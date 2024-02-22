@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Factorio Access Menu</title>
+    <style>
+        @import url('https://fonts.cdnfonts.com/css/titillium-web');
+        html,body{
+            font-family: 'Titillium Web', sans-serif;
+            background:lightgray;
+            height:100%;
+            margin:0;
+            padding:0;
+            display: grid;
+            align-items: center;
+        }
+        #menus{
+            background-color:#313031;
+            margin:auto;
+            width:400px;
+            border:grey outset 4px;
+            padding:8px;
+        }
+        #menus>div>h1{
+            color:#FDE4C1;
+            font-size:12px;
+            line-height:12px;
+            padding:0;
+            margin:0 3px 8px 3px;
+        }
+        #menus>div:target ~ #main-menu,#menus>div{
+            display:none;
+        }
+        #menus>div:target,#menus>#main-menu{
+            display:block;
+        }
+        ul {
+            list-style-type:none;
+            padding:0;
+            margin:0;
+            border:grey inset 3px;
+        }
+        input[type="button"],li>a{
+            display:block;
+            background:#8C8E8C;
+            border-color:darkgray;
+            border-style:outset;
+            line-height:46px;
+            height:auto;
+            font-weight:bold;
+            text-align: center;
+            color: #181C18;
+            text-decoration:none;
+        }
+        li>a:active,li>a:hover,li>a:focus,input[type="button"]:active,input[type="button"]:hover,input[type="button"]:focus{
+            background-color:#E79A21;
+            border-color:#F7CB7B;
+        }
+        #back{
+            line-height:25px;
+            margin:8px 3px 0px 3px;
+        }
+    </style>
+</head>
+<body>
+<div id="menus">
+    <div id="not-implimented">        
+        <h1>Not implimented</h1>
+    </div>
+
+    <div id="Iron-ore-Enabled">
+        <h1>Iron ore: Enabled</h1>
+        <ul>
+            <li><a href="#not-implimented">Enabled:Enabled</a></li>
+            <li><a href="#not-implimented">Frequency:1</a></li>
+            <li><a href="#not-implimented">Size:1</a></li>
+            <li><a href="#not-implimented">Richness:4</a></li>
+        </ul>
+    </div>
+    <div id="Copper-ore-Enabled">
+        <h1>Copper ore: Enabled</h1>
+        <ul>
+            <li><a href="#not-implimented">Enabled:Enabled</a></li>
+            <li><a href="#not-implimented">Frequency:1</a></li>
+            <li><a href="#not-implimented">Size:1</a></li>
+            <li><a href="#not-implimented">Richness:4</a></li>
+        </ul>
+    </div>
+    <div id="Stone-Enabled">
+        <h1>Stone: Enabled</h1>
+        <ul>
+            <li><a href="#not-implimented">Enabled:Enabled</a></li>
+            <li><a href="#not-implimented">Frequency:1</a></li>
+            <li><a href="#not-implimented">Size:1</a></li>
+            <li><a href="#not-implimented">Richness:4</a></li>
+        </ul>
+    </div>
+    <div id="Coal-Enabled">
+        <h1>Coal: Enabled</h1>
+        <ul>
+            <li><a href="#not-implimented">Enabled:Enabled</a></li>
+            <li><a href="#not-implimented">Frequency:1</a></li>
+            <li><a href="#not-implimented">Size:1</a></li>
+            <li><a href="#not-implimented">Richness:4</a></li>
+        </ul>
+    </div>
+    <div id="Uranium-ore-Enabled">
+        <h1>Uranium ore: Enabled</h1>
+        <ul>
+            <li><a href="#not-implimented">Enabled:Enabled</a></li>
+            <li><a href="#not-implimented">Frequency:1</a></li>
+            <li><a href="#not-implimented">Size:1</a></li>
+            <li><a href="#not-implimented">Richness:4</a></li>
+        </ul>
+    </div>
+    <div id="Crude-oil-Enabled">
+        <h1>Crude oil: Enabled</h1>
+        <ul>
+            <li><a href="#not-implimented">Enabled:Enabled</a></li>
+            <li><a href="#not-implimented">Frequency:1</a></li>
+            <li><a href="#not-implimented">Size:1</a></li>
+            <li><a href="#not-implimented">Richness:4</a></li>
+        </ul>
+    </div>
+    <div id="resources-tab-title">
+        <h1>Resources</h1>
+        <ul>
+            <li><a href="#Iron-ore-Enabled">Iron ore: Enabled</a></li>
+            <li><a href="#Copper-ore-Enabled">Copper ore: Enabled</a></li>
+            <li><a href="#Stone-Enabled">Stone: Enabled</a></li>
+            <li><a href="#Coal-Enabled">Coal: Enabled</a></li>
+            <li><a href="#Uranium-ore-Enabled">Uranium ore: Enabled</a></li>
+            <li><a href="#Crude-oil-Enabled">Crude oil: Enabled</a></li>
+        </ul>
+    </div>
+    <div id="Map-type">
+        <h1>Map type:</h1>
+        <ul>
+            <li><a href="#not-implimented">Island</a></li>
+            <li><a href="#not-implimented">Normal</a></li>
+        </ul>
+    </div>
+    <div id="Water-Enabled">
+        <h1>Water: Enabled</h1>
+        <ul>
+            <li><a href="#not-implimented">Enabled:Enabled</a></li>
+            <li><a href="#not-implimented">Scale:1.0</a></li>
+            <li><a href="#not-implimented">Coverage:1</a></li>
+        </ul>
+    </div>
+    <div id="Trees-Enabled">
+        <h1>Trees: Enabled</h1>
+        <ul>
+            <li><a href="#not-implimented">Enabled:Enabled</a></li>
+            <li><a href="#not-implimented">Scale:1.0</a></li>
+            <li><a href="#not-implimented">Coverage:1</a></li>
+        </ul>
+    </div>
+    <div id="Cliffs-Enabled">
+        <h1>Cliffs: Enabled</h1>
+        <ul>
+            <li><a href="#not-implimented">Enabled:Enabled</a></li>
+            <li><a href="#not-implimented">Frequency:0.16666666666666666</a></li>
+            <li><a href="#not-implimented">Continuity:0.1666666716337204</a></li>
+        </ul>
+    </div>
+    <div id="moisture">
+        <h1>Moisture</h1>
+        <ul>
+            <li><a href="#not-implimented">Scale:1.0</a></li>
+            <li><a href="#not-implimented">Bias:0</a></li>
+        </ul>
+    </div>
+    <div id="aux">
+        <h1>Terrain type</h1>
+        <ul>
+            <li><a href="#not-implimented">Scale:1.0</a></li>
+            <li><a href="#not-implimented">Bias:0</a></li>
+        </ul>
+    </div>
+    <div id="terrain-tab-title">
+        <h1>Terrain</h1>
+        <ul>
+            <li><a href="#Map-type">Map type:</a></li>
+            <li><a href="#Water-Enabled">Water: Enabled</a></li>
+            <li><a href="#Trees-Enabled">Trees: Enabled</a></li>
+            <li><a href="#Cliffs-Enabled">Cliffs: Enabled</a></li>
+            <li><a href="#moisture">Moisture</a></li>
+            <li><a href="#aux">Terrain type</a></li>
+        </ul>
+    </div>
+    <div id="Enemy-bases-Enabled">
+        <h1>Enemy bases: Enabled</h1>
+        <ul>
+            <li><a href="#not-implimented">Enabled:Enabled</a></li>
+            <li><a href="#not-implimented">Frequency:1</a></li>
+            <li><a href="#not-implimented">Size:1</a></li>
+        </ul>
+    </div>
+    <div id="Enemy-expansion-Disabled">
+        <h1>Enemy expansion: Disabled</h1>
+        <ul>
+            <li><a href="#not-implimented">Enabled:Disabled</a></li>
+            <li><a href="#not-implimented">Maximum expansion distance:7</a></li>
+            <li><a href="#not-implimented">Minimum group size:5</a></li>
+            <li><a href="#not-implimented">Maximum group size:20</a></li>
+            <li><a href="#not-implimented">Minimum cooldown:4.00</a></li>
+            <li><a href="#not-implimented">Maximum cooldown:60.00</a></li>
+        </ul>
+    </div>
+    <div id="Evolution-Enabled">
+        <h1>Evolution: Enabled</h1>
+        <ul>
+            <li><a href="#not-implimented">Enabled:Enabled</a></li>
+            <li><a href="#not-implimented">Time factor:0</a></li>
+            <li><a href="#not-implimented">Destroy factor:60000</a></li>
+            <li><a href="#not-implimented">Pollution factor:1</a></li>
+        </ul>
+    </div>
+    <div id="enemy-tab-title">
+        <h1>Enemy</h1>
+        <ul>
+            <li><a href="#Enemy-bases-Enabled">Enemy bases: Enabled</a></li>
+            <li><a href="#not-implimented">Peaceful mode:Enabled In peaceful mode, the enemies will not actively attack or expand. Enemies will still attack to defend themselves.
+Note: Enabling this will disable some achievements.</a></li>
+            <li><a href="#not-implimented">Starting area size:4</a></li>
+            <li><a href="#Enemy-expansion-Disabled">Enemy expansion: Disabled</a></li>
+            <li><a href="#Evolution-Enabled">Evolution: Enabled</a></li>
+        </ul>
+    </div>
+    <div id="map-size-group-tile">
+        <h1>Map</h1>
+        <ul>
+            <li><a href="#not-implimented">Width:0</a></li>
+            <li><a href="#not-implimented">Height:0</a></li>
+        </ul>
+    </div>
+    <div id="DifficultyNormal">
+        <h1>Difficulty:Normal</h1>
+        <ul>
+            <li><a href="#not-implimented">Normal</a></li>
+            <li><a href="#not-implimented">Expensive</a></li>
+        </ul>
+    </div>
+    <div id="recipes-difficulty-group-tile">
+        <h1>Recipes</h1>
+        <ul>
+            <li><a href="#DifficultyNormal">Difficulty:Normal</a></li>
+        </ul>
+    </div>
+    <div id="DifficultyNormal">
+        <h1>Difficulty:Normal</h1>
+        <ul>
+            <li><a href="#not-implimented">Normal</a></li>
+            <li><a href="#not-implimented">Expensive</a></li>
+        </ul>
+    </div>
+    <div id="technology-difficulty-group-tile">
+        <h1>Technology</h1>
+        <ul>
+            <li><a href="#DifficultyNormal">Difficulty:Normal</a></li>
+            <li><a href="#not-implimented">Price multiplier:1</a></li>
+        </ul>
+    </div>
+    <div id="Pollution-Enabled">
+        <h1>Pollution: Enabled</h1>
+        <ul>
+            <li><a href="#not-implimented">Enabled:Enabled</a></li>
+            <li><a href="#not-implimented">Absorption modifier:1</a></li>
+            <li><a href="#not-implimented">Attack cost modifier:1</a></li>
+            <li><a href="#not-implimented">Minimum to damage trees:60</a></li>
+            <li><a href="#not-implimented">Absorbed per damaged tree:10</a></li>
+            <li><a href="#not-implimented">Diffusion ratio:0.02</a></li>
+        </ul>
+    </div>
+    <div id="advanced-tab-title">
+        <h1>Advanced</h1>
+        <ul>
+            <li><a href="#not-implimented">Record replay:Disabled Record replay for this save file so it can be watched back. Increases save file size and saving times.</a></li>
+            <li><a href="#map-size-group-tile">Map</a></li>
+            <li><a href="#recipes-difficulty-group-tile">Recipes</a></li>
+            <li><a href="#technology-difficulty-group-tile">Technology</a></li>
+            <li><a href="#Pollution-Enabled">Pollution: Enabled</a></li>
+        </ul>
+    </div>
+    <div id="next">
+        <h1>Next</h1>
+        <ul>
+            <li><a href="#not-implimented">Seed:3814061204</a></li>
+            <li><a href="#resources-tab-title">Resources</a></li>
+            <li><a href="#terrain-tab-title">Terrain</a></li>
+            <li><a href="#enemy-tab-title">Enemy</a></li>
+            <li><a href="#advanced-tab-title">Advanced</a></li>
+            <li><a href="#not-implimented">Play</a></li>
+        </ul>
+    </div>
+    <div id="dyn1">
+        <h1>dyn1</h1>
+        <ul>
+            <li><a href="#not-implimented">All options have preset values.</a></li>
+            <li><a href="#next">Next</a></li>
+        </ul>
+    </div>
+    <div id="main-game">
+        <h1>Main game:</h1>
+        <ul>
+            <li><a href="#dyn1">Compass Valley[selected]</a></li>
+            <li><a href="#dyn1">No Enemies</a></li>
+            <li><a href="#dyn1">Peaceful Mode</a></li>
+            <li><a href="#dyn1">Default</a></li>
+            <li><a href="#dyn1">Rich resources</a></li>
+            <li><a href="#dyn1">Marathon</a></li>
+            <li><a href="#dyn1">Death world</a></li>
+            <li><a href="#dyn1">Death world marathon</a></li>
+            <li><a href="#dyn1">Rail world</a></li>
+            <li><a href="#dyn1">Ribbon world</a></li>
+            <li><a href="#dyn1">Island</a></li>
+        </ul>
+    </div>
+    <div id="dyn2">
+        <h1>dyn2</h1>
+        <ul>
+            <li><a href="#not-implimented">Play</a></li>
+        </ul>
+    </div>
+    <div id="mod-scenarios">
+        <h1>Mod scenarios:</h1>
+        <ul>
+            <li><a href="#dyn2">Compass Valley</a></li>
+            <li><a href="#dyn2">Demo 1</a></li>
+            <li><a href="#dyn2">Demo 2</a></li>
+            <li><a href="#dyn2">Demo Map 3</a></li>
+            <li><a href="#dyn2">Demo Map Alternative</a></li>
+        </ul>
+    </div>
+    <div id="new-game">
+        <h1>New game</h1>
+        <ul>
+            <li><a href="#main-game">Main game:</a></li>
+            <li><a href="#mod-scenarios">Mod scenarios:</a></li>
+        </ul>
+    </div>
+    <div id="load-game">
+        <h1>Load game</h1>
+        <ul>
+            <li><a href="#not-implimented">dyn3</a></li>
+        </ul>
+    </div>
+    <div id="single-player-menu">
+        <h1>Single player</h1>
+        <ul>
+            <li><a href="#new-game">New game</a></li>
+            <li><a href="#load-game">Load game</a></li>
+        </ul>
+    </div>
+    <div id="Host-Settings">
+        <h1>Host Settings</h1>
+        <ul>
+            <li><a href="#not-implimented">dyn4</a></li>
+        </ul>
+    </div>
+    <div id="host-saved-game">
+        <h1>Host saved game</h1>
+        <ul>
+            <li><a href="#not-implimented">dyn5</a></li>
+        </ul>
+    </div>
+    <div id="Friend-List">
+        <h1>Friend List</h1>
+        <ul>
+            <li><a href="#not-implimented">Add</a></li>
+            <li><a href="#not-implimented">dyn6</a></li>
+        </ul>
+    </div>
+    <div id="List-Games-With-Friends">
+        <h1>List Games With Friends</h1>
+        <ul>
+            <li><a href="#not-implimented">Games with friends</a></li>
+        </ul>
+    </div>
+    <div id="browse-public-games">
+        <h1>Browse public games</h1>
+        <ul>
+            <li><a href="#Friend-List">Friend List</a></li>
+            <li><a href="#List-Games-With-Friends">List Games With Friends</a></li>
+        </ul>
+    </div>
+    <div id="multi-player-menu">
+        <h1>Multiplayer</h1>
+        <ul>
+            <li><a href="#not-implimented">Username: Gweneph</a></li>
+            <li><a href="#Host-Settings">Host Settings</a></li>
+            <li><a href="#host-saved-game">Host saved game</a></li>
+            <li><a href="#browse-public-games">Browse public games</a></li>
+            <li><a href="#not-implimented">Connect to address</a></li>
+        </ul>
+    </div>
+    <div id="main-menu">
+        <h1>Main menu</h1>
+        <ul>
+            <li><a href="#single-player-menu">Single player</a></li>
+            <li><a href="#multi-player-menu">Multiplayer</a></li>
+            <li><a href="#not-implimented">Exit</a></li>
+        </ul>
+    </div>
+    <input type="button" id="back" value="Back" onclick="navigation.back();"/>
+
+</div>
+</body>
+</html>
