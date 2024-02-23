@@ -1,9 +1,29 @@
 --Here: localisation functions, including event handlers
 local localising = {}
 --Returns the localised name of an object as a string
-function localising.get(object,pindex)--*** todo make this work
+function localising.get(object,pindex)
+   if pindex == nil then
+      printout("localising: pindex is nil error")
+      return
+   end
    if object.valid and string.sub(object.object_name,-9) ~= "Prototype" then
       object = object.prototype
+   end
+   local result = players[pindex].localisations
+   result = result and result[object.object_name]
+   result = result and result[object.name]
+   --for debugging
+   if not result then
+      --game.print("translation fallback for " .. object.object_name .. " " .. object.name )
+   end
+   result = result or object.name
+   return result
+end
+
+function localising.get_alt(object,pindex)
+   if pindex == nil then
+      printout("localising: pindex is nil error")
+      return
    end
    local result = players[pindex].localisations
    result = result and result[object.object_name]

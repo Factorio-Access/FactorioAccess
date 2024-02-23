@@ -251,6 +251,14 @@ data:extend({
 
 {
    type = "sound",
+   name = "player-crafting",
+   filename = "__FactorioAccess__/Audio/player-crafting-zapsplat-modified_industrial_mechanical_wind_up_manual_001_86125.wav",
+   volume = 0.25,
+   preload = true
+},
+
+{
+   type = "sound",
    name = "player-damaged-character",
    filename = "__FactorioAccess__/Audio/player-damaged-character-zapsplat-modified_multimedia_beep_harsh_synth_single_high_pitched_87498.wav",
    volume = 0.75,
@@ -291,6 +299,14 @@ data:extend({
 
 {
    type = "sound",
+   name = "player-walk",
+   filename = "__FactorioAccess__/Audio/player-walk-zapsplat-little_robot_sound_factory_fantasy_Footstep_Dirt_001.wav",
+   volume = 1,
+   preload = true
+},
+
+{
+   type = "sound",
    name = "Rotate-Hand-Sound",
    filename = "__core__/sound/gui-back.ogg",
    volume = 1,
@@ -301,7 +317,7 @@ data:extend({
    type = "sound",
    name = "scanner-pulse",
    filename = "__FactorioAccess__/Audio/scanner-pulse-zapsplat_science_fiction_computer_alarm_single_medium_ring_beep_fast_001_84293.wav",
-   volume = 0.5,
+   volume = 0.3,
    preload = true
 },
 
@@ -409,6 +425,13 @@ data:extend({
     type = "custom-input",
     name = "read-cursor-distance-and-direction",
     key_sequence = "SHIFT + K",
+    consuming = "none"
+},
+
+{
+    type = "custom-input",
+    name = "read-character-coords",
+    key_sequence = "CONTROL + K",
     consuming = "none"
 },
 
@@ -1125,6 +1148,22 @@ data:extend({
 
 {
     type = "custom-input",
+    name = "flip-blueprint-horizontal-info",
+    key_sequence = "F",
+    linked_game_control = "flip-blueprint-horizontal",
+    consuming = "none"
+},
+
+{
+    type = "custom-input",
+    name = "flip-blueprint-vertical-info",
+    key_sequence = "G",
+    linked_game_control = "flip-blueprint-vertical",
+    consuming = "none"
+},
+
+{
+    type = "custom-input",
     name = "inventory-read-weapons-data",
     key_sequence = "R",
     consuming = "none"
@@ -1336,28 +1375,28 @@ data:extend({
 
 {
     type = "custom-input",
-    name = "train-menu-up",
+    name = "alternative-menu-up",
     key_sequence = "UP",
     consuming = "none"
 },
 
 {
     type = "custom-input",
-    name = "train-menu-down",
+    name = "alternative-menu-down",
     key_sequence = "DOWN",
     consuming = "none"
 },
 
 {
     type = "custom-input",
-    name = "train-menu-left",
+    name = "alternative-menu-left",
     key_sequence = "LEFT",
     consuming = "none"
 },
 
 {
     type = "custom-input",
-    name = "train-menu-right",
+    name = "alternative-menu-right",
     key_sequence = "RIGHT",
     consuming = "none"
 },
@@ -1462,6 +1501,14 @@ data:extend({
 
 {
     type = "custom-input",
+    name = "shoot-weapon-fa",
+    key_sequence = "SPACE",
+    linked_game_control = "shoot-enemy",
+    consuming = "none"
+},
+
+{
+    type = "custom-input",
     name = "launch-rocket",
     key_sequence = "SPACE",
     consuming = "none"
@@ -1477,35 +1524,42 @@ data:extend({
 {
     type = "custom-input",
     name = "help-next",
-    key_sequence = "SHIFT + H",
-    consuming = "none"
-},
-
-{
-    type = "custom-input",
-    name = "help-back",
     key_sequence = "CONTROL + H",
     consuming = "none"
 },
 
 {
     type = "custom-input",
-    name = "help-chapter-next",
-    key_sequence = "SHIFT + ALT + H",
+    name = "help-back",
+    key_sequence = "SHIFT + H",
     consuming = "none"
 },
 
 {
     type = "custom-input",
-    name = "help-chapter-back",
+    name = "help-chapter-next",
     key_sequence = "CONTROL + ALT + H",
     consuming = "none"
 },
 
 {
     type = "custom-input",
-    name = "help-toggle-header",
+    name = "help-chapter-back",
+    key_sequence = "SHIFT + ALT + H",
+    consuming = "none"
+},
+
+{
+    type = "custom-input",
+    name = "help-toggle-header-mode",
     key_sequence = "CONTROL + SHIFT + H",
+    consuming = "none"
+},
+
+{
+    type = "custom-input",
+    name = "help-get-other",
+    key_sequence = "ALT + H",
     consuming = "none"
 },
 

@@ -3,7 +3,13 @@
 
 --Tries to equip a stack. For now called only for a stack in hand when the only the inventory is open.
 function equip_it(stack,pindex)
-   local message = "no message"
+   local message = ""
+   if players[pindex].menu == "vehicle" and game.get_player(pindex).opened.type == "spider-vehicle" then
+      message = localising.get_alt(game.entity_prototypes["spidertron"]) 
+      if message == nil then
+         message = "Spidertron "--laterdo possible bug here
+      end
+   end
    
    if stack == nil or not stack.valid_for_read or not stack.valid then
       return "Nothing found to equip."
@@ -12,9 +18,9 @@ function equip_it(stack,pindex)
    if stack.is_armor then
       local armor = game.get_player(pindex).get_inventory(defines.inventory.character_armor)
       if armor.is_empty() then
-         message = " Equipped " .. stack.name
+         message = message .. " Equipped " .. stack.name
       else
-         message = " Equipped " .. stack.name .. " and took in hand " .. armor[1].name
+         message = message .. " Equipped " .. stack.name .. " and took in hand " .. armor[1].name
       end
       stack.swap_stack(armor[1])
       players[pindex].skip_read_hand = true
@@ -23,14 +29,14 @@ function equip_it(stack,pindex)
 	  local gun_inv = game.get_player(pindex).get_inventory(defines.inventory.character_guns)
 	  if gun_inv.can_insert(stack) then
 	     local inserted = gun_inv.insert(stack)
-		 message = " Equipped " .. stack.name
+		 message = message .. " Equipped " .. stack.name
 		 stack.count = stack.count - inserted
        players[pindex].skip_read_hand = true
 	  else
 	    if gun_inv.count_empty_stacks() == 0 then 
-		    message = "All gun slots full."
+		    message = message .. " All gun slots full."
 		 else
-		    message = "Cannot insert " .. stack.name
+		    message = message .. " Cannot insert " .. stack.name
 		 end
 	  end
    elseif stack.type == "ammo" then
@@ -38,26 +44,32 @@ function equip_it(stack,pindex)
 	  local ammo_inv = game.get_player(pindex).get_inventory(defines.inventory.character_ammo)
 	  if ammo_inv.can_insert(stack) then
 	     local inserted = ammo_inv.insert(stack)
-		 message = "Reloaded with " .. stack.name
+		 message = message .. " Reloaded with " .. stack.name
 		 stack.count = stack.count - inserted
        players[pindex].skip_read_hand = true
 	  else
 	    if ammo_inv.count_empty_stacks() == 0 then 
-		    message = "All ammo slots full."
+		    message = message .. " All ammo slots full."
 		 else
-		    message = "Cannot insert " .. stack.name
+		    message = message .. " Cannot insert " .. stack.name
 		 end
 	  end
    elseif stack.prototype.place_as_equipment_result ~= nil then
       --Equip equipment ("gear")
-      local armor_inv = game.get_player(pindex).get_inventory(defines.inventory.character_armor)
-	  if armor_inv.is_empty() then
-	     return "Equipment requires armor with an equipment grid."
-	  end
-	  if armor_inv[1].grid == nil or not armor_inv[1].grid.valid  then
-	     return "Equipment requires armor with an equipment grid."
-	  end
-	  local grid = armor_inv[1].grid
+      local armor_inv 
+      local grid 
+      if players[pindex].menu == "vehicle" and game.get_player(pindex).opened.type == "spider-vehicle" then
+         grid = game.get_player(pindex).opened.grid
+      else
+         armor_inv = game.get_player(pindex).get_inventory(defines.inventory.character_armor)
+         if armor_inv.is_empty() then
+            return "Equipment requires armor with an equipment grid."
+         end
+         if armor_inv[1].grid == nil or not armor_inv[1].grid.valid  then
+            return "Equipment requires armor with an equipment grid."
+         end
+         grid = armor_inv[1].grid
+     end
 	  --Iterate across the whole grid, trying to place the item. 
 	  local placed = nil
 	  for i = 0, grid.width-1, 1 do
@@ -73,19 +85,19 @@ function equip_it(stack,pindex)
 	  end    
      local slots_left = count_empty_equipment_slots(grid)
 	  if placed ~= nil then
-	     message = "Equipped " .. stack.name .. ", " .. slots_left .. " empty slots remaining."
+	    message = message .. " equipped " .. stack.name .. ", " .. slots_left .. " empty slots remaining."
 		 stack.count = stack.count - 1
        players[pindex].skip_read_hand = true
 	  else
 	     --Check if the grid is full 
 		 if slots_left == 0 then
-		    message = "All armor equipment slots are full."
+		    message = message .. " All armor equipment slots are full."
 		 else
-		    message = "This equipment does not fit in the remaining ".. slots_left .. " slots."
+		    message = message .. " This equipment does not fit in the remaining ".. slots_left .. " slots."
 		 end
 	  end
    else
-      message = " Cannot equip " .. stack.name
+      message = message .. " Cannot equip " .. stack.name
    end
    
    return message
@@ -156,16 +168,24 @@ function remove_weapons_and_ammo(pindex)
    --Remove all ammo
    for i = 1, ammos_count, 1 do
       if main_inv.can_insert(ammo_inv[i]) then
-	     local inserted = main_inv.insert(ammo_inv[i])--laterdo recover the uninserted if cannot insert (which is only when inv full) or maybe fails to remove anyway?
-	     resulted_remove_count = resulted_remove_count + math.ceil(ammo_inv.remove(ammo_inv[i]) / 1000 )--we just want to count stacks
+         local inserted = main_inv.insert(ammo_inv[i])
+         local removed = ammo_inv.remove(ammo_inv[i])
+         if inserted ~= removed then
+            game.get_player(pindex).print("ammo removal count error",{volume_modifier=0})--todo fix
+         end
+         resulted_remove_count = resulted_remove_count + math.ceil(removed / 1000 )--counts how many stacks are removed
 	  end
    end
    
    --Remove all guns
    for i = 1, guns_count, 1 do
       if main_inv.can_insert(guns_inv[i]) then
-	     local inserted = main_inv.insert(guns_inv[i])--laterdo recover the uninserted if cannot insert (which is only when inv full) or maybe fails to remove anyway?
-	     resulted_remove_count = resulted_remove_count + math.ceil(guns_inv.remove(guns_inv[i]) / 1000)--we just want to count stacks
+	     local inserted = main_inv.insert(guns_inv[i])
+        local removed = guns_inv.remove(guns_inv[i])
+        if inserted ~= removed then
+            game.get_player(pindex).print("gun removal count error",{volume_modifier=0})--todo fix
+        end
+	     resulted_remove_count = resulted_remove_count + math.ceil(removed / 1000)--counts how many stacks are removed
 	  end
    end
    
@@ -201,15 +221,24 @@ function read_armor_stats(pindex)
       return armor_inv[1].name .. " equipped, with no equipment grid."
    end
    --Armor with Equipment
-   result = armor_inv[1].name .. " equipped, "
-   local grid = armor_inv[1].grid
+   local grid 
+   if players[pindex].menu == "vehicle" and game.get_player(pindex).opened.type == "spider-vehicle" then
+      grid = game.get_player(pindex).opened.grid
+      result = localising.get_alt(game.entity_prototypes["spidertron"]) 
+      if result == nil then
+         result = "Spidertron "--laterdo possible bug here
+      end
+   else
+      grid = armor_inv[1].grid
+      result = armor_inv[1].name .. " equipped, "
+   end
    if grid.count() == 0 then
       return result .. " no armor equipment installed. "
    end
    --Read shield level
    if grid.max_shield > 0 then
       if grid.shield == grid.max_shield then
-	     result = " shields full, "
+	     result = result .. " shields full, "
 	  else
 	     result = result .. " shields at " .. math.ceil(100 * grid.shield / grid.max_shield) .. " percent, "
 	  end
@@ -256,13 +285,22 @@ function read_equipment_list(pindex)
       return "No equipment grid."
    end
    --Armor with Equipment
-   result = "Equipped, "
-   local grid = armor_inv[1].grid
+   local grid 
+   if players[pindex].menu == "vehicle" and game.get_player(pindex).opened.type == "spider-vehicle" then
+      grid = game.get_player(pindex).opened.grid
+      result = localising.get_alt(game.entity_prototypes["spidertron"]) 
+      if result == nil then
+         result = "Spidertron "--laterdo possible bug here
+      end
+   else
+      grid = armor_inv[1].grid
+      result = "Armor "
+   end
    if grid.equipment == nil or grid.equipment == {} then
       return " No armor equipment installed. "
    end
    --Read Equipment List
-   result = "Equipped, "
+   result = result .." equipped, "
    local contents = grid.get_contents() 
    local itemtable = {}
    for name, count in pairs(contents) do
@@ -289,7 +327,12 @@ function remove_equipment_and_armor(pindex)
       return "No armor."
    end
    
-   local grid = armor_inv[1].grid
+   local grid 
+   if players[pindex].menu == "vehicle" and game.get_player(pindex).opened.type == "spider-vehicle" then
+      grid = game.get_player(pindex).opened.grid
+   else
+      grid = armor_inv[1].grid
+   end
    if grid ~= nil and grid.valid then 
        local e_count = grid.count()
 	   --Take all items
@@ -307,15 +350,16 @@ function remove_equipment_and_armor(pindex)
    end
    
    --Remove armor
-   if game.get_player(pindex).get_inventory(defines.inventory.character_main).count_empty_stacks() == 0 then
-      return "Inventory full."
+   if players[pindex].menu == "vehicle" and game.get_player(pindex).opened.type == "spider-vehicle" then
+      --do nothing 
+   elseif game.get_player(pindex).get_inventory(defines.inventory.character_main).count_empty_stacks() == 0 then
+      result = result .. " inventory full "
    else
       result = result .. "removed " .. armor_inv[1].name
-	  game.get_player(pindex).clear_cursor()
-	  local stack2 = game.get_player(pindex).cursor_stack
-	  stack2.swap_stack(armor_inv[1])
       game.get_player(pindex).clear_cursor()
-      return result
+      local stack2 = game.get_player(pindex).cursor_stack
+      stack2.swap_stack(armor_inv[1])
+      game.get_player(pindex).clear_cursor()
    end
    
    return result
@@ -431,7 +475,7 @@ function aim_gun_at_nearest_enemy(pindex,enemy_in)
    --If in range, move the cursor onto the enemy to aim the gun
    if dist < range then 
       players[pindex].cursor_pos = enemy.position
-      move_mouse_cursor(enemy.position,pindex)
+      move_mouse_pointer(enemy.position,pindex)
       cursor_highlight(pindex,nil,nil,true)
    end
    return true

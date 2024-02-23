@@ -14,11 +14,6 @@
     },
     
     {
-      "name": "Quicksave",
-      "enabled": false
-    },
-    
-    {
       "name": "stop-on-red",
       "enabled": true
     }

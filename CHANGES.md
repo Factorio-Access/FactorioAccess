@@ -1,3 +1,209 @@
+# Version 0.8.2 BETA 
+Released on February 21st, 2024. 
+
+This minor update is all about blueprints and ghosts. It fixes recently reported crashes related to blueprints and ghosts, adds blueprint book reading support after some serious tinkering, and tweaks a few related things.
+
+## New features
+
+- Added support for importing and browsing blueprint books.
+  * Press LEFT BRACKET for a blueprint book in hand to begin browsing it as a list.
+  * Navigate the list with W and S. This will read blueprints in the book in terms of their names and icons. Note that many community blueprints tend to have no name and automatically generated icons.
+  * Press LEFT BRACKET to put the book away and copy the selected blueprint into hand.
+  * Note: Blueprint books can go inside each other. If a blueprint book slot contains another blueprint book in it, the mod is not yet able to identify it.
+  * Note: Further support regarding blueprint books will be added later, such as renaming them or adding blueprints into them.
+
+- Added information to note that a blueprint in hand is being flipped.
+  * You can flip a blueprint in hand horizontally by pressing "F".
+  * You can flip a blueprint in hand vertically by pressing "G".
+  * Note: Flipping a blueprint creates a symmetric version of it that you cannot get by rotating it. It is useful for putting similarly designed factory areas on the two sides of the same transport belt. For example if your machine row goes from East to West and has the input belt on the North side, you can flip it to make it go from West to East instead while the input belt remains on the North side.
+  * Note: If a blueprint contains a building that cannot be flipped, such as a burner mining drill, oil refinery, chemical plant, or the such, then none of the blueprint gets flipped. This will become allowed in Factorio version 2.0.
+
+## Changes
+
+- Attempting to build a blueprint now reads out feedback.
+  * Success includes the blueprint name.
+  * Error due to an obstacle reads the obstacle.
+
+- Improved blueprint menu
+* New menu line: Read this blueprint's dimensions and total component count
+* Rotating the blueprint in hand while the menu is open will update this info and the visual previews correctly.
+
+## Bug fixes
+
+- Fixed a crash that prevented handling blueprints with circuit signal icons added to their icon lists.
+
+- Fixed a crash that prevented nudging ghosts.
+
+- Fixed a crash due to emptying the hand while the blueprint menu is still open.
+
+
+# Version 0.8.1 BETA 
+Released on February 20th, 2024. 
+
+This update fixes some new and old bugs, and brings some minor tweaks and additions.
+
+## New features
+
+- You can now read your character's coordinates by pressing "CONTROL + K". This is independent from the cursor.
+
+## Changes
+
+- Removed camera changing focus to the cursor in cursor mode. This was causing audio confusion and also had issues with map view panning.
+
+- Entity names are now localised when read by the cursor.
+
+- Selecting an entity using the scanner in any mode, or using the pipette tool in cursor mode, now jumps the cursor to the entity's northwest corner.
+  * This is very useful when you want to manually fill in ghosts quickly.
+
+- Generalized the new tutorial summary control to read in the opposite mode.
+  * By default, pressing "ALT + H" will read the current step's summary.
+  * In summary mode, pressing "ALT + H" will read the current step's details.
+  * You can toggle summary mode by pressing "CONTROL + SHIFT + H".
+
+- Adjusted tutorial controls for skipping chapters, to match previous changes.
+  * You go to the next step by pressing "CONTROL + H" and go to the previous step by pressing "SHIFT + H".
+  * You go to the next chapter by pressing "CONTROL + ALT + H" and go to the previous chapter by pressing "SHIFT + ALT + H".
+
+- Changed a configuration setting to enable building the ghosts.
+  * You can now (correctly) place a ghost of the buildable item in hand by pressing "SHIFT + LEFT BRACKET".
+
+- Clarified build preview dimension info.
+
+## Bug fixes
+
+- Fixed a crash when renaming a fast travel point.
+
+- Fixed a crash due to analyzing ghost belts.
+
+- Fixed a pipe preview reading bug due to it reading the player.
+
+- Fixed some typos in the tutorial text.
+
+- Fixed a bug due to belt placement previews not accounting for underground belt entrances and exits. 
+  * However, ghost belts still cannot be accounted for.
+
+
+# Version 0.8.0 BETA 
+Released on February 18th, 2024.
+
+This update includes full support for blueprints, and also for the spidertron thanks to contributions from @dzsoker. The update also has several improvement tweaks across the mod thanks to detailed feedback from @SightlessKombat. More tweaks are on the way in future updates.
+
+## Launcher changes
+
+- Demo maps have been converted into mod scenarios.
+  * Every time you launch a scenario, it starts from the same defined point.
+  * You can save a scenario map and load it like any other map.
+  * With this new mode, we will be able to publish improvements to the demo maps in later updates.
+  
+- Fixed a bug that did not read out punctuation key names when they were a part of a key combination.
+
+- Fixed a crash related to language selection.
+
+- Fixed a bug related to the --mod-directory flag.
+
+
+## New features
+
+- Added blueprint menu for editing and managing blueprints. Menu options include:
+   1. Read the description of this blueprint
+   2. Read the icons of this blueprint, which are its features components
+   3. List all components of this blueprint
+   4. List all missing components for building this blueprint 
+   5. Edit the label of this blueprint
+   6. Edit the description of this blueprint
+   7. Create a copy of this blueprint
+   8. Clear this blueprint 
+   9. Export this blueprint as a text string
+   10. Import a text string to overwrite this blueprint
+
+- Added spidertron remote menu (work done by @dzsoker from our Discord). It has the following options:
+  1. Link or unlink a remote with a spidertron
+  2. Rename the linked spidertron
+  3. Set the cursor position as the spidertron autopilot target 
+  4. Add the cursor position to the spidertron autopilot queue 
+  5. Toggle automatically targetting enemies when the spidertron is working by itself
+  6. Toggle automatically targetting enemies when there is a gunner insider
+  7. Set the spidertron autopilot to follow the selected entity
+  * Open the menu by pressing "RIGHT BRACKET" with the remote in hand.
+  * Shortcut: If you press "LEFT BRACKET" with the rempote in hand, it will set the cursor position as the spidertron autopilot target.
+  * Shortcut: If you press "CONTROL + LEFT BRACKET" with the rempote in hand, it will set the spidertron autopilot to follow the selected entity.
+
+- Added spidertron equipment grid support (work done by @dzsoker from our Discord).
+  * Press "SHIFT + LEFT BRACKET" to equip a selected equipment item in the spidertron trunk or an item in hand while the spidertron menu is open.
+  * Press "G" and "SHIFT + G" on the spidertron menu to get info about its equipment.
+  * Press "CONTROL + SHIFT + G" to empty out the spidertron equipment grid.
+
+- Added repeating reminders for the start of the game about basic controls. 
+  * Press "TAB" to begin.
+  * Press "H" to open the tutorial.
+
+- New game sounds added, others were adjusted 
+  * Moving the cursor mode makes a virtual sound to distinguish it from walking.
+  * Resizing the cursor uses this sound too as it is another cursor action.
+  * Ongoing crafting now makes a background sound.
+  * Artillery remote usage makes a sound.
+  * Footsteps were made louder
+  * Scanner was made quieter.
+  * When you are mining ore, you hear only one mining sound. 
+  * You hear a sound when you pick up an item such as ore while mining continuously.
+    
+- Added functionality for the artillery remote.
+  * When you press LEFT BRACKET with it, artillery cannons within range can fire to the cursor position, even if it is not on screen.
+  * If you are standing next to the cursor when you order a strike, a warning is read out.
+
+- Visual addition: Now in cursor mode, if the cursor is out of player reach, the camera will focus on the cursor in map view.
+  * This applies when you jump the cursor around when scrolling the scanner list or the fast travel list.
+  * This also applies when you move the cursor with ARROW KEYS, but pressing W A S D keeps the vanilla functionality of panning the camera instead of making it focus on the cursor.
+
+## Changes
+
+- Changed tutorial controls.
+  * You now press "CONTROL + H" to go along the list and "SHIFT + H" to go back.
+  * You can now press "ALT + H" to read the summary for the current step only, or press "CONTROL + SHIFT + H" to toggle between summary mode and details mode.
+
+- When a building cannot be built, objects in the way are now identified, such as buildings or cliffs or water.
+
+- Nudging buildings has been improved so that obstacles in the nudge area such as items on the ground are cleared automatically and larger obstacles are identified, such as buildings or cliffs or water.
+
+- Improved entity ghost information, like when reading entities or scan entries.
+
+- Better reporting about items in hand.
+  * Rotating items in hand says "in hand" after the new direction.
+  * "Empty hand" revised to "Emptied hand".
+  * Ghosts in hand are now correctly identified instead of an empty hand.
+  
+- Revised crafting menu and crafting queue info
+  * The crafting category name (also called the item group name) is now stated when you change the category by pressing "W" or "S".
+  * The mod now clearly specifies how many times you can craft a recipe.
+  * When you begin to craft a recipe, the menu reads how many batches there are in queue in total.
+  * Improved localisation for these menus to include the recipe names.
+
+- Examining or previewing heat pipes now gives Information about the heat connections.
+  * The same applies for examining heat exchangers and nuclear reactors that are already built.
+
+- Logistic chests and their previews now report info about their logistic network connection status.
+
+- Entities in general will now report whether they are missing inputs or have a full output, when you select them with the cursor.
+
+- Partial localisation made for entity status reading, and a layout was added for easily improving localisation across the rest of the mod later on.
+
+- Menu search for the technologies menu now checks all three categories, now matching other menus.
+
+- Visual menu icons can now come in pairs. 
+  * The crafting queue menu now has a pair of icons to distinguish it from the crafting menu.
+  * For blueprint menus all four blueprint icons can be displayed too.
+
+## Bug fixes
+
+- Fixed a recent bug that was preventing diagonal rail appending when running diagonally in smooth walk mode.
+
+- Fixed a crash related to reading building fluids.
+
+- Fixed a crash due to an API bug in reading entity status number 23. The original bug has been fixed for a later release.
+
+- Fixed a crash related to inventory browsing after handling armor equipment.
+
+
 # Version 0.7.3 BETA 
 
 Released on February 7th, 2024.
