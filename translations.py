@@ -4,7 +4,7 @@ from collections import defaultdict,UserDict
 from collections.abc import Iterator
 import os
 import zipfile
-import pathlib
+from pathlib import Path
 import json
 
 from fa_arg_parse import dprint
@@ -149,9 +149,7 @@ def translate(l_str:localised_str,n=0,error=False):
     
 
 translation_table=defaultdict(dict)
-'''
-,args:list[localised_str]):
-        self.args=args'''
+
 class translated_args(dict):
     def __init__(self,args:list[localised_str]):
         self.args=args
@@ -220,9 +218,9 @@ def expand_r(parts:list[str],targs:translated_args,in_plural=False):
 
 fancy=re.compile(r'[\.?()\[\]]')
 
-def get_mod_path_parts(path: Union[zipfile.Path , pathlib.Path]):
+def get_mod_path_parts(path: Union[zipfile.Path , Path]):
     import fa_paths
-    if isinstance(path,pathlib.Path):
+    if isinstance(path,Path):
         try:
             return path.relative_to(fa_paths.MODS).parts
         except:
@@ -234,20 +232,20 @@ def get_mod_path_parts(path: Union[zipfile.Path , pathlib.Path]):
         path = path.parent
     return tuple(parts[::-1])
 
-def iterate_over_mods(re_filter:re.Pattern[str] =None) -> Iterator[pathlib.Path]:
+def iterate_over_mods(re_filter:re.Pattern[str] =None) -> Iterator[Path]:
     import fa_paths
     if re_filter:
         for mod_path in iterate_over_mods():
             if re_filter.fullmatch(mod_path.name):
                 yield mod_path
         return
-    base_path = pathlib.Path(fa_paths.READ_DIR)
+    base_path = fa_paths.READ_DIR
     for base_core in ['core','base']:
         yield base_path.joinpath(base_core)
-    yield from pathlib.Path(fa_paths.MODS).iterdir()
+    yield from fa_paths.MODS.iterdir()
     
 
-def mod_re_files_sub(parts:list[str],path: Union[zipfile.Path , pathlib.Path]):
+def mod_re_files_sub(parts:list[str],path: Union[zipfile.Path , Path]):
     if not path.exists():
         return
     if not parts:
@@ -263,7 +261,7 @@ def mod_re_files_sub(parts:list[str],path: Union[zipfile.Path , pathlib.Path]):
         if myre.fullmatch(path_part.name):
             yield from mod_re_files_sub(parts[1:],path_part)
 
-def iterate_over_this_mods_files(parts:list[str],mod_path:pathlib.Path):
+def iterate_over_this_mods_files(parts:list[str],mod_path:Path):
     if mod_path.is_file():
         if not zipfile.is_zipfile(mod_path):
             return
@@ -342,24 +340,32 @@ def check_config_locale():
             print('\t',tcat,count)
 
 
-# for locale_file in iterate_over_mod_files('locale/en/.*.cfg'):
-#     with locale_file.open(encoding='utf8') as fp:
-#         read_cfg(fp,ret=translation_table)
-
-def load_lang(code):
-    for locale_file in iterate_over_mod_files(f'locale/{code}/.*.cfg'):
-        with locale_file.open(encoding='utf8') as fp:
+def maybe_load(path:Path):
+    try:
+        with path.open(encoding='utf8') as fp:
             read_cfg(fp,ret=translation_table)
+    except FileNotFoundError:
+        pass
+
+def load_init(code):
+    cfg=Path(__file__).joinpath('r','locale',code+'.cfg')
+    maybe_load(cfg)
+
+def load_full(code):
+    from fa_paths import READ_DIR
+    cfg=READ_DIR.joinpath('core','locale',code,'core.cfg')
+    maybe_load(cfg)
+    load_init(code)
 
 def get_langs():
     lang={}
     regstr=r'locale/([\w-]+)/info.json'
     reg=re.compile(regstr)
-    for path in iterate_over_mod_files(regstr):
-        code = get_mod_path_parts(path)[2]
-        if code in lang:
-            continue
-        with open(path,encoding='utf8') as fp: 
+    from fa_paths import READ_DIR
+    locs=READ_DIR.joinpath('core','locale')
+    for path in locs.iterdir():
+        code = path.name
+        with path.join('info.json').open(encoding='utf8') as fp: 
             info=json.load(fp)
         if 'language-name' in info:
             lang[code]=info['language-name']
@@ -369,8 +375,10 @@ def tprint(*args,**kargs):
     print(*(translate(arg) for arg in args),**kargs)
 
 code='en'
+load_init('en')
 def check_lang():
     global code
+    load_full('en')
     with config.current_conf:
         code = config.general.locale
         if not code or code=='auto':
@@ -391,7 +399,7 @@ def check_lang():
             if len(short_list):
                 if len(short_list)==1:
                     code=short_list[0]
-                    load_lang(code)
+                    load_full(code)
                     op=fa_menu.select_option([
                         ('gui.confirm',),
                         ('fa-l.list-all-langs',)],
@@ -401,13 +409,9 @@ def check_lang():
                         return
                 else:
                     dprint("We got a short list for langs",short_list)
-            else:
-                load_lang('en')
             lang_op=fa_menu.select_option(langs.values(),('gui-interface-settings.locale',))
             config.general.locale = list(langs.keys())[lang_op]
-        load_lang(config.general.locale)
-
-            
+        load_full(config.general.locale)
 
 
 if __name__ == "__main__":

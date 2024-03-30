@@ -1,2 +1,4 @@
 pyautogui
 git+https://github.com/accessibleapps/accessible_output2.git
+git+https://github.com/killjoy1221/playsound.git
+PyInstaller
