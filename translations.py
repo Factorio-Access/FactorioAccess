@@ -218,7 +218,7 @@ def expand_r(parts:list[str],targs:translated_args,in_plural=False):
         
         
 
-fancy=re.compile(r'[\.?()\[\]]')
+fancy=re.compile(r'[*.?()\[\]]')
 
 def get_mod_path_parts(path: Union[zipfile.Path , pathlib.Path]):
     import fa_paths

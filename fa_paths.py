@@ -94,8 +94,15 @@ else:
         raise SystemExit
     launch_args.insert(0,BIN)
 if not BIN:
-    input("Could not find factorio. If you've installed facorio in a standard way please contact the mod developers with your system details. If you're using the protable version please either place this launcher in the folder with the data and bin folders or launch with the factorio execuable path as an argument.")
+    input("Could not find factorio. If you've installed factorio in a standard way please contact the mod developers with your system details. If you're using the protable version please either place this launcher in the folder with the data and bin folders or launch with the factorio execuable path as an argument.")
     raise SystemExit
+_FACTORIO_VERSION_output = subprocess.check_output([BIN,'--version']).decode()
+_factorio_version_match = re.search(r'Version: (\d+\.\d+.\d+)', _FACTORIO_VERSION_output)
+if not _factorio_version_match:
+    input(f"The executable found produced a strange version string. {BIN} {_FACTORIO_VERSION_output}\n Press Enter to Exit")
+    raise SystemExit
+FACTORIO_VERSION = _factorio_version_match[1]
+
 
 factorio_replacements={
     '__PATH__system-write-data__':os.path.expanduser(os.path.expandvars(WRITE_DATA_MAP[sys.platform])),
