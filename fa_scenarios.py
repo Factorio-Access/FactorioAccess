@@ -20,6 +20,8 @@ def get_scenario_from_path(path):
    temp_translations=defaultdict(dict)
    for code in ['en',translations.code]:
       sub=locale.joinpath(code)
+      if not sub.is_dir():
+         continue
       for possible_cfg in sub.iterdir():
          if not possible_cfg.name.endswith('.cfg'):
             continue

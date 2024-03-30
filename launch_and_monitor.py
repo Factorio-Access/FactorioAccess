@@ -4,9 +4,12 @@ import time
 import json
 import re
 import os
+from pathlib import Path
 
 import accessible_output2.outputs.auto
 import pyautogui as gui
+from playsound import playsound
+
 
 from fa_arg_parse import launch_args, args,dprint
 from save_management import save_game_rename
@@ -16,6 +19,11 @@ gui.FAILSAFE = False
 
 ao_output = accessible_output2.outputs.auto.Auto()
 ao_output.output("Hello Factorio!", False)
+
+
+start_saving=str(Path(__file__).parent.joinpath('r','shh.wav'))
+save_complete=str(Path(__file__).parent.joinpath('r','shh.wav'))
+
 
 rich_text=re.compile(r'\[\/?(font|color|img|item|entity|technology|recipe|item-group|fluid|tile|virtual-signal|achievement|gps|special-item|armor|train|train-stop|tooltip)[^\]]*\]')
 maybe_key=re.compile(r'(?<=[\s"]).(?=[\s"])')
@@ -47,7 +55,8 @@ global_commands = {
     "playerList":set_player_list,
     }
 
-
+re_save_started=re.compile(r"Saving to _autosave\w* \(blocking\).")
+re_player_join_game = re.compile(r'PlayerJoinGame .*?playerIndex\((\d+)\)')
 
 def process_game_stdout(stdout,announce_press_e,tweak_modified):
     player_index=""
@@ -67,7 +76,9 @@ def process_game_stdout(stdout,announce_press_e,tweak_modified):
                 continue
                
         if line.endswith("Saving finished"):
-            ao_output.output("Saving Complete", True)
+            playsound(save_complete)
+        elif re_save_started.search(line):
+            playsound(start_saving)
         elif line.endswith("time start"):
             debug_time = time.time
         elif line.endswith("time end"):
@@ -78,11 +89,11 @@ def process_game_stdout(stdout,announce_press_e,tweak_modified):
             if not restarting:
                 pass#return
             restarting=False
-        elif m:=re.search(r'PlayerJoinGame .*?playerIndex\((\d+)\)',line):
+        elif m:=re_player_join_game.search(line):
             if not player_index:
                 player_index=str(int(m[1])+1)
                 print(f'Player index now {player_index}')
-        elif re.search(r'Quitting multiplayer connection.',line):
+        elif 'Quitting multiplayer connection.' in line:
             player_index=""
             print(f'Player index cleared')
         elif tweak_modified and "Loading map" in line:
