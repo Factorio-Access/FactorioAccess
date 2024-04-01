@@ -1,3 +1,7 @@
+if(!browser && chrome){
+   var browser=chrome
+}
+
 function install_instead(e){
    e.preventDefault()
    e.target.lastChild.nodeValue="clicked"

@@ -1,3 +1,7 @@
+if(!browser && chrome){
+   var browser=chrome
+}
+
 function forward_mod_portal_message(message){
    console.log(message)
 }
@@ -9,7 +13,7 @@ function lost_mod_portal(p){
 function lost_FA(p){
    FA_connections.delete(p)
    if(!FA_connections.size){
-      for(pp of mod_portal_open_ports){
+      for(let pp of mod_portal_open_ports){
          pp.postMessage({"FA":false})
       }
    }
@@ -34,7 +38,7 @@ function connected(p) {
       FA_connections.add(p)
       p.onDisconnect.addListener(lost_FA)
       if(announce){
-         for(pp in mod_portal_open_ports){
+         for(let pp of mod_portal_open_ports){
             pp.postMessage({"FA":true})
          }
       }
