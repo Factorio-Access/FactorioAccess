@@ -1,0 +1,20 @@
+{
+   "manifest_version": 2,
+   "name": "FA install mods",
+   "version": "0.1",
+ 
+   "content_scripts": [
+     {
+       "matches": ["https://mods.factorio.com/*"],
+       "js": ["mod_portal_content_script.js"]
+     },
+     {
+      "matches": ["http://127.0.0.1:34197/*"],
+      "js": ["FA_content_script.js"]
+     }
+   ],
+   "background": {
+      "scripts": ["background.js"]
+    }
+ }
+ 

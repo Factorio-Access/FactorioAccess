@@ -9,16 +9,8 @@
 !/README.md
 !/CHANGES.md
 
-#Config
-!/config/
-!/config/config.ini
-
-#Map settings
-!/Map Settings/
-!/Map Settings/PeacefulSettings.json
-!/Map Settings/CompassValleySettings.json
-!/Map Settings/Custom Settings/
-!/Map Settings/gen/**
+!*.py
+/venv/**
 
 #Mod Files
 !/mods/
@@ -32,9 +24,8 @@
 #Jaws File
 !/Factorio.jkm
 
-#build scripts
-!/gen_release.py
-
+#web
+!/web/**
 
 .vscode/
 mods/FactorioAccess/FA.lnk

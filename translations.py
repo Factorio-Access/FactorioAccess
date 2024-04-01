@@ -348,7 +348,7 @@ def maybe_load(path:Path):
         pass
 
 def load_init(code):
-    cfg=Path(__file__).joinpath('r','locale',code+'.cfg')
+    cfg=Path(__file__).parent.joinpath('r','locale',code+'.cfg')
     maybe_load(cfg)
 
 def load_full(code):
