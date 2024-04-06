@@ -4,16 +4,17 @@ This is the BETA VERSION for an accessibility mod for the popular game Factorio.
 
 This "read me" file covers the basics of the mod, which include the installation guide, the mod controls, and links to other information sources.
 
-# Installing Factorio (Windows)
+# Installing Factorio
 The game can be purchased from Factorio.com or from Steam. We recommend installing it using ONLY one of the three options below.
 
 ## Windows Zip Version / Standalone Version (recommended for easy install and troubleshooting)
 1. Go to https://www.factorio.com/download
 2. If needed, login using your Factorio account or Steam account.
-3. Among the install options, select the Windows zip package, also called the manual install. Note that this is different from the regular Windows version. Selecting the zip version will download a zip file that is about 1.5 gigabytes in size.
-4. Create a folder where you want to keep the game. Extract the zip file into this folder.
-5. If you want, create a desktop shortcut for your Factorio folder.
-6. All done! You need to install the mod next.
+3. Among the install options, find the stable releases at the top half of the page. 
+4. Go to the section with "Other download options" and select "Download full game for Windows (ZIP package)". This will download a zip file that is about 1.5 gigabytes in size. It might also be called the manual install. Note that this is different from the regular Windows version, which downloads an exe file.
+5. Create a folder where you want to keep the game. Extract the zip file into this folder.
+6. If you want, create a desktop shortcut for your Factorio folder.
+7. All done! You need to install the mod next.
 
 ## Steam Version (recommended for easy multiplayer setup)
 1. Install Factorio using Steam settings, like any other game on Steam.
@@ -22,10 +23,19 @@ The game can be purchased from Factorio.com or from Steam. We recommend installi
 ## Regular Windows Version (not recommended)
 1. Go to https://www.factorio.com/download
 2. If needed, login using your Factorio account or Steam account.
-3. Among the install options, select the Windows the normal Windows version. This will download an exe file which is the setup application.
-4. Run the exe file and follow the instructions.
-5. All done! You need to install the mod next.
+3. Among the install options, find the stable releases at the top half of the page.
+4. Select "Download full game for Windows". This will download an exe file which is the setup application.
+5. Run the exe file and follow the instructions.
+6. All done! You need to install the mod next.
 
+## Linux Version
+1. Go to https://www.factorio.com/download
+2. If needed, login using your Factorio account or Steam account.
+3. Among the install options, find the stable releases at the top half of the page.
+4. Go to the section with "Other download options" and select "Download full game for Linux". This will download a tar.xz file.
+5. Move the file to the directory where you want to install the game.
+6. Extract the game from the file using a program such as 7zip.
+7. All done! You need to install the mod next.
 
 # Installing Factorio Access (Windows)
 
@@ -58,6 +68,23 @@ To install a mod release, follow the instructions below:
 12. Try launching the game from Steam. This should now run the mod launcher instead, and say "Hello Factorio". If not setup correctly, the game might launch directly and you will hear music.
 13. Follow the mod launcher instructions while the game is configured. This may involve launching the game itself temporarily.
 14. The game is ready to play from the launcher when the main menu appears.
+
+# Installing Factorio Access (Linux)
+1. Install speechd and python 3 through your distribution. Note that Instructions vary by distribution.
+2. Clone the launcher mod from GitHub.
+3. CD into the folder.
+4. If you want to use a virtual python environment, or an executable, run build_main.py. If not, run pip to install requirements.txt by:  "pip install -r requirements.txt"
+5. Run the executable or main.py
+6. If it complains it can't find your Factorio installation then add the path to the Factorio executable as an argument when launching.
+
+# More info at the wiki
+
+For information about the mod and the game, please check out our own [Factorio Access Wiki](https://github.com/Crimso777/Factorio-Access/wiki) being written by the developers.
+
+Factorio also has an [official wiki](https://wiki.factorio.com/).
+
+# Frequently Asked Questions
+Please check the [Factorio Access Wiki main page](https://github.com/Crimso777/Factorio-Access/wiki) for frequently asked questions section.
 
 # Factorio Access Controls
 
@@ -725,15 +752,6 @@ For a logistic requester chest, toggle requesting from buffer chests: CONTROL + 
 ## Using the screen reader
 
 The screen reader, such as for NVDA, can be used but it is generally not that helpful during gameplay because in-game menus heavily use visual icons and graphs instead of text. We are designing the mod to require the screen reader as little as possible. However, the screen reader is necessary in the following situtaions: When the game crashes, when your character dies, when you win a game, and optionally when you pause the game.
-
-# More info at the wiki
-
-For information about the mod and the game, please check out our own [Factorio Access Wiki](https://github.com/Crimso777/Factorio-Access/wiki) being written by the developers.
-
-Factorio also has an [official wiki](https://wiki.factorio.com/).
-
-# Frequently Asked Questions
-Please check the [Factorio Access Wiki main page](https://github.com/Crimso777/Factorio-Access/wiki) for frequently asked questions section.
 
 # Help and Support
 
