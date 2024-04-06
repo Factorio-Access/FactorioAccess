@@ -79,12 +79,12 @@ To install a mod release, follow the instructions below:
 
 # More info at the wiki
 
-For information about the mod and the game, please check out our own [Factorio Access Wiki](https://github.com/Crimso777/Factorio-Access/wiki) being written by the developers.
+For information about the mod and the game, please check out our own [Factorio Access Wiki](https://github.com/Factorio-Access/Factorio-Access/wiki) being written by the developers.
 
 Factorio also has an [official wiki](https://wiki.factorio.com/).
 
 # Frequently Asked Questions
-Please check the [Factorio Access Wiki main page](https://github.com/Crimso777/Factorio-Access/wiki) for frequently asked questions section.
+Please check the [Factorio Access Wiki main page](https://github.com/Factorio-Access/Factorio-Access/wiki) for frequently asked questions section.
 
 # Factorio Access Controls
 
