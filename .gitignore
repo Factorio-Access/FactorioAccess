@@ -27,5 +27,7 @@
 #web
 !/web/**
 
+!/r/**
+
 .vscode/
 mods/FactorioAccess/FA.lnk
