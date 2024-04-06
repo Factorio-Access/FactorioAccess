@@ -352,10 +352,15 @@ def load_init(code):
     maybe_load(cfg)
 
 def load_full(code):
-    from fa_paths import READ_DIR
-    cfg=READ_DIR.joinpath('core','locale',code,'core.cfg')
-    maybe_load(cfg)
     load_init(code)
+    from fa_paths import READ_DIR
+    cfg=READ_DIR.joinpath("core","locale",code,'core.cfg')
+    maybe_load(cfg)
+    import mods
+    with mods.mod_manager:
+        for cfg in mods.mod_manager.iter_mod_files("locale/"+code+"/.*.cfg"):
+            maybe_load(cfg)
+    
 
 def get_langs():
     lang={}
@@ -365,7 +370,7 @@ def get_langs():
     locs=READ_DIR.joinpath('core','locale')
     for path in locs.iterdir():
         code = path.name
-        with path.join('info.json').open(encoding='utf8') as fp: 
+        with path.joinpath('info.json').open(encoding='utf8') as fp: 
             info=json.load(fp)
         if 'language-name' in info:
             lang[code]=info['language-name']

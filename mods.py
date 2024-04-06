@@ -71,10 +71,10 @@ class __mod_manager(object):
       for mod_path in self._iterate_over_all_mod_paths():
          self.add_mod(mod_path)
 
-      for name in self.dict:
-         if name not in self.by_name_version:
-            del self.dict[name]
-            self.modified = True
+      pre_size=len(self.dict)
+      self.dict={name:m for name,m in self.dict.items() if name in self.by_name_version}
+      if len(self.dict) != pre_size:
+         self.modified = True
 
    def __exit__(self,*args) -> None:
       if self.modified:
@@ -155,12 +155,12 @@ class __mod_manager(object):
       yield from MODS.iterdir()
    
    def iter_mods(self,require_enabled=True,mod_filter:re.Pattern =None) -> Iterator[mod]:
-      for m in self.dict.items():
+      for m in self.dict.values():
          if m['enabled'] or not require_enabled:
             name=m['name']
             if mod_filter and not mod_filter.fullmatch(name):
                continue
-            ver=m['version'] or max(self.by_name_version[name])
+            ver='version' in m and m['version'] or max(self.by_name_version[name])
             yield self.by_name_version[name][ver]
 
    def iter_mod_files(self,inner_re_path:str,require_enabled=True,mod_filter:re.Pattern =None) -> Iterator[Union[zipfile.Path , pathlib.Path]]:
