@@ -96,6 +96,8 @@ function equip_it(stack,pindex)
 		    message = message .. " This equipment does not fit in the remaining ".. slots_left .. " slots."
 		 end
 	  end
+   elseif players[pindex].in_menu == false and (stack.prototype.place_result ~= nil or stack.prototype.place_as_tile_result ~= nil) then
+      message = ""
    else
       message = message .. " Cannot equip " .. stack.name
    end
@@ -195,6 +197,48 @@ function remove_weapons_and_ammo(pindex)
    end
    
    return message
+end
+
+function delete_equipped_atomic_bombs(pindex)
+   local ammo_inv = game.get_player(pindex).get_inventory(defines.inventory.character_ammo)
+   local main_inv = game.get_player(pindex).get_inventory(defines.inventory.character_main)
+   local ammos_count = #ammo_inv - ammo_inv.count_empty_stacks()
+   local resulted_remove_count = 0
+   
+   --Remove all atomic bombs
+   for i = 1, ammos_count, 1 do
+      if ammo_inv[i] and ammo_inv[i].valid_for_read and ammo_inv[i].name == "atomic-bomb" then
+         local removed = ammo_inv.remove(ammo_inv[i])
+         resulted_remove_count = resulted_remove_count + removed
+	  end
+   end
+   
+   --Save removed amount
+   local restore_count = players[pindex].restore_count
+   if restore_count == nil or restore_count < resulted_remove_count then
+      players[pindex].restore_count = resulted_remove_count
+   end
+   return 
+end
+
+function restore_equipped_atomic_bombs(pindex)--
+   local guns_inv = game.get_player(pindex).get_inventory(defines.inventory.character_guns)
+   local ammo_inv = game.get_player(pindex).get_inventory(defines.inventory.character_ammo)
+   local main_inv = game.get_player(pindex).get_inventory(defines.inventory.character_main)
+   local guns_count  = #guns_inv - guns_inv.count_empty_stacks()
+   local ammos_count = #ammo_inv - ammo_inv.count_empty_stacks()
+   
+   --Create stack 
+   local restore_count = players[pindex].restore_count
+   if restore_count == nil then
+      restore_count = 1
+   end
+   local stack = {name = "atomic-bomb", count = restore_count}
+   
+   --Equip all atomic bombs according to count 
+   if restore_count > 0 and ammo_inv.can_insert(stack) then
+      local inserted = ammo_inv.insert(stack)
+   end
 end
 
 function count_empty_equipment_slots(grid)

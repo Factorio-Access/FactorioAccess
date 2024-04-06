@@ -51,13 +51,13 @@ function rail_ent_info(pindex, ent, description)
          is_horz_or_vert = true
          
       elseif ent.direction == dirs.northeast then
-         result = result .. " on falling diagonal left "
+         result = result .. " on falling diagonal, left half "
       elseif ent.direction == dirs.southwest then
-         result = result .. " on falling diagonal right "
+         result = result .. " on falling diagonal, right half "
       elseif ent.direction == dirs.southeast then
-         result = result .. " on rising diagonal left "
+         result = result .. " on rising diagonal, left half "
       elseif ent.direction == dirs.northwest then
-         result = result .. " on rising diagonal right "
+         result = result .. " on rising diagonal, right half "
       end
    
    elseif ent.name == "curved-rail" and is_end_rail == true then
@@ -81,23 +81,23 @@ function rail_ent_info(pindex, ent, description)
       end
    
    elseif ent.name == "curved-rail" and is_end_rail == false then
-      result = result .. " curved in direction "
-      if ent.direction == dirs.north then 
-         result = result ..  "0 with ends facing south and falling diagonal "
+      result = result .. " curved "
+      if ent.direction == dirs.north then --0
+         result = result ..  " facing south and falling diagonal "
       elseif ent.direction == dirs.northeast then
-         result = result ..  "1 with ends facing south and rising diagonal "
+         result = result ..  " facing south and rising diagonal "
       elseif ent.direction == dirs.east then
-         result = result ..  "2 with ends facing west  and rising diagonal "
+         result = result ..  " facing west  and rising diagonal "
       elseif ent.direction == dirs.southeast then
-         result = result ..  "3 with ends facing west  and falling diagonal "
+         result = result ..  " facing west  and falling diagonal "
       elseif ent.direction == dirs.south then
-         result = result ..  "4 with ends facing north and falling diagonal "
+         result = result ..  " facing north and falling diagonal "
       elseif ent.direction == dirs.southwest then
-         result = result ..  "5 with ends facing north and rising diagonal "
+         result = result ..  " facing north and rising diagonal "
       elseif ent.direction == dirs.west then
-         result = result ..  "6 with ends facing east  and rising diagonal "
-      elseif ent.direction == dirs.northwest then
-         result = result ..  "7 with ends facing east  and falling diagonal "
+         result = result ..  " facing east  and rising diagonal "
+      elseif ent.direction == dirs.northwest then --7
+         result = result ..  " facing east  and falling diagonal "
       end
    end
    
@@ -2454,7 +2454,7 @@ function build_rail_bypass_junction(anchor_rail, pindex)
    
 end
 
---Builds a starter for a rail bypass junction with 3 rails ****todo complete and test
+--Builds a starter for a rail bypass junction with 3 rails ***todo complete and test
 function build_rail_bypass_junction_triple(anchor_rail, pindex)
    local build_comment = ""
    local surf = game.get_player(pindex).surface
@@ -3444,27 +3444,55 @@ end
 function get_heading(ent)
    local heading = "unknown"
    if ent == nil then
-      return "nill error"
+      return "nil error"
    end
    local ori = ent.orientation
    if ori < 0.0625 then
-      heading = "North"
+      heading = direction_lookup(dirs.north)
    elseif ori < 0.1875 then
-      heading = "Northeast"
+      heading = direction_lookup(dirs.northeast)
    elseif ori < 0.3125 then
-      heading = "East"
+      heading = direction_lookup(dirs.east)
    elseif ori < 0.4375 then
-      heading = "Southeast"
+      heading = direction_lookup(dirs.southeast)
    elseif ori < 0.5625 then
-      heading = "South"
+      heading = direction_lookup(dirs.south)
    elseif ori < 0.6875 then
-      heading = "Southwest"
+      heading = direction_lookup(dirs.southwest)
    elseif ori < 0.8125 then
-      heading = "West"
+      heading = direction_lookup(dirs.west)
    elseif ori < 0.9375 then
-      heading = "Northwest"
+      heading = direction_lookup(dirs.northwest)
    else
-      heading = "North"
+      heading = direction_lookup(dirs.north)--default
+   end      
+   return heading
+end
+
+function get_heading_value(ent)
+   local heading = nil
+   if ent == nil then
+      return nil
+   end
+   local ori = ent.orientation
+   if ori < 0.0625 then
+      heading = (dirs.north)
+   elseif ori < 0.1875 then
+      heading = (dirs.northeast)
+   elseif ori < 0.3125 then
+      heading = (dirs.east)
+   elseif ori < 0.4375 then
+      heading = (dirs.southeast)
+   elseif ori < 0.5625 then
+      heading = (dirs.south)
+   elseif ori < 0.6875 then
+      heading = (dirs.southwest)
+   elseif ori < 0.8125 then
+      heading = (dirs.west)
+   elseif ori < 0.9375 then
+      heading = (dirs.northwest)
+   else
+      heading = (dirs.north)--default
    end      
    return heading
 end
@@ -3813,7 +3841,7 @@ function train_menu(menu_index, pindex, clicked, other_input)
             printout("The train must have locomotives for it to be named.", pindex)
             return
          end
-         printout("Enter a new name for this train, then press ENTER to confirm.", pindex)
+         printout("Enter a new name for this train, then press 'ENTER' to confirm, or press 'ESC' to cancel.", pindex)
          players[pindex].train_menu.renaming = true
          local frame = game.get_player(pindex).gui.screen.add{type = "frame", name = "train-rename"}
          frame.bring_to_front()
@@ -4045,7 +4073,7 @@ function train_stop_menu(menu_index, pindex, clicked, other_input)
       if not clicked then
          printout("Select here to rename this train stop.", pindex)
       else
-         printout("Enter a new name for this train stop, then press ENTER to confirm.", pindex)
+         printout("Enter a new name for this train stop, then press 'ENTER' to confirm, or press 'ESC' to cancel.", pindex)
          players[pindex].train_stop_menu.renaming = true
          local frame = game.get_player(pindex).gui.screen.add{type = "frame", name = "train-stop-rename"}
          frame.bring_to_front()
@@ -4965,4 +4993,229 @@ function check_and_honk_at_trains_in_same_block(tick,pindex)
    --4. HONK (long)
    game.get_player(pindex).play_sound{path="train-honk-long"}
    players[pindex].last_honk_tick = tick
+end
+
+--Play a sound to indicate the train is turning
+function check_and_play_sound_for_turning_trains(pindex)
+   local p = game.get_player(pindex)
+   if p.vehicle == nil or p.vehicle.valid == false or p.vehicle.train == nil then
+      return 
+   end
+   local ori = p.vehicle.orientation
+   if players[pindex].last_train_orientation ~= nil and players[pindex].last_train_orientation ~= ori then
+      p.play_sound{path = "train-clack"}
+   end
+   players[pindex].last_train_orientation = ori
+end
+
+--Plays an alert depending on the distance to the entity ahead. Returns whether a larger radius check is needed. Driving proximity alert
+function check_and_play_driving_alert_sound(pindex, tick, mode_in)--wip****
+   for pindex, player in pairs(players) do
+      local mode = mode_in or 1
+      local p = game.get_player(pindex)
+      local surf = p.surface 
+      if p == nil or p.valid == false or p.driving == false or p.vehicle == nil then
+         return false
+      end
+      --Return if beeped recently
+      local min_delay = 15
+      if players[pindex].last_driving_alert_tick == nil then 
+         players[pindex].last_driving_alert_tick = tick
+         return false
+      end
+      local last_driving_alert_tick = players[pindex].last_driving_alert_tick
+      local time_since = tick - last_driving_alert_tick
+      if last_driving_alert_tick ~= nil and time_since < min_delay then
+         return false
+      end 
+      --Scan area "ahead" according to direction
+      local v = p.vehicle
+      local dir = get_heading_value(v)
+      if v.speed < 0 then
+         dir = rotate_180(dir)
+      end
+      
+      --Set the trigger distance 
+      local trigger = 1
+      if mode == 1 then
+         trigger = 3
+      elseif mode == 2 then
+         trigger = 10
+      elseif mode == 3 then
+         trigger = 25
+      else
+         trigger = 50
+      end
+      
+      --Scan for entities within the radius
+      local ents_around = {}
+      if p.vehicle.type == "car" then
+         local radius = trigger + 5
+         --For cars, exclude anything they cannot collide with
+         ents_around = surf.find_entities_filtered{area = {{v.position.x-radius, v.position.y-radius,},{v.position.x+radius, v.position.y+radius}}, type = {"resource", "highlight-box", "flying-text", "corpse", "straight-rail", "curved-rail", "rail-signal", "rail-chain-signal", "transport-belt", "underground-belt", "splitter", "item-entity", "pipe", "pipe-to-ground", "inserter", "small-electric-pole", "medium-electric-pole"}, invert = true}
+      elseif p.vehicle.train ~= nil then 
+         trigger = trigger * 3
+         local radius = trigger + 5
+         --For trains, search for anything they can collide with
+         ents_around = surf.find_entities_filtered{area = {{v.position.x-radius, v.position.y-radius,},{v.position.x+radius, v.position.y+radius}}, type = {"locomotive", "cargo-wagon", "fluid-wagon", "artillery-wagon","character","car","unit"}, invert = false}
+      end
+      
+      --Filter entities by direction
+      local ents_ahead = {}  
+      for i, ent in ipairs(ents_around) do
+         local dir_ent = get_direction_of_that_from_this(ent.position,v.position)
+         if dir_ent == dir then
+            if p.vehicle.type == "car" and ent.unit_number ~= p.vehicle.unit_number then
+               --For cars, take the entity as it is
+               table.insert(ents_ahead,ent)
+            elseif p.vehicle.train ~= nil and ent.unit_number ~= p.vehicle.unit_number then
+               --For trains, the entity must also be near/on rails
+               local ent_straight_rails = surf.find_entities_filtered{position = ent.position, radius = 2, type = {"straight-rail"}}
+               local ent_curved_rails = surf.find_entities_filtered{position = ent.position, radius = 4, type = {"curved-rail"}}
+               if (ent_straight_rails ~= nil and #ent_straight_rails > 0) or (ent_curved_rails ~= nil and #ent_curved_rails > 0) then
+                  if not (ent.train and ent.train.id == v.train.id) then
+                     table.insert(ents_ahead,ent)
+                  end
+               end
+            end
+         elseif mode < 2 and util.distance(v.position, ent.position) < 5 and (math.abs(dir_ent - dir) == 1 or math.abs(dir_ent - dir) == 7) then
+            --Take very nearby ents at diagonal directions
+            if p.vehicle.type == "car" and ent.unit_number ~= p.vehicle.unit_number then
+               --For cars, take the entity as it is
+               table.insert(ents_ahead,ent)
+            elseif p.vehicle.train ~= nil and ent.unit_number ~= p.vehicle.unit_number then
+               --For trains, the entity must also be near/on rails and not from the same train (if reversing)
+               local ent_straight_rails = surf.find_entities_filtered{position = ent.position, radius = 2, type = {"straight-rail"}}
+               local ent_curved_rails = surf.find_entities_filtered{position = ent.position, radius = 4, type = {"curved-rail"}}
+               if (ent_straight_rails ~= nil and #ent_straight_rails > 0) or (ent_curved_rails ~= nil and #ent_curved_rails > 0) then
+                  if not (ent.train and ent.train.id == v.train.id) then
+                     table.insert(ents_ahead,ent)
+                  end
+               end
+            end
+         end
+      end
+      
+      --Skip if nothing is ahead
+      if #ents_ahead == 0 then
+         return true
+      else
+      end
+      
+      --Get distance to nearest entity ahead
+      local nearest = v.surface.get_closest(v.position, ents_ahead)
+      local edge_dist = util.distance(v.position, nearest.position) - 1/4*(nearest.tile_width + nearest.tile_height)
+      rendering.draw_circle{color = {0.8, 0.8, 0.8},radius = 2,width = 2,target = nearest,surface = p.surface,time_to_live = 15}
+      
+      --Beep
+      if edge_dist < trigger then 
+         p.play_sound{path = "player-bump-stuck-alert"}
+         players[pindex].last_driving_alert_tick = last_driving_alert_tick
+         players[pindex].last_driving_alert_ent = nearest 
+         rendering.draw_circle{color = {1.0, 0.4, 0.2},radius = 2,width = 2,target = nearest,surface = p.surface,time_to_live = 15}
+         return false
+      end
+      return true
+   end
+end
+
+function stop_vehicle(pindex)
+   local vehicle = game.get_player(pindex).vehicle
+   if vehicle and vehicle.valid then
+      if vehicle.train == nil then
+         vehicle.speed = 0
+      elseif vehicle.train.state == defines.train_state.manual_control then
+         vehicle.train.speed = 0
+      end
+   end
+end
+
+function halve_vehicle_speed(pindex)
+   local vehicle = game.get_player(pindex).vehicle
+   if vehicle and vehicle.valid then
+      if vehicle.train == nil then
+         vehicle.speed = vehicle.speed / 2
+      elseif vehicle.train.state == defines.train_state.manual_control then
+         vehicle.train.speed = vehicle.train.speed / 2
+      end
+   end
+end
+
+--Interfacing with Pavement Driving Assist
+function fa_pda_get_state_of_cruise_control(pindex)
+   if remote.interfaces.PDA and remote.interfaces.PDA.get_state_of_cruise_control then
+      return remote.call("PDA", "get_state_of_cruise_control",pindex)
+   else
+      return nil
+   end
+end
+
+function fa_pda_set_state_of_cruise_control(pindex,new_state)
+   if remote.interfaces.PDA and remote.interfaces.PDA.set_state_of_cruise_control then
+      remote.call("PDA", "set_state_of_cruise_control",pindex,new_state)
+      return 1
+   else
+      return nil
+   end
+end
+
+function fa_pda_get_cruise_control_limit(pindex)
+   if remote.interfaces.PDA and remote.interfaces.PDA.get_cruise_control_limit then
+      return remote.call("PDA", "get_cruise_control_limit",pindex)
+   else
+      return nil
+   end
+end
+
+function fa_pda_set_cruise_control_limit(pindex,new_value)
+   if remote.interfaces.PDA and remote.interfaces.PDA.set_cruise_control_limit then
+      remote.call("PDA", "set_cruise_control_limit",pindex,new_value)
+      return 1
+   else
+      return nil
+   end
+end
+
+function fa_pda_get_state_of_driving_assistant(pindex)
+   if remote.interfaces.PDA and remote.interfaces.PDA.get_state_of_driving_assistant then
+      return remote.call("PDA", "get_state_of_driving_assistant",pindex)
+   else
+      return nil
+   end
+end
+
+function fa_pda_set_state_of_driving_assistant(pindex,new_state)
+   if remote.interfaces.PDA and remote.interfaces.PDA.set_state_of_driving_assistant then
+      remote.call("PDA", "set_state_of_driving_assistant",pindex,new_state)
+      return 1
+   else
+      return nil
+   end
+end
+
+function read_PDA_assistant_toggled_info(pindex)
+   if game.get_player(pindex).driving then  
+      local is_on = not fa_pda_get_state_of_driving_assistant(pindex)
+      if is_on == true then 
+         printout("Enabled pavement driving asssistant",pindex)
+      elseif is_on == false then 
+         printout("Disabled pavement driving asssistant",pindex)
+      else
+         printout("Missing pavement driving asssistant",pindex)
+      end
+   end 
+end
+
+function read_PDA_cruise_control_toggled_info(pindex)
+   if game.get_player(pindex).driving then 
+      local is_on = not fa_pda_get_state_of_cruise_control(pindex)
+      if is_on == true then
+         printout("Enabled cruise control",pindex)
+      elseif is_on == false then
+         printout("Disabled cruise control",pindex)
+      else
+         printout("Missing cruise control",pindex)
+      end
+      fa_pda_set_cruise_control_limit(pindex,0.16)
+   end
 end

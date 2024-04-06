@@ -101,9 +101,9 @@ local on_cutscene_waypoint_reached = function(event)
 
   if not global.skip_intro then
     if game.is_multiplayer() then
-      player.print(global.custom_intro_message or {"msg-intro"})
+      --player.print(global.custom_intro_message or {"msg-intro"})
     else
-      game.show_message_dialog{text = global.custom_intro_message or {"msg-intro"}}
+      --game.show_message_dialog{text = global.custom_intro_message or {"msg-intro"}}
     end
   end
 end

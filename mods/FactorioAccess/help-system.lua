@@ -10,17 +10,21 @@ function load_tutorial(pindex)
    --Load tutorial header and detail strings
    tutorial.step_headers =  {} --2D array of localised strings
    tutorial.step_details =  {} --2D array of localised strings
-   local CHAPTER_1_LENGTH = 28 --Lengths are constants depending on how we write the "en" strings.
-   local CHAPTER_2_LENGTH = 22
-   local CHAPTER_3_LENGTH = 08
-   local CHAPTER_4_LENGTH = 15
-   local CHAPTER_5_LENGTH = 19
-   local CHAPTER_6_LENGTH = 13
-   local CHAPTER_7_LENGTH = 13
-   local CHAPTER_8_LENGTH = 19
-   local CHAPTER_9_LENGTH = 22
+   local CHAPTER_1_LENGTH = 21 --Lengths are constants depending on how we write the "en" strings.
+   local CHAPTER_2_LENGTH = 30
+   local CHAPTER_3_LENGTH = 27
+   local CHAPTER_4_LENGTH = 36
+   local CHAPTER_5_LENGTH = 34
+   local CHAPTER_6_LENGTH = 24
+   local CHAPTER_7_LENGTH = 45
+   local CHAPTER_8_LENGTH = 26
+   local CHAPTER_9_LENGTH = 37
+   local CHAPTER_10_LENGTH = 37
+   local CHAPTER_11_LENGTH = 37
+   local CHAPTER_12_LENGTH = 14
+   local CHAPTER_13_LENGTH = 24
 
-   tutorial.chapter_lengths = {CHAPTER_1_LENGTH, CHAPTER_2_LENGTH, CHAPTER_3_LENGTH, CHAPTER_4_LENGTH, CHAPTER_5_LENGTH, CHAPTER_6_LENGTH, CHAPTER_7_LENGTH, CHAPTER_8_LENGTH, CHAPTER_9_LENGTH}
+   tutorial.chapter_lengths = {CHAPTER_1_LENGTH, CHAPTER_2_LENGTH, CHAPTER_3_LENGTH, CHAPTER_4_LENGTH, CHAPTER_5_LENGTH, CHAPTER_6_LENGTH, CHAPTER_7_LENGTH, CHAPTER_8_LENGTH, CHAPTER_9_LENGTH, CHAPTER_10_LENGTH, CHAPTER_11_LENGTH, CHAPTER_12_LENGTH, CHAPTER_13_LENGTH}
    
    local str_count = 0
    local err_count = 0
@@ -58,6 +62,8 @@ function load_tutorial(pindex)
    --Load Chapter 0 strings
    tutorial.chapter_0_messages = { {"tutorial.tutorial-chapter-0-message-1"}, {"tutorial.tutorial-chapter-0-message-2"}, 
                                    {"tutorial.tutorial-chapter-0-message-3"}, {"tutorial.tutorial-chapter-0-message-4"} }
+   tutorial.chapter_0_headers = { {"tutorial.tutorial-chapter-0-header-1"}, {"tutorial.tutorial-chapter-0-header-2"}, 
+                                   {"tutorial.tutorial-chapter-0-header-3"}, {"tutorial.tutorial-chapter-0-header-4"} }
    
    --Load other tutorial strings
    --...
@@ -67,7 +73,7 @@ function load_tutorial(pindex)
    tutorial.step_index = 1
    tutorial.reading_the_header = false
    tutorial.clicked = false
-   tutorial.rocket_fuel_provided = false
+   tutorial.starting_fuel_provided = false
 
    --Done
    players[pindex].tutorial = tutorial
@@ -287,25 +293,37 @@ function tutorial_menu(pindex, reading_the_header, clicked)
    local p = game.get_player(pindex)
 	if chap == 0 and step == 1 then
 		--Read out chapter 0 start message
-      printout(tutorial.chapter_0_messages[step],pindex)
-      game.get_player(pindex).print("Tutorial start message " .. step .. ":",{volume_modifier=0})--
-      game.get_player(pindex).print(tutorial.chapter_0_messages[step],{volume_modifier=0})
+      if reading_the_header == false then
+         printout(tutorial.chapter_0_messages[step],pindex)
+         game.get_player(pindex).print("Tutorial start message " .. step .. ":",{volume_modifier=0})--
+         game.get_player(pindex).print(tutorial.chapter_0_messages[step],{volume_modifier=0})
+      else
+         printout(tutorial.chapter_0_headers[step],pindex)
+         game.get_player(pindex).print("Tutorial start message " .. step .. ":",{volume_modifier=0})--
+         game.get_player(pindex).print(tutorial.chapter_0_headers[step],{volume_modifier=0})
+      end
       
       --Give rocket fuel
-      if players[pindex].tutorial.rocket_fuel_provided ~= true then
-         p.insert{name = "rocket-fuel", count = 8}
+      if players[pindex].tutorial.starting_fuel_provided ~= true then
+         p.insert{name = "coal", count = 50}
       end 
       
       --Reload tutorial
       game.get_player(pindex).play_sound{path = "Open-Inventory-Sound"}  
       load_tutorial(pindex)
-      players[pindex].tutorial.rocket_fuel_provided = true
+      players[pindex].tutorial.starting_fuel_provided = true
       
    elseif chap == 0 and step > 1 then
       --Read out chapter 0 start message
-      printout(tutorial.chapter_0_messages[step],pindex)
-      game.get_player(pindex).print("Tutorial start message " .. step .. ":",{volume_modifier=0})--
-      game.get_player(pindex).print(tutorial.chapter_0_messages[step],{volume_modifier=0})
+      if reading_the_header == false then
+         printout(tutorial.chapter_0_messages[step],pindex)
+         game.get_player(pindex).print("Tutorial start message " .. step .. ":",{volume_modifier=0})--
+         game.get_player(pindex).print(tutorial.chapter_0_messages[step],{volume_modifier=0})
+      else
+         printout(tutorial.chapter_0_headers[step],pindex)
+         game.get_player(pindex).print("Tutorial start message " .. step .. ":",{volume_modifier=0})--
+         game.get_player(pindex).print(tutorial.chapter_0_headers[step],{volume_modifier=0})
+      end
       
 	elseif chap == -1 and step == -1 then --Example
 		--Do a specific action for this step, e.g. provide an item or run a check

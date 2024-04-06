@@ -21,19 +21,41 @@ resource_map_node.picture = {
 	direction_count = 1
 }
 
---Changes to Vanilla Objects (Mostly removal of collisions with the player)
+--Make selected vanilla objects not collide with players
+--  Pipes
 local pipe = data.raw.pipe.pipe
 pipe.collision_mask = {"object-layer", "floor-layer", "water-tile"}
-
 local pipe_to_ground = data.raw["pipe-to-ground"]["pipe-to-ground"]
 pipe_to_ground.collision_mask = {"object-layer", "floor-layer", "water-tile"}
 
+--  Small & medium electric poles
 local small_electric_pole = data.raw["electric-pole"]["small-electric-pole"]
 small_electric_pole.collision_mask = {"object-layer", "floor-layer", "water-tile"}
-
-
 local medium_electric_pole = data.raw["electric-pole"]["medium-electric-pole"]
 medium_electric_pole.collision_mask = {"object-layer", "floor-layer", "water-tile"}
+
+--  Constant combinators (because of when they are placed to explain transport belts)
+local constant_combinator = data.raw["constant-combinator"]["constant-combinator"]
+constant_combinator.collision_mask = {"object-layer", "floor-layer", "water-tile"}
+
+--  Inserters
+local inserter = data.raw["inserter"]["inserter"]
+inserter.collision_mask = {"object-layer", "floor-layer", "water-tile"}
+local burner_inserter = data.raw["inserter"]["burner-inserter"]
+burner_inserter.collision_mask = {"object-layer", "floor-layer", "water-tile"}
+local fast_inserter = data.raw["inserter"]["fast-inserter"]
+fast_inserter.collision_mask = {"object-layer", "floor-layer", "water-tile"}
+local long_handed_inserter = data.raw["inserter"]["long-handed-inserter"]
+long_handed_inserter.collision_mask = {"object-layer", "floor-layer", "water-tile"}
+local stack_inserter = data.raw["inserter"]["stack-inserter"]
+stack_inserter.collision_mask = {"object-layer", "floor-layer", "water-tile"}
+
+--  Filter inserters
+local filter_inserter = data.raw["inserter"]["filter-inserter"]
+filter_inserter.collision_mask = {"object-layer", "floor-layer", "water-tile"}
+local stack_filter_inserter = data.raw["inserter"]["stack-filter-inserter"]
+stack_filter_inserter.collision_mask = {"object-layer", "floor-layer", "water-tile"}
+
 
 --Add new radar type that does long distance scanning
 local ar_tint = {r=0.5,g=0.5,b=0.5,a=0.9}
@@ -45,7 +67,7 @@ access_radar.icons = {
     tint = ar_tint
   }
 }
---This radar scans a new sector every 5 seconds instead of 33, and it refreshes its short range every 5 seconds (precisely fast enough) instead of 1 second, but the short range is smaller and the radar costs double the power.
+--New building: This radar scans a new sector every 5 seconds instead of 33, and it refreshes its short range every 5 seconds (precisely fast enough) instead of 1 second, but the short range is smaller and the radar costs double the power.
 access_radar.name = "access-radar"
 access_radar.energy_usage = "600kW"  --Default: "300kW"
 access_radar.energy_per_sector = "3MJ" --Default: "10MJ"
@@ -77,7 +99,6 @@ access_radar_recipe.ingredients = {{"electronic-circuit", 10}, {"iron-gear-wheel
 
 data:extend{access_radar,access_radar_item}
 data:extend{access_radar_item,access_radar_recipe}
-
 
 --Map generation preset attempts
 resource_def={richness = 4}
@@ -339,6 +360,14 @@ data:extend({
 
 {
    type = "sound",
+   name = "train-clack",
+   filename = "__FactorioAccess__/Audio/train-clack-zapsplat-cut-transport_steam_train_arrive_at_station_with_tannoy_announcement.wav",
+   volume = 1,
+   preload = true
+},
+
+{
+   type = "sound",
    name = "train-honk-short",
    filename = "__FactorioAccess__/Audio/train-honk-short-2x-GotLag.ogg",
    volume = 1,
@@ -349,6 +378,30 @@ data:extend({
    type = "sound",
    name = "train-honk-long",
    filename = "__FactorioAccess__/Audio/train-honk-long-pixabay-modified-diesel-horn-02-98042.wav",
+   volume = 1,
+   preload = true
+},
+
+{
+   type = "sound",
+   name = "train-honk-low-long",
+   filename = "__FactorioAccess__/Audio/train-honk-long-pixabay-modified-lower-diesel-horn-02-98042.wav",
+   volume = 1,
+   preload = true
+},
+
+{
+   type = "sound",
+   name = "car-honk",
+   filename = "__FactorioAccess__/Audio/car-horn-zapsplat_transport_car_horn_single_beep_external_toyota_corolla_002_18246.wav",
+   volume = 1,
+   preload = true
+},
+
+{
+   type = "sound",
+   name = "tank-honk",
+   filename = "__FactorioAccess__/Audio/tank-horn-zapsplat-Blastwave_FX_FireTruckHornHonk_SFXB.458.wav",
    volume = 1,
    preload = true
 },
@@ -389,6 +442,32 @@ data:extend({
     linked_game_control = "move-right",
     consuming = "none"
 },
+
+{
+    type = "custom-input",
+    name = "cursor-skip-north",
+    key_sequence = "SHIFT + W", 
+    consuming = "none"
+},
+{
+    type = "custom-input",
+    name = "cursor-skip-south",
+    key_sequence = "SHIFT + S", 
+    consuming = "none"
+},
+{
+    type = "custom-input",
+    name = "cursor-skip-west",
+    key_sequence = "SHIFT + A", 
+    consuming = "none"
+},
+{
+    type = "custom-input",
+    name = "cursor-skip-east",
+    key_sequence = "SHIFT + D", 
+    consuming = "none"
+},
+
 {
     type = "custom-input",
     name = "nudge-up",
@@ -430,6 +509,13 @@ data:extend({
 
 {
     type = "custom-input",
+    name = "read-cursor-distance-vector",
+    key_sequence = "ALT + K",
+    consuming = "none"
+},
+
+{
+    type = "custom-input",
     name = "read-character-coords",
     key_sequence = "CONTROL + K",
     consuming = "none"
@@ -446,6 +532,27 @@ data:extend({
     type = "custom-input",
     name = "release-cursor",
     key_sequence = "CONTROL + J",
+    consuming = "none"
+},
+
+{
+    type = "custom-input",
+    name = "cursor-bookmark-save",
+    key_sequence = "SHIFT + B",
+    consuming = "none"
+},
+
+{
+    type = "custom-input",
+    name = "cursor-bookmark-load",
+    key_sequence = "B",
+    consuming = "none"
+},
+
+{
+    type = "custom-input",
+    name = "type-cursor-target",
+    key_sequence = "ALT + T",
     consuming = "none"
 },
 
@@ -564,6 +671,13 @@ data:extend({
 {
     type = "custom-input",
     name = "read-rail-structure-ahead",
+    key_sequence = "SHIFT + J",
+    consuming = "none"
+},
+
+{
+    type = "custom-input",
+    name = "read-driving-structure-ahead",
     key_sequence = "J",
     consuming = "none"
 },
@@ -571,7 +685,7 @@ data:extend({
 {
     type = "custom-input",
     name = "read-rail-structure-behind",
-    key_sequence = "SHIFT + J",
+    key_sequence = "CONTROL + J",
     consuming = "none"
 },
 
@@ -977,6 +1091,14 @@ data:extend({
 
 {
     type = "custom-input",
+    name = "flush-fluid",
+    key_sequence = "X",
+    linked_game_control = "mine",
+    consuming = "none"
+},
+
+{
+    type = "custom-input",
     name = "mine-area",
     key_sequence = "SHIFT + X",
     consuming = "none"
@@ -1041,6 +1163,13 @@ data:extend({
 
 {
     type = "custom-input",
+    name = "open-circuit-menu",
+    key_sequence = "N",
+    consuming = "none"
+},
+
+{
+    type = "custom-input",
     name = "repair-area",
     key_sequence = "CONTROL + SHIFT + LEFTBRACKET",
     consuming = "none"
@@ -1097,7 +1226,7 @@ data:extend({
 
 {
     type = "custom-input",
-    name = "free-place-straight-rail",
+    name = "fa-alternate-build",
     key_sequence = "CONTROL + LEFTBRACKET",
     consuming = "none"
 },
@@ -1194,6 +1323,13 @@ data:extend({
     type = "custom-input",
     name = "item-info-last-indexed",
     key_sequence = "SHIFT + Y",
+    consuming = "none"
+},
+
+{
+    type = "custom-input",
+    name = "item-production-info",
+    key_sequence = "U",
     consuming = "none"
 },
 
@@ -1459,7 +1595,7 @@ data:extend({
 
 {
     type = "custom-input",
-    name = "set-splitter-filter",
+    name = "set-entity-filter-from-hand",
     key_sequence = "CONTROL + LEFTBRACKET",
     consuming = "none"
 },
@@ -1503,7 +1639,14 @@ data:extend({
     type = "custom-input",
     name = "shoot-weapon-fa",
     key_sequence = "SPACE",
-    linked_game_control = "shoot-enemy",
+    --linked_game_control = "shoot-enemy",
+    consuming = "none"
+},
+
+{
+    type = "custom-input",
+    name = "honk",
+    key_sequence = "V",
     consuming = "none"
 },
 
@@ -1657,6 +1800,34 @@ data:extend({
     type = "custom-input",
     name = "logistic-request-toggle-personal-logistics",
     key_sequence = "CONTROL + SHIFT + L",
+    consuming = "none"
+},
+
+{
+    type = "custom-input",
+    name = "send-selected-stack-to-logistic-trash",
+    key_sequence = "O",
+    consuming = "none"
+},
+
+{
+    type = "custom-input",
+    name = "fa-pda-driving-assistant-info",
+    key_sequence = "L",
+    consuming = "none"
+},
+
+{
+    type = "custom-input",
+    name = "fa-pda-cruise-control-info",
+    key_sequence = "O",
+    consuming = "none"
+},
+
+{
+    type = "custom-input",
+    name = "fa-pda-cruise-control-set-speed-info",
+    key_sequence = "CONTROL + O",
     consuming = "none"
 },
 

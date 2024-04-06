@@ -16,6 +16,16 @@
     {
       "name": "stop-on-red",
       "enabled": true
+    },
+    
+    {
+      "name": "VehicleSnap",
+      "enabled": true
+    },
+    
+    {
+      "name": "PavementDriveAssistContinued",
+      "enabled": true
     }
   ]
 }

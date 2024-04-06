@@ -1,4 +1,4 @@
---Here: Functions relating worker robots, roboports, logistic systems, blueprints
+--Here: Functions relating worker robots, roboports, logistic systems, blueprints and other planners, ghosts
 --Does not include event handlers directly, but can have functions called by them.
 
 dirs = defines.direction
@@ -583,7 +583,17 @@ function player_logistic_requests_summary_info(pindex)
    --Check if inside any logistic network or not (simpler than logistics network info)
    local network = p.surface.find_logistic_network_by_position(p.position, p.force)
    if network == nil or not network.valid then
-      result = result .. "Not in a network, "
+      --Check whether in construction range
+      local nearest, min_dist = find_nearest_roboport(p.surface,p.position,60)
+      if nearest == nil or min_dist > 55 then
+         result = result .. "Not in a network, "
+      else
+         result = result .. "In construction range of network " .. nearest.backer_name .. ", " 
+      end
+   else
+      --Definitely within range
+      local nearest, min_dist = find_nearest_roboport(p.surface,p.position,30)
+      result = result .. "In logistic range of network " .. nearest.backer_name .. ", " 
    end
    
    --Check if personal logistics are enabled
@@ -1060,12 +1070,36 @@ function chest_logistic_request_decrement_min(item_stack,chest, pindex)
    chest_logistic_request_read(item_stack,chest,pindex,false)
 end
 
+function send_selected_stack_to_logistic_trash(pindex)
+   local p = game.get_player(pindex)
+   local stack = p.cursor_stack
+   --Check cursor stack 
+   if stack == nil or stack.valid_for_read == false or stack.is_deconstruction_item or stack.is_upgrade_item then
+      stack = p.get_main_inventory()[players[pindex].inventory.index]
+   end
+   --Check inventory stack
+   if players[pindex].menu ~= "inventory" or stack == nil or stack.valid_for_read == false or stack.is_deconstruction_item or stack.is_upgrade_item then
+      return
+   end
+   local trash_inv = p.get_inventory(defines.inventory.character_trash)
+   if trash_inv.can_insert(stack) then
+      local inserted_count = trash_inv.insert(stack)
+      if inserted_count < stack.count then
+         stack.set_stack({name = stack.name, count = stack.count - inserted_count})
+         printout("Partially sent stack to logistic trash",pindex)
+      else
+         stack.set_stack(nil)
+         printout("Sent stack to logistic trash",pindex)
+      end
+   end
+end
+
 function spidertron_logistic_requests_summary_info(spidertron,pindex)
    --***todo improve: "y of z personal logistic requests fulfilled, x items in trash, missing items include [3], take an item in hand and press L to check its request status." maybe use logistics_networks_info(ent,pos_in)
    local p = game.get_player(pindex)
    local current_slot = nil
    local correct_slot_id = nil
-   local result = ""
+   local result = "Spidertron "
    
    --Check if logistics have been researched
    for i, tech in pairs(game.get_player(pindex).force.technologies) do
@@ -1076,9 +1110,19 @@ function spidertron_logistic_requests_summary_info(spidertron,pindex)
    end
    
    --Check if inside any logistic network or not (simpler than logistics network info)
-   local network = spidertron.surface.find_logistic_network_by_position(spidertron.position, spidertron.force)
+   local network = p.surface.find_logistic_network_by_position(spidertron.position, p.force)
    if network == nil or not network.valid then
-      result = result .. "Not in a network, "
+      --Check whether in construction range
+      local nearest, min_dist = find_nearest_roboport(p.surface,spidertron.position,60)
+      if nearest == nil or min_dist > 55 then
+         result = result .. "Not in a network, "
+      else
+         result = result .. "In construction range of network " .. nearest.backer_name .. ", " 
+      end
+   else
+      --Definitely within range
+      local nearest, min_dist = find_nearest_roboport(p.surface,spidertron.position,30)
+      result = result .. "In logistic range of network " .. nearest.backer_name .. ", " 
    end
    
    --Check if personal logistics are enabled
@@ -1506,9 +1550,9 @@ function roboport_menu(menu_index, pindex, clicked)
    elseif index == 1 then
       --1. Rename roboport networks
       if not clicked then
-         printout("Click here to rename this network", pindex)
+         printout("Rename this network", pindex)
       else
-         printout("Enter a new name for this network, then press 'ENTER' to confirm.", pindex)
+         printout("Enter a new name for this network, then press 'ENTER' to confirm, or press 'ESC' to cancel.", pindex)
          players[pindex].roboport_menu.renaming = true
          local frame = game.get_player(pindex).gui.screen.add{type = "frame", name = "network-rename"}
          frame.bring_to_front()
@@ -1520,39 +1564,55 @@ function roboport_menu(menu_index, pindex, clicked)
       end
    elseif index == 2 then
       --2. This roboport: Check neighbor counts and dirs
-      if clicked or (not clicked) then
+      if not clicked then
+         printout("Read roboport neighbours", pindex)
+      else
          local result = roboport_neighbours_info(port)
-         printout("Roboport has " .. result, pindex)
+         printout(result, pindex)
       end
    elseif index == 3 then
       --3. This roboport: Check robot counts
-      if clicked or (not clicked) then
+      if not clicked then
+         printout("Read roboport contents", pindex)
+      else
          local result = roboport_contents_info(port)
-         printout("Roboport " .. result, pindex)
+         printout(result, pindex)
       end
    elseif index == 4 then
       --4. Check network roboport & robot & chest(?) counts
-      if nw ~= nil then
-         local result = logistic_network_members_info(port)
-         printout(result, pindex)
+      if not clicked then
+         printout("Read robots info for the network", pindex)
       else
-         printout("Robots: No network", pindex)
+         if nw ~= nil then
+            local result = logistic_network_members_info(port)
+            printout(result, pindex)
+         else
+            printout("Error: No network", pindex)
+         end
       end
    elseif index == 5 then
       --5. Points/chests info
-      if nw ~= nil then
-         local result = logistic_network_chests_info(port)
-         printout(result, pindex)
+      if not clicked then
+         printout("Read chests info for the network", pindex)
       else
-         printout("Chests: No network", pindex)
+         if nw ~= nil then
+            local result = logistic_network_chests_info(port)
+            printout(result, pindex)
+         else
+            printout("Error: No network", pindex)
+         end
       end
    elseif index == 6 then
       --6. Check network item contents
-      if nw ~= nil then
-         local result = logistic_network_items_info(port)
-         printout(result, pindex)
+      if not clicked then
+         printout("Read items info for the network", pindex)
       else
-         printout("Items: No network", pindex)
+         if nw ~= nil then
+            local result = logistic_network_items_info(port)
+            printout(result, pindex)
+         else
+            printout("Error: No network", pindex)
+         end
       end
    end
 end
@@ -1665,9 +1725,11 @@ function logistic_network_members_info(port)
    local result = ""
    local cell = port.logistic_cell
    local nw = cell.logistic_network
-   
-   result = " Robots: Network has " .. #nw.cells .. " roboports, and " .. nw.all_logistic_robots .. " logistic robots with " .. nw.available_logistic_robots .. " available, and " ..
-            nw.all_construction_robots .. " construction robots with " .. nw.available_construction_robots .. " available "
+   if nw == nil or nw.valid == false then
+      result = " Error: no network "
+      return result
+   end
+   result = " Network has " .. #nw.cells .. " roboports, and " .. nw.all_logistic_robots .. " logistic robots with " .. nw.available_logistic_robots .. " available, and " .. nw.all_construction_robots .. " construction robots with " .. nw.available_construction_robots .. " available "
    return result
 end
 
@@ -1675,6 +1737,11 @@ function logistic_network_chests_info(port)
    local result = ""
    local cell = port.logistic_cell
    local nw = cell.logistic_network
+   
+   if nw == nil or nw.valid == false then
+      result = " Error, no network "
+      return result
+   end
    
    local storage_chest_count = 0
    for i,ent in ipairs(nw.storage_points) do 
@@ -1700,8 +1767,9 @@ function logistic_network_chests_info(port)
          requester_chest_count = requester_chest_count + 1
       end
    end
-   
-   result = " Chests: Network has " .. storage_chest_count .. " storage chests, " .. 
+   local total_chest_count = storage_chest_count + passive_provider_chest_count + active_provider_chest_count + requester_chest_count
+   result = " Network has " .. total_chest_count .. " chests in total, with " ..
+            storage_chest_count .. " storage chests, " .. 
             passive_provider_chest_count .. " passive provider chests, " .. 
             active_provider_chest_count .. " active provider chests, " .. 
             requester_chest_count .. " requester chests or buffer chests, "
@@ -1710,8 +1778,13 @@ function logistic_network_chests_info(port)
 end
 
 function logistic_network_items_info(port)
-   local result = "Items: Network "
-   local itemset = port.logistic_cell.logistic_network.get_contents()
+   local result = " Network "
+   local nw = port.logistic_cell.logistic_network
+   if nw == nil or nw.valid == false then
+      result = " Error: no network "
+      return result
+   end
+   local itemset = nw.get_contents()
    local itemtable = {}
    for name, count in pairs(itemset) do
       table.insert(itemtable, {name = name, count = count})
@@ -1749,7 +1822,7 @@ end
 
 -------------Blueprints------------
 
-local function get_bp_data_for_edit(stack)
+function get_bp_data_for_edit(stack)
    return game.json_to_table(game.decode_string(string.sub(stack.export_stack(),2)))
 end
 
@@ -1773,7 +1846,7 @@ function get_blueprint_description(stack)
 end
 
 function set_blueprint_label(stack,label)
-   bp_data=get_bp_data_for_edit(stack)
+   local bp_data=get_bp_data_for_edit(stack)
    bp_data.blueprint.label = label
    set_stack_bp_from_data(stack,bp_data)
 end
@@ -1794,10 +1867,14 @@ function get_top_left_and_bottom_right(pos_1, pos_2)
 end
 
 --Create a blueprint from a rectangle between any two points and give it to the player's hand
-function create_blueprint(pindex, point_1, point_2)
+function create_blueprint(pindex, point_1, point_2, prior_bp_data)
    local top_left, bottom_right = get_top_left_and_bottom_right(point_1, point_2)
    local p = game.get_player(pindex)
-   if not p.cursor_stack.valid_for_read or p.cursor_stack.valid_for_read and not (p.cursor_stack.is_blueprint and p.cursor_stack.is_blueprint_setup() == false) then
+   if prior_bp_data ~= nil then
+      --First clear the bp in hand
+      p.cursor_stack.set_stack({name = "blueprint", count = 1})
+   end
+   if not p.cursor_stack.valid_for_read or p.cursor_stack.valid_for_read and not (p.cursor_stack.is_blueprint and p.cursor_stack.is_blueprint_setup() == false and prior_bp_data == nil) then
       local cleared = p.clear_cursor()
       if not cleared then
          printout("Error: cursor full.", pindex)
@@ -1810,10 +1887,33 @@ function create_blueprint(pindex, point_1, point_2)
    --Avoid empty blueprints 
    local ent_count = p.cursor_stack.get_blueprint_entity_count()
    if ent_count == 0 then
-      p.cursor_stack.set_stack({name = "blueprint"})
-      printout("Blueprint selection area was empty.", pindex)
+      if prior_bp_data == nil then
+         p.cursor_stack.set_stack({name = "blueprint"})
+      end
+      local result = "Blueprint selection area was empty, "
+      if prior_bp_data ~= nil then
+         result = result .. " keeping old entities "
+      end
+      printout(result, pindex)
    else
-      printout("Blueprint with " .. ent_count .. " entities created in hand.", pindex)
+      local prior_name = ""
+      if prior_bp_data ~= nil then
+         prior_name = prior_bp_data.blueprint.label
+      end
+      printout("Blueprint ".. prior_name .. " with " .. ent_count .. " entities created in hand.", pindex)
+   end
+   
+   --Copy label and description and icons from previous version
+   if prior_bp_data ~= nil then
+      local bp_data = get_bp_data_for_edit(p.cursor_stack)
+      bp_data.blueprint.label = prior_bp_data.blueprint.label
+      bp_data.blueprint.label_color = prior_bp_data.blueprint.label_color
+      bp_data.blueprint.description = prior_bp_data.blueprint.description
+      bp_data.blueprint.icons = prior_bp_data.blueprint.icons
+      if ent_count == 0 then
+         bp_data.blueprint.entities = prior_bp_data.blueprint.entities
+      end
+      set_stack_bp_from_data(p.cursor_stack,bp_data) 
    end
 end 
 
@@ -2118,7 +2218,8 @@ end
    9. Clear this blueprint 
    10. Export this blueprint as a text string
    11. Import a text string to overwrite this blueprint
-   12. Use the last selected area to reselect this blueprint --todo add****
+   12. Reselect the area for this blueprint 
+   13. Use the last selected area to reselect this blueprint --todo add***
 
    This menu opens when you press RIGHT BRACKET on a blueprint in hand 
 ]]
@@ -2304,9 +2405,9 @@ function blueprint_menu(menu_index, pindex, clicked, other_input)
          --p.print(result)--
       end
    elseif index == 6 then
-      --Edit the label of this blueprint
+      --Rename this blueprint (edit its label)
       if not clicked then
-         local result = "Rename this blueprint by editing its label"
+         local result = "Rename this blueprint"
          printout(result, pindex)
       else
          players[pindex].blueprint_menu.edit_label = true
@@ -2314,15 +2415,15 @@ function blueprint_menu(menu_index, pindex, clicked, other_input)
          frame.bring_to_front()
          frame.force_auto_center()
          frame.focus()
-         local input = frame.add{type="textfield", name = "input", text = get_blueprint_label(bp)}
+         local input = frame.add{type="textfield", name = "input"}
          input.focus()
-         local result = "Edit the label text box for this blueprint and press ENTER to confirm"
+         local result = "Type in a new name for this blueprint and press 'ENTER' to confirm, or press 'ESC' to cancel."
          printout(result, pindex)
       end
    elseif index == 7 then
-      --Edit the description of this blueprint
+      --Rewrite the description of this blueprint
       if not clicked then
-         local result = "Edit the description of this blueprint"
+         local result = "Rewrite the description of this blueprint"
          printout(result, pindex)
       else
          players[pindex].blueprint_menu.edit_description = true
@@ -2330,9 +2431,9 @@ function blueprint_menu(menu_index, pindex, clicked, other_input)
          frame.bring_to_front()
          frame.force_auto_center()
          frame.focus()
-         local input = frame.add{type="textfield", name = "input", text = get_blueprint_description(bp)}
+         local input = frame.add{type="textfield", name = "input"}--, text = get_blueprint_description(bp)}
          input.focus()
-         local result = "Edit the description text box for this blueprint and press ENTER to confirm"
+         local result = "Type in the new description text box for this blueprint and press 'ENTER' to confirm, or press 'ESC' to cancel."
          printout(result, pindex)
       end
    elseif index == 8 then
@@ -2389,9 +2490,20 @@ function blueprint_menu(menu_index, pindex, clicked, other_input)
          local result = "Paste a copied blueprint text string in this box and then press ENTER to load it"
          printout(result, pindex)
       end
+   elseif index == 12 then
+      --Reselect the area for this blueprint
+      if not clicked then
+         local result = "Re-select the area for this blueprint"
+         printout(result, pindex)
+      else
+         players[pindex].blueprint_reselecting = true
+         local result = "Select the first point now."
+         printout(result, pindex)
+         blueprint_menu_close(pindex, true)
+      end
    end
 end
-BLUEPRINT_MENU_LENGTH = 11
+BLUEPRINT_MENU_LENGTH = 12
 
 function blueprint_menu_open(pindex)
    if players[pindex].vanilla_mode then
@@ -2476,7 +2588,7 @@ function blueprint_menu_down(pindex)
    blueprint_menu(players[pindex].blueprint_menu.index, pindex, false)
 end
 
-local function get_bp_book_data_for_edit(stack)
+function get_bp_book_data_for_edit(stack)
    --return game.json_to_table(game.decode_string(string.sub(stack.export_stack(),2)))
    return game.json_to_table(game.decode_string(string.sub(stack.export_stack(),2)))
 end

@@ -1,3 +1,386 @@
+# Version 0.10.0 BETA
+Released on April 6th, 2024.
+
+This update features a full rewrite of the mod tutorial to include new chapters and details. Please note that the new tutorial may need more tweaking despite being reviewed, so feel free to get in touch about issues or suggestions. The update also has some launcher improvements such as mod management, as well as small additions and changes to improve the early game, and some changes thanks to community feedback.
+
+## New features
+
+- The tutorial has been rewritten, doubling in length. The game should now be more accessible to new players.
+  * There are now 12 chapters covering everything up to producing logistic science packs, and general tips chapter at the end.
+  * There is a total of over 300 steps in total, with generally only 1 or 2 instructions per step.
+  * Recently added features such as blueprints, cursor skipping, and steam engine snapping have been included.
+  * If you had started the tutorial before this update, jumping back to its start is recommended so that you can reset to the new version and then skip doing the steps that you have already covered. You can jumping back to the start by pressing "ALT + SHIFT + H" a few times. 
+  * The tutorial needs further testing and will continue to receive minor tweaks. Experienced players are invited to give it a try as well, for review assistance.
+
+- New launcher version, with the following additions and changes:
+  * Added a mod management menu, for other mods. You can now enable or disable other mods here so that you no longer need to delete a mod to remove it.
+  * Saving the game now plays beeps at the start and end of it, instead of speaking a message that interrupts other speech.
+  * The launcher now loads much faster.
+  * Fixed a bug so that a missing translation key returns English text instead of an error.
+
+- Added steam engine snapped building.
+  * Press "CONTROL + LEFT BRACKET" with a steam engine in hand to try automatically building a correctly positioned steam engine next to the first free boiler found within 25 tiles.
+  * Mainly added because when you first need steam engines in the first hours of the game you are still new to building.
+  * Does not snap to anything else.
+  * You still need to clear the building area manually, inlcuding stepping out of the way.
+
+- You can now read the cursor position distance as a vector from the character position by pressing "ALT + K".
+  * This reports the vertical and horizontal distances separately, without giving an average compass direction.
+  * This information is useful for building belts and pipes because you'll get the exact distances to cover since they cannot connect to each other diagonally.
+
+- A selected fluid in a building can now be permanently flushed away by pressing "X".
+
+- The blueprint menu now has the option to re-select the blueprint's area, while keeping its original name and descriptions and icons.
+
+## Changes
+
+- Autosaving now makes two click sounds in the background to signal its start and end, instead of interrupting speech output.
+
+- Reading a tile now also comments about its visibility information.
+  * An uncharted tile is labelled as so. You cannot know what is there and it might not even be generated yet.
+  * A charted tile that is more than about 100 tiles away from the nearest player or powered radar is blurred by the game, and it is now also labelled as so. A blurred area has minimal information about what is happening there and produces no sounds even though machines continue to work and enemies continue to move. Tile blurring affects some but not all remote interactions, and sighted players prefer to spread radars around to keep most factory areas continuously visible. 
+  * For a camera centered on the player, which is the default case, a tile that is outside the camera view is outside the rendered screen area and is now labelled as "distant". This affects some actions involving remote controls, although we have tried to minimize the dependency on doing things on screen. You can use the mouse wheel to zoom in and out, which changes camera coverage.
+
+- The tutorial now gifts one stack of coal as part of your emergency supply kit that is already provided at the start of the game. This is important for teaching game mechanics in a clean order. This gift switched from rocket fuel to coal in order to simplify the process and not offer a significant advantage.
+
+- Steam engine direction reporting now says "north and south", or "east and west", to acknowledge that the building is symmetrical.
+
+- A selected water tile is now labelled as "open" or "shore" or "crevice", depending on the arrangement of other water tiles around it.
+
+- A pipe end is now identified as a special case where a pipe has less than 2 connections. This is worth noting because it means the pipe does not lead to anything.
+
+- Pipe ends are now distinguished from other pipes in the scanner list.
+
+- Pipes and storage tanks are now distinguished in the scanner list by the fluid contained.
+
+- Storage tanks are now categorized as containers in the scanner list.
+
+- When you successfully build a pipe to ground unit, the building direction in hand is flipped 180 degrees so that the other end can be built quickly.
+
+- The pipe to ground building preview now also reports information about the above ground connection preview.
+
+- Removed unnecessary repetition of "per cycle" when listing recipe ingredients.
+
+- Checking the status of an enemy spawner now reveals the enemy evolution factor.
+
+- Tweaked names of curved rail and diagonal rail directions to improve clarity.
+
+- Removed the default descriptions from science packs and modules so that the mod's custom descriptions would apply.
+
+## Bug fixes
+
+- Fixed incorrect reporting of player weapons when you switch a vehicle weapon. 
+  * Note: Reading out the correct vehicle weapon has not been added yet.
+  
+- If the pipe to ground preview finds multiple successful underground connections, the closest one is now taken, which is the correct case.
+
+- Fixed a localisation error for when you start crafting a recipe.
+
+- Fixed self-interrupting reminders at the start of the game.
+
+
+# Version 0.9.1 BETA
+Released on March 19th, 2024.
+
+This is a quick update based on feedback for 0.9.0.
+
+## New features
+
+- Added support for programmable speakers.
+  * You can use them to set up audio alerts based on circuit conditions. 
+  * You also can get creative with them like by connecting speakers along a transport belt to play music.
+
+## Changes
+
+- None.
+
+## Bug fixes
+
+- Fixed the signal selector crashing when the end of a group is reached.
+
+
+# Version 0.9.0 BETA
+Released on March 15th, 2024.
+
+This major update introduces support for circuit networks, and several improvements to vehicle driving, and manual control over player logistic trash. Please check the details for other tweaks and fixes.
+
+## New features
+
+- Added circuit network support for the most popular features. 
+  * Circuit networks allow you to tune your factory by reading signals from machines and instructing other machines to act according to signal values.
+  * You can create circuit networks by connecting applicable buildings with red or green circuit wires, as discussed in update 0.8.3. Everything connected to the same wire without interruption is part of the same network. You can connect circuit wires to electric poles as well.
+  * Different buildings can have different reading or operation modes for the circuit network. The most used feature is enabling the operation of a machine, such as a pump or a belt or an inserter, based on a circuit signal's condition. For example, you can activate a belt unit to feed coal to your steam power system when your accumulators are running low on charge.
+  * To open the circuit network menu for a machine, press 'N' when you select it with the cursor or after opening its menu.
+  * In the circuit network menu you can examine the network connections and also configure the machine's modes and its enabling condition.
+  * For a machine with an enabling condition, you can check if the condition is met at the moment by checking the machine's status. It will be either disabled by control behavior or have a different status such as working.
+  * Note that to connect a gate, you actually need to connect to the wall unit next to the gate.
+  * For circuit network features that are not implemented into the mod yet, feel free to make requests.
+  
+- Added signal selector menu.
+  * You can use this menu to select signals when setting up a constant combinator or an enabling condition on another machine.
+  * Signals can include items or fluids. They also include virtual signals such as signal channels labeled using letters or digits or colors.
+  * Special virtual signals include the "everything" signal that checks every nonzero signal at the same time, and the "anything" signal that passes for any nonzero signal.
+  * The signal selector supports menu search. 
+
+- Added first version of driving proximity alert.
+  * When driving a car or tank or train forward or while stopped, the nearest entity ahead will beep. 
+  * When driving in reverse, the nearest entity behind is checked instead.
+  * Nearer entities will beep faster. The alert distances for cars are 50 meters, 25 meters, 10 meters, and 3 meters. For trains, these distances are trippled.
+  * For trains, the entity must be not part of the same train and it must be on rails, although this includes disconnected rails that would actually be safe from this train. The distance reference looks only at the wagon or locomotive that you are riding and not the whole train.
+  * You can press 'J' while driving to identify what last beeped and its distance, if you are still facing it.
+  * Entities that you can pass over or under without crashing will not beep.
+  * This feature does not yet detect water bodies. Your vehicle might still snag into water shores but it will not be damaged from it.
+  * Despite the added alerts, it is recommended to drive slowly, perhaps using the newly added cruise control mode.
+  
+- Integrated the mod Vehicle Snap.
+  * This mod makes a moving car or tank lock to one of the 8 main directions after you press 'A' or 'D' to turn it.
+  * This way you can maintain a heading a lot more easily.
+  * It does not work while pavement driving assistance is active.
+  
+- Integrated the mod Pavement Driving Assist Continued.
+  * This mod allows cars and tanks to follow paved roads automatically, such as stone brick or concrete roads. Exiting a road produces an alert with 3 beeps.
+  * A good road width to use is 5 tiles, and turns need to include diagonal sections, although the diagonals can be short, like for 5 tiles.
+  * The driving assistant can be enabled by pressing 'L'. This will disable vehicle direction snapping.
+  * The cruise control system can be enabled by pressing 'O'. This is recommended because it keeps the car speed at 35 kilometers per hour. You can stop and start with 'W' and 'S' during cruise control so that the speed changes between 0 and 35.
+  * You can type in a new cruise control speed by pressing 'CONTROL + O'. Note that the driving assistant requires a minimum speed of 21 kilometers per hour.
+  * The mod also introduces some extra tools such as stop signs for automatic vehicles to interact with.
+  * The mod technology needs to be unlocked with research, although the basic tools are unlocked just with logistic science.
+  
+- Added manual control over player logistic trash.
+  * You can now directly send the cursor stack or the selected inventory stack to your logistic trash by pressing 'O'.
+  * The logistic trash inventory can now be accessed when it is unlocked, as a new tab of the player menu, after "technologies".
+  * This inventory has a fixed size of 3 rows of 10 slots each.
+  * This inventory can be searched.
+  * You can take items in hand from this menu and press 'Q' to restore them to the inventory, unless logistic limits throw it back into trash automatically.
+  * You can check slot coordinates and item descriptions from this menu.
+  
+## Changes 
+
+- Reading the rail structure ahead is now run by pressing 'SHIFT + J' and reading the structure behind is now run by pressing 'CONTROL + J'. This is because pressing only 'J' is reserved for reporting entities that raise the driving proximity alert.
+
+- Cursor skip special case for underground segments: Skipping from one end towards the underground direction of an underground belt chute or pipe to ground will bring the cursor to the other end.
+
+- Updated constant combinator support to use the circuit menu.
+  * As a new feature, you can now change the count of the last added signal.
+  * Other combinators are not supported yet.
+  
+- Revised item and entity descriptions (in English) to improve accuracy, fix typos, and include entries that did not exist before.
+
+- Vehicle trunks, and the player inventory opened through a building menu, can now use menu search.
+
+- Tweaked the inventory transfer shortcut, the one via pressing 'CONTROL + LEFT BRACKET' on an empty slot.
+  * You can no longer transfer blueprints and blueprint books this way because this custom code does not preserve blueprint data. Other shortcuts work fine.
+  * Identified a bug where if you try to do this more than once, the code always makes the building transfer to the player, unless you re-open the building's menu.
+  
+- Restored cursor mode usage while driving and improved the issue of vehicles moving when you move the cursor.
+  * Moving cars and tanks will slow down.
+  * Stopped cars and tanks will not move.
+  * Moving trains with manual control will slow down.
+  * Stopped trains with manual control will fidget much less than before.
+  * Spidertrons and automatic trains should not be affected.
+  
+- Improved vehicle direction and speed reporting.
+  * Heading and speed is now reported before the vehicle name.
+  * Spidertron heading is irrelevant so it is not reported.
+  
+- Building reserved slot reporting now uses the localised names and the amounts of ingredients and products per recipe cycle.
+
+- Splitter priority direction reading now gives the compass direction too.
+
+- The player or spidertron logistic requests summary info from the 'L' key, now reports whether the player or spidertron is in the construction or logistic range of the nearest roboport network. Note that the logistic range is 25 tiles and the contruction range is 55 tiles.
+
+- The roboport menu's info options are now simply introduced when selected, and are activated when clicked using 'LEFT BRACKET'.
+
+## Bug fixes
+
+- Fixed a crash while reading fluid descriptions.
+
+- Fixed a recent bug where empty inventory slots were not being reported.
+
+- Fixed crashes due to inventory transfer result reporting, by shortening the results lists to 5 individually named items at most.
+
+- Fixed a warnings menu bug where a furnace with its output full would be listed instead as out of fuel.
+
+
+# Version 0.8.4 BETA
+Released on March 9th, 2024.
+
+In this medium-sized quality-of-life update there are several tweaks and additions based on community feedback. Additions include fast travel point descriptions and cursor skipping and vehicle horns. Changes include improvements to crafting menus, production statistics, and inserters.
+
+## New features
+
+- Fast travel points can now have descriptions attached to them. They can be read or changed from the fast travel menu.
+
+- Added cursor skipping for cursor mode, as suggested by @ohylli.
+  * When you press SHIFT + a walking direction key, the cursor now moves in that direction and skips over repeating tiles until it reaches a change point.
+  * Crossing from an entity to empty ground counts as a change.
+  * Crossing from empty ground to an entity counts as a change.
+  * Crossing between two entities with different names counts as a change.
+  * Crossing between two transport belt units with different neighbor counts or shapes also counts as a change.
+  * Crossing between two entities with the same name does not count as a change unless they are facing different directions.
+  * One skip has a maximum distance of 100 tiles, but you can instruct another skip afterward.
+  * The character does not skip along with the cursor but you can always teleport to it.
+
+- You can now honk a vehicle horn by pressing 'V'.
+  * There are different sounds for cars, tanks, and trains.
+  * Trains still honk by themselves in different ways to indicate safety issues.
+  * Spidertrons honk like cars but anyone is welcome to recommend a unique sound.
+
+- Trains now make a clacking sound when turning at a curved rail.
+
+- The base ingredients needed to craft a recipe can now be listed by pressing 'SHIFT + K'. Right now this does not include the counts.
+
+- Constant combinators now read their on/off state and this can be toggled by pressing 'LEFT BRACKET' on them.
+
+## Changes 
+
+- Inserters now report pick up and drop off locations with more detail.
+
+- Mining drills now report output locations with more detail.
+
+- Mining drills now report when selected that they have their outputs full.
+
+- Expanded filter inserter support.
+  * If any filters are set, they are reported when the inserter is selected.
+  * Like with splitter filters, you can add the item in hand to the filter by pressing 'CONTROL + LEFT BRACKET'.
+  * Like with splitter filters, you can clear the last filter by pressing 'CONTROL + LEFT BRACKET' with an empty hand.
+
+- When the player is standing in the area where a building is being placed, they are now teleported out of the way, to the northwest corner of the build area.
+  * If the corner is completely blocked, the character will still teleport but to inside the corner and therefore still in the way.
+
+- The crafting menu now lists every recipe unlocked so far, including the ones you cannot craft by hand. When you try to craft a recipe that requires a building, the name of the building is read out.
+
+- If an item cannot be crafted because you do not have enough ingredients, the missing ingredients will now be reported.
+  
+- Production statistics can now be checked also for recipes in the crafting menu.
+
+- Production statistics for an item now include the number produced in the last 10 minutes (thank you @ohylli).
+
+- Blueprint name and description changing now starts with a blank text box instead of starting with the existing text.
+
+- Selecting an entity now also reports if the entity is currently marked for deconstruction or for upgrading.
+
+- Area mining now also reports a count of how many item stacks are collected from it.
+
+## Bug fixes
+
+- Fixed pumpjack yield reporting
+
+- Fixed roboports crashing when they have no networks.
+
+- Fixed a bug where nudged entities were not connecting properly to other entities.
+
+
+# Version 0.8.3 BETA 
+Released on February 29th, 2024.
+
+In this intermediate update some requested features are added and several bugs are fixed. There is also some preparation work related to circuit networks, which are not yet supported but they will be in the next major update. Additions include connecting wires, power switches, constant combinators, cursor position typing, cursor bookmarking, and item production summary reading. For changes, the sandbox world scenario has been improved and improvements were made to trees, ghosts, remnants, transport belts, and localization.
+
+## New features
+
+- Added support for manually connecting wires.
+  * Copper wires can be connected to electric poles or power switches. Electric pole connections to each other are automatic.
+  * Electricity wires between poles and machines are based on coverage area and cannot be edited.
+  * Red or green circuit wires can connected to electric poles or applicable machines. This is done to form circuit networks (not supported yet).
+  * Press LEFT BRACKET on the relevant building with the relevant wire in hand to begin connecting. 
+  * For copper wires, you need to press for the start and end point every time, while for circuit wires every relevant building will connect to the last one pressed if within range. 
+  * The maximum connection range is either about 7 tiles or greater if you are connecting together electric poles with long wire reach.
+  * If you redraw a particular wire connection, it gets cut instead.
+  
+- Added manual control support for power switches.
+  * Power switches allow you to connect or disconnect two different electric networks using a manual switch or a circuit condition. A power switch has an east side and a west side when connecting copper wires, and you can connect to a particular side by pressing on the correct edge. Meanwhile, there is just one connection for circuit wires.
+  * Selecting a power switch will read the connected power and circuit networks.
+  * If no circuit wire is connected to the switch, you can manually switch it on or off by pressing "LEFT BRACKET" on it.
+  * If a circuit wire is connnected to the switch, it will automatically work according to the circuit condition (not yet supported).
+  
+- Added constant combinator support.
+  * You can manually configure the signals of this machine and switching it on will send the signals constantly to the connected circuit network.
+  * A secondary use for these machines is to place them next to transport belts to represent the expected belt contents, which is useful when the belt is empty.
+  * Selecting a constant combinator will read the signals it has.
+  * You can add a signal for the item in hand by holding it over the constant combinator and pressing "CONTROL + LEFT BRACKET".
+  * You clear the last signal by holding your empty hand over the constant combinator and pressing "CONTROL + LEFT BRACKET".
+  * Support will be added later for writing fluid signals and virtual signals.
+
+- Added feature to jump the cursor to coordinates typed into a text box. 
+  * Open this by pressing "ALT + T".
+  * When typing, the X coordinate comes first, followed by a space and then the y coordinate.
+
+- Added a simple cursor bookmark feature.
+  * Press "SHIFT + B" to save the current position as your bookmark.
+  * Press "B" to load the last position.
+  * There is support for only one bookmark for now.
+  
+- Added production summary feature: Press "U" for an item selected in hand or in the inventory to read the summary of how many units were produced in the last one minute, last one hour, and last one thousand hours.
+
+- New area mining feature: If a deconstruction planner is in hand, the character will try to mine obstacles and also everything marked for deconstruction, except for cliffs.
+
+- New fast travel option added: Relocate this point to your current character position. 
+
+- If you choose the option to respawn after a death, the respawn time is about 10 seconds. A reminder system as been added for it.
+
+- Checking the time by pressing "T" now also notes the total mission time, which is the time played since crash landing.
+
+## Changes
+
+- Ghost directions can now be read.
+
+- Improved cursor detection of remnants.
+  * Remnants can be built over and they also fade over time. They can still be useful by standing in for ghosts, because destroyed buildings do not leave behind ghosts until you unlock construction robots.
+  * Remnants are the same size as the buildings they used to be but the cursor is only able to detect their middle parts, which is an improvement over no detection at all for some cases.
+
+- Added remnants to the "Other" category of the scan list.
+
+- Re-added individual trees to the scanner list in a streamlined way.
+  * The scanner range for individual trees is 25 tiles.
+  * All tree types including different species or dead trunks are simply listed as "tree types". You can still check the specific type with the cursor.
+
+- The research queue is forced to be turned off because you cannot edit it yet. We will re-add it as an accessible feature later.
+
+- Removed player collision with inserters so that it will be much easier to walk around crowded factory areas. The hitboxes were already small, so there is very little lost here.
+
+- Removed player collision with constant combinators because they are often used to explain transport belt contents and it would be smoother to walk over them like with belts.
+
+- Selecting a splitter now reads out its priority situation.
+
+- You can now add a selected entity to the quickbar if you have no item in hand and no menus open.
+
+- Transport belt content assumptions now also check the input belts of belt unit, so that sparsely filled belts can better suggest what they carry.
+
+- Transport belt junction type reading has been improved so that the belt units before belt corners are now recognised as regular middle belt units instead of pouring ends.
+
+- If you try to shoot an atomic bomb to a position within 35 tiles (the explosion range) you get an alert.
+  * The alert prevents you from firing for 5 seconds. You can keep holding down SPACE to fire despite the alert.
+  * Furthermore, successfully aiming will require you to zoom out by scrolling the mouse wheel. 
+  * Note: Therefore the expected firing range for atomic bombs is between 35 and 54 tiles.
+
+- The sandbox world scenario has been revised. 
+  * It now includes infinity chests with their filters set so that you can build new chests elsewhere and copy over the filters.
+  * Blueprints items containing guidance info have been added.
+  * Instant free crafting mode is not enabled by default, but the instructions to enable it have been added in a blueprint.
+  * You can now find power armor and construction robots ready to go at the start.
+  
+- Improved localisation, so that the translated names are read out for:
+  * Selected entities.
+  * Items previewed on transport belts.
+  * Items previewed in selected containers.
+  * Fluids previewed in selected buildings and pipes.
+  * Note: There is still much localisation work to do, such as opening up full mod sentences for translating.
+
+## Bug fixes
+
+- Removed unnecessary message of a building not being equipped after you place it as a ghost.
+
+- Fixed crude oil amount reading to match the vanilla numbers.
+
+- Fixed crashes due to shooting when you have no ammo.
+
+- Fixed crashes after deaths or at game start due to missing player characters.
+
+- Fixed a crash due to sorting the scan list with enemies missing.
+
+- Removed the sound cues of the character randomly getting selected sometimes while running in smooth walk mode.
+
+
 # Version 0.8.2 BETA 
 Released on February 21st, 2024. 
 
@@ -25,8 +408,8 @@ This minor update is all about blueprints and ghosts. It fixes recently reported
   * Error due to an obstacle reads the obstacle.
 
 - Improved blueprint menu
-* New menu line: Read this blueprint's dimensions and total component count
-* Rotating the blueprint in hand while the menu is open will update this info and the visual previews correctly.
+  * New menu line: Read this blueprint's dimensions and total component count
+  * Rotating the blueprint in hand while the menu is open will update this info and the visual previews correctly.
 
 ## Bug fixes
 
@@ -664,17 +1047,17 @@ This is a pre-release of the logistics robots update before I need to go on a de
 - Roboport information will be improved concerning details like range, neighbors, and availability.
 
 - Other logistic robot features will be added.
-* Chest logistics access, which is very powerful.
-* Personal trash access
-* Better info about existing logistic requests
+  * Chest logistics access, which is very powerful.
+  * Personal trash access
+  * Better info about existing logistic requests
 
 - Other construction robot features will be added.
-* Selecting rectangular areas to mark it for automatic deconstruction.
-* Selecting rectangular areas to mark it for automatic upgrading to hier machine tiers.
-* Selecting rectangular areas that you can save as a blueprint item, which lets you copy and paste the area.
-* Placing down a blueprint for contruction robots to build.
-* Giving key information about blueprint items.
-* Possibly, hopefully, support for importing and exporting blueprint items as text strings.
+  * Selecting rectangular areas to mark it for automatic deconstruction.
+  * Selecting rectangular areas to mark it for automatic upgrading to hier machine tiers.
+  * Selecting rectangular areas that you can save as a blueprint item, which lets you copy and paste the area.
+  * Placing down a blueprint for contruction robots to build.
+  * Giving key information about blueprint items.
+  * Possibly, hopefully, support for importing and exporting blueprint items as text strings.
 
 # Version 0.4.9 BETA
 
