@@ -1,6 +1,18 @@
 --Here: Utility functions called by other files. Examples include distance and position calculations, string processing.
 local util = require('util')
 
+local directions={
+   [defines.direction.north]="North",
+   [defines.direction.northeast]="Northeast",
+   [defines.direction.east]="East",
+   [defines.direction.southeast]="Southeast",
+   [defines.direction.south]="South",
+   [defines.direction.southwest]="Southwest",
+   [defines.direction.west]="West",
+   [defines.direction.northwest]="Northwest",
+   [8] = ""
+}
+
 function center_of_tile(pos)
    return {x = math.floor(pos.x)+0.5, y = math.floor(pos.y)+ 0.5}
 end
