@@ -9,7 +9,10 @@
          "request": "launch",
          "name": "Factorio Mod Debug",
          "modsPath": "${fileWorkspaceFolder}\\..\\",
-         "factorioArgs": ["--load-game", "test.zip"]
+         "factorioArgs": [
+            "--load-game",
+            "test.zip"
+         ]
       },
       {
          "type": "factoriomod",

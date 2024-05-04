@@ -22,4 +22,7 @@
    ],
    "Lua.workspace.checkThirdParty": "ApplyInMemory",
    "Lua.runtime.version": "Lua 5.2",
+   "[lua]": {
+      "editor.defaultFormatter": "JohnnyMorganz.stylua"
+   }
 }
