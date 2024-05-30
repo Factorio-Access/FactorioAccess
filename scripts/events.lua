@@ -48,7 +48,6 @@ function mod.all_contexts(event_data)
    return true
 end
 
-
 ---Used very similarly to scripts.on_event. With a few major differences.
 ---The purpose of using the handler is to prevent multiple events from happening do to one key press.
 ---For example we don't want to both flip a blue print and disconnect a train with the same keypress
@@ -56,10 +55,10 @@ end
 ---As long as the contexts are mutually exclusive each event will only fire in it's context.
 ---If the contexts have overlap then only the highest priority event will fire.
 ---Other events will be recorded to the log as suppressed.
----If you think your event should always happen, try out using all_contexts as the context_evaluator. 
+---If you think your event should always happen, try out using all_contexts as the context_evaluator.
 ---If you're confident your event couldn't interfere with another handler and should always be executed even if something else is also executing
 ---then don't provide a context.
----If your context checking is kinda expensive and you'd need that value to actually execute the event, 
+---If your context checking is kinda expensive and you'd need that value to actually execute the event,
 ---then you can return the data you'd need from the context evaluator and as long as it's truthy it'll be passed to your event handler.
 ---The priority of events is determined by the order key in the custom event prototype.
 ---@param event string|defines.events
@@ -82,6 +81,5 @@ function mod.register_handler(event, event_handler, context_evaluator)
 end
 
 --TODO add remove handler
-
 
 return mod
