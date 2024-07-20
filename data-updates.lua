@@ -13,21 +13,16 @@ for _, item in pairs(vanilla_tip_and_tricks_item_table) do
    remove_tip_and_tricks_item(item)
 end
 
---Modifications to Kruise Kontrol inputs
-local alt_input = {
-   name = "klient-alt-move-to",
-   type = "custom-input",
-   key_sequence = "CONTROL + ALT + RIGHTBRACKET",
-   consuming = "game-only",
-}
-local cancel_enter = {
-   name = "klient-cancel-enter",
-   type = "custom-input",
-   linked_game_control = "toggle-driving",
-   consuming = "none",
-   key_sequence = "",
-}
-data:extend({ alt_input, cancel_enter })
+-- We will handle Kruise Kontrol driving through the remote API, but must
+-- re-bind these to ourself to do so.  We can't simply delete, but we can set
+-- enabled = false, which is the same thing.  Deleting crashes Kruise Kontrol.
+local kk_inputs = { "klient-move-to", "klient-cancel-enter" }
+local c_inputs = data.raw["custom-input"]
+assert(c_inputs, "We ourselves set some custom inputs")
+
+for _i, name in ipairs(kk_inputs) do
+   if c_inputs[name] then c_inputs[name].enabled = false end
+end
 
 --Modifications to Pavement Driving Assist Continued inputs
 data:extend({

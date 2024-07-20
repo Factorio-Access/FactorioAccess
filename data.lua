@@ -2101,4 +2101,19 @@ data:extend({
       key_sequence = "A",
       consuming = "none",
    },
+
+   {
+      type = "custom-input",
+      name = "fa-kk-start",
+      key_sequence = "CONTROL + ALT + RIGHTBRACKET",
+      consuming = "none",
+   },
+
+   {
+      name = "fa-kk-cancel",
+      type = "custom-input",
+      linked_game_control = "toggle-driving",
+      consuming = "none",
+      key_sequence = "",
+   },
 })

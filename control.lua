@@ -525,6 +525,33 @@ function repeat_last_spoken(pindex)
    printout(players[pindex].last, pindex)
 end
 
+-- Force the mod to disable/reset nall cursor modes. Useful for KK.
+function force_cursor_off(pindex, silent)
+   local p = game.get_player(pindex)
+
+   local read_tile_old = read_tile
+   local read_tile = function(...)
+      if not silent then read_tile_old(...) end
+   end
+
+   --Disable
+   players[pindex].cursor = false
+   players[pindex].cursor_pos = fa_utils.offset_position(players[pindex].position, players[pindex].player_direction, 1)
+   players[pindex].cursor_pos = fa_utils.center_of_tile(players[pindex].cursor_pos)
+   fa_mouse.move_mouse_pointer(players[pindex].cursor_pos, pindex)
+   fa_graphics.sync_build_cursor_graphics(pindex)
+   players[pindex].player_direction = p.character.direction
+   players[pindex].build_lock = false
+   if p.driving and p.vehicle then p.vehicle.active = true end
+
+   --Close Remote view
+   toggle_remote_view(pindex, false, true)
+   p.close_map()
+
+   --Finally, read the new tile
+   read_tile(pindex, "Cursor mode disabled, ")
+end
+
 --Toggles cursor mode on or off. Appropriately affects other modes such as build lock or remote view.
 function toggle_cursor_mode(pindex)
    local p = game.get_player(pindex)
@@ -545,23 +572,7 @@ function toggle_cursor_mode(pindex)
       --Finally, read the new tile
       read_tile(pindex, "Cursor mode enabled, ")
    else
-      --Disable
-      players[pindex].cursor = false
-      players[pindex].cursor_pos =
-         fa_utils.offset_position(players[pindex].position, players[pindex].player_direction, 1)
-      players[pindex].cursor_pos = fa_utils.center_of_tile(players[pindex].cursor_pos)
-      fa_mouse.move_mouse_pointer(players[pindex].cursor_pos, pindex)
-      fa_graphics.sync_build_cursor_graphics(pindex)
-      players[pindex].player_direction = p.character.direction
-      players[pindex].build_lock = false
-      if p.driving and p.vehicle then p.vehicle.active = true end
-
-      --Close Remote view
-      toggle_remote_view(pindex, false, true)
-      p.close_map()
-
-      --Finally, read the new tile
-      read_tile(pindex, "Cursor mode disabled, ")
+      force_cursor_off(pindex)
    end
    if players[pindex].cursor_size < 2 then
       --Update cursor highlight
@@ -2364,9 +2375,6 @@ function on_tick(event)
       for pindex, player in pairs(players) do
          --Fix running speed bug (toggle walk also fixes it)
          fix_walk(pindex)
-
-         --Update the Kruise Kontrol status
-         fa_kk.status_update(pindex)
       end
    elseif event.tick % 450 == 14 then
       --Run regular reminders every 7.5 seconds
@@ -2378,10 +2386,10 @@ function on_tick(event)
             printout("Press 'H' to open the tutorial", pindex)
          elseif game.get_player(pindex).ticks_to_respawn ~= nil then
             printout(math.floor(game.get_player(pindex).ticks_to_respawn / 60) .. " seconds until respawn", pindex)
-         elseif players[pindex].kruise_kontrolling == true then
-            --Report the KK state
-            fa_kk.status_read(pindex, false)
          end
+
+         --Report the KK state, if any.
+         fa_kk.status_read(pindex, false)
       end
    end
 end
@@ -2442,7 +2450,7 @@ function move_characters(event)
                table.remove(player.move_queue, 1)
             end
          end
-         if not walk and players[pindex].kruise_kontrolling ~= true then
+         if not walk and fa_kk.is_active(pindex) ~= true then
             player.player.walking_state = { walking = true, direction = player.player_direction }
             player.player.walking_state = { walking = false }
          end
@@ -6333,7 +6341,7 @@ end)
 function fix_walk(pindex)
    if not check_for_player(pindex) then return end
    if game.get_player(pindex).character == nil or game.get_player(pindex).character.valid == false then return end
-   if players[pindex].walk == 0 and players[pindex].kruise_kontrolling ~= true then
+   if players[pindex].walk == 0 and fa_kk.is_active(pindex) ~= true then
       game.get_player(pindex).character_running_speed_modifier = -1 -- 100% - 100% = 0%
    else --walk > 0
       game.get_player(pindex).character_running_speed_modifier = 0 -- 100% + 0 = 100%
@@ -8639,14 +8647,14 @@ script.on_event("cursor-pollution-info", function(event)
 end)
 
 --Enables remote view if not already, and then enables kruise kontrol
-script.on_event("klient-alt-move-to", function(event)
+script.on_event("fa-kk-start", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
-   fa_kk.activated_kk(pindex, event)
+   fa_kk.activate_kk(pindex)
 end)
 
-script.on_event("klient-cancel-enter", function(event)
+script.on_event("fa-kk-cancel", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
-   fa_kk.cancelled_kk(pindex)
+   fa_kk.cancel_kk(pindex)
 end)
