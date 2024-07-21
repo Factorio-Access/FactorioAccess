@@ -123,12 +123,12 @@ with open('tutorial.md', 'w') as md_file:
             if kind not in [ 'header', 'detail' ]:
                 continue
 
-            # For the first step's header, use it as the chapter title
-            if step_num == '1' and kind == 'header':
+            # For the first step's header (number 0) use it as the chapter title
+            if step_num == '0' and kind == 'header':
                 md_file.write(f"## {value}\n\n")
             elif kind == 'header':
                 md_file.write("### " + step_num + f": {value}\n\n")
-            elif kind == 'detail' and step_num != '1':
+            elif kind == 'detail' and step_num != '0':
                 # detail of first step is same as chapter header so do not repeat that
                 # Replace the control names with corresponding keyboard commands
                 formatted_value = re.sub(r"__CONTROL__(.+?)__", findControl, value)
