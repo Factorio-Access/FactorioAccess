@@ -30,18 +30,6 @@ function mod.activate_kk(pindex)
       refresh_player_tile(pindex)
       local target = get_selected_ent_deprecated(pindex)
 
-      --Close remote view and menus.
-      toggle_remote_view(pindex, false, true)
-      close_menu_resets(pindex)
-
-      -- If cursor mode is on then the best case is that the mod announces a
-      -- bunch of stuff it shouldn't, but sometimes this just flat out means
-      -- that KK doesn't work.  I don't know why; I'm guessing that's to do with
-      -- how we hack WASD not to move the player.
-      --
-      -- Don't say anything either, this is silent.
-      force_cursor_off(pindex, true)
-
       -- Okay, but what other edge cases can we find?  Turns out that, again, KK
       -- doesn't work if there's a blueprint in the player's hand.  This one is
       -- really hard to resolve because some blueprints are and some blueprints
@@ -63,6 +51,19 @@ function mod.activate_kk(pindex)
       end
 
       -- Okay. Finally we're good.  Let's kick this off.
+
+      --Close remote view and menus.
+      toggle_remote_view(pindex, false, true)
+      close_menu_resets(pindex)
+
+      -- If cursor mode is on then the best case is that the mod announces a
+      -- bunch of stuff it shouldn't, but sometimes this just flat out means
+      -- that KK doesn't work.  I don't know why; I'm guessing that's to do with
+      -- how we hack WASD not to move the player.
+      --
+      -- Don't say anything either, this is silent.
+      force_cursor_off(pindex, true)
+
       remote.call(interface_name, "start_job", pindex, { x = math.floor(kk_pos.x), y = math.floor(kk_pos.y) }, target)
       local desc = remote.call(interface_name, "get_description", pindex)
       if not desc then return { "access.kk-not-started" } end
@@ -83,6 +84,7 @@ function mod.cancel_kk(pindex)
          return
       end
 
+      remote.call(interface_name, "cancel", pindex)
       -- We screwed around with the running modifier. Put it back based on
       -- cursor mode.
       fix_walk(pindex)
