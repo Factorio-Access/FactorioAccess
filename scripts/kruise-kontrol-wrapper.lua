@@ -52,8 +52,6 @@ function mod.activate_kk(pindex)
 
       -- Okay. Finally we're good.  Let's kick this off.
 
-      --Close remote view and menus.
-      toggle_remote_view(pindex, false, true)
       close_menu_resets(pindex)
 
       -- If cursor mode is on then the best case is that the mod announces a
@@ -79,35 +77,39 @@ function mod.cancel_kk(pindex)
    call_with_interface(function()
       if not remote.call(interface_name, "is_active", pindex) then
          -- If there was no interface then KK isn't installed; if the player
-         -- isn't active already then the enter key is doing driving.  Nothing
-         -- to say.
+         -- isn't active already then the enter key is doing enter/exit vehicle.
+         -- In that case there's nothing to say here.
          return
       end
 
       remote.call(interface_name, "cancel", pindex)
+
+      -- Prevent saying KK is done after it is cancelled.
+      players[pindex].kruise_kontrol_active_last_time = false
+
       -- We screwed around with the running modifier. Put it back based on
       -- cursor mode.
       fix_walk(pindex)
 
-      -- If remote view was on turn it off.  unclear if this is necessary now
-      -- that KK isn't moving the mouse to work but it really doesn't hurt.
-      toggle_remote_view(pindex, false, true)
-
-      -- Menus shouldn't be open (or if they are KK is freaking out in other
-      -- ways).  Close them anyway.
-
-      close_menu_resets(pindex)
       printout({ "access.kk-cancel" }, pindex)
    end)
 end
 
 function mod.status_read(pindex, short_version)
    call_with_interface(function()
-      if remote.call(interface_name, "is_active", pindex) then
+      -- We must remember if KK was last active and then use it to detect the
+      -- falling edge.  This is the only way to really know if it's finished.
+      local active = remote.call(interface_name, "is_active", pindex)
+      local was_active = players[pindex].kruise_kontrol_active_last_time
+      players[pindex].kruise_kontrol_active_last_time = active
+      if active then
          printout({ "access.kk-state", remote.call(interface_name, "get_description", pindex) }, pindex)
+      elseif not active and was_active then
+         printout({ "access.kk-done" }, pindex)
       end
    end)
 end
+
 function mod.is_active(pindex)
    return call_with_interface(function()
       return remote.call(interface_name, "is_active", pindex)
