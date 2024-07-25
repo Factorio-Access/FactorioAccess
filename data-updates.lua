@@ -13,16 +13,14 @@ for _, item in pairs(vanilla_tip_and_tricks_item_table) do
    remove_tip_and_tricks_item(item)
 end
 
--- We will handle Kruise Kontrol driving through the remote API, but must
--- re-bind these to ourself to do so.  We can't simply delete, but we can set
--- enabled = false, which is the same thing.  Deleting crashes Kruise Kontrol.
-local kk_inputs = { "klient-move-to", "klient-cancel-enter" }
-local c_inputs = data.raw["custom-input"]
-assert(c_inputs, "We ourselves set some custom inputs")
-
-for _i, name in ipairs(kk_inputs) do
-   if c_inputs[name] then c_inputs[name].enabled = false end
-end
+-- We will handle Kruise Kontrol driving through the remote API.  It binds
+-- everything to the mouse, which we don't use.  The exception is enter, which
+-- cancels.  We also cancel on enter, but double-cancel doesn't do anything.
+-- This file used to modify those inputs, but we don't need to since things
+-- already work.  If we do need to revisit that, note that we will need to move
+-- KK inputs to a dummy key, or alternatively try setting [alt]_key_sequence to
+-- the empty string.  Other solutions (e.g. removal, setting them to disabled)
+-- break KK because Factorio will not let KK register events.
 
 --Modifications to Pavement Driving Assist Continued inputs
 data:extend({
