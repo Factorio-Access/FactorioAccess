@@ -257,72 +257,45 @@ data:extend({
 
    {
       type = "sound",
-      name = "audio-ruler-close-1",
+      name = "audio-ruler-at-bookmark",
       category = "gui-effect",
-      filename = "__base__/sound/programmable-speaker/vibraphone-21.ogg",
+      filename = "__base__/sound/programmable-speaker/kit-07.ogg",
       volume = 1,
       preload = true,
    },
 
    {
       type = "sound",
-      name = "audio-ruler-close-2",
+      name = "audio-ruler-horizontal-aligned",
       category = "gui-effect",
-      filename = "__base__/sound/programmable-speaker/vibraphone-19.ogg",
+      filename = "__base__/sound/programmable-speaker/plucked-14.ogg",
       volume = 1,
       preload = true,
    },
 
    {
       type = "sound",
-      name = "audio-ruler-diagonal-1",
+      name = "audio-ruler-horizontal-close",
       category = "gui-effect",
-      filename = "__base__/sound/programmable-speaker/bass-14.ogg",
+      filename = "__base__/sound/programmable-speaker/plucked-12.ogg",
       volume = 1,
       preload = true,
    },
 
    {
       type = "sound",
-      name = "audio-ruler-diagonal-2",
+      name = "audio-ruler-vertical-aligned",
       category = "gui-effect",
-      filename = "__base__/sound/programmable-speaker/bass-12.ogg",
+      filename = "__base__/sound/programmable-speaker/plucked-14.ogg",
       volume = 1,
       preload = true,
    },
 
    {
       type = "sound",
-      name = "audio-ruler-horizontal-1",
+      name = "audio-ruler-vertical-close",
       category = "gui-effect",
-      filename = "__base__/sound/programmable-speaker//vibraphone-14.ogg",
-      volume = 1,
-      preload = true,
-   },
-
-   {
-      type = "sound",
-      name = "audio-ruler-horizontal-2",
-      category = "gui-effect",
-      filename = "__base__/sound/programmable-speaker/vibraphone-12.ogg",
-      volume = 1,
-      preload = true,
-   },
-
-   {
-      type = "sound",
-      name = "audio-ruler-vertical-1",
-      category = "gui-effect",
-      filename = "__base__/sound/programmable-speaker/vibraphone-14.ogg",
-      volume = 1,
-      preload = true,
-   },
-
-   {
-      type = "sound",
-      name = "audio-ruler-vertical-2",
-      category = "gui-effect",
-      filename = "__base__/sound/programmable-speaker/vibraphone-12.ogg",
+      filename = "__base__/sound/programmable-speaker/plucked-12.ogg",
       volume = 1,
       preload = true,
    },

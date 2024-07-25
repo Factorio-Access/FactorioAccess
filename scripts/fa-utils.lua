@@ -957,40 +957,20 @@ function mod.play_bookmark_alignment_sounds(pindex)
    local diff_y = (math.floor(bookmark_pos.y) - math.floor(cursor_pos.y))
    local dist = util.distance(bookmark_pos, cursor_pos)
 
-   --Print diffs for debug
-   --p.print("diff_x: " .. diff_x .. " | diff_y: " .. diff_y .. " | dist: " .. dist, { volume_modifier = 0 })
-
-   --Bookmark proximity
+   --The cursor is at the bookmark.
    if diff_x == 0 and diff_y == 0 then
-      --Play sound 1
-      p.play_sound({ path = "audio-ruler-close-1" })
-      --elseif math.abs(diff_x) < 2 and math.abs(diff_y) < 2 then
-      --   --Play sound 2
-      --   p.play_sound({ path = "audio-ruler-close-2" })
-   end
-   --Horizontal alignment
-   if diff_x == 0 then
-      --Play sound 1
-      p.play_sound({ path = "audio-ruler-horizontal-1" })
-   elseif math.abs(diff_x) == 1 then
-      --Play sound 2
-      p.play_sound({ path = "audio-ruler-horizontal-2" })
-   end
+      p.play_sound({ path = "audio-ruler-at-bookmark" })
+   -- The cursor is horizontally aligned.
+   elseif diff_x == 0 then
+      p.play_sound({ path = "audio-ruler-horizontal-aligned" })
+   elseif math.abs(diff_x) == 1 and diff_y ~= 0 then
+      p.play_sound({ path = "audio-ruler-horizontal-close" })
    --Vertical alignment
-   if diff_y == 0 then
+   elseif diff_y == 0 then
       --Play sound 1
-      p.play_sound({ path = "audio-ruler-vertical-1" })
+      p.play_sound({ path = "audio-ruler-vertical-aligned" })
    elseif math.abs(diff_y) == 1 then
-      --Play sound 2
-      p.play_sound({ path = "audio-ruler-vertical-2" })
-   end
-   --Diagonal alignment
-   if diff_x ~= 0 and math.abs(diff_x) == math.abs(diff_y) then
-      --Play sound 1
-      p.play_sound({ path = "audio-ruler-diagonal-1" })
-   elseif diff_x ~= 0 and math.abs(math.abs(diff_x) - math.abs(diff_y)) == 1 then
-      --Play sound 2
-      p.play_sound({ path = "audio-ruler-diagonal-2" })
+      p.play_sound({ path = "audio-ruler-vertical-close" })
    end
 end
 
