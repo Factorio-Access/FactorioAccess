@@ -338,6 +338,7 @@ here (TODO: link it).
 * On entities marked for upgrade or destruction: upgrade or destroy them.  When
   upgrading, the same logic as building applies for upgrades.  If it doesn't have entities it
   will try to get them one way or another.
+* On hostile targets (enemies, spawners): kill things.
 
 Press "ENTER" to cancel ongoing actions.  A few important things to consider:
 
@@ -350,6 +351,9 @@ Press "ENTER" to cancel ongoing actions.  A few important things to consider:
   build all ghosts, etc. that means it wandered too far from where you started
   it and they got out of range.  For ghosts and the like, trigger it again to
   finish.
+* In combat it is terrible at healing you.  You must be able to survive at least
+  a few seconds for it to decide to use fish.  It will also keep fighting
+  forever until you die in most cases.  Be careful to cancel it.
 
 ## Item in hand
 
