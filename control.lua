@@ -526,13 +526,8 @@ function repeat_last_spoken(pindex)
 end
 
 -- Force the mod to disable/reset nall cursor modes. Useful for KK.
-function force_cursor_off(pindex, silent)
+function force_cursor_off(pindex)
    local p = game.get_player(pindex)
-
-   local read_tile_old = read_tile
-   local read_tile = function(...)
-      if not silent then read_tile_old(...) end
-   end
 
    --Disable
    players[pindex].cursor = false

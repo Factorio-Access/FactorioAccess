@@ -59,7 +59,7 @@ function mod.activate_kk(pindex)
       -- how we hack WASD not to move the player.
       --
       -- Don't say anything either, this is silent.
-      force_cursor_off(pindex, true)
+      force_cursor_off(pindex)
 
       remote.call(interface_name, "start_job", pindex, { x = math.floor(kk_pos.x), y = math.floor(kk_pos.y) }, target)
       local desc = remote.call(interface_name, "get_description", pindex)
