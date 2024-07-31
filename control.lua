@@ -545,15 +545,12 @@ function force_cursor_off(pindex, silent)
    if p.driving and p.vehicle then p.vehicle.active = true end
 
    --Close Remote view
-   toggle_remote_view(pindex, false, true)
+   toggle_remote_view(pindex, false, true, true)
    p.close_map()
-
-   --Finally, read the new tile
-   read_tile(pindex, "Cursor mode disabled, ")
 end
 
 --Toggles cursor mode on or off. Appropriately affects other modes such as build lock or remote view.
-function toggle_cursor_mode(pindex)
+function toggle_cursor_mode(pindex, muted)
    local p = game.get_player(pindex)
    if p.character == nil then
       players[pindex].cursor = true
@@ -570,9 +567,16 @@ function toggle_cursor_mode(pindex)
       center_player_character(pindex)
 
       --Finally, read the new tile
-      read_tile(pindex, "Cursor mode enabled, ")
+      if muted ~= true then
+         read_tile(pindex, "Cursor mode enabled, ")
+      end
    else
       force_cursor_off(pindex)
+
+      --Finally, read the new tile
+      if muted ~= true then
+         read_tile(pindex, "Cursor mode disabled, ")
+      end
    end
    if players[pindex].cursor_size < 2 then
       --Update cursor highlight
@@ -596,17 +600,21 @@ function toggle_cursor_mode(pindex)
 end
 
 --Toggles remote view on or off. Appropriately affects build lock or remote view.
-function toggle_remote_view(pindex, force_true, force_false)
+function toggle_remote_view(pindex, force_true, force_false, muted)
    if (players[pindex].remote_view ~= true or force_true == true) and force_false ~= true then
       players[pindex].remote_view = true
       players[pindex].cursor = true
       players[pindex].build_lock = false
       center_player_character(pindex)
-      read_tile(pindex, "Remote view opened, ")
+      if muted ~= true then
+         read_tile(pindex, "Remote view opened, ")
+      end
    else
       players[pindex].remote_view = false
       players[pindex].build_lock = false
-      read_tile(pindex, "Remote view closed, ")
+      if muted ~= true then
+         read_tile(pindex, "Remote view closed, ")
+      end
       game.get_player(pindex).close_map()
    end
 
