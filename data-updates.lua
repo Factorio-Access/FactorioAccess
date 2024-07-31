@@ -13,6 +13,7 @@ for _, item in pairs(vanilla_tip_and_tricks_item_table) do
    remove_tip_and_tricks_item(item)
 end
 
+-- Modifications to Kruise Kontrol inputs (no longer needed)
 -- We will handle Kruise Kontrol driving through the remote API.  It binds
 -- everything to the mouse, which we don't use.  The exception is enter, which
 -- cancels.  We also cancel on enter, but double-cancel doesn't do anything.
