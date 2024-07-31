@@ -354,6 +354,8 @@ A few important things to consider:
   a few seconds for it to decide to use fish.  It will also keep fighting
   forever until you die in most cases.  Be careful to cancel it.
 
+See the mod's [wiki chapter on Kruise Kontrol](https://github.com/Factorio-Access/FactorioAccess/wiki/Chapter-27-%E2%80%90-Kruise-Kontrol) for more info.
+
 ## Item in hand
 
 Read item in hand: SHIFT + Q
