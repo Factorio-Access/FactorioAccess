@@ -89,6 +89,11 @@ ENT_TYPES_YOU_CAN_BUILD_OVER = {
    "construction-robot",
    "rocket-silo-rocket-shadow",
 }
+WALKING = {
+   TELESTEP = 0,
+   STEP_BY_WALK = 1,
+   SMOOTH = 2,
+}
 
 --This function gets scheduled.
 function call_to_fix_zoom(pindex)
@@ -751,7 +756,7 @@ function read_tile(pindex, start_text)
          if fa_mining_tools.try_to_mine_with_soun(ent, pindex) then result = result .. name .. " mined, " end
          --Second round, in case two entities are there. While loops do not work!
          ent = get_selected_ent_deprecated(pindex)
-         if ent and ent.valid and players[pindex].walk ~= 2 then --not while
+         if ent and ent.valid and players[pindex].walk ~= WALKING.SMOOTH then --not while
             local name = ent.name
             game.get_player(pindex).play_sound({ path = "player-mine" })
             if fa_mining_tools.try_to_mine_with_soun(ent, pindex) then result = result .. name .. " mined, " end
@@ -1295,7 +1300,7 @@ script.on_event(defines.events.on_player_changed_position, function(event)
    local pindex = event.player_index
    local p = game.get_player(pindex)
    if not check_for_player(pindex) then return end
-   if players[pindex].walk == 2 then
+   if players[pindex].walk == WALKING.SMOOTH then
       players[pindex].position = p.position
       local pos = p.position
       if p.walking_state.direction ~= players[pindex].player_direction and players[pindex].cursor == false then
@@ -2424,7 +2429,7 @@ function move_characters(event)
          end
       end
 
-      if player.walk ~= 2 or player.cursor or player.in_menu then
+      if player.walk ~= WALKING.SMOOTH or player.cursor or player.in_menu then
          local walk = false
          while #player.move_queue > 0 do
             local next_move = player.move_queue[1]
@@ -2464,11 +2469,11 @@ function move(direction, pindex)
    --Compare the input direction and facing direction
    if players[pindex].player_direction == direction then
       --Same direction: Move character:
-      if players[pindex].walk == 2 then return end
+      if players[pindex].walk == WALKING.SMOOTH then return end
       new_pos = fa_utils.center_of_tile(new_pos)
       can_port = first_player.surface.can_place_entity({ name = "character", position = new_pos })
       if can_port then
-         if players[pindex].walk == 1 then
+         if players[pindex].walk == WALKING.STEP_BY_WALK then
             table.insert(players[pindex].move_queue, { direction = direction, dest = new_pos })
          else
             teleported = first_player.teleport(new_pos)
@@ -2508,10 +2513,10 @@ function move(direction, pindex)
       if players[pindex].in_menu == false then fa_utils.play_bookmark_alignment_sounds(pindex) end
    else
       --New direction: Turn character: --turn
-      if players[pindex].walk == 0 then
+      if players[pindex].walk == WALKING.TELESTEP then
          new_pos = fa_utils.center_of_tile(new_pos)
          game.get_player(pindex).play_sound({ path = "player-turned" })
-      elseif players[pindex].walk == 1 then
+      elseif players[pindex].walk == WALKING.STEP_BY_WALK then
          new_pos = fa_utils.center_of_tile(new_pos)
          table.insert(players[pindex].move_queue, { direction = direction, dest = pos })
       end
@@ -2528,9 +2533,9 @@ function move(direction, pindex)
          return
       end
 
-      if players[pindex].walk ~= 2 then
+      if players[pindex].walk ~= WALKING.SMOOTH then
          read_tile(pindex)
-      elseif players[pindex].walk == 2 then
+      elseif players[pindex].walk == WALKING.SMOOTH then
          refresh_player_tile(pindex)
          local ent = get_selected_ent_deprecated(pindex)
          if
@@ -2619,7 +2624,7 @@ function move_key(direction, event, force_single_tile)
    end
 
    --If driving a spidertron in telestep mode, suggest using smooth walking
-   if p.vehicle and p.vehicle.type == "spider-vehicle" and players[pindex].walk ~= 2 then
+   if p.vehicle and p.vehicle.type == "spider-vehicle" and players[pindex].walk ~= WALKING.SMOOTH then
       printout("To walk the spidertron, enable smooth walking mode", pindex)
    end
 end
@@ -6319,15 +6324,20 @@ walk_type_speech = {
 
 script.on_event("toggle-walk", function(event)
    pindex = event.player_index
+   local p = game.get_player(pindex)
    if not check_for_player(pindex) then return end
    reset_bump_stats(pindex)
    players[pindex].move_queue = {}
-   if players[pindex].walk == 0 then --Mode 1 (walk-by-step) is temporarily disabled until it comes back as an in game setting.
-      players[pindex].walk = 2
-      game.get_player(pindex).character_running_speed_modifier = 0 -- 100% + 0 = 100%
-   else --walk == 1 or walk == 2
-      players[pindex].walk = 0
-      game.get_player(pindex).character_running_speed_modifier = -1 -- 100% - 100% = 0%
+   if players[pindex].walk == WALKING.TELESTEP then
+      players[pindex].walk = WALKING.SMOOTH
+      p.character_running_speed_modifier = 0 -- 100% + 0 = 100%
+   elseif players[pindex].walk == WALKING.SMOOTH then
+      players[pindex].walk = WALKING.TELESTEP
+      p.character_running_speed_modifier = -1 -- 100% - 100% = 0%
+   else
+      -- Mode 1 (STEP_BY_WALK) is disabled for now
+      players[pindex].walk = WALKING.SMOOTH
+      p.character_running_speed_modifier = 0 -- 100% + 0 = 100%
    end
    --players[pindex].walk = (players[pindex].walk + 1) % 3
    printout(walk_type_speech[players[pindex].walk + 1], pindex)
@@ -6336,7 +6346,7 @@ end)
 function fix_walk(pindex)
    if not check_for_player(pindex) then return end
    if game.get_player(pindex).character == nil or game.get_player(pindex).character.valid == false then return end
-   if players[pindex].walk == 0 and fa_kk.is_active(pindex) ~= true then
+   if players[pindex].walk == WALKING.TELESTEP and fa_kk.is_active(pindex) ~= true then
       game.get_player(pindex).character_running_speed_modifier = -1 -- 100% - 100% = 0%
    else --walk > 0
       game.get_player(pindex).character_running_speed_modifier = 0 -- 100% + 0 = 100%
@@ -8509,7 +8519,7 @@ function check_and_play_stuck_alert_sound(pindex, this_tick)
    if players[pindex].bump == nil then reset_bump_stats(pindex) end
 
    --Return if in a menu or a vehicle or in a different walking mode than smooth walking
-   if players[pindex].in_menu or p.vehicle ~= nil or players[pindex].walk ~= 2 then return end
+   if players[pindex].in_menu or p.vehicle ~= nil or players[pindex].walk ~= WALKING.SMOOTH then return end
 
    --Return if not walking
    if p.walking_state.walking == false then return end
