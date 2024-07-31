@@ -562,16 +562,12 @@ function toggle_cursor_mode(pindex, muted)
       center_player_character(pindex)
 
       --Finally, read the new tile
-      if muted ~= true then
-         read_tile(pindex, "Cursor mode enabled, ")
-      end
+      if muted ~= true then read_tile(pindex, "Cursor mode enabled, ") end
    else
       force_cursor_off(pindex)
 
       --Finally, read the new tile
-      if muted ~= true then
-         read_tile(pindex, "Cursor mode disabled, ")
-      end
+      if muted ~= true then read_tile(pindex, "Cursor mode disabled, ") end
    end
    if players[pindex].cursor_size < 2 then
       --Update cursor highlight
@@ -601,15 +597,11 @@ function toggle_remote_view(pindex, force_true, force_false, muted)
       players[pindex].cursor = true
       players[pindex].build_lock = false
       center_player_character(pindex)
-      if muted ~= true then
-         read_tile(pindex, "Remote view opened, ")
-      end
+      if muted ~= true then read_tile(pindex, "Remote view opened, ") end
    else
       players[pindex].remote_view = false
       players[pindex].build_lock = false
-      if muted ~= true then
-         read_tile(pindex, "Remote view closed, ")
-      end
+      if muted ~= true then read_tile(pindex, "Remote view closed, ") end
       game.get_player(pindex).close_map()
    end
 
