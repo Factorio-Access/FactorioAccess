@@ -316,14 +316,13 @@ Type in cursor coordinates to jump to: ALT + T
 
 
 ## Kruise Kontrol
-
-Run Kruise Kontrol at the cursor location: CONTROL + ALT + RIGHT BRACKET
-Cancel Kruise Kontrol: enter
-
 Note: Kruise Kontrol is a different mod that we forked.  You can find our fork
-here (TODO: link it).
+[here](https://mods.factorio.com/mod/Kruise_Kontrol_Remote).
 
-* Press ctrl+alt+] somewhere to kick it off. Press enter to cancel.  One of the following happens depending on where you put the cursor:
+Initiate Kruise Kontrol at the cursor location: CONTROL + ALT + RIGHT BRACKET
+Cancel Kruise Kontrol: ENTER
+
+One of the following happens depending on where you put the cursor:
 * On ground or other things Kruise Kontrol doesn't care about,move to the
   location.  This means walking or driving depending whether the character is in
   a vehicle at the time.  
@@ -340,7 +339,7 @@ here (TODO: link it).
   will try to get them one way or another.
 * On hostile targets (enemies, spawners): kill things.
 
-Press "ENTER" to cancel ongoing actions.  A few important things to consider:
+A few important things to consider:
 
 * KK is faster than you if you have all needed items in your inventory.  You are
   faster than it if it can't use your inventory or a chest.  This is especially
