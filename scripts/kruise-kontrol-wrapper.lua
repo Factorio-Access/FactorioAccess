@@ -1,3 +1,5 @@
+--Here: Functions related to Kruise Kontrol Remote
+
 local mod = {}
 
 local interface_name = "kruise_kontrol_updated"
@@ -14,6 +16,9 @@ end
 function mod.activate_kk(pindex)
    local announcing = call_with_interface(function()
       local p = game.get_player(pindex)
+      -- If the player has no character then abort
+      local c = p and p.valid and p.character
+      if not c then return end
       -- The mod modifies this for e.g. telestep.
       p.character_running_speed_modifier = 0
 
@@ -38,14 +43,8 @@ function mod.activate_kk(pindex)
       --
       -- Funnily enough deconstruction planners seem to be fine.  As we find
       -- problems we can add them to the conditional below.
-      local p = game.players[pindex]
-      local c = p and p.valid and p.character
 
-      -- But, actually, if there's no player entity and that player entity
-      -- doesn't have a character, then we're done.  Can't do KK for that.
-      if not c.valid then return end
-
-      local hand = c.cursor_stack
+      local hand = p.cursor_stack
       if hand and hand.valid_for_read and (hand.name == "blueprint" or hand.name == "blueprint-book") then
          return { "access.kk-blueprints-not-allowed" }
       end
