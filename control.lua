@@ -31,6 +31,7 @@ local fa_warnings = require("scripts.warnings")
 local fa_circuits = require("scripts.circuit-networks")
 local fa_kk = require("scripts.kruise-kontrol-wrapper")
 local fa_quickbar = require("scripts.quickbar")
+local Rulers = require("scripts.rulers")
 
 groups = {}
 entity_types = {}
@@ -1385,7 +1386,7 @@ script.on_event(defines.events.on_player_changed_position, function(event)
          p.selected = nil
       end
       --Play a sound for audio ruler alignment (smooth walk)
-      if players[pindex].in_menu == false then fa_utils.play_bookmark_alignment_sounds(pindex) end
+      if players[pindex].in_menu == false then Rulers.update_from_cursor(pindex) end
    end
 end)
 
@@ -2510,7 +2511,7 @@ function move(direction, pindex)
       end
 
       --Play a sound for audio ruler alignment (telestep moved)
-      if players[pindex].in_menu == false then fa_utils.play_bookmark_alignment_sounds(pindex) end
+      if players[pindex].in_menu == false then Rulers.update_from_cursor(pindex) end
    else
       --New direction: Turn character: --turn
       if players[pindex].walk == WALKING.TELESTEP then
@@ -2565,7 +2566,7 @@ function move(direction, pindex)
       end
 
       --Play a sound for audio ruler alignment (telestep turned)
-      if players[pindex].in_menu == false then fa_utils.play_bookmark_alignment_sounds(pindex) end
+      if players[pindex].in_menu == false then Rulers.update_from_cursor(pindex) end
    end
 
    --Update cursor highlight
@@ -2619,9 +2620,7 @@ function move_key(direction, event, force_single_tile)
    end
 
    --Play a sound for audio ruler alignment (cursor mode moved)
-   if players[pindex].in_menu == false and players[pindex].cursor then
-      fa_utils.play_bookmark_alignment_sounds(pindex)
-   end
+   if players[pindex].in_menu == false and players[pindex].cursor then Rulers.update_from_cursor(pindex) end
 
    --If driving a spidertron in telestep mode, suggest using smooth walking
    if p.vehicle and p.vehicle.type == "spider-vehicle" and players[pindex].walk ~= WALKING.SMOOTH then
@@ -2942,6 +2941,22 @@ script.on_event("cursor-bookmark-clear", function(event)
    players[pindex].cursor_bookmark = nil
    printout("Cleared cursor bookmark", pindex)
    game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" })
+end)
+
+script.on_event("ruler-save", function(event)
+   pindex = event.player_index
+   if not check_for_player(pindex) then return end
+   local pos = players[pindex].cursor_pos
+   players[pindex].cursor_bookmark = pos
+   Rulers.upsert_ruler(pindex, pos.x, pos.y)
+   printout("Saved ruler at " .. math.floor(pos.x) .. ", " .. math.floor(pos.y), pindex)
+   game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" })
+end)
+
+script.on_event("ruler-clear", function(event)
+   local pindex = event.player_index
+   Rulers.clear_rulers(pindex)
+   printout("Cleared rulers", pindex)
 end)
 
 script.on_event("type-cursor-target", function(event)

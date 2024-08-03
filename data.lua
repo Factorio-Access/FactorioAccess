@@ -257,7 +257,7 @@ data:extend({
 
    {
       type = "sound",
-      name = "audio-ruler-at-bookmark",
+      name = "audio-ruler-at-definition",
       category = "gui-effect",
       filename = "__base__/sound/programmable-speaker/kit-07.ogg",
       volume = 1,
@@ -266,37 +266,19 @@ data:extend({
 
    {
       type = "sound",
-      name = "audio-ruler-horizontal-aligned",
+      name = "audio-ruler-aligned",
       category = "gui-effect",
       filename = "__base__/sound/programmable-speaker/plucked-14.ogg",
-      volume = 1,
+      volume = 0.5,
       preload = true,
    },
 
    {
       type = "sound",
-      name = "audio-ruler-horizontal-close",
+      name = "audio-ruler-close",
       category = "gui-effect",
       filename = "__base__/sound/programmable-speaker/plucked-12.ogg",
-      volume = 1,
-      preload = true,
-   },
-
-   {
-      type = "sound",
-      name = "audio-ruler-vertical-aligned",
-      category = "gui-effect",
-      filename = "__base__/sound/programmable-speaker/plucked-14.ogg",
-      volume = 1,
-      preload = true,
-   },
-
-   {
-      type = "sound",
-      name = "audio-ruler-vertical-close",
-      category = "gui-effect",
-      filename = "__base__/sound/programmable-speaker/plucked-12.ogg",
-      volume = 1,
+      volume = 0.5,
       preload = true,
    },
 
@@ -720,6 +702,20 @@ data:extend({
       type = "custom-input",
       name = "cursor-bookmark-clear",
       key_sequence = "CONTROL + SHIFT + B",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "ruler-save",
+      key_sequence = "CONTROL + ALT + B",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "ruler-clear",
+      key_sequence = "SHIFT + ALT + B",
       consuming = "none",
    },
 
