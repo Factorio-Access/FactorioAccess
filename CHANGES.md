@@ -1,3 +1,27 @@
+# Version 0.13.0 BETA
+Release pending.
+
+## Summary
+- Not written yet.
+
+## Features
+  - Added the first version of audio rulers, as a feature attached to the cursor bookmark.
+    * Audio rulers straight lines that extend in all 4 cardinal directions from the bookmark position. When the cursor is 1 tile away from a ruler it plays a sound note. Another note is played when directly on the ruler. This helps with aliging the cursor with the boomark without having to count.
+    * Press CONTROL + SHIFT + B to toggle the ruler on or off for the bookmark.
+
+  - Added super ghost mining. Press "CONTROL + SHIFT + X" on a ghost to clear all ghosts within 100 tiles.
+
+## Changes
+  - Kruise Kontrol now works with only one press of the keybind (CONTROL + ALT ^RIGHT BRACKET) and with much greater accuracy. This is thanks to Factorio Access now using its own version of Kruise Kontrol that can now be found on the mod portal.
+  
+  - Clearing ghosts via area mining is no longer limited by the player reach.
+
+## Bugfixes
+  - Fixed a bug that caused rounding errors when entering in a new cursor position by typing.
+  
+  - Fixed a crash that occured when reading or writing logistic request info while waiting to respawn.
+
+
 # Version 0.12.3 BETA
 Released on July 4th, 2024.
 

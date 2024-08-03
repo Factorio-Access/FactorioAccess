@@ -13,21 +13,15 @@ for _, item in pairs(vanilla_tip_and_tricks_item_table) do
    remove_tip_and_tricks_item(item)
 end
 
---Modifications to Kruise Kontrol inputs
-local alt_input = {
-   name = "klient-alt-move-to",
-   type = "custom-input",
-   key_sequence = "CONTROL + ALT + RIGHTBRACKET",
-   consuming = "game-only",
-}
-local cancel_enter = {
-   name = "klient-cancel-enter",
-   type = "custom-input",
-   linked_game_control = "toggle-driving",
-   consuming = "none",
-   key_sequence = "",
-}
-data:extend({ alt_input, cancel_enter })
+-- Modifications to Kruise Kontrol inputs (no longer needed)
+-- We will handle Kruise Kontrol driving through the remote API.  It binds
+-- everything to the mouse, which we don't use.  The exception is enter, which
+-- cancels.  We also cancel on enter, but double-cancel doesn't do anything.
+-- This file used to modify those inputs, but we don't need to since things
+-- already work.  If we do need to revisit that, note that we will need to move
+-- KK inputs to a dummy key, or alternatively try setting [alt]_key_sequence to
+-- the empty string.  Other solutions (e.g. removal, setting them to disabled)
+-- break KK because Factorio will not let KK register events.
 
 --Modifications to Pavement Driving Assist Continued inputs
 data:extend({

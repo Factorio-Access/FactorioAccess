@@ -10,6 +10,8 @@
           "? stop-on-red",
           "? VehicleSnap",
           "? PavementDriveAssistContinued",
-          "? Kruise_Kontrol_Updated"
+          "? Kruise_Kontrol_Remote",
+          "! Kruise_Kontrol_Updated",
+          "! Kruise_Kontrol"
      ]
 }

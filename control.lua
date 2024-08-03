@@ -89,6 +89,11 @@ ENT_TYPES_YOU_CAN_BUILD_OVER = {
    "construction-robot",
    "rocket-silo-rocket-shadow",
 }
+WALKING = {
+   TELESTEP = 0,
+   STEP_BY_WALK = 1,
+   SMOOTH = 2,
+}
 
 --This function gets scheduled.
 function call_to_fix_zoom(pindex)
@@ -525,8 +530,27 @@ function repeat_last_spoken(pindex)
    printout(players[pindex].last, pindex)
 end
 
+-- Force the mod to disable/reset nall cursor modes. Useful for KK.
+function force_cursor_off(pindex)
+   local p = game.get_player(pindex)
+
+   --Disable
+   players[pindex].cursor = false
+   players[pindex].cursor_pos = fa_utils.offset_position(players[pindex].position, players[pindex].player_direction, 1)
+   players[pindex].cursor_pos = fa_utils.center_of_tile(players[pindex].cursor_pos)
+   fa_mouse.move_mouse_pointer(players[pindex].cursor_pos, pindex)
+   fa_graphics.sync_build_cursor_graphics(pindex)
+   players[pindex].player_direction = p.character.direction
+   players[pindex].build_lock = false
+   if p.driving and p.vehicle then p.vehicle.active = true end
+
+   --Close Remote view
+   toggle_remote_view(pindex, false, true, true)
+   p.close_map()
+end
+
 --Toggles cursor mode on or off. Appropriately affects other modes such as build lock or remote view.
-function toggle_cursor_mode(pindex)
+function toggle_cursor_mode(pindex, muted)
    local p = game.get_player(pindex)
    if p.character == nil then
       players[pindex].cursor = true
@@ -543,25 +567,12 @@ function toggle_cursor_mode(pindex)
       center_player_character(pindex)
 
       --Finally, read the new tile
-      read_tile(pindex, "Cursor mode enabled, ")
+      if muted ~= true then read_tile(pindex, "Cursor mode enabled, ") end
    else
-      --Disable
-      players[pindex].cursor = false
-      players[pindex].cursor_pos =
-         fa_utils.offset_position(players[pindex].position, players[pindex].player_direction, 1)
-      players[pindex].cursor_pos = fa_utils.center_of_tile(players[pindex].cursor_pos)
-      fa_mouse.move_mouse_pointer(players[pindex].cursor_pos, pindex)
-      fa_graphics.sync_build_cursor_graphics(pindex)
-      players[pindex].player_direction = p.character.direction
-      players[pindex].build_lock = false
-      if p.driving and p.vehicle then p.vehicle.active = true end
-
-      --Close Remote view
-      toggle_remote_view(pindex, false, true)
-      p.close_map()
+      force_cursor_off(pindex)
 
       --Finally, read the new tile
-      read_tile(pindex, "Cursor mode disabled, ")
+      if muted ~= true then read_tile(pindex, "Cursor mode disabled, ") end
    end
    if players[pindex].cursor_size < 2 then
       --Update cursor highlight
@@ -585,17 +596,17 @@ function toggle_cursor_mode(pindex)
 end
 
 --Toggles remote view on or off. Appropriately affects build lock or remote view.
-function toggle_remote_view(pindex, force_true, force_false)
+function toggle_remote_view(pindex, force_true, force_false, muted)
    if (players[pindex].remote_view ~= true or force_true == true) and force_false ~= true then
       players[pindex].remote_view = true
       players[pindex].cursor = true
       players[pindex].build_lock = false
       center_player_character(pindex)
-      read_tile(pindex, "Remote view opened, ")
+      if muted ~= true then read_tile(pindex, "Remote view opened, ") end
    else
       players[pindex].remote_view = false
       players[pindex].build_lock = false
-      read_tile(pindex, "Remote view closed, ")
+      if muted ~= true then read_tile(pindex, "Remote view closed, ") end
       game.get_player(pindex).close_map()
    end
 
@@ -745,7 +756,7 @@ function read_tile(pindex, start_text)
          if fa_mining_tools.try_to_mine_with_soun(ent, pindex) then result = result .. name .. " mined, " end
          --Second round, in case two entities are there. While loops do not work!
          ent = get_selected_ent_deprecated(pindex)
-         if ent and ent.valid and players[pindex].walk ~= 2 then --not while
+         if ent and ent.valid and players[pindex].walk ~= WALKING.SMOOTH then --not while
             local name = ent.name
             game.get_player(pindex).play_sound({ path = "player-mine" })
             if fa_mining_tools.try_to_mine_with_soun(ent, pindex) then result = result .. name .. " mined, " end
@@ -1289,7 +1300,7 @@ script.on_event(defines.events.on_player_changed_position, function(event)
    local pindex = event.player_index
    local p = game.get_player(pindex)
    if not check_for_player(pindex) then return end
-   if players[pindex].walk == 2 then
+   if players[pindex].walk == WALKING.SMOOTH then
       players[pindex].position = p.position
       local pos = p.position
       if p.walking_state.direction ~= players[pindex].player_direction and players[pindex].cursor == false then
@@ -2364,9 +2375,6 @@ function on_tick(event)
       for pindex, player in pairs(players) do
          --Fix running speed bug (toggle walk also fixes it)
          fix_walk(pindex)
-
-         --Update the Kruise Kontrol status
-         fa_kk.status_update(pindex)
       end
    elseif event.tick % 450 == 14 then
       --Run regular reminders every 7.5 seconds
@@ -2378,10 +2386,10 @@ function on_tick(event)
             printout("Press 'H' to open the tutorial", pindex)
          elseif game.get_player(pindex).ticks_to_respawn ~= nil then
             printout(math.floor(game.get_player(pindex).ticks_to_respawn / 60) .. " seconds until respawn", pindex)
-         elseif players[pindex].kruise_kontrolling == true then
-            --Report the KK state
-            fa_kk.status_read(pindex, false)
          end
+
+         --Report the KK state, if any.
+         fa_kk.status_read(pindex, false)
       end
    end
 end
@@ -2421,7 +2429,7 @@ function move_characters(event)
          end
       end
 
-      if player.walk ~= 2 or player.cursor or player.in_menu then
+      if player.walk ~= WALKING.SMOOTH or player.cursor or player.in_menu then
          local walk = false
          while #player.move_queue > 0 do
             local next_move = player.move_queue[1]
@@ -2442,7 +2450,7 @@ function move_characters(event)
                table.remove(player.move_queue, 1)
             end
          end
-         if not walk and players[pindex].kruise_kontrolling ~= true then
+         if not walk and fa_kk.is_active(pindex) ~= true then
             player.player.walking_state = { walking = true, direction = player.player_direction }
             player.player.walking_state = { walking = false }
          end
@@ -2461,11 +2469,11 @@ function move(direction, pindex)
    --Compare the input direction and facing direction
    if players[pindex].player_direction == direction then
       --Same direction: Move character:
-      if players[pindex].walk == 2 then return end
+      if players[pindex].walk == WALKING.SMOOTH then return end
       new_pos = fa_utils.center_of_tile(new_pos)
       can_port = first_player.surface.can_place_entity({ name = "character", position = new_pos })
       if can_port then
-         if players[pindex].walk == 1 then
+         if players[pindex].walk == WALKING.STEP_BY_WALK then
             table.insert(players[pindex].move_queue, { direction = direction, dest = new_pos })
          else
             teleported = first_player.teleport(new_pos)
@@ -2505,10 +2513,10 @@ function move(direction, pindex)
       if players[pindex].in_menu == false then fa_utils.play_bookmark_alignment_sounds(pindex) end
    else
       --New direction: Turn character: --turn
-      if players[pindex].walk == 0 then
+      if players[pindex].walk == WALKING.TELESTEP then
          new_pos = fa_utils.center_of_tile(new_pos)
          game.get_player(pindex).play_sound({ path = "player-turned" })
-      elseif players[pindex].walk == 1 then
+      elseif players[pindex].walk == WALKING.STEP_BY_WALK then
          new_pos = fa_utils.center_of_tile(new_pos)
          table.insert(players[pindex].move_queue, { direction = direction, dest = pos })
       end
@@ -2525,9 +2533,9 @@ function move(direction, pindex)
          return
       end
 
-      if players[pindex].walk ~= 2 then
+      if players[pindex].walk ~= WALKING.SMOOTH then
          read_tile(pindex)
-      elseif players[pindex].walk == 2 then
+      elseif players[pindex].walk == WALKING.SMOOTH then
          refresh_player_tile(pindex)
          local ent = get_selected_ent_deprecated(pindex)
          if
@@ -2616,7 +2624,7 @@ function move_key(direction, event, force_single_tile)
    end
 
    --If driving a spidertron in telestep mode, suggest using smooth walking
-   if p.vehicle and p.vehicle.type == "spider-vehicle" and players[pindex].walk ~= 2 then
+   if p.vehicle and p.vehicle.type == "spider-vehicle" and players[pindex].walk ~= WALKING.SMOOTH then
       printout("To walk the spidertron, enable smooth walking mode", pindex)
    end
 end
@@ -2928,11 +2936,14 @@ script.on_event("cursor-bookmark-load", function(event)
    game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" })
 end)
 
-script.on_event("cursor-bookmark-clear", function(event)
+script.on_event("cursor-bookmark-toggle-ruler", function(event)
    pindex = event.player_index
    if not check_for_player(pindex) then return end
-   players[pindex].cursor_bookmark = nil
-   printout("Cleared cursor bookmark", pindex)
+   if players[pindex].audio_ruler_enabled ~= true then
+      players[pindex].audio_ruler_enabled = true
+   else
+      players[pindex].audio_ruler_enabled = false
+   end
    game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" })
 end)
 
@@ -6316,15 +6327,20 @@ walk_type_speech = {
 
 script.on_event("toggle-walk", function(event)
    pindex = event.player_index
+   local p = game.get_player(pindex)
    if not check_for_player(pindex) then return end
    reset_bump_stats(pindex)
    players[pindex].move_queue = {}
-   if players[pindex].walk == 0 then --Mode 1 (walk-by-step) is temporarily disabled until it comes back as an in game setting.
-      players[pindex].walk = 2
-      game.get_player(pindex).character_running_speed_modifier = 0 -- 100% + 0 = 100%
-   else --walk == 1 or walk == 2
-      players[pindex].walk = 0
-      game.get_player(pindex).character_running_speed_modifier = -1 -- 100% - 100% = 0%
+   if players[pindex].walk == WALKING.TELESTEP then
+      players[pindex].walk = WALKING.SMOOTH
+      p.character_running_speed_modifier = 0 -- 100% + 0 = 100%
+   elseif players[pindex].walk == WALKING.SMOOTH then
+      players[pindex].walk = WALKING.TELESTEP
+      p.character_running_speed_modifier = -1 -- 100% - 100% = 0%
+   else
+      -- Mode 1 (STEP_BY_WALK) is disabled for now
+      players[pindex].walk = WALKING.SMOOTH
+      p.character_running_speed_modifier = 0 -- 100% + 0 = 100%
    end
    --players[pindex].walk = (players[pindex].walk + 1) % 3
    printout(walk_type_speech[players[pindex].walk + 1], pindex)
@@ -6333,7 +6349,7 @@ end)
 function fix_walk(pindex)
    if not check_for_player(pindex) then return end
    if game.get_player(pindex).character == nil or game.get_player(pindex).character.valid == false then return end
-   if players[pindex].walk == 0 and players[pindex].kruise_kontrolling ~= true then
+   if players[pindex].walk == WALKING.TELESTEP and fa_kk.is_active(pindex) ~= true then
       game.get_player(pindex).character_running_speed_modifier = -1 -- 100% - 100% = 0%
    else --walk > 0
       game.get_player(pindex).character_running_speed_modifier = 0 -- 100% + 0 = 100%
@@ -8506,7 +8522,7 @@ function check_and_play_stuck_alert_sound(pindex, this_tick)
    if players[pindex].bump == nil then reset_bump_stats(pindex) end
 
    --Return if in a menu or a vehicle or in a different walking mode than smooth walking
-   if players[pindex].in_menu or p.vehicle ~= nil or players[pindex].walk ~= 2 then return end
+   if players[pindex].in_menu or p.vehicle ~= nil or players[pindex].walk ~= WALKING.SMOOTH then return end
 
    --Return if not walking
    if p.walking_state.walking == false then return end
@@ -8639,14 +8655,14 @@ script.on_event("cursor-pollution-info", function(event)
 end)
 
 --Enables remote view if not already, and then enables kruise kontrol
-script.on_event("klient-alt-move-to", function(event)
+script.on_event("fa-kk-start", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
-   fa_kk.activated_kk(pindex, event)
+   fa_kk.activate_kk(pindex)
 end)
 
-script.on_event("klient-cancel-enter", function(event)
+script.on_event("fa-kk-cancel", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
-   fa_kk.cancelled_kk(pindex)
+   fa_kk.cancel_kk(pindex)
 end)

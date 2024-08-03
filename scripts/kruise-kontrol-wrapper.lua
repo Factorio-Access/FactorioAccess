@@ -1,244 +1,118 @@
---Here: Kruise Kontrol wrapper methods so that FA can run it and independently assume its states
-local fa_utils = require("scripts.fa-utils")
-local fa_mouse = require("scripts.mouse")
+--Here: Functions related to Kruise Kontrol Remote
 
 local mod = {}
 
+local interface_name = "kruise_kontrol_updated"
+
+-- Call the closure if kk is present, returning what it returns. Otherwise don't
+-- call it and return `or_default`.  Recall that unspecified parameters are
+-- already nil; `or_default`, therefore, is optional.
+local function call_with_interface(closure, or_default)
+   if not remote.interfaces[interface_name] then return or_default end
+   return closure()
+end
+
 --FA actions to take when KK activate input is pressed
-function mod.activated_kk(pindex, event)
-   local p = game.get_player(pindex)
-   if players[pindex].remote_view == true or fa_mouse.cursor_position_is_on_screen_with_player_centered(pindex) then
-      --Allow KK
-      players[pindex].kruise_kontrolling = true
+function mod.activate_kk(pindex)
+   local announcing = call_with_interface(function()
+      local p = game.get_player(pindex)
+      -- If the player has no character then abort
+      local c = p and p.valid and p.character
+      if not c then return end
+      -- The mod modifies this for e.g. telestep.
       p.character_running_speed_modifier = 0
-      local kk_pos = players[pindex].cursor_pos
-      --Save what the player targetted
-      players[pindex].kk_pos = kk_pos
-      local kk_targets = p.surface.find_entities_filtered({ position = kk_pos, name = "highlight-box", invert = true })
-      if kk_targets and #kk_targets > 0 then
-         players[pindex].kk_target = kk_targets[1]
-      else
-         players[pindex].kk_target = nil
+
+      -- we want the mod's view of the cursor, which may be off the screen.
+      --
+      -- Without the deep copy, control.lua touches this from under us.
+      --
+      -- For now the fractional components are still present.  We're about to
+      -- fix that.
+      local kk_pos = table.deepcopy(players[pindex].cursor_pos)
+
+      -- we must duplicate a bit of logic since the mouse is not on our side; FA
+      -- has its own idea of selections.
+      refresh_player_tile(pindex)
+      local target = get_selected_ent_deprecated(pindex)
+
+      -- Okay, but what other edge cases can we find?  Turns out that, again, KK
+      -- doesn't work if there's a blueprint in the player's hand.  This one is
+      -- really hard to resolve because some blueprints are and some blueprints
+      -- aren't temporary, and mod hacking around blueprints is currently going
+      -- on.  For now, we will short-circuit and announce this to the player.
+      --
+      -- Funnily enough deconstruction planners seem to be fine.  As we find
+      -- problems we can add them to the conditional below.
+
+      local hand = p.cursor_stack
+      if hand and hand.valid_for_read and (hand.name == "blueprint" or hand.name == "blueprint-book") then
+         return { "access.kk-blueprints-not-allowed" }
       end
-      --Close remote view
-      toggle_remote_view(pindex, false, true)
+
+      -- Okay. Finally we're good.  Let's kick this off.
+
       close_menu_resets(pindex)
 
-      --Determine and report the KK status
-      players[pindex].kk_status = mod.status_determine(pindex)
-      mod.status_read(pindex, true)
-      players[pindex].kk_start_tick = event.tick
-   else
-      players[pindex].kruise_kontrolling = false
-      fix_walk(pindex)
-      toggle_remote_view(pindex, true, false)
-      sync_remote_view(pindex)
-      printout("Opened in remote view, press again to confirm", pindex)
-   end
+      -- If cursor mode is on then the best case is that the mod announces a
+      -- bunch of stuff it shouldn't, but sometimes this just flat out means
+      -- that KK doesn't work.  I don't know why; I'm guessing that's to do with
+      -- how we hack WASD not to move the player.
+      --
+      -- Don't say anything either, this is silent.
+      force_cursor_off(pindex)
+
+      remote.call(interface_name, "start_job", pindex, { x = math.floor(kk_pos.x), y = math.floor(kk_pos.y) }, target)
+      local desc = remote.call(interface_name, "get_description", pindex)
+      if not desc then return { "access.kk-not-started" } end
+
+      return { "access.kk-start", desc }
+   end, { "access.kk-not-available" })
+
+   printout(announcing, pindex)
 end
 
 --FA actions to take when KK cancel input is pressed
-function mod.cancelled_kk(pindex)
-   if players[pindex].kruise_kontrolling == true then
-      players[pindex].kruise_kontrolling = false
+function mod.cancel_kk(pindex)
+   call_with_interface(function()
+      if not remote.call(interface_name, "is_active", pindex) then
+         -- If there was no interface then KK isn't installed; if the player
+         -- isn't active already then the enter key is doing enter/exit vehicle.
+         -- In that case there's nothing to say here.
+         return
+      end
+
+      remote.call(interface_name, "cancel", pindex)
+
+      -- Prevent saying KK is done after it is cancelled.
+      players[pindex].kruise_kontrol_active_last_time = false
+
+      -- We screwed around with the running modifier. Put it back based on
+      -- cursor mode.
       fix_walk(pindex)
-      toggle_remote_view(pindex, false, true)
-      close_menu_resets(pindex)
-      printout("Cancelled kruise kontrol action.", pindex)
-   end
+
+      printout({ "access.kk-cancel" }, pindex)
+   end)
 end
 
---Determines the assumed status of kruise kontrol. Mimics the checks from the mod itself in Character:determine_job(entity, position)
-function mod.status_determine(pindex)
-   local p = game.get_player(pindex)
-   local entity = players[pindex].kk_target
-   local position = players[pindex].kk_pos
-   local status = ""
-   players[pindex].kk_radius = -1
-
-   if not (entity and entity.valid) then
-      if p.vehicle then
-         status = "driving"
-      else
-         status = "walking"
-      end
-      return status
-   end
-
-   local force = entity.force
-
-   if force == p.force then
-      if entity.type == "entity-ghost" then
-         status = "building ghosts"
-         return status
-      end
-
-      if entity.type == "tile-ghost" then
-         status = "building ghosts"
-         return status
-      end
-
-      if entity.to_be_deconstructed() then
-         status = "deconstructing"
-         return status
-      end
-
-      if entity.get_health_ratio() and entity.get_health_ratio() < 1 then
-         status = "repairing"
-         players[pindex].kk_radius = 50
-         return status
-      end
-
-      if entity.to_be_upgraded() then
-         status = "upgrading"
-         return status
-      end
-
-      local fuel_inventory = entity.get_fuel_inventory()
-      if fuel_inventory and fuel_inventory.is_empty() then
-         status = "refueling"
-         players[pindex].kk_radius = 50
-         return status
-      end
-   end
-
-   if entity.to_be_deconstructed() and (force.name == "neutral") then
-      status = "deconstructing"
-      return status
-   end
-
-   if entity.type == "resource" then
-      status = "mining resources"
-      return status
-   end
-
-   if entity.type == "tree" then
-      status = "mining resources"
-      return status
-   end
-
-   if entity.type == "simple-entity" and force.name == "neutral" then
-      status = "mining resources"
-      return status
-   end
-
-   if p.force.get_cease_fire(entity.force) == false then
-      status = "attacking"
-      players[pindex].kk_radius = 64
-      return status
-   end
-
-   if entity.train ~= nil or entity.type == "car" then
-      status = "following"
-      return status
-   end
-
-   --Unknown case:
-   return "walking"
-end
-
---Updates the assumed status of Kruise Kontrol based on specific checks per status
-function mod.status_update(pindex)
-   --Return if not KK or KK was activated recently
-   if players[pindex].kruise_kontrolling == false then return end
-   if players[pindex].kk_start_tick == nil or game.tick - players[pindex].kk_start_tick < 65 then return end
-   local p = game.get_player(pindex)
-   local status = players[pindex].kk_status
-
-   if status == "walking" then
-      --Check that the player is not moving and not mining
-      if fa_utils.player_was_still_for_1_second(pindex) and p.mining_state.mining == false then
-         status = mod.apply_arrived(pindex)
-      end
-   elseif status == "driving" then
-      --Check that the player vehicle is not moving
-      if p.vehicle and p.vehicle.speed == 0 then status = mod.apply_arrived(pindex) end
-   elseif status == "building ghosts" then
-      --Check if no more ghosts around, or the existing ghosts do not have items in inventory
-      local ghosts = p.surface.find_entities_filtered({ position = p.position, radius = 100, type = "entity-ghost" })
-      if ghosts == nil or #ghosts == 0 then
-         status = mod.apply_finished(pindex)
-      else
-         --Check which ghosts to ignore
-         local ghost_count = #ghosts
-         local ignore_count = 0
-         for i, ghost in ipairs(ghosts) do
-            local amount_required = 1
-            local inv_query = ghost.ghost_name
-
-            -- Address Special cases where item name not equals entity name, like for rails and curved rails
-            --NOTE: A ghost that requires more than one item to build (never in vanilla) is not fully checked
-            if
-               ghost.ghost_prototype.items_to_place_this
-               and ghost.ghost_prototype.items_to_place_this[1].name ~= inv_query
-            then
-               inv_query = ghost.ghost_prototype.items_to_place_this[1].name
-               amount_required = ghost.ghost_prototype.items_to_place_this[1].count
-            end
-
-            if p.get_main_inventory().get_item_count(inv_query) < amount_required then
-               ignore_count = ignore_count + 1
-            else
-               --Still going to build it
-               return
-            end
-         end
-         if ghost_count == ignore_count then
-            --Ignore all remaining ghosts
-            status = mod.apply_finished(pindex)
-         end
-      end
-   elseif status == "deconstructing" then
-      --Check if no more deconstructables around
-      --Note: there are other end states such as inventory being full
-      local targets =
-         p.surface.find_entities_filtered({ position = p.position, radius = 100, to_be_deconstructed = true })
-      if targets == nil or #targets == 0 then status = mod.apply_finished(pindex) end
-   elseif status == "upgrading" then
-      --Check if no more upgradables around
-      --Note: there are other end states such as not having the missing items
-      local targets = p.surface.find_entities_filtered({ position = p.position, radius = 100, to_be_upgraded = true })
-      if targets == nil or #targets == 0 then status = mod.apply_finished(pindex) end
-   end
-
-   players[pindex].kk_status = status
-   --Printout the status change if it is an end state
-   if status == "arrived" or status == "finished" then mod.status_read(pindex, true) end
-end
-
-function mod.apply_finished(pindex)
-   players[pindex].kk_status = "finished"
-   players[pindex].kruise_kontrolling = false
-   fix_walk(pindex)
-   toggle_remote_view(pindex, false, true)
-   return "finished"
-end
-
-function mod.apply_arrived(pindex)
-   players[pindex].kk_status = "arrived"
-   players[pindex].kruise_kontrolling = false
-   fix_walk(pindex)
-   toggle_remote_view(pindex, false, true)
-   return "arrived"
-end
-
---Reads out the assumed Kruise Kontrol status
 function mod.status_read(pindex, short_version)
-   local p = game.get_player(pindex)
-   local status = players[pindex].kk_status
-   local target = players[pindex].kk_target
-   local target_pos = players[pindex].kk_pos
-   local result = "Kruise Kontrol " .. status
-   if short_version == true then
-      printout(result, pindex)
-      return
-   end
-   local target_dist = math.floor(util.distance(p.position, target_pos))
-   local dist_info = ", " .. target_dist .. " tiles to target"
-   if target_dist < 3 then dist_info = "" end
-   if status == "walking" or status == "driving" then result = result .. dist_info end
-   result = result .. ", press ENTER to cancel"
-   printout(result, pindex)
+   call_with_interface(function()
+      -- We must remember if KK was last active and then use it to detect the
+      -- falling edge.  This is the only way to really know if it's finished.
+      local active = remote.call(interface_name, "is_active", pindex)
+      local was_active = players[pindex].kruise_kontrol_active_last_time
+      players[pindex].kruise_kontrol_active_last_time = active
+      if active then
+         printout({ "access.kk-state", remote.call(interface_name, "get_description", pindex) }, pindex)
+      elseif not active and was_active then
+         printout({ "access.kk-done" }, pindex)
+      end
+   end)
+end
+
+function mod.is_active(pindex)
+   return call_with_interface(function()
+      return remote.call(interface_name, "is_active", pindex)
+   end, false)
 end
 
 return mod

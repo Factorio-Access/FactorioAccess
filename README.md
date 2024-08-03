@@ -14,9 +14,9 @@ Factorio also has an [official wiki](https://wiki.factorio.com/).
 Please check the [Factorio Access Wiki main page](https://github.com/Factorio-Access/FactorioAccess/wiki) for frequently asked questions section.
 
 # Installing Factorio
-The game can be purchased from Factorio.com or from Steam. We recommend installing it using ONLY one of the three options below.
+The game can be purchased from Factorio.com or from Steam. Any purchase gives access to all versions. We recommend installing it using ONLY one of the options below. The zip or standalone versions are recommended for being easy to install the mod. The Steam versions are harder to configure but they are more reliable for multiplayer, while Steam Achievements are not available for modded gameplay.
 
-## Windows Zip Version / Standalone Version (recommended for easy install and troubleshooting)
+## Windows Zip Version / Standalone Version (recommended for easy mod install and troubleshooting)
 1. Go to https://www.factorio.com/download
 1. If needed, login using your Factorio account or Steam account.
 1. Among the install options, find the stable releases at the top half of the page. 
@@ -25,7 +25,7 @@ The game can be purchased from Factorio.com or from Steam. We recommend installi
 1. If you want, create a desktop shortcut for your Factorio folder.
 1. All done! You need to install the mod next.
 
-## Steam Version (recommended for easy multiplayer setup)
+## Steam Version (harder to configure the mod, better for multiplayer setup)
 1. Install Factorio using Steam settings, like any other game on Steam.
 1. That is it, pretty much. You next need to install the mod next and then configure Steam settings.
 
@@ -316,14 +316,45 @@ Type in cursor coordinates to jump to: ALT + T
 
 
 ## Kruise Kontrol
+Note: Kruise Kontrol is a different mod that we forked.  You can find our fork
+[here](https://mods.factorio.com/mod/Kruise_Kontrol_Remote).
 
-Run Kruise Kontrol at the cursor location: CONTROL + ALT + RIGHT BRACKET
+Initiate Kruise Kontrol at the cursor location: CONTROL + ALT + RIGHT BRACKET
+Cancel Kruise Kontrol: ENTER
 
-Note: Kruise Kontrol is a different mod but we use it extensively. When you use it on an empty tile, the character walks there automatically. It requires using Remote View.
-* Press "CONTROL + ALT + RIGHT BRACKET" twice, to first open the cursor location in remote view, and then to instruct an action.
-* Usually the action is to walk or drive to that spot. Special cases include selecting a resource to start mining it, selecting a ghost to start building them, selected a descontruction marked building to start removing them, selecting trees to start chopping them, and selecting enemies to start fighting them.
-* Press "ENTER" to cancel ongoing actions. Some actions may be unclear at times so this is recommended if things are taking to long.
-* The character cuts trees along their automatic walking paths.
+One of the following happens depending on where you put the cursor:
+* On ground or other things Kruise Kontrol doesn't care about,move to the
+  location.  This means walking or driving depending whether the character is in
+  a vehicle at the time.  
+* On trees or rocks: destroy the current one, then run around to the next one.
+  It keeps going until it can't find anymore, which basically means forever.
+* On ore patches: hand mines the ore.
+* On ghosts: builds the ghosts. It will try to craft and take from chests if
+  said chests are close enough.  If it seems stuck but still says it's building,
+  it is probably trying to get resources off a belt by picking them up (same as
+  using f yourself).  In this case, consider cancelling it and getting the
+  resources yourself.
+* On entities marked for upgrade or destruction: upgrade or destroy them.  When
+  upgrading, the same logic as building applies for upgrades.  If it doesn't have entities it
+  will try to get them one way or another.
+* On hostile targets (enemies, spawners): kill things.
+
+A few important things to consider:
+
+* KK is faster than you if you have all needed items in your inventory.  You are
+  faster than it if it can't use your inventory or a chest.  This is especially
+  true if it is near belts without much on them.
+* It will try to cut trees near the path of the character's walking.  This isn't
+  just straight on in practice, it's also a couple tiles to the side.
+* There are various range limits in it.  If it's not seeing a chest or doesn't
+  build all ghosts, etc. that means it wandered too far from where you started
+  it and they got out of range.  For ghosts and the like, trigger it again to
+  finish.
+* In combat it is terrible at healing you.  You must be able to survive at least
+  a few seconds for it to decide to use fish.  It will also keep fighting
+  forever until you die in most cases.  Be careful to cancel it.
+
+See the mod's [wiki chapter on Kruise Kontrol](https://github.com/Factorio-Access/FactorioAccess/wiki/Chapter-27-%E2%80%90-Kruise-Kontrol) for more info.
 
 ## Item in hand
 
