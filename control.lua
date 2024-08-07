@@ -132,20 +132,20 @@ function get_selected_ent_deprecated(pindex, ent_no)
    local ent
    local ent_no = ent_no or 1
    while true do
-      if tile.index > #tile.ents then tile.index = #tile.ents end
-      if tile.index == 0 then return nil end
-      ent = tile.ents[tile.index]
-      if not ent then print(serpent.line(tile.ents), tile.index, ent) end
+      if tile.ent_index > #tile.ents then tile.ent_index = #tile.ents end
+      if tile.ent_index == 0 then return nil end
+      ent = tile.ents[tile.ent_index]
+      if not ent then print(serpent.line(tile.ents), tile.ent_index, ent) end
       if ent.valid and (ent.type ~= "character" or players[pindex].cursor or ent.player ~= pindex) then
          ent_no = ent_no - 1
       end
       if ent_no <= 0 then return ent end
-      table.remove(tile.ents, tile.index)
+      table.remove(tile.ents, tile.ent_index)
    end
 end
 
 --- Produce an iterator over all valid entities for a player's selected tile,
---  filtering out the player themselves.
+--  while filtering out the player themselves.
 local function iterate_selected_ents(pindex)
    local tile = players[pindex].tile
    local ents = tile.ents
@@ -159,11 +159,9 @@ local function iterate_selected_ents(pindex)
          local ent = ents[i]
          i = i + 1
 
-         if not ent.valid then goto continue end
-
-         if ent.type ~= "character" or ent.player ~= pindex then return ent end
-
-         ::continue::
+         if ent and ent.valid then
+            if ent.type ~= "character" or ent.player ~= pindex then return ent end
+         end
       end
 
       return nil
@@ -491,8 +489,8 @@ end
 --Checks the cursor tile for a new entity and reads out ent info. Used when a tile has multiple overlapping entities.
 function tile_cycle(pindex)
    local tile = players[pindex].tile
-   tile.index = tile.index + 1
-   if tile.index > #tile.ents then tile.index = 0 end
+   tile.ent_index = tile.ent_index + 1
+   if tile.ent_index > #tile.ents then tile.ent_index = 0 end
    local ent = get_selected_ent_deprecated(pindex)
    if ent then
       printout(fa_info.ent_info(pindex, ent, ""), pindex)
@@ -690,7 +688,7 @@ function refresh_player_tile(pindex)
    for i, remnant in ipairs(remnants) do
       table.insert(players[pindex].tile.ents, remnant)
    end
-   players[pindex].tile.index = #players[pindex].tile.ents == 0 and 0 or 1
+   players[pindex].tile.ent_index = #players[pindex].tile.ents == 0 and 0 or 1
    if
       not (
          pcall(function()
