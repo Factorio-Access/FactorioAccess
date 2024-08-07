@@ -154,30 +154,29 @@ function ent_is_primary(ent, pindex)
       and (ent.type ~= "character" or ent.player ~= pindex)
 end
 
---on iteration: return the next useful ent. If the list end is reached, return the next extra ent. Else circle back.
-
+-- Sorts a list of entities by bringing primary entities to the start
+function sort_ents_by_primary_first(ents)
+   table.sort(ents, function(a, b)
+      -- Return false if either are invalid
+      if a == nil or a.valid == false then return false end
       if b == nil or b.valid == false then return false end
 
       -- Check if primary
-       local a_is_primary = ent_is_primary(a, pindex)
-       local b_is_primary = ent_is_primary(b, pindex)
+      local a_is_primary = ent_is_primary(a, pindex)
+      local b_is_primary = ent_is_primary(b, pindex)
 
-       -- Both or none are primary
-       if a_is_primary == b_is_primary then
-           return false
-       end
+      -- Both or none are primary
+      if a_is_primary == b_is_primary then return false end
 
-       -- a is primary while b is not
-       if a_is_primary then
-           return true
-       end
+      -- a is primary while b is not
+      if a_is_primary then return true end
 
-       -- b is primary while a is not
-       return false
+      -- b is primary while a is not
+      return false
    end)
 end
 
---Get the next entity at this tile and note its index. 
+--Get the next entity at this tile and note its index.
 --The tile entity list is already sorted such that primary ents are listed first.
 function get_next_ent_at_tile(pindex)
    local ents = players[pindex].tile.ents
@@ -760,9 +759,7 @@ function refresh_player_tile(pindex)
       table.insert(players[pindex].tile.ents, remnant)
    end
    players[pindex].tile.ent_index = 1
-   if #players[pindex].tile.ents == 0 then
-      players[pindex].tile.ent_index = 0
-   end
+   if #players[pindex].tile.ents == 0 then players[pindex].tile.ent_index = 0 end
    players[pindex].tile.last_returned_index = 0
    if
       not (
