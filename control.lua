@@ -170,19 +170,6 @@ local function iterate_selected_ents(pindex)
    return next_fn, nil, nil
 end
 
---Returns the first useful ent in the player tile. 
---Useful meaning not the player character or a corpse or a flying robot.
---Unused function for now.
-function get_first_useful_ent(pindex)
-   for ent in iterate_selected_ents(pindex) do
-      local bad = ent.type == "logistic-robot"
-         or ent.type == "construction-robot"
-         or ent.type == "combat-robot"
-         or ent.type == "corpse"
-      if not bad then return ent end
-   end
-end
-
 --???
 function prune_item_groups(array)
    if #groups == 0 then
