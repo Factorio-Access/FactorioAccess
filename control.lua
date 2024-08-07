@@ -144,6 +144,89 @@ function get_selected_ent_deprecated(pindex, ent_no)
    end
 end
 
+
+--on refresh: list all useful ents
+--on refresh: list all extra ents
+--on iteration: return the next useful ent. If the list end is reached, return the next extra ent. Else circle back.
+
+
+--Get the next entity at this tile and note its index. 
+--First iterate for the next useful entity. If there are none, then iterate for the next valid entity.
+--Useful entities are all valid entities excluding your own character, all flying robots, and remnants/corpses.
+function get_next_ent_at_tile(pindex)
+   local function ent_is_useful(ent, pindex)
+      return ent.type ~= "logistic-robot"
+         and ent.type ~= "construction-robot"
+         and ent.type ~= "combat-robot"
+         and ent.type ~= "corpse"
+         and (ent.type ~= "character" or ent.player ~= pindex)
+   end
+   local ents = players[pindex].tile.ents
+   local init_index = players[pindex].tile.ent_index
+   local last_returned_index = players[pindex].tile.last_returned_index
+   local current = ents[init_index]
+
+   --Return nil for an empty ents list
+   if ents == nil or #ents == 0 then return nil end
+
+   --Attempt to find the next useful ent (init to end)
+   for i = init_index, #ents, 1 do
+      current = ents[i]
+      if current and current.valid and ent_is_useful(current, pindex) then
+         --If this is not a repeat then return it
+         if last_returned_index == 0 or last_returned_index ~= i then
+            players[pindex].tile.ent_index = i
+            players[pindex].tile.last_returned_index = i
+            return current
+         end
+      end
+   end
+
+   --Attempt to find the next useful ent (start to init)
+   for i = 1, init_index - 1, 1 do
+      current = ents[i]
+      if current and current.valid and ent_is_useful(current, pindex) then
+         --If this is not a repeat then return it
+         if last_returned_index == 0 or last_returned_index ~= i then
+            players[pindex].tile.ent_index = i
+            players[pindex].tile.last_returned_index = i
+            return current
+         end
+      end
+   end
+
+   --By this point there are no useful ents
+
+   --Attempt to find the next valid ent (init to end)
+   for i = init_index, #ents, 1 do
+      current = ents[i]
+      if current and current.valid then
+         --If this is not a repeat then return it
+         if last_returned_index == 0 or last_returned_index ~= i then
+            players[pindex].tile.ent_index = i
+            players[pindex].tile.last_returned_index = i
+            return current
+         end
+      end
+   end
+
+   --Attempt to find the next valid ent (start to init)
+   for i = 1, init_index - 1, 1 do
+      current = ents[i]
+      if current and current.valid then
+         --If this is not a repeat then return it
+         if last_returned_index == 0 or last_returned_index ~= i then
+            players[pindex].tile.ent_index = i
+            players[pindex].tile.last_returned_index = i
+            return current
+         end
+      end
+   end
+
+   --By this point there are no valid ents
+   return nil
+end
+
 --- Produce an iterator over all valid entities for a player's selected tile,
 --  while filtering out the player themselves.
 local function iterate_selected_ents(pindex)
@@ -688,6 +771,7 @@ function refresh_player_tile(pindex)
    if #players[pindex].tile.ents == 0 then
       players[pindex].tile.ent_index = 0
    end
+   players[pindex].tile.last_returned_index = 0
    if
       not (
          pcall(function()
