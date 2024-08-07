@@ -144,23 +144,42 @@ function get_selected_ent_deprecated(pindex, ent_no)
    end
 end
 
+--Define primary ents, which are ents that show up first when reading tiles.
+--Notably, the definition is done by listing which types count as secondary.
+function ent_is_primary(ent, pindex)
+   return ent.type ~= "logistic-robot"
+      and ent.type ~= "construction-robot"
+      and ent.type ~= "combat-robot"
+      and ent.type ~= "corpse"
+      and (ent.type ~= "character" or ent.player ~= pindex)
+end
 
---on refresh: list all useful ents
---on refresh: list all extra ents
 --on iteration: return the next useful ent. If the list end is reached, return the next extra ent. Else circle back.
 
+      if b == nil or b.valid == false then return false end
+
+      -- Check if primary
+       local a_is_primary = ent_is_primary(a, pindex)
+       local b_is_primary = ent_is_primary(b, pindex)
+
+       -- Both or none are primary
+       if a_is_primary == b_is_primary then
+           return false
+       end
+
+       -- a is primary while b is not
+       if a_is_primary then
+           return true
+       end
+
+       -- b is primary while a is not
+       return false
+   end)
+end
 
 --Get the next entity at this tile and note its index. 
---First iterate for the next useful entity. If there are none, then iterate for the next valid entity.
---Useful entities are all valid entities excluding your own character, all flying robots, and remnants/corpses.
+--The tile entity list is already sorted such that primary ents are listed first.
 function get_next_ent_at_tile(pindex)
-   local function ent_is_useful(ent, pindex)
-      return ent.type ~= "logistic-robot"
-         and ent.type ~= "construction-robot"
-         and ent.type ~= "combat-robot"
-         and ent.type ~= "corpse"
-         and (ent.type ~= "character" or ent.player ~= pindex)
-   end
    local ents = players[pindex].tile.ents
    local init_index = players[pindex].tile.ent_index
    local last_returned_index = players[pindex].tile.last_returned_index
@@ -169,35 +188,7 @@ function get_next_ent_at_tile(pindex)
    --Return nil for an empty ents list
    if ents == nil or #ents == 0 then return nil end
 
-   --Attempt to find the next useful ent (init to end)
-   for i = init_index, #ents, 1 do
-      current = ents[i]
-      if current and current.valid and ent_is_useful(current, pindex) then
-         --If this is not a repeat then return it
-         if last_returned_index == 0 or last_returned_index ~= i then
-            players[pindex].tile.ent_index = i
-            players[pindex].tile.last_returned_index = i
-            return current
-         end
-      end
-   end
-
-   --Attempt to find the next useful ent (start to init)
-   for i = 1, init_index - 1, 1 do
-      current = ents[i]
-      if current and current.valid and ent_is_useful(current, pindex) then
-         --If this is not a repeat then return it
-         if last_returned_index == 0 or last_returned_index ~= i then
-            players[pindex].tile.ent_index = i
-            players[pindex].tile.last_returned_index = i
-            return current
-         end
-      end
-   end
-
-   --By this point there are no useful ents
-
-   --Attempt to find the next valid ent (init to end)
+   --Attempt to find the next ent (init to end)
    for i = init_index, #ents, 1 do
       current = ents[i]
       if current and current.valid then
@@ -210,7 +201,7 @@ function get_next_ent_at_tile(pindex)
       end
    end
 
-   --Attempt to find the next valid ent (start to init)
+   --Attempt to find the next ent (start to init)
    for i = 1, init_index - 1, 1 do
       current = ents[i]
       if current and current.valid then
@@ -757,6 +748,7 @@ function refresh_player_tile(pindex)
    }
    local excluded_names = { "highlight-box", "flying-text" }
    players[pindex].tile.ents = surf.find_entities_filtered({ area = search_area, name = excluded_names, invert = true })
+   sort_ents_by_primary_first(players[pindex].tile.ents)
    --Draw the tile
    --rendering.draw_rectangle{left_top = search_area[1], right_bottom = search_area[2], color = {1,0,1}, surface = surf, time_to_live = 100}--
    local wide_area = {
