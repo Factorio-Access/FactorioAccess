@@ -678,10 +678,6 @@ end
 --Re-checks the cursor tile and indexes the entities on it, returns a boolean on whether it is successful.
 function refresh_player_tile(pindex)
    local surf = game.get_player(pindex).surface
-   --local search_area = {{x=-0.5,y=-0.5},{x=0.29,y=0.29}}
-   --local search_center = players[pindex].cursor_pos
-   --search_area[1]=add_position(search_area[1],search_center)
-   --search_area[2]=add_position(search_area[2],search_center)
    local c_pos = players[pindex].cursor_pos
    if math.floor(c_pos.x) == math.ceil(c_pos.x) then c_pos.x = c_pos.x - 0.01 end
    if math.floor(c_pos.y) == math.ceil(c_pos.y) then c_pos.y = c_pos.y - 0.01 end
@@ -701,7 +697,10 @@ function refresh_player_tile(pindex)
    for i, remnant in ipairs(remnants) do
       table.insert(players[pindex].tile.ents, remnant)
    end
-   players[pindex].tile.ent_index = #players[pindex].tile.ents == 0 and 0 or 1
+   players[pindex].tile.ent_index = 1
+   if #players[pindex].tile.ents == 0 then
+      players[pindex].tile.ent_index = 0
+   end
    if
       not (
          pcall(function()
