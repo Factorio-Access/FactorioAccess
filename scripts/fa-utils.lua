@@ -352,9 +352,11 @@ function mod.get_entity_part_at_cursor(pindex)
 
    --First check if there is an entity at the cursor
    if #ents > 0 then
-      --Choose something else if ore is selected
+      --Prefer the selected ent
       local preferred_ent = p.selected
-      if preferred_ent == nil or preferred_ent.valid == false then return nil end
+      --Otherwise check for other ents at the cursor
+      if preferred_ent == nil or preferred_ent.valid == false then preferred_ent = get_first_ent_at_tile(pindex) end
+      if preferred_ent == nil or preferred_ent.valid == false then return "unknown location" end
 
       --Report which part of the entity the cursor covers.
       rendering.draw_circle({

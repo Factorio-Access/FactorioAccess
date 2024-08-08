@@ -215,6 +215,8 @@ function get_next_ent_at_tile(pindex)
    end
 
    --By this point there are no valid ents
+   players[pindex].tile.ent_index = 0
+   players[pindex].tile.last_returned_index = 0
    return nil
 end
 
@@ -566,7 +568,7 @@ function tile_cycle(pindex)
    if ent then
       printout(fa_info.ent_info(pindex, ent, ""), pindex)
    else
-      printout(tile.tile, pindex)
+      printout(players[pindex].tile.tile, pindex)
    end
 end
 
