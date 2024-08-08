@@ -176,6 +176,28 @@ function sort_ents_by_primary_first(ents)
    end)
 end
 
+--Get the first entity at a tile 
+--The entity list is sorted to have primary entities first, so a primary entity is expected.
+function get_first_ent_at_tile(pindex)
+   local ents = players[pindex].tile.ents
+
+   --Return nil for an empty ents list
+   if ents == nil or #ents == 0 then return nil end
+
+   --Attempt to find the next ent (init to end)
+   for i = 1, #ents, 1 do
+      current = ents[i]
+      if current and current.valid then
+         players[pindex].tile.ent_index = i
+         players[pindex].tile.last_returned_index = i
+         return current
+      end
+   end
+
+   --By this point there are no valid ents
+   return nil
+end
+
 --Get the next entity at this tile and note its index.
 --The tile entity list is already sorted such that primary ents are listed first.
 function get_next_ent_at_tile(pindex)
