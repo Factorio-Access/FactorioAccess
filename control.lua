@@ -201,6 +201,13 @@ function get_next_ent_at_tile(pindex)
       end
    end
 
+   --Return nil to get the tile info instead
+   if last_returned_index ~= 0 then
+      players[pindex].tile.ent_index = 0
+      players[pindex].tile.last_returned_index = 0
+      return nil
+   end
+
    --Attempt to find the next ent (start to init)
    for i = 1, init_index - 1, 1 do
       current = ents[i]
