@@ -581,12 +581,9 @@ function target_mouse_pointer_deprecated(pindex)
    end
 end
 
---Checks the cursor tile for a new entity and reads out ent info. Used when a tile has multiple overlapping entities.
+--Used when a tile has multiple overlapping entities. Reads out the next entity.
 function tile_cycle(pindex)
-   local tile = players[pindex].tile
-   tile.ent_index = tile.ent_index + 1
-   if tile.ent_index > #tile.ents then tile.ent_index = 0 end
-   local ent = get_selected_ent_deprecated(pindex)
+   local ent = get_next_ent_at_tile(pindex)
    if ent then
       printout(fa_info.ent_info(pindex, ent, ""), pindex)
    else
@@ -670,7 +667,7 @@ function toggle_cursor_mode(pindex, muted)
    end
    if players[pindex].cursor_size < 2 then
       --Update cursor highlight
-      local ent = get_selected_ent_deprecated(pindex)
+      local ent = get_first_ent_at_tile(pindex)
       if ent and ent.valid then
          fa_graphics.draw_cursor_highlight(pindex, ent, nil)
       else
@@ -803,7 +800,7 @@ function read_tile(pindex, start_text)
       printout(result .. "Tile uncharted and out of range", pindex)
       return
    end
-   local ent = get_selected_ent_deprecated(pindex)
+   local ent = get_first_ent_at_tile(pindex)
    if not (ent and ent.valid) then
       --If there is no ent, read the tile instead
       players[pindex].tile.previous = nil
@@ -848,7 +845,7 @@ function read_tile(pindex, start_text)
          game.get_player(pindex).play_sound({ path = "player-mine" })
          if fa_mining_tools.try_to_mine_with_soun(ent, pindex) then result = result .. name .. " mined, " end
          --Second round, in case two entities are there. While loops do not work!
-         ent = get_selected_ent_deprecated(pindex)
+         ent = get_first_ent_at_tile(pindex)
          if ent and ent.valid and players[pindex].walk ~= WALKING.SMOOTH then --not while
             local name = ent.name
             game.get_player(pindex).play_sound({ path = "player-mine" })
@@ -1448,7 +1445,7 @@ script.on_event(defines.events.on_player_changed_position, function(event)
 
       --Name a detected entity that you can or cannot walk on, or a tile you cannot walk on, and play a sound to indicate multiple consecutive detections
       refresh_player_tile(pindex)
-      local ent = get_selected_ent_deprecated(pindex)
+      local ent = get_first_ent_at_tile(pindex)
       if
          not players[pindex].vanilla_mode
          and (
@@ -2629,8 +2626,9 @@ function move(direction, pindex)
       if players[pindex].walk ~= WALKING.SMOOTH then
          read_tile(pindex)
       elseif players[pindex].walk == WALKING.SMOOTH then
+         --Read the new entity or unwalkable surface found upon turning
          refresh_player_tile(pindex)
-         local ent = get_selected_ent_deprecated(pindex)
+         local ent = get_first_ent_at_tile(pindex)
          if
             not players[pindex].vanilla_mode
             and (
@@ -2662,7 +2660,7 @@ function move(direction, pindex)
    end
 
    --Update cursor highlight
-   local ent = get_selected_ent_deprecated(pindex)
+   local ent = get_first_ent_at_tile(pindex)
    if ent and ent.valid then
       fa_graphics.draw_cursor_highlight(pindex, ent, nil)
    else
@@ -2755,7 +2753,7 @@ function cursor_mode_move(direction, pindex, single_only)
       if players[pindex].build_lock then fa_building_tools.build_item_in_hand(pindex) end
 
       --Update cursor highlight
-      local ent = get_selected_ent_deprecated(pindex)
+      local ent = get_first_ent_at_tile(pindex)
       if ent and ent.valid then
          fa_graphics.draw_cursor_highlight(pindex, ent, nil)
       else
@@ -4893,7 +4891,7 @@ script.on_event("click-menu", function(event)
          end
 
          --Update cursor highlight
-         local ent = get_selected_ent_deprecated(pindex)
+         local ent = get_first_ent_at_tile(pindex)
          if ent and ent.valid then
             fa_graphics.draw_cursor_highlight(pindex, ent, nil)
          else
@@ -4968,7 +4966,7 @@ script.on_event("click-hand", function(event)
       --Not in a menu
       local stack = game.get_player(pindex).cursor_stack
       local cursor_ghost = game.get_player(pindex).cursor_ghost
-      local ent = get_selected_ent_deprecated(pindex)
+      local ent = get_first_ent_at_tile(pindex)
 
       if stack and stack.valid_for_read and stack.valid then
          players[pindex].last_click_tick = event.tick
@@ -5231,7 +5229,7 @@ script.on_event("click-entity", function(event)
       --Not in a menu
       local stack = game.get_player(pindex).cursor_stack
       local ghost = game.get_player(pindex).cursor_ghost
-      local ent = get_selected_ent_deprecated(pindex)
+      local ent = get_first_ent_at_tile(pindex)
 
       if ghost or (stack and stack.valid_for_read and stack.valid) then
          return
@@ -5370,7 +5368,7 @@ script.on_event("open-circuit-menu", function(event)
       --Open the menu
       fa_circuits.circuit_network_menu_open(pindex, ent)
    elseif players[pindex].in_menu == false then
-      local ent = p.selected or get_selected_ent_deprecated(pindex)
+      local ent = p.selected or get_first_ent_at_tile(pindex)
       if ent == nil or ent.valid == false or (ent.get_control_behavior() == nil and ent.type ~= "electric-pole") then
          --Sort scan results instead
          return
@@ -7082,7 +7080,7 @@ function cursor_skip_iteration(pindex, direction, iteration_limit)
             if con.connection_type == "underground" and dir_neighbor == direction then
                players[pindex].cursor_pos = con.target.get_pipe_connections(1)[1].position
                refresh_player_tile(pindex)
-               current = get_selected_ent_deprecated(pindex)
+               current = get_first_ent_at_tile(pindex)
                return dist
             end
          end
@@ -7097,7 +7095,7 @@ function cursor_skip_iteration(pindex, direction, iteration_limit)
          if dir_neighbor == direction then
             players[pindex].cursor_pos = other_end.position
             refresh_player_tile(pindex)
-            current = get_selected_ent_deprecated(pindex)
+            current = get_first_ent_at_tile(pindex)
             return dist
          end
       end

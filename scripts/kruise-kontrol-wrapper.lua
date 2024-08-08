@@ -33,7 +33,7 @@ function mod.activate_kk(pindex)
       -- we must duplicate a bit of logic since the mouse is not on our side; FA
       -- has its own idea of selections.
       refresh_player_tile(pindex)
-      local target = get_selected_ent_deprecated(pindex)
+      local target = get_first_ent_at_tile(pindex)
 
       -- Okay, but what other edge cases can we find?  Turns out that, again, KK
       -- doesn't work if there's a blueprint in the player's hand.  This one is
