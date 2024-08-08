@@ -4249,14 +4249,16 @@ script.on_event("mine-area", function(event)
    local cleared_total = 0
    local comment = ""
 
-   --Check if within reach
+   --Check if the is within reach or the applicable entity is within reach
    if
       ent ~= nil
-         and ent.valid
-         and ent.name ~= "entity-ghost"
-         and util.distance(game.get_player(pindex).position, ent.position) > game.get_player(pindex).reach_distance
-      or util.distance(game.get_player(pindex).position, players[pindex].cursor_pos)
-         > game.get_player(pindex).reach_distance
+      and ent.valid
+      and ent.name ~= "entity-ghost"
+      and (
+         util.distance(game.get_player(pindex).position, ent.position) > game.get_player(pindex).reach_distance
+         or util.distance(game.get_player(pindex).position, players[pindex].cursor_pos)
+            > game.get_player(pindex).reach_distance
+      )
    then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
       printout("This area is out of player reach", pindex)
