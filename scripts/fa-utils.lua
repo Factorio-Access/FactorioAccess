@@ -343,16 +343,7 @@ function mod.get_entity_part_at_cursor(pindex)
    local p = game.get_player(pindex)
    local x = players[pindex].cursor_pos.x
    local y = players[pindex].cursor_pos.y
-   local excluded_names = {
-      "character",
-      "flying-text",
-      "highlight-box",
-      "combat-robot",
-      "logistic-robot",
-      "construction-robot",
-      "rocket-silo-rocket-shadow",
-   }
-   local ents = p.surface.find_entities_filtered({ position = { x = x, y = y }, name = excluded_names, invert = true })
+   local ents = players[pindex].tile.ents
    local north_same = false
    local south_same = false
    local east_same = false
@@ -362,12 +353,8 @@ function mod.get_entity_part_at_cursor(pindex)
    --First check if there is an entity at the cursor
    if #ents > 0 then
       --Choose something else if ore is selected
-      local preferred_ent = ents[1]
-      for i, ent in ipairs(ents) do
-         if ent.valid and ent.type ~= "resource" then preferred_ent = ent end
-      end
-      p.selected = preferred_ent
-      --TODO cleanup here with get_selected_ent_deprecated or the such
+      local preferred_ent = p.selected
+      if preferred_ent == nil or preferred_ent.valid == false then return nil end
 
       --Report which part of the entity the cursor covers.
       rendering.draw_circle({
