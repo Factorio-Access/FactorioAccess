@@ -121,29 +121,6 @@ function call_to_check_ghost_rails(pindex)
    fa_rails.check_ghost_rail_planning_results(pindex)
 end
 
--- Deprecated. Do not use.
---
--- This function used to be called get_selected_ent and implied that it would
--- simply read entities off a tile.  What it actually did was try to shuffle
--- entities round to remove players from a cache permanently, with emphasis on
--- try.  The code below has a large number of failure conditions.
-function get_selected_ent_deprecated(pindex, ent_no)
-   local tile = players[pindex].tile
-   local ent
-   local ent_no = ent_no or 1
-   while true do
-      if tile.ent_index > #tile.ents then tile.ent_index = #tile.ents end
-      if tile.ent_index == 0 then return nil end
-      ent = tile.ents[tile.ent_index]
-      if not ent then print(serpent.line(tile.ents), tile.ent_index, ent) end
-      if ent.valid and (ent.type ~= "character" or players[pindex].cursor or ent.player ~= pindex) then
-         ent_no = ent_no - 1
-      end
-      if ent_no <= 0 then return ent end
-      table.remove(tile.ents, tile.ent_index)
-   end
-end
-
 --Define primary ents, which are ents that show up first when reading tiles.
 --Notably, the definition is done by listing which types count as secondary.
 function ent_is_primary(ent, pindex)
@@ -178,7 +155,7 @@ function sort_ents_by_primary_first(ents)
    end)
 end
 
---Get the first entity at a tile 
+--Get the first entity at a tile
 --The entity list is sorted to have primary entities first, so a primary entity is expected.
 function get_first_ent_at_tile(pindex)
    local ents = players[pindex].tile.ents
