@@ -715,6 +715,7 @@ function mod.list_index(pindex)
          end
          --Select the northwest corner of the entity
          players[pindex].cursor_pos = fa_utils.get_ent_northwest_corner_position(ent)
+         p.selected = ent
          --Select spaceship wreck pieces from the center because of their irregular shapes
          local check = ent.name
          local a = string.find(check, "spaceship")
