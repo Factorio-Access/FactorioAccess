@@ -572,8 +572,9 @@ end
 --Used when a tile has multiple overlapping entities. Reads out the next entity.
 function tile_cycle(pindex)
    local ent = get_next_ent_at_tile(pindex)
-   if ent then
+   if ent and ent.valid then
       printout(fa_info.ent_info(pindex, ent, ""), pindex)
+      game.get_player(pindex).selected = ent
    else
       printout(players[pindex].tile.tile, pindex)
    end
