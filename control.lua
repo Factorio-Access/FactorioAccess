@@ -151,6 +151,8 @@ function ent_is_primary(ent, pindex)
       and ent.type ~= "construction-robot"
       and ent.type ~= "combat-robot"
       and ent.type ~= "corpse"
+      and ent.type ~= "rocket-silo-rocket-shadow"
+      and ent.type ~= "resource"
       and (ent.type ~= "character" or ent.player ~= pindex)
 end
 
