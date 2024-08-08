@@ -423,13 +423,21 @@ function mod.draw_cursor_highlight(pindex, ent, box_type, skip_mouse_movement)
    if h_box ~= nil and h_box.valid then h_box.destroy() end
    if h_tile ~= nil and rendering.is_valid(h_tile) then rendering.destroy(h_tile) end
 
+   --Skip drawing if hide cursor is enabled
    if players[pindex].hide_cursor then
       players[pindex].cursor_ent_highlight_box = nil
       players[pindex].cursor_tile_highlight_box = nil
       return
    end
 
-   if ent ~= nil and ent.valid and ent.name ~= "highlight-box" and ent.type ~= "flying-text" then
+   --Draw highlight box
+   if
+      ent ~= nil
+      and ent.valid
+      and ent.name ~= "highlight-box"
+      and ent.type ~= "flying-text"
+      and (p.selected == nil or p.selected.valid == false)
+   then
       h_box = p.surface.create_entity({
          name = "highlight-box",
          force = "neutral",
@@ -443,12 +451,6 @@ function mod.draw_cursor_highlight(pindex, ent, box_type, skip_mouse_movement)
          h_box.highlight_box_type = box_type
       else
          h_box.highlight_box_type = "entity"
-      end
-
-      --Select the entity at the cursor position
-      --TODO maybe clean this up with get_selected_ent_deprecated
-      if players[pindex].cursor or (p.character ~= nil and ent.unit_number ~= p.character.unit_number) then
-         p.selected = ent
       end
    end
 
