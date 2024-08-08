@@ -5721,7 +5721,7 @@ function do_multi_stack_transfer(ratio, pindex)
       local offset = 1
       if players[pindex].building.recipe_list ~= nil then offset = offset + 1 end
       if players[pindex].building.sector_name == "player inventory from building" then
-         game.get_player(pindex).print("(inventory transfer issue?)", {volume_modifier=0})
+         game.get_player(pindex).print("(inventory transfer issue?)", { volume_modifier = 0 })
          --This is the section where we move from the player to the building.
          local item_name = ""
          local stack = players[pindex].inventory.lua_inventory[players[pindex].inventory.index]
