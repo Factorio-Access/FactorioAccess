@@ -154,6 +154,8 @@ Note the 3 movement types are as follows:
 
    3- Smooth-Walking: In this mode the character will move similarly to in a sighted game. The player will be notified if they run into something, but otherwise will not be notified of entities they are passing. Very fast, and great for getting around!
 
+Nudge the character by 1 tile: CONTROL + ARROW KEY, with the corresponding key for that direction.
+
 ## Coordinates
 Read cursor coordinates: K
 
@@ -174,13 +176,13 @@ Scan for entities: END
 
 Scan for entities in only the direction you are facing: SHIFT + END
 
-Navigate scanner list entries: PAGE UP and PAGE DOWN. Alternatively you can use UP ARROW and DOWN ARROW.
+Navigate scanner list entries: PAGE UP and PAGE DOWN. Alternatively you can use ALT + UP ARROW and ALT + DOWN ARROW.
 
 Repeat scanner list entry: HOME
 
-Switch between different instances of the same entry: SHIFT + PAGE UP and SHIFT + PAGE DOWN.  Alternatively you can use SHIFT + UP ARROW and SHIFT + DOWN ARROW.
+Switch between different instances of the same entry: SHIFT + PAGE UP and SHIFT + PAGE DOWN.  Alternatively you can use ALT + SHIFT + UP ARROW and ALT + SHIFT + DOWN ARROW.
 
-Change scanner list filter category: CONTROL + PAGE UP and CONTROL + PAGE DOWN. Alternatively you can use CONTROL + UP ARROW and CONTROL + DOWN ARROW.
+Change scanner list filter category: CONTROL + PAGE UP and CONTROL + PAGE DOWN. Alternatively you can use ALT + CONTROL + UP ARROW and ALT + CONTROL + DOWN ARROW.
 
 Sort scan results by distance from current character location: N. If you change location, you need to press again.
 
@@ -209,7 +211,7 @@ Rotate it: R.
 
 Rotation Note: If you have something in your hand, you will rotate that instead, and some buildings cannot be rotated after placing them down while others cannot be rotated at all. Rectangular buildings can only be flipped.
 
-Nudge it by one tile: CONTROL + SHIFT + DIRECTION, where the direction is one of W A S D. 
+Nudge it by one tile: SHIFT + ARROW KEY, with the key for the corresponding direction.
 
 Smart pipette/picker tool: For a selected entity, Q, with an empty hand. This brings to hand more of the selected entity's item form, if you have it in your inventory.
 
@@ -288,9 +290,9 @@ Move cursor freely in cursor mode, by cursor size distance: W A S D
 
 Move cursor freely in cursor mode, by always one tile distance: ARROW KEYS
 
-Skip the cursor over repeating entities and across underground sections: SHIFT + W A S D
+Skip the cursor over repeating entities and across underground sections: SHIFT + W A S D. Alternatively NUMPAD KEYS 2 4 6 8.
 
-Move the cursor by the size of the blueprint or preview in hand: CONTROL + W A S D
+Move the cursor by the size of the blueprint or preview in hand: CONTROL + W A S D. Alternatively CONTROL + NUMPAD KEYS 2 4 6 8.
 
 Return the cursor to the character: J
 
@@ -635,13 +637,13 @@ Select category from currently selected tier: A and D
 
 ## Splitter interactions
 
-Set input priority side: SHIFT + LEFT ARROW, or SHIFT + RIGHT ARROW. Press the same side again to reset to equal priority.
+Set input priority side: ALT + SHIFT + LEFT ARROW, or ALT + SHIFT + RIGHT ARROW. Press the same side again to reset to equal priority.
   
-Set output priority side: CONTROL + LEFT ARROW, or CONTROL + RIGHT ARROW. Press the same side again to reset to equal priority.
+Set output priority side: ALT + CONTROL + LEFT ARROW, or ALT + CONTROL + RIGHT ARROW. Press the same side again to reset to equal priority.
   
 Set an item filter: With the item in hand, CONTROL + LEFT BRACKET
   
-Set item filter output side: CONTROL + LEFT ARROW, or CONTROL + RIGHT ARROW
+Set item filter output side: ALT + CONTROL + LEFT ARROW, or ALT + CONTROL + RIGHT ARROW
   
 Set an item filter: With the item in hand, CONTROL + LEFT BRACKET
   
@@ -669,9 +671,9 @@ Note 1: When building parallel rail segments, it is recommended to have at least
 
 Note 2: In case of bugs, be sure to save regularly. There is a known bug related to extending rails after building a train stop on an end rail.
 
-Shortcut for building rail right turn 45 degrees: CONTROL + RIGHT ARROW on an end rail.
+Shortcut for building rail right turn 45 degrees: ALT + RIGHT ARROW on an end rail.
 
-Shortcut for building rail left turn 45 degrees: CONTROL + LEFT ARROW on an end rail.
+Shortcut for building rail left turn 45 degrees: ALT + LEFT ARROW on an end rail.
 
 Shortcut for picking up all rails and signals within 7 tiles: SHIFT + X on a rail.
 
