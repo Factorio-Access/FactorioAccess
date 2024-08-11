@@ -3,7 +3,7 @@ Released on August 11th, 2024.
 
 ## Summary
 - This update introduces a prototype for audio rulers and greatly improves Kruise Kontrol functionality thanks to our transition to Kruise Kontrol Remote, a fork created by our developer @ahicks92. It also remaps some keys and improves nudging. There are other small changes such as better ghost mining and better entity selection and some tutorial corrections by @danielw97.
-- Note that Factorio Access is from now optionally dependent on Kruise Kontrol Remote while it is no longer compatible with other versions of Kruise Kontrol, which players need to disable or delete. Otherwise Factorio Access will not run.  This only applies if you are upgrading.  New installs don't need to worry about it.
+- **Important:** Factorio Access is now optionally dependent on Kruise Kontrol Remote while it is now **not compatible** with other versions of Kruise Kontrol, which players need to disable or delete. Otherwise Factorio Access will not run.  This only applies if you are upgrading.  New installs don't need to worry about it.
 
 ## Features
   - Added a prototype version of the audio ruler system.
