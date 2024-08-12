@@ -512,7 +512,7 @@ function mod.nudge_key(direction, event)
          temporary_teleported = ent.teleport({ 0, 0 })
          if not temporary_teleported then
             game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-            printout({ "access.failed-to-nudge" }, pindex)
+            printout({ "fa.failed-to-nudge" }, pindex)
             return
          end
 
@@ -535,11 +535,11 @@ function mod.nudge_key(direction, event)
          end
          if not actually_teleported then
             --Failed to teleport
-            printout({ "access.failed-to-nudge" }, pindex)
+            printout({ "fa.failed-to-nudge" }, pindex)
             return
          else
             --Successfully teleported and so nudged
-            printout({ "access.nudged-one-direction", { "access.direction", direction } }, pindex)
+            printout({ "fa.nudged-one-direction", { "fa.direction", direction } }, pindex)
             if players[pindex].cursor then
                players[pindex].cursor_pos = fa_utils.offset_position(players[pindex].cursor_pos, direction, 1)
                fa_graphics.draw_cursor_highlight(pindex, ent, "train-visualization")

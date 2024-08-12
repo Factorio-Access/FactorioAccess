@@ -691,7 +691,7 @@ function mod.dir_dist_locale(pos1, pos2)
    local dir_dist = mod.dir_dist(pos1, pos2)
    local aligned_note = ""
    if mod.is_direction_aligned(pos1, pos2) then aligned_note = "aligned " end
-   return { "access.dir-dist", aligned_note .. mod.direction_lookup(dir_dist[1]), math.floor(dir_dist[2] + 0.5) }
+   return { "fa.dir-dist", aligned_note .. mod.direction_lookup(dir_dist[1]), math.floor(dir_dist[2] + 0.5) }
 end
 
 function mod.ent_name_locale(ent)
@@ -701,7 +701,7 @@ function mod.ent_name_locale(ent)
    end
    if ent.name == "forest" then
       print("todo: forest isn't an entity")
-      return { "access.forest" }
+      return { "fa.forest" }
    end
    local entity_prototype = game.entity_prototypes[ent.name]
    local resource_prototype = game.resource_category_prototypes[ent.name]
