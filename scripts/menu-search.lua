@@ -193,10 +193,10 @@ end
 local function travel_find_index_of_next_name_match(index, str, pindex)
    local repeat_i = -1
    local list_size = #players[pindex].travel
-   if index < 1 then index = 1 end
+   if index == nil or index < 1 then index = 1 end
    --Iterate until the end of the list for a match
    for i = index, list_size, 1 do
-      local locus = players[pindex].travel[players[pindex].travel.index.y]
+      local locus = players[pindex].travel[i]
       if locus and locus.name then
          local name = string.lower(locus.name)
          local result = string.find(name, str)
@@ -209,13 +209,13 @@ local function travel_find_index_of_next_name_match(index, str, pindex)
                repeat_i = i
             end
          end
-         --game.print(i .. " : " .. name .. " vs. " .. str,{volume_modifier=0})
+         --game.print(i .. " : " .. name .. " vs. " .. str, { volume_modifier = 0 })
       end
    end
    --End of inventory reached, circle back
    game.get_player(pindex).play_sound({ path = "inventory-wrap-around" }) --sound for having cicled around
    for i = 1, index, 1 do
-      local locus = players[pindex].travel[players[pindex].travel.index.y]
+      local locus = players[pindex].travel[i]
       if locus and locus.name then
          local name = string.lower(locus.name)
          local result = string.find(name, str)
@@ -228,7 +228,7 @@ local function travel_find_index_of_next_name_match(index, str, pindex)
                repeat_i = i
             end
          end
-         --game.print(i .. " : " .. name .. " vs. " .. str,{volume_modifier=0})
+         --game.print(i .. " : " .. name .. " vs. " .. str, { volume_modifier = 0 })
       end
    end
    --Check if any repeats found
