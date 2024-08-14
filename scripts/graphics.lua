@@ -540,10 +540,12 @@ end
 function mod.update_custom_GUI_sprite(sprite, scale_in, pindex, sprite_2)
    local player = players[pindex]
    local p = game.get_player(pindex)
-   local scale = scale_in
 
-   if sprite == nil and player.custom_GUI_frame ~= nil and player.custom_GUI_frame.valid then
-      player.custom_GUI_frame.visible = false
+   if sprite == nil then
+      if player.custom_GUI_frame ~= nil and player.custom_GUI_frame.valid then
+         player.custom_GUI_frame.visible = false
+      end
+      return
    else
       local f = player.custom_GUI_frame
       local s1 = player.custom_GUI_sprite
@@ -598,6 +600,13 @@ function mod.update_custom_GUI_sprite(sprite, scale_in, pindex, sprite_2)
    end
 end
 
+function mod.clear_player_GUI_remnants(pindex)
+   local p = game.get_player(pindex)
+   if players[pindex].in_menu == false and players[pindex].menu == "none" and p.opened == nil then
+      if p and p.gui and p.gui.screen then p.gui.screen.clear() end
+   end
+end
+
 --Draws a sprite over the head of the player, with the selected scale. Set it to nil to clear it.
 function mod.update_overhead_sprite(sprite, scale_in, radius_in, pindex)
    local player = players[pindex]
@@ -615,6 +624,7 @@ function mod.update_overhead_sprite(sprite, scale_in, radius_in, pindex)
          surface = p.surface,
          target = { x = p.position.x, y = p.position.y - 3 - radius },
          filled = true,
+         time_to_live = 60,
       })
       rendering.set_visible(player.overhead_circle, true)
       player.overhead_sprite = rendering.draw_sprite({
@@ -624,6 +634,7 @@ function mod.update_overhead_sprite(sprite, scale_in, radius_in, pindex)
          surface = p.surface,
          target = { x = p.position.x, y = p.position.y - 3 - radius },
          orientation = dirs.north,
+         time_to_live = 60,
       })
       rendering.set_visible(player.overhead_sprite, true)
    end

@@ -2465,9 +2465,10 @@ function on_tick(event)
          elseif game.get_player(pindex).ticks_to_respawn ~= nil then
             printout(math.floor(game.get_player(pindex).ticks_to_respawn / 60) .. " seconds until respawn", pindex)
          end
-
          --Report the KK state, if any.
          fa_kk.status_read(pindex, false)
+         --Clear unwanted GUI remnants
+         fa_graphics.clear_player_GUI_remnants(pindex)
       end
    end
 end
@@ -6823,7 +6824,7 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
       --Destroy text fields
       if p.gui.screen["circuit-condition-constant"] ~= nil then p.gui.screen["circuit-condition-constant"].destroy() end
       if p.opened ~= nil then p.opened = nil end
-   elseif players[pindex].menu == "travel" then
+   elseif players[pindex].menu == "travel" and players[pindex].entering_search_term ~= true then
       --Edit a travel point
       local result = event.element.text
       if result == nil or result == "" then result = "blank" end
