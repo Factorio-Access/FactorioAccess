@@ -1,6 +1,4 @@
 --Here: Menu search and directly related functions
-local util = require("util")
-local fa_utils = require("scripts.fa-utils")
 local fa_crafting = require("scripts.crafting")
 local localising = require("scripts.localising")
 local fa_sectors = require("scripts.building-vehicle-sectors")
