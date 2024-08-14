@@ -2465,9 +2465,10 @@ function on_tick(event)
          elseif game.get_player(pindex).ticks_to_respawn ~= nil then
             printout(math.floor(game.get_player(pindex).ticks_to_respawn / 60) .. " seconds until respawn", pindex)
          end
-
          --Report the KK state, if any.
          fa_kk.status_read(pindex, false)
+         --Clear unwanted GUI remnants
+         fa_graphics.clear_player_GUI_remnants(pindex)
       end
    end
 end
