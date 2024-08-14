@@ -615,6 +615,7 @@ function mod.update_overhead_sprite(sprite, scale_in, radius_in, pindex)
          surface = p.surface,
          target = { x = p.position.x, y = p.position.y - 3 - radius },
          filled = true,
+         time_to_live = 60,
       })
       rendering.set_visible(player.overhead_circle, true)
       player.overhead_sprite = rendering.draw_sprite({
@@ -624,6 +625,7 @@ function mod.update_overhead_sprite(sprite, scale_in, radius_in, pindex)
          surface = p.surface,
          target = { x = p.position.x, y = p.position.y - 3 - radius },
          orientation = dirs.north,
+         time_to_live = 60,
       })
       rendering.set_visible(player.overhead_sprite, true)
    end
