@@ -6822,7 +6822,7 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
       --Destroy text fields
       if p.gui.screen["circuit-condition-constant"] ~= nil then p.gui.screen["circuit-condition-constant"].destroy() end
       if p.opened ~= nil then p.opened = nil end
-   elseif players[pindex].menu == "travel" then
+   elseif players[pindex].menu == "travel" and players[pindex].entering_search_term ~= true then
       --Edit a travel point
       local result = event.element.text
       if result == nil or result == "" then result = "blank" end
