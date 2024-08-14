@@ -6270,9 +6270,11 @@ script.on_event(defines.events.on_player_cursor_stack_changed, function(event)
    if stack and stack.valid_for_read then
       new_item_name = stack.name
       if stack.is_blueprint and players[pindex].blueprint_hand_direction ~= dirs.north then
-         --Reset blueprint rotation
+         --Reset blueprint rotation (unless it is a temporary blueprint)
          players[pindex].blueprint_hand_direction = dirs.north
-         fa_blueprints.refresh_blueprint_in_hand(pindex)
+         if game.get_player(pindex).cursor_stack_temporary == false then
+            fa_blueprints.refresh_blueprint_in_hand(pindex)
+         end
       end
    end
    if players[pindex].menu == "blueprint_menu" or players[pindex].menu == "blueprint_book_menu" then
