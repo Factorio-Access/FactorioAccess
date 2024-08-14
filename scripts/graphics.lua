@@ -603,9 +603,7 @@ end
 function mod.clear_player_GUI_remnants(pindex)
    local p = game.get_player(pindex)
    if players[pindex].in_menu == false and players[pindex].menu == "none" and p.opened == nil then
-      if p and p.gui and p.gui.screen then
-         p.gui.screen.clear()
-      end
+      if p and p.gui and p.gui.screen then p.gui.screen.clear() end
    end
 end
 
