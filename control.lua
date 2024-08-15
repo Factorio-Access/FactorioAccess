@@ -6276,6 +6276,11 @@ script.on_event(defines.events.on_player_cursor_stack_changed, function(event)
          if game.get_player(pindex).cursor_stack_temporary == false then
             fa_blueprints.refresh_blueprint_in_hand(pindex)
          end
+         --Use this opportunity to update saved information about the blueprint's corners (used when drawing the footprint)
+         local width, height = fa_blueprints.get_blueprint_width_and_height(pindex)
+         if width == nil or height == nil then return result end
+         players[pindex].blueprint_width_in_hand = width + 1
+         players[pindex].blueprint_height_in_hand = height + 1
       end
    end
    if players[pindex].menu == "blueprint_menu" or players[pindex].menu == "blueprint_book_menu" then
