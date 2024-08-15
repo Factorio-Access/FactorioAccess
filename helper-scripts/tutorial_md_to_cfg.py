@@ -1,5 +1,7 @@
 import re
 
+from fix_tutorial_steps import renumber_steps_in_file
+
 def convert_markdown_to_cfg(input_file, output_file):
     with open(input_file, 'r') as infile:
         lines = infile.readlines()
@@ -39,4 +41,5 @@ def convert_markdown_to_cfg(input_file, output_file):
 
 if __name__ == "__main__":
     convert_markdown_to_cfg('fa-tutorial.md', 'fa-tutorial.cfg')
-    
+    renumber_steps_in_file('fa-tutorial.cfg')
+
