@@ -1352,6 +1352,11 @@ function initialize(player)
          edit_import = false,
       }
 
+   faplayer.guns_menu = faplayer.guns_menu or {
+      index = 1,
+      ammo_selected = false,
+   }
+
    if table_size(faplayer.mapped) == 0 then player.force.rechart() end
 
    faplayer.localisations = faplayer.localisations or {}
@@ -1725,6 +1730,8 @@ function menu_cursor_up(pindex)
    elseif players[pindex].menu == "signal_selector" then
       fa_circuits.signal_selector_group_up(pindex)
       fa_circuits.read_selected_signal_group(pindex, "")
+   elseif players[pindex].menu == "guns" then
+      fa_equipment.guns_menu_up_or_down(pindex)
    end
 end
 
@@ -1989,6 +1996,8 @@ function menu_cursor_down(pindex)
    elseif players[pindex].menu == "signal_selector" then
       fa_circuits.signal_selector_group_down(pindex)
       fa_circuits.read_selected_signal_group(pindex, "")
+   elseif players[pindex].menu == "guns" then
+      fa_equipment.guns_menu_up_or_down(pindex)
    end
 end
 
@@ -2140,6 +2149,8 @@ function menu_cursor_left(pindex)
    elseif players[pindex].menu == "signal_selector" then
       fa_circuits.signal_selector_signal_prev(pindex)
       fa_circuits.read_selected_signal_slot(pindex, "")
+   elseif players[pindex].menu == "guns" then
+      fa_equipment.guns_menu_left(pindex)
    end
 end
 
@@ -2308,6 +2319,8 @@ function menu_cursor_right(pindex)
    elseif players[pindex].menu == "signal_selector" then
       fa_circuits.signal_selector_signal_next(pindex)
       fa_circuits.read_selected_signal_slot(pindex, "")
+   elseif players[pindex].menu == "guns" then
+      fa_equipment.guns_menu_right(pindex)
    end
 end
 
@@ -5946,10 +5959,7 @@ script.on_event("inventory-read-weapons-data", function(event)
    if not players[pindex].in_menu then
       return
    elseif players[pindex].menu == "inventory" then
-      --Read Weapon data
-      local result = fa_equipment.read_weapons_and_ammo(pindex)
-      --game.get_player(pindex).print(result)--
-      printout(result, pindex)
+      fa_equipment.guns_menu_open(pindex)
    end
 end)
 

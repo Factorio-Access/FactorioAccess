@@ -401,62 +401,84 @@ function mod.guns_menu_open(pindex)
    players[pindex].menu = "guns"
    players[pindex].guns_menu.ammo_selected = false
    players[pindex].guns_menu.index = 1
-   mod.guns_menu_read_slot("Guns and ammo, ", pindex)
+   mod.guns_menu_read_slot(pindex, "Guns and ammo, ")
 end
 
 function mod.guns_menu_left(pindex)
-
+   local index = players[pindex].guns_menu.index
+   index = index - 1
+   if index == 0 then
+      index = 3
+      game.get_player(pindex).play_sound({ path = "inventory-wrap-around" })
+   else
+      game.get_player(pindex).play_sound({ path = "Inventory-Move" })
+   end
+   players[pindex].guns_menu.index = index
+   game.get_player(pindex).play_sound({ path = "Inventory-Move" })
+   mod.guns_menu_read_slot(pindex)
 end
 
 function mod.guns_menu_right(pindex)
-
+   local index = players[pindex].guns_menu.index
+   index = index + 1
+   if index == 4 then
+      index = 1
+      game.get_player(pindex).play_sound({ path = "inventory-wrap-around" })
+   else
+      game.get_player(pindex).play_sound({ path = "Inventory-Move" })
+   end
+   players[pindex].guns_menu.index = index
+   mod.guns_menu_read_slot(pindex)
 end
 
 function mod.guns_menu_up_or_down(pindex)
-
+   players[pindex].guns_menu.ammo_selected = not players[pindex].guns_menu.ammo_selected
+   game.get_player(pindex).play_sound({ path = "Inventory-Move" })
+   mod.guns_menu_read_slot(pindex)
 end
 
-function mod.guns_menu_read_slot(start_phrase_in, pindex)
+function mod.guns_menu_read_slot(pindex, start_phrase_in)
    local start_phrase = start_phrase_in or ""
    local menu = players[pindex].guns_menu
    local p = game.get_player(pindex)
    local result = { "" }
+   table.insert(result, start_phrase)
    local gun_stack = p.get_inventory(defines.inventory.character_guns)[menu.index]
    local ammo_stack = p.get_inventory(defines.inventory.character_ammo)[menu.index]
    if menu.ammo_selected then
+      --Read the ammo slot
       if ammo_stack and ammo_stack.valid_for_read then
-         --Read the ammo
-         table.insert(result, ammo_stack.name .. " " .. "times" ..  " " .. ammo_stack.count)
+         table.insert(result, ammo_stack.name .. " " .. "times" .. " " .. ammo_stack.count)
       else
          table.insert(result, "empty ammo stack")
       end
-      table.insert(result, "for")
+      table.insert(result, " for ")
       if gun_stack and gun_stack.valid_for_read then
          table.insert(result, gun_stack.name)
       else
          table.insert(result, "empty gun slot")
       end
    else
+      --Read the gun slot
       if gun_stack and gun_stack.valid_for_read then
          table.insert(result, gun_stack.name)
-         if stack.count > 1 then
-            table.insert(result, "times" .. " " .. stack.count)
-         end
+         if gun_stack.count > 1 then table.insert(result, "times" .. " " .. gun_stack.count) end
       else
          table.insert(result, "empty gun slot")
       end
-      table.insert(result, "with")
+      table.insert(result, " using ")
       if ammo_stack and ammo_stack.valid_for_read then
          --Read the ammo
-         table.insert(result, ammo_stack.name .. " " .. "times" ..  " " .. ammo_stack.count)
+         table.insert(result, ammo_stack.name .. " " .. "times" .. " " .. ammo_stack.count)
       else
          table.insert(result, "no ammo")
       end
    end
+   printout(result, pindex)
 end
 
 function mod.guns_menu_click_slot(pindex)
-
+   local p = game.get_player(pindex)
 end
 
 return mod

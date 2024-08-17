@@ -67,6 +67,9 @@ function mod.update_menu_visuals()
          elseif player.menu == "player_trash" then
             mod.update_overhead_sprite("utility.trash_white", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite("utility.trash_white", 3, pindex)
+         elseif player.menu == "guns" then
+            mod.update_overhead_sprite("item.pistol", 2, 1.25, pindex)
+            mod.update_custom_GUI_sprite("item.pistol", 1, pindex)
          elseif player.menu == "travel" then
             mod.update_overhead_sprite("utility.downloading_white", 4, 1.25, pindex)
             mod.update_custom_GUI_sprite("utility.downloading_white", 3, pindex)
