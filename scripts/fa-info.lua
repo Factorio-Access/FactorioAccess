@@ -6,6 +6,7 @@ local util = require("util")
 local fa_utils = require("scripts.fa-utils")
 local fa_localising = require("scripts.localising")
 local fa_electrical = require("scripts.electrical")
+local fa_equipment = require("scripts.equipment")
 local fa_graphics = require("scripts.graphics")
 local fa_building_tools = require("scripts.building-tools")
 local fa_rails = require("scripts.rails")
@@ -1159,9 +1160,12 @@ function mod.selected_item_production_stats_info(pindex)
    item_stack = p.cursor_stack
    if item_stack and item_stack.valid_for_read then prototype = item_stack.prototype end
 
-   --Otherwise try to get it from the inventory.
+   --Otherwise try to get it from the inventory slots
    if prototype == nil and players[pindex].menu == "inventory" then
       item_stack = players[pindex].inventory.lua_inventory[players[pindex].inventory.index]
+      if item_stack and item_stack.valid_for_read then prototype = item_stack.prototype end
+   elseif prototype == nil and players[pindex].menu == "guns" then
+      item_stack = fa_equipment.guns_menu_get_selected_slot(pindex)
       if item_stack and item_stack.valid_for_read then prototype = item_stack.prototype end
    end
 
