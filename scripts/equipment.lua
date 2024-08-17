@@ -154,23 +154,25 @@ end
 
 --Move all weapons and ammo back to inventory
 function mod.remove_weapons_and_ammo(pindex)
-   local guns_inv = game.get_player(pindex).get_inventory(defines.inventory.character_guns)
-   local ammo_inv = game.get_player(pindex).get_inventory(defines.inventory.character_ammo)
-   local main_inv = game.get_player(pindex).get_inventory(defines.inventory.character_main)
+   local p = game.get_player(pindex)
+   local guns_inv = p.get_inventory(defines.inventory.character_guns)
+   local ammo_inv = p.get_inventory(defines.inventory.character_ammo)
+   local main_inv = p.get_inventory(defines.inventory.character_main)
    local guns_count = #guns_inv - guns_inv.count_empty_stacks()
    local ammos_count = #ammo_inv - ammo_inv.count_empty_stacks()
    local expected_remove_count = guns_count + ammos_count
    local resulted_remove_count = 0
    local message = ""
 
+   --Abort if not enough empty slots in inventory
+   if main_inv.count_empty_stacks() < 6 then return "Error: Not enough empty inventory slots, at least 6 needed" end
+
    --Remove all ammo
    for i = 1, ammos_count, 1 do
       if main_inv.can_insert(ammo_inv[i]) then
          local inserted = main_inv.insert(ammo_inv[i])
          local removed = ammo_inv.remove(ammo_inv[i])
-         if inserted ~= removed then
-            game.get_player(pindex).print("ammo removal count error", { volume_modifier = 0 }) --todo fix
-         end
+         if inserted ~= removed then p.print("ammo removal count error", { volume_modifier = 0 }) end
          resulted_remove_count = resulted_remove_count + math.ceil(removed / 1000) --counts how many stacks are removed
       end
    end
@@ -180,17 +182,13 @@ function mod.remove_weapons_and_ammo(pindex)
       if main_inv.can_insert(guns_inv[i]) then
          local inserted = main_inv.insert(guns_inv[i])
          local removed = guns_inv.remove(guns_inv[i])
-         if inserted ~= removed then
-            game.get_player(pindex).print("gun removal count error", { volume_modifier = 0 }) --todo fix
-         end
+         if inserted ~= removed then p.print("gun removal count error", { volume_modifier = 0 }) end
          resulted_remove_count = resulted_remove_count + math.ceil(removed / 1000) --counts how many stacks are removed
       end
    end
 
    message = "Collected " .. resulted_remove_count .. " of " .. expected_remove_count .. " item stacks,"
-   if game.get_player(pindex).get_main_inventory().count_empty_stacks() == 0 then
-      message = message .. " Inventory full. "
-   end
+   if main_inv.count_empty_stacks() == 0 then message = message .. " Inventory full. " end
 
    return message
 end
@@ -355,6 +353,7 @@ end
 --Remove all armor equipment and then the armor. laterdo "inv full" checks
 function mod.remove_equipment_and_armor(pindex)
    local armor_inv = game.get_player(pindex).get_inventory(defines.inventory.character_armor)
+   local char_main_inv = game.get_player(pindex).get_inventory(defines.inventory.character_main)
    local result = ""
    if armor_inv.is_empty() then return "No armor." end
 
@@ -365,7 +364,7 @@ function mod.remove_equipment_and_armor(pindex)
       grid = armor_inv[1].grid
    end
    if grid ~= nil and grid.valid then
-      local e_count = grid.count()
+      local initial_equipment_count = grid.count()
       --Take all items
       for i = 0, grid.width - 1, 1 do
          for j = 0, grid.height - 1, 1 do
@@ -377,13 +376,13 @@ function mod.remove_equipment_and_armor(pindex)
             end
          end
       end
-      result = "Collected " .. e_count - grid.count() .. " of " .. e_count .. " items, "
+      result = "Collected " .. initial_equipment_count - grid.count() .. " of " .. initial_equipment_count .. " items, "
    end
 
    --Remove armor
    if players[pindex].menu == "vehicle" and game.get_player(pindex).opened.type == "spider-vehicle" then
       --do nothing
-   elseif game.get_player(pindex).get_inventory(defines.inventory.character_main).count_empty_stacks() == 0 then
+   elseif char_main_inv.count_empty_stacks() == 0 then
       result = result .. " inventory full "
    else
       result = result .. "removed " .. armor_inv[1].name
