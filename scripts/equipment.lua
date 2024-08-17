@@ -142,10 +142,15 @@ function mod.reload_weapons(pindex)
    end
    --Apply an inventory transfer to the ammo inventory.
    local res, full = transfer_inventory({ from = main_inv, to = ammo_inv })
-   --**laterdo fail conditions messages, and maybe add reload sound?
+   local moved_key_count = 0
+   for key, val in pairs(res) do
+      moved_key_count = moved_key_count + 1
+   end
    --Check fullness
    if ammo_inv.is_full() then
       result = "Fully reloaded all three weapons"
+   elseif moved_key_count == 0 then
+      result = "Error: No relevant ammo found for reloading"
    else
       result = "Reloaded weapons with any available ammunition, "
    end

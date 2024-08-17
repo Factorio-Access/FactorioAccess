@@ -5754,7 +5754,6 @@ function do_multi_stack_transfer(ratio, pindex)
       local offset = 1
       if players[pindex].building.recipe_list ~= nil then offset = offset + 1 end
       if players[pindex].building.sector_name == "player inventory from building" then
-         game.get_player(pindex).print("(inventory transfer issue?)", { volume_modifier = 0 })
          --This is the section where we move from the player to the building.
          local item_name = ""
          local stack = players[pindex].inventory.lua_inventory[players[pindex].inventory.index]
@@ -5803,7 +5802,6 @@ end
 * item name / empty string to indicate transfering everything
 * ratio (between 0 and 1), the ratio of the total count to transder for each item.
 * Has no checks or printouts!
-* persistent bug ***: only 1 inv transfer from player inv to chest can work, after that for some reason it always both inserts and takes back
 ]]
 function transfer_inventory(args)
    args.name = args.name or ""
@@ -5819,7 +5817,7 @@ function transfer_inventory(args)
       transfer_list = args.from.get_contents()
    end
    local full = false
-   local res = {}
+   local results = {}
    for name, amount in pairs(transfer_list) do
       if name ~= "blueprint" and name ~= "blueprint-book" then
          amount = math.ceil(amount * args.ratio)
@@ -5830,13 +5828,13 @@ function transfer_inventory(args)
             full = true
          end
          if amount > 0 then
-            res[name] = amount
+            results[name] = amount
             args.from.remove({ name = name, count = amount })
          end
       end
    end
    --game.print("run 1x: " .. args.name)--**
-   return res, full
+   return results, full
 end
 
 script.on_event("crafting-5", function(event)
