@@ -5988,7 +5988,9 @@ end)
 script.on_event("item-info", function(event)
    pindex = event.player_index
    if not check_for_player(pindex) then return end
-   if game.get_player(pindex).driving and players[pindex].menu ~= "train_menu" then
+   local p = game.get_player(pindex)
+   local hand = p.cursor_stack
+   if p.driving and players[pindex].menu ~= "train_menu" then
       printout(fa_driving.vehicle_info(pindex), pindex)
       return
    end
@@ -6000,11 +6002,18 @@ script.on_event("item-info", function(event)
       offset = 1
    end
    if not players[pindex].in_menu then
-      local ent = game.get_player(pindex).selected
+      local ent = p.selected
       if ent and ent.valid then
          local str = ent.localised_description
          if str == nil or str == "" then str = "No description for this entity" end
          printout(str, pindex)
+      elseif hand and hand.valid_for_read then
+         local str = hand.prototype.localised_description
+         if str == nil or str == "" then str = "No description for the item in hand" end
+         local result = { "" }
+         table.insert(result, "In hand: ")
+         table.insert(result, str)
+         printout(result, pindex)
       else
          printout("Nothing selected, use this key to describe an entity or item that you select.", pindex)
       end
@@ -6020,7 +6029,7 @@ script.on_event("item-info", function(event)
          local stack = players[pindex].inventory.lua_inventory[players[pindex].inventory.index]
          if players[pindex].menu == "player_trash" then
             stack =
-               game.get_player(pindex).get_inventory(defines.inventory.character_trash)[players[pindex].inventory.index]
+               p.get_inventory(defines.inventory.character_trash)[players[pindex].inventory.index]
          end
          if stack and stack.valid_for_read and stack.valid == true then
             local str = ""
