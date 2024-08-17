@@ -998,6 +998,12 @@ function read_coords(pindex, start_phrase)
          y = y - 1
       end
       printout(result .. " slot " .. x .. ", on row " .. y, pindex)
+   elseif players[pindex].menu == "guns" then
+      if players[pindex].guns_menu.ammo_selected then
+         printout("Ammo slot " .. players[pindex].guns_menu.index, pindex)
+      else
+         printout("Gun slot " .. players[pindex].guns_menu.index, pindex)
+      end
    elseif
       (players[pindex].menu == "building" or players[pindex].menu == "vehicle")
       and players[pindex].building.recipe_selection == false
@@ -6010,8 +6016,14 @@ script.on_event("item-info", function(event)
          if str == nil or str == "" then str = "No description for this entity" end
          printout(str, pindex)
       elseif hand and hand.valid_for_read then
-         local str = hand.prototype.localised_description
-         if str == nil or str == "" then str = "No description for the item in hand" end
+         local str = ""
+         if hand.prototype.place_result ~= nil then
+            str = hand.prototype.place_result.localised_description
+         else
+            str = hand.prototype.localised_description
+         end
+         if str == nil or str == "" then str = "No description" end
+         printout(str, pindex)
          local result = { "" }
          table.insert(result, "In hand: ")
          table.insert(result, str)
@@ -6039,6 +6051,15 @@ script.on_event("item-info", function(event)
             else
                str = stack.prototype.localised_description
             end
+            if str == nil or str == "" then str = "No description" end
+            printout(str, pindex)
+         else
+            printout("No description", pindex)
+         end
+      elseif players[pindex].menu == "guns" then
+         local stack = fa_equipment.guns_menu_get_selected_slot(pindex)
+         if stack and stack.valid_for_read then
+            str = stack.prototype.localised_description
             if str == nil or str == "" then str = "No description" end
             printout(str, pindex)
          else

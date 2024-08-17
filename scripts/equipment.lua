@@ -437,6 +437,18 @@ function mod.guns_menu_up_or_down(pindex)
    mod.guns_menu_read_slot(pindex)
 end
 
+function mod.guns_menu_get_selected_slot(pindex)
+   local menu = players[pindex].guns_menu
+   local p = game.get_player(pindex)
+   local gun_stack = p.get_inventory(defines.inventory.character_guns)[menu.index]
+   local ammo_stack = p.get_inventory(defines.inventory.character_ammo)[menu.index]
+   if menu.ammo_selected then
+      return ammo_stack
+   else
+      return gun_stack
+   end
+end
+
 function mod.guns_menu_read_slot(pindex, start_phrase_in)
    local start_phrase = start_phrase_in or ""
    local menu = players[pindex].guns_menu
