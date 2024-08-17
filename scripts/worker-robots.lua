@@ -2,6 +2,7 @@
 --Does not include event handlers directly, but can have functions called by them.
 local util = require("util")
 local fa_utils = require("scripts.fa-utils")
+local fa_equipment = require("scripts.equipment")
 
 local dirs = defines.direction
 local MAX_STACK_COUNT = 10
@@ -665,7 +666,7 @@ local function chest_logistic_request_clear(item_stack, chest, pindex)
    --Read the correct slot id value, increment it, set it
    current_slot = chest.get_request_slot(correct_slot_id)
    if current_slot == nil or current_slot.name == nil then
-      --(done))
+      --(done)
    else
       --Clear this request
       chest.clear_request_slot(correct_slot_id)
@@ -933,13 +934,15 @@ function mod.logistics_info_key_handler(pindex)
       if stack and stack.valid_for_read and stack.valid then
          --Item in hand
          mod.player_logistic_request_read(stack, pindex, true)
-      elseif players[pindex].menu == "inventory" and stack_inv and stack_inv.valid_for_read and stack_inv.valid then
+      elseif players[pindex].menu == "inventory" then
          --Item in inv
          mod.player_logistic_request_read(stack_inv, pindex, true)
-      elseif players[pindex].menu == "player_trash" and stack_tra and stack_tra.valid_for_read and stack_tra.valid then
-         stack_tra =
-            p.get_inventory(defines.inventory.character_trash)[players[pindex].inventory.index]
+      elseif players[pindex].menu == "player_trash" then
+         stack_tra = p.get_inventory(defines.inventory.character_trash)[players[pindex].inventory.index]
          mod.player_logistic_request_read(stack_tra, pindex, true)
+      elseif players[pindex].menu == "guns" then
+         local stack = fa_equipment.guns_menu_get_selected_slot(pindex)
+         mod.player_logistic_request_read(stack, pindex, true)
       elseif players[pindex].menu == "crafting" then
          --Use the first found item product of the selected recipe, pass it as a stack
          local prototype = fa_utils.get_prototype_of_item_product(pindex)
@@ -1038,7 +1041,7 @@ function mod.logistics_request_increment_min_handler(pindex)
          if prototype then player_logistic_request_increment_min(prototype, pindex) end
       else
          --Empty hand, empty inventory slot
-         --(do nothing)
+         printout("No actions", pindex)
       end
    elseif players[pindex].menu == "building" and mod.can_make_logistic_requests(game.get_player(pindex).opened) then
       --Chest logistics
@@ -1093,7 +1096,7 @@ function mod.logistics_request_increment_min_handler(pindex)
       printout("Logistic requests not supported for this building", pindex)
    else
       --Other menu
-      printout("No actions", pindex)
+      printout("No actions for this menu", pindex)
    end
 end
 
@@ -1129,7 +1132,7 @@ function mod.logistics_request_decrement_min_handler(pindex)
          if prototype then player_logistic_request_decrement_min(prototype, pindex) end
       else
          --Empty hand, empty inventory slot
-         --(do nothing)
+         printout("No actions", pindex)
       end
    elseif players[pindex].menu == "building" and mod.can_make_logistic_requests(game.get_player(pindex).opened) then
       --Chest logistics
@@ -1184,7 +1187,7 @@ function mod.logistics_request_decrement_min_handler(pindex)
       printout("Logistic requests not supported for this building", pindex)
    else
       --Other menu
-      printout("No actions", pindex)
+      printout("No actions for this menu", pindex)
    end
 end
 
@@ -1220,7 +1223,7 @@ function mod.logistics_request_increment_max_handler(pindex)
          if prototype then player_logistic_request_increment_max(prototype, pindex) end
       else
          --Empty hand, empty inventory slot
-         --(do nothing)
+         printout("No actions", pindex)
       end
    elseif players[pindex].menu == "vehicle" and mod.can_make_logistic_requests(game.get_player(pindex).opened) then
       --spidertron logistics
@@ -1241,7 +1244,7 @@ function mod.logistics_request_increment_max_handler(pindex)
       end
    else
       --Other menu
-      --(do nothing)
+      printout("No actions for this menu", pindex)
    end
 end
 
@@ -1277,7 +1280,7 @@ function mod.logistics_request_decrement_max_handler(pindex)
          if prototype then player_logistic_request_decrement_max(prototype, pindex) end
       else
          --Empty hand, empty inventory slot
-         --(do nothing)
+         printout("No actions", pindex)
       end
    elseif players[pindex].menu == "vehicle" and mod.can_make_logistic_requests(game.get_player(pindex).opened) then
       --spidertron logistics
@@ -1298,7 +1301,7 @@ function mod.logistics_request_decrement_max_handler(pindex)
       end
    else
       --Other menu
-      --(do nothing)
+      printout("No actions for this menu", pindex)
    end
 end
 
@@ -1363,7 +1366,7 @@ function mod.logistics_request_clear_handler(pindex)
          if prototype then player_logistic_request_clear(prototype, pindex) end
       else
          --Empty hand, empty inventory slot
-         --(do nothing)
+         printout("No actions", pindex)
       end
    elseif players[pindex].menu == "building" and mod.can_make_logistic_requests(game.get_player(pindex).opened) then
       --Chest logistics
@@ -1400,7 +1403,7 @@ function mod.logistics_request_clear_handler(pindex)
       end
    else
       --Other menu
-      --(do nothing)
+      printout("No actions for this menu", pindex)
    end
 end
 
@@ -1489,7 +1492,7 @@ function mod.player_logistic_request_read(item_stack, pindex, additional_checks)
       if not p.character_personal_logistic_requests_enabled then result = result .. "Requests paused, " end
    end
 
-   if item_stack == nil or item_stack.valid_for_read == false then 
+   if item_stack == nil or item_stack.valid_for_read == false then
       printout(result .. "Error: Unknown or missing item", pindex)
       return
    end
@@ -1508,9 +1511,9 @@ function mod.player_logistic_request_read(item_stack, pindex, additional_checks)
       --No requests found
       printout(
          result
-            .. "No personal logistic requests set for "
             .. item_stack.name
-            .. ", use the L key and modifier keys to set requests.",
+            .. " has no personal logistic requests set,"
+            .. " use the L key and modifier keys to set requests.",
          pindex
       )
       return
@@ -1559,9 +1562,9 @@ function mod.player_logistic_request_read(item_stack, pindex, additional_checks)
          --All requests are nil
          printout(
             result
-               .. "No personal logistic requests set for "
                .. item_stack.name
-               .. ", use the L key and modifier keys to set requests.",
+               .. " has no personal logistic requests set,"
+               .. " use the L key and modifier keys to set requests.",
             pindex
          )
          return
@@ -1599,7 +1602,7 @@ function mod.chest_logistic_request_read(item_stack, chest, pindex)
    if current_slot == nil or current_slot.name == nil then
       --No requests found
       printout(
-         "No logistic requests set for " .. item_stack.name .. ", use the 'L' key and modifier keys to set requests.",
+         item_stack.name .. " has no logistic requests set, use the 'L' key and modifier keys to set requests.",
          pindex
       )
       return
@@ -1739,9 +1742,9 @@ function mod.spidertron_logistic_request_read(item_stack, spidertron, pindex, ad
       --No requests found
       printout(
          result
-            .. "No logistic requests set for "
             .. item_stack.name
-            .. " in this spidertron, use the L key and modifier keys to set requests.",
+            .. " has no logistic requests set in this spidertron, "
+            .. " use the L key and modifier keys to set requests.",
          pindex
       )
       return
@@ -1790,9 +1793,9 @@ function mod.spidertron_logistic_request_read(item_stack, spidertron, pindex, ad
          --All requests are nil
          printout(
             result
-               .. "No spidertron logistic requests set for "
                .. item_stack.name
-               .. ", use the L key and modifier keys to set requests.",
+               .. " has no logistic requests set in this spidertron, "
+               .. " use the L key and modifier keys to set requests.",
             pindex
          )
          return
