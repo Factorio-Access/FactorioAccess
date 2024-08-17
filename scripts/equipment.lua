@@ -396,4 +396,67 @@ function mod.remove_equipment_and_armor(pindex)
    return result
 end
 
+function mod.guns_menu_open(pindex)
+   local p = game.get_player(pindex)
+   players[pindex].menu = "guns"
+   players[pindex].guns_menu.ammo_selected = false
+   players[pindex].guns_menu.index = 1
+   mod.guns_menu_read_slot("Guns and ammo, ", pindex)
+end
+
+function mod.guns_menu_left(pindex)
+
+end
+
+function mod.guns_menu_right(pindex)
+
+end
+
+function mod.guns_menu_up_or_down(pindex)
+
+end
+
+function mod.guns_menu_read_slot(start_phrase_in, pindex)
+   local start_phrase = start_phrase_in or ""
+   local menu = players[pindex].guns_menu
+   local p = game.get_player(pindex)
+   local result = { "" }
+   local gun_stack = p.get_inventory(defines.inventory.character_guns)[menu.index]
+   local ammo_stack = p.get_inventory(defines.inventory.character_ammo)[menu.index]
+   if menu.ammo_selected then
+      if ammo_stack and ammo_stack.valid_for_read then
+         --Read the ammo
+         table.insert(result, ammo_stack.name .. " " .. "times" ..  " " .. ammo_stack.count)
+      else
+         table.insert(result, "empty ammo stack")
+      end
+      table.insert(result, "for")
+      if gun_stack and gun_stack.valid_for_read then
+         table.insert(result, gun_stack.name)
+      else
+         table.insert(result, "empty gun slot")
+      end
+   else
+      if gun_stack and gun_stack.valid_for_read then
+         table.insert(result, gun_stack.name)
+         if stack.count > 1 then
+            table.insert(result, "times" .. " " .. stack.count)
+         end
+      else
+         table.insert(result, "empty gun slot")
+      end
+      table.insert(result, "with")
+      if ammo_stack and ammo_stack.valid_for_read then
+         --Read the ammo
+         table.insert(result, ammo_stack.name .. " " .. "times" ..  " " .. ammo_stack.count)
+      else
+         table.insert(result, "no ammo")
+      end
+   end
+end
+
+function mod.guns_menu_click_slot(pindex)
+
+end
+
 return mod
