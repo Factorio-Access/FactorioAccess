@@ -4919,6 +4919,8 @@ script.on_event("click-menu", function(event)
             players[pindex].signal_selector.ent,
             players[pindex].signal_selector.editing_first_slot
          )
+      elseif players[pindex].menu == "guns" then
+         fa_equipment.guns_menu_click_slot(pindex)
       end
    end
 end)
@@ -6028,8 +6030,7 @@ script.on_event("item-info", function(event)
       then
          local stack = players[pindex].inventory.lua_inventory[players[pindex].inventory.index]
          if players[pindex].menu == "player_trash" then
-            stack =
-               p.get_inventory(defines.inventory.character_trash)[players[pindex].inventory.index]
+            stack = p.get_inventory(defines.inventory.character_trash)[players[pindex].inventory.index]
          end
          if stack and stack.valid_for_read and stack.valid == true then
             local str = ""

@@ -484,15 +484,19 @@ function mod.guns_menu_click_slot(pindex)
    local gun_stack = p.get_inventory(defines.inventory.character_guns)[menu.index]
    local ammo_stack = p.get_inventory(defines.inventory.character_ammo)[menu.index]
    local selected_stack = nil
-   if menu.ammo_selected then selected_stack = ammo_stack else selected_stack = gun_stack end
+   if menu.ammo_selected then
+      selected_stack = ammo_stack
+   else
+      selected_stack = gun_stack
+   end
    if hand and hand.valid_for_read then
       --FUll hand operations
       if selected_stack == nil then
          --Empty slot
-         if menu.ammo_selected and not hand.is_ammo then
-            printout("Slot reserved for ammo types only", pindex)
+         if menu.ammo_selected and hand.type ~= "ammo" then
+            printout("Error: Slot reserved for ammo types only", pindex)
          elseif not menu.ammo_selected and hand.type ~= "gun" then
-            printout("Slot reserved for gun types only", pindex)
+            printout("Error: Slot reserved for gun types only", pindex)
          else
             hand.swap_stack(selected_stack)
             --If the swap is successful then the following print statement is overwritten.
@@ -500,17 +504,17 @@ function mod.guns_menu_click_slot(pindex)
          end
       else
          --Full slot
-         if menu.ammo_selected and not hand.is_ammo then
-            printout("Slot reserved for ammo types only", pindex)
+         if menu.ammo_selected and hand.type ~= "ammo" then
+            printout("Error: Slot reserved for ammo types only", pindex)
          elseif not menu.ammo_selected and hand.type ~= "gun" then
-            printout("Slot reserved for gun types only", pindex)
+            printout("Error: Slot reserved for gun types only", pindex)
          else
             hand.swap_stack(selected_stack)
             --If the swap is successful then the following print statement is overwritten.
             printout("Error: Incompatible gun and ammo types", pindex)
          end
       end
-   elseif hand == nil then
+   else
       --Empty hand
       if selected_stack and selected_stack.valid_for_read then
          --Pick up the thing
