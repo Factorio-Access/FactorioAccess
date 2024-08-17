@@ -450,7 +450,7 @@ function mod.guns_menu_read_slot(pindex, start_phrase_in)
       if ammo_stack and ammo_stack.valid_for_read then
          table.insert(result, ammo_stack.name .. " " .. "times" .. " " .. ammo_stack.count)
       else
-         table.insert(result, "empty ammo stack")
+         table.insert(result, "empty ammo slot")
       end
       table.insert(result, " for ")
       if gun_stack and gun_stack.valid_for_read then
@@ -479,6 +479,46 @@ end
 
 function mod.guns_menu_click_slot(pindex)
    local p = game.get_player(pindex)
+   local hand = p.cursor_stack
+   local menu = players[pindex].guns_menu
+   local gun_stack = p.get_inventory(defines.inventory.character_guns)[menu.index]
+   local ammo_stack = p.get_inventory(defines.inventory.character_ammo)[menu.index]
+   local selected_stack = nil
+   if menu.ammo_selected then selected_stack = ammo_stack else selected_stack = gun_stack end
+   if hand and hand.valid_for_read then
+      --FUll hand operations
+      if selected_stack == nil then
+         --Empty slot
+         if menu.ammo_selected and not hand.is_ammo then
+            printout("Slot reserved for ammo types only", pindex)
+         elseif not menu.ammo_selected and hand.type ~= "gun" then
+            printout("Slot reserved for gun types only", pindex)
+         else
+            hand.swap_stack(selected_stack)
+            --If the swap is successful then the following print statement is overwritten.
+            printout("Error: Incompatible gun and ammo types", pindex)
+         end
+      else
+         --Full slot
+         if menu.ammo_selected and not hand.is_ammo then
+            printout("Slot reserved for ammo types only", pindex)
+         elseif not menu.ammo_selected and hand.type ~= "gun" then
+            printout("Slot reserved for gun types only", pindex)
+         else
+            hand.swap_stack(selected_stack)
+            --If the swap is successful then the following print statement is overwritten.
+            printout("Error: Incompatible gun and ammo types", pindex)
+         end
+      end
+   elseif hand == nil then
+      --Empty hand
+      if selected_stack and selected_stack.valid_for_read then
+         --Pick up the thing
+         hand.swap_stack(selected_stack)
+      else
+         printout("No action", pindex)
+      end
+   end
 end
 
 return mod
