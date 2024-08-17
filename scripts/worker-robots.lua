@@ -914,18 +914,20 @@ end
 
 --Calls the appropriate function after a keypress for logistic info
 function mod.logistics_info_key_handler(pindex)
-   if game.get_player(pindex).character == nil then
+   local p = game.get_player(pindex)
+   if p.character == nil then
       printout("No logistic information available at the moment.", pindex)
       return
    elseif
       players[pindex].in_menu == false
       or players[pindex].menu == "inventory"
       or players[pindex].menu == "player_trash"
+      or players[pindex].menu == "guns"
       or players[pindex].menu == "crafting"
    then
       --Personal logistics
-      local stack = game.get_player(pindex).cursor_stack
-      local stack_inv = game.get_player(pindex).get_main_inventory()[players[pindex].inventory.index]
+      local stack = p.cursor_stack
+      local stack_inv = p.get_main_inventory()[players[pindex].inventory.index]
       local stack_tra = nil
       --Check item in hand or item in inventory
       if stack and stack.valid_for_read and stack.valid then
@@ -936,7 +938,7 @@ function mod.logistics_info_key_handler(pindex)
          mod.player_logistic_request_read(stack_inv, pindex, true)
       elseif players[pindex].menu == "player_trash" and stack_tra and stack_tra.valid_for_read and stack_tra.valid then
          stack_tra =
-            game.get_player(pindex).get_inventory(defines.inventory.character_trash)[players[pindex].inventory.index]
+            p.get_inventory(defines.inventory.character_trash)[players[pindex].inventory.index]
          mod.player_logistic_request_read(stack_tra, pindex, true)
       elseif players[pindex].menu == "crafting" then
          --Use the first found item product of the selected recipe, pass it as a stack
@@ -944,7 +946,7 @@ function mod.logistics_info_key_handler(pindex)
          if prototype then mod.player_logistic_request_read(prototype, pindex, true) end
       else
          --Logistic chest in front
-         local ent = game.get_player(pindex).selected
+         local ent = p.selected
          if mod.can_make_logistic_requests(ent) then
             mod.read_entity_requests_summary(ent, pindex)
             return
@@ -959,11 +961,11 @@ function mod.logistics_info_key_handler(pindex)
          local result = mod.player_logistic_requests_summary_info(pindex)
          printout(result, pindex)
       end
-   elseif players[pindex].menu == "building" and mod.can_make_logistic_requests(game.get_player(pindex).opened) then
+   elseif players[pindex].menu == "building" and mod.can_make_logistic_requests(p.opened) then
       --Chest logistics
-      local stack = game.get_player(pindex).cursor_stack
-      local stack_inv = game.get_player(pindex).opened.get_output_inventory()[players[pindex].building.index]
-      local chest = game.get_player(pindex).opened
+      local stack = p.cursor_stack
+      local stack_inv = p.opened.get_output_inventory()[players[pindex].building.index]
+      local chest = p.opened
       --Check item in hand or item in inventory
       if stack ~= nil and stack.valid_for_read and stack.valid then
          --Item in hand
@@ -975,12 +977,12 @@ function mod.logistics_info_key_handler(pindex)
          --Empty hand, empty inventory slot
          mod.read_entity_requests_summary(chest, pindex)
       end
-   elseif players[pindex].menu == "vehicle" and mod.can_make_logistic_requests(game.get_player(pindex).opened) then
+   elseif players[pindex].menu == "vehicle" and mod.can_make_logistic_requests(p.opened) then
       --spidertron logistics
-      local stack = game.get_player(pindex).cursor_stack
+      local stack = p.cursor_stack
       local invs = defines.inventory
-      local stack_inv = game.get_player(pindex).opened.get_inventory(invs.spider_trunk)[players[pindex].building.index]
-      local spidertron = game.get_player(pindex).opened
+      local stack_inv = p.opened.get_inventory(invs.spider_trunk)[players[pindex].building.index]
+      local spidertron = p.opened
       --Check item in hand or item in inventory
       if stack ~= nil and stack.valid_for_read and stack.valid then
          --Item in hand
@@ -992,8 +994,8 @@ function mod.logistics_info_key_handler(pindex)
          --Empty hand, empty inventory slot
          mod.read_entity_requests_summary(spidertron, pindex)
       end
-   elseif players[pindex].menu == "building" and mod.can_set_logistic_filter(game.get_player(pindex).opened) then
-      local filter = game.get_player(pindex).opened.storage_filter
+   elseif players[pindex].menu == "building" and mod.can_set_logistic_filter(p.opened) then
+      local filter = p.opened.storage_filter
       local result = "Nothing"
       if filter ~= nil then result = filter.name end
       printout(result .. " set as logistic storage filter", pindex)
@@ -1485,6 +1487,11 @@ function mod.player_logistic_request_read(item_stack, pindex, additional_checks)
 
       --Check if personal logistics are enabled
       if not p.character_personal_logistic_requests_enabled then result = result .. "Requests paused, " end
+   end
+
+   if item_stack == nil or item_stack.valid_for_read == false then 
+      printout(result .. "Error: Unknown or missing item", pindex)
+      return
    end
 
    --Find the correct request slot for this item
