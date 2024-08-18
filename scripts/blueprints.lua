@@ -911,6 +911,8 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
          elseif left_clicked == false and right_clicked == true then
             --Take the blueprint to hand (Therefore both copy and delete)
             --...
+         elseif false then
+            --Delete it (press twice)
          end
       end
    else
@@ -930,35 +932,67 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             local result = "Read the description of this blueprint book"
             printout(result, pindex)
          else
-            --Stuff ***
+            local result = mod.get_blueprint_description(bpb)
+            if result == nil or result == "" then result = "no description" end
+            printout(result, pindex)
          end
       elseif index == 2 then
          if left_clicked ~= true then
             local result = "Read the icons of this blueprint book, which are its featured components"
             printout(result, pindex)
          else
-            --Stuff ***
+            local result = "This book features "
+            if bpb.blueprint_icons and #bp.blueprint_icons > 0 then
+               --Icon 1
+               if bpb.blueprint_icons[1] ~= nil then result = result .. bp.blueprint_icons[1].signal.name .. ", " end
+               if bpb.blueprint_icons[2] ~= nil then result = result .. bp.blueprint_icons[2].signal.name .. ", " end
+               if bpb.blueprint_icons[3] ~= nil then result = result .. bp.blueprint_icons[3].signal.name .. ", " end
+               if bpb.blueprint_icons[4] ~= nil then result = result .. bp.blueprint_icons[4].signal.name .. ", " end
+            else
+               result = result .. "nothing"
+            end
+            printout(result, pindex)
          end
       elseif index == 3 then
          if left_clicked ~= true then
             local result = "Rename this book"
             printout(result, pindex)
          else
-            --Stuff ***
+            players[pindex].blueprint_menu.edit_label = true
+            local frame = p.gui.screen.add({ type = "frame", name = "blueprint-edit-label" })
+            frame.bring_to_front()
+            frame.force_auto_center()
+            frame.focus()
+            local input = frame.add({ type = "textfield", name = "input" })
+            input.focus()
+            local result =
+               "Type in a new name for this blueprint and press 'ENTER' to confirm, or press 'ESC' to cancel."
+            printout(result, pindex)
          end
       elseif index == 4 then
          if left_clicked ~= true then
             local result = "Rewrite the description of this book"
             printout(result, pindex)
          else
-            --Stuff ***
+            players[pindex].blueprint_menu.edit_description = true
+            local frame = p.gui.screen.add({ type = "frame", name = "blueprint-edit-description" })
+            frame.bring_to_front()
+            frame.force_auto_center()
+            frame.focus()
+            local input = frame.add({ type = "textfield", name = "input" }) --, text = get_blueprint_description(bp)}
+            input.focus()
+            local result =
+               "Type in the new description text box for this blueprint and press 'ENTER' to confirm, or press 'ESC' to cancel."
+            printout(result, pindex)
          end
       elseif index == 5 then
          if left_clicked ~= true then
             local result = "Create a copy of this blueprint book"
             printout(result, pindex)
          else
-            --Stuff ***
+            p.insert(table.deepcopy(bpb))
+            local result = "Book copy inserted to inventory"
+            printout(result, pindex)
          end
       elseif index == 6 then
          if left_clicked ~= true then
