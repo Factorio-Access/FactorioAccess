@@ -386,7 +386,7 @@ end
    6. Edit the label of this blueprint
    7. Edit the description of this blueprint
    8. Create a copy of this blueprint
-   9. Clear this blueprint 
+   9. Clear this blueprint (press twice)
    10. Export this blueprint as a text string
    11. Import a text string to overwrite this blueprint
    12. Reselect the area for this blueprint 
@@ -839,12 +839,14 @@ end
    
    Settings Mode (Press RIGHT BRACKET on the BPB in hand)
    0. name, bp count, menu instructions
-   1. Read the description (?) and icons (?) of this blueprint book, which are its featured components
-   2. Rename this book 
-   3. Create a copy of this blueprint book
-   4. Clear this blueprint book 
-   5. Export this blueprint book as a text string
-   6. Import a text string to overwrite this blueprint book
+   1. Read the description
+   2. Read the icons, which are its featured components
+   3. Rename this book
+   4. Edit the description 
+   5. Create a copy of this blueprint book
+   6. Delete this blueprint book (press twice)
+   7. Export this blueprint book as a text string
+   Later: 8. Import a blueprint or book from a text string
 
    Note: BPB normally supports description and icons, but it is unclear whether the json tables can access these.
 ]]
@@ -913,12 +915,7 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
       end
    else
       --Blueprint book settings mode
-      if true then
-         printout(
-            "Settings for blueprint book " .. mod.blueprint_book_get_name(pindex) .. " not yet implemented ",
-            pindex
-         ) --***
-      elseif index == 0 then
+      if index == 0 then
          printout(
             "Settings for blueprint book "
                .. mod.blueprint_book_get_name(pindex)
@@ -929,46 +926,55 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             pindex
          )
       elseif index == 1 then
-         --Read the icons of this blueprint book, which are its featured components
+         if left_clicked ~= true then
+            local result = "Read the description of this blueprint book"
+            printout(result, pindex)
+         else
+            --Stuff ***
+         end
+      elseif index == 2 then
          if left_clicked ~= true then
             local result = "Read the icons of this blueprint book, which are its featured components"
             printout(result, pindex)
          else
             --Stuff ***
          end
-      elseif index == 2 then
-         --Rename this book
+      elseif index == 3 then
          if left_clicked ~= true then
             local result = "Rename this book"
             printout(result, pindex)
          else
             --Stuff ***
          end
-      elseif index == 3 then
-         --Create a copy of this blueprint book
+      elseif index == 4 then
+         if left_clicked ~= true then
+            local result = "Rewrite the description of this book"
+            printout(result, pindex)
+         else
+            --Stuff ***
+         end
+      elseif index == 5 then
          if left_clicked ~= true then
             local result = "Create a copy of this blueprint book"
             printout(result, pindex)
          else
             --Stuff ***
          end
-      elseif index == 4 then
-         --Clear this blueprint book
+      elseif index == 6 then
          if left_clicked ~= true then
-            local result = "Clear this blueprint book"
+            local result = "Delete this blueprint book"
             printout(result, pindex)
          else
             --Stuff ***
          end
-      elseif index == 5 then
-         --Export this blueprint book as a text string
+      elseif index == 7 then
          if left_clicked ~= true then
             local result = "Export this blueprint book as a text string"
             printout(result, pindex)
          else
             --Stuff ***
          end
-      elseif index == 6 then
+      elseif index == 8 then
          --Import a text string to overwrite this blueprint book
          if left_clicked ~= true then
             local result = "Import a text string to overwrite this blueprint book"
@@ -979,7 +985,7 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
       end
    end
 end
-BLUEPRINT_BOOK_SETTINGS_MENU_LENGTH = 1
+BLUEPRINT_BOOK_SETTINGS_MENU_LENGTH = 7
 
 function mod.blueprint_book_menu_open(pindex, open_in_list_mode)
    if players[pindex].vanilla_mode then return end
