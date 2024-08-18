@@ -797,6 +797,15 @@ function mod.factorio_default_sort(k1, k2)
    end
 end
 
+function mod.sort_ents_by_distance_from_pos(pos, ents)
+   table.sort(ents, function(k1, k2)
+      if k1 == nil or k1.valid == false then return true end
+      if k2 == nil or k2.valid == false then return false end
+      return util.distance(pos, k1.position) < util.distance(pos, k2.position)
+   end)
+   return ents
+end
+
 --Checks a position to see if it has a water tile
 function mod.tile_is_water(surface, pos)
    local water_tiles = surface.find_tiles_filtered({

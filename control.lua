@@ -5107,19 +5107,14 @@ script.on_event("click-hand", function(event)
          --If holding a capsule type, e.g. cliff explosives or robot capsules, or remotes, try to use it at the cursor position (no feedback about successful usage)
          local name = stack.name
          local cursor_dist = util.distance(game.get_player(pindex).position, players[pindex].cursor_pos)
-         local range = 20
-         if name == "cliff-explosives" then
-            range = 10
-         elseif name == "grenade" then
-            range = 15
-         end
+         local min_range, max_range = fa_combat.get_grenade_or_capsule_range(stack)
          --Do a range check or use an artillery remote
          if name == "artillery-targeting-remote" then
             p.use_from_cursor(players[pindex].cursor_pos)
             p.play_sound({ path = "Close-Inventory-Sound" }) --**laterdo better sound
             if cursor_dist < 7 then printout("Warning, you are in the target area!", pindex) end
             return
-         elseif cursor_dist > range then
+         elseif cursor_dist > max_range then
             p.play_sound({ path = "utility/cannot_build" })
             printout("Target is out of range", pindex)
             return
@@ -5127,10 +5122,10 @@ script.on_event("click-hand", function(event)
 
          --Apply smart aiming
          local aim_pos = players[pindex].cursor_pos
-         if name ~= "cliff-explosives" then fa_combat.smart_aim_grenades_and_capsules(pindex) end
+         if name ~= "cliff-explosives" then aim_pos = fa_combat.smart_aim_grenades_and_capsules(pindex) end
 
          --Throw it
-         p.use_from_cursor(aim_pos)
+         if aim_pos ~= nil then p.use_from_cursor(aim_pos) end
 
          --Capsule robot info after throwing
          if name == "defender-capsule" or name == "destroyer-capsule" then

@@ -2,6 +2,7 @@
 --Does not include event handlers, guns and equipment maanagement
 
 local util = require("util")
+local fa_utils = require("scripts.fa-utils")
 local fa_graphics = require("scripts.graphics")
 local fa_mouse = require("scripts.mouse")
 local fa_equipment = require("scripts.equipment")
@@ -239,50 +240,95 @@ function mod.aim_gun_at_nearest_enemy(pindex, enemy_in)
    return true
 end
 
-function mod.smart_aim_grenades_and_capsules(pindex)
+--Max ranges are determined by the game GUI, min ranges represent the minimum distance where you will not get damaged.
+function mod.get_grenade_or_capsule_range(stack)
+   local max_range = 20
+   local min_range = 0
+   if stack == nil or stack.valid_for_read == false then
+      return min_range, max_range
+   elseif stack.name == "grenade" then
+      max_range = 15
+      min_range = 7
+   elseif stack.name == "cluster-grenade" then
+      max_range = 20
+      min_range = 12
+   elseif stack.name == "poison-capsule" then
+      max_range = 25
+      min_range = 12
+   elseif stack.name == "slowdown-capsule" then
+      max_range = 25
+      min_range = 0
+   elseif stack.name == "cliff-explosives" then
+      max_range = 10
+      min_range = 0
+   elseif stack.name == "defender-capsule" then
+      max_range = 20
+      min_range = 0
+   elseif stack.name == "distractor-capsule" then
+      max_range = 25
+      min_range = 0
+   elseif stack.name == "destroyer-capsule" then
+      max_range = 20
+      min_range = 0
+   end
+   return min_range, max_range
+end
+
+--[[
+   Grenade aiming rules
+   - First label and sort all potential_targets by distance
+   - If running, do not throw at anything directly ahead of you.
+   1. Target enemy spawners or worms found within min and max range, nearest first
+   2. If none then target enemy units or characters found within min and max range, nearest first
+   3. If none then target the cursor position if within min and max range
+   4. If not, and if running and if any enemies are close behind you, then target them
+   5. If not, do not throw.
+]]
+function mod.smart_aim_grenades_and_capsules(pindex, draw_circles_in)
+   local draw_circles = draw_circles_in or false
    local p = game.get_player(pindex)
    local hand = p.cursor_stack
    if hand == nil or hand.valid_for_read == false then return end
-   local max_range = 20
-   local min_range = 5
+   local running_dir = nil
+   local player_pos = p.position
+   --Get running direction
+   if p.walking_state.walking then running_dir = p.walking_state.direction end
    --Determine max and min throwing ranges based on capsule type
-   if hand.name == "grenade" then
-      max_range = 15
-      min_range = 6
-   elseif hand.name == "cluster-grenade" then
-      max_range = 15
-      min_range = 10
-   end
+   local min_range, max_range = mod.get_grenade_or_capsule_range(hand)
    --Draw the ranges
-   rendering.draw_circle({
-      surface = p.surface,
-      target = p.position,
-      radius = min_range,
-      width = 4,
-      color = { 1, 0, 0 },
-      draw_on_ground = true,
-      time_to_live = 60,
-   })
-   rendering.draw_circle({
-      surface = p.surface,
-      target = p.position,
-      radius = max_range,
-      width = 8,
-      color = { 1, 0, 0 },
-      draw_on_ground = true,
-      time_to_live = 60,
-   })
+   if draw_circles then
+      rendering.draw_circle({
+         surface = p.surface,
+         target = player_pos,
+         radius = min_range,
+         width = 4,
+         color = { 1, 0, 0 },
+         draw_on_ground = true,
+         time_to_live = 60,
+      })
+      rendering.draw_circle({
+         surface = p.surface,
+         target = player_pos,
+         radius = max_range,
+         width = 8,
+         color = { 1, 0, 0 },
+         draw_on_ground = true,
+         time_to_live = 60,
+      })
+   end
    --Scan for targets within range
    potential_targets = p.surface.find_entities_filtered({
       surface = p.surface,
-      position = p.position,
+      position = player_pos,
       radius = max_range,
       force = { p.force.name, "neutral" },
       invert = true,
    })
-   --Label detected targets
+   --Sort potential targets by distance from the player
+   potential_targets = fa_utils.sort_ents_by_distance_from_pos(player_pos, potential_targets)
+   --Label potential targets
    for i, t in ipairs(potential_targets) do
-      if t.valid then
+      if t.valid and draw_circles then
          rendering.draw_circle({
             surface = p.surface,
             target = t.position,
@@ -294,6 +340,54 @@ function mod.smart_aim_grenades_and_capsules(pindex)
          })
       end
    end
+   --1. Target enemy spawners and worms
+   for i, t in ipairs(potential_targets) do
+      if t.valid and t.type == "unit-spawner" or t.type == "turret" then
+         local dist = util.distance(player_pos, t.position)
+         local dir = fa_utils.get_direction_precise(t.position, player_pos)
+         if dist > min_range and dist < max_range and dir ~= running_dir then return t.position end
+      end
+   end
+   --2a. Target enemy units or characters
+   for i, t in ipairs(potential_targets) do
+      if t.valid and t.type == "unit" or t.type == "character" then
+         local dist = util.distance(player_pos, t.position)
+         local dir = fa_utils.get_direction_precise(t.position, player_pos)
+         if dist > min_range and dist < max_range and dir ~= running_dir then return t.position end
+      end
+   end
+   --2b. Target all other enemy entities
+   for i, t in ipairs(potential_targets) do
+      if t.valid then
+         local dist = util.distance(player_pos, t.position)
+         local dir = fa_utils.get_direction_precise(t.position, player_pos)
+         if dist > min_range and dist < max_range and dir ~= running_dir then return t.position end
+      end
+   end
+   --3. Target the cursor position unless running at it
+   local cursor_dist = util.distance(player_pos, players[pindex].cursor_pos)
+   local cursor_dir = fa_utils.get_direction_precise(players[pindex].cursor_pos, player_pos)
+   if cursor_dist > min_range and cursor_dist < max_range and cursor_dir ~= running_dir then
+      return players[pindex].cursor_pos
+   end
+   --4. If running and if any enemies are close behind you, then target them
+   --The player runs at least 8.9 tiles per second and the throw takes around half a second
+   --so a displacement of 4 tiles is a safe bet. Also assume a max range penalty because it is behind you
+   if running_dir ~= nil and #potential_targets > 0 then
+      for i, t in ipairs(potential_targets) do
+         if t.valid then
+            local dist = util.distance(player_pos, t.position)
+            local dir = fa_utils.get_direction_precise(t.position, player_pos)
+            if dist > min_range - 4 and dist < max_range - 8 and dir == fa_utils.rotate_180(running_dir) then
+               return t.position
+               --also add 45 degrees
+            end
+         end
+      end
+   end
+
+   p.play_sound({ path = "utility/cannot_build" })
+   return nil
 end
 
 --Checks if the conditions are valid for shooting an atomic bomb
