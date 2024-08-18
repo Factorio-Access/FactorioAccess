@@ -239,6 +239,63 @@ function mod.aim_gun_at_nearest_enemy(pindex, enemy_in)
    return true
 end
 
+function mod.smart_aim_grenades_and_capsules(pindex)
+   local p = game.get_player(pindex)
+   local hand = p.cursor_stack
+   if hand == nil or hand.valid_for_read == false then return end
+   local max_range = 20
+   local min_range = 5
+   --Determine max and min throwing ranges based on capsule type
+   if hand.name == "grenade" then
+      max_range = 15
+      min_range = 6
+   elseif hand.name == "cluster-grenade" then
+      max_range = 15
+      min_range = 10
+   end
+   --Draw the ranges
+   rendering.draw_circle({
+      surface = p.surface,
+      target = p.position,
+      radius = min_range,
+      width = 4,
+      color = { 1, 0, 0 },
+      draw_on_ground = true,
+      time_to_live = 60,
+   })
+   rendering.draw_circle({
+      surface = p.surface,
+      target = p.position,
+      radius = max_range,
+      width = 8,
+      color = { 1, 0, 0 },
+      draw_on_ground = true,
+      time_to_live = 60,
+   })
+   --Scan for targets within range
+   potential_targets = p.surface.find_entities_filtered({
+      surface = p.surface,
+      position = p.position,
+      radius = max_range,
+      force = { p.force.name, "neutral" },
+      invert = true,
+   })
+   --Label detected targets
+   for i, t in ipairs(potential_targets) do
+      if t.valid then
+         rendering.draw_circle({
+            surface = p.surface,
+            target = t.position,
+            radius = 1,
+            width = 4,
+            color = { 1, 0, 0 },
+            draw_on_ground = true,
+            time_to_live = 60,
+         })
+      end
+   end
+end
+
 --Checks if the conditions are valid for shooting an atomic bomb
 --laterdo review
 function mod.run_atomic_bomb_checks(pindex)
