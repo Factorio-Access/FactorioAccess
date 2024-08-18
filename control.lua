@@ -5119,14 +5119,20 @@ script.on_event("click-hand", function(event)
             printout("Target is out of range", pindex)
             return
          end
-
          --Apply smart aiming
          local aim_pos = players[pindex].cursor_pos
-         if name ~= "cliff-explosives" then aim_pos = fa_combat.smart_aim_grenades_and_capsules(pindex) end
-
+         if
+            name == "grenade"
+            or name == "cluster-grenade"
+            or name == "poison-capsule"
+            or name == "slowdown-capsule"
+         then
+            aim_pos = fa_combat.smart_aim_grenades_and_capsules(pindex)
+         elseif name == "defender-capsule" or name == "distractor-capsule" or name == "destroyer-capsule" then
+            aim_pos = p.position
+         end
          --Throw it
          if aim_pos ~= nil then p.use_from_cursor(aim_pos) end
-
          --Capsule robot info after throwing
          if name == "defender-capsule" or name == "destroyer-capsule" then
             local max_robots = p.force.maximum_following_robot_count
