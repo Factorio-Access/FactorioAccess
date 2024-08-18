@@ -747,6 +747,13 @@ data:extend({
 
    {
       type = "custom-input",
+      name = "blueprint-book-create",
+      key_sequence = "CONTROL + SHIFT + ALT + B",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
       name = "type-cursor-target",
       key_sequence = "ALT + T",
       consuming = "none",

@@ -3059,6 +3059,15 @@ script.on_event("ruler-clear", function(event)
    printout("Cleared rulers", pindex)
 end)
 
+script.on_event("blueprint-book-create", function(event)
+   local pindex = event.player_index
+   if not check_for_player(pindex) then return end
+   local p = game.get_player(pindex)
+   if p.is_cursor_empty then
+      p.cursor_stack.set_stack("blueprint-book")
+   end
+end)
+
 script.on_event("type-cursor-target", function(event)
    pindex = event.player_index
    if not check_for_player(pindex) then return end
@@ -4447,7 +4456,12 @@ script.on_event("click-menu-right", function(event)
          local stack_inv = table.deepcopy(players[pindex].inventory.lua_inventory[players[pindex].inventory.index])
          p.play_sound({ path = "utility/inventory_click" })
          if stack_inv and stack_inv.valid_for_read and (stack_inv.is_blueprint or stack_inv.is_blueprint_book) then
-            --Do not grab it
+            --A a blueprint book is in hand, then throw blueprints into it
+            local book = p.cursor_stack
+            if book and book.valid_for_read and book.is_blueprint_book and stack_inv.is_blueprint then
+               --add here ***
+            end
+            --Otherwise, do not grab blueprints or books
             return
          end
          if not (stack_cur and stack_cur.valid_for_read) and (stack_inv and stack_inv.valid_for_read) then
