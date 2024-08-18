@@ -345,7 +345,20 @@ function mod.smart_aim_grenades_and_capsules(pindex, draw_circles_in)
       if t.valid and t.type == "unit-spawner" or t.type == "turret" then
          local dist = util.distance(player_pos, t.position)
          local dir = fa_utils.get_direction_precise(t.position, player_pos)
-         if dist > min_range and dist < max_range and dir ~= running_dir then return t.position end
+         if dist > min_range and dist < max_range and dir ~= running_dir then
+            return t.position
+         elseif draw_circles then
+            --Relabel it as skipped
+            rendering.draw_circle({
+               surface = p.surface,
+               target = t.position,
+               radius = 1,
+               width = 8,
+               color = { 0, 0, 1 },
+               draw_on_ground = true,
+               time_to_live = 60,
+            })
+         end
       end
    end
    --2a. Target enemy units or characters
@@ -353,15 +366,41 @@ function mod.smart_aim_grenades_and_capsules(pindex, draw_circles_in)
       if t.valid and t.type == "unit" or t.type == "character" then
          local dist = util.distance(player_pos, t.position)
          local dir = fa_utils.get_direction_precise(t.position, player_pos)
-         if dist > min_range and dist < max_range and dir ~= running_dir then return t.position end
+         if dist > min_range and dist < max_range and dir ~= running_dir then
+            return t.position
+         elseif draw_circles then
+            --Relabel it as skipped
+            rendering.draw_circle({
+               surface = p.surface,
+               target = t.position,
+               radius = 1,
+               width = 8,
+               color = { 0, 0, 1 },
+               draw_on_ground = true,
+               time_to_live = 60,
+            })
+         end
       end
    end
    --2b. Target all other enemy entities
    for i, t in ipairs(potential_targets) do
-      if t.valid then
+      if t.valid and t.type ~= "unit-spawner" and t.type ~= "turret" and t.type ~= "unit" and t.type ~= "character" then
          local dist = util.distance(player_pos, t.position)
          local dir = fa_utils.get_direction_precise(t.position, player_pos)
-         if dist > min_range and dist < max_range and dir ~= running_dir then return t.position end
+         if dist > min_range and dist < max_range and dir ~= running_dir then
+            return t.position
+         elseif draw_circles then
+            --Relabel it as skipped
+            rendering.draw_circle({
+               surface = p.surface,
+               target = t.position,
+               radius = 1,
+               width = 8,
+               color = { 0, 0, 1 },
+               draw_on_ground = true,
+               time_to_live = 60,
+            })
+         end
       end
    end
    --3. Target the cursor position unless running at it
