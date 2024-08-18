@@ -279,8 +279,8 @@ end
    - First label and sort all potential_targets by distance
    - If running, do not throw at anything directly ahead of you.
    1. Target enemy spawners or worms found within min and max range, nearest first
-   2. If none then target enemy units or characters found within min and max range, nearest first
-   3. If none then target the cursor position if within min and max range
+   2. If none, then target enemy units or characters found within min and max range, nearest first
+   3. If none, then target the cursor position if within min and max range
    4. If not, and if running and if any enemies are close behind you, then target them
    5. If not, do not throw.
 ]]
@@ -413,14 +413,12 @@ function mod.smart_aim_grenades_and_capsules(pindex, draw_circles_in)
    --The player runs at least 8.9 tiles per second and the throw takes around half a second
    --so a displacement of 4 tiles is a safe bet. Also assume a max range penalty because it is behind you
    if running_dir ~= nil and #potential_targets > 0 then
+      back_dir = fa_utils.rotate_180(running_dir)
       for i, t in ipairs(potential_targets) do
          if t.valid then
             local dist = util.distance(player_pos, t.position)
             local dir = fa_utils.get_direction_precise(t.position, player_pos)
-            if dist > min_range - 4 and dist < max_range - 8 and dir == fa_utils.rotate_180(running_dir) then
-               return t.position
-               --also add 45 degrees
-            end
+            if dist > min_range - 4 and dist < max_range - 8 and dir == back_dir then return t.position end
          end
       end
    end
