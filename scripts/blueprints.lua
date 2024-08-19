@@ -919,7 +919,7 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
       end
    else
       --Blueprint book settings mode
-      if index == 0 or true then
+      if index == 0 then
          printout(
             "Settings for blueprint book "
                .. mod.blueprint_book_get_name(pindex)
@@ -1001,14 +1001,27 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             local result = "Delete this blueprint book"
             printout(result, pindex)
          else
-            --Stuff ***
+            bpb.set_stack({ name = "blueprint", count = 1 })
+            bpb.set_stack(nil) --calls event handler to delete empty planners.
+            local result = "Blueprint book deleted and menu closed"
+            printout(result, pindex)
+            mod.blueprint_menu_close(pindex)
          end
       elseif index == 7 then
          if left_clicked ~= true then
             local result = "Export this blueprint book as a text string"
             printout(result, pindex)
          else
-            --Stuff ***
+            players[pindex].blueprint_menu.edit_export = true
+            local frame = game.get_player(pindex).gui.screen.add({ type = "frame", name = "blueprint-edit-export" })
+            frame.bring_to_front()
+            frame.force_auto_center()
+            frame.focus()
+            local input = frame.add({ type = "textfield", name = "input", text = bpb.export_stack() })
+            input.focus()
+            local result =
+               "Copy the text from this box using 'CONTROL + A' and then 'CONTROL + C' and then press ENTER to exit"
+            printout(result, pindex)
          end
       elseif index == 8 then
          --Import a text string to overwrite this blueprint book
@@ -1016,12 +1029,20 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             local result = "Import a text string to overwrite this blueprint book"
             printout(result, pindex)
          else
-            --Stuff ***
+            players[pindex].blueprint_menu.edit_import = true
+            local frame = game.get_player(pindex).gui.screen.add({ type = "frame", name = "blueprint-edit-import" })
+            frame.bring_to_front()
+            frame.force_auto_center()
+            frame.focus()
+            local input = frame.add({ type = "textfield", name = "input" })
+            input.focus()
+            local result = "Paste a copied blueprint text string in this box and then press ENTER to load it"
+            printout(result, pindex)
          end
       end
    end
 end
-BLUEPRINT_BOOK_SETTINGS_MENU_LENGTH = 7
+BLUEPRINT_BOOK_SETTINGS_MENU_LENGTH = 8
 
 function mod.blueprint_book_menu_open(pindex, open_in_list_mode)
    if players[pindex].vanilla_mode then return end
