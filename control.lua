@@ -2977,9 +2977,15 @@ script.on_event("read-cursor-distance-vector", function(event)
       local p_pos = players[pindex].position
       local diff_x = math.floor(c_pos.x) - math.floor(p_pos.x)
       local diff_y = math.floor(c_pos.y) - math.floor(p_pos.y)
+
+      ---@type defines.direction
       local dir_x = dirs.east
+
       if diff_x < 0 then dir_x = dirs.west end
+
+      ---@type defines.direction
       local dir_y = dirs.south
+
       if diff_y < 0 then dir_y = dirs.north end
       local result = "At "
          .. math.abs(diff_x)
@@ -6039,6 +6045,7 @@ script.on_event("item-info", function(event)
          if str == nil or str == "" then str = "No description for this entity" end
          printout(str, pindex)
       elseif hand and hand.valid_for_read then
+         ---@type LocalisedString
          local str = ""
          if hand.prototype.place_result ~= nil then
             str = hand.prototype.place_result.localised_description
@@ -6364,7 +6371,7 @@ script.on_event(defines.events.on_player_cursor_stack_changed, function(event)
          end
          --Use this opportunity to update saved information about the blueprint's corners (used when drawing the footprint)
          local width, height = fa_blueprints.get_blueprint_width_and_height(pindex)
-         if width == nil or height == nil then return result end
+         if width == nil or height == nil then return end
          players[pindex].blueprint_width_in_hand = width + 1
          players[pindex].blueprint_height_in_hand = height + 1
       end
@@ -6891,6 +6898,7 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
       local result = event.element.text
       if result ~= nil and result ~= "" then
          local constant = tonumber(result)
+         ---@cast constant  number
          local valid_number = constant ~= nil
          if valid_number and p.selected and p.selected.valid and p.selected.name == "train-stop" and constant >= 0 then
             p.selected.trains_limit = constant
@@ -7749,7 +7757,7 @@ function get_selected_inventory_and_slot(pindex)
       inv = p.get_main_inventory()
       index = players[pindex].inventory.index
    elseif menu == "player_trash" then
-      inv = p.get_inventory(defines.inventory.player_trash)
+      inv = p.get_inventory(defines.inventory.character_trash)
       index = players[pindex].inventory.index
    elseif menu == "building" or menu == "vehicle" then
       local sector_name = players[pindex].building.sector_name

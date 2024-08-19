@@ -87,7 +87,8 @@ end
 function mod.get_direction_biased(pos_target, pos_origin)
    local diff_x = pos_target.x - pos_origin.x
    local diff_y = pos_target.y - pos_origin.y
-   local dir = -1
+   ---@type defines.direction | -1
+   local dir = dirs.north
 
    if math.abs(diff_x) > 4 * math.abs(diff_y) then --along east-west
       if diff_x > 0 then
@@ -112,12 +113,9 @@ function mod.get_direction_biased(pos_target, pos_origin)
          dir = defines.direction.northwest
       elseif diff_x == 0 and diff_y == 0 then
          dir = defines.direction.north
-      else
-         dir = -2
       end
    end
 
-   if dir < 0 then dir = dirs.north end
    return dir
 end
 
@@ -129,7 +127,8 @@ end
 function mod.get_direction_precise(pos_target, pos_origin)
    local diff_x = pos_target.x - pos_origin.x
    local diff_y = pos_target.y - pos_origin.y
-   local dir = -1
+   ---@type defines.direction
+   local dir = defines.direction.north
 
    if math.abs(diff_x) > 2.5 * math.abs(diff_y) then --along east-west
       if diff_x > 0 then
@@ -154,12 +153,9 @@ function mod.get_direction_precise(pos_target, pos_origin)
          dir = defines.direction.northwest
       elseif diff_x == 0 and diff_y == 0 then
          dir = defines.direction.north
-      else
-         dir = -2
       end
    end
 
-   if dir < 0 then dir = dirs.north end
    return dir
 end
 
@@ -392,8 +388,7 @@ function mod.get_entity_part_at_cursor(pindex)
          time_to_live = 30,
       })
 
-      local ent_north =
-         p.surface.find_entities_filtered({ position = { x = x, y = y - 1 }, name = excluded_names, invert = true })
+      local ent_north = p.surface.find_entities_filtered({ position = { x = x, y = y - 1 }, invert = true })
       if #ent_north > 0 and ent_north[1].unit_number == preferred_ent.unit_number then
          north_same = true
       elseif #ent_north > 1 and ent_north[2].unit_number == preferred_ent.unit_number then
@@ -401,8 +396,7 @@ function mod.get_entity_part_at_cursor(pindex)
       elseif #ent_north > 2 and ent_north[3].unit_number == preferred_ent.unit_number then
          north_same = true
       end
-      local ent_south =
-         p.surface.find_entities_filtered({ position = { x = x, y = y + 1 }, name = excluded_names, invert = true })
+      local ent_south = p.surface.find_entities_filtered({ position = { x = x, y = y + 1 }, invert = true })
       if #ent_south > 0 and ent_south[1].unit_number == preferred_ent.unit_number then
          south_same = true
       elseif #ent_south > 1 and ent_south[2].unit_number == preferred_ent.unit_number then
@@ -410,8 +404,7 @@ function mod.get_entity_part_at_cursor(pindex)
       elseif #ent_south > 2 and ent_south[3].unit_number == preferred_ent.unit_number then
          south_same = true
       end
-      local ent_east =
-         p.surface.find_entities_filtered({ position = { x = x + 1, y = y }, name = excluded_names, invert = true })
+      local ent_east = p.surface.find_entities_filtered({ position = { x = x + 1, y = y }, invert = true })
       if #ent_east > 0 and ent_east[1].unit_number == preferred_ent.unit_number then
          east_same = true
       elseif #ent_east > 1 and ent_east[2].unit_number == preferred_ent.unit_number then
@@ -419,8 +412,7 @@ function mod.get_entity_part_at_cursor(pindex)
       elseif #ent_east > 2 and ent_east[3].unit_number == preferred_ent.unit_number then
          east_same = true
       end
-      local ent_west =
-         p.surface.find_entities_filtered({ position = { x = x - 1, y = y }, name = excluded_names, invert = true })
+      local ent_west = p.surface.find_entities_filtered({ position = { x = x - 1, y = y }, invert = true })
       if #ent_west > 0 and ent_west[1].unit_number == preferred_ent.unit_number then
          west_same = true
       elseif #ent_west > 1 and ent_west[2].unit_number == preferred_ent.unit_number then

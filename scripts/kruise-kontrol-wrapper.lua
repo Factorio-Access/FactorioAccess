@@ -61,7 +61,9 @@ function mod.activate_kk(pindex)
       -- Don't say anything either, this is silent.
       force_cursor_off(pindex)
 
-      remote.call(interface_name, "start_job", pindex, { x = math.floor(kk_pos.x), y = math.floor(kk_pos.y) }, target)
+      ---@type table
+      local opts = { x = math.floor(kk_pos.x), y = math.floor(kk_pos.y) }
+      remote.call(interface_name, "start_job", pindex, opts, target)
       local desc = remote.call(interface_name, "get_description", pindex)
       if not desc then return { "access.kk-not-started" } end
 

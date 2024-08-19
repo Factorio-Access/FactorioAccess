@@ -3,7 +3,7 @@ local fa_crafting = require("scripts.crafting")
 local localising = require("scripts.localising")
 local fa_sectors = require("scripts.building-vehicle-sectors")
 local fa_circuits = require("scripts.circuit-networks")
-local fa_travel = require("scripts/travel-tools")
+local fa_travel = require("scripts.travel-tools")
 
 local mod = {}
 
