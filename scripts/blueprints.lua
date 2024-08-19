@@ -919,7 +919,7 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
       end
    else
       --Blueprint book settings mode
-      if index == 0 then
+      if index == 0 or true then
          printout(
             "Settings for blueprint book "
                .. mod.blueprint_book_get_name(pindex)
