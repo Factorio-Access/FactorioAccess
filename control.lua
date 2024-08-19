@@ -90,6 +90,7 @@ ENT_TYPES_YOU_CAN_BUILD_OVER = {
    "construction-robot",
    "rocket-silo-rocket-shadow",
 }
+EXCLUDED_ENT_NAMES = { "highlight-box", "flying-text" }
 WALKING = {
    TELESTEP = 0,
    STEP_BY_WALK = 1,
@@ -753,8 +754,8 @@ function refresh_player_tile(pindex)
       { x = math.floor(c_pos.x) + 0.01, y = math.floor(c_pos.y) + 0.01 },
       { x = math.ceil(c_pos.x) - 0.01, y = math.ceil(c_pos.y) - 0.01 },
    }
-   local excluded_names = { "highlight-box", "flying-text" }
-   players[pindex].tile.ents = surf.find_entities_filtered({ area = search_area, name = excluded_names, invert = true })
+   players[pindex].tile.ents =
+      surf.find_entities_filtered({ area = search_area, name = EXCLUDED_ENT_NAMES, invert = true })
    sort_ents_by_primary_first(players[pindex].tile.ents)
    --Draw the tile
    --rendering.draw_rectangle{left_top = search_area[1], right_bottom = search_area[2], color = {1,0,1}, surface = surf, time_to_live = 100}--

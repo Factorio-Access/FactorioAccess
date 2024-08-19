@@ -388,7 +388,8 @@ function mod.get_entity_part_at_cursor(pindex)
          time_to_live = 30,
       })
 
-      local ent_north = p.surface.find_entities_filtered({ position = { x = x, y = y - 1 }, invert = true })
+      local ent_north =
+         p.surface.find_entities_filtered({ position = { x = x, y = y - 1 }, name = EXCLUDED_ENT_NAMES, invert = true })
       if #ent_north > 0 and ent_north[1].unit_number == preferred_ent.unit_number then
          north_same = true
       elseif #ent_north > 1 and ent_north[2].unit_number == preferred_ent.unit_number then
@@ -396,7 +397,8 @@ function mod.get_entity_part_at_cursor(pindex)
       elseif #ent_north > 2 and ent_north[3].unit_number == preferred_ent.unit_number then
          north_same = true
       end
-      local ent_south = p.surface.find_entities_filtered({ position = { x = x, y = y + 1 }, invert = true })
+      local ent_south =
+         p.surface.find_entities_filtered({ position = { x = x, y = y + 1 }, name = EXCLUDED_ENT_NAMES, invert = true })
       if #ent_south > 0 and ent_south[1].unit_number == preferred_ent.unit_number then
          south_same = true
       elseif #ent_south > 1 and ent_south[2].unit_number == preferred_ent.unit_number then
@@ -404,7 +406,8 @@ function mod.get_entity_part_at_cursor(pindex)
       elseif #ent_south > 2 and ent_south[3].unit_number == preferred_ent.unit_number then
          south_same = true
       end
-      local ent_east = p.surface.find_entities_filtered({ position = { x = x + 1, y = y }, invert = true })
+      local ent_east =
+         p.surface.find_entities_filtered({ position = { x = x + 1, y = y }, name = EXCLUDED_ENT_NAMES, invert = true })
       if #ent_east > 0 and ent_east[1].unit_number == preferred_ent.unit_number then
          east_same = true
       elseif #ent_east > 1 and ent_east[2].unit_number == preferred_ent.unit_number then
@@ -412,7 +415,8 @@ function mod.get_entity_part_at_cursor(pindex)
       elseif #ent_east > 2 and ent_east[3].unit_number == preferred_ent.unit_number then
          east_same = true
       end
-      local ent_west = p.surface.find_entities_filtered({ position = { x = x - 1, y = y }, invert = true })
+      local ent_west =
+         p.surface.find_entities_filtered({ position = { x = x - 1, y = y }, name = EXCLUDED_ENT_NAMES, invert = true })
       if #ent_west > 0 and ent_west[1].unit_number == preferred_ent.unit_number then
          west_same = true
       elseif #ent_west > 1 and ent_west[2].unit_number == preferred_ent.unit_number then
