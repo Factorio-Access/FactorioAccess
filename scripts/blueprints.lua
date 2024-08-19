@@ -758,28 +758,41 @@ function mod.blueprint_menu_down(pindex)
    mod.run_blueprint_menu(players[pindex].blueprint_menu.index, pindex, false)
 end
 
-local function get_bp_book_data_for_edit(stack)
+function mod.get_bp_book_data_for_edit(stack)
    ---@diagnostic disable-next-line: param-type-mismatch
    return game.json_to_table(game.decode_string(string.sub(stack.export_stack(), 2)))
 end
 
 --We run the export just once because it eats UPS
-local function set_bp_book_data_from_cursor(pindex)
-   players[pindex].blueprint_book_menu.book_data = get_bp_book_data_for_edit(game.get_player(pindex).cursor_stack)
+function mod.set_bp_book_data_from_cursor(pindex)
+   players[pindex].blueprint_book_menu.book_data = mod.get_bp_book_data_for_edit(game.get_player(pindex).cursor_stack)
 end
 
-function mod.blueprint_book_get_name(pindex)
+function mod.blueprint_book_get_label(pindex)
    local bp_data = players[pindex].blueprint_book_menu.book_data
    local label = bp_data.blueprint_book.label
    if label == nil then label = "" end
    return label
 end
 
---WIP
-function mod.blueprint_book_set_name(pindex, new_name)
+function mod.blueprint_book_set_label(pindex, new_name)
    local p = game.get_player(pindex)
    local bp_data = players[pindex].blueprint_book_menu.book_data
    bp_data.blueprint_book.label = new_name
+   mod.set_stack_bp_from_data(p.cursor_stack, bp_data)
+end
+
+function mod.get_blueprint_book_description(stack)
+   local bp_data = mod.get_bp_book_data_for_edit(stack)
+   local desc = bp_data.blueprint_book.description
+   if desc == nil then desc = "" end
+   return desc
+end
+
+function mod.set_blueprint_book_description(pindex, new_name)
+   local p = game.get_player(pindex)
+   local bp_data = players[pindex].blueprint_book_menu.book_data
+   bp_data.blueprint_book.description = new_name
    mod.set_stack_bp_from_data(p.cursor_stack, bp_data)
 end
 
@@ -868,7 +881,7 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
          --stuff
          printout(
             "Browsing blueprint book "
-               .. mod.blueprint_book_get_name(pindex)
+               .. mod.blueprint_book_get_label(pindex)
                .. ", with "
                .. item_count
                .. " items,"
@@ -922,7 +935,7 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
       if index == 0 then
          printout(
             "Settings for blueprint book "
-               .. mod.blueprint_book_get_name(pindex)
+               .. mod.blueprint_book_get_label(pindex)
                .. ", with "
                .. item_count
                .. " items,"
@@ -934,7 +947,7 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             local result = "Read the description of this blueprint book"
             printout(result, pindex)
          else
-            local result = mod.get_blueprint_description(bpb)
+            local result = mod.get_blueprint_book_description(bpb)
             if result == nil or result == "" then result = "no description" end
             printout(result, pindex)
          end
@@ -1062,7 +1075,7 @@ function mod.blueprint_book_menu_open(pindex, open_in_list_mode)
       edit_export = false,
       edit_import = false,
    }
-   set_bp_book_data_from_cursor(pindex)
+   mod.set_bp_book_data_from_cursor(pindex)
 
    --Play sound
    game.get_player(pindex).play_sound({ path = "Open-Inventory-Sound" })

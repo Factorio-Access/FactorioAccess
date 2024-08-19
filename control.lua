@@ -7059,7 +7059,11 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
       players[pindex].blueprint_menu.edit_label = false
       local result = event.element.text
       if result == nil or result == "" then result = "unknown" end
-      fa_blueprints.set_blueprint_label(p.cursor_stack, result)
+      if p.cursor_stack.is_blueprint then
+         fa_blueprints.set_blueprint_label(p.cursor_stack, result)
+      elseif p.cursor_stack.is_blueprint_book then
+         fa_blueprints.blueprint_book_set_label(pindex, result)
+      end
       printout("Blueprint label changed to " .. result, pindex)
       event.element.destroy()
       if p.gui.screen["blueprint-edit-label"] ~= nil then p.gui.screen["blueprint-edit-label"].destroy() end
@@ -7068,7 +7072,11 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
       players[pindex].blueprint_menu.edit_description = false
       local result = event.element.text
       if result == nil or result == "" then result = "unknown" end
-      fa_blueprints.set_blueprint_description(p.cursor_stack, result)
+      if p.cursor_stack.is_blueprint then
+         fa_blueprints.set_blueprint_description(p.cursor_stack, result)
+      elseif p.cursor_stack.is_blueprint_book then
+         fa_blueprints.set_blueprint_book_description(pindex, result)
+      end
       printout("Blueprint description changed.", pindex)
       event.element.destroy()
       if p.gui.screen["blueprint-edit-description"] ~= nil then p.gui.screen["blueprint-edit-description"].destroy() end
