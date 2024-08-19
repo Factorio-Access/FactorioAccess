@@ -3069,9 +3069,7 @@ script.on_event("blueprint-book-create", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
-   if p.is_cursor_empty then
-      p.cursor_stack.set_stack("blueprint-book")
-   end
+   if p.is_cursor_empty then p.cursor_stack.set_stack("blueprint-book") end
 end)
 
 script.on_event("type-cursor-target", function(event)
