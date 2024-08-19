@@ -853,6 +853,8 @@ end
 function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked, right_clicked)
    local index = menu_index
    local p = game.get_player(pindex)
+   if not (p.cursor_stack and p.cursor_stack.valid_for_read and p.cursor_stack.is_blueprint_book) then return end
+   ---@type LuaItemStack
    local bpb = p.cursor_stack
    local item_count = mod.blueprint_book_get_item_count(pindex)
    --Update menu length
@@ -942,12 +944,12 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             printout(result, pindex)
          else
             local result = "This book features "
-            if bpb.blueprint_icons and #bp.blueprint_icons > 0 then
+            if bpb.blueprint_icons and #bpb.blueprint_icons > 0 then
                --Icon 1
-               if bpb.blueprint_icons[1] ~= nil then result = result .. bp.blueprint_icons[1].signal.name .. ", " end
-               if bpb.blueprint_icons[2] ~= nil then result = result .. bp.blueprint_icons[2].signal.name .. ", " end
-               if bpb.blueprint_icons[3] ~= nil then result = result .. bp.blueprint_icons[3].signal.name .. ", " end
-               if bpb.blueprint_icons[4] ~= nil then result = result .. bp.blueprint_icons[4].signal.name .. ", " end
+               if bpb.blueprint_icons[1] ~= nil then result = result .. bpb.blueprint_icons[1].signal.name .. ", " end
+               if bpb.blueprint_icons[2] ~= nil then result = result .. bpb.blueprint_icons[2].signal.name .. ", " end
+               if bpb.blueprint_icons[3] ~= nil then result = result .. bpb.blueprint_icons[3].signal.name .. ", " end
+               if bpb.blueprint_icons[4] ~= nil then result = result .. bpb.blueprint_icons[4].signal.name .. ", " end
             else
                result = result .. "nothing"
             end

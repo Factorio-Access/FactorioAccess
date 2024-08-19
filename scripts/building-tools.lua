@@ -317,24 +317,23 @@ end
 * Called as a special case by build_item_in_hand
 ]]
 function mod.build_offshore_pump_in_hand(pindex)
-   local stack = game.get_player(pindex).cursor_stack
+   local p = game.get_player(pindex)
+   local stack = p.cursor_stack
 
    if stack and stack.valid and stack.valid_for_read and stack.name == "offshore-pump" then
       local ent = stack.prototype.place_result
       players[pindex].pump.positions = {}
-      local initial_position = game.get_player(pindex).position
+      local initial_position = p.position
       initial_position.x = math.floor(initial_position.x)
       initial_position.y = math.floor(initial_position.y)
       for i1 = -10, 10 do
          for i2 = -10, 10 do
             for i3 = 0, 3 do
                local position = { x = initial_position.x + i1, y = initial_position.y + i2 }
-               if
-                  game
-                     .get_player(pindex)
-                     .can_build_from_cursor({ name = "offshore-pump", position = position, direction = i3 * 2 })
-               then
-                  table.insert(players[pindex].pump.positions, { position = position, direction = i3 * 2 })
+               ---@type defines.direction
+               local dir_3 = i3 * dirs.east
+               if p.can_build_from_cursor({ name = "offshore-pump", position = position, direction = dir_3 }) then
+                  table.insert(players[pindex].pump.positions, { position = position, direction = dir_3 })
                end
             end
          end
