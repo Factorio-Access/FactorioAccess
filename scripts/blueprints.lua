@@ -549,7 +549,8 @@ function mod.run_blueprint_menu(menu_index, pindex, clicked, other_input)
          --Subtract inventory amounts
          local result = "Blueprint contains "
          for name, count in pairs(ent_counts) do
-            local inv_count = p.get_main_inventory().get_item_count(name)
+            local item_name = fa_utils.get_item_name_for_ent(name)
+            local inv_count = p.get_main_inventory().get_item_count(item_name)
             if inv_count >= count then
                ent_counts[name] = 0
             else

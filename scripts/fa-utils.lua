@@ -941,4 +941,10 @@ mod.spacecat = function(...)
    return table.concat(will_cat, " ")
 end
 
+--Returns the name for the item related to the entity name being checked
+function mod.get_item_name_for_ent(name)
+   if name == "straight-rail" or name == "curved-rail" then return "rail" end
+   return name
+end
+
 return mod
