@@ -6970,7 +6970,7 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
       p.play_sound({ path = "Close-Inventory-Sound" })
 
       --Destroy text fields
-      if p.gui.screen["circuit-condition-constant"] ~= nil then p.gui.screen["circuit-condition-constant"].destroy() end
+      if p.gui.screen["circuit-networks-textfield"] ~= nil then p.gui.screen["circuit-networks-textfield"].destroy() end
       if p.opened ~= nil then p.opened = nil end
    elseif players[pindex].menu == "travel" and players[pindex].entering_search_term ~= true then
       --Edit a travel point
