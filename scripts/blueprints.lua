@@ -4,6 +4,7 @@
 local fa_utils = require("scripts.fa-utils")
 local fa_building_tools = require("scripts.building-tools")
 local fa_mining_tools = require("scripts.mining-tools")
+local fa_graphics = require("scripts.graphics")
 local dirs = defines.direction
 
 local mod = {}
@@ -416,12 +417,7 @@ function mod.run_blueprint_menu(menu_index, pindex, clicked, other_input)
             printout(result, pindex)
          else
             players[pindex].blueprint_menu.edit_import = true
-            local frame = game.get_player(pindex).gui.screen.add({ type = "frame", name = "blueprint-edit-import" })
-            frame.bring_to_front()
-            frame.force_auto_center()
-            frame.focus()
-            local input = frame.add({ type = "textfield", name = "input" })
-            input.focus()
+            local frame = fa_graphics.create_text_field_frame(pindex, "blueprint-edit-import")
             local result = "Paste a copied blueprint text string in this box and then press ENTER to load it"
             printout(result, pindex)
          end
@@ -585,12 +581,7 @@ function mod.run_blueprint_menu(menu_index, pindex, clicked, other_input)
          printout(result, pindex)
       else
          players[pindex].blueprint_menu.edit_label = true
-         local frame = game.get_player(pindex).gui.screen.add({ type = "frame", name = "blueprint-edit-label" })
-         frame.bring_to_front()
-         frame.force_auto_center()
-         frame.focus()
-         local input = frame.add({ type = "textfield", name = "input" })
-         input.focus()
+         local frame = fa_graphics.create_text_field_frame(pindex, "blueprint-edit-label")
          local result = "Type in a new name for this blueprint and press 'ENTER' to confirm, or press 'ESC' to cancel."
          printout(result, pindex)
       end
@@ -601,12 +592,7 @@ function mod.run_blueprint_menu(menu_index, pindex, clicked, other_input)
          printout(result, pindex)
       else
          players[pindex].blueprint_menu.edit_description = true
-         local frame = game.get_player(pindex).gui.screen.add({ type = "frame", name = "blueprint-edit-description" })
-         frame.bring_to_front()
-         frame.force_auto_center()
-         frame.focus()
-         local input = frame.add({ type = "textfield", name = "input" }) --, text = get_blueprint_description(bp)}
-         input.focus()
+         local frame = fa_graphics.create_text_field_frame(pindex, "blueprint-edit-description")
          local result =
             "Type in the new description text box for this blueprint and press 'ENTER' to confirm, or press 'ESC' to cancel."
          printout(result, pindex)
@@ -640,12 +626,7 @@ function mod.run_blueprint_menu(menu_index, pindex, clicked, other_input)
          printout(result, pindex)
       else
          players[pindex].blueprint_menu.edit_export = true
-         local frame = game.get_player(pindex).gui.screen.add({ type = "frame", name = "blueprint-edit-export" })
-         frame.bring_to_front()
-         frame.force_auto_center()
-         frame.focus()
-         local input = frame.add({ type = "textfield", name = "input", text = bp.export_stack() })
-         input.focus()
+         local frame = fa_graphics.create_text_field_frame(pindex, "blueprint-edit-export", bp.export_stack())
          local result =
             "Copy the text from this box using 'CONTROL + A' and then 'CONTROL + C' and then press ENTER to exit"
          printout(result, pindex)
@@ -657,12 +638,7 @@ function mod.run_blueprint_menu(menu_index, pindex, clicked, other_input)
          printout(result, pindex)
       else
          players[pindex].blueprint_menu.edit_import = true
-         local frame = game.get_player(pindex).gui.screen.add({ type = "frame", name = "blueprint-edit-import" })
-         frame.bring_to_front()
-         frame.force_auto_center()
-         frame.focus()
-         local input = frame.add({ type = "textfield", name = "input" })
-         input.focus()
+         local frame = fa_graphics.create_text_field_frame(pindex, "blueprint-edit-import")
          local result = "Paste a copied blueprint text string in this box and then press ENTER to load it"
          printout(result, pindex)
       end
@@ -974,12 +950,7 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             printout(result, pindex)
          else
             players[pindex].blueprint_menu.edit_label = true
-            local frame = p.gui.screen.add({ type = "frame", name = "blueprint-edit-label" })
-            frame.bring_to_front()
-            frame.force_auto_center()
-            frame.focus()
-            local input = frame.add({ type = "textfield", name = "input" })
-            input.focus()
+            local frame = fa_graphics.create_text_field_frame(pindex, "blueprint-edit-label")
             local result =
                "Type in a new name for this blueprint and press 'ENTER' to confirm, or press 'ESC' to cancel."
             printout(result, pindex)
@@ -990,12 +961,7 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             printout(result, pindex)
          else
             players[pindex].blueprint_menu.edit_description = true
-            local frame = p.gui.screen.add({ type = "frame", name = "blueprint-edit-description" })
-            frame.bring_to_front()
-            frame.force_auto_center()
-            frame.focus()
-            local input = frame.add({ type = "textfield", name = "input" }) --, text = get_blueprint_description(bp)}
-            input.focus()
+            local frame = fa_graphics.create_text_field_frame(pindex, "blueprint-edit-description")
             local result =
                "Type in the new description text box for this blueprint and press 'ENTER' to confirm, or press 'ESC' to cancel."
             printout(result, pindex)
@@ -1026,12 +992,7 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             printout(result, pindex)
          else
             players[pindex].blueprint_menu.edit_export = true
-            local frame = game.get_player(pindex).gui.screen.add({ type = "frame", name = "blueprint-edit-export" })
-            frame.bring_to_front()
-            frame.force_auto_center()
-            frame.focus()
-            local input = frame.add({ type = "textfield", name = "input", text = bpb.export_stack() })
-            input.focus()
+            local frame = fa_graphics.create_text_field_frame(pindex, "blueprint-edit-export", bpb.export_stack())
             local result =
                "Copy the text from this box using 'CONTROL + A' and then 'CONTROL + C' and then press ENTER to exit"
             printout(result, pindex)
@@ -1043,12 +1004,7 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             printout(result, pindex)
          else
             players[pindex].blueprint_menu.edit_import = true
-            local frame = game.get_player(pindex).gui.screen.add({ type = "frame", name = "blueprint-edit-import" })
-            frame.bring_to_front()
-            frame.force_auto_center()
-            frame.focus()
-            local input = frame.add({ type = "textfield", name = "input" })
-            input.focus()
+            local frame = fa_graphics.create_text_field_frame(pindex, "blueprint-edit-import")
             local result = "Paste a copied blueprint text string in this box and then press ENTER to load it"
             printout(result, pindex)
          end

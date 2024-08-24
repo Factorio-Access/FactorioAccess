@@ -7105,6 +7105,7 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
       end
    end
    players[pindex].last_menu_search_tick = event.tick
+   players[pindex].text_field_open = false
 end)
 
 script.on_event("open-structure-travel-menu", function(event)
@@ -7153,12 +7154,6 @@ script.on_event("open-structure-travel-menu", function(event)
             .. ", Select a direction, confirm with same direction, and use perpendicular directions to select a target,  press left bracket to teleport to selection",
          pindex
       )
-      local screen = game.get_player(pindex).gui.screen
-      local frame = screen.add({ type = "frame", name = "structure-travel" })
-      frame.bring_to_front()
-      frame.force_auto_center()
-      frame.focus()
-      game.get_player(pindex).opened = frame
    else
       printout("Another menu is open. ", pindex)
    end
@@ -8521,12 +8516,8 @@ end
 function type_cursor_position(pindex)
    printout("Enter new co-ordinates for the cursor, separated by a space", pindex)
    players[pindex].cursor_jumping = true
-   local frame = game.get_player(pindex).gui.screen.add({ type = "frame", name = "cursor-jump" })
-   frame.bring_to_front()
-   frame.force_auto_center()
-   frame.focus()
-   local input = frame.add({ type = "textfield", name = "input" })
-   input.focus()
+   local frame = fa_graphics.create_text_field_frame(pindex, "cursor-jump")
+   return frame
 end
 
 --Result is a string of two numbers separated by a space

@@ -605,7 +605,12 @@ end
 
 function mod.clear_player_GUI_remnants(pindex)
    local p = game.get_player(pindex)
-   if players[pindex].in_menu == false and players[pindex].menu == "none" and p.opened == nil then
+   if
+      players[pindex].in_menu == false
+      and players[pindex].menu == "none"
+      and p.opened == nil
+      and players[pindex].text_field_open ~= true
+   then
       if p and p.gui and p.gui.screen then p.gui.screen.clear() end
    end
 end
@@ -636,7 +641,7 @@ function mod.update_overhead_sprite(sprite, scale_in, radius_in, pindex)
          y_scale = scale, --tint = {r = 0.9, b = 0.9, g = 0.9, a = 1.0},
          surface = p.surface,
          target = { x = p.position.x, y = p.position.y - 3 - radius },
-         orientation = dirs.north,
+         orientation = 0,
          time_to_live = 60,
       })
       rendering.set_visible(player.overhead_sprite, true)
@@ -655,6 +660,17 @@ function mod.set_cursor_colors_to_player_colors(pindex)
    if players[pindex].building_footprint ~= nil and rendering.is_valid(players[pindex].building_footprint) then
       rendering.set_color(players[pindex].building_footprint, p.color)
    end
+end
+
+function mod.create_text_field_frame(pindex, frame_name, frame_text)
+   players[pindex].text_field_open = true
+   local text = frame_text or ""
+   local frame = game.get_player(pindex).gui.screen.add({ type = "frame", name = frame_name, text = text })
+   frame.bring_to_front()
+   frame.force_auto_center()
+   frame.focus()
+   local input = frame.add({ type = "textfield", name = "input" })
+   input.focus()
 end
 
 return mod
