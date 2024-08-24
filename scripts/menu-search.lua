@@ -4,6 +4,7 @@ local localising = require("scripts.localising")
 local fa_sectors = require("scripts.building-vehicle-sectors")
 local fa_circuits = require("scripts.circuit-networks")
 local fa_travel = require("scripts.travel-tools")
+local fa_graphics = require("scripts.graphics")
 
 local mod = {}
 
@@ -266,13 +267,8 @@ function mod.open_search_box(pindex)
       players[pindex].menu_search_frame.destroy()
       players[pindex].menu_search_frame = nil
    end
-   local frame = game.get_player(pindex).gui.screen.add({ type = "frame", name = "enter-search-term" })
-   frame.bring_to_front()
-   frame.force_auto_center()
-   frame.focus()
+   local frame = fa_graphics.create_text_field_frame(pindex, "enter-search-term")
    players[pindex].menu_search_frame = frame
-   local input = frame.add({ type = "textfield", name = "input" })
-   input.focus()
 
    --Inform the player
    printout(players[pindex].menu .. " enter a search term and press 'ENTER' ", pindex)

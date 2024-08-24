@@ -3,6 +3,7 @@
 local util = require("util")
 local fa_utils = require("scripts.fa-utils")
 local fa_equipment = require("scripts.equipment")
+local fa_graphics = require("scripts.graphics")
 
 local dirs = defines.direction
 local MAX_STACK_COUNT = 10
@@ -1936,13 +1937,7 @@ function mod.run_roboport_menu(menu_index, pindex, clicked)
       else
          printout("Enter a new name for this network, then press 'ENTER' to confirm, or press 'ESC' to cancel.", pindex)
          players[pindex].roboport_menu.renaming = true
-         local frame = game.get_player(pindex).gui.screen.add({ type = "frame", name = "network-rename" })
-         frame.bring_to_front()
-         frame.force_auto_center()
-         frame.focus()
-         --game.get_player(pindex).opened = frame
-         local input = frame.add({ type = "textfield", name = "input" })
-         input.focus()
+         local frame = fa_graphics.create_text_field_frame(pindex, "network-rename")
       end
    elseif index == 2 then
       --2. This roboport: Check neighbor counts and dirs

@@ -1,5 +1,6 @@
 --Here: Functions relating to train train stops and train scheduling from them (which is a unique mod feature)
 --Does not include event handlers
+local fa_graphics = require("scripts.graphics")
 
 local mod = {}
 
@@ -33,13 +34,8 @@ function mod.run_train_stop_menu(menu_index, pindex, clicked, other_input)
             pindex
          )
          players[pindex].train_stop_menu.renaming = true
-         local frame = game.get_player(pindex).gui.screen.add({ type = "frame", name = "train-stop-rename" })
-         frame.bring_to_front()
-         frame.force_auto_center()
-         frame.focus()
+         local frame = fa_graphics.create_text_field_frame(pindex, "train-stop-rename")
          game.get_player(pindex).opened = frame
-         local input = frame.add({ type = "textfield", name = "input" })
-         input.focus()
       end
    elseif index == 2 then
       local result = mod.nearby_train_schedule_read_this_stop(train_stop)
@@ -157,12 +153,7 @@ function mod.run_train_stop_menu(menu_index, pindex, clicked, other_input)
       else
          printout("Type in a number and press ENTER to confirm", pindex)
          players[pindex].train_limit_editing = true
-         local frame = game.get_player(pindex).gui.screen.add({ type = "frame", name = "train-limit-edit" })
-         frame.bring_to_front()
-         frame.force_auto_center()
-         frame.focus()
-         local input = frame.add({ type = "textfield", name = "input" })
-         input.focus()
+         local frame = fa_graphics.create_text_field_frame(pindex, "train-limit-edit")
       end
    end
 end

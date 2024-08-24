@@ -4,6 +4,7 @@
 local util = require("util")
 local fa_utils = require("scripts.fa-utils")
 local fa_rails = require("scripts.rails")
+local fa_graphics = require("scripts.graphics")
 local dirs = defines.direction
 
 local mod = {}
@@ -469,13 +470,8 @@ function mod.run_train_menu(menu_index, pindex, clicked, other_input)
          end
          printout("Enter a new name for this train, then press 'ENTER' to confirm, or press 'ESC' to cancel.", pindex)
          players[pindex].train_menu.renaming = true
-         local frame = game.get_player(pindex).gui.screen.add({ type = "frame", name = "train-rename" })
-         frame.bring_to_front()
-         frame.force_auto_center()
-         frame.focus()
+         local frame = fa_graphics.create_text_field_frame(pindex, "train-rename")
          game.get_player(pindex).opened = frame
-         local input = frame.add({ type = "textfield", name = "input" })
-         input.focus()
       end
    elseif index == 3 then
       --Train vehicles info

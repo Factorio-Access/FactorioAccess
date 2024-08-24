@@ -6,6 +6,7 @@ local util = require("util")
 local fa_utils = require("scripts.fa-utils")
 local descriptors = require("scripts.descriptors")
 local multistate_switch = require("scripts.ui.low-level.multistate-switch")
+local fa_graphics = require("scripts.graphics")
 
 local dcb = defines.control_behavior
 
@@ -340,12 +341,7 @@ end
 function mod.constant_combinator_type_last_signal_count(pindex, ent)
    players[pindex].signal_selector = {}
    players[pindex].signal_selector.ent = ent
-   local frame = game.get_player(pindex).gui.screen.add({ type = "frame", name = "circuit-condition-constant" })
-   frame.bring_to_front()
-   frame.force_auto_center()
-   frame.focus()
-   local input = frame.add({ type = "textfield", name = "input" })
-   input.focus()
+   local frame = fa_graphics.create_text_field_frame(pindex, "circuit-networks-textfield")
    return "Type in a number press 'ENTER' to confirm, or press 'ESC' to exit"
 end
 
@@ -1524,12 +1520,7 @@ end
 function mod.type_circuit_condition_constant(pindex, ent)
    players[pindex].signal_selector = {}
    players[pindex].signal_selector.ent = ent
-   local frame = game.get_player(pindex).gui.screen.add({ type = "frame", name = "circuit-condition-constant" })
-   frame.bring_to_front()
-   frame.force_auto_center()
-   frame.focus()
-   local input = frame.add({ type = "textfield", name = "input" })
-   input.focus()
+   local frame = fa_graphics.create_text_field_frame(pindex, "circuit-networks-textfield")
    return "Type in a number for comparing and press 'ENTER' to confirm, or press 'ESC' to exit"
 end
 

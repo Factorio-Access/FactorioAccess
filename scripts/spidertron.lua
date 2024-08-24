@@ -1,4 +1,5 @@
 --Here: Spidertron remote menu
+local fa_graphics = require("scripts.graphics")
 
 local mod = {}
 
@@ -85,13 +86,8 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
          else
             printout("Enter a new name for this spidertron, then press ENTER to confirm.", pindex)
             players[pindex].spider_menu.renaming = true
-            local frame = game.get_player(pindex).gui.screen.add({ type = "frame", name = "spider-rename" })
-            frame.bring_to_front()
-            frame.force_auto_center()
-            frame.focus()
+            local frame = fa_graphics.create_text_field_frame(pindex, "spider-rename")
             game.get_player(pindex).opened = frame
-            local input = frame.add({ type = "textfield", name = "input" })
-            input.focus()
          end
       end
    elseif index == 3 then
