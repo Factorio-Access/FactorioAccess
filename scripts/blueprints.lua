@@ -742,9 +742,10 @@ function mod.get_bp_book_data_for_edit(stack)
    return game.json_to_table(game.decode_string(string.sub(stack.export_stack(), 2)))
 end
 
---We run the export just once because it eats UPS
+--We run the export rarely because it eats UPS
 function mod.set_bp_book_data_from_cursor(pindex)
-   players[pindex].blueprint_book_menu.book_data = mod.get_bp_book_data_for_edit(game.get_player(pindex).cursor_stack)
+   local cursor_stack = game.get_player(pindex).cursor_stack
+   players[pindex].blueprint_book_menu.book_data = mod.get_bp_book_data_for_edit(cursor_stack)
 end
 
 function mod.blueprint_book_get_label(pindex)
@@ -885,11 +886,14 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
                .. ", with "
                .. item_count
                .. " items,"
-               .. ", Press 'W' and 'S' to navigate options, press 'LEFT BRACKET' to copy a blueprint to hand, press 'E' to exit this menu.",
+               .. ", Press 'W' and 'S' to navigate options, "
+               .. "press 'LEFT BRACKET' to copy a blueprint to hand, "
+               .. "press 'X' to delete a blueprint, "
+               .. "press 'E' to exit this menu.",
             pindex
          )
       else
-         --Examine items
+         --Examine items (empty slots are skipped)
          local item = mod.blueprint_book_read_item(pindex, index)
          local name = ""
          if item == nil or item.item == nil then
@@ -926,8 +930,6 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
          elseif left_clicked == false and right_clicked == true then
             --Take the blueprint to hand (Therefore both copy and delete)
             --...
-         elseif false then
-            --Delete it (press twice)
          end
       end
    else
@@ -1055,6 +1057,8 @@ function mod.blueprint_book_menu_open(pindex, open_in_list_mode)
       edit_export = false,
       edit_import = false,
    }
+
+   --Set the data
    mod.set_bp_book_data_from_cursor(pindex)
 
    --Play sound
@@ -1180,6 +1184,39 @@ function mod.add_blueprint_to_book(pindex, book_stack, bp_stack)
    book_data.blueprint_book.blueprints = items
    mod.set_stack_bp_from_data(book_stack, book_data)
    printout("Added blueprint copy to book index" .. new_slot_id, pindex)
+end
+
+--Uses the array index and not the book index
+function mod.remove_item_from_book(pindex, book_stack, array_index)
+   local p = game.get_player(pindex)
+   local book_data = mod.get_bp_book_data_for_edit(book_stack)
+   local items = book_data.blueprint_book.blueprints
+   items[array_index] = nil
+   book_data.blueprint_book.blueprints = items
+   mod.set_stack_bp_from_data(book_stack, book_data)
+   printout("Item removed from book, menu closed", pindex)
+end
+
+--Remove gaps by creating a new list with indexes in order. Note: The stack can be writtem-on to sort the array?
+function mod.remove_all_non_blueprints_from_book(book_stack)
+   local p = game.get_player(pindex)
+   local book_data = mod.get_bp_book_data_for_edit(book_stack)
+   local items = book_data.blueprint_book.blueprints
+   if items == nil or items == {} then return items end
+   local new_items = {}
+   local j = 0
+   for i, item in ipairs(items) do
+      local new_item = {}
+      if item.blueprint ~= nil then
+         new_item = { index = j, blueprint = item.blueprint }
+         table.insert(new_items, new_item)
+         j = j + 1
+      else
+         --This is a non-blueprint item, which gets removed at the moment
+      end
+   end
+   book_data.blueprint_book.blueprints = new_items
+   mod.set_stack_bp_from_data(book_stack, book_data)
 end
 
 function mod.copy_selected_area_to_clipboard(pindex, point_1, point_2)

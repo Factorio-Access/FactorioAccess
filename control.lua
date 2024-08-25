@@ -4198,6 +4198,7 @@ script.on_event("mine-access-sounds", function(event)
 end)
 
 --Mines tiles such as stone brick or concrete within the cursor area, including enlarged cursors
+--Also added: delete blueprints while browsing the blueprint book menu
 script.on_event("mine-tiles", function(event)
    pindex = event.player_index
    if not check_for_player(pindex) then return end
@@ -4217,6 +4218,9 @@ script.on_event("mine-tiles", function(event)
             if mined then game.get_player(pindex).play_sound({ path = "entity-mined/stone-furnace" }) end
          end
       end
+   elseif players[pindex].menu == "blueprint_book_menu" then
+      local menu = players[pindex].blueprint_book_menu
+      fa_blueprints.remove_item_from_book(pindex, game.get_player(pindex).cursor_stack, menu.index)
    end
 end)
 
