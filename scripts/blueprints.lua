@@ -1128,9 +1128,7 @@ local function get_first_empty_book_index(book_data)
    for i = 0, #items + 1, 1 do
       local i_found = false
       for j, item in ipairs(items) do
-         if item.index == i then
-            i_found = true
-         end
+         if item.index == i then i_found = true end
       end
       if i_found == false then return i end
    end
