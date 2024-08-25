@@ -1123,10 +1123,46 @@ end
 
 local function get_first_empty_book_slot_id(book_data)
    local items = book_data.blueprint_book.blueprints
+   if items == nil then return 1 end
    for i = 1, 1000, 1 do
-      if items[i] == nil then return i end
+      if items[i] == nil then
+         game.print("First nil slot: " .. i, { volume_modifier = 0 })
+         return i
+      elseif items[i] == {} then
+         game.print("First empty table slot: " .. i, { volume_modifier = 0 })
+         return i
+      end
    end
    return 1
+end
+
+--Used to explore how blueprint/book info tables work
+function mod.print_book_slots(book_stack)
+   local book_data = mod.get_bp_book_data_for_edit(book_stack)
+   local items = book_data.blueprint_book.blueprints
+   if items == nil then
+      game.print("Empty book.", { volume_modifier = 0 })
+      return
+   end
+   for i = 1, 18, 1 do
+      if items[i] == nil then
+         game.print(i .. ": NIL slot: ", { volume_modifier = 0 })
+      elseif items[i] == {} then
+         game.print(i .. ": Empty table slot: ", { volume_modifier = 0 })
+      elseif items[i].blueprint ~= nil then
+         game.print(i .. ": Slot with 'blueprint', index: " .. items[i]["index"], { volume_modifier = 0 })
+         local bp = items[i].blueprint
+         if bp.item == nil then
+            game.print(i .. ": item: No item", { volume_modifier = 0 })
+         else
+            game.print(i .. ": item: " .. bp.item, { volume_modifier = 0 })
+         end
+      elseif items[i].index == nil then
+         game.print(i .. ": Slot with unknown case, NO index", { volume_modifier = 0 })
+      else
+         game.print(i .. ": Slot with non-bp item, index: " .. items[i]["index"], { volume_modifier = 0 })
+      end
+   end
 end
 
 function mod.add_blueprint_to_book(pindex, book_stack, bp_stack)
@@ -1141,9 +1177,9 @@ function mod.add_blueprint_to_book(pindex, book_stack, bp_stack)
       game.print(item_count)
    end
    local new_item = {}
-   new_item["index"] = item_count
-   new_item["blueprint"] = bp_data.blueprint
    local new_slot_id = get_first_empty_book_slot_id(book_data)
+   new_item["index"] = new_slot_id - 1
+   new_item["blueprint"] = bp_data.blueprint
    --items[item_count + 1] = new_item
    items[new_slot_id] = new_item
    book_data.blueprint_book.blueprints = items

@@ -4464,13 +4464,23 @@ script.on_event("click-menu-right", function(event)
          local stack_cur = p.cursor_stack
          local stack_inv = table.deepcopy(players[pindex].inventory.lua_inventory[players[pindex].inventory.index])
          p.play_sound({ path = "utility/inventory_click" })
-         if stack_inv and stack_inv.valid_for_read and (stack_inv.is_blueprint or stack_inv.is_blueprint_book) then
-            --A a blueprint book is in hand, then throw blueprints into it
-            local book = p.cursor_stack
-            if book and book.valid_for_read and book.is_blueprint_book and stack_inv.is_blueprint then
+         if
+            stack_cur
+            and stack_cur.valid_for_read
+            and stack_cur.is_blueprint_book
+            and stack_inv
+            and stack_inv.valid_for_read
+         then
+            --A a blueprint book is in hand, then throw other items into it
+            local book = stack_cur
+            if stack_inv.is_blueprint then
                fa_blueprints.add_blueprint_to_book(pindex, book, stack_inv)
+            elseif stack_inv.is_blueprint_book or stack_inv.is_deconstruction_item or stack_inv.is_upgrade_item then
+               printout("There is not yet support for adding a " .. stack_inv.name .. " to this book", pindex)
+            else
+               printout("Error: Cannot add " .. stack_inv.name .. " to this book", pindex)
             end
-            --Otherwise, do not grab blueprints or books
+            --Finish the interaction here
             return
          end
          if not (stack_cur and stack_cur.valid_for_read) and (stack_inv and stack_inv.valid_for_read) then
@@ -8009,7 +8019,7 @@ script.on_event("help-get-other", function(event)
    fa_tutorial.read_other_once(pindex)
 end)
 
---**Use this key to test stuff (ALT-G)
+--**Use this key to test stuff (ALT + G)
 script.on_event("debug-test-key", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
@@ -8018,7 +8028,8 @@ script.on_event("debug-test-key", function(event)
    local ent = p.selected
    local stack = game.get_player(pindex).cursor_stack
 
-   game.print(ent.prototype.group.name)
+   if stack.is_blueprint_book then fa_blueprints.print_book_slots(stack) end
+   --game.print(ent.prototype.group.name)
    --get_blueprint_corners(pindex, true)
    --if ent and ent.valid then
    --   game.print("tile width: " .. game.entity_prototypes[ent.name].tile_width)
