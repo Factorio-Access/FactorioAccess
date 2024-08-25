@@ -877,6 +877,7 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
 
    --Run menu
    if list_mode then
+      local book_inv = bpb.get_inventory(defines.inventory.item_main) --**TODO use this for more accurate and efficient reading
       --Blueprint book list mode
       if index == 0 then
          --stuff
@@ -902,15 +903,6 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             local label = item.label
             if label == nil then label = "" end
             name = "Blueprint " .. label .. ", featuring " .. mod.get_blueprint_icons_info(item)
-         elseif item.item == "blueprint-book" or item.item == "blueprint_book" or item.item == "book" then
-            local label = item.label
-            if label == nil then label = "" end
-            local book_data = players[pindex].blueprint_book_menu.book_data
-            name = "Blueprint book "
-               .. label
-               .. ", with "
-               .. mod.blueprint_book_data_get_item_count(book_data)
-               .. " items "
          else
             name = "unknown item " .. item.item
          end
