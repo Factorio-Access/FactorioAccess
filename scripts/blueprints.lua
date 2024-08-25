@@ -1121,7 +1121,14 @@ function mod.blueprint_book_menu_down(pindex)
    mod.run_blueprint_book_menu(pindex, bpb_menu.index, bpb_menu.list_mode, false, false)
 end
 
---TODO WIP ****
+local function get_first_empty_book_slot_id(book_data)
+   local items = book_data.blueprint_book.blueprints
+   for i = 1, 1000, 1 do
+      if items[i] == nil then return i end
+   end
+   return 1
+end
+
 function mod.add_blueprint_to_book(pindex, book_stack, bp_stack)
    local p = game.get_player(pindex)
    local bp_data = mod.get_bp_data_for_edit(bp_stack)
@@ -1131,12 +1138,14 @@ function mod.add_blueprint_to_book(pindex, book_stack, bp_stack)
    if item_count == 0 then
       items = {}
    else
-      for i, item in ipairs(items) do
-         game.print(item["index"] .. " : " .. item["blueprint"])
-      end
+      game.print(item_count)
    end
-   items[item_count]["index"] = item_count
-   items[item_count]["blueprint"] = bp_data
+   local new_item = {}
+   new_item["index"] = item_count
+   new_item["blueprint"] = bp_data.blueprint
+   local new_slot_id = get_first_empty_book_slot_id(book_data)
+   --items[item_count + 1] = new_item
+   items[new_slot_id] = new_item
    book_data.blueprint_book.blueprints = items
    mod.set_stack_bp_from_data(book_stack, book_data)
    printout("Added blueprint copy to book", pindex)
