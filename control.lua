@@ -6813,9 +6813,6 @@ end)
 script.on_event("menu-search-open", function(event)
    pindex = event.player_index
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu == false then return end
-   if players[pindex].menu == "train_menu" then return end
-   if game.get_player(pindex).vehicle ~= nil then return end
    if event.tick - players[pindex].last_menu_search_tick < 5 then return end
    fa_menu_search.open_search_box(pindex)
 end)
@@ -6823,7 +6820,6 @@ end)
 script.on_event("menu-search-get-next", function(event)
    pindex = event.player_index
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu == false then return end
    local str = players[pindex].menu_search_term
    if str == nil or str == "" then
       printout("Press 'CONTROL + F' to start typing in a search term", pindex)
@@ -6835,7 +6831,6 @@ end)
 script.on_event("menu-search-get-last", function(event)
    pindex = event.player_index
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu == false then return end
    local str = players[pindex].menu_search_term
    if str == nil or str == "" then
       printout("Press 'CONTROL + F' to start typing in a search term", pindex)

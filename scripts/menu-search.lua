@@ -238,27 +238,7 @@ local function travel_find_index_of_next_name_match(index, str, pindex)
    return -1
 end
 
---Allows searching a menu that has support written for this
 function mod.open_search_box(pindex)
-   --Only allow "inventory" and "building" menus for now
-   if not players[pindex].in_menu then
-      printout("This menu does not support searching.", pindex)
-      return
-   end
-   if
-      players[pindex].menu ~= "inventory"
-      and players[pindex].menu ~= "building"
-      and players[pindex].menu ~= "vehicle"
-      and players[pindex].menu ~= "crafting"
-      and players[pindex].menu ~= "technology"
-      and players[pindex].menu ~= "signal_selector"
-      and players[pindex].menu ~= "player_trash"
-      and players[pindex].menu ~= "travel"
-   then
-      printout(players[pindex].menu .. " menu does not support searching.", pindex)
-      return
-   end
-
    --Open the searchbox frame
    players[pindex].entering_search_term = true
    players[pindex].menu_search_index = 0
@@ -271,14 +251,14 @@ function mod.open_search_box(pindex)
    players[pindex].menu_search_frame = frame
 
    --Inform the player
-   printout(players[pindex].menu .. " enter a search term and press 'ENTER' ", pindex)
+   printout("Type in a search term and press 'ENTER' ", pindex)
 end
 
 --Reads out the next inventory/menu item to match the search term. Used in all searchable menus.
 function mod.fetch_next(pindex, str, start_phrase_in)
    --Only allow "inventory" and "building" menus for now
    if not players[pindex].in_menu then
-      printout("This menu does not support searching.", pindex)
+      printout("The open map does not support searching.", pindex)
       return
    end
    if
@@ -494,7 +474,7 @@ end
 function mod.fetch_last(pindex, str)
    --Only allow "inventory" and "building" menus for now
    if not players[pindex].in_menu then
-      printout("This menu does not support backwards searching.", pindex)
+      printout("The open map does not support backwards searching.", pindex)
       return
    end
    if players[pindex].menu ~= "inventory" and players[pindex].menu ~= "building" then
