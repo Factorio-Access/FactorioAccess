@@ -371,7 +371,16 @@ function mod.rotate_building_info_read(event, forward)
       local stack = game.get_player(pindex).cursor_stack
       local build_dir = players[pindex].building_direction
       if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result ~= nil then
-         if stack.prototype.place_result.supports_direction then
+         local placed = stack.prototype.place_result
+         if
+            placed.supports_direction
+            or placed.type == "car"
+            or placed.type == "locomotive"
+            or placed.type == "artillery-wagon"
+         then
+            --Locomotives and artillery wagons in hand are rotated 180 degrees
+            if placed.type == "locomotive" or placed.type == "artillery-wagon" then mult = mult * 2 end
+
             --Update the assumed hand direction
             if not players[pindex].lag_building_direction then
                game.get_player(pindex).play_sound({ path = "Rotate-Hand-Sound" })
@@ -426,7 +435,7 @@ function mod.rotate_building_info_read(event, forward)
             printout(fa_utils.direction_lookup(build_dir) .. " in hand", pindex)
             players[pindex].lag_building_direction = false
          else
-            printout(stack.name .. " never needs rotating.", pindex)
+            printout(stack.name .. " does not support or does not need rotating.", pindex)
          end
       elseif stack ~= nil and stack.valid_for_read and stack.is_blueprint and stack.is_blueprint_setup() then
          --Rotate blueprints: They are tracked separately, and we reset them to north when cursor stack changes
@@ -467,7 +476,7 @@ function mod.rotate_building_info_read(event, forward)
 
             --
          else
-            printout(ent.name .. " never needs rotating.", pindex)
+            printout(ent.name .. " does not support or does not need rotating.", pindex)
          end
       else
          printout("Cannot rotate", pindex)

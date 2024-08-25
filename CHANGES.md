@@ -50,9 +50,14 @@ Not released yet.
   * You can still deploy when above the limit in order to refresh your robots because they also have timers that expire.
   * The robots are now deployed at the character location, where they usually are most effective.
 
-  - Added menu search to the travel menu. It works as usual.
+- Added menu search to the travel menu. It works as usual.
 
-  - Added camera zoom controls from the keyboard.
+- Added support for rotating directional vehicles in hand.
+  * Cars and tanks rotate by 90 degrees as a time.
+  * Locomotives and artillery wagons rotate by 180 degrees at a time but snap to rails.
+  * Other wagons and vehicles are symmetric so they do not support rotating.
+
+- Added camera zoom controls from the keyboard.
   * Set standard zoom: ALT + Z
   * Set closest zoom: SHIFT + ALT + Z
   * Set furthest zoom: CONTROL + ALT + Z
