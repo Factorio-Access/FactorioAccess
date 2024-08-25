@@ -1121,19 +1121,20 @@ function mod.blueprint_book_menu_down(pindex)
    mod.run_blueprint_book_menu(pindex, bpb_menu.index, bpb_menu.list_mode, false, false)
 end
 
-local function get_first_empty_book_slot_id(book_data)
+--Finds the first empty index for the blueprint book
+local function get_first_empty_book_index(book_data)
    local items = book_data.blueprint_book.blueprints
-   if items == nil then return 1 end
-   for i = 1, 1000, 1 do
-      if items[i] == nil then
-         --game.print("First nil slot: " .. i, { volume_modifier = 0 })
-         return i
-      elseif items[i] == {} then
-         --game.print("First empty table slot: " .. i, { volume_modifier = 0 })
-         return i
+   if items == nil then return 0 end
+   for i = 0, #items + 1, 1 do
+      local i_found = false
+      for j, item in ipairs(items) do
+         if item.index == i then
+            i_found = true
+         end
       end
+      if i_found == false then return i end
    end
-   return 1
+   return #items
 end
 
 --Used to explore how blueprint/book info tables work
@@ -1173,19 +1174,14 @@ function mod.add_blueprint_to_book(pindex, book_stack, bp_stack)
    local item_count = mod.blueprint_book_data_get_item_count(book_data)
    if item_count == 0 then items = {} end
    local new_item = {}
-   local new_slot_id = get_first_empty_book_slot_id(book_data)
-   game.print("item count: " .. item_count .. ", first empty slot: " .. new_slot_id)
-   if new_slot_id == item_count + 1 then
-      --Add to the end
-      new_item["index"] = new_slot_id - 1
-      new_item["blueprint"] = bp_data.blueprint
-      items[new_slot_id] = new_item
-      book_data.blueprint_book.blueprints = items
-      mod.set_stack_bp_from_data(book_stack, book_data)
-      printout("Added blueprint copy to book end", pindex)
-   else
-      printout("Error: Unsupported blueprint book layout", pindex)
-   end
+   local new_slot_id = get_first_empty_book_index(book_data)
+   --game.print("item count: " .. item_count .. ", first empty index: " .. new_slot_id)
+   new_item["index"] = new_slot_id
+   new_item["blueprint"] = bp_data.blueprint
+   items[item_count + 1] = new_item
+   book_data.blueprint_book.blueprints = items
+   mod.set_stack_bp_from_data(book_stack, book_data)
+   printout("Added blueprint copy to book index" .. new_slot_id, pindex)
 end
 
 function mod.copy_selected_area_to_clipboard(pindex, point_1, point_2)
