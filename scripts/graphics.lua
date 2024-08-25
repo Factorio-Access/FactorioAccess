@@ -665,11 +665,11 @@ end
 function mod.create_text_field_frame(pindex, frame_name, frame_text)
    players[pindex].text_field_open = true
    local text = frame_text or ""
-   local frame = game.get_player(pindex).gui.screen.add({ type = "frame", name = frame_name, text = text })
+   local frame = game.get_player(pindex).gui.screen.add({ type = "frame", name = frame_name })
    frame.bring_to_front()
    frame.force_auto_center()
    frame.focus()
-   local input = frame.add({ type = "textfield", name = "input" })
+   local input = frame.add({ type = "textfield", name = "input", text = text })
    input.focus()
    return frame
 end
