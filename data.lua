@@ -1945,7 +1945,7 @@ data:extend({
    {
       type = "custom-input",
       name = "honk",
-      key_sequence = "V",
+      key_sequence = "ALT + W",
       consuming = "none",
    },
 

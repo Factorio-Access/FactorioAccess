@@ -68,6 +68,10 @@ Not released yet.
   * Press `SHIFT + G` to disconnect selected train wagons.
   * Press `CONTROL + G` to connect selected train wagons.
 
+- Honking a vehicle horn has been rebinded from `V` to `ALT + W`.
+
+- The travel menu can now be opened from inside a vehicle, but you cannot fast travel from inside. Consider Kruise Kontrol driving instead.
+
 - Improved circuit network gate support.
   * Walls at the end of gates are where gate circuits are connected. They are now reported.
   * Improved information about reading and operation modes.

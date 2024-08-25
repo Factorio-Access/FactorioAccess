@@ -6607,6 +6607,7 @@ script.on_event("toggle-walk", function(event)
    pindex = event.player_index
    local p = game.get_player(pindex)
    if not check_for_player(pindex) then return end
+   if p.vehicle then return end
    reset_bump_stats(pindex)
    players[pindex].move_queue = {}
    if p.character == nil then return end
@@ -6881,7 +6882,7 @@ end)
 script.on_event("open-fast-travel-menu", function(event)
    pindex = event.player_index
    if not check_for_player(pindex) or players[pindex].vanilla_mode then return end
-   if game.get_player(pindex).driving ~= true then fa_travel.fast_travel_menu_open(pindex) end
+   fa_travel.fast_travel_menu_open(pindex)
 end)
 
 --GUI action confirmed, such as by pressing ENTER

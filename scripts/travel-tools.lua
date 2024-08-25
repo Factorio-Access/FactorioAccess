@@ -343,11 +343,7 @@ end
 function mod.fast_travel_menu_open(pindex)
    local p = game.get_player(pindex)
    if p.ticks_to_respawn ~= nil then return end
-   if
-      players[pindex].in_menu == false
-      and game.get_player(pindex).driving == false
-      and game.get_player(pindex).opened == nil
-   then
+   if players[pindex].in_menu == false and game.get_player(pindex).opened == nil then
       game.get_player(pindex).selected = nil
 
       players[pindex].menu = "travel"
@@ -370,23 +366,6 @@ function mod.fast_travel_menu_open(pindex)
       game.get_player(pindex).selected = nil
    elseif players[pindex].in_menu or game.get_player(pindex).opened ~= nil then
       printout("Another menu is open.", pindex)
-   elseif game.get_player(pindex).vehicle and game.get_player(pindex).vehicle.valid then
-      printout("Cannot fast travel from inside a vehicle", pindex)
-   end
-
-   --Report disconnect error because the V key normally disconnects rolling stock if driving.
-   local vehicle = nil
-   if game.get_player(pindex).vehicle ~= nil and game.get_player(pindex).vehicle.train ~= nil then
-      vehicle = game.get_player(pindex).vehicle
-      local connected = 0
-      if vehicle.get_connected_rolling_stock(defines.rail_direction.front) ~= nil then connected = connected + 1 end
-      if vehicle.get_connected_rolling_stock(defines.rail_direction.back) ~= nil then connected = connected + 1 end
-      if connected == 0 then
-         printout("Warning, this vehicle was disconnected. Please review mod settings.", pindex)
-         --Attempt to reconnect (does not work)
-         --vehicle.connect_rolling_stock(defines.rail_direction.front)
-         --vehicle.connect_rolling_stock(defines.rail_direction.back)
-      end
    end
 end
 
@@ -411,6 +390,7 @@ function mod.read_fast_travel_slot(pindex)
 end
 
 function mod.fast_travel_menu_click(pindex)
+   local p = game.get_player(pindex)
    if players[pindex].travel.input_box then players[pindex].travel.input_box.destroy() end
    if #global.players[pindex].travel == 0 and players[pindex].travel.index.x < TRAVEL_MENU_LENGTH then
       printout("Move towards the right and select Create New to get started.", pindex)
@@ -420,6 +400,10 @@ function mod.fast_travel_menu_click(pindex)
          pindex
       )
    elseif players[pindex].travel.index.x == 1 then --Travel
+      if p.vehicle then
+         printout("Cannot teleport from inside a vehicle", pindex)
+         return
+      end
       local success = fa_teleport.teleport_to_closest(
          pindex,
          global.players[pindex].travel[players[pindex].travel.index.y].position,
