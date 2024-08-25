@@ -671,6 +671,7 @@ function mod.create_text_field_frame(pindex, frame_name, frame_text)
    frame.focus()
    local input = frame.add({ type = "textfield", name = "input" })
    input.focus()
+   return frame
 end
 
 return mod

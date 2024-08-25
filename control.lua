@@ -7052,8 +7052,10 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
          printout("Searching for " .. term .. ", go through results with 'SHIFT + ENTER' or 'CONTROL + ENTER' ", pindex)
       end
       event.element.destroy()
-      players[pindex].menu_search_frame.destroy()
-      players[pindex].menu_search_frame = nil
+      if players[pindex].menu_search_frame ~= nil then
+         players[pindex].menu_search_frame.destroy()
+         players[pindex].menu_search_frame = nil
+      end
    elseif players[pindex].blueprint_menu.edit_label == true then
       --Apply the new label
       players[pindex].blueprint_menu.edit_label = false
