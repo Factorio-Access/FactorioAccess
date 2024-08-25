@@ -5,6 +5,7 @@ local fa_sectors = require("scripts.building-vehicle-sectors")
 local fa_circuits = require("scripts.circuit-networks")
 local fa_travel = require("scripts.travel-tools")
 local fa_graphics = require("scripts.graphics")
+local fa_blueprints = require("scripts.blueprints")
 
 local mod = {}
 
@@ -191,6 +192,47 @@ local function prototypes_find_index_of_next_name_match(array, index, str, pinde
    return -1
 end
 
+local function blueprint_book_find_index_of_next_match(index, str, pindex)
+   if players[pindex].menu == "blueprint_book_menu" and players[pindex].blueprint_book_menu.list_mode then
+      local book_data = players[pindex].blueprint_book_menu.book_data
+      local items = book_data.blueprint_book.blueprints
+      if items == nil then return nil end
+      for i = index, #items, 1 do
+         if items[i] and items[i].blueprint and items[i].blueprint.label then
+            local name = string.lower(items[i].blueprint.label)
+            local result = string.find(name, str)
+            if result ~= nil then
+               if name ~= players[pindex].menu_search_last_name then
+                  players[pindex].menu_search_last_name = name
+                  game.get_player(pindex).play_sound({ path = "Inventory-Move" }) --sound for finding the next
+                  return i
+               else
+                  repeat_i = i
+               end
+            end
+         end
+      end
+      --End of inventory reached, circle back
+      game.get_player(pindex).play_sound({ path = "inventory-wrap-around" }) --sound for having cicled around
+      for i = 1, index, 1 do
+         if items[i] and items[i].blueprint and items[i].blueprint.label then
+            local name = string.lower(items[i].blueprint.label)
+            local result = string.find(name, str)
+            if result ~= nil then
+               if name ~= players[pindex].menu_search_last_name then
+                  players[pindex].menu_search_last_name = name
+                  game.get_player(pindex).play_sound({ path = "Inventory-Move" }) --sound for finding the next
+                  return i
+               else
+                  repeat_i = i
+               end
+            end
+         end
+      end
+   end
+   return -1
+end
+
 local function travel_find_index_of_next_name_match(index, str, pindex)
    local repeat_i = -1
    local list_size = #players[pindex].travel
@@ -270,6 +312,7 @@ function mod.fetch_next(pindex, str, start_phrase_in)
       and players[pindex].menu ~= "signal_selector"
       and players[pindex].menu ~= "player_trash"
       and players[pindex].menu ~= "travel"
+      and not (players[pindex].menu == "blueprint_book_menu" and players[pindex].blueprint_book_menu.list_mode)
    then
       printout(players[pindex].menu .. " menu does not support searching.", pindex)
       return
@@ -397,6 +440,8 @@ function mod.fetch_next(pindex, str, start_phrase_in)
       --game.print("tries: " .. tries,{volume_modifier=0})--
    elseif players[pindex].menu == "travel" then
       new_index = travel_find_index_of_next_name_match(search_index, str, pindex)
+   elseif players[pindex].menu == "blueprint_book_menu" and players[pindex].blueprint_book_menu.list_mode then
+      new_index = blueprint_book_find_index_of_next_match(search_index, str, pindex)
    else
       printout("This menu or building sector does not support searching.", pindex)
       return
@@ -464,6 +509,10 @@ function mod.fetch_next(pindex, str, start_phrase_in)
       players[pindex].menu_search_index = new_index
       players[pindex].travel.index.y = new_index
       fa_travel.read_fast_travel_slot(pindex)
+   elseif players[pindex].menu == "blueprint_book_menu" and players[pindex].blueprint_book_menu.list_mode then
+      players[pindex].menu_search_index = new_index
+      players[pindex].blueprint_book_menu.index = new_index
+      fa_blueprints.run_blueprint_book_menu(pindex, new_index, true, false, false)
    else
       printout("Search error", pindex)
       return
