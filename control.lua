@@ -315,7 +315,7 @@ function read_inventory_slot(pindex, start_phrase_in, inv_in)
       return
    end
    if stack.is_blueprint then
-      printout(fa_blueprints.get_blueprint_info(stack, false), pindex)
+      printout(fa_blueprints.get_blueprint_info(stack, false, pindex), pindex)
    elseif stack.is_blueprint_book then
       printout(fa_blueprints.get_blueprint_book_info(stack, false), pindex)
    elseif stack.valid_for_read then
@@ -345,7 +345,7 @@ function read_hand(pindex)
    if cursor_stack and cursor_stack.valid_for_read then
       if cursor_stack.is_blueprint then
          --Blueprint extra info
-         printout(fa_blueprints.get_blueprint_info(cursor_stack, true), pindex)
+         printout(fa_blueprints.get_blueprint_info(cursor_stack, true, pindex), pindex)
       elseif cursor_stack.is_blueprint_book then
          printout(fa_blueprints.get_blueprint_book_info(cursor_stack, true), pindex)
       elseif cursor_stack.name == "spidertron-remote" then

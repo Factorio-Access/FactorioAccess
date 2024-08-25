@@ -531,7 +531,7 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
       stack = building_sector.inventory[players[pindex].building.index]
       if stack and stack.valid_for_read and stack.valid then
          if stack.is_blueprint then
-            printout(fa_blueprints.get_blueprint_info(stack, false), pindex)
+            printout(fa_blueprints.get_blueprint_info(stack, false, pindex), pindex)
          elseif stack.is_blueprint_book then
             printout(fa_blueprints.get_blueprint_book_info(stack, false), pindex)
          else

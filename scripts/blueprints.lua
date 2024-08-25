@@ -294,7 +294,7 @@ function mod.refresh_blueprint_in_hand(pindex)
 end
 
 --Basic info for when the blueprint item is read.
-function mod.get_blueprint_info(stack, in_hand)
+function mod.get_blueprint_info(stack, in_hand, pindex)
    --Not a blueprint
    if stack.is_blueprint == false then return "" end
    --Empty blueprint
@@ -323,13 +323,14 @@ function mod.get_blueprint_info(stack, in_hand)
    end
 
    result = result .. ", " .. stack.get_blueprint_entity_count() .. " entities in total "
-   --game.print(result)
 
    --Use this opportunity to update saved information about the blueprint's corners (used when drawing the footprint)
-   local width, height = mod.get_blueprint_width_and_height(pindex)
-   if width == nil or height == nil then return result end
-   players[pindex].blueprint_width_in_hand = width + 1
-   players[pindex].blueprint_height_in_hand = height + 1
+   if in_hand then
+      local width, height = mod.get_blueprint_width_and_height(pindex)
+      if width == nil or height == nil then return result end
+      players[pindex].blueprint_width_in_hand = width + 1
+      players[pindex].blueprint_height_in_hand = height + 1
+   end
    return result
 end
 
@@ -778,7 +779,7 @@ function mod.get_blueprint_book_info(stack, in_hand)
    if in_hand then table.insert(result, " in hand") end
    table.insert(result, ", ")
    table.insert(result, " with " .. item_count .. " items")
-   
+
    return result
 end
 
@@ -1126,13 +1127,19 @@ function mod.add_blueprint_to_book(pindex, book_stack, bp_stack)
    local bp_data = mod.get_bp_data_for_edit(bp_stack)
    local book_data = mod.get_bp_book_data_for_edit(book_stack)
    local items = book_data.blueprint_book.blueprints
-   local item_count = 0
-   if items ~= nil then item_count = #items else items = {} end
+   local item_count = mod.blueprint_book_data_get_item_count(book_data)
+   if item_count == 0 then
+      items = {}
+   else
+      for i, item in ipairs(items) do
+         game.print(item["index"] .. " : " .. item["blueprint"])
+      end
+   end
    items[item_count]["index"] = item_count
    items[item_count]["blueprint"] = bp_data
    book_data.blueprint_book.blueprints = items
    mod.set_stack_bp_from_data(book_stack, book_data)
-   printout("Addy blueprint copy to book", pindex)
+   printout("Added blueprint copy to book", pindex)
 end
 
 function mod.copy_selected_area_to_clipboard(pindex, point_1, point_2)
