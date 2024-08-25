@@ -1126,10 +1126,10 @@ local function get_first_empty_book_slot_id(book_data)
    if items == nil then return 1 end
    for i = 1, 1000, 1 do
       if items[i] == nil then
-         game.print("First nil slot: " .. i, { volume_modifier = 0 })
+         --game.print("First nil slot: " .. i, { volume_modifier = 0 })
          return i
       elseif items[i] == {} then
-         game.print("First empty table slot: " .. i, { volume_modifier = 0 })
+         --game.print("First empty table slot: " .. i, { volume_modifier = 0 })
          return i
       end
    end
@@ -1171,20 +1171,21 @@ function mod.add_blueprint_to_book(pindex, book_stack, bp_stack)
    local book_data = mod.get_bp_book_data_for_edit(book_stack)
    local items = book_data.blueprint_book.blueprints
    local item_count = mod.blueprint_book_data_get_item_count(book_data)
-   if item_count == 0 then
-      items = {}
-   else
-      game.print(item_count)
-   end
+   if item_count == 0 then items = {} end
    local new_item = {}
    local new_slot_id = get_first_empty_book_slot_id(book_data)
-   new_item["index"] = new_slot_id - 1
-   new_item["blueprint"] = bp_data.blueprint
-   --items[item_count + 1] = new_item
-   items[new_slot_id] = new_item
-   book_data.blueprint_book.blueprints = items
-   mod.set_stack_bp_from_data(book_stack, book_data)
-   printout("Added blueprint copy to book", pindex)
+   game.print("item count: " .. item_count .. ", first empty slot: " .. new_slot_id)
+   if new_slot_id == item_count + 1 then
+      --Add to the end
+      new_item["index"] = new_slot_id - 1
+      new_item["blueprint"] = bp_data.blueprint
+      items[new_slot_id] = new_item
+      book_data.blueprint_book.blueprints = items
+      mod.set_stack_bp_from_data(book_stack, book_data)
+      printout("Added blueprint copy to book end", pindex)
+   else
+      printout("Error: Unsupported blueprint book layout", pindex)
+   end
 end
 
 function mod.copy_selected_area_to_clipboard(pindex, point_1, point_2)
