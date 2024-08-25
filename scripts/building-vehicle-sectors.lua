@@ -532,6 +532,8 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
       if stack and stack.valid_for_read and stack.valid then
          if stack.is_blueprint then
             printout(fa_blueprints.get_blueprint_info(stack, false), pindex)
+         elseif stack.is_blueprint_book then
+            printout(fa_blueprints.get_blueprint_book_info(stack, false), pindex)
          else
             --Check if the slot is filtered
             local index = players[pindex].building.index

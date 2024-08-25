@@ -316,6 +316,8 @@ function read_inventory_slot(pindex, start_phrase_in, inv_in)
    end
    if stack.is_blueprint then
       printout(fa_blueprints.get_blueprint_info(stack, false), pindex)
+   elseif stack.is_blueprint_book then
+      printout(fa_blueprints.get_blueprint_book_info(stack, false), pindex)
    elseif stack.valid_for_read then
       --Check if the slot is filtered
       local filter_name = p.get_main_inventory().get_filter(index)
@@ -344,6 +346,8 @@ function read_hand(pindex)
       if cursor_stack.is_blueprint then
          --Blueprint extra info
          printout(fa_blueprints.get_blueprint_info(cursor_stack, true), pindex)
+      elseif cursor_stack.is_blueprint_book then
+         printout(fa_blueprints.get_blueprint_book_info(cursor_stack, true), pindex)
       elseif cursor_stack.name == "spidertron-remote" then
          local remote_info = ""
          if cursor_stack.connected_entity == nil then
@@ -4464,7 +4468,7 @@ script.on_event("click-menu-right", function(event)
             --A a blueprint book is in hand, then throw blueprints into it
             local book = p.cursor_stack
             if book and book.valid_for_read and book.is_blueprint_book and stack_inv.is_blueprint then
-               --add here ***
+               fa_blueprints.add_blueprint_to_book(pindex, book, stack_inv)
             end
             --Otherwise, do not grab blueprints or books
             return

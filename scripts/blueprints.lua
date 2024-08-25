@@ -16,6 +16,7 @@ function mod.get_bp_data_for_edit(stack)
    return game.json_to_table(game.decode_string(string.sub(stack.export_stack(), 2)))
 end
 
+--Works for blueprints and also books too
 function mod.set_stack_bp_from_data(stack, bp_data)
    stack.import_stack("0" .. game.encode_string(game.table_to_json(bp_data)))
 end
@@ -759,6 +760,28 @@ function mod.blueprint_book_set_label(pindex, new_name)
    mod.set_stack_bp_from_data(p.cursor_stack, bp_data)
 end
 
+--Basic info for when the blueprint book item is read.
+function mod.get_blueprint_book_info(stack, in_hand)
+   --Not a book
+   if stack == nil or stack.is_blueprint_book == false then return "" end
+
+   --Get data
+   local book_data = mod.get_bp_book_data_for_edit(stack)
+   local label = book_data.blueprint_book.label
+   if label == nil then label = "" end
+   local item_count = mod.blueprint_book_data_get_item_count(book_data)
+
+   --Construct result
+   local result = { "" }
+   table.insert(result, "Blueprint book ")
+   table.insert(result, label)
+   if in_hand then table.insert(result, " in hand") end
+   table.insert(result, ", ")
+   table.insert(result, " with " .. item_count .. " items")
+   
+   return result
+end
+
 function mod.get_blueprint_book_description(stack)
    local bp_data = mod.get_bp_book_data_for_edit(stack)
    local desc = bp_data.blueprint_book.description
@@ -803,7 +826,6 @@ end
 function mod.blueprint_book_copy_item_to_hand(pindex, i)
    local bp_data = players[pindex].blueprint_book_menu.book_data
    local items = bp_data.blueprint_book.blueprints
-   local item = items[i]["blueprint"]
    local item_string = "0" .. game.encode_string(game.table_to_json(items[i]))
 
    local p = game.get_player(pindex)
@@ -1096,6 +1118,21 @@ function mod.blueprint_book_menu_down(pindex)
    --Load menu
    local bpb_menu = players[pindex].blueprint_book_menu
    mod.run_blueprint_book_menu(pindex, bpb_menu.index, bpb_menu.list_mode, false, false)
+end
+
+--TODO WIP ****
+function mod.add_blueprint_to_book(pindex, book_stack, bp_stack)
+   local p = game.get_player(pindex)
+   local bp_data = mod.get_bp_data_for_edit(bp_stack)
+   local book_data = mod.get_bp_book_data_for_edit(book_stack)
+   local items = book_data.blueprint_book.blueprints
+   local item_count = 0
+   if items ~= nil then item_count = #items else items = {} end
+   items[item_count]["index"] = item_count
+   items[item_count]["blueprint"] = bp_data
+   book_data.blueprint_book.blueprints = items
+   mod.set_stack_bp_from_data(book_stack, book_data)
+   printout("Addy blueprint copy to book", pindex)
 end
 
 function mod.copy_selected_area_to_clipboard(pindex, point_1, point_2)
