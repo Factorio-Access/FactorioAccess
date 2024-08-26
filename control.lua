@@ -145,6 +145,19 @@ function sort_ents_by_primary_first(ents)
       local a_is_primary = ent_is_primary(a, pindex)
       local b_is_primary = ent_is_primary(b, pindex)
 
+      --For rails, check if end rail
+      local a_is_end_rail = false
+      local b_is_end_rail = false
+      if a.name == "straight-rail" or a.name == "curved-rail" then
+         local is_end_rail, dir, comment = fa_rails.check_end_rail(a, pindex)
+         a_is_end_rail = is_end_rail
+      end
+      if b.name == "straight-rail" or b.name == "curved-rail" then
+         local is_end_rail, dir, comment = fa_rails.check_end_rail(b, pindex)
+         b_is_end_rail = is_end_rail
+      end
+      if a_is_end_rail and not b_is_end_rail then return true end
+
       -- Both or none are primary
       if a_is_primary == b_is_primary then return false end
 
