@@ -8,7 +8,7 @@ Not released yet.
 
 - Added circuit network support for regular rail signals.
   * You can now apply an enabling condition for closing the signal.
-  * If you use a signal like this at a train station then you can block a moving train from entering or exiting the area, although trains waiting at signals do not interact with isnerters (???).
+  * If you use a signal like this at a train station then you can block a moving train from entering or exiting the area, although trains waiting at signals do not interact with inserters (???).
 
 - Added support for setting the trains limit at train stops, as the last option in the train stop menu.
   * Train limits are helpful for complex train networks by limiting how many trains are allowed to head for a particular station.
@@ -16,15 +16,15 @@ Not released yet.
 
 - Added extensive support for blueprint books.
   * Press `CONTROL + SHIFT + ALT + B` to grab a new empty book in hand.
-  * With a book in hand and no other menus open, if you press `LEFT BRACKET` you get the list menu for the book contents (as before).
-  * In the list menu, you can press `LEFT BRACKET` to copy the selected blueprint into your hand and put the book away (as before).
-  * In the list menu, you can delete the selected blueprint by pressing `X`.
-  * In the player inventory menu, if you have a book in hand and you press `RIGHT BRACKET` on a blueprint, it is copied into the book's first available empty slot.
+  * With a book in hand and no other menus open, open the book's menu with  `LEFT BRACKET` to see the contents.
+  * In the list menu, press `LEFT BRACKET` to copy the selected blueprint into your hand and put the book away
+  * In the list menu, press `X` to delete the blueprint.
+  * From your inventory,  with a book in hand,  press `RIGHT BRACKET` on a blueprint to copy it into the book's first empty slot.
   * The list menu supports menu search.
   * While books normally can hold other books or other planner types in their list slots, the mod for now supports only blueprints.
   * There is no support yet for actions related to reordering the items within a book.
-  * With a book in hand and no other menus open, if you press `RIGHT BRACKET` you get the book options menu, where you can check and edit the book name and decription, and you can copy, delete, import, or export the book.
-  * Selecting a book in an player or building inventory slot will now give basic info about it.
+  * Like with bluweprints themselves, use `]` to manage the book itself.  This includes renaming, deleting, importing, and exporting.  NOTE that this is a different menu than `[`, which shows the blueprints in the book.
+  * Selecting a book in a player or building inventory slot now gives basic info about it.
 
 - Added full support for the guns inventory.
   * The guns inventory is opened by pressing `R` while on the main character inventory tab.
@@ -36,12 +36,10 @@ Not released yet.
 
 - Added new smart aiming feature for grenades and similar thrown items: Cluster grenades, poison capsules, slowdown capsules.
   * It is now feasible to use your gun with `SPACE` while you run or drive around with `WASD`, while you select a capsule from the quickbar and safely smart throw it without much thought using `LEFT BRACKET`.
-  * A minimum range is determined based on the damage radius of the thrown item, while every item also has its own maximum range. For example grenades have minimum and maximum ranges of 7 and 15 tiles respectively.
-  * Within the ranges, spawners and worms are targeted first.
-  * Enemy units and players are targeted next.
-  * Buildings and other military targets are selected next, or otherwise the cursor position is tried.
+  * The mod determines a minimum range based on the damage radius of the thrown item.  In vanilla, every item also has its own maximum range. For example grenades have minimum and maximum ranges of 7 and 15 tiles respectively.  This ensures that you don't hit yourself.
+  * The mod will try to target things in this order: spawners and worms, enemy units and players, buildings and military targets, and finally the cursor position.
   * If you are running or driving directly towards a potential target, it is skipped so that you do not run into the blast area.
-  * If you are running or driving directly away from a potential target, the item can be thrown a little closer behind you because it is assumed that you will leave the blast area.
+  * If you are running or driving directly away from a potential target, the item can be thrown a little closer behind you because it is assumed that you will leave the blast area.  Be careful and keep moving!
 
 
 - Added information reporting for follower robot counts.
@@ -50,10 +48,10 @@ Not released yet.
   * You can still deploy when above the limit in order to refresh your robots because they also have timers that expire.
   * The robots are now deployed at the character location, where they usually are most effective.
 
-- Added menu search to the travel menu. It works as usual.
+- Added menu search to the travel menu.  This works the same as all other menus with search.
 
 - Added support for rotating directional vehicles in hand.
-  * Cars and tanks rotate by 90 degrees as a time.
+  * Cars and tanks rotate by 90 degrees at a time.
   * Locomotives and artillery wagons rotate by 180 degrees at a time but snap to rails.
   * Other wagons and vehicles are symmetric so they do not support rotating.
 
