@@ -204,6 +204,19 @@ function handle_class:play_if_needed(x, y)
    play_ruler_alignment(self.pindex, alignment)
 end
 
+-- Report how this position aligns with this ruler
+---@param x number
+---@param y number
+---@returns fa.RulerAlignmentResult
+function handle_class:report_alignment(x, y)
+   assert(self.ruler, DELETED_MSG)
+
+   x = math.floor(x)
+   y = math.floor(y)
+
+   return determine_alignment(x, y, self.ruler.x, self.ruler.y)
+end
+
 -- Must be called every time the "viewpoint" for a player moves, e.g. cursor,
 -- walking, whatever.  Should be passed the coords of the tile.  Arguments are floored.
 function mod.on_viewpoint_moved(pindex, x, y)
@@ -230,6 +243,24 @@ end
 function mod.update_from_cursor(pindex)
    local cur = players[pindex].cursor_pos
    mod.on_viewpoint_moved(pindex, cur.x, cur.y)
+end
+
+--Checks the alignment of all rulers against the position
+function mod.is_at_any_ruler_definition(pindex, position)
+   if module_state[pindex].handle then
+      local alignment = module_state[pindex].handle:report_alignment(position.x, position.y)
+      if alignment == ALIGNMENT.AT_DEFINITION then return true end
+   end
+   return false
+end
+
+--Checks the alignment of all rulers against the position
+function mod.is_any_ruler_aligned(pindex, position)
+   if module_state[pindex].handle then
+      local alignment = module_state[pindex].handle:report_alignment(position.x, position.y)
+      if alignment == ALIGNMENT.CENTERED or alignment == ALIGNMENT.AT_DEFINITION then return true end
+   end
+   return false
 end
 
 return mod

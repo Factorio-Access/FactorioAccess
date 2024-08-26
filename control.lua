@@ -7298,6 +7298,7 @@ function cursor_skip_iteration(pindex, direction, iteration_limit)
    local p = game.get_player(pindex)
    local start = nil
    local start_tile_is_water = fa_utils.tile_is_water(p.surface, players[pindex].cursor_pos)
+   local start_tile_is_ruler_aligned = Rulers.is_any_ruler_aligned(pindex, players[pindex].cursor_pos)
    local current = nil
    local limit = iteration_limit or 100
    local moved = 1
@@ -7379,6 +7380,16 @@ function cursor_skip_iteration(pindex, direction, iteration_limit)
 
    --Run checks and skip when needed
    while moved < limit do
+      --For audio rulers, stop if crossing into or out of alignment with any rulers
+      local current_tile_is_ruler_aligned = Rulers.is_any_ruler_aligned(pindex, players[pindex].cursor_pos)
+      if start_tile_is_ruler_aligned ~= current_tile_is_ruler_aligned then
+         Rulers.update_from_cursor(pindex)
+         return moved
+      --Also for rulers, stop if at the definiton point of any ruler
+      elseif Rulers.is_at_any_ruler_definition(pindex, players[pindex].cursor_pos) then
+         Rulers.update_from_cursor(pindex)
+         return moved
+      end
       --Check the current entity or tile against the starting one
       if current == nil then
          if start == nil then
