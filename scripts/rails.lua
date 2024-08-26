@@ -323,6 +323,7 @@ end
 --Determines if an entity is an end rail. Returns boolean is_end_rail, integer end rail direction, and string comment for errors.
 function mod.check_end_rail(check_rail, pindex)
    local is_end_rail = false
+   ---@type defines.direction | int
    local dir = -1
    local comment = "Check function error."
 
@@ -929,6 +930,7 @@ end
 function mod.rail_read_next_rail_entity_ahead(pindex, rail, is_forward)
    local message = "Up this rail, "
    local origin_rail = rail
+   ---@type defines.rail_direction
    local dir_ahead = defines.rail_direction.front
    if not is_forward then
       dir_ahead = defines.rail_direction.back
