@@ -82,21 +82,21 @@ function mod.rail_ent_info(pindex, ent, description)
    elseif ent.name == "curved-rail" and is_end_rail == false then
       result = result .. " curved "
       if ent.direction == dirs.north then --0
-         result = result .. " facing south and falling diagonal "
+         result = result .. " south and northwest "
       elseif ent.direction == dirs.northeast then
-         result = result .. " facing south and rising diagonal "
+         result = result .. " south and northeast "
       elseif ent.direction == dirs.east then
-         result = result .. " facing west  and rising diagonal "
+         result = result .. " west  and northeast "
       elseif ent.direction == dirs.southeast then
-         result = result .. " facing west  and falling diagonal "
+         result = result .. " west  and southeast "
       elseif ent.direction == dirs.south then
-         result = result .. " facing north and falling diagonal "
+         result = result .. " north and southeast "
       elseif ent.direction == dirs.southwest then
-         result = result .. " facing north and rising diagonal "
+         result = result .. " north and southwest "
       elseif ent.direction == dirs.west then
-         result = result .. " facing east  and rising diagonal "
+         result = result .. " east  and southwest "
       elseif ent.direction == dirs.northwest then --7
-         result = result .. " facing east  and falling diagonal "
+         result = result .. " east  and northwest "
       end
    end
 
