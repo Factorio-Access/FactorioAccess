@@ -2,7 +2,7 @@
 Not released yet.
 
 ## Summary
-- No summary yet.
+- This update brings extensive improvements to combat and blueprint books, with many smaller additions and changes regarding other areas such as trains and menu search. Some keybinds have changed regarding checking character health and vehicle features.
 
 ## Features
 
@@ -33,14 +33,12 @@ Not released yet.
   * You can also insert or remove or swap item stacks.
   * The smart equip shortcut `SHIFT + LEFT BRACKET`, and the smart ammo reload shortcut `SHIFT + R`, and the unequip-all-weapons shortcut `CONTROL + SHIFT + R` work for this menu too.
 
-
 - Added new smart aiming feature for grenades and similar thrown items: Cluster grenades, poison capsules, slowdown capsules.
   * It is now feasible to use your gun with `SPACE` while you run or drive around with `WASD`, while you select a capsule from the quickbar and safely smart throw it without much thought using `LEFT BRACKET`.
   * The mod determines a minimum range based on the damage radius of the thrown item.  In vanilla, every item also has its own maximum range. For example grenades have minimum and maximum ranges of 7 and 15 tiles respectively.  This ensures that you don't hit yourself.
   * The mod will try to target things in this order: spawners and worms, enemy units and players, buildings and military targets, and finally the cursor position.
   * If you are running or driving directly towards a potential target, it is skipped so that you do not run into the blast area.
   * If you are running or driving directly away from a potential target, the item can be thrown a little closer behind you because it is assumed that you will leave the blast area.  Be careful and keep moving!
-
 
 - Added information reporting for follower robot counts.
   * You are allowed a limited number of defender or destroyer robots active at the same time. This does not apply to any other robots.
@@ -66,11 +64,6 @@ Not released yet.
   * Press `SHIFT + G` to disconnect selected train wagons.
   * Press `CONTROL + G` to connect selected train wagons.
 
-- On a tile where several rails overlap, end rails now have priority for being reported.
-
-- Simplified how curved rail directions are described.
-  * For example it now says "rail curved east and northwest" which describes the two directions you can go from the center of this rail.
-
 - Honking a vehicle horn has been rebinded from `V` to `ALT + W`.
 
 - The travel menu can now be opened from inside a vehicle, but you cannot fast travel from inside. Consider Kruise Kontrol driving instead.
@@ -78,6 +71,11 @@ Not released yet.
 - Cursor skipping now stops when it crosses an audio ruler.
   * You can also skip from along a ruler to its center point.
   * These long-intended additions will assist with the goal of reducing the need to count tiles.
+
+- On a tile where several rails overlap, end rails now have priority for being reported.
+
+- Simplified how curved rail directions are described.
+  * For example it now says "rail curved east and northwest" which describes the two directions you can go from the center of this rail.
 
 - Improved circuit network gate support.
   * Walls at the end of gates are where gate circuits are connected. They are now reported.
@@ -92,7 +90,7 @@ Not released yet.
 
 - Fixed a crash related to blueprint dimension checks.
 
-- Fixed a graphics bug where icons representing menus would be left on screen or in the world after logging out and logging in.
+- Fixed a long-existing graphics bug where icons representing menus would remain on screen or in the world after logging out and logging in.
 
 - Fixed an issue so that the description can be read for an item in hand when no menus are open and no entities are selected.
 
