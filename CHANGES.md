@@ -66,9 +66,18 @@ Not released yet.
   * Press `SHIFT + G` to disconnect selected train wagons.
   * Press `CONTROL + G` to connect selected train wagons.
 
+- On a tile where several rails overlap, end rails now have priority for being reported.
+
+- Simplified how curved rail directions are described.
+  * For example it now says "rail curved east and northwest" which describes the two directions you can go from the center of this rail.
+
 - Honking a vehicle horn has been rebinded from `V` to `ALT + W`.
 
 - The travel menu can now be opened from inside a vehicle, but you cannot fast travel from inside. Consider Kruise Kontrol driving instead.
+
+- Cursor skipping now stops when it crosses an audio ruler.
+  * You can also skip from along a ruler to its center point.
+  * These long-intended additions will assist with the goal of reducing the need to count tiles.
 
 - Improved circuit network gate support.
   * Walls at the end of gates are where gate circuits are connected. They are now reported.
