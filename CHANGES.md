@@ -17,13 +17,13 @@ Not released yet.
 - Added extensive support for blueprint books.
   * Press `CONTROL + SHIFT + ALT + B` to grab a new empty book in hand.
   * With a book in hand and no other menus open, open the book's menu with  `LEFT BRACKET` to see the contents.
-  * In the list menu, press `LEFT BRACKET` to copy the selected blueprint into your hand and put the book away
+  * In the list menu, press `LEFT BRACKET` to grab a temporary copy the selected blueprint into your hand and put the book away. 
   * In the list menu, press `X` to delete the blueprint.
   * From your inventory,  with a book in hand,  press `RIGHT BRACKET` on a blueprint to copy it into the book's first empty slot.
   * The list menu supports menu search.
   * While books normally can hold other books or other planner types in their list slots, the mod for now supports only blueprints.
   * There is no support yet for actions related to reordering the items within a book.
-  * Like with bluweprints themselves, use `]` to manage the book itself.  This includes renaming, deleting, importing, and exporting.  NOTE that this is a different menu than `[`, which shows the blueprints in the book.
+  * Like with blueprints themselves, use `RIGHT BRACKET` to manage the book itself.  This includes renaming, deleting, importing, and exporting.  NOTE that this is a different menu than `LEFT BRACKET`, which shows the blueprints in the book.
   * Selecting a book in a player or building inventory slot now gives basic info about it.
 
 - Added full support for the guns inventory.
@@ -57,6 +57,10 @@ Not released yet.
   * Set standard zoom: ALT + Z
   * Set closest zoom: SHIFT + ALT + Z
   * Set furthest zoom: CONTROL + ALT + Z
+
+- Added support for the `DELETE` key as a quick way to delete applicable things.
+  * Many such actions require you to press the key again within 10 seconds to confirm the action.
+  * A planner tool or a blueprint or blueprint book in hand can now be deleted.
 
 ## Changes
 - Changed keybinds for health checking and train wagon connecting.
