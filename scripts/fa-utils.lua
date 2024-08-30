@@ -947,4 +947,17 @@ function mod.get_item_name_for_ent(name)
    return name
 end
 
+--Returns true only if this action was called within the last 10 seconds. Resets.
+function mod.confirm_action(pindex, custom_message)
+   local message = custom_message or "Press again to confirm this action."
+   if game.tick - players[pindex].confirm_action_tick > 600 then
+      printout(message, pindex)
+      players[pindex].confirm_action_tick = game.tick
+      return false
+   else
+      players[pindex].confirm_action_tick = 1
+      return true
+   end
+end
+
 return mod

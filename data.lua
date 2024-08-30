@@ -1290,6 +1290,13 @@ data:extend({
 
    {
       type = "custom-input",
+      name = "delete",
+      key_sequence = "DELETE",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
       name = "mine-access-sounds",
       key_sequence = "X",
       linked_game_control = "mine",

@@ -4196,6 +4196,27 @@ function swap_weapon_backward(pindex, write_to_character)
    return gun_index
 end
 
+script.on_event("delete", function(event)
+   pindex = event.player_index
+   if not check_for_player(pindex) then return end
+   local p = game.get_player(pindex)
+   local hand = p.cursor_stack
+   if players[pindex].menu == "blueprint_book_menu" and players[pindex].blueprint_book_menu.list_mode == true then
+      --WIP
+   elseif hand and hand.valid_for_read then
+      local is_planner = hand.is_blueprint
+         or hand.is_blueprint_book
+         or hand.is_deconstruction_item
+         or hand.is_upgrade_item
+      if is_planner then
+         if fa_utils.confirm_action(pindex, "Press again to delete the planner in hand.") then
+            p.cursor_stack_temporary = true
+            p.clear_cursor()
+         end
+      end
+   end
+end)
+
 --Creates sound effects for vanilla mining
 script.on_event("mine-access-sounds", function(event)
    pindex = event.player_index
