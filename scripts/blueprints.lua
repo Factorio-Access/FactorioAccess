@@ -833,6 +833,7 @@ function mod.blueprint_book_copy_item_to_hand(pindex, i)
    local p = game.get_player(pindex)
    p.clear_cursor()
    p.cursor_stack.import_stack(item_string)
+   p.cursor_stack_temporary = true
    printout("Copied blueprint to hand", pindex)
 end
 
