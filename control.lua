@@ -4209,7 +4209,7 @@ script.on_event("delete", function(event)
          or hand.is_deconstruction_item
          or hand.is_upgrade_item
       if is_planner then
-         if fa_utils.confirm_action(pindex, "Press again to delete the planner in hand.") then
+         if fa_utils.confirm_action(pindex, hand.export_stack(), "Press again to delete the planner in hand.") then
             p.cursor_stack_temporary = true
             p.clear_cursor()
          end

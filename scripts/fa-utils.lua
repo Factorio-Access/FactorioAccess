@@ -948,14 +948,26 @@ function mod.get_item_name_for_ent(name)
 end
 
 --Returns true only if this action was called within the last 10 seconds. Resets.
-function mod.confirm_action(pindex, custom_message)
+---@param pindex int player index
+---@param id_string string used to check whether the same thing as last time is being checked
+---@param custom_message string info about what action is being checked
+---@return boolean to allow the action
+function mod.confirm_action(pindex, id_string, custom_message)
    local message = custom_message or "Press again to confirm this action."
-   if players[pindex].confirm_action_tick == nil or game.tick - players[pindex].confirm_action_tick > 600 then
-      printout(message, pindex)
+   --Check the id string
+   if players[pindex].confirm_action_id_string ~= id_string then
+      players[pindex].confirm_action_id_string = id_string
       players[pindex].confirm_action_tick = game.tick
+      printout(message, pindex)
+      return false
+   end
+   --Check the time stamp
+   if players[pindex].confirm_action_tick == nil or game.tick - players[pindex].confirm_action_tick > 600 then
+      players[pindex].confirm_action_tick = game.tick
+      printout(message, pindex)
       return false
    else
-      players[pindex].confirm_action_tick = 1
+      players[pindex].confirm_action_tick = 0
       return true
    end
 end
