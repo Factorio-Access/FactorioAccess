@@ -424,6 +424,10 @@ function locate_hand_in_player_inventory(pindex)
    local p = game.get_player(pindex)
    local inv = p.get_main_inventory()
    local stack = p.cursor_stack
+   if p.cursor_stack_temporary then
+      printout("This item is temporary", pindex)
+      return
+   end
 
    --Check if stack empty and menu supported
    if stack == nil or not stack.valid_for_read or not stack.valid then
@@ -476,6 +480,13 @@ function locate_hand_in_building_output_inventory(pindex)
    local inv = nil
    local stack = p.cursor_stack
    local pb = players[pindex].building
+   if p.cursor_stack_temporary then
+      printout("This item is temporary", pindex)
+      return
+   end
+   if stack.is_blueprint or stack.is_blueprint_book or stack.is_deconstruction_item or stack.is_upgrade_item then
+      return
+   end
 
    --Check if stack empty and menu supported
    if stack == nil or not stack.valid_for_read or not stack.valid then
@@ -529,6 +540,16 @@ function locate_hand_in_crafting_menu(pindex)
    local p = game.get_player(pindex)
    local inv = p.get_main_inventory()
    local stack = p.cursor_stack
+   if
+      p.cursor_stack_temporary
+      or stack.is_blueprint
+      or stack.is_blueprint_book
+      or stack.is_deconstruction_item
+      or stack.is_upgrade_item
+   then
+      printout("This item cannot be crafted", pindex)
+      return
+   end
 
    --Check if stack empty and menu supported
    if stack == nil or not stack.valid_for_read or not stack.valid then

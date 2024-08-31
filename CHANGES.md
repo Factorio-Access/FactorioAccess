@@ -104,6 +104,8 @@ Not released yet.
 
 - Fixed some bugs relating to data type checks and other warnings made by LuaLS.
 
+- Fixed crashes when trying to locate planner tools in inventories or the crafting menu.
+
 
 # Version 0.13.1 BETA
 Released on August 13th, 2024.
