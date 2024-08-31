@@ -2741,6 +2741,9 @@ function move_key(direction, event, force_single_tile)
       game.get_player(pindex).game_view_settings.update_entity_selection = false
    end
 
+   --Reset unconfirmed actions
+   players[pindex].confirm_action_tick = 0
+
    --Save the key press event
    local pex = players[event.player_index]
    pex.bump.last_dir_key_2nd = pex.bump.last_dir_key_1st
@@ -3756,6 +3759,9 @@ function close_menu_resets(pindex)
    if players[pindex].vanilla_mode ~= true then
       game.get_player(pindex).game_view_settings.update_entity_selection = false
    end
+
+   --Reset unconfirmed actions
+   players[pindex].confirm_action_tick = 0
 
    --Reset menu vars
    players[pindex].in_menu = false
