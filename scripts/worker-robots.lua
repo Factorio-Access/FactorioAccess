@@ -1983,9 +1983,13 @@ function mod.run_roboport_menu(menu_index, pindex, clicked)
       --6. Check network item contents
       if not clicked then
          printout("Read items info for the network", pindex)
+         players[pindex].menu_click_count = 0
       else
          if nw ~= nil then
-            local result = mod.logistic_network_items_info(port)
+            local click_count = players[pindex].menu_click_count
+            click_count = click_count + 1
+            local result = mod.logistic_network_items_info(port, click_count)
+            players[pindex].menu_click_count = click_count
             printout(result, pindex)
          else
             printout("Error: No network", pindex)
@@ -2166,12 +2170,14 @@ function mod.logistic_network_chests_info(port)
    return result
 end
 
-function mod.logistic_network_items_info(port)
-   local result = " Network "
+function mod.logistic_network_items_info(port, group_no)
+   local result = { "" }
    local nw = port.logistic_cell.logistic_network
    if nw == nil or nw.valid == false then
-      result = " Error: no network "
+      table.insert(result, " Error: no network ")
       return result
+   elseif group_no == 1 then
+      table.insert(result, "Network contains ")
    end
    local itemset = nw.get_contents()
    local itemtable = {}
@@ -2182,87 +2188,23 @@ function mod.logistic_network_items_info(port)
       return k1.count > k2.count
    end)
    if #itemtable == 0 then
-      result = result .. " contains no items. "
+      table.insert(result, " no items. ")
+      return result
    else
-      result = result
-         .. " contains "
-         .. itemtable[1].name
-         .. " times "
-         .. fa_utils.simplify_large_number(itemtable[1].count)
-         .. ", "
-      if #itemtable > 1 then
-         result = result
-            .. " and "
-            .. itemtable[2].name
-            .. " times "
-            .. fa_utils.simplify_large_number(itemtable[2].count)
-            .. ", "
+      local i_start = (group_no - 1) * 5 + 1
+      if #itemtable < i_start then
+         table.insert(result, " no other items.")
+         return result
       end
-      if #itemtable > 2 then
-         result = result
-            .. " and "
-            .. itemtable[3].name
-            .. " times "
-            .. fa_utils.simplify_large_number(itemtable[3].count)
-            .. ", "
+      for i = i_start, i_start + 4, 1 do
+         if itemtable[i] then
+            table.insert(
+               result,
+               ", " .. itemtable[i].name .. " times " .. fa_utils.simplify_large_number(itemtable[i].count)
+            )
+         end
       end
-      if #itemtable > 3 then
-         result = result
-            .. " and "
-            .. itemtable[4].name
-            .. " times "
-            .. fa_utils.simplify_large_number(itemtable[4].count)
-            .. ", "
-      end
-      if #itemtable > 4 then
-         result = result
-            .. " and "
-            .. itemtable[5].name
-            .. " times "
-            .. fa_utils.simplify_large_number(itemtable[5].count)
-            .. ", "
-      end
-      if #itemtable > 5 then
-         result = result
-            .. " and "
-            .. itemtable[6].name
-            .. " times "
-            .. fa_utils.simplify_large_number(itemtable[6].count)
-            .. ", "
-      end
-      if #itemtable > 6 then
-         result = result
-            .. " and "
-            .. itemtable[7].name
-            .. " times "
-            .. fa_utils.simplify_large_number(itemtable[7].count)
-            .. ", "
-      end
-      if #itemtable > 7 then
-         result = result
-            .. " and "
-            .. itemtable[8].name
-            .. " times "
-            .. fa_utils.simplify_large_number(itemtable[8].count)
-            .. ", "
-      end
-      if #itemtable > 8 then
-         result = result
-            .. " and "
-            .. itemtable[9].name
-            .. " times "
-            .. fa_utils.simplify_large_number(itemtable[9].count)
-            .. ", "
-      end
-      if #itemtable > 9 then
-         result = result
-            .. " and "
-            .. itemtable[10].name
-            .. " times "
-            .. fa_utils.simplify_large_number(itemtable[10].count)
-            .. ", "
-      end
-      if #itemtable > 10 then result = result .. " and other items " end
+      if #itemtable > i_start + 4 then table.insert(result, ", and other items, press LEFT BRACKET to list more.") end
    end
    return result
 end
