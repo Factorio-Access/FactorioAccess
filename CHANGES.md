@@ -87,6 +87,10 @@ Not released yet.
 
 - Entering a menu search term is now allowed from any menu, but the search still runs only in supported menus.
 
+- Improved list reading for signals in a circuit network, or items in a logistic network, or items in a train.
+  * 5 items are listed at a time, and you press `LEFT BRACKET` to get 5 more items.
+  * Rewind to the start by going up and down the menu again.
+
 ## Bugfixes
 - Fixed a bug where rotated temporary blueprints from the copy-paste feature would become permanent and sneak into the inventory.
 
