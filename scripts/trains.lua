@@ -490,7 +490,17 @@ function mod.run_train_menu(menu_index, pindex, clicked, other_input)
       )
    elseif index == 4 then
       --Train cargo info
-      printout("Cargo, " .. mod.train_top_contents_info(train) .. " ", pindex)
+      local click_count = players[pindex].menu_click_count
+      if clicked then
+         click_count = click_count + 1
+      else
+         click_count = 1
+      end
+      players[pindex].menu_click_count = click_count
+      local result = { "" }
+      if click_count == 1 then table.insert(result, "Cargo, ") end
+      table.insert(result, mod.train_top_contents_info(train, click_count))
+      printout(result, pindex)
    elseif index == 5 then
       --Train schedule info
       local result = ""
@@ -630,9 +640,9 @@ function mod.menu_up(pindex)
       players[pindex].train_menu.index = 0
       game.get_player(pindex).play_sound({ path = "inventory-edge" })
    else
-      --Play sound
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
    end
+   players[pindex].menu_click_count = 0
    --Load menu
    mod.run_train_menu(players[pindex].train_menu.index, pindex, false)
 end
@@ -643,9 +653,9 @@ function mod.menu_down(pindex)
       players[pindex].train_menu.index = TRAIN_MENU_LENGTH
       game.get_player(pindex).play_sound({ path = "inventory-edge" })
    else
-      --Play sound
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
    end
+   players[pindex].menu_click_count = 0
    --Load menu
    mod.run_train_menu(players[pindex].train_menu.index, pindex, false)
 end
@@ -697,21 +707,13 @@ function mod.cargo_wagon_top_contents_info(wagon)
       result = result .. " Contains no items. "
    else
       result = result .. " Contains " .. itemtable[1].name .. " times " .. itemtable[1].count .. ", "
-      if #itemtable > 1 then
-         result = result .. " and " .. itemtable[2].name .. " times " .. itemtable[2].count .. ", "
-      end
-      if #itemtable > 2 then
-         result = result .. " and " .. itemtable[3].name .. " times " .. itemtable[3].count .. ", "
-      end
-      if #itemtable > 3 then
-         result = result .. " and " .. itemtable[4].name .. " times " .. itemtable[4].count .. ", "
-      end
-      if #itemtable > 4 then
-         result = result .. " and " .. itemtable[5].name .. " times " .. itemtable[5].count .. ", "
-      end
-      if #itemtable > 5 then result = result .. " and other items " end
+      if #itemtable > 1 then result = result .. itemtable[2].name .. " times " .. itemtable[2].count .. ", " end
+      if #itemtable > 2 then result = result .. itemtable[3].name .. " times " .. itemtable[3].count .. ", " end
+      if #itemtable > 3 then result = result .. itemtable[4].name .. " times " .. itemtable[4].count .. ", " end
+      if #itemtable > 4 then result = result .. itemtable[5].name .. " times " .. itemtable[5].count .. ", " end
+      if #itemtable > 5 then result = result .. " and other items, " end
    end
-   result = result .. ", Use inserters or cursor shortcuts to fill and empty this wagon. "
+   result = result .. " open the wagon menu to browse the full inventory. "
    return result
 end
 
@@ -760,8 +762,8 @@ function mod.fluid_contents_info(wagon)
 end
 
 --Returns most common items and fluids in a train (sum of all wagons)
-function mod.train_top_contents_info(train)
-   local result = ""
+function mod.train_top_contents_info(train, group_no)
+   local result = { "" }
    local itemset = train.get_contents()
    local itemtable = {}
    for name, count in pairs(itemset) do
@@ -770,90 +772,36 @@ function mod.train_top_contents_info(train)
    table.sort(itemtable, function(k1, k2)
       return k1.count > k2.count
    end)
-   if #itemtable == 0 then
-      result = result .. " Contains no items, "
+   --Use a cached list to handle changes in the list while reading
+   if group_no == 1 then
+      players[pindex].cached_list = itemtable
    else
-      result = result
-         .. " Contains "
-         .. itemtable[1].name
-         .. " times "
-         .. fa_utils.simplify_large_number(itemtable[1].count)
-         .. ", "
-      if #itemtable > 1 then
-         result = result
-            .. " and "
-            .. itemtable[2].name
-            .. " times "
-            .. fa_utils.simplify_large_number(itemtable[2].count)
-            .. ", "
-      end
-      if #itemtable > 2 then
-         result = result
-            .. " and "
-            .. itemtable[3].name
-            .. " times "
-            .. fa_utils.simplify_large_number(itemtable[3].count)
-            .. ", "
-      end
-      if #itemtable > 3 then
-         result = result
-            .. " and "
-            .. itemtable[4].name
-            .. " times "
-            .. fa_utils.simplify_large_number(itemtable[4].count)
-            .. ", "
-      end
-      if #itemtable > 4 then
-         result = result
-            .. " and "
-            .. itemtable[5].name
-            .. " times "
-            .. fa_utils.simplify_large_number(itemtable[5].count)
-            .. ", "
-      end
-      if #itemtable > 5 then
-         result = result
-            .. " and "
-            .. itemtable[6].name
-            .. " times "
-            .. fa_utils.simplify_large_number(itemtable[6].count)
-            .. ", "
-      end
-      if #itemtable > 6 then
-         result = result
-            .. " and "
-            .. itemtable[7].name
-            .. " times "
-            .. fa_utils.simplify_large_number(itemtable[7].count)
-            .. ", "
-      end
-      if #itemtable > 7 then
-         result = result
-            .. " and "
-            .. itemtable[8].name
-            .. " times "
-            .. fa_utils.simplify_large_number(itemtable[8].count)
-            .. ", "
-      end
-      if #itemtable > 8 then
-         result = result
-            .. " and "
-            .. itemtable[9].name
-            .. " times "
-            .. fa_utils.simplify_large_number(itemtable[9].count)
-            .. ", "
-      end
-      if #itemtable > 9 then
-         result = result
-            .. " and "
-            .. itemtable[10].name
-            .. " times "
-            .. fa_utils.simplify_large_number(itemtable[10].count)
-            .. ", "
-      end
-      if #itemtable > 10 then result = result .. " and other items, " end
+      itemtable = players[pindex].cached_list
    end
-   result = result .. mod.fluid_contents_info(train)
+   if #itemtable == 0 then
+      table.insert(result, " Contains no items, ")
+      return result
+   else
+      local group_start = (group_no - 1) * 5 + 1
+      local group_end = group_start + 4
+      if #itemtable < group_start then
+         table.insert(result, " no other items.")
+         return result
+      end
+      for i = group_start, group_end, 1 do
+         if itemtable[i] then
+            table.insert(
+               result,
+               ", " .. itemtable[i].name .. " times " .. fa_utils.simplify_large_number(itemtable[i].count)
+            )
+         end
+      end
+      if #itemtable > group_end then
+         table.insert(result, ", and other items, " .. #itemtable .. " total, press LEFT BRACKET to list more")
+      end
+   end
+   table.insert(result, ", ")
+   table.insert(result, mod.fluid_contents_info(train))
    return result
 end
 

@@ -2197,12 +2197,13 @@ function mod.logistic_network_items_info(port, group_no)
       table.insert(result, " no items. ")
       return result
    else
-      local i_start = (group_no - 1) * 5 + 1
-      if #itemtable < i_start then
+      local group_start = (group_no - 1) * 5 + 1
+      local group_end = group_start + 4
+      if #itemtable < group_start then
          table.insert(result, " no other items.")
          return result
       end
-      for i = i_start, i_start + 4, 1 do
+      for i = group_start, group_end, 1 do
          if itemtable[i] then
             table.insert(
                result,
@@ -2210,7 +2211,7 @@ function mod.logistic_network_items_info(port, group_no)
             )
          end
       end
-      if #itemtable > i_start + 4 then
+      if #itemtable > group_end then
          table.insert(result, ", and other items, " .. #itemtable .. " total, press LEFT BRACKET to list more.")
       end
    end
