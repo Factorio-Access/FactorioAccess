@@ -6047,6 +6047,8 @@ end)
 script.on_event("read-character-status", function(event)
    pindex = event.player_index
    if not check_for_player(pindex) then return end
+   local hand = game.get_player(pindex).cursor_stack
+   if hand and hand.valid_for_read and (hand.is_blueprint or hand.is_blueprint_book) then return end
    fa_info.read_character_status(pindex)
 end)
 

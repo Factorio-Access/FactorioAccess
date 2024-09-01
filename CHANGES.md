@@ -37,7 +37,7 @@ Not released yet.
   * You can still deploy more when above the limit in order to refresh your robots, because they also have timers that expire.
   * The robots are now deployed at the character location, where they usually are most effective.
 
-- Added menu search to the travel menu.  This works the same as all other menus with search.
+- Added menu search to the travel menu. This works the same as all other menus with search.
 
 - Added circuit network support for regular rail signals.
   * You can now apply an enabling condition for closing the signal.
@@ -69,7 +69,7 @@ Not released yet.
 
 - Honking a vehicle horn has been rebinded from `V` to `ALT + W`.
 
-- Cars and tanks that you drive are stopped when you are navigating in an open menu or are in cursor mode.
+- Cars and tanks that you drive are stopped instantly when you are navigating in an open menu or are in cursor mode.
   * This does not apply for automatic driving with Kruise Kontrol Remote.
   * They are reactivated when you press a movement key when all menus and cursor mode are closed.
   * They are now also stopped as soon as you exit them.
@@ -81,7 +81,7 @@ Not released yet.
   * You can also skip from along a ruler to its center point.
   * These long-intended additions will assist with the goal of reducing the need to count tiles.
 
-- On a tile where several rails and/or trains overlap, end rails now have priority for being reported.
+- On a tile where several rails and possibly trains overlap, end rails now have priority for being reported first.
 
 - Simplified how curved rail directions are described.
   * For example it now says "rail curved east and northwest" which describes the two directions you can go from the center of this rail.
@@ -114,6 +114,8 @@ Not released yet.
 - Fixed some bugs relating to data type checks and other warnings made by LuaLS.
 
 - Fixed crashes when trying to locate planner tools in inventories or the crafting menu.
+
+- Fixed a crash related to editing logistic requests from the crafting menu.
 
 
 # Version 0.13.1 BETA
