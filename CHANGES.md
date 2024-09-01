@@ -46,20 +46,20 @@ Not released yet.
 - Added support for setting the trains limit at train stops, as the last option in the train stop menu.
   * Train limits are helpful for complex train networks by limiting how many trains are allowed to head for a particular station.
   * When the limit is reached at a station, other trains planning to go to it will wait for their turn at their previous stations.
+  * The default case is no limit, which you can restore by inputting a negative number.
 
 - Added support for rotating directional vehicles in hand.
   * Cars and tanks rotate by 90 degrees at a time.
   * Locomotives and artillery wagons rotate by 180 degrees at a time but snap to rails.
-  * Other wagons and vehicles are symmetric so they do not support rotating.
+  * Other wagons and vehicles are symmetric and so they do not support rotating.
 
 - Added camera zoom controls from the keyboard.
   * Set standard zoom: ALT + Z
   * Set closest zoom: SHIFT + ALT + Z
   * Set furthest zoom: CONTROL + ALT + Z
 
-- Added support for the `DELETE` key as a quick way to delete applicable things.
-  * Many such actions require you to press the key again within 10 seconds to confirm the action.
-  * A planner tool or a blueprint or blueprint book in hand can now be deleted.
+- Added support for the `DELETE` key as a quick way to delete planner tools in hand.
+  * There is a confirmation check that requires you to press the key twice.
 
 ## Changes
 - Changed keybinds for health checking and train wagon connecting.

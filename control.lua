@@ -2776,9 +2776,7 @@ function move_key(direction, event, force_single_tile)
    if p.vehicle then
       if p.vehicle.type == "car" then
          --Deactivate (and stop) cars when in a menu
-         if players[pindex].cursor or players[pindex].in_menu then
-            p.vehicle.active = false
-         end
+         if players[pindex].cursor or players[pindex].in_menu then p.vehicle.active = false end
          --Re-activate inactive cars when in no menu
          if not players[pindex].cursor and not players[pindex].in_menu and p.vehicle.active == false then
             p.vehicle.active = true
@@ -6986,9 +6984,14 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
          local constant = tonumber(result)
          ---@cast constant  number
          local valid_number = constant ~= nil
-         if valid_number and p.selected and p.selected.valid and p.selected.name == "train-stop" and constant >= 0 then
-            p.selected.trains_limit = constant
-            printout("Set trains limit to " .. constant, pindex)
+         if valid_number and p.selected and p.selected.valid and p.selected.name == "train-stop" then
+            if constant >= 0 then
+               p.selected.trains_limit = constant
+               printout("Set trains limit to " .. constant, pindex)
+            else
+               p.selected.trains_limit = nil
+               printout("Cleared trains limit", pindex)
+            end
          else
             printout("Invalid input", pindex)
          end
