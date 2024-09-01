@@ -2,7 +2,7 @@
 Not released yet.
 
 ## Summary
-- This update brings extensive improvements to combat and blueprint books, with many smaller additions and changes regarding other areas such as trains and menu search. Some keybinds have changed regarding checking character health and vehicle features.
+- This update brings extensive improvements to combat and blueprint books, with many smaller additions and changes regarding other areas such as vehicles, rails, and menu search. Some keybinds have changed regarding checking character health and vehicle features.
 
 ## Features
 - Added extensive support for blueprint books.
@@ -16,6 +16,9 @@ Not released yet.
   * There is no support yet for actions related to reordering the items within a book.
   * Like with blueprints themselves, use `RIGHT BRACKET` to manage the book itself.  This includes renaming, deleting, importing, and exporting.  NOTE that this is a different menu than `LEFT BRACKET`, which shows the blueprints in the book.
   * Selecting a book in a player or building inventory slot now gives basic info about it.
+
+- Added support for the `DELETE` key as a quick way to delete planner tools in hand.
+  * There is a confirmation check that requires you to press the key twice.
 
 - Added full support for the guns inventory.
   * The guns inventory is opened by pressing `R` while on the main character inventory tab.
@@ -58,9 +61,6 @@ Not released yet.
   * Set closest zoom: SHIFT + ALT + Z
   * Set furthest zoom: CONTROL + ALT + Z
 
-- Added support for the `DELETE` key as a quick way to delete planner tools in hand.
-  * There is a confirmation check that requires you to press the key twice.
-
 ## Changes
 - Changed keybinds for health checking and train wagon connecting.
   * Press `G` to check character health and shields status.
@@ -75,16 +75,16 @@ Not released yet.
   * They are now also stopped as soon as you exit them.
   * Trains are not affected by these changes. They still use `WASD` to move and `ARROW KEYS` for the train menu.
 
+- On a tile where several rails and possibly trains overlap, end rails now have priority for being reported first.
+
+- Simplified how curved rail directions are described.
+  * For example it now says "rail curved east and northwest" which describes the two directions you can go from the center of this rail.
+
 - The travel menu can now be opened from inside a vehicle, but you cannot fast travel from inside. Consider Kruise Kontrol Remote driving instead.
 
 - Cursor skipping now stops when it crosses an audio ruler.
   * You can also skip from along a ruler to its center point.
   * These long-intended additions will assist with the goal of reducing the need to count tiles.
-
-- On a tile where several rails and possibly trains overlap, end rails now have priority for being reported first.
-
-- Simplified how curved rail directions are described.
-  * For example it now says "rail curved east and northwest" which describes the two directions you can go from the center of this rail.
 
 - Improved circuit network gate support.
   * Walls at the end of gates are where gate circuits are connected. They are now reported.
