@@ -5,15 +5,6 @@ Not released yet.
 - This update brings extensive improvements to combat and blueprint books, with many smaller additions and changes regarding other areas such as trains and menu search. Some keybinds have changed regarding checking character health and vehicle features.
 
 ## Features
-
-- Added circuit network support for regular rail signals.
-  * You can now apply an enabling condition for closing the signal.
-  * If you use a signal like this at a train station then you can block a moving train from entering or exiting the area, although trains waiting at signals do not interact with inserters (???).
-
-- Added support for setting the trains limit at train stops, as the last option in the train stop menu.
-  * Train limits are helpful for complex train networks by limiting how many trains are allowed to head for a particular station.
-  * When the limit is reached at a station, other trains planning to go to it will wait for their turn at their previous stations.
-
 - Added extensive support for blueprint books.
   * Press `CONTROL + SHIFT + ALT + B` to grab a new empty book in hand.
   * With a book in hand and no other menus open, open the book's menu with  `LEFT BRACKET` to see the contents.
@@ -47,6 +38,14 @@ Not released yet.
   * The robots are now deployed at the character location, where they usually are most effective.
 
 - Added menu search to the travel menu.  This works the same as all other menus with search.
+
+- Added circuit network support for regular rail signals.
+  * You can now apply an enabling condition for closing the signal.
+  * If you use a signal like this at a train station then you can block a moving train from entering or exiting the area, although trains waiting at signals do not interact with inserters.
+
+- Added support for setting the trains limit at train stops, as the last option in the train stop menu.
+  * Train limits are helpful for complex train networks by limiting how many trains are allowed to head for a particular station.
+  * When the limit is reached at a station, other trains planning to go to it will wait for their turn at their previous stations.
 
 - Added support for rotating directional vehicles in hand.
   * Cars and tanks rotate by 90 degrees at a time.
