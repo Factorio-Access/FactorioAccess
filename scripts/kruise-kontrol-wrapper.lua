@@ -50,7 +50,7 @@ function mod.activate_kk(pindex)
       end
 
       -- If in a car, make sure to activate it
-      if p.vehicle and p.vehicle.active == false then
+      if p.vehicle and p.vehicle.type == "car" and p.vehicle.active == false then
          p.vehicle.active = true
          p.vehicle.speed = 0
       end
@@ -102,7 +102,7 @@ function mod.cancel_kk(pindex)
       printout({ "access.kk-cancel" }, pindex)
    end)
    -- If in a car, make sure to stop it because we are exiting it too because of the overlapping keys
-   if p.vehicle and p.vehicle.active == true then p.vehicle.speed = 0 end
+   if p.vehicle and p.vehicle.type == "car" and p.vehicle.active == true then p.vehicle.speed = 0 end
 end
 
 function mod.status_read(pindex, short_version)

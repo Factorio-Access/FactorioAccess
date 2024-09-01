@@ -69,19 +69,19 @@ Not released yet.
 
 - Honking a vehicle horn has been rebinded from `V` to `ALT + W`.
 
-- Cars and tanks that you drive are stopped when you are navigating an open menu or are in cursor mode.
+- Cars and tanks that you drive are stopped when you are navigating in an open menu or are in cursor mode.
   * This does not apply for automatic driving with Kruise Kontrol Remote.
   * They are reactivated when you press a movement key when all menus and cursor mode are closed.
   * They are now also stopped as soon as you exit them.
   * Trains are not affected by these changes. They still use `WASD` to move and `ARROW KEYS` for the train menu.
 
-- The travel menu can now be opened from inside a vehicle, but you cannot fast travel from inside. Consider Kruise Kontrol driving instead.
+- The travel menu can now be opened from inside a vehicle, but you cannot fast travel from inside. Consider Kruise Kontrol Remote driving instead.
 
 - Cursor skipping now stops when it crosses an audio ruler.
   * You can also skip from along a ruler to its center point.
   * These long-intended additions will assist with the goal of reducing the need to count tiles.
 
-- On a tile where several rails overlap, end rails now have priority for being reported.
+- On a tile where several rails and/or trains overlap, end rails now have priority for being reported.
 
 - Simplified how curved rail directions are described.
   * For example it now says "rail curved east and northwest" which describes the two directions you can go from the center of this rail.
