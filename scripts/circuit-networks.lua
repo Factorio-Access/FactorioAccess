@@ -833,22 +833,25 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
    elseif index == 1 then
       --List all active signals of this network
       if not clicked then
+         players[pindex].menu_click_count = 0
          printout("List active signals of this network", pindex)
       else
          if nwr == nil and nwg == nil then
             printout("No circuit network connected", pindex)
             return
          end
-         local result = ""
+         local click_count = players[pindex].menu_click_count
+         click_count = click_count + 1
+         players[pindex].menu_click_count = click_count
+         local result = { "" }
          if nwr ~= nil then
-            if nwg ~= nil then result = result .. "Red network: " end
-            result = result .. mod.circuit_network_signals_info(pindex, nwr)
+            if nwg ~= nil then table.insert(result, " Red network: ") end
+            table.insert(result, mod.circuit_network_signals_info(pindex, nwr, "red", click_count))
          end
          if nwg ~= nil then
-            if nwr ~= nil then result = result .. "Green network: " end
-            result = result .. mod.circuit_network_signals_info(pindex, nwg)
+            if nwr ~= nil then table.insert(result, " Green network: ") end
+            table.insert(result, mod.circuit_network_signals_info(pindex, nwg, "green", click_count))
          end
-         if result == "" then result = "No signals at the moment" end
          printout(result, pindex)
       end
    elseif index == 2 then
@@ -1368,24 +1371,43 @@ function mod.circuit_network_members_info(pindex, ent, wire_type)
 end
 
 --Lists first 10 signals in a circuit network
-function mod.circuit_network_signals_info(pindex, nw)
+function mod.circuit_network_signals_info(pindex, nw, color_name, group_no)
    local signals = nw.signals
-   local result = ""
+   local first_sig = 1 + (group_no - 1) * 5
+   local last_sig = first_sig + 4
+   local result = { "" }
    local total_signal_count = 0
    if signals == nil then
-      result = "No signals at the moment"
+      table.insert(result, "No signals at the moment,")
       return result
+   end
+   if #signals < first_sig then
+      table.insert(result, "No other signals at the moment,")
+      return result
+   end
+   table.sort(signals, function(k1, k2)
+      return k1.count > k2.count
+   end)
+   --Use a cached list to handle changes in the list while reading
+   if color_name == "red" then
+      if group_no == 1 then
+         players[pindex].cached_list = signals
+      else
+         signals = players[pindex].cached_list
+      end
+   elseif color_name == "green" then
+      if group_no == 1 then
+         players[pindex].cached_list_2 = signals
+      else
+         signals = players[pindex].cached_list_2
+      end
    end
    --Loop through the list
    for i, sig in ipairs(signals) do
-      if total_signal_count >= 10 and #signals > 10 then
-         result = result .. " and " .. (#signals - total_signal_count) .. " other signals "
-         break
-      end
       total_signal_count = total_signal_count + 1
       local sig_name = sig.signal.name
       local sig_type = sig.signal.type
-      local sig_count = sig.count
+      local sig_count = fa_utils.simplify_large_number(sig.count)
       local sig_local_name = sig_name
       if sig_type == "item" then
          sig_local_name = localising.get(game.item_prototypes[sig_name], pindex)
@@ -1394,7 +1416,15 @@ function mod.circuit_network_signals_info(pindex, nw)
       elseif sig_type == "virtual" then
          sig_local_name = localising.get(game.virtual_signal_prototypes[sig_name], pindex)
       end
-      result = result .. sig_local_name .. " times " .. sig_count .. ", "
+      if i >= first_sig and i <= last_sig then
+         table.insert(result, sig_local_name .. " times " .. sig_count .. ", ")
+      elseif i > last_sig then
+         table.insert(
+            result,
+            " and " .. (#signals - total_signal_count) .. " other signals, press LEFT BRACKET to read more."
+         )
+         return result
+      end
    end
    return result
 end

@@ -2187,6 +2187,12 @@ function mod.logistic_network_items_info(port, group_no)
    table.sort(itemtable, function(k1, k2)
       return k1.count > k2.count
    end)
+   --Use a cached list to handle changes in the list while reading
+   if group_no == 1 then
+      players[pindex].cached_list = itemtable
+   else
+      itemtable = players[pindex].cached_list
+   end
    if #itemtable == 0 then
       table.insert(result, " no items. ")
       return result
@@ -2204,7 +2210,9 @@ function mod.logistic_network_items_info(port, group_no)
             )
          end
       end
-      if #itemtable > i_start + 4 then table.insert(result, ", and other items, press LEFT BRACKET to list more.") end
+      if #itemtable > i_start + 4 then
+         table.insert(result, ", and other items, " .. #itemtable .. " total, press LEFT BRACKET to list more.")
+      end
    end
    return result
 end
