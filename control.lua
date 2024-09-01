@@ -661,7 +661,6 @@ function force_cursor_off(pindex)
    fa_graphics.sync_build_cursor_graphics(pindex)
    players[pindex].player_direction = p.character.direction
    players[pindex].build_lock = false
-   if p.driving and p.vehicle then p.vehicle.active = true end
 
    --Close Remote view
    toggle_remote_view(pindex, false, true, true)
@@ -2599,7 +2598,8 @@ end
 --Returns false if failed to move
 function move(direction, pindex, nudged)
    local p = game.get_player(pindex)
-   if p.driving or p.character == nil then return false end
+   if p.character == nil then return false end
+   if p.vehicle then return true end
    local first_player = game.get_player(pindex)
    local pos = players[pindex].position
    local new_pos = fa_utils.offset_position(pos, direction, 1)
@@ -2772,9 +2772,28 @@ function move_key(direction, event, force_single_tile)
    --Play a sound for audio ruler alignment (cursor mode moved)
    if players[pindex].in_menu == false and players[pindex].cursor then Rulers.update_from_cursor(pindex) end
 
-   --If driving a spidertron in telestep mode, suggest using smooth walking
-   if p.vehicle and p.vehicle.type == "spider-vehicle" and players[pindex].walk ~= WALKING.SMOOTH then
-      printout("To walk the spidertron, enable smooth walking mode", pindex)
+   --Handle vehicle behavior
+   if p.vehicle then
+      if p.vehicle.type == "car" then
+         --Deactivate (and stop) cars when in a menu
+         if players[pindex].cursor or players[pindex].in_menu then
+            p.vehicle.active = false
+         end
+         --Re-activate inactive cars when in no menu
+         if not players[pindex].cursor and not players[pindex].in_menu and p.vehicle.active == false then
+            p.vehicle.active = true
+            p.vehicle.speed = 0
+         end
+         --Re-activate inactive cars if in Kruise Kontrol
+         if fa_kk.is_active(pindex) then
+            p.vehicle.active = true
+            p.vehicle.speed = 0
+         end
+      end
+      --If driving a spidertron in telestep mode, suggest using smooth walking
+      if p.vehicle.type == "spider-vehicle" and players[pindex].walk ~= WALKING.SMOOTH then
+         printout("To walk the spidertron, enable smooth walking mode", pindex)
+      end
    end
 end
 
@@ -2783,13 +2802,6 @@ function cursor_mode_move(direction, pindex, single_only)
    local diff = players[pindex].cursor_size * 2 + 1
    if single_only then diff = 1 end
    local p = game.get_player(pindex)
-
-   if p.driving and p.vehicle and (p.vehicle.type == "car" or p.vehicle.type == "locomotive") then
-      if math.abs(p.vehicle.speed * 215) < 25 then
-         fa_driving.stop_vehicle(pindex)
-         p.vehicle.active = false
-      end
-   end
 
    players[pindex].cursor_pos =
       fa_utils.center_of_tile(fa_utils.offset_position(players[pindex].cursor_pos, direction, diff))
@@ -6934,7 +6946,7 @@ script.on_event("honk", function(event)
          game.play_sound({ path = "train-honk-low-long", position = vehicle.position })
       elseif vehicle.name == "tank" then
          game.play_sound({ path = "tank-honk", position = vehicle.position })
-      else
+      elseif vehicle.type == "car" then
          game.play_sound({ path = "car-honk", position = vehicle.position })
       end
    end

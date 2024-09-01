@@ -49,6 +49,12 @@ function mod.activate_kk(pindex)
          return { "access.kk-blueprints-not-allowed" }
       end
 
+      -- If in a car, make sure to activate it
+      if p.vehicle and p.vehicle.active == false then
+         p.vehicle.active = true
+         p.vehicle.speed = 0
+      end
+
       -- Okay. Finally we're good.  Let's kick this off.
 
       close_menu_resets(pindex)
@@ -75,6 +81,7 @@ end
 
 --FA actions to take when KK cancel input is pressed
 function mod.cancel_kk(pindex)
+   local p = game.get_player(pindex)
    call_with_interface(function()
       if not remote.call(interface_name, "is_active", pindex) then
          -- If there was no interface then KK isn't installed; if the player
@@ -94,6 +101,8 @@ function mod.cancel_kk(pindex)
 
       printout({ "access.kk-cancel" }, pindex)
    end)
+   -- If in a car, make sure to stop it because we are exiting it too because of the overlapping keys
+   if p.vehicle and p.vehicle.active == true then p.vehicle.speed = 0 end
 end
 
 function mod.status_read(pindex, short_version)

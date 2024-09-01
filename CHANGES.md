@@ -29,12 +29,12 @@ Not released yet.
   * The mod determines a minimum range based on the damage radius of the thrown item.  In vanilla, every item also has its own maximum range. For example grenades have minimum and maximum ranges of 7 and 15 tiles respectively.  This ensures that you don't hit yourself.
   * The mod will try to target things in this order: spawners and worms, enemy units and players, buildings and military targets, and finally the cursor position.
   * If you are running or driving directly towards a potential target, it is skipped so that you do not run into the blast area.
-  * If you are running or driving directly away from a potential target, the item can be thrown a little closer behind you because it is assumed that you will leave the blast area.  Be careful and keep moving!
+  * If you are running or driving directly away from a potential target, the item can be thrown a little closer behind you because it is assumed that you will leave the blast area. Be careful and keep moving!
 
 - Added information reporting for follower robot counts.
   * You are allowed a limited number of defender or destroyer robots active at the same time. This does not apply to any other robots.
   * The limit is now announced every time you deploy a defender or destroyer capsule.
-  * You can still deploy when above the limit in order to refresh your robots because they also have timers that expire.
+  * You can still deploy more when above the limit in order to refresh your robots, because they also have timers that expire.
   * The robots are now deployed at the character location, where they usually are most effective.
 
 - Added menu search to the travel menu.  This works the same as all other menus with search.
@@ -68,6 +68,12 @@ Not released yet.
   * Press `CONTROL + G` to connect selected train wagons.
 
 - Honking a vehicle horn has been rebinded from `V` to `ALT + W`.
+
+- Cars and tanks that you drive are stopped when you are navigating an open menu or are in cursor mode.
+  * This does not apply for automatic driving with Kruise Kontrol Remote.
+  * They are reactivated when you press a movement key when all menus and cursor mode are closed.
+  * They are now also stopped as soon as you exit them.
+  * Trains are not affected by these changes. They still use `WASD` to move and `ARROW KEYS` for the train menu.
 
 - The travel menu can now be opened from inside a vehicle, but you cannot fast travel from inside. Consider Kruise Kontrol driving instead.
 
