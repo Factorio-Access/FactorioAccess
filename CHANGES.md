@@ -1,5 +1,5 @@
 # Version 0.14.0 BETA
-Not released yet.
+Released on September 2nd, 2024.
 
 ## Summary
 - This update brings extensive improvements to combat and blueprint books, with many smaller additions and changes regarding other areas such as vehicles, rails, and menu search. Some keybinds have changed regarding checking character health and vehicle features.
