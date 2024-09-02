@@ -10,7 +10,7 @@ Not released yet.
   * With a book in hand and no other menus open, open the book's menu with  `LEFT BRACKET` to see the contents.
   * In the list menu, press `LEFT BRACKET` to grab a temporary copy the selected blueprint into your hand and put the book away. 
   * In the list menu, press `X` to delete the blueprint.
-  * From your inventory,  with a book in hand,  press `RIGHT BRACKET` on a blueprint to copy it into the book's first empty slot.
+  * From your inventory, with a book in hand, press `RIGHT BRACKET` on a blueprint to copy it into the book's first empty slot.
   * The list menu supports menu search.
   * While books normally can hold other books or other planner types in their list slots, the mod for now supports only blueprints.
   * There is no support yet for actions related to reordering the items within a book.
@@ -29,24 +29,25 @@ Not released yet.
 
 - Added new smart aiming feature for grenades and similar thrown items: Cluster grenades, poison capsules, slowdown capsules.
   * It is now feasible to use your gun with `SPACE` while you run or drive around with `WASD`, while you select a capsule from the quickbar and safely smart throw it without much thought using `LEFT BRACKET`.
-  * The mod determines a minimum range based on the damage radius of the thrown item.  In vanilla, every item also has its own maximum range. For example grenades have minimum and maximum ranges of 7 and 15 tiles respectively.  This ensures that you don't hit yourself.
-  * The mod will try to target things in this order: spawners and worms, enemy units and players, buildings and military targets, and finally the cursor position.
+  * The mod determines a minimum range based on the damage radius of the thrown item. This ensures that you don't hit yourself. Every item also has its own maximum range. For example, grenades have minimum and maximum ranges of 7 and 15 tiles respectively. 
+  * The mod will try to smartly target things in this order: spawners and worms, enemy units and players, buildings and military targets, and finally the cursor position.
   * If you are running or driving directly towards a potential target, it is skipped so that you do not run into the blast area.
-  * If you are running or driving directly away from a potential target, the item can be thrown a little closer behind you because it is assumed that you will leave the blast area. Be careful and keep moving!
+  * If you are running or driving directly away from a potential target, the item can be thrown a little closer behind you because it is assumed that you are leaving the blast area. Be careful and keep moving!
 
 - Added information reporting for follower robot counts.
-  * You are allowed a limited number of defender or destroyer robots active at the same time. This does not apply to any other robots.
+  * You are allowed a limited number of defender or destroyer robots active at the same time, as your follower robots. This does not apply to any other robots.
   * The limit is now announced every time you deploy a defender or destroyer capsule.
   * You can still deploy more when above the limit in order to refresh your robots, because they also have timers that expire.
-  * The robots are now deployed at the character location, where they usually are most effective.
+  * The robots are now deployed at the character location, where they usually are most effective. Then follower robots begin to circle you and distractor robots stay in place.
 
 - Added menu search to the travel menu. This works the same as all other menus with search.
 
 - Added circuit network support for regular rail signals.
+  * You can now read whether a train is present by checking for the red color signal.
   * You can now apply an enabling condition for closing the signal.
   * If you use a signal like this at a train station then you can block a moving train from entering or exiting the area, although trains waiting at signals do not interact with inserters.
 
-- Added support for setting the trains limit at train stops, as the last option in the train stop menu.
+- Added support for setting the trains limit at train stops, as the bottom option in the train stop menu.
   * Train limits are helpful for complex train networks by limiting how many trains are allowed to head for a particular station.
   * When the limit is reached at a station, other trains planning to go to it will wait for their turn at their previous stations.
   * The default case is no limit, which you can restore by inputting a negative number.
@@ -67,23 +68,23 @@ Not released yet.
   * Press `SHIFT + G` to disconnect selected train wagons.
   * Press `CONTROL + G` to connect selected train wagons.
 
-- Honking a vehicle horn has been rebinded from `V` to `ALT + W`.
+- Honking a vehicle horn has been rebinded from `V` to `ALT + W`. Hence walking mode cannot be toggled while driving.
 
-- Cars and tanks that you drive are stopped instantly when you are navigating in an open menu or are in cursor mode.
+- Cars and tanks that you drive are stopped instantly when you press `WASD` while navigating in an open menu or in cursor mode.
   * This does not apply for automatic driving with Kruise Kontrol Remote.
   * They are reactivated when you press a movement key when all menus and cursor mode are closed.
-  * They are now also stopped as soon as you exit them.
+  * They are now also stopped as soon as you press `ENTER` to exit them or to cancel Kruise Kontrol.
   * Trains are not affected by these changes. They still use `WASD` to move and `ARROW KEYS` for the train menu.
 
-- On a tile where several rails and possibly trains overlap, end rails now have priority for being reported first.
+- On a tile where several rails and possibly trains are overlapping, end rails now have priority for being reported first.
+
+- The travel menu can now be opened from inside a vehicle, but you cannot fast travel from inside. Consider Kruise Kontrol Remote driving instead.
 
 - Simplified how curved rail directions are described.
   * For example it now says "rail curved east and northwest" which describes the two directions you can go from the center of this rail.
 
-- The travel menu can now be opened from inside a vehicle, but you cannot fast travel from inside. Consider Kruise Kontrol Remote driving instead.
-
 - Cursor skipping now stops when it crosses an audio ruler.
-  * You can also skip from along a ruler to its center point.
+  * You can also skip along a ruler to its center point.
   * These long-intended additions will assist with the goal of reducing the need to count tiles.
 
 - Improved circuit network gate support.
@@ -93,7 +94,7 @@ Not released yet.
 - Entering a menu search term is now allowed from any menu, but the search still runs only in supported menus.
 
 - Improved list reading for signals in a circuit network, or items in a logistic network, or items in a train.
-  * 5 items are listed at a time, and you press `LEFT BRACKET` to get 5 more items.
+  * 5 items are listed at a time, and you press `LEFT BRACKET` to get 5 more items, until the end of the list is reached.
   * Rewind to the start by going up and down the menu again.
 
 ## Bugfixes
@@ -107,15 +108,15 @@ Not released yet.
 
 - Fixed an issue so that the description can be read for an item in hand when no menus are open and no entities are selected.
 
-- Fixed several bugs related to text fields by creating a single function for creating text fields.
+- Fixed several bugs related to text input fields by creating a single function for creating text fields.
 
 - Fixed a crash when trying to check rail item counts for blueprints.
-
-- Fixed some bugs relating to data type checks and other warnings made by LuaLS.
 
 - Fixed crashes when trying to locate planner tools in inventories or the crafting menu.
 
 - Fixed a crash related to editing logistic requests from the crafting menu.
+
+- Fixed some bugs relating to data type checks and other warnings made by LuaLS.
 
 
 # Version 0.13.1 BETA
