@@ -98,6 +98,8 @@ Released on September 2nd, 2024.
   * Rewind to the start by going up and down the menu again.
 
 ## Bugfixes
+- Launcher: Fixed a crash when the mod-list.json file didn't exist.
+
 - Fixed a bug where rotated temporary blueprints from the copy-paste feature would become permanent and sneak into the inventory.
 
 - Added info in the mod about blueprint flipping not working. There are a couple fixes being discussed for this.
