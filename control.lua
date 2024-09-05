@@ -8634,7 +8634,13 @@ function set_infinity_pipe_filter_by_hand(pindex, ent)
          local fluid_name = string.sub(name, 1, first - 1)
          if game.fluid_prototypes[fluid_name] then
             local temp = 25
-            if fluid_name == "water" then temp = 15 end
+            if fluid_name == "water" then
+               temp = 15
+            elseif fluid_name == "empty" then
+               --Special case: Empty barrel sets steam
+               fluid_name = "steam"
+               temp = 500
+            end
             ent.set_infinity_pipe_filter({ name = fluid_name, temperature = temp, percentage = 1.00, mode = "exactly" })
             return "Set filter to fluid in hand"
          end
