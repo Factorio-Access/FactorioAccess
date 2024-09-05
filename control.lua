@@ -8628,16 +8628,21 @@ function set_infinity_pipe_filter_by_hand(pindex, ent)
       return "All filters cleared"
    else
       --Get the fluid from the barrel in hand
-      local first, last = string.find(stack.name, "-barrel")
+      local name = stack.name
+      local first, last = string.find(name, "-barrel")
       if first then
-         local fluid_name = string.sub(stack.name, first)
+         local fluid_name = string.sub(name, 1, first - 1)
          if game.fluid_prototypes[fluid_name] then
-            ent.set_infinity_pipe_filter({ name = fluid_name, temperature = 15, percentage = 1.0, mode = "exactly" })
+            local temp = 25
+            if fluid_name == "water" then temp = 15 end
+            ent.set_infinity_pipe_filter({ name = fluid_name, temperature = temp, percentage = 1.00, mode = "exactly" })
             return "Set filter to fluid in hand"
          end
+         return "Error: Unknown fluid in hand"
       end
+      return "Error: Not a fluid barrel in hand"
    end
-   return ""
+   return "Error setting fluid"
 end
 
 --Feature for typing in coordinates for moving the mod cursor.

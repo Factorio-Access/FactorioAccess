@@ -157,6 +157,13 @@ function mod.ent_info(pindex, ent, description)
             result = result .. ", in network " .. network_name
          end
       end
+   elseif ent.name == "infinity-pipe" then
+      local filter = ent.get_infinity_pipe_filter()
+      if filter == nil then
+         result = result .. " draining "
+      else
+         result = result .. " of " .. filter.name
+      end
    end
    --Pipe ends are labelled to distinguish them
    if ent.name == "pipe" and fa_building_tools.is_a_pipe_end(ent, pindex) then result = result .. " end, " end
