@@ -7762,12 +7762,13 @@ script.on_event("set-entity-filter-from-hand", function(event)
             --Remove the last signal
             fa_circuits.constant_combinator_remove_last_signal(ent, pindex)
          elseif ent.type == "inserter" then
-            --Call the filter setter
             local result = set_inserter_filter_by_hand(pindex, ent)
             printout(result, pindex)
          elseif ent.type == "infinity-container" then
-            --Call the filter setter
             local result = set_infinity_chest_filter_by_hand(pindex, ent)
+            printout(result, pindex)
+         elseif ent.type == "infinity-pipe" then
+            local result = set_infinity_pipe_filter_by_hand(pindex, ent)
             printout(result, pindex)
          end
       else
@@ -7779,12 +7780,13 @@ script.on_event("set-entity-filter-from-hand", function(event)
             --Add a new signal
             fa_circuits.constant_combinator_add_stack_signal(ent, stack, pindex)
          elseif ent.type == "inserter" then
-            --Call the filter setter
             local result = set_inserter_filter_by_hand(pindex, ent)
             printout(result, pindex)
          elseif ent.type == "infinity-container" then
-            --Call the filter setter
             local result = set_infinity_chest_filter_by_hand(pindex, ent)
+            printout(result, pindex)
+         elseif ent.type == "infinity-pipe" then
+            local result = set_infinity_pipe_filter_by_hand(pindex, ent)
             printout(result, pindex)
          end
       end
@@ -8616,6 +8618,26 @@ function set_infinity_chest_filter_by_hand(pindex, ent)
       ent.remove_unfiltered_items = true
       return "Set filter to item in hand"
    end
+end
+
+function set_infinity_pipe_filter_by_hand(pindex, ent)
+   local stack = game.get_player(pindex).cursor_stack
+   if stack == nil or stack.valid_for_read == false or stack.valid == false then
+      --Delete filters
+      ent.set_infinity_pipe_filter(nil)
+      return "All filters cleared"
+   else
+      --Get the fluid from the barrel in hand
+      local first, last = string.find(stack.name, "-barrel")
+      if first then
+         local fluid_name = string.sub(stack.name, first)
+         if game.fluid_prototypes[fluid_name] then
+            ent.set_infinity_pipe_filter({ name = fluid_name, temperature = 15, percentage = 1.0, mode = "exactly" })
+            return "Set filter to fluid in hand"
+         end
+      end
+   end
+   return ""
 end
 
 --Feature for typing in coordinates for moving the mod cursor.
