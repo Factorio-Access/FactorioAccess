@@ -1782,6 +1782,13 @@ data:extend({
 
    {
       type = "custom-input",
+      name = "console",
+      key_sequence = "GRAVE",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
       name = "open-warnings-menu",
       key_sequence = "P",
       consuming = "none",

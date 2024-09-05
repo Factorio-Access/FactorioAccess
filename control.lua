@@ -9091,6 +9091,10 @@ function all_ents_are_walkable(pos)
    return true
 end
 
+script.on_event("console", function(event)
+   printout("Toggled console", pindex)
+end)
+
 script.on_event(defines.events.on_console_chat, function(event)
    local speaker = game.get_player(event.player_index).name
    local message = event.message
