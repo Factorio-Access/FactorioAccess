@@ -9091,6 +9091,22 @@ function all_ents_are_walkable(pos)
    return true
 end
 
+script.on_event(defines.events.on_console_chat, function(event)
+   local speaker = game.get_player(event.player_index).name
+   local message = event.message
+   for pindex, player in pairs(players) do
+      printout(speaker .. " says, " .. message, pindex)
+   end
+end)
+
+script.on_event(defines.events.on_console_command, function(event)
+   local speaker = game.get_player(event.player_index).name
+   local command = event.command
+   for pindex, player in pairs(players) do
+      printout(speaker .. " commands, " .. command, pindex)
+   end
+end)
+
 --WIP. This function can be called via the console: /c __FactorioAccess__ regenerate_all_uncharted_spawners() --laterdo fix bugs?
 function regenerate_all_uncharted_spawners(surface_in)
    local surf = surface_in or game.surfaces["nauvis"]
