@@ -19,7 +19,7 @@ Released on September 7th, 2024.
 ## Changes
 - Changed the keybind to set entity filters from `CONTROL + LEFT BRACKET` to `ALT + LEFT BRACKET`. This applies for chests, inserters, splitters, etc.
 
-- Improved health and armor stats reporting with the `G` key to now include vehicles and check the menu context.
+- Improved health and armor stats reporting with the `G` key to now include vehicles and to check the menu context.
   * When no menus are open, the mod reports only health and shield level info for your character.
   * For most open menus such as the inventory, the full set of stats about player armor is reported.
   * If the character is in a vehicle, or the vehicle's menu is open, then the name and full info for it is read instead.
