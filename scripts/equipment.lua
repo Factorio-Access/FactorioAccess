@@ -293,21 +293,24 @@ function mod.read_armor_stats(pindex, ent_in)
    local ent = ent_in
    local armor_inv = game.get_player(pindex).get_inventory(defines.inventory.character_armor)
    local result = ""
-   if armor_inv.is_empty() then return "No armor equipped." end
-   if armor_inv[1].grid == nil or not armor_inv[1].grid.valid then
-      return armor_inv[1].name .. " equipped, with no equipment grid."
-   end
-   --Armor with Equipment
    local grid
-   if players[pindex].menu == "vehicle" and game.get_player(pindex).opened.type == "spider-vehicle" then
-      grid = game.get_player(pindex).opened.grid
-      result = localising.get_alt(game.entity_prototypes["spidertron"])
-      if result == nil then
-         result = "Spidertron " --laterdo possible bug here
+   if ent_in == nil then
+      if armor_inv.is_empty() then return "No armor equipped." end
+      if armor_inv[1].grid == nil or not armor_inv[1].grid.valid then
+         return armor_inv[1].name .. " equipped, with no equipment grid."
       end
-   else
+      --Player armor with Equipment
       grid = armor_inv[1].grid
       result = armor_inv[1].name .. " equipped, "
+   elseif ent.grid == nil then
+      return "This entity has no equipment grid."
+   else
+      --Entity with equipment grid
+      grid = ent.grid
+      result = localising.get_alt(game.entity_prototypes[ent.name])
+      if result == nil then
+         result = ent.name --laterdo possible bug here
+      end
    end
    if grid.count() == 0 then return result .. " no armor equipment installed. " end
    --Read shield level
