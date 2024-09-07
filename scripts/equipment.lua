@@ -249,35 +249,52 @@ function mod.count_empty_equipment_slots(grid)
    return slots_left
 end
 
-function mod.read_shield_and_health_level(pindex)
+function mod.read_shield_and_health_level(pindex, ent_in)
    local p = game.get_player(pindex)
    local char = p.character
+   local ent
+   local grid
    local result = { "" }
-   --Report if character missing
-   if char == nil or char.valid == false then
-      table.insert(result, "No character")
-      return result
-   end
-   --Check character has any energy shield health remaining
-   local shield_left = 0
-   local armor_inv = p.get_inventory(defines.inventory.character_armor)
-   if armor_inv[1] and armor_inv[1].valid_for_read and armor_inv[1].grid and armor_inv[1].grid.valid then
-      local grid = armor_inv[1].grid
-      if grid.shield > 0 and grid.shield == grid.max_shield then
-         table.insert(result, "Shield full, ")
-      elseif grid.shield > 0 then
-         shield_left = math.floor(grid.shield / grid.max_shield * 100 + 0.5)
-         table.insert(result, "Shield " .. shield_left .. " percent, ")
-      else
-         --Say nothing for empty shield
+   if ent_in then
+      --Report for the ent
+      ent = ent_in
+      grid = ent.grid
+      table.insert(result, ent.localised_name)
+   else
+      --Report for this player
+      if char == nil or char.valid == false then
+         table.insert(result, "No character")
+         return result
+      end
+      ent = char
+      local armor_inv = p.get_inventory(defines.inventory.character_armor)
+      if armor_inv[1] and armor_inv[1].valid_for_read and armor_inv[1].grid and armor_inv[1].grid.valid then
+         grid = armor_inv[1].grid
       end
    end
-   --Character health
-   if char.is_entity_with_health and char.get_health_ratio() == 1 then
-      table.insert(result, { "access.full-health" })
-   elseif char.is_entity_with_health then
-      table.insert(result, { "access.percent-health", math.floor(char.get_health_ratio() * 100) })
+
+   --Check shield health remaining (if supported)
+   local empty_shield = false
+   if grid then
+      if grid.shield > 0 and grid.shield == grid.max_shield then
+         table.insert(result, " Shield full, ")
+      elseif grid.shield > 0 then
+         local shield_left = math.floor(grid.shield / grid.max_shield * 100 + 0.5)
+         table.insert(result, " Shield " .. shield_left .. " percent, ")
+      else
+         empty_shield = true
+      end
    end
+   --Check health
+   if ent.is_entity_with_health then
+      if ent.get_health_ratio() == 1 then
+         table.insert(result, { "access.full-health" })
+      else
+         table.insert(result, { "access.percent-health", math.floor(ent.get_health_ratio() * 100) })
+      end
+   end
+   -- State shield empty at the end (if supported)
+   if grid and empty_shield then table.insert(result, ", shield empty ") end
    return result
 end
 
