@@ -249,8 +249,48 @@ function mod.count_empty_equipment_slots(grid)
    return slots_left
 end
 
---Read armor stats such as type and bonuses
-function mod.read_armor_stats(pindex)
+function mod.read_character_status(pindex)
+   local p = game.get_player(pindex)
+   local char = p.character
+   local result = { "" }
+   --Report if character missing
+   if char == nil or char.valid == false then
+      printout(pindex, "No character")
+      return
+   end
+   --Check character has any energy shield health remaining
+   local shield_left = 0
+   local armor_inv = p.get_inventory(defines.inventory.character_armor)
+   if
+      armor_inv[1]
+      and armor_inv[1].valid_for_read
+      and armor_inv[1].valid
+      and armor_inv[1].grid
+      and armor_inv[1].grid.valid
+   then
+      local grid = armor_inv[1].grid
+      if grid.shield > 0 and grid.shield == grid.max_shield then
+         table.insert(result, "Shield full, ")
+      elseif grid.shield > 0 then
+         shield_left = math.floor(grid.shield / grid.max_shield * 100 + 0.5)
+         table.insert(result, "Shield " .. shield_left .. " percent, ")
+      else
+         --Say nothing
+      end
+   end
+   --Character health
+   if char.is_entity_with_health and char.get_health_ratio() == 1 then
+      table.insert(result, { "access.full-health" })
+   elseif char.is_entity_with_health then
+      table.insert(result, { "access.percent-health", math.floor(char.get_health_ratio() * 100) })
+   end
+   printout(result, pindex)
+   return
+end
+
+--Read armor stats such as type and bonuses. Default option is the player's own armor
+function mod.read_armor_stats(pindex, ent_in)
+   local ent = ent_in
    local armor_inv = game.get_player(pindex).get_inventory(defines.inventory.character_armor)
    local result = ""
    if armor_inv.is_empty() then return "No armor equipped." end

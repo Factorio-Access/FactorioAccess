@@ -1481,43 +1481,4 @@ function mod.read_selected_entity_status(pindex)
    return result
 end
 
-function mod.read_character_status(pindex)
-   local p = game.get_player(pindex)
-   local char = p.character
-   local result = { "" }
-   --Report if character missing
-   if char == nil or char.valid == false then
-      printout(pindex, "No character")
-      return
-   end
-   --Check character has any energy shield health remaining
-   local shield_left = 0
-   local armor_inv = p.get_inventory(defines.inventory.character_armor)
-   if
-      armor_inv[1]
-      and armor_inv[1].valid_for_read
-      and armor_inv[1].valid
-      and armor_inv[1].grid
-      and armor_inv[1].grid.valid
-   then
-      local grid = armor_inv[1].grid
-      if grid.shield > 0 and grid.shield == grid.max_shield then
-         table.insert(result, "Shield full, ")
-      elseif grid.shield > 0 then
-         shield_left = math.floor(grid.shield / grid.max_shield * 100 + 0.5)
-         table.insert(result, "Shield " .. shield_left .. " percent, ")
-      else
-         --Say nothing
-      end
-   end
-   --Character health
-   if char.is_entity_with_health and char.get_health_ratio() == 1 then
-      table.insert(result, { "access.full-health" })
-   elseif char.is_entity_with_health then
-      table.insert(result, { "access.percent-health", math.floor(char.get_health_ratio() * 100) })
-   end
-   printout(result, pindex)
-   return
-end
-
 return mod
