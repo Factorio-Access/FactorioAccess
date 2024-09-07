@@ -298,74 +298,73 @@ function mod.read_shield_and_health_level(pindex, ent_in)
    return result
 end
 
---Read armor stats such as type and bonuses. Default option is the player's own armor
+--Read armor stats such as type and bonuses. Default option is the player's own armor.
 function mod.read_armor_stats(pindex, ent_in)
    local ent = ent_in
    local armor_inv = game.get_player(pindex).get_inventory(defines.inventory.character_armor)
-   local result = ""
+   local result = mod.read_shield_and_health_level(pindex, ent_in) --First report health and shield
+   table.insert(result, " ")
    local grid
    if ent_in == nil then
-      if armor_inv.is_empty() then return "No armor equipped." end
-      if armor_inv[1].grid == nil or not armor_inv[1].grid.valid then
-         return armor_inv[1].name .. " equipped, with no equipment grid."
+      --Player armor
+      if armor_inv.is_empty() then
+         table.insert(result, "No armor equipped.")
+         return result
+      elseif armor_inv[1].grid == nil or not armor_inv[1].grid.valid then
+         table.insert(result, armor_inv[1].name .. " equipped, with no equipment grid.")
+         return result
       end
-      --Player armor with Equipment
+      --Player armor with non-empty equipment grid
       grid = armor_inv[1].grid
-      result = armor_inv[1].name .. " equipped, "
-   elseif ent.grid == nil then
-      return "This entity has no equipment grid."
+      table.insert(result, armor_inv[1].name .. " equipped, ")
    else
-      --Entity with equipment grid
+      --Entity grid
       grid = ent.grid
-      result = localising.get_alt(game.entity_prototypes[ent.name])
-      if result == nil then
-         result = ent.name --laterdo possible bug here
+      if grid == nil or grid.valid == false then
+         table.insert(result, " no equipment grid.")
+         return result
       end
+      --Entity with non-empty equipment grid
+      --(continue)
    end
-   if grid.count() == 0 then return result .. " no armor equipment installed. " end
-   --Read shield level
-   if grid.max_shield > 0 then
-      if grid.shield == grid.max_shield then
-         result = result .. " shields full, "
-      else
-         result = result .. " shields at " .. math.ceil(100 * grid.shield / grid.max_shield) .. " percent, "
-      end
+   --Stop if no equipment
+   if grid.count() == 0 then
+      table.insert(result, " no armor equipment installed. ")
+      return result
    end
    --Read battery level
    if grid.battery_capacity > 0 then
       if grid.available_in_batteries == grid.battery_capacity then
-         result = result .. " batteries full, "
+         table.insert(result, " batteries full, ")
       elseif grid.available_in_batteries == 0 then
-         result = result .. " batteries empty "
+         table.insert(result, " batteries empty ")
       else
-         result = result
-            .. " batteries at "
-            .. math.ceil(100 * grid.available_in_batteries / grid.battery_capacity)
-            .. " percent, "
+         local battery_level = math.ceil(100 * grid.available_in_batteries / grid.battery_capacity)
+         table.insert(result, " batteries at " .. battery_level .. " percent, ")
       end
    else
-      result = result .. " no batteries, "
+      table.insert(result, " no batteries, ")
    end
    --Energy Producers
    if grid.generator_energy > 0 or grid.max_solar_energy > 0 then
-      result = result .. " generating "
+      table.insert(result, " generating ")
       if grid.generator_energy > 0 then
-         result = result .. fa_electrical.get_power_string(grid.generator_energy * 60) .. " nonstop, "
+         table.insert(result, fa_electrical.get_power_string(grid.generator_energy * 60) .. " nonstop, ")
       end
       if grid.max_solar_energy > 0 then
-         result = result .. fa_electrical.get_power_string(grid.max_solar_energy * 60) .. " at daytime, "
+         table.insert(result, fa_electrical.get_power_string(grid.max_solar_energy * 60) .. " at daytime, ")
       end
    end
-
    --Movement bonus
    if grid.count("exoskeleton-equipment") > 0 then
-      result = result
-         .. " movement bonus "
-         .. grid.count("exoskeleton-equipment") * 30
-         .. " percent for "
-         .. fa_electrical.get_power_string(grid.count("exoskeleton-equipment") * 200000)
+      table.insert(
+         result,
+         " movement bonus "
+            .. grid.count("exoskeleton-equipment") * 30
+            .. " percent for "
+            .. fa_electrical.get_power_string(grid.count("exoskeleton-equipment") * 200000)
+      )
    end
-
    return result
 end
 

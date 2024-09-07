@@ -7959,7 +7959,7 @@ script.on_event("read-health-and-armor-stats", function(event)
    pindex = event.player_index
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
-   local output = {""}
+   local output = { "" }
    --Skip blueprint flipping
    local hand = game.get_player(pindex).cursor_stack
    if hand and hand.valid_for_read and (hand.is_blueprint or hand.is_blueprint_book) then return end
