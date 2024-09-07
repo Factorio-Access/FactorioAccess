@@ -1,3 +1,29 @@
+# Version 0.14.1 BETA
+Released on September 7th, 2024.
+
+## Summary
+- ...
+
+## Features
+- Infinity pipe filters can now be set using fluid barrels.
+  * With a fluid barrel in hand, select the infinity pipe and press `ALT + LEFT BRACKET` to set the relevant fluid.
+  * As a special case, an empty barrel is used to set extra hot steam at 500 degrees.
+  * If you press with an empty hand, the filter is cleared and the pipe becomes an infinite drain.
+
+- Added limited support for console reading.
+  * When you press `GRAVE` or the relevant key, the console being opened is now reported.
+  * When a player enters a chat message, all players are informed about it live.
+  * The same as above happens for command messages.
+  * There is not yet support for chat history or for non-player console messages.
+
+- Improved health and armor stats reporting with the `G` key to now include vehicles and check the menu context.
+  * When no menus are open, the mod reports only health and shield level info for your character.
+  * For most open menus such as the inventory, the full set of stats about player armor is reported.
+  * If the character is in a vehicle, or the vehicle's menu is open, then the name and full info for it is read instead.
+
+## Changes
+- Changed the keybind to set entity filters from `CONTROL + LEFT BRACKET` to `ALT + LEFT BRACKET`. This applies for chests, inserters, splitters, etc.
+
 # Version 0.14.0 BETA
 Released on September 2nd, 2024.
 
