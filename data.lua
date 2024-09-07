@@ -1490,7 +1490,7 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "read-character-status",
+      name = "read-health-and-armor-stats",
       key_sequence = "G",
       consuming = "none",
    },
@@ -1924,13 +1924,6 @@ data:extend({
       type = "custom-input",
       name = "disconnect-rail-vehicles",
       key_sequence = "SHIFT + G",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "inventory-read-armor-stats",
-      key_sequence = "G",
       consuming = "none",
    },
 

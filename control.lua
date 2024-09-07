@@ -6044,14 +6044,6 @@ script.on_event("read-entity-status", function(event)
    if result ~= nil and result ~= "" then printout(result, pindex) end
 end)
 
-script.on_event("read-character-status", function(event)
-   pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   local hand = game.get_player(pindex).cursor_stack
-   if hand and hand.valid_for_read and (hand.is_blueprint or hand.is_blueprint_book) then return end
-   fa_info.read_character_status(pindex)
-end)
-
 script.on_event("rotate-building", function(event)
    fa_building_tools.rotate_building_info_read(event, true)
 end)
@@ -7963,17 +7955,27 @@ script.on_event("disconnect-rail-vehicles", function(event)
    end
 end)
 
-script.on_event("inventory-read-armor-stats", function(event)
-   local pindex = event.player_index
-   local vehicle = nil
-   if not check_for_player(pindex) or not players[pindex].in_menu then return end
-   if
-      (players[pindex].in_menu and players[pindex].menu == "inventory")
-      or (players[pindex].menu == "vehicle" and game.get_player(pindex).opened.type == "spider-vehicle")
-   then
+script.on_event("read-health-and-armor-stats", function(event)
+   pindex = event.player_index
+   local p = game.get_player(pindex)
+   if not check_for_player(pindex) then return end
+   --Skip blueprint flipping
+   local hand = game.get_player(pindex).cursor_stack
+   if hand and hand.valid_for_read and (hand.is_blueprint or hand.is_blueprint_book) then return end
+   if players[pindex].menu == "inventory" then
+      --Player health and armor equipment stats
       local result = fa_equipment.read_armor_stats(pindex)
-      --game.get_player(pindex).print(result)--
       printout(result, pindex)
+   elseif players[pindex].menu == "vehicle" and p.opened.type == "spider-vehicle" then
+      --Spider health and armor equipment stats
+      local result = fa_equipment.read_armor_stats(pindex)
+      printout(result, pindex)
+   elseif players[pindex].menu == "vehicle" then
+      --Other vehicle health stats only
+      ---TODO
+   else
+      --Player health stats only
+      fa_info.read_character_status(pindex)
    end
 end)
 
