@@ -9097,11 +9097,12 @@ function all_ents_are_walkable(pos)
 end
 
 script.on_event("console", function(event)
-   printout("Toggled console", pindex)
+   printout("Opened console", pindex)
 end)
 
 script.on_event(defines.events.on_console_chat, function(event)
    local speaker = game.get_player(event.player_index).name
+   if speaker == nil or speaker == "" then speaker = "Player" end
    local message = event.message
    for pindex, player in pairs(players) do
       printout(speaker .. " says, " .. message, pindex)
@@ -9110,6 +9111,7 @@ end)
 
 script.on_event(defines.events.on_console_command, function(event)
    local speaker = game.get_player(event.player_index).name
+   if speaker == nil or speaker == "" then speaker = "Player" end
    local command = event.command
    for pindex, player in pairs(players) do
       printout(speaker .. " commands, " .. command, pindex)
