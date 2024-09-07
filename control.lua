@@ -7976,7 +7976,7 @@ script.on_event("read-health-and-armor-stats", function(event)
       table.insert(output, result)
    else
       --Player health stats only
-      local result = fa_equipment.read_shield_and_health_level(pindex)
+      local result = fa_equipment.read_shield_and_health_level(pindex, nil)
       table.insert(output, result)
    end
    printout(output, pindex)
