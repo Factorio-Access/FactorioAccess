@@ -419,6 +419,9 @@ function mod.ent_info(pindex, ent, description)
          result = result .. ", " .. fa_rails.get_signal_state_info(ent)
       end
    end
+   if ent.type == "mining-drill" and mod.cursor_is_at_mining_drill_output_part(pindex, ent) then
+      result = result .. " drop chute "
+   end
    --Report the entity facing direction
    if
       (ent.prototype.is_building and ent.supports_direction)
@@ -849,6 +852,7 @@ function mod.ent_info(pindex, ent, description)
       local pos = ent.position
       local radius = ent.prototype.mining_drill_radius
       local area = { { pos.x - radius, pos.y - radius }, { pos.x + radius, pos.y + radius } }
+      --Compute resources covered
       local resources = ent.surface.find_entities_filtered({ area = area, type = "resource" })
       local dict = {}
       for i, resource in pairs(resources) do
@@ -858,6 +862,7 @@ function mod.ent_info(pindex, ent, description)
             dict[resource.name] = dict[resource.name] + resource.amount
          end
       end
+      --Compute drop position
       local drop = ent.drop_target
       local drop_name = nil
       if drop ~= nil and drop.valid then
@@ -871,9 +876,10 @@ function mod.ent_info(pindex, ent, description)
             end
          end
       end
+      --Report info
       if drop ~= nil and drop.valid then result = result .. " outputs to " .. drop_name end
       if ent.status == defines.entity_status.waiting_for_space_in_destination then
-         result = result .. " output full "
+         result = result .. ", output full "
       end
       if table_size(dict) > 0 then
          result = result .. ", Mining from "
@@ -1479,6 +1485,12 @@ function mod.read_selected_entity_status(pindex)
    end
 
    return result
+end
+
+function mod.cursor_is_at_mining_drill_output_part(pindex, ent)
+   local dir = ent.direction
+   local correct_pos = fa_utils.offset_position(ent.drop_position, fa_utils.rotate_180(dir), 1)
+   return util.distance(correct_pos, players[pindex].cursor_pos) < 0.6
 end
 
 return mod

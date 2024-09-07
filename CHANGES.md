@@ -2,7 +2,7 @@
 Released on September 7th, 2024.
 
 ## Summary
-- ...
+- This small update adds, re-adds, or improves minor features, such as player and vehicle health and armor info, infinity pipe filter setting, basic game console access, and mining drill drop chute position info.
 
 ## Features
 - Infinity pipe filters can now be set using fluid barrels.
@@ -16,13 +16,17 @@ Released on September 7th, 2024.
   * The same as above happens for command messages.
   * There is not yet support for chat history or for non-player console messages.
 
+## Changes
+- Changed the keybind to set entity filters from `CONTROL + LEFT BRACKET` to `ALT + LEFT BRACKET`. This applies for chests, inserters, splitters, etc.
+
 - Improved health and armor stats reporting with the `G` key to now include vehicles and check the menu context.
   * When no menus are open, the mod reports only health and shield level info for your character.
   * For most open menus such as the inventory, the full set of stats about player armor is reported.
   * If the character is in a vehicle, or the vehicle's menu is open, then the name and full info for it is read instead.
 
-## Changes
-- Changed the keybind to set entity filters from `CONTROL + LEFT BRACKET` to `ALT + LEFT BRACKET`. This applies for chests, inserters, splitters, etc.
+## Bugfixes
+- Re-added the reporting of a mining drill's drop chute position.
+
 
 # Version 0.14.0 BETA
 Released on September 2nd, 2024.
