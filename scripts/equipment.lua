@@ -321,7 +321,7 @@ function mod.read_armor_stats(pindex, ent_in)
       --Entity grid
       grid = ent.grid
       if grid == nil or grid.valid == false then
-         table.insert(result, " no equipment grid.")
+         --No more info to report
          return result
       end
       --Entity with non-empty equipment grid
