@@ -303,7 +303,7 @@ function mod.read_armor_stats(pindex, ent_in)
    local ent = ent_in
    local armor_inv = game.get_player(pindex).get_inventory(defines.inventory.character_armor)
    local result = mod.read_shield_and_health_level(pindex, ent_in) --First report health and shield
-   table.insert(result, " ")
+   table.insert(result, ", ")
    local grid
    if ent_in == nil then
       --Player armor
