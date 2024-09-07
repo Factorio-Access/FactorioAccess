@@ -1909,7 +1909,7 @@ data:extend({
    {
       type = "custom-input",
       name = "set-entity-filter-from-hand",
-      key_sequence = "CONTROL + LEFTBRACKET",
+      key_sequence = "ALT + LEFTBRACKET",
       consuming = "none",
    },
 
