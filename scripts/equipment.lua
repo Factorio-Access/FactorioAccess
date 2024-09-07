@@ -507,14 +507,14 @@ function mod.guns_menu_click_slot(pindex)
    end
    if hand and hand.valid_for_read then
       --FUll hand operations
-      if selected_stack == nil then
+      if selected_stack == nil or selected_stack.valid_for_read == false then
          --Empty slot
          if menu.ammo_selected and hand.type ~= "ammo" then
             printout("Error: Slot reserved for ammo types only", pindex)
          elseif not menu.ammo_selected and hand.type ~= "gun" then
             printout("Error: Slot reserved for gun types only", pindex)
          else
-            hand.swap_stack(selected_stack)
+            if selected_stack ~= nil then hand.swap_stack(selected_stack) end
             --If the swap is successful then the following print statement is overwritten.
             printout("Error: Incompatible gun and ammo types", pindex)
          end
