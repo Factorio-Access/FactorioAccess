@@ -7957,26 +7957,25 @@ end)
 
 script.on_event("read-health-and-armor-stats", function(event)
    pindex = event.player_index
-   local p = game.get_player(pindex)
    if not check_for_player(pindex) then return end
+   local p = game.get_player(pindex)
+   local result = ""
    --Skip blueprint flipping
    local hand = game.get_player(pindex).cursor_stack
    if hand and hand.valid_for_read and (hand.is_blueprint or hand.is_blueprint_book) then return end
    if players[pindex].menu == "inventory" then
       --Player health and armor equipment stats
-      local result = fa_equipment.read_armor_stats(pindex)
-      printout(result, pindex)
-   elseif players[pindex].menu == "vehicle" and p.opened.type == "spider-vehicle" then
-      --Spider health and armor equipment stats
-      local result = fa_equipment.read_armor_stats(pindex)
-      printout(result, pindex)
+      result = fa_equipment.read_armor_stats(pindex, nil)
    elseif players[pindex].menu == "vehicle" then
-      --Other vehicle health stats only
-      ---TODO
+      --Opened vehicle health and armor equipment stats
+      result = fa_equipment.read_armor_stats(pindex, p.opened)
+   elseif p.vehicle then
+      result = fa_equipment.read_armor_stats(pindex, p.vehicle)
    else
       --Player health stats only
-      fa_info.read_character_status(pindex)
+      fa_equipment.read_character_status(pindex)
    end
+   printout(result, pindex)
 end)
 
 script.on_event("inventory-read-equipment-list", function(event)
