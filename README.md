@@ -394,6 +394,12 @@ Insert 1 stack of the item in hand where applicable: CONTROL + LEFT BRACKET. Wor
 
 Insert half a stack of the item in hand where applicable: CONTROL + RIGHT BRACKET. Works for chests or for smartly feeding machines and vehicles.
 
+Set as entity filter: ALT + LEFT BRACKET, for the item in hand.
+
+Clear entity filter: ALT + LEFT BRACKET, with an empty hand.
+
+Note: Entity filters include inserters, splitters, infinity chests, infinity pipes using relevant fluid barrels, and constant combinators.
+
 ## Building from the hand
 
 Items in hand that can be placed will have their previews active
@@ -653,13 +659,11 @@ Set input priority side: ALT + SHIFT + LEFT ARROW, or ALT + SHIFT + RIGHT ARROW.
   
 Set output priority side: ALT + CONTROL + LEFT ARROW, or ALT + CONTROL + RIGHT ARROW. Press the same side again to reset to equal priority.
   
-Set an item filter: With the item in hand, CONTROL + LEFT BRACKET
-  
 Set item filter output side: ALT + CONTROL + LEFT ARROW, or ALT + CONTROL + RIGHT ARROW
   
-Set an item filter: With the item in hand, CONTROL + LEFT BRACKET
+Set an item filter: With the item in hand, ALT + LEFT BRACKET
   
-Clear the item filter: With an empty hand, CONTROL + LEFT BRACKET
+Clear the item filter: With an empty hand, ALT + LEFT BRACKET
   
 Copy and paste splitter settings: SHIFT + RIGHT BRACKET and then SHIFT + LEFT BRACKET
 
