@@ -321,27 +321,31 @@ function mod.list_rail_fork_directions(ent)
 end
 
 --Determines if an entity is an end rail. Returns boolean is_end_rail, integer end rail direction, and string comment for errors.
+---@param check_rail LuaEntity
+---@param pindex any
+---@return boolean
+---@return defines.direction
+---@return string
 function mod.check_end_rail(check_rail, pindex)
    local is_end_rail = false
-   ---@type defines.direction | int
-   local dir = -1
+   local dir = dirs.north
    local comment = "Check function error."
 
    --Check if the entity is a rail
    if check_rail == nil then
       is_end_rail = false
       comment = "Nil."
-      return is_end_rail, -1, comment
+      return is_end_rail, dir, comment
    end
    if not check_rail.valid then
       is_end_rail = false
       comment = "Invalid."
-      return is_end_rail, -1, comment
+      return is_end_rail, dir, comment
    end
    if not (check_rail.name == "straight-rail" or check_rail.name == "curved-rail") then
       is_end_rail = false
       comment = "Not a rail."
-      return is_end_rail, -1, comment
+      return is_end_rail, dir, comment
    end
 
    --Check if end rail: The rail is at the end of its segment and has only 1 connection.
@@ -433,7 +437,7 @@ function mod.check_end_rail(check_rail, pindex)
             --This line should not be reachable
             is_end_rail = false
             comment = "Rail direction error."
-            return is_end_rail, -3, comment
+            return is_end_rail, dir, comment
          end
       elseif check_rail.name == "curved-rail" then
          local next_rail, r_dir_back, c_dir_back = check_rail.get_connected_rail({
@@ -480,14 +484,14 @@ function mod.check_end_rail(check_rail, pindex)
             --This line should not be reachable
             is_end_rail = false
             comment = "Rail direction error."
-            return is_end_rail, -3, comment
+            return is_end_rail, dir, comment
          end
       end
    else
       --Not the end rail
       is_end_rail = false
       comment = "This rail is not the end rail."
-      return is_end_rail, -4, comment
+      return is_end_rail, dir, comment
    end
 
    return is_end_rail, dir, comment

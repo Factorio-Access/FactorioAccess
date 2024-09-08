@@ -890,7 +890,7 @@ function mod.build_rail_turn_right_90_degrees(anchor_rail, pindex)
    local stack = game.get_player(pindex).cursor_stack
    local stack2 = nil
    local pos = nil
-   local dir = -1
+   local dir = dirs.north
    local build_area = nil
    local can_place_all = true
    local is_end_rail
