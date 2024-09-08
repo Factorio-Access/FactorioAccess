@@ -5645,45 +5645,8 @@ function mod.build_rail_bypass_junction_triple(anchor_rail, pindex)
    return
 end
 
---Builds out 6 straight rails from an intersection, as a substep of building a cardinal intersection junction
-function build_cardinal_intersection_leg(intersection_rail, pindex, build_dir)
-   --1. Determine start pos and offset based on direction input
-   local force = intersection_rail.force
-   local surf = intersection_rail.surface
-   local intersect_pos = intersection_rail.position
-   local current_pos = intersect_pos
-   ---@type defines.direction
-   local build_rotation = dirs.north
-   if build_dir == dirs.east or build_dir == dirs.west then build_rotation = dirs.east end
-
-   --2. Check if 6 rails in hand or inventory
-
-   --3. Clear obstacles in building line
-
-   --4. Check if can place rails (6 straight
-   local can_place_all = true
-   for i = 2, 12, 2 do
-      current_pos = fa_utils.offset_position(intersect_pos, i, build_dir)
-      can_place_all = can_place_all
-         and surf.can_place_entity({
-            name = "straight-rail",
-            position = current_pos,
-            direction = build_dir,
-            force = force,
-         })
-   end
-
-   --5. Place the rails
-   for i = 2, 12, 2 do
-      current_pos = fa_utils.offset_position(intersect_pos, i, build_dir)
-      surf.create_entity({ name = "straight-rail", position = current_pos, direction = build_dir, force = force })
-   end
-
-   --6. Subtract the rail counts
-end
-
 --Returns the rotations and positions of the 2 rail pieces needed to form a 45 degree left turn from any input dir
-function left_turn_lookups(input_dir)
+function mod.left_turn_lookups(input_dir)
    local curved_rail_dir = dirs.north
    local curved_rail_pos = { 0, 0 }
    local straight_rail_dir = dirs.north
@@ -5733,7 +5696,7 @@ function left_turn_lookups(input_dir)
 end
 
 --Returns the rotations and positions of the 2 rail pieces needed to form a 45 degree right turn from any input dir
-function right_turn_lookups(input_dir)
+function mod.right_turn_lookups(input_dir)
    local curved_rail_dir = dirs.north
    local curved_rail_pos = { 0, 0 }
    local straight_rail_dir = dirs.north
@@ -5783,7 +5746,7 @@ function right_turn_lookups(input_dir)
 end
 
 --Returns the rotation and position of the 1 curved rail pieces needed to form a 45 degree right turn from any diagonal input dir
-function vertical_and_diagonal_corner_lookups(diagonal_dir)
+function mod.vertical_and_diagonal_corner_lookups(diagonal_dir)
    local curved_rail_dir = dirs.north
    local curved_rail_pos = { 0, 0 }
    if diagonal_dir == dirs.northeast then
@@ -5803,7 +5766,7 @@ function vertical_and_diagonal_corner_lookups(diagonal_dir)
 end
 
 --Returns the rotation and position of the 1 curved rail pieces needed to form a 45 degree right turn from any diagonal input dir
-function horizontal_and_diagonal_corner_lookups(diagonal_dir)
+function mod.horizontal_and_diagonal_corner_lookups(diagonal_dir)
    local curved_rail_dir = dirs.north
    local curved_rail_pos = { 0, 0 }
    if diagonal_dir == dirs.northeast then
@@ -5823,7 +5786,7 @@ function horizontal_and_diagonal_corner_lookups(diagonal_dir)
 end
 
 --Returns the rotations and positions of the 3 rail pieces needed to form a corner for an intersection of a vertical and horizontal rail
-function cardinal_corner_lookups(vertical_dir, horizontal_dir)
+function mod.cardinal_corner_lookups(vertical_dir, horizontal_dir)
    local curved_rail_dir_1 = dirs.north
    local curved_rail_pos_1 = { 0, 0 }
    local curved_rail_dir_2 = dirs.north
@@ -5868,8 +5831,45 @@ function cardinal_corner_lookups(vertical_dir, horizontal_dir)
       connecting_rail_pos
 end
 
+--Builds out 6 straight rails from an intersection, as a substep of building a cardinal intersection junction
+function mod.build_cardinal_intersection_leg(intersection_rail, pindex, build_dir)
+   --1. Determine start pos and offset based on direction input
+   local force = intersection_rail.force
+   local surf = intersection_rail.surface
+   local intersect_pos = intersection_rail.position
+   local current_pos = intersect_pos
+   ---@type defines.direction
+   local build_rotation = dirs.north
+   if build_dir == dirs.east or build_dir == dirs.west then build_rotation = dirs.east end
+
+   --2. Check if 6 rails in hand or inventory
+
+   --3. Clear obstacles in building line
+
+   --4. Check if can place rails (6 straight
+   local can_place_all = true
+   for i = 2, 12, 2 do
+      current_pos = fa_utils.offset_position(intersect_pos, i, build_dir)
+      can_place_all = can_place_all
+         and surf.can_place_entity({
+            name = "straight-rail",
+            position = current_pos,
+            direction = build_dir,
+            force = force,
+         })
+   end
+
+   --5. Place the rails
+   for i = 2, 12, 2 do
+      current_pos = fa_utils.offset_position(intersect_pos, i, build_dir)
+      surf.create_entity({ name = "straight-rail", position = current_pos, direction = build_dir, force = force })
+   end
+
+   --6. Subtract the rail counts
+end
+
 --Builds a corner connecting a vertical rail with a horizontal rail, possibly as a part of a cardinal crossing junction
-function build_cardinal_intersection_corner(intersection_rail, vertical_dir, horizontal_dir, pindex, delete_straights)
+function mod.build_cardinal_intersection_corner(intersection_rail, vertical_dir, horizontal_dir, pindex, delete_straights)
    local curved_rail_dir_1, curved_rail_pos_1, curved_rail_dir_2, curved_rail_pos_2, connecting_rail_dir, connecting_rail_pos =
       cardinal_corner_lookups(vertical_dir, horizontal_dir)
    --1. Check if 10 rails in hand or inventory
