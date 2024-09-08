@@ -328,6 +328,7 @@ end
 ---@return string
 function mod.check_end_rail(check_rail, pindex)
    local is_end_rail = false
+   ---@type defines.direction
    local dir = dirs.north
    local comment = "Check function error."
 

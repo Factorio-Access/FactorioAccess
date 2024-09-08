@@ -403,7 +403,8 @@ function mod.build_rail_turn_right_45_degrees(anchor_rail, pindex)
    local stack = game.get_player(pindex).cursor_stack
    local stack2 = nil
    local pos = nil
-   local dir = -1
+   ---@type defines.direction
+   local dir = dirs.north
    local build_area = nil
    local can_place_all = true
    local is_end_rail
@@ -890,6 +891,7 @@ function mod.build_rail_turn_right_90_degrees(anchor_rail, pindex)
    local stack = game.get_player(pindex).cursor_stack
    local stack2 = nil
    local pos = nil
+   ---@type defines.direction
    local dir = dirs.north
    local build_area = nil
    local can_place_all = true
@@ -1186,7 +1188,8 @@ function mod.build_rail_turn_left_45_degrees(anchor_rail, pindex)
    local stack = game.get_player(pindex).cursor_stack
    local stack2 = nil
    local pos = nil
-   local dir = -1
+   ---@type defines.direction
+   local dir = dirs.north
    local build_area = nil
    local can_place_all = true
    local is_end_rail
@@ -1673,7 +1676,8 @@ function mod.build_rail_turn_left_90_degrees(anchor_rail, pindex)
    local stack = game.get_player(pindex).cursor_stack
    local stack2 = nil
    local pos = nil
-   local dir = -1
+   ---@type defines.direction
+   local dir = dirs.north
    local build_area = nil
    local can_place_all = true
    local is_end_rail
@@ -1969,7 +1973,8 @@ function mod.build_fork_at_end_rail(anchor_rail, pindex, include_forward, includ
    local stack = game.get_player(pindex).cursor_stack
    local stack2 = nil
    local pos = nil
-   local dir = -1
+   ---@type defines.direction
+   local dir = dirs.north
    local build_area = nil
    local can_place_all = true
    local is_end_rail
@@ -3871,7 +3876,8 @@ function mod.build_rail_bypass_junction(anchor_rail, pindex)
    local stack = game.get_player(pindex).cursor_stack
    local stack2 = nil
    local pos = nil
-   local dir = -1
+   ---@type defines.direction
+   local dir = dirs.north
    local build_area = nil
    local can_place_all = true
    local is_end_rail
@@ -4722,7 +4728,8 @@ function mod.build_rail_bypass_junction_triple(anchor_rail, pindex)
    local stack = game.get_player(pindex).cursor_stack
    local stack2 = nil
    local pos = nil
-   local dir = -1
+   ---@type defines.direction
+   local dir = dirs.north
    local build_area = nil
    local can_place_all = true
    local is_end_rail
@@ -5645,6 +5652,7 @@ function build_crossing_leg(intersection_rail, pindex, build_dir)
    local surf = intersection_rail.surface
    local intersect_pos = intersection_rail.position
    local current_pos = intersect_pos
+   ---@type defines.direction
    local build_rotation = dirs.north
    if build_dir == dirs.east or build_dir == dirs.west then build_rotation = dirs.east end
 
@@ -6389,7 +6397,8 @@ function mod.build_train_stop(anchor_rail, pindex)
    local stack = game.get_player(pindex).cursor_stack
    local stack2 = nil
    local pos = nil
-   local dir = -1
+   ---@type defines.direction
+   local dir = dirs.north
    local build_area = nil
    local can_place_all = true
    local is_end_rail
