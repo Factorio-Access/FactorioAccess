@@ -5783,19 +5783,19 @@ function right_turn_lookups(input_dir)
 end
 
 --Returns the rotation and position of the 1 curved rail pieces needed to form a 45 degree right turn from any diagonal input dir
-function cardinal_corner_lookups(input_dir)
+function vertical_and_diagonal_corner_lookups(diagonal_dir)
    local curved_rail_dir = dirs.north
    local curved_rail_pos = { 0, 0 }
-   if input_dir == dirs.northeast then
+   if diagonal_dir == dirs.northeast then
       curved_rail_dir = dirs.north
       curved_rail_pos = { 0, 0 }
-   elseif input_dir == dirs.southeast then
+   elseif diagonal_dir == dirs.southeast then
       curved_rail_dir = dirs.north
       curved_rail_pos = { 0, 0 }
-   elseif input_dir == dirs.southwest then
+   elseif diagonal_dir == dirs.southwest then
       curved_rail_dir = dirs.north
       curved_rail_pos = { 0, 0 }
-   elseif input_dir == dirs.northwest then
+   elseif diagonal_dir == dirs.northwest then
       curved_rail_dir = dirs.north
       curved_rail_pos = { 0, 0 }
    end
@@ -5803,19 +5803,19 @@ function cardinal_corner_lookups(input_dir)
 end
 
 --Returns the rotation and position of the 1 curved rail pieces needed to form a 45 degree right turn from any diagonal input dir
-function horizontal_and_diagonal_corner_lookups(input_dir)
+function horizontal_and_diagonal_corner_lookups(diagonal_dir)
    local curved_rail_dir = dirs.north
    local curved_rail_pos = { 0, 0 }
-   if input_dir == dirs.northeast then
+   if diagonal_dir == dirs.northeast then
       curved_rail_dir = dirs.north
       curved_rail_pos = { 0, 0 }
-   elseif input_dir == dirs.southeast then
+   elseif diagonal_dir == dirs.southeast then
       curved_rail_dir = dirs.north
       curved_rail_pos = { 0, 0 }
-   elseif input_dir == dirs.southwest then
+   elseif diagonal_dir == dirs.southwest then
       curved_rail_dir = dirs.north
       curved_rail_pos = { 0, 0 }
-   elseif input_dir == dirs.northwest then
+   elseif diagonal_dir == dirs.northwest then
       curved_rail_dir = dirs.north
       curved_rail_pos = { 0, 0 }
    end
@@ -5823,7 +5823,7 @@ function horizontal_and_diagonal_corner_lookups(input_dir)
 end
 
 --Returns the rotations and positions of the 3 rail pieces needed to form a corner for an intersection of a vertical and horizontal rail
-function rail_crossing_corner_lookups(vertical_dir, horizontal_dir)
+function cardinal_corner_lookups(vertical_dir, horizontal_dir)
    local curved_rail_dir_1 = dirs.north
    local curved_rail_pos_1 = { 0, 0 }
    local curved_rail_dir_2 = dirs.north
@@ -5871,7 +5871,7 @@ end
 --Builds a corner connecting a vertical rail with a horizontal rail, possibly as a part of a cardinal crossing junction
 function build_cardinal_intersection_corner(intersection_rail, vertical_dir, horizontal_dir, pindex, delete_straights)
    local curved_rail_dir_1, curved_rail_pos_1, curved_rail_dir_2, curved_rail_pos_2, connecting_rail_dir, connecting_rail_pos =
-      rail_crossing_corner_lookups(vertical_dir, horizontal_dir)
+      cardinal_corner_lookups(vertical_dir, horizontal_dir)
    --1. Check if 10 rails in hand or inventory
 
    --2. Clear obstacles in building quadrant
