@@ -9180,7 +9180,7 @@ end)
 
 script.on_event("fa-pda-cruise-control-set-speed-info", function(event)
    printout(
-      "Type in the new cruise control speed and press 'ENTER' and then 'E' to confirm, or press 'ESC' to exit",
+      "Type in the new constant driving speed and press 'ENTER' and then 'E' to confirm, or press 'ESC' to exit",
       pindex
    )
 end)
