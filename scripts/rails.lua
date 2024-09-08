@@ -112,28 +112,32 @@ function mod.rail_ent_info(pindex, ent, description)
    local signals =
       ent.surface.find_entities_filtered({ position = ent.position, radius = 2, name = "rail-chain-signal" })
    for i, s in ipairs(signals) do
-      chain_s_count = chain_s_count + 1
-      rendering.draw_circle({
-         color = { 0.5, 0.5, 1 },
-         radius = 2,
-         width = 2,
-         target = ent,
-         surface = ent.surface,
-         time_to_live = 90,
-      })
+      if s.direction == ent.direction or s.direction == fa_utils.rotate_180(ent.direction) then
+         chain_s_count = chain_s_count + 1
+         rendering.draw_circle({
+            color = { 0.5, 0.5, 1 },
+            radius = 2,
+            width = 2,
+            target = ent,
+            surface = ent.surface,
+            time_to_live = 90,
+         })
+      end
    end
 
    signals = ent.surface.find_entities_filtered({ position = ent.position, radius = 2, name = "rail-signal" })
    for i, s in ipairs(signals) do
-      rail_s_count = rail_s_count + 1
-      rendering.draw_circle({
-         color = { 0.5, 0.5, 1 },
-         radius = 2,
-         width = 2,
-         target = ent,
-         surface = ent.surface,
-         time_to_live = 90,
-      })
+      if s.direction == ent.direction or s.direction == fa_utils.rotate_180(ent.direction) then
+         rail_s_count = rail_s_count + 1
+         rendering.draw_circle({
+            color = { 0.5, 0.5, 1 },
+            radius = 2,
+            width = 2,
+            target = ent,
+            surface = ent.surface,
+            time_to_live = 90,
+         })
+      end
    end
 
    if chain_s_count + rail_s_count == 0 then
