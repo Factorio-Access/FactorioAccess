@@ -5869,9 +5869,15 @@ function mod.build_cardinal_intersection_leg(intersection_rail, pindex, build_di
 end
 
 --Builds a corner connecting a vertical rail with a horizontal rail, possibly as a part of a cardinal crossing junction
-function mod.build_cardinal_intersection_corner(intersection_rail, vertical_dir, horizontal_dir, pindex, delete_straights)
+function mod.build_cardinal_intersection_corner(
+   intersection_rail,
+   vertical_dir,
+   horizontal_dir,
+   pindex,
+   delete_straights
+)
    local curved_rail_dir_1, curved_rail_pos_1, curved_rail_dir_2, curved_rail_pos_2, connecting_rail_dir, connecting_rail_pos =
-      cardinal_corner_lookups(vertical_dir, horizontal_dir)
+      mod.cardinal_corner_lookups(vertical_dir, horizontal_dir)
    --1. Check if 10 rails in hand or inventory
 
    --2. Clear obstacles in building quadrant
