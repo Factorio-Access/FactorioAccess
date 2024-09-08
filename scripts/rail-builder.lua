@@ -5638,6 +5638,205 @@ function mod.build_rail_bypass_junction_triple(anchor_rail, pindex)
    return
 end
 
+--Builds out 6 straight rails from an intersection, as a substep of building a crossing junction
+function build_crossing_leg(intersection_rail, pindex, build_dir)
+   --1. Determine start pos and offset based on direction input
+   local force = intersection_rail.force
+   local surf = intersection_rail.surface
+   local intersect_pos = intersection_rail.position
+   local current_pos = intersect_pos
+   local build_rotation = dirs.north
+   if build_dir == dirs.east or build_dir == dirs.west then build_rotation = dirs.east end
+
+   --2. Check if 6 rails in hand or inventory
+
+   --3. Clear obstacles in building line
+
+   --4. Check if can place rails (6 straight
+   local can_place_all = true
+   for i = 2, 12, 2 do
+      current_pos = fa_utils.offset_position(intersect_pos, i, build_dir)
+      can_place_all = can_place_all
+         and surf.can_place_entity({
+            name = "straight-rail",
+            position = current_pos,
+            direction = build_dir,
+            force = force,
+         })
+   end
+
+   --5. Place the rails
+   for i = 2, 12, 2 do
+      current_pos = fa_utils.offset_position(intersect_pos, i, build_dir)
+      surf.create_entity({ name = "straight-rail", position = current_pos, direction = build_dir, force = force })
+   end
+
+   --6. Subtract the rail counts
+end
+
+--Returns the rotations and positions of the 2 rail pieces needed to form a 45 degree left turn from any input dir
+function left_turn_lookups(input_dir)
+   local curved_rail_dir = dirs.north
+   local curved_rail_pos = { 0, 0 }
+   local straight_rail_dir = dirs.north
+   local straight_rail_pos = { 0, 0 }
+   if input_dir == dirs.north then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+      straight_rail_dir = dirs.north
+      straight_rail_pos = { 0, 0 }
+   elseif input_dir == dirs.northeast then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+      straight_rail_dir = dirs.north
+      straight_rail_pos = { 0, 0 }
+   elseif input_dir == dirs.east then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+      straight_rail_dir = dirs.north
+      straight_rail_pos = { 0, 0 }
+   elseif input_dir == dirs.southeast then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+      straight_rail_dir = dirs.north
+      straight_rail_pos = { 0, 0 }
+   elseif input_dir == dirs.south then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+      straight_rail_dir = dirs.north
+      straight_rail_pos = { 0, 0 }
+   elseif input_dir == dirs.southwest then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+      straight_rail_dir = dirs.north
+      straight_rail_pos = { 0, 0 }
+   elseif input_dir == dirs.west then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+      straight_rail_dir = dirs.north
+      straight_rail_pos = { 0, 0 }
+   elseif input_dir == dirs.northwest then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+      straight_rail_dir = dirs.north
+      straight_rail_pos = { 0, 0 }
+   end
+   return curved_rail_dir, curved_rail_pos, straight_rail_dir, straight_rail_pos
+end
+
+--Returns the rotations and positions of the 2 rail pieces needed to form a 45 degree right turn from any input dir
+function right_turn_lookups(input_dir)
+   local curved_rail_dir = dirs.north
+   local curved_rail_pos = { 0, 0 }
+   local straight_rail_dir = dirs.north
+   local straight_rail_pos = { 0, 0 }
+   if input_dir == dirs.north then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+      straight_rail_dir = dirs.north
+      straight_rail_pos = { 0, 0 }
+   elseif input_dir == dirs.northeast then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+      straight_rail_dir = dirs.north
+      straight_rail_pos = { 0, 0 }
+   elseif input_dir == dirs.east then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+      straight_rail_dir = dirs.north
+      straight_rail_pos = { 0, 0 }
+   elseif input_dir == dirs.southeast then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+      straight_rail_dir = dirs.north
+      straight_rail_pos = { 0, 0 }
+   elseif input_dir == dirs.south then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+      straight_rail_dir = dirs.north
+      straight_rail_pos = { 0, 0 }
+   elseif input_dir == dirs.southwest then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+      straight_rail_dir = dirs.north
+      straight_rail_pos = { 0, 0 }
+   elseif input_dir == dirs.west then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+      straight_rail_dir = dirs.north
+      straight_rail_pos = { 0, 0 }
+   elseif input_dir == dirs.northwest then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+      straight_rail_dir = dirs.north
+      straight_rail_pos = { 0, 0 }
+   end
+   return curved_rail_dir, curved_rail_pos, straight_rail_dir, straight_rail_pos
+end
+
+--Returns the rotations and positions of the 3 rail pieces needed to form a corner for an intersection of a vertical and horizontal rail
+function rail_crossing_corner_lookups(vertical_dir, horizontal_dir)
+   local curved_rail_dir_1 = dirs.north
+   local curved_rail_pos_1 = { 0, 0 }
+   local curved_rail_dir_2 = dirs.north
+   local curved_rail_pos_2 = { 0, 0 }
+   local connecting_rail_dir = dirs.north
+   local connecting_rail_pos = { 0, 0 }
+   if vertical_dir == dirs.north and horizontal_dir == dirs.east then
+      curved_rail_dir_1 = dirs.north
+      curved_rail_pos_1 = { 0, 0 }
+      curved_rail_dir_2 = dirs.north
+      curved_rail_pos_2 = { 0, 0 }
+      connecting_rail_dir = dirs.north
+      connecting_rail_pos = { 0, 0 }
+   elseif vertical_dir == dirs.north and horizontal_dir == dirs.west then
+      curved_rail_dir_1 = dirs.north
+      curved_rail_pos_1 = { 0, 0 }
+      curved_rail_dir_2 = dirs.north
+      curved_rail_pos_2 = { 0, 0 }
+      connecting_rail_dir = dirs.north
+      connecting_rail_pos = { 0, 0 }
+   elseif vertical_dir == dirs.south and horizontal_dir == dirs.east then
+      curved_rail_dir_1 = dirs.north
+      curved_rail_pos_1 = { 0, 0 }
+      curved_rail_dir_2 = dirs.north
+      curved_rail_pos_2 = { 0, 0 }
+      connecting_rail_dir = dirs.north
+      connecting_rail_pos = { 0, 0 }
+   elseif vertical_dir == dirs.south and horizontal_dir == dirs.west then
+      curved_rail_dir_1 = dirs.north
+      curved_rail_pos_1 = { 0, 0 }
+      curved_rail_dir_2 = dirs.north
+      curved_rail_pos_2 = { 0, 0 }
+      connecting_rail_dir = dirs.north
+      connecting_rail_pos = { 0, 0 }
+   end
+
+   return curved_rail_dir_1,
+      curved_rail_pos_1,
+      curved_rail_dir_2,
+      curved_rail_pos_2,
+      connecting_rail_dir,
+      connecting_rail_pos
+end
+
+--Builds a corner connecting two straight rails, possibly as a part of a crossing junction
+function build_intersection_corner(intersection_rail, vertical_dir, horizontal_dir, pindex, delete_straights)
+   local curved_rail_dir_1, curved_rail_pos_1, curved_rail_dir_2, curved_rail_pos_2, connecting_rail_dir, connecting_rail_pos =
+      rail_crossing_corner_lookups(vertical_dir, horizontal_dir)
+   --1. Check if 10 rails in hand or inventory
+
+   --2. Clear obstacles in building quadrant
+
+   --3. Check if can place rails (2 curved, 1 diagonal)
+
+   --5. Place the rails
+
+   --5. Delete straight rails along the quarant boundaries if flagged
+
+   --6. Subtract and/or refund the rail counts
+end
+
 --Places a chain signal pair around a rail depending on its direction. May fail if the spots are full.
 function mod.place_chain_signal_pair(rail, pindex)
    local stack = game.get_player(pindex).cursor_stack
