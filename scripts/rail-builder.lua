@@ -5774,6 +5774,46 @@ function right_turn_lookups(input_dir)
    return curved_rail_dir, curved_rail_pos, straight_rail_dir, straight_rail_pos
 end
 
+--Returns the rotation and position of the 1 curved rail pieces needed to form a 45 degree right turn from any diagonal input dir
+function vertical_and_diagonal_corner_lookups(input_dir)
+   local curved_rail_dir = dirs.north
+   local curved_rail_pos = { 0, 0 }
+   if input_dir == dirs.northeast then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+   elseif input_dir == dirs.southeast then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+   elseif input_dir == dirs.southwest then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+   elseif input_dir == dirs.northwest then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+   end
+   return curved_rail_dir, curved_rail_pos
+end
+
+--Returns the rotation and position of the 1 curved rail pieces needed to form a 45 degree right turn from any diagonal input dir
+function horizontal_and_diagonal_corner_lookups(input_dir)
+   local curved_rail_dir = dirs.north
+   local curved_rail_pos = { 0, 0 }
+   if input_dir == dirs.northeast then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+   elseif input_dir == dirs.southeast then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+   elseif input_dir == dirs.southwest then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+   elseif input_dir == dirs.northwest then
+      curved_rail_dir = dirs.north
+      curved_rail_pos = { 0, 0 }
+   end
+   return curved_rail_dir, curved_rail_pos
+end
+
 --Returns the rotations and positions of the 3 rail pieces needed to form a corner for an intersection of a vertical and horizontal rail
 function rail_crossing_corner_lookups(vertical_dir, horizontal_dir)
    local curved_rail_dir_1 = dirs.north
