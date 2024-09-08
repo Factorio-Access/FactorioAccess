@@ -5645,8 +5645,8 @@ function mod.build_rail_bypass_junction_triple(anchor_rail, pindex)
    return
 end
 
---Builds out 6 straight rails from an intersection, as a substep of building a crossing junction
-function build_crossing_leg(intersection_rail, pindex, build_dir)
+--Builds out 6 straight rails from an intersection, as a substep of building a cardinal intersection junction
+function build_cardinal_intersection_leg(intersection_rail, pindex, build_dir)
    --1. Determine start pos and offset based on direction input
    local force = intersection_rail.force
    local surf = intersection_rail.surface
@@ -5783,7 +5783,7 @@ function right_turn_lookups(input_dir)
 end
 
 --Returns the rotation and position of the 1 curved rail pieces needed to form a 45 degree right turn from any diagonal input dir
-function vertical_and_diagonal_corner_lookups(input_dir)
+function cardinal_corner_lookups(input_dir)
    local curved_rail_dir = dirs.north
    local curved_rail_pos = { 0, 0 }
    if input_dir == dirs.northeast then
@@ -5868,8 +5868,8 @@ function rail_crossing_corner_lookups(vertical_dir, horizontal_dir)
       connecting_rail_pos
 end
 
---Builds a corner connecting two straight rails, possibly as a part of a crossing junction
-function build_intersection_corner(intersection_rail, vertical_dir, horizontal_dir, pindex, delete_straights)
+--Builds a corner connecting a vertical rail with a horizontal rail, possibly as a part of a cardinal crossing junction
+function build_cardinal_intersection_corner(intersection_rail, vertical_dir, horizontal_dir, pindex, delete_straights)
    local curved_rail_dir_1, curved_rail_pos_1, curved_rail_dir_2, curved_rail_pos_2, connecting_rail_dir, connecting_rail_pos =
       rail_crossing_corner_lookups(vertical_dir, horizontal_dir)
    --1. Check if 10 rails in hand or inventory
