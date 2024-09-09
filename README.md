@@ -788,9 +788,9 @@ Read what is beeping due to collision threat: J
   
 Honk the horn: V
 
-Toggle cruise control: O
+Toggle constant speed driving: O
 
-Change cruise control speed: CONTROL + O
+Change constant speed driving speed: CONTROL + O
 
 Note: Recommended speeds are between 25 and 70 units
 
