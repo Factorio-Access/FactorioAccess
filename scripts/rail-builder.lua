@@ -5659,6 +5659,7 @@ function mod.left_turn_lookups(pos, end_rail_dir, anchor_dir)
    local extender_rail_pos = { pos.x + 0, pos.y + 0 }
    ---@type defines.direction
    local extender_rail_dir = dirs.north
+   local using_extender = false
    if dir == dirs.north then
       curved_rail_pos = { pos.x + 0, pos.y - 4 }
       curved_rail_dir = dirs.north
@@ -5680,55 +5681,73 @@ function mod.left_turn_lookups(pos, end_rail_dir, anchor_dir)
       straight_rail_pos = { pos.x - 8, pos.y + 4 }
       straight_rail_dir = dirs.northwest
    elseif dir == dirs.northeast then
-      if anchor_dir == dirs.southeast then
-         curved_rail_pos = { pos.x + 0, pos.y + 0 }
-         curved_rail_dir = dirs.north
-         straight_rail_pos = { pos.x + 0, pos.y + 0 }
+      if anchor_dir == dirs.southeast then --2
+         curved_rail_pos = { pos.x + 4, pos.y - 2 }
+         curved_rail_dir = dirs.southwest
+         straight_rail_pos = { pos.x + 4, pos.y - 8 }
          straight_rail_dir = dirs.north
-      elseif anchor_dir == dirs.northwest then
-         curved_rail_pos = { pos.x + 0, pos.y + 0 }
-         curved_rail_dir = dirs.north
-         straight_rail_pos = { pos.x + 0, pos.y + 0 }
+      elseif anchor_dir == dirs.northwest then --3
+         using_extender = true
+         extender_rail_pos = { pos.x + 0, pos.y - 2 }
+         extender_rail_dir = dirs.southeast
+         curved_rail_pos = { pos.x + 4, pos.y - 4 }
+         curved_rail_dir = dirs.southwest
+         straight_rail_pos = { pos.x + 4, pos.y - 10 }
          straight_rail_dir = dirs.north
       end
-   elseif dir == dirs.northwest then
-      if anchor_dir == dirs.southeast then
+   elseif dir == dirs.southwest then
+      if anchor_dir == dirs.northwest then --2
          curved_rail_pos = { pos.x + 0, pos.y + 0 }
          curved_rail_dir = dirs.north
          straight_rail_pos = { pos.x + 0, pos.y + 0 }
          straight_rail_dir = dirs.north
-      elseif anchor_dir == dirs.northwest then
-         curved_rail_pos = { pos.x + 0, pos.y + 0 }
+      elseif anchor_dir == dirs.southeast then --3
+         using_extender = true
+         extender_rail_pos = { pos.x + 0, pos.y - 0 }
+         extender_rail_dir = dirs.north
+         curved_rail_pos = { pos.x + 0, pos.y - 0 }
          curved_rail_dir = dirs.north
          straight_rail_pos = { pos.x + 0, pos.y + 0 }
          straight_rail_dir = dirs.north
       end
    elseif dir == dirs.southwest then
-      if anchor_dir == dirs.southeast then
+      if anchor_dir == dirs.southeast then --2
          curved_rail_pos = { pos.x + 0, pos.y + 0 }
          curved_rail_dir = dirs.north
          straight_rail_pos = { pos.x + 0, pos.y + 0 }
          straight_rail_dir = dirs.north
-      elseif anchor_dir == dirs.northwest then
-         curved_rail_pos = { pos.x + 0, pos.y + 0 }
+      elseif anchor_dir == dirs.northwest then --3
+         using_extender = true
+         extender_rail_pos = { pos.x + 0, pos.y - 0 }
+         extender_rail_dir = dirs.north
+         curved_rail_pos = { pos.x + 0, pos.y - 0 }
          curved_rail_dir = dirs.north
          straight_rail_pos = { pos.x + 0, pos.y + 0 }
          straight_rail_dir = dirs.north
       end
    elseif dir == dirs.southeast then
-      if anchor_dir == dirs.southeast then
+      if anchor_dir == dirs.southeast then --2
          curved_rail_pos = { pos.x + 0, pos.y + 0 }
          curved_rail_dir = dirs.north
          straight_rail_pos = { pos.x + 0, pos.y + 0 }
          straight_rail_dir = dirs.north
-      elseif anchor_dir == dirs.northwest then
-         curved_rail_pos = { pos.x + 0, pos.y + 0 }
+      elseif anchor_dir == dirs.northwest then --3
+         using_extender = true
+         extender_rail_pos = { pos.x + 0, pos.y - 0 }
+         extender_rail_dir = dirs.north
+         curved_rail_pos = { pos.x + 0, pos.y - 0 }
          curved_rail_dir = dirs.north
          straight_rail_pos = { pos.x + 0, pos.y + 0 }
          straight_rail_dir = dirs.north
       end
    end
-   return curved_rail_dir, curved_rail_pos, straight_rail_dir, straight_rail_pos
+   return curved_rail_dir,
+      curved_rail_pos,
+      straight_rail_dir,
+      straight_rail_pos,
+      using_extender,
+      extender_rail_dir,
+      extender_rail_pos
 end
 
 --Returns the rotations and positions of the 2 rail pieces needed to form a 45 degree right turn from any input dir
@@ -5744,6 +5763,7 @@ function mod.right_turn_lookups(pos, end_rail_dir, anchor_dir)
    local extender_rail_pos = { pos.x + 0, pos.y + 0 }
    ---@type defines.direction
    local extender_rail_dir = dirs.north
+   local using_extender = false
    if dir == dirs.north then
       curved_rail_pos = { pos.x + 0, pos.y + 0 }
       curved_rail_dir = dirs.north
@@ -5765,55 +5785,73 @@ function mod.right_turn_lookups(pos, end_rail_dir, anchor_dir)
       straight_rail_pos = { pos.x + 0, pos.y + 0 }
       straight_rail_dir = dirs.north
    elseif dir == dirs.northeast then
-      if anchor_dir == dirs.southeast then
+      if anchor_dir == dirs.southeast then --2
          curved_rail_pos = { pos.x + 0, pos.y + 0 }
          curved_rail_dir = dirs.north
          straight_rail_pos = { pos.x + 0, pos.y + 0 }
          straight_rail_dir = dirs.north
-      elseif anchor_dir == dirs.northwest then
-         curved_rail_pos = { pos.x + 0, pos.y + 0 }
+      elseif anchor_dir == dirs.northwest then --3
+         using_extender = true
+         extender_rail_pos = { pos.x + 0, pos.y - 0 }
+         extender_rail_dir = dirs.north
+         curved_rail_pos = { pos.x + 0, pos.y - 0 }
          curved_rail_dir = dirs.north
          straight_rail_pos = { pos.x + 0, pos.y + 0 }
          straight_rail_dir = dirs.north
       end
    elseif dir == dirs.northwest then
-      if anchor_dir == dirs.southeast then
+      if anchor_dir == dirs.southeast then --2
          curved_rail_pos = { pos.x + 0, pos.y + 0 }
          curved_rail_dir = dirs.north
          straight_rail_pos = { pos.x + 0, pos.y + 0 }
          straight_rail_dir = dirs.north
-      elseif anchor_dir == dirs.northwest then
-         curved_rail_pos = { pos.x + 0, pos.y + 0 }
+      elseif anchor_dir == dirs.northwest then --3
+         using_extender = true
+         extender_rail_pos = { pos.x + 0, pos.y - 0 }
+         extender_rail_dir = dirs.north
+         curved_rail_pos = { pos.x + 0, pos.y - 0 }
          curved_rail_dir = dirs.north
          straight_rail_pos = { pos.x + 0, pos.y + 0 }
          straight_rail_dir = dirs.north
       end
    elseif dir == dirs.southwest then
-      if anchor_dir == dirs.southeast then
+      if anchor_dir == dirs.southeast then --2
          curved_rail_pos = { pos.x + 0, pos.y + 0 }
          curved_rail_dir = dirs.north
          straight_rail_pos = { pos.x + 0, pos.y + 0 }
          straight_rail_dir = dirs.north
-      elseif anchor_dir == dirs.northwest then
-         curved_rail_pos = { pos.x + 0, pos.y + 0 }
+      elseif anchor_dir == dirs.northwest then --3
+         using_extender = true
+         extender_rail_pos = { pos.x + 0, pos.y - 0 }
+         extender_rail_dir = dirs.north
+         curved_rail_pos = { pos.x + 0, pos.y - 0 }
          curved_rail_dir = dirs.north
          straight_rail_pos = { pos.x + 0, pos.y + 0 }
          straight_rail_dir = dirs.north
       end
    elseif dir == dirs.southeast then
-      if anchor_dir == dirs.southeast then
+      if anchor_dir == dirs.southeast then --2
          curved_rail_pos = { pos.x + 0, pos.y + 0 }
          curved_rail_dir = dirs.north
          straight_rail_pos = { pos.x + 0, pos.y + 0 }
          straight_rail_dir = dirs.north
-      elseif anchor_dir == dirs.northwest then
-         curved_rail_pos = { pos.x + 0, pos.y + 0 }
+      elseif anchor_dir == dirs.northwest then --3
+         using_extender = true
+         extender_rail_pos = { pos.x + 0, pos.y - 0 }
+         extender_rail_dir = dirs.north
+         curved_rail_pos = { pos.x + 0, pos.y - 0 }
          curved_rail_dir = dirs.north
          straight_rail_pos = { pos.x + 0, pos.y + 0 }
          straight_rail_dir = dirs.north
       end
    end
-   return curved_rail_dir, curved_rail_pos, straight_rail_dir, straight_rail_pos
+   return curved_rail_dir,
+      curved_rail_pos,
+      straight_rail_dir,
+      straight_rail_pos,
+      using_extender,
+      extender_rail_dir,
+      extender_rail_pos
 end
 
 --Returns the rotation and position of the 1 curved rail pieces needed to form a 45 degree right turn from any diagonal input dir
