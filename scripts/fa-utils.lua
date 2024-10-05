@@ -997,4 +997,27 @@ function mod.confirm_action(pindex, id_string, custom_message)
    end
 end
 
+-- Format a  number to e.g. "1.3m"
+---@param amount number
+---@return string
+function mod.format_number(amount)
+   local suffix = ""
+
+   local suffix_list = {
+      ["T"] = 1000000000000,
+      ["B"] = 1000000000,
+      ["M"] = 1000000,
+      ["k"] = 1000,
+   }
+   for letter, limit in pairs(suffix_list) do
+      if math.abs(amount) >= limit then
+         amount = math.floor(amount / (limit / 10)) / 10
+         suffix = letter
+         break
+      end
+   end
+
+   return tostring(amount) .. suffix
+end
+
 return mod
