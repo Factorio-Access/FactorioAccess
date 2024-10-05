@@ -1497,4 +1497,136 @@ function mod.cursor_is_at_mining_drill_output_part(pindex, ent)
    return util.distance(correct_pos, players[pindex].cursor_pos) < 0.6
 end
 
+--Returns an info string about the entities and tiles found within an area scan done by an enlarged cursor.
+---@param pindex number
+---@param left_top fa.Point
+---@param right_bottom fa.Point
+---@return LocalisedString
+function mod.area_scan_summary_info(pindex, left_top, right_bottom)
+   local result = {}
+
+   local chunk_lt_x = math.floor(left_top.x / 32)
+   local chunk_lt_y = math.floor(left_top.y / 32)
+   local chunk_rb_x = math.ceil(right_bottom.x / 32)
+   local chunk_rb_y = math.ceil(right_bottom.y / 32)
+
+   local player = assert(game.get_player(pindex))
+   ---@cast player LuaPlayer
+   local surf = player.surface
+
+   local generated_chunk_count = 0
+   local total_chunks_covered = 0
+   for cx = chunk_lt_x, chunk_rb_x do
+      for cy = chunk_lt_y, chunk_rb_y do
+         if surf.is_chunk_generated({ cx, cy }) then generated_chunk_count = generated_chunk_count + 1 end
+         total_chunks_covered = total_chunks_covered + 1
+      end
+   end
+   if total_chunks_covered > 0 and generated_chunk_count < 1 then
+      return "Charted 0%, you need to chart this area by approaching it or using a radar."
+   elseif total_chunks_covered > 0 and generated_chunk_count < total_chunks_covered then
+      table.insert(result, "Charted")
+      table.insert(result, math.floor(generated_chunk_count / total_chunks_covered * 100) .. "%,")
+   end
+
+   ---@type { name: string, count: string, category: string }[]
+   local counts = {}
+
+   local covered_area = (right_bottom.x - left_top.x) * (right_bottom.y - left_top.y)
+   assert(covered_area > 0)
+
+   local water_count = surf.count_tiles_filtered({
+      name = { "water", "deepwater", "water-green", "deepwater-green", "water-shallow", "water-mud", "water-wube" },
+      area = { left_top, right_bottom },
+   })
+
+   if water_count > 0 then table.insert(counts, { name = "water", count = water_count, category = "resource" }) end
+
+   local path_count = surf.count_tiles_filtered({ name = "stone-path", area = { left_top, right_bottom } })
+   if path_count > 0 then
+      table.insert(counts, { name = "stone-brick-path", count = path_count, category = "flooring" })
+   end
+
+   local concrete_count = surf.count_tiles_filtered({
+      name = { "concrete", "hazard-concrete-left", "hazard-concrete-right" },
+      area = { left_top, right_bottom },
+   })
+   if concrete_count > 0 then
+      table.insert(counts, { name = "concrete", count = concrete_count, category = "flooring" })
+   end
+
+   local refined_concrete_count = surf.count_tiles_filtered({
+      name = { "refined-concrete", "refined-hazard-concrete-left", "refined-hazard-concrete-right" },
+      area = { left_top, right_bottom },
+   })
+   if refined_concrete_count > 0 then
+      table.insert(counts, { name = "refined-concrete", count = refined_concrete_count, category = "flooring" })
+   end
+
+   for _, res_proto in pairs(game.entity_prototypes) do
+      if res_proto.type == "resource" then
+         local res_count = surf.count_entities_filtered({ name = res_proto.name, area = { left_top, right_bottom } })
+         table.insert(counts, { name = res_proto.name, count = res_count, category = "resource" })
+      end
+   end
+
+   local tree_count = surf.count_entities_filtered({ type = "tree", area = { left_top, right_bottom } })
+   if tree_count > 0 then table.insert(counts, { name = "trees", count = tree_count, category = "resource" }) end
+
+   local others = surf.find_entities_filtered({
+      type = { "resource", "tree" },
+      area = { left_top, right_bottom },
+      invert = true,
+   })
+
+   local others_by_proto = {}
+   for _, ent in pairs(others) do
+      if ent.valid then others_by_proto[ent.name] = (others_by_proto[ent.name] or 0) + 1 end
+   end
+
+   for n, c in pairs(others_by_proto) do
+      if c > 0 then table.insert(counts, { name = n, count = c, category = "other" }) end
+   end
+
+   table.sort(counts, function(k1, k2)
+      return k1.count > k2.count
+   end)
+
+   local count_total = 0
+   for _, i in pairs(counts) do
+      count_total = count_total + i.count
+   end
+
+   -- Spacecat can't help us here. Why?  We can't have spaces between words and
+   -- commas, e.g. "iron ," is wrong.  The real problem isn't spacecat, it's
+   -- that this should be localised and the commas should be baked into the
+   -- localised strings, then those get fed to spacecat.
+   local contains_list = {}
+   for _, entry in pairs(counts) do
+      if entry.count == 0 then break end
+
+      local fragment = ""
+      fragment = fragment .. tostring(entry.count) .. " " .. entry.name
+      if entry.category == "resource" or entry.category == "flooring" then
+         fragment = fragment .. " " .. math.floor(entry.count / covered_area * 100) .. " " .. "percent"
+      end
+
+      table.insert(contains_list, fragment .. ",")
+   end
+
+   if next(contains_list) then
+      table.insert(result, "Area contains")
+      for _, f in pairs(contains_list) do
+         table.insert(result, f)
+      end
+      table.insert(result, "total space occupied")
+      table.insert(result, math.floor(count_total / covered_area * 100))
+      table.insert(result, "percent")
+   else
+      table.insert(result, "Area empty")
+   end
+
+   return fa_utils.spacecat_table(result)
+end
+
 return mod

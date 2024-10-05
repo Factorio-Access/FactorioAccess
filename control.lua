@@ -2816,24 +2816,14 @@ function cursor_mode_move(direction, pindex, single_only)
    else
       -- Larger cursor sizes: scan area
       local scan_left_top = {
-         math.floor(players[pindex].cursor_pos.x) - players[pindex].cursor_size,
-         math.floor(players[pindex].cursor_pos.y) - players[pindex].cursor_size,
+         x = math.floor(players[pindex].cursor_pos.x) - players[pindex].cursor_size,
+         y = math.floor(players[pindex].cursor_pos.y) - players[pindex].cursor_size,
       }
       local scan_right_bottom = {
-         math.floor(players[pindex].cursor_pos.x) + players[pindex].cursor_size + 1,
-         math.floor(players[pindex].cursor_pos.y) + players[pindex].cursor_size + 1,
+         x = math.floor(players[pindex].cursor_pos.x) + players[pindex].cursor_size + 1,
+         y = math.floor(players[pindex].cursor_pos.y) + players[pindex].cursor_size + 1,
       }
-      players[pindex].nearby.index = 1
-      players[pindex].nearby.ents = fa_scanner.scan_area(
-         math.floor(players[pindex].cursor_pos.x) - players[pindex].cursor_size,
-         math.floor(players[pindex].cursor_pos.y) - players[pindex].cursor_size,
-         players[pindex].cursor_size * 2 + 1,
-         players[pindex].cursor_size * 2 + 1,
-         pindex
-      )
-      fa_scanner.populate_list_categories(pindex)
-      players[pindex].cursor_scan_center = players[pindex].cursor_pos
-      local scan_summary = fa_scanner.area_scan_summary_info(scan_left_top, scan_right_bottom, pindex)
+      local scan_summary = fa_info.area_scan_summary_info(pindex, scan_left_top, scan_right_bottom)
       fa_graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
       printout(scan_summary, pindex)
    end
