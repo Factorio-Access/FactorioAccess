@@ -53,7 +53,7 @@ end
 
 --Outputs basic entity info, usually called when the cursor selects an entity.
 ---@param ent LuaEntity
-function mod.ent_info(pindex, ent, description)
+function mod.ent_info(pindex, ent, description, is_scanner)
    local p = game.get_player(pindex)
    local result = fa_localising.get(ent, pindex)
    if result == nil or result == "" then result = ent.name end
@@ -92,7 +92,7 @@ function mod.ent_info(pindex, ent, description)
          result = result .. " X "
       end
 
-      if p ~= nil and p.valid and p.index == pindex and not players[pindex].cursor then return "" end
+      if p ~= nil and p.valid and p.index == pindex and not (players[pindex].cursor or is_scanner) then return "" end
    elseif ent.name == "character-corpse" then
       if ent.character_corpse_player_index == pindex then
          result = result .. " of your character "
@@ -423,7 +423,7 @@ function mod.ent_info(pindex, ent, description)
          result = result .. ", " .. fa_rails.get_signal_state_info(ent)
       end
    end
-   if ent.type == "mining-drill" and mod.cursor_is_at_mining_drill_output_part(pindex, ent) then
+   if not is_scanner and ent.type == "mining-drill" and mod.cursor_is_at_mining_drill_output_part(pindex, ent) then
       result = result .. " drop chute "
    end
    --Report the entity facing direction
