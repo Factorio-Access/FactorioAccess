@@ -124,11 +124,12 @@ end
 
 ---@param group_number number
 ---@return number
-function TileClusterer:walk_canonical_list(group_number)
+function TileClusterer:walk_canonical_list(group_number, safe_to_drop)
    local old_group_number = group_number
    while group_number do
       old_group_number = group_number
       group_number = self.canonical_linked_list[group_number]
+      if safe_to_drop and group_number then self.groups[old_group_number] = nil end
    end
 
    return old_group_number
@@ -322,10 +323,8 @@ function TileClusterer:get_groups(callback)
    local seen = {}
 
    for num_old in pairs(self.groups) do
-      num = self:walk_canonical_list(num_old)
-      -- Very quick cleanup: nothing consults non-canonical groups and this is
-      -- free.
-      if num < num_old then self.groups[num_old] = nil end
+      num = self:walk_canonical_list(num_old, true)
+
       local candidate = self.groups[num]
       if not seen[candidate] then
          seen[candidate] = true
