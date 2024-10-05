@@ -1784,13 +1784,6 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "open-structure-travel-menu",
-      key_sequence = "CONTROL + SHIFT + ALT + S",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
       name = "alternative-menu-up",
       key_sequence = "UP",
       consuming = "none",

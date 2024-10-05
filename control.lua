@@ -1326,14 +1326,6 @@ function initialize(player)
          renaming = false,
       }
 
-   faplayer.structure_travel = faplayer.structure_travel
-      or {
-         network = {},
-         current = nil,
-         index = 0,
-         direction = "none",
-      }
-
    faplayer.rail_builder = faplayer.rail_builder
       or {
          index = 0,
@@ -1756,8 +1748,6 @@ function menu_cursor_up(pindex)
       )
    elseif players[pindex].menu == "travel" then
       fa_travel.fast_travel_menu_up(pindex)
-   elseif players[pindex].menu == "structure-travel" then
-      fa_travel.move_cursor_structure(pindex, 0)
    elseif players[pindex].menu == "rail_builder" then
       fa_rail_builder.menu_up(pindex)
    elseif players[pindex].menu == "train_stop_menu" then
@@ -2022,8 +2012,6 @@ function menu_cursor_down(pindex)
       )
    elseif players[pindex].menu == "travel" then
       fa_travel.fast_travel_menu_down(pindex)
-   elseif players[pindex].menu == "structure-travel" then
-      fa_travel.move_cursor_structure(pindex, 4)
    elseif players[pindex].menu == "rail_builder" then
       fa_rail_builder.menu_down(pindex)
    elseif players[pindex].menu == "train_stop_menu" then
@@ -2188,8 +2176,6 @@ function menu_cursor_left(pindex)
       fa_warnings.read_warnings_slot(pindex)
    elseif players[pindex].menu == "travel" then
       fa_travel.fast_travel_menu_left(pindex)
-   elseif players[pindex].menu == "structure-travel" then
-      fa_travel.move_cursor_structure(pindex, 6)
    elseif players[pindex].menu == "signal_selector" then
       fa_circuits.signal_selector_signal_prev(pindex)
       fa_circuits.read_selected_signal_slot(pindex, "")
@@ -2358,8 +2344,6 @@ function menu_cursor_right(pindex)
       fa_warnings.read_warnings_slot(pindex)
    elseif players[pindex].menu == "travel" then
       fa_travel.fast_travel_menu_right(pindex)
-   elseif players[pindex].menu == "structure-travel" then
-      fa_travel.move_cursor_structure(pindex, 2)
    elseif players[pindex].menu == "signal_selector" then
       fa_circuits.signal_selector_signal_next(pindex)
       fa_circuits.read_selected_signal_slot(pindex, "")
@@ -3732,8 +3716,6 @@ function close_menu_resets(pindex)
    local p = game.get_player(pindex)
    if players[pindex].menu == "travel" then
       fa_travel.fast_travel_menu_close(pindex)
-   elseif players[pindex].menu == "structure-travel" then
-      fa_travel.structure_travel_menu_close(pindex)
    elseif players[pindex].menu == "rail_builer" then
       fa_rail_builder.close_menu(pindex, false)
    elseif players[pindex].menu == "train_menu" then
@@ -4954,45 +4936,6 @@ script.on_event("click-menu", function(event)
          end
       elseif players[pindex].menu == "travel" then
          fa_travel.fast_travel_menu_click(pindex)
-      elseif players[pindex].menu == "structure-travel" then --Also called "b stride"
-         ---@type LuaEntity
-         local tar = nil
-         local network = players[pindex].structure_travel.network
-         local index = players[pindex].structure_travel.index
-         local current = players[pindex].structure_travel.current
-         if players[pindex].structure_travel.direction == "none" then
-            tar = network[current]
-         elseif players[pindex].structure_travel.direction == "north" then
-            tar = network[network[current].north[index].num]
-         elseif players[pindex].structure_travel.direction == "east" then
-            tar = network[network[current].east[index].num]
-         elseif players[pindex].structure_travel.direction == "south" then
-            tar = network[network[current].south[index].num]
-         elseif players[pindex].structure_travel.direction == "west" then
-            tar = network[network[current].west[index].num]
-         end
-         local success = fa_teleport.teleport_to_closest(pindex, tar.position, false, false)
-         if success and players[pindex].cursor then
-            players[pindex].cursor_pos = table.deepcopy(tar.position)
-         else
-            players[pindex].cursor_pos =
-               fa_utils.offset_position(players[pindex].position, players[pindex].player_direction, 1)
-         end
-         fa_graphics.sync_build_cursor_graphics(pindex)
-         game.get_player(pindex).opened = nil
-
-         if not refresh_player_tile(pindex) then
-            printout("Tile out of range", pindex)
-            return
-         end
-
-         --Update cursor highlight
-         local ent = get_first_ent_at_tile(pindex)
-         if ent and ent.valid then
-            fa_graphics.draw_cursor_highlight(pindex, ent, nil)
-         else
-            fa_graphics.draw_cursor_highlight(pindex, nil, nil)
-         end
       elseif players[pindex].menu == "rail_builder" then
          fa_rail_builder.run_menu(pindex, true)
          fa_rail_builder.close_menu(pindex, false)
@@ -7181,57 +7124,6 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
    end
    players[pindex].last_menu_search_tick = event.tick
    players[pindex].text_field_open = false
-end)
-
-script.on_event("open-structure-travel-menu", function(event)
-   local pindex = event.player_index
-   if not check_for_player(pindex) or players[pindex].vanilla_mode then return end
-   if players[pindex].in_menu == false then
-      game.get_player(pindex).selected = nil
-      players[pindex].menu = "structure-travel"
-      players[pindex].in_menu = true
-      players[pindex].move_queue = {}
-      players[pindex].structure_travel.direction = "none"
-      local ent = game.get_player(pindex).selected
-      local initial_scan_radius = 50
-      if ent ~= nil and ent.valid and ent.unit_number ~= nil and building_types[ent.type] then
-         players[pindex].structure_travel.current = ent.unit_number
-         players[pindex].structure_travel.network = fa_travel.compile_building_network(ent, initial_scan_radius, pindex)
-      else
-         ent = game.get_player(pindex).character
-         players[pindex].structure_travel.current = ent.unit_number
-         players[pindex].structure_travel.network = fa_travel.compile_building_network(ent, initial_scan_radius, pindex)
-      end
-      local description = ""
-      local network = players[pindex].structure_travel.network
-      local current = players[pindex].structure_travel.current
-      game.get_player(pindex).print("current id = " .. current)
-      if network[current].north and #network[current].north > 0 then
-         description = description .. ", " .. #network[current].north .. " connections north,"
-      end
-      if network[current].east and #network[current].east > 0 then
-         description = description .. ", " .. #network[current].east .. " connections east,"
-      end
-      if network[current].south and #network[current].south > 0 then
-         description = description .. ", " .. #network[current].south .. " connections south,"
-      end
-      if network[current].west and #network[current].west > 0 then
-         description = description .. ", " .. #network[current].west .. " connections west,"
-      end
-      if description == "" then description = "No nearby buildings." end
-      printout(
-         "Structure travel, Now at "
-            .. ent.name
-            .. " "
-            .. fa_scanner.ent_extra_list_info(ent, pindex, true)
-            .. " "
-            .. description
-            .. ", Select a direction, confirm with same direction, and use perpendicular directions to select a target,  press left bracket to teleport to selection",
-         pindex
-      )
-   else
-      printout("Another menu is open. ", pindex)
-   end
 end)
 
 script.on_event("cursor-skip-north", function(event)
