@@ -1,3 +1,5 @@
+local Consts = require("scripts.consts")
+
 for name, proto in pairs(data.raw.container) do
    proto.open_sound = proto.open_sound or { filename = "__base__/sound/metallic-chest-open.ogg", volume = 0.43 }
    proto.close_sound = proto.close_sound or { filename = "__base__/sound/metallic-chest-close.ogg", volume = 0.43 }
@@ -84,3 +86,88 @@ end
 --TODO:should probably just filter electric poles by their collision_box size...
 remove_player_collision(data.raw["electric-pole"]["small-electric-pole"])
 remove_player_collision(data.raw["electric-pole"]["medium-electric-pole"])
+
+--[[
+We will now inject a trigger on entity creation, which will send control.lua an
+event on the creation of any map-placed entity.  This is slow, and it should
+also be possible to tone it back in future if that ever becomes problematic. The
+purpose is being able to scan efficiently, rather than trying to scan surfaces
+every time we get a request.  See scripts.scanner.entrypoint.
+
+A trigger is either a single trigger or an array of triggers.  To be compatible
+with other mods, we convert these to arrays, then tack ours on at the end.
+]]
+
+local function augment_with_trigger(proto)
+   -- our trigger.
+   ---@type data.Trigger
+   local nt = {
+
+      type = "direct",
+      action_delivery = {
+         type = "instant",
+         source_effects = {
+            type = "script",
+            effect_id = Consts.NEW_ENTITY_SUBSCRIBER_TRIGGER_ID,
+         },
+      },
+   }
+
+   if not proto.created_effect then
+      proto.created_effect = {}
+   elseif not proto.created_effect[1] then
+      -- This is how we ask lua if something is an array.
+      proto.created_effect = { proto.created_effect }
+   end
+
+   table.insert(proto.created_effect, nt)
+end
+
+for ty, children in pairs(data.raw) do
+   if not defines.prototypes.entity[ty] then goto continue end
+
+   for _name, proto in pairs(children) do
+      augment_with_trigger(proto)
+   end
+   ::continue::
+end
+
+--[[
+See https://forums.factorio.com/viewtopic.php?f=28&t=114820
+
+We need resource_patch_search_radius to write the scanner algorithm, though
+hopefully in future we can just ask the engine.  The problem of today is that we
+don't have it at runtime.  We therefore make a dummy item, and smuggle it
+across in the localised_description.  The format is:
+
+prototype-name=5
+other-prototype-name=10
+
+So on.  Parsed back out in scripts.scanner.resource-patches.lua.
+
+If nil we just don't write anything after the =.
+]]
+
+local resource_search_radiuses = {}
+
+for name, proto in pairs(data.raw["resource"]) do
+   if proto.type == "resource" then
+      local line = {}
+      table.insert(line, name)
+      table.insert(line, "=")
+      local sr = proto.resource_patch_search_radius or 3
+      table.insert(line, tostring(sr))
+      table.insert(resource_search_radiuses, table.concat(line))
+   end
+end
+
+data:extend({
+   {
+      type = "item",
+      name = Consts.RESOURCE_SEARCH_RADIUSES_ITEM,
+      icon = data.raw.item.accumulator.icon,
+      icon_size = 2,
+      stack_size = 1,
+      localised_description = table.concat(resource_search_radiuses, "\n"),
+   },
+})

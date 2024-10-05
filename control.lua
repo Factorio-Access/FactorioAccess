@@ -19,7 +19,6 @@ local fa_rail_builder = require("scripts.rail-builder")
 local fa_trains = require("scripts.trains")
 local fa_train_stops = require("scripts.train-stops")
 local fa_driving = require("scripts.driving")
-local fa_scanner = require("scripts.scanner")
 local fa_spidertrons = require("scripts.spidertron")
 local fa_belts = require("scripts.transport-belts")
 local fa_zoom = require("scripts.zoom")
@@ -31,7 +30,9 @@ local fa_warnings = require("scripts.warnings")
 local fa_circuits = require("scripts.circuit-networks")
 local fa_kk = require("scripts.kruise-kontrol-wrapper")
 local fa_quickbar = require("scripts.quickbar")
+local Consts = require("scripts.consts")
 local Rulers = require("scripts.rulers")
+local ScannerEntrypoint = require("scripts.scanner.entrypoint")
 local WorkQueue = require("scripts.work-queue")
 
 ---@meta scripts.shared-types
@@ -108,11 +109,6 @@ end
 --This function gets scheduled.
 function call_to_sync_graphics(pindex)
    fa_graphics.sync_build_cursor_graphics(pindex)
-end
-
---This function gets scheduled.
-function call_to_run_scan(pindex, dir, mute)
-   fa_scanner.run_scan(pindex, dir, mute)
 end
 
 --This function gets scheduled.
@@ -2406,11 +2402,12 @@ end)
 function on_initial_joining_tick(event)
    if not game.is_multiplayer() then on_player_join(game.connected_players[1].index) end
    on_tick(event)
-   script.on_event(defines.events.on_tick, on_tick)
 end
 
 --Called every tick. Used to call scheduled and repeated functions.
 function on_tick(event)
+   ScannerEntrypoint.on_tick()
+
    if global.scheduled_events[event.tick] then
       for _, to_call in pairs(global.scheduled_events[event.tick]) do
          _G[to_call[1]](to_call[2], to_call[3], to_call[4])
@@ -3414,85 +3411,56 @@ end)
 
 script.on_event("rescan", function(event)
    pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu then
-      fa_scanner.run_scanner_effects(pindex)
-      schedule(2, "call_to_run_scan", pindex, nil, false)
-   end
+   ScannerEntrypoint.do_refresh(pindex)
 end)
 
 script.on_event("scan-facing-direction", function(event)
-   pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   local p = game.get_player(pindex)
-   if p.character == nil then return end
-   if not players[pindex].in_menu then
-      --Set the filter direction
-      local p = game.get_player(pindex)
-      local dir = p.character.direction
-      fa_scanner.run_scanner_effects(pindex)
-      schedule(2, "call_to_run_scan", pindex, dir, false)
-   end
+   local player = game.get_player(event.player_index)
+   local char = player.character
+   if not char then return end
+   ScannerEntrypoint.do_refresh(event.player_index, char.direction)
 end)
 
 script.on_event("scan-list-up", function(event)
    pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu then fa_scanner.list_up(pindex) end
+
+   ScannerEntrypoint.move_subcategory(pindex, -1)
 end)
 
 script.on_event("scan-list-down", function(event)
    pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu then fa_scanner.list_down(pindex) end
+
+   ScannerEntrypoint.move_subcategory(pindex, 1)
 end)
 
 script.on_event("scan-list-middle", function(event)
    pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu then fa_scanner.list_current(pindex) end
+
+   ScannerEntrypoint.announce_current_item(pindex)
 end)
 
 script.on_event("scan-category-up", function(event)
    pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu then fa_scanner.category_up(pindex) end
+
+   ScannerEntrypoint.move_category(pindex, -1)
 end)
 
 script.on_event("scan-category-down", function(event)
    pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu then fa_scanner.category_down(pindex) end
+
+   ScannerEntrypoint.move_category(pindex, 1)
 end)
 
-script.on_event("scan-sort-by-distance", function(event)
-   pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu then
-      local ent = game.get_player(pindex).selected
-      if ent ~= nil and ent.valid == true and (ent.get_control_behavior() ~= nil or ent.type == "electric-pole") then
-         --Open the circuit network menu for the selected ent instead.
-         return
-      end
-      players[pindex].nearby.index = 1
-      players[pindex].nearby.count = false
-      printout("Sorting scan results by distance from character position", pindex)
-      fa_scanner.list_sort(pindex)
-   end
-end)
-
---Move along different inmstances of the same item type
 script.on_event("scan-selection-up", function(event)
    pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   fa_scanner.selection_up(pindex)
+
+   ScannerEntrypoint.move_within_subcategory(pindex, -1)
 end)
 
---Move along different inmstances of the same item type
 script.on_event("scan-selection-down", function(event)
    pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   fa_scanner.selection_down(pindex)
+
+   ScannerEntrypoint.move_within_subcategory(pindex, 1)
 end)
 
 --Repeats the last thing read out. Not just the scanner.
@@ -6491,6 +6459,7 @@ script.on_load(function()
 end)
 
 script.on_configuration_changed(ensure_global_structures_are_up_to_date)
+
 script.on_init(function()
    ---@type any
    local skip_intro_message = remote.interfaces["freeplay"]
@@ -6502,7 +6471,6 @@ end)
 script.on_event(defines.events.on_cutscene_cancelled, function(event)
    pindex = event.player_index
    check_for_player(pindex)
-   fa_scanner.run_scan(pindex, nil, true)
    schedule(3, "call_to_fix_zoom", pindex)
    schedule(4, "call_to_sync_graphics", pindex)
 end)
@@ -6510,7 +6478,6 @@ end)
 script.on_event(defines.events.on_cutscene_finished, function(event)
    pindex = event.player_index
    check_for_player(pindex)
-   fa_scanner.run_scan(pindex, nil, true)
    schedule(3, "call_to_fix_zoom", pindex)
    schedule(4, "call_to_sync_graphics", pindex)
    --printout("Press TAB to continue",pindex)
@@ -8115,296 +8082,8 @@ script.on_event(defines.events.on_gui_opened, function(event)
    end
 end)
 
-script.on_event(defines.events.on_chunk_charted, function(event)
-   pindex = event.force.players[1].index
-   if not check_for_player(pindex) then
-   end
-   if players[pindex].mapped[fa_utils.pos2str(event.position)] ~= nil then return end
-   players[pindex].mapped[fa_utils.pos2str(event.position)] = true
-   local islands = fa_scanner.find_islands(game.surfaces[event.surface_index], event.area, pindex)
-
-   if table_size(islands) > 0 then
-      for i, v in pairs(islands) do
-         if players[pindex].resources[i] == nil then
-            players[pindex].resources[i] = {
-               patches = {},
-               queue = {},
-               index = 1,
-               positions = {},
-            }
-         end
-         local merged_groups = {}
-         local many2many = {}
-         if players[pindex].resources[i].queue[fa_utils.pos2str(event.position)] ~= nil then
-            for dir, positions in pairs(players[pindex].resources[i].queue[fa_utils.pos2str(event.position)]) do
-               --               islands[i].neighbors[dir] = nil
-               for i3, pos in pairs(positions) do
-                  local dirs = { dir - 1, dir, dir + 1 }
-                  if dir == 0 then dirs[1] = 7 end
-                  local new_edges = {}
-                  for i1, d in ipairs(dirs) do
-                     new_edges[fa_utils.pos2str(fa_utils.offset_position(fa_utils.str2pos(pos), d, -1))] = true
-                  end
-                  local adj = {}
-                  for d = 0, 7 do
-                     adj[d] = fa_utils.pos2str(fa_utils.offset_position(fa_utils.str2pos(pos), d, 1))
-                  end
-                  local edge = false
-                  for d, p in ipairs(adj) do
-                     if new_edges[p] then
-                        if islands[i].resources[p] ~= nil then
-                           local island_group = islands[i].resources[p].group
-                           if merged_groups[island_group] == nil then merged_groups[island_group] = {} end
-                           merged_groups[island_group][players[pindex].resources[i].positions[pos]] = true
-                        else
-                           edge = true
-                        end
-                     else
-                        if players[pindex].resources[i].positions[p] == nil then edge = true end
-                     end
-                  end
-                  if edge == false then
-                     local group = players[pindex].resources[i].positions[pos]
-                     players[pindex].resources[i].patches[group].edges[pos] = nil
-                  end
-                  for p, b in pairs(new_edges) do
-                     if islands[i].resources[p] ~= nil then
-                        local adj = {}
-                        for d = 0, 7 do
-                           adj[d] = fa_utils.pos2str(fa_utils.offset_position(fa_utils.str2pos(pos), d, 1))
-                        end
-                        local edge = false
-                        for d, p1 in ipairs(adj) do
-                           if islands[i].resources[p1] == nil and players[pindex].resources[i].positions[p1] == nil then
-                              edge = true
-                           end
-                        end
-                        if edge == false then
-                           islands[i].resources[p].edge = false
-                           islands[i].edges[p] = nil
-                        else
-                           islands[i].edges[p] = false
-                        end
-                     end
-                  end
-               end
-            end
-         end
-         for island_group, resource_groups in pairs(merged_groups) do
-            local matches = {}
-            for i1, ref in ipairs(many2many) do
-               local match = false
-               for i2, v2 in pairs(resource_groups) do
-                  if match then break end
-                  for i3, v3 in pairs(ref["old"]) do
-                     if i2 == i3 then
-                        table.insert(matches, i1)
-                        match = true
-                        break
-                     end
-                  end
-               end
-            end
-            ---@diagnostic disable-next-line: undefined-global
-            local old = table.deepcopy(resource_group) --todo debug: maybe this was meant to be "island_group"? ***
-            if old ~= nil then
-               local new = {}
-               new[island_group] = true
-               if table_size(matches) == 0 then
-                  local entry = {}
-                  entry["old"] = old
-                  entry["new"] = new
-                  table.insert(many2many, table.deepcopy(entry))
-               else
-                  table.sort(matches, function(k1, k2)
-                     return k1 > k2
-                  end)
-
-                  for i1, merge_index in ipairs(matches) do
-                     for i2, v2 in pairs(many2many[merge_index]["old"]) do
-                        old[i2] = true
-                     end
-                     for i2, v2 in pairs(many2many[merge_index]["new"]) do
-                        new[i2] = true
-                     end
-                     table.remove(many2many, merge_index)
-                  end
-                  local entry = {}
-                  entry["old"] = old
-                  entry["new"] = new
-
-                  table.insert(many2many, table.deepcopy(entry))
-               end
-            end
-         end
-         for i1, entry in pairs(many2many) do
-            for island_group, v2 in pairs(entry["new"]) do
-               for resource_group, v3 in pairs(entry["old"]) do
-                  merged_groups[island_group][resource_group] = true
-               end
-            end
-         end
-
-         for island_group, resource_groups in pairs(merged_groups) do
-            local new_group = math.huge
-            for resource_group, b in pairs(resource_groups) do
-               new_group = math.min(new_group, resource_group)
-            end
-            for resource_group, b in pairs(resource_groups) do
-               if
-                  new_group < resource_group
-                  and players[pindex].resources[i].patches ~= nil
-                  and players[pindex].resources[i].patches[resource_group] ~= nil
-                  and islands[i] ~= nil
-                  and islands[i].resources ~= nil
-                  and islands[i].resources[b] ~= nil
-               then --**beta changed "p" to "b"
-                  for i1, pos in pairs(players[pindex].resources[i].patches[resource_group].positions) do
-                     players[pindex].resources[i].positions[pos] = new_group
-                     players[pindex].resources[i].count = islands[i].resources[b].count --**beta "p" to "b"
-                  end
-                  fa_utils.table_concat(
-                     players[pindex].resources[i].patches[new_group].positions,
-                     players[pindex].resources[i].patches[resource_group].positions
-                  )
-                  for pos, val in pairs(players[pindex].resources[i].patches[resource_group].edges) do
-                     players[pindex].resources[i].patches[new_group].edges[pos] = val
-                  end
-                  players[pindex].resources[i].patches[resource_group] = nil
-               end
-            end
-            for pos, val in pairs(islands[i].groups[island_group]) do
-               players[pindex].resources[i].positions[pos] = new_group
-               if "number" == type(players[pindex].resources[i].patches[new_group]) then
-                  new_group = players[pindex].resources[i].patches[new_group]
-               end
-               table.insert(players[pindex].resources[i].patches[new_group].positions, pos)
-               if islands[i].edges[pos] ~= nil then
-                  players[pindex].resources[i].patches[new_group].edges[pos] = islands[i].edges[pos]
-               end
-               islands[i].groups[island_group] = nil
-            end
-         end
-
-         for dir, v1 in pairs(islands[i].neighbors) do
-            local chunk_pos = fa_utils.pos2str(fa_utils.offset_position(event.position, dir, 1))
-            if players[pindex].resources[i].queue[chunk_pos] == nil then
-               players[pindex].resources[i].queue[chunk_pos] = {}
-            end
-            players[pindex].resources[i].queue[chunk_pos][dir] = {}
-         end
-         for old_index, group in pairs(v.groups) do
-            if true then
-               local new_index = players[pindex].resources[i].index
-               players[pindex].resources[i].patches[new_index] = {
-                  positions = {},
-                  edges = {},
-               }
-               players[pindex].resources[i].index = players[pindex].resources[i].index + 1
-               for i2, pos in pairs(group) do
-                  players[pindex].resources[i].positions[pos] = new_index
-                  table.insert(players[pindex].resources[i].patches[new_index].positions, pos)
-                  if islands[i].edges[pos] ~= nil then
-                     players[pindex].resources[i].patches[new_index].edges[pos] = islands[i].edges[pos]
-                     if islands[i].edges[pos] then
-                        local position = fa_utils.str2pos(pos)
-                        if fa_utils.area_edge(event.area, 0, position, i) then
-                           local chunk_pos = fa_utils.pos2str(fa_utils.offset_position(event.position, 0, 1))
-                           if players[pindex].resources[i].queue[chunk_pos][4] == nil then
-                              players[pindex].resources[i].queue[chunk_pos][4] = {}
-                           end
-                           table.insert(players[pindex].resources[i].queue[chunk_pos][4], pos)
-                        end
-                        if fa_utils.area_edge(event.area, 6, position, i) then
-                           local chunk_pos = fa_utils.pos2str(fa_utils.offset_position(event.position, 6, 1))
-                           if players[pindex].resources[i].queue[chunk_pos][2] == nil then
-                              players[pindex].resources[i].queue[chunk_pos][2] = {}
-                           end
-                           table.insert(players[pindex].resources[i].queue[chunk_pos][2], pos)
-                        end
-                        if fa_utils.area_edge(event.area, 4, position, i) then
-                           local chunk_pos = fa_utils.pos2str(fa_utils.offset_position(event.position, 4, 1))
-                           if players[pindex].resources[i].queue[chunk_pos][0] == nil then
-                              players[pindex].resources[i].queue[chunk_pos][0] = {}
-                           end
-                           table.insert(players[pindex].resources[i].queue[chunk_pos][0], pos)
-                        end
-                        if fa_utils.area_edge(event.area, 2, position, i) then
-                           local chunk_pos = fa_utils.pos2str(fa_utils.offset_position(event.position, 2, 1))
-                           if players[pindex].resources[i].queue[chunk_pos][6] == nil then
-                              players[pindex].resources[i].queue[chunk_pos][6] = {}
-                           end
-                           table.insert(players[pindex].resources[i].queue[chunk_pos][6], pos)
-                        end
-                     end
-                  end
-               end
-            end
-         end
-      end
-      --      print(event.area.left_top.x .. " " .. event.area.left_top.y)
-      --      print(event.area.right_bottom.x .. " " .. event.area.right_bottom.y)
-      --      for name, obj in pairs(resources) do
-      --         print(name .. ": " .. table_size(obj.patches))
-      --      end
-   end
-end)
-
 script.on_event(defines.events.on_entity_destroyed, function(event) --DOES NOT HAVE THE KEY PLAYER_INDEX
-   local ent = nil
-   for pindex, player in pairs(players) do --If the destroyed entity is destroyed by any player, it will be detected. Laterdo consider logged out players etc?
-      if players[pindex] ~= nil then
-         local try_ent = players[pindex].destroyed[event.registration_number]
-         if try_ent ~= nil and try_ent.valid then ent = try_ent end
-      end
-   end
-   if ent == nil then return end
-   local str = fa_utils.pos2str(ent.position)
-   if ent.type == "resource" then
-      if ent.name ~= "crude-oil" and players[pindex].resources[ent.name].positions[str] ~= nil then --**beta added a check here to not run for nil "group"s...
-         local group = players[pindex].resources[ent.name].positions[str]
-         players[pindex].resources[ent.name].positions[str] = nil
-         --game.get_player(pindex).print("Pos str: " .. str)
-         --game.get_player(pindex).print("group: " .. group)
-         players[pindex].resources[ent.name].patches[group].edges[str] = nil
-         for i = 1, #players[pindex].resources[ent.name].patches[group].positions do
-            if players[pindex].resources[ent.name].patches[group].positions[i] == str then
-               table.remove(players[pindex].resources[ent.name].patches[group].positions, i)
-               i = i - 1
-            end
-         end
-         if #players[pindex].resources[ent.name].patches[group].positions == 0 then
-            players[pindex].resources[ent.name].patches[group] = nil
-            if table_size(players[pindex].resources[ent.name].patches) == 0 then
-               players[pindex].resources[ent.name] = nil
-            end
-            return
-         end
-         for d = 0, 7 do
-            local adj = fa_utils.pos2str(fa_utils.offset_position(ent.position, d, 1))
-            if players[pindex].resources[ent.name].positions[adj] == group then
-               players[pindex].resources[ent.name].patches[group].edges[adj] = false
-            end
-         end
-      end
-   elseif ent.type == "tree" then
-      local adj = {}
-      adj[fa_utils.pos2str({ x = math.floor(ent.area.left_top.x / 32), y = math.floor(ent.area.left_top.y / 32) })] =
-         true
-      adj[fa_utils.pos2str({ x = math.floor(ent.area.right_bottom.x / 32), y = math.floor(ent.area.left_top.y / 32) })] =
-         true
-      adj[fa_utils.pos2str({ x = math.floor(ent.area.left_top.x / 32), y = math.floor(ent.area.right_bottom.y / 32) })] =
-         true
-      adj[fa_utils.pos2str({
-         x = math.floor(ent.area.right_bottom.x / 32),
-         y = math.floor(ent.area.right_bottom.y / 32),
-      })] =
-         true
-      for pos, val in pairs(adj) do
-         --players[pindex].tree_chunks[pos].count = players[pindex].tree_chunks[pos].count - 1--**beta Forests need updating but these lines are incorrectly named
-      end
-   end
-   players[pindex].destroyed[event.registration_number] = nil
+   ScannerEntrypoint.on_entity_destroyed(event)
 end)
 
 --Scripts regarding train state changes. NOTE: NO PINDEX
@@ -9085,4 +8764,18 @@ script.on_event("fa-kk-cancel", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    fa_kk.cancel_kk(pindex)
+end)
+
+script.on_event(defines.events.on_script_trigger_effect, function(event)
+   if event.effect_id == Consts.NEW_ENTITY_SUBSCRIBER_TRIGGER_ID then
+      ScannerEntrypoint.on_new_entity(event.surface_index, event.source_entity)
+   end
+end)
+
+script.on_event(defines.events.on_surface_created, function(event)
+   ScannerEntrypoint.on_new_surface(game.get_surface(event.surface_index))
+end)
+
+script.on_event(defines.events.on_surface_deleted, function(event)
+   ScannerEntrypoint.on_surface_delete(event.surface_index)
 end)
