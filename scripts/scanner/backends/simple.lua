@@ -49,18 +49,6 @@ end
 
 local SimpleBackend = {}
 
-local function ent_aabb(ent)
-   local pos = ent.position
-   local x, y = pos.x, pos.y
-   local half_width, half_height = ent.tile_width / 2, ent.tile_height / 2
-
-   ---@type fa.AABB
-   return {
-      left_top = { x = x - half_width, y = y - half_height },
-      right_bottom = { x = x + half_width, y = y + half_height },
-   }
-end
-
 ---@param e fa.scanner.ScanEntry
 function SimpleBackend:validate_entry(player, e)
    return e.backend_data.valid and player.surface_index == e.backend_data.surface_index
@@ -81,7 +69,6 @@ function SimpleBackend:fillout_entry(entity, entry)
    end
    entry.backend = self
    entry.backend_data = entity
-   entry.bounding_box = ent_aabb(entity)
    entry.category = self.category_callback(entity)
    entry.subcategory = self.subcategory_callback(entity)
 end
@@ -140,20 +127,14 @@ function SimpleBackend:dump_entries_to_callback(player, callback)
             effective_y = y - hth
          end
 
-         local aabb = {
-            left_top = { x = x - htw, y = y - hth },
-            right_bottom = { x = x + htw, y = y + hth },
-         }
-
          local cached_entry = self.entry_cache[regnum]
          if cached_entry then
             cached_entry.position = { x = effective_x, y = effective_y }
-            cached_entry.bounding_box = aabb
+
             callback(cached_entry)
          else
             local entry = {
                position = { x = effective_x, y = effective_y },
-               bounding_box = aabb,
                category = cat_cb(entity),
                subcategory = subcat_cb(entity),
                backend = self,
@@ -198,6 +179,17 @@ function mod.declare_simple_backend(meta_name, callbacks)
    }
 
    return ret
+end
+
+function SimpleBackend:get_aabb(e)
+   local aabb = e.backend_data.bounding_box
+   local lt = aabb.left_top
+   local rb = aabb.right_bottom
+   return lt.x, lt.y, rb.x, rb.y
+end
+
+function SimpleBackend:is_huge(e)
+   return false
 end
 
 return mod

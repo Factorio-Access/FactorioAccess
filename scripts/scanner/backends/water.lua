@@ -9,6 +9,9 @@ local mod = {}
 local WATER_PROTOS_SET = {}
 TH.array_to_set(WATER_PROTOS_SET, SC.WATER_PROTOS)
 
+---@class fa.scanner.backends.WaterBackendData
+---@field aabb fa.AABB
+
 ---@class fa.scanner.WaterBackend: fa.scanner.ScannerBackend
 ---@field surface LuaSurface
 ---@field clusterer fa.ds.TileClusterer
@@ -25,7 +28,7 @@ function WaterBackend.new(surface)
    )
 end
 
----@param e fa.scanner.ScanEntry
+---@param e LuaEntity
 function WaterBackend:on_new_entity(e) end
 
 ---@param player LuaPlayer
@@ -35,7 +38,7 @@ function WaterBackend:validate_entry(player, e)
 
    -- Could be landfilled. Check that to get our answer.
    return player.surface.count_tiles_filtered({
-      area = e.bounding_box,
+      area = e.backend_data.aabb,
       name = SC.WATER_PROTOS,
       limit = 1,
    }) > 0
@@ -44,7 +47,7 @@ end
 function WaterBackend:update_entry(player, e) end
 
 function WaterBackend:readout_entry(player, e)
-   local bb = e.bounding_box
+   local bb = e.backend_data.aabb
    local w = bb.right_bottom.x - bb.left_top.x
    local h = bb.right_bottom.y - bb.left_top.y
    local area = math.floor(w * h)
@@ -89,9 +92,11 @@ function WaterBackend:dump_entries_to_callback(player, callback)
 
       callback({
          position = { x = e_x, y = e_y },
-         bounding_box = {
-            left_top = { x = tlx, y = tly },
-            right_bottom = { x = brx, y = bry },
+         backend_data = {
+            aabb = {
+               left_top = { x = tlx, y = tly },
+               right_bottom = { x = brx, y = bry },
+            },
          },
          backend = self,
          category = SC.CATEGORIES.RESOURCES,
@@ -114,6 +119,17 @@ function WaterBackend:on_new_chunk(chunk)
    end
 
    self.clusterer:submit_points(xy)
+end
+
+function WaterBackend:get_aabb(e)
+   local aabb = e.backend_data.aabb
+   local lt = aabb.left_top
+   local rb = aabb.right_bottom
+   return lt.x, lt.y, rb.x, rb.y
+end
+
+function WaterBackend:is_huge(e)
+   return true
 end
 
 return mod

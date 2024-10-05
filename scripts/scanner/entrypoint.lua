@@ -26,7 +26,6 @@ local mod = {}
 
 ---@class fa.scanner.ScanEntry
 ---@field position fa.Point
----@field bounding_box fa.AABB
 ---@field backend fa.scanner.ScannerBackend
 ---@field backend_data any
 ---@field category fa.scanner.Category
@@ -41,6 +40,8 @@ local mod = {}
 ---@field on_entity_destroyed fun(self, EventData.on_entity_destroyed)
 ---@field dump_entries_to_callback fun(self, player: LuaPlayer,  callback: fun(fa.scanner.ScanEntry))
 ---@field on_new_tiles fun(self, tiles: LuaTile[])
+---@field is_huge(fa.scanner.ScanEntry): boolean Return true if the scanner should check to see if the player is in the bounding box.
+---@field get_aabb(fa.scanner.ScanEntry): (number, number, number, number) Returnjs (left_top.x, left_top.y, right_bottom.x, right_bottom.y)
 
 ---@class fa.scanner.CursorPos
 ---@field category fa.scanner.Category?
@@ -131,7 +132,10 @@ local function do_refresh_after_sfx(pindex, direction_filter)
       local function adder(e)
          local pos = e.position
          local ex, ey = pos.x, pos.y
-         local aabb = e.bounding_box
+         local ltx, lty, rbx, rby
+         if e.backend:is_huge(e) then
+            ltx, lty, rbx, rby = e.backend:get_aabb(e)
+         end
 
          -- NOTE: stylua is making the following format weird.
          if
@@ -147,12 +151,9 @@ is_chunk_charted(surface, { x = ex / 32, y = ey / 32 })
                -- inside.  This can happen with e.g. seablock where the water
                -- entry surrounds the island, and the bounding box is actually
                -- based off the corners of the generated map.
-               or (
-                  px >= aabb.left_top.x
-                  and px <= aabb.right_bottom.x
-                  and py >= aabb.left_top.y
-                  and py <= aabb.right_bottom.y
-               )
+               --
+               -- ltx etc. are nil if we don't need to do the check.
+               or (ltx and px >= ltx and px <= rbx and py >= lty and py <= rby)
             )
             and (not direction_filter or get_direction_biased(e.position, player_obj.position) == direction_filter)
          then

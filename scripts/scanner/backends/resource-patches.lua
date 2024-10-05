@@ -134,7 +134,7 @@ function ResourcePatchesBackend:validate_entry(player, ent)
    if bd.zoom_override then return bd.zoom_override.valid and bd.zoom_override.surface_index == player.surface_index end
 
    local count = player.surface.count_entities_filtered({
-      area = ent.bounding_box,
+      area = ent.backend_data.aabb,
       name = bd.prototype,
    })
 
@@ -158,7 +158,7 @@ function ResourcePatchesBackend:readout_entry(player, ent)
    local ents
 
    ents = player.surface.find_entities_filtered({
-      area = ent.bounding_box,
+      area = ent.backend_data.aabb,
       name = pname,
    })
 
@@ -192,7 +192,6 @@ end
 ---@param player LuaPlayer
 ---@param callback fun(fa.scanner.ScanEntry)
 function ResourcePatchesBackend:dump_entries_to_callback(player, callback)
-   -- tree can show up more than once.
    local seen_clusterers = {}
 
    local px, py = player.position.x, player.position.y
@@ -214,13 +213,13 @@ function ResourcePatchesBackend:dump_entries_to_callback(player, callback)
          ---@type fa.scanner.ScanEntry
          local ent_agg = {
             backend = self,
-            bounding_box = cluster.aabb,
             category = ScannerConsts.CATEGORIES.RESOURCES,
             position = { x = d.highest_point.x, y = d.highest_point.y },
             subcategory = n,
             -- Required because this may get modified later as clusters fold
             -- into each other.
             backend_data = {
+               aabb = cluster.aabb,
                highest_point = table.deepcopy(d.highest_point),
                -- Without the prototype, we can't do a query on the patch without
                -- having an original entity, which may no longer exist.
@@ -271,13 +270,13 @@ function ResourcePatchesBackend:dump_entries_to_callback(player, callback)
                consumed_count = consumed_count + 1
                local ent = {
                   backend = self,
-                  bounding_box = table.deepcopy(e.bounding_box),
                   category = ScannerConsts.CATEGORIES.RESOURCES,
                   position = { x = e.position.x, y = e.position.y },
                   subcategory = e.name,
                   -- Required because this may get modified later as clusters fold
                   -- into each other.
                   backend_data = {
+                     aabb = table.deepcopy(e.bounding_box),
                      highest_point = table.deepcopy(d.highest_point),
                      -- Without the prototype, we can't do a query on the patch without
                      -- having an original entity, which may no longer exist.
@@ -309,5 +308,16 @@ function ResourcePatchesBackend:dump_entries_to_callback(player, callback)
 end
 
 function ResourcePatchesBackend:on_new_tiles(tiles) end
+
+function ResourcePatchesBackend:is_huge(e)
+   return false
+end
+
+function ResourcePatchesBackend:get_aabb(e)
+   local aabb = e.backend_data.aabb
+   local lt = aabb.left_top
+   local rb = aabb.right_bottom
+   return lt.x, lt.y, rb.x, rb.y
+end
 
 return mod

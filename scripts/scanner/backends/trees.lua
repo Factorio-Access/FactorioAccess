@@ -58,7 +58,7 @@ end
 function TreeBackend:on_entity_destroyed(event) end
 
 function TreeBackend:update_entry(player, e)
-   local aabb = e.bounding_box
+   local aabb = e.backend_data.aabb
    local trees = self.surface.find_entities_filtered({ area = aabb, tpe = "tree" })
    local closest = self.surface.get_closest(player.position, trees)
    -- It's still in the AABB, just a different point.
@@ -67,11 +67,11 @@ end
 
 function TreeBackend:validate_entry(player, e)
    return self.surface.valid
-      and self.surface.count_entities_filtered({ area = e.bounding_box, type = "tree", limit = 1 }) > 0
+      and self.surface.count_entities_filtered({ area = e.backend_data.aabb, type = "tree", limit = 1 }) > 0
 end
 
 function TreeBackend:readout_entry(player, e)
-   return { "fa.scanner-forest", e.backend_data }
+   return { "fa.scanner-forest", e.backend_data.tree_count }
 end
 
 ---@param player LuaPlayer
@@ -127,15 +127,25 @@ function TreeBackend:dump_entries_to_callback(player, callback)
 
       callback({
          backend = self,
-         bounding_box = aabb,
+         backend_data = { tree_count = #trees, aabb = aabb },
          position = closest.position,
          category = CAT_RESOURCES,
          subcategory = "tree",
-         backend_data = #trees,
       })
    end)
 
    -- Todo: zoom. But let's see it work at all first.
+end
+
+function TreeBackend:get_aabb(e)
+   local aabb = e.backend_data.aabb
+   local lt = aabb.left_top
+   local rb = aabb.right_bottom
+   return lt.x, lt.y, rb.x, rb.y
+end
+
+function TreeBackend:is_huge(e)
+   return e.backend_data.tree_count > 100
 end
 
 return mod
