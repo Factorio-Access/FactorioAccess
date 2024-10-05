@@ -964,13 +964,6 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "scan-sort-by-count",
-      key_sequence = "SHIFT + N",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
       name = "scan-sort-by-distance",
       key_sequence = "N",
       consuming = "none",

@@ -3501,17 +3501,6 @@ script.on_event("scan-sort-by-distance", function(event)
    end
 end)
 
-script.on_event("scan-sort-by-count", function(event)
-   pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu then
-      players[pindex].nearby.index = 1
-      players[pindex].nearby.count = true
-      printout("Sorting scan results by total count", pindex)
-      fa_scanner.list_sort(pindex)
-   end
-end)
-
 --Move along different inmstances of the same item type
 script.on_event("scan-selection-up", function(event)
    pindex = event.player_index
