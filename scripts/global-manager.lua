@@ -28,12 +28,16 @@ local module_state = ...
 ```
 
 Enabling both autocomplete and type checks.
+
+For testing, one may set persistent=false in opts.  If so, the global state will
+be reset on first access.
 ]]
 
 local mod = {}
 
 ---@class fa.GlobalManagerOpts
----@field root_field string
+---@field root_field string?
+---@field persistent boolean?
 
 ---@param module_name string
 ---@param default_value any
@@ -44,7 +48,13 @@ function mod.declare_global_module(module_name, default_value, opts)
 
    opts = opts or {
       root_field = "players",
+      persistent = true,
    }
+
+   local needs_clear = false
+   if opts.persistent ~= nil then needs_clear = not opts.persistent end
+
+   print(tostring(needs_clear))
 
    local default_fn = default_value
    if type(default_fn) == "table" then
@@ -57,9 +67,22 @@ function mod.declare_global_module(module_name, default_value, opts)
       end
    end
 
+   local function do_clear_if_needed()
+      if not needs_clear then return end
+      needs_clear = false
+
+      if not global[opts.root_field] then return end
+      for k, e in pairs(global[opts.root_field]) do
+         print("cleared", k)
+         e[module_name] = nil
+      end
+   end
+
    local meta = {}
 
    function meta:__newindex(index, nv)
+      do_clear_if_needed()
+
       if not global[opts.root_field] then global[opts.root_field] = {} end
       if not global[opts.root_field][index] then global[opts.root_field][index] = {} end
 
@@ -67,6 +90,8 @@ function mod.declare_global_module(module_name, default_value, opts)
    end
 
    function meta:__index(index)
+      do_clear_if_needed()
+
       global[opts.root_field] = global[opts.root_field] or {}
       global[opts.root_field][index] = global[opts.root_field][index] or {}
 
@@ -85,6 +110,7 @@ function mod.declare_global_module(module_name, default_value, opts)
    end
 
    local function wrapped_iter(is_ipairs)
+      do_clear_if_needed()
       local last = nil
       local function ret()
          if not global[opts.root_field] then return nil end
