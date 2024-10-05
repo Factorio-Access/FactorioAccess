@@ -308,13 +308,9 @@ function mod.get_ent_northwest_corner_position(ent)
    if ent.valid == false or ent.tile_width == nil then return ent.position end
    local width = ent.tile_width
    local height = ent.tile_height
-   if ent.direction == dirs.east or ent.direction == dirs.west then
-      width = ent.tile_height
-      height = ent.tile_width
-   end
    local pos = mod.center_of_tile({
-      x = ent.position.x - math.floor(width / 2),
-      y = ent.position.y - math.floor(height / 2),
+      x = math.floor(ent.position.x - width / 2),
+      y = math.floor(ent.position.y - height / 2),
    })
    --Error correction:
    --When the northwest corner selection has missed the ent for some reason, the ent position is used instead.
