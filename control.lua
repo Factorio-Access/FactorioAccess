@@ -32,6 +32,7 @@ local fa_circuits = require("scripts.circuit-networks")
 local fa_kk = require("scripts.kruise-kontrol-wrapper")
 local fa_quickbar = require("scripts.quickbar")
 local Rulers = require("scripts.rulers")
+local WorkQueue = require("scripts.work-queue")
 
 groups = {}
 entity_types = {}
@@ -2514,7 +2515,10 @@ function on_tick(event)
    end
 end
 
-script.on_event(defines.events.on_tick, on_initial_joining_tick)
+script.on_event(defines.events.on_tick, function(event)
+   on_tick(event)
+   WorkQueue.on_tick()
+end)
 
 --Called for every player on every tick, to manage automatic walking and enforcing mouse pointer position syncs.
 --Todo: create a new function for all mouse pointer related updates within this function
