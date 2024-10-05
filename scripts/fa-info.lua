@@ -403,7 +403,7 @@ function mod.ent_info(pindex, ent, description)
    if ent.type == "furnace" then
       local output_stack = ent.get_output_inventory()[1]
       if output_stack and output_stack.valid_for_read then
-         result = result .. ", " .. output_stack.count .. " ready, "
+         result = result .. ", " .. output_stack.count .. " " .. output_stack.name .. " " .. " ready, "
       end
    end
    --State the name of a train stop
