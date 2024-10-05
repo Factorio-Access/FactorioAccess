@@ -34,6 +34,8 @@ local fa_quickbar = require("scripts.quickbar")
 local Rulers = require("scripts.rulers")
 local WorkQueue = require("scripts.work-queue")
 
+---@meta scripts.shared-types
+
 groups = {}
 entity_types = {}
 production_types = {}
