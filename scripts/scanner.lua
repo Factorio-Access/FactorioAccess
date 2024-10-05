@@ -779,7 +779,7 @@ function mod.list_index(pindex)
       local dir_dist = fa_utils.dir_dist_locale(p.position, players[pindex].cursor_pos)
       if players[pindex].nearby.count == false then
          --Read the entity in terms of distance and direction, taking the cursor position as the reference point
-         local result = { "access.thing-producing-listpos-dirdist", fa_utils.ent_name_locale(ent) }
+         local result = { "fa.thing-producing-listpos-dirdist", fa_utils.ent_name_locale(ent) }
          table.insert(result, mod.ent_extra_list_info(ent, pindex, true))
          table.insert(
             result,
@@ -794,8 +794,8 @@ function mod.list_index(pindex)
       else
          --Read the entity in terms of count, and give the direction and distance of an example
          local result = {
-            "access.item_and_quantity-example-at-dirdist",
-            { "access.item-quantity", fa_utils.ent_name_locale(ent), ents[players[pindex].nearby.index].count },
+            "fa.item_and_quantity-example-at-dirdist",
+            { "fa.item-quantity", fa_utils.ent_name_locale(ent), ents[players[pindex].nearby.index].count },
             dir_dist,
          }
          local final_result = { "" }

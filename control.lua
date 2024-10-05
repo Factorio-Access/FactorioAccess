@@ -375,12 +375,12 @@ function read_hand(pindex)
          printout(fa_localising.get(cursor_stack, pindex) .. remote_info, pindex)
       else
          --Any other valid item
-         local out = { "access.cursor-description" }
+         local out = { "fa.cursor-description" }
          table.insert(out, cursor_stack.prototype.localised_name)
          local build_entity = cursor_stack.prototype.place_result
          if build_entity and build_entity.supports_direction then
             table.insert(out, 1)
-            table.insert(out, { "access.facing-direction", players[pindex].building_direction })
+            table.insert(out, { "fa.facing-direction", players[pindex].building_direction })
          else
             table.insert(out, 0)
             table.insert(out, "")
@@ -396,12 +396,12 @@ function read_hand(pindex)
       end
    elseif cursor_ghost ~= nil then
       --Any ghost
-      local out = { "access.cursor-description" }
+      local out = { "fa.cursor-description" }
       table.insert(out, cursor_ghost.localised_name)
       local build_entity = cursor_ghost.place_result
       if build_entity and build_entity.supports_direction then
          table.insert(out, 1)
-         table.insert(out, { "access.facing-direction", players[pindex].building_direction })
+         table.insert(out, { "fa.facing-direction", players[pindex].building_direction })
       else
          table.insert(out, 0)
          table.insert(out, "")
@@ -415,7 +415,7 @@ function read_hand(pindex)
       end
       printout(out, pindex)
    else
-      printout({ "access.empty_cursor" }, pindex)
+      printout({ "fa.empty_cursor" }, pindex)
    end
 end
 
@@ -3002,7 +3002,7 @@ script.on_event("read-cursor-distance-and-direction", function(event)
       local cursor_location_description = "At"
       local cursor_production = " "
       local cursor_description_of = " "
-      local result = { "access.thing-producing-listpos-dirdist", cursor_location_description }
+      local result = { "fa.thing-producing-listpos-dirdist", cursor_location_description }
       table.insert(result, cursor_production) --no production
       table.insert(result, cursor_description_of) --listpos
       table.insert(result, dir_dist)
@@ -4949,7 +4949,7 @@ script.on_event("click-menu", function(event)
                fa_graphics.draw_cursor_highlight(pindex, ent, nil)
                fa_graphics.sync_build_cursor_graphics(pindex)
                printout({
-                  "access.teleported-cursor-to",
+                  "fa.teleported-cursor-to",
                   "" .. math.floor(players[pindex].cursor_pos.x) .. " " .. math.floor(players[pindex].cursor_pos.y),
                }, pindex)
             --               players[pindex].menu = ""
@@ -5844,7 +5844,7 @@ function do_multi_stack_transfer(ratio, pindex)
          table.insert(result, ", ")
       end
       if table_size(moved) == 0 then
-         table.insert(result, { "access.grabbed-nothing" })
+         table.insert(result, { "fa.grabbed-nothing" })
       else
          game.get_player(pindex).play_sound({ path = "utility/inventory_move" })
          local item_list = { "" }
@@ -5852,7 +5852,7 @@ function do_multi_stack_transfer(ratio, pindex)
          local listed_count = 0
          for name, amount in pairs(moved) do
             if listed_count <= 5 then
-               table.insert(item_list, { "access.item-quantity", game.item_prototypes[name].localised_name, amount })
+               table.insert(item_list, { "fa.item-quantity", game.item_prototypes[name].localised_name, amount })
                table.insert(item_list, ", ")
             else
                other_items = other_items + amount
@@ -5860,12 +5860,12 @@ function do_multi_stack_transfer(ratio, pindex)
             listed_count = listed_count + 1
          end
          if other_items > 0 then
-            table.insert(item_list, { "access.item-quantity", "other items", other_items }) --***todo localize "other items
+            table.insert(item_list, { "fa.item-quantity", "other items", other_items }) --***todo localize "other items
             table.insert(item_list, ", ")
          end
          --trim traling comma off
          item_list[#item_list] = nil
-         table.insert(result, { "access.grabbed-stuff", item_list })
+         table.insert(result, { "fa.grabbed-stuff", item_list })
       end
    elseif sector and sector.name == "fluid" then
       --Do nothing
@@ -5887,7 +5887,7 @@ function do_multi_stack_transfer(ratio, pindex)
 
          if table_size(moved) == 0 then
             if full then table.insert(result, "Inventory full or not applicable, ") end
-            table.insert(result, { "access.placed-nothing" })
+            table.insert(result, { "fa.placed-nothing" })
          else
             if full then table.insert(result, "Partial success, ") end
             game.get_player(pindex).play_sound({ path = "utility/inventory_move" })
@@ -5896,7 +5896,7 @@ function do_multi_stack_transfer(ratio, pindex)
             local listed_count = 0
             for name, amount in pairs(moved) do
                if listed_count <= 5 then
-                  table.insert(item_list, { "access.item-quantity", game.item_prototypes[name].localised_name, amount })
+                  table.insert(item_list, { "fa.item-quantity", game.item_prototypes[name].localised_name, amount })
                   table.insert(item_list, ", ")
                else
                   other_items = other_items + amount
@@ -5904,12 +5904,12 @@ function do_multi_stack_transfer(ratio, pindex)
                listed_count = listed_count + 1
             end
             if other_items > 0 then
-               table.insert(item_list, { "access.item-quantity", "other items", other_items }) --***todo localize "other items
+               table.insert(item_list, { "fa.item-quantity", "other items", other_items }) --***todo localize "other items
                table.insert(item_list, ", ")
             end
             --trim trailing comma off
             item_list[#item_list] = nil
-            table.insert(result, { "access.placed-stuff", fa_utils.breakup_string(item_list) })
+            table.insert(result, { "fa.placed-stuff", fa_utils.breakup_string(item_list) })
          end
       end
    end

@@ -1462,9 +1462,9 @@ function mod.read_selected_entity_status(pindex)
 
    --Entity Health
    if ent.is_entity_with_health and ent.get_health_ratio() == 1 then
-      table.insert(result, { "access.full-health" })
+      table.insert(result, { "fa.full-health" })
    elseif ent.is_entity_with_health then
-      table.insert(result, { "access.percent-health", math.floor(ent.get_health_ratio() * 100) })
+      table.insert(result, { "fa.percent-health", math.floor(ent.get_health_ratio() * 100) })
    end
 
    -- Report nearest rail intersection position -- laterdo find better keybind

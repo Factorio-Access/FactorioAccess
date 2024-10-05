@@ -46,7 +46,7 @@ function mod.activate_kk(pindex)
 
       local hand = p.cursor_stack
       if hand and hand.valid_for_read and (hand.name == "blueprint" or hand.name == "blueprint-book") then
-         return { "access.kk-blueprints-not-allowed" }
+         return { "fa.kk-blueprints-not-allowed" }
       end
 
       -- If in a car, make sure to activate it
@@ -71,10 +71,10 @@ function mod.activate_kk(pindex)
       local opts = { x = math.floor(kk_pos.x), y = math.floor(kk_pos.y) }
       remote.call(interface_name, "start_job", pindex, opts, target)
       local desc = remote.call(interface_name, "get_description", pindex)
-      if not desc then return { "access.kk-not-started" } end
+      if not desc then return { "fa.kk-not-started" } end
 
-      return { "access.kk-start", desc }
-   end, { "access.kk-not-available" })
+      return { "fa.kk-start", desc }
+   end, { "fa.kk-not-available" })
 
    printout(announcing, pindex)
 end
@@ -99,7 +99,7 @@ function mod.cancel_kk(pindex)
       -- cursor mode.
       fix_walk(pindex)
 
-      printout({ "access.kk-cancel" }, pindex)
+      printout({ "fa.kk-cancel" }, pindex)
    end)
    -- If in a car, make sure to stop it because we are exiting it too because of the overlapping keys
    if p.vehicle and p.vehicle.type == "car" and p.vehicle.active == true then p.vehicle.speed = 0 end
@@ -113,9 +113,9 @@ function mod.status_read(pindex, short_version)
       local was_active = players[pindex].kruise_kontrol_active_last_time
       players[pindex].kruise_kontrol_active_last_time = active
       if active then
-         printout({ "access.kk-state", remote.call(interface_name, "get_description", pindex) }, pindex)
+         printout({ "fa.kk-state", remote.call(interface_name, "get_description", pindex) }, pindex)
       elseif not active and was_active then
-         printout({ "access.kk-done" }, pindex)
+         printout({ "fa.kk-done" }, pindex)
       end
    end)
 end
