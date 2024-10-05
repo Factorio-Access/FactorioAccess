@@ -921,20 +921,49 @@ function mod.player_was_still_for_1_second(pindex)
    end
 end
 
--- Given a list of items which may be stringified, concatenate them all together
--- with a space between, efficiently.
+-- Concatenate a bunch of stuff together, efficiently, and return this as a
+-- localised string.
+--
+-- Assumes that tables are localised strings, otherwise calls tostring(x)
+--
+-- Works with more than 20 items by folding the localised strings into each
+-- other, forming a tree structure.
+---@return LocalisedString
 mod.spacecat = function(...)
    local tab = table.pack(...)
-   local will_cat = {}
+   return mod.spacecat_table(tab)
+end
 
-   for i = 1, tab.n do
+-- Like spacecat but for a table.
+---@param tab any[]
+---@return LocalisedString
+function mod.spacecat_table(tab)
+   local will_cat = { "" }
+
+   for i = 1, #tab do
       local ent = tab[i]
-      local stringified = tostring(ent)
-      if stringified == nil then stringified = "NIL!" end
-      table.insert(will_cat, stringified)
+      local adding = type(ent) == "table" and ent or tostring(ent)
+      if adding == nil then adding = "NIL!" end
+      table.insert(will_cat, adding)
+      table.insert(will_cat, " ")
    end
 
-   return table.concat(will_cat, " ")
+   -- 21 because 20 params, then the first is the "" part.
+   while #will_cat > 21 do
+      local new_cat = { "" }
+
+      for i = 1, #will_cat, 20 do
+         local seg = { "" }
+         for j = 1, 20 do
+            table.insert(seg, will_cat[i + j])
+         end
+         table.insert(new_cat, seg)
+      end
+
+      will_cat = new_cat
+   end
+
+   return will_cat
 end
 
 --Returns the name for the item related to the entity name being checked
