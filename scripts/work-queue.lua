@@ -72,8 +72,15 @@ function mod.declare_work_queue(opts)
    return qstate
 end
 
+-- For dev. Set to true to make work queues reset themselves on game restarts.
+local force_clear = false
+
 ---@returns { items: fa.ds.Deque }
 function qstate_from_global(name)
+   if force_clear then
+      global.work_queues = {}
+      force_clear = false
+   end
    global.work_queues = global.work_queues or {}
    if not global.work_queues[name] then global.work_queues[name] = {
       items = Deque.Deque.new(),

@@ -6,6 +6,7 @@ local SimpleBackend = require("scripts.scanner.backends.simple")
 -- This is typed around 100 times and only used for the LUT, so we will shorten
 -- it.
 local SEB = require("scripts.scanner.backends.single-entity")
+local SparseBitset = require("scripts.ds.sparse-bitset")
 local TH = require("scripts.table-helpers")
 local TreeBackend = require("scripts.scanner.backends.trees")
 local WaterBackend = require("scripts.scanner.backends.water")
@@ -167,7 +168,7 @@ end
 
 ---@class fa.scanner.GlobalSurfaceState
 ---@field backends fa.scanner.SurfaceBackends
----@field seen_entities table<number, true>
+---@field seen_entities fa.ds.SparseBitset
 ---@field seen_chunks table<number, table<number, true>>
 
 ---@return fa.scanner.GlobalSurfaceState
@@ -178,7 +179,7 @@ local function new_empty_surface(key)
    ---@type fa.scanner.GlobalSurfaceState
    local ret = {
       backends = instantiate_backends(surf),
-      seen_entities = {},
+      seen_entities = SparseBitset.SparseBitset.new(),
       seen_chunks = TH.defaulting_table(),
    }
 
@@ -224,14 +225,14 @@ local function scan_chunk(cmd)
    -- it's valid.
    TH.retain_unordered(ents, function(item)
       local dest_req = script.register_on_entity_destroyed(item)
-      if state.seen_entities[dest_req] then return false end
+      if state.seen_entities:test(dest_req) then return false end
 
       -- The entity may not have the center in this chunk.
       if not math.floor(item.position.x / CHUNK_SIZE) == cx and math.floor(item.position.y / CHUNK_SIZE) == cy then
          return false
       end
 
-      state.seen_entities[dest_req] = true
+      state.seen_entities:set(dest_req)
       return true
    end)
 
@@ -306,8 +307,7 @@ local work_queue = WorkQueue.declare_work_queue({
 ---@param event EventData.on_entity_destroyed
 function mod.on_entity_destroyed(event)
    for _, s in pairs(surface_state) do
-      if s.seen_entities[event.registration_number] then
-         s.seen_entities[event.registration_number] = nil
+      if s.seen_entities:remove(event.registration_number) then
          local b = s.backends
 
          for _, b in pairs(b.lut) do
@@ -328,8 +328,8 @@ function mod.on_new_entity(surface_index, ent)
    local state = surface_state[surface_index]
    local dest_req = script.register_on_entity_destroyed(ent)
 
-   if state.seen_entities[dest_req] then return end
-   state.seen_entities[dest_req] = true
+   if state.seen_entities:test(dest_req) then return end
+   state.seen_entities:set(dest_req)
 
    dispatch_entities(state.backends, { ent })
 end
