@@ -91,7 +91,12 @@ function WaterBackend:dump_entries_to_callback(player, callback)
       bry = bry + 1
 
       callback({
-         position = { x = e_x, y = e_y },
+         -- This is fun.  If we use the corner of the tile, confused geometry in
+         -- the cursor handling code will currently corrupt the cursor to
+         -- temporarily be off by one tile to the northwest in some and only
+         -- some contexts.  Since this won't break in future, we offset to the
+         -- center of the tile to fix that.
+         position = { x = e_x + 0.5, y = e_y + 0.5 },
          backend_data = {
             aabb = {
                left_top = { x = tlx, y = tly },
