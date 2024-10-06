@@ -1,3 +1,4 @@
+local Functools = require("scripts.functools")
 local GlobalManager = require("scripts.global-manager")
 local Memosort = require("scripts.memosort")
 local ResourcePatchesBackend = require("scripts.scanner.backends.resource-patches")
@@ -119,20 +120,28 @@ local BACKEND_LUT = {
    ["wall"] = SEB.Military,
 }
 
-local BACKEND_NAME_OVERRIDES = {}
+local BACKEND_NAME_OVERRIDES = Functools.cached(function()
+   local bno = {}
 
--- All our kinds of rocks.
-TH.merge_mappings(BACKEND_NAME_OVERRIDES, {
-   ["rock-big"] = SEB.Rock,
-   ["rock-huge"] = SEB.Rock,
-   ["rock-medium"] = SEB.Rock,
-   ["rock-small"] = SEB.Rock,
-   ["rock-tiny"] = SEB.Rock,
-   ["sand-rock-big"] = SEB.Rock,
-   ["sand-rock-medium"] = SEB.Rock,
-   ["sand-rock-small"] = SEB.Rock,
-})
+   -- All our kinds of rocks.
+   TH.merge_mappings(bno, {
+      ["rock-big"] = SEB.Rock,
+      ["rock-huge"] = SEB.Rock,
+      ["rock-medium"] = SEB.Rock,
+      ["rock-small"] = SEB.Rock,
+      ["rock-tiny"] = SEB.Rock,
+      ["sand-rock-big"] = SEB.Rock,
+      ["sand-rock-medium"] = SEB.Rock,
+      ["sand-rock-small"] = SEB.Rock,
+   })
 
+   -- remnants
+   for proto in pairs(game.entity_prototypes) do
+      if proto:match("-remnants$") then bno[proto] = SEB.Remnants end
+   end
+
+   return bno
+end)
 ---@class fa.scanner.SurfaceBackends
 ---@field lut table<string, fa.scanner.ScannerBackend>
 ---@field name_lut table<string, fa.scanner.ScannerBackend>
@@ -153,7 +162,7 @@ local function instantiate_backends(surface)
       lut[proto] = b
    end
 
-   for name, backend in pairs(BACKEND_NAME_OVERRIDES) do
+   for name, backend in pairs(BACKEND_NAME_OVERRIDES()) do
       local b = instantiated[backend] or backend.new(surface)
       instantiated[backend] = b
       name_lut[name] = b
