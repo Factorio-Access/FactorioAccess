@@ -449,7 +449,13 @@ local function announce_cursor_pos(pindex, ps)
          tostring(ps.scanner_cursor.entry_index),
          tostring(count),
       }, pindex)
-      global.players[pindex].cursor_pos = announcing.position
+      -- See control.lua refresh_player_tile, which goes nuts if we aren't
+      -- directly on the center of a tile; this can be removed when that's
+      -- fixed.
+      global.players[pindex].cursor_pos = {
+         x = math.floor(announcing.position.x) + 0.5,
+         y = math.floor(announcing.position.y) + 0.5,
+      }
    else
       printout({
          "fa.scanner-nothing-in-category",
