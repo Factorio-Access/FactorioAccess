@@ -51,12 +51,14 @@ mod.Vehicle = decl_bound_category("fa.scanner.backends.Vehicle", SC.CATEGORIES.V
 -- complicated.
 mod.TrainsSimple = decl_bound_category("fa.scanner.backends.TrainsSimple", SC.CATEGORIES.TRAINS)
 
--- For train stops and trains, we're using backer_name.
+-- For trains, we group by the train id only, so that the scanner isn't super
+-- cluttered with random train cars.  In the future, we probably want a custom
+-- backend.
 mod.TrainsNamed = decl("fa.scanner.backends.TrainsNamed", {
    category_callback = functionize(SC.CATEGORIES.TRAINS),
    ---@param ent LuaEntity
    subcategory_callback = function(ent)
-      return cat2(ent.name, ent.backer_name or "<NO BACKER NAME>")
+      return cat2("train", tostring(ent.train.id))
    end,
 })
 
