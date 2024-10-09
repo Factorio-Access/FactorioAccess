@@ -16,9 +16,8 @@ the player can see trees close to them.
 the one thing that does come up here is that it's important for us to be able to
 cluster in batches. We thus do the clustering when dumping, but the work which
 is done at that time is saved.
-
-We shove the tree count in as backend_data.
 ]]
+local Info = require("scripts.fa-info")
 local SC = require("scripts.scanner.scanner-consts")
 local TileClusterer = require("scripts.ds.tile-clusterer")
 local TH = require("scripts.table-helpers")
@@ -59,7 +58,7 @@ function TreeBackend:on_entity_destroyed(event) end
 
 function TreeBackend:update_entry(player, e)
    local aabb = e.backend_data.aabb
-   local trees = self.surface.find_entities_filtered({ area = aabb, tpe = "tree" })
+   local trees = self.surface.find_entities_filtered({ area = aabb, type = "tree" })
    local closest = self.surface.get_closest(player.position, trees)
    -- It's still in the AABB, just a different point.
    e.position = closest.position
@@ -70,8 +69,13 @@ function TreeBackend:validate_entry(player, e)
       and self.surface.count_entities_filtered({ area = e.backend_data.aabb, type = "tree", limit = 1 }) > 0
 end
 
+---@param player LuaPlayer
 function TreeBackend:readout_entry(player, e)
-   return { "fa.scanner-forest", e.backend_data.tree_count }
+   if e.backend_data.zoom_ent then
+      return Info.ent_info(player.index, e.backend_data.zoom_ent, nil, true)
+   else
+      return { "fa.scanner-forest", e.backend_data.tree_count }
+   end
 end
 
 ---@param player LuaPlayer
@@ -123,18 +127,43 @@ function TreeBackend:dump_entries_to_callback(player, callback)
       -- If still not, skip this one.
       if not next(trees) then return end
 
-      local closest = self.surface.get_closest(player.position, trees)
+      local zoomed_trees = {}
 
-      callback({
-         backend = self,
-         backend_data = { tree_count = #trees, aabb = aabb },
-         position = closest.position,
-         category = CAT_RESOURCES,
-         subcategory = "tree",
-      })
+      -- Filter out any trees close enough for zoom.
+      local d_squared = SC.FOREST_ZOOM_DISTANCE ^ 2
+      TH.retain_unordered(trees, function(t)
+         local zoomed = (player.position.x - t.position.x) ^ 2 + (player.position.y - t.position.y) ^ 2 < d_squared
+         if zoomed then table.insert(zoomed_trees, t) end
+         return not zoomed
+      end)
+
+      -- Figure out the big non-zoomed one.
+      if next(trees) then
+         local closest = self.surface.get_closest(player.position, trees)
+
+         -- If there is only one tree, don't announce as trees x1. instead
+         -- "zoom" into it.
+         local zoom_ent = #trees == 1 and trees[1] or nil
+         if zoom_ent then aabb = trees[1].bounding_box end
+         callback({
+            backend = self,
+            backend_data = { tree_count = #trees, aabb = aabb, zoom_ent = zoom_ent },
+            position = closest.position,
+            category = CAT_RESOURCES,
+            subcategory = "tree",
+         })
+      end
+
+      for _, t in pairs(zoomed_trees) do
+         callback({
+            position = t.position,
+            category = CAT_RESOURCES,
+            subcategory = "tree",
+            backend = self,
+            backend_data = { tree_count = 1, zoom_ent = t, aabb = t.bounding_box },
+         })
+      end
    end)
-
-   -- Todo: zoom. But let's see it work at all first.
 end
 
 function TreeBackend:get_aabb(e)

@@ -48,7 +48,7 @@ mod.SCANNER_DISTANCE = 2500
 mod.FOREST_TREE_DIST = 4
 
 -- When this close to a forest, make an entry for the trees the player is near.
-mod.FOREST_ZOOM_DISTANCE = 10
+mod.FOREST_ZOOM_DISTANCE = 25
 
 -- The size of chunks when handling a forest.  This tunes an algorithm in the
 -- tree backend.
