@@ -16,8 +16,8 @@ function mod.add_to_inventory_bar(ent, amount)
    local inventory = ent.get_inventory(defines.inventory.chest)
 
    --Checks
-   if not inventory then return { "access.failed-inventory-limit-ajust-notcontainter" } end
-   if not inventory.supports_bar() then return { "access.failed-inventory-limit-ajust-no-limit" } end
+   if not inventory then return { "fa.failed-inventory-limit-ajust-notcontainter" } end
+   if not inventory.supports_bar() then return { "fa.failed-inventory-limit-ajust-no-limit" } end
 
    local max_bar = #inventory + 1
    local current_bar = inventory.get_bar()
@@ -43,7 +43,7 @@ function mod.add_to_inventory_bar(ent, amount)
    else
       current_bar = value
    end
-   return { "access.inventory-limit-status", value, current_bar }
+   return { "fa.inventory-limit-status", value, current_bar }
 end
 
 --Increases the selected inserter's hand stack size by 1

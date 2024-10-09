@@ -563,22 +563,6 @@ Note:  Options include Teleporting to a saved point, renaming a saved point, del
 
 Confirm a new name: ENTER
 
-## Structure travel
-
-Travel freely from building to building as if they were laid out in a grid pattern. Also known as B-Stride. 
-
-Warning: This feature has some bugs and is currently deprecated.
-
-Open it with ALT + CONTROL + SHIFT + S, and explore your factory with the following controls:
-
-First, select a direction using WASD
-
-Next navigate the list of adjacent buildings with the two perpendicular directions.  For instance, if you are going North, then use the A and D keys to select a building from the list.
-
-Last, confirm your selection by pressing the direction you started with.  For instance, if I wanted to go to the 2nd item in the northern list I would hit W to go north, D to select option 2, and W again to confirm.
-
-Once you find your target, press LEFT BRACKET to teleport your character to the building.
-
 ## Warnings
 
 Warnings Menu: P

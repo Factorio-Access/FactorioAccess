@@ -112,25 +112,6 @@ for _, item in pairs(vanilla_tip_and_tricks_item_table) do
    remove_tip_and_tricks_item(item)
 end
 
---New prototypes--
-
----Resource map node entities, also called aggregate entities
-local resource_map_node = {}
-resource_map_node.name = "map-node"
-resource_map_node.type = "simple-entity-with-force"
-resource_map_node.collision_box = { { -0, -0 }, { 0, 0 } }
-resource_map_node.collision_mask = {}
-resource_map_node.selection_box = nil
-resource_map_node.order = "z"
-resource_map_node.max_health = 2147483648
-resource_map_node.picture = {
-   filename = "__FactorioAccess__/Graphics/invisible.png",
-   width = 1,
-   height = 1,
-   direction_count = 1,
-}
-data:extend({ resource_map_node })
-
 ---New radar type: This radar scans a new sector every 5 seconds instead of 33, and it refreshes its short range every 5 seconds (precisely fast enough) instead of 1 second, but the short range is smaller and the radar costs double the power.
 local ar_tint = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 }
 local access_radar = table.deepcopy(data.raw["radar"]["radar"])
@@ -983,13 +964,6 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "scan-sort-by-count",
-      key_sequence = "SHIFT + N",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
       name = "scan-sort-by-distance",
       key_sequence = "N",
       consuming = "none",
@@ -1805,13 +1779,6 @@ data:extend({
       type = "custom-input",
       name = "open-fast-travel-menu",
       key_sequence = "V",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "open-structure-travel-menu",
-      key_sequence = "CONTROL + SHIFT + ALT + S",
       consuming = "none",
    },
 

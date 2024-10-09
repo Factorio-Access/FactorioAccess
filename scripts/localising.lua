@@ -133,7 +133,6 @@ function mod.handler(event)
    end
    player.localisations = player.localisations or {}
    local localised = player.localisations
-   print(translated_thing)
    localised[translated_thing[1]] = localised[translated_thing[1]] or {}
    local translated_list = localised[translated_thing[1]]
    translated_list[translated_thing[2]] = event.result

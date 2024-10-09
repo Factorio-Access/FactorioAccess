@@ -19,7 +19,6 @@ local fa_rail_builder = require("scripts.rail-builder")
 local fa_trains = require("scripts.trains")
 local fa_train_stops = require("scripts.train-stops")
 local fa_driving = require("scripts.driving")
-local fa_scanner = require("scripts.scanner")
 local fa_spidertrons = require("scripts.spidertron")
 local fa_belts = require("scripts.transport-belts")
 local fa_zoom = require("scripts.zoom")
@@ -31,7 +30,12 @@ local fa_warnings = require("scripts.warnings")
 local fa_circuits = require("scripts.circuit-networks")
 local fa_kk = require("scripts.kruise-kontrol-wrapper")
 local fa_quickbar = require("scripts.quickbar")
+local Consts = require("scripts.consts")
 local Rulers = require("scripts.rulers")
+local ScannerEntrypoint = require("scripts.scanner.entrypoint")
+local WorkQueue = require("scripts.work-queue")
+
+---@meta scripts.shared-types
 
 groups = {}
 entity_types = {}
@@ -105,11 +109,6 @@ end
 --This function gets scheduled.
 function call_to_sync_graphics(pindex)
    fa_graphics.sync_build_cursor_graphics(pindex)
-end
-
---This function gets scheduled.
-function call_to_run_scan(pindex, dir, mute)
-   fa_scanner.run_scan(pindex, dir, mute)
 end
 
 --This function gets scheduled.
@@ -375,12 +374,12 @@ function read_hand(pindex)
          printout(fa_localising.get(cursor_stack, pindex) .. remote_info, pindex)
       else
          --Any other valid item
-         local out = { "access.cursor-description" }
+         local out = { "fa.cursor-description" }
          table.insert(out, cursor_stack.prototype.localised_name)
          local build_entity = cursor_stack.prototype.place_result
          if build_entity and build_entity.supports_direction then
             table.insert(out, 1)
-            table.insert(out, { "access.facing-direction", players[pindex].building_direction })
+            table.insert(out, { "fa.facing-direction", players[pindex].building_direction })
          else
             table.insert(out, 0)
             table.insert(out, "")
@@ -396,12 +395,12 @@ function read_hand(pindex)
       end
    elseif cursor_ghost ~= nil then
       --Any ghost
-      local out = { "access.cursor-description" }
+      local out = { "fa.cursor-description" }
       table.insert(out, cursor_ghost.localised_name)
       local build_entity = cursor_ghost.place_result
       if build_entity and build_entity.supports_direction then
          table.insert(out, 1)
-         table.insert(out, { "access.facing-direction", players[pindex].building_direction })
+         table.insert(out, { "fa.facing-direction", players[pindex].building_direction })
       else
          table.insert(out, 0)
          table.insert(out, "")
@@ -415,7 +414,7 @@ function read_hand(pindex)
       end
       printout(out, pindex)
    else
-      printout({ "access.empty_cursor" }, pindex)
+      printout({ "fa.empty_cursor" }, pindex)
    end
 end
 
@@ -1326,14 +1325,6 @@ function initialize(player)
          renaming = false,
       }
 
-   faplayer.structure_travel = faplayer.structure_travel
-      or {
-         network = {},
-         current = nil,
-         index = 0,
-         direction = "none",
-      }
-
    faplayer.rail_builder = faplayer.rail_builder
       or {
          index = 0,
@@ -1756,8 +1747,6 @@ function menu_cursor_up(pindex)
       )
    elseif players[pindex].menu == "travel" then
       fa_travel.fast_travel_menu_up(pindex)
-   elseif players[pindex].menu == "structure-travel" then
-      fa_travel.move_cursor_structure(pindex, 0)
    elseif players[pindex].menu == "rail_builder" then
       fa_rail_builder.menu_up(pindex)
    elseif players[pindex].menu == "train_stop_menu" then
@@ -2022,8 +2011,6 @@ function menu_cursor_down(pindex)
       )
    elseif players[pindex].menu == "travel" then
       fa_travel.fast_travel_menu_down(pindex)
-   elseif players[pindex].menu == "structure-travel" then
-      fa_travel.move_cursor_structure(pindex, 4)
    elseif players[pindex].menu == "rail_builder" then
       fa_rail_builder.menu_down(pindex)
    elseif players[pindex].menu == "train_stop_menu" then
@@ -2188,8 +2175,6 @@ function menu_cursor_left(pindex)
       fa_warnings.read_warnings_slot(pindex)
    elseif players[pindex].menu == "travel" then
       fa_travel.fast_travel_menu_left(pindex)
-   elseif players[pindex].menu == "structure-travel" then
-      fa_travel.move_cursor_structure(pindex, 6)
    elseif players[pindex].menu == "signal_selector" then
       fa_circuits.signal_selector_signal_prev(pindex)
       fa_circuits.read_selected_signal_slot(pindex, "")
@@ -2358,8 +2343,6 @@ function menu_cursor_right(pindex)
       fa_warnings.read_warnings_slot(pindex)
    elseif players[pindex].menu == "travel" then
       fa_travel.fast_travel_menu_right(pindex)
-   elseif players[pindex].menu == "structure-travel" then
-      fa_travel.move_cursor_structure(pindex, 2)
    elseif players[pindex].menu == "signal_selector" then
       fa_circuits.signal_selector_signal_next(pindex)
       fa_circuits.read_selected_signal_slot(pindex, "")
@@ -2419,11 +2402,12 @@ end)
 function on_initial_joining_tick(event)
    if not game.is_multiplayer() then on_player_join(game.connected_players[1].index) end
    on_tick(event)
-   script.on_event(defines.events.on_tick, on_tick)
 end
 
 --Called every tick. Used to call scheduled and repeated functions.
 function on_tick(event)
+   ScannerEntrypoint.on_tick()
+
    if global.scheduled_events[event.tick] then
       for _, to_call in pairs(global.scheduled_events[event.tick]) do
          _G[to_call[1]](to_call[2], to_call[3], to_call[4])
@@ -2530,7 +2514,10 @@ function on_tick(event)
    end
 end
 
-script.on_event(defines.events.on_tick, on_initial_joining_tick)
+script.on_event(defines.events.on_tick, function(event)
+   on_tick(event)
+   WorkQueue.on_tick()
+end)
 
 --Called for every player on every tick, to manage automatic walking and enforcing mouse pointer position syncs.
 --Todo: create a new function for all mouse pointer related updates within this function
@@ -2832,24 +2819,14 @@ function cursor_mode_move(direction, pindex, single_only)
    else
       -- Larger cursor sizes: scan area
       local scan_left_top = {
-         math.floor(players[pindex].cursor_pos.x) - players[pindex].cursor_size,
-         math.floor(players[pindex].cursor_pos.y) - players[pindex].cursor_size,
+         x = math.floor(players[pindex].cursor_pos.x) - players[pindex].cursor_size,
+         y = math.floor(players[pindex].cursor_pos.y) - players[pindex].cursor_size,
       }
       local scan_right_bottom = {
-         math.floor(players[pindex].cursor_pos.x) + players[pindex].cursor_size + 1,
-         math.floor(players[pindex].cursor_pos.y) + players[pindex].cursor_size + 1,
+         x = math.floor(players[pindex].cursor_pos.x) + players[pindex].cursor_size + 1,
+         y = math.floor(players[pindex].cursor_pos.y) + players[pindex].cursor_size + 1,
       }
-      players[pindex].nearby.index = 1
-      players[pindex].nearby.ents = fa_scanner.scan_area(
-         math.floor(players[pindex].cursor_pos.x) - players[pindex].cursor_size,
-         math.floor(players[pindex].cursor_pos.y) - players[pindex].cursor_size,
-         players[pindex].cursor_size * 2 + 1,
-         players[pindex].cursor_size * 2 + 1,
-         pindex
-      )
-      fa_scanner.populate_list_categories(pindex)
-      players[pindex].cursor_scan_center = players[pindex].cursor_pos
-      local scan_summary = fa_scanner.area_scan_summary_info(scan_left_top, scan_right_bottom, pindex)
+      local scan_summary = fa_info.area_scan_summary_info(pindex, scan_left_top, scan_right_bottom)
       fa_graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
       printout(scan_summary, pindex)
    end
@@ -3002,7 +2979,7 @@ script.on_event("read-cursor-distance-and-direction", function(event)
       local cursor_location_description = "At"
       local cursor_production = " "
       local cursor_description_of = " "
-      local result = { "access.thing-producing-listpos-dirdist", cursor_location_description }
+      local result = { "fa.thing-producing-listpos-dirdist", cursor_location_description }
       table.insert(result, cursor_production) --no production
       table.insert(result, cursor_description_of) --listpos
       table.insert(result, dir_dist)
@@ -3434,96 +3411,56 @@ end)
 
 script.on_event("rescan", function(event)
    pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu then
-      fa_scanner.run_scanner_effects(pindex)
-      schedule(2, "call_to_run_scan", pindex, nil, false)
-   end
+   ScannerEntrypoint.do_refresh(pindex)
 end)
 
 script.on_event("scan-facing-direction", function(event)
-   pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   local p = game.get_player(pindex)
-   if p.character == nil then return end
-   if not players[pindex].in_menu then
-      --Set the filter direction
-      local p = game.get_player(pindex)
-      local dir = p.character.direction
-      fa_scanner.run_scanner_effects(pindex)
-      schedule(2, "call_to_run_scan", pindex, dir, false)
-   end
+   local player = game.get_player(event.player_index)
+   local char = player.character
+   if not char then return end
+   ScannerEntrypoint.do_refresh(event.player_index, char.direction)
 end)
 
 script.on_event("scan-list-up", function(event)
    pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu then fa_scanner.list_up(pindex) end
+
+   ScannerEntrypoint.move_subcategory(pindex, -1)
 end)
 
 script.on_event("scan-list-down", function(event)
    pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu then fa_scanner.list_down(pindex) end
+
+   ScannerEntrypoint.move_subcategory(pindex, 1)
 end)
 
 script.on_event("scan-list-middle", function(event)
    pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu then fa_scanner.list_current(pindex) end
+
+   ScannerEntrypoint.announce_current_item(pindex)
 end)
 
 script.on_event("scan-category-up", function(event)
    pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu then fa_scanner.category_up(pindex) end
+
+   ScannerEntrypoint.move_category(pindex, -1)
 end)
 
 script.on_event("scan-category-down", function(event)
    pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu then fa_scanner.category_down(pindex) end
+
+   ScannerEntrypoint.move_category(pindex, 1)
 end)
 
-script.on_event("scan-sort-by-distance", function(event)
-   pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu then
-      local ent = game.get_player(pindex).selected
-      if ent ~= nil and ent.valid == true and (ent.get_control_behavior() ~= nil or ent.type == "electric-pole") then
-         --Open the circuit network menu for the selected ent instead.
-         return
-      end
-      players[pindex].nearby.index = 1
-      players[pindex].nearby.count = false
-      printout("Sorting scan results by distance from character position", pindex)
-      fa_scanner.list_sort(pindex)
-   end
-end)
-
-script.on_event("scan-sort-by-count", function(event)
-   pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu then
-      players[pindex].nearby.index = 1
-      players[pindex].nearby.count = true
-      printout("Sorting scan results by total count", pindex)
-      fa_scanner.list_sort(pindex)
-   end
-end)
-
---Move along different inmstances of the same item type
 script.on_event("scan-selection-up", function(event)
    pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   fa_scanner.selection_up(pindex)
+
+   ScannerEntrypoint.move_within_subcategory(pindex, -1)
 end)
 
---Move along different inmstances of the same item type
 script.on_event("scan-selection-down", function(event)
    pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   fa_scanner.selection_down(pindex)
+
+   ScannerEntrypoint.move_within_subcategory(pindex, 1)
 end)
 
 --Repeats the last thing read out. Not just the scanner.
@@ -3743,8 +3680,6 @@ function close_menu_resets(pindex)
    local p = game.get_player(pindex)
    if players[pindex].menu == "travel" then
       fa_travel.fast_travel_menu_close(pindex)
-   elseif players[pindex].menu == "structure-travel" then
-      fa_travel.structure_travel_menu_close(pindex)
    elseif players[pindex].menu == "rail_builer" then
       fa_rail_builder.close_menu(pindex, false)
    elseif players[pindex].menu == "train_menu" then
@@ -4949,7 +4884,7 @@ script.on_event("click-menu", function(event)
                fa_graphics.draw_cursor_highlight(pindex, ent, nil)
                fa_graphics.sync_build_cursor_graphics(pindex)
                printout({
-                  "access.teleported-cursor-to",
+                  "fa.teleported-cursor-to",
                   "" .. math.floor(players[pindex].cursor_pos.x) .. " " .. math.floor(players[pindex].cursor_pos.y),
                }, pindex)
             --               players[pindex].menu = ""
@@ -4965,45 +4900,6 @@ script.on_event("click-menu", function(event)
          end
       elseif players[pindex].menu == "travel" then
          fa_travel.fast_travel_menu_click(pindex)
-      elseif players[pindex].menu == "structure-travel" then --Also called "b stride"
-         ---@type LuaEntity
-         local tar = nil
-         local network = players[pindex].structure_travel.network
-         local index = players[pindex].structure_travel.index
-         local current = players[pindex].structure_travel.current
-         if players[pindex].structure_travel.direction == "none" then
-            tar = network[current]
-         elseif players[pindex].structure_travel.direction == "north" then
-            tar = network[network[current].north[index].num]
-         elseif players[pindex].structure_travel.direction == "east" then
-            tar = network[network[current].east[index].num]
-         elseif players[pindex].structure_travel.direction == "south" then
-            tar = network[network[current].south[index].num]
-         elseif players[pindex].structure_travel.direction == "west" then
-            tar = network[network[current].west[index].num]
-         end
-         local success = fa_teleport.teleport_to_closest(pindex, tar.position, false, false)
-         if success and players[pindex].cursor then
-            players[pindex].cursor_pos = table.deepcopy(tar.position)
-         else
-            players[pindex].cursor_pos =
-               fa_utils.offset_position(players[pindex].position, players[pindex].player_direction, 1)
-         end
-         fa_graphics.sync_build_cursor_graphics(pindex)
-         game.get_player(pindex).opened = nil
-
-         if not refresh_player_tile(pindex) then
-            printout("Tile out of range", pindex)
-            return
-         end
-
-         --Update cursor highlight
-         local ent = get_first_ent_at_tile(pindex)
-         if ent and ent.valid then
-            fa_graphics.draw_cursor_highlight(pindex, ent, nil)
-         else
-            fa_graphics.draw_cursor_highlight(pindex, nil, nil)
-         end
       elseif players[pindex].menu == "rail_builder" then
          fa_rail_builder.run_menu(pindex, true)
          fa_rail_builder.close_menu(pindex, false)
@@ -5844,7 +5740,7 @@ function do_multi_stack_transfer(ratio, pindex)
          table.insert(result, ", ")
       end
       if table_size(moved) == 0 then
-         table.insert(result, { "access.grabbed-nothing" })
+         table.insert(result, { "fa.grabbed-nothing" })
       else
          game.get_player(pindex).play_sound({ path = "utility/inventory_move" })
          local item_list = { "" }
@@ -5852,7 +5748,7 @@ function do_multi_stack_transfer(ratio, pindex)
          local listed_count = 0
          for name, amount in pairs(moved) do
             if listed_count <= 5 then
-               table.insert(item_list, { "access.item-quantity", game.item_prototypes[name].localised_name, amount })
+               table.insert(item_list, { "fa.item-quantity", game.item_prototypes[name].localised_name, amount })
                table.insert(item_list, ", ")
             else
                other_items = other_items + amount
@@ -5860,12 +5756,12 @@ function do_multi_stack_transfer(ratio, pindex)
             listed_count = listed_count + 1
          end
          if other_items > 0 then
-            table.insert(item_list, { "access.item-quantity", "other items", other_items }) --***todo localize "other items
+            table.insert(item_list, { "fa.item-quantity", "other items", other_items }) --***todo localize "other items
             table.insert(item_list, ", ")
          end
          --trim traling comma off
          item_list[#item_list] = nil
-         table.insert(result, { "access.grabbed-stuff", item_list })
+         table.insert(result, { "fa.grabbed-stuff", item_list })
       end
    elseif sector and sector.name == "fluid" then
       --Do nothing
@@ -5887,7 +5783,7 @@ function do_multi_stack_transfer(ratio, pindex)
 
          if table_size(moved) == 0 then
             if full then table.insert(result, "Inventory full or not applicable, ") end
-            table.insert(result, { "access.placed-nothing" })
+            table.insert(result, { "fa.placed-nothing" })
          else
             if full then table.insert(result, "Partial success, ") end
             game.get_player(pindex).play_sound({ path = "utility/inventory_move" })
@@ -5896,7 +5792,7 @@ function do_multi_stack_transfer(ratio, pindex)
             local listed_count = 0
             for name, amount in pairs(moved) do
                if listed_count <= 5 then
-                  table.insert(item_list, { "access.item-quantity", game.item_prototypes[name].localised_name, amount })
+                  table.insert(item_list, { "fa.item-quantity", game.item_prototypes[name].localised_name, amount })
                   table.insert(item_list, ", ")
                else
                   other_items = other_items + amount
@@ -5904,12 +5800,12 @@ function do_multi_stack_transfer(ratio, pindex)
                listed_count = listed_count + 1
             end
             if other_items > 0 then
-               table.insert(item_list, { "access.item-quantity", "other items", other_items }) --***todo localize "other items
+               table.insert(item_list, { "fa.item-quantity", "other items", other_items }) --***todo localize "other items
                table.insert(item_list, ", ")
             end
             --trim trailing comma off
             item_list[#item_list] = nil
-            table.insert(result, { "access.placed-stuff", fa_utils.breakup_string(item_list) })
+            table.insert(result, { "fa.placed-stuff", fa_utils.breakup_string(item_list) })
          end
       end
    end
@@ -6563,6 +6459,7 @@ script.on_load(function()
 end)
 
 script.on_configuration_changed(ensure_global_structures_are_up_to_date)
+
 script.on_init(function()
    ---@type any
    local skip_intro_message = remote.interfaces["freeplay"]
@@ -6574,7 +6471,6 @@ end)
 script.on_event(defines.events.on_cutscene_cancelled, function(event)
    pindex = event.player_index
    check_for_player(pindex)
-   fa_scanner.run_scan(pindex, nil, true)
    schedule(3, "call_to_fix_zoom", pindex)
    schedule(4, "call_to_sync_graphics", pindex)
 end)
@@ -6582,7 +6478,6 @@ end)
 script.on_event(defines.events.on_cutscene_finished, function(event)
    pindex = event.player_index
    check_for_player(pindex)
-   fa_scanner.run_scan(pindex, nil, true)
    schedule(3, "call_to_fix_zoom", pindex)
    schedule(4, "call_to_sync_graphics", pindex)
    --printout("Press TAB to continue",pindex)
@@ -7192,57 +7087,6 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
    end
    players[pindex].last_menu_search_tick = event.tick
    players[pindex].text_field_open = false
-end)
-
-script.on_event("open-structure-travel-menu", function(event)
-   local pindex = event.player_index
-   if not check_for_player(pindex) or players[pindex].vanilla_mode then return end
-   if players[pindex].in_menu == false then
-      game.get_player(pindex).selected = nil
-      players[pindex].menu = "structure-travel"
-      players[pindex].in_menu = true
-      players[pindex].move_queue = {}
-      players[pindex].structure_travel.direction = "none"
-      local ent = game.get_player(pindex).selected
-      local initial_scan_radius = 50
-      if ent ~= nil and ent.valid and ent.unit_number ~= nil and building_types[ent.type] then
-         players[pindex].structure_travel.current = ent.unit_number
-         players[pindex].structure_travel.network = fa_travel.compile_building_network(ent, initial_scan_radius, pindex)
-      else
-         ent = game.get_player(pindex).character
-         players[pindex].structure_travel.current = ent.unit_number
-         players[pindex].structure_travel.network = fa_travel.compile_building_network(ent, initial_scan_radius, pindex)
-      end
-      local description = ""
-      local network = players[pindex].structure_travel.network
-      local current = players[pindex].structure_travel.current
-      game.get_player(pindex).print("current id = " .. current)
-      if network[current].north and #network[current].north > 0 then
-         description = description .. ", " .. #network[current].north .. " connections north,"
-      end
-      if network[current].east and #network[current].east > 0 then
-         description = description .. ", " .. #network[current].east .. " connections east,"
-      end
-      if network[current].south and #network[current].south > 0 then
-         description = description .. ", " .. #network[current].south .. " connections south,"
-      end
-      if network[current].west and #network[current].west > 0 then
-         description = description .. ", " .. #network[current].west .. " connections west,"
-      end
-      if description == "" then description = "No nearby buildings." end
-      printout(
-         "Structure travel, Now at "
-            .. ent.name
-            .. " "
-            .. fa_scanner.ent_extra_list_info(ent, pindex, true)
-            .. " "
-            .. description
-            .. ", Select a direction, confirm with same direction, and use perpendicular directions to select a target,  press left bracket to teleport to selection",
-         pindex
-      )
-   else
-      printout("Another menu is open. ", pindex)
-   end
 end)
 
 script.on_event("cursor-skip-north", function(event)
@@ -8238,296 +8082,8 @@ script.on_event(defines.events.on_gui_opened, function(event)
    end
 end)
 
-script.on_event(defines.events.on_chunk_charted, function(event)
-   pindex = event.force.players[1].index
-   if not check_for_player(pindex) then
-   end
-   if players[pindex].mapped[fa_utils.pos2str(event.position)] ~= nil then return end
-   players[pindex].mapped[fa_utils.pos2str(event.position)] = true
-   local islands = fa_scanner.find_islands(game.surfaces[event.surface_index], event.area, pindex)
-
-   if table_size(islands) > 0 then
-      for i, v in pairs(islands) do
-         if players[pindex].resources[i] == nil then
-            players[pindex].resources[i] = {
-               patches = {},
-               queue = {},
-               index = 1,
-               positions = {},
-            }
-         end
-         local merged_groups = {}
-         local many2many = {}
-         if players[pindex].resources[i].queue[fa_utils.pos2str(event.position)] ~= nil then
-            for dir, positions in pairs(players[pindex].resources[i].queue[fa_utils.pos2str(event.position)]) do
-               --               islands[i].neighbors[dir] = nil
-               for i3, pos in pairs(positions) do
-                  local dirs = { dir - 1, dir, dir + 1 }
-                  if dir == 0 then dirs[1] = 7 end
-                  local new_edges = {}
-                  for i1, d in ipairs(dirs) do
-                     new_edges[fa_utils.pos2str(fa_utils.offset_position(fa_utils.str2pos(pos), d, -1))] = true
-                  end
-                  local adj = {}
-                  for d = 0, 7 do
-                     adj[d] = fa_utils.pos2str(fa_utils.offset_position(fa_utils.str2pos(pos), d, 1))
-                  end
-                  local edge = false
-                  for d, p in ipairs(adj) do
-                     if new_edges[p] then
-                        if islands[i].resources[p] ~= nil then
-                           local island_group = islands[i].resources[p].group
-                           if merged_groups[island_group] == nil then merged_groups[island_group] = {} end
-                           merged_groups[island_group][players[pindex].resources[i].positions[pos]] = true
-                        else
-                           edge = true
-                        end
-                     else
-                        if players[pindex].resources[i].positions[p] == nil then edge = true end
-                     end
-                  end
-                  if edge == false then
-                     local group = players[pindex].resources[i].positions[pos]
-                     players[pindex].resources[i].patches[group].edges[pos] = nil
-                  end
-                  for p, b in pairs(new_edges) do
-                     if islands[i].resources[p] ~= nil then
-                        local adj = {}
-                        for d = 0, 7 do
-                           adj[d] = fa_utils.pos2str(fa_utils.offset_position(fa_utils.str2pos(pos), d, 1))
-                        end
-                        local edge = false
-                        for d, p1 in ipairs(adj) do
-                           if islands[i].resources[p1] == nil and players[pindex].resources[i].positions[p1] == nil then
-                              edge = true
-                           end
-                        end
-                        if edge == false then
-                           islands[i].resources[p].edge = false
-                           islands[i].edges[p] = nil
-                        else
-                           islands[i].edges[p] = false
-                        end
-                     end
-                  end
-               end
-            end
-         end
-         for island_group, resource_groups in pairs(merged_groups) do
-            local matches = {}
-            for i1, ref in ipairs(many2many) do
-               local match = false
-               for i2, v2 in pairs(resource_groups) do
-                  if match then break end
-                  for i3, v3 in pairs(ref["old"]) do
-                     if i2 == i3 then
-                        table.insert(matches, i1)
-                        match = true
-                        break
-                     end
-                  end
-               end
-            end
-            ---@diagnostic disable-next-line: undefined-global
-            local old = table.deepcopy(resource_group) --todo debug: maybe this was meant to be "island_group"? ***
-            if old ~= nil then
-               local new = {}
-               new[island_group] = true
-               if table_size(matches) == 0 then
-                  local entry = {}
-                  entry["old"] = old
-                  entry["new"] = new
-                  table.insert(many2many, table.deepcopy(entry))
-               else
-                  table.sort(matches, function(k1, k2)
-                     return k1 > k2
-                  end)
-
-                  for i1, merge_index in ipairs(matches) do
-                     for i2, v2 in pairs(many2many[merge_index]["old"]) do
-                        old[i2] = true
-                     end
-                     for i2, v2 in pairs(many2many[merge_index]["new"]) do
-                        new[i2] = true
-                     end
-                     table.remove(many2many, merge_index)
-                  end
-                  local entry = {}
-                  entry["old"] = old
-                  entry["new"] = new
-
-                  table.insert(many2many, table.deepcopy(entry))
-               end
-            end
-         end
-         for i1, entry in pairs(many2many) do
-            for island_group, v2 in pairs(entry["new"]) do
-               for resource_group, v3 in pairs(entry["old"]) do
-                  merged_groups[island_group][resource_group] = true
-               end
-            end
-         end
-
-         for island_group, resource_groups in pairs(merged_groups) do
-            local new_group = math.huge
-            for resource_group, b in pairs(resource_groups) do
-               new_group = math.min(new_group, resource_group)
-            end
-            for resource_group, b in pairs(resource_groups) do
-               if
-                  new_group < resource_group
-                  and players[pindex].resources[i].patches ~= nil
-                  and players[pindex].resources[i].patches[resource_group] ~= nil
-                  and islands[i] ~= nil
-                  and islands[i].resources ~= nil
-                  and islands[i].resources[b] ~= nil
-               then --**beta changed "p" to "b"
-                  for i1, pos in pairs(players[pindex].resources[i].patches[resource_group].positions) do
-                     players[pindex].resources[i].positions[pos] = new_group
-                     players[pindex].resources[i].count = islands[i].resources[b].count --**beta "p" to "b"
-                  end
-                  fa_utils.table_concat(
-                     players[pindex].resources[i].patches[new_group].positions,
-                     players[pindex].resources[i].patches[resource_group].positions
-                  )
-                  for pos, val in pairs(players[pindex].resources[i].patches[resource_group].edges) do
-                     players[pindex].resources[i].patches[new_group].edges[pos] = val
-                  end
-                  players[pindex].resources[i].patches[resource_group] = nil
-               end
-            end
-            for pos, val in pairs(islands[i].groups[island_group]) do
-               players[pindex].resources[i].positions[pos] = new_group
-               if "number" == type(players[pindex].resources[i].patches[new_group]) then
-                  new_group = players[pindex].resources[i].patches[new_group]
-               end
-               table.insert(players[pindex].resources[i].patches[new_group].positions, pos)
-               if islands[i].edges[pos] ~= nil then
-                  players[pindex].resources[i].patches[new_group].edges[pos] = islands[i].edges[pos]
-               end
-               islands[i].groups[island_group] = nil
-            end
-         end
-
-         for dir, v1 in pairs(islands[i].neighbors) do
-            local chunk_pos = fa_utils.pos2str(fa_utils.offset_position(event.position, dir, 1))
-            if players[pindex].resources[i].queue[chunk_pos] == nil then
-               players[pindex].resources[i].queue[chunk_pos] = {}
-            end
-            players[pindex].resources[i].queue[chunk_pos][dir] = {}
-         end
-         for old_index, group in pairs(v.groups) do
-            if true then
-               local new_index = players[pindex].resources[i].index
-               players[pindex].resources[i].patches[new_index] = {
-                  positions = {},
-                  edges = {},
-               }
-               players[pindex].resources[i].index = players[pindex].resources[i].index + 1
-               for i2, pos in pairs(group) do
-                  players[pindex].resources[i].positions[pos] = new_index
-                  table.insert(players[pindex].resources[i].patches[new_index].positions, pos)
-                  if islands[i].edges[pos] ~= nil then
-                     players[pindex].resources[i].patches[new_index].edges[pos] = islands[i].edges[pos]
-                     if islands[i].edges[pos] then
-                        local position = fa_utils.str2pos(pos)
-                        if fa_utils.area_edge(event.area, 0, position, i) then
-                           local chunk_pos = fa_utils.pos2str(fa_utils.offset_position(event.position, 0, 1))
-                           if players[pindex].resources[i].queue[chunk_pos][4] == nil then
-                              players[pindex].resources[i].queue[chunk_pos][4] = {}
-                           end
-                           table.insert(players[pindex].resources[i].queue[chunk_pos][4], pos)
-                        end
-                        if fa_utils.area_edge(event.area, 6, position, i) then
-                           local chunk_pos = fa_utils.pos2str(fa_utils.offset_position(event.position, 6, 1))
-                           if players[pindex].resources[i].queue[chunk_pos][2] == nil then
-                              players[pindex].resources[i].queue[chunk_pos][2] = {}
-                           end
-                           table.insert(players[pindex].resources[i].queue[chunk_pos][2], pos)
-                        end
-                        if fa_utils.area_edge(event.area, 4, position, i) then
-                           local chunk_pos = fa_utils.pos2str(fa_utils.offset_position(event.position, 4, 1))
-                           if players[pindex].resources[i].queue[chunk_pos][0] == nil then
-                              players[pindex].resources[i].queue[chunk_pos][0] = {}
-                           end
-                           table.insert(players[pindex].resources[i].queue[chunk_pos][0], pos)
-                        end
-                        if fa_utils.area_edge(event.area, 2, position, i) then
-                           local chunk_pos = fa_utils.pos2str(fa_utils.offset_position(event.position, 2, 1))
-                           if players[pindex].resources[i].queue[chunk_pos][6] == nil then
-                              players[pindex].resources[i].queue[chunk_pos][6] = {}
-                           end
-                           table.insert(players[pindex].resources[i].queue[chunk_pos][6], pos)
-                        end
-                     end
-                  end
-               end
-            end
-         end
-      end
-      --      print(event.area.left_top.x .. " " .. event.area.left_top.y)
-      --      print(event.area.right_bottom.x .. " " .. event.area.right_bottom.y)
-      --      for name, obj in pairs(resources) do
-      --         print(name .. ": " .. table_size(obj.patches))
-      --      end
-   end
-end)
-
 script.on_event(defines.events.on_entity_destroyed, function(event) --DOES NOT HAVE THE KEY PLAYER_INDEX
-   local ent = nil
-   for pindex, player in pairs(players) do --If the destroyed entity is destroyed by any player, it will be detected. Laterdo consider logged out players etc?
-      if players[pindex] ~= nil then
-         local try_ent = players[pindex].destroyed[event.registration_number]
-         if try_ent ~= nil and try_ent.valid then ent = try_ent end
-      end
-   end
-   if ent == nil then return end
-   local str = fa_utils.pos2str(ent.position)
-   if ent.type == "resource" then
-      if ent.name ~= "crude-oil" and players[pindex].resources[ent.name].positions[str] ~= nil then --**beta added a check here to not run for nil "group"s...
-         local group = players[pindex].resources[ent.name].positions[str]
-         players[pindex].resources[ent.name].positions[str] = nil
-         --game.get_player(pindex).print("Pos str: " .. str)
-         --game.get_player(pindex).print("group: " .. group)
-         players[pindex].resources[ent.name].patches[group].edges[str] = nil
-         for i = 1, #players[pindex].resources[ent.name].patches[group].positions do
-            if players[pindex].resources[ent.name].patches[group].positions[i] == str then
-               table.remove(players[pindex].resources[ent.name].patches[group].positions, i)
-               i = i - 1
-            end
-         end
-         if #players[pindex].resources[ent.name].patches[group].positions == 0 then
-            players[pindex].resources[ent.name].patches[group] = nil
-            if table_size(players[pindex].resources[ent.name].patches) == 0 then
-               players[pindex].resources[ent.name] = nil
-            end
-            return
-         end
-         for d = 0, 7 do
-            local adj = fa_utils.pos2str(fa_utils.offset_position(ent.position, d, 1))
-            if players[pindex].resources[ent.name].positions[adj] == group then
-               players[pindex].resources[ent.name].patches[group].edges[adj] = false
-            end
-         end
-      end
-   elseif ent.type == "tree" then
-      local adj = {}
-      adj[fa_utils.pos2str({ x = math.floor(ent.area.left_top.x / 32), y = math.floor(ent.area.left_top.y / 32) })] =
-         true
-      adj[fa_utils.pos2str({ x = math.floor(ent.area.right_bottom.x / 32), y = math.floor(ent.area.left_top.y / 32) })] =
-         true
-      adj[fa_utils.pos2str({ x = math.floor(ent.area.left_top.x / 32), y = math.floor(ent.area.right_bottom.y / 32) })] =
-         true
-      adj[fa_utils.pos2str({
-         x = math.floor(ent.area.right_bottom.x / 32),
-         y = math.floor(ent.area.right_bottom.y / 32),
-      })] =
-         true
-      for pos, val in pairs(adj) do
-         --players[pindex].tree_chunks[pos].count = players[pindex].tree_chunks[pos].count - 1--**beta Forests need updating but these lines are incorrectly named
-      end
-   end
-   players[pindex].destroyed[event.registration_number] = nil
+   ScannerEntrypoint.on_entity_destroyed(event)
 end)
 
 --Scripts regarding train state changes. NOTE: NO PINDEX
@@ -9208,4 +8764,18 @@ script.on_event("fa-kk-cancel", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    fa_kk.cancel_kk(pindex)
+end)
+
+script.on_event(defines.events.on_script_trigger_effect, function(event)
+   if event.effect_id == Consts.NEW_ENTITY_SUBSCRIBER_TRIGGER_ID then
+      ScannerEntrypoint.on_new_entity(event.surface_index, event.source_entity)
+   end
+end)
+
+script.on_event(defines.events.on_surface_created, function(event)
+   ScannerEntrypoint.on_new_surface(game.get_surface(event.surface_index))
+end)
+
+script.on_event(defines.events.on_surface_deleted, function(event)
+   ScannerEntrypoint.on_surface_delete(event.surface_index)
 end)

@@ -308,13 +308,9 @@ function mod.get_ent_northwest_corner_position(ent)
    if ent.valid == false or ent.tile_width == nil then return ent.position end
    local width = ent.tile_width
    local height = ent.tile_height
-   if ent.direction == dirs.east or ent.direction == dirs.west then
-      width = ent.tile_height
-      height = ent.tile_width
-   end
    local pos = mod.center_of_tile({
-      x = ent.position.x - math.floor(width / 2),
-      y = ent.position.y - math.floor(height / 2),
+      x = math.floor(ent.position.x - width / 2),
+      y = math.floor(ent.position.y - height / 2),
    })
    --Error correction:
    --When the northwest corner selection has missed the ent for some reason, the ent position is used instead.
@@ -687,7 +683,7 @@ function mod.dir_dist_locale(pos1, pos2)
    local dir_dist = mod.dir_dist(pos1, pos2)
    local aligned_note = ""
    if mod.is_direction_aligned(pos1, pos2) then aligned_note = "aligned " end
-   return { "access.dir-dist", aligned_note .. mod.direction_lookup(dir_dist[1]), math.floor(dir_dist[2] + 0.5) }
+   return { "fa.dir-dist", aligned_note .. mod.direction_lookup(dir_dist[1]), math.floor(dir_dist[2] + 0.5) }
 end
 
 function mod.ent_name_locale(ent)
@@ -697,7 +693,7 @@ function mod.ent_name_locale(ent)
    end
    if ent.name == "forest" then
       print("todo: forest isn't an entity")
-      return { "access.forest" }
+      return { "fa.forest" }
    end
    local entity_prototype = game.entity_prototypes[ent.name]
    local resource_prototype = game.resource_category_prototypes[ent.name]
@@ -925,20 +921,49 @@ function mod.player_was_still_for_1_second(pindex)
    end
 end
 
--- Given a list of items which may be stringified, concatenate them all together
--- with a space between, efficiently.
+-- Concatenate a bunch of stuff together, efficiently, and return this as a
+-- localised string.
+--
+-- Assumes that tables are localised strings, otherwise calls tostring(x)
+--
+-- Works with more than 20 items by folding the localised strings into each
+-- other, forming a tree structure.
+---@return LocalisedString
 mod.spacecat = function(...)
    local tab = table.pack(...)
-   local will_cat = {}
+   return mod.spacecat_table(tab)
+end
 
-   for i = 1, tab.n do
+-- Like spacecat but for a table.
+---@param tab any[]
+---@return LocalisedString
+function mod.spacecat_table(tab)
+   local will_cat = { "" }
+
+   for i = 1, #tab do
       local ent = tab[i]
-      local stringified = tostring(ent)
-      if stringified == nil then stringified = "NIL!" end
-      table.insert(will_cat, stringified)
+      local adding = type(ent) == "table" and ent or tostring(ent)
+      if adding == nil then adding = "NIL!" end
+      table.insert(will_cat, adding)
+      table.insert(will_cat, " ")
    end
 
-   return table.concat(will_cat, " ")
+   -- 21 because 20 params, then the first is the "" part.
+   while #will_cat > 21 do
+      local new_cat = { "" }
+
+      for i = 1, #will_cat, 20 do
+         local seg = { "" }
+         for j = 1, 20 do
+            table.insert(seg, will_cat[i + j])
+         end
+         table.insert(new_cat, seg)
+      end
+
+      will_cat = new_cat
+   end
+
+   return will_cat
 end
 
 --Returns the name for the item related to the entity name being checked
@@ -970,6 +995,29 @@ function mod.confirm_action(pindex, id_string, custom_message)
       players[pindex].confirm_action_tick = 0
       return true
    end
+end
+
+-- Format a  number to e.g. "1.3m"
+---@param amount number
+---@return string
+function mod.format_number(amount)
+   local suffix = ""
+
+   local suffix_list = {
+      ["T"] = 1000000000000,
+      ["B"] = 1000000000,
+      ["M"] = 1000000,
+      ["k"] = 1000,
+   }
+   for letter, limit in pairs(suffix_list) do
+      if math.abs(amount) >= limit then
+         amount = math.floor(amount / (limit / 10)) / 10
+         suffix = letter
+         break
+      end
+   end
+
+   return tostring(amount) .. suffix
 end
 
 return mod
