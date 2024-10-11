@@ -120,6 +120,7 @@ local BACKEND_LUT = {
    ["wall"] = SEB.Military,
 }
 
+---@type fun(): table<string, fa.scanner.ScannerBackend>
 local BACKEND_NAME_OVERRIDES = Functools.cached(function()
    local bno = {}
 

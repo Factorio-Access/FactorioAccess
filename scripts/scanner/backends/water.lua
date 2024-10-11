@@ -50,7 +50,6 @@ function WaterBackend:readout_entry(player, e)
    local bb = e.backend_data.aabb
    local w = bb.right_bottom.x - bb.left_top.x
    local h = bb.right_bottom.y - bb.left_top.y
-   local area = math.floor(w * h)
    return { "fa.scanner-water", w, h }
 end
 

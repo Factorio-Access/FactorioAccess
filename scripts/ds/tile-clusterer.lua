@@ -71,15 +71,6 @@ and contains at least everything b did".  To do that, we maintain a second table
 mapping group numbers to their canonical group numbers.  To findf a canonical
 group, we consult that table and walk it like a linked list.  It is entirely
 possible to have d->c->b->a, if tiles are touched in the right order.
-
-It might seem that we need to do cleanup.  We may, and that's definitely a
-future direction.  But what actually happens is that each patch of whatever gets
-one canonical group and, eventually after all are seen, "freezes".  At that
-point the canonical group and all the "wasted" groups for that cluster are just
-wasting memory, and no longer get touched because the clusterer is off handling
-other clusters that don't touch it.  That means that on "normal" maps, the
-linked list never gets too deep (is Seablock a problem? Probably-but Seablock is
-always a problem).
 ]]
 local TH = require("scripts.table-helpers")
 local uid = require("scripts.uid").uid
@@ -96,6 +87,7 @@ local ADJ_COORDS = {
 ---@class fa.ds.TileClusterer.Group
 ---@field tiles table<number, table<number, true>> All tiles in this group.
 ---@field edge_tiles table<number, table<number, true>> The tiles on the edge.
+---@field valid boolean If false, this group should be dropped and ignored.
 
 ---@class fa.ds.TileClusterer.Options
 ---@field track_interior boolean if false, only fill out edges.
@@ -124,12 +116,11 @@ end
 
 ---@param group_number number
 ---@return number
-function TileClusterer:walk_canonical_list(group_number, safe_to_drop)
+function TileClusterer:walk_canonical_list(group_number)
    local old_group_number = group_number
    while group_number do
       old_group_number = group_number
       group_number = self.canonical_linked_list[group_number]
-      if safe_to_drop and group_number then self.groups[old_group_number] = nil end
    end
 
    return old_group_number
@@ -153,7 +144,7 @@ function TileClusterer:submit_points(points)
          x_i, y_i = point_x + ADJ_COORDS[c_i][1], point_y + ADJ_COORDS[c_i][2]
 
          adjacents[c_i] = nil
-         if seen_tiles[x_i] then adjacents[c_i] = seen_tiles[x_i][y_i] end
+         if seen_tiles[x_i] then adjacents[c_i] = self:walk_canonical_list(seen_tiles[x_i][y_i]) end
       end
 
       local adj_count = 0
@@ -173,10 +164,6 @@ function TileClusterer:submit_points(points)
          end
       end
 
-      -- If we found a merge target and this is not the canonical group, we will
-      -- use the canonical group instead.
-      if merge_target_num then merge_target_num = self:walk_canonical_list(merge_target_num) end
-
       local final_group_num
       local final_group_obj
 
@@ -186,6 +173,7 @@ function TileClusterer:submit_points(points)
          final_group_obj = {
             tiles = { [point_x] = { [point_y] = true } },
             edge_tiles = { [point_x] = { [point_y] = true } },
+            valid = true,
          }
          final_group_num = uid()
          self.groups[final_group_num] = final_group_obj
@@ -199,14 +187,15 @@ function TileClusterer:submit_points(points)
 
          for i = 1, 4 do
             local src = adjacents[i]
-            src = self:walk_canonical_list(src)
 
-            -- Never into itself.
+            -- Never into itself. Never into anything we've already merged.
             if src and src ~= merge_target_num and not did[src] then
                did[src] = true
 
                local src_obj = self.groups[src]
+               src_obj.valid = false
                local merge_into = self.groups[merge_target_num]
+               self.canonical_linked_list[src] = merge_target_num
 
                -- This is the magic optimization for edges. We allow single tile
                -- groups but just drop them when merging up.
@@ -296,6 +285,7 @@ function TileClusterer:submit_points(points)
          end
       end
 
+      -- Help to keep the canonical linked list short.
       for c_i = 1, #ADJ_COORDS do
          local i_x, i_y = point_x + ADJ_COORDS[c_i][1], point_y + ADJ_COORDS[c_i][2]
          local a_x = seen_tiles[i_x]
@@ -305,9 +295,11 @@ function TileClusterer:submit_points(points)
             if a_x[i_y] then
                -- Anything in the other group was merged to this one, so replace
                -- the group then mark the old group as no longer canonical.
-               local other = a_x[i_y]
+               -- Note that at this point, the other group is still set to
+               -- something random--we have to walk to the bottom.
+               local other = self:walk_canonical_list(a_x[i_y])
                -- No cycles.
-               if other ~= final_group_num then self.canonical_linked_list[a_x[i_y]] = final_group_num end
+               if other ~= final_group_num then self.canonical_linked_list[other] = final_group_num end
                a_x[i_y] = final_group_num
             end
          end
@@ -322,11 +314,11 @@ end
 function TileClusterer:get_groups(callback)
    local seen = {}
 
-   for num_old in pairs(self.groups) do
-      num = self:walk_canonical_list(num_old, true)
-
+   for num in pairs(self.groups) do
       local candidate = self.groups[num]
-      if not seen[candidate] then
+      if not candidate.valid then
+         self.groups[num] = nil
+      elseif not seen[candidate] then
          seen[candidate] = true
          callback(candidate)
       end
