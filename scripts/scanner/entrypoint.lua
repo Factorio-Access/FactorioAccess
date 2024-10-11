@@ -357,6 +357,8 @@ local function move_in_subcategory(pindex, ps, dir)
    -- Start 1 before the beginning.
    if not ind then ind = 0 end
 
+   ps.scanner_cursor.subcategory_index = ps.scanner_cursor.subcategory_index or 1
+
    if
       not ps.scanner_cursor.category
       or not next(ps.entries[ps.scanner_cursor.category])
