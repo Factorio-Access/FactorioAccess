@@ -331,11 +331,11 @@ function mod.pda_read_cruise_control_toggled_info(pindex)
    if game.get_player(pindex).driving then
       local is_on = not mod.pda_get_state_of_cruise_control(pindex)
       if is_on == true then
-         printout("Enabled cruise control", pindex)
+         printout("Enabled constant speed driving", pindex)
       elseif is_on == false then
-         printout("Disabled cruise control", pindex)
+         printout("Disabled constant speed driving", pindex)
       else
-         printout("Missing cruise control", pindex)
+         printout("Missing constant speed driving", pindex)
       end
       mod.pda_set_cruise_control_limit(pindex, 0.16)
    end

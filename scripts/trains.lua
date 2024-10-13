@@ -1111,7 +1111,7 @@ function mod.check_and_honk_at_closed_signal(tick, pindex)
    local honk_score = mod.train_read_next_rail_entity_ahead(pindex, false, true)
    if honk_score < 2 then return end
    --4. HONK (short)
-   game.get_player(pindex).play_sound({ path = "train-honk-short" })
+   game.play_sound({ path = "train-honk-short" })
    players[pindex].last_honk_tick = tick
 end
 
@@ -1137,7 +1137,7 @@ function mod.check_and_honk_at_trains_in_same_block(tick, pindex)
    end
    if train.front_rail.trains_in_block < 2 and train.back_rail.trains_in_block < 2 then return end
    --4. HONK (long)
-   game.get_player(pindex).play_sound({ path = "train-honk-long" })
+   game.play_sound({ path = "train-honk-long" })
    players[pindex].last_honk_tick = tick
 end
 
