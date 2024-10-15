@@ -221,7 +221,6 @@ end
 
 ---@class fa.scanner.SurfaceScannerChunkScan
 ---@field surface LuaSurface
----@field surface_state fa.scanner.GlobalSurfaceState
 ---@field chunk ChunkPositionAndArea
 
 ---@param cmd fa.scanner.SurfaceScannerChunkScan
@@ -229,7 +228,7 @@ local function scan_chunk(cmd)
    if not cmd.surface.valid then return end
 
    local surf = cmd.surface
-   local state = cmd.surface_state
+   local state = surface_state[surf.index]
    local chunk = cmd.chunk
    local cx, cy = chunk.x, chunk.y
 
@@ -274,11 +273,10 @@ local function redispatch(queue)
    local tasks = {}
 
    for _, s in pairs(game.surfaces) do
-      local state = surface_state[s.index]
       for c in s.get_chunks() do
          local task = {
             surface = s,
-            surface_state = state,
+
             chunk = c,
          }
          table.insert(tasks, task)
