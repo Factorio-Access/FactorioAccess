@@ -4,6 +4,7 @@ by declaring our backends.  Simple already does everything else for us.
 ]]
 local decl = require("scripts.scanner.backends.simple").declare_simple_backend
 local functionize = require("scripts.functools").functionize
+local Info = require("scripts.fa-info")
 local SC = require("scripts.scanner.scanner-consts")
 
 local mod = {}
@@ -32,6 +33,19 @@ mod.CraftingMachine = decl("fa.scanner.backends.CraftingMachine", {
    end,
 })
 
+mod.MiningDrill = decl("fa.scanner.backends.MiningDrill", {
+   category_callback = functionize(SC.CATEGORIES.PRODUCTION),
+   subcategory_callback = function(ent)
+      local under_drill = Info.compute_resources_under_drill(ent)
+      local keys = {}
+      for k in pairs(under_drill) do
+         table.insert(keys, k)
+      end
+      table.sort(keys)
+      local key_part = table.concat(keys, "/")
+      return cat2(ent.name, key_part)
+   end,
+})
 mod.Furnace = decl("fa.scanner.backends.Furnace", {
    category_callback = functionize(SC.CATEGORIES.PRODUCTION),
    ---@param ent LuaEntity

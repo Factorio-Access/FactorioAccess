@@ -82,7 +82,7 @@ local BACKEND_LUT = {
    ["logistic-container"] = SEB.Containers,
    ["logistic-robot"] = SEB.Logistics,
    ["market"] = SEB.Logistics,
-   ["mining-drill"] = SEB.Production,
+   ["mining-drill"] = SEB.MiningDrill,
    ["offshore-pump"] = SEB.Production,
    ["pipe-to-ground"] = SEB.Logistics,
    ["pipe"] = SEB.Logistics,
@@ -197,7 +197,8 @@ local function new_empty_surface(key)
 end
 
 ---@type table<number, fa.scanner.GlobalSurfaceState>
-local surface_state = GlobalManager.declare_global_module("scanner", new_empty_surface, { root_field = "surfaces" })
+local surface_state =
+   GlobalManager.declare_global_module("scanner", new_empty_surface, { root_field = "surfaces", persistent = false })
 
 -- Given a backend setup and an array of entities, dispatch the entities to the
 -- backends.  Assumes the entities are valid.
