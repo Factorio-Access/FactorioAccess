@@ -51,6 +51,21 @@ local function get_adjacent_source(box, pos, dir)
    return result
 end
 
+---@param ent LuaEntity
+---@return table<string, number> The counts by resource prototype name
+function mod.compute_resources_under_drill(ent)
+   local pos = ent.position
+   local radius = ent.prototype.mining_drill_radius
+   local area = { { pos.x - radius, pos.y - radius }, { pos.x + radius, pos.y + radius } }
+   local resources = ent.surface.find_entities_filtered({ area = area, type = "resource" })
+   local dict = {}
+   for i, resource in pairs(resources) do
+      dict[resource.name] = (dict[resource.name] or 0) + resource.amount
+   end
+
+   return dict
+end
+
 --Outputs basic entity info, usually called when the cursor selects an entity.
 ---@param ent LuaEntity
 function mod.ent_info(pindex, ent, description, is_scanner)
@@ -854,18 +869,8 @@ function mod.ent_info(pindex, ent, description, is_scanner)
    end
    if ent.type == "mining-drill" then
       local pos = ent.position
-      local radius = ent.prototype.mining_drill_radius
-      local area = { { pos.x - radius, pos.y - radius }, { pos.x + radius, pos.y + radius } }
-      --Compute resources covered
-      local resources = ent.surface.find_entities_filtered({ area = area, type = "resource" })
-      local dict = {}
-      for i, resource in pairs(resources) do
-         if dict[resource.name] == nil then
-            dict[resource.name] = resource.amount
-         else
-            dict[resource.name] = dict[resource.name] + resource.amount
-         end
-      end
+      local dict = mod.compute_resources_under_drill(ent)
+
       --Compute drop position
       local drop = ent.drop_target
       local drop_name = nil
