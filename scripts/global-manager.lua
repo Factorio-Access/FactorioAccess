@@ -31,6 +31,13 @@ Enabling both autocomplete and type checks.
 
 For testing, one may set persistent=false in opts.  If so, the global state will
 be reset on first access.
+
+Some state such as that for the scanner is ephemeral.  If this is the case, one
+may set ephemeral_state_version to an integer.  When set for the first time or
+incremented, the state will be cleared before access for the first time the game
+starts with the mod updated.  This is useful for example to let the scanner
+pickup backend changes, but comes at the cost of throwing out state.  Use
+carefully.
 ]]
 
 local mod = {}
@@ -38,6 +45,7 @@ local mod = {}
 ---@class fa.GlobalManagerOpts
 ---@field root_field string?
 ---@field persistent boolean?
+---@field ephemeral_state_version number?
 
 ---@param module_name string
 ---@param default_value any
@@ -51,10 +59,7 @@ function mod.declare_global_module(module_name, default_value, opts)
       persistent = true,
    }
 
-   local needs_clear = false
-   if opts.persistent ~= nil then needs_clear = not opts.persistent end
-
-   print(tostring(needs_clear))
+   local tried_clear = false
 
    local default_fn = default_value
    if type(default_fn) == "table" then
@@ -68,13 +73,33 @@ function mod.declare_global_module(module_name, default_value, opts)
    end
 
    local function do_clear_if_needed()
-      if not needs_clear then return end
-      needs_clear = false
+      if tried_clear then return end
+      tried_clear = true
 
-      if not global[opts.root_field] then return end
-      for k, e in pairs(global[opts.root_field]) do
-         print("cleared", k)
-         e[module_name] = nil
+      local version_changed = false
+      if opts.ephemeral_state_version then
+         local ver_state = global.global_manager
+         if not ver_state then
+            ver_state = {}
+            global.global_manager = {}
+         end
+         local ver_state = ver_state.versions
+         if not ver_state then
+            ver_state = {}
+            global.global_manager.versions = ver_state
+         end
+
+         if not ver_state[opts.root_field] then ver_state[opts.root_field] = {} end
+         local ver = ver_state[opts.root_field][module_name]
+         version_changed = ver ~= opts.ephemeral_state_version
+         ver_state[opts.root_field][module_name] = opts.ephemeral_state_version
+      end
+
+      if version_changed or opts.persistent == false then
+         if not global[opts.root_field] then return end
+         for k, e in pairs(global[opts.root_field]) do
+            e[module_name] = nil
+         end
       end
    end
 
