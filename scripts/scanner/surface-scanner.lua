@@ -197,8 +197,11 @@ local function new_empty_surface(key)
 end
 
 ---@type table<number, fa.scanner.GlobalSurfaceState>
-local surface_state =
-   GlobalManager.declare_global_module("scanner", new_empty_surface, { root_field = "surfaces", persistent = false })
+local surface_state = GlobalManager.declare_global_module(
+   "scanner",
+   new_empty_surface,
+   { root_field = "surfaces", ephemeral_state_version = 1 }
+)
 
 -- Given a backend setup and an array of entities, dispatch the entities to the
 -- backends.  Assumes the entities are valid.
