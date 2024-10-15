@@ -313,7 +313,7 @@ end
 -- This work queue will get a chunk per task.
 local work_queue = WorkQueue.declare_work_queue({
    name = "fa.scanner.surface-scanner",
-   per_tick = 2,
+   per_tick = 4,
    worker_function = scan_chunk,
    idle_function = redispatch,
 })
