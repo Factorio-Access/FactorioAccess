@@ -17,9 +17,11 @@ there is that as well.  We also get a large jump if we inline table constants
 when dumping to callbacks.  So this is a bit ugly, but it's ugly because
 performance--a midgame save goes down from 80ms to under 40ms with respect to
 scanning everything in the logistics category (belts, etc), for instance.  Note
-that it is crutial to update positions when dumping, so even when pulling from
-the cache we must still do the position and bounding_box fields.  The others can
-be brought forward on updates.
+that it is crutial to update positions and subcategories when dumping, so even
+when pulling from the cache we must still do those fields.  The others can be
+brought forward on updates.
+
+For now, this assumes category cannot change.
 ]]
 local FaInfo = require("scripts.fa-info")
 local FaUtils = require("scripts.fa-utils")
@@ -130,7 +132,7 @@ function SimpleBackend:dump_entries_to_callback(player, callback)
          local cached_entry = self.entry_cache[regnum]
          if cached_entry then
             cached_entry.position = { x = effective_x, y = effective_y }
-
+            cached_entry.subcategory = subcat_cb(entity)
             callback(cached_entry)
          else
             local entry = {
