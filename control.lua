@@ -3463,6 +3463,10 @@ script.on_event("scan-selection-down", function(event)
    ScannerEntrypoint.move_within_subcategory(pindex, 1)
 end)
 
+script.on_event("scan-sort-by-distance", function(event)
+   ScannerEntrypoint.resort(event.player_index)
+end)
+
 --Repeats the last thing read out. Not just the scanner.
 script.on_event("repeat-last-spoken", function(event)
    pindex = event.player_index
