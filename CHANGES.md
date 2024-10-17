@@ -1,3 +1,37 @@
+# Version 0.15.0 BETA
+Released on ___
+
+## Summary
+- The main highlight of this update is a rewritten scanner which incrementally scans in the background.  Scan refreshes of large saves should now be significantly faster.
+- IMPORTANT: If you upgrade into an existing save, the new scanner implementation will take some time (around 1 minute) to begin returning results.
+- IMPORTANT: the new scanner can only track resource patches if present from the beginning of a save.  If you have mined a patch such that it is now two separate clusters, new scanner will think they are separate patches.
+- IMPORTANT: moving forward, releases with scanner changes may take some time to report results.
+
+## Features
+
+- New scanner:
+  * This is faster on large saves.
+  * The amount of resources in a patch is now announced
+  * Oil wells are now coalesced into an oil field patch if far away.
+  * Rather than using "dense forest", the scanner now announces the number of trees, "trees x 15".
+  * The dimensions of water are more accurately tracked and announced.
+  * The scanner now provides information as if you were using the cursor, rather than a shortened form.
+  * Trains now group all the cars for one train together, rather than grouping by car type.
+  * Scanner categorization of furnaces which aren't currently functioning is more accurate.  The recipe is inferred from the output, if present.
+- Summaries under larger cursor sizes are now lag-free
+- When placing rail signals incorrectly, we now report "can't divide segments" rather than claiming they are open (both are true at the same time, but the train system will treat it like it doesn't exist)
+- Long-since deprecated Structure travel has been dropped.
+- Sorting scan results by count has been dropped.  Depending on demand, this may be reintroduced.
+- Modded accumulators are now supported.
+- Modded infinite resources are now supported.
+
+## Bugfixes
+
+- No longer report that we don't support slot filters when setting the filter of a splitter.
+- Don't crash when doing a menu search with special non-alphanumeric characters.
+- Don't falsely report that pumpjacks and other modded entities outputting fluids have a drop position.
+- Rulers don't also move bookmarks.  These are now separate as intended.
+
 # Version 0.14.1 BETA
 Released on September 7th, 2024.
 
