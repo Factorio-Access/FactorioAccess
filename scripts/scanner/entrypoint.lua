@@ -11,6 +11,8 @@ This has 3 main components:
 You can link up a new backend in surface-scanner.lua.  Mostly they're
 self-explanatory.  I recommend reading simple.lua for a good example that shows
 (almost) everything.
+
+IMPORTANT: see devdocs/scanner.md for the whole picture.
 ]]
 local FaUtils = require("scripts.fa-utils")
 local GlobalManager = require("scripts.global-manager")
