@@ -25,6 +25,8 @@ Released on October 19th, 2024.
 - Modded infinite resources are now supported, by reporting the relevant information.
 
 ## Changes
+- Launcher changes: A few updates for Factorio 2.0 compatibility and faster new game starting.
+
 - Area scan summaries under larger cursor sizes are now lag-free.
 
 - The long-ago deprecated feature of structure travel has been fully removed.
