@@ -142,5 +142,6 @@ Date: 2024.04.06
       such as mod management, as well as small additions and changes to improve the early game, 
       and some changes thanks to community feedback.
 
-    - Note: Earlier changelog entries use a different format and thus are not automatically loaded.
+    - Note: The full changelog can be found in "CHANGES.md". This covers older updates and also the
+      sections other than the summaries.
 
