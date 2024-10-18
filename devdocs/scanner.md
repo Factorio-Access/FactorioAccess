@@ -1,62 +1,63 @@
 Last reviewed: 2024-10-18 (update this if reviewing this doc)
 
-NOTE: current content is pre-2.0.  Primarily this means that we refer to global.  2.0 renames this storage.  If you are here after that rename and see references to global, this is what they mean.
+NOTE: Current content is before Update 2.0.  Primarily this means that we refer to "global".  2.0 renames this to "storage".  If you are here after that rename and see references to global, this is what they mean.
 
 # Introduction
 
-Scanner is one of the flagship features of the mod.  It determines important map
+The scanner is one of the flagship features of the mod.  It determines important map
 features and groups things into categories, presenting a list to the player of
-what is available where.  This is controlled through page up and page down, plus
+what is available where.  This is controlled through `PAGE UP` and `PAGE DOWN`, plus
 modifiers.  Players are presented with a 3-level list: categories,
-subcategories, and items in those subcategories.  From the player perspective,
-subcategories are not currently a named concept.  So, for example:
+subcategories, and entries in those subcategories.  From the player perspective,
+subcategories are not currently a named concept, but they are explicitly named in the code.  
+So, for example:
 
 - An assembling machine is category Production, subcategory based off the recipe.
 - Resource patches are category Resources, subcategory as the prototype type of the patch.
 
-For the cases of water and resources in vanilla, and compound entities in mods (not yet used as of this writing), it is possible to have more than one entity in an entry.  Indeed in the case of water, it is possible to have none at all, as that is instead based off tiles.
+For the cases of water bodies and resource patches in vanilla, and compound entities in mods (not yet used as of this writing), it is possible to have more than one entity in an entry. Indeed in the case of water, it is possible to have none at all, as that is instead based off tiles.
 
-This document covers how this is done.  There used to be a simpler variation, but the modern implementation is both flexible and performant.  As a brief overview, a set of "backends" scans the surface in the background.  The player then receives a stable view over that list, refreshed with the end key in the default key mappings.  While from the UX perspective this appears that it is doing computation, what it is actually doing is grabbing updated versions of the list.  Unfortunately even that is expensive, so there is still some noticeable lag as of this writing.  That can be reduced further, and some strategies as to how we have done so already are presented here.
+This document covers how this is done.  There used to be a simpler variation of the scanner tool, but the modern implementation is both flexible and performant.  As a brief overview of how it works, a set of "backends" scan the surface in the background.  The player then receives a stable view over that list, refreshed with the `END` key in the default key mappings.  While from the UX perspective this appears that it is doing computation, what it is actually doing is grabbing updated versions of the list.  Unfortunately even that is expensive, so there is still some noticeable lag during refresh, as of this writing.  That can be reduced further, and some strategies as to how we have done so already are presented here.
 
 # The Quick Version: how to perform common tasks
 
 Read this whole section before doing anything.
 
-If you've got a new prototype type or name, read single-entity.lua.  Copy one similar to yours and rename/modify it.  The most complex example there is furnaces, which demonstrates how one can make somethingt which dynamicly moves between categories.  Then, go to surface-scanner.lua.  At the top (almost first thing in the file) are a couple tables,.  One for prototype types and one for names.  Plug your backend in there like all the rest.
+If you've got a new prototype type or name, read single-entity.lua.  Copy one similar to yours and rename/modify it.  The most complex example there is furnaces, which demonstrates how one can make something which dynamically moves between categories.  Then, go to surface-scanner.lua.  At the top (almost first thing in the file) are a couple tables,.  One for prototype types and one for names.  Plug your backend in there like all the rest.
 
 If this is for mod support (for e.g. say seablock--not our own mod) make one small change instead.  If you scroll down you can see where we add some dynamic prototypes.  Check for the presence of the mod and put them in at that spot if the mod is present.
 
-If you need to do something more complicated copy and modify an existing backend.  Which one doesn't matter for the most part.  Clear out the methods, leave the ones you don't need empty.  Then add it to the tables as above.
+If you need to do something more complicated, copy and modify an existing backend.  Which one doesn't matter for the most part.  Clear out the methods, leave the ones you don't need empty.  Then add it to the tables as above.
 
 To add a new scanner category open scanner-consts.lua and add it to `CATEGORIES`.  Below, also add it to `CATEGORY_ORDER` so that the scanner knows to iterate it and where.  Then make sure a localised string of the form `scanner-categoryname` e.g. `scanner-category-production` is present.
 
-Finally you probably need to go to surface-scanner.lua and find the declaration of global-manager.  Increment `ephemeral_state_version` by 1.  This will wipe out and rebuild scanner information in saves as necessary.  This is not always required, but if you are unsure whether it is or not this is always safe to do.
+Finally you probably need to go to surface-scanner.lua and find the declaration of global-manager.  Increment `ephemeral_state_version` by 1.  This will wipe out and rebuild scanner information in saves as necessary.  This is not always required, but if you are unsure whether it is or not then this is always safe to do.
 
 Scanner ignores any prototype type not in these tables.  E.g. we leave out beams and explosions.
 
 # Bounding the Problem
 
-Before discussing the solution, let us first discuss the bounds on the problem.  In Factorio today we have a single surface.  In a general somewhat large save--not a megabase, just winning the game--that includes easily 10000 to 20000 player-placed objects.   In addition to that, one is looking at thousands of trees, up to and well beyond 10000 fish, and potentially tens to hundreds of thousands of water tiles.
+Before discussing the solution, let us first discuss the bounds on the problem.  In Factorio today (Update 1.1) we have a single surface.  In a general somewhat large save --not a megabase, just winning the game-- that includes easily 10000 to 20000 player-placed objects.   In addition to that, one is looking at thousands of trees, up to and well beyond 10000 fish, and potentially tens to hundreds of thousands of water tiles.
 
 In Space Age, this again increases because multiple surfaces are present.  As of this writing we can't know by how much, but easily by a factor of 5.
 
-We must account for all of this in an efficient way.  We have under 16 MS to do it every tick.  Significantly so, as we must also leave time for the main game to run.  This must also be done in some form which is reasonably memory efficient, or which at least has the potential to be in future.  As of this writing, the scanner is memory efficient for 1.0/2.0 vanilla, but needs some improvements for space age.  See later in this document about bitsets.
+We must account for all of this in an efficient way.  We have under 16 milliseconds to do it every tick.  Significantly so, as we must also leave time for the main game to run.  This must also be done in some form which is reasonably memory efficient, or which at least has the potential to be in future.  As of this writing, the scanner is memory efficient for 1.0/2.0 vanilla, but needs some improvements for Space Age.  See later in this document about bitsets.
 
 # The Big Idea
 
-Let's step back and pretend that this isn't Factorio or Lua.  We are in some programming language which has all the features we might want and without the constraints of needing to be safe to store in global.  The obvious solution in that situation is to get some sort of list of new entities or tiles, and feed them into classes.  And indeed, that's what we do.  But with some Lua-specific and Factorio-specific tricks.  This allows pushing all of the complexity to one spot, and makes extension and modification of the scanner possible without having to understand the rest.  To see this, read any of the backends--can you implement a callback that handles one entity?  Yes.
+Let's step back and pretend that this isn't Factorio or Lua.  We are in some programming language which has all the features we might want and without the constraints of needing to be safe to store in global.  The obvious solution in that situation is to get some sort of list of new entities or tiles, and feed them into classes.  And indeed, that's what we do.  But with some Lua-specific and Factorio-specific tricks.  This allows pushing all of the complexity to one spot, and makes extension and modification of the scanner possible without having to understand the rest.  To see this, read any of the backends-- can you implement a callback that handles one entity?  Yes.
 
 But.  This is Lua.  So instead of classes we have closures and metatables.  And we don't get closures because we have to store in global.  Our only hammer is metatables, and as they say if all you have is a hammer... The way that Lua does OOP is via metatable tricks.  See [Programmihng in Lua](https://www.lua.org/pil/16.html) for some information.  This is Lua 5.1, but nothing changed about metatables in Lua 5.2.
 
 Factorio allows registering metatables by name with some boilerplate ceremony.  We already use this in e.g. rulers.  One invents a name which must never change, and then registers it at the top level.  This makes a number of things complicated, most notably inheritance.  For the sake of simplicity therefore we just drop empty methods in when a backend doesn't need them.  For the most part that means exactly one: `on_new_entity` or `on_new_chunk`.
 
-The elephant in the room of course is that single-entity.lua does in fact apopear to be using callgbacks.  This is true, but that too is a trick.  In table-helpers.lua, a helper function called `nested_indexer` exists which knows how to chain metatables together.  By using this, we can write the function at the bottom of backends/simple.lua which is able to hide away the complexity of packing callbacks and other things that can't safely store into global behind metatable tricks.  The restrriction is that one must do all of this at the top level of the code so that it loads when control.lua does, not after.  This is fine for scanner, and indeed as can be seen in single-entity.lua works quite well.
+The elephant in the room of course is that single-entity.lua does in fact appear to be using callgbacks.  This is true, but that too is a trick.  In table-helpers.lua, a helper function called `nested_indexer` exists which knows how to chain metatables together.  By using this, we can write the function at the bottom of backends/simple.lua which is able to hide away the complexity of packing callbacks and other things that can't safely store into global behind metatable tricks.  The restriction is that one must do all of this at the top level of the code so that it loads when control.lua does, not after.  This is fine for scanner, and indeed as can be seen in single-entity.lua works quite well.
 
 The result of all of this is that one needs to know barely anything to add to it.  While Lua OOP isn't really friendly to new Lua users, copying code around and changing some strings is enough.
 
 The real complexity happens in two places plus some dependencies.  Here is an overview list.  We will not cover all of these in detail, because in many cases the code is commented with how to use the interface:
 
-- In data.lua, we use some tricks to use a not well documented feature to hook into creation of all entities regardless of how they are created.  This works "most of the time".
+- In data.lua, we use some tricks to use a not-well-documented feature to hook into creation of all entities regardless of how they are created.  This works "most of the time".
 - In surface-scanner.lua, we incrementally iterate over surfaces. to catch missed entities, process incoming new entities from the effect trigger in the above, and find and categorize new chunks.
 - In entrypoint.lua, we handle the extremely complicated cursor management, which is able to deal with invalidation of entries, and drive the actual refresh by asking surface-scanner what it can offer and filtering it down.
 - In ds/* we have a number of dependent data structures, two of which will be covered below.
@@ -66,7 +67,7 @@ The real complexity happens in two places plus some dependencies.  Here is an ov
 
 A backend has three responsibilities, spread amongst a few interface methods.  It must categorize features to expose, tell the scanner code how to announce said features, and know how to tell the scanner if a feature has sinhce become invalid.  To break this down:
 
-- `on_new_entity` and `on_new_chunk` get information on new entities and chunks.  As of this writing these are guaranteed to be new entities or newly generated chunks, but Space Age and 2.09 may necessitate changing this slightly.  That is TBD.
+- `on_new_entity` and `on_new_chunk` get information on new entities and chunks.  As of this writing, these are guaranteed to be new entities or newly generated chunks, but Space Age and 2.0 may necessitate changing this slightly.  That is TBD.
 - `dump_entries_to_callback` must call a callback with tables representing all entries.  This format is documented in entrypoint.llua as the type `fa.scanner.ScanEntry` with self-explanatory fields.
 - `readout_entry` must return a string, preferrably localised, which will announce the information.  The scanner itself handles positional information "2 west and 5 north".  For simple backends this is actually just `fa-info`.
 - `validate_entry` must return false when entries are no longer valid.  For example, water completelyu covered with landfill, no trees left in an area, or an invalid entity.
