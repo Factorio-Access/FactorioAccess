@@ -1,4 +1,18 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.15.0
+Date: 2024.10.19
+
+  Summary:
+    - The main highlight of this update is a full rewrite of the software of the scanner tool. 
+      It now incrementally scans in the background, which makes scan refreshes significantly faster, 
+      especially on larger maps. It also has smarter ways of grouping objects.
+
+    - IMPORTANT: If you upgrade into an existing save, the new scanner tool will need to set up 
+      for the first time. This will take around 1 minute before it starts returning results. 
+      This does not happen on newly created maps or on maps where the setup has already been done before. 
+      However, this might happen again after future updates that signficantly modify the new scanner tool.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.14.1
 Date: 2024.09.07
 
@@ -6,33 +20,6 @@ Date: 2024.09.07
     - This small update adds, re-adds, or improves minor features, such as player and vehicle 
       health and armor info, infinity pipe filter setting, basic game console access, 
       and mining drill drop chute position info.
-
-  Features:
-    - Infinity pipe filters can now be set using fluid barrels.
-      * With a fluid barrel in hand, select the infinity pipe and press `ALT + LEFT BRACKET` to 
-        set the relevant fluid.
-      * As a special case, an empty barrel is used to set extra hot steam at 500 degrees.
-      * If you press with an empty hand, the filter is cleared and the pipe becomes an infinite drain.
-
-    - Added limited support for console reading.
-      * When you press `GRAVE` or the relevant key, the console being opened is now reported.
-      * When a player enters a chat message, all players are informed about it live.
-      * The same as above happens for command messages.
-      * There is not yet support for chat history or for non-player console messages.
-
-  Changes:
-    - Changed the keybind to set entity filters from `CONTROL + LEFT BRACKET` to `ALT + LEFT BRACKET`. 
-      This applies for chests, inserters, splitters, etc.
-
-    - Improved health and armor stats reporting with the `G` key to now include vehicles and 
-      to check the menu context.
-      * When no menus are open, the mod reports only health and shield level info for your character.
-      * For most open menus such as the inventory, the full set of stats about player armor is reported.
-      * If the character is in a vehicle, or the vehicle's menu is open, then the name and full info 
-        for it is read instead.
-
-  Bugfixes:
-    - Re-added the reporting of a mining drill's drop chute position.
 
 ---------------------------------------------------------------------------------------------------
 Version: 0.14.0
@@ -43,163 +30,13 @@ Date: 2024.09.02
       smaller additions and changes regarding other areas such as vehicles, rails, and menu search.
       Some keybinds have changed regarding checking character health and vehicle features.
 
-  Features:
-    - Added extensive support for blueprint books.
-      * Press `CONTROL + SHIFT + ALT + B` to grab a new empty book in hand.
-      * With a book in hand and no other menus open, open the book's menu with `LEFT BRACKET`
-        to see the contents.
-      * In the list menu, press `LEFT BRACKET` to grab a temporary copy the selected blueprint 
-        into your hand and put the book away. 
-      * In the list menu, press `X` to delete the blueprint.
-      * From your inventory, with a book in hand, press `RIGHT BRACKET` on a blueprint to copy it
-        into the book's first empty slot.
-      * The list menu supports menu search.
-      * While books normally can hold other books or other planner types in their list slots, 
-        the mod for now supports only blueprints.
-      * There is no support yet for actions related to reordering the items within a book.
-      * Like with blueprints themselves, use `RIGHT BRACKET` to manage the book itself. 
-        This includes renaming, deleting, importing, and exporting.
-        NOTE that this is a different menu than `LEFT BRACKET`, which shows the blueprints in the book.
-      * Selecting a book in a player or building inventory slot now gives basic info about it.
-
-    - Added support for the `DELETE` key as a quick way to delete planner tools in hand.
-      * There is a confirmation check that requires you to press the key twice.
-
-    - Added full support for the guns inventory.
-      * The guns inventory is opened by pressing `R` while on the main character inventory tab.
-      * It has 3 gun slots in the first row and 3 ammo slots in the second row.
-      * Like with regular inventory slots, you can check the slot position with `K`,
-        get item description info with `Y`, logistic request info with `L`, and production info with `U`.
-      * You can also insert or remove or swap item stacks.
-      * The smart equip shortcut `SHIFT + LEFT BRACKET`, and the smart ammo reload shortcut `SHIFT + R`,
-        and the unequip-all-weapons shortcut `CONTROL + SHIFT + R` work for this menu too.
-
-    - Added new smart aiming feature for grenades and similar thrown items. 
-      * The similar items are: cluster grenades, poison capsules, slowdown capsules.
-      * It is now feasible to use your gun with `SPACE` while you run or drive around with `WASD`, while you 
-        select a capsule from the quickbar and safely smart throw it without much thought using `LEFT BRACKET`.
-      * The mod determines a minimum range based on the damage radius of the thrown item. This ensures that
-        you don't hit yourself. Every item also has its own maximum range. For example, grenades have minimum 
-        and maximum ranges of 7 and 15 tiles respectively. 
-      * The mod will try to smartly target things in this order: spawners and worms, enemy units and players, 
-        buildings and military targets, and finally the cursor position.
-      * If you are running or driving directly towards a potential target, it is skipped so that you do not 
-        run into the blast area.
-      * If you are running or driving directly away from a potential target, the item can be thrown a little 
-        closer behind you because it is assumed that you are leaving the blast area. Be careful and keep moving!
-
-    - Added information reporting for follower robot counts.
-      * You are allowed a limited number of defender or destroyer robots active at the same time,
-        as your follower robots. This does not apply to any other robots.
-      * The limit is now announced every time you deploy a defender or destroyer capsule.
-      * You can still deploy more when above the limit in order to refresh your robots, because
-        they also have timers that expire.
-      * The robots are now deployed at the character location, where they usually are most effective.
-        Then follower robots begin to circle you and distractor robots stay in place.
-
-    - Added menu search to the travel menu. This works the same as all other menus with search.
-
-    - Added circuit network support for regular rail signals.
-      * You can now read whether a train is present by checking for the red color signal.
-      * You can now apply an enabling condition for closing the signal.
-      * If you use a signal like this at a train station then you can block a moving train from entering or
-        exiting the area, although trains waiting at signals do not interact with inserters.
-
-    - Added support for setting the trains limit at train stops, as the bottom option in the train stop menu.
-      * Train limits are helpful for complex train networks by limiting how many trains are allowed to
-        head for a particular station.
-      * When the limit is reached at a station, other trains planning to go to it will wait for their turns
-        at their previous stations.
-      * The default case is no limit, which you can restore by inputting a negative number.
-
-    - Added support for rotating directional vehicles in hand.
-      * Cars and tanks rotate by 90 degrees at a time.
-      * Locomotives and artillery wagons rotate by 180 degrees at a time but snap to rails.
-      * Other wagons and vehicles are symmetric and so they do not support rotating.
-
-    - Added camera zoom controls from the keyboard.
-      * Set standard zoom: `ALT + Z`
-      * Set closest zoom: `SHIFT + ALT + Z`
-      * Set furthest zoom: `CONTROL + ALT + Z`
-
-  Changes:
-    - Changed keybinds for health checking and train wagon connecting.
-      * Press `G` to check character health and shields status.
-      * Press `SHIFT + G` to disconnect selected train wagons.
-      * Press `CONTROL + G` to connect selected train wagons.
-
-    - Honking a vehicle horn has been rebinded from `V` to `ALT + W`. Hence the walking mode cannot be toggled
-      while driving.
-
-    - Cars and tanks are stopped instantly when you press `WASD` while navigating in an open menu or in cursor mode.
-      * This does not apply for automatic driving with Kruise Kontrol Remote.
-      * They are reactivated when you press a movement key when all menus and cursor mode are closed.
-      * They are now also stopped as soon as you press `ENTER` to exit them or to cancel Kruise Kontrol.
-      * Trains are not affected by these changes. They still use `WASD` to move and `ARROW KEYS` for navigating 
-        the train menu.
-
-    - On a tile where several rails and possibly trains are overlapping, end rails now have priority for being
-      reported first.
-
-    - The travel menu can now be opened from inside a vehicle, but you cannot fast travel from inside.
-      Consider Kruise Kontrol Remote driving instead.
-
-    - Simplified how curved rail directions are described.
-      * For example it now says "rail curved east and northwest" which describes the two directions you can go 
-        from the center of this rail.
-
-    - Cursor skipping now stops when it crosses an audio ruler.
-      * You can also skip along a ruler to its center point.
-      * These long-intended additions will assist with the goal of reducing the need to count tiles.
-
-    - Improved circuit network gate support.
-      * Walls at the end of gates are where gate circuits are connected. They are now reported.
-      * Improved information about reading and operation modes.
-
-    - Entering a menu search term is now allowed from any menu, but the search still runs only in supported menus.
-
-    - Improved list reading for signals in a circuit network, or items in a logistic network, or items in a train.
-      * 5 items are listed at a time, and you press `LEFT BRACKET` to get 5 more items, until the end of the list.
-      * Rewind to the start by going up and down the menu again.
-
-  Bugfixes:
-    - Launcher: Fixed a crash when the mod-list.json file didn't exist.
-
-    - Fixed a bug where rotated temporary blueprints from the copy-paste feature would become permanent 
-      and sneak into the inventory.
-
-    - Added info in the mod about blueprint flipping not working. There are a couple fixes being discussed for this.
-
-    - Fixed a crash related to blueprint dimension checks.
-
-    - Fixed a long-existing graphics bug where icons representing menus would remain on screen or in the 
-      world after logging out and logging in.
-
-    - Fixed an issue so that the description can be read for an item in hand when no menus are open and 
-      no entities are selected.
-
-    - Fixed several bugs related to text input fields by creating a single function for creating text fields.
-
-    - Fixed a crash when trying to check rail item counts for blueprints.
-
-    - Fixed crashes when trying to locate planner tools in inventories or the crafting menu.
-
-    - Fixed a crash related to editing logistic requests from the crafting menu.
-
-    - Fixed some bugs relating to data type checks and other warnings made by LuaLS.
-
 ---------------------------------------------------------------------------------------------------
 Version: 0.13.1
 Date: 2024.08.13
 
   Summary:
-    - This is a quick update to fix a bug where pressing the research queue keys in other contexts would
-      incorrectly report info about the research queue.
-
-  Bugfixes:
-    - Fixed a bug where pressing the research queue keys in other contexts would incorrectly report info 
-      about the research queue.
-
+    - This is a quick update to fix a bug where pressing the research queue keys in other contexts 
+      would incorrectly report info about the research queue.
 
 ---------------------------------------------------------------------------------------------------
 Version: 0.13.0
@@ -211,116 +48,11 @@ Date: 2024.08.11
       developer @ahicks92. It also remaps some keys and improves nudging. There are other small 
       changes such as better ghost mining and better entity selection and some tutorial corrections 
       by @danielw97.
+
     - Note that Factorio Access is from now optionally dependent on Kruise Kontrol Remote while it 
       is no longer compatible with other versions of Kruise Kontrol, which players need to disable 
       or delete. Otherwise Factorio Access will not run.  This only applies if you are upgrading.
       New installs don't need to worry about it.
-
-  Features:
-    - Added a prototype version of the audio ruler system.
-      * Audio rulers are tools to help align the cursor without needing to count. 
-      * Press `CONTROL + ALT + B` to setup an audio ruler at the cursor position 
-        and press `ALT + SHIFT + B` to clear it.
-      * When you setup a point for audio rulers, straight ruler lines are extended in all 4 
-        cardinal directions from the point. 
-      * When the cursor lands on a ruler line it plays a sound note. 
-      * A different note is played when the cursor is placed 1 tile away from the ruler line.
-      * More features are being planned for audio rulers, such as cursor skipping or build 
-        lock being interrupted when crossing over them.
-
-    - New launcher features (v0.1.3)
-      * Fixed a bug relating to enabling and disabling sub menus. Specifically, sometimes cliffs 
-        would say they were disabled when in fact they were not.
-      * Added versioning so one can tell which version is running through the "About" menu, 
-        or the exe file property details.
-      * Fixed a bug that broke singleplayer preset descriptions.
-      * Info: First launcher app built using GitHub actions.
-
-    - Added basic support for research queues in the technology menu.
-      * If you select a researchable technology and press `SHIFT + LEFTBRACKET` then it is added to the start of the queue.
-      * Similarly, if you press `CONTROL + LEFTBRACKET` then it is added to the end of the queue.
-      * While there is a queue, if you select a new technology with only `LEFTBRACKET`, then the queue is cleared and this 
-        tech is selected for research by itself.
-      * From any menu, you can read the current research queue by pressing `ALT + Q`.
-      * From any menu, you can clear the current research queue by pressing `CONTROL + SHIFT + ALT + Q`.
-
-    - Added fast travel option to broadcast a travel point on your list.
-      * When you broadcast a point, every other player in your team (your force) will have a copy of that point added to their list.
-      * Added a small check to prevent broadcasting the same point twice in a row, but the check only remembers your last broadcast.
-      * Other than this small check, if other players already have this point, the repeated addition is not prevented.
-
-    - Added super ghost mining. Press `CONTROL + SHIFT + X` on a ghost to clear all ghosts within 100 tiles instead of
-      the default of 10 tiles.
-
-    - Furnaces when selected will now report how many output units they have ready for collection, if more than 0.
-
-  Changes:
-    - Greatly improved Kruise Kontrol functionality.
-      * Kruise Kontrol now works with only one press of the keybind 
-        (`CONTROL + ALT + RIGHT BRACKET`) and does not open remote view.
-      * The mod reports Kruise Kontrol state with full accuracy.
-      * All this is thanks to Factorio Access now using its own custom fork of Kruise Kontrol 
-        by our developer ahicks. It can be found on the mod portal as "Kruise Kontrol Remote".
-      * For those upgrading, Factorio Access is now optionally dependent on Kruise Kontrol Remote 
-        and is not compatible  with other versions of Kruise Kontrol, which players need to 
-        disable or delete. Otherwise Factorio Access will not run.
-
-    - Revised and improved mod controls relating to movement, cursor skipping, and nudging. 
-      The new scheme is:
-      * `WASD` to walk or to move the cursor by its own size in cursor mode (same as before).
-      * `SHIFT + WASD` to cursor skip according to changes on the ground (same as before).
-      * `CONTROL + WASD` to cursor skip by the length of the preview in hand (same as before).
-      * `CONTROL + SHIFT + WASD` unused for now (reserved for new stuff later).
-      * `ALT + WASD` for various individual shortcuts as before (`ALT + W` to toggle walking type, 
-        `ALT + D` to grab deconstruction planner, others reserved).
-      * `ALT + SHIFT + WASD` unused for now (reserved for new stuff later).
-      * `ALT + CONTROL + WASD` unused for now (reserved for new stuff later).
-      * `ARROW KEYS` to move the cursor by 1 tile for any size (as before).
-      * `SHIFT + ARROW KEYS` to nudge buildings by 1 tile (remapped).
-      * `CONTROL + ARROW KEYS` to nudge the character by 1 tile (new).
-      * `CONTROL + SHIFT + ARROW KEYS` unused for now (reserved for new stuff later).
-      * `ALT + LEFT / RIGHT` to quickly add 45 degree turns to end rails (remapped).
-      * `ALT + SHIFT + LEFT / RIGHT` to edit splitter input priorities (remapped).
-      * `ALT + CONTROL + LEFT / RIGHT` to edit splitter output priorities (remapped).
-      * `ALT + UP / DOWN` as alternatives for the scan list entry up and down (remapped).
-      * `ALT + SHIFT + UP / DOWN` as alternatives for the scan list selection up and down (remapped).
-      * `ALT + CONTROL + UP / DOWN` as alternatives for the scan list category up and down (remapped).
-      * `NUMPAD DIGITS` as alternatives to cursor skipping (new). This will later include diagonal directions.
-      * `SHIFT + NUMPAD DIGITS` unused because the operating system has special rules for 
-        keybinds with SHIFT and numpad digits.
-      * `CONTROL + NUMPAD DIGITS` as alternatives to cursor skip by preview length (new). 
-        This will later include diagonal directions.
-
-    - Clearing ghosts via area mining is no longer limited by the player reach. 
-      This applies to super ghost mining too.
-
-    - Cleaned up entity selection code so that it is more predictable and useful.
-      * Several entities such as flying robots or ore tiles are now considered as secondary entities 
-        and they will not be selected first when reading a tile. Other entities will count as primary entities.
-      * Tile cycling with `SHIFT + F` has been rewritten to go through primary entities first, 
-        secondary entities next, and the terrain itself last, before circling back to the start.
-      * Entity part reading when you press `K` now checks the currently selected entity instead of the topmost one.
-
-    - Fixed some spelling errors and links in the tutorial. Thank you @danielw97 on GitHub!
-
-    - Mod sounds now have categories so that they are modified according to the context. 
-      For example menu sounds should no longer be muffled in Remote View.
-
-  Bugfixes:
-    - Fixed a bug that caused rounding errors when entering in a new cursor position by typing.
-
-    - Fixed a crash that occurred when reading or writing logistic request info while waiting to respawn.
-
-    - Fixed several other crashes that occur when trying to do things while waiting to respawn.
-
-    - Fixed an information bug so that partially successful inventory transfers report partial success 
-      rather than falsely claiming the destination is full.
-
-  Info:
-    - Internal code changes
-      * Added a new global state management module and unique ID generation module.
-      * Named walking modes explicitly.
-      * The strings for KK are now localized.
 
 ---------------------------------------------------------------------------------------------------
 Version: 0.12.3
@@ -329,16 +61,6 @@ Date: 2024.07.04
   Summary:
     - This is another quick patch update that fixes a crash introduced in 0.12.1 and some older bugs.
 
-  Bugfixes:
-    - Fixed a crash due to trying to read filter slots of buildings that do not support inventory filtering.
-
-    - Fixed a crash when reading blueprints inside chests due to relying on incomplete data about their dimensions.
-
-    - Fixed a typo when reading logistic network names.
-
-    - Fixed a tutorial reader bug that was not reading the last step of the last chapter.
-
-
 ---------------------------------------------------------------------------------------------------
 Version: 0.12.2
 Date: 2024.07.02
@@ -346,10 +68,6 @@ Date: 2024.07.02
   Summary:
     - This is a quick patch update that fixes an old menu switching bug that affected 
       both menu search, and the recently added inventory slot filter setting.
-
-  Bugfixes:
-    - Fixed an old bug in forward menu switching that was breaking menu search 
-      and inventory slot filter setting by passing these features the incorrect inventories.
 
 ---------------------------------------------------------------------------------------------------
 Version: 0.12.1
@@ -360,135 +78,15 @@ Date: 2024.07.02
       inventory slots. It also allows automating rocket silo launches and tunes the rail crossing alert. 
       Finally, it fixes a launcher bug that makes the game freeze after configuring it successfully.
 
-  Features:
-    - Added support for reading and setting item filters for slots in the player inventory 
-      and in vehicle cargo inventories.
-      * Press ALT + LEFT BRACKET to set or unset the item filter for the selected inventory slot. 
-      * When setting the filter, the mod prefers to use the item that is in the slot. 
-      * Otherwise, it uses the item in hand. 
-      * If the slot is empty and the hand is empty, then no actions are taken, 
-        but in the future there will be support added for using the filter selector menu here.
-      * If any filter is already set, pressing the keybind will unset it, regardless of the item 
-        in hand or in the slot.
-
-    - Added support for toggling whether rocket silos launch automatically when the rocket is ready 
-      and any cargo has been added.
-      * Press "SHIFT + SPACE" or press "CONTROL + SPACE" to toggle this.
-
-    - Added support for checking character shield and health levels, by pressing "ALT + RIGHT BRACKET".
-
-  Changes:
-    - Modified the activation of the rail crossing alert.
-      * The alert now only checks for the player position and not the cursor position.
-      * The alert now also accounts for when the player is driving a car or tank across rails.
-
-  Bugfixes:
-    - Fixed a launcher bug that made the game freeze after successfully generating the config file 
-      when it is launched for the first time.
-
-    - Fixed a recently introduced crash of the blueprint menu.
-
 ---------------------------------------------------------------------------------------------------
 Version: 0.12.0
 Date: 2024.06.28
 
   Summary:
-    - After a detailed write-up by @ahicks and several community discussions, this update covers many topics. 
-      Most significantly, it adds support for the copy paste tool. Among other things, it enhances 
-      cursor skipping and improves building functions and various info tools. The update also fixes several crashes and bugs.
-
-  Features:
-    - Added support for the copy-paste tool, which is activated with `CONTROL + C`.
-      * If you select an area with the copy-paste tool, you get a nameless temporary blueprint that 
-        is deleted when you let go of it, unless you add a name or description to it.
-      * Selecting nothing will keep the blank copy tool in hand.
-      * If you press `CONTROL + V` you can get back the last temporary blueprint into hand.
-      * This system uses the player clipboard so if you `hold SHIFT and scroll the mouse wheel` it 
-        will load older or newer clipboard blueprints but detailed info about this is not supported.
-      * A temporary blueprint in hand can become permanent if you add a name or description to it.
-
-    - You can now set the filters of infinity chests. Like for splitters, you do this by taking 
-      the set item in hand and pressing CONTROL + LEFT BRACKET.
-
-    - Added a new type of curser jumping called "move by preview size".
-      * When you have a blueprint or building preview in hand, press `CONTROL + W/A/S/D` to jump by the respective preview size.
-      * If the hand is empty or does not have a preview, then the jump is equal to the cursor size.
-
-  Changes:
-    - Changed two keybinds:
-      * Toggling the walking mode is now done with `ALT + W` instead of `CONTROL + W`.
-      * Structure travel is now activated using `ALT + CONTROL + SHIFT + S`. 
-
-    - Launcher changes:
-      * Cliffs can now be disabled properly.
-      * Lots of progress made under the hood towards better mod support.
-
-    - Revised the opening and closing behavior of remote view to make it properly act as an extension of cursor mode:
-      * Whether you open or close cursor mode or remote view, the selected tile is read.
-      * Opening cursor mode has no effect on remote view, because it is an additional system.
-      * Opening remote view always opens cursor mode, because it is a dependency, and keeps the cursor in place.
-      * Closing remote view restores the usual cursor mode, and keeps the cursor in place.
-      * Closing cursor mode returns the cursor to the player and forces the closing of remote view, which depends on cursor mode.
-
-    - Improved accuracy of transport belt carried item assumptions such that the word "assumed" can be dropped.
-
-    - Full transport belt lanes are no longer assumed to be stopped, since the mod cannot really tell whether a full belt is stopped or moving.
-
-    - Tweaked later chapters of the tutorial thanks to community feedback.
-
-    - Reading tutorial step summaries now also includes the current step and chapter count at the end.
-
-    - Cursor skipping now ignores flying robots and remnants such as tree stumps and destroyed objects.
-
-    - When an obstacle prevents building, it position is now revealed too along with its name.
-
-    - When simple obstacles such as trees and rocks are preventing you from placing a blueprint, 
-      nearby ones are mined and now also the far away ones get marked for deconstruction, which allows placing ghosts over them.
-
-    - When build lock is enabled, building over the player no longer teleports the player out of the way, and plays an extra alert beep instead.
-
-    - Any case of building over a player who is walking no longer teleports them out of the way.
-
-    - A player inventory opened from inside a building can now be searched. 
-      Note that this has bug such that searching other menus after this requires re-opening the building's menu.
-
-    - Pipes and storage tanks now report their fluid counts immediately when selected, rounded to the nearest whole number.
-
-    - Flying text in multiplayer now has a shorter range so that you need to be standing within 10 tiles of someone else to hear their flying text.
-
-    - Improved item production stats info so that it also mentions consumption counts.
-
-    - Modified teleporting restrictions such that you can now teleport as close as 1 tile away.
-
-    - Improved the descriptions of some items like planner tools.
-
-    - Code cleanup.
-      * Created some new Lua modules to help empty out "control.lua".
-      * Remove deprecated & redundant jump-to-scan feature since the scan list does this automatically now.
-      * Improved comments about many of the shape drawing functions.
-      * The information for contributors document has been moved to a wiki page.
-      * Moved some data stage modifications to a later part of the stage.
-
-  Bugfixes:
-    - Fixed an old crash while sorting the scan list without running a new scan. The game now forces a rescan if anything on the last is invalid.
-
-    - Fixed a bug where selecting an entity from the scan list would land the cursor slightly outside of the entity's covered area.
-
-    - Fixed a crash while selecting a new instance of the same scan list entry.
-
-    - Fixed a server mode crash due to failed localizations.
-
-    - Fixed a crash when reading technology descriptions when there are too many rewards for localization to handle.
-
-    - Fixed cursor skip failing to distinguish between connected ore patches.
-
-    - Fixed missing sounds to indicate wrapping around the edge of a recipe list or a player inventory opened from within a building menu.
-
-    - Fixed a Kruise Kontrol prediction crash related to rail ghosts.
-
-    - Fixed a bug that made temporary items such as empty blueprints leak into the inventory when swapping stacks around.
-
-    - Corrected the cursor to jump to the player when they respawn.
+    - After a detailed write-up by @ahicks and several community discussions, this update covers 
+      many topics. Most significantly, it adds support for the copy paste tool. Among other things, 
+      it enhances cursor skipping and improves building functions and various info tools. The update
+      also fixes several crashes and bugs.
 
 ---------------------------------------------------------------------------------------------------
 Version: 0.11.2
@@ -499,80 +97,6 @@ Date: 2024.05.17
       based on recent feedback, with special thanks this week to @ahicks. Improvements include 
       better info and controls regarding personal logistics, rail signals, the scanner list, 
       and the Kruise Kontrol feature.
-
-  Features:
-    - Added inserter hand stack size tuning from their menus.
-      * Press PAGEUP or PAGEDOWN to edit
-      * Alternative controls: ALT + UP/DOWN
-      * Setting it to 0 restores the default (maximum available) value.
-
-    - Added freeform placement of rail signals next to straight rails.
-      * Like in vanilla gameplay, you can now drop a rail signal at a candidate position next to a straight rail and it will automatically rotate itself.
-      * The rule is that the signal should always be on the right hand side with respect to the direction of travel along the rail.
-      * Preview checks have been added as well.
-      * Disconnected rail signals will now also report that they are not working.
-
-    - Added diagonal rail fork building options to the rail builder.
-      * Also extended the lengths of the forward exit segments built for cardinal direction rail forks.
-
-    - The player logistic info summary now lists how many unfulfilled requests you have and what the missing items are.
-
-    - For a selected item, its logistic request slot can now be entirely cleared by pressing "CONTROL + SHIFT + ALT + L".
-
-  Changes:
-    - Personal logistic requests can now be edited from the crafting menu, so you no longer need to have the items on hand.
-      * The first item product of each recipe is selected.
-      * The few items that you cannot craft by hand are missing, but this tweak is intended as a temporary Q.O.L. improvement until we build a dedicated logistics requests menu.
-
-    - Distance and direction and alignment checks have been revised.
-      * The algorithm to check alignment has been simplified: All positions are floored to the northwest corner of the respective tile.
-      * An entity reported by the scan list now reports the cursor position at the northwest corner rather than the entity's center position. Therefore alignment using the scan list considers the northwest corner.
-      * Cursor distance and direction vectors now use the same calculations as the alignment checks to ensure that they agree.
-
-    - The scan list categories have been expanded.
-      * There are now three types of buildings: logistics buildings, production buildings, and other buildings. The categories match the vanilla groupings of the buildings.
-      * Train stops are still listed along with vehicles, as an exception for the sake of convenience.
-      * A category for ghosts has been added.
-
-    - The scan list, as an exception, selects curved rails from the center instead of the northwest corner.
-      * This is done because usually the northwest corner of a curved rail's rectangle is a few tiles away from it.
-
-    - Kruise Kontrol status prediction has been significantly improved.
-      * Factorio Access now use identical checks as Kruise Kontrol to predict what the initial state will be when the feature is activated.
-      * Factorio Access is now better able to predict whether KK has arrived at a walking or driving destination, or has finished building related tasks.
-      * In general, though, if the character seems to be doing nothing during KK, we recommend pressing "ENTER" to cancel it and re-sync the mods.
-
-    - Kruise Kontrol can now be activated without opening Remote View if the target location is not distant.
-      * This also makes its behavior more predictable.
-
-    - Revised sub-automatic train travel to make it easier to use.
-      * Setting this now makes the train head directly to the temporary station and switch to manual control upon arriving and instantly removing the temporary station.
-      * Therefore you can set a train back to automatic after you arrive and let it resume its schedule with minimal fuss.
-
-    - Cursor skipping now reacts to entering and exiting an area with water.
-
-    - Improved reporting of the top item contents of trains and logistic networks.
-      * Large numbers are simplified, such as numbers greater than 10 thousand being floored to the nearest thousand.
-      * The top 10 items are listed instead of top 3 or 5.
-
-    - Every mod menu now says its name after you open it, making it easier to follow along.
-      * Most menus did this already, but it was added for those left over: fast travel, structure travel, rail builder, warnings.
-
-    - Added information to notify that pressing "ALT + L" toggles personal logistic requests.
-      * This is a vanilla game feature that applies in any menu.
-
-    - Added information to notify that a spidertron can only be driven manually during smooth walking mode.
-
-  Bugfixes:
-    - Fixed a bug that made teleporting to a ghost delete that ghost.
-
-    - Fixed a crash due to opening the inventory while still waiting to respawn.
-
-    - Fixed a bug that prevented info reports about tile pavement previews.
-
-    - Fixed some crashes related to the unfinished ghost rail planner support feature.
-
-    - Fixed electric poles reporting supplied buildings incorrectly because the reports were also counting flying robots.
 
 ---------------------------------------------------------------------------------------------------
 Version: 0.11.1
@@ -585,78 +109,6 @@ Date: 2024.05.13
       fast travel, and the rail builder. While a fair amount of testing has been done, new bugs may 
       still emerge due to the refactor.
 
-  Info:
-    - The second part of the refactoring into modules was completed.
-      * Files with multiple modules in them were split so that every module has one file and vice versa.
-      * Any Lua module being referenced within its own file is now called "mod" for brevity and simplicity. 
-      * All Lua modules related to the runtime stage were moved to a "scripts" folder, matching modding conventions.
-      * Cleaned up several todo comments.
-      * More refactor work is needed later, to further clean up "control.lua".
-
-    - Started using the GitHub Issues system to track all issues and some feature requests. The Discord channels will still be open for use but the goal is to log everything on GitHub.
-
-    - Added a document that provides info for contributors, as a starting point for explaining how the mod code works.
-
-    - Moved to using StyLua to standardize code formatting. It needs to be run after you finish making changes. GitHUb actions were added so that every commit is now checked for StyLua compliance.
-
-    - A new menu system and other code infrastructure is being designed by @ahicks. It is being tested right now for circuit networks code and may be applied to the rest of the codebase later so that more flexible and useful menu designs can be supported later on.
-
-  Features:
-    - The rail builder now supports adding left forks and right forks, giving a total of 4 possible forks.
-
-    - Launcher: Added braille display support so that mod readouts are also written to the displays.
-
-  Changes:
-    - When reading the relative direction of the cursor or a scan list entry, if it is fully aligned in that cardinal or diagonal direction, the game will now also read out "aligned".
-
-    - Checking for the nearest damaged entity will now also jump the cursor to the entity, making it easier to target it.
-
-    - Items in hand can now have their logistic requests edited while the trash menu is open.
-      * You can now also check the request info for an item in a slot of the trash inventory, but you need to take it in hand to edit its requests. This is good because editing the requests for an item might have it automatically flushed out of the trash inventory without warning.
-
-    - Closing the fast travel menu no longer returns the cursor to the player, and the cursor being jumped to a point when it is selected is now stated openly.
-
-    - Tweaked the early tutorial chapters to improve clarity. Notably, added reminders to empty the hand, and switched to using chests instead of pipes as reference points for placing burner inserters.
-
-    - Improved integration for the mod Kruise Kontrol, by Klonan.
-      * KK actions will now be possible while in telestep mode.
-      * Pressing any walking key will no longer cancel KK actions because this was not working correctly. You must press "ENTER" to cancel actions.
-
-    - Added a system for independently predicting and reporting the Kruise Kontrol status. 
-      * The status checks what was targeted to initiate Kruise Kontrol and is updated accordingly.
-      * The status is reported regularly, although this report is often interrupted by cursor readouts.
-      * If the status was walking and the player has reached the destination and has not moved for 1 second, then the status automatically is assumed to be arrived.
-      * For other cases, the status reporting is finished only when you cancel Kruise Kontrol by pressing "Enter", because there may be ongoing actions despite the player standing still at the target location.
-
-    - Bumping into objects no longer makes an alert beep but you still hear the sound of a striking metal boot or sliding gravel.
-
-    - Improved info about saving times. The mod suggests waiting 3 seconds although generally it takes less than 1 second.
-
-    - Launcher: Improved command line parameter handling.
-
-  Bugfixes:
-    - Fixed a locale error about teleporting the cursor.
-
-    - Fixed lab module slots being incorrectly labelled as reserved for science packs.
-
-    - Fixed an issue with the handling of the undocumented direction number 8, which represents "here". It is read out as an empty string.
-
-    - Fixed a crash due to loading a cursor bookmark before having set any.
-
-    - Fixed a crash when using area mining to clear rail objects including signals.
-
-    - Fixed footstep sounds being wrongly played while navigating through menus.
-
-    - Fixed several bugs that were placing the mouse pointer incorrectly while in Remote View, and so interfering with Kruise Kontrol.
-
-    - Fixed a crash that occurs while rotating buildings.
-
-    - Fixed some invalid keybinds.
-
-    - Re-fixed the playing of multiple mining sounds while mining a resource.
-
-    - Fixed some mod features interfering with vanilla mode.
-
 ---------------------------------------------------------------------------------------------------
 Version: 0.11.0
 Date: 2024.04.27
@@ -664,34 +116,9 @@ Date: 2024.04.27
   Summary:
     - This update is mostly about changes under the hood while the mod codebase is being refactored 
       so that the code is easier to follow and maintain, for contributors both new and old. 
-      The update also includes some bug fixes and small improvements, but the refactor has caused new bugs. 
-      Extensive testing is needed to find and fix the new bugs. Therefore this release is labeled 
-      as "experimental" and is recommended only to players who are interested in bug hunting.
-
-  Info:
-    - Started to significantly refactor the mod codebase, with huge help from @eph and @ahicks.
-      * The aim is to make the code easier to follow and maintain, for contributors both new and old.
-      * Improved the explanations of functions, and renamed several of them to more accurate or concise names.
-      * Moved most functions into Lua modules that have their own lua files and are required by other files as local objects, as per best practices. This makes it easier to examine independent modules and their dependencies.
-      * Added "fa-info-for-contributors.md" as an introductory resource for contributors. 
-      * Fixed several IDE warnings.
-      * Further work is underway for simplifying event handlers and other functions inside "control.lua" by moving their contents into smaller functions inside appropriate modules.
-      * The refactor introduced some new bugs, and many of them have been found and fixed. However, further testing is needed so that other bugs can be found and/or fixed.
-
-  Features:
-    - None.
-
-  Changes:
-    - Color info was added to descriptions of electronic chips and transport belts, because the colors are commonly used by the community to distinguish them.
-
-    - Added alternate keybinds for increasing and decreasing chest locked slots and train wait times: You can use "ALT + UP" / "ALT + DOWN" instead of "PAGE UP" / "PAGE DOWN". You can also use "SHIFT"/"CONTROL" and "UP"/"DOWN" instead of "SHIFT"/"CONTROL" and "PAGE UP"/"PAGE DOWN".
-
-  Bugfixes:
-    - Fixed a stray textbox bug that softlocks the game. Closing any menu should now remove stray GUI elements such as these textboxes. Also, pressing ENTER to confirm these textboxes now closes them too.
-
-    - Pressing "RIGHT BRACKET" on a blueprint in the inventory now does nothing instead of deleting it.
-
-    - Train menu: Fixed an updating issue with the single time travel feature so that it resets correctly.
+      The update also includes some bug fixes and small improvements, but the refactor has caused 
+      new bugs. Extensive testing is needed to find and fix the new bugs. Therefore this release is 
+      labeled as "experimental" and is recommended only to players who are interested in bug hunting.
 
 ---------------------------------------------------------------------------------------------------
 Version: 0.10.1
@@ -704,68 +131,6 @@ Date: 2024.04.13
       The update itself includes tweaks, additions, and bugfixes across the board thanks to 
       community feedback. Notably, several blueprint bugs have been fixed and Remote View has been added.
 
-  Info:
-    - The mod's GitHub repository has been moved to a new address to make contributions easier: https://github.com/Factorio-Access/FactorioAccess. Hyperlinks to it have been automatically updated.
-
-    - The mod's wiki has been moved to this address as well, and hyperlinks to it have been updated manually. You may need to update your own wiki related browser bookmarks.
-
-    - The mod has now been officially added to the Factorio Mod Portal, but please note that downloading and installing it from the portal does not make it playable. You still need to use the mod launcher for vocalization and also making game configuration changes to accommodate this mod. Therefore please use the GitHub releases page and follow the install instructions.
-
-    - Release folder contents now include mod dependency info and a mod portal compatible changelog, which is what prompted formatting changes for the main changelog.
-
-    - Settings for configuring other mods are now updated using data stage code, as it should be. Meanwhile, the feature for in-game settings changing is still being worked on.
-
-  Features:
-    - Added Remote View, which is when the camera and microphone focuses on the player's cursor instead of the player's character. Press "ALT + I" to toggle it.
-      * Press arrow keys to move the cursor in remote view. Do not use the "W" "A" "S" "D" keys because this makes the camera pan too fast in a way we cannot control.
-      * This view allows focusing on distant locations, although blurred or uncharted areas offer limited info and no sounds. You need to keep them fully loaded using radars.
-      * Remote view automatically opens and closes Cursor Mode along with itself.
-      * For now, most sounds are muffled in remote view, but this will be fixed. 
-
-    - Added basic support for the Kruise Kontrol mod, which allows automatic walking to the cursor location.
-      * Press "CONTROL + ALT + RIGHT BRACKET" twice, to first open the cursor location in remote view, and then to instruct an action.
-      * Usually the action is to walk or drive to that spot. Special cases include selecting a resource to start mining it, selecting a ghost to start building them, selected a descontruction marked building to start removing them, selecting trees to start chopping them, and selecting enemies to start fighting them.
-      * Press "ENTER" to cancel ongoing actions. Some actions may be unclear at times so this is recommended if things are taking to long.
-      * The character cuts trees along their automatic walking paths.
-
-    - The pollution level at the cursor position can now be read, by pressing "SHIFT + U". Note that "high" pollution is usually when trees start taking pollution damage. Other than that, the most important thing to track regarding pollution is how heavily polluted enemy spawners are, which can be checked with the scanner tool.
-
-    - The scanner can now locate the nearest damaged entity of the player's own team, by pressing "SHIFT + P". This has a range limit of 1000 tiles.
-
-  Changes:
-    - Launcher: Changed the description of the Compass Valley preset to make it more beginner friendly.
-
-    - Cursor area scanning now reports coverage percentages only for ground tiles. It also notes whether there are other things in the area after listing the first 4 things.
-
-    - Cursor area scanning now updates the scan result list properly so that the list can be used to examine in detail what is within the area.
-
-    - Cursor size options now include 51 by 51.
-
-    - Minor revisions were made in some tutorial steps for clarity.
-
-    - Checking technology info now also reads the localised description of the technology. Technology required ingredient names have been localised too.
-
-    - You can now teleport from the structure travel menu as well.
-
-    - Alternate controls for SCAN-UP and SCAN-DOWN have been changed to "ALT + UP" and "ALT + DOWN". The main controls are still "PAGEUP" and "PAGEDOWN".
-
-  Bugfixes:
-    - Fixed a mod initialization crash that was preventing it from running on dedicated servers.
-
-    - Removed deprecated cursor release keybind, which was interfering with rail analysis.
-
-    - Fixed the incorrect reporting of blueprint dimensions from inside the blueprint menu.
-
-    - Fixed a crash during the re-selection of blueprints with no names or descriptions.
-
-    - Fixed a crash during the reading of blueprints with invalid items or icons in them, such as old science pack versions.
-
-    - Fixed the ambiguity about the "electronics" technology having no direct unlocks.
-
-    - Fixed the input for locking 5 inventory slots of chests.
-
-    - Fixed some mod menu typos.
-
 ---------------------------------------------------------------------------------------------------
 Version: 0.10.0
 Date: 2024.04.06
@@ -776,74 +141,6 @@ Date: 2024.04.06
       to get in touch about issues or suggestions. The update also has some launcher improvements 
       such as mod management, as well as small additions and changes to improve the early game, 
       and some changes thanks to community feedback.
+
     - Note: Earlier changelog entries use a different format and thus are not automatically loaded.
 
-  Features:
-    - The tutorial has been rewritten, doubling in length. The game should now be more accessible to new players.
-      * There are now 12 chapters covering everything up to producing logistic science packs, and general tips chapter at the end.
-      * There is a total of over 300 steps in total, with generally only 1 or 2 instructions per step.
-      * Recently added features such as blueprints, cursor skipping, and steam engine snapping have been included.
-      * If you had started the tutorial before this update, jumping back to its start is recommended so that you can reset to the new version and then skip doing the steps that you have already covered. You can jumping back to the start by pressing "ALT + SHIFT + H" a few times.
-      * The tutorial needs further testing and will continue to receive minor tweaks. Experienced players are invited to give it a try as well, for review assistance.
-
-    - New launcher version, with the following additions and changes:
-      * Added a mod management menu, for other mods. You can now enable or disable other mods here so that you no longer need to delete a mod to remove it.
-      * Saving the game now plays beeps at the start and end of it, instead of speaking a message that interrupts other speech.
-      * The launcher now loads much faster.
-      * Fixed a bug so that a missing translation key returns English text instead of an error.
-
-    - Added steam engine snapped building.
-      * Press "CONTROL + LEFT BRACKET" with a steam engine in hand to try automatically building a correctly positioned steam engine next to the first free boiler found within 25 tiles.
-      * Mainly added because when you first need steam engines in the first hours of the game you are still new to building.
-      * Does not snap to anything else.
-      * You still need to clear the building area manually, inlcuding stepping out of the way.
-
-    - You can now read the cursor position distance as a vector from the character position by pressing "ALT + K".
-      * This reports the vertical and horizontal distances separately, without giving an average compass direction.
-      * This information is useful for building belts and pipes because you'll get the exact distances to cover since they cannot connect to each other diagonally.
-
-    - A selected fluid in a building can now be permanently flushed away by pressing "X".
-
-  Changes:
-    - Autosaving now makes two click sounds in the background to signal its start and end, instead of interrupting speech output.
-
-    - Reading a tile now also comments about its visibility information.
-      * An uncharted tile is labelled as so. You cannot know what is there and it might not even be generated yet.
-      * A charted tile that is more than about 100 tiles away from the nearest player or powered radar is blurred by the game, and it is now also labelled as so. A blurred area has minimal information about what is happening there and produces no sounds even though machines continue to work and enemies continue to move. Tile blurring affects some but not all remote interactions, and sighted players prefer to spread radars around to keep most factory areas continuously visible.
-      * For a camera centered on the player, which is the default case, a tile that is outside the camera view is outside the rendered screen area and is now labelled as "distant". This affects some actions involving remote controls, although we have tried to minimize the dependency on doing things on screen. You can use the mouse wheel to zoom in and out, which changes camera coverage.
-
-    - The tutorial now gifts one stack of coal as part of your emergency supply kit that is already provided at the start of the game. This is important for teaching game mechanics in a clean order. This gift switched from rocket fuel to coal in order to simplify the process and not offer a significant advantage.
-
-    - Steam engine direction reporting now says "north and south", or "east and west", to acknowledge that the building is symmetrical.
-
-    - A selected water tile is now labelled as "open" or "shore" or "crevice", depending on the arrangement of other water tiles around it.
-
-    - A pipe end is now identified as a special case where a pipe has less than 2 connections. This is worth noting because it means the pipe does not lead to anything.
-
-    - Pipe ends are now distinguished from other pipes in the scanner list.
-
-    - Pipes and storage tanks are now distinguished in the scanner list by the fluid contained.
-
-    - Storage tanks are now categorized as containers in the scanner list.
-
-    - When you successfully build a pipe to ground unit, the building direction in hand is flipped 180 degrees so that the other end can be built quickly.
-
-    - The pipe to ground building preview now also reports information about the above ground connection preview.
-
-    - Removed unnecessary repetition of "per cycle" when listing recipe ingredients.
-
-    - Checking the status of an enemy spawner now reveals the enemy evolution factor.
-
-    - Tweaked names of curved rail and diagonal rail directions to improve clarity.
-
-    - Removed the default descriptions from science packs and modules so that the mod's custom descriptions would apply.
-
-  Bugfixes:
-    - Fixed incorrect reporting of player weapons when you switch a vehicle weapon.
-      * Note: Reading out the correct vehicle weapon has not been added yet.
-
-    - If the pipe to ground preview finds multiple successful underground connections, the closest one is now taken, which is the correct case.
-
-    - Fixed a localisation error for when you start crafting a recipe.
-
-    - Fixed self-interrupting reminders at the start of the game.
