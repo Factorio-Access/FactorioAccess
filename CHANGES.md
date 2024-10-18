@@ -1,36 +1,45 @@
 # Version 0.15.0 BETA
-Released on ___
+Released on October 19th, 2024.
 
 ## Summary
-- The main highlight of this update is a rewritten scanner which incrementally scans in the background.  Scan refreshes of large saves should now be significantly faster.
-- IMPORTANT: If you upgrade into an existing save, the new scanner implementation will take some time (around 1 minute) to begin returning results.
-- IMPORTANT: the new scanner can only track resource patches if present from the beginning of a save.  If you have mined a patch such that it is now two separate clusters, new scanner will think they are separate patches.
-- IMPORTANT: moving forward, releases with scanner changes may take some time to report results.
+- The main highlight of this update is a full rewrite of the software of the scanner tool. It now incrementally scans in the background, which makes scan refreshes significantly faster, especially on larger maps. It also has smarter ways of grouping objects.
+
+- IMPORTANT: If you upgrade into an existing save, the new scanner tool will need to set up for the first time. This will take around 1 minute before it starts returning results. This does not happen on newly created maps or on maps where the setup has already been done before. However, this might happen again after future updates that signficantly modify the new scanner tool.
 
 ## Features
+- Rewritten scanner tool:
+  * It works much faster on large maps compared to the old tool. It does this by incermentally scanning in the background.
+  * The amount of resources in a patch is now announced.
+  * Note: The scanner defines individual resource patches during its setup phase. If you have mined a patch such that it is now two separate clusters, new scanner during setup will think they are separate patches.
+  * A group of oil wells is now coalesced into a single oil field patch if it is far away.
+  * When describing forests, the new scanner gives exact tree counts instead of descriptors like "dense" or "sparse".
+  * The dimensions of water bodies are now more accurately tracked and announced.
+  * The scanner now reports information like the cursor does, rather than using a shortened form.
+  * Trains are now grouped such that every entry is a different train rather than a different wagon type.
+  * Scanner categorization of idle furnaces is now more accurate.  The recipe is inferred from the furnace output, if present.
 
-- New scanner:
-  * This is faster on large saves.
-  * The amount of resources in a patch is now announced
-  * Oil wells are now coalesced into an oil field patch if far away.
-  * Rather than using "dense forest", the scanner now announces the number of trees, "trees x 15".
-  * The dimensions of water are more accurately tracked and announced.
-  * The scanner now provides information as if you were using the cursor, rather than a shortened form.
-  * Trains now group all the cars for one train together, rather than grouping by car type.
-  * Scanner categorization of furnaces which aren't currently functioning is more accurate.  The recipe is inferred from the output, if present.
-- Summaries under larger cursor sizes are now lag-free
-- When placing rail signals incorrectly, we now report "can't divide segments" rather than claiming they are open (both are true at the same time, but the train system will treat it like it doesn't exist)
-- Long-since deprecated Structure travel has been dropped.
-- Sorting scan results by count has been dropped.  Depending on demand, this may be reintroduced.
-- Modded accumulators are now supported.
-- Modded infinite resources are now supported.
+- The mod now catches and prevents the invalid placement of rail signals at problematic points along rail forks. In such cases it reports "can't divide segments".
+
+- Modded accumulators are now supported, by reporting the relevant information.
+
+- Modded infinite resources are now supported, by reporting the relevant information.
+
+## Changes
+- Area scan summaries under larger cursor sizes are now lag-free.
+
+- The long-ago deprecated feature of structure travel has been fully removed.
+
+- Sorting scan results by count has been dropped. Depending on demand, this may be reintroduced.
 
 ## Bugfixes
+- Fixed the accidental reporting that slot filters not being supported when a splitter filter is being set.
 
-- No longer report that we don't support slot filters when setting the filter of a splitter.
-- Don't crash when doing a menu search with special non-alphanumeric characters.
-- Don't falsely report that pumpjacks and other modded entities outputting fluids have a drop position.
-- Rulers don't also move bookmarks.  These are now separate as intended.
+- Fixed a crash when doing a menu search with special non-alphanumeric characters.
+
+- Fixed falsely reporting that pumpjacks and other modded entities outputting fluids have a drop position.
+
+- Audio rulers no longer move bookmarks along with them. These are now separate as intended.
+
 
 # Version 0.14.1 BETA
 Released on September 7th, 2024.
