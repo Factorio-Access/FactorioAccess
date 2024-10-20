@@ -1575,88 +1575,20 @@ function mod.snap_place_steam_engine_to_a_boiler(pindex)
    end
 end
 
---Identifies if a pipe is a pipe end, so that it can be singled out. The motivation is that pipe ends generally should not exist because the pipes should connect to something. Laterdo review
-function mod.is_a_pipe_end(ent, pindex)
-   local p = game.get_player(pindex)
-   local pos = players[pindex].cursor_pos
-   local ents_north = p.surface.find_entities_filtered({ position = { x = pos.x + 0, y = pos.y - 1 } })
-   local ents_south = p.surface.find_entities_filtered({ position = { x = pos.x + 0, y = pos.y + 1 } })
-   local ents_east = p.surface.find_entities_filtered({ position = { x = pos.x + 1, y = pos.y + 0 } })
-   local ents_west = p.surface.find_entities_filtered({ position = { x = pos.x - 1, y = pos.y + 0 } })
-   local relevant_fluid_north = nil
-   local relevant_fluid_east = nil
-   local relevant_fluid_south = nil
-   local relevant_fluid_west = nil
-   local box = nil
-   local dir_from_pos = nil
-   local total_ent_count = 0
-
-   local north_ent = nil
-   local north_count = 0
-   for i, ent_cand in ipairs(ents_north) do
-      if ent_cand.valid and ent_cand.fluidbox ~= nil then
-         north_ent = ent_cand
-         total_ent_count = total_ent_count + 1
-         if ent_cand.type == "pipe" or (ent_cand.type == "pipe-to-ground" and ent_cand.direction == dirs.north) then
-            north_count = 1
-            total_ent_count = total_ent_count - 1
-         end
-      end
-   end
-   local south_ent = nil
-   local south_count = 0
-   for i, ent_cand in ipairs(ents_south) do
-      if ent_cand.valid and ent_cand.fluidbox ~= nil then
-         south_ent = ent_cand
-         total_ent_count = total_ent_count + 1
-         if ent_cand.type == "pipe" or (ent_cand.type == "pipe-to-ground" and ent_cand.direction == dirs.south) then
-            south_count = 1
-            total_ent_count = total_ent_count - 1
-         end
-      end
-   end
-   local east_ent = nil
-   local east_count = 0
-   for i, ent_cand in ipairs(ents_east) do
-      if ent_cand.valid and ent_cand.fluidbox ~= nil then
-         east_ent = ent_cand
-         total_ent_count = total_ent_count + 1
-         if ent_cand.type == "pipe" or (ent_cand.type == "pipe-to-ground" and ent_cand.direction == dirs.east) then
-            east_count = 1
-            total_ent_count = total_ent_count - 1
-         end
-      end
-   end
-   local west_ent = nil
-   local west_count = 0
-   for i, ent_cand in ipairs(ents_west) do
-      if ent_cand.valid and ent_cand.fluidbox ~= nil then
-         west_ent = ent_cand
-         total_ent_count = total_ent_count + 1
-         if ent_cand.type == "pipe" or (ent_cand.type == "pipe-to-ground" and ent_cand.direction == dirs.west) then
-            west_count = 1
-            total_ent_count = total_ent_count - 1
-         end
+--Identifies if a pipe is a pipe end, so that it can be singled out. The motivation is that pipe ends generally should not exist because the pipes should connect to something.
+---@param ent LuaEntity
+function mod.is_a_pipe_end(ent)
+   local boxes = ent.fluidbox
+   local connections = 0
+   for i = 1, #boxes do
+      local outgoing = boxes.get_pipe_connections(i)
+      for j = 1, #outgoing do
+         if outgoing[j].target then connections = connections + 1 end
+         if connections > 1 then return false end
       end
    end
 
-   local sum = north_count + south_count + east_count + west_count
-   if sum > 1 then
-      return false
-   elseif sum == 0 and total_ent_count == 0 then
-      --No connections at all
-      return true
-   elseif sum == 1 and total_ent_count == 0 then
-      --1 pipe only
-      return true
-   elseif sum == 0 and total_ent_count == 1 then
-      --1 ent only, possibly not connected
-      --Choose false to avoid false positives
-      return false
-   else
-      --More than 1 anything
-      return false
-   end
+   return connections == 1
 end
 
 --Runs through the inventory and deletes all empty planner tools.

@@ -185,7 +185,7 @@ function mod.ent_info(pindex, ent, description, is_scanner)
       end
    end
    --Pipe ends are labelled to distinguish them
-   if ent.name == "pipe" and fa_building_tools.is_a_pipe_end(ent, pindex) then result = result .. " end, " end
+   if ent.name == "pipe" and fa_building_tools.is_a_pipe_end(ent) then result = result .. " end, " end
    --Explain the contents of a pipe or storage tank or etc.
    if
       ent.type == "pipe"
