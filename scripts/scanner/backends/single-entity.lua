@@ -2,6 +2,7 @@
 We have to declare categorization and subcategorization functions for everything
 by declaring our backends.  Simple already does everything else for us.
 ]]
+local BuildingTools = require("scripts.building-tools")
 local decl = require("scripts.scanner.backends.simple").declare_simple_backend
 local functionize = require("scripts.functools").functionize
 local Info = require("scripts.fa-info")
@@ -189,6 +190,18 @@ mod.Roboport = decl("fa.scanner.backends.Roboport", {
    ---@param ent LuaEntity
    subcategory_callback = function(ent)
       return cat2(ent.name, ent.backer_name)
+   end,
+})
+
+mod.Pipe = decl("fa.scanner.backends.Pipe", {
+   category_callback = functionize(SC.CATEGORIES.LOGISTICS),
+
+   ---@param ent LuaEntity
+   subcategory_callback = function(ent)
+      local fluids = ent.get_fluid_contents()
+      local fluid = next(fluids) or "<NONE>"
+      local end_part = BuildingTools.is_a_pipe_end(ent) and "<END>" or "<NONE>"
+      return string.format("%s/%s/%s", ent.name, fluid, end_part)
    end,
 })
 return mod

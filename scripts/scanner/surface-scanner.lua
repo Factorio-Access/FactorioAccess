@@ -85,7 +85,7 @@ local BACKEND_LUT = {
    ["mining-drill"] = SEB.MiningDrill,
    ["offshore-pump"] = SEB.Production,
    ["pipe-to-ground"] = SEB.LogisticsWithFluid,
-   ["pipe"] = SEB.LogisticsWithFluid,
+   ["pipe"] = SEB.Pipe,
    ["player-port"] = SEB.Other,
    ["power-switch"] = SEB.Logistics,
    ["programmable-speaker"] = SEB.Logistics,
@@ -200,7 +200,7 @@ end
 local surface_state = GlobalManager.declare_global_module(
    "scanner",
    new_empty_surface,
-   { root_field = "surfaces", ephemeral_state_version = 4 }
+   { root_field = "surfaces", ephemeral_state_version = 5 }
 )
 
 -- Given a backend setup and an array of entities, dispatch the entities to the
