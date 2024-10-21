@@ -7,12 +7,12 @@ skipping.  Both of these will change later.  For the sake of the prototype,
 players place a ruler with alt+b and clear with alt+shift+b.  If they want to
 also have a bookmark there, we make them do so themselves.
 
-We return an opaque handle which may safely be stored in global, and we (for
+We return an opaque handle which may safely be stored in storage, and we (for
 now) use that ourselves.  The long term plan as of 2024-08-02 is to integrate
 this functionality with fast travel, so in future a handle will simply go live
 over there with fast travel points.
 ]]
-local GlobalManager = require("scripts.global-manager")
+local StorageManager = require("scripts.storage-manager")
 local uid = require("scripts.uid").uid
 
 local mod = {}
@@ -21,7 +21,7 @@ local mod = {}
 ---@field x number
 ---@field y number
 
----@class fa.RulerGlobalState
+---@class fa.RulerStorageState
 ---@field rulers fa.Ruler[]
 ---@field handle fa.RulerHandle? temporary, see comments below on how handles work.
 
@@ -31,8 +31,8 @@ local RULER_SIDE_DIST = 1
 --- When using a handle to a ruler which was deleted, this message is thrown.
 local DELETED_MSG = "Attempt to use a ruler handle which was previously deleted"
 
----@type table<number, fa.RulerGlobalState>
-local module_state = GlobalManager.declare_global_module("rulers", {
+---@type table<number, fa.RulerStorageState>
+local module_state = StorageManager.declare_storage_module("rulers", {
    -- For now only ever holds one; this is future proofing.
    rulers = {},
 })
@@ -45,7 +45,7 @@ As promised in uid.lua, an explanation of the handle:
   the table (so that we need not take the overhead of looking it up, and so that
   code is simpler) and this unique id.
 - When deleting, the handle clears out it's table reference, then uses the
-  unique id to go   delete the ruler from global.
+  unique id to go   delete the ruler from storage.
 - Then the ruler handle switches itself off effectively by just asserting that
   the table reference is still there.  This gives users of the API a clear
   message if they are trying to use rulers they deleted by throwing an error,
@@ -56,10 +56,10 @@ delete.  Once they get integrated into fast travel, however, they will need to
 support being reconfigured--functions on this "class" is where that belongs.
 
 In practice right now it is one ruler per player; the handle is stashed in the
-`handle` field of our global per-player state.
+`handle` field of our stored per-player state.
 
 You can think of this like a Java class except with some ceremony that lets it
-live in global.
+live in storage.
 ]]
 ---@class fa.RulerHandle
 ---@field pindex number

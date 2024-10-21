@@ -116,7 +116,7 @@ not present (but that's usually fine, because the most common operation is to
 then add it).
 
 IMPORTANT: the obvious extension is to allow changing ther default value.  That
-doesn't work because global cannot hold unregistered metatables.  There'd need
+doesn't work because storage cannot hold unregistered metatables.  There'd need
 to be a unique name each.  Other methods result in losing the benefit or are
 much more complex and should be avoided.
 ]]
@@ -132,9 +132,9 @@ Return a metatable which will, when an index is not found, iterate over all of
 the tables specified, left to right, before giving up.
 
 There is a particularly useful trick which allows us to provide options to
-functions which aren't safe for global, usually callbacks.  To do it, we make
-the outermost table global-safe and store that.  Then, we hide the
-non-global-safe things away in tables which are consulted by the metatable,
+functions which aren't safe for storage, usually callbacks.  To do it, we make
+the outermost table storage-safe and store that.  Then, we hide the
+non-storage-safe things away in tables which are consulted by the metatable,
 since that never "pulls values up".  This comes with a negligible performance
 hit, but it's usually only a couple levels and for a function, which means in
 context that's not too bad (plus, anything truly performance sensitive will

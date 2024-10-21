@@ -1,5 +1,5 @@
 local Functools = require("scripts.functools")
-local GlobalManager = require("scripts.global-manager")
+local StorageManager = require("scripts.storage-manager")
 local Memosort = require("scripts.memosort")
 local ResourcePatchesBackend = require("scripts.scanner.backends.resource-patches")
 local ScannerConsts = require("scripts.scanner.scanner-consts")
@@ -197,7 +197,7 @@ local function new_empty_surface(key)
 end
 
 ---@type table<number, fa.scanner.GlobalSurfaceState>
-local surface_state = GlobalManager.declare_global_module(
+local surface_state = StorageManager.declare_storage_module(
    "scanner",
    new_empty_surface,
    { root_field = "surfaces", ephemeral_state_version = 7 }
