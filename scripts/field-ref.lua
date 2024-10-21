@@ -24,7 +24,7 @@ assert(reference.get(example) == 10)
 An error is thrown if the path encounters a nil on any of the intermediate steps
 to the final value but will return nil for the final value itself.
 
-Field references cannot be stored in global.
+Field references cannot be stored in storage.
 
 (If you just want to use it, you can stop here. Devs who want to know how it
 works, read on).

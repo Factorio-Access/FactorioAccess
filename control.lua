@@ -618,11 +618,11 @@ function tile_cycle(pindex)
    end
 end
 
---Checks if the global players table has been created, and if the table entry for this player exists. Otherwise it is initialized.
+--Checks if the storage players table has been created, and if the table entry for this player exists. Otherwise it is initialized.
 function check_for_player(index)
    if not players then
-      global.players = global.players or {}
-      players = global.players
+      storage.players = storage.players or {}
+      players = storage.players
    end
    if players[index] == nil then
       initialize(game.get_player(index))
@@ -1142,15 +1142,15 @@ end
 --Initialize the globally saved data tables for a specific player.
 function initialize(player)
    local force = player.force.index
-   global.forces[force] = global.forces[force] or {}
-   local fa_force = global.forces[force]
+   storage.forces[force] = storage.forces[force] or {}
+   local fa_force = storage.forces[force]
 
-   global.players[player.index] = global.players[player.index] or {}
-   local faplayer = global.players[player.index]
+   storage.players[player.index] = storage.players[player.index] or {}
+   local faplayer = storage.players[player.index]
    faplayer.player = player
 
    if not fa_force.resources then
-      for pi, p in pairs(global.players) do
+      for pi, p in pairs(storage.players) do
          if p.player.valid and p.player.force.index == force and p.resources and p.mapped then
             fa_force.resources = p.resources
             fa_force.mapped = p.mapped
@@ -2359,14 +2359,14 @@ function schedule(ticks_in_the_future, func_to_call, data_to_pass_1, data_to_pas
       return
    end
    local tick = game.tick + ticks_in_the_future
-   local schedule = global.scheduled_events
+   local schedule = storage.scheduled_events
    schedule[tick] = schedule[tick] or {}
    table.insert(schedule[tick], { func_to_call, data_to_pass_1, data_to_pass_2, data_to_pass_3 })
 end
 
 --Handles a player joining into a game session.
 function on_player_join(pindex)
-   players = players or global.players
+   players = players or storage.players
    schedule(3, "call_to_fix_zoom", pindex)
    schedule(4, "call_to_sync_graphics", pindex)
    fa_localising.check_player(pindex)
@@ -2408,11 +2408,11 @@ end
 function on_tick(event)
    ScannerEntrypoint.on_tick()
 
-   if global.scheduled_events[event.tick] then
-      for _, to_call in pairs(global.scheduled_events[event.tick]) do
+   if storage.scheduled_events[event.tick] then
+      for _, to_call in pairs(storage.scheduled_events[event.tick]) do
          _G[to_call[1]](to_call[2], to_call[3], to_call[4])
       end
-      global.scheduled_events[event.tick] = nil
+      storage.scheduled_events[event.tick] = nil
    end
    move_characters(event)
 
@@ -6379,16 +6379,16 @@ script.on_event(defines.events.on_player_mined_item, function(event)
    game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound", volume_modifier = 1 })
 end)
 
-function ensure_global_structures_are_up_to_date()
-   global.forces = global.forces or {}
-   global.players = global.players or {}
-   players = global.players
+function ensure_storage_structures_are_up_to_date()
+   storage.forces = storage.forces or {}
+   storage.players = storage.players or {}
+   players = storage.players
    for pindex, player in pairs(game.players) do
       initialize(player)
    end
 
-   global.entity_types = {}
-   entity_types = global.entity_types
+   storage.entity_types = {}
+   entity_types = storage.entity_types
 
    local types = {}
    for _, ent in pairs(game.entity_prototypes) do
@@ -6410,8 +6410,8 @@ function ensure_global_structures_are_up_to_date()
    end
    table.insert(entity_types, "container")
 
-   global.production_types = {}
-   production_types = global.production_types
+   storage.production_types = {}
+   production_types = storage.production_types
 
    local ents = game.entity_prototypes
    local types = {}
@@ -6437,8 +6437,8 @@ function ensure_global_structures_are_up_to_date()
    table.insert(production_types, "transport-belt")
    table.insert(production_types, "container")
 
-   global.building_types = {}
-   building_types = global.building_types
+   storage.building_types = {}
+   building_types = storage.building_types
 
    local ents = game.entity_prototypes
    local types = {}
@@ -6451,24 +6451,24 @@ function ensure_global_structures_are_up_to_date()
    end
    table.insert(building_types, "character")
 
-   global.scheduled_events = global.scheduled_events or {}
+   storage.scheduled_events = storage.scheduled_events or {}
 end
 
 script.on_load(function()
-   players = global.players
-   entity_types = global.entity_types
-   production_types = global.production_types
-   building_types = global.building_types
+   players = storage.players
+   entity_types = storage.entity_types
+   production_types = storage.production_types
+   building_types = storage.building_types
 end)
 
-script.on_configuration_changed(ensure_global_structures_are_up_to_date)
+script.on_configuration_changed(ensure_storage_structures_are_up_to_date)
 
 script.on_init(function()
    ---@type any
    local skip_intro_message = remote.interfaces["freeplay"]
    skip_intro_message = skip_intro_message and skip_intro_message["set_skip_intro"]
    if skip_intro_message then remote.call("freeplay", "set_skip_intro", true) end
-   ensure_global_structures_are_up_to_date()
+   ensure_storage_structures_are_up_to_date()
 end)
 
 script.on_event(defines.events.on_cutscene_cancelled, function(event)
@@ -6961,12 +6961,12 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
       if players[pindex].travel.creating then
          --Create new point
          players[pindex].travel.creating = false
-         table.insert(global.players[pindex].travel, {
+         table.insert(storage.players[pindex].travel, {
             name = result,
             position = fa_utils.center_of_tile(players[pindex].position),
             description = "No description",
          })
-         table.sort(global.players[pindex].travel, function(k1, k2)
+         table.sort(storage.players[pindex].travel, function(k1, k2)
             return k1.name < k2.name
          end)
          printout(

@@ -15,7 +15,7 @@ self-explanatory.  I recommend reading simple.lua for a good example that shows
 IMPORTANT: see devdocs/scanner.md for the whole picture.
 ]]
 local FaUtils = require("scripts.fa-utils")
-local GlobalManager = require("scripts.global-manager")
+local GlobalManager = require("scripts.storage-manager")
 local Memosort = require("scripts.memosort")
 local ScannerConsts = require("scripts.scanner.scanner-consts")
 local SurfaceScanner = require("scripts.scanner.surface-scanner")
@@ -80,7 +80,7 @@ local function new_player_state(pindex)
 end
 
 ---@type table<number, fa.scanner.GlobalPlayerState>
-local player_state = GlobalManager.declare_global_module("scanner", new_player_state)
+local player_state = GlobalManager.declare_storage_module("scanner", new_player_state)
 
 ---@param player LuaPlayer
 ---@param pstate fa.scanner.GlobalPlayerState
@@ -445,7 +445,7 @@ local function announce_cursor_pos(pindex, ps)
    if announcing then
       -- fa-info has dependencies on having the cursor in the right place that
       -- we can't remove, so just set it first.
-      global.players[pindex].cursor_pos = announcing.position
+      storage.players[pindex].cursor_pos = announcing.position
       -- And for the same reason--we shouldn't be caching tile contents, but we do.
       refresh_player_tile(pindex)
       announcing.backend:update_entry(pobj, announcing)
@@ -463,7 +463,7 @@ local function announce_cursor_pos(pindex, ps)
       -- See control.lua refresh_player_tile, which goes nuts if we aren't
       -- directly on the center of a tile; this can be removed when that's
       -- fixed.
-      global.players[pindex].cursor_pos = {
+      storage.players[pindex].cursor_pos = {
          x = math.floor(announcing.position.x) + 0.5,
          y = math.floor(announcing.position.y) + 0.5,
       }
@@ -487,7 +487,7 @@ end
 ---@param pindex number
 ---@param direction 1 | -1
 function mod.move_category(pindex, direction)
-   if global.players[pindex].in_menu then return end
+   if storage.players[pindex].in_menu then return end
    local pstate = player_state[pindex]
    sound_for_end(move_category(pindex, pstate, direction))
    printout({ "fa.scanner-category-" .. pstate.scanner_cursor.category }, pindex)
@@ -496,7 +496,7 @@ end
 ---@param pindex number
 ---@param direction 1 | -1
 function mod.move_subcategory(pindex, direction)
-   if global.players[pindex].in_menu then return end
+   if storage.players[pindex].in_menu then return end
    local pstate = player_state[pindex]
    sound_for_end(move_subcategory(pindex, pstate, direction))
    announce_cursor_pos(pindex, pstate)
@@ -505,7 +505,7 @@ end
 ---@param pindex number
 ---@param direction 1 | -1
 function mod.move_within_subcategory(pindex, direction)
-   if global.players[pindex].in_menu then return end
+   if storage.players[pindex].in_menu then return end
    local pstate = player_state[pindex]
    sound_for_end(move_in_subcategory(pindex, pstate, direction))
    announce_cursor_pos(pindex, pstate)
@@ -513,13 +513,13 @@ end
 
 ---@param pindex number
 function mod.announce_current_item(pindex)
-   if global.players[pindex].in_menu then return end
+   if storage.players[pindex].in_menu then return end
    local pstate = player_state[pindex]
    announce_cursor_pos(pindex, pstate)
 end
 
 function mod.resort(pindex)
-   if global.players[pindex].in_menu then return end
+   if storage.players[pindex].in_menu then return end
    local pstate = player_state[pindex]
    local player = assert(game.get_player(pindex))
    ---@cast player LuaPlayer
