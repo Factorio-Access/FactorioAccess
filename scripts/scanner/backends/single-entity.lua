@@ -136,7 +136,7 @@ mod.Spawner = decl("fa.scanner.backends.Spawner", {
 -- There are so many logistics items that we will make one generic backend and
 -- list them off in the LUT instead (inserters, transport belts, splitters, so
 -- on).
-mod.Logistics = decl_bound_category("fa.scanner.backends.Logistics", SC.CATEGORIES.LOGISTICS)
+mod.LogisticsAndPower = decl_bound_category("fa.scanner.backends.LogisticsAndPower", SC.CATEGORIES.LOGISTICSAndPower)
 mod.Production = decl_bound_category("fa.scanner.backends.Production", SC.CATEGORIES.PRODUCTION)
 mod.Military = decl_bound_category("fa.scanner.backends.Military", SC.CATEGORIES.MILITARY)
 mod.Other = decl_bound_category("fa.scanner.backends.Other", SC.CATEGORIES.OTHER)
@@ -173,7 +173,7 @@ mod.Rock = decl_bound_category("fa.scanner.backends.ResourceSingle", SC.CATEGORI
 -- rare case of multiple fluids, will group by one arbitrarily, not necessarily
 -- the same one each time.
 mod.LogisticsWithFluid = decl("fa.scanner.backends.LogisticsWithFluid", {
-   category_callback = functionize(SC.CATEGORIES.LOGISTICS),
+   category_callback = functionize(SC.CATEGORIES.LOGISTICSAndPower),
 
    ---@param ent LuaEntity
    subcategory_callback = function(ent)
@@ -185,7 +185,7 @@ mod.LogisticsWithFluid = decl("fa.scanner.backends.LogisticsWithFluid", {
 
 -- Roboports are categorized by network name.
 mod.Roboport = decl("fa.scanner.backends.Roboport", {
-   category_callback = functionize(SC.CATEGORIES.LOGISTICS),
+   category_callback = functionize(SC.CATEGORIES.LOGISTICSAndPower),
 
    ---@param ent LuaEntity
    subcategory_callback = function(ent)
@@ -194,7 +194,7 @@ mod.Roboport = decl("fa.scanner.backends.Roboport", {
 })
 
 mod.Pipe = decl("fa.scanner.backends.Pipe", {
-   category_callback = functionize(SC.CATEGORIES.LOGISTICS),
+   category_callback = functionize(SC.CATEGORIES.LOGISTICSAndPower),
 
    ---@param ent LuaEntity
    subcategory_callback = function(ent)
