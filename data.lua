@@ -2,116 +2,6 @@
 
 --Vanilla prototype changes--
 
---Removal of vanilla tips and tricks--
-vanilla_tip_and_tricks_item_table = {
-   "introduction",
-   "game-interaction",
-   "show-info",
-   --"e-confirm",
-   "clear-cursor",
-   "pipette",
-   "stack-transfers",
-
-   "entity-transfers",
-   "z-dropping",
-   "shoot-targeting",
-   "bulk-crafting",
-
-   "inserters",
-   "burner-inserter-refueling",
-   "long-handed-inserters",
-   "move-between-labs",
-   "insertion-limits",
-   "limit-chests",
-
-   "transport-belts", --in category "belt"
-   "belt-lanes",
-   "splitters",
-   "splitter-filters",
-   "underground-belts",
-
-   "electric-network",
-   "steam-power",
-   "low-power",
-   "electric-pole-connections",
-   "connect-switch",
-
-   "copy-entity-settings", --in category "copy-paste"
-   "copy-paste-trains",
-   "copy-paste-filters",
-   "copy-paste-requester-chest",
-   "copy-paste-spidertron",
-
-   "drag-building",
-   "drag-building-poles",
-   "pole-dragging-coverage",
-   "drag-building-underground-belts",
-   "fast-belt-bending",
-   "fast-obstacle-traversing",
-
-   "trains",
-   "rail-building",
-   "train-stops",
-   "rail-signals-basic",
-   "rail-signals-advanced",
-   "gate-over-rail",
-
-   "pump-connection",
-   "train-stop-same-name",
-
-   "logistic-network",
-   "personal-logistics",
-   "construction-robots",
-   "passive-provider-chest",
-   "storage-chest",
-   "requester-chest",
-
-   "active-provider-chest",
-   "buffer-chest",
-
-   "ghost-building",
-   "ghost-rail-planner",
-   "copy-paste",
-
-   "fast-replace",
-   "fast-replace-direction",
-   "fast-replace-belt-splitter",
-   "fast-replace-belt-underground",
-
-   --no category
-   "rotating-assemblers",
-   "circuit-network",
-}
-
-function remove_tip_and_tricks_item(inname)
-   data.raw["tips-and-tricks-item"][inname] = nil
-   for _, item in pairs(data.raw["tips-and-tricks-item"]) do
-      if item.dependencies then
-         local backup = table.deepcopy(item.dependencies)
-         item.dependencies = { "e-confirm" }
-         ---@diagnostic disable-next-line: param-type-mismatch
-         for _, str in pairs(backup) do
-            if str ~= inname then table.insert(item.dependencies, str) end
-         end
-      end
-   end
-end
-
-data.raw["tips-and-tricks-item"]["introduction"].category = "game-interaction"
-data.raw["tips-and-tricks-item"]["introduction"].trigger = nil
-
-data.raw["tips-and-tricks-item"]["show-info"].starting_status = "unlocked"
-data.raw["tips-and-tricks-item"]["show-info"].dependencies = nil
-
-data.raw["tips-and-tricks-item"]["e-confirm"].starting_status = "unlocked"
-data.raw["tips-and-tricks-item"]["e-confirm"].trigger = nil
-data.raw["tips-and-tricks-item"]["e-confirm"].skip_trigger = { type = "use-confirm" } --**nil
-data.raw["tips-and-tricks-item"]["e-confirm"].dependencies = nil
-
-for _, item in pairs(vanilla_tip_and_tricks_item_table) do
-   remove_tip_and_tricks_item(item)
-end
-
 ---New radar type: This radar scans a new sector every 5 seconds instead of 33, and it refreshes its short range every 5 seconds (precisely fast enough) instead of 1 second, but the short range is smaller and the radar costs double the power.
 local ar_tint = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 }
 local access_radar = table.deepcopy(data.raw["radar"]["radar"])
@@ -148,8 +38,12 @@ access_radar_item.icons = {
 local access_radar_recipe = table.deepcopy(data.raw["recipe"]["radar"])
 access_radar_recipe.enabled = true
 access_radar_recipe.name = "access-radar"
-access_radar_recipe.result = "access-radar"
-access_radar_recipe.ingredients = { { "electronic-circuit", 10 }, { "iron-gear-wheel", 10 }, { "iron-plate", 20 } }
+access_radar_recipe.results = { { type = "item", name = "access-radar", amount = 1 } }
+access_radar_recipe.ingredients = {
+   { type = "item", name = "electronic-circuit", amount = 10 },
+   { type = "item", name = "iron-gear-wheel", amount = 10 },
+   { type = "item", name = "iron-plate", amount = 20 },
+}
 
 data:extend({ access_radar, access_radar_item })
 data:extend({ access_radar_item, access_radar_recipe })
