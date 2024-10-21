@@ -58,7 +58,7 @@ end
 function mod.fast_travel_menu_click(pindex)
    local p = game.get_player(pindex)
    if players[pindex].travel.input_box then players[pindex].travel.input_box.destroy() end
-   if #global.players[pindex].travel == 0 and players[pindex].travel.index.x < TRAVEL_MENU_LENGTH then
+   if #storage.players[pindex].travel == 0 and players[pindex].travel.index.x < TRAVEL_MENU_LENGTH then
       printout("Move towards the right and select Create New to get started.", pindex)
    elseif players[pindex].travel.index.y == 0 and players[pindex].travel.index.x < TRAVEL_MENU_LENGTH then
       printout(
@@ -72,13 +72,13 @@ function mod.fast_travel_menu_click(pindex)
       end
       local success = fa_teleport.teleport_to_closest(
          pindex,
-         global.players[pindex].travel[players[pindex].travel.index.y].position,
+         storage.players[pindex].travel[players[pindex].travel.index.y].position,
          false,
          false
       )
       if success and players[pindex].cursor then
          players[pindex].cursor_pos =
-            table.deepcopy(global.players[pindex].travel[players[pindex].travel.index.y].position)
+            table.deepcopy(storage.players[pindex].travel[players[pindex].travel.index.y].position)
       else
          players[pindex].cursor_pos =
             fa_utils.offset_position(players[pindex].position, players[pindex].player_direction, 1)
@@ -155,7 +155,7 @@ function mod.fast_travel_menu_click(pindex)
          return
       end
       --Broadcast it by adding a copy of it to all players in the same force (except for repeating this player)
-      local players = global.players
+      local players = storage.players
       for other_pindex, player in pairs(players) do
          if
             game.get_player(pindex).force.name == game.get_player(other_pindex).force.name and pindex ~= other_pindex
@@ -176,8 +176,8 @@ function mod.fast_travel_menu_click(pindex)
       players[pindex].travel.last_broadcasted_description = this_point.description
       players[pindex].travel.last_broadcasted_position = this_point.position
    elseif players[pindex].travel.index.x == 7 then --Delete
-      printout("Deleted " .. global.players[pindex].travel[players[pindex].travel.index.y].name, pindex)
-      table.remove(global.players[pindex].travel, players[pindex].travel.index.y)
+      printout("Deleted " .. storage.players[pindex].travel[players[pindex].travel.index.y].name, pindex)
+      table.remove(storage.players[pindex].travel, players[pindex].travel.index.y)
       players[pindex].travel.x = 1
       players[pindex].travel.index.y = players[pindex].travel.index.y - 1
    elseif players[pindex].travel.index.x == 8 then --Create new

@@ -1,13 +1,13 @@
 --[[
 The ability to add methods to something, while keeping it safe to save in
-global.
+storage.
 
 This is how one gets nice APIs like the Factorio entities, where one can
 `thing.whatever()`.  Inheritance is not supported, and at least for now fields
 on the table must not have the same name as methods, or the field takes
 priority.
 
-This is a hard problem because Factorio cannot pass functions through global,
+This is a hard problem because Factorio cannot pass functions through storage,
 nor can it restore metatables, unless those metatables are registerd during
 control.lua startup.
 

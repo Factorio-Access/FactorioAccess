@@ -16,9 +16,9 @@ local mod = {}
 
 ---@returns number
 function mod.uid()
-   if not global.id_counter then global.id_counter = 0 end
-   global.id_counter = global.id_counter + 1
-   return global.id_counter
+   if not storage.id_counter then storage.id_counter = 0 end
+   storage.id_counter = storage.id_counter + 1
+   return storage.id_counter
 end
 
 return mod

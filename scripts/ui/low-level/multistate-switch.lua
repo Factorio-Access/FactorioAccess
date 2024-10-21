@@ -8,9 +8,9 @@ being used to partially replace less ideal code as a midpoint on the path to a
 proper UI system.  The goal is for this to become a detail inside a declared UI
 hierarchy.
 
-These cannot be saved in global, and are intentionally blocked from doing so.
+These cannot be saved in storage, and are intentionally blocked from doing so.
 They are static config.  That restriction will be lifted in future, but we are
-not yet at the point of ephemeral global state.
+not yet at the point of ephemeral state.
 
 First, you declare your UI:
 
@@ -115,7 +115,7 @@ function mod.create(opts)
    local instance = {
       on_off_field = opts.on_off_field,
       state_field = opts.state_field,
-      __no_global = function() end,
+      __no_storage = function() end,
    }
 
    -- Our keys are { onoff, state } and values { label = message }, using the

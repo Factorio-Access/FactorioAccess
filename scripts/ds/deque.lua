@@ -5,7 +5,7 @@ That's a long resource.  The idea is much simpler than the chapter: maintain two
 indices for the bottom and top, then use the fact that Lua allows "moving" the
 array upward forever at the cost of becoming a hashtable.
 
-This is global-safe.
+This is storage-safe.
 
 The one complexity is that Lua is one-based.  We therefore copy the above's
 convension of `front = back = somenumber` being a queue with one item, not 0.
