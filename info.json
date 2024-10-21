@@ -5,7 +5,7 @@
      "author": "Crimso, SirFendi, Gweneph, Austin Hicks",
      "homepage": "https://github.com/Factorio-Access/FactorioAccess",
      "description": "This mod makes the game accessible to the blind and visually impaired, by converting visual features into audio features. Note that running this mod fully requires some config changes, as well as the mod's own launcher from the GitHub releases.",
-     "factorio_version": "1.1",
+     "factorio_version": "2.0",
      "dependencies": [
           "? stop-on-red",
           "? VehicleSnap",
