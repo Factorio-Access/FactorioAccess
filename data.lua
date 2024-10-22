@@ -1383,7 +1383,7 @@ data:extend({
       type = "custom-input",
       name = "flip-blueprint-horizontal-info",
       key_sequence = "F",
-      linked_game_control = "flip-blueprint-horizontal",
+      --linked_game_control = "flip-blueprint-horizontal",
       consuming = "none",
    },
 
@@ -1391,7 +1391,7 @@ data:extend({
       type = "custom-input",
       name = "flip-blueprint-vertical-info",
       key_sequence = "G",
-      linked_game_control = "flip-blueprint-vertical",
+      --linked_game_control = "flip-blueprint-vertical",
       consuming = "none",
    },
 
@@ -1561,7 +1561,7 @@ data:extend({
       type = "custom-input",
       name = "pipette-tool-info",
       key_sequence = "Q",
-      linked_game_control = "smart-pipette",
+      --linked_game_control = "smart-pipette",
       consuming = "none",
    },
 
@@ -1885,22 +1885,6 @@ data:extend({
       type = "custom-input",
       name = "debug-test-key",
       key_sequence = "ALT + G",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-alt-zoom-in",
-      key_sequence = "X",
-      linked_game_control = "alt-zoom-in",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-alt-zoom-out",
-      key_sequence = "X",
-      linked_game_control = "alt-zoom-out",
       consuming = "none",
    },
 
