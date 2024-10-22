@@ -1382,7 +1382,7 @@ data:extend({
       type = "custom-input",
       name = "flip-blueprint-horizontal-info",
       key_sequence = "F",
-      --linked_game_control = "flip-blueprint-horizontal",
+      linked_game_control = "flip-horizontal",
       consuming = "none",
    },
 
@@ -1390,7 +1390,7 @@ data:extend({
       type = "custom-input",
       name = "flip-blueprint-vertical-info",
       key_sequence = "G",
-      --linked_game_control = "flip-blueprint-vertical",
+      linked_game_control = "flip-vertical",
       consuming = "none",
    },
 
@@ -1560,7 +1560,7 @@ data:extend({
       type = "custom-input",
       name = "pipette-tool-info",
       key_sequence = "Q",
-      --linked_game_control = "smart-pipette",
+      linked_game_control = "pipette",
       consuming = "none",
    },
 
@@ -1805,7 +1805,7 @@ data:extend({
       type = "custom-input",
       name = "shoot-weapon-fa",
       key_sequence = "SPACE",
-      --linked_game_control = "shoot-enemy",
+      linked_game_control = "shoot-enemy",
       consuming = "none",
    },
 
