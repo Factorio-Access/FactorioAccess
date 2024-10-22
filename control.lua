@@ -94,7 +94,7 @@ ENT_TYPES_YOU_CAN_BUILD_OVER = {
    "construction-robot",
    "rocket-silo-rocket-shadow",
 }
-EXCLUDED_ENT_NAMES = { "highlight-box", "flying-text" }
+EXCLUDED_ENT_NAMES = { "highlight-box" }
 WALKING = {
    TELESTEP = 0,
    STEP_BY_WALK = 1,
@@ -663,7 +663,7 @@ function force_cursor_off(pindex)
 
    --Close Remote view
    toggle_remote_view(pindex, false, true, true)
-   p.close_map()
+   --p.close_map()
 end
 
 --Toggles cursor mode on or off. Appropriately affects other modes such as build lock or remote view.
@@ -695,9 +695,9 @@ function toggle_cursor_mode(pindex, muted)
       --Update cursor highlight
       local ent = get_first_ent_at_tile(pindex)
       if ent and ent.valid then
-         fa_graphics.draw_cursor_highlight(pindex, ent, nil)
+         --fa_graphics.draw_cursor_highlight(pindex, ent, nil)
       else
-         fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+         --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
       end
    else
       local left_top = {
@@ -708,12 +708,16 @@ function toggle_cursor_mode(pindex, muted)
          math.floor(players[pindex].cursor_pos.x) + players[pindex].cursor_size + 1,
          math.floor(players[pindex].cursor_pos.y) + players[pindex].cursor_size + 1,
       }
-      fa_graphics.draw_large_cursor(left_top, right_bottom, pindex)
+      --fa_graphics.draw_large_cursor(left_top, right_bottom, pindex)
    end
 end
 
 --Toggles remote view on or off. Appropriately affects build lock or remote view.
 function toggle_remote_view(pindex, force_true, force_false, muted)
+   --TODO issue #282, calls for remote view changed.
+   do
+      return
+   end
    if (players[pindex].remote_view ~= true or force_true == true) and force_false ~= true then
       players[pindex].remote_view = true
       players[pindex].cursor = true
@@ -724,7 +728,7 @@ function toggle_remote_view(pindex, force_true, force_false, muted)
       players[pindex].remote_view = false
       players[pindex].build_lock = false
       if muted ~= true then read_tile(pindex, "Remote view closed, ") end
-      game.get_player(pindex).close_map()
+      --game.get_player(pindex).close_map()
    end
 
    --Fix zoom
@@ -759,7 +763,7 @@ function jump_to_player(pindex)
    players[pindex].cursor_pos.y = math.floor(first_player.position.y) + 0.5
    read_coords(pindex, "Cursor returned ")
    if players[pindex].cursor_size < 2 then
-      fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+      --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
    else
       local scan_left_top = {
          math.floor(players[pindex].cursor_pos.x) - players[pindex].cursor_size,
@@ -769,7 +773,7 @@ function jump_to_player(pindex)
          math.floor(players[pindex].cursor_pos.x) + players[pindex].cursor_size + 1,
          math.floor(players[pindex].cursor_pos.y) + players[pindex].cursor_size + 1,
       }
-      fa_graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
+      --fa_graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
    end
 end
 
@@ -844,11 +848,11 @@ function read_tile(pindex, start_text)
          --Identify shores and crevices and so on for water tiles
          result = result .. fa_utils.identify_water_shores(pindex)
       end
-      fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+      --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
       game.get_player(pindex).selected = nil
    else --laterdo tackle the issue here where entities such as tree stumps block preview info
       result = result .. fa_info.ent_info(pindex, ent)
-      fa_graphics.draw_cursor_highlight(pindex, ent, nil)
+      --fa_graphics.draw_cursor_highlight(pindex, ent, nil)
       game.get_player(pindex).selected = ent
 
       --game.get_player(pindex).print(result)--
@@ -1469,7 +1473,7 @@ script.on_event(defines.events.on_player_changed_position, function(event)
 
       --Update cursor graphics
       local stack = p.cursor_stack
-      if stack and stack.valid_for_read and stack.valid then fa_graphics.sync_build_cursor_graphics(pindex) end
+      --if stack and stack.valid_for_read and stack.valid then fa_graphics.sync_build_cursor_graphics(pindex) end
 
       --Name a detected entity that you can or cannot walk on, or a tile you cannot walk on, and play a sound to indicate multiple consecutive detections
       refresh_player_tile(pindex)
@@ -1481,7 +1485,7 @@ script.on_event(defines.events.on_player_changed_position, function(event)
             or (p.surface.can_place_entity({ name = "character", position = players[pindex].cursor_pos }) == false)
          )
       then
-         fa_graphics.draw_cursor_highlight(pindex, ent, nil)
+         --fa_graphics.draw_cursor_highlight(pindex, ent, nil)
          if p.driving then return end
 
          if
@@ -1489,17 +1493,17 @@ script.on_event(defines.events.on_player_changed_position, function(event)
             and ent.valid
             and (p.character == nil or (p.character ~= nil and p.character.unit_number ~= ent.unit_number))
          then
-            fa_graphics.draw_cursor_highlight(pindex, ent, nil)
+            --fa_graphics.draw_cursor_highlight(pindex, ent, nil)
             p.selected = ent
             p.play_sound({ path = "Close-Inventory-Sound", volume_modifier = 0.75 })
          else
-            fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+            --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
             p.selected = nil
          end
 
          read_tile(pindex)
       else
-         fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+         --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
          p.selected = nil
       end
       --Play a sound for audio ruler alignment (smooth walk)
@@ -2457,7 +2461,7 @@ function on_tick(event)
             sync_remote_view(pindex)
             players[pindex].closed_map_count = 0
          elseif players[pindex].vanilla_mode ~= true and players[pindex].closed_map_count < 1 then
-            game.get_player(pindex).close_map()
+            --game.get_player(pindex).close_map()
             players[pindex].closed_map_count = players[pindex].closed_map_count + 1
          end
       end
@@ -2470,7 +2474,7 @@ function on_tick(event)
       end
    elseif event.tick % 30 == 7 then
       --Update menu visuals
-      fa_graphics.update_menu_visuals()
+      --fa_graphics.update_menu_visuals()
    elseif event.tick % 30 == 8 then
       --Play a sound for any player who is mining
       for pindex, player in pairs(players) do
@@ -2509,7 +2513,7 @@ function on_tick(event)
          --Report the KK state, if any.
          fa_kk.status_read(pindex, false)
          --Clear unwanted GUI remnants
-         fa_graphics.clear_player_GUI_remnants(pindex)
+         --fa_graphics.clear_player_GUI_remnants(pindex)
       end
    end
 end
@@ -2540,7 +2544,7 @@ function move_characters(event)
                or stack.prototype.type == "copy-paste-tool"
             then
                --Force the pointer to the build preview location (and draw selection tool boxes)
-               fa_graphics.sync_build_cursor_graphics(pindex)
+               --fa_graphics.sync_build_cursor_graphics(pindex)
             else
                --Force the pointer to the cursor location (if on screen)
                if fa_mouse.cursor_position_is_on_screen_with_player_centered(pindex) then
@@ -2636,7 +2640,7 @@ function move(direction, pindex, nudged)
 
          local stack = first_player.cursor_stack
          if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result ~= nil then
-            fa_graphics.sync_build_cursor_graphics(pindex)
+            --fa_graphics.sync_build_cursor_graphics(pindex)
          end
 
          if players[pindex].build_lock then fa_building_tools.build_item_in_hand(pindex) end
@@ -2662,7 +2666,7 @@ function move(direction, pindex, nudged)
 
       local stack = first_player.cursor_stack
       if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result ~= nil then
-         fa_graphics.sync_build_cursor_graphics(pindex)
+         --fa_graphics.sync_build_cursor_graphics(pindex)
       end
 
       if players[pindex].walk ~= WALKING.SMOOTH then
@@ -2704,9 +2708,9 @@ function move(direction, pindex, nudged)
    --Update cursor highlight
    local ent = get_first_ent_at_tile(pindex)
    if ent and ent.valid then
-      fa_graphics.draw_cursor_highlight(pindex, ent, nil)
+      --fa_graphics.draw_cursor_highlight(pindex, ent, nil)
    else
-      fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+      --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
    end
 
    --Unless the cut-paste tool is in hand, restore the reading of flying text
@@ -2803,7 +2807,7 @@ function cursor_mode_move(direction, pindex, single_only)
          and stack.valid
          and (stack.prototype.place_result ~= nil or stack.is_blueprint)
       then
-         fa_graphics.sync_build_cursor_graphics(pindex)
+         --fa_graphics.sync_build_cursor_graphics(pindex)
       end
 
       --Apply build lock if active
@@ -2812,9 +2816,9 @@ function cursor_mode_move(direction, pindex, single_only)
       --Update cursor highlight
       local ent = get_first_ent_at_tile(pindex)
       if ent and ent.valid then
-         fa_graphics.draw_cursor_highlight(pindex, ent, nil)
+         --fa_graphics.draw_cursor_highlight(pindex, ent, nil)
       else
-         fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+         --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
       end
    else
       -- Larger cursor sizes: scan area
@@ -2827,7 +2831,7 @@ function cursor_mode_move(direction, pindex, single_only)
          y = math.floor(players[pindex].cursor_pos.y) + players[pindex].cursor_size + 1,
       }
       local scan_summary = fa_info.area_scan_summary_info(pindex, scan_left_top, scan_right_bottom)
-      fa_graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
+      --fa_graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
       printout(scan_summary, pindex)
    end
 
@@ -2846,7 +2850,7 @@ end
 function sync_remote_view(pindex)
    local p = game.get_player(pindex)
    p.zoom_to_world(players[pindex].cursor_pos)
-   fa_graphics.sync_build_cursor_graphics(pindex)
+   --fa_graphics.sync_build_cursor_graphics(pindex)
 end
 
 --Makes the character face the cursor, choosing the nearest of 4 cardinal directions. Can be overwriten by vanilla move keys.
@@ -2909,7 +2913,7 @@ end)
 --Pause / resume the game. If a menu GUI is open, ESC makes it close the menu instead
 script.on_event("pause-game-fa", function(event)
    local pindex = event.player_index
-   game.get_player(pindex).close_map()
+   --game.get_player(pindex).close_map()
    game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" })
    if players[pindex].remote_view == true then
       toggle_remote_view(pindex, false, true)
@@ -3072,8 +3076,8 @@ script.on_event("cursor-bookmark-load", function(event)
    local pos = players[pindex].cursor_bookmark
    if pos == nil or pos.x == nil or pos.y == nil then return end
    players[pindex].cursor_pos = pos
-   fa_graphics.draw_cursor_highlight(pindex, nil, nil)
-   fa_graphics.sync_build_cursor_graphics(pindex)
+   --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+   --fa_graphics.sync_build_cursor_graphics(pindex)
    printout("Loaded cursor bookmark at " .. math.floor(pos.x) .. ", " .. math.floor(pos.y), pindex)
    game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" })
 end)
@@ -3131,8 +3135,8 @@ script.on_event("teleport-to-alert-forced", function(event)
    players[pindex].cursor_pos = game.get_player(pindex).position
    players[pindex].position = game.get_player(pindex).position
    players[pindex].last_damage_alert_pos = game.get_player(pindex).position
-   fa_graphics.draw_cursor_highlight(pindex, nil, nil)
-   fa_graphics.sync_build_cursor_graphics(pindex)
+   --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+   --fa_graphics.sync_build_cursor_graphics(pindex)
    refresh_player_tile(pindex)
 end)
 
@@ -3185,7 +3189,7 @@ script.on_event("cursor-size-increment", function(event)
          math.floor(players[pindex].cursor_pos.x) + players[pindex].cursor_size + 1,
          math.floor(players[pindex].cursor_pos.y) + players[pindex].cursor_size + 1,
       }
-      fa_graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
+      --fa_graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
    end
 
    --Play Sound
@@ -3223,7 +3227,7 @@ script.on_event("cursor-size-decrement", function(event)
          math.floor(players[pindex].cursor_pos.x) + players[pindex].cursor_size + 1,
          math.floor(players[pindex].cursor_pos.y) + players[pindex].cursor_size + 1,
       }
-      fa_graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
+      --fa_graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
    end
 
    --Play Sound
@@ -4884,8 +4888,8 @@ script.on_event("click-menu", function(event)
             if ent ~= nil and ent.valid then
                players[pindex].cursor = true
                players[pindex].cursor_pos = fa_utils.center_of_tile(ent.position)
-               fa_graphics.draw_cursor_highlight(pindex, ent, nil)
-               fa_graphics.sync_build_cursor_graphics(pindex)
+               --fa_graphics.draw_cursor_highlight(pindex, ent, nil)
+               --fa_graphics.sync_build_cursor_graphics(pindex)
                printout({
                   "fa.teleported-cursor-to",
                   "" .. math.floor(players[pindex].cursor_pos.x) .. " " .. math.floor(players[pindex].cursor_pos.y),
@@ -6369,7 +6373,7 @@ script.on_event(defines.events.on_player_cursor_stack_changed, function(event)
    players[pindex].bp_selecting = false
    players[pindex].blueprint_reselecting = false
    players[pindex].ghost_rail_planning = false
-   fa_graphics.sync_build_cursor_graphics(pindex)
+   --fa_graphics.sync_build_cursor_graphics(pindex)
 end)
 
 script.on_event(defines.events.on_player_mined_item, function(event)
@@ -6391,8 +6395,8 @@ function ensure_storage_structures_are_up_to_date()
    entity_types = storage.entity_types
 
    local types = {}
-   
-   for _, ent in pairs(game.entity_prototypes) do
+
+   for _, ent in pairs(prototypes.entity) do
       if
          types[ent.type] == nil
          and ent.weight == nil
@@ -6414,34 +6418,13 @@ function ensure_storage_structures_are_up_to_date()
    storage.production_types = {}
    production_types = storage.production_types
 
-   local ents = game.entity_prototypes
-   local types = {}
-   for i, ent in pairs(ents) do
-      --      if (ent.get_inventory_size(defines.inventory.fuel) ~= nil or ent.get_inventory_size(defines.inventory.chest) ~= nil or ent.get_inventory_size(defines.inventory.assembling_machine_input) ~= nil) and ent.weight == nil then
-      if
-         ent.speed == nil
-         and ent.consumption == nil
-         and (
-            ent.burner_prototype ~= nil
-            or ent.mining_speed ~= nil
-            or ent.crafting_speed ~= nil
-            or ent.automated_ammo_count ~= nil
-            or ent.construction_radius ~= nil
-         )
-      then
-         types[ent.type] = true
-      end
-   end
-   for i, type in pairs(types) do
-      table.insert(production_types, i)
-   end
-   table.insert(production_types, "transport-belt")
-   table.insert(production_types, "container")
+   -- TODO: reimplement production types. Seems only to be the warnings menu
+   -- using it.
 
    storage.building_types = {}
    building_types = storage.building_types
 
-   local ents = game.entity_prototypes
+   local ents = prototypes.entity
    local types = {}
    for i, ent in pairs(ents) do
       if ent.is_building then types[ent.type] = true end
@@ -6676,7 +6659,7 @@ script.on_event("recalibrate-zoom", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    fa_zoom.fix_zoom(pindex)
-   fa_graphics.sync_build_cursor_graphics(pindex)
+   --fa_graphics.sync_build_cursor_graphics(pindex)
    printout("Recalibrated", pindex)
 end)
 
@@ -6684,7 +6667,7 @@ script.on_event("set-standard-zoom", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    fa_zoom.set_zoom(1, pindex)
-   fa_graphics.sync_build_cursor_graphics(pindex)
+   --fa_graphics.sync_build_cursor_graphics(pindex)
    printout("Set standard zoom.", pindex)
 end)
 
@@ -6692,7 +6675,7 @@ script.on_event("set-closest-zoom", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    fa_zoom.set_zoom(fa_zoom.MAX_ZOOM, pindex)
-   fa_graphics.sync_build_cursor_graphics(pindex)
+   --fa_graphics.sync_build_cursor_graphics(pindex)
    printout("Set closest zoom.", pindex)
 end)
 
@@ -6700,7 +6683,7 @@ script.on_event("set-furthest-zoom", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    fa_zoom.set_zoom(fa_zoom.MIN_ZOOM, pindex)
-   fa_graphics.sync_build_cursor_graphics(pindex)
+   --fa_graphics.sync_build_cursor_graphics(pindex)
    printout("Set furthest zoom.", pindex)
 end)
 
@@ -6721,8 +6704,8 @@ script.on_event("pipette-tool-info", function(event)
          players[pindex].cursor_rotation_offset = 0
       end
       if players[pindex].cursor then players[pindex].cursor_pos = fa_utils.get_ent_northwest_corner_position(ent) end
-      fa_graphics.sync_build_cursor_graphics(pindex)
-      fa_graphics.draw_cursor_highlight(pindex, ent, nil, nil)
+      --fa_graphics.sync_build_cursor_graphics(pindex)
+      --fa_graphics.draw_cursor_highlight(pindex, ent, nil, nil)
    end
 end)
 
@@ -7195,7 +7178,7 @@ function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
 
    --Read the tile reached
    read_tile(pindex, result)
-   fa_graphics.sync_build_cursor_graphics(pindex)
+   --fa_graphics.sync_build_cursor_graphics(pindex)
 
    --Draw large cursor boxes if present
    if players[pindex].cursor_size > 0 then
@@ -7207,7 +7190,7 @@ function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
          math.floor(players[pindex].cursor_pos.x) + players[pindex].cursor_size + 1,
          math.floor(players[pindex].cursor_pos.y) + players[pindex].cursor_size + 1,
       }
-      fa_graphics.draw_large_cursor(left_top, right_bottom, pindex)
+      --fa_graphics.draw_large_cursor(left_top, right_bottom, pindex)
    end
 end
 
@@ -8236,8 +8219,8 @@ function jump_cursor_to_typed_coordinates(result, pindex)
       if valid_coords then
          players[pindex].cursor_pos = fa_utils.center_of_tile({ x = new_x + 0.01, y = new_y + 0.01 })
          printout("Cursor jumped to " .. new_x .. ", " .. new_y, pindex)
-         fa_graphics.draw_cursor_highlight(pindex)
-         fa_graphics.sync_build_cursor_graphics(pindex)
+         --fa_graphics.draw_cursor_highlight(pindex)
+         --fa_graphics.sync_build_cursor_graphics(pindex)
       else
          printout("Invalid input", pindex)
       end
