@@ -53,6 +53,7 @@ function mod.get_electricity_flow_info(ent)
                name = i,
                input = false,
                precision_index = defines.flow_precision_index.five_seconds,
+               category = "input",
             })
          )
       local cap_add = 0
@@ -161,7 +162,7 @@ end
 function mod.report_nearest_supplied_electric_pole(ent)
    local result = ""
    local pole, dist = mod.find_nearest_electric_pole(ent, true)
-   local dir = -1
+   local dir
    if pole ~= nil then
       dir = fa_utils.get_direction_biased(pole.position, ent.position)
       result = "The nearest powered electric pole is " .. dist .. " tiles to the " .. fa_utils.direction_lookup(dir)
