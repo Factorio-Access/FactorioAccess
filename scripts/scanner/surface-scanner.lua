@@ -137,7 +137,7 @@ local BACKEND_NAME_OVERRIDES = Functools.cached(function()
    })
 
    -- remnants
-   for proto in pairs(game.entity_prototypes) do
+   for proto in pairs(prototypes.entity) do
       if proto:match("-remnants$") then bno[proto] = SEB.Remnants end
    end
 
@@ -237,7 +237,7 @@ local function scan_chunk(cmd)
    -- We just got these from the surface with no gap, so do everything assuming
    -- it's valid.
    TH.retain_unordered(ents, function(item)
-      local dest_req = script.register_on_entity_destroyed(item)
+      local dest_req = script.register_on_object_destroyed(item)
       if state.seen_entities:test(dest_req) then return false end
 
       -- The entity may not have the center in this chunk.
@@ -338,7 +338,7 @@ function mod.on_new_entity(surface_index, ent)
    if not ent.valid then return end
 
    local state = surface_state[surface_index]
-   local dest_req = script.register_on_entity_destroyed(ent)
+   local dest_req = script.register_on_object_destroyed(ent)
 
    if state.seen_entities:test(dest_req) then return end
    state.seen_entities:set(dest_req)

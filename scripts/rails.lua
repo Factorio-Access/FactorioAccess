@@ -498,7 +498,9 @@ function mod.cursor_is_at_straight_end_rail_tip(pindex)
    local p = game.get_player(pindex)
    local pos = players[pindex].cursor_pos
    --Get the rail at the cursor
-   local rails_at_cursor = p.surface.find_entities_filtered({ name = "straight-rail", position = pos })
+   --local rails_at_cursor = p.surface.find_entities_filtered({ name = "straight-rail", position = pos })
+   -- TODO: #271, need old rails back
+   local rails_at_cursor = nil
    if rails_at_cursor == nil or #rails_at_cursor == 0 then return false end
    --Check if it is an end rail that faces a cardinal direction
    local rail_at_cursor = rails_at_cursor[1]
@@ -518,7 +520,9 @@ function mod.cursor_is_at_straight_end_rail_tip(pindex)
    perimeter[8] = fa_utils.add_position(pos, { x = 1, y = 1 })
    for i, pos_p in ipairs(perimeter) do
       --Find rails, if any
-      local ents = p.surface.find_entities_filtered({ name = { "straight-rail", "curved-rail" }, position = pos_p })
+      -- TODO: #271, we need old rails back or the query crashes.
+      --local ents = p.surface.find_entities_filtered({ name = { "straight-rail", "curved-rail" }, position = pos_p })
+      local ents = {}
       if ents ~= nil and #ents > 0 then
          for j, rail in ipairs(ents) do
             --For rails found, check whether the unit number is different
@@ -1036,7 +1040,8 @@ function mod.count_rails_within_range(rail, range, pindex)
       --2. Increase counter for each straight rail
       counter = counter + 1
    end
-   ents = game.get_player(pindex).surface.find_entities_filtered({ area = scan_area, name = "curved-rail" })
+   --ents = game.get_player(pindex).surface.find_entities_filtered({ area = scan_area, name = "curved-rail" })
+   ents = {}
    for i, other_rail in ipairs(ents) do
       --3. Increase counter for each curved rail
       counter = counter + 1
@@ -1117,9 +1122,10 @@ function mod.find_nearest_intersection(rail, pindex, radius_in)
    local radius = radius_in or 1000
    local pos = rail.position
    local scan_area = { { pos.x - radius, pos.y - radius }, { pos.x + radius, pos.y + radius } }
-   local ents = game
-      .get_player(pindex).surface
-      .find_entities_filtered({ area = scan_area, name = { "straight-rail", "curved-rail" } })
+
+   local ents = {}
+   --      .get_player(pindex).surface
+   --      .find_entities_filtered({ area = scan_area, name = { "straight-rail", "curved-rail" } })
    local nearest = nil
    local min_dist = radius
    for i, other_rail in ipairs(ents) do
@@ -1166,10 +1172,10 @@ function mod.check_and_play_train_track_alert_sounds(step)
    for pindex, player in pairs(players) do
       --Check if the player is standing on a rail
       local p = game.get_player(pindex)
-      local floor_ents =
-         p.surface.find_entities_filtered({ position = p.position, name = { "straight-rail", "curved-rail" } })
-      local nearby_ents =
-         p.surface.find_entities_filtered({ position = p.position, radius = 4, name = { "curved-rail" } })
+      local floor_ents = {}
+      --p.surface.find_entities_filtered({ position = p.position, name = { "straight-rail", "curved-rail" } })
+      local nearby_ents = {}
+      --p.surface.find_entities_filtered({ position = p.position, radius = 4, name = { "curved-rail" } })
       local found_rail = nil
       if #floor_ents > 0 then
          found_rail = floor_ents[1]

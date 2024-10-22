@@ -91,7 +91,9 @@ with other mods, we convert these to arrays, then tack ours on at the end.
 ]]
 
 local function augment_with_trigger(proto)
-   do return end
+   do
+      return
+   end
    -- our trigger.
    ---@type data.Trigger
    local nt = {

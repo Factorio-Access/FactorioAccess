@@ -46,28 +46,28 @@ function mod.get_alt(object, pindex)
 end
 
 function mod.get_item_from_name(name, pindex)
-   local proto = game.item_prototypes[name]
+   local proto = prototypes.item[name]
    if proto == nil then return "(nil)" end
    local result = mod.get(proto, pindex)
    return result or "(nil)"
 end
 
 function mod.get_fluid_from_name(name, pindex)
-   local proto = game.fluid_prototypes[name]
+   local proto = prototypes.fluid[name]
    if proto == nil then return "nil" end
    local result = mod.get(proto, pindex)
    return result
 end
 
 function mod.get_recipe_from_name(name, pindex)
-   local proto = game.recipe_prototypes[name]
+   local proto = prototypes.recipe[name]
    if proto == nil then return "nil" end
    local result = mod.get_alt(proto, pindex)
    return result
 end
 
 function mod.get_item_group_from_name(name, pindex)
-   local proto = game.item_group_prototypes[name]
+   local proto = prototypes.item_group[name]
    if proto == nil then return "nil" end
    local result = mod.get_alt(proto, pindex)
    return result
@@ -101,7 +101,7 @@ function mod.request_all_the_translations(pindex)
       "equipment_category",
       "shortcut",
    }) do
-      for _, proto in pairs(game[cat .. "_prototypes"]) do
+      for _, proto in pairs(prototypes[cat]) do
          mod.request_localisation(proto, pindex)
       end
    end

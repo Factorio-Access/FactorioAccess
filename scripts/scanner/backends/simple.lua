@@ -87,7 +87,7 @@ end
 function SimpleBackend:on_new_entity(ent)
    if not ent.valid then return end
 
-   self.known_entities[script.register_on_entity_destroyed(ent)] = ent
+   self.known_entities[script.register_on_object_destroyed(ent)] = ent
 end
 
 ---@param event EventData.on_entity_destroyed

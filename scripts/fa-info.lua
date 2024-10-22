@@ -120,8 +120,8 @@ function mod.ent_info(pindex, ent, description, is_scanner)
       --Chests etc: Report the most common item and say "and other items" if there are other types.
       local itemset = ent.get_inventory(defines.inventory.chest).get_contents()
       local itemtable = {}
-      for name, count in pairs(itemset) do
-         table.insert(itemtable, { name = name, count = count })
+      for _, info in pairs(itemset) do
+         table.insert(itemtable, { name = info.name, count = info.count })
       end
       table.sort(itemtable, function(k1, k2)
          return k1.count > k2.count
@@ -265,11 +265,11 @@ function mod.ent_info(pindex, ent, description, is_scanner)
       local left = ent.get_transport_line(1).get_contents()
       local right = ent.get_transport_line(2).get_contents()
 
-      for name, count in pairs(right) do
+      for name, info in pairs(right) do
          if left[name] ~= nil then
-            left[name] = left[name] + count
+            left[name] = left[name] + info.count
          else
-            left[name] = count
+            left[name] = info.count
          end
       end
       local contents = {}
@@ -1231,8 +1231,12 @@ function mod.selected_item_production_stats_info(pindex)
    local get_stats = function(is_input)
       local name = prototype.name
       local interval = defines.flow_precision_index
-      local last_minute =
-         stats.get_flow_count({ name = name, input = is_input, precision_index = interval.one_minute, count = true })
+      local last_minute = stats.get_flow_count({
+         name = name,
+         category = is_input and "input" or "output",
+         precision_index = interval.one_minute,
+         count = true,
+      })
       local last_10_minutes =
          stats.get_flow_count({ name = name, input = is_input, precision_index = interval.ten_minutes, count = true })
       local last_hour =
