@@ -6391,6 +6391,7 @@ function ensure_storage_structures_are_up_to_date()
    entity_types = storage.entity_types
 
    local types = {}
+   
    for _, ent in pairs(game.entity_prototypes) do
       if
          types[ent.type] == nil
@@ -8097,7 +8098,7 @@ script.on_event(defines.events.on_gui_opened, function(event)
    end
 end)
 
-script.on_event(defines.events.on_entity_destroyed, function(event) --DOES NOT HAVE THE KEY PLAYER_INDEX
+script.on_event(defines.events.on_object_destroyed, function(event) --DOES NOT HAVE THE KEY PLAYER_INDEX
    ScannerEntrypoint.on_entity_destroyed(event)
 end)
 

@@ -17,12 +17,19 @@
       "deprecated",
       "need-check-nil"
    ],
-   "Lua.workspace.library": [
-      "c:\\Program Files\\Factorio\\data"
-   ],
    "Lua.workspace.checkThirdParty": "ApplyInMemory",
    "Lua.runtime.version": "Lua 5.2",
    "[lua]": {
       "editor.defaultFormatter": "JohnnyMorganz.stylua"
-   }
+   },
+   "factorio.versions": [
+      {
+         "name": "System",
+         "factorioPath": "C:\\Program Files\\Factorio\\bin\\x64\\factorio.exe",
+         "active": true
+      }
+   ],
+   "Lua.workspace.userThirdParty": [
+      "c:\\Users\\Austin\\AppData\\Roaming\\Code\\User\\workspaceStorage\\afd8e6d37a6d17a4003ab86a7a65f5b1\\justarandomgeek.factoriomod-debug\\sumneko-3rd"
+   ]
 }
