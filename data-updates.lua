@@ -91,6 +91,7 @@ with other mods, we convert these to arrays, then tack ours on at the end.
 ]]
 
 local function augment_with_trigger(proto)
+   -- Issue #298, we found a crash in the game which cannot be worked around on our side.
    do
       return
    end
