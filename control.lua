@@ -1893,7 +1893,7 @@ function menu_cursor_down(pindex)
          players[pindex].technology.index = 1
       end
       if players[pindex].technology.category == 1 then
-         printout("Researchable ttechnologies", pindex)
+         printout("Researchable technologies", pindex)
       elseif players[pindex].technology.category == 2 then
          printout("Locked technologies", pindex)
       elseif players[pindex].technology.category == 3 then
@@ -6078,7 +6078,7 @@ script.on_event("item-info", function(event)
             table.insert(result, "Description: ")
             table.insert(result, techs[players[pindex].technology.index].localised_description or "No description")
             table.insert(result, ", Rewards: ")
-            local rewards = techs[players[pindex].technology.index].effects
+            local rewards = techs[players[pindex].technology.index].prototype.effects
             for i, reward in ipairs(rewards) do
                local j = 0
                for i1, v in pairs(reward) do
