@@ -16,8 +16,10 @@ end
 function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
    local pos = table.deepcopy(pos)
    local muted = muted or false
-   local first_player = game.get_player(pindex)
-   local surf = first_player.surface
+   local char = game.get_player(pindex).character
+   if not char then return false end
+
+   local surf = char.surface
    local radius = 0.5
    --Find a non-colliding position
    local new_pos = surf.find_non_colliding_position("character", pos, radius, 0.1, true)
@@ -26,7 +28,7 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
       new_pos = surf.find_non_colliding_position("character", pos, radius, 0.1, true)
    end
    --Do not teleport if in a vehicle, in a menu, or already at the desitination
-   if first_player.vehicle ~= nil and first_player.vehicle.valid then
+   if char.vehicle ~= nil and char.vehicle.valid then
       printout("Cannot teleport while in a vehicle.", pindex)
       return false
    elseif util.distance(game.get_player(pindex).position, pos) < 0.6 then
@@ -42,8 +44,7 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
    end
    --Do not teleport near enemies unless instructed to ignore them
    if not ignore_enemies then
-      local enemy =
-         first_player.surface.find_nearest_enemy({ position = new_pos, max_distance = 30, force = first_player.force })
+      local enemy = char.surface.find_nearest_enemy({ position = new_pos, max_distance = 30, force = char.force })
       if enemy and enemy.valid then
          printout(
             "Warning: There are enemies at this location, but you can force teleporting if you press CONTROL + SHIFT + T",
@@ -53,9 +54,9 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
       end
    end
    --Attempt teleport
-   local can_port = first_player.surface.can_place_entity({ name = "character", position = new_pos })
+   local can_port = char.surface.can_place_entity({ name = "character", position = new_pos })
    if can_port then
-      local old_pos = table.deepcopy(first_player.position)
+      local old_pos = table.deepcopy(char.position)
       if not muted then
          --Draw teleporting visuals at origin
          rendering.draw_circle({
@@ -63,7 +64,7 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
             radius = 0.5,
             width = 15,
             target = old_pos,
-            surface = first_player.surface,
+            surface = char.surface,
             draw_on_ground = true,
             time_to_live = 60,
          })
@@ -72,18 +73,18 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
             radius = 0.3,
             width = 20,
             target = old_pos,
-            surface = first_player.surface,
+            surface = char.surface,
             draw_on_ground = true,
             time_to_live = 60,
          })
          local smoke_spot_ghosts =
-            first_player.surface.find_entities_filtered({ position = first_player.position, type = "entity-ghost" })
+            char.surface.find_entities_filtered({ position = char.position, type = "entity-ghost" })
          if smoke_spot_ghosts == nil or #smoke_spot_ghosts == 0 then
-            local smoke_effect = first_player.surface.create_entity({
+            local smoke_effect = char.surface.create_entity({
                name = "iron-chest",
-               position = first_player.position,
+               position = char.position,
                raise_built = false,
-               force = first_player.force,
+               force = char.force,
             })
             smoke_effect.destroy({})
          end
@@ -95,15 +96,12 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
       end
       local teleported = false
       if muted then
-         teleported = first_player.teleport(new_pos)
+         teleported = char.teleport(new_pos)
       else
-         teleported = first_player.teleport(new_pos)
+         teleported = char.teleport(new_pos)
       end
       if teleported then
-         first_player.force.chart(
-            first_player.surface,
-            { { new_pos.x - 15, new_pos.y - 15 }, { new_pos.x + 15, new_pos.y + 15 } }
-         )
+         char.force.chart(char.surface, { { new_pos.x - 15, new_pos.y - 15 }, { new_pos.x + 15, new_pos.y + 15 } })
          players[pindex].position = table.deepcopy(new_pos)
          reset_bump_stats(pindex)
          if not muted then
@@ -113,7 +111,7 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
                radius = 0.5,
                width = 15,
                target = new_pos,
-               surface = first_player.surface,
+               surface = char.surface,
                draw_on_ground = true,
                time_to_live = 60,
             })
@@ -122,18 +120,18 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
                radius = 0.3,
                width = 20,
                target = new_pos,
-               surface = first_player.surface,
+               surface = char.surface,
                draw_on_ground = true,
                time_to_live = 60,
             })
             local smoke_spot_ghosts =
-               first_player.surface.find_entities_filtered({ position = first_player.position, type = "entity-ghost" })
+               char.surface.find_entities_filtered({ position = char.position, type = "entity-ghost" })
             if smoke_spot_ghosts == nil or #smoke_spot_ghosts == 0 then
-               local smoke_effect = first_player.surface.create_entity({
+               local smoke_effect = char.surface.create_entity({
                   name = "iron-chest",
-                  position = first_player.position,
+                  position = char.position,
                   raise_built = false,
-                  force = first_player.force,
+                  force = char.force,
                })
                smoke_effect.destroy({})
             end
@@ -149,9 +147,9 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
             if not muted then
                printout(
                   "Teleported "
-                     .. math.ceil(fa_utils.distance(pos, first_player.position))
+                     .. math.ceil(fa_utils.distance(pos, char.position))
                      .. " "
-                     .. fa_utils.direction(pos, first_player.position)
+                     .. fa_utils.direction(pos, char.position)
                      .. " of target",
                   pindex
                )
@@ -160,7 +158,7 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
          --Update cursor after teleport
          players[pindex].cursor_pos = table.deepcopy(new_pos)
          fa_mouse.move_mouse_pointer(fa_utils.center_of_tile(players[pindex].cursor_pos), pindex)
-         fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+         --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
       else
          printout("Teleport Failed", pindex)
          return false

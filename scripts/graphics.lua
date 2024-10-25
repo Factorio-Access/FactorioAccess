@@ -178,7 +178,7 @@ function mod.sync_build_cursor_graphics(pindex)
    local right_bottom = nil
    if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result then
       --Redraw direction indicator arrow
-      if dir_indicator ~= nil then rendering.destroy(player.building_dir_arrow) end
+      if dir_indicator ~= nil then player.building_dir_arrow.destroy() end
       local arrow_pos = player.cursor_pos
       if players[pindex].build_lock and not players[pindex].cursor and stack.name ~= "rail" then
          arrow_pos = fa_utils.center_of_tile(fa_utils.offset_position(arrow_pos, players[pindex].player_direction, -2))
@@ -193,7 +193,7 @@ function mod.sync_build_cursor_graphics(pindex)
          orientation = dir / (2 * dirs.south),
       })
       dir_indicator = player.building_dir_arrow
-      rendering.set_visible(dir_indicator, true)
+      --rendering.set_visible(dir_indicator, true)
       if
          players[pindex].hide_cursor
          or stack.name == "locomotive"
@@ -201,11 +201,11 @@ function mod.sync_build_cursor_graphics(pindex)
          or stack.name == "fluid-wagon"
          or stack.name == "artillery-wagon"
       then
-         rendering.set_visible(dir_indicator, false)
+         --rendering.set_visible(dir_indicator, false)
       end
 
       --Redraw footprint (ent)
-      if player.building_footprint ~= nil then rendering.destroy(player.building_footprint) end
+      if player.building_footprint ~= nil then player.building_footprint.destroy() end
 
       --Get correct width and height
       width = stack.prototype.place_result.tile_width
@@ -255,7 +255,7 @@ function mod.sync_build_cursor_graphics(pindex)
          surface = game.get_player(pindex).surface,
          players = nil,
       })
-      rendering.set_visible(player.building_footprint, true)
+      --rendering.set_visible(player.building_footprint, true)
 
       --Hide the drawing in the desired cases
       if
@@ -265,7 +265,7 @@ function mod.sync_build_cursor_graphics(pindex)
          or stack.name == "fluid-wagon"
          or stack.name == "artillery-wagon"
       then
-         rendering.set_visible(player.building_footprint, false)
+         --rendering.set_visible(player.building_footprint, false)
       end
 
       --Move mouse pointer according to building box
@@ -305,8 +305,8 @@ function mod.sync_build_cursor_graphics(pindex)
       end
    elseif stack == nil or not stack.valid_for_read then
       --Invalid stack: Hide the objects
-      if dir_indicator ~= nil then rendering.set_visible(dir_indicator, false) end
-      if player.building_footprint ~= nil then rendering.set_visible(player.building_footprint, false) end
+      --if dir_indicator ~= nil then rendering.set_visible(dir_indicator, false) end
+      --if player.building_footprint ~= nil then rendering.set_visible(player.building_footprint, false) end
    elseif
       stack
       and stack.valid_for_read
@@ -316,7 +316,7 @@ function mod.sync_build_cursor_graphics(pindex)
    then
       --Blueprints have their own data:
       --Redraw the direction indicator arrow
-      if dir_indicator ~= nil then rendering.destroy(player.building_dir_arrow) end
+      if dir_indicator ~= nil then player.building_dir_arrow.destroy() end
       local arrow_pos = player.cursor_pos
       local dir = players[pindex].blueprint_hand_direction
       if dir == nil then
@@ -333,10 +333,10 @@ function mod.sync_build_cursor_graphics(pindex)
          orientation = dir / (2 * dirs.south),
       })
       dir_indicator = player.building_dir_arrow
-      rendering.set_visible(dir_indicator, true)
+      --rendering.set_visible(dir_indicator, true)
 
       --Redraw the bp footprint
-      if player.building_footprint ~= nil then rendering.destroy(player.building_footprint) end
+      if player.building_footprint ~= nil then player.building_footprint.destroy() end
       local bp_width = players[pindex].blueprint_width_in_hand
       local bp_height = players[pindex].blueprint_height_in_hand
       if bp_width ~= nil then
@@ -352,7 +352,7 @@ function mod.sync_build_cursor_graphics(pindex)
             surface = p.surface,
             players = nil,
          })
-         rendering.set_visible(player.building_footprint, true)
+         --rendering.set_visible(player.building_footprint, true)
 
          --Move the mouse pointer
          if players[pindex].remote_view == true then
@@ -365,8 +365,8 @@ function mod.sync_build_cursor_graphics(pindex)
       end
    else
       --Hide the objects
-      if dir_indicator ~= nil then rendering.set_visible(dir_indicator, false) end
-      if player.building_footprint ~= nil then rendering.set_visible(player.building_footprint, false) end
+      --if dir_indicator ~= nil then rendering.set_visible(dir_indicator, false) end
+      --if player.building_footprint ~= nil then rendering.set_visible(player.building_footprint, false) end
 
       --Tile placement preview
       if stack.valid and stack.prototype.place_as_tile_result and players[pindex].blueprint_reselecting ~= true then
@@ -408,7 +408,7 @@ function mod.sync_build_cursor_graphics(pindex)
             draw_on_ground = false,
             players = nil,
          })
-         rendering.set_visible(player.building_footprint, true)
+         --rendering.set_visible(player.building_footprint, true)
       end
    end
 
@@ -424,7 +424,7 @@ function mod.draw_cursor_highlight(pindex, ent, box_type, skip_mouse_movement)
    local h_tile = players[pindex].cursor_tile_highlight_box
    if c_pos == nil then return end
    if h_box ~= nil and h_box.valid then h_box.destroy() end
-   if h_tile ~= nil and rendering.is_valid(h_tile) then rendering.destroy(h_tile) end
+   if h_tile ~= nil and h_tile.is_valid() then h_tile.destroy() end
 
    --Skip drawing if hide cursor is enabled
    if players[pindex].hide_cursor then
@@ -500,7 +500,7 @@ end
 --Redraws the player's cursor highlight box as a rectangle around the defined area.
 function mod.draw_large_cursor(input_left_top, input_right_bottom, pindex, colour_in)
    local h_tile = players[pindex].cursor_tile_highlight_box
-   if h_tile ~= nil then rendering.destroy(h_tile) end
+   if h_tile ~= nil then h_tile.destroy() end
    local colour = { 0.75, 1, 1 }
    if colour_in ~= nil then colour = colour_in end
    h_tile = rendering.draw_rectangle({
@@ -511,7 +511,7 @@ function mod.draw_large_cursor(input_left_top, input_right_bottom, pindex, colou
       draw_on_ground = true,
       players = nil,
    })
-   rendering.set_visible(h_tile, true)
+   --rendering.set_visible(h_tile, true)
    players[pindex].cursor_tile_highlight_box = h_tile
 
    --Recolor cursor boxes if multiplayer
@@ -584,7 +584,7 @@ function mod.update_custom_GUI_sprite(sprite, scale_in, pindex, sprite_2)
          and p.cursor_stack.is_blueprint
       then
          local bp = p.cursor_stack
-         local bp_icons = bp.blueprint_icons or {}
+         local bp_icons = bp.preview_icons or {}
          for i = 1, 4 do
             local player_sprite_handle = "custom_GUI_sprite_" .. (i + 1)
             local icon_sprite = player[player_sprite_handle]
@@ -622,8 +622,8 @@ function mod.update_overhead_sprite(sprite, scale_in, radius_in, pindex)
    local scale = scale_in
    local radius = radius_in
 
-   if player.overhead_circle ~= nil then rendering.destroy(player.overhead_circle) end
-   if player.overhead_sprite ~= nil then rendering.destroy(player.overhead_sprite) end
+   if player.overhead_circle ~= nil then player.overhead_circle.destroy() end
+   if player.overhead_sprite ~= nil then player.overhead_sprite.destroy() end
    if sprite ~= nil then
       player.overhead_circle = rendering.draw_circle({
          color = { r = 0.2, b = 0.2, g = 0.2, a = 0.9 },
@@ -634,7 +634,7 @@ function mod.update_overhead_sprite(sprite, scale_in, radius_in, pindex)
          filled = true,
          time_to_live = 60,
       })
-      rendering.set_visible(player.overhead_circle, true)
+      --rendering.set_visible(player.overhead_circle, true)
       player.overhead_sprite = rendering.draw_sprite({
          sprite = sprite,
          x_scale = scale,
@@ -644,7 +644,7 @@ function mod.update_overhead_sprite(sprite, scale_in, radius_in, pindex)
          orientation = 0,
          time_to_live = 60,
       })
-      rendering.set_visible(player.overhead_sprite, true)
+      --rendering.set_visible(player.overhead_sprite, true)
    end
 end
 

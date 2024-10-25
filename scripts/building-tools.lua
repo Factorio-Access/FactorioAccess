@@ -307,9 +307,9 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
    --Update cursor highlight (end)
    local ent = game.get_player(pindex).selected
    if ent and ent.valid then
-      fa_graphics.draw_cursor_highlight(pindex, ent, nil)
+      --fa_graphics.draw_cursor_highlight(pindex, ent, nil)
    else
-      fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+      --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
    end
 end
 
@@ -431,7 +431,7 @@ function mod.rotate_building_info_read(event, forward)
 
             --Display and read the new direction info
             players[pindex].building_direction = build_dir
-            fa_graphics.sync_build_cursor_graphics(pindex)
+            --fa_graphics.sync_build_cursor_graphics(pindex)
             printout(fa_utils.direction_lookup(build_dir) .. " in hand", pindex)
             players[pindex].lag_building_direction = false
          else
@@ -450,7 +450,7 @@ function mod.rotate_building_info_read(event, forward)
          players[pindex].blueprint_width_in_hand = temp
 
          --Call graphics update
-         fa_graphics.sync_build_cursor_graphics(pindex)
+         --fa_graphics.sync_build_cursor_graphics(pindex)
       elseif ent and ent.valid then
          if ent.supports_direction then
             --Assuming that the vanilla rotate event will now rotate the ent
@@ -550,8 +550,8 @@ function mod.nudge_key(direction, event)
             printout({ "fa.nudged-one-direction", { "fa.direction", direction } }, pindex)
             if players[pindex].cursor then
                players[pindex].cursor_pos = fa_utils.offset_position(players[pindex].cursor_pos, direction, 1)
-               fa_graphics.draw_cursor_highlight(pindex, ent, "train-visualization")
-               fa_graphics.sync_build_cursor_graphics(pindex)
+               --fa_graphics.draw_cursor_highlight(pindex, ent, "train-visualization")
+               --fa_graphics.sync_build_cursor_graphics(pindex)
             end
             if ent.type == "electric-pole" then
                -- laterdo **bugfix when nudged electric poles have extra wire reach, cut wires
@@ -1457,7 +1457,8 @@ end
 --If the player is standing within the build area, they are teleported out.
 function mod.teleport_player_out_of_build_area(left_top, right_bottom, pindex)
    local p = game.get_player(pindex)
-   local pos = p.position
+   if not p.character then return end
+   local pos = p.character.position
    if pos.x < left_top.x or pos.x > right_bottom.x or pos.y < left_top.y or pos.y > right_bottom.y then return end
    if p.walking_state.walking == true then return end
    if players[pindex].build_lock == true then
