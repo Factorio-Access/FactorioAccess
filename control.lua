@@ -43,28 +43,6 @@ production_types = {}
 building_types = {}
 local dirs = defines.direction
 
-ENT_NAMES_CLEARED_AS_OBSTACLES = {
-   "tree-01-stump",
-   "tree-02-stump",
-   "tree-03-stump",
-   "tree-04-stump",
-   "tree-05-stump",
-   "tree-06-stump",
-   "tree-07-stump",
-   "tree-08-stump",
-   "tree-09-stump",
-   "small-scorchmark",
-   "small-scorchmark-tintable",
-   "medium-scorchmark",
-   "medium-scorchmark-tintable",
-   "big-scorchmark",
-   "big-scorchmark-tintable",
-   "huge-scorchmark",
-   "huge-scorchmark-tintable",
-   "rock-big",
-   "rock-huge",
-   "sand-rock-big",
-}
 ENT_TYPES_YOU_CAN_WALK_OVER = {
    "resource",
    "transport-belt",
@@ -1473,7 +1451,7 @@ script.on_event(defines.events.on_player_changed_position, function(event)
 
       --Update cursor graphics
       local stack = p.cursor_stack
-      --if stack and stack.valid_for_read and stack.valid then fa_graphics.sync_build_cursor_graphics(pindex) end
+      if stack and stack.valid_for_read and stack.valid then fa_graphics.sync_build_cursor_graphics(pindex) end
 
       --Name a detected entity that you can or cannot walk on, or a tile you cannot walk on, and play a sound to indicate multiple consecutive detections
       refresh_player_tile(pindex)
@@ -2544,7 +2522,7 @@ function move_characters(event)
                or stack.prototype.type == "copy-paste-tool"
             then
                --Force the pointer to the build preview location (and draw selection tool boxes)
-               --fa_graphics.sync_build_cursor_graphics(pindex)
+               fa_graphics.sync_build_cursor_graphics(pindex)
             else
                --Force the pointer to the cursor location (if on screen)
                if fa_mouse.cursor_position_is_on_screen_with_player_centered(pindex) then
@@ -2640,7 +2618,7 @@ function move(direction, pindex, nudged)
 
          local stack = first_player.cursor_stack
          if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result ~= nil then
-            --fa_graphics.sync_build_cursor_graphics(pindex)
+            fa_graphics.sync_build_cursor_graphics(pindex)
          end
 
          if players[pindex].build_lock then fa_building_tools.build_item_in_hand(pindex) end
@@ -2666,7 +2644,7 @@ function move(direction, pindex, nudged)
 
       local stack = first_player.cursor_stack
       if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result ~= nil then
-         --fa_graphics.sync_build_cursor_graphics(pindex)
+         fa_graphics.sync_build_cursor_graphics(pindex)
       end
 
       if players[pindex].walk ~= WALKING.SMOOTH then
@@ -2807,7 +2785,7 @@ function cursor_mode_move(direction, pindex, single_only)
          and stack.valid
          and (stack.prototype.place_result ~= nil or stack.is_blueprint)
       then
-         --fa_graphics.sync_build_cursor_graphics(pindex)
+         fa_graphics.sync_build_cursor_graphics(pindex)
       end
 
       --Apply build lock if active
@@ -2850,7 +2828,7 @@ end
 function sync_remote_view(pindex)
    local p = game.get_player(pindex)
    p.zoom_to_world(players[pindex].cursor_pos)
-   --fa_graphics.sync_build_cursor_graphics(pindex)
+   fa_graphics.sync_build_cursor_graphics(pindex)
 end
 
 --Makes the character face the cursor, choosing the nearest of 4 cardinal directions. Can be overwriten by vanilla move keys.
@@ -3077,7 +3055,7 @@ script.on_event("cursor-bookmark-load", function(event)
    if pos == nil or pos.x == nil or pos.y == nil then return end
    players[pindex].cursor_pos = pos
    --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
-   --fa_graphics.sync_build_cursor_graphics(pindex)
+   fa_graphics.sync_build_cursor_graphics(pindex)
    printout("Loaded cursor bookmark at " .. math.floor(pos.x) .. ", " .. math.floor(pos.y), pindex)
    game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" })
 end)
@@ -3136,7 +3114,7 @@ script.on_event("teleport-to-alert-forced", function(event)
    players[pindex].position = game.get_player(pindex).position
    players[pindex].last_damage_alert_pos = game.get_player(pindex).position
    --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
-   --fa_graphics.sync_build_cursor_graphics(pindex)
+   fa_graphics.sync_build_cursor_graphics(pindex)
    refresh_player_tile(pindex)
 end)
 
@@ -3597,13 +3575,13 @@ end)
 --Sets up mod character menus. Cannot actually open the character GUI.
 function open_player_inventory(tick, pindex)
    local p = game.get_player(pindex)
-   if p.ticks_to_respawn ~= nil then return end
+   if p.ticks_to_respawn ~= nil or p.character == nil then return end
    p.play_sound({ path = "Open-Inventory-Sound" })
    p.selected = nil
    players[pindex].last_menu_toggle_tick = tick
    players[pindex].in_menu = true
    players[pindex].menu = "inventory"
-   players[pindex].inventory.lua_inventory = p.get_main_inventory()
+   players[pindex].inventory.lua_inventory = p.character.get_main_inventory()
    players[pindex].inventory.max = #players[pindex].inventory.lua_inventory
    players[pindex].inventory.index = 1
    read_inventory_slot(pindex, "Inventory, ")
@@ -4091,13 +4069,14 @@ function swap_weapon_forward(pindex, write_to_character)
    if gun_index == nil then
       return 0 --This is an intentionally selected error code
    end
-   local guns_inv = p.get_inventory(defines.inventory.character_guns)
-   local ammo_inv = game.get_player(pindex).get_inventory(defines.inventory.character_ammo)
+   local guns_inv = p.character.get_inventory(defines.inventory.character_guns)
+   local ammo_inv = game.get_player(pindex).character.get_inventory(defines.inventory.character_ammo)
 
    --Simple index increment (not needed)
    gun_index = gun_index + 1
    if gun_index > 3 then gun_index = 1 end
    --game.print("start " .. gun_index)--
+   assert(ammo_inv)
 
    --Increment again if the new index has no guns or no ammo
    local ammo_stack = ammo_inv[gun_index]
@@ -4364,7 +4343,7 @@ script.on_event("mine-area", function(event)
       else
          --Check if it is a remnant ent, clear obstacles
          local ent_is_remnant = false
-         local remnant_names = ENT_NAMES_CLEARED_AS_OBSTACLES
+         local remnant_names = Consts.ENT_NAMES_CLEARED_AS_OBSTACLES
          for i, name in ipairs(remnant_names) do
             if ent.name == name then ent_is_remnant = true end
          end
@@ -4889,7 +4868,7 @@ script.on_event("click-menu", function(event)
                players[pindex].cursor = true
                players[pindex].cursor_pos = fa_utils.center_of_tile(ent.position)
                --fa_graphics.draw_cursor_highlight(pindex, ent, nil)
-               --fa_graphics.sync_build_cursor_graphics(pindex)
+               fa_graphics.sync_build_cursor_graphics(pindex)
                printout({
                   "fa.teleported-cursor-to",
                   "" .. math.floor(players[pindex].cursor_pos.x) .. " " .. math.floor(players[pindex].cursor_pos.y),
@@ -6373,7 +6352,7 @@ script.on_event(defines.events.on_player_cursor_stack_changed, function(event)
    players[pindex].bp_selecting = false
    players[pindex].blueprint_reselecting = false
    players[pindex].ghost_rail_planning = false
-   --fa_graphics.sync_build_cursor_graphics(pindex)
+   fa_graphics.sync_build_cursor_graphics(pindex)
 end)
 
 script.on_event(defines.events.on_player_mined_item, function(event)
@@ -6659,7 +6638,7 @@ script.on_event("recalibrate-zoom", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    fa_zoom.fix_zoom(pindex)
-   --fa_graphics.sync_build_cursor_graphics(pindex)
+   fa_graphics.sync_build_cursor_graphics(pindex)
    printout("Recalibrated", pindex)
 end)
 
@@ -6667,7 +6646,7 @@ script.on_event("set-standard-zoom", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    fa_zoom.set_zoom(1, pindex)
-   --fa_graphics.sync_build_cursor_graphics(pindex)
+   fa_graphics.sync_build_cursor_graphics(pindex)
    printout("Set standard zoom.", pindex)
 end)
 
@@ -6675,7 +6654,7 @@ script.on_event("set-closest-zoom", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    fa_zoom.set_zoom(fa_zoom.MAX_ZOOM, pindex)
-   --fa_graphics.sync_build_cursor_graphics(pindex)
+   fa_graphics.sync_build_cursor_graphics(pindex)
    printout("Set closest zoom.", pindex)
 end)
 
@@ -6683,7 +6662,7 @@ script.on_event("set-furthest-zoom", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    fa_zoom.set_zoom(fa_zoom.MIN_ZOOM, pindex)
-   --fa_graphics.sync_build_cursor_graphics(pindex)
+   fa_graphics.sync_build_cursor_graphics(pindex)
    printout("Set furthest zoom.", pindex)
 end)
 
@@ -6704,7 +6683,7 @@ script.on_event("pipette-tool-info", function(event)
          players[pindex].cursor_rotation_offset = 0
       end
       if players[pindex].cursor then players[pindex].cursor_pos = fa_utils.get_ent_northwest_corner_position(ent) end
-      --fa_graphics.sync_build_cursor_graphics(pindex)
+      fa_graphics.sync_build_cursor_graphics(pindex)
       --fa_graphics.draw_cursor_highlight(pindex, ent, nil, nil)
    end
 end)
@@ -7178,7 +7157,7 @@ function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
 
    --Read the tile reached
    read_tile(pindex, result)
-   --fa_graphics.sync_build_cursor_graphics(pindex)
+   fa_graphics.sync_build_cursor_graphics(pindex)
 
    --Draw large cursor boxes if present
    if players[pindex].cursor_size > 0 then
@@ -8210,7 +8189,7 @@ function jump_cursor_to_typed_coordinates(result, pindex)
          players[pindex].cursor_pos = fa_utils.center_of_tile({ x = new_x + 0.01, y = new_y + 0.01 })
          printout("Cursor jumped to " .. new_x .. ", " .. new_y, pindex)
          --fa_graphics.draw_cursor_highlight(pindex)
-         --fa_graphics.sync_build_cursor_graphics(pindex)
+         fa_graphics.sync_build_cursor_graphics(pindex)
       else
          printout("Invalid input", pindex)
       end
