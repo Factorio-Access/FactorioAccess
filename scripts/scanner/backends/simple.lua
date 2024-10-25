@@ -90,7 +90,7 @@ function SimpleBackend:on_new_entity(ent)
    self.known_entities[script.register_on_object_destroyed(ent)] = ent
 end
 
----@param event EventData.on_entity_destroyed
+---@param event EventData.on_object_destroyed
 function SimpleBackend:on_entity_destroyed(event)
    self.known_entities[event.registration_number] = nil
    self.entry_cache[event.registration_number] = nil

@@ -53,7 +53,7 @@ function TreeBackend:on_new_entity(entity)
    table.insert(self.point_queue, { x = cx, y = cy })
 end
 
----@param event EventData.on_entity_destroyed
+---@param event EventData.on_object_destroyed
 function TreeBackend:on_entity_destroyed(event) end
 
 function TreeBackend:update_entry(player, e)

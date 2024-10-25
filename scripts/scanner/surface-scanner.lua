@@ -316,7 +316,7 @@ local work_queue = WorkQueue.declare_work_queue({
    idle_function = redispatch,
 })
 
----@param event EventData.on_entity_destroyed
+---@param event EventData.on_object_destroyed
 function mod.on_entity_destroyed(event)
    for _, s in pairs(surface_state) do
       if s.seen_entities:remove(event.registration_number) then
