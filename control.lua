@@ -1637,7 +1637,7 @@ function menu_cursor_up(pindex)
          players[pindex].technology.index = 1
       end
       if players[pindex].technology.category == 1 then
-         printout("Researchable ttechnologies", pindex)
+         printout("Researchable technologies", pindex)
       elseif players[pindex].technology.category == 2 then
          printout("Locked technologies", pindex)
       elseif players[pindex].technology.category == 3 then
