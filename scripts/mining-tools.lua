@@ -1,4 +1,5 @@
 --Here: mining functions, such as obstacle clearing
+local Consts = require("scripts.consts")
 
 local mod = {}
 
@@ -59,7 +60,7 @@ function mod.clear_obstacles_in_circle(position, radius, pindex)
    local resources = surf.find_entities_filtered({
       position = position,
       radius = radius,
-      name = { "rock-big", "rock-huge", "sand-rock-big" },
+      name = { "big-rock", "huge-rock", "big-snad-rock" },
    })
    for i, resource_ent in ipairs(resources) do
       if resource_ent ~= nil and resource_ent.valid then
@@ -77,8 +78,11 @@ function mod.clear_obstacles_in_circle(position, radius, pindex)
    end
 
    --Find and mine corpse entities such as building remnants
-   local remnant_ents =
-      surf.find_entities_filtered({ position = position, radius = radius, name = ENT_NAMES_CLEARED_AS_OBSTACLES })
+   local remnant_ents = surf.find_entities_filtered({
+      position = position,
+      radius = radius,
+      name = Consts.ENT_NAMES_CLEARED_AS_OBSTACLES,
+   })
    for i, remnant_ent in ipairs(remnant_ents) do
       if remnant_ent ~= nil and remnant_ent.valid then
          rendering.draw_circle({
@@ -175,7 +179,7 @@ function mod.clear_obstacles_in_rectangle(left_top, right_bottom, pindex, mining
    --Find and mine rocks. Note that they are resource entities with specific names
    local resources = surf.find_entities_filtered({
       area = { left_top, right_bottom },
-      name = { "rock-big", "rock-huge", "sand-rock-big" },
+      name = { "big-rock", "huge-rock", "big-sand-rock" },
    })
    for i, resource_ent in ipairs(resources) do
       if resource_ent ~= nil and resource_ent.valid then
@@ -199,7 +203,7 @@ function mod.clear_obstacles_in_rectangle(left_top, right_bottom, pindex, mining
 
    --Find and destroy corpse entities such as building remnants
    local remnant_ents =
-      surf.find_entities_filtered({ area = { left_top, right_bottom }, name = ENT_NAMES_CLEARED_AS_OBSTACLES })
+      surf.find_entities_filtered({ area = { left_top, right_bottom }, name = Consts.ENT_NAMES_CLEARED_AS_OBSTACLES })
    for i, remnant_ent in ipairs(remnant_ents) do
       if remnant_ent ~= nil and remnant_ent.valid then
          rendering.draw_circle({

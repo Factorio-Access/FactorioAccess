@@ -14,7 +14,7 @@ function mod.get_recipes(pindex, ent, load_all_categories)
    for category_name, _ in pairs(ent.prototype.crafting_categories) do
       table.insert(category_filters, { filter = "category", category = category_name })
    end
-   local all_machine_recipes = game.get_filtered_recipe_prototypes(category_filters)
+   local all_machine_recipes = prototypes.get_recipe_filtered(category_filters)
    local unlocked_machine_recipes = {}
    local force_recipes = game.get_player(pindex).force.recipes
 
