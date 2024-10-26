@@ -146,4 +146,10 @@ function mod.check_player(pindex)
    player.translation_id_lookup[id] = "test_translation"
 end
 
+-- Build a localised string which will announce the localised_x field or, if not present, the name.
+---@param what { name: string, localised_name: LocalisedString }
+---@return LocalisedString
+function mod.get_localised_name_with_fallback(what)
+   return { "?", what.localised_name, what.name }
+end
 return mod

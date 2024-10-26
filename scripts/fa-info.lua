@@ -1647,7 +1647,7 @@ function mod.area_scan_summary_info(pindex, left_top, right_bottom)
       table.insert(result, "Area empty")
    end
 
-   return fa_utils.spacecat_table(result)
+   return fa_utils.localise_cat_table(result)
 end
 
 return mod

@@ -931,13 +931,15 @@ end
 ---@return LocalisedString
 mod.spacecat = function(...)
    local tab = table.pack(...)
-   return mod.spacecat_table(tab)
+   return mod.localise_cat_table(tab)
 end
 
--- Like spacecat but for a table.
+-- Like spacecat but for a table, and with custom separator.
 ---@param tab any[]
+---@param sep string? The separator, default space.
 ---@return LocalisedString
-function mod.spacecat_table(tab)
+function mod.localise_cat_table(tab, sep)
+   sep = sep or " "
    local will_cat = { "" }
 
    for i = 1, #tab do
@@ -945,7 +947,8 @@ function mod.spacecat_table(tab)
       local adding = type(ent) == "table" and ent or tostring(ent)
       if adding == nil then adding = "NIL!" end
       table.insert(will_cat, adding)
-      table.insert(will_cat, " ")
+      -- Careful: shouldn't add after the last element.
+      if tab[i + 1] then table.insert(will_cat, sep) end
    end
 
    -- 21 because 20 params, then the first is the "" part.
