@@ -31,6 +31,7 @@ local fa_circuits = require("scripts.circuit-networks")
 local fa_kk = require("scripts.kruise-kontrol-wrapper")
 local fa_quickbar = require("scripts.quickbar")
 local Consts = require("scripts.consts")
+local Research = require("scripts.research")
 local Rulers = require("scripts.rulers")
 local ScannerEntrypoint = require("scripts.scanner.entrypoint")
 local WorkQueue = require("scripts.work-queue")
@@ -1061,37 +1062,7 @@ function read_coords(pindex, start_phrase)
       result = result .. ", craft time " .. recipe.energy .. " seconds by default."
       printout(result, pindex)
    elseif players[pindex].menu == "technology" then
-      --Read research requirements
-      local techs = {}
-      if players[pindex].technology.category == 1 then
-         techs = players[pindex].technology.lua_researchable
-      elseif players[pindex].technology.category == 2 then
-         techs = players[pindex].technology.lua_locked
-      elseif players[pindex].technology.category == 3 then
-         techs = players[pindex].technology.lua_unlocked
-      end
-
-      if next(techs) ~= nil and players[pindex].technology.index > 0 and players[pindex].technology.index <= #techs then
-         result = result .. "Requires prior research "
-         local dict = techs[players[pindex].technology.index].prerequisites
-         local pre_count = 0
-         for a, b in pairs(dict) do
-            pre_count = pre_count + 1
-         end
-         if pre_count == 0 then result = result .. " None " end
-         for i, preq in pairs(techs[players[pindex].technology.index].prerequisites) do
-            result = result .. fa_localising.get(preq, pindex) .. " , "
-         end
-         result = result
-            .. ", and equipment "
-            .. techs[players[pindex].technology.index].research_unit_count
-            .. " times "
-         for i, ingredient in pairs(techs[players[pindex].technology.index].research_unit_ingredients) do
-            result = result .. fa_localising.get_item_from_name(ingredient.name, pindex) .. ", "
-         end
-
-         printout(result, pindex)
-      end
+      Research.menu_describe(pindex)
    end
    if
       (players[pindex].menu == "building" or players[pindex].menu == "vehicle")
@@ -1247,15 +1218,6 @@ function initialize(player)
       max = 0,
       lua_queue = nil,
    }
-
-   faplayer.technology = faplayer.technology
-      or {
-         index = 1,
-         category = 1,
-         lua_researchable = {},
-         lua_unlocked = {},
-         lua_locked = {},
-      }
 
    faplayer.building = faplayer.building
       or {
@@ -1632,17 +1594,7 @@ function menu_cursor_up(pindex)
          end
       end
    elseif players[pindex].menu == "technology" then
-      if players[pindex].technology.category > 1 then
-         players[pindex].technology.category = players[pindex].technology.category - 1
-         players[pindex].technology.index = 1
-      end
-      if players[pindex].technology.category == 1 then
-         printout("Researchable technologies", pindex)
-      elseif players[pindex].technology.category == 2 then
-         printout("Locked technologies", pindex)
-      elseif players[pindex].technology.category == 3 then
-         printout("Past Research", pindex)
-      end
+      Research.menu_move_vertical(pindex, -1)
    elseif players[pindex].menu == "belt" then
       if players[pindex].belt.sector == 1 then
          if
@@ -1888,17 +1840,7 @@ function menu_cursor_down(pindex)
          end
       end
    elseif players[pindex].menu == "technology" then
-      if players[pindex].technology.category < 3 then
-         players[pindex].technology.category = players[pindex].technology.category + 1
-         players[pindex].technology.index = 1
-      end
-      if players[pindex].technology.category == 1 then
-         printout("Researchable technologies", pindex)
-      elseif players[pindex].technology.category == 2 then
-         printout("Locked technologies", pindex)
-      elseif players[pindex].technology.category == 3 then
-         printout("Past Research", pindex)
-      end
+      Research.menu_move_vertical(pindex, 1)
    elseif players[pindex].menu == "belt" then
       if players[pindex].belt.sector == 1 then
          if
@@ -2134,11 +2076,7 @@ function menu_cursor_left(pindex)
          end
       end
    elseif players[pindex].menu == "technology" then
-      if players[pindex].technology.index > 1 then
-         players[pindex].technology.index = players[pindex].technology.index - 1
-         game.get_player(pindex).play_sound({ path = "Inventory-Move" })
-      end
-      read_technology_slot(pindex)
+      Research.menu_move_horizontal(pindex, -1)
    elseif players[pindex].menu == "belt" then
       if players[pindex].belt.side == 2 then
          players[pindex].belt.side = 1
@@ -2283,19 +2221,7 @@ function menu_cursor_right(pindex)
          end
       end
    elseif players[pindex].menu == "technology" then
-      local techs = {}
-      if players[pindex].technology.category == 1 then
-         techs = players[pindex].technology.lua_researchable
-      elseif players[pindex].technology.category == 2 then
-         techs = players[pindex].technology.lua_locked
-      elseif players[pindex].technology.category == 3 then
-         techs = players[pindex].technology.lua_unlocked
-      end
-      if players[pindex].technology.index < #techs then
-         game.get_player(pindex).play_sound({ path = "Inventory-Move" })
-         players[pindex].technology.index = players[pindex].technology.index + 1
-      end
-      read_technology_slot(pindex)
+      Research.menu_move_horizontal(pindex, 1)
    elseif players[pindex].menu == "belt" then
       if players[pindex].belt.side == 1 then
          players[pindex].belt.side = 2
@@ -3589,54 +3515,6 @@ function open_player_inventory(tick, pindex)
    players[pindex].crafting.max = #players[pindex].crafting.lua_recipes
    players[pindex].crafting.category = 1
    players[pindex].crafting.index = 1
-   players[pindex].technology.category = 1
-   players[pindex].technology.lua_researchable = {}
-   players[pindex].technology.lua_unlocked = {}
-   players[pindex].technology.lua_locked = {}
-   -- Create technologies list
-   for i, tech in pairs(game.get_player(pindex).force.technologies) do
-      if tech.researched then
-         table.insert(players[pindex].technology.lua_unlocked, tech)
-      else
-         local check = true
-         for i1, preq in pairs(tech.prerequisites) do
-            if not preq.researched then check = false end
-         end
-         if check then
-            table.insert(players[pindex].technology.lua_researchable, tech)
-         else
-            local check = false
-            for i1, preq in pairs(tech.prerequisites) do
-               if preq.researched then check = true end
-            end
-            if check then table.insert(players[pindex].technology.lua_locked, tech) end
-         end
-      end
-   end
-end
-
---Technology menu: Read the selected technology
-function read_technology_slot(pindex, start_phrase)
-   start_phrase = start_phrase or ""
-   local techs = {}
-   if players[pindex].technology.category == 1 then
-      techs = players[pindex].technology.lua_researchable
-   elseif players[pindex].technology.category == 2 then
-      techs = players[pindex].technology.lua_locked
-   elseif players[pindex].technology.category == 3 then
-      techs = players[pindex].technology.lua_unlocked
-   end
-
-   if next(techs) ~= nil and players[pindex].technology.index > 0 and players[pindex].technology.index <= #techs then
-      local tech = techs[players[pindex].technology.index]
-      if tech.valid then
-         printout(start_phrase .. fa_localising.get(tech, pindex), pindex)
-      else
-         printout(start_phrase .. "Error loading technology", pindex)
-      end
-   else
-      printout(start_phrase .. "No technologies in this category", pindex)
-   end
 end
 
 script.on_event("close-menu-access", function(event) --close_menu, menu closed
@@ -3830,7 +3708,7 @@ script.on_event("switch-menu-or-gun", function(event)
          )
       elseif players[pindex].menu == "crafting_queue" then
          players[pindex].menu = "technology"
-         read_technology_slot(pindex, "Technology, Researchable Technologies, ")
+         Research.menu_announce_entry(pindex)
       elseif players[pindex].menu == "technology" then
          if logistics_researched then
             players[pindex].menu = "player_trash"
@@ -3976,11 +3854,11 @@ script.on_event("reverse-switch-menu-or-gun", function(event)
             )
          else
             players[pindex].menu = "technology"
-            read_technology_slot(pindex, "Technology, Researchable Technologies, ")
+            Research.menu_announce_entry(pindex)
          end
       elseif players[pindex].menu == "player_trash" then
          players[pindex].menu = "technology"
-         read_technology_slot(pindex, "Technology, Researchable Technologies, ")
+         Research.menu_announce_entry(pindex)
       elseif players[pindex].menu == "crafting_queue" then
          players[pindex].menu = "crafting"
          fa_crafting.read_crafting_slot(pindex, "Crafting, ")
@@ -4813,33 +4691,7 @@ script.on_event("click-menu", function(event)
             end
          end
       elseif players[pindex].menu == "technology" then
-         local techs = {}
-         if players[pindex].technology.category == 1 then
-            techs = players[pindex].technology.lua_researchable
-         elseif players[pindex].technology.category == 2 then
-            techs = players[pindex].technology.lua_locked
-         elseif players[pindex].technology.category == 3 then
-            techs = players[pindex].technology.lua_unlocked
-         end
-
-         if
-            next(techs) ~= nil
-            and players[pindex].technology.index > 0
-            and players[pindex].technology.index <= #techs
-         then
-            if game.get_player(pindex).force.add_research(techs[players[pindex].technology.index]) then
-               local q = game.get_player(pindex).force.research_queue
-               if #q >= 1 then
-                  game.get_player(pindex).force.research_queue = nil
-                  game.get_player(pindex).force.add_research(techs[players[pindex].technology.index])
-                  printout("Research started, research queue cleared.", pindex)
-               else
-                  printout("Research started.", pindex)
-               end
-            else
-               printout("Research locked, first complete the prerequisites.", pindex)
-            end
-         end
+         Research.menu_start_research(pindex)
       elseif players[pindex].menu == "pump" then
          if players[pindex].pump.index == 0 then
             printout("Move up and down to select a location.", pindex)
@@ -6060,45 +5912,7 @@ script.on_event("item-info", function(event)
             printout("No description", pindex)
          end
       elseif players[pindex].menu == "technology" then
-         local techs = {}
-         if players[pindex].technology.category == 1 then
-            techs = players[pindex].technology.lua_researchable
-         elseif players[pindex].technology.category == 2 then
-            techs = players[pindex].technology.lua_locked
-         elseif players[pindex].technology.category == 3 then
-            techs = players[pindex].technology.lua_unlocked
-         end
-
-         if
-            next(techs) ~= nil
-            and players[pindex].technology.index > 0
-            and players[pindex].technology.index <= #techs
-         then
-            local result = { "" }
-            table.insert(result, "Description: ")
-            table.insert(result, techs[players[pindex].technology.index].localised_description or "No description")
-            table.insert(result, ", Rewards: ")
-            local rewards = techs[players[pindex].technology.index].prototype.effects
-            for i, reward in ipairs(rewards) do
-               local j = 0
-               for i1, v in pairs(reward) do
-                  if v then table.insert(result, ", " .. tostring(v)) end
-                  j = j + 1
-                  if j > 5 then
-                     table.insert(result, ", and other rewards")
-                     break
-                  end
-               end
-               if i > 5 then
-                  table.insert(result, ", and other rewards")
-                  break
-               end
-            end
-            if techs[players[pindex].technology.index].name == "electronics" then
-               table.insert(result, ", later technologies")
-            end
-            printout(result, pindex)
-         end
+         Research.menu_describe_costs(pindex)
       elseif players[pindex].menu == "crafting" then
          local recipe =
             players[pindex].crafting.lua_recipes[players[pindex].crafting.category][players[pindex].crafting.index]
@@ -6219,104 +6033,32 @@ script.on_event("read-time-and-research-progress", function(event)
       .. " minutes "
 
    --Add research progress info
-   local progress_string = " No research in progress, "
-   local tech = game.get_player(pindex).force.current_research
-   if tech ~= nil then
-      local research_progress = math.floor(game.get_player(pindex).force.research_progress * 100)
-      progress_string = " Researching " .. tech.name .. ", " .. research_progress .. "%, "
-   end
+   local progress_string = Research.get_progress_string(pindex)
 
-   printout(time_string .. progress_string .. total_time_string, pindex)
+   printout(fa_utils.spacecat(time_string, progress_string, total_time_string), pindex)
    if players[pindex].vanilla_mode then game.get_player(pindex).open_technology_gui() end
 end)
 
---Add the selected technology to the start of the research queue instead of switching directly to it
 script.on_event("add-to-research-queue-start", function(event)
    local pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   add_selected_tech_to_research_queue(pindex, true)
+   Research.menu_enqueue(pindex, 1)
 end)
 
 --Add the selected technology to the end of the research queue instead of switching directly to it
 script.on_event("add-to-research-queue-end", function(event)
    local pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   add_selected_tech_to_research_queue(pindex, false)
+   Research.menu_enqueue(pindex, nil)
 end)
 
---Adds the currently selected researchable technology to the research queue.
---If the param at_start is true, then added to the start, else to the end
-function add_selected_tech_to_research_queue(pindex, at_start)
-   if players[pindex].menu ~= "technology" or players[pindex].technology.category ~= 1 then return end
-   local p = game.get_player(pindex)
-   if p == nil or p.force == nil then return end
-   p.force.research_queue_enabled = true
-   local q = p.force.research_queue
-   local techs = players[pindex].technology.lua_researchable
-   local selected_tech_name = techs[players[pindex].technology.index].name
-   if at_start then
-      table.insert(q, 1, selected_tech_name)
-   else
-      table.insert(q, selected_tech_name)
-   end
-   p.force.research_queue = q
-
-   if at_start then
-      printout("Added to the start of the research queue.", pindex)
-   else
-      printout("Added to the end of the research queue.", pindex)
-   end
-end
-
---Read the research queue (first 10 items)
 script.on_event("read-research-queue", function(event)
    local pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   local p = game.get_player(pindex)
-   if p == nil or p.force == nil then return end
-   p.force.research_queue_enabled = true
-   local q = p.force.research_queue
-   if q == nil or #q == 0 then
-      printout("Research queue empty.", pindex)
-      return
-   end
-   --Read the queue elements
-   local result = "Research queue contains "
-   local i = 0
-   for i = 1, #q, 1 do
-      local tech = q[i]
-      if i > 10 then
-         result = result
-      elseif type(tech) == "string" then
-         result = result .. tech .. ", "
-      elseif tech.name then
-         if tech.level < 2 then
-            result = result .. tech.name .. ", "
-         else
-            result = result .. tech.name .. " level " .. tech.level .. ", "
-         end
-      else
-         result = result .. "tech" .. ", "
-      end
-   end
-   printout(result, pindex)
+   Research.queue_announce(pindex)
 end)
 
 --Clear the research queue
 script.on_event("clear-research-queue", function(event)
    local pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   local p = game.get_player(pindex)
-   if p == nil or p.force == nil then return end
-   p.force.research_queue_enabled = true
-   local q = p.force.research_queue
-   if q == nil or #q == 0 then
-      printout("Research queue empty.", pindex)
-      return
-   end
-   --Clear the queue
-   p.force.research_queue = nil
-   printout("Research queue cleared.", pindex)
+   Research.clear_queue(pindex)
 end)
 
 --When the item in hand changes
