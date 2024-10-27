@@ -6,6 +6,7 @@ local fa_circuits = require("scripts.circuit-networks")
 local fa_travel = require("scripts.travel-tools")
 local fa_graphics = require("scripts.graphics")
 local fa_blueprints = require("scripts.blueprints")
+local Research = require("scripts.research")
 
 local mod = {}
 
@@ -16,7 +17,7 @@ local function inventory_find_index_of_next_name_match(inv, index, str, pindex)
    --Iterate until the end of the inventory for a match
    for i = index, #inv, 1 do
       local stack = inv[i]
-      if stack ~= nil and (stack.object_name == "LuaTechnology" or stack.valid_for_read) then
+      if stack ~= nil and stack.valid_for_read then
          local name = string.lower(localising.get(stack.prototype, pindex))
          local result = string.find(name, str, 1, true)
          if result ~= nil then
@@ -35,7 +36,7 @@ local function inventory_find_index_of_next_name_match(inv, index, str, pindex)
    game.get_player(pindex).play_sound({ path = "inventory-wrap-around" }) --sound for having cicled around
    for i = 1, index, 1 do
       local stack = inv[i]
-      if stack ~= nil and (stack.object_name == "LuaTechnology" or stack.valid_for_read) then
+      if stack ~= nil and stack.valid_for_read then
          local name = string.lower(localising.get(stack.prototype, pindex))
          local result = string.find(name, str, 1, true)
          if result ~= nil then
@@ -372,47 +373,8 @@ function mod.fetch_next(pindex, str, start_phrase_in)
          players[pindex].crafting.lua_recipes
       )
    elseif players[pindex].menu == "technology" then
-      --Search the selected tech catagory
-      local techs = {}
-      if players[pindex].technology.category == 1 then
-         techs = players[pindex].technology.lua_researchable
-      elseif players[pindex].technology.category == 2 then
-         techs = players[pindex].technology.lua_locked
-      elseif players[pindex].technology.category == 3 then
-         techs = players[pindex].technology.lua_unlocked
-      end
-      new_index = inventory_find_index_of_next_name_match(techs, search_index, str, pindex)
-      --Search the second tech category
-      if new_index <= 0 then
-         players[pindex].technology.category = players[pindex].technology.category + 1
-         if players[pindex].technology.category > 3 then players[pindex].technology.category = 1 end
-         if players[pindex].technology.category == 1 then
-            techs = players[pindex].technology.lua_researchable
-         elseif players[pindex].technology.category == 2 then
-            techs = players[pindex].technology.lua_locked
-         elseif players[pindex].technology.category == 3 then
-            techs = players[pindex].technology.lua_unlocked
-         end
-         new_index = inventory_find_index_of_next_name_match(techs, search_index, str, pindex)
-      end
-      --Search the third tech category
-      if new_index <= 0 then
-         players[pindex].technology.category = players[pindex].technology.category + 1
-         if players[pindex].technology.category > 3 then players[pindex].technology.category = 1 end
-         if players[pindex].technology.category == 1 then
-            techs = players[pindex].technology.lua_researchable
-         elseif players[pindex].technology.category == 2 then
-            techs = players[pindex].technology.lua_locked
-         elseif players[pindex].technology.category == 3 then
-            techs = players[pindex].technology.lua_unlocked
-         end
-         new_index = inventory_find_index_of_next_name_match(techs, search_index, str, pindex)
-      end
-      --Circle back to the original category if nothing found
-      if new_index <= 0 then
-         players[pindex].technology.category = players[pindex].technology.category + 1
-         if players[pindex].technology.category > 3 then players[pindex].technology.category = 1 end
-      end
+      Research.menu_search(pindex, str, 1)
+      return
    elseif players[pindex].menu == "signal_selector" then
       --Search the currently selected group
       local group_index = players[pindex].signal_selector.group_index
@@ -485,22 +447,6 @@ function mod.fetch_next(pindex, str, start_phrase_in)
       players[pindex].crafting.category = new_index
       players[pindex].crafting.index = new_index_2
       fa_crafting.read_crafting_slot(pindex, start_phrase)
-   elseif players[pindex].menu == "technology" then
-      local techs = {}
-      local note = start_phrase
-      if players[pindex].technology.category == 1 then
-         techs = players[pindex].technology.lua_researchable
-         note = " researchable "
-      elseif players[pindex].technology.category == 2 then
-         techs = players[pindex].technology.lua_locked
-         note = " locked "
-      elseif players[pindex].technology.category == 3 then
-         techs = players[pindex].technology.lua_unlocked
-         note = " unlocked "
-      end
-      players[pindex].menu_search_index = new_index
-      players[pindex].technology.index = new_index
-      read_technology_slot(pindex, note)
    elseif players[pindex].menu == "signal_selector" then
       players[pindex].menu_search_index = new_index
       players[pindex].signal_selector.signal_index = new_index
@@ -526,7 +472,11 @@ function mod.fetch_last(pindex, str)
       printout("The open map does not support backwards searching.", pindex)
       return
    end
-   if players[pindex].menu ~= "inventory" and players[pindex].menu ~= "building" then
+   if
+      players[pindex].menu ~= "inventory"
+      and players[pindex].menu ~= "building"
+      and players[pindex].menu ~= "technology"
+   then
       printout(players[pindex].menu .. " menu does not support backwards searching.", pindex)
       return
    end
@@ -555,6 +505,9 @@ function mod.fetch_last(pindex, str)
    then
       inv = game.get_player(pindex).opened.get_output_inventory()
       new_index = inventory_find_index_of_last_name_match(inv, search_index, str, pindex)
+   elseif players[pindex].menu == "technology" then
+      Research.menu_search(pindex, str, -1)
+      return
    else
       printout("This menu or building sector does not support backwards searching.", pindex)
       return

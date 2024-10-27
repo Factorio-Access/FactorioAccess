@@ -175,21 +175,17 @@ function mod.find_index_of(array, element)
    return nil
 end
 
--- Given a set table<key, value>, convert it to an array `{ { key, value }...}`
--- sorted by the key.
---
--- LuaLS cannot really understand the typing, so we don't try.
----@param set table
----@return ([any, any])[]
+-- Convert a key-value table to an array of 2-tuples (k, v) then sort that by
+-- k.
 function mod.set_to_sorted_array(set)
-   local arr = {}
+   local array = {}
    for k, v in pairs(set) do
-      table.insert(arr, { k, v })
+      table.insert(array, { k, v })
    end
-   table.sort(arr, function(a, b)
-      return a < b
+   table.sort(array, function(a, b)
+      return a[1] < b[1]
    end)
-   return arr
+   return array
 end
 
 return mod
