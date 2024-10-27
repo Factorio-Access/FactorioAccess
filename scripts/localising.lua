@@ -150,6 +150,7 @@ end
 ---@param what { name: string, localised_name: LocalisedString }
 ---@return LocalisedString
 function mod.get_localised_name_with_fallback(what)
+   assert(what.name)
    return { "?", what.localised_name, what.name }
 end
 return mod

@@ -1062,7 +1062,7 @@ function read_coords(pindex, start_phrase)
       result = result .. ", craft time " .. recipe.energy .. " seconds by default."
       printout(result, pindex)
    elseif players[pindex].menu == "technology" then
-      Research.menu_describe(pindex)
+      Research.menu_describe_costs(pindex)
    end
    if
       (players[pindex].menu == "building" or players[pindex].menu == "vehicle")
@@ -5912,7 +5912,7 @@ script.on_event("item-info", function(event)
             printout("No description", pindex)
          end
       elseif players[pindex].menu == "technology" then
-         Research.menu_describe_costs(pindex)
+         Research.menu_describe(pindex)
       elseif players[pindex].menu == "crafting" then
          local recipe =
             players[pindex].crafting.lua_recipes[players[pindex].crafting.category][players[pindex].crafting.index]

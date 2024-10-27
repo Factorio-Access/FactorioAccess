@@ -60,7 +60,7 @@ end
 ---@param ... any
 function mod.multipush(destination, ...)
    local packed = table.pack(...)
-   mod.merge_arrays(destination, packed)
+   mod.concat_arrays(destination, packed)
 end
 
 -- Merges two arrays.  The second array is pushed into the first.  That is, it
@@ -68,7 +68,7 @@ end
 --
 ---@param destination any[]
 ---@param array any[]
-function mod.merge_arrays(destination, array)
+function mod.concat_arrays(destination, array)
    -- faster: table.insert is a hashtable lookup.
    local tins = table.insert
 
@@ -81,10 +81,12 @@ end
 -- true }.
 ---@param set table<any, true>
 ---@param array any[]
+---@return table<any, true> A copy of set.
 function mod.array_to_set(set, array)
    for i = 1, #array do
       set[array[i]] = true
    end
+   return set
 end
 
 -- Merge the second mapping into the first (e.g. table of non-array keys)
@@ -186,6 +188,18 @@ function mod.set_to_sorted_array(set)
       return a[1] < b[1]
    end)
    return array
+end
+
+-- Return a copy of table, with func called on all values.
+---@param tab table
+---@param func fun(any): any
+---@return table
+function mod.map(tab, func)
+   local copy = {}
+   for k, v in pairs(tab) do
+      copy[k] = func(v)
+   end
+   return copy
 end
 
 return mod
