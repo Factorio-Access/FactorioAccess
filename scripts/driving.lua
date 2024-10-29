@@ -44,11 +44,7 @@ end
 --Return fuel content in a fuel inventory
 function mod.fuel_inventory_info(ent)
    local result = "Contains no fuel."
-   local itemset = ent.get_fuel_inventory().get_contents()
-   local itemtable = {}
-   for name, count in pairs(itemset) do
-      table.insert(itemtable, { name = name, count = count })
-   end
+   local itemtable = ent.get_fuel_inventory().get_contents()
    table.sort(itemtable, function(k1, k2)
       return k1.count > k2.count
    end)
