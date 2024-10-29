@@ -58,7 +58,7 @@ function mod.clear_obstacles_in_circle(position, radius, pindex)
    local resources = surf.find_entities_filtered({
       position = position,
       radius = radius,
-      name = { "big-rock", "huge-rock", "big-snad-rock" },
+      name = { "big-rock", "huge-rock", "big-sand-rock" },
    })
    for i, resource_ent in ipairs(resources) do
       if resource_ent ~= nil and resource_ent.valid then
