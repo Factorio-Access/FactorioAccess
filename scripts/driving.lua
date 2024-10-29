@@ -113,7 +113,6 @@ function mod.check_and_play_driving_alert_sound(pindex, tick, mode_in)
          type = {
             "resource",
             "highlight-box",
-            "flying-text",
             "corpse",
             "straight-rail",
             "curved-rail",

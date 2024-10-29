@@ -39,8 +39,6 @@ function mod.clear_obstacles_in_circle(position, radius, pindex)
    local rocks_cleared = 0
    local remnants_cleared = 0
    local ground_items_cleared = 0
-   players[pindex].allow_reading_flying_text = false
-
    --Find and mine trees
    local trees = surf.find_entities_filtered({ position = position, radius = radius, type = "tree" })
    for i, tree_ent in ipairs(trees) do
@@ -151,7 +149,6 @@ function mod.clear_obstacles_in_rectangle(left_top, right_bottom, pindex, mining
    local remnants_cleared = 0
    local ground_items_cleared = 0
    local deconstruction_counter = 0
-   players[pindex].allow_reading_flying_text = false
 
    --Check for valid positions
    if left_top == nil or right_bottom == nil then return end

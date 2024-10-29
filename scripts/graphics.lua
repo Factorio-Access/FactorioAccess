@@ -434,13 +434,7 @@ function mod.draw_cursor_highlight(pindex, ent, box_type, skip_mouse_movement)
    end
 
    --Draw highlight box
-   if
-      ent ~= nil
-      and ent.valid
-      and ent.name ~= "highlight-box"
-      and ent.type ~= "flying-text"
-      and (p.selected == nil or p.selected.valid == false)
-   then
+   if ent ~= nil and ent.valid and ent.name ~= "highlight-box" and (p.selected == nil or p.selected.valid == false) then
       h_box = p.surface.create_entity({
          name = "highlight-box",
          force = "neutral",

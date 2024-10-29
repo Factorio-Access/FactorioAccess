@@ -56,7 +56,6 @@ ENT_TYPES_YOU_CAN_WALK_OVER = {
    "pipe-to-ground",
    "character",
    "rail-signal",
-   "flying-text",
    "highlight-box",
    "combat-robot",
    "logistic-robot",
@@ -66,7 +65,6 @@ ENT_TYPES_YOU_CAN_WALK_OVER = {
 ENT_TYPES_YOU_CAN_BUILD_OVER = {
    "resource",
    "entity-ghost",
-   "flying-text",
    "highlight-box",
    "combat-robot",
    "logistic-robot",
@@ -1152,7 +1150,6 @@ function initialize(player)
    faplayer.build_lock = faplayer.build_lock or false
    faplayer.vanilla_mode = faplayer.vanilla_mode or false
    faplayer.hide_cursor = faplayer.hide_cursor or false
-   faplayer.allow_reading_flying_text = faplayer.allow_reading_flying_text or true
    faplayer.resources = fa_force.resources
    faplayer.mapped = fa_force.mapped
    faplayer.destroyed = faplayer.destroyed or {}
@@ -2331,7 +2328,6 @@ function on_tick(event)
          check_and_play_bump_alert_sound(pindex, event.tick)
          check_and_play_stuck_alert_sound(pindex, event.tick)
       end
-      read_flying_texts()
    elseif event.tick % 15 == 1 then
       --Check and play train track warning sounds at appropriate frequencies
       fa_rails.check_and_play_train_track_alert_sounds(3)
@@ -2615,12 +2611,6 @@ function move(direction, pindex, nudged)
       --fa_graphics.draw_cursor_highlight(pindex, ent, nil)
    else
       --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
-   end
-
-   --Unless the cut-paste tool is in hand, restore the reading of flying text
-   local stack = game.get_player(pindex).cursor_stack
-   if not (stack and stack.valid_for_read and stack.name == "cut-paste-tool") then
-      players[pindex].allow_reading_flying_text = true
    end
 
    return moved_success
@@ -4077,7 +4067,6 @@ script.on_event("mine-tiles", function(event)
       local stack = game.get_player(pindex).cursor_stack
       local surf = game.get_player(pindex).surface
       if stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result ~= nil then
-         players[pindex].allow_reading_flying_text = false
          local c_pos = players[pindex].cursor_pos
          local c_size = players[pindex].cursor_size
          local left_top = { x = math.floor(c_pos.x - c_size), y = math.floor(c_pos.y - c_size) }
@@ -4162,7 +4151,6 @@ script.on_event("mine-area", function(event)
    local init_empty_stacks = game.get_player(pindex).get_main_inventory().count_empty_stacks()
 
    --Begin clearing
-   players[pindex].allow_reading_flying_text = false
    if ent then
       local surf = ent.surface
       local pos = ent.position
@@ -4243,7 +4231,6 @@ script.on_event("mine-area", function(event)
    local p = game.get_player(pindex)
    local stack = p.cursor_stack
    if stack and stack.valid_for_read and stack.name == "cut-paste-tool" then
-      players[pindex].allow_reading_flying_text = false
       local all_ents =
          p.surface.find_entities_filtered({ position = p.position, radius = 5, force = { p.force, "neutral" } })
       for i, ent in ipairs(all_ents) do
@@ -4257,7 +4244,6 @@ script.on_event("mine-area", function(event)
 
    --If the deconstruction planner is in hand, mine every entity marked for deconstruction except for cliffs.
    if stack and stack.valid_for_read and stack.is_deconstruction_item then
-      players[pindex].allow_reading_flying_text = false
       local all_ents =
          p.surface.find_entities_filtered({ position = p.position, radius = 5, force = { p.force, "neutral" } })
       for i, ent in ipairs(all_ents) do
@@ -6236,34 +6222,6 @@ script.on_event("save-game-manually", function(event)
    game.auto_save("manual")
    printout("Saving Game, please wait 3 seconds.", pindex)
 end)
-
---For all players, reads flying texts within 10 tiles of the cursor
-function read_flying_texts()
-   for pindex, player in pairs(players) do
-      if player.allow_reading_flying_text ~= false then
-         if player.past_flying_texts == nil then player.past_flying_texts = {} end
-         local flying_texts = {}
-         local search = {
-            type = "flying-text",
-            position = player.cursor_pos,
-            radius = 10,
-         }
-
-         for _, ftext in pairs(game.get_player(pindex).surface.find_entities_filtered(search)) do
-            local id = ftext.text
-            if type(id) == "table" then id = serpent.line(id) end
-            flying_texts[id] = (flying_texts[id] or 0) + 1
-         end
-         for id, count in pairs(flying_texts) do
-            if count > (player.past_flying_texts[id] or 0) then
-               local ok, out_text = serpent.load(id)
-               if ok then printout(out_text, pindex) end
-            end
-         end
-         player.past_flying_texts = flying_texts
-      end
-   end
-end
 
 walk_type_speech = {
    "Telestep enabled",
