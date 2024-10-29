@@ -246,7 +246,7 @@ end
 --???
 function prune_item_groups(array)
    if #groups == 0 then
-      local dict = game.item_prototypes
+      local dict = prototypes.item
       local a = fa_utils.get_iterable_array(dict)
       for i, v in ipairs(a) do
          local check1 = true
@@ -1044,16 +1044,16 @@ function read_coords(pindex, start_phrase)
       result = result .. "Ingredients: "
       for i, v in pairs(recipe.ingredients) do
          ---@type LuaItemPrototype | LuaFluidPrototype
-         local proto = game.item_prototypes[v.name]
-         if proto == nil then proto = game.fluid_prototypes[v.name] end
+         local proto = prototypes.item[v.name]
+         if proto == nil then proto = prototypes.fluid[v.name] end
          local localised_name = fa_localising.get(proto, pindex)
          result = result .. ", " .. localised_name .. " times " .. v.amount
       end
       result = result .. ", Products: "
       for i, v in pairs(recipe.products) do
          ---@type LuaItemPrototype | LuaFluidPrototype
-         local proto = game.item_prototypes[v.name]
-         if proto == nil then proto = game.fluid_prototypes[v.name] end
+         local proto = prototypes.item[v.name]
+         if proto == nil then proto = prototypes.fluid[v.name] end
          local localised_name = fa_localising.get(proto, pindex)
          result = result .. ", " .. localised_name .. " times " .. v.amount
       end
@@ -1072,16 +1072,16 @@ function read_coords(pindex, start_phrase)
       result = result .. "Ingredients: "
       for i, v in pairs(recipe.ingredients) do
          ---@type LuaItemPrototype | LuaFluidPrototype
-         local proto = game.item_prototypes[v.name]
-         if proto == nil then proto = game.fluid_prototypes[v.name] end
+         local proto = prototypes.item[v.name]
+         if proto == nil then proto = prototypes.fluid[v.name] end
          local localised_name = fa_localising.get(proto, pindex)
          result = result .. ", " .. localised_name .. " x" .. v.amount .. " per cycle "
       end
       result = result .. ", products: "
       for i, v in pairs(recipe.products) do
          ---@type LuaItemPrototype | LuaFluidPrototype
-         local proto = game.item_prototypes[v.name]
-         if proto == nil then proto = game.fluid_prototypes[v.name] end
+         local proto = prototypes.item[v.name]
+         if proto == nil then proto = prototypes.fluid[v.name] end
          local localised_name = fa_localising.get(proto, pindex)
          result = result .. ", " .. localised_name .. " x" .. v.amount .. " per cycle "
       end
@@ -5572,7 +5572,7 @@ function do_multi_stack_transfer(ratio, pindex)
          local listed_count = 0
          for name, amount in pairs(moved) do
             if listed_count <= 5 then
-               table.insert(item_list, { "fa.item-quantity", game.item_prototypes[name].localised_name, amount })
+               table.insert(item_list, { "fa.item-quantity", prototypes.item[name].localised_name, amount })
                table.insert(item_list, ", ")
             else
                other_items = other_items + amount
@@ -5616,7 +5616,7 @@ function do_multi_stack_transfer(ratio, pindex)
             local listed_count = 0
             for name, amount in pairs(moved) do
                if listed_count <= 5 then
-                  table.insert(item_list, { "fa.item-quantity", game.item_prototypes[name].localised_name, amount })
+                  table.insert(item_list, { "fa.item-quantity", prototypes.item[name].localised_name, amount })
                   table.insert(item_list, ", ")
                else
                   other_items = other_items + amount
@@ -5905,14 +5905,14 @@ script.on_event("item-info", function(event)
          if recipe ~= nil and #recipe.products > 0 then
             local product_name = recipe.products[1].name
             ---@type LuaItemPrototype | LuaFluidPrototype
-            local product = game.item_prototypes[product_name]
+            local product = prototypes.item[product_name]
             local product_is_item = true
             if product == nil then
-               product = game.fluid_prototypes[product_name]
+               product = prototypes.fluid[product_name]
                product_is_item = false
             elseif product_name == "empty-barrel" and recipe.products[2] ~= nil then
                product_name = recipe.products[2].name
-               product = game.fluid_prototypes[product_name]
+               product = prototypes.fluid[product_name]
                product_is_item = false
             end
             ---@type LocalisedString
@@ -5933,7 +5933,7 @@ script.on_event("item-info", function(event)
                players[pindex].building.recipe_list[players[pindex].building.category][players[pindex].building.index]
             if recipe ~= nil and #recipe.products > 0 then
                local product_name = recipe.products[1].name
-               local product = game.item_prototypes[product_name] or game.fluid_prototypes[product_name]
+               local product = prototypes.item[product_name] or prototypes.fluid[product_name]
                local str = product.localised_description
                if str == nil or str == "" then str = "No description found for this" end
                printout(str, pindex)
@@ -6027,13 +6027,13 @@ end)
 
 script.on_event("add-to-research-queue-start", function(event)
    local pindex = event.player_index
-   Research.menu_enqueue(pindex, 1)
+   if players[pindex].menu == "technology" then Research.menu_enqueue(pindex, 1) end
 end)
 
 --Add the selected technology to the end of the research queue instead of switching directly to it
 script.on_event("add-to-research-queue-end", function(event)
    local pindex = event.player_index
-   Research.menu_enqueue(pindex, nil)
+   if players[pindex].menu == "technology" then Research.menu_enqueue(pindex, nil) end
 end)
 
 script.on_event("read-research-queue", function(event)
@@ -7868,7 +7868,7 @@ function set_infinity_pipe_filter_by_hand(pindex, ent)
             fluid_name = "steam"
             temp = 500
          end
-         if game.fluid_prototypes[fluid_name] then
+         if prototypes.fluid[fluid_name] then
             ent.set_infinity_pipe_filter({ name = fluid_name, temperature = temp, percentage = 1.00, mode = "exactly" })
             return "Set filter to fluid in hand"
          end
