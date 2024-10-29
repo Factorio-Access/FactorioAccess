@@ -88,7 +88,7 @@ function mod.enqueue(player, name, index)
    local tech = prototypes.technology[name]
    if not tech then error(string.format("Got an invalid technology name! %s")) end
 
-   if tech.research_trigger then return { "fa.research-technology-not-in-labs" }, false end
+   if tech.research_trigger then return { "fa.research-not-in-labs" }, false end
 
    local force = player.force
    local queue = force.research_queue
