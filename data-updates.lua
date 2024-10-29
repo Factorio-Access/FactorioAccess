@@ -153,3 +153,31 @@ end
 
 local DataToRuntimeMap = require("scripts.data-to-runtime-map")
 DataToRuntimeMap.build(Consts.RESOURCE_SEARCH_RADIUSES_MAP_NAME, resource_search_radiuses)
+
+--[[
+For now, it turns out that we cannot get the amount of items one must craft at
+runtime.  This is probably an API oversight:
+https://forums.factorio.com/viewtopic.php?f=65&t=118491&p=628236#p628236
+
+As a workaround we create a map containing a list of all technologies that have
+a craft-item trigger.  Each of these points at a second map which contains the
+names and values.  When we see craft-item at runtime, we can match them up.  The
+other half is near the top of research.lua: ctrl+f cached.
+]]
+
+local research_craft_map_outer = {}
+
+for name, r in pairs(data.raw.technology) do
+   local t = r.research_trigger or {}
+   if t.type == "craft-item" then
+      local count = t.count or 1
+
+      local mapname = string.format("%s-%s", name, Consts.RESEARCH_CRAFT_ITEM_TRIGGER_MAPNAME_SUFFIX)
+      DataToRuntimeMap.build(mapname, {
+         [t.item] = count,
+      })
+      research_craft_map_outer[name] = mapname
+   end
+end
+
+DataToRuntimeMap.build(Consts.RESEARCH_CRAFT_ITEMS_MAP_OUTER, research_craft_map_outer)

@@ -36,4 +36,8 @@ mod.ENT_NAMES_CLEARED_AS_OBSTACLES = {
    "big-sand-rock",
 }
 
+-- Holds a mapping of names. See data-updates.lua.
+mod.RESEARCH_CRAFT_ITEMS_MAP_OUTER = "craft-item-map-names"
+mod.RESEARCH_CRAFT_ITEM_TRIGGER_MAPNAME_SUFFIX = "craft-item-counts"
+
 return mod

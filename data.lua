@@ -158,6 +158,14 @@ data:extend({
 
    {
       type = "sound",
+      name = "cursor-moved-while-selecting",
+      filename = "__core__/sound/upgrade-select-start.ogg",
+      category = "gui-effect",
+      preload = true,
+   },
+
+   {
+      type = "sound",
       name = "Open-Inventory-Sound",
       category = "gui-effect",
       filename = "__core__/sound/gui-green-button.ogg",

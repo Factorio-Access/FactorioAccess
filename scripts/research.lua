@@ -31,11 +31,30 @@ represent the position with an index.  That complicates things a bit, but
 greatly simplifies menu search.  Hopefully, this can be revisited in future once
 we have better UI abstractions.
 ]]
+local Consts = require("scripts.consts")
+local DataToRuntimeMap = require("scripts.data-to-runtime-map")
 local FaUtils = require("scripts.fa-utils")
+local Functools = require("scripts.functools")
 local Localising = require("scripts.localising")
 local Memosort = require("scripts.memosort")
 local StorageManager = require("scripts.storage-manager")
 local TH = require("scripts.table-helpers")
+
+-- This is the workaround for the lack of counts in craft-item research
+-- triggers. See data-updates.lua for the smuggling and a longer description.
+---@type fun(): table<string, table<string, number>>
+local CRAFT_ITEM_COUNTS = Functools.cached(function()
+   local map_outer = DataToRuntimeMap.load(Consts.RESEARCH_CRAFT_ITEMS_MAP_OUTER)
+
+   local res = {}
+
+   for protoname, mapname in pairs(map_outer) do
+      local inner_map = DataToRuntimeMap.load(mapname)
+      res[protoname] = TH.map(inner_map, tonumber)
+   end
+
+   return res
+end)
 
 ---@enum fa.research.ResearchList
 local RESEARCH_LISTS = {
@@ -116,12 +135,15 @@ end
 
 ---@param trig ResearchTrigger
 ---@return LocalisedString
-local function localise_trigger(trig)
+local function localise_trigger(tech, trig)
    local res = { string.format("fa.research-trigger-%s", trig.type) }
 
    if trig.type == "craft-item" then
       table.insert(res, Localising.get_localised_name_with_fallback(prototypes.item[trig.item]))
-      table.insert(res, tostring(trig.amount or 1))
+
+      local amount = CRAFT_ITEM_COUNTS()[tech.name][trig.item]
+      assert(amount)
+      table.insert(res, amount)
       table.insert(res, trig.item_quality or "normal")
    elseif trig.type == "mine-entity" then
       table.insert(res, Localising.get_localised_name_with_fallback(prototypes.entity[trig.entity]))
@@ -199,7 +221,7 @@ end
 local function localise_research_requirements(tech)
    local trig_or_cost
    if tech.prototype.research_trigger then
-      trig_or_cost = localise_trigger(tech.prototype.research_trigger)
+      trig_or_cost = localise_trigger(tech, tech.prototype.research_trigger)
    elseif tech.prototype.research_unit_ingredients then
       trig_or_cost = localise_science_cost(tech)
    else
