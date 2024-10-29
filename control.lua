@@ -8483,3 +8483,5 @@ end)
 script.on_event(defines.events.on_surface_deleted, function(event)
    ScannerEntrypoint.on_surface_delete(event.surface_index)
 end)
+
+script.on_event(defines.events.on_research_finished, Research.on_research_finished)
