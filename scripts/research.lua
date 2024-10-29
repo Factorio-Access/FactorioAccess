@@ -249,7 +249,6 @@ local function localise_research_rewards(player, tech)
       for _, candidate in pairs(tech.successors) do
          local locked = 0
          for name, pred in pairs(candidate.prerequisites) do
-            print("Prereq", candidate.name, name)
             if not pred.researched then
                locked = locked + 1
                if locked > 1 then break end
@@ -346,16 +345,13 @@ local function localise_research_rewards(player, tech)
    TH.concat_arrays(result, other_bonuses)
 
    if next(direct_unlocks) then
-      print("adding direct")
       local unlocks_string = FaUtils.localise_cat_table(
 
          TH.map(direct_unlocks, function(t)
-            print("hi")
             return Localising.get_localised_name_with_fallback(t)
          end),
          ", "
       )
-      print(serpent.line(unlocks_string))
       table.insert(result, { "fa.research-rewards-next-researches", unlocks_string })
    end
 
