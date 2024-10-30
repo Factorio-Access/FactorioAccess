@@ -93,19 +93,6 @@ function mod.open_operable_building(ent, pindex)
       if ent.prototype.subgroup.name == "belt" then
          players[pindex].in_menu = true
          players[pindex].menu = "belt"
-         players[pindex].move_queue = {}
-         players[pindex].belt.line1 = ent.get_transport_line(1)
-         players[pindex].belt.line2 = ent.get_transport_line(2)
-         players[pindex].belt.ent = ent
-         players[pindex].belt.sector = 1
-         players[pindex].belt.network = {}
-         local network = fa_belts.get_connected_lines(ent)
-         players[pindex].belt.network = fa_belts.get_line_items(network)
-         players[pindex].belt.index = 1
-         players[pindex].belt.side = 1
-         players[pindex].belt.direction = ent.direction
-         printout("Analyzing transport belt", pindex)
-         --printout("Analyzing transport belt " .. #players[pindex].belt.line1 .. " " .. #players[pindex].belt.line2 .. " " .. players[pindex].belt.ent.get_max_transport_line_index(), pindex)
          return
       end
       if ent.prototype.ingredient_count ~= nil then
