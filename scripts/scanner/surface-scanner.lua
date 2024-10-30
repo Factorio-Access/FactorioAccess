@@ -126,14 +126,14 @@ local BACKEND_NAME_OVERRIDES = Functools.cached(function()
 
    -- All our kinds of rocks.
    TH.merge_mappings(bno, {
-      ["rock-big"] = SEB.Rock,
-      ["rock-huge"] = SEB.Rock,
-      ["rock-medium"] = SEB.Rock,
-      ["rock-small"] = SEB.Rock,
-      ["rock-tiny"] = SEB.Rock,
-      ["sand-rock-big"] = SEB.Rock,
-      ["sand-rock-medium"] = SEB.Rock,
-      ["sand-rock-small"] = SEB.Rock,
+      ["big-rock"] = SEB.Rock,
+      ["big-sand-rock"] = SEB.Rock,
+      ["huge-rock"] = SEB.Rock,
+      ["medium-rock"] = SEB.Rock,
+      ["medium-sand-rock"] = SEB.Rock,
+      ["small-rock"] = SEB.Rock,
+      ["small-sand-rock"] = SEB.Rock,
+      ["tiny-rock"] = SEB.Rock,
    })
 
    -- remnants
@@ -200,7 +200,7 @@ end
 local surface_state = StorageManager.declare_storage_module(
    "scanner",
    new_empty_surface,
-   { root_field = "surfaces", ephemeral_state_version = 7 }
+   { root_field = "surfaces", ephemeral_state_version = 8 }
 )
 
 -- Given a backend setup and an array of entities, dispatch the entities to the
