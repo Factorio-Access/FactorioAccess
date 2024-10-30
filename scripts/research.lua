@@ -784,8 +784,8 @@ function mod.on_research_finished(event)
 
    local announcing = { "fa.research-finished-plain", name_str }
    if next(recipes) then
-      local namified = TH.map({}, function(r)
-         return Localising.get_localised_name_with_fallback(r.prototype)
+      local namified = TH.map(recipes, function(r)
+         return Localising.get_localised_name_with_fallback(prototypes.recipe[r])
       end)
 
       local joined = FaUtils.localise_cat_table(namified, ", ")
