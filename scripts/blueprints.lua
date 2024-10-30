@@ -161,11 +161,11 @@ function mod.get_blueprint_corners(pindex, draw_rect)
 
    --Find the blueprint borders and corners
    for i, ent in ipairs(ents) do
-      local ent_width = game.entity_prototypes[ent.name].tile_width
-      local ent_height = game.entity_prototypes[ent.name].tile_height
+      local ent_width = prototypes.entity[ent.name].tile_width
+      local ent_height = prototypes.entity[ent.name].tile_height
       if ent.direction == dirs.east or ent.direction == dirs.west then
-         ent_width = game.entity_prototypes[ent.name].tile_height
-         ent_height = game.entity_prototypes[ent.name].tile_width
+         ent_width = prototypes.entity[ent.name].tile_height
+         ent_height = prototypes.entity[ent.name].tile_width
       end
       --Find the edges of this ent
       local ent_north = ent.position.y - math.floor(ent_height / 2)
@@ -244,11 +244,11 @@ function mod.get_blueprint_width_and_height(pindex)
 
    --Find the blueprint borders and corners
    for i, ent in ipairs(ents) do
-      local ent_width = game.entity_prototypes[ent.name].tile_width
-      local ent_height = game.entity_prototypes[ent.name].tile_height
+      local ent_width = prototypes.entity[ent.name].tile_width
+      local ent_height = prototypes.entity[ent.name].tile_height
       if ent.direction == dirs.east or ent.direction == dirs.west then
-         ent_width = game.entity_prototypes[ent.name].tile_height
-         ent_height = game.entity_prototypes[ent.name].tile_width
+         ent_width = prototypes.entity[ent.name].tile_height
+         ent_height = prototypes.entity[ent.name].tile_width
       end
       --Find the edges of this ent
       local ent_north = ent.position.y - math.floor(ent_height / 2)

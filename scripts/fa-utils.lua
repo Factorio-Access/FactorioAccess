@@ -290,7 +290,7 @@ function mod.get_ent_area_from_name(ent_name, pindex)
    -- else
    -- return ents[1].tile_height * ents[1].tile_width
    -- end
-   return game.entity_prototypes[ent_name].tile_width * game.entity_prototypes[ent_name].tile_height
+   return prototypes.entity[ent_name].tile_width * prototypes.entity[ent_name].tile_height
 end
 
 --Returns true/false on whether an entity is located within a defined area.
@@ -695,8 +695,8 @@ function mod.ent_name_locale(ent)
       print("todo: forest isn't an entity")
       return { "fa.forest" }
    end
-   local entity_prototype = game.entity_prototypes[ent.name]
-   local resource_prototype = game.resource_category_prototypes[ent.name]
+   local entity_prototype = prototypes.entity[ent.name]
+   local resource_prototype = prototypes.resource_category[ent.name]
    local name = nil
    if ent.localised_name == nil and entity_prototype == nil and resource_prototype == nil then
       print("todo: " .. ent.name .. " is not an entity")
@@ -729,7 +729,7 @@ function mod.get_prototype_of_item_product(pindex)
          local prototype = nil
          if product.type == "item" then
             --Select product item #1
-            prototype = game.item_prototypes[product.name]
+            prototype = prototypes.item[product.name]
             if prototype then return prototype end
          end
       end

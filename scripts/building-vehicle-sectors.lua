@@ -491,7 +491,7 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
             index = index + input_item_count
             for i, v in pairs(recipe.ingredients) do
                if v.type == "fluid" and i == index then
-                  local localised_name = localising.get(game.fluid_prototypes[v.name], pindex)
+                  local localised_name = localising.get(prototypes.fluid[v.name], pindex)
                   name = name .. " input " .. localised_name .. " times " .. v.amount .. " per cycle "
                   if prev_name ~= "Any" then name = "input " .. prev_name .. " times " .. math.floor(0.5 + amount) end
                end
@@ -501,7 +501,7 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
             index = index + output_item_count
             for i, v in pairs(recipe.products) do
                if v.type == "fluid" and i == index then
-                  local localised_name = localising.get(game.fluid_prototypes[v.name], pindex)
+                  local localised_name = localising.get(prototypes.fluid[v.name], pindex)
                   name = name .. " output " .. localised_name .. " times " .. v.amount .. " per cycle "
                   if prev_name ~= "Any" then name = "output " .. prev_name .. " times " .. math.floor(0.5 + amount) end
                end
@@ -576,7 +576,7 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
                result = result .. " reserved for "
                for i, v in pairs(recipe.ingredients) do
                   if v.type == "item" and i == players[pindex].building.index then
-                     local localised_name = localising.get(game.item_prototypes[v.name], pindex)
+                     local localised_name = localising.get(prototypes.item[v.name], pindex)
                      result = result .. localised_name .. " times " .. v.amount .. " per cycle "
                   end
                end
@@ -586,7 +586,7 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
                result = result .. " reserved for "
                for i, v in pairs(recipe.products) do
                   if v.type == "item" and i == players[pindex].building.index then
-                     local localised_name = localising.get(game.item_prototypes[v.name], pindex)
+                     local localised_name = localising.get(prototypes.item[v.name], pindex)
                      result = result .. localised_name .. " times " .. v.amount .. " per cycle "
                   end
                end

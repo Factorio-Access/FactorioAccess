@@ -79,7 +79,7 @@ function mod.set_quick_bar_slot(index, pindex)
    then
       game.get_player(pindex).set_quick_bar_slot(index + 10 * page, stack_inv)
       printout("Quickbar assigned " .. index .. " " .. fa_localising.get(stack_inv, pindex), pindex)
-   elseif ent ~= nil and ent.valid and ent.force == p.force and game.item_prototypes[ent.name] ~= nil then
+   elseif ent ~= nil and ent.valid and ent.force == p.force and prototypes.item[ent.name] ~= nil then
       game.get_player(pindex).set_quick_bar_slot(index + 10 * page, ent.name)
       printout("Quickbar assigned " .. index .. " " .. fa_localising.get(ent, pindex), pindex)
    else

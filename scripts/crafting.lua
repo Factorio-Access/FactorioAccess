@@ -45,7 +45,7 @@ function mod.read_crafting_queue(pindex, start_phrase)
       local item = players[pindex].crafting_queue.lua_queue[players[pindex].crafting_queue.index]
       local recipe_name_only = item.recipe
       printout(
-         start_phrase .. localising.get(game.recipe_prototypes[recipe_name_only], pindex) .. " x " .. item.count,
+         start_phrase .. localising.get(prototypes.recipe[recipe_name_only], pindex) .. " x " .. item.count,
          pindex
       )
    else
@@ -165,12 +165,12 @@ function mod.recipe_raw_ingredients_info(recipe, pindex)
    for j, ingt in ipairs(merged_table) do
       local localised_name = ingt.name
       ---@type LuaItemPrototype | LuaFluidPrototype
-      local ingredient_prototype = game.item_prototypes[ingt.name]
+      local ingredient_prototype = prototypes.item[ingt.name]
 
       if ingredient_prototype then
          localised_name = localising.get(ingredient_prototype, pindex)
       else
-         ingredient_prototype = game.fluid_prototypes[ingt.name]
+         ingredient_prototype = prototypes.fluid[ingt.name]
          if ingredient_prototype ~= nil then
             localised_name = localising.get(ingredient_prototype, pindex)
          else
@@ -191,7 +191,7 @@ function mod.get_raw_ingredients_table(recipe, pindex, count_in)
    local raw_ingredients_table = {}
    for i, ing in ipairs(recipe.ingredients) do
       --Check if a recipe of the ingredient's name exists
-      local sub_recipe = game.recipe_prototypes[ing.name]
+      local sub_recipe = prototypes.recipe[ing.name]
       if sub_recipe ~= nil and sub_recipe.valid then
          --If the sub-recipe cannot be crafted by hand, add this ingredient to the main table
          if

@@ -246,13 +246,13 @@ function mod.localise_signal_name(signal, pindex)
       sig_name = "nil"
       sig_type = "nil"
    elseif sig_type == "item" then
-      sig_name = localising.get(game.item_prototypes[signal.name], pindex)
+      sig_name = localising.get(prototypes.item[signal.name], pindex)
       if sig_name == nil then sig_name = signal.name end
    elseif sig_type == "fluid" then
-      sig_name = localising.get(game.fluid_prototypes[signal.name], pindex)
+      sig_name = localising.get(prototypes.fluid[signal.name], pindex)
       if sig_name == nil then sig_name = signal.name end
    elseif sig_type == "virtual" then
-      sig_name = localising.get(game.virtual_signal_prototypes[signal.name], pindex)
+      sig_name = localising.get(prototypes.virtual_signal[signal.name], pindex)
       if sig_name == nil then sig_name = signal.name end
    end
    local result = sig_name
@@ -1410,11 +1410,11 @@ function mod.circuit_network_signals_info(pindex, nw, color_name, group_no)
       local sig_count = fa_utils.simplify_large_number(sig.count)
       local sig_local_name = sig_name
       if sig_type == "item" then
-         sig_local_name = localising.get(game.item_prototypes[sig_name], pindex)
+         sig_local_name = localising.get(prototypes.item[sig_name], pindex)
       elseif sig_type == "fluid" then
-         sig_local_name = localising.get(game.fluid_prototypes[sig_name], pindex)
+         sig_local_name = localising.get(prototypes.fluid[sig_name], pindex)
       elseif sig_type == "virtual" then
-         sig_local_name = localising.get(game.virtual_signal_prototypes[sig_name], pindex)
+         sig_local_name = localising.get(prototypes.virtual_signal[sig_name], pindex)
       end
       if i >= first_sig and i <= last_sig then
          table.insert(result, sig_local_name .. " times " .. sig_count .. ", ")
@@ -1431,8 +1431,8 @@ end
 
 local function build_signal_selector(pindex)
    local item_group_names = {}
-   local groups = fa_utils.get_iterable_array(game.item_group_prototypes) --game.item_group_prototypes
-   --local item_group_array = get_iterable_array(game.item_group_prototypes)
+   local groups = fa_utils.get_iterable_array(prototypes.item_group) --prototypes.item_group
+   --local item_group_array = get_iterable_array(prototypes.item_group)
    for i, group in ipairs(groups) do
       table.insert(item_group_names, group.name)
    end
@@ -1445,13 +1445,13 @@ local function build_signal_selector(pindex)
       editing_first_slot = nil,
    }
    --Populate signal groups
-   local items = fa_utils.get_iterable_array(game.item_prototypes)
+   local items = fa_utils.get_iterable_array(prototypes.item)
    for i, group in ipairs(item_group_names) do
       players[pindex].signal_selector.signals[group] = {}
       if group == "fluids" then
-         players[pindex].signal_selector.signals[group] = fa_utils.get_iterable_array(game.fluid_prototypes)
+         players[pindex].signal_selector.signals[group] = fa_utils.get_iterable_array(prototypes.fluid)
       elseif group == "signals" then
-         players[pindex].signal_selector.signals[group] = fa_utils.get_iterable_array(game.virtual_signal_prototypes)
+         players[pindex].signal_selector.signals[group] = fa_utils.get_iterable_array(prototypes.virtual_signal)
       else
          for j, item in ipairs(items) do
             if item.group.name == group then table.insert(players[pindex].signal_selector.signals[group], item) end
@@ -1489,7 +1489,7 @@ function mod.read_selected_signal_group(pindex, start_phrase_in)
    local group_index = players[pindex].signal_selector.group_index
    local signal_index = players[pindex].signal_selector.signal_index
    local group_name = players[pindex].signal_selector.group_names[group_index]
-   local local_name = localising.get_alt(game.item_group_prototypes[group_name], pindex)
+   local local_name = localising.get_alt(prototypes.item_group[group_name], pindex)
    local group = players[pindex].signal_selector.signals[group_name]
    if local_name == nil then
       game.get_player(pindex).print("localizing failed", { volume_modifier = 0 })

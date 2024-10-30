@@ -10,7 +10,7 @@ local mod = {}
 function mod.equip_it(stack, pindex)
    local message = ""
    if players[pindex].menu == "vehicle" and game.get_player(pindex).opened.type == "spider-vehicle" then
-      message = localising.get_alt(game.entity_prototypes["spidertron"])
+      message = localising.get_alt(prototypes.entity["spidertron"])
       if message == nil then
          message = "Spidertron " --laterdo possible bug here
       end
@@ -378,7 +378,7 @@ function mod.read_equipment_list(pindex)
    local grid
    if players[pindex].menu == "vehicle" and game.get_player(pindex).opened.type == "spider-vehicle" then
       grid = game.get_player(pindex).opened.grid
-      result = localising.get_alt(game.entity_prototypes["spidertron"])
+      result = localising.get_alt(prototypes.entity["spidertron"])
       if result == nil then
          result = "Spidertron " --laterdo possible bug here
       end

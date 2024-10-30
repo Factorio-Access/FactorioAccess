@@ -1328,7 +1328,7 @@ function mod.build_preview_checks_info(stack, pindex)
             position.x = position.x + math.ceil(2 * ent_p.selection_box.right_bottom.y) / 2 - 0.5
          end
       end
-      local dict = game.get_filtered_entity_prototypes({ { filter = "type", type = "electric-pole" } })
+      local dict = prototypes.get_entity_filtered({ { filter = "type", type = "electric-pole" } })
       local poles = {}
       for i, v in pairs(dict) do
          table.insert(poles, v)

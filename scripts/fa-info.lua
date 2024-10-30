@@ -819,7 +819,7 @@ function mod.ent_info(pindex, ent, description, is_scanner)
             if filt ~= nil then
                active_filter_count = active_filter_count + 1
                if active_filter_count > 1 then filter_result = filter_result .. " and " end
-               local local_name = fa_localising.get(game.item_prototypes[filt], pindex)
+               local local_name = fa_localising.get(prototypes.item[filt], pindex)
                if local_name == nil then local_name = filt or " unknown item " end
                filter_result = filter_result .. local_name
             end
@@ -1214,11 +1214,11 @@ function mod.selected_item_production_stats_info(pindex)
             -- do nothing
          elseif chosen.type == "item" then
             --Select product item #1
-            prototype = game.item_prototypes[chosen.name]
+            prototype = prototypes.item[chosen.name]
          elseif chosen.type == "fluid" then
             --Select product fluid #1
             stats = p.force.fluid_production_statistics
-            prototype = game.fluid_prototypes[chosen.name]
+            prototype = prototypes.fluid[chosen.name]
          end
       end
    end
@@ -1584,7 +1584,7 @@ function mod.area_scan_summary_info(pindex, left_top, right_bottom)
       table.insert(counts, { name = "refined-concrete", count = refined_concrete_count, category = "flooring" })
    end
 
-   for _, res_proto in pairs(game.entity_prototypes) do
+   for _, res_proto in pairs(prototypes.entity) do
       if res_proto.type == "resource" then
          local res_count = surf.count_entities_filtered({ name = res_proto.name, area = { left_top, right_bottom } })
          table.insert(counts, { name = res_proto.name, count = res_count, category = "resource" })

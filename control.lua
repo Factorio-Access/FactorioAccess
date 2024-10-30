@@ -1468,7 +1468,7 @@ function menu_cursor_up(pindex)
       if players[pindex].item_selector.group == 0 then
          printout("Blank", pindex)
       elseif players[pindex].item_selector.subgroup == 0 then
-         players[pindex].item_cache = fa_utils.get_iterable_array(game.item_group_prototypes)
+         players[pindex].item_cache = fa_utils.get_iterable_array(prototypes.item_group)
          prune_item_groups(players[pindex].item_cache)
          players[pindex].item_selector.index = players[pindex].item_selector.group
          players[pindex].item_selector.group = 0
@@ -1712,7 +1712,7 @@ function menu_cursor_down(pindex)
          read_item_selector_slot(pindex)
       elseif players[pindex].item_selector.subgroup == 0 then
          players[pindex].item_selector.subgroup = players[pindex].item_selector.index
-         local prototypes = game.get_filtered_item_prototypes({
+         local prototypes = prototypes.get_filtered_item({
             { filter = "subgroup", subgroup = players[pindex].item_cache[players[pindex].item_selector.index].name },
          })
          players[pindex].item_cache = fa_utils.get_iterable_array(prototypes)
@@ -4510,7 +4510,7 @@ script.on_event("click-menu", function(event)
                      read_item_selector_slot(pindex)
                   elseif players[pindex].item_selector.subgroup == 0 then
                      players[pindex].item_selector.subgroup = players[pindex].item_selector.index
-                     local prototypes = game.get_filtered_item_prototypes({
+                     local prototypes = prototypes.get_item_filtered({
                         {
                            filter = "subgroup",
                            subgroup = players[pindex].item_cache[players[pindex].item_selector.index].name,
@@ -4536,7 +4536,7 @@ script.on_event("click-menu", function(event)
                   players[pindex].item_selector.index = 1
                   players[pindex].item_selection = true
                   players[pindex].building.item_selection = true
-                  players[pindex].item_cache = fa_utils.get_iterable_array(game.item_group_prototypes)
+                  players[pindex].item_cache = fa_utils.get_iterable_array(prototypes.item_group)
                   prune_item_groups(players[pindex].item_cache)
                   read_item_selector_slot(pindex)
                end
@@ -7650,7 +7650,7 @@ script.on_event("debug-test-key", function(event)
    --game.print(ent.prototype.group.name)
    --get_blueprint_corners(pindex, true)
    --if ent and ent.valid then
-   --   game.print("tile width: " .. game.entity_prototypes[ent.name].tile_width)
+   --   game.print("tile width: " .. prototypes.entity[ent.name].tile_width)
    --end
    --if ent and ent.type == "programmable-speaker" then
    --ent.play_note(12,1)
@@ -8341,7 +8341,7 @@ function regenerate_all_uncharted_spawners(surface_in)
 
    --Get spawner names
    local spawner_names = {}
-   for name, prot in pairs(game.get_filtered_entity_prototypes({ { filter = "type", type = "unit-spawner" } })) do
+   for name, prot in pairs(prototypes.get_filtered_entity({ { filter = "type", type = "unit-spawner" } })) do
       table.insert(spawner_names, name)
    end
 

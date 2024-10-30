@@ -60,8 +60,8 @@ function mod.get_electricity_flow_info(ent)
       for _, power_ent in pairs(ent.surface.find_entities_filtered({ name = i, force = ent.force })) do
          if power_ent.electric_network_id == ent.electric_network_id then cap_add = cap_add + 1 end
       end
-      cap_add = cap_add * game.entity_prototypes[i].max_energy_production
-      if game.entity_prototypes[i].type == "solar-panel" then
+      cap_add = cap_add * prototypes.entity[i].max_energy_production
+      if prototypes.entity[i].type == "solar-panel" then
          cap_add = cap_add * ent.surface.solar_power_multiplier * (1 - ent.surface.darkness)
       end
       capacity = capacity + cap_add
