@@ -625,6 +625,7 @@ function mod.get_heat_connection_target_positions(ent_name, ent_position, ent_di
 end
 
 --Returns an info string about trying to build the entity in hand. The info type depends on the entity. Note: Limited usefulness for entities with sizes greater than 1 by 1.
+---@param stack LuaItemStack
 function mod.build_preview_checks_info(stack, pindex)
    if stack == nil or not stack.valid_for_read or not stack.valid then return "invalid stack" end
    local p = game.get_player(pindex)
@@ -1185,18 +1186,20 @@ function mod.build_preview_checks_info(stack, pindex)
       end
       if con_count == 0 then result = result .. " to nothing " end
    end
-   --For electric poles, report the directions of up to 5 wire-connectible electric poles that can connect
+   --For electric poles, report the directions of up to 5 wire-connectible
+   -- electric poles that can connect TODO: we can actually just ask now, but
+   -- I'm just getting this running enough to limp along for 2.0.
    if ent_p.type == "electric-pole" then
-      local pole_dict =
-         surf.find_entities_filtered({ type = "electric-pole", position = pos, radius = ent_p.max_wire_distance })
+      local pole_dict = surf.find_entities_filtered({
+         type = "electric-pole",
+         position = pos,
+         radius = ent_p.get_max_wire_distance(stack.quality),
+      })
       local poles = {}
       for i, v in pairs(pole_dict) do
-         if
-            v.prototype.max_wire_distance >= ent_p.max_wire_distance
-            or v.prototype.max_wire_distance >= util.distance(v.position, pos)
-         then
-            table.insert(poles, v)
-         end
+         local ent_p_mwd = ent_p.get_max_wire_distance(stack.quality)
+         local pole_mwd = v.prototype.get_max_wire_distance(v.quality)
+         if pole_mwd >= ent_p_mwd or pole_mwd >= util.distance(v.position, pos) then table.insert(poles, v) end
       end
       if #poles > 0 then
          --List the first 4 poles within range
