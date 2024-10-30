@@ -1175,7 +1175,7 @@ end
 -- are too many cases in the wild.
 function mod.selected_item_production_stats_info(pindex)
    local p = game.get_player(pindex)
-   local stats = p.force.item_production_statistics
+   local stats = p.force.get_item_production_statistics(p.surface)
    local item_stack = nil
    local recipe = nil
    local prototype = nil
@@ -1217,7 +1217,7 @@ function mod.selected_item_production_stats_info(pindex)
             prototype = prototypes.item[chosen.name]
          elseif chosen.type == "fluid" then
             --Select product fluid #1
-            stats = p.force.fluid_production_statistics
+            stats = p.force.get_fluid_production_statistics(p.surface)
             prototype = prototypes.fluid[chosen.name]
          end
       end
@@ -1230,20 +1230,25 @@ function mod.selected_item_production_stats_info(pindex)
    -- changed.
    local get_stats = function(is_input)
       local name = prototype.name
+      local category = is_input and "input" or "output"
       local interval = defines.flow_precision_index
       local last_minute = stats.get_flow_count({
          name = name,
-         category = is_input and "input" or "output",
+         category = category,
          precision_index = interval.one_minute,
          count = true,
       })
-      local last_10_minutes =
-         stats.get_flow_count({ name = name, input = is_input, precision_index = interval.ten_minutes, count = true })
+      local last_10_minutes = stats.get_flow_count({
+         name = name,
+         category = category,
+         precision_index = interval.ten_minutes,
+         count = true,
+      })
       local last_hour =
-         stats.get_flow_count({ name = name, input = is_input, precision_index = interval.one_hour, count = true })
+         stats.get_flow_count({ name = name, category = category, precision_index = interval.one_hour, count = true })
       local thousand_hours = stats.get_flow_count({
          name = name,
-         input = is_input,
+         category = category,
          precision_index = interval.one_thousand_hours,
          count = true,
       })
