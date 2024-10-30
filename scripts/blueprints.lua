@@ -13,12 +13,12 @@ local mod = {}
 
 function mod.get_bp_data_for_edit(stack)
    ---@diagnostic disable-next-line: param-type-mismatch
-   return game.json_to_table(game.decode_string(string.sub(stack.export_stack(), 2)))
+   return helpers.json_to_table(helpers.decode_string(string.sub(stack.export_stack(), 2)))
 end
 
 --Works for blueprints and also books too
 function mod.set_stack_bp_from_data(stack, bp_data)
-   stack.import_stack("0" .. game.encode_string(game.table_to_json(bp_data)))
+   stack.import_stack("0" .. helpers.encode_string(helpers.table_to_json(bp_data)))
 end
 
 function mod.set_blueprint_description(stack, description)
@@ -307,7 +307,7 @@ function mod.get_blueprint_info(stack, in_hand, pindex)
    local result = "Blueprint " .. name .. " features "
    if in_hand then result = "Blueprint " .. name .. "in hand, features " end
    --Use icons as extra info (in case it is not named)
-   local icons = stack.blueprint_icons
+   local icons = stack.preview_icons
    if icons == nil or #icons == 0 then
       result = result .. " no details "
       return result
@@ -461,12 +461,12 @@ function mod.run_blueprint_menu(menu_index, pindex, clicked, other_input)
          printout(result, pindex)
       else
          local result = "This blueprint features "
-         if bp.blueprint_icons and #bp.blueprint_icons > 0 then
+         if bp.preview_icons and #bp.preview_icons > 0 then
             --Icon 1
-            if bp.blueprint_icons[1] ~= nil then result = result .. bp.blueprint_icons[1].signal.name .. ", " end
-            if bp.blueprint_icons[2] ~= nil then result = result .. bp.blueprint_icons[2].signal.name .. ", " end
-            if bp.blueprint_icons[3] ~= nil then result = result .. bp.blueprint_icons[3].signal.name .. ", " end
-            if bp.blueprint_icons[4] ~= nil then result = result .. bp.blueprint_icons[4].signal.name .. ", " end
+            if bp.preview_icons[1] ~= nil then result = result .. bp.preview_icons[1].signal.name .. ", " end
+            if bp.preview_icons[2] ~= nil then result = result .. bp.preview_icons[2].signal.name .. ", " end
+            if bp.preview_icons[3] ~= nil then result = result .. bp.preview_icons[3].signal.name .. ", " end
+            if bp.preview_icons[4] ~= nil then result = result .. bp.preview_icons[4].signal.name .. ", " end
          else
             result = result .. "nothing"
          end
@@ -739,7 +739,7 @@ end
 
 function mod.get_bp_book_data_for_edit(stack)
    ---@diagnostic disable-next-line: param-type-mismatch
-   return game.json_to_table(game.decode_string(string.sub(stack.export_stack(), 2)))
+   return helpers.json_to_table(game.decode_string(string.sub(stack.export_stack(), 2)))
 end
 
 --We run the export rarely because it eats UPS
@@ -828,7 +828,7 @@ end
 function mod.blueprint_book_copy_item_to_hand(pindex, i)
    local bp_data = players[pindex].blueprint_book_menu.book_data
    local items = bp_data.blueprint_book.blueprints
-   local item_string = "0" .. game.encode_string(game.table_to_json(items[i]))
+   local item_string = "0" .. helpers.encode_string(helpers.table_to_json(items[i]))
 
    local p = game.get_player(pindex)
    p.clear_cursor()
@@ -952,12 +952,12 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             printout(result, pindex)
          else
             local result = "This book features "
-            if bpb.blueprint_icons and #bpb.blueprint_icons > 0 then
+            if bpb.preview_icons and #bpb.preview_icons > 0 then
                --Icon 1
-               if bpb.blueprint_icons[1] ~= nil then result = result .. bpb.blueprint_icons[1].signal.name .. ", " end
-               if bpb.blueprint_icons[2] ~= nil then result = result .. bpb.blueprint_icons[2].signal.name .. ", " end
-               if bpb.blueprint_icons[3] ~= nil then result = result .. bpb.blueprint_icons[3].signal.name .. ", " end
-               if bpb.blueprint_icons[4] ~= nil then result = result .. bpb.blueprint_icons[4].signal.name .. ", " end
+               if bpb.preview_icons[1] ~= nil then result = result .. bpb.preview_icons[1].signal.name .. ", " end
+               if bpb.preview_icons[2] ~= nil then result = result .. bpb.preview_icons[2].signal.name .. ", " end
+               if bpb.preview_icons[3] ~= nil then result = result .. bpb.preview_icons[3].signal.name .. ", " end
+               if bpb.preview_icons[4] ~= nil then result = result .. bpb.preview_icons[4].signal.name .. ", " end
             else
                result = result .. "nothing"
             end
