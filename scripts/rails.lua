@@ -534,52 +534,6 @@ function mod.cursor_is_at_straight_end_rail_tip(pindex)
    return true
 end
 
---Acknowledges that the ghost rail planner has been allowed and updates player info
-function mod.start_ghost_rail_planning(pindex)
-   --Notify the ghost rail planner starting
-   players[pindex].ghost_rail_planning = true
-   players[pindex].ghost_rail_start_pos = { x = players[pindex].cursor_pos.x, y = players[pindex].cursor_pos.y }
-   printout("Started ghost rail planner", pindex)
-end
-
---WIP todo #90: Checks the selected end location and cancels if too close by (to prevent big unplanned curves)
---Note: The rail planner itself does nothing if an invalid location is chosen
-function mod.end_ghost_rail_planning(pindex)
-   local p = game.get_player(pindex)
-   players[pindex].ghost_rail_planning = false
-   --Check if cursor is on screen OR if remote view is running
-   local on_screen = fa_mouse.cursor_position_is_on_screen_with_player_centered(pindex) == true
-      or players[pindex].remote_view == true
-   if not on_screen then
-      p.clear_cursor()
-      printout("Rail planner error: cursor was not on screen", pindex)
-      return
-   end
-   --Check if too close
-   local start_pos = players[pindex].ghost_rail_start_pos
-   local end_pos = players[pindex].cursor_pos
-   local far_enough = 50 > util.distance(start_pos, end_pos)
-   --Give warning and clear hand if too close
-   if not far_enough then
-      p.clear_cursor()
-      printout("Rail planner error: Target position must be at least 50 tiles away", pindex)
-      return
-   end
-   --No errors, but rail planner may still fail at invalid placements. Clear the cursor anyway
-   p.clear_cursor()
-   --Check whether there is a ghost rail at the cursor location (from before processing this action)
-   --...
-   --Schedule to check whether successful (which can be verified by there being a rail ghost near the cursor 2 ticks later)
-   schedule(2, "call_to_check_ghost_rails", pindex)
-end
-
---WIP todo #90: Reports on whether the rail planning was successful based on whether there is a ghost rail near the cursor
-function mod.check_ghost_rail_planning_results(pindex)
-   --Look for a ghost rail near the cursor
-
-   --If it exists, you were successful
-end
-
 --Look up and translate the signal state.
 function mod.get_signal_state_info(signal)
    local state_id = 0

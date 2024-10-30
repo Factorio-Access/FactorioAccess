@@ -2647,12 +2647,7 @@ function move_key(direction, event, force_single_tile)
    end
 
    --Play a sound to indicate ongoing selection
-   if pex.bp_selecting then game.get_player(pindex).play_sound({ path = "utility/upgrade_selection_started" }) end
-
-   --Play a sound to indicate ongoing ghost rail planner
-   if pex.ghost_rail_planning then
-      game.get_player(pindex).play_sound({ path = "utility/upgrade_selection_started" })
-   end
+   if pex.bp_selecting then game.get_player(pindex).play_sound({ path = "cursor-moved-while-selecting" }) end
 
    --Play a sound for audio ruler alignment (cursor mode moved)
    if players[pindex].in_menu == false and players[pindex].cursor then Rulers.update_from_cursor(pindex) end
