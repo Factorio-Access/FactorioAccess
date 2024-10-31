@@ -2530,7 +2530,7 @@ function move(direction, pindex, nudged)
          else
             local tile = game.get_player(pindex).surface.get_tile(new_pos.x, new_pos.y)
             local sound_path = "tile-walking/" .. tile.name
-            if game.is_valid_sound_path(sound_path) and players[pindex].in_menu == false then
+            if helpers._sound_path(sound_path) and players[pindex].in_menu == false then
                game.get_player(pindex).play_sound({ path = "tile-walking/" .. tile.name, volume_modifier = 1 })
             elseif players[pindex].in_menu == false then
                game.get_player(pindex).play_sound({ path = "player-walk", volume_modifier = 1 })
