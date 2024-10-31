@@ -8321,7 +8321,7 @@ function regenerate_all_uncharted_spawners(surface_in)
 
    --Get spawner names
    local spawner_names = {}
-   for name, prot in pairs(prototypes.get_filtered_entity({ { filter = "type", type = "unit-spawner" } })) do
+   for name, prot in pairs(prototypes.get_entity_filtered({ { filter = "type", type = "unit-spawner" } })) do
       table.insert(spawner_names, name)
    end
 
