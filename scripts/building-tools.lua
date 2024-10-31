@@ -1334,7 +1334,7 @@ function mod.build_preview_checks_info(stack, pindex)
          table.insert(poles, v)
       end
       table.sort(poles, function(k1, k2)
-         return k1.supply_area_distance < k2.supply_area_distance
+         return k1.get_supply_area_distance() < k2.get_supply_area_distance()
       end)
       local check = false
       ---@type LuaEntity
@@ -1344,7 +1344,7 @@ function mod.build_preview_checks_info(stack, pindex)
          for i1 = i, #poles, 1 do
             table.insert(names, poles[i1].name)
          end
-         local supply_dist = pole.supply_area_distance
+         local supply_dist = pole.get_supply_area_distance()
          if supply_dist > 15 then supply_dist = supply_dist - 2 end
          local area = {
             left_top = {
