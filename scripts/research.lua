@@ -111,7 +111,7 @@ function mod.enqueue(player, name, index)
 
    local force = player.force
    local queue = force.research_queue
-   table.insert(queue, name)
+   table.insert(queue, index or 1, name)
    local queue = force.research_queue
    local added = TH.find_index_of(queue, name)
    if added then
