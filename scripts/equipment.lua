@@ -346,10 +346,10 @@ function mod.read_armor_stats(pindex, ent_in)
       table.insert(result, " no batteries, ")
    end
    --Energy Producers
-   if grid.get_generator_energy("normal") > 0 or grid.max_solar_energy > 0 then
+   if grid.get_generator_energy() > 0 or grid.max_solar_energy > 0 then
       table.insert(result, " generating ")
-      if grid.get_generator_energy("normal") > 0 then
-         table.insert(result, fa_electrical.get_power_string(grid.get_generator_energy("normal") * 60) .. " nonstop, ")
+      if grid.get_generator_energy() > 0 then
+         table.insert(result, fa_electrical.get_power_string(grid.get_generator_energy() * 60) .. " nonstop, ")
       end
       if grid.max_solar_energy > 0 then
          table.insert(result, fa_electrical.get_power_string(grid.max_solar_energy * 60) .. " at daytime, ")
