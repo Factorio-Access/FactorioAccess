@@ -66,9 +66,7 @@ function mod.compute_resources_under_drill(ent)
    return dict
 end
 
---Outputs basic entity info, usually called when the cursor selects an entity.
----@param ent LuaEntity
-function mod.ent_info(pindex, ent, description, is_scanner)
+local function ent_info_inner(pindex, ent, description, is_scanner)
    local p = game.get_player(pindex)
    local result = fa_localising.get(ent, pindex)
    if result == nil or result == "" then result = ent.name end
@@ -563,7 +561,7 @@ function mod.ent_info(pindex, ent, description, is_scanner)
       --For a fluidbox inside a building, give info about the connection directions
       local relative_position =
          { x = players[pindex].cursor_pos.x - ent.position.x, y = players[pindex].cursor_pos.y - ent.position.y }
-      local direction = ent.direction / 2
+      local direction = ent.direction
       local inputs = 0
       for i, box in pairs(ent.prototype.fluidbox_prototypes) do
          for i1, pipe in pairs(box.pipe_connections) do
@@ -571,17 +569,17 @@ function mod.ent_info(pindex, ent, description, is_scanner)
             local adjusted = { position = nil, direction = nil }
             if ent.name == "offshore-pump" then
                adjusted.position = { x = 0, y = 0 }
-               if direction == 0 then
+               if direction == defines.direction.north then
                   adjusted.direction = "South"
-               elseif direction == 1 then
+               elseif direction == defines.direction.east then
                   adjusted.direction = "West"
-               elseif direction == 2 then
+               elseif direction == defines.direction.south then
                   adjusted.direction = "North"
-               elseif direction == 3 then
+               elseif direction == defines.direction.west then
                   adjusted.direction = "East"
                end
             else
-               adjusted = get_adjacent_source(ent.prototype.selection_box, pipe.positions[direction + 1], direction)
+               adjusted = get_adjacent_source(ent.prototype.selection_box, pipe.positions[direction / 4], direction)
             end
             if adjusted.position.x == relative_position.x and adjusted.position.y == relative_position.y then
                if ent.type == "assembling-machine" and ent.get_recipe() ~= nil then
@@ -1047,6 +1045,16 @@ function mod.ent_info(pindex, ent, description, is_scanner)
       result = result .. fa_circuits.constant_combinator_signals_info(ent, pindex)
    end
    return result
+end
+
+--Outputs basic entity info, usually called when the cursor selects an entity.
+---@param ent LuaEntity
+---@return LocalisedString
+function mod.ent_info(pindex, ent, description, is_scanner)
+   -- This can't yet be localised, but we can force our caller to deal with the
+   -- possibility by giving them this meaningless localised string join, thus
+   -- preventing use of the .. operator.
+   return { "", ent_info_inner(pindex, ent, description, is_scanner), "" }
 end
 
 --Reports the charting range of a radar and how much of it has been charted so far.

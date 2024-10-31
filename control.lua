@@ -788,19 +788,26 @@ function refresh_player_tile(pindex)
    return true
 end
 
+-- Lua's version of a forward declaration.
+local read_tile_inner
+
 --Reads the cursor tile and reads out the result. If an entity is found, its ent info is read. Otherwise info about the tile itself is read.
 function read_tile(pindex, start_text)
-   local result = start_text or ""
-   if not refresh_player_tile(pindex) then
-      printout(result .. "Tile uncharted and out of range", pindex)
-      return
-   end
+   local res = read_tile_inner(pindex)
+   if start_text then table.insert(res, 1, start_text) end
+   printout(fa_utils.localise_cat_table(res), pindex)
+end
+
+read_tile_inner = function(pindex, start_text)
+   local result = {}
+
+   if not refresh_player_tile(pindex) then return { "Tile uncharted and out of range" } end
    local ent = get_first_ent_at_tile(pindex)
    if not (ent and ent.valid) then
       --If there is no ent, read the tile instead
       players[pindex].tile.previous = nil
       local tile = players[pindex].tile.tile
-      result = result .. fa_localising.get(players[pindex].tile.tile_object, pindex)
+      table.insert(result, fa_localising.get(players[pindex].tile.tile_object, pindex))
       if
          tile == "water"
          or tile == "deepwater"
@@ -811,12 +818,12 @@ function read_tile(pindex, start_text)
          or tile == "water-wube"
       then
          --Identify shores and crevices and so on for water tiles
-         result = result .. fa_utils.identify_water_shores(pindex)
+         table.insert(result, fa_utils.identify_water_shores(pindex))
       end
       --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
       game.get_player(pindex).selected = nil
    else --laterdo tackle the issue here where entities such as tree stumps block preview info
-      result = result .. fa_info.ent_info(pindex, ent)
+      table.insert(result, fa_info.ent_info(pindex, ent))
       --fa_graphics.draw_cursor_highlight(pindex, ent, nil)
       game.get_player(pindex).selected = ent
 
@@ -827,7 +834,7 @@ function read_tile(pindex, start_text)
       local stack = game.get_player(pindex).cursor_stack
       --Run build preview checks
       if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result ~= nil then
-         result = result .. fa_building_tools.build_preview_checks_info(stack, pindex)
+         table.insert(result, fa_building_tools.build_preview_checks_info(stack, pindex))
          --game.get_player(pindex).print(result)--
       end
    end
@@ -850,9 +857,8 @@ function read_tile(pindex, start_text)
    end
 
    --Add info on whether the tile is uncharted or blurred or distant
-   result = result .. fa_mouse.cursor_visibility_info(pindex)
-   printout(result, pindex)
-   --game.get_player(pindex).print(result)--**
+   table.insert(result, fa_mouse.cursor_visibility_info(pindex))
+   return result
 end
 
 --Read the current co-ordinates of the cursor on the map or in a menu. For crafting recipe and technology menus, it reads the ingredients / requirements instead.
