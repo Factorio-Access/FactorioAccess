@@ -337,18 +337,6 @@ function read_hand(pindex)
          printout(fa_blueprints.get_blueprint_info(cursor_stack, true, pindex), pindex)
       elseif cursor_stack.is_blueprint_book then
          printout(fa_blueprints.get_blueprint_book_info(cursor_stack, true), pindex)
-      elseif cursor_stack.name == "spidertron-remote" then
-         local remote_info = ""
-         if cursor_stack.connected_entity == nil then
-            remote_info = " not linked "
-         else
-            if cursor_stack.connected_entity.entity_label == nil then
-               remote_info = " for unlabelled spidertron "
-            else
-               remote_info = " for spidertron " .. cursor_stack.connected_entity.entity_label
-            end
-         end
-         printout(fa_localising.get(cursor_stack, pindex) .. remote_info, pindex)
       else
          --Any other valid item
          local out = { "fa.cursor-description" }
@@ -1712,7 +1700,7 @@ function menu_cursor_down(pindex)
          read_item_selector_slot(pindex)
       elseif players[pindex].item_selector.subgroup == 0 then
          players[pindex].item_selector.subgroup = players[pindex].item_selector.index
-         local prototypes = prototypes.get_filtered_item({
+         local prototypes = prototypes.get_item_filtered({
             { filter = "subgroup", subgroup = players[pindex].item_cache[players[pindex].item_selector.index].name },
          })
          players[pindex].item_cache = fa_utils.get_iterable_array(prototypes)
@@ -2530,7 +2518,7 @@ function move(direction, pindex, nudged)
          else
             local tile = game.get_player(pindex).surface.get_tile(new_pos.x, new_pos.y)
             local sound_path = "tile-walking/" .. tile.name
-            if helpers._sound_path(sound_path) and players[pindex].in_menu == false then
+            if helpers.is_valid_sound_path(sound_path) and players[pindex].in_menu == false then
                game.get_player(pindex).play_sound({ path = "tile-walking/" .. tile.name, volume_modifier = 1 })
             elseif players[pindex].in_menu == false then
                game.get_player(pindex).play_sound({ path = "player-walk", volume_modifier = 1 })
@@ -4813,9 +4801,6 @@ script.on_event("click-hand", function(event)
       elseif stack.name == "offshore-pump" then
          --If holding an offshore pump, open the offshore pump builder
          fa_building_tools.build_offshore_pump_in_hand(pindex)
-      elseif stack.name == "spidertron-remote" and stack.connected_entity ~= nil then
-         --Set the cursor position as the spidertron autopilot target.
-         fa_spidertrons.run_spider_menu(3, pindex, stack.connected_entity, true, nil)
       elseif stack.is_repair_tool then
          --If holding a repair pack, try to use it (will not work on enemies)
          fa_combat.repair_pack_used(ent, pindex)
@@ -6662,12 +6647,7 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
       fa_trains.menu_close(pindex, false)
    elseif players[pindex].spider_menu.renaming == true then
       players[pindex].spider_menu.renaming = false
-      local result = event.element.text
-      if result == nil or result == "" then result = "unknown" end
-      game.get_player(pindex).cursor_stack.connected_entity.entity_label = result
-      printout("spidertron renamed to " .. result .. ", menu closed.", pindex)
-      event.element.destroy()
-      fa_spidertrons.spider_menu_close(pindex, false)
+      printout("Unimplemented for 2.0", pindex)
    elseif players[pindex].train_stop_menu.renaming == true then
       players[pindex].train_stop_menu.renaming = false
       local result = event.element.text
