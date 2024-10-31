@@ -470,7 +470,7 @@ function mod.ent_info(pindex, ent, description, is_scanner)
    if ent.prototype.type == "generator" then
       result = result .. ", "
       local power1 = ent.energy_generated_last_tick * 60
-      local power2 = ent.prototype.max_energy_production * 60
+      local power2 = ent.prototype.get_max_energy_production(ent.quality) * 60
       local power_load_pct = math.ceil(power1 / power2 * 100)
       if power2 ~= nil then
          result = result
@@ -567,7 +567,7 @@ function mod.ent_info(pindex, ent, description, is_scanner)
       local inputs = 0
       for i, box in pairs(ent.prototype.fluidbox_prototypes) do
          for i1, pipe in pairs(box.pipe_connections) do
-            if pipe.type == "input" then inputs = inputs + 1 end
+            if pipe.flow_direction == "input" then inputs = inputs + 1 end
             local adjusted = { position = nil, direction = nil }
             if ent.name == "offshore-pump" then
                adjusted.position = { x = 0, y = 0 }
@@ -591,7 +591,7 @@ function mod.ent_info(pindex, ent, description, is_scanner)
                            .. ", "
                            .. fa_localising.get_fluid_from_name("crude-oil", pindex)
                            .. " Flow "
-                           .. pipe.type
+                           .. pipe.flow_direction
                            .. " 1 "
                            .. adjusted.direction
                            .. ", at "
@@ -601,7 +601,7 @@ function mod.ent_info(pindex, ent, description, is_scanner)
                            .. ", "
                            .. fa_localising.get_fluid_from_name("petroleum-gas", pindex)
                            .. " Flow "
-                           .. pipe.type
+                           .. pipe.flow_direction
                            .. " 1 "
                            .. adjusted.direction
                            .. ", at "
@@ -611,14 +611,14 @@ function mod.ent_info(pindex, ent, description, is_scanner)
                            .. ", "
                            .. "Unused"
                            .. " Flow "
-                           .. pipe.type
+                           .. pipe.flow_direction
                            .. " 1 "
                            .. adjusted.direction
                            .. ", at "
                            .. fa_utils.get_entity_part_at_cursor(pindex)
                      end
                   else
-                     if pipe.type == "input" then
+                     if pipe.flow_direction == "input" then
                         local inputs = ent.get_recipe().ingredients
                         for i2 = #inputs, 1, -1 do
                            if inputs[i2].type ~= "fluid" then table.remove(inputs, i2) end
@@ -631,7 +631,7 @@ function mod.ent_info(pindex, ent, description, is_scanner)
                               .. ", "
                               .. filter.name
                               .. " Flow "
-                              .. pipe.type
+                              .. pipe.flow_direction
                               .. " 1 "
                               .. adjusted.direction
                               .. ", at "
@@ -641,7 +641,7 @@ function mod.ent_info(pindex, ent, description, is_scanner)
                               .. ", "
                               .. "Unused"
                               .. " Flow "
-                              .. pipe.type
+                              .. pipe.flow_direction
                               .. " 1 "
                               .. adjusted.direction
                               .. ", at "
@@ -660,7 +660,7 @@ function mod.ent_info(pindex, ent, description, is_scanner)
                               .. ", "
                               .. filter.name
                               .. " Flow "
-                              .. pipe.type
+                              .. pipe.flow_direction
                               .. " 1 "
                               .. adjusted.direction
                               .. ", at "
@@ -670,7 +670,7 @@ function mod.ent_info(pindex, ent, description, is_scanner)
                               .. ", "
                               .. "Unused"
                               .. " Flow "
-                              .. pipe.type
+                              .. pipe.flow_direction
                               .. " 1 "
                               .. adjusted.direction
                               .. ", at "
@@ -685,7 +685,7 @@ function mod.ent_info(pindex, ent, description, is_scanner)
                      .. ", "
                      .. filter.name
                      .. " Flow "
-                     .. pipe.type
+                     .. pipe.flow_direction
                      .. " 1 "
                      .. adjusted.direction
                      .. ", at "
@@ -757,23 +757,15 @@ function mod.ent_info(pindex, ent, description, is_scanner)
       result = result .. fa_circuits.wire_neighbours_info(ent, false)
       --Count number of entities being supplied within supply area.
       local pos = ent.position
-      local sdist = ent.prototype.supply_area_distance
+      local sdist = ent.prototype.get_supply_area_distance(ent.quality)
       local supply_area = { { pos.x - sdist, pos.y - sdist }, { pos.x + sdist, pos.y + sdist } }
       local supplied_ents = ent.surface.find_entities_filtered({ area = supply_area })
       local supplied_count = 0
       local producer_count = 0
       for i, ent2 in ipairs(supplied_ents) do
-         if
-            ent2.prototype.max_energy_usage ~= nil
-            and ent2.prototype.max_energy_usage > 0
-            and ent2.prototype.is_building
-         then
+         if ent2.prototype.get_max_energy_usage(ent2.quality) > 0 and ent2.prototype.is_building then
             supplied_count = supplied_count + 1
-         elseif
-            ent2.prototype.max_energy_production ~= nil
-            and ent2.prototype.max_energy_production > 0
-            and ent2.prototype.is_building
-         then
+         elseif ent2.prototype.get_max_energy_production(ent2.quality) > 0 and ent2.prototype.is_building then
             producer_count = producer_count + 1
          end
       end
@@ -1343,10 +1335,8 @@ function mod.read_selected_entity_status(pindex)
    then
       if ent.type == "inserter" then --items per minute based on rotation speed and the STATED hand capacity
          local cap = ent.force.inserter_stack_size_bonus + 1
-         if ent.name == "stack-inserter" or ent.name == "stack-filter-inserter" then
-            cap = ent.force.stack_inserter_capacity_bonus + 1
-         end
-         local rate = string.format(" %.1f ", cap * ent.prototype.inserter_rotation_speed * 57.5)
+         if ent.name == "bulk-inserter" then cap = ent.force.bulk_inserter_capacity_bonus end
+         local rate = string.format(" %.1f ", cap * ent.prototype.get_inserter_rotation_speed(ent.quality) * 57.5)
          table.insert(result, ", can move " .. rate .. " items per second, with a hand capacity of " .. cap)
       end
       if ent.prototype ~= nil and ent.prototype.belt_speed ~= nil and ent.prototype.belt_speed > 0 then --items per minute by simple reading
@@ -1451,26 +1441,28 @@ function mod.read_selected_entity_status(pindex)
       drain = 0
    end
    local uses_energy = false
-   if
-      drain > 0
-      or (ent.prototype ~= nil and ent.prototype.max_energy_usage ~= nil and ent.prototype.max_energy_usage > 0)
-   then
+   if drain > 0 or (ent.prototype ~= nil and ent.prototype.get_max_energy_usage(ent.quality) > 0) then
       uses_energy = true
    end
    if ent.status ~= nil and uses_energy and ent.status == list.working then
       table.insert(
          result,
-         ", consuming " .. fa_electrical.get_power_string(ent.prototype.max_energy_usage * 60 * power_rate + drain)
+         ", consuming "
+            .. fa_electrical.get_power_string(ent.prototype.get_max_energy_usage(ent.quality) * 60 * power_rate + drain)
       )
    elseif ent.status ~= nil and uses_energy and ent.status == list.no_power or ent.status == list.low_power then
       table.insert(
          result,
          ", consuming less than "
-            .. fa_electrical.get_power_string(ent.prototype.max_energy_usage * 60 * power_rate + drain)
+            .. fa_electrical.get_power_string(ent.prototype.get_max_energy(ent.quality) * 60 * power_rate + drain)
       )
    elseif
       ent.status ~= nil and uses_energy
-      or (ent.prototype ~= nil and ent.prototype.max_energy_usage ~= nil and ent.prototype.max_energy_usage > 0)
+      or (
+         ent.prototype ~= nil
+         and ent.prototype.get_max_energy_usage(ent.quality) ~= nil
+         and ent.prototype.get_max_energy_usage(ent.quality) > 0
+      )
    then
       table.insert(result, ", idle and consuming " .. fa_electrical.get_power_string(drain))
    end
@@ -1501,7 +1493,10 @@ function mod.read_selected_entity_status(pindex)
 
    --Spawners: Report evolution factor
    if ent.type == "unit-spawner" then
-      table.insert(result, ", evolution factor " .. math.floor(1000 * ent.force.evolution_factor) / 1000)
+      table.insert(
+         result,
+         ", evolution factor " .. math.floor(1000 * ent.force.get_evolution_factor(ent.surface)) / 1000
+      )
    end
 
    return result
