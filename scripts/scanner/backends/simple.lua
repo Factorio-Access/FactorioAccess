@@ -49,7 +49,7 @@ local function default_subcategory_cb(ent)
 end
 
 local function default_readout_cb(player, ent)
-   return FaInfo.ent_info(player.index, ent, nil, true)
+   return FaInfo.ent_info(player.index, ent, true)
 end
 
 ---@class fa.scanner.backends.SimpleBackend: fa.scanner.ScannerBackend

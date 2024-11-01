@@ -576,7 +576,7 @@ end
 function tile_cycle(pindex)
    local ent = get_next_ent_at_tile(pindex)
    if ent and ent.valid then
-      printout(fa_info.ent_info(pindex, ent, ""), pindex)
+      printout(fa_info.ent_info(pindex, ent), pindex)
       game.get_player(pindex).selected = ent
    else
       printout(players[pindex].tile.tile, pindex)

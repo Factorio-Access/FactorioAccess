@@ -72,7 +72,7 @@ end
 ---@param player LuaPlayer
 function TreeBackend:readout_entry(player, e)
    if e.backend_data.zoom_ent then
-      return Info.ent_info(player.index, e.backend_data.zoom_ent, nil, true)
+      return Info.ent_info(player.index, e.backend_data.zoom_ent, true)
    else
       return { "fa.scanner-forest", e.backend_data.tree_count }
    end

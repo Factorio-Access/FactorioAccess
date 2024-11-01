@@ -66,7 +66,7 @@ function mod.compute_resources_under_drill(ent)
    return dict
 end
 
-local function ent_info_inner(pindex, ent, description, is_scanner)
+local function ent_info_inner(pindex, ent, is_scanner)
    local p = game.get_player(pindex)
    local result = fa_localising.get(ent, pindex)
    if result == nil or result == "" then result = ent.name end
@@ -84,10 +84,8 @@ local function ent_info_inner(pindex, ent, description, is_scanner)
    if ent.name == "entity-ghost" then
       result = fa_localising.get(ent.ghost_prototype, pindex) .. " " .. fa_localising.get(ent, pindex)
    elseif ent.name == "straight-rail" or ent.name == "curved-rail" then
-      return fa_rails.rail_ent_info(pindex, ent, description)
+      return fa_rails.rail_ent_info(pindex, ent)
    end
-
-   result = result .. (description or "")
 
    --Give character names
    if ent.name == "character" then
@@ -1050,11 +1048,11 @@ end
 --Outputs basic entity info, usually called when the cursor selects an entity.
 ---@param ent LuaEntity
 ---@return LocalisedString
-function mod.ent_info(pindex, ent, description, is_scanner)
+function mod.ent_info(pindex, ent, is_scanner)
    -- This can't yet be localised, but we can force our caller to deal with the
    -- possibility by giving them this meaningless localised string join, thus
    -- preventing use of the .. operator.
-   return { "", ent_info_inner(pindex, ent, description, is_scanner), "" }
+   return { "", ent_info_inner(pindex, ent, is_scanner), "" }
 end
 
 --Reports the charting range of a radar and how much of it has been charted so far.

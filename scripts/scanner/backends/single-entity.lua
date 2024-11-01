@@ -128,7 +128,7 @@ mod.Spawner = decl("fa.scanner.backends.Spawner", {
          end
       end
 
-      local info_string = Info.ent_info(player.index, ent, nil, true)
+      local info_string = Info.ent_info(player.index, ent, true)
       return { "fa.scanner-spawner-announce", info_string, result }
    end,
 })

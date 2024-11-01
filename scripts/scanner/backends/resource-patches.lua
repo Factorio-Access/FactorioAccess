@@ -153,7 +153,7 @@ function ResourcePatchesBackend:readout_entry(player, ent)
    local bd = ent.backend_data
    local pname = bd.prototype
 
-   if bd.zoom_override then return FaInfo.ent_info(pindex, bd.zoom_override, nil, true) end
+   if bd.zoom_override then return FaInfo.ent_info(pindex, bd.zoom_override, true) end
 
    local ents
 
