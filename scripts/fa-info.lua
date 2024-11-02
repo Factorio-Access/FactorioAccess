@@ -66,25 +66,34 @@ function mod.compute_resources_under_drill(ent)
    return dict
 end
 
+-- Fragments are joined in ent_info.
+---@return LocalisedString[]
 local function ent_info_inner(pindex, ent, is_scanner)
    local p = game.get_player(pindex)
-   local result = fa_localising.get(ent, pindex)
-   if result == nil or result == "" then result = ent.name end
-   if game.players[pindex].name == "Crimso" then result = result .. " " .. ent.type .. " " end
+   local result = { fa_localising.get_localised_name_with_fallback(ent) }
+
+   local function append(what)
+      table.insert(result, what)
+   end
+
    if ent.type == "resource" then
       if not ent.initial_amount then
          -- initial_amount is nil for non-infinite resources.
-         result = result .. ", x " .. ent.amount
+         append(", x")
+         append(ent.amount)
       else
          -- The game computes it this way then displays it as 403% or w/e.
          local percentage = ent.prototype.normal_resource_amount / 100
-         result = result .. ", x " .. math.floor(ent.amount / percentage) .. "%"
+         append(", x")
+         append(math.floor(ent.amount / percentage))
+         append("percent")
       end
    end
    if ent.name == "entity-ghost" then
-      result = fa_localising.get(ent.ghost_prototype, pindex) .. " " .. fa_localising.get(ent, pindex)
+      append(fa_localising.get_localised_name_with_fallback(ent.ghost_prototype))
+      append(fa_localising.get_localised_name_with_fallback(ent.prototype))
    elseif ent.name == "straight-rail" or ent.name == "curved-rail" then
-      return fa_rails.rail_ent_info(pindex, ent)
+      return { fa_rails.rail_ent_info(pindex, ent) }
    end
 
    --Give character names
@@ -92,25 +101,28 @@ local function ent_info_inner(pindex, ent, is_scanner)
       local p = ent.player
       local p2 = ent.associated_player
       if p ~= nil and p.valid and p.name ~= nil and p.name ~= "" then
-         result = result .. " " .. p.name
+         append(p.name)
       elseif p2 ~= nil and p2.valid and p2.name ~= nil and p2.name ~= "" then
-         result = result .. " " .. p2.name
+         append(p2.name)
       elseif p ~= nil and p.valid and p.index == pindex then
-         result = result .. " you "
+         append("you")
       elseif pindex ~= nil then
-         result = result .. " " .. pindex
+         append(pindex)
       else
-         result = result .. " X "
+         append("X")
       end
 
-      if p ~= nil and p.valid and p.index == pindex and not (players[pindex].cursor or is_scanner) then return "" end
+      if p ~= nil and p.valid and p.index == pindex and not (players[pindex].cursor or is_scanner) then
+         return { "", "" }
+      end
    elseif ent.name == "character-corpse" then
       if ent.character_corpse_player_index == pindex then
-         result = result .. " of your character "
+         append("of your character")
       elseif ent.character_corpse_player_index ~= nil then
-         result = result .. " of another character "
+         append("of another character")
       end
    end
+
    --Explain the contents of a container
    if ent.type == "container" or ent.type == "logistic-container" or ent.type == "infinity-container" then
       --Chests etc: Report the most common item and say "and other items" if there are other types.
@@ -123,65 +135,64 @@ local function ent_info_inner(pindex, ent, is_scanner)
          return k1.count > k2.count
       end)
       if #itemtable == 0 then
-         result = result .. " with nothing "
+         append("with nothing")
       else
-         result = result
-            .. " with "
-            .. fa_localising.get_item_from_name(itemtable[1].name, pindex)
-            .. " times "
-            .. itemtable[1].count
-            .. ", "
+         append("with")
+         append(fa_localising.get_item_from_name(itemtable[1].name, pindex))
+         append("times")
+         append(itemtable[1].count)
+         append(",")
          if #itemtable > 1 then
-            result = result
-               .. " and "
-               .. fa_localising.get_item_from_name(itemtable[2].name, pindex)
-               .. " times "
-               .. itemtable[2].count
-               .. ", "
+            append("and")
+            append(fa_localising.get_item_from_name(itemtable[2].name, pindex))
+            append("times")
+            append(itemtable[2].count)
+            append(",")
          end
          if #itemtable > 2 then
-            result = result
-               .. " and "
-               .. fa_localising.get_item_from_name(itemtable[3].name, pindex)
-               .. " times "
-               .. itemtable[3].count
-               .. ", "
+            append("and")
+            append(fa_localising.get_item_from_name(itemtable[3].name, pindex))
+            append("times")
+            append(itemtable[3].count)
+            append(",")
          end
-         if #itemtable > 3 then result = result .. "and other items " end
+         if #itemtable > 3 then append("and other items") end
       end
       if ent.type == "logistic-container" then
          local network = ent.surface.find_logistic_network_by_position(ent.position, ent.force)
          if network == nil then
             local nearest_roboport = fa_utils.find_nearest_roboport(ent.surface, ent.position, 5000)
             if nearest_roboport == nil then
-               result = result .. ", not in a network, no networks found within 5000 tiles"
+               append(", not in a network, no networks found within 5000 tiles")
             else
                local dist = math.ceil(util.distance(ent.position, nearest_roboport.position) - 25)
                local dir =
                   fa_utils.direction_lookup(fa_utils.get_direction_biased(nearest_roboport.position, ent.position))
-               result = result
-                  .. ", not in a network, nearest network "
-                  .. nearest_roboport.backer_name
-                  .. " is about "
-                  .. dist
-                  .. " to the "
-                  .. dir
+
+               append(", not in a network, nearest network")
+               append(nearest_roboport.backer_name)
+               append("is about")
+               append(dist)
+               append("to the")
+               append(dir)
             end
          else
             local network_name = network.cells[1].owner.backer_name
-            result = result .. ", in network " .. network_name
+            append(",in network")
+            append(network_name)
          end
       end
    elseif ent.name == "infinity-pipe" then
       local filter = ent.get_infinity_pipe_filter()
       if filter == nil then
-         result = result .. " draining "
+         append("draining")
       else
-         result = result .. " of " .. filter.name
+         append("of")
+         append(filter.name)
       end
    end
    --Pipe ends are labelled to distinguish them
-   if ent.name == "pipe" and fa_building_tools.is_a_pipe_end(ent) then result = result .. " end, " end
+   if ent.name == "pipe" and fa_building_tools.is_a_pipe_end(ent) then append("end,") end
    --Explain the contents of a pipe or storage tank or etc.
    if
       ent.type == "pipe"
@@ -201,22 +212,22 @@ local function ent_info_inner(pindex, ent, is_scanner)
          return k1.count > k2.count
       end)
       if #fluids > 0 and fluids[1].count ~= nil then
-         result = result
-            .. " with "
-            .. fa_localising.get_fluid_from_name(fluids[1].name, pindex)
-            .. " times "
-            .. math.floor(0.5 + fluids[1].count)
+         append("with")
+
+         append(fa_localising.get_fluid_from_name(fluids[1].name, pindex))
+         append("times")
+         append(math.floor(0.5 + fluids[1].count))
          if #fluids > 1 and fluids[2].count ~= nil then
             --This normally should not happen because it means different fluids mixed!
-            result = result
-               .. " and "
-               .. fa_localising.get_fluid_from_name(fluids[2].name, pindex)
-               .. " times "
-               .. math.floor(0.5 + fluids[2].count)
+
+            append("and")
+            append(fa_localising.get_fluid_from_name(fluids[2].name, pindex))
+            append("times")
+            append(math.floor(0.5 + fluids[2].count))
          end
-         if #fluids > 2 then result = result .. ", and other fluids " end
+         if #fluids > 2 then append(",and other fluids") end
       else
-         result = result .. " empty "
+         append("empty")
       end
    end
    --Explain the type and content of a transport belt
@@ -246,8 +257,9 @@ local function ent_info_inner(pindex, ent, is_scanner)
       end
       --Check what the neighbor info reveals about the belt
       local say_middle = false
-      result = result
-         .. fa_belts.transport_belt_junction_info(
+
+      append(
+         fa_belts.transport_belt_junction_info(
             sideload_count,
             backload_count,
             outload_count,
@@ -256,6 +268,7 @@ local function ent_info_inner(pindex, ent, is_scanner)
             say_middle,
             outload_is_corner
          )
+      )
 
       --Check contents
       local left = ent.get_transport_line(1).get_contents()
@@ -276,10 +289,12 @@ local function ent_info_inner(pindex, ent, is_scanner)
          return k1.count > k2.count
       end)
       if #contents > 0 then
-         result = result .. " carrying " .. fa_localising.get_item_from_name(contents[1].name, pindex) --***localize
+         append("carrying")
+         append(fa_localising.get_item_from_name(contents[1].name, pindex))
          if #contents > 1 then
-            result = result .. ", and " .. fa_localising.get_item_from_name(contents[2].name, pindex)
-            if #contents > 2 then result = result .. ", and other item types " end
+            append(", and")
+            append(fa_localising.get_item_from_name(contents[2].name, pindex))
+            if #contents > 2 then append(",and other item types") end
          end
       else
          --No currently carried items: Report recently carried items by checking the next belt over
@@ -377,20 +392,24 @@ local function ent_info_inner(pindex, ent, is_scanner)
 
          --Report assumed carried items based on input/output neighbors
          if #next_contents > 0 then
-            result = result .. " carrying " .. fa_localising.get_item_from_name(next_contents[1].name, pindex)
+            append("carrying")
+            append(fa_localising.get_item_from_name(next_contents[1].name, pindex))
             if #next_contents > 1 then
-               result = result .. ", and " .. fa_localising.get_item_from_name(next_contents[2].name, pindex)
-               if #next_contents > 2 then result = result .. ", and other item types " end
+               append(", and")
+               append(fa_localising.get_item_from_name(next_contents[2].name, pindex))
+               if #next_contents > 2 then append(", and other item types") end
             end
          elseif #prev_contents > 0 then
-            result = result .. " carrying " .. fa_localising.get_item_from_name(prev_contents[1].name, pindex)
+            append("carrying")
+            append(fa_localising.get_item_from_name(prev_contents[1].name, pindex))
             if #prev_contents > 1 then
-               result = result .. ", and " .. fa_localising.get_item_from_name(prev_contents[2].name, pindex)
-               if #prev_contents > 2 then result = result .. ", and other item types " end
+               append(", and")
+               append(fa_localising.get_item_from_name(prev_contents[2].name, pindex))
+               if #prev_contents > 2 then append(", and other item types") end
             end
          else
             --No currently or recently carried items
-            result = result .. " carrying nothing, "
+            append("carrying nothing,")
          end
       end
    end
@@ -398,69 +417,80 @@ local function ent_info_inner(pindex, ent, is_scanner)
    --For underground belts, note whether entrance or exit, and report contents
    if ent.type == "underground-belt" then
       if ent.belt_to_ground_type == "input" then
-         result = result .. " entrance "
+         append("entrance")
       elseif ent.belt_to_ground_type == "output" then
-         result = result .. " exit "
+         append("exit")
       end
    end
 
    --Explain the recipe of a machine without pause and before the direction
    pcall(function()
       if ent.get_recipe() ~= nil then
-         result = result .. " producing " .. fa_localising.get_recipe_from_name(ent.get_recipe().name, pindex)
+         append("producing")
+         append(fa_localising.get_recipe_from_name(ent.get_recipe().name, pindex))
       end
    end)
    --For furnaces (which produce only 1 output item type at a time) state how many output units are ready
    if ent.type == "furnace" then
       local output_stack = ent.get_output_inventory()[1]
       if output_stack and output_stack.valid_for_read then
-         result = result .. ", " .. output_stack.count .. " " .. output_stack.name .. " " .. " ready, "
+         append(",")
+         append(output_stack.count)
+         append(output_stack.name)
+         append("ready,")
       end
    end
    --State the name of a train stop
    if ent.name == "train-stop" then
-      result = result .. " " .. ent.backer_name .. " "
+      append(ent.backer_name)
       if ent.trains_limit ~= nil and ent.trains_limit < 10000 then
-         result = result .. ", trains limit " .. ent.trains_limit
+         append(", trains limit")
+         append(ent.trains_limit)
       end
    --State the ID number of a train
    elseif ent.name == "locomotive" or ent.name == "cargo-wagon" or ent.name == "fluid-wagon" then
-      result = result .. " of train " .. fa_trains.get_train_name(ent.train)
+      append("of train")
+      append(fa_trains.get_train_name(ent.train))
    --State the signal state of a rail signal
    elseif ent.name == "rail-signal" or ent.name == "rail-chain-signal" then
       if ent.status == defines.entity_status.not_connected_to_rail then
-         result = result .. " not connected to rails "
+         append("not connected to rails")
       elseif ent.status == defines.entity_status.cant_divide_segments then
-         result = result .. " can't divide segments "
+         append("can't divide segments")
       else
-         result = result .. ", " .. fa_rails.get_signal_state_info(ent)
+         append(",")
+         append(fa_rails.get_signal_state_info(ent))
       end
    end
    if not is_scanner and ent.type == "mining-drill" and mod.cursor_is_at_mining_drill_output_part(pindex, ent) then
-      result = result .. " drop chute "
+      append("drop chute")
    end
    --Report the entity facing direction
    if
       (ent.prototype.is_building and ent.supports_direction)
       or (ent.name == "entity-ghost" and ent.ghost_prototype.is_building and ent.ghost_prototype.supports_direction)
    then
-      result = result .. ", Facing " .. fa_utils.direction_lookup(ent.direction)
+      append(", Facing")
+      append(fa_utils.direction_lookup(ent.direction))
       if ent.type == "generator" then
          --For steam engines and steam turbines, north = south and east = west
-         result = result .. " and " .. fa_utils.direction_lookup(fa_utils.rotate_180(ent.direction))
+         append("and")
+         append(fa_utils.direction_lookup(fa_utils.rotate_180(ent.direction)))
       end
    elseif ent.type == "locomotive" or ent.type == "car" then
-      result = result .. " facing " .. fa_utils.get_heading_info(ent)
+      append("facing")
+      append(fa_utils.get_heading_info(ent))
    end
    if ent.name == "rail-signal" or ent.name == "rail-chain-signal" then
-      result = result .. ", Heading " .. fa_utils.direction_lookup(fa_utils.rotate_180(ent.direction))
+      append(", Heading")
+      append(fa_utils.direction_lookup(fa_utils.rotate_180(ent.direction)))
    end
    if ent.type == "wall" and ent.get_control_behavior() ~= nil then result = result .. ", gate control circuit, " end
    --Report if marked for deconstruction or upgrading
    if ent.to_be_deconstructed() == true then
-      result = result .. " marked for deconstruction, "
+      append("marked for deconstruction,")
    elseif ent.to_be_upgraded() == true then
-      result = result .. " marked for upgrading, "
+      append("marked for upgrading,")
    end
    --Generator power production
    if ent.prototype.type == "generator" then
@@ -470,34 +500,34 @@ local function ent_info_inner(pindex, ent, is_scanner)
       local power_load_pct = math.ceil(power1 / power2 * 100)
       if power2 ~= nil then
          result = result
-            .. " at "
-            .. power_load_pct
-            .. " percent load, producing "
-            .. fa_electrical.get_power_string(power1)
-            .. " out of "
-            .. fa_electrical.get_power_string(power2)
-            .. " capacity, "
+         append("at")
+         append(power_load_pct)
+         append("percent load, producing")
+         append(fa_electrical.get_power_string(power1))
+         append("out of")
+         append(fa_electrical.get_power_string(power2))
+         append("capacity,")
       else
-         result = result .. " producing " .. fa_electrical.get_power_string(power1) .. " "
+         append("producing")
+         append(fa_electrical.get_power_string(power1))
       end
    end
    if ent.type == "underground-belt" then
       if ent.neighbours ~= nil then
-         result = result
-            .. ", Connected to "
-            .. fa_utils.direction(ent.position, ent.neighbours.position)
-            .. " via "
-            .. math.floor(fa_utils.distance(ent.position, ent.neighbours.position)) - 1
-            .. " tiles underground, "
+         append(", Connected to")
+         append(fa_utils.direction(ent.position, ent.neighbours.position))
+         append("via")
+         append(math.floor(fa_utils.distance(ent.position, ent.neighbours.position)) - 1)
+         append("tiles underground,")
       else
-         result = result .. ", not connected "
+         append(", not connected")
       end
    elseif ent.type == "splitter" then
       --Splitter priority info
-      result = result .. fa_belts.splitter_priority_info(ent)
+      append(fa_belts.splitter_priority_info(ent))
    elseif (ent.name == "pipe") and ent.neighbours ~= nil then
       --List connected neighbors
-      result = result .. " connects "
+      append("connects")
       local con_counter = 0
       for i, nbrs in pairs(ent.neighbours) do
          for j, nbr in pairs(nbrs) do
@@ -520,40 +550,43 @@ local function ent_info_inner(pindex, ent, is_scanner)
                   fa_building_tools.get_relevant_fluidbox_and_fluid_name(nbr, ent.position, dirs.west)
             end
             if f_name ~= nil then --"empty" is a name too
-               result = result .. fa_utils.direction_lookup(dir_from_pos) .. ", "
+               append(fa_utils.direction_lookup(dir_from_pos))
+               append(",")
                --game.print("found " .. f_name .. " at " .. nbr.name ,{volume_modifier=0})
                con_counter = con_counter + 1
             end
          end
       end
-      if con_counter == 0 then result = result .. " to nothing" end
+      if con_counter == 0 then append("to nothing") end
    elseif (ent.name == "pipe-to-ground") and ent.neighbours ~= nil then
-      result = result .. " connects "
+      append("connects")
       local connections = ent.fluidbox.get_pipe_connections(1)
       local aboveground_found = false
       local underground_found = false
       for i, con in ipairs(connections) do
          if con.target ~= nil then
             local dist = math.ceil(util.distance(ent.position, con.target.get_pipe_connections(1)[1].position))
-            result = result
-               .. fa_utils.direction_lookup(fa_utils.get_direction_biased(con.target_position, ent.position))
-               .. " "
+
+            append(fa_utils.direction_lookup(fa_utils.get_direction_biased(con.target_position, ent.position)))
+
             if con.connection_type == "underground" then
-               result = result .. " via " .. dist - 1 .. " tiles underground, "
+               append("via")
+               append(dist - 1)
+               append("tiles underground,")
                underground_found = true
             else
-               result = result .. " directly "
+               append("directly")
                aboveground_found = true
             end
-            result = result .. ", "
+            append(",")
          end
       end
       if aboveground_found == false and underground_found == false then
-         result = result .. " nothing "
+         append("nothing")
       elseif aboveground_found == true and underground_found == false then
-         result = result .. " nothing underground "
+         append("nothing underground")
       elseif aboveground_found == false and underground_found == true then
-         result = result .. " nothing directly "
+         append("nothing directly")
       end
    elseif next(ent.prototype.fluidbox_prototypes) ~= nil then
       --For a fluidbox inside a building, give info about the connection directions
@@ -583,35 +616,33 @@ local function ent_info_inner(pindex, ent, is_scanner)
                if ent.type == "assembling-machine" and ent.get_recipe() ~= nil then
                   if ent.name == "oil-refinery" and ent.get_recipe().name == "basic-oil-processing" then
                      if i == 2 then
-                        result = result
-                           .. ", "
-                           .. fa_localising.get_fluid_from_name("crude-oil", pindex)
-                           .. " Flow "
-                           .. pipe.flow_direction
-                           .. " 1 "
-                           .. adjusted.direction
-                           .. ", at "
-                           .. fa_utils.get_entity_part_at_cursor(pindex)
+                        append(",")
+                        append(fa_localising.get_fluid_from_name("crude-oil", pindex))
+                        append("Flow")
+                        append(pipe.flow_direction)
+                        append("1")
+                        append(adjusted.direction)
+                        append(", at")
+                        append(fa_utils.get_entity_part_at_cursor(pindex))
                      elseif i == 5 then
-                        result = result
-                           .. ", "
-                           .. fa_localising.get_fluid_from_name("petroleum-gas", pindex)
-                           .. " Flow "
-                           .. pipe.flow_direction
-                           .. " 1 "
-                           .. adjusted.direction
-                           .. ", at "
-                           .. fa_utils.get_entity_part_at_cursor(pindex)
+                        append(",")
+
+                        append(fa_localising.get_fluid_from_name("petroleum-gas", pindex))
+                        append("Flow")
+                        append(pipe.flow_direction)
+                        append("1")
+                        append(adjusted.direction)
+                        append(", at")
+                        append(fa_utils.get_entity_part_at_cursor(pindex))
                      else
-                        result = result
-                           .. ", "
-                           .. "Unused"
-                           .. " Flow "
-                           .. pipe.flow_direction
-                           .. " 1 "
-                           .. adjusted.direction
-                           .. ", at "
-                           .. fa_utils.get_entity_part_at_cursor(pindex)
+                        append(",")
+                        append("Unused")
+                        append("Flow")
+                        append(pipe.flow_direction)
+                        append("1")
+                        append(adjusted.direction)
+                        append(", at")
+                        append(fa_utils.get_entity_part_at_cursor(pindex))
                      end
                   else
                      if pipe.flow_direction == "input" then
@@ -623,25 +654,24 @@ local function ent_info_inner(pindex, ent, is_scanner)
                            local i3 = (i % #inputs)
                            if i3 == 0 then i3 = #inputs end
                            local filter = inputs[i3]
-                           result = result
-                              .. ", "
-                              .. filter.name
-                              .. " Flow "
-                              .. pipe.flow_direction
-                              .. " 1 "
-                              .. adjusted.direction
-                              .. ", at "
-                              .. fa_utils.get_entity_part_at_cursor(pindex)
+
+                           append(",")
+                           append(filter.name)
+                           append("Flow")
+                           append(pipe.flow_direction)
+                           append("1")
+                           append(adjusted.direction)
+                           append(", at")
+                           append(fa_utils.get_entity_part_at_cursor(pindex))
                         else
-                           result = result
-                              .. ", "
-                              .. "Unused"
-                              .. " Flow "
-                              .. pipe.flow_direction
-                              .. " 1 "
-                              .. adjusted.direction
-                              .. ", at "
-                              .. fa_utils.get_entity_part_at_cursor(pindex)
+                           append(",")
+                           append("Unused")
+                           append("Flow")
+                           append(pipe.flow_direction)
+                           append("1")
+                           append(adjusted.direction)
+                           append(", at")
+                           append(fa_utils.get_entity_part_at_cursor(pindex))
                         end
                      else
                         local outputs = ent.get_recipe().products
@@ -652,40 +682,39 @@ local function ent_info_inner(pindex, ent, is_scanner)
                            local i3 = ((i - inputs) % #outputs)
                            if i3 == 0 then i3 = #outputs end
                            local filter = outputs[i3]
-                           result = result
-                              .. ", "
-                              .. filter.name
-                              .. " Flow "
-                              .. pipe.flow_direction
-                              .. " 1 "
-                              .. adjusted.direction
-                              .. ", at "
-                              .. fa_utils.get_entity_part_at_cursor(pindex)
+
+                           append(",")
+                           append(filter.name)
+                           append("Flow")
+                           append(pipe.flow_direction)
+                           append("1")
+                           append(adjusted.direction)
+                           append(", at")
+                           append(fa_utils.get_entity_part_at_cursor(pindex))
                         else
-                           result = result
-                              .. ", "
-                              .. "Unused"
-                              .. " Flow "
-                              .. pipe.flow_direction
-                              .. " 1 "
-                              .. adjusted.direction
-                              .. ", at "
-                              .. fa_utils.get_entity_part_at_cursor(pindex)
+                           append(",")
+                           append("Unused")
+                           append("Flow")
+                           append(pipe.flow_direction)
+                           append("1")
+                           append(adjusted.direction)
+                           append(", at")
+                           append(fa_utils.get_entity_part_at_cursor(pindex))
                         end
                      end
                   end
                else
                   --Other ent types and assembling machines with no recipes
                   local filter = box.filter or { name = "" }
-                  result = result
-                     .. ", "
-                     .. filter.name
-                     .. " Flow "
-                     .. pipe.flow_direction
-                     .. " 1 "
-                     .. adjusted.direction
-                     .. ", at "
-                     .. fa_utils.get_entity_part_at_cursor(pindex)
+                  append(",")
+
+                  append(filter.name)
+                  append("Flow")
+                  append(pipe.flow_direction)
+                  append("1")
+                  append(adjusted.direction)
+                  append(", at")
+                  append(fa_utils.get_entity_part_at_cursor(pindex))
                end
             end
          end
@@ -716,15 +745,17 @@ local function ent_info_inner(pindex, ent, is_scanner)
       local insert_spots_left = 0
       local insert_spots_right = 0
       if not left.can_insert_at_back() and right.can_insert_at_back() then
-         result = result .. ", " .. left_dir .. " lane full, "
+         append(",")
+         append(left_dir)
+         append("lane full,")
       elseif left.can_insert_at_back() and not right.can_insert_at_back() then
-         result = result .. ", " .. right_dir .. " lane full, "
+         append(",")
+         append(right_dir)
+         append("lane full,")
       elseif not left.can_insert_at_back() and not right.can_insert_at_back() then
-         result = result .. ", both lanes full, "
-         --game.get_player(pindex).print(", both lanes full, ")
+         append(", both lanes full,")
       else
-         result = result .. ", both lanes open, "
-         --game.get_player(pindex).print(", both lanes open, ")
+         append(", both lanes open,")
       end
    elseif ent.name == "cargo-wagon" then
       --Explain contents
@@ -737,20 +768,24 @@ local function ent_info_inner(pindex, ent, is_scanner)
          return k1.count > k2.count
       end)
       if #itemtable == 0 then
-         result = result .. " containing nothing "
+         append("containing nothing")
       else
-         result = result .. " containing " .. itemtable[1].name .. " times " .. itemtable[1].count .. ", "
+         append("containing " .. itemtable[1].name .. " times " .. itemtable[1].count .. ",")
          if #itemtable > 1 then
-            result = result .. " and " .. itemtable[2].name .. " times " .. itemtable[2].count .. ", "
+            append("and")
+            append(itemtable[2].name)
+            append("times")
+            append(itemtable[2].count)
+            append(",")
          end
-         if #itemtable > 2 then result = result .. "and other items " end
+         if #itemtable > 2 then append("and other items") end
       end
    elseif ent.type == "radar" then
-      result = result .. ", " .. mod.radar_charting_info(ent)
-      --game.print(result)--test
+      append(",")
+      append(mod.radar_charting_info(ent))
    elseif ent.type == "electric-pole" then
       --List connected wire neighbors
-      result = result .. fa_circuits.wire_neighbours_info(ent, false)
+      append(fa_circuits.wire_neighbours_info(ent, false))
       --Count number of entities being supplied within supply area.
       local pos = ent.position
       local sdist = ent.prototype.get_supply_area_distance(ent.quality)
@@ -765,42 +800,48 @@ local function ent_info_inner(pindex, ent, is_scanner)
             producer_count = producer_count + 1
          end
       end
-      result = result .. " supplying " .. supplied_count .. " buildings, "
-      if producer_count > 0 then result = result .. " drawing from " .. producer_count .. " buildings, " end
-      result = result .. "Check status for power flow information. "
+      append("supplying")
+      append(supplied_count)
+      append("buildings,")
+      if producer_count > 0 then
+         append("drawing from")
+         append(producer_count)
+         append("buildings,")
+      end
+      append("Check status for power flow information.")
    elseif ent.type == "power-switch" then
       if ent.power_switch_state == false then
-         result = result .. " off, "
+         append("off,")
       elseif ent.power_switch_state == true then
-         result = result .. " on, "
+         append("on,")
       end
-      if (#ent.neighbours.red + #ent.neighbours.green) > 0 then result = result .. " observes circuit condition, " end
-      result = result .. fa_circuits.wire_neighbours_info(ent, true)
+      if (#ent.neighbours.red + #ent.neighbours.green) > 0 then append("observes circuit condition,") end
+      append(fa_circuits.wire_neighbours_info(ent, true))
    elseif ent.name == "roboport" then
       local cell = ent.logistic_cell
       local network = ent.logistic_cell.logistic_network
-      result = result
-         .. " of network "
-         .. fa_bot_logistics.get_network_name(ent)
-         .. ","
-         .. fa_bot_logistics.roboport_contents_info(ent)
+
+      append("of network")
+      append(fa_bot_logistics.get_network_name(ent))
+      append(",")
+      append(fa_bot_logistics.roboport_contents_info(ent))
    elseif ent.type == "spider-vehicle" then
       local label = ent.entity_label
       if label == nil then label = "" end
-      result = result .. label
+      append(label)
    elseif ent.type == "spider-leg" then
       local spiders =
          ent.surface.find_entities_filtered({ position = ent.position, radius = 5, type = "spider-vehicle" })
       local spider = ent.surface.get_closest(ent.position, spiders)
       local label = spider.entity_label
       if label == nil then label = "" end
-      result = result .. label
+      append(label)
    end
    --Inserters: Explain held items, pickup and drop positions
    if ent.type == "inserter" then
       --Declare filters
       if ent.filter_slot_count > 0 then
-         local filter_result = " Filters for "
+         append("Filters for")
          local active_filter_count = 0
          for i = 1, ent.filter_slot_count, 1 do
             local filt = ent.get_filter(i)
@@ -812,12 +853,19 @@ local function ent_info_inner(pindex, ent, is_scanner)
                filter_result = filter_result .. local_name
             end
          end
-         if active_filter_count > 0 then result = result .. filter_result .. ", " end
+         if active_filter_count > 0 then
+            append(filter_result)
+            append(",")
+         end
       end
       --Read held item
       if ent.held_stack ~= nil and ent.held_stack.valid_for_read and ent.held_stack.valid then
-         result = result .. ", holding " .. ent.held_stack.name
-         if ent.held_stack.count > 1 then result = result .. " times " .. ent.held_stack.count end
+         append(", holding")
+         append(ent.held_stack.name)
+         if ent.held_stack.count > 1 then
+            append("times")
+            append(ent.held_stack.count)
+         end
       end
       --Take note of long handed inserters
       local pickup_dist_dir = " at 1 " .. fa_utils.direction_lookup(ent.direction)
@@ -840,7 +888,9 @@ local function ent_info_inner(pindex, ent, is_scanner)
             end
          end
       end
-      result = result .. " picks up from " .. pickup_name .. pickup_dist_dir
+      append("picks up from")
+      append(pickup_name)
+      append(pickup_dist_dir)
       --Read the drop position
       local drop = ent.drop_target
       local drop_name = nil
@@ -855,7 +905,9 @@ local function ent_info_inner(pindex, ent, is_scanner)
             end
          end
       end
-      result = result .. ", drops to " .. drop_name .. drop_dist_dir
+      append(", drops to")
+      append(drop_name)
+      append(drop_dist_dir)
    end
    if ent.type == "mining-drill" then
       local pos = ent.position
@@ -876,26 +928,30 @@ local function ent_info_inner(pindex, ent, is_scanner)
          end
       end
       --Report info
-      if drop ~= nil and drop.valid then result = result .. " outputs to " .. drop_name end
-      if ent.status == defines.entity_status.waiting_for_space_in_destination then
-         result = result .. ", output full "
+      if drop ~= nil and drop.valid then
+         append("outputs to")
+         append(drop_name)
       end
+      if ent.status == defines.entity_status.waiting_for_space_in_destination then append(", output full ") end
       if table_size(dict) > 0 then
-         result = result .. ", Mining from "
+         append(", Mining from")
          for i, amount in pairs(dict) do
             if i == "crude-oil" then
-               result = result .. " " .. i .. " times " .. math.floor(amount / 3000) / 10 .. " per second "
+               append(i)
+               append("times")
+               append(math.floor(amount / 3000) / 10)
+               append("per second")
             else
-               result = result .. " " .. i .. " times " .. fa_utils.simplify_large_number(amount)
+               append(i)
+               append("times")
+               append(fa_utils.simplify_large_number(amount))
             end
          end
       end
    end
    --Explain if no fuel
    if ent.prototype.burner_prototype ~= nil then
-      if ent.energy == 0 and fa_driving.fuel_inventory_info(ent) == "Contains no fuel." then
-         result = result .. ", Out of Fuel "
-      end
+      if ent.energy == 0 and fa_driving.fuel_inventory_info(ent) == "Contains no fuel." then append(", Out of Fuel") end
    end
    --Explain other problematic status messages
    local status = ent.status
@@ -909,21 +965,25 @@ local function ent_info_inner(pindex, ent, is_scanner)
          or status == stat.missing_required_fluid
          or status == stat.no_ammo
       then
-         result = result .. ", input missing "
+         append(", input missing")
       elseif status == stat.full_output or status == stat.full_burnt_result_output then
-         result = result .. " output full "
+         append("output full")
       end
    end
    --Explain power connected status
    if ent.prototype.electric_energy_source_prototype ~= nil and ent.is_connected_to_electric_network() == false then
-      result = result .. " power not Connected"
+      append("power not Connected")
    elseif ent.prototype.electric_energy_source_prototype ~= nil and ent.energy == 0 and ent.type ~= "solar-panel" then
-      result = result .. " out of power "
+      append("out of power")
    end
    if ent.type == "accumulator" then
       local level = math.ceil(ent.energy / ent.electric_buffer_size * 100) --In percentage
       local charge = math.ceil(ent.energy / 1000) --In kilojoules
-      result = result .. ", " .. level .. " percent full, containing " .. charge .. " kilojoules. "
+      append(",")
+      append(level)
+      append(" percent full, containing")
+      append(charge)
+      append("kilojoules.")
    elseif ent.type == "solar-panel" then
       local s_time = ent.surface.daytime * 24 --We observed 18 = peak solar start, 6 = peak solar end, 11 = night start, 13 = night end
       local solar_status = ""
@@ -936,37 +996,52 @@ local function ent_info_inner(pindex, ent, is_scanner)
       elseif s_time > 11 and s_time <= 13 then
          solar_status = ", zero production, night time. "
       end
-      result = result .. solar_status
+      append(solar_status)
    elseif ent.name == "rocket-silo" then
       if ent.rocket_parts ~= nil and ent.rocket_parts < 100 then
-         result = result .. ", " .. ent.rocket_parts .. " finished out of 100. "
+         append(",")
+         append(ent.rocket_parts)
+         append("finished out of 100.")
       elseif ent.rocket_parts ~= nil then
-         result = result .. ", rocket ready, press SPACE to launch. "
+         append(", rocket ready, press SPACE to launch.")
       end
    elseif ent.name == "beacon" then
       local modules = ent.get_module_inventory()
       if modules.get_item_count() == 0 then
-         result = result .. " with no modules "
+         append("with no modules")
       elseif modules.get_item_count() == 1 then
-         result = result .. " with " .. modules[1].name
+         append("with")
+         append(modules[1].name)
       elseif modules.get_item_count() == 2 then
-         result = result .. " with " .. modules[1].name .. " and " .. modules[2].name
+         append("with")
+         append(modules[1].name)
+         append("and")
+         append(modules[2].name)
       elseif modules.get_item_count() > 2 then
-         result = result .. " with " .. modules[1].name .. " and " .. modules[2].name .. " and other modules "
+         append("with")
+         append(modules[1].name)
+         append("and")
+         append(modules[2].name)
+         append("and other modules")
       end
    elseif ent.temperature ~= nil and ent.name ~= "heat-pipe" then --ent.name == "nuclear-reactor" or ent.name == "heat-pipe" or ent.name == "heat-exchanger" then
-      result = result .. ", temperature " .. math.floor(ent.temperature) .. " degrees C "
+      append(", temperature")
+      append(math.floor(ent.temperature))
+      append("degrees C")
       if ent.name == "nuclear-reactor" then
-         if ent.temperature > 900 then result = result .. ", danger " end
-         if ent.energy > 0 then result = result .. ", consuming fuel cell " end
-         result = result .. ", neighbour bonus " .. ent.neighbour_bonus * 100 .. " percent "
+         if ent.temperature > 900 then append(", danger") end
+         if ent.energy > 0 then append(", consuming fuel cell") end
+         append(", neighbour bonus")
+         append(ent.neighbour_bonus * 100)
+         append("percent")
       end
    elseif ent.name == "item-on-ground" then
-      result = result .. ", " .. ent.stack.name
+      append(",")
+      append(ent.stack.name)
    end
    --Explain heat connection neighbors
    if ent.prototype.heat_buffer_prototype ~= nil then
-      result = result .. " connects "
+      append("connects")
       local con_targets = fa_building_tools.get_heat_connection_target_positions(ent.name, ent.position, ent.direction)
       local con_count = 0
       local con_counts = { 0, 0, 0, 0, 0, 0, 0, 0 }
@@ -1027,21 +1102,21 @@ local function ent_info_inner(pindex, ent, is_scanner)
                         con_count = con_count + 1
                         local con_dir = fa_utils.get_direction_biased(con_target_pos, ent.position)
                         if con_count > 1 then result = result .. " and " end
-                        result = result .. fa_utils.direction_lookup(con_dir)
+                        append(fa_utils.direction_lookup(con_dir))
                      end
                   end
                end
             end
          end
       end
-      if con_count == 0 then result = result .. " to nothing " end
+      if con_count == 0 then append("to nothing") end
       if ent.name == "heat-pipe" then --For this ent in particular, read temp after direction
-         result = result .. ", temperature " .. math.floor(ent.temperature) .. " degrees C "
+         append(", temperature")
+         append(math.floor(ent.temperature))
+         append("degrees C")
       end
    end
-   if ent.type == "constant-combinator" then
-      result = result .. fa_circuits.constant_combinator_signals_info(ent, pindex)
-   end
+   if ent.type == "constant-combinator" then append(fa_circuits.constant_combinator_signals_info(ent, pindex)) end
    return result
 end
 
@@ -1049,10 +1124,7 @@ end
 ---@param ent LuaEntity
 ---@return LocalisedString
 function mod.ent_info(pindex, ent, is_scanner)
-   -- This can't yet be localised, but we can force our caller to deal with the
-   -- possibility by giving them this meaningless localised string join, thus
-   -- preventing use of the .. operator.
-   return { "", ent_info_inner(pindex, ent, is_scanner), "" }
+   return fa_utils.localise_cat_table(ent_info_inner(pindex, ent, is_scanner))
 end
 
 --Reports the charting range of a radar and how much of it has been charted so far.
