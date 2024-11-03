@@ -108,6 +108,142 @@ local function ent_info_facing(ent)
    end
 end
 
+-- Announces if the entity is marked for upgrading or deconstruction. Folded
+-- into one function, as these are mutually exclusive states as far as we know.
+---@param ent LuaEntity
+---@return LocalisedString?
+local function ent_info_marked_for_upgrade_deconstruct(ent)
+   if ent.to_be_deconstructed() then
+      return { "fa.ent-info-marked-for-deconstruction" }
+   elseif ent.to_be_upgraded() then
+      return { "fa.ent-info-marked-for-upgrading" }
+   end
+
+   -- Otherwise it is not marked.
+end
+
+-- If this entity generates electricity, tell the player how much.
+---@param ent LuaEntity
+---@return LocalisedString?
+local function ent_info_power_production(ent)
+   if ent.prototype.type == "generator" then
+      local power1 = ent.energy_generated_last_tick * 60
+      local power2 = ent.prototype.get_max_energy_production(ent.quality) * 60
+      local power_load_pct = math.ceil(power1 / power2 * 100)
+      if power2 ~= nil then
+         return FaUtils.localise_cat_table({
+            { "fa.ent-info-generator-load", power_load_pct },
+            {
+               "fa.ent-info-generator-production",
+               Electrical.get_power_string(power1),
+               Electrical.get_power_string(power2),
+            },
+         }, ", ")
+      else
+         return { "fa.ent-info-generator-production", Electrical.get_power_string(power1) }
+      end
+   end
+end
+
+-- If the entity has a status which is super important, for example no power or
+-- output full, tell the player.  These are things that we judge to be important
+-- enough that checking status shouldn't be required.
+---@param ent LuaEntity
+---@return LocalisedString?
+local function ent_info_important_statuses(ent)
+   local status = ent.status
+   local stat = defines.entity_status
+   if status ~= nil and status ~= stat.normal and status ~= stat.working then
+      if
+         status == stat.no_ingredients
+         or status == stat.no_input_fluid
+         or status == stat.no_minable_resources
+         or status == stat.item_ingredient_shortage
+         or status == stat.missing_required_fluid
+         or status == stat.no_ammo
+      then
+         return { "fa.ent-info-input-missing" }
+      elseif status == stat.full_output or status == stat.full_burnt_result_output then
+         return { "fa.ent-info-output-full" }
+      end
+   end
+end
+
+-- "not connected to power" etc.
+---@param ent LuaEntity
+---@return LocalisedString?
+local function ent_info_power_status(ent)
+   if ent.prototype.electric_energy_source_prototype ~= nil and ent.is_connected_to_electric_network() == false then
+      return { "fa.ent-info-no-power-connection" }
+   elseif ent.prototype.electric_energy_source_prototype ~= nil and ent.energy == 0 and ent.type ~= "solar-panel" then
+      return { "fa.ent-info-no-power-empty-electric-network" }
+   end
+end
+
+-- Announces if the entity is a wall and a point at which the player may connect
+-- the circuit network to control a gate.
+---@return LocalisedString?
+local function ent_info_gate_connection_point(ent)
+   if ent.type == "wall" and ent.get_control_behavior() ~= nil then
+      return { "fa.ent-info-gate-circuit-network-connection" }
+   end
+end
+
+---@param ent LuaEntity
+---@return LocalisedString?
+local function ent_info_accumulator(ent)
+   if ent.type == "accumulator" then
+      local level = math.ceil(ent.energy / ent.electric_buffer_size * 100) --In percentage
+      local charge = math.ceil(ent.energy)
+      return { "fa.ent-info-accumulator-charge", level, Electrical.get_power_string(charge) }
+   end
+end
+
+---@param ent LuaEntity
+---@return LocalisedString?
+local function ent_info_solar(ent)
+   if ent.type == "solar-panel" then
+      local s_time = ent.surface.daytime * 24 --We observed 18 = peak solar start, 6 = peak solar end, 11 = night start, 13 = night end
+      local solar_status = ""
+      if s_time > 13 and s_time <= 18 then
+         return { "fa.ent-info-solar-increasing" }
+      elseif s_time > 18 or s_time < 6 then
+         return { "fa.ent-info-solar-full-production" }
+      elseif s_time > 6 and s_time <= 11 then
+         return { "fa.ent-info-solar-evening" }
+      elseif s_time > 11 and s_time <= 13 then
+         return { "fa.ent-info-solar-night" }
+      end
+   end
+end
+
+---@param ent LuaEntity
+---@return LocalisedString?
+local function ent_info_rocket_silo(ent)
+   if ent.name == "rocket-silo" then
+      if ent.rocket_parts ~= nil and ent.rocket_parts < 100 then
+         return { "fa.ent-info-silo-partial", ent.rocket_parts }
+      elseif ent.rocket_parts ~= nil then
+         return { "fa.ent-info-silo-complete" }
+      end
+   end
+end
+
+local function ent_info_beacon_status(ent)
+   if ent.name == "beacon" then
+      local modules = ent.get_module_inventory()
+      if modules.get_item_count() == 0 then
+         return { "fa.ent-info-beacon-modules-0" }
+      elseif modules.get_item_count() == 1 then
+         return { "faent-info-beacon-modules-1", modules[1].name }
+      elseif modules.get_item_count() == 2 then
+         return { "fa.ent-info-beacon-modules-2", modules[1].name, modules[2].name }
+      elseif modules.get_item_count() > 2 then
+         return { "fa.ent-info-beacon-modules-more", modules[1].name, modules[2].name }
+      end
+   end
+end
+
 -- Fragments are joined in ent_info.
 ---@return LocalisedString[]
 local function ent_info_inner(pindex, ent, is_scanner)
@@ -514,33 +650,12 @@ local function ent_info_inner(pindex, ent, is_scanner)
       append(", Heading")
       append(FaUtils.direction_lookup(FaUtils.rotate_180(ent.direction)))
    end
-   if ent.type == "wall" and ent.get_control_behavior() ~= nil then result = result .. ", gate control circuit, " end
-   --Report if marked for deconstruction or upgrading
-   if ent.to_be_deconstructed() == true then
-      append("marked for deconstruction,")
-   elseif ent.to_be_upgraded() == true then
-      append("marked for upgrading,")
-   end
-   --Generator power production
-   if ent.prototype.type == "generator" then
-      result = result .. ", "
-      local power1 = ent.energy_generated_last_tick * 60
-      local power2 = ent.prototype.get_max_energy_production(ent.quality) * 60
-      local power_load_pct = math.ceil(power1 / power2 * 100)
-      if power2 ~= nil then
-         result = result
-         append("at")
-         append(power_load_pct)
-         append("percent load, producing")
-         append(Electrical.get_power_string(power1))
-         append("out of")
-         append(Electrical.get_power_string(power2))
-         append("capacity,")
-      else
-         append("producing")
-         append(Electrical.get_power_string(power1))
-      end
-   end
+
+   append(ent_info_gate_connection_point(ent))
+
+   append(ent_info_marked_for_upgrade_deconstruct(ent))
+   append(ent_info_power_production(ent))
+
    if ent.type == "underground-belt" then
       if ent.neighbours ~= nil then
          append(", Connected to")
@@ -982,78 +1097,16 @@ local function ent_info_inner(pindex, ent, is_scanner)
    if ent.prototype.burner_prototype ~= nil then
       if ent.energy == 0 and Driving.fuel_inventory_info(ent) == "Contains no fuel." then append(", Out of Fuel") end
    end
-   --Explain other problematic status messages
-   local status = ent.status
-   local stat = defines.entity_status
-   if status ~= nil and status ~= stat.normal and status ~= stat.working then
-      if
-         status == stat.no_ingredients
-         or status == stat.no_input_fluid
-         or status == stat.no_minable_resources
-         or status == stat.item_ingredient_shortage
-         or status == stat.missing_required_fluid
-         or status == stat.no_ammo
-      then
-         append(", input missing")
-      elseif status == stat.full_output or status == stat.full_burnt_result_output then
-         append("output full")
-      end
-   end
-   --Explain power connected status
-   if ent.prototype.electric_energy_source_prototype ~= nil and ent.is_connected_to_electric_network() == false then
-      append("power not Connected")
-   elseif ent.prototype.electric_energy_source_prototype ~= nil and ent.energy == 0 and ent.type ~= "solar-panel" then
-      append("out of power")
-   end
-   if ent.type == "accumulator" then
-      local level = math.ceil(ent.energy / ent.electric_buffer_size * 100) --In percentage
-      local charge = math.ceil(ent.energy / 1000) --In kilojoules
-      append(",")
-      append(level)
-      append(" percent full, containing")
-      append(charge)
-      append("kilojoules.")
-   elseif ent.type == "solar-panel" then
-      local s_time = ent.surface.daytime * 24 --We observed 18 = peak solar start, 6 = peak solar end, 11 = night start, 13 = night end
-      local solar_status = ""
-      if s_time > 13 and s_time <= 18 then
-         solar_status = ", increasing production, morning hours. "
-      elseif s_time > 18 or s_time < 6 then
-         solar_status = ", full production, day time. "
-      elseif s_time > 6 and s_time <= 11 then
-         solar_status = ", decreasing production, evening hours. "
-      elseif s_time > 11 and s_time <= 13 then
-         solar_status = ", zero production, night time. "
-      end
-      append(solar_status)
-   elseif ent.name == "rocket-silo" then
-      if ent.rocket_parts ~= nil and ent.rocket_parts < 100 then
-         append(",")
-         append(ent.rocket_parts)
-         append("finished out of 100.")
-      elseif ent.rocket_parts ~= nil then
-         append(", rocket ready, press SPACE to launch.")
-      end
-   elseif ent.name == "beacon" then
-      local modules = ent.get_module_inventory()
-      if modules.get_item_count() == 0 then
-         append("with no modules")
-      elseif modules.get_item_count() == 1 then
-         append("with")
-         append(modules[1].name)
-      elseif modules.get_item_count() == 2 then
-         append("with")
-         append(modules[1].name)
-         append("and")
-         append(modules[2].name)
-      elseif modules.get_item_count() > 2 then
-         append("with")
-         append(modules[1].name)
-         append("and")
-         append(modules[2].name)
-         append("and other modules")
-      end
-   elseif ent.temperature ~= nil and ent.name ~= "heat-pipe" then --ent.name == "nuclear-reactor" or ent.name == "heat-pipe" or ent.name == "heat-exchanger" then
+
+   append(ent_info_important_statuses(ent))
+   append(ent_info_power_status(ent))
+
+   append(ent_info_accumulator(ent))
+   append(ent_info_solar(ent))
+   append(ent_info_rocket_silo(ent))
+   append(ent_info_beacon_status(ent))
+
+   if ent.temperature ~= nil and ent.name ~= "heat-pipe" then --ent.name == "nuclear-reactor" or ent.name == "heat-pipe" or ent.name == "heat-exchanger" then
       append(", temperature")
       append(math.floor(ent.temperature))
       append("degrees C")
@@ -1064,10 +1117,13 @@ local function ent_info_inner(pindex, ent, is_scanner)
          append(ent.neighbour_bonus * 100)
          append("percent")
       end
-   elseif ent.name == "item-on-ground" then
+   end
+
+   if ent.name == "item-on-ground" then
       append(",")
       append(ent.stack.name)
    end
+
    --Explain heat connection neighbors
    if ent.prototype.heat_buffer_prototype ~= nil then
       append("connects")
@@ -1145,6 +1201,7 @@ local function ent_info_inner(pindex, ent, is_scanner)
          append("degrees C")
       end
    end
+
    if ent.type == "constant-combinator" then append(Circuits.constant_combinator_signals_info(ent, pindex)) end
    return result
 end
