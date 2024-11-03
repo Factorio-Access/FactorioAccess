@@ -244,64 +244,78 @@ local function ent_info_beacon_status(ent)
    end
 end
 
--- Fragments are joined in ent_info.
----@return LocalisedString[]
-local function ent_info_inner(pindex, ent, is_scanner)
-   local p = game.get_player(pindex)
-   local result = { Localising.get_localised_name_with_fallback(ent) }
+---@param ent LuaEntity
+---@return LocalisedString?
+local function ent_info_constant_combinator(ent)
+   if ent.type == "constant-combinator" then return Circuits.constant_combinator_signals_info(ent, pindex) end
+end
 
-   local function append(what)
-      if what then table.insert(result, what) end
-   end
-
+---@param ent LuaEntity
+---@return LocalisedString?
+local function ent_info_resource(ent)
    if ent.type == "resource" then
       if not ent.initial_amount then
          -- initial_amount is nil for non-infinite resources.
-         append(", x")
-         append(ent.amount)
+         return { "fa.ent-info-resource-noninfinite", ent.amount }
       else
          -- The game computes it this way then displays it as 403% or w/e.
          local percentage = ent.prototype.normal_resource_amount / 100
-         append(", x")
-         append(math.floor(ent.amount / percentage))
-         append("percent")
+         return { "fa.ent-info-resource-infinite", percentage }
       end
    end
-   if ent.name == "entity-ghost" then
-      append(Localising.get_localised_name_with_fallback(ent.ghost_prototype))
-      append(Localising.get_localised_name_with_fallback(ent.prototype))
-   elseif ent.name == "straight-rail" or ent.name == "curved-rail" then
-      return { Rails.rail_ent_info(pindex, ent) }
-   end
+end
 
-   --Give character names
+---@param ent LuaEntity
+---@return LocalisedString?
+local function ent_info_ghost(ent)
+   if ent.name == "entity-ghost" then
+      return {
+         "fa.ent-info-ghost",
+         Localising.get_localised_name_with_fallback(ent.ghost_prototype),
+         Localising.get_localised_name_with_fallback(ent.prototype),
+      }
+   end
+end
+
+---@param ent LuaEntity
+---@return LocalisedString?
+local function ent_info_rail(pindex, ent)
+   -- TODO: really we shouldn't need pindex here, but for now rails aren't
+   -- localised properly.
+   if ent.name == "straight-rail" or ent.name == "curved-rail" then return Rails.rail_ent_info(pindex, ent) end
+end
+
+---@param ent LuaEntity
+---@return LocalisedString?
+local function ent_info_character(ent)
    if ent.name == "character" then
       local p = ent.player
       local p2 = ent.associated_player
       if p ~= nil and p.valid and p.name ~= nil and p.name ~= "" then
-         append(p.name)
+         return p.name
       elseif p2 ~= nil and p2.valid and p2.name ~= nil and p2.name ~= "" then
-         append(p2.name)
+         return p2.name
       elseif p ~= nil and p.valid and p.index == pindex then
-         append("you")
+         return { "fa.ent-info-self-character" }
       elseif pindex ~= nil then
-         append(pindex)
-      else
-         append("X")
-      end
-
-      if p ~= nil and p.valid and p.index == pindex and not (players[pindex].cursor or is_scanner) then
-         return { "", "" }
-      end
-   elseif ent.name == "character-corpse" then
-      if ent.character_corpse_player_index == pindex then
-         append("of your character")
-      elseif ent.character_corpse_player_index ~= nil then
-         append("of another character")
+         return tostring(pindex)
       end
    end
+end
 
-   --Explain the contents of a container
+local function ent_info_character_corpse(pindex, ent)
+   if ent.name == "character-corpse" then
+      if ent.character_corpse_player_index == pindex then
+         return { "fa.ent-info-corpse-is-self" }
+      elseif ent.character_corpse_player_index ~= nil then
+         return { "fa.ent-info-corpse-of-other" }
+      end
+   end
+end
+
+---@param ent LuaEntity
+---@return LocalisedString?
+local function ent_info_container(pindex, ent)
    if ent.type == "container" or ent.type == "logistic-container" or ent.type == "infinity-container" then
       --Chests etc: Report the most common item and say "and other items" if there are other types.
       local itemset = ent.get_inventory(defines.inventory.chest).get_contents()
@@ -312,65 +326,70 @@ local function ent_info_inner(pindex, ent, is_scanner)
       table.sort(itemtable, function(k1, k2)
          return k1.count > k2.count
       end)
-      if #itemtable == 0 then
-         append("with nothing")
-      else
-         append("with")
-         append(Localising.get_item_from_name(itemtable[1].name, pindex))
-         append("times")
-         append(itemtable[1].count)
-         append(",")
-         if #itemtable > 1 then
-            append("and")
-            append(Localising.get_item_from_name(itemtable[2].name, pindex))
-            append("times")
-            append(itemtable[2].count)
-            append(",")
-         end
-         if #itemtable > 2 then
-            append("and")
-            append(Localising.get_item_from_name(itemtable[3].name, pindex))
-            append("times")
-            append(itemtable[3].count)
-            append(",")
-         end
-         if #itemtable > 3 then append("and other items") end
-      end
-      if ent.type == "logistic-container" then
-         local network = ent.surface.find_logistic_network_by_position(ent.position, ent.force)
-         if network == nil then
-            local nearest_roboport = FaUtils.find_nearest_roboport(ent.surface, ent.position, 5000)
-            if nearest_roboport == nil then
-               append(", not in a network, no networks found within 5000 tiles")
-            else
-               local dist = math.ceil(util.distance(ent.position, nearest_roboport.position) - 25)
-               local dir =
-                  FaUtils.direction_lookup(FaUtils.get_direction_biased(nearest_roboport.position, ent.position))
 
-               append(", not in a network, nearest network")
-               append(nearest_roboport.backer_name)
-               append("is about")
-               append(dist)
-               append("to the")
-               append(dir)
-            end
-         else
-            local network_name = network.cells[1].owner.backer_name
-            append(",in network")
-            append(network_name)
-         end
-      end
-   elseif ent.name == "infinity-pipe" then
-      local filter = ent.get_infinity_pipe_filter()
-      if filter == nil then
-         append("draining")
-      else
-         append("of")
-         append(filter.name)
+      if #itemtable == 0 then
+         return { "fa.ent-info-container-empty" }
+      elseif #itemtable == 1 then
+         return {
+            "fa.ent-info-container-with-1",
+            Localising.get_item_from_name(itemtable[1].name, pindex),
+            itemtable[1].count,
+         }
+      elseif #itemtable == 2 then
+         return {
+            "fa.ent-info-container-with-2",
+            Localising.get_item_from_name(itemtable[1].name, pindex),
+            itemtable[1].count,
+            Localising.get_item_from_name(itemtable[2].name, pindex),
+            itemtable[2].count,
+         }
       end
    end
-   --Pipe ends are labelled to distinguish them
-   if ent.name == "pipe" and BuildingTools.is_a_pipe_end(ent) then append("end,") end
+end
+
+---@param ent LuaEntity
+--@return LocalisedString?
+local function ent_info_logistic_network(ent)
+   -- very unclear: isn't this just entity.logistic_network?  To revisit after
+   -- this file is refactored.
+   if ent.type == "logistic-container" then
+      local network = ent.surface.find_logistic_network_by_position(ent.position, ent.force)
+      if network == nil then
+         local nearest_roboport = FaUtils.find_nearest_roboport(ent.surface, ent.position, 5000)
+         if nearest_roboport == nil then
+            return { "ent-info-logistic-not-in-network", 5000 }
+         else
+            local dist = math.ceil(util.distance(ent.position, nearest_roboport.position) - 25)
+            local dir = FaUtils.direction_lookup(FaUtils.get_direction_biased(nearest_roboport.position, ent.position))
+            return { "fa.ent-info-logistic-not-in-network-with-near", nearest_roboport.backer_name, dist, dir }
+         end
+      else
+         local network_name = network.cells[1].owner.backer_name
+         return { "fa.ent-info-logistic-in-network", network_name }
+      end
+   end
+end
+
+local function ent_info_infinity_pipe(ent)
+   if ent.name == "infinity-pipe" then
+      local filter = ent.get_infinity_pipe_filter()
+      if filter == nil then
+         return { "fa.ent-info-infinity-pipe-draining" }
+      else
+         return { "fa.ent-info-infinity-pipe-producing", filter.name }
+      end
+   end
+end
+
+local function ent_info_is_pipe_end(ent)
+   if ent.name == "pipe" and BuildingTools.is_a_pipe_end(ent) then return { "Fa.ent-info-pipe-end" } end
+end
+
+-- For everything that contains a fluid but isn't a crafting machine, say what
+-- it is.
+---@param ent LuaEntity
+---@return LocalisedString?
+local function ent_info_fluid_transport(ent)
    --Explain the contents of a pipe or storage tank or etc.
    if
       ent.type == "pipe"
@@ -408,6 +427,81 @@ local function ent_info_inner(pindex, ent, is_scanner)
          append("empty")
       end
    end
+end
+
+---@param ent LuaEntity
+---@return LocalisedString?
+local function ent_info_underground_belt_type(ent)
+   if ent.type == "underground-belt" then
+      if ent.belt_to_ground_type == "input" then
+         return { "fa.ent-info-underground-belt-entrance" }
+      elseif ent.belt_to_ground_type == "output" then
+         return { "fa.ent-info-underground-belt-exit" }
+      end
+   end
+end
+
+---@param ent LuaEntity
+---@return LocalisedString?
+local function ent_info_train_stop(ent)
+   if ent.name == "train-stop" then
+      local limit = ent.trains_limit or 0
+      return { "fa.ent-info-train-stop", ent.backer_name, limit }
+   end
+end
+
+-- Returns train name announcement with id fallback.
+---@param ent LuaEntity
+---@return LocalisedString?
+local function ent_info_train_owner(ent)
+   if ent.name == "locomotive" or ent.name == "cargo-wagon" or ent.name == "fluid-wagon" then
+      return { "fa.ent-info-of-train", Trains.get_train_name(ent.train) }
+   end
+end
+
+---@param ent LuaEntity
+---@return LocalisedString?
+
+local function ent_info_rail_signal_state(ent)
+   -- TODO: this should be folded into basic entity state where it belongs.
+   if ent.name == "rail-signal" or ent.name == "rail-chain-signal" then
+      if ent.status == defines.entity_status.not_connected_to_rail then
+         return { "fa.ent-info-rail-signal-not-connected" }
+      elseif ent.status == defines.entity_status.cant_divide_segments then
+         return { "fa.ent-info-rail-signal-not-dividing" }
+      else
+         return Rails.get_signal_state_info(ent)
+      end
+   end
+end
+
+local function ent_info_rail_signal_heading(ent)
+   if ent.name == "rail-signal" or ent.name == "rail-chain-signal" then
+      return { "fa.ent-info-rail-signal-heading", FaUtils.direction_lookup(FaUtils.rotate_180(ent.direction)) }
+   end
+end
+
+-- Fragments are joined in ent_info.
+---@return LocalisedString[]
+local function ent_info_inner(pindex, ent, is_scanner)
+   local p = game.get_player(pindex)
+   local result = { Localising.get_localised_name_with_fallback(ent) }
+
+   local function append(what)
+      if what then table.insert(result, what) end
+   end
+
+   append(ent_info_resource(ent))
+   append(ent_info_ghost(ent))
+   append(ent_info_rail(pindex, ent))
+   append(ent_info_character(ent))
+   append(ent_info_character_corpse(pindex, ent))
+   append(ent_info_container(pindex, ent))
+   append(ent_info_logistic_network(ent))
+   append(ent_info_infinity_pipe(ent))
+   append(ent_info_is_pipe_end(ent))
+   append(ent_info_fluid_transport(ent))
+
    --Explain the type and content of a transport belt
    if ent.type == "transport-belt" then
       --Check if corner or junction or end
@@ -592,14 +686,7 @@ local function ent_info_inner(pindex, ent, is_scanner)
       end
    end
 
-   --For underground belts, note whether entrance or exit, and report contents
-   if ent.type == "underground-belt" then
-      if ent.belt_to_ground_type == "input" then
-         append("entrance")
-      elseif ent.belt_to_ground_type == "output" then
-         append("exit")
-      end
-   end
+   append(ent_info_underground_belt_type(ent))
 
    --Explain the recipe of a machine without pause and before the direction
    pcall(function()
@@ -618,41 +705,21 @@ local function ent_info_inner(pindex, ent, is_scanner)
          append("ready,")
       end
    end
-   --State the name of a train stop
-   if ent.name == "train-stop" then
-      append(ent.backer_name)
-      if ent.trains_limit ~= nil and ent.trains_limit < 10000 then
-         append(", trains limit")
-         append(ent.trains_limit)
-      end
-   --State the ID number of a train
-   elseif ent.name == "locomotive" or ent.name == "cargo-wagon" or ent.name == "fluid-wagon" then
-      append("of train")
-      append(Trains.get_train_name(ent.train))
-   --State the signal state of a rail signal
-   elseif ent.name == "rail-signal" or ent.name == "rail-chain-signal" then
-      if ent.status == defines.entity_status.not_connected_to_rail then
-         append("not connected to rails")
-      elseif ent.status == defines.entity_status.cant_divide_segments then
-         append("can't divide segments")
-      else
-         append(",")
-         append(Rails.get_signal_state_info(ent))
-      end
-   end
+
+   append(ent_info_train_stop(ent))
+
+   append(ent_info_train_owner(ent))
+   append(ent_info_rail_signal_state(ent))
+
+   -- Leaving this for now: we can make it better in a few commits.
    if not is_scanner and ent.type == "mining-drill" and mod.cursor_is_at_mining_drill_output_part(pindex, ent) then
       append("drop chute")
    end
 
    append(ent_info_facing(ent))
-
-   if ent.name == "rail-signal" or ent.name == "rail-chain-signal" then
-      append(", Heading")
-      append(FaUtils.direction_lookup(FaUtils.rotate_180(ent.direction)))
-   end
+   append(ent_info_rail_signal_heading(ent))
 
    append(ent_info_gate_connection_point(ent))
-
    append(ent_info_marked_for_upgrade_deconstruct(ent))
    append(ent_info_power_production(ent))
 
@@ -666,10 +733,14 @@ local function ent_info_inner(pindex, ent, is_scanner)
       else
          append(", not connected")
       end
-   elseif ent.type == "splitter" then
+   end
+
+   if ent.type == "splitter" then
       --Splitter priority info
       append(Belts.splitter_priority_info(ent))
-   elseif (ent.name == "pipe") and ent.neighbours ~= nil then
+   end
+
+   if (ent.name == "pipe") and ent.neighbours ~= nil then
       --List connected neighbors
       append("connects")
       local con_counter = 0
@@ -1202,7 +1273,7 @@ local function ent_info_inner(pindex, ent, is_scanner)
       end
    end
 
-   if ent.type == "constant-combinator" then append(Circuits.constant_combinator_signals_info(ent, pindex)) end
+   append(ent_info_constant_combinator(ent))
    return result
 end
 
