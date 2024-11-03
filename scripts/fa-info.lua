@@ -1,6 +1,19 @@
---Here: Info functions that are meant to be read out without much further processing.
---Examples: Selected entity info, pollution info, etc.
---Note: Some of these functions may later be moved to their own modules when sufficiently developed.
+--[[
+Announcement of information.
+
+This file is used to build up the strings used for entity statuses and cursor
+movement, which are honestlyh most of the mod's "magic".  It consists of
+functions which either produce strings about entities or produce joined up
+strings to send to the player.  Since the applicability conditions for each
+announcement are complex and we would prefer not to centralize them, functions
+here return nil if they do not have anything to add.
+
+The localisation is in entity-info.cfg.  We do not distinguish between cursor
+level information and status level information in the localisation, because it
+is not necessarily the case that things fall into one or the other, or that we
+won't change our mind later or maybe even go as far as adding settings for this
+stuff.
+]]
 local dirs = defines.direction
 local util = require("util")
 
@@ -67,6 +80,34 @@ function mod.compute_resources_under_drill(ent)
    return dict
 end
 
+---@return LocalisedString?
+local function ent_info_facing(ent)
+   local effective_direction
+   -- Set in the case where we detect symmetry.
+   local secondary_effective_direction
+
+   if
+      (ent.prototype.is_building and ent.supports_direction)
+      or (ent.name == "entity-ghost" and ent.ghost_prototype.is_building and ent.ghost_prototype.supports_direction)
+   then
+      effective_direction = FaUtils.direction_lookup(ent.direction)
+      if ent.type == "generator" then
+         --For steam engines and steam turbines, north = south and east = west
+         secondary_direction = FaUtils.direction_lookup(FaUtils.rotate_180(ent.direction))
+      end
+   elseif ent.type == "locomotive" or ent.type == "car" then
+      effective_direction = (FaUtils.get_heading_info(ent))
+   end
+
+   if effective_direction and secondary_direction then
+      return { "fa.ent-info-facing-symmetric", effective_direction, secondary_direction }
+   elseif effective_direction then
+      return { "fa.ent-info-facing", effective_direction }
+   else
+      return nil
+   end
+end
+
 -- Fragments are joined in ent_info.
 ---@return LocalisedString[]
 local function ent_info_inner(pindex, ent, is_scanner)
@@ -74,7 +115,7 @@ local function ent_info_inner(pindex, ent, is_scanner)
    local result = { Localising.get_localised_name_with_fallback(ent) }
 
    local function append(what)
-      table.insert(result, what)
+      if what then table.insert(result, what) end
    end
 
    if ent.type == "resource" then
@@ -466,22 +507,9 @@ local function ent_info_inner(pindex, ent, is_scanner)
    if not is_scanner and ent.type == "mining-drill" and mod.cursor_is_at_mining_drill_output_part(pindex, ent) then
       append("drop chute")
    end
-   --Report the entity facing direction
-   if
-      (ent.prototype.is_building and ent.supports_direction)
-      or (ent.name == "entity-ghost" and ent.ghost_prototype.is_building and ent.ghost_prototype.supports_direction)
-   then
-      append(", Facing")
-      append(FaUtils.direction_lookup(ent.direction))
-      if ent.type == "generator" then
-         --For steam engines and steam turbines, north = south and east = west
-         append("and")
-         append(FaUtils.direction_lookup(FaUtils.rotate_180(ent.direction)))
-      end
-   elseif ent.type == "locomotive" or ent.type == "car" then
-      append("facing")
-      append(FaUtils.get_heading_info(ent))
-   end
+
+   append(ent_info_facing(ent))
+
    if ent.name == "rail-signal" or ent.name == "rail-chain-signal" then
       append(", Heading")
       append(FaUtils.direction_lookup(FaUtils.rotate_180(ent.direction)))
