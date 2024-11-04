@@ -21,13 +21,11 @@ The basic usage pattern is use `fragment()` to append text, `list_item()` to
 signal that a list item has ended.  `list_item()` takes an optional fragment and
 appends it, so you can just chain list_item to build long lists of one thing
 each. Any two fragments appended one after the other are separated by space;
-lists are separated by commas.  This handles:
+lists are separated by commas.
 
-- Nil fragments and empty string fragments get ignored.
-- Duplicate calls to separate list items get ignored.
-- Larger segments can be separated with `.`.
-- You are not limited to 20 items. You are limited to 20^20 items, which is also
-  known as infinite for all practical purposes.
+Unlike normal localised strings, you are not limited to 20 items. You are
+limited to 20^20 items, which is also known as infinite for all practical
+purposes.
 
 Ok so: what's the point?  For those who don't already get why you'd want this,
 it lets you have a series of functions that collaboratively build up a message.
@@ -71,6 +69,7 @@ local MESSAGE_BUILDER_STATE = {
 ---@field _no_storage fun()
 ---@field state fa.MessageBuilder.MessageBuilderState
 ---@field parts LocalisedString[]
+---@field is_first_list_item boolean Used to avoid an extra comma at the start of lists.
 local MessageBuilder = {}
 mod.MessageBuilder = MessageBuilder
 local MessageBuilder_meta = { __index = MessageBuilder }
@@ -80,6 +79,7 @@ function MessageBuilder.new()
    return setmetatable({
       _no_storage = __cannot_be_in_storage,
       state = MESSAGE_BUILDER_STATE.INITIAL,
+      is_first_list_item = true,
       parts = {},
    }, MessageBuilder_meta)
 end
@@ -98,6 +98,12 @@ function MessageBuilder:fragment(fragment)
       self.state = MESSAGE_BUILDER_STATE.FRAGMENT
    end
 
+   -- If we just started a list item, this needs a comma.
+   if self.state == MESSAGE_BUILDER_STATE.LIST_ITEM then
+      if not self.is_first_list_item then table.insert(self.parts, ",") end
+      self.is_first_list_item = false
+   end
+
    -- In all cases but initial, a space is needed.
    if self.state ~= MESSAGE_BUILDER_STATE.INITIAL then table.insert(self.parts, " ") end
 
@@ -109,9 +115,7 @@ end
 ---@return fa.MessageBuilder
 function MessageBuilder:list_item(fragment)
    self:_check_not_built()
-   -- The first fragments are state fragment.  The fragments after the first
-   -- list item are marked by being in state FRAGMENT_IN_LIST.
-   if self.state == MESSAGE_BUILDER_STATE.FRAGMENT_IN_LIST then table.insert(self.parts, ",") end
+
    self.state = MESSAGE_BUILDER_STATE.LIST_ITEM
    if fragment then self:fragment(fragment) end
    return self
