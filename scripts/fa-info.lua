@@ -5,8 +5,8 @@ This file is used to build up the strings used for entity statuses and cursor
 movement, which are honestlyh most of the mod's "magic".  It consists of
 functions which either produce strings about entities or produce joined up
 strings to send to the player.  Since the applicability conditions for each
-announcement are complex and we would prefer not to centralize them, functions
-here return nil if they do not have anything to add.
+announcement are complex and we would prefer not to centralize them, we do this
+by passing around a MessageBuilder and some context as to what's going on.
 
 The localisation is in entity-info.cfg.  We do not distinguish between cursor
 level information and status level information in the localisation, because it
@@ -27,10 +27,18 @@ local Equipment = require("scripts.equipment")
 local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
 local Localising = require("scripts.localising")
+local MessageBuilder = require("scripts.message-builder")
 local Rails = require("scripts.rails")
 local Trains = require("scripts.trains")
 
 local mod = {}
+
+---@class fa.info.EntInfoContext
+---@field message fa.MessageBuilder
+---@field is_scanner boolean
+---@field ent LuaEntity
+---@field pindex number
+---@field player LuaPlayer
 
 --Ent info: Gives the distance and direction of a fluidbox connection target?
 --Todo: update to clarify comments and include localization
@@ -80,9 +88,10 @@ function mod.compute_resources_under_drill(ent)
    return dict
 end
 
----@return LocalisedString?
-local function ent_info_facing(ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_facing(ctx)
    local effective_direction
+   local ent = ctx.ent
    -- Set in the case where we detect symmetry.
    local secondary_effective_direction
 
@@ -100,47 +109,41 @@ local function ent_info_facing(ent)
    end
 
    if effective_direction and secondary_direction then
-      return { "fa.ent-info-facing-symmetric", effective_direction, secondary_direction }
+      ctx.message:fragment({ "fa.ent-info-facing-symmetric", effective_direction, secondary_direction })
    elseif effective_direction then
-      return { "fa.ent-info-facing", effective_direction }
-   else
-      return nil
+      ctx.message:fragment({ "fa.ent-info-facing", effective_direction })
    end
 end
 
 -- Announces if the entity is marked for upgrading or deconstruction. Folded
 -- into one function, as these are mutually exclusive states as far as we know.
----@param ent LuaEntity
----@return LocalisedString?
-local function ent_info_marked_for_upgrade_deconstruct(ent)
-   if ent.to_be_deconstructed() then
-      return { "fa.ent-info-marked-for-deconstruction" }
-   elseif ent.to_be_upgraded() then
-      return { "fa.ent-info-marked-for-upgrading" }
+---@param ctx fa.info.EntInfoContext
+local function ent_info_marked_for_upgrade_deconstruct(ctx)
+   if ctx.ent.to_be_deconstructed() then
+      ctx.message:fragment({ "fa.ent-info-marked-for-deconstruction" })
+   elseif ctx.ent.to_be_upgraded() then
+      ctx.message:fragment({ "fa.ent-info-marked-for-upgrading" })
    end
 
    -- Otherwise it is not marked.
 end
 
 -- If this entity generates electricity, tell the player how much.
----@param ent LuaEntity
----@return LocalisedString?
-local function ent_info_power_production(ent)
-   if ent.prototype.type == "generator" then
+---@param ctx fa.info.EntInfoContext
+local function ent_info_power_production(ctx)
+   local ent = ctx.ent
+   if ctx.ent.prototype.type == "generator" then
       local power1 = ent.energy_generated_last_tick * 60
       local power2 = ent.prototype.get_max_energy_production(ent.quality) * 60
       local power_load_pct = math.ceil(power1 / power2 * 100)
       if power2 ~= nil then
-         return FaUtils.localise_cat_table({
-            { "fa.ent-info-generator-load", power_load_pct },
-            {
-               "fa.ent-info-generator-production",
-               Electrical.get_power_string(power1),
-               Electrical.get_power_string(power2),
-            },
-         }, ", ")
+         ctx.message:fragment(FaUtils.localise_cat_table({ "fa.ent-info-generator-load", power_load_pct })):fragment({
+            "fa.ent-info-generator-production",
+            Electrical.get_power_string(power1),
+            Electrical.get_power_string(power2),
+         })
       else
-         return { "fa.ent-info-generator-production", Electrical.get_power_string(power1) }
+         ctx.message:fragment({ "fa.ent-info-generator-production", Electrical.get_power_string(power1) })
       end
    end
 end
@@ -148,9 +151,9 @@ end
 -- If the entity has a status which is super important, for example no power or
 -- output full, tell the player.  These are things that we judge to be important
 -- enough that checking status shouldn't be required.
----@param ent LuaEntity
----@return LocalisedString?
-local function ent_info_important_statuses(ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_important_statuses(ctx)
+   local ent = ctx.ent
    local status = ent.status
    local stat = defines.entity_status
    if status ~= nil and status ~= stat.normal and status ~= stat.working then
@@ -162,160 +165,167 @@ local function ent_info_important_statuses(ent)
          or status == stat.missing_required_fluid
          or status == stat.no_ammo
       then
-         return { "fa.ent-info-input-missing" }
+         ctx.message:fragment({ "fa.ent-info-input-missing" })
       elseif status == stat.full_output or status == stat.full_burnt_result_output then
-         return { "fa.ent-info-output-full" }
+         ctx.message:fragment({ "fa.ent-info-output-full" })
       end
    end
 end
 
 -- "not connected to power" etc.
----@param ent LuaEntity
----@return LocalisedString?
-local function ent_info_power_status(ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_power_status(ctx)
+   local ent = ctx.ent
    if ent.prototype.electric_energy_source_prototype ~= nil and ent.is_connected_to_electric_network() == false then
-      return { "fa.ent-info-no-power-connection" }
+      ctx.message:fragment({ "fa.ent-info-no-power-connection" })
    elseif ent.prototype.electric_energy_source_prototype ~= nil and ent.energy == 0 and ent.type ~= "solar-panel" then
-      return { "fa.ent-info-no-power-empty-electric-network" }
+      ctx.message:fragment({ "fa.ent-info-no-power-empty-electric-network" })
    end
 end
 
 -- Announces if the entity is a wall and a point at which the player may connect
 -- the circuit network to control a gate.
----@return LocalisedString?
-local function ent_info_gate_connection_point(ent)
-   if ent.type == "wall" and ent.get_control_behavior() ~= nil then
-      return { "fa.ent-info-gate-circuit-network-connection" }
+---@param ctx fa.info.EntInfoContext
+local function ent_info_gate_connection_point(ctx)
+   if ctx.ent.type == "wall" and ctx.ent.get_control_behavior() ~= nil then
+      ctx.message:fragment({ "fa.ent-info-gate-circuit-network-connection" })
    end
 end
 
----@param ent LuaEntity
----@return LocalisedString?
-local function ent_info_accumulator(ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_accumulator(ctx)
+   local ent = ctx.ent
    if ent.type == "accumulator" then
       local level = math.ceil(ent.energy / ent.electric_buffer_size * 100) --In percentage
       local charge = math.ceil(ent.energy)
-      return { "fa.ent-info-accumulator-charge", level, Electrical.get_power_string(charge) }
+      ctx.message:fragment({ "fa.ent-info-accumulator-charge", level, Electrical.get_power_string(charge) })
    end
 end
 
----@param ent LuaEntity
----@return LocalisedString?
-local function ent_info_solar(ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_solar(ctx)
+   local ent = ctx.ent
+
    if ent.type == "solar-panel" then
       local s_time = ent.surface.daytime * 24 --We observed 18 = peak solar start, 6 = peak solar end, 11 = night start, 13 = night end
       local solar_status = ""
       if s_time > 13 and s_time <= 18 then
-         return { "fa.ent-info-solar-increasing" }
+         ctx.message:fragment({ "fa.ent-info-solar-increasing" })
       elseif s_time > 18 or s_time < 6 then
-         return { "fa.ent-info-solar-full-production" }
+         ctx.message:fragment({ "fa.ent-info-solar-full-production" })
       elseif s_time > 6 and s_time <= 11 then
-         return { "fa.ent-info-solar-evening" }
+         ctx.message:fragment({ "fa.ent-info-solar-evening" })
       elseif s_time > 11 and s_time <= 13 then
-         return { "fa.ent-info-solar-night" }
+         ctx.message:fragment({ "fa.ent-info-solar-night" })
       end
    end
 end
 
----@param ent LuaEntity
----@return LocalisedString?
-local function ent_info_rocket_silo(ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_rocket_silo(ctx)
+   local ent = ctx.ent
    if ent.name == "rocket-silo" then
       if ent.rocket_parts ~= nil and ent.rocket_parts < 100 then
-         return { "fa.ent-info-silo-partial", ent.rocket_parts }
+         ctx.message:fragment({ "fa.ent-info-silo-partial", ent.rocket_parts })
       elseif ent.rocket_parts ~= nil then
-         return { "fa.ent-info-silo-complete" }
+         ctx.message:fragment({ "fa.ent-info-silo-complete" })
       end
    end
 end
 
-local function ent_info_beacon_status(ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_beacon_status(ctx)
+   local ent = ctx.ent
    if ent.name == "beacon" then
       local modules = ent.get_module_inventory()
       if modules.get_item_count() == 0 then
-         return { "fa.ent-info-beacon-modules-0" }
+         ctx.message:fragment({ "fa.ent-info-beacon-modules-0" })
       elseif modules.get_item_count() == 1 then
-         return { "faent-info-beacon-modules-1", modules[1].name }
+         ctx.message:fragment({ "fa.ent-info-beacon-modules-1", modules[1].name })
       elseif modules.get_item_count() == 2 then
-         return { "fa.ent-info-beacon-modules-2", modules[1].name, modules[2].name }
+         ctx.message:fragment({ "fa.ent-info-beacon-modules-2", modules[1].name, modules[2].name })
       elseif modules.get_item_count() > 2 then
-         return { "fa.ent-info-beacon-modules-more", modules[1].name, modules[2].name }
+         ctx.message:fragment({ "fa.ent-info-beacon-modules-more", modules[1].name, modules[2].name })
       end
    end
 end
 
----@param ent LuaEntity
----@return LocalisedString?
-local function ent_info_constant_combinator(ent)
-   if ent.type == "constant-combinator" then return Circuits.constant_combinator_signals_info(ent, pindex) end
+---@param ctx fa.info.EntInfoContext
+local function ent_info_constant_combinator(ctx)
+   local ent = ctx.ent
+   if ent.type == "constant-combinator" then
+      ctx.message:fragment(Circuits.constant_combinator_signals_info(ent, pindex))
+   end
 end
 
----@param ent LuaEntity
----@return LocalisedString?
-local function ent_info_resource(ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_resource(ctx)
+   local ent = ctx.ent
    if ent.type == "resource" then
       if not ent.initial_amount then
          -- initial_amount is nil for non-infinite resources.
-         return { "fa.ent-info-resource-noninfinite", ent.amount }
+         ctx.message:fragment({ "fa.ent-info-resource-noninfinite", ent.amount })
       else
          -- The game computes it this way then displays it as 403% or w/e.
          local percentage = ent.prototype.normal_resource_amount / 100
-         return { "fa.ent-info-resource-infinite", percentage }
+         ctx.message:fragment({ "fa.ent-info-resource-infinite", percentage })
       end
    end
 end
 
----@param ent LuaEntity
----@return LocalisedString?
-local function ent_info_ghost(ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_ghost(ctx)
+   local ent = ctx.ent
    if ent.name == "entity-ghost" then
-      return {
+      ctx.message:fragment({
          "fa.ent-info-ghost",
          Localising.get_localised_name_with_fallback(ent.ghost_prototype),
          Localising.get_localised_name_with_fallback(ent.prototype),
-      }
+      })
    end
 end
 
----@param ent LuaEntity
----@return LocalisedString?
-local function ent_info_rail(pindex, ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_rail(ctx)
+   local ent = ctx.ent
    -- TODO: really we shouldn't need pindex here, but for now rails aren't
    -- localised properly.
-   if ent.name == "straight-rail" or ent.name == "curved-rail" then return Rails.rail_ent_info(pindex, ent) end
+   if ent.name == "straight-rail" or ent.name == "curved-rail" then return Rails.rail_ent_info(ctx.pindex, ent) end
 end
 
----@param ent LuaEntity
----@return LocalisedString?
-local function ent_info_character(ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_character(ctx)
+   local ent = ctx.ent
    if ent.name == "character" then
       local p = ent.player
       local p2 = ent.associated_player
       if p ~= nil and p.valid and p.name ~= nil and p.name ~= "" then
-         return p.name
+         ctx.message:fragment(p.name)
       elseif p2 ~= nil and p2.valid and p2.name ~= nil and p2.name ~= "" then
-         return p2.name
-      elseif p ~= nil and p.valid and p.index == pindex then
-         return { "fa.ent-info-self-character" }
+         ctx.message:fragment(p2.name)
+      elseif p ~= nil and p.valid and p.index == ctx.pindex then
+         ctx.message:fragment({ "fa.ent-info-self-character" })
       elseif pindex ~= nil then
-         return tostring(pindex)
+         ctx.message:fragment(tostring(pindex))
       end
    end
 end
 
-local function ent_info_character_corpse(pindex, ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_character_corpse(ctx)
+   local ent = ctx.ent
    if ent.name == "character-corpse" then
-      if ent.character_corpse_player_index == pindex then
-         return { "fa.ent-info-corpse-is-self" }
+      if ent.character_corpse_player_index == ctx.pindex then
+         ctx.message:fragment({ "fa.ent-info-corpse-is-self" })
       elseif ent.character_corpse_player_index ~= nil then
-         return { "fa.ent-info-corpse-of-other" }
+         ctx.message:fragment({ "fa.ent-info-corpse-of-other" })
       end
    end
 end
 
----@param ent LuaEntity
----@return LocalisedString?
-local function ent_info_container(pindex, ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_container(ctx)
+   local ent = ctx.ent
    if ent.type == "container" or ent.type == "logistic-container" or ent.type == "infinity-container" then
       --Chests etc: Report the most common item and say "and other items" if there are other types.
       local itemset = ent.get_inventory(defines.inventory.chest).get_contents()
@@ -328,28 +338,28 @@ local function ent_info_container(pindex, ent)
       end)
 
       if #itemtable == 0 then
-         return { "fa.ent-info-container-empty" }
+         ctx.message:fragment({ "fa.ent-info-container-empty" })
       elseif #itemtable == 1 then
-         return {
+         ctx.message:fragment({
             "fa.ent-info-container-with-1",
-            Localising.get_item_from_name(itemtable[1].name, pindex),
+            Localising.get_item_from_name(itemtable[1].name, ctx.pindex),
             itemtable[1].count,
-         }
+         })
       elseif #itemtable == 2 then
-         return {
+         ctx.message:fragment({
             "fa.ent-info-container-with-2",
-            Localising.get_item_from_name(itemtable[1].name, pindex),
+            Localising.get_item_from_name(itemtable[1].name, ctx.pindex),
             itemtable[1].count,
-            Localising.get_item_from_name(itemtable[2].name, pindex),
+            Localising.get_item_from_name(itemtable[2].name, ctx.pindex),
             itemtable[2].count,
-         }
+         })
       end
    end
 end
 
----@param ent LuaEntity
---@return LocalisedString?
-local function ent_info_logistic_network(ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_logistic_network(ctx)
+   local ent = ctx.ent
    -- very unclear: isn't this just entity.logistic_network?  To revisit after
    -- this file is refactored.
    if ent.type == "logistic-container" then
@@ -357,167 +367,137 @@ local function ent_info_logistic_network(ent)
       if network == nil then
          local nearest_roboport = FaUtils.find_nearest_roboport(ent.surface, ent.position, 5000)
          if nearest_roboport == nil then
-            return { "ent-info-logistic-not-in-network", 5000 }
+            ctx.message:fragment({ "ent-info-logistic-not-in-network", 5000 })
          else
             local dist = math.ceil(util.distance(ent.position, nearest_roboport.position) - 25)
             local dir = FaUtils.direction_lookup(FaUtils.get_direction_biased(nearest_roboport.position, ent.position))
-            return { "fa.ent-info-logistic-not-in-network-with-near", nearest_roboport.backer_name, dist, dir }
+            ctx.message:fragment({
+               "fa.ent-info-logistic-not-in-network-with-near",
+               nearest_roboport.backer_name,
+               dist,
+               dir,
+            })
          end
       else
          local network_name = network.cells[1].owner.backer_name
-         return { "fa.ent-info-logistic-in-network", network_name }
+         ctx.message:fragment({ "fa.ent-info-logistic-in-network", network_name })
       end
    end
 end
 
-local function ent_info_infinity_pipe(ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_infinity_pipe(ctx)
+   local ent = ctx.ent
    if ent.name == "infinity-pipe" then
       local filter = ent.get_infinity_pipe_filter()
       if filter == nil then
-         return { "fa.ent-info-infinity-pipe-draining" }
+         ctx.message:fragment({ "fa.ent-info-infinity-pipe-draining" })
       else
-         return { "fa.ent-info-infinity-pipe-producing", filter.name }
+         ctx.message:fragment({ "fa.ent-info-infinity-pipe-producing", filter.name })
       end
    end
 end
 
-local function ent_info_is_pipe_end(ent)
-   if ent.name == "pipe" and BuildingTools.is_a_pipe_end(ent) then return { "Fa.ent-info-pipe-end" } end
+---@param ctx fa.info.EntInfoContext
+local function ent_info_is_pipe_end(ctx)
+   if ctx.ent.name == "pipe" and BuildingTools.is_a_pipe_end(ctx.ent) then
+      ctx.message:fragment({ "fa.ent-info-pipe-end" })
+   end
 end
 
 -- For everything that contains a fluid but isn't a crafting machine, say what
 -- it is.
----@param ent LuaEntity
----@return LocalisedString?
-local function ent_info_fluid_transport(ent)
-   --Explain the contents of a pipe or storage tank or etc.
-   if
-      ent.type == "pipe"
-      or ent.type == "pipe-to-ground"
-      or ent.type == "storage-tank"
-      or ent.type == "pump"
-      or ent.name == "boiler"
-      or ent.name == "heat-exchanger"
-      or ent.type == "generator"
-   then
-      local dict = ent.get_fluid_contents()
-      local fluids = {}
-      for name, count in pairs(dict) do
-         table.insert(fluids, { name = name, count = count })
-      end
-      table.sort(fluids, function(k1, k2)
-         return k1.count > k2.count
-      end)
-      if #fluids > 0 and fluids[1].count ~= nil then
-         append("with")
-
-         append(Localising.get_fluid_from_name(fluids[1].name, pindex))
-         append("times")
-         append(math.floor(0.5 + fluids[1].count))
-         if #fluids > 1 and fluids[2].count ~= nil then
-            --This normally should not happen because it means different fluids mixed!
-
-            append("and")
-            append(Localising.get_fluid_from_name(fluids[2].name, pindex))
-            append("times")
-            append(math.floor(0.5 + fluids[2].count))
-         end
-         if #fluids > 2 then append(",and other fluids") end
-      else
-         append("empty")
-      end
-   end
+---@param ctx fa.info.EntInfoContext
+local function ent_info_fluid_transport(ctx)
+   -- TODO: needs cleanup for 2.0
 end
 
----@param ent LuaEntity
----@return LocalisedString?
-local function ent_info_underground_belt_type(ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_underground_belt_type(ctx)
+   local ent = ctx.ent
    if ent.type == "underground-belt" then
       if ent.belt_to_ground_type == "input" then
-         return { "fa.ent-info-underground-belt-entrance" }
+         ctx.message:fragment({ "fa.ent-info-underground-belt-entrance" })
       elseif ent.belt_to_ground_type == "output" then
-         return { "fa.ent-info-underground-belt-exit" }
+         ctx.message:fragment({ "fa.ent-info-underground-belt-exit" })
       end
    end
 end
 
----@param ent LuaEntity
----@return LocalisedString?
-local function ent_info_train_stop(ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_train_stop(ctx)
+   local ent = ctx.ent
    if ent.name == "train-stop" then
       local limit = ent.trains_limit or 0
-      return { "fa.ent-info-train-stop", ent.backer_name, limit }
+      ctx.message:fragment({ "fa.ent-info-train-stop", ent.backer_name, limit })
    end
 end
 
 -- Returns train name announcement with id fallback.
----@param ent LuaEntity
----@return LocalisedString?
-local function ent_info_train_owner(ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_train_owner(ctx)
+   local ent = ctx.ent
    if ent.name == "locomotive" or ent.name == "cargo-wagon" or ent.name == "fluid-wagon" then
-      return { "fa.ent-info-of-train", Trains.get_train_name(ent.train) }
+      ctx.message:fragment({ "fa.ent-info-of-train", Trains.get_train_name(ent.train) })
    end
 end
 
----@param ent LuaEntity
----@return LocalisedString?
-
-local function ent_info_rail_signal_state(ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_rail_signal_state(ctx)
    -- TODO: this should be folded into basic entity state where it belongs.
+   local ent = ctx.ent
    if ent.name == "rail-signal" or ent.name == "rail-chain-signal" then
       if ent.status == defines.entity_status.not_connected_to_rail then
-         return { "fa.ent-info-rail-signal-not-connected" }
+         ctx.message:fragment({ "fa.ent-info-rail-signal-not-connected" })
       elseif ent.status == defines.entity_status.cant_divide_segments then
-         return { "fa.ent-info-rail-signal-not-dividing" }
+         ctx.message:fragment({ "fa.ent-info-rail-signal-not-dividing" })
       else
-         return Rails.get_signal_state_info(ent)
+         ctx.message:fragment(Rails.get_signal_state_info(ent))
       end
    end
 end
 
-local function ent_info_rail_signal_heading(ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_rail_signal_heading(ctx)
+   local ent = ctx.ent
    if ent.name == "rail-signal" or ent.name == "rail-chain-signal" then
-      return { "fa.ent-info-rail-signal-heading", FaUtils.direction_lookup(FaUtils.rotate_180(ent.direction)) }
+      ctx.message:fragment({
+         "fa.ent-info-rail-signal-heading",
+         FaUtils.direction_lookup(FaUtils.rotate_180(ent.direction)),
+      })
    end
 end
 
----@param ent LuaEntity
----@return LocalisedString?
-local function ent_info_temperature(ent)
-   if ent.temperature ~= nil then return { "fa.ent-info-temperature", math.floor(ent.temperature) } end
+---@param ctx fa.info.EntInfoContext
+local function ent_info_temperature(ctx)
+   local ent = ctx.ent
+   if ent.temperature ~= nil then ctx.message:fragment({ "fa.ent-info-temperature", math.floor(ent.temperature) }) end
 end
 
---  For the moment this one returns a whole joined sequence, but we will be
---  fixing that in a few commits.
----@param ent LuaEntity
----@return LocalisedString?
-local function ent_info_nuclear_neighbor_bonus(ent)
+-- NOTE: pushes multiple list items.
+---@param ctx fa.info.EntInfoContext
+local function ent_info_nuclear_neighbor_bonus(ctx)
+   local ent = ctx.ent
    if ent.name == "nuclear-reactor" then
-      local res = {}
-      if ent.temperature > 900 then table.insert(res, { "fa.ent-info-nuclear-reactor-explodes" }) end
-      if ent.energy > 0 then table.insert(res, { "fa.ent-info-nuclear-reactor-consuming" }) end
-      table.insert(res, { "fa.ent-info-nuclear-reactor-neighbor-bonus", math.floor(ent.neighbour_bonus * 100) })
-
-      return FaUtils.localise_cat_table(res, ", ")
+      if ent.temperature > 900 then ctx.message:list_item({ "fa.ent-info-nuclear-reactor-explodes" }) end
+      if ent.energy > 0 then ctx.message:list_item({ "fa.ent-info-nuclear-reactor-consuming" }) end
+      ctx.message:list_item({ "fa.ent-info-nuclear-reactor-neighbor-bonus", math.floor(ent.neighbour_bonus * 100) })
    end
 end
 
 -- Name of item for items on the ground.
----@param ent LuaEntity
----@return LocalisedString?
-local function ent_info_item_on_ground(ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_item_on_ground(ctx)
+   local ent = ctx.ent
    if ent.name == "item-on-ground" then
-      append(",")
-      return Localising.get_localised_name_with_fallback(ent.stack.prototype)
+      ctx.message:fragment(Localising.get_localised_name_with_fallback(ent.stack.prototype))
    end
 end
 
----@param ent LuaEntity
----@return LocalisedString?
-local function ent_info_heat_neighbors(ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_heat_neighbors(ctx)
+   local ent = ctx.ent
    if ent.prototype.heat_buffer_prototype ~= nil then
-      local res = {}
-
       local con_targets = BuildingTools.get_heat_connection_target_positions(ent.name, ent.position, ent.direction)
       local con_count = 0
       local con_counts = { 0, 0, 0, 0, 0, 0, 0, 0 }
@@ -577,114 +557,135 @@ local function ent_info_heat_neighbors(ent)
                         })
                         con_count = con_count + 1
                         local con_dir = FaUtils.get_direction_biased(con_target_pos, ent.position)
-                        if con_count > 1 then result = result .. " and " end
-                        table.insert(res, FaUtils.direction_lookup(con_dir))
+                        if con_count > 1 then ctx.message:fragment("and") end
+                        ctx.message:fragment(FaUtils.direction_lookup(con_dir))
                      end
                   end
                end
             end
          end
       end
-      if not next(res) then table.insert(res, { "Fa.ent-info-heat-neighbors-none" }) end
+   else
+      ctx.message:fragment({ "fa.ent-info-heat-neighbors-none" })
    end
 end
 
-local function ent_info_underground_belt_connection(ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_underground_belt_connection(ctx)
+   local ent = ctx.ent
    if ent.type == "underground-belt" then
       if ent.neighbours ~= nil then
-         return {
+         ctx.message:fragment({
             "fa.ent-info-underground-belt-connection",
             FaUtils.direction(ent.position, ent.neighbours.position),
             math.floor(FaUtils.distance(ent.position, ent.neighbours.position)) - 1,
-         }
+         })
       else
-         return { "fa.ent-info-underground-belt-not-connected" }
+         ctx.message:fragment({ "fa.ent-info-underground-belt-not-connected" })
       end
    end
 end
 
-local function ent_info_splitter_states(ent)
-   if ent.type == "splitter" then Belts.splitter_priority_info(ent) end
+---@param ctx fa.info.EntInfoContext
+local function ent_info_splitter_states(ctx)
+   local ent = ctx.ent
+   if ent.type == "splitter" then ctx.message:fragment(Belts.splitter_priority_info(ent)) end
 end
 
-local function ent_info_radar(ent)
-   if ent.type == "radar" then return mod.radar_charting_info(ent) end
+---@param ctx fa.info.EntInfoContext
+local function ent_info_radar(ctx)
+   local ent = ctx.ent
+   if ent.type == "radar" then ctx.message:fragment(mod.radar_charting_info(ent)) end
 end
 
-local function ent_info_spidertron(ent)
+---@param ctx fa.info.EntInfoContext
+local function ent_info_spidertron(ctx)
+   local ent = ctx.ent
    if ent.type == "spider-leg" then
       local spiders =
          ent.surface.find_entities_filtered({ position = ent.position, radius = 5, type = "spider-vehicle" })
       local spider = ent.surface.get_closest(ent.position, spiders)
+      if not spider then return end
       ent = spider
    end
 
    if ent.type == "spider-vehicle" then
       local label = ent.entity_label
-      if label == nil then label = "" end
-      return label
+      if label ~= nil then ctx.message:fragment(label) end
    end
 end
 
--- Fragments are joined in ent_info.
----@return LocalisedString[]
-local function ent_info_inner(pindex, ent, is_scanner)
+--Outputs basic entity info, usually called when the cursor selects an entity.
+---@param ent LuaEntity
+---@return LocalisedString
+function mod.ent_info(pindex, ent, is_scanner)
    local p = game.get_player(pindex)
-   local result = { Localising.get_localised_name_with_fallback(ent) }
+   assert(p)
 
-   local function append(what)
-      if what then table.insert(result, what) end
+   ---@type fa.info.EntInfoContext
+   local ctx = {
+      ent = ent,
+      pindex = pindex,
+      message = MessageBuilder.MessageBuilder.new(),
+      is_scanner = is_scanner,
+      player = p,
+   }
+
+   ctx.message:fragment(Localising.get_localised_name_with_fallback(ent))
+
+   local function run_handler(handler)
+      handler(ctx)
+      ctx.message:list_item()
    end
 
-   append(ent_info_resource(ent))
-   append(ent_info_ghost(ent))
-   append(ent_info_rail(pindex, ent))
-   append(ent_info_character(ent))
-   append(ent_info_character_corpse(pindex, ent))
-   append(ent_info_container(pindex, ent))
-   append(ent_info_logistic_network(ent))
-   append(ent_info_infinity_pipe(ent))
-   append(ent_info_is_pipe_end(ent))
-   append(ent_info_fluid_transport(ent))
+   run_handler(ent_info_resource)
+   run_handler(ent_info_ghost)
+   run_handler(ent_info_rail)
+   run_handler(ent_info_character)
+   run_handler(ent_info_character_corpse)
+   run_handler(ent_info_container)
+   run_handler(ent_info_logistic_network)
+   run_handler(ent_info_infinity_pipe)
+   run_handler(ent_info_is_pipe_end)
+   run_handler(ent_info_fluid_transport)
 
-   append(ent_info_underground_belt_type(ent))
+   run_handler(ent_info_underground_belt_type)
 
    --Explain the recipe of a machine without pause and before the direction
    pcall(function()
       if ent.get_recipe() ~= nil then
-         append("producing")
-         append(Localising.get_recipe_from_name(ent.get_recipe().name, pindex))
+         ctx.message:fragment("producing")
+         ctx.message:list_item(Localising.get_recipe_from_name(ent.get_recipe().name, pindex))
       end
    end)
    --For furnaces (which produce only 1 output item type at a time) state how many output units are ready
    if ent.type == "furnace" then
       local output_stack = ent.get_output_inventory()[1]
       if output_stack and output_stack.valid_for_read then
-         append(",")
-         append(output_stack.count)
-         append(output_stack.name)
-         append("ready,")
+         ctx.message:fragment(output_stack.count)
+         ctx.message:fragment(output_stack.name)
+         ctx.message:fragment("ready,")
+         ctx.message:list_item()
       end
    end
 
-   append(ent_info_train_stop(ent))
-
-   append(ent_info_train_owner(ent))
-   append(ent_info_rail_signal_state(ent))
+   run_handler(ent_info_train_stop)
+   run_handler(ent_info_train_owner)
+   run_handler(ent_info_rail_signal_state)
 
    -- Leaving this for now: we can make it better in a few commits.
    if not is_scanner and ent.type == "mining-drill" and mod.cursor_is_at_mining_drill_output_part(pindex, ent) then
-      append("drop chute")
+      ctx.message:list_item("drop chute")
    end
 
-   append(ent_info_facing(ent))
-   append(ent_info_rail_signal_heading(ent))
+   run_handler(ent_info_facing)
+   run_handler(ent_info_rail_signal_heading)
 
-   append(ent_info_gate_connection_point(ent))
-   append(ent_info_marked_for_upgrade_deconstruct(ent))
-   append(ent_info_power_production(ent))
-   append(ent_info_underground_belt_connection(ent))
-   append(ent_info_splitter_states(ent))
+   run_handler(ent_info_gate_connection_point)
+   run_handler(ent_info_marked_for_upgrade_deconstruct)
+   run_handler(ent_info_power_production)
+   run_handler(ent_info_underground_belt_connection)
+   run_handler(ent_info_splitter_states)
 
    if ent.type == "transport-belt" then
       --Check whether items on the belt are stopped or moving (based on whether you can insert at the back of the belt)
@@ -710,17 +711,16 @@ local function ent_info_inner(pindex, ent, is_scanner)
       local insert_spots_left = 0
       local insert_spots_right = 0
       if not left.can_insert_at_back() and right.can_insert_at_back() then
-         append(",")
-         append(left_dir)
-         append("lane full,")
+         ctx.message:fragment(left_dir)
+         ctx.message:fragment("lane full,")
       elseif left.can_insert_at_back() and not right.can_insert_at_back() then
-         append(",")
-         append(right_dir)
-         append("lane full,")
+         ctx.message:fragment(",")
+         ctx.message:fragment(right_dir)
+         ctx.message:fragment("lane full,")
       elseif not left.can_insert_at_back() and not right.can_insert_at_back() then
-         append(", both lanes full,")
+         ctx.message:fragment(", both lanes full,")
       else
-         append(", both lanes open,")
+         ctx.message:fragment(", both lanes open,")
       end
    end
 
@@ -735,24 +735,24 @@ local function ent_info_inner(pindex, ent, is_scanner)
          return k1.count > k2.count
       end)
       if #itemtable == 0 then
-         append("containing nothing")
+         ctx.message:fragment("containing nothing")
       else
-         append("containing " .. itemtable[1].name .. " times " .. itemtable[1].count .. ",")
+         ctx.message:fragment("containing " .. itemtable[1].name .. " times " .. itemtable[1].count .. ",")
          if #itemtable > 1 then
-            append("and")
-            append(itemtable[2].name)
-            append("times")
-            append(itemtable[2].count)
-            append(",")
+            ctx.message:fragment("and")
+            ctx.message:fragment(itemtable[2].name)
+            ctx.message:fragment("times")
+            ctx.message:fragment(itemtable[2].count)
+            ctx.message:fragment(",")
          end
-         if #itemtable > 2 then append("and other items") end
+         if #itemtable > 2 then ctx.message:fragment("and other items") end
       end
    end
-   append(ent_info_radar(ent))
+   run_handler(ent_info_radar)
 
    if ent.type == "electric-pole" then
       --List connected wire neighbors
-      append(Circuits.wire_neighbours_info(ent, false))
+      ctx.message:fragment(Circuits.wire_neighbours_info(ent, false))
       --Count number of entities being supplied within supply area.
       local pos = ent.position
       local sdist = ent.prototype.get_supply_area_distance(ent.quality)
@@ -767,66 +767,66 @@ local function ent_info_inner(pindex, ent, is_scanner)
             producer_count = producer_count + 1
          end
       end
-      append("supplying")
-      append(supplied_count)
-      append("buildings,")
+      ctx.message:fragment("supplying")
+      ctx.message:fragment(supplied_count)
+      ctx.message:fragment("buildings,")
       if producer_count > 0 then
-         append("drawing from")
-         append(producer_count)
-         append("buildings,")
+         ctx.message:fragment("drawing from")
+         ctx.message:fragment(producer_count)
+         ctx.message:fragment("buildings,")
       end
-      append("Check status for power flow information.")
+      ctx.message:fragment("Check status for power flow information.")
    end
 
    if ent.type == "power-switch" then
       if ent.power_switch_state == false then
-         append("off,")
+         ctx.message:fragment("off,")
       elseif ent.power_switch_state == true then
-         append("on,")
+         ctx.message:fragment("on,")
       end
-      if (#ent.neighbours.red + #ent.neighbours.green) > 0 then append("observes circuit condition,") end
-      append(Circuits.wire_neighbours_info(ent, true))
+      if (#ent.neighbours.red + #ent.neighbours.green) > 0 then run_handler("observes circuit condition,") end
+      ctx.message:fragment(Circuits.wire_neighbours_info(ent, true))
    end
 
    if ent.name == "roboport" then
       local cell = ent.logistic_cell
       local network = ent.logistic_cell.logistic_network
 
-      append("of network")
-      append(BotLogistics.get_network_name(ent))
-      append(",")
-      append(BotLogistics.roboport_contents_info(ent))
+      ctx.message:fragment("of network")
+      ctx.message:fragment(BotLogistics.get_network_name(ent))
+      ctx.message:fragment(",")
+      ctx.message:fragment(BotLogistics.roboport_contents_info(ent))
    end
-   append(ent_info_spidertron(ent))
+   run_handler(ent_info_spidertron)
 
    --Inserters: Explain held items, pickup and drop positions
    if ent.type == "inserter" then
       --Declare filters
       if ent.filter_slot_count > 0 then
-         append("Filters for")
+         ctx.message:fragment("Filters for")
          local active_filter_count = 0
          for i = 1, ent.filter_slot_count, 1 do
             local filt = ent.get_filter(i)
             if filt ~= nil then
                active_filter_count = active_filter_count + 1
                if active_filter_count > 1 then filter_result = filter_result .. " and " end
-               local local_name = Localising.get(prototypes.item[filt], pindex)
-               if local_name == nil then local_name = filt or " unknown item " end
+               local local_name = Localising.get(prototypes.item[filt.name], pindex)
+               if local_name == nil then local_name = tostring(filt.name) or " unknown item " end
                filter_result = filter_result .. local_name
             end
          end
          if active_filter_count > 0 then
-            append(filter_result)
-            append(",")
+            ctx.message:fragment(filter_result)
+            run_handler(",")
          end
       end
       --Read held item
       if ent.held_stack ~= nil and ent.held_stack.valid_for_read and ent.held_stack.valid then
-         append(", holding")
-         append(ent.held_stack.name)
+         ctx.message:fragment(", holding")
+         ctx.message:fragment(ent.held_stack.name)
          if ent.held_stack.count > 1 then
-            append("times")
-            append(ent.held_stack.count)
+            ctx.message:fragment("times")
+            ctx.message:fragment(ent.held_stack.count)
          end
       end
       --Take note of long handed inserters
@@ -850,9 +850,9 @@ local function ent_info_inner(pindex, ent, is_scanner)
             end
          end
       end
-      append("picks up from")
-      append(pickup_name)
-      append(pickup_dist_dir)
+      ctx.message:fragment("picks up from")
+      ctx.message:fragment(pickup_name)
+      ctx.message:fragment(pickup_dist_dir)
       --Read the drop position
       local drop = ent.drop_target
       local drop_name = nil
@@ -867,9 +867,9 @@ local function ent_info_inner(pindex, ent, is_scanner)
             end
          end
       end
-      append(", drops to")
-      append(drop_name)
-      append(drop_dist_dir)
+      ctx.message:fragment(", drops to")
+      ctx.message:fragment(drop_name)
+      ctx.message:fragment(drop_dist_dir)
    end
 
    if ent.type == "mining-drill" then
@@ -892,52 +892,50 @@ local function ent_info_inner(pindex, ent, is_scanner)
       end
       --Report info
       if drop ~= nil and drop.valid then
-         append("outputs to")
-         append(drop_name)
+         ctx.message:fragment("outputs to")
+         ctx.message:fragment(drop_name)
       end
-      if ent.status == defines.entity_status.waiting_for_space_in_destination then append(", output full ") end
+      if ent.status == defines.entity_status.waiting_for_space_in_destination then
+         ctx.message:fragment(", output full ")
+      end
       if table_size(dict) > 0 then
-         append(", Mining from")
+         ctx.message:fragment(", Mining from")
          for i, amount in pairs(dict) do
             if i == "crude-oil" then
-               append(i)
-               append("times")
-               append(math.floor(amount / 3000) / 10)
-               append("per second")
+               ctx.message:fragment(i)
+               ctx.message:fragment("times")
+               ctx.message:fragment(tostring(math.floor(amount / 3000) / 10))
+               ctx.message:fragment("per second")
             else
-               append(i)
-               append("times")
-               append(FaUtils.simplify_large_number(amount))
+               ctx.message:fragment(i)
+               ctx.message:fragment("times")
+               ctx.message:fragment(FaUtils.simplify_large_number(amount))
             end
          end
       end
    end
    --Explain if no fuel
    if ent.prototype.burner_prototype ~= nil then
-      if ent.energy == 0 and Driving.fuel_inventory_info(ent) == "Contains no fuel." then append(", Out of Fuel") end
+      if ent.energy == 0 and Driving.fuel_inventory_info(ent) == "Contains no fuel." then
+         ctx.message:fragment(", Out of Fuel")
+      end
    end
 
-   append(ent_info_important_statuses(ent))
-   append(ent_info_power_status(ent))
+   run_handler(ent_info_important_statuses)
+   run_handler(ent_info_power_status)
 
-   append(ent_info_accumulator(ent))
-   append(ent_info_solar(ent))
-   append(ent_info_rocket_silo(ent))
-   append(ent_info_beacon_status(ent))
-   append(ent_info_temperature(ent))
-   append(ent_info_nuclear_neighbor_bonus(ent))
-   append(ent_info_item_on_ground(ent))
-   append(ent_info_heat_neighbors(ent))
+   run_handler(ent_info_accumulator)
+   run_handler(ent_info_solar)
+   run_handler(ent_info_rocket_silo)
+   run_handler(ent_info_beacon_status)
+   run_handler(ent_info_temperature)
+   run_handler(ent_info_nuclear_neighbor_bonus)
+   run_handler(ent_info_item_on_ground)
+   run_handler(ent_info_heat_neighbors)
 
-   append(ent_info_constant_combinator(ent))
-   return result
-end
+   run_handler(ent_info_constant_combinator)
 
---Outputs basic entity info, usually called when the cursor selects an entity.
----@param ent LuaEntity
----@return LocalisedString
-function mod.ent_info(pindex, ent, is_scanner)
-   return FaUtils.localise_cat_table(ent_info_inner(pindex, ent, is_scanner))
+   return ctx.message:build()
 end
 
 --Reports the charting range of a radar and how much of it has been charted so far.
