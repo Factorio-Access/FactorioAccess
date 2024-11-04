@@ -497,7 +497,7 @@ end
 ---@param ctx fa.info.EntInfoContext
 local function ent_info_heat_neighbors(ctx)
    local ent = ctx.ent
-   if ent.prototype.heat_buffer_prototype ~= nil then
+   if ent.prototype.heat_buffer_prototype ~= nil and next(ent.prototype.heat_buffer_prototype.connections) then
       local con_targets = BuildingTools.get_heat_connection_target_positions(ent.name, ent.position, ent.direction)
       local con_count = 0
       local con_counts = { 0, 0, 0, 0, 0, 0, 0, 0 }
@@ -564,9 +564,9 @@ local function ent_info_heat_neighbors(ctx)
                end
             end
          end
+      else
+         ctx.message:fragment({ "fa.ent-info-heat-neighbors-none" })
       end
-   else
-      ctx.message:fragment({ "fa.ent-info-heat-neighbors-none" })
    end
 end
 
