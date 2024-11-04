@@ -481,6 +481,151 @@ local function ent_info_rail_signal_heading(ent)
    end
 end
 
+---@param ent LuaEntity
+---@return LocalisedString?
+local function ent_info_temperature(ent)
+   if ent.temperature ~= nil then return { "fa.ent-info-temperature", math.floor(ent.temperature) } end
+end
+
+--  For the moment this one returns a whole joined sequence, but we will be
+--  fixing that in a few commits.
+---@param ent LuaEntity
+---@return LocalisedString?
+local function ent_info_nuclear_neighbor_bonus(ent)
+   if ent.name == "nuclear-reactor" then
+      local res = {}
+      if ent.temperature > 900 then table.insert(res, { "fa.ent-info-nuclear-reactor-explodes" }) end
+      if ent.energy > 0 then table.insert(res, { "fa.ent-info-nuclear-reactor-consuming" }) end
+      table.insert(res, { "fa.ent-info-nuclear-reactor-neighbor-bonus", math.floor(ent.neighbour_bonus * 100) })
+
+      return FaUtils.localise_cat_table(res, ", ")
+   end
+end
+
+-- Name of item for items on the ground.
+---@param ent LuaEntity
+---@return LocalisedString?
+local function ent_info_item_on_ground(ent)
+   if ent.name == "item-on-ground" then
+      append(",")
+      return Localising.get_localised_name_with_fallback(ent.stack.prototype)
+   end
+end
+
+---@param ent LuaEntity
+---@return LocalisedString?
+local function ent_info_heat_neighbors(ent)
+   if ent.prototype.heat_buffer_prototype ~= nil then
+      local res = {}
+
+      local con_targets = BuildingTools.get_heat_connection_target_positions(ent.name, ent.position, ent.direction)
+      local con_count = 0
+      local con_counts = { 0, 0, 0, 0, 0, 0, 0, 0 }
+      con_counts[dirs.north + 1] = 0
+      con_counts[dirs.south + 1] = 0
+      con_counts[dirs.east + 1] = 0
+      con_counts[dirs.west + 1] = 0
+      if #con_targets > 0 then
+         for i, con_target_pos in ipairs(con_targets) do
+            --For each heat connection target position, mark it and check for target ents
+            rendering.draw_circle({
+               color = { 1.0, 0.0, 0.5 },
+               radius = 0.1,
+               width = 2,
+               target = con_target_pos,
+               surface = ent.surface,
+               time_to_live = 30,
+            })
+            local target_ents = ent.surface.find_entities_filtered({ position = con_target_pos })
+            for j, target_ent in ipairs(target_ents) do
+               if
+                  target_ent.valid
+                  and #BuildingTools.get_heat_connection_positions(
+                        target_ent.name,
+                        target_ent.position,
+                        target_ent.direction
+                     )
+                     > 0
+               then
+                  for k, spot in
+                     ipairs(
+                        BuildingTools.get_heat_connection_positions(
+                           target_ent.name,
+                           target_ent.position,
+                           target_ent.direction
+                        )
+                     )
+                  do
+                     --For each heat connection of the found target entity, mark it and check for a match
+                     rendering.draw_circle({
+                        color = { 1.0, 1.0, 0.5 },
+                        radius = 0.2,
+                        width = 2,
+                        target = spot,
+                        surface = ent.surface,
+                        time_to_live = 30,
+                     })
+                     if util.distance(con_target_pos, spot) < 0.2 then
+                        --For each match, mark it and count it
+                        rendering.draw_circle({
+                           color = { 0.5, 1.0, 0.5 },
+                           radius = 0.3,
+                           width = 2,
+                           target = spot,
+                           surface = ent.surface,
+                           time_to_live = 30,
+                        })
+                        con_count = con_count + 1
+                        local con_dir = FaUtils.get_direction_biased(con_target_pos, ent.position)
+                        if con_count > 1 then result = result .. " and " end
+                        table.insert(res, FaUtils.direction_lookup(con_dir))
+                     end
+                  end
+               end
+            end
+         end
+      end
+      if not next(res) then table.insert(res, { "Fa.ent-info-heat-neighbors-none" }) end
+   end
+end
+
+local function ent_info_underground_belt_connection(ent)
+   if ent.type == "underground-belt" then
+      if ent.neighbours ~= nil then
+         return {
+            "fa.ent-info-underground-belt-connection",
+            FaUtils.direction(ent.position, ent.neighbours.position),
+            math.floor(FaUtils.distance(ent.position, ent.neighbours.position)) - 1,
+         }
+      else
+         return { "fa.ent-info-underground-belt-not-connected" }
+      end
+   end
+end
+
+local function ent_info_splitter_states(ent)
+   if ent.type == "splitter" then Belts.splitter_priority_info(ent) end
+end
+
+local function ent_info_radar(ent)
+   if ent.type == "radar" then return mod.radar_charting_info(ent) end
+end
+
+local function ent_info_spidertron(ent)
+   if ent.type == "spider-leg" then
+      local spiders =
+         ent.surface.find_entities_filtered({ position = ent.position, radius = 5, type = "spider-vehicle" })
+      local spider = ent.surface.get_closest(ent.position, spiders)
+      ent = spider
+   end
+
+   if ent.type == "spider-vehicle" then
+      local label = ent.entity_label
+      if label == nil then label = "" end
+      return label
+   end
+end
+
 -- Fragments are joined in ent_info.
 ---@return LocalisedString[]
 local function ent_info_inner(pindex, ent, is_scanner)
@@ -538,23 +683,8 @@ local function ent_info_inner(pindex, ent, is_scanner)
    append(ent_info_gate_connection_point(ent))
    append(ent_info_marked_for_upgrade_deconstruct(ent))
    append(ent_info_power_production(ent))
-
-   if ent.type == "underground-belt" then
-      if ent.neighbours ~= nil then
-         append(", Connected to")
-         append(FaUtils.direction(ent.position, ent.neighbours.position))
-         append("via")
-         append(math.floor(FaUtils.distance(ent.position, ent.neighbours.position)) - 1)
-         append("tiles underground,")
-      else
-         append(", not connected")
-      end
-   end
-
-   if ent.type == "splitter" then
-      --Splitter priority info
-      append(Belts.splitter_priority_info(ent))
-   end
+   append(ent_info_underground_belt_connection(ent))
+   append(ent_info_splitter_states(ent))
 
    if ent.type == "transport-belt" then
       --Check whether items on the belt are stopped or moving (based on whether you can insert at the back of the belt)
@@ -592,7 +722,9 @@ local function ent_info_inner(pindex, ent, is_scanner)
       else
          append(", both lanes open,")
       end
-   elseif ent.name == "cargo-wagon" then
+   end
+
+   if ent.name == "cargo-wagon" then
       --Explain contents
       local itemset = ent.get_inventory(defines.inventory.cargo_wagon).get_contents()
       local itemtable = {}
@@ -615,10 +747,10 @@ local function ent_info_inner(pindex, ent, is_scanner)
          end
          if #itemtable > 2 then append("and other items") end
       end
-   elseif ent.type == "radar" then
-      append(",")
-      append(mod.radar_charting_info(ent))
-   elseif ent.type == "electric-pole" then
+   end
+   append(ent_info_radar(ent))
+
+   if ent.type == "electric-pole" then
       --List connected wire neighbors
       append(Circuits.wire_neighbours_info(ent, false))
       --Count number of entities being supplied within supply area.
@@ -644,7 +776,9 @@ local function ent_info_inner(pindex, ent, is_scanner)
          append("buildings,")
       end
       append("Check status for power flow information.")
-   elseif ent.type == "power-switch" then
+   end
+
+   if ent.type == "power-switch" then
       if ent.power_switch_state == false then
          append("off,")
       elseif ent.power_switch_state == true then
@@ -652,7 +786,9 @@ local function ent_info_inner(pindex, ent, is_scanner)
       end
       if (#ent.neighbours.red + #ent.neighbours.green) > 0 then append("observes circuit condition,") end
       append(Circuits.wire_neighbours_info(ent, true))
-   elseif ent.name == "roboport" then
+   end
+
+   if ent.name == "roboport" then
       local cell = ent.logistic_cell
       local network = ent.logistic_cell.logistic_network
 
@@ -660,18 +796,9 @@ local function ent_info_inner(pindex, ent, is_scanner)
       append(BotLogistics.get_network_name(ent))
       append(",")
       append(BotLogistics.roboport_contents_info(ent))
-   elseif ent.type == "spider-vehicle" then
-      local label = ent.entity_label
-      if label == nil then label = "" end
-      append(label)
-   elseif ent.type == "spider-leg" then
-      local spiders =
-         ent.surface.find_entities_filtered({ position = ent.position, radius = 5, type = "spider-vehicle" })
-      local spider = ent.surface.get_closest(ent.position, spiders)
-      local label = spider.entity_label
-      if label == nil then label = "" end
-      append(label)
    end
+   append(ent_info_spidertron(ent))
+
    --Inserters: Explain held items, pickup and drop positions
    if ent.type == "inserter" then
       --Declare filters
@@ -744,6 +871,7 @@ local function ent_info_inner(pindex, ent, is_scanner)
       append(drop_name)
       append(drop_dist_dir)
    end
+
    if ent.type == "mining-drill" then
       local pos = ent.position
       local dict = mod.compute_resources_under_drill(ent)
@@ -796,102 +924,10 @@ local function ent_info_inner(pindex, ent, is_scanner)
    append(ent_info_solar(ent))
    append(ent_info_rocket_silo(ent))
    append(ent_info_beacon_status(ent))
-
-   if ent.temperature ~= nil and ent.name ~= "heat-pipe" then --ent.name == "nuclear-reactor" or ent.name == "heat-pipe" or ent.name == "heat-exchanger" then
-      append(", temperature")
-      append(math.floor(ent.temperature))
-      append("degrees C")
-      if ent.name == "nuclear-reactor" then
-         if ent.temperature > 900 then append(", danger") end
-         if ent.energy > 0 then append(", consuming fuel cell") end
-         append(", neighbour bonus")
-         append(ent.neighbour_bonus * 100)
-         append("percent")
-      end
-   end
-
-   if ent.name == "item-on-ground" then
-      append(",")
-      append(ent.stack.name)
-   end
-
-   --Explain heat connection neighbors
-   if ent.prototype.heat_buffer_prototype ~= nil then
-      append("connects")
-      local con_targets = BuildingTools.get_heat_connection_target_positions(ent.name, ent.position, ent.direction)
-      local con_count = 0
-      local con_counts = { 0, 0, 0, 0, 0, 0, 0, 0 }
-      con_counts[dirs.north + 1] = 0
-      con_counts[dirs.south + 1] = 0
-      con_counts[dirs.east + 1] = 0
-      con_counts[dirs.west + 1] = 0
-      if #con_targets > 0 then
-         for i, con_target_pos in ipairs(con_targets) do
-            --For each heat connection target position, mark it and check for target ents
-            rendering.draw_circle({
-               color = { 1.0, 0.0, 0.5 },
-               radius = 0.1,
-               width = 2,
-               target = con_target_pos,
-               surface = ent.surface,
-               time_to_live = 30,
-            })
-            local target_ents = ent.surface.find_entities_filtered({ position = con_target_pos })
-            for j, target_ent in ipairs(target_ents) do
-               if
-                  target_ent.valid
-                  and #BuildingTools.get_heat_connection_positions(
-                        target_ent.name,
-                        target_ent.position,
-                        target_ent.direction
-                     )
-                     > 0
-               then
-                  for k, spot in
-                     ipairs(
-                        BuildingTools.get_heat_connection_positions(
-                           target_ent.name,
-                           target_ent.position,
-                           target_ent.direction
-                        )
-                     )
-                  do
-                     --For each heat connection of the found target entity, mark it and check for a match
-                     rendering.draw_circle({
-                        color = { 1.0, 1.0, 0.5 },
-                        radius = 0.2,
-                        width = 2,
-                        target = spot,
-                        surface = ent.surface,
-                        time_to_live = 30,
-                     })
-                     if util.distance(con_target_pos, spot) < 0.2 then
-                        --For each match, mark it and count it
-                        rendering.draw_circle({
-                           color = { 0.5, 1.0, 0.5 },
-                           radius = 0.3,
-                           width = 2,
-                           target = spot,
-                           surface = ent.surface,
-                           time_to_live = 30,
-                        })
-                        con_count = con_count + 1
-                        local con_dir = FaUtils.get_direction_biased(con_target_pos, ent.position)
-                        if con_count > 1 then result = result .. " and " end
-                        append(FaUtils.direction_lookup(con_dir))
-                     end
-                  end
-               end
-            end
-         end
-      end
-      if con_count == 0 then append("to nothing") end
-      if ent.name == "heat-pipe" then --For this ent in particular, read temp after direction
-         append(", temperature")
-         append(math.floor(ent.temperature))
-         append("degrees C")
-      end
-   end
+   append(ent_info_temperature(ent))
+   append(ent_info_nuclear_neighbor_bonus(ent))
+   append(ent_info_item_on_ground(ent))
+   append(ent_info_heat_neighbors(ent))
 
    append(ent_info_constant_combinator(ent))
    return result
