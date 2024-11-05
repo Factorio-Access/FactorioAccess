@@ -144,7 +144,9 @@ function mod.direction_of_vector(vector)
    for i = 1, #dv do
       local dx, dy = dv[i].x, dv[i].y
       local dot = nx * dx + ny * dy
-      if math.abs(dot) > angle then return i end
+      if math.abs(dot) > angle then
+         return i --[[@as defines.direction]]
+      end
    end
 
    -- It had a length so it must have a direction and, if we get here, the math
