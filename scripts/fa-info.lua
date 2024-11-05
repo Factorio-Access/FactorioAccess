@@ -25,6 +25,7 @@ local Driving = require("scripts.driving")
 local Electrical = require("scripts.electrical")
 local Equipment = require("scripts.equipment")
 local FaUtils = require("scripts.fa-utils")
+local Fluids = require("scripts.fluids")
 local Graphics = require("scripts.graphics")
 local Localising = require("scripts.localising")
 local MessageBuilder = require("scripts.message-builder")
@@ -399,9 +400,57 @@ local function ent_info_infinity_pipe(ctx)
 end
 
 ---@param ctx fa.info.EntInfoContext
-local function ent_info_is_pipe_end(ctx)
-   if ctx.ent.name == "pipe" and BuildingTools.is_a_pipe_end(ctx.ent) then
-      ctx.message:fragment({ "fa.ent-info-pipe-end" })
+local function ent_info_pipe_shape(ctx)
+   if ctx.ent.type == "pipe" then
+      local shape_info = Fluids.get_pipe_shape(ctx.ent)
+      local s, d = shape_info.shape, shape_info.direction
+      local d_str = FaUtils.direction_lookup(d)
+      local conns = ctx.ent.fluidbox.get_pipe_connections(1)
+      local conn_count = 0
+      for _, c in pairs(conns) do
+         if c.target then conn_count = conn_count + 1 end
+      end
+
+      -- We must be careful.  Pipe shapes do not account for other kinds of
+      -- connection, so we must compare with the expected count as well.
+      -- Otherwise we will say that a pipe is both connected and not connected
+      -- at the same time.
+
+      -- This is just a boring if table which appends fragments.  no special
+      -- logic here.
+      if s == Fluids.PIPE_SHAPE.END and conn_count == 1 then
+         ctx.message:fragment({ "fa.ent-info-pipe-end", FaUtils.direction_lookup(FaUtils.rotate_180(d)) })
+      elseif s == Fluids.PIPE_SHAPE.ALONE and conn_count == 0 then
+         ctx.message:fragment({ "fa.ent-info-pipe-alone" })
+      elseif s == Fluids.PIPE_SHAPE.STRAIT and conn_count == 2 then
+         local key = d == defines.direction.north and "fa.ent-info-pipe-vertical" or "fa.ent-info-pipe-horizontal"
+         ctx.message:fragment({ key })
+      elseif s == Fluids.PIPE_SHAPE.CORNER and conn_count == 2 then
+         local c1, c2
+         if d == defines.direction.northwest then
+            c1 = defines.direction.south
+            c2 = defines.direction.east
+         elseif d == defines.direction.northeast then
+            c1 = defines.direction.south
+            c2 = defines.direction.west
+         elseif d == defines.direction.southwest then
+            c1 = defines.direction.north
+            c2 = defines.direction.east
+         elseif d == defines.direction.southeast then
+            c1 = defines.direction.north
+            c2 = defines.direction.west
+         else
+            error("unreachable! " .. serpent.line({ s = s, d = d }))
+         end
+
+         ctx.message:fragment({ "fa.ent-info-pipe-corner", FaUtils.direction_lookup(c1), FaUtils.direction_lookup(c2) })
+      elseif s == Fluids.PIPE_SHAPE.CROSS and conn_count == 4 then
+         ctx.message:fragment({ "fa.ent-info-pipe-cross" })
+      elseif s == Fluids.PIPE_SHAPE.T then
+         local key = "fa.ent-info-pipe-t-vertical"
+         if d == defines.direction.north or d == defines.direction.south then key = "fa.ent-info-pipe-t-horizontal" end
+         ctx.message:fragment({ key, FaUtils.direction_lookup(FaUtils.rotate_180(d)) })
+      end
    end
 end
 
@@ -646,7 +695,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    run_handler(ent_info_container)
    run_handler(ent_info_logistic_network)
    run_handler(ent_info_infinity_pipe)
-   run_handler(ent_info_is_pipe_end)
+   run_handler(ent_info_pipe_shape)
    run_handler(ent_info_fluid_transport)
 
    run_handler(ent_info_underground_belt_type)
