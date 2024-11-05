@@ -6,6 +6,8 @@ Handlers registered by this file are exported and not announced through our
 normal handling.  This is because the launcher cannot handle queueing.  We need
 the mod to be silent.
 ]]
+local Fluids = require("scripts.fluids")
+local FaUtils = require("scripts.fa-utils")
 
 local mod = {}
 
@@ -51,6 +53,7 @@ function cmd_fac(cmd)
    local with_return = "return " .. script
 
    local environment = {}
+
    for k, v in pairs(_ENV) do
       environment[k] = v
    end
@@ -58,6 +61,8 @@ function cmd_fac(cmd)
    environment.printout = function(arg, pindex)
       print_override(arg, "for pindex", pindex)
    end
+   environment.Fluids = Fluids
+   environment.FaUtils = FaUtils
 
    local chunk, err = load(with_return, "=(load)", "t", environment)
    if not chunk then
