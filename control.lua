@@ -30,6 +30,7 @@ local fa_warnings = require("scripts.warnings")
 local fa_circuits = require("scripts.circuit-networks")
 local fa_kk = require("scripts.kruise-kontrol-wrapper")
 local fa_quickbar = require("scripts.quickbar")
+local FaCommands = require("scripts.fa-commands")
 local Consts = require("scripts.consts")
 local Research = require("scripts.research")
 local Rulers = require("scripts.rulers")
@@ -8314,6 +8315,9 @@ script.on_event(defines.events.on_console_chat, function(event)
 end)
 
 script.on_event(defines.events.on_console_command, function(event)
+   -- For our own commands, we handle the speaking and must not read here.
+   if FaCommands.COMMANDS[event.command] then return end
+
    local speaker = game.get_player(event.player_index).name
    if speaker == nil or speaker == "" then speaker = "Player" end
    for pindex, player in pairs(players) do
