@@ -2,6 +2,8 @@
 local util = require("util")
 local dirs = defines.direction
 
+local Consts = require("scripts.consts")
+
 local mod = {}
 
 function mod.center_of_tile(pos)
@@ -119,44 +121,43 @@ function mod.get_direction_biased(pos_target, pos_origin)
    return dir
 end
 
---[[
-* Returns the direction of that entity from this entity, with each of 8 directions getting equal representation.
-* Returns 1 of 8 main directions, based on the ratios of the x and y distances. 
-* The deciding ratio is 1 to 2.5, meaning that for an object that is 25 tiles north, it can be offset by up to 10 tiles east or west before it stops being counted as "directly" in the north. 
-* The arctangent of 1/2.5 is about 22 degrees, meaning that the field of view that directly counts as a cardinal direction is about 44 degrees, while for a diagonal direction it is about 46 degrees.]]
+---@param vector fa.Point
+---@return defines.direction?
+function mod.direction_of_vector(vector)
+   local len = math.sqrt(vector.x ^ 2 + vector.y ^ 2)
+   if len == 0 then return nil end
+
+   local nx = vector.x / len
+   local ny = vector.y / len
+
+   local c22_5 = Consts.COS22_5
+
+   local dv = Consts.DIRECTION_VECTORS
+
+   -- There *will* be a direction, unless the dot product is exactly on the
+   -- edge.  This is possible in theory. To deal with that, we do 22.5 degrees
+   -- plus a bit, which (because the dot product decreases as the angle
+   -- increases) is a subtraction.  Because we are iterating in order the effect
+   -- is that, for ambiguous points, they fall counterclockwise by 1.
+   local angle = Consts.COS22_5 - 1e-5
+
+   for i = 1, #dv do
+      local dx, dy = dv[i].x, dv[i].y
+      local dot = nx * dx + ny * dy
+      if math.abs(dot) > angle then return i end
+   end
+
+   -- It had a length so it must have a direction and, if we get here, the math
+   -- is wrong.
+   error("Unreachable! Got vector " .. serpent.line(vector))
+end
+
 function mod.get_direction_precise(pos_target, pos_origin)
    local diff_x = pos_target.x - pos_origin.x
    local diff_y = pos_target.y - pos_origin.y
-   ---@type defines.direction
-   local dir = defines.direction.north
-
-   if math.abs(diff_x) > 2.5 * math.abs(diff_y) then --along east-west
-      if diff_x > 0 then
-         dir = defines.direction.east
-      else
-         dir = defines.direction.west
-      end
-   elseif math.abs(diff_y) > 2.5 * math.abs(diff_x) then --along north-south
-      if diff_y > 0 then
-         dir = defines.direction.south
-      else
-         dir = defines.direction.north
-      end
-   else --along diagonals
-      if diff_x > 0 and diff_y > 0 then
-         dir = defines.direction.southeast
-      elseif diff_x > 0 and diff_y < 0 then
-         dir = defines.direction.northeast
-      elseif diff_x < 0 and diff_y > 0 then
-         dir = defines.direction.southwest
-      elseif diff_x < 0 and diff_y < 0 then
-         dir = defines.direction.northwest
-      elseif diff_x == 0 and diff_y == 0 then
-         dir = defines.direction.north
-      end
-   end
-
-   return dir
+   -- For legacy reasons, this must default north: callers have never checked,
+   -- and this used to be a very complex if tree.
+   return mod.direction_of_vector({ x = diff_x, y = diff_y }) or dirs.north
 end
 
 --Checks whether a cardinal or diagonal direction is precisely aligned. All check positions are floored to their northwest corners.
