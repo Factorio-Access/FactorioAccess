@@ -81,7 +81,6 @@ function cmd_fac(cmd)
 
    print_override(val)
 
-   print("Printbuffer is", printbuffer)
    printout(printbuffer, pindex)
 end
 
