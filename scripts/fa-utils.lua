@@ -124,34 +124,41 @@ end
 ---@param vector fa.Point
 ---@return defines.direction?
 function mod.direction_of_vector(vector)
-   local len = math.sqrt(vector.x ^ 2 + vector.y ^ 2)
-   if len == 0 then return nil end
+   --[[
+   The math, since not everyone knows it:
 
-   local nx = vector.x / len
-   local ny = vector.y / len
+   Factorio directions are 16 way.  Slice the circle like a pizza and you get
+   north, northeast etc. like the compass rose.  Vectors need to associate to
+   one of them, but will not always be perfectly aligned.  The angle between two
+   subsequent directions is 22.5.
 
-   local c22_5 = Consts.COS22_5
+   Rotate the imaginary circle by 11.5 degrees, and now north lies directly in
+   the middle of a cone, whose extent is 11.5 degrees left, 11.5 degrees right,
+   22.5 degrees total.
 
-   local dv = Consts.DIRECTION_VECTORS
+   Slice this circle again with the 16 directions and you get segments.  Number
+   these segments from 0 to 31.  Segments 0 and 31 are the special case and are
+   north.  Segments 1 and 2 form north-northeast. Segments 3 and 4 form
+   northeast.  So on.
 
-   -- There *will* be a direction, unless the dot product is exactly on the
-   -- edge.  This is possible in theory. To deal with that, we do 22.5 degrees
-   -- plus a bit, which (because the dot product decreases as the angle
-   -- increases) is a subtraction.  Because we are iterating in order the effect
-   -- is that, for ambiguous points, they fall counterclockwise by 1.
-   local angle = Consts.COS22_5 - 1e-5
+   If we did not have special cases we could map things by just dividing by 2
+   and taking the floor, but we need segment 31 to map to segment 0.  By adding
+   1, we get 1 through 32. Segment 1 maps to north, and segment 32 mod 32 maps
+   to north.  Segment 2 and 3 divided map to north-northeast, so on.
 
-   for i = 1, #dv do
-      local dx, dy = dv[i].x, dv[i].y
-      local dot = nx * dx + ny * dy
-      if math.abs(dot) > angle then
-         return i --[[@as defines.direction]]
-      end
-   end
-
-   -- It had a length so it must have a direction and, if we get here, the math
-   -- is wrong.
-   error("Unreachable! Got vector " .. serpent.line(vector))
+   To fix at the end, then just take mod 16: 16 maps to 0 and all is well.
+   ]]
+   -- Arg 1 is opposite; arg 2 is adjacent; swapping them exchanges
+   -- counterclockwise of east to counterclockwise of north; negating then flips
+   -- to clockwise.
+   local angle = math.atan2(vector.x, -vector.y)
+   -- 2pi/32 = pi/16, lua will not fold the constants.
+   local segment = math.floor(angle / (math.pi / 16))
+   local segment_off = segment + 1
+   local mapped = segment % 32
+   local dir = math.floor(mapped / 2)
+   assert(dir < 16)
+   return dir --[[ @as defines.direction ]]
 end
 
 function mod.get_direction_precise(pos_target, pos_origin)
