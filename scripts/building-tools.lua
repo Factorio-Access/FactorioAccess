@@ -6,7 +6,7 @@ local dirs = defines.direction
 local fa_graphics = require("scripts.graphics")
 local fa_rail_builder = require("scripts.rail-builder")
 local fa_belts = require("scripts.transport-belts")
-local fa_mining_tools = require("scripts.mining-tools")
+local fa_mining_tools = require("scripts.player-mining-tools")
 local fa_teleport = require("scripts.teleport")
 
 local mod = {}

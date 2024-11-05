@@ -3,7 +3,7 @@
 
 local fa_utils = require("scripts.fa-utils")
 local fa_building_tools = require("scripts.building-tools")
-local fa_mining_tools = require("scripts.mining-tools")
+local fa_mining_tools = require("scripts.player-mining-tools")
 local fa_graphics = require("scripts.graphics")
 local dirs = defines.direction
 

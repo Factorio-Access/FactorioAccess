@@ -4,7 +4,7 @@
 
 local util = require("util")
 local fa_utils = require("scripts.fa-utils")
-local fa_mining_tools = require("scripts.mining-tools")
+local fa_mining_tools = require("scripts.player-mining-tools")
 local fa_rails = require("scripts.rails")
 local dirs = defines.direction
 
