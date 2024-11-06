@@ -29,17 +29,15 @@ function mod.get_solid_output_coords(ent)
    -- from that.  Then use the direction to move the point inside the entity, so
    -- that rounding will hit on a tile.
    local in_ent = FaUtils.center_of_tile(FaUtils.closest_point_in_box(v2pr, ent.bounding_box))
-   print(serpent.line(in_ent), serpent.line(v2pr), serpent.line(ent.bounding_box))
+
    local dir = FaUtils.direction_of_vector({ x = v2pr.x - in_ent.x, y = v2pr.y - in_ent.y })
-   print(dir)
    local flipped = FaUtils.rotate_180(dir)
    local uv = Consts.DIRECTION_VECTORS[flipped + 1]
-   print(serpent.line(uv))
    assert(uv)
 
    local effective = { x = v2pr.x + uv.x, y = v2pr.y + uv.y }
    effective = FaUtils.center_of_tile(effective)
-   print("effective", serpent.line(effective), serpent.line(ent.position), serpent.line(uv))
+
    return { position = effective, direction = dir }
 end
 

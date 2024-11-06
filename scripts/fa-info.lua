@@ -650,6 +650,16 @@ local function ent_info_spidertron(ctx)
    end
 end
 
+---@param ctx fa.info.EntInfoContext
+local function ent_info_mining_drill_output_chute(ctx)
+   local point = ResourceMining.get_solid_output_coords(ctx.ent)
+   if not point then return false end
+
+   if util.distance(point.position, players[ctx.pindex].cursor_pos) < 0.6 then
+      ctx.message:fragment({ "fa.ent-info-mining-drill-output" })
+   end
+end
+
 --Outputs basic entity info, usually called when the cursor selects an entity.
 ---@param ent LuaEntity
 ---@return LocalisedString
@@ -707,12 +717,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    run_handler(ent_info_train_stop)
    run_handler(ent_info_train_owner)
    run_handler(ent_info_rail_signal_state)
-
-   -- Leaving this for now: we can make it better in a few commits.
-   if not is_scanner and ent.type == "mining-drill" and mod.cursor_is_at_mining_drill_output_part(pindex, ent) then
-      ctx.message:list_item("drop chute")
-   end
-
+   run_handler(ent_info_mining_drill_output_chute)
    run_handler(ent_info_facing)
    run_handler(ent_info_rail_signal_heading)
 
@@ -1424,13 +1429,6 @@ function mod.read_selected_entity_status(pindex)
    end
 
    return result
-end
-
-function mod.cursor_is_at_mining_drill_output_part(pindex, ent)
-   local point = ResourceMining.get_solid_output_coords(ent)
-   if not point then return false end
-   print("Point was ", serpent.line(point), serpent.line(players[pindex].cursor_pos))
-   return util.distance(point.position, players[pindex].cursor_pos) < 0.6
 end
 
 --Returns an info string about the entities and tiles found within an area scan done by an enlarged cursor.
