@@ -42,6 +42,77 @@ local mod = {}
 ---@field pindex number
 ---@field player LuaPlayer
 
+-- Get an inventory. If truncate is provided truncate at that number.
+---@param ent LuaEntity
+---@param inventory defines.inventory
+---@param truncate number?
+---@return LocalisedString? Nil if the inventory doesn't exist.
+local function present_inventory(ent, inventory, truncate)
+   local inv = ent.get_inventory(inventory)
+   if not inv then return end
+
+   local contents_unrolled = inv.get_contents()
+   local contents = {}
+
+   for i = 1, #contents_unrolled do
+      local c = contents_unrolled[i]
+      local qual = c.quality
+      local count = c.count
+      local name = c.name
+      contents[name] = contents[name] or {}
+      contents[name][qual] = (contents[name][qual] or 0) + count
+   end
+
+   -- Now that everything is together we must unroll it again, then sort.
+   ---@type ({ count: number, item: LuaItemPrototype, quality: LuaQualityPrototype })[]
+   local final = {}
+
+   for name, quals in pairs(contents) do
+      for qual, count in pairs(quals) do
+         table.insert(final, { count = count, item = prototypes.item[name], quality = prototypes.quality[qual] })
+      end
+   end
+
+   -- Careful: this is actually a reverse sort.
+   table.sort(final, function(a, b)
+      if a.count == b.count and a.item.name == b.item.name then
+         return a.quality.level > b.quality.level
+      elseif a.count == b.count then
+         return a.item.name > b.item.name
+      else
+         return a.count > b.count
+      end
+   end)
+
+   local endpoint = #final
+   local extra = false
+   if truncate then
+      extra = truncate < endpoint
+      endpoint = math.min(endpoint, truncate)
+   end
+
+   if not next(final) then return { "fa.ent-inventory-empty" } end
+
+   local entries = {}
+   for i = 1, endpoint do
+      local e = final[i]
+      local istring = Localising.get_localised_name_with_fallback(e.item)
+      if e.quality.name ~= "normal" then
+         istring = { "", istring, " ", Localising.get_localised_name_with_fallback(e.quality) }
+      end
+
+      table.insert(entries, { "fa.ent-info-inventory-entry", istring, e.count })
+   end
+
+   local joined = FaUtils.localise_cat_table(entries, ", ")
+
+   if extra then
+      return { "fa.ent-info-inventory-presentation-truncated", joined, #final - truncate }
+   else
+      return { "fa.ent-info-inventory-presentation", joined }
+   end
+end
+
 ---@param ctx fa.info.EntInfoContext
 local function ent_info_facing(ctx)
    local effective_direction
@@ -282,32 +353,8 @@ local function ent_info_container(ctx)
    local ent = ctx.ent
    if ent.type == "container" or ent.type == "logistic-container" or ent.type == "infinity-container" then
       --Chests etc: Report the most common item and say "and other items" if there are other types.
-      local itemset = ent.get_inventory(defines.inventory.chest).get_contents()
-      local itemtable = {}
-      for _, info in pairs(itemset) do
-         table.insert(itemtable, { name = info.name, count = info.count })
-      end
-      table.sort(itemtable, function(k1, k2)
-         return k1.count > k2.count
-      end)
-
-      if #itemtable == 0 then
-         ctx.message:fragment({ "fa.ent-info-container-empty" })
-      elseif #itemtable == 1 then
-         ctx.message:fragment({
-            "fa.ent-info-container-with-1",
-            Localising.get_item_from_name(itemtable[1].name, ctx.pindex),
-            itemtable[1].count,
-         })
-      elseif #itemtable == 2 then
-         ctx.message:fragment({
-            "fa.ent-info-container-with-2",
-            Localising.get_item_from_name(itemtable[1].name, ctx.pindex),
-            itemtable[1].count,
-            Localising.get_item_from_name(itemtable[2].name, ctx.pindex),
-            itemtable[2].count,
-         })
-      end
+      local presenting = present_inventory(ent, defines.inventory.chest, 3)
+      if presenting then ctx.message:fragment(presenting) end
    end
 end
 
