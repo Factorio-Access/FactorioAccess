@@ -774,23 +774,10 @@ function mod.ent_info(pindex, ent, is_scanner)
 
    ctx.message:fragment(Localising.get_localised_name_with_fallback(ent))
 
-   local function run_handler(handler)
+   local function run_handler(handler, nolist)
       handler(ctx)
-      ctx.message:list_item()
+      if not nolist then ctx.message:list_item() end
    end
-
-   run_handler(ent_info_resource)
-   run_handler(ent_info_ghost)
-   run_handler(ent_info_rail)
-   run_handler(ent_info_character)
-   run_handler(ent_info_character_corpse)
-   run_handler(ent_info_container)
-   run_handler(ent_info_logistic_network)
-   run_handler(ent_info_infinity_pipe)
-   run_handler(ent_info_pipe_shape)
-   run_handler(ent_info_fluid_connections)
-
-   run_handler(ent_info_underground_belt_type)
 
    --Explain the recipe of a machine without pause and before the direction
    pcall(function()
@@ -810,11 +797,25 @@ function mod.ent_info(pindex, ent, is_scanner)
       end
    end
 
+   run_handler(ent_info_facing, true)
+
+   run_handler(ent_info_resource)
+   run_handler(ent_info_ghost)
+   run_handler(ent_info_rail)
+   run_handler(ent_info_character)
+   run_handler(ent_info_character_corpse)
+   run_handler(ent_info_container)
+   run_handler(ent_info_logistic_network)
+   run_handler(ent_info_infinity_pipe)
+   run_handler(ent_info_pipe_shape)
+   run_handler(ent_info_fluid_connections)
+
+   run_handler(ent_info_underground_belt_type)
+
    run_handler(ent_info_train_stop)
    run_handler(ent_info_train_owner)
    run_handler(ent_info_rail_signal_state)
    run_handler(ent_info_mining_drill_output_chute)
-   run_handler(ent_info_facing)
    run_handler(ent_info_rail_signal_heading)
 
    run_handler(ent_info_gate_connection_point)
