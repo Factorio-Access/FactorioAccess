@@ -1452,7 +1452,7 @@ function mod.cursor_is_at_mining_drill_output_part(pindex, ent)
    if ent_pos.x == drop_pos.x and ent_pos.y == drop_pos.y then return false end
 
    local dir = ent.direction
-   local correct_pos = FaUtils.offset_position(drop_pos, FaUtils.rotate_180(dir), 1)
+   local correct_pos = FaUtils.offset_position_legacy(drop_pos, FaUtils.rotate_180(dir), 1)
    return util.distance(correct_pos, players[pindex].cursor_pos) < 0.6
 end
 

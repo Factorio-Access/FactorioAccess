@@ -22,7 +22,12 @@ function mod.mult_position(p, m)
    return { x = p.x * m, y = p.y * m }
 end
 
-function mod.offset_position(oldpos, direction, distance)
+-- This function is legacy. Do not use.  It cannot account for 16 directions and
+-- does not move by 1 on the diagonals. That is, it is *not* working in unit
+-- vectors.  Now that Factorio 2.0 is making us work with 16 directions, and
+-- given that space age does actually use 16 directions as well as new rails,
+-- that's not good enough.
+function mod.offset_position_legacy(oldpos, direction, distance)
    if direction == defines.direction.north then
       return { x = oldpos.x, y = oldpos.y - distance }
    elseif direction == defines.direction.south then

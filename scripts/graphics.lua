@@ -181,7 +181,8 @@ function mod.sync_build_cursor_graphics(pindex)
       if dir_indicator ~= nil then player.building_dir_arrow.destroy() end
       local arrow_pos = player.cursor_pos
       if players[pindex].build_lock and not players[pindex].cursor and stack.name ~= "rail" then
-         arrow_pos = fa_utils.center_of_tile(fa_utils.offset_position(arrow_pos, players[pindex].player_direction, -2))
+         arrow_pos =
+            fa_utils.center_of_tile(fa_utils.offset_position_legacy(arrow_pos, players[pindex].player_direction, -2))
       end
       player.building_dir_arrow = rendering.draw_sprite({
          sprite = "fluid.crude-oil",
@@ -238,9 +239,13 @@ function mod.sync_build_cursor_graphics(pindex)
             elseif p_dir == dirs.east or p_dir == dirs.west then
                size_offset = -width + 1
             end
-            left_top = fa_utils.offset_position(left_top, players[pindex].player_direction, base_offset + size_offset)
-            right_bottom =
-               fa_utils.offset_position(right_bottom, players[pindex].player_direction, base_offset + size_offset)
+            left_top =
+               fa_utils.offset_position_legacy(left_top, players[pindex].player_direction, base_offset + size_offset)
+            right_bottom = fa_utils.offset_position_legacy(
+               right_bottom,
+               players[pindex].player_direction,
+               base_offset + size_offset
+            )
          end
       end
 
@@ -277,17 +282,17 @@ function mod.sync_build_cursor_graphics(pindex)
          --Adjust for direct placement
          local pos = player.cursor_pos
          if p_dir == dirs.north then
-            pos = fa_utils.offset_position(pos, dirs.north, height / 2 - 0.5)
-            pos = fa_utils.offset_position(pos, dirs.east, width / 2 - 0.5)
+            pos = fa_utils.offset_position_legacy(pos, dirs.north, height / 2 - 0.5)
+            pos = fa_utils.offset_position_legacy(pos, dirs.east, width / 2 - 0.5)
          elseif p_dir == dirs.east then
-            pos = fa_utils.offset_position(pos, dirs.south, height / 2 - 0.5)
-            pos = fa_utils.offset_position(pos, dirs.east, width / 2 - 0.5)
+            pos = fa_utils.offset_position_legacy(pos, dirs.south, height / 2 - 0.5)
+            pos = fa_utils.offset_position_legacy(pos, dirs.east, width / 2 - 0.5)
          elseif p_dir == dirs.south then
-            pos = fa_utils.offset_position(pos, dirs.south, height / 2 - 0.5)
-            pos = fa_utils.offset_position(pos, dirs.east, width / 2 - 0.5)
+            pos = fa_utils.offset_position_legacy(pos, dirs.south, height / 2 - 0.5)
+            pos = fa_utils.offset_position_legacy(pos, dirs.east, width / 2 - 0.5)
          elseif p_dir == dirs.west then
-            pos = fa_utils.offset_position(pos, dirs.south, height / 2 - 0.5)
-            pos = fa_utils.offset_position(pos, dirs.west, width / 2 - 0.5)
+            pos = fa_utils.offset_position_legacy(pos, dirs.south, height / 2 - 0.5)
+            pos = fa_utils.offset_position_legacy(pos, dirs.west, width / 2 - 0.5)
          end
 
          --In build lock mode and outside cursor mode, build from behind the player
@@ -299,7 +304,7 @@ function mod.sync_build_cursor_graphics(pindex)
             elseif p_dir == dirs.east or p_dir == dirs.west then
                size_offset = -width + 1
             end
-            pos = fa_utils.offset_position(pos, players[pindex].player_direction, base_offset + size_offset)
+            pos = fa_utils.offset_position_legacy(pos, players[pindex].player_direction, base_offset + size_offset)
          end
          fa_mouse.move_mouse_pointer(pos, pindex)
       end

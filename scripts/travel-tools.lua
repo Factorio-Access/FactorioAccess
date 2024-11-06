@@ -81,7 +81,7 @@ function mod.fast_travel_menu_click(pindex)
             table.deepcopy(storage.players[pindex].travel[players[pindex].travel.index.y].position)
       else
          players[pindex].cursor_pos =
-            fa_utils.offset_position(players[pindex].position, players[pindex].player_direction, 1)
+            fa_utils.offset_position_legacy(players[pindex].position, players[pindex].player_direction, 1)
       end
       fa_graphics.sync_build_cursor_graphics(pindex)
       game.get_player(pindex).opened = nil

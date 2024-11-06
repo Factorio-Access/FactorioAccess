@@ -68,7 +68,7 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
          then
             --Allow easy placement onto rails by simply offsetting to the faced direction.
             local rail_vehicle_offset = 2.5
-            position = fa_utils.offset_position(old_pos, players[pindex].player_direction, rail_vehicle_offset)
+            position = fa_utils.offset_position_legacy(old_pos, players[pindex].player_direction, rail_vehicle_offset)
          else
             --Apply offsets according to building direction and player direction
             local width = stack.prototype.place_result.tile_width
@@ -109,7 +109,7 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
                   size_offset = -width + 1
                end
                position =
-                  fa_utils.offset_position(position, players[pindex].player_direction, base_offset + size_offset)
+                  fa_utils.offset_position_legacy(position, players[pindex].player_direction, base_offset + size_offset)
             end
          end
       else
@@ -176,7 +176,7 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
          end
       elseif stack.name == "big-electric-pole" and players[pindex].build_lock == true then
          --Place a big electric pole in this position only if it is within 29 to 30 tiles of another medium electric pole
-         position = fa_utils.offset_position(position, players[pindex].player_direction, -1)
+         position = fa_utils.offset_position_legacy(position, players[pindex].player_direction, -1)
          local surf = game.get_player(pindex).surface
          local big_poles = surf.find_entities_filtered({ position = position, radius = 30, name = "big-electric-pole" })
          local all_beyond_min = true
@@ -197,7 +197,7 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
          end
       elseif stack.name == "substation" and players[pindex].build_lock == true then
          --Place a substation in this position only if it is within 16 to 18 tiles of another medium electric pole
-         position = fa_utils.offset_position(position, players[pindex].player_direction, -1)
+         position = fa_utils.offset_position_legacy(position, players[pindex].player_direction, -1)
          local surf = game.get_player(pindex).surface
          local sub_poles = surf.find_entities_filtered({ position = position, radius = 18.01, name = "substation" })
          local all_beyond_min = true
@@ -493,7 +493,7 @@ function mod.nudge_key(direction, event)
    if ent and ent.valid then
       if ent.force == game.get_player(pindex).force then
          local old_pos = ent.position
-         local new_pos = fa_utils.offset_position(ent.position, direction, 1)
+         local new_pos = fa_utils.offset_position_legacy(ent.position, direction, 1)
          local temporary_teleported = false
          local actually_teleported = false
 
@@ -512,7 +512,7 @@ function mod.nudge_key(direction, event)
             x = math.floor(ent.position.x - math.floor(width / 2)),
             y = math.floor(ent.position.y - math.floor(height / 2)),
          }
-         left_top = fa_utils.offset_position(left_top, direction, 1)
+         left_top = fa_utils.offset_position_legacy(left_top, direction, 1)
          right_bottom = { x = math.ceil(left_top.x + width), y = math.ceil(left_top.y + height) }
          fa_mining_tools.clear_obstacles_in_rectangle(left_top, right_bottom, pindex)
 
@@ -549,7 +549,7 @@ function mod.nudge_key(direction, event)
             --Successfully teleported and so nudged
             printout({ "fa.nudged-one-direction", { "fa.direction", direction } }, pindex)
             if players[pindex].cursor then
-               players[pindex].cursor_pos = fa_utils.offset_position(players[pindex].cursor_pos, direction, 1)
+               players[pindex].cursor_pos = fa_utils.offset_position_legacy(players[pindex].cursor_pos, direction, 1)
                --fa_graphics.draw_cursor_highlight(pindex, ent, "train-visualization")
                --fa_graphics.sync_build_cursor_graphics(pindex)
             end
@@ -576,7 +576,7 @@ function mod.get_heat_connection_positions(ent_name, ent_position, ent_direction
    if ent_name == "heat-pipe" then
       table.insert(positions, { x = pos.x, y = pos.y })
    elseif ent_name == "heat-exchanger" then
-      table.insert(positions, fa_utils.offset_position(pos, fa_utils.rotate_180(ent_direction), 0.5))
+      table.insert(positions, fa_utils.offset_position_legacy(pos, fa_utils.rotate_180(ent_direction), 0.5))
    elseif ent_name == "nuclear-reactor" then
       table.insert(positions, { x = pos.x - 2, y = pos.y - 2 })
       table.insert(positions, { x = pos.x - 0, y = pos.y - 2 })
@@ -602,7 +602,7 @@ function mod.get_heat_connection_target_positions(ent_name, ent_position, ent_di
       table.insert(positions, { x = pos.x - 0, y = pos.y - 1 })
       table.insert(positions, { x = pos.x - 0, y = pos.y + 1 })
    elseif ent_name == "heat-exchanger" then
-      table.insert(positions, fa_utils.offset_position(pos, fa_utils.rotate_180(ent_direction), 1.5))
+      table.insert(positions, fa_utils.offset_position_legacy(pos, fa_utils.rotate_180(ent_direction), 1.5))
    elseif ent_name == "nuclear-reactor" then
       table.insert(positions, { x = pos.x - 2, y = pos.y - 3 })
       table.insert(positions, { x = pos.x - 0, y = pos.y - 3 })
@@ -1092,7 +1092,7 @@ function mod.build_preview_checks_info(stack, pindex)
    --Same as pipe preview but for the faced direction only
    elseif stack.name == "pipe-to-ground" then
       local face_dir = players[pindex].building_direction
-      local ent_pos = fa_utils.offset_position(pos, face_dir, 1)
+      local ent_pos = fa_utils.offset_position_legacy(pos, face_dir, 1)
       rendering.draw_circle({
          color = { 1, 0.0, 0.5 },
          radius = 0.1,
@@ -1510,7 +1510,7 @@ function mod.snap_place_steam_engine_to_a_boiler(pindex)
    --For each boiler found:
    for i, boiler in ipairs(boilers) do
       --Check if there is any entity in front of it
-      local output_location = fa_utils.offset_position(boiler.position, boiler.direction, 1.5)
+      local output_location = fa_utils.offset_position_legacy(boiler.position, boiler.direction, 1.5)
       rendering.draw_circle({
          color = { 1, 1, 0.25 },
          radius = 0.25,
@@ -1534,13 +1534,13 @@ function mod.snap_place_steam_engine_to_a_boiler(pindex)
          local old_building_dir = players[pindex].building_direction
          players[pindex].building_direction = dir
          if dir == dirs.east then
-            engine_position = fa_utils.offset_position(engine_position, dirs.east, 2)
+            engine_position = fa_utils.offset_position_legacy(engine_position, dirs.east, 2)
          elseif dir == dirs.south then
-            engine_position = fa_utils.offset_position(engine_position, dirs.south, 2)
+            engine_position = fa_utils.offset_position_legacy(engine_position, dirs.south, 2)
          elseif dir == dirs.west then
-            engine_position = fa_utils.offset_position(engine_position, dirs.west, 2)
+            engine_position = fa_utils.offset_position_legacy(engine_position, dirs.west, 2)
          elseif dir == dirs.north then
-            engine_position = fa_utils.offset_position(engine_position, dirs.north, 2)
+            engine_position = fa_utils.offset_position_legacy(engine_position, dirs.north, 2)
          end
          rendering.draw_circle({
             color = { 0.25, 1, 0.25 },
