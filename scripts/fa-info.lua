@@ -676,6 +676,14 @@ local function ent_info_mining_drill_output_chute(ctx)
    end
 end
 
+---@param ctx fa.info.EntInfoContext
+local function ent_info_cargo_wagon(ctx)
+   if ctx.ent.name == "cargo-wagon" then
+      local presenting = present_inventory(ctx.ent, defines.inventory.cargo_wagon)
+      if presenting then ctx.message:fragment(presenting) end
+   end
+end
+
 --Outputs basic entity info, usually called when the cursor selects an entity.
 ---@param ent LuaEntity
 ---@return LocalisedString
@@ -780,30 +788,7 @@ function mod.ent_info(pindex, ent, is_scanner)
       end
    end
 
-   if ent.name == "cargo-wagon" then
-      --Explain contents
-      local itemset = ent.get_inventory(defines.inventory.cargo_wagon).get_contents()
-      local itemtable = {}
-      for name, count in pairs(itemset) do
-         table.insert(itemtable, { name = name, count = count })
-      end
-      table.sort(itemtable, function(k1, k2)
-         return k1.count > k2.count
-      end)
-      if #itemtable == 0 then
-         ctx.message:fragment("containing nothing")
-      else
-         ctx.message:fragment("containing " .. itemtable[1].name .. " times " .. itemtable[1].count .. ",")
-         if #itemtable > 1 then
-            ctx.message:fragment("and")
-            ctx.message:fragment(itemtable[2].name)
-            ctx.message:fragment("times")
-            ctx.message:fragment(itemtable[2].count)
-            ctx.message:fragment(",")
-         end
-         if #itemtable > 2 then ctx.message:fragment("and other items") end
-      end
-   end
+   run_handler(ent_info_cargo_wagon)
    run_handler(ent_info_radar)
 
    if ent.type == "electric-pole" then
