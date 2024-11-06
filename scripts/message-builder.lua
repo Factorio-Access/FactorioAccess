@@ -92,16 +92,17 @@ end
 ---@return fa.MessageBuilder
 function MessageBuilder:fragment(fragment)
    self:_check_not_built()
-   if self.state == MESSAGE_BUILDER_STATE.LIST_ITEM or self.state == MESSAGE_BUILDER_STATE.FRAGMENT_IN_LIST then
-      self.state = MESSAGE_BUILDER_STATE.FRAGMENT_IN_LIST
-   else
-      self.state = MESSAGE_BUILDER_STATE.FRAGMENT
-   end
 
    -- If we just started a list item, this needs a comma.
    if self.state == MESSAGE_BUILDER_STATE.LIST_ITEM then
       if not self.is_first_list_item then table.insert(self.parts, ",") end
       self.is_first_list_item = false
+   end
+
+   if self.state == MESSAGE_BUILDER_STATE.LIST_ITEM or self.state == MESSAGE_BUILDER_STATE.FRAGMENT_IN_LIST then
+      self.state = MESSAGE_BUILDER_STATE.FRAGMENT_IN_LIST
+   else
+      self.state = MESSAGE_BUILDER_STATE.FRAGMENT
    end
 
    -- In all cases but initial, a space is needed.
