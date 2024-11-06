@@ -620,7 +620,8 @@ function force_cursor_off(pindex)
 
    --Disable
    players[pindex].cursor = false
-   players[pindex].cursor_pos = fa_utils.offset_position(players[pindex].position, players[pindex].player_direction, 1)
+   players[pindex].cursor_pos =
+      fa_utils.offset_position_legacy(players[pindex].position, players[pindex].player_direction, 1)
    players[pindex].cursor_pos = fa_utils.center_of_tile(players[pindex].cursor_pos)
    fa_mouse.move_mouse_pointer(players[pindex].cursor_pos, pindex)
    fa_graphics.sync_build_cursor_graphics(pindex)
@@ -1125,7 +1126,7 @@ function initialize(player)
    faplayer.player_direction = faplayer.player_direction or character.walking_state.direction
    faplayer.position = faplayer.position or fa_utils.center_of_tile(character.position)
    faplayer.cursor_pos = faplayer.cursor_pos
-      or fa_utils.offset_position(faplayer.position, faplayer.player_direction, 1)
+      or fa_utils.offset_position_legacy(faplayer.position, faplayer.player_direction, 1)
    faplayer.walk = faplayer.walk or 0
    faplayer.move_queue = faplayer.move_queue or {}
    faplayer.building_direction = faplayer.building_direction or dirs.north --top
@@ -1365,7 +1366,7 @@ script.on_event(defines.events.on_player_changed_position, function(event)
             players[pindex].player_direction = p.walking_state.direction
             if p.walking_state.direction == nil then players[pindex].player_direction = dirs.north end
          end
-         local new_pos = (fa_utils.offset_position(pos, players[pindex].player_direction, 1.0))
+         local new_pos = (fa_utils.offset_position_legacy(pos, players[pindex].player_direction, 1.0))
          players[pindex].cursor_pos = new_pos
 
          --Build lock building + rotate belts in hand unless cursor mode
@@ -1383,7 +1384,7 @@ script.on_event(defines.events.on_player_changed_position, function(event)
          end
       elseif players[pindex].cursor == false then
          --Directions same: Walk straight
-         local new_pos = (fa_utils.offset_position(pos, players[pindex].player_direction, 1))
+         local new_pos = (fa_utils.offset_position_legacy(pos, players[pindex].player_direction, 1))
          players[pindex].cursor_pos = new_pos
 
          --Build lock building + rotate belts in hand unless cursor mode
@@ -2473,7 +2474,7 @@ function move(direction, pindex, nudged)
    if p.vehicle then return true end
    local first_player = game.get_player(pindex)
    local pos = players[pindex].position
-   local new_pos = fa_utils.offset_position(pos, direction, 1)
+   local new_pos = fa_utils.offset_position_legacy(pos, direction, 1)
    local moved_success = false
 
    --Compare the input direction and facing direction
@@ -2498,7 +2499,7 @@ function move(direction, pindex, nudged)
          end
          players[pindex].position = new_pos
          if nudged ~= true then
-            players[pindex].cursor_pos = fa_utils.offset_position(players[pindex].position, direction, 1)
+            players[pindex].cursor_pos = fa_utils.offset_position_legacy(players[pindex].position, direction, 1)
          end
          --Telestep walking sounds
          if
@@ -2662,7 +2663,7 @@ function cursor_mode_move(direction, pindex, single_only)
    local p = game.get_player(pindex)
 
    players[pindex].cursor_pos =
-      fa_utils.center_of_tile(fa_utils.offset_position(players[pindex].cursor_pos, direction, diff))
+      fa_utils.center_of_tile(fa_utils.offset_position_legacy(players[pindex].cursor_pos, direction, diff))
 
    if players[pindex].cursor_size == 0 then
       -- Cursor size 0 ("1 by 1"): Read tile
@@ -6902,7 +6903,7 @@ function cursor_skip_iteration(pindex, direction, iteration_limit)
    elseif start_tile_is_water then
       local selected_tile_is_water = nil
       --Iterate first_tile
-      players[pindex].cursor_pos = fa_utils.offset_position(players[pindex].cursor_pos, direction, 1)
+      players[pindex].cursor_pos = fa_utils.offset_position_legacy(players[pindex].cursor_pos, direction, 1)
       selected_tile_is_water = fa_utils.tile_is_water(p.surface, players[pindex].cursor_pos)
 
       --Run checks and skip when needed
@@ -6922,7 +6923,7 @@ function cursor_skip_iteration(pindex, direction, iteration_limit)
                return moved
             end
             --Iterate again
-            players[pindex].cursor_pos = fa_utils.offset_position(players[pindex].cursor_pos, direction, 1)
+            players[pindex].cursor_pos = fa_utils.offset_position_legacy(players[pindex].cursor_pos, direction, 1)
             selected_tile_is_water = fa_utils.tile_is_water(p.surface, players[pindex].cursor_pos)
             moved = moved + 1
          end
@@ -6931,7 +6932,7 @@ function cursor_skip_iteration(pindex, direction, iteration_limit)
       return -1
    end
    --Iterate first tile
-   players[pindex].cursor_pos = fa_utils.offset_position(players[pindex].cursor_pos, direction, 1)
+   players[pindex].cursor_pos = fa_utils.offset_position_legacy(players[pindex].cursor_pos, direction, 1)
 
    current = compute_current()
 
@@ -7012,7 +7013,7 @@ function cursor_skip_iteration(pindex, direction, iteration_limit)
          end
       end
       --Skip case: Move 1 more tile
-      players[pindex].cursor_pos = fa_utils.offset_position(players[pindex].cursor_pos, direction, 1)
+      players[pindex].cursor_pos = fa_utils.offset_position_legacy(players[pindex].cursor_pos, direction, 1)
       moved = moved + 1
       current = compute_current()
    end
@@ -7032,10 +7033,12 @@ function apply_skip_by_preview_size(pindex, direction)
          if width and height and (width + height > 2) then
             --For blueprints larger than 1x1, check if the height/width has been travelled.
             if direction == dirs.east or direction == dirs.west then
-               players[pindex].cursor_pos = fa_utils.offset_position(players[pindex].cursor_pos, direction, width + 1)
+               players[pindex].cursor_pos =
+                  fa_utils.offset_position_legacy(players[pindex].cursor_pos, direction, width + 1)
                return width
             elseif direction == dirs.north or direction == dirs.south then
-               players[pindex].cursor_pos = fa_utils.offset_position(players[pindex].cursor_pos, direction, height + 1)
+               players[pindex].cursor_pos =
+                  fa_utils.offset_position_legacy(players[pindex].cursor_pos, direction, height + 1)
                return height
             end
          end
@@ -7045,10 +7048,12 @@ function apply_skip_by_preview_size(pindex, direction)
          if width and height and (width + height > 2) then
             --For entities larger than 1x1, check if the height/width has been travelled.
             if direction == dirs.east or direction == dirs.west then
-               players[pindex].cursor_pos = fa_utils.offset_position(players[pindex].cursor_pos, direction, width)
+               players[pindex].cursor_pos =
+                  fa_utils.offset_position_legacy(players[pindex].cursor_pos, direction, width)
                return width
             elseif direction == dirs.north or direction == dirs.south then
-               players[pindex].cursor_pos = fa_utils.offset_position(players[pindex].cursor_pos, direction, height)
+               players[pindex].cursor_pos =
+                  fa_utils.offset_position_legacy(players[pindex].cursor_pos, direction, height)
                return height
             end
          end
@@ -7057,7 +7062,7 @@ function apply_skip_by_preview_size(pindex, direction)
 
    --Offset by cursor size if not something else
    local shift = (players[pindex].cursor_size * 2 + 1)
-   players[pindex].cursor_pos = fa_utils.offset_position(players[pindex].cursor_pos, direction, shift)
+   players[pindex].cursor_pos = fa_utils.offset_position_legacy(players[pindex].cursor_pos, direction, shift)
    return shift
 end
 
