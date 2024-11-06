@@ -44,12 +44,20 @@ local mod = {}
 
 -- Get an inventory. If truncate is provided truncate at that number.
 ---@param ent LuaEntity
----@param inventory defines.inventory
+---@param inventory defines.inventory | LuaInventory
 ---@param truncate number?
 ---@return LocalisedString? Nil if the inventory doesn't exist.
 local function present_inventory(ent, inventory, truncate)
-   local inv = ent.get_inventory(inventory)
-   if not inv then return end
+   ---@type LuaInventory
+   local inv
+   if type(inventory) ~= "userdata" then
+      ---@cast inventory defines.inventory
+      local t = ent.get_inventory(inventory)
+      if not t then return end
+      inv = t
+   else
+      inv = inventory --[[ @as LuaInventory  ]]
+   end
 
    local contents_unrolled = inv.get_contents()
    local contents = {}
@@ -263,15 +271,9 @@ local function ent_info_beacon_status(ctx)
    local ent = ctx.ent
    if ent.name == "beacon" then
       local modules = ent.get_module_inventory()
-      if modules.get_item_count() == 0 then
-         ctx.message:fragment({ "fa.ent-info-beacon-modules-0" })
-      elseif modules.get_item_count() == 1 then
-         ctx.message:fragment({ "fa.ent-info-beacon-modules-1", modules[1].name })
-      elseif modules.get_item_count() == 2 then
-         ctx.message:fragment({ "fa.ent-info-beacon-modules-2", modules[1].name, modules[2].name })
-      elseif modules.get_item_count() > 2 then
-         ctx.message:fragment({ "fa.ent-info-beacon-modules-more", modules[1].name, modules[2].name })
-      end
+      if not modules then return end
+      local presenting = present_inventory(ctx.ent, modules)
+      if presenting then ctx.message:fragment(presenting) end
    end
 end
 
