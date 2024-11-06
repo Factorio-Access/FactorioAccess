@@ -35,7 +35,7 @@ local Trains = require("scripts.trains")
 
 local mod = {}
 
----@class fa.info.EntInfoContext
+---@class fa.Info.EntInfoContext
 ---@field message fa.MessageBuilder
 ---@field is_scanner boolean
 ---@field ent LuaEntity
@@ -121,7 +121,7 @@ local function present_inventory(ent, inventory, truncate)
    end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_facing(ctx)
    local effective_direction
    local ent = ctx.ent
@@ -150,7 +150,7 @@ end
 
 -- Announces if the entity is marked for upgrading or deconstruction. Folded
 -- into one function, as these are mutually exclusive states as far as we know.
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_marked_for_upgrade_deconstruct(ctx)
    if ctx.ent.to_be_deconstructed() then
       ctx.message:fragment({ "fa.ent-info-marked-for-deconstruction" })
@@ -162,7 +162,7 @@ local function ent_info_marked_for_upgrade_deconstruct(ctx)
 end
 
 -- If this entity generates electricity, tell the player how much.
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_power_production(ctx)
    local ent = ctx.ent
    if ctx.ent.prototype.type == "generator" then
@@ -184,7 +184,7 @@ end
 -- If the entity has a status which is super important, for example no power or
 -- output full, tell the player.  These are things that we judge to be important
 -- enough that checking status shouldn't be required.
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_important_statuses(ctx)
    local ent = ctx.ent
    local status = ent.status
@@ -206,7 +206,7 @@ local function ent_info_important_statuses(ctx)
 end
 
 -- "not connected to power" etc.
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_power_status(ctx)
    local ent = ctx.ent
    if ent.prototype.electric_energy_source_prototype ~= nil and ent.is_connected_to_electric_network() == false then
@@ -218,14 +218,14 @@ end
 
 -- Announces if the entity is a wall and a point at which the player may connect
 -- the circuit network to control a gate.
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_gate_connection_point(ctx)
    if ctx.ent.type == "wall" and ctx.ent.get_control_behavior() ~= nil then
       ctx.message:fragment({ "fa.ent-info-gate-circuit-network-connection" })
    end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_accumulator(ctx)
    local ent = ctx.ent
    if ent.type == "accumulator" then
@@ -235,7 +235,7 @@ local function ent_info_accumulator(ctx)
    end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_solar(ctx)
    local ent = ctx.ent
 
@@ -254,7 +254,7 @@ local function ent_info_solar(ctx)
    end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_rocket_silo(ctx)
    local ent = ctx.ent
    if ent.name == "rocket-silo" then
@@ -266,7 +266,7 @@ local function ent_info_rocket_silo(ctx)
    end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_beacon_status(ctx)
    local ent = ctx.ent
    if ent.name == "beacon" then
@@ -277,7 +277,7 @@ local function ent_info_beacon_status(ctx)
    end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_constant_combinator(ctx)
    local ent = ctx.ent
    if ent.type == "constant-combinator" then
@@ -285,7 +285,7 @@ local function ent_info_constant_combinator(ctx)
    end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_resource(ctx)
    local ent = ctx.ent
    if ent.type == "resource" then
@@ -300,7 +300,7 @@ local function ent_info_resource(ctx)
    end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_ghost(ctx)
    local ent = ctx.ent
    if ent.name == "entity-ghost" then
@@ -312,7 +312,7 @@ local function ent_info_ghost(ctx)
    end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_rail(ctx)
    local ent = ctx.ent
    -- TODO: really we shouldn't need pindex here, but for now rails aren't
@@ -320,7 +320,7 @@ local function ent_info_rail(ctx)
    if ent.name == "straight-rail" or ent.name == "curved-rail" then return Rails.rail_ent_info(ctx.pindex, ent) end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_character(ctx)
    local ent = ctx.ent
    if ent.name == "character" then
@@ -338,7 +338,7 @@ local function ent_info_character(ctx)
    end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_character_corpse(ctx)
    local ent = ctx.ent
    if ent.name == "character-corpse" then
@@ -350,7 +350,7 @@ local function ent_info_character_corpse(ctx)
    end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_container(ctx)
    local ent = ctx.ent
    if ent.type == "container" or ent.type == "logistic-container" or ent.type == "infinity-container" then
@@ -360,7 +360,7 @@ local function ent_info_container(ctx)
    end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_logistic_network(ctx)
    local ent = ctx.ent
    -- very unclear: isn't this just entity.logistic_network?  To revisit after
@@ -388,7 +388,7 @@ local function ent_info_logistic_network(ctx)
    end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_infinity_pipe(ctx)
    local ent = ctx.ent
    if ent.name == "infinity-pipe" then
@@ -401,7 +401,7 @@ local function ent_info_infinity_pipe(ctx)
    end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_pipe_shape(ctx)
    if ctx.ent.type == "pipe" then
       local shape_info = Fluids.get_pipe_shape(ctx.ent)
@@ -458,12 +458,12 @@ end
 
 -- For everything that contains a fluid but isn't a crafting machine, say what
 -- it is.
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_fluid_transport(ctx)
    -- TODO: needs cleanup for 2.0
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_underground_belt_type(ctx)
    local ent = ctx.ent
    if ent.type == "underground-belt" then
@@ -475,7 +475,7 @@ local function ent_info_underground_belt_type(ctx)
    end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_train_stop(ctx)
    local ent = ctx.ent
    if ent.name == "train-stop" then
@@ -485,7 +485,7 @@ local function ent_info_train_stop(ctx)
 end
 
 -- Returns train name announcement with id fallback.
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_train_owner(ctx)
    local ent = ctx.ent
    if ent.name == "locomotive" or ent.name == "cargo-wagon" or ent.name == "fluid-wagon" then
@@ -493,7 +493,7 @@ local function ent_info_train_owner(ctx)
    end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_rail_signal_state(ctx)
    -- TODO: this should be folded into basic entity state where it belongs.
    local ent = ctx.ent
@@ -508,7 +508,7 @@ local function ent_info_rail_signal_state(ctx)
    end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_rail_signal_heading(ctx)
    local ent = ctx.ent
    if ent.name == "rail-signal" or ent.name == "rail-chain-signal" then
@@ -519,14 +519,14 @@ local function ent_info_rail_signal_heading(ctx)
    end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_temperature(ctx)
    local ent = ctx.ent
    if ent.temperature ~= nil then ctx.message:fragment({ "fa.ent-info-temperature", math.floor(ent.temperature) }) end
 end
 
 -- NOTE: pushes multiple list items.
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_nuclear_neighbor_bonus(ctx)
    local ent = ctx.ent
    if ent.name == "nuclear-reactor" then
@@ -537,7 +537,7 @@ local function ent_info_nuclear_neighbor_bonus(ctx)
 end
 
 -- Name of item for items on the ground.
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_item_on_ground(ctx)
    local ent = ctx.ent
    if ent.name == "item-on-ground" then
@@ -545,7 +545,7 @@ local function ent_info_item_on_ground(ctx)
    end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_heat_neighbors(ctx)
    local ent = ctx.ent
    if ent.prototype.heat_buffer_prototype ~= nil and next(ent.prototype.heat_buffer_prototype.connections) then
@@ -621,7 +621,7 @@ local function ent_info_heat_neighbors(ctx)
    end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_underground_belt_connection(ctx)
    local ent = ctx.ent
    if ent.type == "underground-belt" then
@@ -637,19 +637,19 @@ local function ent_info_underground_belt_connection(ctx)
    end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_splitter_states(ctx)
    local ent = ctx.ent
    if ent.type == "splitter" then ctx.message:fragment(Belts.splitter_priority_info(ent)) end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_radar(ctx)
    local ent = ctx.ent
    if ent.type == "radar" then ctx.message:fragment(mod.radar_charting_info(ent)) end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_spidertron(ctx)
    local ent = ctx.ent
    if ent.type == "spider-leg" then
@@ -666,7 +666,7 @@ local function ent_info_spidertron(ctx)
    end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_mining_drill_output_chute(ctx)
    local point = ResourceMining.get_solid_output_coords(ctx.ent)
    if not point then return false end
@@ -676,7 +676,7 @@ local function ent_info_mining_drill_output_chute(ctx)
    end
 end
 
----@param ctx fa.info.EntInfoContext
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_cargo_wagon(ctx)
    if ctx.ent.name == "cargo-wagon" then
       local presenting = present_inventory(ctx.ent, defines.inventory.cargo_wagon)
@@ -691,7 +691,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    local p = game.get_player(pindex)
    assert(p)
 
-   ---@type fa.info.EntInfoContext
+   ---@type fa.Info.EntInfoContext
    local ctx = {
       ent = ent,
       pindex = pindex,

@@ -51,7 +51,7 @@ rounded to tiles.  Provides the computed information needed to build cursor
 announcements when the cursor is over an entity, and also returns the raw
 connections for code needing more.
 ]]
----@class fa.fluids.ConnectionPoint
+---@class fa.Fluids.ConnectionPoint
 ---@field position fa.Point rounded to the tile
 ---@field output_direction defines.direction?
 ---@field input_direction defines.direction?
@@ -61,9 +61,9 @@ connections for code needing more.
 ---@field raw PipeConnection
 
 ---@param ent LuaEntity
----@return fa.fluids.ConnectionPoint[]
+---@return fa.Fluids.ConnectionPoint[]
 function mod.get_connection_points(ent)
-   ---@type fa.fluids.ConnectionPoint[]
+   ---@type fa.Fluids.ConnectionPoint[]
    local res = {}
    local fb = ent.fluidbox
 
@@ -90,7 +90,7 @@ function mod.get_connection_points(ent)
             in_dir = FaUtils.rotate_180(out_dir)
          end
 
-         ---@type fa.fluids.ConnectionPoint
+         ---@type fa.Fluids.ConnectionPoint
          local part = {
             bidirectional = in_dir ~= nil and out_dir ~= nil,
             position = { x = sx, y = sy },
@@ -107,7 +107,7 @@ function mod.get_connection_points(ent)
    return res
 end
 
----@enum fa.fluids.PipeShape
+---@enum fa.Fluids.PipeShape
 mod.PIPE_SHAPE = {
    STRAIT = "straight",
 
@@ -123,7 +123,7 @@ mod.PIPE_SHAPE = {
    T = "t",
 }
 
----@alias fa.fluids.ShapeDef { shape: fa.fluids.PipeShape, direction: defines.direction }
+---@alias fa.fluids.ShapeDef { shape: fa.Fluids.PipeShape, direction: defines.direction }
 
 -- north->east->south->west->shape, true if the direction is present, false if
 -- it is not. Used below.
@@ -182,7 +182,7 @@ This function considers only pipe entities, and ignores undergrounds.
 Undergrounds need to be announced separately.
 ]]
 ---@param ent LuaEntity
----@return { shape: fa.fluids.PipeShape, direction: defines.direction }
+---@return { shape: fa.Fluids.PipeShape, direction: defines.direction }
 function mod.get_pipe_shape(ent)
    local dirs = {}
 
