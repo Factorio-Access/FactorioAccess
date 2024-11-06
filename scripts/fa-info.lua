@@ -30,6 +30,7 @@ local Graphics = require("scripts.graphics")
 local Localising = require("scripts.localising")
 local MessageBuilder = require("scripts.message-builder")
 local Rails = require("scripts.rails")
+local ResourceMining = require("scripts.resource-mining")
 local Trains = require("scripts.trains")
 
 local mod = {}
@@ -1441,19 +1442,10 @@ function mod.read_selected_entity_status(pindex)
 end
 
 function mod.cursor_is_at_mining_drill_output_part(pindex, ent)
-   -- From docs: "If the drill does not produce any solid items but uses a
-   -- fluidbox output instead (e.g. pumpjacks), a vector of {0,0} disables the
-   -- yellow arrow alt-mode indicator for the placed item location."
-   --
-   -- What we actually get is that the drop position is the center of the entity
-   -- exactly.
-   local drop_pos = ent.drop_position
-   local ent_pos = ent.position
-   if ent_pos.x == drop_pos.x and ent_pos.y == drop_pos.y then return false end
-
-   local dir = ent.direction
-   local correct_pos = FaUtils.offset_position_legacy(drop_pos, FaUtils.rotate_180(dir), 1)
-   return util.distance(correct_pos, players[pindex].cursor_pos) < 0.6
+   local point = ResourceMining.get_solid_output_coords(ent)
+   if not point then return false end
+   print("Point was ", serpent.line(point), serpent.line(players[pindex].cursor_pos))
+   return util.distance(point.position, players[pindex].cursor_pos) < 0.6
 end
 
 --Returns an info string about the entities and tiles found within an area scan done by an enlarged cursor.

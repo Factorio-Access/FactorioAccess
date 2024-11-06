@@ -1038,4 +1038,14 @@ function mod.format_number(amount)
    return tostring(amount) .. suffix
 end
 
+---@param point fa.Point
+---@param box fa.AABB
+---@return fa.Point?
+function mod.closest_point_in_box(point, box)
+   return {
+      x = math.max(math.min(point.x, box.right_bottom.x), box.left_top.x),
+      y = math.max(math.min(point.y, box.right_bottom.y), box.left_top.y),
+   }
+end
+
 return mod

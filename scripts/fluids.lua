@@ -152,7 +152,7 @@ add_shape(true, true, true, false, mod.PIPE_SHAPE.T, defines.direction.west)
 add_shape(true, true, false, true, mod.PIPE_SHAPE.T, defines.direction.south)
 add_shape(true, false, true, true, mod.PIPE_SHAPE.T, defines.direction.east)
 add_shape(false, true, true, true, mod.PIPE_SHAPE.T, defines.direction.north)
-add_shape(false, false, false, false, mod.PIPE_SHAPE.ALONE)
+add_shape(false, false, false, false, mod.PIPE_SHAPE.ALONE, defines.direction.north)
 
 --[[
 Given a pipe entity, determine to which pipes it is connected and pass back
