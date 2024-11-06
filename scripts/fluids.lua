@@ -58,6 +58,7 @@ connections for code needing more.
 ---@field bidirectional boolean
 ---@field fluid string? Set if the fluid must be a specific one.
 ---@field type data.PipeConnectionType
+---@field open boolean Closed if it's a crafting machine and the recipe doesn't use it.
 ---@field raw PipeConnection
 
 ---@param ent LuaEntity
@@ -66,6 +67,9 @@ function mod.get_connection_points(ent)
    ---@type fa.Fluids.ConnectionPoint[]
    local res = {}
    local fb = ent.fluidbox
+
+   local is_crafting_machine = ent.type == "assembling-machine" or ent.type == "furnace" or ent.type == "rocket-silo"
+   local closed_because_no_recipe = is_crafting_machine and ent.get_recipe() == nil
 
    for i = 1, #fb do
       local conns = fb.get_pipe_connections(i)
@@ -90,6 +94,8 @@ function mod.get_connection_points(ent)
             in_dir = FaUtils.rotate_180(out_dir)
          end
 
+         local open = true
+         if is_crafting_machine then open = not closed_because_no_recipe or fb.get_locked_fluid(i) ~= nil end
          ---@type fa.Fluids.ConnectionPoint
          local part = {
             bidirectional = in_dir ~= nil and out_dir ~= nil,
@@ -99,6 +105,7 @@ function mod.get_connection_points(ent)
             fluid = filt_name,
             input_direction = in_dir,
             output_direction = out_dir,
+            open = open,
          }
          table.insert(res, part)
       end

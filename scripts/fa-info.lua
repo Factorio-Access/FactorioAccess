@@ -721,12 +721,14 @@ local function ent_info_fluid_connections(ctx)
    end
 
    local none = {}
+   local closed = {}
 
    ---@param set table<defines.direction, fa.Fluids.ConnectionPoint>
    local function present(key, set, rotate)
       local buckets = {}
       for dir, c in pairs(set) do
          local f = c.fluid or none
+         if not c.open then f = closed end
          buckets[f] = buckets[f] or {}
          table.insert(buckets[f], rotate and FaUtils.rotate_180(dir) or dir)
       end
@@ -744,7 +746,11 @@ local function ent_info_fluid_connections(ctx)
          local dirlist = FaUtils.localise_cat_table(dirparts, ", ")
          ---@type LocalisedString
          local loc_fluid = { "fa.ent-info-fluid-connections-any" }
-         if fluid ~= none then loc_fluid = Localising.get_localised_name_with_fallback(prototypes.fluid[fluid]) end
+         if fluid == closed then
+            loc_fluid = { "fa.ent-info-fluid-connections-closed" }
+         elseif fluid ~= none then
+            loc_fluid = Localising.get_localised_name_with_fallback(prototypes.fluid[fluid])
+         end
 
          ctx.message:list_item({ key, loc_fluid, dirlist })
       end
