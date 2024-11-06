@@ -40,6 +40,7 @@ system.
 Note that the shape computation logic is reused by heat.  Heat isn't a fluid and
 has a number of "interesting" special cases, but the corner shapes are the same.
 ]]
+local Consts = require("scripts.consts")
 local FaUtils = require("scripts.fa-utils")
 local TH = require("scripts.table-helpers")
 
@@ -68,7 +69,8 @@ function mod.get_connection_points(ent)
    local res = {}
    local fb = ent.fluidbox
 
-   local is_crafting_machine = ent.type == "assembling-machine" or ent.type == "furnace" or ent.type == "rocket-silo"
+   local is_crafting_machine = Consts.CRAFTING_MACHINES[ent.type]
+
    local closed_because_no_recipe = is_crafting_machine and ent.get_recipe() == nil
 
    for i = 1, #fb do

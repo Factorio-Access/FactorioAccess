@@ -63,4 +63,11 @@ mod.DIRECTION_VECTORS = {
    { x = -0.3826834323650904, y = -0.9238795325112865 },
 }
 
+---@type table<string, true>
+mod.CRAFTING_MACHINES = {
+   ["assembling-machine"] = true,
+   ["furnace"] = true,
+   ["rocket-silo"] = true,
+}
+
 return mod
