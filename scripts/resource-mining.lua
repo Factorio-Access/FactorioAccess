@@ -43,4 +43,19 @@ function mod.get_solid_output_coords(ent)
    return { position = effective, direction = dir }
 end
 
+---@param ent LuaEntity
+---@return table<string, number> The counts by resource prototype name
+function mod.compute_resources_under_drill(ent)
+   local pos = ent.position
+   local radius = ent.prototype.mining_drill_radius
+   local area = { { pos.x - radius, pos.y - radius }, { pos.x + radius, pos.y + radius } }
+   local resources = ent.surface.find_entities_filtered({ area = area, type = "resource" })
+   local dict = {}
+   for i, resource in pairs(resources) do
+      dict[resource.name] = (dict[resource.name] or 0) + resource.amount
+   end
+
+   return dict
+end
+
 return mod

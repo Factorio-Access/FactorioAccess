@@ -75,21 +75,6 @@ local function get_adjacent_source(box, pos, dir)
    return result
 end
 
----@param ent LuaEntity
----@return table<string, number> The counts by resource prototype name
-function mod.compute_resources_under_drill(ent)
-   local pos = ent.position
-   local radius = ent.prototype.mining_drill_radius
-   local area = { { pos.x - radius, pos.y - radius }, { pos.x + radius, pos.y + radius } }
-   local resources = ent.surface.find_entities_filtered({ area = area, type = "resource" })
-   local dict = {}
-   for i, resource in pairs(resources) do
-      dict[resource.name] = (dict[resource.name] or 0) + resource.amount
-   end
-
-   return dict
-end
-
 ---@param ctx fa.info.EntInfoContext
 local function ent_info_facing(ctx)
    local effective_direction
@@ -924,7 +909,7 @@ function mod.ent_info(pindex, ent, is_scanner)
 
    if ent.type == "mining-drill" then
       local pos = ent.position
-      local dict = mod.compute_resources_under_drill(ent)
+      local dict = ResourceMining.compute_resources_under_drill(ent)
 
       --Compute drop position
       local drop = ent.drop_target

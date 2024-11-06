@@ -6,6 +6,7 @@ local BuildingTools = require("scripts.building-tools")
 local decl = require("scripts.scanner.backends.simple").declare_simple_backend
 local functionize = require("scripts.functools").functionize
 local Info = require("scripts.fa-info")
+local ResourceMining = require("scripts.resource-mining")
 local SC = require("scripts.scanner.scanner-consts")
 
 local mod = {}
@@ -37,7 +38,7 @@ mod.CraftingMachine = decl("fa.scanner.backends.CraftingMachine", {
 mod.MiningDrill = decl("fa.scanner.backends.MiningDrill", {
    category_callback = functionize(SC.CATEGORIES.PRODUCTION),
    subcategory_callback = function(ent)
-      local under_drill = Info.compute_resources_under_drill(ent)
+      local under_drill = ResourceMining.compute_resources_under_drill(ent)
       local keys = {}
       for k in pairs(under_drill) do
          table.insert(keys, k)
