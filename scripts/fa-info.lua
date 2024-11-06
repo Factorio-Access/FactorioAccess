@@ -41,6 +41,7 @@ local mod = {}
 ---@field ent LuaEntity
 ---@field pindex number
 ---@field player LuaPlayer
+---@field cursor_pos fa.Point Not necessarily the player's actual cursor.
 
 -- Get an inventory. If truncate is provided truncate at that number.
 ---@param ent LuaEntity
@@ -671,7 +672,7 @@ local function ent_info_mining_drill_output_chute(ctx)
    local point = ResourceMining.get_solid_output_coords(ctx.ent)
    if not point then return false end
 
-   if util.distance(point.position, players[ctx.pindex].cursor_pos) < 0.6 then
+   if util.distance(point.position, ctx.cursor_pos) < 0.6 then
       ctx.message:fragment({ "fa.ent-info-mining-drill-output" })
    end
 end
@@ -698,6 +699,7 @@ function mod.ent_info(pindex, ent, is_scanner)
       message = MessageBuilder.MessageBuilder.new(),
       is_scanner = is_scanner,
       player = p,
+      cursor_pos = { x = players[pindex].cursor_pos.x, y = players[pindex].cursor_pos.y },
    }
 
    ctx.message:fragment(Localising.get_localised_name_with_fallback(ent))
