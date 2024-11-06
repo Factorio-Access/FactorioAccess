@@ -42,39 +42,6 @@ local mod = {}
 ---@field pindex number
 ---@field player LuaPlayer
 
---Ent info: Gives the distance and direction of a fluidbox connection target?
---Todo: update to clarify comments and include localization
-local function get_adjacent_source(box, pos, dir)
-   local result = { position = pos, direction = "" }
-   ebox = table.deepcopy(box)
-   if dir == 1 or dir == 3 then
-      ebox.left_top.x = box.left_top.y
-      ebox.left_top.y = box.left_top.x
-      ebox.right_bottom.x = box.right_bottom.y
-      ebox.right_bottom.y = box.right_bottom.x
-   end
-   --   print(ebox.left_top.x .. " " .. ebox.left_top.y)
-   ebox.left_top.x = math.ceil(ebox.left_top.x * 2) / 2
-   ebox.left_top.y = math.ceil(ebox.left_top.y * 2) / 2
-   ebox.right_bottom.x = math.floor(ebox.right_bottom.x * 2) / 2
-   ebox.right_bottom.y = math.floor(ebox.right_bottom.y * 2) / 2
-
-   if pos.x < ebox.left_top.x then
-      result.position.x = result.position.x + 1
-      result.direction = "West"
-   elseif pos.x > ebox.right_bottom.x then
-      result.position.x = result.position.x - 1
-      result.direction = "East"
-   elseif pos.y < ebox.left_top.y then
-      result.position.y = result.position.y + 1
-      result.direction = "North"
-   elseif pos.y > ebox.right_bottom.y then
-      result.position.y = result.position.y - 1
-      result.direction = "South"
-   end
-   return result
-end
-
 ---@param ctx fa.info.EntInfoContext
 local function ent_info_facing(ctx)
    local effective_direction
