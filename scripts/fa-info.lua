@@ -31,6 +31,7 @@ local Localising = require("scripts.localising")
 local MessageBuilder = require("scripts.message-builder")
 local Rails = require("scripts.rails")
 local ResourceMining = require("scripts.resource-mining")
+local TH = require("scripts.table-helpers")
 local Trains = require("scripts.trains")
 
 local mod = {}
@@ -457,13 +458,6 @@ local function ent_info_pipe_shape(ctx)
    end
 end
 
--- For everything that contains a fluid but isn't a crafting machine, say what
--- it is.
----@param ctx fa.Info.EntInfoContext
-local function ent_info_fluid_transport(ctx)
-   -- TODO: needs cleanup for 2.0
-end
-
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_underground_belt_type(ctx)
    local ent = ctx.ent
@@ -685,6 +679,82 @@ local function ent_info_cargo_wagon(ctx)
    end
 end
 
+---@param ctx fa.Info.EntInfoContext
+local function ent_info_fluid_connections(ctx)
+   local points = Fluids.get_connection_points(ctx.ent)
+   ---@param p fa.Fluids.ConnectionPoint
+   TH.retain_unordered(points, function(p)
+      -- Do not announce connections between two pipes.
+      if p.raw.target and p.raw.target.owner.type == "pipe" and ctx.ent.type == "pipe" then return false end
+
+      return FaUtils.distance(p.position, ctx.cursor_pos) < 0.5
+   end)
+
+   if not next(points) then return end
+
+   -- To get convenient announcements, we will roll up into fluids and their
+   -- directions rather than handling these one by one.  If any connection
+   -- connects to an entity, we instead will handle it separately, so that
+   -- adjacent entity connections are announced.
+
+   -- It is an engine invariant that only one fluidbox may be at any point, in
+   -- the sense that only one fluid may be handled.  Storage tanks are a weird
+   -- exception which break the documented stricter rule of no fluidboxes
+   -- sharing a point, as the corners are bidirectional in 2 directions.
+   local out_dirs = {}
+   local in_dirs = {}
+
+   for _, c in pairs(points) do
+      if c.output_direction then out_dirs[c.output_direction] = c end
+      if c.input_direction then in_dirs[c.input_direction] = c end
+   end
+
+   local bidirectionals = {}
+
+   for dir, c in pairs(in_dirs) do
+      local rot = FaUtils.rotate_180(dir)
+      if out_dirs[rot] then
+         bidirectionals[rot] = c
+         in_dirs[dir] = nil
+         out_dirs[rot] = nil
+      end
+   end
+
+   local none = {}
+
+   ---@param set table<defines.direction, fa.Fluids.ConnectionPoint>
+   local function present(key, set, rotate)
+      local buckets = {}
+      for dir, c in pairs(set) do
+         local f = c.fluid or none
+         buckets[f] = buckets[f] or {}
+         table.insert(buckets[f], rotate and FaUtils.rotate_180(dir) or dir)
+      end
+
+      for fluid, dirs in pairs(buckets) do
+         table.sort(dirs, function(a, b)
+            return a < b
+         end)
+
+         local dirparts = {}
+         for _, dir in pairs(dirs) do
+            table.insert(dirparts, FaUtils.direction_lookup(dir))
+         end
+
+         local dirlist = FaUtils.localise_cat_table(dirparts, ", ")
+         ---@type LocalisedString
+         local loc_fluid = { "fa.ent-info-fluid-connections-any" }
+         if fluid ~= none then loc_fluid = Localising.get_localised_name_with_fallback(prototypes.fluid[fluid]) end
+
+         ctx.message:list_item({ key, loc_fluid, dirlist })
+      end
+   end
+
+   present("fa.ent-info-fluid-connections-in", in_dirs, true)
+   present("fa.ent-info-fluid-connections-out", out_dirs)
+   present("fa.ent-info-fluid-connections-bidirectional", bidirectionals)
+end
+
 --Outputs basic entity info, usually called when the cursor selects an entity.
 ---@param ent LuaEntity
 ---@return LocalisedString
@@ -718,7 +788,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    run_handler(ent_info_logistic_network)
    run_handler(ent_info_infinity_pipe)
    run_handler(ent_info_pipe_shape)
-   run_handler(ent_info_fluid_transport)
+   run_handler(ent_info_fluid_connections)
 
    run_handler(ent_info_underground_belt_type)
 

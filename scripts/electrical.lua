@@ -1,6 +1,7 @@
 --Here: Electricity related functions and menus
 local util = require("util")
 local fa_utils = require("scripts.fa-utils")
+local Wires = require("scripts.wires")
 
 local mod = {}
 

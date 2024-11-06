@@ -8,6 +8,8 @@ the mod to be silent.
 ]]
 local Fluids = require("scripts.fluids")
 local FaUtils = require("scripts.fa-utils")
+local TH = require("scripts.table-helpers")
+local Wires = require("scripts.wires")
 
 local mod = {}
 
@@ -61,8 +63,11 @@ function cmd_fac(cmd)
    environment.printout = function(arg, pindex)
       print_override(arg, "for pindex", pindex)
    end
-   environment.Fluids = Fluids
    environment.FaUtils = FaUtils
+   environment.Fluids = Fluids
+   environment.TableHelpers = TH
+   environment.TH = TH
+   environment.Wires = Wires
 
    local chunk, err = load(with_return, "=(load)", "t", environment)
    if not chunk then
