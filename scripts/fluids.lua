@@ -65,6 +65,7 @@ connections for code needing more.
 ---@field fluid string? Set if the fluid must be a specific one.
 ---@field type data.PipeConnectionType
 ---@field open boolean Closed if it's a crafting machine and the recipe doesn't use it.
+---@field position_in_tiles number Not the same as just checking positions unless it's "normal"
 ---@field raw PipeConnection
 
 --[[
@@ -147,6 +148,17 @@ function mod.get_connection_points(ent)
             in_dir = FaUtils.rotate_180(out_dir)
          end
 
+         local distance_in_tiles = 1
+
+         -- For underground and linked connections, the game does not report the
+         -- position of the other side directly and instead yields the position
+         -- of the fluidbox in this entity, e.g. c.position==c.target.  We have
+         -- to look at the other side indirectly.
+         if c.connection_type ~= "normal" then
+            local other_pos =
+               c.target.get_pipe_connections(c.target_fluidbox_index)[c.target_pipe_connection_index].position
+            distance_in_tiles = math.ceil(FaUtils.distance(c.position, other_pos))
+         end
          local open = true
          if is_crafting_machine then open = not closed_because_no_recipe or fb.get_locked_fluid(i) ~= nil end
          ---@type fa.Fluids.ConnectionPoint
@@ -159,6 +171,7 @@ function mod.get_connection_points(ent)
             input_direction = in_dir,
             output_direction = out_dir,
             open = open,
+            distance_in_tiles = distance_in_tiles,
          }
          table.insert(res, part)
       end

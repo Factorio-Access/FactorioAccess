@@ -770,30 +770,38 @@ local function ent_info_fluid_connections(ctx)
       for dir, c in pairs(set) do
          local f = c.fluid or none
          if not c.open then f = closed end
+         local realdir = rotate and FaUtils.rotate_180(dir) or dir
+         local dist = c.distance_in_tiles
          buckets[f] = buckets[f] or {}
-         table.insert(buckets[f], rotate and FaUtils.rotate_180(dir) or dir)
+         buckets[f][dist] = buckets[f][dist] or {}
+
+         print(serpent.line(c))
+         table.insert(buckets[f][dist], realdir)
       end
 
-      for fluid, dirs in pairs(buckets) do
-         table.sort(dirs, function(a, b)
-            return a < b
-         end)
+      print(serpent.line(buckets))
+      for fluid, distdirs in pairs(buckets) do
+         for dist, dirs in pairs(distdirs) do
+            table.sort(dirs, function(a, b)
+               return a < b
+            end)
 
-         local dirparts = {}
-         for _, dir in pairs(dirs) do
-            table.insert(dirparts, FaUtils.direction_lookup(dir))
+            local dirparts = {}
+            for _, dir in pairs(dirs) do
+               table.insert(dirparts, FaUtils.direction_lookup(dir))
+            end
+
+            local dirlist = FaUtils.localise_cat_table(dirparts, ", ")
+            ---@type LocalisedString
+            local loc_fluid = { "fa.ent-info-fluid-connections-any" }
+            if fluid == closed then
+               loc_fluid = { "fa.ent-info-fluid-connections-closed" }
+            elseif fluid ~= none then
+               loc_fluid = Localising.get_localised_name_with_fallback(prototypes.fluid[fluid])
+            end
+
+            ctx.message:list_item({ key, loc_fluid, dirlist, dist })
          end
-
-         local dirlist = FaUtils.localise_cat_table(dirparts, ", ")
-         ---@type LocalisedString
-         local loc_fluid = { "fa.ent-info-fluid-connections-any" }
-         if fluid == closed then
-            loc_fluid = { "fa.ent-info-fluid-connections-closed" }
-         elseif fluid ~= none then
-            loc_fluid = Localising.get_localised_name_with_fallback(prototypes.fluid[fluid])
-         end
-
-         ctx.message:list_item({ key, loc_fluid, dirlist })
       end
    end
 
