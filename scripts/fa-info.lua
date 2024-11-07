@@ -684,7 +684,10 @@ local function ent_info_fluid_connections(ctx)
    local points = Fluids.get_connection_points(ctx.ent)
    ---@param p fa.Fluids.ConnectionPoint
    TH.retain_unordered(points, function(p)
-      -- Do not announce connections between two pipes.
+      -- If this entity is a pipe and the connection goes to nothing, then do
+      -- not announce this connection because pipe shapes are handled elsewhere.
+      if p.raw.target == nil and ctx.ent.type == "pipe" then return false end
+
       if p.raw.target and p.raw.target.owner.type == "pipe" and ctx.ent.type == "pipe" then return false end
 
       return FaUtils.distance(p.position, ctx.cursor_pos) < 0.5
