@@ -65,7 +65,7 @@ connections for code needing more.
 ---@field fluid string? Set if the fluid must be a specific one.
 ---@field type data.PipeConnectionType
 ---@field open boolean Closed if it's a crafting machine and the recipe doesn't use it.
----@field position_in_tiles number Not the same as just checking positions unless it's "normal"
+---@field distance_in_tiles number Not the same as just checking positions unless it's "normal"
 ---@field raw PipeConnection
 
 --[[
