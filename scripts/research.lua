@@ -112,10 +112,18 @@ function mod.enqueue(player, name, index)
    local force = player.force
    local queue = force.research_queue
    table.insert(queue, index or 1, name)
+   force.research_queue = queue
    local queue = force.research_queue
-   local added = TH.find_index_of(queue, name)
+   local added = false
+   for _, e in pairs(queue) do
+      if e.name == name then
+         added = true
+         break
+      end
+   end
+
    if added then
-      local tech_param = tech_name_string(player.force.technologies[tech])
+      local tech_param = tech_name_string(player.force.technologies[name])
       if index == 1 then
          return { "fa.research-enqueued-front", tech_param }, true
       elseif index == nil then
