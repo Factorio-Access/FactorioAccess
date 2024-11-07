@@ -39,6 +39,11 @@ system.
 
 Note that the shape computation logic is reused by heat.  Heat isn't a fluid and
 has a number of "interesting" special cases, but the corner shapes are the same.
+
+There is a concept of locked fluids.  The API doesn't do a good job of
+explaining this.  If a fluid is locked, this means that it is on something that
+produces or consumes that fluid.  This doesn't happen on pipes or storage tanks,
+but it does happen on crafting machines when recipes are set.
 ]]
 local Consts = require("scripts.consts")
 local FaUtils = require("scripts.fa-utils")
