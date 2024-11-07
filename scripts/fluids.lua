@@ -67,6 +67,54 @@ connections for code needing more.
 ---@field open boolean Closed if it's a crafting machine and the recipe doesn't use it.
 ---@field raw PipeConnection
 
+--[[
+Given a fluidbox, determine if it must be a specific fluid, using the following
+rules:
+
+- If a crafting machine recipe is set and it is an input, it must be that input.
+- If it has a filter e.g. a pump, that filter.
+- If the fluidbox is in a segment and that segment contains one fluid only, it
+  must be that fluid.
+
+Otherwise return nil.  Either there's no requirement or the user has managed to
+mix fluids.
+]]
+---@param fluidbox LuaFluidBox
+---@param index number
+---@return string
+local function get_local_fluidbox_constraint(fluidbox, index)
+   local locked = fluidbox.get_locked_fluid(index)
+   if locked then return locked end
+   local filt = fluidbox.get_filter(index)
+
+   if filt then return filt.name end
+   local from_contents
+   local contents = fluidbox.get_fluid_segment_contents(index)
+   if contents and table_size(contents) == 1 then from_contents = next(contents) end
+   return from_contents
+end
+
+--[[
+Given a fluidbox and index, determine what the fluid must be using the rules of
+get_local_fluidbox_constraint, but call it on all immediately adjacent
+fluidboxes until one is found.  We don't look further than that. for now.
+]]
+---@param fluidbox LuaFluidBox
+---@param index number
+---@return string?
+local function get_fluidbox_constraint(fluidbox, index)
+   local first_attempt = get_local_fluidbox_constraint(fluidbox, index)
+   if first_attempt then return first_attempt end
+
+   -- Otherwise try adjacents.
+   for _, c in pairs(fluidbox.get_pipe_connections(index)) do
+      if c.target then
+         local try = get_local_fluidbox_constraint(c.target, c.target_fluidbox_index)
+         if try then return try end
+      end
+   end
+end
+
 ---@param ent LuaEntity
 ---@return fa.Fluids.ConnectionPoint[]
 function mod.get_connection_points(ent)
@@ -80,9 +128,7 @@ function mod.get_connection_points(ent)
 
    for i = 1, #fb do
       local conns = fb.get_pipe_connections(i)
-      local filt = fb.get_filter(i)
-      local filt_name
-      if filt then filt_name = filt.name end
+      local fluid = get_fluidbox_constraint(fb, i)
 
       for j = 1, #conns do
          local c = conns[j]
@@ -109,7 +155,7 @@ function mod.get_connection_points(ent)
             position = { x = sx, y = sy },
             raw = c,
             type = c.connection_type,
-            fluid = filt_name,
+            fluid = fluid,
             input_direction = in_dir,
             output_direction = out_dir,
             open = open,
