@@ -21,6 +21,7 @@ local Belts = require("scripts.transport-belts")
 local BotLogistics = require("scripts.worker-robots")
 local BuildingTools = require("scripts.building-tools")
 local Circuits = require("scripts.circuit-networks")
+local Consts = require("scripts.consts")
 local Driving = require("scripts.driving")
 local Electrical = require("scripts.electrical")
 local Equipment = require("scripts.equipment")
@@ -101,7 +102,7 @@ local function present_inventory(ent, inventory, truncate)
       endpoint = math.min(endpoint, truncate)
    end
 
-   if not next(final) then return { "fa.ent-inventory-empty" } end
+   if not next(final) then return { "fa.ent-info-inventory-empty" } end
 
    local entries = {}
    for i = 1, endpoint do
@@ -360,6 +361,43 @@ local function ent_info_container(ctx)
       local presenting = present_inventory(ent, defines.inventory.chest, 3)
       if presenting then ctx.message:fragment(presenting) end
    end
+end
+
+---@param ctx fa.Info.EntInfoContext
+local function ent_info_fluid_contents(ctx)
+   -- Crafting machines are special, and this is folded into their readiness
+   -- status.
+   if Consts.CRAFTING_MACHINES[ctx.ent.type] then return end
+
+   -- If it can't hold fluids, no point.
+   if #ctx.ent.fluidbox == 0 then return end
+
+   local fluids = ctx.ent.get_fluid_contents()
+
+   if not next(fluids) then
+      ctx.message:fragment({ "fa.ent-info-inventory-empty" })
+      return
+   end
+
+   local unrolled = {}
+   for f, c in pairs(fluids) do
+      table.insert(unrolled, { f, c })
+   end
+   table.sort(unrolled, function(a, b)
+      return a[2] > b[2]
+   end)
+
+   local parts = {}
+   for _, x in pairs(unrolled) do
+      local f, c = x[1], x[2]
+      table.insert(parts, {
+         "fa.ent-info-inventory-entry",
+         Localising.get_localised_name_with_fallback(prototypes.fluid[f]),
+         string.format("%2.0d", c),
+      })
+   end
+
+   ctx.message:fragment({ "fa.ent-info-inventory-presentation", FaUtils.localise_cat_table(parts, ", ") })
 end
 
 ---@param ctx fa.Info.EntInfoContext
@@ -814,6 +852,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    run_handler(ent_info_character)
    run_handler(ent_info_character_corpse)
    run_handler(ent_info_container)
+   run_handler(ent_info_fluid_contents)
    run_handler(ent_info_logistic_network)
    run_handler(ent_info_infinity_pipe)
    run_handler(ent_info_pipe_shape)
