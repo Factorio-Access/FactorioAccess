@@ -34,6 +34,7 @@ local Rails = require("scripts.rails")
 local ResourceMining = require("scripts.resource-mining")
 local TH = require("scripts.table-helpers")
 local Trains = require("scripts.trains")
+local Wires = require("scripts.wires")
 
 local mod = {}
 
@@ -810,6 +811,81 @@ local function ent_info_fluid_connections(ctx)
    present("fa.ent-info-fluid-connections-bidirectional", bidirectionals)
 end
 
+-- "connects to small electric pole x east, y northwest"
+---@param ctx fa.Info.EntInfoContext
+local function ent_info_pole_neighbors(ctx)
+   if ctx.ent.type ~= "electric-pole" then return end
+
+   local neighbors = {}
+
+   Wires.call_on_connectors(ctx.ent, defines.wire_type.copper, function(_, conn)
+      ---@type LuaEntity
+      local other = conn.target.owner
+      local n, q = other.name, other.quality.name
+      neighbors[n] = neighbors[n] or {}
+      neighbors[n][q] = neighbors[n][q] or {}
+      table.insert(neighbors[n][q], other)
+      return true
+   end)
+
+   print(serpent.line(neighbors))
+
+   if not next(neighbors) then
+      ctx.message:fragment({ "fa.ent-info-electrical-connections-nothing" })
+      return
+   end
+
+   -- Now we have grouped entities. We must convert that to strings. To do so,
+   -- sort by distance then direction, to get something consistently ordered...
+   for t, quals in pairs(neighbors) do
+      for q, ents in pairs(quals) do
+         table.sort(ents, function(a, b)
+            local a_dist = FaUtils.distance(a.position, ctx.cursor_pos)
+            local b_dist = FaUtils.distance(b.position, ctx.cursor_pos)
+            if a_dist < b_dist then return true end
+            -- We want the 8-way direction here, as there is little point in
+            -- reporting 16-way for poles.
+            local a_dir = FaUtils.get_direction_biased(a.position, ctx.cursor_pos)
+            local b_dir = FaUtils.get_direction_biased(b.position, ctx.cursor_pos)
+            return a_dir < b_dir
+         end)
+      end
+   end
+
+   -- For now, we don't care about quality sorting.
+   local will_announce = {}
+   for n, quals in pairs(neighbors) do
+      local proto = prototypes.entity[n]
+      local pname = Localising.get_localised_name_with_fallback(proto)
+
+      for q, ents in pairs(quals) do
+         local intro = pname
+         if q ~= "normal" then
+            intro = FaUtils.spacecat(Localising.get_localised_name_with_fallback(prototypes.quality[q]), pname)
+         end
+
+         local ent_parts = {}
+         for _, e in pairs(ents) do
+            table.insert(ent_parts, {
+               "fa.dir-dist",
+               FaUtils.direction_lookup(FaUtils.get_direction_biased(e.position, ctx.cursor_pos)),
+               FaUtils.distance(ctx.cursor_pos, e.position),
+            })
+         end
+
+         table.insert(
+            will_announce,
+            { "fa.ent-info-electrical-connections-sublist", intro, FaUtils.localise_cat_table(ent_parts, ", ") }
+         )
+      end
+   end
+
+   ctx.message:fragment({
+      "fa.ent-info-electrical-connections-connected-to",
+      FaUtils.localise_cat_table(will_announce, ", "),
+   })
+end
+
 --Outputs basic entity info, usually called when the cursor selects an entity.
 ---@param ent LuaEntity
 ---@return LocalisedString
@@ -853,6 +929,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    end
 
    run_handler(ent_info_facing, true)
+   run_handler(ent_info_pole_neighbors, true)
 
    run_handler(ent_info_resource)
    run_handler(ent_info_ghost)

@@ -796,7 +796,7 @@ local read_tile_inner
 --Reads the cursor tile and reads out the result. If an entity is found, its ent info is read. Otherwise info about the tile itself is read.
 function read_tile(pindex, start_text)
    local res = read_tile_inner(pindex)
-   if start_text then table.insert(res, 1, start_text) end
+   if start_text then table.insert(res, 2, start_text) end
    printout(fa_utils.localise_cat_table(res), pindex)
 end
 
