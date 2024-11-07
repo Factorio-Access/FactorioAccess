@@ -173,7 +173,7 @@ local function ent_info_power_production(ctx)
       local power2 = ent.prototype.get_max_energy_production(ent.quality) * 60
       local power_load_pct = math.ceil(power1 / power2 * 100)
       if power2 ~= nil then
-         ctx.message:fragment(FaUtils.localise_cat_table({ "fa.ent-info-generator-load", power_load_pct })):fragment({
+         ctx.message:fragment({ "fa.ent-info-generator-load", power_load_pct }):fragment({
             "fa.ent-info-generator-production",
             Electrical.get_power_string(power1),
             Electrical.get_power_string(power2),
