@@ -9,6 +9,7 @@ the mod to be silent.
 local Fluids = require("scripts.fluids")
 local FaUtils = require("scripts.fa-utils")
 local TH = require("scripts.table-helpers")
+local TransportBelts = require("scripts.transport-belts")
 local Wires = require("scripts.wires")
 
 local mod = {}
@@ -63,10 +64,12 @@ function cmd_fac(cmd)
    environment.printout = function(arg, pindex)
       print_override(arg, "for pindex", pindex)
    end
+
    environment.FaUtils = FaUtils
    environment.Fluids = Fluids
    environment.TableHelpers = TH
    environment.TH = TH
+   environment.TransportBelts = TransportBelts
    environment.Wires = Wires
 
    local chunk, err = load(with_return, "=(load)", "t", environment)

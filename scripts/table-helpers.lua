@@ -202,4 +202,90 @@ function mod.map(tab, func)
    return copy
 end
 
+--[[
+Take an array, 3 functions which unpack it.  Unroll that into a table of
+func1->func2->count, where func1 and func2 are the results of the first two
+functions.  To make this convenient, consider field-ref.
+
+This is useful because it can take (for example) a transport line's detailed
+contents, which has quality and prototypes, and roll that up into a
+prototype->quality->count table.
+]]
+---@param input any[]
+---@param func1 fun(any): any
+---@param func2 fun(any): any
+---@param func3 fun(any): number
+---@return table<any, table<any, number>>
+function mod.rollup2(input, func1, func2, func3)
+   local counts = mod.defaulting_table()
+
+   for i = 1, #input do
+      local item = input[i]
+      local k1 = func1(item)
+      local k2 = func2(item)
+      local c = func3(item)
+      local c2 = counts[k1]
+      c2[k2] = (c2[k2] or 0) + c
+   end
+
+   setmetatable(counts, nil)
+   return counts
+end
+
+-- Given a two-level nested table, count the keys in both. Useful on e.g.
+-- prototype->quality->count.  Is *not* a sum.
+---@param table table<any, table<any, any>>
+function mod.length2(table)
+   local res = 0
+
+   for _, v in pairs(table) do
+      res = res + table_size(v)
+   end
+
+   return res
+end
+
+local function default_tiebreaker2(k1_1, k1_2, k2_1, k2_2)
+   return (k1_1 < k2_1) or (k1_1 == k2_1 and k1_2 < k2_2)
+end
+--[[
+Given a 2-level nested table of counts, return the maximum pair of keys; if the
+table is empty return nil, nil, 0.  Break ties by comparing keys and grabbing
+the "greatest" pair, or, if a function is provided as the second argument,
+calling that function with 4 values to find out if the first two values are less
+than the second two (e.g. like sort, but with 4 arguments).
+]]
+---@param table table<any, table<any, number>>
+---@param tiebreaker fun(any, any, any, any): boolean
+---@return any?, any?, number
+function mod.max_counts2(table, tiebreaker)
+   local max_k1, max_k2
+   local max_count = -math.huge
+
+   tiebreaker = tiebreaker or default_tiebreaker2
+
+   for k1, v in pairs(table) do
+      for k2, count in pairs(v) do
+         if count >= max_count and (not max_k1 or not tiebreaker(max_k1, max_k2, k1, k2)) then
+            max_count = count
+            max_k1 = k1
+            max_k2 = k2
+         end
+      end
+   end
+
+   return max_k1, max_k2, max_k1 and max_count or 0
+end
+
+-- A tiebreaker for max_counts2 that assumes that the inner table is quality,
+-- and tiebreaks based on level of quality first.
+function mod.max_counts2_tiebreak_quality(name1, qual1, name2, qual2)
+   local lev1 = -prototypes.quality[qual1].level
+   local lev2 = -prototypes.quality[qual2].level
+
+   if lev1 < lev2 then return true end
+
+   return lev1 == lev2 and name1 < name2
+end
+
 return mod

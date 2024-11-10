@@ -17,7 +17,7 @@ stuff.
 local dirs = defines.direction
 local util = require("util")
 
-local Belts = require("scripts.transport-belts")
+local TransportBelts = require("scripts.transport-belts")
 local BotLogistics = require("scripts.worker-robots")
 local BuildingTools = require("scripts.building-tools")
 local Circuits = require("scripts.circuit-networks")
@@ -674,7 +674,7 @@ end
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_splitter_states(ctx)
    local ent = ctx.ent
-   if ent.type == "splitter" then ctx.message:fragment(Belts.splitter_priority_info(ent)) end
+   if ent.type == "splitter" then ctx.message:fragment(TransportBelts.splitter_priority_info(ent)) end
 end
 
 ---@param ctx fa.Info.EntInfoContext
@@ -886,6 +886,60 @@ local function ent_info_pole_neighbors(ctx)
    })
 end
 
+---@param ctx fa.Info.EntInfoContext
+local function ent_info_belt_contents(ctx)
+   if ctx.ent.type ~= "transport-belt" then return end
+
+   local node = TransportBelts.Node.create(ctx.ent)
+
+   local found_items = false
+
+   for _, side in pairs({ defines.transport_line.left_line, defines.transport_line.right_line }) do
+      local is_full = node:is_line_full(side)
+      local carries = node:carries_heuristic(side, 5)
+      local carries_exact = carries.distance == 0
+      local best_name, best_qual = TH.max_counts2(carries.results, TH.max_counts2_tiebreak_quality)
+      local count = TH.length2(carries.results)
+
+      if best_name then
+         found_items = true
+         ctx.message:fragment({
+            side == defines.transport_line.left_line and "fa.ent-info-transport-belt-left"
+               or "fa.ent-info-transport-belt-right",
+         })
+
+         local item_str = Localising.get_localised_name_with_fallback(prototypes.item[best_name])
+
+         if best_qual ~= "normal" then
+            item_str = {
+               "fa.item-with-quality",
+               item_str,
+               Localising.get_localised_name_with_fallback(prototypes.quality[best_qual]),
+            }
+         end
+
+         if count > 1 then item_str = { "fa.ent-info-transport-belt-multi-item", item_str, count - 1 } end
+
+         if carries.distance == 0 then
+            ctx.message:fragment({
+               "fa.ent-info-transport-belt-carrying",
+               Localising.get_localised_name_with_fallback(prototypes.item[best_name]),
+            })
+         elseif carries.distance < 0 then
+            ctx.message:fragment({ "fa.ent-info-transport-belt-carrying-upstream", item_str, -carries.distance })
+         elseif carries.distance > 0 then
+            ctx.message:fragment({ "fa.ent-info-transport-belt-carrying-downstream", item_str, carries.distance })
+         end
+
+         if node:is_line_full(side) then ctx.message:fragment({ "fa.ent-info-transport-full" }) end
+
+         ctx.message:list_item()
+      end
+   end
+
+   if not found_items then ctx.message:fragment({ "fa.ent-info-transport-belt-empty" }) end
+end
+
 --Outputs basic entity info, usually called when the cursor selects an entity.
 ---@param ent LuaEntity
 ---@return LocalisedString
@@ -956,44 +1010,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    run_handler(ent_info_power_production)
    run_handler(ent_info_underground_belt_connection)
    run_handler(ent_info_splitter_states)
-
-   if ent.type == "transport-belt" then
-      --Check whether items on the belt are stopped or moving (based on whether you can insert at the back of the belt)
-      local left = ent.get_transport_line(1)
-      local right = ent.get_transport_line(2)
-
-      local left_dir = "left"
-      local right_dir = "right"
-      if ent.direction == dirs.north then
-         left_dir = FaUtils.direction_lookup(dirs.west) or "left"
-         right_dir = FaUtils.direction_lookup(dirs.east) or "right"
-      elseif ent.direction == dirs.east then
-         left_dir = FaUtils.direction_lookup(dirs.north) or "left"
-         right_dir = FaUtils.direction_lookup(dirs.south) or "right"
-      elseif ent.direction == dirs.south then
-         left_dir = FaUtils.direction_lookup(dirs.east) or "left"
-         right_dir = FaUtils.direction_lookup(dirs.west) or "right"
-      elseif ent.direction == dirs.west then
-         left_dir = FaUtils.direction_lookup(dirs.south) or "left"
-         right_dir = FaUtils.direction_lookup(dirs.north) or "right"
-      end
-
-      local insert_spots_left = 0
-      local insert_spots_right = 0
-      if not left.can_insert_at_back() and right.can_insert_at_back() then
-         ctx.message:fragment(left_dir)
-         ctx.message:fragment("lane full,")
-      elseif left.can_insert_at_back() and not right.can_insert_at_back() then
-         ctx.message:fragment(",")
-         ctx.message:fragment(right_dir)
-         ctx.message:fragment("lane full,")
-      elseif not left.can_insert_at_back() and not right.can_insert_at_back() then
-         ctx.message:fragment(", both lanes full,")
-      else
-         ctx.message:fragment(", both lanes open,")
-      end
-   end
-
+   run_handler(ent_info_belt_contents)
    run_handler(ent_info_cargo_wagon)
    run_handler(ent_info_radar)
 
