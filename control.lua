@@ -345,7 +345,7 @@ function read_hand(pindex)
          local build_entity = cursor_stack.prototype.place_result
          if build_entity and build_entity.supports_direction then
             table.insert(out, 1)
-            table.insert(out, { "fa.facing-direction", players[pindex].building_direction })
+            table.insert(out, { "fa.facing-direction", fa_utils.direction_lookup(players[pindex].building_direction) })
          else
             table.insert(out, 0)
             table.insert(out, "")
@@ -366,7 +366,7 @@ function read_hand(pindex)
       local build_entity = cursor_ghost.place_result
       if build_entity and build_entity.supports_direction then
          table.insert(out, 1)
-         table.insert(out, { "fa.facing-direction", players[pindex].building_direction })
+         table.insert(out, { "fa.facing-direction", fa_utils.direction_lookup(players[pindex].building_direction) })
       else
          table.insert(out, 0)
          table.insert(out, "")
