@@ -776,20 +776,30 @@ local function ent_info_fluid_connections(ctx)
          buckets[f] = buckets[f] or {}
          buckets[f][dist] = buckets[f][dist] or {}
 
-         print(serpent.line(c))
-         table.insert(buckets[f][dist], realdir)
+         table.insert(buckets[f][dist], {
+            direction = realdir,
+            type = c.raw.connection_type,
+         })
       end
 
-      print(serpent.line(buckets))
       for fluid, distdirs in pairs(buckets) do
          for dist, dirs in pairs(distdirs) do
             table.sort(dirs, function(a, b)
-               return a < b
+               return a.direction < b.direction
             end)
 
             local dirparts = {}
-            for _, dir in pairs(dirs) do
-               table.insert(dirparts, FaUtils.direction_lookup(dir))
+            for _, dirinfo in pairs(dirs) do
+               local dir = dirinfo.direction
+               local type = dirinfo.type
+               if type == "underground" then
+                  table.insert(
+                     dirparts,
+                     { "fa.ent-info-fluid-connections-via-underground-not-connected", FaUtils.direction_lookup(dir) }
+                  )
+               else
+                  table.insert(dirparts, FaUtils.direction_lookup(dir))
+               end
             end
 
             local dirlist = FaUtils.localise_cat_table(dirparts, ", ")
