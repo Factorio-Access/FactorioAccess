@@ -135,6 +135,7 @@ function mod.get_connection_points(ent)
          local c = conns[j]
          local sx = math.floor(c.position.x) + 0.5
          local sy = math.floor(c.position.y) + 0.5
+
          local tx = math.floor(c.target_position.x) + 0.5
          local ty = math.floor(c.target_position.y) + 0.5
          local out_dir
@@ -153,8 +154,9 @@ function mod.get_connection_points(ent)
          -- For underground and linked connections, the game does not report the
          -- position of the other side directly and instead yields the position
          -- of the fluidbox in this entity, e.g. c.position==c.target.  We have
-         -- to look at the other side indirectly.
-         if c.connection_type ~= "normal" then
+         -- to look at the other side indirectly. Careful: if there is no other
+         -- side yet, we can't know.
+         if c.connection_type ~= "normal" and c.target then
             local other_pos =
                c.target.get_pipe_connections(c.target_fluidbox_index)[c.target_pipe_connection_index].position
             distance_in_tiles = math.ceil(FaUtils.distance(c.position, other_pos))
