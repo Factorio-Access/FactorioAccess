@@ -739,7 +739,7 @@ end
 
 function mod.get_bp_book_data_for_edit(stack)
    ---@diagnostic disable-next-line: param-type-mismatch
-   return helpers.json_to_table(game.decode_string(string.sub(stack.export_stack(), 2)))
+   return helpers.json_to_table(helpers.decode_string(string.sub(stack.export_stack(), 2)))
 end
 
 --We run the export rarely because it eats UPS
