@@ -127,8 +127,8 @@ end
 
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_facing(ctx)
-   local effective_direction
    local ent = ctx.ent
+   local effective_direction
    -- Set in the case where we detect symmetry.
    local secondary_effective_direction
 
@@ -139,14 +139,14 @@ local function ent_info_facing(ctx)
       effective_direction = FaUtils.direction_lookup(ent.direction)
       if ent.type == "generator" then
          --For steam engines and steam turbines, north = south and east = west
-         secondary_direction = FaUtils.direction_lookup(FaUtils.rotate_180(ent.direction))
+         secondary_effective_direction = FaUtils.direction_lookup(FaUtils.rotate_180(ent.direction))
       end
    elseif ent.type == "locomotive" or ent.type == "car" then
       effective_direction = (FaUtils.get_heading_info(ent))
    end
 
-   if effective_direction and secondary_direction then
-      ctx.message:fragment({ "fa.ent-info-facing-symmetric", effective_direction, secondary_direction })
+   if effective_direction and secondary_effective_direction then
+      ctx.message:fragment({ "fa.ent-info-facing-symmetric", effective_direction, secondary_effective_direction })
    elseif effective_direction then
       ctx.message:fragment({ "fa.ent-info-facing", effective_direction })
    end
@@ -779,6 +779,7 @@ local function ent_info_fluid_connections(ctx)
          table.insert(buckets[f][dist], {
             direction = realdir,
             type = c.raw.connection_type,
+            has_other_side = c.raw.target,
          })
       end
 
@@ -792,7 +793,7 @@ local function ent_info_fluid_connections(ctx)
             for _, dirinfo in pairs(dirs) do
                local dir = dirinfo.direction
                local type = dirinfo.type
-               if type == "underground" then
+               if type == "underground" and dirinfo.has_other_side then
                   table.insert(
                      dirparts,
                      { "fa.ent-info-fluid-connections-via-underground-not-connected", FaUtils.direction_lookup(dir) }

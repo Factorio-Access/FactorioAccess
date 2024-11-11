@@ -600,6 +600,7 @@ end
 
 --Prints a string to the Factorio Access Launcher app for the vocalizer to read out.
 function printout(str, pindex)
+   print(serpent.line(str))
    if pindex ~= nil and pindex > 0 then
       players[pindex].last = str
    else
