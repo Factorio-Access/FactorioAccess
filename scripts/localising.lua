@@ -153,4 +153,84 @@ function mod.get_localised_name_with_fallback(what)
    assert(what.name)
    return { "?", what.localised_name, what.name }
 end
+
+-- Marker to say "other item" in localise_item.
+mod.ITEM_OTHER = {}
+
+---@class fa.Localising.LocaliseItemOpts
+---@field item LuaItemPrototype | string | `mod.ITEM_OTHER`
+---@field quality (LuaQualityPrototype|string)?
+---@field count number?
+
+--[[
+Localise an item, possibly with count and quality.
+
+This function can take two things.  An LuaItemStack, or a table with 3 keys:
+item, quality, and count.  In that table, item and quality may either be a
+string or a LuaXXXPrototype.  It:
+
+- For the case of stacks, "transport belt X 50" or (for non-normal quality)
+  "legendary transport belt X 50".
+- For the case of the table, announce item with (if present and non-normal)
+  quality and (if present) count.  That is, leaving stuff out is how you prevent
+  it being announced.
+
+for the case of "and 5 other items" you may use mod.ITEM_OTHER in place of the
+item.
+]]
+---@param what LuaItemStack | fa.Localising.LocaliseItemOpts
+---@returns LocalisedString
+function mod.localise_item(what)
+   ---@type fa.Localising.LocaliseItemOpts
+   local final_opts
+
+   if type(what) == "userdata" then
+      ---@type LuaItemStack
+      local stack = what --[[@as LuaItemStack ]]
+      assert(stack.object_name() == "LuaItemStack")
+
+      final_opts = {
+         item = stack.prototype,
+         quality = stack.quality,
+         count = stack.count,
+      }
+   else
+      if what.item == mod.ITEM_OTHER then
+         assert(what.count, "it does not make sense to ask to localise ITEM_OTHER without also giving a count")
+         return { "fa.item-other", what.count }
+      end
+
+      final_opts = what
+   end
+
+   local quality = final_opts.quality
+   local item = final_opts.item
+   local count = final_opts.count
+
+   local item_proto, quality_proto
+
+   if type(item) == "string" then
+      item = prototypes.item[item]
+   elseif item then
+      item_proto = item
+   end
+   assert(item, "unable to find item")
+
+   if quality and type(quality) == "string" then
+      quality_proto = prototypes.quality[quality]
+   elseif quality then
+      quality_proto = quality --[[@as LuaQualityPrototype ]]
+   else
+      quality_proto = prototypes.quality["normal"]
+   end
+   assert((not quality) or quality_proto)
+
+   local item_str = mod.get_localised_name_with_fallback(item_proto)
+   local quality_str = mod.get_localised_name_with_fallback(quality_proto)
+   local has_quality = (quality and quality.name ~= "normal") and 1 or 0
+   local has_count = count and 1 or 0
+
+   return { "fa.item-quantity-quality", item_str, has_quality, quality_str, has_count, count }
+end
+
 return mod

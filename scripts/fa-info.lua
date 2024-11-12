@@ -17,6 +17,7 @@ stuff.
 local dirs = defines.direction
 local util = require("util")
 
+local F = require("scripts.field-ref")
 local TransportBelts = require("scripts.transport-belts")
 local BotLogistics = require("scripts.worker-robots")
 local BuildingTools = require("scripts.building-tools")
@@ -66,14 +67,7 @@ local function present_inventory(ent, inventory, truncate)
    local contents_unrolled = inv.get_contents()
    local contents = {}
 
-   for i = 1, #contents_unrolled do
-      local c = contents_unrolled[i]
-      local qual = c.quality
-      local count = c.count
-      local name = c.name
-      contents[name] = contents[name] or {}
-      contents[name][qual] = (contents[name][qual] or 0) + count
-   end
+   contents = TH.rollup2(contents_unrolled, F.name().get, F.quality().get, F.count().get)
 
    -- Now that everything is together we must unroll it again, then sort.
    ---@type ({ count: number, item: LuaItemPrototype, quality: LuaQualityPrototype })[]
@@ -108,21 +102,16 @@ local function present_inventory(ent, inventory, truncate)
    local entries = {}
    for i = 1, endpoint do
       local e = final[i]
-      local istring = Localising.get_localised_name_with_fallback(e.item)
-      if e.quality.name ~= "normal" then
-         istring = { "", istring, " ", Localising.get_localised_name_with_fallback(e.quality) }
-      end
 
-      table.insert(entries, { "fa.ent-info-inventory-entry", istring, e.count })
+      table.insert(entries, Localising.localise_item({ item = e.item, quality = e.quality, count = e.count }))
    end
-
-   local joined = FaUtils.localise_cat_table(entries, ", ")
 
    if extra then
-      return { "fa.ent-info-inventory-presentation-truncated", joined, #final - truncate }
-   else
-      return { "fa.ent-info-inventory-presentation", joined }
+      table.insert(entries, Localising.localise_item({ item = Localising.ITEM_OTHER, count = #final - truncate }))
    end
+   local joined = FaUtils.localise_cat_table(entries, ", ")
+
+   return { "fa.ent-info-inventory-presentation", joined }
 end
 
 ---@param ctx fa.Info.EntInfoContext
