@@ -65,9 +65,7 @@ local function present_inventory(ent, inventory, truncate)
    end
 
    local contents_unrolled = inv.get_contents()
-   local contents = {}
-
-   contents = TH.rollup2(contents_unrolled, F.name().get, F.quality().get, F.count().get)
+   local contents = TH.rollup2(contents_unrolled, F.name().get, F.quality().get, F.count().get)
 
    -- Now that everything is together we must unroll it again, then sort.
    ---@type ({ count: number, item: LuaItemPrototype, quality: LuaQualityPrototype })[]
