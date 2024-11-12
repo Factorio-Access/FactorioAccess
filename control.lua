@@ -600,6 +600,7 @@ end
 
 --Prints a string to the Factorio Access Launcher app for the vocalizer to read out.
 function printout(str, pindex)
+   print(serpent.line(str))
    if pindex ~= nil and pindex > 0 then
       players[pindex].last = str
    else
@@ -5545,7 +5546,7 @@ function do_multi_stack_transfer(ratio, pindex)
          local listed_count = 0
          for name, amount in pairs(moved) do
             if listed_count <= 5 then
-               table.insert(item_list, { "fa.item-quantity", prototypes.item[name].localised_name, amount })
+               table.insert(item_list, fa_localising.localise_item({ item = name, count = amount }))
                table.insert(item_list, ", ")
             else
                other_items = other_items + amount
@@ -5553,7 +5554,10 @@ function do_multi_stack_transfer(ratio, pindex)
             listed_count = listed_count + 1
          end
          if other_items > 0 then
-            table.insert(item_list, { "fa.item-quantity", "other items", other_items }) --***todo localize "other items
+            table.insert(
+               item_list,
+               fa_localising.localise_item({ item = fa_localising.ITEM_OTHER, count = other_items })
+            )
             table.insert(item_list, ", ")
          end
          --trim traling comma off
@@ -5589,7 +5593,7 @@ function do_multi_stack_transfer(ratio, pindex)
             local listed_count = 0
             for name, amount in pairs(moved) do
                if listed_count <= 5 then
-                  table.insert(item_list, { "fa.item-quantity", prototypes.item[name].localised_name, amount })
+                  table.insert(item_list, fa_localising.localise_item({ item = name, count = amount }))
                   table.insert(item_list, ", ")
                else
                   other_items = other_items + amount
@@ -5597,7 +5601,10 @@ function do_multi_stack_transfer(ratio, pindex)
                listed_count = listed_count + 1
             end
             if other_items > 0 then
-               table.insert(item_list, { "fa.item-quantity", "other items", other_items }) --***todo localize "other items
+               table.insert(
+                  item_list,
+                  fa_localising.localise_item({ item = fa_localising.ITEM_OTHER, count = other_items })
+               )
                table.insert(item_list, ", ")
             end
             --trim trailing comma off
