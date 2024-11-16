@@ -10,11 +10,11 @@ local mod = {}
 --Shows a GUI to demonstrate different sprites from the game files.
 function mod.show_sprite_demo(pindex)
    --Set these 5 sprites to sprites that you want to demo
-   local sprite1 = "item-group.intermediate-products"
-   local sprite2 = "item-group.effects"
-   local sprite3 = "item-group.environment"
-   local sprite4 = "item-group.other"
-   local sprite5 = "item.iron-gear-wheel"
+   local sprite1 = "utility.add"
+   local sprite2 = "utility.cable_editor_icon"
+   local sprite3 = "utility.center"
+   local sprite4 = "utility.change_recipe"
+   local sprite5 = "utility.bookmark"
    --Let the gunction do the rest. Clear it with CTRL + ALT + R
    local player = players[pindex]
    local p = game.get_player(pindex)
@@ -57,6 +57,7 @@ function mod.update_menu_visuals()
          elseif player.menu == "inventory" then
             mod.update_overhead_sprite("item.wooden-chest", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite("item.wooden-chest", 3, pindex)
+            mod.show_sprite_demo(pindex) --todo delete this 
             if players[pindex].vanilla_mode then mod.update_custom_GUI_sprite(nil, 1, pindex) end
          elseif player.menu == "crafting" then
             mod.update_overhead_sprite("item.repair-pack", 2, 1.25, pindex)
@@ -71,8 +72,8 @@ function mod.update_menu_visuals()
             mod.update_overhead_sprite("item.pistol", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite("item.pistol", 1, pindex)
          elseif player.menu == "travel" then
-            mod.update_overhead_sprite("utility.downloading_white", 4, 1.25, pindex)
-            mod.update_custom_GUI_sprite("utility.downloading_white", 3, pindex)
+            mod.update_overhead_sprite("utility.bookmark", 3, 1.25, pindex)
+            mod.update_custom_GUI_sprite("utility.bookmark", 3, pindex)
          elseif player.menu == "warnings" then
             mod.update_overhead_sprite("utility.warning_white", 4, 1.25, pindex)
             mod.update_custom_GUI_sprite("utility.warning_white", 3, pindex)
