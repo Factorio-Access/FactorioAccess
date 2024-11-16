@@ -662,9 +662,9 @@ function toggle_cursor_mode(pindex, muted)
       --Update cursor highlight
       local ent = get_first_ent_at_tile(pindex)
       if ent and ent.valid then
-         --fa_graphics.draw_cursor_highlight(pindex, ent, nil)
+         fa_graphics.draw_cursor_highlight(pindex, ent, nil)
       else
-         --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+         fa_graphics.draw_cursor_highlight(pindex, nil, nil)
       end
    else
       local left_top = {
@@ -730,7 +730,7 @@ function jump_to_player(pindex)
    players[pindex].cursor_pos.y = math.floor(first_player.position.y) + 0.5
    read_coords(pindex, "Cursor returned ")
    if players[pindex].cursor_size < 2 then
-      --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+      fa_graphics.draw_cursor_highlight(pindex, nil, nil)
    else
       local scan_left_top = {
          math.floor(players[pindex].cursor_pos.x) - players[pindex].cursor_size,
@@ -740,7 +740,7 @@ function jump_to_player(pindex)
          math.floor(players[pindex].cursor_pos.x) + players[pindex].cursor_size + 1,
          math.floor(players[pindex].cursor_pos.y) + players[pindex].cursor_size + 1,
       }
-      --fa_graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
+      fa_graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
    end
 end
 
@@ -822,11 +822,11 @@ read_tile_inner = function(pindex, start_text)
          --Identify shores and crevices and so on for water tiles
          table.insert(result, fa_utils.identify_water_shores(pindex))
       end
-      --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+      fa_graphics.draw_cursor_highlight(pindex, nil, nil)
       game.get_player(pindex).selected = nil
    else --laterdo tackle the issue here where entities such as tree stumps block preview info
       table.insert(result, fa_info.ent_info(pindex, ent))
-      --fa_graphics.draw_cursor_highlight(pindex, ent, nil)
+      fa_graphics.draw_cursor_highlight(pindex, ent, nil)
       game.get_player(pindex).selected = ent
 
       --game.get_player(pindex).print(result)--
@@ -1418,7 +1418,7 @@ script.on_event(defines.events.on_player_changed_position, function(event)
             or (p.surface.can_place_entity({ name = "character", position = players[pindex].cursor_pos }) == false)
          )
       then
-         --fa_graphics.draw_cursor_highlight(pindex, ent, nil)
+         fa_graphics.draw_cursor_highlight(pindex, ent, nil)
          if p.driving then return end
 
          if
@@ -1426,17 +1426,17 @@ script.on_event(defines.events.on_player_changed_position, function(event)
             and ent.valid
             and (p.character == nil or (p.character ~= nil and p.character.unit_number ~= ent.unit_number))
          then
-            --fa_graphics.draw_cursor_highlight(pindex, ent, nil)
+            fa_graphics.draw_cursor_highlight(pindex, ent, nil)
             p.selected = ent
             p.play_sound({ path = "Close-Inventory-Sound", volume_modifier = 0.75 })
          else
-            --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+            fa_graphics.draw_cursor_highlight(pindex, nil, nil)
             p.selected = nil
          end
 
          read_tile(pindex)
       else
-         --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+         fa_graphics.draw_cursor_highlight(pindex, nil, nil)
          p.selected = nil
       end
       --Play a sound for audio ruler alignment (smooth walk)
@@ -2589,9 +2589,9 @@ function move(direction, pindex, nudged)
    --Update cursor highlight
    local ent = get_first_ent_at_tile(pindex)
    if ent and ent.valid then
-      --fa_graphics.draw_cursor_highlight(pindex, ent, nil)
+      fa_graphics.draw_cursor_highlight(pindex, ent, nil)
    else
-      --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+      fa_graphics.draw_cursor_highlight(pindex, nil, nil)
    end
 
    return moved_success
@@ -2686,9 +2686,9 @@ function cursor_mode_move(direction, pindex, single_only)
       --Update cursor highlight
       local ent = get_first_ent_at_tile(pindex)
       if ent and ent.valid then
-         --fa_graphics.draw_cursor_highlight(pindex, ent, nil)
+         fa_graphics.draw_cursor_highlight(pindex, ent, nil)
       else
-         --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+         fa_graphics.draw_cursor_highlight(pindex, nil, nil)
       end
    else
       -- Larger cursor sizes: scan area
@@ -2946,7 +2946,7 @@ script.on_event("cursor-bookmark-load", function(event)
    local pos = players[pindex].cursor_bookmark
    if pos == nil or pos.x == nil or pos.y == nil then return end
    players[pindex].cursor_pos = pos
-   --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+   fa_graphics.draw_cursor_highlight(pindex, nil, nil)
    fa_graphics.sync_build_cursor_graphics(pindex)
    printout("Loaded cursor bookmark at " .. math.floor(pos.x) .. ", " .. math.floor(pos.y), pindex)
    game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" })
@@ -3005,7 +3005,7 @@ script.on_event("teleport-to-alert-forced", function(event)
    players[pindex].cursor_pos = game.get_player(pindex).position
    players[pindex].position = game.get_player(pindex).position
    players[pindex].last_damage_alert_pos = game.get_player(pindex).position
-   --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+   fa_graphics.draw_cursor_highlight(pindex, nil, nil)
    fa_graphics.sync_build_cursor_graphics(pindex)
    refresh_player_tile(pindex)
 end)
@@ -4681,7 +4681,7 @@ script.on_event("click-menu", function(event)
             if ent ~= nil and ent.valid then
                players[pindex].cursor = true
                players[pindex].cursor_pos = fa_utils.center_of_tile(ent.position)
-               --fa_graphics.draw_cursor_highlight(pindex, ent, nil)
+               fa_graphics.draw_cursor_highlight(pindex, ent, nil)
                fa_graphics.sync_build_cursor_graphics(pindex)
                printout({
                   "fa.teleported-cursor-to",
@@ -6363,7 +6363,7 @@ script.on_event("pipette-tool-info", function(event)
       end
       if players[pindex].cursor then players[pindex].cursor_pos = fa_utils.get_ent_northwest_corner_position(ent) end
       fa_graphics.sync_build_cursor_graphics(pindex)
-      --fa_graphics.draw_cursor_highlight(pindex, ent, nil, nil)
+      fa_graphics.draw_cursor_highlight(pindex, ent, nil, nil)
    end
 end)
 
@@ -7876,7 +7876,7 @@ function jump_cursor_to_typed_coordinates(result, pindex)
       if valid_coords then
          players[pindex].cursor_pos = fa_utils.center_of_tile({ x = new_x + 0.01, y = new_y + 0.01 })
          printout("Cursor jumped to " .. new_x .. ", " .. new_y, pindex)
-         --fa_graphics.draw_cursor_highlight(pindex)
+         fa_graphics.draw_cursor_highlight(pindex)
          fa_graphics.sync_build_cursor_graphics(pindex)
       else
          printout("Invalid input", pindex)
