@@ -47,6 +47,47 @@ function mod.offset_position_legacy(oldpos, direction, distance)
    end
 end
 
+--Offsets a position in a cardinal direction by a given distance
+function mod.offset_position_cardinal(oldpos, direction, distance)
+   if direction == defines.direction.north then
+      return { x = oldpos.x, y = oldpos.y - distance }
+   elseif direction == defines.direction.south then
+      return { x = oldpos.x, y = oldpos.y + distance }
+   elseif direction == defines.direction.east then
+      return { x = oldpos.x + distance, y = oldpos.y }
+   elseif direction == defines.direction.west then
+      return { x = oldpos.x - distance, y = oldpos.y }
+   else
+      game.print("Error: Unsupported direction for offset request.")
+      return nil --We want incorrect uses to crash
+   end
+end
+
+--Gives the neighboring tile for each direction. Half diagonals are rounded to full diagonals.
+function mod.to_neighboring_tile(pos, facing_direction)
+   local dir = facing_direction
+   local dirs = defines.direction
+   if dir == dirs.north then
+      return { x = pos.x, y = pos.y - 1 }
+   elseif dir == dirs.south then
+      return { x = pos.x, y = pos.y + 1 }
+   elseif dir == dirs.east then
+      return { x = pos.x + 1, y = pos.y }
+   elseif dir == dirs.west then
+      return { x = pos.x - 1, y = pos.y }
+   elseif dir == dirs.northnortheast or dir == dirs.northeast or dir == dirs.northeasteast then
+      return { x = pos.x + 1, y = pos.y - 1 }
+   elseif dir == dirs.northnorthwest or dir == dirs.northwest or dir == dirs.northwestwest then
+      return { x = pos.x - 1, y = pos.y - 1 }
+   elseif dir == dirs.southsoutheast or dir == dirs.southeast or dir == dirs.southeasteast then
+      return { x = pos.x + 1, y = pos.y + 1 }
+   elseif dir == dirs.southsouthwest or dir == dirs.southwest or dir == dirs.southwestwest then
+      return { x = pos.x - 1, y = pos.y + 1 }
+   else
+      return pos
+   end
+end
+
 --Reports the direction and distance of one point from another. Biased towards the diagonals.
 function mod.dir_dist(pos1, pos2)
    local x1 = pos1.x
