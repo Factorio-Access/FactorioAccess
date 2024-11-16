@@ -2355,7 +2355,7 @@ function on_tick(event)
       end
    elseif event.tick % 30 == 7 then
       --Update menu visuals
-      --fa_graphics.update_menu_visuals()
+      fa_graphics.update_menu_visuals()
    elseif event.tick % 30 == 8 then
       --Play a sound for any player who is mining
       for pindex, player in pairs(players) do
