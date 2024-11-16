@@ -429,7 +429,7 @@ function mod.draw_cursor_highlight(pindex, ent, box_type, skip_mouse_movement)
    local h_tile = players[pindex].cursor_tile_highlight_box
    if c_pos == nil then return end
    if h_box ~= nil and h_box.valid then h_box.destroy() end
-   if h_tile ~= nil and h_tile.is_valid() then h_tile.destroy() end
+   if h_tile ~= nil and h_tile.valid then h_tile.destroy() end
 
    --Skip drawing if hide cursor is enabled
    if players[pindex].hide_cursor then
