@@ -676,7 +676,7 @@ function toggle_cursor_mode(pindex, muted)
          math.floor(players[pindex].cursor_pos.x) + players[pindex].cursor_size + 1,
          math.floor(players[pindex].cursor_pos.y) + players[pindex].cursor_size + 1,
       }
-      --fa_graphics.draw_large_cursor(left_top, right_bottom, pindex)
+      fa_graphics.draw_large_cursor(left_top, right_bottom, pindex)
    end
 end
 
@@ -2702,7 +2702,7 @@ function cursor_mode_move(direction, pindex, single_only)
          y = math.floor(players[pindex].cursor_pos.y) + players[pindex].cursor_size + 1,
       }
       local scan_summary = fa_info.area_scan_summary_info(pindex, scan_left_top, scan_right_bottom)
-      --fa_graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
+      fa_graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
       printout(scan_summary, pindex)
    end
 
@@ -3060,7 +3060,7 @@ script.on_event("cursor-size-increment", function(event)
          math.floor(players[pindex].cursor_pos.x) + players[pindex].cursor_size + 1,
          math.floor(players[pindex].cursor_pos.y) + players[pindex].cursor_size + 1,
       }
-      --fa_graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
+      fa_graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
    end
 
    --Play Sound
@@ -3098,7 +3098,7 @@ script.on_event("cursor-size-decrement", function(event)
          math.floor(players[pindex].cursor_pos.x) + players[pindex].cursor_size + 1,
          math.floor(players[pindex].cursor_pos.y) + players[pindex].cursor_size + 1,
       }
-      --fa_graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
+      fa_graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
    end
 
    --Play Sound
@@ -6844,7 +6844,7 @@ function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
          math.floor(players[pindex].cursor_pos.x) + players[pindex].cursor_size + 1,
          math.floor(players[pindex].cursor_pos.y) + players[pindex].cursor_size + 1,
       }
-      --fa_graphics.draw_large_cursor(left_top, right_bottom, pindex)
+      fa_graphics.draw_large_cursor(left_top, right_bottom, pindex)
    end
 end
 
