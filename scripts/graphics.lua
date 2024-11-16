@@ -563,7 +563,12 @@ function mod.update_custom_GUI_sprite(sprite, scale_in, pindex, sprite_2)
          s1 = f.add({ type = "sprite", caption = "custom menu" })
          player.custom_GUI_sprite = s1
       end
-      if s1.sprite ~= sprite then s1.sprite = sprite end
+      if s1.sprite ~= sprite then
+         s1.sprite = sprite
+         s1.style.size = 64
+         s1.style.stretch_image_to_widget_size = true
+         player.custom_GUI_sprite = s1
+         end
       --Set the secondary sprite
       if sprite_2 == nil and s2 ~= nil and s2.valid then
          player.custom_GUI_sprite_2.visible = false
@@ -572,7 +577,12 @@ function mod.update_custom_GUI_sprite(sprite, scale_in, pindex, sprite_2)
             s2 = f.add({ type = "sprite", caption = "custom menu" })
             player.custom_GUI_sprite_2 = s2
          end
-         if s2.sprite ~= sprite_2 then s2.sprite = sprite_2 end
+         if s2.sprite ~= sprite_2 then
+            s2.sprite = sprite_2
+            s2.style.size = 48
+            s2.style.stretch_image_to_widget_size = true
+            player.custom_GUI_sprite_2 = s2
+            end
          player.custom_GUI_sprite_2.visible = true
       end
       --If a blueprint is in hand, set the blueprint sprites
