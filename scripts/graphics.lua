@@ -260,7 +260,7 @@ function mod.sync_build_cursor_graphics(pindex)
          surface = game.get_player(pindex).surface,
          players = nil,
       })
-      --rendering.set_visible(player.building_footprint, true)
+      player.building_footprint.visible = true
 
       --Hide the drawing in the desired cases
       if
@@ -270,7 +270,7 @@ function mod.sync_build_cursor_graphics(pindex)
          or stack.name == "fluid-wagon"
          or stack.name == "artillery-wagon"
       then
-         --rendering.set_visible(player.building_footprint, false)
+         player.building_footprint.visible = false
       end
 
       --Move mouse pointer according to building box
