@@ -10,11 +10,14 @@ local mod = {}
 --Shows a GUI to demonstrate different sprites from the game files.
 function mod.show_sprite_demo(pindex)
    --Set these 5 sprites to sprites that you want to demo
-   local sprite1 = "item-group.intermediate-products"
-   local sprite2 = "item-group.effects"
-   local sprite3 = "item-group.environment"
-   local sprite4 = "item-group.other"
-   local sprite5 = "item.iron-gear-wheel"
+   local sprite1 = "utility.decorative_editor_icon"
+   local sprite2 = "item-group.signals"
+   local sprite3 = "utility.select_icon_white"
+   local sprite4 = "utility.white_square"
+   local sprite5 = "utility.editor_selection"
+   --center
+   --bookmark
+
    --Let the gunction do the rest. Clear it with CTRL + ALT + R
    local player = players[pindex]
    local p = game.get_player(pindex)
@@ -71,10 +74,10 @@ function mod.update_menu_visuals()
             mod.update_overhead_sprite("item.pistol", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite("item.pistol", 1, pindex)
          elseif player.menu == "travel" then
-            mod.update_overhead_sprite("utility.downloading_white", 4, 1.25, pindex)
-            mod.update_custom_GUI_sprite("utility.downloading_white", 3, pindex)
+            mod.update_overhead_sprite("utility.downloading", 1.5, 1.25, pindex)
+            mod.update_custom_GUI_sprite("utility.downloading", 3, pindex)
          elseif player.menu == "warnings" then
-            mod.update_overhead_sprite("utility.warning_white", 4, 1.25, pindex)
+            mod.update_overhead_sprite("utility.warning_white", 3, 1.25, pindex)
             mod.update_custom_GUI_sprite("utility.warning_white", 3, pindex)
          elseif player.menu == "rail_builder" then
             mod.update_overhead_sprite("item.rail", 2, 1.25, pindex)
@@ -113,26 +116,23 @@ function mod.update_menu_visuals()
          elseif players[pindex].menu == "building" or players[pindex].menu == "vehicle" then
             if game.get_player(pindex).opened == nil then
                --Open building menu with no GUI
-               mod.update_overhead_sprite("utility.search_white", 2, 1.25, pindex)
-               mod.update_custom_GUI_sprite("utility.search_white", 3, pindex)
+               mod.update_overhead_sprite("utility.search", 2, 1.25, pindex)
+               mod.update_custom_GUI_sprite("utility.search", 3, pindex)
             else
                --A building with a GUI is open
-               mod.update_overhead_sprite("utility.search_white", 2, 1.25, pindex)
+               mod.update_overhead_sprite("utility.search", 2, 1.25, pindex)
                mod.update_custom_GUI_sprite(nil, 1, pindex)
             end
          elseif players[pindex].menu == "building_no_sectors" or players[pindex].menu == "vehicle_no_sectors" then
             if game.get_player(pindex).opened == nil then
                --Open building menu with no GUI
-               mod.update_overhead_sprite("utility.search_white", 2, 1.25, pindex)
-               mod.update_custom_GUI_sprite("utility.search_white", 3, pindex, "utility.questionmark")
+               mod.update_overhead_sprite("utility.search", 2, 1.25, pindex)
+               mod.update_custom_GUI_sprite("utility.search", 3, pindex, "utility.questionmark")
             else
                --A building with a GUI is open
-               mod.update_overhead_sprite("utility.search_white", 2, 1.25, pindex)
+               mod.update_overhead_sprite("utility.search", 2, 1.25, pindex)
                mod.update_custom_GUI_sprite(nil, 1, pindex)
             end
-         elseif player.menu == "structure-travel" then
-            mod.update_overhead_sprite("utility.expand_dots_white", 2, 1.25, pindex)
-            mod.update_custom_GUI_sprite("utility.expand_dots_white", 3, pindex)
          else
             --Other menu type ...
             if player.vanilla_mode then
@@ -260,7 +260,7 @@ function mod.sync_build_cursor_graphics(pindex)
          surface = game.get_player(pindex).surface,
          players = nil,
       })
-      --rendering.set_visible(player.building_footprint, true)
+      player.building_footprint.visible = true
 
       --Hide the drawing in the desired cases
       if
@@ -270,7 +270,7 @@ function mod.sync_build_cursor_graphics(pindex)
          or stack.name == "fluid-wagon"
          or stack.name == "artillery-wagon"
       then
-         --rendering.set_visible(player.building_footprint, false)
+         player.building_footprint.visible = false
       end
 
       --Move mouse pointer according to building box
@@ -429,7 +429,7 @@ function mod.draw_cursor_highlight(pindex, ent, box_type, skip_mouse_movement)
    local h_tile = players[pindex].cursor_tile_highlight_box
    if c_pos == nil then return end
    if h_box ~= nil and h_box.valid then h_box.destroy() end
-   if h_tile ~= nil and h_tile.is_valid() then h_tile.destroy() end
+   if h_tile ~= nil and h_tile.valid then h_tile.destroy() end
 
    --Skip drawing if hide cursor is enabled
    if players[pindex].hide_cursor then
@@ -563,7 +563,12 @@ function mod.update_custom_GUI_sprite(sprite, scale_in, pindex, sprite_2)
          s1 = f.add({ type = "sprite", caption = "custom menu" })
          player.custom_GUI_sprite = s1
       end
-      if s1.sprite ~= sprite then s1.sprite = sprite end
+      if s1.sprite ~= sprite then
+         s1.sprite = sprite
+         s1.style.size = 64
+         s1.style.stretch_image_to_widget_size = true
+         player.custom_GUI_sprite = s1
+      end
       --Set the secondary sprite
       if sprite_2 == nil and s2 ~= nil and s2.valid then
          player.custom_GUI_sprite_2.visible = false
@@ -572,7 +577,12 @@ function mod.update_custom_GUI_sprite(sprite, scale_in, pindex, sprite_2)
             s2 = f.add({ type = "sprite", caption = "custom menu" })
             player.custom_GUI_sprite_2 = s2
          end
-         if s2.sprite ~= sprite_2 then s2.sprite = sprite_2 end
+         if s2.sprite ~= sprite_2 then
+            s2.sprite = sprite_2
+            s2.style.size = 48
+            s2.style.stretch_image_to_widget_size = true
+            player.custom_GUI_sprite_2 = s2
+         end
          player.custom_GUI_sprite_2.visible = true
       end
       --If a blueprint is in hand, set the blueprint sprites

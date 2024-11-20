@@ -307,9 +307,9 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
    --Update cursor highlight (end)
    local ent = game.get_player(pindex).selected
    if ent and ent.valid then
-      --fa_graphics.draw_cursor_highlight(pindex, ent, nil)
+      fa_graphics.draw_cursor_highlight(pindex, ent, nil)
    else
-      --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+      fa_graphics.draw_cursor_highlight(pindex, nil, nil)
    end
 end
 
@@ -550,7 +550,7 @@ function mod.nudge_key(direction, event)
             printout({ "fa.nudged-one-direction", { "fa.direction", direction } }, pindex)
             if players[pindex].cursor then
                players[pindex].cursor_pos = fa_utils.offset_position_legacy(players[pindex].cursor_pos, direction, 1)
-               --fa_graphics.draw_cursor_highlight(pindex, ent, "train-visualization")
+               fa_graphics.draw_cursor_highlight(pindex, ent, "train-visualization")
                --fa_graphics.sync_build_cursor_graphics(pindex)
             end
             if ent.type == "electric-pole" then

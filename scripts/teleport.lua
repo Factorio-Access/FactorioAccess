@@ -158,7 +158,7 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
          --Update cursor after teleport
          players[pindex].cursor_pos = table.deepcopy(new_pos)
          fa_mouse.move_mouse_pointer(fa_utils.center_of_tile(players[pindex].cursor_pos), pindex)
-         --fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+         fa_graphics.draw_cursor_highlight(pindex, nil, nil)
       else
          printout("Teleport Failed", pindex)
          return false
