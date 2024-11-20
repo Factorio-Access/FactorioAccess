@@ -568,7 +568,7 @@ function mod.update_custom_GUI_sprite(sprite, scale_in, pindex, sprite_2)
          s1.style.size = 64
          s1.style.stretch_image_to_widget_size = true
          player.custom_GUI_sprite = s1
-         end
+      end
       --Set the secondary sprite
       if sprite_2 == nil and s2 ~= nil and s2.valid then
          player.custom_GUI_sprite_2.visible = false
@@ -582,7 +582,7 @@ function mod.update_custom_GUI_sprite(sprite, scale_in, pindex, sprite_2)
             s2.style.size = 48
             s2.style.stretch_image_to_widget_size = true
             player.custom_GUI_sprite_2 = s2
-            end
+         end
          player.custom_GUI_sprite_2.visible = true
       end
       --If a blueprint is in hand, set the blueprint sprites
