@@ -28,6 +28,7 @@ local Electrical = require("scripts.electrical")
 local Equipment = require("scripts.equipment")
 local FaUtils = require("scripts.fa-utils")
 local Fluids = require("scripts.fluids")
+local Geometry = require("scripts.geometry")
 local Graphics = require("scripts.graphics")
 local Localising = require("scripts.localising")
 local MessageBuilder = require("scripts.message-builder")
@@ -416,6 +417,60 @@ local function ent_info_infinity_pipe(ctx)
       else
          ctx.message:fragment({ "fa.ent-info-infinity-pipe-producing", filter.name })
       end
+   end
+end
+
+---@param ctx fa.Info.EntInfoContext
+local function ent_info_belt_shape(ctx)
+   local e = ctx.ent
+   local t = e.type
+
+   -- Only belts and underground belts can  have shapes, at least for right now.
+   if t ~= "transport-belt" and t ~= "underground-belt" then return end
+
+   local node = TransportBelts.Node.create(e)
+   local shape_info = node:get_shape_info()
+
+   if shape_info.corner then
+      local key
+      local dir
+
+      if shape_info.corner == TransportBelts.CORNER_KINDS.LEFT then
+         key = "fa.ent-info-belt-shape-left"
+         -- we say "from the", so we aren't undoing it and counterclockwise for
+         -- left is right.
+         dir = Geometry.dir_counterclockwise_90(e.direction)
+      elseif shape_info.corner == TransportBelts.CORNER_KINDS.RIGHT then
+         key = "fa.ent-info-belt-shape-right"
+         dir = Geometry.dir_clockwise_90(e.direction)
+      end
+
+      ctx.message:fragment({ key, FaUtils.direction_lookup(dir) })
+   end
+
+   -- Sideloads: none, left, right, or both.
+   if not shape_info.merge and (shape_info.left_sideload or shape_info.right_sideload) then
+      if not shape_info.right_sideload then
+         -- No right sideload, must be left.
+         ctx.message:fragment({ "fa.ent-info-belt-shape-left-sideload" })
+      elseif not shape_info.left_sideload then
+         ctx.message:fragment({ "fa.ent-info-belt-shape-right-sideload" })
+      else
+         ctx.message:fragment({ "fa.ent-info-belt-shape-double-sideload" })
+      end
+   elseif shape_info.merge then
+      ctx.message:fragment({ "fa.ent-info-belt-shape-merge" })
+   end
+
+   -- First the "primary shape" if you will: corners, pouring, etc.
+   if not shape_info.has_input and not shape_info.has_output then
+      ctx.message:fragment({ "fa.ent-info-belt-shape-unit" })
+   elseif shape_info.is_pouring then
+      ctx.message:fragment({ "fa.ent-info-belt-shape-pouring" })
+   elseif shape_info.has_input and not shape_info.has_output then
+      ctx.message:fragment({ "fa.ent-info-belt-shape-stop" })
+   elseif shape_info.has_output and not shape_info.has_input then
+      ctx.message:fragment({ "fa.ent-info-belt-shape-start" })
    end
 end
 
@@ -973,6 +1028,9 @@ function mod.ent_info(pindex, ent, is_scanner)
    end
 
    run_handler(ent_info_facing, true)
+   run_handler(ent_info_underground_belt_type, true)
+   run_handler(ent_info_belt_contents, true)
+   run_handler(ent_info_belt_shape, true)
    run_handler(ent_info_pole_neighbors, true)
 
    run_handler(ent_info_resource)
@@ -987,8 +1045,6 @@ function mod.ent_info(pindex, ent, is_scanner)
    run_handler(ent_info_pipe_shape)
    run_handler(ent_info_fluid_connections)
 
-   run_handler(ent_info_underground_belt_type)
-
    run_handler(ent_info_train_stop)
    run_handler(ent_info_train_owner)
    run_handler(ent_info_rail_signal_state)
@@ -1000,7 +1056,6 @@ function mod.ent_info(pindex, ent, is_scanner)
    run_handler(ent_info_power_production)
    run_handler(ent_info_underground_belt_connection)
    run_handler(ent_info_splitter_states)
-   run_handler(ent_info_belt_contents)
    run_handler(ent_info_cargo_wagon)
    run_handler(ent_info_radar)
 

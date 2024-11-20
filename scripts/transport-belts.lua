@@ -20,14 +20,16 @@ local TH = require("scripts.table-helpers")
 
 local mod = {}
 
--- Count the number of non-nil arguments, up to 3.
+-- Count the number of non-nil arguments, up to 3.  Useful because we can use it
+-- to classify if a belt has one parent: count3(back, left, right) == 1.
 local function count3(a, b, c)
    return (a and 1 or 0) + (b and 1 or 0) + (c and 1 or 0)
 end
+
 --[[
 Return, as up to 3 values, the parents of a belt connectable.  The 3 values so
 returned are behind, left, right.  The relevant return values will be nil.  For
-example nil, belt, belt is valid.  The rules are as follows:
+example nil, belt, belt is valid at a merging.  The rules are as follows:
 
 - For underground belt exits behind is the entrance and left/right are
   sideloads.
@@ -55,6 +57,8 @@ local function get_parents(connectable)
       local inputs = connectable.belt_neighbours.inputs
       if not next(inputs) then return nil, nil, nil end
 
+      -- l is always non-nil, but it may not really be the left; we swap these
+      -- if needed below.
       local l, r = inputs[1], inputs[2]
       local ccw_90_dir = Geometry.dir_counterclockwise_90(outgoing_dir)
       local uv_x, uv_y = uv_for_direction(ccw_90_dir)
@@ -86,21 +90,29 @@ local function get_parents(connectable)
       -- sideloads, as that is an expensive operation.
       if #inputs == 1 and inputs[1].direction == outgoing_dir then return inputs[1], nil, nil end
 
+      local incoming_dir = connectable.direction
+
+      if connectable.type == "transport-belt" then
+         if connectable.belt_shape == "left" then
+            incoming_dir = Geometry.dir_clockwise_90(incoming_dir)
+         elseif connectable.belt_shape == "right" then
+            incoming_dir = Geometry.dir_counterclockwise_90(incoming_dir)
+         end
+      end
+
       -- Has (up to) 3 parents.  We figure out which parent is which by
       -- examining the directions of the input.  This is counterclockwise 90
       -- then  rotate 180 for the direction the left sideload should be, which
       -- is equal to clockwise 90, and likewise for the right sideload: these
       -- aren't backward.
-      local incoming_left = Geometry.dir_clockwise_90(outgoing_dir)
-      local incoming_right = Geometry.dir_counterclockwise_90(outgoing_dir)
-
-      local behind, sl, sr
+      local incoming_left = Geometry.dir_clockwise_90(incoming_dir)
+      local incoming_right = Geometry.dir_counterclockwise_90(incoming_dir)
 
       local len = #inputs
-      assert(len < 3)
+      assert(len <= 3)
       for i = 1, len do
          local belt = inputs[i]
-         if belt.direction == outgoing_dir then
+         if belt.direction == incoming_dir then
             behind = belt
          elseif belt.direction == incoming_left then
             sl = belt
@@ -121,6 +133,7 @@ local function get_parents(connectable)
    return behind, sl, sr
 end
 
+-- Exported so that /fac can see it. Useful for testing.
 mod.get_parents = get_parents
 
 ---@param connectable LuaEntity
@@ -142,7 +155,7 @@ end
 local Node = {}
 local Node_meta = { __index = Node }
 mod.Node = Node
-if script then script.register_metatable("fa.transport-belts.Node", Node_meta) end
+if script then script.register_metatable("fa.TransportBelts.Node", Node_meta) end
 
 ---@param entity LuaEntity
 function Node.create(entity)
@@ -156,74 +169,6 @@ end
 
 function Node:_assert_valid()
    assert(self:valid())
-end
-
---[[
-These correspond to localised strings in e.g. fa-info.  This maps a belt to
-what is needed to verbalize it.
-]]
----@enum fa.TransportBelts.ReadableShape
-mod.BELT_READABLE_SHAPES = {
-   STRAIGHT = "straight",
-
-   -- From the API directly.
-   LEFT = "left",
-   RIGHT = "right",
-
-   -- Two sideloads, no behind.
-   MERGE = "merge",
-
-   -- Sideload incoming from the left and/or right. E.g. left is a belt going
-   -- north touched by a belt going east.
-   SIDELOAD_LEFT = "sideload_left",
-   SIDELOAD_RIGHT = "sideload_right",
-
-   -- Belt has two sideloads, e.e. a "x"
-   SIDELOAD_BOTH = "sideload_both",
-}
-
--- has_behind->has_left->has_right->shape
----@type table<boolean, table<boolean, table<boolean, fa.TransportBelts.ReadableShape>>>
-local BELT_SHAPE_TABLE = {}
-local function add_shape(b, l, r, s)
-   local st = BELT_SHAPE_TABLE
-   st[b] = st[b] or {}
-   st[b][l] = st[b][l] or {}
-   st[b][l][r] = s
-end
-
-add_shape(false, false, false, mod.BELT_READABLE_SHAPES.STRAIGHT)
-add_shape(true, false, false, mod.BELT_READABLE_SHAPES.STRAIGHT)
-add_shape(false, true, false, mod.BELT_READABLE_SHAPES.SIDELOAD_LEFT)
-add_shape(true, true, false, mod.BELT_READABLE_SHAPES.SIDELOAD_LEFT)
-add_shape(false, false, true, mod.BELT_READABLE_SHAPES.SIDELOAD_RIGHT)
-add_shape(true, false, true, mod.BELT_READABLE_SHAPES.SIDELOAD_RIGHT)
-add_shape(true, true, true, mod.BELT_READABLE_SHAPES.SIDELOAD_BOTH)
-add_shape(false, true, true, mod.BELT_READABLE_SHAPES.MERGE)
-
----@return fa.TransportBelts.ReadableShape? Nil if not a transport-belt or underground belt input.
-function Node:get_readable_shape()
-   self:_assert_valid()
-
-   local e = self.entity
-   if e.type ~= "transport-belt" and e.type ~= "underground-belt" then
-      return
-   elseif e.type == "underground-belt" and e.belt_to_ground_type ~= "input" then
-      return nil
-   end
-
-   -- These don't fit into a behind+sideload table model, but they other 8 do.
-   -- Carve them out. Left/right corner from the API directly,
-   if e.type == "transport-belt" then
-      if e.belt_shape == "left" then
-         return mod.BELT_READABLE_SHAPES.LEFT
-      elseif e.belt_shape == "right" then
-         return mod.BELT_READABLE_SHAPES.RIGHT
-      end
-   end
-
-   local b, l, r = get_parents(self.entity)
-   return assert(BELT_SHAPE_TABLE[b ~= nil][l ~= nil][r ~= nil])
 end
 
 -- Is this a connectable with no children/outputs?
@@ -242,9 +187,93 @@ function Node:is_belt_start()
    return not next(self.entity.belt_neighbours.inputs)
 end
 
+---@enum fa.TransportBelts.CornerKind
+mod.CORNER_KINDS = {
+   LEFT = "left",
+   RIGHT = "right",
+}
+
+--[[
+Describe the shape of a belt.  The relevant fields are non-nil (so e.g. a
+splitter never has sideloads or a corner kind).  See belts.md for the specific
+rules.
+]]
+---@class fa.TransportBelts.ShapeInfo
+---@field has_input boolean
+---@field has_output boolean
+---@field left_sideload LuaEntity?
+---@field right_sideload LuaEntity?
+---@field merge boolean
+---@field corner fa.TransportBelts.CornerKind?
+---@field is_pouring boolean
+
+-- WARNING: this is very expensive. Fine to call a few times per tick but not in
+-- tight loops.  Some belt shape properties require materializing both parents
+-- and children and doing algos on them.
+---@return fa.TransportBelts.ShapeInfo
+function Node:get_shape_info()
+   self:_assert_valid()
+   local e = self.entity
+
+   ---@type fa.TransportBelts.ShapeInfo
+   local ret = {
+      has_input = false,
+      has_output = false,
+      is_pouring = false,
+      corner = nil,
+      left_sideload = nil,
+      right_sideload = nil,
+      merge = false,
+   }
+
+   local behind, left, right = get_parents(e)
+   ret.left_sideload = left
+   ret.right_sideload = right
+
+   ret.has_input = count3(behind, left, right) > 0
+   local children = get_children(e)
+   ret.has_output = #children > 0
+
+   -- Work out pouring.
+   if e.type == "transport-belt" and e.belt_shape == "straight" and ret.has_output then
+      assert(#children == 1)
+
+      -- If the next thing is a transport belt and it is a corner then it is
+      -- outputting 90 degrees off based on which way it goes, and we must
+      -- account for that.  What we want is the direction of the input.  These
+      -- aren't backwards if you visualize it.  A left turn's input is 90
+      -- degrees to the clockwise because going left offset it 90 degrees
+      -- counterclockwise, and that's what we want to undo.
+      local child = children[1]
+      local child_dir = child.direction
+      if child.type == "transport-belt" then
+         if child.belt_shape == "left" then
+            child_dir = Geometry.dir_clockwise_90(child_dir)
+         elseif child.belt_shape == "right" then
+            child_dir = Geometry.dir_counterclockwise_90(child_dir)
+         end
+      end
+
+      ret.is_pouring = e.direction ~= child_dir
+   end
+
+   -- Translate corners to the enum.
+   if e.type == "transport-belt" then
+      if e.belt_shape == "left" then
+         ret.corner = mod.CORNER_KINDS.LEFT
+      elseif e.belt_shape == "right" then
+         ret.corner = mod.CORNER_KINDS.RIGHT
+      end
+   end
+
+   ret.merge = e.type == "transport-belt" and ret.left_sideload ~= nil and ret.right_sideload ~= nil and not behind
+
+   return ret
+end
+
 --[[
 OK fun time.  The game doesn't document this well but the linear length of a
-line is the length in tiles.  No case of a transport line exists whnich doesn't
+line is the length in tiles.  No case of a transport line exists which doesn't
 however put 0.25 between entities, and it's not possible to change this in mods,
 only to change the speed.  But, in some cases, things will not be on that
 boundary in particular at inserters and drills.  To deal with that we will round
@@ -441,7 +470,7 @@ function Node:carries_heuristic(line_index, depth)
          local cur = cur_fringe[1]
          if seen[cur.unit_number] then break end
          seen[cur.unit_number] = true
-         if cur.type == "splitter" then goto next_child end
+         if cur.type == "splitter" then goto next_parent end
 
          line = cur.get_transport_line(line_index --[[@as number]])
 
@@ -453,7 +482,7 @@ function Node:carries_heuristic(line_index, depth)
             break
          end
 
-         ::next_child::
+         ::next_parent::
          cur_fringe = get_children(cur)
       end
    end
