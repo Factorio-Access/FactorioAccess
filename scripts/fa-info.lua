@@ -47,25 +47,14 @@ local mod = {}
 ---@field player LuaPlayer
 ---@field cursor_pos fa.Point Not necessarily the player's actual cursor.
 
--- Get an inventory. If truncate is provided truncate at that number.
----@param ent LuaEntity
----@param inventory defines.inventory | LuaInventory
+-- Present a list like iron plate x1, transport belt legendary x2, ...
+---@param list ({ name: string|LuaItemPrototype, quality: string|LuaQualityPrototype|nil, count: number})[]
 ---@param truncate number?
----@return LocalisedString? Nil if the inventory doesn't exist.
-local function present_inventory(ent, inventory, truncate)
-   ---@type LuaInventory
-   local inv
-   if type(inventory) ~= "userdata" then
-      ---@cast inventory defines.inventory
-      local t = ent.get_inventory(inventory)
-      if not t then return end
-      inv = t
-   else
-      inv = inventory --[[ @as LuaInventory  ]]
-   end
-
-   local contents_unrolled = inv.get_contents()
-   local contents = TH.rollup2(contents_unrolled, F.name().get, F.quality().get, F.count().get)
+---@param protos table<string, LuaItemPrototype | LuaFluidPrototype>?
+local function present_list(list, truncate, protos)
+   local contents = TH.rollup2(list, F.name().get, function(i)
+      return i.quality or "normal"
+   end, F.count().get)
 
    -- Now that everything is together we must unroll it again, then sort.
    ---@type ({ count: number, item: LuaItemPrototype, quality: LuaQualityPrototype })[]
@@ -73,16 +62,16 @@ local function present_inventory(ent, inventory, truncate)
 
    for name, quals in pairs(contents) do
       for qual, count in pairs(quals) do
-         table.insert(final, { count = count, item = prototypes.item[name], quality = prototypes.quality[qual] })
+         table.insert(final, { count = count, name = name, quality = prototypes.quality[qual] })
       end
    end
 
    -- Careful: this is actually a reverse sort.
    table.sort(final, function(a, b)
-      if a.count == b.count and a.item.name == b.item.name then
+      if a.count == b.count and a.name.name == b.name.name then
          return a.quality.level > b.quality.level
       elseif a.count == b.count then
-         return a.item.name > b.item.name
+         return a.name.name > b.name.name
       else
          return a.count > b.count
       end
@@ -101,11 +90,17 @@ local function present_inventory(ent, inventory, truncate)
    for i = 1, endpoint do
       local e = final[i]
 
-      table.insert(entries, Localising.localise_item({ item = e.item, quality = e.quality, count = e.count }))
+      table.insert(
+         entries,
+         Localising.localise_item_or_fluid(
+            { name = e.name, quality = e.quality, count = e.count },
+            protos or prototypes.item
+         )
+      )
    end
 
    if extra then
-      table.insert(entries, Localising.localise_item({ item = Localising.ITEM_OTHER, count = #final - truncate }))
+      table.insert(entries, Localising.localise_item({ name = Localising.ITEM_OTHER, count = #final - truncate }))
    end
    local joined = FaUtils.localise_cat_table(entries, ", ")
 
@@ -263,7 +258,7 @@ local function ent_info_beacon_status(ctx)
    if ent.name == "beacon" then
       local modules = ent.get_module_inventory()
       if not modules then return end
-      local presenting = present_inventory(ctx.ent, modules)
+      local presenting = present_list(modules.get_contents())
       if presenting then ctx.message:fragment(presenting) end
    end
 end
@@ -346,7 +341,9 @@ local function ent_info_container(ctx)
    local ent = ctx.ent
    if ent.type == "container" or ent.type == "logistic-container" or ent.type == "infinity-container" then
       --Chests etc: Report the most common item and say "and other items" if there are other types.
-      local presenting = present_inventory(ent, defines.inventory.chest, 3)
+      local inv = ent.get_inventory(defines.inventory.chest)
+      assert(inv)
+      local presenting = present_list(inv.get_contents(), 3)
       if presenting then ctx.message:fragment(presenting) end
    end
 end
@@ -369,23 +366,10 @@ local function ent_info_fluid_contents(ctx)
 
    local unrolled = {}
    for f, c in pairs(fluids) do
-      table.insert(unrolled, { f, c })
-   end
-   table.sort(unrolled, function(a, b)
-      return a[2] > b[2]
-   end)
-
-   local parts = {}
-   for _, x in pairs(unrolled) do
-      local f, c = x[1], x[2]
-      table.insert(parts, {
-         "fa.ent-info-inventory-entry",
-         Localising.get_localised_name_with_fallback(prototypes.fluid[f]),
-         string.format("%2.0d", c),
-      })
+      table.insert(unrolled, { name = f, count = c })
    end
 
-   ctx.message:fragment({ "fa.ent-info-inventory-presentation", FaUtils.localise_cat_table(parts, ", ") })
+   ctx.message:fragment(present_list(unrolled, nil, prototypes.fluid))
 end
 
 ---@param ctx fa.Info.EntInfoContext
@@ -700,7 +684,9 @@ end
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_cargo_wagon(ctx)
    if ctx.ent.name == "cargo-wagon" then
-      local presenting = present_inventory(ctx.ent, defines.inventory.cargo_wagon)
+      local inv = ctx.ent.get_inventory(defines.inventory.cargo_wagon)
+      assert(inv)
+      local presenting = present_list(inv.get_contents())
       if presenting then ctx.message:fragment(presenting) end
    end
 end

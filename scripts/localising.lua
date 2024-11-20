@@ -158,12 +158,12 @@ end
 mod.ITEM_OTHER = {}
 
 ---@class fa.Localising.LocaliseItemOpts
----@field item LuaItemPrototype | string | `mod.ITEM_OTHER`
+---@field name LuaItemPrototype | LuaFluidPrototype | string | `mod.ITEM_OTHER`
 ---@field quality (LuaQualityPrototype|string)?
 ---@field count number?
 
 --[[
-Localise an item, possibly with count and quality.
+Localise an item, or fluid, possibly with count and quality.
 
 This function can take two things.  An LuaItemStack, or a table with 3 keys:
 item, quality, and count.  In that table, item and quality may either be a
@@ -179,8 +179,9 @@ for the case of "and 5 other items" you may use mod.ITEM_OTHER in place of the
 item.
 ]]
 ---@param what LuaItemStack | fa.Localising.LocaliseItemOpts
----@returns LocalisedString
-function mod.localise_item(what)
+---@param protos table<string, LuaItemPrototype|LuaFluidPrototype>
+---@return LocalisedString
+function mod.localise_item_or_fluid(what, protos)
    ---@type fa.Localising.LocaliseItemOpts
    local final_opts
 
@@ -190,31 +191,31 @@ function mod.localise_item(what)
       assert(stack.object_name() == "LuaItemStack")
 
       final_opts = {
-         item = stack.prototype,
+         name = stack.prototype,
          quality = stack.quality,
          count = stack.count,
       }
    else
-      if what.item == mod.ITEM_OTHER then
+      if what.name == mod.ITEM_OTHER then
          assert(what.count, "it does not make sense to ask to localise ITEM_OTHER without also giving a count")
          return { "fa.item-other", what.count }
       end
 
-      final_opts = what
+      final_opts = what --[[ @as fa.Localising.LocaliseItemOpts ]]
    end
 
    local quality = final_opts.quality
-   local item = final_opts.item
+   local name = final_opts.name
    local count = final_opts.count
 
    local item_proto, quality_proto
 
-   if type(item) == "string" then
-      item = prototypes.item[item]
-   elseif item then
-      item_proto = item
+   if type(name) == "string" then
+      item_proto = protos[name]
+   elseif name then
+      item_proto = name
    end
-   assert(item, "unable to find item")
+   assert(item_proto, "unable to find item")
 
    if quality and type(quality) == "string" then
       quality_proto = prototypes.quality[quality]
@@ -231,6 +232,12 @@ function mod.localise_item(what)
    local has_count = count and 1 or 0
 
    return { "fa.item-quantity-quality", item_str, has_quality, quality_str, has_count, count }
+end
+
+---@param what LuaItemStack | fa.Localising.LocaliseItemOpts
+---@return LocalisedString
+function mod.localise_item(what)
+   return mod.localise_item_or_fluid(what, prototypes.item)
 end
 
 return mod
