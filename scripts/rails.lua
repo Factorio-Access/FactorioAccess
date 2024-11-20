@@ -112,28 +112,32 @@ function mod.rail_ent_info(pindex, ent, description)
    local signals =
       ent.surface.find_entities_filtered({ position = ent.position, radius = 2, name = "rail-chain-signal" })
    for i, s in ipairs(signals) do
-      chain_s_count = chain_s_count + 1
-      rendering.draw_circle({
-         color = { 0.5, 0.5, 1 },
-         radius = 2,
-         width = 2,
-         target = ent,
-         surface = ent.surface,
-         time_to_live = 90,
-      })
+      if s.direction == ent.direction or s.direction == fa_utils.rotate_180(ent.direction) then
+         chain_s_count = chain_s_count + 1
+         rendering.draw_circle({
+            color = { 0.5, 0.5, 1 },
+            radius = 2,
+            width = 2,
+            target = ent,
+            surface = ent.surface,
+            time_to_live = 90,
+         })
+      end
    end
 
    signals = ent.surface.find_entities_filtered({ position = ent.position, radius = 2, name = "rail-signal" })
    for i, s in ipairs(signals) do
-      rail_s_count = rail_s_count + 1
-      rendering.draw_circle({
-         color = { 0.5, 0.5, 1 },
-         radius = 2,
-         width = 2,
-         target = ent,
-         surface = ent.surface,
-         time_to_live = 90,
-      })
+      if s.direction == ent.direction or s.direction == fa_utils.rotate_180(ent.direction) then
+         rail_s_count = rail_s_count + 1
+         rendering.draw_circle({
+            color = { 0.5, 0.5, 1 },
+            radius = 2,
+            width = 2,
+            target = ent,
+            surface = ent.surface,
+            time_to_live = 90,
+         })
+      end
    end
 
    if chain_s_count + rail_s_count == 0 then
@@ -321,27 +325,32 @@ function mod.list_rail_fork_directions(ent)
 end
 
 --Determines if an entity is an end rail. Returns boolean is_end_rail, integer end rail direction, and string comment for errors.
+---@param check_rail LuaEntity
+---@param pindex any
+---@return boolean
+---@return defines.direction
+---@return string
 function mod.check_end_rail(check_rail, pindex)
    local is_end_rail = false
-   ---@type defines.direction | int
-   local dir = -1
+   ---@type defines.direction
+   local dir = dirs.north
    local comment = "Check function error."
 
    --Check if the entity is a rail
    if check_rail == nil then
       is_end_rail = false
       comment = "Nil."
-      return is_end_rail, -1, comment
+      return is_end_rail, dir, comment
    end
    if not check_rail.valid then
       is_end_rail = false
       comment = "Invalid."
-      return is_end_rail, -1, comment
+      return is_end_rail, dir, comment
    end
    if not (check_rail.name == "straight-rail" or check_rail.name == "curved-rail") then
       is_end_rail = false
       comment = "Not a rail."
-      return is_end_rail, -1, comment
+      return is_end_rail, dir, comment
    end
 
    --Check if end rail: The rail is at the end of its segment and has only 1 connection.
@@ -433,7 +442,7 @@ function mod.check_end_rail(check_rail, pindex)
             --This line should not be reachable
             is_end_rail = false
             comment = "Rail direction error."
-            return is_end_rail, -3, comment
+            return is_end_rail, dir, comment
          end
       elseif check_rail.name == "curved-rail" then
          local next_rail, r_dir_back, c_dir_back = check_rail.get_connected_rail({
@@ -480,14 +489,14 @@ function mod.check_end_rail(check_rail, pindex)
             --This line should not be reachable
             is_end_rail = false
             comment = "Rail direction error."
-            return is_end_rail, -3, comment
+            return is_end_rail, dir, comment
          end
       end
    else
       --Not the end rail
       is_end_rail = false
       comment = "This rail is not the end rail."
-      return is_end_rail, -4, comment
+      return is_end_rail, dir, comment
    end
 
    return is_end_rail, dir, comment
