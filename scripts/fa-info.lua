@@ -52,12 +52,18 @@ local mod = {}
 ---@param truncate number?
 ---@param protos table<string, LuaItemPrototype | LuaFluidPrototype>?
 local function present_list(list, truncate, protos)
-   local contents = TH.rollup2(list, F.name().get, function(i)
+   local contents = TH.rollup2(list, function(i)
+      if type(i) == "userdata" then
+         return i.name
+      else
+         return i
+      end
+   end, function(i)
       return i.quality or "normal"
    end, F.count().get)
 
    -- Now that everything is together we must unroll it again, then sort.
-   ---@type ({ count: number, item: LuaItemPrototype, quality: LuaQualityPrototype })[]
+   ---@type ({ count: number, name: string, quality: LuaQualityPrototype })[]
    local final = {}
 
    for name, quals in pairs(contents) do
@@ -68,10 +74,10 @@ local function present_list(list, truncate, protos)
 
    -- Careful: this is actually a reverse sort.
    table.sort(final, function(a, b)
-      if a.count == b.count and a.name.name == b.name.name then
+      if a.count == b.count and a.name == b.name then
          return a.quality.level > b.quality.level
       elseif a.count == b.count then
-         return a.name.name > b.name.name
+         return a.name > b.name
       else
          return a.count > b.count
       end
@@ -1149,8 +1155,9 @@ function mod.ent_info(pindex, ent, is_scanner)
 end
 
 --Reports the charting range of a radar and how much of it has been charted so far.
+---@param radar LuaEntity
 function mod.radar_charting_info(radar)
-   local charting_range = radar.prototype.max_distance_of_sector_revealed
+   local charting_range = radar.prototype.get_max_distance_of_sector_revealed(radar.quality)
    local count = 0
    local total = 0
    local centerx = math.floor(radar.position.x / 32)
