@@ -11,6 +11,8 @@ Released on November 23rd, 2024.
 
 - Fixed a scanner crash related to updating the mod.
 
+- Launcher: Fixed multiplayer server settings menu crashing and improved localization.
+
 
 # Version 0.15.2 BETA
 Released on October 26th, 2024.
