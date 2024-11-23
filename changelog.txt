@@ -1,4 +1,18 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.15.3
+Date: 2024.11.23
+
+  Summary:
+    - This is a quick patch update of scanner and locale features while work continues on base game 2.0 compatibility.
+
+---------------------------------------------------------------------------------------------------
+Version: 0.15.2
+Date: 2024.10.26
+
+  Summary:
+    - This quick update improves the grouping of the new scanner and fixes some bugs in the scanner and the launcher.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.15.1
 Date: 2024.10.19
 
