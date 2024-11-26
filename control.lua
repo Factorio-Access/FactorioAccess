@@ -7675,7 +7675,7 @@ script.on_event("logistic-request-decrement-max", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    if game.get_player(pindex).character == nil then return end
-   fa_bot_logistics.logistics_request_decrement_max_handler(pindex)
+   fa_bot_logistics.logistics_request_decrem_max_handler(pindex)
 end)
 
 script.on_event("logistic-request-clear", function(event)
@@ -7688,18 +7688,17 @@ end)
 script.on_event("vanilla-toggle-personal-logistics-info", function(event)
    local pindex = event.player_index
    local p = game.get_player(pindex)
-   if p.character_personal_logistic_requests_enabled then
+   local c = p.character
+   if not c then return end
+
+   local p = c.get_logistic_point(defines.logistic_member_index.character_requester)
+   if not p then return end
+
+   if p.enabled then
       printout("Resumed personal logistics requests", pindex)
    else
       printout("Paused personal logistics requests", pindex)
    end
-end)
-
-script.on_event("logistic-request-toggle-personal-logistics", function(event)
-   local pindex = event.player_index
-   if not check_for_player(pindex) then return end
-   if game.get_player(pindex).character == nil then return end
-   fa_bot_logistics.logistics_request_toggle_handler(pindex)
 end)
 
 script.on_event("send-selected-stack-to-logistic-trash", function(event)
