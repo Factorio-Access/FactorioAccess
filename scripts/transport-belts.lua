@@ -31,6 +31,8 @@ Return, as up to 3 values, the parents of a belt connectable.  The 3 values so
 returned are behind, left, right.  The relevant return values will be nil.  For
 example nil, belt, belt is valid at a merging.  The rules are as follows:
 
+WARNING: these may be ghosts.
+
 - For underground belt exits behind is the entrance and left/right are
   sideloads.
 - For underground belt entrances behind is the incoming belt and left/right are
@@ -416,75 +418,107 @@ end
 ---@field distance number Negative for behind, 0 for "here", positive ahead.
 ---@field results table<string, table<string, number>> item->quality->count
 
+-- Walk this node's parents until either a ghost or a connectable with more than
+-- one parent is found.  Stop if the passed callback returns false or if a loop
+-- is detected.
+---@param callback fun(LuaEntity, number): boolean second arg is number of steps so far, starts at 1.
+function Node:walk_single_parents(callback)
+   self:_assert_valid()
+
+   local e = self.entity
+   local depth = 1
+   local seen = {}
+
+   if e.type == "entity-ghost" then return end
+   seen[e.unit_number] = true
+
+   while true do
+      local b, l, r = get_parents(e)
+      if count3(b, l, r) ~= 1 then return end
+
+      -- Makes stylua happy (because it will otherwise clobber this function)
+      -- and LuaLS happy (because it thinks that p is nil).
+      do
+         local p = b or l or r
+         assert(p)
+         e = p
+      end
+      if e.type == "entity-ghost" then return end
+      if seen[e.unit_number] then return end
+      seen[e.unit_number] = true
+
+      if not callback(e, depth) then return end
+      depth = depth + 1
+   end
+end
+
+-- Exactly the same as walk_single_parent but for single children.
+---@param callback fun(LuaEntity, number): boolean second arg is number of steps so far, starts at 1.
+function Node:walk_single_child(callback)
+   self:_assert_valid()
+
+   local e = self.entity
+   local depth = 1
+   local seen = {}
+
+   if e.type == "entity-ghost" then return end
+   seen[e.unit_number] = true
+
+   while true do
+      local children = get_children(e)
+      if #children ~= 1 then return end
+      e = children[1]
+
+      if e.type == "entity-ghost" then return end
+      if seen[e.unit_number] then return end
+      seen[e.unit_number] = true
+
+      if not callback(e, depth) then return end
+      depth = depth + 1
+   end
+end
+
 -- Run the heuristic to determine what a belt might be carrying, and return a
 --prototype->quality->count table.  See devdocs/belts.md
 ---@param line_index defines.transport_line
----@param depth number
+---@param depth_limit number
 ---@return fa.TransportBelts.Heuristic
-function Node:carries_heuristic(line_index, depth)
-   local cur_parent = self.entity
-   depth = depth + 1 -- Don't count the first parent or child.
-
-   local seen = {}
-
+function Node:carries_heuristic(line_index, depth_limit)
    -- To start, we will go upstream until we find a lane with some contents or hit max depth.
    local contents
    local distance = 0
 
-   for i = 1, depth do
+   local function handler(cur_parent, cur_depth, negate)
+      if cur_depth > depth_limit then return false end
+
       local line, empty
 
-      if seen[cur_parent.unit_number] then break end
-      seen[cur_parent.unit_number] = true
       -- skip splitters, which have very complex internal contents.
-      if cur_parent.type == "splitter" then goto next_parent end
+      if cur_parent.type == "splitter" then return true end
 
       line = cur_parent.get_transport_line(line_index --[[@as number]])
       empty = #line == 0
       if not empty then
          contents = line.get_detailed_contents()
-         distance = -i + 1
-         break
+         distance = negate and -cur_depth or cur_depth
+         return false
       end
 
-      ::next_parent::
-      local b, l, r = get_parents(cur_parent)
-      local count = count3(b, l, r)
-      if count == 1 then
-         cur_parent = (b or l or r) --[[@as LuaEntity]]
-      else
-         break
-      end
+      return true
    end
+
+   handler(self.entity, 0, false)
+
+   if not contents then self:walk_single_parents(function(e, d)
+      return handler(e, d, true)
+   end) end
 
    if not contents then
       -- Now do the same thing, but downstream.  As with upstream, stop if we
       -- find more than one child.
-
-      local cur_fringe = get_children(self.entity)
-      -- We already did the current parent, so don't double-do it.
-      for i = 2, depth do
-         local line, expected
-
-         if #cur_fringe ~= 1 then break end
-         local cur = cur_fringe[1]
-         if seen[cur.unit_number] then break end
-         seen[cur.unit_number] = true
-         if cur.type == "splitter" then goto next_parent end
-
-         line = cur.get_transport_line(line_index --[[@as number]])
-
-         print(serpent.line(cur))
-         if #line > 0 then
-            contents = line.get_detailed_contents()
-            distance = i - 1
-            print("found")
-            break
-         end
-
-         ::next_parent::
-         cur_fringe = get_children(cur)
-      end
+      self:walk_single_child(function(e, d)
+         return handler(e, d, false)
+      end)
    end
 
    ---@type fa.TransportBelts.Heuristic
