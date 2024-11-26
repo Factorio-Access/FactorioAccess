@@ -888,6 +888,10 @@ local function ent_info_pole_neighbors(ctx)
             local a_dist = FaUtils.distance(a.position, ctx.cursor_pos)
             local b_dist = FaUtils.distance(b.position, ctx.cursor_pos)
             if a_dist < b_dist then return true end
+            -- Careful: if the distances aren't equal then continuing is a bad
+            -- sort function.
+            if a_dist > b_dist then return false end
+
             -- We want the 8-way direction here, as there is little point in
             -- reporting 16-way for poles.
             local a_dir = FaUtils.get_direction_biased(a.position, ctx.cursor_pos)
