@@ -53,13 +53,7 @@ local mod = {}
 ---@param truncate number?
 ---@param protos table<string, LuaItemPrototype | LuaFluidPrototype>?
 local function present_list(list, truncate, protos)
-   local contents = TH.rollup2(list, function(i)
-      if type(i) == "userdata" then
-         return i.name
-      else
-         return i
-      end
-   end, function(i)
+   local contents = TH.rollup2(list, F.name().get, function(i)
       return i.quality or "normal"
    end, F.count().get)
 
