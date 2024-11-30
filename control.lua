@@ -30,6 +30,7 @@ local fa_warnings = require("scripts.warnings")
 local fa_circuits = require("scripts.circuit-networks")
 local fa_kk = require("scripts.kruise-kontrol-wrapper")
 local fa_quickbar = require("scripts.quickbar")
+local BeltAnalyzer = require("scripts.ui.belt-analyzer")
 local FaCommands = require("scripts.fa-commands")
 local Consts = require("scripts.consts")
 local Research = require("scripts.research")
@@ -1589,49 +1590,7 @@ function menu_cursor_up(pindex)
    elseif players[pindex].menu == "technology" then
       Research.menu_move_vertical(pindex, -1)
    elseif players[pindex].menu == "belt" then
-      if players[pindex].belt.sector == 1 then
-         if
-            (players[pindex].belt.side == 1 and players[pindex].belt.line1.valid and players[pindex].belt.index > 1)
-            or (players[pindex].belt.side == 2 and players[pindex].belt.line2.valid and players[pindex].belt.index > 1)
-         then
-            game.get_player(pindex).play_sound({ path = "Inventory-Move" })
-            players[pindex].belt.index = players[pindex].belt.index - 1
-         end
-      elseif players[pindex].belt.sector == 2 then
-         local max = 0
-         if players[pindex].belt.side == 1 then
-            max = #players[pindex].belt.network.combined.left
-         elseif players[pindex].belt.side == 2 then
-            max = #players[pindex].belt.network.combined.right
-         end
-         if players[pindex].belt.index > 1 then
-            game.get_player(pindex).play_sound({ path = "Inventory-Move" })
-            players[pindex].belt.index = math.min(players[pindex].belt.index - 1, max)
-         end
-      elseif players[pindex].belt.sector == 3 then
-         local max = 0
-         if players[pindex].belt.side == 1 then
-            max = #players[pindex].belt.network.downstream.left
-         elseif players[pindex].belt.side == 2 then
-            max = #players[pindex].belt.network.downstream.right
-         end
-         if players[pindex].belt.index > 1 then
-            game.get_player(pindex).play_sound({ path = "Inventory-Move" })
-            players[pindex].belt.index = math.min(players[pindex].belt.index - 1, max)
-         end
-      elseif players[pindex].belt.sector == 4 then
-         local max = 0
-         if players[pindex].belt.side == 1 then
-            max = #players[pindex].belt.network.upstream.left
-         elseif players[pindex].belt.side == 2 then
-            max = #players[pindex].belt.network.upstream.right
-         end
-         if players[pindex].belt.index > 1 then
-            game.get_player(pindex).play_sound({ path = "Inventory-Move" })
-            players[pindex].belt.index = math.min(players[pindex].belt.index - 1, max)
-         end
-      end
-      fa_belts.read_belt_slot(pindex)
+      BeltAnalyzer.belt_analyzer:on_up(pindex)
    elseif players[pindex].menu == "warnings" then
       if players[pindex].warnings.category > 1 then
          players[pindex].warnings.category = players[pindex].warnings.category - 1
@@ -1835,49 +1794,7 @@ function menu_cursor_down(pindex)
    elseif players[pindex].menu == "technology" then
       Research.menu_move_vertical(pindex, 1)
    elseif players[pindex].menu == "belt" then
-      if players[pindex].belt.sector == 1 then
-         if
-            (players[pindex].belt.side == 1 and players[pindex].belt.line1.valid and players[pindex].belt.index < 4)
-            or (players[pindex].belt.side == 2 and players[pindex].belt.line2.valid and players[pindex].belt.index < 4)
-         then
-            game.get_player(pindex).play_sound({ path = "Inventory-Move" })
-            players[pindex].belt.index = players[pindex].belt.index + 1
-         end
-      elseif players[pindex].belt.sector == 2 then
-         local max = 0
-         if players[pindex].belt.side == 1 then
-            max = #players[pindex].belt.network.combined.left
-         elseif players[pindex].belt.side == 2 then
-            max = #players[pindex].belt.network.combined.right
-         end
-         if players[pindex].belt.index < max then
-            game.get_player(pindex).play_sound({ path = "Inventory-Move" })
-            players[pindex].belt.index = math.min(players[pindex].belt.index + 1, max)
-         end
-      elseif players[pindex].belt.sector == 3 then
-         local max = 0
-         if players[pindex].belt.side == 1 then
-            max = #players[pindex].belt.network.downstream.left
-         elseif players[pindex].belt.side == 2 then
-            max = #players[pindex].belt.network.downstream.right
-         end
-         if players[pindex].belt.index < max then
-            game.get_player(pindex).play_sound({ path = "Inventory-Move" })
-            players[pindex].belt.index = math.min(players[pindex].belt.index + 1, max)
-         end
-      elseif players[pindex].belt.sector == 4 then
-         local max = 0
-         if players[pindex].belt.side == 1 then
-            max = #players[pindex].belt.network.upstream.left
-         elseif players[pindex].belt.side == 2 then
-            max = #players[pindex].belt.network.upstream.right
-         end
-         if players[pindex].belt.index < max then
-            game.get_player(pindex).play_sound({ path = "Inventory-Move" })
-            players[pindex].belt.index = math.min(players[pindex].belt.index + 1, max)
-         end
-      end
-      fa_belts.read_belt_slot(pindex)
+      BeltAnalyzer.belt_analyzer:on_down(pindex)
    elseif players[pindex].menu == "warnings" then
       local warnings = {}
       if players[pindex].warnings.sector == 1 then
@@ -2071,15 +1988,7 @@ function menu_cursor_left(pindex)
    elseif players[pindex].menu == "technology" then
       Research.menu_move_horizontal(pindex, -1)
    elseif players[pindex].menu == "belt" then
-      if players[pindex].belt.side == 2 then
-         players[pindex].belt.side = 1
-         game.get_player(pindex).play_sound({ path = "Inventory-Move" })
-         if not pcall(function()
-            fa_belts.read_belt_slot(pindex)
-         end) then
-            printout("Blank", pindex)
-         end
-      end
+      BeltAnalyzer.belt_analyzer:on_left(pindex)
    elseif players[pindex].menu == "warnings" then
       if players[pindex].warnings.index > 1 then
          players[pindex].warnings.index = players[pindex].warnings.index - 1
@@ -2216,15 +2125,7 @@ function menu_cursor_right(pindex)
    elseif players[pindex].menu == "technology" then
       Research.menu_move_horizontal(pindex, 1)
    elseif players[pindex].menu == "belt" then
-      if players[pindex].belt.side == 1 then
-         players[pindex].belt.side = 2
-         game.get_player(pindex).play_sound({ path = "Inventory-Move" })
-         if not pcall(function()
-            fa_belts.read_belt_slot(pindex)
-         end) then
-            printout("Blank", pindex)
-         end
-      end
+      BeltAnalyzer.belt_analyzer:on_right(pindex)
    elseif players[pindex].menu == "warnings" then
       local warnings = {}
       if players[pindex].warnings.sector == 1 then
@@ -3691,19 +3592,7 @@ script.on_event("switch-menu-or-gun", function(event)
          players[pindex].menu = "inventory"
          read_inventory_slot(pindex, "Inventory, ")
       elseif players[pindex].menu == "belt" then
-         players[pindex].belt.index = 1
-         players[pindex].belt.sector = players[pindex].belt.sector + 1
-         if players[pindex].belt.sector == 5 then players[pindex].belt.sector = 1 end
-         local sector = players[pindex].belt.sector
-         if sector == 1 then
-            printout("Local Lanes", pindex)
-         elseif sector == 2 then
-            printout("Total Lanes", pindex)
-         elseif sector == 3 then
-            printout("Downstream lanes", pindex)
-         elseif sector == 4 then
-            printout("Upstream Lanes", pindex)
-         end
+         BeltAnalyzer.belt_analyzer:on_next_tab(pindex)
       elseif players[pindex].menu == "warnings" then
          players[pindex].warnings.sector = players[pindex].warnings.sector + 1
          if players[pindex].warnings.sector > 3 then players[pindex].warnings.sector = 1 end
@@ -3839,19 +3728,7 @@ script.on_event("reverse-switch-menu-or-gun", function(event)
          players[pindex].menu = "inventory"
          read_inventory_slot(pindex, "Inventory, ")
       elseif players[pindex].menu == "belt" then
-         players[pindex].belt.index = 1
-         players[pindex].belt.sector = players[pindex].belt.sector - 1
-         if players[pindex].belt.sector == 0 then players[pindex].belt.sector = 4 end
-         local sector = players[pindex].belt.sector
-         if sector == 1 then
-            printout("Local Lanes", pindex)
-         elseif sector == 2 then
-            printout("Total Lanes", pindex)
-         elseif sector == 3 then
-            printout("Downstream lanes", pindex)
-         elseif sector == 4 then
-            printout("Upstream Lanes", pindex)
-         end
+         BeltAnalyzer.belt_analyzer:on_previous_tab(pindex)
       elseif players[pindex].menu == "warnings" then
          players[pindex].warnings.sector = players[pindex].warnings.sector - 1
          if players[pindex].warnings.sector < 1 then players[pindex].warnings.sector = 3 end

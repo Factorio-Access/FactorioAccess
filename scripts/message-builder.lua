@@ -123,10 +123,12 @@ function MessageBuilder:list_item(fragment)
 end
 
 -- It is an error to keep using this builder after building.
----@return LocalisedString Empty string if nothing was ever done.
+---@return LocalisedString? Nil if nothing was done.
 function MessageBuilder:build()
    self:_check_not_built()
    self.state = MESSAGE_BUILDER_STATE.BUILT
+
+   if not next(self.parts) then return nil end
 
    return FaUtils.localise_cat_table(self.parts, "")
 end

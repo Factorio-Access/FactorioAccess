@@ -18,14 +18,18 @@ ground.
 
 This is the top level of the UI hierarchy and also handles the state management.
 Each tab will receive a context with a field to use for persistent state.
-Whatever it stores there persists.  It can reset this state by responding to
-`on_tab_focused` and related events. Again, not super documented for now: this
-is just better than status quo.
+Whatever it stores there persists.  It can reset this state by forcing closure;
+to do so, it should write `force_close=true` to the context.
 
 To clarify how input gets here, this is currently hardcoded in the menu logic in
 control.lua.  That is, by checking global.players[pindex].menu_name, and setting
 it for the open tab list.
+
+You should not use printout. Instead, you are given a builder in the context.
+Sometimes, the tab needs to add output before yours, so you should print through
+that.
 ]]
+local MessageBuilder = require("scripts.message-builder")
 local StorageManager = require("scripts.storage-manager")
 local Math2 = require("math-helpers")
 
@@ -36,23 +40,10 @@ local mod = {}
 ---@field player LuaPlayer
 ---@field state table Goes into storage.
 ---@field parameters table Whatever was passed to :open()
+---@field force_close boolean If true, close this tablist.
+---@field message fa.MessageBuilder
 
----@enum fa.ui.TabEventResponseKind
-mod.EVENT_RESPONSES = {
-   -- Return this special value to close a tab list in response to finding e.g.
-   -- an invalid entity.  `on_tab_list_closed` will stil be called.  State for
-   -- all tabs in this list is also dropped.
-   CLOSE_INVALID = {},
-
-   -- Return this value to ask the handler to clear this tab's state, resetting
-   -- it to the empty table.
-   CLEAR_STATE = {},
-}
-
--- Can include other fields.
----@alias fa.ui.TabEventResponse { kind: fa.ui.TabEventResponseKind }
-
----@alias fa.ui.SimpleTabHandler fun(fa.ui.TabContext): fa.ui.TabEventResponse
+---@alias fa.ui.SimpleTabHandler fun(fa.ui.TabContext)
 
 ---@class fa.ui.TabCallbacks
 ---@field title LocalisedString? If set, read out when the tab changes to this tab.
@@ -116,20 +107,15 @@ function TabList:_do_callback(pindex, target_tab_index, cb_name, ...)
       player = player,
       state = tabstate,
       parameters = tl.parameters,
+      force_close = false,
+      message = MessageBuilder.MessageBuilder.new(),
    }
 
-   local result = callback(context, ...)
-   if result and type(result) == "table" and result.kind then
-      local k = result.kind
-      if k == mod.EVENT_RESPONSES.CLEAR_STATE then
-         tl.tab_states[tabname] = {}
-      elseif k == mod.EVENT_RESPONSES.CLOSE_INVALID then
-         tl.tab_states = {}
-         -- TODO: closing logic. We don't have opening logic yet.
-      end
-   end
+   callback(context, ...)
 
-   return result
+   local msg = context.message:build()
+   if msg then printout(msg, pindex) end
+   if context.force_close then self:close(true) end
 end
 
 -- Returns a method which will call the event handler for the given name, so
@@ -141,13 +127,13 @@ local function build_simple_method(evt_name)
    end
 end
 
----@type fun(self)
+---@type fun(self, number)
 TabList.on_up = build_simple_method("on_up")
----@type fun(self)
+---@type fun(self, number)
 TabList.on_down = build_simple_method("on_down")
----@type fun(self)
+---@type fun(self, number)
 TabList.on_left = build_simple_method("on_left")
----@type fun(self)
+---@type fun(self, number)
 TabList.on_right = build_simple_method("on_right")
 
 ---@param pindex number
@@ -176,20 +162,20 @@ function TabList:_cycle(self, pindex, direction)
    tl.active_tab = new_index
 end
 
-function TabList:next_tab(self, pindex)
+function TabList:on_next_tab(self, pindex)
    self:_cycle(pindex, 1)
 end
 
-function TabList:previous_tab(self, pindex)
+function TabList:on_previous_tab(self, pindex)
    self:_cycle(pindex, -1)
 end
 
 function TabList:open(pindex, parameters)
-   storage.players[pindex].menu_name = self.menu_name
+   storage.players[pindex].menu = self.menu_name
+   storage.players[pindex].in_menu = true
+
    local tabstate = tablist_storage[pindex][self.menu_name]
 
-   -- Tabs wishing to clear their state have the infrastructure to handle that
-   -- via responding in on_tab_list_opened/closed.
    if not tabstate then
       tabstate = {
          parameters = parameters,
@@ -212,21 +198,44 @@ function TabList:open(pindex, parameters)
    tabstate.currently_open = true
 
    -- Tell all the tabs that they have opened, but abort if any of them close.
-
    for i = 1, #tabstate.tab_order do
       self:_do_callback(pindex, i, "on_tab_list_opened")
    end
 end
 
-function TabList:close(pindex)
-   storage.players[pindex].menu_name = nil
-   storage.players[pindex].in_menu = false
-
+---@param force_reset boolean? If true, also dump state.
+function TabList:close(pindex, force_reset)
    for i = 1, #self.tab_order do
       self:_do_callback(pindex, i, "on_tab_list_closed")
    end
 
    tablist_storage[pindex][self.menu_name].currently_open = false
+
+   if force_reset then tablist_storage[pindex][self.menu_name] = nil end
+
+   storage.players[pindex].menu = nil
+   storage.players[pindex].in_menu = false
+end
+
+---@param declaration fa.ui.TabListDeclaration
+---@return fa.ui.TabList
+function mod.declare_tablist(declaration)
+   ---@type fa.ui.TabList
+   local ret = {
+      menu_name = declaration.menu_name,
+      tab_order = {},
+      descriptors = {},
+   }
+
+   for _, d in pairs(declaration.tabs) do
+      assert(not ret.descriptors[d.name], "duplicate tabs not allowed")
+      ret.descriptors[d.name] = d
+      table.insert(ret.tab_order, d.name)
+   end
+
+   assert(#ret.tab_order, "All tablists must have tabs")
+
+   return setmetatable(ret, TabList_meta)
 end
 
 return mod
