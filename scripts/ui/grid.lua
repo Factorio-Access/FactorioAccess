@@ -14,12 +14,13 @@ if you had implemented all of this logic yourself.
 ]]
 local FaUtils = require("scripts.fa-utils")
 local Math2 = require("math-helpers")
+local TH = require("scripts.table-helpers")
 
 local mod = {}
 
 ---@alias fa.ui.GridNames (LocalisedString[])|(fun(fa.ui.TabContext, number): LocalisedString?)
 
----@class fa.ui.GridCallbacks
+---@class fa.ui.GridCallbacks: fa.ui.TabCallbacks
 ---@field title LocalisedString
 ---@field row_names fa.ui.GridNames
 ---@field col_names fa.ui.GridNames
@@ -36,12 +37,11 @@ local mod = {}
 ---@class fa.ui.Grid: fa.ui.TabCallbacks
 ---@field callbacks fa.ui.GridCallbacks
 local GridImpl = {}
-local GridImpl_meta = { __index = GridImpl }
 
 ---@param context fa.ui.GridContext
 ---@return LocalisedString?
 function GridImpl:_force_inbounds(context)
-   local size_x, size_y = self.callbacks.get_dims(context)
+   local size_x, size_y = self.callbacks:get_dims(context)
 
    if size_x == nil then
       assert(context.force_close)
@@ -57,9 +57,9 @@ end
 
 ---@param names fa.ui.GridNames
 ---@return LocalisedString?
-local function resolve_name(context, names, index)
+function GridImpl:_resolve_name(names, context, index)
    if type(names) == "table" then return names[index] end
-   return names(context, index)
+   return names(self.callbacks, context, index)
 end
 
 -- Only one of dx or dy should be set; the other must be zero.
@@ -97,20 +97,20 @@ function GridImpl:_read_current_cell(context, include_xname, include_yname)
    if context.force_close then return end
    assert(cell)
 
-   local parts = { cell }
+   local parts = {}
 
    if include_xname then
-      local xname = resolve_name(context, self.callbacks.col_names, state.x)
+      local xname = self:_resolve_name(self.callbacks.col_names, context, state.x)
       if xname then table.insert(parts, xname) end
    end
 
    if include_yname then
-      local yname = resolve_name(context, self.callbacks.row_names, state.y)
+      local yname = self:_resolve_name(self.callbacks.row_names, context, state.y)
       if yname then table.insert(parts, yname) end
    end
 
    local res = cell
-   if next(parts) then res = { "fa.ui-grid-cell-with-pos", FaUtils.localise_cat_table(parts) } end
+   if next(parts) then res = { "fa.ui-grid-cell-with-pos", cell, FaUtils.localise_cat_table(parts) } end
    context.message:fragment(res)
 end
 
@@ -127,13 +127,23 @@ GridImpl.on_down = move_handler(0, 1)
 GridImpl.on_left = move_handler(-1, 0)
 GridImpl.on_right = move_handler(1, 0)
 
-function GridImpl:on_tab_focused(context)
+---@param context fa.ui.GridContext
+function GridImpl:on_tab_list_opened(context)
+   if self.callbacks.on_tab_list_opened then
+      self.callbacks:on_tab_list_opened(context)
+      if context.force_close then return end
+   end
+
+   context.state.grid = { x = 1, y = 1 }
+
    self:_read_current_cell(context, true, true)
 end
 
 ---@param callbacks fa.ui.GridCallbacks
 function mod.declare_grid(callbacks)
-   return setmetatable({ callbacks = callbacks }, GridImpl_meta)
+   -- The grid shadows the callbacks it needs to intercept, then forwards those
+   -- by hand.
+   return setmetatable({ callbacks = callbacks }, TH.nested_indexer(GridImpl, callbacks))
 end
 
 return mod

@@ -5,6 +5,7 @@ local fa_crafting = require("scripts.crafting")
 local localising = require("scripts.localising")
 local fa_belts = require("scripts.transport-belts")
 local fa_blueprints = require("scripts.blueprints")
+local BeltAnalyzer = require("scripts.ui.belt-analyzer")
 
 local mod = {}
 
@@ -91,8 +92,7 @@ function mod.open_operable_building(ent, pindex)
       players[pindex].menu_search_index = 0
       players[pindex].menu_search_index_2 = 0
       if ent.prototype.subgroup.name == "belt" then
-         players[pindex].in_menu = true
-         players[pindex].menu = "belt"
+         BeltAnalyzer.belt_analyzer:open(pindex, { entity = ent })
          return
       end
       if ent.prototype.ingredient_count ~= nil then

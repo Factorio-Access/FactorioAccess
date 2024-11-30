@@ -37,6 +37,11 @@ function LocalGrid:col_names(context, index)
    return { "fa.ui-belt-analyzer-lane", FaUtils.direction_lookup(which) }
 end
 
+function LocalGrid:get_dims(context)
+   -- 2 lanes, 4 slots.
+   return 2, 4
+end
+
 ---@param context fa.ui.BeltAnalyzer.Context
 function LocalGrid:row_names(context, index)
    local ent = context.parameters.entity
@@ -56,6 +61,7 @@ function LocalGrid:read_cell(context, x, y)
    local node = context.state.node
 
    local contents = node:get_all_contents()
+
    local bucket = contents[x][y]
    assert(bucket)
 
@@ -77,6 +83,9 @@ function LocalGrid:read_cell(context, x, y)
    return builder:build()
 end
 
+function LocalGrid:on_tab_list_opened(context)
+   context.state.node = TransportBelts.Node.create(context.parameters.entity)
+end
 local LocalTab = Grid.declare_grid(LocalGrid)
 
 mod.belt_analyzer = TabList.declare_tablist({

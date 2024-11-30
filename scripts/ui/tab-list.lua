@@ -43,7 +43,7 @@ local mod = {}
 ---@field force_close boolean If true, close this tablist.
 ---@field message fa.MessageBuilder
 
----@alias fa.ui.SimpleTabHandler fun(fa.ui.TabContext)
+---@alias fa.ui.SimpleTabHandler fun(self, fa.ui.TabContext)
 
 ---@class fa.ui.TabCallbacks
 ---@field title LocalisedString? If set, read out when the tab changes to this tab.
@@ -90,7 +90,7 @@ function TabList:_do_callback(pindex, target_tab_index, cb_name, ...)
    local tabname = self.tab_order[target_tab_index]
    local tabstate = tl.tab_states[tabname]
    assert(tabstate, "this gets set up on self:open()")
-   if not tabstate.currently_open then return end
+   if not tl.currently_open then return end
 
    local callbacks = self.descriptors[tabname].callbacks
    local callback = callbacks[cb_name]
@@ -111,7 +111,9 @@ function TabList:_do_callback(pindex, target_tab_index, cb_name, ...)
       message = MessageBuilder.MessageBuilder.new(),
    }
 
-   callback(context, ...)
+   -- It's a method on callbacks, so we must pass callbacks as the self
+   -- parameter since we aren't using the `:` syntax.
+   callback(callbacks, context, ...)
 
    local msg = context.message:build()
    if msg then printout(msg, pindex) end
@@ -180,16 +182,10 @@ function TabList:open(pindex, parameters)
       tabstate = {
          parameters = parameters,
          active_tab = 1,
-         tab_order = {},
          tab_states = {},
          currently_open = true,
       }
       tablist_storage[pindex][self.menu_name] = tabstate
-
-      for _, desc in pairs(self.descriptors) do
-         table.insert(tabstate.tab_order, desc.name)
-         tabstate.tab_states[desc.name] = {}
-      end
    end
 
    -- Parameters always gets updated.
@@ -198,7 +194,10 @@ function TabList:open(pindex, parameters)
    tabstate.currently_open = true
 
    -- Tell all the tabs that they have opened, but abort if any of them close.
-   for i = 1, #tabstate.tab_order do
+   for i = 1, #self.tab_order do
+      local tabname = self.tab_order[i]
+      if not tabstate.tab_states[tabname] then tabstate.tab_states[tabname] = {} end
+
       self:_do_callback(pindex, i, "on_tab_list_opened")
    end
 end

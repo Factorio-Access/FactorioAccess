@@ -142,6 +142,8 @@ hit, but it's usually only a couple levels and for a function, which means in
 context that's not too bad (plus, anything truly performance sensitive will
 cache in a local anyway).  See e.g. ds.work_queue, scanner.backends.simple.
 
+Also, this is simpler Lua inheritance: list the most derived class first.
+
 At least one table must be specified.
 ]]
 function mod.nested_indexer(...)
@@ -154,7 +156,7 @@ function mod.nested_indexer(...)
          local c = cache[key]
          if c then return c end
 
-         for i = #args, 1, -1 do
+         for i = 1, #args do
             local attempt = args[i][key]
             if attempt then
                cache[key] = attempt

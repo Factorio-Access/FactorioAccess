@@ -298,17 +298,20 @@ function Node:get_line_contents(line)
    local line = self.entity.get_transport_line(line --[[@as number]])
 
    local buckets = {}
-   for i = 1, line.line_length * 4 do
+
+   for _ = 1, line.line_length * 4 do
       table.insert(buckets, {
          items = {},
       })
    end
 
    for _, details in pairs(line.get_detailed_contents()) do
-      local slot = math.floor(details.position * 4)
+      local slot = math.floor(details.position * 4) + 1
       local b = buckets[slot]
+
       local ds = details.stack
       local n, q = ds.name, ds.quality.name
+
       b.items[n] = b.items[n] or {}
       b.items[n][q] = (b.items[n][q] or 0) + ds.count
    end
