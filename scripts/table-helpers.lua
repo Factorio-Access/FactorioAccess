@@ -142,6 +142,8 @@ hit, but it's usually only a couple levels and for a function, which means in
 context that's not too bad (plus, anything truly performance sensitive will
 cache in a local anyway).  See e.g. ds.work_queue, scanner.backends.simple.
 
+Also, this is simpler Lua inheritance: list the most derived class first.
+
 At least one table must be specified.
 ]]
 function mod.nested_indexer(...)
@@ -154,7 +156,7 @@ function mod.nested_indexer(...)
          local c = cache[key]
          if c then return c end
 
-         for i = #args, 1, -1 do
+         for i = 1, #args do
             local attempt = args[i][key]
             if attempt then
                cache[key] = attempt
@@ -286,6 +288,28 @@ function mod.max_counts2_tiebreak_quality(name1, qual1, name2, qual2)
    if lev1 < lev2 then return true end
 
    return lev1 == lev2 and name1 < name2
+end
+
+--[[
+When doing announcements we usually need to go from NQC to sorted data in
+descending order. This does that, in a form that can be directly passed to
+localisation.
+]]
+---@param tab fa.NQC
+---@return ({ name: string, quality: string, count: number})[]
+function mod.nqc_to_sorted_descending(tab)
+   local ret = {}
+
+   for n, quals in pairs(tab) do
+      for qual, c in pairs(quals) do
+         table.insert(ret, { name = n, quality = qual, count = c })
+      end
+   end
+
+   table.sort(ret, function(a, b)
+      return a.count > b.count
+   end)
+   return ret
 end
 
 return mod

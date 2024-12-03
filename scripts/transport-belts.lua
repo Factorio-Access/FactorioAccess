@@ -298,17 +298,20 @@ function Node:get_line_contents(line)
    local line = self.entity.get_transport_line(line --[[@as number]])
 
    local buckets = {}
-   for i = 1, line.line_length * 4 do
+
+   for _ = 1, line.line_length * 4 do
       table.insert(buckets, {
          items = {},
       })
    end
 
    for _, details in pairs(line.get_detailed_contents()) do
-      local slot = math.floor(details.position * 4)
+      local slot = math.floor(details.position * 4) + 1
       local b = buckets[slot]
+
       local ds = details.stack
       local n, q = ds.name, ds.quality.name
+
       b.items[n] = b.items[n] or {}
       b.items[n][q] = (b.items[n][q] or 0) + ds.count
    end
@@ -452,7 +455,8 @@ function Node:walk_single_parents(callback)
    end
 end
 
--- Exactly the same as walk_single_parent but for single children.
+-- Exactly the same as walk_single_parent but for single children, and stopping
+-- at sideloads.
 ---@param callback fun(LuaEntity, number): boolean second arg is number of steps so far, starts at 1.
 function Node:walk_single_child(callback)
    self:_assert_valid()
@@ -467,7 +471,21 @@ function Node:walk_single_child(callback)
    while true do
       local children = get_children(e)
       if #children ~= 1 then return end
-      e = children[1]
+      local new = children[1]
+
+      -- Sideload detection: either the next segment faces away, is a corner, or
+      -- is a sideload.
+      if new.type == "transport-belt" or new.type == "underground-belt" then
+         local new_shape = new.type == "underground-belt" and "straight" or new.belt_shape
+         -- If it is an underground belt we claim straight and it will face a
+         -- different direction.  If it is a sideload then the chnild has a
+         -- direct parent that isn't this parent and is thus also going to claim
+         -- to be straight.  Sideloads into corners are double sideloads onto
+         -- straight belts.
+         if new_shape == "straight" and e.direction ~= new.direction then return end
+      end
+
+      e = new
 
       if e.type == "entity-ghost" then return end
       if seen[e.unit_number] then return end
@@ -534,9 +552,91 @@ function Node:carries_heuristic(line_index, depth_limit)
    return result
 end
 
---Transport belt analyzer: Read a results list slot
-function mod.read_belt_slot(pindex, start_phrase)
-   return "unimplemented for 2.0"
+---@class fa.TransportBelts.BeltAnalyzerData
+---@field left { upstream: fa.NQC, downstream: fa.NQC, total: fa.NQC }
+---@field right { upstream: fa.NQC, downstream: fa.NQC, total: fa.NQC }
+
+--[[
+Run the belt analyzer algorithm: collect the left and right lane contents for
+upstream, downstraem, and total.  Total is upstream+downstream+here.  Upstream
+is everything with one parent, stopping at ghosts.  Downstream is everything
+with 1 child, stopping at ghosts and sideloads.
+
+This can't be pulled out because moving it up the module hierarchy would require
+iterating and joining potentially large tables together in a redundant fashion.
+So we do it here, then consume it in ui/belt-analyzer.lua.
+]]
+---@return fa.TransportBelts.BeltAnalyzerData
+function Node:belt_analyzer_algo()
+   local ret = {
+      left = {
+         upstream = {},
+         downstream = {},
+         total = {},
+      },
+      right = { upstream = {}, downstream = {}, total = {} },
+   }
+
+   ---@param tab fa.NQC
+   ---@param buckets fa.TransportBelts.SlotBucket[]
+   local function fold_buckets_into(tab, buckets)
+      for _, bucket in pairs(buckets) do
+         for n, quals in pairs(bucket.items) do
+            local dest = tab[n]
+            if not dest then
+               dest = {}
+               tab[n] = dest
+            end
+
+            for qual, count in pairs(quals) do
+               dest[qual] = (dest[qual] or 0) + count
+            end
+         end
+      end
+   end
+
+   -- It is possible for a belt loop to up to double count if we traverse it
+   -- upstream then downstream. We choose to attribute such loops to upstream.
+   -- In any case, we must duplicate the seen check in the lower level walking
+   -- functions to prevent this.  In future, we may wish to consider warning of
+   -- loops, but this requires a very particular and impractical setup.
+   local seen = {}
+
+   -- Add to total, then to up/downstream if ud is specified.
+   ---@param n fa.TransportBelts.Node
+   ---@param ud "upstream" | "downstream" | nil
+   ---@return boolean false if we did nothing because it was seen before.
+   local function add_node(n, ud)
+      local un_num = n.entity.unit_number
+      if seen[un_num] then return false end
+      seen[un_num] = true
+
+      local this_contents = n:get_all_contents()
+      local left = this_contents[1]
+      local right = this_contents[2]
+      fold_buckets_into(ret.left.total, left)
+      fold_buckets_into(ret.right.total, right)
+      if ud then
+         fold_buckets_into(ret.left[ud], left)
+         fold_buckets_into(ret.right[ud], right)
+      end
+
+      return true
+   end
+
+   -- Ourself, to total only.
+   add_node(self)
+
+   self:walk_single_parents(function(e)
+      local n = Node.create(e)
+      return add_node(n, "upstream")
+   end)
+
+   self:walk_single_child(function(e)
+      return add_node(Node.create(e), "downstream")
+   end)
+
+   return ret
 end
 
 --Set the input priority or the output priority or filter for a splitter
