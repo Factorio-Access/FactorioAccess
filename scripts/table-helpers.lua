@@ -312,4 +312,8 @@ function mod.nqc_to_sorted_descending(tab)
    return ret
 end
 
+function mod.insert_if_notnill(tab, what)
+   if what then table.insert(tab, what) end
+end
+
 return mod

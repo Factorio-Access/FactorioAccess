@@ -15,6 +15,7 @@ won't change our mind later or maybe even go as far as adding settings for this
 stuff.
 ]]
 local dirs = defines.direction
+local Filters = require("scripts.filters")
 local util = require("util")
 
 local F = require("scripts.field-ref")
@@ -971,6 +972,21 @@ local function ent_info_belt_contents(ctx)
    if not found_items then ctx.message:fragment({ "fa.ent-info-transport-belt-empty" }) end
 end
 
+---@param ctx fa.Info.EntInfoContext
+local function ent_info_filters(ctx)
+   local filts = Filters.get_all_filters(ctx.ent)
+   if next(filts) then
+      local first = true
+
+      for _, name in pairs(filts) do
+         ctx.message:list_item()
+         if first then ctx.message:fragment("Filters for") end
+         first = false
+         ctx.message:fragment(Localising.get_localised_name_with_fallback(prototypes.item[name]))
+      end
+   end
+end
+
 --Outputs basic entity info, usually called when the cursor selects an entity.
 ---@param ent LuaEntity
 ---@return LocalisedString
@@ -1063,28 +1079,10 @@ function mod.ent_info(pindex, ent, is_scanner)
       ctx.message:fragment(BotLogistics.roboport_contents_info(ent))
    end
    run_handler(ent_info_spidertron)
+   run_handler(ent_info_filters)
 
    --Inserters: Explain held items, pickup and drop positions
    if ent.type == "inserter" then
-      --Declare filters
-      if ent.filter_slot_count > 0 then
-         ctx.message:fragment("Filters for")
-         local active_filter_count = 0
-         for i = 1, ent.filter_slot_count, 1 do
-            local filt = ent.get_filter(i)
-            if filt ~= nil then
-               active_filter_count = active_filter_count + 1
-               if active_filter_count > 1 then filter_result = filter_result .. " and " end
-               local local_name = Localising.get(prototypes.item[filt.name], pindex)
-               if local_name == nil then local_name = tostring(filt.name) or " unknown item " end
-               filter_result = filter_result .. local_name
-            end
-         end
-         if active_filter_count > 0 then
-            ctx.message:fragment(filter_result)
-            run_handler(",")
-         end
-      end
       --Read held item
       if ent.held_stack ~= nil and ent.held_stack.valid_for_read and ent.held_stack.valid then
          ctx.message:fragment(", holding")

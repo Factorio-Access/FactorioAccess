@@ -6,6 +6,7 @@ local localising = require("scripts.localising")
 local fa_belts = require("scripts.transport-belts")
 local fa_blueprints = require("scripts.blueprints")
 local BeltAnalyzer = require("scripts.ui.belt-analyzer")
+local Filters = require("scripts.filters")
 
 local mod = {}
 
@@ -166,7 +167,7 @@ function mod.open_operable_building(ent, pindex)
          })
          --Add inserter filter info
          for i = 1, ent.filter_slot_count do
-            local filter = ent.get_filter(i)
+            local filter = Filters.get_filter_prototype(ent, i)
             if filter == nil then filter = "No filter selected." end
             table.insert(players[pindex].building.sectors[#players[pindex].building.sectors].inventory, filter)
          end

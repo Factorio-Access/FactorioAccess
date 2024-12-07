@@ -32,6 +32,7 @@ local fa_kk = require("scripts.kruise-kontrol-wrapper")
 local fa_quickbar = require("scripts.quickbar")
 local BeltAnalyzer = require("scripts.ui.belt-analyzer")
 local FaCommands = require("scripts.fa-commands")
+local Filters = require("scripts.filters")
 local Consts = require("scripts.consts")
 local Research = require("scripts.research")
 local Rulers = require("scripts.rulers")
@@ -298,7 +299,7 @@ function read_inventory_slot(pindex, start_phrase_in, inv_in)
       --Label it as an empty slot
       result = result .. "Empty Slot"
       --Check if the empty slot has a filter set
-      local filter_name = p.get_main_inventory().get_filter(index)
+      local filter_name = Filters.get_filter_prototype(p.get_main_inventory(), index)
       if filter_name ~= nil then
          result = result .. " filtered for " .. filter_name --laterdo localise this name
       end
@@ -311,7 +312,7 @@ function read_inventory_slot(pindex, start_phrase_in, inv_in)
       printout(fa_blueprints.get_blueprint_book_info(stack, false), pindex)
    elseif stack.valid_for_read then
       --Check if the slot is filtered
-      local filter_name = p.get_main_inventory().get_filter(index)
+      local filter_name = Filters.get_filter_prototype(p.get_main_inventory(), index)
       if filter_name ~= nil then result = result .. " filtered " end
       --Check if the stack has damage
       if stack.health < 1 then result = result .. " damaged " end
@@ -4383,7 +4384,7 @@ script.on_event("click-menu", function(event)
                         players[pindex].item_cache[players[pindex].item_selector.index].name
                      )
                      sectors_i.inventory[players[pindex].building.index] =
-                        players[pindex].building.ent.get_filter(players[pindex].building.index)
+                        Filters.get_filter_prototype(players[pindex].building.ent, players[pindex].building.index)
                      printout("Filter set.", pindex)
                      players[pindex].building.item_selection = false
                      players[pindex].item_selection = false
@@ -7182,7 +7183,7 @@ function set_selected_inventory_slot_filter(pindex)
    index = index or 1
    --Act according to the situation defined by the filter slot, slot item, and hand item.
    local menu = players[pindex].menu
-   local filter = inv.get_filter(index)
+   local filter = Filters.get_filter_prototype(inv, index)
    local slot_item = inv[index]
    local hand_item = p.cursor_stack
 
@@ -7228,19 +7229,21 @@ end
 --Returns the currently selected entity inventory based on the current mod menu and mod sector.
 function get_selected_inventory_and_slot(pindex)
    local p = game.get_player(pindex)
+   local c = p.character
+   if not c then return nil end
    local inv = nil
    local index = nil
    local menu = players[pindex].menu
    if menu == "inventory" then
-      inv = p.get_main_inventory()
+      inv = c.get_main_inventory()
       index = players[pindex].inventory.index
    elseif menu == "player_trash" then
-      inv = p.get_inventory(defines.inventory.character_trash)
+      inv = c.get_inventory(defines.inventory.character_trash)
       index = players[pindex].inventory.index
    elseif menu == "building" or menu == "vehicle" then
       local sector_name = players[pindex].building.sector_name
       if sector_name == "player inventory from building" then
-         inv = p.get_main_inventory()
+         inv = c.get_main_inventory()
          index = players[pindex].inventory.index
       else
          inv = players[pindex].building.sectors[players[pindex].building.sector].inventory
@@ -7660,7 +7663,7 @@ function set_inserter_filter_by_hand(pindex, ent)
    if stack == nil or stack.valid_for_read == false then
       --Delete last filter
       for i = ent.filter_slot_count, 1, -1 do
-         local filt = ent.get_filter(i)
+         local filt = Filters.get_filter_prototype(ent, i)
          if filt ~= nil then
             ent.set_filter(i, nil)
             return "Last filter cleared"
@@ -7670,10 +7673,10 @@ function set_inserter_filter_by_hand(pindex, ent)
    else
       --Add item in hand as next filter
       for i = 1, ent.filter_slot_count, 1 do
-         local filt = ent.get_filter(i)
+         local filt = Filters.get_filter_prototype(ent, i)
          if filt == nil then
             ent.set_filter(i, stack.name)
-            if ent.get_filter(i) == stack.name then
+            if Filters.get_filter_prototype(ent, i) == stack.name then
                return "Added filter"
             else
                return "Filter setting failed"
