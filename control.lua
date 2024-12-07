@@ -4379,7 +4379,8 @@ script.on_event("click-menu", function(event)
                      players[pindex].item_selector.index = 1
                      read_item_selector_slot(pindex)
                   else
-                     players[pindex].building.ent.set_filter(
+                     Filters.set_filter(
+                        players[pindex].building.ent,
                         players[pindex].building.index,
                         players[pindex].item_cache[players[pindex].item_selector.index].name
                      )
@@ -5591,7 +5592,7 @@ script.on_event("menu-clear-filter", function(event)
                   and players[pindex].building.index
                      < #players[pindex].building.sectors[players[pindex].building.sector].inventory
                then
-                  players[pindex].building.ent.set_filter(players[pindex].building.index, nil)
+                  Filters.set_filter(players[pindex].building.ent, players[pindex].building.index, nil)
                   players[pindex].building.sectors[players[pindex].building.sector].inventory[players[pindex].building.index] =
                      "No filter selected."
                   printout("Filter cleared", pindex)
@@ -5602,7 +5603,7 @@ script.on_event("menu-clear-filter", function(event)
                and players[pindex].building.index
                   < #players[pindex].building.sectors[players[pindex].building.sector].inventory
             then
-               players[pindex].building.ent.set_filter(players[pindex].building.index, nil)
+               Filters.set_filter(players[pindex].building.ent, players[pindex].building.index, nil)
                players[pindex].building.sectors[players[pindex].building.sector].inventory[players[pindex].building.index] =
                   "No filter selected."
                printout("Filter cleared.", pindex)
@@ -7189,13 +7190,13 @@ function set_selected_inventory_slot_filter(pindex)
 
    --1. If a  filter is set then clear it
    if filter ~= nil then
-      inv.set_filter(index, nil)
+      Filters.set_filter(inv, index, nil)
       read_selected_inventory_and_slot(pindex, "Slot filter cleared, ")
       return
    --2. If no filter is set and both the slot and hand are full, then choose the slot item (because otherwise it needs to be moved)
    elseif slot_item and slot_item.valid_for_read and hand_item and hand_item.valid_for_read then
       if inv.can_set_filter(index, slot_item.name) then
-         inv.set_filter(index, slot_item.name)
+         Filters.set_filter(inv, index, slot_item.name)
          read_selected_inventory_and_slot(pindex, "Slot filter set, ")
       else
          printout("Error: Unable to set the slot filter for this item", pindex)
@@ -7204,7 +7205,7 @@ function set_selected_inventory_slot_filter(pindex)
    --3. If no filter is set and the slot is full and the hand is empty (implied), then set the slot item as the filter
    elseif slot_item and slot_item.valid_for_read then
       if inv.can_set_filter(index, slot_item.name) then
-         inv.set_filter(index, slot_item.name)
+         Filters.set_filter(inv, index, slot_item.name)
          read_selected_inventory_and_slot(pindex, "Slot filter set, ")
       else
          printout("Error: Unable to set the slot filter for this item", pindex)
@@ -7213,7 +7214,7 @@ function set_selected_inventory_slot_filter(pindex)
    --4. If no filter is set and the slot is empty (implied) and the hand is full, then set the hand item as the filter
    elseif hand_item and hand_item.valid_for_read then
       if inv.can_set_filter(index, hand_item.name) then
-         inv.set_filter(index, hand_item.name)
+         Filters.set_filter(inv, index, hand_item.name)
          read_selected_inventory_and_slot(pindex, "Slot filter set, ")
       else
          printout("Error: Unable to set the slot filter for this item", pindex)
@@ -7665,7 +7666,7 @@ function set_inserter_filter_by_hand(pindex, ent)
       for i = ent.filter_slot_count, 1, -1 do
          local filt = Filters.get_filter_prototype(ent, i)
          if filt ~= nil then
-            ent.set_filter(i, nil)
+            Filters.set_filter(ent, i, nil)
             return "Last filter cleared"
          end
       end
@@ -7675,7 +7676,7 @@ function set_inserter_filter_by_hand(pindex, ent)
       for i = 1, ent.filter_slot_count, 1 do
          local filt = Filters.get_filter_prototype(ent, i)
          if filt == nil then
-            ent.set_filter(i, stack.name)
+            Filters.set_filter(ent, i, stack.name)
             if Filters.get_filter_prototype(ent, i) == stack.name then
                return "Added filter"
             else
