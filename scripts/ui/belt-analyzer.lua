@@ -15,6 +15,9 @@ local mod = {}
 ---@field upstream fa.BeltAnalyzer.SortedEntries[]
 ---@field downstream fa.BeltAnalyzer.SortedEntries[]
 ---@field total fa.BeltAnalyzer.SortedEntries[]
+---@field upstream_length number
+---@field downstream_length number
+---@field total_length number
 
 ---@class fa.ui.BeltAnalyzer.SharedState
 ---@field node fa.TransportBelts.Node
@@ -97,7 +100,9 @@ local LocalTab = Grid.declare_grid(LocalGrid)
 -- The only difference between the upstream/total/downstream tabs is which
 -- field of the analysis they reference, so this returns the grids referencing
 -- the proper field.  All other logic is 100% identical.
-local function aggregate_grid_builder(field)
+---@param field "upstream"|"downstream"|"total"
+---@param length_field "upstream_length" | "downstream_length" | "total_length"
+local function aggregate_grid_builder(field, length_field)
    ---@class fa.BeltAnalyzer.AggregateTabCallbacks:  fa.ui.GridCallbacks
    local TabCallbacks = {}
 
@@ -119,12 +124,7 @@ local function aggregate_grid_builder(field)
       local ent = ctx.shared_state.analysis[field][x][y]
       if not ent then return { "fa.ui-belt-analyzer-empty" } end
 
-      local total = 0
-      for i = 1, #ctx.shared_state.analysis[field][x] do
-         local c = ctx.shared_state.analysis[field][x][i].count
-         total = total + c
-      end
-      local percent = string.format("%.1f", 100 * ent.count / total)
+      local percent = string.format("%.1f", 100 * ent.count / ctx.shared_state.analysis[length_field])
 
       return { "fa.ui-belt-analyzer-aggregation", Localising.localise_item(ent), percent }
    end
@@ -132,9 +132,9 @@ local function aggregate_grid_builder(field)
    return Grid.declare_grid(TabCallbacks)
 end
 
-local TotalTab = aggregate_grid_builder("total")
-local UpstreamTab = aggregate_grid_builder("upstream")
-local DownstreamTab = aggregate_grid_builder("downstream")
+local TotalTab = aggregate_grid_builder("total", "total_length")
+local UpstreamTab = aggregate_grid_builder("upstream", "upstream_length")
+local DownstreamTab = aggregate_grid_builder("downstream", "downstream_length")
 
 ---@param params fa.ui.BeltAnalyzer.Parameters
 ---@return fa.ui.BeltAnalyzer.SharedState
@@ -154,6 +154,9 @@ local function state_setup(_pindex, params)
          upstream = { up_left, up_right },
          total = { tot_left, tot_right },
          downstream = { down_left, down_right },
+         upstream_length = ad.upstream_length,
+         downstream_length = ad.downstream_length,
+         total_length = ad.total_length,
       },
    }
 end

@@ -555,6 +555,29 @@ end
 ---@class fa.TransportBelts.BeltAnalyzerData
 ---@field left { upstream: fa.NQC, downstream: fa.NQC, total: fa.NQC }
 ---@field right { upstream: fa.NQC, downstream: fa.NQC, total: fa.NQC }
+---@field upstream_length number in "slots", always a multiple of 4.
+---@field downstream_length number
+---@field total_length number
+
+---@param ent LuaEntity
+---@return number
+local function belt_length_in_slots(ent)
+   -- Underground belt exits are also special: they have 0.5-length lines which are used, and two lines left empty.
+   if ent.type == "underground-belt" and ent.belt_to_ground_type == "output" then return 2 end
+
+   -- Underground belt entrances are where we get the length of the underground part from.
+   if ent.type == "underground-belt" and ent.belt_to_ground_type == "input" then
+      local l1 = ent.get_transport_line(1).line_length
+      local l2 = ent.get_transport_line(3).line_length
+      return (l1 + l2) * 4
+   end
+
+   if ent.type == "loader" then return 0 end
+
+   -- Everything else is 4: transport belts for the obvious reason and splitters
+   -- because they are complicated and 4 is a good enough approximation.
+   return 4
+end
 
 --[[
 Run the belt analyzer algorithm: collect the left and right lane contents for
@@ -575,6 +598,10 @@ function Node:belt_analyzer_algo()
          total = {},
       },
       right = { upstream = {}, downstream = {}, total = {} },
+      upstream_length = 0,
+      downstream_length = 0,
+      -- There is always at least this belt.
+      total_length = 0,
    }
 
    ---@param tab fa.NQC
@@ -629,12 +656,22 @@ function Node:belt_analyzer_algo()
 
    self:walk_single_parents(function(e)
       local n = Node.create(e)
-      return add_node(n, "upstream")
+      if add_node(n, "upstream") then
+         ret.upstream_length = ret.upstream_length + belt_length_in_slots(e)
+         return true
+      end
+      return false
    end)
 
    self:walk_single_child(function(e)
-      return add_node(Node.create(e), "downstream")
+      if add_node(Node.create(e), "downstream") then
+         ret.downstream_length = ret.downstream_length + belt_length_in_slots(e)
+         return true
+      end
+      return false
    end)
+
+   ret.total_length = belt_length_in_slots(self.entity) + ret.upstream_length + ret.downstream_length
 
    return ret
 end
