@@ -34,9 +34,11 @@ local BeltAnalyzer = require("scripts.ui.belt-analyzer")
 local FaCommands = require("scripts.fa-commands")
 local Filters = require("scripts.filters")
 local Consts = require("scripts.consts")
+local F = require("scripts.field-ref")
 local Research = require("scripts.research")
 local Rulers = require("scripts.rulers")
 local ScannerEntrypoint = require("scripts.scanner.entrypoint")
+local TH = require("scripts.table-helpers")
 local WorkQueue = require("scripts.work-queue")
 
 ---@meta scripts.shared-types
@@ -3291,30 +3293,24 @@ function read_item_pickup_state(pindex)
          printout(result, pindex)
          return
       end
-      local left = ent.get_transport_line(1).get_contents()
-      local right = ent.get_transport_line(2).get_contents()
-
-      for name, count in pairs(right) do
-         if left[name] ~= nil then
-            left[name] = left[name] + count
-         else
-            left[name] = count
-         end
-      end
-      local contents = {}
-      for name, count in pairs(left) do
-         table.insert(contents, { name = name, count = count })
-      end
-      table.sort(contents, function(k1, k2)
-         return k1.count > k2.count
+      local left = TH.nqc_to_sorted_descending(
+         TH.rollup2(ent.get_transport_line(1).get_contents(), F.name().get, F.quality().get, F.count().get)
+      )
+      local right = TH.nqc_to_sorted_descending(
+         TH.rollup2(ent.get_transport_line(2).get_contents(), F.name().get, F.quality().get, F.count().get)
+      )
+      local all = {}
+      TH.concat_arrays(left, right)
+      -- Rename it, for clarity.
+      local all = left
+      table.sort(all, function(a, b)
+         return a.count > b.count
       end)
-      if #contents > 0 then
-         result = result .. contents[1].name
-         if #contents > 1 then
-            result = result .. ", and " .. contents[2].name
-            if #contents > 2 then result = result .. ", and other item types " end
-         end
-      end
+
+      if all[1] then result = result .. all[1].name end
+      if all[2] then result = result .. " " .. string.format("and %s", all[2].name) end
+      if all[3] then result = result .. " and others" end
+
       result = result .. " from nearby belts"
    --Check if there are ground items within n tiles
    elseif #nearby_ground_items > 0 then
