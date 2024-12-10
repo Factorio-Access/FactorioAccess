@@ -189,6 +189,8 @@ local function ent_info_important_statuses(ctx)
          ctx.message:fragment({ "fa.ent-info-input-missing" })
       elseif status == stat.full_output or status == stat.full_burnt_result_output then
          ctx.message:fragment({ "fa.ent-info-output-full" })
+      elseif status == defines.entity_status.pipeline_overextended then
+         ctx.message:fragment({ "entity-status.pipeline-overextended" })
       end
    end
 end
