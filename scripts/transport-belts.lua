@@ -16,6 +16,7 @@ local F = require("scripts.field-ref")
 local FaUtils = require("scripts.fa-utils")
 local Geometry = require("scripts.geometry")
 local localising = require("scripts.localising")
+local MessageBuilder = require("scripts.message-builder")
 local TH = require("scripts.table-helpers")
 
 local mod = {}
@@ -688,7 +689,7 @@ function mod.set_splitter_priority(splitter, is_input, is_left, filter_item_stac
       result = "Cleared splitter filter"
       splitter.splitter_output_priority = "none"
    elseif filter_item_stack ~= nil and filter_item_stack.valid_for_read then
-      splitter.splitter_filter = filter_item_stack.prototype
+      splitter.splitter_filter = { name = filter_item_stack.prototype }
       filter = splitter.splitter_filter
       result = "filter set to " .. filter_item_stack.name
       if splitter.splitter_output_priority == "none" then
@@ -753,70 +754,58 @@ function mod.set_splitter_priority(splitter, is_input, is_left, filter_item_stac
 end
 
 --Returns an info string about a splitter's input and output settings.
+---@param ent LuaEntity
+---@return LocalisedString
 function mod.splitter_priority_info(ent)
-   local result = ","
    local input = ent.splitter_input_priority
    local output = ent.splitter_output_priority
    local filter = ent.splitter_filter
+   local msg = MessageBuilder.MessageBuilder.new()
+
    if input == "none" then
-      result = result .. " input balanced, "
+      msg:fragment("input balanced,")
    elseif input == "right" then
-      result = result
-         .. " input priority "
-         .. "right"
-         .. " which is "
-         .. FaUtils.direction_lookup(FaUtils.rotate_90(ent.direction))
-         .. ", "
+      msg:fragment("input priority right")
+      msg:fragment("which is")
+
+      msg:fragment(FaUtils.direction_lookup(FaUtils.rotate_90(ent.direction)))
+      msg:fragment(",")
    elseif input == "left" then
-      result = result
-         .. " input priority "
-         .. "left"
-         .. " which is "
-         .. FaUtils.direction_lookup(FaUtils.rotate_270(ent.direction))
-         .. ", "
+      msg:fragment("input priority left which is")
+      msg:fragment(FaUtils.direction_lookup(FaUtils.rotate_270(ent.direction)))
+      msg:fragment(",")
    end
    if filter == nil then
       if output == "none" then
-         result = result .. " output balanced, "
+         msg:fragment(" output balanced,")
       elseif output == "right" then
-         result = result
-            .. " output priority "
-            .. "right"
-            .. " which is "
-            .. FaUtils.direction_lookup(FaUtils.rotate_90(ent.direction))
-            .. ", "
+         msg:fragment("output priority right which is")
+
+         msg:fragment(FaUtils.direction_lookup(FaUtils.rotate_90(ent.direction)))
+         msg:fragment(",")
       elseif output == "left" then
-         result = result
-            .. " output priority "
-            .. "left"
-            .. " which is "
-            .. FaUtils.direction_lookup(FaUtils.rotate_270(ent.direction))
-            .. ", "
+         msg:fragment("output priority left which is")
+
+         msg:fragment(FaUtils.direction_lookup(FaUtils.rotate_270(ent.direction)))
+         msg:fragment(",")
       end
    else
-      local item_name = localising.get(filter, pindex)
-      if item_name == nil or item_name == "" then item_name = "unknown item" end
+      local item_name = localising.get_localised_name_with_fallback(prototypes.item[filter.name])
+      msg:fragment("output filtering")
+      msg:fragment(item_name)
+      msg:fragment("to the")
+      msg:fragment(output)
+      msg:fragment("which is")
+
       if output == "right" then
-         result = result
-            .. " output filtering "
-            .. item_name
-            .. " towards the "
-            .. "right"
-            .. " which is "
-            .. FaUtils.direction_lookup(FaUtils.rotate_90(ent.direction))
-            .. ", "
+         msg:fragment(FaUtils.direction_lookup(FaUtils.rotate_90(ent.direction)))
       elseif output == "left" then
-         result = result
-            .. " output filtering "
-            .. item_name
-            .. " towards the "
-            .. "left"
-            .. " which is "
-            .. FaUtils.direction_lookup(FaUtils.rotate_270(ent.direction))
-            .. ", "
+         msg:fragment(FaUtils.direction_lookup(FaUtils.rotate_270(ent.direction)))
       end
+
+      msg:fragment(",")
    end
-   return result
+   return msg:build()
 end
 
 return mod
