@@ -1048,8 +1048,9 @@ function mod.ent_info(pindex, ent, is_scanner)
 
    run_handler(ent_info_facing, true)
    run_handler(ent_info_underground_belt_type, true)
-   run_handler(ent_info_belt_contents, true)
+
    run_handler(ent_info_belt_shape, true)
+   run_handler(ent_info_belt_contents, true)
    run_handler(ent_info_pole_neighbors, true)
 
    run_handler(ent_info_resource)
