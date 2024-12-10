@@ -926,50 +926,58 @@ local function ent_info_belt_contents(ctx)
 
    local found_items = false
 
-   for _, side in pairs({ defines.transport_line.left_line, defines.transport_line.right_line }) do
-      local is_full = node:is_line_full(side)
-      local carries = node:carries_heuristic(side, 5)
-      local carries_exact = carries.distance == 0
-      local best_name, best_qual = TH.max_counts2(carries.results, TH.max_counts2_tiebreak_quality)
-      local count = TH.length2(carries.results)
+   local is_full = {
+      left = node:is_line_full(defines.transport_line.left_line),
+      right = node:is_line_full(defines.transport_line.right_line),
+   }
+   local carries = {
+      left = node:carries_heuristic(defines.transport_line.left_line, 5),
+      right = node:carries_heuristic(defines.transport_line.right_line, 5),
+   }
+   local empty = { left = true, right = true }
+   local most_common_for_both = { left = nil, right = nil }
+   local other_count_for_both = { left = nil, right = nil }
 
-      if best_name then
-         found_items = true
-         ctx.message:fragment({
-            side == defines.transport_line.left_line and "fa.ent-info-transport-belt-left"
-               or "fa.ent-info-transport-belt-right",
-         })
+   local params = {}
+   for _, side in pairs({ "left", "right" }) do
+      local carries = carries[side]
+      local is_full = is_full[side]
+      if next(carries.results) then
+         empty[side] = false
+         local most_common = TH.max_counts2(carries.results, TH.max_counts2_tiebreak_quality)
+         most_common_for_both[side] = most_common
 
-         local item_str = Localising.get_localised_name_with_fallback(prototypes.item[best_name])
-
-         if best_qual ~= "normal" then
-            item_str = {
-               "fa.item-with-quality",
-               item_str,
-               Localising.get_localised_name_with_fallback(prototypes.quality[best_qual]),
-            }
+         local dist = carries.distance
+         local dist_dir = 1
+         if dist < 0 then
+            dist_dir = 1
+         elseif dist > 0 then
+            dist_dir = 2
          end
-
-         if count > 1 then item_str = { "fa.ent-info-transport-belt-multi-item", item_str, count - 1 } end
-
-         if carries.distance == 0 then
-            ctx.message:fragment({
-               "fa.ent-info-transport-belt-carrying",
-               Localising.get_localised_name_with_fallback(prototypes.item[best_name]),
-            })
-         elseif carries.distance < 0 then
-            ctx.message:fragment({ "fa.ent-info-transport-belt-carrying-upstream", item_str, -carries.distance })
-         elseif carries.distance > 0 then
-            ctx.message:fragment({ "fa.ent-info-transport-belt-carrying-downstream", item_str, carries.distance })
-         end
-
-         if node:is_line_full(side) then ctx.message:fragment({ "fa.ent-info-transport-full" }) end
-
-         ctx.message:list_item()
+         local others = table_size(carries.results) - 1
+         other_count_for_both[side] = others
+         TH.concat_arrays(params, { most_common, dist, dist_dir, others, is_full and 1 or 0 })
       end
    end
 
-   if not found_items then ctx.message:fragment({ "fa.ent-info-transport-belt-empty" }) end
+   local key = "fa.ent-info-belt-contents-empty"
+   if (not empty.left) and empty.right then
+      key = "fa.ent-info-belt-contents-left"
+   elseif empty.left and not empty.right then
+      key = "fa.ent-info-belt-contents-right"
+   elseif not (empty.left or empty.right) then
+      key = "fa.ent-info-belt-contents-both"
+
+      -- If they're the same simplify to the simpler key.
+      if
+         most_common_for_both.left == most_common_for_both.right
+         and other_count_for_both.left == other_count_for_both.right
+      then
+         key = "fa.ent-info-belt-contents-both"
+      end
+   end
+   table.insert(params, 1, key)
+   ctx.message:fragment(params)
 end
 
 ---@param ctx fa.Info.EntInfoContext
