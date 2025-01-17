@@ -624,8 +624,7 @@ function force_cursor_off(pindex)
 
    --Disable
    players[pindex].cursor = false
-   players[pindex].cursor_pos =
-      fa_utils.offset_position_legacy(players[pindex].position, players[pindex].player_direction, 1)
+   players[pindex].cursor_pos = fa_utils.to_neighboring_tile(players[pindex].position, players[pindex].player_direction)
    players[pindex].cursor_pos = fa_utils.center_of_tile(players[pindex].cursor_pos)
    fa_mouse.move_mouse_pointer(players[pindex].cursor_pos, pindex)
    fa_graphics.sync_build_cursor_graphics(pindex)
@@ -8272,7 +8271,7 @@ function check_and_play_bump_alert_sound(pindex, this_tick)
 
    --Check if there is a tile that was bumped into
    local tile = p.surface.get_tile(players[pindex].cursor_pos.x, players[pindex].cursor_pos.y)
-   bump_was_tile = (tile ~= nil and tile.valid and tile.collides_with("player-layer"))
+   bump_was_tile = (tile ~= nil and tile.valid and tile.collides_with("player"))
 
    if bump_was_tile then
       p.play_sound({ path = "player-bump-slide" })

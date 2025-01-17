@@ -75,13 +75,13 @@ function mod.to_neighboring_tile(pos, facing_direction)
       return { x = pos.x + 1, y = pos.y }
    elseif dir == dirs.west then
       return { x = pos.x - 1, y = pos.y }
-   elseif dir == dirs.northnortheast or dir == dirs.northeast or dir == dirs.northeasteast then
+   elseif dir == dirs.northnortheast or dir == dirs.northeast or dir == dirs.eastnortheast then
       return { x = pos.x + 1, y = pos.y - 1 }
-   elseif dir == dirs.northnorthwest or dir == dirs.northwest or dir == dirs.northwestwest then
+   elseif dir == dirs.northnorthwest or dir == dirs.northwest or dir == dirs.westnorthwest then
       return { x = pos.x - 1, y = pos.y - 1 }
-   elseif dir == dirs.southsoutheast or dir == dirs.southeast or dir == dirs.southeasteast then
+   elseif dir == dirs.southsoutheast or dir == dirs.southeast or dir == dirs.eastsoutheast then
       return { x = pos.x + 1, y = pos.y + 1 }
-   elseif dir == dirs.southsouthwest or dir == dirs.southwest or dir == dirs.southwestwest then
+   elseif dir == dirs.southsouthwest or dir == dirs.southwest or dir == dirs.westsouthwest then
       return { x = pos.x - 1, y = pos.y + 1 }
    else
       return pos
