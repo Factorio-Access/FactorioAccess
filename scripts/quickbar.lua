@@ -49,13 +49,14 @@ function mod.read_quick_bar_slot(index, pindex)
    page = game.get_player(pindex).get_active_quick_bar_page(1) - 1
    local item = game.get_player(pindex).get_quick_bar_slot(index + 10 * page)
    if item ~= nil then
+      local proto = prototypes.item[item.name]
       local count = game.get_player(pindex).get_main_inventory().get_item_count(item.name)
       local stack = game.get_player(pindex).cursor_stack
       if stack and stack.valid_for_read then
          count = count + stack.count
-         printout("unselected " .. fa_localising.get(item, pindex) .. " x " .. count, pindex)
+         printout("unselected " .. fa_localising.get(proto, pindex) .. " x " .. count, pindex)
       else
-         printout("selected " .. fa_localising.get(item, pindex) .. " x " .. count, pindex)
+         printout("selected " .. fa_localising.get(proto, pindex) .. " x " .. count, pindex)
       end
    else
       printout("Empty quickbar slot", pindex) --does this print, maybe not working because it is linked to the game control?
@@ -97,7 +98,7 @@ function mod.read_switched_quick_bar(index, pindex)
    page = game.get_player(pindex).get_active_quick_bar_page(index)
    local item = game.get_player(pindex).get_quick_bar_slot(1 + 10 * (index - 1))
    local item_name = "empty slot"
-   if item ~= nil then item_name = fa_localising.get(item, pindex) end
+   if item ~= nil then item_name = fa_localising.get(prototypes.item[item.name], pindex) end
    local result = "Quickbar " .. index .. " selected starting with " .. item_name
    printout(result, pindex)
 end
