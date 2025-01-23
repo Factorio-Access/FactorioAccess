@@ -138,6 +138,8 @@ Time of day and current research and total mission time: T
 
 Check character health and shield level: G
 
+Check the pollution level at the cursor location (chunk): SHIFT + U
+
 Toggle Vanilla Mode: CONTROL + ALT + V. Note that this will mute the narrator until you toggle back out.
 
 Toggle Cursor Drawing: CONTROL + ALT + C. Note: This is enabled by Vanilla Mode by default, but it can be toggled separately for those who want it.
