@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 
 # where to find the required mod files
-mod_path = Path( '.' )
+mod_path = Path(__file__).parent.parent
 data_lua_path = mod_path / 'data.lua'
 tutorial_path = mod_path / 'locale' / 'en' / 'fa-tutorial.cfg'
 missing_control_count = 0
@@ -21,6 +21,7 @@ extra_controls = {
     'clear-cursor': 'Q'
 }
 
+
 def extract_controls_from_lua(file_path):
     '''
     Gets the controls from data.lua and stores them in two dictionaries.
@@ -30,8 +31,8 @@ def extract_controls_from_lua(file_path):
     controls_dict = {}
     alt_controls = {}
     in_controls_section = False  # are we in the file section that has the controls
-    in_control = False # are we processing a control
-    linked_control = None # linked game control name
+    in_control = False  # are we processing a control
+    linked_control = None  # linked game control name
 
     try:
         with open(file_path, 'r') as lua_file:
@@ -67,36 +68,38 @@ def extract_controls_from_lua(file_path):
 
                             # prepare for next possible control
                             linked_control = None
-                    
+
                         in_control = False
         if not controls_section_found:
             print("Error: Failed to locate controls section in data.lua")
         return controls_dict, alt_controls
     except FileNotFoundError:
-        print("File not found.")
+        print(f"File not found: {data_lua_path}")
         return {}
 
-def findControl( match: re.Match ):
+
+def findControl(match: re.Match):
     '''
     Helper method for replacing control names in tutorial steps with actual key commands.
     Parameter is a regular expression match object used in the replace operation.
     '''
     global missing_control_count
     control = match.group(1)
-    key = controls.setdefault( control, None )
+    key = controls.setdefault(control, None)
     if key is None:
-        key = alt_controls.setdefault( control, None )
+        key = alt_controls.setdefault(control, None)
         if key is None:
             missing_control_count += 1
-            print( f'Warning no key found for control "{control}" and the event name was used instead ({str(missing_control_count)})')
+            print(f'Warning no key found for control "{control}" and the event name was used instead ({str(missing_control_count)})')
             return control
 
     return key
 
+
 # get mod controls from data.lua so that control names can be replaced with actual keyboard commands.
 controls, alt_controls = extract_controls_from_lua(data_lua_path)
 # add manually defined controls that could not be found from data.lua
-controls.update( extra_controls )
+controls.update(extra_controls)
 
 # Initialize configparser for parsing the tutorial file
 config = configparser.ConfigParser()
@@ -105,7 +108,7 @@ config = configparser.ConfigParser()
 config.read(tutorial_path)
 
 # Open the markdown file to write the output
-with open('tutorial.md', 'w') as md_file:
+with open(Path(__file__).parent / 'tutorial.md', 'w') as md_file:
     # Check if 'tutorial' section exists
     if 'tutorial' in config:
         # Iterate through each item in the 'tutorial' section
