@@ -6,6 +6,7 @@ local fa_building_tools = require("scripts.building-tools")
 local fa_mining_tools = require("scripts.player-mining-tools")
 local fa_graphics = require("scripts.graphics")
 local dirs = defines.direction
+local BlueprintsMenu = require("scripts.ui.menus.blueprints-menu")
 
 local mod = {}
 
@@ -662,9 +663,8 @@ BLUEPRINT_MENU_LENGTH = 12
 
 function mod.blueprint_menu_open(pindex)
    if players[pindex].vanilla_mode then return end
-   --Set the player menu tracker to this menu
-   players[pindex].menu = "blueprint_menu"
-   players[pindex].in_menu = true
+   BlueprintsMenu.blueprint_menu_tabs:open(pindex, {})
+
    players[pindex].move_queue = {}
 
    --Set the menu line counter to 0

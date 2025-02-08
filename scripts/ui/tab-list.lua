@@ -14,7 +14,7 @@ open at once.
 
 For now this isn't super documented.  If you are looking for some overarching
 framework you won't find it.  That comes later.  This just gets us off the
-ground.
+ground.  However, see ui/menu.lua, which simplifies, well, menus.
 
 This is the top level of the UI hierarchy and also handles the state management.
 Each tab will receive a context with a field to use for persistent state.
@@ -58,6 +58,7 @@ local mod = {}
 ---@field on_down fa.ui.SimpleTabHandler?
 ---@field on_left fa.ui.SimpleTabHandler?
 ---@field on_right fa.ui.SimpleTabHandler?
+---@field on_click fa.ui.SimpleTabHandler?
 
 ---@class fa.ui.TabDescriptor
 ---@field name string
@@ -65,7 +66,7 @@ local mod = {}
 ---@field callbacks fa.ui.TabCallbacks
 
 ---@class fa.ui.TabListDeclaration (exact)
----@field menu_name string
+---@field menu_name string Legacy, used for key routing.
 ---@field tabs fa.ui.TabDescriptor[]
 ---@field shared_state_setup (fun(number, table): table)? passed the parameters and pindex, should return a shaerd state.
 ---@field resets_to_first_tab_on_open boolean?
@@ -129,6 +130,8 @@ function TabList:_do_callback(pindex, target_tab_index, cb_name, msg_builder, pa
       -- It's a method on callbacks, so we must pass callbacks as the self
       -- parameter since we aren't using the `:` syntax.
       callback(callbacks, context, table.unpack(params))
+      -- Makes assigning to state when initializing etc. work.
+      tl.tab_states[tabname] = context.state
 
       if context.force_close then self:close(true) end
    end
@@ -249,13 +252,13 @@ end
 ---@return fa.ui.TabList
 function mod.declare_tablist(declaration)
    ---@type fa.ui.TabList
-   local ret = {
+   local ret = setmetatable({
       menu_name = declaration.menu_name,
       tab_order = {},
       descriptors = {},
       shared_state_initializer = declaration.shared_state_setup,
       declaration = declaration,
-   }
+   }, TabList_meta)
 
    for _, d in pairs(declaration.tabs) do
       assert(not ret.descriptors[d.name], "duplicate tabs not allowed")
@@ -265,7 +268,7 @@ function mod.declare_tablist(declaration)
 
    assert(#ret.tab_order, "All tablists must have tabs")
 
-   return setmetatable(ret, TabList_meta)
+   return ret
 end
 
 return mod

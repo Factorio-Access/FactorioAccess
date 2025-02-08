@@ -31,6 +31,7 @@ local fa_circuits = require("scripts.circuit-networks")
 local fa_kk = require("scripts.kruise-kontrol-wrapper")
 local fa_quickbar = require("scripts.quickbar")
 local BeltAnalyzer = require("scripts.ui.belt-analyzer")
+local BlueprintsMenu = require("scripts.ui.menus.blueprints-menu")
 local FaCommands = require("scripts.fa-commands")
 local Filters = require("scripts.filters")
 local Consts = require("scripts.consts")
@@ -1642,7 +1643,7 @@ function menu_cursor_up(pindex)
    elseif players[pindex].menu == "roboport_menu" then
       fa_bot_logistics.roboport_menu_up(pindex)
    elseif players[pindex].menu == "blueprint_menu" then
-      fa_blueprints.blueprint_menu_up(pindex)
+      BlueprintsMenu.blueprint_menu_tabs:on_up(pindex)
    elseif players[pindex].menu == "blueprint_book_menu" then
       fa_blueprints.blueprint_book_menu_up(pindex)
    elseif players[pindex].menu == "circuit_network_menu" then
@@ -1854,7 +1855,7 @@ function menu_cursor_down(pindex)
    elseif players[pindex].menu == "roboport_menu" then
       fa_bot_logistics.roboport_menu_down(pindex)
    elseif players[pindex].menu == "blueprint_menu" then
-      fa_blueprints.blueprint_menu_down(pindex)
+      BlueprintsMenu.blueprint_menu_tabs:on_down(pindex)
    elseif players[pindex].menu == "blueprint_book_menu" then
       fa_blueprints.blueprint_book_menu_down(pindex)
    elseif players[pindex].menu == "circuit_network_menu" then
@@ -3470,7 +3471,7 @@ function close_menu_resets(pindex)
    elseif players[pindex].menu == "roboport_menu" then
       fa_bot_logistics.roboport_menu_close(pindex)
    elseif players[pindex].menu == "blueprint_menu" then
-      fa_blueprints.blueprint_menu_close(pindex)
+      BlueprintsMenu.blueprint_menu_tabs:close(pindex, false)
    elseif players[pindex].menu == "blueprint_book_menu" then
       fa_blueprints.blueprint_book_menu_close(pindex)
    elseif players[pindex].menu == "circuit_network_menu" then
@@ -4658,7 +4659,7 @@ script.on_event("click-menu", function(event)
       elseif players[pindex].menu == "roboport_menu" then
          fa_bot_logistics.run_roboport_menu(players[pindex].roboport_menu.index, pindex, true)
       elseif players[pindex].menu == "blueprint_menu" then
-         fa_blueprints.run_blueprint_menu(players[pindex].blueprint_menu.index, pindex, true)
+         BlueprintsMenu.blueprint_menu_tabs:on_click(pindex)
       elseif players[pindex].menu == "blueprint_book_menu" then
          local bpb_menu = players[pindex].blueprint_book_menu
          fa_blueprints.run_blueprint_book_menu(pindex, bpb_menu.index, bpb_menu.list_mode, true, false)
@@ -6020,6 +6021,12 @@ script.on_event(defines.events.on_player_cursor_stack_changed, function(event)
          players[pindex].blueprint_height_in_hand = height + 1
       end
    end
+
+   -- As a special case: blueprint menus will end up pointing at the wrong
+   -- blueprint if not closed here, since the only real unique identifier right
+   -- now is the player's hand.
+   if players[pindex].menu == "blueprint_menu" then BlueprintsMenu.blueprint_menu_tabs:close(pindex) end
+
    if players[pindex].menu == "blueprint_menu" or players[pindex].menu == "blueprint_book_menu" then
       close_menu_resets(pindex)
    end
