@@ -20,4 +20,22 @@ function mod.simple_label(key, text)
    end)
 end
 
+--[[
+A "button"-like label: the text is static but you can click it to do something.
+
+Remember though! This can change text on each render, so it's often useful for
+dynamic labels too (the next render gets a chance to recompute).
+]]
+---@param key string
+---@param label LocalisedString
+---@param click_handler fun(fa.MenuCtx)
+---@return fa.MenuItemRender
+function mod.clickable_label(key, label, click_handler)
+   return {
+      label = function(ctx)
+         ctx.message:fragment(label)
+      end,
+      click = click_handler,
+   }
+end
 return mod

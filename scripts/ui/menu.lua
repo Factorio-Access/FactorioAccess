@@ -97,10 +97,14 @@ local mod = {}
 ---@field click fa.MenuEventCallback Can push to message_builder, but doesn't have to.
 ---@field enabled fa.MenuEventPredicate
 
+-- Parameter to the callback for initial state.
+---@class fa.MenuStateCtx
+---@field pindex number
+
 ---@class fa.MenuSpec
 ---@field tab_name string
 ---@field title LocalisedString?
----@field state_callback fun(any): any
+---@field state_callback fun(fa.MenuStateCtx): any?
 ---@field render_callback fun(fa.MenuCtx): fa.MenuRender
 
 ---@class fa.MenuRender
@@ -252,7 +256,7 @@ function mod.declare_menu(opts)
       ctx.state = {
          item_states = {},
          prev_items = {},
-         menu_state = opts.state_callback(ctx.state),
+         menu_state = opts.state_callback({ pindex = ctx.pindex }),
          position_key = nil,
       }
 
