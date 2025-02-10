@@ -7,7 +7,7 @@ function mod.lazy_label(key, callback)
    return {
       key = key,
       label = callback,
-      clikc = callback,
+      click = callback,
    }
 end
 
@@ -32,6 +32,7 @@ dynamic labels too (the next render gets a chance to recompute).
 ---@return fa.MenuItemRender
 function mod.clickable_label(key, label, click_handler)
    return {
+      key = key,
       label = function(ctx)
          ctx.message:fragment(label)
       end,

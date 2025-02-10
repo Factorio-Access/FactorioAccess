@@ -157,6 +157,8 @@ TabList.on_down = build_simple_method("on_down")
 TabList.on_left = build_simple_method("on_left")
 ---@type fun(self, number)
 TabList.on_right = build_simple_method("on_right")
+---@type fun(self, number)
+TabList.on_click = build_simple_method("on_click")
 
 -- Perform the flow for focusing a tab. Does this unconditionally, so be careful
 -- not to over-call it.
@@ -236,8 +238,16 @@ end
 
 ---@param force_reset boolean? If true, also dump state.
 function TabList:close(pindex, force_reset)
-   for i = 1, #self.tab_order do
-      self:_do_callback(pindex, i, "on_tab_list_closed")
+   -- Our lame event handling story where more than one event handler can get
+   -- called for the same event combined with the new GUI framework still being
+   -- WIP means that double-close is apparently possible.  We already know we're
+   -- going to fix that, so for now just guard against it.
+   if not tablist_storage[pindex] or not tablist_storage[pindex][self.menu_name] then return end
+
+   if tablist_storage[pindex][self.menu_name].currently_open then
+      for i = 1, #self.tab_order do
+         self:_do_callback(pindex, i, "on_tab_list_closed")
+      end
    end
 
    tablist_storage[pindex][self.menu_name].currently_open = false

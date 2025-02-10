@@ -73,11 +73,18 @@ local Sounds = require("scripts.ui.sounds")
 
 local mod = {}
 
+--[[
+Tell the menu itself to do things from click handlers etc.
+]]
+---@class fa.MenuController
+---@field close fun(self)
+
 ---@class fa.MenuCtx
 ---@field pindex number
 ---@field message_builder fa.MessageBuilder
 ---@field state any Returned from the state function and maintained in `storage`.
 ---@field item_state table? Private to the menu item itself.
+---@field controller fa.MenuController
 
 ---@alias fa.MenuEventCallback fun(fa.MenuCtx)
 ---@alias fa.MenuEventPredicate fun(fa.MenuCtx): boolean
@@ -202,18 +209,7 @@ end
 --[[
 Return a descriptor for a tab containing a menu.
 
-The tab's name will be `menutab-menu_name`.  The menu will look into
-`parameters` for `parameters.menu_name`.  If found, that is the menu's
-parameters.  For now the only parameter which can be passed is `initial_position
-= { key = "foo" }`.  For example:
-
-```
-{
-   blueprint_menu = {
-      initial_position = { key = "read_name" },
-   }
-}
-```
+The tab's name will be `menutab-menu_name`.  
 
 Which would put the cursor in this tab on that menu item.  If the tablist is
 only one tab, that makes it so that the menu opens to the right place directly;
@@ -228,11 +224,19 @@ function mod.declare_menu(opts)
    ---@param ctx fa.MenuTabCtxInternal
    ---@return fa.MenuCtx
    local function build_user_ctx(ctx)
+      local controller = {}
+      ---@cast controller fa.MenuController
+
+      function controller:close()
+         ctx.force_close = true
+      end
+
       return {
          pindex = ctx.pindex,
          message = ctx.message,
          state = ctx.state.menu_state,
          item_state = nil,
+         controller = controller,
       }
    end
 
@@ -273,7 +277,6 @@ function mod.declare_menu(opts)
    ---@param item fa.MenuItemRender
    ---@return fa.MenuCtx
    function build_item_ctx(ctx, item)
-      print(serpent.line(ctx, { nocode = true }))
       local u_ctx = build_user_ctx(ctx)
       u_ctx.item_state = ctx.state.item_states[item.key]
       if not u_ctx.item_state then
@@ -352,6 +355,7 @@ function mod.declare_menu(opts)
          if not item then return end
 
          item.click(build_item_ctx(ctx, item))
+         Sounds.play_menu_click(ctx.pindex)
       end)
    end
 

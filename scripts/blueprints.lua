@@ -6,7 +6,6 @@ local fa_building_tools = require("scripts.building-tools")
 local fa_mining_tools = require("scripts.player-mining-tools")
 local fa_graphics = require("scripts.graphics")
 local dirs = defines.direction
-local BlueprintsMenu = require("scripts.ui.menus.blueprints-menu")
 
 local mod = {}
 
@@ -44,7 +43,7 @@ end
 function mod.get_blueprint_label(stack)
    local bp_data = mod.get_bp_data_for_edit(stack)
    local label = bp_data.blueprint.label
-   if label == nil then label = "" end
+   if label == nil then label = "no name" end
    return label
 end
 
@@ -663,7 +662,7 @@ BLUEPRINT_MENU_LENGTH = 12
 
 function mod.blueprint_menu_open(pindex)
    if players[pindex].vanilla_mode then return end
-   BlueprintsMenu.blueprint_menu_tabs:open(pindex, {})
+   -- Opening the ui is one level up, to avoid circular imports.
 
    players[pindex].move_queue = {}
 
@@ -678,9 +677,6 @@ function mod.blueprint_menu_open(pindex)
 
    --Play sound
    game.get_player(pindex).play_sound({ path = "Open-Inventory-Sound" })
-
-   --Load menu
-   mod.run_blueprint_menu(players[pindex].blueprint_menu.index, pindex, false)
 end
 
 function mod.blueprint_menu_close(pindex, mute_in)

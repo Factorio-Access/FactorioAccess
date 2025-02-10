@@ -4934,6 +4934,7 @@ script.on_event("click-hand-right", function(event)
          --Laterdo here: build as ghost
       elseif stack.is_blueprint then
          fa_blueprints.blueprint_menu_open(pindex)
+         BlueprintsMenu.blueprint_menu_tabs:open(pindex, {})
       elseif stack.is_blueprint_book then
          fa_blueprints.blueprint_book_menu_open(pindex, false)
       elseif stack.is_deconstruction_item then
