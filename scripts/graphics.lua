@@ -404,6 +404,7 @@ function mod.sync_build_cursor_graphics(pindex)
          elseif stack.is_upgrade_item then
             color = { r = 0.25, b = 0.25, g = 1.00, a = 0.75 }
          end
+         player.building_footprint.destroy()
          player.building_footprint = rendering.draw_rectangle({
             color = color,
             width = 2,
