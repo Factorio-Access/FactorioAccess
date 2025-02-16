@@ -122,20 +122,20 @@ end
 local function get_player_logistic_request_missing_count(pindex, slot_id)
    local p = game.get_player(pindex)
    local slot = p.get_personal_logistic_slot(slot_id)
-   if slot == nil or slot.name == nil then return nil end
+   if slot == nil or slot.value == nil then return nil end
    local missing = slot.min
    if missing == nil then return nil end
    --Check player hand
-   if p.cursor_stack and p.cursor_stack.valid_for_read and p.cursor_stack.name == slot.name then
+   if p.cursor_stack and p.cursor_stack.valid_for_read and p.cursor_stack.name == slot.value then
       missing = missing - stack.count
    end
    if missing <= 0 then return 0 end
    --Check all player inventories
-   missing = missing - p.get_inventory(defines.inventory.character_ammo).get_item_count(slot.name)
-   missing = missing - p.get_inventory(defines.inventory.character_armor).get_item_count(slot.name)
-   missing = missing - p.get_inventory(defines.inventory.character_guns).get_item_count(slot.name)
-   missing = missing - p.get_inventory(defines.inventory.character_main).get_item_count(slot.name)
-   missing = missing - p.get_inventory(defines.inventory.character_trash).get_item_count(slot.name)
+   missing = missing - p.get_inventory(defines.inventory.character_ammo).get_item_count(slot.value)
+   missing = missing - p.get_inventory(defines.inventory.character_armor).get_item_count(slot.value)
+   missing = missing - p.get_inventory(defines.inventory.character_guns).get_item_count(slot.value)
+   missing = missing - p.get_inventory(defines.inventory.character_main).get_item_count(slot.value)
+   missing = missing - p.get_inventory(defines.inventory.character_trash).get_item_count(slot.value)
    if missing <= 0 then return 0 end
    return missing
 end
@@ -184,10 +184,10 @@ local function get_personal_logistic_slot_index(item_object, pindex)
    --Find the correct request slot for this item, if any
    while not slot_found and slots_nil_counter < 250 do
       slot_id = slot_id + 1
-      current_slot = p.get_personal_logistic_slot(slot_id)
-      if current_slot == nil or current_slot.name == nil then
+      current_slot = p.get_requester_point().get_section(1).get_slot(slot_id)
+      if current_slot == nil or current_slot.value == nil then
          slots_nil_counter = slots_nil_counter + 1
-      elseif current_slot.name == item_object.name then
+      elseif current_slot.value == item_object.name then
          slot_found = true
          correct_slot_id = slot_id
       else
@@ -200,8 +200,8 @@ local function get_personal_logistic_slot_index(item_object, pindex)
       slot_id = 0
       while not slot_found and slot_id < 250 do
          slot_id = slot_id + 1
-         current_slot = p.get_personal_logistic_slot(slot_id)
-         if current_slot == nil or current_slot.name == nil then
+         current_slot = p.get_requester_point().get_section(1).get_slot(slot_id)
+         if current_slot == nil or current_slot.value == nil then
             slot_found = true
             correct_slot_id = slot_id
          else
@@ -226,8 +226,8 @@ local function count_active_personal_logistic_slots(pindex) --**laterdo count fu
    --Find non-empty request slots
    while slots_nil_counter < 250 do
       slot_id = slot_id + 1
-      current_slot = p.get_personal_logistic_slot(slot_id)
-      if current_slot == nil or current_slot.name == nil then
+      current_slot = p.get_requester_point().get_section(1).get_slot(slot_id)
+      if current_slot == nil or current_slot.value == nil then
          slots_nil_counter = slots_nil_counter + 1
       else
          slots_found = slots_found + 1
@@ -247,7 +247,7 @@ local function count_active_spidertron_logistic_slots(spidertron, pindex)
    while slots_nil_counter < slots_max_count do
       slot_id = slot_id + 1
       current_slot = spidertron.get_vehicle_logistic_slot(slot_id)
-      if current_slot == nil or current_slot.name == nil then
+      if current_slot == nil or current_slot.value == nil then
          slots_nil_counter = slots_nil_counter + 1
       else
          slot_founds = slots_found + 1
@@ -282,11 +282,12 @@ local function player_logistic_request_increment_min(item_stack, pindex)
    end
 
    --Read the correct slot id value, increment it, set it
-   current_slot = p.get_personal_logistic_slot(correct_slot_id)
-   if current_slot == nil or current_slot.name == nil then
+   current_slot = p.get_requester_point().get_section(1).get_slot(correct_slot_id)
+   if current_slot == nil or current_slot.value == nil then
       --Create a fresh request
-      local new_slot = { name = item_stack.name, min = 1, max = nil }
-      p.set_personal_logistic_slot(correct_slot_id, new_slot)
+      local new_slot = { value = item_stack.name, min = 1, max = nil }
+      p.get_requester_point().get_section(1).clear_slot(correct_slot_id)
+      p.get_requester_point().get_section(1).set_slot(correct_slot_id, new_slot)
    else
       --Update existing request
       local stack_size = 1
@@ -301,7 +302,8 @@ local function player_logistic_request_increment_min(item_stack, pindex)
          printout("Error: Minimum request value cannot exceed maximum", pindex)
          return
       end
-      p.set_personal_logistic_slot(correct_slot_id, current_slot)
+      p.get_requester_point().get_section(1).clear_slot(correct_slot_id)
+      p.get_requester_point().get_section(1).set_slot(correct_slot_id, current_slot)
    end
 
    --Read new status
@@ -333,11 +335,12 @@ local function player_logistic_request_decrement_min(item_stack, pindex)
    end
 
    --Read the correct slot id value, decrement it, set it
-   current_slot = p.get_personal_logistic_slot(correct_slot_id)
-   if current_slot == nil or current_slot.name == nil then
+   current_slot = p.get_requester_point().get_section(1).get_slot(correct_slot_id)
+   if current_slot == nil or current_slot.value == nil then
       --Create a fresh request
-      local new_slot = { name = item_stack.name, min = 0, max = nil }
-      p.set_personal_logistic_slot(correct_slot_id, new_slot)
+      local new_slot = { value = item_stack.name, min = 0, max = nil }
+      p.get_requester_point().get_section(1).clear_slot(correct_slot_id)
+      p.get_requester_point().get_section(1).set_slot(correct_slot_id, new_slot)
    else
       --Update existing request
       local stack_size = 1
@@ -352,7 +355,8 @@ local function player_logistic_request_decrement_min(item_stack, pindex)
          printout("Error: Minimum request value cannot exceed maximum", pindex)
          return
       end
-      p.set_personal_logistic_slot(correct_slot_id, current_slot)
+      p.get_requester_point().get_section(1).clear_slot(correct_slot_id)
+      p.get_requester_point().get_section(1).set_slot(correct_slot_id, current_slot)
    end
 
    --Read new status
@@ -384,17 +388,18 @@ local function player_logistic_request_increment_max(item_stack, pindex)
    end
 
    --Read the correct slot id value, decrement it, set it
-   current_slot = p.get_personal_logistic_slot(correct_slot_id)
+   current_slot = p.get_requester_point().get_section(1).get_slot(correct_slot_id)
    local stack_size = 1
    if item_stack.object_name == "LuaItemStack" then
       stack_size = item_stack.prototype.stack_size
    elseif item_stack.object_name == "LuaItemPrototype" then
       stack_size = item_stack.stack_size
    end
-   if current_slot == nil or current_slot.name == nil then
+   if current_slot == nil or current_slot.value == nil then
       --Create a fresh request
-      local new_slot = { name = item_stack.name, min = 0, max = MAX_STACK_COUNT * stack_size }
-      p.set_personal_logistic_slot(correct_slot_id, new_slot)
+      local new_slot = { value = item_stack.name, min = 0, max = MAX_STACK_COUNT * stack_size }
+      p.get_requester_point().get_section(1).clear_slot(correct_slot_id)
+      p.get_requester_point().get_section(1).set_slot(correct_slot_id, new_slot)
    else
       --Update existing request
       current_slot.max = increment_logistic_request_max_amount(stack_size, current_slot.max)
@@ -403,7 +408,8 @@ local function player_logistic_request_increment_max(item_stack, pindex)
          printout("Error: Minimum request value cannot exceed maximum", pindex)
          return
       end
-      p.set_personal_logistic_slot(correct_slot_id, current_slot)
+      p.get_requester_point().get_section(1).clear_slot(correct_slot_id)
+      p.get_requester_point().get_section(1).set_slot(correct_slot_id, current_slot)
    end
 
    --Read new status
@@ -435,7 +441,7 @@ local function player_logistic_request_decrement_max(item_stack, pindex)
    end
 
    --Read the correct slot id value, increment it, set it
-   current_slot = p.get_personal_logistic_slot(correct_slot_id)
+   current_slot = p.get_requester_point().get_section(1).get_slot(correct_slot_id)
 
    local stack_size = 1
    if item_stack.object_name == "LuaItemStack" then
@@ -443,10 +449,11 @@ local function player_logistic_request_decrement_max(item_stack, pindex)
    elseif item_stack.object_name == "LuaItemPrototype" then
       stack_size = item_stack.stack_size
    end
-   if current_slot == nil or current_slot.name == nil then
+   if current_slot == nil or current_slot.value == nil then
       --Create a fresh request
-      local new_slot = { name = item_stack.name, min = 0, max = MAX_STACK_COUNT * stack_size }
-      p.set_personal_logistic_slot(correct_slot_id, new_slot)
+      local new_slot = { value = item_stack.name, min = 0, max = MAX_STACK_COUNT * stack_size }
+      p.get_requester_point().get_section(1).clear_slot(correct_slot_id)
+      p.get_requester_point().get_section(1).set_slot(correct_slot_id, new_slot)
    else
       --Update existing request
       current_slot.max = decrement_logistic_request_max_amount(stack_size, current_slot.max)
@@ -455,7 +462,8 @@ local function player_logistic_request_decrement_max(item_stack, pindex)
          printout("Error: Minimum request value cannot exceed maximum", pindex)
          return
       end
-      p.set_personal_logistic_slot(correct_slot_id, current_slot)
+      p.get_requester_point().get_section(1).clear_slot(correct_slot_id)
+      p.get_requester_point().get_section(1).set_slot(correct_slot_id, current_slot)
    end
 
    --Read new status
@@ -488,9 +496,9 @@ local function player_logistic_request_clear(item_stack, pindex)
    end
 
    --Read the correct slot id value, increment it, set it
-   current_slot = p.get_personal_logistic_slot(correct_slot_id)
+   current_slot = p.get_requester_point().get_section(1).get_slot(correct_slot_id)
 
-   if current_slot == nil or current_slot.name == nil then
+   if current_slot == nil or current_slot.value == nil then
       --(done)
    else
       --Clear this request
@@ -513,9 +521,9 @@ local function get_entity_logistic_slot_index(item_stack, chest)
    while not slot_found and slot_id < slots_max_count do
       slot_id = slot_id + 1
       current_slot = chest.get_request_slot(slot_id)
-      if current_slot == nil or current_slot.name == nil then
+      if current_slot == nil or current_slot.value == nil then
          --do nothing
-      elseif current_slot.name == item_stack.name then
+      elseif current_slot.value == item_stack.name then
          slot_found = true
          correct_slot_id = slot_id
       else
@@ -529,7 +537,7 @@ local function get_entity_logistic_slot_index(item_stack, chest)
       while not slot_found and slot_id < 100 do
          slot_id = slot_id + 1
          current_slot = chest.get_request_slot(slot_id)
-         if current_slot == nil or current_slot.name == nil then
+         if current_slot == nil or current_slot.value == nil then
             slot_found = true
             correct_slot_id = slot_id
          else
@@ -576,9 +584,9 @@ local function chest_logistic_request_increment_min(item_stack, chest, pindex)
    elseif item_stack.object_name == "LuaItemPrototype" then
       stack_size = item_stack.stack_size
    end
-   if current_slot == nil or current_slot.name == nil then
+   if current_slot == nil or current_slot.value == nil then
       --Create a fresh request
-      local new_slot = { name = item_stack.name, count = stack_size }
+      local new_slot = { value = item_stack.name, count = stack_size }
       chest.set_request_slot(new_slot, correct_slot_id)
    else
       --Update existing request
@@ -622,9 +630,9 @@ local function chest_logistic_request_decrement_min(item_stack, chest, pindex)
    elseif item_stack.object_name == "LuaItemPrototype" then
       stack_size = item_stack.stack_size
    end
-   if current_slot == nil or current_slot.name == nil then
+   if current_slot == nil or current_slot.value == nil then
       --Create a fresh request
-      local new_slot = { name = item_stack.name, count = stack_size }
+      local new_slot = { value = item_stack.name, count = stack_size }
       chest.set_request_slot(new_slot, correct_slot_id)
    else
       --Update existing request
@@ -666,7 +674,7 @@ local function chest_logistic_request_clear(item_stack, chest, pindex)
 
    --Read the correct slot id value, increment it, set it
    current_slot = chest.get_request_slot(correct_slot_id)
-   if current_slot == nil or current_slot.name == nil then
+   if current_slot == nil or current_slot.value == nil then
       --(done)
    else
       --Clear this request
@@ -702,9 +710,9 @@ local function spidertron_logistic_request_increment_min(item_stack, spidertron,
 
    --Read the correct slot id value, increment it, set it
    current_slot = spidertron.get_vehicle_logistic_slot(correct_slot_id)
-   if current_slot == nil or current_slot.name == nil then
+   if current_slot == nil or current_slot.value == nil then
       --Create a fresh request
-      local new_slot = { name = item_stack.name, min = 1, max = nil }
+      local new_slot = { value = item_stack.name, min = 1, max = nil }
       spidertron.set_vehicle_logistic_slot(correct_slot_id, new_slot)
    else
       --Update existing request
@@ -752,9 +760,9 @@ local function spidertron_logistic_request_decrement_min(item_stack, spidertron,
 
    --Read the correct slot id value, decrement it, set it
    current_slot = spidertron.get_vehicle_logistic_slot(correct_slot_id)
-   if current_slot == nil or current_slot.name == nil then
+   if current_slot == nil or current_slot.value == nil then
       --Create a fresh request
-      local new_slot = { name = item_stack.name, min = 0, max = nil }
+      local new_slot = { value = item_stack.name, min = 0, max = nil }
       spidertron.set_vehicle_logistic_slot(correct_slot_id, new_slot)
    else
       --Update existing request
@@ -808,9 +816,9 @@ local function spidertron_logistic_request_increment_max(item_stack, spidertron,
    elseif item_stack.object_name == "LuaItemPrototype" then
       stack_size = item_stack.stack_size
    end
-   if current_slot == nil or current_slot.name == nil then
+   if current_slot == nil or current_slot.value == nil then
       --Create a fresh request
-      local new_slot = { name = item_stack.name, min = 0, max = MAX_STACK_COUNT * stack_size }
+      local new_slot = { value = item_stack.name, min = 0, max = MAX_STACK_COUNT * stack_size }
       spidertron.set_vehicle_logistic_slot(correct_slot_id, new_slot)
    else
       --Update existing request
@@ -858,9 +866,9 @@ local function spidertron_logistic_request_decrement_max(item_stack, spidertron,
    elseif item_stack.object_name == "LuaItemPrototype" then
       stack_size = item_stack.stack_size
    end
-   if current_slot == nil or current_slot.name == nil then
+   if current_slot == nil or current_slot.value == nil then
       --Create a fresh request
-      local new_slot = { name = item_stack.name, min = 0, max = MAX_STACK_COUNT * stack_size }
+      local new_slot = { value = item_stack.name, min = 0, max = MAX_STACK_COUNT * stack_size }
       spidertron.set_vehicle_logistic_slot(correct_slot_id, new_slot)
    else
       --Update existing request
@@ -903,7 +911,7 @@ local function spidertron_logistic_request_clear(item_stack, spidertron, pindex)
 
    --Read the correct slot id value, increment it, set it
    current_slot = spidertron.get_vehicle_logistic_slot(correct_slot_id)
-   if current_slot == nil or current_slot.name == nil then
+   if current_slot == nil or current_slot.value == nil then
       --(done)
    else
       --Clear this request
@@ -1458,7 +1466,7 @@ function mod.player_logistic_requests_summary_info(pindex)
          local missing_check = get_player_logistic_request_missing_count(pindex, i)
          if missing_check ~= nil then
             if missing_check > 0 then
-               local slot_name = p.get_personal_logistic_slot(i).name
+               local slot_name = p.get_requester_point().get_section(1).get_slot(i).value
                result = result .. missing_check .. " " .. slot_name .. ", "
             end
          end
@@ -1507,8 +1515,8 @@ function mod.player_logistic_request_read(item_object, pindex, additional_checks
    end
 
    --Read the correct slot id value
-   current_slot = p.get_personal_logistic_slot(correct_slot_id)
-   if current_slot == nil or current_slot.name == nil then
+   current_slot = p.get_requester_point().get_section(1).get_slot(correct_slot_id)
+   if current_slot == nil or current_slot.value == nil then
       --No requests found
       printout(
          result
@@ -1600,7 +1608,7 @@ function mod.chest_logistic_request_read(item_stack, chest, pindex)
 
    --Read the correct slot id value
    current_slot = chest.get_request_slot(correct_slot_id)
-   if current_slot == nil or current_slot.name == nil then
+   if current_slot == nil or current_slot.value == nil then
       --No requests found
       printout(
          item_stack.name .. " has no logistic requests set, use the 'L' key and modifier keys to set requests.",
@@ -1739,7 +1747,7 @@ function mod.spidertron_logistic_request_read(item_stack, spidertron, pindex, ad
 
    --Read the correct slot id value
    current_slot = spidertron.get_vehicle_logistic_slot(correct_slot_id)
-   if current_slot == nil or current_slot.name == nil then
+   if current_slot == nil or current_slot.value == nil then
       --No requests found
       printout(
          result
