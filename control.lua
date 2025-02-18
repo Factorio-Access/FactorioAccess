@@ -5136,8 +5136,8 @@ script.on_event("open-circuit-menu", function(event)
          return
       end
       --Building has a circuit network
-      local nw1 = control.get_circuit_network(defines.wire_type.red)
-      local nw2 = control.get_circuit_network(defines.wire_type.green)
+      local nw1 = control.get_circuit_network(defines.wire_connector_id.circuit_red)
+      local nw2 = control.get_circuit_network(defines.wire_connector_id.circuit_green)
       if nw1 == nil and nw2 == nil then
          printout(" not connected to a circuit network", pindex)
          return
@@ -5164,8 +5164,8 @@ script.on_event("open-circuit-menu", function(event)
          return
       end
       local control = ent.get_control_behavior()
-      local nw1 = control.get_circuit_network(defines.wire_type.red)
-      local nw2 = control.get_circuit_network(defines.wire_type.green)
+      local nw1 = control.get_circuit_network(defines.wire_connector_id.circuit_red)
+      local nw2 = control.get_circuit_network(defines.wire_connector_id.circuit_green)
       if nw1 == nil and nw2 == nil then
          printout(fa_localising.get(ent, pindex) .. " not connected to a circuit network", pindex)
          return
@@ -6565,10 +6565,10 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
                --Other devices (set enabled condition)
                local control = players[pindex].signal_selector.ent.get_control_behavior()
                local circuit_condition = control.circuit_condition
-               local cond = control.circuit_condition.condition
+               local cond = control.circuit_condition
                cond.second_signal = nil --{name = nil, type = signal_type}
                cond.constant = constant
-               circuit_condition.condition = cond
+               circuit_condition= cond
                players[pindex].signal_selector.ent.get_control_behavior().circuit_condition = circuit_condition
                printout(
                   "Set "
