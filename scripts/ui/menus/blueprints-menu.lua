@@ -120,7 +120,7 @@ local function render(ctx)
             storage.players[ctx.pindex].blueprint_menu.edit_label = true
             Graphics.create_text_field_frame(ctx.pindex, "blueprint-edit-label")
             ctx.message:fragment({ "fa.ui-blueprints-rename-txtbox" })
-            ctx.controller:close()
+            ctx.controller:close_because_textbox()
          end)
       )
 
@@ -130,7 +130,7 @@ local function render(ctx)
             storage.players[ctx.pindex].blueprint_menu.edit_description = true
             Graphics.create_text_field_frame(ctx.pindex, "blueprint-edit-description")
             ctx.message:fragment({ "fa.ui-blueprints-description-txtbox" })
-            ctx.controller:close()
+            ctx.controller:close_because_textbox()
          end)
       )
 
@@ -158,8 +158,7 @@ local function render(ctx)
             if not p then return end
 
             bp.set_stack({ name = "blueprint", count = 1 })
-            bp.set_stack(nil) --calls event handler to delete empty planners.     ctx.controller:close()
-
+            bp.set_stack(nil) --calls event handler to delete empty planners.
             ctx.message:fragment({ "fa.blueprints-ui-deleted" })
             ctx.controller:close()
          end)
@@ -171,7 +170,7 @@ local function render(ctx)
             storage.players[ctx.pindex].blueprint_menu.edit_export = true
             Graphics.create_text_field_frame(ctx.pindex, "blueprint-edit-export", bp.export_stack())
             ctx.message:fragment({ "fa.ui-blueprints-export-txtbox" })
-            ctx.controller:close()
+            ctx.controller:close_because_textbox()
          end)
       )
    end
@@ -184,7 +183,7 @@ local function render(ctx)
          storage.players[pindex].blueprint_menu.edit_import = true
          Graphics.create_text_field_frame(pindex, "blueprint-edit-import")
          ctx.message:fragment({ "fa.ui-blueprints-import-txtbox" })
-         ctx.controller:close()
+         ctx.controller:close_because_textbox()
       end)
    )
 

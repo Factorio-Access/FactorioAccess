@@ -45,6 +45,7 @@ local mod = {}
 ---@field shared_state table
 ---@field parameters table Whatever was passed to :open()
 ---@field force_close boolean If true, close this tablist.
+---@field close_is_textbox boolean? If true, leave menu_name alone so that textboxes can tail call.
 ---@field message fa.MessageBuilder
 
 ---@alias fa.ui.SimpleTabHandler fun(self, fa.ui.TabContext)
@@ -133,7 +134,7 @@ function TabList:_do_callback(pindex, target_tab_index, cb_name, msg_builder, pa
       -- Makes assigning to state when initializing etc. work.
       tl.tab_states[tabname] = context.state
 
-      if context.force_close then self:close(true) end
+      if context.force_close then self:close(pindex, true, context.close_is_textbox) end
    end
 
    local msg = msg_builder:build()
@@ -200,6 +201,7 @@ function TabList:on_previous_tab(pindex)
 end
 
 function TabList:open(pindex, parameters)
+   assert(self.menu_name)
    storage.players[pindex].menu = self.menu_name
    storage.players[pindex].in_menu = true
 
@@ -237,7 +239,7 @@ function TabList:open(pindex, parameters)
 end
 
 ---@param force_reset boolean? If true, also dump state.
-function TabList:close(pindex, force_reset)
+function TabList:close(pindex, force_reset, is_textbox)
    -- Our lame event handling story where more than one event handler can get
    -- called for the same event combined with the new GUI framework still being
    -- WIP means that double-close is apparently possible.  We already know we're
@@ -254,8 +256,12 @@ function TabList:close(pindex, force_reset)
 
    if force_reset then tablist_storage[pindex][self.menu_name] = nil end
 
-   storage.players[pindex].menu = nil
-   storage.players[pindex].in_menu = false
+   -- Textboxes rely on still being "in the menu" for the duration of the
+   -- textbox and we aren't far enough along to have hacked that yet.
+   if not is_textbox then
+      storage.players[pindex].menu = nil
+      storage.players[pindex].in_menu = false
+   end
 end
 
 ---@param declaration fa.ui.TabListDeclaration

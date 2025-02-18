@@ -78,6 +78,7 @@ Tell the menu itself to do things from click handlers etc.
 ]]
 ---@class fa.MenuController
 ---@field close fun(self)
+---@field close_because_textbox fun(self) Temporary hopefully.
 
 ---@class fa.MenuCtx
 ---@field pindex number
@@ -231,6 +232,11 @@ function mod.declare_menu(opts)
          ctx.force_close = true
       end
 
+      function controller:close_because_textbox()
+         ctx.force_close = true
+         ctx.close_is_textbox = true
+      end
+
       return {
          pindex = ctx.pindex,
          message = ctx.message,
@@ -256,7 +262,6 @@ function mod.declare_menu(opts)
 
    ---@param ctx fa.MenuTabCtxInternal
    function menu_callbacks:on_tab_list_opened(ctx)
-      print("Opened menu")
       ctx.state = {
          item_states = {},
          prev_items = {},
