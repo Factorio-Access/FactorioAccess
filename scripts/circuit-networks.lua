@@ -242,10 +242,10 @@ function mod.localise_signal_name(signal, pindex)
       sig_name = "nil"
       sig_type = "nil"
    end
-   if sig_type == nil or sig_type == "nil" then
+   if sig_type == "nil" then
       sig_name = "nil"
       sig_type = "nil"
-   elseif sig_type == "item" then
+   elseif sig_type == nil then
       sig_name = localising.get(prototypes.item[signal.name], pindex)
       if sig_name == nil then sig_name = signal.name end
    elseif sig_type == "fluid" then
@@ -419,7 +419,7 @@ local function get_circuit_read_mode_name(ent)
       elseif control.resource_read_mode == dcb.mining_drill.resource_read_mode.entire_patch then
          result = "Reading all resources in this ore patch. "
       end
-   elseif ent.type == "pumpjack" then
+   elseif ent.type == "pumpjack" then -- i think no longer exists. Check though, but if i see that well they're basic mining drills and mining drill rules are aplied there too. Defines section. 
       result = "Reading crude oil output rate per second " --laterdo explain other read modes**
    elseif ent.type == "programmable-speaker" then
       result = "None"
@@ -537,7 +537,7 @@ local function get_circuit_operation_mode_name(ent)
    elseif ent.type == "pumpjack" then
       result = "None" --"Undefined"--**laterdo
    elseif ent.type == "power-switch" then
-      if control.circuit_condition ~= nil or control.disabled == true then
+      if control.circuit_condition ~= nil or control.circuit_enable_disable == true then
          result = "Enable with condition"
          uses_condition = true
       else
@@ -549,14 +549,14 @@ local function get_circuit_operation_mode_name(ent)
    elseif ent.type == "lamp" then
       result = "Undefined" --**laterdo
    elseif ent.type == "offshore-pump" then
-      if control.circuit_condition ~= nil or control.disabled == true then
+      if control.circuit_condition ~= nil or control.circuit_enable_disable== true then
          result = "Enable with condition"
          uses_condition = true
       else
          result = "None"
       end
    elseif ent.type == "pump" then
-      if control.circuit_condition ~= nil or control.disabled == true then
+      if control.circuit_condition ~= nil or control.circuit_enable_disable== true then
          result = "Enable with condition"
          uses_condition = true
       else
@@ -621,7 +621,7 @@ local function toggle_circuit_operation_mode(ent)
       result = "Undefined" --**laterdo
    elseif ent.type == "power-switch" then
       changed = true
-      if control.circuit_condition ~= nil or control.disabled == true then --**laterdo
+      if control.circuit_condition ~= nil or control.disabled== true then --**laterdo
          result = "Enable with condition"
       else
          result = "None"
@@ -633,17 +633,21 @@ local function toggle_circuit_operation_mode(ent)
       result = "Undefined" --**laterdo
    elseif ent.type == "offshore-pump" then
       changed = true
-      if control.circuit_condition ~= nil or control.disabled == true then --**laterdo
-         result = "Enable with condition"
-      else
+      if control.circuit_enable_disable == true then --**laterdo
+         control.circuit_enable_disable = false
          result = "None"
+      else
+         control.circuit_enable_disable = true
+         result = "Enable with condition"
       end
    elseif ent.type == "pump" then
       changed = true
-      if control.circuit_condition ~= nil or control.disabled == true then --**laterdo
-         result = "Enable with condition"
-      else
+      if control.circuit_enable_disable== true then --**laterdo
+         control.circuit_enable_disable = false
          result = "None"
+      else
+         control.circuit_enable_disable = true
+         result = "Enable with condition"
       end
    else
       changed = false
