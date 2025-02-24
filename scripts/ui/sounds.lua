@@ -15,4 +15,12 @@ function mod.play_menu_move(pindex)
    game.get_player(pindex).play_sound({ path = "Inventory-Move" })
 end
 
+function mod.play_menu_click(pindex)
+   game.get_player(pindex).play_sound({ path = "utility/inventory_click" })
+end
+
+function mod.play_menu_wrap(pindex)
+   game.get_player(pindex).play_sound({ path = "inventory-wrap-around" })
+end
+
 return mod

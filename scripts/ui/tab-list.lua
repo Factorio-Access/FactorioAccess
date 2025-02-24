@@ -14,7 +14,7 @@ open at once.
 
 For now this isn't super documented.  If you are looking for some overarching
 framework you won't find it.  That comes later.  This just gets us off the
-ground.
+ground.  However, see ui/menu.lua, which simplifies, well, menus.
 
 This is the top level of the UI hierarchy and also handles the state management.
 Each tab will receive a context with a field to use for persistent state.
@@ -45,6 +45,7 @@ local mod = {}
 ---@field shared_state table
 ---@field parameters table Whatever was passed to :open()
 ---@field force_close boolean If true, close this tablist.
+---@field close_is_textbox boolean? If true, leave menu_name alone so that textboxes can tail call.
 ---@field message fa.MessageBuilder
 
 ---@alias fa.ui.SimpleTabHandler fun(self, fa.ui.TabContext)
@@ -58,6 +59,7 @@ local mod = {}
 ---@field on_down fa.ui.SimpleTabHandler?
 ---@field on_left fa.ui.SimpleTabHandler?
 ---@field on_right fa.ui.SimpleTabHandler?
+---@field on_click fa.ui.SimpleTabHandler?
 
 ---@class fa.ui.TabDescriptor
 ---@field name string
@@ -65,7 +67,7 @@ local mod = {}
 ---@field callbacks fa.ui.TabCallbacks
 
 ---@class fa.ui.TabListDeclaration (exact)
----@field menu_name string
+---@field menu_name string Legacy, used for key routing.
 ---@field tabs fa.ui.TabDescriptor[]
 ---@field shared_state_setup (fun(number, table): table)? passed the parameters and pindex, should return a shaerd state.
 ---@field resets_to_first_tab_on_open boolean?
@@ -129,8 +131,10 @@ function TabList:_do_callback(pindex, target_tab_index, cb_name, msg_builder, pa
       -- It's a method on callbacks, so we must pass callbacks as the self
       -- parameter since we aren't using the `:` syntax.
       callback(callbacks, context, table.unpack(params))
+      -- Makes assigning to state when initializing etc. work.
+      tl.tab_states[tabname] = context.state
 
-      if context.force_close then self:close(true) end
+      if context.force_close then self:close(pindex, true, context.close_is_textbox) end
    end
 
    local msg = msg_builder:build()
@@ -154,6 +158,8 @@ TabList.on_down = build_simple_method("on_down")
 TabList.on_left = build_simple_method("on_left")
 ---@type fun(self, number)
 TabList.on_right = build_simple_method("on_right")
+---@type fun(self, number)
+TabList.on_click = build_simple_method("on_click")
 
 -- Perform the flow for focusing a tab. Does this unconditionally, so be careful
 -- not to over-call it.
@@ -195,6 +201,7 @@ function TabList:on_previous_tab(pindex)
 end
 
 function TabList:open(pindex, parameters)
+   assert(self.menu_name)
    storage.players[pindex].menu = self.menu_name
    storage.players[pindex].in_menu = true
 
@@ -232,30 +239,42 @@ function TabList:open(pindex, parameters)
 end
 
 ---@param force_reset boolean? If true, also dump state.
-function TabList:close(pindex, force_reset)
-   for i = 1, #self.tab_order do
-      self:_do_callback(pindex, i, "on_tab_list_closed")
+function TabList:close(pindex, force_reset, is_textbox)
+   -- Our lame event handling story where more than one event handler can get
+   -- called for the same event combined with the new GUI framework still being
+   -- WIP means that double-close is apparently possible.  We already know we're
+   -- going to fix that, so for now just guard against it.
+   if not tablist_storage[pindex] or not tablist_storage[pindex][self.menu_name] then return end
+
+   if tablist_storage[pindex][self.menu_name].currently_open then
+      for i = 1, #self.tab_order do
+         self:_do_callback(pindex, i, "on_tab_list_closed")
+      end
    end
 
    tablist_storage[pindex][self.menu_name].currently_open = false
 
    if force_reset then tablist_storage[pindex][self.menu_name] = nil end
 
-   storage.players[pindex].menu = nil
-   storage.players[pindex].in_menu = false
+   -- Textboxes rely on still being "in the menu" for the duration of the
+   -- textbox and we aren't far enough along to have hacked that yet.
+   if not is_textbox then
+      storage.players[pindex].menu = nil
+      storage.players[pindex].in_menu = false
+   end
 end
 
 ---@param declaration fa.ui.TabListDeclaration
 ---@return fa.ui.TabList
 function mod.declare_tablist(declaration)
    ---@type fa.ui.TabList
-   local ret = {
+   local ret = setmetatable({
       menu_name = declaration.menu_name,
       tab_order = {},
       descriptors = {},
       shared_state_initializer = declaration.shared_state_setup,
       declaration = declaration,
-   }
+   }, TabList_meta)
 
    for _, d in pairs(declaration.tabs) do
       assert(not ret.descriptors[d.name], "duplicate tabs not allowed")
@@ -265,7 +284,7 @@ function mod.declare_tablist(declaration)
 
    assert(#ret.tab_order, "All tablists must have tabs")
 
-   return setmetatable(ret, TabList_meta)
+   return ret
 end
 
 return mod

@@ -43,7 +43,7 @@ end
 function mod.get_blueprint_label(stack)
    local bp_data = mod.get_bp_data_for_edit(stack)
    local label = bp_data.blueprint.label
-   if label == nil then label = "" end
+   if label == nil then label = "no name" end
    return label
 end
 
@@ -662,9 +662,8 @@ BLUEPRINT_MENU_LENGTH = 12
 
 function mod.blueprint_menu_open(pindex)
    if players[pindex].vanilla_mode then return end
-   --Set the player menu tracker to this menu
-   players[pindex].menu = "blueprint_menu"
-   players[pindex].in_menu = true
+   -- Opening the ui is one level up, to avoid circular imports.
+
    players[pindex].move_queue = {}
 
    --Set the menu line counter to 0
@@ -678,9 +677,6 @@ function mod.blueprint_menu_open(pindex)
 
    --Play sound
    game.get_player(pindex).play_sound({ path = "Open-Inventory-Sound" })
-
-   --Load menu
-   mod.run_blueprint_menu(players[pindex].blueprint_menu.index, pindex, false)
 end
 
 function mod.blueprint_menu_close(pindex, mute_in)

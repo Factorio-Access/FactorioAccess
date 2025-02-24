@@ -1089,4 +1089,65 @@ function mod.closest_point_in_box(point, box)
    }
 end
 
+local ALL_PROTO_KINDS = {
+   "item",
+   "font",
+   "map_gen_preset",
+   "style",
+   "entity",
+   "fluid",
+   "tile",
+   "equipment",
+   "damage",
+   "virtual_signal",
+   "equipment_grid",
+   "recipe",
+   "technology",
+   "decorative",
+   "particle",
+   "autoplace_control",
+   "mod_setting",
+   "custom_input",
+   "ammo_category",
+   "named_noise_expression",
+   "named_noise_function",
+   "item_subgroup",
+   "item_group",
+   "fuel_category",
+   "resource_category",
+   "achievement",
+   "module_category",
+   "equipment_category",
+   "trivial_smoke",
+   "shortcut",
+   "recipe_category",
+   "quality",
+   "surface_property",
+   "space_location",
+   "space_connection",
+   "custom_event",
+   "active_trigger",
+   "asteroid_chunk",
+   "collision_layer",
+   "airborne_pollutant",
+   "burner_usage",
+   "surface",
+   "procession",
+   "procession_layer_inheritance_group",
+}
+
+-- In 2.0 all the prototypes got split up into separate attributes of
+-- LuaPrototypes, but that's a userdata.  This function checks them all for a
+-- prototype, because in some cases we don't know what it actually is.
+---@param name string
+---@return LuaPrototypeBase?
+function mod.find_prototype(name)
+   for _, f in pairs(ALL_PROTO_KINDS) do
+      local p = prototypes[f]
+      if p and p[name] then return p[name] end
+   end
+
+   return nil
+end
+
 return mod
