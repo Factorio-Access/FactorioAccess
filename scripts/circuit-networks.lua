@@ -202,7 +202,10 @@ function mod.wire_neighbours_info(ent, read_network_ids)
          if neighbour_count > 0 then result = result .. " and " end
          result = result .. " red wire " .. math.ceil(dist) .. " tiles " .. fa_utils.direction_lookup(dir)
          if nbr.type == "electric-pole" then
-            local id = nbr.get_circuit_network(defines.wire_connector_id.circuit_red, defines.circuit_connector_id.electric_pole)
+            local id = nbr.get_circuit_network(
+               defines.wire_connector_id.circuit_red,
+               defines.circuit_connector_id.electric_pole
+            )
             if id == nil then
                id = "nil"
             else
@@ -219,7 +222,10 @@ function mod.wire_neighbours_info(ent, read_network_ids)
          if neighbour_count > 0 then result = result .. " and " end
          result = result .. " green wire " .. math.ceil(dist) .. " tiles " .. fa_utils.direction_lookup(dir)
          if nbr.type == "electric-pole" then
-            local id = nbr.get_circuit_network(defines.wire_connector_id.circuit_green, defines.circuit_connector_id.electric_pole)
+            local id = nbr.get_circuit_network(
+               defines.wire_connector_id.circuit_green,
+               defines.circuit_connector_id.electric_pole
+            )
             if id == nil then
                id = "nil"
             else
@@ -272,7 +278,7 @@ end
 local function constant_combinator_get_first_empty_slot_id(ent)
    local combinator = ent.get_control_behavior()
    local max_signals_count = combinator.get_section(1).filters_count
-   if max_signals_count  == 0 then max_signals_count  = 1 end
+   if max_signals_count == 0 then max_signals_count = 1 end
    for i = 1, max_signals_count, 1 do
       if combinator.get_section(1).get_slot(i).signal == nil then return i end
    end
@@ -419,7 +425,7 @@ local function get_circuit_read_mode_name(ent)
       elseif control.resource_read_mode == dcb.mining_drill.resource_read_mode.entire_patch then
          result = "Reading all resources in this ore patch. "
       end
-   elseif ent.type == "pumpjack" then -- i think no longer exists. Check though, but if i see that well they're basic mining drills and mining drill rules are aplied there too. Defines section. 
+   elseif ent.type == "pumpjack" then -- i think no longer exists. Check though, but if i see that well they're basic mining drills and mining drill rules are aplied there too. Defines section.
       result = "Reading crude oil output rate per second " --laterdo explain other read modes**
    elseif ent.type == "programmable-speaker" then
       result = "None"
@@ -445,7 +451,7 @@ local function toggle_circuit_read_mode(ent)
          result = "Reading held items"
       elseif control.read_contents_mode == dcb.transport_belt.content_read_mode.hold then
          control.read_contents = true
-         control.read_contents_mode = dcb.transport_belt.content_read_mode.entire_belt_hold	
+         control.read_contents_mode = dcb.transport_belt.content_read_mode.entire_belt_hold
          result = "reading the contents from the whole belt"
       elseif control.read_contents_mode == dcb.transport_belt.content_read_mode.entire_belt_hold then
          control.read_contents = true
@@ -491,18 +497,18 @@ local function get_circuit_operation_mode_name(ent)
    local uses_condition = false
    local control = ent.get_control_behavior()
    if ent.type == "inserter" then
-      if control.circuit_enable_disable== false then
+      if control.circuit_enable_disable == false then
          result = "None"
-      elseif control.circuit_enable_disable== true then
+      elseif control.circuit_enable_disable == true then
          result = "Enable with condition"
          uses_condition = true
-      --elseif control.circuit_mode_of_operation == dcb.inserter.circuit_mode_of_operation.read_hand_contents then
+         --elseif control.circuit_mode_of_operation == dcb.inserter.circuit_mode_of_operation.read_hand_contents then
          --result = "Only read hand contents"
-      --else
+         --else
          --result = "Other"
       end
    elseif ent.type == "transport-belt" then
-      if control.circuit_enable_disable== true then
+      if control.circuit_enable_disable == true then
          result = "Enable with condition"
          uses_condition = true
       else
@@ -549,14 +555,14 @@ local function get_circuit_operation_mode_name(ent)
    elseif ent.type == "lamp" then
       result = "Undefined" --**laterdo
    elseif ent.type == "offshore-pump" then
-      if control.circuit_condition ~= nil or control.circuit_enable_disable== true then
+      if control.circuit_condition ~= nil or control.circuit_enable_disable == true then
          result = "Enable with condition"
          uses_condition = true
       else
          result = "None"
       end
    elseif ent.type == "pump" then
-      if control.circuit_condition ~= nil or control.circuit_enable_disable== true then
+      if control.circuit_condition ~= nil or control.circuit_enable_disable == true then
          result = "Enable with condition"
          uses_condition = true
       else
@@ -574,13 +580,13 @@ local function toggle_circuit_operation_mode(ent)
    local control = ent.get_control_behavior()
    if ent.type == "inserter" then
       changed = true
-      if control.circuit_enable_disable== false then
-         control.circuit_enable_disable= true
+      if control.circuit_enable_disable == false then
+         control.circuit_enable_disable = true
          result = "Enable with condition"
-      elseif control.circuit_enable_disable== true then
-         control.circuit_enable_disable= false
+      elseif control.circuit_enable_disable == true then
+         control.circuit_enable_disable = false
          result = "None"
-      --else
+         --else
          --control.circuit_mode_of_operation = dcb.inserter.circuit_mode_of_operation.none
          --result = "None"
       end
@@ -621,7 +627,7 @@ local function toggle_circuit_operation_mode(ent)
       result = "Undefined" --**laterdo
    elseif ent.type == "power-switch" then
       changed = true
-      if control.circuit_condition ~= nil or control.disabled== true then --**laterdo
+      if control.circuit_condition ~= nil or control.disabled == true then --**laterdo
          result = "Enable with condition"
       else
          result = "None"
@@ -642,7 +648,7 @@ local function toggle_circuit_operation_mode(ent)
       end
    elseif ent.type == "pump" then
       changed = true
-      if control.circuit_enable_disable== true then --**laterdo
+      if control.circuit_enable_disable == true then --**laterdo
          control.circuit_enable_disable = false
          result = "None"
       else
@@ -709,7 +715,7 @@ local function toggle_condition_comparator(ent, pindex, comparator_in_words)
       comparator = "="
    end
    cond.comparator = comparator
-   circuit_condition= cond
+   circuit_condition = cond
    ent.get_control_behavior().circuit_condition = circuit_condition
 
    if comparator_in_words == true then
@@ -1546,7 +1552,7 @@ function mod.apply_selected_signal_to_enabled_condition(pindex, ent, first)
       cond.second_signal = { name = prototype.name, type = signal_type }
       set_message = "Set second signal to "
    end
-   circuit_condition= cond
+   circuit_condition = cond
    ent.get_control_behavior().circuit_condition = circuit_condition
    players[pindex].menu = "circuit_network_menu"
    players[pindex].signal_selector = nil

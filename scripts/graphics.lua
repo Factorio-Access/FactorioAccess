@@ -524,9 +524,9 @@ local function sprite_name(sig)
       fluid = "fluid",
       virtual = "virtual-signal",
    }
-   if(sig.type~=nil) then
+   if sig.type ~= nil then
       return typemap[sig.type] .. "." .. sig.name
-   else  
+   else
       return "item" .. "." .. sig.name
    end
 end

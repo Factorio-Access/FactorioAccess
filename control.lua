@@ -6568,7 +6568,7 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
                local cond = control.circuit_condition
                cond.second_signal = nil --{name = nil, type = signal_type}
                cond.constant = constant
-               circuit_condition= cond
+               circuit_condition = cond
                players[pindex].signal_selector.ent.get_control_behavior().circuit_condition = circuit_condition
                printout(
                   "Set "
