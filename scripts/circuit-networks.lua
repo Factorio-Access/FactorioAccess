@@ -124,7 +124,7 @@ function mod.drag_wire_and_read(pindex)
       if drag_target ~= nil then
          local target_ent = drag_target.target_entity
          local target_network = drag_target.target_circuit_id
-         network_found = c_ent.get_circuit_network(defines.wire_type.red, target_network)
+         network_found = c_ent.get_circuit_network(defines.wire_connector_id.circuit_red)
          if network_found == nil or network_found.valid == false then
             network_found = "nil"
          else
@@ -138,7 +138,7 @@ function mod.drag_wire_and_read(pindex)
       if drag_target ~= nil then
          local target_ent = drag_target.target_entity
          local target_network = drag_target.target_circuit_id
-         network_found = c_ent.get_circuit_network(defines.wire_type.green, target_network)
+         network_found = c_ent.get_circuit_network(defines.wire_connector_id.circuit_green)
          if network_found == nil or network_found.valid == false then
             network_found = "nil"
          else
@@ -202,7 +202,10 @@ function mod.wire_neighbours_info(ent, read_network_ids)
          if neighbour_count > 0 then result = result .. " and " end
          result = result .. " red wire " .. math.ceil(dist) .. " tiles " .. fa_utils.direction_lookup(dir)
          if nbr.type == "electric-pole" then
-            local id = nbr.get_circuit_network(defines.wire_type.red, defines.circuit_connector_id.electric_pole)
+            local id = nbr.get_circuit_network(
+               defines.wire_connector_id.circuit_red,
+               defines.circuit_connector_id.electric_pole
+            )
             if id == nil then
                id = "nil"
             else
@@ -219,7 +222,10 @@ function mod.wire_neighbours_info(ent, read_network_ids)
          if neighbour_count > 0 then result = result .. " and " end
          result = result .. " green wire " .. math.ceil(dist) .. " tiles " .. fa_utils.direction_lookup(dir)
          if nbr.type == "electric-pole" then
-            local id = nbr.get_circuit_network(defines.wire_type.green, defines.circuit_connector_id.electric_pole)
+            local id = nbr.get_circuit_network(
+               defines.wire_connector_id.circuit_green,
+               defines.circuit_connector_id.electric_pole
+            )
             if id == nil then
                id = "nil"
             else
@@ -242,10 +248,10 @@ function mod.localise_signal_name(signal, pindex)
       sig_name = "nil"
       sig_type = "nil"
    end
-   if sig_type == nil or sig_type == "nil" then
+   if sig_type == "nil" then
       sig_name = "nil"
       sig_type = "nil"
-   elseif sig_type == "item" then
+   elseif sig_type == nil then
       sig_name = localising.get(prototypes.item[signal.name], pindex)
       if sig_name == nil then sig_name = signal.name end
    elseif sig_type == "fluid" then
@@ -262,25 +268,26 @@ end
 local function constant_combinator_count_valid_signals(ent)
    local count = 0
    local combinator = ent.get_control_behavior()
-   local max_signals_count = combinator.signals_count
+   local max_signals_count = combinator.get_section(1).filters_count
    for i = 1, max_signals_count, 1 do
-      if combinator.get_signal(i).signal ~= nil then count = count + 1 end
+      if combinator.get_section(1).get_slot(i).signal ~= nil then count = count + 1 end
    end
    return count
 end
 
 local function constant_combinator_get_first_empty_slot_id(ent)
    local combinator = ent.get_control_behavior()
-   local max_signals_count = combinator.signals_count
+   local max_signals_count = combinator.get_section(1).filters_count
+   if max_signals_count == 0 then max_signals_count = 1 end
    for i = 1, max_signals_count, 1 do
-      if combinator.get_signal(i).signal == nil then return i end
+      if combinator.get_section(1).get_slot(i).signal == nil then return i end
    end
    return max_signals_count
 end
 
 function mod.constant_combinator_signals_info(ent, pindex)
    local combinator = ent.get_control_behavior()
-   local max_signals_count = combinator.signals_count
+   local max_signals_count = combinator.get_section(1).filters_count
    local valid_signals_count = constant_combinator_count_valid_signals(ent)
    local result = nil
    if combinator.enabled then
@@ -319,7 +326,7 @@ function mod.constant_combinator_add_selector_signal(prototype, signal_type, ent
    local first_empty_slot = constant_combinator_get_first_empty_slot_id(ent)
    local new_signal_id = { type = signal_type, name = prototype.name }
    local new_signal = { signal = new_signal_id, count = 1 }
-   combinator.set_signal(first_empty_slot, new_signal)
+   combinator.get_section(1).set_slot(first_empty_slot, new_signal)
    printout("Added signal for " .. localising.get(prototype, pindex), pindex)
 end
 
@@ -347,13 +354,13 @@ end
 
 function mod.constant_combinator_set_last_signal_count(value, ent, pindex)
    local combinator = ent.get_control_behavior()
-   local max_signals_count = combinator.signals_count
+   local max_signals_count = combinator.get_section(1).filters_count
    for i = max_signals_count, 1, -1 do
-      local signal = combinator.get_signal(i)
+      local signal = combinator.get_section(1).get_slot(i)
       if signal.signal ~= nil then
          local signal_name = mod.localise_signal_name(signal.signal, pindex)
          signal.count = value
-         combinator.set_signal(i, signal)
+         combinator.get_section(1).set_slot(i, signal)
          return true
       end
    end
@@ -384,6 +391,8 @@ local function get_circuit_read_mode_name(ent)
       if control.read_contents == true then
          if control.read_contents_mode == dcb.transport_belt.content_read_mode.hold then
             result = "Reading held items"
+         elseif control.read_contents_mode == dcb.transport_belt.content_read_mode.entire_belt_hold then
+            result = "reading content from the whole belt"
          elseif control.read_contents_mode == dcb.transport_belt.content_read_mode.pulse then
             result = "pulsing passing items"
          end
@@ -416,7 +425,7 @@ local function get_circuit_read_mode_name(ent)
       elseif control.resource_read_mode == dcb.mining_drill.resource_read_mode.entire_patch then
          result = "Reading all resources in this ore patch. "
       end
-   elseif ent.type == "pumpjack" then
+   elseif ent.type == "pumpjack" then -- i think no longer exists. Check though, but if i see that well they're basic mining drills and mining drill rules are aplied there too. Defines section.
       result = "Reading crude oil output rate per second " --laterdo explain other read modes**
    elseif ent.type == "programmable-speaker" then
       result = "None"
@@ -441,6 +450,10 @@ local function toggle_circuit_read_mode(ent)
          control.read_contents_mode = dcb.transport_belt.content_read_mode.hold
          result = "Reading held items"
       elseif control.read_contents_mode == dcb.transport_belt.content_read_mode.hold then
+         control.read_contents = true
+         control.read_contents_mode = dcb.transport_belt.content_read_mode.entire_belt_hold
+         result = "reading the contents from the whole belt"
+      elseif control.read_contents_mode == dcb.transport_belt.content_read_mode.entire_belt_hold then
          control.read_contents = true
          control.read_contents_mode = dcb.transport_belt.content_read_mode.pulse
          result = "pulsing passing items"
@@ -484,18 +497,18 @@ local function get_circuit_operation_mode_name(ent)
    local uses_condition = false
    local control = ent.get_control_behavior()
    if ent.type == "inserter" then
-      if control.circuit_mode_of_operation == dcb.inserter.circuit_mode_of_operation.none then
+      if control.circuit_enable_disable == false then
          result = "None"
-      elseif control.circuit_mode_of_operation == dcb.inserter.circuit_mode_of_operation.enable_disable then
+      elseif control.circuit_enable_disable == true then
          result = "Enable with condition"
          uses_condition = true
-      elseif control.circuit_mode_of_operation == dcb.inserter.circuit_mode_of_operation.read_hand_contents then
-         result = "Only read hand contents"
-      else
-         result = "Other"
+         --elseif control.circuit_mode_of_operation == dcb.inserter.circuit_mode_of_operation.read_hand_contents then
+         --result = "Only read hand contents"
+         --else
+         --result = "Other"
       end
    elseif ent.type == "transport-belt" then
-      if control.enable_disable == true then
+      if control.circuit_enable_disable == true then
          result = "Enable with condition"
          uses_condition = true
       else
@@ -530,7 +543,7 @@ local function get_circuit_operation_mode_name(ent)
    elseif ent.type == "pumpjack" then
       result = "None" --"Undefined"--**laterdo
    elseif ent.type == "power-switch" then
-      if control.circuit_condition ~= nil or control.disabled == true then
+      if control.circuit_condition ~= nil or control.circuit_enable_disable == true then
          result = "Enable with condition"
          uses_condition = true
       else
@@ -542,14 +555,14 @@ local function get_circuit_operation_mode_name(ent)
    elseif ent.type == "lamp" then
       result = "Undefined" --**laterdo
    elseif ent.type == "offshore-pump" then
-      if control.circuit_condition ~= nil or control.disabled == true then
+      if control.circuit_condition ~= nil or control.circuit_enable_disable == true then
          result = "Enable with condition"
          uses_condition = true
       else
          result = "None"
       end
    elseif ent.type == "pump" then
-      if control.circuit_condition ~= nil or control.disabled == true then
+      if control.circuit_condition ~= nil or control.circuit_enable_disable == true then
          result = "Enable with condition"
          uses_condition = true
       else
@@ -567,23 +580,23 @@ local function toggle_circuit_operation_mode(ent)
    local control = ent.get_control_behavior()
    if ent.type == "inserter" then
       changed = true
-      if control.circuit_mode_of_operation == dcb.inserter.circuit_mode_of_operation.none then
-         control.circuit_mode_of_operation = dcb.inserter.circuit_mode_of_operation.enable_disable
+      if control.circuit_enable_disable == false then
+         control.circuit_enable_disable = true
          result = "Enable with condition"
-      elseif control.circuit_mode_of_operation == dcb.inserter.circuit_mode_of_operation.enable_disable then
-         control.circuit_mode_of_operation = dcb.inserter.circuit_mode_of_operation.none
+      elseif control.circuit_enable_disable == true then
+         control.circuit_enable_disable = false
          result = "None"
-      else
-         control.circuit_mode_of_operation = dcb.inserter.circuit_mode_of_operation.none
-         result = "None"
+         --else
+         --control.circuit_mode_of_operation = dcb.inserter.circuit_mode_of_operation.none
+         --result = "None"
       end
    elseif ent.type == "transport-belt" then
       changed = true
-      if control.enable_disable == true then
-         control.enable_disable = false
+      if control.circuit_enable_disable == true then
+         control.circuit_enable_disable = false
          result = "None"
       else
-         control.enable_disable = true
+         control.circuit_enable_disable = true
          result = "Enable with condition"
       end
    elseif ent.name == "logistic-requester-chest" then
@@ -626,17 +639,21 @@ local function toggle_circuit_operation_mode(ent)
       result = "Undefined" --**laterdo
    elseif ent.type == "offshore-pump" then
       changed = true
-      if control.circuit_condition ~= nil or control.disabled == true then --**laterdo
-         result = "Enable with condition"
-      else
+      if control.circuit_enable_disable == true then --**laterdo
+         control.circuit_enable_disable = false
          result = "None"
+      else
+         control.circuit_enable_disable = true
+         result = "Enable with condition"
       end
    elseif ent.type == "pump" then
       changed = true
-      if control.circuit_condition ~= nil or control.disabled == true then --**laterdo
-         result = "Enable with condition"
-      else
+      if control.circuit_enable_disable == true then --**laterdo
+         control.circuit_enable_disable = false
          result = "None"
+      else
+         control.circuit_enable_disable = true
+         result = "Enable with condition"
       end
    else
       changed = false
@@ -647,7 +664,7 @@ end
 
 function mod.read_circuit_condition(ent, comparator_in_words)
    local control = ent.get_control_behavior()
-   local cond = control.circuit_condition.condition
+   local cond = control.circuit_condition
    local fulfilled = control.circuit_condition.fulfilled
    local comparator = cond.comparator
    local first_signal_name = mod.localise_signal_name(cond.first_signal, pindex)
@@ -680,7 +697,7 @@ end
 
 local function toggle_condition_comparator(ent, pindex, comparator_in_words)
    local circuit_condition = ent.get_control_behavior().circuit_condition
-   local cond = circuit_condition.condition
+   local cond = circuit_condition
    local comparator = cond.comparator
    if comparator == "=" then
       comparator = "≠"
@@ -698,7 +715,7 @@ local function toggle_condition_comparator(ent, pindex, comparator_in_words)
       comparator = "="
    end
    cond.comparator = comparator
-   circuit_condition.condition = cond
+   circuit_condition = cond
    ent.get_control_behavior().circuit_condition = circuit_condition
 
    if comparator_in_words == true then
@@ -806,8 +823,8 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
       return
    end
    --Get this ent's networks
-   local nwr = ent.get_circuit_network(defines.wire_type.red)
-   local nwg = ent.get_circuit_network(defines.wire_type.green)
+   local nwr = ent.get_circuit_network(defines.wire_connector_id.circuit_red)
+   local nwg = ent.get_circuit_network(defines.wire_connector_id.circuit_green)
    local nw_name = nil
    if nwr == nil and nwg == nil then
       nw_name = " none "
@@ -866,11 +883,11 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
          local result = ""
          if nwr ~= nil then
             if nwg ~= nil then result = result .. "Red network: " end
-            result = result .. mod.circuit_network_members_info(pindex, ent, defines.wire_type.red)
+            result = result .. mod.circuit_network_members_info(pindex, ent, defines.wire_connector_id.circuit_red)
          end
          if nwg ~= nil then
             if nwr ~= nil then result = result .. "Green network: " end
-            result = result .. mod.circuit_network_members_info(pindex, ent, defines.wire_type.green)
+            result = result .. mod.circuit_network_members_info(pindex, ent, defines.wire_connector_id.circuit_green)
          end
          if result == "" then result = "Error: No network" end
          printout(result, pindex)
@@ -887,11 +904,11 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
          local result = ""
          if nwr ~= nil then
             if nwg ~= nil then result = result .. "Red network: " end
-            result = result .. mod.circuit_network_neighbors_info(pindex, ent, defines.wire_type.red)
+            result = result .. mod.circuit_network_neighbors_info(pindex, ent, defines.wire_connector_id.circuit_red)
          end
          if nwg ~= nil then
             if nwr ~= nil then result = result .. "Green network: " end
-            result = result .. mod.circuit_network_neighbors_info(pindex, ent, defines.wire_type.green)
+            result = result .. mod.circuit_network_neighbors_info(pindex, ent, defines.wire_connector_id.circuit_green)
          end
          if result == "" then result = "Error: No network" end
          printout(result, pindex)
@@ -977,6 +994,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
          or ent.type == "rail-chain-signal"
          or ent.type == "accumulator"
          or ent.type == "roboport"
+         or ent.type == "reactor"
          or ent.type == "constant-combinator"
       local circuit_cond = nil
       local read_mode = get_circuit_read_mode_name(ent)
@@ -1316,9 +1334,9 @@ end
 --Reads the total list of the circuit network neighbors of this entity. Gives details.
 function mod.circuit_network_neighbors_info(pindex, ent, wire_type)
    local color = nil
-   if wire_type == defines.wire_type.red then
+   if wire_type == defines.wire_connector_id.circuit_red then
       color = "red"
-   elseif wire_type == defines.wire_type.green then
+   elseif wire_type == defines.wire_connector_id.circuit_green then
       color = "green"
    else
       return "Error: invalid wire type"
@@ -1344,9 +1362,9 @@ end
 --Reads the total list of the circuit network neighbors of this entity, and then their neighbors, and then their neighbors recursively.
 function mod.circuit_network_members_info(pindex, ent, wire_type)
    local color = nil
-   if wire_type == defines.wire_type.red then
+   if wire_type == defines.wire_connector_id.circuit_red then
       color = "red"
-   elseif wire_type == defines.wire_type.green then
+   elseif wire_type == defines.wire_connector_id.circuit_green then
       color = "green"
    else
       return "Error: invalid wire type"
@@ -1525,7 +1543,7 @@ function mod.apply_selected_signal_to_enabled_condition(pindex, ent, first)
    end
    local control = ent.get_control_behavior()
    local circuit_condition = control.circuit_condition
-   local cond = control.circuit_condition.condition
+   local cond = control.circuit_condition
    local set_message = "Set first signal to "
    if first == true then
       cond.first_signal = { name = prototype.name, type = signal_type }
@@ -1534,7 +1552,7 @@ function mod.apply_selected_signal_to_enabled_condition(pindex, ent, first)
       cond.second_signal = { name = prototype.name, type = signal_type }
       set_message = "Set second signal to "
    end
-   circuit_condition.condition = cond
+   circuit_condition = cond
    ent.get_control_behavior().circuit_condition = circuit_condition
    players[pindex].menu = "circuit_network_menu"
    players[pindex].signal_selector = nil
