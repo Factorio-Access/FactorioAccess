@@ -36,15 +36,12 @@ mod.TreeBackend = TreeBackend
 
 ---@return fa.scanner.backends.TreeBackend
 function TreeBackend.new(surface)
-   ---@type fa.scanner.backends.TreeBackend
-   local r = {
+   return setmetatable({
       clusterer = TileClusterer.TileClusterer.new({ track_interior = true }),
       chunk_size = SC.FOREST_CHUNK_SIZE,
       point_queue = {},
       surface = surface,
-   }
-
-   return setmetatable(r, TreeBackend_meta)
+   }, TreeBackend_meta)
 end
 
 function TreeBackend:on_new_entity(entity)
