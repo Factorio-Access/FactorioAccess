@@ -4,104 +4,94 @@ local util = require("util")
 local fa_utils = require("scripts.fa-utils")
 local fa_equipment = require("scripts.equipment")
 local fa_graphics = require("scripts.graphics")
+local Localising = require("scripts.localising")
+local MessageBuilder = require("scripts.message-builder")
+local Sounds = require("scripts.ui.sounds")
 
 local dirs = defines.direction
 local MAX_STACK_COUNT = 10
 
 local mod = {}
 
---Increments: nil, 1, half-stack, 1 stack, n stacks
-local function increment_logistic_request_min_amount(stack_size, amount_min_in)
-   local amount_min = amount_min_in
-
-   if amount_min == nil or amount_min == 0 then
-      amount_min = 1
-   elseif amount_min == 1 then
-      amount_min = math.max(math.floor(stack_size / 2), 2) -- 0 --> 2
-   elseif amount_min <= math.floor(stack_size / 2) then
-      amount_min = stack_size
-   elseif amount_min <= stack_size then
-      amount_min = amount_min + stack_size
-   elseif amount_min > stack_size then
-      amount_min = amount_min + stack_size
+-- Return the previous and next value to move a logistic filter to, when the
+-- player presses the keys. Down is nil if amount == 0. up is nil if there would
+-- be more than 10 stacks (which represents infinity).
+---@param item LuaItemPrototype | LuaItemStack | string
+---@param cur_val number
+---@return { down: number?, up: number }
+local function compute_increment_decrement(item, cur_val)
+   local proto
+   if type(item) == "string" then
+      proto = prototypes.item[item]
+   elseif item.object_name == "LuaItemPrototype" then
+      proto = item
+   elseif item.object_name == "LuaItemStack" then
+      proto = item.prototype
    end
 
-   return amount_min
-end
+   assert(proto)
 
---Increments: nil, 1, half-stack, 1 stack, n stacks
-local function decrement_logistic_request_min_amount(stack_size, amount_min_in)
-   local amount_min = amount_min_in
+   local stack_size = proto.stack_size
+   local half = math.floor(stack_size / 2)
 
-   if amount_min == nil or amount_min == 0 then
-      amount_min = nil
-   elseif amount_min == 1 then
-      amount_min = nil
-   elseif amount_min <= math.floor(stack_size / 2) then
-      amount_min = 1
-   elseif amount_min <= stack_size then
-      amount_min = math.floor(stack_size / 2)
-   elseif amount_min > stack_size then
-      amount_min = amount_min - stack_size
-   end
-
-   if amount_min == 0 then -- 0 --> "0"
-      amount_min = nil
-   end
-
-   return amount_min
-end
-
---Increments: 0, 1, half-stack, 1 stack, n stacks
-local function increment_logistic_request_max_amount(stack_size, amount_max_in)
-   local amount_max = amount_max_in
-   if amount_max >= stack_size * MAX_STACK_COUNT then
-      amount_max = nil
-   elseif amount_max > stack_size then
-      amount_max = amount_max + stack_size
-   elseif amount_max >= stack_size then
-      amount_max = amount_max + stack_size
-   elseif amount_max >= math.floor(stack_size / 2) then
-      amount_max = stack_size
-   elseif amount_max >= 1 then
-      amount_max = math.max(math.floor(stack_size / 2), 2) -- 0 --> 2
-   elseif amount_max == nil or amount_max == 0 then
-      amount_max = stack_size
-   end
-
-   return amount_max
-end
-
---Increments: 0, 1, half-stack, 1 stack, n stacks
-local function decrement_logistic_request_max_amount(stack_size, amount_max_in)
-   local amount_max = amount_max_in
-
-   if amount_max > stack_size * MAX_STACK_COUNT then
-      amount_max = stack_size * MAX_STACK_COUNT
-   elseif amount_max > stack_size then
-      amount_max = amount_max - stack_size
-   elseif amount_max >= stack_size then
-      amount_max = math.floor(stack_size / 2)
-   elseif amount_max >= math.floor(stack_size / 2) then
-      amount_max = 1
-      if stack_size == 1 then -- 0 --> 0
-         amount_max = 0
+   if cur_val == nil then
+      return { down = stack_size * 10, up = nil }
+   elseif cur_val == 0 then
+      return { down = nil, up = 1 }
+   elseif cur_val == 1 then
+      return { down = 0, up = half }
+   elseif cur_val < half then
+      return { down = 1, up = half }
+   elseif cur_val < stack_size then
+      return { down = half, up = stack_size }
+   else
+      local stacks = math.floor(cur_val / stack_size)
+      assert(stacks >= 1)
+      if stacks == 1 then
+         return { down = half, up = stack_size * 2 }
+      else
+         local down = stack_size * (stacks - 1)
+         ---@type number?
+         local up = stack_size * (stacks + 1)
+         if stacks >= 10 then up = nil end
+         return { down = down, up = up }
       end
-   elseif amount_max >= 1 then
-      amount_max = 0
-   elseif amount_max >= 0 then
-      amount_max = 0
-   elseif amount_max == nil then
-      amount_max = stack_size
    end
 
-   return amount_max
+   error("Unreachable")
+end
+
+---@param point LuaLogisticPoint
+---@param allow_create boolean? If true try to create the section.
+---@return LuaLogisticSection?
+local function find_first_manual_section(point, allow_create)
+   local sec_count = point.sections_count
+   for i = 1, sec_count do
+      local sec = point.get_section(i)
+      if sec and sec.is_manual then return sec end
+   end
+
+   return point.add_section()
+end
+
+local function personal_logistics_enabled(pindex)
+   local p = game.get_player(pindex)
+   local char = p.character
+   if not char then return false end
+   local point = char.get_logistic_point(defines.logistic_member_index.character_requester)
+   for _, sec in pairs(point.sections) do
+      if sec.active then return true end
+   end
+
+   return false
 end
 
 local function logistics_request_toggle_personal_logistics(pindex)
    local p = game.get_player(pindex)
-   p.character_personal_logistic_requests_enabled = not p.character_personal_logistic_requests_enabled
-   if p.character_personal_logistic_requests_enabled then
+   local point = p.get_requester_point()
+   if not point then return end
+   point.enabled = not point.enabled
+   if point.enabled then
       printout("Resumed personal logistics requests", pindex)
    else
       printout("Paused personal logistics requests", pindex)
@@ -121,21 +111,28 @@ end
 --Empty requesrs return nil.
 local function get_player_logistic_request_missing_count(pindex, slot_id)
    local p = game.get_player(pindex)
-   local slot = p.get_personal_logistic_slot(slot_id)
-   if slot == nil or slot.name == nil then return nil end
+   local point = p.get_requester_point()
+   if not point then return nil, nil end
+
+   local section = find_first_manual_section(point)
+   if not section then return nil end
+
+   local slot = section.get_slot(slot_id)
+   if slot == nil then return nil end
    local missing = slot.min
    if missing == nil then return nil end
+   local name = slot.value.name
    --Check player hand
-   if p.cursor_stack and p.cursor_stack.valid_for_read and p.cursor_stack.name == slot.name then
+   if p.cursor_stack and p.cursor_stack.valid_for_read and p.cursor_stack.name == name then
       missing = missing - stack.count
    end
    if missing <= 0 then return 0 end
    --Check all player inventories
-   missing = missing - p.get_inventory(defines.inventory.character_ammo).get_item_count(slot.name)
-   missing = missing - p.get_inventory(defines.inventory.character_armor).get_item_count(slot.name)
-   missing = missing - p.get_inventory(defines.inventory.character_guns).get_item_count(slot.name)
-   missing = missing - p.get_inventory(defines.inventory.character_main).get_item_count(slot.name)
-   missing = missing - p.get_inventory(defines.inventory.character_trash).get_item_count(slot.name)
+   missing = missing - p.get_inventory(defines.inventory.character_ammo).get_item_count(name)
+   missing = missing - p.get_inventory(defines.inventory.character_armor).get_item_count(name)
+   missing = missing - p.get_inventory(defines.inventory.character_guns).get_item_count(name)
+   missing = missing - p.get_inventory(defines.inventory.character_main).get_item_count(name)
+   missing = missing - p.get_inventory(defines.inventory.character_trash).get_item_count(name)
    if missing <= 0 then return 0 end
    return missing
 end
@@ -144,6 +141,7 @@ end
 function mod.logistics_networks_info(ent, pos_in)
    local result = ""
    local result_code = -1
+   ---@type LuaLogisticNetwork?
    local network = nil
    local pos = pos_in
    if pos_in == nil then pos = ent.position end
@@ -172,746 +170,173 @@ function mod.logistics_networks_info(ent, pos_in)
    return result, result_code
 end
 
---Finds or assigns the logistic request slot for the item object, which is a stack or a prototype
-local function get_personal_logistic_slot_index(item_object, pindex)
-   local p = game.get_player(pindex)
-   local slots_nil_counter = 0
-   local slot_found = false
-   local current_slot = nil
-   local correct_slot_id = nil
-   local slot_id = 0
+--[[
+Get the section and slot index to add a request for the given item.  If there is
+no section and it was not possible to create one, return nil.  If there was a
+section or it was possible to create one, return either the index of a filter
+with the given item or filters_count + 1.  Either both return values are nil, or
+neither are.
+]]
+---@param ent LuaEntity
+---@param name string
+---@return LuaLogisticSection?, number?
+local function get_logistic_slot_pos(ent, name)
+   -- The first point (0) is the requester for (almost) everything.  Rocket
+   -- silos in space age are not yet supported.  Important note: if you don't
+   -- pass an index you get a 1-based array.
+   if ent.type == "rocket-silo" then return nil, nil end
+   local point = ent.get_logistic_point(defines.logistic_member_index.character_requester)
+   if not point then return nil, nil end
 
-   --Find the correct request slot for this item, if any
-   while not slot_found and slots_nil_counter < 250 do
-      slot_id = slot_id + 1
-      current_slot = p.get_personal_logistic_slot(slot_id)
-      if current_slot == nil or current_slot.name == nil then
-         slots_nil_counter = slots_nil_counter + 1
-      elseif current_slot.name == item_object.name then
-         slot_found = true
-         correct_slot_id = slot_id
-      else
-         --do nothing
-      end
+   -- Or create it
+   local sec = find_first_manual_section(point, true)
+   if not sec then return nil, nil end
+
+   -- If we got a section and it contains an existing filter for the item,
+   -- return that.
+   for i = 1, sec.filters_count do
+      local filt = sec.get_slot(i)
+      if filt.value.name == name then return sec, i end
    end
 
-   --If needed, find the first empty slot and set it as the correct one
-   if not slot_found then
-      slot_id = 0
-      while not slot_found and slot_id < 250 do
-         slot_id = slot_id + 1
-         current_slot = p.get_personal_logistic_slot(slot_id)
-         if current_slot == nil or current_slot.name == nil then
-            slot_found = true
-            correct_slot_id = slot_id
-         else
-            --do nothing
-         end
-      end
-   end
-
-   --If no correct or empty slots found then return with error (all slots full)
-   if not slot_found then return -1 end
-
-   return correct_slot_id
+   return sec, sec.filters_count + 1
 end
 
-local function count_active_personal_logistic_slots(pindex) --**laterdo count fulfilled ones in the same loop ; also try p.character.request_slot_count
-   local p = game.get_player(pindex)
-   local slots_nil_counter = 0
-   local slots_found = 0
-   local current_slot = nil
-   local slot_id = 0
+---@param point LuaLogisticPoint?
+local function count_active_slots(point)
+   local sections = point.sections
+   local count = 0
 
-   --Find non-empty request slots
-   while slots_nil_counter < 250 do
-      slot_id = slot_id + 1
-      current_slot = p.get_personal_logistic_slot(slot_id)
-      if current_slot == nil or current_slot.name == nil then
-         slots_nil_counter = slots_nil_counter + 1
-      else
-         slots_found = slots_found + 1
-      end
+   for _, sec in pairs(sections) do
+      count = count + sec.filters_count
    end
-   return slots_found
+
+   return count
 end
 
-local function count_active_spidertron_logistic_slots(spidertron, pindex)
-   local slots_max_count = spidertron.request_slot_count
-   local slots_nil_counter = 0
-   local slots_found = 0
-   local current_slot = nil
-   local slot_id = 0
-
-   --Find non-empty request slots
-   while slots_nil_counter < slots_max_count do
-      slot_id = slot_id + 1
-      current_slot = spidertron.get_vehicle_logistic_slot(slot_id)
-      if current_slot == nil or current_slot.name == nil then
-         slots_nil_counter = slots_nil_counter + 1
-      else
-         slot_founds = slots_found + 1
-      end
+---@param ent LuaEntity
+---@param item string
+---@param min_or_max "min" | "max"
+---@param up_or_down "up" | "down"
+---@return number?, boolean, string? The new value if a set could happen at all. true or false to indicate if there was a change. If false, explain why.
+local function modify_logistic_request(ent, item, min_or_max, up_or_down)
+   local sec, index = get_logistic_slot_pos(ent, item)
+   if not sec then return nil, false, "This entity does not support manual logistics" end
+   assert(index)
+   local slot = sec.get_slot(index)
+   local cur = slot[min_or_max]
+   if not cur then
+      -- If it's the minimum, cur goes to 0, and we will move from there.
+      if min_or_max == "min" then cur = 0 end
+      -- Otherwise this is currently at infinity, which is fine.
    end
 
-   return slots_found
+   local dirs = compute_increment_decrement(item, cur)
+   local new_val = dirs[up_or_down]
+   -- If this is nil and we are going up then infinite; if this is nil and we are going down then 0.
+   local wanted = new_val[up_or_down]
+   if cur == nil and wanted == nil and up_or_down == "up" then return math.huge, false end
+
+   -- If wanted is nil and we are going up that's fine. Otherwise, nothing happened.
+   if wanted == nil and up_or_down == "down" then return cur, false end
+
+   slot[min_or_max] = wanted
+   if slot.min and slot.max and slot.min > slot.max then return cur, false, "Request minimum cannot exceed maximum" end
+
+   sec.set_slot(index, slot)
+   return wanted, cur ~= wanted
+end
+
+---@param ent LuaEntity
+---@param item string
+---@param min_or_max "min" | "max"
+---@param up_or_down "up" | "down"
+local function modify_logistic_request_with_announcement(pindex, ent, item, min_or_max, up_or_down)
+   local new, did, err = modify_logistic_request(ent, item, min_or_max, up_or_down)
+   if err then
+      printout(err, pindex)
+      return
+   end
+
+   local msg = MessageBuilder.MessageBuilder.new()
+   if not did then
+      Sounds.play_ui_edge(pindex)
+      msg:fragment(min_or_max):fragment("Unchanged. Current value is"):fragment(tostring(new))
+   else
+      msg:fragment("Set"):fragment(min_or_max):fragment("to"):fragment(new == math.huge and "infinity" or tostring(new))
+   end
+
+   printout(msg:build(), pindex)
+end
+
+---@param pindex number
+---@param item string
+---@param min_or_max "min" | "max"
+---@param up_or_down "up" | "down"
+local function modify_player_logistic_request(pindex, item, min_or_max, up_or_down)
+   local p = game.get_player(pindex)
+   if not p then return nil, false end
+   local force = p.force
+   if not force.character_logistic_requests then
+      printout("Error: You need to research logistic robotics to use this feature.", pindex)
+   end
+
+   local char = p.character
+   if not char then
+      Sounds.play_ui_edge(pindex)
+      printout("You don't control a character right now", pindex)
+      return
+   end
+
+   modify_logistic_request_with_announcement(pindex, char, item, min_or_max, up_or_down)
 end
 
 local function player_logistic_request_increment_min(item_stack, pindex)
-   local p = game.get_player(pindex)
-   local current_slot = nil
-   local correct_slot_id = nil
-
-   --Check if logistics have been researched
-   for i, tech in pairs(game.get_player(pindex).force.technologies) do
-      if tech.name == "logistic-robotics" and not tech.researched then
-         printout("Error: You need to research logistic robotics to use this feature.", pindex)
-         return
-      end
-   end
-
-   --Find the correct request slot for this item
-   local correct_slot_id = get_personal_logistic_slot_index(item_stack, pindex)
-
-   if correct_slot_id == -1 then
-      printout("Error: No empty slots available for this request", pindex)
-      return false
-   elseif correct_slot_id == nil or correct_slot_id < 1 then
-      printout("Error: Invalid slot ID", pindex)
-      return false
-   end
-
-   --Read the correct slot id value, increment it, set it
-   current_slot = p.get_personal_logistic_slot(correct_slot_id)
-   if current_slot == nil or current_slot.name == nil then
-      --Create a fresh request
-      local new_slot = { name = item_stack.name, min = 1, max = nil }
-      p.set_personal_logistic_slot(correct_slot_id, new_slot)
-   else
-      --Update existing request
-      local stack_size = 1
-      if item_stack.object_name == "LuaItemStack" then
-         stack_size = item_stack.prototype.stack_size
-      elseif item_stack.object_name == "LuaItemPrototype" then
-         stack_size = item_stack.stack_size
-      end
-      current_slot.min = increment_logistic_request_min_amount(stack_size, current_slot.min)
-      --Force min <= max
-      if current_slot.min ~= nil and current_slot.max ~= nil and current_slot.min > current_slot.max then
-         printout("Error: Minimum request value cannot exceed maximum", pindex)
-         return
-      end
-      p.set_personal_logistic_slot(correct_slot_id, current_slot)
-   end
-
-   --Read new status
-   mod.player_logistic_request_read(item_stack, pindex, false)
+   modify_player_logistic_request(pindex, item_stack.name, "min", "up")
 end
 
 local function player_logistic_request_decrement_min(item_stack, pindex)
-   local p = game.get_player(pindex)
-   local current_slot = nil
-   local correct_slot_id = nil
-
-   --Check if logistics have been researched
-   for i, tech in pairs(game.get_player(pindex).force.technologies) do
-      if tech.name == "logistic-robotics" and not tech.researched then
-         printout("Error: You need to research logistic robotics to use this feature.", pindex)
-         return
-      end
-   end
-
-   --Find the correct request slot for this item
-   local correct_slot_id = get_personal_logistic_slot_index(item_stack, pindex)
-
-   if correct_slot_id == -1 then
-      printout("Error: No empty slots available for this request", pindex)
-      return false
-   elseif correct_slot_id == nil or correct_slot_id < 1 then
-      printout("Error: Invalid slot ID", pindex)
-      return false
-   end
-
-   --Read the correct slot id value, decrement it, set it
-   current_slot = p.get_personal_logistic_slot(correct_slot_id)
-   if current_slot == nil or current_slot.name == nil then
-      --Create a fresh request
-      local new_slot = { name = item_stack.name, min = 0, max = nil }
-      p.set_personal_logistic_slot(correct_slot_id, new_slot)
-   else
-      --Update existing request
-      local stack_size = 1
-      if item_stack.object_name == "LuaItemStack" then
-         stack_size = item_stack.prototype.stack_size
-      elseif item_stack.object_name == "LuaItemPrototype" then
-         stack_size = item_stack.stack_size
-      end
-      current_slot.min = decrement_logistic_request_min_amount(stack_size, current_slot.min)
-      --Force min <= max
-      if current_slot.min ~= nil and current_slot.max ~= nil and current_slot.min > current_slot.max then
-         printout("Error: Minimum request value cannot exceed maximum", pindex)
-         return
-      end
-      p.set_personal_logistic_slot(correct_slot_id, current_slot)
-   end
-
-   --Read new status
-   mod.player_logistic_request_read(item_stack, pindex)
+   modify_player_logistic_request(pindex, item_stack.name, "min", "down")
 end
 
 local function player_logistic_request_increment_max(item_stack, pindex)
-   local p = game.get_player(pindex)
-   local current_slot = nil
-   local correct_slot_id = nil
-
-   --Check if logistics have been researched
-   for i, tech in pairs(game.get_player(pindex).force.technologies) do
-      if tech.name == "logistic-robotics" and not tech.researched then
-         printout("Error: You need to research logistic robotics to use this feature.", pindex)
-         return
-      end
-   end
-
-   --Find the correct request slot for this item
-   correct_slot_id = get_personal_logistic_slot_index(item_stack, pindex)
-
-   if correct_slot_id == -1 then
-      printout("Error: No empty slots available for this request", pindex)
-      return false
-   elseif correct_slot_id == nil or correct_slot_id < 1 then
-      printout("Error: Invalid slot ID", pindex)
-      return false
-   end
-
-   --Read the correct slot id value, decrement it, set it
-   current_slot = p.get_personal_logistic_slot(correct_slot_id)
-   local stack_size = 1
-   if item_stack.object_name == "LuaItemStack" then
-      stack_size = item_stack.prototype.stack_size
-   elseif item_stack.object_name == "LuaItemPrototype" then
-      stack_size = item_stack.stack_size
-   end
-   if current_slot == nil or current_slot.name == nil then
-      --Create a fresh request
-      local new_slot = { name = item_stack.name, min = 0, max = MAX_STACK_COUNT * stack_size }
-      p.set_personal_logistic_slot(correct_slot_id, new_slot)
-   else
-      --Update existing request
-      current_slot.max = increment_logistic_request_max_amount(stack_size, current_slot.max)
-      --Force min <= max
-      if current_slot.min ~= nil and current_slot.max ~= nil and current_slot.min > current_slot.max then
-         printout("Error: Minimum request value cannot exceed maximum", pindex)
-         return
-      end
-      p.set_personal_logistic_slot(correct_slot_id, current_slot)
-   end
-
-   --Read new status
-   mod.player_logistic_request_read(item_stack, pindex)
+   modify_player_logistic_request(pindex, item_stack.name, "max", "up")
 end
 
 local function player_logistic_request_decrement_max(item_stack, pindex)
-   local p = game.get_player(pindex)
-   local current_slot = nil
-   local correct_slot_id = nil
+   modify_player_logistic_request(pindex, item_stack.name, "max", "down")
+end
 
-   --Check if logistics have been researched
-   for i, tech in pairs(game.get_player(pindex).force.technologies) do
-      if tech.name == "logistic-robotics" and not tech.researched then
-         printout("Error: You need to research logistic robotics to use this feature.", pindex)
-         return
-      end
-   end
+---@param ent LuaEntity
+---@param name string
+---@return boolean
+local function clear_logistic_request(ent, name)
+   local sec, index = get_logistic_slot_pos(ent, name)
+   if not sec then return false end
+   assert(index)
+   if index > sec.filters_count then return false end
+   sec.clear_slot(index)
+   return true
+end
 
-   --Find the correct request slot for this item
-   correct_slot_id = get_personal_logistic_slot_index(item_stack, pindex)
-
-   if correct_slot_id == -1 then
-      printout("Error: No empty slots available for this request", pindex)
-      return false
-   elseif correct_slot_id == nil or correct_slot_id < 1 then
-      printout("Error: Invalid slot ID", pindex)
-      return false
-   end
-
-   --Read the correct slot id value, increment it, set it
-   current_slot = p.get_personal_logistic_slot(correct_slot_id)
-
-   local stack_size = 1
-   if item_stack.object_name == "LuaItemStack" then
-      stack_size = item_stack.prototype.stack_size
-   elseif item_stack.object_name == "LuaItemPrototype" then
-      stack_size = item_stack.stack_size
-   end
-   if current_slot == nil or current_slot.name == nil then
-      --Create a fresh request
-      local new_slot = { name = item_stack.name, min = 0, max = MAX_STACK_COUNT * stack_size }
-      p.set_personal_logistic_slot(correct_slot_id, new_slot)
+---@param ent LuaEntity
+---@param name string
+local function clear_logistic_request_with_announcement(pindex, ent, name)
+   local did = clear_logistic_request(ent, name)
+   if did then
+      printout("Cleared request", pindex)
    else
-      --Update existing request
-      current_slot.max = decrement_logistic_request_max_amount(stack_size, current_slot.max)
-      --Force min <= max
-      if current_slot.min ~= nil and current_slot.max ~= nil and current_slot.min > current_slot.max then
-         printout("Error: Minimum request value cannot exceed maximum", pindex)
-         return
-      end
-      p.set_personal_logistic_slot(correct_slot_id, current_slot)
+      printout("Request already cleared", pindex)
    end
-
-   --Read new status
-   mod.player_logistic_request_read(item_stack, pindex, false)
 end
 
 --Clears a logistic request entirely
 local function player_logistic_request_clear(item_stack, pindex)
    local p = game.get_player(pindex)
-   local current_slot = nil
-   local correct_slot_id = nil
-
-   --Check if logistics have been researched
-   for i, tech in pairs(game.get_player(pindex).force.technologies) do
-      if tech.name == "logistic-robotics" and not tech.researched then
-         printout("Error: You need to research logistic robotics to use this feature.", pindex)
-         return
-      end
-   end
-
-   --Find the correct request slot for this item
-   correct_slot_id = get_personal_logistic_slot_index(item_stack, pindex)
-
-   if correct_slot_id == -1 then
-      printout("Error: No empty slots available for this request", pindex)
-      return false
-   elseif correct_slot_id == nil or correct_slot_id < 1 then
-      printout("Error: Invalid slot ID", pindex)
-      return false
-   end
-
-   --Read the correct slot id value, increment it, set it
-   current_slot = p.get_personal_logistic_slot(correct_slot_id)
-
-   if current_slot == nil or current_slot.name == nil then
-      --(done)
-   else
-      --Clear this request
-      p.clear_personal_logistic_slot(correct_slot_id)
-   end
-
-   --Read new status
-   printout("Request cleared", pindex)
-end
-
---Finds or assigns the logistic request slot for the item, for chests or vehicles
-local function get_entity_logistic_slot_index(item_stack, chest)
-   local slots_max_count = chest.request_slot_count
-   local slot_found = false
-   local current_slot = nil
-   local correct_slot_id = nil
-   local slot_id = 0
-
-   --Find the correct request slot for this item, if any
-   while not slot_found and slot_id < slots_max_count do
-      slot_id = slot_id + 1
-      current_slot = chest.get_request_slot(slot_id)
-      if current_slot == nil or current_slot.name == nil then
-         --do nothing
-      elseif current_slot.name == item_stack.name then
-         slot_found = true
-         correct_slot_id = slot_id
-      else
-         --do nothing
-      end
-   end
-
-   --If needed, find the first empty slot and set it as the correct one
-   if not slot_found then
-      slot_id = 0
-      while not slot_found and slot_id < 100 do
-         slot_id = slot_id + 1
-         current_slot = chest.get_request_slot(slot_id)
-         if current_slot == nil or current_slot.name == nil then
-            slot_found = true
-            correct_slot_id = slot_id
-         else
-            --do nothing
-         end
-      end
-   end
-
-   --If no correct or empty slots found then return with error (all slots full)
-   if not slot_found then return -1 end
-
-   return correct_slot_id
-end
-
---Increments min value
-local function chest_logistic_request_increment_min(item_stack, chest, pindex)
-   local current_slot = nil
-   local correct_slot_id = nil
-
-   --Check if logistics have been researched
-   for i, tech in pairs(game.get_player(pindex).force.technologies) do
-      if tech.name == "logistic-system" and not tech.researched then
-         printout("Error: You need to research logistic system, with utility science, to use this feature.", pindex)
-         return
-      end
-   end
-
-   --Find the correct request slot for this item
-   correct_slot_id = get_entity_logistic_slot_index(item_stack, chest)
-
-   if correct_slot_id == -1 then
-      printout("Error: No empty slots available for this request", pindex)
-      return false
-   elseif correct_slot_id == nil or correct_slot_id < 1 then
-      printout("Error: Invalid slot ID", pindex)
-      return false
-   end
-
-   --Read the correct slot id value, increment it, set it
-   current_slot = chest.get_request_slot(correct_slot_id)
-   local stack_size = 1
-   if item_stack.object_name == "LuaItemStack" then
-      stack_size = item_stack.prototype.stack_size
-   elseif item_stack.object_name == "LuaItemPrototype" then
-      stack_size = item_stack.stack_size
-   end
-   if current_slot == nil or current_slot.name == nil then
-      --Create a fresh request
-      local new_slot = { name = item_stack.name, count = stack_size }
-      chest.set_request_slot(new_slot, correct_slot_id)
-   else
-      --Update existing request
-      current_slot.count = increment_logistic_request_min_amount(stack_size, current_slot.count)
-      chest.set_request_slot(current_slot, correct_slot_id)
-   end
-
-   --Read new status
-   mod.chest_logistic_request_read(item_stack, chest, pindex)
-end
-
---Decrements min value
-local function chest_logistic_request_decrement_min(item_stack, chest, pindex)
-   local current_slot = nil
-   local correct_slot_id = nil
-
-   --Check if logistics have been researched
-   for i, tech in pairs(game.get_player(pindex).force.technologies) do
-      if tech.name == "logistic-system" and not tech.researched then
-         printout("Error: You need to research logistic system, with utility science, to use this feature.", pindex)
-         return
-      end
-   end
-
-   --Find the correct request slot for this item
-   correct_slot_id = get_entity_logistic_slot_index(item_stack, chest)
-
-   if correct_slot_id == -1 then
-      printout("Error: No empty slots available for this request", pindex)
-      return false
-   elseif correct_slot_id == nil or correct_slot_id < 1 then
-      printout("Error: Invalid slot ID", pindex)
-      return false
-   end
-
-   --Read the correct slot id value, decrement it, set it
-   current_slot = chest.get_request_slot(correct_slot_id)
-   local stack_size = 1
-   if item_stack.object_name == "LuaItemStack" then
-      stack_size = item_stack.prototype.stack_size
-   elseif item_stack.object_name == "LuaItemPrototype" then
-      stack_size = item_stack.stack_size
-   end
-   if current_slot == nil or current_slot.name == nil then
-      --Create a fresh request
-      local new_slot = { name = item_stack.name, count = stack_size }
-      chest.set_request_slot(new_slot, correct_slot_id)
-   else
-      --Update existing request
-      current_slot.count = decrement_logistic_request_min_amount(stack_size, current_slot.count)
-      if current_slot.count == nil or current_slot.count == 0 then
-         chest.clear_request_slot(correct_slot_id)
-      else
-         chest.set_request_slot(current_slot, correct_slot_id)
-      end
-   end
-
-   --Read new status
-   mod.chest_logistic_request_read(item_stack, chest, pindex)
-end
-
---Clears a logistic request entirely
-local function chest_logistic_request_clear(item_stack, chest, pindex)
-   local current_slot = nil
-   local correct_slot_id = nil
-
-   --Check if logistics have been researched
-   for i, tech in pairs(game.get_player(pindex).force.technologies) do
-      if tech.name == "logistic-system" and not tech.researched then
-         printout("Error: You need to research logistic system, with utility science, to use this feature.", pindex)
-         return
-      end
-   end
-
-   --Find the correct request slot for this item
-   correct_slot_id = get_entity_logistic_slot_index(item_stack, chest)
-
-   if correct_slot_id == -1 then
-      printout("Error: No empty slots available for this request", pindex)
-      return false
-   elseif correct_slot_id == nil or correct_slot_id < 1 then
-      printout("Error: Invalid slot ID", pindex)
-      return false
-   end
-
-   --Read the correct slot id value, increment it, set it
-   current_slot = chest.get_request_slot(correct_slot_id)
-   if current_slot == nil or current_slot.name == nil then
-      --(done)
-   else
-      --Clear this request
-      chest.clear_request_slot(correct_slot_id)
-   end
-
-   --Read new status
-   printout("Request cleared", pindex)
-end
-
-local function spidertron_logistic_request_increment_min(item_stack, spidertron, pindex)
-   local current_slot = nil
-   local correct_slot_id = nil
-
-   --Check if logistics have been researched
-   for i, tech in pairs(game.get_player(pindex).force.technologies) do
-      if tech.name == "logistic-robotics" and not tech.researched then
-         printout("Error: You need to research logistic robotics to use this feature.", pindex)
-         return
-      end
-   end
-
-   --Find the correct request slot for this item
-   correct_slot_id = get_entity_logistic_slot_index(item_stack, spidertron)
-
-   if correct_slot_id == -1 then
-      printout("Error: No empty slots available for this request", pindex)
-      return false
-   elseif correct_slot_id == nil or correct_slot_id < 1 then
-      printout("Error: Invalid slot ID", pindex)
-      return false
-   end
-
-   --Read the correct slot id value, increment it, set it
-   current_slot = spidertron.get_vehicle_logistic_slot(correct_slot_id)
-   if current_slot == nil or current_slot.name == nil then
-      --Create a fresh request
-      local new_slot = { name = item_stack.name, min = 1, max = nil }
-      spidertron.set_vehicle_logistic_slot(correct_slot_id, new_slot)
-   else
-      --Update existing request
-      local stack_size = 1
-      if item_stack.object_name == "LuaItemStack" then
-         stack_size = item_stack.prototype.stack_size
-      elseif item_stack.object_name == "LuaItemPrototype" then
-         stack_size = item_stack.stack_size
-      end
-      current_slot.min = increment_logistic_request_min_amount(stack_size, current_slot.min)
-      --Force min <= max
-      if current_slot.min ~= nil and current_slot.max ~= nil and current_slot.min > current_slot.max then
-         printout("Error: Minimum request value cannot exceed maximum", pindex)
-         return
-      end
-      spidertron.set_vehicle_logistic_slot(correct_slot_id, current_slot)
-   end
-
-   --Read new status
-   mod.spidertron_logistic_request_read(item_stack, spidertron, pindex, false)
-end
-
-local function spidertron_logistic_request_decrement_min(item_stack, spidertron, pindex)
-   local current_slot = nil
-   local correct_slot_id = nil
-
-   --Check if logistics have been researched
-   for i, tech in pairs(game.get_player(pindex).force.technologies) do
-      if tech.name == "logistic-robotics" and not tech.researched then
-         printout("Error: You need to research logistic robotics to use this feature.", pindex)
-         return
-      end
-   end
-
-   --Find the correct request slot for this item
-   correct_slot_id = get_entity_logistic_slot_index(item_stack, spidertron)
-
-   if correct_slot_id == -1 then
-      printout("Error: No empty slots available for this request", pindex)
-      return false
-   elseif correct_slot_id == nil or correct_slot_id < 1 then
-      printout("Error: Invalid slot ID", pindex)
-      return false
-   end
-
-   --Read the correct slot id value, decrement it, set it
-   current_slot = spidertron.get_vehicle_logistic_slot(correct_slot_id)
-   if current_slot == nil or current_slot.name == nil then
-      --Create a fresh request
-      local new_slot = { name = item_stack.name, min = 0, max = nil }
-      spidertron.set_vehicle_logistic_slot(correct_slot_id, new_slot)
-   else
-      --Update existing request
-      local stack_size = 1
-      if item_stack.object_name == "LuaItemStack" then
-         stack_size = item_stack.prototype.stack_size
-      elseif item_stack.object_name == "LuaItemPrototype" then
-         stack_size = item_stack.stack_size
-      end
-      current_slot.min = decrement_logistic_request_min_amount(stack_size, current_slot.min)
-      --Force min <= max
-      if current_slot.min ~= nil and current_slot.max ~= nil and current_slot.min > current_slot.max then
-         printout("Error: Minimum request value cannot exceed maximum", pindex)
-         return
-      end
-      spidertron.set_vehicle_logistic_slot(correct_slot_id, current_slot)
-   end
-
-   --Read new status
-   mod.spidertron_logistic_request_read(item_stack, spidertron, pindex, false)
-end
-
-local function spidertron_logistic_request_increment_max(item_stack, spidertron, pindex)
-   local current_slot = nil
-   local correct_slot_id = nil
-
-   --Check if logistics have been researched
-   for i, tech in pairs(game.get_player(pindex).force.technologies) do
-      if tech.name == "logistic-robotics" and not tech.researched then
-         printout("Error: You need to research logistic robotics to use this feature.", pindex)
-         return
-      end
-   end
-
-   --Find the correct request slot for this item
-   correct_slot_id = get_entity_logistic_slot_index(item_stack, spidertron)
-
-   if correct_slot_id == -1 then
-      printout("Error: No empty slots available for this request", pindex)
-      return false
-   elseif correct_slot_id == nil or correct_slot_id < 1 then
-      printout("Error: Invalid slot ID", pindex)
-      return false
-   end
-
-   --Read the correct slot id value, decrement it, set it
-   current_slot = spidertron.get_vehicle_logistic_slot(correct_slot_id)
-   local stack_size = 1
-   if item_stack.object_name == "LuaItemStack" then
-      stack_size = item_stack.prototype.stack_size
-   elseif item_stack.object_name == "LuaItemPrototype" then
-      stack_size = item_stack.stack_size
-   end
-   if current_slot == nil or current_slot.name == nil then
-      --Create a fresh request
-      local new_slot = { name = item_stack.name, min = 0, max = MAX_STACK_COUNT * stack_size }
-      spidertron.set_vehicle_logistic_slot(correct_slot_id, new_slot)
-   else
-      --Update existing request
-      current_slot.max = increment_logistic_request_max_amount(stack_size, current_slot.max)
-      --Force min <= max
-      if current_slot.min ~= nil and current_slot.max ~= nil and current_slot.min > current_slot.max then
-         printout("Error: Minimum request value cannot exceed maximum", pindex)
-         return
-      end
-      spidertron.set_vehicle_logistic_slot(correct_slot_id, current_slot)
-   end
-
-   --Read new status
-   mod.spidertron_logistic_request_read(item_stack, spidertron, pindex, false)
-end
-
-local function spidertron_logistic_request_decrement_max(item_stack, spidertron, pindex)
-   local current_slot = nil
-   local correct_slot_id = nil
-
-   --Check if logistics have been researched
-   for i, tech in pairs(game.get_player(pindex).force.technologies) do
-      if tech.name == "logistic-robotics" and not tech.researched then
-         printout("Error: You need to research logistic robotics to use this feature.", pindex)
-         return
-      end
-   end
-
-   --Find the correct request slot for this item
-   correct_slot_id = get_entity_logistic_slot_index(item_stack, spidertron)
-
-   if correct_slot_id == -1 then
-      printout("Error: No empty slots available for this request", pindex)
-      return false
-   elseif correct_slot_id == nil or correct_slot_id < 1 then
-      printout("Error: Invalid slot ID", pindex)
-      return false
-   end
-
-   --Read the correct slot id value, increment it, set it
-   current_slot = spidertron.get_vehicle_logistic_slot(correct_slot_id)
-   local stack_size = 1
-   if item_stack.object_name == "LuaItemStack" then
-      stack_size = item_stack.prototype.stack_size
-   elseif item_stack.object_name == "LuaItemPrototype" then
-      stack_size = item_stack.stack_size
-   end
-   if current_slot == nil or current_slot.name == nil then
-      --Create a fresh request
-      local new_slot = { name = item_stack.name, min = 0, max = MAX_STACK_COUNT * stack_size }
-      spidertron.set_vehicle_logistic_slot(correct_slot_id, new_slot)
-   else
-      --Update existing request
-      current_slot.max = decrement_logistic_request_max_amount(stack_size, current_slot.max)
-      --Force min <= max
-      if current_slot.min ~= nil and current_slot.max ~= nil and current_slot.min > current_slot.max then
-         printout("Error: Minimum request value cannot exceed maximum", pindex)
-         return
-      end
-      spidertron.set_vehicle_logistic_slot(correct_slot_id, current_slot)
-   end
-
-   --Read new status
-   mod.spidertron_logistic_request_read(item_stack, spidertron, pindex, false)
-end
-
---Clears a logistic request entirely
-local function spidertron_logistic_request_clear(item_stack, spidertron, pindex)
-   local current_slot = nil
-   local correct_slot_id = nil
-
-   --Check if logistics have been researched
-   for i, tech in pairs(game.get_player(pindex).force.technologies) do
-      if tech.name == "logistic-robotics" and not tech.researched then
-         printout("Error: You need to research logistic robotics to use this feature.", pindex)
-         return
-      end
-   end
-
-   --Find the correct request slot for this item
-   correct_slot_id = get_entity_logistic_slot_index(item_stack, spidertron)
-
-   if correct_slot_id == -1 then
-      printout("Error: No empty slots available for this request", pindex)
-      return false
-   elseif correct_slot_id == nil or correct_slot_id < 1 then
-      printout("Error: Invalid slot ID", pindex)
-      return false
-   end
-
-   --Read the correct slot id value, increment it, set it
-   current_slot = spidertron.get_vehicle_logistic_slot(correct_slot_id)
-   if current_slot == nil or current_slot.name == nil then
-      --(done)
-   else
-      --Clear this request
-      spidertron.clear_vehicle_logistic_slot(correct_slot_id)
-   end
-
-   --Read new status
-   printout("Request cleared", pindex)
+   if not p then return end
+   local char = p.character
+   if not char then return end
+   clear_logistic_request_with_announcement(pindex, char, item_stack.name)
 end
 
 --Calls the appropriate function after a keypress for logistic info
@@ -951,13 +376,15 @@ function mod.logistics_info_key_handler(pindex)
       else
          --Logistic chest in front
          local ent = p.selected
-         if mod.can_make_logistic_requests(ent) then
+         if not ent then
+            return
+         elseif mod.can_make_logistic_requests(ent) then
             mod.read_entity_requests_summary(ent, pindex)
             return
          elseif mod.can_set_logistic_filter(ent) then
             local filter = ent.storage_filter
             local result = "Nothing"
-            if filter ~= nil then result = filter.name end
+            if filter ~= nil then result = filter.item.name end
             printout(result .. " set as logistic storage filter", pindex)
             return
          end
@@ -970,13 +397,16 @@ function mod.logistics_info_key_handler(pindex)
       local stack = p.cursor_stack
       local stack_inv = p.opened.get_output_inventory()[players[pindex].building.index]
       local chest = p.opened
+      ---@cast chest any
+      if not chest or not type(chest) == "userdata" or not chest.object_name == "LuaEntity" then return end
+      ---@cast chest LuaEntity
       --Check item in hand or item in inventory
       if stack ~= nil and stack.valid_for_read and stack.valid then
          --Item in hand
-         mod.chest_logistic_request_read(stack, chest, pindex)
+         mod.logistic_request_read(stack, chest, pindex)
       elseif stack_inv ~= nil and stack_inv.valid_for_read and stack_inv.valid then
          --Item in output inv
-         mod.chest_logistic_request_read(stack_inv, chest, pindex)
+         mod.logistic_request_read(stack_inv, chest, pindex)
       else
          --Empty hand, empty inventory slot
          mod.read_entity_requests_summary(chest, pindex)
@@ -987,13 +417,18 @@ function mod.logistics_info_key_handler(pindex)
       local invs = defines.inventory
       local stack_inv = p.opened.get_inventory(invs.spider_trunk)[players[pindex].building.index]
       local spidertron = p.opened
+      ---@cast spidertron any
+      if not spidertron or not type(spidertron) == "userdata" or not spidertron.object_name == "LuaEntity" then
+         return
+      end
+      ---@cast spidertron LuaEntity
       --Check item in hand or item in inventory
       if stack ~= nil and stack.valid_for_read and stack.valid then
          --Item in hand
-         mod.spidertron_logistic_request_read(stack, spidertron, pindex, true)
+         mod.logistic_request_read(stack, spidertron, pindex, true)
       elseif stack_inv ~= nil and stack_inv.valid_for_read and stack_inv.valid then
          --Item in output inv
-         mod.spidertron_logistic_request_read(stack_inv, spidertron, pindex, true)
+         mod.logistic_request_read(stack_inv, spidertron, pindex, true)
       else
          --Empty hand, empty inventory slot
          mod.read_entity_requests_summary(spidertron, pindex)
@@ -1001,7 +436,7 @@ function mod.logistics_info_key_handler(pindex)
    elseif players[pindex].menu == "building" and mod.can_set_logistic_filter(p.opened) then
       local filter = p.opened.storage_filter
       local result = "Nothing"
-      if filter ~= nil then result = filter.name end
+      if filter ~= nil then result = filter.item.name end
       printout(result .. " set as logistic storage filter", pindex)
    elseif players[pindex].menu == "building" then
       printout("Logistic requests not supported for this building", pindex)
@@ -1010,303 +445,111 @@ function mod.logistics_info_key_handler(pindex)
    end
 end
 
---Call the appropriate function after a keypress for modifying a logistic request
+-- Find the item stack target of the player trying to set a logistic request.
+---@param pindex number
+---@return LuaEntity?, string?, string?
+local function find_player_logistic_target(pindex)
+   local p = game.get_player(pindex)
+   assert(p)
+   local char = p.character
+   if not char then return nil, nil, "You are not controlling a character" end
+
+   if
+      not players[pindex].in_menu
+      or players[pindex].menu == "inventory"
+      or players[pindex].menu == "player_trash"
+      or players[pindex].menu == "crafting"
+   then
+      --Personal logistics
+      local stack = game.get_player(pindex).cursor_stack
+      local stack_inv = game.get_player(pindex).get_main_inventory()[players[pindex].inventory.index]
+
+      if stack ~= nil and stack.valid_for_read and stack.valid then
+         --Item in hand
+         return char, stack.name, nil
+      elseif players[pindex].menu == "inventory" and stack_inv ~= nil and stack_inv.valid_for_read then
+         --Item in inv
+         return char, stack_inv.name, nil
+      elseif players[pindex].menu == "player_trash" then
+         --Item in trash
+         return nil, nil, "Take this item in hand to change its requests"
+      elseif players[pindex].menu == "crafting" then
+         --Use the first found item product of the selected recipe, pass it as a stack
+         local prototype = fa_utils.get_prototype_of_item_product(pindex)
+         return char, prototype.name, nil
+      else
+         --Empty hand, empty inventory slot
+         return nil, nil, "No actions"
+      end
+   elseif players[pindex].menu == "building" then
+      --Chest logistics
+      local stack = game.get_player(pindex).cursor_stack
+      local stack_inv = game.get_player(pindex).opened.get_output_inventory()[players[pindex].building.index]
+      local chest = game.get_player(pindex).opened --[[@as LuaEntity]]
+      --Check item in hand or item in inventory
+      if stack ~= nil and stack.valid_for_read and stack.valid then
+         --Item in hand
+         return chest, stack.name, nil
+      elseif stack_inv ~= nil and stack_inv.valid_for_read and stack_inv.valid then
+         --Item in output inv
+         return chest, stack_inv.name, nil
+      else
+         --Empty hand, empty inventory slot
+         return nil, nil, "No actions"
+      end
+   elseif players[pindex].menu == "vehicle" then
+      --spidertron logistics
+      local stack = game.get_player(pindex).cursor_stack
+      local invs = defines.inventory
+      local stack_inv = game.get_player(pindex).opened.get_inventory(invs.spider_trunk)[players[pindex].building.index]
+      local spidertron = game.get_player(pindex).opened --[[@as LuaEntity]]
+      --Check item in hand or item in inventory
+      if stack ~= nil and stack.valid_for_read and stack.valid then
+         --Item in hand
+         return spidertron, stack.name, nil
+      elseif stack_inv ~= nil and stack_inv.valid_for_read and stack_inv.valid then
+         --Item in output inv
+         return spidertron, stack_inv.name, nil
+      else
+         --Empty hand, empty inventory slot
+         return nil, nil, "No actions"
+      end
+   end
+
+   return nil, nil, "Could not find item or entity to set logistic request"
+end
+
+---@param min_or_max "min" | "max"
+---@param up_or_down "up" | "down"
+local function modify_logistic_request_kb(pindex, min_or_max, up_or_down)
+   local target, name, err = find_player_logistic_target(pindex)
+   if err then
+      printout(err, pindex)
+      return
+   end
+
+   assert(target)
+   assert(name)
+
+   modify_logistic_request_with_announcement(pindex, target, name, min_or_max, up_or_down)
+end
+
 function mod.logistics_request_increment_min_handler(pindex)
-   if
-      not players[pindex].in_menu
-      or players[pindex].menu == "inventory"
-      or players[pindex].menu == "player_trash"
-      or players[pindex].menu == "crafting"
-   then
-      --Personal logistics
-      local stack = game.get_player(pindex).cursor_stack
-      local stack_inv = game.get_player(pindex).get_main_inventory()[players[pindex].inventory.index]
-      --Check item in hand or item in inventory
-      if stack ~= nil and stack.valid_for_read and stack.valid then
-         --Item in hand
-         player_logistic_request_increment_min(stack, pindex)
-      elseif
-         players[pindex].menu == "inventory"
-         and stack_inv ~= nil
-         and stack_inv.valid_for_read
-         and stack_inv.valid
-      then
-         --Item in inv
-         player_logistic_request_increment_min(stack_inv, pindex)
-      elseif players[pindex].menu == "player_trash" then
-         --Item in trash
-         printout("Take this item in hand to change its requests", pindex)
-      elseif players[pindex].menu == "crafting" then
-         --Use the first found item product of the selected recipe, pass it as a stack
-         local prototype = fa_utils.get_prototype_of_item_product(pindex)
-         if prototype then player_logistic_request_increment_min(prototype, pindex) end
-      else
-         --Empty hand, empty inventory slot
-         printout("No actions", pindex)
-      end
-   elseif players[pindex].menu == "building" and mod.can_make_logistic_requests(game.get_player(pindex).opened) then
-      --Chest logistics
-      local stack = game.get_player(pindex).cursor_stack
-      local stack_inv = game.get_player(pindex).opened.get_output_inventory()[players[pindex].building.index]
-      local chest = game.get_player(pindex).opened
-      --Check item in hand or item in inventory
-      if stack ~= nil and stack.valid_for_read and stack.valid then
-         --Item in hand
-         chest_logistic_request_increment_min(stack, chest, pindex)
-      elseif stack_inv ~= nil and stack_inv.valid_for_read and stack_inv.valid then
-         --Item in output inv
-         chest_logistic_request_increment_min(stack_inv, chest, pindex)
-      else
-         --Empty hand, empty inventory slot
-         printout("No actions", pindex)
-      end
-   elseif players[pindex].menu == "vehicle" and mod.can_make_logistic_requests(game.get_player(pindex).opened) then
-      --spidertron logistics
-      local stack = game.get_player(pindex).cursor_stack
-      local invs = defines.inventory
-      local stack_inv = game.get_player(pindex).opened.get_inventory(invs.spider_trunk)[players[pindex].building.index]
-      local spidertron = game.get_player(pindex).opened
-      --Check item in hand or item in inventory
-      if stack ~= nil and stack.valid_for_read and stack.valid then
-         --Item in hand
-         spidertron_logistic_request_increment_min(stack, spidertron, pindex)
-      elseif stack_inv ~= nil and stack_inv.valid_for_read and stack_inv.valid then
-         --Item in output inv
-         spidertron_logistic_request_increment_min(stack_inv, spidertron, pindex)
-      else
-         --Empty hand, empty inventory slot
-         printout("No actions", pindex)
-      end
-   elseif players[pindex].menu == "building" and mod.can_set_logistic_filter(game.get_player(pindex).opened) then
-      --Chest logistics
-      local stack = game.get_player(pindex).cursor_stack
-      local stack_inv = game.get_player(pindex).opened.get_output_inventory()[players[pindex].building.index]
-      local chest = game.get_player(pindex).opened
-      --Check item in hand or item in inventory
-      if stack ~= nil and stack.valid_for_read and stack.valid then
-         --Item in hand
-         mod.set_logistic_filter(stack, chest, pindex)
-      elseif stack_inv ~= nil and stack_inv.valid_for_read and stack_inv.valid then
-         --Item in output inv
-         mod.set_logistic_filter(stack_inv, chest, pindex)
-      else
-         --Empty hand, empty inventory slot
-         mod.set_logistic_filter(nil, chest, pindex)
-      end
-   elseif players[pindex].menu == "building" then
-      printout("Logistic requests not supported for this building", pindex)
-   else
-      --Other menu
-      printout("No actions for this menu", pindex)
-   end
+   modify_logistic_request_kb(pindex, "min", "up")
 end
 
---Call the appropriate function after a keypress for modifying a logistic request
 function mod.logistics_request_decrement_min_handler(pindex)
-   if
-      not players[pindex].in_menu
-      or players[pindex].menu == "inventory"
-      or players[pindex].menu == "player_trash"
-      or players[pindex].menu == "crafting"
-   then
-      --Personal logistics
-      local stack = game.get_player(pindex).cursor_stack
-      local stack_inv = game.get_player(pindex).get_main_inventory()[players[pindex].inventory.index]
-      --Check item in hand or item in inventory
-      if stack ~= nil and stack.valid_for_read and stack.valid then
-         --Item in hand
-         player_logistic_request_decrement_min(stack, pindex)
-      elseif
-         players[pindex].menu == "inventory"
-         and stack_inv ~= nil
-         and stack_inv.valid_for_read
-         and stack_inv.valid
-      then
-         --Item in inv
-         player_logistic_request_decrement_min(stack_inv, pindex)
-      elseif players[pindex].menu == "player_trash" then
-         --Item in trash
-         printout("Take this item in hand to change its requests", pindex)
-      elseif players[pindex].menu == "crafting" then
-         --Use the first found item product of the selected recipe, pass it as a stack
-         local prototype = fa_utils.get_prototype_of_item_product(pindex)
-         if prototype then player_logistic_request_decrement_min(prototype, pindex) end
-      else
-         --Empty hand, empty inventory slot
-         printout("No actions", pindex)
-      end
-   elseif players[pindex].menu == "building" and mod.can_make_logistic_requests(game.get_player(pindex).opened) then
-      --Chest logistics
-      local stack = game.get_player(pindex).cursor_stack
-      local stack_inv = game.get_player(pindex).opened.get_output_inventory()[players[pindex].building.index]
-      local chest = game.get_player(pindex).opened
-      --Check item in hand or item in inventory
-      if stack ~= nil and stack.valid_for_read and stack.valid then
-         --Item in hand
-         chest_logistic_request_decrement_min(stack, chest, pindex)
-      elseif stack_inv ~= nil and stack_inv.valid_for_read and stack_inv.valid then
-         --Item in output inv
-         chest_logistic_request_decrement_min(stack_inv, chest, pindex)
-      else
-         --Empty hand, empty inventory slot
-         printout("No actions", pindex)
-      end
-   elseif players[pindex].menu == "vehicle" and mod.can_make_logistic_requests(game.get_player(pindex).opened) then
-      --spidertron logistics
-      local stack = game.get_player(pindex).cursor_stack
-      local invs = defines.inventory
-      local stack_inv = game.get_player(pindex).opened.get_inventory(invs.spider_trunk)[players[pindex].building.index]
-      local spidertron = game.get_player(pindex).opened
-      --Check item in hand or item in inventory
-      if stack ~= nil and stack.valid_for_read and stack.valid then
-         --Item in hand
-         spidertron_logistic_request_decrement_min(stack, spidertron, pindex)
-      elseif stack_inv ~= nil and stack_inv.valid_for_read and stack_inv.valid then
-         --Item in output inv
-         spidertron_logistic_request_decrement_min(stack_inv, spidertron, pindex)
-      else
-         --Empty hand, empty inventory slot
-         printout("No actions", pindex)
-      end
-   elseif players[pindex].menu == "building" and mod.can_set_logistic_filter(game.get_player(pindex).opened) then
-      --Chest logistics
-      local stack = game.get_player(pindex).cursor_stack
-      local stack_inv = game.get_player(pindex).opened.get_output_inventory()[players[pindex].building.index]
-      local chest = game.get_player(pindex).opened
-      --Check item in hand or item in inventory
-      if stack ~= nil and stack.valid_for_read and stack.valid then
-         --Item in hand
-         mod.set_logistic_filter(stack, chest, pindex)
-      elseif stack_inv ~= nil and stack_inv.valid_for_read and stack_inv.valid then
-         --Item in output inv
-         mod.set_logistic_filter(stack, chest, pindex)
-      else
-         --Empty hand, empty inventory slot
-         mod.set_logistic_filter(nil, chest, pindex)
-      end
-   elseif players[pindex].menu == "building" then
-      printout("Logistic requests not supported for this building", pindex)
-   else
-      --Other menu
-      printout("No actions for this menu", pindex)
-   end
+   modify_logistic_request_kb(pindex, "min", "down")
 end
 
---Call the appropriate function after a keypress for modifying a logistic request
 function mod.logistics_request_increment_max_handler(pindex)
-   if
-      not players[pindex].in_menu
-      or players[pindex].menu == "inventory"
-      or players[pindex].menu == "player_trash"
-      or players[pindex].menu == "crafting"
-   then
-      --Personal logistics
-      local stack = game.get_player(pindex).cursor_stack
-      local stack_inv = game.get_player(pindex).get_main_inventory()[players[pindex].inventory.index]
-      --Check item in hand or item in inventory
-      if stack ~= nil and stack.valid_for_read and stack.valid then
-         --Item in hand
-         player_logistic_request_increment_max(stack, pindex)
-      elseif
-         players[pindex].menu == "inventory"
-         and stack_inv ~= nil
-         and stack_inv.valid_for_read
-         and stack_inv.valid
-      then
-         --Item in inv
-         player_logistic_request_increment_max(stack_inv, pindex)
-      elseif players[pindex].menu == "player_trash" then
-         --Item in trash
-         printout("Take this item in hand to change its requests", pindex)
-      elseif players[pindex].menu == "crafting" then
-         --Use the first found item product of the selected recipe, pass it as a stack
-         local prototype = fa_utils.get_prototype_of_item_product(pindex)
-         if prototype then player_logistic_request_increment_max(prototype, pindex) end
-      else
-         --Empty hand, empty inventory slot
-         printout("No actions", pindex)
-      end
-   elseif players[pindex].menu == "vehicle" and mod.can_make_logistic_requests(game.get_player(pindex).opened) then
-      --spidertron logistics
-      local stack = game.get_player(pindex).cursor_stack
-      local invs = defines.inventory
-      local stack_inv = game.get_player(pindex).opened.get_inventory(invs.spider_trunk)[players[pindex].building.index]
-      local spidertron = game.get_player(pindex).opened
-      --Check item in hand or item in inventory
-      if stack ~= nil and stack.valid_for_read and stack.valid then
-         --Item in hand
-         spidertron_logistic_request_increment_max(stack, spidertron, pindex)
-      elseif stack_inv ~= nil and stack_inv.valid_for_read and stack_inv.valid then
-         --Item in output inv
-         spidertron_logistic_request_increment_max(stack_inv, spidertron, pindex)
-      else
-         --Empty hand, empty inventory slot
-         printout("No actions", pindex)
-      end
-   else
-      --Other menu
-      printout("No actions for this menu", pindex)
-   end
+   modify_logistic_request_kb(pindex, "max", "up")
 end
 
---Call the appropriate function after a keypress for modifying a logistic request
 function mod.logistics_request_decrement_max_handler(pindex)
-   if
-      not players[pindex].in_menu
-      or players[pindex].menu == "inventory"
-      or players[pindex].menu == "player_trash"
-      or players[pindex].menu == "crafting"
-   then
-      --Personal logistics
-      local stack = game.get_player(pindex).cursor_stack
-      local stack_inv = game.get_player(pindex).get_main_inventory()[players[pindex].inventory.index]
-      --Check item in hand or item in inventory
-      if stack ~= nil and stack.valid_for_read and stack.valid then
-         --Item in hand
-         player_logistic_request_decrement_max(stack, pindex)
-      elseif
-         players[pindex].menu == "inventory"
-         and stack_inv ~= nil
-         and stack_inv.valid_for_read
-         and stack_inv.valid
-      then
-         --Item in inv
-         player_logistic_request_decrement_max(stack_inv, pindex)
-      elseif players[pindex].menu == "player_trash" then
-         --Item in trash
-         printout("Take this item in hand to change its requests", pindex)
-      elseif players[pindex].menu == "crafting" then
-         --Use the first found item product of the selected recipe, pass it as a stack
-         local prototype = fa_utils.get_prototype_of_item_product(pindex)
-         if prototype then player_logistic_request_decrement_max(prototype, pindex) end
-      else
-         --Empty hand, empty inventory slot
-         printout("No actions", pindex)
-      end
-   elseif players[pindex].menu == "vehicle" and mod.can_make_logistic_requests(game.get_player(pindex).opened) then
-      --spidertron logistics
-      local stack = game.get_player(pindex).cursor_stack
-      local invs = defines.inventory
-      local stack_inv = game.get_player(pindex).opened.get_inventory(invs.spider_trunk)[players[pindex].building.index]
-      local spidertron = game.get_player(pindex).opened
-      --Check item in hand or item in inventory
-      if stack ~= nil and stack.valid_for_read and stack.valid then
-         --Item in hand
-         spidertron_logistic_request_decrement_max(stack, spidertron, pindex)
-      elseif stack_inv ~= nil and stack_inv.valid_for_read and stack_inv.valid then
-         --Item in output inv
-         spidertron_logistic_request_decrement_max(stack_inv, spidertron, pindex)
-      else
-         --Empty hand, empty inventory slot
-         printout("No actions", pindex)
-      end
-   else
-      --Other menu
-      printout("No actions for this menu", pindex)
-   end
+   modify_logistic_request_kb(pindex, "max", "down")
 end
 
---Call the appropriate function after a keypress for modifying a logistic request
 function mod.logistics_request_toggle_handler(pindex)
    local ent = game.get_player(pindex).opened
    if
@@ -1337,151 +580,94 @@ end
 
 --Clears the selected logistic request
 function mod.logistics_request_clear_handler(pindex)
-   if
-      not players[pindex].in_menu
-      or players[pindex].menu == "inventory"
-      or players[pindex].menu == "player_trash"
-      or players[pindex].menu == "crafting"
-   then
-      --Personal logistics
-      local stack = game.get_player(pindex).cursor_stack
-      local stack_inv = game.get_player(pindex).get_main_inventory()[players[pindex].inventory.index]
-      --Check item in hand or item in inventory
-      if stack ~= nil and stack.valid_for_read and stack.valid then
-         --Item in hand
-         player_logistic_request_clear(stack, pindex)
-      elseif
-         players[pindex].menu == "inventory"
-         and stack_inv ~= nil
-         and stack_inv.valid_for_read
-         and stack_inv.valid
-      then
-         --Item in inv
-         player_logistic_request_clear(stack_inv, pindex)
-      elseif players[pindex].menu == "player_trash" then
-         --Item in trash
-         printout("Take this item in hand to change its requests", pindex)
-      elseif players[pindex].menu == "crafting" then
-         --Use the first found item product of the selected recipe, pass it as a stack
-         local prototype = fa_utils.get_prototype_of_item_product(pindex)
-         if prototype then player_logistic_request_clear(prototype, pindex) end
-      else
-         --Empty hand, empty inventory slot
-         printout("No actions", pindex)
-      end
-   elseif players[pindex].menu == "building" and mod.can_make_logistic_requests(game.get_player(pindex).opened) then
-      --Chest logistics
-      local stack = game.get_player(pindex).cursor_stack
-      local stack_inv = game.get_player(pindex).opened.get_output_inventory()[players[pindex].building.index]
-      local chest = game.get_player(pindex).opened
-      --Check item in hand or item in inventory
-      if stack ~= nil and stack.valid_for_read and stack.valid then
-         --Item in hand
-         chest_logistic_request_clear(stack, chest, pindex)
-      elseif stack_inv ~= nil and stack_inv.valid_for_read and stack_inv.valid then
-         --Item in output inv
-         chest_logistic_request_clear(stack_inv, chest, pindex)
-      else
-         --Empty hand, empty inventory slot
-         printout("No actions", pindex)
-      end
-   elseif players[pindex].menu == "vehicle" and mod.can_make_logistic_requests(game.get_player(pindex).opened) then
-      --spidertron logistics
-      local stack = game.get_player(pindex).cursor_stack
-      local invs = defines.inventory
-      local stack_inv = game.get_player(pindex).opened.get_inventory(invs.spider_trunk)[players[pindex].building.index]
-      local spidertron = game.get_player(pindex).opened
-      --Check item in hand or item in inventory
-      if stack ~= nil and stack.valid_for_read and stack.valid then
-         --Item in hand
-         spidertron_logistic_request_clear(stack, spidertron, pindex)
-      elseif stack_inv ~= nil and stack_inv.valid_for_read and stack_inv.valid then
-         --Item in output inv
-         spidertron_logistic_request_clear(stack_inv, spidertron, pindex)
-      else
-         --Empty hand, empty inventory slot
-         printout("No actions", pindex)
-      end
-   else
-      --Other menu
-      printout("No actions for this menu", pindex)
+   local target, name, err = find_player_logistic_target(pindex)
+   if not target or not name then
+      printout(err, pindex)
+      return
    end
+   clear_logistic_request_with_announcement(pindex, target, name)
 end
 
 --Returns summary info string
 function mod.player_logistic_requests_summary_info(pindex)
    local p = game.get_player(pindex)
-   local result = ""
+   local msg = MessageBuilder.MessageBuilder.new()
+   local char = p.character
 
-   --1. Check if logistics have been researched
-   for i, tech in pairs(game.get_player(pindex).force.technologies) do
-      if tech.name == "logistic-robotics" and not tech.researched == true then
-         printout("Logistic requests not available, research required.", pindex)
-         return
-      end
-   end
-
-   --2. Check if inside any logistic network or not (simpler than logistics network info)
    local network = p.surface.find_logistic_network_by_position(p.position, p.force)
    if network == nil or not network.valid then
       --Check whether in construction range
       local nearest, min_dist = fa_utils.find_nearest_roboport(p.surface, p.position, 60)
       if nearest == nil or min_dist > 55 then
-         result = result .. "Not in a network, "
+         msg:list_item("Not in a network")
       else
-         result = result .. "In construction range of network " .. nearest.backer_name .. ", "
+         msg:list_item("In construction range of network"):fragment(nearest.backer_name)
       end
    else
       --Definitely within range
       local nearest, min_dist = fa_utils.find_nearest_roboport(p.surface, p.position, 30)
-      result = result .. "In network " .. nearest.backer_name .. ", "
+      msg:list_item("In network"):fragment(nearest.backer_name)
    end
 
-   --3. Check if personal logistics are enabled
-   if not p.character_personal_logistic_requests_enabled then result = result .. "Requests paused, " end
+   if char then
+      local personal_point = char.get_logistic_point(defines.logistic_member_index.character_requester)
+      assert(personal_point)
+      local personal_sec = find_first_manual_section(personal_point)
+      assert(personal_sec)
 
-   --4. Count logistics requests
-   local req_count = count_active_personal_logistic_slots(pindex)
-   result = result .. req_count .. " personal logistic requests set, "
-
-   --5. Count unfulfilled requests and list missing request items
-   local unfulfilled_count = 0
-   for i = 1, 250 do
-      local missing_check = get_player_logistic_request_missing_count(pindex, i)
-      if missing_check ~= nil then
-         if missing_check > 0 then unfulfilled_count = unfulfilled_count + 1 end
+      if not personal_sec.active then
+         msg:list_item("personal logistics disabled")
+      else
+         msg:fragment("personal logistics enabled")
       end
-   end
-   if unfulfilled_count > 0 then
-      result = result .. unfulfilled_count .. " unfulfilled, missing items include "
-      for i = 1, 250 do
+
+      local req_count = count_active_slots(personal_point)
+      msg:list_item(tostring(req_count)):fragment("personal logistic requests set")
+
+      local unfulfilled_count = 0
+      for i = 1, personal_sec.filters_count do
          local missing_check = get_player_logistic_request_missing_count(pindex, i)
          if missing_check ~= nil then
-            if missing_check > 0 then
-               local slot_name = p.get_personal_logistic_slot(i).name
-               result = result .. missing_check .. " " .. slot_name .. ", "
-            end
+            if missing_check > 0 then unfulfilled_count = unfulfilled_count + 1 end
          end
       end
-   else
-      result = result .. " all are fulfilled"
+      if unfulfilled_count > 0 then
+         msg:list_item(tostring(unfulfilled_count)):fragment("unfulfilled, missing items include")
+         for i = 1, personal_sec.filters_count do
+            local missing_check = get_player_logistic_request_missing_count(pindex, i)
+            if missing_check ~= nil then
+               if missing_check > 0 then
+                  local slot = personal_sec.get_slot(i)
+                  if slot.value then msg:list_item(tostring(missing_check)):fragment(slot.value.name) end
+               end
+            end
+         end
+      else
+         msg:fragment("All are fulfilled")
+      end
    end
-   return result
+
+   return msg:build()
 end
 
 --Read the current personal logistics request set for this item object, which is a stack or a prototype
 function mod.player_logistic_request_read(item_object, pindex, additional_checks)
    local p = game.get_player(pindex)
+   local char = p.character
+   if not char then
+      printout("You are not controlling a character", pindex)
+      return
+   end
+
    local current_slot = nil
    local correct_slot_id = nil
    local result = ""
 
    --Check if logistics have been researched
-   for i, tech in pairs(game.get_player(pindex).force.technologies) do
-      if tech.name == "logistic-robotics" and not tech.researched then
-         printout("Logistic requests not available, research required.", pindex)
-         return
-      end
+
+   if not char.force.character_logistic_requests then
+      printout("Logistic requests not available, research required.", pindex)
+      return
    end
 
    if additional_checks then
@@ -1490,7 +676,7 @@ function mod.player_logistic_request_read(item_object, pindex, additional_checks
       if network == nil or not network.valid then result = result .. "Not in a network, " end
 
       --Check if personal logistics are enabled
-      if not p.character_personal_logistic_requests_enabled then result = result .. "Requests paused, " end
+      if not personal_logistics_enabled(pindex) then result = result .. "Requests paused, " end
    end
 
    if item_object == nil or item_object.valid == false then
@@ -1499,16 +685,16 @@ function mod.player_logistic_request_read(item_object, pindex, additional_checks
    end
 
    --Find the correct request slot for this item
-   local correct_slot_id = get_personal_logistic_slot_index(item_object, pindex)
+   local sec, index = get_logistic_slot_pos(char, item_object.name)
 
-   if correct_slot_id == nil or correct_slot_id < 1 then
+   if not sec or index > sec.filters_count then
       printout(result .. "Error: Invalid slot ID", pindex)
       return
    end
 
    --Read the correct slot id value
-   current_slot = p.get_personal_logistic_slot(correct_slot_id)
-   if current_slot == nil or current_slot.name == nil then
+   local current_slot = sec.get_slot(index --[[@as integer]])
+   if current_slot == nil or current_slot.value == nil or current_slot.value.name == nil then
       --No requests found
       printout(
          result
@@ -1570,71 +756,6 @@ function mod.player_logistic_request_read(item_object, pindex, additional_checks
          )
          return
       end
-   end
-end
-
---Read the chest's current logistics request set for this item
-function mod.chest_logistic_request_read(item_stack, chest, pindex)
-   local current_slot = nil
-   local correct_slot_id = nil
-   local result = ""
-
-   --Check if logistics have been researched
-   for i, tech in pairs(game.get_player(pindex).force.technologies) do
-      if tech.name == "logistic-system" and not tech.researched then
-         printout("Error: You need to research logistic system, with utility science, to use this feature.", pindex)
-         return
-      end
-   end
-
-   --Find the correct request slot for this item
-   local correct_slot_id = get_entity_logistic_slot_index(item_stack, chest)
-
-   if correct_slot_id == -1 then
-      printout("Error: No empty slots available for this request", pindex)
-      return false
-   elseif correct_slot_id == nil or correct_slot_id < 1 then
-      printout("Error: Invalid slot ID", pindex)
-      return false
-   end
-
-   --Read the correct slot id value
-   current_slot = chest.get_request_slot(correct_slot_id)
-   if current_slot == nil or current_slot.name == nil then
-      --No requests found
-      printout(
-         item_stack.name .. " has no logistic requests set, use the 'L' key and modifier keys to set requests.",
-         pindex
-      )
-      return
-   else
-      local stack_size = 1
-      if item_stack.object_name == "LuaItemStack" then
-         stack_size = item_stack.prototype.stack_size
-      elseif item_stack.object_name == "LuaItemPrototype" then
-         stack_size = item_stack.stack_size
-      end
-      --Report request counts and inventory counts
-      local req_result = ""
-      local inv_result = ""
-
-      if current_slot.count ~= nil then
-         req_result = fa_utils.express_in_stacks(current_slot.count, stack_size, false)
-      end
-
-      local inv_count = chest.get_output_inventory().get_item_count(item_stack.name)
-      inv_result = fa_utils.express_in_stacks(inv_count, stack_size, false)
-
-      printout(
-         req_result
-            .. " requested and "
-            .. inv_result
-            .. " supplied for "
-            .. item_stack.name
-            .. ", use the 'L' key and modifier keys to set requests.",
-         pindex
-      )
-      return
    end
 end
 
@@ -1701,107 +822,10 @@ function mod.spidertron_logistic_requests_summary_info(spidertron, pindex)
    --3. Check if spidertron logistics are enabled
    if not spidertron.vehicle_logistic_requests_enabled then result = result .. "Requests paused, " end
 
-   --4. Count logistics requests
-   result = result .. count_active_spidertron_logistic_slots(pindex) .. " spidertron logistic requests set, "
+   result = result
+      .. count_active_slots(spidertron.get_logistic_point(defines.logistic_member_index.vehicle_storage))
+      .. " spidertron logistic requests set, "
    return result
-end
-
---Read the current spidertron's logistics request set for this item
-function mod.spidertron_logistic_request_read(item_stack, spidertron, pindex, additional_checks)
-   local current_slot = nil
-   local correct_slot_id = nil
-   local result = ""
-
-   --Check if logistics have been researched
-   for i, tech in pairs(game.get_player(pindex).force.technologies) do
-      if tech.name == "logistic-robotics" and not tech.researched then
-         printout("Logistic requests not available, research required.", pindex)
-         return
-      end
-   end
-
-   if additional_checks then
-      --Check if inside any logistic network or not (simpler than logistics network info)
-      local network = spidertron.surface.find_logistic_network_by_position(spidertron.position, spidertron.force)
-      if network == nil or not network.valid then result = result .. "Not in a network, " end
-
-      --Check if personal logistics are enabled
-      if not spidertron.vehicle_logistic_requests_enabled then result = result .. "Requests paused, " end
-   end
-
-   --Find the correct request slot for this item
-   local correct_slot_id = get_entity_logistic_slot_index(item_stack, spidertron)
-
-   if correct_slot_id == nil or correct_slot_id < 1 then
-      printout(result .. "Error: Invalid slot ID", pindex)
-      return
-   end
-
-   --Read the correct slot id value
-   current_slot = spidertron.get_vehicle_logistic_slot(correct_slot_id)
-   if current_slot == nil or current_slot.name == nil then
-      --No requests found
-      printout(
-         result
-            .. item_stack.name
-            .. " has no logistic requests set in this spidertron, "
-            .. " use the L key and modifier keys to set requests.",
-         pindex
-      )
-      return
-   else
-      --Report request counts and inventory counts
-      if current_slot.max ~= nil or current_slot.min ~= nil then
-         local min_result = ""
-         local max_result = ""
-         local inv_result = ""
-         local trash_result = ""
-         local stack_size = 1
-         if item_stack.object_name == "LuaItemStack" then
-            stack_size = item_stack.prototype.stack_size
-         elseif item_stack.object_name == "LuaItemPrototype" then
-            stack_size = item_stack.stack_size
-         end
-
-         if current_slot.min ~= nil then
-            min_result = fa_utils.express_in_stacks(current_slot.min, stack_size, false) .. " minimum and "
-         end
-
-         if current_slot.max ~= nil then
-            max_result = fa_utils.express_in_stacks(current_slot.max, stack_size, false) .. " maximum "
-         end
-
-         local inv_count = spidertron.get_inventory(defines.inventory.spider_trunk).get_item_count(item_stack.name)
-         inv_result = fa_utils.express_in_stacks(inv_count, stack_size, false) .. " in inventory, "
-
-         local trash_count = spidertron.get_inventory(defines.inventory.spider_trash).get_item_count(item_stack.name)
-         trash_result = fa_utils.express_in_stacks(trash_count, stack_size, false) .. " in spidertron trash, "
-
-         printout(
-            result
-               .. min_result
-               .. max_result
-               .. " requested for "
-               .. item_stack.name
-               .. ", "
-               .. inv_result
-               .. trash_result
-               .. " use the L key and modifier keys to set requests.",
-            pindex
-         )
-         return
-      else
-         --All requests are nil
-         printout(
-            result
-               .. item_stack.name
-               .. " has no logistic requests set in this spidertron, "
-               .. " use the L key and modifier keys to set requests.",
-            pindex
-         )
-         return
-      end
-   end
 end
 
 --Logistic requests can be made by chests or spidertrons
@@ -1809,7 +833,7 @@ function mod.can_make_logistic_requests(ent)
    if ent == nil or ent.valid == false then return false end
    if ent.type == "spider-vehicle" then return true end
    local point = ent.get_logistic_point(defines.logistic_member_index.logistic_container)
-   if point == nil or point.valid == false then return false end
+   if point == nil then return false end
    if point.mode == defines.logistic_mode.requester or point.mode == defines.logistic_mode.buffer then
       return true
    else
@@ -1821,7 +845,7 @@ end
 function mod.can_set_logistic_filter(ent)
    if ent == nil or ent.valid == false then return false end
    local point = ent.get_logistic_point(defines.logistic_member_index.logistic_container)
-   if point == nil or point.valid == false then return false end
+   if point == nil then return false end
    if point.mode == defines.logistic_mode.storage then
       return true
    else
@@ -1829,56 +853,68 @@ function mod.can_set_logistic_filter(ent)
    end
 end
 
+---@param stack LuaItemStack
+---@param ent LuaEntity
+---@param pindex number
 function mod.set_logistic_filter(stack, ent, pindex)
-   if stack == nil or stack.valid_for_read == false then
-      ent.storage_filter = nil
+   local filt = ent.get_filter(1)
+   if not filt then return end
+   local proto = filt.name
+
+   if stack == nil or stack.valid_for_read == false or proto == stack.name then
+      ent.set_filter(1, nil)
       printout("logistic storage filter cleared", pindex)
       return
    end
 
-   if ent.storage_filter == stack.prototype then
-      ent.storage_filter = nil
-      printout("logistic storage filter cleared", pindex)
-   else
-      ent.storage_filter = stack.prototype
-      printout(stack.name .. " set as logistic storage filter ", pindex)
-   end
+   ent.set_filter(1, stack.name)
+   printout(stack.name .. " set as logistic storage filter ", pindex)
 end
 
-function mod.read_entity_requests_summary(ent, pindex) --**laterdo improve
-   if ent.type == "spider-vehicle" then
-      printout(ent.request_slot_count .. " spidertron logistic requests set", pindex)
-   else
-      printout(ent.request_slot_count .. " chest logistic requests set", pindex)
+---@param ent LuaEntity
+---@param pindex number
+function mod.read_entity_requests_summary(ent, pindex)
+   local req_count = 0
+   local unfulfilled_count = 0
+   for _, p in
+      pairs(ent.get_logistic_point() --[=[@as LuaLogisticPoint[]]=])
+   do
+      for _, sec in pairs(p.sections) do
+         req_count = req_count + sec.filters_count
+      end
    end
+
+   printout(MessageBuilder.MessageBuilder.new():fragment(tostring(req_count)):fragment("requests set"):build(), pindex)
 end
 
---laterdo** maybe use surf.find_closest_logistic_network_by_position(position, force)
-
---The idea is that every roboport of the network has the same backer name and this is the networks's name.
+-- vanilla does not have network names.  We add this ourselves: all roboports in
+-- the same network get the same backer name.
 function mod.get_network_name(port)
-   mod.resolve_network_name(port)
+   mod.fixup_network_name(port)
    return port.backer_name
 end
 
---Sets a logistic network's name. The idea is that every roboport of the network has the same backer name and this is the networks's name.
 function mod.set_network_name(port, new_name)
    --Rename this port
    if new_name == nil or new_name == "" then return false end
    port.backer_name = new_name
-   --Rename the rest, if any
+   --Rename the rest, if any.  Note that this is not the same as the fixup
+   --function because this doesn't want to account for the oldest roboport.
    local nw = port.logistic_network
    if nw == nil then return true end
-   local cells = nw.cells
-   if cells == nil or cells == {} then return true end
+   local cells = nw.cells or {}
    for i, cell in ipairs(cells) do
       if cell.owner.supports_backer_name then cell.owner.backer_name = new_name end
    end
    return true
 end
 
---Finds the oldest roboport and applies its name across the network. Any built roboport will be newer and so the older names will be kept.
-function mod.resolve_network_name(port_in)
+--Finds the oldest roboport and applies its name across the network. Any built
+--roboport will be newer and so the older names will be kept.  This can happen
+--if the mod is added to a save, roboports are built in ways which don't go
+--through the mod, if a roboport joins two networks, or (inn theory, though
+--perhaps not in practice) if there is a power outage.
+function mod.fixup_network_name(port_in)
    local oldest_port = port_in
    local nw = oldest_port.logistic_network
    --No network means resolved
@@ -1914,6 +950,7 @@ function mod.run_roboport_menu(menu_index, pindex, clicked)
       players[pindex].roboport_menu.port = port
    elseif ent ~= nil and ent.valid and ent.name == "roboport" then
       port = ent
+      ---@cast port LuaEntity
       players[pindex].roboport_menu.port = port
    else
       players[pindex].roboport.port = nil
@@ -1988,7 +1025,7 @@ function mod.run_roboport_menu(menu_index, pindex, clicked)
          if nw ~= nil then
             local click_count = players[pindex].menu_click_count
             click_count = click_count + 1
-            local result = mod.logistic_network_items_info(port, click_count)
+            local result = mod.logistic_network_items_info(port --[[@as LuaEntity]], click_count)
             players[pindex].menu_click_count = click_count
             printout(result, pindex)
          else
@@ -2170,14 +1207,15 @@ function mod.logistic_network_chests_info(port)
    return result
 end
 
+---@param port LuaEntity
 function mod.logistic_network_items_info(port, group_no)
-   local result = { "" }
+   local msg = MessageBuilder.MessageBuilder.new()
    local nw = port.logistic_cell.logistic_network
    if nw == nil or nw.valid == false then
-      table.insert(result, " Error: no network ")
-      return result
+      msg:fragment("Error: no network ")
+      return msg:build()
    elseif group_no == 1 then
-      table.insert(result, "Network contains ")
+      msg:fragment("Network contains")
    end
    local itemset = nw.get_contents()
    local itemtable = {}
@@ -2194,28 +1232,27 @@ function mod.logistic_network_items_info(port, group_no)
       itemtable = players[pindex].cached_list
    end
    if #itemtable == 0 then
-      table.insert(result, " no items. ")
-      return result
+      msg:fragment("no items.")
+      return msg:build()
    else
       local group_start = (group_no - 1) * 5 + 1
       local group_end = group_start + 4
       if #itemtable < group_start then
-         table.insert(result, " no other items.")
-         return result
+         msg:fragment("no other items.")
+         return msg:build()
       end
       for i = group_start, group_end, 1 do
          if itemtable[i] then
-            table.insert(
-               result,
-               ", " .. itemtable[i].name .. " times " .. fa_utils.simplify_large_number(itemtable[i].count)
-            )
+            msg:list_item(itemtable[i].name)
+               :fragment("times")
+               :fragment(fa_utils.simplify_large_number(itemtable[i].count))
          end
       end
       if #itemtable > group_end then
-         table.insert(result, ", and other items, " .. #itemtable .. " total, press LEFT BRACKET to list more.")
+         msg:list_item("and other items, "):fragment(#itemtable):fragment("total, press LEFT BRACKET to list more.")
       end
    end
-   return result
+   return msg:build()
 end
 
 --laterdo full personal logistics menu where you can go line by line along requests and edit them, iterate through trash?

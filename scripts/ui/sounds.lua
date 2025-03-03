@@ -23,4 +23,9 @@ function mod.play_menu_wrap(pindex)
    game.get_player(pindex).play_sound({ path = "inventory-wrap-around" })
 end
 
+-- Reached the edge of the menu, the end or beginning of a slider, etc.
+function mod.play_ui_edge(pindex)
+   game.get_player(pindex).play_sound({ path = "inventory-edge" })
+end
+
 return mod
