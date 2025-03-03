@@ -7735,7 +7735,7 @@ script.on_event("logistic-request-decrement-max", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    if game.get_player(pindex).character == nil then return end
-   fa_bot_logistics.logistics_request_decrem_max_handler(pindex)
+   fa_bot_logistics.logistics_request_decrement_max_handler(pindex)
 end)
 
 ---@param event EventData.CustomInputEvent

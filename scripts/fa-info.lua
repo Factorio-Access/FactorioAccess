@@ -374,7 +374,7 @@ local function ent_info_logistic_network(ctx)
       if network == nil then
          local nearest_roboport = FaUtils.find_nearest_roboport(ent.surface, ent.position, 5000)
          if nearest_roboport == nil then
-            ctx.message:fragment({ "ent-info-logistic-not-in-network", 5000 })
+            ctx.message:fragment({ "fa.ent-info-logistic-not-in-network", 5000 })
          else
             local dist = math.ceil(util.distance(ent.position, nearest_roboport.position) - 25)
             local dir = FaUtils.direction_lookup(FaUtils.get_direction_biased(nearest_roboport.position, ent.position))

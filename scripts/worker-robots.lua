@@ -42,6 +42,8 @@ local function compute_increment_decrement(item, cur_val)
       return { down = 0, up = half }
    elseif cur_val < half then
       return { down = 1, up = half }
+   elseif cur_val == half then
+      return { down = 1, up = stack_size }
    elseif cur_val < stack_size then
       return { down = half, up = stack_size }
    else
@@ -196,13 +198,14 @@ local function get_logistic_slot_pos(ent, name)
    -- return that.
    for i = 1, sec.filters_count do
       local filt = sec.get_slot(i)
-      if filt.value.name == name then return sec, i end
+      print(sec.filters_count, serpent.line(filt), name)
+      if filt and filt.value and filt.value.name == name then return sec, i end
    end
 
    return sec, sec.filters_count + 1
 end
 
----@param point LuaLogisticPoint?
+---@param point LuaLogisticPoint
 local function count_active_slots(point)
    local sections = point.sections
    local count = 0
@@ -234,17 +237,31 @@ local function modify_logistic_request(ent, item, min_or_max, up_or_down)
    local dirs = compute_increment_decrement(item, cur)
    local new_val = dirs[up_or_down]
    -- If this is nil and we are going up then infinite; if this is nil and we are going down then 0.
-   local wanted = new_val[up_or_down]
-   if cur == nil and wanted == nil and up_or_down == "up" then return math.huge, false end
-
-   -- If wanted is nil and we are going up that's fine. Otherwise, nothing happened.
-   if wanted == nil and up_or_down == "down" then return cur, false end
+   local wanted = dirs[up_or_down]
+   local ret = wanted
+   if min_or_max == "min" then
+      -- Min special cases: nil in cur means 0, that's what the engine sometimes
+      -- gives back.
+      if cur == nil then cur = 0 end
+      -- If wanted is nil for min, we don't do anything.
+      if wanted == nil then return cur, false end
+   else
+      -- For max, down and nil is do nothing, but up and nil is infinity.  Cur
+      -- is also infinity on nil.
+      cur = cur or math.huge
+      if wanted == nil and up_or_down == "down" then
+         return cur, false
+      elseif wanted == nil then
+         ret = cur
+      end
+   end
 
    slot[min_or_max] = wanted
+   slot.value = item
    if slot.min and slot.max and slot.min > slot.max then return cur, false, "Request minimum cannot exceed maximum" end
 
    sec.set_slot(index, slot)
-   return wanted, cur ~= wanted
+   return ret, cur ~= ret
 end
 
 ---@param ent LuaEntity
@@ -599,7 +616,7 @@ function mod.player_logistic_requests_summary_info(pindex)
       --Check whether in construction range
       local nearest, min_dist = fa_utils.find_nearest_roboport(p.surface, p.position, 60)
       if nearest == nil or min_dist > 55 then
-         msg:list_item("Not in a network")
+         msg:fragment("Not in a network.")
       else
          msg:list_item("In construction range of network"):fragment(nearest.backer_name)
       end
@@ -664,7 +681,6 @@ function mod.player_logistic_request_read(item_object, pindex, additional_checks
    local result = ""
 
    --Check if logistics have been researched
-
    if not char.force.character_logistic_requests then
       printout("Logistic requests not available, research required.", pindex)
       return
@@ -679,22 +695,18 @@ function mod.player_logistic_request_read(item_object, pindex, additional_checks
       if not personal_logistics_enabled(pindex) then result = result .. "Requests paused, " end
    end
 
-   if item_object == nil or item_object.valid == false then
-      printout(result .. "Error: Unknown or missing item", pindex)
-      return
-   end
-
    --Find the correct request slot for this item
    local sec, index = get_logistic_slot_pos(char, item_object.name)
 
-   if not sec or index > sec.filters_count then
-      printout(result .. "Error: Invalid slot ID", pindex)
-      return
-   end
-
    --Read the correct slot id value
    local current_slot = sec.get_slot(index --[[@as integer]])
-   if current_slot == nil or current_slot.value == nil or current_slot.value.name == nil then
+   if
+      not sec
+      or index > sec.filters_count
+      or current_slot == nil
+      or current_slot.value == nil
+      or current_slot.value.name == nil
+   then
       --No requests found
       printout(
          result
