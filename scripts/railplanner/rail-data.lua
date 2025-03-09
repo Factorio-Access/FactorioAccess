@@ -7,11 +7,11 @@ local dirs16=require("dirs")
 --if they are one entrance and one exit facing the same direction they join
 --or if they are the same type facing opposite direction they also join.
 --if their directions are the opposite of the above then they form a fork.
---if they are ay an angle besides 0 or 180 then they don't connect.
+--if there angular differnce is not 0 or 180 then they don't connect.
 
 --The geometry deffinitions bellow describe all the different shapes
 --each shape can be roatated and possibly mirrored
---they are however described in one orientation while the others can be extrapolated
+--they are however described in one orientation while the others can be expanded
 
 
 
@@ -113,8 +113,9 @@ local rail_shapes_2={
    },
    {
       name="half-diagonal",
-      dir=dirs16.north,
-      mirrored_dir=dirs16.northeast,
+      dir=dirs16.northeast,
+      two_way_rotational_symmetry=true,
+      mirrored_dir=dirs16.north,
       ends={
          entrance={pos={ -1,2},dir=dirs16.northnortheast},
          exit={pos={ 1, -2},dir=dirs16.northnortheast}
