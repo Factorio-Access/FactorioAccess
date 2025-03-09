@@ -1,4 +1,5 @@
 --Main file for mod runtime
+__bad_temp = require("scripts.railplanner.a_star")
 local util = require("util")
 local fa_utils = require("scripts.fa-utils")
 local fa_info = require("scripts.fa-info")

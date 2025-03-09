@@ -76,6 +76,8 @@ end
 
 ---@type table<integer,node_edge[]>
 local edges_by_abstract_req = {}
+---@type table<string,table<dirs16,RailGeometry>>
+local expand_geometries = {}
 
 ---adds a new edge based on the geometry
 ---@param geo RailGeometry
@@ -105,6 +107,8 @@ local function add_geo_as_edge(geo)
    e.key_change = location_diff(e.pos_change, e.dir_change, e.elevation_change)
    edges_by_abstract_req[start_req] = edges_by_abstract_req[start_req] or {}
    table.insert(edges_by_abstract_req[start_req], e)
+   expand_geometries[geo.prototype] = expand_geometries[geo.prototype] or {}
+   expand_geometries[geo.prototype][geo.dir] = geo
 end
 
 ---expands a geometry to all valid rotations
@@ -128,7 +132,7 @@ local function expand_geometry_rotate(geo)
    end
 end
 
----passed the goe to be rotated along with it's mirror if applicable
+---passed the geo to be rotated along with it's mirror if applicable
 ---@param geo RailGeometry
 local function expand_geometry_mirror(geo)
    expand_geometry_rotate(geo)
@@ -180,9 +184,102 @@ for _, edges in pairs(edges_by_req) do
    end
 end
 
-local key_mod = 2 ^ 52
+---@enum syn_com
+local syn_com = {
+   right = 1,
+   straight = 2,
+   left = 3,
+}
+
+---@type table<integer,table<syn_com,node_edge>>
+local edges_for_syntrax = {}
+for abstract_req, edges in pairs(edges_by_abstract_req) do
+   local req = abstract_prerequisite_map_reversed[abstract_req]
+   edges_for_syntrax[req] = edges_for_syntrax[req] or {}
+   for _, e in pairs(edges) do
+      if e.dir_change == dirs16.northnorthwest then
+         edges_for_syntrax[req][syn_com.left] = e
+      elseif e.dir_change == dirs16.northnortheast then
+         edges_for_syntrax[req][syn_com.right] = e
+      elseif e.elevation_change == 0 then
+         edges_for_syntrax[req][syn_com.straight] = e
+      end
+   end
+end
 
 ---@alias RailPlanner table<string,string>
+
+---@class syntrax
+---@field player LuaPlayer
+---@field rail_end RailGeometry.ends.end
+---@field planner RailPlanner
+---@field req integer
+
+---comment
+---@param player LuaPlayer
+---@param rail LuaEntity
+---@param rail_direction any
+function mod.init_syntrax(player, rail, rail_direction)
+   local geo = expand_geometries[rail.type][rail.direction]
+   local planner = {}
+   local rail_item = prototypes.item[rail.prototype.items_to_place_this[1].name]
+
+   for _, ent in pairs(rail_item.rails) do
+      planner[ent.type] = ent.name
+   end
+   local rail_end = table.deepcopy(geo.ends.entrance)
+   if rail_direction then
+      rail_end = table.deepcopy(geo.ends.exit)
+   else
+      rail_end.dir = (rail_end.dir + dirs16.south) % mod_dir
+   end
+   rail_end.pos[1] = rail_end.pos[1] + rail.position.x
+   rail_end.pos[2] = rail_end.pos[2] + rail.position.y
+   ---@type syntrax
+   local syntrax_runner = {
+      player = player,
+      rail_end = rail_end,
+      planner = planner,
+      req = abstract_prerequisite_map_reversed[abstract_requirement(rail_end)],
+   }
+   return syntrax_runner
+end
+
+---takes one step of syntraxs
+---@param runner syntrax
+---@param com syntrax_command
+local function do_runner(runner, com)
+   local next = edges_for_syntrax[runner.req][com]
+   local place_pos = next.ent_pos_offset
+   place_pos[1] = place_pos[1] + runner.rail_end.pos[1]
+   place_pos[2] = place_pos[2] + runner.rail_end.pos[2]
+   local place_args = {
+      force = runner.player.force,
+      name = runner.planner[next.prototype],
+      position = place_pos,
+      direction = next.ent_dir,
+   }
+   if runner.player.surface.can_place_entity(place_args) then
+      local res = runner.player.surface.create_entity(place_args)
+      if res then
+         runner.rail_end.dir = (runner.rail_end.dir + next.dir_change) % mod_dir
+         runner.rail_end.pos[1] = runner.rail_end.pos[1] + next.pos_change[1]
+         runner.rail_end.pos[2] = runner.rail_end.pos[2] + next.pos_change[2]
+         runner.req = next.after
+      end
+   end
+end
+
+function mod.right(runner)
+   return do_runner(runner, syn_com.right)
+end
+function mod.straight(runner)
+   return do_runner(runner, syn_com.straight)
+end
+function mod.left(runner)
+   return do_runner(runner, syn_com.left)
+end
+local key_mod = 2 ^ 52
 
 ---@class node
 ---@field pos MapPosition
@@ -335,3 +432,4 @@ local function make_draw_function(edge)
 end
 
 --make_draw_function_from_geo(geo[1])
+return mod

@@ -96,7 +96,7 @@ local rail_shapes_2 = {
    {
       name = "straight_curve_to_half_diag",
       dir = dirs16.north,
-      mirrored_dir = dirs16.northnortheast,
+      mirrored_dir = dirs16.northeast,
       ends = {
          entrance = { pos = { 0, 2 }, dir = dirs16.north },
          exit = { pos = { -1, -3 }, dir = dirs16.northnorthwest },
