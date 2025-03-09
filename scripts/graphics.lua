@@ -194,7 +194,7 @@ function mod.sync_build_cursor_graphics(pindex)
          orientation = dir / (2 * dirs.south),
       })
       dir_indicator = player.building_dir_arrow
-      --rendering.set_visible(dir_indicator, true)
+      dir_indicator.visible = true
       if
          players[pindex].hide_cursor
          or stack.name == "locomotive"
@@ -202,7 +202,7 @@ function mod.sync_build_cursor_graphics(pindex)
          or stack.name == "fluid-wagon"
          or stack.name == "artillery-wagon"
       then
-         --rendering.set_visible(dir_indicator, false)
+         dir_indicator.visible = false
       end
 
       --Redraw footprint (ent)
@@ -310,8 +310,8 @@ function mod.sync_build_cursor_graphics(pindex)
       end
    elseif stack == nil or not stack.valid_for_read then
       --Invalid stack: Hide the objects
-      --if dir_indicator ~= nil then rendering.set_visible(dir_indicator, false) end
-      --if player.building_footprint ~= nil then rendering.set_visible(player.building_footprint, false) end
+      if dir_indicator ~= nil then dir_indicator.visible = false end
+      if player.building_footprint ~= nil then player.building_footprint.visible = false end
    elseif
       stack
       and stack.valid_for_read
@@ -338,7 +338,7 @@ function mod.sync_build_cursor_graphics(pindex)
          orientation = dir / (2 * dirs.south),
       })
       dir_indicator = player.building_dir_arrow
-      --rendering.set_visible(dir_indicator, true)
+      dir_indicator.visible = true
 
       --Redraw the bp footprint
       if player.building_footprint ~= nil then player.building_footprint.destroy() end
@@ -357,7 +357,7 @@ function mod.sync_build_cursor_graphics(pindex)
             surface = p.surface,
             players = nil,
          })
-         --rendering.set_visible(player.building_footprint, true)
+         player.building_footprint.visible = true
 
          --Move the mouse pointer
          if players[pindex].remote_view == true then
@@ -404,6 +404,7 @@ function mod.sync_build_cursor_graphics(pindex)
          elseif stack.is_upgrade_item then
             color = { r = 0.25, b = 0.25, g = 1.00, a = 0.75 }
          end
+         player.building_footprint.destroy()
          player.building_footprint = rendering.draw_rectangle({
             color = color,
             width = 2,
@@ -413,7 +414,7 @@ function mod.sync_build_cursor_graphics(pindex)
             draw_on_ground = false,
             players = nil,
          })
-         --rendering.set_visible(player.building_footprint, true)
+         player.building_footprint.visible = true
       end
    end
 
@@ -510,7 +511,7 @@ function mod.draw_large_cursor(input_left_top, input_right_bottom, pindex, colou
       draw_on_ground = true,
       players = nil,
    })
-   --rendering.set_visible(h_tile, true)
+   h_tile.visible = true
    players[pindex].cursor_tile_highlight_box = h_tile
 
    --Recolor cursor boxes if multiplayer
@@ -524,7 +525,7 @@ local function sprite_name(sig)
       fluid = "fluid",
       virtual = "virtual-signal",
    }
-   return typemap[sig.type or "item"] .. "." .. sig.name
+   return typemap[sig.type] .. "." .. sig.name
 end
 
 ---@param elem LuaGuiElement
@@ -643,7 +644,7 @@ function mod.update_overhead_sprite(sprite, scale_in, radius_in, pindex)
          filled = true,
          time_to_live = 60,
       })
-      --rendering.set_visible(player.overhead_circle, true)
+      player.overhead_circle.visible = true
       player.overhead_sprite = rendering.draw_sprite({
          sprite = sprite,
          x_scale = scale,
@@ -653,7 +654,7 @@ function mod.update_overhead_sprite(sprite, scale_in, radius_in, pindex)
          orientation = 0,
          time_to_live = 60,
       })
-      --rendering.set_visible(player.overhead_sprite, true)
+      player.overhead_sprite.visible = true
    end
 end
 
