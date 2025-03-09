@@ -525,7 +525,7 @@ local function sprite_name(sig)
       fluid = "fluid",
       virtual = "virtual-signal",
    }
-   return typemap[sig.type] .. "." .. sig.name
+   return typemap[sig.type or "item"] .. "." .. sig.name
 end
 
 ---@param elem LuaGuiElement
