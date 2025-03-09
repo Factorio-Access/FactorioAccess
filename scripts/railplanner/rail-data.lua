@@ -6,7 +6,12 @@ local dirs16=require("dirs")
 --if the ends of two rail entities are at the same position they might join
 --if they are one entrance and one exit facing the same direction they join
 --or if they are the same type facing opposite direction they also join.
---if their directions are the opposite of the above then they form a fork
+--if their directions are the opposite of the above then they form a fork.
+--if they are ay an angle besides 0 or 180 then they don't connect.
+
+--The geometry deffinitions bellow describe all the different shapes
+--each shape can be roatated and possibly mirrored
+--they are however described in one orientation while the others can be extrapolated
 
 
 
@@ -34,7 +39,7 @@ local dirs16=require("dirs")
 ---@field dir dirs16
 ---Straight rail is identical facing south an north so it only faces north
 ---@field two_way_rotational_symmetry? true
----If mirroring the geometry across the y axis produces a distinct geometry then this direction will wave that mirrored geometry.
+---If mirroring the geometry across the y axis produces a distinct geometry then this direction will have that mirrored geometry.
 ---@field mirrored_dir? dirs16
 ---The actual geometry when the entity is facing dir
 ---@field ends RailGeometry.ends
@@ -124,25 +129,25 @@ local rail_shapes_2={
       dir=dirs16.north,
       mirrored_dir=dirs16.northnortheast,
       ends={
-         entrance={pos={ 0,3},dir=dirs16.north},
-         exit={pos={ -1, -2},dir=dirs16.northnorthwest}
+         entrance={pos={ 0, 2},dir=dirs16.north},
+         exit={pos={ -1, -3},dir=dirs16.northnorthwest}
       },
       elevation_gain=0,
       mod_pos={1,1},
-      prototype="curved-a-rail",
+      prototype="curved-rail-a",
       distance= 5.132284556 --source: https://forums.factorio.com/viewtopic.php?p=592880#p592880
    },
    {
       name="diag_curve_to_half_diag",
-      dir=dirs16.northeast,
-      mirror_dir=dirs16.northnorthwest,
+      dir=dirs16.eastsoutheast,
+      mirror_dir=dirs16.south,
       ends={
          entrance={pos={ -2, 2},dir=dirs16.northeast},
          exit={pos={ 1, -2},dir=dirs16.northnortheast}
       },
       elevation_gain=0,
       mod_pos={1,1},
-      prototype="curved-b-rail",
+      prototype="curved-rail-b",
       distance=5.077891568 --source: https://forums.factorio.com/viewtopic.php?p=592880#p592880
    },
    {
