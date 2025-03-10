@@ -250,15 +250,17 @@ end
 ---@param com syntrax_command
 local function do_runner(runner, com)
    local next = edges_for_syntrax[runner.req][com]
-   local place_pos = next.ent_pos_offset
-   place_pos[1] = place_pos[1] + runner.rail_end.pos[1]
-   place_pos[2] = place_pos[2] + runner.rail_end.pos[2]
+   local place_pos = {
+      next.ent_pos_offset[1] + runner.rail_end.pos[1],
+      next.ent_pos_offset[2] + runner.rail_end.pos[2],
+   }
    local place_args = {
       force = runner.player.force,
       name = runner.planner[next.prototype],
       position = place_pos,
       direction = next.ent_dir,
    }
+   --maybe return place args for easier separation of concern?
    if runner.player.surface.can_place_entity(place_args) then
       local res = runner.player.surface.create_entity(place_args)
       if res then

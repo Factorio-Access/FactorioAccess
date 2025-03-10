@@ -7,10 +7,10 @@ local dirs16 = require("dirs")
 --if they are one entrance and one exit facing the same direction they join
 --or if they are the same type facing opposite direction they also join.
 --if their directions are the opposite of the above then they form a fork.
---if there angular differnce is not 0 or 180 then they don't connect.
+--if there angular difference is not 0 or 180 then they don't connect.
 
---The geometry deffinitions bellow describe all the different shapes
---each shape can be roatated and possibly mirrored
+--The geometry definitions bellow describe all the different shapes
+--each shape can be rotated and possibly mirrored
 --they are however described in one orientation while the others can be expanded
 
 ---@class (exact) RailGeometry.ends.end
