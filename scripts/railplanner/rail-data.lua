@@ -113,14 +113,14 @@ local rail_shapes_2 = {
          entrance = {
             pos = { 0, 2 },
             dir = dirs16.north,
-            exiting_signals = { { -1.5, 1.5 } },
-            entering_signals = { { 1.5, 1.5 } },
+            exiting_signals = { { 1.5, 1.5 } },
+            entering_signals = { { -1.5, 1.5 } },
          },
          exit = {
             pos = { -1, -3 },
             dir = dirs16.northnorthwest,
-            exiting_signals = { { 1.5, -2.5 } },
-            entering_signals = { { -1.5, -1.5 } },
+            exiting_signals = { { -1.5, -1.5 } },
+            entering_signals = { { 0.5, -2.5 } },
          },
       },
       elevation_gain = 0,
@@ -189,7 +189,7 @@ local rail_shapes_2 = {
          exit = {
             pos = { 1, -1 },
             dir = dirs16.northeast,
-            exiting_signals = { { 1.5, -0.5 } },
+            exiting_signals = { { 1.5, 0.5 } },
             entering_signals = { { -0.5, -1.5 } },
          },
       },

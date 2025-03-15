@@ -85,12 +85,11 @@ local function geo_points(geo)
    ---@type table<integer,MapPosition>
    local ret = {}
    for _, rail_end in pairs(geo.ends) do
-      table.append(ret, rail_end.pos)
-      table.append(ret, point)
+      table.insert(ret, rail_end.pos)
       for _, signals in pairs({ rail_end.entering_signals, rail_end.exiting_signals }) do
          if signals then
-            for _, point in signals do
-               table.append(ret, point)
+            for _, point in pairs(signals) do
+               table.insert(ret, point)
             end
          end
       end
@@ -299,6 +298,47 @@ end
 function mod.left(runner)
    return do_runner(runner, syn_com.left)
 end
+
+
+---test code to check signal placement
+---@param surface LuaSurface
+function mod.mark_all_signal_spots(surface)
+   type_filter = {}
+   for t,_ in pairs(expand_geometries) do
+      table.insert( type_filter,t)
+   end
+
+   rails = surface.find_entities_filtered{
+      type=type_filter
+   }
+   for _,r in pairs(rails) do
+         for _, rail_end in pairs(expand_geometries[r.type][r.direction].ends) do
+            for _, sig in pairs(rail_end.entering_signals) do
+               local t = {r.position.x+sig[1], r.position.y+sig[2]}
+               rendering.draw_circle{
+                  color={0.5,0.2,0.9},
+                  radius=0.2,
+                  filled=true,
+                  surface=surface,
+                  time_to_live=600,
+                  target=t
+               }
+            end
+            for _, sig in pairs(rail_end.exiting_signals) do
+               local t = {r.position.x+sig[1], r.position.y+sig[2]}
+               rendering.draw_circle{
+                  color={0.9,0.2,0.5},
+                  radius=0.2,
+                  filled=true,
+                  surface=surface,
+                  time_to_live=600,
+                  target=t
+               }
+            end
+         end
+   end
+end
+
 local key_mod = 2 ^ 52
 
 ---@class node
