@@ -299,43 +299,42 @@ function mod.left(runner)
    return do_runner(runner, syn_com.left)
 end
 
-
 ---test code to check signal placement
 ---@param surface LuaSurface
 function mod.mark_all_signal_spots(surface)
    type_filter = {}
-   for t,_ in pairs(expand_geometries) do
-      table.insert( type_filter,t)
+   for t, _ in pairs(expand_geometries) do
+      table.insert(type_filter, t)
    end
 
-   rails = surface.find_entities_filtered{
-      type=type_filter
-   }
-   for _,r in pairs(rails) do
-         for _, rail_end in pairs(expand_geometries[r.type][r.direction].ends) do
-            for _, sig in pairs(rail_end.entering_signals) do
-               local t = {r.position.x+sig[1], r.position.y+sig[2]}
-               rendering.draw_circle{
-                  color={0.5,0.2,0.9},
-                  radius=0.2,
-                  filled=true,
-                  surface=surface,
-                  time_to_live=600,
-                  target=t
-               }
-            end
-            for _, sig in pairs(rail_end.exiting_signals) do
-               local t = {r.position.x+sig[1], r.position.y+sig[2]}
-               rendering.draw_circle{
-                  color={0.9,0.2,0.5},
-                  radius=0.2,
-                  filled=true,
-                  surface=surface,
-                  time_to_live=600,
-                  target=t
-               }
-            end
+   rails = surface.find_entities_filtered({
+      type = type_filter,
+   })
+   for _, r in pairs(rails) do
+      for _, rail_end in pairs(expand_geometries[r.type][r.direction].ends) do
+         for _, sig in pairs(rail_end.entering_signals) do
+            local t = { r.position.x + sig[1], r.position.y + sig[2] }
+            rendering.draw_circle({
+               color = { 0.5, 0.2, 0.9 },
+               radius = 0.2,
+               filled = true,
+               surface = surface,
+               time_to_live = 600,
+               target = t,
+            })
          end
+         for _, sig in pairs(rail_end.exiting_signals) do
+            local t = { r.position.x + sig[1], r.position.y + sig[2] }
+            rendering.draw_circle({
+               color = { 0.9, 0.2, 0.5 },
+               radius = 0.2,
+               filled = true,
+               surface = surface,
+               time_to_live = 600,
+               target = t,
+            })
+         end
+      end
    end
 end
 
