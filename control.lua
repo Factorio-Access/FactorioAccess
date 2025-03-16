@@ -413,7 +413,7 @@ function locate_hand_in_player_inventory(pindex)
       --Open the inventory if nothing is open
       players[pindex].in_menu = true
       players[pindex].menu = "inventory"
-      p.opened = p
+      p.opened = p.get_inventory(defines.inventory.character_main)
    end
    --Save the hand stack item name
    local item_name = stack.name
@@ -541,7 +541,7 @@ function locate_hand_in_crafting_menu(pindex)
    close_menu_resets(pindex)
    players[pindex].in_menu = true
    players[pindex].menu = "crafting"
-   p.opened = p
+   p.opened = p.get_inventory(defines.inventory.character_main)
 
    --Get the name
    local item_name = string.lower(

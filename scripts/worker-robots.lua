@@ -408,18 +408,70 @@ local function find_player_logistic_target(pindex)
    local char = p.character
    if not char then return nil, { "fa.no-character" } end
 
-   -- So this is actually the easy one.  The mod always sets player.opened for
-   -- every menu we care about.  We just have to check that it is something
-   -- supporting logistics.
+   if p.opened_self then return char end
+
+   -- So this is actually the easy one.  The mod always sets player.opened for every menu we care about.  We just have
+   -- to check that it is something supporting logistics.
    local target = p.opened or p.selected
    if not target then return nil, { "fa.bots-nothing-to-control" } end
-   ---@cast target LuaEntity We do still have to check type, the above cast is
-   -- half a lie to make LuaLS happy.
+
+   ---@cast target LuaEntity
    if not type(target) == "userdata" or not target.object_name == "LuaEntity" then
       return nil, { "fa.bots-nothing-to-control" }
    end
 
    return target
+end
+
+-- Push a readout of a logistic request to the provided builder as a fragment.
+---@param msg_builder fa.MessageBuilder
+---@param req LogisticFilter
+function push_request_readout(msg_builder, req)
+   -- Error conditions are unlocalised because they should never happen.  We
+   -- should probably change these to asserts in the long run, but for now this
+   -- is very new code and it is better to function partially.
+
+   local protoname = req.value
+   if not protoname then
+      msg_builder:fragment("ERROR: unable to determine item")
+      return
+   end
+
+   if type(protoname) ~= "string" then protoname = protoname.name end
+
+   local bottom = req.min
+   local top = req.max
+
+   local localised_item = Localising.get_localised_name_with_fallback(prototypes.item[protoname])
+   if not bottom and not top then
+      msg_builder:fragment({ "fa.bots-request-unconstrained", localised_item })
+      return
+   elseif bottom and top then
+      if bottom == top then
+         msg_builder:fragment({ "fa.bots-request-exactly", localised_item, bottom })
+      else
+         msg_builder:fragment({ "fa.bots-request-range", localised_item, bottom, top })
+      end
+
+      return
+   elseif not bottom or bottom == 0 then
+      msg_builder:fragment({ "fa.bots-request-max-only", localised_item, top })
+      return
+   elseif not top then
+      msg_builder:fragment({ "fa.bots-request-min-only", localised_item, bottom })
+      return
+   end
+
+   msg_builder:fragment("Unable to handle this request. Serpent:"):fragment(serpent.line(req))
+end
+
+-- Announce a logistic request.
+---@param pindex number
+---@param req LogisticFilter
+function mod.readout_logistic_request(pindex, req)
+   local msg = MessageBuilder.MessageBuilder.new()
+   push_request_readout(msg, req)
+   printout(msg:build(), pindex)
 end
 
 function mod.logistics_info_key_handler(pindex)
@@ -430,8 +482,7 @@ function mod.logistics_info_key_handler(pindex)
       return
    end
 
-   -- At least as of right now there is no entity which can do both requests and
-   -- filters, and players cannot do filters.
+   -- At least as of right now there is no entity which can do both requests and filters, and players cannot do filters.
    if mod.can_set_logistic_filter(ent) then
       local filter = ent.storage_filter
       local result = "Nothing"
@@ -598,7 +649,7 @@ function mod.player_logistic_requests_summary_info(pindex)
 end
 
 --Read the current personal logistics request set for this item object, which is a stack or a prototype
-function mod.player_logistic_request_read(item_object, pindex, additional_checks)
+function mod.player_logistic_request_read(item_name, pindex, additional_checks)
    local p = game.get_player(pindex)
    local char = p.character
    if not char then
@@ -610,12 +661,6 @@ function mod.player_logistic_request_read(item_object, pindex, additional_checks
    local correct_slot_id = nil
    local result = ""
 
-   --Check if logistics have been researched
-   if not char.force.character_logistic_requests then
-      printout("Logistic requests not available, research required.", pindex)
-      return
-   end
-
    if additional_checks then
       --Check if inside any logistic network or not (simpler than logistics network info)
       local network = p.surface.find_logistic_network_by_position(p.position, p.force)
@@ -626,21 +671,15 @@ function mod.player_logistic_request_read(item_object, pindex, additional_checks
    end
 
    --Find the correct request slot for this item
-   local sec, index = get_logistic_slot_pos(char, item_object.name)
+   local sec, index = get_logistic_slot_pos(char, item_name)
 
    --Read the correct slot id value
    local current_slot = sec.get_slot(index --[[@as integer]])
-   if
-      not sec
-      or index > sec.filters_count
-      or current_slot == nil
-      or current_slot.value == nil
-      or current_slot.value.name == nil
-   then
+   if current_slot == nil or current_slot.value == nil or current_slot.value.name == nil then
       --No requests found
       printout(
          result
-            .. item_object.name
+            .. item_name
             .. " has no personal logistic requests set,"
             .. " use the L key and modifier keys to set requests.",
          pindex
@@ -648,17 +687,16 @@ function mod.player_logistic_request_read(item_object, pindex, additional_checks
       return
    else
       --Report request counts and inventory counts
+      local msg = MessageBuilder.MessageBuilder.new()
+
       if current_slot.max ~= nil or current_slot.min ~= nil then
          local min_result = ""
          local max_result = ""
          local inv_result = ""
          local trash_result = ""
          local stack_size = 1
-         if item_object.object_name == "LuaItemStack" then
-            stack_size = item_object.prototype.stack_size
-         elseif item_object.object_name == "LuaItemPrototype" then
-            stack_size = item_object.stack_size
-         end
+
+         stack_size = prototypes.item[item_name].stack_size
 
          if current_slot.min ~= nil then
             min_result = fa_utils.express_in_stacks(current_slot.min, stack_size, false) .. " minimum and "
@@ -668,30 +706,22 @@ function mod.player_logistic_request_read(item_object, pindex, additional_checks
             max_result = fa_utils.express_in_stacks(current_slot.max, stack_size, false) .. " maximum "
          end
 
-         local inv_count = p.get_main_inventory().get_item_count(item_object.name)
+         local inv_count = p.get_main_inventory().get_item_count(item_name)
          inv_result = fa_utils.express_in_stacks(inv_count, stack_size, false) .. " in inventory, "
 
-         local trash_count = p.get_inventory(defines.inventory.character_trash).get_item_count(item_object.name)
+         local trash_count = p.get_inventory(defines.inventory.character_trash).get_item_count(item_name)
          trash_result = fa_utils.express_in_stacks(trash_count, stack_size, false) .. " in personal trash, "
 
-         printout(
-            result
-               .. min_result
-               .. max_result
-               .. " requested for "
-               .. item_object.name
-               .. ", "
-               .. inv_result
-               .. trash_result
-               .. " use the L key and modifier keys to set requests.",
-            pindex
-         )
+         msg:list_item(result):list_item()
+         push_request_readout(msg, current_slot)
+         msg:list_item(inv_result):list_item(trash_result):list_item("use the L key and modifier keys to set requests.")
+         printout(msg:build(), pindex)
          return
       else
          --All requests are nil
          printout(
             result
-               .. item_object.name
+               .. item_name
                .. " has no personal logistic requests set,"
                .. " use the L key and modifier keys to set requests.",
             pindex
@@ -737,14 +767,6 @@ function mod.spidertron_logistic_requests_summary_info(spidertron, pindex)
    local correct_slot_id = nil
    local result = "Spidertron "
 
-   --1. Check if logistics have been researched
-   for i, tech in pairs(game.get_player(pindex).force.technologies) do
-      if tech.name == "logistic-robotics" and not tech.researched == true then
-         printout("Logistic requests not available, research required.", pindex)
-         return
-      end
-   end
-
    --2. Check if inside any logistic network or not (simpler than logistics network info)
    local network = p.surface.find_logistic_network_by_position(spidertron.position, p.force)
    if network == nil or not network.valid then
@@ -770,9 +792,8 @@ function mod.spidertron_logistic_requests_summary_info(spidertron, pindex)
    return result
 end
 
---Logistic requests can be made by anything with a logistic point of the
---appropriate role, except for rocket silos which we dummy out until we can
---properly support them.
+--Logistic requests can be made by anything with a logistic point of the appropriate role, except for rocket silos which
+--we dummy out until we can properly support them.
 ---@return boolean
 function mod.can_make_logistic_requests(ent)
    if ent == nil or ent.valid == false then return false end
@@ -787,12 +808,7 @@ end
 
 function mod.can_set_logistic_filter(ent)
    if ent == nil or ent.valid == false then return false end
-   local points = ent.get_logistic_point()
-   for _, p in pairs(points) do
-      if p.mode == defines.logistic_mode.storage then return true end
-   end
-
-   return false
+   return ent.type == "logistic-container"
 end
 
 ---@param stack LuaItemStack
@@ -818,19 +834,29 @@ end
 function mod.read_entity_requests_summary(ent, pindex)
    local req_count = 0
    local unfulfilled_count = 0
+   local reqs = {}
    for _, p in
       pairs(ent.get_logistic_point() --[=[@as LuaLogisticPoint[]]=])
    do
       for _, sec in pairs(p.sections) do
          req_count = req_count + sec.filters_count
+         for req_i = 1, sec.filters_count do
+            table.insert(reqs, sec.get_slot(req_i))
+         end
       end
    end
 
-   printout(MessageBuilder.MessageBuilder.new():fragment(tostring(req_count)):fragment("requests set"):build(), pindex)
+   local msg = MessageBuilder.MessageBuilder.new():fragment(tostring(req_count)):fragment("requests.")
+   for _, req in pairs(reqs) do
+      msg:list_item()
+      push_request_readout(msg, req)
+   end
+
+   printout(msg:build(), pindex)
 end
 
--- vanilla does not have network names.  We add this ourselves: all roboports in
--- the same network get the same backer name.
+-- vanilla does not have network names.  We add this ourselves: all roboports in the same network get the same backer
+-- name.
 function mod.get_network_name(port)
    mod.fixup_network_name(port)
    return port.backer_name
@@ -840,8 +866,8 @@ function mod.set_network_name(port, new_name)
    --Rename this port
    if new_name == nil or new_name == "" then return false end
    port.backer_name = new_name
-   --Rename the rest, if any.  Note that this is not the same as the fixup
-   --function because this doesn't want to account for the oldest roboport.
+   --Rename the rest, if any.  Note that this is not the same as the fixup function because this doesn't want to account
+   --for the oldest roboport.
    local nw = port.logistic_network
    if nw == nil then return true end
    local cells = nw.cells or {}
@@ -851,11 +877,9 @@ function mod.set_network_name(port, new_name)
    return true
 end
 
---Finds the oldest roboport and applies its name across the network. Any built
---roboport will be newer and so the older names will be kept.  This can happen
---if the mod is added to a save, roboports are built in ways which don't go
---through the mod, if a roboport joins two networks, or (inn theory, though
---perhaps not in practice) if there is a power outage.
+--Finds the oldest roboport and applies its name across the network. Any built roboport will be newer and so the older
+--names will be kept.  This can happen if the mod is added to a save, roboports are built in ways which don't go through
+--the mod, if a roboport joins two networks, or (inn theory, though perhaps not in practice) if there is a power outage.
 function mod.fixup_network_name(port_in)
    local oldest_port = port_in
    local nw = oldest_port.logistic_network
