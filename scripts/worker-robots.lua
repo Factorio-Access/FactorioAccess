@@ -809,11 +809,11 @@ end
 ---@return boolean
 function mod.can_make_logistic_requests(ent)
    if ent == nil or ent.valid == false then return false end
-   if ent.prototype.logistic_mode == "storage" then return false end
+   if ent.type == "logistic-container" and ent.prototype.logistic_mode == "storage" then return false end
 
    local point = ent.get_logistic_point()
    if point == nil or not next(point) then return false end
-   for p in pairs(point) do
+   for _, p in pairs(point) do
       if p.mode == defines.logistic_mode.requester or p.mode == defines.logistic_mode.buffer then return true end
    end
 
