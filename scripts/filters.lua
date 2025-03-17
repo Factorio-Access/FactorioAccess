@@ -28,7 +28,7 @@ end
 -- cannot be used on inventories, because in inventories the filter indices are
 -- inventory slot indices, not a list of filters.
 ---@param ent LuaEntity
----@return  string[]
+---@return  LuaItemPrototype[]
 function mod.get_all_filters(ent)
    local ret = {}
 

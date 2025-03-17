@@ -988,11 +988,11 @@ local function ent_info_filters(ctx)
    if next(filts) then
       local first = true
 
-      for _, name in pairs(filts) do
+      for _, proto in pairs(filts) do
          ctx.message:list_item()
          if first then ctx.message:fragment("Filters for") end
          first = false
-         ctx.message:fragment(Localising.get_localised_name_with_fallback(prototypes.item[name]))
+         ctx.message:fragment(Localising.get_localised_name_with_fallback(proto))
       end
    end
 end

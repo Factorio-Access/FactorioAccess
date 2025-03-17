@@ -154,10 +154,14 @@ neither are.
 ---@param name string
 ---@return LuaLogisticSection?, number?
 local function get_logistic_slot_pos(ent, name)
-   -- The first point (0) is the requester for (almost) everything.  Rocket
-   -- silos in space age are not yet supported.  Important note: if you don't
-   -- pass an index you get a 1-based array.
+   -- The first point (0) is the requester for (almost) everything.  Rocket silos in space age are not yet supported.
+   -- Important note: if you don't pass an index you get a 1-based array.
    if ent.type == "rocket-silo" then return nil, nil end
+
+   if ent.type == "logistic-container" and ent.prototype.logistic_mode == defines.logistic_mode.storage then
+      return nil, nil
+   end
+
    local point = ent.get_logistic_point(defines.logistic_member_index.character_requester)
    if not point then return nil, nil end
 
@@ -191,8 +195,10 @@ end
 ---@param item string
 ---@param min_or_max "min" | "max"
 ---@param up_or_down "up" | "down"
----@return number?, boolean, string? The new value if a set could happen at all. true or false to indicate if there was a change. If false, explain why.
+---@return number?, boolean, LocalisedString? The new value if a set could happen at all. true or false to indicate if there was a change. If false, explain why.
 local function modify_logistic_request(ent, item, min_or_max, up_or_down)
+   if not mod.can_make_logistic_requests(ent) then return 0, false, { "fa.bots-requests-not-supported" } end
+
    local sec, index = get_logistic_slot_pos(ent, item)
    if not sec then return nil, false, "This entity does not support manual logistics" end
    assert(index)
@@ -486,7 +492,7 @@ function mod.logistics_info_key_handler(pindex)
    if mod.can_set_logistic_filter(ent) then
       local filter = ent.storage_filter
       local result = "Nothing"
-      if filter ~= nil then result = filter.item.name end
+      if filter ~= nil then result = filter.name.name end
       printout(result .. " set as logistic storage filter", pindex)
       return
    end
@@ -520,6 +526,12 @@ local function modify_logistic_request_kb(pindex, min_or_max, up_or_down)
 
    assert(target)
    assert(name)
+
+   -- This maps to shift+l, which for logistic filter items is really set filter.
+   if up_or_down == "up" and min_or_max == "min" and mod.can_set_logistic_filter(target) then
+      mod.set_logistic_filter(pindex, target, name)
+      return
+   end
 
    modify_logistic_request_with_announcement(pindex, target, name, min_or_max, up_or_down)
 end
@@ -797,6 +809,8 @@ end
 ---@return boolean
 function mod.can_make_logistic_requests(ent)
    if ent == nil or ent.valid == false then return false end
+   if ent.prototype.logistic_mode == "storage" then return false end
+
    local point = ent.get_logistic_point()
    if point == nil or not next(point) then return false end
    for p in pairs(point) do
@@ -808,25 +822,23 @@ end
 
 function mod.can_set_logistic_filter(ent)
    if ent == nil or ent.valid == false then return false end
-   return ent.type == "logistic-container"
+   return ent.type == "logistic-container" and ent.prototype.logistic_mode == "storage"
 end
 
----@param stack LuaItemStack
----@param ent LuaEntity
 ---@param pindex number
-function mod.set_logistic_filter(stack, ent, pindex)
+---@param ent LuaEntity
+---@param name string
+function mod.set_logistic_filter(pindex, ent, name)
    local filt = ent.get_filter(1)
-   if not filt then return end
-   local proto = filt.name
 
-   if stack == nil or stack.valid_for_read == false or proto == stack.name then
+   if filt and filt.name.name == name then
       ent.set_filter(1, nil)
       printout("logistic storage filter cleared", pindex)
       return
    end
 
-   ent.set_filter(1, stack.name)
-   printout(stack.name .. " set as logistic storage filter ", pindex)
+   ent.set_filter(1, name)
+   printout(name .. " set as logistic storage filter ", pindex)
 end
 
 ---@param ent LuaEntity
