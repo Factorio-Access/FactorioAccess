@@ -8,6 +8,7 @@ local fa_rail_builder = require("scripts.rail-builder")
 local fa_belts = require("scripts.transport-belts")
 local fa_mining_tools = require("scripts.player-mining-tools")
 local fa_teleport = require("scripts.teleport")
+local UiRouter = require("scripts.ui.router")
 
 local mod = {}
 
@@ -341,8 +342,7 @@ function mod.build_offshore_pump_in_hand(pindex)
       if #players[pindex].pump.positions == 0 then
          printout("No available positions.  Try moving closer to water.", pindex)
       else
-         players[pindex].in_menu = true
-         players[pindex].menu = "pump"
+         UiRouter.get_router(pindex):open_ui(UiRouter.UI_NAMES.PUMP)
          players[pindex].move_queue = {}
          printout(
             "There are "
@@ -361,12 +361,14 @@ end
 
 --Reads the result of trying to rotate a building, which is a vanilla action.
 function mod.rotate_building_info_read(event, forward)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    local p = game.get_player(pindex)
    if not check_for_player(pindex) then return end
    local mult = 1
    if forward == false then mult = -1 end
-   if players[pindex].in_menu == false or players[pindex].menu == "blueprint_menu" then
+   if not router:is_ui_open() or router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT) then
       local ent = p.selected
       local stack = game.get_player(pindex).cursor_stack
       local build_dir = players[pindex].building_direction
@@ -487,8 +489,9 @@ end
 --Does everything to handle the nudging feature, taking the keypress event and the nudge direction as the input. Nothing happens if an entity cannot be selected.
 function mod.nudge_key(direction, event)
    local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
    local p = game.get_player(pindex)
-   if not check_for_player(pindex) or players[pindex].menu == "prompt" then return end
+   if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
    local ent = p.selected
    if ent and ent.valid then
       if ent.force == game.get_player(pindex).force then

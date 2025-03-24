@@ -7,6 +7,7 @@ local fa_travel = require("scripts.travel-tools")
 local fa_graphics = require("scripts.graphics")
 local fa_blueprints = require("scripts.blueprints")
 local Research = require("scripts.research")
+local UiRouter = require("scripts.ui.router")
 
 local mod = {}
 
@@ -194,7 +195,9 @@ local function prototypes_find_index_of_next_name_match(array, index, str, pinde
 end
 
 local function blueprint_book_find_index_of_next_match(index, str, pindex)
-   if players[pindex].menu == "blueprint_book_menu" and players[pindex].blueprint_book_menu.list_mode then
+   local router = UiRouter.get_router(pindex)
+
+   if router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) and players[pindex].blueprint_book_menu.list_mode then
       local book_data = players[pindex].blueprint_book_menu.book_data
       local items = book_data.blueprint_book.blueprints
       if items == nil then return nil end
@@ -299,23 +302,27 @@ end
 
 --Reads out the next inventory/menu item to match the search term. Used in all searchable menus.
 function mod.fetch_next(pindex, str, start_phrase_in)
+   local router = UiRouter.get_router(pindex)
+
    --Only allow "inventory" and "building" menus for now
-   if not players[pindex].in_menu then
+   if not router:is_ui_open() then
       printout("The open map does not support searching.", pindex)
       return
    end
    if
-      players[pindex].menu ~= "inventory"
-      and players[pindex].menu ~= "building"
-      and players[pindex].menu ~= "vehicle"
-      and players[pindex].menu ~= "crafting"
-      and players[pindex].menu ~= "technology"
-      and players[pindex].menu ~= "signal_selector"
-      and players[pindex].menu ~= "player_trash"
-      and players[pindex].menu ~= "travel"
-      and not (players[pindex].menu == "blueprint_book_menu" and players[pindex].blueprint_book_menu.list_mode)
+      not router:is_ui_one_of({
+         UiRouter.UI_NAMES.INVENTORY,
+         UiRouter.UI_NAMES.BUILDING,
+         UiRouter.UI_NAMES.VEHICLE,
+         UiRouter.UI_NAMES.CRAFTING,
+         UiRouter.UI_NAMES.TECHNOLOGY,
+         UiRouter.UI_NAMES.SIGNAL_SELECTOR,
+         UiRouter.UI_NAMES.PLAYER_TRASH,
+         UiRouter.UI_NAMES.TRAVEL,
+      })
+      or (router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) and players[pindex].blueprint_book_menu.list_mode)
    then
-      printout(players[pindex].menu .. " menu does not support searching.", pindex)
+      printout("This menu does not support searching.", pindex)
       return
    end
    if str == nil or str == "" then
@@ -339,13 +346,13 @@ function mod.fetch_next(pindex, str, start_phrase_in)
    local new_index = nil
    local new_index_2 = nil
    local pb = players[pindex].building
-   if players[pindex].menu == "inventory" then
+   if router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
       inv = game.get_player(pindex).get_main_inventory()
       new_index = inventory_find_index_of_next_name_match(inv, search_index, str, pindex)
-   elseif players[pindex].menu == "player_trash" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
       inv = game.get_player(pindex).get_inventory(defines.inventory.character_trash)
       new_index = inventory_find_index_of_next_name_match(inv, search_index, str, pindex)
-   elseif (players[pindex].menu == "building" or players[pindex].menu == "vehicle") and pb.sector_name ~= nil then
+   elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) and pb.sector_name ~= nil then
       if pb.sector_name == "Output" then
          inv = game.get_player(pindex).opened.get_output_inventory()
          new_index = inventory_find_index_of_next_name_match(inv, search_index, str, pindex)
@@ -364,7 +371,7 @@ function mod.fetch_next(pindex, str, start_phrase_in)
          printout(pb.sector_name .. " sector does not support searching.", pindex)
          return
       end
-   elseif players[pindex].menu == "crafting" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
       new_index, new_index_2 = crafting_find_index_of_next_name_match(
          str,
          pindex,
@@ -372,10 +379,10 @@ function mod.fetch_next(pindex, str, start_phrase_in)
          search_index_2,
          players[pindex].crafting.lua_recipes
       )
-   elseif players[pindex].menu == "technology" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
       Research.menu_search(pindex, str, 1)
       return
-   elseif players[pindex].menu == "signal_selector" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.SIGNAL_SELECTOR) then
       --Search the currently selected group
       local group_index = players[pindex].signal_selector.group_index
       local group_name = players[pindex].signal_selector.group_names[group_index]
@@ -400,9 +407,11 @@ function mod.fetch_next(pindex, str, start_phrase_in)
          players[pindex].signal_selector.signal_index = 0
       end
       --game.print("tries: " .. tries,{volume_modifier=0})--
-   elseif players[pindex].menu == "travel" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       new_index = travel_find_index_of_next_name_match(search_index, str, pindex)
-   elseif players[pindex].menu == "blueprint_book_menu" and players[pindex].blueprint_book_menu.list_mode then
+   elseif
+      router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK_MENU) and players[pindex].blueprint_book_menu.list_mode
+   then
       new_index = blueprint_book_find_index_of_next_match(search_index, str, pindex)
    else
       printout("This menu or building sector does not support searching.", pindex)
@@ -414,15 +423,15 @@ function mod.fetch_next(pindex, str, start_phrase_in)
       game.get_player(pindex).print("Menu search: Could not find " .. str, { volume_modifier = 0 })
       players[pindex].menu_search_last_name = "(none)"
       return
-   elseif players[pindex].menu == "inventory" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
       players[pindex].menu_search_index = new_index
       players[pindex].inventory.index = new_index
       read_inventory_slot(pindex, start_phrase)
-   elseif players[pindex].menu == "player_trash" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
       players[pindex].menu_search_index = new_index
       players[pindex].inventory.index = new_index
       read_inventory_slot(pindex, start_phrase, inv)
-   elseif (players[pindex].menu == "building" or players[pindex].menu == "vehicle") and pb.sector_name ~= nil then
+   elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) and pb.sector_name ~= nil then
       if pb.sector_name == "Output" then
          players[pindex].menu_search_index = new_index
          players[pindex].building.index = new_index
@@ -441,21 +450,21 @@ function mod.fetch_next(pindex, str, start_phrase_in)
          printout("Search section error", pindex)
          return
       end
-   elseif players[pindex].menu == "crafting" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
       players[pindex].menu_search_index = new_index
       players[pindex].menu_search_index_2 = new_index_2
       players[pindex].crafting.category = new_index
       players[pindex].crafting.index = new_index_2
       fa_crafting.read_crafting_slot(pindex, start_phrase)
-   elseif players[pindex].menu == "signal_selector" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.SIGNAL_SELECTOR) then
       players[pindex].menu_search_index = new_index
       players[pindex].signal_selector.signal_index = new_index
       fa_circuits.read_selected_signal_slot(pindex, start_phrase)
-   elseif players[pindex].menu == "travel" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       players[pindex].menu_search_index = new_index
       players[pindex].travel.index.y = new_index
       fa_travel.read_fast_travel_slot(pindex)
-   elseif players[pindex].menu == "blueprint_book_menu" and players[pindex].blueprint_book_menu.list_mode then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) and players[pindex].blueprint_book_menu.list_mode then
       players[pindex].menu_search_index = new_index
       players[pindex].blueprint_book_menu.index = new_index
       fa_blueprints.run_blueprint_book_menu(pindex, new_index, true, false, false)
@@ -467,15 +476,20 @@ end
 
 --Reads out the last inventory/menu item to match the search term. Implemented only in some menus, more can be added later.
 function mod.fetch_last(pindex, str)
+   local router = UiRouter.get_router(pindex)
+
    --Only allow "inventory" and "building" menus for now
-   if not players[pindex].in_menu then
+   if not router:is_ui_open() then
       printout("The open map does not support backwards searching.", pindex)
       return
    end
    if
-      players[pindex].menu ~= "inventory"
-      and players[pindex].menu ~= "building"
-      and players[pindex].menu ~= "technology"
+      not router:is_ui_one_of({
+         UiRouter.UI_NAMES.INVENTORY,
+         UiRouter.UI_NAMES.BUILDING,
+
+         UiRouter.UI_NAMES.TECHNOLOGY,
+      })
    then
       printout(players[pindex].menu .. " menu does not support backwards searching.", pindex)
       return
@@ -494,18 +508,18 @@ function mod.fetch_last(pindex, str)
    local inv = nil
    local new_index = nil
    local pb = players[pindex].building
-   if players[pindex].menu == "inventory" then
+   if router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
       inv = game.get_player(pindex).get_main_inventory()
       new_index = inventory_find_index_of_last_name_match(inv, search_index, str, pindex)
    elseif
-      (players[pindex].menu == "building" or players[pindex].menu == "vehicle")
+      router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
       and pb.sectors
       and pb.sectors[pb.sector]
       and pb.sector_name == "Output"
    then
       inv = game.get_player(pindex).opened.get_output_inventory()
       new_index = inventory_find_index_of_last_name_match(inv, search_index, str, pindex)
-   elseif players[pindex].menu == "technology" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
       Research.menu_search(pindex, str, -1)
       return
    else
@@ -516,12 +530,12 @@ function mod.fetch_last(pindex, str)
    if new_index <= 0 then
       printout("Could not find " .. str, pindex)
       return
-   elseif players[pindex].menu == "inventory" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
       players[pindex].menu_search_index = new_index
       players[pindex].inventory.index = new_index
       read_inventory_slot(pindex)
    elseif
-      (players[pindex].menu == "building" or players[pindex].menu == "vehicle")
+      router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
       and pb.sectors
       and pb.sectors[pb.sector]
       and pb.sector_name == "Output"

@@ -53,10 +53,9 @@ local mod = {}
 function mod.declare_storage_module(module_name, default_value, opts)
    assert(default_value ~= nil, "Default values of nil can't be put in a table as values")
 
-   opts = opts or {
-      root_field = "players",
-      persistent = true,
-   }
+   opts = opts or {}
+   opts.root_field = opts.root_field or "players"
+   opts.persistent = opts.persistent or true
 
    local tried_clear = false
 

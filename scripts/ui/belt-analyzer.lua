@@ -6,6 +6,7 @@ local MessageBuilder = require("scripts.message-builder")
 local TabList = require("scripts.ui.tab-list")
 local TH = require("scripts.table-helpers")
 local TransportBelts = require("scripts.transport-belts")
+local UiRouter = require("scripts.ui.router")
 
 local mod = {}
 
@@ -162,9 +163,7 @@ local function state_setup(_pindex, params)
 end
 
 mod.belt_analyzer = TabList.declare_tablist({
-   -- Till we get everything over this needs to match legacy, and we just called
-   -- it belt.
-   menu_name = "belt",
+   ui_name = UiRouter.UI_NAMES.BELT,
    resets_to_first_tab_on_open = true,
 
    shared_state_setup = state_setup,

@@ -4,6 +4,7 @@
 local fa_utils = require("scripts.fa-utils")
 local fa_mouse = require("scripts.mouse")
 local dirs = defines.direction
+local UiRouter = require("scripts.ui.router")
 
 local mod = {}
 
@@ -53,67 +54,69 @@ end
 --For each player, checks the open menu and appropriately calls to update the overhead sprite and the open GUI.
 function mod.update_menu_visuals()
    for pindex, player in pairs(players) do
-      if player.in_menu then
-         if player.menu == "technology" then
+      local router = UiRouter.get_router(pindex)
+
+      if router:is_ui_open() then
+         if router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
             mod.update_overhead_sprite("item.lab", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite("item.lab", 3, pindex)
-         elseif player.menu == "inventory" then
+         elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
             mod.update_overhead_sprite("item.wooden-chest", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite("item.wooden-chest", 3, pindex)
             if players[pindex].vanilla_mode then mod.update_custom_GUI_sprite(nil, 1, pindex) end
-         elseif player.menu == "crafting" then
+         elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
             mod.update_overhead_sprite("item.repair-pack", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite("item.repair-pack", 3, pindex)
-         elseif player.menu == "crafting_queue" then
+         elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
             mod.update_overhead_sprite("item.repair-pack", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite("item.repair-pack", 3, pindex, "utility.clock")
-         elseif player.menu == "player_trash" then
+         elseif router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
             mod.update_overhead_sprite("utility.trash_white", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite("utility.trash_white", 3, pindex)
-         elseif player.menu == "guns" then
+         elseif router:is_ui_open(UiRouter.UI_NAMES.GUNS) then
             mod.update_overhead_sprite("item.pistol", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite("item.pistol", 1, pindex)
-         elseif player.menu == "travel" then
+         elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
             mod.update_overhead_sprite("utility.downloading", 1.5, 1.25, pindex)
             mod.update_custom_GUI_sprite("utility.downloading", 3, pindex)
-         elseif player.menu == "warnings" then
+         elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
             mod.update_overhead_sprite("utility.warning_white", 3, 1.25, pindex)
             mod.update_custom_GUI_sprite("utility.warning_white", 3, pindex)
-         elseif player.menu == "rail_builder" then
+         elseif router:is_ui_open(UiRouter.UI_NAMES.RAIL_BUILDER) then
             mod.update_overhead_sprite("item.rail", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite("item.rail", 3, pindex)
-         elseif player.menu == "train_menu" then
+         elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
             mod.update_overhead_sprite("item.locomotive", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite("item.locomotive", 3, pindex)
-         elseif player.menu == "spider_menu" then
+         elseif router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then
             mod.update_overhead_sprite("item.spidertron", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite("item.spidertron", 3, pindex)
-         elseif player.menu == "train_stop_menu" then
+         elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
             mod.update_overhead_sprite("item.train-stop", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite("item.train-stop", 3, pindex)
-         elseif player.menu == "roboport_menu" then
+         elseif router:is_ui_open(UiRouter.UI_NAMES.ROBOPORT) then
             mod.update_overhead_sprite("item.roboport", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite("item.roboport", 3, pindex)
-         elseif player.menu == "blueprint_menu" then
+         elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT) then
             mod.update_overhead_sprite("item.blueprint", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite("item.blueprint", 3, pindex)
-         elseif player.menu == "blueprint_book_menu" then
+         elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
             mod.update_overhead_sprite("item.blueprint-book", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite("item.blueprint-book", 3, pindex)
-         elseif player.menu == "circuit_network_menu" then
+         elseif router:is_ui_open(UiRouter.UI_NAMES.CIRCUIT_NETWORK) then
             mod.update_overhead_sprite("item.electronic-circuit", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite("item.electronic-circuit", 3, pindex)
-         elseif player.menu == "signal_selector" then
+         elseif router:is_ui_open(UiRouter.UI_NAMES.SIGNAL_SELECTOR) then
             local sprite = "item-group.signals"
             mod.update_overhead_sprite(sprite, 1, 1.25, pindex)
             mod.update_custom_GUI_sprite(sprite, 0.5, pindex)
-         elseif player.menu == "pump" then
+         elseif router:is_ui_open(UiRouter.UI_NAMES.PUMP) then
             mod.update_overhead_sprite("item.offshore-pump", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite("item.offshore-pump", 3, pindex)
-         elseif player.menu == "belt" then
+         elseif router:is_ui_open(UiRouter.UI_NAMES.BELT) then
             mod.update_overhead_sprite("item.transport-belt", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite(nil, 1, pindex)
-         elseif players[pindex].menu == "building" or players[pindex].menu == "vehicle" then
+         elseif router:is_ui_one_of({ UiRouter.UI_NAMES.VEHICLE, UiRouter.UI_NAMES.BUILDING }) then
             if game.get_player(pindex).opened == nil then
                --Open building menu with no GUI
                mod.update_overhead_sprite("utility.search", 2, 1.25, pindex)
@@ -123,7 +126,9 @@ function mod.update_menu_visuals()
                mod.update_overhead_sprite("utility.search", 2, 1.25, pindex)
                mod.update_custom_GUI_sprite(nil, 1, pindex)
             end
-         elseif players[pindex].menu == "building_no_sectors" or players[pindex].menu == "vehicle_no_sectors" then
+         elseif
+            router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING_NO_SECTORS, UiRouter.UI_NAMES.VEHICLE_NO_SECTORS })
+         then
             if game.get_player(pindex).opened == nil then
                --Open building menu with no GUI
                mod.update_overhead_sprite("utility.search", 2, 1.25, pindex)
@@ -541,6 +546,8 @@ end
 
 --Draws a custom GUI with a sprite in the middle of the screen. Set it to nil to clear it.
 function mod.update_custom_GUI_sprite(sprite, scale_in, pindex, sprite_2)
+   local router = UiRouter.get_router(pindex)
+
    local player = players[pindex]
    local p = game.get_player(pindex)
 
@@ -588,7 +595,7 @@ function mod.update_custom_GUI_sprite(sprite, scale_in, pindex, sprite_2)
       end
       --If a blueprint is in hand, set the blueprint sprites
       if
-         players[pindex].menu == "blueprint_menu"
+         router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT)
          and p.cursor_stack
          and p.cursor_stack.valid_for_read
          and p.cursor_stack.is_blueprint
@@ -614,13 +621,10 @@ function mod.update_custom_GUI_sprite(sprite, scale_in, pindex, sprite_2)
 end
 
 function mod.clear_player_GUI_remnants(pindex)
+   local router = UiRouter.get_router(pindex)
+
    local p = game.get_player(pindex)
-   if
-      players[pindex].in_menu == false
-      and players[pindex].menu == "none"
-      and p.opened == nil
-      and players[pindex].text_field_open ~= true
-   then
+   if not router:is_ui_open() and p.opened == nil and players[pindex].text_field_open ~= true then
       if p and p.gui and p.gui.screen then p.gui.screen.clear() end
    end
 end
@@ -663,7 +667,7 @@ function mod.set_cursor_colors_to_player_colors(pindex)
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
    if
-      players[pindex].cursor_tile_highlight_box ~= nil and rendering.is_valid(players[pindex].cursor_tile_highlight_box)
+      players[pindex].cursor_tile_highlight_box ~= nil and players[pindex].cursor_tile_highlight_box.valid
    then
       rendering.set_color(players[pindex].cursor_tile_highlight_box, p.color)
    end

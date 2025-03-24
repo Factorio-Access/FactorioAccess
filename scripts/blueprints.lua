@@ -5,6 +5,8 @@ local fa_utils = require("scripts.fa-utils")
 local fa_building_tools = require("scripts.building-tools")
 local fa_mining_tools = require("scripts.player-mining-tools")
 local fa_graphics = require("scripts.graphics")
+local UiRouter = require("scripts.ui.router")
+
 local dirs = defines.direction
 
 local mod = {}
@@ -381,7 +383,8 @@ end
 
 function mod.blueprint_menu_open(pindex)
    if players[pindex].vanilla_mode then return end
-   -- Opening the ui is one level up, to avoid circular imports.
+
+   UiRouter.get_router(pindex):open_ui(UiRouter.UI_NAMES.BLUEPRINT)
 
    players[pindex].move_queue = {}
 
@@ -401,8 +404,7 @@ end
 function mod.blueprint_menu_close(pindex, mute_in)
    local mute = mute_in
    --Set the player menu tracker to none
-   players[pindex].menu = "none"
-   players[pindex].in_menu = false
+   UiRouter.get_router(pindex):close_ui()
 
    --Set the menu line counter to 0
    players[pindex].blueprint_menu.index = 0
@@ -723,9 +725,7 @@ BLUEPRINT_BOOK_SETTINGS_MENU_LENGTH = 8
 
 function mod.blueprint_book_menu_open(pindex, open_in_list_mode)
    if players[pindex].vanilla_mode then return end
-   --Set the player menu tracker to this menu
-   players[pindex].menu = "blueprint_book_menu"
-   players[pindex].in_menu = true
+   UiRouter.get_router(pindex):open_ui(UiRouter.UI_NAMES.BLUEPRINT_BOOK)
    players[pindex].move_queue = {}
 
    --Set the menu line counter to 0
@@ -754,8 +754,7 @@ end
 function mod.blueprint_book_menu_close(pindex, mute_in)
    local mute = mute_in
    --Set the player menu tracker to none
-   players[pindex].menu = "none"
-   players[pindex].in_menu = false
+   UiRouter.get_router(pindex):close_ui()
 
    --Set the menu line counter to 0
    players[pindex].blueprint_book_menu.index = 0

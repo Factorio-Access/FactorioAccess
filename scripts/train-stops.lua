@@ -1,6 +1,7 @@
 --Here: Functions relating to train train stops and train scheduling from them (which is a unique mod feature)
 --Does not include event handlers
 local fa_graphics = require("scripts.graphics")
+local UiRouter = require("scripts.ui.router")
 
 local mod = {}
 
@@ -160,10 +161,11 @@ end
 mod.TRAIN_STOP_MENU_LENGTH = 9
 
 function mod.train_stop_menu_open(pindex)
+   local router = UiRouter.get_router(pindex)
+
    if players[pindex].vanilla_mode then return end
-   --Set the player menu tracker to this menu
-   players[pindex].menu = "train_stop_menu"
-   players[pindex].in_menu = true
+
+   router:open_ui(UiRouter.UI_NAMES.TRAIN_STOP)
    players[pindex].move_queue = {}
 
    --Set the menu line counter to 0
@@ -177,10 +179,10 @@ function mod.train_stop_menu_open(pindex)
 end
 
 function mod.train_stop_menu_close(pindex, mute_in)
+   local router = UiRouter.get_router(pindex)
+
    local mute = mute_in
-   --Set the player menu tracker to none
-   players[pindex].menu = "none"
-   players[pindex].in_menu = false
+   router:close_ui()
 
    --Set the menu line counter to 0
    players[pindex].train_stop_menu.index = 0

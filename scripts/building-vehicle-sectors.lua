@@ -7,6 +7,7 @@ local fa_belts = require("scripts.transport-belts")
 local fa_blueprints = require("scripts.blueprints")
 local BeltAnalyzer = require("scripts.ui.belt-analyzer")
 local Filters = require("scripts.filters")
+local UiRouter = require("scripts.ui.router")
 
 local mod = {}
 
@@ -75,6 +76,8 @@ end
 
 --Loads and opens the building menu
 function mod.open_operable_building(ent, pindex)
+   local router = UiRouter.get_router(pindex)
+
    if ent.operable and ent.prototype.is_building then
       --Check if within reach
       if
@@ -93,6 +96,7 @@ function mod.open_operable_building(ent, pindex)
       players[pindex].menu_search_index = 0
       players[pindex].menu_search_index_2 = 0
       if ent.prototype.subgroup.name == "belt" then
+         router:open_ui(UiRouter.UI_NAMES.BELT)
          BeltAnalyzer.belt_analyzer:open(pindex, { entity = ent })
          return
       end
@@ -194,8 +198,7 @@ function mod.open_operable_building(ent, pindex)
       end
       if #players[pindex].building.sectors > 0 then
          players[pindex].building.ent = ent
-         players[pindex].in_menu = true
-         players[pindex].menu = "building"
+         router:open_ui(UiRouter.UI_NAMES.BUILDING)
          players[pindex].move_queue = {}
          players[pindex].inventory.index = 1
          players[pindex].building.index = 1
@@ -231,8 +234,7 @@ function mod.open_operable_building(ent, pindex)
          --No building sectors
          if game.get_player(pindex).opened ~= nil then
             players[pindex].building.ent = ent
-            players[pindex].in_menu = true
-            players[pindex].menu = "building_no_sectors"
+            router:open_ui(UiRouter.UI_NAMES.BUILDING_NO_SECTORS)
             local result = localising.get(ent, pindex) .. ", this menu has no options "
             if ent.type == "inserter" then
                result = localising.get(ent, pindex) .. ", press PAGEUP or PAGEDOWN to edit hand stack size"
@@ -252,6 +254,8 @@ end
 
 --Loads and opens the vehicle menu
 function mod.open_operable_vehicle(ent, pindex)
+   local router = UiRouter.get_router(pindex)
+
    if ent.valid and ent.operable then
       --Check if within reach
       if
@@ -346,8 +350,7 @@ function mod.open_operable_vehicle(ent, pindex)
       end
       if #players[pindex].building.sectors > 0 then
          players[pindex].building.ent = ent
-         players[pindex].in_menu = true
-         players[pindex].menu = "vehicle"
+         router:open_ui(UiRouter.UI_NAMES.VEHICLE)
          players[pindex].move_queue = {}
          players[pindex].inventory.index = 1
          players[pindex].building.index = 1
@@ -358,8 +361,7 @@ function mod.open_operable_vehicle(ent, pindex)
       else
          if game.get_player(pindex).opened ~= nil then
             players[pindex].building.ent = ent
-            players[pindex].in_menu = true
-            players[pindex].menu = "vehicle_no_sectors"
+            router:open_ui(UiRouter.UI_NAMES.VEHICLE_NO_SECTORS)
             printout(ent.name .. ", this menu has no options ", pindex)
          else
             printout(ent.name .. " has no menu ", pindex)

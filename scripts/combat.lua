@@ -6,6 +6,7 @@ local fa_utils = require("scripts.fa-utils")
 local fa_graphics = require("scripts.graphics")
 local fa_mouse = require("scripts.mouse")
 local fa_equipment = require("scripts.equipment")
+local UiRouter = require("scripts.ui.router")
 
 local mod = {}
 
@@ -200,6 +201,8 @@ end
 
 --Locks the cursor to the nearest enemy within 50 tiles. Also plays a sound if the enemy is within range of the gun in hand.
 function mod.aim_gun_at_nearest_enemy(pindex, enemy_in)
+   local router = UiRouter.get_router(pindex)
+
    local p = game.get_player(pindex)
    if p == nil or p.character == nil or p.character.valid == false then return end
    local gun_index = p.character.selected_gun_index
@@ -214,7 +217,7 @@ function mod.aim_gun_at_nearest_enemy(pindex, enemy_in)
    --Return if in Cursormode
    if players[pindex].cursor then return false end
    --Return if in a menu
-   if players[pindex].in_menu then return false end
+   if router:is_ui_open() then return false end
    --Check for nearby enemies
    if enemy_in == nil or not enemy_in.valid then
       enemy = p.surface.find_nearest_enemy({ position = p.position, max_distance = 50, force = p.force })

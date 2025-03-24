@@ -17,6 +17,7 @@ stuff.
 local dirs = defines.direction
 local Filters = require("scripts.filters")
 local util = require("util")
+local UiRouter = require("scripts.ui.router")
 
 local F = require("scripts.field-ref")
 local TransportBelts = require("scripts.transport-belts")
@@ -1443,10 +1444,12 @@ end
 
 --Report the status of the selected entity as well as additional dynamic info depending on the entity type
 function mod.read_selected_entity_status(pindex)
+   local router = UiRouter.get_router(pindex)
+
    local ent = game.get_player(pindex).selected
    if not ent then return end
    local stack = game.get_player(pindex).cursor_stack
-   if players[pindex].in_menu then return end
+   if router:is_ui_open() then return end
    --Print out the status of a machine, if it exists.
    local result = { "" }
    local ent_status_id = ent.status

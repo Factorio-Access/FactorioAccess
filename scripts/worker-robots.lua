@@ -5,6 +5,7 @@ local fa_graphics = require("scripts.graphics")
 local Localising = require("scripts.localising")
 local MessageBuilder = require("scripts.message-builder")
 local Sounds = require("scripts.ui.sounds")
+local UiRouter = require("scripts.ui.router")
 
 local dirs = defines.direction
 local MAX_STACK_COUNT = 10
@@ -336,16 +337,16 @@ end
 -- the context of how we do logistic requests.
 ---@return string?, LocalisedString?
 local function find_player_item_name(pindex)
+   local router = UiRouter.get_router(pindex)
+
    local p = game.get_player(pindex)
    assert(p)
    local char = p.character
    if not char then return nil, { "fa.no-character" } end
 
    if
-      not players[pindex].in_menu
-      or players[pindex].menu == "inventory"
-      or players[pindex].menu == "player_trash"
-      or players[pindex].menu == "crafting"
+      not router:is_ui_open()
+      or router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.PLAYER_TRASH, UiRouter.UI_NAMES.CRAFTING })
    then
       --Personal logistics
       local stack = game.get_player(pindex).cursor_stack
@@ -354,13 +355,13 @@ local function find_player_item_name(pindex)
       if stack ~= nil and stack.valid_for_read and stack.valid then
          --Item in hand
          return stack.name, nil
-      elseif players[pindex].menu == "inventory" and stack_inv ~= nil and stack_inv.valid_for_read then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) and stack_inv ~= nil and stack_inv.valid_for_read then
          --Item in inv
          return stack_inv.name, nil
-      elseif players[pindex].menu == "player_trash" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
          --Item in trash
          return nil, "Take this item in hand to change its requests"
-      elseif players[pindex].menu == "crafting" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
          --Use the first found item product of the selected recipe, pass it as a stack
          local prototype = fa_utils.get_prototype_of_item_product(pindex)
          return prototype.name, nil
@@ -368,7 +369,7 @@ local function find_player_item_name(pindex)
          --Empty hand, empty inventory slot
          return nil, "No actions"
       end
-   elseif players[pindex].menu == "building" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.BUILDING) then
       --Chest logistics
       local stack = game.get_player(pindex).cursor_stack
       local stack_inv = game.get_player(pindex).opened.get_output_inventory()[players[pindex].building.index]
@@ -384,7 +385,7 @@ local function find_player_item_name(pindex)
          --Empty hand, empty inventory slot
          return nil, "No actions"
       end
-   elseif players[pindex].menu == "vehicle" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) then
       --spidertron logistics
       local stack = game.get_player(pindex).cursor_stack
       local invs = defines.inventory
@@ -553,19 +554,19 @@ function mod.logistics_request_decrement_max_handler(pindex)
 end
 
 function mod.logistics_request_toggle_handler(pindex)
+   local router = UiRouter.get_router(pindex)
+
    local ent = game.get_player(pindex).opened
    if
-      not players[pindex].in_menu
-      or players[pindex].menu == "inventory"
-      or players[pindex].menu == "player_trash"
-      or players[pindex].menu == "crafting"
+      not router:is_ui_open()
+      or router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.CRAFTING, UiRouter.UI_NAMES.PLAYER_TRASH })
    then
       --Player: Toggle enabling requests
       toggle_personal_logistics(pindex)
-   elseif players[pindex].menu == "vehicle" and mod.can_make_logistic_requests(ent) then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and mod.can_make_logistic_requests(ent) then
       --Vehicles: Toggle enabling requests
       logistics_request_toggle_spidertron_logistics(ent, pindex)
-   elseif players[pindex].menu == "building" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.BUILDING) then
       --Requester chests: Toggle requesting from buffers
       if mod.can_make_logistic_requests(ent) then
          ent.request_from_buffers = not ent.request_from_buffers
@@ -1016,9 +1017,10 @@ ROBOPORT_MENU_LENGTH = 6
 
 function mod.roboport_menu_open(pindex)
    if players[pindex].vanilla_mode then return end
-   --Set the player menu tracker to this menu
-   players[pindex].menu = "roboport_menu"
-   players[pindex].in_menu = true
+   local router = UiRouter.get_router(pindex)
+
+   router:open_ui(UiRouter.UI_NAMES.ROBOPORT)
+
    players[pindex].move_queue = {}
 
    --Initialize if needed
@@ -1036,8 +1038,7 @@ end
 function mod.roboport_menu_close(pindex, mute_in)
    local mute = mute_in
    --Set the player menu tracker to none
-   players[pindex].menu = "none"
-   players[pindex].in_menu = false
+   UiRouter.get_router(pindex):close_ui()
 
    --Set the menu line counter to 0
    players[pindex].roboport_menu.index = 0

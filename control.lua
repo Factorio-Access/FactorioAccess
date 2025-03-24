@@ -36,7 +36,9 @@ local FaCommands = require("scripts.fa-commands")
 local Filters = require("scripts.filters")
 local Consts = require("scripts.consts")
 local F = require("scripts.field-ref")
+local MessageBuilder = require("scripts.message-builder")
 local Research = require("scripts.research")
+local UiRouter = require("scripts.ui.router")
 local Rulers = require("scripts.rulers")
 local ScannerEntrypoint = require("scripts.scanner.entrypoint")
 local TH = require("scripts.table-helpers")
@@ -399,20 +401,22 @@ function locate_hand_in_player_inventory(pindex)
       return
    end
 
+   local router = UiRouter.get_router(pindex)
+   local ui_name = router:get_open_ui_name()
+
    --Check if stack empty and menu supported
    if stack == nil or not stack.valid_for_read or not stack.valid then
       --Hand is empty
       return
    end
-   if players[pindex].in_menu and players[pindex].menu ~= "inventory" then
+   if ui_name == UiRouter.UI_NAMES.INVENTORY then
       --Unsupported menu type, laterdo add support for building menu and closing the menu with a call
       printout("Another menu is open.", pindex)
       return
    end
-   if not players[pindex].in_menu then
+   if not ui_name then
       --Open the inventory if nothing is open
-      players[pindex].in_menu = true
-      players[pindex].menu = "inventory"
+      router:open_ui(UiRouter.UI_NAMES.INVENTORY)
       p.opened = p.get_inventory(defines.inventory.character_main)
    end
    --Save the hand stack item name
@@ -458,14 +462,15 @@ function locate_hand_in_building_output_inventory(pindex)
       return
    end
 
+   local router = UiRouter.get_router(pindex)
+
    --Check if stack empty and menu supported
    if stack == nil or not stack.valid_for_read or not stack.valid then
       --Hand is empty
       return
    end
    if
-      players[pindex].in_menu
-      and (players[pindex].menu == "building" or players[pindex].menu == "vehicle")
+      (UiRouter:is_ui_open(UiRouter.UI_NAMES.BUILDING) or UiRouter:is_ui_open(UiRouter.UI_NAMES.VEHICLE))
       and pb.sectors
       and pb.sectors[pb.sector]
       and pb.sectors[pb.sector].name == "Output"
@@ -505,11 +510,13 @@ function locate_hand_in_building_output_inventory(pindex)
    end
 end
 
---Clears the item in hand and then locates its recipe from the crafting menu. Closes some other menus, does not run in some other menus, uses the menu search function.
+--Clears the item in hand and then locates its recipe from the crafting menu.
 function locate_hand_in_crafting_menu(pindex)
    local p = game.get_player(pindex)
    local inv = p.get_main_inventory()
    local stack = p.cursor_stack
+   local router = UiRouter.get_router(pindex)
+
    if
       p.cursor_stack_temporary
       or stack.is_blueprint
@@ -527,10 +534,9 @@ function locate_hand_in_crafting_menu(pindex)
       return
    end
    if
-      players[pindex].in_menu
-      and players[pindex].menu ~= "inventory"
-      and players[pindex].menu ~= "building"
-      and players[pindex].menu ~= "crafting"
+      not router:is_ui_open(UiRouter.UI_NAMES.INVENTORY)
+      and not router:is_ui_open(UiRouter.UI_NAMES.BUILDING)
+      and not router:is_ui_open(UiRouter.UI_NAMES.CRAFTING)
    then
       --Unsupported menu types...
       printout("Another menu is open.", pindex)
@@ -539,8 +545,7 @@ function locate_hand_in_crafting_menu(pindex)
 
    --Open the crafting Menu
    close_menu_resets(pindex)
-   players[pindex].in_menu = true
-   players[pindex].menu = "crafting"
+   router:open_ui(UiRouter.UI_NAMES.CRAFTING)
    p.opened = p.get_inventory(defines.inventory.character_main)
 
    --Get the name
@@ -749,8 +754,10 @@ function jump_to_player(pindex)
 end
 
 function return_cursor_to_character(pindex)
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu then
+   if not router:is_ui_open() then
       if players[pindex].cursor then jump_to_player(pindex) end
    end
 end
@@ -874,13 +881,16 @@ function read_coords(pindex, start_phrase)
    local result = start_phrase
    local ent = players[pindex].building.ent
    local offset = 0
+
+   local router = UiRouter.get_router(pindex)
+
    if
-      (players[pindex].menu == "building" or players[pindex].menu == "vehicle")
+      router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
       and players[pindex].building.recipe_list ~= nil
    then
       offset = 1
    end
-   if not players[pindex].in_menu or players[pindex].menu == "structure-travel" or players[pindex].menu == "travel" then
+   if not router:is_ui_open() or router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       if players[pindex].vanilla_mode then players[pindex].cursor_pos = game.get_player(pindex).position end
       if game.get_player(pindex).driving then
          --Give vehicle coords and orientation and speed --laterdo find exact speed coefficient
@@ -1001,10 +1011,9 @@ function read_coords(pindex, start_phrase)
          printout(result, pindex)
       end
    elseif
-      players[pindex].menu == "inventory"
-      or players[pindex].menu == "player_trash"
+      router:is_ui_one_of({ UiRouter.MENU_NAMES.INVENTORY, UiRouter.MENU_NAMES.PLAYER_TRASH })
       or (
-         (players[pindex].menu == "building" or players[pindex].menu == "vehicle")
+         UiRouter.is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
          and players[pindex].building.sector > offset + #players[pindex].building.sectors
       )
    then
@@ -1016,14 +1025,14 @@ function read_coords(pindex, start_phrase)
          y = y - 1
       end
       printout(result .. " slot " .. x .. ", on row " .. y, pindex)
-   elseif players[pindex].menu == "guns" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.GUNS) then
       if players[pindex].guns_menu.ammo_selected then
          printout("Ammo slot " .. players[pindex].guns_menu.index, pindex)
       else
          printout("Gun slot " .. players[pindex].guns_menu.index, pindex)
       end
    elseif
-      (players[pindex].menu == "building" or players[pindex].menu == "vehicle")
+      router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
       and players[pindex].building.recipe_selection == false
    then
       --Give slot coords (chest/building inventory)
@@ -1037,7 +1046,7 @@ function read_coords(pindex, start_phrase)
          y = y - 1
       end
       printout(result .. " slot " .. x .. ", on row " .. y, pindex)
-   elseif players[pindex].menu == "crafting" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
       --Read recipe ingredients / products (crafting menu)
       local recipe =
          players[pindex].crafting.lua_recipes[players[pindex].crafting.category][players[pindex].crafting.index]
@@ -1059,11 +1068,11 @@ function read_coords(pindex, start_phrase)
       end
       result = result .. ", craft time " .. recipe.energy .. " seconds by default."
       printout(result, pindex)
-   elseif players[pindex].menu == "technology" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
       Research.menu_describe_costs(pindex)
    end
    if
-      (players[pindex].menu == "building" or players[pindex].menu == "vehicle")
+      router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
       and players[pindex].building.recipe_selection
    then
       --Read recipe ingredients / products (building recipe selection)
@@ -1113,9 +1122,7 @@ function initialize(player)
    end
 
    local character = player.cutscene_character or player.character or player
-   faplayer.in_menu = faplayer.in_menu or false
    faplayer.in_item_selector = faplayer.in_item_selector or false
-   faplayer.menu = faplayer.menu or "none"
    faplayer.entering_search_term = faplayer.entering_search_term or false
    faplayer.menu_search_index = faplayer.menu_search_index or nil
    faplayer.menu_search_index_2 = faplayer.menu_search_index_2 or nil
@@ -1357,6 +1364,8 @@ end
 --Update the position info and cursor info during smooth walking.
 script.on_event(defines.events.on_player_changed_position, function(event)
    local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    local p = game.get_player(pindex)
    if not check_for_player(pindex) then return end
    if players[pindex].walk == WALKING.SMOOTH then
@@ -1444,7 +1453,7 @@ script.on_event(defines.events.on_player_changed_position, function(event)
          p.selected = nil
       end
       --Play a sound for audio ruler alignment (smooth walk)
-      if players[pindex].in_menu == false then Rulers.update_from_cursor(pindex) end
+      if not router:is_ui_open() then Rulers.update_from_cursor(pindex) end
    end
 end)
 
@@ -1464,6 +1473,8 @@ end
 
 --Moves upwards in a menu. Todo: split by menu. "menu_up"
 function menu_cursor_up(pindex)
+   local router = UiRouter.get_router(pindex)
+
    if players[pindex].item_selection then
       if players[pindex].item_selector.group == 0 then
          printout("Blank", pindex)
@@ -1482,7 +1493,7 @@ function menu_cursor_up(pindex)
          players[pindex].item_selector.subgroup = 0
          read_item_selector_slot(pindex)
       end
-   elseif players[pindex].menu == "inventory" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
       players[pindex].inventory.index = players[pindex].inventory.index - 10
       if players[pindex].inventory.index < 1 then
          if players[pindex].preferences.inventory_wraps_around == true then
@@ -1500,7 +1511,7 @@ function menu_cursor_up(pindex)
          game.get_player(pindex).play_sound({ path = "Inventory-Move" })
          read_inventory_slot(pindex)
       end
-   elseif players[pindex].menu == "player_trash" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
       local trash_inv = game.get_player(pindex).get_inventory(defines.inventory.character_trash)
       players[pindex].inventory.index = players[pindex].inventory.index - 10
       if players[pindex].inventory.index < 1 then
@@ -1519,19 +1530,19 @@ function menu_cursor_up(pindex)
          game.get_player(pindex).play_sound({ path = "Inventory-Move" })
          read_inventory_slot(pindex, "", trash_inv)
       end
-   elseif players[pindex].menu == "crafting" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
       players[pindex].crafting.index = 1
       players[pindex].crafting.category = players[pindex].crafting.category - 1
 
       if players[pindex].crafting.category < 1 then players[pindex].crafting.category = players[pindex].crafting.max end
       fa_crafting.read_crafting_slot(pindex, "", true)
-   elseif players[pindex].menu == "crafting_queue" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
       fa_crafting.load_crafting_queue(pindex)
       players[pindex].crafting_queue.index = 1
       fa_crafting.read_crafting_queue(pindex)
-   elseif players[pindex].menu == "building" or players[pindex].menu == "vehicle" then
+   elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
       --Move one row up in a building inventory of some kind
       if players[pindex].building.sector <= #players[pindex].building.sectors then
          --Most building sectors, eg. chest rows
@@ -1590,18 +1601,18 @@ function menu_cursor_up(pindex)
             --read_inventory_slot(pindex)
          end
       end
-   elseif players[pindex].menu == "technology" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
       Research.menu_move_vertical(pindex, -1)
-   elseif players[pindex].menu == "belt" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.BELT) then
       BeltAnalyzer.belt_analyzer:on_up(pindex)
-   elseif players[pindex].menu == "warnings" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
       if players[pindex].warnings.category > 1 then
          players[pindex].warnings.category = players[pindex].warnings.category - 1
          game.get_player(pindex).play_sound({ path = "Inventory-Move" })
          players[pindex].warnings.index = 1
       end
       fa_warnings.read_warnings_slot(pindex)
-   elseif players[pindex].menu == "pump" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.PUMP) then
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
       players[pindex].pump.index = math.max(1, players[pindex].pump.index - 1)
       local dir = ""
@@ -1634,31 +1645,33 @@ function menu_cursor_up(pindex)
             .. dir,
          pindex
       )
-   elseif players[pindex].menu == "travel" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       fa_travel.fast_travel_menu_up(pindex)
-   elseif players[pindex].menu == "rail_builder" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.RAIL_BUILDER) then
       fa_rail_builder.menu_up(pindex)
-   elseif players[pindex].menu == "train_stop_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
       fa_train_stops.train_stop_menu_up(pindex)
-   elseif players[pindex].menu == "roboport_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.ROBOPORT) then
       fa_bot_logistics.roboport_menu_up(pindex)
-   elseif players[pindex].menu == "blueprint_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT) then
       BlueprintsMenu.blueprint_menu_tabs:on_up(pindex)
-   elseif players[pindex].menu == "blueprint_book_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
       fa_blueprints.blueprint_book_menu_up(pindex)
-   elseif players[pindex].menu == "circuit_network_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.CIRCUIT_NETWORK) then
       general_mod_menu_up(pindex, players[pindex].circuit_network_menu, 0)
       fa_circuits.circuit_network_menu_run(pindex, nil, players[pindex].circuit_network_menu.index, false)
-   elseif players[pindex].menu == "signal_selector" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.SIGNAL_SELECTOR) then
       fa_circuits.signal_selector_group_up(pindex)
       fa_circuits.read_selected_signal_group(pindex, "")
-   elseif players[pindex].menu == "guns" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.GUNS) then
       fa_equipment.guns_menu_up_or_down(pindex)
    end
 end
 
 --Moves downwards in a menu. Todo: split by menu."menu_down"
 function menu_cursor_down(pindex)
+   local router = UiRouter.get_router(pindex)
+
    if players[pindex].item_selection then
       if players[pindex].item_selector.group == 0 then
          players[pindex].item_selector.group = players[pindex].item_selector.index
@@ -1679,7 +1692,7 @@ function menu_cursor_down(pindex)
       else
          printout("Press left bracket to confirm your selection.", pindex)
       end
-   elseif players[pindex].menu == "inventory" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
       players[pindex].inventory.index = players[pindex].inventory.index + 10
       if players[pindex].inventory.index > players[pindex].inventory.max then
          if players[pindex].preferences.inventory_wraps_around == true then
@@ -1698,7 +1711,7 @@ function menu_cursor_down(pindex)
          game.get_player(pindex).play_sound({ path = "Inventory-Move" })
          read_inventory_slot(pindex)
       end
-   elseif players[pindex].menu == "player_trash" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
       local trash_inv = game.get_player(pindex).get_inventory(defines.inventory.character_trash)
       players[pindex].inventory.index = players[pindex].inventory.index + 10
       if players[pindex].inventory.index > #trash_inv then
@@ -1718,19 +1731,19 @@ function menu_cursor_down(pindex)
          game.get_player(pindex).play_sound({ path = "Inventory-Move" })
          read_inventory_slot(pindex, "", trash_inv)
       end
-   elseif players[pindex].menu == "crafting" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
       players[pindex].crafting.index = 1
       players[pindex].crafting.category = players[pindex].crafting.category + 1
 
       if players[pindex].crafting.category > players[pindex].crafting.max then players[pindex].crafting.category = 1 end
       fa_crafting.read_crafting_slot(pindex, "", true)
-   elseif players[pindex].menu == "crafting_queue" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
       fa_crafting.load_crafting_queue(pindex)
       players[pindex].crafting_queue.index = players[pindex].crafting_queue.max
       fa_crafting.read_crafting_queue(pindex)
-   elseif players[pindex].menu == "building" or players[pindex].menu == "vehicle" then
+   elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
       --Move one row down in a building inventory of some kind
       if players[pindex].building.sector <= #players[pindex].building.sectors then
          --Most building sectors, eg. chest rows
@@ -1794,11 +1807,11 @@ function menu_cursor_down(pindex)
             --read_inventory_slot(pindex)
          end
       end
-   elseif players[pindex].menu == "technology" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
       Research.menu_move_vertical(pindex, 1)
-   elseif players[pindex].menu == "belt" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.BELT) then
       BeltAnalyzer.belt_analyzer:on_down(pindex)
-   elseif players[pindex].menu == "warnings" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
       local warnings = {}
       if players[pindex].warnings.sector == 1 then
          warnings = players[pindex].warnings.short.warnings
@@ -1813,7 +1826,7 @@ function menu_cursor_down(pindex)
          players[pindex].warnings.index = 1
       end
       fa_warnings.read_warnings_slot(pindex)
-   elseif players[pindex].menu == "pump" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.PUMP) then
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
       players[pindex].pump.index = math.min(#players[pindex].pump.positions, players[pindex].pump.index + 1)
       local dir = ""
@@ -1846,35 +1859,37 @@ function menu_cursor_down(pindex)
             .. dir,
          pindex
       )
-   elseif players[pindex].menu == "travel" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       fa_travel.fast_travel_menu_down(pindex)
-   elseif players[pindex].menu == "rail_builder" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.RAIL_BUILDER) then
       fa_rail_builder.menu_down(pindex)
-   elseif players[pindex].menu == "train_stop_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
       fa_train_stops.train_stop_menu_down(pindex)
-   elseif players[pindex].menu == "roboport_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.ROBOPORT) then
       fa_bot_logistics.roboport_menu_down(pindex)
-   elseif players[pindex].menu == "blueprint_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT) then
       BlueprintsMenu.blueprint_menu_tabs:on_down(pindex)
-   elseif players[pindex].menu == "blueprint_book_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
       fa_blueprints.blueprint_book_menu_down(pindex)
-   elseif players[pindex].menu == "circuit_network_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.CIRCUIT_NETWORK) then
       general_mod_menu_down(pindex, players[pindex].circuit_network_menu, fa_circuits.CN_MENU_LENGTH)
       fa_circuits.circuit_network_menu_run(pindex, nil, players[pindex].circuit_network_menu.index, false)
-   elseif players[pindex].menu == "signal_selector" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.SIGNAL_SELECTOR) then
       fa_circuits.signal_selector_group_down(pindex)
       fa_circuits.read_selected_signal_group(pindex, "")
-   elseif players[pindex].menu == "guns" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.GUNS) then
       fa_equipment.guns_menu_up_or_down(pindex)
    end
 end
 
 --Moves to the left in a menu. Todo: split by menu."menu_left"
 function menu_cursor_left(pindex)
+   local router = UiRouter.get_router(pindex)
+
    if players[pindex].item_selection then
       players[pindex].item_selector.index = math.max(1, players[pindex].item_selector.index - 1)
       read_item_selector_slot(pindex)
-   elseif players[pindex].menu == "inventory" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
       players[pindex].inventory.index = players[pindex].inventory.index - 1
       if players[pindex].inventory.index % 10 == 0 then
          if players[pindex].preferences.inventory_wraps_around == true then
@@ -1886,13 +1901,12 @@ function menu_cursor_left(pindex)
             --Border setting: Undo change and play "wall" sound
             players[pindex].inventory.index = players[pindex].inventory.index + 1
             game.get_player(pindex).play_sound({ path = "inventory-edge" })
-            --printout("Border.", pindex)
          end
       else
          game.get_player(pindex).play_sound({ path = "Inventory-Move" })
          read_inventory_slot(pindex)
       end
-   elseif players[pindex].menu == "player_trash" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
       local trash_inv = game.get_player(pindex).get_inventory(defines.inventory.character_trash)
       players[pindex].inventory.index = players[pindex].inventory.index - 1
       if players[pindex].inventory.index % 10 == 0 then
@@ -1905,20 +1919,19 @@ function menu_cursor_left(pindex)
             --Border setting: Undo change and play "wall" sound
             players[pindex].inventory.index = players[pindex].inventory.index + 1
             game.get_player(pindex).play_sound({ path = "inventory-edge" })
-            --printout("Border.", pindex)
          end
       else
          game.get_player(pindex).play_sound({ path = "Inventory-Move" })
          read_inventory_slot(pindex, "", trash_inv)
       end
-   elseif players[pindex].menu == "crafting" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
       players[pindex].crafting.index = players[pindex].crafting.index - 1
       if players[pindex].crafting.index < 1 then
          players[pindex].crafting.index = #players[pindex].crafting.lua_recipes[players[pindex].crafting.category]
       end
       fa_crafting.read_crafting_slot(pindex)
-   elseif players[pindex].menu == "crafting_queue" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
       fa_crafting.load_crafting_queue(pindex)
       if players[pindex].crafting_queue.index < 2 then
@@ -1927,7 +1940,7 @@ function menu_cursor_left(pindex)
          players[pindex].crafting_queue.index = players[pindex].crafting_queue.index - 1
       end
       fa_crafting.read_crafting_queue(pindex)
-   elseif players[pindex].menu == "building" or players[pindex].menu == "vehicle" then
+   elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
       --Move along a row in a building inventory
       if players[pindex].building.sector <= #players[pindex].building.sectors then
          --Most building sectors, e.g. chest rows
@@ -1988,33 +2001,35 @@ function menu_cursor_left(pindex)
             fa_sectors.read_building_recipe(pindex)
          end
       end
-   elseif players[pindex].menu == "technology" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
       Research.menu_move_horizontal(pindex, -1)
-   elseif players[pindex].menu == "belt" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.BELT) then
       BeltAnalyzer.belt_analyzer:on_left(pindex)
-   elseif players[pindex].menu == "warnings" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
       if players[pindex].warnings.index > 1 then
          players[pindex].warnings.index = players[pindex].warnings.index - 1
          game.get_player(pindex).play_sound({ path = "Inventory-Move" })
       end
       fa_warnings.read_warnings_slot(pindex)
-   elseif players[pindex].menu == "travel" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       fa_travel.fast_travel_menu_left(pindex)
-   elseif players[pindex].menu == "signal_selector" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.SIGNAL_SELECTOR) then
       fa_circuits.signal_selector_signal_prev(pindex)
       fa_circuits.read_selected_signal_slot(pindex, "")
-   elseif players[pindex].menu == "guns" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.GUNS) then
       fa_equipment.guns_menu_left(pindex)
    end
 end
 
 ----Moves to the right  in a menu. Todo: split by menu. "menu_right"
 function menu_cursor_right(pindex)
+   local router = UiRouter.get_router(pindex)
+
    if players[pindex].item_selection then
       players[pindex].item_selector.index =
          math.min(#players[pindex].item_cache, players[pindex].item_selector.index + 1)
       read_item_selector_slot(pindex)
-   elseif players[pindex].menu == "inventory" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
       players[pindex].inventory.index = players[pindex].inventory.index + 1
       if players[pindex].inventory.index % 10 == 1 then
          if players[pindex].preferences.inventory_wraps_around == true then
@@ -2032,7 +2047,7 @@ function menu_cursor_right(pindex)
          game.get_player(pindex).play_sound({ path = "Inventory-Move" })
          read_inventory_slot(pindex)
       end
-   elseif players[pindex].menu == "player_trash" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
       local trash_inv = game.get_player(pindex).get_inventory(defines.inventory.character_trash)
       players[pindex].inventory.index = players[pindex].inventory.index + 1
       if players[pindex].inventory.index % 10 == 1 then
@@ -2051,14 +2066,14 @@ function menu_cursor_right(pindex)
          game.get_player(pindex).play_sound({ path = "Inventory-Move" })
          read_inventory_slot(pindex, "", trash_inv)
       end
-   elseif players[pindex].menu == "crafting" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
       players[pindex].crafting.index = players[pindex].crafting.index + 1
       if players[pindex].crafting.index > #players[pindex].crafting.lua_recipes[players[pindex].crafting.category] then
          players[pindex].crafting.index = 1
       end
       fa_crafting.read_crafting_slot(pindex)
-   elseif players[pindex].menu == "crafting_queue" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
       fa_crafting.load_crafting_queue(pindex)
       if players[pindex].crafting_queue.index >= players[pindex].crafting_queue.max then
@@ -2067,7 +2082,7 @@ function menu_cursor_right(pindex)
          players[pindex].crafting_queue.index = players[pindex].crafting_queue.index + 1
       end
       fa_crafting.read_crafting_queue(pindex)
-   elseif players[pindex].menu == "building" or players[pindex].menu == "vehicle" then
+   elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
       --Move along a row in a building inventory
       if players[pindex].building.sector <= #players[pindex].building.sectors then
          --Most building sectors, e.g. chest inventories
@@ -2125,11 +2140,11 @@ function menu_cursor_right(pindex)
             fa_sectors.read_building_recipe(pindex)
          end
       end
-   elseif players[pindex].menu == "technology" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
       Research.menu_move_horizontal(pindex, 1)
-   elseif players[pindex].menu == "belt" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.BELT) then
       BeltAnalyzer.belt_analyzer:on_right(pindex)
-   elseif players[pindex].menu == "warnings" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
       local warnings = {}
       if players[pindex].warnings.sector == 1 then
          warnings = players[pindex].warnings.short.warnings
@@ -2146,12 +2161,12 @@ function menu_cursor_right(pindex)
          end
       end
       fa_warnings.read_warnings_slot(pindex)
-   elseif players[pindex].menu == "travel" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       fa_travel.fast_travel_menu_right(pindex)
-   elseif players[pindex].menu == "signal_selector" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.SIGNAL_SELECTOR) then
       fa_circuits.signal_selector_signal_next(pindex)
       fa_circuits.read_selected_signal_slot(pindex, "")
-   elseif players[pindex].menu == "guns" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.GUNS) then
       fa_equipment.guns_menu_right(pindex)
    end
 end
@@ -2312,13 +2327,15 @@ end)
 --Todo: create a new function for all mouse pointer related updates within this function
 function move_characters(event)
    for pindex, player in pairs(players) do
+      local router = UiRouter.get_router(pindex)
+
       if player.vanilla_mode == true then
          player.player.game_view_settings.update_entity_selection = true
       elseif player.player.game_view_settings.update_entity_selection == false then
          --Force the mouse pointer to the mod cursor if there is an item in hand
          --(so that the game does not make a mess when you left click while the cursor is actually locked)
          local stack = game.get_player(pindex).cursor_stack
-         if players[pindex].in_menu == false and stack and stack.valid_for_read then
+         if not router:is_ui_open() and stack and stack.valid_for_read then
             if
                stack.prototype.place_result ~= nil
                or stack.prototype.place_as_tile_result ~= nil
@@ -2341,7 +2358,7 @@ function move_characters(event)
          end
       end
 
-      if player.walk ~= WALKING.SMOOTH or player.cursor or player.in_menu then
+      if player.walk ~= WALKING.SMOOTH or player.cursor or router:is_ui_open() then
          local walk = false
          while #player.move_queue > 0 do
             local next_move = player.move_queue[1]
@@ -2373,6 +2390,8 @@ end
 --Move the player character (or adapt the cursor to smooth walking)
 --Returns false if failed to move
 function move(direction, pindex, nudged)
+   local router = UiRouter.get_router(pindex)
+
    local p = game.get_player(pindex)
    if p.character == nil then return false end
    if p.vehicle then return true end
@@ -2415,9 +2434,9 @@ function move(direction, pindex, nudged)
          else
             local tile = game.get_player(pindex).surface.get_tile(new_pos.x, new_pos.y)
             local sound_path = "tile-walking/" .. tile.name
-            if helpers.is_valid_sound_path(sound_path) and players[pindex].in_menu == false then
+            if helpers.is_valid_sound_path(sound_path) and not router:is_ui_open() then
                game.get_player(pindex).play_sound({ path = "tile-walking/" .. tile.name, volume_modifier = 1 })
-            elseif players[pindex].in_menu == false then
+            elseif not router:is_ui_open() then
                game.get_player(pindex).play_sound({ path = "player-walk", volume_modifier = 1 })
             end
          end
@@ -2435,7 +2454,7 @@ function move(direction, pindex, nudged)
       end
 
       --Play a sound for audio ruler alignment (telestep moved)
-      if players[pindex].in_menu == false then Rulers.update_from_cursor(pindex) end
+      if not router:is_ui_open() then Rulers.update_from_cursor(pindex) end
    else
       --New direction: Turn character: --turn
       if players[pindex].walk == WALKING.TELESTEP then
@@ -2487,7 +2506,7 @@ function move(direction, pindex, nudged)
       end
 
       --Play a sound for audio ruler alignment (telestep turned)
-      if players[pindex].in_menu == false then Rulers.update_from_cursor(pindex) end
+      if not router:is_ui_open() then Rulers.update_from_cursor(pindex) end
    end
 
    --Update cursor highlight
@@ -2505,7 +2524,9 @@ end
 function move_key(direction, event, force_single_tile)
    local pindex = event.player_index
    local p = game.get_player(pindex)
-   if not check_for_player(pindex) or players[pindex].menu == "prompt" then return end
+   local router = UiRouter.get_router(pindex)
+
+   if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
    --Stop any enabled mouse entity selection
    if players[pindex].vanilla_mode ~= true then
       game.get_player(pindex).game_view_settings.update_entity_selection = false
@@ -2520,7 +2541,7 @@ function move_key(direction, event, force_single_tile)
    pex.bump.last_dir_key_1st = direction
    pex.bump.last_dir_key_tick = event.tick
 
-   if players[pindex].in_menu and players[pindex].menu ~= "prompt" then
+   if router:is_ui_open() and not router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then
       -- Menus: move menu cursor
       menu_cursor_move(direction, pindex)
    elseif players[pindex].cursor then
@@ -2535,15 +2556,15 @@ function move_key(direction, event, force_single_tile)
    if pex.bp_selecting then game.get_player(pindex).play_sound({ path = "cursor-moved-while-selecting" }) end
 
    --Play a sound for audio ruler alignment (cursor mode moved)
-   if players[pindex].in_menu == false and players[pindex].cursor then Rulers.update_from_cursor(pindex) end
+   if not router:is_ui_open() and players[pindex].cursor then Rulers.update_from_cursor(pindex) end
 
    --Handle vehicle behavior
    if p.vehicle then
       if p.vehicle.type == "car" then
          --Deactivate (and stop) cars when in a menu
-         if players[pindex].cursor or players[pindex].in_menu then p.vehicle.active = false end
+         if players[pindex].cursor or router:is_ui_open() then p.vehicle.active = false end
          --Re-activate inactive cars when in no menu
-         if not players[pindex].cursor and not players[pindex].in_menu and p.vehicle.active == false then
+         if not players[pindex].cursor and not router:is_ui_open() and p.vehicle.active == false then
             p.vehicle.active = true
             p.vehicle.speed = 0
          end
@@ -2660,7 +2681,9 @@ end
 
 --Called when a player enters or exits a vehicle
 script.on_event(defines.events.on_player_driving_changed_state, function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
    reset_bump_stats(pindex)
    game.get_player(pindex).clear_cursor()
@@ -2677,8 +2700,8 @@ script.on_event(defines.events.on_player_driving_changed_state, function(event)
          players[pindex].last_vehicle.train.manual_mode = true
       end
       fa_teleport.teleport_to_closest(pindex, players[pindex].last_vehicle.position, true, true)
-      if players[pindex].menu == "train_menu" then fa_trains.menu_close(pindex, false) end
-      if players[pindex].menu == "spider_menu" then fa_spidertrons.spider_menu_close(pindex, false) end
+      if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then fa_trains.menu_close(pindex, false) end
+      if router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then fa_spidertrons.spider_menu_close(pindex, false) end
    else
       printout("Driving state changed.", pindex)
    end
@@ -2748,9 +2771,11 @@ end)
 --Get distance and direction of cursor from player.
 ---@param event EventData.CustomInputEvent
 script.on_event("read-cursor-distance-and-direction", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].menu == "crafting" then
+   if router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
       --Read recipe ingredients / products (crafting menu)
       local recipe =
          players[pindex].crafting.lua_recipes[players[pindex].crafting.category][players[pindex].crafting.index]
@@ -2785,9 +2810,11 @@ end)
 --Get distance and direction of cursor from player as a vector with a horizontal component and vertical component.
 ---@param event EventData.CustomInputEvent
 script.on_event("read-cursor-distance-vector", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].menu ~= "crafting" then
+   if not router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
       local c_pos = players[pindex].cursor_pos
       local p_pos = players[pindex].position
       local diff_x = math.floor(c_pos.x) - math.floor(p_pos.x)
@@ -2826,7 +2853,8 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("read-character-coords", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+
    if not check_for_player(pindex) then return end
    local pos = game.get_player(pindex).position
    local result = "Character at " .. math.floor(pos.x) .. ", " .. math.floor(pos.y)
@@ -2935,9 +2963,11 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("toggle-cursor", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu then
+   if not router:is_ui_open() then
       players[pindex].move_queue = {}
       toggle_cursor_mode(pindex)
    end
@@ -2945,9 +2975,11 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("toggle-remote-view", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu then
+   if not router:is_ui_open() then
       players[pindex].move_queue = {}
       toggle_remote_view(pindex)
    end
@@ -2956,9 +2988,11 @@ end)
 --We have cursor sizes 1,3,5,11,21,51,101,251
 ---@param event EventData.CustomInputEvent
 script.on_event("cursor-size-increment", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu then
+   if not router:is_ui_open() then
       if players[pindex].cursor_size == 0 then
          players[pindex].cursor_size = 1
       elseif players[pindex].cursor_size == 1 then
@@ -2995,9 +3029,11 @@ end)
 --We have cursor sizes 1,3,5,11,21,51,101,251
 ---@param event EventData.CustomInputEvent
 script.on_event("cursor-size-decrement", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu then
+   if not router:is_ui_open() then
       if players[pindex].cursor_size == 1 then
          players[pindex].cursor_size = 0
       elseif players[pindex].cursor_size == 2 then
@@ -3033,9 +3069,12 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("increase-inventory-bar-by-1", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu and (players[pindex].menu == "building" or players[pindex].menu == "vehicle") then
+
+   if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
       --Chest bar setting: Increase
       local ent = game.get_player(pindex).opened
       local result = fa_sectors.add_to_inventory_bar(ent, 1)
@@ -3045,9 +3084,10 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("increase-inventory-bar-by-5", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu and (players[pindex].menu == "building" or players[pindex].menu == "vehicle") then
+   if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
       --Chest bar setting: Increase
       local ent = game.get_player(pindex).opened
       local result = fa_sectors.add_to_inventory_bar(ent, 5)
@@ -3057,9 +3097,11 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("increase-inventory-bar-by-100", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu and (players[pindex].menu == "building" or players[pindex].menu == "vehicle") then
+   if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
       --Chest bar setting: Increase
       local ent = game.get_player(pindex).opened
       local result = fa_sectors.add_to_inventory_bar(ent, 100)
@@ -3069,9 +3111,11 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("decrease-inventory-bar-by-1", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu and (players[pindex].menu == "building" or players[pindex].menu == "vehicle") then
+   if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
       --Chest bar setting: Decrease
       local ent = game.get_player(pindex).opened
       local result = fa_sectors.add_to_inventory_bar(ent, -1)
@@ -3081,9 +3125,11 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("decrease-inventory-bar-by-5", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu and (players[pindex].menu == "building" or players[pindex].menu == "vehicle") then
+   if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
       --Chest bar setting: Decrease
       local ent = game.get_player(pindex).opened
       local result = fa_sectors.add_to_inventory_bar(ent, -5)
@@ -3093,9 +3139,11 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("decrease-inventory-bar-by-100", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu and (players[pindex].menu == "building" or players[pindex].menu == "vehicle") then
+   if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
       --Chest bar setting: Decrease
       local ent = game.get_player(pindex).opened
       local result = fa_sectors.add_to_inventory_bar(ent, -100)
@@ -3105,51 +3153,60 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("increase-train-wait-times-by-5", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu and players[pindex].menu == "train_menu" then
+   if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
       fa_trains.change_instant_schedule_wait_time(5, pindex)
-   elseif players[pindex].in_menu and players[pindex].menu == "train_stop_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
       fa_train_stops.nearby_train_schedule_add_to_wait_time(5, pindex)
    end
 end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("increase-train-wait-times-by-60", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu and players[pindex].menu == "train_menu" then
+   if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
       fa_trains.change_instant_schedule_wait_time(60, pindex)
-   elseif players[pindex].in_menu and players[pindex].menu == "train_stop_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
       fa_train_stops.nearby_train_schedule_add_to_wait_time(60, pindex)
    end
 end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("decrease-train-wait-times-by-5", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu and players[pindex].menu == "train_menu" then
+   if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
       fa_trains.change_instant_schedule_wait_time(-5, pindex)
-   elseif players[pindex].in_menu and players[pindex].menu == "train_stop_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
       fa_train_stops.nearby_train_schedule_add_to_wait_time(-5, pindex)
    end
 end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("decrease-train-wait-times-by-60", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu and players[pindex].menu == "train_menu" then
+
+   if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
       fa_trains.change_instant_schedule_wait_time(-60, pindex)
-   elseif players[pindex].in_menu and players[pindex].menu == "train_stop_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
       fa_train_stops.nearby_train_schedule_add_to_wait_time(-60, pindex)
    end
 end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("inserter-hand-stack-size-up", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
    if p.opened and p.opened.type == "inserter" then
@@ -3163,7 +3220,7 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("inserter-hand-stack-size-down", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
    if p.opened and p.opened.type == "inserter" then
@@ -3177,7 +3234,7 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("read-rail-structure-ahead", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local ent = game.get_player(pindex).selected
    if game.get_player(pindex).driving and game.get_player(pindex).vehicle.train ~= nil then
@@ -3190,7 +3247,7 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("read-driving-structure-ahead", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
    if p.driving and (p.vehicle.train ~= nil or p.vehicle.type == "car") then
@@ -3213,7 +3270,7 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("read-rail-structure-behind", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local ent = game.get_player(pindex).selected
    if game.get_player(pindex).driving and game.get_player(pindex).vehicle.train ~= nil then
@@ -3226,7 +3283,7 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("rescan", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
    ScannerEntrypoint.do_refresh(pindex)
 end)
 
@@ -3312,7 +3369,9 @@ script.on_event("pickup-items-info", function(event)
 end)
 
 function read_item_pickup_state(pindex)
-   if players[pindex].in_menu then
+   local router = UiRouter.get_router(pindex)
+
+   if router:is_ui_open() then
       printout("Cannot pickup items while in a menu", pindex)
       return
    end
@@ -3397,19 +3456,23 @@ end)
 --Reads other entities on the same tile? Note: Possibly unneeded
 ---@param event EventData.CustomInputEvent
 script.on_event("tile-cycle", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu then tile_cycle(pindex) end
+   if not router:is_ui_open() then tile_cycle(pindex) end
 end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("open-inventory", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then
       return
-   elseif players[pindex].in_menu or players[pindex].last_menu_toggle_tick == event.tick then
+   elseif router:is_ui_open() or players[pindex].last_menu_toggle_tick == event.tick then
       return
-   elseif not players[pindex].in_menu then
+   elseif not router:is_ui_open() then
       open_player_inventory(event.tick, pindex)
    end
 end)
@@ -3417,12 +3480,13 @@ end)
 --Sets up mod character menus. Cannot actually open the character GUI.
 function open_player_inventory(tick, pindex)
    local p = game.get_player(pindex)
+   local router = UiRouter.get_router(pindex)
+
    if p.ticks_to_respawn ~= nil or p.character == nil then return end
    p.play_sound({ path = "Open-Inventory-Sound" })
    p.selected = nil
    players[pindex].last_menu_toggle_tick = tick
-   players[pindex].in_menu = true
-   players[pindex].menu = "inventory"
+   router:open_ui(UiRouter.UI_NAMES.INVENTORY)
    players[pindex].inventory.lua_inventory = p.character.get_main_inventory()
    players[pindex].inventory.max = #players[pindex].inventory.lua_inventory
    players[pindex].inventory.index = 1
@@ -3435,19 +3499,23 @@ end
 
 ---@param event EventData.CustomInputEvent
 script.on_event("close-menu-access", function(event) --close_menu, menu closed
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
    players[pindex].move_queue = {}
-   if not players[pindex].in_menu or players[pindex].last_menu_toggle_tick == event.tick then
+   if not router:is_ui_open() or players[pindex].last_menu_toggle_tick == event.tick then
       return
-   elseif players[pindex].in_menu and players[pindex].menu ~= "prompt" then
+   elseif not router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then
       printout("Menu closed.", pindex)
       if
-         players[pindex].menu == "inventory"
-         or players[pindex].menu == "crafting"
-         or players[pindex].menu == "technology"
-         or players[pindex].menu == "crafting_queue"
-         or players[pindex].menu == "warnings"
+         router:is_ui_one_of({
+            UiRouter.UI_NAMES.INVENTORY,
+            UiRouter.UI_NAMES.CRAFTING,
+            UiRouter.UI_NAMES.TECHNOLOGY,
+            UiRouter.UI_NAMES.CRAFTING_QUEUE,
+            UiRouter.UI_NAMES.WARNINGS,
+         })
       then --**laterdo open close inv sounds in other menus?
          game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" })
       end
@@ -3458,23 +3526,25 @@ end)
 
 function close_menu_resets(pindex)
    local p = game.get_player(pindex)
-   if players[pindex].menu == "travel" then
+   local router = UiRouter.get_router(pindex)
+
+   if router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       fa_travel.fast_travel_menu_close(pindex)
-   elseif players[pindex].menu == "rail_builer" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.RAIL_BUILDER) then
       fa_rail_builder.close_menu(pindex, false)
-   elseif players[pindex].menu == "train_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
       fa_trains.menu_close(pindex, false)
-   elseif players[pindex].menu == "spider_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then
       fa_spidertrons.spider_menu_close(pindex, false)
-   elseif players[pindex].menu == "train_stop_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
       fa_train_stops.train_stop_menu_close(pindex, false)
-   elseif players[pindex].menu == "roboport_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.ROBOPORT) then
       fa_bot_logistics.roboport_menu_close(pindex)
-   elseif players[pindex].menu == "blueprint_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT) then
       BlueprintsMenu.blueprint_menu_tabs:close(pindex, false)
-   elseif players[pindex].menu == "blueprint_book_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
       fa_blueprints.blueprint_book_menu_close(pindex)
-   elseif players[pindex].menu == "circuit_network_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.CIRCUIT_NETWORK) then
       fa_circuits.circuit_network_menu_close(pindex, false)
    end
 
@@ -3487,10 +3557,8 @@ function close_menu_resets(pindex)
 
    --Reset unconfirmed actions
    players[pindex].confirm_action_tick = 0
+   router:close_ui()
 
-   --Reset menu vars
-   players[pindex].in_menu = false
-   players[pindex].menu = "none"
    players[pindex].entering_search_term = false
    players[pindex].menu_search_index = nil
    players[pindex].menu_search_index_2 = nil
@@ -3514,30 +3582,31 @@ end
 script.on_event("read-menu-name", function(event) --read_menu_name
    pindex = event.player_index
    if not check_for_player(pindex) then return end
-   local menu_name = "menu "
-   if players[pindex].in_menu == false then
-      menu_name = "no menu"
-   elseif players[pindex].menu ~= nil and players[pindex].menu ~= "" then
-      menu_name = players[pindex].menu
-      if players[pindex].menu == "building" or players[pindex].menu == "vehicle" then
-         --Name the building
-         local pb = players[pindex].building
-         menu_name = menu_name .. " " .. pb.ent.name
-         --Name the sector
-         if pb.sectors and pb.sectors[pb.sector] and pb.sectors[pb.sector].name ~= nil then
-            menu_name = menu_name .. ", " .. pb.sectors[pb.sector].name
-         elseif players[pindex].building.recipe_selection == true then
-            menu_name = menu_name .. ", recipe selection"
-         elseif players[pindex].building.sector_name == "player inventory from building" then
-            menu_name = menu_name .. ", player inventory"
-         else
-            menu_name = menu_name .. ", other section"
-         end
+   local router = UiRouter.get_router(pindex)
+
+   local msg = MessageBuilder.MessageBuilder.new()
+
+   if not router:is_ui_open() then msg:fragment("No menu") end
+
+   if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
+      --Name the building
+      local pb = players[pindex].building
+      msg:fragment(pb.ent.name)
+      --Name the sector
+      if pb.sectors and pb.sectors[pb.sector] and pb.sectors[pb.sector].name ~= nil then
+         msg:list_item(pb.sectors[pb.sector].name)
+      elseif players[pindex].building.recipe_selection == true then
+         msg:list_item("recipe selection")
+      elseif players[pindex].building.sector_name == "player inventory from building" then
+         msg:list_item("player inventory")
+      else
+         msg:list_item("other section")
       end
    else
-      menu_name = "unknown menu"
+      msg:fragment("Unknown menu")
    end
-   printout(menu_name, pindex)
+
+   printout(msg:build(), pindex)
 end)
 
 --Quickbar event handlers
@@ -3558,7 +3627,9 @@ script.on_event(quickbar_page_events, fa_quickbar.quickbar_page_handler)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("switch-menu-or-gun", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
 
    if players[pindex].started ~= true then
@@ -3570,9 +3641,9 @@ script.on_event("switch-menu-or-gun", function(event)
    local trash_inv = game.get_player(pindex).get_inventory(defines.inventory.character_trash)
    local logistics_researched = (trash_inv ~= nil and trash_inv.valid and #trash_inv > 0)
 
-   if players[pindex].in_menu and players[pindex].menu ~= "prompt" then
+   if router:is_ui_open() and not router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then
       game.get_player(pindex).play_sound({ path = "Change-Menu-Tab-Sound" })
-      if players[pindex].menu == "building" or players[pindex].menu == "vehicle" then
+      if router:is_ui_one_of({ UiRouter.UI_NAMES.VEHICLE, UiRouter.UI_NAMES.BUILDING }) then
          players[pindex].building.index = 1
          players[pindex].building.category = 1
          players[pindex].building.recipe_selection = false
@@ -3615,37 +3686,37 @@ script.on_event("switch-menu-or-gun", function(event)
                fa_sectors.read_sector_slot(pindex, true)
             end
          end
-      elseif players[pindex].menu == "inventory" then
-         players[pindex].menu = "crafting"
+      elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
+         router:open_ui(UiRouter.UI_NAMES.CRAFTING)
          fa_crafting.read_crafting_slot(pindex, "Crafting, ")
-      elseif players[pindex].menu == "crafting" then
-         players[pindex].menu = "crafting_queue"
+      elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
+         router:open_ui(UiRouter.UI_NAMES.CRAFTING_QUEUE)
          fa_crafting.load_crafting_queue(pindex)
          fa_crafting.read_crafting_queue(
             pindex,
             "Crafting queue, " .. fa_crafting.get_crafting_que_total(pindex) .. " total, "
          )
-      elseif players[pindex].menu == "crafting_queue" then
-         players[pindex].menu = "technology"
+      elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
+         router:open_ui(UiRouter.UI_NAMES.TECHNOLOGY)
          Research.menu_announce_entry(pindex)
-      elseif players[pindex].menu == "technology" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
          if logistics_researched then
-            players[pindex].menu = "player_trash"
+            router:open_ui(UiRouter.UI_NAMES.PLAYER_TRASH)
             read_inventory_slot(
                pindex,
                "Logistic trash, ",
                game.get_player(pindex).get_inventory(defines.inventory.character_trash)
             )
          else
-            players[pindex].menu = "inventory"
+            router:open_ui(UiRouter.UI_NAMES.INVENTORY)
             read_inventory_slot(pindex, "Inventory, ")
          end
-      elseif players[pindex].menu == "player_trash" then
-         players[pindex].menu = "inventory"
+      elseif router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
+         router:open_ui(UiRouter.UI_NAMES.INVENTORY)
          read_inventory_slot(pindex, "Inventory, ")
-      elseif players[pindex].menu == "belt" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.BELT) then
          BeltAnalyzer.belt_analyzer:on_next_tab(pindex)
-      elseif players[pindex].menu == "warnings" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
          players[pindex].warnings.sector = players[pindex].warnings.sector + 1
          if players[pindex].warnings.sector > 3 then players[pindex].warnings.sector = 1 end
          if players[pindex].warnings.sector == 1 then
@@ -3670,7 +3741,7 @@ script.on_event("switch-menu-or-gun", function(event)
    local result = ""
    local switched_index = -2
 
-   if players[pindex].in_menu then
+   if router:is_ui_open() then
       --switch_success = swap_weapon_backward(pindex,true)
       switched_index = swap_weapon_backward(pindex, true)
       return
@@ -3692,7 +3763,7 @@ script.on_event("switch-menu-or-gun", function(event)
       result = gun_stack.name .. " with " .. ammo_stack.count .. " " .. ammo_stack.name .. "s "
    end
 
-   if not players[pindex].in_menu then
+   if not router:is_ui_open() then
       --p.play_sound{path = "Inventory-Move"}
       printout(result, pindex)
    end
@@ -3700,16 +3771,18 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("reverse-switch-menu-or-gun", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
 
    --Check if logistics have been researched
    local trash_inv = game.get_player(pindex).get_inventory(defines.inventory.character_trash)
    local logistics_researched = (trash_inv ~= nil and trash_inv.valid and #trash_inv > 0)
 
-   if players[pindex].in_menu and players[pindex].menu ~= "prompt" then
+   if router:is_ui_open() and not router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then
       game.get_player(pindex).play_sound({ path = "Change-Menu-Tab-Sound" })
-      if players[pindex].menu == "building" or players[pindex].menu == "vehicle" then
+      if router:is_ui_one_of({ UiRouter.UI_NAMES.VEHICLE, UiRouter.UI_NAMES.BUILDING }) then
          players[pindex].building.category = 1
          players[pindex].building.recipe_selection = false
          players[pindex].building.index = 1
@@ -3752,37 +3825,37 @@ script.on_event("reverse-switch-menu-or-gun", function(event)
                players[pindex].building.sector_name = "player inventory from building"
             end
          end
-      elseif players[pindex].menu == "inventory" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
          if logistics_researched then
-            players[pindex].menu = "player_trash"
+            router:open_ui(UiRouter.UI_NAMES.PLAYER_TRASH)
             read_inventory_slot(
                pindex,
                "Logistic trash, ",
                game.get_player(pindex).get_inventory(defines.inventory.character_trash)
             )
          else
-            players[pindex].menu = "technology"
+            router:open_ui(UiRouter.UI_NAMES.TECHNOLOGY)
             Research.menu_announce_entry(pindex)
          end
-      elseif players[pindex].menu == "player_trash" then
-         players[pindex].menu = "technology"
+      elseif router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
+         router:open_ui(UiRouter.UI_NAMES.TECHNOLOGY)
          Research.menu_announce_entry(pindex)
-      elseif players[pindex].menu == "crafting_queue" then
-         players[pindex].menu = "crafting"
+      elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
+         router:open_ui(UiRouter.UI_NAMES.CRAFTING)
          fa_crafting.read_crafting_slot(pindex, "Crafting, ")
-      elseif players[pindex].menu == "technology" then
-         players[pindex].menu = "crafting_queue"
+      elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
+         router:open_ui(UiRouter.UI_NAMES.CRAFTING_QUEUE)
          fa_crafting.load_crafting_queue(pindex)
          fa_crafting.read_crafting_queue(
             pindex,
             "Crafting queue, " .. fa_crafting.get_crafting_que_total(pindex) .. " total, "
          )
-      elseif players[pindex].menu == "crafting" then
-         players[pindex].menu = "inventory"
+      elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
+         router:open_ui(UiRouter.UI_NAMES.INVENTORY)
          read_inventory_slot(pindex, "Inventory, ")
-      elseif players[pindex].menu == "belt" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.BELT) then
          BeltAnalyzer.belt_analyzer:on_previous_tab(pindex)
-      elseif players[pindex].menu == "warnings" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
          players[pindex].warnings.sector = players[pindex].warnings.sector - 1
          if players[pindex].warnings.sector < 1 then players[pindex].warnings.sector = 3 end
          if players[pindex].warnings.sector == 1 then
@@ -3807,7 +3880,7 @@ script.on_event("reverse-switch-menu-or-gun", function(event)
    local result = ""
    local switched_index = -2
 
-   if players[pindex].in_menu then
+   if router:is_ui_open() then
       --do nothing
       return
    else
@@ -3828,7 +3901,7 @@ script.on_event("reverse-switch-menu-or-gun", function(event)
       result = gun_stack.name .. " with " .. ammo_stack.count .. " " .. ammo_stack.name .. "s "
    end
 
-   if not players[pindex].in_menu then
+   if not router:is_ui_open() then
       p.play_sound({ path = "Inventory-Move" })
       printout(result, pindex)
    end
@@ -3930,11 +4003,13 @@ end
 
 ---@param event EventData.CustomInputEvent
 script.on_event("delete", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
    local hand = p.cursor_stack
-   if players[pindex].menu == "blueprint_book_menu" and players[pindex].blueprint_book_menu.list_mode == true then
+   if router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) and players[pindex].blueprint_book_menu.list_mode == true then
       --WIP
    elseif hand and hand.valid_for_read then
       local is_planner = hand.is_blueprint
@@ -3953,9 +4028,11 @@ end)
 --Creates sound effects for vanilla mining
 ---@param event EventData.CustomInputEvent
 script.on_event("mine-access-sounds", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu and not players[pindex].vanilla_mode then
+   if not router:is_ui_open() and not players[pindex].vanilla_mode then
       local ent = game.get_player(pindex).selected
       if ent and ent.valid and (ent.prototype.mineable_properties.products ~= nil) and ent.type ~= "resource" then
          game.get_player(pindex).play_sound({ path = "player-mine" })
@@ -3969,9 +4046,11 @@ end)
 --Also added: delete blueprints while browsing the blueprint book menu
 ---@param event EventData.CustomInputEvent
 script.on_event("mine-tiles", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu and not players[pindex].vanilla_mode then
+   if not router:is_ui_open() and not players[pindex].vanilla_mode then
       --Mine tiles around the cursor
       local stack = game.get_player(pindex).cursor_stack
       local surf = game.get_player(pindex).surface
@@ -3986,7 +4065,7 @@ script.on_event("mine-tiles", function(event)
             if mined then game.get_player(pindex).play_sound({ path = "entity-mined/stone-furnace" }) end
          end
       end
-   elseif players[pindex].menu == "blueprint_book_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
       local menu = players[pindex].blueprint_book_menu
       fa_blueprints.remove_item_from_book(pindex, game.get_player(pindex).cursor_stack, menu.index)
    end
@@ -4033,9 +4112,11 @@ end)
 --Mines groups of entities depending on the name or type. Includes trees and rocks, rails.
 ---@param event EventData.CustomInputEvent
 script.on_event("mine-area", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu then return end
+   if router:is_ui_open() then return end
    local p = game.get_player(pindex)
    local ent = game.get_player(pindex).selected
    local cleared_count = 0
@@ -4178,9 +4259,11 @@ end)
 --Long range area mining. Includes only ghosts for now.
 ---@param event EventData.CustomInputEvent
 script.on_event("super-mine-area", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu then return end
+   if router:is_ui_open() then return end
    local ent = game.get_player(pindex).selected
    local cleared_count = 0
 
@@ -4227,12 +4310,14 @@ end)
 --Right click actions in menus (click_menu)
 ---@param event EventData.CustomInputEvent
 script.on_event("click-menu-right", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
    if players[pindex].last_click_tick == event.tick then return end
-   if players[pindex].in_menu then
+   if router:is_ui_open() then
       players[pindex].last_click_tick = event.tick
-      if players[pindex].menu == "inventory" then
+      if router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
          --Player inventory: Take half
          local p = game.get_player(pindex)
          local stack_cur = p.cursor_stack
@@ -4267,7 +4352,7 @@ script.on_event("click-menu-right", function(event)
             p.get_main_inventory().insert({ name = name, count = bigger_half })
          end
          players[pindex].inventory.max = #players[pindex].inventory.lua_inventory
-      elseif players[pindex].menu == "building" or players[pindex].menu == "vehicle" then
+      elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
          local sectors_i = players[pindex].building.sectors[players[pindex].building.sector]
          if
             players[pindex].building.sector <= #players[pindex].building.sectors
@@ -4305,31 +4390,36 @@ script.on_event("rightbracket-key-id", function(event) end)
 --Left click actions in menus (click_menu)
 ---@param event EventData.CustomInputEvent
 script.on_event("click-menu", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
    if players[pindex].last_click_tick == event.tick then return end
    local p = game.get_player(pindex)
-   local menu = players[pindex].menu
-   if players[pindex].in_menu then
+
+   if router:is_ui_open() then
       players[pindex].last_click_tick = event.tick
       --Clear temporary cursor items instead of swapping them in
-      if p.cursor_stack_temporary and menu ~= "blueprint_menu" and menu ~= "blueprint_book_menu" then
+      if
+         p.cursor_stack_temporary
+         and not router:is_ui_one_of({ UiRouter.UI_NAMES.BLUEPRINT, UiRouter.UI_NAMES.BLUEPRINT_BOOK })
+      then
          p.clear_cursor()
       end
       --Act according to the type of menu open
-      if players[pindex].menu == "inventory" then
+      if router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
          --Swap stacks
          game.get_player(pindex).play_sound({ path = "utility/inventory_click" })
          local stack = players[pindex].inventory.lua_inventory[players[pindex].inventory.index]
          game.get_player(pindex).cursor_stack.swap_stack(stack)
          players[pindex].inventory.max = #players[pindex].inventory.lua_inventory
-      elseif players[pindex].menu == "player_trash" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
          local trash_inv = game.get_player(pindex).get_inventory(defines.inventory.character_trash)
          --Swap stacks
          game.get_player(pindex).play_sound({ path = "utility/inventory_click" })
          local stack = trash_inv[players[pindex].inventory.index]
          game.get_player(pindex).cursor_stack.swap_stack(stack)
-      elseif players[pindex].menu == "crafting" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
          --Check recipe category
          local recipe =
             players[pindex].crafting.lua_recipes[players[pindex].crafting.category][players[pindex].crafting.index]
@@ -4383,7 +4473,7 @@ script.on_event("click-menu", function(event)
             local result = fa_crafting.recipe_missing_ingredients_info(pindex)
             printout(result, pindex)
          end
-      elseif players[pindex].menu == "crafting_queue" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
          --Cancel 1
          fa_crafting.load_crafting_queue(pindex)
          if players[pindex].crafting_queue.max >= 1 then
@@ -4395,7 +4485,7 @@ script.on_event("click-menu", function(event)
             fa_crafting.load_crafting_queue(pindex)
             fa_crafting.read_crafting_queue(pindex, "cancelled 1, ")
          end
-      elseif players[pindex].menu == "building" or players[pindex].menu == "vehicle" then
+      elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
          local sectors_i = players[pindex].building.sectors[players[pindex].building.sector]
          if players[pindex].building.sector <= #players[pindex].building.sectors and #sectors_i.inventory > 0 then
             if sectors_i.name == "Fluid" then
@@ -4594,19 +4684,18 @@ script.on_event("click-menu", function(event)
                ----               read_inventory_slot(pindex)
             end
          end
-      elseif players[pindex].menu == "technology" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
          Research.menu_start_research(pindex)
-      elseif players[pindex].menu == "pump" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.PUMP) then
          if players[pindex].pump.index == 0 then
             printout("Move up and down to select a location.", pindex)
             return
          end
          local entry = players[pindex].pump.positions[players[pindex].pump.index]
          game.get_player(pindex).build_from_cursor({ position = entry.position, direction = entry.direction })
-         players[pindex].in_menu = false
-         players[pindex].menu = "none"
+         router:close_ui()
          printout("Pump placed.", pindex)
-      elseif players[pindex].menu == "warnings" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
          local warnings = {}
          if players[pindex].warnings.sector == 1 then
             warnings = players[pindex].warnings.short.warnings
@@ -4629,8 +4718,6 @@ script.on_event("click-menu", function(event)
                   "fa.teleported-cursor-to",
                   "" .. math.floor(players[pindex].cursor_pos.x) .. " " .. math.floor(players[pindex].cursor_pos.y),
                }, pindex)
-            --               players[pindex].menu = ""
-            --               players[pindex].in_menu = false
             else
                printout("Blank", pindex)
             end
@@ -4640,48 +4727,44 @@ script.on_event("click-menu", function(event)
                pindex
             )
          end
-      elseif players[pindex].menu == "travel" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
          fa_travel.fast_travel_menu_click(pindex)
-      elseif players[pindex].menu == "rail_builder" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.RAIL_BUILDER) then
          fa_rail_builder.run_menu(pindex, true)
          fa_rail_builder.close_menu(pindex, false)
-      elseif players[pindex].menu == "train_menu" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
          fa_trains.run_train_menu(players[pindex].train_menu.index, pindex, true)
-      elseif players[pindex].menu == "spider_menu" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then
          fa_spidertrons.run_spider_menu(
             players[pindex].spider_menu.index,
             pindex,
             game.get_player(pindex).cursor_stack,
             true
          )
-      elseif players[pindex].menu == "train_stop_menu" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
          fa_train_stops.run_train_stop_menu(players[pindex].train_stop_menu.index, pindex, true)
-      elseif players[pindex].menu == "roboport_menu" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.ROBOPORT) then
          fa_bot_logistics.run_roboport_menu(players[pindex].roboport_menu.index, pindex, true)
-      elseif players[pindex].menu == "blueprint_menu" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT) then
          BlueprintsMenu.blueprint_menu_tabs:on_click(pindex)
-      elseif players[pindex].menu == "blueprint_book_menu" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
          local bpb_menu = players[pindex].blueprint_book_menu
          fa_blueprints.run_blueprint_book_menu(pindex, bpb_menu.index, bpb_menu.list_mode, true, false)
-      elseif players[pindex].menu == "circuit_network_menu" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.CIRCUIT_NETWORK) then
          fa_circuits.circuit_network_menu_run(pindex, nil, players[pindex].circuit_network_menu.index, true, false)
-      elseif players[pindex].menu == "signal_selector" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.SIGNAL_SELECTOR) then
          fa_circuits.apply_selected_signal_to_enabled_condition(
             pindex,
             players[pindex].signal_selector.ent,
             players[pindex].signal_selector.editing_first_slot
          )
-      elseif players[pindex].menu == "guns" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.GUNS) then
          fa_equipment.guns_menu_click_slot(pindex)
       end
    end
 end)
 
---WIP: Different behavior when you click on an inventory slot depending on the item in hand and the item in the slot (WIP)
 function player_inventory_click(pindex, left_click)
-   --****todo finish this to include all interaction cases, then generalize it to building inventories .
-   --Use code from above and then replace above clutter with calls to this.
-   --Use stack.transfer_stack(other_stack)
    local click_is_left = left_click or true
    local p = game.get_player(pindex)
    local stack_cur = p.cursor_stack
@@ -4704,11 +4787,13 @@ end
 --Left click actions with items in hand
 ---@param event EventData.CustomInputEvent
 script.on_event("click-hand", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
    if players[pindex].last_click_tick == event.tick then return end
-   if players[pindex].in_menu then
+   if router:is_ui_open() then
       return
    else
       --Not in a menu
@@ -4909,11 +4994,13 @@ end)
 --Right click actions with items in hand
 ---@param event EventData.CustomInputEvent
 script.on_event("click-hand-right", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
    if players[pindex].last_click_tick == event.tick then return end
-   if players[pindex].in_menu then
+   if router:is_ui_open() then
       return
    else
       --Not in a menu
@@ -4997,11 +5084,13 @@ end)
 --Left click actions with no menu and no items in hand
 ---@param event EventData.CustomInputEvent
 script.on_event("click-entity", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
    if players[pindex].last_click_tick == event.tick then return end
    if players[pindex].vanilla_mode == true then return end
-   if players[pindex].in_menu then
+   if router:is_ui_open() then
       return
    else
       --Not in a menu
@@ -5106,14 +5195,17 @@ end
 --For a building, opens circuit menu
 ---@param event EventData.CustomInputEvent
 script.on_event("open-circuit-menu", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
    --In a building menu
    if
-      players[pindex].menu == "building"
-      or players[pindex].menu == "building_no_sectors"
-      or players[pindex].menu == "belt"
+      router:is_ui_one_of({
+         UiRouter.UI_NAMES.BUILDING < UiRouter.UI_NAMES.BUILDING_NO_SECTORS,
+         UiRouter.UI_NAMES.BELT,
+      })
    then
       local ent = p.opened
       if ent == nil or ent.valid == false then
@@ -5146,7 +5238,7 @@ script.on_event("open-circuit-menu", function(event)
       end
       --Open the menu
       fa_circuits.circuit_network_menu_open(pindex, ent)
-   elseif players[pindex].in_menu == false then
+   elseif not router:is_ui_open() then
       local ent = p.selected or get_first_ent_at_tile(pindex)
       if ent == nil or ent.valid == false or (ent.get_control_behavior() == nil and ent.type ~= "electric-pole") then
          --Sort scan results instead
@@ -5179,10 +5271,12 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("repair-area", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
    if players[pindex].last_click_tick == event.tick then return end
-   if players[pindex].in_menu then
+   if router:is_ui_open() then
       return
    else
       --Not in a menu
@@ -5204,10 +5298,12 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("crafting-all", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu then
-      if players[pindex].menu == "crafting" then
+   if router:is_ui_open() then
+      if router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
          local recipe =
             players[pindex].crafting.lua_recipes[players[pindex].crafting.category][players[pindex].crafting.index]
          local T = {
@@ -5231,7 +5327,7 @@ script.on_event("crafting-all", function(event)
          else
             printout("Not enough materials", pindex)
          end
-      elseif players[pindex].menu == "crafting_queue" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
          fa_crafting.load_crafting_queue(pindex)
          if players[pindex].crafting_queue.max >= 1 then
             local T = {
@@ -5249,10 +5345,12 @@ end)
 --Transfers a stack from one inventory to another. Preserves BP data.
 ---@param event EventData.CustomInputEvent
 script.on_event("transfer-one-stack", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu then
-      if players[pindex].menu == "building" or players[pindex].menu == "vehicle" then
+   if router:is_ui_open() then
+      if router:is_ui_one_of({ UiRouter.UI_NAMES.VEHICLE, UiRouter.UI_NAMES.BUILDING }) then
          if
             players[pindex].building.sector <= #players[pindex].building.sectors
             and #players[pindex].building.sectors[players[pindex].building.sector].inventory > 0
@@ -5263,7 +5361,7 @@ script.on_event("transfer-one-stack", function(event)
                players[pindex].building.sectors[players[pindex].building.sector].inventory[players[pindex].building.index]
             if stack and stack.valid and stack.valid_for_read then
                if
-                  players[pindex].menu == "vehicle"
+                  router:is_ui_open(UiRouter.UI_NAMES.VEHICLE)
                   and game.get_player(pindex).opened.type == "spider-vehicle"
                   and stack.prototype.place_as_equipment_result ~= nil
                then
@@ -5295,7 +5393,7 @@ script.on_event("transfer-one-stack", function(event)
                local stack = players[pindex].inventory.lua_inventory[players[pindex].inventory.index]
                if stack and stack.valid and stack.valid_for_read then
                   if
-                     players[pindex].menu == "vehicle"
+                     router:is_ui_open(UiRouter.UI_NAMES.VEHICLE)
                      and game.get_player(pindex).opened.type == "spider-vehicle"
                      and stack.prototype.place_as_equipment_result ~= nil
                   then
@@ -5322,37 +5420,21 @@ end)
 --You can equip armor, armor equipment, guns, ammo. You can equip from the hand, or from the inventory with an empty hand.
 ---@param event EventData.CustomInputEvent
 script.on_event("equip-item", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
    local stack = game.get_player(pindex).cursor_stack
    local result = ""
    if stack ~= nil and stack.valid_for_read and stack.valid then
       --Equip item grabbed in hand, for selected menus
       if
-         not players[pindex].in_menu
-         or players[pindex].menu == "inventory"
-         or players[pindex].menu == "guns"
-         or (players[pindex].menu == "vehicle" and game.get_player(pindex).opened.type == "spider-vehicle")
+         not router:is_ui_open()
+         or router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.GUNS })
+         or (router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle")
       then
          result = fa_equipment.equip_it(stack, pindex)
       end
-   elseif players[pindex].menu == "inventory" then
-      --Equip the selected item from its inventory slot directly
-      local stack = game.get_player(pindex).get_main_inventory()[players[pindex].inventory.index]
-      result = fa_equipment.equip_it(stack, pindex)
-   elseif players[pindex].menu == "vehicle" and game.get_player(pindex).opened.type == "spider-vehicle" then
-      --Equip the selected item from its inventory slot directly
-      local stack
-      if players[pindex].building.sector <= #players[pindex].building.sectors then
-         local invs = defines.inventory
-         stack = game.get_player(pindex).opened.get_inventory(invs.spider_trunk)[players[pindex].building.index]
-      else
-         stack = players[pindex].inventory.lua_inventory[players[pindex].inventory.index]
-      end
-      result = fa_equipment.equip_it(stack, pindex)
-   elseif players[pindex].menu == "building" or players[pindex].menu == "vehicle" then
-      --Something will be smart-inserted so do nothing here
-      return
    end
 
    if result ~= "" then
@@ -5364,9 +5446,11 @@ end)
 --Has the same input as the ghost placement function and so it uses that
 ---@param event EventData.CustomInputEvent
 script.on_event("open-rail-builder", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu then
+   if router:is_ui_open() then
       if players[pindex].ghost_rail_planning == true then game.get_player(pindex).clear_cursor() end
       return
    elseif players[pindex].ghost_rail_planning == true then
@@ -5423,11 +5507,13 @@ end)
 ]]
 ---@param event EventData.CustomInputEvent
 script.on_event("transfer-all-stacks", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
 
-   if players[pindex].in_menu then
-      if players[pindex].menu == "building" or players[pindex].menu == "vehicle" then
+   if router:is_ui_open() then
+      if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
          do_multi_stack_transfer(1, pindex)
       end
    end
@@ -5436,10 +5522,11 @@ end)
 --Default is control clicking
 ---@param event EventData.CustomInputEvent
 script.on_event("fa-alternate-build", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
    if not check_for_player(pindex) then return end
 
-   if players[pindex].in_menu then
+   if router:is_ui_open() then
       return
    else
       --Not in a menu
@@ -5461,11 +5548,13 @@ end)
 ]]
 ---@param event EventData.CustomInputEvent
 script.on_event("transfer-half-of-all-stacks", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
 
-   if players[pindex].in_menu then
-      if players[pindex].menu == "building" or players[pindex].menu == "vehicle" then
+   if router:is_ui_open() then
+      if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
          do_multi_stack_transfer(0.5, pindex)
       end
    end
@@ -5614,10 +5703,12 @@ end
 
 ---@param event EventData.CustomInputEvent
 script.on_event("crafting-5", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu then
-      if players[pindex].menu == "crafting" then
+   if router:is_ui_open() then
+      if router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
          local recipe =
             players[pindex].crafting.lua_recipes[players[pindex].crafting.category][players[pindex].crafting.index]
          local T = {
@@ -5641,7 +5732,7 @@ script.on_event("crafting-5", function(event)
          else
             printout("Not enough materials", pindex)
          end
-      elseif players[pindex].menu == "crafting_queue" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
          fa_crafting.load_crafting_queue(pindex)
          if players[pindex].crafting_queue.max >= 1 then
             local T = {
@@ -5658,10 +5749,12 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("menu-clear-filter", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu then
-      if players[pindex].menu == "building" or players[pindex].menu == "vehicle" then
+   if router:is_ui_open() then
+      if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
          local stack = game.get_player(pindex).cursor_stack
          if players[pindex].building.sector <= #players[pindex].building.sectors then
             if stack and stack.valid_for_read and stack.valid and stack.count > 0 then
@@ -5696,9 +5789,11 @@ end)
 --Reads the entity status but also adds on extra info depending on the entity
 ---@param event EventData.CustomInputEvent
 script.on_event("read-entity-status", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].menu == "crafting" or players[pindex].menu == "crafting_queue" then return end
+   if router:is_ui_one_of({ UiRouter.UI_NAMES.CRAFTING, UiRouter.UI_NAMES.CRAFTING_QUEUE }) then return end
    local result = fa_info.read_selected_entity_status(pindex)
    if result ~= nil and result ~= "" then printout(result, pindex) end
 end)
@@ -5716,7 +5811,7 @@ end)
 --Does not work yet
 ---@param event EventData.CustomInputEvent
 script.on_event("flip-blueprint-horizontal-info", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
    local bp = p.cursor_stack
@@ -5727,7 +5822,7 @@ end)
 --Does not work yet
 ---@param event EventData.CustomInputEvent
 script.on_event("flip-blueprint-vertical-info", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
    local bp = p.cursor_stack
@@ -5737,20 +5832,24 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("inventory-read-weapons-data", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if not players[pindex].in_menu then
+   if not router:is_ui_open() then
       return
-   elseif players[pindex].menu == "inventory" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
       fa_equipment.guns_menu_open(pindex)
    end
 end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("inventory-reload-weapons", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].menu == "inventory" or players[pindex].menu == "guns" then
+   if router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.GUNS }) then
       --Reload weapons
       local result = fa_equipment.reload_weapons(pindex)
       --game.get_player(pindex).print(result)
@@ -5760,9 +5859,11 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("inventory-remove-all-weapons-and-ammo", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].menu == "inventory" or players[pindex].menu == "guns" then
+   if router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.GUNS }) then
       local result = fa_equipment.remove_weapons_and_ammo(pindex)
       --game.get_player(pindex).print(result)
       printout(result, pindex)
@@ -5772,22 +5873,24 @@ end)
 --Reads the custom info for an item selected. If you are driving, it returns custom vehicle info
 ---@param event EventData.CustomInputEvent
 script.on_event("item-info", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
    local hand = p.cursor_stack
-   if p.driving and players[pindex].menu ~= "train_menu" then
+   if p.driving and not router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
       printout(fa_driving.vehicle_info(pindex), pindex)
       return
    end
    local offset = 0
    if
-      (players[pindex].menu == "building" or players[pindex].menu == "vehicle")
+      router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
       and players[pindex].building.recipe_list ~= nil
    then
       offset = 1
    end
-   if not players[pindex].in_menu then
+   if not router:is_ui_open() then
       local ent = p.selected
       if ent and ent.valid then
          local str = ent.localised_description
@@ -5810,17 +5913,16 @@ script.on_event("item-info", function(event)
       else
          printout("Nothing selected, use this key to describe an entity or item that you select.", pindex)
       end
-   elseif players[pindex].in_menu then
+   elseif router:is_ui_open() then
       if
-         players[pindex].menu == "inventory"
-         or players[pindex].menu == "player_trash"
+         router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.PLAYER_TRASH })
          or (
-            (players[pindex].menu == "building" or players[pindex].menu == "vehicle")
+            router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
             and players[pindex].building.sector > offset + #players[pindex].building.sectors
          )
       then
          local stack = players[pindex].inventory.lua_inventory[players[pindex].inventory.index]
-         if players[pindex].menu == "player_trash" then
+         if router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
             stack = p.get_inventory(defines.inventory.character_trash)[players[pindex].inventory.index]
          end
          if stack and stack.valid_for_read and stack.valid == true then
@@ -5835,7 +5937,7 @@ script.on_event("item-info", function(event)
          else
             printout("No description", pindex)
          end
-      elseif players[pindex].menu == "guns" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.GUNS) then
          local stack = fa_equipment.guns_menu_get_selected_slot(pindex)
          if stack and stack.valid_for_read then
             str = stack.prototype.localised_description
@@ -5844,9 +5946,9 @@ script.on_event("item-info", function(event)
          else
             printout("No description", pindex)
          end
-      elseif players[pindex].menu == "technology" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
          Research.menu_describe(pindex)
-      elseif players[pindex].menu == "crafting" then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
          local recipe =
             players[pindex].crafting.lua_recipes[players[pindex].crafting.category][players[pindex].crafting.index]
          if recipe ~= nil and #recipe.products > 0 then
@@ -5874,7 +5976,7 @@ script.on_event("item-info", function(event)
          else
             printout("No description found, menu error", pindex)
          end
-      elseif players[pindex].menu == "building" or players[pindex].menu == "vehicle" then
+      elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
          if players[pindex].building.recipe_selection then
             local recipe =
                players[pindex].building.recipe_list[players[pindex].building.category][players[pindex].building.index]
@@ -5921,9 +6023,11 @@ end)
 --Reads the custom info for the last indexed scanner item
 ---@param event EventData.CustomInputEvent
 script.on_event("item-info-last-indexed", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu then
+   if router:is_ui_open() then
       printout("Error: Cannot check scanned item descriptions while in a menu", pindex)
       return
    end
@@ -5978,14 +6082,18 @@ end)
 ---@param event EventData.CustomInputEvent
 script.on_event("add-to-research-queue-start", function(event)
    local pindex = event.player_index
-   if players[pindex].menu == "technology" then Research.menu_enqueue(pindex, 1) end
+   local router = UiRouter.get_router(pindex)
+
+   if router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then Research.menu_enqueue(pindex, 1) end
 end)
 
 --Add the selected technology to the end of the research queue instead of switching directly to it
 ---@param event EventData.CustomInputEvent
 script.on_event("add-to-research-queue-end", function(event)
    local pindex = event.player_index
-   if players[pindex].menu == "technology" then Research.menu_enqueue(pindex, nil) end
+   local router = UiRouter.get_router(pindex)
+
+   if router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then Research.menu_enqueue(pindex, nil) end
 end)
 
 ---@param event EventData.CustomInputEvent
@@ -6003,7 +6111,9 @@ end)
 
 --When the item in hand changes
 script.on_event(defines.events.on_player_cursor_stack_changed, function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
    local stack = game.get_player(pindex).cursor_stack
    local new_item_name = ""
@@ -6026,9 +6136,9 @@ script.on_event(defines.events.on_player_cursor_stack_changed, function(event)
    -- As a special case: blueprint menus will end up pointing at the wrong
    -- blueprint if not closed here, since the only real unique identifier right
    -- now is the player's hand.
-   if players[pindex].menu == "blueprint_menu" then BlueprintsMenu.blueprint_menu_tabs:close(pindex) end
+   if router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT) then BlueprintsMenu.blueprint_menu_tabs:close(pindex) end
 
-   if players[pindex].menu == "blueprint_menu" or players[pindex].menu == "blueprint_book_menu" then
+   if router:is_ui_one_of({ UiRouter.UI_NAMES.BLUEPRINT, UiRouter.UI_NAMES.BLUEPRINT_BOOK }) then
       close_menu_resets(pindex)
    end
    if players[pindex].previous_hand_item_name ~= new_item_name then
@@ -6149,21 +6259,20 @@ script.on_event(defines.events.on_player_created, function(event)
 end)
 
 script.on_event(defines.events.on_gui_closed, function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
 
    --Other resets
    players[pindex].move_queue = {}
-   if players[pindex].in_menu == true and players[pindex].menu ~= "prompt" then
-      if players[pindex].menu == "inventory" then
+   if router:is_ui_open() and not router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then
+      if router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
          game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" })
-      elseif
-         players[pindex].menu == "travel" or players[pindex].menu == "structure-travel" and event.element ~= nil
-      then
+      elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) and event.element ~= nil then
          event.element.destroy()
       end
-      players[pindex].in_menu = false
-      players[pindex].menu = "none"
+      router:close_ui()
       players[pindex].item_selection = false
       players[pindex].item_cache = {}
       players[pindex].item_selector = {
@@ -6229,8 +6338,10 @@ end
 ---@param event EventData.CustomInputEvent
 script.on_event("toggle-build-lock", function(event)
    local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if not (players[pindex].in_menu == true) then
+   if not router:is_ui_open() then
       if players[pindex].build_lock == true then
          players[pindex].build_lock = false
          printout("Build lock disabled.", pindex)
@@ -6395,13 +6506,15 @@ end)
 --Empties hand and opens the item from the player/building inventory
 ---@param event EventData.CustomInputEvent
 script.on_event("locate-hand-in-inventory", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu == false then
+   if not router:is_ui_open() then
       locate_hand_in_player_inventory(pindex)
-   elseif players[pindex].menu == "inventory" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
       locate_hand_in_player_inventory(pindex)
-   elseif players[pindex].menu == "building" or players[pindex].menu == "vehicle" then
+   elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
       locate_hand_in_building_output_inventory(pindex)
    else
       printout("Cannot locate items in this menu", pindex)
@@ -6451,17 +6564,18 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("open-warnings-menu", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) or players[pindex].vanilla_mode then return end
-   if players[pindex].in_menu == false or game.get_player(pindex).opened_gui_type == defines.gui_type.production then
+   if not router:is_ui_open() or game.get_player(pindex).opened_gui_type == defines.gui_type.production then
       players[pindex].warnings.short = fa_warnings.scan_for_warnings(30, 30, pindex)
       players[pindex].warnings.medium = fa_warnings.scan_for_warnings(100, 100, pindex)
       players[pindex].warnings.long = fa_warnings.scan_for_warnings(500, 500, pindex)
       players[pindex].warnings.index = 1
       players[pindex].warnings.sector = 1
       players[pindex].category = 1
-      players[pindex].menu = "warnings"
-      players[pindex].in_menu = true
+      router:open_ui(UiRouter.UI_NAMES.WARNINGS)
       players[pindex].move_queue = {}
       game.get_player(pindex).selected = nil
       game.get_player(pindex).play_sound({ path = "Open-Inventory-Sound" })
@@ -6473,7 +6587,7 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("honk", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
    if p.driving == true then
@@ -6500,6 +6614,8 @@ end)
 --GUI action confirmed, such as by pressing ENTER
 script.on_event(defines.events.on_gui_confirmed, function(event)
    local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    local p = game.get_player(pindex)
    if not check_for_player(pindex) then return end
    if players[pindex].cursor_jumping == true then
@@ -6508,9 +6624,7 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
       local result = event.element.text
       jump_cursor_to_typed_coordinates(result, pindex)
       event.element.destroy()
-      --Set the player menu tracker to none
-      players[pindex].menu = "none"
-      players[pindex].in_menu = false
+      router:close_ui()
       --play sound
       p.play_sound({ path = "Close-Inventory-Sound" })
 
@@ -6540,16 +6654,14 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
          printout("Invalid input", pindex)
       end
       event.element.destroy()
-      --Set the player menu tracker to none
-      players[pindex].menu = "none"
-      players[pindex].in_menu = false
+      router:close_ui()
       --play sound
       p.play_sound({ path = "Close-Inventory-Sound" })
 
       --Destroy text fields
       if p.gui.screen["train-limit-edit"] ~= nil then p.gui.screen["train-limit-edit"].destroy() end
       if p.opened ~= nil then p.opened = nil end
-   elseif players[pindex].menu == "circuit_network_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.CIRCUIT_NETWORK) then
       --Take the constant number
       local result = event.element.text
       if result ~= nil and result ~= "" then
@@ -6595,15 +6707,14 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
       event.element.destroy()
       players[pindex].signal_selector = nil
       --Set the player menu tracker to none
-      players[pindex].menu = "none"
-      players[pindex].in_menu = false
+      router:close_ui()
       --play sound
       p.play_sound({ path = "Close-Inventory-Sound" })
 
       --Destroy text fields
       if p.gui.screen["circuit-networks-textfield"] ~= nil then p.gui.screen["circuit-networks-textfield"].destroy() end
       if p.opened ~= nil then p.opened = nil end
-   elseif players[pindex].menu == "travel" and players[pindex].entering_search_term ~= true then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) and players[pindex].entering_search_term ~= true then
       --Edit a travel point
       local result = event.element.text
       if result == nil or result == "" then result = "blank" end
@@ -7154,10 +7265,12 @@ end)
 ---@param event EventData.CustomInputEvent
 script.on_event("alternative-menu-up", function(event)
    local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu and players[pindex].menu == "train_menu" then
+   if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
       fa_trains.menu_up(pindex)
-   elseif players[pindex].in_menu and players[pindex].menu == "spider_menu" then
+   elseif router.is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then
       fa_spidertrons.spider_menu_up(pindex)
    end
 end)
@@ -7165,10 +7278,12 @@ end)
 ---@param event EventData.CustomInputEvent
 script.on_event("alternative-menu-down", function(event)
    local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu and players[pindex].menu == "train_menu" then
+   if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
       fa_trains.menu_down(pindex)
-   elseif players[pindex].in_menu and players[pindex].menu == "spider_menu" then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then
       fa_spidertrons.spider_menu_down(pindex)
    end
 end)
@@ -7176,15 +7291,19 @@ end)
 ---@param event EventData.CustomInputEvent
 script.on_event("alternative-menu-left", function(event)
    local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu and players[pindex].menu == "train_menu" then fa_trains.menu_left(pindex) end
+   if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then fa_trains.menu_left(pindex) end
 end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("alternative-menu-right", function(event)
    local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
-   if players[pindex].in_menu and players[pindex].menu == "train_menu" then fa_trains.menu_right(pindex) end
+   if router.is_ui_open(UiRouter.UI_NAMES.TRAIN) then fa_trains.menu_right(pindex) end
 end)
 
 ---@param event EventData.CustomInputEvent
@@ -7266,13 +7385,15 @@ script.on_event("set-splitter-output-priority-right", function(event)
    end
 end)
 
---Sets entity filters for splitters, inserters, contant combinators, infinity chests
+--Sets entity filters forlitters, inserters, contant combinators, infinity chests
 ---@param event EventData.CustomInputEvent
 script.on_event("set-entity-filter-from-hand", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
 
-   if players[pindex].in_menu then
+   if router:is_ui_open() then
       return
    else
       --Not in a menu
@@ -7322,11 +7443,13 @@ end)
 --Sets inventory slot filters
 ---@param event EventData.CustomInputEvent
 script.on_event("toggle-inventory-slot-filter", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
 
    -- Conflicts with setting splitter filters.  Will be fixed by #262
-   if players[pindex].in_menu then set_selected_inventory_slot_filter(pindex) end
+   if router:is_ui_open() then set_selected_inventory_slot_filter(pindex) end
 end)
 
 --Sets inventory slot filters
@@ -7434,8 +7557,10 @@ end
 ---@param event EventData.CustomInputEvent
 script.on_event("connect-rail-vehicles", function(event)
    local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    local vehicle = nil
-   if not check_for_player(pindex) or players[pindex].in_menu then return end
+   if not check_for_player(pindex) or router:is_ui_open() then return end
    local ent = game.get_player(pindex).selected
    if game.get_player(pindex).vehicle ~= nil and game.get_player(pindex).vehicle.train ~= nil then
       vehicle = game.get_player(pindex).vehicle
@@ -7467,8 +7592,10 @@ end)
 ---@param event EventData.CustomInputEvent
 script.on_event("disconnect-rail-vehicles", function(event)
    local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    local vehicle = nil
-   if not check_for_player(pindex) or players[pindex].in_menu then return end
+   if not check_for_player(pindex) or router:is_ui_open() then return end
    local ent = game.get_player(pindex).selected
    if game.get_player(pindex).vehicle ~= nil and game.get_player(pindex).vehicle.train ~= nil then
       vehicle = game.get_player(pindex).vehicle
@@ -7498,15 +7625,17 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("read-health-and-armor-stats", function(event)
-   pindex = event.player_index
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
    local output = { "" }
    --Skip blueprint flipping
    local hand = game.get_player(pindex).cursor_stack
    if hand and hand.valid_for_read and (hand.is_blueprint or hand.is_blueprint_book) then return end
-   if players[pindex].in_menu then
-      if players[pindex].menu == "vehicle" then
+   if router:is_ui_open() then
+      if router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) then
          --Vehicle health and armor equipment stats
          local result = fa_equipment.read_armor_stats(pindex, p.opened)
          table.insert(output, result)
@@ -7517,8 +7646,7 @@ script.on_event("read-health-and-armor-stats", function(event)
       end
    else
       if p.vehicle then
-         --Vehicle health and armor equipment stats
-         local result = fa_equipment.read_armor_stats(pindex, p.vehicle)
+         --Vehicle health and armor equipment sta      local result = fa_equipment.read_armor_stats(pindex, p.vehicle)
          table.insert(output, result)
       else
          --Player health stats only
@@ -7532,11 +7660,14 @@ end)
 ---@param event EventData.CustomInputEvent
 script.on_event("inventory-read-equipment-list", function(event)
    local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    local vehicle = nil
-   if not check_for_player(pindex) or not players[pindex].in_menu then return end
+   if not check_for_player(pindex) or not router:is_ui_open() then return end
+
    if
-      (players[pindex].in_menu and players[pindex].menu == "inventory")
-      or (players[pindex].menu == "vehicle" and game.get_player(pindex).opened.type == "spider-vehicle")
+      router:is_ui_open(UiRouter.UI_NAMES.INVENTORY)
+      or (router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle")
    then
       local result = fa_equipment.read_equipment_list(pindex)
       --game.get_player(pindex).print(result)--
@@ -7547,12 +7678,14 @@ end)
 ---@param event EventData.CustomInputEvent
 script.on_event("inventory-remove-all-equipment-and-armor", function(event)
    local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    local vehicle = nil
    if not check_for_player(pindex) then return end
 
    if
-      (players[pindex].in_menu and players[pindex].menu == "inventory")
-      or (players[pindex].menu == "vehicle" and game.get_player(pindex).opened.type == "spider-vehicle")
+      router:is_ui_open(UiRouter.UI_NAMES.INVENTORY)
+      or (router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle")
    then
       local result = fa_equipment.remove_equipment_and_armor(pindex)
       --game.get_player(pindex).print(result)--
@@ -7772,6 +7905,8 @@ end)
 
 script.on_event(defines.events.on_gui_opened, function(event)
    local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
    players[pindex].move_queue = {}
@@ -7787,16 +7922,12 @@ script.on_event(defines.events.on_gui_opened, function(event)
    --GUI mismatch checks
    if
       event.gui_type == defines.gui_type.controller
-      and players[pindex].menu == "none"
+      and not router:is_ui_open()
       and event.tick - players[pindex].last_menu_toggle_tick < 5
    then
       --If closing another menu toggles the player GUI screen, we close this screen
       p.opened = nil
       --game.print("Closed an extra controller GUI",{volume_modifier = 0})--**checks GUI shenanigans
-   else
-      --Assume a GUI has been opened, whether in a menu or not
-      players[pindex].in_menu = true
-      --game.print("Opened an extra GUI",{volume_modifier = 0})--**checks GUI shenanigans
    end
 end)
 
@@ -8112,7 +8243,9 @@ end)
 
 --If the player has unexpected lateral movement while smooth running in a cardinal direction, like from bumping into an entity or being at the edge of water, play a sound.
 function check_and_play_bump_alert_sound(pindex, this_tick)
-   if not check_for_player(pindex) or players[pindex].menu == "prompt" then return end
+   local router = UiRouter.get_router(pindex)
+
+   if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
    local p = game.get_player(pindex)
    if p == nil or p.character == nil then return end
    local face_dir = p.character.direction
@@ -8122,7 +8255,7 @@ function check_and_play_bump_alert_sound(pindex, this_tick)
    players[pindex].bump.filled = false
 
    --Return and reset if in a menu or a vehicle
-   if players[pindex].in_menu or p.vehicle ~= nil then
+   if router:is_ui_open() or p.vehicle ~= nil then
       players[pindex].bump.last_pos_4 = nil
       players[pindex].bump.last_pos_3 = nil
       players[pindex].bump.last_pos_2 = nil
@@ -8295,14 +8428,17 @@ end
 
 --If walking but recently position has been unchanged, play alert
 function check_and_play_stuck_alert_sound(pindex, this_tick)
-   if not check_for_player(pindex) or players[pindex].menu == "prompt" then return end
+   local router = UiRouter.get_router(pindex)
+
+   if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
+
    local p = game.get_player(pindex)
 
    --Initialize
    if players[pindex].bump == nil then reset_bump_stats(pindex) end
 
    --Return if in a menu or a vehicle or in a different walking mode than smooth walking
-   if players[pindex].in_menu or p.vehicle ~= nil or players[pindex].walk ~= WALKING.SMOOTH then return end
+   if router:is_ui_open() or p.vehicle ~= nil or players[pindex].walk ~= WALKING.SMOOTH then return end
 
    --Return if not walking
    if p.walking_state.walking == false then return end

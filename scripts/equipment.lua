@@ -3,13 +3,16 @@
 
 local localising = require("scripts.localising")
 local fa_electrical = require("scripts.electrical")
+local UiRouter = require("scripts.ui.router")
 
 local mod = {}
 
 --Tries to equip a stack. For now called only for a stack in hand when the only the inventory is open.
 function mod.equip_it(stack, pindex)
+   local router = UiRouter.get_router(pindex)
+
    local message = ""
-   if players[pindex].menu == "vehicle" and game.get_player(pindex).opened.type == "spider-vehicle" then
+   if router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle" then
       message = localising.get_alt(prototypes.entity["spidertron"])
       if message == nil then
          message = "Spidertron " --laterdo possible bug here
@@ -61,7 +64,7 @@ function mod.equip_it(stack, pindex)
       --Equip equipment ("gear")
       local armor_inv
       local grid
-      if players[pindex].menu == "vehicle" and game.get_player(pindex).opened.type == "spider-vehicle" then
+      if router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle" then
          grid = game.get_player(pindex).opened.grid
       else
          armor_inv = game.get_player(pindex).get_inventory(defines.inventory.character_armor)
@@ -94,7 +97,7 @@ function mod.equip_it(stack, pindex)
          end
       end
    elseif
-      players[pindex].in_menu == false
+      not router:is_ui_open()
       and (stack.prototype.place_result ~= nil or stack.prototype.place_as_tile_result ~= nil)
    then
       message = ""
@@ -370,13 +373,15 @@ end
 
 --List armor equipment
 function mod.read_equipment_list(pindex)
+   local router = UiRouter.get_router(pindex)
+
    local armor_inv = game.get_player(pindex).get_inventory(defines.inventory.character_armor)
    local result = ""
    if armor_inv.is_empty() then return "No armor equipped." end
    if armor_inv[1].grid == nil or not armor_inv[1].grid.valid then return "No equipment grid." end
    --Armor with Equipment
    local grid
-   if players[pindex].menu == "vehicle" and game.get_player(pindex).opened.type == "spider-vehicle" then
+   if router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle" then
       grid = game.get_player(pindex).opened.grid
       result = localising.get_alt(prototypes.entity["spidertron"])
       if result == nil then
@@ -409,13 +414,15 @@ end
 
 --Remove all armor equipment and then the armor. laterdo "inv full" checks
 function mod.remove_equipment_and_armor(pindex)
+   local router = UiRouter.get_router(pindex)
+
    local armor_inv = game.get_player(pindex).get_inventory(defines.inventory.character_armor)
    local char_main_inv = game.get_player(pindex).get_inventory(defines.inventory.character_main)
    local result = ""
    if armor_inv.is_empty() then return "No armor." end
 
    local grid
-   if players[pindex].menu == "vehicle" and game.get_player(pindex).opened.type == "spider-vehicle" then
+   if router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle" then
       grid = game.get_player(pindex).opened.grid
    else
       grid = armor_inv[1].grid
@@ -437,7 +444,7 @@ function mod.remove_equipment_and_armor(pindex)
    end
 
    --Remove armor
-   if players[pindex].menu == "vehicle" and game.get_player(pindex).opened.type == "spider-vehicle" then
+   if router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle" then
       --do nothing
    elseif char_main_inv.count_empty_stacks() == 0 then
       result = result .. " inventory full "
@@ -453,8 +460,10 @@ function mod.remove_equipment_and_armor(pindex)
 end
 
 function mod.guns_menu_open(pindex)
+   local router = UiRouter.get_router(pindex)
+
    local p = game.get_player(pindex)
-   players[pindex].menu = "guns"
+   router:open_ui(UiRouter.UI_NAMES.GUNS)
    players[pindex].guns_menu.ammo_selected = false
    players[pindex].guns_menu.index = 1
    mod.guns_menu_read_slot(pindex, "Guns and ammo, ")

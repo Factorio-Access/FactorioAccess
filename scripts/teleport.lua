@@ -2,6 +2,7 @@
 local fa_utils = require("scripts.fa-utils")
 local fa_graphics = require("scripts.graphics")
 local fa_mouse = require("scripts.mouse")
+local UiRouter = require("scripts.ui.router")
 
 local mod = {}
 
@@ -14,6 +15,8 @@ end
 
 --Makes the player teleport to the closest valid position to a target position. Uses game's teleport function. Muted makes silent and effectless teleporting
 function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
+   local router = UiRouter.get_router(pindex)
+
    local pos = table.deepcopy(pos)
    local muted = muted or false
    local char = game.get_player(pindex).character
@@ -34,11 +37,7 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
    elseif util.distance(game.get_player(pindex).position, pos) < 0.6 then
       printout("Already at target", pindex)
       return false
-   elseif
-      players[pindex].in_menu
-      and players[pindex].menu ~= "travel"
-      and players[pindex].menu ~= "structure-travel"
-   then
+   elseif router:is_ui_open() and not router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       printout("Cannot teleport while in a menu.", pindex)
       return false
    end

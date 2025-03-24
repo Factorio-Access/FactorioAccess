@@ -3,17 +3,19 @@ local fa_utils = require("scripts.fa-utils")
 local fa_graphics = require("scripts.graphics")
 local fa_mouse = require("scripts.mouse")
 local fa_teleport = require("scripts.teleport")
+local UiRouter = require("scripts.ui.router")
 
 local mod = {}
 
 function mod.fast_travel_menu_open(pindex)
+   local router = UiRouter.get_router(pindex)
+
    local p = game.get_player(pindex)
    if p.ticks_to_respawn ~= nil then return end
-   if players[pindex].in_menu == false and game.get_player(pindex).opened == nil then
+   if router:is_ui_open() and game.get_player(pindex).opened == nil then
       game.get_player(pindex).selected = nil
 
-      players[pindex].menu = "travel"
-      players[pindex].in_menu = true
+      router:open_ui(UiRouter.UI_NAMES.TRAVEL)
       players[pindex].move_queue = {}
       players[pindex].travel.index = { x = 1, y = 0 }
       players[pindex].travel.creating = false
@@ -30,7 +32,7 @@ function mod.fast_travel_menu_open(pindex)
       frame.focus()
       game.get_player(pindex).opened = frame
       game.get_player(pindex).selected = nil
-   elseif players[pindex].in_menu or game.get_player(pindex).opened ~= nil then
+   elseif router:is_ui_open() or game.get_player(pindex).opened ~= nil then
       printout("Another menu is open.", pindex)
    end
 end
@@ -272,9 +274,10 @@ function mod.fast_travel_menu_left(pindex)
 end
 
 function mod.fast_travel_menu_close(pindex)
+   local router = UiRouter.get_router(pindex)
+
    if game.get_player(pindex).gui.screen["travel"] then game.get_player(pindex).gui.screen["travel"].destroy() end
-   players[pindex].menu = "none"
-   players[pindex].in_menu = false
+   router:close_ui()
 end
 
 return mod

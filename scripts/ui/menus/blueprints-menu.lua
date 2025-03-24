@@ -7,6 +7,7 @@ local Blueprints = require("scripts.blueprints")
 local Localising = require("scripts.localising")
 local TH = require("scripts.table-helpers")
 local FaUtils = require("scripts.fa-utils")
+local UiRouter = require("scripts.ui.router")
 
 local mod = {}
 
@@ -17,7 +18,7 @@ end
 
 ---@type fun(fa.MenuCtx): fa.MenuRender?
 local function render(ctx)
-   local p = game.get_player(pindex)
+   local p = game.get_player(ctx.pindex)
    if not p then return nil end
 
    ---@type LuaItemStack
@@ -202,7 +203,7 @@ local function render(ctx)
 end
 
 mod.blueprint_menu_tabs = TabList.declare_tablist({
-   menu_name = "blueprint_menu",
+   ui_name = UiRouter.UI_NAMES.BLUEPRINT,
    tabs = {
       Menu.declare_menu({
          tab_name = "blueprints",

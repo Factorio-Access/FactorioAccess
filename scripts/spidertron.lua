@@ -1,5 +1,6 @@
 --Here: Spidertron remote menu
 local fa_graphics = require("scripts.graphics")
+local UiRouter = require("scripts.ui.router")
 
 local mod = {}
 
@@ -208,10 +209,10 @@ end
 SPIDER_MENU_LENGTH = 7
 
 function mod.spider_menu_open(pindex, stack)
+   local router = UiRouter.get_router(pindex)
+
    if players[pindex].vanilla_mode then return end
-   --Set the player menu tracker to this menu
-   players[pindex].menu = "spider_menu"
-   players[pindex].in_menu = true
+   router:open_ui(UiRouter.UI_NAMES.SPIDERTRON)
    players[pindex].move_queue = {}
    local spider = stack
    --Set the menu line counter to 0
@@ -225,10 +226,11 @@ function mod.spider_menu_open(pindex, stack)
 end
 
 function mod.spider_menu_close(pindex, mute_in)
+   local router = UiRouter.get_router(pindex)
+
    local mute = mute_in
    --Set the player menu tracker to none
-   players[pindex].menu = "none"
-   players[pindex].in_menu = false
+   router:close_ui()
 
    --Set the menu line counter to 0
    players[pindex].spider_menu.index = 0

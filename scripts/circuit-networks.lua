@@ -7,6 +7,7 @@ local fa_utils = require("scripts.fa-utils")
 local descriptors = require("scripts.descriptors")
 local multistate_switch = require("scripts.ui.low-level.multistate-switch")
 local fa_graphics = require("scripts.graphics")
+local UiRouter = require("scripts.ui.router")
 
 local dcb = defines.control_behavior
 
@@ -1261,10 +1262,10 @@ end
 mod.CN_MENU_LENGTH = 20
 
 function mod.circuit_network_menu_open(pindex, ent)
+   local router = UiRouter.get_router(pindex)
+
    if players[pindex].vanilla_mode then return end
-   --Set the player menu tracker to this menu
-   players[pindex].menu = "circuit_network_menu"
-   players[pindex].in_menu = true
+   router:open_ui(UiRouter.UI_NAMES.CIRCUIT_NETWORK)
    players[pindex].move_queue = {}
 
    --Set the menu line counter to 0
@@ -1280,10 +1281,10 @@ function mod.circuit_network_menu_open(pindex, ent)
 end
 
 function mod.circuit_network_menu_close(pindex, mute_in)
+   local router = UiRouter.get_router(pindex)
+
    local mute = mute_in
-   --Set the player menu tracker to none
-   players[pindex].menu = "none"
-   players[pindex].in_menu = false
+   router:close_ui()
 
    --Set the menu line counter to 0
    players[pindex].circuit_network_menu.index = 0
@@ -1480,7 +1481,10 @@ local function build_signal_selector(pindex)
 end
 
 function mod.open_signal_selector(pindex, ent, first)
-   players[pindex].menu = "signal_selector"
+   local router = UiRouter.get_router(pindex)
+
+   router:open_ui(UiRouter.UI_NAMES.SIGNAL_SELECTOR)
+
    build_signal_selector(pindex)
    players[pindex].signal_selector.ent = ent
    players[pindex].signal_selector.editing_first_slot = first

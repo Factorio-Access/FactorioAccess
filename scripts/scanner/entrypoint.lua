@@ -20,6 +20,7 @@ local Memosort = require("scripts.memosort")
 local ScannerConsts = require("scripts.scanner.scanner-consts")
 local SurfaceScanner = require("scripts.scanner.surface-scanner")
 local TH = require("scripts.table-helpers")
+local UiRouter = require("scripts.ui.router")
 local WorkQueue = require("scripts.work-queue")
 
 local mod = {}
@@ -487,7 +488,9 @@ end
 ---@param pindex number
 ---@param direction 1 | -1
 function mod.move_category(pindex, direction)
-   if storage.players[pindex].in_menu then return end
+   local router = UiRouter.get_router(pindex)
+
+   if router:is_ui_open() then return end
    local pstate = player_state[pindex]
    sound_for_end(move_category(pindex, pstate, direction))
    printout({ "fa.scanner-category-" .. pstate.scanner_cursor.category }, pindex)
@@ -496,7 +499,9 @@ end
 ---@param pindex number
 ---@param direction 1 | -1
 function mod.move_subcategory(pindex, direction)
-   if storage.players[pindex].in_menu then return end
+   local router = UiRouter.get_router(pindex)
+
+   if router:is_ui_open() then return end
    local pstate = player_state[pindex]
    sound_for_end(move_subcategory(pindex, pstate, direction))
    announce_cursor_pos(pindex, pstate)
@@ -505,7 +510,9 @@ end
 ---@param pindex number
 ---@param direction 1 | -1
 function mod.move_within_subcategory(pindex, direction)
-   if storage.players[pindex].in_menu then return end
+   local router = UiRouter.get_router(pindex)
+
+   if router:is_ui_open() then return end
    local pstate = player_state[pindex]
    sound_for_end(move_in_subcategory(pindex, pstate, direction))
    announce_cursor_pos(pindex, pstate)
@@ -513,13 +520,17 @@ end
 
 ---@param pindex number
 function mod.announce_current_item(pindex)
-   if storage.players[pindex].in_menu then return end
+   local router = UiRouter.get_router(pindex)
+
+   if router:is_ui_open() then return end
    local pstate = player_state[pindex]
    announce_cursor_pos(pindex, pstate)
 end
 
 function mod.resort(pindex)
-   if storage.players[pindex].in_menu then return end
+   local router = UiRouter.get_router(pindex)
+
+   if router:is_ui_open() then return end
    local pstate = player_state[pindex]
    local player = assert(game.get_player(pindex))
    ---@cast player LuaPlayer

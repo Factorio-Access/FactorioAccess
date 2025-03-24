@@ -7,6 +7,7 @@ local fa_utils = require("scripts.fa-utils")
 local fa_mining_tools = require("scripts.player-mining-tools")
 local fa_rails = require("scripts.rails")
 local dirs = defines.direction
+local UiRouter=require('scripts.ui.router')
 
 local mod = {}
 
@@ -6288,10 +6289,10 @@ end
 
 --Loads and opens the rail builder menu
 function mod.open_menu(pindex, rail)
+   local router = UiRouter.get_router(pindex)
+
    if players[pindex].vanilla_mode then return end
-   --Set the player menu tracker to this menu
-   players[pindex].menu = "rail_builder"
-   players[pindex].in_menu = true
+router:open_ui(UiRouter.UI_NAMES.RAIL_BUILDER)
    players[pindex].move_queue = {}
 
    --Set the menu line counter to 0
@@ -6332,10 +6333,10 @@ end
 
 --Resets and closes the rail builder menu
 function mod.close_menu(pindex, mute_in)
+   local router = UiRouter.get_router(pindex)
+
    local mute = mute_in or false
-   --Set the player menu tracker to none
-   players[pindex].menu = "none"
-   players[pindex].in_menu = false
+   router:close_ui()
 
    --Set the menu line counter to 0
    players[pindex].rail_builder.index = 0
