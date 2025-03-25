@@ -15,22 +15,22 @@ local colors = {
    [3] = { 0.5, 0, 0.5 },
 }
 
----rotates the point around the origin by 90 degree increments.
+---rotates the point in place around the origin by 90 degree increments.
 ---@param point MapPosition
 ---@param dir dirs16
----@return MapPosition
 local function rotate_point_origin(point, dir)
    dir = dir % mod_dir
+
    if dir == dirs16.north then
-      return { point[1], point[2] }
    elseif dir == dirs16.east then
-      return { -point[2], point[1] }
+      point[1], point[2] = -point[2], point[1]
    elseif dir == dirs16.south then
-      return { -point[1], -point[2] }
+      point[1], point[2] = -point[1], -point[2]
    elseif dir == dirs16.west then
-      return { point[2], -point[1] }
+      point[1], point[2] = point[2], -point[1]
+   else
+      error("passed invalid direction:" .. str(point))
    end
-   error("passed invalid direction:" .. str(point))
 end
 
 ---converts a mod 2 position and direction requirement to an integer
@@ -79,6 +79,24 @@ local edges_by_abstract_req = {}
 ---@type table<string,table<dirs16,RailGeometry>>
 local expand_geometries = {}
 
+---gathers all the points into a table so they can be manipulated
+---@param geo RailGeometry
+local function geo_points(geo)
+   ---@type table<integer,MapPosition>
+   local ret = {}
+   for _, rail_end in pairs(geo.ends) do
+      table.insert(ret, rail_end.pos)
+      for _, signals in pairs({ rail_end.entering_signals, rail_end.exiting_signals }) do
+         if signals then
+            for _, point in pairs(signals) do
+               table.insert(ret, point)
+            end
+         end
+      end
+   end
+   return ret
+end
+
 ---adds a new edge based on the geometry
 ---@param geo RailGeometry
 local function add_geo_as_edge(geo)
@@ -114,19 +132,17 @@ end
 ---expands a geometry to all valid rotations
 ---@param geo RailGeometry
 local function expand_geometry_rotate(geo)
+   ---@type dirs16
    local end_rotation = dirs16.west
    if geo.two_way_rotational_symmetry then end_rotation = dirs16.east end
    for rotation = dirs16.north, end_rotation, dirs16.east do
       local r_geo = table.deepcopy(geo)
       r_geo.dir = (r_geo.dir + rotation) % mod_dir
-      r_geo.ends.entrance = {
-         pos = rotate_point_origin(geo.ends.entrance.pos, rotation),
-         dir = (geo.ends.entrance.dir + rotation) % mod_dir,
-      }
-      r_geo.ends.exit = {
-         pos = rotate_point_origin(geo.ends.exit.pos, rotation),
-         dir = (geo.ends.exit.dir + rotation) % mod_dir,
-      }
+      r_geo.ends.entrance.dir = (geo.ends.entrance.dir + rotation) % mod_dir
+      r_geo.ends.exit.dir = (geo.ends.exit.dir + rotation) % mod_dir
+      for _, p in pairs(geo_points(r_geo)) do
+         rotate_point_origin(p, rotation)
+      end
       if rotation % dirs16.south == dirs16.east then r_geo.mod_pos = { r_geo.mod_pos[2], r_geo.mod_pos[1] } end
       add_geo_as_edge(r_geo)
    end
@@ -138,8 +154,9 @@ local function expand_geometry_mirror(geo)
    expand_geometry_rotate(geo)
    if geo.mirrored_dir then
       geo = table.deepcopy(geo)
-      geo.ends.entrance.pos[1] = -geo.ends.entrance.pos[1]
-      geo.ends.exit.pos[1] = -geo.ends.exit.pos[1]
+      for _, pos in pairs(geo_points(geo)) do
+         pos[1] = -pos[1]
+      end
       geo.ends.entrance.dir = -geo.ends.entrance.dir % mod_dir
       geo.ends.exit.dir = -geo.ends.exit.dir % mod_dir
       geo.dir = geo.mirrored_dir
@@ -281,6 +298,46 @@ end
 function mod.left(runner)
    return do_runner(runner, syn_com.left)
 end
+
+---test code to check signal placement
+---@param surface LuaSurface
+function mod.mark_all_signal_spots(surface)
+   type_filter = {}
+   for t, _ in pairs(expand_geometries) do
+      table.insert(type_filter, t)
+   end
+
+   rails = surface.find_entities_filtered({
+      type = type_filter,
+   })
+   for _, r in pairs(rails) do
+      for _, rail_end in pairs(expand_geometries[r.type][r.direction].ends) do
+         for _, sig in pairs(rail_end.entering_signals) do
+            local t = { r.position.x + sig[1], r.position.y + sig[2] }
+            rendering.draw_circle({
+               color = { 0.5, 0.2, 0.9 },
+               radius = 0.2,
+               filled = true,
+               surface = surface,
+               time_to_live = 600,
+               target = t,
+            })
+         end
+         for _, sig in pairs(rail_end.exiting_signals) do
+            local t = { r.position.x + sig[1], r.position.y + sig[2] }
+            rendering.draw_circle({
+               color = { 0.9, 0.2, 0.5 },
+               radius = 0.2,
+               filled = true,
+               surface = surface,
+               time_to_live = 600,
+               target = t,
+            })
+         end
+      end
+   end
+end
+
 local key_mod = 2 ^ 52
 
 ---@class node

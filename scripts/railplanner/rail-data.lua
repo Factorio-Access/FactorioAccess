@@ -14,10 +14,12 @@ local dirs16 = require("dirs")
 --they are however described in one orientation while the others can be expanded
 
 ---@class (exact) RailGeometry.ends.end
----The position of this end relative to the entity position while facing the first allowed direction
+---The position of this end relative to the entity position
 ---@field pos MapPosition
 ---The direction a train would be traveling while passing through this end in the forward direction
 ---@field dir dirs16
+---@field entering_signals MapPosition[]?
+---@field exiting_signals MapPosition[]?
 
 ---@class (exact) RailGeometry.ends
 ---The entrance to this rail
@@ -52,8 +54,18 @@ local rail_shapes_common = {
       dir = dirs16.north,
       two_way_rotational_symmetry = true,
       ends = {
-         entrance = { pos = { 0, 1 }, dir = dirs16.north },
-         exit = { pos = { 0, -1 }, dir = dirs16.north },
+         entrance = {
+            pos = { 0, 1 },
+            dir = dirs16.north,
+            exiting_signals = { { -1.5, 0.5 } },
+            entering_signals = { { 1.5, 0.5 } },
+         },
+         exit = {
+            pos = { 0, -1 },
+            dir = dirs16.north,
+            exiting_signals = { { 1.5, -0.5 } },
+            entering_signals = { { -1.5, -0.5 } },
+         },
       },
       elevation_gain = 0,
       mod_pos = { 1, 1 },
@@ -98,8 +110,18 @@ local rail_shapes_2 = {
       dir = dirs16.north,
       mirrored_dir = dirs16.northeast,
       ends = {
-         entrance = { pos = { 0, 2 }, dir = dirs16.north },
-         exit = { pos = { -1, -3 }, dir = dirs16.northnorthwest },
+         entrance = {
+            pos = { 0, 2 },
+            dir = dirs16.north,
+            exiting_signals = { { 1.5, 1.5 } },
+            entering_signals = { { -1.5, 1.5 } },
+         },
+         exit = {
+            pos = { -1, -3 },
+            dir = dirs16.northnorthwest,
+            exiting_signals = { { -1.5, -1.5 } },
+            entering_signals = { { 0.5, -2.5 } },
+         },
       },
       elevation_gain = 0,
       mod_pos = { 1, 0 },
@@ -112,8 +134,18 @@ local rail_shapes_2 = {
       two_way_rotational_symmetry = true,
       mirrored_dir = dirs16.north,
       ends = {
-         entrance = { pos = { -1, 2 }, dir = dirs16.northnortheast },
-         exit = { pos = { 1, -2 }, dir = dirs16.northnortheast },
+         entrance = {
+            pos = { -1, 2 },
+            dir = dirs16.northnortheast,
+            exiting_signals = { { -1.5, 0.5 } },
+            entering_signals = { { 0.5, 1.5 } },
+         },
+         exit = {
+            pos = { 1, -2 },
+            dir = dirs16.northnortheast,
+            exiting_signals = { { 1.5, -0.5 } },
+            entering_signals = { { -0.5, -1.5 } },
+         },
       },
       elevation_gain = 0,
       mod_pos = { 1, 1 },
@@ -125,8 +157,18 @@ local rail_shapes_2 = {
       dir = dirs16.southwest,
       mirrored_dir = dirs16.south,
       ends = {
-         entrance = { pos = { -2, 2 }, dir = dirs16.northeast },
-         exit = { pos = { 1, -2 }, dir = dirs16.northnortheast },
+         entrance = {
+            pos = { -2, 2 },
+            dir = dirs16.northeast,
+            exiting_signals = { { -2.5, 0.5 } },
+            entering_signals = { { -0.5, 2.5 } },
+         },
+         exit = {
+            pos = { 1, -2 },
+            dir = dirs16.northnortheast,
+            exiting_signals = { { 1.5, -0.5 }, { 0.5, 0.5 } },
+            entering_signals = { { -0.5, -1.5 } },
+         },
       },
       elevation_gain = 0,
       mod_pos = { 1, 1 },
@@ -138,8 +180,18 @@ local rail_shapes_2 = {
       dir = dirs16.northeast,
       two_way_rotational_symmetry = true,
       ends = {
-         entrance = { pos = { -1, 1 }, dir = dirs16.northeast },
-         exit = { pos = { 1, -1 }, dir = dirs16.northeast },
+         entrance = {
+            pos = { -1, 1 },
+            dir = dirs16.northeast,
+            exiting_signals = { { -1.5, -0.5 } },
+            entering_signals = { { 0.5, 1.5 } },
+         },
+         exit = {
+            pos = { 1, -1 },
+            dir = dirs16.northeast,
+            exiting_signals = { { 1.5, 0.5 } },
+            entering_signals = { { -0.5, -1.5 } },
+         },
       },
       elevation_gain = 0,
       mod_pos = { 0, 0 },
