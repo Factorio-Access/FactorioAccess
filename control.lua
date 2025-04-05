@@ -43,6 +43,7 @@ local Rulers = require("scripts.rulers")
 local ScannerEntrypoint = require("scripts.scanner.entrypoint")
 local TH = require("scripts.table-helpers")
 local WorkQueue = require("scripts.work-queue")
+local Viewpoint = require("scripts.viewpoint")
 
 ---@meta scripts.shared-types
 
