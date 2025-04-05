@@ -22,14 +22,7 @@
    "[lua]": {
       "editor.defaultFormatter": "JohnnyMorganz.stylua"
    },
-   "factorio.versions": [
-      {
-         "name": "System",
-         "factorioPath": "C:\\Program Files\\Factorio\\bin\\x64\\factorio.exe",
-         "active": true
-      }
-   ],
-   "Lua.workspace.userThirdParty": [
-      "c:\\Users\\Austin\\AppData\\Roaming\\Code\\User\\workspaceStorage\\69bddfab45fbf20d083316a7b37bb8d6\\justarandomgeek.factoriomod-debug\\sumneko-3rd"
+   "editor.rulers": [
+      120
    ]
 }
