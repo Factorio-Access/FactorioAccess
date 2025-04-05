@@ -7,7 +7,7 @@ local fa_utils = require("scripts.fa-utils")
 local fa_mining_tools = require("scripts.player-mining-tools")
 local fa_rails = require("scripts.rails")
 local dirs = defines.direction
-local UiRouter=require('scripts.ui.router')
+local UiRouter = require("scripts.ui.router")
 
 local mod = {}
 
@@ -6292,7 +6292,7 @@ function mod.open_menu(pindex, rail)
    local router = UiRouter.get_router(pindex)
 
    if players[pindex].vanilla_mode then return end
-router:open_ui(UiRouter.UI_NAMES.RAIL_BUILDER)
+   router:open_ui(UiRouter.UI_NAMES.RAIL_BUILDER)
    players[pindex].move_queue = {}
 
    --Set the menu line counter to 0

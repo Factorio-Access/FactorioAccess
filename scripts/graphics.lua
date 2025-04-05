@@ -666,9 +666,7 @@ end
 function mod.set_cursor_colors_to_player_colors(pindex)
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
-   if
-      players[pindex].cursor_tile_highlight_box ~= nil and players[pindex].cursor_tile_highlight_box.valid
-   then
+   if players[pindex].cursor_tile_highlight_box ~= nil and players[pindex].cursor_tile_highlight_box.valid then
       rendering.set_color(players[pindex].cursor_tile_highlight_box, p.color)
    end
    if players[pindex].building_footprint ~= nil and rendering.is_valid(players[pindex].building_footprint) then
