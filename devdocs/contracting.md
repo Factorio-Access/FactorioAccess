@@ -1,6 +1,6 @@
 # Introduction
 
-This is pending work for our contractor(s) which will have items removed as they are completed.  This does not
+This is a list of pending work items for our contractor(s) which will have items removed as they are completed.  This does not
 correspond one-to-one for git issues, but each section mentions issues where appropriate.
 
 If you aren't contracting with us *do *not* try to take work from this file because you want to help us out.  Insteadd,
