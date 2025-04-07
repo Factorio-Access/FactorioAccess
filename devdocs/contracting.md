@@ -14,6 +14,10 @@ There is an assumption of some in person/via Discord mod onboarding.  Probably a
 onboarding-friendly fashion at the cost of early ones being boring.  This isn't all the work we have.  Tasks fall off
 the top of the file as they complete and new work gets added to the bottom.
 
+There are also some dev notes here: https://github.com/Factorio-Access/FactorioAccess/wiki/Info-for-Contributors
+
+Note that it is a year old, and only 75% or so accurate.
+
 # Tasks
 
 ## Audit the Codebase for Accidental Global Variables
