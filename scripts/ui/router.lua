@@ -102,7 +102,7 @@ end
 
 ---@return fa.ui.UiName?
 function Router:get_open_ui_name()
-   return router_state[pindex].ui_name
+   return router_state[self.pindex].ui_name
 end
 
 -- Routers are stateless save for the pindex; we cache them to avoid the overhead of making new ones.
@@ -113,7 +113,9 @@ local router_cache = {}
 function mod.get_router(pindex)
    assert(pindex ~= nil)
    if router_cache[pindex] then return router_cache[pindex] end
-   return setmetatable({ pindex = pindex }, Router_meta)
+   local new_router = setmetatable({ pindex = pindex }, Router_meta)
+   router_cache[pindex] = new_router
+   return new_router
 end
 
 return mod

@@ -316,4 +316,14 @@ function mod.insert_if_notnill(tab, what)
    if what then table.insert(tab, what) end
 end
 
+---@param tab table
+---@return table
+function mod.shallow_copy(tab)
+   local out = {}
+   for k, v in pairs(tab) do
+      out[k] = v
+   end
+   return out
+end
+
 return mod

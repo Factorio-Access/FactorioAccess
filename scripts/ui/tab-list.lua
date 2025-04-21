@@ -13,10 +13,10 @@ For now this isn't super documented.  If you are looking for some overarching fr
 later.  This just gets us off the ground.  However, see ui/menu.lua, which simplifies, well, menus.
 
 This is the top level of the UI hierarchy and also handles the state management. Each tab will receive a context with a
-field to use for persistent state. Whatever it stores there persists.  It can reset this state by forcing closure; to do
-so, it should write `force_close=true` to the context.  A shared state, also cleared on forced closure, is
-`shared_state`.  Callbacks passed to creation of this tablist can initialize the shared state, but cannot print to the
-player by design; do not perform mutable actions in state setup or else.
+field to use for persistent state. Whatever it stores there can persist between opens, if `persist_state` is set.  It
+can reset this state by forcing closure; to do so, it should write `force_close=true` to the context.  A shared state,
+also cleared on forced closure, is `shared_state`.  Callbacks passed to creation of this tablist can initialize the
+shared state, but cannot print to the player by design; do not perform mutable actions in state setup or else.
 
 To clarify how input gets here, this is currently hardcoded in the menu logic in control.lua.  That is, by checking
 global.players[pindex].menu_name, and setting it for the open tab list.
@@ -64,6 +64,7 @@ local mod = {}
 ---@field tabs fa.ui.TabDescriptor[]
 ---@field shared_state_setup (fun(number, table): table)? passed the parameters and pindex, should return a shaerd state.
 ---@field resets_to_first_tab_on_open boolean?
+---@field persist_state boolean?
 
 ---@class fa.ui.TabListStorageState
 ---@field active_tab number
@@ -198,6 +199,8 @@ function TabList:open(pindex, parameters)
    local router = UiRouter.get_router(pindex)
    router:open_ui(self.ui_name)
 
+   if not self.declaration.persist_state then tablist_storage[pindex][self.ui_name] = nil end
+
    local tabstate = tablist_storage[pindex][self.ui_name]
 
    if not tabstate then
@@ -233,10 +236,9 @@ end
 
 ---@param force_reset boolean? If true, also dump state.
 function TabList:close(pindex, force_reset, is_textbox)
-   -- Our lame event handling story where more than one event handler can get
-   -- called for the same event combined with the new GUI framework still being
-   -- WIP means that double-close is apparently possible.  We already know we're
-   -- going to fix that, so for now just guard against it.
+   -- Our lame event handling story where more than one event handler can get called for the same event combined with
+   -- the new GUI framework still being WIP means that double-close is apparently possible.  We already know we're going
+   -- to fix that, so for now just guard against it.
    if not tablist_storage[pindex] or not tablist_storage[pindex][self.ui_name] then return end
 
    if tablist_storage[pindex][self.ui_name].currently_open then

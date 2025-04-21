@@ -55,7 +55,7 @@ function mod.declare_storage_module(module_name, default_value, opts)
 
    opts = opts or {}
    opts.root_field = opts.root_field or "players"
-   opts.persistent = opts.persistent or true
+   opts.persistent = opts.persistent ~= nil or true
 
    local tried_clear = false
 

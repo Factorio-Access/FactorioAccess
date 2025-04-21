@@ -122,6 +122,18 @@ function MessageBuilder:list_item(fragment)
    return self
 end
 
+-- Just like list_item, but will force a comma even if this is the first item in a list.  This is used e.g. in grids,
+-- which should always be "label, dims".
+---@param fragment LocalisedString? If present, pushed after the separator.
+---@return fa.MessageBuilder
+function MessageBuilder:list_item_forced_comma(fragment)
+   self:_check_not_built()
+   self:list_item()
+   self.is_first_list_item = false
+   if fragment then self:fragment(fragment) end
+   return self
+end
+
 -- It is an error to keep using this builder after building.
 ---@return LocalisedString? Nil if nothing was done.
 function MessageBuilder:build()

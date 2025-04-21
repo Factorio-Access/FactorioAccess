@@ -86,7 +86,10 @@ local mod = {}
 ---@field message fa.MessageBuilder
 ---@field modifiers fa.ui.graph.Modifiers Set for things using the keyboard. Non-nil but garbage for all others.
 ---@field state any
+---@field tablist_shared_state any
 ---@field pindex number
+---@field parameters any Comes from the parent parameters, indexed by the name of the graph.
+---@field global_parameters any The parent parameters, to enable "going sideways".
 
 ---@alias fa.ui.graph.SimpleCallback fun(fa.ui.GraphCtx)
 
@@ -104,10 +107,10 @@ local mod = {}
 
 ---@enum fa.ui.graph.TransitionDir
 mod.TRANSITION_DIR = {
-   UP = 0,
-   RIGHT = 1,
-   DOWN = 2,
-   LEFT = 3,
+   UP = 1,
+   RIGHT = 12,
+   DOWN = 3,
+   LEFT = 4,
 }
 
 ---@class fa.ui.graph.Node
@@ -130,6 +133,7 @@ mod.TRANSITION_DIR = {
 ---@class fa.ui.Graph: fa.ui.TabCallbacks
 ---@field render fa.ui.graph.Render
 ---@field render_callback fa.ui.graph.RenderCallback
+---@field name string
 local Graph = {}
 local Graph_meta = { __index = Graph }
 
@@ -155,7 +159,7 @@ local NO_MODIFIERS = { control = false, alt = false, shift = false }
 ---@param modifiers fa.ui.graph.Modifiers
 ---@return fa.ui.graph.Ctx
 ---@private
-function Graph:_wrap_ctx(outer_ctx, modifiers)
+function Graph:_wrap_ctx(outer_ctx, name, modifiers)
    local controller = setmetatable({
       graph = self,
       ctx = outer_ctx,
@@ -167,7 +171,10 @@ function Graph:_wrap_ctx(outer_ctx, modifiers)
       modifiers = modifiers,
       controller = controller,
       state = outer_ctx.state,
+      tablist_shared_state = outer_ctx.shared_state,
       pindex = outer_ctx.pindex,
+      parameters = outer_ctx.parameters[name],
+      global_parameters = outer_ctx.parameters,
    }
 
    return inner_ctx
@@ -176,7 +183,7 @@ end
 ---@param ctx fa.ui.graph.InternalTabCtx
 ---@private
 function Graph:_rerender(ctx)
-   local render = self.render_callback(self:_wrap_ctx(ctx, NO_MODIFIERS))
+   local render = self.render_callback(self:_wrap_ctx(ctx, self.name, NO_MODIFIERS))
    if not render then
       ctx.force_close = true
       return
@@ -275,7 +282,7 @@ local CALLBACK_FALLBACKS = {
 ---@return any?
 function Graph:_maybe_call(node, outer_ctx, callback_name, modifiers, ...)
    if outer_ctx.force_close then return end
-   local inner_ctx = self:_wrap_ctx(outer_ctx, modifiers)
+   local inner_ctx = self:_wrap_ctx(outer_ctx, self.name, modifiers)
 
    local fallback_callback_name = CALLBACK_FALLBACKS[callback_name]
    local sound = function() end
@@ -367,6 +374,7 @@ end
 function mod.declare_graph(declaration)
    local graph = setmetatable({
       render_callback = declaration.render_callback,
+      name = declaration.name,
    }, Graph_meta)
 
    return {

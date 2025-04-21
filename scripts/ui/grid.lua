@@ -1,162 +1,208 @@
 --[[
-A simple grid: you give it a callback to get cell contents, dimensions, and
-row/column names, and it handles figuring out all the keyboard stuff for you.
+A builder which knows how to render graphs.
 
-Designed to be mounted in a TabList (ui/tab-list.lua).  Callbacks can force
-closure by setting the context as usual. This just intercepts keypresses.
+You `mod.graph_builder()` then `add_label`, `set_column_header`, etc.  The dimensions of the resulting graph are the
+widest dimensions needed to hold all of the set nodes.  Default nodes are "Empty" or a localisation thereof.  To
+customize that,call `set_default_cell_vtable`.
 
-Grid positions are 1-based, to match lua tables. (1, 1) is the top left;
-positive x is right, positive y down.
+The keys are "1-1" etc.
 
-Your state will have a field `grid` injected into it; this field should be
-treated as private.  This allows passing you the full tab context directly, as
-if you had implemented all of this logic yourself.
+To match Lua, graphs are 1-indexed.
+
+You may replace default dimension announcement by calling `:dimension_labeler` and giving it a callback which will
+receive the graph's context, x, and y.  You should push `:fragment` only.
 ]]
-local FaUtils = require("scripts.fa-utils")
-local Math2 = require("math-helpers")
-local Sounds = require("scripts.ui.sounds")
+local UiKeyGraph = require("scripts.ui.key-graph")
+local UiSounds = require("scripts.ui.sounds")
 local TH = require("scripts.table-helpers")
 
 local mod = {}
 
----@alias fa.ui.GridNames (LocalisedString[])|(fun(self, fa.ui.TabContext, number): LocalisedString?)
+---@class fa.ui.grid.GridCell
+---@field vtable fa.ui.graph.NodeVtable
 
----@class fa.ui.GridCallbacks: fa.ui.TabCallbacks
----@field title LocalisedString
----@field row_names fa.ui.GridNames
----@field col_names fa.ui.GridNames
----@field get_dims fun(self, fa.ui.TabContext): (number, number)?
----@field read_cell fun(self, fa.ui.TabContext, number, number): LocalisedString?
+---@type fa.ui.graph.NodeVtable
+local EMPTY_CELL_VTAB = {
+   label = function(ctx)
+      ctx.message:fragment({ "fa.ui-grid-empty-cell" })
+   end,
+}
 
----@class fa.ui.GridState
----@field x number
----@field y number
+---@type fa.ui.graph.TransitionVtable
+local NORMAL_TRANSITION_VTAB = {
+   play_sound = function(ctx)
+      UiSounds.play_menu_move(ctx.pindex)
+   end,
+}
 
----@class fa.ui.GridContext: fa.ui.TabContext
----@field state { grid: fa.ui.GridState }
+local EMPTY_GRAPH_VTAB = {
+   label = function(ctx)
+      ctx.message:fragment({ "fa.ui-grid-empty" })
+   end,
+}
 
----@class fa.ui.Grid: fa.ui.TabCallbacks
----@field callbacks fa.ui.GridCallbacks
-local GridImpl = {}
+---@class fa.ui.grid.GridBuilder
+---@field cells table<number, table<number, fa.ui.grid.GridCell>>
+---@field default_cell_vtab fa.ui.graph.NodeVtable
+---@field dimension_labeler fun(fa.ui.graph.Ctx, number, number)
+local GridBuilder = {}
+local GridBuilder_meta = { __index = GridBuilder }
 
----@param context fa.ui.GridContext
----@return LocalisedString?
-function GridImpl:_force_inbounds(context)
-   local size_x, size_y = self.callbacks:get_dims(context)
-
-   if size_x == nil then
-      assert(context.force_close)
-      return
-   end
-
-   if size_x == 0 or size_y == 0 then return { "fa.ui-grid-empty" } end
-
-   local state = context.state.grid
-   state.x = Math2.clamp(state.x, 1, size_x)
-   state.y = Math2.clamp(state.y, 1, size_y)
+---@param x number
+---@param y number
+---@param cell fa.ui.grid.GridCell
+---@private
+function GridBuilder:_insert(x, y, cell)
+   assert(x >= 1 and y >= 1)
+   assert(not self.cells[x][y])
+   self.cells[x][y] = cell
+   self.max_x = x > self.max_x and x or self.max_x
+   self.max_y = y > self.max_y and y or self.max_y
 end
 
----@param names fa.ui.GridNames
----@return LocalisedString?
-function GridImpl:_resolve_name(names, context, index)
-   if not names then return nil end
-   if type(names) == "table" then return names[index] end
-   return names(self.callbacks, context, index)
+---@param x number
+---@param y number
+---@param label LocalisedString
+function GridBuilder:add_simple_label(x, y, label)
+   self:add_lazy_label(x, y, function(ctx)
+      ctx.message:fragment(label)
+   end)
+   return self
 end
 
--- Only one of dx or dy should be set; the other must be zero.
----@paramn dx number
----@param dy number
----@param context fa.ui.GridContext
-function GridImpl:_move(context, dx, dy)
-   assert(dx == 0 or dy == 0)
-
-   local state = context.state.grid
-   local x, y = state.x, state.y
-   local old_x, old_y = x, y
-
-   state.x = x + dx
-   state.y = y + dy
-
-   Sounds.play_menu_move(context.pindex)
-
-   local resp = self:_force_inbounds(context)
-   if resp then
-      context.message:fragment(resp)
-      return
-   end
-
-   -- If closure was forced, stop now.
-   if context.force_close == true then return end
-   self:_read_current_cell(context, dx ~= 0, dy ~= 0)
+---@param x number
+---@param y number
+---@param label fun(fa.ui.graph.GraphCtx)
+function GridBuilder:add_lazy_label(x, y, label)
+   self:_insert(x, y, {
+      vtable = {
+         label = label,
+      },
+   })
 end
 
----@param context fa.ui.GridContext
----@param include_xname boolean
----@param include_yname boolean
----@return LocalisedString?
-function GridImpl:_read_current_cell(context, include_xname, include_yname)
-   local empty_resp = self:_force_inbounds(context)
-   if empty_resp then
-      context.message:fragment(empty_resp)
-      return
-   end
-
-   local state = context.state.grid
-
-   local cell = self.callbacks:read_cell(context, state.x, state.y)
-   if context.force_close then return end
-   assert(cell)
-
-   local parts = {}
-
-   if include_xname then
-      local xname = self:_resolve_name(self.callbacks.col_names, context, state.x)
-      if xname then table.insert(parts, xname) end
-   end
-
-   if include_yname then
-      local yname = self:_resolve_name(self.callbacks.row_names, context, state.y)
-      if yname then table.insert(parts, yname) end
-   end
-
-   local res = cell
-   if next(parts) then res = { "fa.ui-grid-cell-with-pos", cell, FaUtils.localise_cat_table(parts) } end
-   context.message:fragment(res)
+function GridBuilder:set_dimension_labeler(labeler)
+   self.dimension_labeler = labeler
+   return self
 end
 
--- All of our up/down/etc. event handlers are the same thing: move, then read the cell.
-local function move_handler(dx, dy)
-   ---@param self fa.ui.Grid
-   return function(self, context)
-      self:_move(context, dx, dy)
+---@param vtab fa.ui.graph.NodeVtable
+---@return fa.ui.grid.GridBuilder
+function GridBuilder:set_default_cell_vtab(vtab)
+   self.default_cell_vtab = vtab
+   return self
+end
+
+-- Building strings is expensive!  Avoid that by caching these, since we need to use them a few times.  The cache is
+-- valid up to keycache_x and keycache_y inclusive, and filled out as needed.
+local keycache = TH.defaulting_table()
+local keycache_x = 0
+local keycache_y = 0
+
+-- This helper table lets us iterate over all 4 directions to check for adjacent nodes.
+local ADJACENT_DIRS = {
+   { UiKeyGraph.TRANSITION_DIR.UP, 0, -1 },
+   { UiKeyGraph.TRANSITION_DIR.DOWN, 0, 1 },
+   { UiKeyGraph.TRANSITION_DIR.LEFT, -1, 0 },
+   { UiKeyGraph.TRANSITION_DIR.RIGHT, 1, 0 },
+}
+
+---@return fa.ui.graph.Render
+function GridBuilder:build()
+   -- We must only capture the labeler, not the whole builder. Be careful of that.
+   local labeler = self.dimension_labeler
+
+   -- First, fill in all missing cells with an empty cell, and attach our node wrapper to announce locations.
+   for x = 1, self.max_x do
+      for y = 1, self.max_y do
+         local node = self.cells[x][y]
+         if not node then
+            node = {
+               vtable = self.default_cell_vtab,
+            }
+            self.cells[x][y] = node
+         end
+
+         local old_lab = node.vtable.label
+         -- The vtable could be from a constant, etc. Don't break it.
+         node.vtable = TH.shallow_copy(node.vtable)
+
+         ---@param ctx fa.ui.graph.Ctx
+         node.vtable.label = function(ctx)
+            old_lab(ctx)
+            ctx.message:list_item_forced_comma()
+            labeler(ctx, x, y)
+         end
+      end
    end
-end
 
-GridImpl.on_up = move_handler(0, -1)
-GridImpl.on_down = move_handler(0, 1)
-GridImpl.on_left = move_handler(-1, 0)
-GridImpl.on_right = move_handler(1, 0)
-
----@param context fa.ui.GridContext
-function GridImpl:on_tab_list_opened(context)
-   if self.callbacks.on_tab_list_opened then
-      self.callbacks:on_tab_list_opened(context)
-      if context.force_close then return end
+   --- Fill out the key cache so that we have all needed keys.
+   for x = keycache_x, self.max_x do
+      for y = keycache_y, self.max_y do
+         keycache[x][y] = string.format("%d-%d", x, y)
+      end
    end
 
-   context.state.grid = { x = 1, y = 1 }
+   ---@type fa.ui.graph.Render
+   local render = {
+      nodes = {
+         -- Gets overwritten immediately, if the graph has any nodes.
+         ["1-1"] = {
+            transitions = {},
+            vtable = EMPTY_GRAPH_VTAB,
+         },
+      },
+      start_key = "1-1",
+   }
+
+   for x = 1, self.max_x do
+      for y = 1, self.max_y do
+         ---@type fa.ui.graph.Node
+         local node = {
+            transitions = {},
+            vtable = self.cells[x][y].vtable,
+         }
+         local k = keycache[x][y]
+         render.nodes[k] = node
+
+         -- For all adjacencies which have a node, add a transition to it.  For all adjacencies which also have a
+         -- header, add the label to announce.
+         for _, adj in pairs(ADJACENT_DIRS) do
+            local dir, dx, dy = adj[1], adj[2], adj[3]
+            local new_x = x + dx
+            local new_y = y + dy
+
+            if not self.cells[new_x][new_y] then goto continue end
+
+            ---@type fa.ui.graph.Transition
+            local t = {
+               destination = keycache[new_x][new_y],
+               vtable = NORMAL_TRANSITION_VTAB,
+            }
+
+            node.transitions[dir] = t
+
+            ::continue::
+         end
+      end
+   end
+
+   return render
 end
 
-function GridImpl:on_tab_focused(ctx)
-   self:_read_current_cell(ctx, true, true)
+function default_dim_namer(ctx, x, y)
+   ctx.message:fragment({ "fa.ui-grid-cell-location", x, y })
 end
 
----@param callbacks fa.ui.GridCallbacks
-function mod.declare_grid(callbacks)
-   -- The grid shadows the callbacks it needs to intercept, then forwards those
-   -- by hand.
-   return setmetatable({ callbacks = callbacks }, TH.nested_indexer(GridImpl, callbacks))
+---@return fa.ui.grid.GridBuilder
+function mod.grid_builder()
+   return setmetatable({
+      cells = TH.defaulting_table({}),
+      default_cell_vtab = EMPTY_CELL_VTAB,
+      dimension_labeler = default_dim_namer,
+      max_x = 0,
+      max_y = 0,
+   }, GridBuilder_meta)
 end
 
 return mod

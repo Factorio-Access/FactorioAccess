@@ -6,6 +6,7 @@ local MessageBuilder = require("scripts.message-builder")
 local TabList = require("scripts.ui.tab-list")
 local TH = require("scripts.table-helpers")
 local TransportBelts = require("scripts.transport-belts")
+local UiKeyGraph = require("scripts.ui.key-graph")
 local UiRouter = require("scripts.ui.router")
 
 local mod = {}
@@ -27,51 +28,44 @@ local mod = {}
 ---@class fa.ui.BeltAnalyzer.Parameters
 ---@field entity LuaEntity
 
----@class fa.ui.BeltAnalyzer.Context: fa.ui.TabContext
----@field parameters fa.ui.BeltAnalyzer.Parameters
----@field shared_state fa.ui.BeltAnalyzer.SharedState
+---@class fa.ui.BeltAnalyzer.Context: fa.ui.graph.Ctx
+---@field global_parameters fa.ui.BeltAnalyzer.Parameters
+---@field tablist_shared_state fa.ui.BeltAnalyzer.SharedState
 
----@class fa.ui.BeltAnalyzer.LocalBeltGridCallbacks: fa.ui.GridCallbacks
-local LocalGrid = {}
-
----@param context fa.ui.BeltAnalyzer.Context
-function LocalGrid:col_names(context, index)
-   local ent = context.parameters.entity
-   if not ent.valid then
-      context.force_close = true
-      return
-   end
+---@param ctx fa.ui.BeltAnalyzer.Context
+---@return LocalisedString
+local function name_col(ctx, x)
+   local ent = ctx.global_parameters.entity
 
    local facing = ent.direction
    local left = Geometry.dir_counterclockwise_90(facing)
    local right = Geometry.dir_clockwise_90(facing)
+   local index = x
 
    local which = ({ left, right })[index]
    return { "fa.ui-belt-analyzer-lane", FaUtils.direction_lookup(which) }
 end
 
-function LocalGrid:get_dims(context)
-   -- 2 lanes, 4 slots.
-   return 2, 4
+local function name_row(y)
+   assert(y >= 1 and y <= 4)
+   return { "fa.ui-belt-analyzer-slot", y }
 end
 
----@param context fa.ui.BeltAnalyzer.Context
-function LocalGrid:row_names(context, index)
-   local ent = context.parameters.entity
-   if not ent.valid then
-      context.force_close = true
-      return
-   end
-
-   return { "fa.ui-belt-analyzer-slot", index }
-end
-
----@param context fa.ui.BeltAnalyzer.Context
+---@param ctx fa.ui.BeltAnalyzer.Context
 ---@param x number
 ---@param y number
-function LocalGrid:read_cell(context, x, y)
+local function local_dim_namer(ctx, x, y)
+   local col = name_col(ctx, x)
+   local row = name_row(y)
+   ctx.message:fragment({ "fa.ui-belt-analyzer-local-pos", row, col })
+end
+
+---@param ctx fa.ui.BeltAnalyzer.Context
+---@param x number
+---@param y number
+local function label_local_cell(ctx, x, y)
    -- x is lane. y is cell.
-   local node = context.shared_state.node
+   local node = ctx.tablist_shared_state.node
 
    local contents = node:get_all_contents()
 
@@ -96,46 +90,68 @@ function LocalGrid:read_cell(context, x, y)
    return builder:build()
 end
 
-local LocalTab = Grid.declare_grid(LocalGrid)
+local function local_renderer(ctx)
+   local builder = Grid.grid_builder()
 
--- The only difference between the upstream/total/downstream tabs is which
--- field of the analysis they reference, so this returns the grids referencing
--- the proper field.  All other logic is 100% identical.
+   for x = 1, 2 do
+      for y = 1, 4 do
+         builder:add_simple_label(x, y, label_local_cell(ctx, x, y))
+      end
+   end
+
+   return builder:set_dimension_labeler(local_dim_namer):build()
+end
+
+-- The only difference between the upstream/total/downstream tabs is which field of the analysis they reference, so this
+-- returns the grids referencing the proper field.  All other logic is 100% identical.
 ---@param field "upstream"|"downstream"|"total"
 ---@param length_field "upstream_length" | "downstream_length" | "total_length"
 local function aggregate_grid_builder(field, length_field)
-   ---@class fa.BeltAnalyzer.AggregateTabCallbacks:  fa.ui.GridCallbacks
-   local TabCallbacks = {}
-
    ---@param ctx fa.ui.BeltAnalyzer.Context
-   function TabCallbacks:get_dims(ctx)
-      local state = ctx.shared_state.analysis[field]
-      local height = math.max(#state[1], #state[2])
-      if height == 0 then return 0, 0 end
-      return 2, height
+   ---@return fa.ui.graph.Render?
+   return function(ctx)
+      local ent = ctx.global_parameters.entity
+      if not ent.valid then return nil end
+
+      local builder = Grid.grid_builder()
+      local analysis = ctx.tablist_shared_state.analysis
+      local state = analysis[field]
+
+      -- Give the player a special message if the belt is empty.
+      if not next(state[1]) and not next(state[2]) then
+         return {
+            nodes = {
+               ["empty-belt"] = {
+                  transitions = {},
+                  vtable = {
+                     label = function(ctx)
+                        ctx.message:fragment({ "fa.ui-belt-analyzer-no-contents" })
+                     end,
+                  },
+               },
+            },
+            start_key = "empty-belt",
+         }
+      end
+
+      for col = 1, 2 do
+         for row, bucket in pairs(state[col]) do
+            local percent = string.format("%.1f", 100 * bucket.count / analysis[length_field])
+            builder:add_simple_label(
+               col,
+               row,
+               { "fa.ui-belt-analyzer-aggregation", Localising.localise_item(bucket), percent }
+            )
+         end
+      end
+
+      return builder:build()
    end
-
-   TabCallbacks.col_names = {
-      { "fa.ui-belt-analyzer-left-lane" },
-      { "fa.ui-belt-analyzer-right-lane" },
-   }
-
-   ---@param ctx fa.ui.BeltAnalyzer.Context
-   function TabCallbacks:read_cell(ctx, x, y)
-      local ent = ctx.shared_state.analysis[field][x][y]
-      if not ent then return { "fa.ui-belt-analyzer-empty" } end
-
-      local percent = string.format("%.1f", 100 * ent.count / ctx.shared_state.analysis[length_field])
-
-      return { "fa.ui-belt-analyzer-aggregation", Localising.localise_item(ent), percent }
-   end
-
-   return Grid.declare_grid(TabCallbacks)
 end
 
-local TotalTab = aggregate_grid_builder("total", "total_length")
-local UpstreamTab = aggregate_grid_builder("upstream", "upstream_length")
-local DownstreamTab = aggregate_grid_builder("downstream", "downstream_length")
+local total_renderer = aggregate_grid_builder("total", "total_length")
+local upstream_renderer = aggregate_grid_builder("upstream", "upstream_length")
+local downstream_renderer = aggregate_grid_builder("downstream", "downstream_length")
 
 ---@param params fa.ui.BeltAnalyzer.Parameters
 ---@return fa.ui.BeltAnalyzer.SharedState
@@ -165,30 +181,28 @@ end
 mod.belt_analyzer = TabList.declare_tablist({
    ui_name = UiRouter.UI_NAMES.BELT,
    resets_to_first_tab_on_open = true,
-
    shared_state_setup = state_setup,
-
    tabs = {
-      {
-         name = "local",
+      UiKeyGraph.declare_graph({
          title = { "fa.ui-belt-analyzer-tab-local" },
-         callbacks = LocalTab,
-      },
-      {
+         render_callback = local_renderer,
+         name = "local",
+      }),
+      UiKeyGraph.declare_graph({
          name = "total",
          title = { "fa.ui-belt-analyzer-tab-total" },
-         callbacks = TotalTab,
-      },
-      {
+         render_callback = total_renderer,
+      }),
+      UiKeyGraph.declare_graph({
          name = "upstream",
          title = { "fa.ui-belt-analyzer-tab-upstream" },
-         callbacks = UpstreamTab,
-      },
-      {
+         render_callback = upstream_renderer,
+      }),
+      UiKeyGraph.declare_graph({
          name = "downstream",
          title = { "fa.ui-belt-analyzer-tab-downstream" },
-         callbacks = DownstreamTab,
-      },
+         render_callback = downstream_renderer,
+      }),
    },
 })
 
