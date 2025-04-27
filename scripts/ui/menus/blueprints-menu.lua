@@ -49,7 +49,7 @@ local function render(ctx)
             return a.index < b.index
          end)
 
-         local icons = TH.map(bp.preview_icons, function(icon)
+         icons = TH.map(bp.preview_icons, function(icon)
             -- Localising this is tricky because it could be from anywhere.
 
             local proto = FaUtils.find_prototype(icon.signal.name)

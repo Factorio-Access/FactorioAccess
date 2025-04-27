@@ -38,7 +38,7 @@ mod.ResourcePatchesBackend = ResourcePatchesBackend
 ---@param a fa.scanner.ResourcePatch
 ---@param b fa.scanner.ResourcePatch
 ---@return fa.scanner.ResourcePatch
-function fold_patches(a, b)
+local function fold_patches(a, b)
    local highest
 
    if a.highest_point.amount > b.highest_point.amount then
@@ -153,7 +153,7 @@ function ResourcePatchesBackend:readout_entry(player, ent)
    local bd = ent.backend_data
    local pname = bd.prototype
 
-   if bd.zoom_override then return FaInfo.ent_info(pindex, bd.zoom_override, true) end
+   if bd.zoom_override then return FaInfo.ent_info(player.index, bd.zoom_override, true) end
 
    local ents
 
@@ -178,7 +178,7 @@ function ResourcePatchesBackend:readout_entry(player, ent)
 
    local percent = math.floor(total / bd.initial_total_amount * 100)
 
-   local pname = prototypes.entity[pname].localised_name
+   pname = prototypes.entity[pname].localised_name
 
    local res = {
       "fa.scanner-resource-patch",

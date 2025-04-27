@@ -17,8 +17,8 @@ end
 function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
    local router = UiRouter.get_router(pindex)
 
-   local pos = table.deepcopy(pos)
-   local muted = muted or false
+   pos = table.deepcopy(pos)
+   muted = muted or false
    local char = game.get_player(pindex).character
    if not char then return false end
 

@@ -58,8 +58,6 @@ local function compute_increment_decrement(item, cur_val)
          return { down = down, up = up }
       end
    end
-
-   error("Unreachable")
 end
 
 ---@param point LuaLogisticPoint
@@ -118,6 +116,7 @@ end
 ---@return number
 local function get_player_logistic_request_missing_count(pindex, slot_id)
    local p = game.get_player(pindex)
+   local stack = p.cursor_stack
    local point = p.get_requester_point()
    if not point then return 0 end
 
@@ -130,7 +129,7 @@ local function get_player_logistic_request_missing_count(pindex, slot_id)
    if missing == nil then return 0 end
    local name = slot.value.name
    --Check player hand
-   if p.cursor_stack and p.cursor_stack.valid_for_read and p.cursor_stack.name == name then
+   if stack and stack.valid_for_read and stack.name == name then
       missing = missing - stack.count
    end
    if missing <= 0 then return 0 end
@@ -433,7 +432,7 @@ end
 -- Push a readout of a logistic request to the provided builder as a fragment.
 ---@param msg_builder fa.MessageBuilder
 ---@param req LogisticFilter
-function push_request_readout(msg_builder, req)
+local function push_request_readout(msg_builder, req)
    -- Error conditions are unlocalised because they should never happen.  We
    -- should probably change these to asserts in the long run, but for now this
    -- is very new code and it is better to function partially.
@@ -483,7 +482,10 @@ end
 
 function mod.logistics_info_key_handler(pindex)
    local p = game.get_player(pindex)
-   local ent, err = find_player_logistic_target(pindex)
+   local ent = nil
+   local err = nil
+   local item = nil
+   ent, err = find_player_logistic_target(pindex)
    if err then
       printout(err, pindex)
       return
@@ -498,7 +500,7 @@ function mod.logistics_info_key_handler(pindex)
       return
    end
 
-   local item, err = find_player_item_name(pindex)
+   item, err = find_player_item_name(pindex)
 
    if ent.type == "character" and ent.player.index == pindex then
       if item then
@@ -514,12 +516,15 @@ end
 ---@param min_or_max "min" | "max"
 ---@param up_or_down "up" | "down"
 local function modify_logistic_request_kb(pindex, min_or_max, up_or_down)
-   local name, err = find_player_item_name(pindex)
+   local err= nil
+   local name = nil
+   local target = nil
+   name, err = find_player_item_name(pindex)
    if err then
       printout(err, pindex)
       return
    end
-   local target, err = find_player_logistic_target(pindex)
+   target, err = find_player_logistic_target(pindex)
    if err then
       printout(err, pindex)
       return
@@ -583,12 +588,15 @@ end
 
 --Clears the selected logistic request
 function mod.logistics_request_clear_handler(pindex)
-   local name, err = find_player_item_name(pindex)
+   local err = nil
+   local name = nil
+   local target = nil
+   name, err = find_player_item_name(pindex)
    if err then
       printout(err, pindex)
       return
    end
-   local target, err = find_player_logistic_target(pindex)
+   target, err = find_player_logistic_target(pindex)
    if err then
       printout(err, pindex)
       return
@@ -687,7 +695,7 @@ function mod.player_logistic_request_read(item_name, pindex, additional_checks)
    local sec, index = get_logistic_slot_pos(char, item_name)
 
    --Read the correct slot id value
-   local current_slot = sec.get_slot(index --[[@as integer]])
+   current_slot = sec.get_slot(index --[[@as integer]])
    if current_slot == nil or current_slot.value == nil or current_slot.value.name == nil then
       --No requests found
       printout(
@@ -909,7 +917,7 @@ function mod.fixup_network_name(port_in)
    return
 end
 
---[[--Logistic network menu options summary 
+--[[--Logistic network menu options summary
    0. Roboport of logistic network NAME, instructions
    1. Rename roboport network
    2. This roboport: Check neighbor counts and dirs
@@ -1004,7 +1012,7 @@ function mod.run_roboport_menu(menu_index, pindex, clicked)
          if nw ~= nil then
             local click_count = players[pindex].menu_click_count
             click_count = click_count + 1
-            local result = mod.logistic_network_items_info(port --[[@as LuaEntity]], click_count)
+            local result = mod.logistic_network_items_info(pindex, port --[[@as LuaEntity]], click_count)
             players[pindex].menu_click_count = click_count
             printout(result, pindex)
          else
@@ -1013,7 +1021,7 @@ function mod.run_roboport_menu(menu_index, pindex, clicked)
       end
    end
 end
-ROBOPORT_MENU_LENGTH = 6
+local ROBOPORT_MENU_LENGTH = 6
 
 function mod.roboport_menu_open(pindex)
    if players[pindex].vanilla_mode then return end
@@ -1187,7 +1195,7 @@ function mod.logistic_network_chests_info(port)
 end
 
 ---@param port LuaEntity
-function mod.logistic_network_items_info(port, group_no)
+function mod.logistic_network_items_info(pindex, port, group_no)
    local msg = MessageBuilder.MessageBuilder.new()
    local nw = port.logistic_cell.logistic_network
    if nw == nil or nw.valid == false then

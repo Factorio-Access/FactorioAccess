@@ -40,7 +40,7 @@ local Viewpoint = {}
 local Viewpoint_meta = { __index = Viewpoint }
 
 function Viewpoint:get_cursor_pos()
-   local pos = viewpoint_storage[pindex].cursor_pos
+   local pos = viewpoint_storage[self.pindex].cursor_pos
    return { x = pos.x, y = pos.y }
 end
 

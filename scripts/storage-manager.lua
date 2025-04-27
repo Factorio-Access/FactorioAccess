@@ -81,7 +81,7 @@ function mod.declare_storage_module(module_name, default_value, opts)
             ver_state = {}
             storage.storage_manager = {}
          end
-         local ver_state = ver_state.versions
+         ver_state = ver_state.versions
          if not ver_state then
             ver_state = {}
             storage.storage_manager.versions = ver_state
@@ -158,7 +158,7 @@ function mod.declare_storage_module(module_name, default_value, opts)
       return wrapped_iter(false)
    end
 
-   ret = {}
+   local ret = {}
    setmetatable(ret, meta)
    return ret
 end

@@ -129,8 +129,8 @@ end
 
 --[[
 * Returns the direction of that entity from this entity, with a bias against the 4 cardinal directions so that you can align with them more easily.
-* Returns 1 of 8 main directions, based on the ratios of the x and y distances. 
-* The deciding ratio is 1 to 4, meaning that for an object that is 100 tiles north, it can be offset by up to 25 tiles east or west before it stops being counted as "directly" in the north. 
+* Returns 1 of 8 main directions, based on the ratios of the x and y distances.
+* The deciding ratio is 1 to 4, meaning that for an object that is 100 tiles north, it can be offset by up to 25 tiles east or west before it stops being counted as "directly" in the north.
 * The arctangent of 1/4 is about 14 degrees, meaning that the field of view that directly counts as a cardinal direction is about 30 degrees, while for a diagonal direction it is about 60 degrees.]]
 function mod.get_direction_biased(pos_target, pos_origin)
    local diff_x = pos_target.x - pos_origin.x
@@ -327,8 +327,8 @@ end
 function mod.get_tile_dimensions(item, dir)
    if item.place_result ~= nil then
       local dimensions = item.place_result.selection_box
-      x = math.ceil(dimensions.right_bottom.x - dimensions.left_top.x)
-      y = math.ceil(dimensions.right_bottom.y - dimensions.left_top.y)
+      local x = math.ceil(dimensions.right_bottom.x - dimensions.left_top.x)
+      local y = math.ceil(dimensions.right_bottom.y - dimensions.left_top.y)
       if dir == dirs.north or dir == dirs.south then
          return { x = x, y = y }
       else
@@ -524,7 +524,7 @@ end
 
 --For a list of edge points of an aggregate entity, returns the nearest one.
 function mod.nearest_edge(edges, pos, name)
-   local pos = table.deepcopy(pos)
+   pos = table.deepcopy(pos)
    if name == "forest" then
       pos.x = pos.x / 8
       pos.y = pos.y / 8
@@ -557,7 +557,7 @@ function mod.is_rectangle_fully_within_player_range(pindex, left_top, right_bott
 end
 
 function mod.scale_area(area, factor)
-   result = table.deepcopy(area)
+   local result = table.deepcopy(area)
    result.left_top.x = area.left_top.x * factor
    result.left_top.y = area.left_top.y * factor
    result.right_bottom.x = area.right_bottom.x * factor
@@ -655,7 +655,7 @@ function mod.str2pos(str)
 end
 
 function mod.breakup_string(str)
-   result = { "" }
+   local result = { "" }
    if table_size(str) > 20 then
       local i = 0
       while i < #str do
@@ -672,7 +672,7 @@ end
 
 --Converts a dictionary into an iterable array.
 function mod.get_iterable_array(dict)
-   result = {}
+   local result = {}
    for i, v in pairs(dict) do
       table.insert(result, v)
    end

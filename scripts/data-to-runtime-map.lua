@@ -24,7 +24,7 @@ local mod = {}
 function mod.build(name, values)
    local index = 1
    for k, v in pairs(values) do
-      local v = tostring(v)
+      v = tostring(v)
 
       data:extend({
          {

@@ -18,7 +18,7 @@ local mod = {}
 --[[
 /fac <script>
 
-Exactrly the same as /c, but accessible without fiddling around. It:
+Exactly the same as /c, but accessible without fiddling around. It:
 
 - Captures return values, then speaks them through serpent:
   - Tries to run the code wrapped in a function, with return prepended
@@ -33,7 +33,7 @@ Also due to launcher limitations, "print" here doesn't do newlines.  That'll
 cause the launcher to not read right.
 ]]
 ---@param cmd CustomCommandData
-function cmd_fac(cmd)
+local function cmd_fac(cmd)
    local pindex = cmd.player_index
    local script = cmd.parameter
 

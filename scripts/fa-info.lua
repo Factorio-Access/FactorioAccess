@@ -272,7 +272,7 @@ end
 local function ent_info_constant_combinator(ctx)
    local ent = ctx.ent
    if ent.type == "constant-combinator" then
-      ctx.message:fragment(Circuits.constant_combinator_signals_info(ent, pindex))
+      ctx.message:fragment(Circuits.constant_combinator_signals_info(ent, ctx.pindex))
    end
 end
 
@@ -311,8 +311,8 @@ local function ent_info_character(ctx)
          ctx.message:fragment(p2.name)
       elseif p ~= nil and p.valid and p.index == ctx.pindex then
          ctx.message:fragment({ "fa.ent-info-self-character" })
-      elseif pindex ~= nil then
-         ctx.message:fragment(tostring(pindex))
+      elseif ctx.pindex ~= nil then
+         ctx.message:fragment(tostring(ctx.pindex))
       end
    end
 end

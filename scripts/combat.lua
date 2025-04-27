@@ -325,7 +325,7 @@ function mod.smart_aim_grenades_and_capsules(pindex, draw_circles_in)
       })
    end
    --Scan for targets within range
-   potential_targets = p.surface.find_entities_filtered({
+   local potential_targets = p.surface.find_entities_filtered({
       surface = p.surface,
       position = player_pos,
       radius = max_range,
@@ -421,7 +421,7 @@ function mod.smart_aim_grenades_and_capsules(pindex, draw_circles_in)
    --The player runs at least 8.9 tiles per second and the throw takes around half a second
    --so a displacement of 4 tiles is a safe bet. Also assume a max range penalty because it is behind you
    if running_dir ~= nil and #potential_targets > 0 then
-      back_dir = fa_utils.rotate_180(running_dir)
+      local back_dir = fa_utils.rotate_180(running_dir)
       for i, t in ipairs(potential_targets) do
          if t.valid and (t.prototype.is_building or t.prototype.is_military_target) then
             local dist = util.distance(player_pos, t.position)

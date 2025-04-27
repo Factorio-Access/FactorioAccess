@@ -479,7 +479,7 @@ end
 -- Play the sound if at the beginning or end. Does nothing if the value passed
 -- isn't the beginning or end.
 ---@param val fa.scanner.MoveResult
-function sound_for_end(val)
+local function sound_for_end(pindex, val)
    local pstate = player_state[pindex]
 
    if val == AT_BEGINNING or val == AT_END then game.get_player(pindex).play_sound({ path = "inventory-edge" }) end
@@ -492,7 +492,7 @@ function mod.move_category(pindex, direction)
 
    if router:is_ui_open() then return end
    local pstate = player_state[pindex]
-   sound_for_end(move_category(pindex, pstate, direction))
+   sound_for_end(pindex, move_category(pindex, pstate, direction))
    printout({ "fa.scanner-category-" .. pstate.scanner_cursor.category }, pindex)
 end
 
@@ -503,7 +503,7 @@ function mod.move_subcategory(pindex, direction)
 
    if router:is_ui_open() then return end
    local pstate = player_state[pindex]
-   sound_for_end(move_subcategory(pindex, pstate, direction))
+   sound_for_end(pindex, move_subcategory(pindex, pstate, direction))
    announce_cursor_pos(pindex, pstate)
 end
 
@@ -514,7 +514,7 @@ function mod.move_within_subcategory(pindex, direction)
 
    if router:is_ui_open() then return end
    local pstate = player_state[pindex]
-   sound_for_end(move_in_subcategory(pindex, pstate, direction))
+   sound_for_end(pindex, move_in_subcategory(pindex, pstate, direction))
    announce_cursor_pos(pindex, pstate)
 end
 
