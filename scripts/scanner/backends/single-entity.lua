@@ -13,7 +13,7 @@ local mod = {}
 
 -- For things such as crafting machines, trains, etc. the category is
 -- 'prototype/recipe', 'prototype/train-name', etc.
-function cat2(c1, c2)
+local function cat2(c1, c2)
    return string.format("%s/%s", c1, c2)
 end
 
@@ -148,7 +148,6 @@ mod.Containers = decl("fa.scanner.backends.Containers", {
    ---@param ent LuaEntity
    subcategory_callback = function(ent)
       local itemset = ent.get_inventory(defines.inventory.chest).get_contents()
-      local subcat
       -- This is a set not an array, and we care if it has 0, 1, or multiple
       -- items. To do that, pull out the first two keys.
       local key1 = next(itemset)

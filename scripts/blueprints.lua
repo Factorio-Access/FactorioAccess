@@ -538,17 +538,19 @@ function mod.blueprint_book_add_item(pindex, bp)
    --laterdo ***
 end
 
+local BLUEPRINT_BOOK_SETTINGS_MENU_LENGTH = 8
+
 --[[ Blueprint book menu options summary
    List Mode (Press LEFT BRACKET on the BPB in hand)
    0. name, menu instructions
    X. Read/copy/take out blueprint number X
-   
+
    Settings Mode (Press RIGHT BRACKET on the BPB in hand)
    0. name, bp count, menu instructions
    1. Read the description
    2. Read the icons, which are its featured components
    3. Rename this book
-   4. Edit the description 
+   4. Edit the description
    5. Create a copy of this blueprint book
    6. Delete this blueprint book (press twice)
    7. Export this blueprint book as a text string
@@ -721,7 +723,6 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
       end
    end
 end
-BLUEPRINT_BOOK_SETTINGS_MENU_LENGTH = 8
 
 function mod.blueprint_book_menu_open(pindex, open_in_list_mode)
    if players[pindex].vanilla_mode then return end
@@ -876,28 +877,6 @@ function mod.remove_item_from_book(pindex, book_stack, array_index)
    book_data.blueprint_book.blueprints = items
    mod.set_stack_bp_from_data(book_stack, book_data)
    printout("Item removed from book, menu closed", pindex)
-end
-
---Remove gaps by creating a new list with indexes in order. Note: The stack can be writtem-on to sort the array?
-function mod.remove_all_non_blueprints_from_book(book_stack)
-   local p = game.get_player(pindex)
-   local book_data = mod.get_bp_book_data_for_edit(book_stack)
-   local items = book_data.blueprint_book.blueprints
-   if items == nil or items == {} then return items end
-   local new_items = {}
-   local j = 0
-   for i, item in ipairs(items) do
-      local new_item = {}
-      if item.blueprint ~= nil then
-         new_item = { index = j, blueprint = item.blueprint }
-         table.insert(new_items, new_item)
-         j = j + 1
-      else
-         --This is a non-blueprint item, which gets removed at the moment
-      end
-   end
-   book_data.blueprint_book.blueprints = new_items
-   mod.set_stack_bp_from_data(book_stack, book_data)
 end
 
 function mod.copy_selected_area_to_clipboard(pindex, point_1, point_2)

@@ -75,7 +75,7 @@ end
 local force_clear = false
 
 ---@returns { items: fa.ds.Deque }
-function qstate_from_storage(name)
+local function qstate_from_storage(name)
    if force_clear then
       storage.work_queues = {}
       force_clear = false

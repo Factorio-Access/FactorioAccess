@@ -179,7 +179,7 @@ function Clusterer:insert(x, y, data)
                -- deleted, as it may be in buckets we aren't iterating over.
                bucket.items[item] = nil
                item.logical_delete = true
-               pdata = self.fold(prev.data, item.data)
+               local pdata = self.fold(prev.data, item.data)
 
                prev.aabb = merge_aabbs(prev.aabb, item.aabb)
                prev.dilated_aabb = merge_aabbs(prev.dilated_aabb, item.dilated_aabb)
@@ -288,7 +288,7 @@ end)
 
 --@param a fa.ds.clusterer.Item
 ---@param b fa.ds.clusterer.Item
-function xycomp(a, b)
+local function xycomp(a, b)
    if a.aabb.left_top.x < b.aabb.left_top.x then return true end
    return a.aabb.left_top.x == b.aabb.left_top.x and a.aabb.left_top.y < b.aabb.left_top.y
 end

@@ -211,7 +211,7 @@ local function blueprint_book_find_index_of_next_match(index, str, pindex)
                   game.get_player(pindex).play_sound({ path = "Inventory-Move" }) --sound for finding the next
                   return i
                else
-                  repeat_i = i
+                  local repeat_i = i
                end
             end
          end
@@ -228,7 +228,7 @@ local function blueprint_book_find_index_of_next_match(index, str, pindex)
                   game.get_player(pindex).play_sound({ path = "Inventory-Move" }) --sound for finding the next
                   return i
                else
-                  repeat_i = i
+                  local repeat_i = i
                end
             end
          end

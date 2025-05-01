@@ -5,7 +5,7 @@ local mod = {}
 
 ---@param event EventData.CustomInputEvent
 function mod.quickbar_get_handler(event)
-   pindex = event.player_index
+   local pindex = event.player_index
    if not check_for_player(pindex) then return end
    if
       players[pindex].menu == "inventory"
@@ -21,7 +21,7 @@ end
 --all 10 quickbar slot setting event handlers
 ---@param event EventData.CustomInputEvent
 function mod.quickbar_set_handler(event)
-   pindex = event.player_index
+   local pindex = event.player_index
    if not check_for_player(pindex) then return end
    if
       players[pindex].menu == "inventory"
@@ -37,7 +37,7 @@ end
 --all 10 quickbar page setting event handlers
 ---@param event EventData.CustomInputEvent
 function mod.quickbar_page_handler(event)
-   pindex = event.player_index
+   local pindex = event.player_index
    if not check_for_player(pindex) then return end
 
    local num = tonumber(string.sub(event.input_name, -1))
@@ -46,7 +46,7 @@ function mod.quickbar_page_handler(event)
 end
 
 function mod.read_quick_bar_slot(index, pindex)
-   page = game.get_player(pindex).get_active_quick_bar_page(1) - 1
+   local page = game.get_player(pindex).get_active_quick_bar_page(1) - 1
    local item = game.get_player(pindex).get_quick_bar_slot(index + 10 * page)
    if item ~= nil then
       local proto = prototypes.item[item.name]
@@ -95,7 +95,7 @@ function mod.set_quick_bar_slot(index, pindex)
 end
 
 function mod.read_switched_quick_bar(index, pindex)
-   page = game.get_player(pindex).get_active_quick_bar_page(index)
+   local page = game.get_player(pindex).get_active_quick_bar_page(index)
    local item = game.get_player(pindex).get_quick_bar_slot(1 + 10 * (index - 1))
    local item_name = "empty slot"
    if item ~= nil then item_name = fa_localising.get(prototypes.item[item.name], pindex) end

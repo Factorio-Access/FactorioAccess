@@ -64,7 +64,7 @@ local function get_parents(connectable)
       -- if needed below.
       local l, r = inputs[1], inputs[2]
       local ccw_90_dir = Geometry.dir_counterclockwise_90(outgoing_dir)
-      local uv_x, uv_y = uv_for_direction(ccw_90_dir)
+      local uv_x, uv_y = Geometry.uv_for_direction(ccw_90_dir)
       local splitter_pos = connectable.position
       local maybe_left_pos = l.position
       local rel_x, rel_y = splitter_pos.x - maybe_left_pos.x, splitter_pos.y - maybe_left_pos.y
@@ -296,7 +296,7 @@ The items table is prototype->quality->count.
 ---@return  fa.TransportBelts.SlotBucket[]
 function Node:get_line_contents(line)
    self:_assert_valid()
-   local line = self.entity.get_transport_line(line --[[@as number]])
+   line = self.entity.get_transport_line(line --[[@as number]])
 
    local buckets = {}
 
@@ -370,8 +370,6 @@ function Node:get_all_contents()
    end
 
    error(string.format("Should be unreachable as this should be a belt connectable, but it is a %s", t))
-
-   return ret
 end
 
 -- If this node has exactly one parent, return that entity.
@@ -391,7 +389,7 @@ end
 ---@param line defines.transport_line
 function Node:is_line_full(line)
    self:_assert_valid()
-   local line = self.entity.get_transport_line(line --[[@as number]])
+   line = self.entity.get_transport_line(line --[[@as number]])
    local expected = line.line_length * 4
    return #line == expected
 end
@@ -679,7 +677,7 @@ end
 
 --Set the input priority or the output priority or filter for a splitter
 function mod.set_splitter_priority(splitter, is_input, is_left, filter_item_stack, clear)
-   local clear = clear or false
+   clear = clear or false
    local result = "no message"
    local filter = splitter.splitter_filter
 

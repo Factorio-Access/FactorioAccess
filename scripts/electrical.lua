@@ -8,7 +8,7 @@ local mod = {}
 --Formats a power value in watts to summarize it as a string according to its magnitude.
 ---@param power float
 function mod.get_power_string(power)
-   result = ""
+   local result = ""
    if power > 1000000000000 then
       power = power / 1000000000000
       result = result .. string.format(" %.1f Terawatts", power)

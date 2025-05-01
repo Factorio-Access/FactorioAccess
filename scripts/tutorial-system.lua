@@ -192,8 +192,7 @@ function mod.prev_chapter(pindex)
 end
 
 function mod.next_step(pindex)
-   local tutorial = players[pindex].tutorial
-   if tutorial == nil then
+   if players[pindex].tutorial == nil then
       mod.load_tutorial(pindex)
       mod.run_tutorial_menu(pindex, players[pindex].tutorial.reading_the_header, players[pindex].tutorial.clicked)
       return

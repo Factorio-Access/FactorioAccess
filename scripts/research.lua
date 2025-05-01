@@ -112,8 +112,10 @@ function mod.enqueue(player, name, index)
    local force = player.force
    local queue = force.research_queue
    table.insert(queue, index or 1, name)
+   -- redundant? no—Factorio needs the copy written back
    force.research_queue = queue
-   local queue = force.research_queue
+   -- re-fetch in case the engine normalized it
+   queue = force.research_queue
    local added = false
    for _, e in pairs(queue) do
       if e.name == name then
@@ -246,7 +248,7 @@ local function localise_research_requirements(tech)
       return a.name < b.name
    end)
 
-   local prereqs = FaUtils.localise_cat_table(TH.map(prereqs, tech_name_string), ", ")
+   prereqs = FaUtils.localise_cat_table(TH.map(prereqs, tech_name_string), ", ")
    return FaUtils.spacecat(trig_or_cost, { "fa.research-needs-techs", prereqs })
 end
 
@@ -564,7 +566,7 @@ end
 ---@param pattern string
 ---@return number?
 local function search_impl(pindex, researches, start_index, direction, pattern)
-   local pattern = pattern:lower()
+   pattern = pattern:lower()
 
    local len = #researches
    if start_index < 1 or start_index > len then return nil end

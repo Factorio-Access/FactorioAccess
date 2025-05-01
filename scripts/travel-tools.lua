@@ -6,6 +6,7 @@ local fa_teleport = require("scripts.teleport")
 local UiRouter = require("scripts.ui.router")
 
 local mod = {}
+local TRAVEL_MENU_LENGTH = 8
 
 function mod.fast_travel_menu_open(pindex)
    local router = UiRouter.get_router(pindex)
@@ -195,7 +196,6 @@ function mod.fast_travel_menu_click(pindex)
       input.select(1, 0)
    end
 end
-TRAVEL_MENU_LENGTH = 8
 
 function mod.fast_travel_menu_up(pindex)
    if players[pindex].travel.index.y > 1 then

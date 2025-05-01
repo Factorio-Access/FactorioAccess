@@ -100,7 +100,7 @@ function mod.tuples(a, b)
 end
 
 function mod.kv_list(list, comparer)
-   vals = {}
+   local vals = {}
    for i = 1, #list do
       vals[i] = { key = list[i][1], value = list[i][2] }
    end
@@ -110,7 +110,7 @@ function mod.kv_list(list, comparer)
    }
 end
 
-function find_key_index_or_die(list, key)
+local function find_key_index_or_die(list, key)
    local cmp = list.options.comparer or rawequal
    for i = 1, #list.values do
       if cmp(list.values[i].key, key) then return i end

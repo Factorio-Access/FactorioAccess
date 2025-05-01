@@ -141,7 +141,7 @@ function TileClusterer:submit_points(points)
       -- For each point, find all adjacent groups. If we have 4 it's a middle tile.
       -- If we have less than 4 then we need to add it to possible edges.
       for c_i = 1, #ADJ_COORDS do
-         x_i, y_i = point_x + ADJ_COORDS[c_i][1], point_y + ADJ_COORDS[c_i][2]
+         local x_i, y_i = point_x + ADJ_COORDS[c_i][1], point_y + ADJ_COORDS[c_i][2]
 
          adjacents[c_i] = nil
          if seen_tiles[x_i] then adjacents[c_i] = self:walk_canonical_list(seen_tiles[x_i][y_i]) end
@@ -258,12 +258,12 @@ function TileClusterer:submit_points(points)
          end
 
          -- And the group.
-         local ec = final_group_obj.edge_tiles[point_x]
-         if not ec then
-            ec = { [point_y] = true }
-            final_group_obj.edge_tiles[point_x] = ec
+         local ec_group = final_group_obj.edge_tiles[point_x]
+         if not ec_group then
+            ec_group = { [point_y] = true }
+            final_group_obj.edge_tiles[point_x] = ec_group
          else
-            ec[point_y] = true
+            ec_group[point_y] = true
          end
       end
 

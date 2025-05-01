@@ -71,7 +71,7 @@ function mod.load_crafting_queue(pindex)
    if players[pindex].crafting_queue.lua_queue ~= nil then
       players[pindex].crafting_queue.lua_queue = game.get_player(pindex).crafting_queue
       if players[pindex].crafting_queue.lua_queue ~= nil then
-         delta = players[pindex].crafting_queue.max - #players[pindex].crafting_queue.lua_queue
+         local delta = players[pindex].crafting_queue.max - #players[pindex].crafting_queue.lua_queue
          players[pindex].crafting_queue.index = math.max(1, players[pindex].crafting_queue.index - delta)
          players[pindex].crafting_queue.max = #players[pindex].crafting_queue.lua_queue
       else

@@ -45,7 +45,7 @@ end
 -- Get the unit vector for a given direction.
 ---@param dir defines.direction
 ---@return number, number
-function uv_for_direction(dir)
+function mod.uv_for_direction(dir)
    local v = Consts.DIRECTION_VECTORS[dir + 1]
    assert(v)
    return v.x, v.y

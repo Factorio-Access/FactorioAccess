@@ -663,7 +663,7 @@ local function toggle_circuit_operation_mode(ent)
    return result, changed
 end
 
-function mod.read_circuit_condition(ent, comparator_in_words)
+function mod.read_circuit_condition(pindex, ent, comparator_in_words)
    local control = ent.get_control_behavior()
    local cond = control.circuit_condition
    local fulfilled = control.circuit_condition.fulfilled
@@ -692,7 +692,7 @@ function mod.read_circuit_condition(ent, comparator_in_words)
          comparator = "compared to"
       end
    end
-   local result = first_signal_name .. " " .. comparator .. " " .. second_signal_name
+   result = first_signal_name .. " " .. comparator .. " " .. second_signal_name
    return result
 end
 
@@ -947,7 +947,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
          if not clicked then
             printout("Set a new count for the last signal", pindex)
          else
-            result = mod.constant_combinator_type_last_signal_count(pindex, ent)
+            local result = mod.constant_combinator_type_last_signal_count(pindex, ent)
             printout(result, pindex)
             p.play_sound({ path = "Inventory-Move" })
          end
@@ -1009,7 +1009,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
             local result = ""
             result = result .. "Reading mode: " .. read_mode .. ", "
             result = result .. "Operation mode: " .. op_mode .. ", "
-            if uses_condition == true then result = result .. mod.read_circuit_condition(ent, true) end
+            if uses_condition == true then result = result .. mod.read_circuit_condition(pindex, ent, true) end
             printout(result, pindex)
          end
       elseif index == 5 then
@@ -1564,7 +1564,7 @@ function mod.apply_selected_signal_to_enabled_condition(pindex, ent, first)
       set_message
          .. localising.get(prototype, pindex)
          .. ", condition now checks if "
-         .. mod.read_circuit_condition(ent, true),
+         .. mod.read_circuit_condition(pindex, ent, true),
       pindex
    )
 end

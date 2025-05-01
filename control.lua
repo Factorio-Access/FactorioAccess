@@ -6695,7 +6695,7 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
                   "Set "
                      .. result
                      .. ", condition now checks if "
-                     .. fa_circuits.read_circuit_condition(players[pindex].signal_selector.ent, true),
+                     .. fa_circuits.read_circuit_condition(pindex, players[pindex].signal_selector.ent, true),
                   pindex
                )
             end

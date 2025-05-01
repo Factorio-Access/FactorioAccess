@@ -11,8 +11,8 @@ local UiRouter = require("scripts.ui.router")
 
 local mod = {}
 
---[[Function to increase/decrease the bar (restricted slots) of a given chest/container by a given amount, while protecting its lower and upper bounds. 
-* Returns the verbal explanation to print out. 
+--[[Function to increase/decrease the bar (restricted slots) of a given chest/container by a given amount, while protecting its lower and upper bounds.
+* Returns the verbal explanation to print out.
 * amount = number of slots to change, set negative value for a decrease.
 ]]
 function mod.add_to_inventory_bar(ent, amount)
@@ -518,7 +518,7 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
          start_phrase = start_phrase .. " locked "
       end
       --Read the slot stack
-      stack = building_sector.inventory[players[pindex].building.index]
+      local stack = building_sector.inventory[players[pindex].building.index]
       if stack and stack.valid_for_read and stack.valid then
          if stack.is_blueprint then
             printout(fa_blueprints.get_blueprint_info(stack, false, pindex), pindex)

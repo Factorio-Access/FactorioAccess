@@ -190,7 +190,7 @@ function GridBuilder:build()
    return render
 end
 
-function default_dim_namer(ctx, x, y)
+local function default_dim_namer(ctx, x, y)
    ctx.message:fragment({ "fa.ui-grid-cell-location", x, y })
 end
 

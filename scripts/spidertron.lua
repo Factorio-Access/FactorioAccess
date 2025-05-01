@@ -99,7 +99,7 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
          if remote.connected_entity == nil then
             printout("To move a spidertron, link it to this remote first.", pindex)
          else
-            cursor = players[pindex].cursor_pos
+            local cursor = players[pindex].cursor_pos
             game.get_player(pindex).cursor_stack.connected_entity.autopilot_destination = cursor
             printout("Spidertron sent to coordinates" .. math.floor(cursor.x) .. ", " .. math.floor(cursor.y), pindex)
          end
@@ -112,7 +112,7 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
          if remote.connected_entity == nil then
             printout("To move a spidertron, link it to this remote first.", pindex)
          else
-            cursor = players[pindex].cursor_pos
+            local cursor = players[pindex].cursor_pos
             game.get_player(pindex).cursor_stack.connected_entity.add_autopilot_destination(cursor)
             printout(
                "Coordinates "
@@ -206,7 +206,7 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
       end
    end
 end
-SPIDER_MENU_LENGTH = 7
+local SPIDER_MENU_LENGTH = 7
 
 function mod.spider_menu_open(pindex, stack)
    local router = UiRouter.get_router(pindex)

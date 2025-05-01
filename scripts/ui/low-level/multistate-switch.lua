@@ -121,7 +121,7 @@ function mod.create(opts)
    -- Our keys are { onoff, state } and values { label = message }, using the
    -- wildcard to capture all the off states into one entry.
 
-   choices = {
+   local choices = {
       { { false, circular_list.ANY }, { label = opts.off_label } },
    }
 

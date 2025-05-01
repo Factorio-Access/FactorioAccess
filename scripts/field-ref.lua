@@ -192,7 +192,7 @@ local test_value = {
 }
 
 -- No root path compilation.
-ok = pcall(function()
+local ok = pcall(function()
    F()
 end)
 assert(ok == false)
