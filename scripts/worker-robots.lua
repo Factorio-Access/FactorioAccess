@@ -129,9 +129,7 @@ local function get_player_logistic_request_missing_count(pindex, slot_id)
    if missing == nil then return 0 end
    local name = slot.value.name
    --Check player hand
-   if stack and stack.valid_for_read and stack.name == name then
-      missing = missing - stack.count
-   end
+   if stack and stack.valid_for_read and stack.name == name then missing = missing - stack.count end
    if missing <= 0 then return 0 end
    --Check all player inventories
    missing = missing - p.get_inventory(defines.inventory.character_ammo).get_item_count(name)
@@ -516,7 +514,7 @@ end
 ---@param min_or_max "min" | "max"
 ---@param up_or_down "up" | "down"
 local function modify_logistic_request_kb(pindex, min_or_max, up_or_down)
-   local err= nil
+   local err = nil
    local name = nil
    local target = nil
    name, err = find_player_item_name(pindex)
