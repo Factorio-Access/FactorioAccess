@@ -1790,9 +1790,6 @@ function mod.read_selected_entity_status(pindex)
       or run_handler(ent_status_lookup)
       or run_handler(ent_status_fallback)
 
-   -- exit if no fragments added yet
-   -- if ctx.message.state == MessageBuilder.MESSAGE_BUILDER_STATE.INITIAL then ctx.message:fragment("status error") end
-
    if status ~= nil then
       --For working or normal entities, give some extra info about specific entities in terms of speeds or bonuses.
       local status_list = defines.entity_status
