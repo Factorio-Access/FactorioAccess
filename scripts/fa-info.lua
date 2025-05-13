@@ -50,6 +50,15 @@ local mod = {}
 ---@field player LuaPlayer
 ---@field cursor_pos fa.Point Not necessarily the player's actual cursor.
 
+---@class fa.Info.EntStatusContext
+---@field message fa.MessageBuilder
+---@field ent LuaEntity
+---@field pindex number
+---@field player LuaPlayer
+---@field power_rate number
+---@field drain number
+---@field uses_energy boolean
+
 -- Present a list like iron plate x1, transport belt legendary x2, ...
 ---@param list ({ name: string|LuaItemPrototype, quality: string|LuaQualityPrototype|nil, count: number})[]
 ---@param truncate number?
@@ -1442,164 +1451,307 @@ function mod.selected_item_production_stats_info(pindex)
    )
 end
 
---Report the status of the selected entity as well as additional dynamic info depending on the entity type
+--- Handles cargo wagons by reporting their top inventory contents instead of status text.
+---@param ctx fa.Info.EntStatusContext The context for the current entity.
+---@return boolean handled True if this handler added information to the message.
+local function ent_status_cargo_wagon(ctx)
+   local ent = ctx.ent
+   if ent.prototype.type == "cargo-wagon" then
+      ctx.message:fragment(Trains.cargo_wagon_top_contents_info(ent))
+      return true
+   end
+   return false
+end
+
+--- Handles fluid wagons by reporting their fluid contents instead of status text.
+---@param ctx fa.Info.EntStatusContext The context for the current entity.
+---@return boolean handled True if this handler added information to the message.
+local function ent_status_fluid_wagon(ctx)
+   local ent = ctx.ent
+   if ent.prototype.type == "fluid-wagon" then
+      ctx.message:fragment(Trains.fluid_contents_info(ent))
+      return true
+   end
+   return false
+end
+
+--- Handles status text if it exists
+---@param ctx fa.Info.EntStatusContext The context for the current entity.
+---@return boolean handled True if this handler added information to the message.
+local function ent_status_lookup(ctx)
+   local ent = ctx.ent
+   local status_lookup = FaUtils.into_lookup(defines.entity_status)
+   status_lookup[23] = "Full burnt result output" --weird exception
+   local ent_status_id = ent.status
+   if ent_status_id ~= nil then
+      local ent_status_text = status_lookup[ent_status_id]
+      if ent_status_text == nil then
+         print("Weird no entity status lookup" .. ent.name .. "-" .. ent.type .. "-" .. ent_status_id)
+      end
+      ctx.message:fragment({ "entity-status." .. ent_status_text:gsub("_", "-") })
+      return true
+   end
+   return false
+end
+
+--- Handles fallback status logic when ent.status is nil
+---@param ctx fa.Info.EntStatusContext The context for the current entity.
+---@return boolean handled True if this handler added information to the message.
+local function ent_status_fallback(ctx)
+   local ent = ctx.ent
+   if ent.get_fuel_inventory() ~= nil then
+      ctx.message:fragment(Driving.fuel_inventory_info(ent))
+   elseif ent.prototype.type == "electric-pole" then
+      if Electrical.get_electricity_satisfaction(ent) > 0 then
+         ctx.message:fragment({
+            "fa.ent-status-percent-network-satisfaction",
+            Electrical.get_electricity_satisfaction(ent),
+            Electrical.get_electricity_flow_info(ent),
+         })
+      else
+         ctx.message:fragment({ "fa.ent-status-no-power", Electrical.report_nearest_supplied_electric_pole(ent) })
+      end
+   else
+      ctx.message:fragment({ "fa.ent-status-no-status" })
+   end
+   return true
+end
+
+--- Reports max item throughput for belts and splitters
+---@param ctx fa.Info.EntStatusContext The context for the current entity.
+---@return boolean handled True if this handler added information to the message.
+local function ent_status_belt_speed(ctx)
+   local ent = ctx.ent
+   local type = ent.prototype.type
+   local belt_speed = ent.prototype.belt_speed
+   if belt_speed ~= nil and belt_speed > 0 then
+      if type == "splitter" then
+         ctx.message:fragment({ "fa.ent-status-splitter-speed", math.floor(belt_speed * 480 * 2) })
+      else
+         ctx.message:fragment({ "fa.ent-status-belt-speed", math.floor(belt_speed * 480) })
+      end
+      return true
+   end
+   return false
+end
+
+--- Reports crafting speed, currently for assembling-machine and furnace
+--- Crafting cycles per minute based on recipe time and the STATED craft speed
+--- Todo maybe extend this to all "crafting machine" types?
+---@param ctx fa.Info.EntStatusContext The context for the current entity.
+---@return boolean handled True if this handler added information to the message.
+local function ent_status_crafting_speed(ctx)
+   local ent = ctx.ent
+   local type = ent.prototype.type
+   if type == "assembling-machine" or type == "furnace" then
+      local progress = ent.crafting_progress
+      local speed = ent.crafting_speed
+      local recipe = ent.get_recipe()
+      if recipe and recipe.valid then
+         local recipe_time = recipe.energy
+         local cycles = 60 / recipe_time * speed -- crafting cycles completed per minute for this recipe
+         local cycles_string = string.format(" %.2f ", cycles)
+         if cycles == math.floor(cycles) then cycles_string = string.format(" %d ", cycles) end
+         local speed_string = string.format(" %.2f ", speed)
+         if speed == math.floor(speed) then speed_string = string.format(" %d ", speed) end
+         if cycles < 10 then --more than 6 seconds to craft
+            ctx.message:fragment({ "fa.ent-status-recipe-progress", math.floor(progress * 100) })
+         end
+         if cycles > 0 then ctx.message:fragment({ "fa.ent-status-recipe-cycles", cycles_string }) end
+         ctx.message:fragment({ "fa.ent-status-crafting-speed", speed_string })
+         ctx.message:fragment({ "fa.ent-status-crafting-percent", math.floor(100 * (1 + ent.speed_bonus) + 0.5) })
+         if ent.productivity_bonus ~= 0 then
+            ctx.message:fragment({
+               "fa.ent-status-productivity-bonus",
+               math.floor(100 * ent.productivity_bonus + 0.5),
+            })
+         end
+         return true
+      end
+   end
+   return false
+end
+
+--- Reports mining speed and bonuses for mining drills
+---@param ctx fa.Info.EntStatusContext The context for the current entity.
+---@return boolean handled True if this handler added information to the message.
+local function ent_status_mining_speed(ctx)
+   local ent = ctx.ent
+   if ent.prototype.type == "mining-drill" then
+      local speed_bonus = ent.speed_bonus
+      local productivity_bonus = ent.productivity_bonus
+      ctx.message:fragment({
+         "fa.ent-status-mining-drill-speed",
+         string.format(" %.2f ", ent.prototype.mining_speed * 60 * (1 + speed_bonus)),
+      })
+      if speed_bonus ~= 0 then
+         ctx.message:fragment({ "fa.ent-status-speed-bonus", math.floor(100 * (1 + speed_bonus) + 0.5) })
+      end
+      if productivity_bonus ~= 0 then
+         ctx.message:fragment({
+            "fa.ent-status-productivity-bonus",
+            math.floor(100 * productivity_bonus + 0.5),
+         })
+      end
+      return true
+   end
+   return false
+end
+
+--- Reports lab speed and productivity bonus
+---@param ctx fa.Info.EntStatusContext The context for the current entity.
+---@return boolean handled True if this handler added information to the message.
+local function ent_status_lab_speed(ctx)
+   local ent = ctx.ent
+   if ent.prototype.type == "lab" then
+      local speed_bonus = ent.speed_bonus
+      local productivity_bonus = ent.productivity_bonus
+      if speed_bonus ~= 0 then
+         local base = ent.force.laboratory_speed_modifier
+         local combined = 1 + base * (1 + (speed_bonus - base))
+         ctx.message:fragment({ "fa.ent-status-speed-bonus", math.floor(100 * combined + 0.5) })
+      end
+      if productivity_bonus ~= 0 then
+         local prod = productivity_bonus + ent.force.laboratory_productivity_bonus
+         ctx.message:fragment({ "fa.ent-status-productivity-bonus", math.floor(100 * prod + 0.5) })
+      end
+      return true
+   end
+   return false
+end
+
+--- Generic fallback for other entity types with speed/productivity bonuses
+---@param ctx fa.Info.EntStatusContext The context for the current entity.
+---@return boolean handled True if this handler added information to the message.
+local function ent_status_generic_speed_productivity(ctx)
+   local ent = ctx.ent
+   local speed_bonus = ent.speed_bonus
+   local productivity_bonus = ent.productivity_bonus
+   if speed_bonus ~= 0 then
+      ctx.message:fragment({ "fa.ent-status-speed-bonus", math.floor(100 * (1 + speed_bonus) + 0.5) })
+   end
+   if productivity_bonus ~= 0 then
+      ctx.message:fragment({ "fa.ent-status-productivity-bonus", math.floor(100 * productivity_bonus + 0.5) })
+   end
+   return true
+end
+
+--- Working consumption: full power draw
+---@param ctx fa.Info.EntStatusContext The context for the current entity.
+---@return boolean handled True if this handler added information to the message.
+local function ent_status_energy_working(ctx)
+   local ent = ctx.ent
+   local status = ent.status
+   local status_list = defines.entity_status
+
+   if ctx.uses_energy and status == status_list.working then
+      local usage = ent.prototype.get_max_energy_usage(ent.quality or 0)
+      local total = (usage * 60 * ctx.power_rate) + ctx.drain
+      ctx.message:fragment({
+         "fa.ent-status-electrical-working",
+         Electrical.get_power_string(total),
+      })
+      return true
+   end
+   return false
+end
+
+--- Low power or no power consumption: Reports estimated energy usage for low/no power status based on capacity and drain.
+---@param ctx fa.Info.EntStatusContext The context for the current entity.
+---@return boolean handled True if this handler added information to the message.
+local function ent_status_energy_low(ctx)
+   local ent = ctx.ent
+   local status = ent.status
+   local status_list = defines.entity_status
+
+   if ctx.uses_energy and (status == status_list.no_power or status == status_list.low_power) then
+      local cap = ent.prototype.get_max_energy(ent.quality or 0) or 0
+      local total = (cap * 60 * ctx.power_rate) + ctx.drain
+      ctx.message:fragment({
+         "fa.ent-status-electrical-low-no-power",
+         Electrical.get_power_string(total),
+      })
+      return true
+   end
+   return false
+end
+
+--- Idle consumption: still drawing drain even when not active
+---@param ctx fa.Info.EntStatusContext The context for the current entity.
+---@return boolean handled True if this handler added information to the message.
+local function ent_status_energy_idle(ctx)
+   local ent = ctx.ent
+
+   local has_potential = (ent.prototype.get_max_energy_usage(ent.quality or 0) or 0) > 0
+
+   if ctx.uses_energy or has_potential then
+      ctx.message:fragment({
+         "fa.ent-status-electrical-idle",
+         Electrical.get_power_string(ctx.drain),
+      })
+      return true
+   end
+   return false
+end
+
+--- Burner fuel: report if relevant
+---@param ctx fa.Info.EntStatusContext The context for the current entity.
+---@return boolean handled True if this handler added information to the message.
+local function ent_status_burner_fuel(ctx)
+   local ent = ctx.ent
+   -- Only engines or burner‐based machines have this field
+   if ctx.uses_energy and ent.prototype.burner_prototype then
+      ctx.message:fragment({ "fa.ent-status-burner-fuel" })
+      return true
+   end
+   return false
+end
+
+--- reports the entity’s health status
+---@param ctx fa.Info.EntStatusContext The context for the current entity.
+---@return boolean handled True if this handler added information to the message.
+local function ent_status_health(ctx)
+   local ent = ctx.ent
+   if ent.is_entity_with_health then
+      local ratio = ent.get_health_ratio()
+      if ratio == 1 then
+         -- Full health
+         ctx.message:fragment({ "fa.ent-status-full-health" })
+      else
+         -- Percent health
+         ctx.message:fragment({
+            "fa.ent-status-percent-health",
+            math.floor(ratio * 100),
+         })
+      end
+      return true
+   end
+   return false
+end
+
+--- reports evolution factor for spawner entities---@param ctx fa.Info.EntStatusContext The context for the current entity.
+---@return boolean handled True if this handler added information to the message.
+local function ent_status_spawner_evolution(ctx)
+   local ent = ctx.ent
+   if ent.type == "unit-spawner" then
+      local evo = math.floor(1000 * ent.force.get_evolution_factor(ent.surface)) / 1000
+      ctx.message:fragment({ "fa.ent-status-spawner-evolution-factor", evo })
+      return true
+   end
+   return false
+end
+
+---Report the status of the selected entity as well as additional dynamic info depending on the entity type
+---@param pindex number The player index for whom the action is being performed.
 function mod.read_selected_entity_status(pindex)
    local router = UiRouter.get_router(pindex)
 
    local ent = game.get_player(pindex).selected
    if not ent then return end
-   local stack = game.get_player(pindex).cursor_stack
+   -- local stack = game.get_player(pindex).cursor_stack
    if router:is_ui_open() then return end
-   --Print out the status of a machine, if it exists.
-   local result = { "" }
-   local ent_status_id = ent.status
-   local ent_status_text = ""
-   local status_lookup = FaUtils.into_lookup(defines.entity_status)
-   status_lookup[23] = "Full burnt result output" --weird exception
-   if ent.name == "cargo-wagon" then
-      --Instead of status, read contents
-      table.insert(result, Trains.cargo_wagon_top_contents_info(ent))
-   elseif ent.name == "fluid-wagon" then
-      --Instead of status, read contents
-      table.insert(result, Trains.fluid_contents_info(ent))
-   elseif ent_status_id ~= nil then
-      --Print status if it exists
-      ent_status_text = status_lookup[ent_status_id]
-      if ent_status_text == nil then
-         print("Weird no entity status lookup" .. ent.name .. "-" .. ent.type .. "-" .. ent.status)
-      end
-      table.insert(result, { "entity-status." .. ent_status_text:gsub("_", "-") })
-   else --There is no status
-      --When there is no status, for entities with fuel inventories, read that out instead. This is typical for vehicles.
-      if ent.get_fuel_inventory() ~= nil then
-         table.insert(result, Driving.fuel_inventory_info(ent))
-      elseif ent.type == "electric-pole" then
-         --For electric poles with no power flow, report the nearest electric pole with a power flow.
-         if Electrical.get_electricity_satisfaction(ent) > 0 then
-            table.insert(
-               result,
-               Electrical.get_electricity_satisfaction(ent)
-                  .. " percent network satisfaction, with "
-                  .. Electrical.get_electricity_flow_info(ent)
-            )
-         else
-            table.insert(result, "No power, " .. Electrical.report_nearest_supplied_electric_pole(ent))
-         end
-      else
-         table.insert(result, "No status.")
-      end
-   end
-   --For working or normal entities, give some extra info about specific entities.
-   if #result == 1 then table.insert(result, "result error") end
+   local status = ent.status
 
-   --For working or normal entities, give some extra info about specific entities in terms of speeds or bonuses.
-   local list = defines.entity_status
-   if
-      ent.status ~= nil
-      and ent.status ~= list.no_power
-      and ent.status ~= list.no_power
-      and ent.status ~= list.no_fuel
-   then
-      if ent.type == "inserter" then --items per minute based on rotation speed and the STATED hand capacity
-         local cap = ent.force.inserter_stack_size_bonus + 1
-         if ent.name == "bulk-inserter" then cap = ent.force.bulk_inserter_capacity_bonus end
-         local rate = string.format(" %.1f ", cap * ent.prototype.get_inserter_rotation_speed(ent.quality) * 57.5)
-         table.insert(result, ", can move " .. rate .. " items per second, with a hand capacity of " .. cap)
-      end
-      if ent.prototype ~= nil and ent.prototype.belt_speed ~= nil and ent.prototype.belt_speed > 0 then --items per minute by simple reading
-         if ent.type == "splitter" then
-            table.insert(
-               result,
-               ", can process " .. math.floor(ent.prototype.belt_speed * 480 * 2) .. " items per second"
-            )
-         else
-            table.insert(result, ", can move " .. math.floor(ent.prototype.belt_speed * 480) .. " items per second")
-         end
-      end
-      if ent.type == "assembling-machine" or ent.type == "furnace" then --Crafting cycles per minute based on recipe time and the STATED craft speed ; laterdo maybe extend this to all "crafting machine" types?
-         local progress = ent.crafting_progress
-         local speed = ent.crafting_speed
-         local recipe_time = 0
-         local cycles = 0 -- crafting cycles completed per minute for this recipe
-         if ent.get_recipe() ~= nil and ent.get_recipe().valid then
-            recipe_time = ent.get_recipe().energy
-            cycles = 60 / recipe_time * speed
-         end
-         local cycles_string = string.format(" %.2f ", cycles)
-         if cycles == math.floor(cycles) then cycles_string = string.format(" %d ", cycles) end
-         local speed_string = string.format(" %.2f ", speed)
-         if speed == math.floor(speed) then speed_string = string.format(" %d ", cycles) end
-         if cycles < 10 then --more than 6 seconds to craft
-            table.insert(result, ", recipe progress " .. math.floor(progress * 100) .. " percent ")
-         end
-         if cycles > 0 then table.insert(result, ", can complete " .. cycles_string .. " recipe cycles per minute ") end
-         table.insert(
-            result,
-            ", with a crafting speed of "
-               .. speed_string
-               .. ", at "
-               .. math.floor(100 * (1 + ent.speed_bonus) + 0.5)
-               .. " percent "
-         )
-         if ent.productivity_bonus ~= 0 then
-            table.insert(
-               result,
-               ", with productivity bonus " .. math.floor(100 * (0 + ent.productivity_bonus) + 0.5) .. " percent "
-            )
-         end
-      elseif ent.type == "mining-drill" then
-         table.insert(
-            result,
-            ", producing "
-               .. string.format(" %.2f ", ent.prototype.mining_speed * 60 * (1 + ent.speed_bonus))
-               .. " items per minute "
-         )
-         if ent.speed_bonus ~= 0 then
-            table.insert(result, ", with speed " .. math.floor(100 * (1 + ent.speed_bonus) + 0.5) .. " percent ")
-         end
-         if ent.productivity_bonus ~= 0 then
-            table.insert(
-               result,
-               ", with productivity bonus " .. math.floor(100 * (0 + ent.productivity_bonus) + 0.5) .. " percent "
-            )
-         end
-      elseif ent.name == "lab" then
-         if ent.speed_bonus ~= 0 then
-            table.insert(
-               result,
-               ", with speed "
-                  .. math.floor(
-                     100
-                           * (1 + ent.force.laboratory_speed_modifier * (1 + (ent.speed_bonus - ent.force.laboratory_speed_modifier)))
-                        + 0.5
-                  )
-                  .. " percent "
-            ) --laterdo fix bug**
-            --game.get_player(pindex).print(result)
-         end
-         if ent.productivity_bonus ~= 0 then
-            table.insert(
-               result,
-               ", with productivity bonus "
-                  .. math.floor(100 * (0 + ent.productivity_bonus + ent.force.laboratory_productivity_bonus) + 0.5)
-                  .. " percent "
-            )
-         end
-      else --All other entities with the an applicable status
-         if ent.speed_bonus ~= 0 then
-            table.insert(result, ", with speed " .. math.floor(100 * (1 + ent.speed_bonus) + 0.5) .. " percent ")
-         end
-         if ent.productivity_bonus ~= 0 then
-            table.insert(
-               result,
-               ", with productivity bonus " .. math.floor(100 * (0 + ent.productivity_bonus) + 0.5) .. " percent "
-            )
-         end
-      end
-      --laterdo maybe pump speed?
-   end
-
-   --Entity power usage
    local power_rate = (1 + ent.consumption_bonus)
    local drain = ent.electric_drain
    if drain ~= nil then
@@ -1608,65 +1760,64 @@ function mod.read_selected_entity_status(pindex)
       drain = 0
    end
    local uses_energy = false
-   if drain > 0 or (ent.prototype ~= nil and ent.prototype.get_max_energy_usage(ent.quality) > 0) then
-      uses_energy = true
+   if drain > 0 or ent.prototype.get_max_energy_usage(ent.quality) > 0 then uses_energy = true end
+
+   local p = game.get_player(pindex)
+   assert(p)
+
+   ---@type fa.Info.EntStatusContext
+   local ctx = {
+      ent = ent,
+      pindex = pindex,
+      message = MessageBuilder.MessageBuilder.new(),
+      player = p,
+      power_rate = power_rate,
+      drain = drain,
+      uses_energy = uses_energy,
+   }
+
+   local function run_handler(handler, nolist)
+      -- Call the handler; expect it to return true if it “handled” the entity
+      local handled = handler(ctx)
+      if handled and not nolist then ctx.message:list_item() end
+      return handled
    end
-   if ent.status ~= nil and uses_energy and ent.status == list.working then
-      table.insert(
-         result,
-         ", consuming "
-            .. Electrical.get_power_string(ent.prototype.get_max_energy_usage(ent.quality) * 60 * power_rate + drain)
-      )
-   elseif ent.status ~= nil and uses_energy and ent.status == list.no_power or ent.status == list.low_power then
-      table.insert(
-         result,
-         ", consuming less than "
-            .. Electrical.get_power_string(ent.prototype.get_max_energy(ent.quality) * 60 * power_rate + drain)
-      )
-   elseif
-      ent.status ~= nil and uses_energy
-      or (
-         ent.prototype ~= nil
-         and ent.prototype.get_max_energy_usage(ent.quality) ~= nil
-         and ent.prototype.get_max_energy_usage(ent.quality) > 0
-      )
-   then
-      table.insert(result, ", idle and consuming " .. Electrical.get_power_string(drain))
+
+   -- Try each in turn, stopping on the first that returns true
+   -- discard final result with `_` variable
+   local _ = run_handler(ent_status_cargo_wagon)
+      or run_handler(ent_status_fluid_wagon)
+      or run_handler(ent_status_lookup)
+      or run_handler(ent_status_fallback)
+
+   -- exit if no fragments added yet
+   -- if ctx.message.state == MessageBuilder.MESSAGE_BUILDER_STATE.INITIAL then ctx.message:fragment("status error") end
+
+   if status ~= nil then
+      --For working or normal entities, give some extra info about specific entities in terms of speeds or bonuses.
+      local status_list = defines.entity_status
+      if status ~= status_list.no_power and status ~= status_list.no_fuel then
+         run_handler(ent_status_belt_speed)
+         _ = run_handler(ent_status_crafting_speed)
+            or run_handler(ent_status_mining_speed)
+            or run_handler(ent_status_lab_speed)
+            or run_handler(ent_status_generic_speed_productivity)
+      end
+
+      --Entity power usage
+      _ = run_handler(ent_status_energy_working)
+         or run_handler(ent_status_energy_low)
+         or run_handler(ent_status_energy_idle)
    end
-   if uses_energy and ent.prototype.burner_prototype ~= nil then table.insert(result, " as burner fuel ") end
+
+   run_handler(ent_status_burner_fuel)
 
    --Entity Health
-   if ent.is_entity_with_health and ent.get_health_ratio() == 1 then
-      table.insert(result, { "fa.full-health" })
-   elseif ent.is_entity_with_health then
-      table.insert(result, { "fa.percent-health", math.floor(ent.get_health_ratio() * 100) })
-   end
-
-   -- Report nearest rail intersection position -- laterdo find better keybind
-   if ent.name == "straight-rail" then
-      local nearest, dist = Rails.find_nearest_intersection(ent, pindex)
-      if nearest == nil then
-         table.insert(result, ", no rail intersections within " .. dist .. " tiles ")
-      else
-         table.insert(
-            result,
-            ", nearest rail intersection at "
-               .. dist
-               .. " "
-               .. FaUtils.direction_lookup(FaUtils.get_direction_biased(nearest.position, ent.position))
-         )
-      end
-   end
+   run_handler(ent_status_health)
 
    --Spawners: Report evolution factor
-   if ent.type == "unit-spawner" then
-      table.insert(
-         result,
-         ", evolution factor " .. math.floor(1000 * ent.force.get_evolution_factor(ent.surface)) / 1000
-      )
-   end
-
-   return result
+   run_handler(ent_status_spawner_evolution)
+   return ctx.message:build()
 end
 
 --Returns an info string about the entities and tiles found within an area scan done by an enlarged cursor.

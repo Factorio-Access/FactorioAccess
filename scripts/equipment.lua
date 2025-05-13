@@ -291,9 +291,9 @@ function mod.read_shield_and_health_level(pindex, ent_in)
    --Check health
    if ent.is_entity_with_health then
       if ent.get_health_ratio() == 1 then
-         table.insert(result, { "fa.full-health" })
+         table.insert(result, { "fa.ent-status-full-health" })
       else
-         table.insert(result, { "fa.percent-health", math.floor(ent.get_health_ratio() * 100) })
+         table.insert(result, { "fa.ent-status-percent-health", math.floor(ent.get_health_ratio() * 100) })
       end
    end
    -- State shield empty at the end (if supported)
