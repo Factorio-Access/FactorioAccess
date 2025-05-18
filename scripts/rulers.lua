@@ -14,6 +14,7 @@ over there with fast travel points.
 ]]
 local StorageManager = require("scripts.storage-manager")
 local uid = require("scripts.uid").uid
+local Viewpoint = require("scripts.viewpoint")
 
 local mod = {}
 
@@ -241,7 +242,7 @@ end
 -- especially with being able to walk in cursor mode on the horizon.  But it's
 -- fine to use it for now.
 function mod.update_from_cursor(pindex)
-   local cur = players[pindex].cursor_pos
+   local cur = Viewpoint.get_viewpoint(pindex):get_cursor_pos()
    mod.on_viewpoint_moved(pindex, cur.x, cur.y)
 end
 

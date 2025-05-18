@@ -8,6 +8,7 @@ local descriptors = require("scripts.descriptors")
 local multistate_switch = require("scripts.ui.low-level.multistate-switch")
 local fa_graphics = require("scripts.graphics")
 local UiRouter = require("scripts.ui.router")
+local Viewpoint = require("scripts.viewpoint")
 
 local dcb = defines.control_behavior
 
@@ -70,7 +71,8 @@ end
 function mod.drag_wire_and_read(pindex)
    --Start/end dragging wire
    local p = game.get_player(pindex)
-   local something_happened = p.drag_wire({ position = players[pindex].cursor_pos })
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local something_happened = p.drag_wire({ position = vp:get_cursor_pos() })
    --Comment on it
    if not something_happened then
       p.play_sound({ path = "utility/cannot_build" })
@@ -91,7 +93,7 @@ function mod.drag_wire_and_read(pindex)
 
    local drag_target = p.drag_target
    local ents_at_position = p.surface.find_entities_filtered({
-      position = players[pindex].cursor_pos,
+      position = vp:get_cursor_pos(),
       radius = 0.2,
       type = {
          "transport-belt",

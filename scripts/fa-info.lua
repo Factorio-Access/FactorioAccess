@@ -38,6 +38,7 @@ local Rails = require("scripts.rails")
 local ResourceMining = require("scripts.resource-mining")
 local TH = require("scripts.table-helpers")
 local Trains = require("scripts.trains")
+local Viewpoint = require("scripts.viewpoint")
 local Wires = require("scripts.wires")
 
 local mod = {}
@@ -1013,6 +1014,7 @@ end
 function mod.ent_info(pindex, ent, is_scanner)
    local p = game.get_player(pindex)
    assert(p)
+   local vp = Viewpoint.get_viewpoint(pindex)
 
    ---@type fa.Info.EntInfoContext
    local ctx = {
@@ -1021,7 +1023,7 @@ function mod.ent_info(pindex, ent, is_scanner)
       message = MessageBuilder.MessageBuilder.new(),
       is_scanner = is_scanner,
       player = p,
-      cursor_pos = { x = players[pindex].cursor_pos.x, y = players[pindex].cursor_pos.y },
+      cursor_pos = vp:get_cursor_pos(),
    }
 
    -- We need to special case ghosts, so that we can fold the "x of y" in, e.g.
@@ -1269,9 +1271,9 @@ end
 --Reads out the distance and direction to the nearest damaged entity within 1000 tiles.
 function mod.read_nearest_damaged_ent_info(pos, pindex)
    local p = game.get_player(pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
    --Scan for ents of your force
-   local ents =
-      p.surface.find_entities_filtered({ position = players[pindex].cursor_pos, radius = 1000, force = p.force })
+   local ents = p.surface.find_entities_filtered({ position = vp:get_cursor_pos(), radius = 1000, force = p.force })
    --Check for entities with health
    if ents == nil or #ents == 0 then
       printout("No damaged structures within 1000 tiles.", pindex)
@@ -1305,7 +1307,7 @@ function mod.read_nearest_damaged_ent_info(pos, pindex)
       return
    else
       --Move cursor to closest
-      players[pindex].cursor_pos = closest.position
+      vp:set_cursor_pos(closest.position)
       Graphics.draw_cursor_highlight(pindex, closest, nil, nil)
 
       --Report the result

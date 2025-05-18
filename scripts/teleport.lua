@@ -3,13 +3,18 @@ local fa_utils = require("scripts.fa-utils")
 local fa_graphics = require("scripts.graphics")
 local fa_mouse = require("scripts.mouse")
 local UiRouter = require("scripts.ui.router")
+local Viewpoint = require("scripts.viewpoint")
 
 local mod = {}
 
 --Teleports the player character to the cursor position.
 function mod.teleport_to_cursor(pindex, muted, ignore_enemies, return_cursor)
-   local result = mod.teleport_to_closest(pindex, players[pindex].cursor_pos, muted, ignore_enemies)
-   if return_cursor then players[pindex].cursor_pos = players[pindex].position end
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local result = mod.teleport_to_closest(pindex, vp:get_cursor_pos(), muted, ignore_enemies)
+   if return_cursor then
+      local position = players[pindex].position
+      vp:set_cursor_pos({ x = position.x, y = position.y })
+   end
    return result
 end
 
@@ -56,6 +61,7 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
    local can_port = char.surface.can_place_entity({ name = "character", position = new_pos })
    if can_port then
       local old_pos = table.deepcopy(char.position)
+      local vp = Viewpoint.get_viewpoint(pindex)
       if not muted then
          --Draw teleporting visuals at origin
          rendering.draw_circle({
@@ -155,8 +161,8 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
             end
          end
          --Update cursor after teleport
-         players[pindex].cursor_pos = table.deepcopy(new_pos)
-         fa_mouse.move_mouse_pointer(fa_utils.center_of_tile(players[pindex].cursor_pos), pindex)
+         vp:set_cursor_pos({ x = new_pos.x, y = new_pos.y })
+         fa_mouse.move_mouse_pointer(fa_utils.center_of_tile(vp:get_cursor_pos()), pindex)
          fa_graphics.draw_cursor_highlight(pindex, nil, nil)
       else
          printout("Teleport Failed", pindex)

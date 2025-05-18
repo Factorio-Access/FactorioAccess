@@ -21,6 +21,7 @@ local ScannerConsts = require("scripts.scanner.scanner-consts")
 local SurfaceScanner = require("scripts.scanner.surface-scanner")
 local TH = require("scripts.table-helpers")
 local UiRouter = require("scripts.ui.router")
+local Viewpoint = require("scripts.viewpoint")
 local WorkQueue = require("scripts.work-queue")
 
 local mod = {}
@@ -395,6 +396,7 @@ end
 ---@param ps fa.scanner.GlobalPlayerState
 local function announce_cursor_pos(pindex, ps)
    local pobj = assert(game.get_player(pindex))
+   local vp = Viewpoint.get_viewpoint(pindex)
    ---@cast pobj LuaPlayer
 
    -- The cursor is put before the beginning of the list so that it is possible
@@ -446,7 +448,7 @@ local function announce_cursor_pos(pindex, ps)
    if announcing then
       -- fa-info has dependencies on having the cursor in the right place that
       -- we can't remove, so just set it first.
-      storage.players[pindex].cursor_pos = announcing.position
+      vp:set_cursor_pos(announcing.position)
       -- And for the same reason--we shouldn't be caching tile contents, but we do.
       refresh_player_tile(pindex)
       announcing.backend:update_entry(pobj, announcing)
@@ -464,10 +466,10 @@ local function announce_cursor_pos(pindex, ps)
       -- See control.lua refresh_player_tile, which goes nuts if we aren't
       -- directly on the center of a tile; this can be removed when that's
       -- fixed.
-      storage.players[pindex].cursor_pos = {
+      vp:set_cursor_pos({
          x = math.floor(announcing.position.x) + 0.5,
          y = math.floor(announcing.position.y) + 0.5,
-      }
+      })
    else
       printout({
          "fa.scanner-nothing-in-category",
