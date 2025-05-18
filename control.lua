@@ -575,12 +575,13 @@ end
 --TODO: remove this, by calling the appropriate mouse module functions instead.
 function target_mouse_pointer_deprecated(pindex)
    if players[pindex].vanilla_mode then return end
+   local vp = Viewpoint.get_viewpoint(pindex)
    local surf = game.get_player(pindex).surface
-   local ents = surf.find_entities_filtered({ position = players[pindex].cursor_pos })
+   local ents = surf.find_entities_filtered({ position = vp:get_cursor_pos() })
    if ents and ents[1] and ents[1].valid then
       fa_mouse.move_mouse_pointer(ents[1].position, pindex)
    else
-      fa_mouse.move_mouse_pointer(players[pindex].cursor_pos, pindex)
+      fa_mouse.move_mouse_pointer(vp:get_cursor_pos(), pindex)
    end
 end
 
@@ -628,14 +629,16 @@ end
 -- Force the mod to disable/reset nall cursor modes. Useful for KK.
 function force_cursor_off(pindex)
    local p = game.get_player(pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
 
    --Disable
-   players[pindex].cursor = false
-   players[pindex].cursor_pos = fa_utils.to_neighboring_tile(players[pindex].position, players[pindex].player_direction)
-   players[pindex].cursor_pos = fa_utils.center_of_tile(players[pindex].cursor_pos)
-   fa_mouse.move_mouse_pointer(players[pindex].cursor_pos, pindex)
+   vp:set_cursor_enabled(false)
+   local pos = fa_utils.to_neighboring_tile(players[pindex].position, players[pindex].player_direction)
+   pos = fa_utils.center_of_tile(pos)
+   vp:set_cursor_pos(pos)
+   fa_mouse.move_mouse_pointer(pos, pindex)
    fa_graphics.sync_build_cursor_graphics(pindex)
-   players[pindex].player_direction = p.character.direction
+   players[pindex].plr_direction = p.character.direction
    players[pindex].build_lock = false
 
    --Close Remote view
@@ -646,15 +649,16 @@ end
 --Toggles cursor mode on or off. Appropriately affects other modes such as build lock or remote view.
 function toggle_cursor_mode(pindex, muted)
    local p = game.get_player(pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
    if p.character == nil then
-      players[pindex].cursor = true
+      vp:set_cursor_enabled(true)
       players[pindex].build_lock = false
       return
    end
 
-   if (not players[pindex].cursor) and not players[pindex].hide_cursor then
+   if not vp:get_cursor_enabled() and not vp:get_cursor_hidden() then
       --Enable
-      players[pindex].cursor = true
+      vp:set_cursor_enabled(true)
       players[pindex].build_lock = false
 
       --Teleport to the center of the nearest tile to align
@@ -668,7 +672,9 @@ function toggle_cursor_mode(pindex, muted)
       --Finally, read the new tile
       if muted ~= true then read_tile(pindex, "Cursor mode disabled, ") end
    end
-   if players[pindex].cursor_size < 2 then
+   local cursor_pos = vp:get_cursor_pos()
+   local cursor_size = vp:get_cursor_size()
+   if cursor_size < 2 then
       --Update cursor highlight
       local ent = get_first_ent_at_tile(pindex)
       if ent and ent.valid then
@@ -678,12 +684,12 @@ function toggle_cursor_mode(pindex, muted)
       end
    else
       local left_top = {
-         math.floor(players[pindex].cursor_pos.x) - players[pindex].cursor_size,
-         math.floor(players[pindex].cursor_pos.y) - players[pindex].cursor_size,
+         math.floor(cursor_pos.x) - cursor_size,
+         math.floor(cursor_pos.y) - cursor_size,
       }
       local right_bottom = {
-         math.floor(players[pindex].cursor_pos.x) + players[pindex].cursor_size + 1,
-         math.floor(players[pindex].cursor_pos.y) + players[pindex].cursor_size + 1,
+         math.floor(cursor_pos.x) + cursor_size + 1,
+         math.floor(cursor_pos.y) + cursor_size + 1,
       }
       fa_graphics.draw_large_cursor(left_top, right_bottom, pindex)
    end
@@ -697,7 +703,8 @@ function toggle_remote_view(pindex, force_true, force_false, muted)
    end
    if (players[pindex].remote_view ~= true or force_true == true) and force_false ~= true then
       players[pindex].remote_view = true
-      players[pindex].cursor = true
+      local vp = Viewpoint.get_viewpoint(pindex)
+      vp:set_cursor_enabled(true)
       players[pindex].build_lock = false
       center_player_character(pindex)
       if muted ~= true then read_tile(pindex, "Remote view opened, ") end
@@ -729,26 +736,33 @@ function center_player_character(pindex)
    end
    if can_port then p.teleport(fa_utils.center_of_tile(p.position)) end
    players[pindex].position = p.position
-   players[pindex].cursor_pos = fa_utils.center_of_tile(players[pindex].cursor_pos)
-   fa_mouse.move_mouse_pointer(players[pindex].cursor_pos, pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
+   cursor_pos = fa_utils.center_of_tile(cursor_pos)
+   vp:set_cursor_pos(cursor_pos)
+   fa_mouse.move_mouse_pointer(cursor_pos, pindex)
 end
 
 --Teleports the cursor to the player character
 function jump_to_player(pindex)
    local first_player = game.get_player(pindex)
-   players[pindex].cursor_pos.x = math.floor(first_player.position.x) + 0.5
-   players[pindex].cursor_pos.y = math.floor(first_player.position.y) + 0.5
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
+   local cursor_size = vp:get_cursor_size()
+   cursor_pos.x = math.floor(first_player.position.x) + 0.5
+   cursor_pos.y = math.floor(first_player.position.y) + 0.5
+   vp:set_cursor_pos(cursor_pos)
    read_coords(pindex, "Cursor returned ")
-   if players[pindex].cursor_size < 2 then
+   if cursor_size < 2 then
       fa_graphics.draw_cursor_highlight(pindex, nil, nil)
    else
       local scan_left_top = {
-         math.floor(players[pindex].cursor_pos.x) - players[pindex].cursor_size,
-         math.floor(players[pindex].cursor_pos.y) - players[pindex].cursor_size,
+         math.floor(cursor_pos.x) - cursor_size,
+         math.floor(cursor_pos.y) - cursor_size,
       }
       local scan_right_bottom = {
-         math.floor(players[pindex].cursor_pos.x) + players[pindex].cursor_size + 1,
-         math.floor(players[pindex].cursor_pos.y) + players[pindex].cursor_size + 1,
+         math.floor(cursor_pos.x) + cursor_size + 1,
+         math.floor(cursor_pos.y) + cursor_size + 1,
       }
       fa_graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
    end
@@ -759,14 +773,16 @@ function return_cursor_to_character(pindex)
 
    if not check_for_player(pindex) then return end
    if not router:is_ui_open() then
-      if players[pindex].cursor then jump_to_player(pindex) end
+      local vp = Viewpoint.get_viewpoint(pindex)
+      if vp:get_cursor_enabled() then jump_to_player(pindex) end
    end
 end
 
 --Re-checks the cursor tile and indexes the entities on it, returns a boolean on whether it is successful.
 function refresh_player_tile(pindex)
    local surf = game.get_player(pindex).surface
-   local c_pos = players[pindex].cursor_pos
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local c_pos = vp:get_cursor_pos()
    if math.floor(c_pos.x) == math.ceil(c_pos.x) then c_pos.x = c_pos.x - 0.01 end
    if math.floor(c_pos.y) == math.ceil(c_pos.y) then c_pos.y = c_pos.y - 0.01 end
    local search_area = {
@@ -792,8 +808,11 @@ function refresh_player_tile(pindex)
    if
       not (
          pcall(function()
-            players[pindex].tile.tile = surf.get_tile(players[pindex].cursor_pos.x, players[pindex].cursor_pos.y).name
-            players[pindex].tile.tile_object = surf.get_tile(players[pindex].cursor_pos.x, players[pindex].cursor_pos.y)
+            local vp = Viewpoint.get_viewpoint(pindex)
+            local cursor_pos = vp:get_cursor_pos()
+            local tile = surf.get_tile(cursor_pos.x, cursor_pos.y)
+            players[pindex].tile.tile = tile.name
+            players[pindex].tile.tile_object = tile
          end)
       )
    then
@@ -878,12 +897,15 @@ end
 --Read the current co-ordinates of the cursor on the map or in a menu. For crafting recipe and technology menus, it reads the ingredients / requirements instead.
 --Todo: split this function by menu.
 function read_coords(pindex, start_phrase)
+   local vp = viewpoint.get_viewpoint(pindex)
+
    start_phrase = start_phrase or ""
    local result = start_phrase
    local ent = players[pindex].building.ent
    local offset = 0
 
    local router = UiRouter.get_router(pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
 
    if
       router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
@@ -892,7 +914,9 @@ function read_coords(pindex, start_phrase)
       offset = 1
    end
    if not router:is_ui_open() or router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
-      if players[pindex].vanilla_mode then players[pindex].cursor_pos = game.get_player(pindex).position end
+      local position = game.get_player(pindex).position
+      local marked_pos = { x = position.x, y = position.y }
+      if players[pindex].vanilla_mode then vp:set_cursor_pos(marked_pos) end
       if game.get_player(pindex).driving then
          --Give vehicle coords and orientation and speed --laterdo find exact speed coefficient
          local vehicle = game.get_player(pindex).vehicle
@@ -924,7 +948,6 @@ function read_coords(pindex, start_phrase)
          --Simply give coords (floored for the readout, extra precision for the console)
          local location = fa_utils.get_entity_part_at_cursor(pindex)
          if location == nil then location = " " end
-         local marked_pos = { x = players[pindex].cursor_pos.x, y = players[pindex].cursor_pos.y }
          result = result .. " " .. location .. " at " .. math.floor(marked_pos.x) .. ", " .. math.floor(marked_pos.y)
          game.get_player(pindex).print(
             result .. "\n (" .. math.floor(marked_pos.x * 10) / 10 .. ", " .. math.floor(marked_pos.y * 10) / 10 .. ")",
@@ -935,13 +958,14 @@ function read_coords(pindex, start_phrase)
             color = { 1.0, 0.2, 0.0 },
             radius = 0.1,
             width = 5,
-            target = players[pindex].cursor_pos,
+            target = marked_pos,
             surface = game.get_player(pindex).surface,
             time_to_live = 180,
          })
 
          --If there is a build preview, give its dimensions and which way they extend
          local stack = game.get_player(pindex).cursor_stack
+         local cursor_enabled = vp:get_cursor_enabled()
          if
             stack
             and stack.valid_for_read
@@ -958,9 +982,9 @@ function read_coords(pindex, start_phrase)
             elseif dir == dirs.east or dir == dirs.west then
                preview_str = preview_str .. stack.prototype.place_result.tile_height .. " tiles wide "
             end
-            if players[pindex].cursor or p_dir == dirs.east or p_dir == dirs.south or p_dir == dirs.north then
+            if cursor_enabled or p_dir == dirs.east or p_dir == dirs.south or p_dir == dirs.north then
                preview_str = preview_str .. " to the East "
-            elseif not players[pindex].cursor and p_dir == dirs.west then
+            elseif not cursor_enabled and p_dir == dirs.west then
                preview_str = preview_str .. " to the West "
             end
             if dir == dirs.north or dir == dirs.south then
@@ -968,9 +992,9 @@ function read_coords(pindex, start_phrase)
             elseif dir == dirs.east or dir == dirs.west then
                preview_str = preview_str .. " and " .. stack.prototype.place_result.tile_width .. " tiles high "
             end
-            if players[pindex].cursor or p_dir == dirs.east or p_dir == dirs.south or p_dir == dirs.west then
+            if cursor_enabled or p_dir == dirs.east or p_dir == dirs.south or p_dir == dirs.west then
                preview_str = preview_str .. " to the South "
-            elseif not players[pindex].cursor and p_dir == dirs.north then
+            elseif not cursor_enabled and p_dir == dirs.north then
                preview_str = preview_str .. " to the North "
             end
             result = result .. preview_str
@@ -994,17 +1018,16 @@ function read_coords(pindex, start_phrase)
          elseif stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result ~= nil then
             --Paving preview size
             local preview_str = ", paving preview "
-            local player = players[pindex]
             preview_str = ", paving preview is "
-               .. (player.cursor_size * 2 + 1)
+               .. (vp:get_cursor_size() * 2 + 1)
                .. " by "
-               .. (player.cursor_size * 2 + 1)
+               .. (vp:get_cursor_size() * 2 + 1)
                .. " tiles, centered on this tile. "
-            if players[pindex].cursor and players[pindex].preferences.tiles_placed_from_northwest_corner then
+            if cursor_enabled and players[pindex].preferences.tiles_placed_from_northwest_corner then
                preview_str = ", paving preview extends "
-                  .. (player.cursor_size * 2 + 1)
+                  .. (vp:get_cursor_size() * 2 + 1)
                   .. " east and "
-                  .. (player.cursor_size * 2 + 1)
+                  .. (vp:get_cursor_size() * 2 + 1)
                   .. " south, starting from this tile. "
             end
             result = result .. preview_str
@@ -1130,15 +1153,9 @@ function initialize(player)
    faplayer.menu_search_term = faplayer.menu_search_term or nil
    faplayer.menu_search_frame = faplayer.menu_search_frame or nil
    faplayer.menu_search_last_name = faplayer.menu_search_last_name or nil
-   faplayer.cursor = faplayer.cursor or false
-   faplayer.cursor_size = faplayer.cursor_size or 0
-   faplayer.cursor_ent_highlight_box = faplayer.cursor_ent_highlight_box or nil
-   faplayer.cursor_tile_highlight_box = faplayer.cursor_tile_highlight_box or nil
    faplayer.num_elements = faplayer.num_elements or 0
    faplayer.player_direction = faplayer.player_direction or character.walking_state.direction
    faplayer.position = faplayer.position or fa_utils.center_of_tile(character.position)
-   faplayer.cursor_pos = faplayer.cursor_pos
-      or fa_utils.offset_position_legacy(faplayer.position, faplayer.player_direction, 1)
    faplayer.walk = faplayer.walk or 0
    faplayer.move_queue = faplayer.move_queue or {}
    faplayer.building_direction = faplayer.building_direction or dirs.north --top
@@ -1157,7 +1174,6 @@ function initialize(player)
    faplayer.zoom = faplayer.zoom or 1
    faplayer.build_lock = faplayer.build_lock or false
    faplayer.vanilla_mode = faplayer.vanilla_mode or false
-   faplayer.hide_cursor = faplayer.hide_cursor or false
    faplayer.resources = fa_force.resources
    faplayer.mapped = fa_force.mapped
    faplayer.destroyed = faplayer.destroyed or {}
@@ -1372,7 +1388,9 @@ script.on_event(defines.events.on_player_changed_position, function(event)
    if players[pindex].walk == WALKING.SMOOTH then
       players[pindex].position = p.position
       local pos = p.position
-      if p.walking_state.direction ~= players[pindex].player_direction and players[pindex].cursor == false then
+      local vp = Viewpoint.get_viewpoint(pindex)
+      local cursor_enabled = vp:get_cursor_enabled()
+      if p.walking_state.direction ~= players[pindex].player_direction and cursor_enabled == false then
          --Directions mismatch. Turn to new direction --turn (Note, this code handles diagonal turns and other direction changes)
          if p.character ~= nil then
             players[pindex].player_direction = p.character.direction
@@ -1381,7 +1399,7 @@ script.on_event(defines.events.on_player_changed_position, function(event)
             if p.walking_state.direction == nil then players[pindex].player_direction = dirs.north end
          end
          local new_pos = (fa_utils.offset_position_legacy(pos, players[pindex].player_direction, 1.0))
-         players[pindex].cursor_pos = new_pos
+         vp:set_cursor_pos(new_pos)
 
          --Build lock building + rotate belts in hand unless cursor mode
          local stack = p.cursor_stack
@@ -1396,10 +1414,10 @@ script.on_event(defines.events.on_player_changed_position, function(event)
             players[pindex].building_direction = players[pindex].player_direction
             fa_building_tools.build_item_in_hand(pindex) --build extra belt when turning
          end
-      elseif players[pindex].cursor == false then
+      elseif cursor_enabled == false then
          --Directions same: Walk straight
          local new_pos = (fa_utils.offset_position_legacy(pos, players[pindex].player_direction, 1))
-         players[pindex].cursor_pos = new_pos
+         vp:set_cursor_pos(new_pos)
 
          --Build lock building + rotate belts in hand unless cursor mode
          if players[pindex].build_lock then
@@ -1429,7 +1447,7 @@ script.on_event(defines.events.on_player_changed_position, function(event)
          not players[pindex].vanilla_mode
          and (
             (ent ~= nil and ent.valid)
-            or (p.surface.can_place_entity({ name = "character", position = players[pindex].cursor_pos }) == false)
+            or (p.surface.can_place_entity({ name = "character", position = vp:get_cursor_pos() }) == false)
          )
       then
          fa_graphics.draw_cursor_highlight(pindex, ent, nil)
@@ -2329,6 +2347,8 @@ end)
 function move_characters(event)
    for pindex, player in pairs(players) do
       local router = UiRouter.get_router(pindex)
+      local vp = Viewpoint.get_viewpoint(pindex)
+      local cursor_pos = vp:get_cursor_pos()
 
       if player.vanilla_mode == true then
          player.player.game_view_settings.update_entity_selection = true
@@ -2351,7 +2371,7 @@ function move_characters(event)
             else
                --Force the pointer to the cursor location (if on screen)
                if fa_mouse.cursor_position_is_on_screen_with_player_centered(pindex) then
-                  fa_mouse.move_mouse_pointer(players[pindex].cursor_pos, pindex)
+                  fa_mouse.move_mouse_pointer(vp:get_cursor_pos(), pindex)
                else
                   fa_mouse.move_mouse_pointer(players[pindex].position, pindex)
                end
@@ -2359,7 +2379,7 @@ function move_characters(event)
          end
       end
 
-      if player.walk ~= WALKING.SMOOTH or player.cursor or router:is_ui_open() then
+      if player.walk ~= WALKING.SMOOTH or vp:get_cursor_enabled() or router:is_ui_open() then
          local walk = false
          while #player.move_queue > 0 do
             local next_move = player.move_queue[1]
@@ -2400,6 +2420,7 @@ function move(direction, pindex, nudged)
    local pos = players[pindex].position
    local new_pos = fa_utils.offset_position_legacy(pos, direction, 1)
    local moved_success = false
+   local vp = Viewpoint.get_viewpoint(pindex)
 
    --Compare the input direction and facing direction
    if players[pindex].player_direction == direction or nudged == true then
@@ -2423,7 +2444,7 @@ function move(direction, pindex, nudged)
          end
          players[pindex].position = new_pos
          if nudged ~= true then
-            players[pindex].cursor_pos = fa_utils.offset_position_legacy(players[pindex].position, direction, 1)
+            vp:set_cursor_pos(fa_utils.offset_position_legacy(players[pindex].position, direction, 1))
          end
          --Telestep walking sounds
          if
@@ -2466,7 +2487,7 @@ function move(direction, pindex, nudged)
          table.insert(players[pindex].move_queue, { direction = direction, dest = pos })
       end
       players[pindex].player_direction = direction
-      players[pindex].cursor_pos = new_pos
+      vp:set_cursor_pos(new_pos)
       moved_success = true
 
       local stack = first_player.cursor_stack
@@ -2486,7 +2507,7 @@ function move(direction, pindex, nudged)
                (ent ~= nil and ent.valid)
                or not game
                   .get_player(pindex).surface
-                  .can_place_entity({ name = "character", position = players[pindex].cursor_pos })
+                  .can_place_entity({ name = "character", position = vp:get_cursor_pos() })
             )
          then
             target_mouse_pointer_deprecated(pindex)
@@ -2526,6 +2547,8 @@ function move_key(direction, event, force_single_tile)
    local pindex = event.player_index
    local p = game.get_player(pindex)
    local router = UiRouter.get_router(pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_enabled = vp:get_cursor_enabled()
 
    if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
    --Stop any enabled mouse entity selection
@@ -2545,7 +2568,7 @@ function move_key(direction, event, force_single_tile)
    if router:is_ui_open() and not router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then
       -- Menus: move menu cursor
       menu_cursor_move(direction, pindex)
-   elseif players[pindex].cursor then
+   elseif cursor_enabled then
       -- Cursor mode: Move cursor on map
       cursor_mode_move(direction, pindex, force_single_tile)
    else
@@ -2557,15 +2580,15 @@ function move_key(direction, event, force_single_tile)
    if pex.bp_selecting then game.get_player(pindex).play_sound({ path = "cursor-moved-while-selecting" }) end
 
    --Play a sound for audio ruler alignment (cursor mode moved)
-   if not router:is_ui_open() and players[pindex].cursor then Rulers.update_from_cursor(pindex) end
+   if not router:is_ui_open() and cursor_enabled then Rulers.update_from_cursor(pindex) end
 
    --Handle vehicle behavior
    if p.vehicle then
       if p.vehicle.type == "car" then
          --Deactivate (and stop) cars when in a menu
-         if players[pindex].cursor or router:is_ui_open() then p.vehicle.active = false end
+         if cursor_enabled or router:is_ui_open() then p.vehicle.active = false end
          --Re-activate inactive cars when in no menu
-         if not players[pindex].cursor and not router:is_ui_open() and p.vehicle.active == false then
+         if not cursor_enabled and not router:is_ui_open() and p.vehicle.active == false then
             p.vehicle.active = true
             p.vehicle.speed = 0
          end
@@ -2584,14 +2607,17 @@ end
 
 --Moves the cursor, and conducts an area scan for larger cursors. If the player is in a slow moving vehicle, it is stopped.
 function cursor_mode_move(direction, pindex, single_only)
-   local diff = players[pindex].cursor_size * 2 + 1
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
+   local cursor_size = vp:get_cursor_size()
+   local diff = cursor_size * 2 + 1
    if single_only then diff = 1 end
    local p = game.get_player(pindex)
 
-   players[pindex].cursor_pos =
-      fa_utils.center_of_tile(fa_utils.offset_position_legacy(players[pindex].cursor_pos, direction, diff))
+   cursor_pos = fa_utils.center_of_tile(fa_utils.offset_position_legacy(cursor_pos, direction, diff))
+   vp:set_cursor_pos(cursor_pos)
 
-   if players[pindex].cursor_size == 0 then
+   if cursor_size == 0 then
       -- Cursor size 0 ("1 by 1"): Read tile
       read_tile(pindex)
 
@@ -2619,12 +2645,12 @@ function cursor_mode_move(direction, pindex, single_only)
    else
       -- Larger cursor sizes: scan area
       local scan_left_top = {
-         x = math.floor(players[pindex].cursor_pos.x) - players[pindex].cursor_size,
-         y = math.floor(players[pindex].cursor_pos.y) - players[pindex].cursor_size,
+         x = math.floor(cursor_pos.x) - cursor_size,
+         y = math.floor(cursor_pos.y) - cursor_size,
       }
       local scan_right_bottom = {
-         x = math.floor(players[pindex].cursor_pos.x) + players[pindex].cursor_size + 1,
-         y = math.floor(players[pindex].cursor_pos.y) + players[pindex].cursor_size + 1,
+         x = math.floor(cursor_pos.x) + cursor_size + 1,
+         y = math.floor(cursor_pos.y) + cursor_size + 1,
       }
       local scan_summary = fa_info.area_scan_summary_info(pindex, scan_left_top, scan_right_bottom)
       fa_graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
@@ -2636,7 +2662,7 @@ function cursor_mode_move(direction, pindex, single_only)
 
    --Play Sound
    if players[pindex].remote_view then
-      p.play_sound({ path = "Close-Inventory-Sound", position = players[pindex].cursor_pos, volume_modifier = 0.75 })
+      p.play_sound({ path = "Close-Inventory-Sound", position = cursor_pos, volume_modifier = 0.75 })
    else
       p.play_sound({ path = "Close-Inventory-Sound", position = players[pindex].position, volume_modifier = 0.75 })
    end
@@ -2645,7 +2671,8 @@ end
 --Focuses camera on the cursor position.
 function sync_remote_view(pindex)
    local p = game.get_player(pindex)
-   p.zoom_to_world(players[pindex].cursor_pos)
+   local vp = Viewpoint.get_viewpoint(pindex)
+   p.zoom_to_world(vp:get_cursor_pos())
    fa_graphics.sync_build_cursor_graphics(pindex)
 end
 
@@ -2774,6 +2801,8 @@ end)
 script.on_event("read-cursor-distance-and-direction", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
 
    if not check_for_player(pindex) then return end
    if router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
@@ -2786,7 +2815,7 @@ script.on_event("read-cursor-distance-and-direction", function(event)
       printout(result, pindex)
    else
       --Read where the cursor is with respect to the player, e.g. "at 5 west"
-      local dir_dist = fa_utils.dir_dist_locale(players[pindex].position, players[pindex].cursor_pos)
+      local dir_dist = fa_utils.dir_dist_locale(players[pindex].position, cursor_pos)
       local cursor_location_description = "At"
       local cursor_production = " "
       local cursor_description_of = " "
@@ -2801,7 +2830,7 @@ script.on_event("read-cursor-distance-and-direction", function(event)
          color = { 1, 0.2, 0 },
          radius = 0.1,
          width = 5,
-         target = players[pindex].cursor_pos,
+         target = cursor_pos,
          surface = game.get_player(pindex).surface,
          time_to_live = 180,
       })
@@ -2813,10 +2842,11 @@ end)
 script.on_event("read-cursor-distance-vector", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local c_pos = vp:get_cursor_pos()
 
    if not check_for_player(pindex) then return end
    if not router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
-      local c_pos = players[pindex].cursor_pos
       local p_pos = players[pindex].position
       local diff_x = math.floor(c_pos.x) - math.floor(p_pos.x)
       local diff_y = math.floor(c_pos.y) - math.floor(p_pos.y)
@@ -2845,7 +2875,7 @@ script.on_event("read-cursor-distance-vector", function(event)
          color = { 1, 0.2, 0 },
          radius = 0.1,
          width = 5,
-         target = players[pindex].cursor_pos,
+         target = c_pos,
          surface = game.get_player(pindex).surface,
          time_to_live = 180,
       })
@@ -2878,8 +2908,9 @@ end)
 script.on_event("cursor-bookmark-save", function(event)
    pindex = event.player_index
    if not check_for_player(pindex) then return end
-   local pos = players[pindex].cursor_pos
-   players[pindex].cursor_bookmark = table.deepcopy(pos)
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local pos = vp:get_cursor_pos()
+   vp:set_cursor_bookmark(table.deepcopy(pos))
    printout("Saved cursor bookmark at " .. math.floor(pos.x) .. ", " .. math.floor(pos.y), pindex)
    game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" })
 end)
@@ -2888,9 +2919,10 @@ end)
 script.on_event("cursor-bookmark-load", function(event)
    pindex = event.player_index
    if not check_for_player(pindex) then return end
-   local pos = players[pindex].cursor_bookmark
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local pos = vp:get_cursor_bookmark()
    if pos == nil or pos.x == nil or pos.y == nil then return end
-   players[pindex].cursor_pos = pos
+   vp:set_cursor_pos(pos)
    fa_graphics.draw_cursor_highlight(pindex, nil, nil)
    fa_graphics.sync_build_cursor_graphics(pindex)
    printout("Loaded cursor bookmark at " .. math.floor(pos.x) .. ", " .. math.floor(pos.y), pindex)
@@ -2901,7 +2933,8 @@ end)
 script.on_event("ruler-save", function(event)
    pindex = event.player_index
    if not check_for_player(pindex) then return end
-   local pos = players[pindex].cursor_pos
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local pos = vp:get_cursor_pos()
    Rulers.upsert_ruler(pindex, pos.x, pos.y)
    printout("Saved ruler at " .. math.floor(pos.x) .. ", " .. math.floor(pos.y), pindex)
    game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" })
@@ -2947,16 +2980,18 @@ end)
 script.on_event("teleport-to-alert-forced", function(event)
    pindex = event.player_index
    if not check_for_player(pindex) then return end
+   local vp = Viewpoint.get_viewpoint(pindex)
    local alert_pos = players[pindex].last_damage_alert_pos
    if alert_pos == nil then
       printout("No target", pindex)
       return
    end
-   players[pindex].cursor_pos = alert_pos
+   vp:set_cursor_pos(alert_pos)
    fa_teleport.teleport_to_cursor(pindex, false, true, true)
-   players[pindex].cursor_pos = game.get_player(pindex).position
-   players[pindex].position = game.get_player(pindex).position
-   players[pindex].last_damage_alert_pos = game.get_player(pindex).position
+   local position = game.get_player(pindex).position
+   vp:set_cursor_pos({ x = position.x, y = position.y })
+   players[pindex].position = position
+   players[pindex].last_damage_alert_pos = position
    fa_graphics.draw_cursor_highlight(pindex, nil, nil)
    fa_graphics.sync_build_cursor_graphics(pindex)
    refresh_player_tile(pindex)
@@ -2993,32 +3028,36 @@ script.on_event("cursor-size-increment", function(event)
    local router = UiRouter.get_router(pindex)
 
    if not check_for_player(pindex) then return end
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
+   local cursor_size = vp:get_cursor_size()
    if not router:is_ui_open() then
-      if players[pindex].cursor_size == 0 then
-         players[pindex].cursor_size = 1
-      elseif players[pindex].cursor_size == 1 then
-         players[pindex].cursor_size = 2
-      elseif players[pindex].cursor_size == 2 then
-         players[pindex].cursor_size = 5
-      elseif players[pindex].cursor_size == 5 then
-         players[pindex].cursor_size = 10
-      elseif players[pindex].cursor_size == 10 then
-         players[pindex].cursor_size = 25
-      elseif players[pindex].cursor_size == 25 then
-         players[pindex].cursor_size = 50
-      elseif players[pindex].cursor_size == 50 then
-         players[pindex].cursor_size = 125
+      if cursor_size == 0 then
+         cursor_size = 1
+      elseif cursor_size == 1 then
+         cursor_size = 2
+      elseif cursor_size == 2 then
+         cursor_size = 5
+      elseif cursor_size == 5 then
+         cursor_size = 10
+      elseif cursor_size == 10 then
+         cursor_size = 25
+      elseif cursor_size == 25 then
+         cursor_size = 50
+      elseif cursor_size == 50 then
+         cursor_size = 125
       end
 
-      local say_size = players[pindex].cursor_size * 2 + 1
+      vp:set_cursor_size(cursor_size)
+      local say_size = cursor_size * 2 + 1
       printout("Cursor size " .. say_size .. " by " .. say_size, pindex)
       local scan_left_top = {
-         math.floor(players[pindex].cursor_pos.x) - players[pindex].cursor_size,
-         math.floor(players[pindex].cursor_pos.y) - players[pindex].cursor_size,
+         math.floor(cursor_pos.x) - cursor_size,
+         math.floor(cursor_pos.y) - cursor_size,
       }
       local scan_right_bottom = {
-         math.floor(players[pindex].cursor_pos.x) + players[pindex].cursor_size + 1,
-         math.floor(players[pindex].cursor_pos.y) + players[pindex].cursor_size + 1,
+         math.floor(cursor_pos.x) + cursor_size + 1,
+         math.floor(cursor_pos.y) + cursor_size + 1,
       }
       fa_graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
    end
@@ -3034,32 +3073,36 @@ script.on_event("cursor-size-decrement", function(event)
    local router = UiRouter.get_router(pindex)
 
    if not check_for_player(pindex) then return end
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
+   local cursor_size = vp:get_cursor_size()
    if not router:is_ui_open() then
-      if players[pindex].cursor_size == 1 then
-         players[pindex].cursor_size = 0
-      elseif players[pindex].cursor_size == 2 then
-         players[pindex].cursor_size = 1
-      elseif players[pindex].cursor_size == 5 then
-         players[pindex].cursor_size = 2
-      elseif players[pindex].cursor_size == 10 then
-         players[pindex].cursor_size = 5
-      elseif players[pindex].cursor_size == 25 then
-         players[pindex].cursor_size = 10
-      elseif players[pindex].cursor_size == 50 then
-         players[pindex].cursor_size = 25
-      elseif players[pindex].cursor_size == 125 then
-         players[pindex].cursor_size = 50
+      if cursor_size == 1 then
+         cursor_size = 0
+      elseif cursor_size == 2 then
+         cursor_size = 1
+      elseif cursor_size == 5 then
+         cursor_size = 2
+      elseif cursor_size == 10 then
+         cursor_size = 5
+      elseif cursor_size == 25 then
+         cursor_size = 10
+      elseif cursor_size == 50 then
+         cursor_size = 25
+      elseif cursor_size == 125 then
+         cursor_size = 50
       end
 
-      local say_size = players[pindex].cursor_size * 2 + 1
+      vp:set_cursor_size(cursor_size)
+      local say_size = cursor_size * 2 + 1
       printout("Cursor size " .. say_size .. " by " .. say_size, pindex)
       local scan_left_top = {
-         math.floor(players[pindex].cursor_pos.x) - players[pindex].cursor_size,
-         math.floor(players[pindex].cursor_pos.y) - players[pindex].cursor_size,
+         math.floor(cursor_pos.x) - cursor_size,
+         math.floor(cursor_pos.y) - cursor_size,
       }
       local scan_right_bottom = {
-         math.floor(players[pindex].cursor_pos.x) + players[pindex].cursor_size + 1,
-         math.floor(players[pindex].cursor_pos.y) + players[pindex].cursor_size + 1,
+         math.floor(cursor_pos.x) + cursor_size + 1,
+         math.floor(cursor_pos.y) + cursor_size + 1,
       }
       fa_graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
    end
@@ -4056,8 +4099,9 @@ script.on_event("mine-tiles", function(event)
       local stack = game.get_player(pindex).cursor_stack
       local surf = game.get_player(pindex).surface
       if stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result ~= nil then
-         local c_pos = players[pindex].cursor_pos
-         local c_size = players[pindex].cursor_size
+         local vp = Viewpoint.get_viewpoint(pindex)
+         local c_pos = vp:get_cursor_pos()
+         local c_size = vp:get_cursor_size()
          local left_top = { x = math.floor(c_pos.x - c_size), y = math.floor(c_pos.y - c_size) }
          local right_bottom = { x = math.floor(c_pos.x + 1 + c_size), y = math.floor(c_pos.y + 1 + c_size) }
          local tiles = surf.find_tiles_filtered({ area = { left_top, right_bottom } })
@@ -4117,6 +4161,8 @@ script.on_event("mine-area", function(event)
    local router = UiRouter.get_router(pindex)
 
    if not check_for_player(pindex) then return end
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
    if router:is_ui_open() then return end
    local p = game.get_player(pindex)
    local ent = game.get_player(pindex).selected
@@ -4131,8 +4177,7 @@ script.on_event("mine-area", function(event)
       and ent.name ~= "entity-ghost"
       and (
          util.distance(game.get_player(pindex).position, ent.position) > game.get_player(pindex).reach_distance
-         or util.distance(game.get_player(pindex).position, players[pindex].cursor_pos)
-            > game.get_player(pindex).reach_distance
+         or util.distance(game.get_player(pindex).position, cursor_pos) > game.get_player(pindex).reach_distance
       )
    then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
@@ -4208,7 +4253,7 @@ script.on_event("mine-area", function(event)
          end
          if ent_is_remnant then
             game.get_player(pindex).play_sound({ path = "player-mine" })
-            cleared_count, comment = fa_mining_tools.clear_obstacles_in_circle(players[pindex].cursor_pos, 5, pindex)
+            cleared_count, comment = fa_mining_tools.clear_obstacles_in_circle(cursor_pos, 5, pindex)
          end
 
          --(For other valid ents, do nothing)
@@ -4216,7 +4261,7 @@ script.on_event("mine-area", function(event)
    else
       --For empty tiles, clear obstacles
       game.get_player(pindex).play_sound({ path = "player-mine" })
-      cleared_count, comment = fa_mining_tools.clear_obstacles_in_circle(players[pindex].cursor_pos, 5, pindex)
+      cleared_count, comment = fa_mining_tools.clear_obstacles_in_circle(cursor_pos, 5, pindex)
    end
    cleared_total = cleared_total + cleared_count
 
@@ -4395,6 +4440,7 @@ script.on_event("click-menu", function(event)
    local router = UiRouter.get_router(pindex)
 
    if not check_for_player(pindex) then return end
+   local vp = Viewpoint.get_viewpoint(pindex)
    if players[pindex].last_click_tick == event.tick then return end
    local p = game.get_player(pindex)
 
@@ -4711,13 +4757,14 @@ script.on_event("click-menu", function(event)
          then
             local ent = warnings[players[pindex].warnings.category].ents[players[pindex].warnings.index]
             if ent ~= nil and ent.valid then
-               players[pindex].cursor = true
-               players[pindex].cursor_pos = fa_utils.center_of_tile(ent.position)
+               vp:set_cursor_enabled(true)
+               local cursor_pos = fa_utils.center_of_tile(ent.position)
+               vp:set_cursor_pos(cursor_pos)
                fa_graphics.draw_cursor_highlight(pindex, ent, nil)
                fa_graphics.sync_build_cursor_graphics(pindex)
                printout({
                   "fa.teleported-cursor-to",
-                  "" .. math.floor(players[pindex].cursor_pos.x) .. " " .. math.floor(players[pindex].cursor_pos.y),
+                  "" .. math.floor(cursor_pos.x) .. " " .. math.floor(cursor_pos.y),
                }, pindex)
             else
                printout("Blank", pindex)
@@ -4936,11 +4983,13 @@ script.on_event("click-hand", function(event)
       elseif stack.prototype ~= nil and stack.prototype.type == "capsule" then
          --If holding a capsule type, e.g. cliff explosives or robot capsules, or remotes, try to use it at the cursor position (no feedback about successful usage)
          local name = stack.name
-         local cursor_dist = util.distance(game.get_player(pindex).position, players[pindex].cursor_pos)
-         local min_range, max_range = fa_combat.get_grenade_or_capsule_range(stack)
+         local vp = Viewpoint.get_viewpoint(pindex)
+         local cursor_pos = vp:get_cursor_pos()
+         local cursor_dist = util.distance(game.get_player(pindex).position, cursor_pos)
+         local min_range, max_range = fa_combat.get_grenade_or_capsule_range(cursor_pos)
          --Do a range check or use an artillery remote
          if name == "artillery-targeting-remote" then
-            p.use_from_cursor(players[pindex].cursor_pos)
+            p.use_from_cursor(cursor_pos)
             p.play_sound({ path = "Close-Inventory-Sound" }) --**laterdo better sound
             if cursor_dist < 7 then printout("Warning, you are in the target area!", pindex) end
             return
@@ -4950,7 +4999,8 @@ script.on_event("click-hand", function(event)
             return
          end
          --Apply smart aiming
-         local aim_pos = players[pindex].cursor_pos
+         ---@type fa.Point?
+         local aim_pos = vp:get_cursor_pos()
          if
             name == "grenade"
             or name == "cluster-grenade"
@@ -4959,7 +5009,7 @@ script.on_event("click-hand", function(event)
          then
             aim_pos = fa_combat.smart_aim_grenades_and_capsules(pindex)
          elseif name == "defender-capsule" or name == "distractor-capsule" or name == "destroyer-capsule" then
-            aim_pos = p.position
+            aim_pos = { x = p.position.x, y = p.position.y }
          end
          --Throw it
          if aim_pos ~= nil then p.use_from_cursor(aim_pos) end
@@ -6358,18 +6408,19 @@ script.on_event("toggle-vanilla-mode", function(event)
    pindex = event.player_index
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
    p.play_sound({ path = "utility/confirm" })
    if players[pindex].vanilla_mode == false then
       p.print("Vanilla mode : ON")
-      players[pindex].cursor = false
+      vp:set_cursor_enabled(false)
       players[pindex].walk = 2
       if p.character then p.character_running_speed_modifier = 0 end
-      players[pindex].hide_cursor = true
+      vp:set_cursor_hidden(true)
       printout("Vanilla mode enabled", pindex)
       players[pindex].vanilla_mode = true
    else
       p.print("Vanilla mode : OFF")
-      players[pindex].hide_cursor = false
+      vp:set_cursor_hidden(false)
       players[pindex].vanilla_mode = false
       printout("Vanilla mode disabled", pindex)
    end
@@ -6379,12 +6430,14 @@ end)
 script.on_event("toggle-cursor-hiding", function(event)
    pindex = event.player_index
    if not check_for_player(pindex) then return end
-   if players[pindex].hide_cursor == nil or players[pindex].hide_cursor == false then
-      players[pindex].hide_cursor = true
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_hidden = vp:get_cursor_hidden()
+   if cursor_hidden == nil or cursor_hidden == false then
+      vp:set_cursor_hidden(true)
       printout("Cursor hiding enabled", pindex)
       game.get_player(pindex).print("Cursor hiding : ON")
    else
-      players[pindex].hide_cursor = false
+      vp:set_cursor_hidden(false)
       printout("Cursor hiding disabled", pindex)
       game.get_player(pindex).print("Cursor hiding : OFF")
    end
@@ -6395,8 +6448,9 @@ script.on_event("clear-renders", function(event)
    pindex = event.player_index
    if not check_for_player(pindex) then return end
    game.get_player(pindex).gui.screen.clear()
-   players[pindex].cursor_ent_highlight_box = nil
-   players[pindex].cursor_tile_highlight_box = nil
+   local vp = Viewpoint.get_viewpoint(pindex)
+   vp:set_cursor_ent_highlight_box(nil)
+   vp:set_cursor_tile_highlight_box(nil)
    players[pindex].building_footprint = nil
    players[pindex].building_dir_arrow = nil
    players[pindex].overhead_sprite = nil
@@ -6461,12 +6515,13 @@ script.on_event("pipette-tool-info", function(event)
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
    local ent = p.selected
+   local vp = Viewpoint.get_viewpoint(pindex)
    if ent and ent.valid then
       if ent.supports_direction then
          players[pindex].building_direction = ent.direction
-         players[pindex].cursor_rotation_offset = 0
+         vp:set_cursor_rotation_offset(0)
       end
-      if players[pindex].cursor then players[pindex].cursor_pos = fa_utils.get_ent_northwest_corner_position(ent) end
+      if vp:get_cursor_enabled() then vp:set_cursor_pos(fa_utils.get_ent_northwest_corner_position(ent)) end
       fa_graphics.sync_build_cursor_graphics(pindex)
       fa_graphics.draw_cursor_highlight(pindex, ent, nil, nil)
    end
@@ -6619,9 +6674,10 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
 
    local p = game.get_player(pindex)
    if not check_for_player(pindex) then return end
-   if players[pindex].cursor_jumping == true then
+   local vp = Viewpoint.get_viewpoint(pindex)
+   if vp:get_cursor_jumping() == true then
       --Jump the cursor
-      players[pindex].cursor_jumping = false
+      vp:set_cursor_jumping(false)
       local result = event.element.text
       jump_cursor_to_typed_coordinates(result, pindex)
       event.element.destroy()
@@ -6899,14 +6955,17 @@ end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("cursor-skip-by-preview-east", function(event)
-   local pindex = event.player_index
+   local pin = event.player_index
    if not check_for_player(pindex) or players[pindex].vanilla_mode then return end
    cursor_skip(pindex, defines.direction.east, 1000, true)
 end)
 
 --Runs the cursor skip actions and reads out results
 function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
-   if players[pindex].cursor == false then return end
+   local vp = Viewpoint.get_viewpoint(pindex)
+   if vp:get_cursor_enabled() == false then return end
+   local cursor_pos = vp:get_cursor_pos()
+   local cursor_size = vp:get_cursor_size()
    local p = game.get_player(pindex)
    local limit = iteration_limit or 100
    local result = ""
@@ -6924,7 +6983,7 @@ function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
    if skip_by_preview_size then
       --Rolling always plays the regular moving sound
       if players[pindex].remote_view then
-         p.play_sound({ path = "Close-Inventory-Sound", position = players[pindex].cursor_pos, volume_modifier = 1 })
+         p.play_sound({ path = "Close-Inventory-Sound", position = cursor_pos, volume_modifier = 1 })
       else
          p.play_sound({ path = "Close-Inventory-Sound", position = players[pindex].position, volume_modifier = 1 })
       end
@@ -6933,7 +6992,7 @@ function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
       result = result .. limit .. " tiles without a change, "
       --Play Sound
       if players[pindex].remote_view then
-         p.play_sound({ path = "inventory-wrap-around", position = players[pindex].cursor_pos, volume_modifier = 1 })
+         p.play_sound({ path = "inventory-wrap-around", position = cursor_pos, volume_modifier = 1 })
       else
          p.play_sound({ path = "inventory-wrap-around", position = players[pindex].position, volume_modifier = 1 })
       end
@@ -6941,7 +7000,7 @@ function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
       result = ""
       --Play Sound
       if players[pindex].remote_view then
-         p.play_sound({ path = "Close-Inventory-Sound", position = players[pindex].cursor_pos, volume_modifier = 1 })
+         p.play_sound({ path = "Close-Inventory-Sound", position = cursor_pos, volume_modifier = 1 })
       else
          p.play_sound({ path = "Close-Inventory-Sound", position = players[pindex].position, volume_modifier = 1 })
       end
@@ -6950,7 +7009,7 @@ function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
       result = result .. moved_count .. " tiles, "
       --Play Sound
       if players[pindex].remote_view then
-         p.play_sound({ path = "inventory-wrap-around", position = players[pindex].cursor_pos, volume_modifier = 1 })
+         p.play_sound({ path = "inventory-wrap-around", position = cursor_pos, volume_modifier = 1 })
       else
          p.play_sound({ path = "inventory-wrap-around", position = players[pindex].position, volume_modifier = 1 })
       end
@@ -6961,14 +7020,14 @@ function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
    fa_graphics.sync_build_cursor_graphics(pindex)
 
    --Draw large cursor boxes if present
-   if players[pindex].cursor_size > 0 then
+   if cursor_size > 0 then
       local left_top = {
-         math.floor(players[pindex].cursor_pos.x) - players[pindex].cursor_size,
-         math.floor(players[pindex].cursor_pos.y) - players[pindex].cursor_size,
+         math.floor(cursor_pos.x) - cursor_size,
+         math.floor(cursor_pos.y) - cursor_size,
       }
       local right_bottom = {
-         math.floor(players[pindex].cursor_pos.x) + players[pindex].cursor_size + 1,
-         math.floor(players[pindex].cursor_pos.y) + players[pindex].cursor_size + 1,
+         math.floor(cursor_pos.x) + cursor_size + 1,
+         math.floor(cursor_pos.y) + cursor_size + 1,
       }
       fa_graphics.draw_large_cursor(left_top, right_bottom, pindex)
    end
@@ -6978,8 +7037,10 @@ end
 function cursor_skip_iteration(pindex, direction, iteration_limit)
    local p = game.get_player(pindex)
    local start = nil
-   local start_tile_is_water = fa_utils.tile_is_water(p.surface, players[pindex].cursor_pos)
-   local start_tile_is_ruler_aligned = Rulers.is_any_ruler_aligned(pindex, players[pindex].cursor_pos)
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
+   local start_tile_is_water = fa_utils.tile_is_water(p.surface, cursor_pos)
+   local start_tile_is_ruler_aligned = Rulers.is_any_ruler_aligned(pindex, cursor_pos)
    local current = nil
    local limit = iteration_limit or 100
    local moved = 1
@@ -7011,7 +7072,7 @@ function cursor_skip_iteration(pindex, direction, iteration_limit)
             local dist = math.ceil(util.distance(start.position, con.target.get_pipe_connections(1)[1].position))
             local dir_neighbor = fa_utils.get_direction_biased(con.target_position, start.position)
             if con.connection_type == "underground" and dir_neighbor == direction then
-               players[pindex].cursor_pos = con.target.get_pipe_connections(1)[1].position
+               vp:set_cursor_pos(con.target.get_pipe_connections(1)[1].position)
                refresh_player_tile(pindex)
                current = get_first_ent_at_tile(pindex)
                return dist
@@ -7026,7 +7087,7 @@ function cursor_skip_iteration(pindex, direction, iteration_limit)
          local dist = math.ceil(util.distance(start.position, other_end.position))
          local dir_neighbor = fa_utils.get_direction_biased(other_end.position, start.position)
          if dir_neighbor == direction then
-            players[pindex].cursor_pos = other_end.position
+            vp:set_cursor_pos(other_end.position)
             refresh_player_tile(pindex)
             current = get_first_ent_at_tile(pindex)
             return dist
@@ -7036,8 +7097,9 @@ function cursor_skip_iteration(pindex, direction, iteration_limit)
    elseif start_tile_is_water then
       local selected_tile_is_water = nil
       --Iterate first_tile
-      players[pindex].cursor_pos = fa_utils.offset_position_legacy(players[pindex].cursor_pos, direction, 1)
-      selected_tile_is_water = fa_utils.tile_is_water(p.surface, players[pindex].cursor_pos)
+      cursor_pos = fa_utils.offset_position_legacy(cursor_pos, direction, 1)
+      vp:set_cursor_pos(cursor_pos)
+      selected_tile_is_water = fa_utils.tile_is_water(p.surface, cursor_pos)
 
       --Run checks and skip when needed
       while moved < limit do
@@ -7046,18 +7108,19 @@ function cursor_skip_iteration(pindex, direction, iteration_limit)
             return moved
          else
             --For audio rulers, stop if crossing into or out of alignment with any rulers
-            local current_tile_is_ruler_aligned = Rulers.is_any_ruler_aligned(pindex, players[pindex].cursor_pos)
+            local current_tile_is_ruler_aligned = Rulers.is_any_ruler_aligned(pindex, cursor_pos)
             if start_tile_is_ruler_aligned ~= current_tile_is_ruler_aligned then
                Rulers.update_from_cursor(pindex)
                return moved
             --Also for rulers, stop if at the definiton point of any ruler
-            elseif Rulers.is_at_any_ruler_definition(pindex, players[pindex].cursor_pos) then
+            elseif Rulers.is_at_any_ruler_definition(pindex, cursor_pos) then
                Rulers.update_from_cursor(pindex)
                return moved
             end
             --Iterate again
-            players[pindex].cursor_pos = fa_utils.offset_position_legacy(players[pindex].cursor_pos, direction, 1)
-            selected_tile_is_water = fa_utils.tile_is_water(p.surface, players[pindex].cursor_pos)
+            cursor_pos = fa_utils.offset_position_legacy(cursor_pos, direction, 1)
+            vp:set_cursor_pos(cursor_pos)
+            selected_tile_is_water = fa_utils.tile_is_water(p.surface, cursor_pos)
             moved = moved + 1
          end
       end
@@ -7065,19 +7128,20 @@ function cursor_skip_iteration(pindex, direction, iteration_limit)
       return -1
    end
    --Iterate first tile
-   players[pindex].cursor_pos = fa_utils.offset_position_legacy(players[pindex].cursor_pos, direction, 1)
+   cursor_pos = fa_utils.offset_position_legacy(cursor_pos, direction, 1)
+   vp:set_cursor_pos(cursor_pos)
 
    current = compute_current()
 
    --Run checks and skip when needed
    while moved < limit do
       --For audio rulers, stop if crossing into or out of alignment with any rulers
-      local current_tile_is_ruler_aligned = Rulers.is_any_ruler_aligned(pindex, players[pindex].cursor_pos)
+      local current_tile_is_ruler_aligned = Rulers.is_any_ruler_aligned(pindex, cursor_pos)
       if start_tile_is_ruler_aligned ~= current_tile_is_ruler_aligned then
          Rulers.update_from_cursor(pindex)
          return moved
       --Also for rulers, stop if at the definiton point of any ruler
-      elseif Rulers.is_at_any_ruler_definition(pindex, players[pindex].cursor_pos) then
+      elseif Rulers.is_at_any_ruler_definition(pindex, cursor_pos) then
          Rulers.update_from_cursor(pindex)
          return moved
       end
@@ -7085,7 +7149,7 @@ function cursor_skip_iteration(pindex, direction, iteration_limit)
       if current == nil then
          if start == nil then
             --Both are nil: check if water, else skip
-            local selected_tile_is_water = fa_utils.tile_is_water(p.surface, players[pindex].cursor_pos)
+            local selected_tile_is_water = fa_utils.tile_is_water(p.surface, cursor_pos)
             if selected_tile_is_water then
                --Non-water tile -> water tile found
                return moved
@@ -7105,7 +7169,7 @@ function cursor_skip_iteration(pindex, direction, iteration_limit)
             if start.unit_number == current.unit_number and current.type ~= "resource" then
                --They are the same ent: skip
             else
-               --They are differemt ents OR they are resource ents (which can have the same unit number despite being different ents)
+               --They are different ents OR they are resource ents (which can have the same unit number despite being different ents)
                if start.name ~= current.name then
                   --They have different names: return
                   --p.print("RET 1, start: " .. start.name .. ", current: " .. current.name .. ", comment:" .. comment)--
@@ -7146,7 +7210,8 @@ function cursor_skip_iteration(pindex, direction, iteration_limit)
          end
       end
       --Skip case: Move 1 more tile
-      players[pindex].cursor_pos = fa_utils.offset_position_legacy(players[pindex].cursor_pos, direction, 1)
+      cursor_pos = fa_utils.offset_position_legacy(cursor_pos, direction, 1)
+      vp:set_cursor_pos(cursor_pos)
       moved = moved + 1
       current = compute_current()
    end
@@ -7157,6 +7222,8 @@ end
 --Shift the cursor by the size of the preview in hand or otherwise by the size of the cursor.
 function apply_skip_by_preview_size(pindex, direction)
    local p = game.get_player(pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
 
    --Check the moved count against the dimensions of the preview in hand
    local stack = p.cursor_stack
@@ -7166,12 +7233,10 @@ function apply_skip_by_preview_size(pindex, direction)
          if width and height and (width + height > 2) then
             --For blueprints larger than 1x1, check if the height/width has been travelled.
             if direction == dirs.east or direction == dirs.west then
-               players[pindex].cursor_pos =
-                  fa_utils.offset_position_legacy(players[pindex].cursor_pos, direction, width + 1)
+               vp:set_cursor_pos(fa_utils.offset_position_legacy(cursor_pos, direction, width + 1))
                return width
             elseif direction == dirs.north or direction == dirs.south then
-               players[pindex].cursor_pos =
-                  fa_utils.offset_position_legacy(players[pindex].cursor_pos, direction, height + 1)
+               vp:set_cursor_pos(fa_utils.offset_position_legacy(cursor_pos, direction, height + 1))
                return height
             end
          end
@@ -7181,12 +7246,10 @@ function apply_skip_by_preview_size(pindex, direction)
          if width and height and (width + height > 2) then
             --For entities larger than 1x1, check if the height/width has been travelled.
             if direction == dirs.east or direction == dirs.west then
-               players[pindex].cursor_pos =
-                  fa_utils.offset_position_legacy(players[pindex].cursor_pos, direction, width)
+               vp:set_cursor_pos(fa_utils.offset_position_legacy(cursor_pos, direction, width))
                return width
             elseif direction == dirs.north or direction == dirs.south then
-               players[pindex].cursor_pos =
-                  fa_utils.offset_position_legacy(players[pindex].cursor_pos, direction, height)
+               vp:set_cursor_pos(fa_utils.offset_position_legacy(cursor_pos, direction, height))
                return height
             end
          end
@@ -7194,8 +7257,8 @@ function apply_skip_by_preview_size(pindex, direction)
    end
 
    --Offset by cursor size if not something else
-   local shift = (players[pindex].cursor_size * 2 + 1)
-   players[pindex].cursor_pos = fa_utils.offset_position_legacy(players[pindex].cursor_pos, direction, shift)
+   local shift = (vp:get_cursor_size() * 2 + 1)
+   vp:set_cursor_pos(fa_utils.offset_position_legacy(cursor_pos, direction, shift))
    return shift
 end
 
@@ -7311,28 +7374,32 @@ end)
 script.on_event("cursor-one-tile-north", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
-   if players[pindex].cursor then move_key(dirs.north, event, true) end
+   local vp = Viewpoint.get_viewpoint(pindex)
+   if vp:get_cursor_enabled() then move_key(dirs.north, event, true) end
 end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("cursor-one-tile-south", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
-   if players[pindex].cursor then move_key(dirs.south, event, true) end
+   local vp = Viewpoint.get_viewpoint(pindex)
+   if vp:get_cursor_enabled() then move_key(dirs.south, event, true) end
 end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("cursor-one-tile-east", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
-   if players[pindex].cursor then move_key(dirs.east, event, true) end
+   local vp = Viewpoint.get_viewpoint(pindex)
+   if vp:get_cursor_enabled() then move_key(dirs.east, event, true) end
 end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("cursor-one-tile-west", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
-   if players[pindex].cursor then move_key(dirs.west, event, true) end
+   local vp = Viewpoint.get_viewpoint(pindex)
+   if vp:get_cursor_enabled() then move_key(dirs.west, event, true) end
 end)
 
 ---@param event EventData.CustomInputEvent
@@ -7819,17 +7886,6 @@ script.on_event("debug-test-key", function(event)
    local stack = game.get_player(pindex).cursor_stack
 
    if stack.is_blueprint_book then fa_blueprints.print_book_slots(stack) end
-   --game.print(ent.prototype.group.name)
-   --get_blueprint_corners(pindex, true)
-   --if ent and ent.valid then
-   --   game.print("tile width: " .. prototypes.entity[ent.name].tile_width)
-   --end
-   --if ent and ent.type == "programmable-speaker" then
-   --ent.play_note(12,1)
-   --fa_circuits.play_selected_speaker_note(ent)
-   --end
-   --show_sprite_demo(pindex)
-   --Character:move_to(players[pindex].cursor_pos, util.distance(players[pindex].position,players[pindex].cursor_pos), 100)
 end)
 
 ---@param event EventData.CustomInputEvent
@@ -8053,8 +8109,9 @@ end
 
 --Feature for typing in coordinates for moving the mod cursor.
 function type_cursor_position(pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
    printout("Enter new co-ordinates for the cursor, separated by a space", pindex)
-   players[pindex].cursor_jumping = true
+   vp:set_cursor_jumping(true)
    local frame = fa_graphics.create_text_field_frame(pindex, "cursor-jump")
    return frame
 end
@@ -8068,7 +8125,8 @@ function jump_cursor_to_typed_coordinates(result, pindex)
       local valid_coords = new_x ~= nil and new_y ~= nil
       --Change cursor position or return error
       if valid_coords then
-         players[pindex].cursor_pos = fa_utils.center_of_tile({ x = new_x + 0.01, y = new_y + 0.01 })
+         local vp = Viewpoint.get_viewpoint(pindex)
+         vp:set_cursor_pos(fa_utils.center_of_tile({ x = new_x + 0.01, y = new_y + 0.01 }))
          printout("Cursor jumped to " .. new_x .. ", " .. new_y, pindex)
          fa_graphics.draw_cursor_highlight(pindex)
          fa_graphics.sync_build_cursor_graphics(pindex)
@@ -8238,8 +8296,10 @@ script.on_event(defines.events.on_string_translated, fa_localising.handler)
 script.on_event(defines.events.on_player_respawned, function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
-   players[pindex].position = game.get_player(pindex).position
-   players[pindex].cursor_pos = game.get_player(pindex).position
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local position = game.get_player(pindex).position
+   players[pindex].position = position
+   vp:set_cursor_pos({ x = position.x, y = position.y })
 end)
 
 --If the player has unexpected lateral movement while smooth running in a cardinal direction, like from bumping into an entity or being at the edge of water, play a sound.
@@ -8412,7 +8472,9 @@ function check_and_play_bump_alert_sound(pindex, this_tick)
    end
 
    --Check if there is a tile that was bumped into
-   local tile = p.surface.get_tile(players[pindex].cursor_pos.x, players[pindex].cursor_pos.y)
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
+   local tile = p.surface.get_tile(cursor_pos.x, cursor_pos.y)
    bump_was_tile = (tile ~= nil and tile.valid and tile.collides_with("player"))
 
    if bump_was_tile then
@@ -8591,14 +8653,16 @@ end)
 script.on_event("nearest-damaged-ent-info", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
-   fa_info.read_nearest_damaged_ent_info(players[pindex].cursor_pos, pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
+   fa_info.read_nearest_damaged_ent_info(vp:get_cursor_pos(), pindex)
 end)
 
 ---@param event EventData.CustomInputEvent
 script.on_event("cursor-pollution-info", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
-   fa_info.read_pollution_level_at_position(players[pindex].cursor_pos, pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
+   fa_info.read_pollution_level_at_position(vp:get_cursor_pos(), pindex)
 end)
 
 ---@param event EventData.CustomInputEvent

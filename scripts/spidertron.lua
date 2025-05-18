@@ -1,12 +1,15 @@
 --Here: Spidertron remote menu
 local fa_graphics = require("scripts.graphics")
 local UiRouter = require("scripts.ui.router")
+local Viewpoint = require("scripts.viewpoint")
 
 local mod = {}
 
 --This menu is opened via a spidertron remote.
 function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
    local index = menu_index
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor = vp:get_cursor_pos()
    local spider
    local remote = game.get_player(pindex).cursor_stack
    local other = other_input or -1
@@ -99,7 +102,6 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
          if remote.connected_entity == nil then
             printout("To move a spidertron, link it to this remote first.", pindex)
          else
-            local cursor = players[pindex].cursor_pos
             game.get_player(pindex).cursor_stack.connected_entity.autopilot_destination = cursor
             printout("Spidertron sent to coordinates" .. math.floor(cursor.x) .. ", " .. math.floor(cursor.y), pindex)
          end
@@ -112,7 +114,6 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
          if remote.connected_entity == nil then
             printout("To move a spidertron, link it to this remote first.", pindex)
          else
-            local cursor = players[pindex].cursor_pos
             game.get_player(pindex).cursor_stack.connected_entity.add_autopilot_destination(cursor)
             printout(
                "Coordinates "

@@ -7,6 +7,7 @@ local fa_graphics = require("scripts.graphics")
 local fa_mouse = require("scripts.mouse")
 local fa_equipment = require("scripts.equipment")
 local UiRouter = require("scripts.ui.router")
+local Viewpoint = require("scripts.viewpoint")
 
 local mod = {}
 
@@ -41,7 +42,6 @@ function mod.repair_pack_used(ent, pindex)
          --Note: This automatically subtracts correctly and decerements the pack in hand.
       end
    end
-   --Note: game.get_player(pindex).use_from_cursor{players[pindex].cursor_pos.x,players[pindex].cursor_pos.y}--This does not work.
 end
 
 --Tries to repair all relevant entities within a certain distance from the player
@@ -205,6 +205,8 @@ function mod.aim_gun_at_nearest_enemy(pindex, enemy_in)
 
    local p = game.get_player(pindex)
    if p == nil or p.character == nil or p.character.valid == false then return end
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
    local gun_index = p.character.selected_gun_index
    local guns_inv = p.get_inventory(defines.inventory.character_guns)
    local ammo_inv = game.get_player(pindex).get_inventory(defines.inventory.character_ammo)
@@ -215,7 +217,7 @@ function mod.aim_gun_at_nearest_enemy(pindex, enemy_in)
    if gun_stack == nil or not gun_stack.valid_for_read or not gun_stack.valid then return false end
    if ammo_stack == nil or not ammo_stack.valid_for_read or not ammo_stack.valid then return false end
    --Return if in Cursormode
-   if players[pindex].cursor then return false end
+   if vp:get_cursor_enabled() then return false end
    --Return if in a menu
    if router:is_ui_open() then return false end
    --Check for nearby enemies
@@ -236,7 +238,7 @@ function mod.aim_gun_at_nearest_enemy(pindex, enemy_in)
    end
    --If in range, move the cursor onto the enemy to aim the gun
    if dist < range then
-      players[pindex].cursor_pos = enemy.position
+      vp:set_cursor_pos({ X = enemy.position.x, y = enemy.position.y })
       fa_mouse.move_mouse_pointer(enemy.position, pindex)
       fa_graphics.draw_cursor_highlight(pindex, nil, nil, true)
    end
@@ -290,6 +292,8 @@ end
 function mod.smart_aim_grenades_and_capsules(pindex, draw_circles_in)
    local draw_circles = draw_circles_in or false
    local p = game.get_player(pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
    local hand = p.cursor_stack
    if hand == nil or hand.valid_for_read == false then return end
    local running_dir = nil
@@ -412,11 +416,9 @@ function mod.smart_aim_grenades_and_capsules(pindex, draw_circles_in)
       end
    end
    --3. Target the cursor position unless running at it
-   local cursor_dist = util.distance(player_pos, players[pindex].cursor_pos)
-   local cursor_dir = fa_utils.get_direction_precise(players[pindex].cursor_pos, player_pos)
-   if cursor_dist > min_range and cursor_dist < max_range and cursor_dir ~= running_dir then
-      return players[pindex].cursor_pos
-   end
+   local cursor_dist = util.distance(player_pos, cursor_pos)
+   local cursor_dir = fa_utils.get_direction_precise(cursor_pos, player_pos)
+   if cursor_dist > min_range and cursor_dist < max_range and cursor_dir ~= running_dir then return cursor_pos end
    --4. If running and if any enemies are close behind you, then target them
    --The player runs at least 8.9 tiles per second and the throw takes around half a second
    --so a displacement of 4 tiles is a safe bet. Also assume a max range penalty because it is behind you
@@ -440,6 +442,8 @@ end
 function mod.run_atomic_bomb_checks(pindex)
    local p = game.get_player(pindex)
    if p.character == nil then return end
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
    --local main_inv = p.get_inventory(defines.inventory.character_main)
    --local ammos_count = #ammo_inv - ammo_inv.count_empty_stacks()
    local ammo_inv = p.get_inventory(defines.inventory.character_ammo)
@@ -458,8 +462,8 @@ function mod.run_atomic_bomb_checks(pindex)
 
    --If the target position is shown as the center of the screen where the player stands, it means the cursor is not on screen
    if target_pos == nil or util.distance(p.position, target_pos) < 1.5 then
-      target_pos = players[pindex].cursor_pos
-      p.shooting_state.position = players[pindex].cursor_pos
+      target_pos = cursor_pos
+      p.shooting_state.position = cursor_pos
       if selected_ammo.name == "atomic-bomb" then
          abort_missle = true
          abort_message = "Aiming alert, scroll mouse wheel to zoom out."
@@ -468,11 +472,11 @@ function mod.run_atomic_bomb_checks(pindex)
 
    --If the target position is shown as the center of the screen where the player stands, it means the cursor is not on screen
    local aim_dist_1 = util.distance(p.position, target_pos)
-   local aim_dist_2 = util.distance(p.position, players[pindex].cursor_pos)
+   local aim_dist_2 = util.distance(p.position, cursor_pos)
    if aim_dist_1 < 1.5 then
       abort_missle = true
       abort_message = "Aiming alert, scroll mouse wheel to zoom out."
-   elseif util.distance(target_pos, players[pindex].cursor_pos) > 2 then
+   elseif util.distance(target_pos, cursor_pos) > 2 then
       abort_missle = true
       abort_message = "Aiming alert, move cursor to sync mouse."
    end

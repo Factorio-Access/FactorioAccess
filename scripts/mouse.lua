@@ -3,6 +3,7 @@
 
 local fa_utils = require("scripts.fa-utils")
 local dirs = defines.direction
+local Viewpoint = require("scripts.viewpoint")
 local mod = {}
 
 --Moves the mouse pointer to the correct pixel on the screen for an input map position. If the position is off screen, then the pointer is centered on the player character instead. Does not run in vanilla mode or if the mouse is released from synchronizing.
@@ -38,7 +39,7 @@ function mod.move_pointer_to_pixels(x, y, pindex)
       and x < game.players[pindex].display_resolution.width
       and y < game.players[pindex].display_resolution.height
    then
-      print("setCursor " .. pindex .. " " .. math.ceil(x) .. "," .. math.ceil(y))
+      -- print("setCursor " .. pindex .. " " .. math.ceil(x) .. "," .. math.ceil(y))
    end
 end
 
@@ -46,9 +47,11 @@ end
 function mod.cursor_position_is_on_screen_with_player_centered(pindex)
    local range_y = math.floor(18 / players[pindex].zoom) --found experimentally by counting tile ranges at different zoom levels
    local range_x = range_y * game.get_player(pindex).display_scale * 1.6 --found experimentally by checking scales
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
    return (
-      math.abs(players[pindex].cursor_pos.y - players[pindex].position.y) <= range_y
-      and math.abs(players[pindex].cursor_pos.x - players[pindex].position.x) <= range_x
+      math.abs(cursor_pos.y - players[pindex].position.y) <= range_y
+      and math.abs(cursor_pos.x - players[pindex].position.x) <= range_x
    )
 end
 
@@ -56,7 +59,8 @@ end
 function mod.cursor_visibility_info(pindex)
    local p = game.get_player(pindex)
    local result = ""
-   local pos = players[pindex].cursor_pos
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local pos = vp:get_cursor_pos()
    local chunk_pos = { x = math.floor(pos.x / 32), y = math.floor(pos.y / 32) }
    if p.force.is_chunk_charted(p.surface, chunk_pos) == false then
       result = result .. " uncharted "

@@ -3,8 +3,9 @@
 
 local fa_utils = require("scripts.fa-utils")
 local fa_mouse = require("scripts.mouse")
-local dirs = defines.direction
 local UiRouter = require("scripts.ui.router")
+local Viewpoint = require("scripts.viewpoint")
+local dirs = defines.direction
 
 local mod = {}
 
@@ -177,6 +178,10 @@ function mod.sync_build_cursor_graphics(pindex)
    local dir = player.building_direction
    local dir_indicator = player.building_dir_arrow
    local p_dir = player.player_direction
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
+   local cursor_size = vp:get_cursor_size()
+   local cursor_enabled = vp:get_cursor_enabled()
    local width = nil
    local height = nil
    local left_top = nil
@@ -185,7 +190,7 @@ function mod.sync_build_cursor_graphics(pindex)
       --Redraw direction indicator arrow
       if dir_indicator ~= nil then player.building_dir_arrow.destroy() end
       local arrow_pos = player.cursor_pos
-      if players[pindex].build_lock and not players[pindex].cursor and stack.name ~= "rail" then
+      if players[pindex].build_lock and not cursor_enabled and stack.name ~= "rail" then
          arrow_pos =
             fa_utils.center_of_tile(fa_utils.offset_position_legacy(arrow_pos, players[pindex].player_direction, -2))
       end
@@ -236,7 +241,7 @@ function mod.sync_build_cursor_graphics(pindex)
          end
 
          --In build lock mode and outside cursor mode, build from behind the player
-         if players[pindex].build_lock and not players[pindex].cursor and stack.name ~= "rail" then
+         if players[pindex].build_lock and not cursor_enabled and stack.name ~= "rail" then
             local base_offset = -2
             local size_offset = 0
             if p_dir == dirs.north or p_dir == dirs.south then
@@ -301,7 +306,7 @@ function mod.sync_build_cursor_graphics(pindex)
          end
 
          --In build lock mode and outside cursor mode, build from behind the player
-         if players[pindex].build_lock and not players[pindex].cursor and stack.name ~= "rail" then
+         if players[pindex].build_lock and not cursor_enabled and stack.name ~= "rail" then
             local base_offset = -2
             local size_offset = 0
             if p_dir == dirs.north or p_dir == dirs.south then
@@ -381,12 +386,12 @@ function mod.sync_build_cursor_graphics(pindex)
       --Tile placement preview
       if stack.valid and stack.prototype.place_as_tile_result and players[pindex].blueprint_reselecting ~= true then
          local left_top = {
-            math.floor(players[pindex].cursor_pos.x) - players[pindex].cursor_size,
-            math.floor(players[pindex].cursor_pos.y) - players[pindex].cursor_size,
+            math.floor(cursor_pos.x) - cursor_size,
+            math.floor(cursor_pos.y) - cursor_size,
          }
          local right_bottom = {
-            math.floor(players[pindex].cursor_pos.x) + players[pindex].cursor_size + 1,
-            math.floor(players[pindex].cursor_pos.y) + players[pindex].cursor_size + 1,
+            math.floor(cursor_pos.x) + cursor_size + 1,
+            math.floor(cursor_pos.y) + cursor_size + 1,
          }
          mod.draw_large_cursor(left_top, right_bottom, pindex, { r = 0.25, b = 0.25, g = 1.0, a = 0.75 })
       elseif
@@ -400,7 +405,7 @@ function mod.sync_build_cursor_graphics(pindex)
       then
          --Draw planner rectangles
          local top_left, bottom_right =
-            fa_utils.get_top_left_and_bottom_right(players[pindex].bp_select_point_1, players[pindex].cursor_pos)
+            fa_utils.get_top_left_and_bottom_right(players[pindex].bp_select_point_1, cursor_pos)
          local color = { 1, 1, 1 }
          if stack.is_blueprint then
             color = { r = 0.25, b = 1.00, g = 0.50, a = 0.75 }
@@ -430,17 +435,19 @@ end
 --Draws the mod cursor box and highlights an entity selected by the cursor. Also moves the mouse pointer to the mod cursor position.
 function mod.draw_cursor_highlight(pindex, ent, box_type, skip_mouse_movement)
    local p = game.get_player(pindex)
-   local c_pos = players[pindex].cursor_pos
-   local h_box = players[pindex].cursor_ent_highlight_box
-   local h_tile = players[pindex].cursor_tile_highlight_box
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local c_pos = vp:get_cursor_pos()
+   local cursor_hidden = vp:get_cursor_hidden()
+   local h_box = vp:get_cursor_ent_highlight_box()
+   local h_tile = vp:get_cursor_tile_highlight_box()
    if c_pos == nil then return end
    if h_box ~= nil and h_box.valid then h_box.destroy() end
    if h_tile ~= nil and h_tile.valid then h_tile.destroy() end
 
    --Skip drawing if hide cursor is enabled
-   if players[pindex].hide_cursor then
-      players[pindex].cursor_ent_highlight_box = nil
-      players[pindex].cursor_tile_highlight_box = nil
+   if cursor_hidden then
+      vp:set_cursor_ent_highlight_box(nil)
+      vp:set_cursor_tile_highlight_box(nil)
       return
    end
 
@@ -474,8 +481,8 @@ function mod.draw_cursor_highlight(pindex, ent, box_type, skip_mouse_movement)
       right_bottom = { math.ceil(c_pos.x) - 0.05, math.ceil(c_pos.y) - 0.05 },
    })
 
-   players[pindex].cursor_ent_highlight_box = h_box
-   players[pindex].cursor_tile_highlight_box = h_tile
+   vp:set_cursor_ent_highlight_box(h_box)
+   vp:set_cursor_tile_highlight_box(h_tile)
 
    --Recolor cursor boxes if multiplayer
    if game.is_multiplayer() then mod.set_cursor_colors_to_player_colors(pindex) end
@@ -504,7 +511,8 @@ end
 
 --Redraws the player's cursor highlight box as a rectangle around the defined area.
 function mod.draw_large_cursor(input_left_top, input_right_bottom, pindex, colour_in)
-   local h_tile = players[pindex].cursor_tile_highlight_box
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local h_tile = vp:get_cursor_tile_highlight_box()
    if h_tile ~= nil then h_tile.destroy() end
    local colour = { 0.75, 1, 1 }
    if colour_in ~= nil then colour = colour_in end
@@ -517,7 +525,7 @@ function mod.draw_large_cursor(input_left_top, input_right_bottom, pindex, colou
       players = nil,
    })
    h_tile.visible = true
-   players[pindex].cursor_tile_highlight_box = h_tile
+   vp:set_cursor_tile_highlight_box(h_tile)
 
    --Recolor cursor boxes if multiplayer
    if game.is_multiplayer() then mod.set_cursor_colors_to_player_colors(pindex) end
@@ -666,9 +674,9 @@ end
 function mod.set_cursor_colors_to_player_colors(pindex)
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
-   if players[pindex].cursor_tile_highlight_box ~= nil and players[pindex].cursor_tile_highlight_box.valid then
-      rendering.set_color(players[pindex].cursor_tile_highlight_box, p.color)
-   end
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local h_tile = vp:get_cursor_tile_highlight_box()
+   if h_tile ~= nil and h_tile.valid then rendering.set_color(h_tile, p.color) end
    if players[pindex].building_footprint ~= nil and rendering.is_valid(players[pindex].building_footprint) then
       rendering.set_color(players[pindex].building_footprint, p.color)
    end

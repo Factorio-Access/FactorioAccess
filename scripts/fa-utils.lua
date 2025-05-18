@@ -1,5 +1,6 @@
 --Here: Utility functions called by other files. Examples include distance and position calculations, string processing.
 local util = require("util")
+local Viewpoint = require("scripts.viewpoint")
 local dirs = defines.direction
 
 local Consts = require("scripts.consts")
@@ -389,8 +390,10 @@ end
 --Reports which part of the selected entity has the cursor. E.g. southwest corner, center...
 function mod.get_entity_part_at_cursor(pindex)
    local p = game.get_player(pindex)
-   local x = players[pindex].cursor_pos.x
-   local y = players[pindex].cursor_pos.y
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
+   local x = cursor_pos.x
+   local y = cursor_pos.y
    local ents = players[pindex].tile.ents
    local north_same = false
    local south_same = false
@@ -877,7 +880,8 @@ function mod.identify_water_shores(pindex)
    local p = game.get_player(pindex)
    local water_tile_names =
       { "water", "deepwater", "water-green", "deepwater-green", "water-shallow", "water-mud", "water-wube" }
-   local pos = players[pindex].cursor_pos
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local pos = vp:get_cursor_pos()
    rendering.draw_circle({
       color = { 1, 0.0, 0.5 },
       radius = 0.1,

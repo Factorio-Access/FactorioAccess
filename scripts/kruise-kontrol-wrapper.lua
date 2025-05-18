@@ -1,5 +1,7 @@
 --Here: Functions related to Kruise Kontrol Remote
 
+local Viewpoint = require("scripts.viewpoint")
+
 local mod = {}
 
 local interface_name = "kruise_kontrol_updated"
@@ -28,7 +30,8 @@ function mod.activate_kk(pindex)
       --
       -- For now the fractional components are still present.  We're about to
       -- fix that.
-      local kk_pos = table.deepcopy(players[pindex].cursor_pos)
+      local vp = Viewpoint.get_viewpoint(pindex)
+      local kk_pos = vp:get_cursor_pos()
 
       -- we must duplicate a bit of logic since the mouse is not on our side; FA
       -- has its own idea of selections.

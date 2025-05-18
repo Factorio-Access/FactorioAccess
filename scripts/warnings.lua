@@ -1,5 +1,6 @@
 --Here: functions about the warnings menu
 local fa_belts = require("scripts.transport-belts")
+local Viewpoint = require("scripts.viewpoint")
 
 local mod = {}
 
@@ -40,7 +41,7 @@ end
 --Warnings menu: scans for problems in the production network it defines and creates the warnings list.
 function mod.scan_for_warnings(L, H, pindex)
    local surf = game.get_player(pindex).surface
-   local pos = players[pindex].cursor_pos
+   local pos = Viewpoint.get_viewpoint(pindex):get_cursor_pos()
    local area = { { pos.x - L, pos.y - H }, { pos.x + L, pos.y + H } }
    local ents = surf.find_entities_filtered({ area = area, type = entity_types })
    local warnings = {}

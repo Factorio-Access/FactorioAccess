@@ -6,6 +6,7 @@ local fa_building_tools = require("scripts.building-tools")
 local fa_mining_tools = require("scripts.player-mining-tools")
 local fa_graphics = require("scripts.graphics")
 local UiRouter = require("scripts.ui.router")
+local Viewpoint = require("scripts.viewpoint")
 
 local dirs = defines.direction
 
@@ -105,7 +106,8 @@ end
 function mod.paste_blueprint(pindex)
    local p = game.get_player(pindex)
    local bp = p.cursor_stack
-   local pos = players[pindex].cursor_pos
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local pos = vp:get_cursor_pos()
 
    --Not a blueprint
    if bp.is_blueprint == false then return nil end
@@ -147,7 +149,8 @@ function mod.get_blueprint_corners(pindex, draw_rect)
    local p = game.get_player(pindex)
    local bp = p.cursor_stack
    if bp == nil or bp.valid_for_read == false or bp.is_blueprint == false then error("invalid call. no blueprint") end
-   local pos = players[pindex].cursor_pos
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local pos = vp:get_cursor_pos()
    local ents = bp.get_blueprint_entities() or {}
    local west_most_x = 0
    local east_most_x = 0
@@ -233,7 +236,8 @@ function mod.get_blueprint_width_and_height(pindex)
       bp = game.get_player(pindex).get_main_inventory()[players[pindex].inventory.index]
    end
    if bp == nil or bp.valid_for_read == false or bp.is_blueprint == false then return nil, nil end
-   local pos = players[pindex].cursor_pos
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local pos = vp:get_cursor_pos()
    local ents = bp.get_blueprint_entities()
    local west_most_x = 0
    local east_most_x = 0

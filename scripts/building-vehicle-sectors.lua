@@ -8,6 +8,7 @@ local fa_blueprints = require("scripts.blueprints")
 local BeltAnalyzer = require("scripts.ui.belt-analyzer")
 local Filters = require("scripts.filters")
 local UiRouter = require("scripts.ui.router")
+local Viewpoint = require("scripts.viewpoint")
 
 local mod = {}
 
@@ -77,11 +78,12 @@ end
 --Loads and opens the building menu
 function mod.open_operable_building(ent, pindex)
    local router = UiRouter.get_router(pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
 
    if ent.operable and ent.prototype.is_building then
       --Check if within reach
       if
-         util.distance(game.get_player(pindex).position, players[pindex].cursor_pos)
+         util.distance(game.get_player(pindex).position, vp:get_cursor_pos())
          > game.get_player(pindex).reach_distance
       then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
@@ -255,11 +257,12 @@ end
 --Loads and opens the vehicle menu
 function mod.open_operable_vehicle(ent, pindex)
    local router = UiRouter.get_router(pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
 
    if ent.valid and ent.operable then
       --Check if within reach
       if
-         util.distance(game.get_player(pindex).position, players[pindex].cursor_pos)
+         util.distance(game.get_player(pindex).position, vp:get_cursor_pos())
          > game.get_player(pindex).reach_distance
       then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })

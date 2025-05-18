@@ -28,10 +28,24 @@ local mod = {}
 
 ---@class fa.viewpoint.ViewpointState
 ---@field cursor_pos fa.Point
+---@field cursor_size number
+---@field cursor_enabled boolean
+---@field cursor_hidden boolean
+---@field cursor_bookmark fa.Point
+---@field cursor_ent_highlight_box  LuaEntity?
+---@field cursor_tile_highlight_box LuaRenderObject?
+---@field cursor_rotation_offset  number
+---@field cursor_jumping boolean
 
 ---@type table<number, fa.viewpoint.ViewpointState>
 local viewpoint_storage = StorageManager.declare_storage_module("viewpoint", {
    cursor_pos = { x = 0, y = 0 },
+   cursor_size = 0,
+   cursor_enabled = false,
+   cursor_hidden = false,
+   cursor_bookmark = { x = 0, y = 0 },
+   cursor_ent_highlight_box = nil,
+   cursor_tile_highlight_box = nil,
 })
 
 ---@class fa.Viewpoint
@@ -39,6 +53,7 @@ local viewpoint_storage = StorageManager.declare_storage_module("viewpoint", {
 local Viewpoint = {}
 local Viewpoint_meta = { __index = Viewpoint }
 
+---@return fa.Point
 function Viewpoint:get_cursor_pos()
    local pos = viewpoint_storage[self.pindex].cursor_pos
    return { x = pos.x, y = pos.y }
@@ -47,6 +62,87 @@ end
 ---@param point fa.Point
 function Viewpoint:set_cursor_pos(point)
    viewpoint_storage[self.pindex].cursor_pos = { x = point.x, y = point.y }
+end
+
+---@return number
+function Viewpoint:get_cursor_size()
+   return viewpoint_storage[self.pindex].cursor_size
+end
+
+---@param size number
+function Viewpoint:set_cursor_size(size)
+   viewpoint_storage[self.pindex].cursor_size = size
+end
+
+---@return boolean
+function Viewpoint:get_cursor_enabled()
+   return viewpoint_storage[self.pindex].cursor_enabled
+end
+
+---@param enabled boolean
+function Viewpoint:set_cursor_enabled(enabled)
+   viewpoint_storage[self.pindex].cursor_enabled = enabled
+end
+
+---@return boolean
+function Viewpoint:get_cursor_hidden()
+   return viewpoint_storage[self.pindex].cursor_hidden
+end
+
+---@param hidden boolean
+function Viewpoint:set_cursor_hidden(hidden)
+   viewpoint_storage[self.pindex].cursor_hidden = hidden
+end
+
+---@return fa.Point
+function Viewpoint:get_cursor_bookmark()
+   local point = viewpoint_storage[self.pindex].cursor_bookmark
+   return { x = point.x, y = point.y }
+end
+
+---@param point fa.Point
+function Viewpoint:set_cursor_bookmark(point)
+   viewpoint_storage[self.pindex].cursor_bookmark = { x = point.x, y = point.y }
+end
+
+---@return LuaEntity?
+function Viewpoint:get_cursor_ent_highlight_box()
+   return viewpoint_storage[self.pindex].cursor_ent_highlight_box
+end
+
+---@param ent_highlight_box LuaEntity?
+function Viewpoint:set_cursor_ent_highlight_box(ent_highlight_box)
+   viewpoint_storage[self.pindex].cursor_ent_highlight_box = ent_highlight_box
+end
+
+---@return  LuaRenderObject?
+function Viewpoint:get_cursor_tile_highlight_box()
+   return viewpoint_storage[self.pindex].cursor_tile_highlight_box
+end
+
+---@param tile_highlight_box  LuaRenderObject?
+function Viewpoint:set_cursor_tile_highlight_box(tile_highlight_box)
+   viewpoint_storage[self.pindex].cursor_tile_highlight_box = tile_highlight_box
+end
+
+---@return number
+function Viewpoint:get_cursor_rotation_offset()
+   return viewpoint_storage[self.pindex].cursor_rotation_offset
+end
+
+---@param rotation_offset  number
+function Viewpoint:set_cursor_rotation_offset(rotation_offset)
+   viewpoint_storage[self.pindex].cursor_rotation_offset = rotation_offset
+end
+
+---@return boolean
+function Viewpoint:get_cursor_jumping()
+   return viewpoint_storage[self.pindex].cursor_jumping
+end
+
+---@param jumping boolean
+function Viewpoint:set_cursor_jumping(jumping)
+   viewpoint_storage[self.pindex].cursor_jumping = jumping
 end
 
 local viewpoint_cache = {}

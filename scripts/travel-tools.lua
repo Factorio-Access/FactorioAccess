@@ -4,6 +4,7 @@ local fa_graphics = require("scripts.graphics")
 local fa_mouse = require("scripts.mouse")
 local fa_teleport = require("scripts.teleport")
 local UiRouter = require("scripts.ui.router")
+local Viewpoint = require("scripts.viewpoint")
 
 local mod = {}
 local TRAVEL_MENU_LENGTH = 8
@@ -43,6 +44,7 @@ function mod.read_fast_travel_slot(pindex)
    if #players[pindex].travel == 0 then
       printout("Move towards the right and select Create to get started.", pindex)
    else
+      local vp = Viewpoint.get_viewpoint(pindex)
       local entry = players[pindex].travel[players[pindex].travel.index.y]
       printout(
          entry.name
@@ -53,13 +55,14 @@ function mod.read_fast_travel_slot(pindex)
             .. ", cursor moved.",
          pindex
       )
-      players[pindex].cursor_pos = fa_utils.center_of_tile(entry.position)
+      vp:set_cursor_pos(fa_utils.center_of_tile(entry.position))
       fa_graphics.draw_cursor_highlight(pindex, nil, "train-visualization")
    end
 end
 
 function mod.fast_travel_menu_click(pindex)
    local p = game.get_player(pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
    if players[pindex].travel.input_box then players[pindex].travel.input_box.destroy() end
    if #storage.players[pindex].travel == 0 and players[pindex].travel.index.x < TRAVEL_MENU_LENGTH then
       printout("Move towards the right and select Create New to get started.", pindex)
@@ -79,12 +82,12 @@ function mod.fast_travel_menu_click(pindex)
          false,
          false
       )
-      if success and players[pindex].cursor then
-         players[pindex].cursor_pos =
-            table.deepcopy(storage.players[pindex].travel[players[pindex].travel.index.y].position)
+      if success and vp:get_cursor_enabled() then
+         vp:set_cursor_pos(table.deepcopy(storage.players[pindex].travel[players[pindex].travel.index.y].position))
       else
-         players[pindex].cursor_pos =
+         vp:set_cursor_pos(
             fa_utils.offset_position_legacy(players[pindex].position, players[pindex].player_direction, 1)
+         )
       end
       fa_graphics.sync_build_cursor_graphics(pindex)
       game.get_player(pindex).opened = nil
@@ -144,7 +147,8 @@ function mod.fast_travel_menu_click(pindex)
             .. math.floor(players[pindex].position.y),
          pindex
       )
-      players[pindex].cursor_pos = players[pindex].position
+      local position = players[pindex].position
+      vp:set_cursor_pos({ x = position.x, y = position.y })
       fa_graphics.draw_cursor_highlight(pindex)
    elseif players[pindex].travel.index.x == 6 then --Broadcast
       --Prevent duplicating by checking if this point was last broadcasted

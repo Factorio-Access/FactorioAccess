@@ -9,6 +9,7 @@ local fa_belts = require("scripts.transport-belts")
 local fa_mining_tools = require("scripts.player-mining-tools")
 local fa_teleport = require("scripts.teleport")
 local UiRouter = require("scripts.ui.router")
+local Viewpoint = require("scripts.viewpoint")
 
 local mod = {}
 
@@ -20,6 +21,10 @@ local mod = {}
 function mod.build_item_in_hand(pindex, free_place_straight_rail)
    local stack = game.get_player(pindex).cursor_stack
    local p = game.get_player(pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local pos = vp:get_cursor_pos()
+   local cursor_enabled = vp:get_cursor_enabled()
+   local cursor_size = vp:get_cursor_size()
 
    --Valid stack check
    if not (stack and stack.valid and stack.valid_for_read) then
@@ -43,7 +48,6 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
    elseif stack.name == "rail" then
       if not (free_place_straight_rail == true) then
          --Append rails unless otherwise stated
-         local pos = players[pindex].cursor_pos
          fa_rail_builder.append_rail(pos, pindex)
          return
       end
@@ -58,7 +62,7 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
       local position = nil
       local placing_underground_belt = stack.prototype.place_result.type == "underground-belt"
 
-      if not players[pindex].cursor then
+      if not cursor_enabled then
          --Not in cursor mode
          local old_pos = game.get_player(pindex).position
          if
@@ -74,8 +78,7 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
             --Apply offsets according to building direction and player direction
             local width = stack.prototype.place_result.tile_width
             local height = stack.prototype.place_result.tile_height
-            local left_top =
-               { x = math.floor(players[pindex].cursor_pos.x), y = math.floor(players[pindex].cursor_pos.y) }
+            local left_top = { x = math.floor(pos.x), y = math.floor(pos.y) }
             local right_bottom = { x = left_top.x + width, y = left_top.y + height }
             local dir = players[pindex].building_direction
             turn_to_cursor_direction_cardinal(pindex)
@@ -101,7 +104,7 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
             position = { x = left_top.x + math.floor(width / 2), y = left_top.y + math.floor(height / 2) }
 
             --In build lock mode and outside cursor mode, build from behind the player
-            if players[pindex].build_lock and not players[pindex].cursor and stack.name ~= "rail" then
+            if players[pindex].build_lock and not cursor_enabled and stack.name ~= "rail" then
                local base_offset = -2
                local size_offset = 0
                if p_dir == dirs.north or p_dir == dirs.south then
@@ -117,7 +120,7 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
          --Cursor mode offset: to the top left corner, according to building direction
          local width = stack.prototype.place_result.tile_width
          local height = stack.prototype.place_result.tile_height
-         local left_top = { x = math.floor(players[pindex].cursor_pos.x), y = math.floor(players[pindex].cursor_pos.y) }
+         local left_top = { x = math.floor(pos.x), y = math.floor(pos.y) }
          local right_bottom = { x = left_top.x + width, y = left_top.y + height }
          local dir = players[pindex].building_direction
          turn_to_cursor_direction_cardinal(pindex)
@@ -290,11 +293,11 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
    elseif stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result ~= nil then
       --Tile placement
       local p = game.get_player(pindex)
-      local t_size = players[pindex].cursor_size * 2 + 1
-      local pos = players[pindex].cursor_pos --Center on the cursor in default
-      if players[pindex].cursor and players[pindex].preferences.tiles_placed_from_northwest_corner then
-         pos.x = pos.x - players[pindex].cursor_size
-         pos.y = pos.y - players[pindex].cursor_size
+      local t_size = cursor_size * 2 + 1
+      if cursor_enabled and players[pindex].preferences.tiles_placed_from_northwest_corner then
+         pos.x = pos.x - cursor_size
+         pos.y = pos.y - cursor_size
+         vp:set_cursor_pos(pos)
       end
       if p.can_build_from_cursor({ position = pos, terrain_building_size = t_size }) then
          p.build_from_cursor({ position = pos, terrain_building_size = t_size })
@@ -372,6 +375,7 @@ function mod.rotate_building_info_read(event, forward)
       local ent = p.selected
       local stack = game.get_player(pindex).cursor_stack
       local build_dir = players[pindex].building_direction
+      local vp = Viewpoint.get_viewpoint(pindex)
       if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result ~= nil then
          local placed = stack.prototype.place_result
          if
@@ -394,7 +398,7 @@ function mod.rotate_building_info_read(event, forward)
                --The actual rotation is by 45 degrees only.
                --Bug:This misaligns the preview. Clearing the cursor does not work. We need to track rotation offsets to fix it.
                --It looks like 4 rotations fully invert it and 8 rotations fix it.
-               local rot_offset = players[pindex].cursor_rotation_offset
+               local rot_offset = vp:get_cursor_rotation_offset()
                if rot_offset == nil then
                   rot_offset = mult
                else
@@ -405,7 +409,7 @@ function mod.rotate_building_info_read(event, forward)
                      rot_offset = rot_offset + 8
                   end
                end
-               players[pindex].cursor_rotation_offset = rot_offset
+               vp:set_cursor_rotation_offset(rot_offset)
                if rot_offset ~= 0 then build_dir = (build_dir - dirs.northeast * mult) % (2 * dirs.south) end
 
                --Printout warning
@@ -493,6 +497,7 @@ function mod.nudge_key(direction, event)
    local p = game.get_player(pindex)
    if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
    local ent = p.selected
+   local vp = Viewpoint.get_viewpoint(pindex)
    if ent and ent.valid then
       if ent.force == game.get_player(pindex).force then
          local old_pos = ent.position
@@ -551,8 +556,8 @@ function mod.nudge_key(direction, event)
          else
             --Successfully teleported and so nudged
             printout({ "fa.nudged-one-direction", { "fa.direction", direction } }, pindex)
-            if players[pindex].cursor then
-               players[pindex].cursor_pos = fa_utils.offset_position_legacy(players[pindex].cursor_pos, direction, 1)
+            if vp:get_cursor_enabled() then
+               vp:set_cursor_pos(fa_utils.offset_position_legacy(vp:get_cursor_pos(), direction, 1))
                fa_graphics.draw_cursor_highlight(pindex, ent, "train-visualization")
                --fa_graphics.sync_build_cursor_graphics(pindex)
             end
@@ -633,7 +638,9 @@ function mod.build_preview_checks_info(stack, pindex)
    if stack == nil or not stack.valid_for_read or not stack.valid then return "invalid stack" end
    local p = game.get_player(pindex)
    local surf = game.get_player(pindex).surface
-   local pos = table.deepcopy(players[pindex].cursor_pos)
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local pos = vp:get_cursor_pos()
+   local cursor_enabled = vp:get_cursor_enabled()
    local result = ""
    local build_dir = players[pindex].building_direction
    local ent_p = stack.prototype.place_result --it is an entity prototype!
@@ -1086,7 +1093,7 @@ function mod.build_preview_checks_info(stack, pindex)
    if ent_p.electric_energy_source_prototype ~= nil then
       local position = pos
       local build_dir = players[pindex].building_direction
-      if players[pindex].cursor then
+      if cursor_enabled then
          position.x = position.x + math.ceil(2 * ent_p.selection_box.right_bottom.x) / 2 - 0.5
          position.y = position.y + math.ceil(2 * ent_p.selection_box.right_bottom.y) / 2 - 0.5
       elseif players[pindex].player_direction == defines.direction.north then
@@ -1178,10 +1185,7 @@ function mod.build_preview_checks_info(stack, pindex)
       end
    end
 
-   if
-      players[pindex].cursor
-      and util.distance(players[pindex].cursor_pos, players[pindex].position) > p.reach_distance + 2
-   then
+   if cursor_enabled and util.distance(pos, players[pindex].position) > p.reach_distance + 2 then
       result = result .. ", cursor out of reach "
    end
    return result
