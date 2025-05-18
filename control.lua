@@ -897,6 +897,8 @@ end
 --Read the current co-ordinates of the cursor on the map or in a menu. For crafting recipe and technology menus, it reads the ingredients / requirements instead.
 --Todo: split this function by menu.
 function read_coords(pindex, start_phrase)
+   local vp = viewpoint.get_viewpoint(pindex)
+
    start_phrase = start_phrase or ""
    local result = start_phrase
    local ent = players[pindex].building.ent
@@ -1016,17 +1018,16 @@ function read_coords(pindex, start_phrase)
          elseif stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result ~= nil then
             --Paving preview size
             local preview_str = ", paving preview "
-            local player = players[pindex]
             preview_str = ", paving preview is "
-               .. (player.cursor_size * 2 + 1)
+               .. (vp:get_cursor_size() * 2 + 1)
                .. " by "
-               .. (player.cursor_size * 2 + 1)
+               .. (vp:get_cursor_size() * 2 + 1)
                .. " tiles, centered on this tile. "
             if cursor_enabled and players[pindex].preferences.tiles_placed_from_northwest_corner then
                preview_str = ", paving preview extends "
-                  .. (player.cursor_size * 2 + 1)
+                  .. (vp:get_cursor_size() * 2 + 1)
                   .. " east and "
-                  .. (player.cursor_size * 2 + 1)
+                  .. (vp:get_cursor_size() * 2 + 1)
                   .. " south, starting from this tile. "
             end
             result = result .. preview_str
@@ -2378,7 +2379,7 @@ function move_characters(event)
          end
       end
 
-      if player.walk ~= WALKING.SMOOTH or player.cursor or router:is_ui_open() then
+      if player.walk ~= WALKING.SMOOTH or vp:get_cursor_enabled() or router:is_ui_open() then
          local walk = false
          while #player.move_queue > 0 do
             local next_move = player.move_queue[1]
@@ -5008,7 +5009,7 @@ script.on_event("click-hand", function(event)
          then
             aim_pos = fa_combat.smart_aim_grenades_and_capsules(pindex)
          elseif name == "defender-capsule" or name == "distractor-capsule" or name == "destroyer-capsule" then
-            aim_pos = {x=p.position.x, y=p.position.y}
+            aim_pos = { x = p.position.x, y = p.position.y }
          end
          --Throw it
          if aim_pos ~= nil then p.use_from_cursor(aim_pos) end
