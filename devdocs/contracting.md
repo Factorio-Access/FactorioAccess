@@ -21,7 +21,10 @@ Note that it is a year old, and only 75% or so accurate.
 # Completed Work
 
 - Onboarding and global variable audit (40 h)
-- fa-info prepartion for 2.0, aka `]` key (17 h).
+- fa-info preparation for 2.0, aka `]` key (17 h, 57h total).
+- Refactor cursor handling to a new viewpoint module to allow for space age and remote view enhancements (15h give or
+  take a bit, total 75 h).
+
 
 # Tasks
 
@@ -256,7 +259,8 @@ and annotate:
 Note the following:
 
 - We genuinely don't know the old order.  Bias UI/menu conditions toward the top but other than that it's ambiguous and
-  we don't care right now because getting this far will let us see if that ever matters, since overlapping/wrong-order conditions won't both trigger anyhmore.
+  we don't care right now because getting this far will let us see if that ever matters, since overlapping/wrong-order
+  conditions won't both trigger anyhmore.
 - Control.lua has a ton of code duplication.  For now that's out of scope, because most of it is being moved to modules
   and doing so was blocked by input being a problem.  For instance the menu_up/menu_left/etc. functions are very clearly
   *almost* but not quite duplicates that could be "fixed", except new UI framework wants to just plug in.
@@ -269,9 +273,11 @@ Note the following:
   scope; it's a self-resolving problem down the road.
 - linked_game_control and consuming are "union".  if any of the old prototypes has them the resulting prototype should
   get them.  It happens that such a transformation shouldn't change observable behaviors.
-- What to do about things like page up which don't exist on laptop keyboards is a tbd question for now.  Feel free to punt it.
+- What to do about things like page up which don't exist on laptop keyboards is a tbd question for now.  Feel free to
+  punt it.
 - Alternate key mappings get dropped.
-- Prototypes which are only modifiers, if any, can be dropped.  They weren't the greatest idea in the first place, but they're for scanner and there are other keys already.
+- Prototypes which are only modifiers, if any, can be dropped.  They weren't the greatest idea in the first place, but
+  they're for scanner and there are other keys already.
 - There are other prototype kinds in data.lua, just leave those alone.
 - To "execute" a lua file, `require('otherfile)` without assigning it to anything.
 - trains will come up.  If possible preserve their key handlers.  You can't test those.  If it's unclear where it should
