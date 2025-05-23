@@ -2681,7 +2681,8 @@ function turn_to_cursor_direction_cardinal(pindex)
    local p = game.get_player(pindex)
    if p.character == nil then return end
    local pex = players[pindex]
-   local dir = fa_utils.get_direction_precise(pex.cursor_pos, p.position)
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local dir = fa_utils.get_direction_precise(vp:get_cursor_pos(), p.position)
    if dir == dirs.northwest or dir == dirs.north or dir == dirs.northeast then
       p.character.direction = dirs.north
       pex.player_direction = dirs.north
@@ -2701,7 +2702,8 @@ function turn_to_cursor_direction_precise(pindex)
    local p = game.get_player(pindex)
    if p.character == nil then return end
    local pex = players[pindex]
-   local dir = fa_utils.get_direction_precise(pex.cursor_pos, p.position)
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local dir = fa_utils.get_direction_precise(vp:get_cursor_pos(), p.position)
    pex.player_direction = dir
    --game.print("set precise pindex_dir: " .. direction_lookup(pex.player_direction))--
    --game.print("set precise charct_dir: " .. direction_lookup(p.character.direction))--
@@ -4882,16 +4884,20 @@ script.on_event("click-hand", function(event)
       then
          --Start or conclude blueprint selection
          local pex = players[pindex]
+         local vp = Viewpoint.get_viewpoint(pindex)
          if pex.bp_selecting ~= true then
             pex.bp_selecting = true
-            pex.bp_select_point_1 = pex.cursor_pos
+            pex.bp_select_point_1 = vp:get_cursor_pos()
             printout(
-               "Started blueprint selection at " .. math.floor(pex.cursor_pos.x) .. "," .. math.floor(pex.cursor_pos.y),
+               "Started blueprint selection at "
+                  .. math.floor(pex.bp_select_point_1.x)
+                  .. ","
+                  .. math.floor(pex.bp_select_point_1.y),
                pindex
             )
          else
             pex.bp_selecting = false
-            pex.bp_select_point_2 = pex.cursor_pos
+            pex.bp_select_point_2 = vp:get_cursor_pos()
             local bp_data = nil
             if players[pindex].blueprint_reselecting == true then
                bp_data = fa_blueprints.get_bp_data_for_edit(stack)
@@ -4904,19 +4910,20 @@ script.on_event("click-hand", function(event)
       elseif stack.is_deconstruction_item then
          --Start or conclude deconstruction selection
          local pex = players[pindex]
+         local vp = Viewpoint.get_viewpoint(pindex)
          if pex.bp_selecting ~= true then
             pex.bp_selecting = true
-            pex.bp_select_point_1 = pex.cursor_pos
+            pex.bp_select_point_1 = vp:get_cursor_pos()
             printout(
                "Started deconstruction selection at "
-                  .. math.floor(pex.cursor_pos.x)
+                  .. math.floor(pex.bp_select_point_1.x)
                   .. ","
-                  .. math.floor(pex.cursor_pos.y),
+                  .. math.floor(pex.bp_select_point_1.y),
                pindex
             )
          else
             pex.bp_selecting = false
-            pex.bp_select_point_2 = pex.cursor_pos
+            pex.bp_select_point_2 = vp:get_cursor_pos()
             --Mark area for deconstruction
             local left_top, right_bottom =
                fa_utils.get_top_left_and_bottom_right(pex.bp_select_point_1, pex.bp_select_point_2)
@@ -4936,16 +4943,20 @@ script.on_event("click-hand", function(event)
       elseif stack.is_upgrade_item then
          --Start or conclude upgrade selection
          local pex = players[pindex]
+         local vp = Viewpoint.get_viewpoint(pindex)
          if pex.bp_selecting ~= true then
             pex.bp_selecting = true
-            pex.bp_select_point_1 = pex.cursor_pos
+            pex.bp_select_point_1 = vp:get_cursor_pos()
             printout(
-               "Started upgrading selection at " .. math.floor(pex.cursor_pos.x) .. "," .. math.floor(pex.cursor_pos.y),
+               "Started upgrading selection at "
+                  .. math.floor(pex.bp_select_point_1.x)
+                  .. ","
+                  .. math.floor(pex.bp_select_point_1.y),
                pindex
             )
          else
             pex.bp_selecting = false
-            pex.bp_select_point_2 = pex.cursor_pos
+            pex.bp_select_point_2 = vp:get_cursor_pos()
             --Mark area for upgrading
             local left_top, right_bottom =
                fa_utils.get_top_left_and_bottom_right(pex.bp_select_point_1, pex.bp_select_point_2)
@@ -4965,16 +4976,20 @@ script.on_event("click-hand", function(event)
       elseif stack.name == "copy-paste-tool" then
          --Start or conclude blueprint selection
          local pex = players[pindex]
+         local vp = Viewpoint.get_viewpoint(pindex)
          if pex.bp_selecting ~= true then
             pex.bp_selecting = true
-            pex.bp_select_point_1 = pex.cursor_pos
+            pex.bp_select_point_1 = vp:get_cursor_pos()
             printout(
-               "Started copy tool selection at " .. math.floor(pex.cursor_pos.x) .. "," .. math.floor(pex.cursor_pos.y),
+               "Started copy tool selection at "
+                  .. math.floor(pex.bp_select_point_1.x)
+                  .. ","
+                  .. math.floor(pex.bp_select_point_1.y),
                pindex
             )
          else
             pex.bp_selecting = false
-            pex.bp_select_point_2 = pex.cursor_pos
+            pex.bp_select_point_2 = vp:get_cursor_pos()
             fa_blueprints.copy_selected_area_to_clipboard(pindex, pex.bp_select_point_1, pex.bp_select_point_2)
             players[pindex].blueprint_reselecting = false
          end
@@ -5078,19 +5093,20 @@ script.on_event("click-hand-right", function(event)
       elseif stack.is_deconstruction_item then
          --Cancel deconstruction
          local pex = players[pindex]
+         local vp = Viewpoint.get_viewpoint(pindex)
          if pex.bp_selecting ~= true then
             pex.bp_selecting = true
-            pex.bp_select_point_1 = pex.cursor_pos
+            pex.bp_select_point_1 = vp:get_cursor_pos()
             printout(
                "Started deconstruction selection at "
-                  .. math.floor(pex.cursor_pos.x)
+                  .. math.floor(pex.bp_select_point_1.x)
                   .. ","
-                  .. math.floor(pex.cursor_pos.y),
+                  .. math.floor(pex.bp_select_point_1.y),
                pindex
             )
          else
             pex.bp_selecting = false
-            pex.bp_select_point_2 = pex.cursor_pos
+            pex.bp_select_point_2 = vp:get_cursor_pos()
             --Cancel area for deconstruction
             local left_top, right_bottom =
                fa_utils.get_top_left_and_bottom_right(pex.bp_select_point_1, pex.bp_select_point_2)
@@ -5104,16 +5120,20 @@ script.on_event("click-hand-right", function(event)
          end
       elseif stack.is_upgrade_item then
          local pex = players[pindex]
+         local vp = Viewpoint.get_viewpoint(pindex)
          if pex.bp_selecting ~= true then
             pex.bp_selecting = true
-            pex.bp_select_point_1 = pex.cursor_pos
+            pex.bp_select_point_1 = vp:get_cursor_pos()
             printout(
-               "Started upgrading selection at " .. math.floor(pex.cursor_pos.x) .. "," .. math.floor(pex.cursor_pos.y),
+               "Started upgrading selection at "
+                  .. math.floor(pex.bp_select_point_1.x)
+                  .. ","
+                  .. math.floor(pex.bp_select_point_1.y),
                pindex
             )
          else
             pex.bp_selecting = false
-            pex.bp_select_point_2 = pex.cursor_pos
+            pex.bp_select_point_2 = vp:get_cursor_pos()
             --Cancel area for upgrading
             local left_top, right_bottom =
                fa_utils.get_top_left_and_bottom_right(pex.bp_select_point_1, pex.bp_select_point_2)
