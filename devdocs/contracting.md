@@ -25,7 +25,6 @@ Note that it is a year old, and only 75% or so accurate.
 - Refactor cursor handling to a new viewpoint module to allow for space age and remote view enhancements (15h give or
   take a bit, total 75 h).
 
-
 # Tasks
 
 ## Input Cleanup
@@ -191,3 +190,64 @@ Concretely I recommend doing it like this.  There's other ways but this is what 
 - Paste that other file back into control.lua at the bottom.
 - Deal with that set.
 - Repeat until done.
+
+## Heat Pipes
+
+We need a module for heat pipes like the module for fluids.  The differences are that heat pipes don't have fluidboxes
+or underground connections.  Like this:
+
+- Refactor the shape logic in fa-info and fluids.lua to be abstract enough to give you the shape of a pipe when it's not
+  a real fluid pipe.
+- Write a function which can find all heat connections on an entity.
+- Special case heat pipe itself in this to always have one connection.
+- When on an entity over a heat connection probe one tile in all directions to find other entities, and check if you landed on one of their heat connections.
+  - It looks like floats would be an issue here but all floats for heat connections are 0.5, e.g. direct equality tests actually work out.
+  - Heat pipes aren't an exception, save that their heat connection is sort of faked out.
+- If it is a heat pipe, grab all other adjacent heat pipes and build the shape, then announce what it connects to that's
+  not a heat pipe, e.g. "heat exchanger at south".  Fluid code already does this, so you might be able to make it
+  somewhat generic again.
+
+In 2.0 base your entities for heat are nuclear reactors and heat exchangers.  Space age adds a bunch more.  To determine
+if an entity "participates" in heat, it is sort of enough to just find out if it has a heat connection.  The only
+exception to that is aquilo which we will handle later because it's not something that fits in this module (indeed it
+may already work).  Entities which participate in heat need to have their temperature read.  Code for this already
+exists in fa-info but it may not extend to Space Age entities due to special casing off prototype types.
+
+## Aquilo iceberg scanner backend
+
+there are a lot of things to do with scanner that we can work on but probably the easiest is aquilo icebergs.  There
+isn't much in this document because scanner is fully documented in devdocs/scanner.md.  In practice such a backend is
+just an inversion of the water one, e.g. a different tile set.  Don't be fooled by the resource scanner using the
+spatial hashes, which is sort of legacy; that can go in favor of tile-clusterer as well, but there's no pressing need to
+rewrite so we haven't.
+
+## Test Larger Cursors on Gleba
+
+This is an easy one maybe.  Make a large cursor and move it over gleba and see how it crashes horribly.  Hopefully it
+doesn't.  If it does we will discuss what work needs to be done.
+
+## Script to do Releases
+
+This needs some scoping but since we have the spare slack it'd be a good idea. What we know wrt the flow:
+
+- It has to run locally because of Factorio creds.  So sadly no CI builds.
+- Package this mod with fmtk.
+- We probably just want to throw our dependency mods in a github repo or something because you copy those zips in.
+- Figure out what to do about the launcher. Ideally we can grab the latest release from GitHub automatically.
+- Making a GH release can be automated.
+
+Ideally automate with Python since we already have that dependency.
+
+We can talk about needed credentials.  You shouldn't, because you can test against your own repo for the GH side of this
+and the fmtk uploading is one line.
+
+The one weird exception to the dependency mods is that Kruise Kontrol is now maintained by us as Kruise Kontrol Remote.
+That should be cloned somewhere and built.  We could put it as a submodule of the main repository no problem, and in fact that might be the best.
+
+## Spidertrons
+
+This is blocked on UI framework work which is in turn blocked on input refactor.
+
+Spidertrons are broken even in 1.1.  They need to be fixed.  We don't know what this means.  Start by ignoring the new
+spidertron RTS tool in 2.0, and just get the old menu working as much as possible. The RTS tool has interesting
+questions around it and someone on the core team will probably have to answer them first.
