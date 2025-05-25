@@ -482,13 +482,10 @@ local function ent_info_pipe_shape(ctx)
          if c.target then conn_count = conn_count + 1 end
       end
 
-      -- We must be careful.  Pipe shapes do not account for other kinds of
-      -- connection, so we must compare with the expected count as well.
-      -- Otherwise we will say that a pipe is both connected and not connected
-      -- at the same time.
+      -- We must be careful.  Pipe shapes do not account for other kinds of connection, so we must compare with the
+      -- expected count as well. Otherwise we will say that a pipe is both connected and not connected at the same time.
 
-      -- This is just a boring if table which appends fragments.  no special
-      -- logic here.
+      -- This is just a boring if table which appends fragments.  no special logic here.
       if s == Fluids.PIPE_SHAPE.END and conn_count == 1 then
          ctx.message:fragment({ "fa.ent-info-pipe-end", FaUtils.direction_lookup(FaUtils.rotate_180(d)) })
       elseif s == Fluids.PIPE_SHAPE.ALONE and conn_count == 0 then

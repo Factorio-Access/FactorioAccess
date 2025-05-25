@@ -1,49 +1,38 @@
 --[[
 Get data about (but do not announce directly) the fluid states of an entity.
 
-As a brief overview: entities have fluidboxes.  Each fluidbox is a "tank" of one
-kind of fluid.  Boilers for example have one for water and one for steam.  Some
-fluidboxes are connected to the external world, usually via a direct pipe
+As a brief overview: entities have fluidboxes.  Each fluidbox is a "tank" of one kind of fluid.  Boilers for example
+have one for water and one for steam.  Some fluidboxes are connected to the external world, usually via a direct pipe
 connection but sometimes via underground connections instead.
 
-One special case is pipes.  These have fluidboxes but we treat them specially,
-because announcing 4 fluidboxes is entirely unhelpful.  For that we compute
-corner shapes and such and provide helpful descriptions.
+One special case is pipes.  These have fluidboxes but we treat them specially, because announcing 4 fluidboxes is
+entirely unhelpful.  For that we compute corner shapes and such and provide helpful descriptions.
 
-Old versions of the mod hardcoded much of this.  The trick to not hardcoding it
-is to know that one needs get_pipe_connections, and then relative directions to
-the *box* of the entity they belong to provide what is needed there.
-`get_simplified_connections` in this file handles the magic of converting an
-entity's fluidboxes into tile coordinates and other info that is useful for
-announcement and analysis on our side.
+Old versions of the mod hardcoded much of this.  The trick to not hardcoding it is to know that one needs
+get_pipe_connections, and then relative directions to the *box* of the entity they belong to provide what is needed
+there. `get_simplified_connections` in this file handles the magic of converting an entity's fluidboxes into tile
+coordinates and other info that is useful for announcement and analysis on our side.
 
-What's actually going on: `get_connections` returns the connected fluidboxes if
-any.  That is, it returns an empty table for e.g. a lonely pipe.
-`get_pipe_connections` instead figures out where connections are going, and
-returns all of them even if they are not connected right now (that is, it seems
-to have nothing to do with pipes).  This is however done per fluidbox, and each
-fluidbox is one fluid only, so to get the overview for the whole entity one must
-iterate.
+What's actually going on: `get_connections` returns the connected fluidboxes if any.  That is, it returns an empty table
+for e.g. a lonely pipe. `get_pipe_connections` instead figures out where connections are going, and returns all of them
+even if they are not connected right now (that is, it seems to have nothing to do with pipes).  This is however done per
+fluidbox, and each fluidbox is one fluid only, so to get the overview for the whole entity one must iterate.
 
-Now for limitations on fluid contents: for that, the API calls it filters and it
-works like splitter or belt filters--but for a whole fluidbox, including all
-connections (for example the two boiler water inputs are one fluidbox and one
-filter for that fluidbox).  Storage tanks are an example of an entity with many
-connections and one un-filtered fluidbox.
+Now for limitations on fluid contents: for that, the API calls it filters and it works like splitter or belt
+filters--but for a whole fluidbox, including all connections (for example the two boiler water inputs are one fluidbox
+and one filter for that fluidbox).  Storage tanks are an example of an entity with many connections and one un-filtered
+fluidbox.
 
-The fluidbox indexing operator itself allows indexing the fluids in a fluidbox.
-Most of the time it's up to 1.  It's unclear if or under what circumstances it
-can be more than 1, but it is probably possible for that to happen.  As of
-2024-11-04, it is unclear to us just when that can happen in the new fluid
-system.
+The fluidbox indexing operator itself allows indexing the fluids in a fluidbox. Most of the time it's up to 1.  It's
+unclear if or under what circumstances it can be more than 1, but it is probably possible for that to happen.  As of
+2024-11-04, it is unclear to us just when that can happen in the new fluid system.
 
-Note that the shape computation logic is reused by heat.  Heat isn't a fluid and
-has a number of "interesting" special cases, but the corner shapes are the same.
+Note that the shape computation logic is reused by heat.  Heat isn't a fluid and has a number of "interesting" special
+cases, but the corner shapes are the same.
 
-There is a concept of locked fluids.  The API doesn't do a good job of
-explaining this.  If a fluid is locked, this means that it is on something that
-produces or consumes that fluid.  This doesn't happen on pipes or storage tanks,
-but it does happen on crafting machines when recipes are set.
+There is a concept of locked fluids.  The API doesn't do a good job of explaining this.  If a fluid is locked, this
+means that it is on something that produces or consumes that fluid.  This doesn't happen on pipes or storage tanks, but
+it does happen on crafting machines when recipes are set.
 ]]
 local Consts = require("scripts.consts")
 local FaUtils = require("scripts.fa-utils")
@@ -52,10 +41,9 @@ local TH = require("scripts.table-helpers")
 local mod = {}
 
 --[[
-Definition of a connection point on an entity with computed directions and
-rounded to tiles.  Provides the computed information needed to build cursor
-announcements when the cursor is over an entity, and also returns the raw
-connections for code needing more.
+Definition of a connection point on an entity with computed directions and rounded to tiles.  Provides the computed
+information needed to build cursor announcements when the cursor is over an entity, and also returns the raw connections
+for code needing more.
 ]]
 ---@class fa.Fluids.ConnectionPoint
 ---@field position fa.Point rounded to the tile
@@ -69,16 +57,13 @@ connections for code needing more.
 ---@field raw PipeConnection
 
 --[[
-Given a fluidbox, determine if it must be a specific fluid, using the following
-rules:
+Given a fluidbox, determine if it must be a specific fluid, using the following rules:
 
 - If a crafting machine recipe is set and it is an input, it must be that input.
 - If it has a filter e.g. a pump, that filter.
-- If the fluidbox is in a segment and that segment contains one fluid only, it
-  must be that fluid.
+- If the fluidbox is in a segment and that segment contains one fluid only, it must be that fluid.
 
-Otherwise return nil.  Either there's no requirement or the user has managed to
-mix fluids.
+Otherwise return nil.  Either there's no requirement or the user has managed to mix fluids.
 ]]
 ---@param fluidbox LuaFluidBox
 ---@param index number
@@ -230,31 +215,24 @@ add_shape(false, true, true, true, mod.PIPE_SHAPE.T, defines.direction.north)
 add_shape(false, false, false, false, mod.PIPE_SHAPE.ALONE, defines.direction.north)
 
 --[[
-Given a pipe entity, determine to which pipes it is connected and pass back
-information on the shape.  This comes back as two values, a kind and a
-direction. Shape interpretations are as follows:
+Given a pipe entity, determine to which pipes it is connected and pass back information on the shape.  This comes back
+as two values, a kind and a direction. Shape interpretations are as follows:
 
-- straight: a line of 3 segments and this pipe is the middle. Direction is
-  either north or east, specifying if it is vertical or horizontal.
-- end: has one connection. Direction is the way the end "points" e.g. 180 from
-  the connection.
-- corner: an L formed of 3 pipe segments.  The direction is the corner of the
-  imaginary box which would be formed of 4 corners.  FOr example, northwest
-  means connecting south and east, because if you completed the box it'd be the
+- straight: a line of 3 segments and this pipe is the middle. Direction is either north or east, specifying if it is
+  vertical or horizontal.
+- end: has one connection. Direction is the way the end "points" e.g. 180 from the connection.
+- corner: an L formed of 3 pipe segments.  The direction is the corner of the imaginary box which would be formed of 4
+  corners.  For example, northwest means connecting south and east, because if you completed the box it'd be the
   northwest corner.
-- Cross: direction is returned as north.  Looks like a cross, which is invariant
-  under rotation.
+- Cross: direction is returned as north.  Looks like a cross, which is invariant under rotation.
 - alone: nothing connects, will just pass back north.
 - T: the direction is the top of the T, e.g. the missing one.
 
-This mismatches fa-info.  The trouble is that the above directions make sense
-for analysis and exposing them directly woiuld be the least verbose option, but
-that relies on blind people knowing what a T is, and figuring out what
-"northwest corner" means--we'd have to teach it.  We probably do at some point,
-but that's not now, so fa-info simplifies.
+This mismatches fa-info.  The trouble is that the above directions make sense for analysis and exposing them directly
+would be the least verbose option, but that relies on blind people knowing what a T is, and figuring out what "northwest
+corner" means--we'd have to teach it.  We probably do at some point, but that's not now, so fa-info simplifies.
 
-This function considers only pipe entities, and ignores undergrounds.
-Undergrounds need to be announced separately.
+This function considers only pipe entities, and ignores undergrounds. Undergrounds need to be announced separately.
 ]]
 ---@param ent LuaEntity
 ---@return { shape: fa.Fluids.PipeShape, direction: defines.direction }
