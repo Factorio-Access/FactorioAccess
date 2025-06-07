@@ -493,9 +493,7 @@ end
 --Does everything to handle the nudging feature, taking the keypress event and the nudge direction as the input. Nothing happens if an entity cannot be selected.
 function mod.nudge_key(direction, event)
    local pindex = event.player_index
-   local router = UiRouter.get_router(pindex)
    local p = game.get_player(pindex)
-   if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
    local ent = p.selected
    local vp = Viewpoint.get_viewpoint(pindex)
    if ent and ent.valid then
