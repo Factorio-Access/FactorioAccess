@@ -107,15 +107,7 @@ function mod._dispatch_event(event_id, event)
    if not event_handlers then return end
 
    for _, handler in ipairs(event_handlers) do
-      local success, err = xpcall(handler, debug.traceback, event)
-      if not success then
-         -- Log the error but continue with other handlers
-         if _G.Logger then
-            Logger.error("mod", "Error in event handler for event " .. tostring(event_id) .. ": " .. tostring(err))
-         else
-            print("mod error in event " .. tostring(event_id) .. ": " .. tostring(err))
-         end
-      end
+      handler(event)
    end
 end
 
@@ -127,17 +119,7 @@ function mod._dispatch_nth_tick(tick_interval, event)
    if not tick_handlers then return end
 
    for _, handler in ipairs(tick_handlers) do
-      local success, err = xpcall(handler, debug.traceback, event)
-      if not success then
-         if _G.Logger then
-            Logger.error(
-               "mod",
-               "Error in nth_tick handler for interval " .. tostring(tick_interval) .. ": " .. tostring(err)
-            )
-         else
-            print("mod error in nth_tick " .. tostring(tick_interval) .. ": " .. tostring(err))
-         end
-      end
+      handler(event)
    end
 end
 
@@ -145,42 +127,21 @@ end
 -- Register on_init handler
 script.on_init(function()
    for _, handler in ipairs(on_init_handlers) do
-      local success, err = xpcall(handler, debug.traceback)
-      if not success then
-         if _G.Logger then
-            Logger.error("EventManager", "Error in on_init handler: " .. tostring(err))
-         else
-            print("EventManager error in on_init: " .. tostring(err))
-         end
-      end
+      handler()
    end
 end)
 
 -- Register on_load handler
 script.on_load(function()
    for _, handler in ipairs(on_load_handlers) do
-      local success, err = xpcall(handler, debug.traceback)
-      if not success then
-         if _G.Logger then
-            Logger.error("EventManager", "Error in on_load handler: " .. tostring(err))
-         else
-            print("EventManager error in on_load: " .. tostring(err))
-         end
-      end
+      handler()
    end
 end)
 
 -- Register on_configuration_changed handler
 script.on_configuration_changed(function(data)
    for _, handler in ipairs(on_configuration_changed_handlers) do
-      local success, err = xpcall(handler, debug.traceback, data)
-      if not success then
-         if _G.Logger then
-            Logger.error("EventManager", "Error in on_configuration_changed handler: " .. tostring(err))
-         else
-            print("EventManager error in on_configuration_changed: " .. tostring(err))
-         end
-      end
+      handler(data)
    end
 end)
 
