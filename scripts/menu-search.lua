@@ -30,7 +30,6 @@ local function inventory_find_index_of_next_name_match(inv, index, str, pindex)
                repeat_i = i
             end
          end
-         --game.print(i .. " : " .. name .. " vs. " .. str,{volume_modifier=0})
       end
    end
    --End of inventory reached, circle back
@@ -49,7 +48,6 @@ local function inventory_find_index_of_next_name_match(inv, index, str, pindex)
                repeat_i = i
             end
          end
-         --game.print(i .. " : " .. name .. " vs. " .. str,{volume_modifier=0})
       end
    end
    --Check if any repeats found
@@ -77,7 +75,6 @@ local function inventory_find_index_of_last_name_match(inv, index, str, pindex)
                repeat_i = i
             end
          end
-         --game.print(i .. " : " .. name .. " vs. " .. str,{volume_modifier=0})
       end
    end
    --Start of inventory reached, circle back
@@ -96,7 +93,6 @@ local function inventory_find_index_of_last_name_match(inv, index, str, pindex)
                repeat_i = i
             end
          end
-         --game.print(i .. " : " .. name .. " vs. " .. str,{volume_modifier=0})
       end
    end
    --Check if any repeats found
@@ -120,13 +116,10 @@ local function crafting_find_index_of_next_name_match(str, pindex, last_i, last_
          if recipe and recipe.valid then
             local name = string.lower(localising.get(recipe, pindex))
             local result = string.find(name, str, 1, true)
-            --game.print(i .. "," .. j .. " : " .. name .. " vs. " .. str,{volume_modifier=0})
             if result ~= nil then
-               --game.print(" * " .. i .. "," .. j .. " : " .. name .. " vs. " .. str .. " * ",{volume_modifier=0})
                if name ~= players[pindex].menu_search_last_name then
                   players[pindex].menu_search_last_name = name
                   game.get_player(pindex).play_sound({ path = "Inventory-Move" }) --sound for finding the next
-                  --game.print(" ** " .. recipes[i][j].name .. " ** ")
                   return i, j
                else
                   repeat_i = i
@@ -145,13 +138,10 @@ local function crafting_find_index_of_next_name_match(str, pindex, last_i, last_
          if recipe and recipe.valid then
             local name = string.lower(localising.get(recipe, pindex))
             local result = string.find(name, str, 1, true)
-            --game.print(i .. "," .. j .. " : " .. name .. " vs. " .. str,{volume_modifier=0})
             if result ~= nil then
-               --game.print(" * " .. i .. "," .. j .. " : " .. name .. " vs. " .. str .. " * ",{volume_modifier=0})
                if name ~= players[pindex].menu_search_last_name then
                   players[pindex].menu_search_last_name = name
                   game.get_player(pindex).play_sound({ path = "Inventory-Move" }) --sound for finding the next
-                  --game.print(" ** " .. recipes[i][j].name .. " ** ")
                   return i, j
                else
                   repeat_i = i
@@ -181,13 +171,11 @@ local function prototypes_find_index_of_next_name_match(array, index, str, pinde
             if name ~= players[pindex].menu_search_last_name then
                players[pindex].menu_search_last_name = name
                game.get_player(pindex).play_sound({ path = "Inventory-Move" }) --sound for finding the next
-               --game.print("found: " .. i .. " : " .. name .. " vs. " .. str .. ", last: " .. players[pindex].menu_search_last_name,{volume_modifier=0})--
                return i
             else
                repeat_i = i
             end
          end
-         --game.print(i .. " : " .. name .. " vs. " .. str .. ", last: " .. players[pindex].menu_search_last_name,{volume_modifier=0})--
       end
    end
    --End of array reached, assume failed and will move on to next.
@@ -256,7 +244,6 @@ local function travel_find_index_of_next_name_match(index, str, pindex)
                repeat_i = i
             end
          end
-         --game.print(i .. " : " .. name .. " vs. " .. str, { volume_modifier = 0 })
       end
    end
    --End of inventory reached, circle back
@@ -275,7 +262,6 @@ local function travel_find_index_of_next_name_match(index, str, pindex)
                repeat_i = i
             end
          end
-         --game.print(i .. " : " .. name .. " vs. " .. str, { volume_modifier = 0 })
       end
    end
    --Check if any repeats found
@@ -406,7 +392,6 @@ function mod.fetch_next(pindex, str, start_phrase_in)
          players[pindex].signal_selector.group_index = starting_group_index
          players[pindex].signal_selector.signal_index = 0
       end
-      --game.print("tries: " .. tries,{volume_modifier=0})--
    elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       new_index = travel_find_index_of_next_name_match(search_index, str, pindex)
    elseif

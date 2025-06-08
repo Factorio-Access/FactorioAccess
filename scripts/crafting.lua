@@ -61,7 +61,6 @@ function mod.count_in_crafting_queue(recipe_name, pindex)
    end
    for i, item in ipairs(game.get_player(pindex).crafting_queue) do
       if item.recipe == recipe_name then count = count + item.count end
-      --game.print(item.recipe .. " vs " .. recipe_name)
    end
    return count
 end

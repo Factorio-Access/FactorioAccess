@@ -6,10 +6,7 @@ function mod.get(object, pindex)
    -- Everything, everything uses this function without checking the return
    -- values. Use really annoying strings to make it very clear there's a
    -- bug.
-   if pindex == nil then
-      game.print("localising: pindex is nil error")
-      return "NOT LOCALIZED!"
-   end
+   if pindex == nil then error("localising.get: pindex is nil") end
    if object == nil then return "LOCALIZED OBJECT IS NIL!" end
    if object.valid and string.sub(object.object_name, -9) ~= "Prototype" then object = object.prototype end
    local result = players[pindex].localisations

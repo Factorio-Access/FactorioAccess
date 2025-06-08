@@ -311,7 +311,6 @@ function mod.constant_combinator_signals_info(ent, pindex)
          end
       end
    end
-   --game.print(result)--
    return result
 end
 
@@ -780,10 +779,7 @@ function mod.play_selected_speaker_note(ent, mute)
       params.note_id = 1
       control.circuit_parameters = params
    end
-   if mute ~= true then
-      ent.play_note(ins_id, note_id)
-      --game.print(ins_id .. "," .. note_id, {volume_modifier=0})--**
-   end
+   if mute ~= true then ent.play_note(ins_id, note_id) end
 end
 
 --[[
@@ -1478,7 +1474,6 @@ local function build_signal_selector(pindex)
             if item.group.name == group then table.insert(players[pindex].signal_selector.signals[group], item) end
          end
       end
-      --game.print("Created group " .. group .. " with " .. #players[pindex].signal_selector.signals[group] .. " items ")
    end
 end
 

@@ -59,8 +59,7 @@ function mod.offset_position_cardinal(oldpos, direction, distance)
    elseif direction == defines.direction.west then
       return { x = oldpos.x - distance, y = oldpos.y }
    else
-      game.print("Error: Unsupported direction for offset request.")
-      return nil --We want incorrect uses to crash
+      error("Unsupported direction for offset request: " .. tostring(direction))
    end
 end
 

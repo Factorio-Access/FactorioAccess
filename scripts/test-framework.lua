@@ -380,7 +380,7 @@ function mod._finish_tests()
       passed = test_results.passed,
       failed = test_results.failed,
       duration = duration,
-      errors = test_results.errors
+      errors = test_results.errors,
    }
    helpers.write_file("test-results.json", game.table_to_json(results_data), false)
 

@@ -247,7 +247,6 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
          direction = players[pindex].building_direction,
          alt = false,
       }
-      --game.print("pos = " .. position.x .. " , " .. position.y,{volume_modifier=0})
       if building.position ~= nil and game.get_player(pindex).can_build_from_cursor(building) then
          --Build it
          game.get_player(pindex).build_from_cursor(building)
@@ -1204,11 +1203,9 @@ function mod.get_relevant_fluidbox_and_fluid_name(building, pos, dir_from_pos)
       })
       --Run checks to see if we have any fluidboxes that are relevant
       for i = 1, #building.fluidbox, 1 do
-         --game.print("box " .. i .. ": " .. building.fluidbox[i].name)
          for j, con in ipairs(building.fluidbox.get_pipe_connections(i)) do
             local target_pos = con.target_position
             local con_pos = con.position
-            --game.print("new connection at: " .. target_pos.x .. "," .. target_pos.y)
             rendering.draw_circle({
                color = { 1, 0, 0 },
                radius = 0.2,

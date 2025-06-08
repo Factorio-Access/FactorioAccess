@@ -1,21 +1,15 @@
-You are an LLM preparing the codebase for work by other LLMs such as your self--in particular Claude Opus.
+Ok, so what is left is the large event manager refactor, which you have misunderstood.  It is supposed to be like this:
 
-This is a mod for the videogame Factorio which enables blind players to play the game. Please be aware that there is a
-launcher process elsewhere that this mod communicates with over stdout, that you do not yet have access to.  That may
-come in the future.
+```
+-- in control.lua
+function handle_the_whatevber(event)
+end
 
-You are in WSL, but running a Windows binary.  To prepare for you, I have worked to create an LLM-optimized set of
-devtools at launch_factorio.py.
+EventManager.register("fa-w", handle_the_whatever)
+```
 
-What you need to do is prepare CLAUDE.md and any other documentation that an LLM might need.  Previous passes have
-worked to get all the info in one place, but now it is time to get it compiled into something useful.  This is NOT an
-easy task because there is little information on Factorio on the internet.  I suggest reviewing everything in llm-docs
-and all modules of the codebase.  After you have compiled everything we'll engage in a dialog so that I can make sure
-your understanding is correct.  I am one of the two primary contributors.  If you need to stop earlier than that to ask
-questions, please, feel fre.
+Not lifting the handlers to the other file at all.
 
-You really need to reason things out though.  This isn't as easy as many other coding things.  In particular there is
-yet no way for you to explore a live game environment.  That is coming soon, but it will require indirect exploration
-via tests as there is no way to get you console access to Factorio itself.
+I think this makes event-registry irrelevant, but in any case the changes to control.lua should be very minimal, and they currently are not.
 
-Anyway, carry on and take as much time as you need.  I'm here to help if you need it.
+Also, files are named `a-b`, not `a_b`, which you need to fix, and you should spend time using the linter to get LuaLS annotations where useful.

@@ -2045,8 +2045,6 @@ function turn_to_cursor_direction_cardinal(pindex)
       --p.character.direction = dir
       pex.player_direction = dir
    end
-   --game.print("set cardinal pindex_dir: " .. direction_lookup(pex.player_direction))--
-   --game.print("set cardinal charct_dir: " .. direction_lookup(p.character.direction))--
 end
 
 --Makes the character face the cursor, choosing the nearest of 8 directions. Can be overwriten by vanilla move keys.
@@ -2057,8 +2055,6 @@ function turn_to_cursor_direction_precise(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
    local dir = fa_utils.get_direction_precise(vp:get_cursor_pos(), p.position)
    pex.player_direction = dir
-   --game.print("set precise pindex_dir: " .. direction_lookup(pex.player_direction))--
-   --game.print("set precise charct_dir: " .. direction_lookup(p.character.direction))--
 end
 
 --Called when a player enters or exits a vehicle
@@ -2194,7 +2190,6 @@ function swap_weapon_forward(pindex, write_to_character)
    --Simple index increment (not needed)
    gun_index = gun_index + 1
    if gun_index > 3 then gun_index = 1 end
-   --game.print("start " .. gun_index)--
    assert(ammo_inv)
 
    --Increment again if the new index has no guns or no ammo
@@ -2219,13 +2214,9 @@ function swap_weapon_forward(pindex, write_to_character)
       tries = tries + 1
    end
 
-   if tries > 3 then
-      --game.print("error " .. gun_index)--
-      return -1
-   end
+   if tries > 3 then return -1 end
 
    if write_to_character then p.character.selected_gun_index = gun_index end
-   --game.print("end " .. gun_index)--
    return gun_index
 end
 
@@ -2475,7 +2466,6 @@ function do_multi_stack_transfer(ratio, pindex)
       end
    end
    printout(result, pindex)
-   --game.print(players[pindex].building.sector_name or "(nil)")--**
 end
 
 --[[Transfers multiple stacks of a specific item (or all items) to/from the player inventory from/to a building inventory.
@@ -2513,7 +2503,6 @@ function transfer_inventory(args)
          end
       end
    end
-   --game.print("run 1x: " .. args.name)--**
    return results, full
 end
 
@@ -3066,7 +3055,6 @@ script.on_event(defines.events.on_gui_opened, function(event)
    then
       --If closing another menu toggles the player GUI screen, we close this screen
       p.opened = nil
-      --game.print("Closed an extra controller GUI",{volume_modifier = 0})--**checks GUI shenanigans
    end
 end)
 
@@ -3239,10 +3227,7 @@ script.on_event(defines.events.on_entity_damaged, function(event)
          and armor_inv[1].grid.valid
       then
          local grid = armor_inv[1].grid
-         if grid.shield > 0 then
-            shield_left = grid.shield
-            --game.print(armor_inv[1].grid.shield,{volume_modifier=0})
-         end
+         if grid.shield > 0 then shield_left = grid.shield end
       end
       --Play shield and/or character damaged sound
       if shield_left ~= nil then ent.player.play_sound({ path = "player-damaged-shield", volume_modifier = 0.8 }) end
@@ -3483,8 +3468,6 @@ function check_and_play_bump_alert_sound(pindex, this_tick)
    --Return if was not going straight earlier (like was running diagonally, as confirmed by last positions)
    if not was_going_straight then return end
 
-   --game.print("checking bump",{volume_modifier=0})--
-
    --Check if latest movement has been straight
    local is_going_straight = false
    if face_dir == dirs.north or face_dir == dirs.south then
@@ -3540,7 +3523,6 @@ function check_and_play_bump_alert_sound(pindex, this_tick)
       else
          p.play_sound({ path = "player-bump-trip" })
       end
-      --game.print("bump: ent:" .. ent.name,{volume_modifier=0})--
       return
    end
 
@@ -3549,7 +3531,6 @@ function check_and_play_bump_alert_sound(pindex, this_tick)
    bump_was_cliff = (#ents > 0)
    if bump_was_cliff then
       p.play_sound({ path = "player-bump-slide" })
-      --game.print("bump: cliff",{volume_modifier=0})--
       return
    end
 
@@ -3561,13 +3542,11 @@ function check_and_play_bump_alert_sound(pindex, this_tick)
 
    if bump_was_tile then
       p.play_sound({ path = "player-bump-slide" })
-      --game.print("bump: tile:" .. tile.name,{volume_modifier=0})--
       return
    end
 
    --The bump was something else, probably missed it...
    --p.play_sound{path = "player-bump-slide"}
-   --game.print("bump: unknown, at " .. p.position.x .. "," .. p.position.y ,{volume_modifier=0})--
    return
 end
 
@@ -5792,7 +5771,6 @@ local function kb_switch_menu_or_gun(event)
    else
       local ammo_stack = ammo_inv[gun_index]
       local gun_stack = guns_inv[gun_index]
-      --game.print("print " .. gun_index)--
       result = gun_stack.name .. " with " .. ammo_stack.count .. " " .. ammo_stack.name .. "s "
    end
 
@@ -5928,7 +5906,6 @@ local function kb_reverse_switch_menu_or_gun(event)
    else
       local ammo_stack = ammo_inv[gun_index]
       local gun_stack = guns_inv[gun_index]
-      --game.print("print " .. gun_index)--
       result = gun_stack.name .. " with " .. ammo_stack.count .. " " .. ammo_stack.name .. "s "
    end
 

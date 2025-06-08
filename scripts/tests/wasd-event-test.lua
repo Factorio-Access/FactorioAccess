@@ -36,10 +36,10 @@ describe("WASD Event Tests", function()
             tick = game.tick,
          }
          EventManager.mock_event("fa-i", enable_cursor_event)
-         
+
          -- Verify cursor is enabled
          ctx:assert(vp:get_cursor_enabled(), "Cursor should be enabled after pressing I")
-         
+
          -- Record initial cursor position
          initial_pos = vp:get_cursor_pos()
       end)
@@ -52,7 +52,7 @@ describe("WASD Event Tests", function()
             tick = game.tick,
          }
          EventManager.mock_event("fa-d", event)
-         
+
          -- Check cursor moved east
          local new_pos = vp:get_cursor_pos()
          ctx:assert(new_pos.x > initial_pos.x, "Cursor should have moved east")
@@ -60,14 +60,14 @@ describe("WASD Event Tests", function()
       end)
 
       ctx:at_tick(3, function()
-         -- Mock pressing 'W' (move north) 
+         -- Mock pressing 'W' (move north)
          local event = {
             name = "fa-w",
             player_index = pindex,
             tick = game.tick,
          }
          EventManager.mock_event("fa-w", event)
-         
+
          -- Check cursor moved north (negative Y in Factorio)
          local new_pos = vp:get_cursor_pos()
          ctx:assert(new_pos.y < initial_pos.y, "Cursor should have moved north")
@@ -76,12 +76,12 @@ describe("WASD Event Tests", function()
       ctx:at_tick(4, function()
          -- Mock pressing 'A' (move west)
          local event = {
-            name = "fa-a", 
+            name = "fa-a",
             player_index = pindex,
             tick = game.tick,
          }
          EventManager.mock_event("fa-a", event)
-         
+
          -- Check cursor moved west (back to original X)
          local new_pos = vp:get_cursor_pos()
          ctx:assert(new_pos.x == initial_pos.x, "Cursor should be back at original X position")
@@ -95,7 +95,7 @@ describe("WASD Event Tests", function()
             tick = game.tick,
          }
          EventManager.mock_event("fa-s", event)
-         
+
          -- Check cursor moved south (back to original position)
          local new_pos = vp:get_cursor_pos()
          ctx:assert(new_pos.x == initial_pos.x, "Cursor X should match initial")

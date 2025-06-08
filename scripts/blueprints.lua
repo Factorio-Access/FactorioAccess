@@ -863,7 +863,6 @@ function mod.add_blueprint_to_book(pindex, book_stack, bp_stack)
    if item_count == 0 then items = {} end
    local new_item = {}
    local new_slot_id = get_first_empty_book_index(book_data)
-   --game.print("item count: " .. item_count .. ", first empty index: " .. new_slot_id)
    new_item["index"] = new_slot_id
    new_item["blueprint"] = bp_data.blueprint
    items[item_count + 1] = new_item

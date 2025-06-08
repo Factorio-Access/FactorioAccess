@@ -157,7 +157,7 @@ local ALIGNMENT_SOUNDS = {
 local function play_ruler_alignment(pindex, alignment)
    local s = ALIGNMENT_SOUNDS[alignment]
    local p = game.get_player(pindex)
-   if not p then game.print("No player with pindex " .. tonumber(pindex)) end
+   if not p then error("No player with pindex " .. tonumber(pindex)) end
 
    -- Nothing to do, not aligned.
    if not s then return end

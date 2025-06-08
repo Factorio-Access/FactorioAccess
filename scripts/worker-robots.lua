@@ -1188,7 +1188,6 @@ function mod.logistic_network_chests_info(port)
       .. " active provider chests, "
       .. requester_chest_count
       .. " requester chests or buffer chests, "
-   --game.print(result,{volume_modifier=0})--
    return result
 end
 
