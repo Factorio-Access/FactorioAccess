@@ -1,3 +1,4 @@
+IMPORTANT: if you find that docs are not matching reality it may be the docs that are incorrect.  If you cannot determine which, ask!  If the docs are wrong, fix them!
 # CLAUDE.md - FactorioAccess Development Guide for LLMs
 
 This document is designed to help LLMs (particularly Claude) understand and effectively work on the FactorioAccess mod codebase. FactorioAccess makes the complex visual game Factorio fully playable by blind and visually impaired players through audio cues and keyboard controls.
