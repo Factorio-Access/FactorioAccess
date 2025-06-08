@@ -1,58 +1,80 @@
---Here: Movement of the mouse pointer on screen
+--Here: Movement of the mouse pointer on screen. This is needed for graphics sync and gun aiming support.
 --Note: Does not include the mod cursor functions!
 
+-- The final pixel position depends on player screen resolution, player zoom level, this multiplier.
+local base_pixels_per_tile = 32
+
 local fa_utils = require("scripts.fa-utils")
-local dirs = defines.direction
 local Viewpoint = require("scripts.viewpoint")
 local mod = {}
 
---Moves the mouse pointer to the correct pixel on the screen for an input map position. If the position is off screen, then the pointer is centered on the player character instead. Does not run in vanilla mode or if the mouse is released from synchronizing.
-function mod.move_mouse_pointer(position, pindex)
-   local player = players[pindex]
-   local pos = position
-   local screen = game.players[pindex].display_resolution
-   local screen_center = fa_utils.mult_position({ x = screen.width, y = screen.height }, 0.5)
-   local pixels = screen_center
-   local offset = { x = 0, y = 0 }
-   if players[pindex].vanilla_mode or game.get_player(pindex).game_view_settings.update_entity_selection == true then
-      return
-   elseif player.remote_view == true then
-      --If in remote view, take the cursor position as the center point
-      offset = fa_utils.mult_position(fa_utils.sub_position(pos, player.cursor_pos), 32 * player.zoom)
-   elseif mod.cursor_position_is_on_screen_with_player_centered(pindex) == false then
-      --If the cursor is distant, center the pointer on the player
-      pos = players[pindex].position
-      offset = fa_utils.mult_position(fa_utils.sub_position(pos, player.position), 32 * player.zoom)
-   else
-      offset = fa_utils.mult_position(fa_utils.sub_position(pos, player.position), 32 * player.zoom)
-   end
-   pixels = fa_utils.add_position(pixels, offset)
-   mod.move_pointer_to_pixels(pixels.x, pixels.y, pindex)
-   --game.get_player(pindex).print("moved to " ..  math.floor(pixels.x) .. " , " ..  math.floor(pixels.y), {volume_modifier=0})--
+---helper function with tripple return
+---@param position MapPosition
+---@param pindex int
+---@return {x:float,y:float} pixel_pos The sceen pixel coordinates of the map position
+---@return boolean on_sceen If that position is on sceen
+---@return {x:float,y:float} screen_center The x and y pixels of the center of the screen
+local function get_pixel_pos_onscreen_center(position, pindex)
+   local player = game.get_player(pindex)
+   local screen_size = player.display_resolution
+   game.print(serpent.line(screen_size))
+   local screen_center = fa_utils.mult_position({ x = screen_size.width, y = screen_size.height }, 0.5)
+   game.print(serpent.line(screen_center))
+   local tile_offest = fa_utils.sub_position(position, player.position)
+   local scale = base_pixels_per_tile * player.zoom * player.display_density_scale
+   local pixel_offset = fa_utils.mult_position(tile_offest, scale)
+   local pixel_pos = fa_utils.add_position(screen_center, pixel_offset)
+   local on_screen = pixel_pos.x > 0
+      and pixel_pos.y > 0
+      and pixel_pos.x < screen_size.width
+      and pixel_pos.y < screen_size.height
+   return pixel_pos, on_screen, screen_center
 end
 
---Moves the mouse pointer to specified pixels on the screen.
-function mod.move_pointer_to_pixels(x, y, pindex)
-   if
-      x >= 0
-      and y >= 0
-      and x < game.players[pindex].display_resolution.width
-      and y < game.players[pindex].display_resolution.height
-   then
-      -- print("setCursor " .. pindex .. " " .. math.ceil(x) .. "," .. math.ceil(y))
-   end
+---Moves the mouse pointer to specified pixels on the screen of player
+---@param pos {x:float,y:float} bounds must be prechecked
+---@param pindex int
+local function move_pointer_to_pixels(pos, pindex)
+   local x = math.ceil(pos.x)
+   local y = math.ceil(pos.y)
+   local text_pos = " " .. x .. "," .. y
+   print("setCursor " .. pindex .. text_pos)
+   --game.get_player(pindex).print("moved to" .. text_pos, { volume_modifier = 0 })
 end
+
+---Moves the mouse pointer to the correct pixel on the screen for an input map position.
+---If the position is off screen, then the pointer is centered instead.
+---Does not run in vanilla mode or if the mouse is released from synchronizing.
+---@param position MapPosition
+---@param pindex int
+function mod.move_mouse_pointer(position, pindex)
+   if players[pindex].vanilla_mode or game.get_player(pindex).game_view_settings.update_entity_selection == true then
+      return
+   end
+   local pixel_pos, on_screen, screen_center = get_pixel_pos_onscreen_center(position, pindex)
+   if not on_screen then pixel_pos = screen_center end
+   move_pointer_to_pixels(pixel_pos, pindex)
+end
+
+---Checks if the position is on the screen
+---@param pos MapPosition
+---@param pindex int
+---@return boolean
+function mod.is_on_screen(pos, pindex)
+   local _, on_sceen, _ = get_pixel_pos_onscreen_center(pos, pindex)
+   return on_sceen
+end
+
+--The rest of these functions should probably be moved elsewhere?
+--Maybe into viewpoint? That would also remove the dependancy on viewpoint
+--That way this module doens't care if we even have a cursor
+--It only cares about the screen and mouse
 
 --Checks if the map position of the mod cursor falls on screen when the camera is locked on the player character.
 function mod.cursor_position_is_on_screen_with_player_centered(pindex)
-   local range_y = math.floor(18 / players[pindex].zoom) --found experimentally by counting tile ranges at different zoom levels
-   local range_x = range_y * game.get_player(pindex).display_scale * 1.6 --found experimentally by checking scales
    local vp = Viewpoint.get_viewpoint(pindex)
    local cursor_pos = vp:get_cursor_pos()
-   return (
-      math.abs(cursor_pos.y - players[pindex].position.y) <= range_y
-      and math.abs(cursor_pos.x - players[pindex].position.x) <= range_x
-   )
+   return mod.is_on_screen(cursor_pos, pindex)
 end
 
 --Reports if the cursor tile is uncharted/blurred and also if it is distant (off screen)
@@ -67,7 +89,7 @@ function mod.cursor_visibility_info(pindex)
    elseif p.force.is_chunk_visible(p.surface, chunk_pos) == false then
       result = result .. " blurred "
    end
-   if mod.cursor_position_is_on_screen_with_player_centered(pindex) == false then result = result .. " distant " end
+   if mod.is_on_screen(pos, pindex) == false then result = result .. " distant " end
    return result
 end
 

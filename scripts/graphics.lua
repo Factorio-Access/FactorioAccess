@@ -189,7 +189,7 @@ function mod.sync_build_cursor_graphics(pindex)
    if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result then
       --Redraw direction indicator arrow
       if dir_indicator ~= nil then player.building_dir_arrow.destroy() end
-      local arrow_pos = player.cursor_pos
+      local arrow_pos = vp:get_cursor_pos()
       if players[pindex].build_lock and not cursor_enabled and stack.name ~= "rail" then
          arrow_pos =
             fa_utils.center_of_tile(fa_utils.offset_position_legacy(arrow_pos, players[pindex].player_direction, -2))
@@ -227,10 +227,10 @@ function mod.sync_build_cursor_graphics(pindex)
          width = stack.prototype.place_result.tile_height
       end
 
-      left_top = { x = math.floor(player.cursor_pos.x), y = math.floor(player.cursor_pos.y) }
+      left_top = { x = math.floor(vp:get_cursor_pos().x), y = math.floor(vp:get_cursor_pos().y) }
       right_bottom = { x = (left_top.x + width), y = (left_top.y + height) }
 
-      if not player.cursor then
+      if not vp:get_cursor_enabled() then
          --Apply offsets when facing west or north so that items can be placed in front of the character
          if p_dir == dirs.west then
             left_top.x = (left_top.x - width + 1)
@@ -284,13 +284,13 @@ function mod.sync_build_cursor_graphics(pindex)
       end
 
       --Move mouse pointer according to building box
-      if player.cursor then
+      if vp:get_cursor_enabled() then
          --Adjust for cursor
          local new_pos = { x = (left_top.x + width / 2), y = (left_top.y + height / 2) }
          fa_mouse.move_mouse_pointer(new_pos, pindex)
       else
          --Adjust for direct placement
-         local pos = player.cursor_pos
+         local pos = vp:get_cursor_pos()
          if p_dir == dirs.north then
             pos = fa_utils.offset_position_legacy(pos, dirs.north, height / 2 - 0.5)
             pos = fa_utils.offset_position_legacy(pos, dirs.east, width / 2 - 0.5)
@@ -332,7 +332,7 @@ function mod.sync_build_cursor_graphics(pindex)
       --Blueprints have their own data:
       --Redraw the direction indicator arrow
       if dir_indicator ~= nil then player.building_dir_arrow.destroy() end
-      local arrow_pos = player.cursor_pos
+      local arrow_pos = vp:get_cursor_pos()
       local dir = players[pindex].blueprint_hand_direction
       if dir == nil then
          players[pindex].blueprint_hand_direction = dirs.north
@@ -355,7 +355,7 @@ function mod.sync_build_cursor_graphics(pindex)
       local bp_width = players[pindex].blueprint_width_in_hand
       local bp_height = players[pindex].blueprint_height_in_hand
       if bp_width ~= nil then
-         local left_top = { x = math.floor(player.cursor_pos.x), y = math.floor(player.cursor_pos.y) }
+         local left_top = { x = math.floor(vp:get_cursor_pos().x), y = math.floor(vp:get_cursor_pos().y) }
          local right_bottom = { x = (left_top.x + bp_width), y = (left_top.y + bp_height) }
          local center_pos = { x = (left_top.x + bp_width / 2), y = (left_top.y + bp_height / 2) }
          player.building_footprint = rendering.draw_rectangle({
@@ -369,14 +369,7 @@ function mod.sync_build_cursor_graphics(pindex)
          })
          player.building_footprint.visible = true
 
-         --Move the mouse pointer
-         if players[pindex].remote_view == true then
-            fa_mouse.move_mouse_pointer(center_pos, pindex)
-         elseif fa_mouse.cursor_position_is_on_screen_with_player_centered(pindex) then
-            fa_mouse.move_mouse_pointer(center_pos, pindex)
-         else
-            fa_mouse.move_mouse_pointer(players[pindex].position, pindex)
-         end
+         fa_mouse.move_mouse_pointer(center_pos, pindex)
       end
    else
       --Hide the objects
@@ -500,13 +493,7 @@ function mod.draw_cursor_highlight(pindex, ent, box_type, skip_mouse_movement)
    end
 
    --Move the mouse cursor to the object on screen or to the player position for objects off screen
-   if players[pindex].remote_view == true then
-      fa_mouse.move_mouse_pointer(fa_utils.center_of_tile(c_pos), pindex)
-   elseif fa_mouse.cursor_position_is_on_screen_with_player_centered(pindex) then
-      fa_mouse.move_mouse_pointer(fa_utils.center_of_tile(c_pos), pindex)
-   else
-      fa_mouse.move_mouse_pointer(fa_utils.center_of_tile(p.position), pindex)
-   end
+   fa_mouse.move_mouse_pointer(fa_utils.center_of_tile(c_pos), pindex)
 end
 
 --Redraws the player's cursor highlight box as a rectangle around the defined area.

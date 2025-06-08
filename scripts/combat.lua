@@ -26,13 +26,13 @@ function mod.repair_pack_used(ent, pindex)
       and ent.name ~= "character"
    then
       p.play_sound({ path = "utility/default_manual_repair" })
-      local health_diff = ent.prototype.max_health - ent.health
+      local health_diff = ent.max_health - ent.health
       local dura = stack.durability or 0
       if health_diff < 10 then --free repair for tiny damages
-         ent.health = ent.prototype.max_health
+         ent.health = ent.max_health
          printout("Fully repaired " .. ent.name, pindex)
       elseif health_diff < dura then
-         ent.health = ent.prototype.max_health
+         ent.health = ent.max_health
          stack.drain_durability(health_diff)
          printout("Fully repaired " .. ent.name, pindex)
       else --if health_diff >= dura then
@@ -69,13 +69,13 @@ function mod.repair_area(radius_in, pindex)
          and ent.name ~= "character"
       then
          p.play_sound({ path = "utility/default_manual_repair" })
-         local health_diff = ent.prototype.max_health - ent.health
+         local health_diff = ent.max_health - ent.health
          local dura = stack.durability or 0
          if health_diff < 10 then --free repair for tiny damages
-            ent.health = ent.prototype.max_health
+            ent.health = ent.max_health
             repaired_count = repaired_count + 1
          elseif health_diff < dura then
-            ent.health = ent.prototype.max_health
+            ent.health = ent.max_health
             stack.drain_durability(health_diff)
             repaired_count = repaired_count + 1
          elseif stack.count < 2 then
@@ -97,13 +97,13 @@ function mod.repair_area(radius_in, pindex)
 
             --Repeat unhtil fully repaired or out of packs
             while ent.get_health_ratio() < 1 do
-               health_diff = ent.prototype.max_health - ent.health
+               health_diff = ent.max_health - ent.health
                dura = stack.durability or 0
                if health_diff < 10 then --free repair for tiny damages
-                  ent.health = ent.prototype.max_health
+                  ent.health = ent.max_health
                   repaired_count = repaired_count + 1
                elseif health_diff < dura then
-                  ent.health = ent.prototype.max_health
+                  ent.health = ent.max_health
                   stack.drain_durability(health_diff)
                   repaired_count = repaired_count + 1
                elseif stack.count < 2 then
@@ -181,7 +181,7 @@ function mod.check_and_play_enemy_alert_sound(mode_in)
             else
                for i, enemy in ipairs(enemies) do
                   --Also check for strong enemies: big/huge biters, huge spitters, medium or larger worms, not spawners
-                  if enemy.prototype.max_health > 360 then
+                  if enemy.max_health > 360 then
                      p.play_sound({ path = "alert-enemy-presence-high", position = pos })
                      return
                   end

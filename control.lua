@@ -1869,11 +1869,7 @@ local function move_characters(event)
                fa_graphics.sync_build_cursor_graphics(pindex)
             else
                --Force the pointer to the cursor location (if on screen)
-               if fa_mouse.cursor_position_is_on_screen_with_player_centered(pindex) then
-                  fa_mouse.move_mouse_pointer(vp:get_cursor_pos(), pindex)
-               else
-                  fa_mouse.move_mouse_pointer(players[pindex].position, pindex)
-               end
+               fa_mouse.move_mouse_pointer(vp:get_cursor_pos(), pindex)
             end
          end
       end
