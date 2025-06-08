@@ -8,12 +8,12 @@ local fa_utils = require("scripts.fa-utils")
 local Viewpoint = require("scripts.viewpoint")
 local mod = {}
 
----comment
+---helper function with tripple return
 ---@param position MapPosition
 ---@param pindex int
 ---@return {x:float,y:float} pixel_pos The sceen pixel coordinates of the map position
 ---@return boolean on_sceen If that position is on sceen
----@return {x:float,y:float} screen_center The x and y of the center of the screen
+---@return {x:float,y:float} screen_center The x and y pixels of the center of the screen
 local function get_pixel_pos_onscreen_center(position, pindex)
    local player = game.get_player(pindex)
    local screen_size = player.display_resolution
@@ -39,7 +39,7 @@ local function move_pointer_to_pixels(pos, pindex)
    local y = math.ceil(pos.y)
    local text_pos = " " .. x .. "," .. y
    print("setCursor " .. pindex .. text_pos)
-   game.get_player(pindex).print("moved to" .. text_pos, { volume_modifier = 0 })
+   --game.get_player(pindex).print("moved to" .. text_pos, { volume_modifier = 0 })
 end
 
 ---Moves the mouse pointer to the correct pixel on the screen for an input map position.
