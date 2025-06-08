@@ -369,14 +369,7 @@ function mod.sync_build_cursor_graphics(pindex)
          })
          player.building_footprint.visible = true
 
-         --Move the mouse pointer
-         if players[pindex].remote_view == true then
-            fa_mouse.move_mouse_pointer(center_pos, pindex)
-         elseif fa_mouse.cursor_position_is_on_screen_with_player_centered(pindex) then
-            fa_mouse.move_mouse_pointer(center_pos, pindex)
-         else
-            fa_mouse.move_mouse_pointer(players[pindex].position, pindex)
-         end
+         fa_mouse.move_mouse_pointer(center_pos, pindex)
       end
    else
       --Hide the objects
@@ -500,13 +493,7 @@ function mod.draw_cursor_highlight(pindex, ent, box_type, skip_mouse_movement)
    end
 
    --Move the mouse cursor to the object on screen or to the player position for objects off screen
-   if players[pindex].remote_view == true then
-      fa_mouse.move_mouse_pointer(fa_utils.center_of_tile(c_pos), pindex)
-   elseif fa_mouse.cursor_position_is_on_screen_with_player_centered(pindex) then
-      fa_mouse.move_mouse_pointer(fa_utils.center_of_tile(c_pos), pindex)
-   else
-      fa_mouse.move_mouse_pointer(fa_utils.center_of_tile(p.position), pindex)
-   end
+   fa_mouse.move_mouse_pointer(fa_utils.center_of_tile(c_pos), pindex)
 end
 
 --Redraws the player's cursor highlight box as a rectangle around the defined area.
