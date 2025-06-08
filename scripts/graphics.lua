@@ -230,7 +230,7 @@ function mod.sync_build_cursor_graphics(pindex)
       left_top = { x = math.floor(vp:get_cursor_pos().x), y = math.floor(vp:get_cursor_pos().y) }
       right_bottom = { x = (left_top.x + width), y = (left_top.y + height) }
 
-      if not player.cursor then
+      if not vp:get_cursor_enabled() then
          --Apply offsets when facing west or north so that items can be placed in front of the character
          if p_dir == dirs.west then
             left_top.x = (left_top.x - width + 1)
@@ -284,7 +284,7 @@ function mod.sync_build_cursor_graphics(pindex)
       end
 
       --Move mouse pointer according to building box
-      if player.cursor then
+      if vp:get_cursor_enabled() then
          --Adjust for cursor
          local new_pos = { x = (left_top.x + width / 2), y = (left_top.y + height / 2) }
          fa_mouse.move_mouse_pointer(new_pos, pindex)
