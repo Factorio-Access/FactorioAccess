@@ -26,6 +26,9 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
    local cursor_enabled = vp:get_cursor_enabled()
    local cursor_size = vp:get_cursor_size()
 
+   -- Ensure building footprint is up to date
+   fa_graphics.sync_build_cursor_graphics(pindex)
+
    --Valid stack check
    if not (stack and stack.valid and stack.valid_for_read) then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
@@ -103,6 +106,10 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
 
             position = { x = left_top.x + math.floor(width / 2), y = left_top.y + math.floor(height / 2) }
 
+            -- Store the calculated footprint for later use
+            players[pindex].building_footprint_left_top = left_top
+            players[pindex].building_footprint_right_bottom = right_bottom
+
             --In build lock mode and outside cursor mode, build from behind the player
             if players[pindex].build_lock and not cursor_enabled and stack.name ~= "rail" then
                local base_offset = -2
@@ -135,6 +142,10 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
          end
 
          position = { x = left_top.x + math.floor(width / 2), y = left_top.y + math.floor(height / 2) }
+
+         -- Store the calculated footprint for later use
+         players[pindex].building_footprint_left_top = left_top
+         players[pindex].building_footprint_right_bottom = right_bottom
       end
       if stack.name == "small-electric-pole" and players[pindex].build_lock == true then
          --Place a small electric pole in this position only if it is within 6.5 to 7.6 tiles of another small electric pole
@@ -1246,6 +1257,7 @@ end
 function mod.teleport_player_out_of_build_area(left_top, right_bottom, pindex)
    local p = game.get_player(pindex)
    if not p.character then return end
+   if not left_top or not right_bottom then return end
    local pos = p.character.position
    if pos.x < left_top.x or pos.x > right_bottom.x or pos.y < left_top.y or pos.y > right_bottom.y then return end
    if p.walking_state.walking == true then return end
