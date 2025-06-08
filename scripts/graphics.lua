@@ -218,46 +218,21 @@ function mod.sync_build_cursor_graphics(pindex)
       --Redraw footprint (ent)
       if player.building_footprint ~= nil then player.building_footprint.destroy() end
 
-      --Get correct width and height
-      width = stack.prototype.place_result.tile_width
-      height = stack.prototype.place_result.tile_height
-      if dir == dirs.east or dir == dirs.west then
-         --Flip width and height. Note: diagonal cases are rounded to north/south cases
-         height = stack.prototype.place_result.tile_width
-         width = stack.prototype.place_result.tile_height
-      end
+      --Calculate footprint using centralized function
+      local footprint = fa_utils.calculate_building_footprint({
+         entity_prototype = stack.prototype.place_result,
+         position = vp:get_cursor_pos(),
+         building_direction = dir,
+         player_direction = p_dir,
+         cursor_enabled = cursor_enabled,
+         build_lock = players[pindex].build_lock,
+         is_rail_vehicle = (stack.name == "rail"),
+      })
 
-      left_top = { x = math.floor(vp:get_cursor_pos().x), y = math.floor(vp:get_cursor_pos().y) }
-      right_bottom = { x = (left_top.x + width), y = (left_top.y + height) }
-
-      if not vp:get_cursor_enabled() then
-         --Apply offsets when facing west or north so that items can be placed in front of the character
-         if p_dir == dirs.west then
-            left_top.x = (left_top.x - width + 1)
-            right_bottom.x = (right_bottom.x - width + 1)
-         elseif p_dir == dirs.north then
-            left_top.y = (left_top.y - height + 1)
-            right_bottom.y = (right_bottom.y - height + 1)
-         end
-
-         --In build lock mode and outside cursor mode, build from behind the player
-         if players[pindex].build_lock and not cursor_enabled and stack.name ~= "rail" then
-            local base_offset = -2
-            local size_offset = 0
-            if p_dir == dirs.north or p_dir == dirs.south then
-               size_offset = -height + 1
-            elseif p_dir == dirs.east or p_dir == dirs.west then
-               size_offset = -width + 1
-            end
-            left_top =
-               fa_utils.offset_position_legacy(left_top, players[pindex].player_direction, base_offset + size_offset)
-            right_bottom = fa_utils.offset_position_legacy(
-               right_bottom,
-               players[pindex].player_direction,
-               base_offset + size_offset
-            )
-         end
-      end
+      left_top = footprint.left_top
+      right_bottom = footprint.right_bottom
+      width = footprint.width
+      height = footprint.height
 
       --Update the footprint info and draw it
       player.building_footprint_left_top = left_top
@@ -283,41 +258,8 @@ function mod.sync_build_cursor_graphics(pindex)
          player.building_footprint.visible = false
       end
 
-      --Move mouse pointer according to building box
-      if vp:get_cursor_enabled() then
-         --Adjust for cursor
-         local new_pos = { x = (left_top.x + width / 2), y = (left_top.y + height / 2) }
-         fa_mouse.move_mouse_pointer(new_pos, pindex)
-      else
-         --Adjust for direct placement
-         local pos = vp:get_cursor_pos()
-         if p_dir == dirs.north then
-            pos = fa_utils.offset_position_legacy(pos, dirs.north, height / 2 - 0.5)
-            pos = fa_utils.offset_position_legacy(pos, dirs.east, width / 2 - 0.5)
-         elseif p_dir == dirs.east then
-            pos = fa_utils.offset_position_legacy(pos, dirs.south, height / 2 - 0.5)
-            pos = fa_utils.offset_position_legacy(pos, dirs.east, width / 2 - 0.5)
-         elseif p_dir == dirs.south then
-            pos = fa_utils.offset_position_legacy(pos, dirs.south, height / 2 - 0.5)
-            pos = fa_utils.offset_position_legacy(pos, dirs.east, width / 2 - 0.5)
-         elseif p_dir == dirs.west then
-            pos = fa_utils.offset_position_legacy(pos, dirs.south, height / 2 - 0.5)
-            pos = fa_utils.offset_position_legacy(pos, dirs.west, width / 2 - 0.5)
-         end
-
-         --In build lock mode and outside cursor mode, build from behind the player
-         if players[pindex].build_lock and not cursor_enabled and stack.name ~= "rail" then
-            local base_offset = -2
-            local size_offset = 0
-            if p_dir == dirs.north or p_dir == dirs.south then
-               size_offset = -height + 1
-            elseif p_dir == dirs.east or p_dir == dirs.west then
-               size_offset = -width + 1
-            end
-            pos = fa_utils.offset_position_legacy(pos, players[pindex].player_direction, base_offset + size_offset)
-         end
-         fa_mouse.move_mouse_pointer(pos, pindex)
-      end
+      --Move mouse pointer to the center of the footprint
+      fa_mouse.move_mouse_pointer(footprint.center, pindex)
    elseif stack == nil or not stack.valid_for_read then
       --Invalid stack: Hide the objects
       if dir_indicator ~= nil then dir_indicator.visible = false end

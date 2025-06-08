@@ -338,6 +338,99 @@ function mod.get_tile_dimensions(item, dir)
    return { x = 0, y = 0 }
 end
 
+--[[
+Calculates the complete building footprint for an entity, handling all placement modes and offsets.
+This centralizes the logic that was previously scattered across building-tools.lua and graphics.lua.
+
+Parameters:
+- params.entity_prototype: The entity prototype (or provide width/height directly)
+- params.width: Entity width in tiles (if not using prototype)
+- params.height: Entity height in tiles (if not using prototype)
+- params.position: The base position (cursor or player position)
+- params.building_direction: The entity's rotation (dirs.north, dirs.east, etc.)
+- params.player_direction: The player's facing direction (for non-cursor mode)
+- params.cursor_enabled: Whether cursor mode is active
+- params.build_lock: Whether build lock mode is active
+- params.is_rail_vehicle: Special handling for locomotives/wagons
+
+Returns:
+{
+  left_top = {x, y},
+  right_bottom = {x, y},
+  center = {x, y},
+  width = number,
+  height = number
+}
+]]
+function mod.calculate_building_footprint(params)
+   local width, height
+
+   -- Get dimensions from prototype or direct parameters
+   if params.entity_prototype then
+      width = params.entity_prototype.tile_width
+      height = params.entity_prototype.tile_height
+   else
+      width = params.width or 1
+      height = params.height or 1
+   end
+
+   -- Handle direction rotation (east/west swap width and height)
+   if params.building_direction == dirs.east or params.building_direction == dirs.west then
+      width, height = height, width
+   end
+
+   -- Calculate initial footprint from position
+   local left_top = {
+      x = math.floor(params.position.x),
+      y = math.floor(params.position.y),
+   }
+   local right_bottom = {
+      x = left_top.x + width,
+      y = left_top.y + height,
+   }
+
+   -- Apply offsets for non-cursor mode based on player direction
+   if not params.cursor_enabled then
+      if params.player_direction == dirs.west then
+         left_top.x = left_top.x - width + 1
+         right_bottom.x = right_bottom.x - width + 1
+      elseif params.player_direction == dirs.north then
+         left_top.y = left_top.y - height + 1
+         right_bottom.y = right_bottom.y - height + 1
+      end
+
+      -- Apply build lock mode offsets (building from behind)
+      if params.build_lock and not params.is_rail_vehicle then
+         local base_offset = -2
+         local size_offset = 0
+
+         if params.player_direction == dirs.north or params.player_direction == dirs.south then
+            size_offset = -height + 1
+         elseif params.player_direction == dirs.east or params.player_direction == dirs.west then
+            size_offset = -width + 1
+         end
+
+         local total_offset = base_offset + size_offset
+         left_top = mod.offset_position_legacy(left_top, params.player_direction, total_offset)
+         right_bottom = mod.offset_position_legacy(right_bottom, params.player_direction, total_offset)
+      end
+   end
+
+   -- Calculate center position
+   local center = {
+      x = left_top.x + math.floor(width / 2),
+      y = left_top.y + math.floor(height / 2),
+   }
+
+   return {
+      left_top = left_top,
+      right_bottom = right_bottom,
+      center = center,
+      width = width,
+      height = height,
+   }
+end
+
 --Small utility function for getting an entity's footprint area using just its name.
 function mod.get_ent_area_from_name(ent_name, pindex)
    -- local ents = game.get_player(pindex).surface.find_entities_filtered{name = ent_name, limit = 1}

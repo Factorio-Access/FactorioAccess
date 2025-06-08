@@ -78,74 +78,44 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
             local rail_vehicle_offset = 2.5
             position = fa_utils.offset_position_legacy(old_pos, players[pindex].player_direction, rail_vehicle_offset)
          else
-            --Apply offsets according to building direction and player direction
-            local width = stack.prototype.place_result.tile_width
-            local height = stack.prototype.place_result.tile_height
-            local left_top = { x = math.floor(pos.x), y = math.floor(pos.y) }
-            local right_bottom = { x = left_top.x + width, y = left_top.y + height }
-            local dir = players[pindex].building_direction
+            --Calculate footprint using centralized function
+            local footprint = fa_utils.calculate_building_footprint({
+               entity_prototype = stack.prototype.place_result,
+               position = pos,
+               building_direction = players[pindex].building_direction,
+               player_direction = players[pindex].player_direction,
+               cursor_enabled = cursor_enabled,
+               build_lock = players[pindex].build_lock,
+               is_rail_vehicle = (stack.name == "rail"),
+            })
+
             turn_to_cursor_direction_cardinal(pindex)
-            local p_dir = players[pindex].player_direction
 
-            --Flip height and width if the object is rotated sideways
-            if dir == dirs.east or dir == dirs.west then
-               --Note, diagonal cases are rounded to north/south cases
-               height = stack.prototype.place_result.tile_width
-               width = stack.prototype.place_result.tile_height
-               right_bottom = { x = left_top.x + width, y = left_top.y + height }
-            end
-
-            --Apply offsets when facing west or north so that items can be placed in front of the character
-            if p_dir == dirs.west then
-               left_top.x = (left_top.x - width + 1)
-               right_bottom.x = (right_bottom.x - width + 1)
-            elseif p_dir == dirs.north then
-               left_top.y = (left_top.y - height + 1)
-               right_bottom.y = (right_bottom.y - height + 1)
-            end
-
-            position = { x = left_top.x + math.floor(width / 2), y = left_top.y + math.floor(height / 2) }
+            position = footprint.center
 
             -- Store the calculated footprint for later use
-            players[pindex].building_footprint_left_top = left_top
-            players[pindex].building_footprint_right_bottom = right_bottom
-
-            --In build lock mode and outside cursor mode, build from behind the player
-            if players[pindex].build_lock and not cursor_enabled and stack.name ~= "rail" then
-               local base_offset = -2
-               local size_offset = 0
-               if p_dir == dirs.north or p_dir == dirs.south then
-                  size_offset = -height + 1
-               elseif p_dir == dirs.east or p_dir == dirs.west then
-                  size_offset = -width + 1
-               end
-               position =
-                  fa_utils.offset_position_legacy(position, players[pindex].player_direction, base_offset + size_offset)
-            end
+            players[pindex].building_footprint_left_top = footprint.left_top
+            players[pindex].building_footprint_right_bottom = footprint.right_bottom
          end
       else
-         --Cursor mode offset: to the top left corner, according to building direction
-         local width = stack.prototype.place_result.tile_width
-         local height = stack.prototype.place_result.tile_height
-         local left_top = { x = math.floor(pos.x), y = math.floor(pos.y) }
-         local right_bottom = { x = left_top.x + width, y = left_top.y + height }
-         local dir = players[pindex].building_direction
+         --Cursor mode: Calculate footprint using centralized function
+         local footprint = fa_utils.calculate_building_footprint({
+            entity_prototype = stack.prototype.place_result,
+            position = pos,
+            building_direction = players[pindex].building_direction,
+            player_direction = players[pindex].player_direction,
+            cursor_enabled = cursor_enabled,
+            build_lock = players[pindex].build_lock,
+            is_rail_vehicle = false,
+         })
+
          turn_to_cursor_direction_cardinal(pindex)
-         local p_dir = players[pindex].player_direction
 
-         --Flip height and width if the object is rotated
-         if dir == dirs.east or dir == dirs.west then --Note, does not cover diagonal directions for non-square objects.
-            local temp = height
-            height = width
-            width = temp
-            right_bottom = { x = left_top.x + width, y = left_top.y + height }
-         end
-
-         position = { x = left_top.x + math.floor(width / 2), y = left_top.y + math.floor(height / 2) }
+         position = footprint.center
 
          -- Store the calculated footprint for later use
-         players[pindex].building_footprint_left_top = left_top
-         players[pindex].building_footprint_right_bottom = right_bottom
+         players[pindex].building_footprint_left_top = footprint.left_top
+         players[pindex].building_footprint_right_bottom = footprint.right_bottom
       end
       if stack.name == "small-electric-pole" and players[pindex].build_lock == true then
          --Place a small electric pole in this position only if it is within 6.5 to 7.6 tiles of another small electric pole
@@ -513,23 +483,19 @@ function mod.nudge_key(direction, event)
          local temporary_teleported = false
          local actually_teleported = false
 
-         --Clear the new build location
-         local left_top
-         local right_bottom
-         local width = ent.tile_width
-         local height = ent.tile_height
-         if ent.direction == dirs.east or ent.direction == dirs.west then
-            --Flip width and height. Note: diagonal cases are rounded to north/south cases
-            height = ent.tile_width
-            width = ent.tile_height
-         end
-
-         left_top = {
-            x = math.floor(ent.position.x - math.floor(width / 2)),
-            y = math.floor(ent.position.y - math.floor(height / 2)),
-         }
-         left_top = fa_utils.offset_position_legacy(left_top, direction, 1)
-         right_bottom = { x = math.ceil(left_top.x + width), y = math.ceil(left_top.y + height) }
+         --Clear the new build location using centralized footprint calculation
+         local footprint = fa_utils.calculate_building_footprint({
+            width = ent.tile_width,
+            height = ent.tile_height,
+            position = fa_utils.offset_position_legacy(ent.position, direction, 1),
+            building_direction = ent.direction,
+            player_direction = dirs.north, -- Not relevant for nudging
+            cursor_enabled = true, -- Nudging uses entity position directly
+            build_lock = false,
+            is_rail_vehicle = false,
+         })
+         local left_top = footprint.left_top
+         local right_bottom = footprint.right_bottom
          fa_mining_tools.clear_obstacles_in_rectangle(left_top, right_bottom, pindex)
 
          --First teleport the ent to 0,0 temporarily

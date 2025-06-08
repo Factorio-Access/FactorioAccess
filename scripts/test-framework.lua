@@ -20,6 +20,7 @@ local test_files = {
    -- Additional tests
    "belt-direction-test", -- Test transport belt direction detection
    "assembler-recipe-test", -- Test assembling machine recipe management
+   "building-footprint-tests", -- Test centralized building footprint calculations
    -- "fa-info-smoke-test", -- Test entity information extraction system (temporarily disabled)
    -- "sound-tests", -- Test sound system integration (temporarily disabled)
 }
