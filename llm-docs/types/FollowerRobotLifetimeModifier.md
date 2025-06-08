@@ -1,0 +1,6 @@
+# FollowerRobotLifetimeModifier
+
+
+
+**Parent:** `SimpleModifier`
+

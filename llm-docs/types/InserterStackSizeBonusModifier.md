@@ -1,0 +1,6 @@
+# InserterStackSizeBonusModifier
+
+
+
+**Parent:** `SimpleModifier`
+

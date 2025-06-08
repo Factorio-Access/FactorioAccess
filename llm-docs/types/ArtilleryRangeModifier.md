@@ -1,0 +1,6 @@
+# ArtilleryRangeModifier
+
+
+
+**Parent:** `SimpleModifier`
+

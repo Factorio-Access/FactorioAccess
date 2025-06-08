@@ -1,0 +1,6 @@
+# LightningPriorityRule
+
+
+
+**Parent:** `LightningRuleBase`
+

@@ -1,0 +1,6 @@
+# ButtonStyleSpecification
+
+
+
+**Parent:** `StyleWithClickableGraphicalSetSpecification`
+

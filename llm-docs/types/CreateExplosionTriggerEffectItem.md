@@ -1,0 +1,6 @@
+# CreateExplosionTriggerEffectItem
+
+
+
+**Parent:** `CreateEntityTriggerEffectItem`
+

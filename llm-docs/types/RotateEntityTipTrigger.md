@@ -1,0 +1,6 @@
+# RotateEntityTipTrigger
+
+
+
+**Parent:** `CountBasedTipTrigger`
+

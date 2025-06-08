@@ -1,0 +1,6 @@
+# UsePipetteTipTrigger
+
+
+
+**Parent:** `CountBasedTipTrigger`
+

@@ -1,0 +1,6 @@
+# CharacterItemDropDistanceModifier
+
+
+
+**Parent:** `SimpleModifier`
+

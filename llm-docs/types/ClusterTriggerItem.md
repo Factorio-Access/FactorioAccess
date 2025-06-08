@@ -1,0 +1,6 @@
+# ClusterTriggerItem
+
+
+
+**Parent:** `TriggerItem`
+

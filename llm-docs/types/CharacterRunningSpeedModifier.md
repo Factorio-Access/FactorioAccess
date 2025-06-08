@@ -1,0 +1,6 @@
+# CharacterRunningSpeedModifier
+
+
+
+**Parent:** `SimpleModifier`
+

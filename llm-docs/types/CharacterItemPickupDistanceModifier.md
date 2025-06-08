@@ -1,0 +1,6 @@
+# CharacterItemPickupDistanceModifier
+
+
+
+**Parent:** `SimpleModifier`
+

@@ -1,0 +1,6 @@
+# DamageTileTriggerEffectItem
+
+
+
+**Parent:** `TriggerEffectItem`
+

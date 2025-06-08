@@ -1,0 +1,6 @@
+# StackTransferTipTrigger
+
+
+
+**Parent:** `CountBasedTipTrigger`
+

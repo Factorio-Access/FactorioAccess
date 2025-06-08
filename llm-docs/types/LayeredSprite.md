@@ -1,0 +1,6 @@
+# LayeredSprite
+
+
+
+**Parent:** `Sprite`
+

@@ -1,0 +1,6 @@
+# CharacterLogisticRequestsModifier
+
+
+
+**Parent:** `BoolModifier`
+

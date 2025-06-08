@@ -1,0 +1,6 @@
+# HorizontalScrollBarStyleSpecification
+
+
+
+**Parent:** `ScrollBarStyleSpecification`
+

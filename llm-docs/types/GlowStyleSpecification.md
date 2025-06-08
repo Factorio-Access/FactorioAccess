@@ -1,0 +1,6 @@
+# GlowStyleSpecification
+
+
+
+**Parent:** `BaseStyleSpecification`
+

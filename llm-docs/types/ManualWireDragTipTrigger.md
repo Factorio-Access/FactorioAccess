@@ -1,0 +1,6 @@
+# ManualWireDragTipTrigger
+
+
+
+**Parent:** `CountBasedTipTrigger`
+

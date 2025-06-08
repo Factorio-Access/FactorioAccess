@@ -1,0 +1,6 @@
+# ManualTransferTipTrigger
+
+
+
+**Parent:** `CountBasedTipTrigger`
+

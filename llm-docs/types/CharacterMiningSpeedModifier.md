@@ -1,0 +1,6 @@
+# CharacterMiningSpeedModifier
+
+
+
+**Parent:** `SimpleModifier`
+

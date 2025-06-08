@@ -1,0 +1,6 @@
+# ScrollBarStyleSpecification
+
+
+
+**Parent:** `BaseStyleSpecification`
+

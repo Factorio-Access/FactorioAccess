@@ -1,0 +1,6 @@
+# VerticalFlowStyleSpecification
+
+
+
+**Parent:** `BaseStyleSpecification`
+

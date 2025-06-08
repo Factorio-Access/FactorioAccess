@@ -1,0 +1,6 @@
+# DelayedTriggerDelivery
+
+
+
+**Parent:** `TriggerDeliveryItem`
+

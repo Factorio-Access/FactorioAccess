@@ -1,0 +1,6 @@
+# GeneratingPowerTipTrigger
+
+
+
+**Parent:** `CountBasedTipTrigger`
+

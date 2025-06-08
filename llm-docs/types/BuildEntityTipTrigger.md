@@ -1,0 +1,6 @@
+# BuildEntityTipTrigger
+
+
+
+**Parent:** `CountBasedTipTrigger`
+

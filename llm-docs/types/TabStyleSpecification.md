@@ -1,0 +1,6 @@
+# TabStyleSpecification
+
+
+
+**Parent:** `StyleWithClickableGraphicalSetSpecification`
+

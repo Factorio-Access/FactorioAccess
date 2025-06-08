@@ -1,0 +1,6 @@
+# ImageStyleSpecification
+
+
+
+**Parent:** `BaseStyleSpecification`
+

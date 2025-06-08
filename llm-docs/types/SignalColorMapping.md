@@ -1,0 +1,6 @@
+# SignalColorMapping
+
+
+
+**Parent:** `SignalIDConnector`
+

@@ -1,0 +1,6 @@
+# WorkerRobotBatteryModifier
+
+
+
+**Parent:** `SimpleModifier`
+

@@ -1,0 +1,6 @@
+# ActivateImpactTriggerEffectItem
+
+
+
+**Parent:** `TriggerEffectItem`
+

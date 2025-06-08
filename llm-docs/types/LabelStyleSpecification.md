@@ -1,0 +1,6 @@
+# LabelStyleSpecification
+
+
+
+**Parent:** `BaseStyleSpecification`
+

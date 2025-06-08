@@ -1,0 +1,6 @@
+# AlternativeBuildTipTrigger
+
+
+
+**Parent:** `CountBasedTipTrigger`
+

@@ -1,0 +1,6 @@
+# CharacterCraftingSpeedModifier
+
+
+
+**Parent:** `SimpleModifier`
+

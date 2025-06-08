@@ -1,0 +1,6 @@
+# CharacterResourceReachDistanceModifier
+
+
+
+**Parent:** `SimpleModifier`
+

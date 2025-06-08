@@ -1,0 +1,6 @@
+# InstantTriggerDelivery
+
+
+
+**Parent:** `TriggerDeliveryItem`
+

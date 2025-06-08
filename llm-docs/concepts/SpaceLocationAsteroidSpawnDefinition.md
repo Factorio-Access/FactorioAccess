@@ -1,0 +1,4 @@
+# SpaceLocationAsteroidSpawnDefinition
+
+
+

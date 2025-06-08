@@ -1,0 +1,6 @@
+# TabbedPaneStyleSpecification
+
+
+
+**Parent:** `BaseStyleSpecification`
+

@@ -1,0 +1,6 @@
+# TrainBrakingForceBonusModifier
+
+
+
+**Parent:** `SimpleModifier`
+

@@ -1,0 +1,6 @@
+# LineTriggerItem
+
+
+
+**Parent:** `TriggerItem`
+

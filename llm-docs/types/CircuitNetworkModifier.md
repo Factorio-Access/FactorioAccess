@@ -1,0 +1,6 @@
+# CircuitNetworkModifier
+
+
+
+**Parent:** `BoolModifier`
+

@@ -1,0 +1,6 @@
+# RotatedAnimation
+
+
+
+**Parent:** `AnimationParameters`
+

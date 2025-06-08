@@ -1,0 +1,6 @@
+# DestroyCliffsTriggerEffectItem
+
+
+
+**Parent:** `TriggerEffectItem`
+

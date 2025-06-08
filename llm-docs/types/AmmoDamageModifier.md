@@ -1,0 +1,6 @@
+# AmmoDamageModifier
+
+
+
+**Parent:** `BaseModifier`
+

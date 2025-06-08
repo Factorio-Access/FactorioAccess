@@ -1,0 +1,6 @@
+# CreateDecorativesTriggerEffectItem
+
+
+
+**Parent:** `TriggerEffectItem`
+

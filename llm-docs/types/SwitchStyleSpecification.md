@@ -1,0 +1,6 @@
+# SwitchStyleSpecification
+
+
+
+**Parent:** `BaseStyleSpecification`
+

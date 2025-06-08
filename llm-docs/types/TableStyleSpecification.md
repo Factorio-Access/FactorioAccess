@@ -1,0 +1,6 @@
+# TableStyleSpecification
+
+
+
+**Parent:** `BaseStyleSpecification`
+

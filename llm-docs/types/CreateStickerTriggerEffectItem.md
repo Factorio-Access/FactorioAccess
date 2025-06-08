@@ -1,0 +1,6 @@
+# CreateStickerTriggerEffectItem
+
+
+
+**Parent:** `TriggerEffectItem`
+

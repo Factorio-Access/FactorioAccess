@@ -1,0 +1,6 @@
+# InvokeTileEffectTriggerEffectItem
+
+
+
+**Parent:** `TriggerEffectItem`
+

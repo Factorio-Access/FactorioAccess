@@ -1,0 +1,6 @@
+# CameraStyleSpecification
+
+
+
+**Parent:** `EmptyWidgetStyleSpecification`
+

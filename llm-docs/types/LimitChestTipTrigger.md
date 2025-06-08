@@ -1,0 +1,6 @@
+# LimitChestTipTrigger
+
+
+
+**Parent:** `CountBasedTipTrigger`
+

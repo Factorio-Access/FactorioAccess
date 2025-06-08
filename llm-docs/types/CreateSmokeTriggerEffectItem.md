@@ -1,0 +1,6 @@
+# CreateSmokeTriggerEffectItem
+
+
+
+**Parent:** `CreateEntityTriggerEffectItem`
+

@@ -1,0 +1,6 @@
+# TransportBeltAnimationSetWithCorners
+
+
+
+**Parent:** `TransportBeltAnimationSet`
+

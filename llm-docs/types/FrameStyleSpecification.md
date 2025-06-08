@@ -1,0 +1,6 @@
+# FrameStyleSpecification
+
+
+
+**Parent:** `BaseStyleSpecification`
+

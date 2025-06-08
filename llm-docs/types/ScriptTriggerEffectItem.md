@@ -1,0 +1,6 @@
+# ScriptTriggerEffectItem
+
+
+
+**Parent:** `TriggerEffectItem`
+

@@ -1,0 +1,6 @@
+# CameraEffectTriggerEffectItem
+
+
+
+**Parent:** `TriggerEffectItem`
+

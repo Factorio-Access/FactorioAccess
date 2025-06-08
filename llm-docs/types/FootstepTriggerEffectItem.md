@@ -1,0 +1,6 @@
+# FootstepTriggerEffectItem
+
+
+
+**Parent:** `CreateParticleTriggerEffectItem`
+

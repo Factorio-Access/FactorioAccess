@@ -1,0 +1,6 @@
+# BulkInserterCapacityBonusModifier
+
+
+
+**Parent:** `SimpleModifier`
+

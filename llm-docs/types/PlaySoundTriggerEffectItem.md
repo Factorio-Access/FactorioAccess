@@ -1,0 +1,6 @@
+# PlaySoundTriggerEffectItem
+
+
+
+**Parent:** `TriggerEffectItem`
+

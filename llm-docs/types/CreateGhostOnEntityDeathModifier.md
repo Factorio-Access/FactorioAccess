@@ -1,0 +1,6 @@
+# CreateGhostOnEntityDeathModifier
+
+
+
+**Parent:** `BoolModifier`
+

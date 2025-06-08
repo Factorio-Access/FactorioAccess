@@ -1,0 +1,6 @@
+# ScrollPaneStyleSpecification
+
+
+
+**Parent:** `BaseStyleSpecification`
+

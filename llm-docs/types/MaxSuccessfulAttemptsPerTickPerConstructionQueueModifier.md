@@ -1,0 +1,6 @@
+# MaxSuccessfulAttemptsPerTickPerConstructionQueueModifier
+
+
+
+**Parent:** `SimpleModifier`
+

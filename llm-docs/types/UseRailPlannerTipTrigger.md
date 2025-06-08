@@ -1,0 +1,6 @@
+# UseRailPlannerTipTrigger
+
+
+
+**Parent:** `CountBasedTipTrigger`
+

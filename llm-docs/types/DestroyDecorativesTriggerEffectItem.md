@@ -1,0 +1,6 @@
+# DestroyDecorativesTriggerEffectItem
+
+
+
+**Parent:** `TriggerEffectItem`
+

@@ -1,0 +1,6 @@
+# SliderStyleSpecification
+
+
+
+**Parent:** `BaseStyleSpecification`
+

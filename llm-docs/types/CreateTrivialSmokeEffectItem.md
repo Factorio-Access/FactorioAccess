@@ -1,0 +1,6 @@
+# CreateTrivialSmokeEffectItem
+
+
+
+**Parent:** `TriggerEffectItem`
+

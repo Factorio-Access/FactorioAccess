@@ -1,0 +1,6 @@
+# RailPlannerAllowElevatedRailsModifier
+
+
+
+**Parent:** `BoolModifier`
+

@@ -1,0 +1,6 @@
+# HorizontalFlowStyleSpecification
+
+
+
+**Parent:** `BaseStyleSpecification`
+

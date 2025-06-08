@@ -1,0 +1,6 @@
+# SendSpidertronTipTrigger
+
+
+
+**Parent:** `CountBasedTipTrigger`
+

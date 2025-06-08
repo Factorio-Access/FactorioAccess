@@ -1,0 +1,6 @@
+# CreateEntityTriggerEffectItem
+
+
+
+**Parent:** `TriggerEffectItem`
+

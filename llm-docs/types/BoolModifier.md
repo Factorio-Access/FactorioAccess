@@ -1,0 +1,6 @@
+# BoolModifier
+
+
+
+**Parent:** `BaseModifier`
+

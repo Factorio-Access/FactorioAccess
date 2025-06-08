@@ -1,0 +1,6 @@
+# GunSpeedModifier
+
+
+
+**Parent:** `BaseModifier`
+

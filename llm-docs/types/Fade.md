@@ -1,0 +1,6 @@
+# Fade
+
+
+
+**Parent:** `Attenuation`
+

@@ -1,0 +1,6 @@
+# ArtilleryTriggerDelivery
+
+
+
+**Parent:** `TriggerDeliveryItem`
+

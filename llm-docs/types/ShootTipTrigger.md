@@ -1,0 +1,6 @@
+# ShootTipTrigger
+
+
+
+**Parent:** `CountBasedTipTrigger`
+

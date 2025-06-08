@@ -1,0 +1,6 @@
+# SetLogisticRequestTipTrigger
+
+
+
+**Parent:** `CountBasedTipTrigger`
+

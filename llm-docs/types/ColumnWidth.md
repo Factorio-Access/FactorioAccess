@@ -1,0 +1,6 @@
+# ColumnWidth
+
+
+
+**Parent:** `ColumnWidthItem`
+

@@ -1,0 +1,6 @@
+# ProjectileAttackParameters
+
+
+
+**Parent:** `BaseAttackParameters`
+
