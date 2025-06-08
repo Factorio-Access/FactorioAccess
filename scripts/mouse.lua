@@ -17,9 +17,12 @@ local mod = {}
 local function get_pixel_pos_onscreen_center(position, pindex)
    local player = game.get_player(pindex)
    local screen_size = player.display_resolution
+   game.print(serpent.line(screen_size))
    local screen_center = fa_utils.mult_position({ x = screen_size.width, y = screen_size.height }, 0.5)
+   game.print(serpent.line(screen_center))
    local tile_offest = fa_utils.sub_position(position, player.position)
-   local pixel_offset = fa_utils.mult_position(tile_offest, base_pixels_per_tile * player.zoom)
+   local scale = base_pixels_per_tile * player.zoom * player.display_density_scale
+   local pixel_offset = fa_utils.mult_position(tile_offest, scale)
    local pixel_pos = fa_utils.add_position(screen_center, pixel_offset)
    local on_screen = pixel_pos.x > 0
       and pixel_pos.y > 0
@@ -35,8 +38,8 @@ local function move_pointer_to_pixels(pos, pindex)
    local x = math.ceil(pos.x)
    local y = math.ceil(pos.y)
    local text_pos = " " .. x .. "," .. y
-   --print("setCursor " .. pindex .. text_pos)
-   --game.get_player(pindex).print("moved to" .. text_pos, {volume_modifier=0})
+   print("setCursor " .. pindex .. text_pos)
+   game.get_player(pindex).print("moved to" .. text_pos, { volume_modifier = 0 })
 end
 
 ---Moves the mouse pointer to the correct pixel on the screen for an input map position.
