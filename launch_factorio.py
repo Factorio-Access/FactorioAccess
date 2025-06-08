@@ -1693,6 +1693,12 @@ def parse_factorio_args() -> argparse.Namespace:
         metavar="SAVE_NAME",
         help="Run benchmark with save file",
     )
+    
+    factorio_group.add_argument(
+        "--run-tests",
+        action="store_true",
+        help="Run FactorioAccess tests using lab_tiles.zip save file",
+    )
 
     factorio_group.add_argument(
         "--mp-connect",
@@ -1785,6 +1791,99 @@ def parse_factorio_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def parse_test_results(log_path: str) -> Optional[Dict[str, Any]]:
+    """
+    Parse test results from the test log file or JSON results file.
+    
+    Args:
+        log_path: Path to the test log file
+        
+    Returns:
+        Dictionary with test summary or None if parsing fails
+    """
+    # First check for JSON results file
+    script_output_dir = os.path.dirname(log_path)
+    json_path = os.path.join(script_output_dir, "test-results.json")
+    
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, 'r') as f:
+                results = json.loads(f.read())
+                
+            # Calculate success rate
+            success_rate = 0.0
+            if results['total'] > 0:
+                success_rate = (results['passed'] / results['total']) * 100
+                
+            # Format duration
+            duration_str = f"{results['duration']:.2f} seconds"
+            
+            # Format failures
+            failures = []
+            for error in results.get('errors', []):
+                failures.append(f"{error['suite']} - {error['test']}")
+                
+            return {
+                'total': results['total'],
+                'passed': results['passed'],
+                'failed': results['failed'],
+                'success_rate': success_rate,
+                'duration': duration_str,
+                'failures': failures
+            }
+        except Exception as e:
+            print(f"[LLM_DEBUG] Error reading JSON test results: {e}")
+            # Fall back to log parsing
+    
+    if not os.path.exists(log_path):
+        return None
+        
+    try:
+        with open(log_path, 'r') as f:
+            content = f.read()
+            
+        # Look for the test summary (new format)
+        summary_match = re.search(
+            r'Test Results:\s*\nTotal:\s*(\d+)\s*\nPassed:\s*(\d+)\s*\nFailed:\s*(\d+)\s*\nDuration:\s*(\d+\.\d+)\s*seconds',
+            content, re.MULTILINE
+        )
+        
+        if not summary_match:
+            return None
+            
+        total = int(summary_match.group(1))
+        passed = int(summary_match.group(2))
+        failed = int(summary_match.group(3))
+        duration = summary_match.group(4) + " seconds"
+        
+        # Calculate success rate
+        success_rate = 0.0
+        if total > 0:
+            success_rate = (passed / total) * 100
+        
+        # Extract failed test names
+        failures = []
+        for line in content.split('\n'):
+            if '✗' in line and 'TestFramework:' in line:
+                # Extract test name from failure line
+                match = re.search(r'✗ ([^:]+) - ([^:]+):', line)
+                if match:
+                    failures.append(f"{match.group(1)} - {match.group(2)}")
+        
+        return {
+            'total': total,
+            'passed': passed,
+            'failed': failed,
+            'success_rate': success_rate,
+            'duration': duration,
+            'failures': failures
+        }
+        
+    except Exception as e:
+        print(f"[LLM_DEBUG] Error parsing test results: {e}")
+        return None
+
+
 def main():
     """
     Main entry point for Factorio WSL launcher.
@@ -1867,6 +1966,11 @@ def main():
         factorio_args.extend(["--load-game", args.load_game])
     if args.benchmark:
         factorio_args.extend(["--benchmark", args.benchmark])
+    if args.run_tests:
+        # For tests, we use benchmark mode with lab_tiles save
+        factorio_args.extend(["--benchmark", "lab_tiles.zip", "--benchmark-ticks", "5000"])
+        print("[LLM_INFO] Running tests with lab_tiles.zip save file")
+        print("[LLM_INFO] Test output will be shown after completion...")
     if args.mp_connect:
         factorio_args.extend(["--mp-connect", args.mp_connect])
 
@@ -1947,6 +2051,42 @@ def main():
                 else:
                     print(f"\n[LLM_INFO] Factorio exited with code: {exit_code}")
                     print(f"[LLM_INFO] Execution time: {elapsed_time:.2f} seconds")
+            
+            # Check test results if running tests
+            if args.run_tests:
+                # Test log is in Factorio's script-output directory
+                test_log_path = os.path.join(
+                    os.path.dirname(launcher.factorio_path),
+                    "..", "..", "script-output", "factorio-access-test.log"
+                )
+                test_log_path = os.path.normpath(test_log_path)
+                
+                # Parse test results from log
+                test_summary = parse_test_results(test_log_path)
+                
+                if test_summary:
+                    print("\n" + "="*60)
+                    print("TEST RESULTS")
+                    print("="*60)
+                    print(f"Total Tests: {test_summary['total']}")
+                    print(f"Passed:      {test_summary['passed']} ✓")
+                    print(f"Failed:      {test_summary['failed']} ✗")
+                    print(f"Success Rate: {test_summary['success_rate']:.1f}%")
+                    print(f"Duration:    {test_summary['duration']}")
+                    print("="*60)
+                    
+                    if test_summary['failed'] > 0:
+                        print("\nFAILED TESTS:")
+                        for failure in test_summary['failures']:
+                            print(f"  ✗ {failure}")
+                        print(f"\nCheck {test_log_path} for details")
+                        return 1
+                    else:
+                        print("\n✓ All tests passed!")
+                        return 0
+                else:
+                    print("[LLM_WARNING] Test results unclear - check logs")
+                    print(f"Log file: {test_log_path}")
 
             return exit_code
 

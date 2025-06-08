@@ -44,6 +44,8 @@ local ScannerEntrypoint = require("scripts.scanner.entrypoint")
 local TH = require("scripts.table-helpers")
 local WorkQueue = require("scripts.work-queue")
 local Viewpoint = require("scripts.viewpoint")
+local EventManager = require("scripts.event-manager")
+local TestFramework = require("scripts.test-framework")
 
 ---@meta scripts.shared-types
 
@@ -992,7 +994,7 @@ function initialize(player)
 end
 
 --Update the position info and cursor info during smooth walking.
-script.on_event(defines.events.on_player_changed_position, function(event)
+EventManager.on_event(defines.events.on_player_changed_position, function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
@@ -1832,7 +1834,7 @@ function on_player_join(pindex)
    players[pindex].building_direction = dirs.north --
 end
 
-script.on_event(defines.events.on_player_joined_game, function(event)
+EventManager.on_event(defines.events.on_player_joined_game, function(event)
    if game.is_multiplayer() then on_player_join(event.player_index) end
 end)
 
@@ -2012,9 +2014,10 @@ function on_tick(event)
    end
 end
 
-script.on_event(defines.events.on_tick, function(event)
+EventManager.on_event(defines.events.on_tick, function(event)
    on_tick(event)
    WorkQueue.on_tick()
+   TestFramework.on_tick(event)
 end)
 
 --Focuses camera on the cursor position.
@@ -4027,7 +4030,7 @@ local function move_key(direction, event, force_single_tile)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-w", function(event)
+EventManager.on_event("fa-w", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
    if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
@@ -4036,7 +4039,7 @@ script.on_event("fa-w", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-a", function(event)
+EventManager.on_event("fa-a", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
    if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
@@ -4045,7 +4048,7 @@ script.on_event("fa-a", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s", function(event)
+EventManager.on_event("fa-s", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
    if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
@@ -4054,7 +4057,7 @@ script.on_event("fa-s", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-d", function(event)
+EventManager.on_event("fa-d", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
    if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
@@ -5223,7 +5226,7 @@ local function toggle_cursor_mode(pindex, muted)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-i", function(event)
+EventManager.on_event("fa-i", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 

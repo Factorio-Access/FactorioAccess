@@ -125,7 +125,11 @@ Modern graph-based UI architecture in `scripts/ui/`:
 ## Development Patterns
 
 ### Module Structure
+
+**CRITICAL**: Always use `local mod = {}` pattern, never `ModuleName = {}` global pattern:
+
 ```lua
+-- CORRECT: Local module pattern
 local mod = {}
 
 -- Module initialization
@@ -138,12 +142,29 @@ function mod.do_something(pindex)
     -- Implementation
 end
 
--- Event handlers
+-- Event handlers (should be in EventManager, see below)
 script.on_event(defines.events.on_tick, function(event)
     -- Handle event
 end)
 
 return mod
+```
+
+**Event Registration Pattern**: The codebase is transitioning to centralized event management. New code should register events through EventManager:
+
+```lua
+-- In EventManager (scripts/event-manager.lua)
+EventManager.on_event(defines.events.on_built_entity, function(event)
+    -- Handle event
+end)
+
+-- Multiple events with same handler
+EventManager.on_event({
+    defines.events.on_player_joined_game,
+    defines.events.on_player_left_game,
+}, function(event)
+    -- Handle either event
+end)
 ```
 
 ### Common Function Patterns
@@ -196,8 +217,14 @@ python3 launch_factorio.py --timeout 10 -- --version
 # Load a save for testing
 python3 launch_factorio.py --timeout 300 --load-game mysave.zip
 
+# Run automated tests
+python3 launch_factorio.py --run-tests --timeout 30
+
 # Run linter
 python3 launch_factorio.py --lint
+
+# Apply formatting (runs stylua)
+python3 launch_factorio.py --format
 
 # Check formatting
 python3 launch_factorio.py --format-check
@@ -205,6 +232,45 @@ python3 launch_factorio.py --format-check
 # GUI testing with screenshots
 python3 launch_factorio.py --gui-test --suppress-window --timeout 60
 ```
+
+### Writing Tests
+
+The mod has a custom test framework in `scripts/test-framework.lua` and `scripts/test-registry.lua`:
+
+```lua
+-- Example test file in scripts/tests/
+describe("Feature Tests", function()
+   it("should do something", function(ctx)
+      -- Use local variables, not ctx.state!
+      local test_value = 42
+      local player
+      
+      ctx:init(function()
+         -- Runs once at test start
+         player = game.get_player(1)
+         -- Do NOT use game.create_player() - it doesn't exist!
+      end)
+      
+      ctx:at_tick(5, function()
+         -- Runs at tick 5
+         test_value = test_value + 1
+         ctx:assert_equals(43, test_value)
+      end)
+      
+      ctx:in_ticks(10, function()
+         -- Runs 10 ticks after previous action
+         -- Local variables persist across tick handlers!
+      end)
+   end)
+end)
+```
+
+**Key Testing Insights**:
+- Use local variables instead of `ctx.state` - Lua closures handle state persistence
+- Never test Factorio API behavior - test your mod's functionality
+- Mock events with `EventManager.mock_event()`
+- Remove empty `ctx:at_tick` handlers - they're unnecessary
+- The test framework handles EventManager test mode automatically
 
 ## Performance Considerations
 
@@ -233,6 +299,10 @@ end
 4. **Coordinate systems** - Factorio uses centered coordinates, not tile corners
 5. **Direction constants** - Use `directions.north` etc, not magic numbers
 6. **Localization** - Never hardcode strings, always use locale system
+7. **game.create_player() doesn't exist** - Players are created by the game, not mods. Use `game.get_player(index)` instead
+8. **Module pattern mistakes** - Use `local mod = {}`, never global `ModuleName = {}`
+9. **Testing antipatterns** - Don't test Factorio's API, test your mod's behavior
+10. **Recipe API** - Use `prototypes.recipe["name"]` not `game.recipe_prototypes` (2.0 change)
 
 ## Adding New Features
 
@@ -252,6 +322,35 @@ end
 - **Circuit Networks**: Broken - wire connection features not functional
 - **Various 1.1 code**: May crash when called due to API differences
 
+### EventManager Migration (In Progress)
+
+The codebase is transitioning from direct `script.on_event` calls scattered throughout modules to centralized event management in `EventManager`. This migration is about 10% complete:
+
+**Current State**:
+- EventManager exists and works for new code
+- ~159 event registrations still in control.lua need migration
+- Most modules still use direct script.on_event
+
+**Migration Pattern**:
+```lua
+-- OLD: Direct registration in module
+script.on_event(defines.events.on_built_entity, function(event)
+    -- handler code
+end)
+
+-- NEW: Register through EventManager
+local EventManager = require("scripts.event-manager")
+EventManager.on_event(defines.events.on_built_entity, function(event)
+    -- handler code
+end)
+```
+
+**Benefits**:
+- Centralized error handling
+- Event mocking for tests
+- Better debugging capabilities
+- Cleaner module separation
+
 ## Debugging Tips
 
 1. **Use game.print()** for debugging - prints to console instead of screen reader
@@ -264,10 +363,14 @@ end
 - `control.lua` - Main runtime entry, loads all modules
 - `scripts/fa-utils.lua` - Core utilities used everywhere  
 - `scripts/storage-manager.lua` - Storage system
+- `scripts/event-manager.lua` - Centralized event handling (transition in progress)
 - `scripts/localising.lua` - Translation/localization
 - `scripts/message-builder.lua` - Complex message construction
 - `scripts/building-tools.lua` - Building placement/interaction
 - `scripts/scanner/` - Entity finding system (see scanner-related files)
+- `scripts/test-framework.lua` - Test runner and TestContext
+- `scripts/test-registry.lua` - Test registration (describe/it functions)
+- `scripts/tests/` - Test files (run with --run-tests)
 - `launch_factorio.py` - Development launcher with linting
 
 ## Working with the Scanner
@@ -294,6 +397,7 @@ When making changes:
 4. **Update locale** - All strings must be translatable
 5. **Document complex logic** - Future maintainers will thank you
 6. **Test manually** - Play with the feature using a screen reader
+7. **Write automated tests** - Add tests in `scripts/tests/` when possible
 
 ## External Communication
 

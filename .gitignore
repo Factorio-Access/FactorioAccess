@@ -1,3 +1,4 @@
 *.code-workspace
 __pycache__
 *.zip
+!lab_tiles.zip
