@@ -17,9 +17,7 @@ local mod = {}
 local function get_pixel_pos_onscreen_center(position, pindex)
    local player = game.get_player(pindex)
    local screen_size = player.display_resolution
-   game.print(serpent.line(screen_size))
    local screen_center = fa_utils.mult_position({ x = screen_size.width, y = screen_size.height }, 0.5)
-   game.print(serpent.line(screen_center))
    local tile_offest = fa_utils.sub_position(position, player.position)
    local scale = base_pixels_per_tile * player.zoom * player.display_density_scale
    local pixel_offset = fa_utils.mult_position(tile_offest, scale)
