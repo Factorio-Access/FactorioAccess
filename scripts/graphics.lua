@@ -189,7 +189,7 @@ function mod.sync_build_cursor_graphics(pindex)
    if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result then
       --Redraw direction indicator arrow
       if dir_indicator ~= nil then player.building_dir_arrow.destroy() end
-      local arrow_pos = player.cursor_pos
+      local arrow_pos = vp:get_cursor_pos()
       if players[pindex].build_lock and not cursor_enabled and stack.name ~= "rail" then
          arrow_pos =
             fa_utils.center_of_tile(fa_utils.offset_position_legacy(arrow_pos, players[pindex].player_direction, -2))
@@ -227,7 +227,7 @@ function mod.sync_build_cursor_graphics(pindex)
          width = stack.prototype.place_result.tile_height
       end
 
-      left_top = { x = math.floor(player.cursor_pos.x), y = math.floor(player.cursor_pos.y) }
+      left_top = { x = math.floor(vp:get_cursor_pos().x), y = math.floor(vp:get_cursor_pos().y) }
       right_bottom = { x = (left_top.x + width), y = (left_top.y + height) }
 
       if not player.cursor then
@@ -290,7 +290,7 @@ function mod.sync_build_cursor_graphics(pindex)
          fa_mouse.move_mouse_pointer(new_pos, pindex)
       else
          --Adjust for direct placement
-         local pos = player.cursor_pos
+         local pos = vp:get_cursor_pos()
          if p_dir == dirs.north then
             pos = fa_utils.offset_position_legacy(pos, dirs.north, height / 2 - 0.5)
             pos = fa_utils.offset_position_legacy(pos, dirs.east, width / 2 - 0.5)
@@ -332,7 +332,7 @@ function mod.sync_build_cursor_graphics(pindex)
       --Blueprints have their own data:
       --Redraw the direction indicator arrow
       if dir_indicator ~= nil then player.building_dir_arrow.destroy() end
-      local arrow_pos = player.cursor_pos
+      local arrow_pos = vp:get_cursor_pos()
       local dir = players[pindex].blueprint_hand_direction
       if dir == nil then
          players[pindex].blueprint_hand_direction = dirs.north
@@ -355,7 +355,7 @@ function mod.sync_build_cursor_graphics(pindex)
       local bp_width = players[pindex].blueprint_width_in_hand
       local bp_height = players[pindex].blueprint_height_in_hand
       if bp_width ~= nil then
-         local left_top = { x = math.floor(player.cursor_pos.x), y = math.floor(player.cursor_pos.y) }
+         local left_top = { x = math.floor(vp:get_cursor_pos().x), y = math.floor(vp:get_cursor_pos().y) }
          local right_bottom = { x = (left_top.x + bp_width), y = (left_top.y + bp_height) }
          local center_pos = { x = (left_top.x + bp_width / 2), y = (left_top.y + bp_height / 2) }
          player.building_footprint = rendering.draw_rectangle({
