@@ -1,7 +1,33 @@
-IMPORTANT: if you find that docs are not matching reality it may be the docs that are incorrect.  If you cannot determine which, ask!  If the docs are wrong, fix them!
+IMPORTANT: if you find that docs are not matching reality it may be the docs that are incorrect.  If you cannot
+determine which, ask!  If the docs are wrong, fix them!
+
 # CLAUDE.md - FactorioAccess Development Guide for LLMs
 
-This document is designed to help LLMs (particularly Claude) understand and effectively work on the FactorioAccess mod codebase. FactorioAccess makes the complex visual game Factorio fully playable by blind and visually impaired players through audio cues and keyboard controls.
+This document is designed to help LLMs (particularly Claude) understand and effectively work on the FactorioAccess mod
+codebase. FactorioAccess makes the complex visual game Factorio fully playable by blind and visually impaired players
+through audio cues and keyboard controls.
+
+## From the Human
+
+After a lot of working with you I have seen your antipatterns, so I am going to lay them out here.
+
+- Everything, everything goes through the launcher script launch_factorio.py. Tests, formatting,  you name it.
+- Always run tests. Always format your changes.
+- Remember that there is Factorio the game, and Factorio Access the mod, and these are separate.  We do not control the
+  game. We should not test the game APIs, only the mod.
+- Many files here are huge.  If you read entire files you will exhaust your context window extremely rapidly.  Prefer
+  rg/grep and partial reads.
+- game.print is wrong.  You cannot see game.print because it only goes to the GUI.  You want print or the logging
+  framework.
+- One-time init of local state that does not depend on the Factorio API may be done at the top level of files.
+- There are conflicting patterns and varying code quality.  This is particularly true of localisation.  fa-info.lua and
+  mesage-builder.lua contain the proper patterns for localisations.  Others, either ask the human or use the one that
+  leads to the best code quality.
+- You currently have no real control over the GUI, only via tests.  Use tests and code hacks to explore.
+- Do not use globals beyond the current file. `_G.whatever = whatever` is cheating.  Do not do this.
+- Requires only execute at the top-level file.  Any other level and the require will crash at runtime.
+- Always add LuaLS annotations.
+
 
 ## Quick Start
 
@@ -150,7 +176,8 @@ end)
 return mod
 ```
 
-**Event Registration Pattern**: The codebase is transitioning to centralized event management. New code should register events through EventManager:
+**Event Registration Pattern**: The codebase is transitioning to centralized event management. New code should register
+events through EventManager:
 
 ```lua
 -- In EventManager (scripts/event-manager.lua)
@@ -299,7 +326,8 @@ end
 4. **Coordinate systems** - Factorio uses centered coordinates, not tile corners
 5. **Direction constants** - Use `directions.north` etc, not magic numbers
 6. **Localization** - Never hardcode strings, always use locale system
-7. **game.create_player() doesn't exist** - Players are created by the game, not mods. Use `game.get_player(index)` instead
+7. **game.create_player() doesn't exist** - Players are created by the game, not mods. Use `game.get_player(index)`
+   instead
 8. **Module pattern mistakes** - Use `local mod = {}`, never global `ModuleName = {}`
 9. **Testing antipatterns** - Don't test Factorio's API, test your mod's behavior
 10. **Recipe API** - Use `prototypes.recipe["name"]` not `game.recipe_prototypes` (2.0 change)
@@ -316,7 +344,8 @@ end
 
 ## Known Issues (Factorio 2.0 Migration)
 
-**IMPORTANT**: The mod is halfway through migration from Factorio 1.1 to 2.0. Many features may crash due to API changes.
+**IMPORTANT**: The mod is halfway through migration from Factorio 1.1 to 2.0. Many features may crash due to API
+changes.
 
 - **Rails**: Currently broken - avoid working on rail-related features
 - **Circuit Networks**: Broken - wire connection features not functional
@@ -324,7 +353,8 @@ end
 
 ### EventManager Migration (In Progress)
 
-The codebase is transitioning from direct `script.on_event` calls scattered throughout modules to centralized event management in `EventManager`. This migration is about 10% complete:
+The codebase is transitioning from direct `script.on_event` calls scattered throughout modules to centralized event
+management in `EventManager`. This migration is about 10% complete:
 
 **Current State**:
 - EventManager exists and works for new code
@@ -416,4 +446,5 @@ The launcher handles text-to-speech conversion. This is why `printout()` is used
 - GitHub issues - Bug reports and feature requests
 - Discord community - User feedback and testing
 
-Remember: This mod makes a complex visual game accessible to blind players. Every feature must be designed with audio-first interaction in mind. When in doubt, play-test with a screen reader!
+Remember: This mod makes a complex visual game accessible to blind players. Every feature must be designed with
+audio-first interaction in mind. When in doubt, play-test with a screen reader!
