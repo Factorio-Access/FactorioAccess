@@ -6871,9 +6871,13 @@ script.on_event("fa-leftbracket", function(event)
    if players[pindex].last_click_tick == event.tick then return end
    local stack = game.get_player(pindex).cursor_stack
    local ghost = game.get_player(pindex).cursor_ghost
-   if router:is_ui_open() then kb_click_menu(event) end
-   if ghost or (stack and stack.valid_for_read and stack.valid) then kb_click_hand(event) end
-   if players[pindex].vanilla_mode == false then kb_click_entity(event) end
+   if router:is_ui_open() then
+      kb_click_menu(event)
+   elseif ghost or (stack and stack.valid_for_read and stack.valid) then
+      kb_click_hand(event)
+   elseif players[pindex].vanilla_mode == false then
+      kb_click_entity(event)
+   end
 end)
 
 --Right click actions in menus (click_menu)
@@ -7099,9 +7103,11 @@ script.on_event("fa-rightbracket", function(event)
    if players[pindex].last_click_tick == event.tick then return end
    local router = UiRouter.get_router(pindex)
    local stack = game.get_player(pindex).cursor_stack
-   if router:is_ui_open() then kb_click_menu_right(event) end
-   if stack and stack.valid_for_read and stack.valid then kb_click_hand_right(event) end
-   if not router:is_ui_one_of({ UiRouter.UI_NAMES.CRAFTING, UiRouter.UI_NAMES.CRAFTING_QUEUE }) then
+   if router:is_ui_open() then
+      kb_click_menu_right(event)
+   elseif stack and stack.valid_for_read and stack.valid then
+      kb_click_hand_right(event)
+   elseif not router:is_ui_one_of({ UiRouter.UI_NAMES.CRAFTING, UiRouter.UI_NAMES.CRAFTING_QUEUE }) then
       kb_read_entity_status(event)
    end
 end)
