@@ -33,16 +33,11 @@ local TEST_LOG_FILE = "factorio-access-test.log"
 -- Current log target
 local current_log_file = LOG_FILE
 
--- Buffer for batched writes (performance optimization)
-local log_buffer = {}
-local BUFFER_SIZE = 10
-local last_flush_tick = 0
-local FLUSH_INTERVAL = 60 -- Flush every second at 60 ticks/sec
-
 -- Initialize the logger
 function mod.init()
    -- Clear the log file on startup
-   helpers.write_file(current_log_file, "", false)
+   helpers.write_file(LOG_FILE, "", false)
+   helpers.write_file(TEST_LOG_FILE, "", false)
    mod.info("mod", "mod initialized")
 end
 
@@ -64,7 +59,6 @@ end
 
 -- Switch to test log file
 function mod.use_test_log()
-   mod.flush() -- Flush any pending logs
    current_log_file = TEST_LOG_FILE
    helpers.write_file(current_log_file, "", false) -- Clear test log
    mod.info("mod", "Switched to test log file")
@@ -72,7 +66,6 @@ end
 
 -- Switch back to main log file
 function mod.use_main_log()
-   mod.flush() -- Flush any pending logs
    current_log_file = LOG_FILE
    mod.info("mod", "Switched to main log file")
 end
@@ -90,20 +83,7 @@ local function write_log(level, module, message)
    if level < mod.current_level then return end
 
    local formatted = format_message(level, module, message)
-   table.insert(log_buffer, formatted)
-
-   -- Flush if buffer is full or enough time has passed
-   if #log_buffer >= BUFFER_SIZE or (game and game.tick - last_flush_tick >= FLUSH_INTERVAL) then mod.flush() end
-end
-
--- Flush the log buffer
-function mod.flush()
-   if #log_buffer == 0 then return end
-
-   local content = table.concat(log_buffer)
-   helpers.write_file(current_log_file, content, true) -- Append mode
-   log_buffer = {}
-   last_flush_tick = game and game.tick or 0
+   helpers.write_file(current_log_file, formatted, true) -- Append mode
 end
 
 -- Log at DEBUG level
@@ -154,13 +134,6 @@ function mod.log_event(event_name, event_data)
       end
       write_log(mod.LEVELS.DEBUG, "EventManager", message)
    end
-end
-
--- Register periodic flush (called from control.lua after initialization)
-function mod.register_flush_handler()
-   if script then script.on_nth_tick(60, function()
-      mod.flush()
-   end) end
 end
 
 -- Make Logger globally available

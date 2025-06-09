@@ -7,6 +7,19 @@ local TestRegistry = require("scripts.test-registry")
 
 local mod = {}
 
+-- Logger wrapper to handle cases where Logger isn't initialized yet
+local function log_info(module, message)
+   if _G.Logger then Logger.info(module, message) end
+end
+
+local function log_warn(module, message)
+   if _G.Logger then Logger.warn(module, message) end
+end
+
+local function log_error(module, message)
+   if _G.Logger then Logger.error(module, message) end
+end
+
 -- Test files to load
 local test_files = {
    -- Integration/smoke tests as per claude-prompt.md
@@ -126,12 +139,12 @@ end
 --- Run all registered tests
 function mod.run_all()
    if is_running then
-      Logger.warn("TestFramework", "Tests are already running")
+      log_warn("TestFramework", "Tests are already running")
       return
    end
 
-   Logger.info("TestFramework", "Starting test run")
-   Logger.use_test_log()
+   log_info("TestFramework", "Starting test run")
+   if _G.Logger then Logger.use_test_log() end
 
    -- Enable test modes
    EventManager.enable_test_mode()
@@ -148,12 +161,12 @@ function mod.run_all()
    }
 
    local test_suites = TestRegistry.get_test_suites()
-   Logger.info("TestFramework", "Found " .. #test_suites .. " test suites")
+   log_info("TestFramework", "Found " .. #test_suites .. " test suites")
 
    -- Build test queue
    test_queue = {}
    for _, suite in ipairs(test_suites) do
-      Logger.info("TestFramework", "Suite '" .. suite.name .. "' has " .. #suite.tests .. " tests")
+      log_info("TestFramework", "Suite '" .. suite.name .. "' has " .. #suite.tests .. " tests")
       for _, test in ipairs(suite.tests) do
          table.insert(test_queue, {
             suite = suite,
@@ -163,7 +176,7 @@ function mod.run_all()
    end
 
    test_results.total = #test_queue
-   Logger.info("TestFramework", "Total tests to run: " .. test_results.total)
+   log_info("TestFramework", "Total tests to run: " .. test_results.total)
 
    -- Start first test
    if #test_queue > 0 then
@@ -171,6 +184,23 @@ function mod.run_all()
    else
       mod._finish_tests()
    end
+end
+
+--- Check if the current save is a test save
+-- Test saves are identified by having a lab tile at position 0,0
+-- @return boolean True if this is a test save
+function mod.is_test_save()
+   if not game then return false end
+
+   local surface = game.surfaces[1]
+   if not surface then return false end
+
+   -- Get the tile at position 0,0
+   local tile = surface.get_tile(0, 0)
+   if not tile or not tile.valid then return false end
+
+   -- Check if it's a lab tile (any tile starting with "lab-")
+   return string.find(tile.name, "^lab%-") ~= nil
 end
 
 --- Internal: Reset game state between tests
@@ -227,19 +257,19 @@ function mod._run_next_test()
       start_tick = game.tick,
    }
 
-   Logger.info("TestFramework", string.format("Running test: %s - %s", current_test.suite.name, current_test.test.name))
+   log_info("TestFramework", string.format("Running test: %s - %s", current_test.suite.name, current_test.test.name))
 
    -- Run before_all if this is the first test in the suite
    if test_data.suite.before_all and not test_data.suite._before_all_run then
       local success, err = pcall(test_data.suite.before_all)
-      if not success then Logger.error("TestFramework", "before_all failed: " .. tostring(err)) end
+      if not success then log_error("TestFramework", "before_all failed: " .. tostring(err)) end
       test_data.suite._before_all_run = true
    end
 
    -- Run before_each
    if test_data.suite.before_each then
       local success, err = pcall(test_data.suite.before_each)
-      if not success then Logger.error("TestFramework", "before_each failed: " .. tostring(err)) end
+      if not success then log_error("TestFramework", "before_each failed: " .. tostring(err)) end
    end
 
    -- Execute the test function to build the test plan
@@ -252,16 +282,16 @@ function mod._run_next_test()
    -- Schedule init function for NEXT tick to ensure it runs
    if current_test.context.init_func then
       local init_tick = game.tick + 1
-      Logger.info("TestFramework", "Scheduling init function for tick " .. init_tick)
+      log_info("TestFramework", "Scheduling init function for tick " .. init_tick)
       scheduled_actions[init_tick] = scheduled_actions[init_tick] or {}
       local ctx = current_test.context
       table.insert(scheduled_actions[init_tick], function()
-         Logger.info("TestFramework", "Running init function")
+         log_info("TestFramework", "Running init function")
          local init_success, init_err = pcall(current_test.context.init_func)
          if not init_success then mod._complete_test(false, init_err) end
       end)
    else
-      Logger.info("TestFramework", "No init function for test")
+      log_info("TestFramework", "No init function for test")
    end
 
    -- Schedule all actions (starting from next tick after init)
@@ -275,7 +305,7 @@ function mod._run_next_test()
 
       scheduled_actions[current_tick] = scheduled_actions[current_tick] or {}
       -- Execute the action function (it already has access to ctx via closure)
-      Logger.info("TestFramework", string.format("Scheduling action for tick %d (type: %s)", current_tick, action.type))
+      log_info("TestFramework", string.format("Scheduling action for tick %d (type: %s)", current_tick, action.type))
       table.insert(scheduled_actions[current_tick], function()
          action.func()
       end)
@@ -311,7 +341,7 @@ function mod._complete_test(passed, error_msg)
    -- Record result
    if passed then
       test_results.passed = test_results.passed + 1
-      Logger.info("TestFramework", string.format("✓ %s - %s", current_test.suite.name, current_test.test.name))
+      log_info("TestFramework", string.format("✓ %s - %s", current_test.suite.name, current_test.test.name))
    else
       test_results.failed = test_results.failed + 1
       table.insert(test_results.errors, {
@@ -319,7 +349,7 @@ function mod._complete_test(passed, error_msg)
          test = current_test.test.name,
          error = error_msg or "Unknown error",
       })
-      Logger.error(
+      log_error(
          "TestFramework",
          string.format("✗ %s - %s: %s", current_test.suite.name, current_test.test.name, error_msg or "Unknown error")
       )
@@ -347,7 +377,7 @@ function mod._finish_tests()
    local duration = (game.tick - start_tick) / 60
 
    -- Log results
-   Logger.info(
+   log_info(
       "TestFramework",
       string.format(
          "\nTest Results:\n" .. "Total: %d\n" .. "Passed: %d\n" .. "Failed: %d\n" .. "Duration: %.2f seconds",
@@ -360,17 +390,18 @@ function mod._finish_tests()
 
    -- Log errors
    if #test_results.errors > 0 then
-      Logger.error("TestFramework", "\nFailed Tests:")
+      log_error("TestFramework", "\nFailed Tests:")
       for _, error in ipairs(test_results.errors) do
-         Logger.error("TestFramework", string.format("  %s - %s: %s", error.suite, error.test, error.error))
+         log_error("TestFramework", string.format("  %s - %s: %s", error.suite, error.test, error.error))
       end
    end
 
    -- Flush logs
-   Logger.flush()
-
-   -- Switch back to main log
-   Logger.use_main_log()
+   if _G.Logger then
+      Logger.flush()
+      -- Switch back to main log
+      Logger.use_main_log()
+   end
 
    -- Print summary to console
    print(string.format("\nTest run complete: %d/%d passed", test_results.passed, test_results.total))
@@ -401,7 +432,7 @@ function mod.on_tick(event)
 
    local actions = scheduled_actions[event.tick]
    if actions then
-      Logger.info("TestFramework", string.format("Running %d scheduled actions for tick %d", #actions, event.tick))
+      log_info("TestFramework", string.format("Running %d scheduled actions for tick %d", #actions, event.tick))
       for _, action in ipairs(actions) do
          local success, err = xpcall(action, debug.traceback)
          if not success and current_test then
@@ -430,8 +461,13 @@ end
 function mod.load_tests()
    -- Just log the summary since tests are already loaded
    local test_suites = TestRegistry.get_test_suites()
-   if _G.Logger then
-      Logger.info("TestFramework", "Test loading complete. " .. #test_suites .. " suites registered.")
+   if _G.Logger then log_info("TestFramework", "Test loading complete. " .. #test_suites .. " suites registered.") end
+end
+
+function mod.on_init()
+   if mod.is_test_save() then
+      log_info("TestFramework", "Detected test save, initializing test framework")
+      mod.run_all()
    end
 end
 

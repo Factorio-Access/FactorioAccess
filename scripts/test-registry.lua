@@ -102,6 +102,8 @@ function mod.describe(suite_name, suite_func)
 
    if _G.Logger then
       Logger.info("TestRegistry", "Registered test suite: " .. suite_name .. " with " .. #suite.tests .. " tests")
+   else
+      print("[TestRegistry] Registered test suite: " .. suite_name .. " with " .. #suite.tests .. " tests")
    end
 end
 
