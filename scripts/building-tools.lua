@@ -624,7 +624,7 @@ function mod.build_preview_checks_info(stack, pindex)
    if
       ent_p.tile_width <= 1
       and ent_p.tile_height <= 1
-      and not surf.can_place_entity({ name = stack.name, position = pos, direction = build_dir })
+      and not surf.can_place_entity({ name = ent_p.name, position = pos, direction = build_dir })
    then
       return " cannot place this here "
    end
