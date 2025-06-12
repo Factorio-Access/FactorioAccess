@@ -8,6 +8,7 @@ local StorageManager = require("scripts.storage-manager")
 -- it.
 local SparseBitset = require("scripts.ds.sparse-bitset")
 local SEB = require("scripts.scanner.backends.single-entity")
+local IcebergBackend = require("scripts.scanner.backends.iceberg")
 local TreeBackend = require("scripts.scanner.backends.trees")
 local WaterBackend = require("scripts.scanner.backends.water")
 local TH = require("scripts.table-helpers")
@@ -146,6 +147,7 @@ end)
 ---@class fa.scanner.SurfaceBackends
 ---@field lut table<string, fa.scanner.ScannerBackend>
 ---@field name_lut table<string, fa.scanner.ScannerBackend>
+---@field iceberg_backend fa.scanner.IcebergBackend
 ---@field water_backend fa.scanner.WaterBackend
 
 -- Instantiate a set of backends, later wired up to a surface, by iterating over
@@ -172,6 +174,7 @@ local function instantiate_backends(surface)
    return {
       lut = lut,
       name_lut = name_lut,
+      iceberg_backend = IcebergBackend.IcebergBackend.new(surface),
       water_backend = WaterBackend.WaterBackend.new(surface),
    }
 end
@@ -200,7 +203,7 @@ end
 local surface_state = StorageManager.declare_storage_module(
    "scanner",
    new_empty_surface,
-   { root_field = "surfaces", ephemeral_state_version = 8 }
+   { root_field = "surfaces", ephemeral_state_version = 9 }
 )
 
 -- Given a backend setup and an array of entities, dispatch the entities to the
@@ -263,6 +266,7 @@ local function scan_chunk(cmd)
 
    if not state.seen_chunks[cx][cy] then
       state.seen_chunks[cx][cy] = true
+      state.backends.iceberg_backend:on_new_chunk(chunk)
       state.backends.water_backend:on_new_chunk(chunk)
    end
 end
@@ -372,6 +376,7 @@ function mod.get_entries_snapshot(surface_index, player, callback)
       end
    end
 
+   state.backends.iceberg_backend:dump_entries_to_callback(player, callback)
    state.backends.water_backend:dump_entries_to_callback(player, callback)
 end
 

@@ -70,4 +70,13 @@ mod.WATER_TILE_DISTANCE = 10
 mod.WATER_PROTOS =
    { "water", "deepwater", "water-green", "deepwater-green", "water-shallow", "water-mud", "water-wube" }
 
+-- How far apart must tiles be to be in the same iceberg?  2.1 is chosen
+-- because it allows for tiny bits of water not to get in the way, causes
+-- diagonal tiles to connect, and leaves a bit of room for floating point error.
+mod.ICEBERG_TILE_DISTANCE = 10
+
+-- No clue if modded icebergs is a thing. If it is we can extend the list.
+mod.ICEBERG_PROTOS =
+   { "brash-ice", "ice-rough", "ice-smooth", "snow-crests", "snow-flat", "snow-lumpy", "snow-patchy" }
+
 return mod
