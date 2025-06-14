@@ -1246,4 +1246,24 @@ function mod.find_prototype(name)
    return nil
 end
 
+-- Get the effective position for distance checks and relative vectors (cursor position when in cursor mode, player position otherwise)
+---@param pindex number
+---@return fa.Point
+function mod.get_player_relative_origin(pindex)
+   local player = game.get_player(pindex)
+   assert(player)
+
+   local vp = Viewpoint:get(pindex)
+
+   -- Check if in cursor mode
+   if vp:get_cursor_enabled() then
+      return vp:get_cursor_pos()
+   elseif player.character then
+      return { x = player.character.position.x, y = player.character.position.y }
+   else
+      -- God mode or similar - use player position
+      return { x = player.position, y = player.position }
+   end
+end
+
 return mod

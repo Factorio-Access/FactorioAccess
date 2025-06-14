@@ -611,10 +611,16 @@ function mod.player_logistic_requests_summary_info(pindex)
    local msg = MessageBuilder.MessageBuilder.new()
    local char = p.character
 
-   local network = p.surface.find_logistic_network_by_position(p.position, p.force)
+   local position = fa_utils.get_player_cursor_position(pindex)
+   if not position then
+      msg:fragment("Error: Unable to determine position")
+      return msg:build()
+   end
+
+   local network = p.surface.find_logistic_network_by_position(position, p.force)
    if network == nil or not network.valid then
       --Check whether in construction range
-      local nearest, min_dist = fa_utils.find_nearest_roboport(p.surface, p.position, 60)
+      local nearest, min_dist = fa_utils.find_nearest_roboport(p.surface, position, 60)
       if nearest == nil or min_dist > 55 then
          msg:fragment("Not in a network.")
       else
@@ -622,7 +628,7 @@ function mod.player_logistic_requests_summary_info(pindex)
       end
    else
       --Definitely within range
-      local nearest, min_dist = fa_utils.find_nearest_roboport(p.surface, p.position, 30)
+      local nearest, min_dist = fa_utils.find_nearest_roboport(p.surface, position, 30)
       msg:list_item("In network"):fragment(nearest.backer_name)
    end
 
@@ -682,8 +688,11 @@ function mod.player_logistic_request_read(item_name, pindex, additional_checks)
 
    if additional_checks then
       --Check if inside any logistic network or not (simpler than logistics network info)
-      local network = p.surface.find_logistic_network_by_position(p.position, p.force)
-      if network == nil or not network.valid then result = result .. "Not in a network, " end
+      local position = fa_utils.get_player_cursor_position(pindex)
+      if position then
+         local network = p.surface.find_logistic_network_by_position(position, p.force)
+         if network == nil or not network.valid then result = result .. "Not in a network, " end
+      end
 
       --Check if personal logistics are enabled
       if not personal_logistics_enabled(pindex) then result = result .. "Requests paused, " end
