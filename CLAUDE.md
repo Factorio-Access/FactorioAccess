@@ -16,18 +16,27 @@ After a lot of working with you I have seen your antipatterns, so I am going to 
 - Remember that there is Factorio the game, and Factorio Access the mod, and these are separate.  We do not control the
   game. We should not test the game APIs, only the mod.
 - Many files here are huge.  If you read entire files you will exhaust your context window extremely rapidly.  Prefer
-  rg/grep and partial reads.
+  rg/grep, partial reads, or tree-sitter (available via MCP)
 - game.print is wrong.  You cannot see game.print because it only goes to the GUI.  You want print or the logging
   framework.
-- One-time init of local state that does not depend on the Factorio API may be done at the top level of files.
+- One-time init of local state that does not depend on the Factorio API and which does not need to persist across a
+  save/load cycle may be done at the top level of files.
 - There are conflicting patterns and varying code quality.  This is particularly true of localisation.  fa-info.lua and
-  mesage-builder.lua contain the proper patterns for localisations.  Others, either ask the human or use the one that
-  leads to the best code quality.
+  mesage-builder.lua contain the proper patterns for localisations.  For others, either ask the human or use the one
+  that leads to the best code quality.
 - You currently have no real control over the GUI, only via tests.  Use tests and code hacks to explore.
 - Do not use globals beyond the current file. `_G.whatever = whatever` is cheating.  Do not do this.
 - Requires only execute at the top-level file.  Any other level and the require will crash at runtime.
 - Always add LuaLS annotations.
 
+control.lua is a problematic file because it is 10000 lines or so.  You are strongly encouraged to explore it with
+tree-sitter, subagents, or rg/grep.  If you repeatedly read it, it will fill your context window.  If you must read it,
+read it once only to prevent this problem.
+
+If you do not detect the tree-sitter MCP server, stop, warn the user, point them at
+https://github.com/wrale/mcp-server-tree-sitter, and ask if they wish to proceed without it.  This is a multi-developer
+project so it is not guaranteed to be present.  If you don't check, the user will unknowingly have problems due to the
+control.lua issues.
 
 ## Quick Start
 
