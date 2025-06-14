@@ -5,31 +5,21 @@ Handle research for a player. This means:
 - Announcing the requirements, either in science packs or trigger conditions.
 - Managing the research queue.
 
-Broadly speaking this is all pretty simple.  The complexity comes in with
-handling successor researches and the like.
+Broadly speaking this is all pretty simple.  The complexity comes in with handling successor researches and the like.
 
-This module handles announcements.  Those announcements are in
-locale/en/research.cfg.
+This module handles announcements.  Those announcements are in locale/en/research.cfg.
 
-Note that some 2.0 technologies do not have descriptions and names because they
-are not necessarily to be shown to the player. To deal with this, you may add
-support by adding to research.cfg  a key of the form
-research-technology-name-prototype-name and
-research-technology-description-prototype-name, e.g.
+Note that some 2.0 technologies do not have descriptions and names because they are not necessarily to be shown to the
+player. To deal with this, you may add support by adding to research.cfg  a key of the form
+research-technology-name-prototype-name and research-technology-description-prototype-name, e.g.
 research-technology-name-steam-power.
 
-Note also that this module does not yet handle hidden researches. The first goal
-is to get 2.0 parity to 1.1, and 1.1's version of the mod currently doesn't.
+This module's primary public interface are the menu_xxx  s which correspond to inputs.  Until we have a better UI setup,
+we do what we can to at least pull that out. They get called from control.lua at appropriate points.
 
-This module's primary public interface are the menu_xxx  s which
-correspond to inputs.  Until we have a better UI setup, we do what we can to at
-least pull that out. They get called from control.lua at appropriate points.
-
-After a bunch of thought the underlying representation of the lists is a flat
-array tagged with the category each thing goes in e.g. locked etc.  This lets us
-represent the position with an index.  That complicates things a bit, but
-greatly simplifies menu search.  Hopefully, this can be revisited in future once
-we have better UI abstractions.
+After a bunch of thought the underlying representation of the lists is a flat array tagged with the category each thing
+goes in e.g. locked etc.  This lets us represent the position with an index.  That complicates things a bit, but greatly
+simplifies menu search.  Hopefully, this can be revisited in future once we have better UI abstractions.
 ]]
 local Consts = require("scripts.consts")
 local DataToRuntimeMap = require("scripts.data-to-runtime-map")
@@ -183,16 +173,16 @@ local function localise_science_cost(tech)
    -- How many "rounds" of the ingredients will be needed.
    local units = tech.research_unit_count
 
-   -- By the types, technically these ingredients can be fluids. Fluids can't
-   -- happen because the actual prototype only accepts tools.
+   -- By the types, technically these ingredients can be fluids. Fluids can't happen because the actual prototype only
+   -- accepts tools.
    local ingredients = {}
 
    for _, ingredient in pairs(tech.research_unit_ingredients) do
       ingredients[ingredient.name] = (ingredients[ingredient.name] or 0) + ingredient.amount
    end
 
-   -- Now invert this.  Then we get groups for "free". We will announce greatest
-   -- to least, so use negatives and table-helpers helps us table.
+   -- Now invert this.  Then we get groups for "free". We will announce greatest to least, so use negatives and
+   -- table-helpers helps us table.
    local groups = TH.defaulting_table()
    for name, amount in pairs(ingredients) do
       local real = amount * units
@@ -240,6 +230,7 @@ local function localise_research_requirements(tech)
 
    if not next(tech.prerequisites) then return trig_or_cost end
 
+   ---@type LocalisedString
    local prereqs = {}
    for k, v in pairs(tech.prerequisites) do
       table.insert(prereqs, v)
@@ -272,36 +263,36 @@ local function localise_research_rewards(player, tech)
    local indirect_unlock_count = 0
    local recipes = {}
 
-   -- Figure out the technologies this technology unlocks, if it has not yet
-   -- been researched.  If it has, then just leave these two parts out.
+   -- Figure out the technologies this technology unlocks, if it has not yet been researched.  If it has, then just
+   -- leave these two parts out.
    if not tech.researched then
-      -- Iterate over all successors. Check that 1, 2, or more predecessors are
-      -- unlocked. If it's exactly one it must be us, otherwise it must be
-      -- indirect. Stop after the second for performance.
+      -- Iterate over all successors. Check that 1, 2, or more predecessors are unlocked. If it's exactly one it must be
+      -- us, otherwise it must be indirect. Stop after the second for performance.
       for _, candidate in pairs(tech.successors) do
-         local locked = 0
-         for name, pred in pairs(candidate.prerequisites) do
-            if not pred.researched then
-               locked = locked + 1
-               if locked > 1 then break end
+         -- Skip hidden successors
+         if not candidate.prototype.hidden then
+            local locked = 0
+            for name, pred in pairs(candidate.prerequisites) do
+               if not pred.researched then
+                  locked = locked + 1
+                  if locked > 1 then break end
+               end
             end
-         end
 
-         if locked == 1 then
-            -- If only one predecessor of this successor was locked, it's us and
-            -- will unlock after this research.
-            table.insert(direct_unlocks, candidate)
-         elseif locked > 1 then
-            indirect_unlock_count = indirect_unlock_count + 1
+            if locked == 1 then
+               -- If only one predecessor of this successor was locked, it's us and will unlock after this research.
+               table.insert(direct_unlocks, candidate)
+            elseif locked > 1 then
+               indirect_unlock_count = indirect_unlock_count + 1
+            end
          end
       end
    end
 
    local other_bonuses = {}
 
-   -- Go over the rewards collecting them one by one. Carve out our special
-   -- cases, otherwise fallb ack to Vanilla. TODO: we will need to carve out the
-   -- space age bonuses. For now I have ignored them.
+   -- Go over the rewards collecting them one by one. Carve out our special cases, otherwise fallb ack to Vanilla. TODO:
+   -- we will need to carve out the space age bonuses. For now I have ignored them.
    for _, reward in pairs(tech.prototype.effects) do
       if reward.type == "gun-speed" then
          table.insert(other_bonuses, {
@@ -378,7 +369,6 @@ local function localise_research_rewards(player, tech)
 
    if next(direct_unlocks) then
       local unlocks_string = FaUtils.localise_cat_table(
-
          TH.map(direct_unlocks, function(t)
             return Localising.get_localised_name_with_fallback(t)
          end),
@@ -399,20 +389,18 @@ end
 ---@field tech LuaTechnology
 ---@field list fa.research.ResearchList
 
--- Get an array of all technologies for this player, ordered by prototype name
+-- Get an array of all visible technologies for this player, ordered by prototype name
 -- and tagged with the category to which they belong.
 ---@param player LuaPlayer
 ---@return fa.research.ResearchEntry[]
-local function get_researches(player)
+local function get_visible_researches(player)
    ---@type fa.research.ResearchEntry[]
    local res = {}
 
    for name, tech in pairs(player.force.technologies) do
-      -- TODO: for now we don't skip hidden or disabled technologies.  In
-      -- Factorio 2.0, now that they do things based off other triggers besides
-      -- hitting the button, it's the only way a player can know about
-      -- everything.  We may need a whitelist or something like that, but it's
-      -- quite probably not as simple as checking hidden and enabled.
+      -- Skip hidden technologies - they're not meant to be shown to players
+      if tech.prototype.hidden then goto continue end
+
       local list
 
       if tech.researched then
@@ -435,6 +423,8 @@ local function get_researches(player)
          tech = tech,
          list = list,
       })
+
+      ::continue::
    end
 
    table.sort(res, function(a, b)
@@ -444,11 +434,9 @@ local function get_researches(player)
    return res
 end
 
--- Given a position, normalize it to be on a technology in the given list: go
--- down untiln one is found, otherwise go up.  This is needed to handle the case
--- when the research lists are open as a technology changes states.  Returns
--- whether this was possible.  Or put another way, if this returns false then
--- the focused list is empty.
+-- Given a position, normalize it to be on a technology in the given list: go down untiln one is found, otherwise go up.
+-- This is needed to handle the case when the research lists are open as a technology changes states.  Returns whether
+-- this was possible.  Or put another way, if this returns false then the focused list is empty.
 ---@param researches fa.research.ResearchEntry[]
 ---@param pos fa.research.ResearchMenuPosition
 ---@return boolean
@@ -473,10 +461,9 @@ local function normalize_pos(researches, pos)
    return false
 end
 
--- Find the next or previous index in an array of researches which is in the
--- given list, direction, and starting index. Does not return the starting
--- index. Returns nil if there was nothing in the direction specified; throws an
--- error if the index is out of range.
+-- Find the next or previous index in an array of researches which is in the given list, direction, and starting index.
+-- Does not return the starting index. Returns nil if there was nothing in the direction specified; throws an error if
+-- the index is out of range.
 ---@param researches fa.research.ResearchEntry[]
 ---@param start_index number
 ---@param direction 1|-1
@@ -510,7 +497,7 @@ end
 ---@param direction -1|1
 ---@return LocalisedString, boolean
 local function move_in_list_impl(player, direction)
-   local researches = get_researches(player)
+   local researches = get_visible_researches(player)
    local pos = research_state[player.index].research_menu_pos
 
    if not normalize_pos(researches, pos) then return { "fa.research-list-no-technologies" }, false end
@@ -620,7 +607,7 @@ function mod.menu_move_vertical(pindex, direction)
    local player = game.get_player(pindex)
    assert(player)
    local pos = research_state[pindex].research_menu_pos
-   local announcing, moved = move_between_lists_impl(get_researches(player), pos, direction)
+   local announcing, moved = move_between_lists_impl(get_visible_researches(player), pos, direction)
    if not moved then
       player.play_sound({ path = "inventory-edge" })
    else
@@ -643,7 +630,7 @@ end
 function mod.menu_search(pindex, pattern, direction)
    local player = game.get_player(pindex)
    assert(player)
-   local researches = get_researches(player)
+   local researches = get_visible_researches(player)
    local pos = research_state[player.index].research_menu_pos
    local n_ind = search_impl(pindex, researches, pos.index, direction, pattern)
    if not n_ind then
@@ -666,7 +653,7 @@ function mod.menu_describe(pindex)
    local player = game.get_player(pindex)
    assert(player)
    local pos = research_state[pindex].research_menu_pos
-   local researches = get_researches(player)
+   local researches = get_visible_researches(player)
    ---@type LocalisedString
    local announcing = { "fa.research-list-no-technologies" }
    local normed = normalize_pos(researches, pos)
@@ -683,7 +670,7 @@ function mod.menu_describe_costs(pindex)
    local player = game.get_player(pindex)
    assert(player)
    local pos = research_state[pindex].research_menu_pos
-   local researches = get_researches(player)
+   local researches = get_visible_researches(player)
    local normed = normalize_pos(researches, pos)
 
    ---@type LocalisedString
@@ -698,7 +685,7 @@ function mod.menu_start_research(pindex)
    assert(player)
 
    local pos = research_state[pindex].research_menu_pos
-   local researches = get_researches(player)
+   local researches = get_visible_researches(player)
    local old_ind = pos.index
    if not normalize_pos(researches, pos) or old_ind ~= pos.index then
       printout({ "fa.research-list-changed" }, pindex)
@@ -715,7 +702,7 @@ function mod.menu_enqueue(pindex, queue_index)
    assert(player)
    local pos = research_state[pindex].research_menu_pos
    local old_ind = pos.index
-   local researches = get_researches(player)
+   local researches = get_visible_researches(player)
    if not normalize_pos(researches, pos) or pos.index ~= old_ind then
       printout({ "fa.research-list-changed" }, pindex)
       return
@@ -760,7 +747,7 @@ function mod.get_progress_string(pindex)
    local tech = player.force.current_research
    if tech then
       local progress = player.force.research_progress
-      return string.format("Researching %s, %2.d percent complete", Localising.get(tech), progress * 100)
+      return string.format("Researching %s, %d percent complete", Localising.get(tech, pindex), progress * 100)
    end
 
    return "No research in progress."
@@ -771,7 +758,7 @@ function mod.menu_announce_entry(pindex)
    local player = game.get_player(pindex)
    assert(player)
    local pos = research_state[pindex].research_menu_pos
-   local researches = get_researches(player)
+   local researches = get_visible_researches(player)
    local normed = normalize_pos(researches, pos)
    printout(
       FaUtils.spacecat(

@@ -4760,9 +4760,9 @@ local function read_coords(pindex, start_phrase)
          printout(result, pindex)
       end
    elseif
-      router:is_ui_one_of({ UiRouter.MENU_NAMES.INVENTORY, UiRouter.MENU_NAMES.PLAYER_TRASH })
+      router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.PLAYER_TRASH })
       or (
-         UiRouter.is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
+         router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
          and players[pindex].building.sector > offset + #players[pindex].building.sectors
       )
    then
