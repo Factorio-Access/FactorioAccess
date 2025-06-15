@@ -1262,7 +1262,7 @@ function mod.get_player_relative_origin(pindex)
       return { x = player.character.position.x, y = player.character.position.y }
    else
       -- God mode or similar - use player position
-      return { x = player.position, y = player.position }
+      return { x = player.position.x, y = player.position.y }
    end
 end
 

@@ -611,7 +611,7 @@ function mod.player_logistic_requests_summary_info(pindex)
    local msg = MessageBuilder.MessageBuilder.new()
    local char = p.character
 
-   local position = fa_utils.get_player_cursor_position(pindex)
+   local position = fa_utils.get_player_relative_origin(pindex)
    if not position then
       msg:fragment("Error: Unable to determine position")
       return msg:build()
@@ -688,7 +688,7 @@ function mod.player_logistic_request_read(item_name, pindex, additional_checks)
 
    if additional_checks then
       --Check if inside any logistic network or not (simpler than logistics network info)
-      local position = fa_utils.get_player_cursor_position(pindex)
+      local position = fa_utils.get_player_relative_origin(pindex)
       if position then
          local network = p.surface.find_logistic_network_by_position(position, p.force)
          if network == nil or not network.valid then result = result .. "Not in a network, " end

@@ -104,7 +104,7 @@ describe("Roboport Distance Cursor Mode", function()
       end)
    end)
 
-   it("should correctly handle get_player_cursor_position helper", function(ctx)
+   it("should correctly handle get_player_relative_origin helper", function(ctx)
       local player
       local vp
       local position
