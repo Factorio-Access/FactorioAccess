@@ -7,6 +7,35 @@ This document is designed to help LLMs (particularly Claude) understand and effe
 codebase. FactorioAccess makes the complex visual game Factorio fully playable by blind and visually impaired players
 through audio cues and keyboard controls.
 
+## Critical Mistakes to Avoid (Read First!)
+
+### Top 5 Most Common LLM Errors:
+
+1. **Viewpoint API: Use dot notation, not colon**
+   ```lua
+   -- WRONG: Viewpoint:get_viewpoint(pindex)
+   -- RIGHT: Viewpoint.get_viewpoint(pindex)
+   ```
+
+2. **Test files must be registered in control.lua**
+   - Add to `test_files` table or tests won't run!
+
+3. **Event handlers: Different modifiers = different events**
+   ```lua
+   -- WRONG: Thinking fa-q and fa-s-q are the same event
+   -- RIGHT: fa-q, fa-s-q, fa-c-q are completely separate events
+   ```
+
+4. **Always format before committing**
+   ```bash
+   python3 launch_factorio.py --format
+   ```
+
+5. **Function names: Check actual API, don't guess**
+   ```lua
+   -- Example: It's get_player_relative_origin, NOT get_player_cursor_position
+   ```
+
 ## From the Human
 
 After a lot of working with you I have seen your antipatterns, so I am going to lay them out here.
@@ -242,6 +271,215 @@ printout(result, pindex)
 
 See `scripts/fa-info.lua` for comprehensive examples of proper localization patterns.
 
+## control.lua Navigation Guide
+
+**CRITICAL**: control.lua is 8,738 lines long. Reading it entirely will exhaust your context window. Use these strategies instead:
+
+### File Structure Overview
+
+control.lua is organized into these major sections:
+
+1. **Lines 1-52**: Module requires and initialization
+   - All `require` statements for scripts
+   - Module loading (fa_utils, fa_info, scanner, etc.)
+
+2. **Lines 53-94**: Global constants
+   - Entity type definitions (ENT_TYPES_YOU_CAN_WALK_OVER, etc.)
+   - Walking modes
+   - Direction constants
+
+3. **Lines 95-744**: Core utility functions
+   - `call_to_*` scheduled functions (95-116)
+   - Entity handling functions (117-260)
+   - Inventory management (261-521)
+   - Player and tile utilities (522-744)
+
+4. **Lines 745-1111**: Player initialization
+   - `initialize()` function and related setup
+   - Default player state configuration
+
+5. **Lines 1112-1811**: Menu navigation
+   - `menu_cursor_up/down/left/right` functions
+   - Menu state management
+
+6. **Lines 1812-2067**: Core systems
+   - `schedule()` function (1812)
+   - `on_tick()` main handler (1912)
+   - Player joining/sync functions
+
+7. **Lines 2068-3776**: Factorio event handlers
+   - Game events (on_built_entity, on_player_died, etc.)
+   - GUI events (on_gui_opened, on_gui_closed, etc.)
+   - Research, combat, and other game events
+
+8. **Lines 3777-8738**: Keybinding handlers
+   - All "fa-*" custom keybindings
+   - Movement keys (3777-4615): WASD, arrow keys with modifiers
+   - Interaction keys (4853-5520): K, J, B, T, I keys
+   - Menu/UI keys (5521-6866): N, Tab, E, X, Delete
+   - Building/rail keys (6866-7454): Brackets [], rail operations
+   - Special function keys (7455-8738): Various Alt/Ctrl combinations
+
+### Search Strategies to Avoid Reading Entire File
+
+1. **Find specific functionality**:
+   ```bash
+   # Instead of reading the file, search for specific functions
+   rg "function.*inventory" control.lua -n
+   rg "on_built_entity" control.lua -n -A 5
+   ```
+
+2. **Look in dedicated modules first**:
+   - Inventory → `scripts/crafting.lua`
+   - Building → `scripts/building-tools.lua`
+   - Scanner → `scripts/scanner/`
+   - Rails → `scripts/rails.lua`, `scripts/rail-builder.lua`
+   - Combat → `scripts/combat.lua`
+   - UI → `scripts/ui/`
+
+3. **Find keybinding handlers**:
+   ```bash
+   # Find what happens when pressing a key
+   rg 'script\.on_event\("fa-k"' control.lua -n -A 10
+   ```
+
+4. **Locate event handlers**:
+   ```bash
+   # Find specific event handlers
+   rg "on_player_cursor_stack_changed" control.lua -n -C 5
+   ```
+
+5. **Use tree-sitter (if available)**:
+   ```bash
+   # Get function list without reading file
+   mcp__treesitter__run_query "control.lua" "(function_declaration) @func"
+   ```
+
+### Alternative Files for Common Tasks
+
+Instead of searching control.lua, check these files first:
+
+- **Building placement**: `scripts/building-tools.lua`
+- **Inventory management**: `scripts/crafting.lua`
+- **Scanner system**: `scripts/scanner/entrypoint.lua`
+- **UI/menus**: `scripts/ui/router.lua`
+- **Movement**: `scripts/travel-tools.lua`
+- **Rails**: `scripts/rails.lua`, `scripts/rail-builder.lua`
+- **Combat**: `scripts/combat.lua`
+- **Localization**: `scripts/localising.lua`, `scripts/message-builder.lua`
+- **Event handling**: `scripts/event-manager.lua` (new pattern)
+
+### Common Patterns in control.lua
+
+When you must look at control.lua:
+
+1. **Player state access**: Search for `storage.players[pindex]`
+2. **Menu handling**: Search for `players[pindex].menu`
+3. **Cursor operations**: Search for `cursor_stack`
+4. **Scheduled tasks**: Search for `schedule(`
+5. **Initialization**: Search for `initialize(`
+
+### Test Framework Pitfalls
+
+1. **Test Registration**
+   ```lua
+   -- Tests MUST be added to test_files table in control.lua
+   local test_files = {
+       "scripts/tests/my-new-test.lua",  -- Add your test here!
+   }
+   ```
+
+2. **Test File Structure**
+   ```lua
+   -- CORRECT test file structure
+   local TestRegistry = require("scripts.test-registry")
+   local describe, it = TestRegistry.describe, TestRegistry.it
+   
+   describe("Feature", function()
+       it("should work", function(ctx)
+           -- Test code here
+       end)
+   end)
+   ```
+
+3. **Assertion API**
+   ```lua
+   -- WRONG: These functions don't exist
+   ctx:assert_true(condition)
+   ctx:assert_false(condition)
+   
+   -- CORRECT: Use assert() with comparison
+   assert(condition == true)
+   assert(condition == false)
+   ctx:assert_equals(expected, actual)  -- This one exists!
+   ```
+
+4. **Test Complexity**
+   ```lua
+   -- WRONG: Testing Factorio API behavior
+   it("should create entity", function(ctx)
+       local entity = surface.create_entity{...}
+       assert(entity.valid)  -- Don't test API!
+   end)
+   
+   -- CORRECT: Test mod functionality
+   it("should announce entity creation", function(ctx)
+       -- Mock/capture printout and verify mod behavior
+   end)
+   ```
+
+### Event Handling Patterns
+
+1. **Key Event Handlers**
+   ```lua
+   -- CORRECT: Different modifiers = different events = separate handlers
+   script.on_event("fa-q", function(event)
+       -- Plain Q logic
+   end)
+   
+   script.on_event("fa-s-q", function(event)
+       -- Shift+Q logic (separate event)
+   end)
+   
+   script.on_event("fa-c-q", function(event)
+       -- Ctrl+Q logic (separate event)
+   end)
+   
+   -- Naming scheme: fa-[modifiers]-keyname
+   -- Modifiers are "bitflags": c (ctrl), a (alt), s (shift)
+   -- Examples:
+   -- fa-cas-w = Ctrl+Alt+Shift+W
+   -- fa-cs-w = Ctrl+Shift+W  
+   -- fa-a-w = Alt+W
+   -- fa-w = plain W
+   ```
+
+2. **Input Naming Convention**
+   ```lua
+   -- Pattern: fa-[modifiers]-keyname
+   -- Examples:
+   "fa-q"              -- Plain Q
+   "fa-shift-q"        -- Shift+Q
+   "fa-control-q"      -- Ctrl+Q
+   "fa-alt-q"          -- Alt+Q
+   "fa-shift-control-q" -- Shift+Ctrl+Q
+   ```
+
+### Metatable Registration
+
+```lua
+-- For custom data structures that need to persist across save/load
+-- Register in on_init:
+script.on_init(function()
+    script.register_metatable("MyCustomClass", MyCustomClass.metatable)
+end)
+
+-- The class needs __index in its metatable:
+MyCustomClass.metatable = {
+    __index = MyCustomClass
+}
+```
+
 ## Testing with launch_factorio.py
 
 The launcher provides LLM-friendly testing capabilities:
@@ -341,6 +579,36 @@ end
 9. **Testing antipatterns** - Don't test Factorio's API, test your mod's behavior
 10. **Recipe API** - Use `prototypes.recipe["name"]` not `game.recipe_prototypes` (2.0 change)
 
+### API Usage Mistakes (Common LLM Errors)
+
+1. **Viewpoint API Confusion**
+   ```lua
+   -- WRONG: Using colon syntax
+   local origin = Viewpoint:get_viewpoint(pindex)
+   
+   -- CORRECT: Use dot syntax for module functions
+   local origin = Viewpoint.get_viewpoint(pindex)
+   ```
+
+2. **Function Naming Errors**
+   ```lua
+   -- WRONG: Incorrect function name
+   local pos = get_player_cursor_position(pindex)
+   
+   -- CORRECT: Use the actual function name
+   local pos = get_player_relative_origin(pindex)
+   ```
+
+3. **Storage Access Patterns**
+   ```lua
+   -- WRONG: Direct storage access
+   storage.players[pindex].my_data = value
+   
+   -- CORRECT: Use StorageManager for new modules
+   local my_storage = storage_manager.declare_storage_module('my_module', {})
+   -- Then access as: my_storage[pindex].field = value
+   ```
+
 ## Adding New Features
 
 1. **Create module** in `scripts/`
@@ -437,6 +705,44 @@ When making changes:
 5. **Document complex logic** - Future maintainers will thank you
 6. **Test manually** - Play with the feature using a screen reader
 7. **Write automated tests** - Add tests in `scripts/tests/` when possible
+
+### Development Workflow Best Practices
+
+1. **Always Format and Lint**
+   ```bash
+   # Format your code (REQUIRED before committing)
+   python3 launch_factorio.py --format
+   
+   # Check formatting
+   python3 launch_factorio.py --format-check
+   
+   # Run linter
+   python3 launch_factorio.py --lint
+   ```
+
+2. **Test Before Committing**
+   ```bash
+   # Run all tests
+   python3 launch_factorio.py --run-tests --timeout 60
+   
+   # Run specific test scenarios
+   python3 launch_factorio.py --timeout 300 --load-game mysave.zip
+   ```
+
+3. **Git Best Practices**
+   ```bash
+   # Use interactive rebase to clean up commits
+   git rebase -i HEAD~3
+   
+   # Squash work-in-progress commits into logical changes
+   # Each commit should be a complete, working change
+   ```
+
+4. **PR Workflow**
+   - Work on feature branches (not main/master)
+   - Keep commits clean and logical
+   - Run formatter and tests before pushing
+   - Use descriptive commit messages
 
 ## External Communication
 
