@@ -1,4 +1,7 @@
 local Research = require("scripts.research")
+local TestRegistry = require("scripts.test-registry")
+local describe = TestRegistry.describe
+local it = TestRegistry.it
 
 describe("Hidden Technology Filter", function()
    it("should filter hidden technologies from research lists", function(ctx)
@@ -51,7 +54,7 @@ describe("Hidden Technology Filter", function()
             _G.printout = original_printout
 
             -- Hidden technology should not be found
-            ctx:assert_false(search_found, "Hidden technology '" .. tech_name .. "' should not be searchable")
+            ctx:assert(not search_found, "Hidden technology '" .. tech_name .. "' should not be searchable")
 
             -- Only test first few hidden techs to avoid long test times
             total_hidden = total_hidden - 1
@@ -108,7 +111,7 @@ describe("Hidden Technology Filter", function()
             print("No technology with both hidden and visible successors found - limited test coverage")
          end
 
-         ctx:assert_false(hidden_successor_mentioned, "Hidden successors should not be mentioned in descriptions")
+         ctx:assert(not hidden_successor_mentioned, "Hidden successors should not be mentioned in descriptions")
       end)
    end)
 end)
