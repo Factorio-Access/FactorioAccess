@@ -568,7 +568,7 @@ function mod.guns_menu_click_slot(pindex)
    end
    if hand and hand.valid_for_read then
       --FUll hand operations
-      if selected_stack == nil or selected_stack.valid_for_read == false then
+      if not selected_stack or not selected_stack.valid_for_read then
          --Empty slot
          if menu.ammo_selected and hand.type ~= "ammo" then
             printout("Error: Slot reserved for ammo types only", pindex)
