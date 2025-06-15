@@ -452,7 +452,7 @@ function mod.run_atomic_bomb_checks(pindex)
    local abort_missle = false
    local abort_message = ""
 
-   if selected_ammo == nil or selected_ammo.valid_for_read == false then return end
+   if not selected_ammo or not selected_ammo.valid_for_read then return end
 
    --Stop checking if atomic bombs are not equipped
    if selected_ammo.name ~= "atomic-bomb" then return end
