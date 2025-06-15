@@ -1253,7 +1253,7 @@ function mod.get_player_relative_origin(pindex)
    local player = game.get_player(pindex)
    assert(player)
 
-   local vp = Viewpoint:get(pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
 
    -- Check if in cursor mode
    if vp:get_cursor_enabled() then

@@ -16,7 +16,7 @@ describe("Roboport Distance Cursor Mode", function()
       ctx:init(function()
          player = game.get_player(1)
          surface = player.surface
-         vp = Viewpoint.get(1)
+         vp = Viewpoint.get_viewpoint(1)
 
          -- Create a roboport at a specific position
          roboport = surface.create_entity({
@@ -34,7 +34,7 @@ describe("Roboport Distance Cursor Mode", function()
 
       ctx:at_tick(1, function()
          -- Test 1: Player far from roboport, cursor mode disabled
-         vp.set_cursor_enabled(false)
+         vp:set_cursor_enabled(false)
 
          -- Capture output
          local old_printout = _G.printout
@@ -55,8 +55,8 @@ describe("Roboport Distance Cursor Mode", function()
 
       ctx:in_ticks(5, function()
          -- Test 2: Enable cursor mode and place cursor near roboport
-         vp.set_cursor_enabled(true)
-         vp.set_cursor_pos({ x = 48, y = 0 }) -- Within construction range of roboport at (50,0)
+         vp:set_cursor_enabled(true)
+         vp:set_cursor_pos({ x = 48, y = 0 }) -- Within construction range of roboport at (50,0)
 
          -- Capture output
          local old_printout = _G.printout
@@ -78,7 +78,7 @@ describe("Roboport Distance Cursor Mode", function()
 
       ctx:in_ticks(5, function()
          -- Test 3: Move cursor far away
-         vp.set_cursor_pos({ x = 200, y = 200 }) -- Far from roboport
+         vp:set_cursor_pos({ x = 200, y = 200 }) -- Far from roboport
 
          -- Capture output
          local old_printout = _G.printout
@@ -111,7 +111,7 @@ describe("Roboport Distance Cursor Mode", function()
 
       ctx:init(function()
          player = game.get_player(1)
-         vp = Viewpoint.get(1)
+         vp = Viewpoint.get_viewpoint(1)
 
          -- Start at a known position
          player.teleport({ x = 10, y = 20 })
@@ -119,7 +119,7 @@ describe("Roboport Distance Cursor Mode", function()
 
       ctx:at_tick(1, function()
          -- Test with cursor disabled - should return player position
-         vp.set_cursor_enabled(false)
+         vp:set_cursor_enabled(false)
          position = FaUtils.get_player_relative_origin(1)
 
          ctx:assert_equals(10, position.x, "Should return player X when cursor disabled")
@@ -128,8 +128,8 @@ describe("Roboport Distance Cursor Mode", function()
 
       ctx:in_ticks(5, function()
          -- Test with cursor enabled - should return cursor position
-         vp.set_cursor_enabled(true)
-         vp.set_cursor_pos({ x = 100, y = 150 })
+         vp:set_cursor_enabled(true)
+         vp:set_cursor_pos({ x = 100, y = 150 })
 
          position = FaUtils.get_player_relative_origin(1)
 
@@ -141,7 +141,7 @@ describe("Roboport Distance Cursor Mode", function()
          -- Test with no character (simulate god mode)
          local old_character = player.character
          player.character = nil
-         vp.set_cursor_enabled(false)
+         vp:set_cursor_enabled(false)
 
          position = FaUtils.get_player_relative_origin(1)
 
@@ -163,7 +163,7 @@ describe("Roboport Distance Cursor Mode", function()
       ctx:init(function()
          player = game.get_player(1)
          surface = player.surface
-         vp = Viewpoint.get(1)
+         vp = Viewpoint.get_viewpoint(1)
 
          -- Create roboport
          roboport = surface.create_entity({
@@ -181,8 +181,8 @@ describe("Roboport Distance Cursor Mode", function()
 
       ctx:at_tick(1, function()
          -- Test with cursor in network range
-         vp.set_cursor_enabled(true)
-         vp.set_cursor_pos({ x = 28, y = 0 }) -- Near roboport
+         vp:set_cursor_enabled(true)
+         vp:set_cursor_pos({ x = 28, y = 0 }) -- Near roboport
 
          -- Capture output
          local old_printout = _G.printout
