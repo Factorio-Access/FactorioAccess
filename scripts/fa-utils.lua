@@ -498,8 +498,8 @@ function mod.get_entity_part_at_cursor(pindex)
       --Prefer the selected ent
       local preferred_ent = p.selected
       --Otherwise check for other ents at the cursor
-      if preferred_ent == nil or preferred_ent.valid == false then preferred_ent = get_first_ent_at_tile(pindex) end
-      if preferred_ent == nil or preferred_ent.valid == false then return "unknown location" end
+      if not preferred_ent or not preferred_ent.valid then preferred_ent = get_first_ent_at_tile(pindex) end
+      if not preferred_ent or not preferred_ent.valid then return "unknown location" end
 
       --Report which part of the entity the cursor covers.
       rendering.draw_circle({
@@ -942,8 +942,8 @@ end
 
 function mod.sort_ents_by_distance_from_pos(pos, ents)
    table.sort(ents, function(k1, k2)
-      if k1 == nil or k1.valid == false then return true end
-      if k2 == nil or k2.valid == false then return false end
+      if not k1 or not k1.valid then return true end
+      if not k2 or not k2.valid then return false end
       return util.distance(pos, k1.position) < util.distance(pos, k2.position)
    end)
    return ents
