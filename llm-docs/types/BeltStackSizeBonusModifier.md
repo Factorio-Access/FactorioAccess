@@ -1,6 +1,0 @@
-# BeltStackSizeBonusModifier
-
-
-
-**Parent:** `SimpleModifier`
-

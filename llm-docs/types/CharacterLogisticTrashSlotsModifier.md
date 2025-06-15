@@ -1,6 +1,0 @@
-# CharacterLogisticTrashSlotsModifier
-
-
-
-**Parent:** `SimpleModifier`
-

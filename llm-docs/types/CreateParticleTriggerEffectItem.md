@@ -1,6 +1,0 @@
-# CreateParticleTriggerEffectItem
-
-
-
-**Parent:** `TriggerEffectItem`
-

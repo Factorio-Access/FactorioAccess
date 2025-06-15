@@ -1,6 +1,0 @@
-# SimpleModifier
-
-
-
-**Parent:** `BaseModifier`
-

@@ -1,6 +1,0 @@
-# TextBoxStyleSpecification
-
-
-
-**Parent:** `BaseStyleSpecification`
-

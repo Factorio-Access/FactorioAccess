@@ -1,6 +1,0 @@
-# PasteEntitySettingsTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

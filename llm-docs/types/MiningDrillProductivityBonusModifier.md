@@ -1,6 +1,0 @@
-# MiningDrillProductivityBonusModifier
-
-
-
-**Parent:** `SimpleModifier`
-

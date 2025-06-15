@@ -1,6 +1,0 @@
-# CharacterHealthBonusModifier
-
-
-
-**Parent:** `SimpleModifier`
-

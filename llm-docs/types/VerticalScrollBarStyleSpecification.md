@@ -1,6 +1,0 @@
-# VerticalScrollBarStyleSpecification
-
-
-
-**Parent:** `ScrollBarStyleSpecification`
-

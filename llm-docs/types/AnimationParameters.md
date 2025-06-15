@@ -1,6 +1,0 @@
-# AnimationParameters
-
-
-
-**Parent:** `SpriteParameters`
-

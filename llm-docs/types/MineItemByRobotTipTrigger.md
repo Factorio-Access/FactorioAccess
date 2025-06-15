@@ -1,6 +1,0 @@
-# MineItemByRobotTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

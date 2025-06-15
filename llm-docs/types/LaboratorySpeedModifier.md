@@ -1,6 +1,0 @@
-# LaboratorySpeedModifier
-
-
-
-**Parent:** `SimpleModifier`
-

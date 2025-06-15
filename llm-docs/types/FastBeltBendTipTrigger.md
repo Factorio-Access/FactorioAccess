@@ -1,6 +1,0 @@
-# FastBeltBendTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

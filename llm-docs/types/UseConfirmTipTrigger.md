@@ -1,6 +1,0 @@
-# UseConfirmTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

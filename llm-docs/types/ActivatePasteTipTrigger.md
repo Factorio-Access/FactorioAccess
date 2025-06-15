@@ -1,6 +1,0 @@
-# ActivatePasteTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

@@ -1,6 +1,0 @@
-# ChainTriggerDelivery
-
-
-
-**Parent:** `TriggerDeliveryItem`
-

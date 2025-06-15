@@ -1,6 +1,0 @@
-# EffectTexture
-
-
-
-**Parent:** `SpriteSource`
-

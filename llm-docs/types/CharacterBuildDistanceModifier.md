@@ -1,6 +1,0 @@
-# CharacterBuildDistanceModifier
-
-
-
-**Parent:** `SimpleModifier`
-

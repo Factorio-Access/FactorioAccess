@@ -1,6 +1,0 @@
-# InsertItemTriggerEffectItem
-
-
-
-**Parent:** `TriggerEffectItem`
-

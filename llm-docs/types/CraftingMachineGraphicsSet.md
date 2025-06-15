@@ -1,6 +1,0 @@
-# CraftingMachineGraphicsSet
-
-
-
-**Parent:** `WorkingVisualisations`
-

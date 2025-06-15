@@ -1,4 +1,0 @@
-# AdvancedMapGenSettings
-
-
-

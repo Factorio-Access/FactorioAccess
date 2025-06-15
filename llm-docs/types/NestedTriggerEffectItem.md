@@ -1,6 +1,0 @@
-# NestedTriggerEffectItem
-
-
-
-**Parent:** `TriggerEffectItem`
-

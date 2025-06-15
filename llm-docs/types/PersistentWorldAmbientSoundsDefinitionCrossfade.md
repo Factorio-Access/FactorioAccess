@@ -1,6 +1,0 @@
-# PersistentWorldAmbientSoundsDefinitionCrossfade
-
-
-
-**Parent:** `Fade`
-

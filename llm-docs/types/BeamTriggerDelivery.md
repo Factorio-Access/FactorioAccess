@@ -1,6 +1,0 @@
-# BeamTriggerDelivery
-
-
-
-**Parent:** `TriggerDeliveryItem`
-

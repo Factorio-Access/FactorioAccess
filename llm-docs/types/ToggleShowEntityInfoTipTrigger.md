@@ -1,6 +1,0 @@
-# ToggleShowEntityInfoTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

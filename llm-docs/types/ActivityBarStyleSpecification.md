@@ -1,6 +1,0 @@
-# ActivityBarStyleSpecification
-
-
-
-**Parent:** `BaseStyleSpecification`
-

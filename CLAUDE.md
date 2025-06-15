@@ -763,3 +763,15 @@ The launcher handles text-to-speech conversion. This is why `printout()` is used
 
 Remember: This mod makes a complex visual game accessible to blind players. Every feature must be designed with
 audio-first interaction in mind. When in doubt, play-test with a screen reader!
+## Note on llm-docs Consolidation
+
+The llm-docs directory has been consolidated from ~1,500 individual files to ~20 larger files to improve git performance. The information is preserved and organized by category:
+
+- `llm-docs/classes.md` - All LuaClass definitions
+- `llm-docs/concepts.md` - All concept definitions
+- `llm-docs/prototypes.md` - All prototype definitions
+- `llm-docs/types.md` - All type definitions
+- `llm-docs/game-content.md` - Game content reference
+- Other standalone files remain unchanged
+
+Use your text editor's search within these files to find specific items.

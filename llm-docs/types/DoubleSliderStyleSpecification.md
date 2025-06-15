@@ -1,6 +1,0 @@
-# DoubleSliderStyleSpecification
-
-
-
-**Parent:** `SliderStyleSpecification`
-

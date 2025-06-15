@@ -1,6 +1,0 @@
-# KillTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

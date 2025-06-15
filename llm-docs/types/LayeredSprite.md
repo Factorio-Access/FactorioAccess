@@ -1,6 +1,0 @@
-# LayeredSprite
-
-
-
-**Parent:** `Sprite`
-

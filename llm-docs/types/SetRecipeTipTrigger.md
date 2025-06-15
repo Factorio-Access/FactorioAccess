@@ -1,6 +1,0 @@
-# SetRecipeTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

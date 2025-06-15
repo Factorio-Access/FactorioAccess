@@ -1,6 +1,0 @@
-# BuildEntityByRobotTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

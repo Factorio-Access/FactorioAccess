@@ -1,4 +1,0 @@
-# CoverGraphicEffectData
-
-Clips the CoverGraphicProcessionLayer.
-

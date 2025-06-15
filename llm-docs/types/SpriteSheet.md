@@ -1,6 +1,0 @@
-# SpriteSheet
-
-
-
-**Parent:** `SpriteParameters`
-

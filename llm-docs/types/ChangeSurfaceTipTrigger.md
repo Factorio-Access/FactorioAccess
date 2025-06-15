@@ -1,6 +1,0 @@
-# ChangeSurfaceTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

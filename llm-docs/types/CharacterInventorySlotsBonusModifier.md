@@ -1,6 +1,0 @@
-# CharacterInventorySlotsBonusModifier
-
-
-
-**Parent:** `SimpleModifier`
-

@@ -1,6 +1,0 @@
-# StreamTriggerDelivery
-
-
-
-**Parent:** `TriggerDeliveryItem`
-

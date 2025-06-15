@@ -1,6 +1,0 @@
-# AnimationSheet
-
-
-
-**Parent:** `AnimationParameters`
-

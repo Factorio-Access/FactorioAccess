@@ -1,4 +1,0 @@
-# ProcessionGraphic
-
-
-

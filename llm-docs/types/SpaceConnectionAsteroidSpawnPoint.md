@@ -1,6 +1,0 @@
-# SpaceConnectionAsteroidSpawnPoint
-
-
-
-**Parent:** `AsteroidSpawnPoint`
-

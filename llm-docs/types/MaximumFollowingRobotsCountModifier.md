@@ -1,6 +1,0 @@
-# MaximumFollowingRobotsCountModifier
-
-
-
-**Parent:** `SimpleModifier`
-

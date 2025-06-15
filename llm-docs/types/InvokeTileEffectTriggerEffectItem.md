@@ -1,6 +1,0 @@
-# InvokeTileEffectTriggerEffectItem
-
-
-
-**Parent:** `TriggerEffectItem`
-

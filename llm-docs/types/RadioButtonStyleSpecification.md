@@ -1,6 +1,0 @@
-# RadioButtonStyleSpecification
-
-
-
-**Parent:** `StyleWithClickableGraphicalSetSpecification`
-

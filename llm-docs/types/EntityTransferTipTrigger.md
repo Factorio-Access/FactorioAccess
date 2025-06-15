@@ -1,6 +1,0 @@
-# EntityTransferTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

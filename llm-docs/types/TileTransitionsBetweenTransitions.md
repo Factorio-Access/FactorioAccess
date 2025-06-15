@@ -1,6 +1,0 @@
-# TileTransitionsBetweenTransitions
-
-
-
-**Parent:** `TileTransitions`
-

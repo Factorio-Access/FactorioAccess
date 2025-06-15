@@ -1,6 +1,0 @@
-# DropItemTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

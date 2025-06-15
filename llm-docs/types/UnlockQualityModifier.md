@@ -1,6 +1,0 @@
-# UnlockQualityModifier
-
-
-
-**Parent:** `BaseModifier`
-

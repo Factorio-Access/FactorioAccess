@@ -1,6 +1,0 @@
-# MinimapStyleSpecification
-
-
-
-**Parent:** `EmptyWidgetStyleSpecification`
-

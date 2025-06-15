@@ -1,6 +1,0 @@
-# TileLightPictures
-
-
-
-**Parent:** `TileSpriteLayout`
-

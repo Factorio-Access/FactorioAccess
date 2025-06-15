@@ -1,6 +1,0 @@
-# GroupAttackTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

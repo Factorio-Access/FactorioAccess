@@ -1,6 +1,0 @@
-# ClearCursorTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

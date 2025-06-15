@@ -1,6 +1,0 @@
-# ShowExplosionOnChartTriggerEffectItem
-
-
-
-**Parent:** `TriggerEffectItem`
-

@@ -1,6 +1,0 @@
-# SetFilterTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

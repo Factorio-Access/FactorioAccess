@@ -1,6 +1,0 @@
-# LineTriggerItem
-
-
-
-**Parent:** `TriggerItem`
-

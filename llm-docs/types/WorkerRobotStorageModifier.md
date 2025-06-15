@@ -1,6 +1,0 @@
-# WorkerRobotStorageModifier
-
-
-
-**Parent:** `SimpleModifier`
-

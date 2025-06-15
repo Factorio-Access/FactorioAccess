@@ -1,6 +1,0 @@
-# ProjectileTriggerDelivery
-
-
-
-**Parent:** `TriggerDeliveryItem`
-

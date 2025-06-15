@@ -1,6 +1,0 @@
-# PlumeEffect
-
-
-
-**Parent:** `StatelessVisualisation`
-

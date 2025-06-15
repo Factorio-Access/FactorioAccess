@@ -1,4 +1,0 @@
-# ProductionHealthEffect
-
-
-

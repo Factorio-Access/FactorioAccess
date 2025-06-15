@@ -1,6 +1,0 @@
-# CreateAsteroidChunkEffectItem
-
-
-
-**Parent:** `TriggerEffectItem`
-

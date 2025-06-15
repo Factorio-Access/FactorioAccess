@@ -1,6 +1,0 @@
-# BeamAttackParameters
-
-
-
-**Parent:** `BaseAttackParameters`
-

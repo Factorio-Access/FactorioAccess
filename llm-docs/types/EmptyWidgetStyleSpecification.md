@@ -1,6 +1,0 @@
-# EmptyWidgetStyleSpecification
-
-
-
-**Parent:** `BaseStyleSpecification`
-

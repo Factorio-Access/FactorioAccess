@@ -1,6 +1,0 @@
-# AreaTriggerItem
-
-
-
-**Parent:** `TriggerItem`
-

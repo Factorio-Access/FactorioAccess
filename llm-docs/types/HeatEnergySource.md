@@ -1,6 +1,0 @@
-# HeatEnergySource
-
-
-
-**Parent:** `BaseEnergySource`
-

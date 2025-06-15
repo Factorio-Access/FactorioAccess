@@ -1,6 +1,0 @@
-# PlaceEquipmentTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

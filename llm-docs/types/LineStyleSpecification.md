@@ -1,6 +1,0 @@
-# LineStyleSpecification
-
-
-
-**Parent:** `BaseStyleSpecification`
-

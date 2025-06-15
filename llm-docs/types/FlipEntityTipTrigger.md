@@ -1,6 +1,0 @@
-# FlipEntityTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

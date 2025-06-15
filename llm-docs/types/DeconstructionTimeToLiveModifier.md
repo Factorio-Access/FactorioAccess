@@ -1,6 +1,0 @@
-# DeconstructionTimeToLiveModifier
-
-
-
-**Parent:** `SimpleModifier`
-

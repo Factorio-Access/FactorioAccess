@@ -1,6 +1,0 @@
-# WorkerRobotSpeedModifier
-
-
-
-**Parent:** `SimpleModifier`
-

@@ -1,6 +1,0 @@
-# TurretAttackModifier
-
-
-
-**Parent:** `BaseModifier`
-

@@ -1,6 +1,0 @@
-# DamageEntityTriggerEffectItem
-
-
-
-**Parent:** `TriggerEffectItem`
-

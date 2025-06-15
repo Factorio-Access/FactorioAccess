@@ -1,6 +1,0 @@
-# MiningWithFluidModifier
-
-
-
-**Parent:** `BoolModifier`
-

@@ -1,6 +1,0 @@
-# VehicleLogisticsModifier
-
-
-
-**Parent:** `BoolModifier`
-

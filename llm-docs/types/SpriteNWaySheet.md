@@ -1,6 +1,0 @@
-# SpriteNWaySheet
-
-
-
-**Parent:** `SpriteParameters`
-

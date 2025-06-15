@@ -1,6 +1,0 @@
-# ThrusterGraphicsSet
-
-
-
-**Parent:** `WorkingVisualisations`
-

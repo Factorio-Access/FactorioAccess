@@ -1,6 +1,0 @@
-# StyleWithClickableGraphicalSetSpecification
-
-
-
-**Parent:** `BaseStyleSpecification`
-

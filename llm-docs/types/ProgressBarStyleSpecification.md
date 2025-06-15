@@ -1,6 +1,0 @@
-# ProgressBarStyleSpecification
-
-
-
-**Parent:** `BaseStyleSpecification`
-

@@ -1,6 +1,0 @@
-# CliffDeconstructionEnabledModifier
-
-
-
-**Parent:** `BoolModifier`
-

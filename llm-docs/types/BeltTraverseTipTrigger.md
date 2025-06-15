@@ -1,6 +1,0 @@
-# BeltTraverseTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

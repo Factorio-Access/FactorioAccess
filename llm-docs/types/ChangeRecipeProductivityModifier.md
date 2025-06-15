@@ -1,6 +1,0 @@
-# ChangeRecipeProductivityModifier
-
-
-
-**Parent:** `BaseModifier`
-

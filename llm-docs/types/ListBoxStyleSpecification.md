@@ -1,6 +1,0 @@
-# ListBoxStyleSpecification
-
-
-
-**Parent:** `BaseStyleSpecification`
-

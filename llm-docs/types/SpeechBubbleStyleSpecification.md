@@ -1,6 +1,0 @@
-# SpeechBubbleStyleSpecification
-
-
-
-**Parent:** `BaseStyleSpecification`
-

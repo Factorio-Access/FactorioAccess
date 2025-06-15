@@ -1,6 +1,0 @@
-# FlowStyleSpecification
-
-
-
-**Parent:** `BaseStyleSpecification`
-

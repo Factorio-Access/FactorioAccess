@@ -1,6 +1,0 @@
-# NothingModifier
-
-
-
-**Parent:** `BaseModifier`
-

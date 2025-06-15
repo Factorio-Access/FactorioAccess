@@ -1,6 +1,0 @@
-# GraphStyleSpecification
-
-
-
-**Parent:** `BaseStyleSpecification`
-

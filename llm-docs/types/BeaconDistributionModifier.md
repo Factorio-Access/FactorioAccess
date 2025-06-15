@@ -1,6 +1,0 @@
-# BeaconDistributionModifier
-
-
-
-**Parent:** `SimpleModifier`
-

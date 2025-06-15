@@ -1,6 +1,0 @@
-# DirectTriggerItem
-
-
-
-**Parent:** `TriggerItem`
-

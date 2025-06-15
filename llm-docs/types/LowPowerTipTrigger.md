@@ -1,6 +1,0 @@
-# LowPowerTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

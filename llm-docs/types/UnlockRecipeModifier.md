@@ -1,6 +1,0 @@
-# UnlockRecipeModifier
-
-
-
-**Parent:** `BaseModifier`
-

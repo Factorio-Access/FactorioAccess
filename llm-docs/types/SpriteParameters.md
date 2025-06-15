@@ -1,6 +1,0 @@
-# SpriteParameters
-
-
-
-**Parent:** `SpriteSource`
-

@@ -1,6 +1,0 @@
-# ApplyStarterPackTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

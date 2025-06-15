@@ -1,6 +1,0 @@
-# CreateFireTriggerEffectItem
-
-
-
-**Parent:** `CreateEntityTriggerEffectItem`
-

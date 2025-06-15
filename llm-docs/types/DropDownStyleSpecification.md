@@ -1,6 +1,0 @@
-# DropDownStyleSpecification
-
-
-
-**Parent:** `BaseStyleSpecification`
-

@@ -1,6 +1,0 @@
-# SetTileTriggerEffectItem
-
-
-
-**Parent:** `TriggerEffectItem`
-

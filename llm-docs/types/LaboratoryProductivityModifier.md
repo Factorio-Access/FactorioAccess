@@ -1,6 +1,0 @@
-# LaboratoryProductivityModifier
-
-
-
-**Parent:** `SimpleModifier`
-

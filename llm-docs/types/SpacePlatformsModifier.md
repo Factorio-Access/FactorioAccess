@@ -1,6 +1,0 @@
-# SpacePlatformsModifier
-
-
-
-**Parent:** `BoolModifier`
-

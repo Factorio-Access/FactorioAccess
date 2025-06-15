@@ -1,6 +1,0 @@
-# BurnerEnergySource
-
-
-
-**Parent:** `BaseEnergySource`
-

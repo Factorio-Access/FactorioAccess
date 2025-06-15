@@ -1,6 +1,0 @@
-# TechnologySlotStyleSpecification
-
-
-
-**Parent:** `ButtonStyleSpecification`
-

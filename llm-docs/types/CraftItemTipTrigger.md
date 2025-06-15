@@ -1,6 +1,0 @@
-# CraftItemTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

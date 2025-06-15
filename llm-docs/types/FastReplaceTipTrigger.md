@@ -1,6 +1,0 @@
-# FastReplaceTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

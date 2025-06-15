@@ -1,6 +1,0 @@
-# EnterVehicleTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

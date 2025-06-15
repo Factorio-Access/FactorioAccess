@@ -1,6 +1,0 @@
-# SpaceLocationAsteroidSpawnDefinition
-
-
-
-**Parent:** `AsteroidSpawnPoint`
-

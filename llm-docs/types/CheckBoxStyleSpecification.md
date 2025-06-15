@@ -1,6 +1,0 @@
-# CheckBoxStyleSpecification
-
-
-
-**Parent:** `StyleWithClickableGraphicalSetSpecification`
-

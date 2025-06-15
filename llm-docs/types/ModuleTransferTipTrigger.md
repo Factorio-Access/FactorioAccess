@@ -1,6 +1,0 @@
-# ModuleTransferTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

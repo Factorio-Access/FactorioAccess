@@ -1,6 +1,0 @@
-# GateOverRailBuildTipTrigger
-
-
-
-**Parent:** `CountBasedTipTrigger`
-

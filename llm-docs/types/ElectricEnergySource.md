@@ -1,6 +1,0 @@
-# ElectricEnergySource
-
-
-
-**Parent:** `BaseEnergySource`
-
