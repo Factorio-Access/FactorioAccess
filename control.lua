@@ -2699,13 +2699,14 @@ end)
 
 function fix_walk(pindex)
    if not check_for_player(pindex) then return end
-   if game.get_player(pindex).character == nil or game.get_player(pindex).character.valid == false then return end
+   local player = game.get_player(pindex)
+   if not player.character then return end
    if players[pindex].walk == WALKING.TELESTEP and fa_kk.is_active(pindex) ~= true then
-      game.get_player(pindex).character_running_speed_modifier = -1 -- 100% - 100% = 0%
+      player.character_running_speed_modifier = -1 -- 100% - 100% = 0%
    else --walk > 0
-      game.get_player(pindex).character_running_speed_modifier = 0 -- 100% + 0 = 100%
+      player.character_running_speed_modifier = 0 -- 100% + 0 = 100%
    end
-   players[pindex].position = game.get_player(pindex).position
+   players[pindex].position = player.position
 end
 
 --GUI action confirmed, such as by pressing ENTER
