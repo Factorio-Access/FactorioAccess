@@ -609,7 +609,6 @@ end
 --Returns an info string about trying to build the entity in hand. The info type depends on the entity. Note: Limited usefulness for entities with sizes greater than 1 by 1.
 ---@param stack LuaItemStack
 function mod.build_preview_checks_info(stack, pindex)
-   if stack == nil or not stack.valid_for_read or not stack.valid then return "invalid stack" end
    local p = game.get_player(pindex)
    local surf = game.get_player(pindex).surface
    local vp = Viewpoint.get_viewpoint(pindex)
