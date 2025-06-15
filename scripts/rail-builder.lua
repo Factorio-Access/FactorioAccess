@@ -283,13 +283,14 @@ function mod.append_rail(pos, pindex)
       end
    end
 
-   game.get_player(pindex).cursor_stack.count = game.get_player(pindex).cursor_stack.count - 1
-   game.get_player(pindex).play_sound({ path = "entity-build/straight-rail" })
+   local player = game.get_player(pindex)
+   player.cursor_stack.count = player.cursor_stack.count - 1
+   player.play_sound({ path = "entity-build/straight-rail" })
 
    --8. Check if the appended rail is with 4 tiles of a parallel rail. If so, delete it.
    if created_rail.valid and fa_rails.has_parallel_neighbor(created_rail, pindex) then
-      game.get_player(pindex).mine_entity(created_rail, true)
-      game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
+      player.mine_entity(created_rail, true)
+      player.play_sound({ path = "utility/cannot_build" })
       printout("Cannot place, parallel rail segments should be at least 4 tiles apart.", pindex)
    end
 
