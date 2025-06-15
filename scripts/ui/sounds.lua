@@ -28,7 +28,8 @@ local function play_sound_internal(pindex, sound_spec)
    else
       -- Normal mode - play the sound
       local player = game.get_player(pindex)
-      if player and player.valid then player.play_sound(sound_spec) end
+      assert(player)
+      player.play_sound(sound_spec)
    end
 end
 
