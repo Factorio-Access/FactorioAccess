@@ -611,31 +611,16 @@ function mod.area_edge(area, dir, pos, name)
       adjusted_area.right_bottom.x = adjusted_area.right_bottom.x / chunk_size
       adjusted_area.right_bottom.y = adjusted_area.right_bottom.y / chunk_size
    end
-   if dir == dirs.north then
-      if adjusted_area.left_top.y == math.floor(pos.y) then
-         return true
-      else
-         return false
-      end
-   elseif dir == dirs.east then
-      if adjusted_area.right_bottom.x == math.ceil(0.001 + pos.x) then
-         return true
-      else
-         return false
-      end
-   elseif dir == dirs.south then
-      if adjusted_area.right_bottom.y == math.ceil(0.001 + pos.y) then
-         return true
-      else
-         return false
-      end
-   elseif dir == dirs.west then
-      if adjusted_area.left_top.x == math.floor(pos.x) then
-         return true
-      else
-         return false
-      end
-   end
+
+   -- Define edge checks for each direction
+   local edge_checks = {
+      [dirs.north] = adjusted_area.left_top.y == math.floor(pos.y),
+      [dirs.east] = adjusted_area.right_bottom.x == math.ceil(0.001 + pos.x),
+      [dirs.south] = adjusted_area.right_bottom.y == math.ceil(0.001 + pos.y),
+      [dirs.west] = adjusted_area.left_top.x == math.floor(pos.x),
+   }
+
+   return edge_checks[dir] or false
 end
 
 --Returns the top left and bottom right corners for a rectangle that takes pos_1 and pos_2 as any of its four corners.
