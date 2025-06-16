@@ -1,7 +1,7 @@
 --Here: teleporting
-local fa_utils = require("scripts.fa-utils")
-local fa_graphics = require("scripts.graphics")
-local fa_mouse = require("scripts.mouse")
+local FaUtils = require("scripts.fa-utils")
+local Graphics = require("scripts.graphics")
+local Mouse = require("scripts.mouse")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
 
@@ -152,9 +152,9 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
             if not muted then
                printout(
                   "Teleported "
-                     .. math.ceil(fa_utils.distance(pos, char.position))
+                     .. math.ceil(FaUtils.distance(pos, char.position))
                      .. " "
-                     .. fa_utils.direction(pos, char.position)
+                     .. FaUtils.direction(pos, char.position)
                      .. " of target",
                   pindex
                )
@@ -162,8 +162,8 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
          end
          --Update cursor after teleport
          vp:set_cursor_pos({ x = new_pos.x, y = new_pos.y })
-         fa_mouse.move_mouse_pointer(fa_utils.center_of_tile(vp:get_cursor_pos()), pindex)
-         fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+         Mouse.move_mouse_pointer(FaUtils.center_of_tile(vp:get_cursor_pos()), pindex)
+         Graphics.draw_cursor_highlight(pindex, nil, nil)
       else
          printout("Teleport Failed", pindex)
          return false
