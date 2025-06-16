@@ -724,50 +724,40 @@ function mod.into_lookup(array)
    return lookup
 end
 
+--Helper function to get substring before or after a delimiter
+local function get_substring_split(str, delimiter, get_before)
+   local first, final = string.find(str, delimiter, 1, true)
+   if get_before then
+      if first == nil or first == 1 then
+         return str
+      else
+         return string.sub(str, 1, first - 1)
+      end
+   else -- get_after
+      if final == nil then return str end
+      if first == 1 then return string.sub(str, final + 1) end
+      if final == string.len(str) then return str end
+      return string.sub(str, final + 1)
+   end
+end
+
 --Returns the part of a substring before a space character. BUG: Breaks when parsing dashes.
 function mod.get_substring_before_space(str)
-   local first, final = string.find(str, " ")
-   if first == nil or first == 1 then --No space, or space at the start only
-      return str
-   else
-      return string.sub(str, 1, first - 1)
-   end
+   return get_substring_split(str, " ", true)
 end
 
 --Returns the part of a substring after a space character. BUG: Breaks when parsing dashes.
 function mod.get_substring_after_space(str)
-   local first, final = string.find(str, " ")
-   if final == nil then --No spaces
-      return str
-   end
-   if first == 1 then --spaces at start only
-      return string.sub(str, final + 1, string.len(str))
-   end
-
-   if final == string.len(str) then --space at the end only?
-      return str
-   end
-
-   return string.sub(str, final + 1, string.len(str))
+   return get_substring_split(str, " ", false)
 end
 
 --Returns the part of a substring before a comma character. BUG: Breaks when parsing dashes.
 function mod.get_substring_before_comma(str)
-   local first, final = string.find(str, ",")
-   if first == nil or first == 1 then
-      return str
-   else
-      return string.sub(str, 1, first - 1)
-   end
+   return get_substring_split(str, ",", true)
 end
 
 function mod.get_substring_before_dash(str)
-   local first, final = string.find(str, "-")
-   if first == nil or first == 1 then
-      return str
-   else
-      return string.sub(str, 1, first - 1)
-   end
+   return get_substring_split(str, "-", true)
 end
 
 --Reads the localised result for the distance and direction from one point to the other. Also mentions if they are precisely aligned. Distances are rounded.
