@@ -1,7 +1,7 @@
 --Here: Crafting menu, crafting queue menu, and related functions
 
 local util = require("util")
-local fa_utils = require("scripts.fa-utils")
+local FaUtils = require("scripts.fa-utils")
 local localising = require("scripts.localising")
 
 local mod = {}
