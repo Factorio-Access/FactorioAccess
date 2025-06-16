@@ -1,5 +1,5 @@
 --Here: functions about the warnings menu
-local fa_belts = require("scripts.transport-belts")
+local TransportBelts = require("scripts.transport-belts")
 local Viewpoint = require("scripts.viewpoint")
 
 local mod = {}
