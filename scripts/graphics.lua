@@ -1,8 +1,8 @@
 --Here: Mod GUI and graphics drawing
 --Note: Does not include every single rendering call made by the mod, such as circles being drawn by obstacle clearing.
 
-local fa_utils = require("scripts.fa-utils")
-local fa_mouse = require("scripts.mouse")
+local FaUtils = require("scripts.fa-utils")
+local Mouse = require("scripts.mouse")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
 local dirs = defines.direction
@@ -192,7 +192,7 @@ function mod.sync_build_cursor_graphics(pindex)
       local arrow_pos = vp:get_cursor_pos()
       if players[pindex].build_lock and not cursor_enabled and stack.name ~= "rail" then
          arrow_pos =
-            fa_utils.center_of_tile(fa_utils.offset_position_legacy(arrow_pos, players[pindex].player_direction, -2))
+            FaUtils.center_of_tile(FaUtils.offset_position_legacy(arrow_pos, players[pindex].player_direction, -2))
       end
       player.building_dir_arrow = rendering.draw_sprite({
          sprite = "fluid.crude-oil",
@@ -219,7 +219,7 @@ function mod.sync_build_cursor_graphics(pindex)
       if player.building_footprint ~= nil then player.building_footprint.destroy() end
 
       --Calculate footprint using centralized function
-      local footprint = fa_utils.calculate_building_footprint({
+      local footprint = FaUtils.calculate_building_footprint({
          entity_prototype = stack.prototype.place_result,
          position = vp:get_cursor_pos(),
          building_direction = dir,
@@ -259,7 +259,7 @@ function mod.sync_build_cursor_graphics(pindex)
       end
 
       --Move mouse pointer to the center of the footprint
-      fa_mouse.move_mouse_pointer(footprint.center, pindex)
+      Mouse.move_mouse_pointer(footprint.center, pindex)
    elseif stack == nil or not stack.valid_for_read then
       --Invalid stack: Hide the objects
       if dir_indicator ~= nil then dir_indicator.visible = false end
@@ -311,7 +311,7 @@ function mod.sync_build_cursor_graphics(pindex)
          })
          player.building_footprint.visible = true
 
-         fa_mouse.move_mouse_pointer(center_pos, pindex)
+         Mouse.move_mouse_pointer(center_pos, pindex)
       end
    else
       --Hide the objects
@@ -340,7 +340,7 @@ function mod.sync_build_cursor_graphics(pindex)
       then
          --Draw planner rectangles
          local top_left, bottom_right =
-            fa_utils.get_top_left_and_bottom_right(players[pindex].bp_select_point_1, cursor_pos)
+            FaUtils.get_top_left_and_bottom_right(players[pindex].bp_select_point_1, cursor_pos)
          local color = { 1, 1, 1 }
          if stack.is_blueprint then
             color = { r = 0.25, b = 1.00, g = 0.50, a = 0.75 }
@@ -435,7 +435,7 @@ function mod.draw_cursor_highlight(pindex, ent, box_type, skip_mouse_movement)
    end
 
    --Move the mouse cursor to the object on screen or to the player position for objects off screen
-   fa_mouse.move_mouse_pointer(fa_utils.center_of_tile(c_pos), pindex)
+   Mouse.move_mouse_pointer(FaUtils.center_of_tile(c_pos), pindex)
 end
 
 --Redraws the player's cursor highlight box as a rectangle around the defined area.
