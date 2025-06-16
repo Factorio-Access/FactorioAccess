@@ -1855,7 +1855,7 @@ function mod.area_scan_summary_info(pindex, left_top, right_bottom)
    assert(covered_area > 0)
 
    local water_count = surf.count_tiles_filtered({
-      name = { "water", "deepwater", "water-green", "deepwater-green", "water-shallow", "water-mud", "water-wube" },
+      name = Consts.WATER_TILE_NAMES,
       area = { left_top, right_bottom },
    })
 

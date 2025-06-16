@@ -1,3 +1,5 @@
+local Consts = require("scripts.consts")
+
 local mod = {}
 
 ---@enum fa.scanner.Category
@@ -69,8 +71,7 @@ mod.INFINITE_RESOURCE_ZOOM_DISTANCE = 50
 mod.WATER_TILE_DISTANCE = 10
 
 -- Modded water is mostly not a thing. If it is we can extend the list.
-mod.WATER_PROTOS =
-   { "water", "deepwater", "water-green", "deepwater-green", "water-shallow", "water-mud", "water-wube" }
+mod.WATER_PROTOS = Consts.WATER_TILE_NAMES
 
 -- How far apart must tiles be to be in the same iceberg?  2.1 is chosen
 -- because it allows for tiny bits of water not to get in the way, causes
