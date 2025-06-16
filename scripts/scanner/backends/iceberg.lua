@@ -103,7 +103,7 @@ function IcebergBackend:dump_entries_to_callback(player, callback)
             },
          },
          backend = self,
-         category = SC.CATEGORIES.RESOURCES,
+         category = SC.CATEGORIES.TERRAIN,
          subcategory = "iceberg",
       })
    end)

@@ -16,6 +16,7 @@ mod.CATEGORIES = {
    REMNANTS = "remnants",
    CONTAINERS = "containers",
    CORPSES = "corpses",
+   TERRAIN = "terrain",
 }
 
 -- The desired order of categories when moving through the scanner.
@@ -34,6 +35,7 @@ mod.CATEGORY_ORDER = {
    mod.CATEGORIES.PLAYERS,
    mod.CATEGORIES.CORPSES,
    mod.CATEGORIES.OTHER,
+   mod.CATEGORIES.TERRAIN,
 }
 
 -- How far can the scanner see, in tiles?
@@ -77,6 +79,6 @@ mod.ICEBERG_TILE_DISTANCE = 10
 
 -- No clue if modded icebergs is a thing. If it is we can extend the list.
 mod.ICEBERG_PROTOS =
-   { "brash-ice", "ice-rough", "ice-smooth", "snow-crests", "snow-flat", "snow-lumpy", "snow-patchy" }
+   { "brash-ice", "ice-rough", "ice-smooth", "snow-crests", "snow-flat", "snow-lumpy", "snow-patchy", "ice-platform" }
 
 return mod
