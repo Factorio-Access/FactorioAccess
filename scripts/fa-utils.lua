@@ -7,6 +7,30 @@ local Consts = require("scripts.consts")
 
 local mod = {}
 
+-- Lookup table for direction offsets
+local DIRECTION_OFFSETS = {
+   [dirs.north] = { x = 0, y = -1 },
+   [dirs.northeast] = { x = 1, y = -1 },
+   [dirs.east] = { x = 1, y = 0 },
+   [dirs.southeast] = { x = 1, y = 1 },
+   [dirs.south] = { x = 0, y = 1 },
+   [dirs.southwest] = { x = -1, y = 1 },
+   [dirs.west] = { x = -1, y = 0 },
+   [dirs.northwest] = { x = -1, y = -1 },
+}
+
+-- Lookup table for half-diagonal to full-diagonal mapping
+local HALF_DIAGONAL_MAP = {
+   [dirs.northnortheast] = dirs.northeast,
+   [dirs.eastnortheast] = dirs.northeast,
+   [dirs.eastsoutheast] = dirs.southeast,
+   [dirs.southsoutheast] = dirs.southeast,
+   [dirs.southsouthwest] = dirs.southwest,
+   [dirs.westsouthwest] = dirs.southwest,
+   [dirs.westnorthwest] = dirs.northwest,
+   [dirs.northnorthwest] = dirs.northwest,
+}
+
 function mod.center_of_tile(pos)
    return { x = math.floor(pos.x) + 0.5, y = math.floor(pos.y) + 0.5 }
 end
@@ -29,35 +53,19 @@ end
 -- given that space age does actually use 16 directions as well as new rails,
 -- that's not good enough.
 function mod.offset_position_legacy(oldpos, direction, distance)
-   if direction == defines.direction.north then
-      return { x = oldpos.x, y = oldpos.y - distance }
-   elseif direction == defines.direction.south then
-      return { x = oldpos.x, y = oldpos.y + distance }
-   elseif direction == defines.direction.east then
-      return { x = oldpos.x + distance, y = oldpos.y }
-   elseif direction == defines.direction.west then
-      return { x = oldpos.x - distance, y = oldpos.y }
-   elseif direction == defines.direction.northwest then
-      return { x = oldpos.x - distance, y = oldpos.y - distance }
-   elseif direction == defines.direction.northeast then
-      return { x = oldpos.x + distance, y = oldpos.y - distance }
-   elseif direction == defines.direction.southwest then
-      return { x = oldpos.x - distance, y = oldpos.y + distance }
-   elseif direction == defines.direction.southeast then
-      return { x = oldpos.x + distance, y = oldpos.y + distance }
-   end
+   local offset = DIRECTION_OFFSETS[direction]
+   if offset then return { x = oldpos.x + offset.x * distance, y = oldpos.y + offset.y * distance } end
+   return oldpos
 end
 
 --Offsets a position in a cardinal direction by a given distance
 function mod.offset_position_cardinal(oldpos, direction, distance)
-   if direction == defines.direction.north then
-      return { x = oldpos.x, y = oldpos.y - distance }
-   elseif direction == defines.direction.south then
-      return { x = oldpos.x, y = oldpos.y + distance }
-   elseif direction == defines.direction.east then
-      return { x = oldpos.x + distance, y = oldpos.y }
-   elseif direction == defines.direction.west then
-      return { x = oldpos.x - distance, y = oldpos.y }
+   local offset = DIRECTION_OFFSETS[direction]
+   if
+      offset
+      and (direction == dirs.north or direction == dirs.south or direction == dirs.east or direction == dirs.west)
+   then
+      return { x = oldpos.x + offset.x * distance, y = oldpos.y + offset.y * distance }
    else
       error("Unsupported direction for offset request: " .. tostring(direction))
    end
@@ -66,23 +74,12 @@ end
 --Gives the neighboring tile for each direction. Half diagonals are rounded to full diagonals.
 function mod.to_neighboring_tile(pos, facing_direction)
    local dir = facing_direction
-   local dirs = defines.direction
-   if dir == dirs.north then
-      return { x = pos.x, y = pos.y - 1 }
-   elseif dir == dirs.south then
-      return { x = pos.x, y = pos.y + 1 }
-   elseif dir == dirs.east then
-      return { x = pos.x + 1, y = pos.y }
-   elseif dir == dirs.west then
-      return { x = pos.x - 1, y = pos.y }
-   elseif dir == dirs.northnortheast or dir == dirs.northeast or dir == dirs.eastnortheast then
-      return { x = pos.x + 1, y = pos.y - 1 }
-   elseif dir == dirs.northnorthwest or dir == dirs.northwest or dir == dirs.westnorthwest then
-      return { x = pos.x - 1, y = pos.y - 1 }
-   elseif dir == dirs.southsoutheast or dir == dirs.southeast or dir == dirs.eastsoutheast then
-      return { x = pos.x + 1, y = pos.y + 1 }
-   elseif dir == dirs.southsouthwest or dir == dirs.southwest or dir == dirs.westsouthwest then
-      return { x = pos.x - 1, y = pos.y + 1 }
+   -- Map half diagonals to full diagonals
+   dir = HALF_DIAGONAL_MAP[dir] or dir
+
+   local offset = DIRECTION_OFFSETS[dir]
+   if offset then
+      return { x = pos.x + offset.x, y = pos.y + offset.y }
    else
       return pos
    end
