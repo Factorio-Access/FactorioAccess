@@ -813,14 +813,11 @@ end
 
    This menu opens when you press KEY when a building menu is open.
 ]]
+-- Precondition: Caller must ensure ent_in is valid
 function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other_input)
    local index = menu_index
    local p = game.get_player(pindex)
    local ent = ent_in or p.opened
-   if ent == nil or ent.valid == false then
-      printout("Error: Missing entity", pindex)
-      return
-   end
    --Get this ent's networks
    local nwr = ent.get_circuit_network(defines.wire_connector_id.circuit_red)
    local nwg = ent.get_circuit_network(defines.wire_connector_id.circuit_green)
