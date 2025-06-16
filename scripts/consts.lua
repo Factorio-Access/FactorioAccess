@@ -70,4 +70,15 @@ mod.CRAFTING_MACHINES = {
    ["rocket-silo"] = true,
 }
 
+---@type string[]
+mod.WATER_TILE_NAMES = {
+   "water",
+   "deepwater",
+   "water-green",
+   "deepwater-green",
+   "water-shallow",
+   "water-mud",
+   "water-wube",
+}
+
 return mod

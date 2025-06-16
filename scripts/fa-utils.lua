@@ -930,15 +930,7 @@ function mod.tile_is_water(surface, pos)
    local water_tiles = surface.find_tiles_filtered({
       position = pos,
       radius = 0.1,
-      name = {
-         "water",
-         "deepwater",
-         "water-green",
-         "deepwater-green",
-         "water-shallow",
-         "water-mud",
-         "water-wube",
-      },
+      name = Consts.WATER_TILE_NAMES,
    })
    return (water_tiles ~= nil and #water_tiles > 0)
 end
@@ -946,8 +938,7 @@ end
 --If the cursor is over a water tile, this function is called to check if it is open water or a shore.
 function mod.identify_water_shores(pindex)
    local p = game.get_player(pindex)
-   local water_tile_names =
-      { "water", "deepwater", "water-green", "deepwater-green", "water-shallow", "water-mud", "water-wube" }
+   local water_tile_names = Consts.WATER_TILE_NAMES
    local vp = Viewpoint.get_viewpoint(pindex)
    local pos = vp:get_cursor_pos()
    rendering.draw_circle({
