@@ -13,6 +13,26 @@ local Viewpoint = require("scripts.viewpoint")
 
 local mod = {}
 
+-- Helper function to check electric pole placement
+local function check_electric_pole_placement(surface, position, pole_name, min_distance, max_radius)
+   local poles = surface.find_entities_filtered({ position = position, radius = max_radius, name = pole_name })
+   local all_beyond_min = true
+   local any_connects = false
+   local any_found = false
+
+   for i, pole in ipairs(poles) do
+      any_found = true
+      local distance = util.distance(position, pole.position)
+      if distance < min_distance then
+         all_beyond_min = false
+      elseif distance >= min_distance then
+         any_connects = true
+      end
+   end
+
+   return all_beyond_min and any_connects, any_found
+end
+
 --[[Attempts to build the item in hand.
 * Does nothing if the hand is empty or the item is not a place-able entity.
 * If the item is an offshore pump, calls a different, special function for it.
@@ -103,86 +123,36 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
          players[pindex].building_footprint_left_top = footprint.left_top
          players[pindex].building_footprint_right_bottom = footprint.right_bottom
       end
-      if stack.name == "small-electric-pole" and players[pindex].build_lock == true then
-         --Place a small electric pole in this position only if it is within 6.5 to 7.6 tiles of another small electric pole
+      -- Electric pole placement checks
+      local pole_configs = {
+         ["small-electric-pole"] = { min_distance = 6.5, max_radius = 7.6, use_center_tile = true },
+         ["medium-electric-pole"] = { min_distance = 6.5, max_radius = 8, use_center_tile = true },
+         ["big-electric-pole"] = { min_distance = 28.5, max_radius = 30, offset_back = true },
+         ["substation"] = { min_distance = 17.01, max_radius = 18.01, offset_back = true },
+      }
+
+      local pole_config = pole_configs[stack.name]
+      if pole_config and players[pindex].build_lock == true then
+         local check_position = position
+
+         -- Apply position adjustments
+         if pole_config.offset_back then
+            check_position = FaUtils.offset_position_legacy(position, players[pindex].player_direction, -1)
+            position = check_position
+         elseif pole_config.use_center_tile then
+            check_position = FaUtils.center_of_tile(position)
+         end
+
          local surf = game.get_player(pindex).surface
-         local small_poles =
-            surf.find_entities_filtered({ position = position, radius = 7.6, name = "small-electric-pole" })
-         local all_beyond_6_5 = true
-         local any_connects = false
-         local any_found = false
-         for i, pole in ipairs(small_poles) do
-            any_found = true
-            if util.distance(FaUtils.center_of_tile(position), pole.position) < 6.5 then
-               all_beyond_6_5 = false
-            elseif util.distance(FaUtils.center_of_tile(position), pole.position) >= 6.5 then
-               any_connects = true
-            end
-         end
-         if not (all_beyond_6_5 and any_connects) then
-            game.get_player(pindex).play_sound({ path = "Inventory-Move" })
-            if not any_found then game.get_player(pindex).play_sound({ path = "utility/cannot_build" }) end
-            return
-         end
-      elseif stack.name == "medium-electric-pole" and players[pindex].build_lock == true then
-         --Place a medium electric pole in this position only if it is within 6.5 to 8 tiles of another medium electric pole
-         local surf = game.get_player(pindex).surface
-         local med_poles =
-            surf.find_entities_filtered({ position = position, radius = 8, name = "medium-electric-pole" })
-         local all_beyond_6_5 = true
-         local any_connects = false
-         local any_found = false
-         for i, pole in ipairs(med_poles) do
-            any_found = true
-            if util.distance(FaUtils.center_of_tile(position), pole.position) < 6.5 then
-               all_beyond_6_5 = false
-            elseif util.distance(FaUtils.center_of_tile(position), pole.position) >= 6.5 then
-               any_connects = true
-            end
-         end
-         if not (all_beyond_6_5 and any_connects) then
-            game.get_player(pindex).play_sound({ path = "Inventory-Move" })
-            if not any_found then game.get_player(pindex).play_sound({ path = "utility/cannot_build" }) end
-            return
-         end
-      elseif stack.name == "big-electric-pole" and players[pindex].build_lock == true then
-         --Place a big electric pole in this position only if it is within 29 to 30 tiles of another medium electric pole
-         position = FaUtils.offset_position_legacy(position, players[pindex].player_direction, -1)
-         local surf = game.get_player(pindex).surface
-         local big_poles = surf.find_entities_filtered({ position = position, radius = 30, name = "big-electric-pole" })
-         local all_beyond_min = true
-         local any_connects = false
-         local any_found = false
-         for i, pole in ipairs(big_poles) do
-            any_found = true
-            if util.distance(position, pole.position) < 28.5 then
-               all_beyond_min = false
-            elseif util.distance(position, pole.position) >= 28.5 then
-               any_connects = true
-            end
-         end
-         if not (all_beyond_min and any_connects) then
-            game.get_player(pindex).play_sound({ path = "Inventory-Move" })
-            if not any_found then game.get_player(pindex).play_sound({ path = "utility/cannot_build" }) end
-            return
-         end
-      elseif stack.name == "substation" and players[pindex].build_lock == true then
-         --Place a substation in this position only if it is within 16 to 18 tiles of another medium electric pole
-         position = FaUtils.offset_position_legacy(position, players[pindex].player_direction, -1)
-         local surf = game.get_player(pindex).surface
-         local sub_poles = surf.find_entities_filtered({ position = position, radius = 18.01, name = "substation" })
-         local all_beyond_min = true
-         local any_connects = false
-         local any_found = false
-         for i, pole in ipairs(sub_poles) do
-            any_found = true
-            if util.distance(position, pole.position) < 17.01 then
-               all_beyond_min = false
-            elseif util.distance(position, pole.position) >= 17.01 then
-               any_connects = true
-            end
-         end
-         if not (all_beyond_min and any_connects) then
+         local can_place, any_found = check_electric_pole_placement(
+            surf,
+            check_position,
+            stack.name,
+            pole_config.min_distance,
+            pole_config.max_radius
+         )
+
+         if not can_place then
             game.get_player(pindex).play_sound({ path = "Inventory-Move" })
             if not any_found then game.get_player(pindex).play_sound({ path = "utility/cannot_build" }) end
             return
