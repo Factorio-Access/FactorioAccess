@@ -1,10 +1,10 @@
 --Here: functions specific to the menus of buildings and vehicles.
 local util = require("util")
-local fa_utils = require("scripts.fa-utils")
-local fa_crafting = require("scripts.crafting")
+local FaUtils = require("scripts.fa-utils")
+local Crafting = require("scripts.crafting")
 local localising = require("scripts.localising")
-local fa_belts = require("scripts.transport-belts")
-local fa_blueprints = require("scripts.blueprints")
+local TransportBelts = require("scripts.transport-belts")
+local Blueprints = require("scripts.blueprints")
 local BeltAnalyzer = require("scripts.ui.belt-analyzer")
 local Filters = require("scripts.filters")
 local UiRouter = require("scripts.ui.router")
@@ -104,7 +104,7 @@ function mod.open_operable_building(ent, pindex)
       end
       if ent.prototype.ingredient_count ~= nil then
          players[pindex].building.recipe = ent.get_recipe()
-         players[pindex].building.recipe_list = fa_crafting.get_recipes(pindex, ent)
+         players[pindex].building.recipe_list = Crafting.get_recipes(pindex, ent)
          players[pindex].building.category = 1
       else
          players[pindex].building.recipe = nil
@@ -278,7 +278,7 @@ function mod.open_operable_vehicle(ent, pindex)
       players[pindex].menu_search_index_2 = 0
       if ent.prototype.ingredient_count ~= nil then
          players[pindex].building.recipe = ent.get_recipe()
-         players[pindex].building.recipe_list = fa_crafting.get_recipes(pindex, ent)
+         players[pindex].building.recipe_list = Crafting.get_recipes(pindex, ent)
          players[pindex].building.category = 1
       else
          players[pindex].building.recipe = nil
@@ -524,9 +524,9 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
       local stack = building_sector.inventory[players[pindex].building.index]
       if stack and stack.valid_for_read and stack.valid then
          if stack.is_blueprint then
-            printout(fa_blueprints.get_blueprint_info(stack, false, pindex), pindex)
+            printout(Blueprints.get_blueprint_info(stack, false, pindex), pindex)
          elseif stack.is_blueprint_book then
-            printout(fa_blueprints.get_blueprint_book_info(stack, false), pindex)
+            printout(Blueprints.get_blueprint_book_info(stack, false), pindex)
          else
             --Check if the slot is filtered
             local index = players[pindex].building.index
