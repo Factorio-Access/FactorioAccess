@@ -1,11 +1,11 @@
 --Here: Menu search and directly related functions
-local fa_crafting = require("scripts.crafting")
+local Crafting = require("scripts.crafting")
 local localising = require("scripts.localising")
-local fa_sectors = require("scripts.building-vehicle-sectors")
-local fa_circuits = require("scripts.circuit-networks")
-local fa_travel = require("scripts.travel-tools")
-local fa_graphics = require("scripts.graphics")
-local fa_blueprints = require("scripts.blueprints")
+local Sectors = require("scripts.building-vehicle-sectors")
+local Circuits = require("scripts.circuit-networks")
+local Travel = require("scripts.travel-tools")
+local Graphics = require("scripts.graphics")
+local Blueprints = require("scripts.blueprints")
 local Research = require("scripts.research")
 local UiRouter = require("scripts.ui.router")
 
@@ -279,7 +279,7 @@ function mod.open_search_box(pindex)
       players[pindex].menu_search_frame.destroy()
       players[pindex].menu_search_frame = nil
    end
-   local frame = fa_graphics.create_text_field_frame(pindex, "enter-search-term")
+   local frame = Graphics.create_text_field_frame(pindex, "enter-search-term")
    players[pindex].menu_search_frame = frame
 
    --Inform the player
@@ -378,7 +378,7 @@ function mod.fetch_next(pindex, str, start_phrase_in)
       new_index = prototypes_find_index_of_next_name_match(group, search_index, str, pindex)
       while new_index <= 0 and tries < #players[pindex].signal_selector.group_names + 1 do
          players[pindex].menu_search_last_name = "(none)"
-         fa_circuits.signal_selector_group_down(pindex)
+         Circuits.signal_selector_group_down(pindex)
          group_index = players[pindex].signal_selector.group_index
          group_name = players[pindex].signal_selector.group_names[group_index]
          group = players[pindex].signal_selector.signals[group_name]
@@ -420,7 +420,7 @@ function mod.fetch_next(pindex, str, start_phrase_in)
       if pb.sector_name == "Output" then
          players[pindex].menu_search_index = new_index
          players[pindex].building.index = new_index
-         fa_sectors.read_sector_slot(pindex, false)
+         Sectors.read_sector_slot(pindex, false)
       elseif pb.sector_name == "player inventory from building" then
          players[pindex].menu_search_index = new_index
          players[pindex].inventory.index = new_index
@@ -430,7 +430,7 @@ function mod.fetch_next(pindex, str, start_phrase_in)
          players[pindex].menu_search_index_2 = new_index_2
          players[pindex].building.category = new_index
          players[pindex].building.index = new_index_2
-         fa_sectors.read_building_recipe(pindex, start_phrase)
+         Sectors.read_building_recipe(pindex, start_phrase)
       else
          printout("Search section error", pindex)
          return
@@ -440,19 +440,19 @@ function mod.fetch_next(pindex, str, start_phrase_in)
       players[pindex].menu_search_index_2 = new_index_2
       players[pindex].crafting.category = new_index
       players[pindex].crafting.index = new_index_2
-      fa_crafting.read_crafting_slot(pindex, start_phrase)
+      Crafting.read_crafting_slot(pindex, start_phrase)
    elseif router:is_ui_open(UiRouter.UI_NAMES.SIGNAL_SELECTOR) then
       players[pindex].menu_search_index = new_index
       players[pindex].signal_selector.signal_index = new_index
-      fa_circuits.read_selected_signal_slot(pindex, start_phrase)
+      Circuits.read_selected_signal_slot(pindex, start_phrase)
    elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       players[pindex].menu_search_index = new_index
       players[pindex].travel.index.y = new_index
-      fa_travel.read_fast_travel_slot(pindex)
+      Travel.read_fast_travel_slot(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) and players[pindex].blueprint_book_menu.list_mode then
       players[pindex].menu_search_index = new_index
       players[pindex].blueprint_book_menu.index = new_index
-      fa_blueprints.run_blueprint_book_menu(pindex, new_index, true, false, false)
+      Blueprints.run_blueprint_book_menu(pindex, new_index, true, false, false)
    else
       printout("Search error", pindex)
       return
