@@ -3,10 +3,10 @@
 local circular = require("scripts.ds.circular-options-list")
 local localising = require("scripts.localising")
 local util = require("util")
-local fa_utils = require("scripts.fa-utils")
+local FaUtils = require("scripts.fa-utils")
 local descriptors = require("scripts.descriptors")
 local multistate_switch = require("scripts.ui.low-level.multistate-switch")
-local fa_graphics = require("scripts.graphics")
+local Graphics = require("scripts.graphics")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
 
@@ -189,21 +189,21 @@ function mod.wire_neighbours_info(ent, read_network_ids)
    else
       result = result .. " connected to "
       for i, pole in ipairs(ent.neighbours.copper) do
-         local dir = fa_utils.get_direction_biased(pole.position, ent.position)
+         local dir = FaUtils.get_direction_biased(pole.position, ent.position)
          local dist = util.distance(pole.position, ent.position)
          if neighbour_count > 0 then result = result .. " and " end
          local id = pole.electric_network_id
          if id == nil then id = "nil" end
-         result = result .. math.ceil(dist) .. " tiles " .. fa_utils.direction_lookup(dir)
+         result = result .. math.ceil(dist) .. " tiles " .. FaUtils.direction_lookup(dir)
          if read_network_ids == true then result = result .. " to electric network number " .. id end
          result = result .. ", "
          neighbour_count = neighbour_count + 1
       end
       for i, nbr in ipairs(ent.neighbours.red) do
-         local dir = fa_utils.get_direction_biased(nbr.position, ent.position)
+         local dir = FaUtils.get_direction_biased(nbr.position, ent.position)
          local dist = util.distance(nbr.position, ent.position)
          if neighbour_count > 0 then result = result .. " and " end
-         result = result .. " red wire " .. math.ceil(dist) .. " tiles " .. fa_utils.direction_lookup(dir)
+         result = result .. " red wire " .. math.ceil(dist) .. " tiles " .. FaUtils.direction_lookup(dir)
          if nbr.type == "electric-pole" then
             local id = nbr.get_circuit_network(
                defines.wire_connector_id.circuit_red,
@@ -220,10 +220,10 @@ function mod.wire_neighbours_info(ent, read_network_ids)
          neighbour_count = neighbour_count + 1
       end
       for i, nbr in ipairs(ent.neighbours.green) do
-         local dir = fa_utils.get_direction_biased(nbr.position, ent.position)
+         local dir = FaUtils.get_direction_biased(nbr.position, ent.position)
          local dist = util.distance(nbr.position, ent.position)
          if neighbour_count > 0 then result = result .. " and " end
-         result = result .. " green wire " .. math.ceil(dist) .. " tiles " .. fa_utils.direction_lookup(dir)
+         result = result .. " green wire " .. math.ceil(dist) .. " tiles " .. FaUtils.direction_lookup(dir)
          if nbr.type == "electric-pole" then
             local id = nbr.get_circuit_network(
                defines.wire_connector_id.circuit_green,
@@ -350,7 +350,7 @@ end
 function mod.constant_combinator_type_last_signal_count(pindex, ent)
    players[pindex].signal_selector = {}
    players[pindex].signal_selector.ent = ent
-   local frame = fa_graphics.create_text_field_frame(pindex, "circuit-networks-textfield")
+   local frame = Graphics.create_text_field_frame(pindex, "circuit-networks-textfield")
    return "Type in a number press 'ENTER' to confirm, or press 'ESC' to exit"
 end
 
@@ -1348,7 +1348,7 @@ function mod.circuit_network_neighbors_info(pindex, ent, wire_type)
             .. " at "
             .. math.ceil(util.distance(member.position, ent.position))
             .. " "
-            .. fa_utils.direction_lookup(fa_utils.get_direction_biased(member.position, ent.position))
+            .. FaUtils.direction_lookup(FaUtils.get_direction_biased(member.position, ent.position))
             .. ", "
       end
    end
@@ -1421,7 +1421,7 @@ function mod.circuit_network_signals_info(pindex, nw, color_name, group_no)
       total_signal_count = total_signal_count + 1
       local sig_name = sig.signal.name
       local sig_type = sig.signal.type
-      local sig_count = fa_utils.simplify_large_number(sig.count)
+      local sig_count = FaUtils.simplify_large_number(sig.count)
       local sig_local_name = sig_name
       if sig_type == "item" then
          sig_local_name = localising.get(prototypes.item[sig_name], pindex)
@@ -1445,7 +1445,7 @@ end
 
 local function build_signal_selector(pindex)
    local item_group_names = {}
-   local groups = fa_utils.get_iterable_array(prototypes.item_group) --prototypes.item_group
+   local groups = FaUtils.get_iterable_array(prototypes.item_group) --prototypes.item_group
    --local item_group_array = get_iterable_array(prototypes.item_group)
    for i, group in ipairs(groups) do
       table.insert(item_group_names, group.name)
@@ -1459,13 +1459,13 @@ local function build_signal_selector(pindex)
       editing_first_slot = nil,
    }
    --Populate signal groups
-   local items = fa_utils.get_iterable_array(prototypes.item)
+   local items = FaUtils.get_iterable_array(prototypes.item)
    for i, group in ipairs(item_group_names) do
       players[pindex].signal_selector.signals[group] = {}
       if group == "fluids" then
-         players[pindex].signal_selector.signals[group] = fa_utils.get_iterable_array(prototypes.fluid)
+         players[pindex].signal_selector.signals[group] = FaUtils.get_iterable_array(prototypes.fluid)
       elseif group == "signals" then
-         players[pindex].signal_selector.signals[group] = fa_utils.get_iterable_array(prototypes.virtual_signal)
+         players[pindex].signal_selector.signals[group] = FaUtils.get_iterable_array(prototypes.virtual_signal)
       else
          for j, item in ipairs(items) do
             if item.group.name == group then table.insert(players[pindex].signal_selector.signals[group], item) end
@@ -1566,7 +1566,7 @@ end
 function mod.type_circuit_condition_constant(pindex, ent)
    players[pindex].signal_selector = {}
    players[pindex].signal_selector.ent = ent
-   local frame = fa_graphics.create_text_field_frame(pindex, "circuit-networks-textfield")
+   local frame = Graphics.create_text_field_frame(pindex, "circuit-networks-textfield")
    return "Type in a number for comparing and press 'ENTER' to confirm, or press 'ESC' to exit"
 end
 
