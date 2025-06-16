@@ -2,10 +2,10 @@
 --Does not include event handlers, guns and equipment maanagement
 
 local util = require("util")
-local fa_utils = require("scripts.fa-utils")
-local fa_graphics = require("scripts.graphics")
-local fa_mouse = require("scripts.mouse")
-local fa_equipment = require("scripts.equipment")
+local FaUtils = require("scripts.fa-utils")
+local Graphics = require("scripts.graphics")
+local Mouse = require("scripts.mouse")
+local Equipment = require("scripts.equipment")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
 
@@ -239,8 +239,8 @@ function mod.aim_gun_at_nearest_enemy(pindex, enemy_in)
    --If in range, move the cursor onto the enemy to aim the gun
    if dist < range then
       vp:set_cursor_pos({ X = enemy.position.x, y = enemy.position.y })
-      fa_mouse.move_mouse_pointer(enemy.position, pindex)
-      fa_graphics.draw_cursor_highlight(pindex, nil, nil, true)
+      Mouse.move_mouse_pointer(enemy.position, pindex)
+      Graphics.draw_cursor_highlight(pindex, nil, nil, true)
    end
    return true
 end
@@ -300,9 +300,9 @@ function mod.smart_aim_grenades_and_capsules(pindex, draw_circles_in)
    local player_pos = p.position
    --Get running direction
    if p.walking_state.walking then running_dir = p.walking_state.direction end
-   if p.vehicle and p.vehicle.valid and p.vehicle.speed > 0 then running_dir = fa_utils.get_heading_value(p.vehicle) end
+   if p.vehicle and p.vehicle.valid and p.vehicle.speed > 0 then running_dir = FaUtils.get_heading_value(p.vehicle) end
    if p.vehicle and p.vehicle.valid and p.vehicle.speed < 0 then
-      running_dir = fa_utils.rotate_180(fa_utils.get_heading_value(p.vehicle))
+      running_dir = FaUtils.rotate_180(FaUtils.get_heading_value(p.vehicle))
    end
    if p.vehicle and p.vehicle.valid and p.vehicle.type == "spider-vehicle" then running_dir = nil end
    --Determine max and min throwing ranges based on capsule type
@@ -337,7 +337,7 @@ function mod.smart_aim_grenades_and_capsules(pindex, draw_circles_in)
       invert = true,
    })
    --Sort potential targets by distance from the player
-   potential_targets = fa_utils.sort_ents_by_distance_from_pos(player_pos, potential_targets)
+   potential_targets = FaUtils.sort_ents_by_distance_from_pos(player_pos, potential_targets)
    --Label potential targets
    for i, t in ipairs(potential_targets) do
       if t.valid and draw_circles then
@@ -356,7 +356,7 @@ function mod.smart_aim_grenades_and_capsules(pindex, draw_circles_in)
    for i, t in ipairs(potential_targets) do
       if t.valid and t.type == "unit-spawner" or t.type == "turret" then
          local dist = util.distance(player_pos, t.position)
-         local dir = fa_utils.get_direction_precise(t.position, player_pos)
+         local dir = FaUtils.get_direction_precise(t.position, player_pos)
          if dist > min_range and dist < max_range and dir ~= running_dir then
             return t.position
          elseif draw_circles then
@@ -377,7 +377,7 @@ function mod.smart_aim_grenades_and_capsules(pindex, draw_circles_in)
    for i, t in ipairs(potential_targets) do
       if t.valid and t.type == "unit" or t.type == "character" then
          local dist = util.distance(player_pos, t.position)
-         local dir = fa_utils.get_direction_precise(t.position, player_pos)
+         local dir = FaUtils.get_direction_precise(t.position, player_pos)
          if dist > min_range and dist < max_range and dir ~= running_dir then
             return t.position
          elseif draw_circles then
@@ -398,7 +398,7 @@ function mod.smart_aim_grenades_and_capsules(pindex, draw_circles_in)
    for i, t in ipairs(potential_targets) do
       if t.valid and (t.prototype.is_building or t.prototype.is_military_target) then
          local dist = util.distance(player_pos, t.position)
-         local dir = fa_utils.get_direction_precise(t.position, player_pos)
+         local dir = FaUtils.get_direction_precise(t.position, player_pos)
          if dist > min_range and dist < max_range and dir ~= running_dir then
             return t.position
          elseif draw_circles then
@@ -417,17 +417,17 @@ function mod.smart_aim_grenades_and_capsules(pindex, draw_circles_in)
    end
    --3. Target the cursor position unless running at it
    local cursor_dist = util.distance(player_pos, cursor_pos)
-   local cursor_dir = fa_utils.get_direction_precise(cursor_pos, player_pos)
+   local cursor_dir = FaUtils.get_direction_precise(cursor_pos, player_pos)
    if cursor_dist > min_range and cursor_dist < max_range and cursor_dir ~= running_dir then return cursor_pos end
    --4. If running and if any enemies are close behind you, then target them
    --The player runs at least 8.9 tiles per second and the throw takes around half a second
    --so a displacement of 4 tiles is a safe bet. Also assume a max range penalty because it is behind you
    if running_dir ~= nil and #potential_targets > 0 then
-      local back_dir = fa_utils.rotate_180(running_dir)
+      local back_dir = FaUtils.rotate_180(running_dir)
       for i, t in ipairs(potential_targets) do
          if t.valid and (t.prototype.is_building or t.prototype.is_military_target) then
             local dist = util.distance(player_pos, t.position)
-            local dir = fa_utils.get_direction_precise(t.position, player_pos)
+            local dir = FaUtils.get_direction_precise(t.position, player_pos)
             if dist > min_range - 4 and dist < max_range - 8 and dir == back_dir then return t.position end
          end
       end
@@ -489,7 +489,7 @@ function mod.run_atomic_bomb_checks(pindex)
    --Take actions to abort the firing
    if abort_missle then
       --Remove all atomic bombs
-      fa_equipment.delete_equipped_atomic_bombs(pindex)
+      Equipment.delete_equipped_atomic_bombs(pindex)
 
       --Warn the player
       p.play_sound({ path = "utility/cannot_build" })
