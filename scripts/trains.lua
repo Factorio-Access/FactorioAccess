@@ -2,9 +2,9 @@
 --Does not include event handlers, train stops, rails
 
 local util = require("util")
-local fa_utils = require("scripts.fa-utils")
-local fa_rails = require("scripts.rails")
-local fa_graphics = require("scripts.graphics")
+local FaUtils = require("scripts.fa-utils")
+local Rails = require("scripts.rails")
+local Graphics = require("scripts.graphics")
 local UiRouter = require("scripts.ui.router")
 
 local dirs = defines.direction
@@ -15,7 +15,7 @@ local mod = {}
 function mod.get_train_state_info(train)
    local train_state_id = train.state
    local train_state_text = ""
-   local state_lookup = fa_utils.into_lookup(defines.train_state)
+   local state_lookup = FaUtils.into_lookup(defines.train_state)
    if train_state_id ~= nil then
       train_state_text = state_lookup[train_state_id]
    else
@@ -234,7 +234,7 @@ function mod.train_read_next_rail_entity_ahead(pindex, invert, mute_in)
    local train = game.get_player(pindex).vehicle.train
    local leading_rail, dir_ahead, leading_stock = mod.get_relative_leading_rail_and_train_dir(pindex, train)
    if invert then
-      dir_ahead = fa_rails.get_opposite_rail_direction(dir_ahead)
+      dir_ahead = Rails.get_opposite_rail_direction(dir_ahead)
       message = "Behind, "
    end
    --Correction for trains: Flip the correct direction ahead for mismatching diagonal rails
@@ -242,7 +242,7 @@ function mod.train_read_next_rail_entity_ahead(pindex, invert, mute_in)
       leading_rail.name == "straight-rail"
       and (leading_rail.direction == dirs.southwest or leading_rail.direction == dirs.northwest)
    then
-      dir_ahead = fa_rails.get_opposite_rail_direction(dir_ahead)
+      dir_ahead = Rails.get_opposite_rail_direction(dir_ahead)
    end
    --Correction for trains: Curved rails report different directions based on where the train sits and so are unreliable.
    if leading_rail.name == "curved-rail" then
@@ -251,7 +251,7 @@ function mod.train_read_next_rail_entity_ahead(pindex, invert, mute_in)
       return -1
    end
    local next_entity, next_entity_label, result_extra, next_is_forward, iteration_count =
-      fa_rails.get_next_rail_entity_ahead(leading_rail, dir_ahead, false)
+      Rails.get_next_rail_entity_ahead(leading_rail, dir_ahead, false)
    if next_entity == nil then
       if mute_in == true then return -1 end
       printout("Analysis error, this rail might be looping.", pindex)
@@ -286,7 +286,7 @@ function mod.train_read_next_rail_entity_ahead(pindex, invert, mute_in)
    elseif next_entity_label == "fork split" then
       local entering_segment_rail = result_extra
       message = message .. "rail fork splitting "
-      message = message .. fa_rails.list_rail_fork_directions(next_entity)
+      message = message .. Rails.list_rail_fork_directions(next_entity)
    elseif next_entity_label == "fork merge" then
       local entering_segment_rail = result_extra
       message = message .. "rail fork merging "
@@ -294,11 +294,11 @@ function mod.train_read_next_rail_entity_ahead(pindex, invert, mute_in)
       local entering_segment_rail = result_extra
       message = message .. "end rail "
    elseif next_entity_label == "rail signal" then
-      local signal_state = fa_rails.get_signal_state_info(next_entity)
+      local signal_state = Rails.get_signal_state_info(next_entity)
       message = message .. "rail signal with state " .. signal_state .. " "
       if signal_state == "closed" then honk_score = honk_score + 1 end
    elseif next_entity_label == "chain signal" then
-      local signal_state = fa_rails.get_signal_state_info(next_entity)
+      local signal_state = Rails.get_signal_state_info(next_entity)
       message = message .. "chain signal with state " .. signal_state .. " "
       if signal_state == "closed" then honk_score = honk_score + 1 end
    elseif next_entity_label == "train stop" then
@@ -332,12 +332,12 @@ function mod.train_read_next_rail_entity_ahead(pindex, invert, mute_in)
    if next_entity_label ~= "train stop" then
       message = message .. " in " .. distance .. " meters. "
       if next_entity_label == "end rail" then
-         message = message .. " facing " .. fa_utils.direction_lookup(result_extra)
+         message = message .. " facing " .. FaUtils.direction_lookup(result_extra)
       end
    end
    --If a train stop is close behind, read that instead
    if leading_stock.name == "locomotive" and next_entity_label ~= "train stop" then
-      local heading = fa_utils.get_heading_info(leading_stock)
+      local heading = FaUtils.get_heading_info(leading_stock)
       local pos = leading_stock.position
       local scan_area = nil
       local passed_stop = nil
@@ -361,7 +361,7 @@ function mod.train_read_next_rail_entity_ahead(pindex, invert, mute_in)
          --message = message .. " found stop "
          if
             distance < 12.5
-            and fa_utils.direction_lookup(passed_stop.direction) == fa_utils.get_heading_info(leading_stock)
+            and FaUtils.direction_lookup(passed_stop.direction) == FaUtils.get_heading_info(leading_stock)
          then
             if not first_reset then
                message = ""
@@ -472,7 +472,7 @@ function mod.run_train_menu(menu_index, pindex, clicked, other_input)
          end
          printout("Enter a new name for this train, then press 'ENTER' to confirm, or press 'ESC' to cancel.", pindex)
          players[pindex].train_menu.renaming = true
-         local frame = fa_graphics.create_text_field_frame(pindex, "train-rename")
+         local frame = Graphics.create_text_field_frame(pindex, "train-rename")
          game.get_player(pindex).opened = frame
       end
    elseif index == 3 then
@@ -795,7 +795,7 @@ function mod.train_top_contents_info(train, group_no)
          if itemtable[i] then
             table.insert(
                result,
-               ", " .. itemtable[i].name .. " times " .. fa_utils.simplify_large_number(itemtable[i].count)
+               ", " .. itemtable[i].name .. " times " .. FaUtils.simplify_large_number(itemtable[i].count)
             )
          end
       end
