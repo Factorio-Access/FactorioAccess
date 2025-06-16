@@ -1,5 +1,5 @@
 --Here: Functions about the zoom system
-local fa_graphics = require("scripts.graphics")
+local Graphics = require("scripts.graphics")
 
 local ZOOM_PER_TICK = 1.104086977
 local ln_zoom = math.log(ZOOM_PER_TICK)
@@ -41,9 +41,9 @@ local function zoom_change(pindex, etick, change_by_tick)
          storage.players[pindex].zoom = zoom
          local stack = game.get_player(pindex).cursor_stack
          if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result ~= nil then
-            fa_graphics.sync_build_cursor_graphics(pindex)
+            Graphics.sync_build_cursor_graphics(pindex)
          else
-            fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+            Graphics.draw_cursor_highlight(pindex, nil, nil)
          end
       end
    end
