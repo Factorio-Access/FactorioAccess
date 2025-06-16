@@ -2,7 +2,7 @@
 --Does not include event handlers, combat, repair packs
 
 local localising = require("scripts.localising")
-local fa_electrical = require("scripts.electrical")
+local Electrical = require("scripts.electrical")
 local UiRouter = require("scripts.ui.router")
 
 local mod = {}
@@ -351,10 +351,10 @@ function mod.read_armor_stats(pindex, ent_in)
    if grid.get_generator_energy() > 0 or grid.max_solar_energy > 0 then
       table.insert(result, " generating ")
       if grid.get_generator_energy() > 0 then
-         table.insert(result, fa_electrical.get_power_string(grid.get_generator_energy() * 60) .. " nonstop, ")
+         table.insert(result, Electrical.get_power_string(grid.get_generator_energy() * 60) .. " nonstop, ")
       end
       if grid.max_solar_energy > 0 then
-         table.insert(result, fa_electrical.get_power_string(grid.max_solar_energy * 60) .. " at daytime, ")
+         table.insert(result, Electrical.get_power_string(grid.max_solar_energy * 60) .. " at daytime, ")
       end
    end
    --Movement bonus
@@ -364,7 +364,7 @@ function mod.read_armor_stats(pindex, ent_in)
          " movement bonus "
             .. grid.count("exoskeleton-equipment") * 30
             .. " percent for "
-            .. fa_electrical.get_power_string(grid.count("exoskeleton-equipment") * 200000)
+            .. Electrical.get_power_string(grid.count("exoskeleton-equipment") * 200000)
       )
    end
    return result
