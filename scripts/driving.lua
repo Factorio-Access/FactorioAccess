@@ -2,8 +2,8 @@
 --Note: Some train-specific functions are in rails-and-trains.lua
 
 local util = require("util")
-local fa_utils = require("scripts.fa-utils")
-local fa_trains = require("scripts.trains")
+local FaUtils = require("scripts.fa-utils")
+local Trains = require("scripts.trains")
 local dirs = defines.direction
 
 local mod = {}
@@ -24,10 +24,10 @@ function mod.vehicle_info(pindex)
       --This is a type of locomotive or wagon.
 
       --Add the train name
-      result = "On board " .. vehicle.name .. " of train " .. fa_trains.get_train_name(train) .. ", "
+      result = "On board " .. vehicle.name .. " of train " .. Trains.get_train_name(train) .. ", "
 
       --Add the train state
-      result = result .. fa_trains.get_train_state_info(train) .. ", "
+      result = result .. Trains.get_train_state_info(train) .. ", "
 
       --Declare destination if any.
       if train.path_end_stop ~= nil then
@@ -81,8 +81,8 @@ function mod.check_and_play_driving_alert_sound(pindex, tick, mode_in)
    if last_driving_alert_tick ~= nil and time_since < min_delay then return false end
    --Scan area "ahead" according to direction
    local v = p.vehicle
-   local dir = fa_utils.get_heading_value(v)
-   if v.speed < 0 then dir = fa_utils.rotate_180(dir) end
+   local dir = FaUtils.get_heading_value(v)
+   if v.speed < 0 then dir = FaUtils.rotate_180(dir) end
 
    --Set the trigger distance
    local trigger = 1
@@ -143,7 +143,7 @@ function mod.check_and_play_driving_alert_sound(pindex, tick, mode_in)
    --Filter entities by direction
    local ents_ahead = {}
    for i, ent in ipairs(ents_around) do
-      local dir_ent = fa_utils.get_direction_biased(ent.position, v.position)
+      local dir_ent = FaUtils.get_direction_biased(ent.position, v.position)
       if dir_ent == dir then
          if p.vehicle.type == "car" and ent.unit_number ~= p.vehicle.unit_number then
             --For cars, take the entity as it is
