@@ -759,18 +759,19 @@ function mod.player_logistic_request_read(item_name, pindex, additional_checks)
    end
 end
 
+-- Note: cursor_stack from API returns valid stack or nil, never invalid stack
 function mod.send_selected_stack_to_logistic_trash(pindex)
    local p = game.get_player(pindex)
    local stack = p.cursor_stack
    --Check cursor stack
-   if stack == nil or stack.valid_for_read == false or stack.is_deconstruction_item or stack.is_upgrade_item then
+   if not stack or not stack.valid_for_read or stack.is_deconstruction_item or stack.is_upgrade_item then
       stack = p.get_main_inventory()[players[pindex].inventory.index]
    end
    --Check inventory stack
    if
       players[pindex].menu ~= "inventory"
-      or stack == nil
-      or stack.valid_for_read == false
+      or not stack
+      or not stack.valid_for_read
       or stack.is_deconstruction_item
       or stack.is_upgrade_item
    then
