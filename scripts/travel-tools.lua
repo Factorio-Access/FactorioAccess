@@ -1,8 +1,8 @@
 --Here: Fast travel, structure travel, etc.
-local fa_utils = require("scripts.fa-utils")
-local fa_graphics = require("scripts.graphics")
-local fa_mouse = require("scripts.mouse")
-local fa_teleport = require("scripts.teleport")
+local FaUtils = require("scripts.fa-utils")
+local Graphics = require("scripts.graphics")
+local Mouse = require("scripts.mouse")
+local Teleport = require("scripts.teleport")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
 
@@ -55,8 +55,8 @@ function mod.read_fast_travel_slot(pindex)
             .. ", cursor moved.",
          pindex
       )
-      vp:set_cursor_pos(fa_utils.center_of_tile(entry.position))
-      fa_graphics.draw_cursor_highlight(pindex, nil, "train-visualization")
+      vp:set_cursor_pos(FaUtils.center_of_tile(entry.position))
+      Graphics.draw_cursor_highlight(pindex, nil, "train-visualization")
    end
 end
 
@@ -76,7 +76,7 @@ function mod.fast_travel_menu_click(pindex)
          printout("Cannot teleport from inside a vehicle", pindex)
          return
       end
-      local success = fa_teleport.teleport_to_closest(
+      local success = Teleport.teleport_to_closest(
          pindex,
          storage.players[pindex].travel[players[pindex].travel.index.y].position,
          false,
@@ -86,10 +86,10 @@ function mod.fast_travel_menu_click(pindex)
          vp:set_cursor_pos(table.deepcopy(storage.players[pindex].travel[players[pindex].travel.index.y].position))
       else
          vp:set_cursor_pos(
-            fa_utils.offset_position_legacy(players[pindex].position, players[pindex].player_direction, 1)
+            FaUtils.offset_position_legacy(players[pindex].position, players[pindex].player_direction, 1)
          )
       end
-      fa_graphics.sync_build_cursor_graphics(pindex)
+      Graphics.sync_build_cursor_graphics(pindex)
       game.get_player(pindex).opened = nil
 
       if not refresh_player_tile(pindex) then
@@ -100,9 +100,9 @@ function mod.fast_travel_menu_click(pindex)
       --Update cursor highlight
       local ent = game.get_player(pindex).selected
       if ent and ent.valid then
-         fa_graphics.draw_cursor_highlight(pindex, ent, nil)
+         Graphics.draw_cursor_highlight(pindex, ent, nil)
       else
-         fa_graphics.draw_cursor_highlight(pindex, nil, nil)
+         Graphics.draw_cursor_highlight(pindex, nil, nil)
       end
    elseif players[pindex].travel.index.x == 2 then --Read description
       local desc = players[pindex].travel[players[pindex].travel.index.y].description
@@ -136,8 +136,7 @@ function mod.fast_travel_menu_click(pindex)
       input.focus()
       input.select(1, 0)
    elseif players[pindex].travel.index.x == 5 then --Relocate to current character position
-      players[pindex].travel[players[pindex].travel.index.y].position =
-         fa_utils.center_of_tile(players[pindex].position)
+      players[pindex].travel[players[pindex].travel.index.y].position = FaUtils.center_of_tile(players[pindex].position)
       printout(
          "Relocated point "
             .. players[pindex].travel[players[pindex].travel.index.y].name
@@ -149,7 +148,7 @@ function mod.fast_travel_menu_click(pindex)
       )
       local position = players[pindex].position
       vp:set_cursor_pos({ x = position.x, y = position.y })
-      fa_graphics.draw_cursor_highlight(pindex)
+      Graphics.draw_cursor_highlight(pindex)
    elseif players[pindex].travel.index.x == 6 then --Broadcast
       --Prevent duplicating by checking if this point was last broadcasted
       local this_point = players[pindex].travel[players[pindex].travel.index.y]
