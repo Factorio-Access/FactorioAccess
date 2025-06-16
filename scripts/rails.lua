@@ -2,8 +2,8 @@
 --Does not include event handlers
 
 local util = require("util")
-local fa_utils = require("scripts.fa-utils")
-local fa_mouse = require("scripts.mouse")
+local FaUtils = require("scripts.fa-utils")
+local Mouse = require("scripts.mouse")
 local dirs = defines.direction
 
 local mod = {}
@@ -510,14 +510,14 @@ function mod.cursor_is_at_straight_end_rail_tip(pindex)
    end
    --Check if any rails around the cursor position have a different unit number
    local perimeter = {}
-   perimeter[1] = fa_utils.add_position(pos, { x = -1, y = -1 })
-   perimeter[2] = fa_utils.add_position(pos, { x = -1, y = 0 })
-   perimeter[3] = fa_utils.add_position(pos, { x = -1, y = 1 })
-   perimeter[4] = fa_utils.add_position(pos, { x = 0, y = -1 })
-   perimeter[5] = fa_utils.add_position(pos, { x = 0, y = 1 })
-   perimeter[6] = fa_utils.add_position(pos, { x = 1, y = -1 })
-   perimeter[7] = fa_utils.add_position(pos, { x = 1, y = 0 })
-   perimeter[8] = fa_utils.add_position(pos, { x = 1, y = 1 })
+   perimeter[1] = FaUtils.add_position(pos, { x = -1, y = -1 })
+   perimeter[2] = FaUtils.add_position(pos, { x = -1, y = 0 })
+   perimeter[3] = FaUtils.add_position(pos, { x = -1, y = 1 })
+   perimeter[4] = FaUtils.add_position(pos, { x = 0, y = -1 })
+   perimeter[5] = FaUtils.add_position(pos, { x = 0, y = 1 })
+   perimeter[6] = FaUtils.add_position(pos, { x = 1, y = -1 })
+   perimeter[7] = FaUtils.add_position(pos, { x = 1, y = 0 })
+   perimeter[8] = FaUtils.add_position(pos, { x = 1, y = 1 })
    for i, pos_p in ipairs(perimeter) do
       --Find rails, if any
       -- TODO: #271, we need old rails back or the query crashes.
@@ -542,12 +542,12 @@ function mod.get_signal_state_info(signal)
    local result = ""
    if signal.name == "rail-signal" then
       state_id = signal.signal_state
-      state_lookup = fa_utils.into_lookup(defines.signal_state)
+      state_lookup = FaUtils.into_lookup(defines.signal_state)
       state_name = state_lookup[state_id]
       result = state_name
    elseif signal.name == "rail-chain-signal" then
       state_id = signal.chain_signal_state
-      state_lookup = fa_utils.into_lookup(defines.chain_signal_state)
+      state_lookup = FaUtils.into_lookup(defines.chain_signal_state)
       state_name = state_lookup[state_id]
       result = state_name
       if state_name == "none_open" then result = "closed" end
@@ -963,7 +963,7 @@ function mod.rail_read_next_rail_entity_ahead(pindex, rail, is_forward)
    if next_entity_label ~= "train stop" then
       message = message .. " in " .. distance .. " meters, "
       if next_entity_label == "end rail" then
-         message = message .. " facing " .. fa_utils.direction_lookup(result_extra)
+         message = message .. " facing " .. FaUtils.direction_lookup(result_extra)
       end
    end
    printout(message, pindex)
