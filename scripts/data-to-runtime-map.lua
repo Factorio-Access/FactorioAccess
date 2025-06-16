@@ -34,6 +34,9 @@ function mod.build(name, values)
             icon_size = 2,
             stack_size = 1,
             localised_description = { k, v },
+            auto_recycle = false,
+            hidden = true,
+            hidden_in_factoriopedia = true,
          },
       })
 
