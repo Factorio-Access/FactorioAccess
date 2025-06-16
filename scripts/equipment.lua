@@ -1,8 +1,8 @@
 --Here: functions relating to guns and equipment management
 --Does not include event handlers, combat, repair packs
 
-local localising = require("scripts.localising")
 local Electrical = require("scripts.electrical")
+local localising = require("scripts.localising")
 local UiRouter = require("scripts.ui.router")
 
 local mod = {}

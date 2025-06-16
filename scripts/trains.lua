@@ -3,8 +3,8 @@
 
 local util = require("util")
 local FaUtils = require("scripts.fa-utils")
-local Rails = require("scripts.rails")
 local Graphics = require("scripts.graphics")
+local Rails = require("scripts.rails")
 local UiRouter = require("scripts.ui.router")
 
 local dirs = defines.direction

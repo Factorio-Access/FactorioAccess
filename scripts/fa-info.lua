@@ -15,13 +15,10 @@ won't change our mind later or maybe even go as far as adding settings for this
 stuff.
 ]]
 local dirs = defines.direction
-local Filters = require("scripts.filters")
 local util = require("util")
+local Filters = require("scripts.filters")
 local UiRouter = require("scripts.ui.router")
 
-local F = require("scripts.field-ref")
-local TransportBelts = require("scripts.transport-belts")
-local BotLogistics = require("scripts.worker-robots")
 local BuildingTools = require("scripts.building-tools")
 local Circuits = require("scripts.circuit-networks")
 local Consts = require("scripts.consts")
@@ -29,6 +26,7 @@ local Driving = require("scripts.driving")
 local Electrical = require("scripts.electrical")
 local Equipment = require("scripts.equipment")
 local FaUtils = require("scripts.fa-utils")
+local F = require("scripts.field-ref")
 local Fluids = require("scripts.fluids")
 local Geometry = require("scripts.geometry")
 local Graphics = require("scripts.graphics")
@@ -38,8 +36,10 @@ local Rails = require("scripts.rails")
 local ResourceMining = require("scripts.resource-mining")
 local TH = require("scripts.table-helpers")
 local Trains = require("scripts.trains")
+local TransportBelts = require("scripts.transport-belts")
 local Viewpoint = require("scripts.viewpoint")
 local Wires = require("scripts.wires")
+local BotLogistics = require("scripts.worker-robots")
 
 local mod = {}
 

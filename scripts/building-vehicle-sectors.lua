@@ -1,12 +1,12 @@
 --Here: functions specific to the menus of buildings and vehicles.
 local util = require("util")
-local FaUtils = require("scripts.fa-utils")
+local Blueprints = require("scripts.blueprints")
 local Crafting = require("scripts.crafting")
+local FaUtils = require("scripts.fa-utils")
+local Filters = require("scripts.filters")
 local localising = require("scripts.localising")
 local TransportBelts = require("scripts.transport-belts")
-local Blueprints = require("scripts.blueprints")
 local BeltAnalyzer = require("scripts.ui.belt-analyzer")
-local Filters = require("scripts.filters")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
 

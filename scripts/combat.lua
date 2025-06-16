@@ -2,10 +2,10 @@
 --Does not include event handlers, guns and equipment maanagement
 
 local util = require("util")
+local Equipment = require("scripts.equipment")
 local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
 local Mouse = require("scripts.mouse")
-local Equipment = require("scripts.equipment")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
 

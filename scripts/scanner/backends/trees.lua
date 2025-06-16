@@ -17,9 +17,9 @@ the one thing that does come up here is that it's important for us to be able to
 cluster in batches. We thus do the clustering when dumping, but the work which
 is done at that time is saved.
 ]]
+local TileClusterer = require("scripts.ds.tile-clusterer")
 local Info = require("scripts.fa-info")
 local SC = require("scripts.scanner.scanner-consts")
-local TileClusterer = require("scripts.ds.tile-clusterer")
 local TH = require("scripts.table-helpers")
 
 local mod = {}

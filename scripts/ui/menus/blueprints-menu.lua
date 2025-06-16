@@ -1,13 +1,13 @@
-local Menu = require("scripts.ui.menu")
-local TabList = require("scripts.ui.tab-list")
+local Blueprints = require("scripts.blueprints")
+local FaUtils = require("scripts.fa-utils")
 local Functools = require("scripts.functools")
 local Graphics = require("scripts.graphics")
-local Blueprints = require("scripts.blueprints")
 local Localising = require("scripts.localising")
 local TH = require("scripts.table-helpers")
-local FaUtils = require("scripts.fa-utils")
 local UiKeyGraph = require("scripts.ui.key-graph")
+local Menu = require("scripts.ui.menu")
 local UiRouter = require("scripts.ui.router")
+local TabList = require("scripts.ui.tab-list")
 
 local mod = {}
 

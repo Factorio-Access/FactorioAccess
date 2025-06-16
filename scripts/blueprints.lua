@@ -1,10 +1,10 @@
 --Here: Functions related to ghosts, blueprints and blueprint books
 --Does not include event handlers
 
-local FaUtils = require("scripts.fa-utils")
 local BuildingTools = require("scripts.building-tools")
-local PlayerMiningTools = require("scripts.player-mining-tools")
+local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
+local PlayerMiningTools = require("scripts.player-mining-tools")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
 

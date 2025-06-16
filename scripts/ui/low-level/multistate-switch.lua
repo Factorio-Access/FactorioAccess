@@ -15,8 +15,8 @@ not yet at the point of ephemeral state.
 First, you declare your UI:
 
 ```
-local multistate_switch = require('scripts.ui.low-level.multistate-switch')
 local F = require('scripts.field-ref')
+local multistate_switch = require('scripts.ui.low-level.multistate-switch')
 
 local switch = multistate_switch.create({
    on_off_field = F.controloler.something_boolean,

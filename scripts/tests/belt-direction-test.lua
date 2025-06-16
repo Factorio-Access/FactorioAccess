@@ -2,8 +2,8 @@
 -- Tests mod's ability to handle belt information
 
 local EventManager = require("scripts.event-manager")
-local TransportBelts = require("scripts.transport-belts")
 local TestRegistry = require("scripts.test-registry")
+local TransportBelts = require("scripts.transport-belts")
 local describe = TestRegistry.describe
 local it = TestRegistry.it
 

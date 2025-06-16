@@ -1,9 +1,9 @@
 local Consts = require("scripts.consts")
 local DataToRuntimeMap = require("scripts.data-to-runtime-map")
+local Clusterer = require("scripts.ds.clusterer")
 local FaInfo = require("scripts.fa-info")
 local FaUtils = require("scripts.fa-utils")
 local Functools = require("scripts.functools")
-local Clusterer = require("scripts.ds.clusterer")
 local ScannerConsts = require("scripts.scanner.scanner-consts")
 local TableHelpers = require("scripts.table-helpers")
 

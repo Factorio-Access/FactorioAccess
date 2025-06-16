@@ -1,16 +1,16 @@
 local Functools = require("scripts.functools")
-local StorageManager = require("scripts.storage-manager")
 local Memosort = require("scripts.memosort")
 local ResourcePatchesBackend = require("scripts.scanner.backends.resource-patches")
-local ScannerConsts = require("scripts.scanner.scanner-consts")
 local SimpleBackend = require("scripts.scanner.backends.simple")
+local ScannerConsts = require("scripts.scanner.scanner-consts")
+local StorageManager = require("scripts.storage-manager")
 -- This is typed around 100 times and only used for the LUT, so we will shorten
 -- it.
-local SEB = require("scripts.scanner.backends.single-entity")
 local SparseBitset = require("scripts.ds.sparse-bitset")
-local TH = require("scripts.table-helpers")
+local SEB = require("scripts.scanner.backends.single-entity")
 local TreeBackend = require("scripts.scanner.backends.trees")
 local WaterBackend = require("scripts.scanner.backends.water")
+local TH = require("scripts.table-helpers")
 local WorkQueue = require("scripts.work-queue")
 
 local mod = {}

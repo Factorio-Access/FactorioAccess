@@ -15,10 +15,10 @@ self-explanatory.  I recommend reading simple.lua for a good example that shows
 IMPORTANT: see devdocs/scanner.md for the whole picture.
 ]]
 local FaUtils = require("scripts.fa-utils")
-local GlobalManager = require("scripts.storage-manager")
 local Memosort = require("scripts.memosort")
 local ScannerConsts = require("scripts.scanner.scanner-consts")
 local SurfaceScanner = require("scripts.scanner.surface-scanner")
+local GlobalManager = require("scripts.storage-manager")
 local TH = require("scripts.table-helpers")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")

@@ -6,8 +6,8 @@ Handlers registered by this file are exported and not announced through our
 normal handling.  This is because the launcher cannot handle queueing.  We need
 the mod to be silent.
 ]]
-local Fluids = require("scripts.fluids")
 local FaUtils = require("scripts.fa-utils")
+local Fluids = require("scripts.fluids")
 local Localising = require("scripts.localising")
 local TH = require("scripts.table-helpers")
 local TransportBelts = require("scripts.transport-belts")

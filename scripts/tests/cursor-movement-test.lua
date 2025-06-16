@@ -3,8 +3,8 @@
 
 local EventManager = require("scripts.event-manager")
 local graphics = require("scripts.graphics")
-local viewpoint = require("scripts.viewpoint")
 local TestRegistry = require("scripts.test-registry")
+local viewpoint = require("scripts.viewpoint")
 local describe = TestRegistry.describe
 local it = TestRegistry.it
 

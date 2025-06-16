@@ -1,13 +1,13 @@
 local FaUtils = require("scripts.fa-utils")
 local Geometry = require("scripts.geometry")
-local Grid = require("scripts.ui.grid")
 local Localising = require("scripts.localising")
 local MessageBuilder = require("scripts.message-builder")
-local TabList = require("scripts.ui.tab-list")
 local TH = require("scripts.table-helpers")
 local TransportBelts = require("scripts.transport-belts")
+local Grid = require("scripts.ui.grid")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local UiRouter = require("scripts.ui.router")
+local TabList = require("scripts.ui.tab-list")
 
 local mod = {}
 

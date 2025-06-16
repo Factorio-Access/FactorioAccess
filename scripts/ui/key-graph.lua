@@ -75,8 +75,8 @@ constraint is this: going down and right must visit the whole graph eventually. 
 whatever they want.  But going down and right must visit all nodes.  Generally this "just works out" because it aligns
 naturally with how the UX for a UI should be.
 ]]
-local UiSounds = require("scripts.ui.sounds")
 local TH = require("scripts.table-helpers")
+local UiSounds = require("scripts.ui.sounds")
 
 local mod = {}
 

@@ -24,9 +24,9 @@ global.players[pindex].menu_name, and setting it for the open tab list.
 You should not use printout. Instead, you are given a builder in the context. Sometimes, the tab needs to add output
 before yours, so you should print through that.
 ]]
+local Math2 = require("math-helpers")
 local MessageBuilder = require("scripts.message-builder")
 local StorageManager = require("scripts.storage-manager")
-local Math2 = require("math-helpers")
 local UiRouter = require("scripts.ui.router")
 
 local mod = {}

@@ -12,9 +12,9 @@ To match Lua, graphs are 1-indexed.
 You may replace default dimension announcement by calling `:dimension_labeler` and giving it a callback which will
 receive the graph's context, x, and y.  You should push `:fragment` only.
 ]]
+local TH = require("scripts.table-helpers")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local UiSounds = require("scripts.ui.sounds")
-local TH = require("scripts.table-helpers")
 
 local mod = {}
 

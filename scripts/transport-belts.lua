@@ -12,8 +12,8 @@ once in part due to lost knowledge.
 local util = require("util")
 
 local Consts = require("scripts.consts")
-local F = require("scripts.field-ref")
 local FaUtils = require("scripts.fa-utils")
+local F = require("scripts.field-ref")
 local Geometry = require("scripts.geometry")
 local localising = require("scripts.localising")
 local MessageBuilder = require("scripts.message-builder")

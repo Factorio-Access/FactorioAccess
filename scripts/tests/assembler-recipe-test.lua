@@ -1,8 +1,8 @@
 --- Test assembling machine recipe management
 -- Tests mod's recipe listing and handling functions
 
-local EventManager = require("scripts.event-manager")
 local Crafting = require("scripts.crafting")
+local EventManager = require("scripts.event-manager")
 local TestRegistry = require("scripts.test-registry")
 local describe = TestRegistry.describe
 local it = TestRegistry.it

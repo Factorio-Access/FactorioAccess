@@ -1,12 +1,12 @@
 --Here: Functions relating to circuit networks, virtual signals, wiring and unwiring buildings, and the such.
 --Does not include event handlers directly, but can have functions called by them.
-local circular = require("scripts.ds.circular-options-list")
-local localising = require("scripts.localising")
 local util = require("util")
-local FaUtils = require("scripts.fa-utils")
 local descriptors = require("scripts.descriptors")
-local multistate_switch = require("scripts.ui.low-level.multistate-switch")
+local circular = require("scripts.ds.circular-options-list")
+local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
+local localising = require("scripts.localising")
+local multistate_switch = require("scripts.ui.low-level.multistate-switch")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
 

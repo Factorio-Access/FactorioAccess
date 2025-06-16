@@ -1,11 +1,11 @@
 local util = require("util")
-local FaUtils = require("scripts.fa-utils")
 local Equipment = require("scripts.equipment")
+local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
 local Localising = require("scripts.localising")
 local MessageBuilder = require("scripts.message-builder")
-local Sounds = require("scripts.ui.sounds")
 local UiRouter = require("scripts.ui.router")
+local Sounds = require("scripts.ui.sounds")
 
 local dirs = defines.direction
 local MAX_STACK_COUNT = 10

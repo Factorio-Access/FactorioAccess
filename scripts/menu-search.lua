@@ -1,12 +1,12 @@
 --Here: Menu search and directly related functions
-local Crafting = require("scripts.crafting")
-local localising = require("scripts.localising")
+local Blueprints = require("scripts.blueprints")
 local Sectors = require("scripts.building-vehicle-sectors")
 local Circuits = require("scripts.circuit-networks")
-local Travel = require("scripts.travel-tools")
+local Crafting = require("scripts.crafting")
 local Graphics = require("scripts.graphics")
-local Blueprints = require("scripts.blueprints")
+local localising = require("scripts.localising")
 local Research = require("scripts.research")
+local Travel = require("scripts.travel-tools")
 local UiRouter = require("scripts.ui.router")
 
 local mod = {}

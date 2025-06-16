@@ -2,8 +2,8 @@
 -- Provides tick-based testing with setup and assertions
 
 local EventManager = require("scripts.event-manager")
-local sounds = require("scripts.ui.sounds")
 local TestRegistry = require("scripts.test-registry")
+local sounds = require("scripts.ui.sounds")
 
 local mod = {}
 

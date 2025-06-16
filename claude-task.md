@@ -1,4 +1,4 @@
-# Task: analyze LLM-generated issue plans and execute on them.
+# Task: fix import styling
 
 ## Character
 
@@ -9,65 +9,32 @@ write code accordingly.  It is fair to assume a deep knowledge of Lua.
 
 ## What
 
-This is a two-phase task. *DO NOT WRITE CODE AT THIS TIME*.  It is also open ended.  Take initiative for decision-making
-but not when writing code.
-
-The codebase has some closely related common antipatterns.  The Factorio API at LuaObject has a `.valid` property which must be checked across ticks.  Because of this, the codebase is full of code like this:
+We have two styles of import:
 
 ```
-function do_something(whatever)
-    if not whatever.valid then return nil end
-
-    -- really do it
-end
-
-function use_the_thing(pindex)
-    local player = game.get_player(pindex)
-    -- Player is valid, we just got one.
-    local target = player.selected
-    -- Selected is valid, we just got one.
-    do_something(target)
-end
+local fa_whatever = require("whatever")
 ```
 
-What's wrong is the extra check.  Because *every caller* of do_something gets the object from the API without crossing a tick boundary, the validity check is not required.  We also have another antipattern:
+and:
 
 ```
--- Handle mining
-function kb_mine(player)
-    -- Not important
-end
-
-function kb_destroy_ghosts(player)
-    if player.valid and player.selected and player.selected.valid and player.selected.is_ghost then
-        -- Get rid of ghosts.
-    end
-end
-
-function kb_x(pindex)
-    -- Player is valid.
-    local player = game.get_player(pindex)
-
-    if player.selected and player.selected.valid and player.selected.is_ghost then
-        kb_destroy_ghosts(player)
-    else
-        kb_mine(player)
-    end
-end
+local Whatever = require("whatever")
 ```
 
-In this case we have two problems: the player is known top be valid (it came from the factorio API), player.selected is valid if not nil (it also came from the Factorio API, and no ticks have gone by), and the top-level function duplicates the checks
+The latter style is what we want.  This needs to be fixed across the codebase.  Since you have already onboarded, I am continuing this in the same session.
 
-there are other similar antipatterns.
+Automated tooling doesn't help too much because IDE things cannot currently handle control.lua, but don't overthink it.
 
-## Deliverables
+`TH` for table-helpers is a special case; leave it alone.  So is `FaUtils` instead of `Utils` (too close to a game built-in) so for e.g. `fa_utils` you'll have to go to `FaUtils`.
 
-Evaluate the codebase.  Ultrathink might be required.  Prepare a report that:
+Be careful!  There's no way sed-type replacement is enough.  If it was, I'd have already done that.  The reason I am using an LLM is that it does require active intelligence and semantic analysis.
 
-- Identifies other similar antipatterns
-- Identifies functions whose parents all have duplicate checks
-- Proposes small, atomic changes in a list.
-- For each change, provides a way to mark whether or not the change should be made.
+This can be done file by file, so you can use subagents if you so choose. Run the tests!
 
+I suggest looking at the already converted imports and matching those where possible.
 
-Once the report is prepared and I have evaluated it, and only after this point, we will proceed to coding.
+Expect running stylua to make a lot of formatting changes.  Since the identifiers are getting shorter, it will want to wrap code differently.
+
+TIP: Any file which does not contain the characters `fa_` can be eliminated early.
+
+One commit per handled file, please.
