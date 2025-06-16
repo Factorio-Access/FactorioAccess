@@ -527,7 +527,7 @@ function mod.fetch_last(pindex, str)
    then
       players[pindex].menu_search_index = new_index
       players[pindex].building.index = new_index
-      fa_sectors.read_sector_slot(pindex, false)
+      Sectors.read_sector_slot(pindex, false)
    else
       printout("Search error", pindex)
       return

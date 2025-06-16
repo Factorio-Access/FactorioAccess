@@ -4,7 +4,7 @@
 -- The final pixel position depends on player screen resolution, player zoom level, this multiplier.
 local base_pixels_per_tile = 32
 
-local fa_utils = require("scripts.fa-utils")
+local FaUtils = require("scripts.fa-utils")
 local Viewpoint = require("scripts.viewpoint")
 local mod = {}
 
@@ -17,11 +17,11 @@ local mod = {}
 local function get_pixel_pos_onscreen_center(position, pindex)
    local player = game.get_player(pindex)
    local screen_size = player.display_resolution
-   local screen_center = fa_utils.mult_position({ x = screen_size.width, y = screen_size.height }, 0.5)
-   local tile_offest = fa_utils.sub_position(position, player.position)
+   local screen_center = FaUtils.mult_position({ x = screen_size.width, y = screen_size.height }, 0.5)
+   local tile_offest = FaUtils.sub_position(position, player.position)
    local scale = base_pixels_per_tile * player.zoom * player.display_density_scale
-   local pixel_offset = fa_utils.mult_position(tile_offest, scale)
-   local pixel_pos = fa_utils.add_position(screen_center, pixel_offset)
+   local pixel_offset = FaUtils.mult_position(tile_offest, scale)
+   local pixel_pos = FaUtils.add_position(screen_center, pixel_offset)
    local on_screen = pixel_pos.x > 0
       and pixel_pos.y > 0
       and pixel_pos.x < screen_size.width
