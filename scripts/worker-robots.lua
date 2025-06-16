@@ -1,7 +1,7 @@
 local util = require("util")
-local fa_utils = require("scripts.fa-utils")
-local fa_equipment = require("scripts.equipment")
-local fa_graphics = require("scripts.graphics")
+local FaUtils = require("scripts.fa-utils")
+local Equipment = require("scripts.equipment")
+local Graphics = require("scripts.graphics")
 local Localising = require("scripts.localising")
 local MessageBuilder = require("scripts.message-builder")
 local Sounds = require("scripts.ui.sounds")
@@ -360,7 +360,7 @@ local function find_player_item_name(pindex)
          return nil, "Take this item in hand to change its requests"
       elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
          --Use the first found item product of the selected recipe, pass it as a stack
-         local prototype = fa_utils.get_prototype_of_item_product(pindex)
+         local prototype = FaUtils.get_prototype_of_item_product(pindex)
          return prototype.name, nil
       else
          --Empty hand, empty inventory slot
@@ -611,7 +611,7 @@ function mod.player_logistic_requests_summary_info(pindex)
    local msg = MessageBuilder.MessageBuilder.new()
    local char = p.character
 
-   local position = fa_utils.get_player_relative_origin(pindex)
+   local position = FaUtils.get_player_relative_origin(pindex)
    if not position then
       msg:fragment("Error: Unable to determine position")
       return msg:build()
@@ -620,7 +620,7 @@ function mod.player_logistic_requests_summary_info(pindex)
    local network = p.surface.find_logistic_network_by_position(position, p.force)
    if network == nil or not network.valid then
       --Check whether in construction range
-      local nearest, min_dist = fa_utils.find_nearest_roboport(p.surface, position, 60)
+      local nearest, min_dist = FaUtils.find_nearest_roboport(p.surface, position, 60)
       if nearest == nil or min_dist > 55 then
          msg:fragment("Not in a network.")
       else
@@ -628,7 +628,7 @@ function mod.player_logistic_requests_summary_info(pindex)
       end
    else
       --Definitely within range
-      local nearest, min_dist = fa_utils.find_nearest_roboport(p.surface, position, 30)
+      local nearest, min_dist = FaUtils.find_nearest_roboport(p.surface, position, 30)
       msg:list_item("In network"):fragment(nearest.backer_name)
    end
 
@@ -688,7 +688,7 @@ function mod.player_logistic_request_read(item_name, pindex, additional_checks)
 
    if additional_checks then
       --Check if inside any logistic network or not (simpler than logistics network info)
-      local position = fa_utils.get_player_relative_origin(pindex)
+      local position = FaUtils.get_player_relative_origin(pindex)
       if position then
          local network = p.surface.find_logistic_network_by_position(position, p.force)
          if network == nil or not network.valid then result = result .. "Not in a network, " end
@@ -727,18 +727,18 @@ function mod.player_logistic_request_read(item_name, pindex, additional_checks)
          stack_size = prototypes.item[item_name].stack_size
 
          if current_slot.min ~= nil then
-            min_result = fa_utils.express_in_stacks(current_slot.min, stack_size, false) .. " minimum and "
+            min_result = FaUtils.express_in_stacks(current_slot.min, stack_size, false) .. " minimum and "
          end
 
          if current_slot.max ~= nil then
-            max_result = fa_utils.express_in_stacks(current_slot.max, stack_size, false) .. " maximum "
+            max_result = FaUtils.express_in_stacks(current_slot.max, stack_size, false) .. " maximum "
          end
 
          local inv_count = p.get_main_inventory().get_item_count(item_name)
-         inv_result = fa_utils.express_in_stacks(inv_count, stack_size, false) .. " in inventory, "
+         inv_result = FaUtils.express_in_stacks(inv_count, stack_size, false) .. " in inventory, "
 
          local trash_count = p.get_inventory(defines.inventory.character_trash).get_item_count(item_name)
-         trash_result = fa_utils.express_in_stacks(trash_count, stack_size, false) .. " in personal trash, "
+         trash_result = FaUtils.express_in_stacks(trash_count, stack_size, false) .. " in personal trash, "
 
          msg:list_item(result):list_item()
          push_request_readout(msg, current_slot)
@@ -800,7 +800,7 @@ function mod.spidertron_logistic_requests_summary_info(spidertron, pindex)
    local network = p.surface.find_logistic_network_by_position(spidertron.position, p.force)
    if network == nil or not network.valid then
       --Check whether in construction range
-      local nearest, min_dist = fa_utils.find_nearest_roboport(p.surface, spidertron.position, 60)
+      local nearest, min_dist = FaUtils.find_nearest_roboport(p.surface, spidertron.position, 60)
       if nearest == nil or min_dist > 55 then
          result = result .. "Not in a network, "
       else
@@ -808,7 +808,7 @@ function mod.spidertron_logistic_requests_summary_info(spidertron, pindex)
       end
    else
       --Definitely within range
-      local nearest, min_dist = fa_utils.find_nearest_roboport(p.surface, spidertron.position, 30)
+      local nearest, min_dist = FaUtils.find_nearest_roboport(p.surface, spidertron.position, 30)
       result = result .. "In logistic range of network " .. nearest.backer_name .. ", "
    end
 
@@ -969,7 +969,7 @@ function mod.run_roboport_menu(menu_index, pindex, clicked)
       else
          printout("Enter a new name for this network, then press 'ENTER' to confirm, or press 'ESC' to cancel.", pindex)
          players[pindex].roboport_menu.renaming = true
-         local frame = fa_graphics.create_text_field_frame(pindex, "network-rename")
+         local frame = Graphics.create_text_field_frame(pindex, "network-rename")
       end
    elseif index == 2 then
       --2. This roboport: Check neighbor counts and dirs
@@ -1122,7 +1122,7 @@ function mod.roboport_neighbours_info(port)
    local neighbour_count = #cell.neighbours
    local neighbour_dirs = ""
    for i, neighbour in ipairs(cell.neighbours) do
-      local dir = fa_utils.direction_lookup(fa_utils.get_direction_biased(neighbour.owner.position, port.position))
+      local dir = FaUtils.direction_lookup(FaUtils.get_direction_biased(neighbour.owner.position, port.position))
       if i > 1 then neighbour_dirs = neighbour_dirs .. " and " end
       neighbour_dirs = neighbour_dirs .. dir
    end
@@ -1239,7 +1239,7 @@ function mod.logistic_network_items_info(pindex, port, group_no)
          if itemtable[i] then
             msg:list_item(itemtable[i].name)
                :fragment("times")
-               :fragment(fa_utils.simplify_large_number(itemtable[i].count))
+               :fragment(FaUtils.simplify_large_number(itemtable[i].count))
          end
       end
       if #itemtable > group_end then
