@@ -1,5 +1,5 @@
 --Here: Quickbar related functions
-local fa_localising = require("scripts.localising")
+local Localising = require("scripts.localising")
 
 local mod = {}
 
@@ -54,9 +54,9 @@ function mod.read_quick_bar_slot(index, pindex)
       local stack = game.get_player(pindex).cursor_stack
       if stack and stack.valid_for_read then
          count = count + stack.count
-         printout("unselected " .. fa_localising.get(proto, pindex) .. " x " .. count, pindex)
+         printout("unselected " .. Localising.get(proto, pindex) .. " x " .. count, pindex)
       else
-         printout("selected " .. fa_localising.get(proto, pindex) .. " x " .. count, pindex)
+         printout("selected " .. Localising.get(proto, pindex) .. " x " .. count, pindex)
       end
    else
       printout("Empty quickbar slot", pindex) --does this print, maybe not working because it is linked to the game control?
@@ -71,7 +71,7 @@ function mod.set_quick_bar_slot(index, pindex)
    local ent = p.selected
    if stack_cur and stack_cur.valid_for_read and stack_cur.valid == true then
       game.get_player(pindex).set_quick_bar_slot(index + 10 * page, stack_cur)
-      printout("Quickbar assigned " .. index .. " " .. fa_localising.get(stack_cur, pindex), pindex)
+      printout("Quickbar assigned " .. index .. " " .. Localising.get(stack_cur, pindex), pindex)
    elseif
       players[pindex].menu == "inventory"
       and stack_inv
@@ -79,15 +79,15 @@ function mod.set_quick_bar_slot(index, pindex)
       and stack_inv.valid == true
    then
       game.get_player(pindex).set_quick_bar_slot(index + 10 * page, stack_inv)
-      printout("Quickbar assigned " .. index .. " " .. fa_localising.get(stack_inv, pindex), pindex)
+      printout("Quickbar assigned " .. index .. " " .. Localising.get(stack_inv, pindex), pindex)
    elseif ent ~= nil and ent.valid and ent.force == p.force and prototypes.item[ent.name] ~= nil then
       game.get_player(pindex).set_quick_bar_slot(index + 10 * page, ent.name)
-      printout("Quickbar assigned " .. index .. " " .. fa_localising.get(ent, pindex), pindex)
+      printout("Quickbar assigned " .. index .. " " .. Localising.get(ent, pindex), pindex)
    else
       --Clear the slot
       local item = game.get_player(pindex).get_quick_bar_slot(index + 10 * page)
       local item_name = ""
-      if item ~= nil then item_name = fa_localising.get(item, pindex) end
+      if item ~= nil then item_name = Localising.get(item, pindex) end
       ---@diagnostic disable-next-line: param-type-mismatch
       game.get_player(pindex).set_quick_bar_slot(index + 10 * page, nil)
       printout("Quickbar unassigned " .. index .. " " .. item_name, pindex)
@@ -98,7 +98,7 @@ function mod.read_switched_quick_bar(index, pindex)
    local page = game.get_player(pindex).get_active_quick_bar_page(index)
    local item = game.get_player(pindex).get_quick_bar_slot(1 + 10 * (index - 1))
    local item_name = "empty slot"
-   if item ~= nil then item_name = fa_localising.get(prototypes.item[item.name], pindex) end
+   if item ~= nil then item_name = Localising.get(prototypes.item[item.name], pindex) end
    local result = "Quickbar " .. index .. " selected starting with " .. item_name
    printout(result, pindex)
 end
