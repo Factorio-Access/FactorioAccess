@@ -265,59 +265,38 @@ function mod.reset_rotation(pindex)
    players[pindex].building_direction = dirs.north
 end
 
---Converts the entity orientation value to a heading direction string, with all directions having equal bias.
-function mod.get_heading_info(ent)
-   ---@diagnostic disable: cast-local-type
-   local heading = "unknown"
-   if ent == nil then return "nil error" end
-   local ori = ent.orientation
-   if ori < 0.0625 then
-      heading = mod.direction_lookup(dirs.north)
-   elseif ori < 0.1875 then
-      heading = mod.direction_lookup(dirs.northeast)
-   elseif ori < 0.3125 then
-      heading = mod.direction_lookup(dirs.east)
-   elseif ori < 0.4375 then
-      heading = mod.direction_lookup(dirs.southeast)
-   elseif ori < 0.5625 then
-      heading = mod.direction_lookup(dirs.south)
-   elseif ori < 0.6875 then
-      heading = mod.direction_lookup(dirs.southwest)
-   elseif ori < 0.8125 then
-      heading = mod.direction_lookup(dirs.west)
-   elseif ori < 0.9375 then
-      heading = mod.direction_lookup(dirs.northwest)
-   else
-      heading = mod.direction_lookup(dirs.north) --default
-   end
-   return heading
-end
-
 --Converts the entity orientation into a heading direction, with all directions having equal bias.
+--Returns the direction value, or nil if entity is nil.
 function mod.get_heading_value(ent)
-   local heading = nil
    if ent == nil then return nil end
    local ori = ent.orientation
    if ori < 0.0625 then
-      heading = dirs.north
+      return dirs.north
    elseif ori < 0.1875 then
-      heading = dirs.northeast
+      return dirs.northeast
    elseif ori < 0.3125 then
-      heading = dirs.east
+      return dirs.east
    elseif ori < 0.4375 then
-      heading = dirs.southeast
+      return dirs.southeast
    elseif ori < 0.5625 then
-      heading = dirs.south
+      return dirs.south
    elseif ori < 0.6875 then
-      heading = dirs.southwest
+      return dirs.southwest
    elseif ori < 0.8125 then
-      heading = dirs.west
+      return dirs.west
    elseif ori < 0.9375 then
-      heading = dirs.northwest
+      return dirs.northwest
    else
-      heading = dirs.north --default
+      return dirs.north --default
    end
-   return heading
+end
+
+--Converts the entity orientation value to a heading direction string, with all directions having equal bias.
+--Returns nil if entity is nil.
+function mod.get_heading_info(ent)
+   local heading_value = mod.get_heading_value(ent)
+   if heading_value == nil then return nil end
+   return mod.direction_lookup(heading_value)
 end
 
 --Returns the length and width of the entity version of an item.
