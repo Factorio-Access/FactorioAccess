@@ -18,9 +18,10 @@ local mod = {}
 * If the item is an offshore pump, calls a different, special function for it.
 * You can offset the building with respect to the direction the player is facing. The offset is multiplied by the placed building width.
 ]]
+-- Precondition: Caller must ensure cursor_stack is valid_for_read
 function mod.build_item_in_hand(pindex, free_place_straight_rail)
-   local stack = game.get_player(pindex).cursor_stack
    local p = game.get_player(pindex)
+   local stack = p.cursor_stack
    local vp = Viewpoint.get_viewpoint(pindex)
    local pos = vp:get_cursor_pos()
    local cursor_enabled = vp:get_cursor_enabled()
@@ -28,21 +29,6 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
 
    -- Ensure building footprint is up to date
    fa_graphics.sync_build_cursor_graphics(pindex)
-
-   --Valid stack check
-   if not (stack and stack.valid and stack.valid_for_read) then
-      game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      local message = "Invalid item in hand!"
-      if game.get_player(pindex).is_cursor_empty() then
-         local auto_cancel_when_empty = true --laterdo this check may become a toggle-able game setting
-         if players[pindex].build_lock == true and auto_cancel_when_empty then
-            players[pindex].build_lock = false
-            message = "Build lock disabled, emptied hand."
-         end
-      end
-      printout(message, pindex)
-      return
-   end
 
    --Exceptional build cases
    if stack.name == "offshore-pump" then
@@ -59,7 +45,7 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
       return
    end
    --General build cases
-   if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result ~= nil then
+   if stack.prototype.place_result ~= nil then
       local ent = stack.prototype.place_result
       local dimensions = fa_utils.get_tile_dimensions(stack.prototype, players[pindex].building_direction)
       local position = nil
