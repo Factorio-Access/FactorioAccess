@@ -3,9 +3,9 @@
 ---@diagnostic disable: assign-type-mismatch
 
 local util = require("util")
-local fa_utils = require("scripts.fa-utils")
-local fa_mining_tools = require("scripts.player-mining-tools")
-local fa_rails = require("scripts.rails")
+local FaUtils = require("scripts.fa-utils")
+local PlayerMiningTools = require("scripts.player-mining-tools")
+local Rails = require("scripts.rails")
 local dirs = defines.direction
 local UiRouter = require("scripts.ui.router")
 
@@ -34,7 +34,7 @@ function mod.append_rail(pos, pindex)
 
    --1 Check the cursor entity. If it is an end rail, use this instead of scanning to extend the rail you want.
    local ent = players[pindex].tile.ents[1]
-   is_end_rail, end_rail_dir, comment = fa_rails.check_end_rail(ent, pindex)
+   is_end_rail, end_rail_dir, comment = Rails.check_end_rail(ent, pindex)
    if is_end_rail then
       end_found = ent
       end_rail_1, end_dir_1 = ent.get_rail_segment_end(defines.rail_direction.front)
@@ -77,7 +77,7 @@ function mod.append_rail(pos, pindex)
       end
 
       --4 Check if the found segment end is an end rail
-      is_end_rail, end_rail_dir, comment = fa_rails.check_end_rail(end_found, pindex)
+      is_end_rail, end_rail_dir, comment = Rails.check_end_rail(end_found, pindex)
       if not is_end_rail then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
          --printout(comment, pindex)
@@ -141,7 +141,7 @@ function mod.append_rail(pos, pindex)
       end
    elseif end_found.name == "curved-rail" then
       --Make sure to use the reported end direction for curved rails
-      is_end_rail, end_rail_dir, comment = fa_rails.check_end_rail(ent, pindex)
+      is_end_rail, end_rail_dir, comment = Rails.check_end_rail(ent, pindex)
       if end_rail_dir == dirs.north then
          if rail_api_dir == dirs.south then
             append_rail_pos = { end_rail_pos.x - 2, end_rail_pos.y - 6 }
@@ -215,7 +215,7 @@ function mod.append_rail(pos, pindex)
       printout(end_rail_dir .. " and " .. rail_api_dir .. ", rail appending direction error.", pindex)
       return
    end
-   temp1, build_comment = fa_mining_tools.clear_obstacles_in_circle(append_rail_pos, 4, pindex)
+   temp1, build_comment = PlayerMiningTools.clear_obstacles_in_circle(append_rail_pos, 4, pindex)
    if
       not surf.can_place_entity({ name = "straight-rail", position = append_rail_pos, direction = append_rail_dir })
    then
@@ -288,14 +288,14 @@ function mod.append_rail(pos, pindex)
    player.play_sound({ path = "entity-build/straight-rail" })
 
    --8. Check if the appended rail is with 4 tiles of a parallel rail. If so, delete it.
-   if created_rail.valid and fa_rails.has_parallel_neighbor(created_rail, pindex) then
+   if created_rail.valid and Rails.has_parallel_neighbor(created_rail, pindex) then
       player.mine_entity(created_rail, true)
       player.play_sound({ path = "utility/cannot_build" })
       printout("Cannot place, parallel rail segments should be at least 4 tiles apart.", pindex)
    end
 
    --9. Check if the appended rail has created an intersection. If so, notify the player.
-   if created_rail.valid and fa_rails.is_intersection_rail(created_rail, pindex) then
+   if created_rail.valid and Rails.is_intersection_rail(created_rail, pindex) then
       printout("Intersection created.", pindex)
    end
 end
@@ -343,7 +343,7 @@ function mod.free_place_rail_signal_in_hand(pindex, preview_only)
    for i, rail in ipairs(rails) do
       --Check if the placement area is valid
       local rail_dir = rail.direction
-      local rail_at = fa_utils.get_direction_precise(rail.position, pos)
+      local rail_at = FaUtils.get_direction_precise(rail.position, pos)
       local created = nil
       --Check if the rail is correctly oriented
       if rail_at == dirs.north and (rail_dir == dirs.east or rail_dir == dirs.west) then
@@ -387,12 +387,12 @@ function mod.free_place_rail_signal_in_hand(pindex, preview_only)
       if created ~= nil then
          p.play_sound({ path = "entity-build/straight-rail" })
          p.cursor_stack.count = p.cursor_stack.count - 1
-         build_comment = "Signal placed heading " .. fa_utils.direction_lookup(fa_utils.rotate_180(created.direction))
+         build_comment = "Signal placed heading " .. FaUtils.direction_lookup(FaUtils.rotate_180(created.direction))
          if created.status == defines.entity_status.not_connected_to_rail then
             build_comment = "Error: Signal not connected to rail, placed too far."
          end
          printout(build_comment, pindex)
-         return fa_utils.rotate_180(created.direction)
+         return FaUtils.rotate_180(created.direction)
       end
    end
    return nil
@@ -428,7 +428,7 @@ function mod.build_rail_turn_right_45_degrees(anchor_rail, pindex)
    end
 
    --2. Secondly, verify the end rail and find its direction
-   is_end_rail, dir, build_comment = fa_rails.check_end_rail(anchor_rail, pindex)
+   is_end_rail, dir, build_comment = Rails.check_end_rail(anchor_rail, pindex)
    if not is_end_rail then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
       printout(build_comment, pindex)
@@ -447,7 +447,7 @@ function mod.build_rail_turn_right_45_degrees(anchor_rail, pindex)
    -- elseif dir == dirs.west or dir == dirs.northwest then
    -- build_area = {{pos.x+9, pos.y+9},{pos.x-16,pos.y-16}}
    -- end
-   temp1, build_comment = fa_mining_tools.clear_obstacles_in_circle(pos, 12, pindex)
+   temp1, build_comment = PlayerMiningTools.clear_obstacles_in_circle(pos, 12, pindex)
 
    --4. Check if every object can be placed
    if dir == dirs.north then
@@ -914,7 +914,7 @@ function mod.build_rail_turn_right_90_degrees(anchor_rail, pindex)
    end
 
    --2. Secondly, verify the end rail and find its direction
-   is_end_rail, dir, build_comment = fa_rails.check_end_rail(anchor_rail, pindex)
+   is_end_rail, dir, build_comment = Rails.check_end_rail(anchor_rail, pindex)
    if not is_end_rail then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
       printout(build_comment, pindex)
@@ -939,7 +939,7 @@ function mod.build_rail_turn_right_90_degrees(anchor_rail, pindex)
    -- elseif dir == dirs.west then
    -- build_area = {{pos.x+2, pos.y+2},{pos.x-16,pos.y-16}}
    -- end
-   temp1, build_comment = fa_mining_tools.clear_obstacles_in_circle(pos, 18, pindex)
+   temp1, build_comment = PlayerMiningTools.clear_obstacles_in_circle(pos, 18, pindex)
 
    --4. Check if every object can be placed
    if dir == dirs.north then
@@ -1211,7 +1211,7 @@ function mod.build_rail_turn_left_45_degrees(anchor_rail, pindex)
    end
 
    --2. Secondly, verify the end rail and find its direction
-   is_end_rail, dir, build_comment = fa_rails.check_end_rail(anchor_rail, pindex)
+   is_end_rail, dir, build_comment = Rails.check_end_rail(anchor_rail, pindex)
    if not is_end_rail then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
       printout(build_comment, pindex)
@@ -1230,7 +1230,7 @@ function mod.build_rail_turn_left_45_degrees(anchor_rail, pindex)
    -- elseif dir == dirs.west or dir == dirs.northwest then
    -- build_area = {{pos.x+9, pos.y-9},{pos.x-16,pos.y+16}}
    -- end
-   temp1, build_comment = fa_mining_tools.clear_obstacles_in_circle(pos, 12, pindex)
+   temp1, build_comment = PlayerMiningTools.clear_obstacles_in_circle(pos, 12, pindex)
 
    --4. Check if every object can be placed
    if dir == dirs.north then
@@ -1697,7 +1697,7 @@ function mod.build_rail_turn_left_90_degrees(anchor_rail, pindex)
    end
 
    --2. Secondly, verify the end rail and find its direction
-   is_end_rail, dir, build_comment = fa_rails.check_end_rail(anchor_rail, pindex)
+   is_end_rail, dir, build_comment = Rails.check_end_rail(anchor_rail, pindex)
    if not is_end_rail then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
       printout(build_comment, pindex)
@@ -1722,7 +1722,7 @@ function mod.build_rail_turn_left_90_degrees(anchor_rail, pindex)
    -- elseif dir == dirs.west then
    -- build_area = {{pos.x+2, pos.y+2},{pos.x-16,pos.y+16}}
    -- end
-   temp1, build_comment = fa_mining_tools.clear_obstacles_in_circle(pos, 18, pindex)
+   temp1, build_comment = PlayerMiningTools.clear_obstacles_in_circle(pos, 18, pindex)
 
    --4. Check if every object can be placed
    if dir == dirs.north then
@@ -1997,7 +1997,7 @@ function mod.build_fork_at_end_rail(anchor_rail, pindex, include_forward, includ
    end
 
    --2. Secondly, verify the end rail and find its direction
-   is_end_rail, dir, build_comment = fa_rails.check_end_rail(anchor_rail, pindex)
+   is_end_rail, dir, build_comment = Rails.check_end_rail(anchor_rail, pindex)
    if not is_end_rail then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
       printout(build_comment, pindex)
@@ -2016,7 +2016,7 @@ function mod.build_fork_at_end_rail(anchor_rail, pindex, include_forward, includ
    -- elseif dir == dirs.west or dir == dirs.northwest then
    -- build_area = {{pos.x+9, pos.y-9},{pos.x-16,pos.y+16}}
    -- end
-   temp1, build_comment = fa_mining_tools.clear_obstacles_in_circle(pos, 14, pindex)
+   temp1, build_comment = PlayerMiningTools.clear_obstacles_in_circle(pos, 14, pindex)
 
    --4A. Check if every object can be placed (LEFT)
    if include_left then
@@ -3909,7 +3909,7 @@ function mod.build_rail_bypass_junction(anchor_rail, pindex)
    end
 
    --2. Secondly, verify the end rail and find its direction
-   is_end_rail, dir, build_comment = fa_rails.check_end_rail(anchor_rail, pindex)
+   is_end_rail, dir, build_comment = Rails.check_end_rail(anchor_rail, pindex)
    if not is_end_rail then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
       printout(build_comment, pindex)
@@ -3919,7 +3919,7 @@ function mod.build_rail_bypass_junction(anchor_rail, pindex)
    pos = anchor_rail.position
 
    --3. Clear trees and rocks in the build area, can be tuned later...
-   temp1, build_comment = fa_mining_tools.clear_obstacles_in_circle(pos, 21, pindex)
+   temp1, build_comment = PlayerMiningTools.clear_obstacles_in_circle(pos, 21, pindex)
 
    --4A. Check if every object can be placed (LEFT)
    if dir == dirs.north then
@@ -4759,7 +4759,7 @@ function mod.build_rail_bypass_junction_triple(anchor_rail, pindex)
    end
 
    --2. Secondly, verify the end rail and find its direction
-   is_end_rail, dir, build_comment = fa_rails.check_end_rail(anchor_rail, pindex)
+   is_end_rail, dir, build_comment = Rails.check_end_rail(anchor_rail, pindex)
    if not is_end_rail then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
       printout(build_comment, pindex)
@@ -4769,7 +4769,7 @@ function mod.build_rail_bypass_junction_triple(anchor_rail, pindex)
    pos = anchor_rail.position
 
    --3. Clear trees and rocks in the build area, can be tuned later...
-   temp1, build_comment = fa_mining_tools.clear_obstacles_in_circle(pos, 21, pindex)
+   temp1, build_comment = PlayerMiningTools.clear_obstacles_in_circle(pos, 21, pindex)
 
    --4A. Check if every object can be placed (LEFT)
    if dir == dirs.north then
@@ -6174,7 +6174,7 @@ function mod.build_train_stop(anchor_rail, pindex)
    end
 
    --2. Secondly, find the direction based on end rail or player direction
-   is_end_rail, end_rail_dir, build_comment = fa_rails.check_end_rail(anchor_rail, pindex)
+   is_end_rail, end_rail_dir, build_comment = Rails.check_end_rail(anchor_rail, pindex)
    if is_end_rail then
       dir = end_rail_dir
    else
@@ -6203,7 +6203,7 @@ function mod.build_train_stop(anchor_rail, pindex)
    end
 
    --3. Clear trees and rocks in the build area
-   temp1, build_comment = fa_mining_tools.clear_obstacles_in_circle(pos, 3, pindex)
+   temp1, build_comment = PlayerMiningTools.clear_obstacles_in_circle(pos, 3, pindex)
 
    --4. Check if every object can be placed
    if dir == dirs.north then
@@ -6284,7 +6284,7 @@ function mod.build_train_stop(anchor_rail, pindex)
 
    --7. Sounds and results
    game.get_player(pindex).play_sound({ path = "entity-build/train-stop" })
-   printout("Train stop built facing" .. fa_utils.direction_lookup(dir) .. ", " .. build_comment, pindex)
+   printout("Train stop built facing" .. FaUtils.direction_lookup(dir) .. ", " .. build_comment, pindex)
    return
 end
 
@@ -6300,7 +6300,7 @@ function mod.open_menu(pindex, rail)
    players[pindex].rail_builder.index = 0
 
    --Determine rail type
-   local is_end_rail, end_dir, comment = fa_rails.check_end_rail(rail, pindex)
+   local is_end_rail, end_dir, comment = Rails.check_end_rail(rail, pindex)
    local dir = rail.direction
    if is_end_rail then
       if dir == dirs.north or dir == dirs.east or dir == dirs.south or dir == dirs.west then
@@ -6573,7 +6573,7 @@ function mod.run_menu(pindex, clicked_in)
             comment = comment .. "Clear rail signals"
             printout(comment, pindex)
          else
-            fa_rails.mine_signals(rail, pindex)
+            Rails.mine_signals(rail, pindex)
             printout("Signals cleared.", pindex)
          end
       end
@@ -6612,7 +6612,7 @@ function mod.run_menu(pindex, clicked_in)
             comment = comment .. "Clear rail signals"
             printout(comment, pindex)
          else
-            fa_rails.mine_signals(rail, pindex)
+            Rails.mine_signals(rail, pindex)
             printout("Signals cleared.", pindex)
          end
       end
