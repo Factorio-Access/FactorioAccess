@@ -7,6 +7,18 @@ local Consts = require("scripts.consts")
 
 local mod = {}
 
+-- Helper function to draw a circle at the given position
+local function draw_circle_at_position(surface, pos, color, radius, width, time_to_live)
+   rendering.draw_circle({
+      color = color or { 1, 0.0, 0.5 },
+      radius = radius or 0.1,
+      width = width or 2,
+      target = pos,
+      surface = surface,
+      time_to_live = time_to_live or 30,
+   })
+end
+
 -- Lookup table for direction offsets
 local DIRECTION_OFFSETS = {
    [dirs.north] = { x = 0, y = -1 },
@@ -478,38 +490,10 @@ function mod.get_entity_part_at_cursor(pindex)
       if not preferred_ent or not preferred_ent.valid then return "unknown location" end
 
       --Report which part of the entity the cursor covers.
-      rendering.draw_circle({
-         color = { 1, 0.0, 0.5 },
-         radius = 0.1,
-         width = 2,
-         target = { x = x + 0, y = y - 1 },
-         surface = p.surface,
-         time_to_live = 30,
-      })
-      rendering.draw_circle({
-         color = { 1, 0.0, 0.5 },
-         radius = 0.1,
-         width = 2,
-         target = { x = x + 0, y = y + 1 },
-         surface = p.surface,
-         time_to_live = 30,
-      })
-      rendering.draw_circle({
-         color = { 1, 0.0, 0.5 },
-         radius = 0.1,
-         width = 2,
-         target = { x = x - 1, y = y - 0 },
-         surface = p.surface,
-         time_to_live = 30,
-      })
-      rendering.draw_circle({
-         color = { 1, 0.0, 0.5 },
-         radius = 0.1,
-         width = 2,
-         target = { x = x + 1, y = y - 0 },
-         surface = p.surface,
-         time_to_live = 30,
-      })
+      draw_circle_at_position(p.surface, { x = x, y = y - 1 })
+      draw_circle_at_position(p.surface, { x = x, y = y + 1 })
+      draw_circle_at_position(p.surface, { x = x - 1, y = y })
+      draw_circle_at_position(p.surface, { x = x + 1, y = y })
 
       local ent_north =
          p.surface.find_entities_filtered({ position = { x = x, y = y - 1 }, name = EXCLUDED_ENT_NAMES, invert = true })
@@ -941,38 +925,10 @@ function mod.identify_water_shores(pindex)
    local water_tile_names = Consts.WATER_TILE_NAMES
    local vp = Viewpoint.get_viewpoint(pindex)
    local pos = vp:get_cursor_pos()
-   rendering.draw_circle({
-      color = { 1, 0.0, 0.5 },
-      radius = 0.1,
-      width = 2,
-      target = { x = pos.x + 0, y = pos.y - 1 },
-      surface = p.surface,
-      time_to_live = 30,
-   })
-   rendering.draw_circle({
-      color = { 1, 0.0, 0.5 },
-      radius = 0.1,
-      width = 2,
-      target = { x = pos.x + 0, y = pos.y + 1 },
-      surface = p.surface,
-      time_to_live = 30,
-   })
-   rendering.draw_circle({
-      color = { 1, 0.0, 0.5 },
-      radius = 0.1,
-      width = 2,
-      target = { x = pos.x - 1, y = pos.y - 0 },
-      surface = p.surface,
-      time_to_live = 30,
-   })
-   rendering.draw_circle({
-      color = { 1, 0.0, 0.5 },
-      radius = 0.1,
-      width = 2,
-      target = { x = pos.x + 1, y = pos.y - 0 },
-      surface = p.surface,
-      time_to_live = 30,
-   })
+   draw_circle_at_position(p.surface, { x = pos.x, y = pos.y - 1 })
+   draw_circle_at_position(p.surface, { x = pos.x, y = pos.y + 1 })
+   draw_circle_at_position(p.surface, { x = pos.x - 1, y = pos.y })
+   draw_circle_at_position(p.surface, { x = pos.x + 1, y = pos.y })
 
    local tile_north = #p.surface.find_tiles_filtered({
       position = { x = pos.x + 0, y = pos.y - 1 },
