@@ -866,15 +866,13 @@ local function ent_info_pole_neighbors(ctx)
       return true
    end)
 
-   print(serpent.line(neighbors))
-
    if not next(neighbors) then
       ctx.message:fragment({ "fa.ent-info-electrical-connections-nothing" })
       return
    end
 
-   -- Now we have grouped entities. We must convert that to strings. To do so,
-   -- sort by distance then direction, to get something consistently ordered...
+   -- Now we have grouped entities. We must convert that to strings. To do so, sort by distance then direction, to get
+   -- something consistently ordered...
    for t, quals in pairs(neighbors) do
       for q, ents in pairs(quals) do
          table.sort(ents, function(a, b)
@@ -911,7 +909,7 @@ local function ent_info_pole_neighbors(ctx)
             table.insert(ent_parts, {
                "fa.dir-dist",
                FaUtils.direction_lookup(FaUtils.get_direction_biased(e.position, ctx.cursor_pos)),
-               FaUtils.distance(ctx.cursor_pos, e.position),
+               FaUtils.distance_speech_friendly(ctx.cursor_pos, e.position),
             })
          end
 

@@ -1036,17 +1036,13 @@ EventManager.on_event(defines.events.on_player_changed_position, function(event)
          --Build lock building + rotate belts in hand unless cursor mode
          if players[pindex].build_lock then
             local stack = p.cursor_stack
-            if
-               stack
-               and stack.valid_for_read
-               and stack.valid
-               and stack.prototype.place_result ~= nil
-               and stack.prototype.place_result.type == "transport-belt"
-            then
-               turn_to_cursor_direction_cardinal(pindex)
-               players[pindex].building_direction = players[pindex].player_direction
+            if stack and stack.valid_for_read and stack.valid then
+               if stack.prototype.place_result ~= nil and stack.prototype.place_result.type == "transport-belt" then
+                  turn_to_cursor_direction_cardinal(pindex)
+                  players[pindex].building_direction = players[pindex].player_direction
+               end
+               BuildingTools.build_item_in_hand(pindex)
             end
-            BuildingTools.build_item_in_hand(pindex)
          end
       end
 

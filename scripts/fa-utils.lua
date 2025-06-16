@@ -139,6 +139,15 @@ function mod.distance(pos1, pos2)
    return mod.dir_dist(pos1, pos2)[2]
 end
 
+function mod.distance_speech_friendly(pos1, pos2)
+   local dist = mod.distance(pos1, pos2)
+   local mul = 1
+   if dist < 1 then mul = 10 end
+
+   local rounded = math.ceil(dist * mul) / mul
+   return rounded
+end
+
 function mod.squared_distance(pos1, pos2)
    local offset = { x = pos1.x - pos2.x, y = pos1.y - pos2.y }
    local result = offset.x * offset.x + offset.y * offset.y
