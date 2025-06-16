@@ -1,6 +1,6 @@
 --Here: Electricity related functions and menus
 local util = require("util")
-local fa_utils = require("scripts.fa-utils")
+local FaUtils = require("scripts.fa-utils")
 local Wires = require("scripts.wires")
 
 local mod = {}
@@ -166,8 +166,8 @@ function mod.report_nearest_supplied_electric_pole(ent)
    local pole, dist = mod.find_nearest_electric_pole(ent, true)
    local dir
    if pole ~= nil then
-      dir = fa_utils.get_direction_biased(pole.position, ent.position)
-      result = "The nearest powered electric pole is " .. dist .. " tiles to the " .. fa_utils.direction_lookup(dir)
+      dir = FaUtils.get_direction_biased(pole.position, ent.position)
+      result = "The nearest powered electric pole is " .. dist .. " tiles to the " .. FaUtils.direction_lookup(dir)
    else
       result = "And there are no powered electric poles within ten thousand tiles. Generators may be out of energy."
    end
