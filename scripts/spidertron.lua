@@ -1,5 +1,5 @@
 --Here: Spidertron remote menu
-local fa_graphics = require("scripts.graphics")
+local Graphics = require("scripts.graphics")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
 
@@ -90,7 +90,7 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
          else
             printout("Enter a new name for this spidertron, then press ENTER to confirm.", pindex)
             players[pindex].spider_menu.renaming = true
-            local frame = fa_graphics.create_text_field_frame(pindex, "spider-rename")
+            local frame = Graphics.create_text_field_frame(pindex, "spider-rename")
             game.get_player(pindex).opened = frame
          end
       end
