@@ -1,10 +1,10 @@
 --Here: Functions related to ghosts, blueprints and blueprint books
 --Does not include event handlers
 
-local fa_utils = require("scripts.fa-utils")
-local fa_building_tools = require("scripts.building-tools")
-local fa_mining_tools = require("scripts.player-mining-tools")
-local fa_graphics = require("scripts.graphics")
+local FaUtils = require("scripts.fa-utils")
+local BuildingTools = require("scripts.building-tools")
+local PlayerMiningTools = require("scripts.player-mining-tools")
+local Graphics = require("scripts.graphics")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
 
@@ -52,7 +52,7 @@ end
 
 --Create a blueprint from a rectangle between any two points and give it to the player's hand
 function mod.create_blueprint(pindex, point_1, point_2, prior_bp_data)
-   local top_left, bottom_right = fa_utils.get_top_left_and_bottom_right(point_1, point_2)
+   local top_left, bottom_right = FaUtils.get_top_left_and_bottom_right(point_1, point_2)
    local p = game.get_player(pindex)
    if prior_bp_data ~= nil then
       --First clear the bp in hand
@@ -118,7 +118,7 @@ function mod.paste_blueprint(pindex)
    local left_top, right_bottom, build_pos = mod.get_blueprint_corners(pindex, false)
 
    --Clear build area for objects up to a certain range, while others are marked for deconstruction
-   fa_mining_tools.clear_obstacles_in_rectangle(left_top, right_bottom, pindex, 99)
+   PlayerMiningTools.clear_obstacles_in_rectangle(left_top, right_bottom, pindex, 99)
 
    --Build it and check if successful
    local dir = players[pindex].blueprint_hand_direction
@@ -134,7 +134,7 @@ function mod.paste_blueprint(pindex)
       p.play_sound({ path = "utility/cannot_build" })
       --Explain build error
       local build_area = { left_top, right_bottom }
-      local result = fa_building_tools.identify_building_obstacle(pindex, build_area, nil)
+      local result = BuildingTools.identify_building_obstacle(pindex, build_area, nil)
       printout(result, pindex)
       return false
    else
@@ -666,7 +666,7 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             printout(result, pindex)
          else
             players[pindex].blueprint_menu.edit_label = true
-            local frame = fa_graphics.create_text_field_frame(pindex, "blueprint-edit-label")
+            local frame = Graphics.create_text_field_frame(pindex, "blueprint-edit-label")
             local result =
                "Type in a new name for this blueprint and press 'ENTER' to confirm, or press 'ESC' to cancel."
             printout(result, pindex)
@@ -677,7 +677,7 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             printout(result, pindex)
          else
             players[pindex].blueprint_menu.edit_description = true
-            local frame = fa_graphics.create_text_field_frame(pindex, "blueprint-edit-description")
+            local frame = Graphics.create_text_field_frame(pindex, "blueprint-edit-description")
             local result =
                "Type in the new description text box for this blueprint and press 'ENTER' to confirm, or press 'ESC' to cancel."
             printout(result, pindex)
@@ -708,7 +708,7 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             printout(result, pindex)
          else
             players[pindex].blueprint_menu.edit_export = true
-            local frame = fa_graphics.create_text_field_frame(pindex, "blueprint-edit-export", bpb.export_stack())
+            local frame = Graphics.create_text_field_frame(pindex, "blueprint-edit-export", bpb.export_stack())
             local result =
                "Copy the text from this box using 'CONTROL + A' and then 'CONTROL + C' and then press ENTER to exit"
             printout(result, pindex)
@@ -720,7 +720,7 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             printout(result, pindex)
          else
             players[pindex].blueprint_menu.edit_import = true
-            local frame = fa_graphics.create_text_field_frame(pindex, "blueprint-edit-import")
+            local frame = Graphics.create_text_field_frame(pindex, "blueprint-edit-import")
             local result = "Paste a copied blueprint text string in this box and then press ENTER to load it"
             printout(result, pindex)
          end
@@ -883,7 +883,7 @@ function mod.remove_item_from_book(pindex, book_stack, array_index)
 end
 
 function mod.copy_selected_area_to_clipboard(pindex, point_1, point_2)
-   local top_left, bottom_right = fa_utils.get_top_left_and_bottom_right(point_1, point_2)
+   local top_left, bottom_right = FaUtils.get_top_left_and_bottom_right(point_1, point_2)
    local p = game.get_player(pindex)
    if p.cursor_stack == nil or p.cursor_stack.valid_for_read == false then return end
    p.cursor_stack.set_stack({ name = "blueprint", count = 1 })
