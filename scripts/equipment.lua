@@ -8,6 +8,7 @@ local UiRouter = require("scripts.ui.router")
 local mod = {}
 
 --Tries to equip a stack. For now called only for a stack in hand when the only the inventory is open.
+-- Precondition: Caller must ensure stack is valid_for_read
 function mod.equip_it(stack, pindex)
    local router = UiRouter.get_router(pindex)
 
@@ -18,8 +19,6 @@ function mod.equip_it(stack, pindex)
          message = "Spidertron " --laterdo possible bug here
       end
    end
-
-   if stack == nil or not stack.valid_for_read or not stack.valid then return "Nothing found to equip." end
 
    if stack.is_armor then
       local armor = game.get_player(pindex).get_inventory(defines.inventory.character_armor)
