@@ -16,6 +16,7 @@ mod.CATEGORIES = {
    REMNANTS = "remnants",
    CONTAINERS = "containers",
    CORPSES = "corpses",
+   TERRAIN = "terrain",
 }
 
 -- The desired order of categories when moving through the scanner.
@@ -34,6 +35,7 @@ mod.CATEGORY_ORDER = {
    mod.CATEGORIES.PLAYERS,
    mod.CATEGORIES.CORPSES,
    mod.CATEGORIES.OTHER,
+   mod.CATEGORIES.TERRAIN,
 }
 
 -- How far can the scanner see, in tiles?
@@ -69,5 +71,14 @@ mod.WATER_TILE_DISTANCE = 10
 -- Modded water is mostly not a thing. If it is we can extend the list.
 mod.WATER_PROTOS =
    { "water", "deepwater", "water-green", "deepwater-green", "water-shallow", "water-mud", "water-wube" }
+
+-- How far apart must tiles be to be in the same iceberg?  2.1 is chosen
+-- because it allows for tiny bits of water not to get in the way, causes
+-- diagonal tiles to connect, and leaves a bit of room for floating point error.
+mod.ICEBERG_TILE_DISTANCE = 10
+
+-- No clue if modded icebergs is a thing. If it is we can extend the list.
+mod.ICEBERG_PROTOS =
+   { "brash-ice", "ice-rough", "ice-smooth", "snow-crests", "snow-flat", "snow-lumpy", "snow-patchy", "ice-platform" }
 
 return mod

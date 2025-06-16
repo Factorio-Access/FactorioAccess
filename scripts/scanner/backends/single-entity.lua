@@ -141,6 +141,7 @@ mod.LogisticsAndPower = decl_bound_category("fa.scanner.backends.LogisticsAndPow
 mod.Production = decl_bound_category("fa.scanner.backends.Production", SC.CATEGORIES.PRODUCTION)
 mod.Military = decl_bound_category("fa.scanner.backends.Military", SC.CATEGORIES.MILITARY)
 mod.Other = decl_bound_category("fa.scanner.backends.Other", SC.CATEGORIES.OTHER)
+mod.Terrain = decl_bound_category("fa.scanner.backends.Terrain", SC.CATEGORIES.TERRAIN)
 mod.Remnants = decl_bound_category("fa.scanner.backends.Remnants", SC.CATEGORIES.REMNANTS)
 
 mod.Containers = decl("fa.scanner.backends.Containers", {
