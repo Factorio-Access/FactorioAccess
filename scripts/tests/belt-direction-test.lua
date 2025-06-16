@@ -2,7 +2,7 @@
 -- Tests mod's ability to handle belt information
 
 local EventManager = require("scripts.event-manager")
-local fa_transport_belts = require("scripts.transport-belts")
+local TransportBelts = require("scripts.transport-belts")
 local TestRegistry = require("scripts.test-registry")
 local describe = TestRegistry.describe
 local it = TestRegistry.it
@@ -33,7 +33,7 @@ describe("Transport Belt Mod Tests", function()
 
       ctx:at_tick(2, function()
          -- Test the mod's splitter priority info function
-         local info = fa_transport_belts.splitter_priority_info(splitter)
+         local info = TransportBelts.splitter_priority_info(splitter)
 
          -- The function should return info about the splitter's priority settings
          ctx:assert_not_nil(info, "Splitter priority info should be returned")
@@ -44,10 +44,10 @@ describe("Transport Belt Mod Tests", function()
       ctx:at_tick(3, function()
          -- Test setting splitter priority using mod function
          -- Set input priority to left
-         fa_transport_belts.set_splitter_priority(splitter, true, true, nil, false)
+         TransportBelts.set_splitter_priority(splitter, true, true, nil, false)
 
          -- Get updated info
-         local info = fa_transport_belts.splitter_priority_info(splitter)
+         local info = TransportBelts.splitter_priority_info(splitter)
          -- Convert to string if it's a localized table
          local info_str = type(info) == "table" and serpent.line(info) or tostring(info)
          ctx:assert(info_str:find("left") ~= nil, "Info should mention left priority")

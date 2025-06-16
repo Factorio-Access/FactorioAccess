@@ -2,7 +2,7 @@
 -- Tests navigating the hierarchical crafting menu system
 
 local EventManager = require("scripts.event-manager")
-local fa_crafting = require("scripts.crafting")
+local Crafting = require("scripts.crafting")
 local TestRegistry = require("scripts.test-registry")
 local describe = TestRegistry.describe
 local it = TestRegistry.it
@@ -53,7 +53,7 @@ describe("Crafting Menu Navigation Tests", function()
          if not queue then
             game.print("WARNING: Crafting queue not available in test environment")
             -- Test the mod's internal queue tracking instead
-            local queue_total = fa_crafting.get_crafting_que_total(ctx.state.pindex)
+            local queue_total = Crafting.get_crafting_que_total(ctx.state.pindex)
             ctx:assert_equals(0, queue_total, "Mod's crafting queue should be empty")
             return
          end
@@ -148,7 +148,7 @@ describe("Crafting Menu Navigation Tests", function()
             ctx.state.player.begin_crafting{recipe = "iron-gear-wheel", count = 1}
             
             -- Check crafting queue
-            local queue = fa_crafting.get_crafting_queue(ctx.state.pindex)
+            local queue = Crafting.get_crafting_queue(ctx.state.pindex)
             ctx:assert(#queue > 0, "Crafting queue should have items after starting craft")
          end
       end)

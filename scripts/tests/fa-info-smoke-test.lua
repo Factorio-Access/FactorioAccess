@@ -1,7 +1,7 @@
 --- Smoke test for fa-info system
 -- Tests the core entity information extraction functionality
 
-local fa_info = require("scripts.fa-info")
+local FaInfo = require("scripts.fa-info")
 local TestRegistry = require("scripts.test-registry")
 local describe = TestRegistry.describe
 local it = TestRegistry.it
@@ -32,7 +32,7 @@ describe("FA-Info Smoke Tests", function()
 
          -- Clear messages and describe the chest
          messages = {}
-         fa_info.describe_entity(chest, pindex, false, false)
+         FaInfo.describe_entity(chest, pindex, false, false)
 
          -- Should have gotten some output
          ctx:assert(#messages > 0, "Should have received description for chest")
@@ -54,7 +54,7 @@ describe("FA-Info Smoke Tests", function()
          ctx:assert(belt and belt.valid, "Belt should be created")
 
          messages = {}
-         fa_info.describe_entity(belt, pindex, false, false)
+         FaInfo.describe_entity(belt, pindex, false, false)
 
          ctx:assert(#messages > 0, "Should have received description for belt")
 
@@ -73,7 +73,7 @@ describe("FA-Info Smoke Tests", function()
          ctx:assert(assembler and assembler.valid, "Assembler should be created")
 
          messages = {}
-         fa_info.describe_entity(assembler, pindex, false, false)
+         FaInfo.describe_entity(assembler, pindex, false, false)
 
          ctx:assert(#messages > 0, "Should have received description for assembler")
 
@@ -101,7 +101,7 @@ describe("FA-Info Smoke Tests", function()
       ctx:at_tick(1, function()
          -- This should not crash
          local success = pcall(function()
-            fa_info.describe_entity(nil, pindex, false, false)
+            FaInfo.describe_entity(nil, pindex, false, false)
          end)
 
          ctx:assert(success, "fa-info should handle nil entity without crashing")

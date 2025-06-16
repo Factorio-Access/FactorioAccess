@@ -3,7 +3,7 @@
 local TestRegistry = require("scripts.test-registry")
 local describe = TestRegistry.describe
 local it = TestRegistry.it
-local fa_utils = require("scripts.fa-utils")
+local FaUtils = require("scripts.fa-utils")
 
 -- Log that the file is being loaded
 print("[BuildingFootprintTests] Loading building footprint tests file")
@@ -13,7 +13,7 @@ describe("Building Footprint Calculations", function()
    it("should calculate basic 3x3 footprint correctly", function(ctx)
       ctx:init(function()
          local dirs = defines.direction
-         local footprint = fa_utils.calculate_building_footprint({
+         local footprint = FaUtils.calculate_building_footprint({
             width = 3,
             height = 3,
             position = { x = 10.5, y = 20.5 },
@@ -38,7 +38,7 @@ describe("Building Footprint Calculations", function()
    -- Test rotation (east/west swaps dimensions)
    it("should swap dimensions when rotated east/west", function(ctx)
       ctx:init(function()
-         local footprint = fa_utils.calculate_building_footprint({
+         local footprint = FaUtils.calculate_building_footprint({
             width = 2,
             height = 4,
             position = { x = 10.5, y = 20.5 },
@@ -62,7 +62,7 @@ describe("Building Footprint Calculations", function()
    -- Test non-cursor mode with player facing west
    it("should offset left when player faces west in non-cursor mode", function(ctx)
       ctx:init(function()
-         local footprint = fa_utils.calculate_building_footprint({
+         local footprint = FaUtils.calculate_building_footprint({
             width = 3,
             height = 3,
             position = { x = 10.5, y = 20.5 },
@@ -85,7 +85,7 @@ describe("Building Footprint Calculations", function()
    -- Test non-cursor mode with player facing north
    it("should offset up when player faces north in non-cursor mode", function(ctx)
       ctx:init(function()
-         local footprint = fa_utils.calculate_building_footprint({
+         local footprint = FaUtils.calculate_building_footprint({
             width = 3,
             height = 3,
             position = { x = 10.5, y = 20.5 },
@@ -108,7 +108,7 @@ describe("Building Footprint Calculations", function()
    -- Test build lock mode (building from behind)
    it("should build behind player with build lock facing south", function(ctx)
       ctx:init(function()
-         local footprint = fa_utils.calculate_building_footprint({
+         local footprint = FaUtils.calculate_building_footprint({
             width = 3,
             height = 3,
             position = { x = 10.5, y = 20.5 },
@@ -131,7 +131,7 @@ describe("Building Footprint Calculations", function()
    -- Test build lock mode with rotation
    it("should handle build lock with rotated entity", function(ctx)
       ctx:init(function()
-         local footprint = fa_utils.calculate_building_footprint({
+         local footprint = FaUtils.calculate_building_footprint({
             width = 2,
             height = 4,
             position = { x = 10.5, y = 20.5 },
@@ -154,7 +154,7 @@ describe("Building Footprint Calculations", function()
    -- Test 1x1 entity
    it("should handle 1x1 entities correctly", function(ctx)
       ctx:init(function()
-         local footprint = fa_utils.calculate_building_footprint({
+         local footprint = FaUtils.calculate_building_footprint({
             width = 1,
             height = 1,
             position = { x = 10.5, y = 20.5 },
@@ -177,7 +177,7 @@ describe("Building Footprint Calculations", function()
    -- Test rail vehicle special case (should ignore build lock)
    it("should ignore build lock for rail vehicles", function(ctx)
       ctx:init(function()
-         local footprint = fa_utils.calculate_building_footprint({
+         local footprint = FaUtils.calculate_building_footprint({
             width = 3,
             height = 3,
             position = { x = 10.5, y = 20.5 },

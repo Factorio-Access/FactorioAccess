@@ -2,7 +2,7 @@
 -- Tests mod's recipe listing and handling functions
 
 local EventManager = require("scripts.event-manager")
-local fa_crafting = require("scripts.crafting")
+local Crafting = require("scripts.crafting")
 local TestRegistry = require("scripts.test-registry")
 local describe = TestRegistry.describe
 local it = TestRegistry.it
@@ -37,7 +37,7 @@ describe("Assembler Recipe Mod Tests", function()
 
       ctx:at_tick(2, function()
          -- Test the mod's get_recipes function
-         local recipes = fa_crafting.get_recipes(pindex, assembler, false)
+         local recipes = Crafting.get_recipes(pindex, assembler, false)
 
          -- Should return a table of recipe groups
          ctx:assert_not_nil(recipes, "Should return recipes")
@@ -59,7 +59,7 @@ describe("Assembler Recipe Mod Tests", function()
 
       ctx:at_tick(3, function()
          -- Test loading all categories
-         local all_recipes = fa_crafting.get_recipes(pindex, assembler, true)
+         local all_recipes = Crafting.get_recipes(pindex, assembler, true)
 
          -- When loading all categories, we should get more recipes
          ctx:assert(#all_recipes > 0, "Should have recipes when loading all categories")
@@ -71,7 +71,7 @@ describe("Assembler Recipe Mod Tests", function()
          end
 
          -- Compare with limited mode
-         local limited_recipes = fa_crafting.get_recipes(pindex, assembler, false)
+         local limited_recipes = Crafting.get_recipes(pindex, assembler, false)
          local limited_total = 0
          for _, group in ipairs(limited_recipes) do
             limited_total = limited_total + #group
