@@ -32,6 +32,7 @@ local Geometry = require("scripts.geometry")
 local Graphics = require("scripts.graphics")
 local Localising = require("scripts.localising")
 local MessageBuilder = require("scripts.message-builder")
+local NetworkShape = require("scripts.network-shape")
 local Rails = require("scripts.rails")
 local ResourceMining = require("scripts.resource-mining")
 local TH = require("scripts.table-helpers")
@@ -486,14 +487,14 @@ local function ent_info_pipe_shape(ctx)
       -- expected count as well. Otherwise we will say that a pipe is both connected and not connected at the same time.
 
       -- This is just a boring if table which appends fragments.  no special logic here.
-      if s == Fluids.PIPE_SHAPE.END and conn_count == 1 then
+      if s == NetworkShape.SHAPE.END and conn_count == 1 then
          ctx.message:fragment({ "fa.ent-info-pipe-end", FaUtils.direction_lookup(FaUtils.rotate_180(d)) })
-      elseif s == Fluids.PIPE_SHAPE.ALONE and conn_count == 0 then
+      elseif s == NetworkShape.SHAPE.ALONE and conn_count == 0 then
          ctx.message:fragment({ "fa.ent-info-pipe-alone" })
-      elseif s == Fluids.PIPE_SHAPE.STRAIT and conn_count == 2 then
+      elseif s == NetworkShape.SHAPE.STRAIT and conn_count == 2 then
          local key = d == defines.direction.north and "fa.ent-info-pipe-vertical" or "fa.ent-info-pipe-horizontal"
          ctx.message:fragment({ key })
-      elseif s == Fluids.PIPE_SHAPE.CORNER and conn_count == 2 then
+      elseif s == NetworkShape.SHAPE.CORNER and conn_count == 2 then
          local c1, c2
          if d == defines.direction.northwest then
             c1 = defines.direction.south
@@ -512,9 +513,9 @@ local function ent_info_pipe_shape(ctx)
          end
 
          ctx.message:fragment({ "fa.ent-info-pipe-corner", FaUtils.direction_lookup(c1), FaUtils.direction_lookup(c2) })
-      elseif s == Fluids.PIPE_SHAPE.CROSS and conn_count == 4 then
+      elseif s == NetworkShape.SHAPE.CROSS and conn_count == 4 then
          ctx.message:fragment({ "fa.ent-info-pipe-cross" })
-      elseif s == Fluids.PIPE_SHAPE.T then
+      elseif s == NetworkShape.SHAPE.T then
          local key = "fa.ent-info-pipe-t-vertical"
          if d == defines.direction.north or d == defines.direction.south then key = "fa.ent-info-pipe-t-horizontal" end
          ctx.message:fragment({ key, FaUtils.direction_lookup(FaUtils.rotate_180(d)) })

@@ -27,15 +27,16 @@ The fluidbox indexing operator itself allows indexing the fluids in a fluidbox. 
 unclear if or under what circumstances it can be more than 1, but it is probably possible for that to happen.  As of
 2024-11-04, it is unclear to us just when that can happen in the new fluid system.
 
-Note that the shape computation logic is reused by heat.  Heat isn't a fluid and has a number of "interesting" special
-cases, but the corner shapes are the same.
-
 There is a concept of locked fluids.  The API doesn't do a good job of explaining this.  If a fluid is locked, this
 means that it is on something that produces or consumes that fluid.  This doesn't happen on pipes or storage tanks, but
 it does happen on crafting machines when recipes are set.
+
+Note: the logic for determining pipe shapes (corner, T, cross, etc.) was formerly part of this file, but is now shared
+via `network-shape.lua`, and reused by both fluids and heat systems.
 ]]
 local Consts = require("scripts.consts")
 local FaUtils = require("scripts.fa-utils")
+local NetworkShape = require("scripts.network-shape")
 local TH = require("scripts.table-helpers")
 
 local mod = {}
@@ -67,7 +68,7 @@ Otherwise return nil.  Either there's no requirement or the user has managed to 
 ]]
 ---@param fluidbox LuaFluidBox
 ---@param index number
----@return string
+---@return string?
 local function get_local_fluidbox_constraint(fluidbox, index)
    local locked = fluidbox.get_locked_fluid(index)
    if locked then return locked end
@@ -167,53 +168,6 @@ function mod.get_connection_points(ent)
    return res
 end
 
----@enum fa.Fluids.PipeShape
-mod.PIPE_SHAPE = {
-   STRAIT = "straight",
-
-   -- 4-way, a cross
-   CROSS = "cross",
-   CORNER = "corner",
-
-   END = "end",
-
-   -- It's not connecting to anything.
-   ALONE = "alone",
-
-   T = "t",
-}
-
----@alias fa.fluids.ShapeDef { shape: fa.Fluids.PipeShape, direction: defines.direction }
-
--- north->east->south->west->shape, true if the direction is present, false if
--- it is not. Used below.
----@type table<boolean, table<boolean, table<boolean, table<boolean, fa.fluids.ShapeDef>>>>
-local SHAPE_TABLE = {}
-
-local function add_shape(n, e, s, w, shape, direction)
-   SHAPE_TABLE[n] = SHAPE_TABLE[n] or {}
-   SHAPE_TABLE[n][e] = SHAPE_TABLE[n][e] or {}
-   SHAPE_TABLE[n][e][s] = SHAPE_TABLE[n][e][s] or {}
-   SHAPE_TABLE[n][e][s][w] = { shape = shape, direction = direction }
-end
-
-add_shape(true, true, true, true, mod.PIPE_SHAPE.CROSS, defines.direction.north)
-add_shape(true, false, true, false, mod.PIPE_SHAPE.STRAIT, defines.direction.north)
-add_shape(false, true, false, true, mod.PIPE_SHAPE.STRAIT, defines.direction.east)
-add_shape(true, true, false, false, mod.PIPE_SHAPE.CORNER, defines.direction.southwest)
-add_shape(false, true, true, false, mod.PIPE_SHAPE.CORNER, defines.direction.northwest)
-add_shape(false, false, true, true, mod.PIPE_SHAPE.CORNER, defines.direction.northeast)
-add_shape(true, false, false, true, mod.PIPE_SHAPE.CORNER, defines.direction.southeast)
-add_shape(true, false, false, false, mod.PIPE_SHAPE.END, defines.direction.north)
-add_shape(false, true, false, false, mod.PIPE_SHAPE.END, defines.direction.east)
-add_shape(false, false, true, false, mod.PIPE_SHAPE.END, defines.direction.south)
-add_shape(false, false, false, true, mod.PIPE_SHAPE.END, defines.direction.west)
-add_shape(true, true, true, false, mod.PIPE_SHAPE.T, defines.direction.west)
-add_shape(true, true, false, true, mod.PIPE_SHAPE.T, defines.direction.south)
-add_shape(true, false, true, true, mod.PIPE_SHAPE.T, defines.direction.east)
-add_shape(false, true, true, true, mod.PIPE_SHAPE.T, defines.direction.north)
-add_shape(false, false, false, false, mod.PIPE_SHAPE.ALONE, defines.direction.north)
-
 --[[
 Given a pipe entity, determine to which pipes it is connected and pass back information on the shape.  This comes back
 as two values, a kind and a direction. Shape interpretations are as follows:
@@ -235,30 +189,26 @@ corner" means--we'd have to teach it.  We probably do at some point, but that's 
 This function considers only pipe entities, and ignores undergrounds. Undergrounds need to be announced separately.
 ]]
 ---@param ent LuaEntity
----@return { shape: fa.Fluids.PipeShape, direction: defines.direction }
+---@return { shape: fa.NetworkShape.Shape, direction: defines.direction }
 function mod.get_pipe_shape(ent)
-   local dirs = {}
-
    assert(ent.type == "pipe")
    local fb = ent.fluidbox
    assert(#fb == 1)
 
+   local dirs = {}
    local conns = fb.get_pipe_connections(1)
+
    for _, conn in pairs(conns) do
       if conn.target and conn.target.owner.type == "pipe" then
-         local v = { x = conn.target_position.x - conn.position.x, y = conn.target_position.y - conn.position.y }
-         local dir = FaUtils.direction_of_vector(v)
-         assert(dir)
+         local dx = conn.target_position.x - conn.position.x
+         local dy = conn.target_position.y - conn.position.y
+         local dir = FaUtils.direction_of_vector({ x = dx, y = dy })
+         assert(dir, "Unable to compute direction from vector.")
          dirs[dir] = true
       end
    end
 
-   local shape =
-      SHAPE_TABLE[dirs[defines.direction.north] ~= nil][dirs[defines.direction.east] ~= nil][dirs[defines.direction.south] ~= nil][dirs[defines.direction.west] ~= nil]
-   if not shape then error(string.format("No shape for %s", serpent.line(dirs))) end
-
-   -- Don't let callers modify what is otherwise a constant.
-   return table.deepcopy(shape)
+   return NetworkShape.get_shape_from_directions(dirs)
 end
 
 return mod
