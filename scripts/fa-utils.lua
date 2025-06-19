@@ -265,10 +265,10 @@ end
 function mod.direction_lookup(dir)
    local reading = "unknown"
    if dir < 0 then return "unknown direction ID " .. dir end
-   if dir >= dirs.north and dir <= dirs.northwest then
+   if dir >= dirs.north and dir <= dirs.northnorthwest then
       return helpers.direction_to_string(dir)
    else
-      if dir == 8 then --Returned by the game when there is no direction in particular
+      if dir == 16 then --Returned by the game when there is no direction in particular
          reading = ""
       elseif dir == 99 then --Defined by mod
          reading = "Here"
