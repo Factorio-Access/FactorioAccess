@@ -30,8 +30,10 @@ local F = require("scripts.field-ref")
 local Fluids = require("scripts.fluids")
 local Geometry = require("scripts.geometry")
 local Graphics = require("scripts.graphics")
+local Heat = require("scripts.heat")
 local Localising = require("scripts.localising")
 local MessageBuilder = require("scripts.message-builder")
+local NetworkShape = require("scripts.network-shape")
 local Rails = require("scripts.rails")
 local ResourceMining = require("scripts.resource-mining")
 local TH = require("scripts.table-helpers")
@@ -486,14 +488,14 @@ local function ent_info_pipe_shape(ctx)
       -- expected count as well. Otherwise we will say that a pipe is both connected and not connected at the same time.
 
       -- This is just a boring if table which appends fragments.  no special logic here.
-      if s == Fluids.PIPE_SHAPE.END and conn_count == 1 then
+      if s == NetworkShape.SHAPE.END and conn_count == 1 then
          ctx.message:fragment({ "fa.ent-info-pipe-end", FaUtils.direction_lookup(FaUtils.rotate_180(d)) })
-      elseif s == Fluids.PIPE_SHAPE.ALONE and conn_count == 0 then
+      elseif s == NetworkShape.SHAPE.ALONE and conn_count == 0 then
          ctx.message:fragment({ "fa.ent-info-pipe-alone" })
-      elseif s == Fluids.PIPE_SHAPE.STRAIT and conn_count == 2 then
+      elseif s == NetworkShape.SHAPE.STRAIGHT and conn_count == 2 then
          local key = d == defines.direction.north and "fa.ent-info-pipe-vertical" or "fa.ent-info-pipe-horizontal"
          ctx.message:fragment({ key })
-      elseif s == Fluids.PIPE_SHAPE.CORNER and conn_count == 2 then
+      elseif s == NetworkShape.SHAPE.CORNER and conn_count == 2 then
          local c1, c2
          if d == defines.direction.northwest then
             c1 = defines.direction.south
@@ -512,9 +514,9 @@ local function ent_info_pipe_shape(ctx)
          end
 
          ctx.message:fragment({ "fa.ent-info-pipe-corner", FaUtils.direction_lookup(c1), FaUtils.direction_lookup(c2) })
-      elseif s == Fluids.PIPE_SHAPE.CROSS and conn_count == 4 then
+      elseif s == NetworkShape.SHAPE.CROSS and conn_count == 4 then
          ctx.message:fragment({ "fa.ent-info-pipe-cross" })
-      elseif s == Fluids.PIPE_SHAPE.T then
+      elseif s == NetworkShape.SHAPE.T then
          local key = "fa.ent-info-pipe-t-vertical"
          if d == defines.direction.north or d == defines.direction.south then key = "fa.ent-info-pipe-t-horizontal" end
          ctx.message:fragment({ key, FaUtils.direction_lookup(FaUtils.rotate_180(d)) })
@@ -604,79 +606,211 @@ local function ent_info_item_on_ground(ctx)
    end
 end
 
+local dir_names = {
+   [defines.direction.north] = "north",
+   [defines.direction.east] = "east",
+   [defines.direction.south] = "south",
+   [defines.direction.west] = "west",
+}
+
+---@param ctx fa.Info.EntInfoContext
+local function ent_info_heat_pipe_shape(ctx)
+   if ctx.ent.type == "heat-pipe" then
+      local shape_info = Heat.get_pipe_shape(ctx.ent)
+      local s, d = shape_info.shape, shape_info.direction
+      local d_str = FaUtils.direction_lookup(d)
+      local conn_count = Heat.get_total_heat_connections(ctx.ent)
+
+      -- We must be careful.  Pipe shapes do not account for other kinds of connection, so we must compare with the
+      -- expected count as well. Otherwise we will say that a pipe is both connected and not connected at the same time.
+
+      -- This is just a boring if table which appends fragments.  no special logic here.
+      if s == NetworkShape.SHAPE.END and conn_count == 1 then
+         ctx.message:fragment({ "fa.ent-info-pipe-end", FaUtils.direction_lookup(FaUtils.rotate_180(d)) })
+      elseif s == NetworkShape.SHAPE.ALONE and conn_count == 0 then
+         ctx.message:fragment({ "fa.ent-info-pipe-alone" })
+      elseif s == NetworkShape.SHAPE.STRAIGHT and conn_count == 2 then
+         local key = d == defines.direction.north and "fa.ent-info-pipe-vertical" or "fa.ent-info-pipe-horizontal"
+         ctx.message:fragment({ key })
+      elseif s == NetworkShape.SHAPE.CORNER and conn_count == 2 then
+         local c1, c2
+         if d == defines.direction.northwest then
+            c1 = defines.direction.south
+            c2 = defines.direction.east
+         elseif d == defines.direction.northeast then
+            c1 = defines.direction.south
+            c2 = defines.direction.west
+         elseif d == defines.direction.southwest then
+            c1 = defines.direction.north
+            c2 = defines.direction.east
+         elseif d == defines.direction.southeast then
+            c1 = defines.direction.north
+            c2 = defines.direction.west
+         else
+            error("unreachable! " .. serpent.line({ s = s, d = d }))
+         end
+
+         ctx.message:fragment({ "fa.ent-info-pipe-corner", FaUtils.direction_lookup(c1), FaUtils.direction_lookup(c2) })
+      elseif s == NetworkShape.SHAPE.CROSS and conn_count == 4 then
+         ctx.message:fragment({ "fa.ent-info-pipe-cross" })
+      elseif s == NetworkShape.SHAPE.T then
+         local key = "fa.ent-info-pipe-t-vertical"
+         if d == defines.direction.north or d == defines.direction.south then key = "fa.ent-info-pipe-t-horizontal" end
+         ctx.message:fragment({ key, FaUtils.direction_lookup(FaUtils.rotate_180(d)) })
+      end
+   end
+end
+
+---@param ctx fa.Info.EntInfoContext
+local function ent_info_render_heat_ports(ctx)
+   local ent = ctx.ent
+   if
+      not (
+         ent
+         and ent.valid
+         and ent.prototype.heat_buffer_prototype
+         and next(ent.prototype.heat_buffer_prototype.connections)
+      )
+   then
+      return
+   end
+
+   local connection_points = Heat.get_connection_points(ent)
+   local found_dirs = {}
+
+   for _, conn in ipairs(connection_points) do
+      -- Draw the port itself (blue)
+      rendering.draw_circle({
+         color = { 0.5, 0.5, 1.0 },
+         radius = 0.15,
+         width = 2,
+         target = conn.position,
+         surface = ent.surface,
+         time_to_live = 30,
+      })
+
+      -- Now, draw only the first connected neighbor per direction (green)
+      local neighbors = Heat.get_connected_neighbors(ent, conn, false)
+      for _, neighbor_info in ipairs(neighbors) do
+         local n_ent = neighbor_info.entity
+         local n_cp = neighbor_info.connection_point
+
+         local dir
+         if conn.direction then
+            dir = conn.direction
+         else
+            dir = FaUtils.get_direction_biased(n_cp.position, ent.position)
+         end
+
+         if not found_dirs[dir] then
+            found_dirs[dir] = true
+            rendering.draw_circle({
+               color = { 0.8, 1.0, 0.5 },
+               radius = 0.18,
+               width = 2,
+               target = n_cp.position,
+               surface = n_ent.surface,
+               time_to_live = 30,
+            })
+         end
+      end
+   end
+end
+
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_heat_neighbors(ctx)
    local ent = ctx.ent
-   if ent.prototype.heat_buffer_prototype ~= nil and next(ent.prototype.heat_buffer_prototype.connections) then
-      local con_targets = BuildingTools.get_heat_connection_target_positions(ent.name, ent.position, ent.direction)
-      local con_count = 0
-      local con_counts = { 0, 0, 0, 0, 0, 0, 0, 0 }
-      con_counts[dirs.north + 1] = 0
-      con_counts[dirs.south + 1] = 0
-      con_counts[dirs.east + 1] = 0
-      con_counts[dirs.west + 1] = 0
-      if #con_targets > 0 then
-         for i, con_target_pos in ipairs(con_targets) do
-            --For each heat connection target position, mark it and check for target ents
-            rendering.draw_circle({
-               color = { 1.0, 0.0, 0.5 },
-               radius = 0.1,
-               width = 2,
-               target = con_target_pos,
-               surface = ent.surface,
-               time_to_live = 30,
-            })
-            local target_ents = ent.surface.find_entities_filtered({ position = con_target_pos })
-            for j, target_ent in ipairs(target_ents) do
-               if
-                  target_ent.valid
-                  and #BuildingTools.get_heat_connection_positions(
-                        target_ent.name,
-                        target_ent.position,
-                        target_ent.direction
-                     )
-                     > 0
-               then
-                  for k, spot in
-                     ipairs(
-                        BuildingTools.get_heat_connection_positions(
-                           target_ent.name,
-                           target_ent.position,
-                           target_ent.direction
-                        )
-                     )
-                  do
-                     --For each heat connection of the found target entity, mark it and check for a match
-                     rendering.draw_circle({
-                        color = { 1.0, 1.0, 0.5 },
-                        radius = 0.2,
-                        width = 2,
-                        target = spot,
-                        surface = ent.surface,
-                        time_to_live = 30,
-                     })
-                     if util.distance(con_target_pos, spot) < 0.2 then
-                        --For each match, mark it and count it
-                        rendering.draw_circle({
-                           color = { 0.5, 1.0, 0.5 },
-                           radius = 0.3,
-                           width = 2,
-                           target = spot,
-                           surface = ent.surface,
-                           time_to_live = 30,
-                        })
-                        con_count = con_count + 1
-                        local con_dir = FaUtils.get_direction_biased(con_target_pos, ent.position)
-                        if con_count > 1 then ctx.message:fragment("and") end
-                        ctx.message:fragment(FaUtils.direction_lookup(con_dir))
-                     end
-                  end
+   if
+      not (
+         ent
+         and ent.valid
+         and ent.prototype.heat_buffer_prototype
+         and next(ent.prototype.heat_buffer_prototype.connections)
+      )
+   then
+      return
+   end
+
+   local connection_points = Heat.get_connection_points(ent)
+   if not connection_points or #connection_points == 0 then return end
+
+   -- Gather only those ports the cursor is "on" (distance threshold)
+   local relevant_ports = {}
+   for _, conn in ipairs(connection_points) do
+      if FaUtils.distance(conn.position, ctx.cursor_pos) < 0.5 then table.insert(relevant_ports, conn) end
+   end
+   if #relevant_ports == 0 then return end
+
+   -- Gather directions of all relevant ports
+   local dirs = {}
+   for _, conn in ipairs(relevant_ports) do
+      local dir = conn.direction
+      if dir == nil then dir = FaUtils.get_direction_biased(conn.position, ent.position) end
+      table.insert(dirs, dir or 16)
+   end
+
+   -- Localize heat port directions, passing raw direction constants
+   local function localise_heat_ports(dirs)
+      local n = #dirs
+      if n == 0 then
+         return nil
+      elseif n == 1 then
+         return { "fa.ent-info-heat-port-1", FaUtils.direction_lookup(dirs[1]) }
+      elseif n == 2 then
+         return { "fa.ent-info-heat-port-2", FaUtils.direction_lookup(dirs[1]), FaUtils.direction_lookup(dirs[2]) }
+      elseif n == 3 then
+         return {
+            "fa.ent-info-heat-port-3",
+            FaUtils.direction_lookup(dirs[1]),
+            FaUtils.direction_lookup(dirs[2]),
+            FaUtils.direction_lookup(dirs[3]),
+         }
+      elseif n == 4 then
+         return {
+            "fa.ent-info-heat-port-4",
+            FaUtils.direction_lookup(dirs[1]),
+            FaUtils.direction_lookup(dirs[2]),
+            FaUtils.direction_lookup(dirs[3]),
+            FaUtils.direction_lookup(dirs[4]),
+         }
+      end
+   end
+
+   if ent.type ~= "heat-pipe" then ctx.message:fragment(localise_heat_ports(dirs)) end
+
+   -- Gather connections: name + raw direction for each neighbor
+   local all_conn_info = {}
+   for _, conn in ipairs(relevant_ports) do
+      local neighbors = Heat.get_connected_neighbors(ent, conn, false)
+      for _, neighbor_info in ipairs(neighbors) do
+         local n_ent = neighbor_info.entity
+         if n_ent and n_ent.valid then
+            if not (ent.type == "heat-pipe" and n_ent.type == "heat-pipe") then
+               -- Use direction from connection_point, fallback to position math
+               local dir = neighbor_info.connection_point and neighbor_info.connection_point.direction
+               if dir == nil then
+                  dir = FaUtils.get_direction_biased(
+                     neighbor_info.connection_point and neighbor_info.connection_point.position or n_ent.position,
+                     conn.position
+                  )
+               else
+                  dir = FaUtils.rotate_180(dir) -- to report it's pointing back at us
                end
+               table.insert(all_conn_info, { n_ent.prototype.localised_name, FaUtils.direction_lookup(dir or 16) })
             end
          end
-      else
-         ctx.message:fragment({ "fa.ent-info-heat-neighbors-none" })
       end
+   end
+
+   local n = #all_conn_info
+   if n > 0 then
+      local key = "fa.ent-info-heat-conn-" .. tostring(math.min(n, 4))
+      local args = { key }
+      for i = 1, math.min(n, 4) do
+         table.insert(args, all_conn_info[i][1]) -- name
+         table.insert(args, all_conn_info[i][2]) -- direction (raw int)
+      end
+      ctx.message:fragment(args)
    end
 end
 
@@ -1212,6 +1346,8 @@ function mod.ent_info(pindex, ent, is_scanner)
    run_handler(ent_info_temperature)
    run_handler(ent_info_nuclear_neighbor_bonus)
    run_handler(ent_info_item_on_ground)
+   run_handler(ent_info_render_heat_ports)
+   run_handler(ent_info_heat_pipe_shape)
    run_handler(ent_info_heat_neighbors)
 
    run_handler(ent_info_constant_combinator)
