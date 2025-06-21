@@ -1132,6 +1132,8 @@ local function ent_info_filters(ctx)
          ctx.message:list_item()
          if first then ctx.message:fragment("Filters for") end
          first = false
+         --We seem to be getting string names in 2.0; lookup the actual prototype to use
+         if type(proto) == "string" then proto = prototypes.item[proto] end
          ctx.message:fragment(Localising.get_localised_name_with_fallback(proto))
       end
    end
