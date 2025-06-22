@@ -1,3 +1,5 @@
+require("syntrax")
+
 --Main file for mod runtime
 local Logger = require("scripts.logger")
 Logger.init()
