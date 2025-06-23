@@ -4,20 +4,24 @@
 local EventManager = require("scripts.event-manager")
 local TestRegistry = require("scripts.test-registry")
 local sounds = require("scripts.ui.sounds")
+local Logging = require("scripts.logging")
 
 local mod = {}
 
--- Logger wrapper to handle cases where Logger isn't initialized yet
+-- Create logger for this module
+local logger = Logging.Logger("TestFramework")
+
+-- Logger wrapper functions for backward compatibility
 local function log_info(module, message)
-   if _G.Logger then Logger.info(module, message) end
+   logger:info(message)
 end
 
 local function log_warn(module, message)
-   if _G.Logger then Logger.warn(module, message) end
+   logger:warn(message)
 end
 
 local function log_error(module, message)
-   if _G.Logger then Logger.error(module, message) end
+   logger:error(message)
 end
 
 -- Test files to load
@@ -146,7 +150,7 @@ function mod.run_all()
    end
 
    log_info("TestFramework", "Starting test run")
-   if _G.Logger then Logger.use_test_log() end
+   Logging.use_test_log()
 
    -- Enable test modes
    EventManager.enable_test_mode()
@@ -398,12 +402,8 @@ function mod._finish_tests()
       end
    end
 
-   -- Flush logs
-   if _G.Logger then
-      Logger.flush()
-      -- Switch back to main log
-      Logger.use_main_log()
-   end
+   -- Switch back to main log
+   Logging.use_main_log()
 
    -- Print summary to console
    print(string.format("\nTest run complete: %d/%d passed", test_results.passed, test_results.total))
@@ -463,7 +463,7 @@ end
 function mod.load_tests()
    -- Just log the summary since tests are already loaded
    local test_suites = TestRegistry.get_test_suites()
-   if _G.Logger then log_info("TestFramework", "Test loading complete. " .. #test_suites .. " suites registered.") end
+   log_info("TestFramework", "Test loading complete. " .. #test_suites .. " suites registered.")
 end
 
 function mod.on_init()

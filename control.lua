@@ -1,8 +1,11 @@
 require("syntrax")
 
 --Main file for mod runtime
-local Logger = require("scripts.logger")
-Logger.init()
+local Logging = require("scripts.logging")
+Logging.init()
+
+-- Create logger for control.lua
+local logger = Logging.Logger("control")
 
 local util = require("util")
 

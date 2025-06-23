@@ -2,6 +2,9 @@
 -- Provides test registration functions (describe, it, etc.) separate from the test runner
 -- This avoids circular dependencies when test files need to import these functions
 
+local Logging = require("scripts.logging")
+local logger = Logging.Logger("TestRegistry")
+
 local mod = {}
 
 -- Test suite storage
@@ -100,11 +103,7 @@ function mod.describe(suite_name, suite_func)
    -- Add suite to test_suites
    table.insert(test_suites, suite)
 
-   if _G.Logger then
-      Logger.info("TestRegistry", "Registered test suite: " .. suite_name .. " with " .. #suite.tests .. " tests")
-   else
-      print("[TestRegistry] Registered test suite: " .. suite_name .. " with " .. #suite.tests .. " tests")
-   end
+   logger:info("Registered test suite: " .. suite_name .. " with " .. #suite.tests .. " tests")
 end
 
 --- Define a test within a suite

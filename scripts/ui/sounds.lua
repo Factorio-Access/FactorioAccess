@@ -7,6 +7,9 @@ over the codebase.  One had to find an example of the sound they wanted, hunt
 down where it was played from, and copy/paste it.  Let's not and say we did.
 ]]
 
+local Logging = require("scripts.logging")
+local logger = Logging.Logger("Sounds")
+
 local mod = {}
 
 -- Test mode flag - when enabled, sounds are logged instead of played
@@ -24,7 +27,7 @@ local function play_sound_internal(pindex, sound_spec)
          sound = sound_spec,
          tick = game and game.tick or 0,
       })
-      if _G.Logger then Logger.debug("Sounds", "Sound played: " .. serpent.line(sound_spec)) end
+      logger:debug("Sound played: " .. serpent.line(sound_spec))
    else
       -- Normal mode - play the sound
       local player = game.get_player(pindex)
