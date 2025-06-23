@@ -4,3 +4,5 @@ __pycache__
 !lab_tiles.zip
 
 .claude/
+claude-task.md
+claude-prompt.md
