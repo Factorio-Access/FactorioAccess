@@ -111,6 +111,8 @@ end
 
 ---@param chunk ChunkPositionAndArea
 function IcebergBackend:on_new_chunk(chunk)
+   if not script.feature_flags.space_travel then return end
+
    local tiles = self.surface.find_tiles_filtered({
       area = chunk.area,
       name = SC.ICEBERG_PROTOS,
