@@ -1340,14 +1340,14 @@ def find_factorio_type_definitions() -> Optional[str]:
     return None
 
 
-def create_or_update_luarc(mod_path: str = ".") -> None:
+def create_or_update_luarc(config_path: str) -> None:
     """
-    Create or update .luarc.json with proper Factorio configuration.
+    Create .luarc.json configuration at the specified path.
     
     Args:
-        mod_path: Path to the mod directory
+        config_path: Full path where the config file should be created
     """
-    luarc_path = Path(mod_path) / ".luarc.json"
+    luarc_path = Path(config_path)
     
     # Find Factorio type definitions
     factorio_lib = find_factorio_type_definitions()
@@ -1427,7 +1427,7 @@ def create_or_update_luarc(mod_path: str = ".") -> None:
     print(f"[LLM_INFO] Updated {luarc_path}")
 
 
-def run_lua_linter(mod_path: str = ".", lua_ls_path: Optional[str] = None, update_config: bool = True) -> Tuple[int, str, str]:
+def run_lua_linter(mod_path: str = ".", lua_ls_path: Optional[str] = None) -> Tuple[int, str, str]:
     """
     Run lua-language-server on the mod files.
     
@@ -1475,21 +1475,23 @@ def run_lua_linter(mod_path: str = ".", lua_ls_path: Optional[str] = None, updat
     # Ensure we're in the mod directory for proper .luarc.json detection
     mod_path = Path(mod_path).resolve()
     
-    # Update or create .luarc.json with proper configuration if requested
-    if update_config:
-        create_or_update_luarc(str(mod_path))
-    
-    # Run lua-language-server in check mode
-    cmd = [lua_ls_path, "--check", "."]
-    
+    # Create temporary config file
+    config_file = None
     try:
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp:
+            config_file = tmp.name
+            create_or_update_luarc(config_file)
+        
+        # Run lua-language-server in check mode with temp config
+        cmd = [lua_ls_path, "--check", ".", "--configpath", config_file]
+        
         # Set VSCODE_FACTORIO_PATH if possible to help with Factorio library detection
         env = os.environ.copy()
         factorio_path = Path(__file__).parent.parent.parent / "bin" / "x64"
         if factorio_path.exists():
             env["FACTORIO_PATH"] = str(factorio_path)
         
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, cwd=str(mod_path), env=env)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60, cwd=str(mod_path), env=env)
         
         # Filter out noise from the output
         stdout_lines = result.stdout.split('\n')
@@ -1510,9 +1512,16 @@ def run_lua_linter(mod_path: str = ".", lua_ls_path: Optional[str] = None, updat
             
         return result.returncode, '\n'.join(filtered_stdout), '\n'.join(stderr_lines)
     except subprocess.TimeoutExpired:
-        return -1, "", "Linting timed out after 30 seconds"
+        return -1, "", "Linting timed out after 60 seconds"
     except Exception as e:
         return -1, "", str(e)
+    finally:
+        # Clean up temp config file
+        if config_file and os.path.exists(config_file):
+            try:
+                os.unlink(config_file)
+            except Exception:
+                pass  # Best effort cleanup
 
 
 def run_stylua(mod_path: str = ".", stylua_path: Optional[str] = None, check_only: bool = True) -> Tuple[int, str, str]:
@@ -1769,17 +1778,6 @@ def parse_factorio_args() -> argparse.Namespace:
         help="Path to the mod directory for linting/formatting (default: current directory)",
     )
     
-    lint_group.add_argument(
-        "--update-luarc",
-        action="store_true",
-        help="Update .luarc.json configuration before linting (default: automatic)",
-    )
-    
-    lint_group.add_argument(
-        "--no-update-luarc",
-        action="store_true",
-        help="Don't update .luarc.json configuration",
-    )
 
     # Pass-through for other Factorio arguments
     parser.add_argument(
@@ -1900,10 +1898,8 @@ def main():
     # Handle linting/formatting commands first (they don't launch Factorio)
     if args.lint:
         print(f"[LLM_INFO] Running lua-language-server on {args.mod_path}")
-        # Determine whether to update config
-        update_config = not args.no_update_luarc
         
-        exit_code, stdout, stderr = run_lua_linter(args.mod_path, args.lua_ls_path, update_config)
+        exit_code, stdout, stderr = run_lua_linter(args.mod_path, args.lua_ls_path)
         
         if stdout:
             print(stdout)
