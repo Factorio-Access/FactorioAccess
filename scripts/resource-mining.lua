@@ -32,7 +32,7 @@ function mod.get_solid_output_coords(ent)
 
    local dir = FaUtils.direction_of_vector({ x = v2pr.x - in_ent.x, y = v2pr.y - in_ent.y })
    local flipped = FaUtils.rotate_180(dir)
-   local uv = Consts.DIRECTION_VECTORS[flipped + 1]
+   local uv = Consts.DIRECTION_VECTORS[flipped]
    assert(uv)
 
    local effective = { x = v2pr.x + uv.x, y = v2pr.y + uv.y }

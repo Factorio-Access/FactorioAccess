@@ -46,7 +46,7 @@ end
 ---@param dir defines.direction
 ---@return number, number
 function mod.uv_for_direction(dir)
-   local v = Consts.DIRECTION_VECTORS[dir + 1]
+   local v = Consts.DIRECTION_VECTORS[dir]
    assert(v)
    return v.x, v.y
 end

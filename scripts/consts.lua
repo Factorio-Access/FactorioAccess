@@ -40,27 +40,27 @@ mod.ENT_NAMES_CLEARED_AS_OBSTACLES = {
 mod.RESEARCH_CRAFT_ITEMS_MAP_OUTER = "craft-item-map-names"
 mod.RESEARCH_CRAFT_ITEM_TRIGGER_MAPNAME_SUFFIX = "craft-item-counts"
 
--- The unit vectors of the directions in order north going clockwise.  If
--- indexed by defines.direction, this gives back the unit vector pointing in
--- that direction.
----@type fa.Point[]
+-- The unit vectors of the directions in order north going clockwise.  If indexed by defines.direction, this gives back
+-- the unit vector pointing in that direction.  Note that this is a 0-indexed table, 0 is north, directions go
+-- clockwise, 15 is northnorthwest.
+---@type table<defines.direction, fa.Point>
 mod.DIRECTION_VECTORS = {
-   { x = 0.0, y = -1.0 },
-   { x = 0.3826834323650898, y = -0.9238795325112867 },
-   { x = 0.7071067811865476, y = -0.7071067811865476 },
-   { x = 0.9238795325112867, y = -0.38268343236508984 },
-   { x = 1.0, y = 0.0 },
-   { x = 0.9238795325112867, y = 0.3826834323650897 },
-   { x = 0.7071067811865476, y = 0.7071067811865475 },
-   { x = 0.3826834323650899, y = 0.9238795325112867 },
-   { x = 0.0, y = 1.0 },
-   { x = -0.38268343236508967, y = 0.9238795325112868 },
-   { x = -0.7071067811865475, y = 0.7071067811865477 },
-   { x = -0.9238795325112865, y = 0.38268343236509034 },
-   { x = -1.0, y = 0.0 },
-   { x = -0.9238795325112866, y = -0.38268343236509 },
-   { x = -0.7071067811865477, y = -0.7071067811865474 },
-   { x = -0.3826834323650904, y = -0.9238795325112865 },
+   [defines.direction.north] = { x = 0.0, y = -1.0 },
+   [defines.direction.northnortheast] = { x = 0.3826834323650898, y = -0.9238795325112867 },
+   [defines.direction.northeast] = { x = 0.7071067811865476, y = -0.7071067811865476 },
+   [defines.direction.eastnortheast] = { x = 0.9238795325112867, y = -0.38268343236508984 },
+   [defines.direction.east] = { x = 1.0, y = 0.0 },
+   [defines.direction.eastsoutheast] = { x = 0.9238795325112867, y = 0.3826834323650897 },
+   [defines.direction.southeast] = { x = 0.7071067811865476, y = 0.7071067811865475 },
+   [defines.direction.southsoutheast] = { x = 0.3826834323650899, y = 0.9238795325112867 },
+   [defines.direction.south] = { x = 0.0, y = 1.0 },
+   [defines.direction.southsouthwest] = { x = -0.38268343236508967, y = 0.9238795325112868 },
+   [defines.direction.southwest] = { x = -0.7071067811865475, y = 0.7071067811865477 },
+   [defines.direction.westsouthwest] = { x = -0.9238795325112865, y = 0.38268343236509034 },
+   [defines.direction.west] = { x = -1.0, y = 0.0 },
+   [defines.direction.westnorthwest] = { x = -0.9238795325112866, y = -0.38268343236509 },
+   [defines.direction.northwest] = { x = -0.7071067811865477, y = -0.7071067811865474 },
+   [defines.direction.northnorthwest] = { x = -0.3826834323650904, y = -0.9238795325112865 },
 }
 
 ---@type table<string, true>
