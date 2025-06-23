@@ -42,6 +42,7 @@ local test_files = {
    "roboport-cursor-distance-test", -- Test roboport distance calculations in cursor mode
    -- "fa-info-smoke-test", -- Test entity information extraction system (temporarily disabled)
    -- "sound-tests", -- Test sound system integration (temporarily disabled)
+   "test-rail-basic-ops", -- Test basic rail operations module
 }
 
 -- Test execution state
