@@ -624,9 +624,56 @@ end
 **IMPORTANT**: The mod is halfway through migration from Factorio 1.1 to 2.0. Many features may crash due to API
 changes.
 
-- **Rails**: Currently broken - avoid working on rail-related features
+- **Rails**: Currently broken - avoid working on rail-related features (Syntrax will eventually replace this)
 - **Circuit Networks**: Broken - wire connection features not functional
 - **Various 1.1 code**: May crash when called due to API differences
+
+## Syntrax - Text-Based Rail Placement Language
+
+Syntrax is a domain-specific language for describing rail layouts using text commands, designed to make train network planning accessible to blind players. It has been integrated into the codebase but is not yet actively used.
+
+### Current Status
+- **Integration**: Code is present in `syntrax/` directory and loaded in `control.lua`
+- **Functionality**: Not yet connected to any rail-building features
+- **Purpose**: Will eventually replace the broken rail-building system
+
+### Basic Syntax
+```lua
+-- Simple commands
+"l r s"              -- left, right, straight rails
+"[l r] rep 4"        -- repeat pattern 4 times
+"[l l s] rep 8"      -- creates a circle
+
+-- Junction example using rail stack
+"s s rpush l s s reset r s s"  -- T-junction
+```
+
+### Using Syntrax in Code
+```lua
+local Syntrax = require("syntrax")
+local rails, error = Syntrax.execute("l r s")
+if error then
+    printout("Syntrax error: " .. error.message, pindex)
+else
+    -- Process rail placements
+    for i, rail in ipairs(rails) do
+        -- rail.kind: "left", "right", or "straight"
+        -- rail.outgoing_direction: 0-15 (Factorio directions)
+    end
+end
+```
+
+### Architecture
+- **Lexer** → **Parser** → **Compiler** → **VM** → **Rail Instructions**
+- Compiles to bytecode for efficient execution
+- Includes comprehensive test suite (`syntrax-tests.lua`)
+- Command-line tool for testing: `lua syntrax-cli.lua -c "[l r] rep 4"`
+
+### Development Notes
+- See `syntrax-overview.md` for detailed documentation
+- See `syntrax-spec.md` for language specification
+- See `syntrax-architecture.md` for implementation details
+- Test files in `syntrax/tests/` use LuaUnit framework
 
 ### EventManager Migration (In Progress)
 
