@@ -2059,7 +2059,7 @@ function turn_to_cursor_direction_precise(pindex)
 end
 
 --Called when a player enters or exits a vehicle
-script.on_event(defines.events.on_player_driving_changed_state, function(event)
+EventManager.on_event(defines.events.on_player_driving_changed_state, function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
@@ -2087,7 +2087,7 @@ script.on_event(defines.events.on_player_driving_changed_state, function(event)
 end)
 
 --Save info about last item pickup and draw radius
-script.on_event(defines.events.on_picked_up_item, function(event)
+EventManager.on_event(defines.events.on_picked_up_item, function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
@@ -2170,11 +2170,11 @@ for i = 1, 10 do
    table.insert(quickbar_page_events, "fa-s-" .. key)
 end
 
-script.on_event(quickbar_get_events, Quickbar.quickbar_get_handler)
+EventManager.on_event(quickbar_get_events, Quickbar.quickbar_get_handler)
 
-script.on_event(quickbar_set_events, Quickbar.quickbar_set_handler)
+EventManager.on_event(quickbar_set_events, Quickbar.quickbar_set_handler)
 
-script.on_event(quickbar_page_events, Quickbar.quickbar_page_handler)
+EventManager.on_event(quickbar_page_events, Quickbar.quickbar_page_handler)
 
 function swap_weapon_forward(pindex, write_to_character)
    local p = game.get_player(pindex)
@@ -2509,7 +2509,7 @@ function transfer_inventory(args)
 end
 
 --When the item in hand changes
-script.on_event(defines.events.on_player_cursor_stack_changed, function(event)
+EventManager.on_event(defines.events.on_player_cursor_stack_changed, function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
@@ -2552,7 +2552,7 @@ script.on_event(defines.events.on_player_cursor_stack_changed, function(event)
    Graphics.sync_build_cursor_graphics(pindex)
 end)
 
-script.on_event(defines.events.on_player_mined_item, function(event)
+EventManager.on_event(defines.events.on_player_mined_item, function(event)
    local pindex = event.player_index
    --Play item pickup sound
    game.get_player(pindex).play_sound({ path = "utility/picked_up_item", volume_modifier = 1 })
@@ -2632,14 +2632,14 @@ EventManager.on_init(function()
    TestFramework.on_init()
 end)
 
-script.on_event(defines.events.on_cutscene_cancelled, function(event)
+EventManager.on_event(defines.events.on_cutscene_cancelled, function(event)
    local pindex = event.player_index
    check_for_player(pindex)
    schedule(3, "call_to_fix_zoom", pindex)
    schedule(4, "call_to_sync_graphics", pindex)
 end)
 
-script.on_event(defines.events.on_cutscene_finished, function(event)
+EventManager.on_event(defines.events.on_cutscene_finished, function(event)
    local pindex = event.player_index
    check_for_player(pindex)
    schedule(3, "call_to_fix_zoom", pindex)
@@ -2647,18 +2647,18 @@ script.on_event(defines.events.on_cutscene_finished, function(event)
    --printout("Press TAB to continue",pindex)
 end)
 
-script.on_event(defines.events.on_cutscene_started, function(event)
+EventManager.on_event(defines.events.on_cutscene_started, function(event)
    local pindex = event.player_index
    check_for_player(pindex)
    --printout("Press TAB to continue",pindex)
 end)
 
-script.on_event(defines.events.on_player_created, function(event)
+EventManager.on_event(defines.events.on_player_created, function(event)
    initialize(game.players[event.player_index])
    --if not game.is_multiplayer() then printout("Press 'TAB' to continue", pindex) end
 end)
 
-script.on_event(defines.events.on_gui_closed, function(event)
+EventManager.on_event(defines.events.on_gui_closed, function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
@@ -2698,7 +2698,7 @@ function fix_walk(pindex)
 end
 
 --GUI action confirmed, such as by pressing ENTER
-script.on_event(defines.events.on_gui_confirmed, function(event)
+EventManager.on_event(defines.events.on_gui_confirmed, function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
@@ -3035,7 +3035,7 @@ local function set_selected_inventory_slot_filter(pindex)
    end
 end
 
-script.on_event(defines.events.on_gui_opened, function(event)
+EventManager.on_event(defines.events.on_gui_opened, function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
@@ -3063,12 +3063,12 @@ script.on_event(defines.events.on_gui_opened, function(event)
    end
 end)
 
-script.on_event(defines.events.on_object_destroyed, function(event) --DOES NOT HAVE THE KEY PLAYER_INDEX
+EventManager.on_event(defines.events.on_object_destroyed, function(event) --DOES NOT HAVE THE KEY PLAYER_INDEX
    ScannerEntrypoint.on_entity_destroyed(event)
 end)
 
 --Scripts regarding train state changes. NOTE: NO PINDEX
-script.on_event(defines.events.on_train_changed_state, function(event)
+EventManager.on_event(defines.events.on_train_changed_state, function(event)
    if event.train.state == defines.train_state.no_schedule then
       --Trains with no schedule are set back to manual mode
       event.train.manual_mode = true
@@ -3214,7 +3214,7 @@ function jump_cursor_to_typed_coordinates(result, pindex)
 end
 
 --Alerts a force's players when their structures are destroyed. 300 ticks of cooldown.
-script.on_event(defines.events.on_entity_damaged, function(event)
+EventManager.on_event(defines.events.on_entity_damaged, function(event)
    local ent = event.entity
    local tick = event.tick
    if ent == nil or not ent.valid then
@@ -3273,7 +3273,7 @@ script.on_event(defines.events.on_entity_damaged, function(event)
 end)
 
 --Alerts a force's players when their structures are destroyed. No cooldown.
-script.on_event(defines.events.on_entity_died, function(event)
+EventManager.on_event(defines.events.on_entity_died, function(event)
    local ent = event.entity
    local causer = event.cause
    if ent == nil then
@@ -3299,7 +3299,7 @@ script.on_event(defines.events.on_entity_died, function(event)
 end)
 
 --Notify all players when a player character dies
-script.on_event(defines.events.on_player_died, function(event)
+EventManager.on_event(defines.events.on_player_died, function(event)
    local pindex = event.player_index
    local p = game.get_player(pindex)
    local causer = event.cause
@@ -3344,7 +3344,7 @@ script.on_event(defines.events.on_player_died, function(event)
    end
 end)
 
-script.on_event(defines.events.on_player_display_resolution_changed, function(event)
+EventManager.on_event(defines.events.on_player_display_resolution_changed, function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local new_res = game.get_player(pindex).display_resolution
@@ -3356,7 +3356,7 @@ script.on_event(defines.events.on_player_display_resolution_changed, function(ev
    schedule(4, "call_to_sync_graphics", pindex)
 end)
 
-script.on_event(defines.events.on_player_display_scale_changed, function(event)
+EventManager.on_event(defines.events.on_player_display_scale_changed, function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local new_sc = game.get_player(pindex).display_scale
@@ -3366,9 +3366,9 @@ script.on_event(defines.events.on_player_display_scale_changed, function(event)
    schedule(4, "call_to_sync_graphics", pindex)
 end)
 
-script.on_event(defines.events.on_string_translated, Localising.handler)
+EventManager.on_event(defines.events.on_string_translated, Localising.handler)
 
-script.on_event(defines.events.on_player_respawned, function(event)
+EventManager.on_event(defines.events.on_player_respawned, function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local vp = Viewpoint.get_viewpoint(pindex)
@@ -3633,7 +3633,7 @@ function all_ents_are_walkable(pos)
    return true
 end
 
-script.on_event(defines.events.on_console_chat, function(event)
+EventManager.on_event(defines.events.on_console_chat, function(event)
    local speaker = game.get_player(event.player_index).name
    if speaker == nil or speaker == "" then speaker = "Player" end
    local message = event.message
@@ -3642,7 +3642,7 @@ script.on_event(defines.events.on_console_chat, function(event)
    end
 end)
 
-script.on_event(defines.events.on_console_command, function(event)
+EventManager.on_event(defines.events.on_console_command, function(event)
    -- For our own commands, we handle the speaking and must not read here.
    if FaCommands.COMMANDS[event.command] then return end
 
@@ -3701,21 +3701,21 @@ function general_mod_menu_down(pindex, menu, upper_limit)
    end
 end
 
-script.on_event(defines.events.on_script_trigger_effect, function(event)
+EventManager.on_event(defines.events.on_script_trigger_effect, function(event)
    if event.effect_id == Consts.NEW_ENTITY_SUBSCRIBER_TRIGGER_ID then
       ScannerEntrypoint.on_new_entity(event.surface_index, event.source_entity)
    end
 end)
 
-script.on_event(defines.events.on_surface_created, function(event)
+EventManager.on_event(defines.events.on_surface_created, function(event)
    ScannerEntrypoint.on_new_surface(game.get_surface(event.surface_index))
 end)
 
-script.on_event(defines.events.on_surface_deleted, function(event)
+EventManager.on_event(defines.events.on_surface_deleted, function(event)
    ScannerEntrypoint.on_surface_delete(event.surface_index)
 end)
 
-script.on_event(defines.events.on_research_finished, Research.on_research_finished)
+EventManager.on_event(defines.events.on_research_finished, Research.on_research_finished)
 -- New input event definitions
 
 ---@param pindex number
@@ -3763,7 +3763,7 @@ local function kb_pause_menu(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-escape", function(event)
+EventManager.on_event("fa-escape", function(event)
    kb_pause_menu(event)
 end)
 
@@ -4059,7 +4059,7 @@ EventManager.on_event("fa-d", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-up", function(event)
+EventManager.on_event("fa-up", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local router = UiRouter.get_router(pindex)
@@ -4074,7 +4074,7 @@ script.on_event("fa-up", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-left", function(event)
+EventManager.on_event("fa-left", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local router = UiRouter.get_router(pindex)
@@ -4087,7 +4087,7 @@ script.on_event("fa-left", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-down", function(event)
+EventManager.on_event("fa-down", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local router = UiRouter.get_router(pindex)
@@ -4102,7 +4102,7 @@ script.on_event("fa-down", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-right", function(event)
+EventManager.on_event("fa-right", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local router = UiRouter.get_router(pindex)
@@ -4416,7 +4416,7 @@ local function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-w", function(event)
+EventManager.on_event("fa-s-w", function(event)
    local pindex = event.player_index
    if
       not check_for_player(pindex)
@@ -4430,7 +4430,7 @@ script.on_event("fa-s-w", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-a", function(event)
+EventManager.on_event("fa-s-a", function(event)
    local pindex = event.player_index
    if
       not check_for_player(pindex)
@@ -4444,7 +4444,7 @@ script.on_event("fa-s-a", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-s", function(event)
+EventManager.on_event("fa-s-s", function(event)
    local pindex = event.player_index
    if
       not check_for_player(pindex)
@@ -4458,7 +4458,7 @@ script.on_event("fa-s-s", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-d", function(event)
+EventManager.on_event("fa-s-d", function(event)
    local pindex = event.player_index
    if
       not check_for_player(pindex)
@@ -4472,7 +4472,7 @@ script.on_event("fa-s-d", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-w", function(event)
+EventManager.on_event("fa-c-w", function(event)
    local pindex = event.player_index
    if
       not check_for_player(pindex)
@@ -4486,7 +4486,7 @@ script.on_event("fa-c-w", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-a", function(event)
+EventManager.on_event("fa-c-a", function(event)
    local pindex = event.player_index
    if
       not check_for_player(pindex)
@@ -4500,7 +4500,7 @@ script.on_event("fa-c-a", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-s", function(event)
+EventManager.on_event("fa-c-s", function(event)
    local pindex = event.player_index
    if
       not check_for_player(pindex)
@@ -4514,7 +4514,7 @@ script.on_event("fa-c-s", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-d", function(event)
+EventManager.on_event("fa-c-d", function(event)
    local pindex = event.player_index
    if
       not check_for_player(pindex)
@@ -4528,7 +4528,7 @@ script.on_event("fa-c-d", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-up", function(event)
+EventManager.on_event("fa-s-up", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
    if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
@@ -4537,7 +4537,7 @@ script.on_event("fa-s-up", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-left", function(event)
+EventManager.on_event("fa-s-left", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
    if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
@@ -4546,7 +4546,7 @@ script.on_event("fa-s-left", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-down", function(event)
+EventManager.on_event("fa-s-down", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
    if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
@@ -4555,7 +4555,7 @@ script.on_event("fa-s-down", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-right", function(event)
+EventManager.on_event("fa-s-right", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
    if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
@@ -4577,7 +4577,7 @@ local function nudge_self(event, direction, name)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-up", function(event)
+EventManager.on_event("fa-c-up", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
    if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
@@ -4585,7 +4585,7 @@ script.on_event("fa-c-up", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-left", function(event)
+EventManager.on_event("fa-c-left", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
    if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
@@ -4593,7 +4593,7 @@ script.on_event("fa-c-left", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-down", function(event)
+EventManager.on_event("fa-c-down", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
    if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
@@ -4601,7 +4601,7 @@ script.on_event("fa-c-down", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-right", function(event)
+EventManager.on_event("fa-c-right", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
    if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
@@ -4839,7 +4839,7 @@ end
 
 --Read coordinates of the cursor. Extra info as well such as entity part if an entity is selected, and heading and speed info for vehicles.
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-k", function(event)
+EventManager.on_event("fa-k", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    read_coords(pindex)
@@ -4883,7 +4883,7 @@ local function kb_read_cursor_distance_and_direction(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-k", function(event)
+EventManager.on_event("fa-s-k", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    kb_read_cursor_distance_and_direction(event)
@@ -4930,7 +4930,7 @@ local function kb_read_cursor_distance_vector(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-a-k", function(event)
+EventManager.on_event("fa-a-k", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
@@ -4951,7 +4951,7 @@ local function kb_read_character_coords(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-k", function(event)
+EventManager.on_event("fa-c-k", function(event)
    local pindex = event.player_index
 
    if not check_for_player(pindex) then return end
@@ -5005,7 +5005,7 @@ local function kb_read_driving_structure_ahead(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-j", function(event)
+EventManager.on_event("fa-j", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
 
@@ -5034,14 +5034,14 @@ local function kb_read_rail(event, behind)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-j", function(event)
+EventManager.on_event("fa-s-j", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    kb_read_rail(event, false)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-j", function(event)
+EventManager.on_event("fa-c-j", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    kb_read_rail(event, true)
@@ -5058,7 +5058,7 @@ local function kb_s_b(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-b", function(event)
+EventManager.on_event("fa-s-b", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
 
@@ -5079,7 +5079,7 @@ local function kb_b(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-b", function(event)
+EventManager.on_event("fa-b", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
 
@@ -5097,7 +5097,7 @@ local function kb_ca_b(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-ca-b", function(event)
+EventManager.on_event("fa-ca-b", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
 
@@ -5105,14 +5105,14 @@ script.on_event("fa-ca-b", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-as-b", function(event)
+EventManager.on_event("fa-as-b", function(event)
    local pindex = event.player_index
    Rulers.clear_rulers(pindex)
    printout("Cleared rulers", pindex)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-cas-b", function(event)
+EventManager.on_event("fa-cas-b", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
@@ -5120,21 +5120,21 @@ script.on_event("fa-cas-b", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-a-t", function(event)
+EventManager.on_event("fa-a-t", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    type_cursor_position(pindex)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-t", function(event)
+EventManager.on_event("fa-s-t", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    Teleport.teleport_to_cursor(pindex, false, false, false)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-cs-t", function(event)
+EventManager.on_event("fa-cs-t", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    Teleport.teleport_to_cursor(pindex, false, true, false)
@@ -5161,7 +5161,7 @@ local function kb_cs_p(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-cs-p", function(event)
+EventManager.on_event("fa-cs-p", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    kb_cs_p(event)
@@ -5278,7 +5278,7 @@ end
 
 --We have cursor sizes 1,3,5,11,21,51,101,251
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-i", function(event)
+EventManager.on_event("fa-s-i", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) or UiRouter.get_router(pindex):is_ui_open() then return end
    adjust_cursor_size(pindex, 1)
@@ -5286,14 +5286,14 @@ end)
 
 --We have cursor sizes 1,3,5,11,21,51,101,251
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-i", function(event)
+EventManager.on_event("fa-c-i", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) or UiRouter.get_router(pindex):is_ui_open() then return end
    adjust_cursor_size(pindex, -1)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-a-i", function(event)
+EventManager.on_event("fa-a-i", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
@@ -5312,7 +5312,7 @@ local function kb_adjust_inventory_bar(event, amount)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-pageup", function(event)
+EventManager.on_event("fa-pageup", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local router = UiRouter.get_router(pindex)
@@ -5333,7 +5333,7 @@ script.on_event("fa-pageup", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-pageup", function(event)
+EventManager.on_event("fa-s-pageup", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local router = UiRouter.get_router(pindex)
@@ -5345,7 +5345,7 @@ script.on_event("fa-s-pageup", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-pageup", function(event)
+EventManager.on_event("fa-c-pageup", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local router = UiRouter.get_router(pindex)
@@ -5361,7 +5361,7 @@ script.on_event("fa-c-pageup", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-pagedown", function(event)
+EventManager.on_event("fa-pagedown", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local router = UiRouter.get_router(pindex)
@@ -5382,7 +5382,7 @@ script.on_event("fa-pagedown", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-pagedown", function(event)
+EventManager.on_event("fa-s-pagedown", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local router = UiRouter.get_router(pindex)
@@ -5394,7 +5394,7 @@ script.on_event("fa-s-pagedown", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-pagedown", function(event)
+EventManager.on_event("fa-c-pagedown", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local router = UiRouter.get_router(pindex)
@@ -5410,19 +5410,19 @@ script.on_event("fa-c-pagedown", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-home", function(event)
+EventManager.on_event("fa-home", function(event)
    local pindex = event.player_index
    ScannerEntrypoint.announce_current_item(pindex)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-end", function(event)
+EventManager.on_event("fa-end", function(event)
    local pindex = event.player_index
    ScannerEntrypoint.do_refresh(pindex)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-end", function(event)
+EventManager.on_event("fa-s-end", function(event)
    local player = game.get_player(event.player_index)
    local char = player.character
    if not char then return end
@@ -5507,7 +5507,7 @@ local function kb_open_circuit_menu(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-n", function(event)
+EventManager.on_event("fa-n", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    ---This can probably be refactored
@@ -5524,7 +5524,7 @@ end
 
 --Repeats the last thing read out. Not just the scanner.
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-tab", function(event)
+EventManager.on_event("fa-c-tab", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    kb_repeat_last_spoken(event)
@@ -5545,7 +5545,7 @@ end
 
 --Reads other entities on the same tile? Note: Possibly unneeded
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-f", function(event)
+EventManager.on_event("fa-s-f", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
@@ -5603,7 +5603,7 @@ local function kb_close_menu(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-e", function(event)
+EventManager.on_event("fa-e", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
 
@@ -5648,7 +5648,7 @@ local function kb_read_menu_name(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-e", function(event) --read_menu_name
+EventManager.on_event("fa-s-e", function(event) --read_menu_name
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    kb_read_menu_name(event)
@@ -5932,14 +5932,14 @@ local function kb_reverse_switch_menu_or_gun(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-tab", function(event)
+EventManager.on_event("fa-tab", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    kb_switch_menu_or_gun(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-tab", function(event)
+EventManager.on_event("fa-s-tab", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    kb_reverse_switch_menu_or_gun(event)
@@ -5967,7 +5967,7 @@ local function kb_delete(event)
    end
 end
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-delete", function(event)
+EventManager.on_event("fa-delete", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    kb_delete(event)
@@ -6035,7 +6035,7 @@ local function kb_mine_access_sounds(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-x", function(event)
+EventManager.on_event("fa-x", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local router = UiRouter.get_router(pindex)
@@ -6202,7 +6202,7 @@ local function kb_mine_area(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-x", function(event)
+EventManager.on_event("fa-s-x", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
@@ -6244,7 +6244,7 @@ local function kb_super_mine_area(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-cs-x", function(event)
+EventManager.on_event("fa-cs-x", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
@@ -6256,7 +6256,7 @@ end)
 
 --Cut-paste-tool. NOTE: This keybind needs to be the same as that for the cut paste tool (default CONTROL + X). laterdo maybe keybind to game control somehow
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-x", function(event)
+EventManager.on_event("fa-c-x", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local stack = game.get_player(pindex).cursor_stack
@@ -6847,7 +6847,7 @@ local function kb_click_entity(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-leftbracket", function(event)
+EventManager.on_event("fa-leftbracket", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
@@ -7081,7 +7081,7 @@ local function kb_read_entity_status(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-rightbracket", function(event)
+EventManager.on_event("fa-rightbracket", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    if players[pindex].last_click_tick == event.tick then return end
@@ -7264,7 +7264,7 @@ local function kb_open_rail_builder(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-leftbracket", function(event)
+EventManager.on_event("fa-s-leftbracket", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
@@ -7302,7 +7302,7 @@ local function kb_repair_area(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-cs-leftbracket", function(event)
+EventManager.on_event("fa-cs-leftbracket", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    if players[pindex].last_click_tick == event.tick then return end
@@ -7327,7 +7327,7 @@ local function kb_alternate_build(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-leftbracket", function(event)
+EventManager.on_event("fa-c-leftbracket", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
    local stack = game.get_player(pindex).cursor_stack
@@ -7349,7 +7349,7 @@ script.on_event("fa-c-leftbracket", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-rightbracket", function(event)
+EventManager.on_event("fa-c-rightbracket", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
@@ -7415,7 +7415,7 @@ end
 
 --Sets inventory slot filters
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-a-leftbracket", function(event)
+EventManager.on_event("fa-a-leftbracket", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
@@ -7429,14 +7429,14 @@ script.on_event("fa-a-leftbracket", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-ca-rightbracket", function(event)
+EventManager.on_event("fa-ca-rightbracket", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    KruiseKontrol.activate_kk(pindex)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-a-left", function(event)
+EventManager.on_event("fa-a-left", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local ent = game.get_player(pindex).selected
@@ -7446,7 +7446,7 @@ script.on_event("fa-a-left", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-a-right", function(event)
+EventManager.on_event("fa-a-right", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local ent = game.get_player(pindex).selected
@@ -7533,7 +7533,7 @@ local function kb_flip_blueprint_horizontal_info(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-f", function(event)
+EventManager.on_event("fa-f", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
@@ -7584,7 +7584,7 @@ local function kb_flip_blueprint_vertical_info(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-g", function(event)
+EventManager.on_event("fa-g", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
@@ -7599,7 +7599,7 @@ script.on_event("fa-g", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-r", function(event)
+EventManager.on_event("fa-r", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
    if router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
@@ -7612,7 +7612,7 @@ script.on_event("fa-r", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-r", function(event)
+EventManager.on_event("fa-s-r", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
@@ -7629,7 +7629,7 @@ end)
 
 ---remove all weapons and ammo
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-cs-r", function(event)
+EventManager.on_event("fa-cs-r", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
@@ -7790,7 +7790,7 @@ end
 
 --Reads the custom info for an item selected. If you are driving, it returns custom vehicle info
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-y", function(event)
+EventManager.on_event("fa-y", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
@@ -7818,7 +7818,7 @@ end
 
 --Reads the custom info for the last indexed scanner item
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-y", function(event)
+EventManager.on_event("fa-s-y", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
@@ -7828,7 +7828,7 @@ end)
 
 --Read production statistics info for the selected item, in the hand or else selected in the inventory menu
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-u", function(event)
+EventManager.on_event("fa-u", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    if game.get_player(pindex).driving then return end
@@ -7837,7 +7837,7 @@ script.on_event("fa-u", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-u", function(event)
+EventManager.on_event("fa-s-u", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    FaInfo.read_pollution_level_at_position(Viewpoint.get_viewpoint(pindex):get_cursor_pos(), pindex)
@@ -7871,27 +7871,27 @@ local function kb_read_time_and_research_progress(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-t", function(event)
+EventManager.on_event("fa-t", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    kb_read_time_and_research_progress(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-a-q", function(event)
+EventManager.on_event("fa-a-q", function(event)
    local pindex = event.player_index
    Research.queue_announce(pindex)
 end)
 
 --Clear the research queue
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-cas-q", function(event)
+EventManager.on_event("fa-cas-q", function(event)
    local pindex = event.player_index
    Research.clear_queue(pindex)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-f1", function(event)
+EventManager.on_event("fa-f1", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    game.auto_save("manual")
@@ -7941,7 +7941,7 @@ local function kb_toggle_walking_mode(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-a-w", function(event)
+EventManager.on_event("fa-a-w", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
@@ -7966,7 +7966,7 @@ end
 
 --Toggle building while walking
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-b", function(event)
+EventManager.on_event("fa-c-b", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
@@ -7997,7 +7997,7 @@ local function kb_toggle_vanilla_mode(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-ca-v", function(event)
+EventManager.on_event("fa-ca-v", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    kb_toggle_vanilla_mode(event)
@@ -8021,7 +8021,7 @@ local function kb_toggle_cursor_hiding(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-ca-c", function(event)
+EventManager.on_event("fa-ca-c", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    kb_toggle_cursor_hiding(event)
@@ -8051,7 +8051,7 @@ local function kb_clear_renders(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-ca-r", function(event)
+EventManager.on_event("fa-ca-r", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    kb_clear_renders(event)
@@ -8066,7 +8066,7 @@ local function kb_recalibrate_zoom(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-end", function(event)
+EventManager.on_event("fa-c-end", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    kb_recalibrate_zoom(event)
@@ -8094,28 +8094,28 @@ local function kb_set_zoom_mode(event, level)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-a-z", function(event)
+EventManager.on_event("fa-a-z", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    kb_set_zoom_mode(event, 1)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-as-z", function(event)
+EventManager.on_event("fa-as-z", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    kb_set_zoom_mode(event, 2)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-ca-z", function(event)
+EventManager.on_event("fa-ca-z", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    kb_set_zoom_mode(event, 0)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-mouse-button-3", function(event)
+EventManager.on_event("fa-mouse-button-3", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    game.get_player(pindex).game_view_settings.update_entity_selection = true
@@ -8138,14 +8138,14 @@ local function kb_pipette_tool_info(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-q", function(event)
+EventManager.on_event("fa-q", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    kb_pipette_tool_info(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-q", function(event)
+EventManager.on_event("fa-s-q", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    read_hand(pindex)
@@ -8168,7 +8168,7 @@ end
 
 --Empties hand and opens the item from the player/building inventory
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-q", function(event)
+EventManager.on_event("fa-c-q", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    kb_locate_hand_in_inventory(event)
@@ -8235,7 +8235,7 @@ end
 
 --Empties hand and opens the item from the crafting menu
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-cs-q", function(event)
+EventManager.on_event("fa-cs-q", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    locate_hand_in_crafting_menu(pindex)
@@ -8243,7 +8243,7 @@ end)
 
 --ENTER KEY by default
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-f", function(event)
+EventManager.on_event("fa-c-f", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    if event.tick - players[pindex].last_menu_search_tick < 5 then return end
@@ -8267,21 +8267,21 @@ local function kb_menu_search_again(event, forward)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-enter", function(event)
+EventManager.on_event("fa-s-enter", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    kb_menu_search_again(event, true)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-enter", function(event)
+EventManager.on_event("fa-c-enter", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    kb_menu_search_again(event, false)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-grave", function(event)
+EventManager.on_event("fa-grave", function(event)
    printout("Opened console", event.player_index)
 end)
 
@@ -8307,21 +8307,21 @@ local function kb_open_warnings_menu(event)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-p", function(event)
+EventManager.on_event("fa-p", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) or players[pindex].vanilla_mode then return end
    kb_open_warnings_menu(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-p", function(event)
+EventManager.on_event("fa-s-p", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    FaInfo.read_nearest_damaged_ent_info(Viewpoint.get_viewpoint(pindex):get_cursor_pos(), pindex)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-v", function(event)
+EventManager.on_event("fa-v", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) or players[pindex].vanilla_mode then return end
    TravelTools.fast_travel_menu_open(pindex)
@@ -8339,7 +8339,7 @@ local function kb_set_splitter_priority(event, ent, is_input, is_left)
 end
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-as-left", function(event)
+EventManager.on_event("fa-as-left", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local ent = game.get_player(pindex).selected
@@ -8347,7 +8347,7 @@ script.on_event("fa-as-left", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-as-right", function(event)
+EventManager.on_event("fa-as-right", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local ent = game.get_player(pindex).selected
@@ -8355,7 +8355,7 @@ script.on_event("fa-as-right", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-ca-left", function(event)
+EventManager.on_event("fa-ca-left", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local ent = game.get_player(pindex).selected
@@ -8363,7 +8363,7 @@ script.on_event("fa-ca-left", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-ca-right", function(event)
+EventManager.on_event("fa-ca-right", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local ent = game.get_player(pindex).selected
@@ -8403,7 +8403,7 @@ end
 
 -- Control G is used to connect rolling stock
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-g", function(event)
+EventManager.on_event("fa-c-g", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
    if not check_for_player(pindex) or router:is_ui_open() then return end
@@ -8458,7 +8458,7 @@ end
 
 --SHIFT + G is used to disconnect rolling stock
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-g", function(event)
+EventManager.on_event("fa-s-g", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
    if not check_for_player(pindex) then return end
@@ -8470,7 +8470,7 @@ script.on_event("fa-s-g", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-cs-g", function(event)
+EventManager.on_event("fa-cs-g", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
@@ -8518,7 +8518,7 @@ end
 
 --Runs before shooting a weapon to check for selected atomic bombs and the target distance
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-space", function(event)
+EventManager.on_event("fa-space", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local pindex = event.player_index
@@ -8549,7 +8549,7 @@ end
 
 --Toggle whether rockets are launched automatically when they have cargo
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-space", function(event)
+EventManager.on_event("fa-c-space", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local ent = find_rocket_silo(pindex)
@@ -8560,49 +8560,49 @@ end)
 
 --Help key and tutorial system WIP
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-h", function(event)
+EventManager.on_event("fa-h", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    TutorialSystem.read_current_step(pindex)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-h", function(event)
+EventManager.on_event("fa-c-h", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    TutorialSystem.next_step(pindex)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-h", function(event)
+EventManager.on_event("fa-s-h", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    TutorialSystem.prev_step(pindex)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-ca-h", function(event)
+EventManager.on_event("fa-ca-h", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    TutorialSystem.next_chapter(pindex)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-as-h", function(event)
+EventManager.on_event("fa-as-h", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    TutorialSystem.prev_chapter(pindex)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-cs-h", function(event)
+EventManager.on_event("fa-cs-h", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    TutorialSystem.toggle_header_detail(pindex)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-a-h", function(event)
+EventManager.on_event("fa-a-h", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    TutorialSystem.read_other_once(pindex)
@@ -8610,7 +8610,7 @@ end)
 
 --**Use this key to test stuff (ALT + G)
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-a-g", function(event)
+EventManager.on_event("fa-a-g", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
@@ -8622,7 +8622,7 @@ script.on_event("fa-a-g", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-l", function(event)
+EventManager.on_event("fa-l", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
@@ -8635,7 +8635,7 @@ script.on_event("fa-l", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-s-l", function(event)
+EventManager.on_event("fa-s-l", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    if game.get_player(pindex).character == nil then return end
@@ -8643,7 +8643,7 @@ script.on_event("fa-s-l", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-l", function(event)
+EventManager.on_event("fa-c-l", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    if game.get_player(pindex).character == nil then return end
@@ -8651,7 +8651,7 @@ script.on_event("fa-c-l", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-as-l", function(event)
+EventManager.on_event("fa-as-l", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    if game.get_player(pindex).character == nil then return end
@@ -8659,7 +8659,7 @@ script.on_event("fa-as-l", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-ca-l", function(event)
+EventManager.on_event("fa-ca-l", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    if game.get_player(pindex).character == nil then return end
@@ -8667,7 +8667,7 @@ script.on_event("fa-ca-l", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-cas-l", function(event)
+EventManager.on_event("fa-cas-l", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    if game.get_player(pindex).character == nil then return end
@@ -8675,7 +8675,7 @@ script.on_event("fa-cas-l", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-a-l", function(event)
+EventManager.on_event("fa-a-l", function(event)
    local pindex = event.player_index
    local p = game.get_player(pindex)
    local c = p.character
@@ -8692,7 +8692,7 @@ script.on_event("fa-a-l", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-o", function(event)
+EventManager.on_event("fa-o", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
@@ -8705,7 +8705,7 @@ script.on_event("fa-o", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-c-o", function(event)
+EventManager.on_event("fa-c-o", function(event)
    printout(
       "Type in the new cruise control speed and press 'ENTER' and then 'E' to confirm, or press 'ESC' to exit",
       event.player_index
@@ -8713,7 +8713,7 @@ script.on_event("fa-c-o", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-script.on_event("fa-kk-cancel", function(event)
+EventManager.on_event("fa-kk-cancel", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    KruiseKontrol.cancel_kk(pindex)
