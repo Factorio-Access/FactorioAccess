@@ -238,7 +238,7 @@ function mod.aim_gun_at_nearest_enemy(pindex, enemy_in)
    end
    --If in range, move the cursor onto the enemy to aim the gun
    if dist < range then
-      vp:set_cursor_pos({ X = enemy.position.x, y = enemy.position.y })
+      vp:set_cursor_pos({ x = enemy.position.x, y = enemy.position.y })
       Mouse.move_mouse_pointer(enemy.position, pindex)
       Graphics.draw_cursor_highlight(pindex, nil, nil, true)
    end
