@@ -61,6 +61,7 @@ end
 
 ---@param point fa.Point
 function Viewpoint:set_cursor_pos(point)
+   assert(point and point.x and point.y)
    viewpoint_storage[self.pindex].cursor_pos = { x = point.x, y = point.y }
 end
 
@@ -71,6 +72,7 @@ end
 
 ---@param size number
 function Viewpoint:set_cursor_size(size)
+   assert(size)
    viewpoint_storage[self.pindex].cursor_size = size
 end
 
@@ -81,6 +83,7 @@ end
 
 ---@param enabled boolean
 function Viewpoint:set_cursor_enabled(enabled)
+   assert(enabled ~= nil)
    viewpoint_storage[self.pindex].cursor_enabled = enabled
 end
 
@@ -91,6 +94,7 @@ end
 
 ---@param hidden boolean
 function Viewpoint:set_cursor_hidden(hidden)
+   assert(hidden ~= nil)
    viewpoint_storage[self.pindex].cursor_hidden = hidden
 end
 
@@ -102,6 +106,7 @@ end
 
 ---@param point fa.Point
 function Viewpoint:set_cursor_bookmark(point)
+   assert(point and point.x and point.y)
    viewpoint_storage[self.pindex].cursor_bookmark = { x = point.x, y = point.y }
 end
 
@@ -132,6 +137,7 @@ end
 
 ---@param rotation_offset  number
 function Viewpoint:set_cursor_rotation_offset(rotation_offset)
+   assert(rotation_offset)
    viewpoint_storage[self.pindex].cursor_rotation_offset = rotation_offset
 end
 
@@ -142,6 +148,7 @@ end
 
 ---@param jumping boolean
 function Viewpoint:set_cursor_jumping(jumping)
+   assert(jumping ~= nil)
    viewpoint_storage[self.pindex].cursor_jumping = jumping
 end
 
