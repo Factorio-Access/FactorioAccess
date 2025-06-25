@@ -3932,7 +3932,7 @@ local function cursor_mode_move(direction, pindex, single_only)
       end
 
       --Apply build lock if active
-      if players[pindex].build_lock then BuildingTools.build_item_in_hand(pindex) end
+      if players[pindex].build_lock and stack and stack.valid_for_read and stack.valid then BuildingTools.build_item_in_hand(pindex) end
 
       --Update cursor highlight
       local ent = get_first_ent_at_tile(pindex)
