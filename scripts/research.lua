@@ -139,9 +139,9 @@ local function localise_trigger(tech, trig)
    local res = { string.format("fa.research-trigger-%s", trig.type) }
 
    if trig.type == "craft-item" then
-      table.insert(res, Localising.get_localised_name_with_fallback(prototypes.item[trig.item]))
+      table.insert(res, Localising.get_localised_name_with_fallback(prototypes.item[trig.item.name]))
 
-      local amount = CRAFT_ITEM_COUNTS()[tech.name][trig.item]
+      local amount = CRAFT_ITEM_COUNTS()[tech.name][trig.item.name]
       assert(amount)
       table.insert(res, amount)
       table.insert(res, trig.item_quality or "normal")
@@ -729,7 +729,7 @@ function mod.queue_announce(pindex)
 
    local joining = {}
    for _, t in pairs(queue) do
-      table.insert(joining, tech_name_string(player.force.technologies[t]))
+      table.insert(joining, tech_name_string(t))
    end
    local joined = FaUtils.localise_cat_table(joining, ", ")
 
