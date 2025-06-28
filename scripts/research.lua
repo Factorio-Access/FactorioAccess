@@ -736,21 +736,19 @@ function mod.queue_announce(pindex)
    printout({ "fa.research-queue-contains", joined }, pindex)
 end
 
--- For when pressing `t`, the research part of the string. Sadly currently
--- special cased as a non-localised string, because it has to concatenate with
--- other stuff.
+-- For when pressing `t`, the research part of the string.
 ---@param pindex number
----@return string
+---@return LocalisedString
 function mod.get_progress_string(pindex)
    local player = game.get_player(pindex)
    assert(player)
    local tech = player.force.current_research
    if tech then
       local progress = player.force.research_progress
-      return string.format("Researching %s, %d percent complete", Localising.get(tech, pindex), progress * 100)
+      return { "fa.research-progress", tech_name_string(tech), FaUtils.format_percentage(progress * 100, "complete") }
    end
 
-   return "No research in progress."
+   return { "fa.research-no-progress" }
 end
 
 -- Called when the menu "gains focus".
