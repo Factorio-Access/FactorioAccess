@@ -897,7 +897,7 @@ function mod.rail_read_next_rail_entity_ahead(pindex, rail, is_forward)
    local next_entity, next_entity_label, result_extra, next_is_forward, iteration_count =
       mod.get_next_rail_entity_ahead(origin_rail, dir_ahead, false)
    if next_entity == nil then
-      printout("Analysis error. This rail might be looping.", pindex)
+      printout({ "fa.rails-analysis-error" }, pindex)
       return
    end
    local distance = math.floor(util.distance(origin_rail.position, next_entity.position))
