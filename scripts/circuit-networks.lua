@@ -847,7 +847,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
       --List all active signals of this network
       if not clicked then
          players[pindex].menu_click_count = 0
-         printout("List active signals of this network", pindex)
+         printout({ "fa.circuit-list-active-signals" }, pindex)
       else
          if nwr == nil and nwg == nil then
             printout("No circuit network connected", pindex)
