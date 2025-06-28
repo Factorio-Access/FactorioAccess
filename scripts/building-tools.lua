@@ -279,7 +279,7 @@ function mod.build_offshore_pump_in_hand(pindex)
          end
       end
       if #players[pindex].pump.positions == 0 then
-         printout("No available positions.  Try moving closer to water.", pindex)
+         printout({ "fa.building-pump-no-positions" }, pindex)
       else
          UiRouter.get_router(pindex):open_ui(UiRouter.UI_NAMES.PUMP)
          players[pindex].move_queue = {}
