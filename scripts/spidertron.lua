@@ -54,7 +54,7 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
       else
          if remote.connected_entity ~= nil then
             remote.connected_entity = nil
-            printout("remote link severed.", pindex)
+            printout({ "fa.spidertron-link-severed" }, pindex)
          else
             local result
             if cursortarget == nil or (cursortarget.type ~= "spider-vehicle" and cursortarget.type ~= "spider-leg") then
@@ -83,12 +83,12 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
    elseif index == 2 then
       --Rename the connected spidertron
       if not clicked then
-         printout("Rename this spidertron, press LEFT BRACKET.", pindex)
+         printout({ "fa.spidertron-rename-prompt" }, pindex)
       else
          if remote.connected_entity == nil then
-            printout("To rename a spidertron, link it to this remote first. ", pindex)
+            printout({ "fa.spidertron-link-first-rename" }, pindex)
          else
-            printout("Enter a new name for this spidertron, then press ENTER to confirm.", pindex)
+            printout({ "fa.spidertron-enter-new-name" }, pindex)
             players[pindex].spider_menu.renaming = true
             local frame = Graphics.create_text_field_frame(pindex, "spider-rename")
             game.get_player(pindex).opened = frame
@@ -97,10 +97,10 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
    elseif index == 3 then
       --Set the cursor position as the spidertron autopilot target
       if not clicked then
-         printout("Set the cursor position as the spidertron autopilot target ", pindex)
+         printout({ "fa.spidertron-set-target" }, pindex)
       else
          if remote.connected_entity == nil then
-            printout("To move a spidertron, link it to this remote first.", pindex)
+            printout({ "fa.spidertron-link-first-move" }, pindex)
          else
             game.get_player(pindex).cursor_stack.connected_entity.autopilot_destination = cursor
             printout("Spidertron sent to coordinates" .. math.floor(cursor.x) .. ", " .. math.floor(cursor.y), pindex)
@@ -109,10 +109,10 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
    elseif index == 4 then
       --Add the cursor position to the spidertron autopilot queue
       if not clicked then
-         printout("add the cursor position to the spidertron autopilot queue", pindex)
+         printout({ "fa.spidertron-add-to-queue" }, pindex)
       else
          if remote.connected_entity == nil then
-            printout("To move a spidertron, link it to this remote first.", pindex)
+            printout({ "fa.spidertron-link-first-move" }, pindex)
          else
             game.get_player(pindex).cursor_stack.connected_entity.add_autopilot_destination(cursor)
             printout(
@@ -128,7 +128,7 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
    elseif index == 5 then
       --Toggle automatically targetting enemies when the spidertron is working by itself
       if remote.connected_entity == nil then
-         printout("No linked spidertron.", pindex)
+         printout({ "fa.spidertron-no-linked" }, pindex)
       else
          if not clicked then
             local targetstate
@@ -162,7 +162,7 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
    elseif index == 6 then
       --Toggle automatically targetting enemies when there is a gunner insider
       if remote.connected_entity == nil then
-         printout("No linked spidertron.", pindex)
+         printout({ "fa.spidertron-no-linked" }, pindex)
       else
          if not clicked then
             local targetstate
@@ -196,11 +196,11 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
    elseif index == 7 then
       --Set the spidertron autopilot to follow the selected entity
       if not clicked then
-         printout("Set the spidertron autopilot to follow the selected entity", pindex)
+         printout({ "fa.spidertron-follow-entity" }, pindex)
       else
          if remote.connected_entity ~= nil then
             game.get_player(pindex).cursor_stack.connected_entity.follow_target = cursortarget
-            printout("spider started to follow the unit.", pindex)
+            printout({ "fa.spidertron-started-following" }, pindex)
          else
             printout("To use this menu item, link a spidertron to this remote.", pindex)
          end
