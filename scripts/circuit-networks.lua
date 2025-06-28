@@ -1030,7 +1030,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
       elseif index == 7 then
          --Toggle enabled condition comparing rule
          if not clicked then
-            printout("Toggle enabled condition comparing rule ", pindex)
+            printout({ "fa.circuit-toggle-enabled-condition" }, pindex)
          else
             local result = "Not using a condition"
             if uses_condition == true then result = toggle_condition_comparator(ent, pindex, true) end
