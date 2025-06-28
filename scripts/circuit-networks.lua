@@ -959,7 +959,11 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
       --List network members directly connected to this building
       if not clicked then
          printout(
-            { "", "List directly connected network members for this ", localising.get_localised_name_with_fallback(ent) },
+            {
+               "",
+               "List directly connected network members for this ",
+               localising.get_localised_name_with_fallback(ent),
+            },
             pindex
          )
       else
@@ -1646,16 +1650,13 @@ function mod.apply_selected_signal_to_enabled_condition(pindex, ent, first)
    ent.get_control_behavior().circuit_condition = circuit_condition
    players[pindex].menu = "circuit_network_menu"
    players[pindex].signal_selector = nil
-   printout(
-      {
-         "",
-         set_message,
-         localising.get_localised_name_with_fallback(prototype),
-         ", condition now checks if ",
-         mod.read_circuit_condition(pindex, ent, true),
-      },
-      pindex
-   )
+   printout({
+      "",
+      set_message,
+      localising.get_localised_name_with_fallback(prototype),
+      ", condition now checks if ",
+      mod.read_circuit_condition(pindex, ent, true),
+   }, pindex)
 end
 
 function mod.type_circuit_condition_constant(pindex, ent)

@@ -605,17 +605,14 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
                   end
                end
             end
-            printout(
-               {
-                  "",
-                  start_phrase,
-                  localising.get_localised_name_with_fallback(stack.prototype),
-                  remote_info,
-                  " x ",
-                  tostring(stack.count),
-               },
-               pindex
-            )
+            printout({
+               "",
+               start_phrase,
+               localising.get_localised_name_with_fallback(stack.prototype),
+               remote_info,
+               " x ",
+               tostring(stack.count),
+            }, pindex)
          end
       else
          --Read the "empty slot"
