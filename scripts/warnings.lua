@@ -31,10 +31,10 @@ function mod.read_warnings_slot(pindex)
             pindex
          )
       else
-         printout("Blank", pindex)
+         printout({ "fa.warnings-blank" }, pindex)
       end
    else
-      printout("No warnings for this range.  Press tab to pick a larger range, or press E to close this menu.", pindex)
+      printout({ "fa.warnings-no-warnings" }, pindex)
    end
 end
 
