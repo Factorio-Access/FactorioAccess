@@ -153,7 +153,7 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
             else
                targetstate = "disabled"
             end
-            printout(targetstate .. " auto target enemies when the spidertron is working by itself", pindex)
+            printout({ "fa.spidertron-auto-target-without-gunner", targetstate }, pindex)
          end
       end
    elseif index == 6 then
@@ -171,7 +171,7 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
             else
                targetstate = "disabled"
             end
-            printout("auto target enemies with gunner inside, currently" .. targetstate, pindex)
+            printout({ "fa.spidertron-auto-target-with-gunner-current", targetstate }, pindex)
          else
             local switch = {
                auto_target_without_gunner = game.get_player(pindex).cursor_stack.connected_entity.vehicle_automatic_targeting_parameters.auto_target_without_gunner,
@@ -187,7 +187,7 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
             else
                targetstate = "disabled"
             end
-            printout(targetstate .. " auto target enemies with gunner inside ", pindex)
+            printout({ "fa.spidertron-auto-target-with-gunner-set", targetstate }, pindex)
          end
       end
    elseif index == 7 then
@@ -199,7 +199,7 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
             game.get_player(pindex).cursor_stack.connected_entity.follow_target = cursortarget
             printout({ "fa.spidertron-started-following" }, pindex)
          else
-            printout("To use this menu item, link a spidertron to this remote.", pindex)
+            printout({ "fa.spidertron-link-required" }, pindex)
          end
       end
    end

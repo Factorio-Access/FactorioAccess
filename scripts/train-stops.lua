@@ -1,6 +1,7 @@
 --Here: Functions relating to train train stops and train scheduling from them (which is a unique mod feature)
 --Does not include event handlers
 local Graphics = require("scripts.graphics")
+local MessageBuilder = require("scripts.message-builder")
 local UiRouter = require("scripts.ui.router")
 
 local mod = {}
@@ -40,7 +41,10 @@ function mod.run_train_stop_menu(menu_index, pindex, clicked, other_input)
       end
    elseif index == 2 then
       local result = mod.nearby_train_schedule_read_this_stop(train_stop)
-      printout(result .. ", Use the below menu options to modify the train schedule.", pindex)
+      local message = MessageBuilder.new()
+      message:fragment(result)
+      message:fragment({ "fa.train-stop-modify-schedule-prompt" })
+      printout(message:build(), pindex)
    elseif index == 3 then
       if not clicked then
          if players[pindex].train_stop_menu.wait_condition == nil then
@@ -233,7 +237,7 @@ function mod.nearby_train_schedule_add_to_wait_time(increment, pindex)
       seconds = 10000
    end
    players[pindex].train_stop_menu.wait_time_seconds = seconds
-   printout(players[pindex].train_stop_menu.wait_time_seconds .. " seconds wait time set.", pindex)
+   printout({ "fa.train-stop-wait-time-set", tostring(players[pindex].train_stop_menu.wait_time_seconds) }, pindex)
 end
 
 --Returns an info string on what the parked train at this stop is scheduled to do at this stop.

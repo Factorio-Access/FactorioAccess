@@ -2377,11 +2377,11 @@ function clicked_on_entity(ent, pindex)
       local silo = ent.surface.get_closest(ent.position, silos)
       if silo and silo.valid then BuildingVehicleSectors.open_operable_building(silo, pindex) end
    elseif ent.operable then
-      printout("No menu for " .. ent.name, pindex)
+      printout({ "fa.no-menu-for", Localising.get_localised_name_with_fallback(ent) }, pindex)
    elseif ent.type == "resource" and ent.name ~= "crude-oil" and ent.name ~= "uranium-ore" then
-      printout("No menu for " .. ent.name .. " but it can be mined by hand.", pindex)
+      printout({ "fa.no-menu-for-mineable", Localising.get_localised_name_with_fallback(ent) }, pindex)
    else
-      printout("No menu for " .. ent.name, pindex)
+      printout({ "fa.no-menu-for", Localising.get_localised_name_with_fallback(ent) }, pindex)
    end
 end
 
@@ -2776,7 +2776,7 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event)
                   pindex
                )
                if success then
-                  printout("Set " .. result, pindex)
+                  printout({ "fa.signal-set", result }, pindex)
                else
                   printout("Error: No signals found", pindex)
                end
@@ -2877,7 +2877,7 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event)
       local result = event.element.text
       if result == nil or result == "" then result = "unknown" end
       WorkerRobots.set_network_name(players[pindex].roboport_menu.port, result)
-      printout("Network renamed to " .. result .. ", menu closed.", pindex)
+      printout({ "fa.network-renamed", result }, pindex)
       event.element.destroy()
       WorkerRobots.roboport_menu_close(pindex)
    elseif players[pindex].entering_search_term == true then
@@ -2902,7 +2902,7 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event)
       elseif p.cursor_stack.is_blueprint_book then
          Blueprints.blueprint_book_set_label(pindex, result)
       end
-      printout("Blueprint label changed to " .. result, pindex)
+      printout({ "fa.blueprint-label-changed", result }, pindex)
       event.element.destroy()
       if p.gui.screen["blueprint-edit-label"] ~= nil then p.gui.screen["blueprint-edit-label"].destroy() end
    elseif players[pindex].blueprint_menu.edit_description == true then
@@ -3214,7 +3214,7 @@ function jump_cursor_to_typed_coordinates(result, pindex)
       if valid_coords then
          local vp = Viewpoint.get_viewpoint(pindex)
          vp:set_cursor_pos(FaUtils.center_of_tile({ x = new_x + 0.01, y = new_y + 0.01 }))
-         printout("Cursor jumped to " .. new_x .. ", " .. new_y, pindex)
+         printout({ "fa.cursor-jumped-to", tostring(new_x), tostring(new_y) }, pindex)
          Graphics.draw_cursor_highlight(pindex)
          Graphics.sync_build_cursor_graphics(pindex)
       else
@@ -4583,7 +4583,7 @@ end)
 local function nudge_self(event, direction, name)
    local pindex = event.player_index
    if move(direction, pindex, true) then
-      printout("Nudged self " .. name, pindex)
+      printout({ "fa.nudged-self", name }, pindex)
       turn_to_cursor_direction_precise(pindex)
    else
       printout("Failed to nudge self", pindex)
@@ -4776,12 +4776,12 @@ local function read_coords(pindex, start_phrase)
          x = x + 10
          y = y - 1
       end
-      printout(result .. " slot " .. x .. ", on row " .. y, pindex)
+      printout({ "fa.inventory-slot-position", result, tostring(x), tostring(y) }, pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.GUNS) then
       if players[pindex].guns_menu.ammo_selected then
-         printout("Ammo slot " .. players[pindex].guns_menu.index, pindex)
+         printout({ "fa.ammo-slot", tostring(players[pindex].guns_menu.index) }, pindex)
       else
-         printout("Gun slot " .. players[pindex].guns_menu.index, pindex)
+         printout({ "fa.gun-slot", tostring(players[pindex].guns_menu.index) }, pindex)
       end
    elseif
       router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
@@ -5275,7 +5275,7 @@ local function adjust_cursor_size(pindex, direction)
    vp:set_cursor_size(new_size)
 
    local say_size = new_size * 2 + 1
-   printout("Cursor size " .. say_size .. " by " .. say_size, pindex)
+   printout({ "fa.cursor-size", tostring(say_size), tostring(say_size) }, pindex)
 
    local scan_left_top = {
       math.floor(cursor_pos.x) - new_size,
@@ -6013,7 +6013,7 @@ local function kb_flush_fluid(event)
 
    if pb.ent and pb.ent.valid and pb.ent.type == "fluid-turret" and pb.index ~= 1 then pb.index = 1 end
 
-   printout(" Flushed away " .. fluid.name, pindex)
+   printout({ "fa.flushed-away", Localising.get_localised_name_with_fallback(fluid) }, pindex)
    box.flush(pb.index)
 end
 
@@ -6136,7 +6136,7 @@ local function kb_mine_area(event)
             surface = surf,
             time_to_live = 60,
          })
-         printout(" Cleared away " .. cleared_count .. " railway objects within 10 tiles. ", pindex)
+         printout({ "fa.cleared-railway-objects", tostring(cleared_count) }, pindex)
          return
       elseif ent.name == "entity-ghost" then
          --Ghosts within 10 tiles
@@ -6509,7 +6509,7 @@ local function kb_click_menu(event)
                return
             end
             if cursor_stack.valid_for_read then name = cursor_stack.name end
-            printout("Cannot insert " .. name .. " in this slot", pindex)
+            printout({ "fa.cannot-insert-in-slot", name }, pindex)
          end
       elseif players[pindex].building.recipe_list == nil then
          --Player inventory: Swap stack
@@ -6847,7 +6847,7 @@ local function kb_click_hand(event)
       --If holding an item with no special left click actions, allow entity left click actions.
       clicked_on_entity(ent, pindex)
    else
-      printout("No actions for " .. stack.name .. " in hand", pindex)
+      printout({ "fa.no-actions-for-item", Localising.get_localised_name_with_fallback(stack) }, pindex)
    end
 end
 

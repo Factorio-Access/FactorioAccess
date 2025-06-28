@@ -354,7 +354,7 @@ function mod.fetch_next(pindex, str, start_phrase_in)
             players[pindex].building.recipe_list
          )
       else
-         printout(pb.sector_name .. " sector does not support searching.", pindex)
+         printout({ "fa.menu-search-sector-not-supported", pb.sector_name }, pindex)
          return
       end
    elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
@@ -404,7 +404,7 @@ function mod.fetch_next(pindex, str, start_phrase_in)
    end
    --Return a menu output according to the index found
    if new_index <= 0 then
-      printout("Could not find " .. str, pindex)
+      printout({ "fa.menu-search-not-found", str }, pindex)
       game.get_player(pindex).print("Menu search: Could not find " .. str, { volume_modifier = 0 })
       players[pindex].menu_search_last_name = "(none)"
       return
@@ -476,7 +476,7 @@ function mod.fetch_last(pindex, str)
          UiRouter.UI_NAMES.TECHNOLOGY,
       })
    then
-      printout(players[pindex].menu .. " menu does not support backwards searching.", pindex)
+      printout({ "fa.menu-search-no-backwards", players[pindex].menu }, pindex)
       return
    end
    if str == nil or str == "" then
@@ -513,7 +513,7 @@ function mod.fetch_last(pindex, str)
    end
    --Return a menu output according to the index found
    if new_index <= 0 then
-      printout("Could not find " .. str, pindex)
+      printout({ "fa.menu-search-not-found", str }, pindex)
       return
    elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
       players[pindex].menu_search_index = new_index

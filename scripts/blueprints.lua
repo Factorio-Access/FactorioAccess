@@ -145,7 +145,7 @@ function mod.paste_blueprint(pindex)
       return false
    else
       p.play_sound({ path = "Close-Inventory-Sound" }) --laterdo maybe better blueprint placement sound
-      printout("Placed blueprint " .. mod.get_blueprint_label(bp), pindex)
+      printout({ "fa.blueprints-placed", mod.get_blueprint_label(bp) }, pindex)
       return true
    end
 end
@@ -316,25 +316,25 @@ function mod.get_blueprint_info(stack, in_hand, pindex)
    local name = mod.get_blueprint_label(stack)
    if name == nil then name = "" end
    --Construct result
-   local result = "Blueprint " .. name .. " features "
-   if in_hand then result = "Blueprint " .. name .. "in hand, features " end
+   local result = { "", { "fa.blueprints-name-features", name } }
+   if in_hand then result = { "", { "fa.blueprints-name-in-hand-features", name } } end
    --Use icons as extra info (in case it is not named)
    local icons = stack.preview_icons
    if icons == nil or #icons == 0 then
-      result = result .. " no details "
+      result = { "", result, { "fa.blueprints-no-details" } }
       return result
    end
 
    for i, signal in ipairs(icons) do
-      if signal.index > 1 then result = result .. " and " end
+      if signal.index > 1 then result = { "", result, { "fa.blueprints-and" } } end
       if signal.signal.name ~= nil then
-         result = result .. signal.signal.name --***todo localise
+         result = { "", result, signal.signal.name } --***todo localise
       else
-         result = result .. "unknown icon"
+         result = { "", result, { "fa.blueprints-unknown-icon" } }
       end
    end
 
-   result = result .. ", " .. stack.get_blueprint_entity_count() .. " entities in total "
+   result = { "", result, { "fa.blueprints-entities-total", tostring(stack.get_blueprint_entity_count()) } }
 
    --Use this opportunity to update saved information about the blueprint's corners (used when drawing the footprint)
    if in_hand then
@@ -347,20 +347,20 @@ function mod.get_blueprint_info(stack, in_hand, pindex)
 end
 
 function mod.get_blueprint_icons_info(bp_table)
-   local result = ""
+   local result = { "" }
    --Use icons as extra info (in case it is not named)
    local icons = bp_table.icons
    if icons == nil or #icons == 0 then
-      result = result .. " no icons "
+      result = { "", result, { "fa.blueprints-no-icons" } }
       return result
    end
 
    for i, signal in ipairs(icons) do
-      if signal.index > 1 then result = result .. " and " end
+      if signal.index > 1 then result = { "", result, { "fa.blueprints-and" } } end
       if signal.signal.name ~= nil then
-         result = result .. signal.signal.name
+         result = { "", result, signal.signal.name }
       else
-         result = result .. "unknown icon"
+         result = { "", result, { "fa.blueprints-unknown-icon" } }
       end
    end
    return result
@@ -372,7 +372,7 @@ function mod.apply_blueprint_import(pindex, text)
    local result = bp.import_stack(text)
    if result == 0 then
       if bp.is_blueprint then
-         printout("Successfully imported blueprint " .. mod.get_blueprint_label(bp), pindex)
+         printout({ "fa.blueprints-imported-successfully", mod.get_blueprint_label(bp) }, pindex)
       elseif bp.is_blueprint_book then
          printout({ "fa.blueprints-imported-book" }, pindex)
       else
@@ -380,7 +380,7 @@ function mod.apply_blueprint_import(pindex, text)
       end
    elseif result == -1 then
       if bp.is_blueprint then
-         printout("Imported with errors, blueprint " .. mod.get_blueprint_label(bp), pindex)
+         printout({ "fa.blueprints-imported-with-errors", mod.get_blueprint_label(bp) }, pindex)
       elseif bp.is_blueprint_book then
          printout({ "fa.blueprints-imported-book-errors" }, pindex)
       else
@@ -480,7 +480,7 @@ function mod.get_blueprint_book_info(stack, in_hand)
    table.insert(result, label)
    if in_hand then table.insert(result, " in hand") end
    table.insert(result, ", ")
-   table.insert(result, " with " .. item_count .. " items")
+   table.insert(result, { "fa.blueprints-with-items", tostring(item_count) })
 
    return result
 end
@@ -585,30 +585,23 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
       --Blueprint book list mode
       if index == 0 then
          --stuff
-         printout(
-            "Browsing blueprint book "
-               .. mod.blueprint_book_get_label(pindex)
-               .. ", with "
-               .. item_count
-               .. " items,"
-               .. ", Press 'W' and 'S' to navigate options, "
-               .. "press 'LEFT BRACKET' to copy a blueprint to hand, "
-               .. "press 'X' to delete a blueprint, "
-               .. "press 'E' to exit this menu.",
-            pindex
-         )
+         local message = MessageBuilder.new()
+         message:fragment({ "fa.blueprints-browsing-book", mod.blueprint_book_get_label(pindex) })
+         message:fragment({ "fa.blueprints-with-items", tostring(item_count) })
+         message:fragment({ "fa.blueprints-book-navigation" })
+         printout(message:build(), pindex)
       else
          --Examine items (empty slots are skipped)
          local item = mod.blueprint_book_read_item(pindex, index)
          local name = ""
          if item == nil or item.item == nil then
-            name = "Unknown item (" .. index .. ")"
+            name = { "fa.blueprints-unknown-item-index", tostring(index) }
          elseif item.item == "blueprint" then
             local label = item.label
             if label == nil then label = "" end
-            name = "Blueprint " .. label .. ", featuring " .. mod.get_blueprint_icons_info(item)
+            name = { "", { "fa.blueprints-blueprint-featuring", label }, mod.get_blueprint_icons_info(item) }
          else
-            name = "unknown item " .. item.item
+            name = { "fa.blueprints-unknown-item-type", item.item }
          end
          if left_clicked == false and right_clicked == false then
             --Read blueprint info
@@ -874,7 +867,7 @@ function mod.add_blueprint_to_book(pindex, book_stack, bp_stack)
    items[item_count + 1] = new_item
    book_data.blueprint_book.blueprints = items
    mod.set_stack_bp_from_data(book_stack, book_data)
-   printout("Added blueprint copy to book index" .. new_slot_id, pindex)
+   printout({ "fa.blueprints-added-to-book-index", tostring(new_slot_id) }, pindex)
 end
 
 --Uses the array index and not the book index
