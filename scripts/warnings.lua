@@ -1,6 +1,9 @@
 --Here: functions about the warnings menu
 local TransportBelts = require("scripts.transport-belts")
 local Viewpoint = require("scripts.viewpoint")
+local MessageBuilder = require("scripts.message-builder")
+local FaUtils = require("scripts.fa-utils")
+local localising = require("scripts.localising")
 
 local mod = {}
 
@@ -20,16 +23,12 @@ function mod.read_warnings_slot(pindex)
    then
       local ent = warnings[players[pindex].warnings.category].ents[players[pindex].warnings.index]
       if ent ~= nil and ent.valid then
-         printout(
-            ent.name
-               .. " has "
-               .. warnings[players[pindex].warnings.category].name
-               .. " at "
-               .. math.floor(ent.position.x)
-               .. ", "
-               .. math.floor(ent.position.y),
-            pindex
-         )
+         local message = MessageBuilder.new()
+         message:fragment(localising.get_localised_name_with_fallback(ent))
+         message:fragment({ "fa.warnings-has-warning" })
+         message:fragment({ "fa.warning-type-" .. warnings[players[pindex].warnings.category].name })
+         message:fragment(FaUtils.format_position(ent.position.x, ent.position.y))
+         printout(message:build(), pindex)
       else
          printout({ "fa.warnings-blank" }, pindex)
       end
@@ -70,17 +69,23 @@ function mod.scan_for_warnings(L, H, pindex)
          if recipe == nil and ent.type ~= "furnace" then table.insert(warnings["noRecipe"], ent) end
       end
    end
-   local str = ""
    local result = {}
+   local summary_message = MessageBuilder.new()
+   local has_warnings = false
+
    for i, warning in pairs(warnings) do
       if #warning > 0 then
-         str = str .. i .. " " .. #warning .. ", "
+         has_warnings = true
+         summary_message:list_item({ "fa.warning-type-" .. i })
+         summary_message:fragment(tostring(#warning))
          table.insert(result, { name = i, ents = warning })
       end
    end
-   if str == "" then str = "No warnings displayed    " end
-   str = string.sub(str, 1, -3)
-   return { summary = str, warnings = result }
+
+   local summary = summary_message:build()
+   if not has_warnings then summary = { "fa.warnings-no-warnings-displayed" } end
+
+   return { summary = summary, warnings = result }
 end
 
 return mod
