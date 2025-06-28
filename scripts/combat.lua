@@ -5,6 +5,8 @@ local util = require("util")
 local Equipment = require("scripts.equipment")
 local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
+local Localising = require("scripts.localising")
+local MessageBuilder = require("scripts.message-builder")
 local Mouse = require("scripts.mouse")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
@@ -30,15 +32,25 @@ function mod.repair_pack_used(ent, pindex)
       local dura = stack.durability or 0
       if health_diff < 10 then --free repair for tiny damages
          ent.health = ent.max_health
-         printout("Fully repaired " .. ent.name, pindex)
+         local msg = MessageBuilder.new()
+         msg:fragment({ "fa.combat-fully-repaired" })
+         msg:fragment(Localising.get_localised_name_with_fallback(ent))
+         printout(msg:build(), pindex)
       elseif health_diff < dura then
          ent.health = ent.max_health
          stack.drain_durability(health_diff)
-         printout("Fully repaired " .. ent.name, pindex)
+         local msg = MessageBuilder.new()
+         msg:fragment({ "fa.combat-fully-repaired" })
+         msg:fragment(Localising.get_localised_name_with_fallback(ent))
+         printout(msg:build(), pindex)
       else --if health_diff >= dura then
          stack.drain_durability(dura)
          ent.health = ent.health + dura
-         printout("Partially repaired " .. ent.name .. " and consumed a repair pack", pindex)
+         local msg = MessageBuilder.new()
+         msg:fragment({ "fa.combat-partially-repaired" })
+         msg:fragment(Localising.get_localised_name_with_fallback(ent))
+         msg:fragment({ "fa.combat-consumed-repair-pack" })
+         printout(msg:build(), pindex)
          --Note: This automatically subtracts correctly and decerements the pack in hand.
       end
    end
