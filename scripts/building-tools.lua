@@ -499,7 +499,7 @@ function mod.nudge_key(direction, event)
       --Update ent connections after teleporting it
       ent.update_connections()
    else
-      printout("Nudged nothing.", pindex)
+      printout({ "fa.building-nudged-nothing" }, pindex)
    end
 end
 
