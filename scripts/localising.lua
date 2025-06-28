@@ -143,15 +143,30 @@ function mod.check_player(pindex)
    player.translation_id_lookup[id] = "test_translation"
 end
 
+local function wrapped_pcall(f)
+   local good, val = pcall(f)
+   if good then
+      return val
+   else
+      return nil
+   end
+end
+
 -- Build a localised string which will announce the localised_x field or, if not present, the name.
----@param what { name: string, localised_name: LocalisedString } | LuaItemStack | LuaEntity
+---@param what { name: string, localised_name: LocalisedString } | LuaItemStack | LuaEntity | LuaPrototypeBase
 ---@return LocalisedString
 function mod.get_localised_name_with_fallback(what)
-   -- Handle LuaItemStack and LuaEntity which have name/localised_name on their prototype
-   if what.prototype then return { "?", what.prototype.localised_name, what.prototype.name } end
-   -- Handle prototypes and other objects with direct name/localised_name properties
-   assert(what.name)
-   return { "?", what.localised_name, what.name }
+   -- We could do a bunch of complex object type checking, or we can just chain out pcall.  The issue is that Factorio
+   -- objects hard error on properties that don't exist rather than giving back nil.  This is a *VERY BAD* antipattern
+   -- in the general case, but this function needs to work with effectively anything you might pass it.
+
+   return wrapped_pcall(function()
+      return what.localised_name
+   end) or wrapped_pcall(function()
+      return what.prototype.localised_name
+   end) or wrapped_pcall(function()
+      return what.prototype.name
+   end) or what.name
 end
 
 -- Marker to say "other item" in localise_item.
