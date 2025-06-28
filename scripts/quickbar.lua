@@ -1,5 +1,6 @@
 --Here: Quickbar related functions
 local Localising = require("scripts.localising")
+local MessageBuilder = require("scripts.message-builder")
 
 local mod = {}
 
@@ -54,7 +55,11 @@ function mod.read_quick_bar_slot(index, pindex)
       local stack = game.get_player(pindex).cursor_stack
       if stack and stack.valid_for_read then
          count = count + stack.count
-         printout("unselected " .. Localising.get(proto, pindex) .. " x " .. count, pindex)
+         local msg = MessageBuilder.new()
+         msg:fragment({ "fa.quickbar-unselected" })
+         msg:fragment(Localising.get_localised_name_with_fallback(proto))
+         msg:fragment({ "fa.quickbar-count", count })
+         printout(msg:build(), pindex)
       else
          printout("selected " .. Localising.get(proto, pindex) .. " x " .. count, pindex)
       end
