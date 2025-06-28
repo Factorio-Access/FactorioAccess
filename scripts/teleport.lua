@@ -37,13 +37,13 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
    end
    --Do not teleport if in a vehicle, in a menu, or already at the desitination
    if char.vehicle ~= nil and char.vehicle.valid then
-      printout("Cannot teleport while in a vehicle.", pindex)
+      printout({ "fa.teleport-cannot-in-vehicle" }, pindex)
       return false
    elseif util.distance(game.get_player(pindex).position, pos) < 0.6 then
-      printout("Already at target", pindex)
+      printout({ "fa.teleport-already-at-target" }, pindex)
       return false
    elseif router:is_ui_open() and not router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
-      printout("Cannot teleport while in a menu.", pindex)
+      printout({ "fa.teleport-cannot-in-menu" }, pindex)
       return false
    end
    --Do not teleport near enemies unless instructed to ignore them
