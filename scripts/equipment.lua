@@ -2,6 +2,7 @@
 --Does not include event handlers, combat, repair packs
 
 local Electrical = require("scripts.electrical")
+local FaUtils = require("scripts.fa-utils")
 local localising = require("scripts.localising")
 local UiRouter = require("scripts.ui.router")
 
@@ -296,7 +297,7 @@ function mod.read_shield_and_health_level(pindex, ent_in)
       end
    end
    -- State shield empty at the end (if supported)
-   if grid and empty_shield then table.insert(result, ", shield empty ") end
+   if grid and empty_shield then table.insert(result, { "fa.armor-shield-empty" }) end
    return result
 end
 
@@ -310,15 +311,18 @@ function mod.read_armor_stats(pindex, ent_in)
    if ent_in == nil then
       --Player armor
       if armor_inv.is_empty() then
-         table.insert(result, "No armor equipped.")
+         table.insert(result, { "fa.armor-no-armor" })
          return result
       elseif armor_inv[1].grid == nil or not armor_inv[1].grid.valid then
-         table.insert(result, armor_inv[1].name .. " equipped, with no equipment grid.")
+         table.insert(
+            result,
+            { "fa.armor-equipped-no-grid", localising.get_localised_name_with_fallback(armor_inv[1].prototype) }
+         )
          return result
       end
       --Player armor with non-empty equipment grid
       grid = armor_inv[1].grid
-      table.insert(result, armor_inv[1].name .. " equipped, ")
+      table.insert(result, { "fa.armor-equipped", localising.get_localised_name_with_fallback(armor_inv[1].prototype) })
    else
       --Entity grid
       grid = ent.grid
@@ -331,40 +335,44 @@ function mod.read_armor_stats(pindex, ent_in)
    end
    --Stop if no equipment
    if grid.count() == 0 then
-      table.insert(result, " no armor equipment installed. ")
+      table.insert(result, { "fa.armor-no-equipment" })
       return result
    end
    --Read battery level
    if grid.battery_capacity > 0 then
       if grid.available_in_batteries == grid.battery_capacity then
-         table.insert(result, " batteries full, ")
+         table.insert(result, { "fa.armor-batteries-full" })
       elseif grid.available_in_batteries == 0 then
-         table.insert(result, " batteries empty ")
+         table.insert(result, { "fa.armor-batteries-empty" })
       else
          local battery_level = math.ceil(100 * grid.available_in_batteries / grid.battery_capacity)
-         table.insert(result, " batteries at " .. battery_level .. " percent, ")
+         table.insert(result, { "fa.armor-batteries-percent", tostring(battery_level) })
       end
    else
-      table.insert(result, " no batteries, ")
+      table.insert(result, { "fa.armor-no-batteries" })
    end
    --Energy Producers
    if grid.get_generator_energy() > 0 or grid.max_solar_energy > 0 then
-      table.insert(result, " generating ")
+      table.insert(result, { "fa.armor-generating" })
       if grid.get_generator_energy() > 0 then
-         table.insert(result, Electrical.get_power_string(grid.get_generator_energy() * 60) .. " nonstop, ")
+         table.insert(
+            result,
+            { "fa.armor-power-nonstop", Electrical.get_power_string(grid.get_generator_energy() * 60) }
+         )
       end
       if grid.max_solar_energy > 0 then
-         table.insert(result, Electrical.get_power_string(grid.max_solar_energy * 60) .. " at daytime, ")
+         table.insert(result, { "fa.armor-power-daytime", Electrical.get_power_string(grid.max_solar_energy * 60) })
       end
    end
    --Movement bonus
    if grid.count("exoskeleton-equipment") > 0 then
       table.insert(
          result,
-         " movement bonus "
-            .. grid.count("exoskeleton-equipment") * 30
-            .. " percent for "
-            .. Electrical.get_power_string(grid.count("exoskeleton-equipment") * 200000)
+         {
+            "fa.armor-movement-bonus",
+            tostring(grid.count("exoskeleton-equipment") * 30),
+            Electrical.get_power_string(grid.count("exoskeleton-equipment") * 200000),
+         }
       )
    end
    return result
@@ -524,30 +532,42 @@ function mod.guns_menu_read_slot(pindex, start_phrase_in)
    if menu.ammo_selected then
       --Read the ammo slot
       if ammo_stack and ammo_stack.valid_for_read then
-         table.insert(result, ammo_stack.name .. " " .. "times" .. " " .. ammo_stack.count)
+         table.insert(
+            result,
+            FaUtils.format_item_count(
+               localising.get_localised_name_with_fallback(ammo_stack.prototype),
+               ammo_stack.count
+            )
+         )
       else
-         table.insert(result, "empty ammo slot")
+         table.insert(result, { "fa.equipment-empty-ammo-slot" })
       end
-      table.insert(result, " for ")
+      table.insert(result, { "fa.equipment-for" })
       if gun_stack and gun_stack.valid_for_read then
-         table.insert(result, gun_stack.name)
+         table.insert(result, localising.get_localised_name_with_fallback(gun_stack.prototype))
       else
-         table.insert(result, "empty gun slot")
+         table.insert(result, { "fa.equipment-empty-gun-slot" })
       end
    else
       --Read the gun slot
       if gun_stack and gun_stack.valid_for_read then
-         table.insert(result, gun_stack.name)
-         if gun_stack.count > 1 then table.insert(result, "times" .. " " .. gun_stack.count) end
+         table.insert(result, localising.get_localised_name_with_fallback(gun_stack.prototype))
+         if gun_stack.count > 1 then table.insert(result, { "fa.equipment-times", "", tostring(gun_stack.count) }) end
       else
-         table.insert(result, "empty gun slot")
+         table.insert(result, { "fa.equipment-empty-gun-slot" })
       end
-      table.insert(result, " using ")
+      table.insert(result, { "fa.equipment-using" })
       if ammo_stack and ammo_stack.valid_for_read then
          --Read the ammo
-         table.insert(result, ammo_stack.name .. " " .. "times" .. " " .. ammo_stack.count)
+         table.insert(
+            result,
+            FaUtils.format_item_count(
+               localising.get_localised_name_with_fallback(ammo_stack.prototype),
+               ammo_stack.count
+            )
+         )
       else
-         table.insert(result, "no ammo")
+         table.insert(result, { "fa.equipment-no-ammo" })
       end
    end
    printout(result, pindex)
