@@ -144,9 +144,12 @@ function mod.check_player(pindex)
 end
 
 -- Build a localised string which will announce the localised_x field or, if not present, the name.
----@param what { name: string, localised_name: LocalisedString }
+---@param what { name: string, localised_name: LocalisedString } | LuaItemStack | LuaEntity
 ---@return LocalisedString
 function mod.get_localised_name_with_fallback(what)
+   -- Handle LuaItemStack and LuaEntity which have name/localised_name on their prototype
+   if what.prototype then return { "?", what.prototype.localised_name, what.prototype.name } end
+   -- Handle prototypes and other objects with direct name/localised_name properties
    assert(what.name)
    return { "?", what.localised_name, what.name }
 end
