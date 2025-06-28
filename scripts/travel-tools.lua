@@ -93,7 +93,7 @@ function mod.fast_travel_menu_click(pindex)
       game.get_player(pindex).opened = nil
 
       if not refresh_player_tile(pindex) then
-         printout("Tile out of range", pindex)
+         printout({ "fa.travel-tile-out-of-range" }, pindex)
          return
       end
 
