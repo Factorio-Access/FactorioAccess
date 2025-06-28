@@ -492,9 +492,13 @@ function mod.logistics_info_key_handler(pindex)
    -- At least as of right now there is no entity which can do both requests and filters, and players cannot do filters.
    if mod.can_set_logistic_filter(ent) then
       local filter = ent.storage_filter
-      local result = "Nothing"
-      if filter ~= nil then result = filter.name.name end
-      printout(result .. " set as logistic storage filter", pindex)
+      local result
+      if filter ~= nil then 
+         result = {"", localising.get_localised_name_with_fallback(filter.name), " set as logistic storage filter"}
+      else
+         result = {"", "Nothing set as logistic storage filter"}
+      end
+      printout(result, pindex)
       return
    end
 
@@ -855,7 +859,12 @@ function mod.set_logistic_filter(pindex, ent, name)
    end
 
    ent.set_filter(1, name)
-   printout(name .. " set as logistic storage filter ", pindex)
+   local proto = prototypes.item[name]
+   if proto then
+      printout({"", localising.get_localised_name_with_fallback(proto), " set as logistic storage filter "}, pindex)
+   else
+      printout({"", name, " set as logistic storage filter "}, pindex)
+   end
 end
 
 ---@param ent LuaEntity

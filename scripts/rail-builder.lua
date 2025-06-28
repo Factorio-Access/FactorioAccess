@@ -212,7 +212,7 @@ function mod.append_rail(pos, pindex)
    --6. Clear trees and rocks nearby and check if the selected 2x2 space is free for building, else return
    if append_rail_pos == nil then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout(end_rail_dir .. " and " .. rail_api_dir .. ", rail appending direction error.", pindex)
+      printout({"", tostring(end_rail_dir), " and ", tostring(rail_api_dir), ", rail appending direction error."}, pindex)
       return
    end
    temp1, build_comment = PlayerMiningTools.clear_obstacles_in_circle(append_rail_pos, 4, pindex)
@@ -881,7 +881,7 @@ function mod.build_rail_turn_right_45_degrees(anchor_rail, pindex)
    --7. Sounds and results
    game.get_player(pindex).play_sound({ path = "entity-build/straight-rail" })
    game.get_player(pindex).play_sound({ path = "entity-build/curved-rail" })
-   printout("Rail turn built 45 degrees right, " .. build_comment, pindex)
+   printout({"", "Rail turn built 45 degrees right, ", build_comment}, pindex)
    return
 end
 
@@ -1177,7 +1177,7 @@ function mod.build_rail_turn_right_90_degrees(anchor_rail, pindex)
    --7. Sounds and results
    game.get_player(pindex).play_sound({ path = "entity-build/straight-rail" })
    game.get_player(pindex).play_sound({ path = "entity-build/curved-rail" })
-   printout("Rail turn built 90 degrees right, " .. build_comment, pindex)
+   printout({"", "Rail turn built 90 degrees right, ", build_comment}, pindex)
    return
 end
 
@@ -1664,7 +1664,7 @@ function mod.build_rail_turn_left_45_degrees(anchor_rail, pindex)
    --7. Sounds and results
    game.get_player(pindex).play_sound({ path = "entity-build/straight-rail" })
    game.get_player(pindex).play_sound({ path = "entity-build/curved-rail" })
-   printout("Rail turn built 45 degrees left, " .. build_comment, pindex)
+   printout({"", "Rail turn built 45 degrees left, ", build_comment}, pindex)
    return
 end
 
@@ -1960,7 +1960,7 @@ function mod.build_rail_turn_left_90_degrees(anchor_rail, pindex)
    --7. Sounds and results
    game.get_player(pindex).play_sound({ path = "entity-build/straight-rail" })
    game.get_player(pindex).play_sound({ path = "entity-build/curved-rail" })
-   printout("Rail turn built 90 degrees left, " .. build_comment, pindex)
+   printout({"", "Rail turn built 90 degrees left, ", build_comment}, pindex)
    return
 end
 
@@ -6284,7 +6284,7 @@ function mod.build_train_stop(anchor_rail, pindex)
 
    --7. Sounds and results
    game.get_player(pindex).play_sound({ path = "entity-build/train-stop" })
-   printout("Train stop built facing" .. FaUtils.direction_lookup(dir) .. ", " .. build_comment, pindex)
+   printout({"", "Train stop built facing", FaUtils.direction_lookup(dir), ", ", build_comment}, pindex)
    return
 end
 
