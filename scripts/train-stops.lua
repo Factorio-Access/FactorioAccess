@@ -14,7 +14,7 @@ function mod.run_train_stop_menu(menu_index, pindex, clicked, other_input)
       train_stop = players[pindex].tile.ents[1]
       players[pindex].train_stop_menu.stop = train_stop
    else
-      printout("Train stop menu error", pindex)
+      printout({ "fa.train-stops-menu-error" }, pindex)
       players[pindex].train_stop_menu.stop = nil
       return
    end
@@ -28,7 +28,7 @@ function mod.run_train_stop_menu(menu_index, pindex, clicked, other_input)
       )
    elseif index == 1 then
       if not clicked then
-         printout("Select here to rename this train stop.", pindex)
+         printout({ "fa.train-stops-rename-prompt" }, pindex)
       else
          printout(
             "Enter a new name for this train stop, then press 'ENTER' to confirm, or press 'ESC' to cancel.",
@@ -150,9 +150,9 @@ function mod.run_train_stop_menu(menu_index, pindex, clicked, other_input)
       end
    elseif index == 9 then
       if not clicked then
-         printout("Set the trains limit for this stop by entering a number", pindex)
+         printout({ "fa.train-stops-set-limit" }, pindex)
       else
-         printout("Type in a number and press ENTER to confirm", pindex)
+         printout({ "fa.train-stops-enter-number" }, pindex)
          players[pindex].train_limit_editing = true
          local frame = Graphics.create_text_field_frame(pindex, "train-limit-edit")
       end
