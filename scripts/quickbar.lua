@@ -1,6 +1,7 @@
 --Here: Quickbar related functions
 local Localising = require("scripts.localising")
 local MessageBuilder = require("scripts.message-builder")
+local UiRouter = require("scripts.ui.router")
 
 local mod = {}
 
@@ -24,10 +25,12 @@ end
 function mod.quickbar_set_handler(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
+   local router = UiRouter.get_router(pindex)
    if
-      players[pindex].menu == "inventory"
-      or players[pindex].menu == "none"
-      or (players[pindex].menu == "building" or players[pindex].menu == "vehicle")
+      router:is_ui_open(UiRouter.UI_NAMES.INVENTORY)
+      or not router:is_ui_open()
+      or router:is_ui_open(UiRouter.UI_NAMES.BUILDING)
+      or router:is_ui_open(UiRouter.UI_NAMES.VEHICLE)
    then
       local num = tonumber(string.sub(event.input_name, -1))
       if num == 0 then num = 10 end
@@ -74,6 +77,7 @@ end
 
 function mod.set_quick_bar_slot(index, pindex)
    local p = game.get_player(pindex)
+   local router = UiRouter.get_router(pindex)
    local page = game.get_player(pindex).get_active_quick_bar_page(1) - 1
    local stack_cur = game.get_player(pindex).cursor_stack
    local stack_inv = players[pindex].inventory.lua_inventory[players[pindex].inventory.index]
@@ -85,7 +89,7 @@ function mod.set_quick_bar_slot(index, pindex)
       msg:fragment(Localising.get_localised_name_with_fallback(stack_cur))
       printout(msg:build(), pindex)
    elseif
-      players[pindex].menu == "inventory"
+      router:is_ui_open(UiRouter.UI_NAMES.INVENTORY)
       and stack_inv
       and stack_inv.valid_for_read
       and stack_inv.valid == true
