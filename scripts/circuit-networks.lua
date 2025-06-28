@@ -925,7 +925,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
       if index == 4 then
          --Read combinator signals
          if not clicked then
-            printout("Read combinator signals", pindex)
+            printout({ "fa.circuit-read-combinator-signals" }, pindex)
          else
             local result = mod.constant_combinator_signals_info(ent, pindex)
             printout(result, pindex)
@@ -933,14 +933,14 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
       elseif index == 5 then
          --Add a signal from the selector
          if not clicked then
-            printout("Add a signal from the selector", pindex)
+            printout({ "fa.circuit-add-signal-from-selector" }, pindex)
          else
             mod.open_signal_selector(pindex, ent, nil)
          end
       elseif index == 6 then
          --Set a new count for the last signal
          if not clicked then
-            printout("Set a new count for the last signal", pindex)
+            printout({ "fa.circuit-set-new-count" }, pindex)
          else
             local result = mod.constant_combinator_type_last_signal_count(pindex, ent)
             printout(result, pindex)
@@ -949,21 +949,21 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
       elseif index == 7 then
          --Delete the last signal
          if not clicked then
-            printout("Delete the last signal", pindex)
+            printout({ "fa.circuit-delete-last-signal" }, pindex)
          else
             mod.constant_combinator_remove_last_signal(ent, pindex)
          end
       elseif index == 8 then
          --Toggle switch
          if not clicked then
-            printout("Toggle switch", pindex)
+            printout({ "fa.circuit-toggle-switch" }, pindex)
          else
             ent.get_control_behavior().enabled = not ent.get_control_behavior().enabled
             local enabled = ent.get_control_behavior().enabled
             if enabled == true then
-               printout("Switched on", pindex)
+               printout({ "fa.circuit-switched-on" }, pindex)
             elseif enabled == false then
-               printout("Switched off", pindex)
+               printout({ "fa.circuit-switched-off" }, pindex)
             end
          end
       elseif index > 8 then
