@@ -145,4 +145,7 @@ function MessageBuilder:build()
    return FaUtils.localise_cat_table(self.parts, "")
 end
 
+-- Convenience function at module level
+mod.new = MessageBuilder.new
+
 return mod
