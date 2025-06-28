@@ -61,7 +61,11 @@ function mod.read_quick_bar_slot(index, pindex)
          msg:fragment({ "fa.quickbar-count", count })
          printout(msg:build(), pindex)
       else
-         printout("selected " .. Localising.get(proto, pindex) .. " x " .. count, pindex)
+         local msg = MessageBuilder.new()
+         msg:fragment({ "fa.quickbar-selected" })
+         msg:fragment(Localising.get_localised_name_with_fallback(proto))
+         msg:fragment({ "fa.quickbar-count", count })
+         printout(msg:build(), pindex)
       end
    else
       printout({ "fa.quickbar-empty-slot" }, pindex) --does this print, maybe not working because it is linked to the game control?
