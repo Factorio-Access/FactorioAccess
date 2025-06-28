@@ -1217,7 +1217,7 @@ function mod.snap_place_steam_engine_to_a_boiler(pindex)
 
    if boilers == nil or #boilers == 0 then
       p.play_sound({ path = "utility/cannot_build" })
-      printout("Error: No boilers found nearby", pindex)
+      printout({ "fa.building-error-no-boilers" }, pindex)
       return
    end
 
@@ -1284,11 +1284,11 @@ function mod.snap_place_steam_engine_to_a_boiler(pindex)
    --If all have been skipped and none were found then play error
    if found_empty_spot == false then
       p.play_sound({ path = "utility/cannot_build" })
-      printout("Error: All boilers nearby are blocked or already connected.", pindex)
+      printout({ "fa.building-error-boilers-blocked" }, pindex)
       return
    elseif found_valid_spot == false then
       p.play_sound({ path = "utility/cannot_build" })
-      printout("Error: Boilers found but unable to build in front of them, check build area for obstacles.", pindex)
+      printout({ "fa.building-error-boilers-obstacles" }, pindex)
       return
    end
 end
