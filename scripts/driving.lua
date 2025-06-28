@@ -312,11 +312,11 @@ function mod.pda_read_assistant_toggled_info(pindex)
    if game.get_player(pindex).driving then
       local is_on = not mod.pda_get_state_of_driving_assistant(pindex)
       if is_on == true then
-         printout("Enabled pavement driving asssistant", pindex)
+         printout({ "fa.driving-pda-enabled" }, pindex)
       elseif is_on == false then
-         printout("Disabled pavement driving asssistant", pindex)
+         printout({ "fa.driving-pda-disabled" }, pindex)
       else
-         printout("Missing pavement driving asssistant", pindex)
+         printout({ "fa.driving-pda-missing" }, pindex)
       end
    end
 end
@@ -326,11 +326,11 @@ function mod.pda_read_cruise_control_toggled_info(pindex)
    if game.get_player(pindex).driving then
       local is_on = not mod.pda_get_state_of_cruise_control(pindex)
       if is_on == true then
-         printout("Enabled cruise control", pindex)
+         printout({ "fa.driving-cruise-enabled" }, pindex)
       elseif is_on == false then
-         printout("Disabled cruise control", pindex)
+         printout({ "fa.driving-cruise-disabled" }, pindex)
       else
-         printout("Missing cruise control", pindex)
+         printout({ "fa.driving-cruise-missing" }, pindex)
       end
       mod.pda_set_cruise_control_limit(pindex, 0.16)
    end
