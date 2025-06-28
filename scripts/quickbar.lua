@@ -104,11 +104,14 @@ function mod.set_quick_bar_slot(index, pindex)
    else
       --Clear the slot
       local item = game.get_player(pindex).get_quick_bar_slot(index + 10 * page)
-      local item_name = ""
-      if item ~= nil then item_name = Localising.get(item, pindex) end
+      local item_desc = nil
+      if item ~= nil then item_desc = Localising.get_localised_name_with_fallback(item) end
       ---@diagnostic disable-next-line: param-type-mismatch
       game.get_player(pindex).set_quick_bar_slot(index + 10 * page, nil)
-      printout("Quickbar unassigned " .. index .. " " .. item_name, pindex)
+      local msg = MessageBuilder.new()
+      msg:fragment({ "fa.quickbar-unassigned", index })
+      if item_desc then msg:fragment(item_desc) end
+      printout(msg:build(), pindex)
    end
 end
 
