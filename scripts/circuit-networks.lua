@@ -824,7 +824,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
    local nw_name = nil
    if nwr == nil and nwg == nil then
       nw_name = " none "
-      -- printout("No circuit network connected", pindex)
+      -- printout({ "fa.circuit-no-network-connected" }, pindex)
       -- return
    elseif nwr ~= nil and nwg == nil then
       nw_name = " red " .. nwr.network_id
@@ -850,7 +850,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
          printout({ "fa.circuit-list-active-signals" }, pindex)
       else
          if nwr == nil and nwg == nil then
-            printout("No circuit network connected", pindex)
+            printout({ "fa.circuit-no-network-connected" }, pindex)
             return
          end
          local click_count = players[pindex].menu_click_count
@@ -873,7 +873,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
          printout("List members of this network", pindex)
       else
          if nwr == nil and nwg == nil then
-            printout("No circuit network connected", pindex)
+            printout({ "fa.circuit-no-network-connected" }, pindex)
             return
          end
          local result = ""
@@ -894,7 +894,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
          printout("List directly connected network members for this " .. localising.get(ent, pindex), pindex)
       else
          if nwr == nil and nwg == nil then
-            printout("No circuit network connected", pindex)
+            printout({ "fa.circuit-no-network-connected" }, pindex)
             return
          end
          local result = ""
@@ -981,7 +981,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
          return
       end
       if nwr == nil and nwg == nil then
-         printout("No circuit network connected", pindex)
+         printout({ "fa.circuit-no-network-connected" }, pindex)
          return
       end
       local control_has_no_circuit_conditions = ent.type == "container"
