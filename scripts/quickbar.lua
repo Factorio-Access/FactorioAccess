@@ -59,7 +59,7 @@ function mod.read_quick_bar_slot(index, pindex)
          printout("selected " .. Localising.get(proto, pindex) .. " x " .. count, pindex)
       end
    else
-      printout("Empty quickbar slot", pindex) --does this print, maybe not working because it is linked to the game control?
+      printout({ "fa.quickbar-empty-slot" }, pindex) --does this print, maybe not working because it is linked to the game control?
    end
 end
 
