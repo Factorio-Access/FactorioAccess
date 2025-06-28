@@ -793,7 +793,7 @@ function initialize(player)
    faplayer.num_elements = faplayer.num_elements or 0
    faplayer.player_direction = faplayer.player_direction or character.walking_state.direction
    faplayer.position = faplayer.position or FaUtils.center_of_tile(character.position)
-   faplayer.walk = faplayer.walk or 0
+   faplayer.walk = faplayer.walk or WALKING.SMOOTH
    faplayer.move_queue = faplayer.move_queue or {}
    faplayer.building_direction = faplayer.building_direction or dirs.north --top
 
