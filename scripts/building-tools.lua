@@ -417,7 +417,7 @@ function mod.rotate_building_info_read(event, forward)
             printout(ent.name .. " does not support or does not need rotating.", pindex)
          end
       else
-         printout("Cannot rotate", pindex)
+         printout({ "fa.building-cannot-rotate" }, pindex)
       end
    end
 end
