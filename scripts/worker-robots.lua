@@ -94,18 +94,18 @@ local function toggle_personal_logistics(pindex)
    if not point then return end
    point.enabled = not point.enabled
    if point.enabled then
-      printout("Resumed personal logistics requests", pindex)
+      printout({ "fa.robots-resumed-personal-logistics" }, pindex)
    else
-      printout("Paused personal logistics requests", pindex)
+      printout({ "fa.robots-paused-personal-logistics" }, pindex)
    end
 end
 
 local function logistics_request_toggle_spidertron_logistics(spidertron, pindex)
    spidertron.vehicle_logistic_requests_enabled = not spidertron.vehicle_logistic_requests_enabled
    if spidertron.vehicle_logistic_requests_enabled then
-      printout("Resumed spidertron logistics requests", pindex)
+      printout({ "fa.robots-resumed-spidertron-logistics" }, pindex)
    else
-      printout("Paused spidertron logistics requests", pindex)
+      printout({ "fa.robots-paused-spidertron-logistics" }, pindex)
    end
 end
 
@@ -269,13 +269,13 @@ local function modify_player_logistic_request(pindex, item, min_or_max, up_or_do
    if not p then return nil, false end
    local force = p.force
    if not force.character_logistic_requests then
-      printout("Error: You need to research logistic robotics to use this feature.", pindex)
+      printout({ "fa.robots-error-need-research" }, pindex)
    end
 
    local char = p.character
    if not char then
       Sounds.play_ui_edge(pindex)
-      printout("You don't control a character right now", pindex)
+      printout({ "fa.robots-no-character-control" }, pindex)
       return
    end
 
@@ -315,9 +315,9 @@ end
 local function clear_logistic_request_with_announcement(pindex, ent, name)
    local did = clear_logistic_request(ent, name)
    if did then
-      printout("Cleared request", pindex)
+      printout({ "fa.robots-cleared-request" }, pindex)
    else
-      printout("Request already cleared", pindex)
+      printout({ "fa.robots-request-already-cleared" }, pindex)
    end
 end
 
@@ -577,9 +577,9 @@ function mod.logistics_request_toggle_handler(pindex)
          return
       end
       if ent.request_from_buffers then
-         printout("Enabled requesting from buffers", pindex)
+         printout({ "fa.robots-enabled-buffer-requests" }, pindex)
       else
-         printout("Disabled requesting from buffers", pindex)
+         printout({ "fa.robots-disabled-buffer-requests" }, pindex)
       end
    end
 end
@@ -678,7 +678,7 @@ function mod.player_logistic_request_read(item_name, pindex, additional_checks)
    local p = game.get_player(pindex)
    local char = p.character
    if not char then
-      printout("You are not controlling a character", pindex)
+      printout({ "fa.robots-not-controlling-character" }, pindex)
       return
    end
 
@@ -782,10 +782,10 @@ function mod.send_selected_stack_to_logistic_trash(pindex)
       local inserted_count = trash_inv.insert(stack)
       if inserted_count < stack.count then
          stack.set_stack({ name = stack.name, count = stack.count - inserted_count })
-         printout("Partially sent stack to logistic trash", pindex)
+         printout({ "fa.robots-partial-stack-to-trash" }, pindex)
       else
          stack.set_stack(nil)
-         printout("Sent stack to logistic trash", pindex)
+         printout({ "fa.robots-sent-stack-to-trash" }, pindex)
       end
    end
 end
@@ -850,7 +850,7 @@ function mod.set_logistic_filter(pindex, ent, name)
 
    if filt and filt.name.name == name then
       ent.set_filter(1, nil)
-      printout("logistic storage filter cleared", pindex)
+      printout({ "fa.robots-storage-filter-cleared" }, pindex)
       return
    end
 
@@ -949,7 +949,7 @@ function mod.run_roboport_menu(menu_index, pindex, clicked)
       players[pindex].roboport_menu.port = port
    else
       players[pindex].roboport.port = nil
-      printout("Roboport menu requires a roboport", pindex)
+      printout({ "fa.robots-roboport-menu-requires" }, pindex)
       return
    end
    local nw = port.logistic_network
@@ -965,16 +965,16 @@ function mod.run_roboport_menu(menu_index, pindex, clicked)
    elseif index == 1 then
       --1. Rename roboport networks
       if not clicked then
-         printout("Rename this network", pindex)
+         printout({ "fa.robots-rename-this-network" }, pindex)
       else
-         printout("Enter a new name for this network, then press 'ENTER' to confirm, or press 'ESC' to cancel.", pindex)
+         printout({ "fa.robots-enter-new-network-name" }, pindex)
          players[pindex].roboport_menu.renaming = true
          local frame = Graphics.create_text_field_frame(pindex, "network-rename")
       end
    elseif index == 2 then
       --2. This roboport: Check neighbor counts and dirs
       if not clicked then
-         printout("Read roboport neighbours", pindex)
+         printout({ "fa.robots-read-roboport-neighbours" }, pindex)
       else
          local result = mod.roboport_neighbours_info(port)
          printout(result, pindex)
@@ -982,7 +982,7 @@ function mod.run_roboport_menu(menu_index, pindex, clicked)
    elseif index == 3 then
       --3. This roboport: Check robot counts
       if not clicked then
-         printout("Read roboport contents", pindex)
+         printout({ "fa.robots-read-roboport-contents" }, pindex)
       else
          local result = mod.roboport_contents_info(port)
          printout(result, pindex)
@@ -990,31 +990,31 @@ function mod.run_roboport_menu(menu_index, pindex, clicked)
    elseif index == 4 then
       --4. Check network roboport & robot & chest(?) counts
       if not clicked then
-         printout("Read robots info for the network", pindex)
+         printout({ "fa.robots-read-robots-info" }, pindex)
       else
          if nw ~= nil then
             local result = mod.logistic_network_members_info(port)
             printout(result, pindex)
          else
-            printout("Error: No network", pindex)
+            printout({ "fa.robots-error-no-network" }, pindex)
          end
       end
    elseif index == 5 then
       --5. Points/chests info
       if not clicked then
-         printout("Read chests info for the network", pindex)
+         printout({ "fa.robots-read-chests-info" }, pindex)
       else
          if nw ~= nil then
             local result = mod.logistic_network_chests_info(port)
             printout(result, pindex)
          else
-            printout("Error: No network", pindex)
+            printout({ "fa.robots-error-no-network" }, pindex)
          end
       end
    elseif index == 6 then
       --6. Check network item contents
       if not clicked then
-         printout("Read items info for the network", pindex)
+         printout({ "fa.robots-read-items-info" }, pindex)
          players[pindex].menu_click_count = 0
       else
          if nw ~= nil then
@@ -1024,7 +1024,7 @@ function mod.run_roboport_menu(menu_index, pindex, clicked)
             players[pindex].menu_click_count = click_count
             printout(result, pindex)
          else
-            printout("Error: No network", pindex)
+            printout({ "fa.robots-error-no-network" }, pindex)
          end
       end
    end
