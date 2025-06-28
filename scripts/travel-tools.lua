@@ -232,21 +232,21 @@ function mod.fast_travel_menu_right(pindex)
       game.get_player(pindex).play_sound({ path = "inventory-edge" })
    end
    if players[pindex].travel.index.x == 1 then
-      printout("Travel", pindex)
+      printout({ "fa.travel-menu-travel" }, pindex)
    elseif players[pindex].travel.index.x == 2 then
-      printout("Read description", pindex)
+      printout({ "fa.travel-menu-read-description" }, pindex)
    elseif players[pindex].travel.index.x == 3 then
-      printout("Rename", pindex)
+      printout({ "fa.travel-menu-rename" }, pindex)
    elseif players[pindex].travel.index.x == 4 then
-      printout("Rewrite description", pindex)
+      printout({ "fa.travel-menu-rewrite-description" }, pindex)
    elseif players[pindex].travel.index.x == 5 then
-      printout("Relocate to current character position", pindex)
+      printout({ "fa.travel-menu-relocate" }, pindex)
    elseif players[pindex].travel.index.x == 6 then
-      printout("Broadcast to team players", pindex)
+      printout({ "fa.travel-menu-broadcast" }, pindex)
    elseif players[pindex].travel.index.x == 7 then
-      printout("Delete", pindex)
+      printout({ "fa.travel-menu-delete" }, pindex)
    elseif players[pindex].travel.index.x == 8 then
-      printout("Create New", pindex)
+      printout({ "fa.travel-menu-create-new" }, pindex)
    end
 end
 
@@ -258,21 +258,21 @@ function mod.fast_travel_menu_left(pindex)
       game.get_player(pindex).play_sound({ path = "inventory-edge" })
    end
    if players[pindex].travel.index.x == 1 then
-      printout("Travel", pindex)
+      printout({ "fa.travel-menu-travel" }, pindex)
    elseif players[pindex].travel.index.x == 2 then
-      printout("Read description", pindex)
+      printout({ "fa.travel-menu-read-description" }, pindex)
    elseif players[pindex].travel.index.x == 3 then
-      printout("Rename", pindex)
+      printout({ "fa.travel-menu-rename" }, pindex)
    elseif players[pindex].travel.index.x == 4 then
-      printout("Rewrite description", pindex)
+      printout({ "fa.travel-menu-rewrite-description" }, pindex)
    elseif players[pindex].travel.index.x == 5 then
-      printout("Relocate to current character position", pindex)
+      printout({ "fa.travel-menu-relocate" }, pindex)
    elseif players[pindex].travel.index.x == 6 then
-      printout("Broadcast to team players", pindex)
+      printout({ "fa.travel-menu-broadcast" }, pindex)
    elseif players[pindex].travel.index.x == 7 then
-      printout("Delete", pindex)
+      printout({ "fa.travel-menu-delete" }, pindex)
    elseif players[pindex].travel.index.x == 8 then
-      printout("Create New", pindex)
+      printout({ "fa.travel-menu-create-new" }, pindex)
    end
 end
 
