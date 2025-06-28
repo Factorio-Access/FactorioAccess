@@ -344,7 +344,7 @@ function mod.constant_combinator_remove_last_signal(ent, pindex)
          return
       end
    end
-   printout("No signals to remove", pindex)
+   printout({ "fa.circuit-no-signals-to-remove" }, pindex)
 end
 
 function mod.constant_combinator_type_last_signal_count(pindex, ent)
