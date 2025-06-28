@@ -65,7 +65,7 @@ function mod.create_blueprint(pindex, point_1, point_2, prior_bp_data)
    then
       local cleared = p.clear_cursor()
       if not cleared then
-         printout("Error: cursor full.", pindex)
+         printout({ "fa.blueprints-error-cursor-full" }, pindex)
          return
       end
    end
@@ -368,20 +368,20 @@ function mod.apply_blueprint_import(pindex, text)
       if bp.is_blueprint then
          printout("Successfully imported blueprint " .. mod.get_blueprint_label(bp), pindex)
       elseif bp.is_blueprint_book then
-         printout("Successfully imported blueprint book ", pindex)
+         printout({ "fa.blueprints-imported-book" }, pindex)
       else
-         printout("Successfully imported unknown planner item", pindex)
+         printout({ "fa.blueprints-imported-unknown" }, pindex)
       end
    elseif result == -1 then
       if bp.is_blueprint then
          printout("Imported with errors, blueprint " .. mod.get_blueprint_label(bp), pindex)
       elseif bp.is_blueprint_book then
-         printout("Imported with errors, blueprint book ", pindex)
+         printout({ "fa.blueprints-imported-book-errors" }, pindex)
       else
-         printout("Imported with errors, unknown planner item", pindex)
+         printout({ "fa.blueprints-imported-unknown-errors" }, pindex)
       end
    else --result == 1
-      printout("Failed to import blueprint item", pindex)
+      printout({ "fa.blueprints-import-failed" }, pindex)
    end
 end
 
@@ -529,7 +529,7 @@ function mod.blueprint_book_copy_item_to_hand(pindex, i)
    p.clear_cursor()
    p.cursor_stack.import_stack(item_string)
    p.cursor_stack_temporary = true
-   printout("Copied blueprint to hand", pindex)
+   printout({ "fa.blueprints-copied-to-hand" }, pindex)
 end
 
 --WIP: Remove a blueprint from a selected blueprint book, based on the index
@@ -611,11 +611,11 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
          elseif left_clicked == true and right_clicked == false then
             --Copy the blueprint to hand
             if item == nil or item.item == nil then
-               printout("Cannot get this.", pindex)
+               printout({ "fa.blueprints-cannot-get" }, pindex)
             elseif item.item == "blueprint" or item.item == "blueprint-book" then
                mod.blueprint_book_copy_item_to_hand(pindex, index)
             else
-               printout("Cannot get this.", pindex)
+               printout({ "fa.blueprints-cannot-get" }, pindex)
             end
          elseif left_clicked == false and right_clicked == true then
             --Take the blueprint to hand (Therefore both copy and delete)
@@ -879,7 +879,7 @@ function mod.remove_item_from_book(pindex, book_stack, array_index)
    items[array_index] = nil
    book_data.blueprint_book.blueprints = items
    mod.set_stack_bp_from_data(book_stack, book_data)
-   printout("Item removed from book, menu closed", pindex)
+   printout({ "fa.blueprints-item-removed" }, pindex)
 end
 
 function mod.copy_selected_area_to_clipboard(pindex, point_1, point_2)
@@ -898,7 +898,7 @@ function mod.copy_selected_area_to_clipboard(pindex, point_1, point_2)
    then
       p.clear_cursor()
       p.cursor_stack.set_stack({ name = "copy-paste-tool", count = 1 })
-      printout("Copied nothing", pindex)
+      printout({ "fa.blueprints-copied-nothing" }, pindex)
       return
    end
    p.add_to_clipboard(p.cursor_stack)
