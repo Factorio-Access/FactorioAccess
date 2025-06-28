@@ -80,7 +80,10 @@ function mod.set_quick_bar_slot(index, pindex)
    local ent = p.selected
    if stack_cur and stack_cur.valid_for_read and stack_cur.valid == true then
       game.get_player(pindex).set_quick_bar_slot(index + 10 * page, stack_cur)
-      printout("Quickbar assigned " .. index .. " " .. Localising.get(stack_cur, pindex), pindex)
+      local msg = MessageBuilder.new()
+      msg:fragment({ "fa.quickbar-assigned", index })
+      msg:fragment(Localising.get_localised_name_with_fallback(stack_cur))
+      printout(msg:build(), pindex)
    elseif
       players[pindex].menu == "inventory"
       and stack_inv
@@ -88,10 +91,16 @@ function mod.set_quick_bar_slot(index, pindex)
       and stack_inv.valid == true
    then
       game.get_player(pindex).set_quick_bar_slot(index + 10 * page, stack_inv)
-      printout("Quickbar assigned " .. index .. " " .. Localising.get(stack_inv, pindex), pindex)
+      local msg = MessageBuilder.new()
+      msg:fragment({ "fa.quickbar-assigned", index })
+      msg:fragment(Localising.get_localised_name_with_fallback(stack_inv))
+      printout(msg:build(), pindex)
    elseif ent ~= nil and ent.valid and ent.force == p.force and prototypes.item[ent.name] ~= nil then
       game.get_player(pindex).set_quick_bar_slot(index + 10 * page, ent.name)
-      printout("Quickbar assigned " .. index .. " " .. Localising.get(ent, pindex), pindex)
+      local msg = MessageBuilder.new()
+      msg:fragment({ "fa.quickbar-assigned", index })
+      msg:fragment(Localising.get_localised_name_with_fallback(ent))
+      printout(msg:build(), pindex)
    else
       --Clear the slot
       local item = game.get_player(pindex).get_quick_bar_slot(index + 10 * page)
