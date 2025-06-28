@@ -870,7 +870,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
    elseif index == 2 then
       --List all members of this network
       if not clicked then
-         printout("List members of this network", pindex)
+         printout({ "fa.circuit-list-members" }, pindex)
       else
          if nwr == nil and nwg == nil then
             printout({ "fa.circuit-no-network-connected" }, pindex)
