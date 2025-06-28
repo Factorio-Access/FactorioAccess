@@ -65,7 +65,7 @@ function mod.fast_travel_menu_click(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
    if players[pindex].travel.input_box then players[pindex].travel.input_box.destroy() end
    if #storage.players[pindex].travel == 0 and players[pindex].travel.index.x < TRAVEL_MENU_LENGTH then
-      printout("Move towards the right and select Create New to get started.", pindex)
+      printout({ "fa.travel-move-right-create-new" }, pindex)
    elseif players[pindex].travel.index.y == 0 and players[pindex].travel.index.x < TRAVEL_MENU_LENGTH then
       printout(
          "Navigate up and down to select a fast travel point, then press LEFT BRACKET to get there quickly.",
