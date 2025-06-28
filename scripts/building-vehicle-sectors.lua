@@ -87,7 +87,7 @@ function mod.open_operable_building(ent, pindex)
          > game.get_player(pindex).reach_distance
       then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout("Building is out of player reach", pindex)
+         printout({ "fa.bvs-building-out-of-reach" }, pindex)
          game.get_player(pindex).opened = nil
          return
       end
@@ -250,7 +250,7 @@ function mod.open_operable_building(ent, pindex)
          end
       end
    else
-      printout("Not an operable building.", pindex)
+      printout({ "fa.bvs-not-operable-building" }, pindex)
    end
 end
 
@@ -267,7 +267,7 @@ function mod.open_operable_vehicle(ent, pindex)
       then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
          game.get_player(pindex).opened = nil
-         printout("Vehicle is out of player reach", pindex)
+         printout({ "fa.bvs-vehicle-out-of-reach" }, pindex)
          return
       end
       --Open GUI if not already
@@ -371,7 +371,7 @@ function mod.open_operable_vehicle(ent, pindex)
          end
       end
    else
-      printout("Not an operable vehicle.", pindex)
+      printout({ "fa.bvs-not-operable-vehicle" }, pindex)
    end
 end
 
@@ -434,7 +434,7 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
       end
       local box = building_sector.inventory
       if #box == 0 then
-         printout("No fluid", pindex)
+         printout({ "fa.bvs-no-fluid" }, pindex)
          return
       elseif players[pindex].building.index > #box or players[pindex].building.index == 0 then
          players[pindex].building.index = 1
