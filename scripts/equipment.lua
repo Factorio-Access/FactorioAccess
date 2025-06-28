@@ -570,24 +570,24 @@ function mod.guns_menu_click_slot(pindex)
       if not selected_stack or not selected_stack.valid_for_read then
          --Empty slot
          if menu.ammo_selected and hand.type ~= "ammo" then
-            printout("Error: Slot reserved for ammo types only", pindex)
+            printout({ "fa.equipment-error-ammo-only" }, pindex)
          elseif not menu.ammo_selected and hand.type ~= "gun" then
-            printout("Error: Slot reserved for gun types only", pindex)
+            printout({ "fa.equipment-error-gun-only" }, pindex)
          else
             if selected_stack ~= nil then hand.swap_stack(selected_stack) end
             --If the swap is successful then the following print statement is overwritten.
-            printout("Error: Incompatible gun and ammo types", pindex)
+            printout({ "fa.equipment-error-incompatible" }, pindex)
          end
       else
          --Full slot
          if menu.ammo_selected and hand.type ~= "ammo" then
-            printout("Error: Slot reserved for ammo types only", pindex)
+            printout({ "fa.equipment-error-ammo-only" }, pindex)
          elseif not menu.ammo_selected and hand.type ~= "gun" then
-            printout("Error: Slot reserved for gun types only", pindex)
+            printout({ "fa.equipment-error-gun-only" }, pindex)
          else
             hand.swap_stack(selected_stack)
             --If the swap is successful then the following print statement is overwritten.
-            printout("Error: Incompatible gun and ammo types", pindex)
+            printout({ "fa.equipment-error-incompatible" }, pindex)
          end
       end
    else
@@ -596,7 +596,7 @@ function mod.guns_menu_click_slot(pindex)
          --Pick up the thing
          hand.swap_stack(selected_stack)
       else
-         printout("No action", pindex)
+         printout({ "fa.equipment-no-action" }, pindex)
       end
    end
 end
