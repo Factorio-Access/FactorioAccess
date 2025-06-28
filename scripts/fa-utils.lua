@@ -1154,4 +1154,83 @@ function mod.get_player_relative_origin(pindex)
    end
 end
 
+-- Formats a power value in watts to a localized string
+---@param power number Power value in watts
+---@return LocalisedString
+function mod.format_power(power)
+   if power > 1000000000000 then
+      return { "fa.unit-terawatts", string.format("%.1f", power / 1000000000000) }
+   elseif power > 1000000000 then
+      return { "fa.unit-gigawatts", string.format("%.1f", power / 1000000000) }
+   elseif power > 1000000 then
+      return { "fa.unit-megawatts", string.format("%.1f", power / 1000000) }
+   elseif power > 1000 then
+      return { "fa.unit-kilowatts", string.format("%.1f", power / 1000) }
+   else
+      return { "fa.unit-watts", string.format("%.1f", power) }
+   end
+end
+
+-- Formats a distance with direction to a localized string
+---@param distance number Distance in tiles
+---@param direction string Direction name (e.g., "north", "south")
+---@return LocalisedString
+function mod.format_distance_with_direction(distance, direction)
+   return { "fa.distance-tiles-direction", tostring(distance), { "fa.direction-" .. direction } }
+end
+
+-- Builds a list with proper separators
+---@param items table Array of LocalisedString or string items
+---@param separator? LocalisedString Optional separator (defaults to comma-space)
+---@param last_separator? LocalisedString Optional last separator (defaults to "and")
+---@return LocalisedString
+function mod.build_list(items, separator, last_separator)
+   if #items == 0 then
+      return ""
+   elseif #items == 1 then
+      return items[1]
+   end
+
+   separator = separator or { "", ", " }
+   last_separator = last_separator or { "", " ", { "fa.list-and" }, " " }
+
+   local result = { "", items[1] }
+   for i = 2, #items - 1 do
+      table.insert(result, separator)
+      table.insert(result, items[i])
+   end
+   table.insert(result, last_separator)
+   table.insert(result, items[#items])
+
+   return result
+end
+
+-- Formats item count (e.g., "iron-plate x 100")
+---@param item_name LocalisedString Item localized name
+---@param count number Item count
+---@return LocalisedString
+function mod.format_item_count(item_name, count)
+   return { "fa.item-count", item_name, tostring(count) }
+end
+
+-- Formats a slot state (empty, contains item, filtered, etc.)
+---@param item_name? LocalisedString Item name if slot contains item
+---@param count? number Item count if applicable
+---@param is_filtered? boolean Whether slot is filtered
+---@param filter_name? LocalisedString Filter name if filtered
+---@return LocalisedString
+function mod.format_slot_state(item_name, count, is_filtered, filter_name)
+   if item_name then
+      if is_filtered then
+         return { "", { "fa.slot-filtered" }, " ", mod.format_item_count(item_name, count or 1) }
+      else
+         return mod.format_item_count(item_name, count or 1)
+      end
+   elseif is_filtered and filter_name then
+      return { "fa.slot-empty-filtered", filter_name }
+   else
+      return { "fa.slot-empty" }
+   end
+end
+
 return mod

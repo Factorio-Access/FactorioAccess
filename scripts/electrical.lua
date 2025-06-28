@@ -5,26 +5,11 @@ local Wires = require("scripts.wires")
 
 local mod = {}
 
---Formats a power value in watts to summarize it as a string according to its magnitude.
+--Formats a power value in watts to summarize it as a LocalisedString according to its magnitude.
 ---@param power float
+---@return LocalisedString
 function mod.get_power_string(power)
-   local result = ""
-   if power > 1000000000000 then
-      power = power / 1000000000000
-      result = result .. string.format(" %.1f Terawatts", power)
-   elseif power > 1000000000 then
-      power = power / 1000000000
-      result = result .. string.format(" %.1f Gigawatts", power)
-   elseif power > 1000000 then
-      power = power / 1000000
-      result = result .. string.format(" %.1f Megawatts", power)
-   elseif power > 1000 then
-      power = power / 1000
-      result = result .. string.format(" %.1f Kilowatts", power)
-   else
-      result = result .. string.format(" %.1f Watts", power)
-   end
-   return result
+   return FaUtils.format_power(power)
 end
 
 --Spawns a lamp at the electric pole and uses its energy level to approximate the network satisfaction percentage with high accuracy
