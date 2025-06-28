@@ -28,7 +28,7 @@ function mod.append_rail(pos, pindex)
    --0 Check if there is at least 1 rail in hand, else return
    if not (stack.valid and stack.valid_for_read and stack.name == "rail" and stack.count > 0) then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout("You need at least 1 rail in hand.", pindex)
+      printout({ "fa.rail-need-at-least-one" }, pindex)
       return
    end
 
@@ -52,7 +52,7 @@ function mod.append_rail(pos, pindex)
          if #ents == 0 then
             game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
             if players[pindex].build_lock == false then
-               printout("No rails found nearby.", pindex)
+               printout({ "fa.rail-no-rails-nearby" }, pindex)
                return
             end
          end
@@ -81,7 +81,7 @@ function mod.append_rail(pos, pindex)
       if not is_end_rail then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
          --printout(comment, pindex)
-         printout("No end rails found nearby", pindex)
+         printout({ "fa.rail-no-end-rails-nearby" }, pindex)
          return
       end
    end
@@ -242,7 +242,7 @@ function mod.append_rail(pos, pindex)
       if
          not surf.can_place_entity({ name = "straight-rail", position = append_rail_pos, direction = append_rail_dir })
       then
-         printout("Cannot place here to extend the rail.", pindex)
+         printout({ "fa.rail-cannot-place-extend" }, pindex)
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
          rendering.draw_circle({
             color = { 1, 0, 0 },
@@ -270,7 +270,7 @@ function mod.append_rail(pos, pindex)
          .build_from_cursor({ name = "straight-rail", position = append_rail_pos, direction = append_rail_dir })
       if not (created_rail ~= nil and created_rail.valid) then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout("Error: Invalid appended rail, try placing by hand.", pindex)
+         printout({ "fa.rail-error-invalid-appended" }, pindex)
          rendering.draw_circle({
             color = { 1, 0, 0 },
             radius = 0.5,
@@ -291,12 +291,12 @@ function mod.append_rail(pos, pindex)
    if created_rail.valid and Rails.has_parallel_neighbor(created_rail, pindex) then
       player.mine_entity(created_rail, true)
       player.play_sound({ path = "utility/cannot_build" })
-      printout("Cannot place, parallel rail segments should be at least 4 tiles apart.", pindex)
+      printout({ "fa.rail-parallel-spacing" }, pindex)
    end
 
    --9. Check if the appended rail has created an intersection. If so, notify the player.
    if created_rail.valid and Rails.is_intersection_rail(created_rail, pindex) then
-      printout("Intersection created.", pindex)
+      printout({ "fa.rail-intersection-created" }, pindex)
    end
 end
 
@@ -416,7 +416,7 @@ function mod.build_rail_turn_right_45_degrees(anchor_rail, pindex)
       --Check if the inventory has enough
       if players[pindex].inventory.lua_inventory.get_item_count("rail") < 3 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout("You need at least 3 rails in your inventory to build this turn.", pindex)
+         printout({ "fa.rail-need-three-for-turn" }, pindex)
          return
       else
          --Take from the inventory.
@@ -670,7 +670,7 @@ function mod.build_rail_turn_right_45_degrees(anchor_rail, pindex)
 
    if not can_place_all then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout("Building area occupied.", pindex)
+      printout({ "fa.rail-building-area-occupied" }, pindex)
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -902,7 +902,7 @@ function mod.build_rail_turn_right_90_degrees(anchor_rail, pindex)
       --Check if the inventory has enough
       if players[pindex].inventory.lua_inventory.get_item_count("rail") < 10 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout("You need at least 10 rails in your inventory to build this turn.", pindex)
+         printout({ "fa.rail-need-ten-for-turn" }, pindex)
          return
       else
          --Take from the inventory.
@@ -924,7 +924,7 @@ function mod.build_rail_turn_right_90_degrees(anchor_rail, pindex)
    pos = anchor_rail.position
    if dir == dirs.northeast or dir == dirs.southeast or dir == dirs.southwest or dir == dirs.northwest then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout("This structure is for horizontal or vertical end rails only.", pindex)
+      printout({ "fa.rail-horizontal-vertical-only" }, pindex)
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -1062,7 +1062,7 @@ function mod.build_rail_turn_right_90_degrees(anchor_rail, pindex)
 
    if not can_place_all then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout("Building area occupied.", pindex)
+      printout({ "fa.rail-building-area-occupied" }, pindex)
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -1199,7 +1199,7 @@ function mod.build_rail_turn_left_45_degrees(anchor_rail, pindex)
       --Check if the inventory has enough
       if players[pindex].inventory.lua_inventory.get_item_count("rail") < 3 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout("You need at least 3 rails in your inventory to build this turn.", pindex)
+         printout({ "fa.rail-need-three-for-turn" }, pindex)
          return
       else
          --Take from the inventory.
@@ -1453,7 +1453,7 @@ function mod.build_rail_turn_left_45_degrees(anchor_rail, pindex)
 
    if not can_place_all then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout("Building area occupied.", pindex)
+      printout({ "fa.rail-building-area-occupied" }, pindex)
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -1685,7 +1685,7 @@ function mod.build_rail_turn_left_90_degrees(anchor_rail, pindex)
       --Check if the inventory has enough
       if players[pindex].inventory.lua_inventory.get_item_count("rail") < 10 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout("You need at least 10 rails in your inventory to build this turn.", pindex)
+         printout({ "fa.rail-need-ten-for-turn" }, pindex)
          return
       else
          --Take from the inventory.
@@ -1707,7 +1707,7 @@ function mod.build_rail_turn_left_90_degrees(anchor_rail, pindex)
    pos = anchor_rail.position
    if dir == dirs.northeast or dir == dirs.southeast or dir == dirs.southwest or dir == dirs.northwest then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout("This structure is for horizontal or vertical end rails only.", pindex)
+      printout({ "fa.rail-horizontal-vertical-only" }, pindex)
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -1845,7 +1845,7 @@ function mod.build_rail_turn_left_90_degrees(anchor_rail, pindex)
 
    if not can_place_all then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout("Building area occupied.", pindex)
+      printout({ "fa.rail-building-area-occupied" }, pindex)
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -1985,7 +1985,7 @@ function mod.build_fork_at_end_rail(anchor_rail, pindex, include_forward, includ
       --Check if the inventory has enough
       if players[pindex].inventory.lua_inventory.get_item_count("rail") < 5 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout("You need at least 5 rails in your inventory to build this turn.", pindex)
+         printout({ "fa.rail-need-five-for-turn" }, pindex)
          return
       else
          --Take from the inventory.
@@ -2988,7 +2988,7 @@ function mod.build_fork_at_end_rail(anchor_rail, pindex, include_forward, includ
          end
       else
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout("Error: rail placement not defined", pindex)
+         printout({ "fa.rail-error-placement-not-defined" }, pindex)
          game.get_player(pindex).clear_cursor()
          return
       end
@@ -2997,7 +2997,7 @@ function mod.build_fork_at_end_rail(anchor_rail, pindex, include_forward, includ
    --4D. Process check results
    if not can_place_all then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout("Building area occupied.", pindex)
+      printout({ "fa.rail-building-area-occupied" }, pindex)
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -3844,7 +3844,7 @@ function mod.build_fork_at_end_rail(anchor_rail, pindex, include_forward, includ
          end
       else
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout("Error: rail placement not defined", pindex)
+         printout({ "fa.rail-error-placement-not-defined" }, pindex)
          game.get_player(pindex).clear_cursor()
          return
       end
@@ -3884,7 +3884,7 @@ function mod.build_rail_bypass_junction(anchor_rail, pindex)
       --Check if the inventory has enough
       if players[pindex].inventory.lua_inventory.get_item_count("rail") < 20 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout("You need at least 20 rails in your inventory to build this.", pindex)
+         printout({ "fa.rail-need-twenty-rails" }, pindex)
          return
       else
          --Take from the inventory.
@@ -3901,7 +3901,7 @@ function mod.build_rail_bypass_junction(anchor_rail, pindex)
       if players[pindex].inventory.lua_inventory.get_item_count("rail-chain-signal") < 4 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
          game.get_player(pindex).clear_cursor()
-         printout("You need at least 4 rail chain signals in your inventory to build this.", pindex)
+         printout({ "fa.rail-need-four-chain-signals" }, pindex)
          return
       else
          --Good to go.
@@ -4340,7 +4340,7 @@ function mod.build_rail_bypass_junction(anchor_rail, pindex)
 
    if not can_place_all then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout("Building area occupied.", pindex)
+      printout({ "fa.rail-building-area-occupied" }, pindex)
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -4735,7 +4735,7 @@ function mod.build_rail_bypass_junction_triple(anchor_rail, pindex)
       --Check if the inventory has enough
       if players[pindex].inventory.lua_inventory.get_item_count("rail") < 25 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout("You need at least 25 rails in your inventory to build this.", pindex)
+         printout({ "fa.rail-need-twenty-five-rails" }, pindex)
          return
       else
          --Take from the inventory.
@@ -4751,7 +4751,7 @@ function mod.build_rail_bypass_junction_triple(anchor_rail, pindex)
       --Check if the inventory has enough
       if players[pindex].inventory.lua_inventory.get_item_count("rail-chain-signal") < 6 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout("You need at least 6 rail chain signals in your inventory to build this.", pindex)
+         printout({ "fa.rail-need-six-chain-signals" }, pindex)
          return
       else
          --Good to go.
@@ -5233,7 +5233,7 @@ function mod.build_rail_bypass_junction_triple(anchor_rail, pindex)
 
    if not can_place_all then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout("Building area occupied.", pindex)
+      printout({ "fa.rail-building-area-occupied" }, pindex)
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -6162,7 +6162,7 @@ function mod.build_train_stop(anchor_rail, pindex)
       --Check if the inventory has enough
       if players[pindex].inventory.lua_inventory.get_item_count("train-stop") < 1 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout("You need at least 1 train stop in your inventory to build this turn.", pindex)
+         printout({ "fa.rail-need-one-train-stop" }, pindex)
          return
       else
          --Take from the inventory.
@@ -6197,7 +6197,7 @@ function mod.build_train_stop(anchor_rail, pindex)
    pos = anchor_rail.position
    if dir == dirs.northeast or dir == dirs.southeast or dir == dirs.southwest or dir == dirs.northwest then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout("This structure is for horizontal or vertical end rails only.", pindex)
+      printout({ "fa.rail-horizontal-vertical-only" }, pindex)
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -6242,7 +6242,7 @@ function mod.build_train_stop(anchor_rail, pindex)
 
    if not can_place_all then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout("Building area occupied, possibly by the player. Cursor mode recommended.", pindex)
+      printout({ "fa.rail-building-area-occupied-cursor" }, pindex)
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -6574,7 +6574,7 @@ function mod.run_menu(pindex, clicked_in)
             printout(comment, pindex)
          else
             Rails.mine_signals(rail, pindex)
-            printout("Signals cleared.", pindex)
+            printout({ "fa.rail-signals-cleared" }, pindex)
          end
       end
    elseif rail_type == 4 then
@@ -6613,7 +6613,7 @@ function mod.run_menu(pindex, clicked_in)
             printout(comment, pindex)
          else
             Rails.mine_signals(rail, pindex)
-            printout("Signals cleared.", pindex)
+            printout({ "fa.rail-signals-cleared" }, pindex)
          end
       end
    end
