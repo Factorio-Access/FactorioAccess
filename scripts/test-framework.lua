@@ -43,6 +43,7 @@ local test_files = {
    -- "fa-info-smoke-test", -- Test entity information extraction system (temporarily disabled)
    -- "sound-tests", -- Test sound system integration (temporarily disabled)
    "test-rail-basic-ops", -- Test basic rail operations module
+   "travel-tools-localization-test", -- Test travel-tools localization messages
 }
 
 -- Test execution state

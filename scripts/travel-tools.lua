@@ -35,7 +35,7 @@ function mod.fast_travel_menu_open(pindex)
       game.get_player(pindex).opened = frame
       game.get_player(pindex).selected = nil
    elseif router:is_ui_open() or game.get_player(pindex).opened ~= nil then
-      printout("Another menu is open.", pindex)
+      printout({ "fa.travel-another-menu-open" }, pindex)
    end
 end
 
