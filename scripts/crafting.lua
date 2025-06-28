@@ -44,8 +44,10 @@ function mod.read_crafting_queue(pindex, start_phrase)
    if players[pindex].crafting_queue.max ~= 0 then
       local item = players[pindex].crafting_queue.lua_queue[players[pindex].crafting_queue.index]
       local recipe_name_only = item.recipe
+      local recipe_proto = prototypes.recipe[recipe_name_only]
+      local recipe_name = recipe_proto and localising.get_localised_name_with_fallback(recipe_proto) or recipe_name_only
       printout(
-         start_phrase .. localising.get(prototypes.recipe[recipe_name_only], pindex) .. " x " .. item.count,
+         {"", start_phrase, recipe_name, " x ", tostring(item.count)},
          pindex
       )
    else
@@ -124,15 +126,22 @@ function mod.recipe_missing_ingredients_info(pindex, recipe_in)
       or players[pindex].crafting.lua_recipes[players[pindex].crafting.category][players[pindex].crafting.index]
    local p = game.get_player(pindex)
    local inv = p.get_main_inventory()
-   local result = "Missing "
+   local result = {"", "Missing "}
    local missing = 0
    for i, ing in ipairs(recipe.ingredients) do
       local on_hand = inv.get_item_count(ing.name)
       local needed = ing.amount - on_hand
       if needed > 0 then
          missing = missing + 1
-         if missing > 1 then result = result .. " and " end
-         result = result .. needed .. " " .. localising.get_item_from_name(ing.name, pindex)
+         if missing > 1 then table.insert(result, " and ") end
+         table.insert(result, tostring(needed))
+         table.insert(result, " ")
+         local proto = prototypes.item[ing.name]
+         if proto then
+            table.insert(result, localising.get_localised_name_with_fallback(proto))
+         else
+            table.insert(result, ing.name)
+         end
       end
    end
    if missing == 0 then result = "" end
@@ -159,25 +168,26 @@ function mod.recipe_raw_ingredients_info(recipe, pindex)
       end
    end
 
-   --Construct result string
-   local result = "Base ingredients: "
+   --Construct result array
+   local result = {"", "Base ingredients: "}
    for j, ingt in ipairs(merged_table) do
-      local localised_name = ingt.name
+      local localised_name
       ---@type LuaItemPrototype | LuaFluidPrototype
       local ingredient_prototype = prototypes.item[ingt.name]
 
       if ingredient_prototype then
-         localised_name = localising.get(ingredient_prototype, pindex)
+         localised_name = localising.get_localised_name_with_fallback(ingredient_prototype)
       else
          ingredient_prototype = prototypes.fluid[ingt.name]
          if ingredient_prototype ~= nil then
-            localised_name = localising.get(ingredient_prototype, pindex)
+            localised_name = localising.get_localised_name_with_fallback(ingredient_prototype)
          else
             localised_name = ingt.name
          end
       end
 
-      result = result .. localised_name .. ", " --" times " .. ingt.amount .. ", "
+      table.insert(result, localised_name)
+      table.insert(result, ", ")
    end
    return result
 end
