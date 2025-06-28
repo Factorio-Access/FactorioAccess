@@ -6,6 +6,8 @@ local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
 local Rails = require("scripts.rails")
 local UiRouter = require("scripts.ui.router")
+local MessageBuilder = require("scripts.message-builder")
+local localising = require("scripts.localising")
 
 local dirs = defines.direction
 
@@ -14,23 +16,14 @@ local mod = {}
 --Look up and translate the train state.
 function mod.get_train_state_info(train)
    local train_state_id = train.state
-   local train_state_text = ""
    local state_lookup = FaUtils.into_lookup(defines.train_state)
+
    if train_state_id ~= nil then
-      train_state_text = state_lookup[train_state_id]
-   else
-      train_state_text = "None"
+      local state_key = state_lookup[train_state_id]
+      if state_key then return FaUtils.format_state(state_key, "train-state") end
    end
 
-   --Explanations
-   if train_state_text == "wait_station" then
-      train_state_text = "waiting at a station"
-   elseif train_state_text == "wait_signal" then
-      train_state_text = "waiting at a closed rail signal"
-   elseif train_state_text == "on_the_path" then
-      train_state_text = "traveling"
-   end
-   return train_state_text
+   return { "fa.train-state-none" }
 end
 
 --Gets a train's name. The idea is that every locomotive on a train has the same backer name and this is the train's name. If there are multiple names, a warning returned.
@@ -39,7 +32,7 @@ function mod.get_train_name(train)
    local train_name = ""
    local multiple_names = false
 
-   if locos == nil then return "without locomotives" end
+   if locos == nil then return { "fa.train-without-locomotives" } end
 
    for i, loco in ipairs(locos["front_movers"]) do
       if train_name ~= "" and train_name ~= loco.backer_name then multiple_names = true end
@@ -51,7 +44,7 @@ function mod.get_train_name(train)
    end
 
    if train_name == "" then
-      return "without a name"
+      return { "fa.train-without-name" }
    elseif multiple_names then
       local oldest_name = mod.resolve_train_name(train)
       mod.set_train_name(train, oldest_name)
@@ -80,7 +73,7 @@ function mod.resolve_train_name(train)
    local locos = train.locomotives
    local oldest_loco = nil
 
-   if locos == nil then return "without locomotives" end
+   if locos == nil then return { "fa.train-without-locomotives" } end
 
    for i, loco in ipairs(locos["front_movers"]) do
       if oldest_loco == nil then
