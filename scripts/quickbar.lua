@@ -118,10 +118,14 @@ end
 function mod.read_switched_quick_bar(index, pindex)
    local page = game.get_player(pindex).get_active_quick_bar_page(index)
    local item = game.get_player(pindex).get_quick_bar_slot(1 + 10 * (index - 1))
-   local item_name = "empty slot"
-   if item ~= nil then item_name = Localising.get(prototypes.item[item.name], pindex) end
-   local result = "Quickbar " .. index .. " selected starting with " .. item_name
-   printout(result, pindex)
+   local msg = MessageBuilder.new()
+   msg:fragment({ "fa.quickbar-page-selected", index })
+   if item ~= nil then
+      msg:fragment(Localising.get_localised_name_with_fallback(prototypes.item[item.name]))
+   else
+      msg:fragment({ "fa.quickbar-empty-slot" })
+   end
+   printout(msg:build(), pindex)
 end
 
 return mod
