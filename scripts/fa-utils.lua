@@ -1233,4 +1233,33 @@ function mod.format_slot_state(item_name, count, is_filtered, filter_name)
    end
 end
 
+-- Formats a position to a localized string (e.g., "at 10, 20")
+---@param x number X coordinate
+---@param y number Y coordinate
+---@return LocalisedString
+function mod.format_position(x, y)
+   return { "fa.position-at", tostring(math.floor(x)), tostring(math.floor(y)) }
+end
+
+-- Formats a percentage value
+---@param value number Value between 0 and 100
+---@param suffix? string Optional suffix key (e.g., "complete", "full")
+---@return LocalisedString
+function mod.format_percentage(value, suffix)
+   if suffix then
+      return { "fa.percentage-with-suffix", tostring(math.floor(value)), { "fa.percentage-suffix-" .. suffix } }
+   else
+      return { "fa.percentage", tostring(math.floor(value)) }
+   end
+end
+
+-- Formats a state/status string
+---@param state_key string The state key to look up
+---@param prefix? string Optional prefix for the locale key (defaults to "state")
+---@return LocalisedString
+function mod.format_state(state_key, prefix)
+   prefix = prefix or "state"
+   return { "fa." .. prefix .. "-" .. state_key }
+end
+
 return mod
