@@ -1958,7 +1958,7 @@ end
 ---@param right_bottom fa.Point
 ---@return LocalisedString
 function mod.area_scan_summary_info(pindex, left_top, right_bottom)
-   local result = {}
+   local msg = MessageBuilder.MessageBuilder.new()
 
    local chunk_lt_x = math.floor(left_top.x / 32)
    local chunk_lt_y = math.floor(left_top.y / 32)
@@ -1978,10 +1978,12 @@ function mod.area_scan_summary_info(pindex, left_top, right_bottom)
       end
    end
    if total_chunks_covered > 0 and generated_chunk_count < 1 then
-      return "Charted 0%, you need to chart this area by approaching it or using a radar."
+      return { "fa.area-scan-charted-zero" }
    elseif total_chunks_covered > 0 and generated_chunk_count < total_chunks_covered then
-      table.insert(result, "Charted")
-      table.insert(result, math.floor(generated_chunk_count / total_chunks_covered * 100) .. "%,")
+      msg:fragment({
+         "fa.area-scan-charted-percent",
+         tostring(math.floor(generated_chunk_count / total_chunks_covered * 100)),
+      })
    end
 
    ---@type { name: string, count: string, category: string }[]
@@ -2052,36 +2054,56 @@ function mod.area_scan_summary_info(pindex, left_top, right_bottom)
       count_total = count_total + i.count
    end
 
-   -- Spacecat can't help us here. Why?  We can't have spaces between words and
-   -- commas, e.g. "iron ," is wrong.  The real problem isn't spacecat, it's
-   -- that this should be localised and the commas should be baked into the
-   -- localised strings, then those get fed to spacecat.
-   local contains_list = {}
+   -- Now using MessageBuilder to properly handle localisation
+   local has_items = false
    for _, entry in pairs(counts) do
       if entry.count == 0 then break end
 
-      local fragment = ""
-      fragment = fragment .. tostring(entry.count) .. " " .. entry.name
+      if not has_items then
+         msg:fragment({ "fa.area-scan-contains" })
+         has_items = true
+      end
+
+      -- Create proper localised string for the name
+      local localised_name
+      if entry.name == "water" then
+         localised_name = { "fa.area-scan-water" }
+      elseif entry.name == "trees" then
+         localised_name = { "fa.area-scan-trees" }
+      elseif entry.name == "stone-brick-path" then
+         localised_name = { "tile-name.stone-path" }
+      elseif entry.name == "concrete" then
+         localised_name = { "tile-name.concrete" }
+      elseif entry.name == "refined-concrete" then
+         localised_name = { "tile-name.refined-concrete" }
+      else
+         -- Try entity name first, then fall back to raw name
+         if prototypes.entity[entry.name] then
+            localised_name = { "entity-name." .. entry.name }
+         else
+            localised_name = entry.name
+         end
+      end
+
       if entry.category == "resource" or entry.category == "flooring" then
-         fragment = fragment .. " " .. math.floor(entry.count / covered_area * 100) .. " " .. "percent"
+         msg:list_item({
+            "fa.area-scan-item-with-percent",
+            tostring(entry.count),
+            localised_name,
+            tostring(math.floor(entry.count / covered_area * 100)),
+         })
+      else
+         msg:list_item({ "fa.area-scan-item", tostring(entry.count), localised_name })
       end
-
-      table.insert(contains_list, fragment .. ",")
    end
 
-   if next(contains_list) then
-      table.insert(result, "Area contains")
-      for _, f in pairs(contains_list) do
-         table.insert(result, f)
-      end
-      table.insert(result, "total space occupied")
-      table.insert(result, math.floor(count_total / covered_area * 100))
-      table.insert(result, "percent")
+   if has_items then
+      msg:fragment({ "fa.area-scan-total-occupied", tostring(math.floor(count_total / covered_area * 100)) })
    else
-      table.insert(result, "Area empty")
+      msg:fragment({ "fa.area-scan-empty" })
    end
 
-   return FaUtils.localise_cat_table(result)
+   return msg:build()
 end
 
 return mod

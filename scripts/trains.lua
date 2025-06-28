@@ -690,7 +690,7 @@ end
 
 --Returns most common items in a cargo wagon.
 function mod.cargo_wagon_top_contents_info(wagon)
-   local result = ""
+   local msg = MessageBuilder.new()
    local itemset = wagon.get_inventory(defines.inventory.cargo_wagon).get_contents()
    local itemtable = {}
    for name, count in pairs(itemset) do
@@ -700,22 +700,22 @@ function mod.cargo_wagon_top_contents_info(wagon)
       return k1.count > k2.count
    end)
    if #itemtable == 0 then
-      result = result .. " Contains no items. "
+      msg:fragment({ "fa.trains-contains-no-items" })
    else
-      result = result .. " Contains " .. itemtable[1].name .. " times " .. itemtable[1].count .. ", "
-      if #itemtable > 1 then result = result .. itemtable[2].name .. " times " .. itemtable[2].count .. ", " end
-      if #itemtable > 2 then result = result .. itemtable[3].name .. " times " .. itemtable[3].count .. ", " end
-      if #itemtable > 3 then result = result .. itemtable[4].name .. " times " .. itemtable[4].count .. ", " end
-      if #itemtable > 4 then result = result .. itemtable[5].name .. " times " .. itemtable[5].count .. ", " end
-      if #itemtable > 5 then result = result .. " and other items, " end
+      msg:fragment({ "fa.trains-contains" })
+      -- Add up to 5 items
+      for i = 1, math.min(5, #itemtable) do
+         msg:list_item({ "fa.trains-item-count", { "item-name." .. itemtable[i].name }, tostring(itemtable[i].count) })
+      end
+      if #itemtable > 5 then msg:list_item({ "fa.trains-and-other-items" }) end
    end
-   result = result .. " open the wagon menu to browse the full inventory. "
-   return result
+   msg:fragment({ "fa.trains-open-wagon-menu" })
+   return msg:build()
 end
 
 --Returns most common items in a fluid wagon or train.
 function mod.fluid_contents_info(wagon)
-   local result = ""
+   local msg = MessageBuilder.new()
    local itemset = wagon.get_fluid_contents()
    local itemtable = {}
    for name, amount in pairs(itemset) do
@@ -725,36 +725,21 @@ function mod.fluid_contents_info(wagon)
       return k1.amount > k2.amount
    end)
    if #itemtable == 0 then
-      result = result .. " Contains no fluids. "
+      msg:fragment({ "fa.trains-contains-no-fluids" })
    else
-      result = result
-         .. " Contains "
-         .. itemtable[1].name
-         .. " times "
-         .. string.format(" %.0f ", itemtable[1].amount)
-         .. ", "
-      if #itemtable > 1 then
-         result = result
-            .. " and "
-            .. itemtable[2].name
-            .. " times "
-            .. string.format(" %.0f ", itemtable[2].amount)
-            .. ", "
+      msg:fragment({ "fa.trains-contains" })
+      -- Add up to 3 fluids
+      for i = 1, math.min(3, #itemtable) do
+         msg:list_item({
+            "fa.trains-fluid-amount",
+            { "fluid-name." .. itemtable[i].name },
+            string.format("%.0f", itemtable[i].amount),
+         })
       end
-      if #itemtable > 2 then
-         result = result
-            .. " and "
-            .. itemtable[3].name
-            .. " times "
-            .. string.format(" %.0f ", itemtable[3].amount)
-            .. ", "
-      end
-      if #itemtable > 3 then result = result .. " and other fluids " end
+      if #itemtable > 3 then msg:list_item({ "fa.trains-and-other-fluids" }) end
    end
-   if wagon.object_name ~= "LuaTrain" and wagon.name == "fluid-wagon" then
-      result = result .. ", Use pumps to fill and empty this wagon. "
-   end
-   return result
+   if wagon.object_name ~= "LuaTrain" and wagon.name == "fluid-wagon" then msg:fragment({ "fa.trains-use-pumps" }) end
+   return msg:build()
 end
 
 --Returns most common items and fluids in a train (sum of all wagons)
