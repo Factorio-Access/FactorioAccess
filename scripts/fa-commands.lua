@@ -38,7 +38,7 @@ local function cmd_fac(cmd)
    local script = cmd.parameter
 
    if not cmd.parameter or cmd.parameter == "" then
-      printout("A script is required", pindex)
+      printout({ "fa.fa-commands-script-required" }, pindex)
       return
    end
 
