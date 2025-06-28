@@ -283,7 +283,7 @@ function mod.open_search_box(pindex)
    players[pindex].menu_search_frame = frame
 
    --Inform the player
-   printout("Type in a search term and press 'ENTER' ", pindex)
+   printout({ "fa.menu-search-type-term" }, pindex)
 end
 
 --Reads out the next inventory/menu item to match the search term. Used in all searchable menus.
@@ -292,7 +292,7 @@ function mod.fetch_next(pindex, str, start_phrase_in)
 
    --Only allow "inventory" and "building" menus for now
    if not router:is_ui_open() then
-      printout("The open map does not support searching.", pindex)
+      printout({ "fa.menu-search-map-unsupported" }, pindex)
       return
    end
    if
@@ -308,11 +308,11 @@ function mod.fetch_next(pindex, str, start_phrase_in)
       })
       or (router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) and players[pindex].blueprint_book_menu.list_mode)
    then
-      printout("This menu does not support searching.", pindex)
+      printout({ "fa.menu-search-menu-unsupported" }, pindex)
       return
    end
    if str == nil or str == "" then
-      printout("Missing search term", pindex)
+      printout({ "fa.menu-search-missing-term" }, pindex)
       return
    end
    --Start phrase
@@ -399,7 +399,7 @@ function mod.fetch_next(pindex, str, start_phrase_in)
    then
       new_index = blueprint_book_find_index_of_next_match(search_index, str, pindex)
    else
-      printout("This menu or building sector does not support searching.", pindex)
+      printout({ "fa.menu-search-sector-unsupported" }, pindex)
       return
    end
    --Return a menu output according to the index found
@@ -432,7 +432,7 @@ function mod.fetch_next(pindex, str, start_phrase_in)
          players[pindex].building.index = new_index_2
          Sectors.read_building_recipe(pindex, start_phrase)
       else
-         printout("Search section error", pindex)
+         printout({ "fa.menu-search-section-error" }, pindex)
          return
       end
    elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
@@ -454,7 +454,7 @@ function mod.fetch_next(pindex, str, start_phrase_in)
       players[pindex].blueprint_book_menu.index = new_index
       Blueprints.run_blueprint_book_menu(pindex, new_index, true, false, false)
    else
-      printout("Search error", pindex)
+      printout({ "fa.menu-search-error" }, pindex)
       return
    end
 end
@@ -465,7 +465,7 @@ function mod.fetch_last(pindex, str)
 
    --Only allow "inventory" and "building" menus for now
    if not router:is_ui_open() then
-      printout("The open map does not support backwards searching.", pindex)
+      printout({ "fa.menu-search-map-no-backwards" }, pindex)
       return
    end
    if
@@ -480,7 +480,7 @@ function mod.fetch_last(pindex, str)
       return
    end
    if str == nil or str == "" then
-      printout("Missing search term", pindex)
+      printout({ "fa.menu-search-missing-term" }, pindex)
       return
    end
    --Get the current search index
@@ -529,7 +529,7 @@ function mod.fetch_last(pindex, str)
       players[pindex].building.index = new_index
       Sectors.read_sector_slot(pindex, false)
    else
-      printout("Search error", pindex)
+      printout({ "fa.menu-search-error" }, pindex)
       return
    end
 end
