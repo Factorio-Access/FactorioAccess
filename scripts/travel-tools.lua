@@ -73,7 +73,7 @@ function mod.fast_travel_menu_click(pindex)
       )
    elseif players[pindex].travel.index.x == 1 then --Travel
       if p.vehicle then
-         printout("Cannot teleport from inside a vehicle", pindex)
+         printout({ "fa.travel-cannot-teleport-vehicle" }, pindex)
          return
       end
       local success = Teleport.teleport_to_closest(
