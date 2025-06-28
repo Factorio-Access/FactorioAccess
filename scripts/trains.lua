@@ -758,7 +758,8 @@ function mod.fluid_contents_info(wagon)
 end
 
 --Returns most common items and fluids in a train (sum of all wagons)
-function mod.train_top_contents_info(train, group_no)
+--NOTE: This function is effectively dead code - trains functionality is not currently active
+function mod.train_top_contents_info(train, group_no, pindex)
    local result = { "" }
    local itemset = train.get_contents()
    local itemtable = {}

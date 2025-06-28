@@ -297,6 +297,7 @@ function mod.nearby_train_schedule_read_this_stop(train_stop)
 end
 
 --Returns an info string after adding this train stop to the parked train.
+--NOTE: This function is effectively dead code - trains functionality is not currently active
 function mod.nearby_train_schedule_add_stop(train_stop, wait_condition_type, wait_time_seconds)
    local result = "initial"
    --Locate the nearby train

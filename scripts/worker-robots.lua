@@ -492,7 +492,7 @@ function mod.logistics_info_key_handler(pindex)
       local filter = ent.storage_filter
       local result
       if filter ~= nil then
-         result = { "", localising.get_localised_name_with_fallback(filter.name), " set as logistic storage filter" }
+         result = { "", Localising.get_localised_name_with_fallback(filter.name), " set as logistic storage filter" }
       else
          result = { "", "Nothing set as logistic storage filter" }
       end
@@ -859,7 +859,7 @@ function mod.set_logistic_filter(pindex, ent, name)
    ent.set_filter(1, name)
    local proto = prototypes.item[name]
    if proto then
-      printout({ "", localising.get_localised_name_with_fallback(proto), " set as logistic storage filter " }, pindex)
+      printout({ "", Localising.get_localised_name_with_fallback(proto), " set as logistic storage filter " }, pindex)
    else
       printout({ "", name, " set as logistic storage filter " }, pindex)
    end
