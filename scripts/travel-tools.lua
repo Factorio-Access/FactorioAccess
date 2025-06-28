@@ -128,7 +128,7 @@ function mod.fast_travel_menu_click(pindex)
          desc = ""
          players[pindex].travel[players[pindex].travel.index.y].description = desc
       end
-      printout("Type in the new description text, then press 'ENTER' to confirm, or press 'ESC' to cancel.", pindex)
+      printout({ "fa.travel-type-new-description" }, pindex)
       players[pindex].travel.describing = true
       local frame = game.get_player(pindex).gui.screen["travel"]
       players[pindex].travel.input_box = frame.add({ type = "textfield", name = "input" })
