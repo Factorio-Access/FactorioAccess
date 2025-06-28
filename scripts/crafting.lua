@@ -114,7 +114,7 @@ function mod.read_crafting_slot(pindex, start_phrase, new_category)
          pindex
       )
    else
-      printout("Blank", pindex)
+      printout({ "fa.crafting-blank" }, pindex)
    end
 end
 
