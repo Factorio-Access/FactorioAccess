@@ -165,11 +165,11 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
          Mouse.move_mouse_pointer(FaUtils.center_of_tile(vp:get_cursor_pos()), pindex)
          Graphics.draw_cursor_highlight(pindex, nil, nil)
       else
-         printout("Teleport Failed", pindex)
+         printout({ "fa.teleport-failed" }, pindex)
          return false
       end
    else
-      printout("Cannot teleport", pindex) --this is unlikely to be reached because we find the first non-colliding position
+      printout({ "fa.teleport-cannot" }, pindex) --this is unlikely to be reached because we find the first non-colliding position
       return false
    end
 
