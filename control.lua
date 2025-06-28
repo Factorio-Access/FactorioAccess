@@ -448,7 +448,7 @@ function locate_hand_in_player_inventory(pindex)
    end
    --If found, read it from the inventory
    if not found then
-      printout("Error: " .. Localising.get(stack, pindex) .. " not found in player inventory", pindex)
+      printout({ "fa.error-item-not-found-inventory", Localising.get(stack, pindex) }, pindex)
       return
    else
       players[pindex].inventory.index = i
@@ -2847,7 +2847,7 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event)
          players[pindex].travel.describing = false
          players[pindex].travel[players[pindex].travel.index.y].description = result
          printout(
-            "Description updated for point " .. players[pindex].travel[players[pindex].travel.index.y].name,
+            { "fa.travel-description-updated", players[pindex].travel[players[pindex].travel.index.y].name },
             pindex
          )
       end
@@ -2885,7 +2885,7 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event)
       event.element.focus()
       players[pindex].menu_search_term = term
       if term ~= "" then
-         printout("Searching for " .. term .. ", go through results with 'SHIFT + ENTER' or 'CONTROL + ENTER' ", pindex)
+         printout({ "fa.menu-search-searching-for", term }, pindex)
       end
       event.element.destroy()
       if players[pindex].menu_search_frame ~= nil then
@@ -3089,8 +3089,7 @@ EventManager.on_event(defines.events.on_train_changed_state, function(event)
       for i, player in ipairs(event.train.passengers) do
          local stop = event.train.path_end_stop
          if stop ~= nil then
-            local str = " Arriving at station " .. stop.backer_name .. " "
-            printout(str, player.index)
+            printout({ "fa.train-arriving-at-station", stop.backer_name }, player.index)
          end
       end
    elseif event.train.state == defines.train_state.on_the_path then --laterdo make this announce only when near another trainstop.
@@ -3098,8 +3097,7 @@ EventManager.on_event(defines.events.on_train_changed_state, function(event)
       for i, player in ipairs(event.train.passengers) do
          local stop = event.train.path_end_stop
          if stop ~= nil then
-            local str = " Heading to station " .. stop.backer_name .. " "
-            printout(str, player.index)
+            printout({ "fa.train-heading-to-station", stop.backer_name }, player.index)
          end
       end
    elseif event.train.state == defines.train_state.wait_signal then
@@ -5800,7 +5798,7 @@ local function kb_switch_menu_or_gun(event)
       local ammo_stack = ammo_inv[gun_index]
       local gun_stack = guns_inv[gun_index]
       --game.print("print " .. gun_index)--
-      result = gun_stack.name .. " with " .. ammo_stack.count .. " " .. ammo_stack.name .. "s "
+      result = { "fa.gun-with-ammo", Localising.get_localised_name_with_fallback(gun_stack), tostring(ammo_stack.count), Localising.get_localised_name_with_fallback(ammo_stack) }
    end
 
    if not router:is_ui_open() then
@@ -5936,7 +5934,7 @@ local function kb_reverse_switch_menu_or_gun(event)
       local ammo_stack = ammo_inv[gun_index]
       local gun_stack = guns_inv[gun_index]
       --game.print("print " .. gun_index)--
-      result = gun_stack.name .. " with " .. ammo_stack.count .. " " .. ammo_stack.name .. "s "
+      result = { "fa.gun-with-ammo", Localising.get_localised_name_with_fallback(gun_stack), tostring(ammo_stack.count), Localising.get_localised_name_with_fallback(ammo_stack) }
    end
 
    if not router:is_ui_open() then
@@ -6155,7 +6153,7 @@ local function kb_mine_area(event)
             surface = surf,
             time_to_live = 60,
          })
-         printout(" Cleared away " .. cleared_count .. " entity ghosts within 10 tiles. ", pindex)
+         printout({ "fa.cleared-entity-ghosts", tostring(cleared_count) }, pindex)
          return
       else
          --Check if it is a remnant ent, clear obstacles
@@ -6210,8 +6208,8 @@ local function kb_mine_area(event)
    local stacks_collected = init_empty_stacks - game.get_player(pindex).get_main_inventory().count_empty_stacks()
 
    --Print result
-   local result = " Cleared away " .. cleared_total .. " objects "
-   if stacks_collected >= 0 then result = result .. " and collected " .. stacks_collected .. " new item stacks." end
+   local result = { "fa.cleared-objects", tostring(cleared_total) }
+   if stacks_collected >= 0 then result = { "", result, { "fa.and-collected-stacks", tostring(stacks_collected) } } end
    printout(result, pindex)
 end
 
@@ -6252,7 +6250,7 @@ local function kb_super_mine_area(event)
          surface = surf,
          time_to_live = 60,
       })
-      printout(" Cleared away " .. cleared_count .. " entity ghosts within 100 tiles. ", pindex)
+      printout({ "fa.cleared-entity-ghosts-100", tostring(cleared_count) }, pindex)
       return
    end
 end
@@ -7866,16 +7864,12 @@ local function kb_read_time_and_research_progress(event)
    local surf = game.get_player(pindex).surface
    local hour = math.floor((24 * surf.daytime + 12) % 24)
    local minute = math.floor((24 * surf.daytime - math.floor(24 * surf.daytime)) * 60)
-   local time_string = " The local time is " .. hour .. ":" .. string.format("%02d", minute) .. ", "
+   local time_string = { "fa.local-time", tostring(hour), string.format("%02d", minute) }
 
    --Get total playtime
    local total_hours = math.floor(game.tick / 216000)
    local total_minutes = math.floor((game.tick % 216000) / 3600)
-   local total_time_string = " The total mission time is "
-      .. total_hours
-      .. " hours and "
-      .. total_minutes
-      .. " minutes "
+   local total_time_string = { "fa.mission-time", tostring(total_hours), tostring(total_minutes) }
 
    --Add research progress info
    local progress_string = Research.get_progress_string(pindex)

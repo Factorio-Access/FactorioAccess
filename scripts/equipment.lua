@@ -4,6 +4,7 @@
 local Electrical = require("scripts.electrical")
 local FaUtils = require("scripts.fa-utils")
 local localising = require("scripts.localising")
+local MessageBuilder = require("scripts.message-builder")
 local UiRouter = require("scripts.ui.router")
 
 local mod = {}
@@ -13,20 +14,22 @@ local mod = {}
 function mod.equip_it(stack, pindex)
    local router = UiRouter.get_router(pindex)
 
-   local message = ""
+   local message = MessageBuilder.new()
    if router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle" then
-      message = localising.get_alt(prototypes.entity["spidertron"])
-      if message == nil then
-         message = "Spidertron " --laterdo possible bug here
+      local spidertron_name = localising.get_alt(prototypes.entity["spidertron"])
+      if spidertron_name == nil then
+         spidertron_name = "Spidertron" --laterdo possible bug here
       end
+      message:fragment(spidertron_name)
+      message:fragment(" ")
    end
 
    if stack.is_armor then
       local armor = game.get_player(pindex).get_inventory(defines.inventory.character_armor)
       if armor.is_empty() then
-         message = message .. " Equipped " .. stack.name
+         message:fragment({ "fa.equipment-equipped", localising.get_localised_name_with_fallback(stack) })
       else
-         message = message .. " Equipped " .. stack.name .. " and took in hand " .. armor[1].name
+         message:fragment({ "fa.equipment-equipped-swap", localising.get_localised_name_with_fallback(stack), localising.get_localised_name_with_fallback(armor[1]) })
       end
       stack.swap_stack(armor[1])
       players[pindex].skip_read_hand = true
@@ -35,14 +38,14 @@ function mod.equip_it(stack, pindex)
       local gun_inv = game.get_player(pindex).get_inventory(defines.inventory.character_guns)
       if gun_inv.can_insert(stack) then
          local inserted = gun_inv.insert(stack)
-         message = message .. " Equipped " .. stack.name
+         message:fragment({ "fa.equipment-equipped", localising.get_localised_name_with_fallback(stack) })
          stack.count = stack.count - inserted
          players[pindex].skip_read_hand = true
       else
          if gun_inv.count_empty_stacks() == 0 then
-            message = message .. " All gun slots full."
+            message:fragment({ "fa.equipment-gun-slots-full" })
          else
-            message = message .. " Cannot insert " .. stack.name
+            message:fragment({ "fa.equipment-cannot-insert", localising.get_localised_name_with_fallback(stack) })
          end
       end
    elseif stack.type == "ammo" then
@@ -50,14 +53,14 @@ function mod.equip_it(stack, pindex)
       local ammo_inv = game.get_player(pindex).get_inventory(defines.inventory.character_ammo)
       if ammo_inv.can_insert(stack) then
          local inserted = ammo_inv.insert(stack)
-         message = message .. " Reloaded with " .. stack.name
+         message:fragment({ "fa.equipment-reloaded", localising.get_localised_name_with_fallback(stack) })
          stack.count = stack.count - inserted
          players[pindex].skip_read_hand = true
       else
          if ammo_inv.count_empty_stacks() == 0 then
-            message = message .. " All ammo slots full."
+            message:fragment({ "fa.equipment-ammo-slots-full" })
          else
-            message = message .. " Cannot insert " .. stack.name
+            message:fragment({ "fa.equipment-cannot-insert", localising.get_localised_name_with_fallback(stack) })
          end
       end
    elseif stack.prototype.place_as_equipment_result ~= nil then
@@ -85,27 +88,27 @@ function mod.equip_it(stack, pindex)
       end
       local slots_left = mod.count_empty_equipment_slots(grid)
       if placed ~= nil then
-         message = message .. " equipped " .. stack.name .. ", " .. slots_left .. " empty slots remaining."
+         message:fragment({ "fa.equipment-equipped-grid", localising.get_localised_name_with_fallback(stack), tostring(slots_left) })
          stack.count = stack.count - 1
          players[pindex].skip_read_hand = true
       else
          --Check if the grid is full
          if slots_left == 0 then
-            message = message .. " All armor equipment slots are full."
+            message:fragment({ "fa.equipment-grid-full" })
          else
-            message = message .. " This equipment does not fit in the remaining " .. slots_left .. " slots."
+            message:fragment({ "fa.equipment-no-fit", tostring(slots_left) })
          end
       end
    elseif
       not router:is_ui_open()
       and (stack.prototype.place_result ~= nil or stack.prototype.place_as_tile_result ~= nil)
    then
-      message = ""
+      return ""
    else
-      message = message .. " Cannot equip " .. stack.name
+      message:fragment({ "fa.equipment-cannot-equip", localising.get_localised_name_with_fallback(stack) })
    end
 
-   return message
+   return message:build()
 end
 
 --Returns info on weapons and ammo
@@ -114,24 +117,27 @@ function mod.read_weapons_and_ammo(pindex)
    local ammo_inv = game.get_player(pindex).get_inventory(defines.inventory.character_ammo)
    local guns_count = #guns_inv - guns_inv.count_empty_stacks()
    local ammos_count = #ammo_inv - ammo_inv.count_empty_stacks()
-   local result = "Weapons, "
+   
+   if guns_count == 0 then return { "fa.equipment-no-weapons" } end
+   
+   local result = MessageBuilder.new()
+   result:fragment({ "fa.equipment-weapons-header" })
 
    for i = 1, 3, 1 do
-      if i > 1 then result = result .. " and " end
+      if i > 1 then result:fragment({ "fa.equipment-and" }) end
       if guns_inv[i] and guns_inv[i].valid and guns_inv[i].valid_for_read then
-         result = result .. guns_inv[i].name
+         result:fragment(localising.get_localised_name_with_fallback(guns_inv[i]))
       else
-         result = result .. "empty weapon slot"
+         result:fragment({ "fa.equipment-empty-weapon-slot" })
       end
       if ammo_inv[i] ~= nil and ammo_inv[i].valid and ammo_inv[i].valid_for_read then
-         result = result .. " with " .. ammo_inv[i].count .. " " .. ammo_inv[i].name .. "s, "
+         result:fragment({ "fa.equipment-with-ammo", tostring(ammo_inv[i].count), localising.get_localised_name_with_fallback(ammo_inv[i]) })
       else
-         result = result .. " with no ammunition, "
+         result:fragment({ "fa.equipment-no-ammunition" })
       end
    end
-   if guns_count == 0 then result = " No weapons equipped." end
 
-   return result
+   return result:build()
 end
 
 --Reload all ammo possible from the inventory. Existing stacks have priority over fuller stacks.
@@ -195,8 +201,8 @@ function mod.remove_weapons_and_ammo(pindex)
       end
    end
 
-   message = "Collected " .. resulted_remove_count .. " of " .. expected_remove_count .. " item stacks,"
-   if main_inv.count_empty_stacks() == 0 then message = message .. " Inventory full. " end
+   message = { "fa.equipment-collected-stacks", tostring(resulted_remove_count), tostring(expected_remove_count) }
+   if main_inv.count_empty_stacks() == 0 then message = { "", message, { "fa.inventory-full" } } end
 
    return message
 end
@@ -283,7 +289,7 @@ function mod.read_shield_and_health_level(pindex, ent_in)
          table.insert(result, " Shield full, ")
       elseif grid.shield > 0 then
          local shield_left = math.floor(grid.shield / grid.max_shield * 100 + 0.5)
-         table.insert(result, " Shield " .. shield_left .. " percent, ")
+         table.insert(result, { "fa.equipment-shield-percent", tostring(shield_left) })
       else
          empty_shield = true
       end
@@ -380,40 +386,42 @@ function mod.read_equipment_list(pindex)
    local router = UiRouter.get_router(pindex)
 
    local armor_inv = game.get_player(pindex).get_inventory(defines.inventory.character_armor)
-   local result = ""
-   if armor_inv.is_empty() then return "No armor equipped." end
-   if armor_inv[1].grid == nil or not armor_inv[1].grid.valid then return "No equipment grid." end
+   if armor_inv.is_empty() then return { "fa.equipment-no-armor" } end
+   if armor_inv[1].grid == nil or not armor_inv[1].grid.valid then return { "fa.equipment-no-grid" } end
    --Armor with Equipment
    local grid
+   local result = MessageBuilder.new()
    if router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle" then
       grid = game.get_player(pindex).opened.grid
-      result = localising.get_alt(prototypes.entity["spidertron"])
-      if result == nil then
-         result = "Spidertron " --laterdo possible bug here
+      local spidertron_name = localising.get_alt(prototypes.entity["spidertron"])
+      if spidertron_name == nil then
+         spidertron_name = "Spidertron" --laterdo possible bug here
       end
+      result:fragment(spidertron_name)
    else
       grid = armor_inv[1].grid
-      result = "Armor "
+      result:fragment({ "fa.equipment-armor" })
    end
-   if grid.equipment == nil or grid.equipment == {} then return " No armor equipment installed. " end
+   if grid.equipment == nil or grid.equipment == {} then return { "fa.equipment-no-equipment-installed" } end
    --Read Equipment List
-   result = result .. " equipped, "
+   result:fragment({ "fa.equipment-equipped-header" })
    local contents = grid.get_contents()
    local itemtable = {}
    for name, count in pairs(contents) do
       table.insert(itemtable, { name = name, count = count })
    end
    if #itemtable == 0 then
-      result = result .. " nothing, "
+      result:fragment({ "fa.equipment-nothing" })
    else
       for i = 1, #itemtable, 1 do
-         result = result .. itemtable[i].count .. " " .. itemtable[i].name .. ", "
+         result:fragment({ "fa.equipment-item-count", tostring(itemtable[i].count), {"item-name." .. itemtable[i].name} })
+         result:fragment(", ")
       end
    end
 
-   result = result .. mod.count_empty_equipment_slots(grid) .. " empty slots remaining "
+   result:fragment({ "fa.equipment-empty-slots", tostring(mod.count_empty_equipment_slots(grid)) })
 
-   return result
+   return result:build()
 end
 
 --Remove all armor equipment and then the armor. laterdo "inv full" checks
@@ -444,16 +452,16 @@ function mod.remove_equipment_and_armor(pindex)
             end
          end
       end
-      result = "Collected " .. initial_equipment_count - grid.count() .. " of " .. initial_equipment_count .. " items, "
+      result = { "fa.equipment-collected-items", tostring(initial_equipment_count - grid.count()), tostring(initial_equipment_count) }
    end
 
    --Remove armor
    if router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle" then
       --do nothing
    elseif char_main_inv.count_empty_stacks() == 0 then
-      result = result .. " inventory full "
+      result = { "", result, { "fa.inventory-full" } }
    else
-      result = result .. "removed " .. armor_inv[1].name
+      result = { "", result, { "fa.equipment-removed-armor", localising.get_localised_name_with_fallback(armor_inv[1]) } }
       game.get_player(pindex).clear_cursor()
       local stack2 = game.get_player(pindex).cursor_stack
       stack2.swap_stack(armor_inv[1])
