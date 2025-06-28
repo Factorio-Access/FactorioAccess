@@ -4,6 +4,7 @@ local FaUtils = require("scripts.fa-utils")
 local localising = require("scripts.localising")
 local dirs = defines.direction
 local Graphics = require("scripts.graphics")
+local MessageBuilder = require("scripts.message-builder")
 local PlayerMiningTools = require("scripts.player-mining-tools")
 local RailBuilder = require("scripts.rail-builder")
 local Teleport = require("scripts.teleport")
@@ -283,12 +284,7 @@ function mod.build_offshore_pump_in_hand(pindex)
       else
          UiRouter.get_router(pindex):open_ui(UiRouter.UI_NAMES.PUMP)
          players[pindex].move_queue = {}
-         printout(
-            "There are "
-               .. #players[pindex].pump.positions
-               .. " possibilities, scroll up and down, then select one to build, or press e to cancel.",
-            pindex
-         )
+         printout({ "fa.building-pump-positions-available", #players[pindex].pump.positions }, pindex)
          table.sort(players[pindex].pump.positions, function(k1, k2)
             return util.distance(initial_position, k1.position) < util.distance(initial_position, k2.position)
          end)
