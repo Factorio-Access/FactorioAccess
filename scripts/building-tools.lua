@@ -362,7 +362,7 @@ function mod.rotate_building_info_read(event, forward)
                      pindex
                   )
                else
-                  printout(FaUtils.direction_lookup(build_dir) .. ", cursor rotation is aligned", pindex)
+                  printout({ "fa.building-rotation-aligned", FaUtils.direction_lookup(build_dir) }, pindex)
                end
                return
             end
@@ -370,10 +370,10 @@ function mod.rotate_building_info_read(event, forward)
             --Display and read the new direction info
             players[pindex].building_direction = build_dir
             --Graphics.sync_build_cursor_graphics(pindex)
-            printout(FaUtils.direction_lookup(build_dir) .. " in hand", pindex)
+            printout({ "fa.building-rotation-in-hand", FaUtils.direction_lookup(build_dir) }, pindex)
             players[pindex].lag_building_direction = false
          else
-            printout(stack.name .. " does not support or does not need rotating.", pindex)
+            printout({ "fa.building-no-rotate-support", { "item-name." .. stack.name } }, pindex)
          end
       elseif stack ~= nil and stack.valid_for_read and stack.is_blueprint and stack.is_blueprint_setup() then
          --Rotate blueprints: They are tracked separately, and we reset them to north when cursor stack changes
@@ -414,7 +414,7 @@ function mod.rotate_building_info_read(event, forward)
 
             --
          else
-            printout(ent.name .. " does not support or does not need rotating.", pindex)
+            printout({ "fa.building-no-rotate-support", { "entity-name." .. ent.name } }, pindex)
          end
       else
          printout({ "fa.building-cannot-rotate" }, pindex)

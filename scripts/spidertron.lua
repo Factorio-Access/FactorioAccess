@@ -100,7 +100,11 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
             printout({ "fa.spidertron-link-first-move" }, pindex)
          else
             game.get_player(pindex).cursor_stack.connected_entity.autopilot_destination = cursor
-            printout("Spidertron sent to coordinates" .. math.floor(cursor.x) .. ", " .. math.floor(cursor.y), pindex)
+            printout({
+               "fa.spidertron-sent-to-coords",
+               tostring(math.floor(cursor.x)),
+               tostring(math.floor(cursor.y)),
+            }, pindex)
          end
       end
    elseif index == 4 then
@@ -137,7 +141,7 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
             else
                targetstate = "disabled"
             end
-            printout("auto target enemies when the spidertron is working by itself, currently" .. targetstate, pindex)
+            printout({ "fa.spidertron-auto-target-status", targetstate }, pindex)
          else
             local switch = {
                auto_target_without_gunner = not game.get_player(pindex).cursor_stack.connected_entity.vehicle_automatic_targeting_parameters.auto_target_without_gunner,

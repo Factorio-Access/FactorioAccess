@@ -1099,7 +1099,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
       elseif index == 5 then
          --Toggle machine reading mode
          if not clicked then
-            printout("Toggle reading mode: " .. read_mode, pindex)
+            printout({ "fa.circuit-toggle-reading-mode", read_mode }, pindex)
          else
             local result, changed = toggle_circuit_read_mode(ent)
             printout(result, pindex)
@@ -1109,7 +1109,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
       elseif index == 6 then
          --Toggle machine control mode
          if not clicked then
-            printout("Toggle operation mode: " .. op_mode, pindex)
+            printout({ "fa.circuit-toggle-operation-mode", op_mode }, pindex)
          else
             local result, changed = toggle_circuit_operation_mode(ent)
             printout(result, pindex)

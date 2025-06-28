@@ -48,7 +48,11 @@ function mod.read_crafting_queue(pindex, start_phrase)
       local recipe_name = recipe_proto and localising.get_localised_name_with_fallback(recipe_proto) or recipe_name_only
       printout({ "", start_phrase, recipe_name, " x ", tostring(item.count) }, pindex)
    else
-      printout(start_phrase .. "Blank", pindex)
+      if start_phrase == "" then
+         printout({ "fa.crafting-blank" }, pindex)
+      else
+         printout({ "", start_phrase, { "fa.crafting-blank" } }, pindex)
+      end
    end
 end
 

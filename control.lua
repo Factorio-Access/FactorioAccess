@@ -296,7 +296,12 @@ end
 
 function read_item_selector_slot(pindex, start_phrase)
    start_phrase = start_phrase or ""
-   printout(start_phrase .. players[pindex].item_cache[players[pindex].item_selector.index].name, pindex)
+   local item_name = players[pindex].item_cache[players[pindex].item_selector.index].name
+   if start_phrase == "" then
+      printout({ "item-name." .. item_name }, pindex)
+   else
+      printout({ "", start_phrase, { "item-name." .. item_name } }, pindex)
+   end
 end
 
 --Reads the selected player inventory's selected menu slot. Default is to read the main inventory.
@@ -333,7 +338,15 @@ function read_inventory_slot(pindex, start_phrase_in, inv_in)
       if filter_name ~= nil then result = result .. " filtered " end
       --Check if the stack has damage
       if stack.health < 1 then result = result .. " damaged " end
-      result = result .. Localising.get(stack, pindex) .. " x " .. stack.count .. " " .. stack.prototype.subgroup.name
+      result = {
+         "",
+         result,
+         Localising.get_localised_name_with_fallback(stack),
+         " x ",
+         tostring(stack.count),
+         " ",
+         stack.prototype.subgroup.name,
+      }
       printout(result, pindex)
    end
 end
@@ -448,7 +461,7 @@ function locate_hand_in_player_inventory(pindex)
    end
    --If found, read it from the inventory
    if not found then
-      printout({ "fa.error-item-not-found-inventory", Localising.get(stack, pindex) }, pindex)
+      printout({ "fa.error-item-not-found-inventory", Localising.get_localised_name_with_fallback(stack) }, pindex)
       return
    else
       players[pindex].inventory.index = i
@@ -510,7 +523,7 @@ function locate_hand_in_building_output_inventory(pindex)
    end
    --If found, read it from the inventory
    if not found then
-      printout(Localising.get(stack, pindex) .. " not found in building output", pindex)
+      printout({ "fa.item-not-found-in-output", Localising.get_localised_name_with_fallback(stack) }, pindex)
       return
    else
       players[pindex].building.index = i
@@ -688,7 +701,7 @@ read_tile_inner = function(pindex, start_text)
       --If there is no ent, read the tile instead
       players[pindex].tile.previous = nil
       local tile = players[pindex].tile.tile
-      table.insert(result, Localising.get(players[pindex].tile.tile_object, pindex))
+      table.insert(result, Localising.get_localised_name_with_fallback(players[pindex].tile.tile_object))
       if
          tile == "water"
          or tile == "deepwater"
@@ -4662,8 +4675,14 @@ local function read_coords(pindex, start_phrase)
          else
             result = result .. " moving at " .. math.floor(speed) .. " kilometers per hour "
          end
-         result = result .. " in " .. Localising.get(vehicle, pindex) .. " at point "
-         printout(result .. math.floor(vehicle.position.x) .. ", " .. math.floor(vehicle.position.y), pindex)
+         result = result .. " in " .. Localising.get_localised_name_with_fallback(vehicle) .. " at point "
+         printout({
+            "",
+            result,
+            tostring(math.floor(vehicle.position.x)),
+            ", ",
+            tostring(math.floor(vehicle.position.y)),
+         }, pindex)
       else
          --Simply give coords (floored for the readout, extra precision for the console)
          local location = FaUtils.get_entity_part_at_cursor(pindex)
@@ -4805,7 +4824,7 @@ local function read_coords(pindex, start_phrase)
          ---@type LuaItemPrototype | LuaFluidPrototype
          local proto = prototypes.item[v.name]
          if proto == nil then proto = prototypes.fluid[v.name] end
-         local localised_name = Localising.get(proto, pindex)
+         local localised_name = Localising.get_localised_name_with_fallback(proto)
          result = result .. ", " .. localised_name .. " times " .. v.amount
       end
       result = result .. ", Products: "
@@ -4813,7 +4832,7 @@ local function read_coords(pindex, start_phrase)
          ---@type LuaItemPrototype | LuaFluidPrototype
          local proto = prototypes.item[v.name]
          if proto == nil then proto = prototypes.fluid[v.name] end
-         local localised_name = Localising.get(proto, pindex)
+         local localised_name = Localising.get_localised_name_with_fallback(proto)
          result = result .. ", " .. localised_name .. " times " .. v.amount
       end
       result = result .. ", craft time " .. recipe.energy .. " seconds by default."
@@ -4833,7 +4852,7 @@ local function read_coords(pindex, start_phrase)
          ---@type LuaItemPrototype | LuaFluidPrototype
          local proto = prototypes.item[v.name]
          if proto == nil then proto = prototypes.fluid[v.name] end
-         local localised_name = Localising.get(proto, pindex)
+         local localised_name = Localising.get_localised_name_with_fallback(proto)
          result = result .. ", " .. localised_name .. " x" .. v.amount .. " per cycle "
       end
       result = result .. ", products: "
@@ -4841,7 +4860,7 @@ local function read_coords(pindex, start_phrase)
          ---@type LuaItemPrototype | LuaFluidPrototype
          local proto = prototypes.item[v.name]
          if proto == nil then proto = prototypes.fluid[v.name] end
-         local localised_name = Localising.get(proto, pindex)
+         local localised_name = Localising.get_localised_name_with_fallback(proto)
          result = result .. ", " .. localised_name .. " x" .. v.amount .. " per cycle "
       end
       result = result .. ", craft time " .. recipe.energy .. " seconds at default speed."
@@ -5008,10 +5027,16 @@ local function kb_read_driving_structure_ahead(event)
       local dir_ent = FaUtils.get_direction_biased(ent.position, p.vehicle.position)
       if p.vehicle.speed >= 0 and (dir_ent == dir or math.abs(dir_ent - dir) == 1 or math.abs(dir_ent - dir) == 7) then
          local dist = math.floor(util.distance(p.vehicle.position, ent.position))
-         printout(Localising.get(ent, pindex) .. " ahead in " .. dist .. " meters", pindex)
+         printout(
+            { "fa.driving-structure-ahead", Localising.get_localised_name_with_fallback(ent), tostring(dist) },
+            pindex
+         )
       elseif p.vehicle.speed <= 0 and dir_ent == FaUtils.rotate_180(dir) then
          local dist = math.floor(util.distance(p.vehicle.position, ent.position))
-         printout(Localising.get(ent, pindex) .. " behind in " .. dist .. " meters", pindex)
+         printout(
+            { "fa.driving-structure-behind", Localising.get_localised_name_with_fallback(ent), tostring(dist) },
+            pindex
+         )
       end
    end
 end
@@ -5510,7 +5535,10 @@ local function kb_open_circuit_menu(event)
       local nw1 = control.get_circuit_network(defines.wire_connector_id.circuit_red)
       local nw2 = control.get_circuit_network(defines.wire_connector_id.circuit_green)
       if nw1 == nil and nw2 == nil then
-         printout(Localising.get(ent, pindex) .. " not connected to a circuit network", pindex)
+         printout(
+            { "fa.entity-not-connected-circuit-network", Localising.get_localised_name_with_fallback(ent) },
+            pindex
+         )
          return
       end
       --Open the menu
@@ -8235,9 +8263,17 @@ local function locate_hand_in_crafting_menu(pindex)
    p.opened = p.get_inventory(defines.inventory.character_main)
 
    --Get the name
-   local item_name = string.lower(
-      FaUtils.get_substring_before_space(FaUtils.get_substring_before_dash(Localising.get(stack.prototype, pindex)))
-   )
+   -- Get a string representation of the item name for searching
+   local item_name_localised = Localising.get_localised_name_with_fallback(stack.prototype)
+   local item_name_string = ""
+   if type(item_name_localised) == "string" then
+      item_name_string = item_name_localised
+   else
+      -- For localized strings, fall back to the prototype name
+      item_name_string = stack.prototype.name
+   end
+   local item_name =
+      string.lower(FaUtils.get_substring_before_space(FaUtils.get_substring_before_dash(item_name_string)))
    players[pindex].menu_search_term = item_name
 
    --Empty hand stack (clear cursor stack) after getting the name
