@@ -247,14 +247,14 @@ function mod.train_read_next_rail_entity_ahead(pindex, invert, mute_in)
    --Correction for trains: Curved rails report different directions based on where the train sits and so are unreliable.
    if leading_rail.name == "curved-rail" then
       if mute_in == true then return -1 end
-      printout("Curved rail analysis error, check from another rail.", pindex)
+      printout({ "fa.trains-curved-rail-error" }, pindex)
       return -1
    end
    local next_entity, next_entity_label, result_extra, next_is_forward, iteration_count =
       Rails.get_next_rail_entity_ahead(leading_rail, dir_ahead, false)
    if next_entity == nil then
       if mute_in == true then return -1 end
-      printout("Analysis error, this rail might be looping.", pindex)
+      printout({ "fa.trains-analysis-error-looping" }, pindex)
       return -1
    end
    local distance = math.floor(util.distance(leading_stock.position, next_entity.position))
@@ -429,7 +429,7 @@ function mod.run_train_menu(menu_index, pindex, clicked, other_input)
       players[pindex].train_menu.locomotive = locomotive
    else
       players[pindex].train_menu.locomotive = nil
-      printout("Train menu requires a locomotive", pindex)
+      printout({ "fa.trains-menu-requires-locomotive" }, pindex)
       return
    end
    local train = locomotive.train
@@ -456,21 +456,21 @@ function mod.run_train_menu(menu_index, pindex, clicked, other_input)
       else
          train.manual_mode = not train.manual_mode
          if train.manual_mode then
-            printout("Manual mode enabled, press LEFT BRACKET to toggle,", pindex)
+            printout({ "fa.trains-manual-mode" }, pindex)
          else
-            printout("Automatic mode enabled, press LEFT BRACKET to toggle,", pindex)
+            printout({ "fa.trains-automatic-mode" }, pindex)
          end
       end
    elseif index == 2 then
       --Rename this train
       if not clicked then
-         printout("Rename this train, press LEFT BRACKET.", pindex)
+         printout({ "fa.trains-rename-prompt" }, pindex)
       else
          if train.locomotives == nil then
-            printout("The train must have locomotives for it to be named.", pindex)
+            printout({ "fa.trains-must-have-locomotives" }, pindex)
             return
          end
-         printout("Enter a new name for this train, then press 'ENTER' to confirm, or press 'ESC' to cancel.", pindex)
+         printout({ "fa.trains-enter-new-name" }, pindex)
          players[pindex].train_menu.renaming = true
          local frame = Graphics.create_text_field_frame(pindex, "train-rename")
          game.get_player(pindex).opened = frame
@@ -560,11 +560,11 @@ function mod.run_train_menu(menu_index, pindex, clicked, other_input)
    elseif index == 7 then
       --Clear schedule
       if not clicked then
-         printout("Clear the schedule here by pressing LEFT BRACKET ", pindex)
+         printout({ "fa.trains-clear-schedule-prompt" }, pindex)
       else
          train.schedule = nil
          train.manual_mode = true
-         printout("Train schedule cleared.", pindex)
+         printout({ "fa.trains-schedule-cleared" }, pindex)
       end
    elseif index == 8 then
       if not players[pindex].train_menu.selecting_station then
@@ -1011,7 +1011,7 @@ function mod.read_valid_train_stop_from_list(pindex)
    local index = players[pindex].train_menu.index_2
    local name = ""
    if players[pindex].valid_train_stop_list == nil or #players[pindex].valid_train_stop_list == 0 then
-      printout("Error: No reachable train stops found", pindex)
+      printout({ "fa.trains-no-stops-found" }, pindex)
       return
    end
    if index == nil then index = 1 end
@@ -1026,7 +1026,7 @@ function mod.go_to_valid_train_stop_from_list(pindex, train)
    local index = players[pindex].train_menu.index_2
    local name = ""
    if players[pindex].valid_train_stop_list == nil or #players[pindex].valid_train_stop_list == 0 then
-      printout("Error: No reachable train stops found", pindex)
+      printout({ "fa.trains-no-stops-found" }, pindex)
       return
    end
    if index == nil then index = 1 end
