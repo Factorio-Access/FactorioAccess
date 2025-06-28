@@ -624,14 +624,11 @@ function mod.build_preview_checks_info(stack, pindex)
                   surface = cand.surface,
                   time_to_live = 60,
                })
-               table.insert(
-                  result,
-                  {
-                     "fa.connection-connects-underground",
-                     { "fa.direction-" .. helpers.direction_to_string(build_dir) },
-                     tostring(math.floor(util.distance(cand.position, pos)) - 1),
-                  }
-               )
+               table.insert(result, {
+                  "fa.connection-connects-underground",
+                  { "fa.direction-" .. helpers.direction_to_string(build_dir) },
+                  tostring(math.floor(util.distance(cand.position, pos)) - 1),
+               })
                connected = true
                players[pindex].underground_connects = true
             end
@@ -689,14 +686,11 @@ function mod.build_preview_checks_info(stack, pindex)
          end
          --Report the closest candidate (therefore the correct one)
          if closest_cand ~= nil then
-            table.insert(
-               result,
-               {
-                  "fa.connection-connects-underground",
-                  { "fa.direction-" .. helpers.direction_to_string(FaUtils.rotate_180(build_dir)) },
-                  tostring(math.floor(util.distance(closest_cand.position, pos)) - 1),
-               }
-            )
+            table.insert(result, {
+               "fa.connection-connects-underground",
+               { "fa.direction-" .. helpers.direction_to_string(FaUtils.rotate_180(build_dir)) },
+               tostring(math.floor(util.distance(closest_cand.position, pos)) - 1),
+            })
          end
       end
       if not connected then table.insert(result, { "fa.connection-not-connected-underground" }) end
@@ -779,47 +773,35 @@ function mod.build_preview_checks_info(stack, pindex)
          table.insert(result, { "fa.connection-pipe-can-connect" })
 
          if relevant_fluid_north ~= nil then
-            table.insert(
-               result,
-               {
-                  "fa.connection-fluid-at-direction",
-                  localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_north]),
-                  { "fa.direction-north" },
-               }
-            )
+            table.insert(result, {
+               "fa.connection-fluid-at-direction",
+               localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_north]),
+               { "fa.direction-north" },
+            })
             count = count + 1
          end
          if relevant_fluid_east ~= nil then
-            table.insert(
-               result,
-               {
-                  "fa.connection-fluid-at-direction",
-                  localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_east]),
-                  { "fa.direction-east" },
-               }
-            )
+            table.insert(result, {
+               "fa.connection-fluid-at-direction",
+               localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_east]),
+               { "fa.direction-east" },
+            })
             count = count + 1
          end
          if relevant_fluid_south ~= nil then
-            table.insert(
-               result,
-               {
-                  "fa.connection-fluid-at-direction",
-                  localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_south]),
-                  { "fa.direction-south" },
-               }
-            )
+            table.insert(result, {
+               "fa.connection-fluid-at-direction",
+               localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_south]),
+               { "fa.direction-south" },
+            })
             count = count + 1
          end
          if relevant_fluid_west ~= nil then
-            table.insert(
-               result,
-               {
-                  "fa.connection-fluid-at-direction",
-                  localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_west]),
-                  { "fa.direction-west" },
-               }
-            )
+            table.insert(result, {
+               "fa.connection-fluid-at-direction",
+               localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_west]),
+               { "fa.direction-west" },
+            })
             count = count + 1
          end
 
@@ -975,13 +957,10 @@ function mod.build_preview_checks_info(stack, pindex)
             table.insert(result, { "fa.connection-no-poles-within" })
          else
             local dir = FaUtils.get_direction_biased(nearest_pole.position, pos)
-            table.insert(
-               result,
-               {
-                  "fa.connection-to-nearest-pole",
-                  FaUtils.format_distance_with_direction(math.ceil(min_dist), helpers.direction_to_string(dir)),
-               }
-            )
+            table.insert(result, {
+               "fa.connection-to-nearest-pole",
+               FaUtils.format_distance_with_direction(math.ceil(min_dist), helpers.direction_to_string(dir)),
+            })
          end
       end
    end
@@ -1016,13 +995,10 @@ function mod.build_preview_checks_info(stack, pindex)
             table.insert(result, { "fa.connection-no-roboports-within" })
          else
             local dir = FaUtils.get_direction_biased(nearest_port.position, pos)
-            table.insert(
-               result,
-               {
-                  "fa.connection-to-nearest-roboport",
-                  FaUtils.format_distance_with_direction(math.ceil(min_dist), helpers.direction_to_string(dir)),
-               }
-            )
+            table.insert(result, {
+               "fa.connection-to-nearest-roboport",
+               FaUtils.format_distance_with_direction(math.ceil(min_dist), helpers.direction_to_string(dir)),
+            })
          end
       end
    end
@@ -1136,13 +1112,10 @@ function mod.build_preview_checks_info(stack, pindex)
          if found_pole.valid then
             local dist = math.ceil(util.distance(found_pole.position, pos))
             local dir = FaUtils.get_direction_biased(found_pole.position, pos)
-            table.insert(
-               result,
-               {
-                  "fa.connection-from-direction",
-                  FaUtils.format_distance_with_direction(dist, helpers.direction_to_string(dir)),
-               }
-            )
+            table.insert(result, {
+               "fa.connection-from-direction",
+               FaUtils.format_distance_with_direction(dist, helpers.direction_to_string(dir)),
+            })
          end
       else
          table.insert(result, { "fa.connection-power-not-connected" })
@@ -1152,13 +1125,10 @@ function mod.build_preview_checks_info(stack, pindex)
             table.insert(result, { "fa.connection-no-poles-within" })
          else
             local dir = FaUtils.get_direction_biased(nearest_pole.position, pos)
-            table.insert(
-               result,
-               {
-                  "fa.connection-to-nearest-pole",
-                  FaUtils.format_distance_with_direction(math.ceil(min_dist), helpers.direction_to_string(dir)),
-               }
-            )
+            table.insert(result, {
+               "fa.connection-to-nearest-pole",
+               FaUtils.format_distance_with_direction(math.ceil(min_dist), helpers.direction_to_string(dir)),
+            })
          end
       end
    end

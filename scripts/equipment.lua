@@ -366,14 +366,11 @@ function mod.read_armor_stats(pindex, ent_in)
    end
    --Movement bonus
    if grid.count("exoskeleton-equipment") > 0 then
-      table.insert(
-         result,
-         {
-            "fa.armor-movement-bonus",
-            tostring(grid.count("exoskeleton-equipment") * 30),
-            Electrical.get_power_string(grid.count("exoskeleton-equipment") * 200000),
-         }
-      )
+      table.insert(result, {
+         "fa.armor-movement-bonus",
+         tostring(grid.count("exoskeleton-equipment") * 30),
+         Electrical.get_power_string(grid.count("exoskeleton-equipment") * 200000),
+      })
    end
    return result
 end

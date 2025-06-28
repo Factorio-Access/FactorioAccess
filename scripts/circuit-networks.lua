@@ -958,14 +958,11 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
    elseif index == 3 then
       --List network members directly connected to this building
       if not clicked then
-         printout(
-            {
-               "",
-               "List directly connected network members for this ",
-               localising.get_localised_name_with_fallback(ent),
-            },
-            pindex
-         )
+         printout({
+            "",
+            "List directly connected network members for this ",
+            localising.get_localised_name_with_fallback(ent),
+         }, pindex)
       else
          if nwr == nil and nwg == nil then
             printout({ "fa.circuit-no-network-connected" }, pindex)
