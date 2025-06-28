@@ -157,7 +157,7 @@ function mod.fast_travel_menu_click(pindex)
          and this_point.description == players[pindex].travel.last_broadcasted_description
          and this_point.position == players[pindex].travel.last_broadcasted_position
       then
-         printout("Error: Cancelled repeated broadcast. ", pindex)
+         printout({ "fa.travel-error-cancelled-broadcast" }, pindex)
          return
       end
       --Broadcast it by adding a copy of it to all players in the same force (except for repeating this player)
