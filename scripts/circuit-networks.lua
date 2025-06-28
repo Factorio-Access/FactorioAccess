@@ -977,7 +977,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
       --Menu for other entities
       local control = ent.get_control_behavior()
       if control == nil then
-         printout("No circuit network interface for this entity", pindex)
+         printout({ "fa.circuit-no-interface" }, pindex)
          return
       end
       if nwr == nil and nwg == nil then
@@ -999,7 +999,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
       if index == 4 then
          --Read machine behavior summary
          if not clicked then
-            printout("Read machine circuit behavior summary", pindex)
+            printout({ "fa.circuit-read-machine-behavior" }, pindex)
          else
             local result = ""
             result = result .. "Reading mode: " .. read_mode .. ", "
@@ -1040,7 +1040,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
       elseif index == 8 then
          --Set enabled condition first signal
          if not clicked then
-            printout("Set enabled condition first signal from the signal selector", pindex)
+            printout({ "fa.circuit-set-first-signal" }, pindex)
          else
             local result = "Not using a condition"
             if uses_condition == true then
@@ -1053,7 +1053,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
       elseif index == 9 then
          --Set enabled condition second signal
          if not clicked then
-            printout("Set enabled condition second signal from the signal selector", pindex)
+            printout({ "fa.circuit-set-second-signal" }, pindex)
          else
             local result = "Not using a condition"
             if uses_condition == true then
@@ -1066,7 +1066,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
       elseif index == 10 then
          --Set enabled condition second signal as a constant number
          if not clicked then
-            printout("Set a constant number for enabled condition second signal", pindex)
+            printout({ "fa.circuit-set-constant-number" }, pindex)
          else
             local result = "Not using a condition"
             if uses_condition == true then result = mod.type_circuit_condition_constant(pindex, ent) end
@@ -1076,7 +1076,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
       else
          if ent.type ~= "programmable-speaker" or (ent.type == "programmable-speaker" and control == nil) then
             if index == 11 then
-               printout("The rest of this menu is for network connected programmable speakers only", pindex)
+               printout({ "fa.circuit-speaker-menu-note" }, pindex)
             elseif index == 12 then
                --(inventory edge: play sound and set index and call this menu again)
                p.play_sound({ path = "inventory-edge" })
@@ -1092,22 +1092,22 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
             if index == 11 then
                --Toggle local or global playback
                if not clicked then
-                  printout("Toggle local or global playback", pindex)
+                  printout({ "fa.circuit-toggle-playback" }, pindex)
                else
                   local params = ent.parameters
                   params.playback_globally = not params.playback_globally
                   ent.parameters = params
                   if ent.parameters.playback_globally then
-                     printout("Global", pindex)
+                     printout({ "fa.circuit-playback-global" }, pindex)
                   else
-                     printout("Local", pindex)
+                     printout({ "fa.circuit-playback-local" }, pindex)
                   end
                   mod.play_selected_speaker_note(ent)
                end
             elseif index == 12 then
                --Switch local playback volume up
                if not clicked then
-                  printout("Switch volume up for local playback", pindex)
+                  printout({ "fa.circuit-switch-volume-up" }, pindex)
                else
                   local params = ent.parameters
                   params.playback_volume = params.playback_volume + 0.1
@@ -1119,7 +1119,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
             elseif index == 13 then
                --Switch local playback volume down
                if not clicked then
-                  printout("Switch volume down for local playback", pindex)
+                  printout({ "fa.circuit-switch-volume-down" }, pindex)
                else
                   local params = ent.parameters
                   params.playback_volume = params.playback_volume - 0.1
@@ -1131,7 +1131,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
             elseif index == 14 then
                --Switch instrument up
                if not clicked then
-                  printout("Switch instrument up ", pindex)
+                  printout({ "fa.circuit-switch-instrument-up" }, pindex)
                else
                   --Switch up
                   local params = control.circuit_parameters
@@ -1153,7 +1153,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
             elseif index == 15 then
                --Switch instrument down
                if not clicked then
-                  printout("Switch instrument down ", pindex)
+                  printout({ "fa.circuit-switch-instrument-down" }, pindex)
                else
                   --Switch down
                   local params = control.circuit_parameters
@@ -1175,7 +1175,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
             elseif index == 16 then
                --Switch note up
                if not clicked then
-                  printout("Switch note or subtype up ", pindex)
+                  printout({ "fa.circuit-switch-note-up" }, pindex)
                else
                   local params = control.circuit_parameters
                   local ins_id = params.instrument_id
@@ -1195,7 +1195,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
             elseif index == 17 then
                --Switch note down
                if not clicked then
-                  printout("Switch note or subtype down ", pindex)
+                  printout({ "fa.circuit-switch-note-down" }, pindex)
                else
                   local params = control.circuit_parameters
                   local ins_id = params.instrument_id
@@ -1215,30 +1215,30 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
             elseif index == 18 then
                --Toggle if signal value is pitch
                if not clicked then
-                  printout("Toggle if signal value determines note pitch", pindex)
+                  printout({ "fa.circuit-toggle-note-pitch" }, pindex)
                else
                   local params = control.circuit_parameters
                   params.signal_value_is_pitch = not params.signal_value_is_pitch
                   control.circuit_parameters = params
                   if control.circuit_parameters.signal_value_is_pitch then
-                     printout("Enabled", pindex)
+                     printout({ "fa.circuit-enabled" }, pindex)
                   else
-                     printout("Disabled", pindex)
+                     printout({ "fa.circuit-disabled" }, pindex)
                   end
                   mod.play_selected_speaker_note(ent)
                end
             elseif index == 19 then
                --Toggle allow polyphony
                if not clicked then
-                  printout("Toggle polyphony mode (or multiple notes at the same time)", pindex)
+                  printout({ "fa.circuit-toggle-polyphony" }, pindex)
                else
                   local params = ent.parameters
                   params.allow_polyphony = not params.allow_polyphony
                   ent.parameters = params
                   if ent.parameters.allow_polyphony then
-                     printout("Enabled polyphony", pindex)
+                     printout({ "fa.circuit-enabled-polyphony" }, pindex)
                   else
-                     printout("Disabled polyphony", pindex)
+                     printout({ "fa.circuit-disabled-polyphony" }, pindex)
                   end
                   mod.play_selected_speaker_note(ent)
                end
@@ -1520,7 +1520,7 @@ function mod.read_selected_signal_slot(pindex, start_phrase_in)
    local prototype, signal_type = mod.get_selected_signal_slot_with_type(pindex)
    local sig_name = localising.get(prototype, pindex)
    if prototype == nil or sig_name == nil then
-      printout("Error: Missing signal", pindex)
+      printout({ "fa.circuit-error-missing-signal" }, pindex)
       return
    end
    local result = start_phrase .. sig_name .. " " .. signal_type
