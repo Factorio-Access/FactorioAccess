@@ -65,7 +65,7 @@ function mod.repair_area(radius_in, pindex)
    local radius = math.min(radius_in, 25)
    if stack.count < 2 then
       --If you are low on repair packs, stop
-      printout("You need at least 2 repair packs to repair the area.", pindex)
+      printout({ "fa.combat-need-repair-packs" }, pindex)
       return
    end
    local ents = p.surface.find_entities_filtered({ position = p.position, radius = radius })
@@ -140,7 +140,7 @@ function mod.repair_area(radius_in, pindex)
       end
    end
    if repaired_count == 0 then
-      printout("Nothing to repair within " .. radius .. " tiles of you.", pindex)
+      printout({ "fa.combat-nothing-to-repair", radius }, pindex)
       return
    end
    printout(
