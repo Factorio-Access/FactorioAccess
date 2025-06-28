@@ -42,7 +42,7 @@ end
 --Reads the selected fast travel menu slot
 function mod.read_fast_travel_slot(pindex)
    if #players[pindex].travel == 0 then
-      printout("Move towards the right and select Create to get started.", pindex)
+      printout({ "fa.travel-move-right-create" }, pindex)
    else
       local vp = Viewpoint.get_viewpoint(pindex)
       local entry = players[pindex].travel[players[pindex].travel.index.y]
