@@ -1,5 +1,6 @@
 --Here: Spidertron remote menu
 local Graphics = require("scripts.graphics")
+local MessageBuilder = require("scripts.message-builder")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
 
@@ -18,47 +19,42 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
    if spiderin ~= nil then spider = spiderin end
    if index == 0 then
       --Give basic info about this spider, such as its name and ID.
-      local res
+      local message = MessageBuilder.new()
       if remote.connected_entity ~= nil then
          if spidertron.entity_label ~= nil then
-            res = spidertron.entity_label .. "connected to this remote. "
+            message:fragment({ "fa.spidertron-connected-named", spidertron.entity_label })
          else
-            res = "unlabelled spidertron connected"
+            message:fragment({ "fa.spidertron-connected-unnamed" })
          end
       else
-         res = "this remote is not connected to a spidertron"
+         message:fragment({ "fa.spidertron-not-connected" })
       end
-      printout(
-         res
-            .. ", Press UP ARROW and DOWN ARROW to navigate options, press LEFT BRACKET to select an option or press E to exit this menu.",
-         pindex
-      )
+      message:fragment({ "fa.spidertron-menu-instructions" })
+      printout(message:build(), pindex)
    elseif index == 1 then
       --spidertron linking and unlinking from the remote
       if not clicked then
+         local message = MessageBuilder.new()
          if remote.connected_entity ~= nil then
-            local spidername
+            message:fragment({ "fa.spidertron-remote-connected-to" })
             if game.get_player(pindex).cursor_stack.connected_entity.entity_label ~= nil then
-               spidername = game.get_player(pindex).cursor_stack.connected_entity.entity_label
+               message:fragment(game.get_player(pindex).cursor_stack.connected_entity.entity_label)
             else
-               spidername = "an unlabelled spidertron"
+               message:fragment({ "fa.spidertron-unnamed" })
             end
-            local result = "the remote is connected to " .. spidername
-            result = result .. ", press LEFT BRACKET to unlink it. "
-            printout(result, pindex)
+            message:fragment({ "fa.spidertron-press-to-unlink" })
          else
-            local result = "the remote is not connected. "
-            result = result .. ", press LEFT BRACKET to link it to the focused spidertron. "
-            printout(result, pindex)
+            message:fragment({ "fa.spidertron-remote-not-connected" })
+            message:fragment({ "fa.spidertron-press-to-link" })
          end
+         printout(message:build(), pindex)
       else
          if remote.connected_entity ~= nil then
             remote.connected_entity = nil
             printout({ "fa.spidertron-link-severed" }, pindex)
          else
-            local result
             if cursortarget == nil or (cursortarget.type ~= "spider-vehicle" and cursortarget.type ~= "spider-leg") then
-               result = "Invalid object to link to this remote. "
+               printout({ "fa.spidertron-invalid-link-target" }, pindex)
             else
                if cursortarget.type == "spider-vehicle" then
                   remote.connected_entity = cursortarget
@@ -70,14 +66,15 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
                   })
                   if spiders[1] and spiders[1].valid then remote.connected_entity = spiders[1] end
                end
-               result = "remote connected to "
+               local message = MessageBuilder.new()
+               message:fragment({ "fa.spidertron-remote-linked-to" })
                if game.get_player(pindex).cursor_stack.connected_entity.entity_label ~= nil then
-                  result = result .. game.get_player(pindex).cursor_stack.connected_entity.entity_label
+                  message:fragment(game.get_player(pindex).cursor_stack.connected_entity.entity_label)
                else
-                  result = result .. "an unlabelled spidertron."
+                  message:fragment({ "fa.spidertron-unnamed" })
                end
+               printout(message:build(), pindex)
             end
-            printout(result, pindex)
          end
       end
    elseif index == 2 then

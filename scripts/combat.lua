@@ -92,14 +92,11 @@ function mod.repair_area(radius_in, pindex)
             repaired_count = repaired_count + 1
          elseif stack.count < 2 then
             --If you are low on repair packs, stop
-            printout(
-               "Repaired "
-                  .. repaired_count
-                  .. " structures using "
-                  .. packs_used
-                  .. " repair packs, stopped because you are low on repair packs.",
-               pindex
-            )
+            printout({
+               "fa.combat-repaired-stopped-low-packs",
+               tostring(repaired_count),
+               tostring(packs_used),
+            }, pindex)
             return
          else
             --Finish the current repair pack
@@ -120,14 +117,11 @@ function mod.repair_area(radius_in, pindex)
                   repaired_count = repaired_count + 1
                elseif stack.count < 2 then
                   --If you are low on repair packs, stop
-                  printout(
-                     "Repaired "
-                        .. repaired_count
-                        .. " structures using "
-                        .. packs_used
-                        .. " repair packs, stopped because you are low on repair packs.",
-                     pindex
-                  )
+                  printout({
+                     "fa.combat-repaired-stopped-low-packs",
+                     tostring(repaired_count),
+                     tostring(packs_used),
+                  }, pindex)
                   return
                else
                   --Finish the current repair pack
@@ -143,16 +137,12 @@ function mod.repair_area(radius_in, pindex)
       printout({ "fa.combat-nothing-to-repair", radius }, pindex)
       return
    end
-   printout(
-      "Repaired all "
-         .. repaired_count
-         .. " structures within "
-         .. radius
-         .. " tiles of you, using "
-         .. packs_used
-         .. " repair packs.",
-      pindex
-   )
+   printout({
+      "fa.combat-repaired-all",
+      tostring(repaired_count),
+      tostring(radius),
+      tostring(packs_used),
+   }, pindex)
 end
 
 --Plays enemy proximity alert sounds. Frequency is determined by distance andmode, and intensity is determined by the threat level.

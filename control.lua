@@ -2004,7 +2004,10 @@ function on_tick(event)
          elseif players[pindex].tutorial == nil then
             printout("Press 'H' to open the tutorial", pindex)
          elseif game.get_player(pindex).ticks_to_respawn ~= nil then
-            printout(math.floor(game.get_player(pindex).ticks_to_respawn / 60) .. " seconds until respawn", pindex)
+            printout(
+               { "fa.respawn-countdown", tostring(math.floor(game.get_player(pindex).ticks_to_respawn / 60)) },
+               pindex
+            )
          end
          --Report the KK state, if any.
          KruiseKontrol.status_read(pindex, false)
@@ -2072,12 +2075,18 @@ EventManager.on_event(defines.events.on_player_driving_changed_state, function(e
    players[pindex].last_train_orientation = nil
    if game.get_player(pindex).driving then
       players[pindex].last_vehicle = game.get_player(pindex).vehicle
-      printout("Entered " .. game.get_player(pindex).vehicle.name, pindex)
+      printout(
+         { "fa.vehicle-entered", Localising.get_localised_name_with_fallback(game.get_player(pindex).vehicle) },
+         pindex
+      )
       if players[pindex].last_vehicle.train ~= nil and players[pindex].last_vehicle.train.schedule == nil then
          players[pindex].last_vehicle.train.manual_mode = true
       end
    elseif players[pindex].last_vehicle ~= nil then
-      printout("Exited " .. players[pindex].last_vehicle.name, pindex)
+      printout(
+         { "fa.vehicle-exited", Localising.get_localised_name_with_fallback(players[pindex].last_vehicle) },
+         pindex
+      )
       if players[pindex].last_vehicle.train ~= nil and players[pindex].last_vehicle.train.schedule == nil then
          players[pindex].last_vehicle.train.manual_mode = true
       end
@@ -2732,7 +2741,7 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event)
          if valid_number and p.selected and p.selected.valid and p.selected.name == "train-stop" then
             if constant >= 0 then
                p.selected.trains_limit = constant
-               printout("Set trains limit to " .. constant, pindex)
+               printout({ "fa.train-limit-set", tostring(constant) }, pindex)
             else
                p.selected.trains_limit = nil
                printout("Cleared trains limit", pindex)
@@ -2849,7 +2858,7 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event)
       local result = event.element.text
       if result == nil or result == "" then result = "unknown" end
       Trains.set_train_name(players[pindex].train_menu.locomotive.train, result)
-      printout("Train renamed to " .. result .. ", menu closed.", pindex)
+      printout({ "fa.train-renamed", result }, pindex)
       event.element.destroy()
       Trains.menu_close(pindex, false)
    elseif players[pindex].spider_menu.renaming == true then
@@ -2860,7 +2869,7 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event)
       local result = event.element.text
       if result == nil or result == "" then result = "unknown" end
       players[pindex].train_stop_menu.stop.backer_name = result
-      printout("Train stop renamed to " .. result .. ", menu closed.", pindex)
+      printout({ "fa.train-stop-renamed", result }, pindex)
       event.element.destroy()
       TrainStops.train_stop_menu_close(pindex, false)
    elseif players[pindex].roboport_menu.renaming == true then
@@ -5058,7 +5067,7 @@ local function kb_s_b(event)
    local vp = Viewpoint.get_viewpoint(pindex)
    local pos = vp:get_cursor_pos()
    vp:set_cursor_bookmark(table.deepcopy(pos))
-   printout("Saved cursor bookmark at " .. math.floor(pos.x) .. ", " .. math.floor(pos.y), pindex)
+   printout({ "fa.cursor-bookmark-saved", tostring(math.floor(pos.x)), tostring(math.floor(pos.y)) }, pindex)
    game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" })
 end
 
@@ -5079,7 +5088,7 @@ local function kb_b(event)
    vp:set_cursor_pos(pos)
    Graphics.draw_cursor_highlight(pindex, nil, nil)
    Graphics.sync_build_cursor_graphics(pindex)
-   printout("Loaded cursor bookmark at " .. math.floor(pos.x) .. ", " .. math.floor(pos.y), pindex)
+   printout({ "fa.cursor-bookmark-loaded", tostring(math.floor(pos.x)), tostring(math.floor(pos.y)) }, pindex)
    game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" })
 end
 
@@ -5097,7 +5106,7 @@ local function kb_ca_b(event)
    local vp = Viewpoint.get_viewpoint(pindex)
    local pos = vp:get_cursor_pos()
    Rulers.upsert_ruler(pindex, pos.x, pos.y)
-   printout("Saved ruler at " .. math.floor(pos.x) .. ", " .. math.floor(pos.y), pindex)
+   printout({ "fa.ruler-saved-at", tostring(math.floor(pos.x)), tostring(math.floor(pos.y)) }, pindex)
    game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" })
 end
 

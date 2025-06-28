@@ -1262,4 +1262,57 @@ function mod.format_state(state_key, prefix)
    return { "fa." .. prefix .. "-" .. state_key }
 end
 
+-- Wave 5 formatting helpers
+-- Formats a count with item name (no pluralization needed)
+---@param count number The count to format
+---@param item_name LocalisedString The item name
+---@return LocalisedString
+function mod.format_count(count, item_name)
+   return { "fa.count-of-items", tostring(count), item_name }
+end
+
+-- Formats a distance value
+---@param distance number Distance in tiles
+---@param include_unit? boolean Whether to include "tiles" unit (default true)
+---@return LocalisedString
+function mod.format_distance(distance, include_unit)
+   include_unit = include_unit == nil and true or include_unit
+   if include_unit then
+      return { "fa.distance-tiles", string.format("%.1f", distance) }
+   else
+      return tostring(math.floor(distance))
+   end
+end
+
+-- Formats time from ticks to human-readable format
+---@param ticks number Game ticks
+---@return LocalisedString
+function mod.format_time(ticks)
+   local seconds = ticks / 60
+   local minutes = seconds / 60
+   local hours = minutes / 60
+
+   if hours >= 1 then
+      return { "fa.time-hours", string.format("%.1f", hours) }
+   elseif minutes >= 1 then
+      return { "fa.time-minutes", string.format("%.1f", minutes) }
+   else
+      return { "fa.time-seconds", string.format("%.1f", seconds) }
+   end
+end
+
+-- Formats coordinates in a standard way
+---@param x number X coordinate
+---@param y number Y coordinate
+---@param include_label? boolean Whether to include "coordinates" label (default true)
+---@return LocalisedString
+function mod.format_coordinates(x, y, include_label)
+   include_label = include_label == nil and true or include_label
+   if include_label then
+      return { "fa.coordinates-labeled", tostring(math.floor(x)), tostring(math.floor(y)) }
+   else
+      return { "fa.coordinates", tostring(math.floor(x)), tostring(math.floor(y)) }
+   end
+end
+
 return mod

@@ -4,6 +4,7 @@
 local BuildingTools = require("scripts.building-tools")
 local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
+local MessageBuilder = require("scripts.message-builder")
 local PlayerMiningTools = require("scripts.player-mining-tools")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
@@ -76,13 +77,18 @@ function mod.create_blueprint(pindex, point_1, point_2, prior_bp_data)
    local ent_count = p.cursor_stack.get_blueprint_entity_count()
    if ent_count == 0 then
       if prior_bp_data == nil then p.cursor_stack.set_stack({ name = "blueprint" }) end
-      local result = "Blueprint selection area was empty, "
-      if prior_bp_data ~= nil then result = result .. " keeping old entities " end
-      printout(result, pindex)
+      local message = MessageBuilder.new()
+      message:fragment({ "fa.blueprints-selection-empty" })
+      if prior_bp_data ~= nil then message:fragment({ "fa.blueprints-keeping-old" }) end
+      printout(message:build(), pindex)
    else
       local prior_name = ""
       if prior_bp_data ~= nil then prior_name = prior_bp_data.blueprint.label or "" end
-      printout("Blueprint " .. prior_name .. " with " .. ent_count .. " entities created in hand.", pindex)
+      local message = MessageBuilder.new()
+      message:fragment({ "fa.blueprints-created", prior_name })
+      message:fragment(FaUtils.format_count(ent_count, { "fa.blueprints-entities" }))
+      message:fragment({ "fa.blueprints-in-hand" })
+      printout(message:build(), pindex)
    end
 
    --Copy label and description and icons from previous version

@@ -137,15 +137,12 @@ function mod.fast_travel_menu_click(pindex)
       input.select(1, 0)
    elseif players[pindex].travel.index.x == 5 then --Relocate to current character position
       players[pindex].travel[players[pindex].travel.index.y].position = FaUtils.center_of_tile(players[pindex].position)
-      printout(
-         "Relocated point "
-            .. players[pindex].travel[players[pindex].travel.index.y].name
-            .. " to "
-            .. math.floor(players[pindex].position.x)
-            .. ", "
-            .. math.floor(players[pindex].position.y),
-         pindex
-      )
+      printout({
+         "fa.travel-relocated-point",
+         players[pindex].travel[players[pindex].travel.index.y].name,
+         tostring(math.floor(players[pindex].position.x)),
+         tostring(math.floor(players[pindex].position.y)),
+      }, pindex)
       local position = players[pindex].position
       vp:set_cursor_pos({ x = position.x, y = position.y })
       Graphics.draw_cursor_highlight(pindex)
@@ -177,12 +174,15 @@ function mod.fast_travel_menu_click(pindex)
          end
       end
       --Report the action and note the last broadcasted point
-      printout("Broadcasted point " .. this_point.name, pindex)
+      printout({ "fa.travel-broadcasted-point", this_point.name }, pindex)
       players[pindex].travel.last_broadcasted_name = this_point.name
       players[pindex].travel.last_broadcasted_description = this_point.description
       players[pindex].travel.last_broadcasted_position = this_point.position
    elseif players[pindex].travel.index.x == 7 then --Delete
-      printout("Deleted " .. storage.players[pindex].travel[players[pindex].travel.index.y].name, pindex)
+      printout(
+         { "fa.travel-deleted-point", storage.players[pindex].travel[players[pindex].travel.index.y].name },
+         pindex
+      )
       table.remove(storage.players[pindex].travel, players[pindex].travel.index.y)
       players[pindex].travel.x = 1
       players[pindex].travel.index.y = players[pindex].travel.index.y - 1
