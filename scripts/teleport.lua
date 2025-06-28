@@ -4,6 +4,7 @@ local Graphics = require("scripts.graphics")
 local Mouse = require("scripts.mouse")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
+local MessageBuilder = require("scripts.message-builder")
 
 local mod = {}
 
@@ -50,10 +51,7 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
    if not ignore_enemies then
       local enemy = char.surface.find_nearest_enemy({ position = new_pos, max_distance = 30, force = char.force })
       if enemy and enemy.valid then
-         printout(
-            "Warning: There are enemies at this location, but you can force teleporting if you press CONTROL + SHIFT + T",
-            pindex
-         )
+         printout({ "fa.teleport-enemies-warning" }, pindex)
          return false
       end
    end
@@ -150,14 +148,13 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
          end
          if new_pos.x ~= pos.x or new_pos.y ~= pos.y then
             if not muted then
-               printout(
-                  "Teleported "
-                     .. math.ceil(FaUtils.distance(pos, char.position))
-                     .. " "
-                     .. FaUtils.direction(pos, char.position)
-                     .. " of target",
-                  pindex
-               )
+               local message = MessageBuilder.new()
+               message:fragment({
+                  "fa.teleport-distance",
+                  tostring(math.ceil(FaUtils.distance(pos, char.position))),
+                  FaUtils.direction(pos, char.position),
+               })
+               printout(message:build(), pindex)
             end
          end
          --Update cursor after teleport

@@ -2884,9 +2884,7 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event)
       local term = string.lower(event.element.text)
       event.element.focus()
       players[pindex].menu_search_term = term
-      if term ~= "" then
-         printout({ "fa.menu-search-searching-for", term }, pindex)
-      end
+      if term ~= "" then printout({ "fa.menu-search-searching-for", term }, pindex) end
       event.element.destroy()
       if players[pindex].menu_search_frame ~= nil then
          players[pindex].menu_search_frame.destroy()
@@ -3088,17 +3086,13 @@ EventManager.on_event(defines.events.on_train_changed_state, function(event)
       --Announce arriving station to players on the train
       for i, player in ipairs(event.train.passengers) do
          local stop = event.train.path_end_stop
-         if stop ~= nil then
-            printout({ "fa.train-arriving-at-station", stop.backer_name }, player.index)
-         end
+         if stop ~= nil then printout({ "fa.train-arriving-at-station", stop.backer_name }, player.index) end
       end
    elseif event.train.state == defines.train_state.on_the_path then --laterdo make this announce only when near another trainstop.
       --Announce heading station to players on the train
       for i, player in ipairs(event.train.passengers) do
          local stop = event.train.path_end_stop
-         if stop ~= nil then
-            printout({ "fa.train-heading-to-station", stop.backer_name }, player.index)
-         end
+         if stop ~= nil then printout({ "fa.train-heading-to-station", stop.backer_name }, player.index) end
       end
    elseif event.train.state == defines.train_state.wait_signal then
       --Announce the wait to players on the train
@@ -3648,7 +3642,7 @@ EventManager.on_event(defines.events.on_console_chat, function(event)
    if speaker == nil or speaker == "" then speaker = "Player" end
    local message = event.message
    for pindex, player in pairs(players) do
-      printout(speaker .. " says, " .. message, pindex)
+      printout({ "fa.chat-message", speaker, message }, pindex)
    end
 end)
 
@@ -3659,7 +3653,7 @@ EventManager.on_event(defines.events.on_console_command, function(event)
    local speaker = game.get_player(event.player_index).name
    if speaker == nil or speaker == "" then speaker = "Player" end
    for pindex, player in pairs(players) do
-      printout(speaker .. " commands, " .. event.command .. " " .. event.parameters, pindex)
+      printout({ "fa.command-message", speaker, event.command, event.parameters }, pindex)
    end
 end)
 
@@ -4795,7 +4789,13 @@ local function read_coords(pindex, start_phrase)
          x = x + row_length
          y = y - 1
       end
-      printout(result .. " slot " .. x .. ", on row " .. y, pindex)
+      local msg = MessageBuilder.new()
+      if result ~= "" then
+         msg:fragment(result)
+         msg:fragment(" ")
+      end
+      msg:fragment({ "fa.building-slot-position", tostring(x), tostring(y) })
+      printout(msg:build(), pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
       --Read recipe ingredients / products (crafting menu)
       local recipe =
@@ -5758,11 +5758,11 @@ local function kb_switch_menu_or_gun(event)
          players[pindex].warnings.sector = players[pindex].warnings.sector + 1
          if players[pindex].warnings.sector > 3 then players[pindex].warnings.sector = 1 end
          if players[pindex].warnings.sector == 1 then
-            printout("Short Range: " .. players[pindex].warnings.short.summary, pindex)
+            printout({ "fa.warnings-short-range", players[pindex].warnings.short.summary }, pindex)
          elseif players[pindex].warnings.sector == 2 then
-            printout("Medium Range: " .. players[pindex].warnings.medium.summary, pindex)
+            printout({ "fa.warnings-medium-range", players[pindex].warnings.medium.summary }, pindex)
          elseif players[pindex].warnings.sector == 3 then
-            printout("Long Range: " .. players[pindex].warnings.long.summary, pindex)
+            printout({ "fa.warnings-long-range", players[pindex].warnings.long.summary }, pindex)
          end
       end
    end
@@ -5798,7 +5798,12 @@ local function kb_switch_menu_or_gun(event)
       local ammo_stack = ammo_inv[gun_index]
       local gun_stack = guns_inv[gun_index]
       --game.print("print " .. gun_index)--
-      result = { "fa.gun-with-ammo", Localising.get_localised_name_with_fallback(gun_stack), tostring(ammo_stack.count), Localising.get_localised_name_with_fallback(ammo_stack) }
+      result = {
+         "fa.gun-with-ammo",
+         Localising.get_localised_name_with_fallback(gun_stack),
+         tostring(ammo_stack.count),
+         Localising.get_localised_name_with_fallback(ammo_stack),
+      }
    end
 
    if not router:is_ui_open() then
@@ -5895,11 +5900,11 @@ local function kb_reverse_switch_menu_or_gun(event)
          players[pindex].warnings.sector = players[pindex].warnings.sector - 1
          if players[pindex].warnings.sector < 1 then players[pindex].warnings.sector = 3 end
          if players[pindex].warnings.sector == 1 then
-            printout("Short Range: " .. players[pindex].warnings.short.summary, pindex)
+            printout({ "fa.warnings-short-range", players[pindex].warnings.short.summary }, pindex)
          elseif players[pindex].warnings.sector == 2 then
-            printout("Medium Range: " .. players[pindex].warnings.medium.summary, pindex)
+            printout({ "fa.warnings-medium-range", players[pindex].warnings.medium.summary }, pindex)
          elseif players[pindex].warnings.sector == 3 then
-            printout("Long Range: " .. players[pindex].warnings.long.summary, pindex)
+            printout({ "fa.warnings-long-range", players[pindex].warnings.long.summary }, pindex)
          end
       end
    end
@@ -5934,7 +5939,12 @@ local function kb_reverse_switch_menu_or_gun(event)
       local ammo_stack = ammo_inv[gun_index]
       local gun_stack = guns_inv[gun_index]
       --game.print("print " .. gun_index)--
-      result = { "fa.gun-with-ammo", Localising.get_localised_name_with_fallback(gun_stack), tostring(ammo_stack.count), Localising.get_localised_name_with_fallback(ammo_stack) }
+      result = {
+         "fa.gun-with-ammo",
+         Localising.get_localised_name_with_fallback(gun_stack),
+         tostring(ammo_stack.count),
+         Localising.get_localised_name_with_fallback(ammo_stack),
+      }
    end
 
    if not router:is_ui_open() then
@@ -6451,7 +6461,7 @@ local function kb_click_menu(event)
             if sectors_i.name == "Modules" and cursor_stack.is_module then
                printout(" Only one module can be added per module slot ", pindex)
             elseif cursor_stack.valid_for_read then
-               printout(" Adding to stack of " .. cursor_stack.name, pindex)
+               printout({ "fa.adding-to-stack", { "item-name." .. cursor_stack.name } }, pindex)
             else
                printout(" Added", pindex)
             end
@@ -6486,7 +6496,10 @@ local function kb_click_menu(event)
                   return
                end
                cursor_stack.count = cursor_stack.count - 1
-               printout(result .. "added " .. module_name, pindex)
+               local msg = MessageBuilder.new()
+               if result ~= "" then msg:fragment(result) end
+               msg:fragment({ "fa.module-added", { "item-name." .. module_name } })
+               printout(msg:build(), pindex)
                return
             else
                printout(" Failed to add module ", pindex)
@@ -6736,7 +6749,7 @@ local function kb_click_hand(event)
          for i, ent in ipairs(ents) do
             if ent.valid and ent.to_be_deconstructed() then decon_counter = decon_counter + 1 end
          end
-         printout(decon_counter .. " entities marked to be deconstructed.", pindex)
+         printout({ "fa.entities-marked-deconstruct", tostring(decon_counter) }, pindex)
       end
    elseif stack.is_upgrade_item then
       --Start or conclude upgrade selection
@@ -6769,7 +6782,7 @@ local function kb_click_hand(event)
          for i, ent in ipairs(ents) do
             if ent.valid and ent.to_be_upgraded() then ent_counter = ent_counter + 1 end
          end
-         printout(ent_counter .. " entities marked to be upgraded.", pindex)
+         printout({ "fa.entities-marked-upgrade", tostring(ent_counter) }, pindex)
       end
    elseif stack.name == "copy-paste-tool" then
       --Start or conclude blueprint selection
@@ -6832,14 +6845,14 @@ local function kb_click_hand(event)
          end
          if count_robots <= max_robots then
             printout(
-               name .. " deployed, " .. count_robots .. " out of " .. max_robots .. " follower robot slots used",
+               { "fa.robot-deployed-slots", { "item-name." .. name }, tostring(count_robots), tostring(max_robots) },
                pindex
             )
          else
-            printout("Slots full, " .. name .. " deployed, old robots replaced", pindex)
+            printout({ "fa.robot-deployed-full", { "item-name." .. name } }, pindex)
          end
       elseif name == "distractor-capsule" then
-         printout(name .. " deployed, they do not follow you", pindex)
+         printout({ "fa.robot-deployed-no-follow", { "item-name." .. name } }, pindex)
       end
    elseif ent ~= nil then
       --If holding an item with no special left click actions, allow entity left click actions.
@@ -6894,9 +6907,9 @@ local function kb_click_menu_right(event)
          if stack_inv.is_blueprint then
             Blueprints.add_blueprint_to_book(pindex, book, stack_inv)
          elseif stack_inv.is_blueprint_book or stack_inv.is_deconstruction_item or stack_inv.is_upgrade_item then
-            printout("There is not yet support for adding a " .. stack_inv.name .. " to this book", pindex)
+            printout({ "fa.blueprint-book-no-support", { "item-name." .. stack_inv.name } }, pindex)
          else
-            printout("Error: Cannot add " .. stack_inv.name .. " to this book", pindex)
+            printout({ "fa.blueprint-book-cannot-add", { "item-name." .. stack_inv.name } }, pindex)
          end
          --Finish the interaction here
          return
@@ -8308,7 +8321,7 @@ local function kb_open_warnings_menu(event)
       players[pindex].move_queue = {}
       game.get_player(pindex).selected = nil
       game.get_player(pindex).play_sound({ path = "Open-Inventory-Sound" })
-      printout("Warnings, Short Range: " .. players[pindex].warnings.short.summary, pindex)
+      printout({ "fa.warnings-menu-short-range", players[pindex].warnings.short.summary }, pindex)
    else
       printout("Another menu is open. ", pindex)
    end

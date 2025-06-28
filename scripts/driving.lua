@@ -3,6 +3,7 @@
 
 local util = require("util")
 local FaUtils = require("scripts.fa-utils")
+local MessageBuilder = require("scripts.message-builder")
 local Trains = require("scripts.trains")
 local dirs = defines.direction
 
@@ -10,54 +11,68 @@ local mod = {}
 
 --Report more info about a vehicle. For trains, this would include the name, ID, and train state.
 function mod.vehicle_info(pindex)
-   local result = ""
-   if not game.get_player(pindex).driving then return "Not in a vehicle." end
+   if not game.get_player(pindex).driving then return { "fa.driving-not-in-vehicle" } end
 
    local vehicle = game.get_player(pindex).vehicle
    local train = game.get_player(pindex).vehicle.train
    if train == nil then
       --This is a type of car or tank.
-      result = "Driving " .. vehicle.name .. ", " .. mod.fuel_inventory_info(vehicle)
+      local result = MessageBuilder.new()
+      result:fragment({ "fa.driving-car", { "entity-name." .. vehicle.name } })
+      result:fragment(", ")
+      result:fragment(mod.fuel_inventory_info(vehicle))
       --laterdo**: car info: health, ammo contents, trunk contents
-      return result
+      return result:build()
    else
       --This is a type of locomotive or wagon.
+      local result = MessageBuilder.new()
 
       --Add the train name
-      result = "On board " .. vehicle.name .. " of train " .. Trains.get_train_name(train) .. ", "
+      result:fragment({ "fa.driving-on-board", { "entity-name." .. vehicle.name }, Trains.get_train_name(train) })
+      result:fragment(", ")
 
       --Add the train state
-      result = result .. Trains.get_train_state_info(train) .. ", "
+      result:fragment(Trains.get_train_state_info(train))
+      result:fragment(", ")
 
       --Declare destination if any.
       if train.path_end_stop ~= nil then
-         result = result .. " heading to station " .. train.path_end_stop.backer_name .. ", "
-         --   result = result .. " traveled a distance of " .. train.path.travelled_distance .. " out of " train.path.total_distance " distance, "
+         result:fragment({ "fa.driving-heading-to-station", train.path_end_stop.backer_name })
+         result:fragment(", ")
+         --   result:fragment(" traveled a distance of " .. train.path.travelled_distance .. " out of " train.path.total_distance " distance, ")
       end
 
       --Note that more info and options are found in the train menu
-      if vehicle.name == "locomotive" then result = result .. " Press LEFT BRACKET to open the train menu. " end
-      return result
+      if vehicle.name == "locomotive" then result:fragment({ "fa.driving-train-menu-hint" }) end
+      return result:build()
    end
 end
 
 --Return fuel content in a fuel inventory
 function mod.fuel_inventory_info(ent)
-   local result = "Contains no fuel."
    local itemtable = ent.get_fuel_inventory().get_contents()
    table.sort(itemtable, function(k1, k2)
       return k1.count > k2.count
    end)
-   if #itemtable > 0 then
-      result = "Contains as fuel, " .. itemtable[1].name .. " times " .. itemtable[1].count .. " "
-      if #itemtable > 1 then
-         result = result .. " and " .. itemtable[2].name .. " times " .. itemtable[2].count .. " "
-      end
-      if #itemtable > 2 then
-         result = result .. " and " .. itemtable[3].name .. " times " .. itemtable[3].count .. " "
-      end
+   if #itemtable == 0 then return { "fa.driving-no-fuel" } end
+
+   local result = MessageBuilder.new()
+   result:fragment({ "fa.driving-contains-fuel" })
+   result:fragment({ "fa.driving-fuel-item", { "item-name." .. itemtable[1].name }, tostring(itemtable[1].count) })
+   result:fragment(" ")
+
+   if #itemtable > 1 then
+      result:fragment({ "fa.and" })
+      result:fragment({ "fa.driving-fuel-item", { "item-name." .. itemtable[2].name }, tostring(itemtable[2].count) })
+      result:fragment(" ")
    end
-   return result
+   if #itemtable > 2 then
+      result:fragment({ "fa.and" })
+      result:fragment({ "fa.driving-fuel-item", { "item-name." .. itemtable[3].name }, tostring(itemtable[3].count) })
+      result:fragment(" ")
+   end
+
+   return result:build()
 end
 
 --Plays an alert depending on the distance to the entity ahead. Returns whether a larger radius check is needed. Driving proximity alert

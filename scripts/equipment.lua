@@ -29,7 +29,11 @@ function mod.equip_it(stack, pindex)
       if armor.is_empty() then
          message:fragment({ "fa.equipment-equipped", localising.get_localised_name_with_fallback(stack) })
       else
-         message:fragment({ "fa.equipment-equipped-swap", localising.get_localised_name_with_fallback(stack), localising.get_localised_name_with_fallback(armor[1]) })
+         message:fragment({
+            "fa.equipment-equipped-swap",
+            localising.get_localised_name_with_fallback(stack),
+            localising.get_localised_name_with_fallback(armor[1]),
+         })
       end
       stack.swap_stack(armor[1])
       players[pindex].skip_read_hand = true
@@ -88,7 +92,11 @@ function mod.equip_it(stack, pindex)
       end
       local slots_left = mod.count_empty_equipment_slots(grid)
       if placed ~= nil then
-         message:fragment({ "fa.equipment-equipped-grid", localising.get_localised_name_with_fallback(stack), tostring(slots_left) })
+         message:fragment({
+            "fa.equipment-equipped-grid",
+            localising.get_localised_name_with_fallback(stack),
+            tostring(slots_left),
+         })
          stack.count = stack.count - 1
          players[pindex].skip_read_hand = true
       else
@@ -117,9 +125,9 @@ function mod.read_weapons_and_ammo(pindex)
    local ammo_inv = game.get_player(pindex).get_inventory(defines.inventory.character_ammo)
    local guns_count = #guns_inv - guns_inv.count_empty_stacks()
    local ammos_count = #ammo_inv - ammo_inv.count_empty_stacks()
-   
+
    if guns_count == 0 then return { "fa.equipment-no-weapons" } end
-   
+
    local result = MessageBuilder.new()
    result:fragment({ "fa.equipment-weapons-header" })
 
@@ -131,7 +139,11 @@ function mod.read_weapons_and_ammo(pindex)
          result:fragment({ "fa.equipment-empty-weapon-slot" })
       end
       if ammo_inv[i] ~= nil and ammo_inv[i].valid and ammo_inv[i].valid_for_read then
-         result:fragment({ "fa.equipment-with-ammo", tostring(ammo_inv[i].count), localising.get_localised_name_with_fallback(ammo_inv[i]) })
+         result:fragment({
+            "fa.equipment-with-ammo",
+            tostring(ammo_inv[i].count),
+            localising.get_localised_name_with_fallback(ammo_inv[i]),
+         })
       else
          result:fragment({ "fa.equipment-no-ammunition" })
       end
@@ -414,7 +426,11 @@ function mod.read_equipment_list(pindex)
       result:fragment({ "fa.equipment-nothing" })
    else
       for i = 1, #itemtable, 1 do
-         result:fragment({ "fa.equipment-item-count", tostring(itemtable[i].count), {"item-name." .. itemtable[i].name} })
+         result:fragment({
+            "fa.equipment-item-count",
+            tostring(itemtable[i].count),
+            { "item-name." .. itemtable[i].name },
+         })
          result:fragment(", ")
       end
    end
@@ -452,7 +468,11 @@ function mod.remove_equipment_and_armor(pindex)
             end
          end
       end
-      result = { "fa.equipment-collected-items", tostring(initial_equipment_count - grid.count()), tostring(initial_equipment_count) }
+      result = {
+         "fa.equipment-collected-items",
+         tostring(initial_equipment_count - grid.count()),
+         tostring(initial_equipment_count),
+      }
    end
 
    --Remove armor
@@ -461,7 +481,8 @@ function mod.remove_equipment_and_armor(pindex)
    elseif char_main_inv.count_empty_stacks() == 0 then
       result = { "", result, { "fa.inventory-full" } }
    else
-      result = { "", result, { "fa.equipment-removed-armor", localising.get_localised_name_with_fallback(armor_inv[1]) } }
+      result =
+         { "", result, { "fa.equipment-removed-armor", localising.get_localised_name_with_fallback(armor_inv[1]) } }
       game.get_player(pindex).clear_cursor()
       local stack2 = game.get_player(pindex).cursor_stack
       stack2.swap_stack(armor_inv[1])
