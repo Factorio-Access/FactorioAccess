@@ -338,8 +338,12 @@ function Node:get_all_contents()
       local left = self:get_line_contents(defines.transport_line.left_line)
       local right = self:get_line_contents(defines.transport_line.right_line)
       local maxlen = math.max(#left, #right)
-      for i = #left + 1, maxlen do left[i] = { items = {} } end
-      for i = #right + 1, maxlen do right[i] = { items = {} } end
+      for i = #left + 1, maxlen do
+         left[i] = { items = {} }
+      end
+      for i = #right + 1, maxlen do
+         right[i] = { items = {} }
+      end
       return { left, right }
    elseif t == "underground-belt" then
       -- Underground inputs are two lines smashed together: the first line is
