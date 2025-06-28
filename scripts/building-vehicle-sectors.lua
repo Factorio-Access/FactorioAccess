@@ -237,16 +237,16 @@ function mod.open_operable_building(ent, pindex)
          if game.get_player(pindex).opened ~= nil then
             players[pindex].building.ent = ent
             router:open_ui(UiRouter.UI_NAMES.BUILDING_NO_SECTORS)
-            local result = localising.get(ent, pindex) .. ", this menu has no options "
+            local result =
+               { "", localising.get_localised_name_with_fallback(ent), { "fa.bvs-this-menu-has-no-options" } }
             if ent.type == "inserter" then
-               result = localising.get(ent, pindex) .. ", press PAGEUP or PAGEDOWN to edit hand stack size"
+               result =
+                  { "", localising.get_localised_name_with_fallback(ent), { "fa.bvs-pageup-pagedown-edit-hand-stack" } }
             end
-            if ent.get_control_behavior() ~= nil then
-               result = result .. ", press 'N' to open the circuit network menu "
-            end
+            if ent.get_control_behavior() ~= nil then table.insert(result, { "fa.bvs-press-n-circuit-network" }) end
             printout(result, pindex)
          else
-            printout(localising.get(ent, pindex) .. " has no menu ", pindex)
+            printout({ "", localising.get_localised_name_with_fallback(ent), { "fa.bvs-has-no-menu" } }, pindex)
          end
       end
    else
@@ -384,7 +384,7 @@ function mod.read_building_recipe(pindex, start_phrase)
       if recipe and recipe.valid then
          printout(
             start_phrase
-               .. localising.get(recipe, pindex)
+               .. localising.get_localised_name_with_fallback(recipe)
                .. " "
                .. recipe.category
                .. " "
@@ -394,14 +394,17 @@ function mod.read_building_recipe(pindex, start_phrase)
             pindex
          )
       else
-         printout(start_phrase .. "blank", pindex)
+         printout({ "", start_phrase, { "fa.bvs-blank" } }, pindex)
       end
    else
       local recipe = players[pindex].building.recipe
       if recipe ~= nil then
-         printout(start_phrase .. "Currently Producing: " .. recipe.name, pindex)
+         printout(
+            { "", start_phrase, { "fa.bvs-currently-producing" }, localising.get_localised_name_with_fallback(recipe) },
+            pindex
+         )
       else
-         printout(start_phrase .. "Press left bracket", pindex)
+         printout({ "", start_phrase, { "fa.bvs-press-left-bracket" } }, pindex)
       end
    end
 end
@@ -452,7 +455,7 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
       local amount = 0
       if fluid ~= nil then
          amount = fluid.amount
-         name = fluid.name --does not locallise..?**
+         name = localising.get_localised_name_with_fallback(prototypes.fluid[fluid.name])
       end --laterdo use fluidbox.get_locked_fluid(i) if needed.
       --Read the fluid ingredients & products
       --Note: We could have separated by input/output but right now the "type" is "input" for all fluids it seeems?
@@ -479,14 +482,39 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
          end
          if index < 0 then index = 0 end
          local prev_name = name
-         name = "Empty slot reserved for "
+         name = { "fa.bvs-empty-slot-reserved-for" }
          if index <= input_fluid_count then
             index = index + input_item_count
             for i, v in pairs(recipe.ingredients) do
                if v.type == "fluid" and i == index then
-                  local localised_name = localising.get(prototypes.fluid[v.name], pindex)
-                  name = name .. " input " .. localised_name .. " times " .. v.amount .. " per cycle "
-                  if prev_name ~= "Any" then name = "input " .. prev_name .. " times " .. math.floor(0.5 + amount) end
+                  local localised_name = localising.get_localised_name_with_fallback(prototypes.fluid[v.name])
+                  name = {
+                     "",
+                     name,
+                     " ",
+                     { "fa.bvs-input" },
+                     " ",
+                     localised_name,
+                     " ",
+                     { "fa.bvs-times" },
+                     " ",
+                     tostring(v.amount),
+                     " ",
+                     { "fa.bvs-per-cycle" },
+                     " ",
+                  }
+                  if prev_name ~= "Any" then
+                     name = {
+                        "",
+                        { "fa.bvs-input" },
+                        " ",
+                        prev_name,
+                        " ",
+                        { "fa.bvs-times" },
+                        " ",
+                        tostring(math.floor(0.5 + amount)),
+                     }
+                  end
                end
             end
          else
@@ -494,17 +522,46 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
             index = index + output_item_count
             for i, v in pairs(recipe.products) do
                if v.type == "fluid" and i == index then
-                  local localised_name = localising.get(prototypes.fluid[v.name], pindex)
-                  name = name .. " output " .. localised_name .. " times " .. v.amount .. " per cycle "
-                  if prev_name ~= "Any" then name = "output " .. prev_name .. " times " .. math.floor(0.5 + amount) end
+                  local localised_name = localising.get_localised_name_with_fallback(prototypes.fluid[v.name])
+                  name = {
+                     "",
+                     name,
+                     " ",
+                     { "fa.bvs-output" },
+                     " ",
+                     localised_name,
+                     " ",
+                     { "fa.bvs-times" },
+                     " ",
+                     tostring(v.amount),
+                     " ",
+                     { "fa.bvs-per-cycle" },
+                     " ",
+                  }
+                  if prev_name ~= "Any" then
+                     name = {
+                        "",
+                        { "fa.bvs-output" },
+                        " ",
+                        prev_name,
+                        " ",
+                        { "fa.bvs-times" },
+                        " ",
+                        tostring(math.floor(0.5 + amount)),
+                     }
+                  end
                end
             end
          end
       else
-         name = name .. " times " .. math.floor(0.5 + amount)
+         name = { "", name, " ", { "fa.bvs-times" }, " ", tostring(math.floor(0.5 + amount)) }
       end
       --Read the fluid found, including amount if any
-      printout(start_phrase .. " " .. name, pindex)
+      if type(name) == "string" then
+         printout({ "", start_phrase, " ", name }, pindex)
+      else
+         printout({ "", start_phrase, " ", name }, pindex)
+      end
    elseif #building_sector.inventory > 0 then
       --Item inventories
       local inventory = building_sector.inventory
@@ -513,12 +570,12 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
          if inventory.supports_bar() and #inventory > inventory.get_bar() - 1 then
             --local unlocked = inventory.supports_bar() and inventory.get_bar() - 1 or nil
             local unlocked = inventory.get_bar() - 1
-            start_phrase = start_phrase .. ", " .. unlocked .. " unlocked, "
+            start_phrase = { "", start_phrase, ", ", tostring(unlocked), " ", { "fa.bvs-unlocked" }, ", " }
          end
       end
       --Mention if the selected slot is locked
       if inventory.supports_bar() and players[pindex].building.index > inventory.get_bar() - 1 then
-         start_phrase = start_phrase .. " locked "
+         start_phrase = { "", start_phrase, " ", { "fa.bvs-locked" }, " " }
       end
       --Read the slot stack
       local stack = building_sector.inventory[players[pindex].building.index]
@@ -532,55 +589,80 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
             local index = players[pindex].building.index
             if building_sector.inventory.supports_filters() then
                local filter_name = building_sector.inventory.get_filter(index)
-               if filter_name ~= nil then start_phrase = start_phrase .. " filtered " end
+               if filter_name ~= nil then start_phrase = { "", start_phrase, " ", { "fa.bvs-filtered" }, " " } end
             end
             --Check if the stack has damage
-            if stack.health < 1 then start_phrase = start_phrase .. " damaged " end
+            if stack.health < 1 then start_phrase = { "", start_phrase, " ", { "fa.bvs-damaged" }, " " } end
             local remote_info = ""
             if stack.name == "spidertron-remote" then
                if stack.connected_entity == nil then
-                  remote_info = " not linked "
+                  remote_info = { "", { "fa.bvs-not-linked" } }
                else
                   if stack.connected_entity.entity_label == nil then
-                     remote_info = " for unlabelled spidertron "
+                     remote_info = { "", { "fa.bvs-for-unlabelled-spidertron" } }
                   else
-                     remote_info = " for spidertron " .. stack.connected_entity.entity_label
+                     remote_info = { "", { "fa.bvs-for-spidertron" }, " ", stack.connected_entity.entity_label }
                   end
                end
             end
-            printout(start_phrase .. localising.get(stack, pindex) .. remote_info .. " x " .. stack.count, pindex)
+            printout(
+               {
+                  "",
+                  start_phrase,
+                  localising.get_localised_name_with_fallback(stack.prototype),
+                  remote_info,
+                  " x ",
+                  tostring(stack.count),
+               },
+               pindex
+            )
          end
       else
          --Read the "empty slot"
-         local result = "Empty slot"
+         local result = { "", { "fa.bvs-empty-slot" } }
          --Check if the empty slot has a filter set
          if building_sector.inventory.supports_filters() then
             local index = players[pindex].building.index
             local filter_name = building_sector.inventory.get_filter(index)
             if filter_name ~= nil then
-               result = result .. " filtered for " .. filter_name --laterdo localise this name
+               table.insert(result, { "fa.bvs-filtered-for" })
+               table.insert(result, localising.get_localised_name_with_fallback(prototypes.item[filter_name]))
             end
          end
-         if building_sector.name == "Modules" then result = "Empty module slot" end
+         if building_sector.name == "Modules" then result = { "", { "fa.bvs-empty-module-slot" } } end
          local recipe = players[pindex].building.recipe
          if recipe ~= nil then
             if building_sector.name == "Input" then
                --For input slots read the recipe ingredients
-               result = result .. " reserved for "
+               table.insert(result, { "fa.bvs-reserved-for" })
                for i, v in pairs(recipe.ingredients) do
                   if v.type == "item" and i == players[pindex].building.index then
-                     local localised_name = localising.get(prototypes.item[v.name], pindex)
-                     result = result .. localised_name .. " times " .. v.amount .. " per cycle "
+                     local localised_name = localising.get_localised_name_with_fallback(prototypes.item[v.name])
+                     table.insert(result, localised_name)
+                     table.insert(result, " ")
+                     table.insert(result, { "fa.bvs-times" })
+                     table.insert(result, " ")
+                     table.insert(result, tostring(v.amount))
+                     table.insert(result, " ")
+                     table.insert(result, { "fa.bvs-per-cycle" })
+                     table.insert(result, " ")
                   end
                end
                --result = result .. "nothing"
             elseif building_sector.name == "Output" then
                --For output slots read the recipe products
-               result = result .. " reserved for "
+               table.insert(result, { "fa.bvs-reserved-for" })
                for i, v in pairs(recipe.products) do
                   if v.type == "item" and i == players[pindex].building.index then
-                     local localised_name = localising.get(prototypes.item[v.name], pindex)
-                     result = result .. localised_name .. " times " .. v.amount .. " per cycle "
+                     local localised_name = localising.get_localised_name_with_fallback(prototypes.item[v.name])
+                     table.insert(result, localised_name)
+                     table.insert(result, " ")
+                     table.insert(result, { "fa.bvs-times" })
+                     table.insert(result, " ")
+                     table.insert(result, tostring(v.amount))
+                     table.insert(result, " ")
+                     table.insert(result, { "fa.bvs-per-cycle" })
+                     table.insert(result, " ")
                   end
                end
                --result = result .. "nothing"
@@ -592,7 +674,9 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
             and building_sector.name == "Output"
          then
             --laterdo switch to {"item-name.".. ent.prototype.lab_inputs[players[pindex].building.index] }
-            result = result .. " reserved for science pack type " .. players[pindex].building.index
+            table.insert(result, { "fa.bvs-reserved-for-science-pack" })
+            table.insert(result, " ")
+            table.insert(result, tostring(players[pindex].building.index))
          elseif
             players[pindex].building.ent ~= nil
             and players[pindex].building.ent.valid

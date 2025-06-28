@@ -469,9 +469,14 @@ function mod.nudge_key(direction, event)
             game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
 
             --Explain build error
-            local result = "Cannot nudge, "
+            local result = { "", "Cannot nudge, " }
             local build_area = { left_top, right_bottom }
-            result = result .. mod.identify_building_obstacle(pindex, build_area, ent)
+            local obstacle_info = mod.identify_building_obstacle(pindex, build_area, ent)
+            for i, v in ipairs(obstacle_info) do
+               if i > 1 then -- Skip the empty string at index 1
+                  table.insert(result, v)
+               end
+            end
             printout(result, pindex)
             return
          end
@@ -1331,7 +1336,7 @@ end
 function mod.identify_building_obstacle(pindex, area, ent_to_ignore)
    local p = game.get_player(pindex)
    local ent_ignored = ent_to_ignore or nil
-   local result = "Cannot build"
+   local result = { "", "Cannot build" }
    --Check for an entity in the way
    local ents_in_area = p.surface.find_entities_filtered({
       area = area,
@@ -1367,22 +1372,19 @@ function mod.identify_building_obstacle(pindex, area, ent_to_ignore)
    })
    --Report obstacles
    if obstacle_ent ~= nil then
-      local obstacle_ent_name = localising.get(obstacle_ent, pindex)
-      result = result
-         .. ", "
-         .. obstacle_ent_name
-         .. " in the way, at "
-         .. math.floor(obstacle_ent.position.x)
-         .. ", "
-         .. math.floor(obstacle_ent.position.y)
+      table.insert(result, ", ")
+      table.insert(result, localising.get_localised_name_with_fallback(obstacle_ent))
+      table.insert(result, " in the way, at ")
+      table.insert(result, tostring(math.floor(obstacle_ent.position.x)))
+      table.insert(result, ", ")
+      table.insert(result, tostring(math.floor(obstacle_ent.position.y)))
    elseif #water_tiles_in_area > 0 then
       local water = water_tiles_in_area[1]
-      result = result
-         .. ", water "
-         .. " in the way, at "
-         .. math.floor(water.position.x)
-         .. ", "
-         .. math.floor(water.position.y)
+      table.insert(result, ", water ")
+      table.insert(result, " in the way, at ")
+      table.insert(result, tostring(math.floor(water.position.x)))
+      table.insert(result, ", ")
+      table.insert(result, tostring(math.floor(water.position.y)))
    end
    return result
 end

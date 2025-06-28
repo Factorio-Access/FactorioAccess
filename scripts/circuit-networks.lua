@@ -80,7 +80,7 @@ function mod.drag_wire_and_read(pindex)
    end
    local result = ""
    local wire_type = nil
-   local wire_name = {"item-name.wire"}
+   local wire_name = { "item-name.wire" }
    if p.cursor_stack.valid_for_read then
       wire_type = p.cursor_stack.name
       wire_name = localising.get_localised_name_with_fallback(p.cursor_stack.prototype)
@@ -133,9 +133,15 @@ function mod.drag_wire_and_read(pindex)
          else
             network_found = network_found.network_id
          end
-         result = {"", " Connected ", localising.get_localised_name_with_fallback(target_ent), " to red circuit network ID ", network_found}
+         result = {
+            "",
+            " Connected ",
+            localising.get_localised_name_with_fallback(target_ent),
+            " to red circuit network ID ",
+            network_found,
+         }
       else
-         result = {"", " Disconnected ", wire_name}
+         result = { "", " Disconnected ", wire_name }
       end
    elseif wire_type == "green-wire" then
       if drag_target ~= nil then
@@ -147,9 +153,15 @@ function mod.drag_wire_and_read(pindex)
          else
             network_found = network_found.network_id
          end
-         result = {"", " Connected ", localising.get_localised_name_with_fallback(target_ent), " to green circuit network ID ", network_found}
+         result = {
+            "",
+            " Connected ",
+            localising.get_localised_name_with_fallback(target_ent),
+            " to green circuit network ID ",
+            network_found,
+         }
       else
-         result = {"", " Disconnected ", wire_name}
+         result = { "", " Disconnected ", wire_name }
       end
    elseif wire_type == "copper-cable" then
       if drag_target ~= nil then
@@ -157,17 +169,23 @@ function mod.drag_wire_and_read(pindex)
          local target_network = drag_target.target_wire_id
          network_found = c_ent.electric_network_id
          if network_found == nil then network_found = "nil" end
-         result = {"", " Connected ", localising.get_localised_name_with_fallback(target_ent), " to electric network ID ", network_found}
+         result = {
+            "",
+            " Connected ",
+            localising.get_localised_name_with_fallback(target_ent),
+            " to electric network ID ",
+            network_found,
+         }
       elseif
          (c_ent ~= nil and c_ent.name == "power-switch")
          or (last_c_ent ~= nil and last_c_ent.valid and last_c_ent.name == "power-switch")
       then
          network_found = c_ent.electric_network_id
          if network_found == nil then network_found = "nil" end
-         result = {"fa.circuit-wiring-power-switch"}
+         result = { "fa.circuit-wiring-power-switch" }
          --result = " Connected " .. localising.get(c_ent,pindex) .. " to electric network ID " .. network_found
       else
-         result = {"", " Disconnected ", wire_name}
+         result = { "", " Disconnected ", wire_name }
       end
    end
    --p.print(result,{volume_modifier=0})--**
@@ -244,9 +262,7 @@ function mod.localise_signal_name(signal, pindex)
    if signal == nil then return "nil" end
    local sig_name = signal.name
    local sig_type = signal.type
-   if sig_name == nil then
-      return "nil"
-   end
+   if sig_name == nil then return "nil" end
    if sig_type == "nil" then
       return "nil"
    elseif sig_type == nil or sig_type == "item" then
@@ -299,14 +315,14 @@ function mod.constant_combinator_signals_info(ent, pindex)
    local combinator = ent.get_control_behavior()
    local max_signals_count = combinator.get_section(1).filters_count
    local valid_signals_count = constant_combinator_count_valid_signals(ent)
-   local result = {""}
-   
+   local result = { "" }
+
    if combinator.enabled then
       table.insert(result, " switched on, ")
    else
       table.insert(result, " switched off, ")
    end
-   
+
    if valid_signals_count == 0 then
       table.insert(result, " with no signals ")
    else
@@ -334,7 +350,7 @@ function mod.constant_combinator_add_stack_signal(ent, stack, pindex)
    local new_signal_id = { type = "item", name = stack.name }
    local new_signal = { signal = new_signal_id, count = 1 }
    combinator.set_signal(first_empty_slot, new_signal)
-   printout({"", "Added signal for ", localising.get_localised_name_with_fallback(stack.prototype)}, pindex)
+   printout({ "", "Added signal for ", localising.get_localised_name_with_fallback(stack.prototype) }, pindex)
 end
 
 function mod.constant_combinator_add_selector_signal(prototype, signal_type, ent, pindex)
@@ -343,7 +359,7 @@ function mod.constant_combinator_add_selector_signal(prototype, signal_type, ent
    local new_signal_id = { type = signal_type, name = prototype.name }
    local new_signal = { signal = new_signal_id, count = 1 }
    combinator.get_section(1).set_slot(first_empty_slot, new_signal)
-   printout({"", "Added signal for ", localising.get_localised_name_with_fallback(prototype)}, pindex)
+   printout({ "", "Added signal for ", localising.get_localised_name_with_fallback(prototype) }, pindex)
 end
 
 function mod.constant_combinator_remove_last_signal(ent, pindex)
@@ -353,7 +369,7 @@ function mod.constant_combinator_remove_last_signal(ent, pindex)
       local signal = combinator.get_signal(i)
       if signal.signal ~= nil then
          local signal_name = mod.localise_signal_name(signal.signal, pindex)
-         printout({"", "Removed last signal ", signal_name}, pindex)
+         printout({ "", "Removed last signal ", signal_name }, pindex)
          combinator.set_signal(i, nil)
          return
       end
@@ -685,8 +701,8 @@ function mod.read_circuit_condition(pindex, ent, comparator_in_words)
    local comparator = cond.comparator
    local first_signal_name = mod.localise_signal_name(cond.first_signal, pindex)
    local second_signal_name = mod.localise_signal_name(cond.second_signal, pindex)
-   local result = {""}
-   
+   local result = { "" }
+
    -- Add first signal name
    if type(first_signal_name) == "table" then
       table.insert(result, first_signal_name)
@@ -694,7 +710,7 @@ function mod.read_circuit_condition(pindex, ent, comparator_in_words)
       table.insert(result, tostring(first_signal_name))
    end
    table.insert(result, " ")
-   
+
    -- Add comparator
    if comparator_in_words == true then
       if comparator == "=" then
@@ -715,7 +731,7 @@ function mod.read_circuit_condition(pindex, ent, comparator_in_words)
    end
    table.insert(result, comparator)
    table.insert(result, " ")
-   
+
    -- Add second signal name or constant
    if cond.second_signal == nil then
       second_signal_name = cond.constant
@@ -728,7 +744,7 @@ function mod.read_circuit_condition(pindex, ent, comparator_in_words)
          table.insert(result, tostring(second_signal_name))
       end
    end
-   
+
    return result
 end
 
@@ -872,9 +888,14 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
    --First 3 lines of the menus are in common
    if index == 0 then
       --Menu info
-      local result = {"", " Circuit network ", nw_name, ", menu for ", 
-         localising.get_localised_name_with_fallback(ent), 
-         ", Navigate up and down with 'W' and 'S' and select an option with 'LEFT BRACKET', or exit with 'ESC'"}
+      local result = {
+         "",
+         " Circuit network ",
+         nw_name,
+         ", menu for ",
+         localising.get_localised_name_with_fallback(ent),
+         ", Navigate up and down with 'W' and 'S' and select an option with 'LEFT BRACKET', or exit with 'ESC'",
+      }
       printout(result, pindex)
    elseif index == 1 then
       --List all active signals of this network
@@ -909,13 +930,13 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
             printout({ "fa.circuit-no-network-connected" }, pindex)
             return
          end
-         local result = {""}
+         local result = { "" }
          local has_content = false
          if nwr ~= nil then
             if nwg ~= nil then table.insert(result, "Red network: ") end
             local red_info = mod.circuit_network_members_info(pindex, ent, defines.wire_connector_id.circuit_red)
             for i, v in ipairs(red_info) do
-               if i > 1 then  -- Skip the empty string at index 1
+               if i > 1 then -- Skip the empty string at index 1
                   table.insert(result, v)
                end
             end
@@ -925,33 +946,34 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
             if nwr ~= nil then table.insert(result, "Green network: ") end
             local green_info = mod.circuit_network_members_info(pindex, ent, defines.wire_connector_id.circuit_green)
             for i, v in ipairs(green_info) do
-               if i > 1 then  -- Skip the empty string at index 1
+               if i > 1 then -- Skip the empty string at index 1
                   table.insert(result, v)
                end
             end
             has_content = true
          end
-         if not has_content then 
-            result = {"", "Error: No network"}
-         end
+         if not has_content then result = { "", "Error: No network" } end
          printout(result, pindex)
       end
    elseif index == 3 then
       --List network members directly connected to this building
       if not clicked then
-         printout({"", "List directly connected network members for this ", localising.get_localised_name_with_fallback(ent)}, pindex)
+         printout(
+            { "", "List directly connected network members for this ", localising.get_localised_name_with_fallback(ent) },
+            pindex
+         )
       else
          if nwr == nil and nwg == nil then
             printout({ "fa.circuit-no-network-connected" }, pindex)
             return
          end
-         local result = {""}
+         local result = { "" }
          local has_content = false
          if nwr ~= nil then
             if nwg ~= nil then table.insert(result, "Red network: ") end
             local red_info = mod.circuit_network_neighbors_info(pindex, ent, defines.wire_connector_id.circuit_red)
             for i, v in ipairs(red_info) do
-               if i > 1 then  -- Skip the empty string at index 1
+               if i > 1 then -- Skip the empty string at index 1
                   table.insert(result, v)
                end
             end
@@ -961,15 +983,13 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
             if nwr ~= nil then table.insert(result, "Green network: ") end
             local green_info = mod.circuit_network_neighbors_info(pindex, ent, defines.wire_connector_id.circuit_green)
             for i, v in ipairs(green_info) do
-               if i > 1 then  -- Skip the empty string at index 1
+               if i > 1 then -- Skip the empty string at index 1
                   table.insert(result, v)
                end
             end
             has_content = true
          end
-         if not has_content then 
-            result = {"", "Error: No network"}
-         end
+         if not has_content then result = { "", "Error: No network" } end
          printout(result, pindex)
       end
    end
@@ -1064,11 +1084,11 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
          if not clicked then
             printout({ "fa.circuit-read-machine-behavior" }, pindex)
          else
-            local result = {"", "Reading mode: ", read_mode, ", ", "Operation mode: ", op_mode, ", "}
-            if uses_condition == true then 
+            local result = { "", "Reading mode: ", read_mode, ", ", "Operation mode: ", op_mode, ", " }
+            if uses_condition == true then
                local condition_info = mod.read_circuit_condition(pindex, ent, true)
                for i, v in ipairs(condition_info) do
-                  if i > 1 then  -- Skip the empty string at index 1
+                  if i > 1 then -- Skip the empty string at index 1
                      table.insert(result, v)
                   end
                end
@@ -1403,12 +1423,12 @@ function mod.circuit_network_neighbors_info(pindex, ent, wire_type)
    elseif wire_type == defines.wire_connector_id.circuit_green then
       color = "green"
    else
-      return {"", "Error: invalid wire type"}
+      return { "", "Error: invalid wire type" }
    end
    local connected_circuit_count = ent.get_circuit_network(wire_type).connected_circuit_count
    local members_list = add_neighbors_to_circuit_network_member_list({}, ent, color, 1, 2)
-   if members_list == nil or #members_list == 0 then return {"", "Error: No members"} end
-   local result = {"", "Connected to "}
+   if members_list == nil or #members_list == 0 then return { "", "Error: No members" } end
+   local result = { "", "Connected to " }
    for i, member in ipairs(members_list) do
       if member.unit_number ~= ent.unit_number then
          table.insert(result, localising.get_localised_name_with_fallback(member))
@@ -1430,14 +1450,14 @@ function mod.circuit_network_members_info(pindex, ent, wire_type)
    elseif wire_type == defines.wire_connector_id.circuit_green then
       color = "green"
    else
-      return {"", "Error: invalid wire type"}
+      return { "", "Error: invalid wire type" }
    end
    local connected_circuit_count = ent.get_circuit_network(wire_type).connected_circuit_count
    local members_list = add_neighbors_to_circuit_network_member_list({}, ent, color, 1, 10)
-   if members_list == nil or #members_list == 0 then return {"", "Error: No members"} end
+   if members_list == nil or #members_list == 0 then return { "", "Error: No members" } end
    local pole_counter = 0
    local ent_counter = 0
-   local result = {"", "Total of ", tostring(connected_circuit_count), " members, including "}
+   local result = { "", "Total of ", tostring(connected_circuit_count), " members, including " }
    for i, member in ipairs(members_list) do
       if member.type == "electric-pole" then
          pole_counter = pole_counter + 1
@@ -1583,7 +1603,7 @@ function mod.read_selected_signal_group(pindex, start_phrase_in)
    local group_proto = prototypes.item_group[group_name]
    local local_name = group_proto and localising.get_localised_name_with_fallback(group_proto) or group_name
    local group = players[pindex].signal_selector.signals[group_name]
-   local result = {"", start_phrase, local_name, ", ", tostring(#group)}
+   local result = { "", start_phrase, local_name, ", ", tostring(#group) }
    printout(result, pindex)
 end
 
@@ -1595,7 +1615,7 @@ function mod.read_selected_signal_slot(pindex, start_phrase_in)
       return
    end
    local sig_name = localising.get_localised_name_with_fallback(prototype)
-   local result = {"", start_phrase, sig_name, " ", signal_type}
+   local result = { "", start_phrase, sig_name, " ", signal_type }
    printout(result, pindex)
 end
 
@@ -1627,7 +1647,13 @@ function mod.apply_selected_signal_to_enabled_condition(pindex, ent, first)
    players[pindex].menu = "circuit_network_menu"
    players[pindex].signal_selector = nil
    printout(
-      {"", set_message, localising.get_localised_name_with_fallback(prototype), ", condition now checks if ", mod.read_circuit_condition(pindex, ent, true)},
+      {
+         "",
+         set_message,
+         localising.get_localised_name_with_fallback(prototype),
+         ", condition now checks if ",
+         mod.read_circuit_condition(pindex, ent, true),
+      },
       pindex
    )
 end

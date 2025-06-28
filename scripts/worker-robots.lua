@@ -268,9 +268,7 @@ local function modify_player_logistic_request(pindex, item, min_or_max, up_or_do
    local p = game.get_player(pindex)
    if not p then return nil, false end
    local force = p.force
-   if not force.character_logistic_requests then
-      printout({ "fa.robots-error-need-research" }, pindex)
-   end
+   if not force.character_logistic_requests then printout({ "fa.robots-error-need-research" }, pindex) end
 
    local char = p.character
    if not char then
@@ -493,10 +491,10 @@ function mod.logistics_info_key_handler(pindex)
    if mod.can_set_logistic_filter(ent) then
       local filter = ent.storage_filter
       local result
-      if filter ~= nil then 
-         result = {"", localising.get_localised_name_with_fallback(filter.name), " set as logistic storage filter"}
+      if filter ~= nil then
+         result = { "", localising.get_localised_name_with_fallback(filter.name), " set as logistic storage filter" }
       else
-         result = {"", "Nothing set as logistic storage filter"}
+         result = { "", "Nothing set as logistic storage filter" }
       end
       printout(result, pindex)
       return
@@ -861,9 +859,9 @@ function mod.set_logistic_filter(pindex, ent, name)
    ent.set_filter(1, name)
    local proto = prototypes.item[name]
    if proto then
-      printout({"", localising.get_localised_name_with_fallback(proto), " set as logistic storage filter "}, pindex)
+      printout({ "", localising.get_localised_name_with_fallback(proto), " set as logistic storage filter " }, pindex)
    else
-      printout({"", name, " set as logistic storage filter "}, pindex)
+      printout({ "", name, " set as logistic storage filter " }, pindex)
    end
 end
 

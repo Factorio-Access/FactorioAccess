@@ -46,10 +46,7 @@ function mod.read_crafting_queue(pindex, start_phrase)
       local recipe_name_only = item.recipe
       local recipe_proto = prototypes.recipe[recipe_name_only]
       local recipe_name = recipe_proto and localising.get_localised_name_with_fallback(recipe_proto) or recipe_name_only
-      printout(
-         {"", start_phrase, recipe_name, " x ", tostring(item.count)},
-         pindex
-      )
+      printout({ "", start_phrase, recipe_name, " x ", tostring(item.count) }, pindex)
    else
       printout(start_phrase .. "Blank", pindex)
    end
@@ -126,7 +123,7 @@ function mod.recipe_missing_ingredients_info(pindex, recipe_in)
       or players[pindex].crafting.lua_recipes[players[pindex].crafting.category][players[pindex].crafting.index]
    local p = game.get_player(pindex)
    local inv = p.get_main_inventory()
-   local result = {"", "Missing "}
+   local result = { "", "Missing " }
    local missing = 0
    for i, ing in ipairs(recipe.ingredients) do
       local on_hand = inv.get_item_count(ing.name)
@@ -169,7 +166,7 @@ function mod.recipe_raw_ingredients_info(recipe, pindex)
    end
 
    --Construct result array
-   local result = {"", "Base ingredients: "}
+   local result = { "", "Base ingredients: " }
    for j, ingt in ipairs(merged_table) do
       local localised_name
       ---@type LuaItemPrototype | LuaFluidPrototype
