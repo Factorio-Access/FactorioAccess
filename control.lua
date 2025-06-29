@@ -1267,36 +1267,20 @@ function menu_cursor_up(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.PUMP) then
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
       players[pindex].pump.index = math.max(1, players[pindex].pump.index - 1)
-      local dir = ""
-      if players[pindex].pump.positions[players[pindex].pump.index].direction == 0 then
-         dir = " North"
-      elseif players[pindex].pump.positions[players[pindex].pump.index].direction == 4 then
-         dir = " South"
-      elseif players[pindex].pump.positions[players[pindex].pump.index].direction == 2 then
-         dir = " East"
-      elseif players[pindex].pump.positions[players[pindex].pump.index].direction == 6 then
-         dir = " West"
-      end
 
-      printout(
-         "Option "
-            .. players[pindex].pump.index
-            .. ": "
-            .. math.floor(
-               FaUtils.distance(
-                  game.get_player(pindex).position,
-                  players[pindex].pump.positions[players[pindex].pump.index].position
-               )
-            )
-            .. " meters "
-            .. FaUtils.direction(
-               game.get_player(pindex).position,
-               players[pindex].pump.positions[players[pindex].pump.index].position
-            )
-            .. " Facing "
-            .. dir,
-         pindex
-      )
+      local pump_position = players[pindex].pump.positions[players[pindex].pump.index]
+      local player_pos = game.get_player(pindex).position
+      local distance = math.floor(FaUtils.distance(player_pos, pump_position.position))
+      local relative_dir = FaUtils.direction(player_pos, pump_position.position)
+      local facing_dir = pump_position.direction
+
+      printout({
+         "fa.pump-placement-option",
+         players[pindex].pump.index,
+         distance,
+         relative_dir,
+         { "fa.direction", facing_dir },
+      }, pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       TravelTools.fast_travel_menu_up(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.RAIL_BUILDER) then
@@ -1481,36 +1465,20 @@ function menu_cursor_down(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.PUMP) then
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
       players[pindex].pump.index = math.min(#players[pindex].pump.positions, players[pindex].pump.index + 1)
-      local dir = ""
-      if players[pindex].pump.positions[players[pindex].pump.index].direction == 0 then
-         dir = " North"
-      elseif players[pindex].pump.positions[players[pindex].pump.index].direction == 4 then
-         dir = " South"
-      elseif players[pindex].pump.positions[players[pindex].pump.index].direction == 2 then
-         dir = " East"
-      elseif players[pindex].pump.positions[players[pindex].pump.index].direction == 6 then
-         dir = " West"
-      end
 
-      printout(
-         "Option "
-            .. players[pindex].pump.index
-            .. ": "
-            .. math.floor(
-               FaUtils.distance(
-                  game.get_player(pindex).position,
-                  players[pindex].pump.positions[players[pindex].pump.index].position
-               )
-            )
-            .. " meters "
-            .. FaUtils.direction(
-               game.get_player(pindex).position,
-               players[pindex].pump.positions[players[pindex].pump.index].position
-            )
-            .. " Facing "
-            .. dir,
-         pindex
-      )
+      local pump_position = players[pindex].pump.positions[players[pindex].pump.index]
+      local player_pos = game.get_player(pindex).position
+      local distance = math.floor(FaUtils.distance(player_pos, pump_position.position))
+      local relative_dir = FaUtils.direction(player_pos, pump_position.position)
+      local facing_dir = pump_position.direction
+
+      printout({
+         "fa.pump-placement-option",
+         players[pindex].pump.index,
+         distance,
+         relative_dir,
+         { "fa.direction", facing_dir },
+      }, pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       TravelTools.fast_travel_menu_down(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.RAIL_BUILDER) then
