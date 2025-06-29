@@ -61,6 +61,82 @@ printout(msg:build(), pindex)
 - Maximum 20 levels of recursion
 - Keys limited to 200 characters
 
+## Current Status (December 2024)
+
+### Completed Work
+
+#### Wave 1: Simple Printout Localization ✓
+- All direct `printout("string", pindex)` calls have been localized across major modules
+- Modules completed: rail-builder, worker-robots, circuit-networks, and many others
+- Over 100 simple messages converted to use locale keys
+
+#### Wave 2: Localising.get() Replacement ✓
+- All `localising.get()` calls replaced with `get_localised_name_with_fallback()`
+- Fixed concatenated messages using LocalisedString arrays
+- Modules updated: building-vehicle-sectors, circuit-networks, crafting
+
+#### Wave 3: Unit Formatting and Dynamic Messages ✓
+- Created unit formatting helpers in fa-utils.lua:
+  - `format_power()` for watts/kilowatts/megawatts/etc
+  - `format_distance_with_direction()` for "X tiles north"
+  - `format_item_count()` for "item-name x count"
+  - `format_slot_state()` for inventory slots
+- Converted complex concatenations in building-tools, electrical, equipment
+- Note: List building should use MessageBuilder, not custom helpers
+
+#### Wave 9: High-Priority Concatenation Fixes ✓
+- Fixed critical concatenations in control.lua printout calls
+- Replaced remaining Localising.get() calls in control.lua
+- Updated spidertron.lua, building-tools.lua, circuit-networks.lua, crafting.lua
+- All tests passing (25/25)
+
+### Remaining Work
+
+Based on comprehensive analysis (see `hardcoded-strings-to-localize.md` for full details):
+
+#### High Priority: Control.lua Localization
+Control.lua contains **70+ hardcoded strings** that need immediate attention:
+- **Menu messages**: "Another menu is open", "Menu closed", movement instructions
+- **Error messages**: "Invalid input", "Error: No signals found", various craft requirement errors  
+- **Status messages**: "Switched on/off", "Blank", "Empty", state changes
+- **Combat messages**: "No ready weapons", damage reports
+- **Building/crafting messages**: Machine requirements, placement errors
+
+This represents the largest concentration of non-localized user-facing text.
+
+#### Medium Priority: Remaining Module Strings
+Several modules still have hardcoded strings:
+- **fa-info.lua**: Damaged structure messages
+- **building-vehicle-sectors.lua**: Menu navigation strings
+- **rail-builder.lua**: Rail finding messages
+- **menu-search.lua**: Search capability announcements
+
+#### Low Priority: Complex Refactoring
+Some areas require architectural changes:
+- **String concatenation patterns**: Many functions build strings dynamically
+- **Menu option keys**: Used for both display and logic
+- **Debug/development messages**: Low user impact
+
+### What "Wave 4" Actually Looks Like
+
+Given that research.lua is already well-localized, the next logical "wave" should focus on:
+
+1. **Control.lua Simple Strings** (30-40 messages)
+   - Direct printout calls with hardcoded strings
+   - Simple status messages that don't require refactoring
+   - Error messages with no dynamic content
+
+2. **Control.lua Complex Patterns** (20-30 patterns)
+   - Damage/combat message building
+   - Recipe requirement messages
+   - Movement result messages
+
+3. **Remaining Module Cleanup** (10-15 messages)
+   - fa-info.lua damaged messages
+   - Various menu-related strings
+
+The actual work is less about "waves" now and more about systematic cleanup of the remaining ~100 hardcoded strings, with control.lua being the primary target.
+
 ## The Dependency Order Problem
 
 The critical challenge is that functions returning strings for concatenation cannot be localized until their callers handle LocalisedStrings properly:
@@ -361,10 +437,11 @@ local name_desc = Localising.get_localised_name_with_fallback(entity)
 -- Localise items with quality/count
 local desc = Localising.localise_item(stack)
 
--- Legacy functions (still used but being phased out):
--- Localising.get() - returns raw string, uses buggy cache
+-- Legacy functions (REMOVED in Wave 9):
+-- Localising.get() - REMOVED - was buggy and returned raw strings
+-- Still available but prefer modern alternatives:
 -- Localising.get_item_from_name() - legacy cache-based
--- Localising.get_fluid_from_name() - legacy cache-based
+-- Localising.get_fluid_from_name() - legacy cache-based  
 -- Localising.get_recipe_from_name() - legacy cache-based
 ```
 
@@ -671,6 +748,44 @@ scanner-blank-sector=blank sector
 - Direct printout call with no return value
 - String is not concatenated elsewhere
 - Simple replacement maintains exact behavior
+
+## Key Learnings from Completed Waves
+
+### Critical Patterns Discovered
+
+1. **LocalisedString Concatenation**
+   ```lua
+   -- WRONG: Using .. operator
+   local msg = {"fa.prefix"} .. " and " .. {"fa.suffix"}
+   
+   -- RIGHT: Using {""} concatenation
+   local msg = {"", {"fa.prefix"}, " and ", {"fa.suffix"}}
+   ```
+
+2. **Function Return Values**
+   ```lua
+   -- Functions that return strings for concatenation MUST return LocalisedString
+   function get_description()
+       return {"fa.description"}  -- Not "description string"
+   end
+   ```
+
+3. **Menu Search Exception**
+   ```lua
+   -- menu-search.lua requires actual strings, not LocalisedStrings
+   -- This is a special case that should NOT be converted
+   ```
+
+4. **List Building Pattern**
+   ```lua
+   -- DON'T create custom list builders with "and"
+   -- DO use MessageBuilder for all list construction
+   local msg = MessageBuilder.new()
+   msg:list_item({"fa.item1"})
+   msg:list_item({"fa.item2"})
+   msg:list_item({"fa.item3"})
+   -- MessageBuilder handles separators correctly
+   ```
 
 ## Practical Workflow for Iterative Localization
 
