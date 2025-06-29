@@ -408,12 +408,16 @@ function mod.read_building_recipe(pindex, start_phrase)
    else
       local recipe = players[pindex].building.recipe
       if recipe ~= nil then
-         printout(
-            { "", start_phrase, { "fa.bvs-currently-producing" }, localising.get_localised_name_with_fallback(recipe) },
-            pindex
-         )
+         local message = MessageBuilder.new()
+         if start_phrase ~= "" then message:fragment(start_phrase) end
+         message:fragment({ "fa.bvs-currently-producing" })
+         message:fragment(localising.get_localised_name_with_fallback(recipe))
+         printout(message:build(), pindex)
       else
-         printout({ "", start_phrase, { "fa.bvs-press-left-bracket" } }, pindex)
+         local message = MessageBuilder.new()
+         if start_phrase ~= "" then message:fragment(start_phrase) end
+         message:fragment({ "fa.bvs-press-left-bracket" })
+         printout(message:build(), pindex)
       end
    end
 end
