@@ -726,6 +726,12 @@ def parse_factorio_args() -> argparse.Namespace:
         default=100,
         help="Number of lines to capture from logs (default: %(default)s)",
     )
+    
+    debug_support_group.add_argument(
+        "--show-paths",
+        action="store_true",
+        help="Show paths to important files (logs, script-output, etc.) and exit",
+    )
 
     lint_group.add_argument(
         "--format",
@@ -1023,6 +1029,46 @@ def main():
     """
     args = parse_factorio_args()
 
+    # Handle show-paths command (doesn't launch Factorio)
+    if args.show_paths:
+        factorio_path = Path(args.factorio_path).resolve()
+        
+        print("[LLM_INFO] Important file paths for debugging:")
+        print("-" * 60)
+        
+        # Factorio logs
+        log_path = find_factorio_log_path(factorio_path)
+        if log_path and log_path.exists():
+            print(f"Factorio current log: {log_path}")
+        else:
+            print("Factorio current log: Not found")
+            
+        # Script output directory
+        script_output_dir = find_script_output_dir(factorio_path)
+        if script_output_dir and script_output_dir.exists():
+            print(f"Script output directory: {script_output_dir}")
+            
+            # Check for specific files
+            printout_log = script_output_dir / "factorio-access-printout.log"
+            if printout_log.exists():
+                print(f"  - FactorioAccess printout log: {printout_log}")
+            else:
+                print(f"  - FactorioAccess printout log: Not found (expected at {printout_log})")
+                
+            test_log = script_output_dir / "factorio-access-test.log"
+            if test_log.exists():
+                print(f"  - FactorioAccess test log: {test_log}")
+                
+            mod_log = script_output_dir / "factorio-access.log"
+            if mod_log.exists():
+                print(f"  - FactorioAccess mod log: {mod_log}")
+        else:
+            print(f"Script output directory: Not found (expected at {script_output_dir})")
+            
+        print("-" * 60)
+        print("[LLM_INFO] Use --capture-logs to save current logs for analysis")
+        return 0
+    
     # Handle capture-logs command (doesn't launch Factorio)
     if args.capture_logs:
         print(f"[LLM_INFO] Capturing Factorio logs from manual run...")
@@ -1051,6 +1097,11 @@ def main():
         if crash_info.get("mod_log"):
             print("\n[LLM_INFO] === Last lines of factorio-access.log ===")
             lines = crash_info["mod_log"].split('\n')[-50:]
+            print('\n'.join(lines))
+            
+        if crash_info.get("printout_log"):
+            print("\n[LLM_INFO] === Last lines of factorio-access-printout.log ===")
+            lines = crash_info["printout_log"].split('\n')[-50:]
             print('\n'.join(lines))
             
         return 0

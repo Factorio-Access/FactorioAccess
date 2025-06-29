@@ -8,7 +8,7 @@ local mod = {}
 local LOG_FILE = "factorio-access-printout.log"
 
 --- Initialize the printout logger
-function mod.init()
+local function init_if_needed()
    -- Only init once per save.
    if storage.printout_logger_initialized then return end
 
@@ -34,7 +34,7 @@ end
 ---@param message LocalisedString
 ---@param pindex number
 function mod.log_printout(message, pindex)
-   if not storage.printout_logger_initialized then return end
+   init_if_needed()
 
    -- Build a localised string with timestamp and player info
    local tick = game and game.tick or 0

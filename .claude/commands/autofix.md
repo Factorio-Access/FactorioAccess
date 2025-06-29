@@ -17,14 +17,15 @@ Just say: `/autofix`
 ## What happens next
 
 1. I'll onboard to the codebase, once per session.
-2. I'll immediately run `python3 launch_factorio.py --capture-logs` to save the logs
-3. I'll analyze the captured logs for any crash or error information
-4. If a bug is found:
+2. I'll check important file paths using `python3 launch_factorio.py --show-paths`
+3. I'll immediately run `python3 launch_factorio.py --capture-logs` to save the logs
+4. I'll analyze the captured logs for any crash or error information
+5. If a bug is found:
    - I'll show you the relevant error information
    - I'll guide you through the fix process
    - I'll format the code and commit the changes
    - I'll help you test the fix before the user tries again
-5. If no bug is found:
+6. If no bug is found:
    - I'll report that no crash was detected in the logs
    - I'll ask you to describe what issue you encountered
    - I'll then proceed to help debug based on your description
@@ -37,6 +38,9 @@ Just say: `/autofix`
 - Always format your changes before asking the user to retry
 - ALWAYS commit your changes after fixing bugs or adding features
 - Unit tests cannot be run while the user has Factorio open - rely on formatting and linting only
+- **NEVER run tests during debugging** - they overwrite the printout log!
+- If you can't find the issue after examining logs, ask the user for help instead of flailing
+- The launcher now captures factorio-access-printout.log which contains all speech output
 - Users will continue in the same session, providing more bugs as followups without rerunning this command.
 
 ## Related documentation

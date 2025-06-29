@@ -2660,7 +2660,6 @@ EventManager.on_init(function()
    if skip_intro_message then remote.call("freeplay", "set_skip_intro", true) end
    ensure_storage_structures_are_up_to_date()
    TestFramework.on_init()
-   PrintoutLogger.init()
 end)
 
 EventManager.on_event(defines.events.on_cutscene_cancelled, function(event)
