@@ -711,7 +711,7 @@ def parse_factorio_args() -> argparse.Namespace:
         action="store_true",
         help="Check Lua formatting with stylua (does not modify files)",
     )
-    
+
     # Debugging support options
     debug_support_group = parser.add_argument_group("debugging support")
     debug_support_group.add_argument(
@@ -719,14 +719,14 @@ def parse_factorio_args() -> argparse.Namespace:
         action="store_true",
         help="Capture current Factorio logs without running the game (for debugging crashes from manual runs)",
     )
-    
+
     debug_support_group.add_argument(
         "--last-lines",
         type=int,
         default=100,
         help="Number of lines to capture from logs (default: %(default)s)",
     )
-    
+
     debug_support_group.add_argument(
         "--show-paths",
         action="store_true",
@@ -763,10 +763,10 @@ def parse_factorio_args() -> argparse.Namespace:
 def find_factorio_log_path(factorio_path: Path) -> Optional[Path]:
     """
     Find the factorio-current.log file by checking common locations.
-    
+
     Args:
         factorio_path: Path to factorio executable
-        
+
     Returns:
         Path to log file or None if not found
     """
@@ -775,55 +775,53 @@ def find_factorio_log_path(factorio_path: Path) -> Optional[Path]:
         # Same directory as executable
         factorio_path.parent / "factorio-current.log",
         # Parent directory (common for portable installs)
-        factorio_path.parent.parent / "factorio-current.log",
-        # Config directory (if specified)
-        factorio_path.parent / "config" / "factorio-current.log",
+        # directories are like bin/x64/factorio.exe, so we go up 3 levels.
+        factorio_path.parent.parent.parent / "factorio-current.log",
     ]
-    
+
     # On Windows, also check %APPDATA%
-    if sys.platform.startswith('win') or 'microsoft' in sys.platform.lower():
-        appdata = os.environ.get('APPDATA')
+    if sys.platform.startswith("win") or "microsoft" in sys.platform.lower():
+        appdata = os.environ.get("APPDATA")
         if appdata:
-            possible_locations.append(Path(appdata) / "Factorio" / "factorio-current.log")
-    
+            possible_locations.append(
+                Path(appdata) / "Factorio" / "factorio-current.log"
+            )
+
     # Check each location
     for location in possible_locations:
         if location.exists():
             return location
-            
+
     return None
 
 
 def find_script_output_dir(factorio_path: Path) -> Optional[Path]:
     """
     Find the script-output directory where mods write files.
-    
+
     Args:
         factorio_path: Path to factorio executable
-        
+
     Returns:
         Path to script-output directory or None if not found
     """
     # Common locations
     possible_locations = [
-        # Relative to executable
-        factorio_path.parent.parent / "script-output",
-        factorio_path.parent / "script-output",
-        # Temp directory (common for testing)
-        factorio_path.parent.parent / "temp" / "script-output",
+        # Relative to executable, includes exe name, e.g. bin/x64/factorio.exe so go up 3 times.
+        factorio_path.parent.parent.parent / "script-output",
     ]
-    
+
     # On Windows, also check %APPDATA%
-    if sys.platform.startswith('win') or 'microsoft' in sys.platform.lower():
-        appdata = os.environ.get('APPDATA')
+    if sys.platform.startswith("win") or "microsoft" in sys.platform.lower():
+        appdata = os.environ.get("APPDATA")
         if appdata:
             possible_locations.append(Path(appdata) / "Factorio" / "script-output")
-    
+
     # Check each location, prefer ones that exist
     for location in possible_locations:
         if location.exists():
             return location
-    
+
     # If none exist, return the most likely location (will be created by Factorio)
     return factorio_path.parent.parent / "script-output"
 
@@ -831,11 +829,11 @@ def find_script_output_dir(factorio_path: Path) -> Optional[Path]:
 def capture_crash_info(factorio_path: Path, exit_code: int) -> Dict[str, Any]:
     """
     Capture crash information from logs and save for later analysis.
-    
+
     Args:
         factorio_path: Path to factorio executable
         exit_code: Exit code from Factorio
-        
+
     Returns:
         Dictionary with crash information
     """
@@ -846,33 +844,43 @@ def capture_crash_info(factorio_path: Path, exit_code: int) -> Dict[str, Any]:
         "mod_log": None,
         "printout_log": None,
     }
-    
+
     # Try to capture factorio-current.log
     log_path = find_factorio_log_path(factorio_path)
     if log_path and log_path.exists():
         try:
             # Read last 200 lines (usually enough for crash info)
-            with open(log_path, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
                 lines = f.readlines()
                 # Look for crash/error patterns
                 crash_lines = []
                 capture = False
                 for i, line in enumerate(lines):
-                    if any(pattern in line.lower() for pattern in ['error', 'exception', 'crash', 'stack traceback']):
+                    if any(
+                        pattern in line.lower()
+                        for pattern in [
+                            "error",
+                            "exception",
+                            "crash",
+                            "stack traceback",
+                        ]
+                    ):
                         # Capture 20 lines before and all lines after
                         start = max(0, i - 20)
                         crash_lines = lines[start:]
                         capture = True
                         break
-                
+
                 if capture:
-                    crash_info["factorio_log"] = ''.join(crash_lines[-500:])  # Last 500 lines max
+                    crash_info["factorio_log"] = "".join(
+                        crash_lines[-500:]
+                    )  # Last 500 lines max
                 else:
                     # No obvious crash, just get last 100 lines
-                    crash_info["factorio_log"] = ''.join(lines[-100:])
+                    crash_info["factorio_log"] = "".join(lines[-100:])
         except Exception as e:
             crash_info["factorio_log"] = f"Failed to read log: {e}"
-    
+
     # Try to capture mod logs from script-output
     script_output_dir = find_script_output_dir(factorio_path)
     if script_output_dir and script_output_dir.exists():
@@ -880,45 +888,47 @@ def capture_crash_info(factorio_path: Path, exit_code: int) -> Dict[str, Any]:
         mod_log_path = script_output_dir / "factorio-access.log"
         if mod_log_path.exists():
             try:
-                with open(mod_log_path, 'r', encoding='utf-8', errors='ignore') as f:
+                with open(mod_log_path, "r", encoding="utf-8", errors="ignore") as f:
                     crash_info["mod_log"] = f.read()[-10000:]  # Last 10KB
             except Exception as e:
                 crash_info["mod_log"] = f"Failed to read mod log: {e}"
-        
+
         # Check for printout log (if we implement it)
         printout_log_path = script_output_dir / "factorio-access-printout.log"
         if printout_log_path.exists():
             try:
-                with open(printout_log_path, 'r', encoding='utf-8', errors='ignore') as f:
+                with open(
+                    printout_log_path, "r", encoding="utf-8", errors="ignore"
+                ) as f:
                     crash_info["printout_log"] = f.read()[-5000:]  # Last 5KB
             except Exception as e:
                 crash_info["printout_log"] = f"Failed to read printout log: {e}"
-    
+
     return crash_info
 
 
 def save_crash_report(crash_info: Dict[str, Any], output_dir: Path = None) -> Path:
     """
     Save crash information to a file for later analysis.
-    
+
     Args:
         crash_info: Dictionary with crash information
         output_dir: Directory to save report (defaults to current directory)
-        
+
     Returns:
         Path to saved crash report
     """
     if output_dir is None:
         output_dir = Path.cwd()
-    
+
     # Create filename with timestamp
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     report_path = output_dir / f"factorio_crash_{timestamp}.json"
-    
+
     # Save as JSON for easy parsing
-    with open(report_path, 'w', encoding='utf-8') as f:
+    with open(report_path, "w", encoding="utf-8") as f:
         json.dump(crash_info, f, indent=2)
-    
+
     return report_path
 
 
@@ -1032,80 +1042,87 @@ def main():
     # Handle show-paths command (doesn't launch Factorio)
     if args.show_paths:
         factorio_path = Path(args.factorio_path).resolve()
-        
+
         print("[LLM_INFO] Important file paths for debugging:")
         print("-" * 60)
-        
+
         # Factorio logs
         log_path = find_factorio_log_path(factorio_path)
+
         if log_path and log_path.exists():
             print(f"Factorio current log: {log_path}")
         else:
             print("Factorio current log: Not found")
-            
+
         # Script output directory
         script_output_dir = find_script_output_dir(factorio_path)
         if script_output_dir and script_output_dir.exists():
             print(f"Script output directory: {script_output_dir}")
-            
+
             # Check for specific files
             printout_log = script_output_dir / "factorio-access-printout.log"
             if printout_log.exists():
                 print(f"  - FactorioAccess printout log: {printout_log}")
             else:
-                print(f"  - FactorioAccess printout log: Not found (expected at {printout_log})")
-                
+                print(
+                    f"  - FactorioAccess printout log: Not found (expected at {printout_log})"
+                )
+
             test_log = script_output_dir / "factorio-access-test.log"
             if test_log.exists():
                 print(f"  - FactorioAccess test log: {test_log}")
-                
+
             mod_log = script_output_dir / "factorio-access.log"
             if mod_log.exists():
                 print(f"  - FactorioAccess mod log: {mod_log}")
         else:
-            print(f"Script output directory: Not found (expected at {script_output_dir})")
-            
+            print(
+                f"Script output directory: Not found (expected at {script_output_dir})"
+            )
+
         print("-" * 60)
         print("[LLM_INFO] Use --capture-logs to save current logs for analysis")
         return 0
-    
+
     # Handle capture-logs command (doesn't launch Factorio)
     if args.capture_logs:
         print(f"[LLM_INFO] Capturing Factorio logs from manual run...")
-        
+
         # Try to find Factorio installation
         factorio_path = Path(args.factorio_path).resolve()
         if not factorio_path.exists():
             # Try to find it in common locations
-            print("[LLM_WARN] Factorio executable not found at specified path, searching common locations...")
+            print(
+                "[LLM_WARN] Factorio executable not found at specified path, searching common locations..."
+            )
             # Just use the parent directories as a guess
             factorio_path = factorio_path.parent
-        
+
         # Capture crash info (exit_code 1 indicates we're capturing a potential crash)
         crash_info = capture_crash_info(factorio_path, 1)
-        
+
         # Save the report
         crash_report_path = save_crash_report(crash_info)
         print(f"[LLM_INFO] Log capture saved to: {crash_report_path}")
-        
+
         # Also print key information for immediate analysis
         if crash_info.get("factorio_log"):
             print("\n[LLM_INFO] === Last lines of factorio-current.log ===")
-            lines = crash_info["factorio_log"].split('\n')[-args.last_lines:]
-            print('\n'.join(lines))
-            
+            lines = crash_info["factorio_log"].split("\n")[-args.last_lines :]
+            print("\n".join(lines))
+
         if crash_info.get("mod_log"):
             print("\n[LLM_INFO] === Last lines of factorio-access.log ===")
-            lines = crash_info["mod_log"].split('\n')[-50:]
-            print('\n'.join(lines))
-            
+            lines = crash_info["mod_log"].split("\n")[-50:]
+            print("\n".join(lines))
+
         if crash_info.get("printout_log"):
             print("\n[LLM_INFO] === Last lines of factorio-access-printout.log ===")
-            lines = crash_info["printout_log"].split('\n')[-50:]
-            print('\n'.join(lines))
-            
+            lines = crash_info["printout_log"].split("\n")[-50:]
+            print("\n".join(lines))
+
         return 0
-    
+
     # Handle linting/formatting commands first (they don't launch Factorio)
     if args.lint:
         print(f"[LLM_INFO] Running lua-language-server on {args.mod_path}")
@@ -1222,11 +1239,13 @@ def main():
 
         # Capture crash info if exit code indicates failure
         if exit_code != 0 and exit_code != 130:  # 130 is Ctrl+C
-            print(f"\n[LLM_INFO] Factorio exited with error code {exit_code}, capturing crash information...")
+            print(
+                f"\n[LLM_INFO] Factorio exited with error code {exit_code}, capturing crash information..."
+            )
             crash_info = capture_crash_info(launcher.factorio_path, exit_code)
             crash_report_path = save_crash_report(crash_info)
             print(f"[LLM_INFO] Crash report saved to: {crash_report_path}")
-            
+
         # Check test results if running tests
         if args.run_tests:
             # Test log is in Factorio's script-output directory - find it dynamically
