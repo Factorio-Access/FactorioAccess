@@ -29,7 +29,7 @@ end
 --For an electricity producer, returns an info string on the current and maximum production.
 ---@param ent LuaEntity
 function mod.get_electricity_flow_info(ent)
-   local result = ""
+   local result = { "" }
    local power = 0
    local capacity = 0
    for i, v in pairs(ent.electric_network_statistics.output_counts) do
@@ -55,11 +55,13 @@ function mod.get_electricity_flow_info(ent)
    end
    power = power * 60
    capacity = capacity * 60
-   result = result
-      .. mod.get_power_string(power)
-      .. " being produced out of "
-      .. mod.get_power_string(capacity)
-      .. " capacity, "
+   result = {
+      "",
+      mod.get_power_string(power),
+      " being produced out of ",
+      mod.get_power_string(capacity),
+      " capacity, ",
+   }
    return result
 end
 
