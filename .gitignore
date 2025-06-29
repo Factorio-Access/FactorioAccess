@@ -3,6 +3,6 @@ __pycache__
 *.zip
 !lab_tiles.zip
 
-.claude/
+/.claude/
 claude-task.md
 claude-prompt.md

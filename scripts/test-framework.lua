@@ -44,6 +44,7 @@ local test_files = {
    -- "sound-tests", -- Test sound system integration (temporarily disabled)
    "test-rail-basic-ops", -- Test basic rail operations module
    "travel-tools-localization-test", -- Test travel-tools localization messages
+   "printout-logger-test", -- Test printout logging to file
 }
 
 -- Test execution state

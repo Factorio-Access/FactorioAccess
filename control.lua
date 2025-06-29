@@ -55,6 +55,7 @@ local Warnings = require("scripts.warnings")
 local WorkQueue = require("scripts.work-queue")
 local WorkerRobots = require("scripts.worker-robots")
 local Zoom = require("scripts.zoom")
+local PrintoutLogger = require("scripts.printout-logger")
 
 ---@meta scripts.shared-types
 
@@ -567,7 +568,11 @@ function printout(str, pindex)
       return
    end
    if players[pindex].vanilla_mode == nil then players[pindex].vanilla_mode = false end
-   if not players[pindex].vanilla_mode then localised_print({ "", "out " .. pindex .. " ", str }) end
+   if not players[pindex].vanilla_mode then
+      localised_print({ "", "out " .. pindex .. " ", str })
+      -- Also log to file for debugging
+      PrintoutLogger.log_printout(str, pindex)
+   end
 end
 
 ---Teleports the player character to the nearest tile center position to allow grid aligned cursor movement.
@@ -2655,6 +2660,7 @@ EventManager.on_init(function()
    if skip_intro_message then remote.call("freeplay", "set_skip_intro", true) end
    ensure_storage_structures_are_up_to_date()
    TestFramework.on_init()
+   PrintoutLogger.init()
 end)
 
 EventManager.on_event(defines.events.on_cutscene_cancelled, function(event)
