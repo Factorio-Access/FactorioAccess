@@ -28,6 +28,7 @@ Just say: `/autofix`
 6. If a bug is found:
    - I'll show you the relevant error information
    - I'll guide you through the fix process
+   - **CRITICAL**: I'll use MessageBuilder for ALL string concatenation with LocalisedStrings
    - I'll format the code and commit the changes
    - I'll help you test the fix before the user tries again
 7. If no bug is found but logs were captured:
@@ -47,6 +48,44 @@ Just say: `/autofix`
 - If you can't find the issue after examining logs, ask the user for help instead of flailing
 - The launcher now captures factorio-access-printout.log which contains all speech output
 - Users will continue in the same session, providing more bugs as followups without rerunning this command.
+
+## CRITICAL: Localization and String Handling
+
+**ALWAYS USE MessageBuilder FOR LOCALIZATION!** Never concatenate LocalisedStrings with regular strings using `..`
+
+### Common Localization Errors to Avoid:
+
+1. **WRONG**: String concatenation with LocalisedStrings
+   ```lua
+   -- This will crash!
+   local result = "Power: " .. get_power_string(power) .. " capacity"
+   ```
+
+2. **WRONG**: Mixed table concatenation
+   ```lua
+   -- This will also crash!
+   local result = {"", "Power: ", get_power_string(power), " capacity"}
+   ```
+
+3. **CORRECT**: Use MessageBuilder
+   ```lua
+   local message = MessageBuilder.new()
+   message:fragment("Power: ")
+   message:fragment(get_power_string(power))
+   message:fragment(" capacity")
+   printout(message:build(), pindex)
+   ```
+
+### MessageBuilder Pattern:
+- Always `require("scripts.message-builder")` at the top of files
+- Create new instance with `MessageBuilder.new()`
+- Add fragments with `message:fragment(text_or_localised_string)`
+- Build final message with `message:build()`
+- MessageBuilder properly handles mixing LocalisedStrings and regular strings
+
+### Direction Localization:
+- Use `{"fa.direction", direction_number}` not `"fa.direction-" .. direction_name`
+- Direction numbers: 0=North, 4=East, 8=South, 12=West, etc.
 
 ## Related documentation
 

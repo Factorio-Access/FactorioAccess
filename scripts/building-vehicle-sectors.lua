@@ -5,6 +5,7 @@ local Crafting = require("scripts.crafting")
 local FaUtils = require("scripts.fa-utils")
 local Filters = require("scripts.filters")
 local localising = require("scripts.localising")
+local MessageBuilder = require("scripts.message-builder")
 local TransportBelts = require("scripts.transport-belts")
 local BeltAnalyzer = require("scripts.ui.belt-analyzer")
 local UiRouter = require("scripts.ui.router")
@@ -365,9 +366,15 @@ function mod.open_operable_vehicle(ent, pindex)
          if game.get_player(pindex).opened ~= nil then
             players[pindex].building.ent = ent
             router:open_ui(UiRouter.UI_NAMES.VEHICLE_NO_SECTORS)
-            printout({ "", ent.name, ", this menu has no options " }, pindex)
+            local message = MessageBuilder.new()
+            message:fragment(ent.name)
+            message:fragment(", this menu has no options ")
+            printout(message:build(), pindex)
          else
-            printout({ "", ent.name, " has no menu " }, pindex)
+            local message = MessageBuilder.new()
+            message:fragment(ent.name)
+            message:fragment(" has no menu ")
+            printout(message:build(), pindex)
          end
       end
    else
@@ -382,19 +389,21 @@ function mod.read_building_recipe(pindex, start_phrase)
       local recipe =
          players[pindex].building.recipe_list[players[pindex].building.category][players[pindex].building.index]
       if recipe and recipe.valid then
-         printout({
-            "",
-            start_phrase,
-            localising.get_localised_name_with_fallback(recipe),
-            " ",
-            recipe.category,
-            " ",
-            recipe.group.name,
-            " ",
-            recipe.subgroup.name,
-         }, pindex)
+         local message = MessageBuilder.new()
+         if start_phrase ~= "" then message:fragment(start_phrase) end
+         message:fragment(localising.get_localised_name_with_fallback(recipe))
+         message:fragment(" ")
+         message:fragment(recipe.category)
+         message:fragment(" ")
+         message:fragment(recipe.group.name)
+         message:fragment(" ")
+         message:fragment(recipe.subgroup.name)
+         printout(message:build(), pindex)
       else
-         printout({ "", start_phrase, { "fa.bvs-blank" } }, pindex)
+         local message = MessageBuilder.new()
+         if start_phrase ~= "" then message:fragment(start_phrase) end
+         message:fragment({ "fa.bvs-blank" })
+         printout(message:build(), pindex)
       end
    else
       local recipe = players[pindex].building.recipe
