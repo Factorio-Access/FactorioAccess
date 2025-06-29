@@ -853,11 +853,11 @@ function mod.build_preview_checks_info(stack, pindex)
       --Prepare result string
       if relevant_fluid_faced ~= nil then
          local count = 0
-         table.insert(result, {
-            "fa.connection-connects-directly",
-            { "fa.direction", face_dir },
-            localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_faced]),
-         })
+         table.insert(result, ", connects ")
+         table.insert(result, { "fa.direction", face_dir })
+         table.insert(result, " to ")
+         table.insert(result, localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_faced]))
+         table.insert(result, " directly ")
       else
          table.insert(result, { "fa.connection-not-above-ground" })
       end
