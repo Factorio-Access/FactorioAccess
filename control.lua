@@ -8738,10 +8738,19 @@ EventManager.on_event("fa-cas-l", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
+-- Reload mod scripts (control stage only)
+-- NOTE: This does NOT reload:
+-- - Localizations (locale/*.cfg files)
+-- - Prototypes (data.lua, data-updates.lua, data-final-fixes.lua)
+-- - Graphics/sounds
+-- For a full reload including translations, Factorio must be restarted.
 EventManager.on_event("fa-cas-r", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
-   printout("Reloading all mods...", pindex)
+   printout(
+      "Reloading mod scripts (control.lua). Note: This does not reload localizations or prototypes. For full reload including translations, restart Factorio.",
+      pindex
+   )
    game.reload_script()
 end)
 
