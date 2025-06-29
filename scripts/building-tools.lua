@@ -626,7 +626,7 @@ function mod.build_preview_checks_info(stack, pindex)
                })
                table.insert(result, {
                   "fa.connection-connects-underground",
-                  { "fa.direction-" .. FaUtils.direction_to_locale_key(build_dir) },
+                  { "fa.direction", build_dir },
                   tostring(math.floor(util.distance(cand.position, pos)) - 1),
                })
                connected = true
@@ -688,7 +688,7 @@ function mod.build_preview_checks_info(stack, pindex)
          if closest_cand ~= nil then
             table.insert(result, {
                "fa.connection-connects-underground",
-               { "fa.direction-" .. FaUtils.direction_to_locale_key(FaUtils.rotate_180(build_dir)) },
+               { "fa.direction", FaUtils.rotate_180(build_dir) },
                tostring(math.floor(util.distance(closest_cand.position, pos)) - 1),
             })
          end
@@ -776,7 +776,7 @@ function mod.build_preview_checks_info(stack, pindex)
             table.insert(result, {
                "fa.connection-fluid-at-direction",
                localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_north]),
-               { "fa.direction-north" },
+               { "fa.direction", dirs.north },
             })
             count = count + 1
          end
@@ -784,7 +784,7 @@ function mod.build_preview_checks_info(stack, pindex)
             table.insert(result, {
                "fa.connection-fluid-at-direction",
                localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_east]),
-               { "fa.direction-east" },
+               { "fa.direction", dirs.east },
             })
             count = count + 1
          end
@@ -792,7 +792,7 @@ function mod.build_preview_checks_info(stack, pindex)
             table.insert(result, {
                "fa.connection-fluid-at-direction",
                localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_south]),
-               { "fa.direction-south" },
+               { "fa.direction", dirs.south },
             })
             count = count + 1
          end
@@ -800,7 +800,7 @@ function mod.build_preview_checks_info(stack, pindex)
             table.insert(result, {
                "fa.connection-fluid-at-direction",
                localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_west]),
-               { "fa.direction-west" },
+               { "fa.direction", dirs.west },
             })
             count = count + 1
          end
@@ -914,7 +914,7 @@ function mod.build_preview_checks_info(stack, pindex)
                         con_count = con_count + 1
                         local con_dir = FaUtils.get_direction_biased(con_target_pos, pos)
                         if con_count > 1 then table.insert(result, { "fa.connection-heat-pipe-and" }) end
-                        table.insert(result, { "fa.direction-" .. FaUtils.direction_to_locale_key(con_dir) })
+                        table.insert(result, { "fa.direction", con_dir })
                      end
                   end
                end
@@ -1028,10 +1028,7 @@ function mod.build_preview_checks_info(stack, pindex)
    if ent_p.name == "rail-signal" or ent_p.name == "rail-chain-signal" then
       local preview_dir = RailBuilder.free_place_rail_signal_in_hand(pindex, true)
       if preview_dir ~= nil then
-         table.insert(
-            result,
-            { "fa.connection-signal-heading", { "fa.direction-" .. FaUtils.direction_to_locale_key(preview_dir) } }
-         )
+         table.insert(result, { "fa.connection-signal-heading", { "fa.direction", preview_dir } })
       end
    end
 

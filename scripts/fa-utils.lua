@@ -279,22 +279,6 @@ function mod.direction_lookup(dir)
    end
 end
 
--- Safe version for use with locale keys
--- Maps direction to the exact string expected by locale files
-function mod.direction_to_locale_key(dir)
-   local direction_map = {
-      [dirs.north] = "north",
-      [dirs.northeast] = "northeast",
-      [dirs.east] = "east",
-      [dirs.southeast] = "southeast",
-      [dirs.south] = "south",
-      [dirs.southwest] = "southwest",
-      [dirs.west] = "west",
-      [dirs.northwest] = "northwest",
-   }
-   return direction_map[dir] or "unknown"
-end
-
 function mod.rotate_90(dir)
    return (dir + dirs.east) % (2 * dirs.south)
 end
