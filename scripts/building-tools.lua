@@ -824,7 +824,7 @@ function mod.build_preview_checks_info(stack, pindex)
          end
          if relevant_fluid_south ~= nil and (relevant_fluid_south == relevant_fluid_west) then count = count - 1 end
 
-         if count > 1 then result = result .. " warning: there may be mixing fluids " end
+         if count > 1 then table.insert(result, { "fa.connection-warning-mixing-fluids" }) end
       end
    --Same as pipe preview but for the faced direction only
    elseif stack.name == "pipe-to-ground" then
@@ -853,12 +853,11 @@ function mod.build_preview_checks_info(stack, pindex)
       --Prepare result string
       if relevant_fluid_faced ~= nil then
          local count = 0
-         result = result
-            .. ", connects "
-            .. FaUtils.direction_lookup(face_dir)
-            .. " to "
-            .. relevant_fluid_faced
-            .. " directly "
+         table.insert(result, {
+            "fa.connection-connects-directly",
+            { "fa.direction", face_dir },
+            localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_faced]),
+         })
       else
          table.insert(result, { "fa.connection-not-above-ground" })
       end
