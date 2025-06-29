@@ -8738,6 +8738,14 @@ EventManager.on_event("fa-cas-l", function(event)
 end)
 
 ---@param event EventData.CustomInputEvent
+EventManager.on_event("fa-cas-r", function(event)
+   local pindex = event.player_index
+   if not check_for_player(pindex) then return end
+   printout("Reloading all mods...", pindex)
+   game.reload_script()
+end)
+
+---@param event EventData.CustomInputEvent
 EventManager.on_event("fa-a-l", function(event)
    local pindex = event.player_index
    local p = game.get_player(pindex)

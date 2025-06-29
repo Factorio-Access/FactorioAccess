@@ -1238,4 +1238,11 @@ data:extend({
       consuming = "none",
       key_sequence = "",
    },
+
+   {
+      type = "custom-input",
+      name = "fa-cas-r",
+      key_sequence = "CONTROL + ALT + SHIFT + R",
+      consuming = "game-only",
+   },
 })

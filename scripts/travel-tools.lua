@@ -14,7 +14,7 @@ function mod.fast_travel_menu_open(pindex)
 
    local p = game.get_player(pindex)
    if p.ticks_to_respawn ~= nil then return end
-   if router:is_ui_open() and game.get_player(pindex).opened == nil then
+   if not router:is_ui_open() and game.get_player(pindex).opened == nil then
       game.get_player(pindex).selected = nil
 
       router:open_ui(UiRouter.UI_NAMES.TRAVEL)
