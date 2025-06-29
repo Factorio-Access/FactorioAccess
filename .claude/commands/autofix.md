@@ -22,6 +22,7 @@ Just say: `/autofix`
 4. If a bug is found:
    - I'll show you the relevant error information
    - I'll guide you through the fix process
+   - I'll format the code and commit the changes
    - I'll help you test the fix before the user tries again
 5. If no bug is found:
    - I'll report that no crash was detected in the logs
@@ -34,6 +35,7 @@ Just say: `/autofix`
 - The user is playing manually, not through the launcher
 - Focus on being helpful and responsive to keep the user engaged
 - Always format your changes before asking the user to retry
+- ALWAYS commit your changes after fixing bugs or adding features
 - Unit tests cannot be run while the user has Factorio open - rely on formatting and linting only
 - Users will continue in the same session, providing more bugs as followups without rerunning this command.
 
