@@ -43,6 +43,11 @@ import tempfile
 import re
 
 
+class LogsNotFoundError(Exception):
+    """Raised when critical logs cannot be found during debugging."""
+    pass
+
+
 class FactorioLauncher:
     """
     Factorio launcher with WSL-specific handling.
@@ -826,16 +831,20 @@ def find_script_output_dir(factorio_path: Path) -> Optional[Path]:
     return factorio_path.parent.parent / "script-output"
 
 
-def capture_crash_info(factorio_path: Path, exit_code: int) -> Dict[str, Any]:
+def capture_crash_info(factorio_path: Path, exit_code: int, fail_hard: bool = True) -> Dict[str, Any]:
     """
     Capture crash information from logs and save for later analysis.
 
     Args:
         factorio_path: Path to factorio executable
         exit_code: Exit code from Factorio
+        fail_hard: If True, raise exception when critical logs are missing
 
     Returns:
         Dictionary with crash information
+
+    Raises:
+        LogsNotFoundError: When fail_hard=True and critical logs cannot be found
     """
     crash_info = {
         "exit_code": exit_code,
@@ -844,6 +853,9 @@ def capture_crash_info(factorio_path: Path, exit_code: int) -> Dict[str, Any]:
         "mod_log": None,
         "printout_log": None,
     }
+
+    logs_found = False
+    missing_logs = []
 
     # Try to capture factorio-current.log
     log_path = find_factorio_log_path(factorio_path)
@@ -878,8 +890,11 @@ def capture_crash_info(factorio_path: Path, exit_code: int) -> Dict[str, Any]:
                 else:
                     # No obvious crash, just get last 100 lines
                     crash_info["factorio_log"] = "".join(lines[-100:])
+                logs_found = True
         except Exception as e:
             crash_info["factorio_log"] = f"Failed to read log: {e}"
+    else:
+        missing_logs.append(f"factorio-current.log (searched at: {log_path})")
 
     # Try to capture mod logs from script-output
     script_output_dir = find_script_output_dir(factorio_path)
@@ -893,7 +908,7 @@ def capture_crash_info(factorio_path: Path, exit_code: int) -> Dict[str, Any]:
             except Exception as e:
                 crash_info["mod_log"] = f"Failed to read mod log: {e}"
 
-        # Check for printout log (if we implement it)
+        # Check for printout log (CRITICAL for debugging)
         printout_log_path = script_output_dir / "factorio-access-printout.log"
         if printout_log_path.exists():
             try:
@@ -901,8 +916,24 @@ def capture_crash_info(factorio_path: Path, exit_code: int) -> Dict[str, Any]:
                     printout_log_path, "r", encoding="utf-8", errors="ignore"
                 ) as f:
                     crash_info["printout_log"] = f.read()[-5000:]  # Last 5KB
+                logs_found = True
             except Exception as e:
                 crash_info["printout_log"] = f"Failed to read printout log: {e}"
+        else:
+            missing_logs.append(f"factorio-access-printout.log (critical - searched at: {printout_log_path})")
+    else:
+        missing_logs.append(f"script-output directory (searched at: {script_output_dir})")
+
+    # If fail_hard is enabled and no logs were found, raise an exception
+    if fail_hard and not logs_found:
+        error_msg = "[LLM_CRITICAL] Cannot find any logs! This is a waste of time.\n"
+        error_msg += "Missing logs:\n"
+        for log in missing_logs:
+            error_msg += f"  - {log}\n"
+        error_msg += "\nSTOP! Ask the user for help locating the logs.\n"
+        error_msg += "The launcher MUST be able to find logs for debugging to work.\n"
+        error_msg += "Run with --show-paths to see where logs are expected."
+        raise LogsNotFoundError(error_msg)
 
     return crash_info
 
@@ -1099,7 +1130,11 @@ def main():
             factorio_path = factorio_path.parent
 
         # Capture crash info (exit_code 1 indicates we're capturing a potential crash)
-        crash_info = capture_crash_info(factorio_path, 1)
+        try:
+            crash_info = capture_crash_info(factorio_path, 1, fail_hard=True)
+        except LogsNotFoundError as e:
+            print(str(e))
+            return 2  # Exit with error code
 
         # Save the report
         crash_report_path = save_crash_report(crash_info)
@@ -1242,9 +1277,13 @@ def main():
             print(
                 f"\n[LLM_INFO] Factorio exited with error code {exit_code}, capturing crash information..."
             )
-            crash_info = capture_crash_info(launcher.factorio_path, exit_code)
-            crash_report_path = save_crash_report(crash_info)
-            print(f"[LLM_INFO] Crash report saved to: {crash_report_path}")
+            try:
+                crash_info = capture_crash_info(launcher.factorio_path, exit_code, fail_hard=False)
+                crash_report_path = save_crash_report(crash_info)
+                print(f"[LLM_INFO] Crash report saved to: {crash_report_path}")
+            except LogsNotFoundError as e:
+                print(str(e))
+                print("[LLM_ERROR] Failed to capture crash information due to missing logs")
 
         # Check test results if running tests
         if args.run_tests:
