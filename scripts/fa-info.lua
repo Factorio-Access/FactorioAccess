@@ -371,7 +371,9 @@ local function ent_info_fluid_contents(ctx)
 
    local unrolled = {}
    for f, c in pairs(fluids) do
-      table.insert(unrolled, { name = f, count = c })
+      -- Round fluid amounts to 1 decimal place to avoid excessive decimal display
+      local rounded_count = math.floor(c * 10 + 0.5) / 10
+      table.insert(unrolled, { name = f, count = rounded_count })
    end
 
    ctx.message:fragment(present_list(unrolled, nil, prototypes.fluid))
