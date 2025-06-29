@@ -365,9 +365,9 @@ function mod.open_operable_vehicle(ent, pindex)
          if game.get_player(pindex).opened ~= nil then
             players[pindex].building.ent = ent
             router:open_ui(UiRouter.UI_NAMES.VEHICLE_NO_SECTORS)
-            printout(ent.name .. ", this menu has no options ", pindex)
+            printout({ "", ent.name, ", this menu has no options " }, pindex)
          else
-            printout(ent.name .. " has no menu ", pindex)
+            printout({ "", ent.name, " has no menu " }, pindex)
          end
       end
    else
@@ -382,17 +382,17 @@ function mod.read_building_recipe(pindex, start_phrase)
       local recipe =
          players[pindex].building.recipe_list[players[pindex].building.category][players[pindex].building.index]
       if recipe and recipe.valid then
-         printout(
-            start_phrase
-               .. localising.get_localised_name_with_fallback(recipe)
-               .. " "
-               .. recipe.category
-               .. " "
-               .. recipe.group.name
-               .. " "
-               .. recipe.subgroup.name,
-            pindex
-         )
+         printout({
+            "",
+            start_phrase,
+            localising.get_localised_name_with_fallback(recipe),
+            " ",
+            recipe.category,
+            " ",
+            recipe.group.name,
+            " ",
+            recipe.subgroup.name,
+         }, pindex)
       else
          printout({ "", start_phrase, { "fa.bvs-blank" } }, pindex)
       end
