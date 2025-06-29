@@ -626,7 +626,7 @@ function mod.build_preview_checks_info(stack, pindex)
                })
                table.insert(result, {
                   "fa.connection-connects-underground",
-                  { "fa.direction-" .. helpers.direction_to_string(build_dir) },
+                  { "fa.direction-" .. FaUtils.direction_to_locale_key(build_dir) },
                   tostring(math.floor(util.distance(cand.position, pos)) - 1),
                })
                connected = true
@@ -688,7 +688,7 @@ function mod.build_preview_checks_info(stack, pindex)
          if closest_cand ~= nil then
             table.insert(result, {
                "fa.connection-connects-underground",
-               { "fa.direction-" .. helpers.direction_to_string(FaUtils.rotate_180(build_dir)) },
+               { "fa.direction-" .. FaUtils.direction_to_locale_key(FaUtils.rotate_180(build_dir)) },
                tostring(math.floor(util.distance(closest_cand.position, pos)) - 1),
             })
          end
@@ -914,7 +914,7 @@ function mod.build_preview_checks_info(stack, pindex)
                         con_count = con_count + 1
                         local con_dir = FaUtils.get_direction_biased(con_target_pos, pos)
                         if con_count > 1 then table.insert(result, { "fa.connection-heat-pipe-and" }) end
-                        table.insert(result, { "fa.direction-" .. helpers.direction_to_string(con_dir) })
+                        table.insert(result, { "fa.direction-" .. FaUtils.direction_to_locale_key(con_dir) })
                      end
                   end
                end
@@ -1030,7 +1030,7 @@ function mod.build_preview_checks_info(stack, pindex)
       if preview_dir ~= nil then
          table.insert(
             result,
-            { "fa.connection-signal-heading", { "fa.direction-" .. helpers.direction_to_string(preview_dir) } }
+            { "fa.connection-signal-heading", { "fa.direction-" .. FaUtils.direction_to_locale_key(preview_dir) } }
          )
       end
    end
