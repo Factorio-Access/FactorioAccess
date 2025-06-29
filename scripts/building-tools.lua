@@ -773,36 +773,48 @@ function mod.build_preview_checks_info(stack, pindex)
          table.insert(result, { "fa.connection-pipe-can-connect" })
 
          if relevant_fluid_north ~= nil then
-            table.insert(result, {
-               "fa.connection-fluid-at-direction",
-               localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_north]),
-               { "fa.direction", dirs.north },
-            })
-            count = count + 1
+            local fluid_proto = prototypes.fluid[relevant_fluid_north]
+            if fluid_proto then
+               table.insert(result, {
+                  "fa.connection-fluid-at-direction",
+                  localising.get_localised_name_with_fallback(fluid_proto),
+                  { "fa.direction", dirs.north },
+               })
+               count = count + 1
+            end
          end
          if relevant_fluid_east ~= nil then
-            table.insert(result, {
-               "fa.connection-fluid-at-direction",
-               localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_east]),
-               { "fa.direction", dirs.east },
-            })
-            count = count + 1
+            local fluid_proto = prototypes.fluid[relevant_fluid_east]
+            if fluid_proto then
+               table.insert(result, {
+                  "fa.connection-fluid-at-direction",
+                  localising.get_localised_name_with_fallback(fluid_proto),
+                  { "fa.direction", dirs.east },
+               })
+               count = count + 1
+            end
          end
          if relevant_fluid_south ~= nil then
-            table.insert(result, {
-               "fa.connection-fluid-at-direction",
-               localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_south]),
-               { "fa.direction", dirs.south },
-            })
-            count = count + 1
+            local fluid_proto = prototypes.fluid[relevant_fluid_south]
+            if fluid_proto then
+               table.insert(result, {
+                  "fa.connection-fluid-at-direction",
+                  localising.get_localised_name_with_fallback(fluid_proto),
+                  { "fa.direction", dirs.south },
+               })
+               count = count + 1
+            end
          end
          if relevant_fluid_west ~= nil then
-            table.insert(result, {
-               "fa.connection-fluid-at-direction",
-               localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_west]),
-               { "fa.direction", dirs.west },
-            })
-            count = count + 1
+            local fluid_proto = prototypes.fluid[relevant_fluid_west]
+            if fluid_proto then
+               table.insert(result, {
+                  "fa.connection-fluid-at-direction",
+                  localising.get_localised_name_with_fallback(fluid_proto),
+                  { "fa.direction", dirs.west },
+               })
+               count = count + 1
+            end
          end
 
          --Check which fluids are empty or equal (and thus not mixing invalidly). "Empty" counts too because sometimes a pipe itself is empty but it is still part of a network...
@@ -853,11 +865,14 @@ function mod.build_preview_checks_info(stack, pindex)
       --Prepare result string
       if relevant_fluid_faced ~= nil then
          local count = 0
-         table.insert(result, {
-            "fa.connection-connects-directly",
-            { "fa.direction", face_dir },
-            localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_faced]),
-         })
+         local fluid_proto = prototypes.fluid[relevant_fluid_faced]
+         if fluid_proto then
+            table.insert(result, {
+               "fa.connection-connects-directly",
+               { "fa.direction", face_dir },
+               localising.get_localised_name_with_fallback(fluid_proto),
+            })
+         end
       else
          table.insert(result, { "fa.connection-not-above-ground" })
       end
