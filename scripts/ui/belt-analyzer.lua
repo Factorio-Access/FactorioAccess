@@ -69,8 +69,10 @@ local function label_local_cell(ctx, x, y)
 
    local contents = node:get_all_contents()
 
-   local bucket = contents[x][y]
-   assert(bucket)
+   local bucket = contents[x] and contents[x][y]
+   if not bucket then
+      return { "fa.ui-belt-analyzer-empty" }
+   end
 
    if not next(bucket.items) then return { "fa.ui-belt-analyzer-empty" } end
 
