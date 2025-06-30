@@ -692,16 +692,22 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
             and players[pindex].building.ent.valid
             and players[pindex].building.ent.type == "roboport"
          then
-            result = result .. " reserved for worker robots "
+            table.insert(result, { "fa.bvs-reserved-for" })
+            table.insert(result, " ")
+            table.insert(result, "worker robots")
+            table.insert(result, " ")
          elseif
             players[pindex].building.ent ~= nil
-               and players[pindex].building.ent.valid
-               and players[pindex].building.ent.type == "ammo-turret"
+            and players[pindex].building.ent.valid
+            and players[pindex].building.ent.type == "ammo-turret"
             or players[pindex].building.ent.type == "artillery-turret"
          then
-            result = result .. " reserved for ammo "
+            table.insert(result, { "fa.bvs-reserved-for" })
+            table.insert(result, " ")
+            table.insert(result, "ammo")
+            table.insert(result, " ")
          end
-         printout(start_phrase .. result, pindex)
+         printout({ "", start_phrase, result }, pindex)
       end
    elseif prefix_inventory_size_and_name then
       printout("0 " .. building_sector.name, pindex)
