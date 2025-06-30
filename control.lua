@@ -4792,24 +4792,37 @@ local function read_coords(pindex, start_phrase)
       --Read recipe ingredients / products (crafting menu)
       local recipe =
          players[pindex].crafting.lua_recipes[players[pindex].crafting.category][players[pindex].crafting.index]
-      result = result .. "Ingredients: "
+      local msg = MessageBuilder.new()
+      if result ~= "" then
+         msg:fragment(result)
+         msg:fragment(" ")
+      end
+      msg:fragment("Ingredients: ")
       for i, v in pairs(recipe.ingredients) do
          ---@type LuaItemPrototype | LuaFluidPrototype
          local proto = prototypes.item[v.name]
          if proto == nil then proto = prototypes.fluid[v.name] end
-         local localised_name = Localising.get_localised_name_with_fallback(proto)
-         result = result .. ", " .. localised_name .. " times " .. v.amount
+         local name = Localising.get_localised_name_with_fallback(proto)
+         msg:fragment(", ")
+         msg:fragment(name)
+         msg:fragment(" times ")
+         msg:fragment(tostring(v.amount))
       end
-      result = result .. ", Products: "
+      msg:fragment(", Products: ")
       for i, v in pairs(recipe.products) do
          ---@type LuaItemPrototype | LuaFluidPrototype
          local proto = prototypes.item[v.name]
          if proto == nil then proto = prototypes.fluid[v.name] end
-         local localised_name = Localising.get_localised_name_with_fallback(proto)
-         result = result .. ", " .. localised_name .. " times " .. v.amount
+         local name = Localising.get_localised_name_with_fallback(proto)
+         msg:fragment(", ")
+         msg:fragment(name)
+         msg:fragment(" times ")
+         msg:fragment(tostring(v.amount))
       end
-      result = result .. ", craft time " .. recipe.energy .. " seconds by default."
-      printout(result, pindex)
+      msg:fragment(", craft time ")
+      msg:fragment(tostring(recipe.energy))
+      msg:fragment(" seconds by default.")
+      printout(msg:build(), pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
       Research.menu_describe_costs(pindex)
    end
@@ -4820,24 +4833,39 @@ local function read_coords(pindex, start_phrase)
       --Read recipe ingredients / products (building recipe selection)
       local recipe =
          players[pindex].building.recipe_list[players[pindex].building.category][players[pindex].building.index]
-      result = result .. "Ingredients: "
+      local msg = MessageBuilder.new()
+      if result ~= "" then
+         msg:fragment(result)
+         msg:fragment(" ")
+      end
+      msg:fragment("Ingredients: ")
       for i, v in pairs(recipe.ingredients) do
          ---@type LuaItemPrototype | LuaFluidPrototype
          local proto = prototypes.item[v.name]
          if proto == nil then proto = prototypes.fluid[v.name] end
-         local localised_name = Localising.get_localised_name_with_fallback(proto)
-         result = result .. ", " .. localised_name .. " x" .. v.amount .. " per cycle "
+         local name = Localising.get_localised_name_with_fallback(proto)
+         msg:fragment(", ")
+         msg:fragment(name)
+         msg:fragment(" x")
+         msg:fragment(tostring(v.amount))
+         msg:fragment(" per cycle ")
       end
-      result = result .. ", products: "
+      msg:fragment(", products: ")
       for i, v in pairs(recipe.products) do
          ---@type LuaItemPrototype | LuaFluidPrototype
          local proto = prototypes.item[v.name]
          if proto == nil then proto = prototypes.fluid[v.name] end
-         local localised_name = Localising.get_localised_name_with_fallback(proto)
-         result = result .. ", " .. localised_name .. " x" .. v.amount .. " per cycle "
+         local name = Localising.get_localised_name_with_fallback(proto)
+         msg:fragment(", ")
+         msg:fragment(name)
+         msg:fragment(" x")
+         msg:fragment(tostring(v.amount))
+         msg:fragment(" per cycle ")
       end
-      result = result .. ", craft time " .. recipe.energy .. " seconds at default speed."
-      printout(result, pindex)
+      msg:fragment(", craft time ")
+      msg:fragment(tostring(recipe.energy))
+      msg:fragment(" seconds at default speed.")
+      printout(msg:build(), pindex)
    end
 end
 
