@@ -796,8 +796,8 @@ function initialize(player)
    faplayer.walk = faplayer.walk or 0
    faplayer.move_queue = faplayer.move_queue or {}
    faplayer.building_direction = faplayer.building_direction or dirs.north --top
-   faplayer.building_footprint = faplayer.building_footprint or nil
-   faplayer.building_dir_arrow = faplayer.building_dir_arrow or nil
+   faplayer.building_footprint = nil
+   faplayer.building_dir_arrow = nil
    faplayer.overhead_sprite = nil
    faplayer.overhead_circle = nil
    faplayer.custom_GUI_frame = nil
