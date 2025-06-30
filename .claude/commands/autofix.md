@@ -86,6 +86,7 @@ Just say: `/autofix`
 ### Direction Localization:
 - Use `{"fa.direction", direction_number}` not `"fa.direction-" .. direction_name`
 - Direction numbers: 0=North, 4=East, 8=South, 12=West, etc.
+- ***IMPORTANT**: use defines.north etc. instead in all applicable locations.
 
 ## Related documentation
 
