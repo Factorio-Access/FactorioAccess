@@ -457,7 +457,7 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
          game.get_player(pindex).play_sound({ path = "inventory-wrap-around" })
       end
       local capacity = box.get_capacity(players[pindex].building.index)
-      local type = box.get_prototype(players[pindex].building.index).production_type
+      local fluid_type = box.get_prototype(players[pindex].building.index).production_type
       local fluid = box[players[pindex].building.index]
       local len = #box
       if prefix_inventory_size_and_name then
@@ -471,7 +471,7 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
          name = localising.get_localised_name_with_fallback(prototypes.fluid[fluid.name])
       end --laterdo use fluidbox.get_locked_fluid(i) if needed.
       --Read the fluid ingredients & products
-      --Note: We could have separated by input/output but right now the "type" is "input" for all fluids it seeems?
+      --Note: Could separate by input/output, but production_type (fluid_type) currently always "input"
       local recipe = players[pindex].building.recipe
       if recipe ~= nil then
          local index = players[pindex].building.index
