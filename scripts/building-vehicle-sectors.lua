@@ -692,20 +692,24 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
             and players[pindex].building.ent.valid
             and players[pindex].building.ent.type == "roboport"
          then
-            table.insert(result, { "fa.bvs-reserved-for" })
-            table.insert(result, " ")
-            table.insert(result, "worker robots")
-            table.insert(result, " ")
+            local message = MessageBuilder.new()
+            if start_phrase ~= "" then message:fragment(start_phrase) end
+            message:list_item({ "fa.bvs-reserved-for" })
+            message:list_item("worker robots")
+            printout(message:build(), pindex)
+            return
          elseif
             players[pindex].building.ent ~= nil
             and players[pindex].building.ent.valid
-            and players[pindex].building.ent.type == "ammo-turret"
-            or players[pindex].building.ent.type == "artillery-turret"
+            and (players[pindex].building.ent.type == "ammo-turret"
+                 or players[pindex].building.ent.type == "artillery-turret")
          then
-            table.insert(result, { "fa.bvs-reserved-for" })
-            table.insert(result, " ")
-            table.insert(result, "ammo")
-            table.insert(result, " ")
+            local message = MessageBuilder.new()
+            if start_phrase ~= "" then message:fragment(start_phrase) end
+            message:list_item({ "fa.bvs-reserved-for" })
+            message:list_item("ammo")
+            printout(message:build(), pindex)
+            return
          end
          printout({ "", start_phrase, result }, pindex)
       end
