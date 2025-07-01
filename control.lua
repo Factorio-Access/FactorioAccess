@@ -7420,7 +7420,7 @@ EventManager.on_event("fa-c-rightbracket", function(event)
    * Control click an item in an inventory to try smart transfer HALF of it. 
    * Control click an empty slot to try to smart transfer HALF of all items from that inventory.
    ]]
-   if router:is_ui_open() and router:is_ui_one_of({ UiRouter.UI_NA.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
+   if router:is_ui_open() and router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
       ---From event transfer-half-of-all-stacks
       do_multi_stack_transfer(0.5, pindex)
    end
