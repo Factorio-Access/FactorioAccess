@@ -181,7 +181,7 @@ mod.ITEM_OTHER = {}
 Localise an item, or fluid, possibly with count and quality.
 
 This function can take two things.  An LuaItemStack, or a table with 3 keys:
-item, quality, and count.  In that table, item and quality may either be a
+name, quality, and count.  In that table, name and quality may either be a
 string or a LuaXXXPrototype.  It:
 
 - For the case of stacks, "transport belt X 50" or (for non-normal quality)
@@ -191,7 +191,7 @@ string or a LuaXXXPrototype.  It:
   it being announced.
 
 for the case of "and 5 other items" you may use mod.ITEM_OTHER in place of the
-item.
+name.
 ]]
 ---@param what LuaItemStack | fa.Localising.LocaliseItemOpts
 ---@param protos table<string, LuaItemPrototype|LuaFluidPrototype>

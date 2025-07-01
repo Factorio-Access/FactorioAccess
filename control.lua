@@ -2409,7 +2409,7 @@ function do_multi_stack_transfer(ratio, pindex)
          local listed_count = 0
          for name, amount in pairs(moved) do
             if listed_count <= 5 then
-               table.insert(item_list, Localising.localise_item({ item = name, count = amount }))
+               table.insert(item_list, Localising.localise_item({ name = name, count = amount }))
                table.insert(item_list, ", ")
             else
                other_items = other_items + amount
@@ -2417,10 +2417,10 @@ function do_multi_stack_transfer(ratio, pindex)
             listed_count = listed_count + 1
          end
          if other_items > 0 then
-            table.insert(item_list, Localising.localise_item({ item = Localising.ITEM_OTHER, count = other_items }))
+            table.insert(item_list, Localising.localise_item({ name = Localising.ITEM_OTHER, count = other_items }))
             table.insert(item_list, ", ")
          end
-         --trim traling comma off
+         -- trim trailing comma off
          item_list[#item_list] = nil
          table.insert(result, { "fa.grabbed-stuff", item_list })
       end
@@ -2453,7 +2453,7 @@ function do_multi_stack_transfer(ratio, pindex)
             local listed_count = 0
             for name, amount in pairs(moved) do
                if listed_count <= 5 then
-                  table.insert(item_list, Localising.localise_item({ item = name, count = amount }))
+                  table.insert(item_list, Localising.localise_item({ name = name, count = amount }))
                   table.insert(item_list, ", ")
                else
                   other_items = other_items + amount
@@ -2461,10 +2461,10 @@ function do_multi_stack_transfer(ratio, pindex)
                listed_count = listed_count + 1
             end
             if other_items > 0 then
-               table.insert(item_list, Localising.localise_item({ item = Localising.ITEM_OTHER, count = other_items }))
+               table.insert(item_list, Localising.localise_item({ name = Localising.ITEM_OTHER, count = other_items }))
                table.insert(item_list, ", ")
             end
-            --trim trailing comma off
+            -- trim trailing comma off
             item_list[#item_list] = nil
             table.insert(result, { "fa.placed-stuff", FaUtils.breakup_string(item_list) })
          end
