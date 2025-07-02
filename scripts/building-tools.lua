@@ -1,4 +1,5 @@
 --Here: Functions for building with the mod, both basics and advanced tools.
+local Consts = require("scripts.consts")
 local Electrical = require("scripts.electrical")
 local FaUtils = require("scripts.fa-utils")
 local localising = require("scripts.localising")
@@ -1355,7 +1356,7 @@ function mod.identify_building_obstacle(pindex, area, ent_to_ignore)
    local ents_in_area = p.surface.find_entities_filtered({
       area = area,
       invert = true,
-      type = ENT_TYPES_YOU_CAN_BUILD_OVER,
+      type = Consts.ENT_TYPES_YOU_CAN_BUILD_OVER,
    })
    local obstacle_ent = nil
    for i, area_ent in ipairs(ents_in_area) do

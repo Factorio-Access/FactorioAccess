@@ -514,13 +514,13 @@ function mod.get_entity_part_at_cursor(pindex)
       draw_circle_at_position(p.surface, { x = x + 1, y = y })
 
       north_same =
-         check_entity_at_position(p.surface, { x = x, y = y - 1 }, preferred_ent.unit_number, EXCLUDED_ENT_NAMES)
+         check_entity_at_position(p.surface, { x = x, y = y - 1 }, preferred_ent.unit_number, Consts.EXCLUDED_ENT_NAMES)
       south_same =
-         check_entity_at_position(p.surface, { x = x, y = y + 1 }, preferred_ent.unit_number, EXCLUDED_ENT_NAMES)
+         check_entity_at_position(p.surface, { x = x, y = y + 1 }, preferred_ent.unit_number, Consts.EXCLUDED_ENT_NAMES)
       east_same =
-         check_entity_at_position(p.surface, { x = x + 1, y = y }, preferred_ent.unit_number, EXCLUDED_ENT_NAMES)
+         check_entity_at_position(p.surface, { x = x + 1, y = y }, preferred_ent.unit_number, Consts.EXCLUDED_ENT_NAMES)
       west_same =
-         check_entity_at_position(p.surface, { x = x - 1, y = y }, preferred_ent.unit_number, EXCLUDED_ENT_NAMES)
+         check_entity_at_position(p.surface, { x = x - 1, y = y }, preferred_ent.unit_number, Consts.EXCLUDED_ENT_NAMES)
 
       if north_same and south_same then
          if east_same and west_same then

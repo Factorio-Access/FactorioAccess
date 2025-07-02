@@ -81,4 +81,45 @@ mod.WATER_TILE_NAMES = {
    "water-wube",
 }
 
+-- Entity types that players can walk over without collision
+mod.ENT_TYPES_YOU_CAN_WALK_OVER = {
+   "resource",
+   "transport-belt",
+   "underground-belt",
+   "splitter",
+   "item-entity",
+   "entity-ghost",
+   "heat-pipe",
+   "pipe",
+   "pipe-to-ground",
+   "character",
+   "rail-signal",
+   "highlight-box",
+   "combat-robot",
+   "logistic-robot",
+   "construction-robot",
+   "rocket-silo-rocket-shadow",
+}
+
+-- Entity types that can be built over (replaced)
+mod.ENT_TYPES_YOU_CAN_BUILD_OVER = {
+   "resource",
+   "entity-ghost",
+   "highlight-box",
+   "combat-robot",
+   "logistic-robot",
+   "construction-robot",
+   "rocket-silo-rocket-shadow",
+}
+
+-- Entity names to exclude from various operations
+mod.EXCLUDED_ENT_NAMES = { "highlight-box" }
+
+-- Walking mode enumerations
+mod.WALKING = {
+   TELESTEP = 0,
+   STEP_BY_WALK = 1,
+   SMOOTH = 2,
+}
+
 return mod

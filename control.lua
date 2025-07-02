@@ -65,40 +65,6 @@ production_types = {}
 building_types = {}
 local dirs = defines.direction
 
-ENT_TYPES_YOU_CAN_WALK_OVER = {
-   "resource",
-   "transport-belt",
-   "underground-belt",
-   "splitter",
-   "item-entity",
-   "entity-ghost",
-   "heat-pipe",
-   "pipe",
-   "pipe-to-ground",
-   "character",
-   "rail-signal",
-   "highlight-box",
-   "combat-robot",
-   "logistic-robot",
-   "construction-robot",
-   "rocket-silo-rocket-shadow",
-}
-ENT_TYPES_YOU_CAN_BUILD_OVER = {
-   "resource",
-   "entity-ghost",
-   "highlight-box",
-   "combat-robot",
-   "logistic-robot",
-   "construction-robot",
-   "rocket-silo-rocket-shadow",
-}
-EXCLUDED_ENT_NAMES = { "highlight-box" }
-WALKING = {
-   TELESTEP = 0,
-   STEP_BY_WALK = 1,
-   SMOOTH = 2,
-}
-
 --This function gets scheduled.
 function call_to_fix_zoom(pindex)
    Zoom.fix_zoom(pindex)
@@ -656,7 +622,7 @@ function refresh_player_tile(pindex)
       { x = math.ceil(c_pos.x) - 0.01, y = math.ceil(c_pos.y) - 0.01 },
    }
    players[pindex].tile.ents =
-      surf.find_entities_filtered({ area = search_area, name = EXCLUDED_ENT_NAMES, invert = true })
+      surf.find_entities_filtered({ area = search_area, name = Consts.EXCLUDED_ENT_NAMES, invert = true })
    sort_ents_by_primary_first(pindex, players[pindex].tile.ents)
    --Draw the tile
    --rendering.draw_rectangle{left_top = search_area[1], right_bottom = search_area[2], color = {1,0,1}, surface = surf, time_to_live = 100}--
@@ -747,7 +713,7 @@ read_tile_inner = function(pindex, start_text)
          if PlayerMiningTools.try_to_mine_with_soun(ent, pindex) then result = result .. name .. " mined, " end
          --Second round, in case two entities are there. While loops do not work!
          ent = get_first_ent_at_tile(pindex)
-         if ent and ent.valid and players[pindex].walk ~= WALKING.SMOOTH then --not while
+         if ent and ent.valid and players[pindex].walk ~= Consts.Consts.WALKING.SMOOTH then --not while
             local name = ent.name
             game.get_player(pindex).play_sound({ path = "player-mine" })
             if PlayerMiningTools.try_to_mine_with_soun(ent, pindex) then result = result .. name .. " mined, " end
@@ -1025,7 +991,7 @@ EventManager.on_event(defines.events.on_player_changed_position, function(event)
 
    local p = game.get_player(pindex)
    if not check_for_player(pindex) then return end
-   if players[pindex].walk == WALKING.SMOOTH then
+   if players[pindex].walk == Consts.WALKING.SMOOTH then
       players[pindex].position = p.position
       local pos = p.position
       local vp = Viewpoint.get_viewpoint(pindex)
@@ -1865,7 +1831,7 @@ local function move_characters(event)
          end
       end
 
-      if player.walk ~= WALKING.SMOOTH or vp:get_cursor_enabled() or router:is_ui_open() then
+      if player.walk ~= Consts.WALKING.SMOOTH or vp:get_cursor_enabled() or router:is_ui_open() then
          local walk = false
          while #player.move_queue > 0 do
             local next_move = player.move_queue[1]
@@ -2690,7 +2656,7 @@ function fix_walk(pindex)
    if not check_for_player(pindex) then return end
    local player = game.get_player(pindex)
    if not player.character then return end
-   if players[pindex].walk == WALKING.TELESTEP and KruiseKontrol.is_active(pindex) ~= true then
+   if players[pindex].walk == Consts.WALKING.TELESTEP and KruiseKontrol.is_active(pindex) ~= true then
       player.character_running_speed_modifier = -1 -- 100% - 100% = 0%
    else --walk > 0
       player.character_running_speed_modifier = 0 -- 100% + 0 = 100%
@@ -3569,7 +3535,7 @@ function check_and_play_stuck_alert_sound(pindex, this_tick)
    if players[pindex].bump == nil then reset_bump_stats(pindex) end
 
    --Return if in a menu or a vehicle or in a different walking mode than smooth walking
-   if router:is_ui_open() or p.vehicle ~= nil or players[pindex].walk ~= WALKING.SMOOTH then return end
+   if router:is_ui_open() or p.vehicle ~= nil or players[pindex].walk ~= Consts.WALKING.SMOOTH then return end
 
    --Return if not walking
    if p.walking_state.walking == false then return end
@@ -3618,7 +3584,7 @@ function all_ents_are_walkable(pos)
       position = FaUtils.center_of_tile(pos),
       radius = 0.4,
       invert = true,
-      type = ENT_TYPES_YOU_CAN_WALK_OVER,
+      type = Consts.ENT_TYPES_YOU_CAN_WALK_OVER,
    })
    for i, ent in ipairs(ents) do
       return false
@@ -3777,11 +3743,11 @@ local function move(direction, pindex, nudged)
    --Compare the input direction and facing direction
    if players[pindex].player_direction == direction or nudged == true then
       --Same direction or nudging: Move character (unless smooth walking):
-      if players[pindex].walk == WALKING.SMOOTH and nudged ~= true then return end
+      if players[pindex].walk == Consts.WALKING.SMOOTH and nudged ~= true then return end
       new_pos = FaUtils.center_of_tile(new_pos)
       can_port = first_player.surface.can_place_entity({ name = "character", position = new_pos })
       if can_port then
-         if players[pindex].walk == WALKING.STEP_BY_WALK and nudged ~= true then
+         if players[pindex].walk == Consts.WALKING.STEP_BY_WALK and nudged ~= true then
             table.insert(players[pindex].move_queue, { direction = direction, dest = new_pos })
             moved_success = true
          else
@@ -3831,10 +3797,10 @@ local function move(direction, pindex, nudged)
       if not router:is_ui_open() then Rulers.update_from_cursor(pindex) end
    else
       --New direction: Turn character: --turn
-      if players[pindex].walk == WALKING.TELESTEP then
+      if players[pindex].walk == Consts.WALKING.TELESTEP then
          new_pos = FaUtils.center_of_tile(new_pos)
          game.get_player(pindex).play_sound({ path = "player-turned" })
-      elseif players[pindex].walk == WALKING.STEP_BY_WALK then
+      elseif players[pindex].walk == Consts.WALKING.STEP_BY_WALK then
          new_pos = FaUtils.center_of_tile(new_pos)
          table.insert(players[pindex].move_queue, { direction = direction, dest = pos })
       end
@@ -3847,9 +3813,9 @@ local function move(direction, pindex, nudged)
          Graphics.sync_build_cursor_graphics(pindex)
       end
 
-      if players[pindex].walk ~= WALKING.SMOOTH then
+      if players[pindex].walk ~= Consts.WALKING.SMOOTH then
          read_tile(pindex)
-      elseif players[pindex].walk == WALKING.SMOOTH then
+      elseif players[pindex].walk == Consts.WALKING.SMOOTH then
          --Read the new entity or unwalkable surface found upon turning
          refresh_player_tile(pindex)
          local ent = get_first_ent_at_tile(pindex)
@@ -7978,15 +7944,15 @@ local function kb_toggle_walking_mode(event)
    reset_bump_stats(pindex)
    players[pindex].move_queue = {}
    if p.character == nil then return end
-   if players[pindex].walk == WALKING.TELESTEP then
-      players[pindex].walk = WALKING.SMOOTH
+   if players[pindex].walk == Consts.WALKING.TELESTEP then
+      players[pindex].walk = Consts.WALKING.SMOOTH
       p.character_running_speed_modifier = 0 -- 100% + 0 = 100%
-   elseif players[pindex].walk == WALKING.SMOOTH then
-      players[pindex].walk = WALKING.TELESTEP
+   elseif players[pindex].walk == Consts.WALKING.SMOOTH then
+      players[pindex].walk = Consts.WALKING.TELESTEP
       p.character_running_speed_modifier = -1 -- 100% - 100% = 0%
    else
       -- Mode 1 (STEP_BY_WALK) is disabled for now
-      players[pindex].walk = WALKING.SMOOTH
+      players[pindex].walk = Consts.WALKING.SMOOTH
       p.character_running_speed_modifier = 0 -- 100% + 0 = 100%
    end
    --players[pindex].walk = (players[pindex].walk + 1) % 3
