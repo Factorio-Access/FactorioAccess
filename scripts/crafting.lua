@@ -29,8 +29,7 @@ function mod.get_recipes(pindex, ent, load_all_categories)
       local force_recipe = force_recipes[recipe_name]
       local proto = prototypes.recipe[recipe_name]
       -- only include enabled, non-hidden recipes that actually produce items
-      if force_recipe and force_recipe.enabled and not force_recipe.hidden
-         and proto and next(proto.products) then
+      if force_recipe and force_recipe.enabled and not force_recipe.hidden and proto and next(proto.products) then
          local grp = recipe.group.name
          unlocked_machine_recipes[grp] = unlocked_machine_recipes[grp] or {}
          table.insert(unlocked_machine_recipes[grp], force_recipe)

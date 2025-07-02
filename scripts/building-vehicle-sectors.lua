@@ -701,8 +701,10 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
          elseif
             players[pindex].building.ent ~= nil
             and players[pindex].building.ent.valid
-            and (players[pindex].building.ent.type == "ammo-turret"
-                 or players[pindex].building.ent.type == "artillery-turret")
+            and (
+               players[pindex].building.ent.type == "ammo-turret"
+               or players[pindex].building.ent.type == "artillery-turret"
+            )
          then
             local message = MessageBuilder.new()
             if start_phrase ~= "" then message:fragment(start_phrase) end

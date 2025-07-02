@@ -797,13 +797,9 @@ function initialize(player)
    faplayer.move_queue = faplayer.move_queue or {}
    faplayer.building_direction = faplayer.building_direction or dirs.north --top
 
-   if type(faplayer.building_footprint) == "number" then
-       faplayer.building_footprint = nil
-   end
+   if type(faplayer.building_footprint) == "number" then faplayer.building_footprint = nil end
 
-   if type(faplayer.building_dir_arrow) == "number" then
-       faplayer.building_dir_arrow = nil
-   end
+   if type(faplayer.building_dir_arrow) == "number" then faplayer.building_dir_arrow = nil end
 
    faplayer.overhead_sprite = nil
    faplayer.overhead_circle = nil
