@@ -6,3 +6,4 @@ __pycache__
 /.claude/
 claude-task.md
 claude-prompt.md
+factorio_crash_*
