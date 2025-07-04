@@ -585,7 +585,6 @@ function initialize(player)
    faplayer.num_elements = faplayer.num_elements or 0
    faplayer.player_direction = faplayer.player_direction or character.walking_state.direction
    faplayer.position = faplayer.position or FaUtils.center_of_tile(character.position)
-   faplayer.walk = faplayer.walk or Consts.WALKING.SMOOTH
    faplayer.building_direction = faplayer.building_direction or dirs.north --top
 
    if type(faplayer.building_footprint) == "number" then faplayer.building_footprint = nil end
@@ -3362,8 +3361,8 @@ function check_and_play_stuck_alert_sound(pindex, this_tick)
    --Initialize
    if storage.players[pindex].bump == nil then reset_bump_stats(pindex) end
 
-   --Return if in a menu or a vehicle or in a different walking mode than smooth walking
-   if router:is_ui_open() or p.vehicle ~= nil or storage.players[pindex].walk ~= Consts.WALKING.SMOOTH then return end
+   --Return if in a menu or a vehicle
+   if router:is_ui_open() or p.vehicle ~= nil then return end
 
    --Return if not walking
    if p.walking_state.walking == false then return end
@@ -7833,7 +7832,6 @@ local function kb_toggle_vanilla_mode(event)
    if storage.players[pindex].vanilla_mode == false then
       p.print("Vanilla mode : ON")
       vp:set_cursor_enabled(false)
-      storage.players[pindex].walk = 2
       if p.character then p.character_running_speed_modifier = 0 end
       vp:set_cursor_hidden(true)
       printout("Vanilla mode enabled", pindex)

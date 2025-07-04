@@ -115,10 +115,4 @@ mod.ENT_TYPES_YOU_CAN_BUILD_OVER = {
 -- Entity names to exclude from various operations
 mod.EXCLUDED_ENT_NAMES = { "highlight-box" }
 
--- Walking mode enumerations
--- Only smooth walking is supported
-mod.WALKING = {
-   SMOOTH = 2,
-}
-
 return mod
