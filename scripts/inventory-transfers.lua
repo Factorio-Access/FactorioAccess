@@ -121,10 +121,10 @@ function mod.do_multi_stack_transfer(ratio, pindex)
          })
 
          if table_size(moved) == 0 then
-            if full then table.insert(result, "Inventory full or not applicable, ") end
+            if full then table.insert(result, { "fa.inventory-full-or-not-applicable" }) end
             table.insert(result, { "fa.placed-nothing" })
          else
-            if full then table.insert(result, "Partial success, ") end
+            if full then table.insert(result, { "fa.partial-success" }) end
             game.get_player(pindex).play_sound({ path = "utility/inventory_move" })
             local item_list = { "" }
             local other_items = 0

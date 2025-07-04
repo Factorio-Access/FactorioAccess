@@ -33,7 +33,7 @@ function mod.mine_area(pindex)
       )
    then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout("This area is out of player reach", pindex)
+      printout({ "fa.area-out-of-reach" }, pindex)
       return
    end
 
