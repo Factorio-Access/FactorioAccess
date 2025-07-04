@@ -12,6 +12,7 @@ local util = require("util")
 local Blueprints = require("scripts.blueprints")
 local BuildingTools = require("scripts.building-tools")
 local BuildingVehicleSectors = require("scripts.building-vehicle-sectors")
+local BumpDetection = require("scripts.bump-detection")
 local CircuitNetworks = require("scripts.circuit-networks")
 local Combat = require("scripts.combat")
 local Consts = require("scripts.consts")
@@ -792,20 +793,6 @@ function initialize(player)
    faplayer.localisations = faplayer.localisations or {}
    faplayer.translation_id_lookup = faplayer.translation_id_lookup or {}
    Localising.check_player(player.index)
-
-   faplayer.bump = faplayer.bump
-      or {
-         last_bump_tick = 1, --Updated in bump checker
-         last_dir_key_tick = 1, --Updated in key press handlers
-         last_dir_key_1st = nil, --Updated in key press handlers
-         last_dir_key_2nd = nil, --Updated in key press handlers
-         last_pos_1 = nil, --Updated in bump checker
-         last_pos_2 = nil, --Updated in bump checker
-         last_pos_3 = nil, --Updated in bump checker
-         last_pos_4 = nil, --Updated in bump checker
-         last_dir_2 = nil, --Updated in bump checker
-         last_dir_1 = nil, --Updated in bump checker
-      }
 end
 
 --Update the position info and cursor info during smooth walking.
@@ -1695,8 +1682,8 @@ function on_tick(event)
    if event.tick % 15 == 0 then
       for pindex, player in pairs(players) do
          --Bump checks
-         check_and_play_bump_alert_sound(pindex, event.tick)
-         check_and_play_stuck_alert_sound(pindex, event.tick)
+         BumpDetection.check_and_play_bump_alert_sound(pindex, event.tick)
+         BumpDetection.check_and_play_stuck_alert_sound(pindex, event.tick)
       end
    elseif event.tick % 15 == 1 then
       --Check and play train track warning sounds at appropriate frequencies
@@ -1844,7 +1831,7 @@ EventManager.on_event(defines.events.on_player_driving_changed_state, function(e
    local router = UiRouter.get_router(pindex)
 
    if not check_for_player(pindex) then return end
-   reset_bump_stats(pindex)
+   BumpDetection.reset_bump_stats(pindex)
    game.get_player(pindex).clear_cursor()
    storage.players[pindex].last_train_orientation = nil
    if game.get_player(pindex).driving then
@@ -3163,248 +3150,6 @@ EventManager.on_event(defines.events.on_player_respawned, function(event)
    vp:set_cursor_pos({ x = position.x, y = position.y })
 end)
 
---If the player has unexpected lateral movement while smooth running in a cardinal direction, like from bumping into an entity or being at the edge of water, play a sound.
-function check_and_play_bump_alert_sound(pindex, this_tick)
-   local router = UiRouter.get_router(pindex)
-
-   if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
-   local p = game.get_player(pindex)
-   if p == nil or p.character == nil then return end
-   local face_dir = p.character.direction
-
-   --Initialize
-   if storage.players[pindex].bump == nil then reset_bump_stats(pindex) end
-   storage.players[pindex].bump.filled = false
-
-   --Return and reset if in a menu or a vehicle
-   if router:is_ui_open() or p.vehicle ~= nil then
-      storage.players[pindex].bump.last_pos_4 = nil
-      storage.players[pindex].bump.last_pos_3 = nil
-      storage.players[pindex].bump.last_pos_2 = nil
-      storage.players[pindex].bump.last_pos_1 = nil
-      storage.players[pindex].bump.last_dir_2 = nil
-      storage.players[pindex].bump.last_dir_1 = nil
-      return
-   end
-
-   --Update Positions and directions since last check
-   storage.players[pindex].bump.last_pos_4 = storage.players[pindex].bump.last_pos_3
-   storage.players[pindex].bump.last_pos_3 = storage.players[pindex].bump.last_pos_2
-   storage.players[pindex].bump.last_pos_2 = storage.players[pindex].bump.last_pos_1
-   storage.players[pindex].bump.last_pos_1 = p.position
-
-   storage.players[pindex].bump.last_dir_2 = storage.players[pindex].bump.last_dir_1
-   storage.players[pindex].bump.last_dir_1 = face_dir
-
-   --Return if not walking
-   if p.walking_state.walking == false then return end
-
-   --Return if not enough positions filled (trying 4 for now)
-   if storage.players[pindex].bump.last_pos_4 == nil then
-      storage.players[pindex].bump.filled = false
-      return
-   else
-      storage.players[pindex].bump.filled = true
-   end
-
-   --Return if bump sounded recently
-   if this_tick - storage.players[pindex].bump.last_bump_tick < 15 then return end
-
-   --Return if player changed direction recently
-   if
-      this_tick - storage.players[pindex].bump.last_dir_key_tick < 30
-      and storage.players[pindex].bump.last_dir_key_1st ~= storage.players[pindex].bump.last_dir_key_2nd
-   then
-      return
-   end
-
-   --Return if current running direction is not equal to the last (e.g. letting go of a key)
-   if face_dir ~= storage.players[pindex].bump.last_dir_key_1st then return end
-
-   --Return if no last key info filled (rare)
-   if storage.players[pindex].bump.last_dir_key_1st == nil then return end
-
-   --Return if no last dir info filled (rare)
-   if storage.players[pindex].bump.last_dir_2 == nil then return end
-
-   --Return if not walking in a cardinal direction
-   if face_dir ~= dirs.north and face_dir ~= dirs.east and face_dir ~= dirs.south and face_dir ~= dirs.west then
-      return
-   end
-
-   --Return if last dir is different
-   if storage.players[pindex].bump.last_dir_1 ~= storage.players[pindex].bump.last_dir_2 then return end
-
-   --Prepare analysis data
-   local TOLERANCE = 0.05
-   local was_going_straight = false
-   local b = storage.players[pindex].bump
-
-   local diff_x1 = b.last_pos_1.x - b.last_pos_2.x
-   local diff_x2 = b.last_pos_2.x - b.last_pos_3.x
-   local diff_x3 = b.last_pos_3.x - b.last_pos_4.x
-
-   local diff_y1 = b.last_pos_1.y - b.last_pos_2.y
-   local diff_y2 = b.last_pos_2.y - b.last_pos_3.y
-   local diff_y3 = b.last_pos_3.y - b.last_pos_4.y
-
-   --Check if earlier movement has been straight
-   if storage.players[pindex].bump.last_dir_key_1st == storage.players[pindex].bump.last_dir_key_2nd then
-      was_going_straight = true
-   else
-      if face_dir == dirs.north or face_dir == dirs.south then
-         if math.abs(diff_x2) < TOLERANCE and math.abs(diff_x3) < TOLERANCE then was_going_straight = true end
-      elseif face_dir == dirs.east or face_dir == dirs.west then
-         if math.abs(diff_y2) < TOLERANCE and math.abs(diff_y3) < TOLERANCE then was_going_straight = true end
-      end
-   end
-
-   --Return if was not going straight earlier (like was running diagonally, as confirmed by last positions)
-   if not was_going_straight then return end
-
-   --game.print("checking bump",{volume_modifier=0})--
-
-   --Check if latest movement has been straight
-   local is_going_straight = false
-   if face_dir == dirs.north or face_dir == dirs.south then
-      if math.abs(diff_x1) < TOLERANCE then is_going_straight = true end
-   elseif face_dir == dirs.east or face_dir == dirs.west then
-      if math.abs(diff_y1) < TOLERANCE then is_going_straight = true end
-   end
-
-   --Return if going straight now
-   if is_going_straight then return end
-
-   --Now we can confirm that there is a sudden lateral movement
-   storage.players[pindex].bump.last_bump_tick = this_tick
-   --p.play_sound({ path = "player-bump-alert" }) --Removed the alert beep
-   local bump_was_ent = false
-   local bump_was_cliff = false
-   local bump_was_tile = false
-
-   --Check if there is an ent in front of the player
-   local found_ent = p.selected
-   local ent = nil
-   if
-      found_ent
-      and found_ent.valid
-      and found_ent.type ~= "resource"
-      and found_ent.type ~= "transport-belt"
-      and found_ent.type ~= "item-entity"
-      and found_ent.type ~= "entity-ghost"
-      and found_ent.type ~= "character"
-   then
-      ent = found_ent
-   end
-   if ent == nil or ent.valid == false then
-      local ents = p.surface.find_entities_filtered({ position = p.position, radius = 0.75 })
-      for i, found_ent in ipairs(ents) do
-         --Ignore ents you can walk through, laterdo better collision checks**
-         if
-            found_ent.type ~= "resource"
-            and found_ent.type ~= "transport-belt"
-            and found_ent.type ~= "item-entity"
-            and found_ent.type ~= "entity-ghost"
-            and found_ent.type ~= "character"
-         then
-            ent = found_ent
-         end
-      end
-   end
-   bump_was_ent = (ent ~= nil and ent.valid)
-
-   if bump_was_ent then
-      if ent.type == "cliff" then
-         p.play_sound({ path = "player-bump-slide" })
-      else
-         p.play_sound({ path = "player-bump-trip" })
-      end
-      --game.print("bump: ent:" .. ent.name,{volume_modifier=0})--
-      return
-   end
-
-   --Check if there is a cliff nearby (the weird size can make it affect the player without being read)
-   local ents = p.surface.find_entities_filtered({ position = p.position, radius = 2, type = "cliff" })
-   bump_was_cliff = (#ents > 0)
-   if bump_was_cliff then
-      p.play_sound({ path = "player-bump-slide" })
-      --game.print("bump: cliff",{volume_modifier=0})--
-      return
-   end
-
-   --Check if there is a tile that was bumped into
-   local vp = Viewpoint.get_viewpoint(pindex)
-   local cursor_pos = vp:get_cursor_pos()
-   local tile = p.surface.get_tile(cursor_pos.x, cursor_pos.y)
-   bump_was_tile = (tile ~= nil and tile.valid and tile.collides_with("player"))
-
-   if bump_was_tile then
-      p.play_sound({ path = "player-bump-slide" })
-      --game.print("bump: tile:" .. tile.name,{volume_modifier=0})--
-      return
-   end
-
-   --The bump was something else, probably missed it...
-   --p.play_sound{path = "player-bump-slide"}
-   --game.print("bump: unknown, at " .. p.position.x .. "," .. p.position.y ,{volume_modifier=0})--
-   return
-end
-
---If walking but recently position has been unchanged, play alert
-function check_and_play_stuck_alert_sound(pindex, this_tick)
-   local router = UiRouter.get_router(pindex)
-
-   if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
-
-   local p = game.get_player(pindex)
-
-   --Initialize
-   if storage.players[pindex].bump == nil then reset_bump_stats(pindex) end
-
-   --Return if in a menu or a vehicle
-   if router:is_ui_open() or p.vehicle ~= nil then return end
-
-   --Return if not walking
-   if p.walking_state.walking == false then return end
-
-   --Return if not enough positions filled (trying 3 for now)
-   if storage.players[pindex].bump.last_pos_3 == nil then return end
-
-   --Return if no last dir info filled (rare)
-   if storage.players[pindex].bump.last_dir_2 == nil then return end
-
-   --Prepare analysis data
-   local b = storage.players[pindex].bump
-
-   local diff_x1 = b.last_pos_1.x - b.last_pos_2.x
-   local diff_x2 = b.last_pos_2.x - b.last_pos_3.x
-   --local diff_x3 = b.last_pos_3.x - b.last_pos_4.x
-
-   local diff_y1 = b.last_pos_1.y - b.last_pos_2.y
-   local diff_y2 = b.last_pos_2.y - b.last_pos_3.y
-   --local diff_y3 = b.last_pos_3.y - b.last_pos_4.y
-
-   --Check if earlier movement has been straight
-   if diff_x1 == 0 and diff_y1 == 0 and diff_x2 == 0 and diff_y2 == 0 then --and diff_x3 == 0 and diff_y3 == 0 then
-      p.play_sound({ path = "player-bump-stuck-alert" })
-   end
-end
-
-function reset_bump_stats(pindex)
-   storage.players[pindex].bump = {
-      last_bump_tick = 1,
-      last_dir_key_tick = 1,
-      last_dir_key_1st = nil,
-      last_dir_key_2nd = nil,
-      last_pos_1 = nil,
-      last_pos_2 = nil,
-      last_pos_3 = nil,
-      last_pos_4 = nil,
-      last_dir_2 = nil,
-      last_dir_1 = nil,
-      filled = false,
-   }
-end
 
 function all_ents_are_walkable(pos)
    local ents = game.surfaces[1].find_entities_filtered({
@@ -3757,10 +3502,7 @@ local function move_key(direction, event, force_single_tile)
    storage.players[pindex].confirm_action_tick = 0
 
    --Save the key press event
-   local pex = storage.players[event.player_index]
-   pex.bump.last_dir_key_2nd = pex.bump.last_dir_key_1st
-   pex.bump.last_dir_key_1st = direction
-   pex.bump.last_dir_key_tick = event.tick
+   BumpDetection.update_last_direction_key(event.player_index, direction, event.tick)
 
    if router:is_ui_open() and not router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then
       -- Menus: move menu cursor
