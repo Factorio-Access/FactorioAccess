@@ -18,6 +18,7 @@ local Consts = require("scripts.consts")
 local Crafting = require("scripts.crafting")
 local Driving = require("scripts.driving")
 local Electrical = require("scripts.electrical")
+local EntitySelection = require("scripts.entity-selection")
 local Equipment = require("scripts.equipment")
 local EventManager = require("scripts.event-manager")
 local FaCommands = require("scripts.fa-commands")
@@ -86,151 +87,6 @@ end
 --This function gets scheduled.
 function call_to_check_ghost_rails(pindex)
    Rails.check_ghost_rail_planning_results(pindex)
-end
-
---Define primary ents, which are ents that show up first when reading tiles.
---Notably, the definition is done by listing which types count as secondary.
-function ent_is_primary(ent, pindex)
-   return ent.type ~= "logistic-robot"
-      and ent.type ~= "construction-robot"
-      and ent.type ~= "combat-robot"
-      and ent.type ~= "corpse"
-      and ent.type ~= "rocket-silo-rocket-shadow"
-      and ent.type ~= "resource"
-      and (ent.type ~= "character" or ent.player ~= pindex)
-end
-
--- Sorts a list of entities by bringing primary entities to the start
-local function sort_ents_by_primary_first(pindex, ents)
-   table.sort(ents, function(a, b)
-      -- Return false if either are invalid
-      if a == nil or a.valid == false then return false end
-      if b == nil or b.valid == false then return false end
-
-      -- Check if primary
-      local a_is_primary = ent_is_primary(a, pindex)
-      local b_is_primary = ent_is_primary(b, pindex)
-
-      --For rails, check if end rail
-      local a_is_end_rail = false
-      local b_is_end_rail = false
-      if a.name == "straight-rail" or a.name == "curved-rail" then
-         local is_end_rail, dir, comment = Rails.check_end_rail(a, pindex)
-         a_is_end_rail = is_end_rail
-      end
-      if b.name == "straight-rail" or b.name == "curved-rail" then
-         local is_end_rail, dir, comment = Rails.check_end_rail(b, pindex)
-         b_is_end_rail = is_end_rail
-      end
-      if a_is_end_rail and not b_is_end_rail then return true end
-
-      -- Both or none are primary
-      if a_is_primary == b_is_primary then return false end
-
-      -- a is primary while b is not
-      if a_is_primary then return true end
-
-      -- b is primary while a is not
-      return false
-   end)
-end
-
---Get the first entity at a tile
---The entity list is sorted to have primary entities first, so a primary entity is expected.
-function get_first_ent_at_tile(pindex)
-   local ents = storage.players[pindex].tile.ents
-
-   --Return nil for an empty ents list
-   if ents == nil or #ents == 0 then return nil end
-
-   --Attempt to find the next ent (init to end)
-   for i = 1, #ents, 1 do
-      current = ents[i]
-      if current and current.valid then
-         storage.players[pindex].tile.ent_index = i
-         storage.players[pindex].tile.last_returned_index = i
-         return current
-      end
-   end
-
-   --By this point there are no valid ents
-   return nil
-end
-
---Get the next entity at this tile and note its index.
---The tile entity list is already sorted such that primary ents are listed first.
-function get_next_ent_at_tile(pindex)
-   local ents = storage.players[pindex].tile.ents
-   local init_index = storage.players[pindex].tile.ent_index
-   local last_returned_index = storage.players[pindex].tile.last_returned_index
-   local current = ents[init_index]
-
-   --Return nil for an empty ents list
-   if ents == nil or #ents == 0 then return nil end
-
-   --Attempt to find the next ent (init to end)
-   for i = init_index, #ents, 1 do
-      current = ents[i]
-      if current and current.valid then
-         --If this is not a repeat then return it
-         if last_returned_index == 0 or last_returned_index ~= i then
-            storage.players[pindex].tile.ent_index = i
-            storage.players[pindex].tile.last_returned_index = i
-            return current
-         end
-      end
-   end
-
-   --Return nil to get the tile info instead
-   if last_returned_index ~= 0 then
-      storage.players[pindex].tile.ent_index = 0
-      storage.players[pindex].tile.last_returned_index = 0
-      return nil
-   end
-
-   --Attempt to find the next ent (start to init)
-   for i = 1, init_index - 1, 1 do
-      current = ents[i]
-      if current and current.valid then
-         --If this is not a repeat then return it
-         if last_returned_index == 0 or last_returned_index ~= i then
-            storage.players[pindex].tile.ent_index = i
-            storage.players[pindex].tile.last_returned_index = i
-            return current
-         end
-      end
-   end
-
-   --By this point there are no valid ents
-   storage.players[pindex].tile.ent_index = 0
-   storage.players[pindex].tile.last_returned_index = 0
-   return nil
-end
-
---- Produce an iterator over all valid entities for a player's selected tile,
---  while filtering out the player themselves.
-local function iterate_selected_ents(pindex)
-   local tile = storage.players[pindex].tile
-   local ents = tile.ents
-   local i = 1
-
-   local next_fn
-   next_fn = function()
-      -- Ignore all entities that are a character belonging to this player. It
-      -- should only be one, but we don't mutate so we don't know.
-      while i <= #ents do
-         local ent = ents[i]
-         i = i + 1
-
-         if ent and ent.valid then
-            if ent.type ~= "character" or ent.player ~= pindex then return ent end
-         end
-      end
-
-      return nil
-   end
-
-   return next_fn, nil, nil
 end
 
 --???
@@ -523,7 +379,6 @@ end
 
 --Checks if the storage players table has been created, and if the table entry for this player exists. Otherwise it is initialized.
 function check_for_player(index)
-   if not storage.players then storage.players = storage.players or {} end
    if storage.players[index] == nil then
       initialize(game.get_player(index))
       return false
@@ -616,48 +471,7 @@ function force_cursor_off(pindex)
    --p.close_map()
 end
 
---Re-checks the cursor tile and indexes the entities on it, returns a boolean on whether it is successful.
-function refresh_player_tile(pindex)
-   local surf = game.get_player(pindex).surface
-   local vp = Viewpoint.get_viewpoint(pindex)
-   local c_pos = vp:get_cursor_pos()
-   if math.floor(c_pos.x) == math.ceil(c_pos.x) then c_pos.x = c_pos.x - 0.01 end
-   if math.floor(c_pos.y) == math.ceil(c_pos.y) then c_pos.y = c_pos.y - 0.01 end
-   local search_area = {
-      { x = math.floor(c_pos.x) + 0.01, y = math.floor(c_pos.y) + 0.01 },
-      { x = math.ceil(c_pos.x) - 0.01, y = math.ceil(c_pos.y) - 0.01 },
-   }
-   storage.players[pindex].tile.ents =
-      surf.find_entities_filtered({ area = search_area, name = Consts.EXCLUDED_ENT_NAMES, invert = true })
-   sort_ents_by_primary_first(pindex, storage.players[pindex].tile.ents)
-   --Draw the tile
-   --rendering.draw_rectangle{left_top = search_area[1], right_bottom = search_area[2], color = {1,0,1}, surface = surf, time_to_live = 100}--
-   local wide_area = {
-      { x = math.floor(c_pos.x) - 0.01, y = math.floor(c_pos.y) - 0.01 },
-      { x = math.ceil(c_pos.x) + 0.01, y = math.ceil(c_pos.y) + 0.01 },
-   }
-   local remnants = surf.find_entities_filtered({ area = wide_area, type = "corpse" })
-   for i, remnant in ipairs(remnants) do
-      table.insert(storage.players[pindex].tile.ents, remnant)
-   end
-   storage.players[pindex].tile.ent_index = 1
-   if #storage.players[pindex].tile.ents == 0 then storage.players[pindex].tile.ent_index = 0 end
-   storage.players[pindex].tile.last_returned_index = 0
-   if
-      not (
-         pcall(function()
-            local vp = Viewpoint.get_viewpoint(pindex)
-            local cursor_pos = vp:get_cursor_pos()
-            local tile = surf.get_tile(cursor_pos.x, cursor_pos.y)
-            storage.players[pindex].tile.tile = tile.name
-            storage.players[pindex].tile.tile_object = tile
-         end)
-      )
-   then
-      return false
-   end
-   return true
-end
+--refresh_player_tile has been moved to EntitySelection module
 
 -- Lua's version of a forward declaration.
 local read_tile_inner
@@ -672,13 +486,14 @@ end
 read_tile_inner = function(pindex, start_text)
    local result = {}
 
-   if not refresh_player_tile(pindex) then return { "Tile uncharted and out of range" } end
-   local ent = get_first_ent_at_tile(pindex)
+   if not EntitySelection.refresh_player_tile(pindex) then return { "Tile uncharted and out of range" } end
+   local ent = EntitySelection.get_first_ent_at_tile(pindex)
    if not (ent and ent.valid) then
       --If there is no ent, read the tile instead
-      storage.players[pindex].tile.previous = nil
-      local tile = storage.players[pindex].tile.tile
-      table.insert(result, Localising.get_localised_name_with_fallback(storage.players[pindex].tile.tile_object))
+      local tile_cache = EntitySelection.get_tile_cache(pindex)
+      tile_cache.previous = nil
+      local tile = tile_cache.tile
+      table.insert(result, Localising.get_localised_name_with_fallback(tile_cache.tile_object))
       if
          tile == "water"
          or tile == "deepwater"
@@ -699,7 +514,7 @@ read_tile_inner = function(pindex, start_text)
       game.get_player(pindex).selected = ent
 
       --game.get_player(pindex).print(result)--
-      storage.players[pindex].tile.previous = ent
+      EntitySelection.get_tile_cache(pindex).previous = ent
    end
    if not ent or ent.type == "resource" then --possible bug here with the h box being a new tile ent
       local stack = game.get_player(pindex).cursor_stack
@@ -723,7 +538,7 @@ read_tile_inner = function(pindex, start_text)
          game.get_player(pindex).play_sound({ path = "player-mine" })
          if PlayerMiningTools.try_to_mine_with_soun(ent, pindex) then result = result .. name .. " mined, " end
          --Second round, in case two entities are there. While loops do not work!
-         ent = get_first_ent_at_tile(pindex)
+         ent = EntitySelection.get_first_ent_at_tile(pindex)
          if ent and ent.valid and storage.players[pindex].walk ~= Consts.Consts.WALKING.SMOOTH then --not while
             local name = ent.name
             game.get_player(pindex).play_sound({ path = "player-mine" })
@@ -1054,8 +869,8 @@ EventManager.on_event(defines.events.on_player_changed_position, function(event)
       if stack and stack.valid_for_read and stack.valid then Graphics.sync_build_cursor_graphics(pindex) end
 
       --Name a detected entity that you can or cannot walk on, or a tile you cannot walk on, and play a sound to indicate multiple consecutive detections
-      refresh_player_tile(pindex)
-      local ent = get_first_ent_at_tile(pindex)
+      EntitySelection.refresh_player_tile(pindex)
+      local ent = EntitySelection.get_first_ent_at_tile(pindex)
       if
          not storage.players[pindex].vanilla_mode
          and (
@@ -1811,7 +1626,6 @@ end
 
 --Handles a player joining into a game session.
 function on_player_join(pindex)
-   players = players or storage.players
    schedule(3, "call_to_fix_zoom", pindex)
    schedule(4, "call_to_sync_graphics", pindex)
    Localising.check_player(pindex)
@@ -2845,13 +2659,10 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event)
          --Save the new description
          storage.players[pindex].travel.describing = false
          storage.players[pindex].travel[storage.players[pindex].travel.index.y].description = result
-         printout(
-            {
-               "fa.travel-description-updated",
-               storage.players[pindex].travel[storage.players[pindex].travel.index.y].name,
-            },
-            pindex
-         )
+         printout({
+            "fa.travel-description-updated",
+            storage.players[pindex].travel[storage.players[pindex].travel.index.y].name,
+         }, pindex)
       end
       storage.players[pindex].travel.index.x = 1
       event.element.destroy()
@@ -3818,9 +3629,9 @@ local function move(direction, pindex, nudged)
          end
          --Telestep walking sounds
          if
-            storage.players[pindex].tile.previous ~= nil
-            and storage.players[pindex].tile.previous.valid
-            and storage.players[pindex].tile.previous.type == "transport-belt"
+            EntitySelection.get_tile_cache(pindex).previous ~= nil
+            and EntitySelection.get_tile_cache(pindex).previous.valid
+            and EntitySelection.get_tile_cache(pindex).previous.type == "transport-belt"
          then
             game.get_player(pindex).play_sound({ path = "utility/metal_walking_sound", volume_modifier = 1 })
          else
@@ -3869,8 +3680,8 @@ local function move(direction, pindex, nudged)
          read_tile(pindex)
       elseif storage.players[pindex].walk == Consts.WALKING.SMOOTH then
          --Read the new entity or unwalkable surface found upon turning
-         refresh_player_tile(pindex)
-         local ent = get_first_ent_at_tile(pindex)
+         EntitySelection.refresh_player_tile(pindex)
+         local ent = EntitySelection.get_first_ent_at_tile(pindex)
          if
             not storage.players[pindex].vanilla_mode
             and (
@@ -3902,7 +3713,7 @@ local function move(direction, pindex, nudged)
    end
 
    --Update cursor highlight
-   local ent = get_first_ent_at_tile(pindex)
+   local ent = EntitySelection.get_first_ent_at_tile(pindex)
    if ent and ent.valid then
       Graphics.draw_cursor_highlight(pindex, ent, nil)
    else
@@ -3945,7 +3756,7 @@ local function cursor_mode_move(direction, pindex, single_only)
       end
 
       --Update cursor highlight
-      local ent = get_first_ent_at_tile(pindex)
+      local ent = EntitySelection.get_first_ent_at_tile(pindex)
       if ent and ent.valid then
          Graphics.draw_cursor_highlight(pindex, ent, nil)
       else
@@ -4148,8 +3959,8 @@ local function cursor_skip_iteration(pindex, direction, iteration_limit)
    --
    ---@returns LuaEntity?
    local function compute_current()
-      refresh_player_tile(pindex)
-      for ent in iterate_selected_ents(pindex) do
+      EntitySelection.refresh_player_tile(pindex)
+      for ent in EntitySelection.iterate_selected_ents(pindex) do
          local bad = ent.type == "logistic-robot"
             or ent.type == "construction-robot"
             or ent.type == "combat-robot"
@@ -4171,8 +3982,8 @@ local function cursor_skip_iteration(pindex, direction, iteration_limit)
             local dir_neighbor = FaUtils.get_direction_biased(con.target_position, start.position)
             if con.connection_type == "underground" and dir_neighbor == direction then
                vp:set_cursor_pos(con.target.get_pipe_connections(1)[1].position)
-               refresh_player_tile(pindex)
-               current = get_first_ent_at_tile(pindex)
+               EntitySelection.refresh_player_tile(pindex)
+               current = EntitySelection.get_first_ent_at_tile(pindex)
                return dist
             end
          end
@@ -4186,8 +3997,8 @@ local function cursor_skip_iteration(pindex, direction, iteration_limit)
          local dir_neighbor = FaUtils.get_direction_biased(other_end.position, start.position)
          if dir_neighbor == direction then
             vp:set_cursor_pos(other_end.position)
-            refresh_player_tile(pindex)
-            current = get_first_ent_at_tile(pindex)
+            EntitySelection.refresh_player_tile(pindex)
+            current = EntitySelection.get_first_ent_at_tile(pindex)
             return dist
          end
       end
@@ -5236,7 +5047,7 @@ local function kb_cs_p(event)
    storage.players[pindex].last_damage_alert_pos = position
    Graphics.draw_cursor_highlight(pindex, nil, nil)
    Graphics.sync_build_cursor_graphics(pindex)
-   refresh_player_tile(pindex)
+   EntitySelection.refresh_player_tile(pindex)
 end
 
 ---@param event EventData.CustomInputEvent
@@ -5278,7 +5089,7 @@ local function toggle_cursor_mode(pindex, muted)
    local cursor_size = vp:get_cursor_size()
    if cursor_size < 2 then
       --Update cursor highlight
-      local ent = get_first_ent_at_tile(pindex)
+      local ent = EntitySelection.get_first_ent_at_tile(pindex)
       if ent and ent.valid then
          Graphics.draw_cursor_highlight(pindex, ent, nil)
       else
@@ -5555,7 +5366,7 @@ local function kb_open_circuit_menu(event)
       --Open the menu
       CircuitNetworks.circuit_network_menu_open(pindex, ent)
    elseif not router:is_ui_open() then
-      local ent = p.selected or get_first_ent_at_tile(pindex)
+      local ent = p.selected or EntitySelection.get_first_ent_at_tile(pindex)
       if ent == nil or ent.valid == false or (ent.get_control_behavior() == nil and ent.type ~= "electric-pole") then
          --Sort scan results instead
          return
@@ -5616,12 +5427,12 @@ end)
 ---@param event EventData.CustomInputEvent
 local function kb_tile_cycle(event)
    local pindex = event.player_index
-   local ent = get_next_ent_at_tile(pindex)
+   local ent = EntitySelection.get_next_ent_at_tile(pindex)
    if ent and ent.valid then
       printout(FaInfo.ent_info(pindex, ent), pindex)
       game.get_player(pindex).selected = ent
    else
-      printout(storage.players[pindex].tile.tile, pindex)
+      printout(EntitySelection.get_tile_cache(pindex).tile, pindex)
    end
 end
 
@@ -6757,7 +6568,7 @@ local function kb_click_hand(event)
    local p = game.get_player(pindex)
    local stack = game.get_player(pindex).cursor_stack
    local cursor_ghost = game.get_player(pindex).cursor_ghost
-   local ent = get_first_ent_at_tile(pindex)
+   local ent = EntitySelection.get_first_ent_at_tile(pindex)
 
    if stack and stack.valid_for_read and stack.valid then
       storage.players[pindex].last_click_tick = event.tick
@@ -6966,7 +6777,7 @@ end
 local function kb_click_entity(event)
    local pindex = event.player_index
    storage.players[pindex].last_ck_tick = event.tick
-   local ent = get_first_ent_at_tile(pindex)
+   local ent = EntitySelection.get_first_ent_at_tile(pindex)
    clicked_on_entity(ent, pindex)
 end
 

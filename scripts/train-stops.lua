@@ -3,6 +3,7 @@
 local Graphics = require("scripts.graphics")
 local MessageBuilder = require("scripts.message-builder")
 local UiRouter = require("scripts.ui.router")
+local EntitySelection = require("scripts.entity-selection")
 
 local mod = {}
 
@@ -11,8 +12,9 @@ function mod.run_train_stop_menu(menu_index, pindex, clicked, other_input)
    local index = menu_index
    local other = other_input or -1
    local train_stop = nil
-   if storage.players[pindex].tile.ents[1] ~= nil and storage.players[pindex].tile.ents[1].name == "train-stop" then
-      train_stop = storage.players[pindex].tile.ents[1]
+   local tile_cache = EntitySelection.get_tile_cache(pindex)
+   if tile_cache.ents[1] ~= nil and tile_cache.ents[1].name == "train-stop" then
+      train_stop = tile_cache.ents[1]
       storage.players[pindex].train_stop_menu.stop = train_stop
    else
       printout({ "fa.train-stops-menu-error" }, pindex)

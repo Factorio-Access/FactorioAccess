@@ -4,6 +4,7 @@ local Viewpoint = require("scripts.viewpoint")
 local dirs = defines.direction
 
 local Consts = require("scripts.consts")
+local EntitySelection = require("scripts.entity-selection")
 
 local mod = {}
 
@@ -492,7 +493,7 @@ function mod.get_entity_part_at_cursor(pindex)
    local cursor_pos = vp:get_cursor_pos()
    local x = cursor_pos.x
    local y = cursor_pos.y
-   local ents = storage.players[pindex].tile.ents
+   local ents = EntitySelection.get_tile_cache(pindex).ents
    local north_same = false
    local south_same = false
    local east_same = false
@@ -504,7 +505,9 @@ function mod.get_entity_part_at_cursor(pindex)
       --Prefer the selected ent
       local preferred_ent = p.selected
       --Otherwise check for other ents at the cursor
-      if not preferred_ent or not preferred_ent.valid then preferred_ent = get_first_ent_at_tile(pindex) end
+      if not preferred_ent or not preferred_ent.valid then
+         preferred_ent = EntitySelection.get_first_ent_at_tile(pindex)
+      end
       if not preferred_ent or not preferred_ent.valid then return "unknown location" end
 
       --Report which part of the entity the cursor covers.

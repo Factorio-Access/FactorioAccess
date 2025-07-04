@@ -6,6 +6,7 @@ local util = require("util")
 local FaUtils = require("scripts.fa-utils")
 local PlayerMiningTools = require("scripts.player-mining-tools")
 local Rails = require("scripts.rails")
+local EntitySelection = require("scripts.entity-selection")
 local dirs = defines.direction
 local UiRouter = require("scripts.ui.router")
 
@@ -33,7 +34,7 @@ function mod.append_rail(pos, pindex)
    end
 
    --1 Check the cursor entity. If it is an end rail, use this instead of scanning to extend the rail you want.
-   local ent = storage.players[pindex].tile.ents[1]
+   local ent = EntitySelection.get_tile_cache(pindex).ents[1]
    is_end_rail, end_rail_dir, comment = Rails.check_end_rail(ent, pindex)
    if is_end_rail then
       end_found = ent
