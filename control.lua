@@ -9,6 +9,7 @@ local logger = Logging.Logger("control")
 
 local util = require("util")
 
+local AreaOperations = require("scripts.area-operations")
 local AudioCues = require("scripts.audio-cues")
 local Blueprints = require("scripts.blueprints")
 local BuildingTools = require("scripts.building-tools")
@@ -29,6 +30,7 @@ local FaUtils = require("scripts.fa-utils")
 local F = require("scripts.field-ref")
 local Filters = require("scripts.filters")
 local Graphics = require("scripts.graphics")
+local InventoryTransfers = require("scripts.inventory-transfers")
 local ItemDescriptions = require("scripts.item-descriptions")
 local KruiseKontrol = require("scripts.kruise-kontrol-wrapper")
 local Localising = require("scripts.localising")
@@ -85,11 +87,6 @@ end
 --This function gets scheduled.
 function call_to_restore_equipped_atomic_bombs(pindex)
    Equipment.restore_equipped_atomic_bombs(pindex)
-end
-
---This function gets scheduled.
-function call_to_check_ghost_rails(pindex)
-   Rails.check_ghost_rail_planning_results(pindex)
 end
 
 --???
@@ -2123,137 +2120,6 @@ end
 --[[Manages inventory transfers that are bigger than one stack. 
 * Has checks and printouts!
 ]]
-function do_multi_stack_transfer(ratio, pindex)
-   local result = { "" }
-   local sector = storage.players[pindex].building.sectors[storage.players[pindex].building.sector]
-   if
-      sector
-      and sector.name ~= "Fluid"
-      and storage.players[pindex].building.sector_name ~= "player inventory from building"
-   then
-      --This is the section where we move from the building to the player.
-      local item_name = ""
-      local stack = sector.inventory[storage.players[pindex].building.index]
-      if stack and stack.valid and stack.valid_for_read then item_name = stack.name end
-
-      local moved, full =
-         transfer_inventory({ from = sector.inventory, to = game.players[pindex], name = item_name, ratio = ratio })
-      if full then
-         table.insert(result, { "inventory-full-message.main" })
-         table.insert(result, ", ")
-      end
-      if table_size(moved) == 0 then
-         table.insert(result, { "fa.grabbed-nothing" })
-      else
-         game.get_player(pindex).play_sound({ path = "utility/inventory_move" })
-         local item_list = { "" }
-         local other_items = 0
-         local listed_count = 0
-         for name, amount in pairs(moved) do
-            if listed_count <= 5 then
-               table.insert(item_list, Localising.localise_item({ name = name, count = amount }))
-               table.insert(item_list, ", ")
-            else
-               other_items = other_items + amount
-            end
-            listed_count = listed_count + 1
-         end
-         if other_items > 0 then
-            table.insert(item_list, Localising.localise_item({ name = Localising.ITEM_OTHER, count = other_items }))
-            table.insert(item_list, ", ")
-         end
-         -- trim trailing comma off
-         item_list[#item_list] = nil
-         table.insert(result, { "fa.grabbed-stuff", item_list })
-      end
-   elseif sector and sector.name == "fluid" then
-      --Do nothing
-   else
-      local offset = 1
-      if storage.players[pindex].building.recipe_list ~= nil then offset = offset + 1 end
-      if storage.players[pindex].building.sector_name == "player inventory from building" then
-         --This is the section where we move from the player to the building.
-         local item_name = ""
-         local stack = storage.players[pindex].inventory.lua_inventory[storage.players[pindex].inventory.index]
-         if stack and stack.valid and stack.valid_for_read then item_name = stack.name end
-
-         local moved, full = transfer_inventory({
-            from = game.get_player(pindex).get_main_inventory(),
-            to = storage.players[pindex].building.ent,
-            name = item_name,
-            ratio = ratio,
-         })
-
-         if table_size(moved) == 0 then
-            if full then table.insert(result, "Inventory full or not applicable, ") end
-            table.insert(result, { "fa.placed-nothing" })
-         else
-            if full then table.insert(result, "Partial success, ") end
-            game.get_player(pindex).play_sound({ path = "utility/inventory_move" })
-            local item_list = { "" }
-            local other_items = 0
-            local listed_count = 0
-            for name, amount in pairs(moved) do
-               if listed_count <= 5 then
-                  table.insert(item_list, Localising.localise_item({ name = name, count = amount }))
-                  table.insert(item_list, ", ")
-               else
-                  other_items = other_items + amount
-               end
-               listed_count = listed_count + 1
-            end
-            if other_items > 0 then
-               table.insert(item_list, Localising.localise_item({ name = Localising.ITEM_OTHER, count = other_items }))
-               table.insert(item_list, ", ")
-            end
-            -- trim trailing comma off
-            item_list[#item_list] = nil
-            table.insert(result, { "fa.placed-stuff", FaUtils.breakup_string(item_list) })
-         end
-      end
-   end
-   printout(result, pindex)
-   --game.print(storage.players[pindex].building.sector_name or "(nil)")--**
-end
-
---[[Transfers multiple stacks of a specific item (or all items) to/from the player inventory from/to a building inventory.
-* item name / empty string to indicate transfering everything
-* ratio (between 0 and 1), the ratio of the total count to transder for each item.
-* Has no checks or printouts!
-]]
-function transfer_inventory(args)
-   args.name = args.name or ""
-   args.ratio = args.ratio or 1
-   local transfer_list = {}
-   if args.name ~= "" then
-      --Known name: transfer only this
-      transfer_list[args.name] = args.from.get_item_count(args.name)
-   elseif args.name == "blueprint" or args.name == "blueprint-book" then
-      return {}, false
-   else
-      --No name: Transfer everything
-      transfer_list = args.from.get_contents()
-   end
-   local full = false
-   local results = {}
-   for name, amount in pairs(transfer_list) do
-      if name ~= "blueprint" and name ~= "blueprint-book" then
-         amount = math.ceil(amount * args.ratio)
-         local actual_amount = args.to.insert({ name = name, count = amount })
-         if actual_amount ~= amount then
-            print(name, amount, actual_amount)
-            amount = actual_amount
-            full = true
-         end
-         if amount > 0 then
-            results[name] = amount
-            args.from.remove({ name = name, count = amount })
-         end
-      end
-   end
-   --game.print("run 1x: " .. args.name)--**
-   return results, full
-end
 
 --When the item in hand changes
 EventManager.on_event(defines.events.on_player_cursor_stack_changed, function(event)
@@ -3154,31 +3020,6 @@ EventManager.on_event(defines.events.on_console_command, function(event)
    end
 end)
 
---WIP. This function can be called via the console: /c __FactorioAccess__ regenerate_all_uncharted_spawners() --laterdo fix bugs?
-function regenerate_all_uncharted_spawners(surface_in)
-   local surf = surface_in or game.surfaces["nauvis"]
-
-   --Get spawner names
-   local spawner_names = {}
-   for name, prot in pairs(prototypes.get_entity_filtered({ { filter = "type", type = "unit-spawner" } })) do
-      table.insert(spawner_names, name)
-   end
-
-   for chunk in surf.get_chunks() do
-      local is_charted = false
-      --Check if the chunk is charted by any players
-      for pindex, player in pairs(players) do
-         is_charted = is_charted or (player.force and player.force.is_chunk_charted(surf, { x = chunk.x, y = chunk.y }))
-      end
-      --Regenerate the spawners if NOT charted by any player forces
-      if is_charted == false then
-         for i, name in ipairs(spawner_names) do
-            surf.regenerate_entity(name, chunk)
-         end
-      end
-   end
-end
-
 function general_mod_menu_up(pindex, menu, lower_limit_in) --todo*** use
    local lower_limit = lower_limit_in or 0
    menu.index = menu.index - 1
@@ -3220,17 +3061,6 @@ EventManager.on_event(defines.events.on_research_finished, Research.on_research_
 -- New input event definitions
 
 ---@param pindex number
-local function report_pause_menu(pindex)
-   if game.tick_paused then
-      -- Nothing useful here; handlers don't run while paused
-      return
-   end
-
-   local player = game.get_player(pindex)
-   if player.opened then printout("Menu closed", pindex) end
-end
-
----@param pindex number
 local function clear_fa_gui(pindex)
    local player = game.get_player(pindex)
    for _, elem in ipairs(FaUtils.get_iterable_array(player.gui.children)) do
@@ -3255,9 +3085,6 @@ local function kb_pause_menu(event)
       toggle_remote_view(pindex, false, true)
       printout("Remote view closed", pindex)
    end
-
-   -- Report potential menu close or resume
-   report_pause_menu(pindex)
 
    -- Close mod GUIs
    clear_fa_gui(pindex)
@@ -5623,189 +5450,6 @@ end)
 
 --Mines groups of entities depending on the name or type. Includes trees and rocks, rails.
 ---@param event EventData.CustomInputEvent
-local function kb_mine_area(event)
-   local pindex = event.player_index
-   local vp = Viewpoint.get_viewpoint(pindex)
-   local cursor_pos = vp:get_cursor_pos()
-   local p = game.get_player(pindex)
-   local ent = game.get_player(pindex).selected
-   local cleared_count = 0
-   local cleared_total = 0
-   local comment = ""
-
-   --Check if the is within reach or the applicable entity is within reach
-   if
-      ent ~= nil
-      and ent.valid
-      and ent.name ~= "entity-ghost"
-      and (
-         util.distance(game.get_player(pindex).position, ent.position) > game.get_player(pindex).reach_distance
-         or util.distance(game.get_player(pindex).position, cursor_pos) > game.get_player(pindex).reach_distance
-      )
-   then
-      game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout("This area is out of player reach", pindex)
-      return
-   end
-
-   --Get initial inventory size
-   local init_empty_stacks = game.get_player(pindex).get_main_inventory().count_empty_stacks()
-
-   --Begin clearing
-   if ent then
-      local surf = ent.surface
-      local pos = ent.position
-      if
-         ent.type == "tree"
-         or ent.name == "rock-big"
-         or ent.name == "rock-huge"
-         or ent.name == "sand-rock-big"
-         or ent.name == "item-on-ground"
-      then
-         --Obstacles within 5 tiles: trees and rocks and ground items
-         game.get_player(pindex).play_sound({ path = "player-mine" })
-         cleared_count, comment = PlayerMiningTools.clear_obstacles_in_circle(pos, 5, pindex)
-      elseif ent.name == "straight-rail" or ent.name == "curved-rail" then
-         --Railway objects within 10 tiles (and their signals)
-         local rail_ents = surf.find_entities_filtered({
-            position = pos,
-            radius = 10,
-            name = { "straight-rail", "curved-rail", "rail-signal", "rail-chain-signal", "train-stop" },
-         })
-         for i, rail_ent in ipairs(rail_ents) do
-            p.play_sound({ path = "entity-mined/straight-rail" })
-            p.mine_entity(rail_ent, true)
-            cleared_count = cleared_count + 1
-         end
-         --Draw the clearing range
-         rendering.draw_circle({
-            color = { 0, 1, 0 },
-            radius = 10,
-            width = 2,
-            target = pos,
-            surface = surf,
-            time_to_live = 60,
-         })
-         printout({ "fa.cleared-railway-objects", tostring(cleared_count) }, pindex)
-         return
-      elseif ent.name == "entity-ghost" then
-         --Ghosts within 10 tiles
-         local ghosts = surf.find_entities_filtered({ position = pos, radius = 10, name = { "entity-ghost" } })
-         for i, ghost in ipairs(ghosts) do
-            game.get_player(pindex).mine_entity(ghost, true)
-            cleared_count = cleared_count + 1
-         end
-         game.get_player(pindex).play_sound({ path = "utility/item_deleted" })
-         --Draw the clearing range
-         rendering.draw_circle({
-            color = { 0, 1, 0 },
-            radius = 10,
-            width = 2,
-            target = pos,
-            surface = surf,
-            time_to_live = 60,
-         })
-         printout({ "fa.cleared-entity-ghosts", tostring(cleared_count) }, pindex)
-         return
-      else
-         --Check if it is a remnant ent, clear obstacles
-         local ent_is_remnant = false
-         local remnant_names = Consts.ENT_NAMES_CLEARED_AS_OBSTACLES
-         for i, name in ipairs(remnant_names) do
-            if ent.name == name then ent_is_remnant = true end
-         end
-         if ent_is_remnant then
-            game.get_player(pindex).play_sound({ path = "player-mine" })
-            cleared_count, comment = PlayerMiningTools.clear_obstacles_in_circle(cursor_pos, 5, pindex)
-         end
-
-         --(For other valid ents, do nothing)
-      end
-   else
-      --For empty tiles, clear obstacles
-      game.get_player(pindex).play_sound({ path = "player-mine" })
-      cleared_count, comment = PlayerMiningTools.clear_obstacles_in_circle(cursor_pos, 5, pindex)
-   end
-   cleared_total = cleared_total + cleared_count
-
-   --If cut-paste tool in hand, mine every non-resource entity in the area that you can.
-   local p = game.get_player(pindex)
-   local stack = p.cursor_stack
-   if stack and stack.valid_for_read and stack.name == "cut-paste-tool" then
-      local all_ents =
-         p.surface.find_entities_filtered({ position = p.position, radius = 5, force = { p.force, "neutral" } })
-      for i, ent in ipairs(all_ents) do
-         if ent and ent.valid then
-            local name = ent.name
-            game.get_player(pindex).play_sound({ path = "player-mine" })
-            if PlayerMiningTools.try_to_mine_with_soun(ent, pindex) then cleared_total = cleared_total + 1 end
-         end
-      end
-   end
-
-   --If the deconstruction planner is in hand, mine every entity marked for deconstruction except for cliffs.
-   if stack and stack.valid_for_read and stack.is_deconstruction_item then
-      local all_ents =
-         p.surface.find_entities_filtered({ position = p.position, radius = 5, force = { p.force, "neutral" } })
-      for i, ent in ipairs(all_ents) do
-         if ent and ent.valid and ent.is_registered_for_deconstruction(p.force) then
-            local name = ent.name
-            game.get_player(pindex).play_sound({ path = "player-mine" })
-            if PlayerMiningTools.try_to_mine_with_soun(ent, pindex) then cleared_total = cleared_total + 1 end
-         end
-      end
-   end
-
-   --Calculate collected stack count
-   local stacks_collected = init_empty_stacks - game.get_player(pindex).get_main_inventory().count_empty_stacks()
-
-   --Print result
-   local result = { "fa.cleared-objects", tostring(cleared_total) }
-   if stacks_collected >= 0 then result = { "", result, { "fa.and-collected-stacks", tostring(stacks_collected) } } end
-   printout(result, pindex)
-end
-
----@param event EventData.CustomInputEvent
-EventManager.on_event("fa-s-x", function(event)
-   local pindex = event.player_index
-   local router = UiRouter.get_router(pindex)
-
-   if not check_for_player(pindex) then return end
-   if router:is_ui_open() then return end
-   kb_mine_area(event)
-end)
-
---Long range area mining. Includes only ghosts for now.
----@param event EventData.CustomInputEvent
-local function kb_super_mine_area(event)
-   local pindex = event.player_index
-   local ent = game.get_player(pindex).selected
-   local cleared_count = 0
-
-   --Begin clearing
-   local surf = ent.surface
-   local pos = ent.position
-   if ent.name == "entity-ghost" then
-      --Ghosts within 100 tiles
-      local ghosts = surf.find_entities_filtered({ position = pos, radius = 100, name = { "entity-ghost" } })
-      for i, ghost in ipairs(ghosts) do
-         game.get_player(pindex).mine_entity(ghost, true)
-         cleared_count = cleared_count + 1
-      end
-      game.get_player(pindex).play_sound({ path = "utility/item_deleted" })
-      --Draw the clearing range
-      rendering.draw_circle({
-         color = { 0, 1, 0 },
-         radius = 100,
-         width = 10,
-         target = pos,
-         surface = surf,
-         time_to_live = 60,
-      })
-      printout({ "fa.cleared-entity-ghosts-100", tostring(cleared_count) }, pindex)
-      return
-   end
-end
 
 ---@param event EventData.CustomInputEvent
 EventManager.on_event("fa-cs-x", function(event)
@@ -5815,7 +5459,7 @@ EventManager.on_event("fa-cs-x", function(event)
    if not check_for_player(pindex) then return end
    if router:is_ui_open() then return end
    local ent = game.get_player(pindex).selected
-   if ent and ent.valid then kb_super_mine_area(event) end
+   if ent and ent.valid then AreaOperations.super_mine_area(pindex) end
 end)
 
 --Cut-paste-tool. NOTE: This keybind needs to be the same as that for the cut paste tool (default CONTROL + X). laterdo maybe keybind to game control somehow
@@ -6943,7 +6587,7 @@ EventManager.on_event("fa-c-leftbracket", function(event)
    ]]
    elseif router:is_ui_open() and router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
       ---From event transfer-all-stacks
-      do_multi_stack_transfer(1, pindex)
+      InventoryTransfers.do_multi_stack_transfer(1, pindex)
    elseif stack ~= nil and stack.valid_for_read and stack.valid then
       kb_alternate_build(event)
    end
@@ -6962,7 +6606,7 @@ EventManager.on_event("fa-c-rightbracket", function(event)
    ]]
    if router:is_ui_open() and router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
       ---From event transfer-half-of-all-stacks
-      do_multi_stack_transfer(0.5, pindex)
+      InventoryTransfers.do_multi_stack_transfer(0.5, pindex)
    end
 end)
 
