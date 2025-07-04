@@ -1651,7 +1651,7 @@ end
 --Called for every player on every tick, to manage automatic walking and enforcing mouse pointer position syncs.
 --Todo: create a new function for all mouse pointer related updates within this function
 local function move_characters(event)
-   for pindex, player in pairs(players) do
+   for pindex, player in pairs(storage.players) do
       local router = UiRouter.get_router(pindex)
       local vp = Viewpoint.get_viewpoint(pindex)
       local cursor_pos = vp:get_cursor_pos()
