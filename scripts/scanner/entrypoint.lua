@@ -14,6 +14,7 @@ self-explanatory.  I recommend reading simple.lua for a good example that shows
 
 IMPORTANT: see devdocs/scanner.md for the whole picture.
 ]]
+local EntitySelection = require("scripts.entity-selection")
 local FaUtils = require("scripts.fa-utils")
 local Memosort = require("scripts.memosort")
 local ScannerConsts = require("scripts.scanner.scanner-consts")
@@ -450,11 +451,11 @@ local function announce_cursor_pos(pindex, ps)
       -- we can't remove, so just set it first.
       vp:set_cursor_pos(announcing.position)
       -- And for the same reason--we shouldn't be caching tile contents, but we do.
-      refresh_player_tile(pindex)
+      EntitySelection.refresh_player_tile(pindex)
       announcing.backend:update_entry(pobj, announcing)
       -- Until we have a cursor module or the like, we must then manually try to
       -- select the entity if there is one.
-      local new_ent = get_first_ent_at_tile(pindex)
+      local new_ent = EntitySelection.get_first_ent_at_tile(pindex)
       if new_ent then pobj.selected = new_ent end
       printout({
          "fa.scanner-full-presentation",
@@ -463,7 +464,7 @@ local function announce_cursor_pos(pindex, ps)
          tostring(ps.scanner_cursor.entry_index),
          tostring(count),
       }, pindex)
-      -- See control.lua refresh_player_tile, which goes nuts if we aren't
+      -- See entity-selection.lua refresh_player_tile, which goes nuts if we aren't
       -- directly on the center of a tile; this can be removed when that's
       -- fixed.
       vp:set_cursor_pos({

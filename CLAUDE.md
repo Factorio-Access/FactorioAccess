@@ -56,7 +56,7 @@ After a lot of working with you I have seen your antipatterns, so I am going to 
 - You currently have no real control over the GUI, only via tests.  Use tests and code hacks to explore.
 - Do not use globals beyond the current file. `_G.whatever = whatever` is cheating.  Do not do this.
 - Requires only execute at the top-level file.  Any other level and the require will crash at runtime.
-- Always add LuaLS annotations.
+- Always add LuaLS annotations using the correct format: `---@` (three dashes), not `-- @` (two dashes with space).
 
 control.lua is a problematic file because it is 10000 lines or so.  You are strongly encouraged to explore it with
 tree-sitter, subagents, or rg/grep.  If you repeatedly read it, it will fill your context window.  If you must read it,
