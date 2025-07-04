@@ -96,61 +96,61 @@ function mod.open_operable_building(ent, pindex)
       local p = game.get_player(pindex)
       if p.opened == nil then p.opened = ent end
       --Other stuff...
-      players[pindex].menu_search_index = 0
-      players[pindex].menu_search_index_2 = 0
+      storage.players[pindex].menu_search_index = 0
+      storage.players[pindex].menu_search_index_2 = 0
       if ent.prototype.subgroup.name == "belt" then
          router:open_ui(UiRouter.UI_NAMES.BELT)
          BeltAnalyzer.belt_analyzer:open(pindex, { entity = ent })
          return
       end
       if ent.prototype.ingredient_count ~= nil then
-         players[pindex].building.recipe = ent.get_recipe()
-         players[pindex].building.recipe_list = Crafting.get_recipes(pindex, ent)
-         players[pindex].building.category = 1
+         storage.players[pindex].building.recipe = ent.get_recipe()
+         storage.players[pindex].building.recipe_list = Crafting.get_recipes(pindex, ent)
+         storage.players[pindex].building.category = 1
       else
-         players[pindex].building.recipe = nil
-         players[pindex].building.recipe_list = nil
-         players[pindex].building.category = 0
+         storage.players[pindex].building.recipe = nil
+         storage.players[pindex].building.recipe_list = nil
+         storage.players[pindex].building.category = 0
       end
-      players[pindex].building.item_selection = false
-      players[pindex].inventory.lua_inventory = game.get_player(pindex).get_main_inventory()
-      players[pindex].inventory.max = #players[pindex].inventory.lua_inventory
-      players[pindex].building.sectors = {}
-      players[pindex].building.sector = 1
+      storage.players[pindex].building.item_selection = false
+      storage.players[pindex].inventory.lua_inventory = game.get_player(pindex).get_main_inventory()
+      storage.players[pindex].inventory.max = #storage.players[pindex].inventory.lua_inventory
+      storage.players[pindex].building.sectors = {}
+      storage.players[pindex].building.sector = 1
 
       --Inventories as sectors
       if ent.get_output_inventory() ~= nil then
-         table.insert(players[pindex].building.sectors, {
+         table.insert(storage.players[pindex].building.sectors, {
             name = "Output",
             inventory = ent.get_output_inventory(),
          })
       end
       if ent.get_fuel_inventory() ~= nil then
-         table.insert(players[pindex].building.sectors, {
+         table.insert(storage.players[pindex].building.sectors, {
             name = "Fuel",
             inventory = ent.get_fuel_inventory(),
          })
       end
       if ent.prototype.ingredient_count ~= nil then
-         table.insert(players[pindex].building.sectors, {
+         table.insert(storage.players[pindex].building.sectors, {
             name = "Input",
             inventory = ent.get_inventory(defines.inventory.assembling_machine_input),
          })
       end
       if ent.get_module_inventory() ~= nil and #ent.get_module_inventory() > 0 then
-         table.insert(players[pindex].building.sectors, {
+         table.insert(storage.players[pindex].building.sectors, {
             name = "Modules",
             inventory = ent.get_module_inventory(),
          })
       end
       if ent.get_burnt_result_inventory() ~= nil and #ent.get_burnt_result_inventory() > 0 then
-         table.insert(players[pindex].building.sectors, {
+         table.insert(storage.players[pindex].building.sectors, {
             name = "Burnt result",
             inventory = ent.get_burnt_result_inventory(),
          })
       end
       if ent.fluidbox ~= nil and #ent.fluidbox > 0 then
-         table.insert(players[pindex].building.sectors, {
+         table.insert(storage.players[pindex].building.sectors, {
             name = "Fluid",
             inventory = ent.fluidbox,
          })
@@ -160,7 +160,7 @@ function mod.open_operable_building(ent, pindex)
       local invs = defines.inventory
       if ent.type == "rocket-silo" then
          if ent.get_inventory(invs.rocket_silo_rocket) ~= nil and #ent.get_inventory(invs.rocket_silo_rocket) > 0 then
-            table.insert(players[pindex].building.sectors, {
+            table.insert(storage.players[pindex].building.sectors, {
                name = "Rocket",
                inventory = ent.get_inventory(invs.rocket_silo_rocket),
             })
@@ -168,7 +168,7 @@ function mod.open_operable_building(ent, pindex)
       end
 
       if ent.filter_slot_count > 0 and ent.type == "inserter" then
-         table.insert(players[pindex].building.sectors, {
+         table.insert(storage.players[pindex].building.sectors, {
             name = "Filters",
             inventory = {},
          })
@@ -176,55 +176,61 @@ function mod.open_operable_building(ent, pindex)
          for i = 1, ent.filter_slot_count do
             local filter = Filters.get_filter_prototype(ent, i)
             if filter == nil then filter = "No filter selected." end
-            table.insert(players[pindex].building.sectors[#players[pindex].building.sectors].inventory, filter)
+            table.insert(
+               storage.players[pindex].building.sectors[#storage.players[pindex].building.sectors].inventory,
+               filter
+            )
          end
          table.insert(
-            players[pindex].building.sectors[#players[pindex].building.sectors].inventory,
+            storage.players[pindex].building.sectors[#storage.players[pindex].building.sectors].inventory,
             ent.inserter_filter_mode
          )
-         players[pindex].item_selection = false
-         players[pindex].item_cache = {}
-         players[pindex].item_selector = {
+         storage.players[pindex].item_selection = false
+         storage.players[pindex].item_cache = {}
+         storage.players[pindex].item_selector = {
             index = 0,
             group = 0,
             subgroup = 0,
          }
       end
 
-      for i1 = #players[pindex].building.sectors, 2, -1 do
+      for i1 = #storage.players[pindex].building.sectors, 2, -1 do
          for i2 = i1 - 1, 1, -1 do
-            if players[pindex].building.sectors[i1].inventory == players[pindex].building.sectors[i2].inventory then
-               table.remove(players[pindex].building.sectors, i2)
+            if
+               storage.players[pindex].building.sectors[i1].inventory
+               == storage.players[pindex].building.sectors[i2].inventory
+            then
+               table.remove(storage.players[pindex].building.sectors, i2)
                i2 = i2 + 1
             end
          end
       end
-      if #players[pindex].building.sectors > 0 then
-         players[pindex].building.ent = ent
+      if #storage.players[pindex].building.sectors > 0 then
+         storage.players[pindex].building.ent = ent
          router:open_ui(UiRouter.UI_NAMES.BUILDING)
-         players[pindex].move_queue = {}
-         players[pindex].inventory.index = 1
-         players[pindex].building.index = 1
-         local pb = players[pindex].building
-         players[pindex].building.sector_name = pb.sectors[pb.sector].name
+         storage.players[pindex].move_queue = {}
+         storage.players[pindex].inventory.index = 1
+         storage.players[pindex].building.index = 1
+         local pb = storage.players[pindex].building
+         storage.players[pindex].building.sector_name = pb.sectors[pb.sector].name
 
          --For assembling machine types with no recipe, open recipe building sector directly
-         local recipe = players[pindex].building.recipe
+         local recipe = storage.players[pindex].building.recipe
          if
             (recipe == nil or not recipe.valid)
             and (ent.prototype.type == "assembling-machine")
-            and players[pindex].building.recipe_list ~= nil
+            and storage.players[pindex].building.recipe_list ~= nil
          then
-            players[pindex].building.sector = #players[pindex].building.sectors + 1
-            players[pindex].building.index = 1
-            players[pindex].building.category = 1
-            players[pindex].building.recipe_selection = false
-            players[pindex].building.sector_name = "unloaded recipe selection"
+            storage.players[pindex].building.sector = #storage.players[pindex].building.sectors + 1
+            storage.players[pindex].building.index = 1
+            storage.players[pindex].building.category = 1
+            storage.players[pindex].building.recipe_selection = false
+            storage.players[pindex].building.sector_name = "unloaded recipe selection"
 
-            players[pindex].building.item_selection = false
-            players[pindex].item_selection = false
-            players[pindex].item_cache = {}
-            players[pindex].item_selector = {
+            storage.players[pindex].building.item_selection = false
+            storage.players[pindex].item_selection = false
+            storage.players[pindex].item_cache = {}
+            storage.players[pindex].item_selector = {
                index = 0,
                group = 0,
                subgroup = 0,
@@ -236,7 +242,7 @@ function mod.open_operable_building(ent, pindex)
       else
          --No building sectors
          if game.get_player(pindex).opened ~= nil then
-            players[pindex].building.ent = ent
+            storage.players[pindex].building.ent = ent
             router:open_ui(UiRouter.UI_NAMES.BUILDING_NO_SECTORS)
             local result =
                { "", localising.get_localised_name_with_fallback(ent), { "fa.bvs-this-menu-has-no-options" } }
@@ -275,38 +281,38 @@ function mod.open_operable_vehicle(ent, pindex)
       local p = game.get_player(pindex)
       if p.opened == nil then p.opened = ent end
       --Other stuff...
-      players[pindex].menu_search_index = 0
-      players[pindex].menu_search_index_2 = 0
+      storage.players[pindex].menu_search_index = 0
+      storage.players[pindex].menu_search_index_2 = 0
       if ent.prototype.ingredient_count ~= nil then
-         players[pindex].building.recipe = ent.get_recipe()
-         players[pindex].building.recipe_list = Crafting.get_recipes(pindex, ent)
-         players[pindex].building.category = 1
+         storage.players[pindex].building.recipe = ent.get_recipe()
+         storage.players[pindex].building.recipe_list = Crafting.get_recipes(pindex, ent)
+         storage.players[pindex].building.category = 1
       else
-         players[pindex].building.recipe = nil
-         players[pindex].building.recipe_list = nil
-         players[pindex].building.category = 0
+         storage.players[pindex].building.recipe = nil
+         storage.players[pindex].building.recipe_list = nil
+         storage.players[pindex].building.category = 0
       end
-      players[pindex].building.item_selection = false
-      players[pindex].inventory.lua_inventory = game.get_player(pindex).get_main_inventory()
-      players[pindex].inventory.max = #players[pindex].inventory.lua_inventory
-      players[pindex].building.sectors = {}
-      players[pindex].building.sector = 1
+      storage.players[pindex].building.item_selection = false
+      storage.players[pindex].inventory.lua_inventory = game.get_player(pindex).get_main_inventory()
+      storage.players[pindex].inventory.max = #storage.players[pindex].inventory.lua_inventory
+      storage.players[pindex].building.sectors = {}
+      storage.players[pindex].building.sector = 1
 
       --Inventories as sectors
       if ent.get_output_inventory() ~= nil then
-         table.insert(players[pindex].building.sectors, {
+         table.insert(storage.players[pindex].building.sectors, {
             name = "Output",
             inventory = ent.get_output_inventory(),
          })
       end
       if ent.get_fuel_inventory() ~= nil then
-         table.insert(players[pindex].building.sectors, {
+         table.insert(storage.players[pindex].building.sectors, {
             name = "Fuel",
             inventory = ent.get_fuel_inventory(),
          })
       end
       if ent.get_burnt_result_inventory() ~= nil and #ent.get_burnt_result_inventory() > 0 then
-         table.insert(players[pindex].building.sectors, {
+         table.insert(storage.players[pindex].building.sectors, {
             name = "Burnt result",
             inventory = ent.get_burnt_result_inventory(),
          })
@@ -317,7 +323,7 @@ function mod.open_operable_vehicle(ent, pindex)
       if ent.type == "car" then
          --Trunk = Output, Fuel = Fuel
          if ent.get_inventory(invs.car_ammo) ~= nil and #ent.get_inventory(invs.car_ammo) > 0 then
-            table.insert(players[pindex].building.sectors, {
+            table.insert(storage.players[pindex].building.sectors, {
                name = "Ammo",
                inventory = ent.get_inventory(invs.car_ammo),
             })
@@ -325,46 +331,49 @@ function mod.open_operable_vehicle(ent, pindex)
       end
       if ent.type == "spider-vehicle" then
          if ent.get_inventory(invs.spider_trunk) ~= nil and #ent.get_inventory(invs.spider_trunk) > 0 then
-            table.insert(players[pindex].building.sectors, {
+            table.insert(storage.players[pindex].building.sectors, {
                name = "Output",
                inventory = ent.get_inventory(invs.spider_trunk),
             })
          end
          if ent.get_inventory(invs.spider_trash) ~= nil and #ent.get_inventory(invs.spider_trash) > 0 then
-            table.insert(players[pindex].building.sectors, {
+            table.insert(storage.players[pindex].building.sectors, {
                name = "Trash",
                inventory = ent.get_inventory(invs.spider_trash),
             })
          end
          if ent.get_inventory(invs.spider_ammo) ~= nil and #ent.get_inventory(invs.spider_ammo) > 0 then
-            table.insert(players[pindex].building.sectors, {
+            table.insert(storage.players[pindex].building.sectors, {
                name = "Ammo",
                inventory = ent.get_inventory(invs.spider_ammo),
             })
          end
       end
 
-      for i1 = #players[pindex].building.sectors, 2, -1 do
+      for i1 = #storage.players[pindex].building.sectors, 2, -1 do
          for i2 = i1 - 1, 1, -1 do
-            if players[pindex].building.sectors[i1].inventory == players[pindex].building.sectors[i2].inventory then
-               table.remove(players[pindex].building.sectors, i2)
+            if
+               storage.players[pindex].building.sectors[i1].inventory
+               == storage.players[pindex].building.sectors[i2].inventory
+            then
+               table.remove(storage.players[pindex].building.sectors, i2)
                i2 = i2 + 1
             end
          end
       end
-      if #players[pindex].building.sectors > 0 then
-         players[pindex].building.ent = ent
+      if #storage.players[pindex].building.sectors > 0 then
+         storage.players[pindex].building.ent = ent
          router:open_ui(UiRouter.UI_NAMES.VEHICLE)
-         players[pindex].move_queue = {}
-         players[pindex].inventory.index = 1
-         players[pindex].building.index = 1
-         local pb = players[pindex].building
-         players[pindex].building.sector_name = pb.sectors[pb.sector].name
+         storage.players[pindex].move_queue = {}
+         storage.players[pindex].inventory.index = 1
+         storage.players[pindex].building.index = 1
+         local pb = storage.players[pindex].building
+         storage.players[pindex].building.sector_name = pb.sectors[pb.sector].name
 
          mod.read_sector_slot(pindex, true)
       else
          if game.get_player(pindex).opened ~= nil then
-            players[pindex].building.ent = ent
+            storage.players[pindex].building.ent = ent
             router:open_ui(UiRouter.UI_NAMES.VEHICLE_NO_SECTORS)
             local message = MessageBuilder.new()
             message:fragment(ent.name)
@@ -385,9 +394,9 @@ end
 --Building recipe selection sector: Read the selected recipe
 function mod.read_building_recipe(pindex, start_phrase)
    start_phrase = start_phrase or ""
-   if players[pindex].building.recipe_selection then --inside the selector
+   if storage.players[pindex].building.recipe_selection then --inside the selector
       local recipe =
-         players[pindex].building.recipe_list[players[pindex].building.category][players[pindex].building.index]
+         storage.players[pindex].building.recipe_list[storage.players[pindex].building.category][storage.players[pindex].building.index]
       if recipe and recipe.valid then
          local message = MessageBuilder.new()
          if start_phrase ~= "" then message:fragment(start_phrase) end
@@ -406,7 +415,7 @@ function mod.read_building_recipe(pindex, start_phrase)
          printout(message:build(), pindex)
       end
    else
-      local recipe = players[pindex].building.recipe
+      local recipe = storage.players[pindex].building.recipe
       if recipe ~= nil then
          local message = MessageBuilder.new()
          if start_phrase ~= "" then message:fragment(start_phrase) end
@@ -424,7 +433,7 @@ end
 
 --Building sectors: Read the item or fluid at the selected slot.
 function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phrase_in)
-   local building_sector = players[pindex].building.sectors[players[pindex].building.sector]
+   local building_sector = storage.players[pindex].building.sectors[storage.players[pindex].building.sector]
    local start_phrase = start_phrase_in or ""
    if building_sector.name == "Filters" then
       local inventory = building_sector.inventory
@@ -433,32 +442,32 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
       end
       printout(
          start_phrase
-            .. players[pindex].building.index
+            .. storage.players[pindex].building.index
             .. ", "
-            .. building_sector.inventory[players[pindex].building.index],
+            .. building_sector.inventory[storage.players[pindex].building.index],
          pindex
       )
    elseif building_sector.name == "Fluid" then
       if
-         players[pindex].building.ent ~= nil
-         and players[pindex].building.ent.valid
-         and players[pindex].building.ent.type == "fluid-turret"
-         and players[pindex].building.index ~= 1
+         storage.players[pindex].building.ent ~= nil
+         and storage.players[pindex].building.ent.valid
+         and storage.players[pindex].building.ent.type == "fluid-turret"
+         and storage.players[pindex].building.index ~= 1
       then
          --Prevent fluid turret crashes
-         players[pindex].building.index = 1
+         storage.players[pindex].building.index = 1
       end
       local box = building_sector.inventory
       if #box == 0 then
          printout({ "fa.bvs-no-fluid" }, pindex)
          return
-      elseif players[pindex].building.index > #box or players[pindex].building.index == 0 then
-         players[pindex].building.index = 1
+      elseif storage.players[pindex].building.index > #box or storage.players[pindex].building.index == 0 then
+         storage.players[pindex].building.index = 1
          game.get_player(pindex).play_sound({ path = "inventory-wrap-around" })
       end
-      local capacity = box.get_capacity(players[pindex].building.index)
-      local fluid_type = box.get_prototype(players[pindex].building.index).production_type
-      local fluid = box[players[pindex].building.index]
+      local capacity = box.get_capacity(storage.players[pindex].building.index)
+      local fluid_type = box.get_prototype(storage.players[pindex].building.index).production_type
+      local fluid = box[storage.players[pindex].building.index]
       local len = #box
       if prefix_inventory_size_and_name then
          start_phrase = start_phrase .. len .. " " .. building_sector.name .. ", "
@@ -472,9 +481,9 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
       end --laterdo use fluidbox.get_locked_fluid(i) if needed.
       --Read the fluid ingredients & products
       --Note: Could separate by input/output, but production_type (fluid_type) currently always "input"
-      local recipe = players[pindex].building.recipe
+      local recipe = storage.players[pindex].building.recipe
       if recipe ~= nil then
-         local index = players[pindex].building.index
+         local index = storage.players[pindex].building.index
          local input_fluid_count = 0
          local input_item_count = 0
          for i, v in pairs(recipe.ingredients) do
@@ -587,11 +596,11 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
          end
       end
       --Mention if the selected slot is locked
-      if inventory.supports_bar() and players[pindex].building.index > inventory.get_bar() - 1 then
+      if inventory.supports_bar() and storage.players[pindex].building.index > inventory.get_bar() - 1 then
          start_phrase = { "", start_phrase, " ", { "fa.bvs-locked" }, " " }
       end
       --Read the slot stack
-      local stack = building_sector.inventory[players[pindex].building.index]
+      local stack = building_sector.inventory[storage.players[pindex].building.index]
       if stack and stack.valid_for_read and stack.valid then
          if stack.is_blueprint then
             printout(Blueprints.get_blueprint_info(stack, false, pindex), pindex)
@@ -599,7 +608,7 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
             printout(Blueprints.get_blueprint_book_info(stack, false), pindex)
          else
             --Check if the slot is filtered
-            local index = players[pindex].building.index
+            local index = storage.players[pindex].building.index
             if building_sector.inventory.supports_filters() then
                local filter_name = building_sector.inventory.get_filter(index)
                if filter_name ~= nil then start_phrase = { "", start_phrase, " ", { "fa.bvs-filtered" }, " " } end
@@ -632,7 +641,7 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
          local result = { "", { "fa.bvs-empty-slot" } }
          --Check if the empty slot has a filter set
          if building_sector.inventory.supports_filters() then
-            local index = players[pindex].building.index
+            local index = storage.players[pindex].building.index
             local filter_name = building_sector.inventory.get_filter(index)
             if filter_name ~= nil then
                table.insert(result, { "fa.bvs-filtered-for" })
@@ -640,13 +649,13 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
             end
          end
          if building_sector.name == "Modules" then result = { "", { "fa.bvs-empty-module-slot" } } end
-         local recipe = players[pindex].building.recipe
+         local recipe = storage.players[pindex].building.recipe
          if recipe ~= nil then
             if building_sector.name == "Input" then
                --For input slots read the recipe ingredients
                table.insert(result, { "fa.bvs-reserved-for" })
                for i, v in pairs(recipe.ingredients) do
-                  if v.type == "item" and i == players[pindex].building.index then
+                  if v.type == "item" and i == storage.players[pindex].building.index then
                      local localised_name = localising.get_localised_name_with_fallback(prototypes.item[v.name])
                      table.insert(result, localised_name)
                      table.insert(result, " ")
@@ -663,7 +672,7 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
                --For output slots read the recipe products
                table.insert(result, { "fa.bvs-reserved-for" })
                for i, v in pairs(recipe.products) do
-                  if v.type == "item" and i == players[pindex].building.index then
+                  if v.type == "item" and i == storage.players[pindex].building.index then
                      local localised_name = localising.get_localised_name_with_fallback(prototypes.item[v.name])
                      table.insert(result, localised_name)
                      table.insert(result, " ")
@@ -678,19 +687,19 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
                --result = result .. "nothing"
             end
          elseif
-            players[pindex].building.ent ~= nil
-            and players[pindex].building.ent.valid
-            and players[pindex].building.ent.type == "lab"
+            storage.players[pindex].building.ent ~= nil
+            and storage.players[pindex].building.ent.valid
+            and storage.players[pindex].building.ent.type == "lab"
             and building_sector.name == "Output"
          then
-            --laterdo switch to {"item-name.".. ent.prototype.lab_inputs[players[pindex].building.index] }
+            --laterdo switch to {"item-name.".. ent.prototype.lab_inputs[storage.players[pindex].building.index] }
             table.insert(result, { "fa.bvs-reserved-for-science-pack" })
             table.insert(result, " ")
-            table.insert(result, tostring(players[pindex].building.index))
+            table.insert(result, tostring(storage.players[pindex].building.index))
          elseif
-            players[pindex].building.ent ~= nil
-            and players[pindex].building.ent.valid
-            and players[pindex].building.ent.type == "roboport"
+            storage.players[pindex].building.ent ~= nil
+            and storage.players[pindex].building.ent.valid
+            and storage.players[pindex].building.ent.type == "roboport"
          then
             local message = MessageBuilder.new()
             if start_phrase ~= "" then message:fragment(start_phrase) end
@@ -699,11 +708,11 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
             printout(message:build(), pindex)
             return
          elseif
-            players[pindex].building.ent ~= nil
-            and players[pindex].building.ent.valid
+            storage.players[pindex].building.ent ~= nil
+            and storage.players[pindex].building.ent.valid
             and (
-               players[pindex].building.ent.type == "ammo-turret"
-               or players[pindex].building.ent.type == "artillery-turret"
+               storage.players[pindex].building.ent.type == "ammo-turret"
+               or storage.players[pindex].building.ent.type == "artillery-turret"
             )
          then
             local message = MessageBuilder.new()

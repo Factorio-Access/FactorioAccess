@@ -69,7 +69,7 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
    --General build cases
    if stack.prototype.place_result ~= nil then
       local ent = stack.prototype.place_result
-      local dimensions = FaUtils.get_tile_dimensions(stack.prototype, players[pindex].building_direction)
+      local dimensions = FaUtils.get_tile_dimensions(stack.prototype, storage.players[pindex].building_direction)
       local position = nil
       local placing_underground_belt = stack.prototype.place_result.type == "underground-belt"
 
@@ -84,16 +84,17 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
          then
             --Allow easy placement onto rails by simply offsetting to the faced direction.
             local rail_vehicle_offset = 2.5
-            position = FaUtils.offset_position_legacy(old_pos, players[pindex].player_direction, rail_vehicle_offset)
+            position =
+               FaUtils.offset_position_legacy(old_pos, storage.players[pindex].player_direction, rail_vehicle_offset)
          else
             --Calculate footprint using centralized function
             local footprint = FaUtils.calculate_building_footprint({
                entity_prototype = stack.prototype.place_result,
                position = pos,
-               building_direction = players[pindex].building_direction,
-               player_direction = players[pindex].player_direction,
+               building_direction = storage.players[pindex].building_direction,
+               player_direction = storage.players[pindex].player_direction,
                cursor_enabled = cursor_enabled,
-               build_lock = players[pindex].build_lock,
+               build_lock = storage.players[pindex].build_lock,
                is_rail_vehicle = (stack.name == "rail"),
             })
 
@@ -102,18 +103,18 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
             position = footprint.center
 
             -- Store the calculated footprint for later use
-            players[pindex].building_footprint_left_top = footprint.left_top
-            players[pindex].building_footprint_right_bottom = footprint.right_bottom
+            storage.players[pindex].building_footprint_left_top = footprint.left_top
+            storage.players[pindex].building_footprint_right_bottom = footprint.right_bottom
          end
       else
          --Cursor mode: Calculate footprint using centralized function
          local footprint = FaUtils.calculate_building_footprint({
             entity_prototype = stack.prototype.place_result,
             position = pos,
-            building_direction = players[pindex].building_direction,
-            player_direction = players[pindex].player_direction,
+            building_direction = storage.players[pindex].building_direction,
+            player_direction = storage.players[pindex].player_direction,
             cursor_enabled = cursor_enabled,
-            build_lock = players[pindex].build_lock,
+            build_lock = storage.players[pindex].build_lock,
             is_rail_vehicle = false,
          })
 
@@ -122,8 +123,8 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
          position = footprint.center
 
          -- Store the calculated footprint for later use
-         players[pindex].building_footprint_left_top = footprint.left_top
-         players[pindex].building_footprint_right_bottom = footprint.right_bottom
+         storage.players[pindex].building_footprint_left_top = footprint.left_top
+         storage.players[pindex].building_footprint_right_bottom = footprint.right_bottom
       end
       -- Electric pole placement checks
       local pole_configs = {
@@ -134,12 +135,12 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
       }
 
       local pole_config = pole_configs[stack.name]
-      if pole_config and players[pindex].build_lock == true then
+      if pole_config and storage.players[pindex].build_lock == true then
          local check_position = position
 
          -- Apply position adjustments
          if pole_config.offset_back then
-            check_position = FaUtils.offset_position_legacy(position, players[pindex].player_direction, -1)
+            check_position = FaUtils.offset_position_legacy(position, storage.players[pindex].player_direction, -1)
             position = check_position
          elseif pole_config.use_center_tile then
             check_position = FaUtils.center_of_tile(position)
@@ -159,22 +160,23 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
             if not any_found then game.get_player(pindex).play_sound({ path = "utility/cannot_build" }) end
             return
          end
-      elseif placing_underground_belt and players[pindex].underground_connects == true then
+      elseif placing_underground_belt and storage.players[pindex].underground_connects == true then
          --Flip the chute
-         players[pindex].building_direction = (players[pindex].building_direction + dirs.south) % (2 * dirs.south)
+         storage.players[pindex].building_direction = (storage.players[pindex].building_direction + dirs.south)
+            % (2 * dirs.south)
       end
 
       --Clear build area obstacles
       PlayerMiningTools.clear_obstacles_in_rectangle(
-         players[pindex].building_footprint_left_top,
-         players[pindex].building_footprint_right_bottom,
+         storage.players[pindex].building_footprint_left_top,
+         storage.players[pindex].building_footprint_right_bottom,
          pindex
       )
 
       --Teleport player out of build area
       mod.teleport_player_out_of_build_area(
-         players[pindex].building_footprint_left_top,
-         players[pindex].building_footprint_right_bottom,
+         storage.players[pindex].building_footprint_left_top,
+         storage.players[pindex].building_footprint_right_bottom,
          pindex
       )
 
@@ -183,7 +185,7 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
       local building = {
          position = position,
          --position = center_of_tile(position),
-         direction = players[pindex].building_direction,
+         direction = storage.players[pindex].building_direction,
          alt = false,
       }
       if building.position ~= nil and game.get_player(pindex).can_build_from_cursor(building) then
@@ -194,18 +196,21 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
       else
          --Report errors
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         if players[pindex].build_lock == false then
+         if storage.players[pindex].build_lock == false then
             --Explain build error
             local result = "Cannot place that there "
-            local build_area =
-               { players[pindex].building_footprint_left_top, players[pindex].building_footprint_right_bottom }
+            local build_area = {
+               storage.players[pindex].building_footprint_left_top,
+               storage.players[pindex].building_footprint_right_bottom,
+            }
             result = mod.identify_building_obstacle(pindex, build_area, nil)
             printout(result, pindex)
          end
       end
       --Restore the original underground belt chute preview
-      if placing_underground_belt and players[pindex].underground_connects == true then
-         players[pindex].building_direction = (players[pindex].building_direction + dirs.south) % (2 * dirs.south)
+      if placing_underground_belt and storage.players[pindex].underground_connects == true then
+         storage.players[pindex].building_direction = (storage.players[pindex].building_direction + dirs.south)
+            % (2 * dirs.south)
          local stack = game.get_player(pindex).cursor_stack
          if
             stack
@@ -225,14 +230,14 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
          and stack.prototype.place_result ~= nil
          and stack.prototype.place_result.name == "pipe-to-ground"
       then
-         players[pindex].building_direction = FaUtils.rotate_180(players[pindex].building_direction)
+         storage.players[pindex].building_direction = FaUtils.rotate_180(storage.players[pindex].building_direction)
          game.get_player(pindex).play_sound({ path = "Rotate-Hand-Sound" })
       end
    elseif stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result ~= nil then
       --Tile placement
       local p = game.get_player(pindex)
       local t_size = cursor_size * 2 + 1
-      if cursor_enabled and players[pindex].preferences.tiles_placed_from_northwest_corner then
+      if cursor_enabled and storage.players[pindex].preferences.tiles_placed_from_northwest_corner then
          pos.x = pos.x - cursor_size
          pos.y = pos.y - cursor_size
          vp:set_cursor_pos(pos)
@@ -264,7 +269,7 @@ function mod.build_offshore_pump_in_hand(pindex)
 
    if stack and stack.valid and stack.valid_for_read and stack.name == "offshore-pump" then
       local ent = stack.prototype.place_result
-      players[pindex].pump.positions = {}
+      storage.players[pindex].pump.positions = {}
       local initial_position = p.position
       initial_position.x = math.floor(initial_position.x)
       initial_position.y = math.floor(initial_position.y)
@@ -275,22 +280,22 @@ function mod.build_offshore_pump_in_hand(pindex)
                ---@type defines.direction
                local dir_3 = i3 * dirs.east
                if p.can_build_from_cursor({ name = "offshore-pump", position = position, direction = dir_3 }) then
-                  table.insert(players[pindex].pump.positions, { position = position, direction = dir_3 })
+                  table.insert(storage.players[pindex].pump.positions, { position = position, direction = dir_3 })
                end
             end
          end
       end
-      if #players[pindex].pump.positions == 0 then
+      if #storage.players[pindex].pump.positions == 0 then
          printout({ "fa.building-pump-no-positions" }, pindex)
       else
          UiRouter.get_router(pindex):open_ui(UiRouter.UI_NAMES.PUMP)
-         players[pindex].move_queue = {}
-         printout({ "fa.building-pump-positions-available", #players[pindex].pump.positions }, pindex)
-         table.sort(players[pindex].pump.positions, function(k1, k2)
+         storage.players[pindex].move_queue = {}
+         printout({ "fa.building-pump-positions-available", #storage.players[pindex].pump.positions }, pindex)
+         table.sort(storage.players[pindex].pump.positions, function(k1, k2)
             return util.distance(initial_position, k1.position) < util.distance(initial_position, k2.position)
          end)
 
-         players[pindex].pump.index = 0
+         storage.players[pindex].pump.index = 0
       end
    end
 end
@@ -307,7 +312,7 @@ function mod.rotate_building_info_read(event, forward)
    if not router:is_ui_open() or router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT) then
       local ent = p.selected
       local stack = game.get_player(pindex).cursor_stack
-      local build_dir = players[pindex].building_direction
+      local build_dir = storage.players[pindex].building_direction
       local vp = Viewpoint.get_viewpoint(pindex)
       if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result ~= nil then
          local placed = stack.prototype.place_result
@@ -321,7 +326,7 @@ function mod.rotate_building_info_read(event, forward)
             if placed.type == "locomotive" or placed.type == "artillery-wagon" then mult = mult * 2 end
 
             --Update the assumed hand direction
-            if not players[pindex].lag_building_direction then
+            if not storage.players[pindex].lag_building_direction then
                game.get_player(pindex).play_sound({ path = "Rotate-Hand-Sound" })
                build_dir = (build_dir + dirs.east * mult) % (2 * dirs.south)
             end
@@ -369,24 +374,25 @@ function mod.rotate_building_info_read(event, forward)
             end
 
             --Display and read the new direction info
-            players[pindex].building_direction = build_dir
+            storage.players[pindex].building_direction = build_dir
             --Graphics.sync_build_cursor_graphics(pindex)
             printout({ "fa.building-rotation-in-hand", FaUtils.direction_lookup(build_dir) }, pindex)
-            players[pindex].lag_building_direction = false
+            storage.players[pindex].lag_building_direction = false
          else
             printout({ "fa.building-no-rotate-support", { "item-name." .. stack.name } }, pindex)
          end
       elseif stack ~= nil and stack.valid_for_read and stack.is_blueprint and stack.is_blueprint_setup() then
          --Rotate blueprints: They are tracked separately, and we reset them to north when cursor stack changes
          game.get_player(pindex).play_sound({ path = "Rotate-Hand-Sound" })
-         players[pindex].blueprint_hand_direction = (players[pindex].blueprint_hand_direction + dirs.east * mult)
-            % (2 * dirs.south)
-         printout(FaUtils.direction_lookup(players[pindex].blueprint_hand_direction), pindex)
+         storage.players[pindex].blueprint_hand_direction = (
+            storage.players[pindex].blueprint_hand_direction + dirs.east * mult
+         ) % (2 * dirs.south)
+         printout(FaUtils.direction_lookup(storage.players[pindex].blueprint_hand_direction), pindex)
 
          --Flip the saved bp width and height
-         local temp = players[pindex].blueprint_height_in_hand
-         players[pindex].blueprint_height_in_hand = players[pindex].blueprint_width_in_hand
-         players[pindex].blueprint_width_in_hand = temp
+         local temp = storage.players[pindex].blueprint_height_in_hand
+         storage.players[pindex].blueprint_height_in_hand = storage.players[pindex].blueprint_width_in_hand
+         storage.players[pindex].blueprint_width_in_hand = temp
 
          --Call graphics update
          --Graphics.sync_build_cursor_graphics(pindex)
@@ -573,7 +579,7 @@ function mod.build_preview_checks_info(stack, pindex)
    local pos = vp:get_cursor_pos()
    local cursor_enabled = vp:get_cursor_enabled()
    local result = { "" }
-   local build_dir = players[pindex].building_direction
+   local build_dir = storage.players[pindex].building_direction
    local ent_p = stack.prototype.place_result --it is an entity prototype!
    if ent_p == nil or not ent_p.valid then return "invalid entity" end
 
@@ -631,13 +637,13 @@ function mod.build_preview_checks_info(stack, pindex)
                   tostring(math.floor(util.distance(cand.position, pos)) - 1),
                })
                connected = true
-               players[pindex].underground_connects = true
+               storage.players[pindex].underground_connects = true
             end
          end
       end
       if not connected then
          table.insert(result, { "fa.connection-not-connected-pipe" })
-         players[pindex].underground_connects = false
+         storage.players[pindex].underground_connects = false
       end
    end
 
@@ -829,7 +835,7 @@ function mod.build_preview_checks_info(stack, pindex)
       end
    --Same as pipe preview but for the faced direction only
    elseif stack.name == "pipe-to-ground" then
-      local face_dir = players[pindex].building_direction
+      local face_dir = storage.players[pindex].building_direction
       local ent_pos = FaUtils.offset_position_legacy(pos, face_dir, 1)
       rendering.draw_circle({
          color = { 1, 0.0, 0.5 },
@@ -1035,29 +1041,29 @@ function mod.build_preview_checks_info(stack, pindex)
    --For all electric powered entities, note whether powered, and from which direction. Otherwise report the nearest power pole.
    if ent_p.electric_energy_source_prototype ~= nil then
       local position = pos
-      local build_dir = players[pindex].building_direction
+      local build_dir = storage.players[pindex].building_direction
       if cursor_enabled then
          position.x = position.x + math.ceil(2 * ent_p.selection_box.right_bottom.x) / 2 - 0.5
          position.y = position.y + math.ceil(2 * ent_p.selection_box.right_bottom.y) / 2 - 0.5
-      elseif players[pindex].player_direction == defines.direction.north then
+      elseif storage.players[pindex].player_direction == defines.direction.north then
          if build_dir == dirs.north or build_dir == dirs.south then
             position.y = position.y + math.ceil(2 * ent_p.selection_box.left_top.y) / 2 + 0.5
          elseif build_dir == dirs.east or build_dir == dirs.west then
             position.y = position.y + math.ceil(2 * ent_p.selection_box.left_top.x) / 2 + 0.5
          end
-      elseif players[pindex].player_direction == defines.direction.south then
+      elseif storage.players[pindex].player_direction == defines.direction.south then
          if build_dir == dirs.north or build_dir == dirs.south then
             position.y = position.y + math.ceil(2 * ent_p.selection_box.right_bottom.y) / 2 - 0.5
          elseif build_dir == dirs.east or build_dir == dirs.west then
             position.y = position.y + math.ceil(2 * ent_p.selection_box.right_bottom.x) / 2 - 0.5
          end
-      elseif players[pindex].player_direction == defines.direction.west then
+      elseif storage.players[pindex].player_direction == defines.direction.west then
          if build_dir == dirs.north or build_dir == dirs.south then
             position.x = position.x + math.ceil(2 * ent_p.selection_box.left_top.x) / 2 + 0.5
          elseif build_dir == dirs.east or build_dir == dirs.west then
             position.x = position.x + math.ceil(2 * ent_p.selection_box.left_top.y) / 2 + 0.5
          end
-      elseif players[pindex].player_direction == defines.direction.east then
+      elseif storage.players[pindex].player_direction == defines.direction.east then
          if build_dir == dirs.north or build_dir == dirs.south then
             position.x = position.x + math.ceil(2 * ent_p.selection_box.right_bottom.x) / 2 - 0.5
          elseif build_dir == dirs.east or build_dir == dirs.west then
@@ -1091,7 +1097,7 @@ function mod.build_preview_checks_info(stack, pindex)
                (position.x + math.floor(ent_p.selection_box.right_bottom.x) + supply_dist),
                (position.y + math.floor(ent_p.selection_box.right_bottom.y) + supply_dist),
             },
-            orientation = players[pindex].building_direction / (2 * dirs.south),
+            orientation = storage.players[pindex].building_direction / (2 * dirs.south),
          } --**laterdo "connected" check is a little buggy at the supply area edges, need to trim and tune, maybe re-enable direction based offset? The offset could be due to the pole width: 1 vs 2, maybe just make it more conservative?
          local T = {
             area = area,
@@ -1130,7 +1136,7 @@ function mod.build_preview_checks_info(stack, pindex)
       end
    end
 
-   if cursor_enabled and util.distance(pos, players[pindex].position) > p.reach_distance + 2 then
+   if cursor_enabled and util.distance(pos, storage.players[pindex].position) > p.reach_distance + 2 then
       table.insert(result, { "fa.connection-cursor-out-of-reach" })
    end
    return result
@@ -1198,7 +1204,7 @@ function mod.teleport_player_out_of_build_area(left_top, right_bottom, pindex)
    local pos = p.character.position
    if pos.x < left_top.x or pos.x > right_bottom.x or pos.y < left_top.y or pos.y > right_bottom.y then return end
    if p.walking_state.walking == true then return end
-   if players[pindex].build_lock == true then
+   if storage.players[pindex].build_lock == true then
       p.play_sound({ path = "player-bump-stuck-alert" })
       return
    end
@@ -1265,8 +1271,8 @@ function mod.snap_place_steam_engine_to_a_boiler(pindex)
          found_empty_spot = true
          local engine_position = output_location
          local dir = boiler.direction
-         local old_building_dir = players[pindex].building_direction
-         players[pindex].building_direction = dir
+         local old_building_dir = storage.players[pindex].building_direction
+         storage.players[pindex].building_direction = dir
          if dir == dirs.east then
             engine_position = FaUtils.offset_position_legacy(engine_position, dirs.east, 2)
          elseif dir == dirs.south then

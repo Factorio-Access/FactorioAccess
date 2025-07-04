@@ -104,8 +104,8 @@ function mod.create_blueprint(pindex, point_1, point_2, prior_bp_data)
 
    --Use this opportunity to update saved information about the blueprint's corners (used when drawing the footprint)
    local width, height = mod.get_blueprint_width_and_height(pindex)
-   players[pindex].blueprint_width_in_hand = width + 1
-   players[pindex].blueprint_height_in_hand = height + 1
+   storage.players[pindex].blueprint_width_in_hand = width + 1
+   storage.players[pindex].blueprint_height_in_hand = height + 1
 end
 
 --Building function for bluelprints
@@ -127,7 +127,7 @@ function mod.paste_blueprint(pindex)
    PlayerMiningTools.clear_obstacles_in_rectangle(left_top, right_bottom, pindex, 99)
 
    --Build it and check if successful
-   local dir = players[pindex].blueprint_hand_direction
+   local dir = storage.players[pindex].blueprint_hand_direction
    local result = bp.build_blueprint({
       surface = p.surface,
       force = p.force,
@@ -204,7 +204,8 @@ function mod.get_blueprint_corners(pindex, draw_rect)
    local bp_width = bp_right_bottom.x - bp_left_top.x - 1
    local bp_height = bp_right_bottom.y - bp_left_top.y - 1
    if
-      players[pindex].blueprint_hand_direction == dirs.east or players[pindex].blueprint_hand_direction == dirs.west
+      storage.players[pindex].blueprint_hand_direction == dirs.east
+      or storage.players[pindex].blueprint_hand_direction == dirs.west
    then
       --Flip width and height
       bp_width = bp_right_bottom.y - bp_left_top.y - 1
@@ -239,7 +240,7 @@ function mod.get_blueprint_width_and_height(pindex)
    local p = game.get_player(pindex)
    local bp = p.cursor_stack
    if bp == nil or bp.valid_for_read == false or bp.is_blueprint == false then
-      bp = game.get_player(pindex).get_main_inventory()[players[pindex].inventory.index]
+      bp = game.get_player(pindex).get_main_inventory()[storage.players[pindex].inventory.index]
    end
    if bp == nil or bp.valid_for_read == false or bp.is_blueprint == false then return nil, nil end
    local vp = Viewpoint.get_viewpoint(pindex)
@@ -288,7 +289,8 @@ function mod.get_blueprint_width_and_height(pindex)
    local bp_width = bp_right_bottom.x - bp_left_top.x - 1
    local bp_height = bp_right_bottom.y - bp_left_top.y - 1
    if
-      players[pindex].blueprint_hand_direction == dirs.east or players[pindex].blueprint_hand_direction == dirs.west
+      storage.players[pindex].blueprint_hand_direction == dirs.east
+      or storage.players[pindex].blueprint_hand_direction == dirs.west
    then
       --Flip width and height
       bp_width = bp_right_bottom.y - bp_left_top.y - 1
@@ -340,8 +342,8 @@ function mod.get_blueprint_info(stack, in_hand, pindex)
    if in_hand then
       local width, height = mod.get_blueprint_width_and_height(pindex)
       if width == nil or height == nil then return result end
-      players[pindex].blueprint_width_in_hand = width + 1
-      players[pindex].blueprint_height_in_hand = height + 1
+      storage.players[pindex].blueprint_width_in_hand = width + 1
+      storage.players[pindex].blueprint_height_in_hand = height + 1
    end
    return result
 end
@@ -392,14 +394,14 @@ function mod.apply_blueprint_import(pindex, text)
 end
 
 function mod.blueprint_menu_open(pindex)
-   if players[pindex].vanilla_mode then return end
+   if storage.players[pindex].vanilla_mode then return end
 
    UiRouter.get_router(pindex):open_ui(UiRouter.UI_NAMES.BLUEPRINT)
 
-   players[pindex].move_queue = {}
+   storage.players[pindex].move_queue = {}
 
    --Set the menu line counter to 0
-   players[pindex].blueprint_menu = {
+   storage.players[pindex].blueprint_menu = {
       index = 0,
       edit_label = false,
       edit_description = false,
@@ -417,7 +419,7 @@ function mod.blueprint_menu_close(pindex, mute_in)
    UiRouter.get_router(pindex):close_ui()
 
    --Set the menu line counter to 0
-   players[pindex].blueprint_menu.index = 0
+   storage.players[pindex].blueprint_menu.index = 0
 
    --play sound
    if not mute then game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" }) end
@@ -446,11 +448,11 @@ end
 --We run the export rarely because it eats UPS
 function mod.set_bp_book_data_from_cursor(pindex)
    local cursor_stack = game.get_player(pindex).cursor_stack
-   players[pindex].blueprint_book_menu.book_data = mod.get_bp_book_data_for_edit(cursor_stack)
+   storage.players[pindex].blueprint_book_menu.book_data = mod.get_bp_book_data_for_edit(cursor_stack)
 end
 
 function mod.blueprint_book_get_label(pindex)
-   local bp_data = players[pindex].blueprint_book_menu.book_data
+   local bp_data = storage.players[pindex].blueprint_book_menu.book_data
    local label = bp_data.blueprint_book.label
    if label == nil then label = "" end
    return label
@@ -458,7 +460,7 @@ end
 
 function mod.blueprint_book_set_label(pindex, new_name)
    local p = game.get_player(pindex)
-   local bp_data = players[pindex].blueprint_book_menu.book_data
+   local bp_data = storage.players[pindex].blueprint_book_menu.book_data
    bp_data.blueprint_book.label = new_name
    mod.set_stack_bp_from_data(p.cursor_stack, bp_data)
 end
@@ -494,13 +496,13 @@ end
 
 function mod.set_blueprint_book_description(pindex, new_name)
    local p = game.get_player(pindex)
-   local bp_data = players[pindex].blueprint_book_menu.book_data
+   local bp_data = storage.players[pindex].blueprint_book_menu.book_data
    bp_data.blueprint_book.description = new_name
    mod.set_stack_bp_from_data(p.cursor_stack, bp_data)
 end
 
 function mod.blueprint_book_get_item_count(pindex)
-   local bp_data = players[pindex].blueprint_book_menu.book_data
+   local bp_data = storage.players[pindex].blueprint_book_menu.book_data
    local items = bp_data.blueprint_book.blueprints
    if items == nil or items == {} then
       return 0
@@ -520,14 +522,14 @@ end
 
 --Reads a blueprint within the blueprint book
 function mod.blueprint_book_read_item(pindex, i)
-   local bp_data = players[pindex].blueprint_book_menu.book_data
+   local bp_data = storage.players[pindex].blueprint_book_menu.book_data
    local items = bp_data.blueprint_book.blueprints
    return items[i]["blueprint"]
 end
 
 --Puts the book away and imports the selected blueprint to hand
 function mod.blueprint_book_copy_item_to_hand(pindex, i)
-   local bp_data = players[pindex].blueprint_book_menu.book_data
+   local bp_data = storage.players[pindex].blueprint_book_menu.book_data
    local items = bp_data.blueprint_book.blueprints
    local item_string = "0" .. helpers.encode_string(helpers.table_to_json(items[i]))
 
@@ -576,8 +578,8 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
    local bpb = p.cursor_stack
    local item_count = mod.blueprint_book_get_item_count(pindex)
    --Update menu length
-   players[pindex].blueprint_book_menu.menu_length = BLUEPRINT_BOOK_SETTINGS_MENU_LENGTH
-   if list_mode then players[pindex].blueprint_book_menu.menu_length = item_count end
+   storage.players[pindex].blueprint_book_menu.menu_length = BLUEPRINT_BOOK_SETTINGS_MENU_LENGTH
+   if list_mode then storage.players[pindex].blueprint_book_menu.menu_length = item_count end
 
    --Run menu
    if list_mode then
@@ -664,7 +666,7 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             local result = "Rename this book"
             printout(result, pindex)
          else
-            players[pindex].blueprint_menu.edit_label = true
+            storage.players[pindex].blueprint_menu.edit_label = true
             local frame = Graphics.create_text_field_frame(pindex, "blueprint-edit-label")
             local result =
                "Type in a new name for this blueprint and press 'ENTER' to confirm, or press 'ESC' to cancel."
@@ -675,7 +677,7 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             local result = "Rewrite the description of this book"
             printout(result, pindex)
          else
-            players[pindex].blueprint_menu.edit_description = true
+            storage.players[pindex].blueprint_menu.edit_description = true
             local frame = Graphics.create_text_field_frame(pindex, "blueprint-edit-description")
             local result =
                "Type in the new description text box for this blueprint and press 'ENTER' to confirm, or press 'ESC' to cancel."
@@ -706,7 +708,7 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             local result = "Export this blueprint book as a text string"
             printout(result, pindex)
          else
-            players[pindex].blueprint_menu.edit_export = true
+            storage.players[pindex].blueprint_menu.edit_export = true
             local frame = Graphics.create_text_field_frame(pindex, "blueprint-edit-export", bpb.export_stack())
             local result =
                "Copy the text from this box using 'CONTROL + A' and then 'CONTROL + C' and then press ENTER to exit"
@@ -718,7 +720,7 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             local result = "Import a text string to overwrite this blueprint book"
             printout(result, pindex)
          else
-            players[pindex].blueprint_menu.edit_import = true
+            storage.players[pindex].blueprint_menu.edit_import = true
             local frame = Graphics.create_text_field_frame(pindex, "blueprint-edit-import")
             local result = "Paste a copied blueprint text string in this box and then press ENTER to load it"
             printout(result, pindex)
@@ -728,12 +730,12 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
 end
 
 function mod.blueprint_book_menu_open(pindex, open_in_list_mode)
-   if players[pindex].vanilla_mode then return end
+   if storage.players[pindex].vanilla_mode then return end
    UiRouter.get_router(pindex):open_ui(UiRouter.UI_NAMES.BLUEPRINT_BOOK)
-   players[pindex].move_queue = {}
+   storage.players[pindex].move_queue = {}
 
    --Set the menu line counter to 0
-   players[pindex].blueprint_book_menu = {
+   storage.players[pindex].blueprint_book_menu = {
       book_data = nil,
       index = 0,
       menu_length = 0,
@@ -751,7 +753,7 @@ function mod.blueprint_book_menu_open(pindex, open_in_list_mode)
    game.get_player(pindex).play_sound({ path = "Open-Inventory-Sound" })
 
    --Load menu
-   local bpb_menu = players[pindex].blueprint_book_menu
+   local bpb_menu = storage.players[pindex].blueprint_book_menu
    mod.run_blueprint_book_menu(pindex, bpb_menu.index, bpb_menu.list_mode, false, false)
 end
 
@@ -761,7 +763,7 @@ function mod.blueprint_book_menu_close(pindex, mute_in)
    UiRouter.get_router(pindex):close_ui()
 
    --Set the menu line counter to 0
-   players[pindex].blueprint_book_menu.index = 0
+   storage.players[pindex].blueprint_book_menu.index = 0
 
    --play sound
    if not mute then game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" }) end
@@ -783,30 +785,30 @@ function mod.blueprint_book_menu_close(pindex, mute_in)
 end
 
 function mod.blueprint_book_menu_up(pindex)
-   players[pindex].blueprint_book_menu.index = players[pindex].blueprint_book_menu.index - 1
-   if players[pindex].blueprint_book_menu.index < 0 then
-      players[pindex].blueprint_book_menu.index = 0
+   storage.players[pindex].blueprint_book_menu.index = storage.players[pindex].blueprint_book_menu.index - 1
+   if storage.players[pindex].blueprint_book_menu.index < 0 then
+      storage.players[pindex].blueprint_book_menu.index = 0
       game.get_player(pindex).play_sound({ path = "inventory-edge" })
    else
       --Play sound
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
    end
    --Load menu
-   local bpb_menu = players[pindex].blueprint_book_menu
+   local bpb_menu = storage.players[pindex].blueprint_book_menu
    mod.run_blueprint_book_menu(pindex, bpb_menu.index, bpb_menu.list_mode, false, false)
 end
 
 function mod.blueprint_book_menu_down(pindex)
-   players[pindex].blueprint_book_menu.index = players[pindex].blueprint_book_menu.index + 1
-   if players[pindex].blueprint_book_menu.index > players[pindex].blueprint_book_menu.menu_length then
-      players[pindex].blueprint_book_menu.index = players[pindex].blueprint_book_menu.menu_length
+   storage.players[pindex].blueprint_book_menu.index = storage.players[pindex].blueprint_book_menu.index + 1
+   if storage.players[pindex].blueprint_book_menu.index > storage.players[pindex].blueprint_book_menu.menu_length then
+      storage.players[pindex].blueprint_book_menu.index = storage.players[pindex].blueprint_book_menu.menu_length
       game.get_player(pindex).play_sound({ path = "inventory-edge" })
    else
       --Play sound
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
    end
    --Load menu
-   local bpb_menu = players[pindex].blueprint_book_menu
+   local bpb_menu = storage.players[pindex].blueprint_book_menu
    mod.run_blueprint_book_menu(pindex, bpb_menu.index, bpb_menu.list_mode, false, false)
 end
 
@@ -906,8 +908,8 @@ function mod.copy_selected_area_to_clipboard(pindex, point_1, point_2)
 
    --Use this opportunity to update saved information about the blueprint's corners (used when drawing the footprint)
    local width, height = mod.get_blueprint_width_and_height(pindex)
-   players[pindex].blueprint_width_in_hand = width + 1
-   players[pindex].blueprint_height_in_hand = height + 1
+   storage.players[pindex].blueprint_width_in_hand = width + 1
+   storage.players[pindex].blueprint_height_in_hand = height + 1
 end
 
 return mod

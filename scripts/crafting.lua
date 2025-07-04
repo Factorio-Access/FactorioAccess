@@ -45,8 +45,8 @@ end
 --Reads out the selected slot of the player crafting queue.
 function mod.read_crafting_queue(pindex, start_phrase)
    start_phrase = start_phrase or ""
-   if players[pindex].crafting_queue.max ~= 0 then
-      local item = players[pindex].crafting_queue.lua_queue[players[pindex].crafting_queue.index]
+   if storage.players[pindex].crafting_queue.max ~= 0 then
+      local item = storage.players[pindex].crafting_queue.lua_queue[storage.players[pindex].crafting_queue.index]
       local recipe_name_only = item.recipe
       local recipe_proto = prototypes.recipe[recipe_name_only]
       local recipe_name = recipe_proto and localising.get_localised_name_with_fallback(recipe_proto) or recipe_name_only
@@ -74,23 +74,24 @@ end
 
 --Loads the crafting queue menu for a player.
 function mod.load_crafting_queue(pindex)
-   if players[pindex].crafting_queue.lua_queue ~= nil then
-      players[pindex].crafting_queue.lua_queue = game.get_player(pindex).crafting_queue
-      if players[pindex].crafting_queue.lua_queue ~= nil then
-         local delta = players[pindex].crafting_queue.max - #players[pindex].crafting_queue.lua_queue
-         players[pindex].crafting_queue.index = math.max(1, players[pindex].crafting_queue.index - delta)
-         players[pindex].crafting_queue.max = #players[pindex].crafting_queue.lua_queue
+   if storage.players[pindex].crafting_queue.lua_queue ~= nil then
+      storage.players[pindex].crafting_queue.lua_queue = game.get_player(pindex).crafting_queue
+      if storage.players[pindex].crafting_queue.lua_queue ~= nil then
+         local delta = storage.players[pindex].crafting_queue.max - #storage.players[pindex].crafting_queue.lua_queue
+         storage.players[pindex].crafting_queue.index =
+            math.max(1, storage.players[pindex].crafting_queue.index - delta)
+         storage.players[pindex].crafting_queue.max = #storage.players[pindex].crafting_queue.lua_queue
       else
-         players[pindex].crafting_queue.index = 1
-         players[pindex].crafting_queue.max = 0
+         storage.players[pindex].crafting_queue.index = 1
+         storage.players[pindex].crafting_queue.max = 0
       end
    else
-      players[pindex].crafting_queue.lua_queue = game.get_player(pindex).crafting_queue
-      players[pindex].crafting_queue.index = 1
-      if players[pindex].crafting_queue.lua_queue ~= nil then
-         players[pindex].crafting_queue.max = #players[pindex].crafting_queue.lua_queue
+      storage.players[pindex].crafting_queue.lua_queue = game.get_player(pindex).crafting_queue
+      storage.players[pindex].crafting_queue.index = 1
+      if storage.players[pindex].crafting_queue.lua_queue ~= nil then
+         storage.players[pindex].crafting_queue.max = #storage.players[pindex].crafting_queue.lua_queue
       else
-         players[pindex].crafting_queue.max = 0
+         storage.players[pindex].crafting_queue.max = 0
       end
    end
 end
@@ -110,7 +111,7 @@ end
 function mod.read_crafting_slot(pindex, start_phrase, new_category)
    start_phrase = start_phrase or ""
    local recipe =
-      players[pindex].crafting.lua_recipes[players[pindex].crafting.category][players[pindex].crafting.index]
+      storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index]
    if recipe.valid == true then
       if new_category == true then start_phrase = start_phrase .. localising.get_alt(recipe.group, pindex) .. ", " end
       printout(
@@ -128,7 +129,7 @@ end
 --Returns an info string about how many units of which ingredients are missing in order to craft one batch of this recipe.
 function mod.recipe_missing_ingredients_info(pindex, recipe_in)
    local recipe = recipe_in
-      or players[pindex].crafting.lua_recipes[players[pindex].crafting.category][players[pindex].crafting.index]
+      or storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index]
    local p = game.get_player(pindex)
    local inv = p.get_main_inventory()
    local result = { "", "Missing " }

@@ -496,7 +496,7 @@ end
 --Determines whether the cursor is at the outer tip of a rail, by checking the 8 tiles around the cursor and confirming that they do not contain other rails.
 function mod.cursor_is_at_straight_end_rail_tip(pindex)
    local p = game.get_player(pindex)
-   local pos = players[pindex].cursor_pos
+   local pos = storage.players[pindex].cursor_pos
    --Get the rail at the cursor
    --local rails_at_cursor = p.surface.find_entities_filtered({ name = "straight-rail", position = pos })
    -- TODO: #271, need old rails back

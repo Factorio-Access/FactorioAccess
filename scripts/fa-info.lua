@@ -1488,17 +1488,18 @@ function mod.selected_item_production_stats_info(pindex)
    if item_stack and item_stack.valid_for_read then prototype = item_stack.prototype end
 
    --Otherwise try to get it from the inventory slots
-   if prototype == nil and players[pindex].menu == "inventory" then
-      item_stack = players[pindex].inventory.lua_inventory[players[pindex].inventory.index]
+   if prototype == nil and storage.players[pindex].menu == "inventory" then
+      item_stack = storage.players[pindex].inventory.lua_inventory[storage.players[pindex].inventory.index]
       if item_stack and item_stack.valid_for_read then prototype = item_stack.prototype end
-   elseif prototype == nil and players[pindex].menu == "guns" then
+   elseif prototype == nil and storage.players[pindex].menu == "guns" then
       item_stack = Equipment.guns_menu_get_selected_slot(pindex)
       if item_stack and item_stack.valid_for_read then prototype = item_stack.prototype end
    end
 
    --Try crafting menu.
-   if prototype == nil and players[pindex].menu == "crafting" then
-      recipe = players[pindex].crafting.lua_recipes[players[pindex].crafting.category][players[pindex].crafting.index]
+   if prototype == nil and storage.players[pindex].menu == "crafting" then
+      recipe =
+         storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index]
       if recipe and recipe.valid and recipe.products then
          local first_item, first_fluid
          for i, prod in ipairs(recipe.products) do

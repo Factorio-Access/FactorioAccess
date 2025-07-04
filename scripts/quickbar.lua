@@ -10,9 +10,9 @@ function mod.quickbar_get_handler(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    if
-      players[pindex].menu == "inventory"
-      or players[pindex].menu == "none"
-      or (players[pindex].menu == "building" or players[pindex].menu == "vehicle")
+      storage.players[pindex].menu == "inventory"
+      or storage.players[pindex].menu == "none"
+      or (storage.players[pindex].menu == "building" or storage.players[pindex].menu == "vehicle")
    then
       local num = tonumber(string.sub(event.input_name, -1))
       if num == 0 then num = 10 end
@@ -80,7 +80,7 @@ function mod.set_quick_bar_slot(index, pindex)
    local router = UiRouter.get_router(pindex)
    local page = game.get_player(pindex).get_active_quick_bar_page(1) - 1
    local stack_cur = game.get_player(pindex).cursor_stack
-   local stack_inv = players[pindex].inventory.lua_inventory[players[pindex].inventory.index]
+   local stack_inv = storage.players[pindex].inventory.lua_inventory[storage.players[pindex].inventory.index]
    local ent = p.selected
    if stack_cur and stack_cur.valid_for_read and stack_cur.valid == true then
       game.get_player(pindex).set_quick_bar_slot(index + 10 * page, stack_cur)

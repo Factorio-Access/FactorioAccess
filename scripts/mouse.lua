@@ -46,7 +46,10 @@ end
 ---@param position MapPosition
 ---@param pindex int
 function mod.move_mouse_pointer(position, pindex)
-   if players[pindex].vanilla_mode or game.get_player(pindex).game_view_settings.update_entity_selection == true then
+   if
+      storage.players[pindex].vanilla_mode
+      or game.get_player(pindex).game_view_settings.update_entity_selection == true
+   then
       return
    end
    local pixel_pos, on_screen, screen_center = get_pixel_pos_onscreen_center(position, pindex)

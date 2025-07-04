@@ -84,11 +84,11 @@ function mod.drag_wire_and_read(pindex)
    if p.cursor_stack.valid_for_read then
       wire_type = p.cursor_stack.name
       wire_name = localising.get_localised_name_with_fallback(p.cursor_stack.prototype)
-      players[pindex].last_wire_type = wire_type
-      players[pindex].last_wire_name = wire_name
+      storage.players[pindex].last_wire_type = wire_type
+      storage.players[pindex].last_wire_name = wire_name
    else
-      wire_type = players[pindex].last_wire_type
-      wire_name = players[pindex].last_wire_name
+      wire_type = storage.players[pindex].last_wire_type
+      wire_name = storage.players[pindex].last_wire_name
    end
 
    local drag_target = p.drag_target
@@ -118,7 +118,7 @@ function mod.drag_wire_and_read(pindex)
       },
    })
    local c_ent = ents_at_position[1]
-   local last_c_ent = players[pindex].last_wire_ent
+   local last_c_ent = storage.players[pindex].last_wire_ent
    local network_found = nil
    if c_ent == nil or c_ent.valid == false then c_ent = p.selected end
    if c_ent == nil or c_ent.valid == false then
@@ -190,7 +190,7 @@ function mod.drag_wire_and_read(pindex)
    end
    --p.print(result,{volume_modifier=0})--**
    printout(result, pindex)
-   players[pindex].last_wire_ent = c_ent
+   storage.players[pindex].last_wire_ent = c_ent
 end
 
 --*** later: test ent.circuit_connection_definitions
@@ -378,8 +378,8 @@ function mod.constant_combinator_remove_last_signal(ent, pindex)
 end
 
 function mod.constant_combinator_type_last_signal_count(pindex, ent)
-   players[pindex].signal_selector = {}
-   players[pindex].signal_selector.ent = ent
+   storage.players[pindex].signal_selector = {}
+   storage.players[pindex].signal_selector.ent = ent
    local frame = Graphics.create_text_field_frame(pindex, "circuit-networks-textfield")
    return "Type in a number press 'ENTER' to confirm, or press 'ESC' to exit"
 end
@@ -900,16 +900,16 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
    elseif index == 1 then
       --List all active signals of this network
       if not clicked then
-         players[pindex].menu_click_count = 0
+         storage.players[pindex].menu_click_count = 0
          printout({ "fa.circuit-list-active-signals" }, pindex)
       else
          if nwr == nil and nwg == nil then
             printout({ "fa.circuit-no-network-connected" }, pindex)
             return
          end
-         local click_count = players[pindex].menu_click_count
+         local click_count = storage.players[pindex].menu_click_count
          click_count = click_count + 1
-         players[pindex].menu_click_count = click_count
+         storage.players[pindex].menu_click_count = click_count
          local result = { "" }
          if nwr ~= nil then
             if nwg ~= nil then table.insert(result, " Red network: ") end
@@ -1000,8 +1000,8 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
       if index > 3 then
          --(inventory edge: play sound and set index and call this menu again)
          p.play_sound({ path = "inventory-edge" })
-         players[pindex].circuit_network_menu.index = 3
-         mod.circuit_network_menu_run(pindex, ent, players[pindex].circuit_network_menu.index, false, false)
+         storage.players[pindex].circuit_network_menu.index = 3
+         mod.circuit_network_menu_run(pindex, ent, storage.players[pindex].circuit_network_menu.index, false, false)
       end
       return
    elseif ent.type == "constant-combinator" then
@@ -1053,8 +1053,8 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
       elseif index > 8 then
          --(inventory edge: play sound and set index and call this menu again)
          p.play_sound({ path = "inventory-edge" })
-         players[pindex].circuit_network_menu.index = 8
-         mod.circuit_network_menu_run(pindex, ent, players[pindex].circuit_network_menu.index, false, false)
+         storage.players[pindex].circuit_network_menu.index = 8
+         mod.circuit_network_menu_run(pindex, ent, storage.players[pindex].circuit_network_menu.index, false, false)
       end
       return
    else
@@ -1169,8 +1169,14 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
             elseif index == 12 then
                --(inventory edge: play sound and set index and call this menu again)
                p.play_sound({ path = "inventory-edge" })
-               players[pindex].circuit_network_menu.index = 11
-               mod.circuit_network_menu_run(pindex, ent, players[pindex].circuit_network_menu.index, false, false)
+               storage.players[pindex].circuit_network_menu.index = 11
+               mod.circuit_network_menu_run(
+                  pindex,
+                  ent,
+                  storage.players[pindex].circuit_network_menu.index,
+                  false,
+                  false
+               )
             end
          else
             --Programmable speaker menu
@@ -1334,8 +1340,14 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
             elseif index == 20 then
                --(inventory edge: play sound and set index and call this menu again)
                p.play_sound({ path = "inventory-edge" })
-               players[pindex].circuit_network_menu.index = 19
-               mod.circuit_network_menu_run(pindex, ent, players[pindex].circuit_network_menu.index, false, false)
+               storage.players[pindex].circuit_network_menu.index = 19
+               mod.circuit_network_menu_run(
+                  pindex,
+                  ent,
+                  storage.players[pindex].circuit_network_menu.index,
+                  false,
+                  false
+               )
             end
          end
       end
@@ -1348,12 +1360,12 @@ mod.CN_MENU_LENGTH = 20
 function mod.circuit_network_menu_open(pindex, ent)
    local router = UiRouter.get_router(pindex)
 
-   if players[pindex].vanilla_mode then return end
+   if storage.players[pindex].vanilla_mode then return end
    router:open_ui(UiRouter.UI_NAMES.CIRCUIT_NETWORK)
-   players[pindex].move_queue = {}
+   storage.players[pindex].move_queue = {}
 
    --Set the menu line counter to 0
-   players[pindex].circuit_network_menu = {
+   storage.players[pindex].circuit_network_menu = {
       index = 0,
    }
 
@@ -1371,7 +1383,7 @@ function mod.circuit_network_menu_close(pindex, mute_in)
    router:close_ui()
 
    --Set the menu line counter to 0
-   players[pindex].circuit_network_menu.index = 0
+   storage.players[pindex].circuit_network_menu.index = 0
 
    --play sound
    if not mute then game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" }) end
@@ -1495,15 +1507,15 @@ function mod.circuit_network_signals_info(pindex, nw, color_name, group_no)
    --Use a cached list to handle changes in the list while reading
    if color_name == "red" then
       if group_no == 1 then
-         players[pindex].cached_list = signals
+         storage.players[pindex].cached_list = signals
       else
-         signals = players[pindex].cached_list
+         signals = storage.players[pindex].cached_list
       end
    elseif color_name == "green" then
       if group_no == 1 then
-         players[pindex].cached_list_2 = signals
+         storage.players[pindex].cached_list_2 = signals
       else
-         signals = players[pindex].cached_list_2
+         signals = storage.players[pindex].cached_list_2
       end
    end
    --Loop through the list
@@ -1546,7 +1558,7 @@ local function build_signal_selector(pindex)
    for i, group in ipairs(groups) do
       table.insert(item_group_names, group.name)
    end
-   players[pindex].signal_selector = {
+   storage.players[pindex].signal_selector = {
       signal_index = 0,
       group_index = 1,
       group_names = item_group_names,
@@ -1557,14 +1569,16 @@ local function build_signal_selector(pindex)
    --Populate signal groups
    local items = FaUtils.get_iterable_array(prototypes.item)
    for i, group in ipairs(item_group_names) do
-      players[pindex].signal_selector.signals[group] = {}
+      storage.players[pindex].signal_selector.signals[group] = {}
       if group == "fluids" then
-         players[pindex].signal_selector.signals[group] = FaUtils.get_iterable_array(prototypes.fluid)
+         storage.players[pindex].signal_selector.signals[group] = FaUtils.get_iterable_array(prototypes.fluid)
       elseif group == "signals" then
-         players[pindex].signal_selector.signals[group] = FaUtils.get_iterable_array(prototypes.virtual_signal)
+         storage.players[pindex].signal_selector.signals[group] = FaUtils.get_iterable_array(prototypes.virtual_signal)
       else
          for j, item in ipairs(items) do
-            if item.group.name == group then table.insert(players[pindex].signal_selector.signals[group], item) end
+            if item.group.name == group then
+               table.insert(storage.players[pindex].signal_selector.signals[group], item)
+            end
          end
       end
    end
@@ -1576,17 +1590,17 @@ function mod.open_signal_selector(pindex, ent, first)
    router:open_ui(UiRouter.UI_NAMES.SIGNAL_SELECTOR)
 
    build_signal_selector(pindex)
-   players[pindex].signal_selector.ent = ent
-   players[pindex].signal_selector.editing_first_slot = first
+   storage.players[pindex].signal_selector.ent = ent
+   storage.players[pindex].signal_selector.editing_first_slot = first
 end
 
 --Returns the currently selected item/fluid/virtual signal prototype and the signal type
 function mod.get_selected_signal_slot_with_type(pindex)
-   if players[pindex].signal_selector == nil then build_signal_selector(pindex) end
-   local group_index = players[pindex].signal_selector.group_index
-   local signal_index = players[pindex].signal_selector.signal_index
-   local group_name = players[pindex].signal_selector.group_names[group_index]
-   local signal = players[pindex].signal_selector.signals[group_name][signal_index]
+   if storage.players[pindex].signal_selector == nil then build_signal_selector(pindex) end
+   local group_index = storage.players[pindex].signal_selector.group_index
+   local signal_index = storage.players[pindex].signal_selector.signal_index
+   local group_name = storage.players[pindex].signal_selector.group_names[group_index]
+   local signal = storage.players[pindex].signal_selector.signals[group_name][signal_index]
    local signal_type = "item"
    if group_name == "fluids" then
       signal_type = "fluid"
@@ -1598,12 +1612,12 @@ end
 
 function mod.read_selected_signal_group(pindex, start_phrase_in)
    local start_phrase = start_phrase_in or ""
-   local group_index = players[pindex].signal_selector.group_index
-   local signal_index = players[pindex].signal_selector.signal_index
-   local group_name = players[pindex].signal_selector.group_names[group_index]
+   local group_index = storage.players[pindex].signal_selector.group_index
+   local signal_index = storage.players[pindex].signal_selector.signal_index
+   local group_name = storage.players[pindex].signal_selector.group_names[group_index]
    local group_proto = prototypes.item_group[group_name]
    local local_name = group_proto and localising.get_localised_name_with_fallback(group_proto) or group_name
-   local group = players[pindex].signal_selector.signals[group_name]
+   local group = storage.players[pindex].signal_selector.signals[group_name]
    local result = { "", start_phrase, local_name, ", ", tostring(#group) }
    printout(result, pindex)
 end
@@ -1645,8 +1659,8 @@ function mod.apply_selected_signal_to_enabled_condition(pindex, ent, first)
    end
    circuit_condition = cond
    ent.get_control_behavior().circuit_condition = circuit_condition
-   players[pindex].menu = "circuit_network_menu"
-   players[pindex].signal_selector = nil
+   storage.players[pindex].menu = "circuit_network_menu"
+   storage.players[pindex].signal_selector = nil
    printout({
       "",
       set_message,
@@ -1657,97 +1671,97 @@ function mod.apply_selected_signal_to_enabled_condition(pindex, ent, first)
 end
 
 function mod.type_circuit_condition_constant(pindex, ent)
-   players[pindex].signal_selector = {}
-   players[pindex].signal_selector.ent = ent
+   storage.players[pindex].signal_selector = {}
+   storage.players[pindex].signal_selector.ent = ent
    local frame = Graphics.create_text_field_frame(pindex, "circuit-networks-textfield")
    return "Type in a number for comparing and press 'ENTER' to confirm, or press 'ESC' to exit"
 end
 
 function mod.signal_selector_group_up(pindex)
-   if players[pindex].signal_selector == nil then build_signal_selector(pindex) end
+   if storage.players[pindex].signal_selector == nil then build_signal_selector(pindex) end
    game.get_player(pindex).play_sound({ path = "Inventory-Move" })
    local jumps = 1
-   if players[pindex].signal_selector.group_index <= 1 then
-      players[pindex].signal_selector.group_index = #players[pindex].signal_selector.group_names
+   if storage.players[pindex].signal_selector.group_index <= 1 then
+      storage.players[pindex].signal_selector.group_index = #storage.players[pindex].signal_selector.group_names
    else
-      players[pindex].signal_selector.group_index = players[pindex].signal_selector.group_index - 1
+      storage.players[pindex].signal_selector.group_index = storage.players[pindex].signal_selector.group_index - 1
    end
 
-   local group_index = players[pindex].signal_selector.group_index
-   local group_name = players[pindex].signal_selector.group_names[group_index]
-   local group = players[pindex].signal_selector.signals[group_name]
+   local group_index = storage.players[pindex].signal_selector.group_index
+   local group_name = storage.players[pindex].signal_selector.group_names[group_index]
+   local group = storage.players[pindex].signal_selector.signals[group_name]
 
    --Go further up if this group is empty
    while (group == nil or #group == 0) and jumps < 10 do
       jumps = jumps + 1
-      if players[pindex].signal_selector.group_index <= 1 then
-         players[pindex].signal_selector.group_index = #players[pindex].signal_selector.group_names
+      if storage.players[pindex].signal_selector.group_index <= 1 then
+         storage.players[pindex].signal_selector.group_index = #storage.players[pindex].signal_selector.group_names
       else
-         players[pindex].signal_selector.group_index = players[pindex].signal_selector.group_index - 1
+         storage.players[pindex].signal_selector.group_index = storage.players[pindex].signal_selector.group_index - 1
       end
-      group_index = players[pindex].signal_selector.group_index
-      group_name = players[pindex].signal_selector.group_names[group_index]
-      group = players[pindex].signal_selector.signals[group_name]
+      group_index = storage.players[pindex].signal_selector.group_index
+      group_name = storage.players[pindex].signal_selector.group_names[group_index]
+      group = storage.players[pindex].signal_selector.signals[group_name]
    end
    --Reset signal level
-   players[pindex].signal_selector.signal_index = 1
+   storage.players[pindex].signal_selector.signal_index = 1
    return jumps
 end
 
 function mod.signal_selector_group_down(pindex)
-   if players[pindex].signal_selector == nil then build_signal_selector(pindex) end
+   if storage.players[pindex].signal_selector == nil then build_signal_selector(pindex) end
    game.get_player(pindex).play_sound({ path = "Inventory-Move" })
    local jumps = 1
-   if players[pindex].signal_selector.group_index < #players[pindex].signal_selector.group_names then
-      players[pindex].signal_selector.group_index = players[pindex].signal_selector.group_index + 1
+   if storage.players[pindex].signal_selector.group_index < #storage.players[pindex].signal_selector.group_names then
+      storage.players[pindex].signal_selector.group_index = storage.players[pindex].signal_selector.group_index + 1
    else
-      players[pindex].signal_selector.group_index = 1
+      storage.players[pindex].signal_selector.group_index = 1
    end
 
-   local group_index = players[pindex].signal_selector.group_index
-   local group_name = players[pindex].signal_selector.group_names[group_index]
-   local group = players[pindex].signal_selector.signals[group_name]
+   local group_index = storage.players[pindex].signal_selector.group_index
+   local group_name = storage.players[pindex].signal_selector.group_names[group_index]
+   local group = storage.players[pindex].signal_selector.signals[group_name]
 
    --Go further up if this group is empty
    while (group == nil or #group == 0) and jumps < 10 do
       jumps = jumps + 1
-      if players[pindex].signal_selector.group_index < #players[pindex].signal_selector.group_names then
-         players[pindex].signal_selector.group_index = players[pindex].signal_selector.group_index + 1
+      if storage.players[pindex].signal_selector.group_index < #storage.players[pindex].signal_selector.group_names then
+         storage.players[pindex].signal_selector.group_index = storage.players[pindex].signal_selector.group_index + 1
       else
-         players[pindex].signal_selector.group_index = 1
+         storage.players[pindex].signal_selector.group_index = 1
       end
-      group_index = players[pindex].signal_selector.group_index
-      group_name = players[pindex].signal_selector.group_names[group_index]
-      group = players[pindex].signal_selector.signals[group_name]
+      group_index = storage.players[pindex].signal_selector.group_index
+      group_name = storage.players[pindex].signal_selector.group_names[group_index]
+      group = storage.players[pindex].signal_selector.signals[group_name]
    end
    --Reset signal level
-   players[pindex].signal_selector.signal_index = 1
+   storage.players[pindex].signal_selector.signal_index = 1
    return jumps
 end
 
 function mod.signal_selector_signal_next(pindex)
-   local group_index = players[pindex].signal_selector.group_index
-   local group_name = players[pindex].signal_selector.group_names[group_index]
-   local group = players[pindex].signal_selector.signals[group_name]
+   local group_index = storage.players[pindex].signal_selector.group_index
+   local group_name = storage.players[pindex].signal_selector.group_names[group_index]
+   local group = storage.players[pindex].signal_selector.signals[group_name]
 
-   if players[pindex].signal_selector.signal_index < #group then
-      players[pindex].signal_selector.signal_index = players[pindex].signal_selector.signal_index + 1
+   if storage.players[pindex].signal_selector.signal_index < #group then
+      storage.players[pindex].signal_selector.signal_index = storage.players[pindex].signal_selector.signal_index + 1
    else
       game.get_player(pindex).play_sound({ path = "inventory-wrap-around" })
-      players[pindex].signal_selector.signal_index = 1
+      storage.players[pindex].signal_selector.signal_index = 1
    end
 end
 
 function mod.signal_selector_signal_prev(pindex)
-   local group_index = players[pindex].signal_selector.group_index
-   local group_name = players[pindex].signal_selector.group_names[group_index]
-   local group = players[pindex].signal_selector.signals[group_name]
+   local group_index = storage.players[pindex].signal_selector.group_index
+   local group_name = storage.players[pindex].signal_selector.group_names[group_index]
+   local group = storage.players[pindex].signal_selector.signals[group_name]
 
-   if players[pindex].signal_selector.signal_index > 1 then
-      players[pindex].signal_selector.signal_index = players[pindex].signal_selector.signal_index - 1
+   if storage.players[pindex].signal_selector.signal_index > 1 then
+      storage.players[pindex].signal_selector.signal_index = storage.players[pindex].signal_selector.signal_index - 1
    else
       game.get_player(pindex).play_sound({ path = "inventory-wrap-around" })
-      players[pindex].signal_selector.signal_index = #group
+      storage.players[pindex].signal_selector.signal_index = #group
    end
 end
 

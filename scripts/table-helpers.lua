@@ -326,4 +326,27 @@ function mod.shallow_copy(tab)
    return out
 end
 
+--[[
+Returns a table with a metatable that prevents all reads and writes. This is useful for catching accidental usage of
+deprecated global variables. Any attempt to read or write will throw an error.
+]]
+---@return table
+function mod.deny_access_table()
+   local denied = {}
+   local mt = {
+      __index = function(t, k)
+         error(
+            "Attempted to read from denied table at key: " .. tostring(k) .. "\nUse storage.players instead of players"
+         )
+      end,
+      __newindex = function(t, k, v)
+         error(
+            "Attempted to write to denied table at key: " .. tostring(k) .. "\nUse storage.players instead of players"
+         )
+      end,
+   }
+   setmetatable(denied, mt)
+   return denied
+end
+
 return mod

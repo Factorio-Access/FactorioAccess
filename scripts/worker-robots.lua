@@ -345,7 +345,7 @@ local function find_player_item_name(pindex)
    then
       --Personal logistics
       local stack = game.get_player(pindex).cursor_stack
-      local stack_inv = game.get_player(pindex).get_main_inventory()[players[pindex].inventory.index]
+      local stack_inv = game.get_player(pindex).get_main_inventory()[storage.players[pindex].inventory.index]
 
       if stack ~= nil and stack.valid_for_read and stack.valid then
          --Item in hand
@@ -367,7 +367,7 @@ local function find_player_item_name(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.BUILDING) then
       --Chest logistics
       local stack = game.get_player(pindex).cursor_stack
-      local stack_inv = game.get_player(pindex).opened.get_output_inventory()[players[pindex].building.index]
+      local stack_inv = game.get_player(pindex).opened.get_output_inventory()[storage.players[pindex].building.index]
       local chest = game.get_player(pindex).opened --[[@as LuaEntity]]
       --Check item in hand or item in inventory
       if stack ~= nil and stack.valid_for_read and stack.valid then
@@ -384,7 +384,8 @@ local function find_player_item_name(pindex)
       --spidertron logistics
       local stack = game.get_player(pindex).cursor_stack
       local invs = defines.inventory
-      local stack_inv = game.get_player(pindex).opened.get_inventory(invs.spider_trunk)[players[pindex].building.index]
+      local stack_inv =
+         game.get_player(pindex).opened.get_inventory(invs.spider_trunk)[storage.players[pindex].building.index]
       --Check item in hand or item in inventory
       if stack ~= nil and stack.valid_for_read and stack.valid then
          --Item in hand
@@ -767,11 +768,11 @@ function mod.send_selected_stack_to_logistic_trash(pindex)
    local stack = p.cursor_stack
    --Check cursor stack
    if not stack or not stack.valid_for_read or stack.is_deconstruction_item or stack.is_upgrade_item then
-      stack = p.get_main_inventory()[players[pindex].inventory.index]
+      stack = p.get_main_inventory()[storage.players[pindex].inventory.index]
    end
    --Check inventory stack
    if
-      players[pindex].menu ~= "inventory"
+      storage.players[pindex].menu ~= "inventory"
       or not stack
       or not stack.valid_for_read
       or stack.is_deconstruction_item
@@ -949,13 +950,13 @@ function mod.run_roboport_menu(menu_index, pindex, clicked)
    local ent = game.get_player(pindex).selected
    if game.get_player(pindex).opened ~= nil and game.get_player(pindex).opened.name == "roboport" then
       port = game.get_player(pindex).opened
-      players[pindex].roboport_menu.port = port
+      storage.players[pindex].roboport_menu.port = port
    elseif ent ~= nil and ent.valid and ent.name == "roboport" then
       port = ent
       ---@cast port LuaEntity
-      players[pindex].roboport_menu.port = port
+      storage.players[pindex].roboport_menu.port = port
    else
-      players[pindex].roboport.port = nil
+      storage.players[pindex].roboport.port = nil
       printout({ "fa.robots-roboport-menu-requires" }, pindex)
       return
    end
@@ -975,7 +976,7 @@ function mod.run_roboport_menu(menu_index, pindex, clicked)
          printout({ "fa.robots-rename-this-network" }, pindex)
       else
          printout({ "fa.robots-enter-new-network-name" }, pindex)
-         players[pindex].roboport_menu.renaming = true
+         storage.players[pindex].roboport_menu.renaming = true
          local frame = Graphics.create_text_field_frame(pindex, "network-rename")
       end
    elseif index == 2 then
@@ -1022,13 +1023,13 @@ function mod.run_roboport_menu(menu_index, pindex, clicked)
       --6. Check network item contents
       if not clicked then
          printout({ "fa.robots-read-items-info" }, pindex)
-         players[pindex].menu_click_count = 0
+         storage.players[pindex].menu_click_count = 0
       else
          if nw ~= nil then
-            local click_count = players[pindex].menu_click_count
+            local click_count = storage.players[pindex].menu_click_count
             click_count = click_count + 1
             local result = mod.logistic_network_items_info(pindex, port --[[@as LuaEntity]], click_count)
-            players[pindex].menu_click_count = click_count
+            storage.players[pindex].menu_click_count = click_count
             printout(result, pindex)
          else
             printout({ "fa.robots-error-no-network" }, pindex)
@@ -1039,23 +1040,23 @@ end
 local ROBOPORT_MENU_LENGTH = 6
 
 function mod.roboport_menu_open(pindex)
-   if players[pindex].vanilla_mode then return end
+   if storage.players[pindex].vanilla_mode then return end
    local router = UiRouter.get_router(pindex)
 
    router:open_ui(UiRouter.UI_NAMES.ROBOPORT)
 
-   players[pindex].move_queue = {}
+   storage.players[pindex].move_queue = {}
 
    --Initialize if needed
-   if players[pindex].roboport_menu == nil then players[pindex].roboport_menu = {} end
+   if storage.players[pindex].roboport_menu == nil then storage.players[pindex].roboport_menu = {} end
    --Set the menu line counter to 0
-   players[pindex].roboport_menu.index = 0
+   storage.players[pindex].roboport_menu.index = 0
 
    --Play sound
    game.get_player(pindex).play_sound({ path = "Open-Inventory-Sound" })
 
    --Load menu
-   mod.run_roboport_menu(players[pindex].roboport_menu.index, pindex, false)
+   mod.run_roboport_menu(storage.players[pindex].roboport_menu.index, pindex, false)
 end
 
 function mod.roboport_menu_close(pindex, mute_in)
@@ -1064,8 +1065,8 @@ function mod.roboport_menu_close(pindex, mute_in)
    UiRouter.get_router(pindex):close_ui()
 
    --Set the menu line counter to 0
-   players[pindex].roboport_menu.index = 0
-   players[pindex].roboport_menu.port = nil
+   storage.players[pindex].roboport_menu.index = 0
+   storage.players[pindex].roboport_menu.port = nil
 
    --play sound
    if not mute then game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" }) end
@@ -1078,29 +1079,29 @@ function mod.roboport_menu_close(pindex, mute_in)
 end
 
 function mod.roboport_menu_up(pindex)
-   players[pindex].roboport_menu.index = players[pindex].roboport_menu.index - 1
-   if players[pindex].roboport_menu.index < 0 then
-      players[pindex].roboport_menu.index = 0
+   storage.players[pindex].roboport_menu.index = storage.players[pindex].roboport_menu.index - 1
+   if storage.players[pindex].roboport_menu.index < 0 then
+      storage.players[pindex].roboport_menu.index = 0
       game.get_player(pindex).play_sound({ path = "inventory-edge" })
    else
       --Play sound
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
    end
    --Load menu
-   mod.run_roboport_menu(players[pindex].roboport_menu.index, pindex, false)
+   mod.run_roboport_menu(storage.players[pindex].roboport_menu.index, pindex, false)
 end
 
 function mod.roboport_menu_down(pindex)
-   players[pindex].roboport_menu.index = players[pindex].roboport_menu.index + 1
-   if players[pindex].roboport_menu.index > ROBOPORT_MENU_LENGTH then
-      players[pindex].roboport_menu.index = ROBOPORT_MENU_LENGTH
+   storage.players[pindex].roboport_menu.index = storage.players[pindex].roboport_menu.index + 1
+   if storage.players[pindex].roboport_menu.index > ROBOPORT_MENU_LENGTH then
+      storage.players[pindex].roboport_menu.index = ROBOPORT_MENU_LENGTH
       game.get_player(pindex).play_sound({ path = "inventory-edge" })
    else
       --Play sound
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
    end
    --Load menu
-   mod.run_roboport_menu(players[pindex].roboport_menu.index, pindex, false)
+   mod.run_roboport_menu(storage.players[pindex].roboport_menu.index, pindex, false)
 end
 
 function mod.roboport_contents_info(port)
@@ -1228,9 +1229,9 @@ function mod.logistic_network_items_info(pindex, port, group_no)
    end)
    --Use a cached list to handle changes in the list while reading
    if group_no == 1 then
-      players[pindex].cached_list = itemtable
+      storage.players[pindex].cached_list = itemtable
    else
-      itemtable = players[pindex].cached_list
+      itemtable = storage.players[pindex].cached_list
    end
    if #itemtable == 0 then
       msg:fragment("no items.")

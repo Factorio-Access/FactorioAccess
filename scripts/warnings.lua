@@ -10,23 +10,23 @@ local mod = {}
 --Reads out a selected warning from the menu.
 function mod.read_warnings_slot(pindex)
    local warnings = {}
-   if players[pindex].warnings.sector == 1 then
-      warnings = players[pindex].warnings.short.warnings
-   elseif players[pindex].warnings.sector == 2 then
-      warnings = players[pindex].warnings.medium.warnings
-   elseif players[pindex].warnings.sector == 3 then
-      warnings = players[pindex].warnings.long.warnings
+   if storage.players[pindex].warnings.sector == 1 then
+      warnings = storage.players[pindex].warnings.short.warnings
+   elseif storage.players[pindex].warnings.sector == 2 then
+      warnings = storage.players[pindex].warnings.medium.warnings
+   elseif storage.players[pindex].warnings.sector == 3 then
+      warnings = storage.players[pindex].warnings.long.warnings
    end
    if
-      players[pindex].warnings.category <= #warnings
-      and players[pindex].warnings.index <= #warnings[players[pindex].warnings.category].ents
+      storage.players[pindex].warnings.category <= #warnings
+      and storage.players[pindex].warnings.index <= #warnings[storage.players[pindex].warnings.category].ents
    then
-      local ent = warnings[players[pindex].warnings.category].ents[players[pindex].warnings.index]
+      local ent = warnings[storage.players[pindex].warnings.category].ents[storage.players[pindex].warnings.index]
       if ent ~= nil and ent.valid then
          local message = MessageBuilder.new()
          message:fragment(localising.get_localised_name_with_fallback(ent))
          message:fragment({ "fa.warnings-has-warning" })
-         message:fragment({ "fa.warning-type-" .. warnings[players[pindex].warnings.category].name })
+         message:fragment({ "fa.warning-type-" .. warnings[storage.players[pindex].warnings.category].name })
          message:fragment(FaUtils.format_position(ent.position.x, ent.position.y))
          printout(message:build(), pindex)
       else

@@ -18,11 +18,11 @@ function mod.fast_travel_menu_open(pindex)
       game.get_player(pindex).selected = nil
 
       router:open_ui(UiRouter.UI_NAMES.TRAVEL)
-      players[pindex].move_queue = {}
-      players[pindex].travel.index = { x = 1, y = 0 }
-      players[pindex].travel.creating = false
-      players[pindex].travel.renaming = false
-      players[pindex].travel.describing = false
+      storage.players[pindex].move_queue = {}
+      storage.players[pindex].travel.index = { x = 1, y = 0 }
+      storage.players[pindex].travel.creating = false
+      storage.players[pindex].travel.renaming = false
+      storage.players[pindex].travel.describing = false
       printout(
          "Fast travel, Navigate up and down with W and S to select a fast travel location, and jump to it with LEFT BRACKET.  Alternatively, select an option by navigating left and right with A and D.",
          pindex
@@ -41,11 +41,11 @@ end
 
 --Reads the selected fast travel menu slot
 function mod.read_fast_travel_slot(pindex)
-   if #players[pindex].travel == 0 then
+   if #storage.players[pindex].travel == 0 then
       printout({ "fa.travel-move-right-create" }, pindex)
    else
       local vp = Viewpoint.get_viewpoint(pindex)
-      local entry = players[pindex].travel[players[pindex].travel.index.y]
+      local entry = storage.players[pindex].travel[storage.players[pindex].travel.index.y]
       printout(
          entry.name
             .. " at "
@@ -63,30 +63,38 @@ end
 function mod.fast_travel_menu_click(pindex)
    local p = game.get_player(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
-   if players[pindex].travel.input_box then players[pindex].travel.input_box.destroy() end
-   if #storage.players[pindex].travel == 0 and players[pindex].travel.index.x < TRAVEL_MENU_LENGTH then
+   if storage.players[pindex].travel.input_box then storage.players[pindex].travel.input_box.destroy() end
+   if #storage.players[pindex].travel == 0 and storage.players[pindex].travel.index.x < TRAVEL_MENU_LENGTH then
       printout({ "fa.travel-move-right-create-new" }, pindex)
-   elseif players[pindex].travel.index.y == 0 and players[pindex].travel.index.x < TRAVEL_MENU_LENGTH then
+   elseif
+      storage.players[pindex].travel.index.y == 0 and storage.players[pindex].travel.index.x < TRAVEL_MENU_LENGTH
+   then
       printout(
          "Navigate up and down to select a fast travel point, then press LEFT BRACKET to get there quickly.",
          pindex
       )
-   elseif players[pindex].travel.index.x == 1 then --Travel
+   elseif storage.players[pindex].travel.index.x == 1 then --Travel
       if p.vehicle then
          printout({ "fa.travel-cannot-teleport-vehicle" }, pindex)
          return
       end
       local success = Teleport.teleport_to_closest(
          pindex,
-         storage.players[pindex].travel[players[pindex].travel.index.y].position,
+         storage.players[pindex].travel[storage.players[pindex].travel.index.y].position,
          false,
          false
       )
       if success and vp:get_cursor_enabled() then
-         vp:set_cursor_pos(table.deepcopy(storage.players[pindex].travel[players[pindex].travel.index.y].position))
+         vp:set_cursor_pos(
+            table.deepcopy(storage.players[pindex].travel[storage.players[pindex].travel.index.y].position)
+         )
       else
          vp:set_cursor_pos(
-            FaUtils.offset_position_legacy(players[pindex].position, players[pindex].player_direction, 1)
+            FaUtils.offset_position_legacy(
+               storage.players[pindex].position,
+               storage.players[pindex].player_direction,
+               1
+            )
          )
       end
       Graphics.sync_build_cursor_graphics(pindex)
@@ -104,55 +112,56 @@ function mod.fast_travel_menu_click(pindex)
       else
          Graphics.draw_cursor_highlight(pindex, nil, nil)
       end
-   elseif players[pindex].travel.index.x == 2 then --Read description
-      local desc = players[pindex].travel[players[pindex].travel.index.y].description
+   elseif storage.players[pindex].travel.index.x == 2 then --Read description
+      local desc = storage.players[pindex].travel[storage.players[pindex].travel.index.y].description
       if desc == nil or desc == "" then
          desc = "No description"
-         players[pindex].travel[players[pindex].travel.index.y].description = desc
+         storage.players[pindex].travel[storage.players[pindex].travel.index.y].description = desc
       end
       printout(desc, pindex)
-   elseif players[pindex].travel.index.x == 3 then --Rename
+   elseif storage.players[pindex].travel.index.x == 3 then --Rename
       printout(
          "Type in a new name for this fast travel point, then press 'ENTER' to confirm, or press 'ESC' to cancel.",
          pindex
       )
-      players[pindex].travel.renaming = true
+      storage.players[pindex].travel.renaming = true
       local frame = game.get_player(pindex).gui.screen["travel"]
-      players[pindex].travel.input_box = frame.add({ type = "textfield", name = "input" })
-      local input = players[pindex].travel.input_box
+      storage.players[pindex].travel.input_box = frame.add({ type = "textfield", name = "input" })
+      local input = storage.players[pindex].travel.input_box
       input.focus()
       input.select(1, 0)
-   elseif players[pindex].travel.index.x == 4 then --Rewrite description
-      local desc = players[pindex].travel[players[pindex].travel.index.y].description
+   elseif storage.players[pindex].travel.index.x == 4 then --Rewrite description
+      local desc = storage.players[pindex].travel[storage.players[pindex].travel.index.y].description
       if desc == nil then
          desc = ""
-         players[pindex].travel[players[pindex].travel.index.y].description = desc
+         storage.players[pindex].travel[storage.players[pindex].travel.index.y].description = desc
       end
       printout({ "fa.travel-type-new-description" }, pindex)
-      players[pindex].travel.describing = true
+      storage.players[pindex].travel.describing = true
       local frame = game.get_player(pindex).gui.screen["travel"]
-      players[pindex].travel.input_box = frame.add({ type = "textfield", name = "input" })
-      local input = players[pindex].travel.input_box
+      storage.players[pindex].travel.input_box = frame.add({ type = "textfield", name = "input" })
+      local input = storage.players[pindex].travel.input_box
       input.focus()
       input.select(1, 0)
-   elseif players[pindex].travel.index.x == 5 then --Relocate to current character position
-      players[pindex].travel[players[pindex].travel.index.y].position = FaUtils.center_of_tile(players[pindex].position)
+   elseif storage.players[pindex].travel.index.x == 5 then --Relocate to current character position
+      storage.players[pindex].travel[storage.players[pindex].travel.index.y].position =
+         FaUtils.center_of_tile(storage.players[pindex].position)
       printout({
          "fa.travel-relocated-point",
-         players[pindex].travel[players[pindex].travel.index.y].name,
-         tostring(math.floor(players[pindex].position.x)),
-         tostring(math.floor(players[pindex].position.y)),
+         storage.players[pindex].travel[storage.players[pindex].travel.index.y].name,
+         tostring(math.floor(storage.players[pindex].position.x)),
+         tostring(math.floor(storage.players[pindex].position.y)),
       }, pindex)
-      local position = players[pindex].position
+      local position = storage.players[pindex].position
       vp:set_cursor_pos({ x = position.x, y = position.y })
       Graphics.draw_cursor_highlight(pindex)
-   elseif players[pindex].travel.index.x == 6 then --Broadcast
+   elseif storage.players[pindex].travel.index.x == 6 then --Broadcast
       --Prevent duplicating by checking if this point was last broadcasted
-      local this_point = players[pindex].travel[players[pindex].travel.index.y]
+      local this_point = storage.players[pindex].travel[storage.players[pindex].travel.index.y]
       if
-         this_point.name == players[pindex].travel.last_broadcasted_name
-         and this_point.description == players[pindex].travel.last_broadcasted_description
-         and this_point.position == players[pindex].travel.last_broadcasted_position
+         this_point.name == storage.players[pindex].travel.last_broadcasted_name
+         and this_point.description == storage.players[pindex].travel.last_broadcasted_description
+         and this_point.position == storage.players[pindex].travel.last_broadcasted_position
       then
          printout({ "fa.travel-error-cancelled-broadcast" }, pindex)
          return
@@ -175,103 +184,103 @@ function mod.fast_travel_menu_click(pindex)
       end
       --Report the action and note the last broadcasted point
       printout({ "fa.travel-broadcasted-point", this_point.name }, pindex)
-      players[pindex].travel.last_broadcasted_name = this_point.name
-      players[pindex].travel.last_broadcasted_description = this_point.description
-      players[pindex].travel.last_broadcasted_position = this_point.position
-   elseif players[pindex].travel.index.x == 7 then --Delete
+      storage.players[pindex].travel.last_broadcasted_name = this_point.name
+      storage.players[pindex].travel.last_broadcasted_description = this_point.description
+      storage.players[pindex].travel.last_broadcasted_position = this_point.position
+   elseif storage.players[pindex].travel.index.x == 7 then --Delete
       printout(
-         { "fa.travel-deleted-point", storage.players[pindex].travel[players[pindex].travel.index.y].name },
+         { "fa.travel-deleted-point", storage.players[pindex].travel[storage.players[pindex].travel.index.y].name },
          pindex
       )
-      table.remove(storage.players[pindex].travel, players[pindex].travel.index.y)
-      players[pindex].travel.x = 1
-      players[pindex].travel.index.y = players[pindex].travel.index.y - 1
-   elseif players[pindex].travel.index.x == 8 then --Create new
+      table.remove(storage.players[pindex].travel, storage.players[pindex].travel.index.y)
+      storage.players[pindex].travel.x = 1
+      storage.players[pindex].travel.index.y = storage.players[pindex].travel.index.y - 1
+   elseif storage.players[pindex].travel.index.x == 8 then --Create new
       printout(
          "Type in a name for this fast travel point, then press 'ENTER' to confirm, or press 'ESC' to cancel.",
          pindex
       )
-      players[pindex].travel.creating = true
+      storage.players[pindex].travel.creating = true
       local frame = game.get_player(pindex).gui.screen["travel"]
-      players[pindex].travel.input_box = frame.add({ type = "textfield", name = "input" })
-      local input = players[pindex].travel.input_box
+      storage.players[pindex].travel.input_box = frame.add({ type = "textfield", name = "input" })
+      local input = storage.players[pindex].travel.input_box
       input.focus()
       input.select(1, 0)
    end
 end
 
 function mod.fast_travel_menu_up(pindex)
-   if players[pindex].travel.index.y > 1 then
+   if storage.players[pindex].travel.index.y > 1 then
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
-      players[pindex].travel.index.y = players[pindex].travel.index.y - 1
+      storage.players[pindex].travel.index.y = storage.players[pindex].travel.index.y - 1
    else
-      players[pindex].travel.index.y = 1
+      storage.players[pindex].travel.index.y = 1
       game.get_player(pindex).play_sound({ path = "inventory-edge" })
    end
-   players[pindex].travel.index.x = 1
+   storage.players[pindex].travel.index.x = 1
    mod.read_fast_travel_slot(pindex)
 end
 
 function mod.fast_travel_menu_down(pindex)
-   if players[pindex].travel.index.y < #players[pindex].travel then
+   if storage.players[pindex].travel.index.y < #storage.players[pindex].travel then
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
-      players[pindex].travel.index.y = players[pindex].travel.index.y + 1
+      storage.players[pindex].travel.index.y = storage.players[pindex].travel.index.y + 1
    else
-      players[pindex].travel.index.y = #players[pindex].travel
+      storage.players[pindex].travel.index.y = #storage.players[pindex].travel
       game.get_player(pindex).play_sound({ path = "inventory-edge" })
    end
-   players[pindex].travel.index.x = 1
+   storage.players[pindex].travel.index.x = 1
    mod.read_fast_travel_slot(pindex)
 end
 
 function mod.fast_travel_menu_right(pindex)
-   if players[pindex].travel.index.x < TRAVEL_MENU_LENGTH then
+   if storage.players[pindex].travel.index.x < TRAVEL_MENU_LENGTH then
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
-      players[pindex].travel.index.x = players[pindex].travel.index.x + 1
+      storage.players[pindex].travel.index.x = storage.players[pindex].travel.index.x + 1
    else
       game.get_player(pindex).play_sound({ path = "inventory-edge" })
    end
-   if players[pindex].travel.index.x == 1 then
+   if storage.players[pindex].travel.index.x == 1 then
       printout({ "fa.travel-menu-travel" }, pindex)
-   elseif players[pindex].travel.index.x == 2 then
+   elseif storage.players[pindex].travel.index.x == 2 then
       printout({ "fa.travel-menu-read-description" }, pindex)
-   elseif players[pindex].travel.index.x == 3 then
+   elseif storage.players[pindex].travel.index.x == 3 then
       printout({ "fa.travel-menu-rename" }, pindex)
-   elseif players[pindex].travel.index.x == 4 then
+   elseif storage.players[pindex].travel.index.x == 4 then
       printout({ "fa.travel-menu-rewrite-description" }, pindex)
-   elseif players[pindex].travel.index.x == 5 then
+   elseif storage.players[pindex].travel.index.x == 5 then
       printout({ "fa.travel-menu-relocate" }, pindex)
-   elseif players[pindex].travel.index.x == 6 then
+   elseif storage.players[pindex].travel.index.x == 6 then
       printout({ "fa.travel-menu-broadcast" }, pindex)
-   elseif players[pindex].travel.index.x == 7 then
+   elseif storage.players[pindex].travel.index.x == 7 then
       printout({ "fa.travel-menu-delete" }, pindex)
-   elseif players[pindex].travel.index.x == 8 then
+   elseif storage.players[pindex].travel.index.x == 8 then
       printout({ "fa.travel-menu-create-new" }, pindex)
    end
 end
 
 function mod.fast_travel_menu_left(pindex)
-   if players[pindex].travel.index.x > 1 then
+   if storage.players[pindex].travel.index.x > 1 then
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
-      players[pindex].travel.index.x = players[pindex].travel.index.x - 1
+      storage.players[pindex].travel.index.x = storage.players[pindex].travel.index.x - 1
    else
       game.get_player(pindex).play_sound({ path = "inventory-edge" })
    end
-   if players[pindex].travel.index.x == 1 then
+   if storage.players[pindex].travel.index.x == 1 then
       printout({ "fa.travel-menu-travel" }, pindex)
-   elseif players[pindex].travel.index.x == 2 then
+   elseif storage.players[pindex].travel.index.x == 2 then
       printout({ "fa.travel-menu-read-description" }, pindex)
-   elseif players[pindex].travel.index.x == 3 then
+   elseif storage.players[pindex].travel.index.x == 3 then
       printout({ "fa.travel-menu-rename" }, pindex)
-   elseif players[pindex].travel.index.x == 4 then
+   elseif storage.players[pindex].travel.index.x == 4 then
       printout({ "fa.travel-menu-rewrite-description" }, pindex)
-   elseif players[pindex].travel.index.x == 5 then
+   elseif storage.players[pindex].travel.index.x == 5 then
       printout({ "fa.travel-menu-relocate" }, pindex)
-   elseif players[pindex].travel.index.x == 6 then
+   elseif storage.players[pindex].travel.index.x == 6 then
       printout({ "fa.travel-menu-broadcast" }, pindex)
-   elseif players[pindex].travel.index.x == 7 then
+   elseif storage.players[pindex].travel.index.x == 7 then
       printout({ "fa.travel-menu-delete" }, pindex)
-   elseif players[pindex].travel.index.x == 8 then
+   elseif storage.players[pindex].travel.index.x == 8 then
       printout({ "fa.travel-menu-create-new" }, pindex)
    end
 end

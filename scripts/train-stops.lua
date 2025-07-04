@@ -11,12 +11,12 @@ function mod.run_train_stop_menu(menu_index, pindex, clicked, other_input)
    local index = menu_index
    local other = other_input or -1
    local train_stop = nil
-   if players[pindex].tile.ents[1] ~= nil and players[pindex].tile.ents[1].name == "train-stop" then
-      train_stop = players[pindex].tile.ents[1]
-      players[pindex].train_stop_menu.stop = train_stop
+   if storage.players[pindex].tile.ents[1] ~= nil and storage.players[pindex].tile.ents[1].name == "train-stop" then
+      train_stop = storage.players[pindex].tile.ents[1]
+      storage.players[pindex].train_stop_menu.stop = train_stop
    else
       printout({ "fa.train-stops-menu-error" }, pindex)
-      players[pindex].train_stop_menu.stop = nil
+      storage.players[pindex].train_stop_menu.stop = nil
       return
    end
 
@@ -35,7 +35,7 @@ function mod.run_train_stop_menu(menu_index, pindex, clicked, other_input)
             "Enter a new name for this train stop, then press 'ENTER' to confirm, or press 'ESC' to cancel.",
             pindex
          )
-         players[pindex].train_stop_menu.renaming = true
+         storage.players[pindex].train_stop_menu.renaming = true
          local frame = Graphics.create_text_field_frame(pindex, "train-stop-rename")
          game.get_player(pindex).opened = frame
       end
@@ -47,17 +47,17 @@ function mod.run_train_stop_menu(menu_index, pindex, clicked, other_input)
       printout(message:build(), pindex)
    elseif index == 3 then
       if not clicked then
-         if players[pindex].train_stop_menu.wait_condition == nil then
-            players[pindex].train_stop_menu.wait_condition = "time"
+         if storage.players[pindex].train_stop_menu.wait_condition == nil then
+            storage.players[pindex].train_stop_menu.wait_condition = "time"
          end
          printout(
             "Proposed wait condition: "
-               .. players[pindex].train_stop_menu.wait_condition
+               .. storage.players[pindex].train_stop_menu.wait_condition
                .. " selected, change by selecting here, this change needs to also be applied.",
             pindex
          )
       else
-         local condi = players[pindex].train_stop_menu.wait_condition
+         local condi = storage.players[pindex].train_stop_menu.wait_condition
          if condi == "time" then
             condi = "inactivity"
          elseif condi == "inactivity" then
@@ -71,31 +71,31 @@ function mod.run_train_stop_menu(menu_index, pindex, clicked, other_input)
          else
             condi = "time"
          end
-         players[pindex].train_stop_menu.wait_condition = condi
+         storage.players[pindex].train_stop_menu.wait_condition = condi
          printout(
             " "
-               .. players[pindex].train_stop_menu.wait_condition
+               .. storage.players[pindex].train_stop_menu.wait_condition
                .. " condition proposed, change by selecting here, this change needs to also be applied.",
             pindex
          )
       end
    elseif index == 4 then
-      if players[pindex].train_stop_menu.wait_time_seconds == nil then
-         players[pindex].train_stop_menu.wait_time_seconds = 60
+      if storage.players[pindex].train_stop_menu.wait_time_seconds == nil then
+         storage.players[pindex].train_stop_menu.wait_time_seconds = 60
       end
       printout(
          "Proposed wait time: "
-            .. players[pindex].train_stop_menu.wait_time_seconds
+            .. storage.players[pindex].train_stop_menu.wait_time_seconds
             .. " seconds selected, if applicable, change using page up or page down, and hold control to increase step size. This change needs to also be applied.",
          pindex
       )
    elseif index == 5 then
       if not clicked then
-         if players[pindex].train_stop_menu.safety_wait_enabled == nil then
-            players[pindex].train_stop_menu.safety_wait_enabled = true
+         if storage.players[pindex].train_stop_menu.safety_wait_enabled == nil then
+            storage.players[pindex].train_stop_menu.safety_wait_enabled = true
          end
          local result = ""
-         if players[pindex].train_stop_menu.safety_wait_enabled == true then
+         if storage.players[pindex].train_stop_menu.safety_wait_enabled == true then
             result =
                "ENABLED proposed safety waiting, select here to disable it, Enabling it makes the train wait at this stop for 5 seconds regardless of the main wait condition, this change needs to also be applied."
          else
@@ -104,8 +104,9 @@ function mod.run_train_stop_menu(menu_index, pindex, clicked, other_input)
          end
          printout(result, pindex)
       else
-         players[pindex].train_stop_menu.safety_wait_enabled = not players[pindex].train_stop_menu.safety_wait_enabled
-         if players[pindex].train_stop_menu.safety_wait_enabled == true then
+         storage.players[pindex].train_stop_menu.safety_wait_enabled =
+            not storage.players[pindex].train_stop_menu.safety_wait_enabled
+         if storage.players[pindex].train_stop_menu.safety_wait_enabled == true then
             result =
                "ENABLED proposed safety waiting, select here to disable it, Enabling it makes the train wait at this stop for 5 seconds regardless of the main wait condition, this change needs to also be applied."
          else
@@ -123,8 +124,8 @@ function mod.run_train_stop_menu(menu_index, pindex, clicked, other_input)
       else
          local result = mod.nearby_train_schedule_add_stop(
             train_stop,
-            players[pindex].train_stop_menu.wait_condition,
-            players[pindex].train_stop_menu.wait_time_seconds
+            storage.players[pindex].train_stop_menu.wait_condition,
+            storage.players[pindex].train_stop_menu.wait_time_seconds
          )
          printout(result, pindex)
       end
@@ -137,8 +138,8 @@ function mod.run_train_stop_menu(menu_index, pindex, clicked, other_input)
       else
          local result = mod.nearby_train_schedule_update_stop(
             train_stop,
-            players[pindex].train_stop_menu.wait_condition,
-            players[pindex].train_stop_menu.wait_time_seconds
+            storage.players[pindex].train_stop_menu.wait_condition,
+            storage.players[pindex].train_stop_menu.wait_time_seconds
          )
          printout(result, pindex)
       end
@@ -157,7 +158,7 @@ function mod.run_train_stop_menu(menu_index, pindex, clicked, other_input)
          printout({ "fa.train-stops-set-limit" }, pindex)
       else
          printout({ "fa.train-stops-enter-number" }, pindex)
-         players[pindex].train_limit_editing = true
+         storage.players[pindex].train_limit_editing = true
          local frame = Graphics.create_text_field_frame(pindex, "train-limit-edit")
       end
    end
@@ -167,19 +168,19 @@ mod.TRAIN_STOP_MENU_LENGTH = 9
 function mod.train_stop_menu_open(pindex)
    local router = UiRouter.get_router(pindex)
 
-   if players[pindex].vanilla_mode then return end
+   if storage.players[pindex].vanilla_mode then return end
 
    router:open_ui(UiRouter.UI_NAMES.TRAIN_STOP)
-   players[pindex].move_queue = {}
+   storage.players[pindex].move_queue = {}
 
    --Set the menu line counter to 0
-   players[pindex].train_stop_menu.index = 0
+   storage.players[pindex].train_stop_menu.index = 0
 
    --Play sound
    game.get_player(pindex).play_sound({ path = "Open-Inventory-Sound" })
 
    --Load menu
-   mod.run_train_stop_menu(players[pindex].train_stop_menu.index, pindex, false)
+   mod.run_train_stop_menu(storage.players[pindex].train_stop_menu.index, pindex, false)
 end
 
 function mod.train_stop_menu_close(pindex, mute_in)
@@ -189,7 +190,7 @@ function mod.train_stop_menu_close(pindex, mute_in)
    router:close_ui()
 
    --Set the menu line counter to 0
-   players[pindex].train_stop_menu.index = 0
+   storage.players[pindex].train_stop_menu.index = 0
 
    --Destroy GUI
    if game.get_player(pindex).gui.screen["train-stop-rename"] ~= nil then
@@ -201,34 +202,34 @@ function mod.train_stop_menu_close(pindex, mute_in)
 end
 
 function mod.train_stop_menu_up(pindex)
-   players[pindex].train_stop_menu.index = players[pindex].train_stop_menu.index - 1
-   if players[pindex].train_stop_menu.index < 0 then
-      players[pindex].train_stop_menu.index = 0
+   storage.players[pindex].train_stop_menu.index = storage.players[pindex].train_stop_menu.index - 1
+   if storage.players[pindex].train_stop_menu.index < 0 then
+      storage.players[pindex].train_stop_menu.index = 0
       game.get_player(pindex).play_sound({ path = "inventory-edge" })
    else
       --Play sound
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
    end
    --Load menu
-   mod.run_train_stop_menu(players[pindex].train_stop_menu.index, pindex, false)
+   mod.run_train_stop_menu(storage.players[pindex].train_stop_menu.index, pindex, false)
 end
 
 function mod.train_stop_menu_down(pindex)
-   players[pindex].train_stop_menu.index = players[pindex].train_stop_menu.index + 1
-   if players[pindex].train_stop_menu.index > mod.TRAIN_STOP_MENU_LENGTH then
-      players[pindex].train_stop_menu.index = mod.TRAIN_STOP_MENU_LENGTH
+   storage.players[pindex].train_stop_menu.index = storage.players[pindex].train_stop_menu.index + 1
+   if storage.players[pindex].train_stop_menu.index > mod.TRAIN_STOP_MENU_LENGTH then
+      storage.players[pindex].train_stop_menu.index = mod.TRAIN_STOP_MENU_LENGTH
       game.get_player(pindex).play_sound({ path = "inventory-edge" })
    else
       --Play sound
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
    end
    --Load menu
-   mod.run_train_stop_menu(players[pindex].train_stop_menu.index, pindex, false)
+   mod.run_train_stop_menu(storage.players[pindex].train_stop_menu.index, pindex, false)
 end
 
 --For the selected train stop, changes assigned wait time in seconds for the parked train. The increment is a positive or negative integer.
 function mod.nearby_train_schedule_add_to_wait_time(increment, pindex)
-   local seconds = players[pindex].train_stop_menu.wait_time_seconds
+   local seconds = storage.players[pindex].train_stop_menu.wait_time_seconds
    if seconds == nil then seconds = 300 end
    seconds = seconds + increment
    if seconds < 5 then
@@ -236,8 +237,11 @@ function mod.nearby_train_schedule_add_to_wait_time(increment, pindex)
    elseif seconds > 10000 then
       seconds = 10000
    end
-   players[pindex].train_stop_menu.wait_time_seconds = seconds
-   printout({ "fa.train-stop-wait-time-set", tostring(players[pindex].train_stop_menu.wait_time_seconds) }, pindex)
+   storage.players[pindex].train_stop_menu.wait_time_seconds = seconds
+   printout(
+      { "fa.train-stop-wait-time-set", tostring(storage.players[pindex].train_stop_menu.wait_time_seconds) },
+      pindex
+   )
 end
 
 --Returns an info string on what the parked train at this stop is scheduled to do at this stop.
@@ -320,7 +324,7 @@ function mod.nearby_train_schedule_add_stop(train_stop, wait_condition_type, wai
    local wait_condition_1 = { type = wait_condition_type, ticks = wait_time_seconds * 60, compare_type = "and" }
    local wait_condition_2 = { type = "time", ticks = 300, compare_type = "and" }
    local new_record = { wait_conditions = { wait_condition_1 }, station = train_stop.backer_name, temporary = false }
-   if players[pindex].train_stop_menu.safety_wait_enabled then
+   if storage.players[pindex].train_stop_menu.safety_wait_enabled then
       new_record = {
          wait_conditions = { wait_condition_1, wait_condition_2 },
          station = train_stop.backer_name,
@@ -367,7 +371,7 @@ function mod.nearby_train_schedule_update_stop(train_stop, wait_condition_type, 
    local wait_condition_1 = { type = wait_condition_type, ticks = wait_time_seconds * 60, compare_type = "and" }
    local wait_condition_2 = { type = "time", ticks = 300, compare_type = "and" }
    local new_record = { wait_conditions = { wait_condition_1 }, station = train_stop.backer_name, temporary = false }
-   if players[pindex].train_stop_menu.safety_wait_enabled then
+   if storage.players[pindex].train_stop_menu.safety_wait_enabled then
       new_record = {
          wait_conditions = { wait_condition_1, wait_condition_2 },
          station = train_stop.backer_name,

@@ -86,7 +86,7 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
             printout({ "fa.spidertron-link-first-rename" }, pindex)
          else
             printout({ "fa.spidertron-enter-new-name" }, pindex)
-            players[pindex].spider_menu.renaming = true
+            storage.players[pindex].spider_menu.renaming = true
             local frame = Graphics.create_text_field_frame(pindex, "spider-rename")
             game.get_player(pindex).opened = frame
          end
@@ -213,18 +213,18 @@ local SPIDER_MENU_LENGTH = 7
 function mod.spider_menu_open(pindex, stack)
    local router = UiRouter.get_router(pindex)
 
-   if players[pindex].vanilla_mode then return end
+   if storage.players[pindex].vanilla_mode then return end
    router:open_ui(UiRouter.UI_NAMES.SPIDERTRON)
-   players[pindex].move_queue = {}
+   storage.players[pindex].move_queue = {}
    local spider = stack
    --Set the menu line counter to 0
-   players[pindex].spider_menu.index = 0
+   storage.players[pindex].spider_menu.index = 0
 
    --Play sound
    game.get_player(pindex).play_sound({ path = "Open-Inventory-Sound" })
 
    --Load menu
-   mod.run_spider_menu(players[pindex].spider_menu.index, pindex, spider, false)
+   mod.run_spider_menu(storage.players[pindex].spider_menu.index, pindex, spider, false)
 end
 
 function mod.spider_menu_close(pindex, mute_in)
@@ -235,7 +235,7 @@ function mod.spider_menu_close(pindex, mute_in)
    router:close_ui()
 
    --Set the menu line counter to 0
-   players[pindex].spider_menu.index = 0
+   storage.players[pindex].spider_menu.index = 0
 
    --play sound
    if not mute then game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" }) end
@@ -248,22 +248,22 @@ function mod.spider_menu_close(pindex, mute_in)
 end
 
 function mod.spider_menu_up(pindex, spider)
-   players[pindex].spider_menu.index = players[pindex].spider_menu.index - 1
-   if players[pindex].spider_menu.index < 0 then
-      players[pindex].spider_menu.index = 0
+   storage.players[pindex].spider_menu.index = storage.players[pindex].spider_menu.index - 1
+   if storage.players[pindex].spider_menu.index < 0 then
+      storage.players[pindex].spider_menu.index = 0
       game.get_player(pindex).play_sound({ path = "inventory-edge" })
    else
       --Play sound
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
    end
    --Load menu
-   mod.run_spider_menu(players[pindex].spider_menu.index, pindex, spider, false)
+   mod.run_spider_menu(storage.players[pindex].spider_menu.index, pindex, spider, false)
 end
 
 function mod.spider_menu_down(pindex, spider)
-   players[pindex].spider_menu.index = players[pindex].spider_menu.index + 1
-   if players[pindex].spider_menu.index > SPIDER_MENU_LENGTH then
-      players[pindex].spider_menu.index = SPIDER_MENU_LENGTH
+   storage.players[pindex].spider_menu.index = storage.players[pindex].spider_menu.index + 1
+   if storage.players[pindex].spider_menu.index > SPIDER_MENU_LENGTH then
+      storage.players[pindex].spider_menu.index = SPIDER_MENU_LENGTH
       game.get_player(pindex).play_sound({ path = "inventory-edge" })
    else
       --Play sound
@@ -271,7 +271,7 @@ function mod.spider_menu_down(pindex, spider)
    end
    --Load menu
 
-   mod.run_spider_menu(players[pindex].spider_menu.index, pindex, spider, false)
+   mod.run_spider_menu(storage.players[pindex].spider_menu.index, pindex, spider, false)
 end
 
 return mod

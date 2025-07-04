@@ -9,7 +9,7 @@ function mod.get(object, pindex)
    if pindex == nil then error("localising.get: pindex is nil") end
    if object == nil then return "LOCALIZED OBJECT IS NIL!" end
    if object.valid and string.sub(object.object_name, -9) ~= "Prototype" then object = object.prototype end
-   local result = players[pindex].localisations
+   local result = storage.players[pindex].localisations
    result = result and result[object.object_name]
    result = result and result[object.name]
    --for debugging
@@ -29,7 +29,7 @@ function mod.get_alt(object, pindex)
       return "(nil)"
    end
    if object == nil then return "(nil)" end
-   local result = players[pindex].localisations
+   local result = storage.players[pindex].localisations
    result = result and result[object.object_name]
    result = result and result[object.name]
    --for debugging
@@ -72,7 +72,7 @@ end
 
 function mod.request_localisation(thing, pindex)
    local id = game.players[pindex].request_translation(thing.localised_name)
-   local lookup = players[pindex].translation_id_lookup
+   local lookup = storage.players[pindex].translation_id_lookup
    lookup[id] = { thing.object_name, thing.name }
 end
 
@@ -107,7 +107,7 @@ end
 --Populates the appropriate localised string arrays for every translation
 function mod.handler(event)
    local pindex = event.player_index
-   local player = players[pindex]
+   local player = storage.players[pindex]
    local successful = event.translated
    local translated_thing = player.translation_id_lookup[event.id]
    if not translated_thing then return end
@@ -118,7 +118,7 @@ function mod.handler(event)
       else
          player.translation_issue_counter = player.translation_issue_counter + 1
       end
-      --print("translation request ".. event.id .. " failed, request: [" .. serpent.line(event.localised_string) ..  "] for:" .. translated_thing[1] .. ":" .. translated_thing[2] .. ", total issues: " .. players[pindex].translation_issue_counter)
+      --print("translation request ".. event.id .. " failed, request: [" .. serpent.line(event.localised_string) ..  "] for:" .. translated_thing[1] .. ":" .. translated_thing[2] .. ", total issues: " .. storage.players[pindex].translation_issue_counter)
       return
    end
    if translated_thing == "test_translation" then
@@ -136,7 +136,7 @@ function mod.handler(event)
 end
 
 function mod.check_player(pindex)
-   local player = players[pindex]
+   local player = storage.players[pindex]
    local id = game.players[pindex].request_translation({ "error.crash-to-desktop-message" })
    if not id then return end
    player.translation_id_lookup = player.translation_id_lookup or {}

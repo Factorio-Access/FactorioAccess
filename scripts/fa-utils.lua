@@ -292,7 +292,7 @@ function mod.rotate_270(dir)
 end
 
 function mod.reset_rotation(pindex)
-   players[pindex].building_direction = dirs.north
+   storage.players[pindex].building_direction = dirs.north
 end
 
 --Converts the entity orientation into a heading direction, with all directions having equal bias.
@@ -492,7 +492,7 @@ function mod.get_entity_part_at_cursor(pindex)
    local cursor_pos = vp:get_cursor_pos()
    local x = cursor_pos.x
    local y = cursor_pos.y
-   local ents = players[pindex].tile.ents
+   local ents = storage.players[pindex].tile.ents
    local north_same = false
    local south_same = false
    local east_same = false
@@ -799,7 +799,7 @@ end
 --Returns the first found item prototype in the currently selected crafting menu slot, if any. Else returns nil.
 function mod.get_prototype_of_item_product(pindex)
    local recipe =
-      players[pindex].crafting.lua_recipes[players[pindex].crafting.category][players[pindex].crafting.index]
+      storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index]
    if recipe and recipe.valid and recipe.products and recipe.products[1] then
       for i, product in ipairs(recipe.products) do
          local prototype = nil
@@ -941,7 +941,7 @@ end
 
 --Checks whether the player has not walked for 1 second. Uses the bump alert checks.
 function mod.player_was_still_for_1_second(pindex)
-   local b = players[pindex].bump
+   local b = storage.players[pindex].bump
    if b == nil or b.filled ~= true then
       --It is too soon to report anything
       return false
@@ -1023,19 +1023,22 @@ end
 function mod.confirm_action(pindex, id_string, custom_message)
    local message = custom_message or "Press again to confirm this action."
    --Check the id string
-   if players[pindex].confirm_action_id_string ~= id_string then
-      players[pindex].confirm_action_id_string = id_string
-      players[pindex].confirm_action_tick = game.tick
+   if storage.players[pindex].confirm_action_id_string ~= id_string then
+      storage.players[pindex].confirm_action_id_string = id_string
+      storage.players[pindex].confirm_action_tick = game.tick
       printout(message, pindex)
       return false
    end
    --Check the time stamp
-   if players[pindex].confirm_action_tick == nil or game.tick - players[pindex].confirm_action_tick > 600 then
-      players[pindex].confirm_action_tick = game.tick
+   if
+      storage.players[pindex].confirm_action_tick == nil
+      or game.tick - storage.players[pindex].confirm_action_tick > 600
+   then
+      storage.players[pindex].confirm_action_tick = game.tick
       printout(message, pindex)
       return false
    else
-      players[pindex].confirm_action_tick = 0
+      storage.players[pindex].confirm_action_tick = 0
       return true
    end
 end

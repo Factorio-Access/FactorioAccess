@@ -33,7 +33,7 @@ function mod.append_rail(pos, pindex)
    end
 
    --1 Check the cursor entity. If it is an end rail, use this instead of scanning to extend the rail you want.
-   local ent = players[pindex].tile.ents[1]
+   local ent = storage.players[pindex].tile.ents[1]
    is_end_rail, end_rail_dir, comment = Rails.check_end_rail(ent, pindex)
    if is_end_rail then
       end_found = ent
@@ -51,7 +51,7 @@ function mod.append_rail(pos, pindex)
          ents = surf.find_entities_filtered({ position = pos, radius = 3, name = "curved-rail" })
          if #ents == 0 then
             game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-            if players[pindex].build_lock == false then
+            if storage.players[pindex].build_lock == false then
                printout({ "fa.rail-no-rails-nearby" }, pindex)
                return
             end
@@ -72,7 +72,7 @@ function mod.append_rail(pos, pindex)
       end
       if end_found == nil then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         if players[pindex].build_lock == false then printout("No end rails found nearby", pindex) end
+         if storage.players[pindex].build_lock == false then printout("No end rails found nearby", pindex) end
          return
       end
 
@@ -317,7 +317,7 @@ function mod.free_place_rail_signal_in_hand(pindex, preview_only)
       return
    end
    local surf = p.surface
-   local pos = players[pindex].cursor_pos
+   local pos = storage.players[pindex].cursor_pos
    local build_comment = ""
    --Check if the building area is occupied
    if surf.can_place_entity({ position = pos, name = stack.name, force = p.force }) == false then
@@ -417,16 +417,16 @@ function mod.build_rail_turn_right_45_degrees(anchor_rail, pindex)
    --1. Firstly, check if the player has enough rails to place this (3 units)
    if not (stack.valid and stack.valid_for_read and stack.name == "rail" and stack.count >= 3) then
       --Check if the inventory has enough
-      if players[pindex].inventory.lua_inventory.get_item_count("rail") < 3 then
+      if storage.players[pindex].inventory.lua_inventory.get_item_count("rail") < 3 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
          printout({ "fa.rail-need-three-for-turn" }, pindex)
          return
       else
          --Take from the inventory.
-         stack2 = players[pindex].inventory.lua_inventory.find_item_stack("rail")
+         stack2 = storage.players[pindex].inventory.lua_inventory.find_item_stack("rail")
          game.get_player(pindex).cursor_stack.swap_stack(stack2)
          stack = game.get_player(pindex).cursor_stack
-         players[pindex].inventory.max = #players[pindex].inventory.lua_inventory
+         storage.players[pindex].inventory.max = #storage.players[pindex].inventory.lua_inventory
       end
    end
 
@@ -903,16 +903,16 @@ function mod.build_rail_turn_right_90_degrees(anchor_rail, pindex)
    --1. Firstly, check if the player has enough rails to place this (10 units)
    if not (stack.valid and stack.valid_for_read and stack.name == "rail" and stack.count >= 10) then
       --Check if the inventory has enough
-      if players[pindex].inventory.lua_inventory.get_item_count("rail") < 10 then
+      if storage.players[pindex].inventory.lua_inventory.get_item_count("rail") < 10 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
          printout({ "fa.rail-need-ten-for-turn" }, pindex)
          return
       else
          --Take from the inventory.
-         stack2 = players[pindex].inventory.lua_inventory.find_item_stack("rail")
+         stack2 = storage.players[pindex].inventory.lua_inventory.find_item_stack("rail")
          game.get_player(pindex).cursor_stack.swap_stack(stack2)
          stack = game.get_player(pindex).cursor_stack
-         players[pindex].inventory.max = #players[pindex].inventory.lua_inventory
+         storage.players[pindex].inventory.max = #storage.players[pindex].inventory.lua_inventory
       end
    end
 
@@ -1200,16 +1200,16 @@ function mod.build_rail_turn_left_45_degrees(anchor_rail, pindex)
    --1. Firstly, check if the player has enough rails to place this (3 units)
    if not (stack.valid and stack.valid_for_read and stack.name == "rail" and stack.count >= 3) then
       --Check if the inventory has enough
-      if players[pindex].inventory.lua_inventory.get_item_count("rail") < 3 then
+      if storage.players[pindex].inventory.lua_inventory.get_item_count("rail") < 3 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
          printout({ "fa.rail-need-three-for-turn" }, pindex)
          return
       else
          --Take from the inventory.
-         stack2 = players[pindex].inventory.lua_inventory.find_item_stack("rail")
+         stack2 = storage.players[pindex].inventory.lua_inventory.find_item_stack("rail")
          game.get_player(pindex).cursor_stack.swap_stack(stack2)
          stack = game.get_player(pindex).cursor_stack
-         players[pindex].inventory.max = #players[pindex].inventory.lua_inventory
+         storage.players[pindex].inventory.max = #storage.players[pindex].inventory.lua_inventory
       end
    end
 
@@ -1686,16 +1686,16 @@ function mod.build_rail_turn_left_90_degrees(anchor_rail, pindex)
    --1. Firstly, check if the player has enough rails to place this (10 units)
    if not (stack.valid and stack.valid_for_read and stack.name == "rail" and stack.count > 10) then
       --Check if the inventory has enough
-      if players[pindex].inventory.lua_inventory.get_item_count("rail") < 10 then
+      if storage.players[pindex].inventory.lua_inventory.get_item_count("rail") < 10 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
          printout({ "fa.rail-need-ten-for-turn" }, pindex)
          return
       else
          --Take from the inventory.
-         stack2 = players[pindex].inventory.lua_inventory.find_item_stack("rail")
+         stack2 = storage.players[pindex].inventory.lua_inventory.find_item_stack("rail")
          game.get_player(pindex).cursor_stack.swap_stack(stack2)
          stack = game.get_player(pindex).cursor_stack
-         players[pindex].inventory.max = #players[pindex].inventory.lua_inventory
+         storage.players[pindex].inventory.max = #storage.players[pindex].inventory.lua_inventory
       end
    end
 
@@ -1986,16 +1986,16 @@ function mod.build_fork_at_end_rail(anchor_rail, pindex, include_forward, includ
    --1. Firstly, check if the player has enough rails to place this (5 units)
    if not (stack.valid and stack.valid_for_read and stack.name == "rail" and stack.count >= 5) then
       --Check if the inventory has enough
-      if players[pindex].inventory.lua_inventory.get_item_count("rail") < 5 then
+      if storage.players[pindex].inventory.lua_inventory.get_item_count("rail") < 5 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
          printout({ "fa.rail-need-five-for-turn" }, pindex)
          return
       else
          --Take from the inventory.
-         stack2 = players[pindex].inventory.lua_inventory.find_item_stack("rail")
+         stack2 = storage.players[pindex].inventory.lua_inventory.find_item_stack("rail")
          game.get_player(pindex).cursor_stack.swap_stack(stack2)
          stack = game.get_player(pindex).cursor_stack
-         players[pindex].inventory.max = #players[pindex].inventory.lua_inventory
+         storage.players[pindex].inventory.max = #storage.players[pindex].inventory.lua_inventory
       end
    end
 
@@ -3885,23 +3885,23 @@ function mod.build_rail_bypass_junction(anchor_rail, pindex)
    --1A. Firstly, check if the player has enough rails to place this (20 units)
    if not (stack.valid and stack.valid_for_read and stack.name == "rail" and stack.count >= 20) then
       --Check if the inventory has enough
-      if players[pindex].inventory.lua_inventory.get_item_count("rail") < 20 then
+      if storage.players[pindex].inventory.lua_inventory.get_item_count("rail") < 20 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
          printout({ "fa.rail-need-twenty-rails" }, pindex)
          return
       else
          --Take from the inventory.
-         stack2 = players[pindex].inventory.lua_inventory.find_item_stack("rail")
+         stack2 = storage.players[pindex].inventory.lua_inventory.find_item_stack("rail")
          game.get_player(pindex).cursor_stack.swap_stack(stack2)
          stack = game.get_player(pindex).cursor_stack
-         players[pindex].inventory.max = #players[pindex].inventory.lua_inventory
+         storage.players[pindex].inventory.max = #storage.players[pindex].inventory.lua_inventory
       end
    end
 
    --1B. Check if the player has enough rail signals to place this (4 units)
    if not (stack.valid and stack.valid_for_read and stack.name == "rail-chain-signal" and stack.count >= 4) then
       --Check if the inventory has enough
-      if players[pindex].inventory.lua_inventory.get_item_count("rail-chain-signal") < 4 then
+      if storage.players[pindex].inventory.lua_inventory.get_item_count("rail-chain-signal") < 4 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
          game.get_player(pindex).clear_cursor()
          printout({ "fa.rail-need-four-chain-signals" }, pindex)
@@ -4736,23 +4736,23 @@ function mod.build_rail_bypass_junction_triple(anchor_rail, pindex)
    --1A. Firstly, check if the player has enough rails to place this (25 units)
    if not (stack.valid and stack.valid_for_read and stack.name == "rail" and stack.count >= 25) then
       --Check if the inventory has enough
-      if players[pindex].inventory.lua_inventory.get_item_count("rail") < 25 then
+      if storage.players[pindex].inventory.lua_inventory.get_item_count("rail") < 25 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
          printout({ "fa.rail-need-twenty-five-rails" }, pindex)
          return
       else
          --Take from the inventory.
-         stack2 = players[pindex].inventory.lua_inventory.find_item_stack("rail")
+         stack2 = storage.players[pindex].inventory.lua_inventory.find_item_stack("rail")
          game.get_player(pindex).cursor_stack.swap_stack(stack2)
          stack = game.get_player(pindex).cursor_stack
-         players[pindex].inventory.max = #players[pindex].inventory.lua_inventory
+         storage.players[pindex].inventory.max = #storage.players[pindex].inventory.lua_inventory
       end
    end
 
    --1B. Check if the player has enough rail signals to place this (6 units)
    if not (stack.valid and stack.valid_for_read and stack.name == "rail-chain-signal" and stack.count >= 6) then
       --Check if the inventory has enough
-      if players[pindex].inventory.lua_inventory.get_item_count("rail-chain-signal") < 6 then
+      if storage.players[pindex].inventory.lua_inventory.get_item_count("rail-chain-signal") < 6 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
          printout({ "fa.rail-need-six-chain-signals" }, pindex)
          return
@@ -5779,7 +5779,7 @@ function mod.place_chain_signal_pair(rail, pindex)
    --3. Check whether the player has enough rail chain signals.
    if not (stack.valid and stack.valid_for_read and stack.name == "rail-chain-signal" and stack.count >= 2) then
       --Check if the inventory has one instead
-      if players[pindex].inventory.lua_inventory.get_item_count("rail-chain-signal") < 2 then
+      if storage.players[pindex].inventory.lua_inventory.get_item_count("rail-chain-signal") < 2 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
          build_comment = "You need to have at least 2 rail chain signals on you."
          successful = false
@@ -5787,10 +5787,10 @@ function mod.place_chain_signal_pair(rail, pindex)
          return successful, build_comment
       else
          --Take from the inventory.
-         stack2 = players[pindex].inventory.lua_inventory.find_item_stack("rail-chain-signal")
+         stack2 = storage.players[pindex].inventory.lua_inventory.find_item_stack("rail-chain-signal")
          game.get_player(pindex).cursor_stack.swap_stack(stack2)
          stack = game.get_player(pindex).cursor_stack
-         players[pindex].inventory.max = #players[pindex].inventory.lua_inventory
+         storage.players[pindex].inventory.max = #storage.players[pindex].inventory.lua_inventory
       end
    end
 
@@ -6025,7 +6025,7 @@ function mod.place_rail_signal_pair(rail, pindex)
    --3. Check whether the player has enough rail chain signals.
    if not (stack.valid and stack.valid_for_read and stack.name == "rail-signal" and stack.count >= 2) then
       --Check if the inventory has one instead
-      if players[pindex].inventory.lua_inventory.get_item_count("rail-signal") < 2 then
+      if storage.players[pindex].inventory.lua_inventory.get_item_count("rail-signal") < 2 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
          build_comment = "You need to have at least 2 rail signals on you."
          successful = false
@@ -6033,10 +6033,10 @@ function mod.place_rail_signal_pair(rail, pindex)
          return successful, build_comment
       else
          --Take from the inventory.
-         stack2 = players[pindex].inventory.lua_inventory.find_item_stack("rail-signal")
+         stack2 = storage.players[pindex].inventory.lua_inventory.find_item_stack("rail-signal")
          game.get_player(pindex).cursor_stack.swap_stack(stack2)
          stack = game.get_player(pindex).cursor_stack
-         players[pindex].inventory.max = #players[pindex].inventory.lua_inventory
+         storage.players[pindex].inventory.max = #storage.players[pindex].inventory.lua_inventory
       end
    end
 
@@ -6163,16 +6163,16 @@ function mod.build_train_stop(anchor_rail, pindex)
    --1. Firstly, check if the player has a train stop in hand
    if not (stack.valid and stack.valid_for_read and stack.name == "train-stop" and stack.count > 0) then
       --Check if the inventory has enough
-      if players[pindex].inventory.lua_inventory.get_item_count("train-stop") < 1 then
+      if storage.players[pindex].inventory.lua_inventory.get_item_count("train-stop") < 1 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
          printout({ "fa.rail-need-one-train-stop" }, pindex)
          return
       else
          --Take from the inventory.
-         stack2 = players[pindex].inventory.lua_inventory.find_item_stack("train-stop")
+         stack2 = storage.players[pindex].inventory.lua_inventory.find_item_stack("train-stop")
          game.get_player(pindex).cursor_stack.swap_stack(stack2)
          stack = game.get_player(pindex).cursor_stack
-         players[pindex].inventory.max = #players[pindex].inventory.lua_inventory
+         storage.players[pindex].inventory.max = #storage.players[pindex].inventory.lua_inventory
       end
    end
 
@@ -6184,15 +6184,27 @@ function mod.build_train_stop(anchor_rail, pindex)
       --Choose the dir based on player direction
       turn_to_cursor_direction_cardinal(pindex)
       if anchor_rail.direction == dirs.north or anchor_rail.direction == dirs.south then
-         if players[pindex].player_direction == dirs.north or players[pindex].player_direction == dirs.east then
+         if
+            storage.players[pindex].player_direction == dirs.north
+            or storage.players[pindex].player_direction == dirs.east
+         then
             dir = dirs.north
-         elseif players[pindex].player_direction == dirs.south or players[pindex].player_direction == dirs.west then
+         elseif
+            storage.players[pindex].player_direction == dirs.south
+            or storage.players[pindex].player_direction == dirs.west
+         then
             dir = dirs.south
          end
       elseif anchor_rail.direction == dirs.east or anchor_rail.direction == dirs.west then
-         if players[pindex].player_direction == dirs.north or players[pindex].player_direction == dirs.east then
+         if
+            storage.players[pindex].player_direction == dirs.north
+            or storage.players[pindex].player_direction == dirs.east
+         then
             dir = dirs.east
-         elseif players[pindex].player_direction == dirs.south or players[pindex].player_direction == dirs.west then
+         elseif
+            storage.players[pindex].player_direction == dirs.south
+            or storage.players[pindex].player_direction == dirs.west
+         then
             dir = dirs.west
          end
       end
@@ -6295,12 +6307,12 @@ end
 function mod.open_menu(pindex, rail)
    local router = UiRouter.get_router(pindex)
 
-   if players[pindex].vanilla_mode then return end
+   if storage.players[pindex].vanilla_mode then return end
    router:open_ui(UiRouter.UI_NAMES.RAIL_BUILDER)
-   players[pindex].move_queue = {}
+   storage.players[pindex].move_queue = {}
 
    --Set the menu line counter to 0
-   players[pindex].rail_builder.index = 0
+   storage.players[pindex].rail_builder.index = 0
 
    --Determine rail type
    local is_end_rail, end_dir, comment = Rails.check_end_rail(rail, pindex)
@@ -6308,22 +6320,22 @@ function mod.open_menu(pindex, rail)
    if is_end_rail then
       if dir == dirs.north or dir == dirs.east or dir == dirs.south or dir == dirs.west then
          --Straight end rails
-         players[pindex].rail_builder.rail_type = 1
-         players[pindex].rail_builder.index_max = 10
+         storage.players[pindex].rail_builder.rail_type = 1
+         storage.players[pindex].rail_builder.index_max = 10
       else
          --Diagonal end rails
-         players[pindex].rail_builder.rail_type = 2
-         players[pindex].rail_builder.index_max = 6
+         storage.players[pindex].rail_builder.rail_type = 2
+         storage.players[pindex].rail_builder.index_max = 6
       end
    else
       if dir == dirs.north or dir == dirs.east or dir == dirs.south or dir == dirs.west then
          --Straight mid rails
-         players[pindex].rail_builder.rail_type = 3
-         players[pindex].rail_builder.index_max = 3
+         storage.players[pindex].rail_builder.rail_type = 3
+         storage.players[pindex].rail_builder.index_max = 3
       else
          --Diagonal mid rails
-         players[pindex].rail_builder.rail_type = 4
-         players[pindex].rail_builder.index_max = 3
+         storage.players[pindex].rail_builder.rail_type = 4
+         storage.players[pindex].rail_builder.index_max = 3
       end
    end
 
@@ -6331,7 +6343,7 @@ function mod.open_menu(pindex, rail)
    game.get_player(pindex).play_sound({ path = "Open-Inventory-Sound" })
 
    --Load menu
-   players[pindex].rail_builder.rail = rail
+   storage.players[pindex].rail_builder.rail = rail
    mod.run_menu(pindex, false)
 end
 
@@ -6343,7 +6355,7 @@ function mod.close_menu(pindex, mute_in)
    router:close_ui()
 
    --Set the menu line counter to 0
-   players[pindex].rail_builder.index = 0
+   storage.players[pindex].rail_builder.index = 0
 
    --play sound
    if not mute then game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" }) end
@@ -6352,11 +6364,11 @@ end
 --Moves up the rail builder menu
 function mod.menu_up(pindex)
    --Decrement the index
-   players[pindex].rail_builder.index = players[pindex].rail_builder.index - 1
+   storage.players[pindex].rail_builder.index = storage.players[pindex].rail_builder.index - 1
 
    --Check the index against the limit
-   if players[pindex].rail_builder.index < 0 then
-      players[pindex].rail_builder.index = 0
+   if storage.players[pindex].rail_builder.index < 0 then
+      storage.players[pindex].rail_builder.index = 0
       game.get_player(pindex).play_sound({ path = "inventory-edge" })
    else
       --Play sound
@@ -6370,11 +6382,11 @@ end
 --Moves down the rail buidler menu
 function mod.menu_down(pindex)
    --Increment the index
-   players[pindex].rail_builder.index = players[pindex].rail_builder.index + 1
+   storage.players[pindex].rail_builder.index = storage.players[pindex].rail_builder.index + 1
 
    --Check the index against the limit
-   if players[pindex].rail_builder.index > players[pindex].rail_builder.index_max then
-      players[pindex].rail_builder.index = players[pindex].rail_builder.index_max
+   if storage.players[pindex].rail_builder.index > storage.players[pindex].rail_builder.index_max then
+      storage.players[pindex].rail_builder.index = storage.players[pindex].rail_builder.index_max
       game.get_player(pindex).play_sound({ path = "inventory-edge" })
    else
       --Play sound
@@ -6389,9 +6401,9 @@ end
 function mod.run_menu(pindex, clicked_in)
    local clicked = clicked_in
    local comment = ""
-   local menu_line = players[pindex].rail_builder.index
-   local rail_type = players[pindex].rail_builder.rail_type
-   local rail = players[pindex].rail_builder.rail
+   local menu_line = storage.players[pindex].rail_builder.index
+   local rail_type = storage.players[pindex].rail_builder.rail_type
+   local rail = storage.players[pindex].rail_builder.rail
 
    if rail == nil then
       comment = " Rail nil error "

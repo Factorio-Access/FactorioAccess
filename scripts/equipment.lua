@@ -36,7 +36,7 @@ function mod.equip_it(stack, pindex)
          })
       end
       stack.swap_stack(armor[1])
-      players[pindex].skip_read_hand = true
+      storage.players[pindex].skip_read_hand = true
    elseif stack.type == "gun" then
       --Equip gun ("arms")
       local gun_inv = game.get_player(pindex).get_inventory(defines.inventory.character_guns)
@@ -44,7 +44,7 @@ function mod.equip_it(stack, pindex)
          local inserted = gun_inv.insert(stack)
          message:fragment({ "fa.equipment-equipped", localising.get_localised_name_with_fallback(stack) })
          stack.count = stack.count - inserted
-         players[pindex].skip_read_hand = true
+         storage.players[pindex].skip_read_hand = true
       else
          if gun_inv.count_empty_stacks() == 0 then
             message:fragment({ "fa.equipment-gun-slots-full" })
@@ -59,7 +59,7 @@ function mod.equip_it(stack, pindex)
          local inserted = ammo_inv.insert(stack)
          message:fragment({ "fa.equipment-reloaded", localising.get_localised_name_with_fallback(stack) })
          stack.count = stack.count - inserted
-         players[pindex].skip_read_hand = true
+         storage.players[pindex].skip_read_hand = true
       else
          if ammo_inv.count_empty_stacks() == 0 then
             message:fragment({ "fa.equipment-ammo-slots-full" })
@@ -98,7 +98,7 @@ function mod.equip_it(stack, pindex)
             tostring(slots_left),
          })
          stack.count = stack.count - 1
-         players[pindex].skip_read_hand = true
+         storage.players[pindex].skip_read_hand = true
       else
          --Check if the grid is full
          if slots_left == 0 then
@@ -235,9 +235,9 @@ function mod.delete_equipped_atomic_bombs(pindex)
    end
 
    --Save removed amount
-   local restore_count = players[pindex].restore_count
+   local restore_count = storage.players[pindex].restore_count
    if restore_count == nil or restore_count < resulted_remove_count then
-      players[pindex].restore_count = resulted_remove_count
+      storage.players[pindex].restore_count = resulted_remove_count
    end
    return
 end
@@ -251,7 +251,7 @@ function mod.restore_equipped_atomic_bombs(pindex)
    local ammos_count = #ammo_inv - ammo_inv.count_empty_stacks()
 
    --Create stack
-   local restore_count = players[pindex].restore_count
+   local restore_count = storage.players[pindex].restore_count
    if restore_count == nil then restore_count = 1 end
    local stack = { name = "atomic-bomb", count = restore_count }
 
@@ -497,13 +497,13 @@ function mod.guns_menu_open(pindex)
 
    local p = game.get_player(pindex)
    router:open_ui(UiRouter.UI_NAMES.GUNS)
-   players[pindex].guns_menu.ammo_selected = false
-   players[pindex].guns_menu.index = 1
+   storage.players[pindex].guns_menu.ammo_selected = false
+   storage.players[pindex].guns_menu.index = 1
    mod.guns_menu_read_slot(pindex, "Guns and ammo, ")
 end
 
 function mod.guns_menu_left(pindex)
-   local index = players[pindex].guns_menu.index
+   local index = storage.players[pindex].guns_menu.index
    index = index - 1
    if index == 0 then
       index = 3
@@ -511,13 +511,13 @@ function mod.guns_menu_left(pindex)
    else
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
    end
-   players[pindex].guns_menu.index = index
+   storage.players[pindex].guns_menu.index = index
    game.get_player(pindex).play_sound({ path = "Inventory-Move" })
    mod.guns_menu_read_slot(pindex)
 end
 
 function mod.guns_menu_right(pindex)
-   local index = players[pindex].guns_menu.index
+   local index = storage.players[pindex].guns_menu.index
    index = index + 1
    if index == 4 then
       index = 1
@@ -525,18 +525,18 @@ function mod.guns_menu_right(pindex)
    else
       game.get_player(pindex).play_sound({ path = "Inventory-Move" })
    end
-   players[pindex].guns_menu.index = index
+   storage.players[pindex].guns_menu.index = index
    mod.guns_menu_read_slot(pindex)
 end
 
 function mod.guns_menu_up_or_down(pindex)
-   players[pindex].guns_menu.ammo_selected = not players[pindex].guns_menu.ammo_selected
+   storage.players[pindex].guns_menu.ammo_selected = not storage.players[pindex].guns_menu.ammo_selected
    game.get_player(pindex).play_sound({ path = "Inventory-Move" })
    mod.guns_menu_read_slot(pindex)
 end
 
 function mod.guns_menu_get_selected_slot(pindex)
-   local menu = players[pindex].guns_menu
+   local menu = storage.players[pindex].guns_menu
    local p = game.get_player(pindex)
    local gun_stack = p.get_inventory(defines.inventory.character_guns)[menu.index]
    local ammo_stack = p.get_inventory(defines.inventory.character_ammo)[menu.index]
@@ -549,7 +549,7 @@ end
 
 function mod.guns_menu_read_slot(pindex, start_phrase_in)
    local start_phrase = start_phrase_in or ""
-   local menu = players[pindex].guns_menu
+   local menu = storage.players[pindex].guns_menu
    local p = game.get_player(pindex)
    local result = { "" }
    table.insert(result, start_phrase)
@@ -602,7 +602,7 @@ end
 function mod.guns_menu_click_slot(pindex)
    local p = game.get_player(pindex)
    local hand = p.cursor_stack
-   local menu = players[pindex].guns_menu
+   local menu = storage.players[pindex].guns_menu
    local gun_stack = p.get_inventory(defines.inventory.character_guns)[menu.index]
    local ammo_stack = p.get_inventory(defines.inventory.character_ammo)[menu.index]
    local selected_stack = nil

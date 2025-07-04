@@ -248,7 +248,7 @@ function mod.clear_obstacles_in_rectangle(left_top, right_bottom, pindex, mining
       if comment ~= "" then comment = comment .. ", " end
       comment = comment .. deconstruction_counter .. " objects marked for deconstruction"
    end
-   if not players[pindex].hide_cursor then
+   if not storage.players[pindex].hide_cursor then
       --Uncomment here to draw the area being cleared
       --rendering.draw_rectangle{color = {0, 1, 0, 0.5}, left_top = left_top, right_bottom = right_bottom, width = 4, surface = surf, time_to_live = 60, draw_on_ground = true}
    end

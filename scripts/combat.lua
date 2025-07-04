@@ -460,7 +460,7 @@ function mod.run_atomic_bomb_checks(pindex)
    if selected_ammo.name ~= "atomic-bomb" then return end
 
    --Stop checking if vanilla mode
-   if players[pindex].vanilla_mode == true then return end
+   if storage.players[pindex].vanilla_mode == true then return end
 
    --If the target position is shown as the center of the screen where the player stands, it means the cursor is not on screen
    if target_pos == nil or util.distance(p.position, target_pos) < 1.5 then

@@ -21,7 +21,7 @@ function mod.show_sprite_demo(pindex)
    --bookmark
 
    --Let the gunction do the rest. Clear it with CTRL + ALT + R
-   local player = players[pindex]
+   local player = storage.players[pindex]
    local p = game.get_player(pindex)
 
    local f = nil
@@ -64,7 +64,7 @@ function mod.update_menu_visuals()
          elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
             mod.update_overhead_sprite("item.wooden-chest", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite("item.wooden-chest", 3, pindex)
-            if players[pindex].vanilla_mode then mod.update_custom_GUI_sprite(nil, 1, pindex) end
+            if storage.players[pindex].vanilla_mode then mod.update_custom_GUI_sprite(nil, 1, pindex) end
          elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
             mod.update_overhead_sprite("item.repair-pack", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite("item.repair-pack", 3, pindex)
@@ -169,7 +169,7 @@ end
 --Draws stuff like the building footprint, direction indicator arrow, selection tool selection box.
 --Also moves the mouse pointer to hold the preview at the correct position on screen.
 function mod.sync_build_cursor_graphics(pindex)
-   local player = players[pindex]
+   local player = storage.players[pindex]
    if player == nil or player.player.character == nil then return end
    local p = game.get_player(pindex)
    local stack = game.get_player(pindex).cursor_stack
@@ -190,9 +190,10 @@ function mod.sync_build_cursor_graphics(pindex)
       --Redraw direction indicator arrow
       if dir_indicator ~= nil then player.building_dir_arrow.destroy() end
       local arrow_pos = vp:get_cursor_pos()
-      if players[pindex].build_lock and not cursor_enabled and stack.name ~= "rail" then
-         arrow_pos =
-            FaUtils.center_of_tile(FaUtils.offset_position_legacy(arrow_pos, players[pindex].player_direction, -2))
+      if storage.players[pindex].build_lock and not cursor_enabled and stack.name ~= "rail" then
+         arrow_pos = FaUtils.center_of_tile(
+            FaUtils.offset_position_legacy(arrow_pos, storage.players[pindex].player_direction, -2)
+         )
       end
       player.building_dir_arrow = rendering.draw_sprite({
          sprite = "fluid.crude-oil",
@@ -206,7 +207,7 @@ function mod.sync_build_cursor_graphics(pindex)
       dir_indicator = player.building_dir_arrow
       dir_indicator.visible = true
       if
-         players[pindex].hide_cursor
+         storage.players[pindex].hide_cursor
          or stack.name == "locomotive"
          or stack.name == "cargo-wagon"
          or stack.name == "fluid-wagon"
@@ -225,7 +226,7 @@ function mod.sync_build_cursor_graphics(pindex)
          building_direction = dir,
          player_direction = p_dir,
          cursor_enabled = cursor_enabled,
-         build_lock = players[pindex].build_lock,
+         build_lock = storage.players[pindex].build_lock,
          is_rail_vehicle = (stack.name == "rail"),
       })
 
@@ -249,7 +250,7 @@ function mod.sync_build_cursor_graphics(pindex)
 
       --Hide the drawing in the desired cases
       if
-         players[pindex].hide_cursor
+         storage.players[pindex].hide_cursor
          or stack.name == "locomotive"
          or stack.name == "cargo-wagon"
          or stack.name == "fluid-wagon"
@@ -269,15 +270,15 @@ function mod.sync_build_cursor_graphics(pindex)
       and stack.valid_for_read
       and stack.is_blueprint
       and stack.is_blueprint_setup()
-      and players[pindex].blueprint_reselecting ~= true
+      and storage.players[pindex].blueprint_reselecting ~= true
    then
       --Blueprints have their own data:
       --Redraw the direction indicator arrow
       if dir_indicator ~= nil then player.building_dir_arrow.destroy() end
       local arrow_pos = vp:get_cursor_pos()
-      local dir = players[pindex].blueprint_hand_direction
+      local dir = storage.players[pindex].blueprint_hand_direction
       if dir == nil then
-         players[pindex].blueprint_hand_direction = dirs.north
+         storage.players[pindex].blueprint_hand_direction = dirs.north
          dir = dirs.north
       end
       player.building_dir_arrow = rendering.draw_sprite({
@@ -294,8 +295,8 @@ function mod.sync_build_cursor_graphics(pindex)
 
       --Redraw the bp footprint
       if player.building_footprint ~= nil then player.building_footprint.destroy() end
-      local bp_width = players[pindex].blueprint_width_in_hand
-      local bp_height = players[pindex].blueprint_height_in_hand
+      local bp_width = storage.players[pindex].blueprint_width_in_hand
+      local bp_height = storage.players[pindex].blueprint_height_in_hand
       if bp_width ~= nil then
          local left_top = { x = math.floor(vp:get_cursor_pos().x), y = math.floor(vp:get_cursor_pos().y) }
          local right_bottom = { x = (left_top.x + bp_width), y = (left_top.y + bp_height) }
@@ -319,7 +320,11 @@ function mod.sync_build_cursor_graphics(pindex)
       --if player.building_footprint ~= nil then rendering.set_visible(player.building_footprint, false) end
 
       --Tile placement preview
-      if stack.valid and stack.prototype.place_as_tile_result and players[pindex].blueprint_reselecting ~= true then
+      if
+         stack.valid
+         and stack.prototype.place_as_tile_result
+         and storage.players[pindex].blueprint_reselecting ~= true
+      then
          local left_top = {
             math.floor(cursor_pos.x) - cursor_size,
             math.floor(cursor_pos.y) - cursor_size,
@@ -336,11 +341,11 @@ function mod.sync_build_cursor_graphics(pindex)
             or stack.is_upgrade_item
             or stack.prototype.type == "selection-tool"
             or stack.prototype.type == "copy-paste-tool"
-         ) and (players[pindex].bp_selecting == true)
+         ) and (storage.players[pindex].bp_selecting == true)
       then
          --Draw planner rectangles
          local top_left, bottom_right =
-            FaUtils.get_top_left_and_bottom_right(players[pindex].bp_select_point_1, cursor_pos)
+            FaUtils.get_top_left_and_bottom_right(storage.players[pindex].bp_select_point_1, cursor_pos)
          local color = { 1, 1, 1 }
          if stack.is_blueprint then
             color = { r = 0.25, b = 1.00, g = 0.50, a = 0.75 }
@@ -423,7 +428,7 @@ function mod.draw_cursor_highlight(pindex, ent, box_type, skip_mouse_movement)
    if game.is_multiplayer() then mod.set_cursor_colors_to_player_colors(pindex) end
 
    --Highlight nearby entities by default means (reposition the cursor)
-   if players[pindex].vanilla_mode or skip_mouse_movement == true then return end
+   if storage.players[pindex].vanilla_mode or skip_mouse_movement == true then return end
    local stack = game.get_player(pindex).cursor_stack
    if
       stack ~= nil
@@ -485,7 +490,7 @@ end
 function mod.update_custom_GUI_sprite(sprite, scale_in, pindex, sprite_2)
    local router = UiRouter.get_router(pindex)
 
-   local player = players[pindex]
+   local player = storage.players[pindex]
    local p = game.get_player(pindex)
 
    if sprite == nil then
@@ -561,14 +566,14 @@ function mod.clear_player_GUI_remnants(pindex)
    local router = UiRouter.get_router(pindex)
 
    local p = game.get_player(pindex)
-   if not router:is_ui_open() and p.opened == nil and players[pindex].text_field_open ~= true then
+   if not router:is_ui_open() and p.opened == nil and storage.players[pindex].text_field_open ~= true then
       if p and p.gui and p.gui.screen then p.gui.screen.clear() end
    end
 end
 
 --Draws a sprite over the head of the player, with the selected scale. Set it to nil to clear it.
 function mod.update_overhead_sprite(sprite, scale_in, radius_in, pindex)
-   local player = players[pindex]
+   local player = storage.players[pindex]
    local p = game.get_player(pindex)
    local scale = scale_in
    local radius = radius_in
@@ -606,13 +611,16 @@ function mod.set_cursor_colors_to_player_colors(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
    local h_tile = vp:get_cursor_tile_highlight_box()
    if h_tile ~= nil and h_tile.valid then rendering.set_color(h_tile, p.color) end
-   if players[pindex].building_footprint ~= nil and rendering.is_valid(players[pindex].building_footprint) then
-      rendering.set_color(players[pindex].building_footprint, p.color)
+   if
+      storage.players[pindex].building_footprint ~= nil
+      and rendering.is_valid(storage.players[pindex].building_footprint)
+   then
+      rendering.set_color(storage.players[pindex].building_footprint, p.color)
    end
 end
 
 function mod.create_text_field_frame(pindex, frame_name, frame_text)
-   players[pindex].text_field_open = true
+   storage.players[pindex].text_field_open = true
    local text = frame_text or ""
    local frame = game.get_player(pindex).gui.screen.add({ type = "frame", name = frame_name })
    frame.bring_to_front()

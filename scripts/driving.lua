@@ -84,14 +84,14 @@ function mod.check_and_play_driving_alert_sound(pindex, tick, mode_in)
    --Return in inapplicable cases
    if p == nil or p.valid == false or p.driving == false or p.vehicle == nil then return false end
    --Return in vanilla mode
-   if players[pindex].vanilla_mode == true then return end
+   if storage.players[pindex].vanilla_mode == true then return end
    --Return if beeped recently
    local min_delay = 15
-   if players[pindex].last_driving_alert_tick == nil then
-      players[pindex].last_driving_alert_tick = tick
+   if storage.players[pindex].last_driving_alert_tick == nil then
+      storage.players[pindex].last_driving_alert_tick = tick
       return false
    end
-   local last_driving_alert_tick = players[pindex].last_driving_alert_tick
+   local last_driving_alert_tick = storage.players[pindex].last_driving_alert_tick
    local time_since = tick - last_driving_alert_tick
    if last_driving_alert_tick ~= nil and time_since < min_delay then return false end
    --Scan area "ahead" according to direction
@@ -227,8 +227,8 @@ function mod.check_and_play_driving_alert_sound(pindex, tick, mode_in)
    --Beep
    if edge_dist < trigger then
       p.play_sound({ path = "player-bump-stuck-alert" })
-      players[pindex].last_driving_alert_tick = last_driving_alert_tick
-      players[pindex].last_driving_alert_ent = nearest
+      storage.players[pindex].last_driving_alert_tick = last_driving_alert_tick
+      storage.players[pindex].last_driving_alert_ent = nearest
       --Draw a circle around the nearest confirmed beeping entity
       rendering.draw_circle({
          color = { 1.0, 0.4, 0.2 },
