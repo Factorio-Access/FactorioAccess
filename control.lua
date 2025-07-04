@@ -539,7 +539,7 @@ read_tile_inner = function(pindex, start_text)
          if PlayerMiningTools.try_to_mine_with_soun(ent, pindex) then result = result .. name .. " mined, " end
          --Second round, in case two entities are there. While loops do not work!
          ent = EntitySelection.get_first_ent_at_tile(pindex)
-         if ent and ent.valid and storage.players[pindex].walk ~= Consts.Consts.WALKING.SMOOTH then --not while
+         if ent and ent.valid then --not while
             local name = ent.name
             game.get_player(pindex).play_sound({ path = "player-mine" })
             if PlayerMiningTools.try_to_mine_with_soun(ent, pindex) then result = result .. name .. " mined, " end
@@ -585,8 +585,7 @@ function initialize(player)
    faplayer.num_elements = faplayer.num_elements or 0
    faplayer.player_direction = faplayer.player_direction or character.walking_state.direction
    faplayer.position = faplayer.position or FaUtils.center_of_tile(character.position)
-   faplayer.walk = faplayer.walk or WALKING.SMOOTH
-   faplayer.move_queue = faplayer.move_queue or {}
+   faplayer.walk = faplayer.walk or Consts.WALKING.SMOOTH
    faplayer.building_direction = faplayer.building_direction or dirs.north --top
 
    if type(faplayer.building_footprint) == "number" then faplayer.building_footprint = nil end
@@ -817,91 +816,89 @@ EventManager.on_event(defines.events.on_player_changed_position, function(event)
 
    local p = game.get_player(pindex)
    if not check_for_player(pindex) then return end
-   if storage.players[pindex].walk == Consts.WALKING.SMOOTH then
-      storage.players[pindex].position = p.position
-      local pos = p.position
-      local vp = Viewpoint.get_viewpoint(pindex)
-      local cursor_enabled = vp:get_cursor_enabled()
-      if p.walking_state.direction ~= storage.players[pindex].player_direction and cursor_enabled == false then
-         --Directions mismatch. Turn to new direction --turn (Note, this code handles diagonal turns and other direction changes)
-         if p.character ~= nil then
-            storage.players[pindex].player_direction = p.character.direction
-         else
-            storage.players[pindex].player_direction = p.walking_state.direction
-            if p.walking_state.direction == nil then storage.players[pindex].player_direction = dirs.north end
-         end
-         local new_pos = (FaUtils.offset_position_legacy(pos, storage.players[pindex].player_direction, 1.0))
-         vp:set_cursor_pos(new_pos)
+   storage.players[pindex].position = p.position
+   local pos = p.position
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_enabled = vp:get_cursor_enabled()
+   if p.walking_state.direction ~= storage.players[pindex].player_direction and cursor_enabled == false then
+      --Directions mismatch. Turn to new direction --turn (Note, this code handles diagonal turns and other direction changes)
+      if p.character ~= nil then
+         storage.players[pindex].player_direction = p.character.direction
+      else
+         storage.players[pindex].player_direction = p.walking_state.direction
+         if p.walking_state.direction == nil then storage.players[pindex].player_direction = dirs.north end
+      end
+      local new_pos = (FaUtils.offset_position_legacy(pos, storage.players[pindex].player_direction, 1.0))
+      vp:set_cursor_pos(new_pos)
 
-         --Build lock building + rotate belts in hand unless cursor mode
+      --Build lock building + rotate belts in hand unless cursor mode
+      local stack = p.cursor_stack
+      if
+         storage.players[pindex].build_lock
+         and stack.valid_for_read
+         and stack.valid
+         and stack.prototype.place_result ~= nil
+         and (stack.prototype.place_result.type == "transport-belt" or stack.name == "rail")
+      then
+         turn_to_cursor_direction_cardinal(pindex)
+         storage.players[pindex].building_direction = storage.players[pindex].player_direction
+         BuildingTools.build_item_in_hand(pindex) --build extra belt when turning
+      end
+   elseif cursor_enabled == false then
+      --Directions same: Walk straight
+      local new_pos = (FaUtils.offset_position_legacy(pos, storage.players[pindex].player_direction, 1))
+      vp:set_cursor_pos(new_pos)
+
+      --Build lock building + rotate belts in hand unless cursor mode
+      if storage.players[pindex].build_lock then
          local stack = p.cursor_stack
-         if
-            storage.players[pindex].build_lock
-            and stack.valid_for_read
-            and stack.valid
-            and stack.prototype.place_result ~= nil
-            and (stack.prototype.place_result.type == "transport-belt" or stack.name == "rail")
-         then
-            turn_to_cursor_direction_cardinal(pindex)
-            storage.players[pindex].building_direction = storage.players[pindex].player_direction
-            BuildingTools.build_item_in_hand(pindex) --build extra belt when turning
-         end
-      elseif cursor_enabled == false then
-         --Directions same: Walk straight
-         local new_pos = (FaUtils.offset_position_legacy(pos, storage.players[pindex].player_direction, 1))
-         vp:set_cursor_pos(new_pos)
-
-         --Build lock building + rotate belts in hand unless cursor mode
-         if storage.players[pindex].build_lock then
-            local stack = p.cursor_stack
-            if stack and stack.valid_for_read and stack.valid then
-               if stack.prototype.place_result ~= nil and stack.prototype.place_result.type == "transport-belt" then
-                  turn_to_cursor_direction_cardinal(pindex)
-                  storage.players[pindex].building_direction = storage.players[pindex].player_direction
-               end
-               BuildingTools.build_item_in_hand(pindex)
+         if stack and stack.valid_for_read and stack.valid then
+            if stack.prototype.place_result ~= nil and stack.prototype.place_result.type == "transport-belt" then
+               turn_to_cursor_direction_cardinal(pindex)
+               storage.players[pindex].building_direction = storage.players[pindex].player_direction
             end
+            BuildingTools.build_item_in_hand(pindex)
          end
       end
+   end
 
-      --Update cursor graphics
-      local stack = p.cursor_stack
-      if stack and stack.valid_for_read and stack.valid then Graphics.sync_build_cursor_graphics(pindex) end
+   --Update cursor graphics
+   local stack = p.cursor_stack
+   if stack and stack.valid_for_read and stack.valid then Graphics.sync_build_cursor_graphics(pindex) end
 
-      --Name a detected entity that you can or cannot walk on, or a tile you cannot walk on, and play a sound to indicate multiple consecutive detections
-      EntitySelection.refresh_player_tile(pindex)
-      local ent = EntitySelection.get_first_ent_at_tile(pindex)
+   --Name a detected entity that you can or cannot walk on, or a tile you cannot walk on, and play a sound to indicate multiple consecutive detections
+   EntitySelection.refresh_player_tile(pindex)
+   local ent = EntitySelection.get_first_ent_at_tile(pindex)
+   if
+      not storage.players[pindex].vanilla_mode
+      and (
+         (ent ~= nil and ent.valid)
+         or (p.surface.can_place_entity({ name = "character", position = vp:get_cursor_pos() }) == false)
+      )
+   then
+      Graphics.draw_cursor_highlight(pindex, ent, nil)
+      if p.driving then return end
+
       if
-         not storage.players[pindex].vanilla_mode
-         and (
-            (ent ~= nil and ent.valid)
-            or (p.surface.can_place_entity({ name = "character", position = vp:get_cursor_pos() }) == false)
-         )
+         ent ~= nil
+         and ent.valid
+         and (p.character == nil or (p.character ~= nil and p.character.unit_number ~= ent.unit_number))
       then
          Graphics.draw_cursor_highlight(pindex, ent, nil)
-         if p.driving then return end
-
-         if
-            ent ~= nil
-            and ent.valid
-            and (p.character == nil or (p.character ~= nil and p.character.unit_number ~= ent.unit_number))
-         then
-            Graphics.draw_cursor_highlight(pindex, ent, nil)
-            p.selected = ent
-            p.play_sound({ path = "Close-Inventory-Sound", volume_modifier = 0.75 })
-         else
-            Graphics.draw_cursor_highlight(pindex, nil, nil)
-            p.selected = nil
-         end
-
-         read_tile(pindex)
+         p.selected = ent
+         p.play_sound({ path = "Close-Inventory-Sound", volume_modifier = 0.75 })
       else
          Graphics.draw_cursor_highlight(pindex, nil, nil)
          p.selected = nil
       end
-      --Play a sound for audio ruler alignment (smooth walk)
-      if not router:is_ui_open() then Rulers.update_from_cursor(pindex) end
+
+      read_tile(pindex)
+   else
+      Graphics.draw_cursor_highlight(pindex, nil, nil)
+      p.selected = nil
    end
+   --Play a sound for audio ruler alignment (smooth walk)
+   if not router:is_ui_open() then Rulers.update_from_cursor(pindex) end
 end)
 
 --Calls the appropriate menu movement function for a player and the input direction.
@@ -1678,33 +1675,6 @@ local function move_characters(event)
                --Force the pointer to the cursor location (if on screen)
                Mouse.move_mouse_pointer(vp:get_cursor_pos(), pindex)
             end
-         end
-      end
-
-      if player.walk ~= Consts.WALKING.SMOOTH or vp:get_cursor_enabled() or router:is_ui_open() then
-         local walk = false
-         while #player.move_queue > 0 do
-            local next_move = player.move_queue[1]
-            player.player.walking_state = { walking = true, direction = next_move.direction }
-            if next_move.direction == defines.direction.north then
-               walk = player.player.position.y > next_move.dest.y
-            elseif next_move.direction == defines.direction.south then
-               walk = player.player.position.y < next_move.dest.y
-            elseif next_move.direction == defines.direction.east then
-               walk = player.player.position.x < next_move.dest.x
-            elseif next_move.direction == defines.direction.west then
-               walk = player.player.position.x > next_move.dest.x
-            end
-
-            if walk then
-               break
-            else
-               table.remove(player.move_queue, 1)
-            end
-         end
-         if not walk and KruiseKontrol.is_active(pindex) ~= true then
-            player.player.walking_state = { walking = true, direction = player.player_direction }
-            player.player.walking_state = { walking = false }
          end
       end
    end
@@ -2486,7 +2456,6 @@ EventManager.on_event(defines.events.on_gui_closed, function(event)
    if not check_for_player(pindex) then return end
 
    --Other resets
-   storage.players[pindex].move_queue = {}
    if router:is_ui_open() and not router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then
       if router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
          game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" })
@@ -2510,11 +2479,8 @@ function fix_walk(pindex)
    if not check_for_player(pindex) then return end
    local player = game.get_player(pindex)
    if not player.character then return end
-   if storage.players[pindex].walk == Consts.WALKING.TELESTEP and KruiseKontrol.is_active(pindex) ~= true then
-      player.character_running_speed_modifier = -1 -- 100% - 100% = 0%
-   else --walk > 0
-      player.character_running_speed_modifier = 0 -- 100% + 0 = 100%
-   end
+   -- Always use normal walking speed
+   player.character_running_speed_modifier = 0 -- 100% + 0 = 100%
    storage.players[pindex].position = player.position
 end
 
@@ -2864,7 +2830,6 @@ EventManager.on_event(defines.events.on_gui_opened, function(event)
 
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
-   storage.players[pindex].move_queue = {}
 
    --Stop any enabled mouse entity selection
    if storage.players[pindex].vanilla_mode ~= true then
@@ -3605,23 +3570,18 @@ local function move(direction, pindex, nudged)
 
    --Compare the input direction and facing direction
    if storage.players[pindex].player_direction == direction or nudged == true then
-      --Same direction or nudging: Move character (unless smooth walking):
-      if storage.players[pindex].walk == Consts.WALKING.SMOOTH and nudged ~= true then return end
+      --Same direction or nudging: For smooth walking, just return as Factorio handles movement
+      if nudged ~= true then return end
       new_pos = FaUtils.center_of_tile(new_pos)
       can_port = first_player.surface.can_place_entity({ name = "character", position = new_pos })
       if can_port then
-         if storage.players[pindex].walk == Consts.WALKING.STEP_BY_WALK and nudged ~= true then
-            table.insert(storage.players[pindex].move_queue, { direction = direction, dest = new_pos })
-            moved_success = true
+         --If nudged then teleport now
+         teleported = first_player.teleport(new_pos)
+         if not teleported then
+            printout("Teleport Failed", pindex)
+            moved_success = false
          else
-            --If telestep or nudged then teleport now
-            teleported = first_player.teleport(new_pos)
-            if not teleported then
-               printout("Teleport Failed", pindex)
-               moved_success = false
-            else
-               moved_success = true
-            end
+            moved_success = true
          end
          storage.players[pindex].position = new_pos
          if nudged ~= true then
@@ -3659,14 +3619,7 @@ local function move(direction, pindex, nudged)
       --Play a sound for audio ruler alignment (telestep moved)
       if not router:is_ui_open() then Rulers.update_from_cursor(pindex) end
    else
-      --New direction: Turn character: --turn
-      if storage.players[pindex].walk == Consts.WALKING.TELESTEP then
-         new_pos = FaUtils.center_of_tile(new_pos)
-         game.get_player(pindex).play_sound({ path = "player-turned" })
-      elseif storage.players[pindex].walk == Consts.WALKING.STEP_BY_WALK then
-         new_pos = FaUtils.center_of_tile(new_pos)
-         table.insert(storage.players[pindex].move_queue, { direction = direction, dest = pos })
-      end
+      --New direction: Turn character for smooth walking
       storage.players[pindex].player_direction = direction
       vp:set_cursor_pos(new_pos)
       moved_success = true
@@ -3676,24 +3629,20 @@ local function move(direction, pindex, nudged)
          Graphics.sync_build_cursor_graphics(pindex)
       end
 
-      if storage.players[pindex].walk ~= Consts.WALKING.SMOOTH then
+      --Read the new entity or unwalkable surface found upon turning
+      EntitySelection.refresh_player_tile(pindex)
+      local ent = EntitySelection.get_first_ent_at_tile(pindex)
+      if
+         not storage.players[pindex].vanilla_mode
+         and (
+            (ent ~= nil and ent.valid)
+            or not game
+               .get_player(pindex).surface
+               .can_place_entity({ name = "character", position = vp:get_cursor_pos() })
+         )
+      then
+         target_mouse_pointer_deprecated(pindex)
          read_tile(pindex)
-      elseif storage.players[pindex].walk == Consts.WALKING.SMOOTH then
-         --Read the new entity or unwalkable surface found upon turning
-         EntitySelection.refresh_player_tile(pindex)
-         local ent = EntitySelection.get_first_ent_at_tile(pindex)
-         if
-            not storage.players[pindex].vanilla_mode
-            and (
-               (ent ~= nil and ent.valid)
-               or not game
-                  .get_player(pindex).surface
-                  .can_place_entity({ name = "character", position = vp:get_cursor_pos() })
-            )
-         then
-            target_mouse_pointer_deprecated(pindex)
-            read_tile(pindex)
-         end
       end
 
       --Rotate belts in hand for build lock Mode
@@ -5114,10 +5063,7 @@ EventManager.on_event("fa-i", function(event)
    local router = UiRouter.get_router(pindex)
 
    if not check_for_player(pindex) then return end
-   if not router:is_ui_open() then
-      storage.players[pindex].move_queue = {}
-      toggle_cursor_mode(pindex, false)
-   end
+   if not router:is_ui_open() then toggle_cursor_mode(pindex, false) end
 end)
 
 ---Valid cursor sizes
@@ -5188,7 +5134,6 @@ EventManager.on_event("fa-a-i", function(event)
    local router = UiRouter.get_router(pindex)
 
    if not check_for_player(pindex) or router:is_ui_open() then return end
-   storage.players[pindex].move_queue = {}
    toggle_remote_view(pindex)
 end)
 
@@ -5473,7 +5418,6 @@ local function kb_close_menu(event)
    local pindex = event.player_index
    local tick = event.tick
    local router = UiRouter.get_router(pindex)
-   storage.players[pindex].move_queue = {}
 
    if not router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then
       printout("Menu closed.", pindex)
@@ -7838,12 +7782,6 @@ EventManager.on_event("fa-f1", function(event)
    printout("Saving Game, please wait 3 seconds.", pindex)
 end)
 
-local walk_type_speech = {
-   "Telestep enabled",
-   "Step by walk enabled",
-   "Walking smoothly enabled",
-}
-
 ---@param event EventData.CustomInputEvent
 local function kb_honk(event)
    local vehicle = game.get_player(event.player_index).vehicle
@@ -7856,40 +7794,12 @@ local function kb_honk(event)
    end
 end
 
----Dead code; intentionally left so walking mode can be toggled until fully removed
----as some saves may be in different toggle states.
----@param event EventData.CustomInputEvent
-local function kb_toggle_walking_mode(event)
-   local pindex = event.player_index
-   local p = game.get_player(pindex)
-   reset_bump_stats(pindex)
-   storage.players[pindex].move_queue = {}
-   if p.character == nil then return end
-   if storage.players[pindex].walk == Consts.WALKING.TELESTEP then
-      storage.players[pindex].walk = Consts.WALKING.SMOOTH
-      p.character_running_speed_modifier = 0 -- 100% + 0 = 100%
-   elseif storage.players[pindex].walk == Consts.WALKING.SMOOTH then
-      storage.players[pindex].walk = Consts.WALKING.TELESTEP
-      p.character_running_speed_modifier = -1 -- 100% - 100% = 0%
-   else
-      -- Mode 1 (STEP_BY_WALK) is disabled for now
-      storage.players[pindex].walk = Consts.WALKING.SMOOTH
-      p.character_running_speed_modifier = 0 -- 100% + 0 = 100%
-   end
-   --storage.players[pindex].walk = (storage.players[pindex].walk + 1) % 3
-   printout(walk_type_speech[storage.players[pindex].walk + 1], pindex)
-end
-
 ---@param event EventData.CustomInputEvent
 EventManager.on_event("fa-a-w", function(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
    local p = game.get_player(pindex)
-   if p.driving == true and p.vehicle and p.vehicle.valid then
-      kb_honk(event)
-   else
-      kb_toggle_walking_mode(event)
-   end
+   if p.driving == true and p.vehicle and p.vehicle.valid then kb_honk(event) end
 end)
 
 ---@param event EventData.CustomInputEvent
@@ -8245,7 +8155,6 @@ local function kb_open_warnings_menu(event)
       storage.players[pindex].warnings.sector = 1
       storage.players[pindex].category = 1
       router:open_ui(UiRouter.UI_NAMES.WARNINGS)
-      storage.players[pindex].move_queue = {}
       game.get_player(pindex).selected = nil
       game.get_player(pindex).play_sound({ path = "Open-Inventory-Sound" })
       printout({ "fa.warnings-menu-short-range", storage.players[pindex].warnings.short.summary }, pindex)

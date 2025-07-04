@@ -116,9 +116,8 @@ mod.ENT_TYPES_YOU_CAN_BUILD_OVER = {
 mod.EXCLUDED_ENT_NAMES = { "highlight-box" }
 
 -- Walking mode enumerations
+-- Only smooth walking is supported
 mod.WALKING = {
-   TELESTEP = 0,
-   STEP_BY_WALK = 1,
    SMOOTH = 2,
 }
 
