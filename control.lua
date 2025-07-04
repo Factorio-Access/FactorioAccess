@@ -149,7 +149,8 @@ function read_inventory_slot(pindex, start_phrase_in, inv_in)
       --Label it as an empty slot
       result = result .. "Empty Slot"
       --Check if the empty slot has a filter set
-      local filter_name = Filters.get_filter_prototype(p.get_main_inventory(), index)
+      local main_inv = p.get_main_inventory()
+      local filter_name = main_inv and Filters.get_filter_prototype(main_inv, index) or nil
       if filter_name ~= nil then
          result = result .. " filtered for " .. filter_name --laterdo localise this name
       end
@@ -162,7 +163,8 @@ function read_inventory_slot(pindex, start_phrase_in, inv_in)
       printout(Blueprints.get_blueprint_book_info(stack, false), pindex)
    elseif stack.valid_for_read then
       --Check if the slot is filtered
-      local filter_name = Filters.get_filter_prototype(p.get_main_inventory(), index)
+      local main_inv = p.get_main_inventory()
+      local filter_name = main_inv and Filters.get_filter_prototype(main_inv, index) or nil
       if filter_name ~= nil then result = result .. " filtered " end
       --Check if the stack has damage
       if stack.health < 1 then result = result .. " damaged " end
@@ -382,7 +384,8 @@ end
 --Checks if the storage players table has been created, and if the table entry for this player exists. Otherwise it is initialized.
 function check_for_player(index)
    if storage.players[index] == nil then
-      PlayerInit.initialize(game.get_player(index))
+      local player = game.get_player(index)
+      if player then PlayerInit.initialize(player) end
       return false
    else
       return true
@@ -1542,7 +1545,7 @@ EventManager.on_event(defines.events.on_player_driving_changed_state, function(e
    local router = UiRouter.get_router(pindex)
 
    if not check_for_player(pindex) then return end
-   reset_bump_stats(pindex)
+   BumpDetection.reset_bump_stats(pindex)
    game.get_player(pindex).clear_cursor()
    storage.players[pindex].last_train_orientation = nil
    if game.get_player(pindex).driving then
@@ -1855,11 +1858,11 @@ function clicked_on_entity(ent, pindex)
       local silo = ent.surface.get_closest(ent.position, silos)
       if silo and silo.valid then BuildingVehicleSectors.open_operable_building(silo, pindex) end
    elseif ent.operable then
-      printout({ "fa.no-menu-for", Localising.get_localised_name_with_fallback(ent) }, pindex)
+      if ent then printout({ "fa.no-menu-for", Localising.get_localised_name_with_fallback(ent) }, pindex) end
    elseif ent.type == "resource" and ent.name ~= "crude-oil" and ent.name ~= "uranium-ore" then
-      printout({ "fa.no-menu-for-mineable", Localising.get_localised_name_with_fallback(ent) }, pindex)
+      if ent then printout({ "fa.no-menu-for-mineable", Localising.get_localised_name_with_fallback(ent) }, pindex) end
    else
-      printout({ "fa.no-menu-for", Localising.get_localised_name_with_fallback(ent) }, pindex)
+      if ent then printout({ "fa.no-menu-for", Localising.get_localised_name_with_fallback(ent) }, pindex) end
    end
 end
 
@@ -5816,7 +5819,11 @@ local function kb_click_hand(event)
       --If holding an item with no special left click actions, allow entity left click actions.
       clicked_on_entity(ent, pindex)
    else
-      printout({ "fa.no-actions-for-item", Localising.get_localised_name_with_fallback(stack) }, pindex)
+      if stack then
+         printout({ "fa.no-actions-for-item", Localising.get_localised_name_with_fallback(stack) }, pindex)
+      else
+         printout({ "fa.no-actions-for-item", "empty hand" }, pindex)
+      end
    end
 end
 

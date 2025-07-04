@@ -493,7 +493,7 @@ function mod.logistics_info_key_handler(pindex)
       local filter = ent.storage_filter
       local result
       if filter ~= nil then
-         result = { "", Localising.get_localised_name_with_fallback(filter.name), " set as logistic storage filter" }
+         result = { "", Localising.get_localised_name_with_fallback(filter), " set as logistic storage filter" }
       else
          result = { "", "Nothing set as logistic storage filter" }
       end

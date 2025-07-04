@@ -5,6 +5,7 @@ local Mouse = require("scripts.mouse")
 local Teleport = require("scripts.teleport")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
+local EntitySelection = require("scripts.entity-selection")
 
 local mod = {}
 local TRAVEL_MENU_LENGTH = 8
@@ -100,7 +101,7 @@ function mod.fast_travel_menu_click(pindex)
       Graphics.sync_build_cursor_graphics(pindex)
       game.get_player(pindex).opened = nil
 
-      if not refresh_player_tile(pindex) then
+      if not EntitySelection.refresh_player_tile(pindex) then
          printout({ "fa.travel-tile-out-of-range" }, pindex)
          return
       end

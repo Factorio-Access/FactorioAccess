@@ -127,7 +127,8 @@ function mod.run_train_stop_menu(menu_index, pindex, clicked, other_input)
          local result = mod.nearby_train_schedule_add_stop(
             train_stop,
             storage.players[pindex].train_stop_menu.wait_condition,
-            storage.players[pindex].train_stop_menu.wait_time_seconds
+            storage.players[pindex].train_stop_menu.wait_time_seconds,
+            pindex
          )
          printout(result, pindex)
       end
@@ -304,7 +305,7 @@ end
 
 --Returns an info string after adding this train stop to the parked train.
 --NOTE: This function is effectively dead code - trains functionality is not currently active
-function mod.nearby_train_schedule_add_stop(train_stop, wait_condition_type, wait_time_seconds)
+function mod.nearby_train_schedule_add_stop(train_stop, wait_condition_type, wait_time_seconds, pindex)
    local result = "initial"
    --Locate the nearby train
    local train = train_stop.get_stopped_train()

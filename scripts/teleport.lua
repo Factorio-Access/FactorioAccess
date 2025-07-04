@@ -5,6 +5,7 @@ local Mouse = require("scripts.mouse")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
 local MessageBuilder = require("scripts.message-builder")
+local BumpDetection = require("scripts.bump-detection")
 
 local mod = {}
 
@@ -106,7 +107,7 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
       if teleported then
          char.force.chart(char.surface, { { new_pos.x - 15, new_pos.y - 15 }, { new_pos.x + 15, new_pos.y + 15 } })
          storage.players[pindex].position = table.deepcopy(new_pos)
-         reset_bump_stats(pindex)
+         BumpDetection.reset_bump_stats(pindex)
          if not muted then
             --Draw teleporting visuals at target
             rendering.draw_circle({
