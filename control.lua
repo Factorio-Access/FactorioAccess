@@ -9,6 +9,7 @@ local logger = Logging.Logger("control")
 
 local util = require("util")
 
+local AudioCues = require("scripts.audio-cues")
 local Blueprints = require("scripts.blueprints")
 local BuildingTools = require("scripts.building-tools")
 local BuildingVehicleSectors = require("scripts.building-vehicle-sectors")
@@ -28,6 +29,7 @@ local FaUtils = require("scripts.fa-utils")
 local F = require("scripts.field-ref")
 local Filters = require("scripts.filters")
 local Graphics = require("scripts.graphics")
+local ItemDescriptions = require("scripts.item-descriptions")
 local KruiseKontrol = require("scripts.kruise-kontrol-wrapper")
 local Localising = require("scripts.localising")
 local MenuSearch = require("scripts.menu-search")
@@ -793,6 +795,20 @@ function initialize(player)
    faplayer.localisations = faplayer.localisations or {}
    faplayer.translation_id_lookup = faplayer.translation_id_lookup or {}
    Localising.check_player(player.index)
+
+   faplayer.bump = faplayer.bump
+      or {
+         last_bump_tick = 1, --Updated in bump checker
+         last_dir_key_tick = 1, --Updated in key press handlers
+         last_dir_key_1st = nil, --Updated in key press handlers
+         last_dir_key_2nd = nil, --Updated in key press handlers
+         last_pos_1 = nil, --Updated in bump checker
+         last_pos_2 = nil, --Updated in bump checker
+         last_pos_3 = nil, --Updated in bump checker
+         last_pos_4 = nil, --Updated in bump checker
+         last_dir_2 = nil, --Updated in bump checker
+         last_dir_1 = nil, --Updated in bump checker
+      }
 end
 
 --Update the position info and cursor info during smooth walking.
@@ -1678,37 +1694,15 @@ function on_tick(event)
    end
    move_characters(event)
 
+   -- Check alerts via AudioCues
+   AudioCues.check_cues(event.tick, players)
+
    --The elseifs can schedule up to 16 events.
    if event.tick % 15 == 0 then
       for pindex, player in pairs(players) do
          --Bump checks
          BumpDetection.check_and_play_bump_alert_sound(pindex, event.tick)
          BumpDetection.check_and_play_stuck_alert_sound(pindex, event.tick)
-      end
-   elseif event.tick % 15 == 1 then
-      --Check and play train track warning sounds at appropriate frequencies
-      Rails.check_and_play_train_track_alert_sounds(3)
-      Combat.check_and_play_enemy_alert_sound(3)
-      if event.tick % 30 == 1 then
-         Rails.check_and_play_train_track_alert_sounds(2)
-         Combat.check_and_play_enemy_alert_sound(2)
-         if event.tick % 60 == 1 then
-            Rails.check_and_play_train_track_alert_sounds(1)
-            Combat.check_and_play_enemy_alert_sound(1)
-         end
-      end
-   elseif event.tick % 15 == 2 then
-      for pindex, player in pairs(players) do
-         local check_further = Driving.check_and_play_driving_alert_sound(pindex, event.tick, 1)
-         if event.tick % 30 == 2 and check_further then
-            check_further = Driving.check_and_play_driving_alert_sound(pindex, event.tick, 2)
-            if event.tick % 60 == 2 and check_further then
-               check_further = Driving.check_and_play_driving_alert_sound(pindex, event.tick, 3)
-               if event.tick % 120 == 2 and check_further then
-                  check_further = Driving.check_and_play_driving_alert_sound(pindex, event.tick, 4)
-               end
-            end
-         end
       end
    elseif event.tick % 15 == 3 then
       --Adjust camera if in remote view
@@ -1722,35 +1716,9 @@ function on_tick(event)
             storage.players[pindex].closed_map_count = storage.players[pindex].closed_map_count + 1
          end
       end
-   elseif event.tick % 30 == 6 then
-      --Check and play train horns
-      for pindex, player in pairs(players) do
-         Trains.check_and_honk_at_trains_in_same_block(event.tick, pindex)
-         Trains.check_and_honk_at_closed_signal(event.tick, pindex)
-         Trains.check_and_play_sound_for_turning_trains(pindex)
-      end
    elseif event.tick % 30 == 7 then
       --Update menu visuals
       Graphics.update_menu_visuals()
-   elseif event.tick % 30 == 8 then
-      --Play a sound for any player who is mining
-      for pindex, player in pairs(players) do
-         if game.get_player(pindex) ~= nil and game.get_player(pindex).mining_state.mining == true then
-            PlayerMiningTools.play_mining_sound(pindex)
-         end
-      end
-   elseif event.tick % 60 == 11 then
-      for pindex, player in pairs(players) do
-         --If within 50 tiles of an enemy, try to aim at enemies and play sound to notify of enemies within shooting range
-         local p = game.get_player(pindex)
-         local enemy = p.surface.find_nearest_enemy({ position = p.position, max_distance = 50, force = p.force })
-         if enemy ~= nil and enemy.valid then Combat.aim_gun_at_nearest_enemy(pindex, enemy) end
-
-         --If crafting, play a sound
-         if p.character and p.crafting_queue ~= nil and #p.crafting_queue > 0 and p.crafting_queue_size > 0 then
-            p.play_sound({ path = "player-crafting", volume_modifier = 0.5 })
-         end
-      end
    elseif event.tick % 90 == 13 then
       for pindex, player in pairs(players) do
          --Fix running speed bug (toggle walk also fixes it)
@@ -1831,7 +1799,7 @@ EventManager.on_event(defines.events.on_player_driving_changed_state, function(e
    local router = UiRouter.get_router(pindex)
 
    if not check_for_player(pindex) then return end
-   BumpDetection.reset_bump_stats(pindex)
+   reset_bump_stats(pindex)
    game.get_player(pindex).clear_cursor()
    storage.players[pindex].last_train_orientation = nil
    if game.get_player(pindex).driving then
@@ -2407,6 +2375,7 @@ EventManager.on_init(function()
    if skip_intro_message then remote.call("freeplay", "set_skip_intro", true) end
    ensure_storage_structures_are_up_to_date()
    TestFramework.on_init()
+   AudioCues.on_init()
 end)
 
 EventManager.on_event(defines.events.on_cutscene_cancelled, function(event)
@@ -3150,6 +3119,7 @@ EventManager.on_event(defines.events.on_player_respawned, function(event)
    vp:set_cursor_pos({ x = position.x, y = position.y })
 end)
 
+--If the player has unexpected lateral movement while smooth running in a cardinal direction, like from bumping into an entity or being at the edge of water, play a sound.
 
 function all_ents_are_walkable(pos)
    local ents = game.surfaces[1].find_entities_filtered({
@@ -3502,7 +3472,10 @@ local function move_key(direction, event, force_single_tile)
    storage.players[pindex].confirm_action_tick = 0
 
    --Save the key press event
-   BumpDetection.update_last_direction_key(event.player_index, direction, event.tick)
+   local pex = storage.players[event.player_index]
+   pex.bump.last_dir_key_2nd = pex.bump.last_dir_key_1st
+   pex.bump.last_dir_key_1st = direction
+   pex.bump.last_dir_key_tick = event.tick
 
    if router:is_ui_open() and not router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then
       -- Menus: move menu cursor
@@ -7269,154 +7242,6 @@ EventManager.on_event("fa-cs-r", function(event)
    end
 end)
 
----@param event EventData.CustomInputEvent
-local function kb_item_info(event)
-   local pindex = event.player_index
-   local router = UiRouter.get_router(pindex)
-   local p = game.get_player(pindex)
-   local hand = p.cursor_stack
-   if p.driving and not router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
-      printout(Driving.vehicle_info(pindex), pindex)
-      return
-   end
-   local offset = 0
-   if
-      router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
-      and storage.players[pindex].building.recipe_list ~= nil
-   then
-      offset = 1
-   end
-   if not router:is_ui_open() then
-      local ent = p.selected
-      if ent and ent.valid then
-         local str = ent.localised_description
-         if str == nil or str == "" then str = "No description for this entity" end
-         printout(str, pindex)
-      elseif hand and hand.valid_for_read then
-         ---@type LocalisedString
-         local str = ""
-         if hand.prototype.place_result ~= nil then
-            str = hand.prototype.place_result.localised_description
-         else
-            str = hand.prototype.localised_description
-         end
-         if str == nil or str == "" then str = "No description" end
-         printout(str, pindex)
-         local result = { "" }
-         table.insert(result, "In hand: ")
-         table.insert(result, str)
-         printout(result, pindex)
-      else
-         printout("Nothing selected, use this key to describe an entity or item that you select.", pindex)
-      end
-   elseif router:is_ui_open() then
-      if
-         router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.PLAYER_TRASH })
-         or (
-            router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
-            and storage.players[pindex].building.sector > offset + #storage.players[pindex].building.sectors
-         )
-      then
-         local stack = storage.players[pindex].inventory.lua_inventory[storage.players[pindex].inventory.index]
-         if router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
-            stack = p.get_inventory(defines.inventory.character_trash)[storage.players[pindex].inventory.index]
-         end
-         if stack and stack.valid_for_read and stack.valid == true then
-            local str = ""
-            if stack.prototype.place_result ~= nil then
-               str = stack.prototype.place_result.localised_description
-            else
-               str = stack.prototype.localised_description
-            end
-            if str == nil or str == "" then str = "No description" end
-            printout(str, pindex)
-         else
-            printout("No description", pindex)
-         end
-      elseif router:is_ui_open(UiRouter.UI_NAMES.GUNS) then
-         local stack = Equipment.guns_menu_get_selected_slot(pindex)
-         if stack and stack.valid_for_read then
-            str = stack.prototype.localised_description
-            if str == nil or str == "" then str = "No description" end
-            printout(str, pindex)
-         else
-            printout("No description", pindex)
-         end
-      elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
-         Research.menu_describe(pindex)
-      elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
-         local recipe =
-            storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index]
-         if recipe ~= nil and #recipe.products > 0 then
-            local product_name = recipe.products[1].name
-            ---@type LuaItemPrototype | LuaFluidPrototype
-            local product = prototypes.item[product_name]
-            local product_is_item = true
-            if product == nil then
-               product = prototypes.fluid[product_name]
-               product_is_item = false
-            elseif product_name == "empty-barrel" and recipe.products[2] ~= nil then
-               product_name = recipe.products[2].name
-               product = prototypes.fluid[product_name]
-               product_is_item = false
-            end
-            ---@type LocalisedString
-            local str = ""
-            if product_is_item and product.place_result ~= nil then
-               str = product.place_result.localised_description
-            else
-               str = product.localised_description
-            end
-            if str == nil or str == "" then str = "No description found for this" end
-            printout(str, pindex)
-         else
-            printout("No description found, menu error", pindex)
-         end
-      elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-         if storage.players[pindex].building.recipe_selection then
-            local recipe =
-               storage.players[pindex].building.recipe_list[storage.players[pindex].building.category][storage.players[pindex].building.index]
-            if recipe ~= nil and #recipe.products > 0 then
-               local product_name = recipe.products[1].name
-               local product = prototypes.item[product_name] or prototypes.fluid[product_name]
-               local str = product.localised_description
-               if str == nil or str == "" then str = "No description found for this" end
-               printout(str, pindex)
-            else
-               printout("No description found, menu error", pindex)
-            end
-         elseif storage.players[pindex].building.sector <= #storage.players[pindex].building.sectors then
-            local inventory =
-               storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory
-            if inventory == nil or not inventory.valid then printout("No description found, menu error", pindex) end
-            if
-               storage.players[pindex].building.sectors[storage.players[pindex].building.sector].name ~= "Fluid"
-               and storage.players[pindex].building.sectors[storage.players[pindex].building.sector].name ~= "Filters"
-               and inventory.is_empty()
-            then
-               printout("No description found, menu error", pindex)
-               return
-            end
-            local stack = inventory[storage.players[pindex].building.index]
-            if stack and stack.valid_for_read and stack.valid == true then
-               local str = ""
-               if stack.prototype.place_result ~= nil then
-                  str = stack.prototype.place_result.localised_description
-               else
-                  str = stack.prototype.localised_description
-               end
-               if str == nil or str == "" then str = "No description found for this item" end
-               printout(str, pindex)
-            else
-               printout("No description found, menu error", pindex)
-            end
-         end
-      else --Another menu
-         printout("Descriptions are not supported for this menu.", pindex)
-      end
-   end
-end
-
 --Reads the custom info for an item selected. If you are driving, it returns custom vehicle info
 ---@param event EventData.CustomInputEvent
 EventManager.on_event("fa-y", function(event)
@@ -7424,26 +7249,10 @@ EventManager.on_event("fa-y", function(event)
    local router = UiRouter.get_router(pindex)
 
    if not check_for_player(pindex) then return end
-   kb_item_info(event)
+   ItemDescriptions.read_item_info(event)
 end)
 
 ---@param event EventData.CustomInputEvent
-local function kb_item_info_last_indexed(event)
-   local pindex = event.player_index
-   local router = UiRouter.get_router(pindex)
-   if router:is_ui_open() then
-      printout("Error: Cannot check scanned item descriptions while in a menu", pindex)
-      return
-   end
-   local ent = storage.players[pindex].last_indexed_ent
-   if ent == nil or not ent.valid then
-      printout("No description, note that most resources need to be examined from up close", pindex) --laterdo find a workaround for aggregate ents
-      return
-   end
-   local str = ent.localised_description
-   if str == nil or str == "" then str = "No description found for this entity" end
-   printout(str, pindex)
-end
 
 --Reads the custom info for the last indexed scanner item
 ---@param event EventData.CustomInputEvent
@@ -7452,7 +7261,7 @@ EventManager.on_event("fa-s-y", function(event)
    local router = UiRouter.get_router(pindex)
 
    if not check_for_player(pindex) then return end
-   kb_item_info_last_indexed(event)
+   ItemDescriptions.read_last_indexed_item_info(event)
 end)
 
 --Read production statistics info for the selected item, in the hand or else selected in the inventory menu
