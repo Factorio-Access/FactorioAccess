@@ -37,6 +37,7 @@ local Localising = require("scripts.localising")
 local MenuSearch = require("scripts.menu-search")
 local MessageBuilder = require("scripts.message-builder")
 local Mouse = require("scripts.mouse")
+local PlayerInit = require("scripts.player-init")
 local PlayerMiningTools = require("scripts.player-mining-tools")
 local Quickbar = require("scripts.quickbar")
 local RailBuilder = require("scripts.rail-builder")
@@ -380,7 +381,7 @@ end
 --Checks if the storage players table has been created, and if the table entry for this player exists. Otherwise it is initialized.
 function check_for_player(index)
    if storage.players[index] == nil then
-      initialize(game.get_player(index))
+      PlayerInit.initialize(game.get_player(index))
       return false
    else
       return true
@@ -552,261 +553,6 @@ read_tile_inner = function(pindex, start_text)
    return result
 end
 
---Initialize the globally saved data tables for a specific player.
-function initialize(player)
-   local force = player.force.index
-   storage.forces[force] = storage.forces[force] or {}
-   local fa_force = storage.forces[force]
-
-   storage.players[player.index] = storage.players[player.index] or {}
-   local faplayer = storage.players[player.index]
-   faplayer.player = player
-
-   if not fa_force.resources then
-      for pi, p in pairs(storage.players) do
-         if p.player.valid and p.player.force.index == force and p.resources and p.mapped then
-            fa_force.resources = p.resources
-            fa_force.mapped = p.mapped
-            break
-         end
-      end
-      fa_force.resources = fa_force.resources or {}
-      fa_force.mapped = fa_force.mapped or {}
-   end
-
-   local character = player.cutscene_character or player.character or player
-   faplayer.in_item_selector = faplayer.in_item_selector or false
-   faplayer.entering_search_term = faplayer.entering_search_term or false
-   faplayer.menu_search_index = faplayer.menu_search_index or nil
-   faplayer.menu_search_index_2 = faplayer.menu_search_index_2 or nil
-   faplayer.menu_search_term = faplayer.menu_search_term or nil
-   faplayer.menu_search_frame = faplayer.menu_search_frame or nil
-   faplayer.menu_search_last_name = faplayer.menu_search_last_name or nil
-   faplayer.num_elements = faplayer.num_elements or 0
-   faplayer.player_direction = faplayer.player_direction or character.walking_state.direction
-   faplayer.position = faplayer.position or FaUtils.center_of_tile(character.position)
-   faplayer.building_direction = faplayer.building_direction or dirs.north --top
-
-   if type(faplayer.building_footprint) == "number" then faplayer.building_footprint = nil end
-
-   if type(faplayer.building_dir_arrow) == "number" then faplayer.building_dir_arrow = nil end
-
-   faplayer.overhead_sprite = nil
-   faplayer.overhead_circle = nil
-   faplayer.custom_GUI_frame = nil
-   faplayer.custom_GUI_sprite = nil
-   faplayer.direction_lag = faplayer.direction_lag or true
-   faplayer.previous_hand_item_name = faplayer.previous_hand_item_name or ""
-   faplayer.last = faplayer.last or ""
-   faplayer.last_indexed_ent = faplayer.last_indexed_ent or nil
-   faplayer.item_selection = faplayer.item_selection or false
-   faplayer.item_cache = faplayer.item_cache or {}
-   faplayer.zoom = faplayer.zoom or 1
-   faplayer.build_lock = faplayer.build_lock or false
-   faplayer.vanilla_mode = faplayer.vanilla_mode or false
-   faplayer.resources = fa_force.resources
-   faplayer.mapped = fa_force.mapped
-   faplayer.destroyed = faplayer.destroyed or {}
-   faplayer.last_menu_toggle_tick = faplayer.last_menu_toggle_tick or 1
-   faplayer.last_menu_search_tick = faplayer.last_menu_search_tick or 1
-   faplayer.last_click_tick = faplayer.last_click_tick or 1
-   faplayer.last_damage_alert_tick = faplayer.last_damage_alert_tick or 1
-   faplayer.last_damage_alert_pos = faplayer.last_damage_alert_pos or nil
-   faplayer.last_honk_tick = faplayer.last_honk_tick or 1
-   faplayer.last_pickup_tick = faplayer.last_pickup_tick or 1
-   faplayer.last_item_picked_up = faplayer.last_item_picked_up or nil
-   faplayer.skip_read_hand = faplayer.skip_read_hand or false
-   faplayer.tutorial = faplayer.tutorial or nil
-
-   faplayer.preferences = faplayer.preferences or {}
-
-   faplayer.preferences.building_inventory_row_length = faplayer.preferences.building_inventory_row_length or 8
-   if faplayer.preferences.inventory_wraps_around == nil then faplayer.preferences.inventory_wraps_around = true end
-   if faplayer.preferences.tiles_placed_from_northwest_corner == nil then
-      faplayer.preferences.tiles_placed_from_northwest_corner = false
-   end
-
-   faplayer.nearby = faplayer.nearby
-      or {
-         index = 0,
-         selection = 0,
-         count = false,
-         category = 1,
-         ents = {},
-         resources = {},
-         containers = {},
-         buildings = {},
-         vehicles = {},
-         players = {},
-         enemies = {},
-         other = {},
-      }
-   faplayer.nearby.ents = faplayer.nearby.ents or {}
-
-   faplayer.tile = faplayer.tile or {
-      ents = {},
-      tile = "",
-      index = 1,
-      previous = nil,
-   }
-
-   faplayer.inventory = faplayer.inventory or {
-      lua_inventory = nil,
-      max = 0,
-      index = 1,
-   }
-
-   faplayer.crafting = faplayer.crafting
-      or {
-         lua_recipes = nil,
-         max = 0,
-         index = 1,
-         category = 1,
-      }
-
-   faplayer.crafting_queue = faplayer.crafting_queue or {
-      index = 1,
-      max = 0,
-      lua_queue = nil,
-   }
-
-   faplayer.building = faplayer.building
-      or {
-         index = 0,
-         ent = nil,
-         sectors = nil,
-         sector = 0,
-         recipe_selection = false,
-         item_selection = false,
-         category = 0,
-         recipe = nil,
-         recipe_list = nil,
-      }
-
-   faplayer.belt = faplayer.belt
-      or {
-         index = 1,
-         sector = 1,
-         ent = nil,
-         line1 = nil,
-         line2 = nil,
-         network = {},
-         side = 0,
-      }
-   faplayer.warnings = faplayer.warnings
-      or {
-         short = {},
-         medium = {},
-         long = {},
-         sector = 1,
-         index = 1,
-         category = 1,
-      }
-   faplayer.pump = faplayer.pump or {
-      index = 0,
-      positions = {},
-   }
-
-   faplayer.item_selector = faplayer.item_selector or {
-      index = 0,
-      group = 0,
-      subgroup = 0,
-   }
-
-   faplayer.travel = faplayer.travel
-      or {
-         index = { x = 1, y = 0 },
-         creating = false,
-         renaming = false,
-      }
-
-   faplayer.rail_builder = faplayer.rail_builder
-      or {
-         index = 0,
-         index_max = 1,
-         rail = nil,
-         rail_type = 0,
-      }
-
-   faplayer.train_menu = faplayer.train_menu
-      or {
-         index = 0,
-         renaming = false,
-         locomotive = nil,
-         wait_time = 300,
-         index_2 = 0,
-         selecting_station = false,
-      }
-
-   faplayer.spider_menu = faplayer.spider_menu or {
-      index = 0,
-      renaming = false,
-      spider = nil,
-   }
-
-   faplayer.train_stop_menu = faplayer.train_stop_menu
-      or {
-         index = 0,
-         renaming = false,
-         stop = nil,
-         wait_condition = "time",
-         wait_time_seconds = 30,
-         safety_wait_enabled = true,
-      }
-
-   faplayer.valid_train_stop_list = faplayer.valid_train_stop_list or {}
-
-   faplayer.roboport_menu = faplayer.roboport_menu or {
-      port = nil,
-      index = 0,
-      renaming = false,
-   }
-
-   faplayer.blueprint_menu = faplayer.blueprint_menu
-      or {
-         index = 0,
-         edit_label = false,
-         edit_description = false,
-         edit_export = false,
-         edit_import = false,
-      }
-
-   faplayer.blueprint_book_menu = faplayer.blueprint_book_menu
-      or {
-         index = 0,
-         menu_length = 0,
-         list_mode = true,
-         edit_label = false,
-         edit_description = false,
-         edit_export = false,
-         edit_import = false,
-      }
-
-   faplayer.guns_menu = faplayer.guns_menu or {
-      index = 1,
-      ammo_selected = false,
-   }
-
-   if table_size(faplayer.mapped) == 0 then player.force.rechart() end
-
-   faplayer.localisations = faplayer.localisations or {}
-   faplayer.translation_id_lookup = faplayer.translation_id_lookup or {}
-   Localising.check_player(player.index)
-
-   faplayer.bump = faplayer.bump
-      or {
-         last_bump_tick = 1, --Updated in bump checker
-         last_dir_key_tick = 1, --Updated in key press handlers
-         last_dir_key_1st = nil, --Updated in key press handlers
-         last_dir_key_2nd = nil, --Updated in key press handlers
-         last_pos_1 = nil, --Updated in bump checker
-         last_pos_2 = nil, --Updated in bump checker
-         last_pos_3 = nil, --Updated in bump checker
-         last_pos_4 = nil, --Updated in bump checker
-         last_dir_2 = nil, --Updated in bump checker
-         last_dir_1 = nil, --Updated in bump checker
-      }
-end
 
 --Update the position info and cursor info during smooth walking.
 EventManager.on_event(defines.events.on_player_changed_position, function(event)
@@ -2176,7 +1922,7 @@ function ensure_storage_structures_are_up_to_date()
    storage.forces = storage.forces or {}
    storage.players = storage.players or {}
    for pindex, player in pairs(game.players) do
-      initialize(player)
+      PlayerInit.initialize(player)
    end
 
    storage.entity_types = {}
@@ -2266,7 +2012,7 @@ EventManager.on_event(defines.events.on_cutscene_started, function(event)
 end)
 
 EventManager.on_event(defines.events.on_player_created, function(event)
-   initialize(game.players[event.player_index])
+   PlayerInit.initialize(game.players[event.player_index])
    --if not game.is_multiplayer() then printout("Press 'TAB' to continue", pindex) end
 end)
 
