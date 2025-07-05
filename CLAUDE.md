@@ -36,6 +36,14 @@ through audio cues and keyboard controls.
    -- Example: It's get_player_relative_origin, NOT get_player_cursor_position
    ```
 
+6. **Table properties: MUST use local variable**
+   ```lua
+   -- WRONG: player.walking_state = {walking = false}  -- Engine ignores this!
+   -- RIGHT: 
+   local new_state = {walking = false}
+   player.walking_state = new_state
+   ```
+
 ## From the Human
 
 After a lot of working with you I have seen your antipatterns, so I am going to lay them out here.
@@ -607,6 +615,21 @@ end
    -- CORRECT: Use StorageManager for new modules
    local my_storage = storage_manager.declare_storage_module('my_module', {})
    -- Then access as: my_storage[pindex].field = value
+   ```
+
+4. **Table Property Assignment (Critical)**
+   ```lua
+   -- WRONG: This will NOT work - Factorio engine won't detect the change
+   player.walking_state = {walking = false}
+   
+   -- CORRECT: Must assign to a local variable first
+   local new_state = {walking = false}
+   player.walking_state = new_state
+   
+   -- This is a Factorio engine requirement: when setting properties that 
+   -- return tables (like walking_state, color, etc.), you MUST assign a
+   -- table to a local variable first, then assign that variable to the
+   -- property. Direct table construction in the assignment will be ignored.
    ```
 
 ## Adding New Features

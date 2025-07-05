@@ -1402,6 +1402,16 @@ local function move_characters(event)
       local vp = Viewpoint.get_viewpoint(pindex)
       local cursor_pos = vp:get_cursor_pos()
 
+      if vp:get_cursor_enabled() or router:is_ui_open() then
+         local p = game.get_player(pindex)
+         -- Careful! You have to write a table for the game to pick it up.
+         if p.character then
+            local ws = p.character.walking_state
+            ws.walking = false
+            p.character.walking_state = ws
+         end
+      end
+
       if player.vanilla_mode == true then
          player.player.game_view_settings.update_entity_selection = true
       elseif player.player.game_view_settings.update_entity_selection == false then
