@@ -86,7 +86,7 @@ function mod.initialize(player)
       }
    faplayer.crafting = faplayer.crafting
       or {
-         lua_recipes = TH.localised_recipes(),
+         lua_recipes = {},
          max = 1,
          index = 1,
          category = 1,
