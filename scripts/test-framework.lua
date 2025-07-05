@@ -44,6 +44,7 @@ local test_files = {
    -- "sound-tests", -- Test sound system integration (temporarily disabled)
    "test-rail-basic-ops", -- Test basic rail operations module
    -- "travel-tools-localization-test", -- Test travel-tools localization messages (file missing)
+   "furnace-fuel-test", -- Test furnace fuel status reporting
    "printout-logger-test", -- Test printout logging to file
 }
 

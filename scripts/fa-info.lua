@@ -1335,7 +1335,8 @@ function mod.ent_info(pindex, ent, is_scanner)
    end
    --Explain if no fuel
    if ent.prototype.burner_prototype ~= nil then
-      if ent.energy == 0 and Driving.fuel_inventory_info(ent) == "Contains no fuel." then
+      local fuel_inv = ent.get_fuel_inventory()
+      if fuel_inv and fuel_inv.valid and fuel_inv.is_empty() then
          ctx.message:fragment(", Out of Fuel")
       end
    end
