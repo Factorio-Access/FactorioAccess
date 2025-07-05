@@ -43,7 +43,7 @@ local test_files = {
    -- "fa-info-smoke-test", -- Test entity information extraction system (temporarily disabled)
    -- "sound-tests", -- Test sound system integration (temporarily disabled)
    "test-rail-basic-ops", -- Test basic rail operations module
-   "travel-tools-localization-test", -- Test travel-tools localization messages
+   -- "travel-tools-localization-test", -- Test travel-tools localization messages (file missing)
    "printout-logger-test", -- Test printout logging to file
 }
 
@@ -458,7 +458,7 @@ for _, file in ipairs(test_files) do
    local success, module = pcall(require, "scripts.tests." .. file)
    if not success then
       -- Can't log yet since Logger might not be initialized
-      print("TestFramework: Failed to load test file " .. file .. ": " .. tostring(module))
+      error("TestFramework: Failed to load test file " .. file .. ": " .. tostring(module))
    end
 end
 
