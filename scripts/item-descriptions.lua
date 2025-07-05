@@ -17,6 +17,7 @@ local mod = {}
 local function get_stack_description(stack)
    if not stack or not stack.valid_for_read then return "No description" end
 
+   ---@type LocalisedString
    local str = ""
    if stack.prototype.place_result ~= nil then
       str = stack.prototype.place_result.localised_description
