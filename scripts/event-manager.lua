@@ -212,15 +212,11 @@ end
 function mod.create_player_handler(handler)
    return function(event)
       local pindex = event.player_index
-      if not pindex then
-         error("create_player_handler used on event without player_index")
-      end
-      
+      if not pindex then error("create_player_handler used on event without player_index") end
+
       -- Player initialization is now handled in _dispatch_event
       -- so we just need to verify the player exists
-      if storage.players and storage.players[pindex] then
-         handler(event, pindex)
-      end
+      if storage.players and storage.players[pindex] then handler(event, pindex) end
    end
 end
 
@@ -231,10 +227,8 @@ end
 function mod.create_extended_player_handler(handler)
    return function(event)
       local pindex = event.player_index
-      if not pindex then
-         error("create_extended_player_handler used on event without player_index")
-      end
-      
+      if not pindex then error("create_extended_player_handler used on event without player_index") end
+
       -- Player initialization is now handled in _dispatch_event
       if storage.players and storage.players[pindex] then
          local player = game.get_player(pindex)

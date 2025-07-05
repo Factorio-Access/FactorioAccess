@@ -82,7 +82,7 @@ function mod.initialize(player)
          lua_inventory = character.get_main_inventory(),
          index = 1,
          width = 10,
-         max = character.get_main_inventory().get_max_inventory_index(),
+         max = #character.get_main_inventory(),
       }
    faplayer.crafting = faplayer.crafting
       or {
