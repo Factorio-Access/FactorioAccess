@@ -40,6 +40,19 @@ local bump_storage = StorageManager.declare_storage_module("bump_detection", {
    filled = false,
 })
 
+---Save a key press event for bump detection
+---@param pindex number
+---@param direction defines.direction
+---@param tick number
+function mod.save_key_press(pindex, direction, tick)
+   local bump = bump_storage[pindex]
+   if bump then
+      bump.last_dir_key_2nd = bump.last_dir_key_1st
+      bump.last_dir_key_1st = direction
+      bump.last_dir_key_tick = tick
+   end
+end
+
 ---Resets bump detection statistics for a player
 ---@param pindex number
 function mod.reset_bump_stats(pindex)

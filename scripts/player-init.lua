@@ -211,19 +211,13 @@ function mod.initialize(player)
    faplayer.draw_cursor_original_index = faplayer.draw_cursor_original_index or false
 
    -- Player preferences
-   faplayer.preferences = faplayer.preferences
-      or {
-         -- Realisticly, there aren't major reasons to have a default other than Nauvis. These are player prefs that have been configured in the settings after all!
-         vanilla_mode = settings.get_player_settings(player).fa_pref_vanilla_mode_default.value,
-         draw_cursor_mode = settings.get_player_settings(player).fa_pref_draw_cursor_default.value,
-         allow_driving_mode = settings.get_player_settings(player).fa_pref_allow_driving.value,
-         printout_volume = settings.get_player_settings(player).fa_pref_printout_volume.value,
-         walking_mode_1 = 2, -- smooth walking
-         walking_mode_2 = 2, -- smooth walking
-         inventory_wrap_mode = settings.get_player_settings(player).fa_pref_inventory_wrapping_mode.value,
-         crafting_recipe_announcements = settings.get_player_settings(player).fa_pref_crafting_details.value,
-         invert_arrow_keys = settings.get_player_settings(player).fa_pref_reverse_arrow_keys.value,
-      }
+   faplayer.preferences = faplayer.preferences or {}
+
+   faplayer.preferences.building_inventory_row_length = faplayer.preferences.building_inventory_row_length or 8
+   if faplayer.preferences.inventory_wraps_around == nil then faplayer.preferences.inventory_wraps_around = true end
+   if faplayer.preferences.tiles_placed_from_northwest_corner == nil then
+      faplayer.preferences.tiles_placed_from_northwest_corner = false
+   end
 
    -- Walking modes
    faplayer.smooth_walking = faplayer.smooth_walking or true
@@ -232,7 +226,8 @@ function mod.initialize(player)
    faplayer.logistic_slot_counts = faplayer.logistic_slot_counts or {}
    if not (player.character == nil) then faplayer.logistic_slot_counts = faplayer.logistic_slot_counts or {} end
    faplayer.trash_slot_count = faplayer.trash_slot_count or 0
-   if not (player.character == nil) then faplayer.trash_slot_count = player.character.request_slot_count end
+   -- TODO: request_slot_count doesn't exist on LuaEntity - this was added in the refactoring
+   -- if not (player.character == nil) then faplayer.trash_slot_count = player.character.request_slot_count end
 
    -- Other
    faplayer.last_aggregate = faplayer.last_aggregate or {}
@@ -285,9 +280,13 @@ function mod.initialize(player)
    faplayer.entities_scanned = faplayer.entities_scanned or {}
    faplayer.players_distance_described = faplayer.players_distance_described or false
    faplayer.quick_bar_rows = faplayer.quick_bar_rows or 1
-   if not (player.character == nil) then
-      faplayer.quick_bar_rows = player.character.mod_settings["fa-quickbar-rows"].value
-   end
+   -- TODO: mod_settings doesn't exist on LuaEntity - should use player.mod_settings instead
+   -- if not (player.character == nil) then
+   --    local quickbar_setting = player.mod_settings["fa-quickbar-rows"]
+   --    if quickbar_setting then
+   --       faplayer.quick_bar_rows = quickbar_setting.value
+   --    end
+   -- end
    faplayer.said_owner = faplayer.said_owner or {}
 
    -- Force rechart on empty map

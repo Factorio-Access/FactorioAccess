@@ -3070,10 +3070,7 @@ local function move_key(direction, event, force_single_tile)
    storage.players[pindex].confirm_action_tick = 0
 
    --Save the key press event
-   local pex = storage.players[event.player_index]
-   pex.bump.last_dir_key_2nd = pex.bump.last_dir_key_1st
-   pex.bump.last_dir_key_1st = direction
-   pex.bump.last_dir_key_tick = event.tick
+   BumpDetection.save_key_press(event.player_index, direction, event.tick)
 
    if router:is_ui_open() and not router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then
       -- Menus: move menu cursor
@@ -3087,7 +3084,7 @@ local function move_key(direction, event, force_single_tile)
    end
 
    --Play a sound to indicate ongoing selection
-   if pex.bp_selecting then sounds.play_cursor_moved_while_selecting(pindex) end
+   if storage.players[pindex].bp_selecting then sounds.play_cursor_moved_while_selecting(pindex) end
 
    --Play a sound for audio ruler alignment (cursor mode moved)
    if not router:is_ui_open() and cursor_enabled then Rulers.update_from_cursor(pindex) end
