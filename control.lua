@@ -3090,40 +3090,36 @@ local function move_key(direction, event, force_single_tile)
 end
 
 ---@param event EventData.CustomInputEvent
-EventManager.on_event("fa-w", function(event)
-   local pindex = event.player_index
+EventManager.on_event("fa-w", EventManager.create_player_handler(function(event, pindex)
    local router = UiRouter.get_router(pindex)
-   if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
+   if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
 
    move_key(defines.direction.north, event)
-end)
+end))
 
 ---@param event EventData.CustomInputEvent
-EventManager.on_event("fa-a", function(event)
-   local pindex = event.player_index
+EventManager.on_event("fa-a", EventManager.create_player_handler(function(event, pindex)
    local router = UiRouter.get_router(pindex)
-   if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
+   if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
 
    move_key(defines.direction.west, event)
-end)
+end))
 
 ---@param event EventData.CustomInputEvent
-EventManager.on_event("fa-s", function(event)
-   local pindex = event.player_index
+EventManager.on_event("fa-s", EventManager.create_player_handler(function(event, pindex)
    local router = UiRouter.get_router(pindex)
-   if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
+   if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
 
    move_key(defines.direction.south, event)
-end)
+end))
 
 ---@param event EventData.CustomInputEvent
-EventManager.on_event("fa-d", function(event)
-   local pindex = event.player_index
+EventManager.on_event("fa-d", EventManager.create_player_handler(function(event, pindex)
    local router = UiRouter.get_router(pindex)
-   if not check_for_player(pindex) or router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
+   if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
 
    move_key(defines.direction.east, event)
-end)
+end))
 
 ---@param event EventData.CustomInputEvent
 EventManager.on_event("fa-up", function(event)
