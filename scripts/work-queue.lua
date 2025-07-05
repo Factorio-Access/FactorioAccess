@@ -27,7 +27,7 @@ For modules which wish to respawn work (e.g. scanner), a function
 `idle_function` may be specified. This gets called if there is a tick where the
 queue is empty.
 ]]
-local Deque = require("scripts.ds.deque")
+local Deque = require("ds.deque")
 
 local mod = {}
 

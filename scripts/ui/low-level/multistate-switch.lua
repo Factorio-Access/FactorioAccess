@@ -48,7 +48,7 @@ local cur_label = switch.current(e)
 Note that this abstraction does not care whether the entity is really a factorio
 entity.  Tables work, for example.
 ]]
-local circular_list = require("scripts.ds.circular-options-list")
+local circular_list = require("ds.circular-options-list")
 local F = require("scripts.field-ref") -- for self-tests
 local methods = require("scripts.methods")
 

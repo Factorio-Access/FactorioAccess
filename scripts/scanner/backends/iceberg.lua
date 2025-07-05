@@ -1,8 +1,8 @@
-local Clusterer = require("scripts.ds.clusterer")
+local Clusterer = require("ds.clusterer")
 local SC = require("scripts.scanner.scanner-consts")
 local TH = require("scripts.table-helpers")
 local Memosort = require("scripts.memosort")
-local TileClusterer = require("scripts.ds.tile-clusterer")
+local TileClusterer = require("ds.tile-clusterer")
 
 local mod = {}
 

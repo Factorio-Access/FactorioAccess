@@ -16,6 +16,7 @@ COMMON USAGE PATTERNS:
 - Quick test: python3 launch_factorio.py --timeout 10 -- --version
 - Load save: python3 launch_factorio.py --timeout 300 --load-game mysave.zip
 - Run tests: python3 launch_factorio.py --run-tests --timeout 300
+- Run only DS tests: python3 launch_factorio.py --run-tests --lua-tests ds --timeout 300
 - Headless server: python3 launch_factorio.py --timeout 3600 -- --start-server mysave.zip
 - With mods: python3 launch_factorio.py --timeout 300 --mod-directory ./mods --load-game mysave.zip
 - Lint Lua code: python3 launch_factorio.py --lint
@@ -566,6 +567,40 @@ def run_syntrax_tests() -> Tuple[int, str, str]:
         return -1, "", str(e)
 
 
+def run_lua_tests(test_suite: str = "all") -> Tuple[int, str, str]:
+    """
+    Run Lua test suites using the generalized test runner.
+
+    Args:
+        test_suite: Which test suite to run ("syntrax", "ds", or "all")
+
+    Returns:
+        Tuple of (exit_code, stdout, stderr)
+    """
+    suite_names = {
+        "syntrax": "Syntrax",
+        "ds": "Data Structures",
+        "all": "All"
+    }
+    
+    print(f"[LLM_INFO] Running {suite_names.get(test_suite, test_suite)} test suite...")
+
+    # Run the run-tests.lua file with the specified suite
+    cmd = ["lua", "run-tests.lua", test_suite]
+
+    try:
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=60, cwd=Path(__file__).parent
+        )
+        return result.returncode, result.stdout, result.stderr
+    except subprocess.TimeoutExpired:
+        return -1, "", f"{suite_names.get(test_suite, test_suite)} tests timed out after 60 seconds"
+    except FileNotFoundError:
+        return -1, "", "lua command not found. Please ensure Lua is installed."
+    except Exception as e:
+        return -1, "", str(e)
+
+
 def parse_factorio_args() -> argparse.Namespace:
     """
     Parse command line arguments for Factorio launcher.
@@ -581,7 +616,9 @@ def parse_factorio_args() -> argparse.Namespace:
             "  %(prog)s --timeout 300 --load-game mysave.zip\n"
             "  %(prog)s --timeout 3600 -- --start-server mysave.zip --server-settings settings.json\n"
             "  %(prog)s --dry-run -- --help  # See all Factorio options\n"
-            "  %(prog)s --run-tests --timeout 300  # Run Factorio tests and Syntrax tests\n"
+            "  %(prog)s --run-tests --timeout 300  # Run all tests (Factorio + all Lua tests)\n"
+            "  %(prog)s --run-tests --lua-tests syntrax --timeout 300  # Run only Syntrax tests\n"
+            "  %(prog)s --run-tests --lua-tests ds --timeout 300  # Run only DS tests\n"
             "  %(prog)s --lint  # Run lua-language-server to check for errors\n"
             "  %(prog)s --format-check  # Check if Lua files are properly formatted\n"
             "  %(prog)s --format  # Apply stylua formatting to Lua files"
@@ -662,7 +699,14 @@ def parse_factorio_args() -> argparse.Namespace:
     factorio_group.add_argument(
         "--run-tests",
         action="store_true",
-        help="Run FactorioAccess tests and Syntrax tests",
+        help="Run FactorioAccess tests and all Lua tests (Syntrax + DS)",
+    )
+
+    factorio_group.add_argument(
+        "--lua-tests",
+        choices=["syntrax", "ds", "all"],
+        default="all",
+        help="Which Lua test suite to run with --run-tests (default: all)",
     )
 
     factorio_group.add_argument(
@@ -1326,28 +1370,33 @@ def main():
                 print("[LLM_WARNING] Test results unclear - check logs")
                 print(f"Log file: {test_log_path}")
 
-            # Now run Syntrax tests
+            # Now run Lua tests
+            test_suite_desc = {
+                "syntrax": "SYNTRAX TESTS",
+                "ds": "DATA STRUCTURES TESTS", 
+                "all": "LUA TESTS (SYNTRAX & DATA STRUCTURES)"
+            }
             print("\n" + "=" * 60)
-            print("RUNNING SYNTRAX TESTS")
+            print(f"RUNNING {test_suite_desc[args.lua_tests]}")
             print("=" * 60)
 
-            syntrax_exit_code, syntrax_stdout, syntrax_stderr = run_syntrax_tests()
+            lua_exit_code, lua_stdout, lua_stderr = run_lua_tests(args.lua_tests)
 
-            if syntrax_stdout:
-                print(syntrax_stdout)
-            if syntrax_stderr:
-                print(syntrax_stderr, file=sys.stderr)
+            if lua_stdout:
+                print(lua_stdout)
+            if lua_stderr:
+                print(lua_stderr, file=sys.stderr)
 
-            if syntrax_exit_code == 0:
-                print("\n✓ All Syntrax tests passed!")
+            if lua_exit_code == 0:
+                print("\n✓ All Lua tests passed!")
             else:
-                print(f"\n✗ Syntrax tests failed with exit code {syntrax_exit_code}")
+                print(f"\n✗ Lua tests failed with exit code {lua_exit_code}")
 
             # Return failure if either test suite failed
             if test_summary and test_summary["failed"] > 0:
                 return 1
-            elif syntrax_exit_code != 0:
-                return syntrax_exit_code
+            elif lua_exit_code != 0:
+                return lua_exit_code
             else:
                 return 0
 

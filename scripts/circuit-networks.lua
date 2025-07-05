@@ -2,7 +2,7 @@
 --Does not include event handlers directly, but can have functions called by them.
 local util = require("util")
 local descriptors = require("scripts.descriptors")
-local circular = require("scripts.ds.circular-options-list")
+local circular = require("ds.circular-options-list")
 local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
 local localising = require("scripts.localising")

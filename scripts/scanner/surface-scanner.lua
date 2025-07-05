@@ -6,7 +6,7 @@ local ScannerConsts = require("scripts.scanner.scanner-consts")
 local StorageManager = require("scripts.storage-manager")
 -- This is typed around 100 times and only used for the LUT, so we will shorten
 -- it.
-local SparseBitset = require("scripts.ds.sparse-bitset")
+local SparseBitset = require("ds.sparse-bitset")
 local SEB = require("scripts.scanner.backends.single-entity")
 local IcebergBackend = require("scripts.scanner.backends.iceberg")
 local TreeBackend = require("scripts.scanner.backends.trees")
