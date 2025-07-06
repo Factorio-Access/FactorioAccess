@@ -204,7 +204,7 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
                storage.players[pindex].building_footprint_right_bottom,
             }
             result = mod.identify_building_obstacle(pindex, build_area, nil)
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
          end
       end
       --Restore the original underground belt chute preview
@@ -286,11 +286,11 @@ function mod.build_offshore_pump_in_hand(pindex)
          end
       end
       if #storage.players[pindex].pump.positions == 0 then
-         Speech.speak(pindex, { "fa.building-pump-no-positions" })
+         Speech.speak({ "fa.building-pump-no-positions" }, pindex)
       else
          UiRouter.get_router(pindex):open_ui(UiRouter.UI_NAMES.PUMP)
          storage.players[pindex].move_queue = {}
-         Speech.speak(pindex, { "fa.building-pump-positions-available", #storage.players[pindex].pump.positions })
+         Speech.speak({ "fa.building-pump-positions-available", #storage.players[pindex].pump.positions }, pindex)
          table.sort(storage.players[pindex].pump.positions, function(k1, k2)
             return util.distance(initial_position, k1.position) < util.distance(initial_position, k2.position)
          end)
@@ -353,22 +353,22 @@ function mod.rotate_building_info_read(event, forward)
                --Printout warning
                if rot_offset > 0 then
                   Speech.speak(
-                     pindex,
                      FaUtils.direction_lookup(build_dir)
                         .. " rail rotation warning: rotate a rail "
                         .. rot_offset
-                        .. " times backward to re-align cursor, and then rotate a different item in hand to select the rotation you want before placing a rail"
+                        .. " times backward to re-align cursor, and then rotate a different item in hand to select the rotation you want before placing a rail",
+                     pindex
                   )
                elseif rot_offset < 0 then
                   Speech.speak(
-                     pindex,
                      FaUtils.direction_lookup(build_dir)
                         .. " rail rotation warning: rotate a rail "
                         .. -rot_offset
-                        .. " times forward to re-align cursor, and then rotate a different item in hand to select the rotation you want before placing a rail"
+                        .. " times forward to re-align cursor, and then rotate a different item in hand to select the rotation you want before placing a rail",
+                     pindex
                   )
                else
-                  Speech.speak(pindex, { "fa.building-rotation-aligned", FaUtils.direction_lookup(build_dir) })
+                  Speech.speak({ "fa.building-rotation-aligned", FaUtils.direction_lookup(build_dir) }, pindex)
                end
                return
             end
@@ -376,10 +376,10 @@ function mod.rotate_building_info_read(event, forward)
             --Display and read the new direction info
             storage.players[pindex].building_direction = build_dir
             --Graphics.sync_build_cursor_graphics(pindex)
-            Speech.speak(pindex, { "fa.building-rotation-in-hand", FaUtils.direction_lookup(build_dir) })
+            Speech.speak({ "fa.building-rotation-in-hand", FaUtils.direction_lookup(build_dir) }, pindex)
             storage.players[pindex].lag_building_direction = false
          else
-            Speech.speak(pindex, { "fa.building-no-rotate-support", { "item-name." .. stack.name } })
+            Speech.speak({ "fa.building-no-rotate-support", { "item-name." .. stack.name } }, pindex)
          end
       elseif stack ~= nil and stack.valid_for_read and stack.is_blueprint and stack.is_blueprint_setup() then
          --Rotate blueprints: They are tracked separately, and we reset them to north when cursor stack changes
@@ -387,7 +387,7 @@ function mod.rotate_building_info_read(event, forward)
          storage.players[pindex].blueprint_hand_direction = (
             storage.players[pindex].blueprint_hand_direction + dirs.east * mult
          ) % (2 * dirs.south)
-         Speech.speak(pindex, FaUtils.direction_lookup(storage.players[pindex].blueprint_hand_direction))
+         Speech.speak(FaUtils.direction_lookup(storage.players[pindex].blueprint_hand_direction), pindex)
 
          --Flip the saved bp width and height
          local temp = storage.players[pindex].blueprint_height_in_hand
@@ -417,14 +417,14 @@ function mod.rotate_building_info_read(event, forward)
                new_dir = (new_dir + dirs.east * mult) % (2 * dirs.south)
             end
 
-            Speech.speak(pindex, FaUtils.direction_lookup(new_dir))
+            Speech.speak(FaUtils.direction_lookup(new_dir), pindex)
 
             --
          else
-            Speech.speak(pindex, { "fa.building-no-rotate-support", { "entity-name." .. ent.name } })
+            Speech.speak({ "fa.building-no-rotate-support", { "entity-name." .. ent.name } }, pindex)
          end
       else
-         Speech.speak(pindex, { "fa.building-cannot-rotate" })
+         Speech.speak({ "fa.building-cannot-rotate" }, pindex)
       end
    end
 end
@@ -461,7 +461,7 @@ function mod.nudge_key(direction, event)
          temporary_teleported = ent.teleport({ 0, 0 })
          if not temporary_teleported then
             game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-            Speech.speak(pindex, { "fa.failed-to-nudge" })
+            Speech.speak({ "fa.failed-to-nudge" }, pindex)
             return
          end
 
@@ -484,16 +484,16 @@ function mod.nudge_key(direction, event)
                   table.insert(result, v)
                end
             end
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
             return
          end
          if not actually_teleported then
             --Failed to teleport
-            Speech.speak(pindex, { "fa.failed-to-nudge" })
+            Speech.speak({ "fa.failed-to-nudge" }, pindex)
             return
          else
             --Successfully teleported and so nudged
-            Speech.speak(pindex, { "fa.nudged-one-direction", { "fa.direction", direction } })
+            Speech.speak({ "fa.nudged-one-direction", { "fa.direction", direction } }, pindex)
             if vp:get_cursor_enabled() then
                vp:set_cursor_pos(FaUtils.offset_position_legacy(vp:get_cursor_pos(), direction, 1))
                Graphics.draw_cursor_highlight(pindex, ent, "train-visualization")
@@ -511,7 +511,7 @@ function mod.nudge_key(direction, event)
       --Update ent connections after teleporting it
       ent.update_connections()
    else
-      Speech.speak(pindex, { "fa.building-nudged-nothing" })
+      Speech.speak({ "fa.building-nudged-nothing" }, pindex)
    end
 end
 
@@ -1243,7 +1243,7 @@ function mod.snap_place_steam_engine_to_a_boiler(pindex)
 
    if boilers == nil or #boilers == 0 then
       p.play_sound({ path = "utility/cannot_build" })
-      Speech.speak(pindex, { "fa.building-error-no-boilers" })
+      Speech.speak({ "fa.building-error-no-boilers" }, pindex)
       return
    end
 
@@ -1297,11 +1297,11 @@ function mod.snap_place_steam_engine_to_a_boiler(pindex)
             p.build_from_cursor({ position = engine_position, direction = dir })
             found_valid_spot = true
             Speech.speak(
-               pindex,
                "Placed steam engine near boiler at "
                   .. math.floor(boiler.position.x)
                   .. ","
-                  .. math.floor(boiler.position.y)
+                  .. math.floor(boiler.position.y),
+               pindex
             )
             return
          end
@@ -1310,11 +1310,11 @@ function mod.snap_place_steam_engine_to_a_boiler(pindex)
    --If all have been skipped and none were found then play error
    if found_empty_spot == false then
       p.play_sound({ path = "utility/cannot_build" })
-      Speech.speak(pindex, { "fa.building-error-boilers-blocked" })
+      Speech.speak({ "fa.building-error-boilers-blocked" }, pindex)
       return
    elseif found_valid_spot == false then
       p.play_sound({ path = "utility/cannot_build" })
-      Speech.speak(pindex, { "fa.building-error-boilers-obstacles" })
+      Speech.speak({ "fa.building-error-boilers-obstacles" }, pindex)
       return
    end
 end

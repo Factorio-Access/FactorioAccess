@@ -8,6 +8,7 @@ local localising = require("scripts.localising")
 local Research = require("scripts.research")
 local Travel = require("scripts.travel-tools")
 local UiRouter = require("scripts.ui.router")
+local Speech = require("scripts.speech")
 
 local mod = {}
 
@@ -283,7 +284,7 @@ function mod.open_search_box(pindex)
    storage.players[pindex].menu_search_frame = frame
 
    --Inform the player
-   printout({ "fa.menu-search-type-term" }, pindex)
+   Speech.speak(pindex, { "fa.menu-search-type-term" })
 end
 
 --Reads out the next inventory/menu item to match the search term. Used in all searchable menus.
@@ -292,7 +293,7 @@ function mod.fetch_next(pindex, str, start_phrase_in)
 
    --Only allow "inventory" and "building" menus for now
    if not router:is_ui_open() then
-      printout({ "fa.menu-search-map-unsupported" }, pindex)
+      Speech.speak(pindex, { "fa.menu-search-map-unsupported" })
       return
    end
    if
@@ -308,11 +309,11 @@ function mod.fetch_next(pindex, str, start_phrase_in)
       })
       or (router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) and storage.players[pindex].blueprint_book_menu.list_mode)
    then
-      printout({ "fa.menu-search-menu-unsupported" }, pindex)
+      Speech.speak(pindex, { "fa.menu-search-menu-unsupported" })
       return
    end
    if str == nil or str == "" then
-      printout({ "fa.menu-search-missing-term" }, pindex)
+      Speech.speak(pindex, { "fa.menu-search-missing-term" })
       return
    end
    --Start phrase
@@ -354,7 +355,7 @@ function mod.fetch_next(pindex, str, start_phrase_in)
             storage.players[pindex].building.recipe_list
          )
       else
-         printout({ "fa.menu-search-sector-not-supported", pb.sector_name }, pindex)
+         Speech.speak(pindex, { "fa.menu-search-sector-not-supported", pb.sector_name })
          return
       end
    elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
@@ -399,12 +400,12 @@ function mod.fetch_next(pindex, str, start_phrase_in)
    then
       new_index = blueprint_book_find_index_of_next_match(search_index, str, pindex)
    else
-      printout({ "fa.menu-search-sector-unsupported" }, pindex)
+      Speech.speak(pindex, { "fa.menu-search-sector-unsupported" })
       return
    end
    --Return a menu output according to the index found
    if new_index <= 0 then
-      printout({ "fa.menu-search-not-found", str }, pindex)
+      Speech.speak(pindex, { "fa.menu-search-not-found", str })
       game.get_player(pindex).print("Menu search: Could not find " .. str, { volume_modifier = 0 })
       storage.players[pindex].menu_search_last_name = "(none)"
       return
@@ -432,7 +433,7 @@ function mod.fetch_next(pindex, str, start_phrase_in)
          storage.players[pindex].building.index = new_index_2
          Sectors.read_building_recipe(pindex, start_phrase)
       else
-         printout({ "fa.menu-search-section-error" }, pindex)
+         Speech.speak(pindex, { "fa.menu-search-section-error" })
          return
       end
    elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
@@ -456,7 +457,7 @@ function mod.fetch_next(pindex, str, start_phrase_in)
       storage.players[pindex].blueprint_book_menu.index = new_index
       Blueprints.run_blueprint_book_menu(pindex, new_index, true, false, false)
    else
-      printout({ "fa.menu-search-error" }, pindex)
+      Speech.speak(pindex, { "fa.menu-search-error" })
       return
    end
 end
@@ -467,7 +468,7 @@ function mod.fetch_last(pindex, str)
 
    --Only allow "inventory" and "building" menus for now
    if not router:is_ui_open() then
-      printout({ "fa.menu-search-map-no-backwards" }, pindex)
+      Speech.speak(pindex, { "fa.menu-search-map-no-backwards" })
       return
    end
    if
@@ -478,11 +479,11 @@ function mod.fetch_last(pindex, str)
          UiRouter.UI_NAMES.TECHNOLOGY,
       })
    then
-      printout({ "fa.menu-search-no-backwards", storage.players[pindex].menu }, pindex)
+      Speech.speak(pindex, { "fa.menu-search-no-backwards", storage.players[pindex].menu })
       return
    end
    if str == nil or str == "" then
-      printout({ "fa.menu-search-missing-term" }, pindex)
+      Speech.speak(pindex, { "fa.menu-search-missing-term" })
       return
    end
    --Get the current search index
@@ -510,12 +511,12 @@ function mod.fetch_last(pindex, str)
       Research.menu_search(pindex, str, -1)
       return
    else
-      printout("This menu or building sector does not support backwards searching.", pindex)
+      Speech.speak(pindex, "This menu or building sector does not support backwards searching.")
       return
    end
    --Return a menu output according to the index found
    if new_index <= 0 then
-      printout({ "fa.menu-search-not-found", str }, pindex)
+      Speech.speak(pindex, { "fa.menu-search-not-found", str })
       return
    elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
       storage.players[pindex].menu_search_index = new_index
@@ -531,7 +532,7 @@ function mod.fetch_last(pindex, str)
       storage.players[pindex].building.index = new_index
       Sectors.read_sector_slot(pindex, false)
    else
-      printout({ "fa.menu-search-error" }, pindex)
+      Speech.speak(pindex, { "fa.menu-search-error" })
       return
    end
 end

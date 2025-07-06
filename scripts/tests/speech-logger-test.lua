@@ -1,8 +1,9 @@
 local TestRegistry = require("scripts.test-registry")
 local describe, it = TestRegistry.describe, TestRegistry.it
+local Speech = require("scripts.speech")
 
-describe("Printout Logger", function()
-   it("should log printout messages to file", function(ctx)
+describe("Speech Logger", function()
+   it("should log speech messages to file", function(ctx)
       local player
 
       ctx:init(function()
@@ -11,33 +12,33 @@ describe("Printout Logger", function()
 
       ctx:at_tick(1, function()
          -- Test simple string message
-         printout("Test simple string", 1)
+         Speech.speak(1, "Test simple string")
       end)
 
       ctx:at_tick(5, function()
          -- Test concatenated localised string
-         printout({ "", "Test ", "concatenated ", "string" }, 1)
+         Speech.speak(1, { "", "Test ", "concatenated ", "string" })
       end)
 
       ctx:at_tick(10, function()
          -- Test actual locale key that exists
-         printout({ "fa.prefix-w" }, 1)
+         Speech.speak(1, { "fa.prefix-w" })
       end)
 
       ctx:at_tick(15, function()
          -- Test locale key with parameters
-         printout({ "fa.ent-recipe-line", "iron-plate", 5 }, 1)
+         Speech.speak(1, { "fa.ent-recipe-line", "iron-plate", 5 })
       end)
 
       ctx:at_tick(20, function()
          -- Test mixed content
-         printout({ "", "Position: ", { "fa.position", 10, 20 }, " facing ", { "fa.direction.north" } }, 1)
+         Speech.speak(1, { "", "Position: ", { "fa.position", 10, 20 }, " facing ", { "fa.direction.north" } })
       end)
 
       ctx:at_tick(25, function()
          -- Test nil and edge cases
-         printout("", 1) -- Empty string
-         printout({ "" }, 1) -- Empty localised string
+         Speech.speak(1, "") -- Empty string
+         Speech.speak(1, { "" }) -- Empty localised string
       end)
 
       ctx:at_tick(30, function()

@@ -4,6 +4,7 @@
 local util = require("util")
 local FaUtils = require("scripts.fa-utils")
 local Mouse = require("scripts.mouse")
+local Speech = require("scripts.speech")
 local dirs = defines.direction
 
 local mod = {}
@@ -704,7 +705,7 @@ function mod.read_all_rail_segment_entities(pindex, rail)
       message = message .. "back 2 is else, " .. ent_b2.name .. ", "
    end
 
-   printout(message, pindex)
+   Speech.speak(pindex, message)
    return
 end
 
@@ -897,7 +898,7 @@ function mod.rail_read_next_rail_entity_ahead(pindex, rail, is_forward)
    local next_entity, next_entity_label, result_extra, next_is_forward, iteration_count =
       mod.get_next_rail_entity_ahead(origin_rail, dir_ahead, false)
    if next_entity == nil then
-      printout({ "fa.rails-analysis-error" }, pindex)
+      Speech.speak(pindex, { "fa.rails-analysis-error" })
       return
    end
    local distance = math.floor(util.distance(origin_rail.position, next_entity.position))
@@ -966,7 +967,7 @@ function mod.rail_read_next_rail_entity_ahead(pindex, rail, is_forward)
          message = message .. " facing " .. FaUtils.direction_lookup(result_extra)
       end
    end
-   printout(message, pindex)
+   Speech.speak(pindex, message)
    --Draw circles for visual debugging
    rendering.draw_circle({
       color = { 0, 1, 0 },

@@ -6,7 +6,7 @@ Supports ratio-based transfers and item filtering.
 
 local Localising = require("scripts.localising")
 local FaUtils = require("scripts.fa-utils")
-local MessageBuilder = require("scripts.message-builder")
+local Speech = require("scripts.speech")
 local TH = require("scripts.table-helpers")
 
 local mod = {}
@@ -15,7 +15,7 @@ local mod = {}
 ---@param moved table<string, integer> Table of moved items {[item_name] = count}
 ---@return LocalisedString
 local function build_item_list_message(moved)
-   local message = MessageBuilder.new()
+   local message = Speech.new()
 
    -- Convert to array and sort by count (descending)
    local items = {}
@@ -103,11 +103,11 @@ end
 ---@param ratio number Transfer ratio (0-1)
 ---@param pindex number Player index
 function mod.do_multi_stack_transfer(ratio, pindex)
-   local message = MessageBuilder.new()
+   local message = Speech.new()
    local building_data = storage.players[pindex].building
    if not building_data or not building_data.sectors then
       message:fragment({ "fa.grabbed-nothing" })
-      printout(message:build(), pindex)
+      Speech.speak(pindex, message:build())
       return
    end
 
@@ -176,7 +176,7 @@ function mod.do_multi_stack_transfer(ratio, pindex)
          message:fragment({ "fa.grabbed-nothing" })
       end
    end
-   printout(message:build(), pindex)
+   Speech.speak(pindex, message:build())
 end
 
 return mod

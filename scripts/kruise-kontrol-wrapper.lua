@@ -2,6 +2,7 @@
 
 local Viewpoint = require("scripts.viewpoint")
 local EntitySelection = require("scripts.entity-selection")
+local Speech = require("scripts.speech")
 
 local mod = {}
 
@@ -80,7 +81,7 @@ function mod.activate_kk(pindex)
       return { "fa.kk-start", desc }
    end, { "fa.kk-not-available" })
 
-   printout(announcing, pindex)
+   Speech.speak(pindex, announcing)
 end
 
 --FA actions to take when KK cancel input is pressed
@@ -103,7 +104,7 @@ function mod.cancel_kk(pindex)
       -- cursor mode.
       fix_walk(pindex)
 
-      printout({ "fa.kk-cancel" }, pindex)
+      Speech.speak(pindex, { "fa.kk-cancel" })
    end)
    -- If in a car, make sure to stop it because we are exiting it too because of the overlapping keys
    if p.vehicle and p.vehicle.type == "car" and p.vehicle.active == true then p.vehicle.speed = 0 end
@@ -117,9 +118,9 @@ function mod.status_read(pindex, short_version)
       local was_active = storage.players[pindex].kruise_kontrol_active_last_time
       storage.players[pindex].kruise_kontrol_active_last_time = active
       if active then
-         printout({ "fa.kk-state", remote.call(interface_name, "get_description", pindex) }, pindex)
+         Speech.speak(pindex, { "fa.kk-state", remote.call(interface_name, "get_description", pindex) })
       elseif not active and was_active then
-         printout({ "fa.kk-done" }, pindex)
+         Speech.speak(pindex, { "fa.kk-done" })
       end
    end)
 end

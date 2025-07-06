@@ -27,6 +27,7 @@ local FaUtils = require("scripts.fa-utils")
 local Functools = require("scripts.functools")
 local Localising = require("scripts.localising")
 local Memosort = require("scripts.memosort")
+local Speech = require("scripts.speech")
 local StorageManager = require("scripts.storage-manager")
 local TH = require("scripts.table-helpers")
 
@@ -613,7 +614,7 @@ function mod.menu_move_vertical(pindex, direction)
    else
       player.play_sound({ path = "Inventory-Move" })
    end
-   printout(announcing, pindex)
+   Speech.speak(pindex, announcing)
 end
 
 function mod.menu_move_horizontal(pindex, direction)
@@ -624,7 +625,7 @@ function mod.menu_move_horizontal(pindex, direction)
    else
       player.play_sound({ path = "Inventory-Move" })
    end
-   printout(announcing, pindex)
+   Speech.speak(pindex, announcing)
 end
 
 function mod.menu_search(pindex, pattern, direction)
@@ -635,18 +636,18 @@ function mod.menu_search(pindex, pattern, direction)
    local n_ind = search_impl(pindex, researches, pos.index, direction, pattern)
    if not n_ind then
       player.play_sound({ path = "inventory-edge" })
-      printout({ "fa.research-list-no-results", pattern }, pindex)
+      Speech.speak(pindex, { "fa.research-list-no-results", pattern })
       return
    else
       pos.index = n_ind
       pos.focused_list = researches[n_ind].list
       player.play_sound({ path = "Inventory-Move" })
    end
-   printout({
+   Speech.speak(pindex, {
       "fa.research-list-moved-up-down",
       { string.format("fa.research-list-%s", pos.focused_list) },
       announce_under_pos(researches, pos),
-   }, pindex)
+   })
 end
 
 function mod.menu_describe(pindex)
@@ -663,7 +664,7 @@ function mod.menu_describe(pindex)
          FaUtils.spacecat(tech_description_string(researches[pos.index].tech), localise_research_rewards(player, tech))
    end
 
-   printout(announcing, pindex)
+   Speech.speak(pindex, announcing)
 end
 
 function mod.menu_describe_costs(pindex)
@@ -677,7 +678,7 @@ function mod.menu_describe_costs(pindex)
    local announcing = { "fa.research-list-no-technologies" }
    if normed then announcing = localise_research_requirements(researches[pos.index].tech) end
 
-   printout(announcing, pindex)
+   Speech.speak(pindex, announcing)
 end
 
 function mod.menu_start_research(pindex)
@@ -688,13 +689,13 @@ function mod.menu_start_research(pindex)
    local researches = get_visible_researches(player)
    local old_ind = pos.index
    if not normalize_pos(researches, pos) or old_ind ~= pos.index then
-      printout({ "fa.research-list-changed" }, pindex)
+      Speech.speak(pindex, { "fa.research-list-changed" })
       return
    end
 
    player.force.research_queue = {}
    local enqueued = mod.enqueue(player, researches[pos.index].name, 1)
-   printout(FaUtils.spacecat({ "fa.research-queue-cleared" }, enqueued), pindex)
+   Speech.speak(pindex, FaUtils.spacecat({ "fa.research-queue-cleared" }, enqueued))
 end
 
 function mod.menu_enqueue(pindex, queue_index)
@@ -704,18 +705,18 @@ function mod.menu_enqueue(pindex, queue_index)
    local old_ind = pos.index
    local researches = get_visible_researches(player)
    if not normalize_pos(researches, pos) or pos.index ~= old_ind then
-      printout({ "fa.research-list-changed" }, pindex)
+      Speech.speak(pindex, { "fa.research-list-changed" })
       return
    end
 
-   printout(mod.enqueue(player, researches[pos.index].name, queue_index), pindex)
+   Speech.speak(pindex, mod.enqueue(player, researches[pos.index].name, queue_index))
 end
 
 function mod.clear_queue(pindex)
    local player = game.get_player(pindex)
    assert(player)
    player.force.research_queue = {}
-   printout({ "fa.research-queue-cleared" }, pindex)
+   Speech.speak(pindex, { "fa.research-queue-cleared" })
 end
 
 function mod.queue_announce(pindex)
@@ -723,7 +724,7 @@ function mod.queue_announce(pindex)
    assert(player)
    local queue = player.force.research_queue
    if not next(queue) then
-      printout({ "fa.research-queue-empty" }, pindex)
+      Speech.speak(pindex, { "fa.research-queue-empty" })
       return
    end
 
@@ -733,7 +734,7 @@ function mod.queue_announce(pindex)
    end
    local joined = FaUtils.localise_cat_table(joining, ", ")
 
-   printout({ "fa.research-queue-contains", joined }, pindex)
+   Speech.speak(pindex, { "fa.research-queue-contains", joined })
 end
 
 -- For when pressing `t`, the research part of the string.
@@ -758,12 +759,12 @@ function mod.menu_announce_entry(pindex)
    local pos = research_state[pindex].research_menu_pos
    local researches = get_visible_researches(player)
    local normed = normalize_pos(researches, pos)
-   printout(
+   Speech.speak(
+      pindex,
       FaUtils.spacecat(
          { "", { "fa.research-menu-title" }, "," },
          normed and announce_under_pos(researches, pos) or { "fa.research-list-no-technologiess" }
-      ),
-      pindex
+      )
    )
 end
 
@@ -790,7 +791,7 @@ function mod.on_research_finished(event)
    local force = tech.force
    local players = force.players
    for _, p in pairs(players) do
-      printout(announcing, p.index)
+      Speech.speak(p.index, announcing)
    end
 end
 

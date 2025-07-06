@@ -8,6 +8,7 @@ local UiRouter = require("scripts.ui.router")
 local Driving = require("scripts.driving")
 local Equipment = require("scripts.equipment")
 local Research = require("scripts.research")
+local Speech = require("scripts.speech")
 
 local mod = {}
 
@@ -71,13 +72,13 @@ function mod.read_selected_or_hand_description(pindex)
    if ent and ent.valid then
       local str = ent.localised_description
       if str == nil or str == "" then str = "No description for this entity" end
-      printout(str, pindex)
+      Speech.speak(pindex, str)
    elseif hand and hand.valid_for_read then
       local str = get_stack_description(hand)
       local result = { "", "In hand: ", str }
-      printout(result, pindex)
+      Speech.speak(pindex, result)
    else
-      printout("Nothing selected, use this key to describe an entity or item that you select.", pindex)
+      Speech.speak(pindex, "Nothing selected, use this key to describe an entity or item that you select.")
    end
 end
 
@@ -94,7 +95,7 @@ function mod.read_inventory_slot_description(pindex)
    end
 
    local str = get_stack_description(stack)
-   printout(str, pindex)
+   Speech.speak(pindex, str)
 end
 
 ---Reads description for guns menu selection
@@ -104,9 +105,9 @@ function mod.read_guns_menu_description(pindex)
    if stack and stack.valid_for_read then
       local str = stack.prototype.localised_description
       if str == nil or str == "" then str = "No description" end
-      printout(str, pindex)
+      Speech.speak(pindex, str)
    else
-      printout("No description", pindex)
+      Speech.speak(pindex, "No description")
    end
 end
 
@@ -117,7 +118,7 @@ function mod.read_crafting_menu_description(pindex)
    local recipe =
       storage_players.crafting.lua_recipes[storage_players.crafting.category][storage_players.crafting.index]
    local str = get_recipe_product_description(recipe)
-   printout(str, pindex)
+   Speech.speak(pindex, str)
 end
 
 ---Reads description for building/vehicle menu selection
@@ -142,27 +143,27 @@ function mod.read_building_menu_description(pindex)
          local product = prototypes.item[product_name] or prototypes.fluid[product_name]
          local str = product.localised_description
          if str == nil or str == "" then str = "No description found for this" end
-         printout(str, pindex)
+         Speech.speak(pindex, str)
       else
-         printout("No description found, menu error", pindex)
+         Speech.speak(pindex, "No description found, menu error")
       end
    elseif storage_players.building.sector <= #storage_players.building.sectors then
       local inventory = storage_players.building.sectors[storage_players.building.sector].inventory
       if inventory == nil or not inventory.valid then
-         printout("No description found, menu error", pindex)
+         Speech.speak(pindex, "No description found, menu error")
          return
       end
 
       local sector_name = storage_players.building.sectors[storage_players.building.sector].name
       if sector_name ~= "Fluid" and sector_name ~= "Filters" and inventory.is_empty() then
-         printout("No description found, menu error", pindex)
+         Speech.speak(pindex, "No description found, menu error")
          return
       end
 
       local stack = inventory[storage_players.building.index]
       local str = get_stack_description(stack)
       if str == "No description" then str = "No description found for this item" end
-      printout(str, pindex)
+      Speech.speak(pindex, str)
    end
 end
 
@@ -182,7 +183,7 @@ function mod.read_item_description(pindex)
 
    -- Special case: driving
    if p.driving and not router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
-      printout(Driving.vehicle_info(pindex), pindex)
+      Speech.speak(pindex, Driving.vehicle_info(pindex))
       return
    end
 
@@ -218,7 +219,7 @@ function mod.read_item_description(pindex)
    elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
       mod.read_building_menu_description(pindex)
    else
-      printout("Descriptions are not supported for this menu.", pindex)
+      Speech.speak(pindex, "Descriptions are not supported for this menu.")
    end
 end
 
@@ -235,19 +236,19 @@ function mod.read_last_indexed_description(pindex)
    local router = UiRouter.get_router(pindex)
 
    if router:is_ui_open() then
-      printout("Error: Cannot check scanned item descriptions while in a menu", pindex)
+      Speech.speak(pindex, "Error: Cannot check scanned item descriptions while in a menu")
       return
    end
 
    local ent = storage.players[pindex].last_indexed_ent
    if ent == nil or not ent.valid then
-      printout("No description, note that most resources need to be examined from up close", pindex)
+      Speech.speak(pindex, "No description, note that most resources need to be examined from up close")
       return
    end
 
    local str = ent.localised_description
    if str == nil or str == "" then str = "No description found for this entity" end
-   printout(str, pindex)
+   Speech.speak(pindex, str)
 end
 
 return mod

@@ -10,12 +10,12 @@ This guide provides a systematic approach to localizing the FactorioAccess mod, 
 
 1. **❌ Raw Strings (NOT localized)**
    ```lua
-   printout("This is English only", pindex)
+   Speech.speak(pindex, "This is English only")
    ```
 
 2. **✅ Factorio LocalisedString**
    ```lua
-   printout({"fa.empty_cursor"}, pindex)
+   Speech.speak(pindex, {"fa.empty_cursor"})
    ```
 
 3. **✅ MessageBuilder (for complex messages)**
@@ -23,7 +23,7 @@ This guide provides a systematic approach to localizing the FactorioAccess mod, 
    local message = MessageBuilder.new()
    message:fragment({"entity-name.transport-belt"})
    message:fragment({"fa.ent-info-facing", direction})
-   printout(message:build(), pindex)
+   Speech.speak(pindex, message:build())
    ```
 
 ## Understanding Factorio's LocalisedString
@@ -53,7 +53,7 @@ A LocalisedString is an array where:
 local msg = MessageBuilder.new()
 msg:fragment({"entity-name.transport-belt"})
 msg:fragment({"fa.ent-info-facing", "north"})
-printout(msg:build(), pindex)
+Speech.speak(pindex, msg:build())
 ```
 
 ### Limitations
@@ -148,7 +148,7 @@ function get_status()
 end
 
 function report_status(pindex)
-    printout("System " .. get_status(), pindex)  -- Uses .. concatenation
+    Speech.speak(pindex, "System " .. get_status())  -- Uses .. concatenation
 end
 
 -- MUST FIRST convert caller to handle LocalisedString
@@ -156,7 +156,7 @@ function report_status(pindex)
     local msg = MessageBuilder.new()
     msg:fragment({"fa.system"})
     msg:fragment(get_status())  -- Now can accept LocalisedString
-    printout(msg:build(), pindex)
+    Speech.speak(pindex, msg:build())
 end
 
 -- THEN localize the function
@@ -310,23 +310,23 @@ Create a `LOCALIZATION_PROGRESS.md` file:
 #### For Simple Printouts (Leaf Nodes)
 ```lua
 -- BEFORE
-printout("Blank", pindex)
+Speech.speak(pindex, "Blank")
 
 -- AFTER
-printout({"fa.blank"}, pindex)
+Speech.speak(pindex, {"fa.blank"})
 ```
 
 #### For Concatenated Messages
 ```lua
 -- BEFORE
-printout("Building " .. entity.name .. " at " .. x .. "," .. y, pindex)
+Speech.speak(pindex, "Building " .. entity.name .. " at " .. x .. "," .. y)
 
 -- AFTER (using MessageBuilder - PREFERRED)
 local msg = MessageBuilder.new()
 msg:fragment({"fa.building"})
 msg:fragment({"entity-name." .. entity.name})
 msg:fragment({"fa.at-coordinates", x, y})
-printout(msg:build(), pindex)
+Speech.speak(pindex, msg:build())
 ```
 
 #### For Entity/Item Names
@@ -337,7 +337,7 @@ local entity_desc = Localising.get_localised_name_with_fallback(entity)
 
 -- For item stacks with quality and count
 local item_desc = Localising.localise_item(stack)
-printout(item_desc, pindex)
+Speech.speak(pindex, item_desc)
 
 -- For custom item descriptions
 local item_desc = Localising.localise_item({
@@ -425,7 +425,7 @@ msg:fragment({"fa.building-placed"})
 msg:fragment({"entity-name.transport-belt"})
 msg:list_item({"fa.facing", "north"})
 msg:list_item({"fa.at-position", x, y})
-printout(msg:build(), pindex)
+Speech.speak(pindex, msg:build())
 ```
 
 ### Localising (scripts/localising.lua)
@@ -518,33 +518,33 @@ at-coordinates=at __1__, __2__
 ### In control.lua
 ```lua
 -- Many hardcoded strings in menu handlers
-printout("Press left bracket to confirm your selection.", pindex)
-printout("Another menu is open.", pindex)
+Speech.speak(pindex, "Press left bracket to confirm your selection.")
+Speech.speak(pindex, "Another menu is open.")
 
 -- String building in loops
 local result = ""
 for i, item in pairs(items) do
     result = result .. item.name .. ", "
 end
-printout(result, pindex)
+Speech.speak(pindex, result)
 ```
 
 ### In scanner modules
 ```lua
 -- Entity descriptions often hardcoded
-printout("blank sector", pindex)
+Speech.speak(pindex, "blank sector")
 
 -- Distance/direction announcements
-printout(ent.name .. " " .. dir .. " " .. dist .. " tiles", pindex)
+Speech.speak(pindex, ent.name .. " " .. dir .. " " .. dist .. " tiles")
 ```
 
 ### In building tools
 ```lua
 -- Status messages frequently hardcoded  
-printout("Cannot place here", pindex)
+Speech.speak(pindex, "Cannot place here")
 
 -- Building feedback
-printout("Building " .. building_name .. " placed", pindex)
+Speech.speak(pindex, "Building " .. building_name .. " placed")
 ```
 
 ### Menu Building Patterns
@@ -564,7 +564,7 @@ if entity.crafting then
     status = status .. "crafting " .. recipe .. " "
 end
 status = status .. "at " .. percent .. "% "
-printout(status, pindex)
+Speech.speak(pindex, status)
 ```
 
 ### Challenges Requiring Refactoring
@@ -651,30 +651,30 @@ msg:fragment({"fa.base-message"})
 if condition then
     msg:fragment({"fa.additional-info"})
 end
-printout(msg:build(), pindex)
+Speech.speak(pindex, msg:build())
 ```
 
 ### Entity/Item Names
 ```lua
 -- DON'T hardcode entity names
-printout("You found " .. entity.name, pindex)  -- BAD
+Speech.speak(pindex, "You found " .. entity.name)  -- BAD
 
 -- DON'T try to make your own locale key
-printout({"fa.found", entity.name}, pindex)  -- BAD - shows raw prototype name
+Speech.speak(pindex, {"fa.found", entity.name})  -- BAD - shows raw prototype name
 
 -- DO use modern Localising functions
 local entity_desc = Localising.get_localised_name_with_fallback(entity)
 local msg = MessageBuilder.new()
 msg:fragment({"fa.found"})
 msg:fragment(entity_desc)  -- LocalisedString with fallback
-printout(msg:build(), pindex)
+Speech.speak(pindex, msg:build())
 
 -- OR for built-in entity locale keys (if you know they exist)
 msg:fragment({"entity-name." .. entity.name})  -- Game's built-in keys
 
 -- For items with details
 local item_desc = Localising.localise_item(stack)  -- Includes quality/count
-printout(item_desc, pindex)
+Speech.speak(pindex, item_desc)
 ```
 
 ## What NOT to Localize (Yet)
@@ -726,7 +726,7 @@ Here's a concrete example of proper localization from the scanner module:
 ```lua
 -- In scripts/scanner/entrypoint.lua
 if #results == 0 then
-    printout("blank sector", pindex)
+    Speech.speak(pindex, "blank sector")
     return
 end
 ```
@@ -735,7 +735,7 @@ end
 ```lua
 -- In scripts/scanner/entrypoint.lua  
 if #results == 0 then
-    printout({"fa.scanner-blank-sector"}, pindex)
+    Speech.speak(pindex, {"fa.scanner-blank-sector"})
     return
 end
 
@@ -837,24 +837,24 @@ After each batch:
 **Batch 1**: Simple scanner messages
 ```lua
 -- BEFORE
-printout("blank sector", pindex)
-printout("No entities found", pindex)
+Speech.speak(pindex, "blank sector")
+Speech.speak(pindex, "No entities found")
 
 -- AFTER  
-printout({"fa.scanner-blank-sector"}, pindex)
-printout({"fa.scanner-no-entities"}, pindex)
+Speech.speak(pindex, {"fa.scanner-blank-sector"})
+Speech.speak(pindex, {"fa.scanner-no-entities"})
 ```
 
 **Batch 2**: Scanner with entity names (now safe)
 ```lua
 -- BEFORE
-printout("Found " .. ent.name, pindex)
+Speech.speak(pindex, "Found " .. ent.name)
 
 -- AFTER
 local msg = MessageBuilder.new()
 msg:fragment({"fa.scanner-found"})
 msg:fragment(Localising.get_localised_name_with_fallback(ent))
-printout(msg:build(), pindex)
+Speech.speak(pindex, msg:build())
 ```
 
 **Batch 3**: Scanner result formatting (unblocked by Batch 2)

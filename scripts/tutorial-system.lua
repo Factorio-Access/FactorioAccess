@@ -1,5 +1,7 @@
 --Here: The tutorial system
 
+local Speech = require("scripts.speech")
+
 local mod = {}
 
 --The tutorial strings are fetched according to locale, with the main set of tutorial strings being im English ("en").
@@ -315,7 +317,7 @@ function mod.read_current_header(pindex)
    local str = tutorial.step_headers[i][j]
    local str2 = ", tutorial step " .. j .. " of " .. tutorial.chapter_lengths[i] .. " in chapter " .. i
    str = { "", str, str2 }
-   printout(str, pindex)
+   Speech.speak(pindex, str)
    game.get_player(pindex).print(str, { volume_modifier = 0 })
 end
 
@@ -325,7 +327,7 @@ function mod.read_current_detail(pindex)
    local j = tutorial.step_index
    local str = tutorial.step_details[i][j]
    local str_h = tutorial.step_headers[i][j]
-   printout(str, pindex)
+   Speech.speak(pindex, str)
    game.get_player(pindex).print(
       "Tutorial message, chapter "
          .. storage.players[pindex].tutorial.chapter_index
@@ -347,11 +349,11 @@ function mod.run_tutorial_menu(pindex, reading_the_header, clicked)
    if chap == 0 and step == 1 then
       --Read out chapter 0 start message
       if reading_the_header == false then
-         printout(tutorial.chapter_0_messages[step], pindex)
+         Speech.speak(pindex, tutorial.chapter_0_messages[step])
          game.get_player(pindex).print("Tutorial start message " .. step .. ":", { volume_modifier = 0 }) --
          game.get_player(pindex).print(tutorial.chapter_0_messages[step], { volume_modifier = 0 })
       else
-         printout(tutorial.chapter_0_headers[step], pindex)
+         Speech.speak(pindex, tutorial.chapter_0_headers[step])
          game.get_player(pindex).print("Tutorial start message " .. step .. ":", { volume_modifier = 0 }) --
          game.get_player(pindex).print(tutorial.chapter_0_headers[step], { volume_modifier = 0 })
       end
@@ -368,11 +370,11 @@ function mod.run_tutorial_menu(pindex, reading_the_header, clicked)
    elseif chap == 0 and step > 1 then
       --Read out chapter 0 start message
       if reading_the_header == false then
-         printout(tutorial.chapter_0_messages[step], pindex)
+         Speech.speak(pindex, tutorial.chapter_0_messages[step])
          game.get_player(pindex).print("Tutorial start message " .. step .. ":", { volume_modifier = 0 }) --
          game.get_player(pindex).print(tutorial.chapter_0_messages[step], { volume_modifier = 0 })
       else
-         printout(tutorial.chapter_0_headers[step], pindex)
+         Speech.speak(pindex, tutorial.chapter_0_headers[step])
          game.get_player(pindex).print("Tutorial start message " .. step .. ":", { volume_modifier = 0 }) --
          game.get_player(pindex).print(tutorial.chapter_0_headers[step], { volume_modifier = 0 })
       end
@@ -389,11 +391,11 @@ function mod.run_tutorial_menu(pindex, reading_the_header, clicked)
          --Run the check and print the appropriate tutorial check result string
          local ents = p.surface.find_entities_filtered({ position = p.position, radius = 100, name = "stone-furnace" })
          if #ents > 1 then --(more checks here)
-            --printout(tutorial.check_passed,pindex) --e.g. "Check passed"
+            --Speech.speak(tutorial.check_passed,pindex) --e.g. "Check passed"
          elseif #ents == 1 then --(more checks here)
-            --printout(tutorial.check_message_just_1_ent,pindex) --e.g. "Check issue, only 1 ent found"
+            --Speech.speak(tutorial.check_message_just_1_ent,pindex) --e.g. "Check issue, only 1 ent found"
          else
-            --printout(tutorial.check_failed,pindex) --e.g. "Check failed"
+            --Speech.speak(tutorial.check_failed,pindex) --e.g. "Check failed"
          end
       end
    elseif chap > 0 and step > 0 then
@@ -404,7 +406,7 @@ function mod.run_tutorial_menu(pindex, reading_the_header, clicked)
          mod.read_current_detail(pindex)
       end
    else
-      printout({ "tutorial.tutorial-error" }, pindex) --**
+      Speech.speak(pindex, { "tutorial.tutorial-error" }) --**
    end
 end
 

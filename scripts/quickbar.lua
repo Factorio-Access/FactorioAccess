@@ -1,6 +1,6 @@
 --Here: Quickbar related functions
 local Localising = require("scripts.localising")
-local MessageBuilder = require("scripts.message-builder")
+local Speech = require("scripts.speech")
 local UiRouter = require("scripts.ui.router")
 
 local mod = {}
@@ -58,20 +58,20 @@ function mod.read_quick_bar_slot(index, pindex)
       local stack = game.get_player(pindex).cursor_stack
       if stack and stack.valid_for_read then
          count = count + stack.count
-         local msg = MessageBuilder.new()
+         local msg = Speech.new()
          msg:fragment({ "fa.quickbar-unselected" })
          msg:fragment(Localising.get_localised_name_with_fallback(proto))
          msg:fragment({ "fa.quickbar-count", count })
-         printout(msg:build(), pindex)
+         Speech.speak(pindex, msg:build())
       else
-         local msg = MessageBuilder.new()
+         local msg = Speech.new()
          msg:fragment({ "fa.quickbar-selected" })
          msg:fragment(Localising.get_localised_name_with_fallback(proto))
          msg:fragment({ "fa.quickbar-count", count })
-         printout(msg:build(), pindex)
+         Speech.speak(pindex, msg:build())
       end
    else
-      printout({ "fa.quickbar-empty-slot" }, pindex) --does this print, maybe not working because it is linked to the game control?
+      Speech.speak(pindex, { "fa.quickbar-empty-slot" }) --does this print, maybe not working because it is linked to the game control?
    end
 end
 
@@ -84,10 +84,10 @@ function mod.set_quick_bar_slot(index, pindex)
    local ent = p.selected
    if stack_cur and stack_cur.valid_for_read and stack_cur.valid == true then
       game.get_player(pindex).set_quick_bar_slot(index + 10 * page, stack_cur)
-      local msg = MessageBuilder.new()
+      local msg = Speech.new()
       msg:fragment({ "fa.quickbar-assigned", index })
       msg:fragment(Localising.get_localised_name_with_fallback(stack_cur))
-      printout(msg:build(), pindex)
+      Speech.speak(pindex, msg:build())
    elseif
       router:is_ui_open(UiRouter.UI_NAMES.INVENTORY)
       and stack_inv
@@ -95,16 +95,16 @@ function mod.set_quick_bar_slot(index, pindex)
       and stack_inv.valid == true
    then
       game.get_player(pindex).set_quick_bar_slot(index + 10 * page, stack_inv)
-      local msg = MessageBuilder.new()
+      local msg = Speech.new()
       msg:fragment({ "fa.quickbar-assigned", index })
       msg:fragment(Localising.get_localised_name_with_fallback(stack_inv))
-      printout(msg:build(), pindex)
+      Speech.speak(pindex, msg:build())
    elseif ent ~= nil and ent.valid and ent.force == p.force and prototypes.item[ent.name] ~= nil then
       game.get_player(pindex).set_quick_bar_slot(index + 10 * page, ent.name)
-      local msg = MessageBuilder.new()
+      local msg = Speech.new()
       msg:fragment({ "fa.quickbar-assigned", index })
       msg:fragment(Localising.get_localised_name_with_fallback(ent))
-      printout(msg:build(), pindex)
+      Speech.speak(pindex, msg:build())
    else
       --Clear the slot
       local item = game.get_player(pindex).get_quick_bar_slot(index + 10 * page)
@@ -112,24 +112,24 @@ function mod.set_quick_bar_slot(index, pindex)
       if item ~= nil then item_desc = Localising.get_localised_name_with_fallback(item) end
       ---@diagnostic disable-next-line: param-type-mismatch
       game.get_player(pindex).set_quick_bar_slot(index + 10 * page, nil)
-      local msg = MessageBuilder.new()
+      local msg = Speech.new()
       msg:fragment({ "fa.quickbar-unassigned", index })
       if item_desc then msg:fragment(item_desc) end
-      printout(msg:build(), pindex)
+      Speech.speak(pindex, msg:build())
    end
 end
 
 function mod.read_switched_quick_bar(index, pindex)
    local page = game.get_player(pindex).get_active_quick_bar_page(index)
    local item = game.get_player(pindex).get_quick_bar_slot(1 + 10 * (index - 1))
-   local msg = MessageBuilder.new()
+   local msg = Speech.new()
    msg:fragment({ "fa.quickbar-page-selected", index })
    if item ~= nil then
       msg:fragment(Localising.get_localised_name_with_fallback(prototypes.item[item.name]))
    else
       msg:fragment({ "fa.quickbar-empty-slot" })
    end
-   printout(msg:build(), pindex)
+   Speech.speak(pindex, msg:build())
 end
 
 return mod

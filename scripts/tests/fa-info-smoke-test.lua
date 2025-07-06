@@ -9,14 +9,11 @@ local it = TestRegistry.it
 describe("FA-Info Smoke Tests", function()
    it("should describe basic entities without crashing", function(ctx)
       local pindex = 1
-      local messages = {}
-      local original_printout = _G.printout
+      local Speech = require("scripts.speech")
 
       ctx:init(function()
-         -- Mock printout to capture fa-info output
-         _G.printout = function(message, player_index)
-            if player_index == pindex then table.insert(messages, message) end
-         end
+         -- Enable speech capture for testing
+         Speech.start_capture()
       end)
 
       ctx:at_tick(1, function()
@@ -31,11 +28,11 @@ describe("FA-Info Smoke Tests", function()
          ctx:assert(chest and chest.valid, "Chest should be created")
 
          -- Clear messages and describe the chest
-         messages = {}
+         Speech.clear_captured_messages()
          FaInfo.describe_entity(chest, pindex, false, false)
 
          -- Should have gotten some output
-         ctx:assert(#messages > 0, "Should have received description for chest")
+         ctx:assert(Speech.has_captured_messages(), "Should have received description for chest")
 
          -- Clean up
          chest.destroy()
@@ -53,10 +50,10 @@ describe("FA-Info Smoke Tests", function()
          })
          ctx:assert(belt and belt.valid, "Belt should be created")
 
-         messages = {}
+         Speech.clear_captured_messages()
          FaInfo.describe_entity(belt, pindex, false, false)
 
-         ctx:assert(#messages > 0, "Should have received description for belt")
+         ctx:assert(Speech.has_captured_messages(), "Should have received description for belt")
 
          belt.destroy()
       end)
@@ -72,30 +69,27 @@ describe("FA-Info Smoke Tests", function()
          })
          ctx:assert(assembler and assembler.valid, "Assembler should be created")
 
-         messages = {}
+         Speech.clear_captured_messages()
          FaInfo.describe_entity(assembler, pindex, false, false)
 
-         ctx:assert(#messages > 0, "Should have received description for assembler")
+         ctx:assert(Speech.has_captured_messages(), "Should have received description for assembler")
 
          assembler.destroy()
       end)
 
       ctx:at_tick(4, function()
-         -- Restore original printout
-         _G.printout = original_printout
+         -- Stop capture
+         Speech.stop_capture()
       end)
    end)
 
    it("should handle nil entity gracefully", function(ctx)
       local pindex = 1
-      local original_printout = _G.printout
-      local error_occurred = false
+      local Speech = require("scripts.speech")
 
       ctx:init(function()
-         -- Mock printout to detect errors
-         _G.printout = function(message, player_index)
-            -- fa-info might output an error message for nil entity
-         end
+         -- Enable speech capture for testing
+         Speech.start_capture()
       end)
 
       ctx:at_tick(1, function()
@@ -106,8 +100,8 @@ describe("FA-Info Smoke Tests", function()
 
          ctx:assert(success, "fa-info should handle nil entity without crashing")
 
-         -- Restore
-         _G.printout = original_printout
+         -- Stop capture
+         Speech.stop_capture()
       end)
    end)
 end)

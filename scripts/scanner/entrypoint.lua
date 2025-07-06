@@ -24,6 +24,7 @@ local TH = require("scripts.table-helpers")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
 local WorkQueue = require("scripts.work-queue")
+local Speech = require("scripts.speech")
 
 local mod = {}
 
@@ -217,9 +218,9 @@ is_chunk_charted(surface, { x = ex / 32, y = ey / 32 })
    apply_sort(player_obj, ps)
 
    if direction_filter then
-      printout({ "fa.scanner-refreshed-directional", FaUtils.direction_lookup(direction_filter) }, pindex)
+      Speech.speak(pindex, { "fa.scanner-refreshed-directional", FaUtils.direction_lookup(direction_filter) })
    else
-      printout({ "fa.scanner-refreshed" }, pindex)
+      Speech.speak(pindex, { "fa.scanner-refreshed" })
    end
 end
 
@@ -457,13 +458,13 @@ local function announce_cursor_pos(pindex, ps)
       -- select the entity if there is one.
       local new_ent = EntitySelection.get_first_ent_at_tile(pindex)
       if new_ent then pobj.selected = new_ent end
-      printout({
+      Speech.speak(pindex, {
          "fa.scanner-full-presentation",
          announcing.backend:readout_entry(pobj, announcing),
          FaUtils.dir_dist_locale(pobj.position, announcing.position),
          tostring(ps.scanner_cursor.entry_index),
          tostring(count),
-      }, pindex)
+      })
       -- See entity-selection.lua refresh_player_tile, which goes nuts if we aren't
       -- directly on the center of a tile; this can be removed when that's
       -- fixed.
@@ -472,10 +473,10 @@ local function announce_cursor_pos(pindex, ps)
          y = math.floor(announcing.position.y) + 0.5,
       })
    else
-      printout({
+      Speech.speak(pindex, {
          "fa.scanner-nothing-in-category",
          { "fa.scanner-category-" .. ps.scanner_cursor.category },
-      }, pindex)
+      })
    end
 end
 
@@ -496,7 +497,7 @@ function mod.move_category(pindex, direction)
    if router:is_ui_open() then return end
    local pstate = player_state[pindex]
    sound_for_end(pindex, move_category(pindex, pstate, direction))
-   printout({ "fa.scanner-category-" .. pstate.scanner_cursor.category }, pindex)
+   Speech.speak(pindex, { "fa.scanner-category-" .. pstate.scanner_cursor.category })
 end
 
 ---@param pindex number
@@ -538,7 +539,7 @@ function mod.resort(pindex)
    local player = assert(game.get_player(pindex))
    ---@cast player LuaPlayer
    apply_sort(player, pstate)
-   printout({ "fa.scanner-sorted" }, pindex)
+   Speech.speak(pindex, { "fa.scanner-sorted" })
 end
 
 --[[

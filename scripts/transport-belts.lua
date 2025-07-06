@@ -16,7 +16,7 @@ local FaUtils = require("scripts.fa-utils")
 local F = require("scripts.field-ref")
 local Geometry = require("scripts.geometry")
 local localising = require("scripts.localising")
-local MessageBuilder = require("scripts.message-builder")
+local Speech = require("scripts.speech")
 local TH = require("scripts.table-helpers")
 
 local mod = {}
@@ -765,7 +765,7 @@ function mod.splitter_priority_info(ent)
    local input = ent.splitter_input_priority
    local output = ent.splitter_output_priority
    local filter = ent.splitter_filter
-   local msg = MessageBuilder.MessageBuilder.new()
+   local msg = Speech.new()
 
    if input == "none" then
       msg:fragment("input balanced,")

@@ -1,6 +1,6 @@
 --Here: Spidertron remote menu
 local Graphics = require("scripts.graphics")
-local MessageBuilder = require("scripts.message-builder")
+local Speech = require("scripts.speech")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
 
@@ -19,7 +19,7 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
    if spiderin ~= nil then spider = spiderin end
    if index == 0 then
       --Give basic info about this spider, such as its name and ID.
-      local message = MessageBuilder.new()
+      local message = Speech.new()
       if remote.connected_entity ~= nil then
          if spidertron.entity_label ~= nil then
             message:fragment({ "fa.spidertron-connected-named", spidertron.entity_label })
@@ -30,11 +30,11 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
          message:fragment({ "fa.spidertron-not-connected" })
       end
       message:fragment({ "fa.spidertron-menu-instructions" })
-      printout(message:build(), pindex)
+      Speech.speak(pindex, message:build())
    elseif index == 1 then
       --spidertron linking and unlinking from the remote
       if not clicked then
-         local message = MessageBuilder.new()
+         local message = Speech.new()
          if remote.connected_entity ~= nil then
             message:fragment({ "fa.spidertron-remote-connected-to" })
             if game.get_player(pindex).cursor_stack.connected_entity.entity_label ~= nil then
@@ -47,14 +47,14 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
             message:fragment({ "fa.spidertron-remote-not-connected" })
             message:fragment({ "fa.spidertron-press-to-link" })
          end
-         printout(message:build(), pindex)
+         Speech.speak(pindex, message:build())
       else
          if remote.connected_entity ~= nil then
             remote.connected_entity = nil
-            printout({ "fa.spidertron-link-severed" }, pindex)
+            Speech.speak(pindex, { "fa.spidertron-link-severed" })
          else
             if cursortarget == nil or (cursortarget.type ~= "spider-vehicle" and cursortarget.type ~= "spider-leg") then
-               printout({ "fa.spidertron-invalid-link-target" }, pindex)
+               Speech.speak(pindex, { "fa.spidertron-invalid-link-target" })
             else
                if cursortarget.type == "spider-vehicle" then
                   remote.connected_entity = cursortarget
@@ -66,26 +66,26 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
                   })
                   if spiders[1] and spiders[1].valid then remote.connected_entity = spiders[1] end
                end
-               local message = MessageBuilder.new()
+               local message = Speech.new()
                message:fragment({ "fa.spidertron-remote-linked-to" })
                if game.get_player(pindex).cursor_stack.connected_entity.entity_label ~= nil then
                   message:fragment(game.get_player(pindex).cursor_stack.connected_entity.entity_label)
                else
                   message:fragment({ "fa.spidertron-unnamed" })
                end
-               printout(message:build(), pindex)
+               Speech.speak(pindex, message:build())
             end
          end
       end
    elseif index == 2 then
       --Rename the connected spidertron
       if not clicked then
-         printout({ "fa.spidertron-rename-prompt" }, pindex)
+         Speech.speak(pindex, { "fa.spidertron-rename-prompt" })
       else
          if remote.connected_entity == nil then
-            printout({ "fa.spidertron-link-first-rename" }, pindex)
+            Speech.speak(pindex, { "fa.spidertron-link-first-rename" })
          else
-            printout({ "fa.spidertron-enter-new-name" }, pindex)
+            Speech.speak(pindex, { "fa.spidertron-enter-new-name" })
             storage.players[pindex].spider_menu.renaming = true
             local frame = Graphics.create_text_field_frame(pindex, "spider-rename")
             game.get_player(pindex).opened = frame
@@ -94,42 +94,42 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
    elseif index == 3 then
       --Set the cursor position as the spidertron autopilot target
       if not clicked then
-         printout({ "fa.spidertron-set-target" }, pindex)
+         Speech.speak(pindex, { "fa.spidertron-set-target" })
       else
          if remote.connected_entity == nil then
-            printout({ "fa.spidertron-link-first-move" }, pindex)
+            Speech.speak(pindex, { "fa.spidertron-link-first-move" })
          else
             game.get_player(pindex).cursor_stack.connected_entity.autopilot_destination = cursor
-            printout({
+            Speech.speak(pindex, {
                "fa.spidertron-sent-to-coords",
                tostring(math.floor(cursor.x)),
                tostring(math.floor(cursor.y)),
-            }, pindex)
+            })
          end
       end
    elseif index == 4 then
       --Add the cursor position to the spidertron autopilot queue
       if not clicked then
-         printout({ "fa.spidertron-add-to-queue" }, pindex)
+         Speech.speak(pindex, { "fa.spidertron-add-to-queue" })
       else
          if remote.connected_entity == nil then
-            printout({ "fa.spidertron-link-first-move" }, pindex)
+            Speech.speak(pindex, { "fa.spidertron-link-first-move" })
          else
             game.get_player(pindex).cursor_stack.connected_entity.add_autopilot_destination(cursor)
-            printout(
+            Speech.speak(
+               pindex,
                "Coordinates "
                   .. math.floor(cursor.x)
                   .. ", "
                   .. math.floor(cursor.y)
-                  .. "added to this spidertron's autopilot queue.",
-               pindex
+                  .. "added to this spidertron's autopilot queue."
             )
          end
       end
    elseif index == 5 then
       --Toggle automatically targetting enemies when the spidertron is working by itself
       if remote.connected_entity == nil then
-         printout({ "fa.spidertron-no-linked" }, pindex)
+         Speech.speak(pindex, { "fa.spidertron-no-linked" })
       else
          if not clicked then
             local targetstate
@@ -141,7 +141,7 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
             else
                targetstate = "disabled"
             end
-            printout({ "fa.spidertron-auto-target-status", targetstate }, pindex)
+            Speech.speak(pindex, { "fa.spidertron-auto-target-status", targetstate })
          else
             local switch = {
                auto_target_without_gunner = not game.get_player(pindex).cursor_stack.connected_entity.vehicle_automatic_targeting_parameters.auto_target_without_gunner,
@@ -157,13 +157,13 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
             else
                targetstate = "disabled"
             end
-            printout({ "fa.spidertron-auto-target-without-gunner", targetstate }, pindex)
+            Speech.speak(pindex, { "fa.spidertron-auto-target-without-gunner", targetstate })
          end
       end
    elseif index == 6 then
       --Toggle automatically targetting enemies when there is a gunner insider
       if remote.connected_entity == nil then
-         printout({ "fa.spidertron-no-linked" }, pindex)
+         Speech.speak(pindex, { "fa.spidertron-no-linked" })
       else
          if not clicked then
             local targetstate
@@ -175,7 +175,7 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
             else
                targetstate = "disabled"
             end
-            printout({ "fa.spidertron-auto-target-with-gunner-current", targetstate }, pindex)
+            Speech.speak(pindex, { "fa.spidertron-auto-target-with-gunner-current", targetstate })
          else
             local switch = {
                auto_target_without_gunner = game.get_player(pindex).cursor_stack.connected_entity.vehicle_automatic_targeting_parameters.auto_target_without_gunner,
@@ -191,19 +191,19 @@ function mod.run_spider_menu(menu_index, pindex, spiderin, clicked, other_input)
             else
                targetstate = "disabled"
             end
-            printout({ "fa.spidertron-auto-target-with-gunner-set", targetstate }, pindex)
+            Speech.speak(pindex, { "fa.spidertron-auto-target-with-gunner-set", targetstate })
          end
       end
    elseif index == 7 then
       --Set the spidertron autopilot to follow the selected entity
       if not clicked then
-         printout({ "fa.spidertron-follow-entity" }, pindex)
+         Speech.speak(pindex, { "fa.spidertron-follow-entity" })
       else
          if remote.connected_entity ~= nil then
             game.get_player(pindex).cursor_stack.connected_entity.follow_target = cursortarget
-            printout({ "fa.spidertron-started-following" }, pindex)
+            Speech.speak(pindex, { "fa.spidertron-started-following" })
          else
-            printout({ "fa.spidertron-link-required" }, pindex)
+            Speech.speak(pindex, { "fa.spidertron-link-required" })
          end
       end
    end

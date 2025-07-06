@@ -1029,7 +1029,7 @@ function mod.confirm_action(pindex, id_string, custom_message)
    if storage.players[pindex].confirm_action_id_string ~= id_string then
       storage.players[pindex].confirm_action_id_string = id_string
       storage.players[pindex].confirm_action_tick = game.tick
-      printout(message, pindex)
+      Speech.speak(pindex, message)
       return false
    end
    --Check the time stamp
@@ -1038,7 +1038,7 @@ function mod.confirm_action(pindex, id_string, custom_message)
       or game.tick - storage.players[pindex].confirm_action_tick > 600
    then
       storage.players[pindex].confirm_action_tick = game.tick
-      printout(message, pindex)
+      Speech.speak(pindex, message)
       return false
    else
       storage.players[pindex].confirm_action_tick = 0

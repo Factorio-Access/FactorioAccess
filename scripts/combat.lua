@@ -6,7 +6,7 @@ local Equipment = require("scripts.equipment")
 local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
 local Localising = require("scripts.localising")
-local MessageBuilder = require("scripts.message-builder")
+local Speech = require("scripts.speech")
 local Mouse = require("scripts.mouse")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
@@ -32,25 +32,25 @@ function mod.repair_pack_used(ent, pindex)
       local dura = stack.durability or 0
       if health_diff < 10 then --free repair for tiny damages
          ent.health = ent.max_health
-         local msg = MessageBuilder.new()
+         local msg = Speech.new()
          msg:fragment({ "fa.combat-fully-repaired" })
          msg:fragment(Localising.get_localised_name_with_fallback(ent))
-         printout(msg:build(), pindex)
+         Speech.speak(pindex, msg:build())
       elseif health_diff < dura then
          ent.health = ent.max_health
          stack.drain_durability(health_diff)
-         local msg = MessageBuilder.new()
+         local msg = Speech.new()
          msg:fragment({ "fa.combat-fully-repaired" })
          msg:fragment(Localising.get_localised_name_with_fallback(ent))
-         printout(msg:build(), pindex)
+         Speech.speak(pindex, msg:build())
       else --if health_diff >= dura then
          stack.drain_durability(dura)
          ent.health = ent.health + dura
-         local msg = MessageBuilder.new()
+         local msg = Speech.new()
          msg:fragment({ "fa.combat-partially-repaired" })
          msg:fragment(Localising.get_localised_name_with_fallback(ent))
          msg:fragment({ "fa.combat-consumed-repair-pack" })
-         printout(msg:build(), pindex)
+         Speech.speak(pindex, msg:build())
          --Note: This automatically subtracts correctly and decerements the pack in hand.
       end
    end
@@ -65,7 +65,7 @@ function mod.repair_area(radius_in, pindex)
    local radius = math.min(radius_in, 25)
    if stack.count < 2 then
       --If you are low on repair packs, stop
-      printout({ "fa.combat-need-repair-packs" }, pindex)
+      Speech.speak(pindex, { "fa.combat-need-repair-packs" })
       return
    end
    local ents = p.surface.find_entities_filtered({ position = p.position, radius = radius })
@@ -92,11 +92,11 @@ function mod.repair_area(radius_in, pindex)
             repaired_count = repaired_count + 1
          elseif stack.count < 2 then
             --If you are low on repair packs, stop
-            printout({
+            Speech.speak(pindex, {
                "fa.combat-repaired-stopped-low-packs",
                tostring(repaired_count),
                tostring(packs_used),
-            }, pindex)
+            })
             return
          else
             --Finish the current repair pack
@@ -117,11 +117,11 @@ function mod.repair_area(radius_in, pindex)
                   repaired_count = repaired_count + 1
                elseif stack.count < 2 then
                   --If you are low on repair packs, stop
-                  printout({
+                  Speech.speak(pindex, {
                      "fa.combat-repaired-stopped-low-packs",
                      tostring(repaired_count),
                      tostring(packs_used),
-                  }, pindex)
+                  })
                   return
                else
                   --Finish the current repair pack
@@ -134,15 +134,15 @@ function mod.repair_area(radius_in, pindex)
       end
    end
    if repaired_count == 0 then
-      printout({ "fa.combat-nothing-to-repair", radius }, pindex)
+      Speech.speak(pindex, { "fa.combat-nothing-to-repair", radius })
       return
    end
-   printout({
+   Speech.speak(pindex, {
       "fa.combat-repaired-all",
       tostring(repaired_count),
       tostring(radius),
       tostring(packs_used),
-   }, pindex)
+   })
 end
 
 --Plays enemy proximity alert sounds. Frequency is determined by distance andmode, and intensity is determined by the threat level.
@@ -495,7 +495,7 @@ function mod.run_atomic_bomb_checks(pindex)
 
       --Warn the player
       p.play_sound({ path = "utility/cannot_build" })
-      printout(abort_message, pindex)
+      Speech.speak(pindex, abort_message)
 
       --Schedule to restore the items on a later tick
       schedule(310, "call_to_restore_equipped_atomic_bombs", pindex)

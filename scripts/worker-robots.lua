@@ -3,7 +3,7 @@ local Equipment = require("scripts.equipment")
 local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
 local Localising = require("scripts.localising")
-local MessageBuilder = require("scripts.message-builder")
+local Speech = require("scripts.speech")
 local UiRouter = require("scripts.ui.router")
 local Sounds = require("scripts.ui.sounds")
 
@@ -94,18 +94,18 @@ local function toggle_personal_logistics(pindex)
    if not point then return end
    point.enabled = not point.enabled
    if point.enabled then
-      printout({ "fa.robots-resumed-personal-logistics" }, pindex)
+      Speech.speak(pindex, { "fa.robots-resumed-personal-logistics" })
    else
-      printout({ "fa.robots-paused-personal-logistics" }, pindex)
+      Speech.speak(pindex, { "fa.robots-paused-personal-logistics" })
    end
 end
 
 local function logistics_request_toggle_spidertron_logistics(spidertron, pindex)
    spidertron.vehicle_logistic_requests_enabled = not spidertron.vehicle_logistic_requests_enabled
    if spidertron.vehicle_logistic_requests_enabled then
-      printout({ "fa.robots-resumed-spidertron-logistics" }, pindex)
+      Speech.speak(pindex, { "fa.robots-resumed-spidertron-logistics" })
    else
-      printout({ "fa.robots-paused-spidertron-logistics" }, pindex)
+      Speech.speak(pindex, { "fa.robots-paused-spidertron-logistics" })
    end
 end
 
@@ -245,11 +245,11 @@ end
 local function modify_logistic_request_with_announcement(pindex, ent, item, min_or_max, up_or_down)
    local new, did, err = modify_logistic_request(ent, item, min_or_max, up_or_down)
    if err then
-      printout(err, pindex)
+      Speech.speak(pindex, err)
       return
    end
 
-   local msg = MessageBuilder.MessageBuilder.new()
+   local msg = Speech.new()
    if not did then
       Sounds.play_ui_edge(pindex)
       msg:fragment(min_or_max):fragment("Unchanged. Current value is"):fragment(tostring(new))
@@ -257,7 +257,7 @@ local function modify_logistic_request_with_announcement(pindex, ent, item, min_
       msg:fragment("Set"):fragment(min_or_max):fragment("to"):fragment(new == math.huge and "infinity" or tostring(new))
    end
 
-   printout(msg:build(), pindex)
+   Speech.speak(pindex, msg:build())
 end
 
 ---@param pindex number
@@ -268,12 +268,12 @@ local function modify_player_logistic_request(pindex, item, min_or_max, up_or_do
    local p = game.get_player(pindex)
    if not p then return nil, false end
    local force = p.force
-   if not force.character_logistic_requests then printout({ "fa.robots-error-need-research" }, pindex) end
+   if not force.character_logistic_requests then Speech.speak(pindex, { "fa.robots-error-need-research" }) end
 
    local char = p.character
    if not char then
       Sounds.play_ui_edge(pindex)
-      printout({ "fa.robots-no-character-control" }, pindex)
+      Speech.speak(pindex, { "fa.robots-no-character-control" })
       return
    end
 
@@ -313,9 +313,9 @@ end
 local function clear_logistic_request_with_announcement(pindex, ent, name)
    local did = clear_logistic_request(ent, name)
    if did then
-      printout({ "fa.robots-cleared-request" }, pindex)
+      Speech.speak(pindex, { "fa.robots-cleared-request" })
    else
-      printout({ "fa.robots-request-already-cleared" }, pindex)
+      Speech.speak(pindex, { "fa.robots-request-already-cleared" })
    end
 end
 
@@ -427,7 +427,7 @@ local function find_player_logistic_target(pindex)
 end
 
 -- Push a readout of a logistic request to the provided builder as a fragment.
----@param msg_builder fa.MessageBuilder
+---@param msg_builder fa.Speech
 ---@param req LogisticFilter
 local function push_request_readout(msg_builder, req)
    -- Error conditions are unlocalised because they should never happen.  We
@@ -472,9 +472,9 @@ end
 ---@param pindex number
 ---@param req LogisticFilter
 function mod.readout_logistic_request(pindex, req)
-   local msg = MessageBuilder.MessageBuilder.new()
+   local msg = Speech.new()
    push_request_readout(msg, req)
-   printout(msg:build(), pindex)
+   Speech.speak(pindex, msg:build())
 end
 
 function mod.logistics_info_key_handler(pindex)
@@ -484,7 +484,7 @@ function mod.logistics_info_key_handler(pindex)
    local item = nil
    ent, err = find_player_logistic_target(pindex)
    if err then
-      printout(err, pindex)
+      Speech.speak(pindex, err)
       return
    end
 
@@ -497,7 +497,7 @@ function mod.logistics_info_key_handler(pindex)
       else
          result = { "", "Nothing set as logistic storage filter" }
       end
-      printout(result, pindex)
+      Speech.speak(pindex, result)
       return
    end
 
@@ -522,12 +522,12 @@ local function modify_logistic_request_kb(pindex, min_or_max, up_or_down)
    local target = nil
    name, err = find_player_item_name(pindex)
    if err then
-      printout(err, pindex)
+      Speech.speak(pindex, err)
       return
    end
    target, err = find_player_logistic_target(pindex)
    if err then
-      printout(err, pindex)
+      Speech.speak(pindex, err)
       return
    end
 
@@ -580,9 +580,9 @@ function mod.logistics_request_toggle_handler(pindex)
          return
       end
       if ent.request_from_buffers then
-         printout({ "fa.robots-enabled-buffer-requests" }, pindex)
+         Speech.speak(pindex, { "fa.robots-enabled-buffer-requests" })
       else
-         printout({ "fa.robots-disabled-buffer-requests" }, pindex)
+         Speech.speak(pindex, { "fa.robots-disabled-buffer-requests" })
       end
    end
 end
@@ -594,12 +594,12 @@ function mod.logistics_request_clear_handler(pindex)
    local target = nil
    name, err = find_player_item_name(pindex)
    if err then
-      printout(err, pindex)
+      Speech.speak(pindex, err)
       return
    end
    target, err = find_player_logistic_target(pindex)
    if err then
-      printout(err, pindex)
+      Speech.speak(pindex, err)
       return
    end
 
@@ -611,7 +611,7 @@ end
 --Returns summary info string
 function mod.player_logistic_requests_summary_info(pindex)
    local p = game.get_player(pindex)
-   local msg = MessageBuilder.MessageBuilder.new()
+   local msg = Speech.new()
    local char = p.character
 
    local position = FaUtils.get_player_relative_origin(pindex)
@@ -681,7 +681,7 @@ function mod.player_logistic_request_read(item_name, pindex, additional_checks)
    local p = game.get_player(pindex)
    local char = p.character
    if not char then
-      printout({ "fa.robots-not-controlling-character" }, pindex)
+      Speech.speak(pindex, { "fa.robots-not-controlling-character" })
       return
    end
 
@@ -708,17 +708,17 @@ function mod.player_logistic_request_read(item_name, pindex, additional_checks)
    current_slot = sec.get_slot(index --[[@as integer]])
    if current_slot == nil or current_slot.value == nil or current_slot.value.name == nil then
       --No requests found
-      printout(
+      Speech.speak(
+         pindex,
          result
             .. item_name
             .. " has no personal logistic requests set,"
-            .. " use the L key and modifier keys to set requests.",
-         pindex
+            .. " use the L key and modifier keys to set requests."
       )
       return
    else
       --Report request counts and inventory counts
-      local msg = MessageBuilder.MessageBuilder.new()
+      local msg = Speech.new()
 
       if current_slot.max ~= nil or current_slot.min ~= nil then
          local min_result = ""
@@ -746,16 +746,16 @@ function mod.player_logistic_request_read(item_name, pindex, additional_checks)
          msg:list_item(result):list_item()
          push_request_readout(msg, current_slot)
          msg:list_item(inv_result):list_item(trash_result):list_item("use the L key and modifier keys to set requests.")
-         printout(msg:build(), pindex)
+         Speech.speak(pindex, msg:build())
          return
       else
          --All requests are nil
-         printout(
+         Speech.speak(
+            pindex,
             result
                .. item_name
                .. " has no personal logistic requests set,"
-               .. " use the L key and modifier keys to set requests.",
-            pindex
+               .. " use the L key and modifier keys to set requests."
          )
          return
       end
@@ -785,10 +785,10 @@ function mod.send_selected_stack_to_logistic_trash(pindex)
       local inserted_count = trash_inv.insert(stack)
       if inserted_count < stack.count then
          stack.set_stack({ name = stack.name, count = stack.count - inserted_count })
-         printout({ "fa.robots-partial-stack-to-trash" }, pindex)
+         Speech.speak(pindex, { "fa.robots-partial-stack-to-trash" })
       else
          stack.set_stack(nil)
-         printout({ "fa.robots-sent-stack-to-trash" }, pindex)
+         Speech.speak(pindex, { "fa.robots-sent-stack-to-trash" })
       end
    end
 end
@@ -853,16 +853,19 @@ function mod.set_logistic_filter(pindex, ent, name)
 
    if filt and filt.name.name == name then
       ent.set_filter(1, nil)
-      printout({ "fa.robots-storage-filter-cleared" }, pindex)
+      Speech.speak(pindex, { "fa.robots-storage-filter-cleared" })
       return
    end
 
    ent.set_filter(1, name)
    local proto = prototypes.item[name]
    if proto then
-      printout({ "", Localising.get_localised_name_with_fallback(proto), " set as logistic storage filter " }, pindex)
+      Speech.speak(
+         pindex,
+         { "", Localising.get_localised_name_with_fallback(proto), " set as logistic storage filter " }
+      )
    else
-      printout({ "", name, " set as logistic storage filter " }, pindex)
+      Speech.speak(pindex, { "", name, " set as logistic storage filter " })
    end
 end
 
@@ -883,13 +886,13 @@ function mod.read_entity_requests_summary(ent, pindex)
       end
    end
 
-   local msg = MessageBuilder.MessageBuilder.new():fragment(tostring(req_count)):fragment("requests.")
+   local msg = Speech.new():fragment(tostring(req_count)):fragment("requests.")
    for _, req in pairs(reqs) do
       msg:list_item()
       push_request_readout(msg, req)
    end
 
-   printout(msg:build(), pindex)
+   Speech.speak(pindex, msg:build())
 end
 
 -- vanilla does not have network names.  We add this ourselves: all roboports in the same network get the same backer
@@ -957,72 +960,72 @@ function mod.run_roboport_menu(menu_index, pindex, clicked)
       storage.players[pindex].roboport_menu.port = port
    else
       storage.players[pindex].roboport.port = nil
-      printout({ "fa.robots-roboport-menu-requires" }, pindex)
+      Speech.speak(pindex, { "fa.robots-roboport-menu-requires" })
       return
    end
    local nw = port.logistic_network
 
    if index == 0 then
       --0. Roboport of logistic network NAME, instructions
-      printout(
+      Speech.speak(
+         pindex,
          "Roboport of logistic network "
             .. mod.get_network_name(port)
-            .. ", Press 'W' and 'S' to navigate options, press 'LEFT BRACKET' to select an option or press 'E' to exit this menu.",
-         pindex
+            .. ", Press 'W' and 'S' to navigate options, press 'LEFT BRACKET' to select an option or press 'E' to exit this menu."
       )
    elseif index == 1 then
       --1. Rename roboport networks
       if not clicked then
-         printout({ "fa.robots-rename-this-network" }, pindex)
+         Speech.speak(pindex, { "fa.robots-rename-this-network" })
       else
-         printout({ "fa.robots-enter-new-network-name" }, pindex)
+         Speech.speak(pindex, { "fa.robots-enter-new-network-name" })
          storage.players[pindex].roboport_menu.renaming = true
          local frame = Graphics.create_text_field_frame(pindex, "network-rename")
       end
    elseif index == 2 then
       --2. This roboport: Check neighbor counts and dirs
       if not clicked then
-         printout({ "fa.robots-read-roboport-neighbours" }, pindex)
+         Speech.speak(pindex, { "fa.robots-read-roboport-neighbours" })
       else
          local result = mod.roboport_neighbours_info(port)
-         printout(result, pindex)
+         Speech.speak(pindex, result)
       end
    elseif index == 3 then
       --3. This roboport: Check robot counts
       if not clicked then
-         printout({ "fa.robots-read-roboport-contents" }, pindex)
+         Speech.speak(pindex, { "fa.robots-read-roboport-contents" })
       else
          local result = mod.roboport_contents_info(port)
-         printout(result, pindex)
+         Speech.speak(pindex, result)
       end
    elseif index == 4 then
       --4. Check network roboport & robot & chest(?) counts
       if not clicked then
-         printout({ "fa.robots-read-robots-info" }, pindex)
+         Speech.speak(pindex, { "fa.robots-read-robots-info" })
       else
          if nw ~= nil then
             local result = mod.logistic_network_members_info(port)
-            printout(result, pindex)
+            Speech.speak(pindex, result)
          else
-            printout({ "fa.robots-error-no-network" }, pindex)
+            Speech.speak(pindex, { "fa.robots-error-no-network" })
          end
       end
    elseif index == 5 then
       --5. Points/chests info
       if not clicked then
-         printout({ "fa.robots-read-chests-info" }, pindex)
+         Speech.speak(pindex, { "fa.robots-read-chests-info" })
       else
          if nw ~= nil then
             local result = mod.logistic_network_chests_info(port)
-            printout(result, pindex)
+            Speech.speak(pindex, result)
          else
-            printout({ "fa.robots-error-no-network" }, pindex)
+            Speech.speak(pindex, { "fa.robots-error-no-network" })
          end
       end
    elseif index == 6 then
       --6. Check network item contents
       if not clicked then
-         printout({ "fa.robots-read-items-info" }, pindex)
+         Speech.speak(pindex, { "fa.robots-read-items-info" })
          storage.players[pindex].menu_click_count = 0
       else
          if nw ~= nil then
@@ -1030,9 +1033,9 @@ function mod.run_roboport_menu(menu_index, pindex, clicked)
             click_count = click_count + 1
             local result = mod.logistic_network_items_info(pindex, port --[[@as LuaEntity]], click_count)
             storage.players[pindex].menu_click_count = click_count
-            printout(result, pindex)
+            Speech.speak(pindex, result)
          else
-            printout({ "fa.robots-error-no-network" }, pindex)
+            Speech.speak(pindex, { "fa.robots-error-no-network" })
          end
       end
    end
@@ -1211,7 +1214,7 @@ end
 
 ---@param port LuaEntity
 function mod.logistic_network_items_info(pindex, port, group_no)
-   local msg = MessageBuilder.MessageBuilder.new()
+   local msg = Speech.new()
    local nw = port.logistic_cell.logistic_network
    if nw == nil or nw.valid == false then
       msg:fragment("Error: no network ")

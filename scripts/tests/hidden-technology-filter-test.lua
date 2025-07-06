@@ -36,22 +36,22 @@ describe("Hidden Technology Filter", function()
          -- If our filter works, searching for a hidden tech name should fail
          for tech_name, _ in pairs(hidden_tech_names) do
             -- Capture the search result
-            local search_found = false
-            local original_printout = _G.printout
-            _G.printout = function(msg, pindex)
-               -- If search succeeds, it will print the technology name
-               -- If it fails, it prints a "not found" message
-               if type(msg) == "table" and msg[1] and msg[1] == "fa.research-search-no-results" then
-                  search_found = false
-               else
-                  search_found = true
-               end
-            end
+            local Speech = require("scripts.speech")
+            Speech.start_capture()
 
             -- Try to search for the hidden technology
             Research.menu_search(1, tech_name, 1)
 
-            _G.printout = original_printout
+            -- Check if search failed (should print not found message)
+            local messages = Speech.stop_capture()
+            local search_found = true
+            for _, msg_data in ipairs(messages) do
+               local msg = msg_data.message
+               if type(msg) == "table" and msg[1] and msg[1] == "fa.research-search-no-results" then
+                  search_found = false
+                  break
+               end
+            end
 
             -- Hidden technology should not be found
             ctx:assert(not search_found, "Hidden technology '" .. tech_name .. "' should not be searchable")

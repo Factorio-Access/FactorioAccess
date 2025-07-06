@@ -3,6 +3,7 @@
 local util = require("util")
 local FaUtils = require("scripts.fa-utils")
 local localising = require("scripts.localising")
+local Speech = require("scripts.speech")
 
 local mod = {}
 
@@ -50,12 +51,12 @@ function mod.read_crafting_queue(pindex, start_phrase)
       local recipe_name_only = item.recipe
       local recipe_proto = prototypes.recipe[recipe_name_only]
       local recipe_name = recipe_proto and localising.get_localised_name_with_fallback(recipe_proto) or recipe_name_only
-      printout({ "", start_phrase, recipe_name, " x ", tostring(item.count) }, pindex)
+      Speech.speak(pindex, { "", start_phrase, recipe_name, " x ", tostring(item.count) })
    else
       if start_phrase == "" then
-         printout({ "fa.crafting-blank" }, pindex)
+         Speech.speak(pindex, { "fa.crafting-blank" })
       else
-         printout({ "", start_phrase, { "fa.crafting-blank" } }, pindex)
+         Speech.speak(pindex, { "", start_phrase, { "fa.crafting-blank" } })
       end
    end
 end
@@ -114,15 +115,15 @@ function mod.read_crafting_slot(pindex, start_phrase, new_category)
       storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index]
    if recipe.valid == true then
       if new_category == true then start_phrase = start_phrase .. localising.get_alt(recipe.group, pindex) .. ", " end
-      printout(
+      Speech.speak(
+         pindex,
          start_phrase
             .. localising.get_recipe_from_name(recipe.name, pindex)
             .. ", can craft "
-            .. game.get_player(pindex).get_craftable_count(recipe.name),
-         pindex
+            .. game.get_player(pindex).get_craftable_count(recipe.name)
       )
    else
-      printout({ "fa.crafting-blank" }, pindex)
+      Speech.speak(pindex, { "fa.crafting-blank" })
    end
 end
 

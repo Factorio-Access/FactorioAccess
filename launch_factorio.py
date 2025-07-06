@@ -952,7 +952,7 @@ def capture_crash_info(factorio_path: Path, exit_code: int, fail_hard: bool = Tr
             except Exception as e:
                 crash_info["mod_log"] = f"Failed to read mod log: {e}"
 
-        # Check for printout log (CRITICAL for debugging)
+        # Check for speech output log (CRITICAL for debugging)
         printout_log_path = script_output_dir / "factorio-access-printout.log"
         if printout_log_path.exists():
             try:

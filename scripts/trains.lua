@@ -6,7 +6,7 @@ local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
 local Rails = require("scripts.rails")
 local UiRouter = require("scripts.ui.router")
-local MessageBuilder = require("scripts.message-builder")
+local Speech = require("scripts.speech")
 local localising = require("scripts.localising")
 
 local dirs = defines.direction
@@ -240,14 +240,14 @@ function mod.train_read_next_rail_entity_ahead(pindex, invert, mute_in)
    --Correction for trains: Curved rails report different directions based on where the train sits and so are unreliable.
    if leading_rail.name == "curved-rail" then
       if mute_in == true then return -1 end
-      printout({ "fa.trains-curved-rail-error" }, pindex)
+      Speech.speak(pindex, { "fa.trains-curved-rail-error" })
       return -1
    end
    local next_entity, next_entity_label, result_extra, next_is_forward, iteration_count =
       Rails.get_next_rail_entity_ahead(leading_rail, dir_ahead, false)
    if next_entity == nil then
       if mute_in == true then return -1 end
-      printout({ "fa.trains-analysis-error-looping" }, pindex)
+      Speech.speak(pindex, { "fa.trains-analysis-error-looping" })
       return -1
    end
    local distance = math.floor(util.distance(leading_stock.position, next_entity.position))
@@ -370,7 +370,7 @@ function mod.train_read_next_rail_entity_ahead(pindex, invert, mute_in)
       if first_reset then message = message .. " for the front vehicle. " end
    end
    if not mute_in == true then
-      printout(message, pindex)
+      Speech.speak(pindex, message)
       --Draw circle for visual confirmation or debugging of the next entity
       rendering.draw_circle({
          color = { 0, 0.5, 1 },
@@ -422,20 +422,20 @@ function mod.run_train_menu(menu_index, pindex, clicked, other_input)
       storage.players[pindex].train_menu.locomotive = locomotive
    else
       storage.players[pindex].train_menu.locomotive = nil
-      printout({ "fa.trains-menu-requires-locomotive" }, pindex)
+      Speech.speak(pindex, { "fa.trains-menu-requires-locomotive" })
       return
    end
    local train = locomotive.train
 
    if index == 0 then
       --Give basic info about this train, such as its name and ID. Instructions.
-      printout(
+      Speech.speak(
+         pindex,
          "Train "
             .. mod.get_train_name(train)
             .. ", with ID "
             .. train.id
-            .. ", Press UP ARROW and DOWN ARROW to navigate options, press LEFT BRACKET to select an option or press E to exit this menu.",
-         pindex
+            .. ", Press UP ARROW and DOWN ARROW to navigate options, press LEFT BRACKET to select an option or press E to exit this menu."
       )
    elseif index == 1 then
       --Get train state and toggle manual control
@@ -445,25 +445,25 @@ function mod.run_train_menu(menu_index, pindex, clicked, other_input)
             result = result .. ", going to station " .. train.path_end_stop.backer_name
          end
          result = result .. ", press LEFT BRACKET to toggle manual control "
-         printout(result, pindex)
+         Speech.speak(pindex, result)
       else
          train.manual_mode = not train.manual_mode
          if train.manual_mode then
-            printout({ "fa.trains-manual-mode" }, pindex)
+            Speech.speak(pindex, { "fa.trains-manual-mode" })
          else
-            printout({ "fa.trains-automatic-mode" }, pindex)
+            Speech.speak(pindex, { "fa.trains-automatic-mode" })
          end
       end
    elseif index == 2 then
       --Rename this train
       if not clicked then
-         printout({ "fa.trains-rename-prompt" }, pindex)
+         Speech.speak(pindex, { "fa.trains-rename-prompt" })
       else
          if train.locomotives == nil then
-            printout({ "fa.trains-must-have-locomotives" }, pindex)
+            Speech.speak(pindex, { "fa.trains-must-have-locomotives" })
             return
          end
-         printout({ "fa.trains-enter-new-name" }, pindex)
+         Speech.speak(pindex, { "fa.trains-enter-new-name" })
          storage.players[pindex].train_menu.renaming = true
          local frame = Graphics.create_text_field_frame(pindex, "train-rename")
          game.get_player(pindex).opened = frame
@@ -471,7 +471,8 @@ function mod.run_train_menu(menu_index, pindex, clicked, other_input)
    elseif index == 3 then
       --Train vehicles info
       local locos = train.locomotives
-      printout(
+      Speech.speak(
+         pindex,
          "Vehicle counts, "
             .. #locos["front_movers"]
             .. " locomotives facing front, "
@@ -480,8 +481,7 @@ function mod.run_train_menu(menu_index, pindex, clicked, other_input)
             .. #train.cargo_wagons
             .. " cargo wagons, "
             .. #train.fluid_wagons
-            .. " fluid wagons, ",
-         pindex
+            .. " fluid wagons, "
       )
    elseif index == 4 then
       --Train cargo info
@@ -495,7 +495,7 @@ function mod.run_train_menu(menu_index, pindex, clicked, other_input)
       local result = { "" }
       if click_count == 1 then table.insert(result, "Cargo, ") end
       table.insert(result, mod.train_top_contents_info(train, click_count))
-      printout(result, pindex)
+      Speech.speak(pindex, result)
    elseif index == 5 then
       --Train schedule info
       local result = ""
@@ -537,39 +537,39 @@ function mod.run_train_menu(menu_index, pindex, clicked, other_input)
          if namelist == "" then namelist = " is empty" end
          result = " Train schedule" .. namelist
       end
-      printout(result, pindex)
+      Speech.speak(pindex, result)
    elseif index == 6 then
       --Set instant schedule
       if storage.players[pindex].train_menu.wait_time == nil then storage.players[pindex].train_menu.wait_time = 300 end
       if not clicked then
-         printout(
-            " Set a new instant schedule for the train here by pressing LEFT BRACKET, where the train waits for a set amount of time at immediately reachable station, modify this time with PAGE UP or PAGE DOWN before settting the schedule and hold CONTROL to increase the step size",
-            pindex
+         Speech.speak(
+            pindex,
+            " Set a new instant schedule for the train here by pressing LEFT BRACKET, where the train waits for a set amount of time at immediately reachable station, modify this time with PAGE UP or PAGE DOWN before settting the schedule and hold CONTROL to increase the step size"
          )
       else
          local comment = mod.instant_schedule(train, storage.players[pindex].train_menu.wait_time)
-         printout(comment, pindex)
+         Speech.speak(pindex, comment)
       end
    elseif index == 7 then
       --Clear schedule
       if not clicked then
-         printout({ "fa.trains-clear-schedule-prompt" }, pindex)
+         Speech.speak(pindex, { "fa.trains-clear-schedule-prompt" })
       else
          train.schedule = nil
          train.manual_mode = true
-         printout({ "fa.trains-schedule-cleared" }, pindex)
+         Speech.speak(pindex, { "fa.trains-schedule-cleared" })
       end
    elseif index == 8 then
       if not storage.players[pindex].train_menu.selecting_station then
          --Subautomatic travel to a selected train stop
          if not clicked then
-            printout(
-               "Single-time travel to a reachable train stop, press LEFT BRACKET to select one, the train waits there until all passengers get off, then it resumes its original schedule.",
-               pindex
+            Speech.speak(
+               pindex,
+               "Single-time travel to a reachable train stop, press LEFT BRACKET to select one, the train waits there until all passengers get off, then it resumes its original schedule."
             )
          else
             local comment = "Select a station with LEFT and RIGHT arrow keys and confirm with LEFT BRACKET."
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
             storage.players[pindex].train_menu.selecting_station = true
             mod.refresh_valid_train_stop_list(train, pindex)
             train.manual_mode = true
@@ -690,7 +690,7 @@ end
 
 --Returns most common items in a cargo wagon.
 function mod.cargo_wagon_top_contents_info(wagon)
-   local msg = MessageBuilder.new()
+   local msg = Speech.new()
    local itemset = wagon.get_inventory(defines.inventory.cargo_wagon).get_contents()
    local itemtable = {}
    for name, count in pairs(itemset) do
@@ -715,7 +715,7 @@ end
 
 --Returns most common items in a fluid wagon or train.
 function mod.fluid_contents_info(wagon)
-   local msg = MessageBuilder.new()
+   local msg = Speech.new()
    local itemset = wagon.get_fluid_contents()
    local itemtable = {}
    for name, amount in pairs(itemset) do
@@ -878,10 +878,10 @@ function mod.change_instant_schedule_wait_time(increment, pindex)
       seconds = 10000
    end
    storage.players[pindex].train_menu.wait_time = seconds
-   printout(
+   Speech.speak(
+      pindex,
       storage.players[pindex].train_menu.wait_time
-         .. " seconds waited at each station. Use arrow keys to navigate the train menu and apply the new wait time by re-creating the schedule.",
-      pindex
+         .. " seconds waited at each station. Use arrow keys to navigate the train menu and apply the new wait time by re-creating the schedule."
    )
 end
 
@@ -990,7 +990,7 @@ function mod.read_valid_train_stop_from_list(pindex)
    local index = storage.players[pindex].train_menu.index_2
    local name = ""
    if storage.players[pindex].valid_train_stop_list == nil or #storage.players[pindex].valid_train_stop_list == 0 then
-      printout({ "fa.trains-no-stops-found" }, pindex)
+      Speech.speak(pindex, { "fa.trains-no-stops-found" })
       return
    end
    if index == nil then index = 1 end
@@ -998,14 +998,14 @@ function mod.read_valid_train_stop_from_list(pindex)
 
    name = storage.players[pindex].valid_train_stop_list[index]
    --Return the name
-   printout(name, pindex)
+   Speech.speak(pindex, name)
 end
 
 function mod.go_to_valid_train_stop_from_list(pindex, train)
    local index = storage.players[pindex].train_menu.index_2
    local name = ""
    if storage.players[pindex].valid_train_stop_list == nil or #storage.players[pindex].valid_train_stop_list == 0 then
-      printout({ "fa.trains-no-stops-found" }, pindex)
+      Speech.speak(pindex, { "fa.trains-no-stops-found" })
       return
    end
    if index == nil then index = 1 end

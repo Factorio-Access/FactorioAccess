@@ -24,7 +24,7 @@ python3 launch_factorio.py --format
 
 #### Send Message to Player
 ```lua
-printout("Your message here", pindex)
+Speech.speak(pindex, "Your message here")
 ```
 
 #### Get Player's Selected Entity
@@ -82,7 +82,7 @@ local message = MessageBuilder.new()
 message:fragment({"entity-name.transport-belt"})
 message:fragment({"fa.ent-info-facing", "north"})
 message:list_item({"fa.item", "iron-plate", 50})
-printout(message:build(), pindex)
+Speech.speak(pindex, message:build())
 ```
 
 #### Register Event Handler
@@ -97,7 +97,7 @@ end)
 #### Schedule Future Event
 ```lua
 schedule(10, function()
-    printout("This happens 10 ticks later", pindex)
+    Speech.speak(pindex, "This happens 10 ticks later")
 end)
 ```
 
@@ -119,7 +119,7 @@ end)
 
 | Function | Purpose |
 |----------|---------|
-| `printout(msg, pindex)` | Send text to screen reader |
+| `Speech.speak(pindex, msg)` | Send text to screen reader |
 | `get_selected_ent(pindex)` | Get entity under cursor |
 | `players[pindex]` | Access player state |
 | `schedule(ticks, callback)` | Schedule future event |
@@ -199,7 +199,7 @@ data.raw["item"]["iron-plate"].stack_size = game.forces  -- CRASH!
 local my_important_data = {}  -- LOST on save/load!
 
 -- Hardcode strings
-printout("Building placed", pindex)  -- Not translatable!
+Speech.speak(pindex, "Building placed")  -- Not translatable!
 
 -- Assume single player
 local player = game.players[1]  -- Breaks multiplayer!
@@ -215,7 +215,7 @@ data.raw["item"]["iron-plate"].stack_size = 100
 storage.players[pindex].my_data = {}
 
 -- Use locale
-printout({"building.placed"}, pindex)
+Speech.speak(pindex, {"building.placed"})
 
 -- Always use pindex
 local player = game.get_player(pindex)

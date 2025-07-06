@@ -1,4 +1,6 @@
 --Here: localisation functions, including event handlers
+local Speech = require("scripts.speech")
+
 local mod = {}
 --Returns the localised name of an object as a string. Used for ents and items and fluids
 ---@return string
@@ -25,7 +27,7 @@ end
 --Used for recipes
 function mod.get_alt(object, pindex)
    if pindex == nil then
-      printout("localising: pindex is nil error")
+      Speech.speak(nil, "localising: pindex is nil error")
       return "(nil)"
    end
    if object == nil then return "(nil)" end

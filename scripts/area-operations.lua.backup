@@ -34,7 +34,7 @@ function mod.mine_area(pindex)
       )
    then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      Speech.speak(pindex, { "fa.area-out-of-reach" })
+      Speech.speak({ "fa.area-out-of-reach" }, pindex)
       return
    end
 
@@ -76,7 +76,7 @@ function mod.mine_area(pindex)
             surface = surf,
             time_to_live = 60,
          })
-         Speech.speak(pindex, { "fa.cleared-railway-objects", tostring(cleared_count) })
+         Speech.speak({ "fa.cleared-railway-objects", tostring(cleared_count) }, pindex)
          return
       elseif ent.name == "entity-ghost" then
          --Ghosts within 10 tiles
@@ -95,7 +95,7 @@ function mod.mine_area(pindex)
             surface = surf,
             time_to_live = 60,
          })
-         Speech.speak(pindex, { "fa.cleared-entity-ghosts", tostring(cleared_count) })
+         Speech.speak({ "fa.cleared-entity-ghosts", tostring(cleared_count) }, pindex)
          return
       else
          --Check if it is a remnant ent, clear obstacles
@@ -152,7 +152,7 @@ function mod.mine_area(pindex)
    --Print result
    local result = { "fa.cleared-objects", tostring(cleared_total) }
    if stacks_collected >= 0 then result = { "", result, { "fa.and-collected-stacks", tostring(stacks_collected) } } end
-   Speech.speak(pindex, result)
+   Speech.speak(result, pindex)
 end
 
 ---Super mine area for long range ghost clearing
@@ -183,7 +183,7 @@ function mod.super_mine_area(pindex)
          surface = surf,
          time_to_live = 60,
       })
-      Speech.speak(pindex, { "fa.cleared-entity-ghosts-100", tostring(cleared_count) })
+      Speech.speak({ "fa.cleared-entity-ghosts-100", tostring(cleared_count) }, pindex)
       return
    end
 end

@@ -1,7 +1,7 @@
 --Here: Functions relating to train train stops and train scheduling from them (which is a unique mod feature)
 --Does not include event handlers
 local Graphics = require("scripts.graphics")
-local MessageBuilder = require("scripts.message-builder")
+local Speech = require("scripts.speech")
 local UiRouter = require("scripts.ui.router")
 local EntitySelection = require("scripts.entity-selection")
 
@@ -17,25 +17,25 @@ function mod.run_train_stop_menu(menu_index, pindex, clicked, other_input)
       train_stop = tile_cache.ents[1]
       storage.players[pindex].train_stop_menu.stop = train_stop
    else
-      printout({ "fa.train-stops-menu-error" }, pindex)
+      Speech.speak(pindex, { "fa.train-stops-menu-error" })
       storage.players[pindex].train_stop_menu.stop = nil
       return
    end
 
    if index == 0 then
-      printout(
+      Speech.speak(
+         pindex,
          "Train stop "
             .. train_stop.backer_name
-            .. ", Press W and S to navigate options, press LEFT BRACKET to select an option or press E to exit this menu.",
-         pindex
+            .. ", Press W and S to navigate options, press LEFT BRACKET to select an option or press E to exit this menu."
       )
    elseif index == 1 then
       if not clicked then
-         printout({ "fa.train-stops-rename-prompt" }, pindex)
+         Speech.speak(pindex, { "fa.train-stops-rename-prompt" })
       else
-         printout(
-            "Enter a new name for this train stop, then press 'ENTER' to confirm, or press 'ESC' to cancel.",
-            pindex
+         Speech.speak(
+            pindex,
+            "Enter a new name for this train stop, then press 'ENTER' to confirm, or press 'ESC' to cancel."
          )
          storage.players[pindex].train_stop_menu.renaming = true
          local frame = Graphics.create_text_field_frame(pindex, "train-stop-rename")
@@ -43,20 +43,20 @@ function mod.run_train_stop_menu(menu_index, pindex, clicked, other_input)
       end
    elseif index == 2 then
       local result = mod.nearby_train_schedule_read_this_stop(train_stop)
-      local message = MessageBuilder.new()
+      local message = Speech.new()
       message:fragment(result)
       message:fragment({ "fa.train-stop-modify-schedule-prompt" })
-      printout(message:build(), pindex)
+      Speech.speak(pindex, message:build())
    elseif index == 3 then
       if not clicked then
          if storage.players[pindex].train_stop_menu.wait_condition == nil then
             storage.players[pindex].train_stop_menu.wait_condition = "time"
          end
-         printout(
+         Speech.speak(
+            pindex,
             "Proposed wait condition: "
                .. storage.players[pindex].train_stop_menu.wait_condition
-               .. " selected, change by selecting here, this change needs to also be applied.",
-            pindex
+               .. " selected, change by selecting here, this change needs to also be applied."
          )
       else
          local condi = storage.players[pindex].train_stop_menu.wait_condition
@@ -74,22 +74,22 @@ function mod.run_train_stop_menu(menu_index, pindex, clicked, other_input)
             condi = "time"
          end
          storage.players[pindex].train_stop_menu.wait_condition = condi
-         printout(
+         Speech.speak(
+            pindex,
             " "
                .. storage.players[pindex].train_stop_menu.wait_condition
-               .. " condition proposed, change by selecting here, this change needs to also be applied.",
-            pindex
+               .. " condition proposed, change by selecting here, this change needs to also be applied."
          )
       end
    elseif index == 4 then
       if storage.players[pindex].train_stop_menu.wait_time_seconds == nil then
          storage.players[pindex].train_stop_menu.wait_time_seconds = 60
       end
-      printout(
+      Speech.speak(
+         pindex,
          "Proposed wait time: "
             .. storage.players[pindex].train_stop_menu.wait_time_seconds
-            .. " seconds selected, if applicable, change using page up or page down, and hold control to increase step size. This change needs to also be applied.",
-         pindex
+            .. " seconds selected, if applicable, change using page up or page down, and hold control to increase step size. This change needs to also be applied."
       )
    elseif index == 5 then
       if not clicked then
@@ -104,7 +104,7 @@ function mod.run_train_stop_menu(menu_index, pindex, clicked, other_input)
             result =
                "DISABLED proposed safety waiting, select here to enable it, Enabling it makes the train wait at this stop for 5 seconds regardless of the main wait condition, this change needs to also be applied."
          end
-         printout(result, pindex)
+         Speech.speak(pindex, result)
       else
          storage.players[pindex].train_stop_menu.safety_wait_enabled =
             not storage.players[pindex].train_stop_menu.safety_wait_enabled
@@ -115,13 +115,13 @@ function mod.run_train_stop_menu(menu_index, pindex, clicked, other_input)
             result =
                "DISABLED proposed safety waiting, select here to enable it, Enabling it makes the train wait at this stop for 5 seconds regardless of the main wait condition, this change needs to also be applied."
          end
-         printout(result, pindex)
+         Speech.speak(pindex, result)
       end
    elseif index == 6 then
       if not clicked then
-         printout(
-            "ADD A NEW ENTRY for this train stop by selecting here, with the proposed conditions applied, for a train parked by this train stop.",
-            pindex
+         Speech.speak(
+            pindex,
+            "ADD A NEW ENTRY for this train stop by selecting here, with the proposed conditions applied, for a train parked by this train stop."
          )
       else
          local result = mod.nearby_train_schedule_add_stop(
@@ -130,13 +130,13 @@ function mod.run_train_stop_menu(menu_index, pindex, clicked, other_input)
             storage.players[pindex].train_stop_menu.wait_time_seconds,
             pindex
          )
-         printout(result, pindex)
+         Speech.speak(pindex, result)
       end
    elseif index == 7 then
       if not clicked then
-         printout(
-            "UPDATE ALL ENTRIES for this train stop by selecting here, with the proposed conditions applied, for a train parked by this train stop.",
-            pindex
+         Speech.speak(
+            pindex,
+            "UPDATE ALL ENTRIES for this train stop by selecting here, with the proposed conditions applied, for a train parked by this train stop."
          )
       else
          local result = mod.nearby_train_schedule_update_stop(
@@ -144,23 +144,23 @@ function mod.run_train_stop_menu(menu_index, pindex, clicked, other_input)
             storage.players[pindex].train_stop_menu.wait_condition,
             storage.players[pindex].train_stop_menu.wait_time_seconds
          )
-         printout(result, pindex)
+         Speech.speak(pindex, result)
       end
    elseif index == 8 then
       if not clicked then
-         printout(
-            "REMOVE ALL ENTRIES for this train stop by selecting here, for a train parked by this train stop.",
-            pindex
+         Speech.speak(
+            pindex,
+            "REMOVE ALL ENTRIES for this train stop by selecting here, for a train parked by this train stop."
          )
       else
          local result = mod.nearby_train_schedule_remove_stop(train_stop)
-         printout(result, pindex)
+         Speech.speak(pindex, result)
       end
    elseif index == 9 then
       if not clicked then
-         printout({ "fa.train-stops-set-limit" }, pindex)
+         Speech.speak(pindex, { "fa.train-stops-set-limit" })
       else
-         printout({ "fa.train-stops-enter-number" }, pindex)
+         Speech.speak(pindex, { "fa.train-stops-enter-number" })
          storage.players[pindex].train_limit_editing = true
          local frame = Graphics.create_text_field_frame(pindex, "train-limit-edit")
       end
@@ -241,9 +241,9 @@ function mod.nearby_train_schedule_add_to_wait_time(increment, pindex)
       seconds = 10000
    end
    storage.players[pindex].train_stop_menu.wait_time_seconds = seconds
-   printout(
-      { "fa.train-stop-wait-time-set", tostring(storage.players[pindex].train_stop_menu.wait_time_seconds) },
-      pindex
+   Speech.speak(
+      pindex,
+      { "fa.train-stop-wait-time-set", tostring(storage.players[pindex].train_stop_menu.wait_time_seconds) }
    )
 end
 

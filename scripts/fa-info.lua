@@ -6,7 +6,7 @@ movement, which are honestlyh most of the mod's "magic".  It consists of
 functions which either produce strings about entities or produce joined up
 strings to send to the player.  Since the applicability conditions for each
 announcement are complex and we would prefer not to centralize them, we do this
-by passing around a MessageBuilder and some context as to what's going on.
+by passing around a Speech and some context as to what's going on.
 
 The localisation is in entity-info.cfg.  We do not distinguish between cursor
 level information and status level information in the localisation, because it
@@ -32,7 +32,7 @@ local Geometry = require("scripts.geometry")
 local Graphics = require("scripts.graphics")
 local Heat = require("scripts.heat")
 local Localising = require("scripts.localising")
-local MessageBuilder = require("scripts.message-builder")
+local Speech = require("scripts.speech")
 local NetworkShape = require("scripts.network-shape")
 local Rails = require("scripts.rails")
 local ResourceMining = require("scripts.resource-mining")
@@ -46,7 +46,7 @@ local BotLogistics = require("scripts.worker-robots")
 local mod = {}
 
 ---@class fa.Info.EntInfoContext
----@field message fa.MessageBuilder
+---@field message fa.Speech
 ---@field is_scanner boolean
 ---@field ent LuaEntity
 ---@field pindex number
@@ -54,7 +54,7 @@ local mod = {}
 ---@field cursor_pos fa.Point Not necessarily the player's actual cursor.
 
 ---@class fa.Info.EntStatusContext
----@field message fa.MessageBuilder
+---@field message fa.Speech
 ---@field ent LuaEntity
 ---@field pindex number
 ---@field player LuaPlayer
@@ -1153,7 +1153,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    local ctx = {
       ent = ent,
       pindex = pindex,
-      message = MessageBuilder.MessageBuilder.new(),
+      message = Speech.new(),
       is_scanner = is_scanner,
       player = p,
       cursor_pos = vp:get_cursor_pos(),
@@ -1399,7 +1399,7 @@ function mod.read_pollution_level_at_position(pos, pindex)
    elseif pol >= 250 then
       result = "Maximal" .. result
    end
-   printout(result, pindex)
+   Speech.speak(pindex, result)
 end
 
 --Reads out the distance and direction to the nearest damaged entity within 1000 tiles.
@@ -1410,7 +1410,7 @@ function mod.read_nearest_damaged_ent_info(pos, pindex)
    local ents = p.surface.find_entities_filtered({ position = vp:get_cursor_pos(), radius = 1000, force = p.force })
    --Check for entities with health
    if ents == nil or #ents == 0 then
-      printout("No damaged structures within 1000 tiles.", pindex)
+      Speech.speak(pindex, "No damaged structures within 1000 tiles.")
       return
    end
    local at_least_one_has_damage = false
@@ -1422,7 +1422,7 @@ function mod.read_nearest_damaged_ent_info(pos, pindex)
       end
    end
    if at_least_one_has_damage == false then
-      printout("No damaged structures within 1000 tiles.", pindex)
+      Speech.speak(pindex, "No damaged structures within 1000 tiles.")
       return
    end
    --Narrow by distance
@@ -1437,7 +1437,7 @@ function mod.read_nearest_damaged_ent_info(pos, pindex)
       end
    end
    if closest == nil then
-      printout("No damaged structures within 1000 tiles.", pindex)
+      Speech.speak(pindex, "No damaged structures within 1000 tiles.")
       return
    else
       --Move cursor to closest
@@ -1456,7 +1456,7 @@ function mod.read_nearest_damaged_ent_info(pos, pindex)
          .. aligned_note
          .. FaUtils.direction_lookup(dir)
          .. ", cursor moved. "
-      printout(result, pindex)
+      Speech.speak(pindex, result)
    end
 end
 
@@ -1906,7 +1906,7 @@ function mod.read_selected_entity_status(pindex)
    local ctx = {
       ent = ent,
       pindex = pindex,
-      message = MessageBuilder.MessageBuilder.new(),
+      message = Speech.new(),
       player = p,
       power_rate = power_rate,
       drain = drain,
@@ -1960,7 +1960,7 @@ end
 ---@param right_bottom fa.Point
 ---@return LocalisedString
 function mod.area_scan_summary_info(pindex, left_top, right_bottom)
-   local msg = MessageBuilder.MessageBuilder.new()
+   local msg = Speech.new()
 
    local chunk_lt_x = math.floor(left_top.x / 32)
    local chunk_lt_y = math.floor(left_top.y / 32)
@@ -2056,7 +2056,7 @@ function mod.area_scan_summary_info(pindex, left_top, right_bottom)
       count_total = count_total + i.count
    end
 
-   -- Now using MessageBuilder to properly handle localisation
+   -- Now using Speech to properly handle localisation
    local has_items = false
    for _, entry in pairs(counts) do
       if entry.count == 0 then break end

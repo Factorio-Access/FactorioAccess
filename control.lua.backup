@@ -125,9 +125,9 @@ function read_item_selector_slot(pindex, start_phrase)
    start_phrase = start_phrase or ""
    local item_name = storage.players[pindex].item_cache[storage.players[pindex].item_selector.index].name
    if start_phrase == "" then
-      Speech.speak(pindex, { "item-name." .. item_name })
+      Speech.speak({ "item-name." .. item_name }, pindex)
    else
-      Speech.speak(pindex, { "", start_phrase, { "item-name." .. item_name } })
+      Speech.speak({ "", start_phrase, { "item-name." .. item_name } }, pindex)
    end
 end
 
@@ -153,13 +153,13 @@ function read_inventory_slot(pindex, start_phrase_in, inv_in)
       if filter_name ~= nil then
          result = result .. " filtered for " .. filter_name --laterdo localise this name
       end
-      Speech.speak(pindex, result)
+      Speech.speak(result, pindex)
       return
    end
    if stack.is_blueprint then
-      Speech.speak(pindex, Blueprints.get_blueprint_info(stack, false, pindex))
+      Speech.speak(Blueprints.get_blueprint_info(stack, false, pindex), pindex)
    elseif stack.is_blueprint_book then
-      Speech.speak(pindex, Blueprints.get_blueprint_book_info(stack, false))
+      Speech.speak(Blueprints.get_blueprint_book_info(stack, false), pindex)
    elseif stack.valid_for_read then
       --Check if the slot is filtered
       local main_inv = p.get_main_inventory()
@@ -176,7 +176,7 @@ function read_inventory_slot(pindex, start_phrase_in, inv_in)
          " ",
          stack.prototype.subgroup.name,
       }
-      Speech.speak(pindex, result)
+      Speech.speak(result, pindex)
    end
 end
 
@@ -192,9 +192,9 @@ local function read_hand(pindex)
    if cursor_stack and cursor_stack.valid_for_read then
       if cursor_stack.is_blueprint then
          --Blueprint extra info
-         Speech.speak(pindex, Blueprints.get_blueprint_info(cursor_stack, true, pindex))
+         Speech.speak(Blueprints.get_blueprint_info(cursor_stack, true, pindex), pindex)
       elseif cursor_stack.is_blueprint_book then
-         Speech.speak(pindex, Blueprints.get_blueprint_book_info(cursor_stack, true))
+         Speech.speak(Blueprints.get_blueprint_book_info(cursor_stack, true), pindex)
       else
          --Any other valid item
          local out = { "fa.cursor-description" }
@@ -217,7 +217,7 @@ local function read_hand(pindex)
          else
             table.insert(out, 0)
          end
-         Speech.speak(pindex, out)
+         Speech.speak(out, pindex)
       end
    elseif cursor_ghost ~= nil then
       --Any ghost
@@ -241,9 +241,9 @@ local function read_hand(pindex)
       else
          table.insert(out, 0)
       end
-      Speech.speak(pindex, out)
+      Speech.speak(out, pindex)
    else
-      Speech.speak(pindex, { "fa.empty_cursor" })
+      Speech.speak({ "fa.empty_cursor" }, pindex)
    end
 end
 
@@ -253,7 +253,7 @@ function locate_hand_in_player_inventory(pindex)
    local inv = p.get_main_inventory()
    local stack = p.cursor_stack
    if p.cursor_stack_temporary then
-      Speech.speak(pindex, { "fa.this-item-is-temporary" })
+      Speech.speak({ "fa.this-item-is-temporary" }, pindex)
       return
    end
 
@@ -267,7 +267,7 @@ function locate_hand_in_player_inventory(pindex)
    end
    if ui_name == UiRouter.UI_NAMES.INVENTORY then
       --Unsupported menu type, laterdo add support for building menu and closing the menu with a call
-      Speech.speak(pindex, { "fa.another-menu-is-open" })
+      Speech.speak({ "fa.another-menu-is-open" }, pindex)
       return
    end
    if not ui_name then
@@ -283,7 +283,7 @@ function locate_hand_in_player_inventory(pindex)
    if not successful then
       local message = "Unable to empty hand"
       if inv.count_empty_stacks() == 0 then message = message .. ", inventory full" end
-      Speech.speak(pindex, message)
+      Speech.speak(message, pindex)
       return
    end
 
@@ -296,7 +296,7 @@ function locate_hand_in_player_inventory(pindex)
    end
    --If found, read it from the inventory
    if not found then
-      Speech.speak(pindex, { "fa.error-item-not-found-inventory", Localising.get_localised_name_with_fallback(stack) })
+      Speech.speak({ "fa.error-item-not-found-inventory", Localising.get_localised_name_with_fallback(stack) }, pindex)
       return
    else
       storage.players[pindex].inventory.index = i
@@ -311,7 +311,7 @@ function locate_hand_in_building_output_inventory(pindex)
    local stack = p.cursor_stack
    local pb = storage.players[pindex].building
    if p.cursor_stack_temporary then
-      Speech.speak(pindex, { "fa.this-item-is-temporary" })
+      Speech.speak({ "fa.this-item-is-temporary" }, pindex)
       return
    end
    if stack.is_blueprint or stack.is_blueprint_book or stack.is_deconstruction_item or stack.is_upgrade_item then
@@ -345,7 +345,7 @@ function locate_hand_in_building_output_inventory(pindex)
    if not successful then
       local message = "Unable to empty hand"
       if inv.count_empty_stacks() == 0 then message = message .. ", inventory full" end
-      Speech.speak(pindex, message)
+      Speech.speak(message, pindex)
       return
    end
 
@@ -358,7 +358,7 @@ function locate_hand_in_building_output_inventory(pindex)
    end
    --If found, read it from the inventory
    if not found then
-      Speech.speak(pindex, { "fa.item-not-found-in-output", Localising.get_localised_name_with_fallback(stack) })
+      Speech.speak({ "fa.item-not-found-in-output", Localising.get_localised_name_with_fallback(stack) }, pindex)
       return
    else
       storage.players[pindex].building.index = i
@@ -469,7 +469,7 @@ local read_tile_inner
 function read_tile(pindex, start_text)
    local res = read_tile_inner(pindex)
    if start_text then table.insert(res, 1, start_text) end
-   Speech.speak(pindex, FaUtils.localise_cat_table(res))
+   Speech.speak(FaUtils.localise_cat_table(res), pindex)
 end
 
 read_tile_inner = function(pindex, start_text)
@@ -651,7 +651,7 @@ function menu_cursor_up(pindex)
 
    if storage.players[pindex].item_selection then
       if storage.players[pindex].item_selector.group == 0 then
-         Speech.speak(pindex, { "fa.blank" })
+         Speech.speak({ "fa.blank" }, pindex)
       elseif storage.players[pindex].item_selector.subgroup == 0 then
          storage.players[pindex].item_cache = FaUtils.get_iterable_array(prototypes.item_group)
          prune_item_groups(storage.players[pindex].item_cache)
@@ -680,7 +680,7 @@ function menu_cursor_up(pindex)
             --Border setting: Undo change and play "wall" sound
             storage.players[pindex].inventory.index = storage.players[pindex].inventory.index + 10
             sounds.play_ui_edge(pindex)
-            --Speech.speak(pindex, "Border.")
+            --Speech.speak("Border.", pindex)
          end
       else
          sounds.play_menu_move(pindex)
@@ -699,7 +699,7 @@ function menu_cursor_up(pindex)
             --Border setting: Undo change and play "wall" sound
             storage.players[pindex].inventory.index = storage.players[pindex].inventory.index + 10
             sounds.play_ui_edge(pindex)
-            --Speech.speak(pindex, "Border.")
+            --Speech.speak("Border.", pindex)
          end
       else
          sounds.play_menu_move(pindex)
@@ -727,7 +727,7 @@ function menu_cursor_up(pindex)
             storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory == nil
             or #storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory < 1
          then
-            Speech.speak(pindex, { "fa.blank-sector" })
+            Speech.speak({ "fa.blank-sector" }, pindex)
             return
          end
          --Move one row up in building inventory
@@ -802,13 +802,13 @@ function menu_cursor_up(pindex)
       local relative_dir = FaUtils.direction(player_pos, pump_position.position)
       local facing_dir = pump_position.direction
 
-      Speech.speak(pindex, {
+      Speech.speak({
          "fa.pump-placement-option",
          storage.players[pindex].pump.index,
          distance,
          relative_dir,
          { "fa.direction", facing_dir },
-      })
+      }, pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       TravelTools.fast_travel_menu_up(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.RAIL_BUILDER) then
@@ -858,7 +858,7 @@ function menu_cursor_down(pindex)
          storage.players[pindex].item_selector.index = 1
          read_item_selector_slot(pindex)
       else
-         Speech.speak(pindex, { "fa.press-left-bracket-to-confirm" })
+         Speech.speak({ "fa.press-left-bracket-to-confirm" }, pindex)
       end
    elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
       storage.players[pindex].inventory.index = storage.players[pindex].inventory.index + 10
@@ -873,7 +873,7 @@ function menu_cursor_down(pindex)
             --Border setting: Undo change and play "wall" sound
             storage.players[pindex].inventory.index = storage.players[pindex].inventory.index - 10
             sounds.play_ui_edge(pindex)
-            --Speech.speak(pindex, "Border.")
+            --Speech.speak("Border.", pindex)
          end
       else
          sounds.play_menu_move(pindex)
@@ -893,7 +893,7 @@ function menu_cursor_down(pindex)
             --Border setting: Undo change and play "wall" sound
             storage.players[pindex].inventory.index = storage.players[pindex].inventory.index - 10
             sounds.play_ui_edge(pindex)
-            --Speech.speak(pindex, "Border.")
+            --Speech.speak("Border.", pindex)
          end
       else
          sounds.play_menu_move(pindex)
@@ -921,7 +921,7 @@ function menu_cursor_down(pindex)
             storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory == nil
             or #storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory < 1
          then
-            Speech.speak(pindex, { "fa.blank-sector" })
+            Speech.speak({ "fa.blank-sector" }, pindex)
             return
          end
          sounds.play_menu_move(pindex)
@@ -1011,13 +1011,13 @@ function menu_cursor_down(pindex)
       local relative_dir = FaUtils.direction(player_pos, pump_position.position)
       local facing_dir = pump_position.direction
 
-      Speech.speak(pindex, {
+      Speech.speak({
          "fa.pump-placement-option",
          storage.players[pindex].pump.index,
          distance,
          relative_dir,
          { "fa.direction", facing_dir },
-      })
+      }, pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       TravelTools.fast_travel_menu_down(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.RAIL_BUILDER) then
@@ -1108,7 +1108,7 @@ function menu_cursor_left(pindex)
             storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory == nil
             or #storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory < 1
          then
-            Speech.speak(pindex, { "fa.blank-sector" })
+            Speech.speak({ "fa.blank-sector" }, pindex)
             return
          end
          sounds.play_menu_move(pindex)
@@ -1203,7 +1203,7 @@ function menu_cursor_right(pindex)
             --Border setting: Undo change and play "wall" sound
             storage.players[pindex].inventory.index = storage.players[pindex].inventory.index - 1
             sounds.play_ui_edge(pindex)
-            --Speech.speak(pindex, "Border.")
+            --Speech.speak("Border.", pindex)
          end
       else
          sounds.play_menu_move(pindex)
@@ -1222,7 +1222,7 @@ function menu_cursor_right(pindex)
             --Border setting: Undo change and play "wall" sound
             storage.players[pindex].inventory.index = storage.players[pindex].inventory.index - 1
             sounds.play_ui_edge(pindex)
-            --Speech.speak(pindex, "Border.")
+            --Speech.speak("Border.", pindex)
          end
       else
          sounds.play_menu_move(pindex)
@@ -1255,7 +1255,7 @@ function menu_cursor_right(pindex)
             storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory == nil
             or #storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory < 1
          then
-            Speech.speak(pindex, { "fa.blank-sector" })
+            Speech.speak({ "fa.blank-sector" }, pindex)
             return
          end
          sounds.play_menu_move(pindex)
@@ -1467,13 +1467,13 @@ function on_tick(event)
       for pindex, player in pairs(players) do
          --Tutorial reminder every 10 seconds until you open it
          if storage.players[pindex].started ~= true then
-            Speech.speak(pindex, { "fa.press-tab-to-begin" })
+            Speech.speak({ "fa.press-tab-to-begin" }, pindex)
          elseif storage.players[pindex].tutorial == nil then
-            Speech.speak(pindex, { "fa.press-h-for-tutorial" })
+            Speech.speak({ "fa.press-h-for-tutorial" }, pindex)
          elseif game.get_player(pindex).ticks_to_respawn ~= nil then
             Speech.speak(
-               pindex,
-               { "fa.respawn-countdown", tostring(math.floor(game.get_player(pindex).ticks_to_respawn / 60)) }
+               { "fa.respawn-countdown", tostring(math.floor(game.get_player(pindex).ticks_to_respawn / 60)) },
+               pindex
             )
          end
          --Report the KK state, if any.
@@ -1541,8 +1541,8 @@ EventManager.on_event(defines.events.on_player_driving_changed_state, function(e
    if game.get_player(pindex).driving then
       storage.players[pindex].last_vehicle = game.get_player(pindex).vehicle
       Speech.speak(
-         pindex,
-         { "fa.vehicle-entered", Localising.get_localised_name_with_fallback(game.get_player(pindex).vehicle) }
+         { "fa.vehicle-entered", Localising.get_localised_name_with_fallback(game.get_player(pindex).vehicle) },
+         pindex
       )
       if
          storage.players[pindex].last_vehicle.train ~= nil
@@ -1552,8 +1552,8 @@ EventManager.on_event(defines.events.on_player_driving_changed_state, function(e
       end
    elseif storage.players[pindex].last_vehicle ~= nil then
       Speech.speak(
-         pindex,
-         { "fa.vehicle-exited", Localising.get_localised_name_with_fallback(storage.players[pindex].last_vehicle) }
+         { "fa.vehicle-exited", Localising.get_localised_name_with_fallback(storage.players[pindex].last_vehicle) },
+         pindex
       )
       if
          storage.players[pindex].last_vehicle.train ~= nil
@@ -1565,7 +1565,7 @@ EventManager.on_event(defines.events.on_player_driving_changed_state, function(e
       if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then Trains.menu_close(pindex, false) end
       if router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then Spidertron.spider_menu_close(pindex, false) end
    else
-      Speech.speak(pindex, { "fa.driving-state-changed" })
+      Speech.speak({ "fa.driving-state-changed" }, pindex)
    end
 end)
 
@@ -1811,13 +1811,13 @@ function clicked_on_entity(ent, pindex)
    elseif ent.type == "power-switch" then
       --Toggle it, if in manual mode
       if (#ent.neighbours.red + #ent.neighbours.green) > 0 then
-         Speech.speak(pindex, { "fa.observes-circuit-condition" })
+         Speech.speak({ "fa.observes-circuit-condition" }, pindex)
       else
          ent.power_switch_state = not ent.power_switch_state
          if ent.power_switch_state == true then
-            Speech.speak(pindex, { "fa.switched-on" })
+            Speech.speak({ "fa.switched-on" }, pindex)
          elseif ent.power_switch_state == false then
-            Speech.speak(pindex, { "fa.switched-off" })
+            Speech.speak({ "fa.switched-off" }, pindex)
          end
       end
    elseif ent.type == "constant-combinator" then
@@ -1825,9 +1825,9 @@ function clicked_on_entity(ent, pindex)
       ent.get_control_behavior().enabled = not ent.get_control_behavior().enabled
       local enabled = ent.get_control_behavior().enabled
       if enabled == true then
-         Speech.speak(pindex, { "fa.switched-on" })
+         Speech.speak({ "fa.switched-on" }, pindex)
       elseif enabled == false then
-         Speech.speak(pindex, { "fa.switched-off" })
+         Speech.speak({ "fa.switched-off" }, pindex)
       end
    elseif ent.operable and ent.prototype.is_building then
       --If checking an operable building, open its menu
@@ -1846,18 +1846,18 @@ function clicked_on_entity(ent, pindex)
       local silo = ent.surface.get_closest(ent.position, silos)
       if silo and silo.valid then BuildingVehicleSectors.open_operable_building(silo, pindex) end
    elseif ent.operable then
-      if ent then Speech.speak(pindex, { "fa.no-menu-for", Localising.get_localised_name_with_fallback(ent) }) end
+      if ent then Speech.speak({ "fa.no-menu-for", Localising.get_localised_name_with_fallback(ent) }, pindex) end
    elseif ent.type == "resource" and ent.name ~= "crude-oil" and ent.name ~= "uranium-ore" then
       if ent then
-         Speech.speak(pindex, { "fa.no-menu-for-mineable", Localising.get_localised_name_with_fallback(ent) })
+         Speech.speak({ "fa.no-menu-for-mineable", Localising.get_localised_name_with_fallback(ent) }, pindex)
       end
    else
-      if ent then Speech.speak(pindex, { "fa.no-menu-for", Localising.get_localised_name_with_fallback(ent) }) end
+      if ent then Speech.speak({ "fa.no-menu-for", Localising.get_localised_name_with_fallback(ent) }, pindex) end
    end
 end
 
 --[[Manages inventory transfers that are bigger than one stack. 
-* Has checks and speech output!
+* Has checks and printouts!
 ]]
 
 --When the item in hand changes
@@ -1988,16 +1988,16 @@ end)
 EventManager.on_event(defines.events.on_cutscene_finished, function(event, pindex)
    schedule(3, "call_to_fix_zoom", pindex)
    schedule(4, "call_to_sync_graphics", pindex)
-   --Speech.speak(pindex, "Press TAB to continue")
+   --Speech.speak("Press TAB to continue",pindex)
 end)
 
 EventManager.on_event(defines.events.on_cutscene_started, function(event, pindex)
-   --Speech.speak(pindex, "Press TAB to continue")
+   --Speech.speak("Press TAB to continue",pindex)
 end)
 
 EventManager.on_event(defines.events.on_player_created, function(event)
    PlayerInit.initialize(game.players[event.player_index])
-   --if not game.is_multiplayer() then Speech.speak(pindex, "Press 'TAB' to continue") end
+   --if not game.is_multiplayer() then Speech.speak("Press 'TAB' to continue", pindex) end
 end)
 
 EventManager.on_event(defines.events.on_gui_closed, function(event, pindex)
@@ -2061,16 +2061,16 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
          if valid_number and p.selected and p.selected.valid and p.selected.name == "train-stop" then
             if constant >= 0 then
                p.selected.trains_limit = constant
-               Speech.speak(pindex, { "fa.train-limit-set", tostring(constant) })
+               Speech.speak({ "fa.train-limit-set", tostring(constant) }, pindex)
             else
                p.selected.trains_limit = nil
-               Speech.speak(pindex, { "fa.cleared-trains-limit" })
+               Speech.speak({ "fa.cleared-trains-limit" }, pindex)
             end
          else
-            Speech.speak(pindex, { "fa.invalid-input" })
+            Speech.speak({ "fa.invalid-input" }, pindex)
          end
       else
-         Speech.speak(pindex, { "fa.invalid-input" })
+         Speech.speak({ "fa.invalid-input" }, pindex)
       end
       event.element.destroy()
       router:close_ui()
@@ -2096,9 +2096,9 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
                   pindex
                )
                if success then
-                  Speech.speak(pindex, { "fa.signal-set", result })
+                  Speech.speak({ "fa.signal-set", result }, pindex)
                else
-                  Speech.speak(pindex, { "fa.error-no-signals-found" })
+                  Speech.speak({ "fa.error-no-signals-found" }, pindex)
                end
             else
                --Other devices (set enabled condition)
@@ -2110,7 +2110,6 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
                circuit_condition = cond
                storage.players[pindex].signal_selector.ent.get_control_behavior().circuit_condition = circuit_condition
                Speech.speak(
-                  pindex,
                   "Set "
                      .. result
                      .. ", condition now checks if "
@@ -2118,14 +2117,15 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
                         pindex,
                         storage.players[pindex].signal_selector.ent,
                         true
-                     )
+                     ),
+                  pindex
                )
             end
          else
-            Speech.speak(pindex, { "fa.invalid-input" })
+            Speech.speak({ "fa.invalid-input" }, pindex)
          end
       else
-         Speech.speak(pindex, { "fa.invalid-input" })
+         Speech.speak({ "fa.invalid-input" }, pindex)
       end
       event.element.destroy()
       storage.players[pindex].signal_selector = nil
@@ -2153,13 +2153,13 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
             return k1.name < k2.name
          end)
          Speech.speak(
-            pindex,
             "Fast travel point "
                .. result
                .. " created at "
                .. math.floor(storage.players[pindex].position.x)
                .. ", "
-               .. math.floor(storage.players[pindex].position.y)
+               .. math.floor(storage.players[pindex].position.y),
+            pindex
          )
       elseif storage.players[pindex].travel.renaming then
          --Renaming selected point
@@ -2170,10 +2170,10 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
          --Save the new description
          storage.players[pindex].travel.describing = false
          storage.players[pindex].travel[storage.players[pindex].travel.index.y].description = result
-         Speech.speak(pindex, {
+         Speech.speak({
             "fa.travel-description-updated",
             storage.players[pindex].travel[storage.players[pindex].travel.index.y].name,
-         })
+         }, pindex)
       end
       storage.players[pindex].travel.index.x = 1
       event.element.destroy()
@@ -2182,18 +2182,18 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
       local result = event.element.text
       if result == nil or result == "" then result = "unknown" end
       Trains.set_train_name(storage.players[pindex].train_menu.locomotive.train, result)
-      Speech.speak(pindex, { "fa.train-renamed", result })
+      Speech.speak({ "fa.train-renamed", result }, pindex)
       event.element.destroy()
       Trains.menu_close(pindex, false)
    elseif storage.players[pindex].spider_menu.renaming == true then
       storage.players[pindex].spider_menu.renaming = false
-      Speech.speak(pindex, { "fa.unimplemented-2-0" })
+      Speech.speak({ "fa.unimplemented-2-0" }, pindex)
    elseif storage.players[pindex].train_stop_menu.renaming == true then
       storage.players[pindex].train_stop_menu.renaming = false
       local result = event.element.text
       if result == nil or result == "" then result = "unknown" end
       storage.players[pindex].train_stop_menu.stop.backer_name = result
-      Speech.speak(pindex, { "fa.train-stop-renamed", result })
+      Speech.speak({ "fa.train-stop-renamed", result }, pindex)
       event.element.destroy()
       TrainStops.train_stop_menu_close(pindex, false)
    elseif storage.players[pindex].roboport_menu.renaming == true then
@@ -2201,14 +2201,14 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
       local result = event.element.text
       if result == nil or result == "" then result = "unknown" end
       WorkerRobots.set_network_name(storage.players[pindex].roboport_menu.port, result)
-      Speech.speak(pindex, { "fa.network-renamed", result })
+      Speech.speak({ "fa.network-renamed", result }, pindex)
       event.element.destroy()
       WorkerRobots.roboport_menu_close(pindex)
    elseif storage.players[pindex].entering_search_term == true then
       local term = string.lower(event.element.text)
       event.element.focus()
       storage.players[pindex].menu_search_term = term
-      if term ~= "" then Speech.speak(pindex, { "fa.menu-search-searching-for", term }) end
+      if term ~= "" then Speech.speak({ "fa.menu-search-searching-for", term }, pindex) end
       event.element.destroy()
       if storage.players[pindex].menu_search_frame ~= nil then
          storage.players[pindex].menu_search_frame.destroy()
@@ -2224,7 +2224,7 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
       elseif p.cursor_stack.is_blueprint_book then
          Blueprints.blueprint_book_set_label(pindex, result)
       end
-      Speech.speak(pindex, { "fa.blueprint-label-changed", result })
+      Speech.speak({ "fa.blueprint-label-changed", result }, pindex)
       event.element.destroy()
       if p.gui.screen["blueprint-edit-label"] ~= nil then p.gui.screen["blueprint-edit-label"].destroy() end
    elseif storage.players[pindex].blueprint_menu.edit_description == true then
@@ -2237,7 +2237,7 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
       elseif p.cursor_stack.is_blueprint_book then
          Blueprints.set_blueprint_book_description(pindex, result)
       end
-      Speech.speak(pindex, { "fa.blueprint-description-changed" })
+      Speech.speak({ "fa.blueprint-description-changed" }, pindex)
       event.element.destroy()
       if p.gui.screen["blueprint-edit-description"] ~= nil then p.gui.screen["blueprint-edit-description"].destroy() end
    elseif storage.players[pindex].blueprint_menu.edit_import == true then
@@ -2253,7 +2253,7 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
       storage.players[pindex].blueprint_menu.edit_export = false
       local result = event.element.text
       if result == nil or result == "" then result = "unknown" end
-      Speech.speak(pindex, "Text box closed")
+      Speech.speak("Text box closed", pindex)
       event.element.destroy()
       if p.gui.screen["blueprint-edit-export"] ~= nil then p.gui.screen["blueprint-edit-export"].destroy() end
    else
@@ -2282,7 +2282,7 @@ local function read_selected_inventory_and_slot(pindex, start_phrase_in)
          BuildingVehicleSectors.read_sector_slot(pindex, false, start_phrase_in)
       end
    else
-      Speech.speak(pindex, start_phrase_in)
+      Speech.speak(start_phrase_in, pindex)
    end
 end
 
@@ -2320,7 +2320,7 @@ local function set_selected_inventory_slot_filter(pindex)
    local inv, index = get_selected_inventory_and_slot(pindex)
    --Check if it supports filters
    if inv == nil or (inv.valid and not inv.supports_filters()) then
-      Speech.speak(pindex, "This menu or sector does not support slot filters")
+      Speech.speak("This menu or sector does not support slot filters", pindex)
       return
    end
    index = index or 1
@@ -2341,7 +2341,7 @@ local function set_selected_inventory_slot_filter(pindex)
          Filters.set_filter(inv, index, slot_item.name)
          read_selected_inventory_and_slot(pindex, "Slot filter set, ")
       else
-         Speech.speak(pindex, "Error: Unable to set the slot filter for this item")
+         Speech.speak("Error: Unable to set the slot filter for this item", pindex)
       end
       return
    --3. If no filter is set and the slot is full and the hand is empty (implied), then set the slot item as the filter
@@ -2350,7 +2350,7 @@ local function set_selected_inventory_slot_filter(pindex)
          Filters.set_filter(inv, index, slot_item.name)
          read_selected_inventory_and_slot(pindex, "Slot filter set, ")
       else
-         Speech.speak(pindex, "Error: Unable to set the slot filter for this item")
+         Speech.speak("Error: Unable to set the slot filter for this item", pindex)
       end
       return
    --4. If no filter is set and the slot is empty (implied) and the hand is full, then set the hand item as the filter
@@ -2359,12 +2359,12 @@ local function set_selected_inventory_slot_filter(pindex)
          Filters.set_filter(inv, index, hand_item.name)
          read_selected_inventory_and_slot(pindex, "Slot filter set, ")
       else
-         Speech.speak(pindex, "Error: Unable to set the slot filter for this item")
+         Speech.speak("Error: Unable to set the slot filter for this item", pindex)
       end
       return
    --5. If no filter is set and the hand is empty and the slot is empty, then open the filter selector to set the filter
    else --(implied)
-      Speech.speak(pindex, "Error: No item specified for setting a slot filter")
+      Speech.speak("Error: No item specified for setting a slot filter", pindex)
       return
    end
 end
@@ -2407,13 +2407,13 @@ EventManager.on_event(defines.events.on_train_changed_state, function(event)
       --Announce arriving station to players on the train
       for i, player in ipairs(event.train.passengers) do
          local stop = event.train.path_end_stop
-         if stop ~= nil then Speech.speak(player.index, { "fa.train-arriving-at-station", stop.backer_name }) end
+         if stop ~= nil then Speech.speak({ "fa.train-arriving-at-station", stop.backer_name }, player.index) end
       end
    elseif event.train.state == defines.train_state.on_the_path then --laterdo make this announce only when near another trainstop.
       --Announce heading station to players on the train
       for i, player in ipairs(event.train.passengers) do
          local stop = event.train.path_end_stop
-         if stop ~= nil then Speech.speak(player.index, { "fa.train-heading-to-station", stop.backer_name }) end
+         if stop ~= nil then Speech.speak({ "fa.train-heading-to-station", stop.backer_name }, player.index) end
       end
    elseif event.train.state == defines.train_state.wait_signal then
       --Announce the wait to players on the train
@@ -2421,7 +2421,7 @@ EventManager.on_event(defines.events.on_train_changed_state, function(event)
          local stop = event.train.path_end_stop
          if stop ~= nil then
             local str = " Waiting at signal. "
-            Speech.speak(player.index, str)
+            Speech.speak(str, player.index)
          end
       end
    end
@@ -2510,7 +2510,7 @@ end
 --Feature for typing in coordinates for moving the mod cursor.
 function type_cursor_position(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
-   Speech.speak(pindex, "Enter new co-ordinates for the cursor, separated by a space")
+   Speech.speak("Enter new co-ordinates for the cursor, separated by a space", pindex)
    vp:set_cursor_jumping(true)
    local frame = Graphics.create_text_field_frame(pindex, "cursor-jump")
    return frame
@@ -2527,14 +2527,14 @@ function jump_cursor_to_typed_coordinates(result, pindex)
       if valid_coords then
          local vp = Viewpoint.get_viewpoint(pindex)
          vp:set_cursor_pos(FaUtils.center_of_tile({ x = new_x + 0.01, y = new_y + 0.01 }))
-         Speech.speak(pindex, { "fa.cursor-jumped-to", tostring(new_x), tostring(new_y) })
+         Speech.speak({ "fa.cursor-jumped-to", tostring(new_x), tostring(new_y) }, pindex)
          Graphics.draw_cursor_highlight(pindex)
          Graphics.sync_build_cursor_graphics(pindex)
       else
-         Speech.speak(pindex, { "fa.invalid-input" })
+         Speech.speak({ "fa.invalid-input" }, pindex)
       end
    else
-      Speech.speak(pindex, "Invalid input")
+      Speech.speak("Invalid input", pindex)
    end
 end
 
@@ -2594,7 +2594,7 @@ EventManager.on_event(defines.events.on_entity_damaged, function(event)
          local dir =
             FaUtils.direction_lookup(FaUtils.get_direction_biased(ent.position, storage.players[pindex].position))
          local result = ent.name .. " damaged by " .. attacker_force.name .. " forces at " .. dist .. " " .. dir
-         Speech.speak(pindex, result)
+         Speech.speak(result, pindex)
          --game.get_player(pindex).print(result,{volume_modifier=0})--**
          sounds.play_structure_damaged(pindex)
       end
@@ -2621,7 +2621,7 @@ EventManager.on_event(defines.events.on_entity_died, function(event)
          local dir =
             FaUtils.direction_lookup(FaUtils.get_direction_biased(ent.position, storage.players[pindex].position))
          local result = ent.name .. " destroyed by " .. attacker_force.name .. " forces at " .. dist .. " " .. dir
-         Speech.speak(pindex, result)
+         Speech.speak(result, pindex)
          --game.get_player(pindex).print(result,{volume_modifier=0})--**
          sounds.play_alert_destroyed(pindex)
       end
@@ -2668,7 +2668,7 @@ EventManager.on_event(defines.events.on_player_died, function(event, pindex)
    --Notify all players
    for pindex, player in pairs(players) do
       storage.players[pindex].last_damage_alert_tick = event.tick
-      Speech.speak(pindex, result)
+      Speech.speak(result, pindex)
       game.get_player(pindex).print(result) --**laterdo unique sound, for now use console sound
    end
 end)
@@ -2720,7 +2720,7 @@ EventManager.on_event(defines.events.on_console_chat, function(event)
    if speaker == nil or speaker == "" then speaker = "Player" end
    local message = event.message
    for pindex, player in pairs(players) do
-      Speech.speak(pindex, { "fa.chat-message", speaker, message })
+      Speech.speak({ "fa.chat-message", speaker, message }, pindex)
    end
 end)
 
@@ -2731,7 +2731,7 @@ EventManager.on_event(defines.events.on_console_command, function(event)
    local speaker = game.get_player(event.player_index).name
    if speaker == nil or speaker == "" then speaker = "Player" end
    for pindex, player in pairs(players) do
-      Speech.speak(pindex, { "fa.command-message", speaker, event.command, event.parameters })
+      Speech.speak({ "fa.command-message", speaker, event.command, event.parameters }, pindex)
    end
 end)
 
@@ -2798,7 +2798,7 @@ local function kb_pause_menu(event)
    -- Close remote view if open
    if storage.players[pindex].remote_view then
       toggle_remote_view(pindex, false, true)
-      Speech.speak(pindex, "Remote view closed")
+      Speech.speak("Remote view closed", pindex)
    end
 
    -- Close mod GUIs
@@ -2833,7 +2833,7 @@ local function move(direction, pindex, nudged)
          --If nudged then teleport now
          teleported = first_player.teleport(new_pos)
          if not teleported then
-            Speech.speak(pindex, "Teleport Failed")
+            Speech.speak("Teleport Failed", pindex)
             moved_success = false
          else
             moved_success = true
@@ -2867,7 +2867,7 @@ local function move(direction, pindex, nudged)
 
          if storage.players[pindex].build_lock then BuildingTools.build_item_in_hand(pindex) end
       else
-         Speech.speak(pindex, "Tile Occupied")
+         Speech.speak("Tile Occupied", pindex)
          moved_success = false
       end
 
@@ -2978,7 +2978,7 @@ local function cursor_mode_move(direction, pindex, single_only)
       }
       local scan_summary = FaInfo.area_scan_summary_info(pindex, scan_left_top, scan_right_bottom)
       Graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
-      Speech.speak(pindex, scan_summary)
+      Speech.speak(scan_summary, pindex)
    end
 
    --Update player direction to face the cursor (after the vanilla move event that turns the character too, and only ends when the movement key is released)
@@ -3626,10 +3626,10 @@ EventManager.on_event(
 local function nudge_self(event, direction, name)
    local pindex = event.player_index
    if move(direction, pindex, true) then
-      Speech.speak(pindex, { "fa.nudged-self", name })
+      Speech.speak({ "fa.nudged-self", name }, pindex)
       turn_to_cursor_direction_precise(pindex)
    else
-      Speech.speak(pindex, "Failed to nudge self")
+      Speech.speak("Failed to nudge self", pindex)
    end
 end
 
@@ -3722,13 +3722,13 @@ local function read_coords(pindex, start_phrase)
             result = result .. " moving at " .. math.floor(speed) .. " kilometers per hour "
          end
          result = result .. " in " .. Localising.get_localised_name_with_fallback(vehicle) .. " at point "
-         Speech.speak(pindex, {
+         Speech.speak({
             "",
             result,
             tostring(math.floor(vehicle.position.x)),
             ", ",
             tostring(math.floor(vehicle.position.y)),
-         })
+         }, pindex)
       else
          --Simply give coords (floored for the readout, extra precision for the console)
          local location = FaUtils.get_entity_part_at_cursor(pindex)
@@ -3817,7 +3817,7 @@ local function read_coords(pindex, start_phrase)
             end
             result = result .. preview_str
          end
-         Speech.speak(pindex, result)
+         Speech.speak(result, pindex)
       end
    elseif
       router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.PLAYER_TRASH })
@@ -3833,12 +3833,12 @@ local function read_coords(pindex, start_phrase)
          x = x + 10
          y = y - 1
       end
-      Speech.speak(pindex, { "fa.inventory-slot-position", result, tostring(x), tostring(y) })
+      Speech.speak({ "fa.inventory-slot-position", result, tostring(x), tostring(y) }, pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.GUNS) then
       if storage.players[pindex].guns_menu.ammo_selected then
-         Speech.speak(pindex, { "fa.ammo-slot", tostring(storage.players[pindex].guns_menu.index) })
+         Speech.speak({ "fa.ammo-slot", tostring(storage.players[pindex].guns_menu.index) }, pindex)
       else
-         Speech.speak(pindex, { "fa.gun-slot", tostring(storage.players[pindex].guns_menu.index) })
+         Speech.speak({ "fa.gun-slot", tostring(storage.players[pindex].guns_menu.index) }, pindex)
       end
    elseif
       router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
@@ -3860,7 +3860,7 @@ local function read_coords(pindex, start_phrase)
          msg:fragment(" ")
       end
       msg:fragment({ "fa.building-slot-position", tostring(x), tostring(y) })
-      Speech.speak(pindex, msg:build())
+      Speech.speak(msg:build(), pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
       --Read recipe ingredients / products (crafting menu)
       local recipe =
@@ -3895,7 +3895,7 @@ local function read_coords(pindex, start_phrase)
       msg:fragment(", craft time ")
       msg:fragment(tostring(recipe.energy))
       msg:fragment(" seconds by default.")
-      Speech.speak(pindex, msg:build())
+      Speech.speak(msg:build(), pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
       Research.menu_describe_costs(pindex)
    end
@@ -3938,7 +3938,7 @@ local function read_coords(pindex, start_phrase)
       msg:fragment(", craft time ")
       msg:fragment(tostring(recipe.energy))
       msg:fragment(" seconds at default speed.")
-      Speech.speak(pindex, msg:build())
+      Speech.speak(msg:build(), pindex)
    end
 end
 
@@ -3963,7 +3963,7 @@ local function kb_read_cursor_distance_and_direction(event)
       local recipe =
          storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index]
       local result = Crafting.recipe_raw_ingredients_info(recipe, pindex)
-      Speech.speak(pindex, result)
+      Speech.speak(result, pindex)
    else
       --Read where the cursor is with respect to the player, e.g. "at 5 west"
       local dir_dist = FaUtils.dir_dist_locale(storage.players[pindex].position, cursor_pos)
@@ -3974,7 +3974,7 @@ local function kb_read_cursor_distance_and_direction(event)
       table.insert(result, cursor_production) --no production
       table.insert(result, cursor_description_of) --listpos
       table.insert(result, dir_dist)
-      Speech.speak(pindex, result)
+      Speech.speak(result, pindex)
       game.get_player(pindex).print(result, { volume_modifier = 0 })
       --Draw the point
       rendering.draw_circle({
@@ -4023,7 +4023,7 @@ local function kb_read_cursor_distance_vector(event)
       .. math.abs(diff_y)
       .. " "
       .. FaUtils.direction_lookup(dir_y)
-   Speech.speak(pindex, result)
+   Speech.speak(result, pindex)
    game.get_player(pindex).print(result, { volume_modifier = 0 })
    --Show cursor position
    rendering.draw_circle({
@@ -4052,7 +4052,7 @@ local function kb_read_character_coords(event)
    local pos = game.get_player(pindex).position
    local result = "Character at " .. math.floor(pos.x) .. ", " .. math.floor(pos.y)
    --Report co-ordinates (floored for the readout, extra precision for the console)
-   Speech.speak(pindex, result)
+   Speech.speak(result, pindex)
    game.get_player(pindex).print(
       result .. "\n (" .. math.floor(pos.x * 10) / 10 .. ", " .. math.floor(pos.y * 10) / 10 .. ")",
       { volume_modifier = 0 }
@@ -4105,14 +4105,14 @@ local function kb_read_driving_structure_ahead(event)
       if p.vehicle.speed >= 0 and (dir_ent == dir or math.abs(dir_ent - dir) == 1 or math.abs(dir_ent - dir) == 7) then
          local dist = math.floor(util.distance(p.vehicle.position, ent.position))
          Speech.speak(
-            pindex,
-            { "fa.driving-structure-ahead", Localising.get_localised_name_with_fallback(ent), tostring(dist) }
+            { "fa.driving-structure-ahead", Localising.get_localised_name_with_fallback(ent), tostring(dist) },
+            pindex
          )
       elseif p.vehicle.speed <= 0 and dir_ent == FaUtils.rotate_180(dir) then
          local dist = math.floor(util.distance(p.vehicle.position, ent.position))
          Speech.speak(
-            pindex,
-            { "fa.driving-structure-behind", Localising.get_localised_name_with_fallback(ent), tostring(dist) }
+            { "fa.driving-structure-behind", Localising.get_localised_name_with_fallback(ent), tostring(dist) },
+            pindex
          )
       end
    end
@@ -4169,7 +4169,7 @@ local function kb_s_b(event)
    local vp = Viewpoint.get_viewpoint(pindex)
    local pos = vp:get_cursor_pos()
    vp:set_cursor_bookmark(table.deepcopy(pos))
-   Speech.speak(pindex, { "fa.cursor-bookmark-saved", tostring(math.floor(pos.x)), tostring(math.floor(pos.y)) })
+   Speech.speak({ "fa.cursor-bookmark-saved", tostring(math.floor(pos.x)), tostring(math.floor(pos.y)) }, pindex)
    sounds.play_close_inventory(pindex)
 end
 
@@ -4190,7 +4190,7 @@ local function kb_b(event)
    vp:set_cursor_pos(pos)
    Graphics.draw_cursor_highlight(pindex, nil, nil)
    Graphics.sync_build_cursor_graphics(pindex)
-   Speech.speak(pindex, { "fa.cursor-bookmark-loaded", tostring(math.floor(pos.x)), tostring(math.floor(pos.y)) })
+   Speech.speak({ "fa.cursor-bookmark-loaded", tostring(math.floor(pos.x)), tostring(math.floor(pos.y)) }, pindex)
    sounds.play_close_inventory(pindex)
 end
 
@@ -4208,7 +4208,7 @@ local function kb_ca_b(event)
    local vp = Viewpoint.get_viewpoint(pindex)
    local pos = vp:get_cursor_pos()
    Rulers.upsert_ruler(pindex, pos.x, pos.y)
-   Speech.speak(pindex, { "fa.ruler-saved-at", tostring(math.floor(pos.x)), tostring(math.floor(pos.y)) })
+   Speech.speak({ "fa.ruler-saved-at", tostring(math.floor(pos.x)), tostring(math.floor(pos.y)) }, pindex)
    sounds.play_close_inventory(pindex)
 end
 
@@ -4225,7 +4225,7 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       Rulers.clear_rulers(pindex)
-      Speech.speak(pindex, "Cleared rulers")
+      Speech.speak("Cleared rulers", pindex)
    end
 )
 
@@ -4268,7 +4268,7 @@ local function kb_cs_p(event)
    local vp = Viewpoint.get_viewpoint(pindex)
    local alert_pos = storage.players[pindex].last_damage_alert_pos
    if alert_pos == nil then
-      Speech.speak(pindex, "No target")
+      Speech.speak("No target", pindex)
       return
    end
    vp:set_cursor_pos(alert_pos)
@@ -4382,7 +4382,7 @@ local function adjust_cursor_size(pindex, direction)
    vp:set_cursor_size(new_size)
 
    local say_size = new_size * 2 + 1
-   Speech.speak(pindex, { "fa.cursor-size", tostring(say_size), tostring(say_size) })
+   Speech.speak({ "fa.cursor-size", tostring(say_size), tostring(say_size) }, pindex)
 
    local scan_left_top = {
       math.floor(cursor_pos.x) - new_size,
@@ -4434,7 +4434,7 @@ local function kb_adjust_inventory_bar(event, amount)
    local pindex = event.player_index
    local ent = game.get_player(pindex).opened
    local result = BuildingVehicleSectors.add_to_inventory_bar(ent, amount)
-   Speech.speak(pindex, result)
+   Speech.speak(result, pindex)
 end
 
 EventManager.on_event(
@@ -4452,7 +4452,7 @@ EventManager.on_event(
          TrainStops.nearby_train_schedule_add_to_wait_time(5, pindex)
       elseif ent and ent.type == "inserter" then
          local result = BuildingVehicleSectors.inserter_hand_stack_size_up(ent)
-         Speech.speak(pindex, result)
+         Speech.speak(result, pindex)
       else
          ScannerEntrypoint.move_subcategory(pindex, -1)
       end
@@ -4504,7 +4504,7 @@ EventManager.on_event(
          TrainStops.nearby_train_schedule_add_to_wait_time(-5, pindex)
       elseif ent and ent.type == "inserter" then
          local result = BuildingVehicleSectors.inserter_hand_stack_size_down(ent)
-         Speech.speak(pindex, result)
+         Speech.speak(result, pindex)
       else
          ScannerEntrypoint.move_subcategory(pindex, 1)
       end
@@ -4581,7 +4581,7 @@ local function kb_open_circuit_menu(event)
    then
       local ent = p.opened
       if ent == nil or ent.valid == false then
-         Speech.speak(pindex, "Error: Missing building interface")
+         Speech.speak("Error: Missing building interface", pindex)
          return
       end
       if ent.type == "electric-pole" then
@@ -4592,20 +4592,20 @@ local function kb_open_circuit_menu(event)
          CircuitNetworks.circuit_network_menu_open(pindex, ent)
          return
       elseif ent.type == "arithmetic-combinator" or ent.type == "decider-combinator" then
-         Speech.speak(pindex, "Error: This combinator is not supported")
+         Speech.speak("Error: This combinator is not supported", pindex)
          return
       end
       --Building has control behavior
       local control = ent.get_control_behavior()
       if control == nil then
-         Speech.speak(pindex, "No control behavior for this building")
+         Speech.speak("No control behavior for this building", pindex)
          return
       end
       --Building has a circuit network
       local nw1 = control.get_circuit_network(defines.wire_connector_id.circuit_red)
       local nw2 = control.get_circuit_network(defines.wire_connector_id.circuit_green)
       if nw1 == nil and nw2 == nil then
-         Speech.speak(pindex, " not connected to a circuit network")
+         Speech.speak(" not connected to a circuit network", pindex)
          return
       end
       --Open the menu
@@ -4626,7 +4626,7 @@ local function kb_open_circuit_menu(event)
          CircuitNetworks.circuit_network_menu_open(pindex, ent)
          return
       elseif ent.type == "arithmetic-combinator" or ent.type == "decider-combinator" then
-         Speech.speak(pindex, "Error: This combinator is not supported")
+         Speech.speak("Error: This combinator is not supported", pindex)
          return
       end
       local control = ent.get_control_behavior()
@@ -4634,8 +4634,8 @@ local function kb_open_circuit_menu(event)
       local nw2 = control.get_circuit_network(defines.wire_connector_id.circuit_green)
       if nw1 == nil and nw2 == nil then
          Speech.speak(
-            pindex,
-            { "fa.entity-not-connected-circuit-network", Localising.get_localised_name_with_fallback(ent) }
+            { "fa.entity-not-connected-circuit-network", Localising.get_localised_name_with_fallback(ent) },
+            pindex
          )
          return
       end
@@ -4658,7 +4658,7 @@ EventManager.on_event(
 ---@param event EventData.CustomInputEvent
 local function kb_repeat_last_spoken(event)
    local pindex = event.player_index
-   Speech.speak(pindex, storage.players[pindex].last)
+   Speech.speak(storage.players[pindex].last, pindex)
 end
 
 --Repeats the last thing read out. Not just the scanner.
@@ -4676,10 +4676,10 @@ local function kb_tile_cycle(event)
    local pindex = event.player_index
    local ent = EntitySelection.get_next_ent_at_tile(pindex)
    if ent and ent.valid then
-      Speech.speak(pindex, FaInfo.ent_info(pindex, ent))
+      Speech.speak(FaInfo.ent_info(pindex, ent), pindex)
       game.get_player(pindex).selected = ent
    else
-      Speech.speak(pindex, EntitySelection.get_tile_cache(pindex).tile)
+      Speech.speak(EntitySelection.get_tile_cache(pindex).tile, pindex)
    end
 end
 
@@ -4723,7 +4723,7 @@ local function kb_close_menu(event)
    local router = UiRouter.get_router(pindex)
 
    if not router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then
-      Speech.speak(pindex, "Menu closed.")
+      Speech.speak("Menu closed.", pindex)
 
       if
          router:is_ui_one_of({
@@ -4784,7 +4784,7 @@ local function kb_read_menu_name(event)
       msg:fragment("Unknown menu")
    end
 
-   Speech.speak(pindex, msg:build())
+   Speech.speak(msg:build(), pindex)
 end
 
 EventManager.on_event("fa-s-e", function(event) --read_menu_name
@@ -4884,11 +4884,11 @@ local function kb_switch_menu_or_gun(event)
          storage.players[pindex].warnings.sector = storage.players[pindex].warnings.sector + 1
          if storage.players[pindex].warnings.sector > 3 then storage.players[pindex].warnings.sector = 1 end
          if storage.players[pindex].warnings.sector == 1 then
-            Speech.speak(pindex, { "fa.warnings-short-range", storage.players[pindex].warnings.short.summary })
+            Speech.speak({ "fa.warnings-short-range", storage.players[pindex].warnings.short.summary }, pindex)
          elseif storage.players[pindex].warnings.sector == 2 then
-            Speech.speak(pindex, { "fa.warnings-medium-range", storage.players[pindex].warnings.medium.summary })
+            Speech.speak({ "fa.warnings-medium-range", storage.players[pindex].warnings.medium.summary }, pindex)
          elseif storage.players[pindex].warnings.sector == 3 then
-            Speech.speak(pindex, { "fa.warnings-long-range", storage.players[pindex].warnings.long.summary })
+            Speech.speak({ "fa.warnings-long-range", storage.players[pindex].warnings.long.summary }, pindex)
          end
       end
    end
@@ -4934,7 +4934,7 @@ local function kb_switch_menu_or_gun(event)
 
    if not router:is_ui_open() then
       --p.play_sound{path = "Inventory-Move"}
-      Speech.speak(pindex, result)
+      Speech.speak(result, pindex)
    end
 end
 
@@ -5026,11 +5026,11 @@ local function kb_reverse_switch_menu_or_gun(event)
          storage.players[pindex].warnings.sector = storage.players[pindex].warnings.sector - 1
          if storage.players[pindex].warnings.sector < 1 then storage.players[pindex].warnings.sector = 3 end
          if storage.players[pindex].warnings.sector == 1 then
-            Speech.speak(pindex, { "fa.warnings-short-range", storage.players[pindex].warnings.short.summary })
+            Speech.speak({ "fa.warnings-short-range", storage.players[pindex].warnings.short.summary }, pindex)
          elseif storage.players[pindex].warnings.sector == 2 then
-            Speech.speak(pindex, { "fa.warnings-medium-range", storage.players[pindex].warnings.medium.summary })
+            Speech.speak({ "fa.warnings-medium-range", storage.players[pindex].warnings.medium.summary }, pindex)
          elseif storage.players[pindex].warnings.sector == 3 then
-            Speech.speak(pindex, { "fa.warnings-long-range", storage.players[pindex].warnings.long.summary })
+            Speech.speak({ "fa.warnings-long-range", storage.players[pindex].warnings.long.summary }, pindex)
          end
       end
    end
@@ -5075,7 +5075,7 @@ local function kb_reverse_switch_menu_or_gun(event)
 
    if not router:is_ui_open() then
       sounds.play_menu_move(p.index)
-      Speech.speak(pindex, result)
+      Speech.speak(result, pindex)
    end
 end
 
@@ -5141,19 +5141,19 @@ local function kb_flush_fluid(event)
    local sector = pb.sectors[pb.sector]
    local box = sector.inventory
    if sector.name ~= "Fluid" or not box or #box == 0 then
-      Speech.speak(pindex, "No fluids to flush")
+      Speech.speak("No fluids to flush", pindex)
       return
    end
 
    local fluid = box[pb.index]
    if not (fluid and fluid.name) then
-      Speech.speak(pindex, "No fluids to flush")
+      Speech.speak("No fluids to flush", pindex)
       return
    end
 
    if pb.ent and pb.ent.valid and pb.ent.type == "fluid-turret" and pb.index ~= 1 then pb.index = 1 end
 
-   Speech.speak(pindex, { "fa.flushed-away", Localising.get_localised_name_with_fallback(fluid) })
+   Speech.speak({ "fa.flushed-away", Localising.get_localised_name_with_fallback(fluid) }, pindex)
    box.flush(pb.index)
 end
 
@@ -5184,7 +5184,7 @@ local function kb_mine_access_sounds(event)
    if ent and ent.valid and ent.prototype.mineable_properties.products and ent.type ~= "resource" then
       sounds.play_mine(p.index)
    elseif ent and ent.valid and ent.name == "character-corpse" then
-      Speech.speak(pindex, "Collecting items ")
+      Speech.speak("Collecting items ", pindex)
    end
 end
 
@@ -5233,7 +5233,7 @@ EventManager.on_event(
    function(event, pindex)
       local stack = game.get_player(pindex).cursor_stack
       if stack and stack.valid_for_read and stack.name == "cut-paste-tool" then
-         Speech.speak(pindex, "To disable this tool empty the hand, by pressing SHIFT + Q")
+         Speech.speak("To disable this tool empty the hand, by pressing SHIFT + Q", pindex)
       end
    end
 )
@@ -5273,28 +5273,28 @@ local function kb_click_menu(event)
          storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index]
       if p.cheat_mode == false or (p.cheat_mode == true and recipe.subgroup == "fluid-recipes") then
          if recipe.category == "advanced-crafting" then
-            Speech.speak(pindex, "An assembling machine is required to craft this")
+            Speech.speak("An assembling machine is required to craft this", pindex)
             return
          elseif recipe.category == "centrifuging" then
-            Speech.speak(pindex, "A centrifuge is required to craft this")
+            Speech.speak("A centrifuge is required to craft this", pindex)
             return
          elseif recipe.category == "chemistry" then
-            Speech.speak(pindex, "A chemical plant is required to craft this")
+            Speech.speak("A chemical plant is required to craft this", pindex)
             return
          elseif recipe.category == "crafting-with-fluid" then
-            Speech.speak(pindex, "An advanced assembling machine is required to craft this")
+            Speech.speak("An advanced assembling machine is required to craft this", pindex)
             return
          elseif recipe.category == "oil-processing" then
-            Speech.speak(pindex, "An oil refinery is required to craft this")
+            Speech.speak("An oil refinery is required to craft this", pindex)
             return
          elseif recipe.category == "rocket-building" then
-            Speech.speak(pindex, "A rocket silo is required to craft this")
+            Speech.speak("A rocket silo is required to craft this", pindex)
             return
          elseif recipe.category == "smelting" then
-            Speech.speak(pindex, "A furnace is required to craft this")
+            Speech.speak("A furnace is required to craft this", pindex)
             return
          elseif p.force.get_hand_crafting_disabled_for_recipe(recipe) == true then
-            Speech.speak(pindex, "This recipe cannot be crafted by hand")
+            Speech.speak("This recipe cannot be crafted by hand", pindex)
             return
          end
       end
@@ -5308,18 +5308,18 @@ local function kb_click_menu(event)
       if count > 0 then
          local total_count = Crafting.count_in_crafting_queue(T.recipe.name, pindex)
          Speech.speak(
-            pindex,
             "Started crafting "
                .. count
                .. " "
                .. Localising.get_recipe_from_name(recipe.name, pindex)
                .. ", "
                .. total_count
-               .. " total in queue"
+               .. " total in queue",
+            pindex
          )
       else
          local result = Crafting.recipe_missing_ingredients_info(pindex)
-         Speech.speak(pindex, result)
+         Speech.speak(result, pindex)
       end
    elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
       --Cancel 1
@@ -5347,9 +5347,9 @@ local function kb_click_menu(event)
             if storage.players[pindex].building.index == #sectors_i.inventory then
                if storage.players[pindex].building.ent == nil or not storage.players[pindex].building.ent.valid then
                   if storage.players[pindex].building.ent == nil then
-                     Speech.speak(pindex, "Nil entity")
+                     Speech.speak("Nil entity", pindex)
                   else
-                     Speech.speak(pindex, "Invalid Entity")
+                     Speech.speak("Invalid Entity", pindex)
                   end
                   return
                end
@@ -5392,7 +5392,7 @@ local function kb_click_menu(event)
                      storage.players[pindex].building.ent,
                      storage.players[pindex].building.index
                   )
-                  Speech.speak(pindex, "Filter set.")
+                  Speech.speak("Filter set.", pindex)
                   storage.players[pindex].building.item_selection = false
                   storage.players[pindex].item_selection = false
                end
@@ -5416,11 +5416,11 @@ local function kb_click_menu(event)
             stack.transfer_stack(cursor_stack)
             cursor_stack = game.get_player(pindex).cursor_stack
             if sectors_i.name == "Modules" and cursor_stack.is_module then
-               Speech.speak(pindex, " Only one module can be added per module slot ")
+               Speech.speak(" Only one module can be added per module slot ", pindex)
             elseif cursor_stack.valid_for_read then
-               Speech.speak(pindex, { "fa.adding-to-stack", { "item-name." .. cursor_stack.name } })
+               Speech.speak({ "fa.adding-to-stack", { "item-name." .. cursor_stack.name } }, pindex)
             else
-               Speech.speak(pindex, " Added")
+               Speech.speak(" Added", pindex)
             end
             return
          end
@@ -5435,7 +5435,7 @@ local function kb_click_menu(event)
             local result = ""
             if stack.valid_for_read and stack.count > 0 then
                if p_inv.count_empty_stacks() < 2 then
-                  Speech.speak(pindex, " Error: At least two empty player inventory slots needed")
+                  Speech.speak(" Error: At least two empty player inventory slots needed", pindex)
                   return
                else
                   result = "Collected " .. stack.name .. " and "
@@ -5451,17 +5451,17 @@ local function kb_click_menu(event)
                   count = 1,
                })
                if not successful then
-                  Speech.speak(pindex, " Failed to add module ")
+                  Speech.speak(" Failed to add module ", pindex)
                   return
                end
                cursor_stack.count = cursor_stack.count - 1
                local msg = Speech.new()
                if result ~= "" then msg:fragment(result) end
                msg:fragment({ "fa.module-added", { "item-name." .. module_name } })
-               Speech.speak(pindex, msg:build())
+               Speech.speak(msg:build(), pindex)
                return
             else
-               Speech.speak(pindex, " Failed to add module ")
+               Speech.speak(" Failed to add module ", pindex)
                return
             end
          end
@@ -5475,11 +5475,11 @@ local function kb_click_menu(event)
                (stack == nil or not stack.valid_for_read)
                and (cursor_stack == nil or not cursor_stack.valid_for_read)
             then
-               Speech.speak(pindex, "Empty")
+               Speech.speak("Empty", pindex)
                return
             end
             if cursor_stack.valid_for_read then name = cursor_stack.name end
-            Speech.speak(pindex, { "fa.cannot-insert-in-slot", name })
+            Speech.speak({ "fa.cannot-insert-in-slot", name }, pindex)
          end
       elseif storage.players[pindex].building.recipe_list == nil then
          --Player inventory: Swap stack
@@ -5503,7 +5503,7 @@ local function kb_click_menu(event)
                         end
                         storage.players[pindex].building.recipe_selection = false
                         storage.players[pindex].building.index = 1
-                        Speech.speak(pindex, "Selected")
+                        Speech.speak("Selected", pindex)
                         sounds.play_inventory_click(pindex)
                         --Open GUI if not already
                         local p = game.get_player(pindex)
@@ -5518,8 +5518,8 @@ local function kb_click_menu(event)
                   )
                then
                   Speech.speak(
-                     pindex,
-                     "For this building, recipes are selected automatically based on the input item, this menu is for information only."
+                     "For this building, recipes are selected automatically based on the input item, this menu is for information only.",
+                     pindex
                   )
                end
             elseif #storage.players[pindex].building.recipe_list > 0 then
@@ -5530,7 +5530,7 @@ local function kb_click_menu(event)
                storage.players[pindex].building.index = 1
                BuildingVehicleSectors.read_building_recipe(pindex)
             else
-               Speech.speak(pindex, "No recipes unlocked for this building yet.")
+               Speech.speak("No recipes unlocked for this building yet.", pindex)
             end
          else
             --Player inventory again: swap stack
@@ -5546,13 +5546,13 @@ local function kb_click_menu(event)
       Research.menu_start_research(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.PUMP) then
       if storage.players[pindex].pump.index == 0 then
-         Speech.speak(pindex, "Move up and down to select a location.")
+         Speech.speak("Move up and down to select a location.", pindex)
          return
       end
       local entry = storage.players[pindex].pump.positions[storage.players[pindex].pump.index]
       game.get_player(pindex).build_from_cursor({ position = entry.position, direction = entry.direction })
       router:close_ui()
-      Speech.speak(pindex, "Pump placed.")
+      Speech.speak("Pump placed.", pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
       local warnings = {}
       if storage.players[pindex].warnings.sector == 1 then
@@ -5573,17 +5573,17 @@ local function kb_click_menu(event)
             vp:set_cursor_pos(cursor_pos)
             Graphics.draw_cursor_highlight(pindex, ent, nil)
             Graphics.sync_build_cursor_graphics(pindex)
-            Speech.speak(pindex, {
+            Speech.speak({
                "fa.teleported-cursor-to",
                "" .. math.floor(cursor_pos.x) .. " " .. math.floor(cursor_pos.y),
-            })
+            }, pindex)
          else
-            Speech.speak(pindex, { "fa.blank" })
+            Speech.speak({ "fa.blank" }, pindex)
          end
       else
          Speech.speak(
-            pindex,
-            "No warnings for this range.  Press tab to pick a larger range, or press E to close this menu."
+            "No warnings for this range.  Press tab to pick a larger range, or press E to close this menu.",
+            pindex
          )
       end
    elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
@@ -5641,7 +5641,7 @@ local function kb_click_hand(event)
       storage.players[pindex].last_click_tick = event.tick
    elseif cursor_ghost ~= nil then
       storage.players[pindex].last_click_tick = event.tick
-      Speech.speak(pindex, "Cannot build the ghost in hand")
+      Speech.speak("Cannot build the ghost in hand", pindex)
       return
    end
    --If something is in hand...
@@ -5677,11 +5677,11 @@ local function kb_click_hand(event)
          pex.bp_selecting = true
          pex.bp_select_point_1 = vp:get_cursor_pos()
          Speech.speak(
-            pindex,
             "Started blueprint selection at "
                .. math.floor(pex.bp_select_point_1.x)
                .. ","
-               .. math.floor(pex.bp_select_point_1.y)
+               .. math.floor(pex.bp_select_point_1.y),
+            pindex
          )
       else
          pex.bp_selecting = false
@@ -5703,11 +5703,11 @@ local function kb_click_hand(event)
          pex.bp_selecting = true
          pex.bp_select_point_1 = vp:get_cursor_pos()
          Speech.speak(
-            pindex,
             "Started deconstruction selection at "
                .. math.floor(pex.bp_select_point_1.x)
                .. ","
-               .. math.floor(pex.bp_select_point_1.y)
+               .. math.floor(pex.bp_select_point_1.y),
+            pindex
          )
       else
          pex.bp_selecting = false
@@ -5726,7 +5726,7 @@ local function kb_click_hand(event)
          for i, ent in ipairs(ents) do
             if ent.valid and ent.to_be_deconstructed() then decon_counter = decon_counter + 1 end
          end
-         Speech.speak(pindex, { "fa.entities-marked-deconstruct", tostring(decon_counter) })
+         Speech.speak({ "fa.entities-marked-deconstruct", tostring(decon_counter) }, pindex)
       end
    elseif stack.is_upgrade_item then
       --Start or conclude upgrade selection
@@ -5736,11 +5736,11 @@ local function kb_click_hand(event)
          pex.bp_selecting = true
          pex.bp_select_point_1 = vp:get_cursor_pos()
          Speech.speak(
-            pindex,
             "Started upgrading selection at "
                .. math.floor(pex.bp_select_point_1.x)
                .. ","
-               .. math.floor(pex.bp_select_point_1.y)
+               .. math.floor(pex.bp_select_point_1.y),
+            pindex
          )
       else
          pex.bp_selecting = false
@@ -5759,7 +5759,7 @@ local function kb_click_hand(event)
          for i, ent in ipairs(ents) do
             if ent.valid and ent.to_be_upgraded() then ent_counter = ent_counter + 1 end
          end
-         Speech.speak(pindex, { "fa.entities-marked-upgrade", tostring(ent_counter) })
+         Speech.speak({ "fa.entities-marked-upgrade", tostring(ent_counter) }, pindex)
       end
    elseif stack.name == "copy-paste-tool" then
       --Start or conclude blueprint selection
@@ -5769,11 +5769,11 @@ local function kb_click_hand(event)
          pex.bp_selecting = true
          pex.bp_select_point_1 = vp:get_cursor_pos()
          Speech.speak(
-            pindex,
             "Started copy tool selection at "
                .. math.floor(pex.bp_select_point_1.x)
                .. ","
-               .. math.floor(pex.bp_select_point_1.y)
+               .. math.floor(pex.bp_select_point_1.y),
+            pindex
          )
       else
          pex.bp_selecting = false
@@ -5794,11 +5794,11 @@ local function kb_click_hand(event)
       if name == "artillery-targeting-remote" then
          p.use_from_cursor(cursor_pos)
          sounds.play_close_inventory(p.index) --**laterdo better sound
-         if cursor_dist < 7 then Speech.speak(pindex, "Warning, you are in the target area!") end
+         if cursor_dist < 7 then Speech.speak("Warning, you are in the target area!", pindex) end
          return
       elseif cursor_dist > max_range then
          sounds.play_cannot_build(p.index)
-         Speech.speak(pindex, "Target is out of range")
+         Speech.speak("Target is out of range", pindex)
          return
       end
       --Apply smart aiming
@@ -5822,23 +5822,23 @@ local function kb_click_hand(event)
          end
          if count_robots <= max_robots then
             Speech.speak(
-               pindex,
-               { "fa.robot-deployed-slots", { "item-name." .. name }, tostring(count_robots), tostring(max_robots) }
+               { "fa.robot-deployed-slots", { "item-name." .. name }, tostring(count_robots), tostring(max_robots) },
+               pindex
             )
          else
-            Speech.speak(pindex, { "fa.robot-deployed-full", { "item-name." .. name } })
+            Speech.speak({ "fa.robot-deployed-full", { "item-name." .. name } }, pindex)
          end
       elseif name == "distractor-capsule" then
-         Speech.speak(pindex, { "fa.robot-deployed-no-follow", { "item-name." .. name } })
+         Speech.speak({ "fa.robot-deployed-no-follow", { "item-name." .. name } }, pindex)
       end
    elseif ent ~= nil then
       --If holding an item with no special left click actions, allow entity left click actions.
       clicked_on_entity(ent, pindex)
    else
       if stack then
-         Speech.speak(pindex, { "fa.no-actions-for-item", Localising.get_localised_name_with_fallback(stack) })
+         Speech.speak({ "fa.no-actions-for-item", Localising.get_localised_name_with_fallback(stack) }, pindex)
       else
-         Speech.speak(pindex, { "fa.no-actions-for-item", "empty hand" })
+         Speech.speak({ "fa.no-actions-for-item", "empty hand" }, pindex)
       end
    end
 end
@@ -5890,9 +5890,9 @@ local function kb_click_menu_right(event)
          if stack_inv.is_blueprint then
             Blueprints.add_blueprint_to_book(pindex, book, stack_inv)
          elseif stack_inv.is_blueprint_book or stack_inv.is_deconstruction_item or stack_inv.is_upgrade_item then
-            Speech.speak(pindex, { "fa.blueprint-book-no-support", { "item-name." .. stack_inv.name } })
+            Speech.speak({ "fa.blueprint-book-no-support", { "item-name." .. stack_inv.name } }, pindex)
          else
-            Speech.speak(pindex, { "fa.blueprint-book-cannot-add", { "item-name." .. stack_inv.name } })
+            Speech.speak({ "fa.blueprint-book-cannot-add", { "item-name." .. stack_inv.name } }, pindex)
          end
          --Finish the interaction here
          return
@@ -5921,17 +5921,17 @@ local function kb_click_menu_right(event)
       if count > 0 then
          local total_count = Crafting.count_in_crafting_queue(T.recipe.name, pindex)
          Speech.speak(
-            pindex,
             "Started crafting "
                .. count
                .. " "
                .. Localising.get_recipe_from_name(recipe.name, pindex)
                .. ", "
                .. total_count
-               .. " total in queue"
+               .. " total in queue",
+            pindex
          )
       else
-         Speech.speak(pindex, "Not enough materials")
+         Speech.speak("Not enough materials", pindex)
       end
    elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
       Crafting.load_crafting_queue(pindex)
@@ -5986,7 +5986,7 @@ local function kb_click_menu_right(event)
                Filters.set_filter(storage.players[pindex].building.ent, storage.players[pindex].building.index, nil)
                storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory[storage.players[pindex].building.index] =
                   "No filter selected."
-               Speech.speak(pindex, "Filter cleared")
+               Speech.speak("Filter cleared", pindex)
             end
          elseif
             storage.players[pindex].building.sectors[storage.players[pindex].building.sector].name == "Filters"
@@ -5997,7 +5997,7 @@ local function kb_click_menu_right(event)
             Filters.set_filter(storage.players[pindex].building.ent, storage.players[pindex].building.index, nil)
             storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory[storage.players[pindex].building.index] =
                "No filter selected."
-            Speech.speak(pindex, "Filter cleared.")
+            Speech.speak("Filter cleared.", pindex)
          end
       end
    end
@@ -6032,11 +6032,11 @@ local function kb_click_hand_right(event)
          pex.bp_selecting = true
          pex.bp_select_point_1 = vp:get_cursor_pos()
          Speech.speak(
-            pindex,
             "Started deconstruction selection at "
                .. math.floor(pex.bp_select_point_1.x)
                .. ","
-               .. math.floor(pex.bp_select_point_1.y)
+               .. math.floor(pex.bp_select_point_1.y),
+            pindex
          )
       else
          pex.bp_selecting = false
@@ -6050,7 +6050,7 @@ local function kb_click_hand_right(event)
             player = p,
             item = p.cursor_stack,
          })
-         Speech.speak(pindex, "Canceled deconstruction in selected area")
+         Speech.speak("Canceled deconstruction in selected area", pindex)
       end
    elseif stack.is_upgrade_item then
       local pex = storage.players[pindex]
@@ -6059,11 +6059,11 @@ local function kb_click_hand_right(event)
          pex.bp_selecting = true
          pex.bp_select_point_1 = vp:get_cursor_pos()
          Speech.speak(
-            pindex,
             "Started upgrading selection at "
                .. math.floor(pex.bp_select_point_1.x)
                .. ","
-               .. math.floor(pex.bp_select_point_1.y)
+               .. math.floor(pex.bp_select_point_1.y),
+            pindex
          )
       else
          pex.bp_selecting = false
@@ -6077,7 +6077,7 @@ local function kb_click_hand_right(event)
             player = p,
             item = p.cursor_stack,
          })
-         Speech.speak(pindex, "Canceled upgrading in selected area")
+         Speech.speak("Canceled upgrading in selected area", pindex)
       end
    elseif stack.name == "spidertron-remote" then
       --open spidermenu with the remote in hand
@@ -6095,7 +6095,7 @@ local function kb_read_entity_status(event)
    local router = UiRouter.get_router(pindex)
 
    local result = FaInfo.read_selected_entity_status(pindex)
-   if result ~= nil and result ~= "" then Speech.speak(pindex, result) end
+   if result ~= nil and result ~= "" then Speech.speak(result, pindex) end
 end
 
 EventManager.on_event(
@@ -6138,17 +6138,17 @@ local function kb_menu_action(event)
       if count > 0 then
          local total_count = Crafting.count_in_crafting_queue(T.recipe.name, pindex)
          Speech.speak(
-            pindex,
             "Started crafting "
                .. count
                .. " "
                .. Localising.get_recipe_from_name(recipe.name, pindex)
                .. ", "
                .. total_count
-               .. " total in queue"
+               .. " total in queue",
+            pindex
          )
       else
-         Speech.speak(pindex, "Not enough materials")
+         Speech.speak("Not enough materials", pindex)
       end
    elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
       Crafting.load_crafting_queue(pindex)
@@ -6189,13 +6189,13 @@ local function kb_menu_action(event)
                   count = inserted,
                })
                result = "Moved " .. inserted .. " " .. result .. " to player's inventory." --**laterdo note that ammo gets inserted to ammo slots first
-               Speech.speak(pindex, result)
+               Speech.speak(result, pindex)
             else
                local result = "Cannot insert " .. stack.name .. " to player's inventory, "
                if game.get_player(pindex).get_main_inventory().count_empty_stacks() == 0 then
                   result = result .. "because it is full."
                end
-               Speech.speak(pindex, result)
+               Speech.speak(result, pindex)
             end
          end
       else
@@ -6218,10 +6218,10 @@ local function kb_menu_action(event)
                   local inserted = storage.players[pindex].building.ent.insert(stack)
                   storage.players[pindex].inventory.lua_inventory.remove({ name = stack.name, count = inserted })
                   result = "Moved " .. inserted .. " " .. result .. " to " .. storage.players[pindex].building.ent.name
-                  Speech.speak(pindex, result)
+                  Speech.speak(result, pindex)
                else
                   local result = "Cannot insert " .. stack.name .. " to " .. storage.players[pindex].building.ent.name
-                  Speech.speak(pindex, result)
+                  Speech.speak(result, pindex)
                end
             end
          end
@@ -6244,7 +6244,7 @@ local function kb_equip_item(event)
 
    if result ~= "" then
       --game.get_player(pindex).print(result)--**
-      Speech.speak(pindex, result)
+      Speech.speak(result, pindex)
    end
 end
 
@@ -6279,7 +6279,7 @@ local function kb_open_rail_builder(event)
                RailBuilder.open_menu(pindex, ent)
             end
          elseif ent.name == "curved-rail" then
-            Speech.speak(pindex, "Rail builder menu cannot use curved rails.")
+            Speech.speak("Rail builder menu cannot use curved rails.", pindex)
          end
       end
    end
@@ -6404,37 +6404,37 @@ local function kb_set_entity_filter_from_hand(event)
       if ent.type == "splitter" then
          --Clear the filter
          local result = TransportBelts.set_splitter_priority(ent, nil, nil, nil, true)
-         Speech.speak(pindex, result)
+         Speech.speak(result, pindex)
       elseif ent.type == "constant-combinator" then
          --Remove the last signal
          CircuitNetworks.constant_combinator_remove_last_signal(ent, pindex)
       elseif ent.type == "inserter" then
          local result = set_inserter_filter_by_hand(pindex, ent)
-         Speech.speak(pindex, result)
+         Speech.speak(result, pindex)
       elseif ent.type == "infinity-container" then
          local result = set_infinity_chest_filter_by_hand(pindex, ent)
-         Speech.speak(pindex, result)
+         Speech.speak(result, pindex)
       elseif ent.type == "infinity-pipe" then
          local result = set_infinity_pipe_filter_by_hand(pindex, ent)
-         Speech.speak(pindex, result)
+         Speech.speak(result, pindex)
       end
    else
       if ent.type == "splitter" then
          --Set the filter
          local result = TransportBelts.set_splitter_priority(ent, nil, nil, stack)
-         Speech.speak(pindex, result)
+         Speech.speak(result, pindex)
       elseif ent.type == "constant-combinator" then
          --Add a new signal
          CircuitNetworks.constant_combinator_add_stack_signal(ent, stack, pindex)
       elseif ent.type == "inserter" then
          local result = set_inserter_filter_by_hand(pindex, ent)
-         Speech.speak(pindex, result)
+         Speech.speak(result, pindex)
       elseif ent.type == "infinity-container" then
          local result = set_infinity_chest_filter_by_hand(pindex, ent)
-         Speech.speak(pindex, result)
+         Speech.speak(result, pindex)
       elseif ent.type == "infinity-pipe" then
          local result = set_infinity_pipe_filter_by_hand(pindex, ent)
-         Speech.speak(pindex, result)
+         Speech.speak(result, pindex)
       end
    end
 end
@@ -6491,7 +6491,7 @@ local function kb_read_item_pickup_state(event)
    local router = UiRouter.get_router(pindex)
 
    if router:is_ui_open() then
-      Speech.speak(pindex, "Cannot pickup items while in a menu")
+      Speech.speak("Cannot pickup items while in a menu", pindex)
       return
    end
    local p = game.get_player(pindex)
@@ -6518,7 +6518,7 @@ local function kb_read_item_pickup_state(event)
       local ent = nearby_belts[1]
       if ent == nil or not ent.valid then
          result = result .. " from nearby belts"
-         Speech.speak(pindex, result)
+         Speech.speak(result, pindex)
          return
       end
       local left = TH.nqc_to_sorted_descending(
@@ -6550,7 +6550,7 @@ local function kb_read_item_pickup_state(event)
    else
       result = "No items within range to pick up"
    end
-   Speech.speak(pindex, result)
+   Speech.speak(result, pindex)
 end
 
 --Does not work yet
@@ -6558,7 +6558,7 @@ end
 local function kb_flip_blueprint_horizontal_info(event)
    local pindex = event.player_index
    local p = game.get_player(pindex)
-   Speech.speak(pindex, "Error: Flipping horizontal is not supported.")
+   Speech.speak("Error: Flipping horizontal is not supported.", pindex)
 end
 
 EventManager.on_event(
@@ -6601,7 +6601,7 @@ local function kb_read_health_and_armor_stats(event)
          table.insert(output, result)
       end
    end
-   Speech.speak(pindex, output)
+   Speech.speak(output, pindex)
 end
 
 --Does not work yet
@@ -6610,7 +6610,7 @@ local function kb_flip_blueprint_vertical_info(event)
    local pindex = event.player_index
    local p = game.get_player(pindex)
    local bp = p.cursor_stack
-   Speech.speak(pindex, "Error: Flipping vertical is not supported.")
+   Speech.speak("Error: Flipping vertical is not supported.", pindex)
 end
 
 EventManager.on_event(
@@ -6654,7 +6654,7 @@ EventManager.on_event(
          --Reload weapons
          local result = Equipment.reload_weapons(pindex)
          --game.get_player(pindex).print(result)
-         Speech.speak(pindex, result)
+         Speech.speak(result, pindex)
       else
          BuildingTools.rotate_building_info_read(event, false)
       end
@@ -6671,7 +6671,7 @@ EventManager.on_event(
       if router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.GUNS }) then
          local result = Equipment.remove_weapons_and_ammo(pindex)
          --game.get_player(pindex).print(result)
-         Speech.speak(pindex, result)
+         Speech.speak(result, pindex)
       end
    end
 )
@@ -6705,7 +6705,7 @@ EventManager.on_event(
    function(event, pindex)
       if game.get_player(pindex).driving then return end
       local str = FaInfo.selected_item_production_stats_info(pindex)
-      Speech.speak(pindex, str)
+      Speech.speak(str, pindex)
    end
 )
 
@@ -6736,7 +6736,7 @@ local function kb_read_time_and_research_progress(event)
    --Add research progress info
    local progress_string = Research.get_progress_string(pindex)
 
-   Speech.speak(pindex, FaUtils.spacecat(time_string, progress_string, total_time_string))
+   Speech.speak(FaUtils.spacecat(time_string, progress_string, total_time_string), pindex)
    if storage.players[pindex].vanilla_mode then game.get_player(pindex).open_technology_gui() end
 end
 
@@ -6770,7 +6770,7 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       game.auto_save("manual")
-      Speech.speak(pindex, "Saving Game, please wait 3 seconds.")
+      Speech.speak("Saving Game, please wait 3 seconds.", pindex)
    end
 )
 
@@ -6800,10 +6800,10 @@ local function kb_toggle_build_lock(event)
    local pindex = event.player_index
    if storage.players[pindex].build_lock == true then
       storage.players[pindex].build_lock = false
-      Speech.speak(pindex, "Build lock disabled.")
+      Speech.speak("Build lock disabled.", pindex)
    else
       storage.players[pindex].build_lock = true
-      Speech.speak(pindex, "Build lock enabled")
+      Speech.speak("Build lock enabled", pindex)
    end
 end
 
@@ -6829,13 +6829,13 @@ local function kb_toggle_vanilla_mode(event)
       vp:set_cursor_enabled(false)
       if p.character then p.character_running_speed_modifier = 0 end
       vp:set_cursor_hidden(true)
-      Speech.speak(pindex, "Vanilla mode enabled")
+      Speech.speak("Vanilla mode enabled", pindex)
       storage.players[pindex].vanilla_mode = true
    else
       p.print("Vanilla mode : OFF")
       vp:set_cursor_hidden(false)
       storage.players[pindex].vanilla_mode = false
-      Speech.speak(pindex, "Vanilla mode disabled")
+      Speech.speak("Vanilla mode disabled", pindex)
    end
 end
 
@@ -6855,11 +6855,11 @@ local function kb_toggle_cursor_hiding(event)
    local p = game.get_player(pindex)
    if cursor_hidden == nil or cursor_hidden == false then
       vp:set_cursor_hidden(true)
-      Speech.speak(pindex, { "fa.cursor-hiding-enabled" })
+      Speech.speak({ "fa.cursor-hiding-enabled" }, pindex)
       p.print("Cursor hiding : ON")
    else
       vp:set_cursor_hidden(false)
-      Speech.speak(pindex, { "fa.cursor-hiding-disabled" })
+      Speech.speak({ "fa.cursor-hiding-disabled" }, pindex)
       p.print("Cursor hiding : OFF")
    end
 end
@@ -6892,7 +6892,7 @@ local function kb_clear_renders(event)
    storage.players[pindex].custom_GUI_frame = nil
    storage.players[pindex].custom_GUI_sprite = nil
    clear_renders()
-   Speech.speak(pindex, { "fa.cleared-renders" })
+   Speech.speak({ "fa.cleared-renders" }, pindex)
 end
 
 EventManager.on_event(
@@ -6908,7 +6908,7 @@ local function kb_recalibrate_zoom(event)
    local pindex = event.player_index
    Zoom.fix_zoom(pindex)
    Graphics.sync_build_cursor_graphics(pindex)
-   Speech.speak(pindex, { "fa.recalibrated" })
+   Speech.speak({ "fa.recalibrated" }, pindex)
 end
 
 EventManager.on_event(
@@ -6937,7 +6937,7 @@ local function kb_set_zoom_mode(event, level)
 
    Zoom.set_zoom(level, pindex)
    Graphics.sync_build_cursor_graphics(pindex)
-   Speech.speak(pindex, message)
+   Speech.speak(message, pindex)
 end
 
 EventManager.on_event(
@@ -7015,7 +7015,7 @@ local function kb_locate_hand_in_inventory(event)
    elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
       locate_hand_in_building_output_inventory(pindex)
    else
-      Speech.speak(pindex, { "fa.cannot-locate-items-in-menu" })
+      Speech.speak({ "fa.cannot-locate-items-in-menu" }, pindex)
    end
 end
 
@@ -7043,7 +7043,7 @@ local function locate_hand_in_crafting_menu(pindex)
       or stack.is_deconstruction_item
       or stack.is_upgrade_item
    then
-      Speech.speak(pindex, { "fa.this-item-cannot-be-crafted" })
+      Speech.speak({ "fa.this-item-cannot-be-crafted" }, pindex)
       return
    end
 
@@ -7058,7 +7058,7 @@ local function locate_hand_in_crafting_menu(pindex)
       and not router:is_ui_open(UiRouter.UI_NAMES.CRAFTING)
    then
       --Unsupported menu types...
-      Speech.speak(pindex, { "fa.another-menu-is-open" })
+      Speech.speak({ "fa.another-menu-is-open" }, pindex)
       return
    end
 
@@ -7087,7 +7087,7 @@ local function locate_hand_in_crafting_menu(pindex)
    if not successful then
       local message = "Unable to empty hand"
       if inv.count_empty_stacks() == 0 then message = message .. ", inventory full" end
-      Speech.speak(pindex, message)
+      Speech.speak(message, pindex)
       return
    end
 
@@ -7120,7 +7120,7 @@ local function kb_menu_search_again(event, forward)
    local pindex = event.player_index
    local str = storage.players[pindex].menu_search_term
    if str == nil or str == "" then
-      Speech.speak(pindex, { "fa.press-ctrl-f-to-search" })
+      Speech.speak({ "fa.press-ctrl-f-to-search" }, pindex)
       return
    end
    if forward then
@@ -7147,7 +7147,7 @@ EventManager.on_event(
 )
 
 EventManager.on_event("fa-grave", function(event)
-   Speech.speak(event.player_index, "Opened console")
+   Speech.speak("Opened console", event.player_index)
 end)
 
 ---@param event EventData.CustomInputEvent
@@ -7164,9 +7164,9 @@ local function kb_open_warnings_menu(event)
       router:open_ui(UiRouter.UI_NAMES.WARNINGS)
       game.get_player(pindex).selected = nil
       sounds.play_open_inventory(pindex)
-      Speech.speak(pindex, { "fa.warnings-menu-short-range", storage.players[pindex].warnings.short.summary })
+      Speech.speak({ "fa.warnings-menu-short-range", storage.players[pindex].warnings.short.summary }, pindex)
    else
-      Speech.speak(pindex, { "fa.another-menu-is-open" })
+      Speech.speak({ "fa.another-menu-is-open" }, pindex)
    end
 end
 
@@ -7204,7 +7204,7 @@ local function kb_set_splitter_priority(event, ent, is_input, is_left)
    local pindex = event.player_index
 
    local result = TransportBelts.set_splitter_priority(ent, is_input, is_left, nil)
-   Speech.speak(pindex, result)
+   Speech.speak(result, pindex)
 end
 
 EventManager.on_event(
@@ -7260,15 +7260,15 @@ local function kb_connect_rail_vehicles(event)
       if vehicle.connect_rolling_stock(defines.rail_direction.front) then connected = connected + 1 end
       if vehicle.connect_rolling_stock(defines.rail_direction.back) then connected = connected + 1 end
       if connected > 0 then
-         Speech.speak(pindex, { "fa.connected-this-vehicle" })
+         Speech.speak({ "fa.connected-this-vehicle" }, pindex)
       else
          connected = 0
          if vehicle.get_connected_rolling_stock(defines.rail_direction.front) ~= nil then connected = connected + 1 end
          if vehicle.get_connected_rolling_stock(defines.rail_direction.back) ~= nil then connected = connected + 1 end
          if connected > 0 then
-            Speech.speak(pindex, { "fa.connected-this-vehicle" })
+            Speech.speak({ "fa.connected-this-vehicle" }, pindex)
          else
-            Speech.speak(pindex, { "fa.nothing-was-connected" })
+            Speech.speak({ "fa.nothing-was-connected" }, pindex)
          end
       end
    end
@@ -7302,15 +7302,15 @@ local function kb_disconnect_rail_vehicles(event)
       if vehicle.disconnect_rolling_stock(defines.rail_direction.front) then disconnected = disconnected + 1 end
       if vehicle.disconnect_rolling_stock(defines.rail_direction.back) then disconnected = disconnected + 1 end
       if disconnected > 0 then
-         Speech.speak(pindex, { "fa.disconnected-this-vehicle" })
+         Speech.speak({ "fa.disconnected-this-vehicle" }, pindex)
       else
          local connected = 0
          if vehicle.get_connected_rolling_stock(defines.rail_direction.front) ~= nil then connected = connected + 1 end
          if vehicle.get_connected_rolling_stock(defines.rail_direction.back) ~= nil then connected = connected + 1 end
          if connected > 0 then
-            Speech.speak(pindex, { "fa.disconnection-error" })
+            Speech.speak({ "fa.disconnection-error" }, pindex)
          else
-            Speech.speak(pindex, { "fa.disconnected-this-vehicle" })
+            Speech.speak({ "fa.disconnected-this-vehicle" }, pindex)
          end
       end
    end
@@ -7327,7 +7327,7 @@ local function kb_inventory_read_equipment_list(event)
    then
       local result = Equipment.read_equipment_list(pindex)
       --game.get_player(pindex).print(result)--
-      Speech.speak(pindex, result)
+      Speech.speak(result, pindex)
    end
 end
 
@@ -7359,7 +7359,7 @@ EventManager.on_event(
       then
          local result = Equipment.remove_equipment_and_armor(pindex)
          --game.get_player(pindex).print(result)--
-         Speech.speak(pindex, result)
+         Speech.speak(result, pindex)
       end
    end
 )
@@ -7387,9 +7387,9 @@ local function kb_launch_rocket(event, ent)
    local pindex = event.player_index
    local try_launch = ent.launch_rocket()
    if try_launch then
-      Speech.speak(pindex, { "fa.launch-successful" })
+      Speech.speak({ "fa.launch-successful" }, pindex)
    else
-      Speech.speak(pindex, { "fa.not-ready-to-launch" })
+      Speech.speak({ "fa.not-ready-to-launch" }, pindex)
    end
 end
 
@@ -7418,9 +7418,9 @@ local function kb_toggle_auto_launch_with_cargo(event, ent)
    ---@diagnostic disable-next-line: inject-field
    ent.auto_launch = not ent.auto_launch
    if ent.auto_launch then
-      Speech.speak(pindex, { "fa.enabled-auto-launch" })
+      Speech.speak({ "fa.enabled-auto-launch" }, pindex)
    else
-      Speech.speak(pindex, { "fa.disabled-auto-launch" })
+      Speech.speak({ "fa.disabled-auto-launch" }, pindex)
    end
 end
 
@@ -7574,8 +7574,8 @@ EventManager.on_event(
 -- For a full reload including translations, Factorio must be restarted.
 EventManager.on_event("fa-cas-r", function(event, pindex)
    Speech.speak(
-      pindex,
-      "Reloading mod scripts (control.lua). Note: This does not reload localizations or prototypes. For full reload including translations, restart Factorio."
+      "Reloading mod scripts (control.lua). Note: This does not reload localizations or prototypes. For full reload including translations, restart Factorio.",
+      pindex
    )
    game.reload_script()
 end)
@@ -7590,9 +7590,9 @@ EventManager.on_event("fa-a-l", function(event)
    if not p then return end
 
    if p.enabled then
-      Speech.speak(pindex, { "fa.resumed-personal-logistics" })
+      Speech.speak({ "fa.resumed-personal-logistics" }, pindex)
    else
-      Speech.speak(pindex, { "fa.paused-personal-logistics" })
+      Speech.speak({ "fa.paused-personal-logistics" }, pindex)
    end
 end)
 
@@ -7612,8 +7612,8 @@ EventManager.on_event(
 
 EventManager.on_event("fa-c-o", function(event)
    Speech.speak(
-      event.player_index,
-      "Type in the new cruise control speed and press 'ENTER' and then 'E' to confirm, or press 'ESC' to exit"
+      "Type in the new cruise control speed and press 'ENTER' and then 'E' to confirm, or press 'ESC' to exit",
+      event.player_index
    )
 end)
 

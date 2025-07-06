@@ -190,7 +190,7 @@ function mod.drag_wire_and_read(pindex)
       end
    end
    --p.print(result,{volume_modifier=0})--**
-   Speech.speak(pindex, result)
+   Speech.speak(result, pindex)
    storage.players[pindex].last_wire_ent = c_ent
 end
 
@@ -351,7 +351,7 @@ function mod.constant_combinator_add_stack_signal(ent, stack, pindex)
    local new_signal_id = { type = "item", name = stack.name }
    local new_signal = { signal = new_signal_id, count = 1 }
    combinator.set_signal(first_empty_slot, new_signal)
-   Speech.speak(pindex, { "", "Added signal for ", localising.get_localised_name_with_fallback(stack.prototype) })
+   Speech.speak({ "", "Added signal for ", localising.get_localised_name_with_fallback(stack.prototype) }, pindex)
 end
 
 function mod.constant_combinator_add_selector_signal(prototype, signal_type, ent, pindex)
@@ -360,7 +360,7 @@ function mod.constant_combinator_add_selector_signal(prototype, signal_type, ent
    local new_signal_id = { type = signal_type, name = prototype.name }
    local new_signal = { signal = new_signal_id, count = 1 }
    combinator.get_section(1).set_slot(first_empty_slot, new_signal)
-   Speech.speak(pindex, { "", "Added signal for ", localising.get_localised_name_with_fallback(prototype) })
+   Speech.speak({ "", "Added signal for ", localising.get_localised_name_with_fallback(prototype) }, pindex)
 end
 
 function mod.constant_combinator_remove_last_signal(ent, pindex)
@@ -370,12 +370,12 @@ function mod.constant_combinator_remove_last_signal(ent, pindex)
       local signal = combinator.get_signal(i)
       if signal.signal ~= nil then
          local signal_name = mod.localise_signal_name(signal.signal, pindex)
-         Speech.speak(pindex, { "", "Removed last signal ", signal_name })
+         Speech.speak({ "", "Removed last signal ", signal_name }, pindex)
          combinator.set_signal(i, nil)
          return
       end
    end
-   Speech.speak(pindex, { "fa.circuit-no-signals-to-remove" })
+   Speech.speak({ "fa.circuit-no-signals-to-remove" }, pindex)
 end
 
 function mod.constant_combinator_type_last_signal_count(pindex, ent)
@@ -876,7 +876,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
    local nw_name = nil
    if nwr == nil and nwg == nil then
       nw_name = " none "
-      -- Speech.speak(pindex, { "fa.circuit-no-network-connected" })
+      -- Speech.speak({ "fa.circuit-no-network-connected" }, pindex)
       -- return
    elseif nwr ~= nil and nwg == nil then
       nw_name = " red " .. nwr.network_id
@@ -897,15 +897,15 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
          localising.get_localised_name_with_fallback(ent),
          ", Navigate up and down with 'W' and 'S' and select an option with 'LEFT BRACKET', or exit with 'ESC'",
       }
-      Speech.speak(pindex, result)
+      Speech.speak(result, pindex)
    elseif index == 1 then
       --List all active signals of this network
       if not clicked then
          storage.players[pindex].menu_click_count = 0
-         Speech.speak(pindex, { "fa.circuit-list-active-signals" })
+         Speech.speak({ "fa.circuit-list-active-signals" }, pindex)
       else
          if nwr == nil and nwg == nil then
-            Speech.speak(pindex, { "fa.circuit-no-network-connected" })
+            Speech.speak({ "fa.circuit-no-network-connected" }, pindex)
             return
          end
          local click_count = storage.players[pindex].menu_click_count
@@ -920,15 +920,15 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
             if nwr ~= nil then table.insert(result, " Green network: ") end
             table.insert(result, mod.circuit_network_signals_info(pindex, nwg, "green", click_count))
          end
-         Speech.speak(pindex, result)
+         Speech.speak(result, pindex)
       end
    elseif index == 2 then
       --List all members of this network
       if not clicked then
-         Speech.speak(pindex, { "fa.circuit-list-members" })
+         Speech.speak({ "fa.circuit-list-members" }, pindex)
       else
          if nwr == nil and nwg == nil then
-            Speech.speak(pindex, { "fa.circuit-no-network-connected" })
+            Speech.speak({ "fa.circuit-no-network-connected" }, pindex)
             return
          end
          local result = { "" }
@@ -954,19 +954,19 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
             has_content = true
          end
          if not has_content then result = { "", "Error: No network" } end
-         Speech.speak(pindex, result)
+         Speech.speak(result, pindex)
       end
    elseif index == 3 then
       --List network members directly connected to this building
       if not clicked then
-         Speech.speak(pindex, {
+         Speech.speak({
             "",
             "List directly connected network members for this ",
             localising.get_localised_name_with_fallback(ent),
-         })
+         }, pindex)
       else
          if nwr == nil and nwg == nil then
-            Speech.speak(pindex, { "fa.circuit-no-network-connected" })
+            Speech.speak({ "fa.circuit-no-network-connected" }, pindex)
             return
          end
          local result = { "" }
@@ -992,7 +992,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
             has_content = true
          end
          if not has_content then result = { "", "Error: No network" } end
-         Speech.speak(pindex, result)
+         Speech.speak(result, pindex)
       end
    end
    --Rest of the menu depends on ent type
@@ -1010,45 +1010,45 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
       if index == 4 then
          --Read combinator signals
          if not clicked then
-            Speech.speak(pindex, { "fa.circuit-read-combinator-signals" })
+            Speech.speak({ "fa.circuit-read-combinator-signals" }, pindex)
          else
             local result = mod.constant_combinator_signals_info(ent, pindex)
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
          end
       elseif index == 5 then
          --Add a signal from the selector
          if not clicked then
-            Speech.speak(pindex, { "fa.circuit-add-signal-from-selector" })
+            Speech.speak({ "fa.circuit-add-signal-from-selector" }, pindex)
          else
             mod.open_signal_selector(pindex, ent, nil)
          end
       elseif index == 6 then
          --Set a new count for the last signal
          if not clicked then
-            Speech.speak(pindex, { "fa.circuit-set-new-count" })
+            Speech.speak({ "fa.circuit-set-new-count" }, pindex)
          else
             local result = mod.constant_combinator_type_last_signal_count(pindex, ent)
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
             p.play_sound({ path = "Inventory-Move" })
          end
       elseif index == 7 then
          --Delete the last signal
          if not clicked then
-            Speech.speak(pindex, { "fa.circuit-delete-last-signal" })
+            Speech.speak({ "fa.circuit-delete-last-signal" }, pindex)
          else
             mod.constant_combinator_remove_last_signal(ent, pindex)
          end
       elseif index == 8 then
          --Toggle switch
          if not clicked then
-            Speech.speak(pindex, { "fa.circuit-toggle-switch" })
+            Speech.speak({ "fa.circuit-toggle-switch" }, pindex)
          else
             ent.get_control_behavior().enabled = not ent.get_control_behavior().enabled
             local enabled = ent.get_control_behavior().enabled
             if enabled == true then
-               Speech.speak(pindex, { "fa.circuit-switched-on" })
+               Speech.speak({ "fa.circuit-switched-on" }, pindex)
             elseif enabled == false then
-               Speech.speak(pindex, { "fa.circuit-switched-off" })
+               Speech.speak({ "fa.circuit-switched-off" }, pindex)
             end
          end
       elseif index > 8 then
@@ -1062,11 +1062,11 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
       --Menu for other entities
       local control = ent.get_control_behavior()
       if control == nil then
-         Speech.speak(pindex, { "fa.circuit-no-interface" })
+         Speech.speak({ "fa.circuit-no-interface" }, pindex)
          return
       end
       if nwr == nil and nwg == nil then
-         Speech.speak(pindex, { "fa.circuit-no-network-connected" })
+         Speech.speak({ "fa.circuit-no-network-connected" }, pindex)
          return
       end
       local control_has_no_circuit_conditions = ent.type == "container"
@@ -1084,7 +1084,7 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
       if index == 4 then
          --Read machine behavior summary
          if not clicked then
-            Speech.speak(pindex, { "fa.circuit-read-machine-behavior" })
+            Speech.speak({ "fa.circuit-read-machine-behavior" }, pindex)
          else
             local result = { "", "Reading mode: ", read_mode, ", ", "Operation mode: ", op_mode, ", " }
             if uses_condition == true then
@@ -1095,78 +1095,78 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
                   end
                end
             end
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
          end
       elseif index == 5 then
          --Toggle machine reading mode
          if not clicked then
-            Speech.speak(pindex, { "fa.circuit-toggle-reading-mode", read_mode })
+            Speech.speak({ "fa.circuit-toggle-reading-mode", read_mode }, pindex)
          else
             local result, changed = toggle_circuit_read_mode(ent)
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
             p.play_sound({ path = "Inventory-Move" })
             if changed == false then p.play_sound({ path = "inventory-edge" }) end
          end
       elseif index == 6 then
          --Toggle machine control mode
          if not clicked then
-            Speech.speak(pindex, { "fa.circuit-toggle-operation-mode", op_mode })
+            Speech.speak({ "fa.circuit-toggle-operation-mode", op_mode }, pindex)
          else
             local result, changed = toggle_circuit_operation_mode(ent)
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
             p.play_sound({ path = "Inventory-Move" })
             if changed == false then p.play_sound({ path = "inventory-edge" }) end
          end
       elseif index == 7 then
          --Toggle enabled condition comparing rule
          if not clicked then
-            Speech.speak(pindex, { "fa.circuit-toggle-enabled-condition" })
+            Speech.speak({ "fa.circuit-toggle-enabled-condition" }, pindex)
          else
             local result = "Not using a condition"
             if uses_condition == true then result = toggle_condition_comparator(ent, pindex, true) end
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
             p.play_sound({ path = "Inventory-Move" })
          end
       elseif index == 8 then
          --Set enabled condition first signal
          if not clicked then
-            Speech.speak(pindex, { "fa.circuit-set-first-signal" })
+            Speech.speak({ "fa.circuit-set-first-signal" }, pindex)
          else
             local result = "Not using a condition"
             if uses_condition == true then
                result = "Navigate item groups with W and S and inidividual signals with A and D."
                mod.open_signal_selector(pindex, ent, true)
             end
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
             p.play_sound({ path = "Inventory-Move" })
          end
       elseif index == 9 then
          --Set enabled condition second signal
          if not clicked then
-            Speech.speak(pindex, { "fa.circuit-set-second-signal" })
+            Speech.speak({ "fa.circuit-set-second-signal" }, pindex)
          else
             local result = "Not using a condition"
             if uses_condition == true then
                result = "Navigate item groups with W and S and inidividual signals with A and D."
                mod.open_signal_selector(pindex, ent, false)
             end
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
             p.play_sound({ path = "Inventory-Move" })
          end
       elseif index == 10 then
          --Set enabled condition second signal as a constant number
          if not clicked then
-            Speech.speak(pindex, { "fa.circuit-set-constant-number" })
+            Speech.speak({ "fa.circuit-set-constant-number" }, pindex)
          else
             local result = "Not using a condition"
             if uses_condition == true then result = mod.type_circuit_condition_constant(pindex, ent) end
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
             p.play_sound({ path = "Inventory-Move" })
          end
       else
          if ent.type ~= "programmable-speaker" or (ent.type == "programmable-speaker" and control == nil) then
             if index == 11 then
-               Speech.speak(pindex, { "fa.circuit-speaker-menu-note" })
+               Speech.speak({ "fa.circuit-speaker-menu-note" }, pindex)
             elseif index == 12 then
                --(inventory edge: play sound and set index and call this menu again)
                p.play_sound({ path = "inventory-edge" })
@@ -1188,46 +1188,46 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
             if index == 11 then
                --Toggle local or global playback
                if not clicked then
-                  Speech.speak(pindex, { "fa.circuit-toggle-playback" })
+                  Speech.speak({ "fa.circuit-toggle-playback" }, pindex)
                else
                   local params = ent.parameters
                   params.playback_globally = not params.playback_globally
                   ent.parameters = params
                   if ent.parameters.playback_globally then
-                     Speech.speak(pindex, { "fa.circuit-playback-global" })
+                     Speech.speak({ "fa.circuit-playback-global" }, pindex)
                   else
-                     Speech.speak(pindex, { "fa.circuit-playback-local" })
+                     Speech.speak({ "fa.circuit-playback-local" }, pindex)
                   end
                   mod.play_selected_speaker_note(ent)
                end
             elseif index == 12 then
                --Switch local playback volume up
                if not clicked then
-                  Speech.speak(pindex, { "fa.circuit-switch-volume-up" })
+                  Speech.speak({ "fa.circuit-switch-volume-up" }, pindex)
                else
                   local params = ent.parameters
                   params.playback_volume = params.playback_volume + 0.1
                   if params.playback_volume > 1 then params.playback_volume = 1 end
                   ent.parameters = params
-                  Speech.speak(pindex, ent.parameters.playback_volume)
+                  Speech.speak(ent.parameters.playback_volume, pindex)
                   mod.play_selected_speaker_note(ent)
                end
             elseif index == 13 then
                --Switch local playback volume down
                if not clicked then
-                  Speech.speak(pindex, { "fa.circuit-switch-volume-down" })
+                  Speech.speak({ "fa.circuit-switch-volume-down" }, pindex)
                else
                   local params = ent.parameters
                   params.playback_volume = params.playback_volume - 0.1
                   if params.playback_volume < 0 then params.playback_volume = 0 end
                   ent.parameters = params
-                  Speech.speak(pindex, ent.parameters.playback_volume)
+                  Speech.speak(ent.parameters.playback_volume, pindex)
                   mod.play_selected_speaker_note(ent)
                end
             elseif index == 14 then
                --Switch instrument up
                if not clicked then
-                  Speech.speak(pindex, { "fa.circuit-switch-instrument-up" })
+                  Speech.speak({ "fa.circuit-switch-instrument-up" }, pindex)
                else
                   --Switch up
                   local params = control.circuit_parameters
@@ -1243,13 +1243,13 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
                   params.note_id = 1
                   control.circuit_parameters = params
                   --Read instrument
-                  Speech.speak(pindex, instruments[ins_id].name)
+                  Speech.speak(instruments[ins_id].name, pindex)
                   mod.play_selected_speaker_note(ent)
                end
             elseif index == 15 then
                --Switch instrument down
                if not clicked then
-                  Speech.speak(pindex, { "fa.circuit-switch-instrument-down" })
+                  Speech.speak({ "fa.circuit-switch-instrument-down" }, pindex)
                else
                   --Switch down
                   local params = control.circuit_parameters
@@ -1265,13 +1265,13 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
                   params.note_id = 1
                   control.circuit_parameters = params
                   --Read instrument
-                  Speech.speak(pindex, instruments[ins_id].name)
+                  Speech.speak(instruments[ins_id].name, pindex)
                   mod.play_selected_speaker_note(ent)
                end
             elseif index == 16 then
                --Switch note up
                if not clicked then
-                  Speech.speak(pindex, { "fa.circuit-switch-note-up" })
+                  Speech.speak({ "fa.circuit-switch-note-up" }, pindex)
                else
                   local params = control.circuit_parameters
                   local ins_id = params.instrument_id
@@ -1285,13 +1285,13 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
                   params.note_id = note_id
                   control.circuit_parameters = params
                   --Read note
-                  Speech.speak(pindex, notes[note_id])
+                  Speech.speak(notes[note_id], pindex)
                   mod.play_selected_speaker_note(ent)
                end
             elseif index == 17 then
                --Switch note down
                if not clicked then
-                  Speech.speak(pindex, { "fa.circuit-switch-note-down" })
+                  Speech.speak({ "fa.circuit-switch-note-down" }, pindex)
                else
                   local params = control.circuit_parameters
                   local ins_id = params.instrument_id
@@ -1305,36 +1305,36 @@ function mod.circuit_network_menu_run(pindex, ent_in, menu_index, clicked, other
                   params.note_id = note_id
                   control.circuit_parameters = params
                   --Read note
-                  Speech.speak(pindex, notes[note_id])
+                  Speech.speak(notes[note_id], pindex)
                   mod.play_selected_speaker_note(ent)
                end
             elseif index == 18 then
                --Toggle if signal value is pitch
                if not clicked then
-                  Speech.speak(pindex, { "fa.circuit-toggle-note-pitch" })
+                  Speech.speak({ "fa.circuit-toggle-note-pitch" }, pindex)
                else
                   local params = control.circuit_parameters
                   params.signal_value_is_pitch = not params.signal_value_is_pitch
                   control.circuit_parameters = params
                   if control.circuit_parameters.signal_value_is_pitch then
-                     Speech.speak(pindex, { "fa.circuit-enabled" })
+                     Speech.speak({ "fa.circuit-enabled" }, pindex)
                   else
-                     Speech.speak(pindex, { "fa.circuit-disabled" })
+                     Speech.speak({ "fa.circuit-disabled" }, pindex)
                   end
                   mod.play_selected_speaker_note(ent)
                end
             elseif index == 19 then
                --Toggle allow polyphony
                if not clicked then
-                  Speech.speak(pindex, { "fa.circuit-toggle-polyphony" })
+                  Speech.speak({ "fa.circuit-toggle-polyphony" }, pindex)
                else
                   local params = ent.parameters
                   params.allow_polyphony = not params.allow_polyphony
                   ent.parameters = params
                   if ent.parameters.allow_polyphony then
-                     Speech.speak(pindex, { "fa.circuit-enabled-polyphony" })
+                     Speech.speak({ "fa.circuit-enabled-polyphony" }, pindex)
                   else
-                     Speech.speak(pindex, { "fa.circuit-disabled-polyphony" })
+                     Speech.speak({ "fa.circuit-disabled-polyphony" }, pindex)
                   end
                   mod.play_selected_speaker_note(ent)
                end
@@ -1620,19 +1620,19 @@ function mod.read_selected_signal_group(pindex, start_phrase_in)
    local local_name = group_proto and localising.get_localised_name_with_fallback(group_proto) or group_name
    local group = storage.players[pindex].signal_selector.signals[group_name]
    local result = { "", start_phrase, local_name, ", ", tostring(#group) }
-   Speech.speak(pindex, result)
+   Speech.speak(result, pindex)
 end
 
 function mod.read_selected_signal_slot(pindex, start_phrase_in)
    local start_phrase = start_phrase_in or ""
    local prototype, signal_type = mod.get_selected_signal_slot_with_type(pindex)
    if prototype == nil then
-      Speech.speak(pindex, { "fa.circuit-error-missing-signal" })
+      Speech.speak({ "fa.circuit-error-missing-signal" }, pindex)
       return
    end
    local sig_name = localising.get_localised_name_with_fallback(prototype)
    local result = { "", start_phrase, sig_name, " ", signal_type }
-   Speech.speak(pindex, result)
+   Speech.speak(result, pindex)
 end
 
 --For an enabled condition, updates the relevant signal from the signal selector. For a constant combinator, the selected signal gets added.
@@ -1662,13 +1662,13 @@ function mod.apply_selected_signal_to_enabled_condition(pindex, ent, first)
    ent.get_control_behavior().circuit_condition = circuit_condition
    storage.players[pindex].menu = "circuit_network_menu"
    storage.players[pindex].signal_selector = nil
-   Speech.speak(pindex, {
+   Speech.speak({
       "",
       set_message,
       localising.get_localised_name_with_fallback(prototype),
       ", condition now checks if ",
       mod.read_circuit_condition(pindex, ent, true),
-   })
+   }, pindex)
 end
 
 function mod.type_circuit_condition_constant(pindex, ent)

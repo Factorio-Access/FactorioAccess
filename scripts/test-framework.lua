@@ -45,7 +45,7 @@ local test_files = {
    "test-rail-basic-ops", -- Test basic rail operations module
    -- "travel-tools-localization-test", -- Test travel-tools localization messages (file missing)
    "furnace-fuel-test", -- Test furnace fuel status reporting
-   "printout-logger-test", -- Test printout logging to file
+   "speech-logger-test", -- Test speech logging to file
    "inventory-transfer-test", -- Test inventory transfer functionality and sorting
 }
 

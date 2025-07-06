@@ -1,7 +1,7 @@
 local FaUtils = require("scripts.fa-utils")
 local Geometry = require("scripts.geometry")
 local Localising = require("scripts.localising")
-local MessageBuilder = require("scripts.message-builder")
+local Speech = require("scripts.speech")
 local TH = require("scripts.table-helpers")
 local TransportBelts = require("scripts.transport-belts")
 local Grid = require("scripts.ui.grid")
@@ -74,7 +74,7 @@ local function label_local_cell(ctx, x, y)
 
    if not next(bucket.items) then return { "fa.ui-belt-analyzer-empty" } end
 
-   local builder = MessageBuilder.MessageBuilder.new()
+   local builder = Speech.new()
 
    for name, quals in pairs(bucket.items) do
       for quality, count in pairs(quals) do

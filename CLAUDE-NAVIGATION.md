@@ -102,7 +102,7 @@ This guide helps LLMs quickly find specific code locations in the FactorioAccess
 - **Common mistake**: Hardcoding strings instead of using locale keys
 
 ### Output to Screen Reader
-- **Send message**: `printout(message, pindex)`
+- **Send message**: `Speech.speak(pindex, message)`
 - **Format**: Sends `"out <pindex> <message>"` to stdout
 - **Debug print**: `game.print()` - Goes to console, not screen reader
 - **Common mistake**: Using `game.print()` for user messages
@@ -198,7 +198,7 @@ return mod
 local message = MessageBuilder.new()
 message:fragment({"entity-name.transport-belt"})
 message:fragment({"fa.ent-info-count", count})
-printout(message:build(), pindex)
+Speech.speak(pindex, message:build())
 ```
 
 ### Event Registration (New Pattern)

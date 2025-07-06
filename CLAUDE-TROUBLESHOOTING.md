@@ -128,14 +128,14 @@ end)
 ### Screen Reader Not Speaking
 
 **Common Issues**:
-1. Using `game.print()` instead of `printout()`
+1. Using `game.print()` instead of `Speech.speak()`
 2. Missing pindex parameter
 3. Launcher not running
 
 **Test**:
 ```lua
 -- Direct test
-printout("Test message", pindex)  -- Should always work
+Speech.speak(pindex, "Test message")  -- Should always work
 ```
 
 ## Scanner Issues

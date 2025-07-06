@@ -4,7 +4,7 @@
 local Electrical = require("scripts.electrical")
 local FaUtils = require("scripts.fa-utils")
 local localising = require("scripts.localising")
-local MessageBuilder = require("scripts.message-builder")
+local Speech = require("scripts.speech")
 local UiRouter = require("scripts.ui.router")
 
 local mod = {}
@@ -14,7 +14,7 @@ local mod = {}
 function mod.equip_it(stack, pindex)
    local router = UiRouter.get_router(pindex)
 
-   local message = MessageBuilder.new()
+   local message = Speech.new()
    if router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle" then
       local spidertron_name = localising.get_alt(prototypes.entity["spidertron"])
       if spidertron_name == nil then
@@ -128,7 +128,7 @@ function mod.read_weapons_and_ammo(pindex)
 
    if guns_count == 0 then return { "fa.equipment-no-weapons" } end
 
-   local result = MessageBuilder.new()
+   local result = Speech.new()
    result:fragment({ "fa.equipment-weapons-header" })
 
    for i = 1, 3, 1 do
@@ -402,7 +402,7 @@ function mod.read_equipment_list(pindex)
    if armor_inv[1].grid == nil or not armor_inv[1].grid.valid then return { "fa.equipment-no-grid" } end
    --Armor with Equipment
    local grid
-   local result = MessageBuilder.new()
+   local result = Speech.new()
    if router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle" then
       grid = game.get_player(pindex).opened.grid
       local spidertron_name = localising.get_alt(prototypes.entity["spidertron"])
@@ -596,7 +596,7 @@ function mod.guns_menu_read_slot(pindex, start_phrase_in)
          table.insert(result, { "fa.equipment-no-ammo" })
       end
    end
-   printout(result, pindex)
+   Speech.speak(pindex, result)
 end
 
 function mod.guns_menu_click_slot(pindex)
@@ -616,24 +616,24 @@ function mod.guns_menu_click_slot(pindex)
       if not selected_stack or not selected_stack.valid_for_read then
          --Empty slot
          if menu.ammo_selected and hand.type ~= "ammo" then
-            printout({ "fa.equipment-error-ammo-only" }, pindex)
+            Speech.speak(pindex, { "fa.equipment-error-ammo-only" })
          elseif not menu.ammo_selected and hand.type ~= "gun" then
-            printout({ "fa.equipment-error-gun-only" }, pindex)
+            Speech.speak(pindex, { "fa.equipment-error-gun-only" })
          else
             if selected_stack ~= nil then hand.swap_stack(selected_stack) end
             --If the swap is successful then the following print statement is overwritten.
-            printout({ "fa.equipment-error-incompatible" }, pindex)
+            Speech.speak(pindex, { "fa.equipment-error-incompatible" })
          end
       else
          --Full slot
          if menu.ammo_selected and hand.type ~= "ammo" then
-            printout({ "fa.equipment-error-ammo-only" }, pindex)
+            Speech.speak(pindex, { "fa.equipment-error-ammo-only" })
          elseif not menu.ammo_selected and hand.type ~= "gun" then
-            printout({ "fa.equipment-error-gun-only" }, pindex)
+            Speech.speak(pindex, { "fa.equipment-error-gun-only" })
          else
             hand.swap_stack(selected_stack)
             --If the swap is successful then the following print statement is overwritten.
-            printout({ "fa.equipment-error-incompatible" }, pindex)
+            Speech.speak(pindex, { "fa.equipment-error-incompatible" })
          end
       end
    else
@@ -642,7 +642,7 @@ function mod.guns_menu_click_slot(pindex)
          --Pick up the thing
          hand.swap_stack(selected_stack)
       else
-         printout({ "fa.equipment-no-action" }, pindex)
+         Speech.speak(pindex, { "fa.equipment-no-action" })
       end
    end
 end

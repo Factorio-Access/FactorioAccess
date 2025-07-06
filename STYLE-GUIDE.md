@@ -215,7 +215,7 @@ end
 local message = MessageBuilder.new()
 message:fragment({"entity-name.transport-belt"})
 message:fragment({"fa.ent-info-facing", direction_lookup(entity.direction)})
-printout(message:build(), pindex)
+Speech.speak(pindex, message:build())
 
 -- Simple pattern for basic messages
 local result = {"", 
@@ -223,7 +223,7 @@ local result = {"",
     " facing ", 
     direction_lookup(entity.direction)
 }
-printout(result, pindex)
+Speech.speak(pindex, result)
 ```
 
 ### Sound Playing
@@ -245,10 +245,10 @@ player.play_sound({ path = "utility/cannot_build" })
 
 ```lua
 -- Good localization
-printout({"fa.building-info", entity.name}, pindex)
+Speech.speak(pindex, {"fa.building-info", entity.name})
 
 -- Bad - hardcoded string
-printout("Building: " .. entity.name, pindex)  -- DO NOT DO THIS
+Speech.speak(pindex, "Building: " .. entity.name)  -- DO NOT DO THIS
 ```
 
 ## 5. Documentation
@@ -337,10 +337,10 @@ if event.tick % 60 == 0 then  -- Every second
 
 ```lua
 -- WRONG
-printout("Building placed at " .. pos.x .. ", " .. pos.y, pindex)
+Speech.speak(pindex, "Building placed at " .. pos.x .. ", " .. pos.y)
 
 -- CORRECT
-printout({"fa.building-placed", pos.x, pos.y}, pindex)
+Speech.speak(pindex, {"fa.building-placed", pos.x, pos.y})
 ```
 
 ### Testing Factorio API

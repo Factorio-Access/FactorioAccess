@@ -7,6 +7,7 @@ local FaUtils = require("scripts.fa-utils")
 local PlayerMiningTools = require("scripts.player-mining-tools")
 local Rails = require("scripts.rails")
 local EntitySelection = require("scripts.entity-selection")
+local Speech = require("scripts.speech")
 local dirs = defines.direction
 local UiRouter = require("scripts.ui.router")
 
@@ -29,7 +30,7 @@ function mod.append_rail(pos, pindex)
    --0 Check if there is at least 1 rail in hand, else return
    if not (stack.valid and stack.valid_for_read and stack.name == "rail" and stack.count > 0) then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout({ "fa.rail-need-at-least-one" }, pindex)
+      Speech.speak(pindex, { "fa.rail-need-at-least-one" })
       return
    end
 
@@ -53,7 +54,7 @@ function mod.append_rail(pos, pindex)
          if #ents == 0 then
             game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
             if storage.players[pindex].build_lock == false then
-               printout({ "fa.rail-no-rails-nearby" }, pindex)
+               Speech.speak(pindex, { "fa.rail-no-rails-nearby" })
                return
             end
          end
@@ -73,7 +74,7 @@ function mod.append_rail(pos, pindex)
       end
       if end_found == nil then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         if storage.players[pindex].build_lock == false then printout("No end rails found nearby", pindex) end
+         if storage.players[pindex].build_lock == false then Speech.speak(pindex, "No end rails found nearby") end
          return
       end
 
@@ -81,8 +82,8 @@ function mod.append_rail(pos, pindex)
       is_end_rail, end_rail_dir, comment = Rails.check_end_rail(end_found, pindex)
       if not is_end_rail then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         --printout(comment, pindex)
-         printout({ "fa.rail-no-end-rails-nearby" }, pindex)
+         --Speech.speak(pindex, comment)
+         Speech.speak(pindex, { "fa.rail-no-end-rails-nearby" })
          return
       end
    end
@@ -94,7 +95,7 @@ function mod.append_rail(pos, pindex)
    append_rail_pos = nil
    rail_api_dir = end_found.direction
 
-   --printout(" Rail end found at " .. end_found.position.x .. " , " .. end_found.position.y .. " , facing " .. end_found.direction, pindex)--Checks
+   --Speech.speak(pindex, " Rail end found at " .. end_found.position.x .. " , " .. end_found.position.y .. " , facing " .. end_found.direction)--Checks
 
    if end_found.name == "straight-rail" then
       if end_rail_dir == dirs.north or end_rail_dir == dirs.south then
@@ -213,9 +214,9 @@ function mod.append_rail(pos, pindex)
    --6. Clear trees and rocks nearby and check if the selected 2x2 space is free for building, else return
    if append_rail_pos == nil then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout(
-         { "", tostring(end_rail_dir), " and ", tostring(rail_api_dir), ", rail appending direction error." },
-         pindex
+      Speech.speak(
+         pindex,
+         { "", tostring(end_rail_dir), " and ", tostring(rail_api_dir), ", rail appending direction error." }
       )
       return
    end
@@ -246,7 +247,7 @@ function mod.append_rail(pos, pindex)
       if
          not surf.can_place_entity({ name = "straight-rail", position = append_rail_pos, direction = append_rail_dir })
       then
-         printout({ "fa.rail-cannot-place-extend" }, pindex)
+         Speech.speak(pindex, { "fa.rail-cannot-place-extend" })
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
          rendering.draw_circle({
             color = { 1, 0, 0 },
@@ -274,7 +275,7 @@ function mod.append_rail(pos, pindex)
          .build_from_cursor({ name = "straight-rail", position = append_rail_pos, direction = append_rail_dir })
       if not (created_rail ~= nil and created_rail.valid) then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout({ "fa.rail-error-invalid-appended" }, pindex)
+         Speech.speak(pindex, { "fa.rail-error-invalid-appended" })
          rendering.draw_circle({
             color = { 1, 0, 0 },
             radius = 0.5,
@@ -295,12 +296,12 @@ function mod.append_rail(pos, pindex)
    if created_rail.valid and Rails.has_parallel_neighbor(created_rail, pindex) then
       player.mine_entity(created_rail, true)
       player.play_sound({ path = "utility/cannot_build" })
-      printout({ "fa.rail-parallel-spacing" }, pindex)
+      Speech.speak(pindex, { "fa.rail-parallel-spacing" })
    end
 
    --9. Check if the appended rail has created an intersection. If so, notify the player.
    if created_rail.valid and Rails.is_intersection_rail(created_rail, pindex) then
-      printout({ "fa.rail-intersection-created" }, pindex)
+      Speech.speak(pindex, { "fa.rail-intersection-created" })
    end
 end
 
@@ -324,7 +325,7 @@ function mod.free_place_rail_signal_in_hand(pindex, preview_only)
    if surf.can_place_entity({ position = pos, name = stack.name, force = p.force }) == false then
       if not preview_only then p.play_sound({ path = "utility/cannot_build" }) end
       build_comment = "Tile occupied."
-      printout(build_comment, pindex)
+      Speech.speak(pindex, build_comment)
       return
    end
    --Check if too close to existing signals
@@ -333,7 +334,7 @@ function mod.free_place_rail_signal_in_hand(pindex, preview_only)
    if #nearby_signals > 0 then
       if not preview_only then p.play_sound({ path = "utility/cannot_build" }) end
       build_comment = "Too close to existing signals."
-      printout(build_comment, pindex)
+      Speech.speak(pindex, build_comment)
       return
    end
    --Scan for straight rails nearby
@@ -341,7 +342,7 @@ function mod.free_place_rail_signal_in_hand(pindex, preview_only)
    if #rails == 0 then
       if not preview_only then p.play_sound({ path = "utility/cannot_build" }) end
       build_comment = "Must be placed next to a straight rail."
-      printout(build_comment, pindex)
+      Speech.speak(pindex, build_comment)
       return
    end
    for i, rail in ipairs(rails) do
@@ -395,7 +396,7 @@ function mod.free_place_rail_signal_in_hand(pindex, preview_only)
          if created.status == defines.entity_status.not_connected_to_rail then
             build_comment = "Error: Signal not connected to rail, placed too far."
          end
-         printout(build_comment, pindex)
+         Speech.speak(pindex, build_comment)
          return FaUtils.rotate_180(created.direction)
       end
    end
@@ -420,7 +421,7 @@ function mod.build_rail_turn_right_45_degrees(anchor_rail, pindex)
       --Check if the inventory has enough
       if storage.players[pindex].inventory.lua_inventory.get_item_count("rail") < 3 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout({ "fa.rail-need-three-for-turn" }, pindex)
+         Speech.speak(pindex, { "fa.rail-need-three-for-turn" })
          return
       else
          --Take from the inventory.
@@ -435,7 +436,7 @@ function mod.build_rail_turn_right_45_degrees(anchor_rail, pindex)
    is_end_rail, dir, build_comment = Rails.check_end_rail(anchor_rail, pindex)
    if not is_end_rail then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout(build_comment, pindex)
+      Speech.speak(pindex, build_comment)
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -674,7 +675,7 @@ function mod.build_rail_turn_right_45_degrees(anchor_rail, pindex)
 
    if not can_place_all then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout({ "fa.rail-building-area-occupied" }, pindex)
+      Speech.speak(pindex, { "fa.rail-building-area-occupied" })
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -885,7 +886,7 @@ function mod.build_rail_turn_right_45_degrees(anchor_rail, pindex)
    --7. Sounds and results
    game.get_player(pindex).play_sound({ path = "entity-build/straight-rail" })
    game.get_player(pindex).play_sound({ path = "entity-build/curved-rail" })
-   printout({ "", "Rail turn built 45 degrees right, ", build_comment }, pindex)
+   Speech.speak(pindex, { "", "Rail turn built 45 degrees right, ", build_comment })
    return
 end
 
@@ -906,7 +907,7 @@ function mod.build_rail_turn_right_90_degrees(anchor_rail, pindex)
       --Check if the inventory has enough
       if storage.players[pindex].inventory.lua_inventory.get_item_count("rail") < 10 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout({ "fa.rail-need-ten-for-turn" }, pindex)
+         Speech.speak(pindex, { "fa.rail-need-ten-for-turn" })
          return
       else
          --Take from the inventory.
@@ -921,14 +922,14 @@ function mod.build_rail_turn_right_90_degrees(anchor_rail, pindex)
    is_end_rail, dir, build_comment = Rails.check_end_rail(anchor_rail, pindex)
    if not is_end_rail then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout(build_comment, pindex)
+      Speech.speak(pindex, build_comment)
       game.get_player(pindex).clear_cursor()
       return
    end
    pos = anchor_rail.position
    if dir == dirs.northeast or dir == dirs.southeast or dir == dirs.southwest or dir == dirs.northwest then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout({ "fa.rail-horizontal-vertical-only" }, pindex)
+      Speech.speak(pindex, { "fa.rail-horizontal-vertical-only" })
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -1066,7 +1067,7 @@ function mod.build_rail_turn_right_90_degrees(anchor_rail, pindex)
 
    if not can_place_all then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout({ "fa.rail-building-area-occupied" }, pindex)
+      Speech.speak(pindex, { "fa.rail-building-area-occupied" })
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -1181,7 +1182,7 @@ function mod.build_rail_turn_right_90_degrees(anchor_rail, pindex)
    --7. Sounds and results
    game.get_player(pindex).play_sound({ path = "entity-build/straight-rail" })
    game.get_player(pindex).play_sound({ path = "entity-build/curved-rail" })
-   printout({ "", "Rail turn built 90 degrees right, ", build_comment }, pindex)
+   Speech.speak(pindex, { "", "Rail turn built 90 degrees right, ", build_comment })
    return
 end
 
@@ -1203,7 +1204,7 @@ function mod.build_rail_turn_left_45_degrees(anchor_rail, pindex)
       --Check if the inventory has enough
       if storage.players[pindex].inventory.lua_inventory.get_item_count("rail") < 3 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout({ "fa.rail-need-three-for-turn" }, pindex)
+         Speech.speak(pindex, { "fa.rail-need-three-for-turn" })
          return
       else
          --Take from the inventory.
@@ -1218,7 +1219,7 @@ function mod.build_rail_turn_left_45_degrees(anchor_rail, pindex)
    is_end_rail, dir, build_comment = Rails.check_end_rail(anchor_rail, pindex)
    if not is_end_rail then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout(build_comment, pindex)
+      Speech.speak(pindex, build_comment)
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -1457,7 +1458,7 @@ function mod.build_rail_turn_left_45_degrees(anchor_rail, pindex)
 
    if not can_place_all then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout({ "fa.rail-building-area-occupied" }, pindex)
+      Speech.speak(pindex, { "fa.rail-building-area-occupied" })
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -1668,7 +1669,7 @@ function mod.build_rail_turn_left_45_degrees(anchor_rail, pindex)
    --7. Sounds and results
    game.get_player(pindex).play_sound({ path = "entity-build/straight-rail" })
    game.get_player(pindex).play_sound({ path = "entity-build/curved-rail" })
-   printout({ "", "Rail turn built 45 degrees left, ", build_comment }, pindex)
+   Speech.speak(pindex, { "", "Rail turn built 45 degrees left, ", build_comment })
    return
 end
 
@@ -1689,7 +1690,7 @@ function mod.build_rail_turn_left_90_degrees(anchor_rail, pindex)
       --Check if the inventory has enough
       if storage.players[pindex].inventory.lua_inventory.get_item_count("rail") < 10 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout({ "fa.rail-need-ten-for-turn" }, pindex)
+         Speech.speak(pindex, { "fa.rail-need-ten-for-turn" })
          return
       else
          --Take from the inventory.
@@ -1704,14 +1705,14 @@ function mod.build_rail_turn_left_90_degrees(anchor_rail, pindex)
    is_end_rail, dir, build_comment = Rails.check_end_rail(anchor_rail, pindex)
    if not is_end_rail then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout(build_comment, pindex)
+      Speech.speak(pindex, build_comment)
       game.get_player(pindex).clear_cursor()
       return
    end
    pos = anchor_rail.position
    if dir == dirs.northeast or dir == dirs.southeast or dir == dirs.southwest or dir == dirs.northwest then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout({ "fa.rail-horizontal-vertical-only" }, pindex)
+      Speech.speak(pindex, { "fa.rail-horizontal-vertical-only" })
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -1849,7 +1850,7 @@ function mod.build_rail_turn_left_90_degrees(anchor_rail, pindex)
 
    if not can_place_all then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout({ "fa.rail-building-area-occupied" }, pindex)
+      Speech.speak(pindex, { "fa.rail-building-area-occupied" })
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -1964,7 +1965,7 @@ function mod.build_rail_turn_left_90_degrees(anchor_rail, pindex)
    --7. Sounds and results
    game.get_player(pindex).play_sound({ path = "entity-build/straight-rail" })
    game.get_player(pindex).play_sound({ path = "entity-build/curved-rail" })
-   printout({ "", "Rail turn built 90 degrees left, ", build_comment }, pindex)
+   Speech.speak(pindex, { "", "Rail turn built 90 degrees left, ", build_comment })
    return
 end
 
@@ -1989,7 +1990,7 @@ function mod.build_fork_at_end_rail(anchor_rail, pindex, include_forward, includ
       --Check if the inventory has enough
       if storage.players[pindex].inventory.lua_inventory.get_item_count("rail") < 5 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout({ "fa.rail-need-five-for-turn" }, pindex)
+         Speech.speak(pindex, { "fa.rail-need-five-for-turn" })
          return
       else
          --Take from the inventory.
@@ -2004,7 +2005,7 @@ function mod.build_fork_at_end_rail(anchor_rail, pindex, include_forward, includ
    is_end_rail, dir, build_comment = Rails.check_end_rail(anchor_rail, pindex)
    if not is_end_rail then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout(build_comment, pindex)
+      Speech.speak(pindex, build_comment)
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -2992,7 +2993,7 @@ function mod.build_fork_at_end_rail(anchor_rail, pindex, include_forward, includ
          end
       else
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout({ "fa.rail-error-placement-not-defined" }, pindex)
+         Speech.speak(pindex, { "fa.rail-error-placement-not-defined" })
          game.get_player(pindex).clear_cursor()
          return
       end
@@ -3001,7 +3002,7 @@ function mod.build_fork_at_end_rail(anchor_rail, pindex, include_forward, includ
    --4D. Process check results
    if not can_place_all then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout({ "fa.rail-building-area-occupied" }, pindex)
+      Speech.speak(pindex, { "fa.rail-building-area-occupied" })
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -3848,7 +3849,7 @@ function mod.build_fork_at_end_rail(anchor_rail, pindex, include_forward, includ
          end
       else
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout({ "fa.rail-error-placement-not-defined" }, pindex)
+         Speech.speak(pindex, { "fa.rail-error-placement-not-defined" })
          game.get_player(pindex).clear_cursor()
          return
       end
@@ -3866,7 +3867,7 @@ function mod.build_fork_at_end_rail(anchor_rail, pindex, include_forward, includ
    if include_right then result = result .. "right, " end
    if include_forward then result = result .. "forward, " end
    result = result .. build_comment
-   printout(result, pindex)
+   Speech.speak(pindex, result)
    return
 end
 
@@ -3888,7 +3889,7 @@ function mod.build_rail_bypass_junction(anchor_rail, pindex)
       --Check if the inventory has enough
       if storage.players[pindex].inventory.lua_inventory.get_item_count("rail") < 20 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout({ "fa.rail-need-twenty-rails" }, pindex)
+         Speech.speak(pindex, { "fa.rail-need-twenty-rails" })
          return
       else
          --Take from the inventory.
@@ -3905,7 +3906,7 @@ function mod.build_rail_bypass_junction(anchor_rail, pindex)
       if storage.players[pindex].inventory.lua_inventory.get_item_count("rail-chain-signal") < 4 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
          game.get_player(pindex).clear_cursor()
-         printout({ "fa.rail-need-four-chain-signals" }, pindex)
+         Speech.speak(pindex, { "fa.rail-need-four-chain-signals" })
          return
       else
          --Good to go.
@@ -3916,7 +3917,7 @@ function mod.build_rail_bypass_junction(anchor_rail, pindex)
    is_end_rail, dir, build_comment = Rails.check_end_rail(anchor_rail, pindex)
    if not is_end_rail then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout(build_comment, pindex)
+      Speech.speak(pindex, build_comment)
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -4344,7 +4345,7 @@ function mod.build_rail_bypass_junction(anchor_rail, pindex)
 
    if not can_place_all then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout({ "fa.rail-building-area-occupied" }, pindex)
+      Speech.speak(pindex, { "fa.rail-building-area-occupied" })
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -4717,7 +4718,7 @@ function mod.build_rail_bypass_junction(anchor_rail, pindex)
    game.get_player(pindex).play_sound({ path = "entity-build/straight-rail" })
    game.get_player(pindex).play_sound({ path = "entity-build/curved-rail" })
    local result = "Rail bypass junction built, " .. build_comment
-   printout(result, pindex)
+   Speech.speak(pindex, result)
    return
 end
 
@@ -4739,7 +4740,7 @@ function mod.build_rail_bypass_junction_triple(anchor_rail, pindex)
       --Check if the inventory has enough
       if storage.players[pindex].inventory.lua_inventory.get_item_count("rail") < 25 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout({ "fa.rail-need-twenty-five-rails" }, pindex)
+         Speech.speak(pindex, { "fa.rail-need-twenty-five-rails" })
          return
       else
          --Take from the inventory.
@@ -4755,7 +4756,7 @@ function mod.build_rail_bypass_junction_triple(anchor_rail, pindex)
       --Check if the inventory has enough
       if storage.players[pindex].inventory.lua_inventory.get_item_count("rail-chain-signal") < 6 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout({ "fa.rail-need-six-chain-signals" }, pindex)
+         Speech.speak(pindex, { "fa.rail-need-six-chain-signals" })
          return
       else
          --Good to go.
@@ -4766,7 +4767,7 @@ function mod.build_rail_bypass_junction_triple(anchor_rail, pindex)
    is_end_rail, dir, build_comment = Rails.check_end_rail(anchor_rail, pindex)
    if not is_end_rail then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout(build_comment, pindex)
+      Speech.speak(pindex, build_comment)
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -5237,7 +5238,7 @@ function mod.build_rail_bypass_junction_triple(anchor_rail, pindex)
 
    if not can_place_all then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout({ "fa.rail-building-area-occupied" }, pindex)
+      Speech.speak(pindex, { "fa.rail-building-area-occupied" })
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -5640,7 +5641,7 @@ function mod.build_rail_bypass_junction_triple(anchor_rail, pindex)
    game.get_player(pindex).play_sound({ path = "entity-build/straight-rail" })
    game.get_player(pindex).play_sound({ path = "entity-build/curved-rail" })
    local result = "Rail bypass junction built with 3 branches, " .. build_comment
-   printout(result, pindex)
+   Speech.speak(pindex, result)
    return
 end
 
@@ -6166,7 +6167,7 @@ function mod.build_train_stop(anchor_rail, pindex)
       --Check if the inventory has enough
       if storage.players[pindex].inventory.lua_inventory.get_item_count("train-stop") < 1 then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         printout({ "fa.rail-need-one-train-stop" }, pindex)
+         Speech.speak(pindex, { "fa.rail-need-one-train-stop" })
          return
       else
          --Take from the inventory.
@@ -6213,7 +6214,7 @@ function mod.build_train_stop(anchor_rail, pindex)
    pos = anchor_rail.position
    if dir == dirs.northeast or dir == dirs.southeast or dir == dirs.southwest or dir == dirs.northwest then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout({ "fa.rail-horizontal-vertical-only" }, pindex)
+      Speech.speak(pindex, { "fa.rail-horizontal-vertical-only" })
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -6258,7 +6259,7 @@ function mod.build_train_stop(anchor_rail, pindex)
 
    if not can_place_all then
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-      printout({ "fa.rail-building-area-occupied-cursor" }, pindex)
+      Speech.speak(pindex, { "fa.rail-building-area-occupied-cursor" })
       game.get_player(pindex).clear_cursor()
       return
    end
@@ -6300,7 +6301,7 @@ function mod.build_train_stop(anchor_rail, pindex)
 
    --7. Sounds and results
    game.get_player(pindex).play_sound({ path = "entity-build/train-stop" })
-   printout({ "", "Train stop built facing", FaUtils.direction_lookup(dir), ", ", build_comment }, pindex)
+   Speech.speak(pindex, { "", "Train stop built facing", FaUtils.direction_lookup(dir), ", ", build_comment })
    return
 end
 
@@ -6408,7 +6409,7 @@ function mod.run_menu(pindex, clicked_in)
 
    if rail == nil then
       comment = " Rail nil error "
-      printout(comment, pindex)
+      Speech.speak(pindex, comment)
       mod.close_menu(pindex, false)
       return
    end
@@ -6416,7 +6417,7 @@ function mod.run_menu(pindex, clicked_in)
    if menu_line == 0 then
       comment = comment
          .. "Rail builder, select a structure to build by going up or down this menu, attempt to build it via LEFT BRACKET, "
-      printout(comment, pindex)
+      Speech.speak(pindex, comment)
       return
    end
 
@@ -6425,7 +6426,7 @@ function mod.run_menu(pindex, clicked_in)
       if menu_line == 1 then
          if not clicked then
             comment = comment .. "Left turn 45 degrees"
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          else
             --Build it here
             mod.build_rail_turn_left_45_degrees(rail, pindex)
@@ -6433,7 +6434,7 @@ function mod.run_menu(pindex, clicked_in)
       elseif menu_line == 2 then
          if not clicked then
             comment = comment .. "Right turn 45 degrees"
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          else
             --Build it here
             mod.build_rail_turn_right_45_degrees(rail, pindex)
@@ -6441,7 +6442,7 @@ function mod.run_menu(pindex, clicked_in)
       elseif menu_line == 3 then
          if not clicked then
             comment = comment .. "Left turn 90 degrees"
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          else
             --Build it here
             mod.build_rail_turn_left_90_degrees(rail, pindex)
@@ -6449,7 +6450,7 @@ function mod.run_menu(pindex, clicked_in)
       elseif menu_line == 4 then
          if not clicked then
             comment = comment .. "Right turn 90 degrees"
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          else
             --Build it here
             mod.build_rail_turn_right_90_degrees(rail, pindex)
@@ -6457,7 +6458,7 @@ function mod.run_menu(pindex, clicked_in)
       elseif menu_line == 5 then
          if not clicked then
             comment = comment .. "Train stop facing end rail direction"
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          else
             --Build it here
             mod.build_train_stop(rail, pindex)
@@ -6465,7 +6466,7 @@ function mod.run_menu(pindex, clicked_in)
       elseif menu_line == 6 then
          if not clicked then
             comment = comment .. "Rail fork left and right and forward"
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          else
             --Build it here
             mod.build_fork_at_end_rail(rail, pindex, true, true, true)
@@ -6473,7 +6474,7 @@ function mod.run_menu(pindex, clicked_in)
       elseif menu_line == 7 then
          if not clicked then
             comment = comment .. "Rail fork only left and right"
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          else
             --Build it here
             mod.build_fork_at_end_rail(rail, pindex, false, true, true)
@@ -6481,7 +6482,7 @@ function mod.run_menu(pindex, clicked_in)
       elseif menu_line == 8 then
          if not clicked then
             comment = comment .. "Rail fork only left and forward"
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          else
             --Build it here
             mod.build_fork_at_end_rail(rail, pindex, true, true, false)
@@ -6489,7 +6490,7 @@ function mod.run_menu(pindex, clicked_in)
       elseif menu_line == 9 then
          if not clicked then
             comment = comment .. "Rail fork only right and forward"
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          else
             --Build it here
             mod.build_fork_at_end_rail(rail, pindex, true, false, true)
@@ -6497,7 +6498,7 @@ function mod.run_menu(pindex, clicked_in)
       elseif menu_line == 10 then
          if not clicked then
             comment = comment .. "Rail bypass junction"
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          else
             --Build it here
             mod.build_rail_bypass_junction(rail, pindex)
@@ -6508,7 +6509,7 @@ function mod.run_menu(pindex, clicked_in)
       if menu_line == 1 then
          if not clicked then
             comment = comment .. "Left turn 45 degrees"
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          else
             --Build it here
             mod.build_rail_turn_left_45_degrees(rail, pindex)
@@ -6516,7 +6517,7 @@ function mod.run_menu(pindex, clicked_in)
       elseif menu_line == 2 then
          if not clicked then
             comment = comment .. "Right turn 45 degrees"
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          else
             --Build it here
             mod.build_rail_turn_right_45_degrees(rail, pindex)
@@ -6524,7 +6525,7 @@ function mod.run_menu(pindex, clicked_in)
       elseif menu_line == 3 then
          if not clicked then
             comment = comment .. "Rail fork left and right and forward"
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          else
             --Build it here
             mod.build_fork_at_end_rail(rail, pindex, true, true, true)
@@ -6532,7 +6533,7 @@ function mod.run_menu(pindex, clicked_in)
       elseif menu_line == 4 then
          if not clicked then
             comment = comment .. "Rail fork only left and right"
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          else
             --Build it here
             mod.build_fork_at_end_rail(rail, pindex, false, true, true)
@@ -6540,7 +6541,7 @@ function mod.run_menu(pindex, clicked_in)
       elseif menu_line == 5 then
          if not clicked then
             comment = comment .. "Rail fork only left and forward"
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          else
             --Build it here
             mod.build_fork_at_end_rail(rail, pindex, true, true, false)
@@ -6548,7 +6549,7 @@ function mod.run_menu(pindex, clicked_in)
       elseif menu_line == 6 then
          if not clicked then
             comment = comment .. "Rail fork only right and forward"
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          else
             --Build it here
             mod.build_fork_at_end_rail(rail, pindex, true, false, true)
@@ -6559,7 +6560,7 @@ function mod.run_menu(pindex, clicked_in)
       if menu_line == 1 then
          if not clicked then
             comment = comment .. "Pair of chain rail signals."
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          else
             local success, build_comment = mod.place_chain_signal_pair(rail, pindex)
             if success then
@@ -6567,13 +6568,13 @@ function mod.run_menu(pindex, clicked_in)
             else
                comment = comment .. build_comment
             end
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          end
       elseif menu_line == 2 then
          if not clicked then
             comment = comment
                .. "Pair of regular rail signals, warning: do not use regular rail signals unless you are sure about what you are doing because trains can easily get deadlocked at them"
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          else
             local success, build_comment = mod.place_rail_signal_pair(rail, pindex)
             if success then
@@ -6582,15 +6583,15 @@ function mod.run_menu(pindex, clicked_in)
             else
                comment = comment .. build_comment
             end
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          end
       elseif menu_line == 3 then
          if not clicked then
             comment = comment .. "Clear rail signals"
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          else
             Rails.mine_signals(rail, pindex)
-            printout({ "fa.rail-signals-cleared" }, pindex)
+            Speech.speak(pindex, { "fa.rail-signals-cleared" })
          end
       end
    elseif rail_type == 4 then
@@ -6598,7 +6599,7 @@ function mod.run_menu(pindex, clicked_in)
       if menu_line == 1 then
          if not clicked then
             comment = comment .. "Pair of chain rail signals."
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          else
             local success, build_comment = mod.place_chain_signal_pair(rail, pindex)
             if success then
@@ -6606,13 +6607,13 @@ function mod.run_menu(pindex, clicked_in)
             else
                comment = comment .. build_comment
             end
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          end
       elseif menu_line == 2 then
          if not clicked then
             comment = comment
                .. "Pair of regular rail signals, warning: do not use regular rail signals unless you are sure about what you are doing because trains can easily get deadlocked at them"
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          else
             local success, build_comment = mod.place_rail_signal_pair(rail, pindex)
             if success then
@@ -6621,15 +6622,15 @@ function mod.run_menu(pindex, clicked_in)
             else
                comment = comment .. build_comment
             end
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          end
       elseif menu_line == 3 then
          if not clicked then
             comment = comment .. "Clear rail signals"
-            printout(comment, pindex)
+            Speech.speak(pindex, comment)
          else
             Rails.mine_signals(rail, pindex)
-            printout({ "fa.rail-signals-cleared" }, pindex)
+            Speech.speak(pindex, { "fa.rail-signals-cleared" })
          end
       end
    end

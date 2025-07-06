@@ -1,7 +1,7 @@
 --Here: functions about the warnings menu
 local TransportBelts = require("scripts.transport-belts")
 local Viewpoint = require("scripts.viewpoint")
-local MessageBuilder = require("scripts.message-builder")
+local Speech = require("scripts.speech")
 local FaUtils = require("scripts.fa-utils")
 local localising = require("scripts.localising")
 
@@ -23,17 +23,17 @@ function mod.read_warnings_slot(pindex)
    then
       local ent = warnings[storage.players[pindex].warnings.category].ents[storage.players[pindex].warnings.index]
       if ent ~= nil and ent.valid then
-         local message = MessageBuilder.new()
+         local message = Speech.new()
          message:fragment(localising.get_localised_name_with_fallback(ent))
          message:fragment({ "fa.warnings-has-warning" })
          message:fragment({ "fa.warning-type-" .. warnings[storage.players[pindex].warnings.category].name })
          message:fragment(FaUtils.format_position(ent.position.x, ent.position.y))
-         printout(message:build(), pindex)
+         Speech.speak(pindex, message:build())
       else
-         printout({ "fa.warnings-blank" }, pindex)
+         Speech.speak(pindex, { "fa.warnings-blank" })
       end
    else
-      printout({ "fa.warnings-no-warnings" }, pindex)
+      Speech.speak(pindex, { "fa.warnings-no-warnings" })
    end
 end
 
@@ -70,7 +70,7 @@ function mod.scan_for_warnings(L, H, pindex)
       end
    end
    local result = {}
-   local summary_message = MessageBuilder.new()
+   local summary_message = Speech.new()
    local has_warnings = false
 
    for i, warning in pairs(warnings) do

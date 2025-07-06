@@ -1,6 +1,7 @@
 -- Test for inventory transfer functionality
 local TestRegistry = require("scripts.test-registry")
 local InventoryTransfers = require("scripts.inventory-transfers")
+local Speech = require("scripts.speech")
 
 local describe, it = TestRegistry.describe, TestRegistry.it
 
@@ -46,23 +47,15 @@ describe("Inventory Transfer Tests", function()
             index = nil, -- Transfer all items
          }
 
-         -- Capture printout to verify it was called without error
-         local printout_called = false
-         local old_printout = _G.printout
-         _G.printout = function(message, pindex)
-            printout_called = true
-            -- We can't easily check the message content since it's a LocalisedString
-            -- but we can verify it was called without error
-         end
+         -- Start capturing speech
+         Speech.start_capture()
 
          -- Do multi-stack transfer (50% ratio to test partial transfers)
          InventoryTransfers.do_multi_stack_transfer(0.5, 1)
 
-         -- Restore printout
-         _G.printout = old_printout
-
-         -- Verify printout was called
-         assert(printout_called, "Expected printout to be called")
+         -- Stop capture and verify speech was called
+         local messages = Speech.stop_capture()
+         assert(#messages > 0, "Expected Speech.speak to be called")
 
          -- Verify items were transferred (50% of each)
          local player_inv = player.get_main_inventory()

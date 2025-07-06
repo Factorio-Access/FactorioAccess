@@ -143,9 +143,11 @@ end)
 #### Communication with Screen Reader
 The mod communicates with an external launcher via stdout:
 ```lua
-printout("Building placed at coordinates 10, 20", pindex)
+Speech.speak(pindex, "Building placed at coordinates 10, 20")
 -- Sends: "out <pindex> Building placed at coordinates 10, 20"
 ```
+
+**Note**: The old `printout(message, pindex)` API has been deprecated in favor of `Speech.speak(pindex, message)`. Always use Speech.speak for new code.
 
 ## Key Systems
 
@@ -266,7 +268,7 @@ The mod is transitioning to MessageBuilder for proper localization:
 local message = MessageBuilder.new()
 message:fragment({"entity-name.transport-belt"})
 message:fragment({"fa.ent-info-facing", direction_lookup(entity.direction)})
-printout(message:build(), pindex)
+Speech.speak(pindex, message:build())
 
 -- Legacy pattern (still used in most code)
 local result = {"", 
@@ -274,7 +276,7 @@ local result = {"",
     " facing ", 
     direction_lookup(entity.direction)
 }
-printout(result, pindex)
+Speech.speak(pindex, result)
 ```
 
 See `scripts/fa-info.lua` for comprehensive examples of proper localization patterns.
@@ -676,7 +678,7 @@ Syntrax is a domain-specific language for describing rail layouts using text com
 local Syntrax = require("syntrax")
 local rails, error = Syntrax.execute("l r s")
 if error then
-    printout("Syntrax error: " .. error.message, pindex)
+    Speech.speak(pindex, "Syntrax error: " .. error.message)
 else
     -- Process rail placements
     for i, rail in ipairs(rails) do
@@ -731,7 +733,7 @@ end)
 ## Debugging Tips
 
 1. **Use game.print()** for debugging - prints to console instead of screen reader
-2. **Use printout()** for user-facing messages - goes to screen reader
+2. **Use Speech.speak()** for user-facing messages - goes to screen reader
 3. **Check logs** at `%APPDATA%/Factorio/factorio-current.log`
 4. **Cursor rendering** - Enable to visualize what the mod is doing
 
@@ -821,7 +823,7 @@ The mod communicates with a launcher process via stdout. Format:
 out <player_index> <message>
 ```
 
-The launcher handles text-to-speech conversion. This is why `printout()` is used instead of `game.print()`.
+The launcher handles text-to-speech conversion. This is why `Speech.speak()` is used instead of `game.print()`.
 
 ## Resources
 

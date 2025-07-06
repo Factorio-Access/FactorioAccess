@@ -12,6 +12,7 @@ local Localising = require("scripts.localising")
 local TH = require("scripts.table-helpers")
 local TransportBelts = require("scripts.transport-belts")
 local Wires = require("scripts.wires")
+local Speech = require("scripts.speech")
 
 local mod = {}
 
@@ -25,8 +26,8 @@ Exactly the same as /c, but accessible without fiddling around. It:
   - Otherwise, runs the code directly, and uses whatever the chunk returns.
 - Overrides Lua print to go to speech, and concatenates everything up so that we
   don't "trip" over the announcements.
-- Makes printout available, as a mocked version that will just call to print
-  (IMPORTANT: only works on the current player; pindex is ignored).
+- Makes printout available as a compatibility wrapper that calls Speech.speak
+  (for legacy scripts that still use printout).
 - Announces errors, with tracebacks, using pcall.
 
 Also due to launcher limitations, "print" here doesn't do newlines.  That'll
@@ -38,7 +39,7 @@ local function cmd_fac(cmd)
    local script = cmd.parameter
 
    if not cmd.parameter or cmd.parameter == "" then
-      printout({ "fa.fa-commands-script-required" }, pindex)
+      Speech.speak(pindex, { "fa.fa-commands-script-required" })
       return
    end
 
@@ -62,8 +63,11 @@ local function cmd_fac(cmd)
       environment[k] = v
    end
    environment.print = print_override
-   environment.printout = function(arg, pindex)
-      print_override(arg, "for pindex", pindex)
+   -- Compatibility wrapper for legacy scripts
+   environment.printout = function(message, provided_pindex)
+      -- Use the command's player index if not provided
+      local actual_pindex = provided_pindex or pindex
+      Speech.speak(actual_pindex, message)
    end
 
    environment.FaUtils = FaUtils
@@ -78,7 +82,7 @@ local function cmd_fac(cmd)
    if not chunk then
       chunk, err = load(cmd.parameter, "=(load)", "t", environment)
       if err then
-         printout(err, pindex)
+         Speech.speak(pindex, err)
          print(err)
          return
       end
@@ -91,7 +95,7 @@ local function cmd_fac(cmd)
 
    print_override(val)
 
-   printout(printbuffer, pindex)
+   Speech.speak(pindex, printbuffer)
 end
 
 mod.COMMANDS = {

@@ -4,7 +4,7 @@ local Graphics = require("scripts.graphics")
 local Mouse = require("scripts.mouse")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
-local MessageBuilder = require("scripts.message-builder")
+local Speech = require("scripts.speech")
 local BumpDetection = require("scripts.bump-detection")
 
 local mod = {}
@@ -39,20 +39,20 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
    end
    --Do not teleport if in a vehicle, in a menu, or already at the desitination
    if char.vehicle ~= nil and char.vehicle.valid then
-      printout({ "fa.teleport-cannot-in-vehicle" }, pindex)
+      Speech.speak(pindex, { "fa.teleport-cannot-in-vehicle" })
       return false
    elseif util.distance(game.get_player(pindex).position, pos) < 0.6 then
-      printout({ "fa.teleport-already-at-target" }, pindex)
+      Speech.speak(pindex, { "fa.teleport-already-at-target" })
       return false
    elseif router:is_ui_open() and not router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
-      printout({ "fa.teleport-cannot-in-menu" }, pindex)
+      Speech.speak(pindex, { "fa.teleport-cannot-in-menu" })
       return false
    end
    --Do not teleport near enemies unless instructed to ignore them
    if not ignore_enemies then
       local enemy = char.surface.find_nearest_enemy({ position = new_pos, max_distance = 30, force = char.force })
       if enemy and enemy.valid then
-         printout({ "fa.teleport-enemies-warning" }, pindex)
+         Speech.speak(pindex, { "fa.teleport-enemies-warning" })
          return false
       end
    end
@@ -149,13 +149,13 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
          end
          if new_pos.x ~= pos.x or new_pos.y ~= pos.y then
             if not muted then
-               local message = MessageBuilder.new()
+               local message = Speech.new()
                message:fragment({
                   "fa.teleport-distance",
                   tostring(math.ceil(FaUtils.distance(pos, char.position))),
                   FaUtils.direction(pos, char.position),
                })
-               printout(message:build(), pindex)
+               Speech.speak(pindex, message:build())
             end
          end
          --Update cursor after teleport
@@ -163,11 +163,11 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
          Mouse.move_mouse_pointer(FaUtils.center_of_tile(vp:get_cursor_pos()), pindex)
          Graphics.draw_cursor_highlight(pindex, nil, nil)
       else
-         printout({ "fa.teleport-failed" }, pindex)
+         Speech.speak(pindex, { "fa.teleport-failed" })
          return false
       end
    else
-      printout({ "fa.teleport-cannot" }, pindex) --this is unlikely to be reached because we find the first non-colliding position
+      Speech.speak(pindex, { "fa.teleport-cannot" }) --this is unlikely to be reached because we find the first non-colliding position
       return false
    end
 

@@ -25,7 +25,7 @@ You should not use printout. Instead, you are given a builder in the context. So
 before yours, so you should print through that.
 ]]
 local Math2 = require("math-helpers")
-local MessageBuilder = require("scripts.message-builder")
+local Speech = require("scripts.speech")
 local StorageManager = require("scripts.storage-manager")
 local UiRouter = require("scripts.ui.router")
 
@@ -39,7 +39,7 @@ local mod = {}
 ---@field parameters table Whatever was passed to :open()
 ---@field force_close boolean If true, close this tablist.
 ---@field close_is_textbox boolean? If true, leave  the open UI alone so that textboxes can tail call.
----@field message fa.MessageBuilder
+---@field message fa.Speech
 
 ---@alias fa.ui.SimpleTabHandler fun(self, fa.ui.TabContext)
 
@@ -90,10 +90,10 @@ mod.TabList = TabList
 -- nothing if this tablist is not open, which can happen when calling a bunch of
 -- events back to back if the tab list has to close in the middle of a sequence
 -- of actions.
----@param msg_builder fa.MessageBuilder?
+---@param msg_builder fa.Speech?
 ---@param params any[]?
 function TabList:_do_callback(pindex, target_tab_index, cb_name, msg_builder, params)
-   msg_builder = msg_builder or MessageBuilder.MessageBuilder.new()
+   msg_builder = msg_builder or Speech.new()
    params = params or {}
 
    local tl = tablist_storage[pindex][self.ui_name]
@@ -132,7 +132,7 @@ function TabList:_do_callback(pindex, target_tab_index, cb_name, msg_builder, pa
    end
 
    local msg = msg_builder:build()
-   if msg then printout(msg, pindex) end
+   if msg then Speech.speak(pindex, msg) end
 end
 
 -- Returns a method which will call the event handler for the given name, so
@@ -165,7 +165,7 @@ function TabList:_set_active_tab(pindex, active_tab)
    -- cohesive framework are relying on it; playing sounds here is
    -- double-playing.
 
-   local msg_builder = MessageBuilder.MessageBuilder.new()
+   local msg_builder = Speech.new()
    local desc = self.descriptors[self.tab_order[active_tab]]
    local title = desc.title
    if title then msg_builder:list_item(title) end

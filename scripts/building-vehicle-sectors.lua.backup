@@ -88,7 +88,7 @@ function mod.open_operable_building(ent, pindex)
          > game.get_player(pindex).reach_distance
       then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         Speech.speak(pindex, { "fa.bvs-building-out-of-reach" })
+         Speech.speak({ "fa.bvs-building-out-of-reach" }, pindex)
          game.get_player(pindex).opened = nil
          return
       end
@@ -251,13 +251,13 @@ function mod.open_operable_building(ent, pindex)
                   { "", localising.get_localised_name_with_fallback(ent), { "fa.bvs-pageup-pagedown-edit-hand-stack" } }
             end
             if ent.get_control_behavior() ~= nil then table.insert(result, { "fa.bvs-press-n-circuit-network" }) end
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
          else
-            Speech.speak(pindex, { "", localising.get_localised_name_with_fallback(ent), { "fa.bvs-has-no-menu" } })
+            Speech.speak({ "", localising.get_localised_name_with_fallback(ent), { "fa.bvs-has-no-menu" } }, pindex)
          end
       end
    else
-      Speech.speak(pindex, { "fa.bvs-not-operable-building" })
+      Speech.speak({ "fa.bvs-not-operable-building" }, pindex)
    end
 end
 
@@ -274,7 +274,7 @@ function mod.open_operable_vehicle(ent, pindex)
       then
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
          game.get_player(pindex).opened = nil
-         Speech.speak(pindex, { "fa.bvs-vehicle-out-of-reach" })
+         Speech.speak({ "fa.bvs-vehicle-out-of-reach" }, pindex)
          return
       end
       --Open GUI if not already
@@ -378,16 +378,16 @@ function mod.open_operable_vehicle(ent, pindex)
             local message = Speech.new()
             message:fragment(ent.name)
             message:fragment(", this menu has no options ")
-            Speech.speak(pindex, message:build())
+            Speech.speak(message:build(), pindex)
          else
             local message = Speech.new()
             message:fragment(ent.name)
             message:fragment(" has no menu ")
-            Speech.speak(pindex, message:build())
+            Speech.speak(message:build(), pindex)
          end
       end
    else
-      Speech.speak(pindex, { "fa.bvs-not-operable-vehicle" })
+      Speech.speak({ "fa.bvs-not-operable-vehicle" }, pindex)
    end
 end
 
@@ -407,12 +407,12 @@ function mod.read_building_recipe(pindex, start_phrase)
          message:fragment(recipe.group.name)
          message:fragment(" ")
          message:fragment(recipe.subgroup.name)
-         Speech.speak(pindex, message:build())
+         Speech.speak(message:build(), pindex)
       else
          local message = Speech.new()
          if start_phrase ~= "" then message:fragment(start_phrase) end
          message:fragment({ "fa.bvs-blank" })
-         Speech.speak(pindex, message:build())
+         Speech.speak(message:build(), pindex)
       end
    else
       local recipe = storage.players[pindex].building.recipe
@@ -421,12 +421,12 @@ function mod.read_building_recipe(pindex, start_phrase)
          if start_phrase ~= "" then message:fragment(start_phrase) end
          message:fragment({ "fa.bvs-currently-producing" })
          message:fragment(localising.get_localised_name_with_fallback(recipe))
-         Speech.speak(pindex, message:build())
+         Speech.speak(message:build(), pindex)
       else
          local message = Speech.new()
          if start_phrase ~= "" then message:fragment(start_phrase) end
          message:fragment({ "fa.bvs-press-left-bracket" })
-         Speech.speak(pindex, message:build())
+         Speech.speak(message:build(), pindex)
       end
    end
 end
@@ -441,11 +441,11 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
          start_phrase = start_phrase .. #inventory .. " " .. building_sector.name .. ", "
       end
       Speech.speak(
-         pindex,
          start_phrase
             .. storage.players[pindex].building.index
             .. ", "
-            .. building_sector.inventory[storage.players[pindex].building.index]
+            .. building_sector.inventory[storage.players[pindex].building.index],
+         pindex
       )
    elseif building_sector.name == "Fluid" then
       if
@@ -459,7 +459,7 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
       end
       local box = building_sector.inventory
       if #box == 0 then
-         Speech.speak(pindex, { "fa.bvs-no-fluid" })
+         Speech.speak({ "fa.bvs-no-fluid" }, pindex)
          return
       elseif storage.players[pindex].building.index > #box or storage.players[pindex].building.index == 0 then
          storage.players[pindex].building.index = 1
@@ -580,9 +580,9 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
       end
       --Read the fluid found, including amount if any
       if type(name) == "string" then
-         Speech.speak(pindex, { "", start_phrase, " ", name })
+         Speech.speak({ "", start_phrase, " ", name }, pindex)
       else
-         Speech.speak(pindex, { "", start_phrase, " ", name })
+         Speech.speak({ "", start_phrase, " ", name }, pindex)
       end
    elseif #building_sector.inventory > 0 then
       --Item inventories
@@ -603,9 +603,9 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
       local stack = building_sector.inventory[storage.players[pindex].building.index]
       if stack and stack.valid_for_read and stack.valid then
          if stack.is_blueprint then
-            Speech.speak(pindex, Blueprints.get_blueprint_info(stack, false, pindex))
+            Speech.speak(Blueprints.get_blueprint_info(stack, false, pindex), pindex)
          elseif stack.is_blueprint_book then
-            Speech.speak(pindex, Blueprints.get_blueprint_book_info(stack, false))
+            Speech.speak(Blueprints.get_blueprint_book_info(stack, false), pindex)
          else
             --Check if the slot is filtered
             local index = storage.players[pindex].building.index
@@ -627,14 +627,14 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
                   end
                end
             end
-            Speech.speak(pindex, {
+            Speech.speak({
                "",
                start_phrase,
                localising.get_localised_name_with_fallback(stack.prototype),
                remote_info,
                " x ",
                tostring(stack.count),
-            })
+            }, pindex)
          end
       else
          --Read the "empty slot"
@@ -705,7 +705,7 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
             if start_phrase ~= "" then message:fragment(start_phrase) end
             message:list_item({ "fa.bvs-reserved-for" })
             message:list_item("worker robots")
-            Speech.speak(pindex, message:build())
+            Speech.speak(message:build(), pindex)
             return
          elseif
             storage.players[pindex].building.ent ~= nil
@@ -719,13 +719,13 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
             if start_phrase ~= "" then message:fragment(start_phrase) end
             message:list_item({ "fa.bvs-reserved-for" })
             message:list_item("ammo")
-            Speech.speak(pindex, message:build())
+            Speech.speak(message:build(), pindex)
             return
          end
-         Speech.speak(pindex, { "", start_phrase, result })
+         Speech.speak({ "", start_phrase, result }, pindex)
       end
    elseif prefix_inventory_size_and_name then
-      Speech.speak(pindex, "0 " .. building_sector.name)
+      Speech.speak("0 " .. building_sector.name, pindex)
    end
 end
 

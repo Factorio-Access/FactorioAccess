@@ -3,7 +3,7 @@
 
 local util = require("util")
 local FaUtils = require("scripts.fa-utils")
-local MessageBuilder = require("scripts.message-builder")
+local Speech = require("scripts.speech")
 local Trains = require("scripts.trains")
 local dirs = defines.direction
 
@@ -17,7 +17,7 @@ function mod.vehicle_info(pindex)
    local train = game.get_player(pindex).vehicle.train
    if train == nil then
       --This is a type of car or tank.
-      local result = MessageBuilder.new()
+      local result = Speech.new()
       result:fragment({ "fa.driving-car", { "entity-name." .. vehicle.name } })
       result:fragment(", ")
       result:fragment(mod.fuel_inventory_info(vehicle))
@@ -25,7 +25,7 @@ function mod.vehicle_info(pindex)
       return result:build()
    else
       --This is a type of locomotive or wagon.
-      local result = MessageBuilder.new()
+      local result = Speech.new()
 
       --Add the train name
       result:fragment({ "fa.driving-on-board", { "entity-name." .. vehicle.name }, Trains.get_train_name(train) })
@@ -56,7 +56,7 @@ function mod.fuel_inventory_info(ent)
    end)
    if #itemtable == 0 then return { "fa.driving-no-fuel" } end
 
-   local result = MessageBuilder.new()
+   local result = Speech.new()
    result:fragment({ "fa.driving-contains-fuel" })
    result:fragment({ "fa.driving-fuel-item", { "item-name." .. itemtable[1].name }, tostring(itemtable[1].count) })
    result:fragment(" ")
@@ -327,11 +327,11 @@ function mod.pda_read_assistant_toggled_info(pindex)
    if game.get_player(pindex).driving then
       local is_on = not mod.pda_get_state_of_driving_assistant(pindex)
       if is_on == true then
-         printout({ "fa.driving-pda-enabled" }, pindex)
+         Speech.speak(pindex, { "fa.driving-pda-enabled" })
       elseif is_on == false then
-         printout({ "fa.driving-pda-disabled" }, pindex)
+         Speech.speak(pindex, { "fa.driving-pda-disabled" })
       else
-         printout({ "fa.driving-pda-missing" }, pindex)
+         Speech.speak(pindex, { "fa.driving-pda-missing" })
       end
    end
 end
@@ -341,11 +341,11 @@ function mod.pda_read_cruise_control_toggled_info(pindex)
    if game.get_player(pindex).driving then
       local is_on = not mod.pda_get_state_of_cruise_control(pindex)
       if is_on == true then
-         printout({ "fa.driving-cruise-enabled" }, pindex)
+         Speech.speak(pindex, { "fa.driving-cruise-enabled" })
       elseif is_on == false then
-         printout({ "fa.driving-cruise-disabled" }, pindex)
+         Speech.speak(pindex, { "fa.driving-cruise-disabled" })
       else
-         printout({ "fa.driving-cruise-missing" }, pindex)
+         Speech.speak(pindex, { "fa.driving-cruise-missing" })
       end
       mod.pda_set_cruise_control_limit(pindex, 0.16)
    end

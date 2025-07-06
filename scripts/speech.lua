@@ -1,5 +1,9 @@
 --[[
-Intelligently build messages.
+Speech System - Intelligently build and speak messages.
+
+This module combines message building with speech output. Messages are built
+using a fluent API and then sent to an external launcher process for
+text-to-speech rendering.
 
 We have a pattern in the mod especially around entity info, but also in lots of
 other places.  Build a message with a prefix and then a list.  Then, possibly
@@ -9,7 +13,7 @@ is an alternative:
 
 ```
 -- 'the thing with a, b, c"
-return MessageBuilder.new()
+return Speech.new()
     :fragment("the thing with")
     :list_item("a")
     :list_item("b")
@@ -39,12 +43,19 @@ This is very much not storage safe, and it is very much not intended to be;
 attempts to do so throw when the game saves.
 ]]
 local FaUtils = require("scripts.fa-utils")
+local SpeechLogger = require("scripts.speech-logger")
 
 local mod = {}
 
+-- Test capture mechanism
+local capture_state = {
+   enabled = false,
+   messages = {},
+}
+
 local function __cannot_be_in_storage() end
 
----@enum fa.MessageBuilder.MessageBuilderState
+---@enum fa.Speech.MessageBuilderState
 local MESSAGE_BUILDER_STATE = {
    -- Nothing has happened yet.
    -- Next valid state: fragment only.
@@ -65,32 +76,32 @@ local MESSAGE_BUILDER_STATE = {
    BUILT = "built",
 }
 
----@class fa.MessageBuilder
+---@class fa.Speech
 ---@field _no_storage fun()
----@field state fa.MessageBuilder.MessageBuilderState
+---@field state fa.Speech.MessageBuilderState
 ---@field parts LocalisedString[]
 ---@field is_first_list_item boolean Used to avoid an extra comma at the start of lists.
-local MessageBuilder = {}
-mod.MessageBuilder = MessageBuilder
-local MessageBuilder_meta = { __index = MessageBuilder }
+local Speech = {}
+mod.Speech = Speech
+local Speech_meta = { __index = Speech }
 
----@return fa.MessageBuilder
-function MessageBuilder.new()
+---@return fa.Speech
+function Speech.new()
    return setmetatable({
       _no_storage = __cannot_be_in_storage,
       state = MESSAGE_BUILDER_STATE.INITIAL,
       is_first_list_item = true,
       parts = {},
-   }, MessageBuilder_meta)
+   }, Speech_meta)
 end
 
-function MessageBuilder:_check_not_built()
+function Speech:_check_not_built()
    assert(self.state ~= MESSAGE_BUILDER_STATE.BUILT, "Ateempt to use a message builder twice")
 end
 
 ---@param fragment LocalisedString
----@return fa.MessageBuilder
-function MessageBuilder:fragment(fragment)
+---@return fa.Speech
+function Speech:fragment(fragment)
    self:_check_not_built()
 
    -- If we just started a list item, this needs a comma.
@@ -113,8 +124,8 @@ function MessageBuilder:fragment(fragment)
 end
 
 ---@param fragment LocalisedString? If present, pushed after the separator.
----@return fa.MessageBuilder
-function MessageBuilder:list_item(fragment)
+---@return fa.Speech
+function Speech:list_item(fragment)
    self:_check_not_built()
 
    self.state = MESSAGE_BUILDER_STATE.LIST_ITEM
@@ -125,8 +136,8 @@ end
 -- Just like list_item, but will force a comma even if this is the first item in a list.  This is used e.g. in grids,
 -- which should always be "label, dims".
 ---@param fragment LocalisedString? If present, pushed after the separator.
----@return fa.MessageBuilder
-function MessageBuilder:list_item_forced_comma(fragment)
+---@return fa.Speech
+function Speech:list_item_forced_comma(fragment)
    self:_check_not_built()
    self:list_item()
    self.is_first_list_item = false
@@ -136,7 +147,7 @@ end
 
 -- It is an error to keep using this builder after building.
 ---@return LocalisedString? Nil if nothing was done.
-function MessageBuilder:build()
+function Speech:build()
    self:_check_not_built()
    self.state = MESSAGE_BUILDER_STATE.BUILT
 
@@ -146,6 +157,71 @@ function MessageBuilder:build()
 end
 
 -- Convenience function at module level
-mod.new = MessageBuilder.new
+mod.new = Speech.new
+
+---Send a localized string to the external launcher for text-to-speech rendering.
+---This is the primary way the mod communicates with blind players.
+---@param pindex number Player index
+---@param str LocalisedString The message to speak
+function mod.speak(pindex, str)
+   -- Assert to catch parameter order mistakes
+   assert(type(pindex) == "number", "Speech.speak expects pindex as first parameter (number), got " .. type(pindex))
+
+   -- Capture for tests if enabled
+   if capture_state.enabled then
+      table.insert(capture_state.messages, {
+         message = str,
+         pindex = pindex,
+      })
+   end
+
+   if pindex ~= nil and pindex > 0 then
+      storage.players[pindex].last = str
+   else
+      return
+   end
+   if storage.players[pindex].vanilla_mode == nil then storage.players[pindex].vanilla_mode = false end
+   if not storage.players[pindex].vanilla_mode then
+      localised_print({ "", "out " .. pindex .. " ", str })
+      -- Also log to file for debugging
+      SpeechLogger.log_speech(str, pindex)
+   end
+end
+
+-- For backwards compatibility during migration
+mod.MessageBuilder = Speech
+
+-- Test helper functions
+---Enable speech capture for testing
+function mod.start_capture()
+   capture_state.enabled = true
+   capture_state.messages = {}
+end
+
+---Disable speech capture and return captured messages
+---@return table Array of {message: LocalisedString, pindex: number}
+function mod.stop_capture()
+   capture_state.enabled = false
+   local messages = capture_state.messages
+   capture_state.messages = {}
+   return messages
+end
+
+---Get captured messages without stopping capture
+---@return table Array of {message: LocalisedString, pindex: number}
+function mod.get_captured_messages()
+   return capture_state.messages
+end
+
+---Clear captured messages without stopping capture
+function mod.clear_captured_messages()
+   capture_state.messages = {}
+end
+
+---Check if any messages were captured
+---@return boolean
+function mod.has_captured_messages()
+   return #capture_state.messages > 0
+end
 
 return mod

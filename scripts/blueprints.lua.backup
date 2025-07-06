@@ -66,7 +66,7 @@ function mod.create_blueprint(pindex, point_1, point_2, prior_bp_data)
    then
       local cleared = p.clear_cursor()
       if not cleared then
-         Speech.speak(pindex, { "fa.blueprints-error-cursor-full" })
+         Speech.speak({ "fa.blueprints-error-cursor-full" }, pindex)
          return
       end
    end
@@ -80,7 +80,7 @@ function mod.create_blueprint(pindex, point_1, point_2, prior_bp_data)
       local message = Speech.new()
       message:fragment({ "fa.blueprints-selection-empty" })
       if prior_bp_data ~= nil then message:fragment({ "fa.blueprints-keeping-old" }) end
-      Speech.speak(pindex, message:build())
+      Speech.speak(message:build(), pindex)
    else
       local prior_name = ""
       if prior_bp_data ~= nil then prior_name = prior_bp_data.blueprint.label or "" end
@@ -88,7 +88,7 @@ function mod.create_blueprint(pindex, point_1, point_2, prior_bp_data)
       message:fragment({ "fa.blueprints-created", prior_name })
       message:fragment(FaUtils.format_count(ent_count, { "fa.blueprints-entities" }))
       message:fragment({ "fa.blueprints-in-hand" })
-      Speech.speak(pindex, message:build())
+      Speech.speak(message:build(), pindex)
    end
 
    --Copy label and description and icons from previous version
@@ -141,11 +141,11 @@ function mod.paste_blueprint(pindex)
       --Explain build error
       local build_area = { left_top, right_bottom }
       local result = BuildingTools.identify_building_obstacle(pindex, build_area, nil)
-      Speech.speak(pindex, result)
+      Speech.speak(result, pindex)
       return false
    else
       p.play_sound({ path = "Close-Inventory-Sound" }) --laterdo maybe better blueprint placement sound
-      Speech.speak(pindex, { "fa.blueprints-placed", mod.get_blueprint_label(bp) })
+      Speech.speak({ "fa.blueprints-placed", mod.get_blueprint_label(bp) }, pindex)
       return true
    end
 end
@@ -374,22 +374,22 @@ function mod.apply_blueprint_import(pindex, text)
    local result = bp.import_stack(text)
    if result == 0 then
       if bp.is_blueprint then
-         Speech.speak(pindex, { "fa.blueprints-imported-successfully", mod.get_blueprint_label(bp) })
+         Speech.speak({ "fa.blueprints-imported-successfully", mod.get_blueprint_label(bp) }, pindex)
       elseif bp.is_blueprint_book then
-         Speech.speak(pindex, { "fa.blueprints-imported-book" })
+         Speech.speak({ "fa.blueprints-imported-book" }, pindex)
       else
-         Speech.speak(pindex, { "fa.blueprints-imported-unknown" })
+         Speech.speak({ "fa.blueprints-imported-unknown" }, pindex)
       end
    elseif result == -1 then
       if bp.is_blueprint then
-         Speech.speak(pindex, { "fa.blueprints-imported-with-errors", mod.get_blueprint_label(bp) })
+         Speech.speak({ "fa.blueprints-imported-with-errors", mod.get_blueprint_label(bp) }, pindex)
       elseif bp.is_blueprint_book then
-         Speech.speak(pindex, { "fa.blueprints-imported-book-errors" })
+         Speech.speak({ "fa.blueprints-imported-book-errors" }, pindex)
       else
-         Speech.speak(pindex, { "fa.blueprints-imported-unknown-errors" })
+         Speech.speak({ "fa.blueprints-imported-unknown-errors" }, pindex)
       end
    else --result == 1
-      Speech.speak(pindex, { "fa.blueprints-import-failed" })
+      Speech.speak({ "fa.blueprints-import-failed" }, pindex)
    end
 end
 
@@ -537,7 +537,7 @@ function mod.blueprint_book_copy_item_to_hand(pindex, i)
    p.clear_cursor()
    p.cursor_stack.import_stack(item_string)
    p.cursor_stack_temporary = true
-   Speech.speak(pindex, { "fa.blueprints-copied-to-hand" })
+   Speech.speak({ "fa.blueprints-copied-to-hand" }, pindex)
 end
 
 --WIP: Remove a blueprint from a selected blueprint book, based on the index
@@ -591,7 +591,7 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
          message:fragment({ "fa.blueprints-browsing-book", mod.blueprint_book_get_label(pindex) })
          message:fragment({ "fa.blueprints-with-items", tostring(item_count) })
          message:fragment({ "fa.blueprints-book-navigation" })
-         Speech.speak(pindex, message:build())
+         Speech.speak(message:build(), pindex)
       else
          --Examine items (empty slots are skipped)
          local item = mod.blueprint_book_read_item(pindex, index)
@@ -608,15 +608,15 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
          if left_clicked == false and right_clicked == false then
             --Read blueprint info
             local result = name
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
          elseif left_clicked == true and right_clicked == false then
             --Copy the blueprint to hand
             if item == nil or item.item == nil then
-               Speech.speak(pindex, { "fa.blueprints-cannot-get" })
+               Speech.speak({ "fa.blueprints-cannot-get" }, pindex)
             elseif item.item == "blueprint" or item.item == "blueprint-book" then
                mod.blueprint_book_copy_item_to_hand(pindex, index)
             else
-               Speech.speak(pindex, { "fa.blueprints-cannot-get" })
+               Speech.speak({ "fa.blueprints-cannot-get" }, pindex)
             end
          elseif left_clicked == false and right_clicked == true then
             --Take the blueprint to hand (Therefore both copy and delete)
@@ -627,27 +627,27 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
       --Blueprint book settings mode
       if index == 0 then
          Speech.speak(
-            pindex,
             "Settings for blueprint book "
                .. mod.blueprint_book_get_label(pindex)
                .. ", with "
                .. item_count
                .. " items,"
-               .. " Press 'W' and 'S' to navigate options, press 'LEFT BRACKET' to select, press 'E' to exit this menu."
+               .. " Press 'W' and 'S' to navigate options, press 'LEFT BRACKET' to select, press 'E' to exit this menu.",
+            pindex
          )
       elseif index == 1 then
          if left_clicked ~= true then
             local result = "Read the description of this blueprint book"
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
          else
             local result = mod.get_blueprint_book_description(bpb)
             if result == nil or result == "" then result = "no description" end
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
          end
       elseif index == 2 then
          if left_clicked ~= true then
             local result = "Read the icons of this blueprint book, which are its featured components"
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
          else
             local result = "This book features "
             if bpb.preview_icons and #bpb.preview_icons > 0 then
@@ -659,71 +659,71 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             else
                result = result .. "nothing"
             end
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
          end
       elseif index == 3 then
          if left_clicked ~= true then
             local result = "Rename this book"
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
          else
             storage.players[pindex].blueprint_menu.edit_label = true
             local frame = Graphics.create_text_field_frame(pindex, "blueprint-edit-label")
             local result =
                "Type in a new name for this blueprint and press 'ENTER' to confirm, or press 'ESC' to cancel."
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
          end
       elseif index == 4 then
          if left_clicked ~= true then
             local result = "Rewrite the description of this book"
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
          else
             storage.players[pindex].blueprint_menu.edit_description = true
             local frame = Graphics.create_text_field_frame(pindex, "blueprint-edit-description")
             local result =
                "Type in the new description text box for this blueprint and press 'ENTER' to confirm, or press 'ESC' to cancel."
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
          end
       elseif index == 5 then
          if left_clicked ~= true then
             local result = "Create a copy of this blueprint book"
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
          else
             p.insert(table.deepcopy(bpb))
             local result = "Book copy inserted to inventory"
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
          end
       elseif index == 6 then
          if left_clicked ~= true then
             local result = "Delete this blueprint book"
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
          else
             bpb.set_stack({ name = "blueprint", count = 1 })
             bpb.set_stack(nil) --calls event handler to delete empty planners.
             local result = "Blueprint book deleted and menu closed"
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
             mod.blueprint_menu_close(pindex)
          end
       elseif index == 7 then
          if left_clicked ~= true then
             local result = "Export this blueprint book as a text string"
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
          else
             storage.players[pindex].blueprint_menu.edit_export = true
             local frame = Graphics.create_text_field_frame(pindex, "blueprint-edit-export", bpb.export_stack())
             local result =
                "Copy the text from this box using 'CONTROL + A' and then 'CONTROL + C' and then press ENTER to exit"
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
          end
       elseif index == 8 then
          --Import a text string to overwrite this blueprint book
          if left_clicked ~= true then
             local result = "Import a text string to overwrite this blueprint book"
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
          else
             storage.players[pindex].blueprint_menu.edit_import = true
             local frame = Graphics.create_text_field_frame(pindex, "blueprint-edit-import")
             local result = "Paste a copied blueprint text string in this box and then press ENTER to load it"
-            Speech.speak(pindex, result)
+            Speech.speak(result, pindex)
          end
       end
    end
@@ -869,7 +869,7 @@ function mod.add_blueprint_to_book(pindex, book_stack, bp_stack)
    items[item_count + 1] = new_item
    book_data.blueprint_book.blueprints = items
    mod.set_stack_bp_from_data(book_stack, book_data)
-   Speech.speak(pindex, { "fa.blueprints-added-to-book-index", tostring(new_slot_id) })
+   Speech.speak({ "fa.blueprints-added-to-book-index", tostring(new_slot_id) }, pindex)
 end
 
 --Uses the array index and not the book index
@@ -880,7 +880,7 @@ function mod.remove_item_from_book(pindex, book_stack, array_index)
    items[array_index] = nil
    book_data.blueprint_book.blueprints = items
    mod.set_stack_bp_from_data(book_stack, book_data)
-   Speech.speak(pindex, { "fa.blueprints-item-removed" })
+   Speech.speak({ "fa.blueprints-item-removed" }, pindex)
 end
 
 function mod.copy_selected_area_to_clipboard(pindex, point_1, point_2)
@@ -899,7 +899,7 @@ function mod.copy_selected_area_to_clipboard(pindex, point_1, point_2)
    then
       p.clear_cursor()
       p.cursor_stack.set_stack({ name = "copy-paste-tool", count = 1 })
-      Speech.speak(pindex, { "fa.blueprints-copied-nothing" })
+      Speech.speak({ "fa.blueprints-copied-nothing" }, pindex)
       return
    end
    p.add_to_clipboard(p.cursor_stack)

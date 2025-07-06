@@ -1,6 +1,6 @@
 local TestRegistry = require("scripts.test-registry")
 local describe, it = TestRegistry.describe, TestRegistry.it
-local MessageBuilder = require("scripts.message-builder")
+local Speech = require("scripts.speech")
 
 describe("Furnace Fuel Status", function()
    it("should report out of fuel for furnace with empty fuel inventory", function(ctx)
