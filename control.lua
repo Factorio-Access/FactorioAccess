@@ -6096,6 +6096,9 @@ local function kb_click_hand_right(event)
    elseif stack.name == "spidertron-remote" then
       --open spidermenu with the remote in hand
       Spidertron.spider_menu_open(pindex, stack)
+   else
+      -- Regular item in hand - read entity status as fallback
+      kb_read_entity_status(event)
    end
 end
 
@@ -6120,8 +6123,11 @@ EventManager.on_event(
          kb_click_menu_right(event)
       elseif stack and stack.valid_for_read and stack.valid then
          kb_click_hand_right(event)
-      elseif not router:is_ui_one_of({ UiRouter.UI_NAMES.CRAFTING, UiRouter.UI_NAMES.CRAFTING_QUEUE }) then
-         kb_read_entity_status(event)
+      else
+         -- Empty hand case - read entity status (unless in crafting menu)
+         if not router:is_ui_one_of({ UiRouter.UI_NAMES.CRAFTING, UiRouter.UI_NAMES.CRAFTING_QUEUE }) then
+            kb_read_entity_status(event)
+         end
       end
    end
 )
