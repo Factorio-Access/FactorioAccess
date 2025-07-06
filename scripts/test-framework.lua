@@ -46,6 +46,7 @@ local test_files = {
    -- "travel-tools-localization-test", -- Test travel-tools localization messages (file missing)
    "furnace-fuel-test", -- Test furnace fuel status reporting
    "printout-logger-test", -- Test printout logging to file
+   "inventory-transfer-test", -- Test inventory transfer functionality and sorting
 }
 
 -- Test execution state
