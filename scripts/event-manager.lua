@@ -1,5 +1,6 @@
---- mod: Manages multiple handlers for Factorio events
--- Since Factorio's script.on_event is last-one-wins, this allows multiple handlers per event
+--- mod: Manages multiple handlers for Factorio events Since Factorio's script.on_event is last-one-wins, this allows
+-- multiple handlers per event.  Don't use that though, it's to support our tests.
+local PlayerInit = require("scripts.player-init")
 
 local mod = {}
 
@@ -103,25 +104,24 @@ end
 -- @param event_id The event ID
 -- @param event The event data
 function mod._dispatch_event(event_id, event)
+   local pindex = event.player_index
+
    local event_handlers = handlers[event_id]
    if not event_handlers then return end
 
+   local pindex = event.player_index
+
    -- Check if this event has a player_index and needs initialization
-   if event.player_index then
-      local pindex = event.player_index
+   if pindex then
       if storage.players and storage.players[pindex] == nil then
          -- Player needs initialization
          local player = game.get_player(pindex)
-         if player then
-            -- Import PlayerInit here to avoid circular dependencies
-            local PlayerInit = require("scripts.player-init")
-            PlayerInit.initialize(player)
-         end
+         PlayerInit.initialize(player)
       end
    end
 
    for _, handler in ipairs(event_handlers) do
-      handler(event)
+      handler(event, pindex)
    end
 end
 
@@ -203,41 +203,6 @@ end
 function mod.get_handler_count(event_id)
    if not handlers[event_id] then return 0 end
    return #handlers[event_id]
-end
-
---- Create a player event handler that automatically validates the player
--- This wrapper ensures the player is initialized and valid before calling the handler
--- @param handler function(event, pindex) The handler function
--- @return function The wrapped handler
-function mod.create_player_handler(handler)
-   return function(event)
-      local pindex = event.player_index
-      if not pindex then error("create_player_handler used on event without player_index") end
-
-      -- Player initialization is now handled in _dispatch_event
-      -- so we just need to verify the player exists
-      if storage.players and storage.players[pindex] then handler(event, pindex) end
-   end
-end
-
---- Create a player event handler with common objects pre-fetched
--- This wrapper provides player, router, and other commonly needed objects
--- @param handler function(event, pindex, player, router) The handler function
--- @return function The wrapped handler
-function mod.create_extended_player_handler(handler)
-   return function(event)
-      local pindex = event.player_index
-      if not pindex then error("create_extended_player_handler used on event without player_index") end
-
-      -- Player initialization is now handled in _dispatch_event
-      if storage.players and storage.players[pindex] then
-         local player = game.get_player(pindex)
-         -- Lazy load UiRouter to avoid circular dependencies
-         local UiRouter = require("scripts.ui.router")
-         local router = UiRouter.get_router(pindex)
-         handler(event, pindex, player, router)
-      end
-   end
 end
 
 return mod

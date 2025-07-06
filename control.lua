@@ -558,97 +558,94 @@ read_tile_inner = function(pindex, start_text)
 end
 
 --Update the position info and cursor info during smooth walking.
-EventManager.on_event(
-   defines.events.on_player_changed_position,
-   EventManager.create_player_handler(function(event, pindex)
-      local router = UiRouter.get_router(pindex)
+EventManager.on_event(defines.events.on_player_changed_position, function(event, pindex)
+   local router = UiRouter.get_router(pindex)
 
-      local p = game.get_player(pindex)
-      storage.players[pindex].position = p.position
-      local pos = p.position
-      local vp = Viewpoint.get_viewpoint(pindex)
-      local cursor_enabled = vp:get_cursor_enabled()
-      if p.walking_state.direction ~= storage.players[pindex].player_direction and cursor_enabled == false then
-         --Directions mismatch. Turn to new direction --turn (Note, this code handles diagonal turns and other direction changes)
-         if p.character ~= nil then
-            storage.players[pindex].player_direction = p.character.direction
-         else
-            storage.players[pindex].player_direction = p.walking_state.direction
-            if p.walking_state.direction == nil then storage.players[pindex].player_direction = dirs.north end
-         end
-         local new_pos = (FaUtils.offset_position_legacy(pos, storage.players[pindex].player_direction, 1.0))
-         vp:set_cursor_pos(new_pos)
+   local p = game.get_player(pindex)
+   storage.players[pindex].position = p.position
+   local pos = p.position
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_enabled = vp:get_cursor_enabled()
+   if p.walking_state.direction ~= storage.players[pindex].player_direction and cursor_enabled == false then
+      --Directions mismatch. Turn to new direction --turn (Note, this code handles diagonal turns and other direction changes)
+      if p.character ~= nil then
+         storage.players[pindex].player_direction = p.character.direction
+      else
+         storage.players[pindex].player_direction = p.walking_state.direction
+         if p.walking_state.direction == nil then storage.players[pindex].player_direction = dirs.north end
+      end
+      local new_pos = (FaUtils.offset_position_legacy(pos, storage.players[pindex].player_direction, 1.0))
+      vp:set_cursor_pos(new_pos)
 
-         --Build lock building + rotate belts in hand unless cursor mode
+      --Build lock building + rotate belts in hand unless cursor mode
+      local stack = p.cursor_stack
+      if
+         storage.players[pindex].build_lock
+         and stack.valid_for_read
+         and stack.valid
+         and stack.prototype.place_result ~= nil
+         and (stack.prototype.place_result.type == "transport-belt" or stack.name == "rail")
+      then
+         turn_to_cursor_direction_cardinal(pindex)
+         storage.players[pindex].building_direction = storage.players[pindex].player_direction
+         BuildingTools.build_item_in_hand(pindex) --build extra belt when turning
+      end
+   elseif cursor_enabled == false then
+      --Directions same: Walk straight
+      local new_pos = (FaUtils.offset_position_legacy(pos, storage.players[pindex].player_direction, 1))
+      vp:set_cursor_pos(new_pos)
+
+      --Build lock building + rotate belts in hand unless cursor mode
+      if storage.players[pindex].build_lock then
          local stack = p.cursor_stack
-         if
-            storage.players[pindex].build_lock
-            and stack.valid_for_read
-            and stack.valid
-            and stack.prototype.place_result ~= nil
-            and (stack.prototype.place_result.type == "transport-belt" or stack.name == "rail")
-         then
-            turn_to_cursor_direction_cardinal(pindex)
-            storage.players[pindex].building_direction = storage.players[pindex].player_direction
-            BuildingTools.build_item_in_hand(pindex) --build extra belt when turning
-         end
-      elseif cursor_enabled == false then
-         --Directions same: Walk straight
-         local new_pos = (FaUtils.offset_position_legacy(pos, storage.players[pindex].player_direction, 1))
-         vp:set_cursor_pos(new_pos)
-
-         --Build lock building + rotate belts in hand unless cursor mode
-         if storage.players[pindex].build_lock then
-            local stack = p.cursor_stack
-            if stack and stack.valid_for_read and stack.valid then
-               if stack.prototype.place_result ~= nil and stack.prototype.place_result.type == "transport-belt" then
-                  turn_to_cursor_direction_cardinal(pindex)
-                  storage.players[pindex].building_direction = storage.players[pindex].player_direction
-               end
-               BuildingTools.build_item_in_hand(pindex)
+         if stack and stack.valid_for_read and stack.valid then
+            if stack.prototype.place_result ~= nil and stack.prototype.place_result.type == "transport-belt" then
+               turn_to_cursor_direction_cardinal(pindex)
+               storage.players[pindex].building_direction = storage.players[pindex].player_direction
             end
+            BuildingTools.build_item_in_hand(pindex)
          end
       end
+   end
 
-      --Update cursor graphics
-      local stack = p.cursor_stack
-      if stack and stack.valid_for_read and stack.valid then Graphics.sync_build_cursor_graphics(pindex) end
+   --Update cursor graphics
+   local stack = p.cursor_stack
+   if stack and stack.valid_for_read and stack.valid then Graphics.sync_build_cursor_graphics(pindex) end
 
-      --Name a detected entity that you can or cannot walk on, or a tile you cannot walk on, and play a sound to indicate multiple consecutive detections
-      EntitySelection.refresh_player_tile(pindex)
-      local ent = EntitySelection.get_first_ent_at_tile(pindex)
+   --Name a detected entity that you can or cannot walk on, or a tile you cannot walk on, and play a sound to indicate multiple consecutive detections
+   EntitySelection.refresh_player_tile(pindex)
+   local ent = EntitySelection.get_first_ent_at_tile(pindex)
+   if
+      not storage.players[pindex].vanilla_mode
+      and (
+         (ent ~= nil and ent.valid)
+         or (p.surface.can_place_entity({ name = "character", position = vp:get_cursor_pos() }) == false)
+      )
+   then
+      Graphics.draw_cursor_highlight(pindex, ent, nil)
+      if p.driving then return end
+
       if
-         not storage.players[pindex].vanilla_mode
-         and (
-            (ent ~= nil and ent.valid)
-            or (p.surface.can_place_entity({ name = "character", position = vp:get_cursor_pos() }) == false)
-         )
+         ent ~= nil
+         and ent.valid
+         and (p.character == nil or (p.character ~= nil and p.character.unit_number ~= ent.unit_number))
       then
          Graphics.draw_cursor_highlight(pindex, ent, nil)
-         if p.driving then return end
-
-         if
-            ent ~= nil
-            and ent.valid
-            and (p.character == nil or (p.character ~= nil and p.character.unit_number ~= ent.unit_number))
-         then
-            Graphics.draw_cursor_highlight(pindex, ent, nil)
-            p.selected = ent
-            sounds.play_close_inventory(p.index)
-         else
-            Graphics.draw_cursor_highlight(pindex, nil, nil)
-            p.selected = nil
-         end
-
-         read_tile(pindex)
+         p.selected = ent
+         sounds.play_close_inventory(p.index)
       else
          Graphics.draw_cursor_highlight(pindex, nil, nil)
          p.selected = nil
       end
-      --Play a sound for audio ruler alignment (smooth walk)
-      if not router:is_ui_open() then Rulers.update_from_cursor(pindex) end
-   end)
-)
+
+      read_tile(pindex)
+   else
+      Graphics.draw_cursor_highlight(pindex, nil, nil)
+      p.selected = nil
+   end
+   --Play a sound for audio ruler alignment (smooth walk)
+   if not router:is_ui_open() then Rulers.update_from_cursor(pindex) end
+end)
 
 --Calls the appropriate menu movement function for a player and the input direction.
 local function menu_cursor_move(direction, pindex)
@@ -1551,65 +1548,59 @@ function turn_to_cursor_direction_precise(pindex)
 end
 
 --Called when a player enters or exits a vehicle
-EventManager.on_event(
-   defines.events.on_player_driving_changed_state,
-   EventManager.create_player_handler(function(event, pindex)
-      local router = UiRouter.get_router(pindex)
+EventManager.on_event(defines.events.on_player_driving_changed_state, function(event, pindex)
+   local router = UiRouter.get_router(pindex)
 
-      BumpDetection.reset_bump_stats(pindex)
-      game.get_player(pindex).clear_cursor()
-      storage.players[pindex].last_train_orientation = nil
-      if game.get_player(pindex).driving then
-         storage.players[pindex].last_vehicle = game.get_player(pindex).vehicle
-         printout(
-            { "fa.vehicle-entered", Localising.get_localised_name_with_fallback(game.get_player(pindex).vehicle) },
-            pindex
-         )
-         if
-            storage.players[pindex].last_vehicle.train ~= nil
-            and storage.players[pindex].last_vehicle.train.schedule == nil
-         then
-            storage.players[pindex].last_vehicle.train.manual_mode = true
-         end
-      elseif storage.players[pindex].last_vehicle ~= nil then
-         printout(
-            { "fa.vehicle-exited", Localising.get_localised_name_with_fallback(storage.players[pindex].last_vehicle) },
-            pindex
-         )
-         if
-            storage.players[pindex].last_vehicle.train ~= nil
-            and storage.players[pindex].last_vehicle.train.schedule == nil
-         then
-            storage.players[pindex].last_vehicle.train.manual_mode = true
-         end
-         Teleport.teleport_to_closest(pindex, storage.players[pindex].last_vehicle.position, true, true)
-         if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then Trains.menu_close(pindex, false) end
-         if router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then Spidertron.spider_menu_close(pindex, false) end
-      else
-         printout({ "fa.driving-state-changed" }, pindex)
+   BumpDetection.reset_bump_stats(pindex)
+   game.get_player(pindex).clear_cursor()
+   storage.players[pindex].last_train_orientation = nil
+   if game.get_player(pindex).driving then
+      storage.players[pindex].last_vehicle = game.get_player(pindex).vehicle
+      printout(
+         { "fa.vehicle-entered", Localising.get_localised_name_with_fallback(game.get_player(pindex).vehicle) },
+         pindex
+      )
+      if
+         storage.players[pindex].last_vehicle.train ~= nil
+         and storage.players[pindex].last_vehicle.train.schedule == nil
+      then
+         storage.players[pindex].last_vehicle.train.manual_mode = true
       end
-   end)
-)
+   elseif storage.players[pindex].last_vehicle ~= nil then
+      printout(
+         { "fa.vehicle-exited", Localising.get_localised_name_with_fallback(storage.players[pindex].last_vehicle) },
+         pindex
+      )
+      if
+         storage.players[pindex].last_vehicle.train ~= nil
+         and storage.players[pindex].last_vehicle.train.schedule == nil
+      then
+         storage.players[pindex].last_vehicle.train.manual_mode = true
+      end
+      Teleport.teleport_to_closest(pindex, storage.players[pindex].last_vehicle.position, true, true)
+      if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then Trains.menu_close(pindex, false) end
+      if router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then Spidertron.spider_menu_close(pindex, false) end
+   else
+      printout({ "fa.driving-state-changed" }, pindex)
+   end
+end)
 
 --Save info about last item pickup and draw radius
-EventManager.on_event(
-   defines.events.on_picked_up_item,
-   EventManager.create_player_handler(function(event, pindex)
-      local p = game.get_player(pindex)
-      --Draw the pickup range
-      rendering.draw_circle({
-         color = { 0.3, 1, 0.3 },
-         radius = 1.25,
-         width = 1,
-         target = p.position,
-         surface = p.surface,
-         time_to_live = 10,
-         draw_on_ground = true,
-      })
-      storage.players[pindex].last_pickup_tick = event.tick
-      storage.players[pindex].last_item_picked_up = event.item_stack.name
-   end)
-)
+EventManager.on_event(defines.events.on_picked_up_item, function(event, pindex)
+   local p = game.get_player(pindex)
+   --Draw the pickup range
+   rendering.draw_circle({
+      color = { 0.3, 1, 0.3 },
+      radius = 1.25,
+      width = 1,
+      target = p.position,
+      surface = p.surface,
+      time_to_live = 10,
+      draw_on_ground = true,
+   })
+   storage.players[pindex].last_pickup_tick = event.tick
+   storage.players[pindex].last_item_picked_up = event.item_stack.name
+end)
 
 function close_menu_resets(pindex)
    local p = game.get_player(pindex)
@@ -1884,58 +1875,52 @@ end
 ]]
 
 --When the item in hand changes
-EventManager.on_event(
-   defines.events.on_player_cursor_stack_changed,
-   EventManager.create_player_handler(function(event, pindex)
-      local router = UiRouter.get_router(pindex)
+EventManager.on_event(defines.events.on_player_cursor_stack_changed, function(event, pindex)
+   local router = UiRouter.get_router(pindex)
 
-      local stack = game.get_player(pindex).cursor_stack
-      local new_item_name = ""
-      if stack and stack.valid_for_read then
-         new_item_name = stack.name
-         if stack.is_blueprint and storage.players[pindex].blueprint_hand_direction ~= dirs.north then
-            --Reset blueprint rotation (unless it is a temporary blueprint)
-            storage.players[pindex].blueprint_hand_direction = dirs.north
-            if game.get_player(pindex).cursor_stack_temporary == false then
-               Blueprints.refresh_blueprint_in_hand(pindex)
-            end
-            --Use this opportunity to update saved information about the blueprint's corners (used when drawing the footprint)
-            local width, height = Blueprints.get_blueprint_width_and_height(pindex)
-            if width == nil or height == nil then return end
-            storage.players[pindex].blueprint_width_in_hand = width + 1
-            storage.players[pindex].blueprint_height_in_hand = height + 1
+   local stack = game.get_player(pindex).cursor_stack
+   local new_item_name = ""
+   if stack and stack.valid_for_read then
+      new_item_name = stack.name
+      if stack.is_blueprint and storage.players[pindex].blueprint_hand_direction ~= dirs.north then
+         --Reset blueprint rotation (unless it is a temporary blueprint)
+         storage.players[pindex].blueprint_hand_direction = dirs.north
+         if game.get_player(pindex).cursor_stack_temporary == false then
+            Blueprints.refresh_blueprint_in_hand(pindex)
          end
+         --Use this opportunity to update saved information about the blueprint's corners (used when drawing the footprint)
+         local width, height = Blueprints.get_blueprint_width_and_height(pindex)
+         if width == nil or height == nil then return end
+         storage.players[pindex].blueprint_width_in_hand = width + 1
+         storage.players[pindex].blueprint_height_in_hand = height + 1
       end
+   end
 
-      -- As a special case: blueprint menus will end up pointing at the wrong
-      -- blueprint if not closed here, since the only real unique identifier right
-      -- now is the player's hand.
-      if router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT) then BlueprintsMenu.blueprint_menu_tabs:close(pindex) end
+   -- As a special case: blueprint menus will end up pointing at the wrong
+   -- blueprint if not closed here, since the only real unique identifier right
+   -- now is the player's hand.
+   if router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT) then BlueprintsMenu.blueprint_menu_tabs:close(pindex) end
 
-      if router:is_ui_one_of({ UiRouter.UI_NAMES.BLUEPRINT, UiRouter.UI_NAMES.BLUEPRINT_BOOK }) then
-         close_menu_resets(pindex)
-      end
-      if storage.players[pindex].previous_hand_item_name ~= new_item_name then
-         storage.players[pindex].previous_hand_item_name = new_item_name
-         --storage.players[pindex].lag_building_direction = true
-         read_hand(pindex)
-      end
-      BuildingTools.delete_empty_planners_in_inventory(pindex)
-      storage.players[pindex].bp_selecting = false
-      storage.players[pindex].blueprint_reselecting = false
-      storage.players[pindex].ghost_rail_planning = false
-      Graphics.sync_build_cursor_graphics(pindex)
-   end)
-)
+   if router:is_ui_one_of({ UiRouter.UI_NAMES.BLUEPRINT, UiRouter.UI_NAMES.BLUEPRINT_BOOK }) then
+      close_menu_resets(pindex)
+   end
+   if storage.players[pindex].previous_hand_item_name ~= new_item_name then
+      storage.players[pindex].previous_hand_item_name = new_item_name
+      --storage.players[pindex].lag_building_direction = true
+      read_hand(pindex)
+   end
+   BuildingTools.delete_empty_planners_in_inventory(pindex)
+   storage.players[pindex].bp_selecting = false
+   storage.players[pindex].blueprint_reselecting = false
+   storage.players[pindex].ghost_rail_planning = false
+   Graphics.sync_build_cursor_graphics(pindex)
+end)
 
-EventManager.on_event(
-   defines.events.on_player_mined_item,
-   EventManager.create_player_handler(function(event, pindex)
-      --Play item pickup sound
-      sounds.play_picked_up_item(pindex)
-      sounds.play_close_inventory(pindex)
-   end)
-)
+EventManager.on_event(defines.events.on_player_mined_item, function(event, pindex)
+   --Play item pickup sound
+   sounds.play_picked_up_item(pindex)
+   sounds.play_close_inventory(pindex)
+end)
 
 function ensure_storage_structures_are_up_to_date()
    storage.forces = storage.forces or {}
@@ -2009,60 +1994,48 @@ EventManager.on_init(function()
    AudioCues.on_init()
 end)
 
-EventManager.on_event(
-   defines.events.on_cutscene_cancelled,
-   EventManager.create_player_handler(function(event, pindex)
-      schedule(3, "call_to_fix_zoom", pindex)
-      schedule(4, "call_to_sync_graphics", pindex)
-   end)
-)
+EventManager.on_event(defines.events.on_cutscene_cancelled, function(event, pindex)
+   schedule(3, "call_to_fix_zoom", pindex)
+   schedule(4, "call_to_sync_graphics", pindex)
+end)
 
-EventManager.on_event(
-   defines.events.on_cutscene_finished,
-   EventManager.create_player_handler(function(event, pindex)
-      schedule(3, "call_to_fix_zoom", pindex)
-      schedule(4, "call_to_sync_graphics", pindex)
-      --printout("Press TAB to continue",pindex)
-   end)
-)
+EventManager.on_event(defines.events.on_cutscene_finished, function(event, pindex)
+   schedule(3, "call_to_fix_zoom", pindex)
+   schedule(4, "call_to_sync_graphics", pindex)
+   --printout("Press TAB to continue",pindex)
+end)
 
-EventManager.on_event(
-   defines.events.on_cutscene_started,
-   EventManager.create_player_handler(function(event, pindex)
-      --printout("Press TAB to continue",pindex)
-   end)
-)
+EventManager.on_event(defines.events.on_cutscene_started, function(event, pindex)
+   --printout("Press TAB to continue",pindex)
+end)
 
 EventManager.on_event(defines.events.on_player_created, function(event)
    PlayerInit.initialize(game.players[event.player_index])
    --if not game.is_multiplayer() then printout("Press 'TAB' to continue", pindex) end
 end)
 
-EventManager.on_event(
-   defines.events.on_gui_closed,
-   EventManager.create_player_handler(function(event, pindex)
-      local router = UiRouter.get_router(pindex)
+EventManager.on_event(defines.events.on_gui_closed, function(event, pindex)
+   local router = UiRouter.get_router(pindex)
 
-      --Other resets
-      if router:is_ui_open() and not router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then
-         if router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
-            sounds.play_close_inventory(pindex)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) and event.element ~= nil then
-            event.element.destroy()
-         end
-         router:close_ui()
-         storage.players[pindex].item_selection = false
-         storage.players[pindex].item_cache = {}
-         storage.players[pindex].item_selector = {
-            index = 0,
-            group = 0,
-            subgroup = 0,
-         }
-         storage.players[pindex].building.item_selection = false
-         close_menu_resets(pindex)
+   --Other resets
+   if router:is_ui_open() and not router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then
+      if router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
+         sounds.play_close_inventory(pindex)
+      elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) and event.element ~= nil then
+         event.element.destroy()
       end
-   end)
-)
+      router:close_ui()
+      storage.players[pindex].item_selection = false
+      storage.players[pindex].item_cache = {}
+      storage.players[pindex].item_selector = {
+         index = 0,
+         group = 0,
+         subgroup = 0,
+      }
+      storage.players[pindex].building.item_selection = false
+      close_menu_resets(pindex)
+   end
+end)
 
 function fix_walk(pindex)
    local player = game.get_player(pindex)
@@ -2073,249 +2046,241 @@ function fix_walk(pindex)
 end
 
 --GUI action confirmed, such as by pressing ENTER
-EventManager.on_event(
-   defines.events.on_gui_confirmed,
-   EventManager.create_player_handler(function(event, pindex)
-      local router = UiRouter.get_router(pindex)
+EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
+   local router = UiRouter.get_router(pindex)
 
-      local p = game.get_player(pindex)
-      local vp = Viewpoint.get_viewpoint(pindex)
-      if vp:get_cursor_jumping() == true then
-         --Jump the cursor
-         vp:set_cursor_jumping(false)
-         local result = event.element.text
-         jump_cursor_to_typed_coordinates(result, pindex)
-         event.element.destroy()
-         router:close_ui()
-         --play sound
-         sounds.play_close_inventory(p.index)
+   local p = game.get_player(pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
+   if vp:get_cursor_jumping() == true then
+      --Jump the cursor
+      vp:set_cursor_jumping(false)
+      local result = event.element.text
+      jump_cursor_to_typed_coordinates(result, pindex)
+      event.element.destroy()
+      router:close_ui()
+      --play sound
+      sounds.play_close_inventory(p.index)
 
-         --Destroy text fields
-         if p.gui.screen["cursor-jump"] ~= nil then p.gui.screen["cursor-jump"].destroy() end
-         if p.opened ~= nil then p.opened = nil end
-      elseif storage.players[pindex].train_limit_editing == true then
-         --Apply the limit
-         storage.players[pindex].train_limit_editing = false
-         local result = event.element.text
-         if result ~= nil and result ~= "" then
-            local constant = tonumber(result)
-            ---@cast constant  number
-            local valid_number = constant ~= nil
-            if valid_number and p.selected and p.selected.valid and p.selected.name == "train-stop" then
-               if constant >= 0 then
-                  p.selected.trains_limit = constant
-                  printout({ "fa.train-limit-set", tostring(constant) }, pindex)
-               else
-                  p.selected.trains_limit = nil
-                  printout({ "fa.cleared-trains-limit" }, pindex)
-               end
+      --Destroy text fields
+      if p.gui.screen["cursor-jump"] ~= nil then p.gui.screen["cursor-jump"].destroy() end
+      if p.opened ~= nil then p.opened = nil end
+   elseif storage.players[pindex].train_limit_editing == true then
+      --Apply the limit
+      storage.players[pindex].train_limit_editing = false
+      local result = event.element.text
+      if result ~= nil and result ~= "" then
+         local constant = tonumber(result)
+         ---@cast constant  number
+         local valid_number = constant ~= nil
+         if valid_number and p.selected and p.selected.valid and p.selected.name == "train-stop" then
+            if constant >= 0 then
+               p.selected.trains_limit = constant
+               printout({ "fa.train-limit-set", tostring(constant) }, pindex)
             else
-               printout({ "fa.invalid-input" }, pindex)
+               p.selected.trains_limit = nil
+               printout({ "fa.cleared-trains-limit" }, pindex)
             end
          else
             printout({ "fa.invalid-input" }, pindex)
          end
-         event.element.destroy()
-         router:close_ui()
-         --play sound
-         sounds.play_close_inventory(p.index)
-
-         --Destroy text fields
-         if p.gui.screen["train-limit-edit"] ~= nil then p.gui.screen["train-limit-edit"].destroy() end
-         if p.opened ~= nil then p.opened = nil end
-      elseif router:is_ui_open(UiRouter.UI_NAMES.CIRCUIT_NETWORK) then
-         --Take the constant number
-         local result = event.element.text
-         if result ~= nil and result ~= "" then
-            local constant = tonumber(result)
-            local valid_number = constant ~= nil
-            --Apply the valid number
-            if valid_number then
-               if storage.players[pindex].signal_selector.ent.type == "constant-combinator" then
-                  --Constant combinators (set last signal value)
-                  local success = CircuitNetworks.constant_combinator_set_last_signal_count(
-                     constant,
-                     storage.players[pindex].signal_selector.ent,
-                     pindex
-                  )
-                  if success then
-                     printout({ "fa.signal-set", result }, pindex)
-                  else
-                     printout({ "fa.error-no-signals-found" }, pindex)
-                  end
-               else
-                  --Other devices (set enabled condition)
-                  local control = storage.players[pindex].signal_selector.ent.get_control_behavior()
-                  local circuit_condition = control.circuit_condition
-                  local cond = control.circuit_condition
-                  cond.second_signal = nil --{name = nil, type = signal_type}
-                  cond.constant = constant
-                  circuit_condition = cond
-                  storage.players[pindex].signal_selector.ent.get_control_behavior().circuit_condition =
-                     circuit_condition
-                  printout(
-                     "Set "
-                        .. result
-                        .. ", condition now checks if "
-                        .. CircuitNetworks.read_circuit_condition(
-                           pindex,
-                           storage.players[pindex].signal_selector.ent,
-                           true
-                        ),
-                     pindex
-                  )
-               end
-            else
-               printout({ "fa.invalid-input" }, pindex)
-            end
-         else
-            printout({ "fa.invalid-input" }, pindex)
-         end
-         event.element.destroy()
-         storage.players[pindex].signal_selector = nil
-         --Set the player menu tracker to none
-         router:close_ui()
-         --play sound
-         sounds.play_close_inventory(p.index)
-
-         --Destroy text fields
-         if p.gui.screen["circuit-networks-textfield"] ~= nil then
-            p.gui.screen["circuit-networks-textfield"].destroy()
-         end
-         if p.opened ~= nil then p.opened = nil end
-      elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) and storage.players[pindex].entering_search_term ~= true then
-         --Edit a travel point
-         local result = event.element.text
-         if result == nil or result == "" then result = "blank" end
-         if storage.players[pindex].travel.creating then
-            --Create new point
-            storage.players[pindex].travel.creating = false
-            table.insert(storage.players[pindex].travel, {
-               name = result,
-               position = FaUtils.center_of_tile(storage.players[pindex].position),
-               description = "No description",
-            })
-            table.sort(storage.players[pindex].travel, function(k1, k2)
-               return k1.name < k2.name
-            end)
-            printout(
-               "Fast travel point "
-                  .. result
-                  .. " created at "
-                  .. math.floor(storage.players[pindex].position.x)
-                  .. ", "
-                  .. math.floor(storage.players[pindex].position.y),
-               pindex
-            )
-         elseif storage.players[pindex].travel.renaming then
-            --Renaming selected point
-            storage.players[pindex].travel.renaming = false
-            storage.players[pindex].travel[storage.players[pindex].travel.index.y].name = result
-            TravelTools.read_fast_travel_slot(pindex)
-         elseif storage.players[pindex].travel.describing then
-            --Save the new description
-            storage.players[pindex].travel.describing = false
-            storage.players[pindex].travel[storage.players[pindex].travel.index.y].description = result
-            printout({
-               "fa.travel-description-updated",
-               storage.players[pindex].travel[storage.players[pindex].travel.index.y].name,
-            }, pindex)
-         end
-         storage.players[pindex].travel.index.x = 1
-         event.element.destroy()
-      elseif storage.players[pindex].train_menu.renaming == true then
-         storage.players[pindex].train_menu.renaming = false
-         local result = event.element.text
-         if result == nil or result == "" then result = "unknown" end
-         Trains.set_train_name(storage.players[pindex].train_menu.locomotive.train, result)
-         printout({ "fa.train-renamed", result }, pindex)
-         event.element.destroy()
-         Trains.menu_close(pindex, false)
-      elseif storage.players[pindex].spider_menu.renaming == true then
-         storage.players[pindex].spider_menu.renaming = false
-         printout({ "fa.unimplemented-2-0" }, pindex)
-      elseif storage.players[pindex].train_stop_menu.renaming == true then
-         storage.players[pindex].train_stop_menu.renaming = false
-         local result = event.element.text
-         if result == nil or result == "" then result = "unknown" end
-         storage.players[pindex].train_stop_menu.stop.backer_name = result
-         printout({ "fa.train-stop-renamed", result }, pindex)
-         event.element.destroy()
-         TrainStops.train_stop_menu_close(pindex, false)
-      elseif storage.players[pindex].roboport_menu.renaming == true then
-         storage.players[pindex].roboport_menu.renaming = false
-         local result = event.element.text
-         if result == nil or result == "" then result = "unknown" end
-         WorkerRobots.set_network_name(storage.players[pindex].roboport_menu.port, result)
-         printout({ "fa.network-renamed", result }, pindex)
-         event.element.destroy()
-         WorkerRobots.roboport_menu_close(pindex)
-      elseif storage.players[pindex].entering_search_term == true then
-         local term = string.lower(event.element.text)
-         event.element.focus()
-         storage.players[pindex].menu_search_term = term
-         if term ~= "" then printout({ "fa.menu-search-searching-for", term }, pindex) end
-         event.element.destroy()
-         if storage.players[pindex].menu_search_frame ~= nil then
-            storage.players[pindex].menu_search_frame.destroy()
-            storage.players[pindex].menu_search_frame = nil
-         end
-      elseif storage.players[pindex].blueprint_menu.edit_label == true then
-         --Apply the new label
-         storage.players[pindex].blueprint_menu.edit_label = false
-         local result = event.element.text
-         if result == nil or result == "" then result = "unknown" end
-         if p.cursor_stack.is_blueprint then
-            Blueprints.set_blueprint_label(p.cursor_stack, result)
-         elseif p.cursor_stack.is_blueprint_book then
-            Blueprints.blueprint_book_set_label(pindex, result)
-         end
-         printout({ "fa.blueprint-label-changed", result }, pindex)
-         event.element.destroy()
-         if p.gui.screen["blueprint-edit-label"] ~= nil then p.gui.screen["blueprint-edit-label"].destroy() end
-      elseif storage.players[pindex].blueprint_menu.edit_description == true then
-         --Apply the new desc
-         storage.players[pindex].blueprint_menu.edit_description = false
-         local result = event.element.text
-         if result == nil or result == "" then result = "unknown" end
-         if p.cursor_stack.is_blueprint then
-            Blueprints.set_blueprint_description(p.cursor_stack, result)
-         elseif p.cursor_stack.is_blueprint_book then
-            Blueprints.set_blueprint_book_description(pindex, result)
-         end
-         printout({ "fa.blueprint-description-changed" }, pindex)
-         event.element.destroy()
-         if p.gui.screen["blueprint-edit-description"] ~= nil then
-            p.gui.screen["blueprint-edit-description"].destroy()
-         end
-      elseif storage.players[pindex].blueprint_menu.edit_import == true then
-         --Apply the new import
-         storage.players[pindex].blueprint_menu.edit_import = false
-         local result = event.element.text
-         if result == nil or result == "" then result = "unknown" end
-         Blueprints.apply_blueprint_import(pindex, result)
-         event.element.destroy()
-         if p.gui.screen["blueprint-edit-import"] ~= nil then p.gui.screen["blueprint-edit-import"].destroy() end
-      elseif storage.players[pindex].blueprint_menu.edit_export == true then
-         --Instruct export
-         storage.players[pindex].blueprint_menu.edit_export = false
-         local result = event.element.text
-         if result == nil or result == "" then result = "unknown" end
-         printout("Text box closed", pindex)
-         event.element.destroy()
-         if p.gui.screen["blueprint-edit-export"] ~= nil then p.gui.screen["blueprint-edit-export"].destroy() end
       else
-         --Stray text box, so do nothing and destroy it
-         if event.element.parent then
-            event.element.parent.destroy()
-         else
-            event.element.destroy()
-         end
+         printout({ "fa.invalid-input" }, pindex)
       end
-      storage.players[pindex].last_menu_search_tick = event.tick
-      storage.players[pindex].text_field_open = false
-   end)
-)
+      event.element.destroy()
+      router:close_ui()
+      --play sound
+      sounds.play_close_inventory(p.index)
+
+      --Destroy text fields
+      if p.gui.screen["train-limit-edit"] ~= nil then p.gui.screen["train-limit-edit"].destroy() end
+      if p.opened ~= nil then p.opened = nil end
+   elseif router:is_ui_open(UiRouter.UI_NAMES.CIRCUIT_NETWORK) then
+      --Take the constant number
+      local result = event.element.text
+      if result ~= nil and result ~= "" then
+         local constant = tonumber(result)
+         local valid_number = constant ~= nil
+         --Apply the valid number
+         if valid_number then
+            if storage.players[pindex].signal_selector.ent.type == "constant-combinator" then
+               --Constant combinators (set last signal value)
+               local success = CircuitNetworks.constant_combinator_set_last_signal_count(
+                  constant,
+                  storage.players[pindex].signal_selector.ent,
+                  pindex
+               )
+               if success then
+                  printout({ "fa.signal-set", result }, pindex)
+               else
+                  printout({ "fa.error-no-signals-found" }, pindex)
+               end
+            else
+               --Other devices (set enabled condition)
+               local control = storage.players[pindex].signal_selector.ent.get_control_behavior()
+               local circuit_condition = control.circuit_condition
+               local cond = control.circuit_condition
+               cond.second_signal = nil --{name = nil, type = signal_type}
+               cond.constant = constant
+               circuit_condition = cond
+               storage.players[pindex].signal_selector.ent.get_control_behavior().circuit_condition = circuit_condition
+               printout(
+                  "Set "
+                     .. result
+                     .. ", condition now checks if "
+                     .. CircuitNetworks.read_circuit_condition(
+                        pindex,
+                        storage.players[pindex].signal_selector.ent,
+                        true
+                     ),
+                  pindex
+               )
+            end
+         else
+            printout({ "fa.invalid-input" }, pindex)
+         end
+      else
+         printout({ "fa.invalid-input" }, pindex)
+      end
+      event.element.destroy()
+      storage.players[pindex].signal_selector = nil
+      --Set the player menu tracker to none
+      router:close_ui()
+      --play sound
+      sounds.play_close_inventory(p.index)
+
+      --Destroy text fields
+      if p.gui.screen["circuit-networks-textfield"] ~= nil then p.gui.screen["circuit-networks-textfield"].destroy() end
+      if p.opened ~= nil then p.opened = nil end
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) and storage.players[pindex].entering_search_term ~= true then
+      --Edit a travel point
+      local result = event.element.text
+      if result == nil or result == "" then result = "blank" end
+      if storage.players[pindex].travel.creating then
+         --Create new point
+         storage.players[pindex].travel.creating = false
+         table.insert(storage.players[pindex].travel, {
+            name = result,
+            position = FaUtils.center_of_tile(storage.players[pindex].position),
+            description = "No description",
+         })
+         table.sort(storage.players[pindex].travel, function(k1, k2)
+            return k1.name < k2.name
+         end)
+         printout(
+            "Fast travel point "
+               .. result
+               .. " created at "
+               .. math.floor(storage.players[pindex].position.x)
+               .. ", "
+               .. math.floor(storage.players[pindex].position.y),
+            pindex
+         )
+      elseif storage.players[pindex].travel.renaming then
+         --Renaming selected point
+         storage.players[pindex].travel.renaming = false
+         storage.players[pindex].travel[storage.players[pindex].travel.index.y].name = result
+         TravelTools.read_fast_travel_slot(pindex)
+      elseif storage.players[pindex].travel.describing then
+         --Save the new description
+         storage.players[pindex].travel.describing = false
+         storage.players[pindex].travel[storage.players[pindex].travel.index.y].description = result
+         printout({
+            "fa.travel-description-updated",
+            storage.players[pindex].travel[storage.players[pindex].travel.index.y].name,
+         }, pindex)
+      end
+      storage.players[pindex].travel.index.x = 1
+      event.element.destroy()
+   elseif storage.players[pindex].train_menu.renaming == true then
+      storage.players[pindex].train_menu.renaming = false
+      local result = event.element.text
+      if result == nil or result == "" then result = "unknown" end
+      Trains.set_train_name(storage.players[pindex].train_menu.locomotive.train, result)
+      printout({ "fa.train-renamed", result }, pindex)
+      event.element.destroy()
+      Trains.menu_close(pindex, false)
+   elseif storage.players[pindex].spider_menu.renaming == true then
+      storage.players[pindex].spider_menu.renaming = false
+      printout({ "fa.unimplemented-2-0" }, pindex)
+   elseif storage.players[pindex].train_stop_menu.renaming == true then
+      storage.players[pindex].train_stop_menu.renaming = false
+      local result = event.element.text
+      if result == nil or result == "" then result = "unknown" end
+      storage.players[pindex].train_stop_menu.stop.backer_name = result
+      printout({ "fa.train-stop-renamed", result }, pindex)
+      event.element.destroy()
+      TrainStops.train_stop_menu_close(pindex, false)
+   elseif storage.players[pindex].roboport_menu.renaming == true then
+      storage.players[pindex].roboport_menu.renaming = false
+      local result = event.element.text
+      if result == nil or result == "" then result = "unknown" end
+      WorkerRobots.set_network_name(storage.players[pindex].roboport_menu.port, result)
+      printout({ "fa.network-renamed", result }, pindex)
+      event.element.destroy()
+      WorkerRobots.roboport_menu_close(pindex)
+   elseif storage.players[pindex].entering_search_term == true then
+      local term = string.lower(event.element.text)
+      event.element.focus()
+      storage.players[pindex].menu_search_term = term
+      if term ~= "" then printout({ "fa.menu-search-searching-for", term }, pindex) end
+      event.element.destroy()
+      if storage.players[pindex].menu_search_frame ~= nil then
+         storage.players[pindex].menu_search_frame.destroy()
+         storage.players[pindex].menu_search_frame = nil
+      end
+   elseif storage.players[pindex].blueprint_menu.edit_label == true then
+      --Apply the new label
+      storage.players[pindex].blueprint_menu.edit_label = false
+      local result = event.element.text
+      if result == nil or result == "" then result = "unknown" end
+      if p.cursor_stack.is_blueprint then
+         Blueprints.set_blueprint_label(p.cursor_stack, result)
+      elseif p.cursor_stack.is_blueprint_book then
+         Blueprints.blueprint_book_set_label(pindex, result)
+      end
+      printout({ "fa.blueprint-label-changed", result }, pindex)
+      event.element.destroy()
+      if p.gui.screen["blueprint-edit-label"] ~= nil then p.gui.screen["blueprint-edit-label"].destroy() end
+   elseif storage.players[pindex].blueprint_menu.edit_description == true then
+      --Apply the new desc
+      storage.players[pindex].blueprint_menu.edit_description = false
+      local result = event.element.text
+      if result == nil or result == "" then result = "unknown" end
+      if p.cursor_stack.is_blueprint then
+         Blueprints.set_blueprint_description(p.cursor_stack, result)
+      elseif p.cursor_stack.is_blueprint_book then
+         Blueprints.set_blueprint_book_description(pindex, result)
+      end
+      printout({ "fa.blueprint-description-changed" }, pindex)
+      event.element.destroy()
+      if p.gui.screen["blueprint-edit-description"] ~= nil then p.gui.screen["blueprint-edit-description"].destroy() end
+   elseif storage.players[pindex].blueprint_menu.edit_import == true then
+      --Apply the new import
+      storage.players[pindex].blueprint_menu.edit_import = false
+      local result = event.element.text
+      if result == nil or result == "" then result = "unknown" end
+      Blueprints.apply_blueprint_import(pindex, result)
+      event.element.destroy()
+      if p.gui.screen["blueprint-edit-import"] ~= nil then p.gui.screen["blueprint-edit-import"].destroy() end
+   elseif storage.players[pindex].blueprint_menu.edit_export == true then
+      --Instruct export
+      storage.players[pindex].blueprint_menu.edit_export = false
+      local result = event.element.text
+      if result == nil or result == "" then result = "unknown" end
+      printout("Text box closed", pindex)
+      event.element.destroy()
+      if p.gui.screen["blueprint-edit-export"] ~= nil then p.gui.screen["blueprint-edit-export"].destroy() end
+   else
+      --Stray text box, so do nothing and destroy it
+      if event.element.parent then
+         event.element.parent.destroy()
+      else
+         event.element.destroy()
+      end
+   end
+   storage.players[pindex].last_menu_search_tick = event.tick
+   storage.players[pindex].text_field_open = false
+end)
 
 --Read the correct inventory slot based on the current menu, optionally with a start phrase in
 local function read_selected_inventory_and_slot(pindex, start_phrase_in)
@@ -2418,33 +2383,30 @@ local function set_selected_inventory_slot_filter(pindex)
    end
 end
 
-EventManager.on_event(
-   defines.events.on_gui_opened,
-   EventManager.create_player_handler(function(event, pindex)
-      local router = UiRouter.get_router(pindex)
+EventManager.on_event(defines.events.on_gui_opened, function(event, pindex)
+   local router = UiRouter.get_router(pindex)
 
-      local p = game.get_player(pindex)
+   local p = game.get_player(pindex)
 
-      --Stop any enabled mouse entity selection
-      if storage.players[pindex].vanilla_mode ~= true then
-         game.get_player(pindex).game_view_settings.update_entity_selection = false
-      end
+   --Stop any enabled mouse entity selection
+   if storage.players[pindex].vanilla_mode ~= true then
+      game.get_player(pindex).game_view_settings.update_entity_selection = false
+   end
 
-      --Deselect to prevent multiple interactions
-      p.selected = nil
+   --Deselect to prevent multiple interactions
+   p.selected = nil
 
-      --GUI mismatch checks
-      if
-         event.gui_type == defines.gui_type.controller
-         and not router:is_ui_open()
-         and event.tick - storage.players[pindex].last_menu_toggle_tick < 5
-      then
-         --If closing another menu toggles the player GUI screen, we close this screen
-         p.opened = nil
-         --game.print("Closed an extra controller GUI",{volume_modifier = 0})--**checks GUI shenanigans
-      end
-   end)
-)
+   --GUI mismatch checks
+   if
+      event.gui_type == defines.gui_type.controller
+      and not router:is_ui_open()
+      and event.tick - storage.players[pindex].last_menu_toggle_tick < 5
+   then
+      --If closing another menu toggles the player GUI screen, we close this screen
+      p.opened = nil
+      --game.print("Closed an extra controller GUI",{volume_modifier = 0})--**checks GUI shenanigans
+   end
+end)
 
 EventManager.on_event(defines.events.on_object_destroyed, function(event) --DOES NOT HAVE THE KEY PLAYER_INDEX
    ScannerEntrypoint.on_entity_destroyed(event)
@@ -2681,90 +2643,76 @@ EventManager.on_event(defines.events.on_entity_died, function(event)
 end)
 
 --Notify all players when a player character dies
-EventManager.on_event(
-   defines.events.on_player_died,
-   EventManager.create_player_handler(function(event, pindex)
-      local p = game.get_player(pindex)
-      local causer = event.cause
-      local bodies = p.surface.find_entities_filtered({ name = "character-corpse" })
-      local latest_body = nil
-      local latest_death_tick = 0
-      local name = p.name
-      if name == nil then name = " " end
-      --Find the most recent character corpse
-      for i, body in ipairs(bodies) do
-         if
-            body.character_corpse_player_index == pindex and body.character_corpse_tick_of_death > latest_death_tick
-         then
-            latest_body = body
-            latest_death_tick = latest_body.character_corpse_tick_of_death
-         end
+EventManager.on_event(defines.events.on_player_died, function(event, pindex)
+   local p = game.get_player(pindex)
+   local causer = event.cause
+   local bodies = p.surface.find_entities_filtered({ name = "character-corpse" })
+   local latest_body = nil
+   local latest_death_tick = 0
+   local name = p.name
+   if name == nil then name = " " end
+   --Find the most recent character corpse
+   for i, body in ipairs(bodies) do
+      if body.character_corpse_player_index == pindex and body.character_corpse_tick_of_death > latest_death_tick then
+         latest_body = body
+         latest_death_tick = latest_body.character_corpse_tick_of_death
       end
-      --Verify the latest death
-      if event.tick - latest_death_tick > 120 then latest_body = nil end
-      --Generate death message
-      local result = "Player " .. name
-      if causer == nil or not causer.valid then
-         result = result .. " died "
-      elseif causer.name == "character" and causer.player ~= nil and causer.player.valid then
-         local other_name = causer.player.name
-         if other_name == nil then other_name = "" end
-         result = result .. " was killed by player " .. other_name
-      else
-         result = result .. " was killed by " .. causer.name
-      end
-      if latest_body ~= nil and latest_body.valid then
-         result = result
-            .. " at "
-            .. math.floor(0.5 + latest_body.position.x)
-            .. ", "
-            .. math.floor(0.5 + latest_body.position.y)
-            .. "."
-      end
-      --Notify all players
-      for pindex, player in pairs(players) do
-         storage.players[pindex].last_damage_alert_tick = event.tick
-         printout(result, pindex)
-         game.get_player(pindex).print(result) --**laterdo unique sound, for now use console sound
-      end
-   end)
-)
+   end
+   --Verify the latest death
+   if event.tick - latest_death_tick > 120 then latest_body = nil end
+   --Generate death message
+   local result = "Player " .. name
+   if causer == nil or not causer.valid then
+      result = result .. " died "
+   elseif causer.name == "character" and causer.player ~= nil and causer.player.valid then
+      local other_name = causer.player.name
+      if other_name == nil then other_name = "" end
+      result = result .. " was killed by player " .. other_name
+   else
+      result = result .. " was killed by " .. causer.name
+   end
+   if latest_body ~= nil and latest_body.valid then
+      result = result
+         .. " at "
+         .. math.floor(0.5 + latest_body.position.x)
+         .. ", "
+         .. math.floor(0.5 + latest_body.position.y)
+         .. "."
+   end
+   --Notify all players
+   for pindex, player in pairs(players) do
+      storage.players[pindex].last_damage_alert_tick = event.tick
+      printout(result, pindex)
+      game.get_player(pindex).print(result) --**laterdo unique sound, for now use console sound
+   end
+end)
 
-EventManager.on_event(
-   defines.events.on_player_display_resolution_changed,
-   EventManager.create_player_handler(function(event, pindex)
-      local new_res = game.get_player(pindex).display_resolution
-      if players and storage.players[pindex] then storage.players[pindex].display_resolution = new_res end
-      game
-         .get_player(pindex)
-         .print("Display resolution changed: " .. new_res.width .. " x " .. new_res.height, { volume_modifier = 0 })
-      schedule(3, "call_to_fix_zoom", pindex)
-      schedule(4, "call_to_sync_graphics", pindex)
-   end)
-)
+EventManager.on_event(defines.events.on_player_display_resolution_changed, function(event, pindex)
+   local new_res = game.get_player(pindex).display_resolution
+   if players and storage.players[pindex] then storage.players[pindex].display_resolution = new_res end
+   game
+      .get_player(pindex)
+      .print("Display resolution changed: " .. new_res.width .. " x " .. new_res.height, { volume_modifier = 0 })
+   schedule(3, "call_to_fix_zoom", pindex)
+   schedule(4, "call_to_sync_graphics", pindex)
+end)
 
-EventManager.on_event(
-   defines.events.on_player_display_scale_changed,
-   EventManager.create_player_handler(function(event, pindex)
-      local new_sc = game.get_player(pindex).display_scale
-      if players and storage.players[pindex] then storage.players[pindex].display_resolution = new_sc end
-      game.get_player(pindex).print("Display scale changed: " .. new_sc, { volume_modifier = 0 })
-      schedule(3, "call_to_fix_zoom", pindex)
-      schedule(4, "call_to_sync_graphics", pindex)
-   end)
-)
+EventManager.on_event(defines.events.on_player_display_scale_changed, function(event, pindex)
+   local new_sc = game.get_player(pindex).display_scale
+   if players and storage.players[pindex] then storage.players[pindex].display_resolution = new_sc end
+   game.get_player(pindex).print("Display scale changed: " .. new_sc, { volume_modifier = 0 })
+   schedule(3, "call_to_fix_zoom", pindex)
+   schedule(4, "call_to_sync_graphics", pindex)
+end)
 
 EventManager.on_event(defines.events.on_string_translated, Localising.handler)
 
-EventManager.on_event(
-   defines.events.on_player_respawned,
-   EventManager.create_player_handler(function(event, pindex)
-      local vp = Viewpoint.get_viewpoint(pindex)
-      local position = game.get_player(pindex).position
-      storage.players[pindex].position = position
-      vp:set_cursor_pos({ x = position.x, y = position.y })
-   end)
-)
+EventManager.on_event(defines.events.on_player_respawned, function(event, pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local position = game.get_player(pindex).position
+   storage.players[pindex].position = position
+   vp:set_cursor_pos({ x = position.x, y = position.y })
+end)
 
 --If the player has unexpected lateral movement while smooth running in a cardinal direction, like from bumping into an entity or being at the edge of water, play a sound.
 
@@ -3119,130 +3067,114 @@ end
 
 EventManager.on_event(
    "fa-w",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
 
-         move_key(defines.direction.north, event)
-      end
-   )
+      move_key(defines.direction.north, event)
+   end
 )
 
 EventManager.on_event(
    "fa-a",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
 
-         move_key(defines.direction.west, event)
-      end
-   )
+      move_key(defines.direction.west, event)
+   end
 )
 
 EventManager.on_event(
    "fa-s",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
 
-         move_key(defines.direction.south, event)
-      end
-   )
+      move_key(defines.direction.south, event)
+   end
 )
 
 EventManager.on_event(
    "fa-d",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
 
-         move_key(defines.direction.east, event)
-      end
-   )
+      move_key(defines.direction.east, event)
+   end
 )
 
 EventManager.on_event(
    "fa-up",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         local vp = Viewpoint.get_viewpoint(pindex)
-         if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
-            Trains.menu_up(pindex)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then
-            Spidertron.spider_menu_up(pindex)
-         elseif
-            (not router:is_ui_open() and vp:get_cursor_enabled()) or not router:is_ui_open(UiRouter.UI_NAMES.PROMPT)
-         then
-            move_key(dirs.north, event, true)
-         end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      local vp = Viewpoint.get_viewpoint(pindex)
+      if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
+         Trains.menu_up(pindex)
+      elseif router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then
+         Spidertron.spider_menu_up(pindex)
+      elseif
+         (not router:is_ui_open() and vp:get_cursor_enabled()) or not router:is_ui_open(UiRouter.UI_NAMES.PROMPT)
+      then
+         move_key(dirs.north, event, true)
       end
-   )
+   end
 )
 
 EventManager.on_event(
    "fa-left",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         local vp = Viewpoint.get_viewpoint(pindex)
-         if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
-            Trains.menu_left(pindex)
-         elseif
-            (not router:is_ui_open() and vp:get_cursor_enabled()) or not router:is_ui_open(UiRouter.UI_NAMES.PROMPT)
-         then
-            move_key(dirs.west, event, true)
-         end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      local vp = Viewpoint.get_viewpoint(pindex)
+      if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
+         Trains.menu_left(pindex)
+      elseif
+         (not router:is_ui_open() and vp:get_cursor_enabled()) or not router:is_ui_open(UiRouter.UI_NAMES.PROMPT)
+      then
+         move_key(dirs.west, event, true)
       end
-   )
+   end
 )
 
 EventManager.on_event(
    "fa-down",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         local vp = Viewpoint.get_viewpoint(pindex)
-         if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
-            Trains.menu_down(pindex)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then
-            Spidertron.spider_menu_down(pindex)
-         elseif
-            (not router:is_ui_open() and vp:get_cursor_enabled()) or not router:is_ui_open(UiRouter.UI_NAMES.PROMPT)
-         then
-            move_key(dirs.south, event, true)
-         end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      local vp = Viewpoint.get_viewpoint(pindex)
+      if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
+         Trains.menu_down(pindex)
+      elseif router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then
+         Spidertron.spider_menu_down(pindex)
+      elseif
+         (not router:is_ui_open() and vp:get_cursor_enabled()) or not router:is_ui_open(UiRouter.UI_NAMES.PROMPT)
+      then
+         move_key(dirs.south, event, true)
       end
-   )
+   end
 )
 
 EventManager.on_event(
    "fa-right",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         local vp = Viewpoint.get_viewpoint(pindex)
-         if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
-            Trains.menu_right(pindex)
-         elseif
-            (not router:is_ui_open() and vp:get_cursor_enabled()) or not router:is_ui_open(UiRouter.UI_NAMES.PROMPT)
-         then
-            move_key(dirs.east, event, true)
-         end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      local vp = Viewpoint.get_viewpoint(pindex)
+      if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
+         Trains.menu_right(pindex)
+      elseif
+         (not router:is_ui_open() and vp:get_cursor_enabled()) or not router:is_ui_open(UiRouter.UI_NAMES.PROMPT)
+      then
+         move_key(dirs.east, event, true)
       end
-   )
+   end
 )
 
 --Moves the cursor in the same direction multiple times until the reported entity changes. Change includes: new entity name or new direction for entites with the same name, or changing between nil and ent. Returns move count.
@@ -3564,166 +3496,142 @@ end
 
 EventManager.on_event(
    "fa-s-w",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
-            return
-         end
-
-         cursor_skip(pindex, defines.direction.north)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
+         return
       end
-   )
+
+      cursor_skip(pindex, defines.direction.north)
+   end
 )
 
 EventManager.on_event(
    "fa-s-a",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
-            return
-         end
-
-         cursor_skip(pindex, defines.direction.west)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
+         return
       end
-   )
+
+      cursor_skip(pindex, defines.direction.west)
+   end
 )
 
 EventManager.on_event(
    "fa-s-s",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
-            return
-         end
-
-         cursor_skip(pindex, defines.direction.south)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
+         return
       end
-   )
+
+      cursor_skip(pindex, defines.direction.south)
+   end
 )
 
 EventManager.on_event(
    "fa-s-d",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
-            return
-         end
-
-         cursor_skip(pindex, defines.direction.east)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
+         return
       end
-   )
+
+      cursor_skip(pindex, defines.direction.east)
+   end
 )
 
 EventManager.on_event(
    "fa-c-w",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
-            return
-         end
-
-         cursor_skip(pindex, defines.direction.north, 1000, true)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
+         return
       end
-   )
+
+      cursor_skip(pindex, defines.direction.north, 1000, true)
+   end
 )
 
 EventManager.on_event(
    "fa-c-a",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
-            return
-         end
-
-         cursor_skip(pindex, defines.direction.west, 1000, true)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
+         return
       end
-   )
+
+      cursor_skip(pindex, defines.direction.west, 1000, true)
+   end
 )
 
 EventManager.on_event(
    "fa-c-s",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
-            return
-         end
-
-         cursor_skip(pindex, defines.direction.south, 1000, true)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
+         return
       end
-   )
+
+      cursor_skip(pindex, defines.direction.south, 1000, true)
+   end
 )
 
 EventManager.on_event(
    "fa-c-d",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
-            return
-         end
-
-         cursor_skip(pindex, defines.direction.east, 1000, true)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
+         return
       end
-   )
+
+      cursor_skip(pindex, defines.direction.east, 1000, true)
+   end
 )
 
 EventManager.on_event(
    "fa-s-up",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
 
-         BuildingTools.nudge_key(defines.direction.north, event)
-      end
-   )
+      BuildingTools.nudge_key(defines.direction.north, event)
+   end
 )
 
 EventManager.on_event(
    "fa-s-left",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
 
-         BuildingTools.nudge_key(defines.direction.west, event)
-      end
-   )
+      BuildingTools.nudge_key(defines.direction.west, event)
+   end
 )
 
 EventManager.on_event(
    "fa-s-down",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
 
-         BuildingTools.nudge_key(defines.direction.south, event)
-      end
-   )
+      BuildingTools.nudge_key(defines.direction.south, event)
+   end
 )
 
 EventManager.on_event(
    "fa-s-right",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
 
-         BuildingTools.nudge_key(defines.direction.east, event)
-      end
-   )
+      BuildingTools.nudge_key(defines.direction.east, event)
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -3741,50 +3649,42 @@ end
 
 EventManager.on_event(
    "fa-c-up",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
-         nudge_self(event, defines.direction.north, "north")
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
+      nudge_self(event, defines.direction.north, "north")
+   end
 )
 
 EventManager.on_event(
    "fa-c-left",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
-         nudge_self(event, defines.direction.west, "west")
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
+      nudge_self(event, defines.direction.west, "west")
+   end
 )
 
 EventManager.on_event(
    "fa-c-down",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
-         nudge_self(event, defines.direction.south, "south")
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
+      nudge_self(event, defines.direction.south, "south")
+   end
 )
 
 EventManager.on_event(
    "fa-c-right",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
-         nudge_self(event, defines.direction.east, "east")
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
+      nudge_self(event, defines.direction.east, "east")
+   end
 )
 
 --Read the current co-ordinates of the cursor on the map or in a menu. For crafting recipe and technology menus, it reads the ingredients / requirements instead.
@@ -4059,12 +3959,10 @@ end
 --Read coordinates of the cursor. Extra info as well such as entity part if an entity is selected, and heading and speed info for vehicles.
 EventManager.on_event(
    "fa-k",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         read_coords(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      read_coords(pindex)
+   end
 )
 
 --Get distance and direction of cursor from player.
@@ -4106,12 +4004,10 @@ end
 
 EventManager.on_event(
    "fa-s-k",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_read_cursor_distance_and_direction(event)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_read_cursor_distance_and_direction(event)
+   end
 )
 
 --Get distance and direction of cursor from player as a vector with a horizontal component and vertical component.
@@ -4156,15 +4052,13 @@ end
 
 EventManager.on_event(
    "fa-a-k",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
 
-         if router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then return end
-         kb_read_cursor_distance_vector(event)
-      end
-   )
+      if router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then return end
+      kb_read_cursor_distance_vector(event)
+   end
 )
 
 local function kb_read_character_coords(event)
@@ -4181,12 +4075,10 @@ end
 
 EventManager.on_event(
    "fa-c-k",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_read_character_coords(event)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_read_character_coords(event)
+   end
 )
 
 --Teleports the cursor to the player character
@@ -4242,19 +4134,17 @@ end
 
 EventManager.on_event(
    "fa-j",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         local p = game.get_player(pindex)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      local p = game.get_player(pindex)
 
-         if router and not router:is_ui_open() and Viewpoint.get_viewpoint(pindex):get_cursor_enabled() then
-            kb_jump_to_player(event)
-         elseif p.driving and (p.vehicle.train ~= nil or p.vehicle.type == "car") then
-            kb_read_driving_structure_ahead(event)
-         end
+      if router and not router:is_ui_open() and Viewpoint.get_viewpoint(pindex):get_cursor_enabled() then
+         kb_jump_to_player(event)
+      elseif p.driving and (p.vehicle.train ~= nil or p.vehicle.type == "car") then
+         kb_read_driving_structure_ahead(event)
       end
-   )
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -4273,22 +4163,18 @@ end
 
 EventManager.on_event(
    "fa-s-j",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_read_rail(event, false)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_read_rail(event, false)
+   end
 )
 
 EventManager.on_event(
    "fa-c-j",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_read_rail(event, true)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_read_rail(event, true)
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -4303,12 +4189,10 @@ end
 
 EventManager.on_event(
    "fa-s-b",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_s_b(event)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_s_b(event)
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -4326,12 +4210,10 @@ end
 
 EventManager.on_event(
    "fa-b",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_b(event)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_b(event)
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -4346,64 +4228,52 @@ end
 
 EventManager.on_event(
    "fa-ca-b",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_ca_b(event)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_ca_b(event)
+   end
 )
 
 EventManager.on_event(
    "fa-as-b",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         Rulers.clear_rulers(pindex)
-         printout("Cleared rulers", pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      Rulers.clear_rulers(pindex)
+      printout("Cleared rulers", pindex)
+   end
 )
 
 EventManager.on_event(
    "fa-cas-b",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local p = game.get_player(pindex)
-         if p.is_cursor_empty then p.cursor_stack.set_stack("blueprint-book") end
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local p = game.get_player(pindex)
+      if p.is_cursor_empty then p.cursor_stack.set_stack("blueprint-book") end
+   end
 )
 
 EventManager.on_event(
    "fa-a-t",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         type_cursor_position(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      type_cursor_position(pindex)
+   end
 )
 
 EventManager.on_event(
    "fa-s-t",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         Teleport.teleport_to_cursor(pindex, false, false, false)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      Teleport.teleport_to_cursor(pindex, false, false, false)
+   end
 )
 
 EventManager.on_event(
    "fa-cs-t",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         Teleport.teleport_to_cursor(pindex, false, true, false)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      Teleport.teleport_to_cursor(pindex, false, true, false)
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -4428,12 +4298,10 @@ end
 
 EventManager.on_event(
    "fa-cs-p",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_cs_p(event)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_cs_p(event)
+   end
 )
 
 ---Toggles cursor mode on or off. Appropriately affects other modes such as build lock or remote view.
@@ -4489,14 +4357,12 @@ end
 
 EventManager.on_event(
    "fa-i",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
 
-         if not router:is_ui_open() then toggle_cursor_mode(pindex, false) end
-      end
-   )
+      if not router:is_ui_open() then toggle_cursor_mode(pindex, false) end
+   end
 )
 
 ---Valid cursor sizes
@@ -4548,38 +4414,32 @@ end
 --We have cursor sizes 1,3,5,11,21,51,101,251
 EventManager.on_event(
    "fa-s-i",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         if UiRouter.get_router(pindex):is_ui_open() then return end
-         adjust_cursor_size(pindex, 1)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if UiRouter.get_router(pindex):is_ui_open() then return end
+      adjust_cursor_size(pindex, 1)
+   end
 )
 
 --We have cursor sizes 1,3,5,11,21,51,101,251
 EventManager.on_event(
    "fa-c-i",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         if UiRouter.get_router(pindex):is_ui_open() then return end
-         adjust_cursor_size(pindex, -1)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if UiRouter.get_router(pindex):is_ui_open() then return end
+      adjust_cursor_size(pindex, -1)
+   end
 )
 
 EventManager.on_event(
    "fa-a-i",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
 
-         if router:is_ui_open() then return end
-         toggle_remote_view(pindex)
-      end
-   )
+      if router:is_ui_open() then return end
+      toggle_remote_view(pindex)
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -4593,138 +4453,122 @@ end
 
 EventManager.on_event(
    "fa-pageup",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         local p = game.get_player(pindex)
-         local ent = p.opened
-         if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-            kb_adjust_inventory_bar(event, 1)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
-            Trains.change_instant_schedule_wait_time(5, pindex)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
-            TrainStops.nearby_train_schedule_add_to_wait_time(5, pindex)
-         elseif ent and ent.type == "inserter" then
-            local result = BuildingVehicleSectors.inserter_hand_stack_size_up(ent)
-            printout(result, pindex)
-         else
-            ScannerEntrypoint.move_subcategory(pindex, -1)
-         end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      local p = game.get_player(pindex)
+      local ent = p.opened
+      if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
+         kb_adjust_inventory_bar(event, 1)
+      elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
+         Trains.change_instant_schedule_wait_time(5, pindex)
+      elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
+         TrainStops.nearby_train_schedule_add_to_wait_time(5, pindex)
+      elseif ent and ent.type == "inserter" then
+         local result = BuildingVehicleSectors.inserter_hand_stack_size_up(ent)
+         printout(result, pindex)
+      else
+         ScannerEntrypoint.move_subcategory(pindex, -1)
       end
-   )
+   end
 )
 
 EventManager.on_event(
    "fa-s-pageup",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-            kb_adjust_inventory_bar(event, 5)
-         else
-            ScannerEntrypoint.move_within_subcategory(pindex, -1)
-         end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
+         kb_adjust_inventory_bar(event, 5)
+      else
+         ScannerEntrypoint.move_within_subcategory(pindex, -1)
       end
-   )
+   end
 )
 
 EventManager.on_event(
    "fa-c-pageup",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-            kb_adjust_inventory_bar(event, 100)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
-            Trains.change_instant_schedule_wait_time(60, pindex)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
-            TrainStops.nearby_train_schedule_add_to_wait_time(60, pindex)
-         else
-            ScannerEntrypoint.move_category(pindex, -1)
-         end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
+         kb_adjust_inventory_bar(event, 100)
+      elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
+         Trains.change_instant_schedule_wait_time(60, pindex)
+      elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
+         TrainStops.nearby_train_schedule_add_to_wait_time(60, pindex)
+      else
+         ScannerEntrypoint.move_category(pindex, -1)
       end
-   )
+   end
 )
 
 EventManager.on_event(
    "fa-pagedown",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         local p = game.get_player(pindex)
-         local ent = p.opened
-         if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-            kb_adjust_inventory_bar(event, -1)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
-            Trains.change_instant_schedule_wait_time(-5, pindex)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
-            TrainStops.nearby_train_schedule_add_to_wait_time(-5, pindex)
-         elseif ent and ent.type == "inserter" then
-            local result = BuildingVehicleSectors.inserter_hand_stack_size_down(ent)
-            printout(result, pindex)
-         else
-            ScannerEntrypoint.move_subcategory(pindex, 1)
-         end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      local p = game.get_player(pindex)
+      local ent = p.opened
+      if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
+         kb_adjust_inventory_bar(event, -1)
+      elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
+         Trains.change_instant_schedule_wait_time(-5, pindex)
+      elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
+         TrainStops.nearby_train_schedule_add_to_wait_time(-5, pindex)
+      elseif ent and ent.type == "inserter" then
+         local result = BuildingVehicleSectors.inserter_hand_stack_size_down(ent)
+         printout(result, pindex)
+      else
+         ScannerEntrypoint.move_subcategory(pindex, 1)
       end
-   )
+   end
 )
 
 EventManager.on_event(
    "fa-s-pagedown",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-            kb_adjust_inventory_bar(event, -5)
-         else
-            ScannerEntrypoint.move_within_subcategory(pindex, 1)
-         end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
+         kb_adjust_inventory_bar(event, -5)
+      else
+         ScannerEntrypoint.move_within_subcategory(pindex, 1)
       end
-   )
+   end
 )
 
 EventManager.on_event(
    "fa-c-pagedown",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-            kb_adjust_inventory_bar(event, -100)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
-            Trains.change_instant_schedule_wait_time(-60, pindex)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
-            TrainStops.nearby_train_schedule_add_to_wait_time(-60, pindex)
-         else
-            ScannerEntrypoint.move_category(pindex, 1)
-         end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
+         kb_adjust_inventory_bar(event, -100)
+      elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
+         Trains.change_instant_schedule_wait_time(-60, pindex)
+      elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
+         TrainStops.nearby_train_schedule_add_to_wait_time(-60, pindex)
+      else
+         ScannerEntrypoint.move_category(pindex, 1)
       end
-   )
+   end
 )
 
 EventManager.on_event(
    "fa-home",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         ScannerEntrypoint.announce_current_item(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      ScannerEntrypoint.announce_current_item(pindex)
+   end
 )
 
 EventManager.on_event(
    "fa-end",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         ScannerEntrypoint.do_refresh(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      ScannerEntrypoint.do_refresh(pindex)
+   end
 )
 
 EventManager.on_event("fa-s-end", function(event)
@@ -4816,14 +4660,12 @@ end
 
 EventManager.on_event(
    "fa-n",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         ---This can probably be refactored
-         kb_open_circuit_menu(event)
-         ScannerEntrypoint.resort(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      ---This can probably be refactored
+      kb_open_circuit_menu(event)
+      ScannerEntrypoint.resort(pindex)
+   end
 )
 
 --Reprints the last sent string to the Factorio Access Launcher app for the vocalizer to read out.
@@ -4836,12 +4678,10 @@ end
 --Repeats the last thing read out. Not just the scanner.
 EventManager.on_event(
    "fa-c-tab",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_repeat_last_spoken(event)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_repeat_last_spoken(event)
+   end
 )
 
 --Used when a tile has multiple overlapping entities. Reads out the next entity.
@@ -4860,14 +4700,12 @@ end
 --Reads other entities on the same tile? Note: Possibly unneeded
 EventManager.on_event(
    "fa-s-f",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
 
-         if not router:is_ui_open() then kb_tile_cycle(event) end
-      end
-   )
+      if not router:is_ui_open() then kb_tile_cycle(event) end
+   end
 )
 
 --Sets up mod character menus. Cannot actually open the character GUI.
@@ -4920,19 +4758,17 @@ end
 
 EventManager.on_event(
    "fa-e",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         local tick = event.tick
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      local tick = event.tick
 
-         if router:is_ui_open() and storage.players[pindex].last_menu_toggle_tick ~= tick then
-            kb_close_menu(event)
-         elseif not router:is_ui_open() and storage.players[pindex].last_menu_toggle_tick ~= tick then
-            kb_open_player_inventory(event)
-         end
+      if router:is_ui_open() and storage.players[pindex].last_menu_toggle_tick ~= tick then
+         kb_close_menu(event)
+      elseif not router:is_ui_open() and storage.players[pindex].last_menu_toggle_tick ~= tick then
+         kb_open_player_inventory(event)
       end
-   )
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -5259,22 +5095,18 @@ end
 
 EventManager.on_event(
    "fa-tab",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_switch_menu_or_gun(event)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_switch_menu_or_gun(event)
+   end
 )
 
 EventManager.on_event(
    "fa-s-tab",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_reverse_switch_menu_or_gun(event)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_reverse_switch_menu_or_gun(event)
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -5303,12 +5135,10 @@ local function kb_delete(event)
 end
 EventManager.on_event(
    "fa-delete",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_delete(event)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_delete(event)
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -5374,58 +5204,52 @@ end
 
 EventManager.on_event(
    "fa-x",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
 
-         if router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
-            kb_remove_blueprint(event)
-         elseif
-            storage.players[pindex].menu == "building"
-            and storage.players[pindex].building.sectors[storage.players[pindex].building.sector].name == "Fluid"
-         then
-            kb_flush_fluid(event)
-         elseif not router:is_ui_open() and not storage.players[pindex].vanilla_mode then
-            local p = game.get_player(pindex)
-            local stack = p.cursor_stack
-            if stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result then
-               kb_mine_tiles(event)
-            end
-            kb_mine_access_sounds(event)
+      if router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
+         kb_remove_blueprint(event)
+      elseif
+         storage.players[pindex].menu == "building"
+         and storage.players[pindex].building.sectors[storage.players[pindex].building.sector].name == "Fluid"
+      then
+         kb_flush_fluid(event)
+      elseif not router:is_ui_open() and not storage.players[pindex].vanilla_mode then
+         local p = game.get_player(pindex)
+         local stack = p.cursor_stack
+         if stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result then
+            kb_mine_tiles(event)
          end
+         kb_mine_access_sounds(event)
       end
-   )
+   end
 )
 
 --Mines groups of entities depending on the name or type. Includes trees and rocks, rails.
 
 EventManager.on_event(
    "fa-cs-x",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
 
-         if router:is_ui_open() then return end
-         local ent = game.get_player(pindex).selected
-         if ent and ent.valid then AreaOperations.super_mine_area(pindex) end
-      end
-   )
+      if router:is_ui_open() then return end
+      local ent = game.get_player(pindex).selected
+      if ent and ent.valid then AreaOperations.super_mine_area(pindex) end
+   end
 )
 
 --Cut-paste-tool. NOTE: This keybind needs to be the same as that for the cut paste tool (default CONTROL + X). laterdo maybe keybind to game control somehow
 EventManager.on_event(
    "fa-c-x",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local stack = game.get_player(pindex).cursor_stack
-         if stack and stack.valid_for_read and stack.name == "cut-paste-tool" then
-            printout("To disable this tool empty the hand, by pressing SHIFT + Q", pindex)
-         end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local stack = game.get_player(pindex).cursor_stack
+      if stack and stack.valid_for_read and stack.name == "cut-paste-tool" then
+         printout("To disable this tool empty the hand, by pressing SHIFT + Q", pindex)
       end
-   )
+   end
 )
 
 --Left click actions in menus (click_menu)
@@ -6044,23 +5868,21 @@ end
 
 EventManager.on_event(
    "fa-leftbracket",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
 
-         if storage.players[pindex].last_click_tick == event.tick then return end
-         local stack = game.get_player(pindex).cursor_stack
-         local ghost = game.get_player(pindex).cursor_ghost
-         if router:is_ui_open() then
-            kb_click_menu(event)
-         elseif ghost or (stack and stack.valid_for_read and stack.valid) then
-            kb_click_hand(event)
-         elseif storage.players[pindex].vanilla_mode == false then
-            kb_click_entity(event)
-         end
+      if storage.players[pindex].last_click_tick == event.tick then return end
+      local stack = game.get_player(pindex).cursor_stack
+      local ghost = game.get_player(pindex).cursor_ghost
+      if router:is_ui_open() then
+         kb_click_menu(event)
+      elseif ghost or (stack and stack.valid_for_read and stack.valid) then
+         kb_click_hand(event)
+      elseif storage.players[pindex].vanilla_mode == false then
+         kb_click_entity(event)
       end
-   )
+   end
 )
 
 --Right click actions in menus (click_menu)
@@ -6289,21 +6111,19 @@ end
 
 EventManager.on_event(
    "fa-rightbracket",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         if storage.players[pindex].last_click_tick == event.tick then return end
-         local router = UiRouter.get_router(pindex)
-         local stack = game.get_player(pindex).cursor_stack
-         if router:is_ui_open() then
-            kb_click_menu_right(event)
-         elseif stack and stack.valid_for_read and stack.valid then
-            kb_click_hand_right(event)
-         elseif not router:is_ui_one_of({ UiRouter.UI_NAMES.CRAFTING, UiRouter.UI_NAMES.CRAFTING_QUEUE }) then
-            kb_read_entity_status(event)
-         end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if storage.players[pindex].last_click_tick == event.tick then return end
+      local router = UiRouter.get_router(pindex)
+      local stack = game.get_player(pindex).cursor_stack
+      if router:is_ui_open() then
+         kb_click_menu_right(event)
+      elseif stack and stack.valid_for_read and stack.valid then
+         kb_click_hand_right(event)
+      elseif not router:is_ui_one_of({ UiRouter.UI_NAMES.CRAFTING, UiRouter.UI_NAMES.CRAFTING_QUEUE }) then
+         kb_read_entity_status(event)
       end
-   )
+   end
 )
 
 ---Handles menu actions when pressing shift+leftbracket
@@ -6475,31 +6295,29 @@ end
 
 EventManager.on_event(
    "fa-s-leftbracket",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
 
-         local p = game.get_player(pindex)
-         local stack = p.cursor_stack
-         if
-            stack ~= nil
-            and stack.valid_for_read
-            and stack.valid
-            and (
-               not router:is_ui_open()
-               or router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.GUNS })
-               or (router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and p.opened.type == "spider-vehicle")
-            )
-         then
-            kb_equip_item(event)
-         elseif router:is_ui_open() then
-            kb_menu_action(event)
-         end
-         ---Has behavior when menu is opened or closed; let it decide when to run.
-         kb_open_rail_builder(event)
+      local p = game.get_player(pindex)
+      local stack = p.cursor_stack
+      if
+         stack ~= nil
+         and stack.valid_for_read
+         and stack.valid
+         and (
+            not router:is_ui_open()
+            or router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.GUNS })
+            or (router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and p.opened.type == "spider-vehicle")
+         )
+      then
+         kb_equip_item(event)
+      elseif router:is_ui_open() then
+         kb_menu_action(event)
       end
-   )
+      ---Has behavior when menu is opened or closed; let it decide when to run.
+      kb_open_rail_builder(event)
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -6516,15 +6334,13 @@ end
 
 EventManager.on_event(
    "fa-cs-leftbracket",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         if storage.players[pindex].last_click_tick == event.tick then return end
-         if UiRouter.get_router(pindex):is_ui_open() then return end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if storage.players[pindex].last_click_tick == event.tick then return end
+      if UiRouter.get_router(pindex):is_ui_open() then return end
 
-         kb_repair_area(event)
-      end
-   )
+      kb_repair_area(event)
+   end
 )
 
 --Default is control clicking
@@ -6544,49 +6360,43 @@ end
 
 EventManager.on_event(
    "fa-c-leftbracket",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         local stack = game.get_player(pindex).cursor_stack
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      local stack = game.get_player(pindex).cursor_stack
 
-         ---Add the selected technology to the end of the research queue instead of switching directly to it
-         if router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
-            ---From event add-to-research-queue-end
-            Research.menu_enqueue(pindex, nil)
+      ---Add the selected technology to the end of the research queue instead of switching directly to it
+      if router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
+         ---From event add-to-research-queue-end
+         Research.menu_enqueue(pindex, nil)
          --[[Imitates vanilla behavior: 
    * Control click an item in an inventory to try smart transfer ALL of it. 
    * Control click an empty slot to try to smart transfer ALL items from that inventory.
    ]]
-         elseif
-            router:is_ui_open() and router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
-         then
-            ---From event transfer-all-stacks
-            InventoryTransfers.do_multi_stack_transfer(1, pindex)
-         elseif stack ~= nil and stack.valid_for_read and stack.valid then
-            kb_alternate_build(event)
-         end
+      elseif router:is_ui_open() and router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
+         ---From event transfer-all-stacks
+         InventoryTransfers.do_multi_stack_transfer(1, pindex)
+      elseif stack ~= nil and stack.valid_for_read and stack.valid then
+         kb_alternate_build(event)
       end
-   )
+   end
 )
 
 EventManager.on_event(
    "fa-c-rightbracket",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
 
-         --[[Imitates vanilla behavior: 
+      --[[Imitates vanilla behavior: 
    * Control click an item in an inventory to try smart transfer HALF of it. 
    * Control click an empty slot to try to smart transfer HALF of all items from that inventory.
    ]]
-         if router:is_ui_open() and router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-            ---From event transfer-half-of-all-stacks
-            InventoryTransfers.do_multi_stack_transfer(0.5, pindex)
-         end
+      if router:is_ui_open() and router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
+         ---From event transfer-half-of-all-stacks
+         InventoryTransfers.do_multi_stack_transfer(0.5, pindex)
       end
-   )
+   end
 )
 
 --Sets entity filters forlitters, inserters, contant combinators, infinity chests
@@ -6640,54 +6450,46 @@ end
 --Sets inventory slot filters
 EventManager.on_event(
    "fa-a-leftbracket",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
 
-         -- Conflicts with setting splitter filters.  Will be fixed by #262
-         if router:is_ui_open() then
-            set_selected_inventory_slot_filter(pindex)
-         else
-         end
+      -- Conflicts with setting splitter filters.  Will be fixed by #262
+      if router:is_ui_open() then
+         set_selected_inventory_slot_filter(pindex)
+      else
       end
-   )
+   end
 )
 
 EventManager.on_event(
    "fa-ca-rightbracket",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         KruiseKontrol.activate_kk(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      KruiseKontrol.activate_kk(pindex)
+   end
 )
 
 EventManager.on_event(
    "fa-a-left",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local ent = game.get_player(pindex).selected
-         if not ent then return end
-         --Build left turns on end rails
-         if ent.name == "straight-rail" then RailBuilder.build_rail_turn_left_45_degrees(ent, pindex) end
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local ent = game.get_player(pindex).selected
+      if not ent then return end
+      --Build left turns on end rails
+      if ent.name == "straight-rail" then RailBuilder.build_rail_turn_left_45_degrees(ent, pindex) end
+   end
 )
 
 EventManager.on_event(
    "fa-a-right",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local ent = game.get_player(pindex).selected
-         if not ent then return end
-         --Build left turns on end rails
-         if ent.name == "straight-rail" then RailBuilder.build_rail_turn_right_45_degrees(ent, pindex) end
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local ent = game.get_player(pindex).selected
+      if not ent then return end
+      --Build left turns on end rails
+      if ent.name == "straight-rail" then RailBuilder.build_rail_turn_right_45_degrees(ent, pindex) end
+   end
 )
 
 --Calls function to notify if items are being picked up via vanilla F key.
@@ -6769,18 +6571,16 @@ end
 
 EventManager.on_event(
    "fa-f",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local p = game.get_player(pindex)
-         local bp = p.cursor_stack
-         if bp and bp.valid_for_read and bp.is_blueprint then
-            kb_flip_blueprint_horizontal_info(event)
-         else
-            kb_read_item_pickup_state(event)
-         end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local p = game.get_player(pindex)
+      local bp = p.cursor_stack
+      if bp and bp.valid_for_read and bp.is_blueprint then
+         kb_flip_blueprint_horizontal_info(event)
+      else
+         kb_read_item_pickup_state(event)
       end
-   )
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -6823,122 +6623,106 @@ end
 
 EventManager.on_event(
    "fa-g",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
 
-         local p = game.get_player(pindex)
-         local bp = p.cursor_stack
-         if bp ~= nil and bp.valid_for_read and bp.is_blueprint then
-            kb_flip_blueprint_vertical_info(event)
-         else
-            kb_read_health_and_armor_stats(event)
-         end
+      local p = game.get_player(pindex)
+      local bp = p.cursor_stack
+      if bp ~= nil and bp.valid_for_read and bp.is_blueprint then
+         kb_flip_blueprint_vertical_info(event)
+      else
+         kb_read_health_and_armor_stats(event)
       end
-   )
+   end
 )
 
 EventManager.on_event(
    "fa-r",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         if router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
-            ---From event inventory-read-weapons-data
-            Equipment.guns_menu_open(pindex)
-         else
-            ---From event rotate-building
-            BuildingTools.rotate_building_info_read(event, true)
-         end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      if router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
+         ---From event inventory-read-weapons-data
+         Equipment.guns_menu_open(pindex)
+      else
+         ---From event rotate-building
+         BuildingTools.rotate_building_info_read(event, true)
       end
-   )
+   end
 )
 
 EventManager.on_event(
    "fa-s-r",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
 
-         if router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.GUNS }) then
-            --Reload weapons
-            local result = Equipment.reload_weapons(pindex)
-            --game.get_player(pindex).print(result)
-            printout(result, pindex)
-         else
-            BuildingTools.rotate_building_info_read(event, false)
-         end
+      if router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.GUNS }) then
+         --Reload weapons
+         local result = Equipment.reload_weapons(pindex)
+         --game.get_player(pindex).print(result)
+         printout(result, pindex)
+      else
+         BuildingTools.rotate_building_info_read(event, false)
       end
-   )
+   end
 )
 
 ---remove all weapons and ammo
 EventManager.on_event(
    "fa-cs-r",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
 
-         if router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.GUNS }) then
-            local result = Equipment.remove_weapons_and_ammo(pindex)
-            --game.get_player(pindex).print(result)
-            printout(result, pindex)
-         end
+      if router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.GUNS }) then
+         local result = Equipment.remove_weapons_and_ammo(pindex)
+         --game.get_player(pindex).print(result)
+         printout(result, pindex)
       end
-   )
+   end
 )
 
 --Reads the custom info for an item selected. If you are driving, it returns custom vehicle info
 EventManager.on_event(
    "fa-y",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
 
-         ItemDescriptions.read_item_info(event)
-      end
-   )
+      ItemDescriptions.read_item_info(event)
+   end
 )
 
 --Reads the custom info for the last indexed scanner item
 EventManager.on_event(
    "fa-s-y",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
 
-         ItemDescriptions.read_last_indexed_item_info(event)
-      end
-   )
+      ItemDescriptions.read_last_indexed_item_info(event)
+   end
 )
 
 --Read production statistics info for the selected item, in the hand or else selected in the inventory menu
 EventManager.on_event(
    "fa-u",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         if game.get_player(pindex).driving then return end
-         local str = FaInfo.selected_item_production_stats_info(pindex)
-         printout(str, pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if game.get_player(pindex).driving then return end
+      local str = FaInfo.selected_item_production_stats_info(pindex)
+      printout(str, pindex)
+   end
 )
 
 EventManager.on_event(
    "fa-s-u",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         FaInfo.read_pollution_level_at_position(Viewpoint.get_viewpoint(pindex):get_cursor_pos(), pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      FaInfo.read_pollution_level_at_position(Viewpoint.get_viewpoint(pindex):get_cursor_pos(), pindex)
+   end
 )
 
 --Gives in-game time. The night darkness is from 11 to 13, and peak daylight hours are 18 to 6.
@@ -6966,44 +6750,36 @@ end
 
 EventManager.on_event(
    "fa-t",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_read_time_and_research_progress(event)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_read_time_and_research_progress(event)
+   end
 )
 
 EventManager.on_event(
    "fa-a-q",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         Research.queue_announce(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      Research.queue_announce(pindex)
+   end
 )
 
 --Clear the research queue
 EventManager.on_event(
    "fa-cas-q",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         Research.clear_queue(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      Research.clear_queue(pindex)
+   end
 )
 
 EventManager.on_event(
    "fa-f1",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         game.auto_save("manual")
-         printout("Saving Game, please wait 3 seconds.", pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      game.auto_save("manual")
+      printout("Saving Game, please wait 3 seconds.", pindex)
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -7020,13 +6796,11 @@ end
 
 EventManager.on_event(
    "fa-a-w",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local p = game.get_player(pindex)
-         if p.driving == true and p.vehicle and p.vehicle.valid then kb_honk(event) end
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local p = game.get_player(pindex)
+      if p.driving == true and p.vehicle and p.vehicle.valid then kb_honk(event) end
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -7044,14 +6818,12 @@ end
 --Toggle building while walking
 EventManager.on_event(
    "fa-c-b",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
 
-         if not router:is_ui_open() then kb_toggle_build_lock(event) end
-      end
-   )
+      if not router:is_ui_open() then kb_toggle_build_lock(event) end
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -7077,12 +6849,10 @@ end
 
 EventManager.on_event(
    "fa-ca-v",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_toggle_vanilla_mode(event)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_toggle_vanilla_mode(event)
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -7104,12 +6874,10 @@ end
 
 EventManager.on_event(
    "fa-ca-c",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_toggle_cursor_hiding(event)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_toggle_cursor_hiding(event)
+   end
 )
 
 ---nothing else uses this; perhaps merge this into kb_clear_renders
@@ -7137,12 +6905,10 @@ end
 
 EventManager.on_event(
    "fa-ca-r",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_clear_renders(event)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_clear_renders(event)
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -7155,12 +6921,10 @@ end
 
 EventManager.on_event(
    "fa-c-end",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_recalibrate_zoom(event)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_recalibrate_zoom(event)
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -7186,42 +6950,34 @@ end
 
 EventManager.on_event(
    "fa-a-z",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_set_zoom_mode(event, 1)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_set_zoom_mode(event, 1)
+   end
 )
 
 EventManager.on_event(
    "fa-as-z",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_set_zoom_mode(event, 2)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_set_zoom_mode(event, 2)
+   end
 )
 
 EventManager.on_event(
    "fa-ca-z",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_set_zoom_mode(event, 0)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_set_zoom_mode(event, 0)
+   end
 )
 
 EventManager.on_event(
    "fa-mouse-button-3",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         game.get_player(pindex).game_view_settings.update_entity_selection = true
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      game.get_player(pindex).game_view_settings.update_entity_selection = true
+   end
 )
 
 local function kb_pipette_tool_info(event)
@@ -7242,22 +6998,18 @@ end
 
 EventManager.on_event(
    "fa-q",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_pipette_tool_info(event)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_pipette_tool_info(event)
+   end
 )
 
 EventManager.on_event(
    "fa-s-q",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         read_hand(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      read_hand(pindex)
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -7278,12 +7030,10 @@ end
 --Empties hand and opens the item from the player/building inventory
 EventManager.on_event(
    "fa-c-q",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_locate_hand_in_inventory(event)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_locate_hand_in_inventory(event)
+   end
 )
 
 ---Clears the item in hand and then locates its recipe from the crafting menu.
@@ -7356,24 +7106,20 @@ end
 --Empties hand and opens the item from the crafting menu
 EventManager.on_event(
    "fa-cs-q",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         locate_hand_in_crafting_menu(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      locate_hand_in_crafting_menu(pindex)
+   end
 )
 
 --ENTER KEY by default
 EventManager.on_event(
    "fa-c-f",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         if event.tick - storage.players[pindex].last_menu_search_tick < 5 then return end
-         MenuSearch.open_search_box(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if event.tick - storage.players[pindex].last_menu_search_tick < 5 then return end
+      MenuSearch.open_search_box(pindex)
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -7394,22 +7140,18 @@ end
 
 EventManager.on_event(
    "fa-s-enter",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_menu_search_again(event, true)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_menu_search_again(event, true)
+   end
 )
 
 EventManager.on_event(
    "fa-c-enter",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         kb_menu_search_again(event, false)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_menu_search_again(event, false)
+   end
 )
 
 EventManager.on_event("fa-grave", function(event)
@@ -7438,34 +7180,28 @@ end
 
 EventManager.on_event(
    "fa-p",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         if storage.players[pindex].vanilla_mode then return end
-         kb_open_warnings_menu(event)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if storage.players[pindex].vanilla_mode then return end
+      kb_open_warnings_menu(event)
+   end
 )
 
 EventManager.on_event(
    "fa-s-p",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         FaInfo.read_nearest_damaged_ent_info(Viewpoint.get_viewpoint(pindex):get_cursor_pos(), pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      FaInfo.read_nearest_damaged_ent_info(Viewpoint.get_viewpoint(pindex):get_cursor_pos(), pindex)
+   end
 )
 
 EventManager.on_event(
    "fa-v",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         if storage.players[pindex].vanilla_mode then return end
-         TravelTools.fast_travel_menu_open(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if storage.players[pindex].vanilla_mode then return end
+      TravelTools.fast_travel_menu_open(pindex)
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -7481,46 +7217,38 @@ end
 
 EventManager.on_event(
    "fa-as-left",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local ent = game.get_player(pindex).selected
-         if ent and ent.valid and ent.type == "splitter" then kb_set_splitter_priority(event, ent, true, true) end
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local ent = game.get_player(pindex).selected
+      if ent and ent.valid and ent.type == "splitter" then kb_set_splitter_priority(event, ent, true, true) end
+   end
 )
 
 EventManager.on_event(
    "fa-as-right",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local ent = game.get_player(pindex).selected
-         if ent and ent.valid and ent.type == "splitter" then kb_set_splitter_priority(event, ent, true, false) end
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local ent = game.get_player(pindex).selected
+      if ent and ent.valid and ent.type == "splitter" then kb_set_splitter_priority(event, ent, true, false) end
+   end
 )
 
 EventManager.on_event(
    "fa-ca-left",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local ent = game.get_player(pindex).selected
-         if ent and ent.valid and ent.type == "splitter" then kb_set_splitter_priority(event, ent, false, true) end
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local ent = game.get_player(pindex).selected
+      if ent and ent.valid and ent.type == "splitter" then kb_set_splitter_priority(event, ent, false, true) end
+   end
 )
 
 EventManager.on_event(
    "fa-ca-right",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local ent = game.get_player(pindex).selected
-         if ent and ent.valid and ent.type == "splitter" then kb_set_splitter_priority(event, ent, false, false) end
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local ent = game.get_player(pindex).selected
+      if ent and ent.valid and ent.type == "splitter" then kb_set_splitter_priority(event, ent, false, false) end
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -7557,14 +7285,12 @@ end
 -- Control G is used to connect rolling stock
 EventManager.on_event(
    "fa-c-g",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         if router:is_ui_open() then return end
-         kb_connect_rail_vehicles(event)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      if router:is_ui_open() then return end
+      kb_connect_rail_vehicles(event)
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -7616,41 +7342,34 @@ end
 --SHIFT + G is used to disconnect rolling stock
 EventManager.on_event(
    "fa-s-g",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
-         if router:is_ui_open() then
-            kb_inventory_read_equipment_list(event)
-         else
-            kb_disconnect_rail_vehicles(event)
-         end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      if router:is_ui_open() then
+         kb_inventory_read_equipment_list(event)
+      else
+         kb_disconnect_rail_vehicles(event)
       end
-   )
+   end
 )
 
 EventManager.on_event(
    "fa-cs-g",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local router = UiRouter.get_router(pindex)
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
 
-         local vehicle = nil
+      local vehicle = nil
 
-         if
-            router:is_ui_open(UiRouter.UI_NAMES.INVENTORY)
-            or (
-               router:is_ui_open(UiRouter.UI_NAMES.VEHICLE)
-               and game.get_player(pindex).opened.type == "spider-vehicle"
-            )
-         then
-            local result = Equipment.remove_equipment_and_armor(pindex)
-            --game.get_player(pindex).print(result)--
-            printout(result, pindex)
-         end
+      if
+         router:is_ui_open(UiRouter.UI_NAMES.INVENTORY)
+         or (router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle")
+      then
+         local result = Equipment.remove_equipment_and_armor(pindex)
+         --game.get_player(pindex).print(result)--
+         printout(result, pindex)
       end
-   )
+   end
 )
 
 ---@param pindex number
@@ -7685,20 +7404,18 @@ end
 --Runs before shooting a weapon to check for selected atomic bombs and the target distance
 EventManager.on_event(
    "fa-space",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local pindex = event.player_index
-         local ent = find_rocket_silo(pindex)
-         --Try to launch from the silo
-         if ent ~= nil and ent.valid and ent.name == "rocket-silo" then
-            ---@diagnostic disable-next-line: param-type-mismatch
-            kb_launch_rocket(event, ent)
-         else
-            Combat.run_atomic_bomb_checks(pindex)
-         end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local pindex = event.player_index
+      local ent = find_rocket_silo(pindex)
+      --Try to launch from the silo
+      if ent ~= nil and ent.valid and ent.name == "rocket-silo" then
+         ---@diagnostic disable-next-line: param-type-mismatch
+         kb_launch_rocket(event, ent)
+      else
+         Combat.run_atomic_bomb_checks(pindex)
       end
-   )
+   end
 )
 
 ---@param event EventData.CustomInputEvent
@@ -7718,173 +7435,143 @@ end
 --Toggle whether rockets are launched automatically when they have cargo
 EventManager.on_event(
    "fa-c-space",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local ent = find_rocket_silo(pindex)
-         --Try to launch from the silo
-         ---@diagnostic disable-next-line: param-type-mismatch
-         if ent ~= nil and ent.valid and ent.name == "rocket-silo" then kb_toggle_auto_launch_with_cargo(event, ent) end
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local ent = find_rocket_silo(pindex)
+      --Try to launch from the silo
+      ---@diagnostic disable-next-line: param-type-mismatch
+      if ent ~= nil and ent.valid and ent.name == "rocket-silo" then kb_toggle_auto_launch_with_cargo(event, ent) end
+   end
 )
 
 --Help key and tutorial system WIP
 EventManager.on_event(
    "fa-h",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         TutorialSystem.read_current_step(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      TutorialSystem.read_current_step(pindex)
+   end
 )
 
 EventManager.on_event(
    "fa-c-h",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         TutorialSystem.next_step(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      TutorialSystem.next_step(pindex)
+   end
 )
 
 EventManager.on_event(
    "fa-s-h",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         TutorialSystem.prev_step(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      TutorialSystem.prev_step(pindex)
+   end
 )
 
 EventManager.on_event(
    "fa-ca-h",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         TutorialSystem.next_chapter(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      TutorialSystem.next_chapter(pindex)
+   end
 )
 
 EventManager.on_event(
    "fa-as-h",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         TutorialSystem.prev_chapter(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      TutorialSystem.prev_chapter(pindex)
+   end
 )
 
 EventManager.on_event(
    "fa-cs-h",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         TutorialSystem.toggle_header_detail(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      TutorialSystem.toggle_header_detail(pindex)
+   end
 )
 
 EventManager.on_event(
    "fa-a-h",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         TutorialSystem.read_other_once(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      TutorialSystem.read_other_once(pindex)
+   end
 )
 
 --**Use this key to test stuff (ALT + G)
 EventManager.on_event(
    "fa-a-g",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local p = game.get_player(pindex)
-         local pex = storage.players[pindex]
-         local ent = p.selected
-         local stack = game.get_player(pindex).cursor_stack
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local p = game.get_player(pindex)
+      local pex = storage.players[pindex]
+      local ent = p.selected
+      local stack = game.get_player(pindex).cursor_stack
 
-         if stack.is_blueprint_book then Blueprints.print_book_slots(stack) end
-      end
-   )
+      if stack.is_blueprint_book then Blueprints.print_book_slots(stack) end
+   end
 )
 
 EventManager.on_event(
    "fa-l",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local p = game.get_player(pindex)
-         if p.character == nil then return end
-         if p.driving == false then
-            WorkerRobots.logistics_info_key_handler(pindex)
-         else
-            Driving.pda_read_assistant_toggled_info(pindex)
-         end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local p = game.get_player(pindex)
+      if p.character == nil then return end
+      if p.driving == false then
+         WorkerRobots.logistics_info_key_handler(pindex)
+      else
+         Driving.pda_read_assistant_toggled_info(pindex)
       end
-   )
+   end
 )
 
 EventManager.on_event(
    "fa-s-l",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         if game.get_player(pindex).character == nil then return end
-         WorkerRobots.logistics_request_increment_min_handler(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if game.get_player(pindex).character == nil then return end
+      WorkerRobots.logistics_request_increment_min_handler(pindex)
+   end
 )
 
 EventManager.on_event(
    "fa-c-l",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         if game.get_player(pindex).character == nil then return end
-         WorkerRobots.logistics_request_decrement_min_handler(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if game.get_player(pindex).character == nil then return end
+      WorkerRobots.logistics_request_decrement_min_handler(pindex)
+   end
 )
 
 EventManager.on_event(
    "fa-as-l",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         if game.get_player(pindex).character == nil then return end
-         WorkerRobots.logistics_request_increment_max_handler(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if game.get_player(pindex).character == nil then return end
+      WorkerRobots.logistics_request_increment_max_handler(pindex)
+   end
 )
 
 EventManager.on_event(
    "fa-ca-l",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         if game.get_player(pindex).character == nil then return end
-         WorkerRobots.logistics_request_decrement_max_handler(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if game.get_player(pindex).character == nil then return end
+      WorkerRobots.logistics_request_decrement_max_handler(pindex)
+   end
 )
 
 EventManager.on_event(
    "fa-cas-l",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         if game.get_player(pindex).character == nil then return end
-         WorkerRobots.logistics_request_clear_handler(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if game.get_player(pindex).character == nil then return end
+      WorkerRobots.logistics_request_clear_handler(pindex)
+   end
 )
 
 -- Reload mod scripts (control stage only)
@@ -7893,16 +7580,13 @@ EventManager.on_event(
 -- - Prototypes (data.lua, data-updates.lua, data-final-fixes.lua)
 -- - Graphics/sounds
 -- For a full reload including translations, Factorio must be restarted.
-EventManager.on_event(
-   "fa-cas-r",
-   EventManager.create_player_handler(function(event, pindex)
-      printout(
-         "Reloading mod scripts (control.lua). Note: This does not reload localizations or prototypes. For full reload including translations, restart Factorio.",
-         pindex
-      )
-      game.reload_script()
-   end)
-)
+EventManager.on_event("fa-cas-r", function(event, pindex)
+   printout(
+      "Reloading mod scripts (control.lua). Note: This does not reload localizations or prototypes. For full reload including translations, restart Factorio.",
+      pindex
+   )
+   game.reload_script()
+end)
 
 EventManager.on_event("fa-a-l", function(event)
    local pindex = event.player_index
@@ -7922,18 +7606,16 @@ end)
 
 EventManager.on_event(
    "fa-o",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         local p = game.get_player(pindex)
-         if p.character == nil then return end
-         if p.driving == false then
-            WorkerRobots.send_selected_stack_to_logistic_trash(pindex)
-         else
-            Driving.pda_read_cruise_control_toggled_info(event.player_index)
-         end
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local p = game.get_player(pindex)
+      if p.character == nil then return end
+      if p.driving == false then
+         WorkerRobots.send_selected_stack_to_logistic_trash(pindex)
+      else
+         Driving.pda_read_cruise_control_toggled_info(event.player_index)
       end
-   )
+   end
 )
 
 EventManager.on_event("fa-c-o", function(event)
@@ -7945,10 +7627,8 @@ end)
 
 EventManager.on_event(
    "fa-kk-cancel",
-   EventManager.create_player_handler(
-      ---@param event EventData.CustomInputEvent
-      function(event, pindex)
-         KruiseKontrol.cancel_kk(pindex)
-      end
-   )
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      KruiseKontrol.cancel_kk(pindex)
+   end
 )
