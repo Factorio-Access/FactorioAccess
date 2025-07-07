@@ -205,7 +205,7 @@ function mod.localise_item_or_fluid(what, protos)
    if type(what) == "userdata" then
       ---@type LuaItemStack
       local stack = what --[[@as LuaItemStack ]]
-      assert(stack.object_name() == "LuaItemStack")
+      assert(stack.object_name == "LuaItemStack")
 
       final_opts = {
          name = stack.prototype,
