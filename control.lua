@@ -3702,44 +3702,82 @@ local function read_coords(pindex, start_phrase)
          local speed = vehicle.speed * 215
          local message = Speech.new()
 
+         if start_phrase then message:fragment(start_phrase) end
+
          if vehicle.type ~= "spider-vehicle" then
             if speed > 0 then
-               message:fragment(
-                  result
-                     .. " heading "
-                     .. FaUtils.get_heading_info(vehicle)
-                     .. " at "
-                     .. math.floor(speed)
-                     .. " kilometers per hour "
-               )
+               message:fragment({
+                  "fa.vehicle-heading",
+                  Localising.get_localised_name_with_fallback(vehicle),
+                  FaUtils.get_heading_info(vehicle),
+                  tostring(math.floor(speed)),
+               })
             elseif speed < 0 then
-               message:fragment(
-                  result
-                     .. " facing "
-                     .. FaUtils.get_heading_info(vehicle)
-                     .. " while reversing at "
-                     .. math.floor(-speed)
-                     .. " kilometers per hour "
-               )
+               message:fragment({
+                  "fa.vehicle-reversing",
+                  Localising.get_localised_name_with_fallback(vehicle),
+                  FaUtils.get_heading_info(vehicle),
+                  tostring(math.floor(-speed)),
+               })
             else
-               message:fragment(result .. " parked facing " .. FaUtils.get_heading_info(vehicle))
+               message:fragment({
+                  "fa.vehicle-parked",
+                  Localising.get_localised_name_with_fallback(vehicle),
+                  FaUtils.get_heading_info(vehicle),
+               })
             end
          else
-            message:fragment(result .. " moving at " .. math.floor(speed) .. " kilometers per hour ")
+            message:fragment({
+               "fa.vehicle-spider-moving",
+               Localising.get_localised_name_with_fallback(vehicle),
+               tostring(math.floor(speed)),
+            })
          end
 
-         message:fragment(" in ")
-         message:fragment(Localising.get_localised_name_with_fallback(vehicle))
-         message:fragment(" at point " .. math.floor(vehicle.position.x) .. ", " .. math.floor(vehicle.position.y))
+         message:fragment({
+            "fa.vehicle-position-in",
+            Localising.get_localised_name_with_fallback(vehicle),
+            tostring(math.floor(vehicle.position.x)),
+            tostring(math.floor(vehicle.position.y)),
+         })
 
          Speech.speak(pindex, message:build())
       else
          --Simply give coords (floored for the readout, extra precision for the console)
          local location = FaUtils.get_entity_part_at_cursor(pindex)
-         if location == nil then location = " " end
-         result = result .. " " .. location .. " at " .. math.floor(marked_pos.x) .. ", " .. math.floor(marked_pos.y)
+         local message = Speech.new()
+
+         if start_phrase then message:fragment(start_phrase) end
+
+         if location and location ~= " " then
+            message:fragment({
+               "fa.coordinates-at-with-location",
+               "",
+               location,
+               tostring(math.floor(marked_pos.x)),
+               tostring(math.floor(marked_pos.y)),
+            })
+         else
+            message:fragment({
+               "fa.coordinates-at",
+               "",
+               tostring(math.floor(marked_pos.x)),
+               tostring(math.floor(marked_pos.y)),
+            })
+         end
+
+         -- Also print to console with extra precision
          game.get_player(pindex).print(
-            result .. "\n (" .. math.floor(marked_pos.x * 10) / 10 .. ", " .. math.floor(marked_pos.y * 10) / 10 .. ")",
+            (start_phrase or "")
+               .. " at "
+               .. math.floor(marked_pos.x)
+               .. ", "
+               .. math.floor(marked_pos.y)
+               .. "\n ("
+               .. math.floor(marked_pos.x * 10) / 10
+               .. ", "
+               .. math.floor(marked_pos.y * 10) / 10
+               .. ")",
             { volume_modifier = 0 }
          )
          --Draw the point
@@ -3765,28 +3803,42 @@ local function read_coords(pindex, start_phrase)
             local dir = storage.players[pindex].building_direction
             turn_to_cursor_direction_cardinal(pindex)
             local p_dir = storage.players[pindex].player_direction
-            local preview_str = ", preview is "
+
+            message:fragment({ "fa.build-preview-intro" })
+
+            -- Width dimension
+            local width_tiles
             if dir == dirs.north or dir == dirs.south then
-               preview_str = preview_str .. stack.prototype.place_result.tile_width .. " tiles wide "
-            elseif dir == dirs.east or dir == dirs.west then
-               preview_str = preview_str .. stack.prototype.place_result.tile_height .. " tiles wide "
+               width_tiles = stack.prototype.place_result.tile_width
+            else
+               width_tiles = stack.prototype.place_result.tile_height
             end
+            message:fragment({ "fa.build-preview-wide", tostring(width_tiles) })
+
+            -- Width direction
             if cursor_enabled or p_dir == dirs.east or p_dir == dirs.south or p_dir == dirs.north then
-               preview_str = preview_str .. " to the East "
+               message:fragment({ "fa.build-preview-east" })
             elseif not cursor_enabled and p_dir == dirs.west then
-               preview_str = preview_str .. " to the West "
+               message:fragment({ "fa.build-preview-west" })
             end
+
+            message:fragment({ "fa.build-preview-and" })
+
+            -- Height dimension
+            local height_tiles
             if dir == dirs.north or dir == dirs.south then
-               preview_str = preview_str .. " and " .. stack.prototype.place_result.tile_height .. " tiles high "
-            elseif dir == dirs.east or dir == dirs.west then
-               preview_str = preview_str .. " and " .. stack.prototype.place_result.tile_width .. " tiles high "
+               height_tiles = stack.prototype.place_result.tile_height
+            else
+               height_tiles = stack.prototype.place_result.tile_width
             end
+            message:fragment({ "fa.build-preview-high", tostring(height_tiles) })
+
+            -- Height direction
             if cursor_enabled or p_dir == dirs.east or p_dir == dirs.south or p_dir == dirs.west then
-               preview_str = preview_str .. " to the South "
+               message:fragment({ "fa.build-preview-south" })
             elseif not cursor_enabled and p_dir == dirs.north then
-               preview_str = preview_str .. " to the North "
+               message:fragment({ "fa.build-preview-north" })
             end
-            result = result .. preview_str
          elseif
             stack
             and stack.valid_for_read
@@ -3798,30 +3850,17 @@ local function read_coords(pindex, start_phrase)
             local left_top, right_bottom, build_pos = Blueprints.get_blueprint_corners(pindex, false)
             local bp_dim_1 = right_bottom.x - left_top.x
             local bp_dim_2 = right_bottom.y - left_top.y
-            local preview_str = ", blueprint preview is "
-               .. bp_dim_1
-               .. " tiles wide to the East and "
-               .. bp_dim_2
-               .. " tiles high to the South"
-            result = result .. preview_str
+            message:fragment({ "fa.blueprint-preview", tostring(bp_dim_1), tostring(bp_dim_2) })
          elseif stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result ~= nil then
             --Paving preview size
-            local preview_str = ", paving preview "
-            preview_str = ", paving preview is "
-               .. (vp:get_cursor_size() * 2 + 1)
-               .. " by "
-               .. (vp:get_cursor_size() * 2 + 1)
-               .. " tiles, centered on this tile. "
+            local size = vp:get_cursor_size() * 2 + 1
             if cursor_enabled and storage.players[pindex].preferences.tiles_placed_from_northwest_corner then
-               preview_str = ", paving preview extends "
-                  .. (vp:get_cursor_size() * 2 + 1)
-                  .. " east and "
-                  .. (vp:get_cursor_size() * 2 + 1)
-                  .. " south, starting from this tile. "
+               message:fragment({ "fa.paving-preview-northwest", tostring(size), tostring(size) })
+            else
+               message:fragment({ "fa.paving-preview-centered", tostring(size), tostring(size) })
             end
-            result = result .. preview_str
          end
-         Speech.speak(pindex, result)
+         Speech.speak(pindex, message:build())
       end
    elseif
       router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.PLAYER_TRASH })
@@ -3859,10 +3898,7 @@ local function read_coords(pindex, start_phrase)
          y = y - 1
       end
       local msg = Speech.new()
-      if result ~= "" then
-         msg:fragment(result)
-         msg:fragment(" ")
-      end
+      if result then msg:fragment(result) end
       msg:fragment({ "fa.building-slot-position", tostring(x), tostring(y) })
       Speech.speak(pindex, msg:build())
    elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
@@ -3870,35 +3906,30 @@ local function read_coords(pindex, start_phrase)
       local recipe =
          storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index]
       local msg = Speech.new()
-      if result ~= "" then
-         msg:fragment(result)
-         msg:fragment(" ")
-      end
-      msg:fragment("Ingredients: ")
+      if result then msg:fragment(result) end
+      msg:fragment({ "fa.recipe-ingredients" })
       for i, v in pairs(recipe.ingredients) do
          ---@type LuaItemPrototype | LuaFluidPrototype
          local proto = prototypes.item[v.name]
          if proto == nil then proto = prototypes.fluid[v.name] end
          local name = Localising.get_localised_name_with_fallback(proto)
-         msg:fragment(", ")
+         if i > 1 then msg:fragment(", ") end
          msg:fragment(name)
-         msg:fragment(" times ")
+         msg:fragment({ "fa.bvs-times" })
          msg:fragment(tostring(v.amount))
       end
-      msg:fragment(", Products: ")
+      msg:fragment({ "fa.recipe-products" })
       for i, v in pairs(recipe.products) do
          ---@type LuaItemPrototype | LuaFluidPrototype
          local proto = prototypes.item[v.name]
          if proto == nil then proto = prototypes.fluid[v.name] end
          local name = Localising.get_localised_name_with_fallback(proto)
-         msg:fragment(", ")
+         if i > 1 then msg:fragment(", ") end
          msg:fragment(name)
-         msg:fragment(" times ")
+         msg:fragment({ "fa.bvs-times" })
          msg:fragment(tostring(v.amount))
       end
-      msg:fragment(", craft time ")
-      msg:fragment(tostring(recipe.energy))
-      msg:fragment(" seconds by default.")
+      msg:fragment({ "fa.recipe-craft-time", tostring(recipe.energy) })
       Speech.speak(pindex, msg:build())
    elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
       Research.menu_describe_costs(pindex)
@@ -3911,10 +3942,7 @@ local function read_coords(pindex, start_phrase)
       local recipe =
          storage.players[pindex].building.recipe_list[storage.players[pindex].building.category][storage.players[pindex].building.index]
       local msg = Speech.new()
-      if result ~= "" then
-         msg:fragment(result)
-         msg:fragment(" ")
-      end
+      if result then msg:fragment(result) end
       msg:fragment("Ingredients: ")
       for i, v in pairs(recipe.ingredients) do
          ---@type LuaItemPrototype | LuaFluidPrototype
