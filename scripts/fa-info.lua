@@ -1186,9 +1186,8 @@ function mod.ent_info(pindex, ent, is_scanner)
    if ent.type == "furnace" then
       local output_stack = ent.get_output_inventory()[1]
       if output_stack and output_stack.valid_for_read then
-         ctx.message:fragment(output_stack.count)
-         ctx.message:fragment(output_stack.name)
-         ctx.message:fragment("ready,")
+         local item_str = Localising.localise_item(output_stack)
+         ctx.message:fragment({ "fa.ent-info-furnace-output-ready", item_str })
          ctx.message:list_item()
       end
    end
