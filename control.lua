@@ -5212,6 +5212,18 @@ EventManager.on_event(
    end
 )
 
+--Area mining for obstacles, trees, rocks, etc.
+EventManager.on_event(
+   "fa-s-x",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+
+      if router:is_ui_open() then return end
+      AreaOperations.mine_area(pindex)
+   end
+)
+
 --Mines groups of entities depending on the name or type. Includes trees and rocks, rails.
 
 EventManager.on_event(
