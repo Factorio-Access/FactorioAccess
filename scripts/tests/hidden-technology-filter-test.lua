@@ -1,5 +1,6 @@
 local Research = require("scripts.research")
 local TestRegistry = require("scripts.test-registry")
+local Speech = require("scripts.speech")
 local describe = TestRegistry.describe
 local it = TestRegistry.it
 
@@ -36,7 +37,6 @@ describe("Hidden Technology Filter", function()
          -- If our filter works, searching for a hidden tech name should fail
          for tech_name, _ in pairs(hidden_tech_names) do
             -- Capture the search result
-            local Speech = require("scripts.speech")
             Speech.start_capture()
 
             -- Try to search for the hidden technology

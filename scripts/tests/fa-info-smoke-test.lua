@@ -3,13 +3,13 @@
 
 local FaInfo = require("scripts.fa-info")
 local TestRegistry = require("scripts.test-registry")
+local Speech = require("scripts.speech")
 local describe = TestRegistry.describe
 local it = TestRegistry.it
 
 describe("FA-Info Smoke Tests", function()
    it("should describe basic entities without crashing", function(ctx)
       local pindex = 1
-      local Speech = require("scripts.speech")
 
       ctx:init(function()
          -- Enable speech capture for testing
