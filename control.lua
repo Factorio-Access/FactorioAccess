@@ -6003,6 +6003,16 @@ local function kb_click_menu_right(event)
    end
 end
 
+--Reads the entity status but also adds on extra info depending on the entity
+---@param event EventData.CustomInputEvent
+local function kb_read_entity_status(event)
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
+   local result = FaInfo.read_selected_entity_status(pindex)
+   if result ~= nil and result ~= "" then Speech.speak(pindex, result) end
+end
+
 --Right click actions with items in hand
 ---@param event EventData.CustomInputEvent
 local function kb_click_hand_right(event)
@@ -6019,6 +6029,7 @@ local function kb_click_hand_right(event)
       and stack.name ~= "offshore-pump"
    then
       --Laterdo here: build as ghost
+      kb_read_entity_status(event)
    elseif stack.is_blueprint then
       Blueprints.blueprint_menu_open(pindex)
       BlueprintsMenu.blueprint_menu_tabs:open(pindex, {})
@@ -6086,16 +6097,6 @@ local function kb_click_hand_right(event)
       -- Regular item in hand - read entity status as fallback
       kb_read_entity_status(event)
    end
-end
-
---Reads the entity status but also adds on extra info depending on the entity
----@param event EventData.CustomInputEvent
-local function kb_read_entity_status(event)
-   local pindex = event.player_index
-   local router = UiRouter.get_router(pindex)
-
-   local result = FaInfo.read_selected_entity_status(pindex)
-   if result ~= nil and result ~= "" then Speech.speak(pindex, result) end
 end
 
 EventManager.on_event(
