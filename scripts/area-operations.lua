@@ -9,13 +9,14 @@ local Localising = require("scripts.localising")
 local PlayerMiningTools = require("scripts.player-mining-tools")
 local FaUtils = require("scripts.fa-utils")
 local Speech = require("scripts.speech")
+local Viewpoint = require("scripts.viewpoint")
 
 local mod = {}
 
 ---Mine area around cursor or selected entity
 ---@param pindex number
 function mod.mine_area(pindex)
-   local vp = require("scripts.viewpoint").get_viewpoint(pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
    local cursor_pos = vp:get_cursor_pos()
    local p = game.get_player(pindex)
    local ent = game.get_player(pindex).selected
