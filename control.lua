@@ -3700,35 +3700,39 @@ local function read_coords(pindex, start_phrase)
          --Give vehicle coords and orientation and speed --laterdo find exact speed coefficient
          local vehicle = game.get_player(pindex).vehicle
          local speed = vehicle.speed * 215
+         local message = Speech.new()
+
          if vehicle.type ~= "spider-vehicle" then
             if speed > 0 then
-               result = result
-                  .. " heading "
-                  .. FaUtils.get_heading_info(vehicle)
-                  .. " at "
-                  .. math.floor(speed)
-                  .. " kilometers per hour "
+               message:fragment(
+                  result
+                     .. " heading "
+                     .. FaUtils.get_heading_info(vehicle)
+                     .. " at "
+                     .. math.floor(speed)
+                     .. " kilometers per hour "
+               )
             elseif speed < 0 then
-               result = result
-                  .. " facing "
-                  .. FaUtils.get_heading_info(vehicle)
-                  .. " while reversing at "
-                  .. math.floor(-speed)
-                  .. " kilometers per hour "
+               message:fragment(
+                  result
+                     .. " facing "
+                     .. FaUtils.get_heading_info(vehicle)
+                     .. " while reversing at "
+                     .. math.floor(-speed)
+                     .. " kilometers per hour "
+               )
             else
-               result = result .. " parked facing " .. FaUtils.get_heading_info(vehicle)
+               message:fragment(result .. " parked facing " .. FaUtils.get_heading_info(vehicle))
             end
          else
-            result = result .. " moving at " .. math.floor(speed) .. " kilometers per hour "
+            message:fragment(result .. " moving at " .. math.floor(speed) .. " kilometers per hour ")
          end
-         result = result .. " in " .. Localising.get_localised_name_with_fallback(vehicle) .. " at point "
-         Speech.speak(pindex, {
-            "",
-            result,
-            tostring(math.floor(vehicle.position.x)),
-            ", ",
-            tostring(math.floor(vehicle.position.y)),
-         })
+
+         message:fragment(" in ")
+         message:fragment(Localising.get_localised_name_with_fallback(vehicle))
+         message:fragment(" at point " .. math.floor(vehicle.position.x) .. ", " .. math.floor(vehicle.position.y))
+
+         Speech.speak(pindex, message:build())
       else
          --Simply give coords (floored for the readout, extra precision for the console)
          local location = FaUtils.get_entity_part_at_cursor(pindex)
