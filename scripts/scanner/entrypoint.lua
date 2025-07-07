@@ -112,11 +112,17 @@ local function do_refresh_after_sfx(pindex, direction_filter)
    -- scan refresh.
    local ps = player_state[pindex]
 
-   do
-      local cat = ps.scanner_cursor.category
+   -- Handle case where player state doesn't exist (e.g., old save)
+   if not ps then
       player_state[pindex] = new_player_state(pindex)
       ps = player_state[pindex]
-      ps.scanner_cursor.category = cat
+   end
+
+   do
+      local cat = ps.scanner_cursor and ps.scanner_cursor.category
+      player_state[pindex] = new_player_state(pindex)
+      ps = player_state[pindex]
+      if cat then ps.scanner_cursor.category = cat end
    end
 
    local player_obj = assert(game.get_player(pindex))
