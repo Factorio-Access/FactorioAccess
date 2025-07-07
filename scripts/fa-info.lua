@@ -1117,7 +1117,7 @@ local function ent_info_belt_contents(ctx)
          most_common_for_both.left == most_common_for_both.right
          and other_count_for_both.left == other_count_for_both.right
       then
-         key = "fa.ent-info-belt-contents-both"
+         key = "fa.ent-info-belt-contents-both-same"
       end
    end
    table.insert(params, 1, key)
