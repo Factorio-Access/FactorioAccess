@@ -3878,6 +3878,14 @@ local function read_coords(pindex, start_phrase)
       end
       Speech.speak(pindex, { "fa.inventory-slot-position", result, tostring(x), tostring(y) })
    elseif router:is_ui_open(UiRouter.UI_NAMES.GUNS) then
+      -- Initialize guns_menu if it doesn't exist
+      if not storage.players[pindex].guns_menu then
+         storage.players[pindex].guns_menu = {
+            ammo_selected = false,
+            index = 1,
+         }
+      end
+
       if storage.players[pindex].guns_menu.ammo_selected then
          Speech.speak(pindex, { "fa.ammo-slot", tostring(storage.players[pindex].guns_menu.index) })
       else

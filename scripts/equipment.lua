@@ -497,12 +497,29 @@ function mod.guns_menu_open(pindex)
 
    local p = game.get_player(pindex)
    router:open_ui(UiRouter.UI_NAMES.GUNS)
+
+   -- Initialize guns_menu if it doesn't exist
+   if not storage.players[pindex].guns_menu then
+      storage.players[pindex].guns_menu = {
+         ammo_selected = false,
+         index = 1,
+      }
+   end
+
    storage.players[pindex].guns_menu.ammo_selected = false
    storage.players[pindex].guns_menu.index = 1
    mod.guns_menu_read_slot(pindex, "Guns and ammo, ")
 end
 
 function mod.guns_menu_left(pindex)
+   -- Initialize guns_menu if it doesn't exist
+   if not storage.players[pindex].guns_menu then
+      storage.players[pindex].guns_menu = {
+         ammo_selected = false,
+         index = 1,
+      }
+   end
+
    local index = storage.players[pindex].guns_menu.index
    index = index - 1
    if index == 0 then
@@ -517,6 +534,14 @@ function mod.guns_menu_left(pindex)
 end
 
 function mod.guns_menu_right(pindex)
+   -- Initialize guns_menu if it doesn't exist
+   if not storage.players[pindex].guns_menu then
+      storage.players[pindex].guns_menu = {
+         ammo_selected = false,
+         index = 1,
+      }
+   end
+
    local index = storage.players[pindex].guns_menu.index
    index = index + 1
    if index == 4 then
@@ -530,12 +555,28 @@ function mod.guns_menu_right(pindex)
 end
 
 function mod.guns_menu_up_or_down(pindex)
+   -- Initialize guns_menu if it doesn't exist
+   if not storage.players[pindex].guns_menu then
+      storage.players[pindex].guns_menu = {
+         ammo_selected = false,
+         index = 1,
+      }
+   end
+
    storage.players[pindex].guns_menu.ammo_selected = not storage.players[pindex].guns_menu.ammo_selected
    game.get_player(pindex).play_sound({ path = "Inventory-Move" })
    mod.guns_menu_read_slot(pindex)
 end
 
 function mod.guns_menu_get_selected_slot(pindex)
+   -- Initialize guns_menu if it doesn't exist
+   if not storage.players[pindex].guns_menu then
+      storage.players[pindex].guns_menu = {
+         ammo_selected = false,
+         index = 1,
+      }
+   end
+
    local menu = storage.players[pindex].guns_menu
    local p = game.get_player(pindex)
    local gun_stack = p.get_inventory(defines.inventory.character_guns)[menu.index]
@@ -549,6 +590,15 @@ end
 
 function mod.guns_menu_read_slot(pindex, start_phrase_in)
    local start_phrase = start_phrase_in or ""
+
+   -- Initialize guns_menu if it doesn't exist
+   if not storage.players[pindex].guns_menu then
+      storage.players[pindex].guns_menu = {
+         ammo_selected = false,
+         index = 1,
+      }
+   end
+
    local menu = storage.players[pindex].guns_menu
    local p = game.get_player(pindex)
    local result = { "" }
@@ -602,6 +652,15 @@ end
 function mod.guns_menu_click_slot(pindex)
    local p = game.get_player(pindex)
    local hand = p.cursor_stack
+
+   -- Initialize guns_menu if it doesn't exist
+   if not storage.players[pindex].guns_menu then
+      storage.players[pindex].guns_menu = {
+         ammo_selected = false,
+         index = 1,
+      }
+   end
+
    local menu = storage.players[pindex].guns_menu
    local gun_stack = p.get_inventory(defines.inventory.character_guns)[menu.index]
    local ammo_stack = p.get_inventory(defines.inventory.character_ammo)[menu.index]
