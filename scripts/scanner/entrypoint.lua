@@ -113,7 +113,7 @@ local function do_refresh_after_sfx(pindex, direction_filter)
    local ps = player_state[pindex]
 
    do
-      local cat = ps.scanner_cursor.category
+      local cat = (ps.scanner_cursor and ps.scanner_cursor.category) or ScannerConsts.CATEGORIES.ALL
       player_state[pindex] = new_player_state(pindex)
       ps = player_state[pindex]
       ps.scanner_cursor.category = cat
