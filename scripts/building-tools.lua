@@ -269,6 +269,7 @@ function mod.build_offshore_pump_in_hand(pindex)
 
    if stack and stack.valid and stack.valid_for_read and stack.name == "offshore-pump" then
       local ent = stack.prototype.place_result
+      if storage.players[pindex].pump == nil then storage.players[pindex].pump = {} end
       storage.players[pindex].pump.positions = {}
       local initial_position = p.position
       initial_position.x = math.floor(initial_position.x)
