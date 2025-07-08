@@ -6,6 +6,7 @@ local dirs = defines.direction
 local Consts = require("scripts.consts")
 local EntitySelection = require("scripts.entity-selection")
 
+
 local mod = {}
 
 -- Helper function to draw a circle at the given position
@@ -1029,7 +1030,7 @@ function mod.confirm_action(pindex, id_string, custom_message)
    if storage.players[pindex].confirm_action_id_string ~= id_string then
       storage.players[pindex].confirm_action_id_string = id_string
       storage.players[pindex].confirm_action_tick = game.tick
-      Speech.speak(pindex, message)
+      require("scripts.speech").speak(pindex, message)
       return false
    end
    --Check the time stamp
@@ -1038,7 +1039,7 @@ function mod.confirm_action(pindex, id_string, custom_message)
       or game.tick - storage.players[pindex].confirm_action_tick > 600
    then
       storage.players[pindex].confirm_action_tick = game.tick
-      Speech.speak(pindex, message)
+      require("scripts.speech").speak(pindex, message)
       return false
    else
       storage.players[pindex].confirm_action_tick = 0
