@@ -116,8 +116,6 @@ function mod.initialize(player)
 
    faplayer.walking = faplayer.walking or {}
 
-   faplayer.scanner = faplayer.scanner or {}
-
    faplayer.combat = faplayer.combat or {}
 
    faplayer.rail_builder = faplayer.rail_builder or nil
