@@ -67,6 +67,12 @@ function mod.initialize(player)
    faplayer.last_move_tick = faplayer.last_move_tick or 0
    faplayer.last_build_tick = faplayer.last_build_tick or 0
    faplayer.last_click_tick = faplayer.last_click_tick or 0
+   faplayer.last_menu_search_tick = faplayer.last_menu_search_tick or 0
+   faplayer.last_pickup_tick = faplayer.last_pickup_tick or 0
+   faplayer.last_menu_toggle_tick = faplayer.last_menu_toggle_tick or 0
+   faplayer.last_damage_alert_tick = faplayer.last_damage_alert_tick or 0
+   faplayer.last_honk_tick = faplayer.last_honk_tick or 0
+   faplayer.last_driving_alert_tick = faplayer.last_driving_alert_tick or 0
    faplayer.last_click_time = faplayer.last_click_time or 0
    faplayer.lag_building_in_hand = faplayer.lag_building_in_hand or nil
    faplayer.lag_building_selected = faplayer.lag_building_selected or nil
@@ -286,6 +292,66 @@ function mod.initialize(player)
    --    end
    -- end
    faplayer.said_owner = faplayer.said_owner or {}
+
+   -- Menu initializations
+   faplayer.train_menu = faplayer.train_menu
+      or {
+         index = 0,
+         renaming = false,
+         locomotive = nil,
+         wait_time = 300,
+         index_2 = 0,
+         selecting_station = false,
+      }
+
+   faplayer.spider_menu = faplayer.spider_menu or {
+      index = 0,
+      renaming = false,
+      spider = nil,
+   }
+
+   faplayer.train_stop_menu = faplayer.train_stop_menu
+      or {
+         index = 0,
+         renaming = false,
+         stop = nil,
+         wait_condition = "time",
+         wait_time_seconds = 30,
+         safety_wait_enabled = true,
+      }
+
+   faplayer.valid_train_stop_list = faplayer.valid_train_stop_list or {}
+
+   faplayer.roboport_menu = faplayer.roboport_menu or {
+      port = nil,
+      index = 0,
+      renaming = false,
+   }
+
+   faplayer.blueprint_menu = faplayer.blueprint_menu
+      or {
+         index = 0,
+         edit_label = false,
+         edit_description = false,
+         edit_export = false,
+         edit_import = false,
+      }
+
+   faplayer.blueprint_book_menu = faplayer.blueprint_book_menu
+      or {
+         index = 0,
+         menu_length = 0,
+         list_mode = true,
+         edit_label = false,
+         edit_description = false,
+         edit_export = false,
+         edit_import = false,
+      }
+
+   faplayer.pump = faplayer.pump or {
+      index = 0,
+      positions = {},
+   }
 
    -- Force rechart on empty map
    if table_size(faplayer.mapped) == 0 then player.force.rechart() end
