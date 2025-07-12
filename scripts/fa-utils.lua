@@ -6,7 +6,6 @@ local dirs = defines.direction
 local Consts = require("scripts.consts")
 local EntitySelection = require("scripts.entity-selection")
 
-
 local mod = {}
 
 -- Helper function to draw a circle at the given position
