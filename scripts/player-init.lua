@@ -124,6 +124,8 @@ function mod.initialize(player)
 
    faplayer.combat = faplayer.combat or {}
 
+   faplayer.guns_menu = faplayer.guns_menu or {}
+
    faplayer.rail_builder = faplayer.rail_builder or nil
 
    faplayer.menu_history = faplayer.menu_history or {}
@@ -237,6 +239,8 @@ function mod.initialize(player)
    faplayer.last_aggregate = faplayer.last_aggregate or {}
    faplayer.recent_item_name = faplayer.recent_item_name or ""
    faplayer.recent_fluid_name = faplayer.recent_fluid_name or ""
+   faplayer.pump = faplayer.pump or {}
+   faplayer.spider_menu = faplayer.spider_menu or {}
    faplayer.last_line_id = faplayer.last_line_id or 0
    faplayer.tutorial_mode = faplayer.tutorial_mode or false
    faplayer.launcher_version = faplayer.launcher_version or "0.0.0"
