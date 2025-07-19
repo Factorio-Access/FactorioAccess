@@ -348,19 +348,32 @@ function mod.open_operable_vehicle(ent, pindex)
                inventory = ent.get_inventory(invs.spider_ammo),
             })
          end
+         table.insert(storage.players[pindex].building.sectors, {
+            name = "fa.spidertron-rename-prompt",
+            action = "rename",
+            entity = ent,
+         })
+         table.insert(storage.players[pindex].building.sectors, {
+            name = "fa.spidertron-auto-target-status",
+            action = "autotarget",
+         })
+         table.insert(storage.players[pindex].building.sectors, {
+            name = "fa.spidertron-auto-target-with-gunner-current",
+            action = "autotarget_gunner",
+         })
       end
 
       for i1 = #storage.players[pindex].building.sectors, 2, -1 do
          for i2 = i1 - 1, 1, -1 do
-            if
-               storage.players[pindex].building.sectors[i1].inventory
-               == storage.players[pindex].building.sectors[i2].inventory
-            then
+            local s1 = storage.players[pindex].building.sectors[i1]
+            local s2 = storage.players[pindex].building.sectors[i2]
+            if s1.inventory and s2.inventory and s1.inventory == s2.inventory then
                table.remove(storage.players[pindex].building.sectors, i2)
                i2 = i2 + 1
             end
          end
       end
+
       if #storage.players[pindex].building.sectors > 0 then
          storage.players[pindex].building.ent = ent
          router:open_ui(UiRouter.UI_NAMES.VEHICLE)
@@ -435,6 +448,8 @@ end
 function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phrase_in)
    local building_sector = storage.players[pindex].building.sectors[storage.players[pindex].building.sector]
    local start_phrase = start_phrase_in or ""
+   local p = game.get_player(pindex)
+   local ent = storage.players[pindex].building.ent
    if building_sector.name == "Filters" then
       local inventory = building_sector.inventory
       if prefix_inventory_size_and_name then
@@ -448,12 +463,7 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
             .. building_sector.inventory[storage.players[pindex].building.index]
       )
    elseif building_sector.name == "Fluid" then
-      if
-         storage.players[pindex].building.ent ~= nil
-         and storage.players[pindex].building.ent.valid
-         and storage.players[pindex].building.ent.type == "fluid-turret"
-         and storage.players[pindex].building.index ~= 1
-      then
+      if ent ~= nil and ent.valid and ent.type == "fluid-turret" and storage.players[pindex].building.index ~= 1 then
          --Prevent fluid turret crashes
          storage.players[pindex].building.index = 1
       end
@@ -463,7 +473,7 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
          return
       elseif storage.players[pindex].building.index > #box or storage.players[pindex].building.index == 0 then
          storage.players[pindex].building.index = 1
-         game.get_player(pindex).play_sound({ path = "inventory-wrap-around" })
+         p.play_sound({ path = "inventory-wrap-around" })
       end
       local capacity = box.get_capacity(storage.players[pindex].building.index)
       local fluid_type = box.get_prototype(storage.players[pindex].building.index).production_type
@@ -583,6 +593,21 @@ function mod.read_sector_slot(pindex, prefix_inventory_size_and_name, start_phra
          Speech.speak(pindex, { "", start_phrase, " ", name })
       else
          Speech.speak(pindex, { "", start_phrase, " ", name })
+      end
+   elseif building_sector.action ~= nil then
+      local targetstate
+      if building_sector.action == "rename" then
+         Speech.speak(pindex, { building_sector.name })
+      elseif building_sector.action == "autotarget" then
+         targetstate = (ent and ent.valid and ent.vehicle_automatic_targeting_parameters.auto_target_without_gunner)
+               and "enabled"
+            or "disabled"
+         Speech.speak(pindex, { building_sector.name, targetstate })
+      elseif building_sector.action == "autotarget_gunner" then
+         targetstate = (ent and ent.valid and ent.vehicle_automatic_targeting_parameters.auto_target_with_gunner)
+               and "enabled"
+            or "disabled"
+         Speech.speak(pindex, { building_sector.name, targetstate })
       end
    elseif #building_sector.inventory > 0 then
       --Item inventories

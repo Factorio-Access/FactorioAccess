@@ -2187,8 +2187,16 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
       event.element.destroy()
       Trains.menu_close(pindex, false)
    elseif storage.players[pindex].spider_menu.renaming == true then
+      local ent = storage.players[pindex].spider_menu.ent
+      local new_name = event.element.text
+      if new_name and new_name ~= "" and ent and ent.valid and ent.prototype.type == "spider-vehicle" then
+         ent.entity_label = new_name
+         Speech.speak(pindex, { "fa.spidertron-new-name-entered", new_name })
+      end
       storage.players[pindex].spider_menu.renaming = false
-      Speech.speak(pindex, { "fa.unimplemented-2-0" })
+      storage.players[pindex].spider_menu.ent = nil
+      event.element.destroy()
+      Spidertron.spider_menu_close(pindex, false)
    elseif storage.players[pindex].train_stop_menu.renaming == true then
       storage.players[pindex].train_stop_menu.renaming = false
       local result = event.element.text
@@ -5296,7 +5304,11 @@ local function kb_click_menu(event)
    --Clear temporary cursor items instead of swapping them in
    if
       p.cursor_stack_temporary
-      and not router:is_ui_one_of({ UiRouter.UI_NAMES.BLUEPRINT, UiRouter.UI_NAMES.BLUEPRINT_BOOK })
+      and not router:is_ui_one_of({
+         UiRouter.UI_NAMES.BLUEPRINT,
+         UiRouter.UI_NAMES.BLUEPRINT_BOOK,
+         UiRouter.UI_NAMES.SPIDERTRON,
+      })
    then
       p.clear_cursor()
    end
@@ -5383,7 +5395,7 @@ local function kb_click_menu(event)
       local sectors_i = storage.players[pindex].building.sectors[storage.players[pindex].building.sector]
       if
          storage.players[pindex].building.sector <= #storage.players[pindex].building.sectors
-         and #sectors_i.inventory > 0
+         and ((sectors_i and sectors_i.action) or #sectors_i.inventory > 0)
       then
          if sectors_i.name == "Fluid" then
             --Do nothing
@@ -5452,6 +5464,31 @@ local function kb_click_menu(event)
                prune_item_groups(storage.players[pindex].item_cache)
                read_item_selector_slot(pindex)
             end
+            return
+         elseif sectors_i.action ~= nil then
+            local action = sectors_i.action
+            local ent = storage.players[pindex].building.ent
+            if action == "rename" then
+               Speech.speak(pindex, { "fa.spidertron-enter-new-name" })
+               storage.players[pindex].spider_menu.renaming = true
+               storage.players[pindex].spider_menu.ent = sectors_i.entity
+               local frame = Graphics.create_text_field_frame(pindex, "spider-rename")
+               p.opened = frame
+               return
+            elseif action == "autotarget" then
+               local switch = {
+                  auto_target_without_gunner = not ent.vehicle_automatic_targeting_parameters.auto_target_without_gunner,
+                  auto_target_with_gunner = ent.vehicle_automatic_targeting_parameters.auto_target_with_gunner,
+               }
+               ent.vehicle_automatic_targeting_parameters = switch
+            elseif action == "autotarget_gunner" then
+               local switch = {
+                  auto_target_without_gunner = ent.vehicle_automatic_targeting_parameters.auto_target_without_gunner,
+                  auto_target_with_gunner = not ent.vehicle_automatic_targeting_parameters.auto_target_with_gunner,
+               }
+               ent.vehicle_automatic_targeting_parameters = switch
+            end
+            BuildingVehicleSectors.read_sector_slot(pindex, false)
             return
          end
          --Otherwise, you are working with item stacks

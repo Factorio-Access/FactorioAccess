@@ -128,6 +128,14 @@ function mod.initialize(player)
 
    faplayer.rail_builder = faplayer.rail_builder or nil
 
+   faplayer.train_menu = faplayer.train_menu or {}
+
+   faplayer.train_stop_menu = faplayer.train_stop_menu or {}
+
+   faplayer.roboport_menu = faplayer.roboport_menu or {}
+
+   faplayer.blueprint_menu = faplayer.blueprint_menu or {}
+
    faplayer.menu_history = faplayer.menu_history or {}
 
    faplayer.menu = faplayer.menu or "character"

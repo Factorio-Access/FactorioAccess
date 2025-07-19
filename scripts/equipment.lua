@@ -16,7 +16,7 @@ function mod.equip_it(stack, pindex)
 
    local message = Speech.new()
    if router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle" then
-      local spidertron_name = localising.get_alt(prototypes.entity["spidertron"])
+      local spidertron_name = localising.get_alt(prototypes.entity["spidertron"], pindex)
       if spidertron_name == nil then
          spidertron_name = "Spidertron" --laterdo possible bug here
       end
