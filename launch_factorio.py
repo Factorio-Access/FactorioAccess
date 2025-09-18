@@ -1,33 +1,18 @@
 #!/usr/bin/env python3
 """
-Factorio Windows Launcher - Specialized for LLM Usage
+Factorio Windows Launcher - Development and debugging tool for FactorioAccess.
 
-This script launches the Factorio Windows executable with proper output handling and timeout support.
-It's designed specifically for LLM instances to programmatically control and monitor Factorio execution.
-
-IMPORTANT FOR LLMs:
-1. Default path: ../../bin/x64/factorio.exe (relative to this script's location)
-2. Always use --timeout to prevent hanging processes
-3. Use -- before Factorio-specific arguments not in the predefined options
-4. Exit codes: 0=success, -1=error/timeout, 130=interrupted, others=Factorio exit code
-
-COMMON USAGE PATTERNS:
-- Quick test: python launch_factorio.py --timeout 10 -- --version
-- Load save: python launch_factorio.py --timeout 300 --load-game mysave.zip
-- Run tests: python launch_factorio.py --run-tests --timeout 300
-- Run only DS tests: python launch_factorio.py --run-tests --lua-tests ds --timeout 300
-- Headless server: python launch_factorio.py --timeout 3600 -- --start-server mysave.zip
-- With mods: python launch_factorio.py --timeout 300 --mod-directory ./mods --load-game mysave.zip
-- Lint Lua code: python launch_factorio.py --lint
-- Check formatting: python launch_factorio.py --format-check
-- Apply formatting: python launch_factorio.py --format
+Key features:
+- Launch Factorio with timeout support
+- Capture and analyze crash logs
+- Run tests and linting
+- Format code with stylua
 """
 
 import argparse
 import subprocess
 import sys
 import os
-import signal
 import time
 import shutil
 from pathlib import Path
@@ -37,6 +22,13 @@ import queue
 import json
 import tempfile
 import re
+import glob
+
+
+# Constants
+FACTORIO_REL_PATH = Path("../../bin/x64/factorio.exe")
+DEFAULT_TIMEOUT = 300
+LUA_EXE = "lua52.exe"
 
 
 class LogsNotFoundError(Exception):
@@ -45,236 +37,156 @@ class LogsNotFoundError(Exception):
     pass
 
 
-class FactorioLauncher:
+def validate_factorio_exe() -> Path:
+    """Validate and return the Factorio executable path."""
+    factorio_path = (Path(__file__).parent / FACTORIO_REL_PATH).resolve()
+    if not factorio_path.exists():
+        raise FileNotFoundError(
+            f"Factorio executable not found at: {factorio_path}\n"
+            f"Current working directory: {Path.cwd()}"
+        )
+    return factorio_path
+
+
+def stream_process_output(
+    cmd: List[str],
+    timeout: Optional[int] = None,
+    capture: bool = True,
+    unbuffered: bool = True,
+) -> Tuple[int, float]:
     """
-    Factorio launcher for Windows.
+    Stream output from a subprocess with timeout support.
 
-    This class manages the subprocess execution of Factorio.exe,
-    handling timeouts and output capture.
+    Uses threading to prevent blocking on pipe reads and handle timeouts properly.
+
+    Returns:
+        Tuple of (exit_code, elapsed_time)
     """
+    start_time = time.time()
+    output_queue = queue.Queue()
 
-    def __init__(self, factorio_path: str, timeout: Optional[int] = None):
-        """
-        Initialize the launcher.
-
-        Args:
-            factorio_path: Path to factorio.exe (can be relative or absolute)
-            timeout: Maximum execution time in seconds (None for no timeout)
-        """
-        self.factorio_path = Path(factorio_path).resolve()
-        self.timeout = timeout
-        self.process: Optional[subprocess.Popen] = None
-        self.output_queue = queue.Queue()
-        self.start_time: Optional[float] = None
-        self.exit_code: Optional[int] = None
-
-    def _validate_executable(self) -> None:
-        """
-        Validate Factorio executable exists and is accessible.
-
-        Raises:
-            FileNotFoundError: If the executable doesn't exist
-        """
-        if not self.factorio_path.exists():
-            raise FileNotFoundError(
-                f"Factorio executable not found at: {self.factorio_path}\n"
-                f"Expected location: {self.factorio_path.absolute()}\n"
-                f"Current working directory: {Path.cwd()}"
-            )
-
-        # Store the path for execution
-        self.windows_path = str(self.factorio_path)
-
-    def _output_reader(self, pipe, pipe_name: str) -> None:
-        """
-        Thread worker to read output from stdout/stderr pipes.
-
-        This prevents blocking when reading subprocess output by using
-        a separate thread for each pipe.
-
-        Args:
-            pipe: The pipe object to read from
-            pipe_name: Either "stdout" or "stderr" for identification
-        """
+    def output_reader(pipe, pipe_name: str):
+        """Thread worker to read from stdout/stderr pipes."""
         try:
             for line in iter(pipe.readline, ""):
                 if line:
-                    self.output_queue.put((pipe_name, line))
+                    output_queue.put((pipe_name, line))
             pipe.close()
         except Exception as e:
-            self.output_queue.put(("error", f"Error reading {pipe_name}: {e}"))
+            output_queue.put(("error", f"Error reading {pipe_name}: {e}"))
 
-    def launch(
-        self,
-        args: List[str],
-        capture_output: bool = True,
-        stream_output: bool = True,
-        unbuffered: bool = True,
-        use_shell: bool = False,
-    ) -> Tuple[int, float]:
-        """
-        Launch Factorio with specified arguments.
+    # Setup subprocess
+    popen_args = {
+        "bufsize": 0 if unbuffered else -1,
+        "encoding": "utf-8",
+        "errors": "replace",
+        "env": os.environ.copy(),
+    }
 
-        Args:
-            args: Command line arguments to pass to Factorio
-            capture_output: If True, capture stdout/stderr (default: True)
-            stream_output: If True, print output in real-time (default: True)
-            unbuffered: If True, disable output buffering (default: True)
-            use_shell: If True, use shell execution (workaround for some WSL issues)
+    if capture:
+        popen_args.update(
+            {
+                "stdout": subprocess.PIPE,
+                "stderr": subprocess.PIPE,
+            }
+        )
 
-        Returns:
-            Tuple of (exit_code, execution_time_seconds)
-            Exit codes:
-                0: Success
-                -1: Error or timeout
-                130: Interrupted (Ctrl+C)
-                Other: Factorio-specific exit code
-        """
-        self._validate_executable()
+    print(f"[INFO] Launching: {' '.join(cmd)}")
+    if timeout:
+        print(f"[INFO] Timeout: {timeout} seconds")
 
-        # Build command
-        cmd = [self.windows_path] + args
+    try:
+        process = subprocess.Popen(cmd, **popen_args)
 
-        # Setup subprocess arguments
-        popen_args = {
-            "bufsize": 0 if unbuffered else -1,  # 0 = unbuffered, -1 = system default
-            "shell": use_shell,
-            "encoding": "utf-8",
-            "errors": "replace",  # Replace undecodable characters instead of crashing
-        }
-
-        if capture_output:
-            popen_args.update(
-                {
-                    "stdout": subprocess.PIPE,
-                    "stderr": subprocess.PIPE,
-                }
+        if capture:
+            # Start reader threads
+            stdout_thread = threading.Thread(
+                target=output_reader, args=(process.stdout, "stdout")
             )
+            stderr_thread = threading.Thread(
+                target=output_reader, args=(process.stderr, "stderr")
+            )
+            stdout_thread.daemon = True
+            stderr_thread.daemon = True
+            stdout_thread.start()
+            stderr_thread.start()
 
-        # Use current environment
-        popen_args["env"] = os.environ.copy()
-
-        self.start_time = time.time()
-
-        try:
-            print(f"[LLM_INFO] Launching Factorio: {' '.join(cmd)}")
-            if self.timeout:
-                print(f"[LLM_INFO] Timeout set to {self.timeout} seconds")
-
-            self.process = subprocess.Popen(cmd, **popen_args)
-
-            if capture_output and stream_output:
-                # Start output reader threads for non-blocking I/O
-                stdout_thread = threading.Thread(
-                    target=self._output_reader, args=(self.process.stdout, "stdout")
-                )
-                stderr_thread = threading.Thread(
-                    target=self._output_reader, args=(self.process.stderr, "stderr")
-                )
-
-                stdout_thread.daemon = True
-                stderr_thread.daemon = True
-                stdout_thread.start()
-                stderr_thread.start()
-
-                # Stream output in real-time
-                while True:
-                    try:
-                        # Non-blocking read with short timeout
-                        pipe_name, line = self.output_queue.get(timeout=0.1)
-                        if pipe_name == "stdout":
-                            sys.stdout.write(line)
-                            sys.stdout.flush()
-                        elif pipe_name == "stderr":
-                            sys.stderr.write(line)
-                            sys.stderr.flush()
-                    except queue.Empty:
-                        # Check if process finished
-                        if self.process.poll() is not None:
-                            break
-                        # Check timeout
-                        elapsed = time.time() - self.start_time
-                        if self.timeout and elapsed > self.timeout:
-                            print(
-                                f"\n[LLM_ERROR] Timeout reached ({self.timeout}s), terminating process..."
-                            )
-                            self.terminate()
-                            self.exit_code = -1
-                            return -1, elapsed
-
-                # Drain any remaining output
-                while not self.output_queue.empty():
-                    try:
-                        pipe_name, line = self.output_queue.get_nowait()
-                        if pipe_name == "stdout":
-                            sys.stdout.write(line)
-                        elif pipe_name == "stderr":
-                            sys.stderr.write(line)
-                    except queue.Empty:
-                        break
-
-            else:
-                # Simple wait with timeout
+            # Stream output in real-time
+            while True:
                 try:
-                    self.exit_code = self.process.wait(timeout=self.timeout)
-                except subprocess.TimeoutExpired:
-                    elapsed = time.time() - self.start_time
-                    print(
-                        f"\n[LLM_ERROR] Timeout reached ({self.timeout}s), terminating process..."
-                    )
-                    self.terminate()
-                    self.exit_code = -1
-                    return -1, elapsed
+                    pipe_name, line = output_queue.get(timeout=0.1)
+                    if pipe_name == "stdout":
+                        sys.stdout.write(line)
+                        sys.stdout.flush()
+                    elif pipe_name == "stderr":
+                        sys.stderr.write(line)
+                        sys.stderr.flush()
+                except queue.Empty:
+                    # Check if process finished
+                    if process.poll() is not None:
+                        break
+                    # Check timeout
+                    elapsed = time.time() - start_time
+                    if timeout and elapsed > timeout:
+                        print(f"\n[ERROR] Timeout reached ({timeout}s), terminating...")
+                        process.terminate()
+                        time.sleep(2)
+                        if process.poll() is None:
+                            process.kill()
+                        return -1, elapsed
 
-            elapsed = time.time() - self.start_time
-            self.exit_code = self.process.returncode
-            return self.exit_code, elapsed
-
-        except OSError as e:
-            elapsed = time.time() - self.start_time
-            if e.errno == 2:
-                print(f"[LLM_ERROR] Could not find executable at {self.windows_path}")
-                print("[LLM_HINT] Verify path is correct and accessible")
-            else:
-                print(f"[LLM_ERROR] OSError launching Factorio: {e}")
-            self.exit_code = -1
-            return -1, elapsed
-        except Exception as e:
-            elapsed = time.time() - self.start_time
-            print(f"[LLM_ERROR] Unexpected error: {e}")
-            self.exit_code = -1
-            return -1, elapsed
-
-    def terminate(self) -> None:
-        """
-        Terminate the Factorio process gracefully, then forcefully if needed.
-
-        Attempts SIGTERM first, waits 2 seconds, then SIGKILL if still running.
-        """
-        if self.process:
+            # Drain remaining output
+            while not output_queue.empty():
+                try:
+                    pipe_name, line = output_queue.get_nowait()
+                    if pipe_name == "stdout":
+                        sys.stdout.write(line)
+                    elif pipe_name == "stderr":
+                        sys.stderr.write(line)
+                except queue.Empty:
+                    break
+        else:
+            # Simple wait without capture
             try:
-                # Try graceful termination first (SIGTERM)
-                self.process.terminate()
+                process.wait(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                elapsed = time.time() - start_time
+                print(f"\n[ERROR] Timeout reached ({timeout}s), terminating...")
+                process.terminate()
                 time.sleep(2)
+                if process.poll() is None:
+                    process.kill()
+                return -1, elapsed
 
-                # Force kill if still running (SIGKILL)
-                if self.process.poll() is None:
-                    print(
-                        "[LLM_INFO] Process didn't terminate gracefully, forcing kill..."
-                    )
-                    self.process.kill()
-            except Exception as e:
-                print(f"[LLM_ERROR] Error terminating process: {e}")
+        elapsed = time.time() - start_time
+        return process.returncode, elapsed
+
+    except OSError as e:
+        elapsed = time.time() - start_time
+        if e.errno == 2:
+            print(f"[ERROR] Could not find executable: {cmd[0]}")
+        else:
+            print(f"[ERROR] OS error launching process: {e}")
+        return -1, elapsed
+    except Exception as e:
+        elapsed = time.time() - start_time
+        print(f"[ERROR] Unexpected error: {e}")
+        return -1, elapsed
+
+
+def launch_factorio(
+    args: List[str],
+    timeout: Optional[int] = None,
+    capture_output: bool = True,
+) -> Tuple[int, float]:
+    """Launch Factorio with specified arguments."""
+    factorio_path = validate_factorio_exe()
+    cmd = [str(factorio_path)] + args
+    return stream_process_output(cmd, timeout, capture_output)
 
 
 def find_factorio_type_definitions() -> Optional[str]:
-    """
-    Find Factorio type definitions from various possible locations.
-
-    Returns:
-        Path to the Factorio library directory, or None if not found
-    """
-    # Common paths to check on Windows
+    """Find Factorio type definitions for lua-language-server."""
     search_paths = [
         # VSCode on Windows
         os.path.expanduser(
@@ -285,28 +197,18 @@ def find_factorio_type_definitions() -> Optional[str]:
         os.path.expanduser("~\\factorio-lua-types\\library"),
     ]
 
-    import glob
-
     for pattern in search_paths:
         expanded = os.path.expanduser(pattern)
         matches = glob.glob(expanded)
         if matches:
-            # Use the first match found
             return matches[0]
 
     return None
 
 
 def create_or_update_luarc(config_path: str) -> None:
-    """
-    Create .luarc.json configuration at the specified path.
-
-    Args:
-        config_path: Full path where the config file should be created
-    """
+    """Create .luarc.json configuration for lua-language-server."""
     luarc_path = Path(config_path)
-
-    # Find Factorio type definitions
     factorio_lib = find_factorio_type_definitions()
 
     config = {
@@ -339,7 +241,7 @@ def create_or_update_luarc(config_path: str) -> None:
                 "lowercase-global",
                 "deprecated",
                 "need-check-nil",
-                "redefined-local",  # Added per user request
+                "redefined-local",
             ],
             "severity": {
                 "unused-local": "Information",
@@ -355,156 +257,39 @@ def create_or_update_luarc(config_path: str) -> None:
         "hint": {"enable": True, "setType": False},
     }
 
-    # Add Factorio library if found
     if factorio_lib:
         config["workspace"]["library"].append(factorio_lib)
-        print(f"[LLM_INFO] Found Factorio type definitions at: {factorio_lib}")
+        print(f"[INFO] Found Factorio type definitions at: {factorio_lib}")
     else:
         print(
-            "[LLM_WARNING] Factorio type definitions not found. Some API completions may be missing."
+            "[WARNING] Factorio type definitions not found. Some API completions may be missing."
         )
         print(
-            "[LLM_HINT] Install the factoriomod-debug VSCode extension for better type checking."
+            "[HINT] Install the factoriomod-debug VSCode extension for better type checking."
         )
 
-    # Write the configuration
     with open(luarc_path, "w") as f:
         json.dump(config, f, indent=2)
 
-    print(f"[LLM_INFO] Updated {luarc_path}")
+    print(f"[INFO] Updated {luarc_path}")
 
 
-def run_lua_linter(lua_ls_path: Optional[str] = None) -> Tuple[int, str, str]:
+def check_lua_annotations() -> Tuple[int, List[str]]:
     """
-    Run lua-language-server on the mod files.
-
-    Args:
-        lua_ls_path: Path to lua-language-server executable (searches PATH if not provided)
-
-    Returns:
-        Tuple of (exit_code, stdout, stderr)
-    """
-    # Always use the script's directory as the mod path
-    mod_path = Path(__file__).parent.resolve()
-    if lua_ls_path is None:
-        # Try to find lua-language-server in common locations
-        possible_paths = [
-            "lua-language-server.exe",
-            # Common VSCode extension paths on Windows
-            os.path.expanduser(
-                "~\\.vscode\\extensions\\sumneko.lua-*\\server\\bin\\lua-language-server.exe"
-            ),
-            os.path.expanduser(
-                "~\\AppData\\Roaming\\Code\\User\\globalStorage\\sumneko.lua\\server\\bin\\lua-language-server.exe"
-            ),
-            "C:\\Program Files\\lua-language-server\\bin\\lua-language-server.exe",
-        ]
-
-        for path_pattern in possible_paths:
-            # Handle glob patterns
-            if "*" in path_pattern:
-                import glob
-
-                matches = glob.glob(path_pattern)
-                if matches:
-                    path = matches[0]  # Use first match
-                else:
-                    continue
-            else:
-                path = path_pattern
-
-            try:
-                subprocess.run([path, "--version"], capture_output=True, timeout=2)
-                lua_ls_path = path
-                break
-            except (subprocess.TimeoutExpired, FileNotFoundError):
-                continue
-
-        if lua_ls_path is None:
-            return (
-                1,
-                "",
-                "lua-language-server not found. Please install it or specify --lua-ls-path",
-            )
-
-    # Create temporary config file
-    config_file = None
-    try:
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as tmp:
-            config_file = tmp.name
-            create_or_update_luarc(config_file)
-
-        # Run lua-language-server in check mode with temp config
-        cmd = [lua_ls_path, "--check", ".", "--configpath", config_file]
-
-        # Set VSCODE_FACTORIO_PATH if possible to help with Factorio library detection
-        env = os.environ.copy()
-        factorio_path = Path(__file__).parent.parent.parent / "bin" / "x64"
-        if factorio_path.exists():
-            env["FACTORIO_PATH"] = str(factorio_path)
-
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=60, cwd=str(mod_path), env=env
-        )
-
-        # Filter out noise from the output
-        stdout_lines = result.stdout.split("\n")
-        stderr_lines = result.stderr.split("\n")
-
-        # Remove progress indicators and empty lines
-        filtered_stdout = []
-        for line in stdout_lines:
-            if line and not line.startswith(">") and not line.strip() == "":
-                # Also filter out the initialization message
-                if "Initializing" not in line and "Diagnosis complete" not in line:
-                    filtered_stdout.append(line)
-
-        # Count problems
-        problems_line = [l for l in stdout_lines if "problems found" in l]
-        if problems_line:
-            filtered_stdout.append(problems_line[-1])
-
-        return result.returncode, "\n".join(filtered_stdout), "\n".join(stderr_lines)
-    except subprocess.TimeoutExpired:
-        return -1, "", "Linting timed out after 60 seconds"
-    except Exception as e:
-        return -1, "", str(e)
-    finally:
-        # Clean up temp config file
-        if config_file and os.path.exists(config_file):
-            try:
-                os.unlink(config_file)
-            except Exception:
-                pass  # Best effort cleanup
-
-
-def check_lua_annotations() -> Tuple[int, str, str]:
-    """
-    Check for incorrect LuaLS annotation formats in Lua files.
+    Check for incorrect LuaLS annotation formats.
 
     Correct format: ---@
-    Incorrect formats: -- @, --- @, etc.
+    Incorrect formats: -- @, --- @, --@, etc.
 
     Returns:
-        Tuple of (exit_code, stdout, stderr)
+        Tuple of (exit_code, error_list)
     """
-    import glob
-
-    # Always use the script's directory as the mod path
     mod_path = Path(__file__).parent.resolve()
     errors = []
     files_checked = 0
 
-    # Pattern to match incorrect annotations
-    # Matches lines that start with dashes and @ but not exactly "---@"
-    incorrect_pattern = re.compile(
-        r"^(\s*)((?:-+\s+@)|(?:--@)|(?:-{4,}@))", re.MULTILINE
-    )
-
     # Find all Lua files
-    lua_files = []
-    for pattern in ["**/*.lua"]:
-        lua_files.extend(glob.glob(str(mod_path / pattern), recursive=True))
+    lua_files = glob.glob(str(mod_path / "**/*.lua"), recursive=True)
 
     for file_path in lua_files:
         files_checked += 1
@@ -512,9 +297,8 @@ def check_lua_annotations() -> Tuple[int, str, str]:
             with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
-            # Find all incorrect annotations
+            # Check each line for annotation issues
             for line_num, line in enumerate(content.splitlines(), 1):
-                # Skip empty lines and non-annotation lines
                 stripped = line.strip()
                 if not stripped or "@" not in stripped:
                     continue
@@ -523,7 +307,6 @@ def check_lua_annotations() -> Tuple[int, str, str]:
                 if re.match(r"^\s*-+\s*@", line):
                     # Check if it's NOT the correct format
                     if not re.match(r"^\s*---@", line):
-                        # Make file path relative to mod_path for cleaner output
                         rel_path = Path(file_path).relative_to(mod_path)
                         errors.append(
                             f"{rel_path}:{line_num}: Incorrect annotation format: {line.strip()}"
@@ -533,54 +316,85 @@ def check_lua_annotations() -> Tuple[int, str, str]:
                         )
 
         except Exception as e:
-            return -1, "", f"Error checking annotations: {str(e)}"
+            errors.append(f"Error checking {file_path}: {str(e)}")
 
-    if errors:
-        stdout = (
-            f"Found {len(errors)} incorrect annotation(s) in {files_checked} files:\n\n"
+    if not errors:
+        print(f"[INFO] All annotations correct in {files_checked} Lua files")
+
+    return (1 if errors else 0, errors)
+
+
+def run_lua_linter(lua_ls_path: Optional[str] = None) -> Tuple[int, str, str]:
+    """Run lua-language-server on the mod files."""
+    mod_path = Path(__file__).parent.resolve()
+
+    if lua_ls_path is None:
+        # Try to find lua-language-server
+        possible_paths = [
+            "lua-language-server.exe",
+            os.path.expanduser(
+                "~\\.vscode\\extensions\\sumneko.lua-*\\server\\bin\\lua-language-server.exe"
+            ),
+            os.path.expanduser(
+                "~\\AppData\\Roaming\\Code\\User\\globalStorage\\sumneko.lua\\server\\bin\\lua-language-server.exe"
+            ),
+        ]
+
+        for pattern in possible_paths:
+            if pattern == "lua-language-server.exe":
+                if shutil.which(pattern):
+                    lua_ls_path = pattern
+                    break
+            else:
+                matches = glob.glob(pattern)
+                if matches:
+                    lua_ls_path = matches[0]
+                    break
+
+    if not lua_ls_path:
+        return (
+            -1,
+            "",
+            "lua-language-server not found. Install the sumneko.lua VSCode extension.",
         )
-        stdout += "\n".join(errors)
-        return 1, stdout, ""
-    else:
-        return 0, f"All annotations correct in {files_checked} Lua files", ""
+
+    # Ensure .luarc.json exists
+    luarc_path = mod_path / ".luarc.json"
+    if not luarc_path.exists():
+        print("[INFO] Creating .luarc.json configuration...")
+        create_or_update_luarc(str(luarc_path))
+
+    # Run lua-language-server
+    cmd = [lua_ls_path, "--check", str(mod_path)]
+
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=60,
+        )
+        return result.returncode, result.stdout, result.stderr
+    except subprocess.TimeoutExpired:
+        return -1, "", "lua-language-server timed out after 60 seconds"
+    except Exception as e:
+        return -1, "", f"Error running lua-language-server: {e}"
 
 
 def run_stylua(
-    stylua_path: Optional[str] = None, check_only: bool = True
+    stylua_path: Optional[str] = None, check_only: bool = False
 ) -> Tuple[int, str, str]:
-    """
-    Run stylua formatter on Lua files.
-
-    Args:
-        stylua_path: Path to stylua executable (searches PATH if not provided)
-        check_only: If True, only check formatting; if False, apply formatting
-
-    Returns:
-        Tuple of (exit_code, stdout, stderr)
-    """
-    # Always use the script's directory as the mod path
+    """Run stylua formatter on Lua files."""
     mod_path = Path(__file__).parent.resolve()
+
     if stylua_path is None:
-        # Try to find stylua in common locations
-        possible_paths = [
-            "stylua.exe",
-            os.path.expanduser("~\\.cargo\\bin\\stylua.exe"),
-            "C:\\tools\\stylua\\stylua.exe",
-            os.path.expanduser("~\\AppData\\Roaming\\stylua\\stylua.exe"),
-        ]
+        stylua_path = shutil.which("stylua")
 
-        for path in possible_paths:
-            try:
-                subprocess.run([path, "--version"], capture_output=True, timeout=2)
-                stylua_path = path
-                break
-            except (subprocess.TimeoutExpired, FileNotFoundError):
-                continue
+    if not stylua_path:
+        return -1, "", "stylua not found in PATH. Please install stylua."
 
-        if stylua_path is None:
-            return 1, "", "stylua not found. Please install it or specify --stylua-path"
-
-    # Build stylua command
     cmd = [stylua_path]
     if check_only:
         cmd.append("--check")
@@ -588,368 +402,93 @@ def run_stylua(
 
     try:
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=30, cwd=str(mod_path)
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=30,
         )
         return result.returncode, result.stdout, result.stderr
     except subprocess.TimeoutExpired:
-        return -1, "", "Formatting timed out after 30 seconds"
+        return -1, "", "stylua timed out after 30 seconds"
     except Exception as e:
-        return -1, "", str(e)
-
-
-def run_syntrax_tests() -> Tuple[int, str, str]:
-    """
-    Run the Syntrax test suite using LuaUnit.
-
-    Returns:
-        Tuple of (exit_code, stdout, stderr)
-    """
-    print("[LLM_INFO] Running Syntrax test suite...")
-
-    # Use lua52.exe to match Factorio's embedded Lua version
-    if not shutil.which("lua52.exe"):
-        return (
-            -1,
-            "",
-            "lua52.exe not found. Please ensure Lua 5.2 is installed and in PATH.",
-        )
-
-    cmd = ["lua52.exe", "syntrax-tests.lua"]
-
-    try:
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=30, cwd=Path(__file__).parent
-        )
-        return result.returncode, result.stdout, result.stderr
-    except subprocess.TimeoutExpired:
-        return -1, "", "Syntrax tests timed out after 30 seconds"
-    except Exception as e:
-        return -1, "", str(e)
+        return -1, "", f"Error running stylua: {e}"
 
 
 def run_lua_tests(test_suite: str = "all") -> Tuple[int, str, str]:
-    """
-    Run Lua test suites using the generalized test runner.
-
-    Args:
-        test_suite: Which test suite to run ("syntrax", "ds", or "all")
-
-    Returns:
-        Tuple of (exit_code, stdout, stderr)
-    """
-    suite_names = {"syntrax": "Syntrax", "ds": "Data Structures", "all": "All"}
-
-    print(f"[LLM_INFO] Running {suite_names.get(test_suite, test_suite)} test suite...")
-
-    # Use lua52.exe to match Factorio's embedded Lua version
-    if not shutil.which("lua52.exe"):
+    """Run Lua unit tests (syntrax and/or data structures)."""
+    if not shutil.which(LUA_EXE):
         return (
             -1,
             "",
-            "lua52.exe not found. Please ensure Lua 5.2 is installed and in PATH.",
+            f"{LUA_EXE} not found. Please ensure Lua 5.2 is installed and in PATH.",
         )
 
-    cmd = ["lua52.exe", "run-tests.lua", test_suite]
+    stdout_parts = []
+    stderr_parts = []
+    exit_code = 0
 
-    try:
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=60, cwd=Path(__file__).parent
-        )
-        return result.returncode, result.stdout, result.stderr
-    except subprocess.TimeoutExpired:
-        return (
-            -1,
-            "",
-            f"{suite_names.get(test_suite, test_suite)} tests timed out after 60 seconds",
-        )
-    except Exception as e:
-        return -1, "", str(e)
+    # Determine which tests to run
+    test_files = []
+    if test_suite in ["syntrax", "all"]:
+        test_files.append("syntrax-tests.lua")
+    if test_suite in ["ds", "all"]:
+        test_files.append("ds-tests.lua")
 
+    for test_file in test_files:
+        if not Path(test_file).exists():
+            stderr_parts.append(f"Test file {test_file} not found")
+            continue
 
-def parse_factorio_args() -> argparse.Namespace:
-    """
-    Parse command line arguments for Factorio launcher.
-
-    Returns:
-        Parsed arguments namespace
-    """
-    parser = argparse.ArgumentParser(
-        description="Launch Factorio on Windows - Optimized for LLM usage",
-        epilog=(
-            "Examples for LLMs:\n"
-            "  %(prog)s --timeout 10 -- --version\n"
-            "  %(prog)s --timeout 300 --load-game mysave.zip\n"
-            "  %(prog)s --timeout 3600 -- --start-server mysave.zip --server-settings settings.json\n"
-            "  %(prog)s --dry-run -- --help  # See all Factorio options\n"
-            "  %(prog)s --run-tests --timeout 300  # Run all tests (Factorio + all Lua tests)\n"
-            "  %(prog)s --run-tests --lua-tests syntrax --timeout 300  # Run only Syntrax tests\n"
-            "  %(prog)s --run-tests --lua-tests ds --timeout 300  # Run only DS tests\n"
-            "  %(prog)s --lint  # Run lua-language-server to check for errors\n"
-            "  %(prog)s --format-check  # Check if Lua files are properly formatted\n"
-            "  %(prog)s --format  # Apply stylua formatting to Lua files"
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-
-    # Core options
-    parser.add_argument(
-        "--factorio-path",
-        "-f",
-        default="../../bin/x64/factorio.exe",
-        help="Path to Factorio executable (default: %(default)s)",
-    )
-
-    parser.add_argument(
-        "--timeout",
-        "-t",
-        type=int,
-        help="Timeout in seconds (REQUIRED for LLM usage to prevent hanging)",
-    )
-
-    # Output control
-    output_group = parser.add_argument_group("output control")
-    output_group.add_argument(
-        "--no-capture",
-        action="store_true",
-        help="Let Factorio write directly to terminal (disables output capture)",
-    )
-
-    output_group.add_argument(
-        "--no-stream",
-        action="store_true",
-        help="Capture output but don't stream it (show only at end)",
-    )
-
-    output_group.add_argument(
-        "--buffered",
-        action="store_true",
-        help="Use buffered output (default: unbuffered for real-time output)",
-    )
-
-    # Common Factorio options
-    factorio_group = parser.add_argument_group("common Factorio options")
-    factorio_group.add_argument(
-        "--mod-directory",
-        help="Path to mod directory (e.g., ./mods)",
-    )
-
-    factorio_group.add_argument(
-        "--config",
-        help="Path to config.ini file",
-    )
-
-    factorio_group.add_argument(
-        "--executable-path",
-        help="Override Factorio data directory detection",
-    )
-
-    factorio_group.add_argument(
-        "--create",
-        metavar="SAVE_NAME",
-        help="Create a new save file",
-    )
-
-    factorio_group.add_argument(
-        "--load-game",
-        metavar="SAVE_NAME",
-        help="Load existing save file",
-    )
-
-    factorio_group.add_argument(
-        "--benchmark",
-        metavar="SAVE_NAME",
-        help="Run benchmark with save file",
-    )
-
-    factorio_group.add_argument(
-        "--run-tests",
-        action="store_true",
-        help="Run FactorioAccess tests and all Lua tests (Syntrax + DS)",
-    )
-
-    factorio_group.add_argument(
-        "--lua-tests",
-        choices=["syntrax", "ds", "all"],
-        default="all",
-        help="Which Lua test suite to run with --run-tests (default: all)",
-    )
-
-    factorio_group.add_argument(
-        "--mp-connect",
-        metavar="ADDRESS:PORT",
-        help="Connect to multiplayer server",
-    )
-
-    # Debugging and WSL workarounds
-    debug_group = parser.add_argument_group("debugging")
-    debug_group.add_argument(
-        "--verbose",
-        "-v",
-        action="store_true",
-        help="Show execution details and timing",
-    )
-
-    debug_group.add_argument(
-        "--shell",
-        action="store_true",
-        help="Use shell execution",
-    )
-
-    debug_group.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Show command without executing (useful for debugging)",
-    )
-
-    debug_group.add_argument(
-        "--json-status",
-        action="store_true",
-        help="Output final status as JSON (for LLM parsing)",
-    )
-
-    # Linting and formatting options
-    lint_group = parser.add_argument_group("linting and formatting")
-    lint_group.add_argument(
-        "--lint",
-        action="store_true",
-        help="Run lua-language-server to check for Lua errors and warnings",
-    )
-
-    lint_group.add_argument(
-        "--lua-ls-path",
-        help="Path to lua-language-server executable",
-    )
-
-    lint_group.add_argument(
-        "--format-check",
-        action="store_true",
-        help="Check Lua formatting with stylua (does not modify files)",
-    )
-
-    # Debugging support options
-    debug_support_group = parser.add_argument_group("debugging support")
-    debug_support_group.add_argument(
-        "--capture-logs",
-        action="store_true",
-        help="Capture current Factorio logs without running the game (for debugging crashes from manual runs)",
-    )
-
-    debug_support_group.add_argument(
-        "--last-lines",
-        type=int,
-        default=100,
-        help="Number of lines to capture from logs (default: %(default)s)",
-    )
-
-    debug_support_group.add_argument(
-        "--show-paths",
-        action="store_true",
-        help="Show paths to important files (logs, script-output, etc.) and exit",
-    )
-
-    lint_group.add_argument(
-        "--format",
-        action="store_true",
-        help="Apply Lua formatting with stylua (modifies files)",
-    )
-
-    lint_group.add_argument(
-        "--stylua-path",
-        help="Path to stylua executable",
-    )
-
-    # Pass-through for other Factorio arguments
-    parser.add_argument(
-        "extra_args",
-        nargs="*",
-        help="Additional Factorio arguments (use -- before them)",
-    )
-
-    return parser.parse_args()
-
-
-def find_factorio_log_path(factorio_path: Path) -> Optional[Path]:
-    """
-    Find the factorio-current.log file by checking common locations.
-
-    Args:
-        factorio_path: Path to factorio executable
-
-    Returns:
-        Path to log file or None if not found
-    """
-    # Common locations relative to the executable
-    possible_locations = [
-        # Same directory as executable
-        factorio_path.parent / "factorio-current.log",
-        # Parent directory (common for portable installs)
-        # directories are like bin/x64/factorio.exe, so we go up 3 levels.
-        factorio_path.parent.parent.parent / "factorio-current.log",
-    ]
-
-    # Check %APPDATA% on Windows
-    if sys.platform.startswith("win"):
-        appdata = os.environ.get("APPDATA")
-        if appdata:
-            possible_locations.append(
-                Path(appdata) / "Factorio" / "factorio-current.log"
+        cmd = [LUA_EXE, test_file]
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=30,
             )
+            stdout_parts.append(result.stdout)
+            stderr_parts.append(result.stderr)
+            if result.returncode != 0:
+                exit_code = result.returncode
+        except Exception as e:
+            stderr_parts.append(f"Error running {test_file}: {e}")
+            exit_code = -1
 
-    # Check each location
-    for location in possible_locations:
-        if location.exists():
-            return location
+    return exit_code, "\n".join(stdout_parts), "\n".join(stderr_parts)
+
+
+def find_script_output_dir() -> Optional[Path]:
+    """Find Factorio's script-output directory."""
+    # Script output is relative to Factorio executable
+    factorio_dir = Path(__file__).parent.parent.parent
+    script_output = factorio_dir / "script-output"
+
+    if script_output.exists():
+        return script_output
+
+    # Try alternative location
+    alt_output = factorio_dir / "data" / "script-output"
+    if alt_output.exists():
+        return alt_output
 
     return None
 
 
-def find_script_output_dir(factorio_path: Path) -> Optional[Path]:
+def capture_crash_info(exit_code: int, fail_hard: bool = True) -> Dict[str, Any]:
     """
-    Find the script-output directory where mods write files.
+    Capture crash information from logs.
 
     Args:
-        factorio_path: Path to factorio executable
-
-    Returns:
-        Path to script-output directory or None if not found
-    """
-    # Common locations
-    possible_locations = [
-        # Relative to executable, includes exe name, e.g. bin/x64/factorio.exe so go up 3 times.
-        factorio_path.parent.parent.parent / "script-output",
-    ]
-
-    # Check %APPDATA% on Windows
-    if sys.platform.startswith("win"):
-        appdata = os.environ.get("APPDATA")
-        if appdata:
-            possible_locations.append(Path(appdata) / "Factorio" / "script-output")
-
-    # Check each location, prefer ones that exist
-    for location in possible_locations:
-        if location.exists():
-            return location
-
-    # If none exist, return the most likely location (will be created by Factorio)
-    return factorio_path.parent.parent / "script-output"
-
-
-def capture_crash_info(
-    factorio_path: Path, exit_code: int, fail_hard: bool = True
-) -> Dict[str, Any]:
-    """
-    Capture crash information from logs and save for later analysis.
-
-    Args:
-        factorio_path: Path to factorio executable
         exit_code: Exit code from Factorio
         fail_hard: If True, raise exception when critical logs are missing
 
     Returns:
         Dictionary with crash information
-
-    Raises:
-        LogsNotFoundError: When fail_hard=True and critical logs cannot be found
     """
     crash_info = {
         "exit_code": exit_code,
@@ -962,16 +501,17 @@ def capture_crash_info(
     logs_found = False
     missing_logs = []
 
-    # Try to capture factorio-current.log
-    log_path = find_factorio_log_path(factorio_path)
-    if log_path and log_path.exists():
+    # Find Factorio log
+    factorio_dir = Path(__file__).parent.parent.parent
+    log_path = factorio_dir / "factorio-current.log"
+
+    if log_path.exists():
         try:
-            # Read last 200 lines (usually enough for crash info)
             with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
                 lines = f.readlines()
-                # Look for crash/error patterns
-                crash_lines = []
-                capture = False
+
+                # Look for error patterns
+                error_found = False
                 for i, line in enumerate(lines):
                     if any(
                         pattern in line.lower()
@@ -982,38 +522,38 @@ def capture_crash_info(
                             "stack traceback",
                         ]
                     ):
-                        # Capture 20 lines before and all lines after
+                        # Capture context around error
                         start = max(0, i - 20)
-                        crash_lines = lines[start:]
-                        capture = True
+                        crash_info["factorio_log"] = "".join(lines[start:])[
+                            -10000:
+                        ]  # Last 10KB max
+                        error_found = True
                         break
 
-                if capture:
-                    crash_info["factorio_log"] = "".join(
-                        crash_lines[-500:]
-                    )  # Last 500 lines max
-                else:
-                    # No obvious crash, just get last 100 lines
+                if not error_found:
+                    # No error found, just get last 100 lines
                     crash_info["factorio_log"] = "".join(lines[-100:])
+
                 logs_found = True
         except Exception as e:
             crash_info["factorio_log"] = f"Failed to read log: {e}"
     else:
-        missing_logs.append(f"factorio-current.log (searched at: {log_path})")
+        missing_logs.append(f"factorio-current.log at {log_path}")
 
-    # Try to capture mod logs from script-output
-    script_output_dir = find_script_output_dir(factorio_path)
-    if script_output_dir and script_output_dir.exists():
-        # Check for factorio-access.log
+    # Find mod logs
+    script_output_dir = find_script_output_dir()
+    if script_output_dir:
+        # Mod log
         mod_log_path = script_output_dir / "factorio-access.log"
         if mod_log_path.exists():
             try:
                 with open(mod_log_path, "r", encoding="utf-8", errors="ignore") as f:
                     crash_info["mod_log"] = f.read()[-10000:]  # Last 10KB
+                logs_found = True
             except Exception as e:
                 crash_info["mod_log"] = f"Failed to read mod log: {e}"
 
-        # Check for speech output log (CRITICAL for debugging)
+        # Printout log (critical for debugging)
         printout_log_path = script_output_dir / "factorio-access-printout.log"
         if printout_log_path.exists():
             try:
@@ -1025,262 +565,254 @@ def capture_crash_info(
             except Exception as e:
                 crash_info["printout_log"] = f"Failed to read printout log: {e}"
         else:
-            missing_logs.append(
-                f"factorio-access-printout.log (critical - searched at: {printout_log_path})"
-            )
+            missing_logs.append(f"factorio-access-printout.log at {printout_log_path}")
     else:
-        missing_logs.append(
-            f"script-output directory (searched at: {script_output_dir})"
-        )
+        missing_logs.append("script-output directory")
 
-    # If fail_hard is enabled and no logs were found, raise an exception
+    # Fail if no logs found and fail_hard is True
     if fail_hard and not logs_found:
-        error_msg = "[LLM_CRITICAL] Cannot find any logs! This is a waste of time.\n"
-        error_msg += "Missing logs:\n"
+        error_msg = (
+            "[CRITICAL] Cannot find any logs! Debugging is impossible without logs.\n"
+        )
+        error_msg += "Missing:\n"
         for log in missing_logs:
             error_msg += f"  - {log}\n"
-        error_msg += "\nSTOP! Ask the user for help locating the logs.\n"
-        error_msg += "The launcher MUST be able to find logs for debugging to work.\n"
-        error_msg += "Run with --show-paths to see where logs are expected."
+        error_msg += "\nRun with --show-paths to see where logs are expected."
         raise LogsNotFoundError(error_msg)
 
     return crash_info
 
 
-def save_crash_report(crash_info: Dict[str, Any], output_dir: Path = None) -> Path:
-    """
-    Save crash information to a file for later analysis.
-
-    Args:
-        crash_info: Dictionary with crash information
-        output_dir: Directory to save report (defaults to current directory)
-
-    Returns:
-        Path to saved crash report
-    """
-    if output_dir is None:
-        output_dir = Path.cwd()
-
-    # Create filename with timestamp
+def save_crash_report(crash_info: Dict[str, Any]) -> Path:
+    """Save crash report to JSON file."""
     timestamp = time.strftime("%Y%m%d_%H%M%S")
-    report_path = output_dir / f"factorio_crash_{timestamp}.json"
+    crash_file = Path(f"factorio_crash_{timestamp}.json")
 
-    # Save as JSON for easy parsing
-    with open(report_path, "w", encoding="utf-8") as f:
+    with open(crash_file, "w", encoding="utf-8") as f:
         json.dump(crash_info, f, indent=2)
 
-    return report_path
+    return crash_file
 
 
 def parse_test_results(log_path: str) -> Optional[Dict[str, Any]]:
-    """
-    Parse test results from the test log file or JSON results file.
-
-    Args:
-        log_path: Path to the test log file
-
-    Returns:
-        Dictionary with test summary or None if parsing fails
-    """
-    # First check for JSON results file
-    script_output_dir = os.path.dirname(log_path)
-    json_path = os.path.join(script_output_dir, "test-results.json")
-
-    if os.path.exists(json_path):
-        try:
-            with open(json_path, "r") as f:
-                results = json.loads(f.read())
-
-            # Calculate success rate
-            success_rate = 0.0
-            if results["total"] > 0:
-                success_rate = (results["passed"] / results["total"]) * 100
-
-            # Format duration
-            duration_str = f"{results['duration']:.2f} seconds"
-
-            # Format failures
-            failures = []
-            for error in results.get("errors", []):
-                failures.append(f"{error['suite']} - {error['test']}")
-
-            return {
-                "total": results["total"],
-                "passed": results["passed"],
-                "failed": results["failed"],
-                "success_rate": success_rate,
-                "duration": duration_str,
-                "failures": failures,
-            }
-        except Exception as e:
-            print(f"[LLM_DEBUG] Error reading JSON test results: {e}")
-            # Fall back to log parsing
-
-    if not os.path.exists(log_path):
+    """Parse test results from log file."""
+    log_path = Path(log_path)
+    if not log_path.exists():
         return None
 
     try:
-        with open(log_path, "r") as f:
+        with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
             content = f.read()
 
-        # Look for the test summary (new format)
-        summary_match = re.search(
-            r"Test Results:\s*\nTotal:\s*(\d+)\s*\nPassed:\s*(\d+)\s*\nFailed:\s*(\d+)\s*\nDuration:\s*(\d+\.\d+)\s*seconds",
-            content,
-            re.MULTILINE,
-        )
-
-        if not summary_match:
-            return None
-
-        total = int(summary_match.group(1))
-        passed = int(summary_match.group(2))
-        failed = int(summary_match.group(3))
-        duration = summary_match.group(4) + " seconds"
-
-        # Calculate success rate
-        success_rate = 0.0
-        if total > 0:
-            success_rate = (passed / total) * 100
-
-        # Extract failed test names
-        failures = []
-        for line in content.split("\n"):
-            if "✗" in line and "TestFramework:" in line:
-                # Extract test name from failure line
-                match = re.search(r"✗ ([^:]+) - ([^:]+):", line)
-                if match:
-                    failures.append(f"{match.group(1)} - {match.group(2)}")
-
-        return {
-            "total": total,
-            "passed": passed,
-            "failed": failed,
-            "success_rate": success_rate,
-            "duration": duration,
-            "failures": failures,
+        summary = {
+            "total": 0,
+            "passed": 0,
+            "failed": 0,
+            "success_rate": 0.0,
+            "duration": "unknown",
+            "failures": [],
         }
 
-    except Exception as e:
-        print(f"[LLM_DEBUG] Error parsing test results: {e}")
+        # Parse TestFramework output format (PASS/FAIL or checkmarks)
+        # Try both Unicode checkmarks and ASCII text
+        passed_tests = re.findall(r"TestFramework: (?:✓|PASS:) (.+?)(?:\n|$)", content)
+
+        # Look for failed tests - they appear after ERROR
+        failed_tests = re.findall(
+            r"\[ERROR\] TestFramework: (?:✗|FAIL:) (.+?):", content
+        )
+
+        summary["passed"] = len(passed_tests)
+        summary["failed"] = len(failed_tests)
+        summary["failures"] = failed_tests[:10]  # Limit to first 10
+
+        summary["total"] = summary["passed"] + summary["failed"]
+        if summary["total"] > 0:
+            summary["success_rate"] = (summary["passed"] / summary["total"]) * 100
+
+        return summary
+
+    except Exception:
         return None
 
 
-def main():
-    """
-    Main entry point for Factorio WSL launcher.
+def parse_factorio_args() -> argparse.Namespace:
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Factorio Windows Launcher for FactorioAccess development",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
 
-    Exit codes:
-        0: Success
-        1: General error
-        2: Invalid arguments
-        130: Interrupted (Ctrl+C)
-        -1: Timeout or launch error
-    """
+    # Commands group
+    commands = parser.add_argument_group("commands")
+    commands.add_argument(
+        "--show-paths", action="store_true", help="Show important paths for debugging"
+    )
+    commands.add_argument(
+        "--capture-logs", action="store_true", help="Capture current logs for debugging"
+    )
+    commands.add_argument(
+        "--debug-logs", action="store_true", help="Show detailed debug information"
+    )
+    commands.add_argument("--lint", action="store_true", help="Run Lua linter")
+    commands.add_argument(
+        "--format", action="store_true", help="Apply code formatting with stylua"
+    )
+    commands.add_argument(
+        "--format-check", action="store_true", help="Check code formatting"
+    )
+    commands.add_argument("--run-tests", action="store_true", help="Run all tests")
+
+    # Tool paths
+    tools = parser.add_argument_group("tool paths")
+    tools.add_argument("--lua-ls-path", help="Path to lua-language-server executable")
+    tools.add_argument("--stylua-path", help="Path to stylua executable")
+
+    # Factorio options
+    factorio = parser.add_argument_group("factorio options")
+    factorio.add_argument(
+        "--factorio-path",
+        default="../../bin/x64/factorio.exe",
+        help="Path to Factorio executable",
+    )
+    factorio.add_argument("--timeout", type=int, help="Timeout in seconds")
+    factorio.add_argument("--mod-directory", help="Mod directory path")
+    factorio.add_argument("--config", help="Config file path")
+    factorio.add_argument("--executable-path", help="Executable path for Factorio")
+    factorio.add_argument("--create", help="Create new save")
+    factorio.add_argument("--load-game", help="Load save game")
+    factorio.add_argument("--benchmark", help="Run benchmark")
+    factorio.add_argument("--mp-connect", help="Connect to multiplayer server")
+
+    # Test options
+    test_options = parser.add_argument_group("test options")
+    test_options.add_argument(
+        "--lua-tests",
+        choices=["all", "syntrax", "ds"],
+        default="all",
+        help="Which Lua tests to run",
+    )
+    test_options.add_argument(
+        "--verbose", action="store_true", help="Verbose output for tests"
+    )
+
+    # Output options
+    output = parser.add_argument_group("output options")
+    output.add_argument(
+        "--no-capture", action="store_true", help="Don't capture Factorio output"
+    )
+    output.add_argument("--buffered", action="store_true", help="Use buffered output")
+    output.add_argument(
+        "--json-status", action="store_true", help="Output status as JSON"
+    )
+    output.add_argument(
+        "--last-lines",
+        type=int,
+        default=100,
+        help="Number of log lines to show on error",
+    )
+
+    # Other options
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Show command without executing"
+    )
+    parser.add_argument("--shell", action="store_true", help="Use shell execution")
+    parser.add_argument(
+        "--create-luarc", action="store_true", help="Create .luarc.json configuration"
+    )
+    parser.add_argument(
+        "extra_args", nargs="*", default=[], help="Extra arguments to pass to Factorio"
+    )
+
+    return parser.parse_args()
+
+
+def main():
+    """Main entry point."""
     args = parse_factorio_args()
 
-    # Handle show-paths command (doesn't launch Factorio)
-    if args.show_paths:
-        factorio_path = Path(args.factorio_path).resolve()
-
-        print("[LLM_INFO] Important file paths for debugging:")
-        print("-" * 60)
-
-        # Factorio logs
-        log_path = find_factorio_log_path(factorio_path)
-
-        if log_path and log_path.exists():
-            print(f"Factorio current log: {log_path}")
-        else:
-            print("Factorio current log: Not found")
-
-        # Script output directory
-        script_output_dir = find_script_output_dir(factorio_path)
-        if script_output_dir and script_output_dir.exists():
-            print(f"Script output directory: {script_output_dir}")
-
-            # Check for specific files
-            printout_log = script_output_dir / "factorio-access-printout.log"
-            if printout_log.exists():
-                print(f"  - FactorioAccess printout log: {printout_log}")
-            else:
-                print(
-                    f"  - FactorioAccess printout log: Not found (expected at {printout_log})"
-                )
-
-            test_log = script_output_dir / "factorio-access-test.log"
-            if test_log.exists():
-                print(f"  - FactorioAccess test log: {test_log}")
-
-            mod_log = script_output_dir / "factorio-access.log"
-            if mod_log.exists():
-                print(f"  - FactorioAccess mod log: {mod_log}")
-        else:
-            print(
-                f"Script output directory: Not found (expected at {script_output_dir})"
-            )
-
-        print("-" * 60)
-        print("[LLM_INFO] Use --capture-logs to save current logs for analysis")
+    # Handle .luarc.json creation
+    if args.create_luarc:
+        mod_path = Path(__file__).parent.resolve()
+        luarc_path = mod_path / ".luarc.json"
+        create_or_update_luarc(str(luarc_path))
         return 0
 
-    # Handle capture-logs command (doesn't launch Factorio)
+    # Handle show-paths
+    if args.show_paths or args.debug_logs:
+        factorio_dir = Path(__file__).parent.parent.parent
+        mod_dir = Path(__file__).parent
+        script_output = find_script_output_dir()
+
+        print("=" * 60)
+        print("FACTORIO ACCESS LAUNCHER - PATH INFORMATION")
+        print("=" * 60)
+        print(f"Factorio directory: {factorio_dir}")
+        print(f"Mod directory: {mod_dir}")
+        print(f"Working directory: {Path.cwd()}")
+
+        factorio_exe = factorio_dir / "bin" / "x64" / "factorio.exe"
+        if factorio_exe.exists():
+            print(f"Factorio executable: {factorio_exe} [EXISTS]")
+        else:
+            print(f"Factorio executable: {factorio_exe} [NOT FOUND]")
+
+        if script_output:
+            print(f"Script output directory: {script_output}")
+
+            # Check for specific files
+            for log_file in [
+                "factorio-access-printout.log",
+                "factorio-access.log",
+                "factorio-access-test.log",
+            ]:
+                log_path = script_output / log_file
+                if log_path.exists():
+                    print(f"  - {log_file}: {log_path}")
+                else:
+                    print(f"  - {log_file}: Not found")
+        else:
+            print("Script output directory: Not found")
+
+        print("=" * 60)
+        return 0
+
+    # Handle capture-logs
     if args.capture_logs:
-        print(f"[LLM_INFO] Capturing Factorio logs from manual run...")
+        print("[INFO] Capturing Factorio logs from manual run...")
 
-        # Try to find Factorio installation
-        factorio_path = Path(args.factorio_path).resolve()
-        if not factorio_path.exists():
-            # Try to find it in common locations
-            print(
-                "[LLM_WARN] Factorio executable not found at specified path, searching common locations..."
-            )
-            # Just use the parent directories as a guess
-            factorio_path = factorio_path.parent
-
-        # Capture crash info (exit_code 1 indicates we're capturing a potential crash)
         try:
-            crash_info = capture_crash_info(factorio_path, 1, fail_hard=True)
+            crash_info = capture_crash_info(1, fail_hard=True)
         except LogsNotFoundError as e:
             print(str(e))
-            return 2  # Exit with error code
+            return 2
 
         # Save the report
         crash_report_path = save_crash_report(crash_info)
-        print(f"[LLM_INFO] Log capture saved to: {crash_report_path}")
+        print(f"[INFO] Log capture saved to: {crash_report_path}")
 
-        # Also print key information for immediate analysis
-        if crash_info.get("factorio_log"):
-            print("\n[LLM_INFO] === Last lines of factorio-current.log ===")
-            lines = crash_info["factorio_log"].split("\n")[-args.last_lines :]
-            print("\n".join(lines))
-
-        if crash_info.get("mod_log"):
-            print("\n[LLM_INFO] === Last lines of factorio-access.log ===")
-            lines = crash_info["mod_log"].split("\n")[-50:]
-            print("\n".join(lines))
-
+        # Show recent printout log entries
         if crash_info.get("printout_log"):
-            print("\n[LLM_INFO] === Last lines of factorio-access-printout.log ===")
+            print("\n[INFO] === Last lines of printout log ===")
             lines = crash_info["printout_log"].split("\n")[-50:]
             print("\n".join(lines))
 
         return 0
 
-    # Handle linting/formatting commands first (they don't launch Factorio)
+    # Handle linting
     if args.lint:
-        # First check annotations
         mod_path = Path(__file__).parent.resolve()
-        print(f"[LLM_INFO] Checking LuaLS annotations in {mod_path}")
-        ann_exit_code, ann_stdout, ann_stderr = check_lua_annotations()
-        if ann_stdout:
-            print(ann_stdout)
-        if ann_stderr:
-            print(ann_stderr, file=sys.stderr)
+
+        # First check annotations
+        print(f"[INFO] Checking LuaLS annotations in {mod_path}")
+        ann_exit_code, ann_errors = check_lua_annotations()
+        if ann_errors:
+            print(f"Found {len(ann_errors) // 2} incorrect annotation(s):")
+            for error in ann_errors:
+                print(error)
 
         # Then run lua-language-server
-        print(f"[LLM_INFO] Running lua-language-server on {mod_path}")
-
+        print(f"\n[INFO] Running lua-language-server on {mod_path}")
         exit_code, stdout, stderr = run_lua_linter(args.lua_ls_path)
 
         if stdout:
@@ -1291,16 +823,17 @@ def main():
         # Return failure if either check failed
         final_exit_code = max(ann_exit_code, exit_code)
         if final_exit_code == 0:
-            print("[LLM_INFO] All linting checks passed")
+            print("[INFO] All linting checks passed")
         else:
-            print(f"[LLM_ERROR] Linting failed with exit code {final_exit_code}")
+            print(f"[ERROR] Linting failed with exit code {final_exit_code}")
 
         return final_exit_code
 
+    # Handle formatting
     if args.format_check or args.format:
         mod_path = Path(__file__).parent.resolve()
         action = "Checking" if args.format_check else "Applying"
-        print(f"[LLM_INFO] {action} formatting with stylua on {mod_path}")
+        print(f"[INFO] {action} formatting with stylua on {mod_path}")
 
         exit_code, stdout, stderr = run_stylua(
             args.stylua_path, check_only=args.format_check
@@ -1313,26 +846,21 @@ def main():
 
         if exit_code == 0:
             if args.format_check:
-                print("[LLM_INFO] All files are properly formatted")
+                print("[INFO] All files are properly formatted")
             else:
-                print("[LLM_INFO] Formatting applied successfully")
+                print("[INFO] Formatting applied successfully")
         else:
             if args.format_check:
-                print(f"[LLM_ERROR] Formatting check failed with exit code {exit_code}")
+                print(f"[ERROR] Formatting check failed with exit code {exit_code}")
             else:
-                print(f"[LLM_ERROR] Formatting failed with exit code {exit_code}")
+                print(f"[ERROR] Formatting failed with exit code {exit_code}")
 
         return exit_code
-
-    # LLM usage warning for Factorio launching
-    if not args.timeout and not args.dry_run:
-        print("[LLM_WARNING] No timeout specified! Factorio may run indefinitely.")
-        print("[LLM_HINT] Always use --timeout when running from an LLM")
 
     # Build Factorio command line
     factorio_args = []
 
-    # Add predefined options
+    # Add options
     if args.mod_directory:
         factorio_args.extend(["--mod-directory", args.mod_directory])
     if args.config:
@@ -1346,111 +874,68 @@ def main():
     if args.benchmark:
         factorio_args.extend(["--benchmark", args.benchmark])
     if args.run_tests:
-        # For tests, we use benchmark mode with lab_tiles save
+        # For tests, use benchmark mode
         factorio_args.extend(
             ["--benchmark", "lab_tiles.zip", "--benchmark-ticks", "5000"]
         )
-        print("[LLM_INFO] Running tests with lab_tiles.zip save file")
-        print("[LLM_INFO] Test output will be suppressed unless failures occur...")
+        print("[INFO] Running tests with lab_tiles.zip save file")
+        if not args.verbose:
+            print("[INFO] Test output will be suppressed unless failures occur...")
     if args.mp_connect:
         factorio_args.extend(["--mp-connect", args.mp_connect])
 
-    # Add extra pass-through arguments
+    # Add extra arguments
     factorio_args.extend(args.extra_args)
 
     # Dry run mode
     if args.dry_run:
-        cmd = [args.factorio_path] + factorio_args
-        print(f"[LLM_INFO] Would execute: {' '.join(cmd)}")
+        factorio_exe = validate_factorio_exe()
+        cmd = [str(factorio_exe)] + factorio_args
+        print(f"[INFO] Would execute: {' '.join(cmd)}")
         return 0
 
-    # Launch Factorio
-    launcher = FactorioLauncher(args.factorio_path, args.timeout)
+    # Warning for no timeout
+    if not args.timeout and not args.dry_run:
+        print("[WARNING] No timeout specified! Factorio may run indefinitely.")
+        print("[HINT] Always use --timeout when running from automation")
 
-    # Create temporary file for buffering test output if needed
-    temp_output_file = None
-    original_stdout = sys.stdout
-    original_stderr = sys.stderr
+    # Handle test execution with output buffering
+    if args.run_tests:
+        temp_output_file = None
+        original_stdout = sys.stdout
+        original_stderr = sys.stderr
 
-    try:
-        # For tests, buffer output and only show on failure
-        buffer_output = args.run_tests and not args.verbose
-
-        if buffer_output:
-            temp_output_file = tempfile.NamedTemporaryFile(
-                mode="w+", delete=False, suffix=".log"
-            )
-            sys.stdout = temp_output_file
-            sys.stderr = temp_output_file
-
-        exit_code, elapsed_time = launcher.launch(
-            factorio_args,
-            capture_output=not args.no_capture,
-            stream_output=True,  # Always stream, but it goes to file if buffering
-            unbuffered=not args.buffered,
-            use_shell=args.shell,
-        )
-
-        # Restore stdout/stderr
-        if buffer_output:
-            sys.stdout = original_stdout
-            sys.stderr = original_stderr
-            temp_output_file.close()
-
-        # Output status information
-        if args.verbose or args.json_status:
-            status = {
-                "exit_code": exit_code,
-                "elapsed_time": round(elapsed_time, 2),
-                "timeout": args.timeout,
-                "timed_out": exit_code == -1
-                and args.timeout
-                and elapsed_time >= args.timeout,
-                "factorio_path": str(launcher.factorio_path),
-            }
-
-            if args.json_status:
-                print(f"\n[LLM_STATUS]{json.dumps(status)}")
-            else:
-                print(f"\n[LLM_INFO] Factorio exited with code: {exit_code}")
-                print(f"[LLM_INFO] Execution time: {elapsed_time:.2f} seconds")
-
-        # Capture crash info if exit code indicates failure
-        if exit_code != 0 and exit_code != 130:  # 130 is Ctrl+C
-            print(
-                f"\n[LLM_INFO] Factorio exited with error code {exit_code}, capturing crash information..."
-            )
-            try:
-                crash_info = capture_crash_info(
-                    launcher.factorio_path, exit_code, fail_hard=False
+        try:
+            # Buffer output for tests unless verbose
+            if not args.verbose:
+                temp_output_file = tempfile.NamedTemporaryFile(
+                    mode="w+", delete=False, suffix=".log"
                 )
-                crash_report_path = save_crash_report(crash_info)
-                print(f"[LLM_INFO] Crash report saved to: {crash_report_path}")
-            except LogsNotFoundError as e:
-                print(str(e))
-                print(
-                    "[LLM_ERROR] Failed to capture crash information due to missing logs"
-                )
+                sys.stdout = temp_output_file
+                sys.stderr = temp_output_file
 
-        # Check test results if running tests
-        if args.run_tests:
-            # Test log is in Factorio's script-output directory - find it dynamically
-            script_output_dir = find_script_output_dir(launcher.factorio_path)
+            # Run Factorio tests
+            exit_code, elapsed_time = launch_factorio(
+                factorio_args, timeout=args.timeout, capture_output=not args.no_capture
+            )
+
+            # Restore output
+            if not args.verbose:
+                sys.stdout = original_stdout
+                sys.stderr = original_stderr
+                temp_output_file.close()
+
+            # Parse test results
+            script_output_dir = find_script_output_dir()
             if script_output_dir:
                 test_log_path = script_output_dir / "factorio-access-test.log"
             else:
-                # Fallback to old hardcoded path
-                test_log_path = os.path.join(
-                    os.path.dirname(launcher.factorio_path),
-                    "..",
-                    "..",
-                    "script-output",
-                    "factorio-access-test.log",
-                )
-                test_log_path = os.path.normpath(test_log_path)
+                test_log_path = Path("script-output/factorio-access-test.log")
 
-            # Parse test results from log
-            test_summary = parse_test_results(test_log_path)
+            # Check if Factorio crashed (exit code -1 typically means a test threw an uncaught error)
+            factorio_crashed = exit_code == -1
+
+            test_summary = parse_test_results(str(test_log_path))
 
             if test_summary:
                 print("\n" + "=" * 60)
@@ -1460,17 +945,18 @@ def main():
                 print(f"Passed:      {test_summary['passed']}")
                 print(f"Failed:      {test_summary['failed']}")
                 print(f"Success Rate: {test_summary['success_rate']:.1f}%")
-                print(f"Duration:    {test_summary['duration']}")
+                if factorio_crashed:
+                    print(f"Status:      CRASHED (exit code -1)")
                 print("=" * 60)
 
-                if test_summary["failed"] > 0:
+                if test_summary["failed"] > 0 or factorio_crashed:
                     print("\nFAILED TESTS:")
                     for failure in test_summary["failures"]:
                         print(f"  - {failure}")
                     print(f"\nCheck {test_log_path} for details")
 
                     # Show buffered output on failure
-                    if buffer_output and temp_output_file:
+                    if not args.verbose and temp_output_file:
                         print("\n" + "=" * 60)
                         print("FACTORIO OUTPUT (shown due to test failures):")
                         print("=" * 60)
@@ -1478,20 +964,23 @@ def main():
                             with open(temp_output_file.name, "r") as f:
                                 print(f.read())
                         except Exception as e:
-                            print(f"[LLM_ERROR] Could not read buffered output: {e}")
-
+                            print(f"[ERROR] Could not read buffered output: {e}")
             else:
-                print("[LLM_WARNING] Test results unclear - check logs")
+                print("[WARNING] Could not parse test results - check logs")
                 print(f"Log file: {test_log_path}")
+                if exit_code == -1:
+                    print(
+                        "[INFO] Exit code -1 usually indicates an uncaught test error"
+                    )
 
-            # Now run Lua tests
-            test_suite_desc = {
+            # Run Lua tests
+            print("\n" + "=" * 60)
+            test_desc = {
                 "syntrax": "SYNTRAX TESTS",
                 "ds": "DATA STRUCTURES TESTS",
                 "all": "LUA TESTS (SYNTRAX & DATA STRUCTURES)",
             }
-            print("\n" + "=" * 60)
-            print(f"RUNNING {test_suite_desc[args.lua_tests]}")
+            print(f"RUNNING {test_desc[args.lua_tests]}")
             print("=" * 60)
 
             lua_exit_code, lua_stdout, lua_stderr = run_lua_tests(args.lua_tests)
@@ -1512,31 +1001,67 @@ def main():
             elif lua_exit_code != 0:
                 return lua_exit_code
             else:
-                return 0
+                return exit_code
+
+        finally:
+            # Restore output
+            sys.stdout = original_stdout
+            sys.stderr = original_stderr
+
+            # Clean up temp file
+            if temp_output_file:
+                try:
+                    if hasattr(temp_output_file, "name") and os.path.exists(
+                        temp_output_file.name
+                    ):
+                        os.unlink(temp_output_file.name)
+                except Exception:
+                    pass
+
+    # Regular Factorio execution
+    try:
+        exit_code, elapsed_time = launch_factorio(
+            factorio_args, timeout=args.timeout, capture_output=not args.no_capture
+        )
+
+        # Output status if requested
+        if args.verbose or args.json_status:
+            status = {
+                "exit_code": exit_code,
+                "elapsed_time": round(elapsed_time, 2),
+                "timeout": args.timeout,
+                "timed_out": exit_code == -1
+                and args.timeout
+                and elapsed_time >= args.timeout,
+            }
+
+            if args.json_status:
+                print(f"\n[STATUS]{json.dumps(status)}")
+            else:
+                print(f"\n[INFO] Factorio exited with code: {exit_code}")
+                print(f"[INFO] Execution time: {elapsed_time:.2f} seconds")
+
+        # Capture crash info on failure
+        if exit_code != 0 and exit_code != 130:  # 130 is Ctrl+C
+            print(
+                f"\n[INFO] Factorio exited with error code {exit_code}, capturing crash information..."
+            )
+            try:
+                crash_info = capture_crash_info(exit_code, fail_hard=False)
+                crash_report_path = save_crash_report(crash_info)
+                print(f"[INFO] Crash report saved to: {crash_report_path}")
+            except LogsNotFoundError as e:
+                print(str(e))
+                print("[ERROR] Failed to capture crash information due to missing logs")
 
         return exit_code
 
     except KeyboardInterrupt:
-        print("\n[LLM_INFO] Interrupted by user, terminating Factorio...")
-        launcher.terminate()
-        return 130  # Standard exit code for SIGINT
+        print("\n[INFO] Interrupted by user")
+        return 130
     except Exception as e:
-        print(f"[LLM_ERROR] Unexpected error in launcher: {e}")
+        print(f"[ERROR] Unexpected error in launcher: {e}")
         return 1
-    finally:
-        # Restore stdout/stderr if we changed them
-        sys.stdout = original_stdout
-        sys.stderr = original_stderr
-
-        # Clean up temp file if it exists and wasn't already deleted
-        if temp_output_file:
-            try:
-                if hasattr(temp_output_file, "name") and os.path.exists(
-                    temp_output_file.name
-                ):
-                    os.unlink(temp_output_file.name)
-            except Exception:
-                pass  # Best effort cleanup
 
 
 if __name__ == "__main__":

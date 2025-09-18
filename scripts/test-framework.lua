@@ -356,7 +356,7 @@ function mod._complete_test(passed, error_msg)
    -- Record result
    if passed then
       test_results.passed = test_results.passed + 1
-      log_info("TestFramework", string.format("✓ %s - %s", current_test.suite.name, current_test.test.name))
+      log_info("TestFramework", string.format("PASS: %s - %s", current_test.suite.name, current_test.test.name))
    else
       test_results.failed = test_results.failed + 1
       table.insert(test_results.errors, {
@@ -366,7 +366,7 @@ function mod._complete_test(passed, error_msg)
       })
       log_error(
          "TestFramework",
-         string.format("✗ %s - %s: %s", current_test.suite.name, current_test.test.name, error_msg or "Unknown error")
+         string.format("FAIL: %s - %s: %s", current_test.suite.name, current_test.test.name, error_msg or "Unknown error")
       )
    end
 
