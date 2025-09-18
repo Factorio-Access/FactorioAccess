@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """
-Factorio WSL Launcher - Specialized for LLM Usage
+Factorio Windows Launcher - Specialized for LLM Usage
 
-This script launches the Factorio Windows executable from within WSL (Windows Subsystem for Linux)
-with proper output handling and timeout support. It's designed specifically for LLM instances to
-programmatically control and monitor Factorio execution.
+This script launches the Factorio Windows executable with proper output handling and timeout support.
+It's designed specifically for LLM instances to programmatically control and monitor Factorio execution.
 
 IMPORTANT FOR LLMs:
 1. Default path: ../../bin/x64/factorio.exe (relative to this script's location)
@@ -13,20 +12,15 @@ IMPORTANT FOR LLMs:
 4. Exit codes: 0=success, -1=error/timeout, 130=interrupted, others=Factorio exit code
 
 COMMON USAGE PATTERNS:
-- Quick test: python3 launch_factorio.py --timeout 10 -- --version
-- Load save: python3 launch_factorio.py --timeout 300 --load-game mysave.zip
-- Run tests: python3 launch_factorio.py --run-tests --timeout 300
-- Run only DS tests: python3 launch_factorio.py --run-tests --lua-tests ds --timeout 300
-- Headless server: python3 launch_factorio.py --timeout 3600 -- --start-server mysave.zip
-- With mods: python3 launch_factorio.py --timeout 300 --mod-directory ./mods --load-game mysave.zip
-- Lint Lua code: python3 launch_factorio.py --lint
-- Check formatting: python3 launch_factorio.py --format-check
-- Apply formatting: python3 launch_factorio.py --format
-
-WSL INTEROP NOTES:
-- Windows error 0xc0000142 (DLL init failed) may occur - use --shell flag as workaround
-- Output buffering issues are handled by default with unbuffered mode
-- Paths are automatically resolved from WSL to Windows format
+- Quick test: python launch_factorio.py --timeout 10 -- --version
+- Load save: python launch_factorio.py --timeout 300 --load-game mysave.zip
+- Run tests: python launch_factorio.py --run-tests --timeout 300
+- Run only DS tests: python launch_factorio.py --run-tests --lua-tests ds --timeout 300
+- Headless server: python launch_factorio.py --timeout 3600 -- --start-server mysave.zip
+- With mods: python launch_factorio.py --timeout 300 --mod-directory ./mods --load-game mysave.zip
+- Lint Lua code: python launch_factorio.py --lint
+- Check formatting: python launch_factorio.py --format-check
+- Apply formatting: python launch_factorio.py --format
 """
 
 import argparse
@@ -35,6 +29,7 @@ import sys
 import os
 import signal
 import time
+import shutil
 from pathlib import Path
 from typing import Optional, List, Tuple, Dict, Any
 import threading
@@ -46,15 +41,16 @@ import re
 
 class LogsNotFoundError(Exception):
     """Raised when critical logs cannot be found during debugging."""
+
     pass
 
 
 class FactorioLauncher:
     """
-    Factorio launcher with WSL-specific handling.
+    Factorio launcher for Windows.
 
-    This class manages the subprocess execution of Factorio.exe from WSL,
-    handling common interop issues like buffering, timeouts, and output capture.
+    This class manages the subprocess execution of Factorio.exe,
+    handling timeouts and output capture.
     """
 
     def __init__(self, factorio_path: str, timeout: Optional[int] = None):
@@ -86,7 +82,7 @@ class FactorioLauncher:
                 f"Current working directory: {Path.cwd()}"
             )
 
-        # Store the path as-is for WSL interop
+        # Store the path for execution
         self.windows_path = str(self.factorio_path)
 
     def _output_reader(self, pipe, pipe_name: str) -> None:
@@ -101,7 +97,7 @@ class FactorioLauncher:
             pipe_name: Either "stdout" or "stderr" for identification
         """
         try:
-            for line in iter(pipe.readline, b""):
+            for line in iter(pipe.readline, ""):
                 if line:
                     self.output_queue.put((pipe_name, line))
             pipe.close()
@@ -143,6 +139,8 @@ class FactorioLauncher:
         popen_args = {
             "bufsize": 0 if unbuffered else -1,  # 0 = unbuffered, -1 = system default
             "shell": use_shell,
+            "encoding": "utf-8",
+            "errors": "replace",  # Replace undecodable characters instead of crashing
         }
 
         if capture_output:
@@ -153,10 +151,8 @@ class FactorioLauncher:
                 }
             )
 
-        # Environment setup for better WSL interop
-        env = os.environ.copy()
-        env["LC_ALL"] = "C.UTF-8"  # Prevent locale issues with Windows exe
-        popen_args["env"] = env
+        # Use current environment
+        popen_args["env"] = os.environ.copy()
 
         self.start_time = time.time()
 
@@ -187,10 +183,10 @@ class FactorioLauncher:
                         # Non-blocking read with short timeout
                         pipe_name, line = self.output_queue.get(timeout=0.1)
                         if pipe_name == "stdout":
-                            sys.stdout.write(line.decode("utf-8", errors="replace"))
+                            sys.stdout.write(line)
                             sys.stdout.flush()
                         elif pipe_name == "stderr":
-                            sys.stderr.write(line.decode("utf-8", errors="replace"))
+                            sys.stderr.write(line)
                             sys.stderr.flush()
                     except queue.Empty:
                         # Check if process finished
@@ -211,9 +207,9 @@ class FactorioLauncher:
                     try:
                         pipe_name, line = self.output_queue.get_nowait()
                         if pipe_name == "stdout":
-                            sys.stdout.write(line.decode("utf-8", errors="replace"))
+                            sys.stdout.write(line)
                         elif pipe_name == "stderr":
-                            sys.stderr.write(line.decode("utf-8", errors="replace"))
+                            sys.stderr.write(line)
                     except queue.Empty:
                         break
 
@@ -238,7 +234,7 @@ class FactorioLauncher:
             elapsed = time.time() - self.start_time
             if e.errno == 2:
                 print(f"[LLM_ERROR] Could not find executable at {self.windows_path}")
-                print("[LLM_HINT] Verify path is correct and accessible from WSL")
+                print("[LLM_HINT] Verify path is correct and accessible")
             else:
                 print(f"[LLM_ERROR] OSError launching Factorio: {e}")
             self.exit_code = -1
@@ -278,17 +274,15 @@ def find_factorio_type_definitions() -> Optional[str]:
     Returns:
         Path to the Factorio library directory, or None if not found
     """
-    # Common paths to check
+    # Common paths to check on Windows
     search_paths = [
-        # VSCode on Windows (via WSL)
-        "/mnt/c/Users/*/AppData/Roaming/Code/User/workspaceStorage/*/justarandomgeek.factoriomod-debug/sumneko-3rd/factorio/library",
-        # VSCode on Linux
-        "~/.config/Code/User/workspaceStorage/*/justarandomgeek.factoriomod-debug/sumneko-3rd/factorio/library",
-        # VSCode Server
-        "~/.vscode-server/data/User/workspaceStorage/*/justarandomgeek.factoriomod-debug/sumneko-3rd/factorio/library",
+        # VSCode on Windows
+        os.path.expanduser(
+            "~\\AppData\\Roaming\\Code\\User\\workspaceStorage\\*\\justarandomgeek.factoriomod-debug\\sumneko-3rd\\factorio\\library"
+        ),
         # Manual installation
-        "~/.local/share/factorio-lua-types/library",
-        "/usr/local/share/factorio-lua-types/library",
+        "C:\\factorio-lua-types\\library",
+        os.path.expanduser("~\\factorio-lua-types\\library"),
     ]
 
     import glob
@@ -380,33 +374,30 @@ def create_or_update_luarc(config_path: str) -> None:
     print(f"[LLM_INFO] Updated {luarc_path}")
 
 
-def run_lua_linter(
-    mod_path: str = ".", lua_ls_path: Optional[str] = None
-) -> Tuple[int, str, str]:
+def run_lua_linter(lua_ls_path: Optional[str] = None) -> Tuple[int, str, str]:
     """
     Run lua-language-server on the mod files.
 
     Args:
-        mod_path: Path to the mod directory
         lua_ls_path: Path to lua-language-server executable (searches PATH if not provided)
 
     Returns:
         Tuple of (exit_code, stdout, stderr)
     """
+    # Always use the script's directory as the mod path
+    mod_path = Path(__file__).parent.resolve()
     if lua_ls_path is None:
         # Try to find lua-language-server in common locations
         possible_paths = [
-            "lua-language-server",
-            "/usr/local/bin/lua-language-server",
-            "/usr/bin/lua-language-server",
-            os.path.expanduser("~/.local/bin/lua-language-server"),
-            # Common VSCode extension paths
+            "lua-language-server.exe",
+            # Common VSCode extension paths on Windows
             os.path.expanduser(
-                "~/.vscode-server/extensions/sumneko.lua-*/server/bin/lua-language-server"
+                "~\\.vscode\\extensions\\sumneko.lua-*\\server\\bin\\lua-language-server.exe"
             ),
             os.path.expanduser(
-                "~/.vscode/extensions/sumneko.lua-*/server/bin/lua-language-server"
+                "~\\AppData\\Roaming\\Code\\User\\globalStorage\\sumneko.lua\\server\\bin\\lua-language-server.exe"
             ),
+            "C:\\Program Files\\lua-language-server\\bin\\lua-language-server.exe",
         ]
 
         for path_pattern in possible_paths:
@@ -435,9 +426,6 @@ def run_lua_linter(
                 "",
                 "lua-language-server not found. Please install it or specify --lua-ls-path",
             )
-
-    # Ensure we're in the mod directory for proper .luarc.json detection
-    mod_path = Path(mod_path).resolve()
 
     # Create temporary config file
     config_file = None
@@ -490,61 +478,67 @@ def run_lua_linter(
                 pass  # Best effort cleanup
 
 
-def check_lua_annotations(mod_path: str = ".") -> Tuple[int, str, str]:
+def check_lua_annotations() -> Tuple[int, str, str]:
     """
     Check for incorrect LuaLS annotation formats in Lua files.
-    
+
     Correct format: ---@
     Incorrect formats: -- @, --- @, etc.
-    
-    Args:
-        mod_path: Path to the mod directory
-        
+
     Returns:
         Tuple of (exit_code, stdout, stderr)
     """
     import glob
-    
-    mod_path = Path(mod_path).resolve()
+
+    # Always use the script's directory as the mod path
+    mod_path = Path(__file__).parent.resolve()
     errors = []
     files_checked = 0
-    
+
     # Pattern to match incorrect annotations
     # Matches lines that start with dashes and @ but not exactly "---@"
-    incorrect_pattern = re.compile(r'^(\s*)((?:-+\s+@)|(?:--@)|(?:-{4,}@))', re.MULTILINE)
-    
+    incorrect_pattern = re.compile(
+        r"^(\s*)((?:-+\s+@)|(?:--@)|(?:-{4,}@))", re.MULTILINE
+    )
+
     # Find all Lua files
     lua_files = []
     for pattern in ["**/*.lua"]:
         lua_files.extend(glob.glob(str(mod_path / pattern), recursive=True))
-    
+
     for file_path in lua_files:
         files_checked += 1
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
-            
+
             # Find all incorrect annotations
             for line_num, line in enumerate(content.splitlines(), 1):
                 # Skip empty lines and non-annotation lines
                 stripped = line.strip()
-                if not stripped or '@' not in stripped:
+                if not stripped or "@" not in stripped:
                     continue
-                
+
                 # Check if line contains annotation-like pattern
-                if re.match(r'^\s*-+\s*@', line):
+                if re.match(r"^\s*-+\s*@", line):
                     # Check if it's NOT the correct format
-                    if not re.match(r'^\s*---@', line):
+                    if not re.match(r"^\s*---@", line):
                         # Make file path relative to mod_path for cleaner output
                         rel_path = Path(file_path).relative_to(mod_path)
-                        errors.append(f"{rel_path}:{line_num}: Incorrect annotation format: {line.strip()}")
-                        errors.append(f"  Should be: ---@{line.strip()[line.find('@')+1:]}")
-        
+                        errors.append(
+                            f"{rel_path}:{line_num}: Incorrect annotation format: {line.strip()}"
+                        )
+                        errors.append(
+                            f"  Should be: ---@{line.strip()[line.find('@') + 1 :]}"
+                        )
+
         except Exception as e:
             return -1, "", f"Error checking annotations: {str(e)}"
-    
+
     if errors:
-        stdout = f"Found {len(errors)} incorrect annotation(s) in {files_checked} files:\n\n"
+        stdout = (
+            f"Found {len(errors)} incorrect annotation(s) in {files_checked} files:\n\n"
+        )
         stdout += "\n".join(errors)
         return 1, stdout, ""
     else:
@@ -552,27 +546,27 @@ def check_lua_annotations(mod_path: str = ".") -> Tuple[int, str, str]:
 
 
 def run_stylua(
-    mod_path: str = ".", stylua_path: Optional[str] = None, check_only: bool = True
+    stylua_path: Optional[str] = None, check_only: bool = True
 ) -> Tuple[int, str, str]:
     """
     Run stylua formatter on Lua files.
 
     Args:
-        mod_path: Path to the mod directory
         stylua_path: Path to stylua executable (searches PATH if not provided)
         check_only: If True, only check formatting; if False, apply formatting
 
     Returns:
         Tuple of (exit_code, stdout, stderr)
     """
+    # Always use the script's directory as the mod path
+    mod_path = Path(__file__).parent.resolve()
     if stylua_path is None:
         # Try to find stylua in common locations
         possible_paths = [
-            "stylua",
-            "/usr/local/bin/stylua",
-            "/usr/bin/stylua",
-            os.path.expanduser("~/.local/bin/stylua"),
-            os.path.expanduser("~/.cargo/bin/stylua"),
+            "stylua.exe",
+            os.path.expanduser("~\\.cargo\\bin\\stylua.exe"),
+            "C:\\tools\\stylua\\stylua.exe",
+            os.path.expanduser("~\\AppData\\Roaming\\stylua\\stylua.exe"),
         ]
 
         for path in possible_paths:
@@ -590,11 +584,11 @@ def run_stylua(
     cmd = [stylua_path]
     if check_only:
         cmd.append("--check")
-    cmd.append(mod_path)
+    cmd.append(str(mod_path))
 
     try:
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=30, cwd=mod_path
+            cmd, capture_output=True, text=True, timeout=30, cwd=str(mod_path)
         )
         return result.returncode, result.stdout, result.stderr
     except subprocess.TimeoutExpired:
@@ -612,8 +606,15 @@ def run_syntrax_tests() -> Tuple[int, str, str]:
     """
     print("[LLM_INFO] Running Syntrax test suite...")
 
-    # Run the syntrax-tests.lua file
-    cmd = ["lua", "syntrax-tests.lua"]
+    # Use lua52.exe to match Factorio's embedded Lua version
+    if not shutil.which("lua52.exe"):
+        return (
+            -1,
+            "",
+            "lua52.exe not found. Please ensure Lua 5.2 is installed and in PATH.",
+        )
+
+    cmd = ["lua52.exe", "syntrax-tests.lua"]
 
     try:
         result = subprocess.run(
@@ -622,8 +623,6 @@ def run_syntrax_tests() -> Tuple[int, str, str]:
         return result.returncode, result.stdout, result.stderr
     except subprocess.TimeoutExpired:
         return -1, "", "Syntrax tests timed out after 30 seconds"
-    except FileNotFoundError:
-        return -1, "", "lua command not found. Please ensure Lua is installed."
     except Exception as e:
         return -1, "", str(e)
 
@@ -638,16 +637,19 @@ def run_lua_tests(test_suite: str = "all") -> Tuple[int, str, str]:
     Returns:
         Tuple of (exit_code, stdout, stderr)
     """
-    suite_names = {
-        "syntrax": "Syntrax",
-        "ds": "Data Structures",
-        "all": "All"
-    }
-    
+    suite_names = {"syntrax": "Syntrax", "ds": "Data Structures", "all": "All"}
+
     print(f"[LLM_INFO] Running {suite_names.get(test_suite, test_suite)} test suite...")
 
-    # Run the run-tests.lua file with the specified suite
-    cmd = ["lua", "run-tests.lua", test_suite]
+    # Use lua52.exe to match Factorio's embedded Lua version
+    if not shutil.which("lua52.exe"):
+        return (
+            -1,
+            "",
+            "lua52.exe not found. Please ensure Lua 5.2 is installed and in PATH.",
+        )
+
+    cmd = ["lua52.exe", "run-tests.lua", test_suite]
 
     try:
         result = subprocess.run(
@@ -655,9 +657,11 @@ def run_lua_tests(test_suite: str = "all") -> Tuple[int, str, str]:
         )
         return result.returncode, result.stdout, result.stderr
     except subprocess.TimeoutExpired:
-        return -1, "", f"{suite_names.get(test_suite, test_suite)} tests timed out after 60 seconds"
-    except FileNotFoundError:
-        return -1, "", "lua command not found. Please ensure Lua is installed."
+        return (
+            -1,
+            "",
+            f"{suite_names.get(test_suite, test_suite)} tests timed out after 60 seconds",
+        )
     except Exception as e:
         return -1, "", str(e)
 
@@ -670,7 +674,7 @@ def parse_factorio_args() -> argparse.Namespace:
         Parsed arguments namespace
     """
     parser = argparse.ArgumentParser(
-        description="Launch Factorio from WSL - Optimized for LLM usage",
+        description="Launch Factorio on Windows - Optimized for LLM usage",
         epilog=(
             "Examples for LLMs:\n"
             "  %(prog)s --timeout 10 -- --version\n"
@@ -777,7 +781,7 @@ def parse_factorio_args() -> argparse.Namespace:
     )
 
     # Debugging and WSL workarounds
-    debug_group = parser.add_argument_group("debugging and WSL workarounds")
+    debug_group = parser.add_argument_group("debugging")
     debug_group.add_argument(
         "--verbose",
         "-v",
@@ -788,7 +792,7 @@ def parse_factorio_args() -> argparse.Namespace:
     debug_group.add_argument(
         "--shell",
         action="store_true",
-        help="Use shell execution (workaround for WSL interop error 0xc0000142)",
+        help="Use shell execution",
     )
 
     debug_group.add_argument(
@@ -854,12 +858,6 @@ def parse_factorio_args() -> argparse.Namespace:
         help="Path to stylua executable",
     )
 
-    lint_group.add_argument(
-        "--mod-path",
-        default=".",
-        help="Path to the mod directory for linting/formatting (default: current directory)",
-    )
-
     # Pass-through for other Factorio arguments
     parser.add_argument(
         "extra_args",
@@ -889,8 +887,8 @@ def find_factorio_log_path(factorio_path: Path) -> Optional[Path]:
         factorio_path.parent.parent.parent / "factorio-current.log",
     ]
 
-    # On Windows, also check %APPDATA%
-    if sys.platform.startswith("win") or "microsoft" in sys.platform.lower():
+    # Check %APPDATA% on Windows
+    if sys.platform.startswith("win"):
         appdata = os.environ.get("APPDATA")
         if appdata:
             possible_locations.append(
@@ -921,8 +919,8 @@ def find_script_output_dir(factorio_path: Path) -> Optional[Path]:
         factorio_path.parent.parent.parent / "script-output",
     ]
 
-    # On Windows, also check %APPDATA%
-    if sys.platform.startswith("win") or "microsoft" in sys.platform.lower():
+    # Check %APPDATA% on Windows
+    if sys.platform.startswith("win"):
         appdata = os.environ.get("APPDATA")
         if appdata:
             possible_locations.append(Path(appdata) / "Factorio" / "script-output")
@@ -936,7 +934,9 @@ def find_script_output_dir(factorio_path: Path) -> Optional[Path]:
     return factorio_path.parent.parent / "script-output"
 
 
-def capture_crash_info(factorio_path: Path, exit_code: int, fail_hard: bool = True) -> Dict[str, Any]:
+def capture_crash_info(
+    factorio_path: Path, exit_code: int, fail_hard: bool = True
+) -> Dict[str, Any]:
     """
     Capture crash information from logs and save for later analysis.
 
@@ -1025,9 +1025,13 @@ def capture_crash_info(factorio_path: Path, exit_code: int, fail_hard: bool = Tr
             except Exception as e:
                 crash_info["printout_log"] = f"Failed to read printout log: {e}"
         else:
-            missing_logs.append(f"factorio-access-printout.log (critical - searched at: {printout_log_path})")
+            missing_logs.append(
+                f"factorio-access-printout.log (critical - searched at: {printout_log_path})"
+            )
     else:
-        missing_logs.append(f"script-output directory (searched at: {script_output_dir})")
+        missing_logs.append(
+            f"script-output directory (searched at: {script_output_dir})"
+        )
 
     # If fail_hard is enabled and no logs were found, raise an exception
     if fail_hard and not logs_found:
@@ -1266,17 +1270,18 @@ def main():
     # Handle linting/formatting commands first (they don't launch Factorio)
     if args.lint:
         # First check annotations
-        print(f"[LLM_INFO] Checking LuaLS annotations in {args.mod_path}")
-        ann_exit_code, ann_stdout, ann_stderr = check_lua_annotations(args.mod_path)
+        mod_path = Path(__file__).parent.resolve()
+        print(f"[LLM_INFO] Checking LuaLS annotations in {mod_path}")
+        ann_exit_code, ann_stdout, ann_stderr = check_lua_annotations()
         if ann_stdout:
             print(ann_stdout)
         if ann_stderr:
             print(ann_stderr, file=sys.stderr)
-        
-        # Then run lua-language-server
-        print(f"[LLM_INFO] Running lua-language-server on {args.mod_path}")
 
-        exit_code, stdout, stderr = run_lua_linter(args.mod_path, args.lua_ls_path)
+        # Then run lua-language-server
+        print(f"[LLM_INFO] Running lua-language-server on {mod_path}")
+
+        exit_code, stdout, stderr = run_lua_linter(args.lua_ls_path)
 
         if stdout:
             print(stdout)
@@ -1293,11 +1298,12 @@ def main():
         return final_exit_code
 
     if args.format_check or args.format:
+        mod_path = Path(__file__).parent.resolve()
         action = "Checking" if args.format_check else "Applying"
-        print(f"[LLM_INFO] {action} formatting with stylua on {args.mod_path}")
+        print(f"[LLM_INFO] {action} formatting with stylua on {mod_path}")
 
         exit_code, stdout, stderr = run_stylua(
-            args.mod_path, args.stylua_path, check_only=args.format_check
+            args.stylua_path, check_only=args.format_check
         )
 
         if stdout:
@@ -1365,16 +1371,18 @@ def main():
     temp_output_file = None
     original_stdout = sys.stdout
     original_stderr = sys.stderr
-    
+
     try:
         # For tests, buffer output and only show on failure
         buffer_output = args.run_tests and not args.verbose
-        
+
         if buffer_output:
-            temp_output_file = tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix='.log')
+            temp_output_file = tempfile.NamedTemporaryFile(
+                mode="w+", delete=False, suffix=".log"
+            )
             sys.stdout = temp_output_file
             sys.stderr = temp_output_file
-        
+
         exit_code, elapsed_time = launcher.launch(
             factorio_args,
             capture_output=not args.no_capture,
@@ -1382,7 +1390,7 @@ def main():
             unbuffered=not args.buffered,
             use_shell=args.shell,
         )
-        
+
         # Restore stdout/stderr
         if buffer_output:
             sys.stdout = original_stdout
@@ -1413,12 +1421,16 @@ def main():
                 f"\n[LLM_INFO] Factorio exited with error code {exit_code}, capturing crash information..."
             )
             try:
-                crash_info = capture_crash_info(launcher.factorio_path, exit_code, fail_hard=False)
+                crash_info = capture_crash_info(
+                    launcher.factorio_path, exit_code, fail_hard=False
+                )
                 crash_report_path = save_crash_report(crash_info)
                 print(f"[LLM_INFO] Crash report saved to: {crash_report_path}")
             except LogsNotFoundError as e:
                 print(str(e))
-                print("[LLM_ERROR] Failed to capture crash information due to missing logs")
+                print(
+                    "[LLM_ERROR] Failed to capture crash information due to missing logs"
+                )
 
         # Check test results if running tests
         if args.run_tests:
@@ -1445,8 +1457,8 @@ def main():
                 print("FACTORIO ACCESS TEST RESULTS")
                 print("=" * 60)
                 print(f"Total Tests: {test_summary['total']}")
-                print(f"Passed:      {test_summary['passed']} ✓")
-                print(f"Failed:      {test_summary['failed']} ✗")
+                print(f"Passed:      {test_summary['passed']}")
+                print(f"Failed:      {test_summary['failed']}")
                 print(f"Success Rate: {test_summary['success_rate']:.1f}%")
                 print(f"Duration:    {test_summary['duration']}")
                 print("=" * 60)
@@ -1454,16 +1466,16 @@ def main():
                 if test_summary["failed"] > 0:
                     print("\nFAILED TESTS:")
                     for failure in test_summary["failures"]:
-                        print(f"  ✗ {failure}")
+                        print(f"  - {failure}")
                     print(f"\nCheck {test_log_path} for details")
-                    
+
                     # Show buffered output on failure
                     if buffer_output and temp_output_file:
                         print("\n" + "=" * 60)
                         print("FACTORIO OUTPUT (shown due to test failures):")
                         print("=" * 60)
                         try:
-                            with open(temp_output_file.name, 'r') as f:
+                            with open(temp_output_file.name, "r") as f:
                                 print(f.read())
                         except Exception as e:
                             print(f"[LLM_ERROR] Could not read buffered output: {e}")
@@ -1475,8 +1487,8 @@ def main():
             # Now run Lua tests
             test_suite_desc = {
                 "syntrax": "SYNTRAX TESTS",
-                "ds": "DATA STRUCTURES TESTS", 
-                "all": "LUA TESTS (SYNTRAX & DATA STRUCTURES)"
+                "ds": "DATA STRUCTURES TESTS",
+                "all": "LUA TESTS (SYNTRAX & DATA STRUCTURES)",
             }
             print("\n" + "=" * 60)
             print(f"RUNNING {test_suite_desc[args.lua_tests]}")
@@ -1490,9 +1502,9 @@ def main():
                 print(lua_stderr, file=sys.stderr)
 
             if lua_exit_code == 0:
-                print("\n✓ All Lua tests passed!")
+                print("\nAll Lua tests passed!")
             else:
-                print(f"\n✗ Lua tests failed with exit code {lua_exit_code}")
+                print(f"\nLua tests failed with exit code {lua_exit_code}")
 
             # Return failure if either test suite failed
             if test_summary and test_summary["failed"] > 0:
@@ -1515,11 +1527,13 @@ def main():
         # Restore stdout/stderr if we changed them
         sys.stdout = original_stdout
         sys.stderr = original_stderr
-        
+
         # Clean up temp file if it exists and wasn't already deleted
         if temp_output_file:
             try:
-                if hasattr(temp_output_file, 'name') and os.path.exists(temp_output_file.name):
+                if hasattr(temp_output_file, "name") and os.path.exists(
+                    temp_output_file.name
+                ):
                     os.unlink(temp_output_file.name)
             except Exception:
                 pass  # Best effort cleanup
