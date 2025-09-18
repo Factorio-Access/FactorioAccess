@@ -352,7 +352,7 @@ function mod.nearby_train_schedule_add_stop(train_stop, wait_condition_type, wai
 end
 
 --Returns an info string after updating every entry for this train stop for the parked train.
-function mod.nearby_train_schedule_update_stop(train_stop, wait_condition_type, wait_time_seconds)
+function mod.nearby_train_schedule_update_stop(train_stop, wait_condition_type, wait_time_seconds, pindex)
    local result = "initial"
    --Locate the nearby train
    local train = train_stop.get_stopped_train()

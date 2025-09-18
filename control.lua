@@ -57,7 +57,9 @@ local TravelTools = require("scripts.travel-tools")
 local TutorialSystem = require("scripts.tutorial-system")
 local BeltAnalyzer = require("scripts.ui.belt-analyzer")
 local BlueprintsMenu = require("scripts.ui.menus.blueprints-menu")
+local GenericInventory = require("scripts.ui.generic-inventory")
 local UiRouter = require("scripts.ui.router")
+local UiEventRouting = require("scripts.ui.event-routing")
 local Viewpoint = require("scripts.viewpoint")
 local Warnings = require("scripts.warnings")
 local WorkQueue = require("scripts.work-queue")
@@ -784,8 +786,6 @@ function menu_cursor_up(pindex)
       end
    elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
       Research.menu_move_vertical(pindex, -1)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.BELT) then
-      BeltAnalyzer.belt_analyzer:on_up(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
       if storage.players[pindex].warnings.category > 1 then
          storage.players[pindex].warnings.category = storage.players[pindex].warnings.category - 1
@@ -818,8 +818,6 @@ function menu_cursor_up(pindex)
       TrainStops.train_stop_menu_up(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.ROBOPORT) then
       WorkerRobots.roboport_menu_up(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT) then
-      BlueprintsMenu.blueprint_menu_tabs:on_up(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
       Blueprints.blueprint_book_menu_up(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.CIRCUIT_NETWORK) then
@@ -984,8 +982,6 @@ function menu_cursor_down(pindex)
       end
    elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
       Research.menu_move_vertical(pindex, 1)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.BELT) then
-      BeltAnalyzer.belt_analyzer:on_down(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
       local warnings = {}
       if storage.players[pindex].warnings.sector == 1 then
@@ -1027,8 +1023,6 @@ function menu_cursor_down(pindex)
       TrainStops.train_stop_menu_down(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.ROBOPORT) then
       WorkerRobots.roboport_menu_down(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT) then
-      BlueprintsMenu.blueprint_menu_tabs:on_down(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
       Blueprints.blueprint_book_menu_down(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.CIRCUIT_NETWORK) then
@@ -1166,8 +1160,6 @@ function menu_cursor_left(pindex)
       end
    elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
       Research.menu_move_horizontal(pindex, -1)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.BELT) then
-      BeltAnalyzer.belt_analyzer:on_left(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
       if storage.players[pindex].warnings.index > 1 then
          storage.players[pindex].warnings.index = storage.players[pindex].warnings.index - 1
@@ -1310,8 +1302,6 @@ function menu_cursor_right(pindex)
       end
    elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
       Research.menu_move_horizontal(pindex, 1)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.BELT) then
-      BeltAnalyzer.belt_analyzer:on_right(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
       local warnings = {}
       if storage.players[pindex].warnings.sector == 1 then
@@ -2796,7 +2786,7 @@ local function clear_fa_gui(pindex)
 end
 
 --Pause / resume the game. If a menu GUI is open, ESC makes it close the menu instead
----@param event EventData.CustomInputEvent
+---@param event EventData
 local function kb_pause_menu(event)
    local pindex = event.player_index
    local player = game.get_player(pindex)
@@ -3708,6 +3698,7 @@ local function read_coords(pindex, start_phrase)
       if game.get_player(pindex).driving then
          --Give vehicle coords and orientation and speed --laterdo find exact speed coefficient
          local vehicle = game.get_player(pindex).vehicle
+         assert(vehicle ~= nil) -- When driving is true, vehicle is guaranteed to exist
          local speed = vehicle.speed * 215
          local message = Speech.new()
 
@@ -4799,8 +4790,9 @@ EventManager.on_event(
    end
 )
 
----@param event EventData.CustomInputEvent
+---@param event EventData
 local function kb_read_menu_name(event)
+   ---@cast event EventData.CustomInputEvent
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
@@ -4920,8 +4912,6 @@ local function kb_switch_menu_or_gun(event)
       elseif router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
          router:open_ui(UiRouter.UI_NAMES.INVENTORY)
          read_inventory_slot(pindex, "Inventory, ")
-      elseif router:is_ui_open(UiRouter.UI_NAMES.BELT) then
-         BeltAnalyzer.belt_analyzer:on_next_tab(pindex)
       elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
          storage.players[pindex].warnings.sector = storage.players[pindex].warnings.sector + 1
          if storage.players[pindex].warnings.sector > 3 then storage.players[pindex].warnings.sector = 1 end
@@ -4944,6 +4934,7 @@ local function kb_switch_menu_or_gun(event)
    end
    local guns_inv = p.get_inventory(defines.inventory.character_guns)
    local ammo_inv = game.get_player(pindex).get_inventory(defines.inventory.character_ammo)
+   ---@type string|LocalisedString
    local result = ""
    local switched_index = -2
 
@@ -5062,8 +5053,6 @@ local function kb_reverse_switch_menu_or_gun(event)
       elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
          router:open_ui(UiRouter.UI_NAMES.INVENTORY)
          read_inventory_slot(pindex, "Inventory, ")
-      elseif router:is_ui_open(UiRouter.UI_NAMES.BELT) then
-         BeltAnalyzer.belt_analyzer:on_previous_tab(pindex)
       elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
          storage.players[pindex].warnings.sector = storage.players[pindex].warnings.sector - 1
          if storage.players[pindex].warnings.sector < 1 then storage.players[pindex].warnings.sector = 3 end
@@ -5086,6 +5075,7 @@ local function kb_reverse_switch_menu_or_gun(event)
    end
    local guns_inv = p.get_inventory(defines.inventory.character_guns)
    local ammo_inv = game.get_player(pindex).get_inventory(defines.inventory.character_ammo)
+   ---@type string|LocalisedString
    local result = ""
    local switched_index = -2
 
@@ -5687,8 +5677,6 @@ local function kb_click_menu(event)
       TrainStops.run_train_stop_menu(storage.players[pindex].train_stop_menu.index, pindex, true)
    elseif router:is_ui_open(UiRouter.UI_NAMES.ROBOPORT) then
       WorkerRobots.run_roboport_menu(storage.players[pindex].roboport_menu.index, pindex, true)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT) then
-      BlueprintsMenu.blueprint_menu_tabs:on_click(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
       local bpb_menu = storage.players[pindex].blueprint_book_menu
       Blueprints.run_blueprint_book_menu(pindex, bpb_menu.index, bpb_menu.list_mode, true, false)

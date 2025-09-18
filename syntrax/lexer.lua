@@ -132,7 +132,7 @@ local BRACKET_INVERSE = {
    ["}"] = "{",
 }
 
---@param untyped_tokens { text: String, span: syntrax.Span }
+---@param untyped_tokens { text: string, span: syntrax.Span }
 ---@return syntrax.Token[]?, syntrax.Error?
 local function build_tokens(untyped_tokens)
    -- A stack whose bottom-most level is the "top" of the program, and each level thereafter is a bracket plus the items

@@ -47,6 +47,10 @@ local test_files = {
    "furnace-fuel-test", -- Test furnace fuel status reporting
    "speech-logger-test", -- Test speech logging to file
    "inventory-transfer-test", -- Test inventory transfer functionality and sorting
+
+   "tab-crash-test", -- Test TAB key doesn't crash with no UI open
+   -- "event-manager-player-init-test", -- Test EventManager player initialization (requires custom events)
+   -- "event-priority-test", -- Test EventManager priority system (requires custom events)
 }
 
 -- Test execution state
@@ -199,7 +203,7 @@ end
 
 --- Check if the current save is a test save
 -- Test saves are identified by having a lab tile at position 0,0
--- @return boolean True if this is a test save
+---@return boolean True if this is a test save
 function mod.is_test_save()
    if not game then return false end
 

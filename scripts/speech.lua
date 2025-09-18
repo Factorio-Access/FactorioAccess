@@ -104,6 +104,11 @@ end
 function Speech:fragment(fragment)
    self:_check_not_built()
 
+   -- Warn about common mistake: fragment(" ") is unnecessary as spaces are added automatically
+   if type(fragment) == "string" and fragment == " " then
+      error('Speech:fragment(" ") is unnecessary - spaces are automatically added between fragments')
+   end
+
    -- If we just started a list item, this needs a comma.
    if self.state == MESSAGE_BUILDER_STATE.LIST_ITEM then
       if not self.is_first_list_item then table.insert(self.parts, ",") end

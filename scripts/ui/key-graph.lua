@@ -83,7 +83,7 @@ local mod = {}
 ---@alias fa.ui.graph.Modifiers { control: boolean, alt: boolean, shift: boolean }
 
 ---@class fa.ui.graph.Ctx
----@field message fa.MessageBuilder
+---@field message fa.Speech
 ---@field modifiers fa.ui.graph.Modifiers Set for things using the keyboard. Non-nil but garbage for all others.
 ---@field state any
 ---@field tablist_shared_state any
@@ -145,11 +145,6 @@ local Controller_meta = { __index = Controller }
 
 function Controller:close()
    self.ctx.force_close = true
-end
-
-function Controller:close_for_textbox()
-   self.ctx.force_close = true
-   self.ctx.close_is_textbox = true
 end
 
 ---@type fa.ui.graph.Modifiers

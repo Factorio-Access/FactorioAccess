@@ -178,11 +178,11 @@ player.play_sound{
 ## Debugging
 
 ```lua
--- Debug output to console
-game.print("DEBUG: " .. serpent.line(data))
+-- Debug output to logs
+print("DEBUG: " .. serpent.line(data))
 
 -- Check storage size
-game.print("Storage size: " .. serpent.line(#serpent.dump(storage)))
+print("Storage size: " .. serpent.line(#serpent.dump(storage)))
 
 -- Log to file
 log("Important event: " .. serpent.block(event_data))

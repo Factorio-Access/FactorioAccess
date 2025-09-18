@@ -10,6 +10,7 @@ local TransportBelts = require("scripts.transport-belts")
 local BeltAnalyzer = require("scripts.ui.belt-analyzer")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
+local GenericInventory = require("scripts.ui.generic-inventory")
 
 local mod = {}
 
@@ -101,6 +102,11 @@ function mod.open_operable_building(ent, pindex)
       if ent.prototype.subgroup.name == "belt" then
          router:open_ui(UiRouter.UI_NAMES.BELT)
          BeltAnalyzer.belt_analyzer:open(pindex, { entity = ent })
+         return
+      end
+      -- Check if it's a simple container (chest)
+      if ent.type == "container" or ent.type == "logistic-container" then
+         GenericInventory.generic_inventory:open(pindex, { entity = ent, inventory = defines.inventory.chest })
          return
       end
       if ent.prototype.ingredient_count ~= nil then

@@ -1,16 +1,16 @@
 --[[
-A builder which knows how to render graphs.
+A builder which knows how to render grids.
 
-You `mod.graph_builder()` then `add_label`, `set_column_header`, etc.  The dimensions of the resulting graph are the
+You `mod.grid_builder()` then `add_label`, `set_column_header`, etc.  The dimensions of the resulting grid are the
 widest dimensions needed to hold all of the set nodes.  Default nodes are "Empty" or a localisation thereof.  To
 customize that,call `set_default_cell_vtable`.
 
 The keys are "1-1" etc.
 
-To match Lua, graphs are 1-indexed.
+To match Lua grids are 1-indexed.grids
 
 You may replace default dimension announcement by calling `:dimension_labeler` and giving it a callback which will
-receive the graph's context, x, and y.  You should push `:fragment` only.
+receive the grid's context, x, and y.  You should push `:fragment` only.
 ]]
 local TH = require("scripts.table-helpers")
 local UiKeyGraph = require("scripts.ui.key-graph")
@@ -78,6 +78,18 @@ function GridBuilder:add_lazy_label(x, y, label)
       vtable = {
          label = label,
       },
+   })
+end
+
+---@param x number
+---@param y number
+---@param label fun(fa.ui.graph.GraphCtx)
+---@param vtable table<string, any>? Optional callbacks (label will be set automatically)
+function GridBuilder:add_control(x, y, label, vtable)
+   vtable = vtable or {}
+   vtable.label = label
+   self:_insert(x, y, {
+      vtable = vtable,
    })
 end
 

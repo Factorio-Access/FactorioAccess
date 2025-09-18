@@ -121,14 +121,14 @@ end
 ```lua
 -- Add logging to input handler
 script.on_event("my-custom-input", function(event)
-    game.print("Input received!")  -- Verify it's firing
+    print("Input received!")  -- Verify it's firing (use print, not game.print)
 end)
 ```
 
 ### Screen Reader Not Speaking
 
 **Common Issues**:
-1. Using `game.print()` instead of `Speech.speak()`
+1. Using `game.print()` instead of `Speech.speak()` (game.print outputs to in-game console which is inaccessible)
 2. Missing pindex parameter
 3. Launcher not running
 
@@ -183,7 +183,7 @@ local blocking = surface.find_entities_filtered{
     collision_mask = prototype.collision_mask
 }
 for _, blocker in pairs(blocking) do
-    game.print("Blocked by: " .. blocker.name .. " at " .. serpent.line(blocker.position))
+    print("Blocked by: " .. blocker.name .. " at " .. serpent.line(blocker.position))
 end
 ```
 
@@ -269,12 +269,12 @@ When encountering crashes, check if the feature uses 1.1 API calls that no longe
 ### Useful Console Commands
 ```lua
 -- Check storage size
-/c game.print("Storage: " .. #serpent.dump(storage) .. " bytes")
+/c print("Storage: " .. #serpent.dump(storage) .. " bytes")
 
 -- List all entities in area
 /c local area = {{-50,-50},{50,50}}
 local ents = game.player.surface.find_entities(area)
-for _, e in pairs(ents) do game.print(e.name) end
+for _, e in pairs(ents) do print(e.name) end
 
 -- Force scanner refresh
 /c storage.scanner.surfaces[1].force_full_rescan = true
@@ -296,12 +296,12 @@ end
 -- Add to control.lua for development
 commands.add_command("fa-debug", nil, function(command)
     storage.debug_mode = not storage.debug_mode
-    game.print("Debug mode: " .. tostring(storage.debug_mode))
+    print("Debug mode: " .. tostring(storage.debug_mode))
 end)
 
 -- Use in code
 if storage.debug_mode then
-    game.print("Debug: " .. serpent.line(data))
+    print("Debug: " .. serpent.line(data))
 end
 ```
 

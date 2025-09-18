@@ -104,8 +104,8 @@ This guide helps LLMs quickly find specific code locations in the FactorioAccess
 ### Output to Screen Reader
 - **Send message**: `Speech.speak(pindex, message)`
 - **Format**: Sends `"out <pindex> <message>"` to stdout
-- **Debug print**: `game.print()` - Goes to console, not screen reader
-- **Common mistake**: Using `game.print()` for user messages
+- **Debug print**: `print()` or logging framework - For debugging output visible in logs
+- **Common mistake**: Using `game.print()` - it outputs to the in-game console which is inaccessible to blind users
 
 ## 4. Configuration and Settings
 

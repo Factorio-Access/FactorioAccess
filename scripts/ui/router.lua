@@ -32,9 +32,15 @@ local StorageManager = require("scripts.storage-manager")
 
 local mod = {}
 
+---Storage for registered UIs (will be set by ui-event-routing)
+---@type fun(): table<string, fa.ui.TabList>?
+mod.get_registered_uis = nil
+
 ---@enum fa.ui.UiName
 mod.UI_NAMES = {
    INVENTORY = "inventory",
+   -- New inventory, but we need the old name for a little bit while we roll over.
+   GENERIC_INVENTORY = "inventory2",
    BUILDING = "building",
    VEHICLE = "vehicle",
    CRAFTING = "crafting",
@@ -75,11 +81,31 @@ local Router_meta = { __index = Router }
 
 ---@param name fa.ui.UiName
 function Router:open_ui(name)
+   local current_ui = router_state[self.pindex].ui_name
+
+   -- If switching to a different UI, close the current one first
+   if current_ui and current_ui ~= name then self:_close_current_ui() end
+
    router_state[self.pindex].ui_name = name
 end
 
 function Router:close_ui()
+   self:_close_current_ui()
    router_state[self.pindex].ui_name = nil
+end
+
+---Internal method to close the currently open UI
+---@private
+function Router:_close_current_ui()
+   local current_ui = router_state[self.pindex].ui_name
+   if not current_ui then return end
+
+   -- Get the registered UI and call its close method
+   local registered_uis = mod.get_registered_uis()
+   if registered_uis and registered_uis[current_ui] then
+      local ui = registered_uis[current_ui]
+      if ui.close then ui:close(self.pindex) end
+   end
 end
 
 ---@param name fa.ui.UiName? If null, return true if any UI is open.

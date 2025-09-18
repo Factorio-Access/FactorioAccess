@@ -1,7 +1,5 @@
 --[[
-Holds a list of named tabs, and lets you select between them.  This is a lesser form of #263, which can be converted to
-the full form as a special case, by creating a layer that just calls the methods.  That's a good idea anyway: ultimately
-no one wants to write complex UI by individually handling keys.
+Holds a list of named tabs, and lets you select between them.
 
 For now this does not support dynamicism.  That is to say that tabs must be declared at the top level of a file.  You
 don't get multiple instances per player.  For example you can't have two open belt analyzers.  As is the theme, this can
@@ -18,11 +16,16 @@ can reset this state by forcing closure; to do so, it should write `force_close=
 also cleared on forced closure, is `shared_state`.  Callbacks passed to creation of this tablist can initialize the
 shared state, but cannot print to the player by design; do not perform mutable actions in state setup or else.
 
-To clarify how input gets here, this is currently hardcoded in the menu logic in control.lua.  That is, by checking
-global.players[pindex].menu_name, and setting it for the open tab list.
+You should not use printout/speak. Instead, you are given a message builder in the context. Sometimes, the tab needs to
+add output before yours, so you should print through that.
 
-You should not use printout. Instead, you are given a builder in the context. Sometimes, the tab needs to add output
-before yours, so you should print through that.
+There is limited support for enabling and disabling tabs.  A stateless callback given only the pindex may be provided on
+a tab's callbacks. This will configure that tab to enable/disable itself based on the return value.  This is an interim
+step toward building the tabs on demand that lets us get things going.  It's enough to use the same tab list for all
+generic containers.  Until the wider form, two limitations must be observed:
+
+- Tabs which are focused will not be disabled if their callback says they should be.
+- The first tab should always be enabled, because it will receive initial focus.
 ]]
 local Math2 = require("math-helpers")
 local Speech = require("scripts.speech")
@@ -38,7 +41,6 @@ local mod = {}
 ---@field shared_state table
 ---@field parameters table Whatever was passed to :open()
 ---@field force_close boolean If true, close this tablist.
----@field close_is_textbox boolean? If true, leave  the open UI alone so that textboxes can tail call.
 ---@field message fa.Speech
 
 ---@alias fa.ui.SimpleTabHandler fun(self, fa.ui.TabContext)
@@ -53,6 +55,10 @@ local mod = {}
 ---@field on_left fa.ui.SimpleTabHandler?
 ---@field on_right fa.ui.SimpleTabHandler?
 ---@field on_click fa.ui.SimpleTabHandler?
+---@field on_right_click fa.ui.SimpleTabHandler?
+---@field on_read_coords fa.ui.SimpleTabHandler?
+---@field on_read_info fa.ui.SimpleTabHandler?
+---@field enabled fun(number): boolean
 
 ---@class fa.ui.TabDescriptor
 ---@field name string
@@ -128,7 +134,7 @@ function TabList:_do_callback(pindex, target_tab_index, cb_name, msg_builder, pa
       -- Makes assigning to state when initializing etc. work.
       tl.tab_states[tabname] = context.state
 
-      if context.force_close then self:close(pindex, true, context.close_is_textbox) end
+      if context.force_close then self:close(pindex, true) end
    end
 
    local msg = msg_builder:build()
@@ -154,6 +160,12 @@ TabList.on_left = build_simple_method("on_left")
 TabList.on_right = build_simple_method("on_right")
 ---@type fun(self, number)
 TabList.on_click = build_simple_method("on_click")
+---@type fun(self, number)
+TabList.on_right_click = build_simple_method("on_right_click")
+---@type fun(self, number)
+TabList.on_read_coords = build_simple_method("on_read_coords")
+---@type fun(self, number)
+TabList.on_read_info = build_simple_method("on_read_info")
 
 -- Perform the flow for focusing a tab. Does this unconditionally, so be careful
 -- not to over-call it.
@@ -178,10 +190,15 @@ end
 ---@param pindex number
 ---@param direction 1|-1
 function TabList:_cycle(pindex, direction)
+   if not tablist_storage[pindex] or not tablist_storage[pindex][self.ui_name] then return end
    local tl = tablist_storage[pindex][self.ui_name]
    local old_index = tl.active_tab
-
    local new_index = Math2.mod1(tl.active_tab + direction, #self.tab_order)
+
+   while new_index ~= old_index do
+      local behavior = self.descriptors[self.tab_order[new_index]]
+      if not behavior.callbacks.enabled or behavior.callbacks.enabled(pindex) then break end
+   end
 
    if old_index ~= new_index then self:_set_active_tab(pindex, new_index) end
 end
@@ -235,7 +252,7 @@ function TabList:open(pindex, parameters)
 end
 
 ---@param force_reset boolean? If true, also dump state.
-function TabList:close(pindex, force_reset, is_textbox)
+function TabList:close(pindex, force_reset)
    -- Our lame event handling story where more than one event handler can get called for the same event combined with
    -- the new GUI framework still being WIP means that double-close is apparently possible.  We already know we're going
    -- to fix that, so for now just guard against it.
@@ -250,10 +267,6 @@ function TabList:close(pindex, force_reset, is_textbox)
    tablist_storage[pindex][self.ui_name].currently_open = false
 
    if force_reset then tablist_storage[pindex][self.ui_name] = nil end
-
-   -- Textboxes rely on still being "in the menu" for the duration of the
-   -- textbox and we aren't far enough along to have hacked that yet.
-   if not is_textbox then UiRouter.get_router(pindex):close_ui() end
 end
 
 ---@param declaration fa.ui.TabListDeclaration

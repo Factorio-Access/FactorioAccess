@@ -9,7 +9,7 @@ through audio cues and keyboard controls.
 
 ## Critical Mistakes to Avoid (Read First!)
 
-### Top 5 Most Common LLM Errors:
+### Top 7 Most Common LLM Errors:
 
 1. **Viewpoint API: Use dot notation, not colon**
    ```lua
@@ -44,6 +44,14 @@ through audio cues and keyboard controls.
    player.walking_state = new_state
    ```
 
+7. **Speech fragments: NEVER use fragment(" ")**
+   ```lua
+   -- WRONG: message:fragment(" ") -- Spaces are added automatically!
+   -- WRONG: message:fragment(quality_string):fragment(" "):fragment(item_name)
+   -- RIGHT: message:fragment(quality_string):fragment(item_name)
+   ```
+   The Speech system automatically adds spaces between fragments. Adding explicit space fragments is an error and will crash at runtime.
+
 ## From the Human
 
 After a lot of working with you I have seen your antipatterns, so I am going to lay them out here.
@@ -54,17 +62,17 @@ After a lot of working with you I have seen your antipatterns, so I am going to 
   game. We should not test the game APIs, only the mod.
 - Many files here are huge.  If you read entire files you will exhaust your context window extremely rapidly.  Prefer
   rg/grep, partial reads, or tree-sitter (available via MCP)
-- game.print is wrong.  You cannot see game.print because it only goes to the GUI.  You want print or the logging
-  framework.
+- game.print is wrong. You cannot see game.print because it only goes to the GUI. You want print or the logging framework.
 - One-time init of local state that does not depend on the Factorio API and which does not need to persist across a
   save/load cycle may be done at the top level of files.
 - There are conflicting patterns and varying code quality.  This is particularly true of localisation.  fa-info.lua and
-  mesage-builder.lua contain the proper patterns for localisations.  For others, either ask the human or use the one
+  message-builder.lua contain the proper patterns for localisations.  For others, either ask the human or use the one
   that leads to the best code quality.
 - You currently have no real control over the GUI, only via tests.  Use tests and code hacks to explore.
 - Do not use globals beyond the current file. `_G.whatever = whatever` is cheating.  Do not do this.
 - Requires only execute at the top-level file.  Any other level and the require will crash at runtime.
 - Always add LuaLS annotations using the correct format: `---@` (three dashes), not `-- @` (two dashes with space).
+- The linter will automatically check for incorrect annotation formats and fail if any are found.
 
 control.lua is a problematic file because it is 10000 lines or so.  You are strongly encouraged to explore it with
 tree-sitter, subagents, or rg/grep.  If you repeatedly read it, it will fill your context window.  If you must read it,
@@ -501,10 +509,13 @@ python3 launch_factorio.py --timeout 10 -- --version
 # Load a save for testing
 python3 launch_factorio.py --timeout 300 --load-game mysave.zip
 
-# Run automated tests
+# Run automated tests (output is suppressed unless tests fail)
 python3 launch_factorio.py --run-tests --timeout 30
 
-# Run linter
+# Run tests with full output (verbose mode)
+python3 launch_factorio.py --run-tests --timeout 30 --verbose
+
+# Run linter (includes LuaLS annotation format checking)
 python3 launch_factorio.py --lint
 
 # Apply formatting (runs stylua)
@@ -555,6 +566,8 @@ end)
 - Mock events with `EventManager.mock_event()`
 - Remove empty `ctx:at_tick` handlers - they're unnecessary
 - The test framework handles EventManager test mode automatically
+- Test output is suppressed by default to save context (use `--verbose` to see full output)
+- On test failure, full output is automatically shown for debugging
 
 ## Performance Considerations
 
@@ -632,6 +645,21 @@ end
    -- return tables (like walking_state, color, etc.), you MUST assign a
    -- table to a local variable first, then assign that variable to the
    -- property. Direct table construction in the assignment will be ignored.
+   ```
+
+5. **Debug Output (Critical for FactorioAccess)**
+   ```lua
+   -- WRONG: game.print() outputs to in-game console which blind users can't see
+   game.print("Debug info: " .. value)
+   
+   -- CORRECT: Use print() for debug output to logs
+   print("Debug info: " .. value)
+   
+   -- CORRECT: Use logging framework for structured logging
+   log("Debug info: " .. serpent.line(complex_data))
+   
+   -- CORRECT: Use Speech.speak() for user-facing messages
+   Speech.speak(pindex, "Operation completed successfully")
    ```
 
 ## Adding New Features
@@ -732,7 +760,7 @@ end)
 
 ## Debugging Tips
 
-1. **Use game.print()** for debugging - prints to console instead of screen reader
+1. **Use print() or logging framework** for debugging - game.print() outputs to the in-game console which blind users cannot access
 2. **Use Speech.speak()** for user-facing messages - goes to screen reader
 3. **Check logs** at `%APPDATA%/Factorio/factorio-current.log`
 4. **Cursor rendering** - Enable to visualize what the mod is doing
@@ -823,7 +851,7 @@ The mod communicates with a launcher process via stdout. Format:
 out <player_index> <message>
 ```
 
-The launcher handles text-to-speech conversion. This is why `Speech.speak()` is used instead of `game.print()`.
+The launcher handles text-to-speech conversion. This is why `Speech.speak()` is used for user messages. Never use `game.print()` - it outputs to the in-game console which is inaccessible to blind users.
 
 ## Resources
 

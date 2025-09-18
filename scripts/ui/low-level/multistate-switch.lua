@@ -54,13 +54,13 @@ local methods = require("scripts.methods")
 
 local mod = {}
 
---- @alias MultistateSwitchChoices { [1]: any, [2]: string }[]
+---@alias MultistateSwitchChoices { [1]: any, [2]: string }[]
 
---- @class MultistateSwitchOptions
---- @field on_off_field FieldRef A boolean field which will toggle it on or off.
---- @field state_field FieldRef The field that contains the state value.
---- @field off_label string The label to use for the off state.
---- @field choices MultistateSwitchChoices The choices for the on states.
+---@class MultistateSwitchOptions
+---@field on_off_field FieldRef A boolean field which will toggle it on or off.
+---@field state_field FieldRef The field that contains the state value.
+---@field off_label string The label to use for the off state.
+---@field choices MultistateSwitchChoices The choices for the on states.
 
 local function get_cur_key(instance, from_what)
    return { instance.on_off_field.get(from_what), instance.state_field.get(from_what) }
@@ -84,31 +84,31 @@ local function generic_movement(instance, entity, calling, do_set)
 end
 
 -- Our methods are just 3 variations on the above.
---- @class MultistateSwitch
+---@class MultistateSwitch
 local multistate_methods = {}
 
---- @param entity table<any, any>
---- @returns string
+---@param entity table<any, any>
+---@return string
 function multistate_methods:prev(entity)
    return generic_movement(self, entity, circular_list.prev, true)
 end
 
---- @param entity table<any, any>
---- @returns string
+---@param entity table<any, any>
+---@return string
 function multistate_methods:next(entity)
    return generic_movement(self, entity, circular_list.next, true)
 end
 
---- @param entity table<any, any>
---- @returns string
+---@param entity table<any, any>
+---@return string
 function multistate_methods:current(entity)
    return generic_movement(self, entity, circular_list.current, false)
 end
 
 local linker = methods.link("multistate-switch", multistate_methods)
 
---- @param opts MultistateSwitchOptions
---- @returns MultistateSwitch
+---@param opts MultistateSwitchOptions
+---@return MultistateSwitch
 function mod.create(opts)
    -- What we are actually going to do is compile to a circular list and save
    -- that.

@@ -1,5 +1,4 @@
 --- Sound system tests
--- @module sound_tests
 
 local TestRegistry = require("scripts.test-registry")
 local sounds = require("scripts.ui.sounds")

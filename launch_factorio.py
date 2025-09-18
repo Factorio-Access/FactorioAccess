@@ -490,6 +490,67 @@ def run_lua_linter(
                 pass  # Best effort cleanup
 
 
+def check_lua_annotations(mod_path: str = ".") -> Tuple[int, str, str]:
+    """
+    Check for incorrect LuaLS annotation formats in Lua files.
+    
+    Correct format: ---@
+    Incorrect formats: -- @, --- @, etc.
+    
+    Args:
+        mod_path: Path to the mod directory
+        
+    Returns:
+        Tuple of (exit_code, stdout, stderr)
+    """
+    import glob
+    
+    mod_path = Path(mod_path).resolve()
+    errors = []
+    files_checked = 0
+    
+    # Pattern to match incorrect annotations
+    # Matches lines that start with dashes and @ but not exactly "---@"
+    incorrect_pattern = re.compile(r'^(\s*)((?:-+\s+@)|(?:--@)|(?:-{4,}@))', re.MULTILINE)
+    
+    # Find all Lua files
+    lua_files = []
+    for pattern in ["**/*.lua"]:
+        lua_files.extend(glob.glob(str(mod_path / pattern), recursive=True))
+    
+    for file_path in lua_files:
+        files_checked += 1
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Find all incorrect annotations
+            for line_num, line in enumerate(content.splitlines(), 1):
+                # Skip empty lines and non-annotation lines
+                stripped = line.strip()
+                if not stripped or '@' not in stripped:
+                    continue
+                
+                # Check if line contains annotation-like pattern
+                if re.match(r'^\s*-+\s*@', line):
+                    # Check if it's NOT the correct format
+                    if not re.match(r'^\s*---@', line):
+                        # Make file path relative to mod_path for cleaner output
+                        rel_path = Path(file_path).relative_to(mod_path)
+                        errors.append(f"{rel_path}:{line_num}: Incorrect annotation format: {line.strip()}")
+                        errors.append(f"  Should be: ---@{line.strip()[line.find('@')+1:]}")
+        
+        except Exception as e:
+            return -1, "", f"Error checking annotations: {str(e)}"
+    
+    if errors:
+        stdout = f"Found {len(errors)} incorrect annotation(s) in {files_checked} files:\n\n"
+        stdout += "\n".join(errors)
+        return 1, stdout, ""
+    else:
+        return 0, f"All annotations correct in {files_checked} Lua files", ""
+
+
 def run_stylua(
     mod_path: str = ".", stylua_path: Optional[str] = None, check_only: bool = True
 ) -> Tuple[int, str, str]:
@@ -1204,6 +1265,15 @@ def main():
 
     # Handle linting/formatting commands first (they don't launch Factorio)
     if args.lint:
+        # First check annotations
+        print(f"[LLM_INFO] Checking LuaLS annotations in {args.mod_path}")
+        ann_exit_code, ann_stdout, ann_stderr = check_lua_annotations(args.mod_path)
+        if ann_stdout:
+            print(ann_stdout)
+        if ann_stderr:
+            print(ann_stderr, file=sys.stderr)
+        
+        # Then run lua-language-server
         print(f"[LLM_INFO] Running lua-language-server on {args.mod_path}")
 
         exit_code, stdout, stderr = run_lua_linter(args.mod_path, args.lua_ls_path)
@@ -1213,12 +1283,14 @@ def main():
         if stderr:
             print(stderr, file=sys.stderr)
 
-        if exit_code == 0:
-            print("[LLM_INFO] Linting passed with no errors")
+        # Return failure if either check failed
+        final_exit_code = max(ann_exit_code, exit_code)
+        if final_exit_code == 0:
+            print("[LLM_INFO] All linting checks passed")
         else:
-            print(f"[LLM_ERROR] Linting failed with exit code {exit_code}")
+            print(f"[LLM_ERROR] Linting failed with exit code {final_exit_code}")
 
-        return exit_code
+        return final_exit_code
 
     if args.format_check or args.format:
         action = "Checking" if args.format_check else "Applying"
@@ -1273,7 +1345,7 @@ def main():
             ["--benchmark", "lab_tiles.zip", "--benchmark-ticks", "5000"]
         )
         print("[LLM_INFO] Running tests with lab_tiles.zip save file")
-        print("[LLM_INFO] Test output will be shown after completion...")
+        print("[LLM_INFO] Test output will be suppressed unless failures occur...")
     if args.mp_connect:
         factorio_args.extend(["--mp-connect", args.mp_connect])
 
@@ -1289,14 +1361,33 @@ def main():
     # Launch Factorio
     launcher = FactorioLauncher(args.factorio_path, args.timeout)
 
+    # Create temporary file for buffering test output if needed
+    temp_output_file = None
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
+    
     try:
+        # For tests, buffer output and only show on failure
+        buffer_output = args.run_tests and not args.verbose
+        
+        if buffer_output:
+            temp_output_file = tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix='.log')
+            sys.stdout = temp_output_file
+            sys.stderr = temp_output_file
+        
         exit_code, elapsed_time = launcher.launch(
             factorio_args,
             capture_output=not args.no_capture,
-            stream_output=not args.no_stream,
+            stream_output=True,  # Always stream, but it goes to file if buffering
             unbuffered=not args.buffered,
             use_shell=args.shell,
         )
+        
+        # Restore stdout/stderr
+        if buffer_output:
+            sys.stdout = original_stdout
+            sys.stderr = original_stderr
+            temp_output_file.close()
 
         # Output status information
         if args.verbose or args.json_status:
@@ -1365,6 +1456,17 @@ def main():
                     for failure in test_summary["failures"]:
                         print(f"  ✗ {failure}")
                     print(f"\nCheck {test_log_path} for details")
+                    
+                    # Show buffered output on failure
+                    if buffer_output and temp_output_file:
+                        print("\n" + "=" * 60)
+                        print("FACTORIO OUTPUT (shown due to test failures):")
+                        print("=" * 60)
+                        try:
+                            with open(temp_output_file.name, 'r') as f:
+                                print(f.read())
+                        except Exception as e:
+                            print(f"[LLM_ERROR] Could not read buffered output: {e}")
 
             else:
                 print("[LLM_WARNING] Test results unclear - check logs")
@@ -1409,6 +1511,18 @@ def main():
     except Exception as e:
         print(f"[LLM_ERROR] Unexpected error in launcher: {e}")
         return 1
+    finally:
+        # Restore stdout/stderr if we changed them
+        sys.stdout = original_stdout
+        sys.stderr = original_stderr
+        
+        # Clean up temp file if it exists and wasn't already deleted
+        if temp_output_file:
+            try:
+                if hasattr(temp_output_file, 'name') and os.path.exists(temp_output_file.name):
+                    os.unlink(temp_output_file.name)
+            except Exception:
+                pass  # Best effort cleanup
 
 
 if __name__ == "__main__":

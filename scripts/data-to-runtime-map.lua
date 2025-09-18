@@ -59,7 +59,7 @@ function mod.build(name, values)
    end
 end
 
---@param name string
+---@param name string
 ---@return table<string, string>
 function mod.load(name)
    local res = {}

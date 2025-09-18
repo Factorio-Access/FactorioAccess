@@ -286,7 +286,7 @@ c1:get_clusters(function(x)
    table.insert(got, x)
 end)
 
---@param a fa.ds.clusterer.Item
+---@param a fa.ds.clusterer.Item
 ---@param b fa.ds.clusterer.Item
 local function xycomp(a, b)
    if a.aabb.left_top.x < b.aabb.left_top.x then return true end

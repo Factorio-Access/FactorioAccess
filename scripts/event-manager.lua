@@ -1,11 +1,24 @@
---- mod: Manages multiple handlers for Factorio events Since Factorio's script.on_event is last-one-wins, this allows
--- multiple handlers per event.  Don't use that though, it's to support our tests.
+---Manages multiple handlers for Factorio events
+---Since Factorio's script.on_event is last-one-wins, this allows multiple handlers per event.
+---Don't use that though, it's to support our tests.
 local PlayerInit = require("scripts.player-init")
 
 local mod = {}
 
+-- Event priority constants
+mod.EVENT_KIND = {
+   TEST = "test",
+   UI = "ui",
+   WORLD = "world",
+}
+
+-- Special constant to indicate no further handlers should run
+mod.FINISHED = {}
+
+---@alias EventHandlerResult nil|table Return nil to continue processing, or EventManager.FINISHED to stop
+
 -- Storage for all registered handlers
--- Structure: handlers[event_id] = { handler1, handler2, ... }
+-- Structure: handlers[event_id] = { test = handler, ui = handler, world = handler }
 local handlers = {}
 
 -- Storage for on_init handlers
@@ -27,14 +40,17 @@ local test_mode = false
 -- Storage for mocked events when in test mode
 local mocked_events = {}
 
---- Register a handler for an event
--- @param event_id The event ID from defines.events
--- @param handler The function to call when the event fires
-function mod.on_event(event_id, handler)
+---Register a handler for an event
+---@param event_id defines.events|string|(defines.events|string)[] The event ID from defines.events, custom input name, or array of event IDs
+---@param handler fun(event: EventData, pindex?: integer): EventHandlerResult The function to call when the event fires
+---@param priority? "test"|"ui"|"world" Optional priority (defaults to WORLD)
+function mod.on_event(event_id, handler, priority)
+   priority = priority or mod.EVENT_KIND.WORLD
+
    if type(event_id) == "table" then
       -- Handle multiple events with same handler
       for _, id in pairs(event_id) do
-         mod.on_event(id, handler)
+         mod.on_event(id, handler, priority)
       end
       return
    end
@@ -48,30 +64,31 @@ function mod.on_event(event_id, handler)
       end)
    end
 
-   table.insert(handlers[event_id], handler)
+   -- Only one handler per priority level allowed
+   handlers[event_id][priority] = handler
 end
 
---- Register a handler for on_init
--- @param handler The function to call on init
+---Register a handler for on_init
+---@param handler fun() The function to call on init
 function mod.on_init(handler)
    table.insert(on_init_handlers, handler)
 end
 
---- Register a handler for on_load
--- @param handler The function to call on load
+---Register a handler for on_load
+---@param handler fun() The function to call on load
 function mod.on_load(handler)
    table.insert(on_load_handlers, handler)
 end
 
---- Register a handler for on_configuration_changed
--- @param handler The function to call on configuration changed
+---Register a handler for on_configuration_changed
+---@param handler fun(data: ConfigurationChangedData) The function to call on configuration changed
 function mod.on_configuration_changed(handler)
    table.insert(on_configuration_changed_handlers, handler)
 end
 
---- Register a handler for on_nth_tick
--- @param tick_interval The tick interval
--- @param handler The function to call
+---Register a handler for on_nth_tick
+---@param tick_interval integer The tick interval
+---@param handler fun(event: NthTickEventData) The function to call
 function mod.on_nth_tick(tick_interval, handler)
    if not on_nth_tick_handlers[tick_interval] then
       on_nth_tick_handlers[tick_interval] = {}
@@ -85,27 +102,27 @@ function mod.on_nth_tick(tick_interval, handler)
    table.insert(on_nth_tick_handlers[tick_interval], handler)
 end
 
---- Register a handler for a custom input
--- @param input_name The custom input name (e.g. "fa-w")
--- @param handler The function to call
-function mod.on_custom_input(input_name, handler)
+---Register a handler for a custom input
+---@param input_name string The custom input name (e.g. "fa-w")
+---@param handler fun(event: EventData, pindex?: integer): EventHandlerResult The function to call
+---@param priority? "test"|"ui"|"world" Optional priority (defaults to WORLD)
+function mod.on_custom_input(input_name, handler, priority)
    -- Custom inputs are just regular events
-   mod.on_event(input_name, handler)
+   mod.on_event(input_name, handler, priority)
 end
 
---- Register a handler (alias for on_event)
--- @param event_id_or_input The event ID or custom input name
--- @param handler The function to call
-function mod.register(event_id_or_input, handler)
-   mod.on_event(event_id_or_input, handler)
+---Register a handler (alias for on_event)
+---@param event_id_or_input defines.events|string The event ID or custom input name
+---@param handler fun(event: EventData, pindex?: integer): EventHandlerResult The function to call
+---@param priority? "test"|"ui"|"world" Optional priority (defaults to WORLD)
+function mod.register(event_id_or_input, handler, priority)
+   mod.on_event(event_id_or_input, handler, priority)
 end
 
---- Internal: Dispatch an event to all registered handlers
--- @param event_id The event ID
--- @param event The event data
+---Internal: Dispatch an event to all registered handlers
+---@param event_id defines.events|string The event ID
+---@param event EventData The event data
 function mod._dispatch_event(event_id, event)
-   local pindex = event.player_index
-
    local event_handlers = handlers[event_id]
    if not event_handlers then return end
 
@@ -116,18 +133,28 @@ function mod._dispatch_event(event_id, event)
       if storage.players and storage.players[pindex] == nil then
          -- Player needs initialization
          local player = game.get_player(pindex)
-         PlayerInit.initialize(player)
+         if player then PlayerInit.initialize(player) end
       end
    end
 
-   for _, handler in ipairs(event_handlers) do
-      handler(event, pindex)
+   -- Run handlers in priority order: test → ui → world
+   local priority_order = { mod.EVENT_KIND.TEST, mod.EVENT_KIND.UI, mod.EVENT_KIND.WORLD }
+
+   for _, priority in ipairs(priority_order) do
+      local handler = event_handlers[priority]
+      if handler then
+         local result = handler(event, pindex)
+         if result == mod.FINISHED then
+            -- Stop processing further handlers
+            return
+         end
+      end
    end
 end
 
---- Internal: Dispatch nth tick events
--- @param tick_interval The tick interval
--- @param event The event data
+---Internal: Dispatch nth tick events
+---@param tick_interval integer The tick interval
+---@param event NthTickEventData The event data
 function mod._dispatch_nth_tick(tick_interval, event)
    local tick_handlers = on_nth_tick_handlers[tick_interval]
    if not tick_handlers then return end
@@ -159,20 +186,20 @@ script.on_configuration_changed(function(data)
    end
 end)
 
---- Enable test mode to allow event mocking
+---Enable test mode to allow event mocking
 function mod.enable_test_mode()
    test_mode = true
 end
 
---- Disable test mode
+---Disable test mode
 function mod.disable_test_mode()
    test_mode = false
    mocked_events = {}
 end
 
---- Mock an event (only works in test mode)
--- @param event_id The event ID to mock
--- @param event_data The event data to dispatch
+---Mock an event (only works in test mode)
+---@param event_id defines.events|string The event ID to mock
+---@param event_data any The event data to dispatch
 function mod.mock_event(event_id, event_data)
    if not test_mode then error("Cannot mock events outside of test mode") end
 
@@ -188,7 +215,7 @@ function mod.mock_event(event_id, event_data)
    mod._dispatch_event(event_id, event_data)
 end
 
---- Clear all handlers (useful for testing)
+---Clear all handlers (useful for testing)
 function mod.clear_all_handlers()
    handlers = {}
    on_init_handlers = {}
@@ -197,12 +224,16 @@ function mod.clear_all_handlers()
    on_nth_tick_handlers = {}
 end
 
---- Get the number of handlers for an event (useful for testing)
--- @param event_id The event ID
--- @return Number of handlers
+---Get the number of handlers for an event (useful for testing)
+---@param event_id defines.events|string The event ID
+---@return integer count Number of handlers
 function mod.get_handler_count(event_id)
    if not handlers[event_id] then return 0 end
-   return #handlers[event_id]
+   local count = 0
+   for _, handler in pairs(handlers[event_id]) do
+      if handler then count = count + 1 end
+   end
+   return count
 end
 
 return mod

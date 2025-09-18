@@ -368,7 +368,7 @@ commands.add_command("fa-memory", nil, function(command)
         scanner_surfaces = table_size(storage.scanner.surfaces),
         total_entities_tracked = count_all_entities_in_scanner()
     }
-    game.print(serpent.line(memory_info))
+    print(serpent.line(memory_info))
 end)
 ```
 

@@ -24,8 +24,8 @@ local mod = {}
 -- only a few straightforward lines.
 local read_mode_switch_cache = {}
 
---- @param entity LuaEntity
---- @returns MultistateSwitch?
+---@param entity LuaEntity
+---@return MultistateSwitch?
 local function make_read_switch_for_entity_uncached(entity)
    local type = entity.prototype.type
    local desc = descriptors.PROTOTYPES[type]
@@ -54,8 +54,8 @@ local function make_read_switch_for_entity_uncached(entity)
    })
 end
 
--- @param entity LuaEntity
--- @returns MultistateSwitch?
+---@param entity LuaEntity
+---@return MultistateSwitch?
 local function make_read_switch_for_entity(entity)
    if read_mode_switch_cache[entity.prototype.type] then return read_mode_switch_cache[entity.prototype.type] end
 
@@ -400,13 +400,13 @@ function mod.constant_combinator_set_last_signal_count(value, ent, pindex)
    return false
 end
 
--- @param entity LuaEntity
--- @param direction "prev"|"current"|"next"
--- @returns string?
+---@param entity LuaEntity
+---@param direction "prev"|"current"|"next"
+---@return string?
 function mod.read_mode_multistate_call(entity, direction)
    -- We're using this indirectly, so make Lua stop warning at the last line of
    -- this function.
-   --- @type table<any, any>?
+   ---@type table<any, any>?
    local switch = make_read_switch_for_entity(entity)
    if not switch then
       -- Fall back to old code paths.
