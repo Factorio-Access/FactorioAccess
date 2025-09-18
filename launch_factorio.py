@@ -358,14 +358,13 @@ def run_lua_linter(lua_ls_path: Optional[str] = None) -> Tuple[int, str, str]:
             "lua-language-server not found. Install the sumneko.lua VSCode extension.",
         )
 
-    # Ensure .luarc.json exists
-    luarc_path = mod_path / ".luarc.json"
-    if not luarc_path.exists():
-        print("[INFO] Creating .luarc.json configuration...")
-        create_or_update_luarc(str(luarc_path))
+    # Create temporary .luarc.json config (don't pollute the mod directory)
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as tmp:
+        config_file = tmp.name
+        create_or_update_luarc(config_file)
 
-    # Run lua-language-server
-    cmd = [lua_ls_path, "--check", str(mod_path)]
+    # Run lua-language-server with temp config
+    cmd = [lua_ls_path, "--check", ".", "--configpath", config_file]
 
     try:
         result = subprocess.run(
@@ -375,12 +374,19 @@ def run_lua_linter(lua_ls_path: Optional[str] = None) -> Tuple[int, str, str]:
             encoding="utf-8",
             errors="replace",
             timeout=60,
+            cwd=str(mod_path),
         )
         return result.returncode, result.stdout, result.stderr
     except subprocess.TimeoutExpired:
         return -1, "", "lua-language-server timed out after 60 seconds"
     except Exception as e:
         return -1, "", f"Error running lua-language-server: {e}"
+    finally:
+        # Clean up temp config file
+        try:
+            os.unlink(config_file)
+        except:
+            pass
 
 
 def run_stylua(
@@ -718,9 +724,6 @@ def parse_factorio_args() -> argparse.Namespace:
     )
     parser.add_argument("--shell", action="store_true", help="Use shell execution")
     parser.add_argument(
-        "--create-luarc", action="store_true", help="Create .luarc.json configuration"
-    )
-    parser.add_argument(
         "extra_args", nargs="*", default=[], help="Extra arguments to pass to Factorio"
     )
 
@@ -730,13 +733,6 @@ def parse_factorio_args() -> argparse.Namespace:
 def main():
     """Main entry point."""
     args = parse_factorio_args()
-
-    # Handle .luarc.json creation
-    if args.create_luarc:
-        mod_path = Path(__file__).parent.resolve()
-        luarc_path = mod_path / ".luarc.json"
-        create_or_update_luarc(str(luarc_path))
-        return 0
 
     # Handle show-paths
     if args.show_paths or args.debug_logs:
