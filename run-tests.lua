@@ -1,4 +1,5 @@
 #!/usr/bin/env lua
+---@diagnostic disable
 
 -- General test runner for FactorioAccess
 -- Usage: lua run-tests.lua [suite]
@@ -52,7 +53,7 @@ elseif suite == "all" then
    end
 else
    print("Unknown test suite: " .. suite)
-   print("Usage: lua run-tests.lua [syntrax|ds|all]")
+   int("Usage: lua run-tests.lua [syntrax|ds|all]")
    os.exit(1)
 end
 

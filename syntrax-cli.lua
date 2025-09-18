@@ -1,4 +1,5 @@
 #!/usr/bin/env lua
+---@diagnostic disable
 --[[
 Syntrax CLI - Development and debugging tool for the Syntrax language
 
