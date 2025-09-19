@@ -553,54 +553,6 @@ end
 ---@param direction -1|1
 ---@param pattern string
 ---@return number?
-local function search_impl(pindex, researches, start_index, direction, pattern)
-   pattern = pattern:lower()
-
-   local len = #researches
-   if start_index < 1 or start_index > len then return nil end
-
-   -- The user needs a sensible idea of the list that matches theirs. To do
-   -- this, instead of pulling out based off the flatr list, reorder the flat
-   -- list sorted by category order, and remember the original index and name
-   -- for each.  Then we can line up to get our search index, move in the
-   -- specified direction from that, and map back when done.
-   ---@type { tech: LuaTechnology, index: number, list: string }
-
-   -- Shallow clone, also remember the original indices.
-   local effective_researches = {}
-   for k, v in pairs(researches) do
-      effective_researches[k] = {
-         tech = v.tech,
-         list = v.list,
-         index = k,
-      }
-   end
-
-   Memosort.memosort(effective_researches, function(r)
-      -- If we ever get more than 16777216 researches, this breaks.
-      local ind = TH.find_index_of(RESEARCH_LIST_ORDER, r.list)
-      assert(ind)
-      return bit32.lshift(ind, 24) + r.index
-   end)
-
-   local start
-   for i = 1, #effective_researches do
-      if effective_researches[i].index == start_index then
-         start = i
-         break
-      end
-   end
-   assert(start)
-   start = start + direction
-
-   local endpoint = direction == -1 and 1 or len
-   for i = start, endpoint, direction do
-      local name = Localising.get(effective_researches[i].tech, pindex)
-      if name:lower():find(pattern, 1, true) then return effective_researches[i].index end
-   end
-
-   return nil
-end
 
 -- Finally: we may implement our key handlers.
 
@@ -626,28 +578,6 @@ function mod.menu_move_horizontal(pindex, direction)
       player.play_sound({ path = "Inventory-Move" })
    end
    Speech.speak(pindex, announcing)
-end
-
-function mod.menu_search(pindex, pattern, direction)
-   local player = game.get_player(pindex)
-   assert(player)
-   local researches = get_visible_researches(player)
-   local pos = research_state[player.index].research_menu_pos
-   local n_ind = search_impl(pindex, researches, pos.index, direction, pattern)
-   if not n_ind then
-      player.play_sound({ path = "inventory-edge" })
-      Speech.speak(pindex, { "fa.research-list-no-results", pattern })
-      return
-   else
-      pos.index = n_ind
-      pos.focused_list = researches[n_ind].list
-      player.play_sound({ path = "Inventory-Move" })
-   end
-   Speech.speak(pindex, {
-      "fa.research-list-moved-up-down",
-      { string.format("fa.research-list-%s", pos.focused_list) },
-      announce_under_pos(researches, pos),
-   })
 end
 
 function mod.menu_describe(pindex)

@@ -38,12 +38,6 @@ function mod.initialize(player)
 
    local character = player.cutscene_character or player.character or player
    faplayer.in_item_selector = faplayer.in_item_selector or false
-   faplayer.entering_search_term = faplayer.entering_search_term or false
-   faplayer.menu_search_index = faplayer.menu_search_index or nil
-   faplayer.menu_search_index_2 = faplayer.menu_search_index_2 or nil
-   faplayer.menu_search_term = faplayer.menu_search_term or nil
-   faplayer.menu_search_frame = faplayer.menu_search_frame or nil
-   faplayer.menu_search_last_name = faplayer.menu_search_last_name or nil
    faplayer.num_elements = faplayer.num_elements or 0
    faplayer.player_direction = faplayer.player_direction or character.walking_state.direction
    faplayer.position = faplayer.position or FaUtils.center_of_tile(character.position)

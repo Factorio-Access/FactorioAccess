@@ -40,7 +40,7 @@ describe("Hidden Technology Filter", function()
             Speech.start_capture()
 
             -- Try to search for the hidden technology
-            Research.menu_search(1, tech_name, 1)
+            -- Research.menu_search(1, tech_name, 1) -- Function removed
 
             -- Check if search failed (should print not found message)
             local messages = Speech.stop_capture()

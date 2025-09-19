@@ -35,7 +35,6 @@ local InventoryTransfers = require("scripts.inventory-transfers")
 local ItemDescriptions = require("scripts.item-descriptions")
 local KruiseKontrol = require("scripts.kruise-kontrol-wrapper")
 local Localising = require("scripts.localising")
-local MenuSearch = require("scripts.menu-search")
 local Speech = require("scripts.speech")
 local Mouse = require("scripts.mouse")
 local PlayerInit = require("scripts.player-init")
@@ -1593,9 +1592,6 @@ function close_menu_resets(pindex)
    storage.players[pindex].confirm_action_tick = 0
    router:close_ui()
 
-   storage.players[pindex].entering_search_term = false
-   storage.players[pindex].menu_search_index = nil
-   storage.players[pindex].menu_search_index_2 = nil
    storage.players[pindex].item_selection = false
    storage.players[pindex].item_cache = {}
    storage.players[pindex].item_selector = { index = 0, group = 0, subgroup = 0 }
@@ -2099,7 +2095,7 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
       --Destroy text fields
       if p.gui.screen["circuit-networks-textfield"] ~= nil then p.gui.screen["circuit-networks-textfield"].destroy() end
       if p.opened ~= nil then p.opened = nil end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) and storage.players[pindex].entering_search_term ~= true then
+   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       --Edit a travel point
       local result = event.element.text
       if result == nil or result == "" then result = "blank" end
@@ -2158,16 +2154,6 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
       Speech.speak(pindex, { "fa.network-renamed", result })
       event.element.destroy()
       WorkerRobots.roboport_menu_close(pindex)
-   elseif storage.players[pindex].entering_search_term == true then
-      local term = string.lower(event.element.text)
-      event.element.focus()
-      storage.players[pindex].menu_search_term = term
-      if term ~= "" then Speech.speak(pindex, { "fa.menu-search-searching-for", term }) end
-      event.element.destroy()
-      if storage.players[pindex].menu_search_frame ~= nil then
-         storage.players[pindex].menu_search_frame.destroy()
-         storage.players[pindex].menu_search_frame = nil
-      end
    elseif storage.players[pindex].blueprint_menu.edit_label == true then
       --Apply the new label
       storage.players[pindex].blueprint_menu.edit_label = false
@@ -2218,7 +2204,6 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
          event.element.destroy()
       end
    end
-   storage.players[pindex].last_menu_search_tick = event.tick
    storage.players[pindex].text_field_open = false
 end)
 
@@ -4721,8 +4706,6 @@ local function kb_switch_menu_or_gun(event)
          storage.players[pindex].building.index = 1
          storage.players[pindex].building.category = 1
          storage.players[pindex].building.recipe_selection = false
-         storage.players[pindex].menu_search_index = nil
-         storage.players[pindex].menu_search_index_2 = nil
 
          storage.players[pindex].building.sector = storage.players[pindex].building.sector + 1 --Change sector
          storage.players[pindex].building.item_selection = false
@@ -4862,8 +4845,6 @@ local function kb_reverse_switch_menu_or_gun(event)
          storage.players[pindex].building.category = 1
          storage.players[pindex].building.recipe_selection = false
          storage.players[pindex].building.index = 1
-         storage.players[pindex].menu_search_index = nil
-         storage.players[pindex].menu_search_index_2 = nil
 
          storage.players[pindex].building.sector = storage.players[pindex].building.sector - 1
          storage.players[pindex].building.item_selection = false
@@ -6959,8 +6940,6 @@ local function locate_hand_in_crafting_menu(pindex)
    end
    local item_name =
       string.lower(FaUtils.get_substring_before_space(FaUtils.get_substring_before_dash(item_name_string)))
-   storage.players[pindex].menu_search_term = item_name
-
    --Empty hand stack (clear cursor stack) after getting the name
    storage.players[pindex].skip_read_hand = true
    local successful = p.clear_cursor()
@@ -6970,9 +6949,6 @@ local function locate_hand_in_crafting_menu(pindex)
       Speech.speak(pindex, message)
       return
    end
-
-   --Run the search
-   MenuSearch.fetch_next(pindex, item_name, nil)
 end
 
 --Empties hand and opens the item from the crafting menu
@@ -6981,48 +6957,6 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       locate_hand_in_crafting_menu(pindex)
-   end
-)
-
---ENTER KEY by default
-EventManager.on_event(
-   "fa-c-f",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      if event.tick - storage.players[pindex].last_menu_search_tick < 5 then return end
-      MenuSearch.open_search_box(pindex)
-   end
-)
-
----@param event EventData.CustomInputEvent
----@param forward boolean
-local function kb_menu_search_again(event, forward)
-   local pindex = event.player_index
-   local str = storage.players[pindex].menu_search_term
-   if str == nil or str == "" then
-      Speech.speak(pindex, { "fa.press-ctrl-f-to-search" })
-      return
-   end
-   if forward then
-      MenuSearch.fetch_next(pindex, str)
-   else
-      MenuSearch.fetch_last(pindex, str)
-   end
-end
-
-EventManager.on_event(
-   "fa-s-enter",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      kb_menu_search_again(event, true)
-   end
-)
-
-EventManager.on_event(
-   "fa-c-enter",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      kb_menu_search_again(event, false)
    end
 )
 

@@ -97,8 +97,6 @@ function mod.open_operable_building(ent, pindex)
       local p = game.get_player(pindex)
       if p.opened == nil then p.opened = ent end
       --Other stuff...
-      storage.players[pindex].menu_search_index = 0
-      storage.players[pindex].menu_search_index_2 = 0
       if ent.prototype.subgroup.name == "belt" then
          router:open_ui(UiRouter.UI_NAMES.BELT)
          BeltAnalyzer.belt_analyzer:open(pindex, { entity = ent })
@@ -287,8 +285,6 @@ function mod.open_operable_vehicle(ent, pindex)
       local p = game.get_player(pindex)
       if p.opened == nil then p.opened = ent end
       --Other stuff...
-      storage.players[pindex].menu_search_index = 0
-      storage.players[pindex].menu_search_index_2 = 0
       if ent.prototype.ingredient_count ~= nil then
          storage.players[pindex].building.recipe = ent.get_recipe()
          storage.players[pindex].building.recipe_list = Crafting.get_recipes(pindex, ent)

@@ -954,28 +954,6 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "fa-c-f",
-      key_sequence = "CONTROL + F",
-      linked_game_control = "focus-search",
-      consuming = "game-only",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-s-enter",
-      key_sequence = "SHIFT + ENTER",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-c-enter",
-      key_sequence = "CONTROL + ENTER",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
       name = "fa-grave",
       key_sequence = "GRAVE",
       consuming = "none",
