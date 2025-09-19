@@ -24,7 +24,6 @@ local Electrical = require("scripts.electrical")
 local EntitySelection = require("scripts.entity-selection")
 local Equipment = require("scripts.equipment")
 local EventManager = require("scripts.event-manager")
-local GunMenu = require("scripts.gun-menu")
 local FaCommands = require("scripts.fa-commands")
 local FaInfo = require("scripts.fa-info")
 local FaUtils = require("scripts.fa-utils")
@@ -52,6 +51,7 @@ local TravelTools = require("scripts.travel-tools")
 local TutorialSystem = require("scripts.tutorial-system")
 local BeltAnalyzer = require("scripts.ui.belt-analyzer")
 local BlueprintsMenu = require("scripts.ui.menus.blueprints-menu")
+local GunMenuUi = require("scripts.ui.menus.gun-menu")
 local GenericInventory = require("scripts.ui.generic-inventory")
 local UiRouter = require("scripts.ui.router")
 local UiEventRouting = require("scripts.ui.event-routing")
@@ -817,8 +817,6 @@ function menu_cursor_up(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.SIGNAL_SELECTOR) then
       CircuitNetworks.signal_selector_group_up(pindex)
       CircuitNetworks.read_selected_signal_group(pindex, "")
-   elseif router:is_ui_open(UiRouter.UI_NAMES.GUNS) then
-      GunMenu.up_or_down(pindex)
    end
 end
 
@@ -1018,8 +1016,6 @@ function menu_cursor_down(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.SIGNAL_SELECTOR) then
       CircuitNetworks.signal_selector_group_down(pindex)
       CircuitNetworks.read_selected_signal_group(pindex, "")
-   elseif router:is_ui_open(UiRouter.UI_NAMES.GUNS) then
-      GunMenu.up_or_down(pindex)
    end
 end
 
@@ -1158,8 +1154,6 @@ function menu_cursor_left(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.SIGNAL_SELECTOR) then
       CircuitNetworks.signal_selector_signal_prev(pindex)
       CircuitNetworks.read_selected_signal_slot(pindex, "")
-   elseif router:is_ui_open(UiRouter.UI_NAMES.GUNS) then
-      GunMenu.left(pindex)
    end
 end
 
@@ -1311,8 +1305,6 @@ function menu_cursor_right(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.SIGNAL_SELECTOR) then
       CircuitNetworks.signal_selector_signal_next(pindex)
       CircuitNetworks.read_selected_signal_slot(pindex, "")
-   elseif router:is_ui_open(UiRouter.UI_NAMES.GUNS) then
-      GunMenu.right(pindex)
    end
 end
 
@@ -3785,13 +3777,6 @@ local function read_coords(pindex, start_phrase)
          y = y - 1
       end
       Speech.speak(pindex, { "fa.inventory-slot-position", result, tostring(x), tostring(y) })
-   elseif router:is_ui_open(UiRouter.UI_NAMES.GUNS) then
-      local state = GunMenu.get_state(pindex)
-      if state.ammo_selected then
-         Speech.speak(pindex, { "fa.ammo-slot", tostring(state.index) })
-      else
-         Speech.speak(pindex, { "fa.gun-slot", tostring(state.index) })
-      end
    elseif
       router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
       and storage.players[pindex].building.recipe_selection == false
@@ -5544,8 +5529,6 @@ local function kb_click_menu(event)
          storage.players[pindex].signal_selector.ent,
          storage.players[pindex].signal_selector.editing_first_slot
       )
-   elseif router:is_ui_open(UiRouter.UI_NAMES.GUNS) then
-      GunMenu.click_slot(pindex)
    end
 end
 
@@ -6497,7 +6480,7 @@ EventManager.on_event(
       local router = UiRouter.get_router(pindex)
       if router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
          ---From event inventory-read-weapons-data
-         GunMenu.open(pindex)
+         GunMenuUi.gun_menu:open(pindex, {})
       else
          ---From event rotate-building
          BuildingTools.rotate_building_info_read(event, true)
