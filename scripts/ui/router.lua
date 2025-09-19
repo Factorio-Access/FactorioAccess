@@ -52,18 +52,12 @@ mod.UI_NAMES = {
    BELT = "belt",
    WARNINGS = "warnings",
    PUMP = "pump",
-   RAIL_BUILDER = "rail_builder",
-   TRAIN_STOP = "train_stop",
    ROBOPORT = "roboport",
    BLUEPRINT = "blueprint",
    BLUEPRINT_BOOK = "blueprint_book",
    CIRCUIT_NETWORK = "circuit_network",
    SIGNAL_SELECTOR = "signal_selector",
-   PROMPT = "prompt",
-   TRAIN = "train",
    SPIDERTRON = "spidertron",
-   BUILDING_NO_SECTORS = "building_no_sectors",
-   VEHICLE_NO_SECTORS = "vehicle_no_sectors",
 }
 
 ---@class fa.ui.RouterState

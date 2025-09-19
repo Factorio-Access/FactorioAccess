@@ -41,8 +41,6 @@ local Mouse = require("scripts.mouse")
 local PlayerInit = require("scripts.player-init")
 local PlayerMiningTools = require("scripts.player-mining-tools")
 local Quickbar = require("scripts.quickbar")
-local RailBuilder = require("scripts.rail-builder")
-local Rails = require("scripts.rails")
 local Research = require("scripts.research")
 local Rulers = require("scripts.rulers")
 local ScannerEntrypoint = require("scripts.scanner.entrypoint")
@@ -50,8 +48,6 @@ local Spidertron = require("scripts.spidertron")
 local TH = require("scripts.table-helpers")
 local Teleport = require("scripts.teleport")
 local TestFramework = require("scripts.test-framework")
-local TrainStops = require("scripts.train-stops")
-local Trains = require("scripts.trains")
 local TransportBelts = require("scripts.transport-belts")
 local TravelTools = require("scripts.travel-tools")
 local TutorialSystem = require("scripts.tutorial-system")
@@ -812,10 +808,6 @@ function menu_cursor_up(pindex)
       })
    elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       TravelTools.fast_travel_menu_up(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.RAIL_BUILDER) then
-      RailBuilder.menu_up(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
-      TrainStops.train_stop_menu_up(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.ROBOPORT) then
       WorkerRobots.roboport_menu_up(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
@@ -1017,10 +1009,6 @@ function menu_cursor_down(pindex)
       })
    elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       TravelTools.fast_travel_menu_down(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.RAIL_BUILDER) then
-      RailBuilder.menu_down(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
-      TrainStops.train_stop_menu_down(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.ROBOPORT) then
       WorkerRobots.roboport_menu_down(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
@@ -1553,7 +1541,6 @@ EventManager.on_event(defines.events.on_player_driving_changed_state, function(e
          storage.players[pindex].last_vehicle.train.manual_mode = true
       end
       Teleport.teleport_to_closest(pindex, storage.players[pindex].last_vehicle.position, true, true)
-      if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then Trains.menu_close(pindex, false) end
       if router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then Spidertron.spider_menu_close(pindex, false) end
    else
       Speech.speak(pindex, { "fa.driving-state-changed" })
@@ -1583,14 +1570,8 @@ function close_menu_resets(pindex)
 
    if router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       TravelTools.fast_travel_menu_close(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.RAIL_BUILDER) then
-      RailBuilder.close_menu(pindex, false)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
-      Trains.menu_close(pindex, false)
    elseif router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then
       Spidertron.spider_menu_close(pindex, false)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
-      TrainStops.train_stop_menu_close(pindex, false)
    elseif router:is_ui_open(UiRouter.UI_NAMES.ROBOPORT) then
       WorkerRobots.roboport_menu_close(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT) then
@@ -1764,11 +1745,7 @@ end
 
 function clicked_on_entity(ent, pindex)
    local p = game.get_player(pindex)
-   if p.vehicle ~= nil and p.vehicle.train ~= nil then
-      --If player is on a train, open it
-      Trains.menu_open(pindex)
-      return
-   elseif ent == nil then
+   if ent == nil then
       --No entity clicked
       p.selected = nil
       return
@@ -1790,13 +1767,7 @@ function clicked_on_entity(ent, pindex)
    end
 
    p.selected = ent
-   if ent.name == "locomotive" then
-      --For a rail vehicle, open train menu
-      Trains.menu_open(pindex)
-   elseif ent.name == "train-stop" then
-      --For a train stop, open train stop menu
-      TrainStops.train_stop_menu_open(pindex)
-   elseif ent.name == "roboport" then
+   if ent.name == "roboport" then
       --For a roboport, open roboport menu
       WorkerRobots.roboport_menu_open(pindex)
    elseif ent.type == "power-switch" then
@@ -1995,7 +1966,7 @@ EventManager.on_event(defines.events.on_gui_closed, function(event, pindex)
    local router = UiRouter.get_router(pindex)
 
    --Other resets
-   if router:is_ui_open() and not router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then
+   if router:is_ui_open() then
       if router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
          sounds.play_close_inventory(pindex)
       elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) and event.element ~= nil then
@@ -2168,14 +2139,6 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
       end
       storage.players[pindex].travel.index.x = 1
       event.element.destroy()
-   elseif storage.players[pindex].train_menu.renaming == true then
-      storage.players[pindex].train_menu.renaming = false
-      local result = event.element.text
-      if result == nil or result == "" then result = "unknown" end
-      Trains.set_train_name(storage.players[pindex].train_menu.locomotive.train, result)
-      Speech.speak(pindex, { "fa.train-renamed", result })
-      event.element.destroy()
-      Trains.menu_close(pindex, false)
    elseif storage.players[pindex].spider_menu.renaming == true then
       local ent = storage.players[pindex].spider_menu.ent
       local new_name = event.element.text
@@ -2187,14 +2150,6 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
       storage.players[pindex].spider_menu.ent = nil
       event.element.destroy()
       Spidertron.spider_menu_close(pindex, false)
-   elseif storage.players[pindex].train_stop_menu.renaming == true then
-      storage.players[pindex].train_stop_menu.renaming = false
-      local result = event.element.text
-      if result == nil or result == "" then result = "unknown" end
-      storage.players[pindex].train_stop_menu.stop.backer_name = result
-      Speech.speak(pindex, { "fa.train-stop-renamed", result })
-      event.element.destroy()
-      TrainStops.train_stop_menu_close(pindex, false)
    elseif storage.players[pindex].roboport_menu.renaming == true then
       storage.players[pindex].roboport_menu.renaming = false
       local result = event.element.text
@@ -3014,7 +2969,7 @@ local function move_key(direction, event, force_single_tile)
    --Save the key press event
    BumpDetection.save_key_press(event.player_index, direction, event.tick)
 
-   if router:is_ui_open() and not router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then
+   if router:is_ui_open() then
       -- Menus: move menu cursor
       menu_cursor_move(direction, pindex)
    elseif cursor_enabled then
@@ -3055,7 +3010,6 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
-      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
 
       move_key(defines.direction.north, event)
    end
@@ -3066,7 +3020,6 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
-      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
 
       move_key(defines.direction.west, event)
    end
@@ -3077,7 +3030,6 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
-      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
 
       move_key(defines.direction.south, event)
    end
@@ -3088,7 +3040,6 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
-      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
 
       move_key(defines.direction.east, event)
    end
@@ -3100,13 +3051,9 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
       local vp = Viewpoint.get_viewpoint(pindex)
-      if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
-         Trains.menu_up(pindex)
-      elseif router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then
+      if router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then
          Spidertron.spider_menu_up(pindex)
-      elseif
-         (not router:is_ui_open() and vp:get_cursor_enabled()) or not router:is_ui_open(UiRouter.UI_NAMES.PROMPT)
-      then
+      elseif not router:is_ui_open() and vp:get_cursor_enabled() then
          move_key(dirs.north, event, true)
       end
    end
@@ -3118,13 +3065,7 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
       local vp = Viewpoint.get_viewpoint(pindex)
-      if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
-         Trains.menu_left(pindex)
-      elseif
-         (not router:is_ui_open() and vp:get_cursor_enabled()) or not router:is_ui_open(UiRouter.UI_NAMES.PROMPT)
-      then
-         move_key(dirs.west, event, true)
-      end
+      if not router:is_ui_open() and vp:get_cursor_enabled() then move_key(dirs.west, event, true) end
    end
 )
 
@@ -3134,13 +3075,9 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
       local vp = Viewpoint.get_viewpoint(pindex)
-      if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
-         Trains.menu_down(pindex)
-      elseif router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then
+      if router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then
          Spidertron.spider_menu_down(pindex)
-      elseif
-         (not router:is_ui_open() and vp:get_cursor_enabled()) or not router:is_ui_open(UiRouter.UI_NAMES.PROMPT)
-      then
+      elseif not router:is_ui_open() and vp:get_cursor_enabled() then
          move_key(dirs.south, event, true)
       end
    end
@@ -3152,13 +3089,7 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
       local vp = Viewpoint.get_viewpoint(pindex)
-      if router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
-         Trains.menu_right(pindex)
-      elseif
-         (not router:is_ui_open() and vp:get_cursor_enabled()) or not router:is_ui_open(UiRouter.UI_NAMES.PROMPT)
-      then
-         move_key(dirs.east, event, true)
-      end
+      if not router:is_ui_open() and vp:get_cursor_enabled() then move_key(dirs.east, event, true) end
    end
 )
 
@@ -3580,7 +3511,6 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
-      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
 
       BuildingTools.nudge_key(defines.direction.north, event)
    end
@@ -3591,7 +3521,6 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
-      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
 
       BuildingTools.nudge_key(defines.direction.west, event)
    end
@@ -3602,7 +3531,6 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
-      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
 
       BuildingTools.nudge_key(defines.direction.south, event)
    end
@@ -3613,7 +3541,6 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
-      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
 
       BuildingTools.nudge_key(defines.direction.east, event)
    end
@@ -3637,7 +3564,6 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
-      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
       nudge_self(event, defines.direction.north, "north")
    end
 )
@@ -3647,7 +3573,6 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
-      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
       nudge_self(event, defines.direction.west, "west")
    end
 )
@@ -3657,7 +3582,6 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
-      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
       nudge_self(event, defines.direction.south, "south")
    end
 )
@@ -3667,7 +3591,6 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
-      if router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then return end
       nudge_self(event, defines.direction.east, "east")
    end
 )
@@ -4167,36 +4090,6 @@ EventManager.on_event(
 )
 
 ---@param event EventData.CustomInputEvent
----@param behind boolean
-local function kb_read_rail(event, behind)
-   local pindex = event.player_index
-   local player = game.get_player(pindex)
-   local ent = player.selected
-
-   if player.driving and player.vehicle.train ~= nil then
-      Trains.train_read_next_rail_entity_ahead(pindex, behind)
-   elseif ent and ent.valid and (ent.name == "straight-rail" or ent.name == "curved-rail") then
-      Rails.rail_read_next_rail_entity_ahead(pindex, ent, not behind)
-   end
-end
-
-EventManager.on_event(
-   "fa-s-j",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      kb_read_rail(event, false)
-   end
-)
-
-EventManager.on_event(
-   "fa-c-j",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      kb_read_rail(event, true)
-   end
-)
-
----@param event EventData.CustomInputEvent
 local function kb_s_b(event)
    local pindex = event.player_index
    local vp = Viewpoint.get_viewpoint(pindex)
@@ -4479,10 +4372,6 @@ EventManager.on_event(
       local ent = p.opened
       if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
          kb_adjust_inventory_bar(event, 1)
-      elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
-         Trains.change_instant_schedule_wait_time(5, pindex)
-      elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
-         TrainStops.nearby_train_schedule_add_to_wait_time(5, pindex)
       elseif ent and ent.type == "inserter" then
          local result = BuildingVehicleSectors.inserter_hand_stack_size_up(ent)
          Speech.speak(pindex, result)
@@ -4512,10 +4401,6 @@ EventManager.on_event(
       local router = UiRouter.get_router(pindex)
       if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
          kb_adjust_inventory_bar(event, 100)
-      elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
-         Trains.change_instant_schedule_wait_time(60, pindex)
-      elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
-         TrainStops.nearby_train_schedule_add_to_wait_time(60, pindex)
       else
          ScannerEntrypoint.move_category(pindex, -1)
       end
@@ -4531,10 +4416,6 @@ EventManager.on_event(
       local ent = p.opened
       if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
          kb_adjust_inventory_bar(event, -1)
-      elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
-         Trains.change_instant_schedule_wait_time(-5, pindex)
-      elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
-         TrainStops.nearby_train_schedule_add_to_wait_time(-5, pindex)
       elseif ent and ent.type == "inserter" then
          local result = BuildingVehicleSectors.inserter_hand_stack_size_down(ent)
          Speech.speak(pindex, result)
@@ -4564,10 +4445,6 @@ EventManager.on_event(
       local router = UiRouter.get_router(pindex)
       if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
          kb_adjust_inventory_bar(event, -100)
-      elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
-         Trains.change_instant_schedule_wait_time(-60, pindex)
-      elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
-         TrainStops.nearby_train_schedule_add_to_wait_time(-60, pindex)
       else
          ScannerEntrypoint.move_category(pindex, 1)
       end
@@ -4755,24 +4632,23 @@ local function kb_close_menu(event)
    local tick = event.tick
    local router = UiRouter.get_router(pindex)
 
-   if not router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then
-      Speech.speak(pindex, "Menu closed.")
+   -- PROMPT check removed - it was never opened anyway
+   Speech.speak(pindex, "Menu closed.")
 
-      if
-         router:is_ui_one_of({
-            UiRouter.UI_NAMES.INVENTORY,
-            UiRouter.UI_NAMES.CRAFTING,
-            UiRouter.UI_NAMES.TECHNOLOGY,
-            UiRouter.UI_NAMES.CRAFTING_QUEUE,
-            UiRouter.UI_NAMES.WARNINGS,
-         })
-      then
-         sounds.play_close_inventory(pindex)
-      end
-
-      storage.players[pindex].last_menu_toggle_tick = tick
-      close_menu_resets(pindex)
+   if
+      router:is_ui_one_of({
+         UiRouter.UI_NAMES.INVENTORY,
+         UiRouter.UI_NAMES.CRAFTING,
+         UiRouter.UI_NAMES.TECHNOLOGY,
+         UiRouter.UI_NAMES.CRAFTING_QUEUE,
+         UiRouter.UI_NAMES.WARNINGS,
+      })
+   then
+      sounds.play_close_inventory(pindex)
    end
+
+   storage.players[pindex].last_menu_toggle_tick = tick
+   close_menu_resets(pindex)
 end
 
 EventManager.on_event(
@@ -4839,7 +4715,7 @@ local function kb_switch_menu_or_gun(event)
    local trash_inv = game.get_player(pindex).get_inventory(defines.inventory.character_trash)
    local logistics_researched = (trash_inv ~= nil and trash_inv.valid and #trash_inv > 0)
 
-   if router:is_ui_open() and not router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then
+   if router:is_ui_open() then
       sounds.play_change_menu_tab(pindex)
       if router:is_ui_one_of({ UiRouter.UI_NAMES.VEHICLE, UiRouter.UI_NAMES.BUILDING }) then
          storage.players[pindex].building.index = 1
@@ -4980,7 +4856,7 @@ local function kb_reverse_switch_menu_or_gun(event)
    local trash_inv = game.get_player(pindex).get_inventory(defines.inventory.character_trash)
    local logistics_researched = (trash_inv ~= nil and trash_inv.valid and #trash_inv > 0)
 
-   if router:is_ui_open() and not router:is_ui_open(UiRouter.UI_NAMES.PROMPT) then
+   if router:is_ui_open() then
       sounds.play_change_menu_tab(pindex)
       if router:is_ui_one_of({ UiRouter.UI_NAMES.VEHICLE, UiRouter.UI_NAMES.BUILDING }) then
          storage.players[pindex].building.category = 1
@@ -5661,11 +5537,6 @@ local function kb_click_menu(event)
       end
    elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       TravelTools.fast_travel_menu_click(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.RAIL_BUILDER) then
-      RailBuilder.run_menu(pindex, true)
-      RailBuilder.close_menu(pindex, false)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
-      Trains.run_train_menu(storage.players[pindex].train_menu.index, pindex, true)
    elseif router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then
       Spidertron.run_spider_menu(
          storage.players[pindex].spider_menu.index,
@@ -5673,8 +5544,6 @@ local function kb_click_menu(event)
          game.get_player(pindex).cursor_stack,
          true
       )
-   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
-      TrainStops.run_train_stop_menu(storage.players[pindex].train_stop_menu.index, pindex, true)
    elseif router:is_ui_open(UiRouter.UI_NAMES.ROBOPORT) then
       WorkerRobots.run_roboport_menu(storage.players[pindex].roboport_menu.index, pindex, true)
    elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
@@ -6320,43 +6189,6 @@ local function kb_equip_item(event)
    end
 end
 
---Has the same input as the ghost placement function and so it uses that
----@param event EventData.CustomInputEvent
-local function kb_open_rail_builder(event)
-   local pindex = event.player_index
-   local router = UiRouter.get_router(pindex)
-   local p = game.get_player(pindex)
-   if router:is_ui_open() then
-      if storage.players[pindex].ghost_rail_planning == true then p.clear_cursor() end
-      return
-   elseif storage.players[pindex].ghost_rail_planning == true then
-      Rails.end_ghost_rail_planning(pindex)
-   else
-      --Not in a menu
-      local ent = p.selected
-      local stack = p.cursor_stack
-      if ent then
-         if ent.name == "straight-rail" then
-            --If holding a rail item and selecting the tip of the end rail, notify about the ghost rail planner activation
-            local ghost_rail_case = false
-            if stack and stack.valid_for_read and stack.name == "rail" then
-               ghost_rail_case = Rails.cursor_is_at_straight_end_rail_tip(pindex)
-            end
-            ghost_rail_case = false --keep this feature off for now
-            if ghost_rail_case then
-               Rails.start_ghost_rail_planning(pindex)
-            else
-               --Open rail builder
-               p.clear_cursor()
-               RailBuilder.open_menu(pindex, ent)
-            end
-         elseif ent.name == "curved-rail" then
-            Speech.speak(pindex, "Rail builder menu cannot use curved rails.")
-         end
-      end
-   end
-end
-
 EventManager.on_event(
    "fa-s-leftbracket",
    ---@param event EventData.CustomInputEvent
@@ -6379,8 +6211,6 @@ EventManager.on_event(
       elseif router:is_ui_open() then
          kb_menu_action(event)
       end
-      ---Has behavior when menu is opened or closed; let it decide when to run.
-      kb_open_rail_builder(event)
    end
 )
 
@@ -6531,28 +6361,6 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       KruiseKontrol.activate_kk(pindex)
-   end
-)
-
-EventManager.on_event(
-   "fa-a-left",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local ent = game.get_player(pindex).selected
-      if not ent then return end
-      --Build left turns on end rails
-      if ent.name == "straight-rail" then RailBuilder.build_rail_turn_left_45_degrees(ent, pindex) end
-   end
-)
-
-EventManager.on_event(
-   "fa-a-right",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local ent = game.get_player(pindex).selected
-      if not ent then return end
-      --Build left turns on end rails
-      if ent.name == "straight-rail" then RailBuilder.build_rail_turn_right_45_degrees(ent, pindex) end
    end
 )
 

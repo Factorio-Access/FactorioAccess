@@ -127,18 +127,6 @@ function mod.update_menu_visuals()
                mod.update_overhead_sprite("utility.search", 2, 1.25, pindex)
                mod.update_custom_GUI_sprite(nil, 1, pindex)
             end
-         elseif
-            router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING_NO_SECTORS, UiRouter.UI_NAMES.VEHICLE_NO_SECTORS })
-         then
-            if game.get_player(pindex).opened == nil then
-               --Open building menu with no GUI
-               mod.update_overhead_sprite("utility.search", 2, 1.25, pindex)
-               mod.update_custom_GUI_sprite("utility.search", 3, pindex, "utility.questionmark")
-            else
-               --A building with a GUI is open
-               mod.update_overhead_sprite("utility.search", 2, 1.25, pindex)
-               mod.update_custom_GUI_sprite(nil, 1, pindex)
-            end
          else
             --Other menu type ...
             if player.vanilla_mode then

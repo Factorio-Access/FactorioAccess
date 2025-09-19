@@ -600,6 +600,55 @@ def save_crash_report(crash_info: Dict[str, Any]) -> Path:
     return crash_file
 
 
+def detect_module_loading_errors(output_file: str = None) -> Optional[Dict[str, Any]]:
+    """Detect Factorio module loading errors from output.
+
+    Args:
+        output_file: Path to temporary output file (if buffering was used)
+
+    Returns:
+        Dict with error information if module loading failed, None otherwise
+    """
+    # Check the temporary output file if provided
+    if output_file and os.path.exists(output_file):
+        try:
+            with open(output_file, "r", encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+
+            # Look for module loading errors
+            # Pattern: Error Util.cpp:81: __ModName__/path: module ... not found
+            module_error = re.search(
+                r"Error\s+\w+\.cpp:\d+:\s+(.+?):\s*module\s+(.+?)\s+not found",
+                content
+            )
+
+            if module_error:
+                return {
+                    "error_type": "module_not_found",
+                    "location": module_error.group(1),
+                    "module": module_error.group(2),
+                    "full_error": module_error.group(0)
+                }
+
+            # Also check for other loading errors
+            generic_error = re.search(
+                r"Error\s+\w+\.cpp:\d+:\s+(.+)",
+                content
+            )
+
+            if generic_error:
+                return {
+                    "error_type": "loading_error",
+                    "full_error": generic_error.group(0),
+                    "details": generic_error.group(1)
+                }
+
+        except Exception:
+            pass
+
+    return None
+
+
 def parse_test_results(log_path: str) -> Optional[Dict[str, Any]]:
     """Parse test results from log file."""
     log_path = Path(log_path)
@@ -930,6 +979,41 @@ def main():
 
             # Check if Factorio crashed (exit code -1 typically means a test threw an uncaught error)
             factorio_crashed = exit_code == -1
+
+            # Check for module loading errors
+            module_error = None
+            if not args.verbose and temp_output_file:
+                module_error = detect_module_loading_errors(temp_output_file.name)
+
+            # If we have a module loading error, treat it as a critical failure
+            if module_error:
+                print("\n" + "=" * 60)
+                print("CRITICAL ERROR: MODULE LOADING FAILED")
+                print("=" * 60)
+
+                if module_error["error_type"] == "module_not_found":
+                    print(f"Module not found: {module_error['module']}")
+                    print(f"Location: {module_error['location']}")
+                else:
+                    print(f"Loading error: {module_error.get('details', 'Unknown error')}")
+
+                print(f"\nFull error: {module_error['full_error']}")
+                print("=" * 60)
+                print("\nTESTING ABORTED: Fix module loading errors before running tests")
+
+                # Show the full output for debugging
+                if temp_output_file:
+                    print("\n" + "=" * 60)
+                    print("FULL FACTORIO OUTPUT:")
+                    print("=" * 60)
+                    try:
+                        with open(temp_output_file.name, "r") as f:
+                            print(f.read())
+                    except Exception as e:
+                        print(f"[ERROR] Could not read buffered output: {e}")
+
+                # Exit with error code
+                sys.exit(1)
 
             test_summary = parse_test_results(str(test_log_path))
 

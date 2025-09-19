@@ -249,7 +249,7 @@ function mod.open_operable_building(ent, pindex)
          --No building sectors
          if game.get_player(pindex).opened ~= nil then
             storage.players[pindex].building.ent = ent
-            router:open_ui(UiRouter.UI_NAMES.BUILDING_NO_SECTORS)
+            -- Just speak the message instead of opening a placeholder UI
             local result =
                { "", localising.get_localised_name_with_fallback(ent), { "fa.bvs-this-menu-has-no-options" } }
             if ent.type == "inserter" then
@@ -393,7 +393,7 @@ function mod.open_operable_vehicle(ent, pindex)
       else
          if game.get_player(pindex).opened ~= nil then
             storage.players[pindex].building.ent = ent
-            router:open_ui(UiRouter.UI_NAMES.VEHICLE_NO_SECTORS)
+            -- Just speak the message instead of opening a placeholder UI
             local message = Speech.new()
             message:fragment(ent.name)
             message:fragment(", this menu has no options ")

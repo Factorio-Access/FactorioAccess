@@ -34,10 +34,12 @@ local Heat = require("scripts.heat")
 local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
 local NetworkShape = require("scripts.network-shape")
-local Rails = require("scripts.rails")
+-- Rails removed (Factorio 2.0 incompatibility)
+-- local Rails = require("scripts.rails")
 local ResourceMining = require("scripts.resource-mining")
 local TH = require("scripts.table-helpers")
-local Trains = require("scripts.trains")
+-- Trains removed (Factorio 2.0 incompatibility)
+-- local Trains = require("scripts.trains")
 local TransportBelts = require("scripts.transport-belts")
 local Viewpoint = require("scripts.viewpoint")
 local Wires = require("scripts.wires")
@@ -308,7 +310,11 @@ local function ent_info_rail(ctx)
    local ent = ctx.ent
    -- TODO: really we shouldn't need pindex here, but for now rails aren't
    -- localised properly.
-   if ent.name == "straight-rail" or ent.name == "curved-rail" then return Rails.rail_ent_info(ctx.pindex, ent) end
+   if ent.name == "straight-rail" or ent.name == "curved-rail" then
+      -- Rails not supported in 2.0 yet
+      ctx.message:fragment({ "fa.trains-not-supported" })
+      return ctx.message:build()
+   end
 end
 
 ---@param ctx fa.Info.EntInfoContext
@@ -552,7 +558,8 @@ end
 local function ent_info_train_owner(ctx)
    local ent = ctx.ent
    if ent.name == "locomotive" or ent.name == "cargo-wagon" or ent.name == "fluid-wagon" then
-      ctx.message:fragment({ "fa.ent-info-of-train", Trains.get_train_name(ent.train) })
+      -- Trains not supported in 2.0 yet
+      ctx.message:fragment({ "fa.trains-not-supported" })
    end
 end
 
@@ -566,7 +573,8 @@ local function ent_info_rail_signal_state(ctx)
       elseif ent.status == defines.entity_status.cant_divide_segments then
          ctx.message:fragment({ "fa.ent-info-rail-signal-not-dividing" })
       else
-         ctx.message:fragment(Rails.get_signal_state_info(ent))
+         -- Rail signals not supported in 2.0 yet
+         ctx.message:fragment({ "fa.trains-not-supported" })
       end
    end
 end
@@ -1593,7 +1601,8 @@ end
 local function ent_status_cargo_wagon(ctx)
    local ent = ctx.ent
    if ent.prototype.type == "cargo-wagon" then
-      ctx.message:fragment(Trains.cargo_wagon_top_contents_info(ent))
+      -- Trains not supported in 2.0 yet
+      ctx.message:fragment({ "fa.trains-not-supported" })
       return true
    end
    return false
@@ -1605,7 +1614,8 @@ end
 local function ent_status_fluid_wagon(ctx)
    local ent = ctx.ent
    if ent.prototype.type == "fluid-wagon" then
-      ctx.message:fragment(Trains.fluid_contents_info(ent))
+      -- Trains not supported in 2.0 yet
+      ctx.message:fragment({ "fa.trains-not-supported" })
       return true
    end
    return false

@@ -21,7 +21,7 @@ The new UI system is located in `scripts/ui/` and consists of:
 ### 🔄 Partially Ported (1)
 1. **GUNS** (`scripts/gun-menu.lua`) - Uses StorageManager and UiRouter but not TabList/KeyGraph
 
-### ❌ Not Ported - Old System (18)
+### ❌ Not Ported - Old System (15)
 
 #### Core Game Interface (6)
 1. **INVENTORY** - Player inventory management
@@ -31,27 +31,26 @@ The new UI system is located in `scripts/ui/` and consists of:
 5. **PLAYER_TRASH** - Trash slot management
 6. **CRAFTING_QUEUE** - Crafting queue display
 
-#### Entity Configuration (8)
-7. **TRAIN** (`scripts/trains.lua`) - Train schedule and configuration
-8. **SPIDERTRON** (`scripts/spidertron.lua`) - Spidertron remote and settings
-9. **TRAIN_STOP** (`scripts/train-stops.lua`) - Train stop configuration
-10. **ROBOPORT** (`scripts/worker-robots.lua`) - Roboport network management
-11. **PUMP** - Pump configuration
-12. **CIRCUIT_NETWORK** (`scripts/circuit-networks.lua`) - Circuit network configuration
-13. **SIGNAL_SELECTOR** (`scripts/circuit-networks.lua`) - Signal selection for circuits
-14. **BLUEPRINT_BOOK** (`scripts/blueprints.lua`) - Blueprint book management
+#### Entity Configuration (5)
+7. **SPIDERTRON** (`scripts/spidertron.lua`) - Spidertron remote and settings
+8. **ROBOPORT** (`scripts/worker-robots.lua`) - Roboport network management
+9. **PUMP** - Pump configuration
+10. **CIRCUIT_NETWORK** (`scripts/circuit-networks.lua`) - Circuit network configuration
+11. **SIGNAL_SELECTOR** (`scripts/circuit-networks.lua`) - Signal selection for circuits
+12. **BLUEPRINT_BOOK** (`scripts/blueprints.lua`) - Blueprint book management
 
-#### Other Systems (4)
-15. **TRAVEL** (`scripts/travel-tools.lua`) - Fast travel point management
-16. **TECHNOLOGY** - Research menu
-17. **WARNINGS** - Warning/alert display
-18. **RAIL_BUILDER** (`scripts/rail-builder.lua`) - Rail building interface (currently broken in Factorio 2.0)
+#### Other Systems (3)
+13. **TRAVEL** (`scripts/travel-tools.lua`) - Fast travel point management
+14. **TECHNOLOGY** - Research menu
+15. **WARNINGS** - Warning/alert display
 
-### 🚫 Not Real UIs (3)
-These are state markers, not actual menus to port:
-- **PROMPT** - Never opened, only checked to block input (appears to be unused)
-- **BUILDING_NO_SECTORS** - Placeholder for buildings with no configurable options
-- **VEHICLE_NO_SECTORS** - Placeholder for vehicles with no inventory
+## Removed Systems (Factorio 2.0 Incompatible)
+
+The following systems have been removed due to complete API changes in Factorio 2.0:
+- **TRAIN** - Train schedule and configuration (will be reimplemented)
+- **TRAIN_STOP** - Train stop configuration (will be reimplemented)
+- **RAIL_BUILDER** - Rail building interface (will be reimplemented)
+
 
 ## Old System Characteristics
 

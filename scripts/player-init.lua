@@ -126,12 +126,6 @@ function mod.initialize(player)
 
    faplayer.guns_menu = faplayer.guns_menu or {}
 
-   faplayer.rail_builder = faplayer.rail_builder or nil
-
-   faplayer.train_menu = faplayer.train_menu or {}
-
-   faplayer.train_stop_menu = faplayer.train_stop_menu or {}
-
    faplayer.roboport_menu = faplayer.roboport_menu or {}
 
    faplayer.blueprint_menu = faplayer.blueprint_menu or {}
@@ -306,33 +300,12 @@ function mod.initialize(player)
    faplayer.said_owner = faplayer.said_owner or {}
 
    -- Menu initializations
-   faplayer.train_menu = faplayer.train_menu
-      or {
-         index = 0,
-         renaming = false,
-         locomotive = nil,
-         wait_time = 300,
-         index_2 = 0,
-         selecting_station = false,
-      }
 
    faplayer.spider_menu = faplayer.spider_menu or {
       index = 0,
       renaming = false,
       spider = nil,
    }
-
-   faplayer.train_stop_menu = faplayer.train_stop_menu
-      or {
-         index = 0,
-         renaming = false,
-         stop = nil,
-         wait_condition = "time",
-         wait_time_seconds = 30,
-         safety_wait_enabled = true,
-      }
-
-   faplayer.valid_train_stop_list = faplayer.valid_train_stop_list or {}
 
    faplayer.roboport_menu = faplayer.roboport_menu or {
       port = nil,

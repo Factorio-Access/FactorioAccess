@@ -7,7 +7,7 @@ local dirs = defines.direction
 local Graphics = require("scripts.graphics")
 local Speech = require("scripts.speech")
 local PlayerMiningTools = require("scripts.player-mining-tools")
-local RailBuilder = require("scripts.rail-builder")
+-- Rail builder removed (Factorio 2.0 incompatibility)
 local Teleport = require("scripts.teleport")
 local TransportBelts = require("scripts.transport-belts")
 local UiRouter = require("scripts.ui.router")
@@ -57,13 +57,12 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
       mod.build_offshore_pump_in_hand(pindex)
       return
    elseif stack.name == "rail" then
-      if not (free_place_straight_rail == true) then
-         --Append rails unless otherwise stated
-         RailBuilder.append_rail(pos, pindex)
-         return
-      end
+      -- Rails not supported in 2.0 yet
+      Speech.speak(pindex, { "fa.trains-not-supported" })
+      return
    elseif stack.name == "rail-signal" or stack.name == "rail-chain-signal" then
-      RailBuilder.free_place_rail_signal_in_hand(pindex)
+      -- Rail signals not supported in 2.0 yet
+      Speech.speak(pindex, { "fa.trains-not-supported" })
       return
    end
    --General build cases
@@ -1032,10 +1031,8 @@ function mod.build_preview_checks_info(stack, pindex)
 
    --For rail signals, check for valid placement
    if ent_p.name == "rail-signal" or ent_p.name == "rail-chain-signal" then
-      local preview_dir = RailBuilder.free_place_rail_signal_in_hand(pindex, true)
-      if preview_dir ~= nil then
-         table.insert(result, { "fa.connection-signal-heading", { "fa.direction", preview_dir } })
-      end
+      -- Rail signals not supported in 2.0 yet
+      table.insert(result, { "fa.trains-not-supported" })
    end
 
    --For all electric powered entities, note whether powered, and from which direction. Otherwise report the nearest power pole.

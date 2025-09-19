@@ -1,14 +1,12 @@
 --[[
 Audio Cues
 Centralized management of various audio cues that need to be played periodically.
-Handles train sounds, enemy alerts, driving alerts, mining sounds, and crafting sounds.
+Handles enemy alerts, driving alerts, mining sounds, and crafting sounds.
 ]]
 
-local Rails = require("scripts.rails")
 local Combat = require("scripts.combat")
 local Driving = require("scripts.driving")
 local PlayerMiningTools = require("scripts.player-mining-tools")
-local Trains = require("scripts.trains")
 local sounds = require("scripts.ui.sounds")
 
 local mod = {}
@@ -65,11 +63,6 @@ end
 
 ---Initialize default audio cues
 function mod.on_init()
-   -- Train track alerts at different frequencies
-   mod.register_cue("train_track_3", Rails.check_and_play_train_track_alert_sounds, 15, 1, false, { 3 })
-   mod.register_cue("train_track_2", Rails.check_and_play_train_track_alert_sounds, 30, 1, false, { 2 })
-   mod.register_cue("train_track_1", Rails.check_and_play_train_track_alert_sounds, 60, 1, false, { 1 })
-
    -- Enemy alerts at different frequencies
    mod.register_cue("enemy_3", Combat.check_and_play_enemy_alert_sound, 15, 1, false, { 3 })
    mod.register_cue("enemy_2", Combat.check_and_play_enemy_alert_sound, 30, 1, false, { 2 })
@@ -88,13 +81,6 @@ function mod.on_init()
          end
       end
    end, 15, 2, true)
-
-   -- Train horns
-   mod.register_cue("train_horns", function(pindex, tick)
-      Trains.check_and_honk_at_trains_in_same_block(tick, pindex)
-      Trains.check_and_honk_at_closed_signal(tick, pindex)
-      Trains.check_and_play_sound_for_turning_trains(pindex)
-   end, 30, 6, true)
 
    -- Mining sounds
    mod.register_cue("mining", function(pindex, tick)

@@ -1,15 +1,13 @@
 --Here: Functions about driving, mainly cars.
---Note: Some train-specific functions are in rails-and-trains.lua
 
 local util = require("util")
 local FaUtils = require("scripts.fa-utils")
 local Speech = require("scripts.speech")
-local Trains = require("scripts.trains")
 local dirs = defines.direction
 
 local mod = {}
 
---Report more info about a vehicle. For trains, this would include the name, ID, and train state.
+--Report more info about a vehicle.
 function mod.vehicle_info(pindex)
    if not game.get_player(pindex).driving then return { "fa.driving-not-in-vehicle" } end
 
@@ -24,27 +22,8 @@ function mod.vehicle_info(pindex)
       --laterdo**: car info: health, ammo contents, trunk contents
       return result:build()
    else
-      --This is a type of locomotive or wagon.
-      local result = Speech.new()
-
-      --Add the train name
-      result:fragment({ "fa.driving-on-board", { "entity-name." .. vehicle.name }, Trains.get_train_name(train) })
-      result:fragment(", ")
-
-      --Add the train state
-      result:fragment(Trains.get_train_state_info(train))
-      result:fragment(", ")
-
-      --Declare destination if any.
-      if train.path_end_stop ~= nil then
-         result:fragment({ "fa.driving-heading-to-station", train.path_end_stop.backer_name })
-         result:fragment(", ")
-         --   result:fragment(" traveled a distance of " .. train.path.travelled_distance .. " out of " train.path.total_distance " distance, ")
-      end
-
-      --Note that more info and options are found in the train menu
-      if vehicle.name == "locomotive" then result:fragment({ "fa.driving-train-menu-hint" }) end
-      return result:build()
+      --This is a type of locomotive or wagon - trains not supported
+      return { "fa.driving-trains-not-supported" }
    end
 end
 
@@ -111,7 +90,7 @@ function mod.check_and_play_driving_alert_sound(pindex, tick, mode_in)
       trigger = 50
    end
 
-   --Scan for entities within the radius
+   --Scan for entities within the radius (cars only)
    local ents_around = {}
    if p.vehicle.type == "car" then
       local radius = trigger + 5
@@ -141,18 +120,9 @@ function mod.check_and_play_driving_alert_sound(pindex, tick, mode_in)
          },
          invert = true,
       })
-   elseif p.vehicle.train ~= nil then
-      trigger = trigger * 3
-      local radius = trigger + 5
-      --For trains, search for anything they can collide with
-      ents_around = surf.find_entities_filtered({
-         area = {
-            { v.position.x - radius, v.position.y - radius },
-            { v.position.x + radius, v.position.y + radius },
-         },
-         type = { "locomotive", "cargo-wagon", "fluid-wagon", "artillery-wagon", "character", "car", "unit" },
-         invert = false,
-      })
+   else
+      -- Trains not supported
+      return false
    end
 
    --Filter entities by direction
@@ -163,18 +133,6 @@ function mod.check_and_play_driving_alert_sound(pindex, tick, mode_in)
          if p.vehicle.type == "car" and ent.unit_number ~= p.vehicle.unit_number then
             --For cars, take the entity as it is
             table.insert(ents_ahead, ent)
-         elseif p.vehicle.train ~= nil and ent.unit_number ~= p.vehicle.unit_number then
-            --For trains, the entity must also be near/on rails
-            local ent_straight_rails =
-               surf.find_entities_filtered({ position = ent.position, radius = 2, type = { "straight-rail" } })
-            local ent_curved_rails =
-               surf.find_entities_filtered({ position = ent.position, radius = 4, type = { "curved-rail" } })
-            if
-               (ent_straight_rails ~= nil and #ent_straight_rails > 0)
-               or (ent_curved_rails ~= nil and #ent_curved_rails > 0)
-            then
-               if not (ent.train and ent.train.id == v.train.id) then table.insert(ents_ahead, ent) end
-            end
          end
       elseif
          mode < 2
@@ -185,18 +143,6 @@ function mod.check_and_play_driving_alert_sound(pindex, tick, mode_in)
          if p.vehicle.type == "car" and ent.unit_number ~= p.vehicle.unit_number then
             --For cars, take the entity as it is
             table.insert(ents_ahead, ent)
-         elseif p.vehicle.train ~= nil and ent.unit_number ~= p.vehicle.unit_number then
-            --For trains, the entity must also be near/on rails and not from the same train (if reversing)
-            local ent_straight_rails =
-               surf.find_entities_filtered({ position = ent.position, radius = 2, type = { "straight-rail" } })
-            local ent_curved_rails =
-               surf.find_entities_filtered({ position = ent.position, radius = 4, type = { "curved-rail" } })
-            if
-               (ent_straight_rails ~= nil and #ent_straight_rails > 0)
-               or (ent_curved_rails ~= nil and #ent_curved_rails > 0)
-            then
-               if not (ent.train and ent.train.id == v.train.id) then table.insert(ents_ahead, ent) end
-            end
          end
       end
    end
@@ -248,8 +194,8 @@ function mod.stop_vehicle(pindex)
    if vehicle and vehicle.valid then
       if vehicle.train == nil then
          vehicle.speed = 0
-      elseif vehicle.train.state == defines.train_state.manual_control then
-         vehicle.train.speed = 0
+      else
+         -- Trains not supported
       end
    end
 end
@@ -259,8 +205,8 @@ function mod.halve_vehicle_speed(pindex)
    if vehicle and vehicle.valid then
       if vehicle.train == nil then
          vehicle.speed = vehicle.speed / 2
-      elseif vehicle.train.state == defines.train_state.manual_control then
-         vehicle.train.speed = vehicle.train.speed / 2
+      else
+         -- Trains not supported
       end
    end
 end

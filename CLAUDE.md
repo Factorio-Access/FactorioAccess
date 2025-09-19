@@ -190,10 +190,9 @@ Character coordinates are announced for spatial awareness.
 - Hierarchical crafting menu
 
 ### 5. Transport Systems
-- **Rails**: Custom rail builder with templates (currently broken in 2.0)
-- **Trains**: Schedule management, state reporting
 - **Belts**: Complex analysis of belt networks
 - **Vehicles**: Driving assistance
+- **Trains/Rails**: Removed due to Factorio 2.0 API changes (will be reimplemented)
 
 ### 6. UI System
 Modern graph-based UI architecture in `scripts/ui/`:
@@ -351,7 +350,6 @@ control.lua is organized into these major sections:
    - Inventory → `scripts/crafting.lua`
    - Building → `scripts/building-tools.lua`
    - Scanner → `scripts/scanner/`
-   - Rails → `scripts/rails.lua`, `scripts/rail-builder.lua`
    - Combat → `scripts/combat.lua`
    - UI → `scripts/ui/`
 
@@ -382,7 +380,6 @@ Instead of searching control.lua, check these files first:
 - **Scanner system**: `scripts/scanner/entrypoint.lua`
 - **UI/menus**: `scripts/ui/router.lua`
 - **Movement**: `scripts/travel-tools.lua`
-- **Rails**: `scripts/rails.lua`, `scripts/rail-builder.lua`
 - **Combat**: `scripts/combat.lua`
 - **Localization**: `scripts/localising.lua`, `scripts/message-builder.lua`
 - **Event handling**: `scripts/event-manager.lua` (new pattern)
@@ -677,7 +674,7 @@ end
 **IMPORTANT**: The mod is halfway through migration from Factorio 1.1 to 2.0. Many features may crash due to API
 changes.
 
-- **Rails**: Currently broken - avoid working on rail-related features (Syntrax will eventually replace this)
+- **Trains/Rails**: Completely removed due to API incompatibility - will be reimplemented from scratch
 - **Circuit Networks**: Broken - wire connection features not functional
 - **Various 1.1 code**: May crash when called due to API differences
 

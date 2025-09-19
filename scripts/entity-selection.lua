@@ -4,7 +4,6 @@ local mod = {}
 local Consts = require("scripts.consts")
 local StorageManager = require("scripts.storage-manager")
 local Viewpoint = require("scripts.viewpoint")
-local Rails -- Forward declaration to avoid circular dependency
 
 ---@class fa.EntitySelection.StorageState
 ---@field ents LuaEntity[]
@@ -40,7 +39,6 @@ end
 --- Sorts a list of entities by bringing primary entities to the start
 ---@param pindex number The player index
 ---@param ents table Array of entities to sort
----@param check_end_rail_fn function|nil Optional function to check if a rail is an end rail
 function mod.sort_ents_by_primary_first(pindex, ents, check_end_rail_fn)
    table.sort(ents, function(a, b)
       -- Return false if either are invalid
@@ -50,21 +48,6 @@ function mod.sort_ents_by_primary_first(pindex, ents, check_end_rail_fn)
       -- Check if primary
       local a_is_primary = mod.ent_is_primary(a, pindex)
       local b_is_primary = mod.ent_is_primary(b, pindex)
-
-      --For rails, check if end rail
-      local a_is_end_rail = false
-      local b_is_end_rail = false
-      if check_end_rail_fn then
-         if a.name == "straight-rail" or a.name == "curved-rail" then
-            local is_end_rail, dir, comment = check_end_rail_fn(a, pindex)
-            a_is_end_rail = is_end_rail
-         end
-         if b.name == "straight-rail" or b.name == "curved-rail" then
-            local is_end_rail, dir, comment = check_end_rail_fn(b, pindex)
-            b_is_end_rail = is_end_rail
-         end
-      end
-      if a_is_end_rail and not b_is_end_rail then return true end
 
       -- Both or none are primary
       if a_is_primary == b_is_primary then return false end
@@ -199,19 +182,8 @@ function mod.refresh_player_tile(pindex)
    ent_selection_storage[pindex].ents =
       surf.find_entities_filtered({ area = search_area, name = Consts.EXCLUDED_ENT_NAMES, invert = true })
 
-   -- Call sort without Rails check function if Rails is not available (e.g., in tests)
-   if not Rails then
-      -- Try to load Rails, but if it fails (e.g., in tests), just sort without the rail check
-      local success, rails_module = pcall(require, "scripts.rails")
-      if success then
-         Rails = rails_module
-         mod.sort_ents_by_primary_first(pindex, ent_selection_storage[pindex].ents, Rails.check_end_rail)
-      else
-         mod.sort_ents_by_primary_first(pindex, ent_selection_storage[pindex].ents, nil)
-      end
-   else
-      mod.sort_ents_by_primary_first(pindex, ent_selection_storage[pindex].ents, Rails.check_end_rail)
-   end
+   -- Sort entities without rail-specific sorting
+   mod.sort_ents_by_primary_first(pindex, ent_selection_storage[pindex].ents, nil)
    --Draw the tile
    --rendering.draw_rectangle{left_top = search_area[1], right_bottom = search_area[2], color = {1,0,1}, surface = surf, time_to_live = 100}--
    local wide_area = {
