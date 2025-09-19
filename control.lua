@@ -52,6 +52,7 @@ local TutorialSystem = require("scripts.tutorial-system")
 local BeltAnalyzer = require("scripts.ui.belt-analyzer")
 local BlueprintsMenu = require("scripts.ui.menus.blueprints-menu")
 local GunMenuUi = require("scripts.ui.menus.gun-menu")
+local RoboportMenuUi = require("scripts.ui.menus.roboport-menu")
 local GenericInventory = require("scripts.ui.generic-inventory")
 local UiRouter = require("scripts.ui.router")
 local UiEventRouting = require("scripts.ui.event-routing")
@@ -808,7 +809,7 @@ function menu_cursor_up(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       TravelTools.fast_travel_menu_up(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.ROBOPORT) then
-      WorkerRobots.roboport_menu_up(pindex)
+      -- Now handled by new UI system
    elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
       Blueprints.blueprint_book_menu_up(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.CIRCUIT_NETWORK) then
@@ -1007,7 +1008,7 @@ function menu_cursor_down(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       TravelTools.fast_travel_menu_down(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.ROBOPORT) then
-      WorkerRobots.roboport_menu_down(pindex)
+      -- Now handled by new UI system
    elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
       Blueprints.blueprint_book_menu_down(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.CIRCUIT_NETWORK) then
@@ -1564,7 +1565,7 @@ function close_menu_resets(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then
       Spidertron.spider_menu_close(pindex, false)
    elseif router:is_ui_open(UiRouter.UI_NAMES.ROBOPORT) then
-      WorkerRobots.roboport_menu_close(pindex)
+      RoboportMenuUi.roboport_menu:close(pindex, false)
    elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT) then
       BlueprintsMenu.blueprint_menu_tabs:close(pindex, false)
    elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
@@ -1757,7 +1758,7 @@ function clicked_on_entity(ent, pindex)
    p.selected = ent
    if ent.name == "roboport" then
       --For a roboport, open roboport menu
-      WorkerRobots.roboport_menu_open(pindex)
+      RoboportMenuUi.roboport_menu:open(pindex, {})
    elseif ent.type == "power-switch" then
       --Toggle it, if in manual mode
       if (#ent.neighbours.red + #ent.neighbours.green) > 0 then
@@ -2145,7 +2146,7 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
       WorkerRobots.set_network_name(storage.players[pindex].roboport_menu.port, result)
       Speech.speak(pindex, { "fa.network-renamed", result })
       event.element.destroy()
-      WorkerRobots.roboport_menu_close(pindex)
+      RoboportMenuUi.roboport_menu:close(pindex, false)
    elseif storage.players[pindex].blueprint_menu.edit_label == true then
       --Apply the new label
       storage.players[pindex].blueprint_menu.edit_label = false
@@ -5511,7 +5512,7 @@ local function kb_click_menu(event)
          true
       )
    elseif router:is_ui_open(UiRouter.UI_NAMES.ROBOPORT) then
-      WorkerRobots.run_roboport_menu(storage.players[pindex].roboport_menu.index, pindex, true)
+      -- Now handled by new UI system
    elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
       local bpb_menu = storage.players[pindex].blueprint_book_menu
       Blueprints.run_blueprint_book_menu(pindex, bpb_menu.index, bpb_menu.list_mode, true, false)
