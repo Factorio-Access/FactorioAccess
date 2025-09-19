@@ -18,8 +18,13 @@ local UiSounds = require("scripts.ui.sounds")
 
 local mod = {}
 
+---@alias fa.ui.grid.CoordCallback fun(ctx: fa.ui.graph.Ctx, x: number, y: number)
+
+---@class fa.ui.grid.GridNodeVtable : fa.ui.graph.NodeVtable
+---@field on_read_coords fa.ui.grid.CoordCallback?
+
 ---@class fa.ui.grid.GridCell
----@field vtable fa.ui.graph.NodeVtable
+---@field vtable fa.ui.grid.GridNodeVtable
 
 ---@type fa.ui.graph.NodeVtable
 local EMPTY_CELL_VTAB = {
@@ -72,7 +77,7 @@ end
 
 ---@param x number
 ---@param y number
----@param label fun(fa.ui.graph.GraphCtx)
+---@param label fun(fa.ui.graph.Ctx)
 function GridBuilder:add_lazy_label(x, y, label)
    self:_insert(x, y, {
       vtable = {
@@ -83,8 +88,8 @@ end
 
 ---@param x number
 ---@param y number
----@param label fun(fa.ui.graph.GraphCtx)
----@param vtable table<string, any>? Optional callbacks (label will be set automatically)
+---@param label fun(fa.ui.graph.Ctx)
+---@param vtable fa.ui.grid.GridNodeVtable? Optional callbacks (label will be set automatically)
 function GridBuilder:add_control(x, y, label, vtable)
    vtable = vtable or {}
    vtable.label = label
@@ -136,6 +141,7 @@ function GridBuilder:build()
          end
 
          local old_lab = node.vtable.label
+         local old_read_coords = node.vtable.on_read_coords
          -- The vtable could be from a constant, etc. Don't break it.
          node.vtable = TH.shallow_copy(node.vtable)
 
@@ -144,6 +150,14 @@ function GridBuilder:build()
             old_lab(ctx)
             ctx.message:list_item_forced_comma()
             labeler(ctx, x, y)
+         end
+
+         -- Wrap on_read_coords if it exists to provide x,y coordinates
+         if old_read_coords then
+            node.vtable.on_read_coords = function(ctx)
+               -- Pass x,y as parameters to the callback
+               old_read_coords(ctx, x, y)
+            end
          end
       end
    end

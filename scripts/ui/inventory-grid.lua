@@ -174,11 +174,11 @@ local function render_inventory_grid(ctx, subkey)
                end
             end
          end,
-         on_read_coords = function(coord_ctx)
+         on_read_coords = function(coord_ctx, x, y)
             -- Read the slot position
-            local slot_index = grid_pos_to_slot(coord_ctx.x, coord_ctx.y)
-            local row = coord_ctx.y
-            Speech.speak(coord_ctx.pindex, { "fa.ui-inventory-slot-position", slot_index, row })
+            local slot_index = grid_pos_to_slot(x, y)
+            local row = y
+            coord_ctx.message:fragment({ "fa.ui-inventory-slot-position", slot_index, row })
          end,
       })
    end

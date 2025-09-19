@@ -95,7 +95,9 @@ local mod = {}
 
 ---@class fa.ui.graph.NodeVtable
 ---@field label fa.ui.graph.SimpleCallback Required always.
----@field left_click fa.ui.graph.SimpleCallback? By default, re-say the label instead.
+---@field on_click fa.ui.graph.SimpleCallback? By default, re-say the label instead.
+---@field on_right_click fa.ui.graph.SimpleCallback?
+---@field on_read_coords fa.ui.graph.SimpleCallback?
 
 ---@class fa.ui.graph.TransitionVtable
 ---@field label fa.ui.graph.SimpleCallback?
@@ -321,6 +323,22 @@ function Graph:on_click(ctx)
       local n = self.render.nodes[ctx.state.cur_key]
       -- Right now we only have lefft click with no modifiers.
       self:_maybe_call(n, ctx, "on_click", NO_MODIFIERS)
+   end)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+function Graph:on_right_click(ctx)
+   self:_with_render(ctx, function()
+      local n = self.render.nodes[ctx.state.cur_key]
+      self:_maybe_call(n, ctx, "on_right_click", NO_MODIFIERS)
+   end)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+function Graph:on_read_coords(ctx)
+   self:_with_render(ctx, function()
+      local n = self.render.nodes[ctx.state.cur_key]
+      self:_maybe_call(n, ctx, "on_read_coords", NO_MODIFIERS)
    end)
 end
 
