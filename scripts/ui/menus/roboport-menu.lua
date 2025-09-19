@@ -32,11 +32,9 @@ local function state_setup(pindex, params)
    local player = game.get_player(pindex)
    local port = player.opened or player.selected
 
-   if port and port.valid and port.name == "roboport" then
-      return {
-         port = port,
-      }
-   end
+   if port and port.valid and port.name == "roboport" then return {
+      port = port,
+   } end
 
    return {
       port = nil,
@@ -131,30 +129,22 @@ local function render_roboport_menu(ctx)
          if nw then
             local storage_count = 0
             for _, point in ipairs(nw.storage_points) do
-               if point.owner.type == "logistic-container" then
-                  storage_count = storage_count + 1
-               end
+               if point.owner.type == "logistic-container" then storage_count = storage_count + 1 end
             end
 
             local passive_provider_count = 0
             for _, point in ipairs(nw.passive_provider_points) do
-               if point.owner.type == "logistic-container" then
-                  passive_provider_count = passive_provider_count + 1
-               end
+               if point.owner.type == "logistic-container" then passive_provider_count = passive_provider_count + 1 end
             end
 
             local active_provider_count = 0
             for _, point in ipairs(nw.active_provider_points) do
-               if point.owner.type == "logistic-container" then
-                  active_provider_count = active_provider_count + 1
-               end
+               if point.owner.type == "logistic-container" then active_provider_count = active_provider_count + 1 end
             end
 
             local requester_count = 0
             for _, point in ipairs(nw.requester_points) do
-               if point.owner.type == "logistic-container" then
-                  requester_count = requester_count + 1
-               end
+               if point.owner.type == "logistic-container" then requester_count = requester_count + 1 end
             end
 
             local total_count = storage_count + passive_provider_count + active_provider_count + requester_count

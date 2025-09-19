@@ -17,9 +17,7 @@ The new UI system is located in `scripts/ui/` and consists of:
 1. **BELT** (`scripts/ui/belt-analyzer.lua`) - Belt network analysis
 2. **GENERIC_INVENTORY** (`scripts/ui/generic-inventory.lua`) - New inventory system
 3. **BLUEPRINT** (`scripts/ui/menus/blueprints-menu.lua`) - Blueprint editing
-
-### 🔄 Partially Ported (1)
-1. **GUNS** (`scripts/gun-menu.lua`) - Uses StorageManager and UiRouter but not TabList/KeyGraph
+4. **GUNS** (`scripts/gun-menu.lua`) - Uses StorageManager and UiRouter but not TabList/KeyGraph
 
 ### ❌ Not Ported - Old System (15)
 

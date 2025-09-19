@@ -53,6 +53,7 @@ local BeltAnalyzer = require("scripts.ui.belt-analyzer")
 local BlueprintsMenu = require("scripts.ui.menus.blueprints-menu")
 local GunMenuUi = require("scripts.ui.menus.gun-menu")
 local RoboportMenuUi = require("scripts.ui.menus.roboport-menu")
+local SpidertronMenuUi = require("scripts.ui.menus.spidertron-menu")
 local GenericInventory = require("scripts.ui.generic-inventory")
 local UiRouter = require("scripts.ui.router")
 local UiEventRouting = require("scripts.ui.event-routing")
@@ -1533,7 +1534,7 @@ EventManager.on_event(defines.events.on_player_driving_changed_state, function(e
          storage.players[pindex].last_vehicle.train.manual_mode = true
       end
       Teleport.teleport_to_closest(pindex, storage.players[pindex].last_vehicle.position, true, true)
-      if router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then Spidertron.spider_menu_close(pindex, false) end
+      if router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then SpidertronMenuUi.spidertron_menu:close(pindex, false) end
    else
       Speech.speak(pindex, { "fa.driving-state-changed" })
    end
@@ -1563,7 +1564,7 @@ function close_menu_resets(pindex)
    if router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       TravelTools.fast_travel_menu_close(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then
-      Spidertron.spider_menu_close(pindex, false)
+      SpidertronMenuUi.spidertron_menu:close(pindex, false)
    elseif router:is_ui_open(UiRouter.UI_NAMES.ROBOPORT) then
       RoboportMenuUi.roboport_menu:close(pindex, false)
    elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT) then
@@ -2128,17 +2129,10 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
       end
       storage.players[pindex].travel.index.x = 1
       event.element.destroy()
-   elseif storage.players[pindex].spider_menu.renaming == true then
-      local ent = storage.players[pindex].spider_menu.ent
-      local new_name = event.element.text
-      if new_name and new_name ~= "" and ent and ent.valid and ent.prototype.type == "spider-vehicle" then
-         ent.entity_label = new_name
-         Speech.speak(pindex, { "fa.spidertron-new-name-entered", new_name })
-      end
-      storage.players[pindex].spider_menu.renaming = false
-      storage.players[pindex].spider_menu.ent = nil
+   elseif false then -- spider_menu.renaming removed - textbox functionality not implemented
+      -- Renaming functionality removed - handled by new UI system
       event.element.destroy()
-      Spidertron.spider_menu_close(pindex, false)
+      SpidertronMenuUi.spidertron_menu:close(pindex, false)
    elseif storage.players[pindex].roboport_menu.renaming == true then
       storage.players[pindex].roboport_menu.renaming = false
       local result = event.element.text
@@ -3029,11 +3023,7 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
       local vp = Viewpoint.get_viewpoint(pindex)
-      if router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then
-         Spidertron.spider_menu_up(pindex)
-      elseif not router:is_ui_open() and vp:get_cursor_enabled() then
-         move_key(dirs.north, event, true)
-      end
+      if not router:is_ui_open() and vp:get_cursor_enabled() then move_key(dirs.north, event, true) end
    end
 )
 
@@ -3053,11 +3043,7 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
       local vp = Viewpoint.get_viewpoint(pindex)
-      if router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then
-         Spidertron.spider_menu_down(pindex)
-      elseif not router:is_ui_open() and vp:get_cursor_enabled() then
-         move_key(dirs.south, event, true)
-      end
+      if not router:is_ui_open() and vp:get_cursor_enabled() then move_key(dirs.south, event, true) end
    end
 )
 
@@ -5302,11 +5288,7 @@ local function kb_click_menu(event)
             local action = sectors_i.action
             local ent = storage.players[pindex].building.ent
             if action == "rename" then
-               Speech.speak(pindex, { "fa.spidertron-enter-new-name" })
-               storage.players[pindex].spider_menu.renaming = true
-               storage.players[pindex].spider_menu.ent = sectors_i.entity
-               local frame = Graphics.create_text_field_frame(pindex, "spider-rename")
-               p.opened = frame
+               Speech.speak(pindex, "Textbox functionality not implemented")
                return
             elseif action == "autotarget" then
                local switch = {
@@ -5505,12 +5487,7 @@ local function kb_click_menu(event)
    elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
       TravelTools.fast_travel_menu_click(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then
-      Spidertron.run_spider_menu(
-         storage.players[pindex].spider_menu.index,
-         pindex,
-         game.get_player(pindex).cursor_stack,
-         true
-      )
+      -- Now handled by new UI system
    elseif router:is_ui_open(UiRouter.UI_NAMES.ROBOPORT) then
       -- Now handled by new UI system
    elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
@@ -5997,7 +5974,7 @@ local function kb_click_hand_right(event)
       end
    elseif stack.name == "spidertron-remote" then
       --open spidermenu with the remote in hand
-      Spidertron.spider_menu_open(pindex, stack)
+      SpidertronMenuUi.spidertron_menu:open(pindex, {})
    else
       -- Regular item in hand - read entity status as fallback
       kb_read_entity_status(event)
