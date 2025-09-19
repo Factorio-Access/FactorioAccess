@@ -200,19 +200,13 @@ function mod.read_item_description(pindex)
    end
 
    if
-      router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.PLAYER_TRASH })
+      router:is_ui_one_of({ UiRouter.UI_NAMES.PLAYER_TRASH })
       or (
          router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
          and storage_players.building.sector > offset + #storage_players.building.sectors
       )
    then
       mod.read_inventory_slot_description(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.GUNS) then
-      mod.read_guns_menu_description(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
-      Research.menu_describe(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
-      mod.read_crafting_menu_description(pindex)
    elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
       mod.read_building_menu_description(pindex)
    else

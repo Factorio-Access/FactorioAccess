@@ -667,39 +667,6 @@ function menu_cursor_up(pindex)
          storage.players[pindex].item_selector.subgroup = 0
          read_item_selector_slot(pindex)
       end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
-      storage.players[pindex].inventory.index = storage.players[pindex].inventory.index - 10
-      if storage.players[pindex].inventory.index < 1 then
-         if storage.players[pindex].preferences.inventory_wraps_around == true then
-            --Wrap around setting: Move to the inventory end and read slot
-            storage.players[pindex].inventory.index = storage.players[pindex].inventory.max
-               + storage.players[pindex].inventory.index
-            sounds.play_menu_wrap(pindex)
-            read_inventory_slot(pindex)
-         else
-            --Border setting: Undo change and play "wall" sound
-            storage.players[pindex].inventory.index = storage.players[pindex].inventory.index + 10
-            sounds.play_ui_edge(pindex)
-            --Speech.speak(pindex, "Border.")
-         end
-      else
-         sounds.play_menu_move(pindex)
-         read_inventory_slot(pindex)
-      end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
-      sounds.play_menu_move(pindex)
-      storage.players[pindex].crafting.index = 1
-      storage.players[pindex].crafting.category = storage.players[pindex].crafting.category - 1
-
-      if storage.players[pindex].crafting.category < 1 then
-         storage.players[pindex].crafting.category = storage.players[pindex].crafting.max
-      end
-      Crafting.read_crafting_slot(pindex, "", true)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
-      sounds.play_menu_move(pindex)
-      Crafting.load_crafting_queue(pindex)
-      storage.players[pindex].crafting_queue.index = 1
-      Crafting.read_crafting_queue(pindex)
    elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
       --Move one row up in a building inventory of some kind
       if storage.players[pindex].building.sector <= #storage.players[pindex].building.sectors then
@@ -762,8 +729,6 @@ function menu_cursor_up(pindex)
             --read_inventory_slot(pindex)
          end
       end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
-      Research.menu_move_vertical(pindex, -1)
    elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
       if storage.players[pindex].warnings.category > 1 then
          storage.players[pindex].warnings.category = storage.players[pindex].warnings.category - 1
@@ -831,39 +796,6 @@ function menu_cursor_down(pindex)
       else
          Speech.speak(pindex, { "fa.press-left-bracket-to-confirm" })
       end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
-      storage.players[pindex].inventory.index = storage.players[pindex].inventory.index + 10
-      if storage.players[pindex].inventory.index > storage.players[pindex].inventory.max then
-         if storage.players[pindex].preferences.inventory_wraps_around == true then
-            --Wrap around setting: Wrap over to first row
-            storage.players[pindex].inventory.index = storage.players[pindex].inventory.index % 10
-            if storage.players[pindex].inventory.index == 0 then storage.players[pindex].inventory.index = 10 end
-            sounds.play_menu_wrap(pindex)
-            read_inventory_slot(pindex)
-         else
-            --Border setting: Undo change and play "wall" sound
-            storage.players[pindex].inventory.index = storage.players[pindex].inventory.index - 10
-            sounds.play_ui_edge(pindex)
-            --Speech.speak(pindex, "Border.")
-         end
-      else
-         sounds.play_menu_move(pindex)
-         read_inventory_slot(pindex)
-      end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
-      sounds.play_menu_move(pindex)
-      storage.players[pindex].crafting.index = 1
-      storage.players[pindex].crafting.category = storage.players[pindex].crafting.category + 1
-
-      if storage.players[pindex].crafting.category > storage.players[pindex].crafting.max then
-         storage.players[pindex].crafting.category = 1
-      end
-      Crafting.read_crafting_slot(pindex, "", true)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
-      sounds.play_menu_move(pindex)
-      Crafting.load_crafting_queue(pindex)
-      storage.players[pindex].crafting_queue.index = storage.players[pindex].crafting_queue.max
-      Crafting.read_crafting_queue(pindex)
    elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
       --Move one row down in a building inventory of some kind
       if storage.players[pindex].building.sector <= #storage.players[pindex].building.sectors then
@@ -932,8 +864,6 @@ function menu_cursor_down(pindex)
             --read_inventory_slot(pindex)
          end
       end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
-      Research.menu_move_vertical(pindex, 1)
    elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
       local warnings = {}
       if storage.players[pindex].warnings.sector == 1 then
@@ -989,40 +919,6 @@ function menu_cursor_left(pindex)
    if storage.players[pindex].item_selection then
       storage.players[pindex].item_selector.index = math.max(1, storage.players[pindex].item_selector.index - 1)
       read_item_selector_slot(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
-      storage.players[pindex].inventory.index = storage.players[pindex].inventory.index - 1
-      if storage.players[pindex].inventory.index % 10 == 0 then
-         if storage.players[pindex].preferences.inventory_wraps_around == true then
-            --Wrap around setting: Move and play move sound and read slot
-            storage.players[pindex].inventory.index = storage.players[pindex].inventory.index + 10
-            sounds.play_menu_wrap(pindex)
-            read_inventory_slot(pindex)
-         else
-            --Border setting: Undo change and play "wall" sound
-            storage.players[pindex].inventory.index = storage.players[pindex].inventory.index + 1
-            sounds.play_ui_edge(pindex)
-         end
-      else
-         sounds.play_menu_move(pindex)
-         read_inventory_slot(pindex)
-      end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
-      sounds.play_menu_move(pindex)
-      storage.players[pindex].crafting.index = storage.players[pindex].crafting.index - 1
-      if storage.players[pindex].crafting.index < 1 then
-         storage.players[pindex].crafting.index =
-            #storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category]
-      end
-      Crafting.read_crafting_slot(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
-      sounds.play_menu_move(pindex)
-      Crafting.load_crafting_queue(pindex)
-      if storage.players[pindex].crafting_queue.index < 2 then
-         storage.players[pindex].crafting_queue.index = storage.players[pindex].crafting_queue.max
-      else
-         storage.players[pindex].crafting_queue.index = storage.players[pindex].crafting_queue.index - 1
-      end
-      Crafting.read_crafting_queue(pindex)
    elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
       --Move along a row in a building inventory
       if storage.players[pindex].building.sector <= #storage.players[pindex].building.sectors then
@@ -1086,8 +982,6 @@ function menu_cursor_left(pindex)
             BuildingVehicleSectors.read_building_recipe(pindex)
          end
       end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
-      Research.menu_move_horizontal(pindex, -1)
    elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
       if storage.players[pindex].warnings.index > 1 then
          storage.players[pindex].warnings.index = storage.players[pindex].warnings.index - 1
@@ -1110,43 +1004,6 @@ function menu_cursor_right(pindex)
       storage.players[pindex].item_selector.index =
          math.min(#storage.players[pindex].item_cache, storage.players[pindex].item_selector.index + 1)
       read_item_selector_slot(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
-      storage.players[pindex].inventory.index = storage.players[pindex].inventory.index + 1
-      if storage.players[pindex].inventory.index % 10 == 1 then
-         if storage.players[pindex].preferences.inventory_wraps_around == true then
-            --Wrap around setting: Move and play move sound and read slot
-            storage.players[pindex].inventory.index = storage.players[pindex].inventory.index - 10
-            sounds.play_menu_wrap(pindex)
-            read_inventory_slot(pindex)
-         else
-            --Border setting: Undo change and play "wall" sound
-            storage.players[pindex].inventory.index = storage.players[pindex].inventory.index - 1
-            sounds.play_ui_edge(pindex)
-            --Speech.speak(pindex, "Border.")
-         end
-      else
-         sounds.play_menu_move(pindex)
-         read_inventory_slot(pindex)
-      end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
-      sounds.play_menu_move(pindex)
-      storage.players[pindex].crafting.index = storage.players[pindex].crafting.index + 1
-      if
-         storage.players[pindex].crafting.index
-         > #storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category]
-      then
-         storage.players[pindex].crafting.index = 1
-      end
-      Crafting.read_crafting_slot(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
-      sounds.play_menu_move(pindex)
-      Crafting.load_crafting_queue(pindex)
-      if storage.players[pindex].crafting_queue.index >= storage.players[pindex].crafting_queue.max then
-         storage.players[pindex].crafting_queue.index = 1
-      else
-         storage.players[pindex].crafting_queue.index = storage.players[pindex].crafting_queue.index + 1
-      end
-      Crafting.read_crafting_queue(pindex)
    elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
       --Move along a row in a building inventory
       if storage.players[pindex].building.sector <= #storage.players[pindex].building.sectors then
@@ -1207,8 +1064,6 @@ function menu_cursor_right(pindex)
             BuildingVehicleSectors.read_building_recipe(pindex)
          end
       end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
-      Research.menu_move_horizontal(pindex, 1)
    elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
       local warnings = {}
       if storage.players[pindex].warnings.sector == 1 then
@@ -1881,8 +1736,8 @@ EventManager.on_event(defines.events.on_gui_closed, function(event, pindex)
 
    --Other resets
    if router:is_ui_open() then
-      if router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
-         sounds.play_close_inventory(pindex)
+      if false then
+         -- Removed INVENTORY UI check
       elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) and event.element ~= nil then
          event.element.destroy()
       end
@@ -3670,21 +3525,8 @@ local function read_coords(pindex, start_phrase)
          end
          Speech.speak(pindex, message:build())
       end
-   elseif
-      router:is_ui_open(UiRouter.UI_NAMES.INVENTORY)
-      or (
-         router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
-         and storage.players[pindex].building.sector > offset + #storage.players[pindex].building.sectors
-      )
-   then
-      --Give slot coords (player inventory)
-      local x = storage.players[pindex].inventory.index % 10
-      local y = math.floor(storage.players[pindex].inventory.index / 10) + 1
-      if x == 0 then
-         x = x + 10
-         y = y - 1
-      end
-      Speech.speak(pindex, { "fa.inventory-slot-position", result, tostring(x), tostring(y) })
+   elseif false then
+      -- Removed INVENTORY UI check
    elseif
       router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
       and storage.players[pindex].building.recipe_selection == false
@@ -3703,38 +3545,10 @@ local function read_coords(pindex, start_phrase)
       if result then msg:fragment(result) end
       msg:fragment({ "fa.building-slot-position", tostring(x), tostring(y) })
       Speech.speak(pindex, msg:build())
-   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
-      --Read recipe ingredients / products (crafting menu)
-      local recipe =
-         storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index]
-      local msg = Speech.new()
-      if result then msg:fragment(result) end
-      msg:fragment({ "fa.recipe-ingredients" })
-      for i, v in pairs(recipe.ingredients) do
-         ---@type LuaItemPrototype | LuaFluidPrototype
-         local proto = prototypes.item[v.name]
-         if proto == nil then proto = prototypes.fluid[v.name] end
-         local name = Localising.get_localised_name_with_fallback(proto)
-         if i > 1 then msg:fragment(", ") end
-         msg:fragment(name)
-         msg:fragment({ "fa.bvs-times" })
-         msg:fragment(tostring(v.amount))
-      end
-      msg:fragment({ "fa.recipe-products" })
-      for i, v in pairs(recipe.products) do
-         ---@type LuaItemPrototype | LuaFluidPrototype
-         local proto = prototypes.item[v.name]
-         if proto == nil then proto = prototypes.fluid[v.name] end
-         local name = Localising.get_localised_name_with_fallback(proto)
-         if i > 1 then msg:fragment(", ") end
-         msg:fragment(name)
-         msg:fragment({ "fa.bvs-times" })
-         msg:fragment(tostring(v.amount))
-      end
-      msg:fragment({ "fa.recipe-craft-time", tostring(recipe.energy) })
-      Speech.speak(pindex, msg:build())
-   elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
-      Research.menu_describe_costs(pindex)
+   elseif false then
+      -- Removed CRAFTING UI check
+   elseif false then
+      -- Removed TECHNOLOGY UI check
    end
    if
       router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
@@ -3792,12 +3606,8 @@ local function kb_read_cursor_distance_and_direction(event)
    local router = UiRouter.get_router(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
    local cursor_pos = vp:get_cursor_pos()
-   if router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
-      --Read recipe ingredients / products (crafting menu)
-      local recipe =
-         storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index]
-      local result = Crafting.recipe_raw_ingredients_info(recipe, pindex)
-      Speech.speak(pindex, result)
+   if false then
+      -- Removed CRAFTING UI check
    else
       --Read where the cursor is with respect to the player, e.g. "at 5 west"
       local dir_dist = FaUtils.dir_dist_locale(storage.players[pindex].position, cursor_pos)
@@ -3876,7 +3686,7 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
 
-      if router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then return end
+      if false then return end -- Removed CRAFTING UI check
       kb_read_cursor_distance_vector(event)
    end
 )
@@ -4515,10 +4325,7 @@ local function kb_close_menu(event)
 
    if
       router:is_ui_one_of({
-         UiRouter.UI_NAMES.INVENTORY,
-         UiRouter.UI_NAMES.CRAFTING,
-         UiRouter.UI_NAMES.TECHNOLOGY,
-         UiRouter.UI_NAMES.CRAFTING_QUEUE,
+         -- Removed INVENTORY, CRAFTING, TECHNOLOGY, CRAFTING_QUEUE checks
          UiRouter.UI_NAMES.WARNINGS,
       })
    then
@@ -4632,22 +4439,6 @@ local function kb_switch_menu_or_gun(event)
                BuildingVehicleSectors.read_sector_slot(pindex, true)
             end
          end
-      elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
-         router:open_ui(UiRouter.UI_NAMES.CRAFTING)
-         Crafting.read_crafting_slot(pindex, "Crafting, ")
-      elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
-         router:open_ui(UiRouter.UI_NAMES.CRAFTING_QUEUE)
-         Crafting.load_crafting_queue(pindex)
-         Crafting.read_crafting_queue(
-            pindex,
-            "Crafting queue, " .. Crafting.get_crafting_que_total(pindex) .. " total, "
-         )
-      elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
-         router:open_ui(UiRouter.UI_NAMES.TECHNOLOGY)
-         Research.menu_announce_entry(pindex)
-      elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
-         router:open_ui(UiRouter.UI_NAMES.INVENTORY)
-         read_inventory_slot(pindex, "Inventory, ")
       elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
          storage.players[pindex].warnings.sector = storage.players[pindex].warnings.sector + 1
          if storage.players[pindex].warnings.sector > 3 then storage.players[pindex].warnings.sector = 1 end
@@ -4755,22 +4546,6 @@ local function kb_reverse_switch_menu_or_gun(event)
                storage.players[pindex].building.sector_name = "player inventory from building"
             end
          end
-      elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
-         router:open_ui(UiRouter.UI_NAMES.TECHNOLOGY)
-         Research.menu_announce_entry(pindex)
-      elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
-         router:open_ui(UiRouter.UI_NAMES.CRAFTING)
-         Crafting.read_crafting_slot(pindex, "Crafting, ")
-      elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
-         router:open_ui(UiRouter.UI_NAMES.CRAFTING_QUEUE)
-         Crafting.load_crafting_queue(pindex)
-         Crafting.read_crafting_queue(
-            pindex,
-            "Crafting queue, " .. Crafting.get_crafting_que_total(pindex) .. " total, "
-         )
-      elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
-         router:open_ui(UiRouter.UI_NAMES.INVENTORY)
-         read_inventory_slot(pindex, "Inventory, ")
       elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
          storage.players[pindex].warnings.sector = storage.players[pindex].warnings.sector - 1
          if storage.players[pindex].warnings.sector < 1 then storage.players[pindex].warnings.sector = 3 end
@@ -5021,78 +4796,12 @@ local function kb_click_menu(event)
       p.clear_cursor()
    end
    --Act according to the type of menu open
-   if router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
-      --Swap stacks
-      sounds.play_inventory_click(pindex)
-      local stack = storage.players[pindex].inventory.lua_inventory[storage.players[pindex].inventory.index]
-      game.get_player(pindex).cursor_stack.swap_stack(stack)
-      storage.players[pindex].inventory.max = #storage.players[pindex].inventory.lua_inventory
-   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
-      --Check recipe category
-      local recipe =
-         storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index]
-      if p.cheat_mode == false or (p.cheat_mode == true and recipe.subgroup == "fluid-recipes") then
-         if recipe.category == "advanced-crafting" then
-            Speech.speak(pindex, "An assembling machine is required to craft this")
-            return
-         elseif recipe.category == "centrifuging" then
-            Speech.speak(pindex, "A centrifuge is required to craft this")
-            return
-         elseif recipe.category == "chemistry" then
-            Speech.speak(pindex, "A chemical plant is required to craft this")
-            return
-         elseif recipe.category == "crafting-with-fluid" then
-            Speech.speak(pindex, "An advanced assembling machine is required to craft this")
-            return
-         elseif recipe.category == "oil-processing" then
-            Speech.speak(pindex, "An oil refinery is required to craft this")
-            return
-         elseif recipe.category == "rocket-building" then
-            Speech.speak(pindex, "A rocket silo is required to craft this")
-            return
-         elseif recipe.category == "smelting" then
-            Speech.speak(pindex, "A furnace is required to craft this")
-            return
-         elseif p.force.get_hand_crafting_disabled_for_recipe(recipe) == true then
-            Speech.speak(pindex, "This recipe cannot be crafted by hand")
-            return
-         end
-      end
-      --Craft 1
-      local T = {
-         count = 1,
-         recipe = storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index],
-         silent = false,
-      }
-      local count = game.get_player(pindex).begin_crafting(T)
-      if count > 0 then
-         local total_count = Crafting.count_in_crafting_queue(T.recipe.name, pindex)
-         Speech.speak(
-            pindex,
-            "Started crafting "
-               .. count
-               .. " "
-               .. Localising.get_recipe_from_name(recipe.name, pindex)
-               .. ", "
-               .. total_count
-               .. " total in queue"
-         )
-      else
-         local result = Crafting.recipe_missing_ingredients_info(pindex)
-         Speech.speak(pindex, result)
-      end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
-      --Cancel 1
-      Crafting.load_crafting_queue(pindex)
-      if storage.players[pindex].crafting_queue.max >= 1 then
-         local T = {
-            index = storage.players[pindex].crafting_queue.index,
-            count = 1,
-         }
-         game.get_player(pindex).cancel_crafting(T)
-         Crafting.load_crafting_queue(pindex)
-         Crafting.read_crafting_queue(pindex, "cancelled 1, ")
-      end
+   if false then
+      -- Removed INVENTORY UI check
+   elseif false then
+      -- Removed CRAFTING UI check
+   elseif false then
+      -- Removed CRAFTING_QUEUE UI check
    elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
       local sectors_i = storage.players[pindex].building.sectors[storage.players[pindex].building.sector]
       if
@@ -5323,8 +5032,8 @@ local function kb_click_menu(event)
             ----               read_inventory_slot(pindex)
          end
       end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
-      Research.menu_start_research(pindex)
+   elseif false then
+      -- Removed TECHNOLOGY UI check
    elseif router:is_ui_open(UiRouter.UI_NAMES.PUMP) then
       if storage.players[pindex].pump.index == 0 then
          Speech.speak(pindex, "Move up and down to select a location.")
@@ -5644,7 +5353,7 @@ local function kb_click_menu_right(event)
    storage.players[pindex].last_click_tick = event.tick
    local p = game.get_player(pindex)
    local stack = p.cursor_stack
-   if router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
+   if false then -- Removed INVENTORY UI check
       --Player inventory: Take half
       local stack_inv =
          table.deepcopy(storage.players[pindex].inventory.lua_inventory[storage.players[pindex].inventory.index])
@@ -5674,7 +5383,7 @@ local function kb_click_menu_right(event)
          p.get_main_inventory().insert({ name = name, count = bigger_half })
       end
       storage.players[pindex].inventory.max = #storage.players[pindex].inventory.lua_inventory
-   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
+   elseif false then -- Removed CRAFTING UI check
       local recipe =
          storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index]
       local T = {
@@ -5698,7 +5407,7 @@ local function kb_click_menu_right(event)
       else
          Speech.speak(pindex, "Not enough materials")
       end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
+   elseif false then -- Removed CRAFTING_QUEUE UI check
       Crafting.load_crafting_queue(pindex)
       if storage.players[pindex].crafting_queue.max >= 1 then
          local T = {
@@ -5877,7 +5586,7 @@ EventManager.on_event(
          kb_click_hand_right(event)
       else
          -- Empty hand case - read entity status (unless in crafting menu)
-         if not router:is_ui_one_of({ UiRouter.UI_NAMES.CRAFTING, UiRouter.UI_NAMES.CRAFTING_QUEUE }) then
+         if not false then -- Removed CRAFTING/CRAFTING_QUEUE UI check
             kb_read_entity_status(event)
          end
       end
@@ -5892,7 +5601,7 @@ local function kb_menu_action(event)
    local router = UiRouter.get_router(pindex)
 
    ---First two branches were from event "crafting-all"
-   if router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
+   if false then -- Removed CRAFTING UI check
       local recipe =
          storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index]
       local T = {
@@ -5916,7 +5625,7 @@ local function kb_menu_action(event)
       else
          Speech.speak(pindex, "Not enough materials")
       end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
+   elseif false then -- Removed CRAFTING_QUEUE UI check
       Crafting.load_crafting_queue(pindex)
       if storage.players[pindex].crafting_queue.max >= 1 then
          local T = {
@@ -5993,7 +5702,7 @@ local function kb_menu_action(event)
          end
       end
    ---From event add-to-research-queue-start
-   elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
+   elseif false then -- Removed TECHNOLOGY UI check
       Research.menu_enqueue(pindex, 1)
    end
 end
@@ -6028,7 +5737,7 @@ EventManager.on_event(
          and stack.valid
          and (
             not router:is_ui_open()
-            or router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.GUNS })
+            or false -- Removed INVENTORY/GUNS UI check
             or (router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and p.opened.type == "spider-vehicle")
          )
       then
@@ -6085,7 +5794,7 @@ EventManager.on_event(
       local stack = game.get_player(pindex).cursor_stack
 
       ---Add the selected technology to the end of the research queue instead of switching directly to it
-      if router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
+      if false then -- Removed TECHNOLOGY UI check
          ---From event add-to-research-queue-end
          Research.menu_enqueue(pindex, nil)
          --[[Imitates vanilla behavior: 
@@ -6339,9 +6048,8 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
-      if router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
-         ---From event inventory-read-weapons-data
-         GunMenuUi.gun_menu:open(pindex, {})
+      if false then
+         -- Removed INVENTORY UI check
       else
          ---From event rotate-building
          BuildingTools.rotate_building_info_read(event, true)
@@ -6355,7 +6063,7 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
 
-      if router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.GUNS }) then
+      if false then -- Removed INVENTORY/GUNS UI check
          --Reload weapons
          local result = Equipment.reload_weapons(pindex)
          --game.get_player(pindex).print(result)
@@ -6373,7 +6081,7 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
 
-      if router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.GUNS }) then
+      if false then -- Removed INVENTORY/GUNS UI check
          local result = Equipment.remove_weapons_and_ammo(pindex)
          --game.get_player(pindex).print(result)
          Speech.speak(pindex, result)
@@ -6715,7 +6423,7 @@ local function kb_locate_hand_in_inventory(event)
    local router = UiRouter.get_router(pindex)
    if not router:is_ui_open() then
       locate_hand_in_player_inventory(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
+   elseif false then -- Removed INVENTORY UI check
       locate_hand_in_player_inventory(pindex)
    elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
       locate_hand_in_building_output_inventory(pindex)
@@ -6758,9 +6466,9 @@ local function locate_hand_in_crafting_menu(pindex)
       return
    end
    if
-      not router:is_ui_open(UiRouter.UI_NAMES.INVENTORY)
+      false -- Removed INVENTORY UI check
       and not router:is_ui_open(UiRouter.UI_NAMES.BUILDING)
-      and not router:is_ui_open(UiRouter.UI_NAMES.CRAFTING)
+      and false -- Removed CRAFTING UI check
    then
       --Unsupported menu types...
       Speech.speak(pindex, { "fa.another-menu-is-open" })
@@ -6980,7 +6688,7 @@ local function kb_inventory_read_equipment_list(event)
    local vehicle = nil
 
    if
-      router:is_ui_open(UiRouter.UI_NAMES.INVENTORY)
+      false -- Removed INVENTORY UI check
       or (router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle")
    then
       local result = Equipment.read_equipment_list(pindex)
@@ -7012,7 +6720,7 @@ EventManager.on_event(
       local vehicle = nil
 
       if
-         router:is_ui_open(UiRouter.UI_NAMES.INVENTORY)
+         false -- Removed INVENTORY UI check
          or (router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle")
       then
          local result = Equipment.remove_equipment_and_armor(pindex)

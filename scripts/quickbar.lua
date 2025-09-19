@@ -27,8 +27,7 @@ function mod.quickbar_set_handler(event)
    if not check_for_player(pindex) then return end
    local router = UiRouter.get_router(pindex)
    if
-      router:is_ui_open(UiRouter.UI_NAMES.INVENTORY)
-      or not router:is_ui_open()
+      not router:is_ui_open()
       or router:is_ui_open(UiRouter.UI_NAMES.BUILDING)
       or router:is_ui_open(UiRouter.UI_NAMES.VEHICLE)
    then
@@ -88,12 +87,7 @@ function mod.set_quick_bar_slot(index, pindex)
       msg:fragment({ "fa.quickbar-assigned", index })
       msg:fragment(Localising.get_localised_name_with_fallback(stack_cur))
       Speech.speak(pindex, msg:build())
-   elseif
-      router:is_ui_open(UiRouter.UI_NAMES.INVENTORY)
-      and stack_inv
-      and stack_inv.valid_for_read
-      and stack_inv.valid == true
-   then
+   elseif stack_inv and stack_inv.valid_for_read and stack_inv.valid == true then
       game.get_player(pindex).set_quick_bar_slot(index + 10 * page, stack_inv)
       local msg = Speech.new()
       msg:fragment({ "fa.quickbar-assigned", index })

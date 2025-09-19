@@ -44,22 +44,6 @@ function mod.get_recipes(pindex, ent, load_all_categories)
 end
 
 --Reads out the selected slot of the player crafting queue.
-function mod.read_crafting_queue(pindex, start_phrase)
-   start_phrase = start_phrase or ""
-   if storage.players[pindex].crafting_queue.max ~= 0 then
-      local item = storage.players[pindex].crafting_queue.lua_queue[storage.players[pindex].crafting_queue.index]
-      local recipe_name_only = item.recipe
-      local recipe_proto = prototypes.recipe[recipe_name_only]
-      local recipe_name = recipe_proto and localising.get_localised_name_with_fallback(recipe_proto) or recipe_name_only
-      Speech.speak(pindex, { "", start_phrase, recipe_name, " x ", tostring(item.count) })
-   else
-      if start_phrase == "" then
-         Speech.speak(pindex, { "fa.crafting-blank" })
-      else
-         Speech.speak(pindex, { "", start_phrase, { "fa.crafting-blank" } })
-      end
-   end
-end
 
 --Returns a count of how many batches of this recipe are listed in the (entire) crafting queue.
 function mod.count_in_crafting_queue(recipe_name, pindex)
@@ -74,58 +58,6 @@ function mod.count_in_crafting_queue(recipe_name, pindex)
 end
 
 --Loads the crafting queue menu for a player.
-function mod.load_crafting_queue(pindex)
-   if storage.players[pindex].crafting_queue.lua_queue ~= nil then
-      storage.players[pindex].crafting_queue.lua_queue = game.get_player(pindex).crafting_queue
-      if storage.players[pindex].crafting_queue.lua_queue ~= nil then
-         local delta = storage.players[pindex].crafting_queue.max - #storage.players[pindex].crafting_queue.lua_queue
-         storage.players[pindex].crafting_queue.index =
-            math.max(1, storage.players[pindex].crafting_queue.index - delta)
-         storage.players[pindex].crafting_queue.max = #storage.players[pindex].crafting_queue.lua_queue
-      else
-         storage.players[pindex].crafting_queue.index = 1
-         storage.players[pindex].crafting_queue.max = 0
-      end
-   else
-      storage.players[pindex].crafting_queue.lua_queue = game.get_player(pindex).crafting_queue
-      storage.players[pindex].crafting_queue.index = 1
-      if storage.players[pindex].crafting_queue.lua_queue ~= nil then
-         storage.players[pindex].crafting_queue.max = #storage.players[pindex].crafting_queue.lua_queue
-      else
-         storage.players[pindex].crafting_queue.max = 0
-      end
-   end
-end
-
---Returns a count of total recipe batches left in the player crafting queue.
-function mod.get_crafting_que_total(pindex)
-   local p = game.get_player(pindex)
-   local total_items = 0
-   if p.crafting_queue == nil or p.crafting_queue == {} then return 0 end
-   for i, q_item in ipairs(p.crafting_queue) do
-      total_items = total_items + q_item.count
-   end
-   return total_items
-end
-
---Reads the currently selected recipe in the player crafting menu.
-function mod.read_crafting_slot(pindex, start_phrase, new_category)
-   start_phrase = start_phrase or ""
-   local recipe =
-      storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index]
-   if recipe.valid == true then
-      if new_category == true then start_phrase = start_phrase .. localising.get_alt(recipe.group, pindex) .. ", " end
-      Speech.speak(
-         pindex,
-         start_phrase
-            .. localising.get_recipe_from_name(recipe.name, pindex)
-            .. ", can craft "
-            .. game.get_player(pindex).get_craftable_count(recipe.name)
-      )
-   else
-      Speech.speak(pindex, { "fa.crafting-blank" })
-   end
-end
 
 --Returns an info string about how many units of which ingredients are missing in order to craft one batch of this recipe.
 function mod.recipe_missing_ingredients_info(pindex, recipe_in)

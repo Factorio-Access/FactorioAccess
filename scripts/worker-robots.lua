@@ -338,10 +338,7 @@ local function find_player_item_name(pindex)
    local char = p.character
    if not char then return nil, { "fa.no-character" } end
 
-   if
-      not router:is_ui_open()
-      or router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.PLAYER_TRASH, UiRouter.UI_NAMES.CRAFTING })
-   then
+   if not router:is_ui_open() or router:is_ui_one_of({ UiRouter.UI_NAMES.PLAYER_TRASH }) then
       --Personal logistics
       local stack = game.get_player(pindex).cursor_stack
       local stack_inv = game.get_player(pindex).get_main_inventory()[storage.players[pindex].inventory.index]
@@ -349,16 +346,9 @@ local function find_player_item_name(pindex)
       if stack ~= nil and stack.valid_for_read and stack.valid then
          --Item in hand
          return stack.name, nil
-      elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) and stack_inv ~= nil and stack_inv.valid_for_read then
-         --Item in inv
-         return stack_inv.name, nil
       elseif router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
          --Item in trash
          return nil, "Take this item in hand to change its requests"
-      elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
-         --Use the first found item product of the selected recipe, pass it as a stack
-         local prototype = FaUtils.get_prototype_of_item_product(pindex)
-         return prototype.name, nil
       else
          --Empty hand, empty inventory slot
          return nil, "No actions"
@@ -562,10 +552,7 @@ function mod.logistics_request_toggle_handler(pindex)
    local router = UiRouter.get_router(pindex)
 
    local ent = game.get_player(pindex).opened
-   if
-      not router:is_ui_open()
-      or router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.CRAFTING, UiRouter.UI_NAMES.PLAYER_TRASH })
-   then
+   if not router:is_ui_open() or router:is_ui_one_of({ UiRouter.UI_NAMES.PLAYER_TRASH }) then
       --Player: Toggle enabling requests
       toggle_personal_logistics(pindex)
    elseif router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and mod.can_make_logistic_requests(ent) then

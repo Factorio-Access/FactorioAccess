@@ -58,23 +58,7 @@ function mod.update_menu_visuals()
       local router = UiRouter.get_router(pindex)
 
       if router:is_ui_open() then
-         if router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
-            mod.update_overhead_sprite("item.lab", 2, 1.25, pindex)
-            mod.update_custom_GUI_sprite("item.lab", 3, pindex)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
-            mod.update_overhead_sprite("item.wooden-chest", 2, 1.25, pindex)
-            mod.update_custom_GUI_sprite("item.wooden-chest", 3, pindex)
-            if storage.players[pindex].vanilla_mode then mod.update_custom_GUI_sprite(nil, 1, pindex) end
-         elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
-            mod.update_overhead_sprite("item.repair-pack", 2, 1.25, pindex)
-            mod.update_custom_GUI_sprite("item.repair-pack", 3, pindex)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
-            mod.update_overhead_sprite("item.repair-pack", 2, 1.25, pindex)
-            mod.update_custom_GUI_sprite("item.repair-pack", 3, pindex, "utility.clock")
-         elseif router:is_ui_open(UiRouter.UI_NAMES.GUNS) then
-            mod.update_overhead_sprite("item.pistol", 2, 1.25, pindex)
-            mod.update_custom_GUI_sprite("item.pistol", 1, pindex)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
+         if router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
             mod.update_overhead_sprite("utility.downloading", 1.5, 1.25, pindex)
             mod.update_custom_GUI_sprite("utility.downloading", 3, pindex)
          elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
