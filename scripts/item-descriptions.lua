@@ -90,9 +90,6 @@ function mod.read_inventory_slot_description(pindex)
    local storage_players = storage.players[pindex]
 
    local stack = storage_players.inventory.lua_inventory[storage_players.inventory.index]
-   if router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
-      stack = p.get_inventory(defines.inventory.character_trash)[storage_players.inventory.index]
-   end
 
    local str = get_stack_description(stack)
    Speech.speak(pindex, str)

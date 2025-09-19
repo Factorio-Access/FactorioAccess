@@ -726,7 +726,7 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "copy-entity-settings-info",
+      name = "fa-s-rightbracket",
       key_sequence = "SHIFT + RIGHTBRACKET",
       linked_game_control = "copy-entity-settings",
       consuming = "none",

@@ -224,12 +224,9 @@ function mod.initialize(player)
    -- Walking modes
    faplayer.smooth_walking = faplayer.smooth_walking or true
 
-   -- Logistic and trash slots
+   -- Logistic slots
    faplayer.logistic_slot_counts = faplayer.logistic_slot_counts or {}
    if not (player.character == nil) then faplayer.logistic_slot_counts = faplayer.logistic_slot_counts or {} end
-   faplayer.trash_slot_count = faplayer.trash_slot_count or 0
-   -- TODO: request_slot_count doesn't exist on LuaEntity - this was added in the refactoring
-   -- if not (player.character == nil) then faplayer.trash_slot_count = player.character.request_slot_count end
 
    -- Other
    faplayer.last_aggregate = faplayer.last_aggregate or {}

@@ -136,7 +136,6 @@ local function get_player_logistic_request_missing_count(pindex, slot_id)
    missing = missing - p.get_inventory(defines.inventory.character_armor).get_item_count(name)
    missing = missing - p.get_inventory(defines.inventory.character_guns).get_item_count(name)
    missing = missing - p.get_inventory(defines.inventory.character_main).get_item_count(name)
-   missing = missing - p.get_inventory(defines.inventory.character_trash).get_item_count(name)
    if missing <= 0 then return 0 end
    return missing
 end
@@ -724,7 +723,6 @@ function mod.player_logistic_request_read(item_name, pindex, additional_checks)
          local min_result = ""
          local max_result = ""
          local inv_result = ""
-         local trash_result = ""
          local stack_size = 1
 
          stack_size = prototypes.item[item_name].stack_size
@@ -740,12 +738,9 @@ function mod.player_logistic_request_read(item_name, pindex, additional_checks)
          local inv_count = p.get_main_inventory().get_item_count(item_name)
          inv_result = FaUtils.express_in_stacks(inv_count, stack_size, false) .. " in inventory, "
 
-         local trash_count = p.get_inventory(defines.inventory.character_trash).get_item_count(item_name)
-         trash_result = FaUtils.express_in_stacks(trash_count, stack_size, false) .. " in personal trash, "
-
          msg:list_item(result):list_item()
          push_request_readout(msg, current_slot)
-         msg:list_item(inv_result):list_item(trash_result):list_item("use the L key and modifier keys to set requests.")
+         msg:list_item(inv_result):list_item("use the L key and modifier keys to set requests.")
          Speech.speak(pindex, msg:build())
          return
       else
@@ -758,37 +753,6 @@ function mod.player_logistic_request_read(item_name, pindex, additional_checks)
                .. " use the L key and modifier keys to set requests."
          )
          return
-      end
-   end
-end
-
--- Note: cursor_stack from API returns valid stack or nil, never invalid stack
-function mod.send_selected_stack_to_logistic_trash(pindex)
-   local p = game.get_player(pindex)
-   local stack = p.cursor_stack
-   --Check cursor stack
-   if not stack or not stack.valid_for_read or stack.is_deconstruction_item or stack.is_upgrade_item then
-      stack = p.get_main_inventory()[storage.players[pindex].inventory.index]
-   end
-   --Check inventory stack
-   if
-      storage.players[pindex].menu ~= "inventory"
-      or not stack
-      or not stack.valid_for_read
-      or stack.is_deconstruction_item
-      or stack.is_upgrade_item
-   then
-      return
-   end
-   local trash_inv = p.get_inventory(defines.inventory.character_trash)
-   if trash_inv.can_insert(stack) then
-      local inserted_count = trash_inv.insert(stack)
-      if inserted_count < stack.count then
-         stack.set_stack({ name = stack.name, count = stack.count - inserted_count })
-         Speech.speak(pindex, { "fa.robots-partial-stack-to-trash" })
-      else
-         stack.set_stack(nil)
-         Speech.speak(pindex, { "fa.robots-sent-stack-to-trash" })
       end
    end
 end

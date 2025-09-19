@@ -46,8 +46,12 @@ UiRouter.get_registered_uis = get_all_registered_uis
 
 ---Create a handler that routes to the appropriate TabList method
 ---@param method_name string The method name to call on the TabList
+---@param modifiers? {control?: boolean, shift?: boolean, alt?: boolean} Optional modifier keys state
 ---@return fun(event: EventData, pindex: integer): any
-local function create_ui_handler(method_name)
+local function create_ui_handler(method_name, modifiers)
+   -- Default to no modifiers if not provided
+   modifiers = modifiers or { control = false, shift = false, alt = false }
+
    return function(event, pindex)
       local router = UiRouter.get_router(pindex)
       local open_ui_name = router:get_open_ui_name()
@@ -55,8 +59,8 @@ local function create_ui_handler(method_name)
       -- Only handle if UI is open AND registered with the new system
       if open_ui_name and registered_uis[open_ui_name] then
          local tablist = registered_uis[open_ui_name]
-         -- Call the method on the TabList
-         tablist[method_name](tablist, pindex)
+         -- Call the method on the TabList, passing modifiers as third parameter
+         tablist[method_name](tablist, pindex, modifiers)
          -- Return FINISHED to prevent world handlers from running
          return EventManager.FINISHED
       end
@@ -82,6 +86,36 @@ EventManager.on_event("fa-right", create_ui_handler("on_right"), EventManager.EV
 -- Click/select (leftbracket is left click, rightbracket is right click)
 EventManager.on_event("fa-leftbracket", create_ui_handler("on_click"), EventManager.EVENT_KIND.UI)
 EventManager.on_event("fa-rightbracket", create_ui_handler("on_right_click"), EventManager.EVENT_KIND.UI)
+
+-- Modified click handlers with modifiers
+-- Control+click
+EventManager.on_event("fa-c-leftbracket", create_ui_handler("on_click", { control = true }), EventManager.EVENT_KIND.UI)
+EventManager.on_event(
+   "fa-c-rightbracket",
+   create_ui_handler("on_right_click", { control = true }),
+   EventManager.EVENT_KIND.UI
+)
+
+-- Shift+click
+EventManager.on_event("fa-s-leftbracket", create_ui_handler("on_click", { shift = true }), EventManager.EVENT_KIND.UI)
+EventManager.on_event(
+   "fa-s-rightbracket",
+   create_ui_handler("on_right_click", { shift = true }),
+   EventManager.EVENT_KIND.UI
+)
+
+-- Control+Shift+click
+EventManager.on_event(
+   "fa-cs-leftbracket",
+   create_ui_handler("on_click", { control = true, shift = true }),
+   EventManager.EVENT_KIND.UI
+)
+-- TODO: fa-cs-rightbracket keybinding doesn't exist in data/input.lua
+-- EventManager.on_event(
+--    "fa-cs-rightbracket",
+--    create_ui_handler("on_right_click", { control = true, shift = true }),
+--    EventManager.EVENT_KIND.UI
+-- )
 
 -- Tab navigation (TAB and Shift+TAB)
 EventManager.on_event("fa-tab", create_ui_handler("on_next_tab"), EventManager.EVENT_KIND.UI)

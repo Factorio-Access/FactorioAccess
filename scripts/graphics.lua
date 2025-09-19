@@ -71,9 +71,6 @@ function mod.update_menu_visuals()
          elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
             mod.update_overhead_sprite("item.repair-pack", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite("item.repair-pack", 3, pindex, "utility.clock")
-         elseif router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
-            mod.update_overhead_sprite("utility.trash_white", 2, 1.25, pindex)
-            mod.update_custom_GUI_sprite("utility.trash_white", 3, pindex)
          elseif router:is_ui_open(UiRouter.UI_NAMES.GUNS) then
             mod.update_overhead_sprite("item.pistol", 2, 1.25, pindex)
             mod.update_custom_GUI_sprite("item.pistol", 1, pindex)

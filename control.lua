@@ -686,25 +686,6 @@ function menu_cursor_up(pindex)
          sounds.play_menu_move(pindex)
          read_inventory_slot(pindex)
       end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
-      local trash_inv = game.get_player(pindex).get_inventory(defines.inventory.character_trash)
-      storage.players[pindex].inventory.index = storage.players[pindex].inventory.index - 10
-      if storage.players[pindex].inventory.index < 1 then
-         if storage.players[pindex].preferences.inventory_wraps_around == true then
-            --Wrap around setting: Move to the inventory end and read slot
-            storage.players[pindex].inventory.index = #trash_inv + storage.players[pindex].inventory.index
-            sounds.play_menu_wrap(pindex)
-            read_inventory_slot(pindex, "", trash_inv)
-         else
-            --Border setting: Undo change and play "wall" sound
-            storage.players[pindex].inventory.index = storage.players[pindex].inventory.index + 10
-            sounds.play_ui_edge(pindex)
-            --Speech.speak(pindex, "Border.")
-         end
-      else
-         sounds.play_menu_move(pindex)
-         read_inventory_slot(pindex, "", trash_inv)
-      end
    elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
       sounds.play_menu_move(pindex)
       storage.players[pindex].crafting.index = 1
@@ -869,26 +850,6 @@ function menu_cursor_down(pindex)
          sounds.play_menu_move(pindex)
          read_inventory_slot(pindex)
       end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
-      local trash_inv = game.get_player(pindex).get_inventory(defines.inventory.character_trash)
-      storage.players[pindex].inventory.index = storage.players[pindex].inventory.index + 10
-      if storage.players[pindex].inventory.index > #trash_inv then
-         if storage.players[pindex].preferences.inventory_wraps_around == true then
-            --Wrap around setting: Wrap over to first row
-            storage.players[pindex].inventory.index = storage.players[pindex].inventory.index % 10
-            if storage.players[pindex].inventory.index == 0 then storage.players[pindex].inventory.index = 10 end
-            sounds.play_menu_wrap(pindex)
-            read_inventory_slot(pindex, "", trash_inv)
-         else
-            --Border setting: Undo change and play "wall" sound
-            storage.players[pindex].inventory.index = storage.players[pindex].inventory.index - 10
-            sounds.play_ui_edge(pindex)
-            --Speech.speak(pindex, "Border.")
-         end
-      else
-         sounds.play_menu_move(pindex)
-         read_inventory_slot(pindex, "", trash_inv)
-      end
    elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
       sounds.play_menu_move(pindex)
       storage.players[pindex].crafting.index = 1
@@ -1045,24 +1006,6 @@ function menu_cursor_left(pindex)
          sounds.play_menu_move(pindex)
          read_inventory_slot(pindex)
       end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
-      local trash_inv = game.get_player(pindex).get_inventory(defines.inventory.character_trash)
-      storage.players[pindex].inventory.index = storage.players[pindex].inventory.index - 1
-      if storage.players[pindex].inventory.index % 10 == 0 then
-         if storage.players[pindex].preferences.inventory_wraps_around == true then
-            --Wrap around setting: Move and play move sound and read slot
-            storage.players[pindex].inventory.index = storage.players[pindex].inventory.index + 10
-            sounds.play_menu_wrap(pindex)
-            read_inventory_slot(pindex, "", trash_inv)
-         else
-            --Border setting: Undo change and play "wall" sound
-            storage.players[pindex].inventory.index = storage.players[pindex].inventory.index + 1
-            sounds.play_ui_edge(pindex)
-         end
-      else
-         sounds.play_menu_move(pindex)
-         read_inventory_slot(pindex, "", trash_inv)
-      end
    elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
       sounds.play_menu_move(pindex)
       storage.players[pindex].crafting.index = storage.players[pindex].crafting.index - 1
@@ -1184,25 +1127,6 @@ function menu_cursor_right(pindex)
       else
          sounds.play_menu_move(pindex)
          read_inventory_slot(pindex)
-      end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
-      local trash_inv = game.get_player(pindex).get_inventory(defines.inventory.character_trash)
-      storage.players[pindex].inventory.index = storage.players[pindex].inventory.index + 1
-      if storage.players[pindex].inventory.index % 10 == 1 then
-         if storage.players[pindex].preferences.inventory_wraps_around == true then
-            --Wrap around setting: Move and play move sound and read slot
-            storage.players[pindex].inventory.index = storage.players[pindex].inventory.index - 10
-            sounds.play_menu_wrap(pindex)
-            read_inventory_slot(pindex, "", trash_inv)
-         else
-            --Border setting: Undo change and play "wall" sound
-            storage.players[pindex].inventory.index = storage.players[pindex].inventory.index - 1
-            sounds.play_ui_edge(pindex)
-            --Speech.speak(pindex, "Border.")
-         end
-      else
-         sounds.play_menu_move(pindex)
-         read_inventory_slot(pindex, "", trash_inv)
       end
    elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
       sounds.play_menu_move(pindex)
@@ -2222,9 +2146,6 @@ local function get_selected_inventory_and_slot(pindex)
    local menu = storage.players[pindex].menu
    if menu == "inventory" then
       inv = c.get_main_inventory()
-      index = storage.players[pindex].inventory.index
-   elseif menu == "player_trash" then
-      inv = c.get_inventory(defines.inventory.character_trash)
       index = storage.players[pindex].inventory.index
    elseif menu == "building" or menu == "vehicle" then
       local sector_name = storage.players[pindex].building.sector_name
@@ -3750,7 +3671,7 @@ local function read_coords(pindex, start_phrase)
          Speech.speak(pindex, message:build())
       end
    elseif
-      router:is_ui_one_of({ UiRouter.UI_NAMES.INVENTORY, UiRouter.UI_NAMES.PLAYER_TRASH })
+      router:is_ui_open(UiRouter.UI_NAMES.INVENTORY)
       or (
          router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
          and storage.players[pindex].building.sector > offset + #storage.players[pindex].building.sectors
@@ -4668,10 +4589,6 @@ local function kb_switch_menu_or_gun(event)
       return
    end
 
-   --Check if logistics have been researched
-   local trash_inv = game.get_player(pindex).get_inventory(defines.inventory.character_trash)
-   local logistics_researched = (trash_inv ~= nil and trash_inv.valid and #trash_inv > 0)
-
    if router:is_ui_open() then
       sounds.play_change_menu_tab(pindex)
       if router:is_ui_one_of({ UiRouter.UI_NAMES.VEHICLE, UiRouter.UI_NAMES.BUILDING }) then
@@ -4729,18 +4646,6 @@ local function kb_switch_menu_or_gun(event)
          router:open_ui(UiRouter.UI_NAMES.TECHNOLOGY)
          Research.menu_announce_entry(pindex)
       elseif router:is_ui_open(UiRouter.UI_NAMES.TECHNOLOGY) then
-         if logistics_researched then
-            router:open_ui(UiRouter.UI_NAMES.PLAYER_TRASH)
-            read_inventory_slot(
-               pindex,
-               "Logistic trash, ",
-               game.get_player(pindex).get_inventory(defines.inventory.character_trash)
-            )
-         else
-            router:open_ui(UiRouter.UI_NAMES.INVENTORY)
-            read_inventory_slot(pindex, "Inventory, ")
-         end
-      elseif router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
          router:open_ui(UiRouter.UI_NAMES.INVENTORY)
          read_inventory_slot(pindex, "Inventory, ")
       elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
@@ -4807,10 +4712,6 @@ local function kb_reverse_switch_menu_or_gun(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
-   --Check if logistics have been researched
-   local trash_inv = game.get_player(pindex).get_inventory(defines.inventory.character_trash)
-   local logistics_researched = (trash_inv ~= nil and trash_inv.valid and #trash_inv > 0)
-
    if router:is_ui_open() then
       sounds.play_change_menu_tab(pindex)
       if router:is_ui_one_of({ UiRouter.UI_NAMES.VEHICLE, UiRouter.UI_NAMES.BUILDING }) then
@@ -4855,18 +4756,6 @@ local function kb_reverse_switch_menu_or_gun(event)
             end
          end
       elseif router:is_ui_open(UiRouter.UI_NAMES.INVENTORY) then
-         if logistics_researched then
-            router:open_ui(UiRouter.UI_NAMES.PLAYER_TRASH)
-            read_inventory_slot(
-               pindex,
-               "Logistic trash, ",
-               game.get_player(pindex).get_inventory(defines.inventory.character_trash)
-            )
-         else
-            router:open_ui(UiRouter.UI_NAMES.TECHNOLOGY)
-            Research.menu_announce_entry(pindex)
-         end
-      elseif router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
          router:open_ui(UiRouter.UI_NAMES.TECHNOLOGY)
          Research.menu_announce_entry(pindex)
       elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING_QUEUE) then
@@ -5138,12 +5027,6 @@ local function kb_click_menu(event)
       local stack = storage.players[pindex].inventory.lua_inventory[storage.players[pindex].inventory.index]
       game.get_player(pindex).cursor_stack.swap_stack(stack)
       storage.players[pindex].inventory.max = #storage.players[pindex].inventory.lua_inventory
-   elseif router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
-      local trash_inv = game.get_player(pindex).get_inventory(defines.inventory.character_trash)
-      --Swap stacks
-      sounds.play_inventory_click(pindex)
-      local stack = trash_inv[storage.players[pindex].inventory.index]
-      game.get_player(pindex).cursor_stack.swap_stack(stack)
    elseif router:is_ui_open(UiRouter.UI_NAMES.CRAFTING) then
       --Check recipe category
       local recipe =
@@ -7377,11 +7260,7 @@ EventManager.on_event(
    function(event, pindex)
       local p = game.get_player(pindex)
       if p.character == nil then return end
-      if p.driving == false then
-         WorkerRobots.send_selected_stack_to_logistic_trash(pindex)
-      else
-         Driving.pda_read_cruise_control_toggled_info(event.player_index)
-      end
+      if p.driving == true then Driving.pda_read_cruise_control_toggled_info(event.player_index) end
    end
 )
 

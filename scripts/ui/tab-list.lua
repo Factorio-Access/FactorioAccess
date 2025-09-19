@@ -43,7 +43,7 @@ local mod = {}
 ---@field force_close boolean If true, close this tablist.
 ---@field message fa.Speech
 
----@alias fa.ui.SimpleTabHandler fun(self, fa.ui.TabContext)
+---@alias fa.ui.SimpleTabHandler fun(self, fa.ui.TabContext, modifiers?: {control?: boolean, shift?: boolean, alt?: boolean})
 
 ---@class fa.ui.TabCallbacks
 ---@field on_tab_focused fa.ui.SimpleTabHandler?
@@ -144,27 +144,28 @@ end
 -- Returns a method which will call the event handler for the given name, so
 -- that we may avoid rewriting the same body over and over.
 local function build_simple_method(evt_name)
-   return function(self, pindex)
+   return function(self, pindex, modifiers)
       local tl = tablist_storage[pindex][self.ui_name]
-      self:_do_callback(pindex, tl.active_tab, evt_name)
+      -- Pass modifiers as part of params array to _do_callback
+      self:_do_callback(pindex, tl.active_tab, evt_name, nil, { modifiers })
    end
 end
 
----@type fun(self, number)
+---@type fun(self, number, table?)
 TabList.on_up = build_simple_method("on_up")
----@type fun(self, number)
+---@type fun(self, number, table?)
 TabList.on_down = build_simple_method("on_down")
----@type fun(self, number)
+---@type fun(self, number, table?)
 TabList.on_left = build_simple_method("on_left")
----@type fun(self, number)
+---@type fun(self, number, table?)
 TabList.on_right = build_simple_method("on_right")
----@type fun(self, number)
+---@type fun(self, number, table?)
 TabList.on_click = build_simple_method("on_click")
----@type fun(self, number)
+---@type fun(self, number, table?)
 TabList.on_right_click = build_simple_method("on_right_click")
----@type fun(self, number)
+---@type fun(self, number, table?)
 TabList.on_read_coords = build_simple_method("on_read_coords")
----@type fun(self, number)
+---@type fun(self, number, table?)
 TabList.on_read_info = build_simple_method("on_read_info")
 
 -- Perform the flow for focusing a tab. Does this unconditionally, so be careful
@@ -203,11 +204,13 @@ function TabList:_cycle(pindex, direction)
    if old_index ~= new_index then self:_set_active_tab(pindex, new_index) end
 end
 
-function TabList:on_next_tab(pindex)
+function TabList:on_next_tab(pindex, modifiers)
+   -- Tab navigation doesn't use modifiers, but we accept them for consistency
    self:_cycle(pindex, 1)
 end
 
-function TabList:on_previous_tab(pindex)
+function TabList:on_previous_tab(pindex, modifiers)
+   -- Tab navigation doesn't use modifiers, but we accept them for consistency
    self:_cycle(pindex, -1)
 end
 

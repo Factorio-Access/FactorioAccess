@@ -338,12 +338,6 @@ function mod.open_operable_vehicle(ent, pindex)
                inventory = ent.get_inventory(invs.spider_trunk),
             })
          end
-         if ent.get_inventory(invs.spider_trash) ~= nil and #ent.get_inventory(invs.spider_trash) > 0 then
-            table.insert(storage.players[pindex].building.sectors, {
-               name = "Trash",
-               inventory = ent.get_inventory(invs.spider_trash),
-            })
-         end
          if ent.get_inventory(invs.spider_ammo) ~= nil and #ent.get_inventory(invs.spider_ammo) > 0 then
             table.insert(storage.players[pindex].building.sectors, {
                name = "Ammo",

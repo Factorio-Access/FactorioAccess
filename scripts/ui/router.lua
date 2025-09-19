@@ -45,7 +45,6 @@ mod.UI_NAMES = {
    VEHICLE = "vehicle",
    CRAFTING = "crafting",
    TRAVEL = "travel",
-   PLAYER_TRASH = "player_trash",
    GUNS = "guns",
    TECHNOLOGY = "technology",
    CRAFTING_QUEUE = "crafting_queue",
