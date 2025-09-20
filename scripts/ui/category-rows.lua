@@ -242,7 +242,7 @@ local function handle_vertical_navigation(ctx, render, direction)
    update_state_after_render(state, render)
 
    if #render.categories == 0 then
-      sounds.play_inventory_edge(ctx.pindex)
+      sounds.play_menu_wrap(ctx.pindex)
       ctx.message:fragment({ "fa.category-rows-no-categories" })
       return
    end
@@ -250,35 +250,41 @@ local function handle_vertical_navigation(ctx, render, direction)
    local current_index = find_category_index(render, state.current_category_key) or 1
    local new_index = current_index + direction
 
-   if new_index < 1 or new_index > #render.categories then
-      sounds.play_inventory_edge(ctx.pindex)
+   -- Implement wrapping
+   if new_index < 1 then
+      new_index = #render.categories
+      sounds.play_menu_wrap(ctx.pindex)
+   elseif new_index > #render.categories then
+      new_index = 1
+      sounds.play_menu_wrap(ctx.pindex)
    else
       sounds.play_menu_move(ctx.pindex)
-      local new_category = render.categories[new_index]
-      state.current_category_key = new_category.key
+   end
 
-      -- Announce category name
-      ctx.message:fragment(new_category.label)
-      ctx.message:list_item_forced_comma()
+   local new_category = render.categories[new_index]
+   state.current_category_key = new_category.key
 
-      -- Announce current item in category if any
-      local cursor_key = state.cursor_by_category[new_category.key]
-      if cursor_key then
-         local item_index = find_item_index(new_category, cursor_key)
-         if item_index then
-            local item = new_category.items[item_index]
-            local item_ctx = create_item_context(ctx)
-            item.vtable.label(item_ctx)
-         end
-      elseif #new_category.items > 0 then
-         -- Set cursor to first item
-         state.cursor_by_category[new_category.key] = new_category.items[1].key
-         local item = new_category.items[1]
+   -- Announce category name
+   ctx.message:fragment(new_category.label)
+   ctx.message:list_item_forced_comma()
+
+   -- Announce current item in category if any
+   local cursor_key = state.cursor_by_category[new_category.key]
+   if cursor_key then
+      local item_index = find_item_index(new_category, cursor_key)
+      if item_index then
+         local item = new_category.items[item_index]
          local item_ctx = create_item_context(ctx)
          item.vtable.label(item_ctx)
-      else
-         ctx.message:fragment({ "fa.category-rows-empty-category" })
       end
+   elseif #new_category.items > 0 then
+      -- Set cursor to first item
+      state.cursor_by_category[new_category.key] = new_category.items[1].key
+      local item = new_category.items[1]
+      local item_ctx = create_item_context(ctx)
+      item.vtable.label(item_ctx)
+   else
+      ctx.message:fragment({ "fa.category-rows-empty-category" })
    end
 end
 
@@ -291,7 +297,7 @@ local function handle_horizontal_navigation(ctx, render, direction)
    update_state_after_render(state, render)
 
    if #render.categories == 0 then
-      sounds.play_inventory_edge(ctx.pindex)
+      sounds.play_menu_wrap(ctx.pindex)
       ctx.message:fragment({ "fa.category-rows-no-categories" })
       return
    end
@@ -300,7 +306,7 @@ local function handle_horizontal_navigation(ctx, render, direction)
    local category = render.categories[cat_index]
 
    if #category.items == 0 then
-      sounds.play_inventory_edge(ctx.pindex)
+      sounds.play_menu_wrap(ctx.pindex)
       ctx.message:fragment({ "fa.category-rows-empty-category" })
       return
    end
@@ -309,17 +315,23 @@ local function handle_horizontal_navigation(ctx, render, direction)
    local current_index = find_item_index(category, cursor_key) or 1
    local new_index = current_index + direction
 
-   if new_index < 1 or new_index > #category.items then
-      sounds.play_inventory_edge(ctx.pindex)
+   -- Implement wrapping
+   if new_index < 1 then
+      new_index = #category.items
+      sounds.play_menu_wrap(ctx.pindex)
+   elseif new_index > #category.items then
+      new_index = 1
+      sounds.play_menu_wrap(ctx.pindex)
    else
       sounds.play_menu_move(ctx.pindex)
-      local new_item = category.items[new_index]
-      state.cursor_by_category[category.key] = new_item.key
-
-      -- Announce item
-      local item_ctx = create_item_context(ctx)
-      new_item.vtable.label(item_ctx)
    end
+
+   local new_item = category.items[new_index]
+   state.cursor_by_category[category.key] = new_item.key
+
+   -- Announce item
+   local item_ctx = create_item_context(ctx)
+   new_item.vtable.label(item_ctx)
 end
 
 ---Handle click events
