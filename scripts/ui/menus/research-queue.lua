@@ -32,7 +32,12 @@ function mod.render(ctx)
    local queue = player.force.research_queue
 
    if not queue or #queue == 0 then
-      builder:add_label("empty", { "fa.research-queue-empty" })
+      -- Add a single item that announces the empty state
+      builder:add_item("empty", {
+         label = function(ctx)
+            ctx.message:fragment({ "fa.research-queue-empty" })
+         end,
+      })
       return builder:build()
    end
 

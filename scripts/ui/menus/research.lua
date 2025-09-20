@@ -235,6 +235,7 @@ end
 -- Create the tab descriptor for the research menu
 mod.research_tab = CategoryRows.declare_category_rows({
    name = "research",
+   title = { "fa.research-title" },
    render_callback = render_research_menu,
 })
 

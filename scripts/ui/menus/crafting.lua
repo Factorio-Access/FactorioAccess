@@ -175,6 +175,7 @@ end
 -- Create the tab descriptor for the crafting menu
 mod.crafting_tab = CategoryRows.declare_category_rows({
    name = "crafting",
+   title = { "fa.crafting-title" },
    render_callback = render_crafting_menu,
 })
 
