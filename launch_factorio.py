@@ -501,7 +501,7 @@ def capture_crash_info(exit_code: int, fail_hard: bool = True) -> Dict[str, Any]
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         "factorio_log": None,
         "mod_log": None,
-        "printout_log": None,
+        "speech_log": None,
     }
 
     logs_found = False
@@ -559,19 +559,19 @@ def capture_crash_info(exit_code: int, fail_hard: bool = True) -> Dict[str, Any]
             except Exception as e:
                 crash_info["mod_log"] = f"Failed to read mod log: {e}"
 
-        # Printout log (critical for debugging)
-        printout_log_path = script_output_dir / "factorio-access-printout.log"
-        if printout_log_path.exists():
+        # Speech log (critical for debugging)
+        speech_log_path = script_output_dir / "factorio-access-speech.log"
+        if speech_log_path.exists():
             try:
                 with open(
-                    printout_log_path, "r", encoding="utf-8", errors="ignore"
+                    speech_log_path, "r", encoding="utf-8", errors="ignore"
                 ) as f:
-                    crash_info["printout_log"] = f.read()[-5000:]  # Last 5KB
+                    crash_info["speech_log"] = f.read()[-5000:]  # Last 5KB
                 logs_found = True
             except Exception as e:
-                crash_info["printout_log"] = f"Failed to read printout log: {e}"
+                crash_info["speech_log"] = f"Failed to read speech log: {e}"
         else:
-            missing_logs.append(f"factorio-access-printout.log at {printout_log_path}")
+            missing_logs.append(f"factorio-access-speech.log at {speech_log_path}")
     else:
         missing_logs.append("script-output directory")
 
@@ -807,7 +807,7 @@ def main():
 
             # Check for specific files
             for log_file in [
-                "factorio-access-printout.log",
+                "factorio-access-speech.log",
                 "factorio-access.log",
                 "factorio-access-test.log",
             ]:
@@ -836,10 +836,10 @@ def main():
         crash_report_path = save_crash_report(crash_info)
         print(f"[INFO] Log capture saved to: {crash_report_path}")
 
-        # Show recent printout log entries
-        if crash_info.get("printout_log"):
-            print("\n[INFO] === Last lines of printout log ===")
-            lines = crash_info["printout_log"].split("\n")[-50:]
+        # Show recent speech log entries
+        if crash_info.get("speech_log"):
+            print("\n[INFO] === Last lines of speech log ===")
+            lines = crash_info["speech_log"].split("\n")[-50:]
             print("\n".join(lines))
 
         return 0
