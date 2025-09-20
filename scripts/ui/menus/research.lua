@@ -50,7 +50,7 @@ local function categorize_technologies(player)
    }
 
    for _, tech in pairs(force.technologies) do
-      if not tech.hidden then
+      if not tech.prototype.hidden then
          if tech.researched then
             table.insert(categories[CATEGORY_RESEARCHED], tech)
          elseif tech.enabled then
