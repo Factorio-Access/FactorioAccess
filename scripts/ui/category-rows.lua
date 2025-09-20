@@ -459,83 +459,113 @@ function mod.get_prev_position(render, category_key, item_key)
    return nil, nil
 end
 
+---@class fa.ui.CategoryRows
+---@field render_callback fun(ctx: fa.ui.TabContext): fa.ui.CategoryRows.Render?
+---@field name string
+local CategoryRows = {}
+local CategoryRows_meta = { __index = CategoryRows }
+
+---@param ctx fa.ui.TabContext
+---@param modifiers any
+function CategoryRows:on_up(ctx, modifiers)
+   local render = self.render_callback(ctx)
+   if render then handle_vertical_navigation(ctx, render, -1) end
+end
+
+---@param ctx fa.ui.TabContext
+---@param modifiers any
+function CategoryRows:on_down(ctx, modifiers)
+   local render = self.render_callback(ctx)
+   if render then handle_vertical_navigation(ctx, render, 1) end
+end
+
+---@param ctx fa.ui.TabContext
+---@param modifiers any
+function CategoryRows:on_left(ctx, modifiers)
+   local render = self.render_callback(ctx)
+   if render then handle_horizontal_navigation(ctx, render, -1) end
+end
+
+---@param ctx fa.ui.TabContext
+---@param modifiers any
+function CategoryRows:on_right(ctx, modifiers)
+   local render = self.render_callback(ctx)
+   if render then handle_horizontal_navigation(ctx, render, 1) end
+end
+
+---@param ctx fa.ui.TabContext
+---@param modifiers {control?: boolean, shift?: boolean, alt?: boolean}
+function CategoryRows:on_click(ctx, modifiers)
+   local render = self.render_callback(ctx)
+   if render then handle_click(ctx, render, modifiers, false) end
+end
+
+---@param ctx fa.ui.TabContext
+---@param modifiers {control?: boolean, shift?: boolean, alt?: boolean}
+function CategoryRows:on_right_click(ctx, modifiers)
+   local render = self.render_callback(ctx)
+   if render then handle_click(ctx, render, modifiers, true) end
+end
+
+---@param ctx fa.ui.TabContext
+---@param modifiers any
+function CategoryRows:on_read_coords(ctx, modifiers)
+   local render = self.render_callback(ctx)
+   if render then handle_read_coords(ctx, render) end
+end
+
+---@param ctx fa.ui.TabContext
+---@param modifiers any
+function CategoryRows:on_tab_focused(ctx, modifiers)
+   -- Announce current position when tab gains focus
+   local render = self.render_callback(ctx)
+   if not render or #render.categories == 0 then
+      ctx.message:fragment({ "fa.category-rows-no-categories" })
+      return
+   end
+
+   local state = get_or_create_state(ctx)
+   update_state_after_render(state, render)
+
+   local cat_index = find_category_index(render, state.current_category_key) or 1
+   local category = render.categories[cat_index]
+
+   -- Announce category
+   ctx.message:fragment(category.label)
+   ctx.message:list_item_forced_comma()
+
+   -- Announce current item
+   if #category.items > 0 then
+      local cursor_key = state.cursor_by_category[category.key] or category.items[1].key
+      local item_index = find_item_index(category, cursor_key)
+      if item_index then
+         local item = category.items[item_index]
+         local item_ctx = create_item_context(ctx)
+         item.vtable.label(item_ctx)
+      end
+   else
+      ctx.message:fragment({ "fa.category-rows-empty-category" })
+   end
+end
+
+---@class fa.ui.CategoryRows.Declaration
+---@field title LocalisedString?
+---@field render_callback fun(ctx: fa.ui.TabContext): fa.ui.CategoryRows.Render?
+---@field name string
+
 ---Declare a category-rows based tab
----@param params {name: string, render_callback: fun(ctx: fa.ui.TabContext): fa.ui.CategoryRows.Render?}
+---@param declaration fa.ui.CategoryRows.Declaration
 ---@return fa.ui.TabDescriptor
-function mod.declare_category_rows(params)
-   ---@type fa.ui.TabCallbacks
-   local callbacks = {}
-
-   function callbacks:on_up(ctx, modifiers)
-      local render = params.render_callback(ctx)
-      if render then handle_vertical_navigation(ctx, render, -1) end
-   end
-
-   function callbacks:on_down(ctx, modifiers)
-      local render = params.render_callback(ctx)
-      if render then handle_vertical_navigation(ctx, render, 1) end
-   end
-
-   function callbacks:on_left(ctx, modifiers)
-      local render = params.render_callback(ctx)
-      if render then handle_horizontal_navigation(ctx, render, -1) end
-   end
-
-   function callbacks:on_right(ctx, modifiers)
-      local render = params.render_callback(ctx)
-      if render then handle_horizontal_navigation(ctx, render, 1) end
-   end
-
-   function callbacks:on_click(ctx, modifiers)
-      local render = params.render_callback(ctx)
-      if render then handle_click(ctx, render, modifiers, false) end
-   end
-
-   function callbacks:on_right_click(ctx, modifiers)
-      local render = params.render_callback(ctx)
-      if render then handle_click(ctx, render, modifiers, true) end
-   end
-
-   function callbacks:on_read_coords(ctx, modifiers)
-      local render = params.render_callback(ctx)
-      if render then handle_read_coords(ctx, render) end
-   end
-
-   function callbacks:on_tab_focused(ctx, modifiers)
-      -- Announce current position when tab gains focus
-      local render = params.render_callback(ctx)
-      if not render or #render.categories == 0 then
-         ctx.message:fragment({ "fa.category-rows-no-categories" })
-         return
-      end
-
-      local state = get_or_create_state(ctx)
-      update_state_after_render(state, render)
-
-      local cat_index = find_category_index(render, state.current_category_key) or 1
-      local category = render.categories[cat_index]
-
-      -- Announce category
-      ctx.message:fragment(category.label)
-      ctx.message:list_item_forced_comma()
-
-      -- Announce current item
-      if #category.items > 0 then
-         local cursor_key = state.cursor_by_category[category.key] or category.items[1].key
-         local item_index = find_item_index(category, cursor_key)
-         if item_index then
-            local item = category.items[item_index]
-            local item_ctx = create_item_context(ctx)
-            item.vtable.label(item_ctx)
-         end
-      else
-         ctx.message:fragment({ "fa.category-rows-empty-category" })
-      end
-   end
+function mod.declare_category_rows(declaration)
+   local category_rows = setmetatable({
+      render_callback = declaration.render_callback,
+      name = declaration.name,
+   }, CategoryRows_meta)
 
    return {
-      name = params.name,
-      callbacks = callbacks,
+      name = declaration.name,
+      title = declaration.title,
+      callbacks = category_rows,
    }
 end
 
