@@ -5,8 +5,8 @@ Left bracket cancels the selected item.
 ]]
 
 local Menu = require("scripts.ui.menu")
-local MessageBuilder = require("scripts.message-builder")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 local localising = require("scripts.localising")
 
 local mod = {}
@@ -94,7 +94,7 @@ function mod.on_click(ctx, modifiers)
    -- Announce what was cancelled
    local recipe_proto = prototypes.recipe[item.recipe]
    if recipe_proto then
-      local message = MessageBuilder.new()
+      local message = Speech.new()
       message:fragment({ "fa.crafting-queue-cancelled" })
       message:fragment(tostring(math.min(cancel_count, item.count)))
       message:fragment(localising.get_localised_name_with_fallback(recipe_proto))
@@ -105,11 +105,14 @@ function mod.on_click(ctx, modifiers)
    ctx:request_render()
 end
 
----@type fa.ui.SimpleTabHandler
-function mod.tab_handler(self, ctx, modifiers)
-   if ctx.event == "on_click" then self.on_click(ctx, modifiers) end
-end
+-- Create callbacks structure for TabList compatibility
+mod.callbacks = {
+   render = mod.render,
+   state_setup = mod.state_setup,
+   on_click = mod.on_click,
+}
 
-mod.module_name = "crafting-queue"
+mod.name = "crafting_queue"
+mod.title = { "fa.crafting-queue-title" }
 
 return mod

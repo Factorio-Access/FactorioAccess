@@ -40,16 +40,12 @@ mod.get_registered_uis = nil
 mod.UI_NAMES = {
    -- New unified UI that subsumes inventory, guns, crafting, crafting_queue, technology
    MAIN = "main",
-   INVENTORY = "inventory",
    -- New inventory, but we need the old name for a little bit while we roll over.
    GENERIC_INVENTORY = "inventory2",
    BUILDING = "building",
    VEHICLE = "vehicle",
-   CRAFTING = "crafting",
    TRAVEL = "travel",
-   GUNS = "guns",
-   TECHNOLOGY = "technology",
-   CRAFTING_QUEUE = "crafting_queue",
+   GUNS = "guns", -- Keep for backward compatibility with gun_menu registration
    BELT = "belt",
    WARNINGS = "warnings",
    PUMP = "pump",

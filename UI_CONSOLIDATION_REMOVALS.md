@@ -2,8 +2,14 @@
 
 This document tracks functionality that has been temporarily removed during the UI consolidation from multiple UI names (INVENTORY, GUNS, CRAFTING, CRAFTING_QUEUE, TECHNOLOGY) to a single "main" UI.
 
-## Status: COMPLETED
-All removals have been implemented. The new "main" UI name has been added to the router.
+## Status: IN PROGRESS
+Most removals completed but additional references found that need cleanup.
+
+## Additional References Found (2025-09-19)
+### control.lua
+- **Line 269**: `UI_NAMES.INVENTORY` check in toggle_menu - needs removal
+- **Line 276**: `router:open_ui(UiRouter.UI_NAMES.INVENTORY)` in toggle_menu - should use MAIN
+- **Line 6467**: `router:open_ui(UiRouter.UI_NAMES.CRAFTING)` - should use MAIN
 
 ## UI Names Being Consolidated into "main"
 - **INVENTORY** - Player inventory

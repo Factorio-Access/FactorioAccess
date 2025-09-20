@@ -145,6 +145,11 @@ end
 -- that we may avoid rewriting the same body over and over.
 local function build_simple_method(evt_name)
    return function(self, pindex, modifiers)
+      -- Check if the tablist storage exists for this UI
+      if not tablist_storage[pindex] or not tablist_storage[pindex][self.ui_name] then
+         -- TabList not properly initialized, cannot handle events
+         return
+      end
       local tl = tablist_storage[pindex][self.ui_name]
       -- Pass modifiers as part of params array to _do_callback
       self:_do_callback(pindex, tl.active_tab, evt_name, nil, { modifiers })

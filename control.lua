@@ -52,6 +52,7 @@ local TutorialSystem = require("scripts.tutorial-system")
 local BeltAnalyzer = require("scripts.ui.belt-analyzer")
 local BlueprintsMenu = require("scripts.ui.menus.blueprints-menu")
 local GunMenuUi = require("scripts.ui.menus.gun-menu")
+local MainMenu = require("scripts.ui.menus.main-menu")
 local RoboportMenuUi = require("scripts.ui.menus.roboport-menu")
 local SpidertronMenuUi = require("scripts.ui.menus.spidertron-menu")
 local GenericInventory = require("scripts.ui.generic-inventory")
@@ -265,14 +266,14 @@ function locate_hand_in_player_inventory(pindex)
       --Hand is empty
       return
    end
-   if ui_name == UiRouter.UI_NAMES.INVENTORY then
-      --Unsupported menu type, laterdo add support for building menu and closing the menu with a call
+   if ui_name then
+      --Another menu is open, cannot Q from hand
       Speech.speak(pindex, { "fa.another-menu-is-open" })
       return
    end
    if not ui_name then
-      --Open the inventory if nothing is open
-      router:open_ui(UiRouter.UI_NAMES.INVENTORY)
+      --Open the main menu if nothing is open
+      router:open_ui(UiRouter.UI_NAMES.MAIN)
       p.opened = p.get_inventory(defines.inventory.character_main)
    end
    --Save the hand stack item name
@@ -4292,7 +4293,7 @@ EventManager.on_event(
    end
 )
 
---Sets up mod character menus. Cannot actually open the character GUI.
+--Opens the main unified menu
 ---@param event EventData.CustomInputEvent
 local function kb_open_player_inventory(event)
    local pindex = event.player_index
@@ -4303,15 +4304,8 @@ local function kb_open_player_inventory(event)
    sounds.play_open_inventory(p.index)
    p.selected = nil
    storage.players[pindex].last_menu_toggle_tick = event.tick
-   router:open_ui(UiRouter.UI_NAMES.INVENTORY)
-   storage.players[pindex].inventory.lua_inventory = p.character.get_main_inventory()
-   storage.players[pindex].inventory.max = #storage.players[pindex].inventory.lua_inventory
-   storage.players[pindex].inventory.index = 1
-   read_inventory_slot(pindex, "Inventory, ")
-   storage.players[pindex].crafting.lua_recipes = Crafting.get_recipes(pindex, p.character, true)
-   storage.players[pindex].crafting.max = #storage.players[pindex].crafting.lua_recipes
-   storage.players[pindex].crafting.category = 1
-   storage.players[pindex].crafting.index = 1
+   -- Use the TabList's open method to properly initialize the UI
+   MainMenu.main_menu:open(pindex, {})
 end
 
 ---@param event EventData.CustomInputEvent
@@ -6063,14 +6057,8 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
 
-      if false then -- Removed INVENTORY/GUNS UI check
-         --Reload weapons
-         local result = Equipment.reload_weapons(pindex)
-         --game.get_player(pindex).print(result)
-         Speech.speak(pindex, result)
-      else
-         BuildingTools.rotate_building_info_read(event, false)
-      end
+      -- Gun reload removed - now always rotate building
+      BuildingTools.rotate_building_info_read(event, false)
    end
 )
 
@@ -6475,9 +6463,9 @@ local function locate_hand_in_crafting_menu(pindex)
       return
    end
 
-   --Open the crafting Menu
+   --Open the main menu (crafting tab will be accessible there)
    close_menu_resets(pindex)
-   router:open_ui(UiRouter.UI_NAMES.CRAFTING)
+   router:open_ui(UiRouter.UI_NAMES.MAIN)
    p.opened = p.get_inventory(defines.inventory.character_main)
 
    --Get the name

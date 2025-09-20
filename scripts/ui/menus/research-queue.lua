@@ -5,8 +5,8 @@ Left bracket removes the selected research from the queue.
 ]]
 
 local Menu = require("scripts.ui.menu")
-local MessageBuilder = require("scripts.message-builder")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 
 local mod = {}
 
@@ -92,7 +92,7 @@ function mod.on_click(ctx, modifiers)
 
    -- Announce what was removed
    if tech_to_remove then
-      local message = MessageBuilder.new()
+      local message = Speech.new()
       message:fragment({ "fa.research-queue-removed" })
       message:fragment(get_tech_name(tech_to_remove))
       Speech.speak(ctx.pindex, message:build())
@@ -102,11 +102,14 @@ function mod.on_click(ctx, modifiers)
    ctx:request_render()
 end
 
----@type fa.ui.SimpleTabHandler
-function mod.tab_handler(self, ctx, modifiers)
-   if ctx.event == "on_click" then self.on_click(ctx, modifiers) end
-end
+-- Create callbacks structure for TabList compatibility
+mod.callbacks = {
+   render = mod.render,
+   state_setup = mod.state_setup,
+   on_click = mod.on_click,
+}
 
-mod.module_name = "research-queue"
+mod.name = "research_queue"
+mod.title = { "fa.research-queue-title" }
 
 return mod

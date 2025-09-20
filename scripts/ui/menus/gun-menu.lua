@@ -204,17 +204,26 @@ local function render_gun_grid(ctx)
    return builder:build()
 end
 
--- Declare the TabList
+-- Export the gun tab for use in the main menu
+mod.gun_tab = UiKeyGraph.declare_graph({
+   name = "guns",
+   title = { "fa.guns-and-ammo" },
+   render_callback = render_gun_grid,
+})
+
+-- Add a state setup callback to ensure we have the inventories
+mod.gun_tab.callbacks = mod.gun_tab.callbacks or {}
+mod.gun_tab.callbacks.state_setup = function(ctx)
+   return state_setup(ctx.pindex, {})
+end
+
+-- Legacy TabList for backward compatibility (can be removed later)
 mod.gun_menu = TabList.declare_tablist({
    ui_name = UiRouter.UI_NAMES.GUNS,
    resets_to_first_tab_on_open = true,
    shared_state_setup = state_setup,
    tabs = {
-      UiKeyGraph.declare_graph({
-         name = "guns",
-         title = { "fa.guns-and-ammo" },
-         render_callback = render_gun_grid,
-      }),
+      mod.gun_tab,
    },
 })
 
