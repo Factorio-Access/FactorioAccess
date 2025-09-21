@@ -3,6 +3,7 @@ Spidertron remote menu UI using the new TabList/Menu system.
 Provides a vertical menu interface for managing spidertron remotes.
 ]]
 
+local Functools = require("scripts.functools")
 local Menu = require("scripts.ui.menu")
 local Speech = require("scripts.speech")
 local TabList = require("scripts.ui.tab-list")
@@ -191,13 +192,13 @@ mod.spidertron_menu = TabList.declare_tablist({
    ui_name = UiRouter.UI_NAMES.SPIDERTRON,
    resets_to_first_tab_on_open = true,
    shared_state_setup = state_setup,
-   tabs = {
+   tabs_callback = Functools.functionize({
       UiKeyGraph.declare_graph({
          name = "spidertron",
          title = { "fa.spidertron-menu-title" },
          render_callback = render_spidertron_menu,
       }),
-   },
+   }),
 })
 
 return mod

@@ -9,6 +9,7 @@ Vehicles and containers have:
 
 Crafting machines etc. are more complicated, but this covers the simpler cases.
 ]]
+local Functools = require("scripts.functools")
 local InventoryGrid = require("scripts.ui.inventory-grid")
 local TabList = require("scripts.ui.tab-list")
 local UiRouter = require("scripts.ui.router")
@@ -72,10 +73,10 @@ mod.generic_inventory = TabList.declare_tablist({
    ui_name = UiRouter.UI_NAMES.GENERIC_INVENTORY,
    resets_to_first_tab_on_open = true,
    shared_state_setup = setup_shared_state,
-   tabs = {
+   tabs_callback = Functools.functionize({
       GENERIC_GRID,
       PERSONAL_GRID,
-   },
+   }),
 })
 
 -- Register with the UI event routing system

@@ -174,13 +174,13 @@ end
 
 mod.blueprint_menu_tabs = TabList.declare_tablist({
    ui_name = UiRouter.UI_NAMES.BLUEPRINT,
-   tabs = {
+   tabs_callback = Functools.functionize({
       UiKeyGraph.declare_graph({
          name = "blueprints-menu",
          render_callback = render,
          title = { "fa.ui-blueprints-menu-title" },
       }),
-   },
+   }),
 })
 
 -- Register with the UI event routing system for event interception

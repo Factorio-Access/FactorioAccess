@@ -1,4 +1,5 @@
 local FaUtils = require("scripts.fa-utils")
+local Functools = require("scripts.functools")
 local Geometry = require("scripts.geometry")
 local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
@@ -182,7 +183,7 @@ mod.belt_analyzer = TabList.declare_tablist({
    ui_name = UiRouter.UI_NAMES.BELT,
    resets_to_first_tab_on_open = true,
    shared_state_setup = state_setup,
-   tabs = {
+   tabs_callback = Functools.functionize({
       UiKeyGraph.declare_graph({
          title = { "fa.ui-belt-analyzer-tab-local" },
          render_callback = local_renderer,
@@ -203,7 +204,7 @@ mod.belt_analyzer = TabList.declare_tablist({
          title = { "fa.ui-belt-analyzer-tab-downstream" },
          render_callback = downstream_renderer,
       }),
-   },
+   }),
 })
 
 -- Register with the UI event routing system for event interception

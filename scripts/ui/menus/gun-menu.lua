@@ -4,6 +4,7 @@ Provides a 3x2 grid interface for managing weapon and ammo slots.
 ]]
 
 local Equipment = require("scripts.equipment")
+local Functools = require("scripts.functools")
 local Grid = require("scripts.ui.grid")
 local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
@@ -222,9 +223,9 @@ mod.gun_menu = TabList.declare_tablist({
    ui_name = UiRouter.UI_NAMES.GUNS,
    resets_to_first_tab_on_open = true,
    shared_state_setup = state_setup,
-   tabs = {
+   tabs_callback = Functools.functionize({
       mod.gun_tab,
-   },
+   }),
 })
 
 -- Register with the UI event routing system for event interception

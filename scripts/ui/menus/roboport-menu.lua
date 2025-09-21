@@ -3,6 +3,7 @@ Roboport menu UI using the new TabList/Menu system.
 Provides a vertical menu interface for managing roboport networks.
 ]]
 
+local Functools = require("scripts.functools")
 local WorkerRobots = require("scripts.worker-robots")
 local Localising = require("scripts.localising")
 local Menu = require("scripts.ui.menu")
@@ -205,13 +206,13 @@ mod.roboport_menu = TabList.declare_tablist({
    ui_name = UiRouter.UI_NAMES.ROBOPORT,
    resets_to_first_tab_on_open = true,
    shared_state_setup = state_setup,
-   tabs = {
+   tabs_callback = Functools.functionize({
       UiKeyGraph.declare_graph({
          name = "roboport",
          title = { "fa.roboport-menu-main" },
          render_callback = render_roboport_menu,
       }),
-   },
+   }),
 })
 
 -- Register with the UI event routing system for event interception
