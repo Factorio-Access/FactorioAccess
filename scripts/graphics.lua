@@ -59,80 +59,15 @@ function mod.update_menu_visuals()
 
       -- [UI CHECKS REMOVED] Menu-specific sprite rendering removed
       -- New UI system will handle its own rendering with text labels
-      if false then -- Menu rendering disabled
-         if router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
-            mod.update_overhead_sprite("utility.downloading", 1.5, 1.25, pindex)
-            mod.update_custom_GUI_sprite("utility.downloading", 3, pindex)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
-            mod.update_overhead_sprite("utility.warning_white", 3, 1.25, pindex)
-            mod.update_custom_GUI_sprite("utility.warning_white", 3, pindex)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.RAIL_BUILDER) then
-            mod.update_overhead_sprite("item.rail", 2, 1.25, pindex)
-            mod.update_custom_GUI_sprite("item.rail", 3, pindex)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
-            mod.update_overhead_sprite("item.locomotive", 2, 1.25, pindex)
-            mod.update_custom_GUI_sprite("item.locomotive", 3, pindex)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then
-            mod.update_overhead_sprite("item.spidertron", 2, 1.25, pindex)
-            mod.update_custom_GUI_sprite("item.spidertron", 3, pindex)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.TRAIN_STOP) then
-            mod.update_overhead_sprite("item.train-stop", 2, 1.25, pindex)
-            mod.update_custom_GUI_sprite("item.train-stop", 3, pindex)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.ROBOPORT) then
-            mod.update_overhead_sprite("item.roboport", 2, 1.25, pindex)
-            mod.update_custom_GUI_sprite("item.roboport", 3, pindex)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT) then
-            mod.update_overhead_sprite("item.blueprint", 2, 1.25, pindex)
-            mod.update_custom_GUI_sprite("item.blueprint", 3, pindex)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
-            mod.update_overhead_sprite("item.blueprint-book", 2, 1.25, pindex)
-            mod.update_custom_GUI_sprite("item.blueprint-book", 3, pindex)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.CIRCUIT_NETWORK) then
-            mod.update_overhead_sprite("item.electronic-circuit", 2, 1.25, pindex)
-            mod.update_custom_GUI_sprite("item.electronic-circuit", 3, pindex)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.SIGNAL_SELECTOR) then
-            local sprite = "item-group.signals"
-            mod.update_overhead_sprite(sprite, 1, 1.25, pindex)
-            mod.update_custom_GUI_sprite(sprite, 0.5, pindex)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.PUMP) then
-            mod.update_overhead_sprite("item.offshore-pump", 2, 1.25, pindex)
-            mod.update_custom_GUI_sprite("item.offshore-pump", 3, pindex)
-         elseif router:is_ui_open(UiRouter.UI_NAMES.BELT) then
-            mod.update_overhead_sprite("item.transport-belt", 2, 1.25, pindex)
-            mod.update_custom_GUI_sprite(nil, 1, pindex)
-         elseif router:is_ui_one_of({ UiRouter.UI_NAMES.VEHICLE, UiRouter.UI_NAMES.BUILDING }) then
-            if game.get_player(pindex).opened == nil then
-               --Open building menu with no GUI
-               mod.update_overhead_sprite("utility.search", 2, 1.25, pindex)
-               mod.update_custom_GUI_sprite("utility.search", 3, pindex)
-            else
-               --A building with a GUI is open
-               mod.update_overhead_sprite("utility.search", 2, 1.25, pindex)
-               mod.update_custom_GUI_sprite(nil, 1, pindex)
-            end
-         else
-            --Other menu type ...
-            if player.vanilla_mode then
-               --No "missing image"
-               mod.update_overhead_sprite(nil, 1, 1, pindex)
-               mod.update_custom_GUI_sprite(nil, 1, pindex)
-            else
-               --"Missing image"
-               mod.update_overhead_sprite("utility.select_icon_white", 1, 1, pindex)
-               mod.update_custom_GUI_sprite("utility.select_icon_white", 1, pindex)
-            end
-         end
+      -- Non-menu rendering preserved
+      if game.get_player(pindex).opened ~= nil then
+         --Not in menu, but open GUI
+         mod.update_overhead_sprite("utility.white_square", 2, 1.25, pindex)
+         mod.update_custom_GUI_sprite(nil, 1, pindex)
       else
-         -- Non-menu rendering preserved
-         if game.get_player(pindex).opened ~= nil then
-            --Not in menu, but open GUI
-            mod.update_overhead_sprite("utility.white_square", 2, 1.25, pindex)
-            mod.update_custom_GUI_sprite(nil, 1, pindex)
-         else
-            --Not in menu, no open GUI
-            mod.update_overhead_sprite(nil, 1, 1, pindex)
-            mod.update_custom_GUI_sprite(nil, 1, pindex)
-         end
+         --Not in menu, no open GUI
+         mod.update_overhead_sprite(nil, 1, 1, pindex)
+         mod.update_custom_GUI_sprite(nil, 1, pindex)
       end
    end
 end
