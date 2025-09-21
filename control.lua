@@ -326,12 +326,7 @@ function locate_hand_in_building_output_inventory(pindex)
       --Hand is empty
       return
    end
-   if
-      (UiRouter:is_ui_open(UiRouter.UI_NAMES.BUILDING) or UiRouter:is_ui_open(UiRouter.UI_NAMES.VEHICLE))
-      and pb.sectors
-      and pb.sectors[pb.sector]
-      and pb.sectors[pb.sector].name == "Output"
-   then
+   if pb.sectors and pb.sectors[pb.sector] and pb.sectors[pb.sector].name == "Output" then
       inv = p.opened.get_output_inventory()
    else
       --Unsupported menu type
@@ -629,7 +624,7 @@ EventManager.on_event(defines.events.on_player_changed_position, function(event,
       p.selected = nil
    end
    --Play a sound for audio ruler alignment (smooth walk)
-   if not router:is_ui_open() then Rulers.update_from_cursor(pindex) end
+   Rulers.update_from_cursor(pindex)
 end)
 
 --Calls the appropriate menu movement function for a player and the input direction.
@@ -668,104 +663,7 @@ function menu_cursor_up(pindex)
          storage.players[pindex].item_selector.subgroup = 0
          read_item_selector_slot(pindex)
       end
-   elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-      --Move one row up in a building inventory of some kind
-      if storage.players[pindex].building.sector <= #storage.players[pindex].building.sectors then
-         --Most building sectors, eg. chest rows
-         if
-            storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory == nil
-            or #storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory < 1
-         then
-            Speech.speak(pindex, { "fa.blank-sector" })
-            return
-         end
-         --Move one row up in building inventory
-         local row_length = storage.players[pindex].preferences.building_inventory_row_length
-         if
-            #storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory > row_length
-         then
-            sounds.play_menu_move(pindex)
-            storage.players[pindex].building.index = storage.players[pindex].building.index - row_length
-            if storage.players[pindex].building.index < 1 then
-               --Wrap around to building inventory last row
-               sounds.play_menu_wrap(pindex)
-               storage.players[pindex].building.index = storage.players[pindex].building.index
-                  + #storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory
-            end
-         else
-            --Inventory size < row length: Wrap over to the same slot
-            sounds.play_menu_wrap(pindex)
-            --storage.players[pindex].building.index = 1
-         end
-         BuildingVehicleSectors.read_sector_slot(pindex, false)
-      elseif storage.players[pindex].building.sector_name == "player inventory from building" then
-         --Move one row up in player inventory
-         sounds.play_menu_move(pindex)
-         storage.players[pindex].inventory.index = storage.players[pindex].inventory.index - 10
-         if storage.players[pindex].inventory.index < 1 then
-            storage.players[pindex].inventory.index = storage.players[pindex].inventory.max
-               + storage.players[pindex].inventory.index
-            sounds.play_menu_wrap(pindex)
-         end
-         read_inventory_slot(pindex)
-      else
-         if storage.players[pindex].building.sector == #storage.players[pindex].building.sectors + 1 then
-            if storage.players[pindex].building.recipe_selection then
-               --Recipe selection
-               sounds.play_menu_move(pindex)
-               storage.players[pindex].building.category = storage.players[pindex].building.category - 1
-               storage.players[pindex].building.index = 1
-               if storage.players[pindex].building.category < 1 then
-                  storage.players[pindex].building.category = #storage.players[pindex].building.recipe_list
-               end
-            end
-            BuildingVehicleSectors.read_building_recipe(pindex)
-         else
-            --Case = Player inv again???
-            --game.get_player(pindex).play_sound({ path = "Inventory-Move" })
-            --storage.players[pindex].inventory.index = storage.players[pindex].inventory.index - 10
-            --if storage.players[pindex].inventory.index < 1 then
-            --   storage.players[pindex].inventory.index = storage.players[pindex].inventory.max + storage.players[pindex].inventory.index
-            --end
-            --read_inventory_slot(pindex)
-         end
-      end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
-      if storage.players[pindex].warnings.category > 1 then
-         storage.players[pindex].warnings.category = storage.players[pindex].warnings.category - 1
-         sounds.play_menu_move(pindex)
-         storage.players[pindex].warnings.index = 1
-      end
-      Warnings.read_warnings_slot(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.PUMP) then
-      sounds.play_menu_move(pindex)
-      storage.players[pindex].pump.index = math.max(1, storage.players[pindex].pump.index - 1)
-
-      local pump_position = storage.players[pindex].pump.positions[storage.players[pindex].pump.index]
-      local player_pos = game.get_player(pindex).position
-      local distance = math.floor(FaUtils.distance(player_pos, pump_position.position))
-      local relative_dir = FaUtils.direction(player_pos, pump_position.position)
-      local facing_dir = pump_position.direction
-
-      Speech.speak(pindex, {
-         "fa.pump-placement-option",
-         storage.players[pindex].pump.index,
-         distance,
-         relative_dir,
-         { "fa.direction", facing_dir },
-      })
-   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
-      TravelTools.fast_travel_menu_up(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.ROBOPORT) then
-      -- Now handled by new UI system
-   elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
-      Blueprints.blueprint_book_menu_up(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.CIRCUIT_NETWORK) then
-      general_mod_menu_up(pindex, storage.players[pindex].circuit_network_menu, 0)
-      CircuitNetworks.circuit_network_menu_run(pindex, nil, storage.players[pindex].circuit_network_menu.index, false)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.SIGNAL_SELECTOR) then
-      CircuitNetworks.signal_selector_group_up(pindex)
-      CircuitNetworks.read_selected_signal_group(pindex, "")
+      -- [UI CHECKS REMOVED] Building/vehicle menu navigation removed
    end
 end
 
@@ -797,119 +695,7 @@ function menu_cursor_down(pindex)
       else
          Speech.speak(pindex, { "fa.press-left-bracket-to-confirm" })
       end
-   elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-      --Move one row down in a building inventory of some kind
-      if storage.players[pindex].building.sector <= #storage.players[pindex].building.sectors then
-         --Most building sectors, eg. chest rows
-         if
-            storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory == nil
-            or #storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory < 1
-         then
-            Speech.speak(pindex, { "fa.blank-sector" })
-            return
-         end
-         sounds.play_menu_move(pindex)
-         local row_length = storage.players[pindex].preferences.building_inventory_row_length
-         if
-            #storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory > row_length
-         then
-            --Move one row down
-            storage.players[pindex].building.index = storage.players[pindex].building.index + row_length
-            if
-               storage.players[pindex].building.index
-               > #storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory
-            then
-               --Wrap around to the building inventory first row
-               sounds.play_menu_wrap(pindex)
-               storage.players[pindex].building.index = storage.players[pindex].building.index % row_length
-               --If the row is shorter than usual, get to its end
-               if storage.players[pindex].building.index < 1 then
-                  storage.players[pindex].building.index = row_length
-               end
-            end
-         else
-            --Inventory size < row length: Wrap over to the same slot
-            sounds.play_menu_wrap(pindex)
-         end
-         BuildingVehicleSectors.read_sector_slot(pindex, false)
-      elseif storage.players[pindex].building.sector_name == "player inventory from building" then
-         --Move one row down in player inventory
-         sounds.play_menu_move(pindex)
-         storage.players[pindex].inventory.index = storage.players[pindex].inventory.index + 10
-         if storage.players[pindex].inventory.index > storage.players[pindex].inventory.max then
-            storage.players[pindex].inventory.index = storage.players[pindex].inventory.index % 10
-            if storage.players[pindex].inventory.index == 0 then storage.players[pindex].inventory.index = 10 end
-            sounds.play_menu_wrap(pindex)
-         end
-         read_inventory_slot(pindex)
-      else
-         if storage.players[pindex].building.sector == #storage.players[pindex].building.sectors + 1 then
-            --Recipe selection
-            if storage.players[pindex].building.recipe_selection then
-               sounds.play_menu_move(pindex)
-               storage.players[pindex].building.index = 1
-               storage.players[pindex].building.category = storage.players[pindex].building.category + 1
-               if storage.players[pindex].building.category > #storage.players[pindex].building.recipe_list then
-                  storage.players[pindex].building.category = 1
-               end
-            end
-            BuildingVehicleSectors.read_building_recipe(pindex)
-         else
-            --Case = Player inv again?
-            --game.get_player(pindex).play_sound({ path = "Inventory-Move" })
-            --storage.players[pindex].inventory.index = storage.players[pindex].inventory.index + 10
-            --if storage.players[pindex].inventory.index > storage.players[pindex].inventory.max then
-            --   storage.players[pindex].inventory.index = storage.players[pindex].inventory.index % 10
-            --   if storage.players[pindex].inventory.index == 0 then storage.players[pindex].inventory.index = 10 end
-            --end
-            --read_inventory_slot(pindex)
-         end
-      end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
-      local warnings = {}
-      if storage.players[pindex].warnings.sector == 1 then
-         warnings = storage.players[pindex].warnings.short.warnings
-      elseif storage.players[pindex].warnings.sector == 2 then
-         warnings = storage.players[pindex].warnings.medium.warnings
-      elseif storage.players[pindex].warnings.sector == 3 then
-         warnings = storage.players[pindex].warnings.long.warnings
-      end
-      if storage.players[pindex].warnings.category < #warnings then
-         storage.players[pindex].warnings.category = storage.players[pindex].warnings.category + 1
-         sounds.play_menu_move(pindex)
-         storage.players[pindex].warnings.index = 1
-      end
-      Warnings.read_warnings_slot(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.PUMP) then
-      sounds.play_menu_move(pindex)
-      storage.players[pindex].pump.index =
-         math.min(#storage.players[pindex].pump.positions, storage.players[pindex].pump.index + 1)
-
-      local pump_position = storage.players[pindex].pump.positions[storage.players[pindex].pump.index]
-      local player_pos = game.get_player(pindex).position
-      local distance = math.floor(FaUtils.distance(player_pos, pump_position.position))
-      local relative_dir = FaUtils.direction(player_pos, pump_position.position)
-      local facing_dir = pump_position.direction
-
-      Speech.speak(pindex, {
-         "fa.pump-placement-option",
-         storage.players[pindex].pump.index,
-         distance,
-         relative_dir,
-         { "fa.direction", facing_dir },
-      })
-   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
-      TravelTools.fast_travel_menu_down(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.ROBOPORT) then
-      -- Now handled by new UI system
-   elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
-      Blueprints.blueprint_book_menu_down(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.CIRCUIT_NETWORK) then
-      general_mod_menu_down(pindex, storage.players[pindex].circuit_network_menu, CircuitNetworks.CN_MENU_LENGTH)
-      CircuitNetworks.circuit_network_menu_run(pindex, nil, storage.players[pindex].circuit_network_menu.index, false)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.SIGNAL_SELECTOR) then
-      CircuitNetworks.signal_selector_group_down(pindex)
-      CircuitNetworks.read_selected_signal_group(pindex, "")
+      -- [UI CHECKS REMOVED] Building/vehicle menu navigation removed
    end
 end
 
@@ -920,81 +706,8 @@ function menu_cursor_left(pindex)
    if storage.players[pindex].item_selection then
       storage.players[pindex].item_selector.index = math.max(1, storage.players[pindex].item_selector.index - 1)
       read_item_selector_slot(pindex)
-   elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-      --Move along a row in a building inventory
-      if storage.players[pindex].building.sector <= #storage.players[pindex].building.sectors then
-         --Most building sectors, e.g. chest rows
-         if
-            storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory == nil
-            or #storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory < 1
-         then
-            Speech.speak(pindex, { "fa.blank-sector" })
-            return
-         end
-         sounds.play_menu_move(pindex)
-         local row_length = storage.players[pindex].preferences.building_inventory_row_length
-         if
-            #storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory > row_length
-         then
-            storage.players[pindex].building.index = storage.players[pindex].building.index - 1
-            if storage.players[pindex].building.index % row_length < 1 then
-               --Wrap around to the end of this row
-               sounds.play_menu_wrap(pindex)
-               storage.players[pindex].building.index = storage.players[pindex].building.index + row_length
-               if
-                  storage.players[pindex].building.index
-                  > #storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory
-               then
-                  --If this final row is short, just jump to the end of the inventory
-                  storage.players[pindex].building.index =
-                     #storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory
-               end
-            end
-         else
-            storage.players[pindex].building.index = storage.players[pindex].building.index - 1
-            if storage.players[pindex].building.index < 1 then
-               --Wrap around to the end of this single-row inventory
-               sounds.play_menu_wrap(pindex)
-               storage.players[pindex].building.index =
-                  #storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory
-            end
-         end
-         BuildingVehicleSectors.read_sector_slot(pindex, false)
-      elseif storage.players[pindex].building.sector_name == "player inventory from building" then
-         sounds.play_menu_move(pindex)
-         storage.players[pindex].inventory.index = storage.players[pindex].inventory.index - 1
-         if storage.players[pindex].inventory.index % 10 < 1 then
-            storage.players[pindex].inventory.index = storage.players[pindex].inventory.index + 10
-            sounds.play_menu_wrap(pindex)
-         end
-         read_inventory_slot(pindex)
-      else
-         if storage.players[pindex].building.recipe_selection then
-            --Recipe selection
-            if storage.players[pindex].building.recipe_selection then
-               sounds.play_menu_move(pindex)
-               storage.players[pindex].building.index = storage.players[pindex].building.index - 1
-               if storage.players[pindex].building.index < 1 then
-                  storage.players[pindex].building.index =
-                     #storage.players[pindex].building.recipe_list[storage.players[pindex].building.category]
-                  sounds.play_menu_wrap(pindex)
-               end
-            end
-            BuildingVehicleSectors.read_building_recipe(pindex)
-         end
-      end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
-      if storage.players[pindex].warnings.index > 1 then
-         storage.players[pindex].warnings.index = storage.players[pindex].warnings.index - 1
-         sounds.play_menu_move(pindex)
-      end
-      Warnings.read_warnings_slot(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
-      TravelTools.fast_travel_menu_left(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.SIGNAL_SELECTOR) then
-      CircuitNetworks.signal_selector_signal_prev(pindex)
-      CircuitNetworks.read_selected_signal_slot(pindex, "")
    end
+   -- [UI CHECKS REMOVED] Building/vehicle/menu-specific navigation removed
 end
 
 ----Moves to the right  in a menu. Todo: split by menu. "menu_right"
@@ -1005,88 +718,6 @@ function menu_cursor_right(pindex)
       storage.players[pindex].item_selector.index =
          math.min(#storage.players[pindex].item_cache, storage.players[pindex].item_selector.index + 1)
       read_item_selector_slot(pindex)
-   elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-      --Move along a row in a building inventory
-      if storage.players[pindex].building.sector <= #storage.players[pindex].building.sectors then
-         --Most building sectors, e.g. chest inventories
-         if
-            storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory == nil
-            or #storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory < 1
-         then
-            Speech.speak(pindex, { "fa.blank-sector" })
-            return
-         end
-         sounds.play_menu_move(pindex)
-         local row_length = storage.players[pindex].preferences.building_inventory_row_length
-         if
-            #storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory > row_length
-         then
-            storage.players[pindex].building.index = storage.players[pindex].building.index + 1
-            if storage.players[pindex].building.index % row_length == 1 then
-               --Wrap back around to the start of this row
-               sounds.play_menu_wrap(pindex)
-               storage.players[pindex].building.index = storage.players[pindex].building.index - row_length
-            end
-         else
-            storage.players[pindex].building.index = storage.players[pindex].building.index + 1
-            if
-               storage.players[pindex].building.index
-               > #storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory
-            then
-               --Wrap around to the start of the single-row inventory
-               sounds.play_menu_wrap(pindex)
-               storage.players[pindex].building.index = 1
-            end
-         end
-         BuildingVehicleSectors.read_sector_slot(pindex, false)
-      elseif storage.players[pindex].building.sector_name == "player inventory from building" then
-         sounds.play_menu_move(pindex)
-         storage.players[pindex].inventory.index = storage.players[pindex].inventory.index + 1
-         if storage.players[pindex].inventory.index % 10 == 1 then
-            storage.players[pindex].inventory.index = storage.players[pindex].inventory.index - 10
-            sounds.play_menu_wrap(pindex)
-         end
-         read_inventory_slot(pindex)
-      else
-         if storage.players[pindex].building.recipe_selection then
-            --Recipe selection
-            if storage.players[pindex].building.recipe_selection then
-               sounds.play_menu_move(pindex)
-
-               storage.players[pindex].building.index = storage.players[pindex].building.index + 1
-               if
-                  storage.players[pindex].building.index
-                  > #storage.players[pindex].building.recipe_list[storage.players[pindex].building.category]
-               then
-                  storage.players[pindex].building.index = 1
-                  sounds.play_menu_wrap(pindex)
-               end
-            end
-            BuildingVehicleSectors.read_building_recipe(pindex)
-         end
-      end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
-      local warnings = {}
-      if storage.players[pindex].warnings.sector == 1 then
-         warnings = storage.players[pindex].warnings.short.warnings
-      elseif storage.players[pindex].warnings.sector == 2 then
-         warnings = storage.players[pindex].warnings.medium.warnings
-      elseif storage.players[pindex].warnings.sector == 3 then
-         warnings = storage.players[pindex].warnings.long.warnings
-      end
-      if warnings[storage.players[pindex].warnings.category] ~= nil then
-         local ents = warnings[storage.players[pindex].warnings.category].ents
-         if storage.players[pindex].warnings.index < #ents then
-            storage.players[pindex].warnings.index = storage.players[pindex].warnings.index + 1
-            sounds.play_menu_move(pindex)
-         end
-      end
-      Warnings.read_warnings_slot(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
-      TravelTools.fast_travel_menu_right(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.SIGNAL_SELECTOR) then
-      CircuitNetworks.signal_selector_signal_next(pindex)
-      CircuitNetworks.read_selected_signal_slot(pindex, "")
    end
 end
 
@@ -1135,7 +766,7 @@ local function move_characters(event)
       local vp = Viewpoint.get_viewpoint(pindex)
       local cursor_pos = vp:get_cursor_pos()
 
-      if vp:get_cursor_enabled() or router:is_ui_open() then
+      if vp:get_cursor_enabled() then
          local p = game.get_player(pindex)
          -- Careful! You have to write a table for the game to pick it up.
          if p.character then
@@ -1151,7 +782,7 @@ local function move_characters(event)
          --Force the mouse pointer to the mod cursor if there is an item in hand
          --(so that the game does not make a mess when you left click while the cursor is actually locked)
          local stack = game.get_player(pindex).cursor_stack
-         if not router:is_ui_open() and stack and stack.valid_for_read then
+         if stack and stack.valid_for_read then
             if
                stack.prototype.place_result ~= nil
                or stack.prototype.place_as_tile_result ~= nil
@@ -1314,7 +945,7 @@ EventManager.on_event(defines.events.on_player_driving_changed_state, function(e
          storage.players[pindex].last_vehicle.train.manual_mode = true
       end
       Teleport.teleport_to_closest(pindex, storage.players[pindex].last_vehicle.position, true, true)
-      if router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then SpidertronMenuUi.spidertron_menu:close(pindex, false) end
+      SpidertronMenuUi.spidertron_menu:close(pindex, false)
    else
       Speech.speak(pindex, { "fa.driving-state-changed" })
    end
@@ -1337,50 +968,7 @@ EventManager.on_event(defines.events.on_picked_up_item, function(event, pindex)
    storage.players[pindex].last_item_picked_up = event.item_stack.name
 end)
 
-function close_menu_resets(pindex)
-   local p = game.get_player(pindex)
-   local router = UiRouter.get_router(pindex)
-
-   if router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
-      TravelTools.fast_travel_menu_close(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then
-      SpidertronMenuUi.spidertron_menu:close(pindex, false)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.ROBOPORT) then
-      RoboportMenuUi.roboport_menu:close(pindex, false)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT) then
-      BlueprintsMenu.blueprint_menu_tabs:close(pindex, false)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
-      Blueprints.blueprint_book_menu_close(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.CIRCUIT_NETWORK) then
-      CircuitNetworks.circuit_network_menu_close(pindex, false)
-   end
-
-   if p.gui.screen["cursor-jump"] ~= nil then p.gui.screen["cursor-jump"].destroy() end
-
-   --Stop any enabled mouse entity selection
-   if storage.players[pindex].vanilla_mode ~= true then
-      game.get_player(pindex).game_view_settings.update_entity_selection = false
-   end
-
-   --Reset unconfirmed actions
-   storage.players[pindex].confirm_action_tick = 0
-   router:close_ui()
-
-   storage.players[pindex].item_selection = false
-   storage.players[pindex].item_cache = {}
-   storage.players[pindex].item_selector = { index = 0, group = 0, subgroup = 0 }
-   storage.players[pindex].building = {
-      index = 0,
-      ent = nil,
-      sectors = nil,
-      sector = 0,
-      recipe_selection = false,
-      item_selection = false,
-      category = 0,
-      recipe = nil,
-      recipe_list = nil,
-   }
-end
+-- [UI CHECKS REMOVED] close_menu_resets function removed - menus handled by new UI system
 
 --Quickbar event handlers
 local quickbar_get_events = {}
@@ -1617,11 +1205,9 @@ EventManager.on_event(defines.events.on_player_cursor_stack_changed, function(ev
    -- As a special case: blueprint menus will end up pointing at the wrong
    -- blueprint if not closed here, since the only real unique identifier right
    -- now is the player's hand.
-   if router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT) then BlueprintsMenu.blueprint_menu_tabs:close(pindex) end
+   BlueprintsMenu.blueprint_menu_tabs:close(pindex)
 
-   if router:is_ui_one_of({ UiRouter.UI_NAMES.BLUEPRINT, UiRouter.UI_NAMES.BLUEPRINT_BOOK }) then
-      close_menu_resets(pindex)
-   end
+   -- [UI CHECKS REMOVED] close_menu_resets call removed
    if storage.players[pindex].previous_hand_item_name ~= new_item_name then
       storage.players[pindex].previous_hand_item_name = new_item_name
       --storage.players[pindex].lag_building_direction = true
@@ -1735,24 +1321,18 @@ end)
 EventManager.on_event(defines.events.on_gui_closed, function(event, pindex)
    local router = UiRouter.get_router(pindex)
 
-   --Other resets
-   if router:is_ui_open() then
-      if false then
-         -- Removed INVENTORY UI check
-      elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) and event.element ~= nil then
-         event.element.destroy()
-      end
-      router:close_ui()
-      storage.players[pindex].item_selection = false
-      storage.players[pindex].item_cache = {}
-      storage.players[pindex].item_selector = {
-         index = 0,
-         group = 0,
-         subgroup = 0,
-      }
-      storage.players[pindex].building.item_selection = false
-      close_menu_resets(pindex)
-   end
+   --Other resets - now executed unconditionally
+   if event.element ~= nil then event.element.destroy() end
+   router:close_ui()
+   storage.players[pindex].item_selection = false
+   storage.players[pindex].item_cache = {}
+   storage.players[pindex].item_selector = {
+      index = 0,
+      group = 0,
+      subgroup = 0,
+   }
+   storage.players[pindex].building.item_selection = false
+   -- [UI CHECKS REMOVED] close_menu_resets call removed
 end)
 
 function fix_walk(pindex)
@@ -1812,107 +1392,6 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
       --Destroy text fields
       if p.gui.screen["train-limit-edit"] ~= nil then p.gui.screen["train-limit-edit"].destroy() end
       if p.opened ~= nil then p.opened = nil end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.CIRCUIT_NETWORK) then
-      --Take the constant number
-      local result = event.element.text
-      if result ~= nil and result ~= "" then
-         local constant = tonumber(result)
-         local valid_number = constant ~= nil
-         --Apply the valid number
-         if valid_number then
-            if storage.players[pindex].signal_selector.ent.type == "constant-combinator" then
-               --Constant combinators (set last signal value)
-               local success = CircuitNetworks.constant_combinator_set_last_signal_count(
-                  constant,
-                  storage.players[pindex].signal_selector.ent,
-                  pindex
-               )
-               if success then
-                  Speech.speak(pindex, { "fa.signal-set", result })
-               else
-                  Speech.speak(pindex, { "fa.error-no-signals-found" })
-               end
-            else
-               --Other devices (set enabled condition)
-               local control = storage.players[pindex].signal_selector.ent.get_control_behavior()
-               local circuit_condition = control.circuit_condition
-               local cond = control.circuit_condition
-               cond.second_signal = nil --{name = nil, type = signal_type}
-               cond.constant = constant
-               circuit_condition = cond
-               storage.players[pindex].signal_selector.ent.get_control_behavior().circuit_condition = circuit_condition
-               Speech.speak(
-                  pindex,
-                  "Set "
-                     .. result
-                     .. ", condition now checks if "
-                     .. CircuitNetworks.read_circuit_condition(
-                        pindex,
-                        storage.players[pindex].signal_selector.ent,
-                        true
-                     )
-               )
-            end
-         else
-            Speech.speak(pindex, { "fa.invalid-input" })
-         end
-      else
-         Speech.speak(pindex, { "fa.invalid-input" })
-      end
-      event.element.destroy()
-      storage.players[pindex].signal_selector = nil
-      --Set the player menu tracker to none
-      router:close_ui()
-      --play sound
-      sounds.play_close_inventory(p.index)
-
-      --Destroy text fields
-      if p.gui.screen["circuit-networks-textfield"] ~= nil then p.gui.screen["circuit-networks-textfield"].destroy() end
-      if p.opened ~= nil then p.opened = nil end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
-      --Edit a travel point
-      local result = event.element.text
-      if result == nil or result == "" then result = "blank" end
-      if storage.players[pindex].travel.creating then
-         --Create new point
-         storage.players[pindex].travel.creating = false
-         table.insert(storage.players[pindex].travel, {
-            name = result,
-            position = FaUtils.center_of_tile(storage.players[pindex].position),
-            description = "No description",
-         })
-         table.sort(storage.players[pindex].travel, function(k1, k2)
-            return k1.name < k2.name
-         end)
-         Speech.speak(
-            pindex,
-            "Fast travel point "
-               .. result
-               .. " created at "
-               .. math.floor(storage.players[pindex].position.x)
-               .. ", "
-               .. math.floor(storage.players[pindex].position.y)
-         )
-      elseif storage.players[pindex].travel.renaming then
-         --Renaming selected point
-         storage.players[pindex].travel.renaming = false
-         storage.players[pindex].travel[storage.players[pindex].travel.index.y].name = result
-         TravelTools.read_fast_travel_slot(pindex)
-      elseif storage.players[pindex].travel.describing then
-         --Save the new description
-         storage.players[pindex].travel.describing = false
-         storage.players[pindex].travel[storage.players[pindex].travel.index.y].description = result
-         Speech.speak(pindex, {
-            "fa.travel-description-updated",
-            storage.players[pindex].travel[storage.players[pindex].travel.index.y].name,
-         })
-      end
-      storage.players[pindex].travel.index.x = 1
-      event.element.destroy()
-   elseif false then -- spider_menu.renaming removed - textbox functionality not implemented
-      -- Renaming functionality removed - handled by new UI system
-      event.element.destroy()
-      SpidertronMenuUi.spidertron_menu:close(pindex, false)
    elseif storage.players[pindex].roboport_menu.renaming == true then
       storage.players[pindex].roboport_menu.renaming = false
       local result = event.element.text
@@ -2088,7 +1567,6 @@ EventManager.on_event(defines.events.on_gui_opened, function(event, pindex)
    --GUI mismatch checks
    if
       event.gui_type == defines.gui_type.controller
-      and not router:is_ui_open()
       and event.tick - storage.players[pindex].last_menu_toggle_tick < 5
    then
       --If closing another menu toggles the player GUI screen, we close this screen
@@ -2484,7 +1962,7 @@ local function clear_fa_gui(pindex)
    for _, elem in ipairs(FaUtils.get_iterable_array(player.gui.children)) do
       if elem.get_mod() == "FactorioAccess" or elem.get_mod() == nil then
          elem.clear()
-         close_menu_resets(pindex)
+         -- [UI CHECKS REMOVED] close_menu_resets call removed
       end
    end
 end
@@ -2555,9 +2033,9 @@ local function move(direction, pindex, nudged)
          else
             local tile = game.get_player(pindex).surface.get_tile(new_pos.x, new_pos.y)
             local sound_path = "tile-walking/" .. tile.name
-            if helpers.is_valid_sound_path(sound_path) and not router:is_ui_open() then
+            if helpers.is_valid_sound_path(sound_path) then
                sounds.play_tile_walking(pindex, tile.name)
-            elseif not router:is_ui_open() then
+            else
                sounds.play_tile_walking(pindex)
             end
          end
@@ -2575,7 +2053,7 @@ local function move(direction, pindex, nudged)
       end
 
       --Play a sound for audio ruler alignment (telestep moved)
-      if not router:is_ui_open() then Rulers.update_from_cursor(pindex) end
+      Rulers.update_from_cursor(pindex)
    else
       --New direction: Turn character for smooth walking
       storage.players[pindex].player_direction = direction
@@ -2616,7 +2094,7 @@ local function move(direction, pindex, nudged)
       end
 
       --Play a sound for audio ruler alignment (telestep turned)
-      if not router:is_ui_open() then Rulers.update_from_cursor(pindex) end
+      Rulers.update_from_cursor(pindex)
    end
 
    --Update cursor highlight
@@ -2718,10 +2196,8 @@ local function move_key(direction, event, force_single_tile)
    --Save the key press event
    BumpDetection.save_key_press(event.player_index, direction, event.tick)
 
-   if router:is_ui_open() then
-      -- Menus: move menu cursor
-      menu_cursor_move(direction, pindex)
-   elseif cursor_enabled then
+   -- [UI CHECKS REMOVED] Assume never in menu (new UI intercepts first)
+   if cursor_enabled then
       -- Cursor mode: Move cursor on map
       cursor_mode_move(direction, pindex, force_single_tile)
    else
@@ -2733,15 +2209,15 @@ local function move_key(direction, event, force_single_tile)
    if storage.players[pindex].bp_selecting then sounds.play_cursor_moved_while_selecting(pindex) end
 
    --Play a sound for audio ruler alignment (cursor mode moved)
-   if not router:is_ui_open() and cursor_enabled then Rulers.update_from_cursor(pindex) end
+   if cursor_enabled then Rulers.update_from_cursor(pindex) end
 
    --Handle vehicle behavior
    if p.vehicle then
       if p.vehicle.type == "car" then
          --Deactivate (and stop) cars when in a menu
-         if cursor_enabled or router:is_ui_open() then p.vehicle.active = false end
+         if cursor_enabled then p.vehicle.active = false end
          --Re-activate inactive cars when in no menu
-         if not cursor_enabled and not router:is_ui_open() and p.vehicle.active == false then
+         if not cursor_enabled and p.vehicle.active == false then
             p.vehicle.active = true
             p.vehicle.speed = 0
          end
@@ -2800,7 +2276,7 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
       local vp = Viewpoint.get_viewpoint(pindex)
-      if not router:is_ui_open() and vp:get_cursor_enabled() then move_key(dirs.north, event, true) end
+      if vp:get_cursor_enabled() then move_key(dirs.north, event, true) end
    end
 )
 
@@ -2810,7 +2286,7 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
       local vp = Viewpoint.get_viewpoint(pindex)
-      if not router:is_ui_open() and vp:get_cursor_enabled() then move_key(dirs.west, event, true) end
+      if vp:get_cursor_enabled() then move_key(dirs.west, event, true) end
    end
 )
 
@@ -2820,7 +2296,7 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
       local vp = Viewpoint.get_viewpoint(pindex)
-      if not router:is_ui_open() and vp:get_cursor_enabled() then move_key(dirs.south, event, true) end
+      if vp:get_cursor_enabled() then move_key(dirs.south, event, true) end
    end
 )
 
@@ -2830,7 +2306,7 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
       local vp = Viewpoint.get_viewpoint(pindex)
-      if not router:is_ui_open() and vp:get_cursor_enabled() then move_key(dirs.east, event, true) end
+      if vp:get_cursor_enabled() then move_key(dirs.east, event, true) end
    end
 )
 
@@ -3349,189 +2825,173 @@ local function read_coords(pindex, start_phrase)
    local router = UiRouter.get_router(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
 
-   if
-      router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
-      and storage.players[pindex].building.recipe_list ~= nil
-   then
-      offset = 1
-   end
-   if not router:is_ui_open() or router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
-      local position = game.get_player(pindex).position
-      local marked_pos = { x = position.x, y = position.y }
-      if storage.players[pindex].vanilla_mode then vp:set_cursor_pos(marked_pos) end
-      if game.get_player(pindex).driving then
-         --Give vehicle coords and orientation and speed --laterdo find exact speed coefficient
-         local vehicle = game.get_player(pindex).vehicle
-         assert(vehicle ~= nil) -- When driving is true, vehicle is guaranteed to exist
-         local speed = vehicle.speed * 215
-         local message = Speech.new()
+   if storage.players[pindex].building.recipe_list ~= nil then offset = 1 end
+   -- UI check removed, executing unconditionally
+   local position = game.get_player(pindex).position
+   local marked_pos = { x = position.x, y = position.y }
+   if storage.players[pindex].vanilla_mode then vp:set_cursor_pos(marked_pos) end
+   if game.get_player(pindex).driving then
+      --Give vehicle coords and orientation and speed --laterdo find exact speed coefficient
+      local vehicle = game.get_player(pindex).vehicle
+      assert(vehicle ~= nil) -- When driving is true, vehicle is guaranteed to exist
+      local speed = vehicle.speed * 215
+      local message = Speech.new()
 
-         if start_phrase then message:fragment(start_phrase) end
+      if start_phrase then message:fragment(start_phrase) end
 
-         if vehicle.type ~= "spider-vehicle" then
-            if speed > 0 then
-               message:fragment({
-                  "fa.vehicle-heading",
-                  Localising.get_localised_name_with_fallback(vehicle),
-                  FaUtils.get_heading_info(vehicle),
-                  tostring(math.floor(speed)),
-               })
-            elseif speed < 0 then
-               message:fragment({
-                  "fa.vehicle-reversing",
-                  Localising.get_localised_name_with_fallback(vehicle),
-                  FaUtils.get_heading_info(vehicle),
-                  tostring(math.floor(-speed)),
-               })
-            else
-               message:fragment({
-                  "fa.vehicle-parked",
-                  Localising.get_localised_name_with_fallback(vehicle),
-                  FaUtils.get_heading_info(vehicle),
-               })
-            end
-         else
+      if vehicle.type ~= "spider-vehicle" then
+         if speed > 0 then
             message:fragment({
-               "fa.vehicle-spider-moving",
+               "fa.vehicle-heading",
                Localising.get_localised_name_with_fallback(vehicle),
+               FaUtils.get_heading_info(vehicle),
                tostring(math.floor(speed)),
             })
-         end
-
-         message:fragment({
-            "fa.vehicle-position-in",
-            Localising.get_localised_name_with_fallback(vehicle),
-            tostring(math.floor(vehicle.position.x)),
-            tostring(math.floor(vehicle.position.y)),
-         })
-
-         Speech.speak(pindex, message:build())
-      else
-         --Simply give coords (floored for the readout, extra precision for the console)
-         local location = FaUtils.get_entity_part_at_cursor(pindex)
-         local message = Speech.new()
-
-         if start_phrase then message:fragment(start_phrase) end
-
-         if location and location ~= " " then
+         elseif speed < 0 then
             message:fragment({
-               "fa.coordinates-at-with-location",
-               "",
-               location,
-               tostring(math.floor(marked_pos.x)),
-               tostring(math.floor(marked_pos.y)),
+               "fa.vehicle-reversing",
+               Localising.get_localised_name_with_fallback(vehicle),
+               FaUtils.get_heading_info(vehicle),
+               tostring(math.floor(-speed)),
             })
          else
             message:fragment({
-               "fa.coordinates-at",
-               "",
-               tostring(math.floor(marked_pos.x)),
-               tostring(math.floor(marked_pos.y)),
+               "fa.vehicle-parked",
+               Localising.get_localised_name_with_fallback(vehicle),
+               FaUtils.get_heading_info(vehicle),
             })
          end
-
-         -- Also print to console with extra precision
-         game.get_player(pindex).print(
-            (start_phrase or "")
-               .. " at "
-               .. math.floor(marked_pos.x)
-               .. ", "
-               .. math.floor(marked_pos.y)
-               .. "\n ("
-               .. math.floor(marked_pos.x * 10) / 10
-               .. ", "
-               .. math.floor(marked_pos.y * 10) / 10
-               .. ")",
-            { volume_modifier = 0 }
-         )
-         --Draw the point
-         rendering.draw_circle({
-            color = { 1.0, 0.2, 0.0 },
-            radius = 0.1,
-            width = 5,
-            target = marked_pos,
-            surface = game.get_player(pindex).surface,
-            time_to_live = 180,
+      else
+         message:fragment({
+            "fa.vehicle-spider-moving",
+            Localising.get_localised_name_with_fallback(vehicle),
+            tostring(math.floor(speed)),
          })
-
-         --If there is a build preview, give its dimensions and which way they extend
-         local stack = game.get_player(pindex).cursor_stack
-         local cursor_enabled = vp:get_cursor_enabled()
-         if
-            stack
-            and stack.valid_for_read
-            and stack.valid
-            and stack.prototype.place_result ~= nil
-            and (stack.prototype.place_result.tile_height > 1 or stack.prototype.place_result.tile_width > 1)
-         then
-            local dir = storage.players[pindex].building_direction
-            turn_to_cursor_direction_cardinal(pindex)
-            local p_dir = storage.players[pindex].player_direction
-
-            message:fragment({ "fa.build-preview-intro" })
-
-            -- Width dimension
-            local width_tiles
-            if dir == dirs.north or dir == dirs.south then
-               width_tiles = stack.prototype.place_result.tile_width
-            else
-               width_tiles = stack.prototype.place_result.tile_height
-            end
-            message:fragment({ "fa.build-preview-wide", tostring(width_tiles) })
-
-            -- Width direction
-            if cursor_enabled or p_dir == dirs.east or p_dir == dirs.south or p_dir == dirs.north then
-               message:fragment({ "fa.build-preview-east" })
-            elseif not cursor_enabled and p_dir == dirs.west then
-               message:fragment({ "fa.build-preview-west" })
-            end
-
-            message:fragment({ "fa.build-preview-and" })
-
-            -- Height dimension
-            local height_tiles
-            if dir == dirs.north or dir == dirs.south then
-               height_tiles = stack.prototype.place_result.tile_height
-            else
-               height_tiles = stack.prototype.place_result.tile_width
-            end
-            message:fragment({ "fa.build-preview-high", tostring(height_tiles) })
-
-            -- Height direction
-            if cursor_enabled or p_dir == dirs.east or p_dir == dirs.south or p_dir == dirs.west then
-               message:fragment({ "fa.build-preview-south" })
-            elseif not cursor_enabled and p_dir == dirs.north then
-               message:fragment({ "fa.build-preview-north" })
-            end
-         elseif
-            stack
-            and stack.valid_for_read
-            and stack.valid
-            and stack.is_blueprint
-            and stack.is_blueprint_setup()
-         then
-            --Blueprints have their own data
-            local left_top, right_bottom, build_pos = Blueprints.get_blueprint_corners(pindex, false)
-            local bp_dim_1 = right_bottom.x - left_top.x
-            local bp_dim_2 = right_bottom.y - left_top.y
-            message:fragment({ "fa.blueprint-preview", tostring(bp_dim_1), tostring(bp_dim_2) })
-         elseif stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result ~= nil then
-            --Paving preview size
-            local size = vp:get_cursor_size() * 2 + 1
-            if cursor_enabled and storage.players[pindex].preferences.tiles_placed_from_northwest_corner then
-               message:fragment({ "fa.paving-preview-northwest", tostring(size), tostring(size) })
-            else
-               message:fragment({ "fa.paving-preview-centered", tostring(size), tostring(size) })
-            end
-         end
-         Speech.speak(pindex, message:build())
       end
-   elseif false then
-      -- Removed INVENTORY UI check
-   elseif
-      router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
-      and storage.players[pindex].building.recipe_selection == false
-   then
+
+      message:fragment({
+         "fa.vehicle-position-in",
+         Localising.get_localised_name_with_fallback(vehicle),
+         tostring(math.floor(vehicle.position.x)),
+         tostring(math.floor(vehicle.position.y)),
+      })
+
+      Speech.speak(pindex, message:build())
+   else
+      --Simply give coords (floored for the readout, extra precision for the console)
+      local location = FaUtils.get_entity_part_at_cursor(pindex)
+      local message = Speech.new()
+
+      if start_phrase then message:fragment(start_phrase) end
+
+      if location and location ~= " " then
+         message:fragment({
+            "fa.coordinates-at-with-location",
+            "",
+            location,
+            tostring(math.floor(marked_pos.x)),
+            tostring(math.floor(marked_pos.y)),
+         })
+      else
+         message:fragment({
+            "fa.coordinates-at",
+            "",
+            tostring(math.floor(marked_pos.x)),
+            tostring(math.floor(marked_pos.y)),
+         })
+      end
+
+      -- Also print to console with extra precision
+      game.get_player(pindex).print(
+         (start_phrase or "")
+            .. " at "
+            .. math.floor(marked_pos.x)
+            .. ", "
+            .. math.floor(marked_pos.y)
+            .. "\n ("
+            .. math.floor(marked_pos.x * 10) / 10
+            .. ", "
+            .. math.floor(marked_pos.y * 10) / 10
+            .. ")",
+         { volume_modifier = 0 }
+      )
+      --Draw the point
+      rendering.draw_circle({
+         color = { 1.0, 0.2, 0.0 },
+         radius = 0.1,
+         width = 5,
+         target = marked_pos,
+         surface = game.get_player(pindex).surface,
+         time_to_live = 180,
+      })
+
+      --If there is a build preview, give its dimensions and which way they extend
+      local stack = game.get_player(pindex).cursor_stack
+      local cursor_enabled = vp:get_cursor_enabled()
+      if
+         stack
+         and stack.valid_for_read
+         and stack.valid
+         and stack.prototype.place_result ~= nil
+         and (stack.prototype.place_result.tile_height > 1 or stack.prototype.place_result.tile_width > 1)
+      then
+         local dir = storage.players[pindex].building_direction
+         turn_to_cursor_direction_cardinal(pindex)
+         local p_dir = storage.players[pindex].player_direction
+
+         message:fragment({ "fa.build-preview-intro" })
+
+         -- Width dimension
+         local width_tiles
+         if dir == dirs.north or dir == dirs.south then
+            width_tiles = stack.prototype.place_result.tile_width
+         else
+            width_tiles = stack.prototype.place_result.tile_height
+         end
+         message:fragment({ "fa.build-preview-wide", tostring(width_tiles) })
+
+         -- Width direction
+         if cursor_enabled or p_dir == dirs.east or p_dir == dirs.south or p_dir == dirs.north then
+            message:fragment({ "fa.build-preview-east" })
+         elseif not cursor_enabled and p_dir == dirs.west then
+            message:fragment({ "fa.build-preview-west" })
+         end
+
+         message:fragment({ "fa.build-preview-and" })
+
+         -- Height dimension
+         local height_tiles
+         if dir == dirs.north or dir == dirs.south then
+            height_tiles = stack.prototype.place_result.tile_height
+         else
+            height_tiles = stack.prototype.place_result.tile_width
+         end
+         message:fragment({ "fa.build-preview-high", tostring(height_tiles) })
+
+         -- Height direction
+         if cursor_enabled or p_dir == dirs.east or p_dir == dirs.south or p_dir == dirs.west then
+            message:fragment({ "fa.build-preview-south" })
+         elseif not cursor_enabled and p_dir == dirs.north then
+            message:fragment({ "fa.build-preview-north" })
+         end
+      elseif stack and stack.valid_for_read and stack.valid and stack.is_blueprint and stack.is_blueprint_setup() then
+         --Blueprints have their own data
+         local left_top, right_bottom, build_pos = Blueprints.get_blueprint_corners(pindex, false)
+         local bp_dim_1 = right_bottom.x - left_top.x
+         local bp_dim_2 = right_bottom.y - left_top.y
+         message:fragment({ "fa.blueprint-preview", tostring(bp_dim_1), tostring(bp_dim_2) })
+      elseif stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result ~= nil then
+         --Paving preview size
+         local size = vp:get_cursor_size() * 2 + 1
+         if cursor_enabled and storage.players[pindex].preferences.tiles_placed_from_northwest_corner then
+            message:fragment({ "fa.paving-preview-northwest", tostring(size), tostring(size) })
+         else
+            message:fragment({ "fa.paving-preview-centered", tostring(size), tostring(size) })
+         end
+      end
+      Speech.speak(pindex, message:build())
+   end
+   if storage.players[pindex].building.recipe_selection == false then
       --Give slot coords (chest/building inventory)
       local x = -1 --Col number
       local y = -1 --Row number
@@ -3546,15 +3006,8 @@ local function read_coords(pindex, start_phrase)
       if result then msg:fragment(result) end
       msg:fragment({ "fa.building-slot-position", tostring(x), tostring(y) })
       Speech.speak(pindex, msg:build())
-   elseif false then
-      -- Removed CRAFTING UI check
-   elseif false then
-      -- Removed TECHNOLOGY UI check
    end
-   if
-      router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
-      and storage.players[pindex].building.recipe_selection
-   then
+   if storage.players[pindex].building.recipe_selection then
       --Read recipe ingredients / products (building recipe selection)
       local recipe =
          storage.players[pindex].building.recipe_list[storage.players[pindex].building.category][storage.players[pindex].building.index]
@@ -3607,30 +3060,26 @@ local function kb_read_cursor_distance_and_direction(event)
    local router = UiRouter.get_router(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
    local cursor_pos = vp:get_cursor_pos()
-   if false then
-      -- Removed CRAFTING UI check
-   else
-      --Read where the cursor is with respect to the player, e.g. "at 5 west"
-      local dir_dist = FaUtils.dir_dist_locale(storage.players[pindex].position, cursor_pos)
-      local cursor_location_description = "At"
-      local cursor_production = " "
-      local cursor_description_of = " "
-      local result = { "fa.thing-producing-listpos-dirdist", cursor_location_description }
-      table.insert(result, cursor_production) --no production
-      table.insert(result, cursor_description_of) --listpos
-      table.insert(result, dir_dist)
-      Speech.speak(pindex, result)
-      game.get_player(pindex).print(result, { volume_modifier = 0 })
-      --Draw the point
-      rendering.draw_circle({
-         color = { 1, 0.2, 0 },
-         radius = 0.1,
-         width = 5,
-         target = cursor_pos,
-         surface = game.get_player(pindex).surface,
-         time_to_live = 180,
-      })
-   end
+   --Read where the cursor is with respect to the player, e.g. "at 5 west"
+   local dir_dist = FaUtils.dir_dist_locale(storage.players[pindex].position, cursor_pos)
+   local cursor_location_description = "At"
+   local cursor_production = " "
+   local cursor_description_of = " "
+   local result = { "fa.thing-producing-listpos-dirdist", cursor_location_description }
+   table.insert(result, cursor_production) --no production
+   table.insert(result, cursor_description_of) --listpos
+   table.insert(result, dir_dist)
+   Speech.speak(pindex, result)
+   game.get_player(pindex).print(result, { volume_modifier = 0 })
+   --Draw the point
+   rendering.draw_circle({
+      color = { 1, 0.2, 0 },
+      radius = 0.1,
+      width = 5,
+      target = cursor_pos,
+      surface = game.get_player(pindex).surface,
+      time_to_live = 180,
+   })
 end
 
 EventManager.on_event(
@@ -3687,7 +3136,6 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
 
-      if false then return end -- Removed CRAFTING UI check
       kb_read_cursor_distance_vector(event)
    end
 )
@@ -3770,7 +3218,7 @@ EventManager.on_event(
       local router = UiRouter.get_router(pindex)
       local p = game.get_player(pindex)
 
-      if router and not router:is_ui_open() and Viewpoint.get_viewpoint(pindex):get_cursor_enabled() then
+      if router and Viewpoint.get_viewpoint(pindex):get_cursor_enabled() then
          kb_jump_to_player(event)
       elseif p.driving and (p.vehicle.train ~= nil or p.vehicle.type == "car") then
          kb_read_driving_structure_ahead(event)
@@ -3962,7 +3410,7 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
 
-      if not router:is_ui_open() then toggle_cursor_mode(pindex, false) end
+      toggle_cursor_mode(pindex, false)
    end
 )
 
@@ -4017,7 +3465,7 @@ EventManager.on_event(
    "fa-s-i",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      if UiRouter.get_router(pindex):is_ui_open() then return end
+      -- UI check removed
       adjust_cursor_size(pindex, 1)
    end
 )
@@ -4027,7 +3475,7 @@ EventManager.on_event(
    "fa-c-i",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      if UiRouter.get_router(pindex):is_ui_open() then return end
+      -- UI check removed
       adjust_cursor_size(pindex, -1)
    end
 )
@@ -4038,19 +3486,12 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
 
-      if router:is_ui_open() then return end
+      -- [UI CHECKS REMOVED] Not in menu, execute remote view toggle
       toggle_remote_view(pindex)
    end
 )
 
----@param event EventData.CustomInputEvent
----@param amount integer Positive to increase, negative to decrease
-local function kb_adjust_inventory_bar(event, amount)
-   local pindex = event.player_index
-   local ent = game.get_player(pindex).opened
-   local result = BuildingVehicleSectors.add_to_inventory_bar(ent, amount)
-   Speech.speak(pindex, result)
-end
+-- [UI CHECKS REMOVED] kb_adjust_inventory_bar removed - only worked in building/vehicle menus
 
 EventManager.on_event(
    "fa-pageup",
@@ -4059,9 +3500,8 @@ EventManager.on_event(
       local router = UiRouter.get_router(pindex)
       local p = game.get_player(pindex)
       local ent = p.opened
-      if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-         kb_adjust_inventory_bar(event, 1)
-      elseif ent and ent.type == "inserter" then
+      -- [UI CHECKS REMOVED] Check entity type
+      if ent and ent.type == "inserter" then
          local result = BuildingVehicleSectors.inserter_hand_stack_size_up(ent)
          Speech.speak(pindex, result)
       else
@@ -4074,12 +3514,8 @@ EventManager.on_event(
    "fa-s-pageup",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-      if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-         kb_adjust_inventory_bar(event, 5)
-      else
-         ScannerEntrypoint.move_within_subcategory(pindex, -1)
-      end
+      -- [UI CHECKS REMOVED] Inventory bar adjustment only worked in menus, now dead code
+      ScannerEntrypoint.move_within_subcategory(pindex, -1)
    end
 )
 
@@ -4087,12 +3523,8 @@ EventManager.on_event(
    "fa-c-pageup",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-      if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-         kb_adjust_inventory_bar(event, 100)
-      else
-         ScannerEntrypoint.move_category(pindex, -1)
-      end
+      -- [UI CHECKS REMOVED] Inventory bar adjustment only worked in menus, now dead code
+      ScannerEntrypoint.move_category(pindex, -1)
    end
 )
 
@@ -4103,9 +3535,8 @@ EventManager.on_event(
       local router = UiRouter.get_router(pindex)
       local p = game.get_player(pindex)
       local ent = p.opened
-      if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-         kb_adjust_inventory_bar(event, -1)
-      elseif ent and ent.type == "inserter" then
+      -- [UI CHECKS REMOVED] Check entity type
+      if ent and ent.type == "inserter" then
          local result = BuildingVehicleSectors.inserter_hand_stack_size_down(ent)
          Speech.speak(pindex, result)
       else
@@ -4118,12 +3549,8 @@ EventManager.on_event(
    "fa-s-pagedown",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-      if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-         kb_adjust_inventory_bar(event, -5)
-      else
-         ScannerEntrypoint.move_within_subcategory(pindex, 1)
-      end
+      -- [UI CHECKS REMOVED] Inventory bar adjustment only worked in menus, now dead code
+      ScannerEntrypoint.move_within_subcategory(pindex, 1)
    end
 )
 
@@ -4131,12 +3558,8 @@ EventManager.on_event(
    "fa-c-pagedown",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-      if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-         kb_adjust_inventory_bar(event, -100)
-      else
-         ScannerEntrypoint.move_category(pindex, 1)
-      end
+      -- [UI CHECKS REMOVED] Inventory bar adjustment only worked in menus, now dead code
+      ScannerEntrypoint.move_category(pindex, 1)
    end
 )
 
@@ -4171,76 +3594,43 @@ local function kb_open_circuit_menu(event)
 
    local p = game.get_player(pindex)
    --In a building menu
-   if
-      router:is_ui_one_of({
-         UiRouter.UI_NAMES.BUILDING,
-         UiRouter.UI_NAMES.BUILDING_NO_SECTORS,
-         UiRouter.UI_NAMES.BELT,
-      })
-   then
-      local ent = p.opened
-      if ent == nil or ent.valid == false then
-         Speech.speak(pindex, "Error: Missing building interface")
-         return
-      end
-      if ent.type == "electric-pole" then
-         --Open the menu
-         CircuitNetworks.circuit_network_menu_open(pindex, ent)
-         return
-      elseif ent.type == "constant-combinator" then
-         CircuitNetworks.circuit_network_menu_open(pindex, ent)
-         return
-      elseif ent.type == "arithmetic-combinator" or ent.type == "decider-combinator" then
-         Speech.speak(pindex, "Error: This combinator is not supported")
-         return
-      end
-      --Building has control behavior
-      local control = ent.get_control_behavior()
-      if control == nil then
-         Speech.speak(pindex, "No control behavior for this building")
-         return
-      end
-      --Building has a circuit network
-      local nw1 = control.get_circuit_network(defines.wire_connector_id.circuit_red)
-      local nw2 = control.get_circuit_network(defines.wire_connector_id.circuit_green)
-      if nw1 == nil and nw2 == nil then
-         Speech.speak(pindex, " not connected to a circuit network")
-         return
-      end
-      --Open the menu
-      CircuitNetworks.circuit_network_menu_open(pindex, ent)
-   elseif not router:is_ui_open() then
-      local ent = p.selected or EntitySelection.get_first_ent_at_tile(pindex)
-      if ent == nil or ent.valid == false or (ent.get_control_behavior() == nil and ent.type ~= "electric-pole") then
-         --Sort scan results instead
-         return
-      end
-      --Building has a circuit network
-      p.opened = ent
-      if ent.type == "electric-pole" then
-         --Open the menu
-         CircuitNetworks.circuit_network_menu_open(pindex, ent)
-         return
-      elseif ent.type == "constant-combinator" then
-         CircuitNetworks.circuit_network_menu_open(pindex, ent)
-         return
-      elseif ent.type == "arithmetic-combinator" or ent.type == "decider-combinator" then
-         Speech.speak(pindex, "Error: This combinator is not supported")
-         return
-      end
-      local control = ent.get_control_behavior()
-      local nw1 = control.get_circuit_network(defines.wire_connector_id.circuit_red)
-      local nw2 = control.get_circuit_network(defines.wire_connector_id.circuit_green)
-      if nw1 == nil and nw2 == nil then
-         Speech.speak(
-            pindex,
-            { "fa.entity-not-connected-circuit-network", Localising.get_localised_name_with_fallback(ent) }
-         )
-         return
-      end
-      --Open the menu
-      CircuitNetworks.circuit_network_menu_open(pindex, ent)
+   -- Building UI check removed - handled by new UI system
+   local ent = p.selected or EntitySelection.get_first_ent_at_tile(pindex)
+   if ent == nil or ent.valid == false or (ent.get_control_behavior() == nil and ent.type ~= "electric-pole") then
+      --Sort scan results instead
+      return
    end
+   --Building has a circuit network
+   p.opened = ent
+   if ent.type == "electric-pole" then
+      --Open the menu
+      CircuitNetworks.circuit_network_menu_open(pindex, ent)
+      return
+   elseif ent.type == "constant-combinator" then
+      CircuitNetworks.circuit_network_menu_open(pindex, ent)
+      return
+   elseif ent.type == "arithmetic-combinator" or ent.type == "decider-combinator" then
+      Speech.speak(pindex, "Error: This combinator is not supported")
+      return
+   end
+   --Building has control behavior
+   local control = ent.get_control_behavior()
+   if control == nil then
+      Speech.speak(pindex, "No control behavior for this building")
+      return
+   end
+   --Building has a circuit network
+   local nw1 = control.get_circuit_network(defines.wire_connector_id.circuit_red)
+   local nw2 = control.get_circuit_network(defines.wire_connector_id.circuit_green)
+   if nw1 == nil and nw2 == nil then
+      Speech.speak(
+         pindex,
+         { "fa.entity-not-connected-circuit-network", Localising.get_localised_name_with_fallback(ent) }
+      )
+      return
+   end
+   --Open the menu
+   CircuitNetworks.circuit_network_menu_open(pindex, ent)
 end
 
 EventManager.on_event(
@@ -4289,7 +3679,7 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
 
-      if not router:is_ui_open() then kb_tile_cycle(event) end
+      kb_tile_cycle(event)
    end
 )
 
@@ -4317,17 +3707,10 @@ local function kb_close_menu(event)
    -- PROMPT check removed - it was never opened anyway
    Speech.speak(pindex, "Menu closed.")
 
-   if
-      router:is_ui_one_of({
-         -- Removed INVENTORY, CRAFTING, TECHNOLOGY, CRAFTING_QUEUE checks
-         UiRouter.UI_NAMES.WARNINGS,
-      })
-   then
-      sounds.play_close_inventory(pindex)
-   end
+   -- UI check removed, sound will play from new UI system
 
    storage.players[pindex].last_menu_toggle_tick = tick
-   close_menu_resets(pindex)
+   -- [UI CHECKS REMOVED] close_menu_resets call removed
 end
 
 EventManager.on_event(
@@ -4353,25 +3736,11 @@ local function kb_read_menu_name(event)
 
    local msg = Speech.Speech.new()
 
-   if not router:is_ui_open() then msg:fragment("No menu") end
+   -- UI check removed, executing unconditionally
+   msg:fragment("No menu")
 
-   if router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-      --Name the building
-      local pb = storage.players[pindex].building
-      msg:fragment(pb.ent.name)
-      --Name the sector
-      if pb.sectors and pb.sectors[pb.sector] and pb.sectors[pb.sector].name ~= nil then
-         msg:list_item(pb.sectors[pb.sector].name)
-      elseif storage.players[pindex].building.recipe_selection == true then
-         msg:list_item("recipe selection")
-      elseif storage.players[pindex].building.sector_name == "player inventory from building" then
-         msg:list_item("player inventory")
-      else
-         msg:list_item("other section")
-      end
-   else
-      msg:fragment("Unknown menu")
-   end
+   -- Building/Vehicle UI check removed - handled by new UI system
+   msg:fragment("Unknown menu")
 
    Speech.speak(pindex, msg:build())
 end
@@ -4390,61 +3759,9 @@ local function kb_switch_menu_or_gun(event)
       return
    end
 
-   if router:is_ui_open() then
-      sounds.play_change_menu_tab(pindex)
-      if router:is_ui_one_of({ UiRouter.UI_NAMES.VEHICLE, UiRouter.UI_NAMES.BUILDING }) then
-         storage.players[pindex].building.index = 1
-         storage.players[pindex].building.category = 1
-         storage.players[pindex].building.recipe_selection = false
-
-         storage.players[pindex].building.sector = storage.players[pindex].building.sector + 1 --Change sector
-         storage.players[pindex].building.item_selection = false
-         storage.players[pindex].item_selection = false
-         storage.players[pindex].item_cache = {}
-         storage.players[pindex].item_selector = {
-            index = 0,
-            group = 0,
-            subgroup = 0,
-         }
-
-         if storage.players[pindex].building.sector <= #storage.players[pindex].building.sectors then
-            BuildingVehicleSectors.read_sector_slot(pindex, true)
-            local pb = storage.players[pindex].building
-            storage.players[pindex].building.sector_name = pb.sectors[pb.sector].name
-         elseif storage.players[pindex].building.recipe_list == nil then
-            if storage.players[pindex].building.sector == (#storage.players[pindex].building.sectors + 1) then --Player inventory sector
-               read_inventory_slot(pindex, "Player Inventory, ")
-               storage.players[pindex].building.sector_name = "player inventory from building"
-            else
-               storage.players[pindex].building.sector = 1
-               BuildingVehicleSectors.read_sector_slot(pindex, true)
-               local pb = storage.players[pindex].building
-               storage.players[pindex].building.sector_name = pb.sectors[pb.sector].name
-            end
-         else
-            if storage.players[pindex].building.sector == #storage.players[pindex].building.sectors + 1 then --Recipe selection sector
-               BuildingVehicleSectors.read_building_recipe(pindex, "Select a Recipe, ")
-               storage.players[pindex].building.sector_name = "unloaded recipe selection"
-            elseif storage.players[pindex].building.sector == #storage.players[pindex].building.sectors + 2 then --Player inventory sector
-               read_inventory_slot(pindex, "Player Inventory, ")
-               storage.players[pindex].building.sector_name = "player inventory from building"
-            else
-               storage.players[pindex].building.sector = 1
-               BuildingVehicleSectors.read_sector_slot(pindex, true)
-            end
-         end
-      elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
-         storage.players[pindex].warnings.sector = storage.players[pindex].warnings.sector + 1
-         if storage.players[pindex].warnings.sector > 3 then storage.players[pindex].warnings.sector = 1 end
-         if storage.players[pindex].warnings.sector == 1 then
-            Speech.speak(pindex, { "fa.warnings-short-range", storage.players[pindex].warnings.short.summary })
-         elseif storage.players[pindex].warnings.sector == 2 then
-            Speech.speak(pindex, { "fa.warnings-medium-range", storage.players[pindex].warnings.medium.summary })
-         elseif storage.players[pindex].warnings.sector == 3 then
-            Speech.speak(pindex, { "fa.warnings-long-range", storage.players[pindex].warnings.long.summary })
-         end
-      end
-   end
+   -- UI check removed, executing unconditionally
+   sounds.play_change_menu_tab(pindex)
+   -- Vehicle/Building UI check removed - handled by new UI system
 
    --Gun related changes (this seems to run before the actual switch happens so even when we write the new index, it will change, so we need to be predictive)
    local p = game.get_player(pindex)
@@ -4459,37 +3776,10 @@ local function kb_switch_menu_or_gun(event)
    local result = ""
    local switched_index = -2
 
-   if router:is_ui_open() then
-      --switch_success = swap_weapon_backward(pindex,true)
-      switched_index = swap_weapon_backward(pindex, true)
-      return
-   else
-      switched_index = swap_weapon_forward(pindex, false)
-   end
-
-   --Declare the selected weapon
-   local gun_index = switched_index
-   local ammo_stack = nil
-   local gun_stack = nil
-
-   if gun_index < 1 then
-      result = "No ready weapons"
-   else
-      local ammo_stack = ammo_inv[gun_index]
-      local gun_stack = guns_inv[gun_index]
-      --game.print("print " .. gun_index)--
-      result = {
-         "fa.gun-with-ammo",
-         Localising.get_localised_name_with_fallback(gun_stack),
-         tostring(ammo_stack.count),
-         Localising.get_localised_name_with_fallback(ammo_stack),
-      }
-   end
-
-   if not router:is_ui_open() then
-      --p.play_sound{path = "Inventory-Move"}
-      Speech.speak(pindex, result)
-   end
+   -- UI check removed, executing unconditionally
+   --switch_success = swap_weapon_backward(pindex,true)
+   switched_index = swap_weapon_backward(pindex, true)
+   return
 end
 
 ---@param event EventData.CustomInputEvent
@@ -4497,61 +3787,9 @@ local function kb_reverse_switch_menu_or_gun(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
-   if router:is_ui_open() then
-      sounds.play_change_menu_tab(pindex)
-      if router:is_ui_one_of({ UiRouter.UI_NAMES.VEHICLE, UiRouter.UI_NAMES.BUILDING }) then
-         storage.players[pindex].building.category = 1
-         storage.players[pindex].building.recipe_selection = false
-         storage.players[pindex].building.index = 1
-
-         storage.players[pindex].building.sector = storage.players[pindex].building.sector - 1
-         storage.players[pindex].building.item_selection = false
-         storage.players[pindex].item_selection = false
-         storage.players[pindex].item_cache = {}
-         storage.players[pindex].item_selector = {
-            index = 0,
-            group = 0,
-            subgroup = 0,
-         }
-
-         if storage.players[pindex].building.sector < 1 then
-            if storage.players[pindex].building.recipe_list == nil then
-               storage.players[pindex].building.sector = #storage.players[pindex].building.sectors + 1
-            else
-               storage.players[pindex].building.sector = #storage.players[pindex].building.sectors + 2
-            end
-            storage.players[pindex].building.sector_name = "player inventory from building"
-            read_inventory_slot(pindex, "Player Inventory, ")
-         elseif storage.players[pindex].building.sector <= #storage.players[pindex].building.sectors then
-            BuildingVehicleSectors.read_sector_slot(pindex, true)
-            local pb = storage.players[pindex].building
-            storage.players[pindex].building.sector_name = pb.sectors[pb.sector].name
-         elseif storage.players[pindex].building.recipe_list == nil then
-            if storage.players[pindex].building.sector == (#storage.players[pindex].building.sectors + 1) then
-               read_inventory_slot(pindex, "Player Inventory, ")
-               storage.players[pindex].building.sector_name = "player inventory from building"
-            end
-         else
-            if storage.players[pindex].building.sector == #storage.players[pindex].building.sectors + 1 then
-               BuildingVehicleSectors.read_building_recipe(pindex, "Select a Recipe, ")
-               storage.players[pindex].building.sector_name = "unloaded recipe selection"
-            elseif storage.players[pindex].building.sector == #storage.players[pindex].building.sectors + 2 then
-               read_inventory_slot(pindex, "Player Inventory, ")
-               storage.players[pindex].building.sector_name = "player inventory from building"
-            end
-         end
-      elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
-         storage.players[pindex].warnings.sector = storage.players[pindex].warnings.sector - 1
-         if storage.players[pindex].warnings.sector < 1 then storage.players[pindex].warnings.sector = 3 end
-         if storage.players[pindex].warnings.sector == 1 then
-            Speech.speak(pindex, { "fa.warnings-short-range", storage.players[pindex].warnings.short.summary })
-         elseif storage.players[pindex].warnings.sector == 2 then
-            Speech.speak(pindex, { "fa.warnings-medium-range", storage.players[pindex].warnings.medium.summary })
-         elseif storage.players[pindex].warnings.sector == 3 then
-            Speech.speak(pindex, { "fa.warnings-long-range", storage.players[pindex].warnings.long.summary })
-         end
-      end
-   end
+   -- UI check removed, executing unconditionally
+   sounds.play_change_menu_tab(pindex)
+   -- Vehicle/Building UI check removed - handled by new UI system
 
    --Gun related changes (Vanilla Factorio DOES NOT have shift + tab weapon revserse switching, so we add it without prediction needed)
    local p = game.get_player(pindex)
@@ -4566,12 +3804,8 @@ local function kb_reverse_switch_menu_or_gun(event)
    local result = ""
    local switched_index = -2
 
-   if router:is_ui_open() then
-      --do nothing
-      return
-   else
-      switched_index = swap_weapon_backward(pindex, true)
-   end
+   -- [UI CHECKS REMOVED] Execute weapon swap
+   switched_index = swap_weapon_backward(pindex, true)
 
    --Declare the selected weapon
    local gun_index = switched_index
@@ -4592,10 +3826,9 @@ local function kb_reverse_switch_menu_or_gun(event)
       }
    end
 
-   if not router:is_ui_open() then
-      sounds.play_menu_move(p.index)
-      Speech.speak(pindex, result)
-   end
+   -- UI check removed, executing unconditionally
+   sounds.play_menu_move(p.index)
+   Speech.speak(pindex, result)
 end
 
 EventManager.on_event(
@@ -4620,12 +3853,8 @@ local function kb_delete(event)
    local router = UiRouter.get_router(pindex)
    local p = game.get_player(pindex)
    local hand = p.cursor_stack
-   if
-      router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK)
-      and storage.players[pindex].blueprint_book_menu.list_mode == true
-   then
-      --WIP
-   elseif hand and hand.valid_for_read then
+   -- BLUEPRINT_BOOK UI check removed - handled by new UI system
+   if hand and hand.valid_for_read then
       local is_planner = hand.is_blueprint
          or hand.is_blueprint_book
          or hand.is_deconstruction_item
@@ -4713,14 +3942,14 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
 
-      if router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
-         kb_remove_blueprint(event)
-      elseif
+      -- BLUEPRINT_BOOK UI check removed - handled by new UI system
+      if
          storage.players[pindex].menu == "building"
          and storage.players[pindex].building.sectors[storage.players[pindex].building.sector].name == "Fluid"
       then
          kb_flush_fluid(event)
-      elseif not router:is_ui_open() and not storage.players[pindex].vanilla_mode then
+      -- UI check removed - execute unconditionally
+      elseif not storage.players[pindex].vanilla_mode then
          local p = game.get_player(pindex)
          local stack = p.cursor_stack
          if stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result then
@@ -4738,7 +3967,7 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
 
-      if router:is_ui_open() then return end
+      -- [UI CHECKS REMOVED] Not in menu, execute mine area
       AreaOperations.mine_area(pindex)
    end
 )
@@ -4751,7 +3980,7 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
 
-      if router:is_ui_open() then return end
+      -- [UI CHECKS REMOVED] Not in menu, execute super mine
       local ent = game.get_player(pindex).selected
       if ent and ent.valid then AreaOperations.super_mine_area(pindex) end
    end
@@ -4781,536 +4010,13 @@ local function kb_click_menu(event)
    --Clear temporary cursor items instead of swapping them in
    if
       p.cursor_stack_temporary
-      and not router:is_ui_one_of({
-         UiRouter.UI_NAMES.BLUEPRINT,
-         UiRouter.UI_NAMES.BLUEPRINT_BOOK,
-         UiRouter.UI_NAMES.SPIDERTRON,
-      })
+      -- Equipment UI checks removed - handled by new UI system
    then
       p.clear_cursor()
    end
    --Act according to the type of menu open
-   if false then
-      -- Removed INVENTORY UI check
-   elseif false then
-      -- Removed CRAFTING UI check
-   elseif false then
-      -- Removed CRAFTING_QUEUE UI check
-   elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-      local sectors_i = storage.players[pindex].building.sectors[storage.players[pindex].building.sector]
-      if
-         storage.players[pindex].building.sector <= #storage.players[pindex].building.sectors
-         and ((sectors_i and sectors_i.action) or #sectors_i.inventory > 0)
-      then
-         if sectors_i.name == "Fluid" then
-            --Do nothing
-            return
-         elseif sectors_i.name == "Filters" then
-            --Set filters
-            if storage.players[pindex].building.index == #sectors_i.inventory then
-               if storage.players[pindex].building.ent == nil or not storage.players[pindex].building.ent.valid then
-                  if storage.players[pindex].building.ent == nil then
-                     Speech.speak(pindex, "Nil entity")
-                  else
-                     Speech.speak(pindex, "Invalid Entity")
-                  end
-                  return
-               end
-               if storage.players[pindex].building.ent.inserter_filter_mode == "whitelist" then
-                  storage.players[pindex].building.ent.inserter_filter_mode = "blacklist"
-               else
-                  storage.players[pindex].building.ent.inserter_filter_mode = "whitelist"
-               end
-               sectors_i.inventory[storage.players[pindex].building.index] =
-                  storage.players[pindex].building.ent.inserter_filter_mode
-               BuildingVehicleSectors.read_sector_slot(pindex, false)
-            elseif storage.players[pindex].building.item_selection then
-               if storage.players[pindex].item_selector.group == 0 then
-                  storage.players[pindex].item_selector.group = storage.players[pindex].item_selector.index
-                  storage.players[pindex].item_cache = FaUtils.get_iterable_array(
-                     storage.players[pindex].item_cache[storage.players[pindex].item_selector.group].subgroups
-                  )
-                  prune_item_groups(storage.players[pindex].item_cache)
-
-                  storage.players[pindex].item_selector.index = 1
-                  read_item_selector_slot(pindex)
-               elseif storage.players[pindex].item_selector.subgroup == 0 then
-                  storage.players[pindex].item_selector.subgroup = storage.players[pindex].item_selector.index
-                  local prototypes = prototypes.get_item_filtered({
-                     {
-                        filter = "subgroup",
-                        subgroup = storage.players[pindex].item_cache[storage.players[pindex].item_selector.index].name,
-                     },
-                  })
-                  storage.players[pindex].item_cache = FaUtils.get_iterable_array(prototypes)
-                  storage.players[pindex].item_selector.index = 1
-                  read_item_selector_slot(pindex)
-               else
-                  Filters.set_filter(
-                     storage.players[pindex].building.ent,
-                     storage.players[pindex].building.index,
-                     storage.players[pindex].item_cache[storage.players[pindex].item_selector.index].name
-                  )
-                  sectors_i.inventory[storage.players[pindex].building.index] = Filters.get_filter_prototype(
-                     storage.players[pindex].building.ent,
-                     storage.players[pindex].building.index
-                  )
-                  Speech.speak(pindex, "Filter set.")
-                  storage.players[pindex].building.item_selection = false
-                  storage.players[pindex].item_selection = false
-               end
-            else
-               storage.players[pindex].item_selector.group = 0
-               storage.players[pindex].item_selector.subgroup = 0
-               storage.players[pindex].item_selector.index = 1
-               storage.players[pindex].item_selection = true
-               storage.players[pindex].building.item_selection = true
-               storage.players[pindex].item_cache = FaUtils.get_iterable_array(prototypes.item_group)
-               prune_item_groups(storage.players[pindex].item_cache)
-               read_item_selector_slot(pindex)
-            end
-            return
-         elseif sectors_i.action ~= nil then
-            local action = sectors_i.action
-            local ent = storage.players[pindex].building.ent
-            if action == "rename" then
-               Speech.speak(pindex, "Textbox functionality not implemented")
-               return
-            elseif action == "autotarget" then
-               local switch = {
-                  auto_target_without_gunner = not ent.vehicle_automatic_targeting_parameters.auto_target_without_gunner,
-                  auto_target_with_gunner = ent.vehicle_automatic_targeting_parameters.auto_target_with_gunner,
-               }
-               ent.vehicle_automatic_targeting_parameters = switch
-            elseif action == "autotarget_gunner" then
-               local switch = {
-                  auto_target_without_gunner = ent.vehicle_automatic_targeting_parameters.auto_target_without_gunner,
-                  auto_target_with_gunner = not ent.vehicle_automatic_targeting_parameters.auto_target_with_gunner,
-               }
-               ent.vehicle_automatic_targeting_parameters = switch
-            end
-            BuildingVehicleSectors.read_sector_slot(pindex, false)
-            return
-         end
-         --Otherwise, you are working with item stacks
-         local stack = sectors_i.inventory[storage.players[pindex].building.index]
-         local cursor_stack = game.get_player(pindex).cursor_stack
-         --If both stacks have the same item, do a transfer
-         if cursor_stack.valid_for_read and stack.valid_for_read and cursor_stack.name == stack.name then
-            stack.transfer_stack(cursor_stack)
-            cursor_stack = game.get_player(pindex).cursor_stack
-            if sectors_i.name == "Modules" and cursor_stack.is_module then
-               Speech.speak(pindex, " Only one module can be added per module slot ")
-            elseif cursor_stack.valid_for_read then
-               Speech.speak(pindex, { "fa.adding-to-stack", { "item-name." .. cursor_stack.name } })
-            else
-               Speech.speak(pindex, " Added")
-            end
-            return
-         end
-         --Special case for filling module slots
-         if
-            sectors_i.name == "Modules"
-            and cursor_stack ~= nil
-            and cursor_stack.valid_for_read
-            and cursor_stack.is_module
-         then
-            local p_inv = game.get_player(pindex).get_main_inventory()
-            local result = ""
-            if stack.valid_for_read and stack.count > 0 then
-               if p_inv.count_empty_stacks() < 2 then
-                  Speech.speak(pindex, " Error: At least two empty player inventory slots needed")
-                  return
-               else
-                  result = "Collected " .. stack.name .. " and "
-                  p_inv.insert(stack)
-                  stack.clear()
-               end
-            end
-            stack = sectors_i.inventory[storage.players[pindex].building.index]
-            if (stack == nil or stack.count == 0) and sectors_i.inventory.can_insert(cursor_stack) then
-               local module_name = cursor_stack.name
-               local successful = sectors_i.inventory[storage.players[pindex].building.index].set_stack({
-                  name = module_name,
-                  count = 1,
-               })
-               if not successful then
-                  Speech.speak(pindex, " Failed to add module ")
-                  return
-               end
-               cursor_stack.count = cursor_stack.count - 1
-               local msg = Speech.new()
-               if result ~= "" then msg:fragment(result) end
-               msg:fragment({ "fa.module-added", { "item-name." .. module_name } })
-               Speech.speak(pindex, msg:build())
-               return
-            else
-               Speech.speak(pindex, " Failed to add module ")
-               return
-            end
-         end
-         --Try to swap stacks and report if there is an error
-         if cursor_stack.swap_stack(stack) then
-            sounds.play_inventory_click(pindex)
-         --             read_building_slot(pindex,false)
-         else
-            local name = "This item"
-            if
-               (stack == nil or not stack.valid_for_read)
-               and (cursor_stack == nil or not cursor_stack.valid_for_read)
-            then
-               Speech.speak(pindex, "Empty")
-               return
-            end
-            if cursor_stack.valid_for_read then name = cursor_stack.name end
-            Speech.speak(pindex, { "fa.cannot-insert-in-slot", name })
-         end
-      elseif storage.players[pindex].building.recipe_list == nil then
-         --Player inventory: Swap stack
-         sounds.play_inventory_click(pindex)
-         local stack = storage.players[pindex].inventory.lua_inventory[storage.players[pindex].inventory.index]
-         game.get_player(pindex).cursor_stack.swap_stack(stack)
-         storage.players[pindex].inventory.max = #storage.players[pindex].inventory.lua_inventory
-         --          read_inventory_slot(pindex)
-      else
-         if storage.players[pindex].building.sector == #storage.players[pindex].building.sectors + 1 then --Building recipe selection
-            if storage.players[pindex].building.recipe_selection then
-               if
-                  not (
-                     pcall(function()
-                        local there_was_a_recipe_before = false
-                        storage.players[pindex].building.recipe =
-                           storage.players[pindex].building.recipe_list[storage.players[pindex].building.category][storage.players[pindex].building.index]
-                        if storage.players[pindex].building.ent.valid then
-                           there_was_a_recipe_before = (storage.players[pindex].building.ent.get_recipe() ~= nil)
-                           storage.players[pindex].building.ent.set_recipe(storage.players[pindex].building.recipe)
-                        end
-                        storage.players[pindex].building.recipe_selection = false
-                        storage.players[pindex].building.index = 1
-                        Speech.speak(pindex, "Selected")
-                        sounds.play_inventory_click(pindex)
-                        --Open GUI if not already
-                        local p = game.get_player(pindex)
-                        if there_was_a_recipe_before == false and storage.players[pindex].building.ent.valid then
-                           --Refresh the GUI --**laterdo figure this out, closing and opening in the same tick does not work.
-                           --storage.players[pindex].refreshing_building_gui = true
-                           --p.opened = nil
-                           --p.opened = storage.players[pindex].building.ent
-                           --storage.players[pindex].refreshing_building_gui = false
-                        end
-                     end)
-                  )
-               then
-                  Speech.speak(
-                     pindex,
-                     "For this building, recipes are selected automatically based on the input item, this menu is for information only."
-                  )
-               end
-            elseif #storage.players[pindex].building.recipe_list > 0 then
-               sounds.play_inventory_click(pindex)
-               storage.players[pindex].building.recipe_selection = true
-               storage.players[pindex].building.sector_name = "recipe selection"
-               storage.players[pindex].building.category = 1
-               storage.players[pindex].building.index = 1
-               BuildingVehicleSectors.read_building_recipe(pindex)
-            else
-               Speech.speak(pindex, "No recipes unlocked for this building yet.")
-            end
-         else
-            --Player inventory again: swap stack
-            sounds.play_inventory_click(pindex)
-            local stack = storage.players[pindex].inventory.lua_inventory[storage.players[pindex].inventory.index]
-            game.get_player(pindex).cursor_stack.swap_stack(stack)
-
-            storage.players[pindex].inventory.max = #storage.players[pindex].inventory.lua_inventory
-            ----               read_inventory_slot(pindex)
-         end
-      end
-   elseif false then
-      -- Removed TECHNOLOGY UI check
-   elseif router:is_ui_open(UiRouter.UI_NAMES.PUMP) then
-      if storage.players[pindex].pump.index == 0 then
-         Speech.speak(pindex, "Move up and down to select a location.")
-         return
-      end
-      local entry = storage.players[pindex].pump.positions[storage.players[pindex].pump.index]
-      game.get_player(pindex).build_from_cursor({ position = entry.position, direction = entry.direction })
-      router:close_ui()
-      Speech.speak(pindex, "Pump placed.")
-   elseif router:is_ui_open(UiRouter.UI_NAMES.WARNINGS) then
-      local warnings = {}
-      if storage.players[pindex].warnings.sector == 1 then
-         warnings = storage.players[pindex].warnings.short.warnings
-      elseif storage.players[pindex].warnings.sector == 2 then
-         warnings = storage.players[pindex].warnings.medium.warnings
-      elseif storage.players[pindex].warnings.sector == 3 then
-         warnings = storage.players[pindex].warnings.long.warnings
-      end
-      if
-         storage.players[pindex].warnings.category <= #warnings
-         and storage.players[pindex].warnings.index <= #warnings[storage.players[pindex].warnings.category].ents
-      then
-         local ent = warnings[storage.players[pindex].warnings.category].ents[storage.players[pindex].warnings.index]
-         if ent ~= nil and ent.valid then
-            vp:set_cursor_enabled(true)
-            local cursor_pos = FaUtils.center_of_tile(ent.position)
-            vp:set_cursor_pos(cursor_pos)
-            Graphics.draw_cursor_highlight(pindex, ent, nil)
-            Graphics.sync_build_cursor_graphics(pindex)
-            Speech.speak(pindex, {
-               "fa.teleported-cursor-to",
-               "" .. math.floor(cursor_pos.x) .. " " .. math.floor(cursor_pos.y),
-            })
-         else
-            Speech.speak(pindex, { "fa.blank" })
-         end
-      else
-         Speech.speak(
-            pindex,
-            "No warnings for this range.  Press tab to pick a larger range, or press E to close this menu."
-         )
-      end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
-      TravelTools.fast_travel_menu_click(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.SPIDERTRON) then
-      -- Now handled by new UI system
-   elseif router:is_ui_open(UiRouter.UI_NAMES.ROBOPORT) then
-      -- Now handled by new UI system
-   elseif router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT_BOOK) then
-      local bpb_menu = storage.players[pindex].blueprint_book_menu
-      Blueprints.run_blueprint_book_menu(pindex, bpb_menu.index, bpb_menu.list_mode, true, false)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.CIRCUIT_NETWORK) then
-      CircuitNetworks.circuit_network_menu_run(
-         pindex,
-         nil,
-         storage.players[pindex].circuit_network_menu.index,
-         true,
-         false
-      )
-   elseif router:is_ui_open(UiRouter.UI_NAMES.SIGNAL_SELECTOR) then
-      CircuitNetworks.apply_selected_signal_to_enabled_condition(
-         pindex,
-         storage.players[pindex].signal_selector.ent,
-         storage.players[pindex].signal_selector.editing_first_slot
-      )
-   end
+   -- All UI checks removed - handled by new UI system
 end
-
---Left click actions with items in hand
----@param event EventData.CustomInputEvent
-local function kb_click_hand(event)
-   local pindex = event.player_index
-   local p = game.get_player(pindex)
-   local stack = game.get_player(pindex).cursor_stack
-   local cursor_ghost = game.get_player(pindex).cursor_ghost
-   local ent = EntitySelection.get_first_ent_at_tile(pindex)
-
-   if stack and stack.valid_for_read and stack.valid then
-      storage.players[pindex].last_click_tick = event.tick
-   elseif cursor_ghost ~= nil then
-      storage.players[pindex].last_click_tick = event.tick
-      Speech.speak(pindex, "Cannot build the ghost in hand")
-      return
-   end
-   --If something is in hand...
-   if
-      stack.prototype ~= nil
-      and (stack.prototype.place_result ~= nil or stack.prototype.place_as_tile_result ~= nil)
-      and stack.name ~= "offshore-pump"
-   then
-      --If holding a preview of a building/tile, try to place it here
-      BuildingTools.build_item_in_hand(pindex)
-   elseif stack.name == "offshore-pump" then
-      --If holding an offshore pump, open the offshore pump builder
-      BuildingTools.build_offshore_pump_in_hand(pindex)
-   elseif stack.is_repair_tool then
-      --If holding a repair pack, try to use it (will not work on enemies)
-      Combat.repair_pack_used(ent, pindex)
-   elseif
-      stack.is_blueprint
-      and stack.is_blueprint_setup()
-      and storage.players[pindex].blueprint_reselecting ~= true
-   then
-      --Paste a ready blueprint
-      storage.players[pindex].last_held_blueprint = stack
-      Blueprints.paste_blueprint(pindex)
-   elseif
-      stack.is_blueprint
-      and (stack.is_blueprint_setup() == false or storage.players[pindex].blueprint_reselecting == true)
-   then
-      --Start or conclude blueprint selection
-      local pex = storage.players[pindex]
-      local vp = Viewpoint.get_viewpoint(pindex)
-      if pex.bp_selecting ~= true then
-         pex.bp_selecting = true
-         pex.bp_select_point_1 = vp:get_cursor_pos()
-         Speech.speak(
-            pindex,
-            "Started blueprint selection at "
-               .. math.floor(pex.bp_select_point_1.x)
-               .. ","
-               .. math.floor(pex.bp_select_point_1.y)
-         )
-      else
-         pex.bp_selecting = false
-         pex.bp_select_point_2 = vp:get_cursor_pos()
-         local bp_data = nil
-         if storage.players[pindex].blueprint_reselecting == true then
-            bp_data = Blueprints.get_bp_data_for_edit(stack)
-         end
-         Blueprints.create_blueprint(pindex, pex.bp_select_point_1, pex.bp_select_point_2, bp_data)
-         storage.players[pindex].blueprint_reselecting = false
-      end
-   elseif stack.is_blueprint_book then
-      Blueprints.blueprint_book_menu_open(pindex, true)
-   elseif stack.is_deconstruction_item then
-      --Start or conclude deconstruction selection
-      local pex = storage.players[pindex]
-      local vp = Viewpoint.get_viewpoint(pindex)
-      if pex.bp_selecting ~= true then
-         pex.bp_selecting = true
-         pex.bp_select_point_1 = vp:get_cursor_pos()
-         Speech.speak(
-            pindex,
-            "Started deconstruction selection at "
-               .. math.floor(pex.bp_select_point_1.x)
-               .. ","
-               .. math.floor(pex.bp_select_point_1.y)
-         )
-      else
-         pex.bp_selecting = false
-         pex.bp_select_point_2 = vp:get_cursor_pos()
-         --Mark area for deconstruction
-         local left_top, right_bottom =
-            FaUtils.get_top_left_and_bottom_right(pex.bp_select_point_1, pex.bp_select_point_2)
-         p.surface.deconstruct_area({
-            area = { left_top, right_bottom },
-            force = p.force,
-            player = p,
-            item = p.cursor_stack,
-         })
-         local ents = p.surface.find_entities_filtered({ area = { left_top, right_bottom } })
-         local decon_counter = 0
-         for i, ent in ipairs(ents) do
-            if ent.valid and ent.to_be_deconstructed() then decon_counter = decon_counter + 1 end
-         end
-         Speech.speak(pindex, { "fa.entities-marked-deconstruct", tostring(decon_counter) })
-      end
-   elseif stack.is_upgrade_item then
-      --Start or conclude upgrade selection
-      local pex = storage.players[pindex]
-      local vp = Viewpoint.get_viewpoint(pindex)
-      if pex.bp_selecting ~= true then
-         pex.bp_selecting = true
-         pex.bp_select_point_1 = vp:get_cursor_pos()
-         Speech.speak(
-            pindex,
-            "Started upgrading selection at "
-               .. math.floor(pex.bp_select_point_1.x)
-               .. ","
-               .. math.floor(pex.bp_select_point_1.y)
-         )
-      else
-         pex.bp_selecting = false
-         pex.bp_select_point_2 = vp:get_cursor_pos()
-         --Mark area for upgrading
-         local left_top, right_bottom =
-            FaUtils.get_top_left_and_bottom_right(pex.bp_select_point_1, pex.bp_select_point_2)
-         p.surface.upgrade_area({
-            area = { left_top, right_bottom },
-            force = p.force,
-            player = p,
-            item = p.cursor_stack,
-         })
-         local ents = p.surface.find_entities_filtered({ area = { left_top, right_bottom } })
-         local ent_counter = 0
-         for i, ent in ipairs(ents) do
-            if ent.valid and ent.to_be_upgraded() then ent_counter = ent_counter + 1 end
-         end
-         Speech.speak(pindex, { "fa.entities-marked-upgrade", tostring(ent_counter) })
-      end
-   elseif stack.name == "copy-paste-tool" then
-      --Start or conclude blueprint selection
-      local pex = storage.players[pindex]
-      local vp = Viewpoint.get_viewpoint(pindex)
-      if pex.bp_selecting ~= true then
-         pex.bp_selecting = true
-         pex.bp_select_point_1 = vp:get_cursor_pos()
-         Speech.speak(
-            pindex,
-            "Started copy tool selection at "
-               .. math.floor(pex.bp_select_point_1.x)
-               .. ","
-               .. math.floor(pex.bp_select_point_1.y)
-         )
-      else
-         pex.bp_selecting = false
-         pex.bp_select_point_2 = vp:get_cursor_pos()
-         Blueprints.copy_selected_area_to_clipboard(pindex, pex.bp_select_point_1, pex.bp_select_point_2)
-         storage.players[pindex].blueprint_reselecting = false
-      end
-   elseif stack.name == "red-wire" or stack.name == "green-wire" or stack.name == "copper-cable" then
-      CircuitNetworks.drag_wire_and_read(pindex)
-   elseif stack.prototype ~= nil and stack.prototype.type == "capsule" then
-      --If holding a capsule type, e.g. cliff explosives or robot capsules, or remotes, try to use it at the cursor position (no feedback about successful usage)
-      local name = stack.name
-      local vp = Viewpoint.get_viewpoint(pindex)
-      local cursor_pos = vp:get_cursor_pos()
-      local cursor_dist = util.distance(game.get_player(pindex).position, cursor_pos)
-      local min_range, max_range = Combat.get_grenade_or_capsule_range(cursor_pos)
-      --Do a range check or use an artillery remote
-      if name == "artillery-targeting-remote" then
-         p.use_from_cursor(cursor_pos)
-         sounds.play_close_inventory(p.index) --**laterdo better sound
-         if cursor_dist < 7 then Speech.speak(pindex, "Warning, you are in the target area!") end
-         return
-      elseif cursor_dist > max_range then
-         sounds.play_cannot_build(p.index)
-         Speech.speak(pindex, "Target is out of range")
-         return
-      end
-      --Apply smart aiming
-      ---@type fa.Point?
-      local aim_pos = vp:get_cursor_pos()
-      if name == "grenade" or name == "cluster-grenade" or name == "poison-capsule" or name == "slowdown-capsule" then
-         aim_pos = Combat.smart_aim_grenades_and_capsules(pindex)
-      elseif name == "defender-capsule" or name == "distractor-capsule" or name == "destroyer-capsule" then
-         aim_pos = { x = p.position.x, y = p.position.y }
-      end
-      --Throw it
-      if aim_pos ~= nil then p.use_from_cursor(aim_pos) end
-      --Capsule robot info after throwing
-      if name == "defender-capsule" or name == "destroyer-capsule" then
-         local max_robots = p.force.maximum_following_robot_count
-         local count_robots = #p.following_robots
-         if name == "defender-capsule" then
-            count_robots = count_robots + 1
-         elseif name == "destroyer-capsule" then
-            count_robots = count_robots + 5
-         end
-         if count_robots <= max_robots then
-            Speech.speak(
-               pindex,
-               { "fa.robot-deployed-slots", { "item-name." .. name }, tostring(count_robots), tostring(max_robots) }
-            )
-         else
-            Speech.speak(pindex, { "fa.robot-deployed-full", { "item-name." .. name } })
-         end
-      elseif name == "distractor-capsule" then
-         Speech.speak(pindex, { "fa.robot-deployed-no-follow", { "item-name." .. name } })
-      end
-   elseif ent ~= nil then
-      --If holding an item with no special left click actions, allow entity left click actions.
-      clicked_on_entity(ent, pindex)
-   else
-      if stack then
-         Speech.speak(pindex, { "fa.no-actions-for-item", Localising.get_localised_name_with_fallback(stack) })
-      else
-         Speech.speak(pindex, { "fa.no-actions-for-item", "empty hand" })
-      end
-   end
-end
-
 --Left click actions with no menu and no items in hand
 ---@param event EventData.CustomInputEvent
 local function kb_click_entity(event)
@@ -5329,9 +4035,8 @@ EventManager.on_event(
       if storage.players[pindex].last_click_tick == event.tick then return end
       local stack = game.get_player(pindex).cursor_stack
       local ghost = game.get_player(pindex).cursor_ghost
-      if router:is_ui_open() then
-         kb_click_menu(event)
-      elseif ghost or (stack and stack.valid_for_read and stack.valid) then
+      -- [UI CHECKS REMOVED] Not in menu, check what to click
+      if ghost or (stack and stack.valid_for_read and stack.valid) then
          kb_click_hand(event)
       elseif storage.players[pindex].vanilla_mode == false then
          kb_click_entity(event)
@@ -5347,128 +4052,6 @@ local function kb_click_menu_right(event)
    storage.players[pindex].last_click_tick = event.tick
    local p = game.get_player(pindex)
    local stack = p.cursor_stack
-   if false then -- Removed INVENTORY UI check
-      --Player inventory: Take half
-      local stack_inv =
-         table.deepcopy(storage.players[pindex].inventory.lua_inventory[storage.players[pindex].inventory.index])
-      sounds.play_inventory_click(p.index)
-      if stack and stack.valid_for_read and stack.is_blueprint_book and stack_inv and stack_inv.valid_for_read then
-         --A a blueprint book is in hand, then throw other items into it
-         local book = stack
-         if stack_inv.is_blueprint then
-            Blueprints.add_blueprint_to_book(pindex, book, stack_inv)
-         elseif stack_inv.is_blueprint_book or stack_inv.is_deconstruction_item or stack_inv.is_upgrade_item then
-            Speech.speak(pindex, { "fa.blueprint-book-no-support", { "item-name." .. stack_inv.name } })
-         else
-            Speech.speak(pindex, { "fa.blueprint-book-cannot-add", { "item-name." .. stack_inv.name } })
-         end
-         --Finish the interaction here
-         return
-      end
-      if not (stack and stack.valid_for_read) and (stack_inv and stack_inv.valid_for_read) then
-         --Take half (sorted inventory)
-         local name = stack_inv.name
-         p.cursor_stack.swap_stack(
-            storage.players[pindex].inventory.lua_inventory[storage.players[pindex].inventory.index]
-         )
-         local bigger_half = math.ceil(p.cursor_stack.count / 2)
-         local smaller_half = math.floor(p.cursor_stack.count / 2)
-         p.cursor_stack.count = smaller_half
-         p.get_main_inventory().insert({ name = name, count = bigger_half })
-      end
-      storage.players[pindex].inventory.max = #storage.players[pindex].inventory.lua_inventory
-   elseif false then -- Removed CRAFTING UI check
-      local recipe =
-         storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index]
-      local T = {
-         count = 5,
-         recipe = storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index],
-         silent = false,
-      }
-      local count = p.begin_crafting(T)
-      if count > 0 then
-         local total_count = Crafting.count_in_crafting_queue(T.recipe.name, pindex)
-         Speech.speak(
-            pindex,
-            "Started crafting "
-               .. count
-               .. " "
-               .. Localising.get_recipe_from_name(recipe.name, pindex)
-               .. ", "
-               .. total_count
-               .. " total in queue"
-         )
-      else
-         Speech.speak(pindex, "Not enough materials")
-      end
-   elseif false then -- Removed CRAFTING_QUEUE UI check
-      Crafting.load_crafting_queue(pindex)
-      if storage.players[pindex].crafting_queue.max >= 1 then
-         local T = {
-            index = storage.players[pindex].crafting_queue.index,
-            count = 5,
-         }
-         p.cancel_crafting(T)
-         Crafting.load_crafting_queue(pindex)
-         Crafting.read_crafting_queue(pindex, "cancelled 5, ")
-      end
-   elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-      local sectors_i = storage.players[pindex].building.sectors[storage.players[pindex].building.sector]
-      if
-         storage.players[pindex].building.sector <= #storage.players[pindex].building.sectors
-         and #sectors_i.inventory > 0
-         and (sectors_i.name == "Output" or sectors_i.name == "Input" or sectors_i.name == "Fuel")
-      then
-         --Building invs: Take half**
-      elseif
-         storage.players[pindex].building.recipe_list == nil or #storage.players[pindex].building.recipe_list == 0
-      then
-         --Player inventory: Take half
-         local p = game.get_player(pindex)
-         local stack_cur = p.cursor_stack
-         local stack_inv =
-            table.deepcopy(storage.players[pindex].inventory.lua_inventory[storage.players[pindex].inventory.index])
-         sounds.play_inventory_click(p.index)
-         if not (stack_cur and stack_cur.valid_for_read) and (stack_inv and stack_inv.valid_for_read) then
-            --Take half (sorted inventory)
-            local name = stack_inv.name
-            p.cursor_stack.swap_stack(
-               storage.players[pindex].inventory.lua_inventory[storage.players[pindex].inventory.index]
-            )
-            local bigger_half = math.ceil(p.cursor_stack.count / 2)
-            local smaller_half = math.floor(p.cursor_stack.count / 2)
-            p.cursor_stack.count = smaller_half
-            p.get_main_inventory().insert({ name = name, count = bigger_half })
-         end
-         storage.players[pindex].inventory.max = #storage.players[pindex].inventory.lua_inventory
-      end
-      if storage.players[pindex].building.sector <= #storage.players[pindex].building.sectors then
-         if stack and stack.valid_for_read and stack.valid and stack.count > 0 then
-            local iName = storage.players[pindex].building.sectors[storage.players[pindex].building.sector].name
-            if
-               iName == "Filters"
-               and storage.players[pindex].item_selection == false
-               and storage.players[pindex].building.index
-                  < #storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory
-            then
-               Filters.set_filter(storage.players[pindex].building.ent, storage.players[pindex].building.index, nil)
-               storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory[storage.players[pindex].building.index] =
-                  "No filter selected."
-               Speech.speak(pindex, "Filter cleared")
-            end
-         elseif
-            storage.players[pindex].building.sectors[storage.players[pindex].building.sector].name == "Filters"
-            and storage.players[pindex].building.item_selection == false
-            and storage.players[pindex].building.index
-               < #storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory
-         then
-            Filters.set_filter(storage.players[pindex].building.ent, storage.players[pindex].building.index, nil)
-            storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory[storage.players[pindex].building.index] =
-               "No filter selected."
-            Speech.speak(pindex, "Filter cleared.")
-         end
-      end
-   end
 end
 
 --Reads the entity status but also adds on extra info depending on the entity
@@ -5574,12 +4157,11 @@ EventManager.on_event(
       if storage.players[pindex].last_click_tick == event.tick then return end
       local router = UiRouter.get_router(pindex)
       local stack = game.get_player(pindex).cursor_stack
-      if router:is_ui_open() then
-         kb_click_menu_right(event)
-      elseif stack and stack.valid_for_read and stack.valid then
+      -- [UI CHECKS REMOVED] Not in menu, check what to right-click
+      if stack and stack.valid_for_read and stack.valid then
          kb_click_hand_right(event)
       else
-         -- Empty hand case - read entity status (unless in crafting menu)
+         -- Empty hand case - read entity status
          if not false then -- Removed CRAFTING/CRAFTING_QUEUE UI check
             kb_read_entity_status(event)
          end
@@ -5593,112 +4175,6 @@ EventManager.on_event(
 local function kb_menu_action(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
-
-   ---First two branches were from event "crafting-all"
-   if false then -- Removed CRAFTING UI check
-      local recipe =
-         storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index]
-      local T = {
-         count = game.get_player(pindex).get_craftable_count(recipe),
-         recipe = storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index],
-         silent = false,
-      }
-      local count = game.get_player(pindex).begin_crafting(T)
-      if count > 0 then
-         local total_count = Crafting.count_in_crafting_queue(T.recipe.name, pindex)
-         Speech.speak(
-            pindex,
-            "Started crafting "
-               .. count
-               .. " "
-               .. Localising.get_recipe_from_name(recipe.name, pindex)
-               .. ", "
-               .. total_count
-               .. " total in queue"
-         )
-      else
-         Speech.speak(pindex, "Not enough materials")
-      end
-   elseif false then -- Removed CRAFTING_QUEUE UI check
-      Crafting.load_crafting_queue(pindex)
-      if storage.players[pindex].crafting_queue.max >= 1 then
-         local T = {
-            index = storage.players[pindex].crafting_queue.index,
-            count = storage.players[pindex].crafting_queue.lua_queue[storage.players[pindex].crafting_queue.index].count,
-         }
-         game.get_player(pindex).cancel_crafting(T)
-         Crafting.load_crafting_queue(pindex)
-         Crafting.read_crafting_queue(pindex, "cancelled all, ")
-      end
-   ---From "transfer-one-stack"
-   --Transfers a stack from one inventory to another. Preserves BP data.
-   elseif router:is_ui_one_of({ UiRouter.UI_NAMES.VEHICLE, UiRouter.UI_NAMES.BUILDING }) then
-      if
-         storage.players[pindex].building.sector <= #storage.players[pindex].building.sectors
-         and #storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory > 0
-         and storage.players[pindex].building.sectors[storage.players[pindex].building.sector].name ~= "Fluid"
-      then
-         --Transfer stack from building to player inventory
-         local stack =
-            storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory[storage.players[pindex].building.index]
-         if stack and stack.valid and stack.valid_for_read then
-            if
-               router:is_ui_open(UiRouter.UI_NAMES.VEHICLE)
-               and game.get_player(pindex).opened.type == "spider-vehicle"
-               and stack.prototype.place_as_equipment_result ~= nil
-            then
-               return
-            end
-            if game.get_player(pindex).can_insert(stack) then
-               sounds.play_inventory_move(pindex)
-               local result = stack.name
-               local inserted = game.get_player(pindex).insert(stack)
-               storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory.remove({
-                  name = stack.name,
-                  count = inserted,
-               })
-               result = "Moved " .. inserted .. " " .. result .. " to player's inventory." --**laterdo note that ammo gets inserted to ammo slots first
-               Speech.speak(pindex, result)
-            else
-               local result = "Cannot insert " .. stack.name .. " to player's inventory, "
-               if game.get_player(pindex).get_main_inventory().count_empty_stacks() == 0 then
-                  result = result .. "because it is full."
-               end
-               Speech.speak(pindex, result)
-            end
-         end
-      else
-         local offset = 1
-         if storage.players[pindex].building.recipe_list ~= nil then offset = offset + 1 end
-         if storage.players[pindex].building.sector == #storage.players[pindex].building.sectors + offset then
-            --Transfer stack from player inventory to building
-            local stack = storage.players[pindex].inventory.lua_inventory[storage.players[pindex].inventory.index]
-            if stack and stack.valid and stack.valid_for_read then
-               if
-                  router:is_ui_open(UiRouter.UI_NAMES.VEHICLE)
-                  and game.get_player(pindex).opened.type == "spider-vehicle"
-                  and stack.prototype.place_as_equipment_result ~= nil
-               then
-                  return
-               end
-               if storage.players[pindex].building.ent.can_insert(stack) then
-                  sounds.play_inventory_move(pindex)
-                  local result = stack.name
-                  local inserted = storage.players[pindex].building.ent.insert(stack)
-                  storage.players[pindex].inventory.lua_inventory.remove({ name = stack.name, count = inserted })
-                  result = "Moved " .. inserted .. " " .. result .. " to " .. storage.players[pindex].building.ent.name
-                  Speech.speak(pindex, result)
-               else
-                  local result = "Cannot insert " .. stack.name .. " to " .. storage.players[pindex].building.ent.name
-                  Speech.speak(pindex, result)
-               end
-            end
-         end
-      end
-   ---From event add-to-research-queue-start
-   elseif false then -- Removed TECHNOLOGY UI check
-      Research.menu_enqueue(pindex, 1)
-   end
 end
 
 --You can equip armor, armor equipment, guns, ammo. You can equip from the hand, or from the inventory with an empty hand.
@@ -5729,15 +4205,9 @@ EventManager.on_event(
          stack ~= nil
          and stack.valid_for_read
          and stack.valid
-         and (
-            not router:is_ui_open()
-            or false -- Removed INVENTORY/GUNS UI check
-            or (router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and p.opened.type == "spider-vehicle")
-         )
+         and true -- UI checks removed - handled by new UI system
       then
          kb_equip_item(event)
-      elseif router:is_ui_open() then
-         kb_menu_action(event)
       end
    end
 )
@@ -5759,7 +4229,7 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       if storage.players[pindex].last_click_tick == event.tick then return end
-      if UiRouter.get_router(pindex):is_ui_open() then return end
+      -- UI check removed
 
       kb_repair_area(event)
    end
@@ -5787,20 +4257,7 @@ EventManager.on_event(
       local router = UiRouter.get_router(pindex)
       local stack = game.get_player(pindex).cursor_stack
 
-      ---Add the selected technology to the end of the research queue instead of switching directly to it
-      if false then -- Removed TECHNOLOGY UI check
-         ---From event add-to-research-queue-end
-         Research.menu_enqueue(pindex, nil)
-         --[[Imitates vanilla behavior: 
-   * Control click an item in an inventory to try smart transfer ALL of it. 
-   * Control click an empty slot to try to smart transfer ALL items from that inventory.
-   ]]
-      elseif router:is_ui_open() and router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-         ---From event transfer-all-stacks
-         InventoryTransfers.do_multi_stack_transfer(1, pindex)
-      elseif stack ~= nil and stack.valid_for_read and stack.valid then
-         kb_alternate_build(event)
-      end
+      if stack ~= nil and stack.valid_for_read and stack.valid then kb_alternate_build(event) end
    end
 )
 
@@ -5814,10 +4271,6 @@ EventManager.on_event(
    * Control click an item in an inventory to try smart transfer HALF of it. 
    * Control click an empty slot to try to smart transfer HALF of all items from that inventory.
    ]]
-      if router:is_ui_open() and router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-         ---From event transfer-half-of-all-stacks
-         InventoryTransfers.do_multi_stack_transfer(0.5, pindex)
-      end
    end
 )
 
@@ -5877,10 +4330,8 @@ EventManager.on_event(
       local router = UiRouter.get_router(pindex)
 
       -- Conflicts with setting splitter filters.  Will be fixed by #262
-      if router:is_ui_open() then
-         set_selected_inventory_slot_filter(pindex)
-      else
-      end
+      -- UI check removed, executing unconditionally
+      set_selected_inventory_slot_filter(pindex)
    end
 )
 
@@ -5898,10 +4349,7 @@ local function kb_read_item_pickup_state(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
-   if router:is_ui_open() then
-      Speech.speak(pindex, "Cannot pickup items while in a menu")
-      return
-   end
+   -- [UI CHECKS REMOVED] Not in menu, can pickup items
    local p = game.get_player(pindex)
    local result = ""
    local check_last_pickup = false
@@ -5989,26 +4437,11 @@ local function kb_read_health_and_armor_stats(event)
    local router = UiRouter.get_router(pindex)
    local p = game.get_player(pindex)
    local output = { "" }
-   if router:is_ui_open() then
-      if router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) then
-         --Vehicle health and armor equipment stats
-         local result = Equipment.read_armor_stats(pindex, p.opened)
-         table.insert(output, result)
-      else
-         --Player health and armor equipment stats
-         local result = Equipment.read_armor_stats(pindex, nil)
-         table.insert(output, result)
-      end
-   else
-      if p.vehicle then
-         --Vehicle health and armor equipment sta      local result = Equipment.read_armor_stats(pindex, p.vehicle)
-         table.insert(output, result)
-      else
-         --Player health stats only
-         local result = Equipment.read_shield_and_health_level(pindex, nil)
-         table.insert(output, result)
-      end
-   end
+   -- UI check removed, executing unconditionally
+   -- Vehicle UI check removed - handled by new UI system
+   --Player health and armor equipment stats
+   local result = Equipment.read_armor_stats(pindex, nil)
+   table.insert(output, result)
    Speech.speak(pindex, output)
 end
 
@@ -6042,12 +4475,8 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
-      if false then
-         -- Removed INVENTORY UI check
-      else
-         ---From event rotate-building
-         BuildingTools.rotate_building_info_read(event, true)
-      end
+      ---From event rotate-building
+      BuildingTools.rotate_building_info_read(event, true)
    end
 )
 
@@ -6068,12 +4497,6 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
-
-      if false then -- Removed INVENTORY/GUNS UI check
-         local result = Equipment.remove_weapons_and_ammo(pindex)
-         --game.get_player(pindex).print(result)
-         Speech.speak(pindex, result)
-      end
    end
 )
 
@@ -6215,7 +4638,8 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
 
-      if not router:is_ui_open() then kb_toggle_build_lock(event) end
+      -- UI check removed, executing unconditionally
+      kb_toggle_build_lock(event)
    end
 )
 
@@ -6409,15 +4833,8 @@ EventManager.on_event(
 local function kb_locate_hand_in_inventory(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
-   if not router:is_ui_open() then
-      locate_hand_in_player_inventory(pindex)
-   elseif false then -- Removed INVENTORY UI check
-      locate_hand_in_player_inventory(pindex)
-   elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-      locate_hand_in_building_output_inventory(pindex)
-   else
-      Speech.speak(pindex, { "fa.cannot-locate-items-in-menu" })
-   end
+   -- UI check removed, executing unconditionally
+   locate_hand_in_player_inventory(pindex)
 end
 
 --Empties hand and opens the item from the player/building inventory
@@ -6455,7 +4872,7 @@ local function locate_hand_in_crafting_menu(pindex)
    end
    if
       false -- Removed INVENTORY UI check
-      and not router:is_ui_open(UiRouter.UI_NAMES.BUILDING)
+      -- Building UI check removed - handled by new UI system
       and false -- Removed CRAFTING UI check
    then
       --Unsupported menu types...
@@ -6464,7 +4881,7 @@ local function locate_hand_in_crafting_menu(pindex)
    end
 
    --Open the main menu (crafting tab will be accessible there)
-   close_menu_resets(pindex)
+   -- [UI CHECKS REMOVED] close_menu_resets call removed
    router:open_ui(UiRouter.UI_NAMES.MAIN)
    p.opened = p.get_inventory(defines.inventory.character_main)
 
@@ -6508,20 +4925,17 @@ end)
 local function kb_open_warnings_menu(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
-   if not router:is_ui_open() or game.get_player(pindex).opened_gui_type == defines.gui_type.production then
-      storage.players[pindex].warnings.short = Warnings.scan_for_warnings(30, 30, pindex)
-      storage.players[pindex].warnings.medium = Warnings.scan_for_warnings(100, 100, pindex)
-      storage.players[pindex].warnings.long = Warnings.scan_for_warnings(500, 500, pindex)
-      storage.players[pindex].warnings.index = 1
-      storage.players[pindex].warnings.sector = 1
-      storage.players[pindex].category = 1
-      router:open_ui(UiRouter.UI_NAMES.WARNINGS)
-      game.get_player(pindex).selected = nil
-      sounds.play_open_inventory(pindex)
-      Speech.speak(pindex, { "fa.warnings-menu-short-range", storage.players[pindex].warnings.short.summary })
-   else
-      Speech.speak(pindex, { "fa.another-menu-is-open" })
-   end
+   -- UI check removed - warnings can be opened unconditionally
+   storage.players[pindex].warnings.short = Warnings.scan_for_warnings(30, 30, pindex)
+   storage.players[pindex].warnings.medium = Warnings.scan_for_warnings(100, 100, pindex)
+   storage.players[pindex].warnings.long = Warnings.scan_for_warnings(500, 500, pindex)
+   storage.players[pindex].warnings.index = 1
+   storage.players[pindex].warnings.sector = 1
+   storage.players[pindex].category = 1
+   router:open_ui(UiRouter.UI_NAMES.WARNINGS)
+   game.get_player(pindex).selected = nil
+   sounds.play_open_inventory(pindex)
+   Speech.speak(pindex, { "fa.warnings-menu-short-range", storage.players[pindex].warnings.short.summary })
 end
 
 EventManager.on_event(
@@ -6634,7 +5048,7 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
-      if router:is_ui_open() then return end
+      -- [UI CHECKS REMOVED] Not in menu, execute rail connect
       kb_connect_rail_vehicles(event)
    end
 )
@@ -6674,15 +5088,6 @@ local function kb_inventory_read_equipment_list(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
    local vehicle = nil
-
-   if
-      false -- Removed INVENTORY UI check
-      or (router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle")
-   then
-      local result = Equipment.read_equipment_list(pindex)
-      --game.get_player(pindex).print(result)--
-      Speech.speak(pindex, result)
-   end
 end
 
 --SHIFT + G is used to disconnect rolling stock
@@ -6691,11 +5096,8 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
-      if router:is_ui_open() then
-         kb_inventory_read_equipment_list(event)
-      else
-         kb_disconnect_rail_vehicles(event)
-      end
+      -- UI check removed, executing unconditionally
+      kb_inventory_read_equipment_list(event)
    end
 )
 
@@ -6706,15 +5108,6 @@ EventManager.on_event(
       local router = UiRouter.get_router(pindex)
 
       local vehicle = nil
-
-      if
-         false -- Removed INVENTORY UI check
-         or (router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle")
-      then
-         local result = Equipment.remove_equipment_and_armor(pindex)
-         --game.get_player(pindex).print(result)--
-         Speech.speak(pindex, result)
-      end
    end
 )
 
