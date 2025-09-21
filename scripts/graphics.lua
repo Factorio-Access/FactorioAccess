@@ -57,7 +57,9 @@ function mod.update_menu_visuals()
    for pindex, player in pairs(players) do
       local router = UiRouter.get_router(pindex)
 
-      if router:is_ui_open() then
+      -- [UI CHECKS REMOVED] Menu-specific sprite rendering removed
+      -- New UI system will handle its own rendering with text labels
+      if false then -- Menu rendering disabled
          if router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
             mod.update_overhead_sprite("utility.downloading", 1.5, 1.25, pindex)
             mod.update_custom_GUI_sprite("utility.downloading", 3, pindex)
@@ -121,6 +123,7 @@ function mod.update_menu_visuals()
             end
          end
       else
+         -- Non-menu rendering preserved
          if game.get_player(pindex).opened ~= nil then
             --Not in menu, but open GUI
             mod.update_overhead_sprite("utility.white_square", 2, 1.25, pindex)
@@ -505,12 +508,8 @@ function mod.update_custom_GUI_sprite(sprite, scale_in, pindex, sprite_2)
          player.custom_GUI_sprite_2.visible = true
       end
       --If a blueprint is in hand, set the blueprint sprites
-      if
-         router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT)
-         and p.cursor_stack
-         and p.cursor_stack.valid_for_read
-         and p.cursor_stack.is_blueprint
-      then
+      -- [UI CHECKS REMOVED] Blueprint check removed - check cursor stack only
+      if p.cursor_stack and p.cursor_stack.valid_for_read and p.cursor_stack.is_blueprint then
          local bp = p.cursor_stack
          local bp_icons = bp.preview_icons or {}
          for i = 1, 4 do
@@ -535,7 +534,8 @@ function mod.clear_player_GUI_remnants(pindex)
    local router = UiRouter.get_router(pindex)
 
    local p = game.get_player(pindex)
-   if not router:is_ui_open() and p.opened == nil and storage.players[pindex].text_field_open ~= true then
+   -- [UI CHECKS REMOVED] GUI clearing simplified
+   if p.opened == nil and storage.players[pindex].text_field_open ~= true then
       if p and p.gui and p.gui.screen then p.gui.screen.clear() end
    end
 end
