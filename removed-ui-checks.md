@@ -1,10 +1,12 @@
-# Removed UI Checks from control.lua
+# Removed UI Checks from FactorioAccess
 
-This document tracks all `is_ui_open` and `is_ui_one_of` checks that were removed from control.lua as part of the UI system modernization effort.
+This document tracks all `is_ui_open` and `is_ui_one_of` checks that were removed from the codebase as part of the UI system modernization effort.
 
 ## Summary
-- Total checks removed: 132
-- Date: 2025-09-20
+- Total checks removed from control.lua: 132
+- Total checks removed from other files: 8
+- Total: 140 UI checks removed
+- Date: 2025-09-20 (Updated: 2025-09-21)
 - Purpose: Enable UI system to evolve beyond simple FSM to support advanced features like textboxes and item choosers
 
 ## UIs with Removed Checks
@@ -109,7 +111,28 @@ Each removed UI will need to be reimplemented using the new TabList-based UI sys
 2. **Medium Priority**: TRAVEL, CIRCUIT_NETWORK, PUMP
 3. **Low Priority**: WARNINGS, SIGNAL_SELECTOR, BLUEPRINT_BOOK (less frequently used)
 
+## Additional Files with Removed Checks
+
+### scanner/entrypoint.lua
+- **Lines affected**: 497, 508, 519, 529, 537
+- **Functionality lost**: Scanner blocking when in menus
+- **Note**: Scanner can now be used while menus are open (handled by event priority)
+
+### worker-robots.lua
+- **Lines affected**: 341-389 (find_player_item_name), 516-533 (logistics_request_toggle_handler)
+- **Functionality lost**:
+  - Context-aware logistic request detection (chest vs personal vs spidertron)
+  - Toggle buffer requests for requester chests
+  - Spidertron logistics toggle
+- **Note**: Now defaults to personal logistics only
+
+### teleport.lua
+- **Lines affected**: 47-49
+- **Functionality lost**: Menu blocking for teleportation
+- **Note**: Teleportation now allowed while in menus
+
 ## Notes
 - Functions called from removed UI checks remain in the codebase for future use
 - Inline UI code that wasn't abstracted to functions has been deleted
 - The router module remains public for now (file moving was out of scope)
+- Event priority system handles UI interception before world handlers

@@ -331,64 +331,25 @@ end
 -- the context of how we do logistic requests.
 ---@return string?, LocalisedString?
 local function find_player_item_name(pindex)
-   local router = UiRouter.get_router(pindex)
+   -- [UI CHECKS REMOVED] Logistic request context detection removed
+   -- Now defaults to personal logistics behavior only
 
    local p = game.get_player(pindex)
    assert(p)
    local char = p.character
    if not char then return nil, { "fa.no-character" } end
 
-   if not router:is_ui_open() or router:is_ui_one_of({ UiRouter.UI_NAMES.PLAYER_TRASH }) then
-      --Personal logistics
-      local stack = game.get_player(pindex).cursor_stack
-      local stack_inv = game.get_player(pindex).get_main_inventory()[storage.players[pindex].inventory.index]
+   --Personal logistics only
+   local stack = game.get_player(pindex).cursor_stack
+   local stack_inv = game.get_player(pindex).get_main_inventory()[storage.players[pindex].inventory.index]
 
-      if stack ~= nil and stack.valid_for_read and stack.valid then
-         --Item in hand
-         return stack.name, nil
-      elseif router:is_ui_open(UiRouter.UI_NAMES.PLAYER_TRASH) then
-         --Item in trash
-         return nil, "Take this item in hand to change its requests"
-      else
-         --Empty hand, empty inventory slot
-         return nil, "No actions"
-      end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.BUILDING) then
-      --Chest logistics
-      local stack = game.get_player(pindex).cursor_stack
-      local stack_inv = game.get_player(pindex).opened.get_output_inventory()[storage.players[pindex].building.index]
-      local chest = game.get_player(pindex).opened --[[@as LuaEntity]]
-      --Check item in hand or item in inventory
-      if stack ~= nil and stack.valid_for_read and stack.valid then
-         --Item in hand
-         return stack.name, nil
-      elseif stack_inv ~= nil and stack_inv.valid_for_read and stack_inv.valid then
-         --Item in output inv
-         return stack_inv.name, nil
-      else
-         --Empty hand, empty inventory slot
-         return nil, "No actions"
-      end
-   elseif router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) then
-      --spidertron logistics
-      local stack = game.get_player(pindex).cursor_stack
-      local invs = defines.inventory
-      local stack_inv =
-         game.get_player(pindex).opened.get_inventory(invs.spider_trunk)[storage.players[pindex].building.index]
-      --Check item in hand or item in inventory
-      if stack ~= nil and stack.valid_for_read and stack.valid then
-         --Item in hand
-         return stack.name, nil
-      elseif stack_inv ~= nil and stack_inv.valid_for_read and stack_inv.valid then
-         --Item in output inv
-         return stack_inv.name, nil
-      else
-         --Empty hand, empty inventory slot
-         return nil, "No actions"
-      end
+   if stack ~= nil and stack.valid_for_read and stack.valid then
+      --Item in hand
+      return stack.name, nil
+   else
+      --Empty hand, empty inventory slot
+      return nil, "No actions"
    end
-
-   return nil, nil
 end
 
 -- Find the item stack target of the player trying to set a logistic request.
@@ -551,26 +512,10 @@ end
 function mod.logistics_request_toggle_handler(pindex)
    local router = UiRouter.get_router(pindex)
 
+   -- [UI CHECKS REMOVED] Context-specific toggle removed
+   -- Now only toggles personal logistics
    local ent = game.get_player(pindex).opened
-   if not router:is_ui_open() or router:is_ui_one_of({ UiRouter.UI_NAMES.PLAYER_TRASH }) then
-      --Player: Toggle enabling requests
-      toggle_personal_logistics(pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and mod.can_make_logistic_requests(ent) then
-      --Vehicles: Toggle enabling requests
-      logistics_request_toggle_spidertron_logistics(ent, pindex)
-   elseif router:is_ui_open(UiRouter.UI_NAMES.BUILDING) then
-      --Requester chests: Toggle requesting from buffers
-      if mod.can_make_logistic_requests(ent) then
-         ent.request_from_buffers = not ent.request_from_buffers
-      else
-         return
-      end
-      if ent.request_from_buffers then
-         Speech.speak(pindex, { "fa.robots-enabled-buffer-requests" })
-      else
-         Speech.speak(pindex, { "fa.robots-disabled-buffer-requests" })
-      end
-   end
+   toggle_personal_logistics(pindex)
 end
 
 --Clears the selected logistic request

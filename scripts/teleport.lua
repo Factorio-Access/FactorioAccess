@@ -44,9 +44,7 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
    elseif util.distance(game.get_player(pindex).position, pos) < 0.6 then
       Speech.speak(pindex, { "fa.teleport-already-at-target" })
       return false
-   elseif router:is_ui_open() and not router:is_ui_open(UiRouter.UI_NAMES.TRAVEL) then
-      Speech.speak(pindex, { "fa.teleport-cannot-in-menu" })
-      return false
+   -- [UI CHECKS REMOVED] Teleportation now allowed in menus
    end
    --Do not teleport near enemies unless instructed to ignore them
    if not ignore_enemies then

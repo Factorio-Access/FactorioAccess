@@ -492,9 +492,7 @@ end
 ---@param pindex number
 ---@param direction 1 | -1
 function mod.move_category(pindex, direction)
-   local router = UiRouter.get_router(pindex)
-
-   if router:is_ui_open() then return end
+   -- [UI CHECKS REMOVED] Scanner now handled by event priority system
    local pstate = player_state[pindex]
    sound_for_end(pindex, move_category(pindex, pstate, direction))
    Speech.speak(pindex, { "fa.scanner-category-" .. pstate.scanner_cursor.category })
@@ -503,9 +501,7 @@ end
 ---@param pindex number
 ---@param direction 1 | -1
 function mod.move_subcategory(pindex, direction)
-   local router = UiRouter.get_router(pindex)
-
-   if router:is_ui_open() then return end
+   -- [UI CHECKS REMOVED] Scanner now handled by event priority system
    local pstate = player_state[pindex]
    sound_for_end(pindex, move_subcategory(pindex, pstate, direction))
    announce_cursor_pos(pindex, pstate)
@@ -514,9 +510,7 @@ end
 ---@param pindex number
 ---@param direction 1 | -1
 function mod.move_within_subcategory(pindex, direction)
-   local router = UiRouter.get_router(pindex)
-
-   if router:is_ui_open() then return end
+   -- [UI CHECKS REMOVED] Scanner now handled by event priority system
    local pstate = player_state[pindex]
    sound_for_end(pindex, move_in_subcategory(pindex, pstate, direction))
    announce_cursor_pos(pindex, pstate)
@@ -524,17 +518,13 @@ end
 
 ---@param pindex number
 function mod.announce_current_item(pindex)
-   local router = UiRouter.get_router(pindex)
-
-   if router:is_ui_open() then return end
+   -- [UI CHECKS REMOVED] Scanner now handled by event priority system
    local pstate = player_state[pindex]
    announce_cursor_pos(pindex, pstate)
 end
 
 function mod.resort(pindex)
-   local router = UiRouter.get_router(pindex)
-
-   if router:is_ui_open() then return end
+   -- [UI CHECKS REMOVED] Scanner now handled by event priority system
    local pstate = player_state[pindex]
    local player = assert(game.get_player(pindex))
    ---@cast player LuaPlayer
