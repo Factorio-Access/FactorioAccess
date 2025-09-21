@@ -60,6 +60,14 @@ function mod.on_event(event_id, handler, priority)
 
       -- Register the master handler with Factorio
       script.on_event(event_id, function(event)
+         -- For debugging: prints events to the launcher console.
+         -- CLAUDE: don't remove this, it's not by you.
+         if false and event.name and event.name ~= 0 then
+            print("Evt:", serpent.line(event, { nocode = true }))
+            for n, v in pairs(defines.events) do
+               if event.name == v then print("Is", n) end
+            end
+         end
          mod._dispatch_event(event_id, event)
       end)
    end

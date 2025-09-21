@@ -1314,21 +1314,25 @@ EventManager.on_event(defines.events.on_player_created, function(event)
    --if not game.is_multiplayer() then Speech.speak(pindex, "Press 'TAB' to continue") end
 end)
 
-EventManager.on_event(defines.events.on_gui_closed, function(event, pindex)
-   local router = UiRouter.get_router(pindex)
-
-   --Other resets - now executed unconditionally
-   if event.element ~= nil then event.element.destroy() end
-   router:close_ui()
-   storage.players[pindex].item_selection = false
-   storage.players[pindex].item_cache = {}
-   storage.players[pindex].item_selector = {
-      index = 0,
-      group = 0,
-      subgroup = 0,
-   }
-   storage.players[pindex].building.item_selection = false
-end)
+EventManager.on_event(
+   defines.events.on_gui_closed,
+   ---@param event EventData.on_gui_closed
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
+      print(serpent.line(event, { nocode = true }))
+      --Other resets - now executed unconditionally
+      if event.element ~= nil then event.element.destroy() end
+      router:close_ui()
+      storage.players[pindex].item_selection = false
+      storage.players[pindex].item_cache = {}
+      storage.players[pindex].item_selector = {
+         index = 0,
+         group = 0,
+         subgroup = 0,
+      }
+      storage.players[pindex].building.item_selection = false
+   end
+)
 
 function fix_walk(pindex)
    local player = game.get_player(pindex)
@@ -1554,16 +1558,6 @@ EventManager.on_event(defines.events.on_gui_opened, function(event, pindex)
    --Stop any enabled mouse entity selection
    if storage.players[pindex].vanilla_mode ~= true then
       game.get_player(pindex).game_view_settings.update_entity_selection = false
-   end
-
-   --Deselect to prevent multiple interactions
-   p.selected = nil
-
-   --GUI mismatch checks
-   if event.gui_type == defines.gui_type.controller then
-      --If closing another menu toggles the player GUI screen, we close this screen
-      p.opened = nil
-      --game.print("Closed an extra controller GUI",{volume_modifier = 0})--**checks GUI shenanigans
    end
 end)
 
