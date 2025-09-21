@@ -122,15 +122,10 @@ end
 ---@param pindex number
 function mod.read_building_menu_description(pindex)
    local storage_players = storage.players[pindex]
-   local router = UiRouter.get_router(pindex)
+   -- [UI CHECKS REMOVED] Offset calculation removed - caller should handle context
 
    local offset = 0
-   if
-      router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
-      and storage_players.building.recipe_list ~= nil
-   then
-      offset = 1
-   end
+   if storage_players.building.recipe_list ~= nil then offset = 1 end
 
    if storage_players.building.recipe_selection then
       local recipe =
@@ -174,44 +169,18 @@ end
 ---Internal function to read item descriptions based on context
 ---@param pindex number
 function mod.read_item_description(pindex)
-   local router = UiRouter.get_router(pindex)
+   -- [UI CHECKS REMOVED] Menu routing removed - new UI system will handle context
+   -- Default to world behavior (selected or hand)
    local p = game.get_player(pindex)
-   local storage_players = storage.players[pindex]
 
    -- Special case: driving
-   if p.driving and not router:is_ui_open(UiRouter.UI_NAMES.TRAIN) then
+   if p.driving then
       Speech.speak(pindex, Driving.vehicle_info(pindex))
       return
    end
 
-   -- Not in menu - check selected or hand
-   if not router:is_ui_open() then
-      mod.read_selected_or_hand_description(pindex)
-      return
-   end
-
-   -- In menu - handle based on menu type
-   local offset = 0
-   if
-      router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
-      and storage_players.building.recipe_list ~= nil
-   then
-      offset = 1
-   end
-
-   if
-      router:is_ui_one_of({ UiRouter.UI_NAMES.PLAYER_TRASH })
-      or (
-         router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE })
-         and storage_players.building.sector > offset + #storage_players.building.sectors
-      )
-   then
-      mod.read_inventory_slot_description(pindex)
-   elseif router:is_ui_one_of({ UiRouter.UI_NAMES.BUILDING, UiRouter.UI_NAMES.VEHICLE }) then
-      mod.read_building_menu_description(pindex)
-   else
-      Speech.speak(pindex, "Descriptions are not supported for this menu.")
-   end
+   -- Default: check selected or hand
+   mod.read_selected_or_hand_description(pindex)
 end
 
 ---Reads description for last indexed scanner entity
@@ -224,12 +193,7 @@ end
 ---Internal function to read description for last indexed scanner entity
 ---@param pindex number
 function mod.read_last_indexed_description(pindex)
-   local router = UiRouter.get_router(pindex)
-
-   if router:is_ui_open() then
-      Speech.speak(pindex, "Error: Cannot check scanned item descriptions while in a menu")
-      return
-   end
+   -- [UI CHECKS REMOVED] Scanner descriptions now available anytime
 
    local ent = storage.players[pindex].last_indexed_ent
    if ent == nil or not ent.valid then

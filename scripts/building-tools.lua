@@ -308,123 +308,122 @@ function mod.rotate_building_info_read(event, forward)
    if not check_for_player(pindex) then return end
    local mult = 1
    if forward == false then mult = -1 end
-   if not router:is_ui_open() or router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT) then
-      local ent = p.selected
-      local stack = game.get_player(pindex).cursor_stack
-      local build_dir = storage.players[pindex].building_direction
-      local vp = Viewpoint.get_viewpoint(pindex)
-      if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result ~= nil then
-         local placed = stack.prototype.place_result
-         if
-            placed.supports_direction
-            or placed.type == "car"
-            or placed.type == "locomotive"
-            or placed.type == "artillery-wagon"
-         then
-            --Locomotives and artillery wagons in hand are rotated 180 degrees
-            if placed.type == "locomotive" or placed.type == "artillery-wagon" then mult = mult * 2 end
+   -- [UI CHECKS REMOVED] Rotation now works anywhere
+   local ent = p.selected
+   local stack = game.get_player(pindex).cursor_stack
+   local build_dir = storage.players[pindex].building_direction
+   local vp = Viewpoint.get_viewpoint(pindex)
+   if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result ~= nil then
+      local placed = stack.prototype.place_result
+      if
+         placed.supports_direction
+         or placed.type == "car"
+         or placed.type == "locomotive"
+         or placed.type == "artillery-wagon"
+      then
+         --Locomotives and artillery wagons in hand are rotated 180 degrees
+         if placed.type == "locomotive" or placed.type == "artillery-wagon" then mult = mult * 2 end
 
-            --Update the assumed hand direction
-            if not storage.players[pindex].lag_building_direction then
-               game.get_player(pindex).play_sound({ path = "Rotate-Hand-Sound" })
-               build_dir = (build_dir + dirs.east * mult) % (2 * dirs.south)
-            end
-
-            --Exceptions
-            if stack.name == "rail" then
-               --The actual rotation is by 45 degrees only.
-               --Bug:This misaligns the preview. Clearing the cursor does not work. We need to track rotation offsets to fix it.
-               --It looks like 4 rotations fully invert it and 8 rotations fix it.
-               local rot_offset = vp:get_cursor_rotation_offset()
-               if rot_offset == nil then
-                  rot_offset = mult
-               else
-                  rot_offset = rot_offset + mult
-                  if rot_offset >= 8 then
-                     rot_offset = rot_offset - 8
-                  elseif rot_offset <= -8 then
-                     rot_offset = rot_offset + 8
-                  end
-               end
-               vp:set_cursor_rotation_offset(rot_offset)
-               if rot_offset ~= 0 then build_dir = (build_dir - dirs.northeast * mult) % (2 * dirs.south) end
-
-               --Printout warning
-               if rot_offset > 0 then
-                  Speech.speak(
-                     pindex,
-                     FaUtils.direction_lookup(build_dir)
-                        .. " rail rotation warning: rotate a rail "
-                        .. rot_offset
-                        .. " times backward to re-align cursor, and then rotate a different item in hand to select the rotation you want before placing a rail"
-                  )
-               elseif rot_offset < 0 then
-                  Speech.speak(
-                     pindex,
-                     FaUtils.direction_lookup(build_dir)
-                        .. " rail rotation warning: rotate a rail "
-                        .. -rot_offset
-                        .. " times forward to re-align cursor, and then rotate a different item in hand to select the rotation you want before placing a rail"
-                  )
-               else
-                  Speech.speak(pindex, { "fa.building-rotation-aligned", FaUtils.direction_lookup(build_dir) })
-               end
-               return
-            end
-
-            --Display and read the new direction info
-            storage.players[pindex].building_direction = build_dir
-            --Graphics.sync_build_cursor_graphics(pindex)
-            Speech.speak(pindex, { "fa.building-rotation-in-hand", FaUtils.direction_lookup(build_dir) })
-            storage.players[pindex].lag_building_direction = false
-         else
-            Speech.speak(pindex, { "fa.building-no-rotate-support", { "item-name." .. stack.name } })
+         --Update the assumed hand direction
+         if not storage.players[pindex].lag_building_direction then
+            game.get_player(pindex).play_sound({ path = "Rotate-Hand-Sound" })
+            build_dir = (build_dir + dirs.east * mult) % (2 * dirs.south)
          end
-      elseif stack ~= nil and stack.valid_for_read and stack.is_blueprint and stack.is_blueprint_setup() then
-         --Rotate blueprints: They are tracked separately, and we reset them to north when cursor stack changes
-         game.get_player(pindex).play_sound({ path = "Rotate-Hand-Sound" })
-         storage.players[pindex].blueprint_hand_direction = (
-            storage.players[pindex].blueprint_hand_direction + dirs.east * mult
-         ) % (2 * dirs.south)
-         Speech.speak(pindex, FaUtils.direction_lookup(storage.players[pindex].blueprint_hand_direction))
 
-         --Flip the saved bp width and height
-         local temp = storage.players[pindex].blueprint_height_in_hand
-         storage.players[pindex].blueprint_height_in_hand = storage.players[pindex].blueprint_width_in_hand
-         storage.players[pindex].blueprint_width_in_hand = temp
+         --Exceptions
+         if stack.name == "rail" then
+            --The actual rotation is by 45 degrees only.
+            --Bug:This misaligns the preview. Clearing the cursor does not work. We need to track rotation offsets to fix it.
+            --It looks like 4 rotations fully invert it and 8 rotations fix it.
+            local rot_offset = vp:get_cursor_rotation_offset()
+            if rot_offset == nil then
+               rot_offset = mult
+            else
+               rot_offset = rot_offset + mult
+               if rot_offset >= 8 then
+                  rot_offset = rot_offset - 8
+               elseif rot_offset <= -8 then
+                  rot_offset = rot_offset + 8
+               end
+            end
+            vp:set_cursor_rotation_offset(rot_offset)
+            if rot_offset ~= 0 then build_dir = (build_dir - dirs.northeast * mult) % (2 * dirs.south) end
 
-         --Call graphics update
+            --Printout warning
+            if rot_offset > 0 then
+               Speech.speak(
+                  pindex,
+                  FaUtils.direction_lookup(build_dir)
+                     .. " rail rotation warning: rotate a rail "
+                     .. rot_offset
+                     .. " times backward to re-align cursor, and then rotate a different item in hand to select the rotation you want before placing a rail"
+               )
+            elseif rot_offset < 0 then
+               Speech.speak(
+                  pindex,
+                  FaUtils.direction_lookup(build_dir)
+                     .. " rail rotation warning: rotate a rail "
+                     .. -rot_offset
+                     .. " times forward to re-align cursor, and then rotate a different item in hand to select the rotation you want before placing a rail"
+               )
+            else
+               Speech.speak(pindex, { "fa.building-rotation-aligned", FaUtils.direction_lookup(build_dir) })
+            end
+            return
+         end
+
+         --Display and read the new direction info
+         storage.players[pindex].building_direction = build_dir
          --Graphics.sync_build_cursor_graphics(pindex)
-      elseif ent and ent.valid then
-         if ent.supports_direction then
-            --Assuming that the vanilla rotate event will now rotate the ent
-            local new_dir = (ent.direction + dirs.east * mult) % (2 * dirs.south)
-
-            if
-               ent.name == "steam-engine"
-               or ent.name == "steam-turbine"
-               or ent.name == "rail"
-               or ent.name == "straight-rail"
-               or ent.name == "curved-rail"
-               or ent.name == "character"
-            then
-               --Exception: These ents do not rotate
-               new_dir = (new_dir - dirs.east * mult) % (2 * dirs.south)
-            elseif (ent.tile_width ~= ent.tile_height and ent.supports_direction) or ent.type == "underground-belt" then
-               --Exceptions: None-square ents rotate 2x , while underground belts simply flip instead
-               --Examples, boiler, pump, flamethrower, heat exchanger,
-               new_dir = (new_dir + dirs.east * mult) % (2 * dirs.south)
-            end
-
-            Speech.speak(pindex, FaUtils.direction_lookup(new_dir))
-
-            --
-         else
-            Speech.speak(pindex, { "fa.building-no-rotate-support", { "entity-name." .. ent.name } })
-         end
+         Speech.speak(pindex, { "fa.building-rotation-in-hand", FaUtils.direction_lookup(build_dir) })
+         storage.players[pindex].lag_building_direction = false
       else
-         Speech.speak(pindex, { "fa.building-cannot-rotate" })
+         Speech.speak(pindex, { "fa.building-no-rotate-support", { "item-name." .. stack.name } })
       end
+   elseif stack ~= nil and stack.valid_for_read and stack.is_blueprint and stack.is_blueprint_setup() then
+      --Rotate blueprints: They are tracked separately, and we reset them to north when cursor stack changes
+      game.get_player(pindex).play_sound({ path = "Rotate-Hand-Sound" })
+      storage.players[pindex].blueprint_hand_direction = (
+         storage.players[pindex].blueprint_hand_direction + dirs.east * mult
+      ) % (2 * dirs.south)
+      Speech.speak(pindex, FaUtils.direction_lookup(storage.players[pindex].blueprint_hand_direction))
+
+      --Flip the saved bp width and height
+      local temp = storage.players[pindex].blueprint_height_in_hand
+      storage.players[pindex].blueprint_height_in_hand = storage.players[pindex].blueprint_width_in_hand
+      storage.players[pindex].blueprint_width_in_hand = temp
+
+      --Call graphics update
+      --Graphics.sync_build_cursor_graphics(pindex)
+   elseif ent and ent.valid then
+      if ent.supports_direction then
+         --Assuming that the vanilla rotate event will now rotate the ent
+         local new_dir = (ent.direction + dirs.east * mult) % (2 * dirs.south)
+
+         if
+            ent.name == "steam-engine"
+            or ent.name == "steam-turbine"
+            or ent.name == "rail"
+            or ent.name == "straight-rail"
+            or ent.name == "curved-rail"
+            or ent.name == "character"
+         then
+            --Exception: These ents do not rotate
+            new_dir = (new_dir - dirs.east * mult) % (2 * dirs.south)
+         elseif (ent.tile_width ~= ent.tile_height and ent.supports_direction) or ent.type == "underground-belt" then
+            --Exceptions: None-square ents rotate 2x , while underground belts simply flip instead
+            --Examples, boiler, pump, flamethrower, heat exchanger,
+            new_dir = (new_dir + dirs.east * mult) % (2 * dirs.south)
+         end
+
+         Speech.speak(pindex, FaUtils.direction_lookup(new_dir))
+
+         --
+      else
+         Speech.speak(pindex, { "fa.building-no-rotate-support", { "entity-name." .. ent.name } })
+      end
+   else
+      Speech.speak(pindex, { "fa.building-cannot-rotate" })
    end
 end
 
