@@ -663,7 +663,6 @@ function menu_cursor_up(pindex)
          storage.players[pindex].item_selector.subgroup = 0
          read_item_selector_slot(pindex)
       end
-      -- [UI CHECKS REMOVED] Building/vehicle menu navigation removed
    end
 end
 
@@ -695,7 +694,6 @@ function menu_cursor_down(pindex)
       else
          Speech.speak(pindex, { "fa.press-left-bracket-to-confirm" })
       end
-      -- [UI CHECKS REMOVED] Building/vehicle menu navigation removed
    end
 end
 
@@ -707,7 +705,6 @@ function menu_cursor_left(pindex)
       storage.players[pindex].item_selector.index = math.max(1, storage.players[pindex].item_selector.index - 1)
       read_item_selector_slot(pindex)
    end
-   -- [UI CHECKS REMOVED] Building/vehicle/menu-specific navigation removed
 end
 
 ----Moves to the right  in a menu. Todo: split by menu. "menu_right"
@@ -968,8 +965,6 @@ EventManager.on_event(defines.events.on_picked_up_item, function(event, pindex)
    storage.players[pindex].last_item_picked_up = event.item_stack.name
 end)
 
--- [UI CHECKS REMOVED] close_menu_resets function removed - menus handled by new UI system
-
 --Quickbar event handlers
 local quickbar_get_events = {}
 local quickbar_set_events = {}
@@ -1209,7 +1204,6 @@ EventManager.on_event(defines.events.on_player_cursor_stack_changed, function(ev
    local router = UiRouter.get_router(pindex)
    if router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT) then router:close_ui() end
 
-   -- [UI CHECKS REMOVED] close_menu_resets call removed
    if storage.players[pindex].previous_hand_item_name ~= new_item_name then
       storage.players[pindex].previous_hand_item_name = new_item_name
       --storage.players[pindex].lag_building_direction = true
@@ -1334,7 +1328,6 @@ EventManager.on_event(defines.events.on_gui_closed, function(event, pindex)
       subgroup = 0,
    }
    storage.players[pindex].building.item_selection = false
-   -- [UI CHECKS REMOVED] close_menu_resets call removed
 end)
 
 function fix_walk(pindex)
@@ -1567,10 +1560,7 @@ EventManager.on_event(defines.events.on_gui_opened, function(event, pindex)
    p.selected = nil
 
    --GUI mismatch checks
-   if
-      event.gui_type == defines.gui_type.controller
-      and event.tick - storage.players[pindex].last_menu_toggle_tick < 5
-   then
+   if event.gui_type == defines.gui_type.controller then
       --If closing another menu toggles the player GUI screen, we close this screen
       p.opened = nil
       --game.print("Closed an extra controller GUI",{volume_modifier = 0})--**checks GUI shenanigans
@@ -1962,10 +1952,7 @@ EventManager.on_event(defines.events.on_research_finished, Research.on_research_
 local function clear_fa_gui(pindex)
    local player = game.get_player(pindex)
    for _, elem in ipairs(FaUtils.get_iterable_array(player.gui.children)) do
-      if elem.get_mod() == "FactorioAccess" or elem.get_mod() == nil then
-         elem.clear()
-         -- [UI CHECKS REMOVED] close_menu_resets call removed
-      end
+      if elem.get_mod() == "FactorioAccess" or elem.get_mod() == nil then elem.clear() end
    end
 end
 
@@ -2198,7 +2185,6 @@ local function move_key(direction, event, force_single_tile)
    --Save the key press event
    BumpDetection.save_key_press(event.player_index, direction, event.tick)
 
-   -- [UI CHECKS REMOVED] Assume never in menu (new UI intercepts first)
    if cursor_enabled then
       -- Cursor mode: Move cursor on map
       cursor_mode_move(direction, pindex, force_single_tile)
@@ -2828,7 +2814,7 @@ local function read_coords(pindex, start_phrase)
    local vp = Viewpoint.get_viewpoint(pindex)
 
    if storage.players[pindex].building.recipe_list ~= nil then offset = 1 end
-   -- UI check removed, executing unconditionally
+
    local position = game.get_player(pindex).position
    local marked_pos = { x = position.x, y = position.y }
    if storage.players[pindex].vanilla_mode then vp:set_cursor_pos(marked_pos) end
@@ -3467,7 +3453,6 @@ EventManager.on_event(
    "fa-s-i",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      -- UI check removed
       adjust_cursor_size(pindex, 1)
    end
 )
@@ -3477,7 +3462,6 @@ EventManager.on_event(
    "fa-c-i",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      -- UI check removed
       adjust_cursor_size(pindex, -1)
    end
 )
@@ -3488,12 +3472,9 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
 
-      -- [UI CHECKS REMOVED] Not in menu, execute remote view toggle
       toggle_remote_view(pindex)
    end
 )
-
--- [UI CHECKS REMOVED] kb_adjust_inventory_bar removed - only worked in building/vehicle menus
 
 EventManager.on_event(
    "fa-pageup",
@@ -3502,7 +3483,7 @@ EventManager.on_event(
       local router = UiRouter.get_router(pindex)
       local p = game.get_player(pindex)
       local ent = p.opened
-      -- [UI CHECKS REMOVED] Check entity type
+
       if ent and ent.type == "inserter" then
          local result = BuildingVehicleSectors.inserter_hand_stack_size_up(ent)
          Speech.speak(pindex, result)
@@ -3516,7 +3497,6 @@ EventManager.on_event(
    "fa-s-pageup",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      -- [UI CHECKS REMOVED] Inventory bar adjustment only worked in menus, now dead code
       ScannerEntrypoint.move_within_subcategory(pindex, -1)
    end
 )
@@ -3525,7 +3505,6 @@ EventManager.on_event(
    "fa-c-pageup",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      -- [UI CHECKS REMOVED] Inventory bar adjustment only worked in menus, now dead code
       ScannerEntrypoint.move_category(pindex, -1)
    end
 )
@@ -3537,7 +3516,7 @@ EventManager.on_event(
       local router = UiRouter.get_router(pindex)
       local p = game.get_player(pindex)
       local ent = p.opened
-      -- [UI CHECKS REMOVED] Check entity type
+
       if ent and ent.type == "inserter" then
          local result = BuildingVehicleSectors.inserter_hand_stack_size_down(ent)
          Speech.speak(pindex, result)
@@ -3551,7 +3530,6 @@ EventManager.on_event(
    "fa-s-pagedown",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      -- [UI CHECKS REMOVED] Inventory bar adjustment only worked in menus, now dead code
       ScannerEntrypoint.move_within_subcategory(pindex, 1)
    end
 )
@@ -3560,7 +3538,6 @@ EventManager.on_event(
    "fa-c-pagedown",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      -- [UI CHECKS REMOVED] Inventory bar adjustment only worked in menus, now dead code
       ScannerEntrypoint.move_category(pindex, 1)
    end
 )
@@ -3596,7 +3573,7 @@ local function kb_open_circuit_menu(event)
 
    local p = game.get_player(pindex)
    --In a building menu
-   -- Building UI check removed - handled by new UI system
+
    local ent = p.selected or EntitySelection.get_first_ent_at_tile(pindex)
    if ent == nil or ent.valid == false or (ent.get_control_behavior() == nil and ent.type ~= "electric-pole") then
       --Sort scan results instead
@@ -3695,7 +3672,7 @@ local function kb_open_player_inventory(event)
    if p.ticks_to_respawn ~= nil or p.character == nil then return end
    sounds.play_open_inventory(p.index)
    p.selected = nil
-   storage.players[pindex].last_menu_toggle_tick = event.tick
+
    -- Use the router to open the main menu
    local router = UiRouter.get_router(pindex)
    router:open_ui(UiRouter.UI_NAMES.MAIN)
@@ -3707,13 +3684,7 @@ local function kb_close_menu(event)
    local tick = event.tick
    local router = UiRouter.get_router(pindex)
 
-   -- PROMPT check removed - it was never opened anyway
    Speech.speak(pindex, "Menu closed.")
-
-   -- UI check removed, sound will play from new UI system
-
-   storage.players[pindex].last_menu_toggle_tick = tick
-   -- [UI CHECKS REMOVED] close_menu_resets call removed
 end
 
 EventManager.on_event(
@@ -3723,9 +3694,9 @@ EventManager.on_event(
       local router = UiRouter.get_router(pindex)
       local tick = event.tick
 
-      if router:is_ui_open() and storage.players[pindex].last_menu_toggle_tick ~= tick then
+      if router:is_ui_open() then
          kb_close_menu(event)
-      elseif not router:is_ui_open() and storage.players[pindex].last_menu_toggle_tick ~= tick then
+      else
          kb_open_player_inventory(event)
       end
    end
@@ -3739,10 +3710,8 @@ local function kb_read_menu_name(event)
 
    local msg = Speech.Speech.new()
 
-   -- UI check removed, executing unconditionally
    msg:fragment("No menu")
 
-   -- Building/Vehicle UI check removed - handled by new UI system
    msg:fragment("Unknown menu")
 
    Speech.speak(pindex, msg:build())
@@ -3762,9 +3731,7 @@ local function kb_switch_menu_or_gun(event)
       return
    end
 
-   -- UI check removed, executing unconditionally
    sounds.play_change_menu_tab(pindex)
-   -- Vehicle/Building UI check removed - handled by new UI system
 
    --Gun related changes (this seems to run before the actual switch happens so even when we write the new index, it will change, so we need to be predictive)
    local p = game.get_player(pindex)
@@ -3779,7 +3746,6 @@ local function kb_switch_menu_or_gun(event)
    local result = ""
    local switched_index = -2
 
-   -- UI check removed, executing unconditionally
    --switch_success = swap_weapon_backward(pindex,true)
    switched_index = swap_weapon_backward(pindex, true)
    return
@@ -3790,9 +3756,7 @@ local function kb_reverse_switch_menu_or_gun(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
-   -- UI check removed, executing unconditionally
    sounds.play_change_menu_tab(pindex)
-   -- Vehicle/Building UI check removed - handled by new UI system
 
    --Gun related changes (Vanilla Factorio DOES NOT have shift + tab weapon revserse switching, so we add it without prediction needed)
    local p = game.get_player(pindex)
@@ -3807,7 +3771,6 @@ local function kb_reverse_switch_menu_or_gun(event)
    local result = ""
    local switched_index = -2
 
-   -- [UI CHECKS REMOVED] Execute weapon swap
    switched_index = swap_weapon_backward(pindex, true)
 
    --Declare the selected weapon
@@ -3829,7 +3792,6 @@ local function kb_reverse_switch_menu_or_gun(event)
       }
    end
 
-   -- UI check removed, executing unconditionally
    sounds.play_menu_move(p.index)
    Speech.speak(pindex, result)
 end
@@ -3856,7 +3818,7 @@ local function kb_delete(event)
    local router = UiRouter.get_router(pindex)
    local p = game.get_player(pindex)
    local hand = p.cursor_stack
-   -- BLUEPRINT_BOOK UI check removed - handled by new UI system
+
    if hand and hand.valid_for_read then
       local is_planner = hand.is_blueprint
          or hand.is_blueprint_book
@@ -3945,13 +3907,11 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
 
-      -- BLUEPRINT_BOOK UI check removed - handled by new UI system
       if
          storage.players[pindex].menu == "building"
          and storage.players[pindex].building.sectors[storage.players[pindex].building.sector].name == "Fluid"
       then
          kb_flush_fluid(event)
-      -- UI check removed - execute unconditionally
       elseif not storage.players[pindex].vanilla_mode then
          local p = game.get_player(pindex)
          local stack = p.cursor_stack
@@ -3970,7 +3930,6 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
 
-      -- [UI CHECKS REMOVED] Not in menu, execute mine area
       AreaOperations.mine_area(pindex)
    end
 )
@@ -3983,7 +3942,6 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
 
-      -- [UI CHECKS REMOVED] Not in menu, execute super mine
       local ent = game.get_player(pindex).selected
       if ent and ent.valid then AreaOperations.super_mine_area(pindex) end
    end
@@ -4011,14 +3969,8 @@ local function kb_click_menu(event)
 
    storage.players[pindex].last_click_tick = event.tick
    --Clear temporary cursor items instead of swapping them in
-   if
-      p.cursor_stack_temporary
-      -- Equipment UI checks removed - handled by new UI system
-   then
-      p.clear_cursor()
-   end
+   if p.cursor_stack_temporary then p.clear_cursor() end
    --Act according to the type of menu open
-   -- All UI checks removed - handled by new UI system
 end
 --Left click actions with no menu and no items in hand
 ---@param event EventData.CustomInputEvent
@@ -4038,7 +3990,7 @@ EventManager.on_event(
       if storage.players[pindex].last_click_tick == event.tick then return end
       local stack = game.get_player(pindex).cursor_stack
       local ghost = game.get_player(pindex).cursor_ghost
-      -- [UI CHECKS REMOVED] Not in menu, check what to click
+
       if ghost or (stack and stack.valid_for_read and stack.valid) then
          kb_click_hand(event)
       elseif storage.players[pindex].vanilla_mode == false then
@@ -4162,14 +4114,13 @@ EventManager.on_event(
       if storage.players[pindex].last_click_tick == event.tick then return end
       local router = UiRouter.get_router(pindex)
       local stack = game.get_player(pindex).cursor_stack
-      -- [UI CHECKS REMOVED] Not in menu, check what to right-click
+
       if stack and stack.valid_for_read and stack.valid then
          kb_click_hand_right(event)
       else
          -- Empty hand case - read entity status
-         if not false then -- Removed CRAFTING/CRAFTING_QUEUE UI check
-            kb_read_entity_status(event)
-         end
+
+         kb_read_entity_status(event)
       end
    end
 )
@@ -4206,14 +4157,7 @@ EventManager.on_event(
 
       local p = game.get_player(pindex)
       local stack = p.cursor_stack
-      if
-         stack ~= nil
-         and stack.valid_for_read
-         and stack.valid
-         and true -- UI checks removed - handled by new UI system
-      then
-         kb_equip_item(event)
-      end
+      if stack ~= nil and stack.valid_for_read and stack.valid then kb_equip_item(event) end
    end
 )
 
@@ -4234,7 +4178,6 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       if storage.players[pindex].last_click_tick == event.tick then return end
-      -- UI check removed
 
       kb_repair_area(event)
    end
@@ -4335,7 +4278,7 @@ EventManager.on_event(
       local router = UiRouter.get_router(pindex)
 
       -- Conflicts with setting splitter filters.  Will be fixed by #262
-      -- UI check removed, executing unconditionally
+
       set_selected_inventory_slot_filter(pindex)
    end
 )
@@ -4354,7 +4297,6 @@ local function kb_read_item_pickup_state(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
-   -- [UI CHECKS REMOVED] Not in menu, can pickup items
    local p = game.get_player(pindex)
    local result = ""
    local check_last_pickup = false
@@ -4442,8 +4384,7 @@ local function kb_read_health_and_armor_stats(event)
    local router = UiRouter.get_router(pindex)
    local p = game.get_player(pindex)
    local output = { "" }
-   -- UI check removed, executing unconditionally
-   -- Vehicle UI check removed - handled by new UI system
+
    --Player health and armor equipment stats
    local result = Equipment.read_armor_stats(pindex, nil)
    table.insert(output, result)
@@ -4491,7 +4432,6 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
 
-      -- Gun reload removed - now always rotate building
       BuildingTools.rotate_building_info_read(event, false)
    end
 )
@@ -4643,7 +4583,6 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
 
-      -- UI check removed, executing unconditionally
       kb_toggle_build_lock(event)
    end
 )
@@ -4838,7 +4777,7 @@ EventManager.on_event(
 local function kb_locate_hand_in_inventory(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
-   -- UI check removed, executing unconditionally
+
    locate_hand_in_player_inventory(pindex)
 end
 
@@ -4875,20 +4814,8 @@ local function locate_hand_in_crafting_menu(pindex)
       --Hand is empty
       return
    end
-   if
-      false -- Removed INVENTORY UI check
-      -- Building UI check removed - handled by new UI system
-      and false -- Removed CRAFTING UI check
-   then
-      --Unsupported menu types...
-      Speech.speak(pindex, { "fa.another-menu-is-open" })
-      return
-   end
 
-   --Open the main menu (crafting tab will be accessible there)
-   -- [UI CHECKS REMOVED] close_menu_resets call removed
    router:open_ui(UiRouter.UI_NAMES.MAIN)
-   p.opened = p.get_inventory(defines.inventory.character_main)
 
    --Get the name
    -- Get a string representation of the item name for searching
@@ -4930,7 +4857,7 @@ end)
 local function kb_open_warnings_menu(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
-   -- UI check removed - warnings can be opened unconditionally
+
    storage.players[pindex].warnings.short = Warnings.scan_for_warnings(30, 30, pindex)
    storage.players[pindex].warnings.medium = Warnings.scan_for_warnings(100, 100, pindex)
    storage.players[pindex].warnings.long = Warnings.scan_for_warnings(500, 500, pindex)
@@ -5053,7 +4980,7 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
-      -- [UI CHECKS REMOVED] Not in menu, execute rail connect
+
       kb_connect_rail_vehicles(event)
    end
 )
@@ -5101,7 +5028,7 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
-      -- UI check removed, executing unconditionally
+
       kb_inventory_read_equipment_list(event)
    end
 )
