@@ -206,11 +206,16 @@ mod.roboport_menu = TabList.declare_tablist({
    resets_to_first_tab_on_open = true,
    shared_state_setup = state_setup,
    tabs_callback = Functools.functionize({
-      UiKeyGraph.declare_graph({
-         name = "roboport",
-         title = { "fa.roboport-menu-main" },
-         render_callback = render_roboport_menu,
-      }),
+      {
+         name = "main",
+         tabs = {
+            UiKeyGraph.declare_graph({
+               name = "roboport",
+               title = { "fa.roboport-menu-main" },
+               render_callback = render_roboport_menu,
+            }),
+         },
+      },
    }),
 })
 

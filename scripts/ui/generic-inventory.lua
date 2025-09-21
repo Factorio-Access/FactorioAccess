@@ -73,8 +73,13 @@ mod.generic_inventory = TabList.declare_tablist({
    resets_to_first_tab_on_open = true,
    shared_state_setup = setup_shared_state,
    tabs_callback = Functools.functionize({
-      GENERIC_GRID,
-      PERSONAL_GRID,
+      {
+         name = "main",
+         tabs = {
+            GENERIC_GRID,
+            PERSONAL_GRID,
+         },
+      },
    }),
 })
 

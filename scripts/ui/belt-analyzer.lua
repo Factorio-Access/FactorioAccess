@@ -184,26 +184,31 @@ mod.belt_analyzer = TabList.declare_tablist({
    resets_to_first_tab_on_open = true,
    shared_state_setup = state_setup,
    tabs_callback = Functools.functionize({
-      UiKeyGraph.declare_graph({
-         title = { "fa.ui-belt-analyzer-tab-local" },
-         render_callback = local_renderer,
-         name = "local",
-      }),
-      UiKeyGraph.declare_graph({
-         name = "total",
-         title = { "fa.ui-belt-analyzer-tab-total" },
-         render_callback = total_renderer,
-      }),
-      UiKeyGraph.declare_graph({
-         name = "upstream",
-         title = { "fa.ui-belt-analyzer-tab-upstream" },
-         render_callback = upstream_renderer,
-      }),
-      UiKeyGraph.declare_graph({
-         name = "downstream",
-         title = { "fa.ui-belt-analyzer-tab-downstream" },
-         render_callback = downstream_renderer,
-      }),
+      {
+         name = "main",
+         tabs = {
+            UiKeyGraph.declare_graph({
+               title = { "fa.ui-belt-analyzer-tab-local" },
+               render_callback = local_renderer,
+               name = "local",
+            }),
+            UiKeyGraph.declare_graph({
+               name = "total",
+               title = { "fa.ui-belt-analyzer-tab-total" },
+               render_callback = total_renderer,
+            }),
+            UiKeyGraph.declare_graph({
+               name = "upstream",
+               title = { "fa.ui-belt-analyzer-tab-upstream" },
+               render_callback = upstream_renderer,
+            }),
+            UiKeyGraph.declare_graph({
+               name = "downstream",
+               title = { "fa.ui-belt-analyzer-tab-downstream" },
+               render_callback = downstream_renderer,
+            }),
+         },
+      },
    }),
 })
 

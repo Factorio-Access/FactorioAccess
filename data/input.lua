@@ -385,6 +385,13 @@ data:extend({
 
    {
       type = "custom-input",
+      name = "fa-cs-tab",
+      key_sequence = "CONTROL + SHIFT + TAB",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
       name = "fa-f",
       key_sequence = "F",
       linked_game_control = "pick-items",

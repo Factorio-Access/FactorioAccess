@@ -232,6 +232,10 @@ EventManager.on_event(
 EventManager.on_event("fa-tab", create_ui_handler("on_next_tab"), EventManager.EVENT_KIND.UI)
 EventManager.on_event("fa-s-tab", create_ui_handler("on_previous_tab"), EventManager.EVENT_KIND.UI)
 
+-- Section navigation (Ctrl+TAB and Ctrl+Shift+TAB)
+EventManager.on_event("fa-c-tab", create_ui_handler("on_next_section"), EventManager.EVENT_KIND.UI)
+EventManager.on_event("fa-cs-tab", create_ui_handler("on_previous_section"), EventManager.EVENT_KIND.UI)
+
 -- K key reads coordinates
 EventManager.on_event("fa-k", create_ui_handler("on_read_coords"), EventManager.EVENT_KIND.UI)
 

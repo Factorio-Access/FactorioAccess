@@ -224,7 +224,12 @@ mod.gun_menu = TabList.declare_tablist({
    resets_to_first_tab_on_open = true,
    shared_state_setup = state_setup,
    tabs_callback = Functools.functionize({
-      mod.gun_tab,
+      {
+         name = "main",
+         tabs = {
+            mod.gun_tab,
+         },
+      },
    }),
 })
 

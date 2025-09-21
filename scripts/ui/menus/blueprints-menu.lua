@@ -175,11 +175,16 @@ end
 mod.blueprint_menu_tabs = TabList.declare_tablist({
    ui_name = UiRouter.UI_NAMES.BLUEPRINT,
    tabs_callback = Functools.functionize({
-      UiKeyGraph.declare_graph({
-         name = "blueprints-menu",
-         render_callback = render,
-         title = { "fa.ui-blueprints-menu-title" },
-      }),
+      {
+         name = "main",
+         tabs = {
+            UiKeyGraph.declare_graph({
+               name = "blueprints-menu",
+               render_callback = render,
+               title = { "fa.ui-blueprints-menu-title" },
+            }),
+         },
+      },
    }),
 })
 

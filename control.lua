@@ -3623,14 +3623,7 @@ local function kb_repeat_last_spoken(event)
    Speech.speak(pindex, storage.players[pindex].last)
 end
 
---Repeats the last thing read out. Not just the scanner.
-EventManager.on_event(
-   "fa-c-tab",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      kb_repeat_last_spoken(event)
-   end
-)
+-- fa-c-tab is now handled by the UI router for section navigation
 
 --Used when a tile has multiple overlapping entities. Reads out the next entity.
 ---@param event EventData.CustomInputEvent

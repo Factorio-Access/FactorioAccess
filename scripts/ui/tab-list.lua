@@ -31,6 +31,7 @@ local Math2 = require("math-helpers")
 local Speech = require("scripts.speech")
 local StorageManager = require("scripts.storage-manager")
 local TH = require("scripts.table-helpers")
+local Sounds = require("scripts.ui.sounds")
 
 local mod = {}
 
@@ -65,14 +66,20 @@ local mod = {}
 ---@field title LocalisedString? If set, read out when the tab changes to this tab.
 ---@field callbacks fa.ui.TabCallbacks
 
+---@class fa.ui.SectionDescriptor
+---@field name string
+---@field title LocalisedString? If set, read out when switching to this section.
+---@field tabs fa.ui.TabDescriptor[]
+
 ---@class fa.ui.TabListDeclaration (exact)
 ---@field ui_name fa.ui.UiName Legacy, used for key routing.
----@field tabs_callback fun(pindex: number, parameters: any): fa.ui.TabDescriptor[] Dynamic tabs callback
+---@field tabs_callback fun(pindex: number, parameters: any): fa.ui.SectionDescriptor[] Dynamic sections callback
 ---@field shared_state_setup (fun(number, table): table)? passed the parameters and pindex, should return a shaerd state.
 ---@field resets_to_first_tab_on_open boolean?
 ---@field persist_state boolean?
 
 ---@class fa.ui.TabListStorageState
+---@field active_section number
 ---@field active_tab number
 ---@field tab_states table<string, table>
 ---@field parameters any
@@ -84,10 +91,11 @@ local mod = {}
 local tablist_storage = StorageManager.declare_storage_module("tab_list", {})
 
 ---@class fa.ui.TabList
+---@field sections fa.ui.SectionDescriptor[]
 ---@field descriptors  table<string, fa.ui.TabDescriptor>
 ---@field ui_name fa.ui.UiName
 ---@field tab_order string[]
----@field tabs_callback fun(pindex: number, parameters: any): fa.ui.TabDescriptor[]
+---@field tabs_callback fun(pindex: number, parameters: any): fa.ui.SectionDescriptor[]
 ---@field shared_state_initializer (fun(number, table): table)?
 ---@field declaration fa.ui.TabListDeclaration
 local TabList = {}
@@ -150,21 +158,32 @@ function TabList:_rerender(pindex)
    local tl = tablist_storage[pindex][self.ui_name]
    if not tl then return end
 
-   -- Get fresh descriptors from callback
-   local new_descriptors = self.tabs_callback(pindex, tl.parameters)
-   if not new_descriptors then
+   -- Get fresh sections from callback
+   local new_sections = self.tabs_callback(pindex, tl.parameters)
+   if not new_sections then
       -- If callback returns nil, close the UI
       self:close(pindex, true)
       return
    end
 
-   -- Build new descriptor map and order
+   -- Build flat descriptor map and order from sections
    local new_order = {}
    local new_desc_map = {}
-   for _, desc in ipairs(new_descriptors) do
-      new_desc_map[desc.name] = desc
-      table.insert(new_order, desc.name)
+   local valid_sections = {}
+
+   for _, section in ipairs(new_sections) do
+      if section.tabs and #section.tabs > 0 then
+         -- Only include sections with tabs
+         table.insert(valid_sections, section)
+         for _, desc in ipairs(section.tabs) do
+            new_desc_map[desc.name] = desc
+            table.insert(new_order, desc.name)
+         end
+      end
    end
+
+   -- Error if no valid sections with tabs
+   if #valid_sections == 0 then error("UI " .. self.ui_name .. " has no sections with tabs - programmer error") end
 
    -- Get previous tab order from storage (or current if first render)
    local prev_tab_order = tl.prev_tab_order or self.tab_order
@@ -201,6 +220,18 @@ function TabList:_rerender(pindex)
       end
    end
 
+   -- Determine which section contains the active tab
+   local tab_index = 0
+   for section_idx, section in ipairs(valid_sections) do
+      for _, tab in ipairs(section.tabs) do
+         tab_index = tab_index + 1
+         if tab_index == tl.active_tab then
+            tl.active_section = section_idx
+            break
+         end
+      end
+   end
+
    -- Clean up states for removed tabs
    if prev_tab_order then
       for _, old_name in ipairs(prev_tab_order) do
@@ -209,11 +240,12 @@ function TabList:_rerender(pindex)
    end
 
    -- Initialize states for new tabs
-   for _, desc in ipairs(new_descriptors) do
+   for _, desc in pairs(new_desc_map) do
       if not tl.tab_states[desc.name] then tl.tab_states[desc.name] = {} end
    end
 
    -- Update the TabList's descriptor tables
+   self.sections = valid_sections
    self.descriptors = new_desc_map
    self.tab_order = new_order
 
@@ -261,7 +293,8 @@ TabList.on_read_info = build_simple_method("on_read_info")
 
 -- Perform the flow for focusing a tab. Does this unconditionally, so be careful
 -- not to over-call it.
-function TabList:_set_active_tab(pindex, active_tab)
+-- @param msg_builder Optional message builder to prepend section info to
+function TabList:_set_active_tab(pindex, active_tab, msg_builder)
    local tl = tablist_storage[pindex][self.ui_name]
 
    -- Note: for now, control.lua has the sound logic for tab cycling because it
@@ -269,7 +302,8 @@ function TabList:_set_active_tab(pindex, active_tab)
    -- cohesive framework are relying on it; playing sounds here is
    -- double-playing.
 
-   local msg_builder = Speech.new()
+   -- Use provided message builder or create new one
+   msg_builder = msg_builder or Speech.new()
    local desc = self.descriptors[self.tab_order[active_tab]]
    local title = desc.title
    if title then msg_builder:list_item(title) end
@@ -288,18 +322,42 @@ function TabList:_cycle(pindex, direction)
    self:_rerender(pindex)
 
    local tl = tablist_storage[pindex][self.ui_name]
-   if not tl or not tl.currently_open then return end
+   if not tl or not tl.currently_open or not self.sections then return end
 
-   local old_index = tl.active_tab
-   local new_index = Math2.mod1(tl.active_tab + direction, #self.tab_order)
+   -- Get tabs in current section only
+   local current_section = self.sections[tl.active_section]
+   if not current_section or #current_section.tabs == 0 then return end
 
-   while new_index ~= old_index do
-      local behavior = self.descriptors[self.tab_order[new_index]]
-      if not behavior.callbacks.enabled or behavior.callbacks.enabled(pindex) then break end
-      new_index = Math2.mod1(new_index + direction, #self.tab_order)
+   -- Find current tab index within section
+   local current_tab_name = self.tab_order[tl.active_tab]
+   local section_tab_index = 0
+   for i, tab in ipairs(current_section.tabs) do
+      if tab.name == current_tab_name then
+         section_tab_index = i
+         break
+      end
    end
 
-   if old_index ~= new_index then self:_set_active_tab(pindex, new_index) end
+   -- Cycle within section
+   local old_section_index = section_tab_index
+   local new_section_index = Math2.mod1(section_tab_index + direction, #current_section.tabs)
+
+   while new_section_index ~= old_section_index do
+      local tab = current_section.tabs[new_section_index]
+      if not tab.callbacks.enabled or tab.callbacks.enabled(pindex) then break end
+      new_section_index = Math2.mod1(new_section_index + direction, #current_section.tabs)
+   end
+
+   if old_section_index ~= new_section_index then
+      -- Find global index of new tab
+      local new_tab_name = current_section.tabs[new_section_index].name
+      for i, name in ipairs(self.tab_order) do
+         if name == new_tab_name then
+            self:_set_active_tab(pindex, i)
+            break
+         end
+      end
+   end
 end
 
 function TabList:on_next_tab(pindex, modifiers)
@@ -312,6 +370,86 @@ function TabList:on_previous_tab(pindex, modifiers)
    self:_cycle(pindex, -1)
 end
 
+---@param pindex number
+---@param direction 1|-1
+function TabList:_cycle_section(pindex, direction)
+   if not tablist_storage[pindex] or not tablist_storage[pindex][self.ui_name] then return end
+
+   -- Re-render before cycling
+   self:_rerender(pindex)
+
+   local tl = tablist_storage[pindex][self.ui_name]
+   if not tl or not tl.currently_open or not self.sections then return end
+
+   -- If only one section, play edge sound
+   if #self.sections <= 1 then
+      Sounds.play_ui_edge(pindex)
+      return
+   end
+
+   -- Cycle to next/previous section (wrapping around)
+   local old_section = tl.active_section
+   local new_section = Math2.mod1(old_section + direction, #self.sections)
+
+   -- Skip empty sections
+   local attempts = 0
+   while attempts < #self.sections do
+      if self.sections[new_section] and #self.sections[new_section].tabs > 0 then break end
+      new_section = Math2.mod1(new_section + direction, #self.sections)
+      attempts = attempts + 1
+   end
+
+   if new_section == old_section then
+      -- All other sections are empty, play edge sound
+      Sounds.play_ui_edge(pindex)
+      return
+   end
+
+   -- Switch to new section
+   tl.active_section = new_section
+
+   -- Find first enabled tab in new section
+   local section = self.sections[new_section]
+   local first_tab_name = nil
+   for _, tab in ipairs(section.tabs) do
+      if not tab.callbacks.enabled or tab.callbacks.enabled(pindex) then
+         first_tab_name = tab.name
+         break
+      end
+   end
+
+   if not first_tab_name then
+      -- No enabled tabs in section (shouldn't happen but handle gracefully)
+      return
+   end
+
+   -- Find global index of the tab
+   for i, name in ipairs(self.tab_order) do
+      if name == first_tab_name then
+         -- Build message with section title (if present) and let _set_active_tab add the tab title
+         local msg_builder = nil
+         if section.title then
+            msg_builder = Speech.new()
+            msg_builder:fragment(section.title)
+         end
+         -- Pass the message builder to _set_active_tab so it can add the tab title
+         -- But we need to modify _set_active_tab to accept an optional message builder
+         self:_set_active_tab(pindex, i, msg_builder)
+         break
+      end
+   end
+end
+
+function TabList:on_next_section(pindex, modifiers)
+   -- Section navigation doesn't use modifiers, but we accept them for consistency
+   self:_cycle_section(pindex, 1)
+end
+
+function TabList:on_previous_section(pindex, modifiers)
+   -- Section navigation doesn't use modifiers, but we accept them for consistency
+   self:_cycle_section(pindex, -1)
+end
+
 function TabList:open(pindex, parameters)
    assert(self.ui_name)
 
@@ -322,6 +460,7 @@ function TabList:open(pindex, parameters)
    if not tabstate then
       tabstate = {
          parameters = parameters,
+         active_section = 1,
          active_tab = 1,
          tab_states = {},
          currently_open = true,
@@ -337,7 +476,13 @@ function TabList:open(pindex, parameters)
    -- And it is now open.
    tabstate.currently_open = true
 
-   if self.declaration.resets_to_first_tab_on_open then tabstate.active_tab = 1 end
+   -- Ensure active_section exists (for saved games from before sections)
+   if not tabstate.active_section then tabstate.active_section = 1 end
+
+   if self.declaration.resets_to_first_tab_on_open then
+      tabstate.active_tab = 1
+      tabstate.active_section = 1
+   end
 
    -- Perform initial render
    self:_rerender(pindex)
@@ -380,6 +525,7 @@ function mod.declare_tablist(declaration)
    ---@type fa.ui.TabList
    local ret = setmetatable({
       ui_name = declaration.ui_name,
+      sections = {},
       tab_order = {},
       descriptors = {},
       tabs_callback = declaration.tabs_callback,

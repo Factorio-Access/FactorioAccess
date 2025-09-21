@@ -36,18 +36,36 @@ local function setup_shared_state(pindex, params)
    return state
 end
 
--- Create the unified TabList with all tabs
+-- Create the unified TabList with sections
 mod.main_menu = TabList.declare_tablist({
    ui_name = UiRouter.UI_NAMES.MAIN,
    resets_to_first_tab_on_open = true,
    shared_state_setup = setup_shared_state,
    tabs_callback = Functools.functionize({
-      inventory.inventory_tab,
-      gun_menu.gun_tab,
-      crafting.crafting_tab,
-      crafting_queue, -- This module exports itself as a tab
-      research.research_tab,
-      research_queue, -- This module exports itself as a tab
+      {
+         name = "inventories",
+         title = { "fa.section-inventories" },
+         tabs = {
+            inventory.inventory_tab,
+            gun_menu.gun_tab,
+         },
+      },
+      {
+         name = "crafting",
+         title = { "fa.section-crafting" },
+         tabs = {
+            crafting.crafting_tab,
+            crafting_queue, -- This module exports itself as a tab
+         },
+      },
+      {
+         name = "research",
+         title = { "fa.section-research" },
+         tabs = {
+            research.research_tab,
+            research_queue, -- This module exports itself as a tab
+         },
+      },
    }),
 })
 
