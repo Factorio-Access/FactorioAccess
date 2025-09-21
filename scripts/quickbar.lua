@@ -25,16 +25,10 @@ end
 function mod.quickbar_set_handler(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
-   local router = UiRouter.get_router(pindex)
-   if
-      not router:is_ui_open()
-      or router:is_ui_open(UiRouter.UI_NAMES.BUILDING)
-      or router:is_ui_open(UiRouter.UI_NAMES.VEHICLE)
-   then
-      local num = tonumber(string.sub(event.input_name, -1))
-      if num == 0 then num = 10 end
-      mod.set_quick_bar_slot(num, pindex)
-   end
+   -- [UI CHECKS REMOVED] Quickbar setting now available anytime
+   local num = tonumber(string.sub(event.input_name, -1))
+   if num == 0 then num = 10 end
+   mod.set_quick_bar_slot(num, pindex)
 end
 
 --all 10 quickbar page setting event handlers

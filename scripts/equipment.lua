@@ -15,14 +15,7 @@ function mod.equip_it(stack, pindex)
    local router = UiRouter.get_router(pindex)
 
    local message = Speech.new()
-   if router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle" then
-      local spidertron_name = localising.get_alt(prototypes.entity["spidertron"], pindex)
-      if spidertron_name == nil then
-         spidertron_name = "Spidertron" --laterdo possible bug here
-      end
-      message:fragment(spidertron_name)
-      message:fragment(" ")
-   end
+   -- [UI CHECKS REMOVED] Spidertron equipment context removed - defaults to character equipment
 
    if stack.is_armor then
       local armor = game.get_player(pindex).get_inventory(defines.inventory.character_armor)
@@ -71,16 +64,13 @@ function mod.equip_it(stack, pindex)
       --Equip equipment ("gear")
       local armor_inv
       local grid
-      if router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle" then
-         grid = game.get_player(pindex).opened.grid
-      else
-         armor_inv = game.get_player(pindex).get_inventory(defines.inventory.character_armor)
-         if armor_inv.is_empty() then return "Equipment requires armor with an equipment grid." end
-         if armor_inv[1].grid == nil or not armor_inv[1].grid.valid then
-            return "Equipment requires armor with an equipment grid."
-         end
-         grid = armor_inv[1].grid
+      -- [UI CHECKS REMOVED] Spidertron grid check removed - defaults to character armor
+      armor_inv = game.get_player(pindex).get_inventory(defines.inventory.character_armor)
+      if armor_inv.is_empty() then return "Equipment requires armor with an equipment grid." end
+      if armor_inv[1].grid == nil or not armor_inv[1].grid.valid then
+         return "Equipment requires armor with an equipment grid."
       end
+      grid = armor_inv[1].grid
       --Iterate across the whole grid, trying to place the item.
       local placed = nil
       for i = 0, grid.width - 1, 1 do
@@ -107,10 +97,8 @@ function mod.equip_it(stack, pindex)
             message:fragment({ "fa.equipment-no-fit", tostring(slots_left) })
          end
       end
-   elseif
-      not router:is_ui_open()
-      and (stack.prototype.place_result ~= nil or stack.prototype.place_as_tile_result ~= nil)
-   then
+   elseif stack.prototype.place_result ~= nil or stack.prototype.place_as_tile_result ~= nil then
+      -- [UI CHECKS REMOVED] Menu check removed
       return ""
    else
       message:fragment({ "fa.equipment-cannot-equip", localising.get_localised_name_with_fallback(stack) })
@@ -403,17 +391,9 @@ function mod.read_equipment_list(pindex)
    --Armor with Equipment
    local grid
    local result = Speech.new()
-   if router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle" then
-      grid = game.get_player(pindex).opened.grid
-      local spidertron_name = localising.get_alt(prototypes.entity["spidertron"])
-      if spidertron_name == nil then
-         spidertron_name = "Spidertron" --laterdo possible bug here
-      end
-      result:fragment(spidertron_name)
-   else
-      grid = armor_inv[1].grid
-      result:fragment({ "fa.equipment-armor" })
-   end
+   -- [UI CHECKS REMOVED] Spidertron grid check removed - defaults to character armor
+   grid = armor_inv[1].grid
+   result:fragment({ "fa.equipment-armor" })
    if grid.equipment == nil or grid.equipment == {} then return { "fa.equipment-no-equipment-installed" } end
    --Read Equipment List
    result:fragment({ "fa.equipment-equipped-header" })
@@ -450,11 +430,8 @@ function mod.remove_equipment_and_armor(pindex)
    if armor_inv.is_empty() then return "No armor." end
 
    local grid
-   if router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle" then
-      grid = game.get_player(pindex).opened.grid
-   else
-      grid = armor_inv[1].grid
-   end
+   -- [UI CHECKS REMOVED] Spidertron grid check removed - defaults to character armor
+   grid = armor_inv[1].grid
    if grid ~= nil and grid.valid then
       local initial_equipment_count = grid.count()
       --Take all items
@@ -476,9 +453,8 @@ function mod.remove_equipment_and_armor(pindex)
    end
 
    --Remove armor
-   if router:is_ui_open(UiRouter.UI_NAMES.VEHICLE) and game.get_player(pindex).opened.type == "spider-vehicle" then
-      --do nothing
-   elseif char_main_inv.count_empty_stacks() == 0 then
+   -- [UI CHECKS REMOVED] Spidertron check removed - armor removal proceeds
+   if char_main_inv.count_empty_stacks() == 0 then
       result = { "", result, { "fa.inventory-full" } }
    else
       result =

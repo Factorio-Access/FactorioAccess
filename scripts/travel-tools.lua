@@ -16,29 +16,26 @@ function mod.fast_travel_menu_open(pindex)
 
    local p = game.get_player(pindex)
    if p.ticks_to_respawn ~= nil then return end
-   if not router:is_ui_open() and game.get_player(pindex).opened == nil then
-      game.get_player(pindex).selected = nil
+   -- [UI CHECKS REMOVED] Menu mutex check removed - travel menu handled by new UI system
+   game.get_player(pindex).selected = nil
 
-      router:open_ui(UiRouter.UI_NAMES.TRAVEL)
-      storage.players[pindex].move_queue = {}
-      storage.players[pindex].travel.index = { x = 1, y = 0 }
-      storage.players[pindex].travel.creating = false
-      storage.players[pindex].travel.renaming = false
-      storage.players[pindex].travel.describing = false
-      Speech.speak(
-         pindex,
-         "Fast travel, Navigate up and down with W and S to select a fast travel location, and jump to it with LEFT BRACKET.  Alternatively, select an option by navigating left and right with A and D."
-      )
-      local screen = game.get_player(pindex).gui.screen
-      local frame = screen.add({ type = "frame", name = "travel" })
-      frame.bring_to_front()
-      frame.force_auto_center()
-      frame.focus()
-      game.get_player(pindex).opened = frame
-      game.get_player(pindex).selected = nil
-   elseif router:is_ui_open() or game.get_player(pindex).opened ~= nil then
-      Speech.speak(pindex, { "fa.travel-another-menu-open" })
-   end
+   router:open_ui(UiRouter.UI_NAMES.TRAVEL)
+   storage.players[pindex].move_queue = {}
+   storage.players[pindex].travel.index = { x = 1, y = 0 }
+   storage.players[pindex].travel.creating = false
+   storage.players[pindex].travel.renaming = false
+   storage.players[pindex].travel.describing = false
+   Speech.speak(
+      pindex,
+      "Fast travel, Navigate up and down with W and S to select a fast travel location, and jump to it with LEFT BRACKET.  Alternatively, select an option by navigating left and right with A and D."
+   )
+   local screen = game.get_player(pindex).gui.screen
+   local frame = screen.add({ type = "frame", name = "travel" })
+   frame.bring_to_front()
+   frame.force_auto_center()
+   frame.focus()
+   game.get_player(pindex).opened = frame
+   game.get_player(pindex).selected = nil
 end
 
 --Reads the selected fast travel menu slot
