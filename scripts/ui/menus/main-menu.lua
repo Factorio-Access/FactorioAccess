@@ -6,7 +6,6 @@ This is the primary player interface accessed with the E key.
 local Functools = require("scripts.functools")
 local TabList = require("scripts.ui.tab-list")
 local UiRouter = require("scripts.ui.router")
-local UiEventRouting = require("scripts.ui.event-routing")
 
 -- Import all the individual tabs
 local inventory = require("scripts.ui.menus.inventory")
@@ -53,6 +52,6 @@ mod.main_menu = TabList.declare_tablist({
 })
 
 -- Register with the UI event routing system
-UiEventRouting.register_ui(mod.main_menu)
+UiRouter.register_ui(mod.main_menu)
 
 return mod

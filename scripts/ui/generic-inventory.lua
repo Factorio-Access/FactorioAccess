@@ -13,7 +13,6 @@ local Functools = require("scripts.functools")
 local InventoryGrid = require("scripts.ui.inventory-grid")
 local TabList = require("scripts.ui.tab-list")
 local UiRouter = require("scripts.ui.router")
-local UiEventRouting = require("scripts.ui.event-routing")
 
 local mod = {}
 
@@ -80,6 +79,6 @@ mod.generic_inventory = TabList.declare_tablist({
 })
 
 -- Register with the UI event routing system
-UiEventRouting.register_ui(mod.generic_inventory)
+UiRouter.register_ui(mod.generic_inventory)
 
 return mod

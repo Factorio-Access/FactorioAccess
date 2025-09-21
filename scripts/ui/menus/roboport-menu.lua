@@ -11,7 +11,6 @@ local Speech = require("scripts.speech")
 local TabList = require("scripts.ui.tab-list")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local UiRouter = require("scripts.ui.router")
-local UiEventRouting = require("scripts.ui.event-routing")
 
 local mod = {}
 
@@ -216,6 +215,6 @@ mod.roboport_menu = TabList.declare_tablist({
 })
 
 -- Register with the UI event routing system for event interception
-UiEventRouting.register_ui(mod.roboport_menu)
+UiRouter.register_ui(mod.roboport_menu)
 
 return mod

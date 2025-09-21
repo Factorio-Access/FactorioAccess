@@ -7,7 +7,6 @@ Sets up default values and data structures for each player.
 local FaUtils = require("scripts.fa-utils")
 local TH = require("scripts.table-helpers")
 local Localising = require("scripts.localising")
-local BumpDetection = require("scripts.bump-detection")
 
 local dirs = defines.direction
 
@@ -336,8 +335,7 @@ function mod.initialize(player)
    faplayer.translation_id_lookup = faplayer.translation_id_lookup or {}
    Localising.check_player(player.index)
 
-   -- Initialize bump detection
-   BumpDetection.reset_bump_stats(player.index)
+   -- Bump detection is now self-initializing via StorageManager
 end
 
 return mod

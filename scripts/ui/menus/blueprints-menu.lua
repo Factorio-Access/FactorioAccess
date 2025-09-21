@@ -184,7 +184,6 @@ mod.blueprint_menu_tabs = TabList.declare_tablist({
 })
 
 -- Register with the UI event routing system for event interception
-local UiEventRouting = require("scripts.ui.event-routing")
-UiEventRouting.register_ui(mod.blueprint_menu_tabs)
+UiRouter.register_ui(mod.blueprint_menu_tabs)
 
 return mod

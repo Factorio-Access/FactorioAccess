@@ -229,7 +229,6 @@ mod.gun_menu = TabList.declare_tablist({
 })
 
 -- Register with the UI event routing system for event interception
-local UiEventRouting = require("scripts.ui.event-routing")
-UiEventRouting.register_ui(mod.gun_menu)
+UiRouter.register_ui(mod.gun_menu)
 
 return mod

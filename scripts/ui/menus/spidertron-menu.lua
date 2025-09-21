@@ -9,7 +9,6 @@ local Speech = require("scripts.speech")
 local TabList = require("scripts.ui.tab-list")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local UiRouter = require("scripts.ui.router")
-local UiEventRouting = require("scripts.ui.event-routing")
 local Viewpoint = require("scripts.viewpoint")
 
 local mod = {}
