@@ -31,7 +31,6 @@ local Math2 = require("math-helpers")
 local Speech = require("scripts.speech")
 local StorageManager = require("scripts.storage-manager")
 local TH = require("scripts.table-helpers")
-local UiRouter = require("scripts.ui.router")
 
 local mod = {}
 
@@ -315,8 +314,6 @@ end
 
 function TabList:open(pindex, parameters)
    assert(self.ui_name)
-   local router = UiRouter.get_router(pindex)
-   router:open_ui(self.ui_name)
 
    if not self.declaration.persist_state then tablist_storage[pindex][self.ui_name] = nil end
 

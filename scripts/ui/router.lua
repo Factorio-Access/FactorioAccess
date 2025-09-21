@@ -91,13 +91,20 @@ local Router = {}
 local Router_meta = { __index = Router }
 
 ---@param name fa.ui.UiName
-function Router:open_ui(name)
+---@param params? table Optional parameters to pass to the UI
+function Router:open_ui(name, params)
    local current_ui = router_state[self.pindex].ui_name
 
    -- If switching to a different UI, close the current one first
    if current_ui and current_ui ~= name then self:_close_current_ui() end
 
+   -- Set the UI as open in router state
    router_state[self.pindex].ui_name = name
+
+   -- Get the registered UI and open it with params
+   if registered_uis[name] then registered_uis[name]:open(self.pindex, params or {}) end
+   -- If UI is not registered, it might be a legacy UI name - just set it as open
+   -- This maintains backward compatibility with old UI system
 end
 
 function Router:close_ui()

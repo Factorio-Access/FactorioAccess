@@ -49,13 +49,14 @@ local TestFramework = require("scripts.test-framework")
 local TransportBelts = require("scripts.transport-belts")
 local TravelTools = require("scripts.travel-tools")
 local TutorialSystem = require("scripts.tutorial-system")
-local BeltAnalyzer = require("scripts.ui.belt-analyzer")
-local BlueprintsMenu = require("scripts.ui.menus.blueprints-menu")
-local GunMenuUi = require("scripts.ui.menus.gun-menu")
-local MainMenu = require("scripts.ui.menus.main-menu")
-local RoboportMenuUi = require("scripts.ui.menus.roboport-menu")
-local SpidertronMenuUi = require("scripts.ui.menus.spidertron-menu")
-local GenericInventory = require("scripts.ui.generic-inventory")
+-- UI modules (required for registration with router)
+require("scripts.ui.belt-analyzer")
+require("scripts.ui.menus.blueprints-menu")
+require("scripts.ui.menus.gun-menu")
+require("scripts.ui.menus.main-menu")
+require("scripts.ui.menus.roboport-menu")
+require("scripts.ui.menus.spidertron-menu")
+require("scripts.ui.generic-inventory")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
 local Warnings = require("scripts.warnings")
@@ -1126,7 +1127,8 @@ function clicked_on_entity(ent, pindex)
    p.selected = ent
    if ent.name == "roboport" then
       --For a roboport, open roboport menu
-      RoboportMenuUi.roboport_menu:open(pindex, {})
+      local router = UiRouter.get_router(pindex)
+      router:open_ui(UiRouter.UI_NAMES.ROBOPORT)
    elseif ent.type == "power-switch" then
       --Toggle it, if in manual mode
       if (#ent.neighbours.red + #ent.neighbours.green) > 0 then
@@ -1204,7 +1206,8 @@ EventManager.on_event(defines.events.on_player_cursor_stack_changed, function(ev
    -- As a special case: blueprint menus will end up pointing at the wrong
    -- blueprint if not closed here, since the only real unique identifier right
    -- now is the player's hand.
-   BlueprintsMenu.blueprint_menu_tabs:close(pindex)
+   local router = UiRouter.get_router(pindex)
+   if router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT) then router:close_ui() end
 
    -- [UI CHECKS REMOVED] close_menu_resets call removed
    if storage.players[pindex].previous_hand_item_name ~= new_item_name then
@@ -3693,8 +3696,9 @@ local function kb_open_player_inventory(event)
    sounds.play_open_inventory(p.index)
    p.selected = nil
    storage.players[pindex].last_menu_toggle_tick = event.tick
-   -- Use the TabList's open method to properly initialize the UI
-   MainMenu.main_menu:open(pindex, {})
+   -- Use the router to open the main menu
+   local router = UiRouter.get_router(pindex)
+   router:open_ui(UiRouter.UI_NAMES.MAIN)
 end
 
 ---@param event EventData.CustomInputEvent
@@ -4082,7 +4086,8 @@ local function kb_click_hand_right(event)
       kb_read_entity_status(event)
    elseif stack.is_blueprint then
       Blueprints.blueprint_menu_open(pindex)
-      BlueprintsMenu.blueprint_menu_tabs:open(pindex, {})
+      local router = UiRouter.get_router(pindex)
+      router:open_ui(UiRouter.UI_NAMES.BLUEPRINT)
    elseif stack.is_blueprint_book then
       Blueprints.blueprint_book_menu_open(pindex, false)
    elseif stack.is_deconstruction_item then
@@ -4142,7 +4147,8 @@ local function kb_click_hand_right(event)
       end
    elseif stack.name == "spidertron-remote" then
       --open spidermenu with the remote in hand
-      SpidertronMenuUi.spidertron_menu:open(pindex, {})
+      local router = UiRouter.get_router(pindex)
+      router:open_ui(UiRouter.UI_NAMES.SPIDERTRON)
    else
       -- Regular item in hand - read entity status as fallback
       kb_read_entity_status(event)
