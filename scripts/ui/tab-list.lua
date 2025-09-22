@@ -297,10 +297,8 @@ TabList.on_read_info = build_simple_method("on_read_info")
 function TabList:_set_active_tab(pindex, active_tab, msg_builder)
    local tl = tablist_storage[pindex][self.ui_name]
 
-   -- Note: for now, control.lua has the sound logic for tab cycling because it
-   -- turns out that is generic and all of the other menus that don't use a
-   -- cohesive framework are relying on it; playing sounds here is
-   -- double-playing.
+   -- Play tab change sound
+   Sounds.play_change_menu_tab(pindex)
 
    -- Use provided message builder or create new one
    msg_builder = msg_builder or Speech.new()
