@@ -16,9 +16,7 @@ gh issue list --search "keyword"
 
 ### Step 2: Explore the Codebase
 ```bash
-# Use tree-sitter MCP to understand code structure (preferred)
-# Register the project first if needed
-mcp__treesitter__register_project_tool --path /path/to/FactorioAccess
+# Use grep/rg to understand code structure
 
 # Find relevant files using pattern matching
 python3 launch_factorio.py --lint  # Get familiar with the codebase structure
@@ -87,8 +85,8 @@ require("scripts.my-feature")
 
 ### Step 1: Locate the Feature
 ```bash
-# Use tree-sitter to find feature structure
-mcp__treesitter__find_text --project FactorioAccess --pattern "feature_name"
+# Use grep to find feature structure
+grep -r "feature_name" scripts/
 
 # Find which module handles specific events
 rg "on_player_cursor_stack_changed" scripts/ -A 5 -B 5
@@ -105,8 +103,8 @@ rg "require.*module-name" --type lua
 # Find what this module calls
 rg "require" scripts/module-name.lua
 
-# Use tree-sitter for dependency analysis
-mcp__treesitter__get_dependencies --project FactorioAccess --file_path scripts/module.lua
+# Use grep for dependency analysis
+grep "require" scripts/module.lua
 ```
 
 ### Step 3: Make Changes Safely
@@ -449,8 +447,8 @@ gh pr list --author @me
 
 ## Tips for Success
 
-1. **Always use tree-sitter MCP** when available - it's much more efficient than reading entire files
-2. **Never read control.lua entirely** - use targeted searches or tree-sitter
+1. **Always use grep/rg** for searching - it's much more efficient than reading entire files
+2. **Never read control.lua entirely** - use targeted searches with grep/rg
 3. **Test early and often** - catch issues before they compound
 4. **Use the TODO system** - it helps track complex multi-step tasks
 5. **Ask when unsure** - The docs might be wrong; confirm with maintainers

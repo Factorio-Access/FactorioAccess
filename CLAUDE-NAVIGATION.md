@@ -167,7 +167,7 @@ This guide helps LLMs quickly find specific code locations in the FactorioAccess
 - **Common mistake**: Using `ctx.state` instead of local variables
 
 ### File Size Warnings
-- **control.lua**: ~10,000 lines - Use tree-sitter or grep, not full reads
+- **control.lua**: Main runtime entry point - Use grep or partial reads when needed
 - **Large modules**: Check file size before reading entire file
 - **Common mistake**: Repeatedly reading control.lua exhausts context
 
@@ -210,7 +210,7 @@ end)
 ```
 
 ## Navigation Tips
-- Use tree-sitter for large files (control.lua)
+- Use grep or partial reads for large files
 - Search for keybind names to find handlers
 - Look for `require` statements to trace dependencies
 - Check `scripts/` subdirectories for feature modules

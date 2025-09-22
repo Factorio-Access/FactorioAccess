@@ -17,12 +17,11 @@ KEY TOOLS YOU NEED:
 - git and gh (GitHub CLI) for version control
 - Python 3 for running the launcher script
 - grep/rg for searching the codebase
-- Tree-sitter tools if available (helps navigate large files)
 
 WORKING DIRECTORY: The FactorioAccess mod directory
 
 CRITICAL FILES TO KNOW:
-- control.lua (8000+ lines) - Main runtime, DO NOT read entirely
+- control.lua - Main runtime entry point, use grep or partial reads
 - launch_factorio.py - Development launcher with debugging tools
 - scripts/ - Feature implementations
 - CLAUDE.md - Development guide with patterns and pitfalls
@@ -35,12 +34,9 @@ When starting a session, run these checks:
 ```bash
 # Check for required tools
 which git
-which gh  
+which gh
 which python3
 which rg || which grep
-
-# Check if tree-sitter is available
-# If not available, warn that navigation may be slower
 
 # Get current branch
 git status
@@ -65,7 +61,7 @@ When the user reports a crash:
 3. Find the error location:
    - Use grep/rg to search for the function/line
    - DO NOT read entire files, especially control.lua
-   - Use tree-sitter if available for better navigation
+   - Use grep/rg for efficient navigation
 
 4. Assess fix size:
    - Small (<50 lines): Apply immediately

@@ -61,7 +61,7 @@ After a lot of working with you I have seen your antipatterns, so I am going to 
 - Remember that there is Factorio the game, and Factorio Access the mod, and these are separate.  We do not control the
   game. We should not test the game APIs, only the mod.
 - Many files here are huge.  If you read entire files you will exhaust your context window extremely rapidly.  Prefer
-  rg/grep, partial reads, or tree-sitter (available via MCP)
+  rg/grep or partial reads
 - game.print is wrong. You cannot see game.print because it only goes to the GUI. You want print or the logging framework.
 - One-time init of local state that does not depend on the Factorio API and which does not need to persist across a
   save/load cycle may be done at the top level of files.
@@ -74,14 +74,7 @@ After a lot of working with you I have seen your antipatterns, so I am going to 
 - Always add LuaLS annotations using the correct format: `---@` (three dashes), not `-- @` (two dashes with space).
 - The linter will automatically check for incorrect annotation formats and fail if any are found.
 
-control.lua is a problematic file because it is 10000 lines or so.  You are strongly encouraged to explore it with
-tree-sitter, subagents, or rg/grep.  If you repeatedly read it, it will fill your context window.  If you must read it,
-read it once only to prevent this problem.
-
-If you do not detect the tree-sitter MCP server, stop, warn the user, point them at
-https://github.com/wrale/mcp-server-tree-sitter, and ask if they wish to proceed without it.  This is a multi-developer
-project so it is not guaranteed to be present.  If you don't check, the user will unknowingly have problems due to the
-control.lua issues.
+control.lua is the main runtime entry point. Use rg/grep or partial reads to explore it efficiently rather than reading the entire file.
 
 ## Quick Start
 
@@ -290,7 +283,7 @@ See `scripts/fa-info.lua` for comprehensive examples of proper localization patt
 
 ## control.lua Navigation Guide
 
-**CRITICAL**: control.lua is 8,738 lines long. Reading it entirely will exhaust your context window. Use these strategies instead:
+It's best to use targeted searches rather than reading the entire file:
 
 ### File Structure Overview
 
@@ -363,12 +356,6 @@ control.lua is organized into these major sections:
    ```bash
    # Find specific event handlers
    rg "on_player_cursor_stack_changed" control.lua -n -C 5
-   ```
-
-5. **Use tree-sitter (if available)**:
-   ```bash
-   # Get function list without reading file
-   mcp__treesitter__run_query "control.lua" "(function_declaration) @func"
    ```
 
 ### Alternative Files for Common Tasks

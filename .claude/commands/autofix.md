@@ -16,22 +16,21 @@ Just say: `/autofix`
 
 ## What happens next
 
-1. I'll onboard to the codebase, once per session.
-2. I'll check important file paths using `python3 launch_factorio.py --show-paths`
-3. I'll immediately run `python3 launch_factorio.py --capture-logs` to save the logs
-4. **CRITICAL REQUIREMENT**: 
+1. I'll check important file paths using `python3 launch_factorio.py --show-paths`
+2. I'll immediately run `python3 launch_factorio.py --capture-logs` to save the logs
+3. **CRITICAL REQUIREMENT**:
    - If the launcher returns empty/null logs, I MUST STOP IMMEDIATELY
    - I will NOT proceed without logs - it's a waste of everyone's time
    - I will ask for help to locate the logs instead of guessing or continuing blindly
    - The launcher should fail hard if logs can't be found
-5. I'll analyze the captured logs for any crash or error information
-6. If a bug is found:
+4. I'll analyze the captured logs for any crash or error information
+5. If a bug is found:
    - I'll show you the relevant error information
    - I'll guide you through the fix process
    - **CRITICAL**: I'll use MessageBuilder for ALL string concatenation with LocalisedStrings
    - I'll format the code and commit the changes
    - I'll help you test the fix before the user tries again
-7. If no bug is found but logs were captured:
+6. If no bug is found but logs were captured:
    - I'll report that no crash was detected in the logs
    - I'll ask you to describe what issue you encountered
    - I'll then proceed to help debug based on your description

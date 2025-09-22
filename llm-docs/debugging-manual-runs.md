@@ -127,14 +127,13 @@ Check the stack trace for the specific handler.
 ## Tips for LLMs
 
 1. **Act quickly** - Logs are overwritten when Factorio restarts
-2. **Use tree-sitter** if available for large file navigation
+2. **Use grep/rg** for efficient file navigation
 3. **Check CLAUDE.md** for known issues and patterns
 4. **Focus on the error line** and work backwards through the stack trace
 5. **Test fixes** with the launcher before asking the user to test
 
 ## Integration with Other Tools
 
-- **Tree-sitter MCP**: Use for navigating control.lua efficiently
 - **GitHub integration**: Can create issues or PRs for larger fixes, ONLY WITH USER PERMISSION.
 - **Logging framework**: Already integrated, use `Logging.Logger("ModuleName")`.  Requires importing.
 
