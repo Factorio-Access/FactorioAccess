@@ -242,7 +242,7 @@ local function handle_vertical_navigation(ctx, render, direction)
    update_state_after_render(state, render)
 
    if #render.categories == 0 then
-      sounds.play_menu_wrap(ctx.pindex)
+      sounds.play_ui_edge(ctx.pindex)
       ctx.message:fragment({ "fa.category-rows-no-categories" })
       return
    end
@@ -297,7 +297,7 @@ local function handle_horizontal_navigation(ctx, render, direction)
    update_state_after_render(state, render)
 
    if #render.categories == 0 then
-      sounds.play_menu_wrap(ctx.pindex)
+      sounds.play_ui_edge(ctx.pindex)
       ctx.message:fragment({ "fa.category-rows-no-categories" })
       return
    end
@@ -306,7 +306,7 @@ local function handle_horizontal_navigation(ctx, render, direction)
    local category = render.categories[cat_index]
 
    if #category.items == 0 then
-      sounds.play_menu_wrap(ctx.pindex)
+      sounds.play_ui_edge(ctx.pindex)
       ctx.message:fragment({ "fa.category-rows-empty-category" })
       return
    end
@@ -491,6 +491,126 @@ end
 function CategoryRows:on_right(ctx, modifiers)
    local render = self.render_callback(ctx)
    if render then handle_horizontal_navigation(ctx, render, 1) end
+end
+
+---Helper function to jump to a specific category (first or last)
+---@param ctx fa.ui.TabContext
+---@param render fa.ui.CategoryRows.Render
+---@param target_index number 1 for first, or #categories for last
+local function jump_to_category(ctx, render, target_index)
+   local state = get_or_create_state(ctx)
+   update_state_after_render(state, render)
+
+   if #render.categories == 0 then
+      sounds.play_ui_edge(ctx.pindex)
+      ctx.message:fragment({ "fa.category-rows-no-categories" })
+      return
+   end
+
+   local current_index = find_category_index(render, state.current_category_key) or 1
+
+   if current_index == target_index then
+      -- Already at target, play edge sound and re-announce
+      sounds.play_ui_edge(ctx.pindex)
+   else
+      -- Move to target category
+      state.current_category_key = render.categories[target_index].key
+   end
+
+   -- Announce category and current item
+   local category = render.categories[target_index]
+   ctx.message:fragment(category.label)
+   ctx.message:list_item_forced_comma()
+
+   local cursor_key = state.cursor_by_category[category.key]
+   if cursor_key then
+      local item_index = find_item_index(category, cursor_key)
+      if item_index then
+         local item = category.items[item_index]
+         local item_ctx = create_item_context(ctx)
+         item.vtable.label(item_ctx)
+      end
+   elseif #category.items > 0 then
+      state.cursor_by_category[category.key] = category.items[1].key
+      local item = category.items[1]
+      local item_ctx = create_item_context(ctx)
+      item.vtable.label(item_ctx)
+   else
+      ctx.message:fragment({ "fa.category-rows-empty-category" })
+   end
+end
+
+---Helper function to jump to a specific item in current category (first or last)
+---@param ctx fa.ui.TabContext
+---@param render fa.ui.CategoryRows.Render
+---@param target_index_fn fun(category: fa.ui.CategoryRows.Category): number
+local function jump_to_item(ctx, render, target_index_fn)
+   local state = get_or_create_state(ctx)
+   update_state_after_render(state, render)
+
+   if #render.categories == 0 then
+      sounds.play_ui_edge(ctx.pindex)
+      ctx.message:fragment({ "fa.category-rows-no-categories" })
+      return
+   end
+
+   local cat_index = find_category_index(render, state.current_category_key) or 1
+   local category = render.categories[cat_index]
+
+   if #category.items == 0 then
+      sounds.play_ui_edge(ctx.pindex)
+      ctx.message:fragment({ "fa.category-rows-empty-category" })
+      return
+   end
+
+   local cursor_key = state.cursor_by_category[category.key] or category.items[1].key
+   local current_index = find_item_index(category, cursor_key) or 1
+   local target_index = target_index_fn(category)
+
+   if current_index == target_index then
+      -- Already at target, play edge sound and re-announce
+      sounds.play_ui_edge(ctx.pindex)
+   else
+      -- Move to target item
+      state.cursor_by_category[category.key] = category.items[target_index].key
+   end
+
+   -- Announce target item
+   local item = category.items[target_index]
+   local item_ctx = create_item_context(ctx)
+   item.vtable.label(item_ctx)
+end
+
+---@param ctx fa.ui.TabContext
+---@param modifiers any
+function CategoryRows:on_top(ctx, modifiers)
+   local render = self.render_callback(ctx)
+   if render then jump_to_category(ctx, render, 1) end
+end
+
+---@param ctx fa.ui.TabContext
+---@param modifiers any
+function CategoryRows:on_bottom(ctx, modifiers)
+   local render = self.render_callback(ctx)
+   if render then jump_to_category(ctx, render, #render.categories) end
+end
+
+---@param ctx fa.ui.TabContext
+---@param modifiers any
+function CategoryRows:on_leftmost(ctx, modifiers)
+   local render = self.render_callback(ctx)
+   if render then jump_to_item(ctx, render, function(category)
+      return 1
+   end) end
+end
+
+---@param ctx fa.ui.TabContext
+---@param modifiers any
+function CategoryRows:on_rightmost(ctx, modifiers)
+   local render = self.render_callback(ctx)
+   if render then jump_to_item(ctx, render, function(category)
+      return #category.items
+   end) end
 end
 
 ---@param ctx fa.ui.TabContext

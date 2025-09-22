@@ -200,6 +200,12 @@ EventManager.on_event("fa-down", create_ui_handler("on_down"), EventManager.EVEN
 EventManager.on_event("fa-left", create_ui_handler("on_left"), EventManager.EVENT_KIND.UI)
 EventManager.on_event("fa-right", create_ui_handler("on_right"), EventManager.EVENT_KIND.UI)
 
+-- Edge navigation (Ctrl+WASD)
+EventManager.on_event("fa-c-w", create_ui_handler("on_top"), EventManager.EVENT_KIND.UI)
+EventManager.on_event("fa-c-s", create_ui_handler("on_bottom"), EventManager.EVENT_KIND.UI)
+EventManager.on_event("fa-c-a", create_ui_handler("on_leftmost"), EventManager.EVENT_KIND.UI)
+EventManager.on_event("fa-c-d", create_ui_handler("on_rightmost"), EventManager.EVENT_KIND.UI)
+
 -- Click/select (leftbracket is left click, rightbracket is right click)
 EventManager.on_event("fa-leftbracket", create_ui_handler("on_click"), EventManager.EVENT_KIND.UI)
 EventManager.on_event("fa-rightbracket", create_ui_handler("on_right_click"), EventManager.EVENT_KIND.UI)

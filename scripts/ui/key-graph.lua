@@ -198,7 +198,9 @@ function Graph:_rerender(ctx)
          state.cur_key = render.start_key
       else
          local old_ind = TH.find_index_of(state.key_order, state.cur_key)
-         assert(old_ind, "cur_key should always have been in the previous version of the graph")
+         if not old_ind then
+            error("cur_key should always have been in the previous version of the graph: " .. serpent.line(cur_key))
+         end
          for i = old_ind, 1, -1 do
             local k = state.key_order[i]
             if render.nodes[k] then
@@ -360,6 +362,65 @@ end
 ---@param ctx fa.ui.graph.InternalTabCtx
 function Graph:on_down(ctx)
    self:_do_move(ctx, mod.TRANSITION_DIR.DOWN)
+end
+
+---@private
+---@param ctx fa.ui.graph.InternalTabCtx
+---@param dir number Direction from mod.TRANSITION_DIR
+function Graph:_do_move_to_edge(ctx, dir)
+   self:_with_render(ctx, function()
+      local state = ctx.state
+      local render = self.render
+      local current_key = state.cur_key
+      local moved = false
+
+      -- Move in the given direction as far as possible
+      while true do
+         local current_node = render.nodes[current_key]
+         if not current_node then break end
+
+         local t = current_node.transitions[dir]
+         if not t then break end
+
+         local new_node = render.nodes[t.destination]
+         if not new_node then break end
+
+         current_key = t.destination
+         moved = true
+      end
+
+      if moved then
+         -- We moved to a new position
+         state.cur_key = current_key
+         local node = render.nodes[current_key]
+         self:_maybe_call(node, ctx, "label", NO_MODIFIERS)
+      else
+         -- Already at edge, play edge sound and re-announce
+         UiSounds.play_ui_edge(ctx.pindex)
+         local node = render.nodes[current_key]
+         self:_maybe_call(node, ctx, "label", NO_MODIFIERS)
+      end
+   end)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+function Graph:on_top(ctx)
+   self:_do_move_to_edge(ctx, mod.TRANSITION_DIR.UP)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+function Graph:on_bottom(ctx)
+   self:_do_move_to_edge(ctx, mod.TRANSITION_DIR.DOWN)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+function Graph:on_leftmost(ctx)
+   self:_do_move_to_edge(ctx, mod.TRANSITION_DIR.LEFT)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+function Graph:on_rightmost(ctx)
+   self:_do_move_to_edge(ctx, mod.TRANSITION_DIR.RIGHT)
 end
 
 ---@param ctx fa.ui.graph.InternalTabCtx

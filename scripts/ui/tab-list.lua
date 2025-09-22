@@ -55,6 +55,10 @@ local mod = {}
 ---@field on_down fa.ui.SimpleTabHandler?
 ---@field on_left fa.ui.SimpleTabHandler?
 ---@field on_right fa.ui.SimpleTabHandler?
+---@field on_top fa.ui.SimpleTabHandler?
+---@field on_bottom fa.ui.SimpleTabHandler?
+---@field on_leftmost fa.ui.SimpleTabHandler?
+---@field on_rightmost fa.ui.SimpleTabHandler?
 ---@field on_click fa.ui.SimpleTabHandler?
 ---@field on_right_click fa.ui.SimpleTabHandler?
 ---@field on_read_coords fa.ui.SimpleTabHandler?
@@ -290,6 +294,14 @@ TabList.on_right_click = build_simple_method("on_right_click")
 TabList.on_read_coords = build_simple_method("on_read_coords")
 ---@type fun(self, number, table?)
 TabList.on_read_info = build_simple_method("on_read_info")
+---@type fun(self, number, table?)
+TabList.on_top = build_simple_method("on_top")
+---@type fun(self, number, table?)
+TabList.on_bottom = build_simple_method("on_bottom")
+---@type fun(self, number, table?)
+TabList.on_leftmost = build_simple_method("on_leftmost")
+---@type fun(self, number, table?)
+TabList.on_rightmost = build_simple_method("on_rightmost")
 
 -- Perform the flow for focusing a tab. Does this unconditionally, so be careful
 -- not to over-call it.
