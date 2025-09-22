@@ -62,8 +62,7 @@ mod.UI_NAMES = {
    MAIN = "main",
    -- New inventory, but we need the old name for a little bit while we roll over.
    GENERIC_INVENTORY = "inventory2",
-   BUILDING = "building",
-   VEHICLE = "vehicle",
+   -- BUILDING and VEHICLE removed - migrating to capability-based UI
    TRAVEL = "travel",
    GUNS = "guns", -- Keep for backward compatibility with gun_menu registration
    BELT = "belt",

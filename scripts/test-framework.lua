@@ -46,7 +46,7 @@ local test_files = {
    -- "travel-tools-localization-test", -- Test travel-tools localization messages (file missing)
    "furnace-fuel-test", -- Test furnace fuel status reporting
    "speech-logger-test", -- Test speech logging to file
-   "inventory-transfer-test", -- Test inventory transfer functionality and sorting
+   -- "inventory-transfer-test", -- Removed: functionality migrated to capability-based UI
 
    "tab-crash-test", -- Test TAB key doesn't crash with no UI open
    -- "event-manager-player-init-test", -- Test EventManager player initialization (requires custom events)

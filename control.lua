@@ -13,7 +13,7 @@ local AreaOperations = require("scripts.area-operations")
 local AudioCues = require("scripts.audio-cues")
 local Blueprints = require("scripts.blueprints")
 local BuildingTools = require("scripts.building-tools")
-local BuildingVehicleSectors = require("scripts.building-vehicle-sectors")
+-- Removed BuildingVehicleSectors - migrating to capability-based UI
 local BumpDetection = require("scripts.bump-detection")
 local CircuitNetworks = require("scripts.circuit-networks")
 local Combat = require("scripts.combat")
@@ -358,7 +358,8 @@ function locate_hand_in_building_output_inventory(pindex)
       return
    else
       storage.players[pindex].building.index = i
-      BuildingVehicleSectors.read_sector_slot(pindex, false)
+      -- Removed: BuildingVehicleSectors.read_sector_slot(pindex, false)
+      -- TODO: Replace with new capability-based UI
    end
 end
 
@@ -1146,21 +1147,28 @@ function clicked_on_entity(ent, pindex)
          Speech.speak(pindex, { "fa.switched-off" })
       end
    elseif ent.operable and ent.prototype.is_building then
-      --If checking an operable building, open its menu
-      BuildingVehicleSectors.open_operable_building(ent, pindex)
+      -- TODO: Replace with capability-based UI
+      Speech.speak(pindex, { "fa.no-menu-for", Localising.get_localised_name_with_fallback(ent) })
    elseif ent.type == "car" or ent.type == "spider-vehicle" or ent.train ~= nil then
-      BuildingVehicleSectors.open_operable_vehicle(ent, pindex)
+      -- TODO: Replace with capability-based UI
+      Speech.speak(pindex, { "fa.no-menu-for", Localising.get_localised_name_with_fallback(ent) })
    elseif ent.type == "spider-leg" then
       --Find and open the spider
       local spiders =
          ent.surface.find_entities_filtered({ position = ent.position, radius = 5, type = "spider-vehicle" })
       local spider = ent.surface.get_closest(ent.position, spiders)
-      if spider and spider.valid then BuildingVehicleSectors.open_operable_vehicle(spider, pindex) end
+      if spider and spider.valid then
+         -- TODO: Replace with capability-based UI
+         Speech.speak(pindex, { "fa.no-menu-for", Localising.get_localised_name_with_fallback(spider) })
+      end
    elseif ent.name == "rocket-silo-rocket-shadow" or ent.name == "rocket-silo-rocket" then
       --Find and open the silo
       local silos = ent.surface.find_entities_filtered({ position = ent.position, radius = 5, type = "rocket-silo" })
       local silo = ent.surface.get_closest(ent.position, silos)
-      if silo and silo.valid then BuildingVehicleSectors.open_operable_building(silo, pindex) end
+      if silo and silo.valid then
+         -- TODO: Replace with capability-based UI
+         Speech.speak(pindex, { "fa.no-menu-for", Localising.get_localised_name_with_fallback(silo) })
+      end
    elseif ent.operable then
       if ent then Speech.speak(pindex, { "fa.no-menu-for", Localising.get_localised_name_with_fallback(ent) }) end
    elseif ent.type == "resource" and ent.name ~= "crude-oil" and ent.name ~= "uranium-ore" then
@@ -1459,12 +1467,8 @@ local function read_selected_inventory_and_slot(pindex, start_phrase_in)
    if menu == "inventory" then
       read_inventory_slot(pindex, start_phrase_in)
    elseif menu == "building" or menu == "vehicle" then
-      local sector_name = storage.players[pindex].building.sector_name
-      if sector_name == "player inventory from building" then
-         read_inventory_slot(pindex, start_phrase_in)
-      else
-         BuildingVehicleSectors.read_sector_slot(pindex, false, start_phrase_in)
-      end
+      -- TODO: Replace with capability-based UI
+      Speech.speak(pindex, start_phrase_in .. "Building/vehicle menus temporarily disabled")
    else
       Speech.speak(pindex, start_phrase_in)
    end
@@ -1482,14 +1486,10 @@ local function get_selected_inventory_and_slot(pindex)
       inv = c.get_main_inventory()
       index = storage.players[pindex].inventory.index
    elseif menu == "building" or menu == "vehicle" then
-      local sector_name = storage.players[pindex].building.sector_name
-      if sector_name == "player inventory from building" then
-         inv = c.get_main_inventory()
-         index = storage.players[pindex].inventory.index
-      else
-         inv = storage.players[pindex].building.sectors[storage.players[pindex].building.sector].inventory
-         index = storage.players[pindex].building.index
-      end
+      -- TODO: Replace with capability-based UI
+      -- For now, return player inventory as fallback
+      inv = c.get_main_inventory()
+      index = storage.players[pindex].inventory.index
    end
    return inv, index
 end
@@ -3479,7 +3479,10 @@ EventManager.on_event(
       local ent = p.opened
 
       if ent and ent.type == "inserter" then
-         local result = BuildingVehicleSectors.inserter_hand_stack_size_up(ent)
+         -- TODO: Move to capability-based UI
+         -- Temporarily inline the functionality
+         ent.inserter_stack_size_override = ent.inserter_stack_size_override + 1
+         local result = ent.inserter_stack_size_override .. " set for hand stack size"
          Speech.speak(pindex, result)
       else
          ScannerEntrypoint.move_subcategory(pindex, -1)
@@ -3512,7 +3515,20 @@ EventManager.on_event(
       local ent = p.opened
 
       if ent and ent.type == "inserter" then
-         local result = BuildingVehicleSectors.inserter_hand_stack_size_down(ent)
+         -- TODO: Move to capability-based UI
+         -- Temporarily inline the functionality
+         local result = ""
+         if ent.inserter_stack_size_override > 1 then
+            ent.inserter_stack_size_override = ent.inserter_stack_size_override - 1
+            result = ent.inserter_stack_size_override .. " set for hand stack size"
+         else
+            ent.inserter_stack_size_override = 0
+            local cap = ent.force.inserter_stack_size_bonus + 1
+            if ent.name == "stack-inserter" or ent.name == "stack-filter-inserter" then
+               cap = ent.force.stack_inserter_capacity_bonus + 1
+            end
+            result = "restored " .. cap .. " as default hand stack size "
+         end
          Speech.speak(pindex, result)
       else
          ScannerEntrypoint.move_subcategory(pindex, 1)
@@ -3894,11 +3910,10 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
 
-      if
-         storage.players[pindex].menu == "building"
-         and storage.players[pindex].building.sectors[storage.players[pindex].building.sector].name == "Fluid"
-      then
-         kb_flush_fluid(event)
+      -- Removed building menu fluid flush check
+      -- TODO: Move to capability-based UI
+      if false then
+         -- kb_flush_fluid(event) -- disabled
       elseif not storage.players[pindex].vanilla_mode then
          local p = game.get_player(pindex)
          local stack = p.cursor_stack
