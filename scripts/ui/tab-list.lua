@@ -306,11 +306,12 @@ TabList.on_rightmost = build_simple_method("on_rightmost")
 -- Perform the flow for focusing a tab. Does this unconditionally, so be careful
 -- not to over-call it.
 -- @param msg_builder Optional message builder to prepend section info to
-function TabList:_set_active_tab(pindex, active_tab, msg_builder)
+-- @param play_sound Optional boolean, defaults to true. Set to false to suppress sound.
+function TabList:_set_active_tab(pindex, active_tab, msg_builder, play_sound)
    local tl = tablist_storage[pindex][self.ui_name]
 
-   -- Play tab change sound
-   Sounds.play_change_menu_tab(pindex)
+   -- Play tab change sound (unless explicitly suppressed)
+   if play_sound ~= false then Sounds.play_change_menu_tab(pindex) end
 
    -- Use provided message builder or create new one
    msg_builder = msg_builder or Speech.new()
@@ -506,7 +507,8 @@ function TabList:open(pindex, parameters)
       self:_do_callback(pindex, i, "on_tab_list_opened")
    end
 
-   self:_set_active_tab(pindex, tabstate.active_tab)
+   -- Set the active tab without playing sound (we're opening, not switching)
+   self:_set_active_tab(pindex, tabstate.active_tab, nil, false)
 end
 
 ---@param force_reset boolean? If true, also dump state.
