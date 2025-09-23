@@ -11,6 +11,7 @@ Provides a category-based interface for crafting recipes where:
 local CategoryRows = require("scripts.ui.category-rows")
 local Crafting = require("scripts.crafting")
 local Localising = require("scripts.localising")
+local RecipeHelpers = require("scripts.recipe-helpers")
 local Speech = require("scripts.speech")
 
 local mod = {}
@@ -85,38 +86,6 @@ local function handle_recipe_click(ctx, recipe, modifiers)
    end
 end
 
----Read recipe ingredients and products
----@param ctx fa.ui.CategoryRows.ItemContext
----@param recipe LuaRecipe
-local function read_recipe_info(ctx, recipe)
-   -- Read ingredients
-   ctx.message:fragment({ "fa.crafting-ingredients" })
-   for _, ingredient in ipairs(recipe.ingredients) do
-      local proto = prototypes.item[ingredient.name] or prototypes.fluid[ingredient.name]
-      if proto then
-         ctx.message:list_item(Localising.get_localised_name_with_fallback(proto))
-         ctx.message:fragment({ "fa.crafting-amount", ingredient.amount })
-      end
-   end
-
-   -- Read products
-   ctx.message:fragment({ "fa.crafting-products" })
-   for _, product in ipairs(recipe.products) do
-      local proto = prototypes.item[product.name] or prototypes.fluid[product.name]
-      if proto then
-         ctx.message:list_item(Localising.get_localised_name_with_fallback(proto))
-         if product.amount then
-            ctx.message:fragment({ "fa.crafting-amount", product.amount })
-         elseif product.amount_min and product.amount_max then
-            ctx.message:fragment({ "fa.crafting-amount-range", product.amount_min, product.amount_max })
-         end
-         if product.probability and product.probability < 1 then
-            ctx.message:fragment({ "fa.crafting-probability", product.probability * 100 })
-         end
-      end
-   end
-end
-
 ---Render the crafting menu
 ---@param ctx fa.ui.TabContext
 ---@return fa.ui.CategoryRows.Render?
@@ -160,7 +129,7 @@ local function render_crafting_menu(ctx)
                end
 
                function vtable.on_read_coords(item_ctx)
-                  read_recipe_info(item_ctx, recipe)
+                  RecipeHelpers.read_recipe_details(item_ctx.message, recipe)
                end
 
                builder:add_item(group_name, recipe.name, vtable)

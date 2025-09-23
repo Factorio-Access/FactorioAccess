@@ -35,6 +35,8 @@ local mod = {}
 
 ---@class fa.ui.CategoryRows.Render
 ---@field categories fa.ui.CategoryRows.Category[]
+---@field focus_category_key string? Optional: category to focus when tab gains focus
+---@field focus_item_key string? Optional: item to focus when tab gains focus
 
 ---@class fa.ui.CategoryRows.State
 ---@field current_category_key string?
@@ -54,6 +56,8 @@ local mod = {}
 ---@class fa.ui.CategoryRows.Builder
 ---@field categories table<string, fa.ui.CategoryRows.Category>
 ---@field category_order string[]
+---@field focus_category_key string?
+---@field focus_item_key string?
 local CategoryRowsBuilder = {}
 local CategoryRowsBuilder_meta = { __index = CategoryRowsBuilder }
 
@@ -87,6 +91,16 @@ function CategoryRowsBuilder:add_item(category_key, item_key, vtable)
    return self
 end
 
+---Set the focus position for when the tab gains focus
+---@param category_key string
+---@param item_key string
+---@return fa.ui.CategoryRows.Builder
+function CategoryRowsBuilder:set_focus(category_key, item_key)
+   self.focus_category_key = category_key
+   self.focus_item_key = item_key
+   return self
+end
+
 ---Build the final render structure
 ---@return fa.ui.CategoryRows.Render
 function CategoryRowsBuilder:build()
@@ -96,6 +110,8 @@ function CategoryRowsBuilder:build()
    end
    return {
       categories = categories,
+      focus_category_key = self.focus_category_key,
+      focus_item_key = self.focus_item_key,
    }
 end
 
@@ -387,8 +403,11 @@ local function handle_read_coords(ctx, render)
    local category = render.categories[cat_index]
    if #category.items == 0 then return end
 
-   local cursor_key = state.cursor_by_category[category.key]
-   if not cursor_key then return end
+   -- Default to first item if no cursor is set yet
+   local cursor_key = state.cursor_by_category[category.key] or category.items[1].key
+   if not state.cursor_by_category[category.key] and #category.items > 0 then
+      state.cursor_by_category[category.key] = category.items[1].key
+   end
 
    local item_index = find_item_index(category, cursor_key)
    if not item_index then return end
@@ -646,6 +665,15 @@ function CategoryRows:on_tab_focused(ctx, modifiers)
 
    local state = get_or_create_state(ctx)
    update_state_after_render(state, render)
+
+   -- If render specifies a focus position, jump to it
+   if render.focus_category_key and render.focus_item_key then
+      local focus_cat_index = find_category_index(render, render.focus_category_key)
+      if focus_cat_index then
+         state.current_category_key = render.focus_category_key
+         state.cursor_by_category[render.focus_category_key] = render.focus_item_key
+      end
+   end
 
    local cat_index = find_category_index(render, state.current_category_key) or 1
    local category = render.categories[cat_index]
