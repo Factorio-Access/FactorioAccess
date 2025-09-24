@@ -186,7 +186,7 @@ local function render_inventory_grid(ctx)
             local inv_stack = inv[slot_index]
 
             -- Play inventory click sound
-            sounds.play_inventory_click(click_ctx.pindex)
+            sounds.play_menu_click(click_ctx.pindex)
 
             -- Swap stacks between cursor and inventory
             if cursor_stack and inv_stack then
@@ -212,7 +212,7 @@ local function render_inventory_grid(ctx)
             local inv_stack = inv[slot_index]
 
             -- Play inventory click sound
-            sounds.play_inventory_click(click_ctx.pindex)
+            sounds.play_menu_click(click_ctx.pindex)
 
             -- Right click logic: split stack or transfer half
             if cursor_stack and inv_stack then

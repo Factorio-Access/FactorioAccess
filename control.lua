@@ -1097,7 +1097,7 @@ function player_inventory_click(pindex, left_click)
    end
 
    --Play sound and update known inv size
-   sounds.play_inventory_click(p.index)
+   sounds.play_menu_click(p.index)
    storage.players[pindex].inventory.max = #storage.players[pindex].inventory.lua_inventory
 end
 

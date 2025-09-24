@@ -196,13 +196,8 @@ function mod.play_crafting(pindex)
 end
 
 -- Utility sounds
-function mod.play_inventory_click(pindex)
-   play_sound_internal(pindex, { path = "utility/inventory_click" })
-end
-
-function mod.play_inventory_move(pindex)
-   play_sound_internal(pindex, { path = "utility/inventory_move" })
-end
+-- Note: play_inventory_click removed - use play_menu_click instead
+-- Note: play_inventory_move removed - not used anywhere
 
 function mod.play_cannot_build(pindex)
    play_sound_internal(pindex, { path = "utility/cannot_build" })

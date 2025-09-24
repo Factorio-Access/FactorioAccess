@@ -45,7 +45,7 @@ local function handle_slot_click(ctx, slot_index, is_ammo)
    local target_stack = is_ammo and ammo_inv[slot_index] or gun_inv[slot_index]
 
    -- Play inventory click sound
-   UiSounds.play_inventory_click(ctx.pindex)
+   UiSounds.play_menu_click(ctx.pindex)
 
    if cursor_stack and cursor_stack.valid_for_read then
       -- Hand has item - validate and swap
@@ -88,7 +88,7 @@ local function handle_slot_right_click(ctx, slot_index, is_ammo)
    local target_stack = is_ammo and ammo_inv[slot_index] or gun_inv[slot_index]
 
    -- Play inventory click sound
-   UiSounds.play_inventory_click(ctx.pindex)
+   UiSounds.play_menu_click(ctx.pindex)
 
    if cursor_stack and target_stack then
       if cursor_stack.valid_for_read and not target_stack.valid_for_read then

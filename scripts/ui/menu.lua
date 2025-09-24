@@ -6,6 +6,7 @@ function.  Helpers on it allow for adding controls, etc.
 ]]
 local UiKeyGraph = require("scripts.ui.key-graph")
 local UiSounds = require("scripts.ui.sounds")
+local UiUtils = require("scripts.ui.ui-utils")
 
 local mod = {}
 
@@ -36,14 +37,8 @@ end
 ---@param label LocalisedString | fun(fa.ui.graph.Ctx): LocalisedString
 ---@return fa.ui.menu.MenuBuilder
 function MenuBuilder:add_label(key, label)
-   if type(label) ~= "function" then
-      local old_lab = label
-      label = function(ctx)
-         ctx.message:fragment(old_lab)
-      end
-   end
    self:add_item(key, {
-      label = label,
+      label = UiUtils.to_label_function(label),
    })
    return self
 end
@@ -52,17 +47,11 @@ end
 ---@param label LocalisedString | fun(fa.ui.graph.Ctx): LocalisedString
 ---@param click_handlers { on_click: fa.ui.graph.SimpleCallback }
 function MenuBuilder:add_clickable(key, label, click_handlers)
-   if type(label) ~= "function" then
-      local old_lab = label
-      label = function(ctx)
-         ctx.message:fragment(old_lab)
-      end
-   end
    self:add_item(key, {
       on_click = function(ctx)
          click_handlers.on_click(ctx)
       end,
-      label = label,
+      label = UiUtils.to_label_function(label),
    })
 end
 
