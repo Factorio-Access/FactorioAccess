@@ -28,7 +28,7 @@ end)
 Use the launcher script with the `--run-tests` flag:
 
 ```bash
-python3 launch_factorio.py --run-tests --timeout 30
+python launch_factorio.py --run-tests --timeout 30
 ```
 
 This will:

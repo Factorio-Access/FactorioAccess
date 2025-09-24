@@ -127,7 +127,7 @@ Some patterns require manual review:
 ## After Migration
 
 1. Review the changes with `git diff`
-2. Run the formatter: `python3 launch_factorio.py --format`
-3. Run tests: `python3 launch_factorio.py --run-tests`
+2. Run the formatter: `python launch_factorio.py --format`
+3. Run tests: `python launch_factorio.py --run-tests`
 4. Test the game manually
 5. Address any manual review cases in `manual_review_needed.lua`

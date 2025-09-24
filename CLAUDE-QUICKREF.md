@@ -5,19 +5,19 @@
 ### Testing & Development
 ```bash
 # Run Factorio with mod
-python3 launch_factorio.py --timeout 300 --load-game mysave.zip
+python launch_factorio.py --timeout 300 --load-game mysave.zip
 
 # Quick version check
-python3 launch_factorio.py --timeout 10 -- --version
+python launch_factorio.py --timeout 10 -- --version
 
 # Lint the code
-python3 launch_factorio.py --lint
+python launch_factorio.py --lint
 
 # Check formatting
-python3 launch_factorio.py --format-check
+python launch_factorio.py --format-check
 
 # Apply formatting
-python3 launch_factorio.py --format
+python launch_factorio.py --format
 ```
 
 ### Common Code Patterns

@@ -42,7 +42,7 @@ which rg || which grep
 git status
 
 # Understand the crash capture tool
-python3 launch_factorio.py --help | grep -A5 "capture-logs"
+python launch_factorio.py --help | grep -A5 "capture-logs"
 ```
 
 ## Debugging Workflow Instructions
@@ -51,7 +51,7 @@ python3 launch_factorio.py --help | grep -A5 "capture-logs"
 When the user reports a crash:
 
 1. IMMEDIATELY capture logs (they're lost on restart!):
-   python3 launch_factorio.py --capture-logs
+   python launch_factorio.py --capture-logs
 
 2. Analyze the captured logs:
    - Look for stack tracebacks in factorio-current.log
@@ -68,9 +68,9 @@ When the user reports a crash:
    - Large (>50 lines): Ask user permission first
 
 5. Apply and test fixes:
-   python3 launch_factorio.py --format     # Format code
-   python3 launch_factorio.py --lint       # Check for errors
-   python3 launch_factorio.py --run-tests  # Run tests if available
+   python launch_factorio.py --format     # Format code
+   python launch_factorio.py --lint       # Check for errors
+   python launch_factorio.py --run-tests  # Run tests if available
 
 6. Ask user to test the fix
 ```
@@ -103,7 +103,7 @@ User: "Factorio crashed when I pressed K on a belt"
 
 LLM: I'll immediately capture the crash logs to analyze what happened.
 
-[Run: python3 launch_factorio.py --capture-logs]
+[Run: python launch_factorio.py --capture-logs]
 
 I can see from the logs that there's a nil reference error in transport-belts.lua 
 when trying to access belt contents. Looking at line 234...
@@ -114,7 +114,7 @@ I found the issue - the code isn't checking if the belt has contents before
 accessing them. This is a small fix (3 lines). Let me apply it:
 
 [Make the fix with proper nil checks]
-[Run: python3 launch_factorio.py --format]
+[Run: python launch_factorio.py --format]
 
 The fix is applied. Please try pressing K on a belt again and let me know if it works.
 ```

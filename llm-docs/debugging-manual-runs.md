@@ -14,7 +14,7 @@ When a user experiences a crash or issue while playing Factorio manually (not th
 
 ### Capture logs immediately after a crash:
 ```bash
-python3 launch_factorio.py --capture-logs
+python launch_factorio.py --capture-logs
 ```
 
 This will:
@@ -26,7 +26,7 @@ This will:
 
 ### Capture more lines from logs:
 ```bash
-python3 launch_factorio.py --capture-logs --last-lines 200
+python launch_factorio.py --capture-logs --last-lines 200
 ```
 
 ## Workflow
@@ -35,7 +35,7 @@ python3 launch_factorio.py --capture-logs --last-lines 200
 When a user reports a crash, immediately:
 ```bash
 # Capture the logs before the user restarts Factorio
-python3 launch_factorio.py --capture-logs
+python launch_factorio.py --capture-logs
 ```
 
 Tell the user: "I'm waiting for you to report a bug. When you're ready, let me know what happened."
@@ -71,10 +71,10 @@ Then ask the user to reproduce the crash.
 ### 5. Apply the Fix
 ```bash
 # Always format after making changes
-python3 launch_factorio.py --format
+python launch_factorio.py --format
 
 # Run tests if available (automated, no GUI)
-python3 launch_factorio.py --run-tests --timeout 60
+python launch_factorio.py --run-tests --timeout 60
 
 # IMPORTANT: Never load saves directly without --run-tests
 # This would open a GUI window instead of running automated tests
@@ -143,7 +143,7 @@ Check the stack trace for the specific handler.
 User: Factorio just crashed when I tried to place a rail
 
 LLM: I'll capture the crash logs immediately to see what happened.
-*runs: python3 launch_factorio.py --capture-logs*
+*runs: python launch_factorio.py --capture-logs*
 
 [Analyzes logs, finds nil reference in rail-builder.lua:142]
 

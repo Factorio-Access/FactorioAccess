@@ -393,13 +393,13 @@ Document these for manual review - they require careful analysis of the call cha
 4. **Test**
    ```bash
    # Verify syntax
-   python3 launch_factorio.py --run-tests --timeout 60
+   python launch_factorio.py --run-tests --timeout 60
    
    # Check linting
-   python3 launch_factorio.py --lint
+   python launch_factorio.py --lint
    
    # Format code
-   python3 launch_factorio.py --format
+   python launch_factorio.py --format
    ```
 
 5. **Commit**
@@ -623,7 +623,7 @@ end)
 
 Then run:
 ```bash
-python3 launch_factorio.py --run-tests --timeout 60
+python launch_factorio.py --run-tests --timeout 60
 ```
 
 ## Handling Edge Cases

@@ -19,7 +19,7 @@ gh issue list --search "keyword"
 # Use grep/rg to understand code structure
 
 # Find relevant files using pattern matching
-python3 launch_factorio.py --lint  # Get familiar with the codebase structure
+python launch_factorio.py --lint  # Get familiar with the codebase structure
 
 # Search for related functionality
 rg "feature_name" --type lua
@@ -122,13 +122,13 @@ grep "require" scripts/module.lua
 ### Step 4: Test Impact
 ```bash
 # Run tests immediately after changes
-python3 launch_factorio.py --run-tests --timeout 60
+python launch_factorio.py --run-tests --timeout 60
 
 # Run specific test if available
-python3 launch_factorio.py --run-tests --filter "feature_name"
+python launch_factorio.py --run-tests --filter "feature_name"
 
 # Manual testing with a save file
-python3 launch_factorio.py --load-game test-save.zip --timeout 300
+python launch_factorio.py --load-game test-save.zip --timeout 300
 ```
 
 ## 3. Debugging Issues
@@ -229,10 +229,10 @@ end)
 ### Step 2: Run Tests
 ```bash
 # Run all tests
-python3 launch_factorio.py --run-tests --timeout 60
+python launch_factorio.py --run-tests --timeout 60
 
 # Run with more time for complex tests
-python3 launch_factorio.py --run-tests --timeout 300
+python launch_factorio.py --run-tests --timeout 300
 
 # Check test output carefully
 # Look for: "All tests passed!" or specific failures
@@ -250,7 +250,7 @@ end)
 ### Step 4: Integration Testing
 ```bash
 # Create a test save with specific scenario
-python3 launch_factorio.py --load-game test-scenario.zip --timeout 600
+python launch_factorio.py --load-game test-scenario.zip --timeout 600
 
 # Test with screen reader integration
 # 1. Start Factorio with the mod
@@ -264,16 +264,16 @@ python3 launch_factorio.py --load-game test-scenario.zip --timeout 600
 ### Step 1: Format Code
 ```bash
 # Format all Lua files
-python3 launch_factorio.py --format
+python launch_factorio.py --format
 
 # Check formatting without changing
-python3 launch_factorio.py --format-check
+python launch_factorio.py --format-check
 ```
 
 ### Step 2: Run Linter
 ```bash
 # Run LuaLS linter
-python3 launch_factorio.py --lint
+python launch_factorio.py --lint
 
 # Fix any warnings about:
 # - Missing type annotations
@@ -284,7 +284,7 @@ python3 launch_factorio.py --lint
 ### Step 3: Run Tests
 ```bash
 # Full test suite
-python3 launch_factorio.py --run-tests --timeout 120
+python launch_factorio.py --run-tests --timeout 120
 
 # Verify output shows all tests passing
 ```
@@ -345,13 +345,13 @@ git commit -m "fix: Handle edge case in my-feature"
 ### Step 3: Final Checks
 ```bash
 # Ensure all tests pass
-python3 launch_factorio.py --run-tests --timeout 120
+python launch_factorio.py --run-tests --timeout 120
 
 # Format check
-python3 launch_factorio.py --format-check
+python launch_factorio.py --format-check
 
 # Lint check
-python3 launch_factorio.py --lint
+python launch_factorio.py --lint
 
 # Update from main/f2.0-dev
 git fetch origin
@@ -425,10 +425,10 @@ Additional context, performance considerations, etc.
 
 ```bash
 # Development
-python3 launch_factorio.py --run-tests --timeout 60
-python3 launch_factorio.py --format
-python3 launch_factorio.py --lint
-python3 launch_factorio.py --load-game save.zip --timeout 300
+python launch_factorio.py --run-tests --timeout 60
+python launch_factorio.py --format
+python launch_factorio.py --lint
+python launch_factorio.py --load-game save.zip --timeout 300
 
 # Searching
 rg "pattern" --type lua

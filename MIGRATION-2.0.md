@@ -152,16 +152,16 @@ Most files still use direct `script.on_event`, including:
 ### Testing Procedures
 ```bash
 # Always use the launcher for testing
-python3 launch_factorio.py --run-tests --timeout 30
+python launch_factorio.py --run-tests --timeout 30
 
 # Format your changes
-python3 launch_factorio.py --format
+python launch_factorio.py --format
 
 # Run linter
-python3 launch_factorio.py --lint
+python launch_factorio.py --lint
 
 # Manual testing with a save
-python3 launch_factorio.py --timeout 300 --load-game mysave.zip
+python launch_factorio.py --timeout 300 --load-game mysave.zip
 ```
 
 ### Migration Checklist

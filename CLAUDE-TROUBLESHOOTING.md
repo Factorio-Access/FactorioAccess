@@ -239,20 +239,11 @@ end
 
 ## Development Workflow Issues
 
-### WSL/Windows Interop Problems
-
-**Symptom**: "Error 0xc0000142" when launching
-
-**Solutions**:
-1. Use `--shell` flag: `python3 launch_factorio.py --shell`
-2. Check WSL version: `wsl --version`
-3. Restart WSL: `wsl --shutdown` then restart
-
 ### Linter Not Finding Types
 
 The launcher should automatically configure .luarc.json. If types are still missing:
 1. Install the factoriomod-debug VSCode extension
-2. Run `python3 launch_factorio.py --update-luarc`
+2. Run `python launch_factorio.py --update-luarc`
 3. Check that Factorio path is correct in .luarc.json
 
 ### Factorio 2.0 Migration Issues

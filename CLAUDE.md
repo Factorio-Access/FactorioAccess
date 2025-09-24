@@ -28,7 +28,7 @@ through audio cues and keyboard controls.
 
 4. **Always format before committing**
    ```bash
-   python3 launch_factorio.py --format
+   python launch_factorio.py --format
    ```
 
 5. **Function names: Check actual API, don't guess**
@@ -79,7 +79,7 @@ control.lua is the main runtime entry point. Use rg/grep or partial reads to exp
 ## Quick Start
 
 1. **Environment**: You're in WSL running a Windows Factorio binary
-2. **Launcher**: Use `python3 launch_factorio.py` for testing (see below)
+2. **Launcher**: Use `python launch_factorio.py` for testing (see below)
 3. **Main entry**: `control.lua` is the runtime entry point
 4. **Key directories**: 
    - `scripts/` - All gameplay features
@@ -488,28 +488,28 @@ The launcher provides LLM-friendly testing capabilities:
 
 ```bash
 # Quick version check
-python3 launch_factorio.py --timeout 10 -- --version
+python launch_factorio.py --timeout 10 -- --version
 
 # Load a save for testing
-python3 launch_factorio.py --timeout 300 --load-game mysave.zip
+python launch_factorio.py --timeout 300 --load-game mysave.zip
 
 # Run automated tests (output is suppressed unless tests fail)
-python3 launch_factorio.py --run-tests --timeout 30
+python launch_factorio.py --run-tests --timeout 30
 
 # Run tests with full output (verbose mode)
-python3 launch_factorio.py --run-tests --timeout 30 --verbose
+python launch_factorio.py --run-tests --timeout 30 --verbose
 
 # Run linter (includes LuaLS annotation format checking)
-python3 launch_factorio.py --lint
+python launch_factorio.py --lint
 
 # Apply formatting (runs stylua)
-python3 launch_factorio.py --format
+python launch_factorio.py --format
 
 # Check formatting
-python3 launch_factorio.py --format-check
+python launch_factorio.py --format-check
 
 # GUI testing with screenshots
-python3 launch_factorio.py --gui-test --suppress-window --timeout 60
+python launch_factorio.py --gui-test --suppress-window --timeout 60
 ```
 
 ### Writing Tests
@@ -795,22 +795,22 @@ When making changes:
 1. **Always Format and Lint**
    ```bash
    # Format your code (REQUIRED before committing)
-   python3 launch_factorio.py --format
+   python launch_factorio.py --format
    
    # Check formatting
-   python3 launch_factorio.py --format-check
+   python launch_factorio.py --format-check
    
    # Run linter
-   python3 launch_factorio.py --lint
+   python launch_factorio.py --lint
    ```
 
 2. **Test Before Committing**
    ```bash
    # Run all tests
-   python3 launch_factorio.py --run-tests --timeout 60
+   python launch_factorio.py --run-tests --timeout 60
    
    # Run specific test scenarios
-   python3 launch_factorio.py --timeout 300 --load-game mysave.zip
+   python launch_factorio.py --timeout 300 --load-game mysave.zip
    ```
 
 3. **Git Best Practices**

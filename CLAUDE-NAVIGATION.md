@@ -28,7 +28,7 @@ This guide helps LLMs quickly find specific code locations in the FactorioAccess
 ### Add a New Test
 - **Create test file**: `scripts/tests/YOUR_TEST.lua`
 - **Test structure**: Use `describe()` and `it()` from `scripts/test-registry.lua`
-- **Run tests**: `python3 launch_factorio.py --run-tests`
+- **Run tests**: `python launch_factorio.py --run-tests`
 - **Common mistake**: Testing Factorio API instead of mod behavior
 
 ### Add Storage for New Feature
