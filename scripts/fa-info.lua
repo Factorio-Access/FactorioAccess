@@ -1890,8 +1890,6 @@ end
 ---Report the status of the selected entity as well as additional dynamic info depending on the entity type
 ---@param pindex number The player index for whom the action is being performed.
 function mod.read_selected_entity_status(pindex)
-   -- [UI CHECKS REMOVED] Entity status now available anytime
-
    local ent = game.get_player(pindex).selected
    if not ent then return end
    local status = ent.status

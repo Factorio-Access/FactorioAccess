@@ -25,7 +25,6 @@ end
 function mod.quickbar_set_handler(event)
    local pindex = event.player_index
    if not check_for_player(pindex) then return end
-   -- [UI CHECKS REMOVED] Quickbar setting now available anytime
    local num = tonumber(string.sub(event.input_name, -1))
    if num == 0 then num = 10 end
    mod.set_quick_bar_slot(num, pindex)

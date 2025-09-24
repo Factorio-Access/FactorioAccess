@@ -122,7 +122,6 @@ end
 ---@param pindex number
 function mod.read_building_menu_description(pindex)
    local storage_players = storage.players[pindex]
-   -- [UI CHECKS REMOVED] Offset calculation removed - caller should handle context
 
    local offset = 0
    if storage_players.building.recipe_list ~= nil then offset = 1 end
@@ -169,7 +168,6 @@ end
 ---Internal function to read item descriptions based on context
 ---@param pindex number
 function mod.read_item_description(pindex)
-   -- [UI CHECKS REMOVED] Menu routing removed - new UI system will handle context
    -- Default to world behavior (selected or hand)
    local p = game.get_player(pindex)
 
@@ -193,8 +191,6 @@ end
 ---Internal function to read description for last indexed scanner entity
 ---@param pindex number
 function mod.read_last_indexed_description(pindex)
-   -- [UI CHECKS REMOVED] Scanner descriptions now available anytime
-
    local ent = storage.players[pindex].last_indexed_ent
    if ent == nil or not ent.valid then
       Speech.speak(pindex, "No description, note that most resources need to be examined from up close")

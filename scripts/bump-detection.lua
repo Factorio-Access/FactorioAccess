@@ -99,7 +99,6 @@ end
 function mod.check_and_play_bump_alert_sound(pindex, this_tick)
    local router = UiRouter.get_router(pindex)
 
-   -- [UI CHECKS REMOVED] Specific PROMPT check removed
    if not game.get_player(pindex) then return end
    local p = game.get_player(pindex)
    if p == nil or p.character == nil then return end
@@ -110,7 +109,6 @@ function mod.check_and_play_bump_alert_sound(pindex, this_tick)
    bump.filled = false
 
    --Return and reset if in a vehicle
-   -- [UI CHECKS REMOVED] Menu check removed - bump detection works in menus
    if p.vehicle ~= nil then
       bump.last_pos_4 = nil
       bump.last_pos_3 = nil
@@ -262,7 +260,6 @@ end
 function mod.check_and_play_stuck_alert_sound(pindex, this_tick)
    local router = UiRouter.get_router(pindex)
 
-   -- [UI CHECKS REMOVED] Specific PROMPT check removed
    if not game.get_player(pindex) then return end
 
    local p = game.get_player(pindex)
@@ -271,7 +268,6 @@ function mod.check_and_play_stuck_alert_sound(pindex, this_tick)
    local bump = bump_storage[pindex]
 
    --Return if in a vehicle
-   -- [UI CHECKS REMOVED] Menu check removed - wall detection works in menus
    if p.vehicle ~= nil then return end
 
    --Return if not walking

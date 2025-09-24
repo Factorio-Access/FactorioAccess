@@ -308,7 +308,6 @@ function mod.rotate_building_info_read(event, forward)
    if not check_for_player(pindex) then return end
    local mult = 1
    if forward == false then mult = -1 end
-   -- [UI CHECKS REMOVED] Rotation now works anywhere
    local ent = p.selected
    local stack = game.get_player(pindex).cursor_stack
    local build_dir = storage.players[pindex].building_direction

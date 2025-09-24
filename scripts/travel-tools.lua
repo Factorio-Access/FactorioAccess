@@ -16,7 +16,6 @@ function mod.fast_travel_menu_open(pindex)
 
    local p = game.get_player(pindex)
    if p.ticks_to_respawn ~= nil then return end
-   -- [UI CHECKS REMOVED] Menu mutex check removed - travel menu handled by new UI system
    game.get_player(pindex).selected = nil
 
    router:open_ui(UiRouter.UI_NAMES.TRAVEL)

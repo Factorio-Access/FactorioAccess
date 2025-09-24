@@ -15,7 +15,6 @@ function mod.equip_it(stack, pindex)
    local router = UiRouter.get_router(pindex)
 
    local message = Speech.new()
-   -- [UI CHECKS REMOVED] Spidertron equipment context removed - defaults to character equipment
 
    if stack.is_armor then
       local armor = game.get_player(pindex).get_inventory(defines.inventory.character_armor)
@@ -64,7 +63,6 @@ function mod.equip_it(stack, pindex)
       --Equip equipment ("gear")
       local armor_inv
       local grid
-      -- [UI CHECKS REMOVED] Spidertron grid check removed - defaults to character armor
       armor_inv = game.get_player(pindex).get_inventory(defines.inventory.character_armor)
       if armor_inv.is_empty() then return "Equipment requires armor with an equipment grid." end
       if armor_inv[1].grid == nil or not armor_inv[1].grid.valid then
@@ -98,7 +96,6 @@ function mod.equip_it(stack, pindex)
          end
       end
    elseif stack.prototype.place_result ~= nil or stack.prototype.place_as_tile_result ~= nil then
-      -- [UI CHECKS REMOVED] Menu check removed
       return ""
    else
       message:fragment({ "fa.equipment-cannot-equip", localising.get_localised_name_with_fallback(stack) })
@@ -391,7 +388,6 @@ function mod.read_equipment_list(pindex)
    --Armor with Equipment
    local grid
    local result = Speech.new()
-   -- [UI CHECKS REMOVED] Spidertron grid check removed - defaults to character armor
    grid = armor_inv[1].grid
    result:fragment({ "fa.equipment-armor" })
    if grid.equipment == nil or grid.equipment == {} then return { "fa.equipment-no-equipment-installed" } end
@@ -430,7 +426,6 @@ function mod.remove_equipment_and_armor(pindex)
    if armor_inv.is_empty() then return "No armor." end
 
    local grid
-   -- [UI CHECKS REMOVED] Spidertron grid check removed - defaults to character armor
    grid = armor_inv[1].grid
    if grid ~= nil and grid.valid then
       local initial_equipment_count = grid.count()
@@ -453,7 +448,6 @@ function mod.remove_equipment_and_armor(pindex)
    end
 
    --Remove armor
-   -- [UI CHECKS REMOVED] Spidertron check removed - armor removal proceeds
    if char_main_inv.count_empty_stacks() == 0 then
       result = { "", result, { "fa.inventory-full" } }
    else

@@ -57,9 +57,6 @@ function mod.update_menu_visuals()
    for pindex, player in pairs(players) do
       local router = UiRouter.get_router(pindex)
 
-      -- [UI CHECKS REMOVED] Menu-specific sprite rendering removed
-      -- New UI system will handle its own rendering with text labels
-      -- Non-menu rendering preserved
       if game.get_player(pindex).opened ~= nil then
          --Not in menu, but open GUI
          mod.update_overhead_sprite("utility.white_square", 2, 1.25, pindex)
@@ -443,7 +440,6 @@ function mod.update_custom_GUI_sprite(sprite, scale_in, pindex, sprite_2)
          player.custom_GUI_sprite_2.visible = true
       end
       --If a blueprint is in hand, set the blueprint sprites
-      -- [UI CHECKS REMOVED] Blueprint check removed - check cursor stack only
       if p.cursor_stack and p.cursor_stack.valid_for_read and p.cursor_stack.is_blueprint then
          local bp = p.cursor_stack
          local bp_icons = bp.preview_icons or {}
@@ -469,7 +465,6 @@ function mod.clear_player_GUI_remnants(pindex)
    local router = UiRouter.get_router(pindex)
 
    local p = game.get_player(pindex)
-   -- [UI CHECKS REMOVED] GUI clearing simplified
    if p.opened == nil then
       if p and p.gui and p.gui.screen then p.gui.screen.clear() end
    end

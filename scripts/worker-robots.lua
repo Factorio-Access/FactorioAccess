@@ -331,7 +331,6 @@ end
 -- the context of how we do logistic requests.
 ---@return string?, LocalisedString?
 local function find_player_item_name(pindex)
-   -- [UI CHECKS REMOVED] Logistic request context detection removed
    -- Now defaults to personal logistics behavior only
 
    local p = game.get_player(pindex)
@@ -512,7 +511,6 @@ end
 function mod.logistics_request_toggle_handler(pindex)
    local router = UiRouter.get_router(pindex)
 
-   -- [UI CHECKS REMOVED] Context-specific toggle removed
    -- Now only toggles personal logistics
    local ent = game.get_player(pindex).opened
    toggle_personal_logistics(pindex)
