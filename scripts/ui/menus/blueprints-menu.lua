@@ -97,19 +97,17 @@ local function render(ctx)
 
       builder:add_clickable("rename", { "fa.ui-blueprints-menu-rename" }, {
          on_click = function(ctx)
-            storage.players[ctx.pindex].blueprint_menu.edit_label = true
-            Graphics.create_text_field_frame(ctx.pindex, "blueprint-edit-label")
-            ctx.message:fragment({ "fa.ui-blueprints-rename-txtbox" })
-            ctx.controller:close()
+            ctx.message:fragment(
+               "Blueprint renaming is temporarily unavailable while the text input system is being redesigned."
+            )
          end,
       })
 
       builder:add_clickable("edit-desc", { "fa.ui-blueprints-menu-edit-desc" }, {
          on_click = function(ctx)
-            storage.players[ctx.pindex].blueprint_menu.edit_description = true
-            Graphics.create_text_field_frame(ctx.pindex, "blueprint-edit-description")
-            ctx.message:fragment({ "fa.ui-blueprints-description-txtbox" })
-            ctx.controller:close()
+            ctx.message:fragment(
+               "Blueprint description editing is temporarily unavailable while the text input system is being redesigned."
+            )
          end,
       })
 
@@ -143,22 +141,18 @@ local function render(ctx)
 
       builder:add_clickable("export", { "fa.ui-blueprints-menu-export" }, {
          on_click = function(ctx)
-            storage.players[ctx.pindex].blueprint_menu.edit_export = true
-            Graphics.create_text_field_frame(ctx.pindex, "blueprint-edit-export", bp.export_stack())
-            ctx.message:fragment({ "fa.ui-blueprints-export-txtbox" })
-            ctx.controller:close()
+            ctx.message:fragment(
+               "Blueprint export is temporarily unavailable while the text input system is being redesigned."
+            )
          end,
       })
    end
 
    builder:add_clickable("import", { "fa.ui-blueprints-menu-import" }, {
       on_click = function(ctx)
-         -- For now, this shells out to legacy UI: close ourselves, and let it
-         -- do the work.
-         storage.players[ctx.pindex].blueprint_menu.edit_import = true
-         Graphics.create_text_field_frame(ctx.pindex, "blueprint-edit-import")
-         ctx.message:fragment({ "fa.ui-blueprints-import-txtbox" })
-         ctx.controller:close()
+         ctx.message:fragment(
+            "Blueprint import is temporarily unavailable while the text input system is being redesigned."
+         )
       end,
    })
 

@@ -22,9 +22,6 @@ function mod.fast_travel_menu_open(pindex)
    router:open_ui(UiRouter.UI_NAMES.TRAVEL)
    storage.players[pindex].move_queue = {}
    storage.players[pindex].travel.index = { x = 1, y = 0 }
-   storage.players[pindex].travel.creating = false
-   storage.players[pindex].travel.renaming = false
-   storage.players[pindex].travel.describing = false
    Speech.speak(
       pindex,
       "Fast travel, Navigate up and down with W and S to select a fast travel location, and jump to it with LEFT BRACKET.  Alternatively, select an option by navigating left and right with A and D."
@@ -62,7 +59,6 @@ end
 function mod.fast_travel_menu_click(pindex)
    local p = game.get_player(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
-   if storage.players[pindex].travel.input_box then storage.players[pindex].travel.input_box.destroy() end
    if #storage.players[pindex].travel == 0 and storage.players[pindex].travel.index.x < TRAVEL_MENU_LENGTH then
       Speech.speak(pindex, { "fa.travel-move-right-create-new" })
    elseif
@@ -121,27 +117,13 @@ function mod.fast_travel_menu_click(pindex)
    elseif storage.players[pindex].travel.index.x == 3 then --Rename
       Speech.speak(
          pindex,
-         "Type in a new name for this fast travel point, then press 'ENTER' to confirm, or press 'ESC' to cancel."
+         "Travel point renaming is temporarily unavailable while the text input system is being redesigned."
       )
-      storage.players[pindex].travel.renaming = true
-      local frame = game.get_player(pindex).gui.screen["travel"]
-      storage.players[pindex].travel.input_box = frame.add({ type = "textfield", name = "input" })
-      local input = storage.players[pindex].travel.input_box
-      input.focus()
-      input.select(1, 0)
    elseif storage.players[pindex].travel.index.x == 4 then --Rewrite description
-      local desc = storage.players[pindex].travel[storage.players[pindex].travel.index.y].description
-      if desc == nil then
-         desc = ""
-         storage.players[pindex].travel[storage.players[pindex].travel.index.y].description = desc
-      end
-      Speech.speak(pindex, { "fa.travel-type-new-description" })
-      storage.players[pindex].travel.describing = true
-      local frame = game.get_player(pindex).gui.screen["travel"]
-      storage.players[pindex].travel.input_box = frame.add({ type = "textfield", name = "input" })
-      local input = storage.players[pindex].travel.input_box
-      input.focus()
-      input.select(1, 0)
+      Speech.speak(
+         pindex,
+         "Travel point description editing is temporarily unavailable while the text input system is being redesigned."
+      )
    elseif storage.players[pindex].travel.index.x == 5 then --Relocate to current character position
       storage.players[pindex].travel[storage.players[pindex].travel.index.y].position =
          FaUtils.center_of_tile(storage.players[pindex].position)
@@ -197,14 +179,8 @@ function mod.fast_travel_menu_click(pindex)
    elseif storage.players[pindex].travel.index.x == 8 then --Create new
       Speech.speak(
          pindex,
-         "Type in a name for this fast travel point, then press 'ENTER' to confirm, or press 'ESC' to cancel."
+         "Creating new travel points is temporarily unavailable while the text input system is being redesigned."
       )
-      storage.players[pindex].travel.creating = true
-      local frame = game.get_player(pindex).gui.screen["travel"]
-      storage.players[pindex].travel.input_box = frame.add({ type = "textfield", name = "input" })
-      local input = storage.players[pindex].travel.input_box
-      input.focus()
-      input.select(1, 0)
    end
 end
 

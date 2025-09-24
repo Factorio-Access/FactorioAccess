@@ -470,7 +470,7 @@ function mod.clear_player_GUI_remnants(pindex)
 
    local p = game.get_player(pindex)
    -- [UI CHECKS REMOVED] GUI clearing simplified
-   if p.opened == nil and storage.players[pindex].text_field_open ~= true then
+   if p.opened == nil then
       if p and p.gui and p.gui.screen then p.gui.screen.clear() end
    end
 end
@@ -521,18 +521,6 @@ function mod.set_cursor_colors_to_player_colors(pindex)
    then
       rendering.set_color(storage.players[pindex].building_footprint, p.color)
    end
-end
-
-function mod.create_text_field_frame(pindex, frame_name, frame_text)
-   storage.players[pindex].text_field_open = true
-   local text = frame_text or ""
-   local frame = game.get_player(pindex).gui.screen.add({ type = "frame", name = frame_name })
-   frame.bring_to_front()
-   frame.force_auto_center()
-   frame.focus()
-   local input = frame.add({ type = "textfield", name = "input", text = text })
-   input.focus()
-   return frame
 end
 
 return mod

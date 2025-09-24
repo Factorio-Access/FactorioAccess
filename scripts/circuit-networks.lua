@@ -379,10 +379,7 @@ function mod.constant_combinator_remove_last_signal(ent, pindex)
 end
 
 function mod.constant_combinator_type_last_signal_count(pindex, ent)
-   storage.players[pindex].signal_selector = {}
-   storage.players[pindex].signal_selector.ent = ent
-   local frame = Graphics.create_text_field_frame(pindex, "circuit-networks-textfield")
-   return "Type in a number press 'ENTER' to confirm, or press 'ESC' to exit"
+   return "Signal count editing is temporarily unavailable while the text input system is being redesigned."
 end
 
 function mod.constant_combinator_set_last_signal_count(value, ent, pindex)
@@ -1672,10 +1669,7 @@ function mod.apply_selected_signal_to_enabled_condition(pindex, ent, first)
 end
 
 function mod.type_circuit_condition_constant(pindex, ent)
-   storage.players[pindex].signal_selector = {}
-   storage.players[pindex].signal_selector.ent = ent
-   local frame = Graphics.create_text_field_frame(pindex, "circuit-networks-textfield")
-   return "Type in a number for comparing and press 'ENTER' to confirm, or press 'ESC' to exit"
+   return "Circuit condition constant editing is temporarily unavailable while the text input system is being redesigned."
 end
 
 function mod.signal_selector_group_up(pindex)

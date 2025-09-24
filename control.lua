@@ -1355,114 +1355,6 @@ function fix_walk(pindex)
 end
 
 --GUI action confirmed, such as by pressing ENTER
-EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
-   local router = UiRouter.get_router(pindex)
-
-   local p = game.get_player(pindex)
-   local vp = Viewpoint.get_viewpoint(pindex)
-   if vp:get_cursor_jumping() == true then
-      --Jump the cursor
-      vp:set_cursor_jumping(false)
-      local result = event.element.text
-      jump_cursor_to_typed_coordinates(result, pindex)
-      event.element.destroy()
-      router:close_ui()
-      --play sound
-      sounds.play_close_inventory(p.index)
-
-      --Destroy text fields
-      if p.gui.screen["cursor-jump"] ~= nil then p.gui.screen["cursor-jump"].destroy() end
-      if p.opened ~= nil then p.opened = nil end
-   elseif storage.players[pindex].train_limit_editing == true then
-      --Apply the limit
-      storage.players[pindex].train_limit_editing = false
-      local result = event.element.text
-      if result ~= nil and result ~= "" then
-         local constant = tonumber(result)
-         ---@cast constant  number
-         local valid_number = constant ~= nil
-         if valid_number and p.selected and p.selected.valid and p.selected.name == "train-stop" then
-            if constant >= 0 then
-               p.selected.trains_limit = constant
-               Speech.speak(pindex, { "fa.train-limit-set", tostring(constant) })
-            else
-               p.selected.trains_limit = nil
-               Speech.speak(pindex, { "fa.cleared-trains-limit" })
-            end
-         else
-            Speech.speak(pindex, { "fa.invalid-input" })
-         end
-      else
-         Speech.speak(pindex, { "fa.invalid-input" })
-      end
-      event.element.destroy()
-      router:close_ui()
-      --play sound
-      sounds.play_close_inventory(p.index)
-
-      --Destroy text fields
-      if p.gui.screen["train-limit-edit"] ~= nil then p.gui.screen["train-limit-edit"].destroy() end
-      if p.opened ~= nil then p.opened = nil end
-   elseif storage.players[pindex].roboport_menu.renaming == true then
-      storage.players[pindex].roboport_menu.renaming = false
-      local result = event.element.text
-      if result == nil or result == "" then result = "unknown" end
-      WorkerRobots.set_network_name(storage.players[pindex].roboport_menu.port, result)
-      Speech.speak(pindex, { "fa.network-renamed", result })
-      event.element.destroy()
-      RoboportMenuUi.roboport_menu:close(pindex, false)
-   elseif storage.players[pindex].blueprint_menu.edit_label == true then
-      --Apply the new label
-      storage.players[pindex].blueprint_menu.edit_label = false
-      local result = event.element.text
-      if result == nil or result == "" then result = "unknown" end
-      if p.cursor_stack.is_blueprint then
-         Blueprints.set_blueprint_label(p.cursor_stack, result)
-      elseif p.cursor_stack.is_blueprint_book then
-         Blueprints.blueprint_book_set_label(pindex, result)
-      end
-      Speech.speak(pindex, { "fa.blueprint-label-changed", result })
-      event.element.destroy()
-      if p.gui.screen["blueprint-edit-label"] ~= nil then p.gui.screen["blueprint-edit-label"].destroy() end
-   elseif storage.players[pindex].blueprint_menu.edit_description == true then
-      --Apply the new desc
-      storage.players[pindex].blueprint_menu.edit_description = false
-      local result = event.element.text
-      if result == nil or result == "" then result = "unknown" end
-      if p.cursor_stack.is_blueprint then
-         Blueprints.set_blueprint_description(p.cursor_stack, result)
-      elseif p.cursor_stack.is_blueprint_book then
-         Blueprints.set_blueprint_book_description(pindex, result)
-      end
-      Speech.speak(pindex, { "fa.blueprint-description-changed" })
-      event.element.destroy()
-      if p.gui.screen["blueprint-edit-description"] ~= nil then p.gui.screen["blueprint-edit-description"].destroy() end
-   elseif storage.players[pindex].blueprint_menu.edit_import == true then
-      --Apply the new import
-      storage.players[pindex].blueprint_menu.edit_import = false
-      local result = event.element.text
-      if result == nil or result == "" then result = "unknown" end
-      Blueprints.apply_blueprint_import(pindex, result)
-      event.element.destroy()
-      if p.gui.screen["blueprint-edit-import"] ~= nil then p.gui.screen["blueprint-edit-import"].destroy() end
-   elseif storage.players[pindex].blueprint_menu.edit_export == true then
-      --Instruct export
-      storage.players[pindex].blueprint_menu.edit_export = false
-      local result = event.element.text
-      if result == nil or result == "" then result = "unknown" end
-      Speech.speak(pindex, "Text box closed")
-      event.element.destroy()
-      if p.gui.screen["blueprint-edit-export"] ~= nil then p.gui.screen["blueprint-edit-export"].destroy() end
-   else
-      --Stray text box, so do nothing and destroy it
-      if event.element.parent then
-         event.element.parent.destroy()
-      else
-         event.element.destroy()
-      end
-   end
-   storage.players[pindex].text_field_open = false
-end)
 
 --Read the correct inventory slot based on the current menu, optionally with a start phrase in
 local function read_selected_inventory_and_slot(pindex, start_phrase_in)
@@ -1676,37 +1568,6 @@ function set_infinity_pipe_filter_by_hand(pindex, ent)
       return "Error: Not a fluid barrel in hand"
    end
    return "Error setting fluid"
-end
-
---Feature for typing in coordinates for moving the mod cursor.
-function type_cursor_position(pindex)
-   local vp = Viewpoint.get_viewpoint(pindex)
-   Speech.speak(pindex, "Enter new co-ordinates for the cursor, separated by a space")
-   vp:set_cursor_jumping(true)
-   local frame = Graphics.create_text_field_frame(pindex, "cursor-jump")
-   return frame
-end
-
---Result is a string of two numbers separated by a space
-function jump_cursor_to_typed_coordinates(result, pindex)
-   if result ~= nil and result ~= "" then
-      local new_x = tonumber(FaUtils.get_substring_before_space(result))
-      local new_y = tonumber(FaUtils.get_substring_after_space(result))
-      --Check if valid numbers
-      local valid_coords = new_x ~= nil and new_y ~= nil
-      --Change cursor position or return error
-      if valid_coords then
-         local vp = Viewpoint.get_viewpoint(pindex)
-         vp:set_cursor_pos(FaUtils.center_of_tile({ x = new_x + 0.01, y = new_y + 0.01 }))
-         Speech.speak(pindex, { "fa.cursor-jumped-to", tostring(new_x), tostring(new_y) })
-         Graphics.draw_cursor_highlight(pindex)
-         Graphics.sync_build_cursor_graphics(pindex)
-      else
-         Speech.speak(pindex, { "fa.invalid-input" })
-      end
-   else
-      Speech.speak(pindex, "Invalid input")
-   end
 end
 
 --Alerts a force's players when their structures are destroyed. 300 ticks of cooldown.
@@ -3291,7 +3152,10 @@ EventManager.on_event(
    "fa-a-t",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      type_cursor_position(pindex)
+      Speech.speak(
+         pindex,
+         "Cursor coordinate jumping is temporarily unavailable while the text input system is being redesigned."
+      )
    end
 )
 

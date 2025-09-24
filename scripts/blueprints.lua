@@ -424,19 +424,6 @@ function mod.blueprint_menu_close(pindex, mute_in)
    --play sound
    if not mute then game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" }) end
 
-   --Destroy text fields
-   if game.get_player(pindex).gui.screen["blueprint-edit-label"] ~= nil then
-      game.get_player(pindex).gui.screen["blueprint-edit-label"].destroy()
-   end
-   if game.get_player(pindex).gui.screen["blueprint-edit-description"] ~= nil then
-      game.get_player(pindex).gui.screen["blueprint-edit-description"].destroy()
-   end
-   if game.get_player(pindex).gui.screen["blueprint-edit-export"] ~= nil then
-      game.get_player(pindex).gui.screen["blueprint-edit-export"].destroy()
-   end
-   if game.get_player(pindex).gui.screen["blueprint-edit-import"] ~= nil then
-      game.get_player(pindex).gui.screen["blueprint-edit-import"].destroy()
-   end
    if game.get_player(pindex).opened ~= nil then game.get_player(pindex).opened = nil end
 end
 
@@ -666,10 +653,8 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             local result = "Rename this book"
             Speech.speak(pindex, result)
          else
-            storage.players[pindex].blueprint_menu.edit_label = true
-            local frame = Graphics.create_text_field_frame(pindex, "blueprint-edit-label")
             local result =
-               "Type in a new name for this blueprint and press 'ENTER' to confirm, or press 'ESC' to cancel."
+               "Blueprint renaming is temporarily unavailable while the text input system is being redesigned."
             Speech.speak(pindex, result)
          end
       elseif index == 4 then
@@ -677,10 +662,8 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             local result = "Rewrite the description of this book"
             Speech.speak(pindex, result)
          else
-            storage.players[pindex].blueprint_menu.edit_description = true
-            local frame = Graphics.create_text_field_frame(pindex, "blueprint-edit-description")
             local result =
-               "Type in the new description text box for this blueprint and press 'ENTER' to confirm, or press 'ESC' to cancel."
+               "Blueprint description editing is temporarily unavailable while the text input system is being redesigned."
             Speech.speak(pindex, result)
          end
       elseif index == 5 then
@@ -708,10 +691,8 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             local result = "Export this blueprint book as a text string"
             Speech.speak(pindex, result)
          else
-            storage.players[pindex].blueprint_menu.edit_export = true
-            local frame = Graphics.create_text_field_frame(pindex, "blueprint-edit-export", bpb.export_stack())
             local result =
-               "Copy the text from this box using 'CONTROL + A' and then 'CONTROL + C' and then press ENTER to exit"
+               "Blueprint export is temporarily unavailable while the text input system is being redesigned."
             Speech.speak(pindex, result)
          end
       elseif index == 8 then
@@ -720,9 +701,8 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
             local result = "Import a text string to overwrite this blueprint book"
             Speech.speak(pindex, result)
          else
-            storage.players[pindex].blueprint_menu.edit_import = true
-            local frame = Graphics.create_text_field_frame(pindex, "blueprint-edit-import")
-            local result = "Paste a copied blueprint text string in this box and then press ENTER to load it"
+            local result =
+               "Blueprint import is temporarily unavailable while the text input system is being redesigned."
             Speech.speak(pindex, result)
          end
       end
