@@ -40,6 +40,7 @@ local registered_uis = {}
 ---Register a TabList UI with the event routing system
 ---@param tablist fa.ui.TabList
 function mod.register_ui(tablist)
+   assert(type(tablist.ui_name) == "string")
    registered_uis[tablist.ui_name] = tablist
 end
 
@@ -63,6 +64,8 @@ mod.UI_NAMES = {
    -- New inventory, but we need the old name for a little bit while we roll over.
    GENERIC_INVENTORY = "inventory2",
    -- BUILDING and VEHICLE removed - migrating to capability-based UI
+   -- Generic entity UI that adapts to entity capabilities
+   ENTITY = "entity",
    TRAVEL = "travel",
    GUNS = "guns", -- Keep for backward compatibility with gun_menu registration
    BELT = "belt",
@@ -92,10 +95,9 @@ local Router_meta = { __index = Router }
 ---@param name fa.ui.UiName
 ---@param params? table Optional parameters to pass to the UI
 function Router:open_ui(name, params)
-   local current_ui = router_state[self.pindex].ui_name
-
-   -- If switching to a different UI, close the current one first
-   if current_ui and current_ui ~= name then self:_close_current_ui() end
+   -- If switching to a different UI, close the current one first. That's not just based on name; the current UI might
+   -- be reopening on, e.g., a different entity.
+   self:_close_current_ui()
 
    -- Set the UI as open in router state
    router_state[self.pindex].ui_name = name

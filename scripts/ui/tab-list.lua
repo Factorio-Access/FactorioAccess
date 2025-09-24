@@ -76,8 +76,8 @@ local mod = {}
 ---@field tabs fa.ui.TabDescriptor[]
 
 ---@class fa.ui.TabListDeclaration (exact)
----@field ui_name fa.ui.UiName Legacy, used for key routing.
----@field tabs_callback fun(pindex: number, parameters: any): fa.ui.SectionDescriptor[] Dynamic sections callback
+---@field ui_name fa.ui.UiName used for key routing.
+---@field tabs_callback fun(pindex: number, parameters: any): fa.ui.SectionDescriptor[]? Dynamic sections callback
 ---@field shared_state_setup (fun(number, table): table)? passed the parameters and pindex, should return a shaerd state.
 ---@field resets_to_first_tab_on_open boolean?
 ---@field persist_state boolean?
@@ -92,7 +92,9 @@ local mod = {}
 ---@field prev_tab_order string[]? Previous tab order for removal detection
 
 ---@type table<number, table<string, fa.ui.TabListStorageState>>
-local tablist_storage = StorageManager.declare_storage_module("tab_list", {})
+local tablist_storage = StorageManager.declare_storage_module("tab_list", {}, {
+   ephemeral_state_version = 1,
+})
 
 ---@class fa.ui.TabList
 ---@field sections fa.ui.SectionDescriptor[]
@@ -146,9 +148,13 @@ function TabList:_do_callback(pindex, target_tab_index, cb_name, msg_builder, pa
       -- parameter since we aren't using the `:` syntax.
       callback(callbacks, context, table.unpack(params))
       -- Makes assigning to state when initializing etc. work.
+      print(self.declaration.ui_name, "boop", cb_name, tabname)
       tl.tab_states[tabname] = context.state
 
-      if context.force_close then self:close(pindex, true) end
+      if context.force_close then
+         print("closed in", cb_name, "of", tabname)
+         self:close(pindex, true)
+      end
    end
 
    local msg = msg_builder:build()
@@ -160,10 +166,11 @@ end
 ---@private
 function TabList:_rerender(pindex)
    local tl = tablist_storage[pindex][self.ui_name]
-   if not tl then return end
+   assert(tl)
 
    -- Get fresh sections from callback
    local new_sections = self.tabs_callback(pindex, tl.parameters)
+
    if not new_sections then
       -- If callback returns nil, close the UI
       self:close(pindex, true)
@@ -261,17 +268,11 @@ end
 -- that we may avoid rewriting the same body over and over.
 local function build_simple_method(evt_name)
    return function(self, pindex, modifiers)
-      -- Check if the tablist storage exists for this UI
-      if not tablist_storage[pindex] or not tablist_storage[pindex][self.ui_name] then
-         -- TabList not properly initialized, cannot handle events
-         return
-      end
-
       -- Re-render before handling the event
       self:_rerender(pindex)
 
       local tl = tablist_storage[pindex][self.ui_name]
-      if not tl or not tl.currently_open then return end
+      if not tl.currently_open then return end
 
       -- Pass modifiers as part of params array to _do_callback
       self:_do_callback(pindex, tl.active_tab, evt_name, nil, { modifiers })
@@ -486,9 +487,6 @@ function TabList:open(pindex, parameters)
    if self.shared_state_initializer then tabstate.shared_state = self.shared_state_initializer(pindex, parameters) end
    -- And it is now open.
    tabstate.currently_open = true
-
-   -- Ensure active_section exists (for saved games from before sections)
-   if not tabstate.active_section then tabstate.active_section = 1 end
 
    if self.declaration.resets_to_first_tab_on_open then
       tabstate.active_tab = 1

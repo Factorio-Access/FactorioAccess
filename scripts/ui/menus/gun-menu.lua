@@ -236,4 +236,91 @@ mod.gun_menu = TabList.declare_tablist({
 -- Register with the UI event routing system for event interception
 UiRouter.register_ui(mod.gun_menu)
 
+---Render gun grid for an entity (used by entity-ui.lua)
+---@param ctx fa.ui.GunMenu.Context
+---@param gun_inv_index defines.inventory? Gun inventory index
+---@param ammo_inv_index defines.inventory? Ammo inventory index
+---@return fa.ui.graph.Render?
+function mod.render_entity_guns(ctx, gun_inv_index, ammo_inv_index)
+   local entity = ctx.tablist_shared_state.entity
+   if not entity or not entity.valid then return nil end
+
+   local gun_inv = gun_inv_index and entity.get_inventory(gun_inv_index) or nil
+   local ammo_inv = ammo_inv_index and entity.get_inventory(ammo_inv_index) or nil
+
+   -- Need at least one inventory
+   if not gun_inv and not ammo_inv then return nil end
+
+   local builder = Grid.grid_builder()
+
+   builder:set_dimension_labeler(function(ctx, x, y)
+      if y == 1 and gun_inv then
+         ctx.message:fragment({ "fa.gun-slot", tostring(x) })
+      elseif y == 2 and ammo_inv then
+         ctx.message:fragment({ "fa.ammo-slot", tostring(x) })
+      else
+         ctx.message:fragment({ "fa.equipment-slot", tostring(x), tostring(y) })
+      end
+   end)
+
+   -- Determine grid dimensions
+   local max_slots = math.max(gun_inv and #gun_inv or 0, ammo_inv and #ammo_inv or 0)
+
+   -- Build grid with available inventories
+   for slot = 1, max_slots do
+      -- Add gun slots if gun inventory exists
+      if gun_inv and slot <= #gun_inv then
+         local gun_stack = gun_inv[slot]
+
+         builder:add_control(slot, 1, function(label_ctx)
+            local gun_label = gun_stack and gun_stack.valid_for_read and Localising.localise_item(gun_stack)
+               or { "fa.equipment-empty-gun-slot" }
+
+            -- Check if there's corresponding ammo
+            if ammo_inv and slot <= #ammo_inv then
+               local ammo_stack = ammo_inv[slot]
+               if ammo_stack and ammo_stack.valid_for_read then
+                  local ammo_label = Localising.localise_item(ammo_stack)
+                  label_ctx.message:fragment({ "fa.gun-menu-gun-using-ammo", gun_label, ammo_label })
+               else
+                  label_ctx.message:fragment({ "fa.gun-menu-gun-no-ammo", gun_label })
+               end
+            else
+               label_ctx.message:fragment(gun_label)
+            end
+         end, {
+            on_read_coords = function(coord_ctx)
+               coord_ctx.message:fragment({ "fa.gun-slot", tostring(slot) })
+            end,
+         })
+      end
+
+      -- Add ammo slots if ammo inventory exists
+      if ammo_inv and slot <= #ammo_inv then
+         local ammo_stack = ammo_inv[slot]
+
+         builder:add_control(slot, 2, function(label_ctx)
+            local ammo_label = ammo_stack and ammo_stack.valid_for_read and Localising.localise_item(ammo_stack)
+               or { "fa.equipment-empty-ammo-slot" }
+
+            -- Check if there's corresponding gun
+            if gun_inv and slot <= #gun_inv then
+               local gun_stack = gun_inv[slot]
+               local gun_label = gun_stack and gun_stack.valid_for_read and Localising.localise_item(gun_stack)
+                  or { "fa.equipment-empty-gun-slot" }
+               label_ctx.message:fragment({ "fa.gun-menu-ammo-for-gun", ammo_label, gun_label })
+            else
+               label_ctx.message:fragment(ammo_label)
+            end
+         end, {
+            on_read_coords = function(coord_ctx)
+               coord_ctx.message:fragment({ "fa.ammo-slot", tostring(slot) })
+            end,
+         })
+      end
+   end
+
+   return builder:build()
+end
+
 return mod

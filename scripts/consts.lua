@@ -115,4 +115,74 @@ mod.ENT_TYPES_YOU_CAN_BUILD_OVER = {
 -- Entity names to exclude from various operations
 mod.EXCLUDED_ENT_NAMES = { "highlight-box" }
 
+-- Inventory priorities for sorting in entity UI
+-- Lower numbers appear first
+---@type table<string, number>
+mod.INVENTORY_PRIORITIES = {
+   -- Primary/main inventories (priority 1)
+   character_main = 1,
+   chest = 1,
+   car_trunk = 1,
+   spider_trunk = 1,
+   cargo_wagon = 1,
+   hub_main = 1,
+   cargo_landing_pad_main = 1,
+   linked_container_main = 1,
+   item_main = 1,
+
+   -- Input inventories (priority 2)
+   crafter_input = 2,
+   lab_input = 2,
+   agricultural_tower_input = 2,
+
+   -- Output inventories (priority 3)
+   crafter_output = 3,
+   agricultural_tower_output = 3,
+   asteroid_collector_output = 3,
+   burnt_result = 3,
+
+   -- Module inventories (priority 4)
+   crafter_modules = 4,
+   beacon_modules = 4,
+   mining_drill_modules = 4,
+   lab_modules = 4,
+
+   -- Special/trash inventories (priority 5)
+   crafter_trash = 5,
+   car_trash = 5,
+   character_trash = 5,
+   spider_trash = 5,
+   hub_trash = 5,
+   lab_trash = 5,
+   cargo_landing_pad_trash = 5,
+   rocket_silo_trash = 5,
+   logistic_container_trash = 5,
+
+   -- Fuel inventories (priority 6)
+   fuel = 6,
+
+   -- Robot/material inventories (priority 7)
+   roboport_robot = 7,
+   roboport_material = 7,
+   robot_cargo = 7,
+   robot_repair = 7,
+
+   -- Rocket silo special (priority 8)
+   rocket_silo_rocket = 8,
+
+   -- Deprecated inventories (map to their replacements for compatibility)
+   assembling_machine_input = 2, -- maps to crafter_input
+   assembling_machine_output = 3, -- maps to crafter_output
+   assembling_machine_modules = 4, -- maps to crafter_modules
+   assembling_machine_trash = 5, -- maps to crafter_trash
+   assembling_machine_dump = 5,
+   furnace_source = 2, -- maps to crafter_input
+   furnace_result = 3, -- maps to crafter_output
+   furnace_modules = 4, -- maps to crafter_modules
+   furnace_trash = 5, -- maps to crafter_trash
+   rocket_silo_input = 2, -- maps to crafter_input
+   rocket_silo_output = 3, -- maps to crafter_output
+   rocket_silo_modules = 4, -- maps to crafter_modules
+}
+
 return mod

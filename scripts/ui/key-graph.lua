@@ -449,6 +449,8 @@ function mod.declare_graph(declaration)
    local graph = setmetatable({
       render_callback = declaration.render_callback,
       name = declaration.name,
+      -- For debugging, because otherwise it is very unclear that this is a metatable trick.
+      _callbacks_are_from_metatable = "yes because this is KeyGraph",
    }, Graph_meta)
 
    return {

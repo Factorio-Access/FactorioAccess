@@ -76,13 +76,12 @@ end
 
 ---Render the inventory grid
 ---@param ctx fa.ui.InventoryGrid.Context
----@param subkey string The subkey that this is using for params and state
----@return fa.ui.graph.Render?
-local function render_inventory_grid(ctx, subkey)
-   -- Get inventory from shared state if available, otherwise from parameters
-   local inv = ctx.tablist_shared_state[subkey].inventory
 
-   if not inv or not inv.valid then return nil end
+---@return fa.ui.graph.Render?
+local function render_inventory_grid(ctx)
+   local inv = ctx.parameters.inventory
+
+   if not inv.valid then return nil end
 
    local builder = Grid.grid_builder()
    builder:set_dimension_labeler(inventory_dimension_labeler)
@@ -187,15 +186,13 @@ local function render_inventory_grid(ctx, subkey)
 end
 
 ---Create an inventory grid graph declaration
----@param params { name: string, title?: LocalisedString, subkey: string }
+---@param params { name: string, title?: LocalisedString }
 ---@return fa.ui.TabDescriptor
 function mod.create_inventory_grid(params)
    return UiKeyGraph.declare_graph({
       name = params.name,
       title = params.title or { "fa.ui-inventory-title" },
-      render_callback = function(ctx)
-         return render_inventory_grid(ctx, params.subkey)
-      end,
+      render_callback = render_inventory_grid,
    })
 end
 

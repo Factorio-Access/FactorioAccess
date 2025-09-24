@@ -5,6 +5,7 @@ local EventManager = require("scripts.event-manager")
 local TestRegistry = require("scripts.test-registry")
 local sounds = require("scripts.ui.sounds")
 local Logging = require("scripts.logging")
+local UiRouter = require("scripts.ui.router")
 
 local mod = {}
 
@@ -52,6 +53,7 @@ local test_files = {
    "tab-crash-test", -- Test TAB key doesn't crash with no UI open
    -- "event-manager-player-init-test", -- Test EventManager player initialization (requires custom events)
    -- "event-priority-test", -- Test EventManager priority system (requires custom events)
+   "entity-ui-test", -- Test generic entity UI system
 }
 
 -- Test execution state
@@ -338,6 +340,12 @@ end
 --- Internal: Complete the current test
 function mod._complete_test(passed, error_msg)
    if not current_test then return end
+
+   -- Clean up any open UIs to prevent test contamination
+   for pindex = 1, #game.players do
+      local router = UiRouter.get_router(pindex)
+      if router:is_ui_open() then router:close_ui() end
+   end
 
    -- Run after_each
    if current_test.suite.after_each then pcall(current_test.suite.after_each) end

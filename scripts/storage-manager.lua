@@ -79,7 +79,7 @@ function mod.declare_storage_module(module_name, default_value, opts)
          local ver_state = storage.storage_manager
          if not ver_state then
             ver_state = {}
-            storage.storage_manager = {}
+            storage.storage_manager = ver_state
          end
          ver_state = ver_state.versions
          if not ver_state then

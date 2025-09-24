@@ -234,6 +234,73 @@ local function update_state_after_render(state, render)
    state.prev_items_by_category = new_items_by_category
 end
 
+---Ensure cursor is initialized for the current category
+---@param state fa.ui.CategoryRows.State
+---@param render fa.ui.CategoryRows.Render
+local function _ensure_cursor_initialized(state, render)
+   if not state.current_category_key then
+      if #render.categories > 0 then
+         state.current_category_key = render.categories[1].key
+      else
+         return
+      end
+   end
+
+   local cat_index = find_category_index(render, state.current_category_key)
+   if not cat_index then
+      -- Current category doesn't exist, default to first
+      if #render.categories > 0 then
+         state.current_category_key = render.categories[1].key
+         cat_index = 1
+      else
+         return
+      end
+   end
+
+   local category = render.categories[cat_index]
+   if #category.items > 0 and not state.cursor_by_category[category.key] then
+      -- Initialize cursor to first item
+      state.cursor_by_category[category.key] = category.items[1].key
+   end
+end
+
+---Get current position, initializing if needed
+---@param state fa.ui.CategoryRows.State
+---@param render fa.ui.CategoryRows.Render
+---@return number?, number?
+local function _get_position(state, render)
+   -- Ensure cursor is initialized
+   _ensure_cursor_initialized(state, render)
+
+   if not state.current_category_key then return nil, nil end
+
+   local cat_index = find_category_index(render, state.current_category_key)
+   if not cat_index then return nil, nil end
+
+   local category = render.categories[cat_index]
+   if #category.items == 0 then return cat_index, nil end
+
+   local cursor_key = state.cursor_by_category[category.key]
+   if not cursor_key then
+      -- This shouldn't happen after _ensure_cursor_initialized, but be defensive
+      if #category.items > 0 then
+         state.cursor_by_category[category.key] = category.items[1].key
+         cursor_key = category.items[1].key
+      else
+         return cat_index, nil
+      end
+   end
+
+   local item_index = find_item_index(category, cursor_key)
+   if not item_index and #category.items > 0 then
+      -- Cursor points to invalid item, reset to first
+      state.cursor_by_category[category.key] = category.items[1].key
+      item_index = 1
+   end
+
+   return cat_index, item_index
+end
+
 ---Create an item context from a tab context
 ---@param tab_ctx fa.ui.TabContext
 ---@return fa.ui.CategoryRows.ItemContext
@@ -249,59 +316,94 @@ local function create_item_context(tab_ctx)
    }
 end
 
+---Announce current position (category and optionally item)
+---@param ctx fa.ui.TabContext
+---@param category fa.ui.CategoryRows.Category
+---@param item_index number? nil to skip item announcement
+---@param announce_category boolean? whether to announce category (default true)
+local function announce_position(ctx, category, item_index, announce_category)
+   if announce_category ~= false then
+      ctx.message:fragment(category.label)
+      ctx.message:list_item_forced_comma()
+   end
+
+   if #category.items == 0 then
+      ctx.message:fragment({ "fa.category-rows-empty-category" })
+   elseif item_index then
+      local item = category.items[item_index]
+      if item then
+         local item_ctx = create_item_context(ctx)
+         item.vtable.label(item_ctx)
+      end
+   end
+end
+
+---Wrap an index within bounds with sound feedback
+---@param current_index number
+---@param direction -1|1
+---@param max_index number
+---@param pindex number
+---@return number new_index
+local function wrap_index(current_index, direction, max_index, pindex)
+   local new_index = current_index + direction
+
+   if new_index < 1 then
+      sounds.play_menu_wrap(pindex)
+      return max_index
+   elseif new_index > max_index then
+      sounds.play_menu_wrap(pindex)
+      return 1
+   else
+      sounds.play_menu_move(pindex)
+      return new_index
+   end
+end
+
+---Prepare state for an operation
+---@param ctx fa.ui.TabContext
+---@param render fa.ui.CategoryRows.Render
+---@return fa.ui.CategoryRows.State
+local function prepare_state(ctx, render)
+   local state = get_or_create_state(ctx)
+   update_state_after_render(state, render)
+   return state
+end
+
+---Check if render has no categories and announce if empty
+---@param ctx fa.ui.TabContext
+---@param render fa.ui.CategoryRows.Render
+---@return boolean is_empty
+local function check_empty_categories(ctx, render)
+   if #render.categories == 0 then
+      sounds.play_ui_edge(ctx.pindex)
+      ctx.message:fragment({ "fa.category-rows-no-categories" })
+      return true
+   end
+   return false
+end
+
 ---Handle vertical navigation (between categories)
 ---@param ctx fa.ui.TabContext
 ---@param render fa.ui.CategoryRows.Render
 ---@param direction -1|1
 local function handle_vertical_navigation(ctx, render, direction)
-   local state = get_or_create_state(ctx)
-   update_state_after_render(state, render)
+   local state = prepare_state(ctx, render)
+   if check_empty_categories(ctx, render) then return end
 
-   if #render.categories == 0 then
-      sounds.play_ui_edge(ctx.pindex)
-      ctx.message:fragment({ "fa.category-rows-no-categories" })
-      return
-   end
+   local current_index, _ = _get_position(state, render)
+   if not current_index then current_index = 1 end
 
-   local current_index = find_category_index(render, state.current_category_key) or 1
-   local new_index = current_index + direction
-
-   -- Implement wrapping
-   if new_index < 1 then
-      new_index = #render.categories
-      sounds.play_menu_wrap(ctx.pindex)
-   elseif new_index > #render.categories then
-      new_index = 1
-      sounds.play_menu_wrap(ctx.pindex)
-   else
-      sounds.play_menu_move(ctx.pindex)
-   end
-
+   local new_index = wrap_index(current_index, direction, #render.categories, ctx.pindex)
    local new_category = render.categories[new_index]
    state.current_category_key = new_category.key
 
-   -- Announce category name
-   ctx.message:fragment(new_category.label)
-   ctx.message:list_item_forced_comma()
+   -- Ensure cursor is initialized for new category
+   _ensure_cursor_initialized(state, render)
 
-   -- Announce current item in category if any
+   -- Announce position
    local cursor_key = state.cursor_by_category[new_category.key]
-   if cursor_key then
-      local item_index = find_item_index(new_category, cursor_key)
-      if item_index then
-         local item = new_category.items[item_index]
-         local item_ctx = create_item_context(ctx)
-         item.vtable.label(item_ctx)
-      end
-   elseif #new_category.items > 0 then
-      -- Set cursor to first item
-      state.cursor_by_category[new_category.key] = new_category.items[1].key
-      local item = new_category.items[1]
-      local item_ctx = create_item_context(ctx)
-      item.vtable.label(item_ctx)
-   else
-      ctx.message:fragment({ "fa.category-rows-empty-category" })
-   end
+   local item_index = cursor_key and find_item_index(new_category, cursor_key) or nil
+   announce_position(ctx, new_category, item_index)
 end
 
 ---Handle horizontal navigation (between items in category)
@@ -309,45 +411,27 @@ end
 ---@param render fa.ui.CategoryRows.Render
 ---@param direction -1|1
 local function handle_horizontal_navigation(ctx, render, direction)
-   local state = get_or_create_state(ctx)
-   update_state_after_render(state, render)
+   local state = prepare_state(ctx, render)
+   if check_empty_categories(ctx, render) then return end
 
-   if #render.categories == 0 then
-      sounds.play_ui_edge(ctx.pindex)
-      ctx.message:fragment({ "fa.category-rows-no-categories" })
-      return
-   end
+   local cat_index, current_index = _get_position(state, render)
+   if not cat_index then return end
 
-   local cat_index = find_category_index(render, state.current_category_key) or 1
    local category = render.categories[cat_index]
-
    if #category.items == 0 then
       sounds.play_ui_edge(ctx.pindex)
       ctx.message:fragment({ "fa.category-rows-empty-category" })
       return
    end
 
-   local cursor_key = state.cursor_by_category[category.key] or category.items[1].key
-   local current_index = find_item_index(category, cursor_key) or 1
-   local new_index = current_index + direction
-
-   -- Implement wrapping
-   if new_index < 1 then
-      new_index = #category.items
-      sounds.play_menu_wrap(ctx.pindex)
-   elseif new_index > #category.items then
-      new_index = 1
-      sounds.play_menu_wrap(ctx.pindex)
-   else
-      sounds.play_menu_move(ctx.pindex)
-   end
+   if not current_index then current_index = 1 end
+   local new_index = wrap_index(current_index, direction, #category.items, ctx.pindex)
 
    local new_item = category.items[new_index]
    state.cursor_by_category[category.key] = new_item.key
 
-   -- Announce item
-   local item_ctx = create_item_context(ctx)
-   new_item.vtable.label(item_ctx)
+   -- Announce item only (no category)
+   announce_position(ctx, category, new_index, false)
 end
 
 ---Handle click events
@@ -356,22 +440,14 @@ end
 ---@param modifiers {control?: boolean, shift?: boolean, alt?: boolean}
 ---@param is_right_click boolean
 local function handle_click(ctx, render, modifiers, is_right_click)
-   local state = get_or_create_state(ctx)
-   update_state_after_render(state, render)
-
+   local state = prepare_state(ctx, render)
    if #render.categories == 0 then return end
 
-   local cat_index = find_category_index(render, state.current_category_key)
-   if not cat_index then return end
+   local cat_index, item_index = _get_position(state, render)
+   if not cat_index or not item_index then return end
 
    local category = render.categories[cat_index]
    if #category.items == 0 then return end
-
-   local cursor_key = state.cursor_by_category[category.key]
-   if not cursor_key then return end
-
-   local item_index = find_item_index(category, cursor_key)
-   if not item_index then return end
 
    local item = category.items[item_index]
    local callback_name = is_right_click and "on_right_click" or "on_click"
@@ -392,26 +468,13 @@ end
 ---@param ctx fa.ui.TabContext
 ---@param render fa.ui.CategoryRows.Render
 local function handle_read_coords(ctx, render)
-   local state = get_or_create_state(ctx)
-   update_state_after_render(state, render)
-
+   local state = prepare_state(ctx, render)
    if #render.categories == 0 then return end
 
-   local cat_index = find_category_index(render, state.current_category_key)
-   if not cat_index then return end
+   local cat_index, item_index = _get_position(state, render)
+   if not cat_index or not item_index then return end
 
    local category = render.categories[cat_index]
-   if #category.items == 0 then return end
-
-   -- Default to first item if no cursor is set yet
-   local cursor_key = state.cursor_by_category[category.key] or category.items[1].key
-   if not state.cursor_by_category[category.key] and #category.items > 0 then
-      state.cursor_by_category[category.key] = category.items[1].key
-   end
-
-   local item_index = find_item_index(category, cursor_key)
-   if not item_index then return end
-
    local item = category.items[item_index]
    if item.vtable.on_read_coords then
       local item_ctx = create_item_context(ctx)
@@ -423,7 +486,7 @@ end
 ---@param render fa.ui.CategoryRows.Render
 ---@param category_key string
 ---@param item_key string
----@return string?, string? category_key, item_key
+---@return string?, string?
 function mod.get_next_position(render, category_key, item_key)
    local cat_index = find_category_index(render, category_key)
    if not cat_index then return nil, nil end
@@ -453,7 +516,7 @@ end
 ---@param render fa.ui.CategoryRows.Render
 ---@param category_key string
 ---@param item_key string
----@return string?, string? category_key, item_key
+---@return string?, string?
 function mod.get_prev_position(render, category_key, item_key)
    local cat_index = find_category_index(render, category_key)
    if not cat_index then return nil, nil end
@@ -517,16 +580,11 @@ end
 ---@param render fa.ui.CategoryRows.Render
 ---@param target_index number 1 for first, or #categories for last
 local function jump_to_category(ctx, render, target_index)
-   local state = get_or_create_state(ctx)
-   update_state_after_render(state, render)
+   local state = prepare_state(ctx, render)
+   if check_empty_categories(ctx, render) then return end
 
-   if #render.categories == 0 then
-      sounds.play_ui_edge(ctx.pindex)
-      ctx.message:fragment({ "fa.category-rows-no-categories" })
-      return
-   end
-
-   local current_index = find_category_index(render, state.current_category_key) or 1
+   local current_index, _ = _get_position(state, render)
+   if not current_index then current_index = 1 end
 
    if current_index == target_index then
       -- Already at target, play edge sound and re-announce
@@ -536,27 +594,14 @@ local function jump_to_category(ctx, render, target_index)
       state.current_category_key = render.categories[target_index].key
    end
 
-   -- Announce category and current item
-   local category = render.categories[target_index]
-   ctx.message:fragment(category.label)
-   ctx.message:list_item_forced_comma()
+   -- Ensure cursor is initialized for target category
+   _ensure_cursor_initialized(state, render)
 
+   -- Announce position
+   local category = render.categories[target_index]
    local cursor_key = state.cursor_by_category[category.key]
-   if cursor_key then
-      local item_index = find_item_index(category, cursor_key)
-      if item_index then
-         local item = category.items[item_index]
-         local item_ctx = create_item_context(ctx)
-         item.vtable.label(item_ctx)
-      end
-   elseif #category.items > 0 then
-      state.cursor_by_category[category.key] = category.items[1].key
-      local item = category.items[1]
-      local item_ctx = create_item_context(ctx)
-      item.vtable.label(item_ctx)
-   else
-      ctx.message:fragment({ "fa.category-rows-empty-category" })
-   end
+   local item_index = cursor_key and find_item_index(category, cursor_key) or nil
+   announce_position(ctx, category, item_index)
 end
 
 ---Helper function to jump to a specific item in current category (first or last)
@@ -564,16 +609,12 @@ end
 ---@param render fa.ui.CategoryRows.Render
 ---@param target_index_fn fun(category: fa.ui.CategoryRows.Category): number
 local function jump_to_item(ctx, render, target_index_fn)
-   local state = get_or_create_state(ctx)
-   update_state_after_render(state, render)
+   local state = prepare_state(ctx, render)
+   if check_empty_categories(ctx, render) then return end
 
-   if #render.categories == 0 then
-      sounds.play_ui_edge(ctx.pindex)
-      ctx.message:fragment({ "fa.category-rows-no-categories" })
-      return
-   end
+   local cat_index, current_index = _get_position(state, render)
+   if not cat_index then return end
 
-   local cat_index = find_category_index(render, state.current_category_key) or 1
    local category = render.categories[cat_index]
 
    if #category.items == 0 then
@@ -582,8 +623,7 @@ local function jump_to_item(ctx, render, target_index_fn)
       return
    end
 
-   local cursor_key = state.cursor_by_category[category.key] or category.items[1].key
-   local current_index = find_item_index(category, cursor_key) or 1
+   if not current_index then current_index = 1 end
    local target_index = target_index_fn(category)
 
    if current_index == target_index then
@@ -594,10 +634,8 @@ local function jump_to_item(ctx, render, target_index_fn)
       state.cursor_by_category[category.key] = category.items[target_index].key
    end
 
-   -- Announce target item
-   local item = category.items[target_index]
-   local item_ctx = create_item_context(ctx)
-   item.vtable.label(item_ctx)
+   -- Announce target item only (no category)
+   announce_position(ctx, category, target_index, false)
 end
 
 ---@param ctx fa.ui.TabContext
@@ -658,13 +696,9 @@ end
 function CategoryRows:on_tab_focused(ctx, modifiers)
    -- Announce current position when tab gains focus
    local render = self.render_callback(ctx)
-   if not render or #render.categories == 0 then
-      ctx.message:fragment({ "fa.category-rows-no-categories" })
-      return
-   end
+   if not render or check_empty_categories(ctx, render) then return end
 
-   local state = get_or_create_state(ctx)
-   update_state_after_render(state, render)
+   local state = prepare_state(ctx, render)
 
    -- If render specifies a focus position, jump to it
    if render.focus_category_key and render.focus_item_key then
@@ -675,25 +709,14 @@ function CategoryRows:on_tab_focused(ctx, modifiers)
       end
    end
 
-   local cat_index = find_category_index(render, state.current_category_key) or 1
+   -- Get or initialize position
+   local cat_index, item_index = _get_position(state, render)
+   if not cat_index then return end
+
    local category = render.categories[cat_index]
 
-   -- Announce category
-   ctx.message:fragment(category.label)
-   ctx.message:list_item_forced_comma()
-
-   -- Announce current item
-   if #category.items > 0 then
-      local cursor_key = state.cursor_by_category[category.key] or category.items[1].key
-      local item_index = find_item_index(category, cursor_key)
-      if item_index then
-         local item = category.items[item_index]
-         local item_ctx = create_item_context(ctx)
-         item.vtable.label(item_ctx)
-      end
-   else
-      ctx.message:fragment({ "fa.category-rows-empty-category" })
-   end
+   -- Announce position
+   announce_position(ctx, category, item_index)
 end
 
 ---@class fa.ui.CategoryRows.Declaration

@@ -52,16 +52,13 @@ end
 ---@return fa.ui.CategoryRows.Render?
 local function render_assembling_machine_recipes(ctx)
    local entity = ctx.parameters.entity
-   if not entity or not entity.valid then
-      ctx.force_close = true
-      return nil
-   end
+   if not entity.valid then return nil end
 
    -- Check if this is an assembling machine (players can set recipes on these)
    -- Furnaces also support recipes via API but players can't change them
    if not RecipeHelpers.can_player_set_recipe(entity) then
       Speech.speak(ctx.pindex, { "fa.assembling-machine-cannot-set-recipe" })
-      ctx.force_close = true
+
       return nil
    end
 

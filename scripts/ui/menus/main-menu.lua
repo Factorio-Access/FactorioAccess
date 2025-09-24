@@ -22,18 +22,7 @@ local mod = {}
 ---@param params any
 ---@return table
 local function setup_shared_state(pindex, params)
-   local state = {}
-
-   -- Setup player inventory state
-   local player = game.get_player(pindex)
-   if player and player.character then
-      state.player_inventory = {
-         entity = player.character,
-         inventory = player.character.get_inventory(defines.inventory.character_main),
-      }
-   end
-
-   return state
+   return {}
 end
 
 -- Create the unified TabList with sections

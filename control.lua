@@ -51,6 +51,7 @@ local TravelTools = require("scripts.travel-tools")
 local TutorialSystem = require("scripts.tutorial-system")
 -- UI modules (required for registration with router)
 require("scripts.ui.belt-analyzer")
+local EntityUI = require("scripts.ui.entity-ui")
 require("scripts.ui.menus.blueprints-menu")
 require("scripts.ui.menus.gun-menu")
 require("scripts.ui.menus.main-menu")
@@ -273,7 +274,10 @@ function locate_hand_in_player_inventory(pindex)
    end
    if not ui_name then
       --Open the main menu if nothing is open
-      router:open_ui(UiRouter.UI_NAMES.MAIN)
+      router:open_ui(
+         UiRouter.UI_NAMES.MAIN,
+         { player_inventory = { inventory = p.get_inventory(defines.inventory.character_main) } }
+      )
       p.opened = p.get_inventory(defines.inventory.character_main)
    end
    --Save the hand stack item name
@@ -1147,27 +1151,27 @@ function clicked_on_entity(ent, pindex)
          Speech.speak(pindex, { "fa.switched-off" })
       end
    elseif ent.operable and ent.prototype.is_building then
-      -- TODO: Replace with capability-based UI
-      Speech.speak(pindex, { "fa.no-menu-for", Localising.get_localised_name_with_fallback(ent) })
+      -- Open capability-based entity UI
+      EntityUI.open_entity_ui(pindex, ent)
    elseif ent.type == "car" or ent.type == "spider-vehicle" or ent.train ~= nil then
-      -- TODO: Replace with capability-based UI
-      Speech.speak(pindex, { "fa.no-menu-for", Localising.get_localised_name_with_fallback(ent) })
+      -- Open capability-based entity UI for vehicles
+      EntityUI.open_entity_ui(pindex, ent)
    elseif ent.type == "spider-leg" then
       --Find and open the spider
       local spiders =
          ent.surface.find_entities_filtered({ position = ent.position, radius = 5, type = "spider-vehicle" })
       local spider = ent.surface.get_closest(ent.position, spiders)
       if spider and spider.valid then
-         -- TODO: Replace with capability-based UI
-         Speech.speak(pindex, { "fa.no-menu-for", Localising.get_localised_name_with_fallback(spider) })
+         -- Open capability-based entity UI for the spider
+         EntityUI.open_entity_ui(pindex, spider)
       end
    elseif ent.name == "rocket-silo-rocket-shadow" or ent.name == "rocket-silo-rocket" then
       --Find and open the silo
       local silos = ent.surface.find_entities_filtered({ position = ent.position, radius = 5, type = "rocket-silo" })
       local silo = ent.surface.get_closest(ent.position, silos)
       if silo and silo.valid then
-         -- TODO: Replace with capability-based UI
-         Speech.speak(pindex, { "fa.no-menu-for", Localising.get_localised_name_with_fallback(silo) })
+         -- Open capability-based entity UI for the rocket silo
+         EntityUI.open_entity_ui(pindex, silo)
       end
    elseif ent.operable then
       if ent then Speech.speak(pindex, { "fa.no-menu-for", Localising.get_localised_name_with_fallback(ent) }) end
@@ -3678,7 +3682,10 @@ local function kb_open_player_inventory(event)
 
    -- Use the router to open the main menu
    local router = UiRouter.get_router(pindex)
-   router:open_ui(UiRouter.UI_NAMES.MAIN)
+   router:open_ui(
+      UiRouter.UI_NAMES.MAIN,
+      { player_inventory = { inventory = p.get_inventory(defines.inventory.character_main) } }
+   )
 end
 
 ---@param event EventData.CustomInputEvent
@@ -3687,6 +3694,7 @@ local function kb_close_menu(event)
    local tick = event.tick
    local router = UiRouter.get_router(pindex)
 
+   router:close_ui()
    Speech.speak(pindex, "Menu closed.")
 end
 
@@ -3974,6 +3982,32 @@ local function kb_click_menu(event)
    if p.cursor_stack_temporary then p.clear_cursor() end
    --Act according to the type of menu open
 end
+---Left click actions with items in hand
+---@param event EventData.CustomInputEvent
+local function kb_click_hand(event)
+   local pindex = event.player_index
+   storage.players[pindex].last_click_tick = event.tick
+
+   local player = game.get_player(pindex)
+   local stack = player.cursor_stack
+
+   -- Check if the item in hand can be built
+   if stack and stack.valid_for_read then
+      local proto = stack.prototype
+      if proto.place_result or proto.place_as_tile_result then
+         -- Item can be placed/built
+         BuildingTools.build_item_in_hand(pindex)
+      else
+         -- Item cannot be built (e.g., intermediate products, tools, etc.)
+         -- Could add a message or different action here if needed
+         Speech.speak(pindex, { "fa.cannot-build-item" })
+      end
+   elseif player.cursor_ghost then
+      -- Ghost building
+      BuildingTools.build_item_in_hand(pindex)
+   end
+end
+
 --Left click actions with no menu and no items in hand
 ---@param event EventData.CustomInputEvent
 local function kb_click_entity(event)
@@ -4792,63 +4826,11 @@ EventManager.on_event(
    end
 )
 
----Clears the item in hand and then locates its recipe from the crafting menu.
----@param pindex number
-local function locate_hand_in_crafting_menu(pindex)
-   local p = game.get_player(pindex)
-   local inv = p.get_main_inventory()
-   local stack = p.cursor_stack
-   local router = UiRouter.get_router(pindex)
-
-   if
-      p.cursor_stack_temporary
-      or stack.is_blueprint
-      or stack.is_blueprint_book
-      or stack.is_deconstruction_item
-      or stack.is_upgrade_item
-   then
-      Speech.speak(pindex, { "fa.this-item-cannot-be-crafted" })
-      return
-   end
-
-   --Check if stack empty and menu supported
-   if stack == nil or not stack.valid_for_read or not stack.valid then
-      --Hand is empty
-      return
-   end
-
-   router:open_ui(UiRouter.UI_NAMES.MAIN)
-
-   --Get the name
-   -- Get a string representation of the item name for searching
-   local item_name_localised = Localising.get_localised_name_with_fallback(stack.prototype)
-   local item_name_string = ""
-   if type(item_name_localised) == "string" then
-      item_name_string = item_name_localised
-   else
-      -- For localized strings, fall back to the prototype name
-      item_name_string = stack.prototype.name
-   end
-   local item_name =
-      string.lower(FaUtils.get_substring_before_space(FaUtils.get_substring_before_dash(item_name_string)))
-   --Empty hand stack (clear cursor stack) after getting the name
-   storage.players[pindex].skip_read_hand = true
-   local successful = p.clear_cursor()
-   if not successful then
-      local message = "Unable to empty hand"
-      if inv.count_empty_stacks() == 0 then message = message .. ", inventory full" end
-      Speech.speak(pindex, message)
-      return
-   end
-end
-
 --Empties hand and opens the item from the crafting menu
 EventManager.on_event(
    "fa-cs-q",
    ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      locate_hand_in_crafting_menu(pindex)
-   end
+   function(event, pindex) end
 )
 
 EventManager.on_event("fa-grave", function(event)
