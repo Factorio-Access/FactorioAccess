@@ -126,22 +126,18 @@ function Router:_close_current_ui()
    end
 end
 
+--[[
+Ask if a UI is open.
+
+This function primarily exists for the test framework.  It may be tempting to use it in other code, but you should
+instead go through the UI event management at the bottom of this file, by overriding events in the ways others are
+currently.
+]]
 ---@param name fa.ui.UiName? If null, return true if any UI is open.
 ---@return boolean
 function Router:is_ui_open(name)
    if not name then return router_state[self.pindex].ui_name ~= nil end
    return router_state[self.pindex].ui_name == name
-end
-
--- If a UI is open and one of the names in this list, return true.
----@param list fa.ui.UiName[]
----@return boolean
-function Router:is_ui_one_of(list)
-   for _, n in pairs(list) do
-      if self:is_ui_open(n) then return true end
-   end
-
-   return false
 end
 
 ---@return fa.ui.UiName?
@@ -248,5 +244,12 @@ EventManager.on_event("fa-k", create_ui_handler("on_read_coords"), EventManager.
 
 -- Y key reads custom info
 EventManager.on_event("fa-y", create_ui_handler("on_read_info"), EventManager.EVENT_KIND.UI)
+
+-- E key closes the UI (inventory/menu close)
+EventManager.on_event("fa-e", function(event)
+   local pindex = event.player_index
+   local router = mod.get_router(pindex)
+   if router.current_ui then router:close_ui() end
+end, EventManager.EVENT_KIND.UI)
 
 return mod

@@ -1111,11 +1111,7 @@ EventManager.on_event(defines.events.on_player_cursor_stack_changed, function(ev
       end
    end
 
-   -- As a special case: blueprint menus will end up pointing at the wrong
-   -- blueprint if not closed here, since the only real unique identifier right
-   -- now is the player's hand.
-   local router = UiRouter.get_router(pindex)
-   if router:is_ui_open(UiRouter.UI_NAMES.BLUEPRINT) then router:close_ui() end
+   -- Blueprint UI will handle its own state changes when the cursor stack changes
 
    if storage.players[pindex].previous_hand_item_name ~= new_item_name then
       storage.players[pindex].previous_hand_item_name = new_item_name
@@ -3445,28 +3441,12 @@ local function kb_open_player_inventory(event)
    )
 end
 
----@param event EventData.CustomInputEvent
-local function kb_close_menu(event)
-   local pindex = event.player_index
-   local tick = event.tick
-   local router = UiRouter.get_router(pindex)
-
-   router:close_ui()
-   Speech.speak(pindex, "Menu closed.")
-end
-
 EventManager.on_event(
    "fa-e",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-      local tick = event.tick
-
-      if router:is_ui_open() then
-         kb_close_menu(event)
-      else
-         kb_open_player_inventory(event)
-      end
+      -- Always open inventory - closing is handled by the UI event system
+      kb_open_player_inventory(event)
    end
 )
 
