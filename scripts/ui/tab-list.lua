@@ -148,11 +148,14 @@ function TabList:_do_callback(pindex, target_tab_index, cb_name, msg_builder, pa
       -- parameter since we aren't using the `:` syntax.
       callback(callbacks, context, table.unpack(params))
       -- Makes assigning to state when initializing etc. work.
-      print(self.declaration.ui_name, "boop", cb_name, tabname)
       tl.tab_states[tabname] = context.state
 
       if context.force_close then
-         print("closed in", cb_name, "of", tabname)
+         -- Assert that we're not trying to close during an open callback
+         assert(
+            cb_name ~= "on_tab_list_opened" and cb_name ~= "on_tab_focused",
+            "Attempted to close UI during open/focus callback: " .. cb_name .. " in tab " .. tabname
+         )
          self:close(pindex, true)
       end
    end

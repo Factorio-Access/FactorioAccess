@@ -276,7 +276,7 @@ function locate_hand_in_player_inventory(pindex)
       --Open the main menu if nothing is open
       router:open_ui(
          UiRouter.UI_NAMES.MAIN,
-         { player_inventory = { inventory = p.get_inventory(defines.inventory.character_main) } }
+         { player_inventory = { entity = p.character, inventory_index = defines.inventory.character_main } }
       )
       p.opened = p.get_inventory(defines.inventory.character_main)
    end
@@ -3684,7 +3684,7 @@ local function kb_open_player_inventory(event)
    local router = UiRouter.get_router(pindex)
    router:open_ui(
       UiRouter.UI_NAMES.MAIN,
-      { player_inventory = { inventory = p.get_inventory(defines.inventory.character_main) } }
+      { player_inventory = { entity = p.character, inventory_index = defines.inventory.character_main } }
    )
 end
 

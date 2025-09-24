@@ -198,7 +198,7 @@ local function setup_shared_state(pindex, params)
    for _, inv_data in ipairs(sorted_invs) do
       state["inv_" .. inv_data.name] = {
          entity = entity,
-         inventory = inv_data.inventory,
+         inventory_index = inv_data.index,
       }
    end
 
@@ -251,13 +251,21 @@ function mod.open_entity_ui(pindex, entity)
    }
 
    if player.character then
-      params.player_inventory = { inventory = player.get_inventory(defines.inventory.character_main) }
+      params.player_inventory = {
+         entity = player.character,
+         inventory_index = defines.inventory.character_main,
+      }
    end
 
    for i = 1, entity.get_max_inventory_index() do
       ---@diagnostic disable-next-line
       local inv = entity.get_inventory(i)
-      if inv and inv.name then params["inv_" .. inv.name] = { inventory = inv } end
+      if inv and inv.name then
+         params["inv_" .. inv.name] = {
+            entity = entity,
+            inventory_index = i,
+         }
+      end
    end
 
    -- Open the UI

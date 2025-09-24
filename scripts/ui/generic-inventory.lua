@@ -38,7 +38,7 @@ local function setup_shared_state(pindex, params)
    local ret = {
       generic_inventory = {
          entity = entity,
-         inventory = inventory,
+         inventory_index = params.inventory,
       },
    }
 
@@ -47,7 +47,7 @@ local function setup_shared_state(pindex, params)
 
    ret["player_inventory"] = {
       entity = p.character,
-      inventory = p.character.get_inventory(defines.inventory.character_main),
+      inventory_index = defines.inventory.character_main,
    }
    return ret
 end

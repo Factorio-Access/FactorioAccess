@@ -11,15 +11,18 @@ local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local sounds = require("scripts.ui.sounds")
+local Consts = require("scripts.consts")
 
 local mod = {}
 
 ---@class fa.ui.InventoryGrid.Parameters
----@field inventory LuaInventory The inventory to display
+---@field entity LuaEntity The entity containing the inventory
+---@field inventory_index defines.inventory The inventory to display
 ---@field title LocalisedString? Optional title for the inventory
 
 ---@class fa.ui.InventoryGrid.State
----@field inventory LuaInventory
+---@field entity LuaEntity
+---@field inventory_index defines.inventory
 
 ---@class fa.ui.InventoryGrid.Context: fa.ui.graph.Ctx
 ---@field parameters table<string, fa.ui.InventoryGrid.Parameters>
@@ -28,21 +31,88 @@ local mod = {}
 -- Constants
 local GRID_WIDTH = 10 -- Match the old inventory system
 
+---Get recipe-based locks for crafting machine inventories
+---@param entity LuaEntity
+---@param inventory_index defines.inventory
+---@return table<number, string> Sparse array mapping slot indices to item names
+local function get_recipe_locks(entity, inventory_index)
+   -- Only applies to crafting machines
+   if not Consts.CRAFTING_MACHINES[entity.type] then return {} end
+
+   local recipe = entity.get_recipe()
+   if not recipe then return {} end
+
+   local locks = {}
+   if
+      inventory_index == defines.inventory.assembling_machine_input
+      or inventory_index == defines.inventory.furnace_source
+   then
+      -- Map ingredients to slots
+      local slot = 1
+      for _, ingredient in ipairs(recipe.ingredients) do
+         if ingredient.type == "item" then
+            locks[slot] = ingredient.name
+            slot = slot + 1
+         end
+      end
+   elseif
+      inventory_index == defines.inventory.assembling_machine_output
+      or inventory_index == defines.inventory.furnace_result
+   then
+      -- Map products to slots
+      local slot = 1
+      for _, product in ipairs(recipe.products) do
+         if product.type == "item" then
+            locks[slot] = product.name
+            slot = slot + 1
+         end
+      end
+   end
+
+   return locks
+end
+
 ---Generate a label for an inventory slot
 ---@param inv LuaInventory
 ---@param slot_index number
+---@param locks table<number, string>? Recipe locks for this inventory
 ---@return LocalisedString
-local function get_slot_label(inv, slot_index)
+local function get_slot_label(inv, slot_index, locks)
    local stack = inv[slot_index]
+   local lock_name = locks and locks[slot_index]
 
-   if not stack or not stack.valid_for_read then return { "fa.ui-inventory-empty-slot" } end
+   -- If empty slot with a lock, show what it's locked to
+   if not stack or not stack.valid_for_read then
+      if lock_name then
+         return {
+            "",
+            { "fa.ui-inventory-empty-slot" },
+            {
+               "fa.ui-inventory-slot-locked-to",
+               Localising.localise_item({ name = lock_name }),
+            },
+         }
+      end
+      return { "fa.ui-inventory-empty-slot" }
+   end
 
    -- Build the item label with count and quality
-   return Localising.localise_item({
+   local item_label = Localising.localise_item({
       name = stack.name,
       count = stack.count,
       quality = stack.quality and stack.quality.name or nil,
    })
+
+   -- Add lock info if this slot has one
+   if lock_name then
+      return {
+         "",
+         item_label,
+         { "fa.ui-inventory-slot-locked-to", Localising.localise_item({ name = lock_name }) },
+      }
+   end
+
+   return item_label
 end
 
 ---Calculate grid position from slot index
@@ -76,12 +146,18 @@ end
 
 ---Render the inventory grid
 ---@param ctx fa.ui.InventoryGrid.Context
-
 ---@return fa.ui.graph.Render?
 local function render_inventory_grid(ctx)
-   local inv = ctx.parameters.inventory
+   local entity = ctx.parameters.entity
+   local inventory_index = ctx.parameters.inventory_index
 
-   if not inv.valid then return nil end
+   if not entity or not entity.valid then return nil end
+
+   local inv = entity.get_inventory(inventory_index)
+   if not inv or not inv.valid then return nil end
+
+   -- Get recipe locks if applicable
+   local locks = get_recipe_locks(entity, inventory_index)
 
    local builder = Grid.grid_builder()
    builder:set_dimension_labeler(inventory_dimension_labeler)
@@ -93,7 +169,7 @@ local function render_inventory_grid(ctx)
    -- Build the grid
    for slot_index = 1, total_slots do
       local x, y = slot_to_grid_pos(slot_index)
-      local label = get_slot_label(inv, slot_index)
+      local label = get_slot_label(inv, slot_index, locks)
 
       builder:add_control(x, y, function(label_ctx)
          label_ctx.message:fragment(label)
