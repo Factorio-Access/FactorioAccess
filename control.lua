@@ -68,7 +68,6 @@ local sounds = require("scripts.ui.sounds")
 
 ---@meta scripts.shared-types
 
-groups = {}
 entity_types = {}
 production_types = {}
 building_types = {}
@@ -90,47 +89,6 @@ end
 --This function gets scheduled.
 function call_to_restore_equipped_atomic_bombs(pindex)
    Equipment.restore_equipped_atomic_bombs(pindex)
-end
-
---???
-function prune_item_groups(array)
-   if #groups == 0 then
-      local dict = prototypes.item
-      local a = FaUtils.get_iterable_array(dict)
-      for i, v in ipairs(a) do
-         local check1 = true
-         local check2 = true
-
-         for i1, v1 in ipairs(groups) do
-            if v1.name == v.group.name then check1 = false end
-            if v1.name == v.subgroup.name then check2 = false end
-         end
-         if check1 then table.insert(groups, v.group) end
-         if check2 then table.insert(groups, v.subgroup) end
-      end
-   end
-   local i = 1
-   while i < #array and array ~= nil and array[i] ~= nil do
-      local check = true
-      for i1, v in ipairs(groups) do
-         if v ~= nil and array[i].name == v.name then
-            i = i + 1
-            check = false
-            break
-         end
-      end
-      if check then table.remove(array, i) end
-   end
-end
-
-function read_item_selector_slot(pindex, start_phrase)
-   start_phrase = start_phrase or ""
-   local item_name = storage.players[pindex].item_cache[storage.players[pindex].item_selector.index].name
-   if start_phrase == "" then
-      Speech.speak(pindex, { "item-name." .. item_name })
-   else
-      Speech.speak(pindex, { "", start_phrase, { "item-name." .. item_name } })
-   end
 end
 
 --Reads the selected player inventory's selected menu slot. Default is to read the main inventory.
@@ -649,78 +607,21 @@ end
 --Moves upwards in a menu. Todo: split by menu. "menu_up"
 function menu_cursor_up(pindex)
    local router = UiRouter.get_router(pindex)
-
-   if storage.players[pindex].item_selection then
-      if storage.players[pindex].item_selector.group == 0 then
-         Speech.speak(pindex, { "fa.blank" })
-      elseif storage.players[pindex].item_selector.subgroup == 0 then
-         storage.players[pindex].item_cache = FaUtils.get_iterable_array(prototypes.item_group)
-         prune_item_groups(storage.players[pindex].item_cache)
-         storage.players[pindex].item_selector.index = storage.players[pindex].item_selector.group
-         storage.players[pindex].item_selector.group = 0
-         read_item_selector_slot(pindex)
-      else
-         local group = storage.players[pindex].item_cache[storage.players[pindex].item_selector.index].group
-         storage.players[pindex].item_cache = FaUtils.get_iterable_array(group.subgroups)
-         prune_item_groups(storage.players[pindex].item_cache)
-
-         storage.players[pindex].item_selector.index = storage.players[pindex].item_selector.subgroup
-         storage.players[pindex].item_selector.subgroup = 0
-         read_item_selector_slot(pindex)
-      end
-   end
 end
 
 --Moves downwards in a menu. Todo: split by menu."menu_down"
 function menu_cursor_down(pindex)
    local router = UiRouter.get_router(pindex)
-
-   if storage.players[pindex].item_selection then
-      if storage.players[pindex].item_selector.group == 0 then
-         storage.players[pindex].item_selector.group = storage.players[pindex].item_selector.index
-         storage.players[pindex].item_cache = FaUtils.get_iterable_array(
-            storage.players[pindex].item_cache[storage.players[pindex].item_selector.group].subgroups
-         )
-         prune_item_groups(storage.players[pindex].item_cache)
-
-         storage.players[pindex].item_selector.index = 1
-         read_item_selector_slot(pindex)
-      elseif storage.players[pindex].item_selector.subgroup == 0 then
-         storage.players[pindex].item_selector.subgroup = storage.players[pindex].item_selector.index
-         local prototypes = prototypes.get_item_filtered({
-            {
-               filter = "subgroup",
-               subgroup = storage.players[pindex].item_cache[storage.players[pindex].item_selector.index].name,
-            },
-         })
-         storage.players[pindex].item_cache = FaUtils.get_iterable_array(prototypes)
-         storage.players[pindex].item_selector.index = 1
-         read_item_selector_slot(pindex)
-      else
-         Speech.speak(pindex, { "fa.press-left-bracket-to-confirm" })
-      end
-   end
 end
 
 --Moves to the left in a menu. Todo: split by menu."menu_left"
 function menu_cursor_left(pindex)
    local router = UiRouter.get_router(pindex)
-
-   if storage.players[pindex].item_selection then
-      storage.players[pindex].item_selector.index = math.max(1, storage.players[pindex].item_selector.index - 1)
-      read_item_selector_slot(pindex)
-   end
 end
 
 ----Moves to the right  in a menu. Todo: split by menu. "menu_right"
 function menu_cursor_right(pindex)
    local router = UiRouter.get_router(pindex)
-
-   if storage.players[pindex].item_selection then
-      storage.players[pindex].item_selector.index =
-         math.min(#storage.players[pindex].item_cache, storage.players[pindex].item_selector.index + 1)
-      read_item_selector_slot(pindex)
-   end
 end
 
 --Schedules a function to be called after a certain number of ticks.
@@ -1335,14 +1236,6 @@ EventManager.on_event(
       --Other resets - now executed unconditionally
       if event.element ~= nil then event.element.destroy() end
       router:close_ui()
-      storage.players[pindex].item_selection = false
-      storage.players[pindex].item_cache = {}
-      storage.players[pindex].item_selector = {
-         index = 0,
-         group = 0,
-         subgroup = 0,
-      }
-      storage.players[pindex].building.item_selection = false
    end
 )
 

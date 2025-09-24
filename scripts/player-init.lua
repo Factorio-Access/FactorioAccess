@@ -36,7 +36,6 @@ function mod.initialize(player)
    end
 
    local character = player.cutscene_character or player.character or player
-   faplayer.in_item_selector = faplayer.in_item_selector or false
    faplayer.num_elements = faplayer.num_elements or 0
    faplayer.player_direction = faplayer.player_direction or character.walking_state.direction
    faplayer.position = faplayer.position or FaUtils.center_of_tile(character.position)
@@ -54,8 +53,6 @@ function mod.initialize(player)
    faplayer.previous_hand_item_name = faplayer.previous_hand_item_name or ""
    faplayer.last = faplayer.last or ""
    faplayer.last_indexed_ent = faplayer.last_indexed_ent or nil
-   faplayer.item_selection = faplayer.item_selection or false
-   faplayer.item_cache = faplayer.item_cache or {}
    faplayer.zoom = faplayer.zoom or 1
    faplayer.last_move_tick = faplayer.last_move_tick or 0
    faplayer.last_build_tick = faplayer.last_build_tick or 0
@@ -132,8 +129,6 @@ function mod.initialize(player)
    faplayer.travel_queue_list = faplayer.travel_queue_list or {}
 
    faplayer.spidertron_remote = faplayer.spidertron_remote or { active = false, spider = nil }
-
-   faplayer.item_selector = faplayer.item_selector or { index = 1, group = 0, subgroup = 0 }
 
    faplayer.equipment = faplayer.equipment or { index = 1, sector = 1 }
 
