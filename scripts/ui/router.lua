@@ -92,6 +92,16 @@ local router_state = StorageManager.declare_storage_module("ui_router", {}, {
 local Router = {}
 local Router_meta = { __index = Router }
 
+---@class fa.ui.RouterController
+---@field router fa.ui.Router
+---@field pindex number
+local RouterController = {}
+local RouterController_meta = { __index = RouterController }
+
+function RouterController:close()
+   self.router:close_ui()
+end
+
 ---@param name fa.ui.UiName
 ---@param params? table Optional parameters to pass to the UI
 function Router:open_ui(name, params)
@@ -103,7 +113,14 @@ function Router:open_ui(name, params)
    router_state[self.pindex].ui_name = name
 
    -- Get the registered UI and open it with params
-   if registered_uis[name] then registered_uis[name]:open(self.pindex, params or {}) end
+   if registered_uis[name] then
+      -- Create a controller for the opening UI
+      local controller = setmetatable({
+         router = self,
+         pindex = self.pindex,
+      }, RouterController_meta)
+      registered_uis[name]:open(self.pindex, params or {}, controller)
+   end
    -- If UI is not registered, it might be a legacy UI name - just set it as open
    -- This maintains backward compatibility with old UI system
 end
@@ -173,8 +190,13 @@ local function create_ui_handler(method_name, modifiers)
       -- Only handle if UI is open AND registered with the new system
       if open_ui_name and registered_uis[open_ui_name] then
          local tablist = registered_uis[open_ui_name]
-         -- Call the method on the TabList, passing modifiers as third parameter
-         tablist[method_name](tablist, pindex, modifiers)
+         -- Create a fresh controller for this event
+         local controller = setmetatable({
+            router = router,
+            pindex = pindex,
+         }, RouterController_meta)
+         -- Call the method on the TabList, passing modifiers and controller
+         tablist[method_name](tablist, pindex, modifiers, controller)
          -- Return FINISHED to prevent world handlers from running
          return EventManager.FINISHED
       end

@@ -45,7 +45,7 @@ per-node and/or per-transition so that things can be reused: things that don't n
 using parameters and states, it is possible to make graphs once and return them, communicating with the nodes via the
 state.  That is how we handle more performance sensitive paths.
 
-The graph can close itself (the graph context contains a controller, to tell the graph what to do).  Alternatively if
+The graph can close itself (the graph context contains a controller from the router to close the UI).  Alternatively if
 render returns nil, the graph closes.  Since it is guaranteed that render is always called before the rest and that
 there is no gap between render and using the value it returns, performing checks at the top of render is sufficient and
 they do not necessarily need to propagate to the rest of it.
@@ -85,6 +85,7 @@ local mod = {}
 ---@class fa.ui.graph.Ctx
 ---@field message fa.Speech
 ---@field modifiers fa.ui.graph.Modifiers Set for things using the keyboard. Non-nil but garbage for all others.
+---@field controller fa.ui.RouterController The router's controller for UI management
 ---@field state any
 ---@field tablist_shared_state any
 ---@field pindex number
@@ -139,15 +140,7 @@ mod.TRANSITION_DIR = {
 local Graph = {}
 local Graph_meta = { __index = Graph }
 
----@class fa.ui.graph.Controller
----@field graph fa.ui.Graph
----@field ctx fa.ui.graph.InternalTabCtx
-local Controller = {}
-local Controller_meta = { __index = Controller }
-
-function Controller:close()
-   self.ctx.force_close = true
-end
+-- Controller class removed - we now pass through the router's controller
 
 ---@type fa.ui.graph.Modifiers
 local NO_MODIFIERS = { control = false, alt = false, shift = false }
@@ -157,16 +150,11 @@ local NO_MODIFIERS = { control = false, alt = false, shift = false }
 ---@return fa.ui.graph.Ctx
 ---@private
 function Graph:_wrap_ctx(outer_ctx, name, modifiers)
-   local controller = setmetatable({
-      graph = self,
-      ctx = outer_ctx,
-   }, Controller_meta)
-
    ---@type fa.ui.graph.Ctx
    local inner_ctx = {
       message = outer_ctx.message,
       modifiers = modifiers,
-      controller = controller,
+      controller = outer_ctx.controller, -- Pass through the router's controller
       state = outer_ctx.state,
       tablist_shared_state = outer_ctx.shared_state,
       pindex = outer_ctx.pindex,
@@ -182,7 +170,8 @@ end
 function Graph:_rerender(ctx)
    local render = self.render_callback(self:_wrap_ctx(ctx, self.name, NO_MODIFIERS))
    if not render then
-      ctx.force_close = true
+      -- Close via controller
+      ctx.controller:close()
       return
    end
 
@@ -263,7 +252,8 @@ end
 ---@private
 function Graph:_with_render(ctx, callback)
    self:_rerender(ctx)
-   if ctx.force_close then return end
+   -- If controller closed the UI, render will be nil
+   if not self.render then return end
    return callback()
 end
 
@@ -280,7 +270,7 @@ local CALLBACK_FALLBACKS = {
 ---@private
 ---@return any?
 function Graph:_maybe_call(node, outer_ctx, callback_name, modifiers, ...)
-   if outer_ctx.force_close then return end
+   -- Controller will handle closing if needed
    local inner_ctx = self:_wrap_ctx(outer_ctx, self.name, modifiers)
 
    local fallback_callback_name = CALLBACK_FALLBACKS[callback_name]

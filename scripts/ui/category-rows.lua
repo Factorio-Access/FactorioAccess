@@ -51,7 +51,7 @@ local mod = {}
 ---@field state table
 ---@field shared_state table
 ---@field parameters table
----@field force_close boolean
+---@field controller fa.ui.RouterController Controller for UI management
 
 ---@class fa.ui.CategoryRows.Builder
 ---@field categories table<string, fa.ui.CategoryRows.Category>
@@ -312,7 +312,7 @@ local function create_item_context(tab_ctx)
       state = tab_ctx.state,
       shared_state = tab_ctx.shared_state,
       parameters = tab_ctx.parameters,
-      force_close = false,
+      controller = tab_ctx.controller,
    }
 end
 
@@ -456,7 +456,7 @@ local function handle_click(ctx, render, modifiers, is_right_click)
    if callback then
       local item_ctx = create_item_context(ctx)
       callback(item_ctx, modifiers or {})
-      if item_ctx.force_close then ctx.force_close = true end
+      -- Controller is passed through, so callbacks can use it directly
    else
       -- Default to reading the label
       local item_ctx = create_item_context(ctx)

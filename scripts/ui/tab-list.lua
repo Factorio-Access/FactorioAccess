@@ -12,7 +12,7 @@ later.  This just gets us off the ground.  However, see ui/menu.lua, which simpl
 
 This is the top level of the UI hierarchy and also handles the state management. Each tab will receive a context with a
 field to use for persistent state. Whatever it stores there can persist between opens, if `persist_state` is set.  It
-can reset this state by forcing closure; to do so, it should write `force_close=true` to the context.  A shared state,
+can reset this state by forcing closure; to do so, it should call `context.controller:close()`.  A shared state,
 also cleared on forced closure, is `shared_state`.  Callbacks passed to creation of this tablist can initialize the
 shared state, but cannot print to the player by design; do not perform mutable actions in state setup or else.
 
@@ -41,7 +41,7 @@ local mod = {}
 ---@field state table Goes into storage.
 ---@field shared_state table
 ---@field parameters table Whatever was passed to :open()
----@field force_close boolean If true, close this tablist.
+---@field controller fa.ui.RouterController Controller for UI management
 ---@field message fa.Speech
 
 ---@alias fa.ui.SimpleTabHandler fun(self, fa.ui.TabContext, modifiers?: {control?: boolean, shift?: boolean, alt?: boolean})
@@ -114,7 +114,8 @@ mod.TabList = TabList
 -- of actions.
 ---@param msg_builder fa.Speech?
 ---@param params any[]?
-function TabList:_do_callback(pindex, target_tab_index, cb_name, msg_builder, params)
+---@param controller fa.ui.RouterController
+function TabList:_do_callback(pindex, target_tab_index, cb_name, msg_builder, params, controller)
    msg_builder = msg_builder or Speech.new()
    params = params or {}
 
@@ -139,7 +140,7 @@ function TabList:_do_callback(pindex, target_tab_index, cb_name, msg_builder, pa
          player = player,
          state = tabstate,
          parameters = tl.parameters,
-         force_close = false,
+         controller = controller,
          message = msg_builder,
          shared_state = tl.shared_state,
       }
@@ -149,15 +150,6 @@ function TabList:_do_callback(pindex, target_tab_index, cb_name, msg_builder, pa
       callback(callbacks, context, table.unpack(params))
       -- Makes assigning to state when initializing etc. work.
       tl.tab_states[tabname] = context.state
-
-      if context.force_close then
-         -- Assert that we're not trying to close during an open callback
-         assert(
-            cb_name ~= "on_tab_list_opened" and cb_name ~= "on_tab_focused",
-            "Attempted to close UI during open/focus callback: " .. cb_name .. " in tab " .. tabname
-         )
-         self:close(pindex, true)
-      end
    end
 
    local msg = msg_builder:build()
@@ -166,8 +158,9 @@ end
 
 -- Re-render the tabs, handling additions and removals
 ---@param pindex number
+---@param controller fa.ui.RouterController
 ---@private
-function TabList:_rerender(pindex)
+function TabList:_rerender(pindex, controller)
    local tl = tablist_storage[pindex][self.ui_name]
    assert(tl)
 
@@ -175,8 +168,8 @@ function TabList:_rerender(pindex)
    local new_sections = self.tabs_callback(pindex, tl.parameters)
 
    if not new_sections then
-      -- If callback returns nil, close the UI
-      self:close(pindex, true)
+      -- If callback returns nil, close the UI via controller
+      controller:close()
       return
    end
 
@@ -270,48 +263,49 @@ end
 -- Returns a method which will call the event handler for the given name, so
 -- that we may avoid rewriting the same body over and over.
 local function build_simple_method(evt_name)
-   return function(self, pindex, modifiers)
-      -- Re-render before handling the event
-      self:_rerender(pindex)
+   return function(self, pindex, modifiers, controller)
+      -- Re-render before handling the event (needs controller for potential close)
+      self:_rerender(pindex, controller)
 
       local tl = tablist_storage[pindex][self.ui_name]
       if not tl.currently_open then return end
 
-      -- Pass modifiers as part of params array to _do_callback
-      self:_do_callback(pindex, tl.active_tab, evt_name, nil, { modifiers })
+      -- Pass modifiers and controller as part of params array to _do_callback
+      self:_do_callback(pindex, tl.active_tab, evt_name, nil, { modifiers }, controller)
    end
 end
 
----@type fun(self, number, table?)
+---@type fun(self, number, table?, fa.ui.RouterController)
 TabList.on_up = build_simple_method("on_up")
----@type fun(self, number, table?)
+---@type fun(self, number, table?, fa.ui.RouterController)
 TabList.on_down = build_simple_method("on_down")
----@type fun(self, number, table?)
+---@type fun(self, number, table?, fa.ui.RouterController)
 TabList.on_left = build_simple_method("on_left")
----@type fun(self, number, table?)
+---@type fun(self, number, table?, fa.ui.RouterController)
 TabList.on_right = build_simple_method("on_right")
----@type fun(self, number, table?)
+---@type fun(self, number, table?, fa.ui.RouterController)
 TabList.on_click = build_simple_method("on_click")
----@type fun(self, number, table?)
+---@type fun(self, number, table?, fa.ui.RouterController)
 TabList.on_right_click = build_simple_method("on_right_click")
----@type fun(self, number, table?)
+---@type fun(self, number, table?, fa.ui.RouterController)
 TabList.on_read_coords = build_simple_method("on_read_coords")
----@type fun(self, number, table?)
+---@type fun(self, number, table?, fa.ui.RouterController)
 TabList.on_read_info = build_simple_method("on_read_info")
----@type fun(self, number, table?)
+---@type fun(self, number, table?, fa.ui.RouterController)
 TabList.on_top = build_simple_method("on_top")
----@type fun(self, number, table?)
+---@type fun(self, number, table?, fa.ui.RouterController)
 TabList.on_bottom = build_simple_method("on_bottom")
----@type fun(self, number, table?)
+---@type fun(self, number, table?, fa.ui.RouterController)
 TabList.on_leftmost = build_simple_method("on_leftmost")
----@type fun(self, number, table?)
+---@type fun(self, number, table?, fa.ui.RouterController)
 TabList.on_rightmost = build_simple_method("on_rightmost")
 
 -- Perform the flow for focusing a tab. Does this unconditionally, so be careful
 -- not to over-call it.
 -- @param msg_builder Optional message builder to prepend section info to
 -- @param play_sound Optional boolean, defaults to true. Set to false to suppress sound.
-function TabList:_set_active_tab(pindex, active_tab, msg_builder, play_sound)
+-- @param controller fa.ui.RouterController
+function TabList:_set_active_tab(pindex, active_tab, msg_builder, play_sound, controller)
    local tl = tablist_storage[pindex][self.ui_name]
 
    -- Play tab change sound (unless explicitly suppressed)
@@ -322,19 +316,20 @@ function TabList:_set_active_tab(pindex, active_tab, msg_builder, play_sound)
    local desc = self.descriptors[self.tab_order[active_tab]]
    local title = desc.title
    if title then msg_builder:list_item(title) end
-   self:_do_callback(pindex, tl.active_tab, "on_tab_unfocused")
-   self:_do_callback(pindex, active_tab, "on_tab_focused", msg_builder)
+   self:_do_callback(pindex, tl.active_tab, "on_tab_unfocused", nil, nil, controller)
+   self:_do_callback(pindex, active_tab, "on_tab_focused", msg_builder, nil, controller)
 
    tl.active_tab = active_tab
 end
 
 ---@param pindex number
 ---@param direction 1|-1
-function TabList:_cycle(pindex, direction)
+---@param controller fa.ui.RouterController
+function TabList:_cycle(pindex, direction, controller)
    if not tablist_storage[pindex] or not tablist_storage[pindex][self.ui_name] then return end
 
    -- Re-render before cycling
-   self:_rerender(pindex)
+   self:_rerender(pindex, controller)
 
    local tl = tablist_storage[pindex][self.ui_name]
    if not tl or not tl.currently_open or not self.sections then return end
@@ -368,30 +363,31 @@ function TabList:_cycle(pindex, direction)
       local new_tab_name = current_section.tabs[new_section_index].name
       for i, name in ipairs(self.tab_order) do
          if name == new_tab_name then
-            self:_set_active_tab(pindex, i)
+            self:_set_active_tab(pindex, i, nil, true, controller)
             break
          end
       end
    end
 end
 
-function TabList:on_next_tab(pindex, modifiers)
-   -- Tab navigation doesn't use modifiers, but we accept them for consistency
-   self:_cycle(pindex, 1)
+function TabList:on_next_tab(pindex, modifiers, controller)
+   -- Tab navigation doesn't use modifiers, but we pass controller through
+   self:_cycle(pindex, 1, controller)
 end
 
-function TabList:on_previous_tab(pindex, modifiers)
-   -- Tab navigation doesn't use modifiers, but we accept them for consistency
-   self:_cycle(pindex, -1)
+function TabList:on_previous_tab(pindex, modifiers, controller)
+   -- Tab navigation doesn't use modifiers, but we pass controller through
+   self:_cycle(pindex, -1, controller)
 end
 
 ---@param pindex number
 ---@param direction 1|-1
-function TabList:_cycle_section(pindex, direction)
+---@param controller fa.ui.RouterController
+function TabList:_cycle_section(pindex, direction, controller)
    if not tablist_storage[pindex] or not tablist_storage[pindex][self.ui_name] then return end
 
    -- Re-render before cycling
-   self:_rerender(pindex)
+   self:_rerender(pindex, controller)
 
    local tl = tablist_storage[pindex][self.ui_name]
    if not tl or not tl.currently_open or not self.sections then return end
@@ -449,24 +445,26 @@ function TabList:_cycle_section(pindex, direction)
          end
          -- Pass the message builder to _set_active_tab so it can add the tab title
          -- But we need to modify _set_active_tab to accept an optional message builder
-         self:_set_active_tab(pindex, i, msg_builder)
+         self:_set_active_tab(pindex, i, msg_builder, true, controller)
          break
       end
    end
 end
 
-function TabList:on_next_section(pindex, modifiers)
-   -- Section navigation doesn't use modifiers, but we accept them for consistency
-   self:_cycle_section(pindex, 1)
+function TabList:on_next_section(pindex, modifiers, controller)
+   -- Section navigation doesn't use modifiers, but we pass controller through
+   self:_cycle_section(pindex, 1, controller)
 end
 
-function TabList:on_previous_section(pindex, modifiers)
-   -- Section navigation doesn't use modifiers, but we accept them for consistency
-   self:_cycle_section(pindex, -1)
+function TabList:on_previous_section(pindex, modifiers, controller)
+   -- Section navigation doesn't use modifiers, but we pass controller through
+   self:_cycle_section(pindex, -1, controller)
 end
 
-function TabList:open(pindex, parameters)
+---@param controller fa.ui.RouterController
+function TabList:open(pindex, parameters, controller)
    assert(self.ui_name)
+   assert(controller, "TabList:open requires a controller")
 
    if not self.declaration.persist_state then tablist_storage[pindex][self.ui_name] = nil end
 
@@ -497,7 +495,7 @@ function TabList:open(pindex, parameters)
    end
 
    -- Perform initial render
-   self:_rerender(pindex)
+   self:_rerender(pindex, controller)
    if not tabstate.currently_open then return end -- Rerender might have closed
 
    -- Tell all the tabs that they have opened, but abort if any of them close.
@@ -505,11 +503,11 @@ function TabList:open(pindex, parameters)
       local tabname = self.tab_order[i]
       if not tabstate.tab_states[tabname] then tabstate.tab_states[tabname] = {} end
 
-      self:_do_callback(pindex, i, "on_tab_list_opened")
+      self:_do_callback(pindex, i, "on_tab_list_opened", nil, nil, controller)
    end
 
    -- Set the active tab without playing sound (we're opening, not switching)
-   self:_set_active_tab(pindex, tabstate.active_tab, nil, false)
+   self:_set_active_tab(pindex, tabstate.active_tab, nil, false, controller)
 end
 
 ---@param force_reset boolean? If true, also dump state.
