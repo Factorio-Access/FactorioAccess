@@ -22,20 +22,19 @@ local function render(ctx)
 
    local builder = Menu.MenuBuilder.new()
 
-   -- In the below note that it is long-standing mod behavior to close menus
-   -- after text boxes close.  That's unfortunate, but we'll keep doing that for
-   -- now as we flesh out our gui story.
-
    if not bp.is_blueprint_setup() then
       builder:add_label("blueprint-info", { "fa.ui-blueprints-menu-limited" })
    else
-      builder:add_label("blueprint-info", { "fa.ui-blueprints-menu-basic", Blueprints.get_blueprint_label(bp) })
+      builder:add_label("blueprint-info", { "fa.ui-blueprints-menu-basic", bp.label or "no name" })
    end
 
    -- Blueprints which are empty can't have descriptions; don't show it.
-   if bp.is_blueprint_setup then
+   if bp.is_blueprint_setup() then
       builder:add_label("description", function(ctx)
-         ctx.message:fragment({ "fa.ui-blueprints-menu-description", Blueprints.get_blueprint_description(bp) })
+         ctx.message:fragment({
+            "fa.ui-blueprints-menu-description",
+            bp.blueprint_description or "",
+         })
       end)
 
       builder:add_label("icons", function(ctx)
@@ -97,17 +96,24 @@ local function render(ctx)
 
       builder:add_clickable("rename", { "fa.ui-blueprints-menu-rename" }, {
          on_click = function(ctx)
-            ctx.message:fragment(
-               "Blueprint renaming is temporarily unavailable while the text input system is being redesigned."
-            )
+            ctx.controller:open_textbox("", "rename")
+            ctx.message:fragment({ "fa.ui-blueprints-enter-name" })
+         end,
+         on_child_result = function(ctx, result)
+            bp.label = result
+            ctx.message:fragment({ "fa.ui-blueprints-renamed", result })
          end,
       })
 
       builder:add_clickable("edit-desc", { "fa.ui-blueprints-menu-edit-desc" }, {
          on_click = function(ctx)
-            ctx.message:fragment(
-               "Blueprint description editing is temporarily unavailable while the text input system is being redesigned."
-            )
+            ctx.controller:open_textbox("", "edit-desc")
+            ctx.message:fragment({ "fa.ui-blueprints-enter-description" })
+         end,
+         ---@param result string
+         on_child_result = function(ctx, result)
+            bp.blueprint_description = result
+            ctx.message:fragment({ "fa.ui-blueprints-description-updated" })
          end,
       })
 
@@ -141,9 +147,22 @@ local function render(ctx)
 
       builder:add_clickable("export", { "fa.ui-blueprints-menu-export" }, {
          on_click = function(ctx)
-            ctx.message:fragment(
-               "Blueprint export is temporarily unavailable while the text input system is being redesigned."
-            )
+            local export_string = bp.export_stack()
+            ctx.controller:open_textbox(export_string, "export")
+            ctx.message:fragment({ "fa.ui-blueprints-export-string-shown" })
+         end,
+         on_child_result = function(ctx, result)
+            -- User might paste a different blueprint string to import
+            if result and result ~= "" then
+               local import_result = bp.import_stack(result)
+               if import_result == 0 then
+                  ctx.message:fragment({ "fa.ui-blueprints-import-success" })
+               else
+                  ctx.message:fragment({ "fa.ui-blueprints-import-failed" })
+               end
+            else
+               ctx.message:fragment({ "fa.ui-blueprints-export-closed" })
+            end
          end,
       })
    end

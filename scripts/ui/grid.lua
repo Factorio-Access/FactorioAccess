@@ -22,6 +22,7 @@ local mod = {}
 
 ---@class fa.ui.grid.GridNodeVtable : fa.ui.graph.NodeVtable
 ---@field on_read_coords fa.ui.grid.CoordCallback?
+---@field on_child_result fa.ui.graph.ChildResultCallback?
 
 ---@class fa.ui.grid.GridCell
 ---@field vtable fa.ui.grid.GridNodeVtable

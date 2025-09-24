@@ -58,6 +58,7 @@ require("scripts.ui.menus.main-menu")
 require("scripts.ui.menus.roboport-menu")
 require("scripts.ui.menus.spidertron-menu")
 require("scripts.ui.generic-inventory")
+local GameGui = require("scripts.ui.game-gui")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
 local Warnings = require("scripts.warnings")
@@ -1343,6 +1344,43 @@ EventManager.on_event(defines.events.on_gui_opened, function(event, pindex)
    --Stop any enabled mouse entity selection
    if storage.players[pindex].vanilla_mode ~= true then
       game.get_player(pindex).game_view_settings.update_entity_selection = false
+   end
+end)
+
+EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
+   local router = UiRouter.get_router(pindex)
+
+   -- Check if this is our textbox
+   if event.element and event.element.valid and event.element.name == "fa-text-input" then
+      local result_context = GameGui.get_textbox_result_context(pindex)
+      if result_context then
+         -- Route the result to the UI that opened the textbox
+         local ui_name = result_context.ui_name
+         if ui_name == router:get_open_ui_name() then
+            -- UI is still open, send the result
+            local ui = UiRouter.get_registered_ui(ui_name)
+            if ui and ui.on_child_result then
+               -- Create a controller for the callback
+               local controller = {
+                  router = router,
+                  pindex = pindex,
+                  close = function(self)
+                     router:close_ui()
+                  end,
+                  open_textbox = function(self, initial_text, context)
+                     local result_context = {
+                        ui_name = router:get_open_ui_name(),
+                        context = context,
+                     }
+                     GameGui.open_textbox(pindex, initial_text, result_context)
+                  end,
+               }
+               ui:on_child_result(pindex, result_context, event.element.text, controller)
+            end
+         end
+         -- Close the textbox
+         GameGui.close_textbox(pindex)
+      end
    end
 end)
 

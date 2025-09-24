@@ -45,14 +45,21 @@ end
 
 ---@param key string
 ---@param label LocalisedString | fun(fa.ui.graph.Ctx): LocalisedString
----@param click_handlers { on_click: fa.ui.graph.SimpleCallback }
+---@param click_handlers { on_click?: fa.ui.graph.SimpleCallback, on_child_result?: fa.ui.graph.ChildResultCallback }
 function MenuBuilder:add_clickable(key, label, click_handlers)
-   self:add_item(key, {
-      on_click = function(ctx)
-         click_handlers.on_click(ctx)
-      end,
+   local vtable = {
       label = UiUtils.to_label_function(label),
-   })
+   }
+
+   -- Copy over any provided handlers
+   if click_handlers.on_click then
+      vtable.on_click = click_handlers.on_click
+   end
+   if click_handlers.on_child_result then
+      vtable.on_child_result = click_handlers.on_child_result
+   end
+
+   self:add_item(key, vtable)
 end
 
 ---@return fa.ui.graph.Render

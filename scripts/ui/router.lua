@@ -30,6 +30,7 @@ UI-destined events.
 ]]
 local StorageManager = require("scripts.storage-manager")
 local EventManager = require("scripts.event-manager")
+local GameGui = require("scripts.ui.game-gui")
 
 local mod = {}
 
@@ -102,6 +103,18 @@ function RouterController:close()
    self.router:close_ui()
 end
 
+---Open a textbox for user input
+---@param initial_text string
+---@param context any Any value to help identify which node/item opened the textbox
+function RouterController:open_textbox(initial_text, context)
+   -- Create result context with current UI name and provided context
+   local result_context = {
+      ui_name = self.router:get_open_ui_name(),
+      context = context,
+   }
+   GameGui.open_textbox(self.pindex, initial_text, result_context)
+end
+
 ---@param name fa.ui.UiName
 ---@param params? table Optional parameters to pass to the UI
 function Router:open_ui(name, params)
@@ -111,6 +124,9 @@ function Router:open_ui(name, params)
 
    -- Set the UI as open in router state
    router_state[self.pindex].ui_name = name
+
+   -- Update the game GUI to show the UI frame
+   GameGui.set_active_ui(self.pindex, name)
 
    -- Get the registered UI and open it with params
    if registered_uis[name] then
@@ -128,6 +144,9 @@ end
 function Router:close_ui()
    self:_close_current_ui()
    router_state[self.pindex].ui_name = nil
+
+   -- Clear the game GUI
+   GameGui.clear_active_ui(self.pindex)
 end
 
 ---Internal method to close the currently open UI

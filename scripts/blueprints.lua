@@ -25,32 +25,6 @@ function mod.set_stack_bp_from_data(stack, bp_data)
    stack.import_stack("0" .. helpers.encode_string(helpers.table_to_json(bp_data)))
 end
 
-function mod.set_blueprint_description(stack, description)
-   local bp_data = mod.get_bp_data_for_edit(stack)
-   bp_data.blueprint.description = description
-   mod.set_stack_bp_from_data(stack, bp_data)
-end
-
-function mod.get_blueprint_description(stack)
-   local bp_data = mod.get_bp_data_for_edit(stack)
-   local desc = bp_data.blueprint.description
-   if desc == nil then desc = "" end
-   return desc
-end
-
-function mod.set_blueprint_label(stack, label)
-   local bp_data = mod.get_bp_data_for_edit(stack)
-   bp_data.blueprint.label = label
-   mod.set_stack_bp_from_data(stack, bp_data)
-end
-
-function mod.get_blueprint_label(stack)
-   local bp_data = mod.get_bp_data_for_edit(stack)
-   local label = bp_data.blueprint.label
-   if label == nil then label = "no name" end
-   return label
-end
-
 --Create a blueprint from a rectangle between any two points and give it to the player's hand
 function mod.create_blueprint(pindex, point_1, point_2, prior_bp_data)
    local top_left, bottom_right = FaUtils.get_top_left_and_bottom_right(point_1, point_2)

@@ -63,6 +63,7 @@ local mod = {}
 ---@field on_right_click fa.ui.SimpleTabHandler?
 ---@field on_read_coords fa.ui.SimpleTabHandler?
 ---@field on_read_info fa.ui.SimpleTabHandler?
+---@field on_child_result fa.ui.SimpleTabHandler?
 ---@field enabled fun(number): boolean
 
 ---@class fa.ui.TabDescriptor
@@ -300,11 +301,27 @@ TabList.on_leftmost = build_simple_method("on_leftmost")
 ---@type fun(self, number, table?, fa.ui.RouterController)
 TabList.on_rightmost = build_simple_method("on_rightmost")
 
+---Handle child result from textbox or other child UI
+---@param pindex number
+---@param result_context table { ui_name: string, context: any }
+---@param result any
+---@param controller fa.ui.RouterController
+function TabList:on_child_result(pindex, result_context, result, controller)
+   -- Re-render before handling the event (needs controller for potential close)
+   self:_rerender(pindex, controller)
+
+   local tl = tablist_storage[pindex][self.ui_name]
+   if not tl.currently_open then return end
+
+   -- Pass result_context and result to the active tab's handler
+   self:_do_callback(pindex, tl.active_tab, "on_child_result", nil, { result_context, result }, controller)
+end
+
 -- Perform the flow for focusing a tab. Does this unconditionally, so be careful
 -- not to over-call it.
--- @param msg_builder Optional message builder to prepend section info to
--- @param play_sound Optional boolean, defaults to true. Set to false to suppress sound.
--- @param controller fa.ui.RouterController
+---@param msg_builder fa.Speech? Optional message builder to prepend section info to
+---@param play_sound boolean? Optional boolean, defaults to true. Set to false to suppress sound.
+---@param controller fa.ui.RouterController
 function TabList:_set_active_tab(pindex, active_tab, msg_builder, play_sound, controller)
    local tl = tablist_storage[pindex][self.ui_name]
 
@@ -519,7 +536,7 @@ function TabList:close(pindex, force_reset)
 
    if tablist_storage[pindex][self.ui_name].currently_open then
       for i = 1, #self.tab_order do
-         self:_do_callback(pindex, i, "on_tab_list_closed")
+         self:_do_callback(pindex, i, "on_tab_list_closed", nil, nil, nil)
       end
    end
 

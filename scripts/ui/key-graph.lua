@@ -93,12 +93,14 @@ local mod = {}
 ---@field global_parameters any The parent parameters, to enable "going sideways".
 
 ---@alias fa.ui.graph.SimpleCallback fun(fa.ui.GraphCtx)
+---@alias fa.ui.graph.ChildResultCallback fun(fa.ui.GraphCtx, any)
 
 ---@class fa.ui.graph.NodeVtable
 ---@field label fa.ui.graph.SimpleCallback Required always.
 ---@field on_click fa.ui.graph.SimpleCallback? By default, re-say the label instead.
 ---@field on_right_click fa.ui.graph.SimpleCallback?
 ---@field on_read_coords fa.ui.graph.SimpleCallback?
+---@field on_child_result fa.ui.graph.ChildResultCallback?
 
 ---@class fa.ui.graph.TransitionVtable
 ---@field label fa.ui.graph.SimpleCallback?
@@ -425,6 +427,22 @@ function Graph:on_tab_focused(ctx)
    self:_with_render(ctx, function()
       local node = self.render.nodes[ctx.state.cur_key]
       self:_maybe_call(node, ctx, "label", NO_MODIFIERS)
+   end)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+---@param result_context table { ui_name: string, context: any }
+---@param result any
+function Graph:on_child_result(ctx, result_context, result)
+   self:_with_render(ctx, function()
+      -- Find the node that opened the child UI using the stored context
+      -- The context should be the node key
+      local node = self.render.nodes[result_context.context]
+      if node and node.vtable.on_child_result then
+         -- Call the node's on_child_result handler with the result
+         local wrapped_ctx = self:_wrap_ctx(ctx, self.name, NO_MODIFIERS)
+         node.vtable.on_child_result(wrapped_ctx, result)
+      end
    end)
 end
 
