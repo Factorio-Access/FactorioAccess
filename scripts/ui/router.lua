@@ -271,7 +271,9 @@ EventManager.on_event("fa-y", create_ui_handler("on_read_info"), EventManager.EV
 EventManager.on_event("fa-e", function(event)
    local pindex = event.player_index
    local router = mod.get_router(pindex)
-   if router.current_ui then router:close_ui() end
+
+   router:close_ui()
+   return EventManager.FINISHED
 end, EventManager.EVENT_KIND.UI)
 
 return mod
