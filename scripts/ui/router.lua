@@ -92,6 +92,7 @@ local router_state = StorageManager.declare_storage_module("ui_router", {
 
 ---@class fa.ui.Router
 ---@field pindex number
+---@field controller fa.ui.RouterController
 local Router = {}
 local Router_meta = { __index = Router }
 
@@ -369,6 +370,7 @@ register_ui_event("fa-e", function(event, pindex)
 end)
 
 -- Handle textbox confirmation - this one needs special handling since it checks textbox validity
+---@param event EventData.on_gui_confirmed
 EventManager.on_event(defines.events.on_gui_confirmed, function(event)
    local pindex = event.player_index
    -- Check if this is our textbox

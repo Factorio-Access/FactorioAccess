@@ -62,12 +62,9 @@ function mod.activate_kk(pindex)
 
       -- Okay. Finally we're good.  Let's kick this off.
 
-      close_menu_resets(pindex)
-
-      -- If cursor mode is on then the best case is that the mod announces a
-      -- bunch of stuff it shouldn't, but sometimes this just flat out means
-      -- that KK doesn't work.  I don't know why; I'm guessing that's to do with
-      -- how we hack WASD not to move the player.
+      -- If cursor mode is on then the best case is that the mod announces a bunch of stuff it shouldn't, but sometimes
+      -- this just flat out means that KK doesn't work.  I don't know why; I'm guessing that's to do with how we hack
+      -- WASD not to move the player.
       --
       -- Don't say anything either, this is silent.
       force_cursor_off(pindex)

@@ -246,6 +246,7 @@ function mod.open_entity_ui(pindex, entity)
       return false
    end
 
+   ---@type table<any, any>
    local params = {
       entity = entity,
    }

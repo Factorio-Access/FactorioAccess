@@ -849,7 +849,6 @@ EventManager.on_event(defines.events.on_player_driving_changed_state, function(e
          storage.players[pindex].last_vehicle.train.manual_mode = true
       end
       Teleport.teleport_to_closest(pindex, storage.players[pindex].last_vehicle.position, true, true)
-      SpidertronMenuUi.spidertron_menu:close(pindex, false)
    else
       Speech.speak(pindex, { "fa.driving-state-changed" })
    end

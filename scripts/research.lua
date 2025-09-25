@@ -70,15 +70,18 @@ local mod = {}
 
 -- Wrap a research's localised name so that, if vanilla doesn't have a localised
 -- description, we have a chance ourselves.
----@param tech LuaTechnology
+---@param tech LuaTechnology | LuaTechnologyPrototype | string
 ---@return LocalisedString
 local function tech_name_string(tech)
+   if type(tech) == "string" then tech = prototypes.technology[tech] end
    return { "?", tech.localised_name, { string.format("fa.research-technology-name-%s", tech.name) }, tech.name }
 end
 
----@param tech LuaTechnology
+---@param tech LuaTechnology | LuaTechnologyPrototype | string
 ---@return LocalisedString
 local function tech_description_string(tech)
+   if type(tech) == "string" then tech = prototypes.technology[tech] end
+
    return {
       "?",
       tech.localised_description,
@@ -231,7 +234,7 @@ local function localise_research_requirements(tech)
 
    if not next(tech.prerequisites) then return trig_or_cost end
 
-   ---@type LocalisedString
+   ---@type table
    local prereqs = {}
    for k, v in pairs(tech.prerequisites) do
       table.insert(prereqs, v)
@@ -240,8 +243,8 @@ local function localise_research_requirements(tech)
       return a.name < b.name
    end)
 
-   prereqs = FaUtils.localise_cat_table(TH.map(prereqs, tech_name_string), ", ")
-   return FaUtils.spacecat(trig_or_cost, { "fa.research-needs-techs", prereqs })
+   local prereqs_msg = FaUtils.localise_cat_table(TH.map(prereqs, tech_name_string), ", ")
+   return FaUtils.spacecat(trig_or_cost, { "fa.research-needs-techs", prereqs_msg })
 end
 
 local BONUSES_ARE_PERCENTS = TH.array_to_set({}, {
@@ -509,53 +512,6 @@ local function move_in_list_impl(player, direction)
    return announce_under_pos(researches, pos), index ~= nil
 end
 
--- Switch pos between the given lists in-place in the given direction; 1 means
--- "down". Return false if hitting an edge, otherwise true.  Does not correct
--- the index.
----@param pos fa.research.ResearchMenuPosition
----@param direction 1|-1
----@return boolean
-local function move_between_lists(pos, direction)
-   local cur_ind = TH.find_index_of(RESEARCH_LIST_ORDER, pos.focused_list)
-   assert(cur_ind)
-   local new_ind = cur_ind + direction
-   if new_ind < 1 or new_ind > #RESEARCH_LIST_ORDER then return false end
-   pos.focused_list = RESEARCH_LIST_ORDER[new_ind]
-   return true
-end
-
--- Implements moving between lists.  Returns what to announce.  _impl being the
--- "this implements the keyboard" bit, though the naming isn't great.  The
--- second return value is whether an end was hit; if true, the parent needs to
--- play the edge sound.
----@param researches fa.research.ResearchEntry[]
----@param pos fa.research.ResearchMenuPosition
----@param direction 1|-1
----@return LocalisedString, boolean
-local function move_between_lists_impl(researches, pos, direction)
-   local moved = move_between_lists(pos, direction)
-   if moved then pos.index = 1 end
-   local normalized = normalize_pos(researches, pos)
-   return {
-      "fa.research-list-moved-up-down",
-      { string.format("fa.research-list-%s", pos.focused_list) },
-      normalized and announce_under_pos(researches, pos) or { "fa.research-list-no-technologies" },
-   },
-      moved
-end
-
--- Starting at the given index and in the given direction, find the index of the
--- next research which would match the given menu search string. Return this
--- index or nil.
----@param pindex number
----@param researches fa.research.ResearchEntry[]
----@param start_index number
----@param direction -1|1
----@param pattern string
----@return number?
-
--- Finally: we may implement our key handlers.
-
 function mod.clear_queue(pindex)
    local player = game.get_player(pindex)
    assert(player)
@@ -572,6 +528,7 @@ function mod.queue_announce(pindex)
       return
    end
 
+   ---@type LocalisedString[]
    local joining = {}
    for _, t in pairs(queue) do
       table.insert(joining, tech_name_string(t))

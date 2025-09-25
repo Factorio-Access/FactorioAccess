@@ -158,7 +158,7 @@ end
 ---@return boolean
 function mod.is_textbox_open(pindex)
    local state = gui_storage[pindex]
-   return state.textbox_element and state.textbox_element.valid
+   return state.textbox_element ~= nil and state.textbox_element.valid
 end
 
 return mod
