@@ -536,7 +536,10 @@ function TabList:close(pindex, force_reset)
 
    if tablist_storage[pindex][self.ui_name].currently_open then
       for i = 1, #self.tab_order do
-         self:_do_callback(pindex, i, "on_tab_list_closed", nil, nil, nil)
+         -- Create a dummy controller for the close callback
+         ---@type fa.ui.RouterController
+         local dummy_controller = {}
+         self:_do_callback(pindex, i, "on_tab_list_closed", nil, nil, dummy_controller)
       end
    end
 

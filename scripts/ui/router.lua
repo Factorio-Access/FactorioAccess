@@ -81,11 +81,13 @@ mod.UI_NAMES = {
 }
 
 ---@class fa.ui.RouterState
----@field ui_name fa.ui.UiName
+---@field ui_stack fa.ui.UiName[] Stack of open UI names (top is last)
 
 ---@type table<number, fa.ui.RouterState>
-local router_state = StorageManager.declare_storage_module("ui_router", {}, {
-   ephemeral_state_version = 1,
+local router_state = StorageManager.declare_storage_module("ui_router", {
+   ui_stack = {},
+}, {
+   ephemeral_state_version = 2,
 })
 
 ---@class fa.ui.Router
@@ -103,27 +105,37 @@ function RouterController:close()
    self.router:close_ui()
 end
 
+---Close the current UI and return a result to the parent
+---@param result any The result to pass to the parent UI
+function RouterController:close_with_result(result)
+   self.router:close_with_result(result)
+end
+
+---Open a child UI on top of the current one
+---@param name fa.ui.UiName
+---@param params? table Optional parameters to pass to the child UI
+function RouterController:open_child_ui(name, params)
+   self.router:open_child_ui(name, params)
+end
+
 ---Open a textbox for user input
 ---@param initial_text string
 ---@param context any Any value to help identify which node/item opened the textbox
 function RouterController:open_textbox(initial_text, context)
-   -- Create result context with current UI name and provided context
-   local result_context = {
-      ui_name = self.router:get_open_ui_name(),
-      context = context,
-   }
-   GameGui.open_textbox(self.pindex, initial_text, result_context)
+   -- Store the context - result will go to top of stack when textbox closes
+   GameGui.open_textbox(self.pindex, initial_text, context)
 end
 
 ---@param name fa.ui.UiName
 ---@param params? table Optional parameters to pass to the UI
 function Router:open_ui(name, params)
-   -- If switching to a different UI, close the current one first. That's not just based on name; the current UI might
+   -- If switching to a different UI, close all current UIs first. That's not just based on name; the current UI might
    -- be reopening on, e.g., a different entity.
-   self:_close_current_ui()
+   self:_close_all_uis()
 
-   -- Set the UI as open in router state
-   router_state[self.pindex].ui_name = name
+   -- Push the UI onto the stack
+   local stack = router_state[self.pindex].ui_stack
+   table.insert(stack, name)
 
    -- Update the game GUI to show the UI frame
    GameGui.set_active_ui(self.pindex, name)
@@ -142,24 +154,43 @@ function Router:open_ui(name, params)
 end
 
 function Router:close_ui()
-   self:_close_current_ui()
-   router_state[self.pindex].ui_name = nil
+   local stack = router_state[self.pindex].ui_stack
+   if #stack == 0 then return end
 
-   -- Clear the game GUI
-   GameGui.clear_active_ui(self.pindex)
-end
-
----Internal method to close the currently open UI
----@private
-function Router:_close_current_ui()
-   local current_ui = router_state[self.pindex].ui_name
-   if not current_ui then return end
-
-   -- Get the registered UI and call its close method
-   if registered_uis[current_ui] then
-      local ui = registered_uis[current_ui]
+   -- Close the top UI
+   local top_ui = stack[#stack]
+   if registered_uis[top_ui] then
+      local ui = registered_uis[top_ui]
       if ui.close then ui:close(self.pindex) end
    end
+
+   -- Pop from stack
+   table.remove(stack)
+
+   -- Update GUI based on what's left
+   if #stack > 0 then
+      -- Show the new top UI
+      GameGui.set_active_ui(self.pindex, stack[#stack])
+   else
+      -- Clear the game GUI
+      GameGui.clear_active_ui(self.pindex)
+   end
+end
+
+---Internal method to close all open UIs
+---@private
+function Router:_close_all_uis()
+   local stack = router_state[self.pindex].ui_stack
+   -- Close from top to bottom
+   for i = #stack, 1, -1 do
+      local ui_name = stack[i]
+      if registered_uis[ui_name] then
+         local ui = registered_uis[ui_name]
+         if ui.close then ui:close(self.pindex) end
+      end
+   end
+   -- Clear the stack
+   router_state[self.pindex].ui_stack = {}
 end
 
 --[[
@@ -172,13 +203,69 @@ currently.
 ---@param name fa.ui.UiName? If null, return true if any UI is open.
 ---@return boolean
 function Router:is_ui_open(name)
-   if not name then return router_state[self.pindex].ui_name ~= nil end
-   return router_state[self.pindex].ui_name == name
+   local stack = router_state[self.pindex].ui_stack
+   if not name then return #stack > 0 end
+   -- Check if name exists anywhere in the stack
+   for _, ui_name in ipairs(stack) do
+      if ui_name == name then return true end
+   end
+   return false
 end
 
 ---@return fa.ui.UiName?
 function Router:get_open_ui_name()
-   return router_state[self.pindex].ui_name
+   local stack = router_state[self.pindex].ui_stack
+   if #stack == 0 then return nil end
+   return stack[#stack] -- Return top of stack
+end
+
+---Open a child UI on top of the current one without closing it
+---@param name fa.ui.UiName
+---@param params? table Optional parameters to pass to the child UI
+function Router:open_child_ui(name, params)
+   local stack = router_state[self.pindex].ui_stack
+
+   -- Push the new UI onto the stack without closing the current one
+   table.insert(stack, name)
+
+   -- Update the game GUI to show the new UI
+   GameGui.set_active_ui(self.pindex, name)
+
+   -- Open the new UI
+   if registered_uis[name] then
+      -- Create a controller for the child UI
+      local child_controller = setmetatable({
+         router = self,
+         pindex = self.pindex,
+      }, RouterController_meta)
+      registered_uis[name]:open(self.pindex, params or {}, child_controller)
+   end
+end
+
+---Close the current UI and return a result to the parent
+---@param result any The result to pass to the parent UI
+function Router:close_with_result(result)
+   local stack = router_state[self.pindex].ui_stack
+   if #stack == 0 then return end
+
+   -- Store the parent UI name before closing
+   local parent_ui_name = nil
+   if #stack > 1 then parent_ui_name = stack[#stack - 1] end
+
+   -- Close and remove the current UI
+   self:close_ui()
+
+   -- If there's a parent UI, send it the result
+   if parent_ui_name and registered_uis[parent_ui_name] then
+      -- Create a controller for the parent
+      local parent_controller = setmetatable({
+         router = self,
+         pindex = self.pindex,
+      }, RouterController_meta)
+      -- Send result to parent's on_child_result handler
+      -- Context is nil since we're always sending to top of stack
+      registered_uis[parent_ui_name]:on_child_result(self.pindex, {}, result, parent_controller)
+   end
 end
 
 -- Routers are stateless save for the pindex; we cache them to avoid the overhead of making new ones.
@@ -204,23 +291,29 @@ local function create_ui_handler(method_name, modifiers)
 
    return function(event, pindex)
       local router = mod.get_router(pindex)
-      local open_ui_name = router:get_open_ui_name()
+      local stack = router_state[pindex].ui_stack
 
-      -- Only handle if UI is open AND registered with the new system
-      if open_ui_name and registered_uis[open_ui_name] then
-         local tablist = registered_uis[open_ui_name]
-         -- Create a fresh controller for this event
-         local controller = setmetatable({
-            router = router,
-            pindex = pindex,
-         }, RouterController_meta)
-         -- Call the method on the TabList, passing modifiers and controller
-         tablist[method_name](tablist, pindex, modifiers, controller)
-         -- Return FINISHED to prevent world handlers from running
-         return EventManager.FINISHED
+      -- Iterate down the stack from top to bottom
+      for i = #stack, 1, -1 do
+         local ui_name = stack[i]
+         if registered_uis[ui_name] then
+            local tablist = registered_uis[ui_name]
+            -- Check if this UI has the method we're looking for
+            if tablist[method_name] then
+               -- Create a fresh controller for this event
+               local controller = setmetatable({
+                  router = router,
+                  pindex = pindex,
+               }, RouterController_meta)
+               -- Call the method on the TabList, passing modifiers and controller
+               tablist[method_name](tablist, pindex, modifiers, controller)
+               -- Return FINISHED to prevent world handlers from running
+               return EventManager.FINISHED
+            end
+         end
       end
 
-      -- UI not registered or not open, let event pass through to legacy handlers
+      -- No UI in stack handled it, let event pass through to legacy handlers
       return nil
    end
 end

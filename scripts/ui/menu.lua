@@ -52,12 +52,8 @@ function MenuBuilder:add_clickable(key, label, click_handlers)
    }
 
    -- Copy over any provided handlers
-   if click_handlers.on_click then
-      vtable.on_click = click_handlers.on_click
-   end
-   if click_handlers.on_child_result then
-      vtable.on_child_result = click_handlers.on_child_result
-   end
+   if click_handlers.on_click then vtable.on_click = click_handlers.on_click end
+   if click_handlers.on_child_result then vtable.on_child_result = click_handlers.on_child_result end
 
    self:add_item(key, vtable)
 end

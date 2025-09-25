@@ -12,7 +12,7 @@ local mod = {}
 ---@field ui_label LuaGuiElement?
 ---@field textbox_element LuaGuiElement?
 ---@field active_ui_name string?
----@field textbox_result_context table? { ui_name: string, context: any }
+---@field textbox_context any? Context to help identify which node/item opened the textbox
 
 ---@type table<number, fa.ui.GameGuiState>
 local gui_storage = StorageManager.declare_storage_module("game_gui", {
@@ -20,7 +20,7 @@ local gui_storage = StorageManager.declare_storage_module("game_gui", {
    ui_label = nil,
    textbox_element = nil,
    active_ui_name = nil,
-   textbox_result_context = nil,
+   textbox_context = nil,
 })
 
 ---Cleanup any invalid GUI elements
@@ -33,7 +33,7 @@ local function cleanup_invalid_elements(pindex)
    end
    if state.textbox_element and not state.textbox_element.valid then
       state.textbox_element = nil
-      state.textbox_result_context = nil
+      state.textbox_context = nil
    end
 end
 
@@ -104,14 +104,14 @@ function mod.clear_active_ui(pindex)
    state.ui_label = nil
    state.textbox_element = nil
    state.active_ui_name = nil
-   state.textbox_result_context = nil
+   state.textbox_context = nil
 end
 
 ---Open a textbox for user input
 ---@param pindex number
 ---@param initial_text string
----@param result_context table { ui_name: string, context: any }
-function mod.open_textbox(pindex, initial_text, result_context)
+---@param context any? Context to help identify which node/item opened the textbox
+function mod.open_textbox(pindex, initial_text, context)
    local state = gui_storage[pindex]
 
    if not state.active_ui_name then error("Cannot open textbox without an active UI") end
@@ -131,8 +131,8 @@ function mod.open_textbox(pindex, initial_text, result_context)
    state.textbox_element.focus()
    state.textbox_element.select_all()
 
-   -- Store the result context
-   state.textbox_result_context = result_context
+   -- Store the context
+   state.textbox_context = context
 end
 
 ---Close the textbox
@@ -143,14 +143,14 @@ function mod.close_textbox(pindex)
    if state.textbox_element and state.textbox_element.valid then state.textbox_element.destroy() end
 
    state.textbox_element = nil
-   state.textbox_result_context = nil
+   state.textbox_context = nil
 end
 
----Get the stored result context for the textbox
+---Get the stored context for the textbox
 ---@param pindex number
----@return table? { ui_name: string, context: any }
-function mod.get_textbox_result_context(pindex)
-   return gui_storage[pindex].textbox_result_context
+---@return any?
+function mod.get_textbox_context(pindex)
+   return gui_storage[pindex].textbox_context
 end
 
 ---Check if a textbox is open
