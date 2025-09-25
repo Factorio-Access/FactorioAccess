@@ -89,11 +89,9 @@ end
 
 ---@param x number
 ---@param y number
----@param label fun(fa.ui.graph.Ctx)
----@param vtable fa.ui.grid.GridNodeVtable? Optional callbacks (label will be set automatically)
-function GridBuilder:add_control(x, y, label, vtable)
-   vtable = vtable or {}
-   vtable.label = label
+---@param vtable fa.ui.grid.GridNodeVtable Must include a label field
+function GridBuilder:add_control(x, y, vtable)
+   assert(vtable and vtable.label, "vtable must include a label field")
    self:_insert(x, y, {
       vtable = vtable,
    })

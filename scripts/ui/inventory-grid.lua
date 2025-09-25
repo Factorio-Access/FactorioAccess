@@ -171,14 +171,15 @@ local function render_inventory_grid(ctx)
       local x, y = slot_to_grid_pos(slot_index)
       local label = get_slot_label(inv, slot_index, locks)
 
-      builder:add_control(x, y, function(label_ctx)
-         label_ctx.message:fragment(label)
+      builder:add_control(x, y, {
+         label = function(label_ctx)
+            label_ctx.message:fragment(label)
 
-         -- Add bar/locked status if applicable
-         if inv.supports_bar() and slot_index >= inv.get_bar() then
-            label_ctx.message:fragment({ "fa.ui-inventory-slot-locked" })
-         end
-      end, {
+            -- Add bar/locked status if applicable
+            if inv.supports_bar() and slot_index >= inv.get_bar() then
+               label_ctx.message:fragment({ "fa.ui-inventory-slot-locked" })
+            end
+         end,
          on_click = function(click_ctx)
             -- Handle inventory slot clicks (item transfers - left click swaps stacks)
             local player = game.get_player(click_ctx.pindex)
