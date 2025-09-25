@@ -299,9 +299,9 @@ function Graph:_do_move(ctx, dir)
          assert(new_node)
       end
 
-      -- Didn't move. Behavior: play a click.
+      -- Didn't move. Behavior: play edge sound and re-read label.
       if node == new_node then
-         UiSounds.play_menu_move(ctx.pindex)
+         UiSounds.play_ui_edge(ctx.pindex)
          self:_maybe_call(new_node, ctx, "label", NO_MODIFIERS)
          return
       end
