@@ -141,14 +141,7 @@ function Router:open_ui(name, params)
    GameGui.set_active_ui(self.pindex, name)
 
    -- Get the registered UI and open it with params
-   if registered_uis[name] then
-      -- Create a controller for the opening UI
-      local controller = setmetatable({
-         router = self,
-         pindex = self.pindex,
-      }, RouterController_meta)
-      registered_uis[name]:open(self.pindex, params or {}, controller)
-   end
+   if registered_uis[name] then registered_uis[name]:open(self.pindex, params or {}, self.controller) end
    -- If UI is not registered, it might be a legacy UI name - just set it as open
    -- This maintains backward compatibility with old UI system
 end
@@ -232,14 +225,7 @@ function Router:open_child_ui(name, params)
    GameGui.set_active_ui(self.pindex, name)
 
    -- Open the new UI
-   if registered_uis[name] then
-      -- Create a controller for the child UI
-      local child_controller = setmetatable({
-         router = self,
-         pindex = self.pindex,
-      }, RouterController_meta)
-      registered_uis[name]:open(self.pindex, params or {}, child_controller)
-   end
+   if registered_uis[name] then registered_uis[name]:open(self.pindex, params or {}, self.controller) end
 end
 
 ---Close the current UI and return a result to the parent
@@ -257,14 +243,9 @@ function Router:close_with_result(result)
 
    -- If there's a parent UI, send it the result
    if parent_ui_name and registered_uis[parent_ui_name] then
-      -- Create a controller for the parent
-      local parent_controller = setmetatable({
-         router = self,
-         pindex = self.pindex,
-      }, RouterController_meta)
       -- Send result to parent's on_child_result handler
       -- Context is nil since we're always sending to top of stack
-      registered_uis[parent_ui_name]:on_child_result(self.pindex, {}, result, parent_controller)
+      registered_uis[parent_ui_name]:on_child_result(self.pindex, {}, result, self.controller)
    end
 end
 
@@ -277,6 +258,11 @@ function mod.get_router(pindex)
    assert(pindex ~= nil)
    if router_cache[pindex] then return router_cache[pindex] end
    local new_router = setmetatable({ pindex = pindex }, Router_meta)
+   -- Create and cache the controller for this router
+   new_router.controller = setmetatable({
+      router = new_router,
+      pindex = pindex,
+   }, RouterController_meta)
    router_cache[pindex] = new_router
    return new_router
 end
@@ -300,13 +286,8 @@ local function create_ui_handler(method_name, modifiers)
             local tablist = registered_uis[ui_name]
             -- Check if this UI has the method we're looking for
             if tablist[method_name] then
-               -- Create a fresh controller for this event
-               local controller = setmetatable({
-                  router = router,
-                  pindex = pindex,
-               }, RouterController_meta)
                -- Call the method on the TabList, passing modifiers and controller
-               tablist[method_name](tablist, pindex, modifiers, controller)
+               tablist[method_name](tablist, pindex, modifiers, router.controller)
                -- Return FINISHED to prevent world handlers from running
                return EventManager.FINISHED
             end
@@ -384,8 +365,37 @@ EventManager.on_event("fa-e", function(event)
    local pindex = event.player_index
    local router = mod.get_router(pindex)
 
-   router:close_ui()
-   return EventManager.FINISHED
+   -- Only handle if a UI is actually open
+   if router:is_ui_open() then
+      router:close_ui()
+      return EventManager.FINISHED
+   end
+
+   -- No UI open, let it fall through to world handler to open inventory
+   return nil
+end, EventManager.EVENT_KIND.UI)
+
+-- Handle textbox confirmation
+EventManager.on_event(defines.events.on_gui_confirmed, function(event)
+   local pindex = event.player_index
+   -- Check if this is our textbox
+   if event.element and event.element.valid and event.element.name == "fa-text-input" then
+      local context = GameGui.get_textbox_context(pindex)
+      local router = mod.get_router(pindex)
+      local top_ui_name = router:get_open_ui_name()
+
+      if top_ui_name then
+         -- Send result to the top UI on the stack
+         local ui = registered_uis[top_ui_name]
+         if ui and ui.on_child_result then
+            -- Pass context and result to the handler
+            ui:on_child_result(pindex, context, event.element.text, router.controller)
+         end
+      end
+      -- Close the textbox
+      GameGui.close_textbox(pindex)
+      return EventManager.FINISHED
+   end
 end, EventManager.EVENT_KIND.UI)
 
 return mod

@@ -1347,44 +1347,6 @@ EventManager.on_event(defines.events.on_gui_opened, function(event, pindex)
    end
 end)
 
-EventManager.on_event(defines.events.on_gui_confirmed, function(event, pindex)
-   local router = UiRouter.get_router(pindex)
-
-   -- Check if this is our textbox
-   if event.element and event.element.valid and event.element.name == "fa-text-input" then
-      local context = GameGui.get_textbox_context(pindex)
-      local top_ui_name = router:get_open_ui_name()
-
-      if top_ui_name then
-         -- Send result to the top UI on the stack
-         local ui = UiRouter.get_registered_ui(top_ui_name)
-         if ui and ui.on_child_result then
-            -- Create a controller for the callback - reuse same controller pattern
-            local controller = {
-               router = router,
-               pindex = pindex,
-               close = function(self)
-                  router:close_ui()
-               end,
-               close_with_result = function(self, result)
-                  router:close_with_result(result)
-               end,
-               open_child_ui = function(self, name, params)
-                  router:open_child_ui(name, params)
-               end,
-               open_textbox = function(self, initial_text, context)
-                  GameGui.open_textbox(pindex, initial_text, context)
-               end,
-            }
-            -- Pass context and result to the handler
-            ui:on_child_result(pindex, context, event.element.text, controller)
-         end
-      end
-      -- Close the textbox
-      GameGui.close_textbox(pindex)
-   end
-end)
-
 EventManager.on_event(defines.events.on_object_destroyed, function(event) --DOES NOT HAVE THE KEY PLAYER_INDEX
    ScannerEntrypoint.on_entity_destroyed(event)
 end)
