@@ -190,7 +190,9 @@ function Graph:_rerender(ctx)
       else
          local old_ind = TH.find_index_of(state.key_order, state.cur_key)
          if not old_ind then
-            error("cur_key should always have been in the previous version of the graph: " .. serpent.line(cur_key))
+            error(
+               "cur_key should always have been in the previous version of the graph: " .. serpent.line(state.cur_key)
+            )
          end
          for i = old_ind, 1, -1 do
             local k = state.key_order[i]

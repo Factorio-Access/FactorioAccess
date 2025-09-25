@@ -267,6 +267,19 @@ function mod.get_router(pindex)
    return new_router
 end
 
+---Register a UI event that only fires when a UI is open
+---@param event_name string|defines.events The event name or ID to register
+---@param handler fun(event: EventData, pindex: integer): any? The handler function
+local function register_ui_event(event_name, handler)
+   EventManager.on_event(event_name, function(event, pindex)
+      local router = mod.get_router(pindex)
+      -- Only process if a UI is open
+      if router:is_ui_open() then return handler(event, pindex) end
+      -- No UI open, let it fall through
+      return nil
+   end, EventManager.EVENT_KIND.UI)
+end
+
 ---Create a handler that routes to the appropriate TabList method
 ---@param method_name string The method name to call on the TabList
 ---@param modifiers? {control?: boolean, shift?: boolean, alt?: boolean} Optional modifier keys state
@@ -301,101 +314,83 @@ end
 
 -- Register UI event handlers with UI priority at module load time
 -- Movement keys (WASD)
-EventManager.on_event("fa-w", create_ui_handler("on_up"), EventManager.EVENT_KIND.UI)
-EventManager.on_event("fa-s", create_ui_handler("on_down"), EventManager.EVENT_KIND.UI)
-EventManager.on_event("fa-a", create_ui_handler("on_left"), EventManager.EVENT_KIND.UI)
-EventManager.on_event("fa-d", create_ui_handler("on_right"), EventManager.EVENT_KIND.UI)
+register_ui_event("fa-w", create_ui_handler("on_up"))
+register_ui_event("fa-s", create_ui_handler("on_down"))
+register_ui_event("fa-a", create_ui_handler("on_left"))
+register_ui_event("fa-d", create_ui_handler("on_right"))
 
 -- Arrow keys
-EventManager.on_event("fa-up", create_ui_handler("on_up"), EventManager.EVENT_KIND.UI)
-EventManager.on_event("fa-down", create_ui_handler("on_down"), EventManager.EVENT_KIND.UI)
-EventManager.on_event("fa-left", create_ui_handler("on_left"), EventManager.EVENT_KIND.UI)
-EventManager.on_event("fa-right", create_ui_handler("on_right"), EventManager.EVENT_KIND.UI)
+register_ui_event("fa-up", create_ui_handler("on_up"))
+register_ui_event("fa-down", create_ui_handler("on_down"))
+register_ui_event("fa-left", create_ui_handler("on_left"))
+register_ui_event("fa-right", create_ui_handler("on_right"))
 
 -- Edge navigation (Ctrl+WASD)
-EventManager.on_event("fa-c-w", create_ui_handler("on_top"), EventManager.EVENT_KIND.UI)
-EventManager.on_event("fa-c-s", create_ui_handler("on_bottom"), EventManager.EVENT_KIND.UI)
-EventManager.on_event("fa-c-a", create_ui_handler("on_leftmost"), EventManager.EVENT_KIND.UI)
-EventManager.on_event("fa-c-d", create_ui_handler("on_rightmost"), EventManager.EVENT_KIND.UI)
+register_ui_event("fa-c-w", create_ui_handler("on_top"))
+register_ui_event("fa-c-s", create_ui_handler("on_bottom"))
+register_ui_event("fa-c-a", create_ui_handler("on_leftmost"))
+register_ui_event("fa-c-d", create_ui_handler("on_rightmost"))
 
 -- Click/select (leftbracket is left click, rightbracket is right click)
-EventManager.on_event("fa-leftbracket", create_ui_handler("on_click"), EventManager.EVENT_KIND.UI)
-EventManager.on_event("fa-rightbracket", create_ui_handler("on_right_click"), EventManager.EVENT_KIND.UI)
+register_ui_event("fa-leftbracket", create_ui_handler("on_click"))
+register_ui_event("fa-rightbracket", create_ui_handler("on_right_click"))
 
 -- Modified click handlers with modifiers
 -- Control+click
-EventManager.on_event("fa-c-leftbracket", create_ui_handler("on_click", { control = true }), EventManager.EVENT_KIND.UI)
-EventManager.on_event(
-   "fa-c-rightbracket",
-   create_ui_handler("on_right_click", { control = true }),
-   EventManager.EVENT_KIND.UI
-)
+register_ui_event("fa-c-leftbracket", create_ui_handler("on_click", { control = true }))
+register_ui_event("fa-c-rightbracket", create_ui_handler("on_right_click", { control = true }))
 
 -- Shift+click
-EventManager.on_event("fa-s-leftbracket", create_ui_handler("on_click", { shift = true }), EventManager.EVENT_KIND.UI)
-EventManager.on_event(
-   "fa-s-rightbracket",
-   create_ui_handler("on_right_click", { shift = true }),
-   EventManager.EVENT_KIND.UI
-)
+register_ui_event("fa-s-leftbracket", create_ui_handler("on_click", { shift = true }))
+register_ui_event("fa-s-rightbracket", create_ui_handler("on_right_click", { shift = true }))
 
 -- Control+Shift+click
-EventManager.on_event(
-   "fa-cs-leftbracket",
-   create_ui_handler("on_click", { control = true, shift = true }),
-   EventManager.EVENT_KIND.UI
-)
+register_ui_event("fa-cs-leftbracket", create_ui_handler("on_click", { control = true, shift = true }))
 
 -- Tab navigation (TAB and Shift+TAB)
-EventManager.on_event("fa-tab", create_ui_handler("on_next_tab"), EventManager.EVENT_KIND.UI)
-EventManager.on_event("fa-s-tab", create_ui_handler("on_previous_tab"), EventManager.EVENT_KIND.UI)
+register_ui_event("fa-tab", create_ui_handler("on_next_tab"))
+register_ui_event("fa-s-tab", create_ui_handler("on_previous_tab"))
 
 -- Section navigation (Ctrl+TAB and Ctrl+Shift+TAB)
-EventManager.on_event("fa-c-tab", create_ui_handler("on_next_section"), EventManager.EVENT_KIND.UI)
-EventManager.on_event("fa-cs-tab", create_ui_handler("on_previous_section"), EventManager.EVENT_KIND.UI)
+register_ui_event("fa-c-tab", create_ui_handler("on_next_section"))
+register_ui_event("fa-cs-tab", create_ui_handler("on_previous_section"))
 
 -- K key reads coordinates
-EventManager.on_event("fa-k", create_ui_handler("on_read_coords"), EventManager.EVENT_KIND.UI)
+register_ui_event("fa-k", create_ui_handler("on_read_coords"))
 
 -- Y key reads custom info
-EventManager.on_event("fa-y", create_ui_handler("on_read_info"), EventManager.EVENT_KIND.UI)
+register_ui_event("fa-y", create_ui_handler("on_read_info"))
 
 -- E key closes the UI (inventory/menu close)
-EventManager.on_event("fa-e", function(event)
-   local pindex = event.player_index
+register_ui_event("fa-e", function(event, pindex)
    local router = mod.get_router(pindex)
+   router:close_ui()
+   return EventManager.FINISHED
+end)
 
-   -- Only handle if a UI is actually open
-   if router:is_ui_open() then
-      router:close_ui()
-      return EventManager.FINISHED
-   end
-
-   -- No UI open, let it fall through to world handler to open inventory
-   return nil
-end, EventManager.EVENT_KIND.UI)
-
--- Handle textbox confirmation
+-- Handle textbox confirmation - this one needs special handling since it checks textbox validity
 EventManager.on_event(defines.events.on_gui_confirmed, function(event)
    local pindex = event.player_index
    -- Check if this is our textbox
    if event.element and event.element.valid and event.element.name == "fa-text-input" then
-      local context = GameGui.get_textbox_context(pindex)
       local router = mod.get_router(pindex)
       local top_ui_name = router:get_open_ui_name()
 
       if top_ui_name then
+         local context = GameGui.get_textbox_context(pindex)
          -- Send result to the top UI on the stack
          local ui = registered_uis[top_ui_name]
          if ui and ui.on_child_result then
             -- Pass context and result to the handler
             ui:on_child_result(pindex, context, event.element.text, router.controller)
          end
+         -- Close the textbox
+         GameGui.close_textbox(pindex)
+         return EventManager.FINISHED
       end
-      -- Close the textbox
-      GameGui.close_textbox(pindex)
-      return EventManager.FINISHED
    end
+   -- Not our textbox or no UI open
+   return nil
 end, EventManager.EVENT_KIND.UI)
 
 return mod
