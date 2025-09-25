@@ -78,6 +78,8 @@ mod.UI_NAMES = {
    CIRCUIT_NETWORK = "circuit_network",
    SIGNAL_SELECTOR = "signal_selector",
    SPIDERTRON = "spidertron",
+   DEBUG = "debug",
+   ITEM_CHOOSER = "item_chooser",
 }
 
 ---@class fa.ui.RouterState

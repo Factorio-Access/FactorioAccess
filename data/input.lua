@@ -471,6 +471,13 @@ data:extend({
 
    {
       type = "custom-input",
+      name = "fa-cas-d",
+      key_sequence = "CONTROL + ALT + SHIFT + D",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
       name = "fa-1",
       key_sequence = "1",
       linked_game_control = "quick-bar-button-1",

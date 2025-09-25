@@ -163,13 +163,25 @@ function mod.get_localised_name_with_fallback(what)
    -- objects hard error on properties that don't exist rather than giving back nil.  This is a *VERY BAD* antipattern
    -- in the general case, but this function needs to work with effectively anything you might pass it.
 
-   return wrapped_pcall(function()
+   local fallback_name = wrapped_pcall(function()
+      return what.prototype.name
+   end) or wrapped_pcall(function()
+      return what.name
+   end)
+
+   local res = wrapped_pcall(function()
       return what.localised_name
    end) or wrapped_pcall(function()
       return what.prototype.localised_name
    end) or wrapped_pcall(function()
       return what.prototype.name
    end) or what.name
+
+   if fallback_name then
+      return { "?", res, fallback_name }
+   else
+      return res
+   end
 end
 
 -- Marker to say "other item" in localise_item.

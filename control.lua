@@ -55,6 +55,8 @@ local EntityUI = require("scripts.ui.entity-ui")
 require("scripts.ui.menus.blueprints-menu")
 require("scripts.ui.menus.gun-menu")
 require("scripts.ui.menus.main-menu")
+require("scripts.ui.menus.debug-menu")
+require("scripts.ui.tabs.item-chooser")
 require("scripts.ui.menus.roboport-menu")
 require("scripts.ui.menus.spidertron-menu")
 require("scripts.ui.generic-inventory")
@@ -5011,6 +5013,12 @@ EventManager.on_event("fa-c-o", function(event)
       event.player_index,
       "Type in the new cruise control speed and press 'ENTER' and then 'E' to confirm, or press 'ESC' to exit"
    )
+end)
+
+EventManager.on_event("fa-cas-d", function(event)
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+   router:open_ui(UiRouter.UI_NAMES.DEBUG)
 end)
 
 EventManager.on_event(
