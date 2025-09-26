@@ -13,7 +13,6 @@ local AreaOperations = require("scripts.area-operations")
 local AudioCues = require("scripts.audio-cues")
 local Blueprints = require("scripts.blueprints")
 local BuildingTools = require("scripts.building-tools")
--- Removed BuildingVehicleSectors - migrating to capability-based UI
 local BumpDetection = require("scripts.bump-detection")
 local CircuitNetworks = require("scripts.circuit-networks")
 local Combat = require("scripts.combat")
@@ -208,124 +207,6 @@ local function read_hand(pindex)
       Speech.speak(pindex, out)
    else
       Speech.speak(pindex, { "fa.empty_cursor" })
-   end
-end
-
---Clears the item in hand and then locates it from the first found player inventory slot. laterdo can use API:player.hand_location in the future if it has advantages
-function locate_hand_in_player_inventory(pindex)
-   local p = game.get_player(pindex)
-   local inv = p.get_main_inventory()
-   local stack = p.cursor_stack
-   if p.cursor_stack_temporary then
-      Speech.speak(pindex, { "fa.this-item-is-temporary" })
-      return
-   end
-
-   local router = UiRouter.get_router(pindex)
-   local ui_name = router:get_open_ui_name()
-
-   --Check if stack empty and menu supported
-   if stack == nil or not stack.valid_for_read or not stack.valid then
-      --Hand is empty
-      return
-   end
-   if ui_name then
-      --Another menu is open, cannot Q from hand
-      Speech.speak(pindex, { "fa.another-menu-is-open" })
-      return
-   end
-   if not ui_name then
-      --Open the main menu if nothing is open
-      router:open_ui(
-         UiRouter.UI_NAMES.MAIN,
-         { player_inventory = { entity = p.character, inventory_index = defines.inventory.character_main } }
-      )
-      p.opened = p.get_inventory(defines.inventory.character_main)
-   end
-   --Save the hand stack item name
-   local item_name = stack.name
-   --Empty hand stack (clear cursor stack)
-   storage.players[pindex].skip_read_hand = true
-   local successful = p.clear_cursor()
-   if not successful then
-      local message = "Unable to empty hand"
-      if inv.count_empty_stacks() == 0 then message = message .. ", inventory full" end
-      Speech.speak(pindex, message)
-      return
-   end
-
-   --Iterate the inventory until you find the matching item name's index
-   local found = false
-   local i = 0
-   while not found and i < #inv do
-      i = i + 1
-      if inv[i] and inv[i].valid_for_read and inv[i].name == item_name then found = true end
-   end
-   --If found, read it from the inventory
-   if not found then
-      Speech.speak(pindex, { "fa.error-item-not-found-inventory", Localising.get_localised_name_with_fallback(stack) })
-      return
-   else
-      storage.players[pindex].inventory.index = i
-      read_inventory_slot(pindex, "inventory ")
-   end
-end
-
---Clears the item in hand and then locates it from the first found building output slot
-function locate_hand_in_building_output_inventory(pindex)
-   local p = game.get_player(pindex)
-   local inv = nil
-   local stack = p.cursor_stack
-   local pb = storage.players[pindex].building
-   if p.cursor_stack_temporary then
-      Speech.speak(pindex, { "fa.this-item-is-temporary" })
-      return
-   end
-   if stack.is_blueprint or stack.is_blueprint_book or stack.is_deconstruction_item or stack.is_upgrade_item then
-      return
-   end
-
-   local router = UiRouter.get_router(pindex)
-
-   --Check if stack empty and menu supported
-   if stack == nil or not stack.valid_for_read or not stack.valid then
-      --Hand is empty
-      return
-   end
-   if pb.sectors and pb.sectors[pb.sector] and pb.sectors[pb.sector].name == "Output" then
-      inv = p.opened.get_output_inventory()
-   else
-      --Unsupported menu type
-      return
-   end
-
-   --Save the hand stack item name
-   local item_name = stack.name
-   --Empty hand stack (clear cursor stack)
-   storage.players[pindex].skip_read_hand = true
-   local successful = p.clear_cursor()
-   if not successful then
-      local message = "Unable to empty hand"
-      if inv.count_empty_stacks() == 0 then message = message .. ", inventory full" end
-      Speech.speak(pindex, message)
-      return
-   end
-
-   --Iterate the inventory until you find the matching item name's index
-   local found = false
-   local i = 0
-   while not found and i < #inv do
-      i = i + 1
-      if inv[i] and inv[i].valid_for_read and inv[i].name == item_name then found = true end
-   end
-   --If found, read it from the inventory
-   if not found then
-      Speech.speak(pindex, { "fa.item-not-found-in-output", Localising.get_localised_name_with_fallback(stack) })
-      return
-   else
-      storage.players[pindex].building.index = i
-      -- Removed: BuildingVehicleSectors.read_sector_slot(pindex, false)
-      -- TODO: Replace with new capability-based UI
    end
 end
 
@@ -1248,20 +1129,6 @@ end
 
 --GUI action confirmed, such as by pressing ENTER
 
---Read the correct inventory slot based on the current menu, optionally with a start phrase in
-local function read_selected_inventory_and_slot(pindex, start_phrase_in)
-   local start_phrase_in = start_phrase_in or ""
-   local menu = storage.players[pindex].menu
-   if menu == "inventory" then
-      read_inventory_slot(pindex, start_phrase_in)
-   elseif menu == "building" or menu == "vehicle" then
-      -- TODO: Replace with capability-based UI
-      Speech.speak(pindex, start_phrase_in .. "Building/vehicle menus temporarily disabled")
-   else
-      Speech.speak(pindex, start_phrase_in)
-   end
-end
-
 --Returns the currently selected entity inventory based on the current mod menu and mod sector.
 local function get_selected_inventory_and_slot(pindex)
    local p = game.get_player(pindex)
@@ -1280,62 +1147,6 @@ local function get_selected_inventory_and_slot(pindex)
       index = storage.players[pindex].inventory.index
    end
    return inv, index
-end
-
---Sets inventory slot filters
-local function set_selected_inventory_slot_filter(pindex)
-   local p = game.get_player(pindex)
-   --Determine the inventory selected
-   local inv, index = get_selected_inventory_and_slot(pindex)
-   --Check if it supports filters
-   if inv == nil or (inv.valid and not inv.supports_filters()) then
-      Speech.speak(pindex, "This menu or sector does not support slot filters")
-      return
-   end
-   index = index or 1
-   --Act according to the situation defined by the filter slot, slot item, and hand item.
-   local menu = storage.players[pindex].menu
-   local filter = Filters.get_filter_prototype(inv, index)
-   local slot_item = inv[index]
-   local hand_item = p.cursor_stack
-
-   --1. If a  filter is set then clear it
-   if filter ~= nil then
-      Filters.set_filter(inv, index, nil)
-      read_selected_inventory_and_slot(pindex, "Slot filter cleared, ")
-      return
-   --2. If no filter is set and both the slot and hand are full, then choose the slot item (because otherwise it needs to be moved)
-   elseif slot_item and slot_item.valid_for_read and hand_item and hand_item.valid_for_read then
-      if inv.can_set_filter(index, slot_item.name) then
-         Filters.set_filter(inv, index, slot_item.name)
-         read_selected_inventory_and_slot(pindex, "Slot filter set, ")
-      else
-         Speech.speak(pindex, "Error: Unable to set the slot filter for this item")
-      end
-      return
-   --3. If no filter is set and the slot is full and the hand is empty (implied), then set the slot item as the filter
-   elseif slot_item and slot_item.valid_for_read then
-      if inv.can_set_filter(index, slot_item.name) then
-         Filters.set_filter(inv, index, slot_item.name)
-         read_selected_inventory_and_slot(pindex, "Slot filter set, ")
-      else
-         Speech.speak(pindex, "Error: Unable to set the slot filter for this item")
-      end
-      return
-   --4. If no filter is set and the slot is empty (implied) and the hand is full, then set the hand item as the filter
-   elseif hand_item and hand_item.valid_for_read then
-      if inv.can_set_filter(index, hand_item.name) then
-         Filters.set_filter(inv, index, hand_item.name)
-         read_selected_inventory_and_slot(pindex, "Slot filter set, ")
-      else
-         Speech.speak(pindex, "Error: Unable to set the slot filter for this item")
-      end
-      return
-   --5. If no filter is set and the hand is empty and the slot is empty, then open the filter selector to set the filter
-   else --(implied)
-      Speech.speak(pindex, "Error: No item specified for setting a slot filter")
-      return
-   end
 end
 
 EventManager.on_event(defines.events.on_gui_opened, function(event, pindex)
@@ -3944,67 +3755,6 @@ EventManager.on_event(
    end
 )
 
---Sets entity filters forlitters, inserters, contant combinators, infinity chests
----@param event EventData.CustomInputEvent
-local function kb_set_entity_filter_from_hand(event)
-   local pindex = event.player_index
-   local router = UiRouter.get_router(pindex)
-
-   local stack = game.get_player(pindex).cursor_stack
-   local ent = game.get_player(pindex).selected
-   if ent == nil or ent.valid == false then return end
-   if stack == nil or not stack.valid_for_read or not stack.valid then
-      if ent.type == "splitter" then
-         --Clear the filter
-         local result = TransportBelts.set_splitter_priority(ent, nil, nil, nil, true)
-         Speech.speak(pindex, result)
-      elseif ent.type == "constant-combinator" then
-         --Remove the last signal
-         CircuitNetworks.constant_combinator_remove_last_signal(ent, pindex)
-      elseif ent.type == "inserter" then
-         local result = set_inserter_filter_by_hand(pindex, ent)
-         Speech.speak(pindex, result)
-      elseif ent.type == "infinity-container" then
-         local result = set_infinity_chest_filter_by_hand(pindex, ent)
-         Speech.speak(pindex, result)
-      elseif ent.type == "infinity-pipe" then
-         local result = set_infinity_pipe_filter_by_hand(pindex, ent)
-         Speech.speak(pindex, result)
-      end
-   else
-      if ent.type == "splitter" then
-         --Set the filter
-         local result = TransportBelts.set_splitter_priority(ent, nil, nil, stack)
-         Speech.speak(pindex, result)
-      elseif ent.type == "constant-combinator" then
-         --Add a new signal
-         CircuitNetworks.constant_combinator_add_stack_signal(ent, stack, pindex)
-      elseif ent.type == "inserter" then
-         local result = set_inserter_filter_by_hand(pindex, ent)
-         Speech.speak(pindex, result)
-      elseif ent.type == "infinity-container" then
-         local result = set_infinity_chest_filter_by_hand(pindex, ent)
-         Speech.speak(pindex, result)
-      elseif ent.type == "infinity-pipe" then
-         local result = set_infinity_pipe_filter_by_hand(pindex, ent)
-         Speech.speak(pindex, result)
-      end
-   end
-end
-
---Sets inventory slot filters
-EventManager.on_event(
-   "fa-a-leftbracket",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-
-      -- Conflicts with setting splitter filters.  Will be fixed by #262
-
-      set_selected_inventory_slot_filter(pindex)
-   end
-)
-
 EventManager.on_event(
    "fa-ca-rightbracket",
    ---@param event EventData.CustomInputEvent
@@ -4158,15 +3908,6 @@ EventManager.on_event(
    end
 )
 
----remove all weapons and ammo
-EventManager.on_event(
-   "fa-cs-r",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-   end
-)
-
 --Reads the custom info for an item selected. If you are driving, it returns custom vehicle info
 EventManager.on_event(
    "fa-y",
@@ -4175,17 +3916,6 @@ EventManager.on_event(
       local router = UiRouter.get_router(pindex)
 
       ItemDescriptions.read_item_info(event)
-   end
-)
-
---Reads the custom info for the last indexed scanner item
-EventManager.on_event(
-   "fa-s-y",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-
-      ItemDescriptions.read_last_indexed_item_info(event)
    end
 )
 
@@ -4493,30 +4223,6 @@ EventManager.on_event(
    function(event, pindex)
       read_hand(pindex)
    end
-)
-
----@param event EventData.CustomInputEvent
-local function kb_locate_hand_in_inventory(event)
-   local pindex = event.player_index
-   local router = UiRouter.get_router(pindex)
-
-   locate_hand_in_player_inventory(pindex)
-end
-
---Empties hand and opens the item from the player/building inventory
-EventManager.on_event(
-   "fa-c-q",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      kb_locate_hand_in_inventory(event)
-   end
-)
-
---Empties hand and opens the item from the crafting menu
-EventManager.on_event(
-   "fa-cs-q",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex) end
 )
 
 EventManager.on_event("fa-grave", function(event)

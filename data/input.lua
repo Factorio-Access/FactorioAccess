@@ -799,22 +799,8 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "fa-cs-r",
-      key_sequence = "CONTROL + SHIFT + R",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
       name = "fa-y",
       key_sequence = "Y",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-s-y",
-      key_sequence = "SHIFT + Y",
       consuming = "none",
    },
 
@@ -949,20 +935,6 @@ data:extend({
       type = "custom-input",
       name = "fa-s-q",
       key_sequence = "SHIFT + Q",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-c-q",
-      key_sequence = "CONTROL + Q",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-cs-q",
-      key_sequence = "CONTROL + SHIFT + Q",
       consuming = "none",
    },
 
