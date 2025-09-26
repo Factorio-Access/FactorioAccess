@@ -4506,20 +4506,6 @@ EventManager.on_event(
    end
 )
 
---**Use this key to test stuff (ALT + G)
-EventManager.on_event(
-   "fa-a-g",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local p = game.get_player(pindex)
-      local pex = storage.players[pindex]
-      local ent = p.selected
-      local stack = game.get_player(pindex).cursor_stack
-
-      if stack.is_blueprint_book then Blueprints.print_book_slots(stack) end
-   end
-)
-
 EventManager.on_event(
    "fa-l",
    ---@param event EventData.CustomInputEvent

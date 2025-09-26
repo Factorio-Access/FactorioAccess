@@ -1074,13 +1074,6 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "fa-a-g",
-      key_sequence = "ALT + G",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
       name = "fa-l",
       key_sequence = "L",
       consuming = "none",
