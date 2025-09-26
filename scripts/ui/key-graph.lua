@@ -203,7 +203,7 @@ function Graph:_rerender(ctx)
          end
       end
 
-      if not state.cur_key then state.cur_key = render.start_key end
+      if not render.nodes[state.cur_key] then state.cur_key = render.start_key end
    end
 
    -- Perform a loop-based graph traversal to compute the new key order.

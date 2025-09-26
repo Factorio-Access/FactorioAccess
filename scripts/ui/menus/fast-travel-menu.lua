@@ -21,180 +21,157 @@ local function render(ctx)
 
    local num_points = controller:get_num_travel_points()
 
-   if num_points == 0 then
-      -- No travel points, just show create option
-      builder:add_clickable("create-new", { "fa.travel-menu-create-new" }, {
-         on_click = function(ctx)
-            ctx.controller:open_textbox("", "create-new")
-            ctx.message:fragment({ "fa.travel-enter-name" })
-         end,
-         on_child_result = function(ctx, result)
-            if result and result ~= "" then
-               local p = game.get_player(ctx.pindex)
-               if p and p.character then
-                  local position = storage.players[ctx.pindex].position
-                  controller:create_point(result, position)
-                  ctx.message:fragment({ "fa.travel-point-created", result })
-                  -- Menu will re-render automatically
-               end
-            end
-         end,
-      })
-   else
-      -- Add travel points as rows
-      for i = 1, num_points do
-         local point = controller:get_point_by_index(i)
-         if point then
-            local point_id = point.id -- Capture ID for closures
+   -- Add travel points as rows
+   for i = 1, num_points do
+      local point = controller:get_point_by_index(i)
+      if point then
+         local point_id = point.id -- Capture ID for closures
 
-            -- Start a row for this travel point
-            builder:start_row("travelpoint")
+         -- Start a row for this travel point
+         builder:start_row("travelpoint")
 
-            -- Point name and location
-            builder:add_clickable("point-" .. point_id, function(ctx)
-               ctx.message:fragment(point.label)
-               ctx.message:fragment(FaUtils.format_position(point.position.x, point.position.y))
-               if point.description and point.description ~= "" then
-                  ctx.message:fragment(",")
-                  ctx.message:fragment(point.description)
-               end
+         -- Point name and location
+         builder:add_clickable("point-" .. point_id, function(ctx)
+            ctx.message:fragment(point.label)
+            ctx.message:fragment(FaUtils.format_position(point.position.x, point.position.y))
+            if point.description and point.description ~= "" then
                ctx.message:fragment(",")
-               ctx.message:fragment({ "fa.travel-click-move-cursor" })
-            end, {
-               on_click = function(ctx)
-                  -- Move cursor to show location
-                  vp:set_cursor_pos(FaUtils.center_of_tile(point.position))
-                  Graphics.draw_cursor_highlight(ctx.pindex, nil, "train-visualization")
-                  ctx.message:fragment("Cursor moved to ")
-                  ctx.message:fragment(point.label)
-               end,
-            })
-
-            -- Teleport action
-            builder:add_clickable("teleport-" .. point_id, function(ctx)
-               ctx.message:fragment({ "fa.travel-menu-travel" })
-               ctx.message:fragment(point.label)
-            end, {
-               on_click = function(ctx)
-                  if controller:travel_to_point(point_id) then
-                     ctx.controller:close()
-                     ctx.message:fragment("Teleported to ")
-                     ctx.message:fragment(point.label)
-                  end
-               end,
-            })
-
-            -- Relocate action
-            builder:add_clickable("relocate-" .. point_id, function(ctx)
-               ctx.message:fragment({ "fa.travel-menu-relocate" })
-               ctx.message:fragment(point.label)
-            end, {
-               on_click = function(ctx)
-                  local p = game.get_player(ctx.pindex)
-                  if not p or not p.character then
-                     ctx.message:fragment("Cannot relocate without a character")
-                     return
-                  end
-
-                  local position = storage.players[ctx.pindex].position
-                  if controller:relocate_point(point_id, position) then
-                     ctx.message:fragment({
-                        "fa.travel-relocated-point",
-                        point.label,
-                        tostring(math.floor(position.x)),
-                        tostring(math.floor(position.y)),
-                     })
-                     vp:set_cursor_pos({ x = position.x, y = position.y })
-                     Graphics.draw_cursor_highlight(ctx.pindex)
-                  else
-                     ctx.message:fragment("Failed to relocate point")
-                  end
-               end,
-            })
-
-            -- Rename action
-            builder:add_clickable("rename-" .. point_id, function(ctx)
-               ctx.message:fragment({ "fa.travel-menu-rename" })
-               ctx.message:fragment(point.label)
-            end, {
-               on_click = function(ctx)
-                  ctx.controller:open_textbox(point.label, "rename-" .. point_id)
-                  ctx.message:fragment({ "fa.travel-enter-name" })
-               end,
-               on_child_result = function(ctx, result)
-                  if result and result ~= "" then
-                     if controller:update_point_label(point_id, result) then
-                        ctx.message:fragment({ "fa.travel-point-renamed", result })
-                        -- Menu will re-render automatically
-                     end
-                  end
-               end,
-            })
-
-            -- Edit description action
-            builder:add_clickable("edit-desc-" .. point_id, function(ctx)
-               ctx.message:fragment({ "fa.travel-menu-rewrite-description" })
-               ctx.message:fragment("of")
-               ctx.message:fragment(point.label)
-            end, {
-               on_click = function(ctx)
-                  ctx.controller:open_textbox(point.description or "", "edit-desc-" .. point_id)
-                  ctx.message:fragment({ "fa.travel-enter-description" })
-               end,
-               on_child_result = function(ctx, result)
-                  if result then
-                     if controller:update_point_description(point_id, result) then
-                        ctx.message:fragment({ "fa.travel-description-updated" })
-                        -- Menu will re-render automatically
-                     end
-                  end
-               end,
-            })
-
-            -- Delete action
-            builder:add_clickable("delete-" .. point_id, function(ctx)
-               ctx.message:fragment({ "fa.travel-menu-delete" })
-               ctx.message:fragment(point.label)
-            end, {
-               on_click = function(ctx)
-                  local deleted_name = point.label
-                  if controller:delete_point(point_id) then
-                     ctx.message:fragment({ "fa.travel-deleted-point", deleted_name })
-                     -- Menu will re-render automatically
-                  else
-                     ctx.message:fragment("Failed to delete point")
-                  end
-               end,
-            })
-
-            builder:end_row()
-         end
-      end
-
-      -- Add bottom actions row
-      builder:start_row("actions")
-
-      -- Create new travel point
-      builder:add_clickable("create-new", { "fa.travel-menu-create-new" }, {
-         on_click = function(ctx)
-            ctx.controller:open_textbox("", "create-new")
-            ctx.message:fragment({ "fa.travel-enter-name" })
-         end,
-         on_child_result = function(ctx, result)
-            if result and result ~= "" then
-               local p = game.get_player(ctx.pindex)
-               if p and p.character then
-                  local position = storage.players[ctx.pindex].position
-                  controller:create_point(result, position)
-                  ctx.message:fragment({ "fa.travel-point-created", result })
-                  -- Menu will re-render automatically
-               end
+               ctx.message:fragment(point.description)
             end
-         end,
-      })
+            ctx.message:fragment(",")
+            ctx.message:fragment({ "fa.travel-click-move-cursor" })
+         end, {
+            on_click = function(ctx)
+               -- Move cursor to show location
+               vp:set_cursor_pos(FaUtils.center_of_tile(point.position))
+               Graphics.draw_cursor_highlight(ctx.pindex, nil, "train-visualization")
+               ctx.message:fragment({ "fa.travel-cursor-moved-to", point.label })
+            end,
+         })
 
-      builder:end_row()
+         -- Teleport action
+         builder:add_clickable("teleport-" .. point_id, function(ctx)
+            ctx.message:fragment({ "fa.travel-menu-travel" })
+            ctx.message:fragment(point.label)
+         end, {
+            on_click = function(ctx)
+               if controller:travel_to_point(point_id) then
+                  ctx.controller:close()
+                  ctx.message:fragment({ "fa.travel-teleported-to", point.label })
+               end
+            end,
+         })
+
+         -- Relocate action
+         builder:add_clickable("relocate-" .. point_id, function(ctx)
+            ctx.message:fragment({ "fa.travel-menu-relocate" })
+            ctx.message:fragment(point.label)
+         end, {
+            on_click = function(ctx)
+               local p = game.get_player(ctx.pindex)
+               if not p or not p.character then
+                  ctx.message:fragment({ "fa.travel-cannot-relocate-no-character" })
+                  return
+               end
+
+               local position = storage.players[ctx.pindex].position
+               if controller:relocate_point(point_id, position) then
+                  ctx.message:fragment({
+                     "fa.travel-relocated-point",
+                     point.label,
+                     tostring(math.floor(position.x)),
+                     tostring(math.floor(position.y)),
+                  })
+                  vp:set_cursor_pos({ x = position.x, y = position.y })
+                  Graphics.draw_cursor_highlight(ctx.pindex)
+               else
+                  ctx.message:fragment({ "fa.travel-failed-relocate" })
+               end
+            end,
+         })
+
+         -- Rename action
+         builder:add_clickable("rename-" .. point_id, function(ctx)
+            ctx.message:fragment({ "fa.travel-menu-rename" })
+            ctx.message:fragment(point.label)
+         end, {
+            on_click = function(ctx)
+               ctx.controller:open_textbox(point.label, "rename-" .. point_id)
+               ctx.message:fragment({ "fa.travel-enter-name" })
+            end,
+            on_child_result = function(ctx, result)
+               if result and result ~= "" then
+                  if controller:update_point_label(point_id, result) then
+                     ctx.message:fragment({ "fa.travel-point-renamed", result })
+                     -- Menu will re-render automatically
+                  end
+               end
+            end,
+         })
+
+         -- Edit description action
+         builder:add_clickable("edit-desc-" .. point_id, function(ctx)
+            ctx.message:fragment({ "fa.travel-menu-rewrite-description" })
+            ctx.message:fragment("of")
+            ctx.message:fragment(point.label)
+         end, {
+            on_click = function(ctx)
+               ctx.controller:open_textbox(point.description or "", "edit-desc-" .. point_id)
+               ctx.message:fragment({ "fa.travel-enter-description" })
+            end,
+            on_child_result = function(ctx, result)
+               if result then
+                  if controller:update_point_description(point_id, result) then
+                     ctx.message:fragment({ "fa.travel-description-updated" })
+                     -- Menu will re-render automatically
+                  end
+               end
+            end,
+         })
+
+         -- Delete action
+         builder:add_clickable("delete-" .. point_id, function(ctx)
+            ctx.message:fragment({ "fa.travel-menu-delete" })
+            ctx.message:fragment(point.label)
+         end, {
+            on_click = function(ctx)
+               local deleted_name = point.label
+               if controller:delete_point(point_id) then
+                  ctx.message:fragment({ "fa.travel-deleted-point", deleted_name })
+                  -- Menu will re-render automatically
+               else
+                  ctx.message:fragment({ "fa.travel-failed-delete" })
+               end
+            end,
+         })
+
+         builder:end_row()
+      end
    end
+
+   -- Add bottom actions row
+   builder:start_row("actions")
+
+   -- Create new travel point
+   builder:add_clickable("create-new", { "fa.travel-menu-create-new" }, {
+      on_click = function(ctx)
+         ctx.controller:open_textbox("", "create-new")
+         ctx.message:fragment({ "fa.travel-enter-name" })
+      end,
+      on_child_result = function(ctx, result)
+         if result and result ~= "" then
+            local p = game.get_player(ctx.pindex)
+            if p and p.character then
+               local position = storage.players[ctx.pindex].position
+               controller:create_point(result, position)
+               ctx.message:fragment({ "fa.travel-point-created", result })
+               -- Menu will re-render automatically
+            end
+         end
+      end,
+   })
+
+   builder:end_row()
 
    return builder:build()
 end
