@@ -3759,7 +3759,6 @@ local function kb_click_hand_right(event)
       --Laterdo here: build as ghost
       kb_read_entity_status(event)
    elseif stack.is_blueprint then
-      Blueprints.blueprint_menu_open(pindex)
       local router = UiRouter.get_router(pindex)
       router:open_ui(UiRouter.UI_NAMES.BLUEPRINT)
    elseif stack.is_blueprint_book then

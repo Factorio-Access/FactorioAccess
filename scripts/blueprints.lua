@@ -367,26 +367,6 @@ function mod.apply_blueprint_import(pindex, text)
    end
 end
 
-function mod.blueprint_menu_open(pindex)
-   if storage.players[pindex].vanilla_mode then return end
-
-   UiRouter.get_router(pindex):open_ui(UiRouter.UI_NAMES.BLUEPRINT)
-
-   storage.players[pindex].move_queue = {}
-
-   --Set the menu line counter to 0
-   storage.players[pindex].blueprint_menu = {
-      index = 0,
-      edit_label = false,
-      edit_description = false,
-      edit_export = false,
-      edit_import = false,
-   }
-
-   --Play sound
-   game.get_player(pindex).play_sound({ path = "Open-Inventory-Sound" })
-end
-
 function mod.blueprint_menu_close(pindex, mute_in)
    local mute = mute_in
    --Set the player menu tracker to none
