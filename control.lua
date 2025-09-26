@@ -2563,8 +2563,6 @@ local function read_coords(pindex, start_phrase)
    local router = UiRouter.get_router(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
 
-   if storage.players[pindex].building.recipe_list ~= nil then offset = 1 end
-
    local position = game.get_player(pindex).position
    local marked_pos = { x = position.x, y = position.y }
    if storage.players[pindex].vanilla_mode then vp:set_cursor_pos(marked_pos) end
@@ -2728,57 +2726,6 @@ local function read_coords(pindex, start_phrase)
          end
       end
       Speech.speak(pindex, message:build())
-   end
-   if storage.players[pindex].building.recipe_selection == false then
-      --Give slot coords (chest/building inventory)
-      local x = -1 --Col number
-      local y = -1 --Row number
-      local row_length = storage.players[pindex].preferences.building_inventory_row_length
-      x = storage.players[pindex].building.index % row_length
-      y = math.floor(storage.players[pindex].building.index / row_length) + 1
-      if x == 0 then
-         x = x + row_length
-         y = y - 1
-      end
-      local msg = Speech.new()
-      if result then msg:fragment(result) end
-      msg:fragment({ "fa.building-slot-position", tostring(x), tostring(y) })
-      Speech.speak(pindex, msg:build())
-   end
-   if storage.players[pindex].building.recipe_selection then
-      --Read recipe ingredients / products (building recipe selection)
-      local recipe =
-         storage.players[pindex].building.recipe_list[storage.players[pindex].building.category][storage.players[pindex].building.index]
-      local msg = Speech.new()
-      if result then msg:fragment(result) end
-      msg:fragment("Ingredients: ")
-      for i, v in pairs(recipe.ingredients) do
-         ---@type LuaItemPrototype | LuaFluidPrototype
-         local proto = prototypes.item[v.name]
-         if proto == nil then proto = prototypes.fluid[v.name] end
-         local name = Localising.get_localised_name_with_fallback(proto)
-         msg:fragment(", ")
-         msg:fragment(name)
-         msg:fragment(" x")
-         msg:fragment(tostring(v.amount))
-         msg:fragment(" per cycle ")
-      end
-      msg:fragment(", products: ")
-      for i, v in pairs(recipe.products) do
-         ---@type LuaItemPrototype | LuaFluidPrototype
-         local proto = prototypes.item[v.name]
-         if proto == nil then proto = prototypes.fluid[v.name] end
-         local name = Localising.get_localised_name_with_fallback(proto)
-         msg:fragment(", ")
-         msg:fragment(name)
-         msg:fragment(" x")
-         msg:fragment(tostring(v.amount))
-         msg:fragment(" per cycle ")
-      end
-      msg:fragment(", craft time ")
-      msg:fragment(tostring(recipe.energy))
-      msg:fragment(" seconds at default speed.")
-      Speech.speak(pindex, msg:build())
    end
 end
 
