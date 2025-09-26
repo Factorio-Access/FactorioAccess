@@ -8,6 +8,7 @@ local UiKeyGraph = require("scripts.ui.key-graph")
 local Menu = require("scripts.ui.menu")
 local UiRouter = require("scripts.ui.router")
 local TabList = require("scripts.ui.tab-list")
+local BoxSelector = require("scripts.ui.box-selector")
 
 local mod = {}
 
@@ -177,9 +178,41 @@ local function render(ctx)
 
    builder:add_clickable("reselect", { "fa.ui-blueprints-menu-reselect" }, {
       on_click = function(ctx)
-         storage.players[ctx.pindex].blueprint_reselecting = true
-         ctx.message:fragment({ "fa.ui-blueprints-select-first-point" })
-         ctx.controller:close()
+         ctx.controller:open_child_ui(UiRouter.UI_NAMES.BLUEPRINT_AREA_SELECTOR, {
+            node_key = "reselect"  -- Pass the node key so BoxSelector can return it
+         })
+      end,
+      on_child_result = function(ctx, result)
+         if result and result.box then
+            local p = game.get_player(ctx.pindex)
+            if not p then return end
+
+            -- Get the blueprint item
+            local bp = p.cursor_stack
+            if not bp or not bp.is_blueprint then
+               ctx.message:fragment({ "fa.ui-blueprints-no-blueprint-in-hand" })
+               return
+            end
+
+            -- Create blueprint from selected area
+            -- Check if shift was held during any of the clicks
+            local exclude_tiles = (result.first_click.modifiers.shift or result.second_click.modifiers.shift)
+
+            bp.create_blueprint({
+               surface = p.surface,
+               force = p.force,
+               area = result.box,
+               include_entities = true,
+               include_tiles = not exclude_tiles,
+               include_fuel = true,
+               include_trains = true,
+               include_station_names = true
+            })
+
+            ctx.message:fragment({ "fa.ui-blueprints-area-selected" })
+         else
+            ctx.message:fragment({ "fa.ui-blueprints-selection-cancelled" })
+         end
       end,
    })
    return builder:build()
@@ -203,5 +236,12 @@ mod.blueprint_menu_tabs = TabList.declare_tablist({
 
 -- Register with the UI event routing system for event interception
 UiRouter.register_ui(mod.blueprint_menu_tabs)
+
+-- Register box selector for blueprint area selection
+local blueprint_area_selector = BoxSelector.declare_box_selector({
+   ui_name = UiRouter.UI_NAMES.BLUEPRINT_AREA_SELECTOR,
+})
+
+UiRouter.register_ui(blueprint_area_selector)
 
 return mod

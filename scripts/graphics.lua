@@ -174,7 +174,6 @@ function mod.sync_build_cursor_graphics(pindex)
       and stack.valid_for_read
       and stack.is_blueprint
       and stack.is_blueprint_setup()
-      and storage.players[pindex].blueprint_reselecting ~= true
    then
       --Blueprints have their own data:
       --Redraw the direction indicator arrow
@@ -227,7 +226,6 @@ function mod.sync_build_cursor_graphics(pindex)
       if
          stack.valid
          and stack.prototype.place_as_tile_result
-         and storage.players[pindex].blueprint_reselecting ~= true
       then
          local left_top = {
             math.floor(cursor_pos.x) - cursor_size,

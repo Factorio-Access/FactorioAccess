@@ -34,29 +34,51 @@ local GameGui = require("scripts.ui.game-gui")
 
 local mod = {}
 
----Storage for registered TabList instances
----@type table<string, fa.ui.TabList>
+---Storage for registered UI instances
+---@type table<string, fa.ui.UiPanelBase>
 local registered_uis = {}
 
----Register a TabList UI with the event routing system
----@param tablist fa.ui.TabList
-function mod.register_ui(tablist)
-   assert(type(tablist.ui_name) == "string")
-   registered_uis[tablist.ui_name] = tablist
+---Register a UI with the event routing system
+---@param ui fa.ui.UiPanelBase
+function mod.register_ui(ui)
+   assert(type(ui.ui_name) == "string")
+   registered_uis[ui.ui_name] = ui
 end
 
 ---Get a registered UI by name
 ---@param ui_name string
----@return fa.ui.TabList?
+---@return fa.ui.UiPanelBase?
 function mod.get_registered_ui(ui_name)
    return registered_uis[ui_name]
 end
 
 ---Get all registered UIs
----@return table<string, fa.ui.TabList>
+---@return table<string, fa.ui.UiPanelBase>
 function mod.get_registered_uis()
    return registered_uis
 end
+
+---@class fa.ui.UiPanelBase
+---@field ui_name fa.ui.UiName
+---@field open fun(self, pindex: number, parameters: table, controller: fa.ui.RouterController)
+---@field close? fun(self, pindex: number)
+---@field on_click? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_right_click? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_up? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_down? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_left? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_right? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_top? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_bottom? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_leftmost? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_rightmost? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_read_coords? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_read_info? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_next_tab? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_previous_tab? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_next_section? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_previous_section? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_child_result? fun(self, pindex: number, result_context: table, result: any, controller: fa.ui.RouterController)
 
 ---@enum fa.ui.UiName
 mod.UI_NAMES = {
@@ -80,6 +102,8 @@ mod.UI_NAMES = {
    SPIDERTRON = "spidertron",
    DEBUG = "debug",
    ITEM_CHOOSER = "item_chooser",
+   BOX_SELECTOR = "box_selector",
+   BLUEPRINT_AREA_SELECTOR = "blueprint_area_selector",
 }
 
 ---@class fa.ui.RouterState
@@ -110,15 +134,17 @@ end
 
 ---Close the current UI and return a result to the parent
 ---@param result any The result to pass to the parent UI
-function RouterController:close_with_result(result)
-   self.router:close_with_result(result)
+---@param context? any Optional context to help identify which node/item requested the result
+function RouterController:close_with_result(result, context)
+   self.router:close_with_result(result, context)
 end
 
 ---Open a child UI on top of the current one
 ---@param name fa.ui.UiName
 ---@param params? table Optional parameters to pass to the child UI
-function RouterController:open_child_ui(name, params)
-   self.router:open_child_ui(name, params)
+---@param context? any Optional context to help identify which node/item opened the child UI
+function RouterController:open_child_ui(name, params, context)
+   self.router:open_child_ui(name, params, context)
 end
 
 ---Open a textbox for user input
@@ -233,7 +259,8 @@ end
 
 ---Close the current UI and return a result to the parent
 ---@param result any The result to pass to the parent UI
-function Router:close_with_result(result)
+---@param context? any Optional context to help identify which node/item requested the result
+function Router:close_with_result(result, context)
    local stack = router_state[self.pindex].ui_stack
    if #stack == 0 then return end
 
@@ -247,8 +274,9 @@ function Router:close_with_result(result)
    -- If there's a parent UI, send it the result
    if parent_ui_name and registered_uis[parent_ui_name] then
       -- Send result to parent's on_child_result handler
-      -- Context is nil since we're always sending to top of stack
-      registered_uis[parent_ui_name]:on_child_result(self.pindex, {}, result, self.controller)
+      -- Pass the context if provided
+      local result_context = context and { context = context } or {}
+      registered_uis[parent_ui_name]:on_child_result(self.pindex, result_context, result, self.controller)
    end
 end
 
@@ -295,22 +323,22 @@ local function create_ui_handler(method_name, modifiers)
       local router = mod.get_router(pindex)
       local stack = router_state[pindex].ui_stack
 
-      -- Iterate down the stack from top to bottom
-      for i = #stack, 1, -1 do
-         local ui_name = stack[i]
+      -- Only check the top UI (the active one)
+      if #stack > 0 then
+         local ui_name = stack[#stack]
          if registered_uis[ui_name] then
-            local tablist = registered_uis[ui_name]
+            local ui = registered_uis[ui_name]
             -- Check if this UI has the method we're looking for
-            if tablist[method_name] then
-               -- Call the method on the TabList, passing modifiers and controller
-               tablist[method_name](tablist, pindex, modifiers, router.controller)
+            if ui[method_name] then
+               -- Call the method on the UI, passing modifiers and controller
+               ui[method_name](ui, pindex, modifiers, router.controller)
                -- Return FINISHED to prevent world handlers from running
                return EventManager.FINISHED
             end
          end
       end
 
-      -- No UI in stack handled it, let event pass through to legacy handlers
+      -- No UI handled it or no UI open, let event pass through to world handlers
       return nil
    end
 end

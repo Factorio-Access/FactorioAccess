@@ -97,10 +97,9 @@ local tablist_storage = StorageManager.declare_storage_module("tab_list", {}, {
    ephemeral_state_version = 1,
 })
 
----@class fa.ui.TabList
+---@class fa.ui.TabList : fa.ui.UiPanelBase
 ---@field sections fa.ui.SectionDescriptor[]
 ---@field descriptors  table<string, fa.ui.TabDescriptor>
----@field ui_name fa.ui.UiName
 ---@field tab_order string[]
 ---@field tabs_callback fun(pindex: number, parameters: any): fa.ui.SectionDescriptor[]
 ---@field shared_state_initializer (fun(number, table): table)?
