@@ -231,6 +231,13 @@ data:extend({
 
    {
       type = "custom-input",
+      name = "fa-a-b",
+      key_sequence = "ALT + B",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
       name = "fa-ca-b",
       key_sequence = "CONTROL + ALT + B",
       consuming = "none",

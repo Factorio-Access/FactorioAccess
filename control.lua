@@ -4247,6 +4247,27 @@ EventManager.on_event(
    end
 )
 
+EventManager.on_event(
+   "fa-a-b",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if storage.players[pindex].vanilla_mode then return end
+      local p = game.get_player(pindex)
+      if not p then return end
+
+      -- Put an empty blueprint in the player's hand
+      p.cursor_stack.set_stack({ name = "blueprint", count = 1 })
+
+      -- Open the blueprint area selector with a custom intro message
+      -- NOTE: The on_player_cursor_stack_changed event will announce "blueprint 1" which overrides
+      -- this intro message. This is a known issue that we're living with for now.
+      local router = UiRouter.get_router(pindex)
+      router:open_ui(UiRouter.UI_NAMES.BLUEPRINT_AREA_SELECTOR, {
+         intro_message = { "fa.ui-blueprints-create-new-intro" },
+      })
+   end
+)
+
 ---@param event EventData.CustomInputEvent
 ---@param ent LuaEntity
 ---@param is_input boolean

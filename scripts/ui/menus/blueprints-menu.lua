@@ -3,6 +3,7 @@ local FaUtils = require("scripts.fa-utils")
 local Functools = require("scripts.functools")
 local Graphics = require("scripts.graphics")
 local Localising = require("scripts.localising")
+local Speech = require("scripts.speech")
 local TH = require("scripts.table-helpers")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local Menu = require("scripts.ui.menu")
@@ -24,7 +25,25 @@ local function render(ctx)
    local builder = Menu.MenuBuilder.new()
 
    if not bp.is_blueprint_setup() then
-      builder:add_label("blueprint-info", { "fa.ui-blueprints-menu-limited" })
+      -- Use custom intro message if provided in params, otherwise default
+      local intro_message = (ctx.params and ctx.params.intro_message) or { "fa.ui-blueprints-menu-limited" }
+      builder:add_label("blueprint-info", intro_message)
+
+      -- Add option to select area for empty blueprint
+      builder:add_clickable("select-area", { "fa.ui-blueprints-menu-reselect" }, {
+         on_click = function(ctx)
+            ctx.controller:open_child_ui(UiRouter.UI_NAMES.BLUEPRINT_AREA_SELECTOR, {
+               intro_message = { "fa.ui-blueprints-select-first-point" },
+            }, "select-area")
+         end,
+         on_child_result = function(ctx, result)
+            if result and result.box then
+               ctx.message:fragment({ "fa.ui-blueprints-area-selected" })
+            else
+               ctx.message:fragment({ "fa.ui-blueprints-selection-cancelled" })
+            end
+         end,
+      })
    else
       builder:add_label("blueprint-info", { "fa.ui-blueprints-menu-basic", bp.label or "no name" })
    end
@@ -178,39 +197,9 @@ local function render(ctx)
 
    builder:add_clickable("reselect", { "fa.ui-blueprints-menu-reselect" }, {
       on_click = function(ctx)
-         ctx.controller:open_child_ui(UiRouter.UI_NAMES.BLUEPRINT_AREA_SELECTOR, {}, "reselect")
-      end,
-      on_child_result = function(ctx, result)
-         if result and result.box then
-            local p = game.get_player(ctx.pindex)
-            if not p then return end
-
-            -- Get the blueprint item
-            local bp = p.cursor_stack
-            if not bp or not bp.is_blueprint then
-               ctx.message:fragment({ "fa.ui-blueprints-no-blueprint-in-hand" })
-               return
-            end
-
-            -- Create blueprint from selected area
-            -- Check if shift was held during any of the clicks
-            local exclude_tiles = (result.first_click.modifiers.shift or result.second_click.modifiers.shift)
-
-            bp.create_blueprint({
-               surface = p.surface,
-               force = p.force,
-               area = result.box,
-               include_entities = true,
-               include_tiles = not exclude_tiles,
-               include_fuel = true,
-               include_trains = true,
-               include_station_names = true,
-            })
-
-            ctx.message:fragment({ "fa.ui-blueprints-area-selected" })
-         else
-            ctx.message:fragment({ "fa.ui-blueprints-selection-cancelled" })
-         end
+         ctx.controller:open_child_ui(UiRouter.UI_NAMES.BLUEPRINT_AREA_SELECTOR, {
+            intro_message = { "fa.ui-blueprints-select-first-point" },
+         }, "reselect")
       end,
    })
    return builder:build()
@@ -235,9 +224,32 @@ mod.blueprint_menu_tabs = TabList.declare_tablist({
 -- Register with the UI event routing system for event interception
 UiRouter.register_ui(mod.blueprint_menu_tabs)
 
--- Register box selector for blueprint area selection
+-- Register box selector for blueprint area selection with callback
 local blueprint_area_selector = BoxSelector.declare_box_selector({
    ui_name = UiRouter.UI_NAMES.BLUEPRINT_AREA_SELECTOR,
+   callback = function(pindex, params, result)
+      local p = game.get_player(pindex)
+      if not p then return end
+
+      -- Get the blueprint item
+      local bp = p.cursor_stack
+      if not bp or not bp.is_blueprint then return end
+
+      -- Create blueprint from selected area (using engine defaults for optional parameters)
+      bp.create_blueprint({
+         surface = p.surface,
+         force = p.force,
+         area = result.box,
+      })
+
+      -- Provide feedback about what was captured
+      local entity_count = bp.get_blueprint_entity_count()
+      if entity_count > 0 then
+         Speech.speak(pindex, { "fa.ui-blueprints-created-with-entities", entity_count })
+      else
+         Speech.speak(pindex, { "fa.ui-blueprints-created-empty" })
+      end
+   end,
 })
 
 UiRouter.register_ui(blueprint_area_selector)

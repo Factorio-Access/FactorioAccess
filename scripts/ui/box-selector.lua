@@ -31,7 +31,9 @@ function BoxSelector:open(pindex, parameters, controller)
       callback_params = parameters or {},
    }
 
-   Speech.speak(pindex, { "fa.box-selector-intro" })
+   -- Use custom intro message if provided in parameters, otherwise default
+   local intro_message = (parameters and parameters.intro_message) or { "fa.box-selector-intro" }
+   Speech.speak(pindex, intro_message)
 end
 
 function BoxSelector:close(pindex)
