@@ -4440,29 +4440,12 @@ EventManager.on_event(
    end
 )
 
----@param event EventData.CustomInputEvent
----@param ent LuaEntity
-local function kb_toggle_auto_launch_with_cargo(event, ent)
-   local pindex = event.player_index
-   local p = game.get_player(pindex)
-   ---@diagnostic disable-next-line: inject-field
-   ent.auto_launch = not ent.auto_launch
-   if ent.auto_launch then
-      Speech.speak(pindex, { "fa.enabled-auto-launch" })
-   else
-      Speech.speak(pindex, { "fa.disabled-auto-launch" })
-   end
-end
-
 --Toggle whether rockets are launched automatically when they have cargo
 EventManager.on_event(
    "fa-c-space",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local ent = find_rocket_silo(pindex)
-      --Try to launch from the silo
-      ---@diagnostic disable-next-line: param-type-mismatch
-      if ent ~= nil and ent.valid and ent.name == "rocket-silo" then kb_toggle_auto_launch_with_cargo(event, ent) end
+      Speech.speak("Not implemented in Factorio 2.0 yet due to API limitations", pindex)
    end
 )
 
