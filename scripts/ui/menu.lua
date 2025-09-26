@@ -135,6 +135,35 @@ function MenuBuilder:build()
 
    render.start_key = all_items[1].key
 
+   -- Helper to determine target item for vertical navigation
+   local function get_vertical_target(current_row, target_row, pos_in_row)
+      -- Check if rows have same key for column navigation
+      if
+         current_row.key
+         and target_row.key
+         and current_row.key == target_row.key
+         and pos_in_row <= #target_row.items
+      then
+         -- Column navigation - go to same position in target row
+         return target_row.items[pos_in_row]
+      else
+         -- Different keys or no keys - go to first item of target row
+         return target_row.items[1]
+      end
+   end
+
+   -- Helper to create vertical transition
+   local function add_vertical_transition(node, direction, target_key)
+      node.transitions[direction] = {
+         vtable = {
+            play_sound = function(ctx)
+               UiSounds.play_menu_move(ctx.pindex)
+            end,
+         },
+         destination = target_key,
+      }
+   end
+
    -- Build transitions
    for item_idx, item in ipairs(all_items) do
       local current_row_idx = item_to_row[item_idx]
@@ -152,49 +181,15 @@ function MenuBuilder:build()
       -- UP navigation
       if current_row_idx > 1 then
          local prev_row = self.rows[current_row_idx - 1]
-         local target_item
-
-         -- Check if rows have same key for column navigation
-         if current_row.key and prev_row.key and current_row.key == prev_row.key and pos_in_row <= #prev_row.items then
-            -- Column navigation - go to same position in previous row
-            target_item = prev_row.items[pos_in_row]
-         else
-            -- Different keys or no keys - go to first item of previous row
-            target_item = prev_row.items[1]
-         end
-
-         render.nodes[item.key].transitions[UiKeyGraph.TRANSITION_DIR.UP] = {
-            vtable = {
-               play_sound = function(ctx)
-                  UiSounds.play_menu_move(ctx.pindex)
-               end,
-            },
-            destination = target_item.key,
-         }
+         local target_item = get_vertical_target(current_row, prev_row, pos_in_row)
+         add_vertical_transition(render.nodes[item.key], UiKeyGraph.TRANSITION_DIR.UP, target_item.key)
       end
 
       -- DOWN navigation
       if current_row_idx < #self.rows then
          local next_row = self.rows[current_row_idx + 1]
-         local target_item
-
-         -- Check if rows have same key for column navigation
-         if current_row.key and next_row.key and current_row.key == next_row.key and pos_in_row <= #next_row.items then
-            -- Column navigation - go to same position in next row
-            target_item = next_row.items[pos_in_row]
-         else
-            -- Different keys or no keys - go to first item of next row
-            target_item = next_row.items[1]
-         end
-
-         render.nodes[item.key].transitions[UiKeyGraph.TRANSITION_DIR.DOWN] = {
-            vtable = {
-               play_sound = function(ctx)
-                  UiSounds.play_menu_move(ctx.pindex)
-               end,
-            },
-            destination = target_item.key,
-         }
+         local target_item = get_vertical_target(current_row, next_row, pos_in_row)
+         add_vertical_transition(render.nodes[item.key], UiKeyGraph.TRANSITION_DIR.DOWN, target_item.key)
       end
 
       -- LEFT navigation within row
