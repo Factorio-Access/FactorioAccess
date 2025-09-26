@@ -3996,27 +3996,6 @@ EventManager.on_event(
 )
 
 ---@param event EventData.CustomInputEvent
-local function kb_honk(event)
-   local vehicle = game.get_player(event.player_index).vehicle
-   if vehicle.type == "locomotive" or vehicle.train ~= nil then
-      sounds.play_sound_at_position({ path = "train-honk-low-long" }, vehicle.position)
-   elseif vehicle.name == "tank" then
-      sounds.play_sound_at_position({ path = "tank-honk" }, vehicle.position)
-   elseif vehicle.type == "car" then
-      sounds.play_sound_at_position({ path = "car-honk" }, vehicle.position)
-   end
-end
-
-EventManager.on_event(
-   "fa-a-w",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local p = game.get_player(pindex)
-      if p.driving == true and p.vehicle and p.vehicle.valid then kb_honk(event) end
-   end
-)
-
----@param event EventData.CustomInputEvent
 local function kb_toggle_build_lock(event)
    local pindex = event.player_index
    if storage.players[pindex].build_lock == true then
