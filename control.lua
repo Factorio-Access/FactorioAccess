@@ -4204,10 +4204,6 @@ EventManager.on_event(
    end
 )
 
-EventManager.on_event("fa-grave", function(event)
-   Speech.speak(event.player_index, "Opened console")
-end)
-
 ---@param event EventData.CustomInputEvent
 local function kb_open_warnings_menu(event)
    local pindex = event.player_index

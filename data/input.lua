@@ -940,13 +940,6 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "fa-grave",
-      key_sequence = "GRAVE",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
       name = "fa-p",
       key_sequence = "P",
       consuming = "none",
