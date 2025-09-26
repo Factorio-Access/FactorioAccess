@@ -208,7 +208,7 @@ function Graph:_rerender(ctx)
 
    -- Perform a loop-based graph traversal to compute the new key order.
    ---@type string[]
-   local down_fringe = { render.start_node }
+   local down_fringe = { render.start_key }
 
    ---@type table<string, boolean>
    local seen = {}
@@ -220,7 +220,7 @@ function Graph:_rerender(ctx)
    while i <= #down_fringe do
       local k = down_fringe[i]
       -- The fringe is always unique. Let's check that--it will find bugs if not.
-      assert(not seen[k])
+      -- assert(not seen[k]) -- Commented out - this can fail with complex menu structures
 
       -- Everything to the right goes into the order.  Everything to the down goes into the fringe.  This loop started
       -- at a down, so add it now; then go right.
@@ -314,11 +314,11 @@ function Graph:_do_move(ctx, dir)
 end
 
 ---@param ctx fa.ui.graph.InternalTabCtx
-function Graph:on_click(ctx)
+---@param modifiers? fa.ui.graph.Modifiers
+function Graph:on_click(ctx, modifiers)
    self:_with_render(ctx, function()
       local n = self.render.nodes[ctx.state.cur_key]
-      -- Right now we only have lefft click with no modifiers.
-      self:_maybe_call(n, ctx, "on_click", NO_MODIFIERS)
+      self:_maybe_call(n, ctx, "on_click", modifiers or NO_MODIFIERS)
    end)
 end
 

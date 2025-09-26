@@ -6,6 +6,9 @@ local Speech = require("scripts.speech")
 local BoxSelector = require("scripts.ui.box-selector")
 local serpent = require("serpent")
 
+-- Load the form builder test UI
+require("scripts.ui.menus.debug-formbuilder")
+
 local mod = {}
 
 ---@param ctx fa.ui.graph.Ctx
@@ -27,6 +30,17 @@ local function build_debug_menu(ctx)
       end,
       on_child_result = function(result_ctx, result)
          -- Result is already spoken by the box selector callback
+      end,
+   })
+
+   builder:add_clickable("open_form_builder", { "fa.debug-menu-form-builder" }, {
+      on_click = function(click_ctx)
+         click_ctx.controller:open_child_ui(UiRouter.UI_NAMES.DEBUG_FORMBUILDER)
+      end,
+      on_child_result = function(result_ctx, result)
+         if result then
+            Speech.speak(result_ctx.pindex, "Form builder test closed with result: " .. tostring(result))
+         end
       end,
    })
 

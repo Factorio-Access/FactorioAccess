@@ -102,6 +102,7 @@ mod.UI_NAMES = {
    SIGNAL_SELECTOR = "signal_selector",
    SPIDERTRON = "spidertron",
    DEBUG = "debug",
+   DEBUG_FORMBUILDER = "debug_formbuilder",
    ITEM_CHOOSER = "item_chooser",
    BOX_SELECTOR = "box_selector",
    BLUEPRINT_AREA_SELECTOR = "blueprint_area_selector",

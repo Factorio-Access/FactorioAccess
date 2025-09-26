@@ -14,15 +14,39 @@ local mod = {}
 ---@field vtable fa.ui.graph.NodeVtable
 ---@field key string
 
+---@class fa.ui.menu.Row
+---@field items fa.ui.menu.Entry[]
+---@field key string?
+---@field is_explicit boolean
+
 ---@class fa.ui.menu.MenuBuilder
----@field entries fa.ui.menu.Entry
+---@field rows fa.ui.menu.Row[]
+---@field current_row fa.ui.menu.Row?
 local MenuBuilder = {}
 local MenuBuilder_meta = { __index = MenuBuilder }
 
 function MenuBuilder.new()
    return setmetatable({
-      entries = {},
+      rows = {},
+      current_row = nil,
    }, MenuBuilder_meta)
+end
+
+---Helper to add item to current or new row
+---@param entry fa.ui.menu.Entry
+---@private
+function MenuBuilder:_add_entry_to_row(entry)
+   if self.current_row then
+      -- Add to explicit row
+      table.insert(self.current_row.items, entry)
+   else
+      -- Create implicit single-item row
+      table.insert(self.rows, {
+         items = { entry },
+         key = nil,
+         is_explicit = false,
+      })
+   end
 end
 
 -- Lowest level way to add to the menu.  Consider one of the "control" helpers below.
@@ -30,7 +54,29 @@ end
 ---@param vtable fa.ui.graph.NodeVtable
 ---@return fa.ui.menu.MenuBuilder
 function MenuBuilder:add_item(key, vtable)
-   table.insert(self.entries, { key = key, vtable = vtable })
+   self:_add_entry_to_row({ key = key, vtable = vtable })
+   return self
+end
+
+---Start an explicit row with optional key for column navigation
+---@param key string?
+---@return fa.ui.menu.MenuBuilder
+function MenuBuilder:start_row(key)
+   assert(not self.current_row, "Cannot start a row while another is open")
+   self.current_row = {
+      items = {},
+      key = key,
+      is_explicit = true,
+   }
+   return self
+end
+
+---End the current explicit row
+---@return fa.ui.menu.MenuBuilder
+function MenuBuilder:end_row()
+   assert(self.current_row, "No row to end")
+   table.insert(self.rows, self.current_row)
+   self.current_row = nil
    return self
 end
 
@@ -65,43 +111,119 @@ function MenuBuilder:build()
       nodes = {},
    }
 
-   assert(#self.entries, "Menus must have at least one item")
+   assert(self.current_row == nil, "Unclosed row - call end_row()")
+   assert(#self.rows > 0, "Menus must have at least one item")
 
-   local prev_k = self.entries[1].key
-   render.nodes[prev_k] = {
-      vtable = self.entries[1].vtable,
-      transitions = {},
-   }
-
-   render.start_key = prev_k
-   for i = 2, #self.entries do
-      local k = self.entries[i].key
-
-      render.nodes[prev_k].transitions[UiKeyGraph.TRANSITION_DIR.DOWN] = {
-         vtable = {
-            play_sound = function(ctx)
-               UiSounds.play_menu_move(ctx.pindex)
-            end,
-         },
-         destination = k,
-      }
-
-      render.nodes[k] = {
-         vtable = self.entries[i].vtable,
-         transitions = {
-            [UiKeyGraph.TRANSITION_DIR.UP] = {
-               vtable = {
-                  play_sound = function(ctx)
-                     UiSounds.play_menu_move(ctx.pindex)
-                  end,
-               },
-               destination = prev_k,
-            },
-         },
-      }
-
-      prev_k = k
+   -- Flatten rows to get all items
+   local all_items = {}
+   local item_to_row = {} -- Map item index to row index
+   for row_idx, row in ipairs(self.rows) do
+      assert(#row.items > 0, "Row cannot be empty")
+      for _, item in ipairs(row.items) do
+         table.insert(all_items, item)
+         item_to_row[#all_items] = row_idx
+      end
    end
+
+   -- Build nodes
+   for item_idx, item in ipairs(all_items) do
+      render.nodes[item.key] = {
+         vtable = item.vtable,
+         transitions = {},
+      }
+   end
+
+   render.start_key = all_items[1].key
+
+   -- Build transitions
+   for item_idx, item in ipairs(all_items) do
+      local current_row_idx = item_to_row[item_idx]
+      local current_row = self.rows[current_row_idx]
+
+      -- Find position within current row
+      local pos_in_row = 1
+      for i, row_item in ipairs(current_row.items) do
+         if row_item == item then
+            pos_in_row = i
+            break
+         end
+      end
+
+      -- UP navigation
+      if current_row_idx > 1 then
+         local prev_row = self.rows[current_row_idx - 1]
+         local target_item
+
+         -- Check if rows have same key for column navigation
+         if current_row.key and prev_row.key and current_row.key == prev_row.key and pos_in_row <= #prev_row.items then
+            -- Column navigation - go to same position in previous row
+            target_item = prev_row.items[pos_in_row]
+         else
+            -- Different keys or no keys - go to first item of previous row
+            target_item = prev_row.items[1]
+         end
+
+         render.nodes[item.key].transitions[UiKeyGraph.TRANSITION_DIR.UP] = {
+            vtable = {
+               play_sound = function(ctx)
+                  UiSounds.play_menu_move(ctx.pindex)
+               end,
+            },
+            destination = target_item.key,
+         }
+      end
+
+      -- DOWN navigation
+      if current_row_idx < #self.rows then
+         local next_row = self.rows[current_row_idx + 1]
+         local target_item
+
+         -- Check if rows have same key for column navigation
+         if current_row.key and next_row.key and current_row.key == next_row.key and pos_in_row <= #next_row.items then
+            -- Column navigation - go to same position in next row
+            target_item = next_row.items[pos_in_row]
+         else
+            -- Different keys or no keys - go to first item of next row
+            target_item = next_row.items[1]
+         end
+
+         render.nodes[item.key].transitions[UiKeyGraph.TRANSITION_DIR.DOWN] = {
+            vtable = {
+               play_sound = function(ctx)
+                  UiSounds.play_menu_move(ctx.pindex)
+               end,
+            },
+            destination = target_item.key,
+         }
+      end
+
+      -- LEFT navigation within row
+      if pos_in_row > 1 then
+         local prev_item = current_row.items[pos_in_row - 1]
+         render.nodes[item.key].transitions[UiKeyGraph.TRANSITION_DIR.LEFT] = {
+            vtable = {
+               play_sound = function(ctx)
+                  UiSounds.play_menu_move(ctx.pindex)
+               end,
+            },
+            destination = prev_item.key,
+         }
+      end
+
+      -- RIGHT navigation within row
+      if pos_in_row < #current_row.items then
+         local next_item = current_row.items[pos_in_row + 1]
+         render.nodes[item.key].transitions[UiKeyGraph.TRANSITION_DIR.RIGHT] = {
+            vtable = {
+               play_sound = function(ctx)
+                  UiSounds.play_menu_move(ctx.pindex)
+               end,
+            },
+            destination = next_item.key,
+         }
+      end
+   end
+
    return render
 end
 
