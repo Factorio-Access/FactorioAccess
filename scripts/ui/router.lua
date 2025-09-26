@@ -31,6 +31,7 @@ UI-destined events.
 local StorageManager = require("scripts.storage-manager")
 local EventManager = require("scripts.event-manager")
 local GameGui = require("scripts.ui.game-gui")
+local UiSounds = require("scripts.ui.sounds")
 
 local mod = {}
 
@@ -158,52 +159,75 @@ end
 ---@param name fa.ui.UiName
 ---@param params? table Optional parameters to pass to the UI
 function Router:open_ui(name, params)
-   -- If switching to a different UI, close all current UIs first. That's not just based on name; the current UI might
-   -- be reopening on, e.g., a different entity.
-   self:_close_all_uis()
-
-   -- Push the UI onto the stack
-   local stack = router_state[self.pindex].ui_stack
-   table.insert(stack, name)
-
-   -- Update the game GUI to show the UI frame
-   GameGui.set_active_ui(self.pindex, name)
-
-   -- Get the registered UI and open it with params
-   if registered_uis[name] then registered_uis[name]:open(self.pindex, params or {}, self.controller) end
-   -- If UI is not registered, it might be a legacy UI name - just set it as open
-   -- This maintains backward compatibility with old UI system
+   -- Clear stack then push new UI
+   self:_clear_ui_stack()
+   self:_push_ui(name, params)
 end
 
 function Router:close_ui()
-   local stack = router_state[self.pindex].ui_stack
-   if #stack == 0 then return end
+   self:_pop_ui()
+end
 
-   -- Close the top UI
-   local top_ui = stack[#stack]
-   if registered_uis[top_ui] then
-      local ui = registered_uis[top_ui]
+-- Core stack operations
+
+---Push a UI onto the stack (open it)
+---@private
+---@param name fa.ui.UiName
+---@param params? table
+function Router:_push_ui(name, params)
+   local stack = router_state[self.pindex].ui_stack
+
+   -- Add to stack
+   table.insert(stack, name)
+
+   -- Update GUI to show new top
+   GameGui.set_active_ui(self.pindex, name)
+
+   -- Play open sound
+   UiSounds.play_open_inventory(self.pindex)
+
+   -- Call the UI's open method
+   if registered_uis[name] then registered_uis[name]:open(self.pindex, params or {}, self.controller) end
+end
+
+---Pop the top UI from the stack (close it)
+---@private
+---@return fa.ui.UiName? The name of the UI that was closed
+function Router:_pop_ui()
+   local stack = router_state[self.pindex].ui_stack
+   if #stack == 0 then return nil end
+
+   local ui_name = stack[#stack]
+
+   -- Call the UI's close method
+   if registered_uis[ui_name] then
+      local ui = registered_uis[ui_name]
       if ui.close then ui:close(self.pindex) end
    end
 
-   -- Pop from stack
+   -- Remove from stack
    table.remove(stack)
 
-   -- Update GUI based on what's left
+   -- Play close sound
+   UiSounds.play_close_inventory(self.pindex)
+
+   -- Update GUI to show new top (or clear if empty)
    if #stack > 0 then
-      -- Show the new top UI
       GameGui.set_active_ui(self.pindex, stack[#stack])
    else
-      -- Clear the game GUI
       GameGui.clear_active_ui(self.pindex)
    end
+
+   return ui_name
 end
 
----Internal method to close all open UIs
+---Clear all UIs from the stack
 ---@private
-function Router:_close_all_uis()
+function Router:_clear_ui_stack()
    local stack = router_state[self.pindex].ui_stack
-   -- Close from top to bottom
+   if #stack == 0 then return end
+
+   -- Close all UIs in reverse order (top to bottom)
    for i = #stack, 1, -1 do
       local ui_name = stack[i]
       if registered_uis[ui_name] then
@@ -211,8 +235,15 @@ function Router:_close_all_uis()
          if ui.close then ui:close(self.pindex) end
       end
    end
+
    -- Clear the stack
    router_state[self.pindex].ui_stack = {}
+
+   -- Play single close sound
+   UiSounds.play_close_inventory(self.pindex)
+
+   -- Clear the GUI
+   GameGui.clear_active_ui(self.pindex)
 end
 
 --[[
@@ -245,16 +276,8 @@ end
 ---@param name fa.ui.UiName
 ---@param params? table Optional parameters to pass to the child UI
 function Router:open_child_ui(name, params)
-   local stack = router_state[self.pindex].ui_stack
-
-   -- Push the new UI onto the stack without closing the current one
-   table.insert(stack, name)
-
-   -- Update the game GUI to show the new UI
-   GameGui.set_active_ui(self.pindex, name)
-
-   -- Open the new UI
-   if registered_uis[name] then registered_uis[name]:open(self.pindex, params or {}, self.controller) end
+   -- Just push without clearing
+   self:_push_ui(name, params)
 end
 
 ---Close the current UI and return a result to the parent
@@ -264,17 +287,14 @@ function Router:close_with_result(result, context)
    local stack = router_state[self.pindex].ui_stack
    if #stack == 0 then return end
 
-   -- Store the parent UI name before closing
-   local parent_ui_name = nil
-   if #stack > 1 then parent_ui_name = stack[#stack - 1] end
+   -- Get parent before popping
+   local parent_ui_name = #stack > 1 and stack[#stack - 1] or nil
 
-   -- Close and remove the current UI
-   self:close_ui()
+   -- Pop the current UI
+   self:_pop_ui()
 
-   -- If there's a parent UI, send it the result
+   -- Send result to parent if there is one
    if parent_ui_name and registered_uis[parent_ui_name] then
-      -- Send result to parent's on_child_result handler
-      -- Pass the context if provided
       local result_context = context and { context = context } or {}
       registered_uis[parent_ui_name]:on_child_result(self.pindex, result_context, result, self.controller)
    end
