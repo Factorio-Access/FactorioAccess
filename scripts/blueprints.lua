@@ -260,8 +260,8 @@ function mod.get_blueprint_width_and_height(pindex)
    --Determine blueprint dimensions from the final edges
    local bp_left_top = { x = math.floor(west_most_x), y = math.floor(north_most_y) }
    local bp_right_bottom = { x = math.ceil(east_most_x), y = math.ceil(south_most_y) }
-   local bp_width = bp_right_bottom.x - bp_left_top.x - 1
-   local bp_height = bp_right_bottom.y - bp_left_top.y - 1
+   local bp_width = bp_right_bottom.x - bp_left_top.x
+   local bp_height = bp_right_bottom.y - bp_left_top.y
    if
       storage.players[pindex].blueprint_hand_direction == dirs.east
       or storage.players[pindex].blueprint_hand_direction == dirs.west
