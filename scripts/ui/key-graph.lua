@@ -433,13 +433,13 @@ function Graph:on_tab_focused(ctx)
 end
 
 ---@param ctx fa.ui.graph.InternalTabCtx
----@param result_context table { ui_name: string, context: any }
 ---@param result any
-function Graph:on_child_result(ctx, result_context, result)
+---@param context any The context from when child UI was opened
+function Graph:on_child_result(ctx, result, context)
    self:_with_render(ctx, function()
       -- Find the node that opened the child UI using the stored context
       -- The context should be the node key
-      local node = self.render.nodes[result_context.context]
+      local node = self.render.nodes[context]
       if node and node.vtable.on_child_result then
          -- Call the node's on_child_result handler with the result
          local wrapped_ctx = self:_wrap_ctx(ctx, self.name, NO_MODIFIERS)

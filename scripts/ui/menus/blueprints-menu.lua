@@ -178,9 +178,7 @@ local function render(ctx)
 
    builder:add_clickable("reselect", { "fa.ui-blueprints-menu-reselect" }, {
       on_click = function(ctx)
-         ctx.controller:open_child_ui(UiRouter.UI_NAMES.BLUEPRINT_AREA_SELECTOR, {
-            node_key = "reselect"  -- Pass the node key so BoxSelector can return it
-         })
+         ctx.controller:open_child_ui(UiRouter.UI_NAMES.BLUEPRINT_AREA_SELECTOR, {}, "reselect")
       end,
       on_child_result = function(ctx, result)
          if result and result.box then
@@ -206,7 +204,7 @@ local function render(ctx)
                include_tiles = not exclude_tiles,
                include_fuel = true,
                include_trains = true,
-               include_station_names = true
+               include_station_names = true,
             })
 
             ctx.message:fragment({ "fa.ui-blueprints-area-selected" })

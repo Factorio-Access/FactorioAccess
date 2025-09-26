@@ -79,7 +79,7 @@ end
 ---@field on_previous_tab? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_next_section? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_previous_section? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_child_result? fun(self, pindex: number, result_context: table, result: any, controller: fa.ui.RouterController)
+---@field on_child_result? fun(self, pindex: number, result: any, context: any, controller: fa.ui.RouterController)
 
 ---@enum fa.ui.UiName
 mod.UI_NAMES = {
@@ -108,13 +108,13 @@ mod.UI_NAMES = {
 }
 
 ---@class fa.ui.RouterState
----@field ui_stack fa.ui.UiName[] Stack of open UI names (top is last)
+---@field ui_stack {name: fa.ui.UiName, context?: any}[] Stack of open UIs with contexts (top is last)
 
 ---@type table<number, fa.ui.RouterState>
 local router_state = StorageManager.declare_storage_module("ui_router", {
    ui_stack = {},
 }, {
-   ephemeral_state_version = 2,
+   ephemeral_state_version = 3,
 })
 
 ---@class fa.ui.Router
@@ -135,9 +135,8 @@ end
 
 ---Close the current UI and return a result to the parent
 ---@param result any The result to pass to the parent UI
----@param context? any Optional context to help identify which node/item requested the result
-function RouterController:close_with_result(result, context)
-   self.router:close_with_result(result, context)
+function RouterController:close_with_result(result)
+   self.router:close_with_result(result)
 end
 
 ---Open a child UI on top of the current one
@@ -174,11 +173,12 @@ end
 ---@private
 ---@param name fa.ui.UiName
 ---@param params? table
-function Router:_push_ui(name, params)
+---@param context? any Context to store with this UI entry
+function Router:_push_ui(name, params, context)
    local stack = router_state[self.pindex].ui_stack
 
-   -- Add to stack
-   table.insert(stack, name)
+   -- Add to stack with context
+   table.insert(stack, { name = name, context = context })
 
    -- Update GUI to show new top
    GameGui.set_active_ui(self.pindex, name)
@@ -197,7 +197,8 @@ function Router:_pop_ui()
    local stack = router_state[self.pindex].ui_stack
    if #stack == 0 then return nil end
 
-   local ui_name = stack[#stack]
+   local top_entry = stack[#stack]
+   local ui_name = top_entry.name
 
    -- Call the UI's close method
    if registered_uis[ui_name] then
@@ -213,7 +214,7 @@ function Router:_pop_ui()
 
    -- Update GUI to show new top (or clear if empty)
    if #stack > 0 then
-      GameGui.set_active_ui(self.pindex, stack[#stack])
+      GameGui.set_active_ui(self.pindex, stack[#stack].name)
    else
       GameGui.clear_active_ui(self.pindex)
    end
@@ -229,7 +230,8 @@ function Router:_clear_ui_stack()
 
    -- Close all UIs in reverse order (top to bottom)
    for i = #stack, 1, -1 do
-      local ui_name = stack[i]
+      local entry = stack[i]
+      local ui_name = entry.name
       if registered_uis[ui_name] then
          local ui = registered_uis[ui_name]
          if ui.close then ui:close(self.pindex) end
@@ -259,8 +261,8 @@ function Router:is_ui_open(name)
    local stack = router_state[self.pindex].ui_stack
    if not name then return #stack > 0 end
    -- Check if name exists anywhere in the stack
-   for _, ui_name in ipairs(stack) do
-      if ui_name == name then return true end
+   for _, entry in ipairs(stack) do
+      if entry.name == name then return true end
    end
    return false
 end
@@ -269,34 +271,37 @@ end
 function Router:get_open_ui_name()
    local stack = router_state[self.pindex].ui_stack
    if #stack == 0 then return nil end
-   return stack[#stack] -- Return top of stack
+   return stack[#stack].name -- Return name from top of stack
 end
 
 ---Open a child UI on top of the current one without closing it
 ---@param name fa.ui.UiName
 ---@param params? table Optional parameters to pass to the child UI
-function Router:open_child_ui(name, params)
+---@param context? any Optional context to store with this UI
+function Router:open_child_ui(name, params, context)
    -- Just push without clearing
-   self:_push_ui(name, params)
+   self:_push_ui(name, params, context)
 end
 
 ---Close the current UI and return a result to the parent
 ---@param result any The result to pass to the parent UI
----@param context? any Optional context to help identify which node/item requested the result
-function Router:close_with_result(result, context)
+function Router:close_with_result(result)
    local stack = router_state[self.pindex].ui_stack
    if #stack == 0 then return end
 
+   -- Get the context of the UI being closed
+   local closing_ui = stack[#stack]
+   local context = closing_ui.context
+
    -- Get parent before popping
-   local parent_ui_name = #stack > 1 and stack[#stack - 1] or nil
+   local parent_ui = #stack > 1 and stack[#stack - 1] or nil
 
    -- Pop the current UI
    self:_pop_ui()
 
    -- Send result to parent if there is one
-   if parent_ui_name and registered_uis[parent_ui_name] then
-      local result_context = context and { context = context } or {}
-      registered_uis[parent_ui_name]:on_child_result(self.pindex, result_context, result, self.controller)
+   if parent_ui and registered_uis[parent_ui.name] then
+      registered_uis[parent_ui.name]:on_child_result(self.pindex, result, context, self.controller)
    end
 end
 
@@ -345,7 +350,8 @@ local function create_ui_handler(method_name, modifiers)
 
       -- Only check the top UI (the active one)
       if #stack > 0 then
-         local ui_name = stack[#stack]
+         local top_entry = stack[#stack]
+         local ui_name = top_entry.name
          if registered_uis[ui_name] then
             local ui = registered_uis[ui_name]
             -- Check if this UI has the method we're looking for
@@ -433,8 +439,8 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event)
          -- Send result to the top UI on the stack
          local ui = registered_uis[top_ui_name]
          if ui and ui.on_child_result then
-            -- Pass context and result to the handler
-            ui:on_child_result(pindex, context, event.element.text, router.controller)
+            -- Pass result first, then context to the handler
+            ui:on_child_result(pindex, event.element.text, context, router.controller)
          end
          -- Close the textbox
          GameGui.close_textbox(pindex)

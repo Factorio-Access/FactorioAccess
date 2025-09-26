@@ -169,12 +169,7 @@ function mod.sync_build_cursor_graphics(pindex)
       --Invalid stack: Hide the objects
       if dir_indicator ~= nil then dir_indicator.visible = false end
       if player.building_footprint ~= nil then player.building_footprint.visible = false end
-   elseif
-      stack
-      and stack.valid_for_read
-      and stack.is_blueprint
-      and stack.is_blueprint_setup()
-   then
+   elseif stack and stack.valid_for_read and stack.is_blueprint and stack.is_blueprint_setup() then
       --Blueprints have their own data:
       --Redraw the direction indicator arrow
       if dir_indicator ~= nil then player.building_dir_arrow.destroy() end
@@ -223,10 +218,7 @@ function mod.sync_build_cursor_graphics(pindex)
       --if player.building_footprint ~= nil then rendering.set_visible(player.building_footprint, false) end
 
       --Tile placement preview
-      if
-         stack.valid
-         and stack.prototype.place_as_tile_result
-      then
+      if stack.valid and stack.prototype.place_as_tile_result then
          local left_top = {
             math.floor(cursor_pos.x) - cursor_size,
             math.floor(cursor_pos.y) - cursor_size,

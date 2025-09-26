@@ -12,7 +12,6 @@ local mod = {}
 ---@class fa.ui.BoxSelectorState
 ---@field first_click? {x: number, y: number, modifiers: table, is_right_click: boolean}
 ---@field callback_params table
----@field node_key? string The key of the node that opened this selector
 
 ---@type table<number, table<string, fa.ui.BoxSelectorState>>
 local box_selector_storage = StorageManager.declare_storage_module("box_selector", {}, {
@@ -30,10 +29,9 @@ function BoxSelector:open(pindex, parameters, controller)
    box_selector_storage[pindex][self.ui_name] = {
       first_click = nil,
       callback_params = parameters or {},
-      node_key = parameters and parameters.node_key  -- Store the node key that opened this
    }
 
-   Speech.speak(pindex, {"fa.box-selector-intro"})
+   Speech.speak(pindex, { "fa.box-selector-intro" })
 end
 
 function BoxSelector:close(pindex)
@@ -67,9 +65,9 @@ function BoxSelector:_handle_click(pindex, modifiers, is_right_click, controller
          x = cursor_pos.x,
          y = cursor_pos.y,
          modifiers = modifiers or {},
-         is_right_click = is_right_click
+         is_right_click = is_right_click,
       }
-      Speech.speak(pindex, {"fa.box-selector-second-point"})
+      Speech.speak(pindex, { "fa.box-selector-second-point" })
    else
       -- Second click - complete selection
       local result = {
@@ -78,28 +76,26 @@ function BoxSelector:_handle_click(pindex, modifiers, is_right_click, controller
             x = cursor_pos.x,
             y = cursor_pos.y,
             modifiers = modifiers or {},
-            is_right_click = is_right_click
+            is_right_click = is_right_click,
          },
          box = {
             left_top = {
                x = math.min(state.first_click.x, cursor_pos.x),
-               y = math.min(state.first_click.y, cursor_pos.y)
+               y = math.min(state.first_click.y, cursor_pos.y),
             },
             right_bottom = {
                x = math.max(state.first_click.x, cursor_pos.x),
-               y = math.max(state.first_click.y, cursor_pos.y)
-            }
+               y = math.max(state.first_click.y, cursor_pos.y),
+            },
          },
-         controller = controller
+         controller = controller,
       }
 
       -- Execute callback if provided
-      if self.callback then
-         self.callback(pindex, state.callback_params, result)
-      end
+      if self.callback then self.callback(pindex, state.callback_params, result) end
 
-      -- Close with result and pass node_key as context
-      controller:close_with_result(result, state.node_key)
+      -- Close with result
+      controller:close_with_result(result)
    end
 end
 
@@ -111,7 +107,7 @@ function mod.declare_box_selector(declaration)
    ---@type fa.ui.BoxSelector
    local ret = setmetatable({
       ui_name = declaration.ui_name,
-      callback = declaration.callback,  -- Optional
+      callback = declaration.callback, -- Optional
       declaration = declaration,
    }, BoxSelector_meta)
 

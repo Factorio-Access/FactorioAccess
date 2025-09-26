@@ -63,7 +63,7 @@ local test_box_selector = BoxSelector.declare_box_selector({
       msg:fragment("Box selection result: ")
       msg:fragment(serpent.line(result, { nocode = true }))
       Speech.speak(pindex, msg:build())
-   end
+   end,
 })
 
 UiRouter.register_ui(test_box_selector)

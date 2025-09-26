@@ -302,18 +302,18 @@ TabList.on_rightmost = build_simple_method("on_rightmost")
 
 ---Handle child result from textbox or other child UI
 ---@param pindex number
----@param result_context table { ui_name: string, context: any }
 ---@param result any
+---@param context any The context from when child UI was opened
 ---@param controller fa.ui.RouterController
-function TabList:on_child_result(pindex, result_context, result, controller)
+function TabList:on_child_result(pindex, result, context, controller)
    -- Re-render before handling the event (needs controller for potential close)
    self:_rerender(pindex, controller)
 
    local tl = tablist_storage[pindex][self.ui_name]
    if not tl.currently_open then return end
 
-   -- Pass result_context and result to the active tab's handler
-   self:_do_callback(pindex, tl.active_tab, "on_child_result", nil, { result_context, result }, controller)
+   -- Pass result and context to the active tab's handler
+   self:_do_callback(pindex, tl.active_tab, "on_child_result", nil, { result, context }, controller)
 end
 
 -- Perform the flow for focusing a tab. Does this unconditionally, so be careful
