@@ -33,11 +33,6 @@ function mod.sync_build_cursor_graphics(pindex)
       --Redraw direction indicator arrow
       if dir_indicator ~= nil then player.building_dir_arrow.destroy() end
       local arrow_pos = vp:get_cursor_pos()
-      if storage.players[pindex].build_lock and stack.name ~= "rail" then
-         arrow_pos = FaUtils.center_of_tile(
-            FaUtils.offset_position_legacy(arrow_pos, storage.players[pindex].player_direction, -2)
-         )
-      end
       player.building_dir_arrow = rendering.draw_sprite({
          sprite = "fluid.crude-oil",
          tint = { r = 0.25, b = 0.25, g = 1.0, a = 0.75 },
@@ -68,8 +63,6 @@ function mod.sync_build_cursor_graphics(pindex)
          position = vp:get_cursor_pos(),
          building_direction = dir,
          player_direction = p_dir,
-
-         build_lock = storage.players[pindex].build_lock,
          is_rail_vehicle = (stack.name == "rail"),
       })
 

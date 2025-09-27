@@ -1510,8 +1510,6 @@ local function move(direction, pindex, nudged)
          if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result ~= nil then
             Graphics.sync_build_cursor_graphics(pindex)
          end
-
-         if storage.players[pindex].build_lock then BuildingTools.build_item_in_hand(pindex) end
       else
          Speech.speak(pindex, "Tile Occupied")
          moved_success = false
@@ -1548,15 +1546,6 @@ local function move(direction, pindex, nudged)
 
       --Rotate belts in hand for build lock Mode
       local stack = game.get_player(pindex).cursor_stack
-      if
-         storage.players[pindex].build_lock
-         and stack.valid_for_read
-         and stack.valid
-         and stack.prototype.place_result ~= nil
-         and stack.prototype.place_result.type == "transport-belt"
-      then
-         storage.players[pindex].building_direction = storage.players[pindex].player_direction
-      end
 
       --Play a sound for audio ruler alignment (telestep turned)
       Rulers.update_from_cursor(pindex)
@@ -1598,11 +1587,6 @@ local function cursor_mode_move(direction, pindex, single_only)
          and (stack.prototype.place_result ~= nil or stack.is_blueprint)
       then
          Graphics.sync_build_cursor_graphics(pindex)
-      end
-
-      --Apply build lock if active
-      if storage.players[pindex].build_lock and stack and stack.valid_for_read and stack.valid then
-         BuildingTools.build_item_in_hand(pindex)
       end
 
       --Update cursor highlight
@@ -2660,7 +2644,6 @@ local function toggle_cursor_mode(pindex, muted)
    local vp = Viewpoint.get_viewpoint(pindex)
    if p.character == nil then
       vp:set_cursor_anchored(false)
-      storage.players[pindex].build_lock = false
       Speech.speak(pindex, "Cannot anchor cursor while there is no character")
       return
    end
@@ -2668,7 +2651,6 @@ local function toggle_cursor_mode(pindex, muted)
    if not vp:get_cursor_anchored() then
       --Enable
       vp:set_cursor_anchored(true)
-      storage.players[pindex].build_lock = false
 
       --Finally, read the new tile
       if muted ~= true then read_tile(pindex, "Cursor mode enabled, ") end
@@ -3736,13 +3718,7 @@ EventManager.on_event(
 ---@param event EventData.CustomInputEvent
 local function kb_toggle_build_lock(event)
    local pindex = event.player_index
-   if storage.players[pindex].build_lock == true then
-      storage.players[pindex].build_lock = false
-      Speech.speak(pindex, "Build lock disabled.")
-   else
-      storage.players[pindex].build_lock = true
-      Speech.speak(pindex, "Build lock enabled")
-   end
+   Speech.speak(pindex, "Build lock needs reimplementation for 2.0")
 end
 
 --Toggle building while walking
@@ -3750,8 +3726,6 @@ EventManager.on_event(
    "fa-c-b",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-
       kb_toggle_build_lock(event)
    end
 )

@@ -78,8 +78,6 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
          position = pos,
          building_direction = storage.players[pindex].building_direction,
          player_direction = storage.players[pindex].player_direction,
-
-         build_lock = storage.players[pindex].build_lock,
          is_rail_vehicle = false,
       })
 
@@ -91,41 +89,7 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
       storage.players[pindex].building_footprint_left_top = footprint.left_top
       storage.players[pindex].building_footprint_right_bottom = footprint.right_bottom
 
-      -- Electric pole placement checks
-      local pole_configs = {
-         ["small-electric-pole"] = { min_distance = 6.5, max_radius = 7.6, use_center_tile = true },
-         ["medium-electric-pole"] = { min_distance = 6.5, max_radius = 8, use_center_tile = true },
-         ["big-electric-pole"] = { min_distance = 28.5, max_radius = 30, offset_back = true },
-         ["substation"] = { min_distance = 17.01, max_radius = 18.01, offset_back = true },
-      }
-
-      local pole_config = pole_configs[stack.name]
-      if pole_config and storage.players[pindex].build_lock == true then
-         local check_position = position
-
-         -- Apply position adjustments
-         if pole_config.offset_back then
-            check_position = FaUtils.offset_position_legacy(position, storage.players[pindex].player_direction, -1)
-            position = check_position
-         elseif pole_config.use_center_tile then
-            check_position = FaUtils.center_of_tile(position)
-         end
-
-         local surf = game.get_player(pindex).surface
-         local can_place, any_found = check_electric_pole_placement(
-            surf,
-            check_position,
-            stack.name,
-            pole_config.min_distance,
-            pole_config.max_radius
-         )
-
-         if not can_place then
-            game.get_player(pindex).play_sound({ path = "Inventory-Move" })
-            if not any_found then game.get_player(pindex).play_sound({ path = "utility/cannot_build" }) end
-            return
-         end
-      elseif placing_underground_belt and storage.players[pindex].underground_connects == true then
+      if placing_underground_belt and storage.players[pindex].underground_connects == true then
          --Flip the chute
          storage.players[pindex].building_direction = (storage.players[pindex].building_direction + dirs.south)
             % (2 * dirs.south)
@@ -161,16 +125,15 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
       else
          --Report errors
          game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
-         if storage.players[pindex].build_lock == false then
-            --Explain build error
-            local result = "Cannot place that there "
-            local build_area = {
-               storage.players[pindex].building_footprint_left_top,
-               storage.players[pindex].building_footprint_right_bottom,
-            }
-            result = mod.identify_building_obstacle(pindex, build_area, nil)
-            Speech.speak(pindex, result)
-         end
+
+         --Explain build error
+         local result = "Cannot place that there "
+         local build_area = {
+            storage.players[pindex].building_footprint_left_top,
+            storage.players[pindex].building_footprint_right_bottom,
+         }
+         result = mod.identify_building_obstacle(pindex, build_area, nil)
+         Speech.speak(pindex, result)
       end
       --Restore the original underground belt chute preview
       if placing_underground_belt and storage.players[pindex].underground_connects == true then
@@ -412,8 +375,6 @@ function mod.nudge_key(direction, event)
             position = FaUtils.offset_position_legacy(ent.position, direction, 1),
             building_direction = ent.direction,
             player_direction = dirs.north, -- Not relevant for nudging
-
-            build_lock = false,
             is_rail_vehicle = false,
          })
          local left_top = footprint.left_top
@@ -1139,10 +1100,7 @@ function mod.teleport_player_out_of_build_area(left_top, right_bottom, pindex)
    local pos = p.character.position
    if pos.x < left_top.x or pos.x > right_bottom.x or pos.y < left_top.y or pos.y > right_bottom.y then return end
    if p.walking_state.walking == true then return end
-   if storage.players[pindex].build_lock == true then
-      p.play_sound({ path = "player-bump-stuck-alert" })
-      return
-   end
+
    local exits = {}
    exits[1] = { x = left_top.x - 1, y = left_top.y - 0 }
    exits[2] = { x = left_top.x - 0, y = left_top.y - 1 }

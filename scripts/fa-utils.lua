@@ -356,7 +356,6 @@ Parameters:
 - params.position: The base position (cursor or player position)
 - params.building_direction: The entity's rotation (dirs.north, dirs.east, etc.)
 - params.player_direction: The player's facing direction (for non-cursor mode)
-- params.build_lock: Whether build lock mode is active
 - params.is_rail_vehicle: Special handling for locomotives/wagons
 
 Returns:
