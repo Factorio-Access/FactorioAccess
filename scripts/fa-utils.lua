@@ -423,14 +423,6 @@ function mod.get_ent_area_from_name(ent_name, pindex)
    return prototypes.entity[ent_name].tile_width * prototypes.entity[ent_name].tile_height
 end
 
---Returns true/false on whether an entity is located within a defined area.
-function mod.is_ent_inside_area(ent_name, area_left_top, area_right_bottom, pindex)
-   local ents = game
-      .get_player(pindex).surface
-      .find_entities_filtered({ name = ent_name, area = { area_left_top, area_right_bottom }, limit = 1 })
-   return #ents > 0
-end
-
 --Returns the map position of the northwest corner of an entity.
 --NOTE: If the calculation result gives a tile that does not touch the ent, then the ent's own position is returned instead.
 --TODO fix the calculation (several attempts have failed so far because fixing it for one group of ents breaks it for others).
@@ -544,71 +536,6 @@ function mod.get_entity_part_at_cursor(pindex)
    return location
 end
 
---For a list of edge points of an aggregate entity, returns the nearest one.
-function mod.nearest_edge(edges, pos, name)
-   pos = table.deepcopy(pos)
-   if name == "forest" then
-      pos.x = pos.x / 8
-      pos.y = pos.y / 8
-   end
-   local result = {}
-   local min = math.huge
-   for str, b in pairs(edges) do
-      local edge_pos = mod.str2pos(str)
-      local d = util.distance(pos, edge_pos)
-      if d < min then
-         result = edge_pos
-         min = d
-      end
-   end
-   if name == "forest" then
-      result.x = result.x * 8 - 4
-      result.y = result.y * 8 - 4
-   end
-   return result
-end
-
---Checks whether a rectangle defined by the two points falls fully within the rectangular range value
-function mod.is_rectangle_fully_within_player_range(pindex, left_top, right_bottom, range)
-   local pos = game.get_player(pindex).position
-   if math.abs(left_top.x - pos.x) > range then return false end
-   if math.abs(left_top.y - pos.y) > range then return false end
-   if math.abs(right_bottom.x - pos.x) > range then return false end
-   if math.abs(right_bottom.y - pos.y) > range then return false end
-   return true
-end
-
-function mod.scale_area(area, factor)
-   local result = table.deepcopy(area)
-   result.left_top.x = area.left_top.x * factor
-   result.left_top.y = area.left_top.y * factor
-   result.right_bottom.x = area.right_bottom.x * factor
-   result.right_bottom.y = area.right_bottom.y * factor
-   return result
-end
-
---Checks whether a given position is at the edge of an area, in the selected direction
-function mod.area_edge(area, dir, pos, name)
-   local adjusted_area = table.deepcopy(area)
-   if name == "forest" then
-      local chunk_size = 8
-      adjusted_area.left_top.x = adjusted_area.left_top.x / chunk_size
-      adjusted_area.left_top.y = adjusted_area.left_top.y / chunk_size
-      adjusted_area.right_bottom.x = adjusted_area.right_bottom.x / chunk_size
-      adjusted_area.right_bottom.y = adjusted_area.right_bottom.y / chunk_size
-   end
-
-   -- Define edge checks for each direction
-   local edge_checks = {
-      [dirs.north] = adjusted_area.left_top.y == math.floor(pos.y),
-      [dirs.east] = adjusted_area.right_bottom.x == math.ceil(0.001 + pos.x),
-      [dirs.south] = adjusted_area.right_bottom.y == math.ceil(0.001 + pos.y),
-      [dirs.west] = adjusted_area.left_top.x == math.floor(pos.x),
-   }
-
-   return edge_checks[dir] or false
-end
-
 --Returns the top left and bottom right corners for a rectangle that takes pos_1 and pos_2 as any of its four corners.
 function mod.get_top_left_and_bottom_right(pos_1, pos_2)
    local top_left = { x = math.min(pos_1.x, pos_2.x), y = math.min(pos_1.y, pos_2.y) }
@@ -649,34 +576,6 @@ function mod.table_concat(T1, T2)
    end
 end
 
-function mod.pos2str(pos)
-   return pos.x .. " " .. pos.y
-end
-
-function mod.str2pos(str)
-   local t = {}
-   for s in string.gmatch(str, "([^%s]+)") do
-      table.insert(t, s)
-   end
-   return { x = t[1], y = t[2] }
-end
-
-function mod.breakup_string(str)
-   local result = { "" }
-   if table_size(str) > 20 then
-      local i = 0
-      while i < #str do
-         if i % 20 == 0 then table.insert(result, { "" }) end
-         ---@diagnostic disable-next-line: param-type-mismatch
-         table.insert(result[math.ceil((i + 1) / 20) + 1], table.deepcopy(str[i + 1]))
-         i = i + 1
-      end
-      return result
-   else
-      return str
-   end
-end
-
 --Converts a dictionary into an iterable array.
 function mod.get_iterable_array(dict)
    local result = {}
@@ -693,42 +592,6 @@ function mod.into_lookup(array)
       lookup[value] = key
    end
    return lookup
-end
-
---Helper function to get substring before or after a delimiter
-local function get_substring_split(str, delimiter, get_before)
-   local first, final = string.find(str, delimiter, 1, true)
-   if get_before then
-      if first == nil or first == 1 then
-         return str
-      else
-         return string.sub(str, 1, first - 1)
-      end
-   else -- get_after
-      if final == nil then return str end
-      if first == 1 then return string.sub(str, final + 1) end
-      if final == string.len(str) then return str end
-      return string.sub(str, final + 1)
-   end
-end
-
---Returns the part of a substring before a space character. BUG: Breaks when parsing dashes.
-function mod.get_substring_before_space(str)
-   return get_substring_split(str, " ", true)
-end
-
---Returns the part of a substring after a space character. BUG: Breaks when parsing dashes.
-function mod.get_substring_after_space(str)
-   return get_substring_split(str, " ", false)
-end
-
---Returns the part of a substring before a comma character. BUG: Breaks when parsing dashes.
-function mod.get_substring_before_comma(str)
-   return get_substring_split(str, ",", true)
-end
-
-function mod.get_substring_before_dash(str)
-   return get_substring_split(str, "-", true)
 end
 
 --Reads the localised result for the distance and direction from one point to the other. Also mentions if they are precisely aligned. Distances are rounded.
@@ -762,32 +625,6 @@ function mod.ent_name_locale(ent)
       name = resource_prototype.localised_name
    end
    return name
-end
-
---small utility function for getting the index of a named object from an array of objects.
-function mod.index_of_entity(array, value)
-   if next(array) == nil then return nil end
-   for i = 1, #array, 1 do
-      if array[i].name == value then return i end
-   end
-   return nil
-end
-
---Returns the first found item prototype in the currently selected crafting menu slot, if any. Else returns nil.
-function mod.get_prototype_of_item_product(pindex)
-   local recipe =
-      storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index]
-   if recipe and recipe.valid and recipe.products and recipe.products[1] then
-      for i, product in ipairs(recipe.products) do
-         local prototype = nil
-         if product.type == "item" then
-            --Select product item #1
-            prototype = prototypes.item[product.name]
-            if prototype then return prototype end
-         end
-      end
-   end
-   return nil
 end
 
 --Rounds down a number to the nearest thousand after 10 thousand, and nearest 100 thousand after 1 million.
@@ -828,18 +665,6 @@ function mod.express_in_stacks(count, stack_size, precise)
    end
    if count > 10000 then result = "infinite" end
    return result
-end
-
-function mod.factorio_default_sort(k1, k2)
-   if k1.group.order ~= k2.group.order then
-      return k1.group.order < k2.group.order
-   elseif k1.subgroup.order ~= k2.subgroup.order then
-      return k1.subgroup.order < k2.subgroup.order
-   elseif k1.order ~= k2.order then
-      return k1.order < k2.order
-   else
-      return k1.name < k2.name
-   end
 end
 
 function mod.sort_ents_by_distance_from_pos(pos, ents)
@@ -914,28 +739,6 @@ function mod.identify_water_shores(pindex)
       result = " open "
    end
    return result
-end
-
---Checks whether the player has not walked for 1 second. Uses the bump alert checks.
-function mod.player_was_still_for_1_second(pindex)
-   local b = storage.players[pindex].bump
-   if b == nil or b.filled ~= true then
-      --It is too soon to report anything
-      return false
-   end
-   local diff_x1 = math.abs(b.last_pos_1.x - b.last_pos_2.x)
-   local diff_x2 = math.abs(b.last_pos_2.x - b.last_pos_3.x)
-   local diff_x3 = math.abs(b.last_pos_3.x - b.last_pos_4.x)
-   local diff_y1 = math.abs(b.last_pos_1.y - b.last_pos_2.y)
-   local diff_y2 = math.abs(b.last_pos_2.y - b.last_pos_3.y)
-   local diff_y3 = math.abs(b.last_pos_3.y - b.last_pos_4.y)
-   if (diff_x1 + diff_x2 + diff_x3 + diff_y1 + diff_y2 + diff_y3) == 0 then
-      --Confirmed no movement in the past 60 ticks
-      return true
-   else
-      --Confirmed some movement in the past 60 ticks
-      return false
-   end
 end
 
 -- Concatenate a bunch of stuff together, efficiently, and return this as a
