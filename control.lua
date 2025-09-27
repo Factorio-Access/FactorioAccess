@@ -706,26 +706,6 @@ function swap_weapon_backward(pindex, write_to_character)
    return gun_index
 end
 
-function player_inventory_click(pindex, left_click)
-   local click_is_left = left_click or true
-   local p = game.get_player(pindex)
-   local stack_cur = p.cursor_stack
-   local stack_inv = storage.players[pindex].inventory.lua_inventory[storage.players[pindex].inventory.index]
-
-   if stack_cur and stack_cur.valid_for_read then
-      --Full hand
-      if stack_inv and stack_inv.valid_for_read and stack_inv.name ~= stack_cur.name then
-      else
-      end
-   else
-      --Empty hand
-   end
-
-   --Play sound and update known inv size
-   sounds.play_menu_click(p.index)
-   storage.players[pindex].inventory.max = #storage.players[pindex].inventory.lua_inventory
-end
-
 function clicked_on_entity(ent, pindex)
    local p = game.get_player(pindex)
    if ent == nil then
@@ -994,28 +974,6 @@ function fix_walk(pindex)
    -- Always use normal walking speed
    player.character_running_speed_modifier = 0 -- 100% + 0 = 100%
    storage.players[pindex].position = player.position
-end
-
---GUI action confirmed, such as by pressing ENTER
-
---Returns the currently selected entity inventory based on the current mod menu and mod sector.
-local function get_selected_inventory_and_slot(pindex)
-   local p = game.get_player(pindex)
-   local c = p.character
-   if not c then return nil end
-   local inv = nil
-   local index = nil
-   local menu = storage.players[pindex].menu
-   if menu == "inventory" then
-      inv = c.get_main_inventory()
-      index = storage.players[pindex].inventory.index
-   elseif menu == "building" or menu == "vehicle" then
-      -- TODO: Replace with capability-based UI
-      -- For now, return player inventory as fallback
-      inv = c.get_main_inventory()
-      index = storage.players[pindex].inventory.index
-   end
-   return inv, index
 end
 
 EventManager.on_event(
@@ -3377,14 +3335,6 @@ EventManager.on_event(
       end
    end
 )
-
----Handles menu actions when pressing shift+leftbracket
----Merge of old crafting-all and transfer-one-stack
----@param event EventData.CustomInputEvent
-local function kb_menu_action(event)
-   local pindex = event.player_index
-   local router = UiRouter.get_router(pindex)
-end
 
 --You can equip armor, armor equipment, guns, ammo. You can equip from the hand, or from the inventory with an empty hand.
 ---@param event EventData.CustomInputEvent
