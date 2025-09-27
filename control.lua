@@ -469,21 +469,6 @@ function on_tick(event)
          BumpDetection.check_and_play_bump_alert_sound(pindex, event.tick)
          BumpDetection.check_and_play_stuck_alert_sound(pindex, event.tick)
       end
-   elseif event.tick % 15 == 3 then
-      --Adjust camera if in remote view
-      for pindex, player in pairs(players) do
-         storage.players[pindex].closed_map_count = storage.players[pindex].closed_map_count or 0
-         if storage.players[pindex].remote_view == true then
-            sync_remote_view(pindex)
-            storage.players[pindex].closed_map_count = 0
-         elseif storage.players[pindex].vanilla_mode ~= true and storage.players[pindex].closed_map_count < 1 then
-            --game.get_player(pindex).close_map()
-            storage.players[pindex].closed_map_count = storage.players[pindex].closed_map_count + 1
-         end
-      end
-   elseif event.tick % 30 == 7 then
-      --Update menu visuals
-      Graphics.update_menu_visuals()
    elseif event.tick % 90 == 13 then
       for pindex, player in pairs(players) do
          --Fix running speed bug (toggle walk also fixes it)
@@ -520,14 +505,6 @@ EventManager.on_event(
       TestFramework.on_tick(event)
    end
 )
-
---Focuses camera on the cursor position.
-function sync_remote_view(pindex)
-   local p = game.get_player(pindex)
-   local vp = Viewpoint.get_viewpoint(pindex)
-   p.zoom_to_world(vp:get_cursor_pos())
-   Graphics.sync_build_cursor_graphics(pindex)
-end
 
 --Makes the character face the cursor, choosing the nearest of 4 cardinal directions. Can be overwriten by vanilla move keys.
 function turn_to_cursor_direction_cardinal(pindex)
@@ -1481,7 +1458,7 @@ local function clear_fa_gui(pindex)
 end
 
 --Pause / resume the game. If a menu GUI is open, ESC makes it close the menu instead
----@param event EventData
+---@param event EventData.CustomInputEvent
 local function kb_pause_menu(event)
    local pindex = event.player_index
    local player = game.get_player(pindex)
@@ -1499,9 +1476,13 @@ local function kb_pause_menu(event)
    clear_fa_gui(pindex)
 end
 
-EventManager.on_event("fa-escape", function(event)
-   kb_pause_menu(event)
-end)
+EventManager.on_event(
+   "fa-escape",
+   ---@param event EventData.CustomInputEvent
+   function(event)
+      kb_pause_menu(event)
+   end
+)
 
 --Move the player character (or adapt the cursor to smooth walking)
 --Returns false if failed to move
@@ -2709,7 +2690,7 @@ local function toggle_cursor_mode(pindex, muted)
    if p.character == nil then
       vp:set_cursor_anchored(false)
       storage.players[pindex].build_lock = false
-      Speech.speak("Cannot anchor cursor while there is no character", pindex)
+      Speech.speak(pindex, "Cannot anchor cursor while there is no character")
       return
    end
 
@@ -4254,7 +4235,7 @@ EventManager.on_event(
    "fa-c-space",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      Speech.speak("Not implemented in Factorio 2.0 yet due to API limitations", pindex)
+      Speech.speak(pindex, "Not implemented in Factorio 2.0 yet due to API limitations")
    end
 )
 

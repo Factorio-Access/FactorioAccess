@@ -42,7 +42,7 @@ local mocked_events = {}
 
 ---Register a handler for an event
 ---@param event_id defines.events|string|(defines.events|string)[] The event ID from defines.events, custom input name, or array of event IDs
----@param handler fun(event: EventData, pindex?: integer): EventHandlerResult The function to call when the event fires
+---@param handler fun(event: any, pindex?: integer): EventHandlerResult The function to call when the event fires
 ---@param priority? "test"|"ui"|"world" Optional priority (defaults to WORLD)
 function mod.on_event(event_id, handler, priority)
    priority = priority or mod.EVENT_KIND.WORLD

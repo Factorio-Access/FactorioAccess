@@ -52,23 +52,6 @@ function mod.show_sprite_demo(pindex)
    s5.style.size = 5
 end
 
---For each player, checks the open menu and appropriately calls to update the overhead sprite and the open GUI.
-function mod.update_menu_visuals()
-   for pindex, player in pairs(players) do
-      local router = UiRouter.get_router(pindex)
-
-      if game.get_player(pindex).opened ~= nil then
-         --Not in menu, but open GUI
-         mod.update_overhead_sprite("utility.white_square", 2, 1.25, pindex)
-         mod.update_custom_GUI_sprite(nil, 1, pindex)
-      else
-         --Not in menu, no open GUI
-         mod.update_overhead_sprite(nil, 1, 1, pindex)
-         mod.update_custom_GUI_sprite(nil, 1, pindex)
-      end
-   end
-end
-
 --Updates graphics to match the mod's current construction preview in hand.
 --Draws stuff like the building footprint, direction indicator arrow, selection tool selection box.
 --Also moves the mouse pointer to hold the preview at the correct position on screen.
