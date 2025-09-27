@@ -324,52 +324,57 @@ read_tile_inner = function(pindex, start_text)
 end
 
 --Update the position info and cursor info during smooth walking.
-EventManager.on_event(defines.events.on_player_changed_position, function(event, pindex)
-   local router = UiRouter.get_router(pindex)
+EventManager.on_event(
+   defines.events.on_player_changed_position,
+   ---@param event EventData.on_player_changed_position
+   ---@param pindex integer
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
 
-   local p = game.get_player(pindex)
-   storage.players[pindex].position = p.position
-   local pos = p.position
-   local vp = Viewpoint.get_viewpoint(pindex)
+      local p = game.get_player(pindex)
+      storage.players[pindex].position = p.position
+      local pos = p.position
+      local vp = Viewpoint.get_viewpoint(pindex)
 
-   --Update cursor graphics
-   local stack = p.cursor_stack
-   if stack and stack.valid_for_read and stack.valid then Graphics.sync_build_cursor_graphics(pindex) end
+      --Update cursor graphics
+      local stack = p.cursor_stack
+      if stack and stack.valid_for_read and stack.valid then Graphics.sync_build_cursor_graphics(pindex) end
 
-   --Name a detected entity that you can or cannot walk on, or a tile you cannot walk on, and play a sound to indicate multiple consecutive detections
-   EntitySelection.refresh_player_tile(pindex)
-   local ent = EntitySelection.get_first_ent_at_tile(pindex)
-   if
-      not storage.players[pindex].vanilla_mode
-      and (
-         (ent ~= nil and ent.valid)
-         or (p.surface.can_place_entity({ name = "character", position = vp:get_cursor_pos() }) == false)
-      )
-   then
-      Graphics.draw_cursor_highlight(pindex, ent, nil)
-      if p.driving then return end
-
+      --Name a detected entity that you can or cannot walk on, or a tile you cannot walk on, and play a sound to indicate multiple consecutive detections
+      EntitySelection.refresh_player_tile(pindex)
+      local ent = EntitySelection.get_first_ent_at_tile(pindex)
       if
-         ent ~= nil
-         and ent.valid
-         and (p.character == nil or (p.character ~= nil and p.character.unit_number ~= ent.unit_number))
+         not storage.players[pindex].vanilla_mode
+         and (
+            (ent ~= nil and ent.valid)
+            or (p.surface.can_place_entity({ name = "character", position = vp:get_cursor_pos() }) == false)
+         )
       then
          Graphics.draw_cursor_highlight(pindex, ent, nil)
-         p.selected = ent
-         sounds.play_close_inventory(p.index)
+         if p.driving then return end
+
+         if
+            ent ~= nil
+            and ent.valid
+            and (p.character == nil or (p.character ~= nil and p.character.unit_number ~= ent.unit_number))
+         then
+            Graphics.draw_cursor_highlight(pindex, ent, nil)
+            p.selected = ent
+            sounds.play_close_inventory(p.index)
+         else
+            Graphics.draw_cursor_highlight(pindex, nil, nil)
+            p.selected = nil
+         end
+
+         read_tile(pindex)
       else
          Graphics.draw_cursor_highlight(pindex, nil, nil)
          p.selected = nil
       end
-
-      read_tile(pindex)
-   else
-      Graphics.draw_cursor_highlight(pindex, nil, nil)
-      p.selected = nil
+      --Play a sound for audio ruler alignment (smooth walk)
+      Rulers.update_from_cursor(pindex)
    end
-   --Play a sound for audio ruler alignment (smooth walk)
-   Rulers.update_from_cursor(pindex)
-end)
+)
 
 --Schedules a function to be called after a certain number of ticks.
 function schedule(ticks_in_the_future, func_to_call, data_to_pass_1, data_to_pass_2, data_to_pass_3)
@@ -399,14 +404,13 @@ function on_player_join(pindex)
    storage.players[pindex].building_direction = dirs.north --
 end
 
-EventManager.on_event(defines.events.on_player_joined_game, function(event)
-   if game.is_multiplayer() then on_player_join(event.player_index) end
-end)
-
-function on_initial_joining_tick(event)
-   if not game.is_multiplayer() then on_player_join(game.connected_storage.players[1].index) end
-   on_tick(event)
-end
+EventManager.on_event(
+   defines.events.on_player_joined_game,
+   ---@param event EventData.on_player_joined_game
+   function(event)
+      if game.is_multiplayer() then on_player_join(event.player_index) end
+   end
+)
 
 --Called for every player on every tick, to manage automatic walking and enforcing mouse pointer position syncs.
 --Todo: create a new function for all mouse pointer related updates within this function
@@ -507,11 +511,15 @@ function on_tick(event)
    end
 end
 
-EventManager.on_event(defines.events.on_tick, function(event)
-   on_tick(event)
-   WorkQueue.on_tick()
-   TestFramework.on_tick(event)
-end)
+EventManager.on_event(
+   defines.events.on_tick,
+   ---@param event EventData.on_tick
+   function(event)
+      on_tick(event)
+      WorkQueue.on_tick()
+      TestFramework.on_tick(event)
+   end
+)
 
 --Focuses camera on the cursor position.
 function sync_remote_view(pindex)
@@ -555,57 +563,67 @@ function turn_to_cursor_direction_precise(pindex)
 end
 
 --Called when a player enters or exits a vehicle
-EventManager.on_event(defines.events.on_player_driving_changed_state, function(event, pindex)
-   local router = UiRouter.get_router(pindex)
+EventManager.on_event(
+   defines.events.on_player_driving_changed_state,
+   ---@param event EventData.on_player_driving_changed_state
+   ---@param pindex integer
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
 
-   BumpDetection.reset_bump_stats(pindex)
-   game.get_player(pindex).clear_cursor()
-   storage.players[pindex].last_train_orientation = nil
-   if game.get_player(pindex).driving then
-      storage.players[pindex].last_vehicle = game.get_player(pindex).vehicle
-      Speech.speak(
-         pindex,
-         { "fa.vehicle-entered", Localising.get_localised_name_with_fallback(game.get_player(pindex).vehicle) }
-      )
-      if
-         storage.players[pindex].last_vehicle.train ~= nil
-         and storage.players[pindex].last_vehicle.train.schedule == nil
-      then
-         storage.players[pindex].last_vehicle.train.manual_mode = true
+      BumpDetection.reset_bump_stats(pindex)
+      game.get_player(pindex).clear_cursor()
+      storage.players[pindex].last_train_orientation = nil
+      if game.get_player(pindex).driving then
+         storage.players[pindex].last_vehicle = game.get_player(pindex).vehicle
+         Speech.speak(
+            pindex,
+            { "fa.vehicle-entered", Localising.get_localised_name_with_fallback(game.get_player(pindex).vehicle) }
+         )
+         if
+            storage.players[pindex].last_vehicle.train ~= nil
+            and storage.players[pindex].last_vehicle.train.schedule == nil
+         then
+            storage.players[pindex].last_vehicle.train.manual_mode = true
+         end
+      elseif storage.players[pindex].last_vehicle ~= nil then
+         Speech.speak(
+            pindex,
+            { "fa.vehicle-exited", Localising.get_localised_name_with_fallback(storage.players[pindex].last_vehicle) }
+         )
+         if
+            storage.players[pindex].last_vehicle.train ~= nil
+            and storage.players[pindex].last_vehicle.train.schedule == nil
+         then
+            storage.players[pindex].last_vehicle.train.manual_mode = true
+         end
+         Teleport.teleport_to_closest(pindex, storage.players[pindex].last_vehicle.position, true, true)
+      else
+         Speech.speak(pindex, { "fa.driving-state-changed" })
       end
-   elseif storage.players[pindex].last_vehicle ~= nil then
-      Speech.speak(
-         pindex,
-         { "fa.vehicle-exited", Localising.get_localised_name_with_fallback(storage.players[pindex].last_vehicle) }
-      )
-      if
-         storage.players[pindex].last_vehicle.train ~= nil
-         and storage.players[pindex].last_vehicle.train.schedule == nil
-      then
-         storage.players[pindex].last_vehicle.train.manual_mode = true
-      end
-      Teleport.teleport_to_closest(pindex, storage.players[pindex].last_vehicle.position, true, true)
-   else
-      Speech.speak(pindex, { "fa.driving-state-changed" })
    end
-end)
+)
 
 --Save info about last item pickup and draw radius
-EventManager.on_event(defines.events.on_picked_up_item, function(event, pindex)
-   local p = game.get_player(pindex)
-   --Draw the pickup range
-   rendering.draw_circle({
-      color = { 0.3, 1, 0.3 },
-      radius = 1.25,
-      width = 1,
-      target = p.position,
-      surface = p.surface,
-      time_to_live = 10,
-      draw_on_ground = true,
-   })
-   storage.players[pindex].last_pickup_tick = event.tick
-   storage.players[pindex].last_item_picked_up = event.item_stack.name
-end)
+EventManager.on_event(
+   defines.events.on_picked_up_item,
+   ---@param event EventData.on_picked_up_item
+   ---@param pindex integer
+   function(event, pindex)
+      local p = game.get_player(pindex)
+      --Draw the pickup range
+      rendering.draw_circle({
+         color = { 0.3, 1, 0.3 },
+         radius = 1.25,
+         width = 1,
+         target = p.position,
+         surface = p.surface,
+         time_to_live = 10,
+         draw_on_ground = true,
+      })
+      storage.players[pindex].last_pickup_tick = event.tick
+      storage.players[pindex].last_item_picked_up = event.item_stack.name
+   end
+)
 
 --Quickbar event handlers
 local quickbar_get_events = {}
@@ -826,46 +844,56 @@ end
 ]]
 
 --When the item in hand changes
-EventManager.on_event(defines.events.on_player_cursor_stack_changed, function(event, pindex)
-   local router = UiRouter.get_router(pindex)
+EventManager.on_event(
+   defines.events.on_player_cursor_stack_changed,
+   ---@param event EventData.on_player_cursor_stack_changed
+   ---@param pindex integer
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
 
-   local stack = game.get_player(pindex).cursor_stack
-   local new_item_name = ""
-   if stack and stack.valid_for_read then
-      new_item_name = stack.name
-      if stack.is_blueprint and storage.players[pindex].blueprint_hand_direction ~= dirs.north then
-         --Reset blueprint rotation (unless it is a temporary blueprint)
-         storage.players[pindex].blueprint_hand_direction = dirs.north
-         if game.get_player(pindex).cursor_stack_temporary == false then
-            Blueprints.refresh_blueprint_in_hand(pindex)
+      local stack = game.get_player(pindex).cursor_stack
+      local new_item_name = ""
+      if stack and stack.valid_for_read then
+         new_item_name = stack.name
+         if stack.is_blueprint and storage.players[pindex].blueprint_hand_direction ~= dirs.north then
+            --Reset blueprint rotation (unless it is a temporary blueprint)
+            storage.players[pindex].blueprint_hand_direction = dirs.north
+            if game.get_player(pindex).cursor_stack_temporary == false then
+               Blueprints.refresh_blueprint_in_hand(pindex)
+            end
+            --Use this opportunity to update saved information about the blueprint's corners (used when drawing the footprint)
+            local width, height = Blueprints.get_blueprint_width_and_height(pindex)
+            if width == nil or height == nil then return end
+            storage.players[pindex].blueprint_width_in_hand = width + 1
+            storage.players[pindex].blueprint_height_in_hand = height + 1
          end
-         --Use this opportunity to update saved information about the blueprint's corners (used when drawing the footprint)
-         local width, height = Blueprints.get_blueprint_width_and_height(pindex)
-         if width == nil or height == nil then return end
-         storage.players[pindex].blueprint_width_in_hand = width + 1
-         storage.players[pindex].blueprint_height_in_hand = height + 1
       end
+
+      -- Blueprint UI will handle its own state changes when the cursor stack changes
+
+      if storage.players[pindex].previous_hand_item_name ~= new_item_name then
+         storage.players[pindex].previous_hand_item_name = new_item_name
+         --storage.players[pindex].lag_building_direction = true
+         read_hand(pindex)
+      end
+      BuildingTools.delete_empty_planners_in_inventory(pindex)
+      storage.players[pindex].bp_selecting = false
+      storage.players[pindex].blueprint_reselecting = false
+      storage.players[pindex].ghost_rail_planning = false
+      Graphics.sync_build_cursor_graphics(pindex)
    end
+)
 
-   -- Blueprint UI will handle its own state changes when the cursor stack changes
-
-   if storage.players[pindex].previous_hand_item_name ~= new_item_name then
-      storage.players[pindex].previous_hand_item_name = new_item_name
-      --storage.players[pindex].lag_building_direction = true
-      read_hand(pindex)
+EventManager.on_event(
+   defines.events.on_player_mined_item,
+   ---@param event EventData.on_player_mined_item
+   ---@param pindex integer
+   function(event, pindex)
+      --Play item pickup sound
+      sounds.play_picked_up_item(pindex)
+      sounds.play_close_inventory(pindex)
    end
-   BuildingTools.delete_empty_planners_in_inventory(pindex)
-   storage.players[pindex].bp_selecting = false
-   storage.players[pindex].blueprint_reselecting = false
-   storage.players[pindex].ghost_rail_planning = false
-   Graphics.sync_build_cursor_graphics(pindex)
-end)
-
-EventManager.on_event(defines.events.on_player_mined_item, function(event, pindex)
-   --Play item pickup sound
-   sounds.play_picked_up_item(pindex)
-   sounds.play_close_inventory(pindex)
-end)
+)
 
 function ensure_storage_structures_are_up_to_date()
    storage.forces = storage.forces or {}
@@ -939,25 +967,44 @@ EventManager.on_init(function()
    AudioCues.on_init()
 end)
 
-EventManager.on_event(defines.events.on_cutscene_cancelled, function(event, pindex)
-   schedule(3, "call_to_fix_zoom", pindex)
-   schedule(4, "call_to_sync_graphics", pindex)
-end)
+EventManager.on_event(
+   defines.events.on_cutscene_cancelled,
+   ---@param event EventData.on_cutscene_cancelled
+   ---@param pindex integer
+   function(event, pindex)
+      schedule(3, "call_to_fix_zoom", pindex)
+      schedule(4, "call_to_sync_graphics", pindex)
+   end
+)
 
-EventManager.on_event(defines.events.on_cutscene_finished, function(event, pindex)
-   schedule(3, "call_to_fix_zoom", pindex)
-   schedule(4, "call_to_sync_graphics", pindex)
-   --Speech.speak(pindex, "Press TAB to continue")
-end)
+EventManager.on_event(
+   defines.events.on_cutscene_finished,
+   ---@param event EventData.on_cutscene_finished
+   ---@param pindex integer
+   function(event, pindex)
+      schedule(3, "call_to_fix_zoom", pindex)
+      schedule(4, "call_to_sync_graphics", pindex)
+      --Speech.speak(pindex, "Press TAB to continue")
+   end
+)
 
-EventManager.on_event(defines.events.on_cutscene_started, function(event, pindex)
-   --Speech.speak(pindex, "Press TAB to continue")
-end)
+EventManager.on_event(
+   defines.events.on_cutscene_started,
+   ---@param event EventData.on_cutscene_started
+   ---@param pindex integer
+   function(event, pindex)
+      --Speech.speak(pindex, "Press TAB to continue")
+   end
+)
 
-EventManager.on_event(defines.events.on_player_created, function(event)
-   PlayerInit.initialize(game.players[event.player_index])
-   --if not game.is_multiplayer() then Speech.speak(pindex, "Press 'TAB' to continue") end
-end)
+EventManager.on_event(
+   defines.events.on_player_created,
+   ---@param event EventData.on_player_created
+   function(event)
+      PlayerInit.initialize(game.players[event.player_index])
+      --if not game.is_multiplayer() then Speech.speak(pindex, "Press 'TAB' to continue") end
+   end
+)
 
 EventManager.on_event(
    defines.events.on_gui_closed,
@@ -1001,49 +1048,62 @@ local function get_selected_inventory_and_slot(pindex)
    return inv, index
 end
 
-EventManager.on_event(defines.events.on_gui_opened, function(event, pindex)
-   local router = UiRouter.get_router(pindex)
+EventManager.on_event(
+   defines.events.on_gui_opened,
+   ---@param event EventData.on_gui_opened
+   ---@param pindex integer
+   function(event, pindex)
+      local router = UiRouter.get_router(pindex)
 
-   local p = game.get_player(pindex)
+      local p = game.get_player(pindex)
 
-   --Stop any enabled mouse entity selection
-   if storage.players[pindex].vanilla_mode ~= true then
-      game.get_player(pindex).game_view_settings.update_entity_selection = false
+      --Stop any enabled mouse entity selection
+      if storage.players[pindex].vanilla_mode ~= true then
+         game.get_player(pindex).game_view_settings.update_entity_selection = false
+      end
    end
-end)
+)
 
-EventManager.on_event(defines.events.on_object_destroyed, function(event) --DOES NOT HAVE THE KEY PLAYER_INDEX
-   ScannerEntrypoint.on_entity_destroyed(event)
-end)
+EventManager.on_event(
+   defines.events.on_object_destroyed,
+   ---@param event EventData.on_object_destroyed
+   function(event) --DOES NOT HAVE THE KEY PLAYER_INDEX
+      ScannerEntrypoint.on_entity_destroyed(event)
+   end
+)
 
 --Scripts regarding train state changes. NOTE: NO PINDEX
-EventManager.on_event(defines.events.on_train_changed_state, function(event)
-   if event.train.state == defines.train_state.no_schedule then
-      --Trains with no schedule are set back to manual mode
-      event.train.manual_mode = true
-   elseif event.train.state == defines.train_state.arrive_station then
-      --Announce arriving station to players on the train
-      for i, player in ipairs(event.train.passengers) do
-         local stop = event.train.path_end_stop
-         if stop ~= nil then Speech.speak(player.index, { "fa.train-arriving-at-station", stop.backer_name }) end
-      end
-   elseif event.train.state == defines.train_state.on_the_path then --laterdo make this announce only when near another trainstop.
-      --Announce heading station to players on the train
-      for i, player in ipairs(event.train.passengers) do
-         local stop = event.train.path_end_stop
-         if stop ~= nil then Speech.speak(player.index, { "fa.train-heading-to-station", stop.backer_name }) end
-      end
-   elseif event.train.state == defines.train_state.wait_signal then
-      --Announce the wait to players on the train
-      for i, player in ipairs(event.train.passengers) do
-         local stop = event.train.path_end_stop
-         if stop ~= nil then
-            local str = " Waiting at signal. "
-            Speech.speak(player.index, str)
+EventManager.on_event(
+   defines.events.on_train_changed_state,
+   ---@param event EventData.on_train_changed_state
+   function(event)
+      if event.train.state == defines.train_state.no_schedule then
+         --Trains with no schedule are set back to manual mode
+         event.train.manual_mode = true
+      elseif event.train.state == defines.train_state.arrive_station then
+         --Announce arriving station to players on the train
+         for i, player in ipairs(event.train.passengers) do
+            local stop = event.train.path_end_stop
+            if stop ~= nil then Speech.speak(player.index, { "fa.train-arriving-at-station", stop.backer_name }) end
+         end
+      elseif event.train.state == defines.train_state.on_the_path then --laterdo make this announce only when near another trainstop.
+         --Announce heading station to players on the train
+         for i, player in ipairs(event.train.passengers) do
+            local stop = event.train.path_end_stop
+            if stop ~= nil then Speech.speak(player.index, { "fa.train-heading-to-station", stop.backer_name }) end
+         end
+      elseif event.train.state == defines.train_state.wait_signal then
+         --Announce the wait to players on the train
+         for i, player in ipairs(event.train.passengers) do
+            local stop = event.train.path_end_stop
+            if stop ~= nil then
+               local str = " Waiting at signal. "
+               Speech.speak(player.index, str)
+            end
          end
       end
    end
-end)
+)
 
 --If a filter inserter is selected, the item in hand is set as its output filter item.
 function set_inserter_filter_by_hand(pindex, ent)
@@ -1126,166 +1186,196 @@ function set_infinity_pipe_filter_by_hand(pindex, ent)
 end
 
 --Alerts a force's players when their structures are destroyed. 300 ticks of cooldown.
-EventManager.on_event(defines.events.on_entity_damaged, function(event)
-   local ent = event.entity
-   local tick = event.tick
-   if ent == nil or not ent.valid then
-      return
-   elseif ent.name == "character" then
-      --Check character has any energy shield health remaining
-      if ent.player == nil or not ent.player.valid then return end
-      local shield_left = nil
-      local armor_inv = ent.player.get_inventory(defines.inventory.character_armor)
-      if
-         armor_inv[1]
-         and armor_inv[1].valid_for_read
-         and armor_inv[1].valid
-         and armor_inv[1].grid
-         and armor_inv[1].grid.valid
-      then
-         local grid = armor_inv[1].grid
-         if grid.shield > 0 then
-            shield_left = grid.shield
-            --game.print(armor_inv[1].grid.shield,{volume_modifier=0})
+EventManager.on_event(
+   defines.events.on_entity_damaged,
+   ---@param event EventData.on_entity_damaged
+   function(event)
+      local ent = event.entity
+      local tick = event.tick
+      if ent == nil or not ent.valid then
+         return
+      elseif ent.name == "character" then
+         --Check character has any energy shield health remaining
+         if ent.player == nil or not ent.player.valid then return end
+         local shield_left = nil
+         local armor_inv = ent.player.get_inventory(defines.inventory.character_armor)
+         if
+            armor_inv[1]
+            and armor_inv[1].valid_for_read
+            and armor_inv[1].valid
+            and armor_inv[1].grid
+            and armor_inv[1].grid.valid
+         then
+            local grid = armor_inv[1].grid
+            if grid.shield > 0 then
+               shield_left = grid.shield
+               --game.print(armor_inv[1].grid.shield,{volume_modifier=0})
+            end
+         end
+         --Play shield and/or character damaged sound
+         if shield_left ~= nil then sounds.play_player_damaged_shield(ent.player.index) end
+         if shield_left == nil or (shield_left < 1.0 and ent.get_health_ratio() < 1.0) then
+            sounds.play_player_damaged_character(ent.player.index)
+         end
+         return
+      elseif ent.get_health_ratio() == 1.0 then
+         --Ignore alerts if an entity has full health despite being damaged
+         return
+      elseif tick < 3600 and tick > 600 then
+         --No alerts for the first 10th to 60th seconds (because of the alert spam from spaceship fire damage)
+         return
+      end
+
+      local attacker_force = event.force
+      local damaged_force = ent.force
+      --Alert all players of the damaged force
+      for pindex, player in pairs(players) do
+         if
+            storage.players[pindex] ~= nil
+            and game.get_player(pindex).force.name == damaged_force.name
+            and (
+               storage.players[pindex].last_damage_alert_tick == nil
+               or (tick - storage.players[pindex].last_damage_alert_tick) > 300
+            )
+         then
+            storage.players[pindex].last_damage_alert_tick = tick
+            storage.players[pindex].last_damage_alert_pos = ent.position
+            local dist = math.ceil(util.distance(storage.players[pindex].position, ent.position))
+            local dir =
+               FaUtils.direction_lookup(FaUtils.get_direction_biased(ent.position, storage.players[pindex].position))
+            local result = ent.name .. " damaged by " .. attacker_force.name .. " forces at " .. dist .. " " .. dir
+            Speech.speak(pindex, result)
+            --game.get_player(pindex).print(result,{volume_modifier=0})--**
+            sounds.play_structure_damaged(pindex)
          end
       end
-      --Play shield and/or character damaged sound
-      if shield_left ~= nil then sounds.play_player_damaged_shield(ent.player.index) end
-      if shield_left == nil or (shield_left < 1.0 and ent.get_health_ratio() < 1.0) then
-         sounds.play_player_damaged_character(ent.player.index)
-      end
-      return
-   elseif ent.get_health_ratio() == 1.0 then
-      --Ignore alerts if an entity has full health despite being damaged
-      return
-   elseif tick < 3600 and tick > 600 then
-      --No alerts for the first 10th to 60th seconds (because of the alert spam from spaceship fire damage)
-      return
    end
-
-   local attacker_force = event.force
-   local damaged_force = ent.force
-   --Alert all players of the damaged force
-   for pindex, player in pairs(players) do
-      if
-         storage.players[pindex] ~= nil
-         and game.get_player(pindex).force.name == damaged_force.name
-         and (
-            storage.players[pindex].last_damage_alert_tick == nil
-            or (tick - storage.players[pindex].last_damage_alert_tick) > 300
-         )
-      then
-         storage.players[pindex].last_damage_alert_tick = tick
-         storage.players[pindex].last_damage_alert_pos = ent.position
-         local dist = math.ceil(util.distance(storage.players[pindex].position, ent.position))
-         local dir =
-            FaUtils.direction_lookup(FaUtils.get_direction_biased(ent.position, storage.players[pindex].position))
-         local result = ent.name .. " damaged by " .. attacker_force.name .. " forces at " .. dist .. " " .. dir
-         Speech.speak(pindex, result)
-         --game.get_player(pindex).print(result,{volume_modifier=0})--**
-         sounds.play_structure_damaged(pindex)
-      end
-   end
-end)
+)
 
 --Alerts a force's players when their structures are destroyed. No cooldown.
-EventManager.on_event(defines.events.on_entity_died, function(event)
-   local ent = event.entity
-   local causer = event.cause
-   if ent == nil then
-      return
-   elseif ent.name == "character" then
-      return
-   end
-   local attacker_force = event.force
-   local damaged_force = ent.force
-   --Alert all players of the damaged force
-   for pindex, player in pairs(players) do
-      if storage.players[pindex] ~= nil and game.get_player(pindex).force.name == damaged_force.name then
-         storage.players[pindex].last_damage_alert_tick = event.tick
-         storage.players[pindex].last_damage_alert_pos = ent.position
-         local dist = math.ceil(util.distance(storage.players[pindex].position, ent.position))
-         local dir =
-            FaUtils.direction_lookup(FaUtils.get_direction_biased(ent.position, storage.players[pindex].position))
-         local result = ent.name .. " destroyed by " .. attacker_force.name .. " forces at " .. dist .. " " .. dir
-         Speech.speak(pindex, result)
-         --game.get_player(pindex).print(result,{volume_modifier=0})--**
-         sounds.play_alert_destroyed(pindex)
+EventManager.on_event(
+   defines.events.on_entity_died,
+   ---@param event EventData.on_entity_died
+   function(event)
+      local ent = event.entity
+      local causer = event.cause
+      if ent == nil then
+         return
+      elseif ent.name == "character" then
+         return
+      end
+      local attacker_force = event.force
+      local damaged_force = ent.force
+      --Alert all players of the damaged force
+      for pindex, player in pairs(players) do
+         if storage.players[pindex] ~= nil and game.get_player(pindex).force.name == damaged_force.name then
+            storage.players[pindex].last_damage_alert_tick = event.tick
+            storage.players[pindex].last_damage_alert_pos = ent.position
+            local dist = math.ceil(util.distance(storage.players[pindex].position, ent.position))
+            local dir =
+               FaUtils.direction_lookup(FaUtils.get_direction_biased(ent.position, storage.players[pindex].position))
+            local result = ent.name .. " destroyed by " .. attacker_force.name .. " forces at " .. dist .. " " .. dir
+            Speech.speak(pindex, result)
+            --game.get_player(pindex).print(result,{volume_modifier=0})--**
+            sounds.play_alert_destroyed(pindex)
+         end
       end
    end
-end)
+)
 
 --Notify all players when a player character dies
-EventManager.on_event(defines.events.on_player_died, function(event, pindex)
-   local p = game.get_player(pindex)
-   local causer = event.cause
-   local bodies = p.surface.find_entities_filtered({ name = "character-corpse" })
-   local latest_body = nil
-   local latest_death_tick = 0
-   local name = p.name
-   if name == nil then name = " " end
-   --Find the most recent character corpse
-   for i, body in ipairs(bodies) do
-      if body.character_corpse_player_index == pindex and body.character_corpse_tick_of_death > latest_death_tick then
-         latest_body = body
-         latest_death_tick = latest_body.character_corpse_tick_of_death
+EventManager.on_event(
+   defines.events.on_player_died,
+   ---@param event EventData.on_player_died
+   ---@param pindex integer
+   function(event, pindex)
+      local p = game.get_player(pindex)
+      local causer = event.cause
+      local bodies = p.surface.find_entities_filtered({ name = "character-corpse" })
+      local latest_body = nil
+      local latest_death_tick = 0
+      local name = p.name
+      if name == nil then name = " " end
+      --Find the most recent character corpse
+      for i, body in ipairs(bodies) do
+         if
+            body.character_corpse_player_index == pindex and body.character_corpse_tick_of_death > latest_death_tick
+         then
+            latest_body = body
+            latest_death_tick = latest_body.character_corpse_tick_of_death
+         end
+      end
+      --Verify the latest death
+      if event.tick - latest_death_tick > 120 then latest_body = nil end
+      --Generate death message
+      local result = "Player " .. name
+      if causer == nil or not causer.valid then
+         result = result .. " died "
+      elseif causer.name == "character" and causer.player ~= nil and causer.player.valid then
+         local other_name = causer.player.name
+         if other_name == nil then other_name = "" end
+         result = result .. " was killed by player " .. other_name
+      else
+         result = result .. " was killed by " .. causer.name
+      end
+      if latest_body ~= nil and latest_body.valid then
+         result = result
+            .. " at "
+            .. math.floor(0.5 + latest_body.position.x)
+            .. ", "
+            .. math.floor(0.5 + latest_body.position.y)
+            .. "."
+      end
+      --Notify all players
+      for pindex, player in pairs(players) do
+         storage.players[pindex].last_damage_alert_tick = event.tick
+         Speech.speak(pindex, result)
+         game.get_player(pindex).print(result) --**laterdo unique sound, for now use console sound
       end
    end
-   --Verify the latest death
-   if event.tick - latest_death_tick > 120 then latest_body = nil end
-   --Generate death message
-   local result = "Player " .. name
-   if causer == nil or not causer.valid then
-      result = result .. " died "
-   elseif causer.name == "character" and causer.player ~= nil and causer.player.valid then
-      local other_name = causer.player.name
-      if other_name == nil then other_name = "" end
-      result = result .. " was killed by player " .. other_name
-   else
-      result = result .. " was killed by " .. causer.name
-   end
-   if latest_body ~= nil and latest_body.valid then
-      result = result
-         .. " at "
-         .. math.floor(0.5 + latest_body.position.x)
-         .. ", "
-         .. math.floor(0.5 + latest_body.position.y)
-         .. "."
-   end
-   --Notify all players
-   for pindex, player in pairs(players) do
-      storage.players[pindex].last_damage_alert_tick = event.tick
-      Speech.speak(pindex, result)
-      game.get_player(pindex).print(result) --**laterdo unique sound, for now use console sound
-   end
-end)
+)
 
-EventManager.on_event(defines.events.on_player_display_resolution_changed, function(event, pindex)
-   local new_res = game.get_player(pindex).display_resolution
-   if players and storage.players[pindex] then storage.players[pindex].display_resolution = new_res end
-   game
-      .get_player(pindex)
-      .print("Display resolution changed: " .. new_res.width .. " x " .. new_res.height, { volume_modifier = 0 })
-   schedule(3, "call_to_fix_zoom", pindex)
-   schedule(4, "call_to_sync_graphics", pindex)
-end)
+EventManager.on_event(
+   defines.events.on_player_display_resolution_changed,
+   ---@param event EventData.on_player_display_resolution_changed
+   ---@param pindex integer
+   function(event, pindex)
+      local new_res = game.get_player(pindex).display_resolution
+      if players and storage.players[pindex] then storage.players[pindex].display_resolution = new_res end
+      game
+         .get_player(pindex)
+         .print("Display resolution changed: " .. new_res.width .. " x " .. new_res.height, { volume_modifier = 0 })
+      schedule(3, "call_to_fix_zoom", pindex)
+      schedule(4, "call_to_sync_graphics", pindex)
+   end
+)
 
-EventManager.on_event(defines.events.on_player_display_scale_changed, function(event, pindex)
-   local new_sc = game.get_player(pindex).display_scale
-   if players and storage.players[pindex] then storage.players[pindex].display_resolution = new_sc end
-   game.get_player(pindex).print("Display scale changed: " .. new_sc, { volume_modifier = 0 })
-   schedule(3, "call_to_fix_zoom", pindex)
-   schedule(4, "call_to_sync_graphics", pindex)
-end)
+EventManager.on_event(
+   defines.events.on_player_display_scale_changed,
+   ---@param event EventData.on_player_display_scale_changed
+   ---@param pindex integer
+   function(event, pindex)
+      local new_sc = game.get_player(pindex).display_scale
+      if players and storage.players[pindex] then storage.players[pindex].display_resolution = new_sc end
+      game.get_player(pindex).print("Display scale changed: " .. new_sc, { volume_modifier = 0 })
+      schedule(3, "call_to_fix_zoom", pindex)
+      schedule(4, "call_to_sync_graphics", pindex)
+   end
+)
 
 EventManager.on_event(defines.events.on_string_translated, Localising.handler)
 
-EventManager.on_event(defines.events.on_player_respawned, function(event, pindex)
-   local vp = Viewpoint.get_viewpoint(pindex)
-   local position = game.get_player(pindex).position
-   storage.players[pindex].position = position
-   vp:set_cursor_pos({ x = position.x, y = position.y })
-end)
+EventManager.on_event(
+   defines.events.on_player_respawned,
+   ---@param event EventData.on_player_respawned
+   ---@param pindex integer
+   function(event, pindex)
+      local vp = Viewpoint.get_viewpoint(pindex)
+      local position = game.get_player(pindex).position
+      storage.players[pindex].position = position
+      vp:set_cursor_pos({ x = position.x, y = position.y })
+   end
+)
 
 --If the player has unexpected lateral movement while smooth running in a cardinal direction, like from bumping into an entity or being at the edge of water, play a sound.
 
@@ -1302,25 +1392,33 @@ function all_ents_are_walkable(pos)
    return true
 end
 
-EventManager.on_event(defines.events.on_console_chat, function(event)
-   local speaker = game.get_player(event.player_index).name
-   if speaker == nil or speaker == "" then speaker = "Player" end
-   local message = event.message
-   for pindex, player in pairs(players) do
-      Speech.speak(pindex, { "fa.chat-message", speaker, message })
+EventManager.on_event(
+   defines.events.on_console_chat,
+   ---@param event EventData.on_console_chat
+   function(event)
+      local speaker = game.get_player(event.player_index).name
+      if speaker == nil or speaker == "" then speaker = "Player" end
+      local message = event.message
+      for pindex, player in pairs(players) do
+         Speech.speak(pindex, { "fa.chat-message", speaker, message })
+      end
    end
-end)
+)
 
-EventManager.on_event(defines.events.on_console_command, function(event)
-   -- For our own commands, we handle the speaking and must not read here.
-   if FaCommands.COMMANDS[event.command] then return end
+EventManager.on_event(
+   defines.events.on_console_command,
+   ---@param event EventData.on_console_command
+   function(event)
+      -- For our own commands, we handle the speaking and must not read here.
+      if FaCommands.COMMANDS[event.command] then return end
 
-   local speaker = game.get_player(event.player_index).name
-   if speaker == nil or speaker == "" then speaker = "Player" end
-   for pindex, player in pairs(players) do
-      Speech.speak(pindex, { "fa.command-message", speaker, event.command, event.parameters })
+      local speaker = game.get_player(event.player_index).name
+      if speaker == nil or speaker == "" then speaker = "Player" end
+      for pindex, player in pairs(players) do
+         Speech.speak(pindex, { "fa.command-message", speaker, event.command, event.parameters })
+      end
    end
-end)
+)
 
 function general_mod_menu_up(pindex, menu, lower_limit_in) --todo*** use
    local lower_limit = lower_limit_in or 0
@@ -1345,19 +1443,31 @@ function general_mod_menu_down(pindex, menu, upper_limit)
    end
 end
 
-EventManager.on_event(defines.events.on_script_trigger_effect, function(event)
-   if event.effect_id == Consts.NEW_ENTITY_SUBSCRIBER_TRIGGER_ID then
-      ScannerEntrypoint.on_new_entity(event.surface_index, event.source_entity)
+EventManager.on_event(
+   defines.events.on_script_trigger_effect,
+   ---@param event EventData.on_script_trigger_effect
+   function(event)
+      if event.effect_id == Consts.NEW_ENTITY_SUBSCRIBER_TRIGGER_ID then
+         ScannerEntrypoint.on_new_entity(event.surface_index, event.source_entity)
+      end
    end
-end)
+)
 
-EventManager.on_event(defines.events.on_surface_created, function(event)
-   ScannerEntrypoint.on_new_surface(game.get_surface(event.surface_index))
-end)
+EventManager.on_event(
+   defines.events.on_surface_created,
+   ---@param event EventData.on_surface_created
+   function(event)
+      ScannerEntrypoint.on_new_surface(game.get_surface(event.surface_index))
+   end
+)
 
-EventManager.on_event(defines.events.on_surface_deleted, function(event)
-   ScannerEntrypoint.on_surface_delete(event.surface_index)
-end)
+EventManager.on_event(
+   defines.events.on_surface_deleted,
+   ---@param event EventData.on_surface_deleted
+   function(event)
+      ScannerEntrypoint.on_surface_delete(event.surface_index)
+   end
+)
 
 EventManager.on_event(defines.events.on_research_finished, Research.on_research_finished)
 -- New input event definitions
