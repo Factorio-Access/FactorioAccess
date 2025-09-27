@@ -53,16 +53,19 @@ local viewpoint_storage = StorageManager.declare_storage_module("viewpoint", {
 local Viewpoint = {}
 local Viewpoint_meta = { __index = Viewpoint }
 
+-- Get the cursor position, which is always integral.
 ---@return fa.Point
 function Viewpoint:get_cursor_pos()
    local pos = viewpoint_storage[self.pindex].cursor_pos
-   return { x = pos.x, y = pos.y }
+   -- Old saves can have fractionals here, so just floor again to deal with it.
+   return { x = math.floor(pos.x), y = math.floor(pos.y) }
 end
 
+-- Set the cursor position. Floors the incoming coordinates.
 ---@param point fa.Point
 function Viewpoint:set_cursor_pos(point)
-   assert(point and point.x and point.y and math.floor(point.x) == point.x and math.floor(point.y) == point.y)
-   viewpoint_storage[self.pindex].cursor_pos = { x = point.x, y = point.y }
+   assert(point and point.x and point.y)
+   viewpoint_storage[self.pindex].cursor_pos = { x = math.floor(point.x), y = math.floor(point.y) }
 end
 
 ---@return number
