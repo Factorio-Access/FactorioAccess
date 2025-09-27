@@ -26,6 +26,8 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
    local router = UiRouter.get_router(pindex)
 
    pos = table.deepcopy(pos)
+   pos.x = math.floor(pos.x) + 0.5
+   pos.y = math.floor(pos.y) + 0.5
    muted = muted or false
    local char = game.get_player(pindex).character
    if not char then return false end
@@ -38,7 +40,7 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
       radius = radius + 1
       new_pos = surf.find_non_colliding_position("character", pos, radius, 0.1, true)
    end
-   --Do not teleport if in a vehicle, in a menu, or already at the desitination
+   --Do not teleport if in a vehicle, in a menu, or already at the destination
    if char.vehicle ~= nil and char.vehicle.valid then
       Speech.speak(pindex, { "fa.teleport-cannot-in-vehicle" })
       return false
@@ -146,12 +148,16 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
                .get_player(pindex)
                .play_sound({ path = "utility/scenario_message", volume_modifier = 0.8, position = new_pos })
          end
-         if new_pos.x ~= pos.x or new_pos.y ~= pos.y then
+         print(serpent.line(pos), serpent.line(new_pos))
+         if math.floor(new_pos.x) ~= math.floor(pos.x) or math.floor(new_pos.y) ~= math.floor(pos.y) then
             if not muted then
                local message = Speech.new()
                message:fragment({
                   "fa.teleport-distance",
-                  tostring(math.ceil(FaUtils.distance(pos, char.position))),
+                  -- This is a bit weird. We can either be too high or too low. But if off by one tile we want to be too
+                  -- low, because southwest for example is actually sqrt(2) tiles. So we want floor.  Really we probably
+                  -- want manhattan distance or something but this is good enough.
+                  tostring(math.floor(FaUtils.distance(pos, char.position))),
                   FaUtils.direction(pos, char.position),
                })
                Speech.speak(pindex, message:build())

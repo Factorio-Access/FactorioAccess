@@ -173,11 +173,11 @@ function mod.refresh_player_tile(pindex)
    local surf = game.get_player(pindex).surface
    local vp = Viewpoint.get_viewpoint(pindex)
    local c_pos = vp:get_cursor_pos()
-   if math.floor(c_pos.x) == math.ceil(c_pos.x) then c_pos.x = c_pos.x - 0.01 end
-   if math.floor(c_pos.y) == math.ceil(c_pos.y) then c_pos.y = c_pos.y - 0.01 end
+   local x = c_pos.x + 0.5
+   local y = c_pos.y + 0.5
    local search_area = {
-      { x = math.floor(c_pos.x) + 0.01, y = math.floor(c_pos.y) + 0.01 },
-      { x = math.ceil(c_pos.x) - 0.01, y = math.ceil(c_pos.y) - 0.01 },
+      { x = math.floor(x) + 0.001, y = math.floor(y) + 0.001 },
+      { x = math.ceil(x) - 0.01, y = math.ceil(y) - 0.01 },
    }
    ent_selection_storage[pindex].ents =
       surf.find_entities_filtered({ area = search_area, name = Consts.EXCLUDED_ENT_NAMES, invert = true })
@@ -186,11 +186,7 @@ function mod.refresh_player_tile(pindex)
    mod.sort_ents_by_primary_first(pindex, ent_selection_storage[pindex].ents, nil)
    --Draw the tile
    --rendering.draw_rectangle{left_top = search_area[1], right_bottom = search_area[2], color = {1,0,1}, surface = surf, time_to_live = 100}--
-   local wide_area = {
-      { x = math.floor(c_pos.x) - 0.01, y = math.floor(c_pos.y) - 0.01 },
-      { x = math.ceil(c_pos.x) + 0.01, y = math.ceil(c_pos.y) + 0.01 },
-   }
-   local remnants = surf.find_entities_filtered({ area = wide_area, type = "corpse" })
+   local remnants = surf.find_entities_filtered({ area = search_area, type = "corpse" })
    for i, remnant in ipairs(remnants) do
       table.insert(ent_selection_storage[pindex].ents, remnant)
    end
