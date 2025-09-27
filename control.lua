@@ -52,6 +52,8 @@ local TutorialSystem = require("scripts.tutorial-system")
 require("scripts.ui.belt-analyzer")
 local EntityUI = require("scripts.ui.entity-ui")
 require("scripts.ui.menus.blueprints-menu")
+require("scripts.ui.selectors.decon-selector")
+require("scripts.ui.selectors.upgrade-selector")
 require("scripts.ui.menus.gun-menu")
 require("scripts.ui.menus.main-menu")
 require("scripts.ui.menus.fast-travel-menu")
@@ -3522,9 +3524,40 @@ EventManager.on_event(
       local router = UiRouter.get_router(pindex)
 
       if storage.players[pindex].last_click_tick == event.tick then return end
-      local stack = game.get_player(pindex).cursor_stack
-      local ghost = game.get_player(pindex).cursor_ghost
+      local p = game.get_player(pindex)
+      local stack = p.cursor_stack
+      local ghost = p.cursor_ghost
 
+      -- Handle upgrade/deconstruction planners specially
+      if stack and stack.valid_for_read then
+         if stack.is_deconstruction_item then
+            -- Start selection for deconstruction (action determined by alt modifier on second click)
+            local vp = Viewpoint.get_viewpoint(pindex)
+            local cursor_pos = vp:get_cursor_pos()
+            router:open_ui(UiRouter.UI_NAMES.DECON_AREA_SELECTOR, {
+               first_point = { x = cursor_pos.x, y = cursor_pos.y },
+               intro_message = {
+                  "fa.planner-deconstruct-first-point",
+                  math.floor(cursor_pos.x),
+                  math.floor(cursor_pos.y),
+               },
+               second_message = { "fa.planner-select-second-point" },
+            })
+            return
+         elseif stack.is_upgrade_item then
+            -- Start selection for upgrade (action determined by alt modifier on second click)
+            local vp = Viewpoint.get_viewpoint(pindex)
+            local cursor_pos = vp:get_cursor_pos()
+            router:open_ui(UiRouter.UI_NAMES.UPGRADE_AREA_SELECTOR, {
+               first_point = { x = cursor_pos.x, y = cursor_pos.y },
+               intro_message = { "fa.planner-upgrade-first-point", math.floor(cursor_pos.x), math.floor(cursor_pos.y) },
+               second_message = { "fa.planner-select-second-point" },
+            })
+            return
+         end
+      end
+
+      -- Normal left-click behavior
       if ghost or (stack and stack.valid_for_read and stack.valid) then
          kb_click_hand(event)
       elseif storage.players[pindex].vanilla_mode == false then
@@ -3575,61 +3608,9 @@ local function kb_click_hand_right(event)
       router:open_ui(UiRouter.UI_NAMES.BLUEPRINT)
    elseif stack.is_blueprint_book then
       Blueprints.blueprint_book_menu_open(pindex, false)
-   elseif stack.is_deconstruction_item then
-      --Cancel deconstruction
-      local pex = storage.players[pindex]
-      local vp = Viewpoint.get_viewpoint(pindex)
-      if pex.bp_selecting ~= true then
-         pex.bp_selecting = true
-         pex.bp_select_point_1 = vp:get_cursor_pos()
-         Speech.speak(
-            pindex,
-            "Started deconstruction selection at "
-               .. math.floor(pex.bp_select_point_1.x)
-               .. ","
-               .. math.floor(pex.bp_select_point_1.y)
-         )
-      else
-         pex.bp_selecting = false
-         pex.bp_select_point_2 = vp:get_cursor_pos()
-         --Cancel area for deconstruction
-         local left_top, right_bottom =
-            FaUtils.get_top_left_and_bottom_right(pex.bp_select_point_1, pex.bp_select_point_2)
-         p.surface.cancel_deconstruct_area({
-            area = { left_top, right_bottom },
-            force = p.force,
-            player = p,
-            item = p.cursor_stack,
-         })
-         Speech.speak(pindex, "Canceled deconstruction in selected area")
-      end
-   elseif stack.is_upgrade_item then
-      local pex = storage.players[pindex]
-      local vp = Viewpoint.get_viewpoint(pindex)
-      if pex.bp_selecting ~= true then
-         pex.bp_selecting = true
-         pex.bp_select_point_1 = vp:get_cursor_pos()
-         Speech.speak(
-            pindex,
-            "Started upgrading selection at "
-               .. math.floor(pex.bp_select_point_1.x)
-               .. ","
-               .. math.floor(pex.bp_select_point_1.y)
-         )
-      else
-         pex.bp_selecting = false
-         pex.bp_select_point_2 = vp:get_cursor_pos()
-         --Cancel area for upgrading
-         local left_top, right_bottom =
-            FaUtils.get_top_left_and_bottom_right(pex.bp_select_point_1, pex.bp_select_point_2)
-         p.surface.cancel_upgrade_area({
-            area = { left_top, right_bottom },
-            force = p.force,
-            player = p,
-            item = p.cursor_stack,
-         })
-         Speech.speak(pindex, "Canceled upgrading in selected area")
-      end
+   elseif stack.is_deconstruction_item or stack.is_upgrade_item then
+      -- Deconstruction and upgrade planners are now handled via left-click and alt+left-click
+      Speech.speak(pindex, { "fa.planner-use-leftbracket" })
    elseif stack.name == "spidertron-remote" then
       --open spidermenu with the remote in hand
       local router = UiRouter.get_router(pindex)

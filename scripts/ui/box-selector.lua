@@ -27,12 +27,18 @@ local BoxSelector_meta = { __index = BoxSelector }
 function BoxSelector:open(pindex, parameters, controller)
    -- Always reinitialize state on open
    box_selector_storage[pindex][self.ui_name] = {
-      first_click = nil,
+      first_click = parameters and parameters.first_point or nil,
       callback_params = parameters or {},
    }
 
    -- Use custom intro message if provided in parameters, otherwise default
-   local intro_message = (parameters and parameters.intro_message) or { "fa.box-selector-intro" }
+   local intro_message
+   if parameters and parameters.first_point then
+      -- If first point is pre-set, skip to second point message
+      intro_message = (parameters and parameters.second_message) or { "fa.box-selector-second-point" }
+   else
+      intro_message = (parameters and parameters.intro_message) or { "fa.box-selector-intro" }
+   end
    Speech.speak(pindex, intro_message)
 end
 

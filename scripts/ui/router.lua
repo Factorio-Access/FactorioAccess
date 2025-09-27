@@ -106,6 +106,8 @@ mod.UI_NAMES = {
    ITEM_CHOOSER = "item_chooser",
    BOX_SELECTOR = "box_selector",
    BLUEPRINT_AREA_SELECTOR = "blueprint_area_selector",
+   DECON_AREA_SELECTOR = "decon_area_selector",
+   UPGRADE_AREA_SELECTOR = "upgrade_area_selector",
 }
 
 ---@class fa.ui.RouterState
@@ -394,6 +396,9 @@ register_ui_event("fa-leftbracket", create_ui_handler("on_click"))
 register_ui_event("fa-rightbracket", create_ui_handler("on_right_click"))
 
 -- Modified click handlers with modifiers
+-- Alt+click (only leftbracket exists)
+register_ui_event("fa-a-leftbracket", create_ui_handler("on_click", { alt = true }))
+
 -- Control+click
 register_ui_event("fa-c-leftbracket", create_ui_handler("on_click", { control = true }))
 register_ui_event("fa-c-rightbracket", create_ui_handler("on_right_click", { control = true }))
