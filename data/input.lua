@@ -14,28 +14,24 @@ data:extend({
       type = "custom-input",
       name = "fa-w",
       key_sequence = "W",
-      linked_game_control = "move-up",
       consuming = "none",
    },
    {
       type = "custom-input",
       name = "fa-a",
       key_sequence = "A",
-      linked_game_control = "move-left",
       consuming = "none",
    },
    {
       type = "custom-input",
       name = "fa-s",
       key_sequence = "S",
-      linked_game_control = "move-down",
       consuming = "none",
    },
    {
       type = "custom-input",
       name = "fa-d",
       key_sequence = "D",
-      linked_game_control = "move-right",
       consuming = "none",
    },
 
