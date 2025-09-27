@@ -1228,24 +1228,6 @@ function mod.is_a_pipe_end(ent)
    return connections == 1
 end
 
---Runs through the inventory and deletes all empty planner tools.
-function mod.delete_empty_planners_in_inventory(pindex)
-   local inv = game.get_player(pindex).get_main_inventory()
-   local length = #inv
-   for i = 1, length, 1 do
-      local stack = inv[i]
-      if stack and stack.valid_for_read then
-         if stack.name == "cut-paste-tool" or stack.name == "copy-paste-tool" then
-            stack.clear()
-         elseif stack.is_deconstruction_item or stack.is_upgrade_item then
-            stack.clear()
-         elseif stack.is_blueprint and stack.is_blueprint_setup() == false then
-            stack.clear()
-         end
-      end
-   end
-end
-
 --Scans an area to identify obstacles for building there
 function mod.identify_building_obstacle(pindex, area, ent_to_ignore)
    local p = game.get_player(pindex)

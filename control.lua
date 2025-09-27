@@ -846,7 +846,7 @@ EventManager.on_event(
          --storage.players[pindex].lag_building_direction = true
          read_hand(pindex)
       end
-      BuildingTools.delete_empty_planners_in_inventory(pindex)
+
       storage.players[pindex].bp_selecting = false
       storage.players[pindex].blueprint_reselecting = false
       storage.players[pindex].ghost_rail_planning = false
