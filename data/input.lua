@@ -91,33 +91,6 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "fa-up",
-      key_sequence = "UP",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-left",
-      key_sequence = "LEFT",
-      consuming = "none",
-   },
-   {
-      type = "custom-input",
-      name = "fa-down",
-      key_sequence = "DOWN",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-right",
-      key_sequence = "RIGHT",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
       name = "fa-s-up",
       key_sequence = "SHIFT + UP",
       consuming = "none",

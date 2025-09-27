@@ -379,11 +379,7 @@ register_ui_event("fa-s", create_ui_handler("on_down"))
 register_ui_event("fa-a", create_ui_handler("on_left"))
 register_ui_event("fa-d", create_ui_handler("on_right"))
 
--- Arrow keys
-register_ui_event("fa-up", create_ui_handler("on_up"))
-register_ui_event("fa-down", create_ui_handler("on_down"))
-register_ui_event("fa-left", create_ui_handler("on_left"))
-register_ui_event("fa-right", create_ui_handler("on_right"))
+-- Arrow keys (removed - using cursor anchoring instead)
 
 -- Edge navigation (Ctrl+WASD)
 register_ui_event("fa-c-w", create_ui_handler("on_top"))

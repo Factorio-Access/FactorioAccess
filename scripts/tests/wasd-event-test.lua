@@ -1,5 +1,5 @@
 --- Test WASD keyboard events for cursor movement
--- Simulates keyboard input to test cursor movement
+-- WASD keys always move the cursor and never move the character
 
 local EventManager = require("scripts.event-manager")
 local TestRegistry = require("scripts.test-registry")
@@ -29,17 +29,6 @@ describe("WASD Event Tests", function()
       end)
 
       ctx:at_tick(1, function()
-         -- First enable cursor mode by mocking 'I' key press
-         local enable_cursor_event = {
-            name = "fa-i",
-            player_index = pindex,
-            tick = game.tick,
-         }
-         EventManager.mock_event("fa-i", enable_cursor_event)
-
-         -- Verify cursor is enabled
-         ctx:assert(vp:get_cursor_enabled(), "Cursor should be enabled after pressing I")
-
          -- Record initial cursor position
          initial_pos = vp:get_cursor_pos()
       end)

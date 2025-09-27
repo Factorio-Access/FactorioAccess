@@ -29,7 +29,7 @@ local mod = {}
 ---@class fa.viewpoint.ViewpointState
 ---@field cursor_pos fa.Point
 ---@field cursor_size number
----@field cursor_enabled boolean
+---@field cursor_anchored boolean
 ---@field cursor_hidden boolean
 ---@field cursor_bookmark fa.Point
 ---@field cursor_ent_highlight_box  LuaEntity?
@@ -41,7 +41,7 @@ local mod = {}
 local viewpoint_storage = StorageManager.declare_storage_module("viewpoint", {
    cursor_pos = { x = 0, y = 0 },
    cursor_size = 0,
-   cursor_enabled = false,
+   cursor_anchored = true,
    cursor_hidden = false,
    cursor_bookmark = { x = 0, y = 0 },
    cursor_ent_highlight_box = nil,
@@ -61,7 +61,7 @@ end
 
 ---@param point fa.Point
 function Viewpoint:set_cursor_pos(point)
-   assert(point and point.x and point.y)
+   assert(point and point.x and point.y and math.floor(point.x) == point.x and math.floor(point.y) == point.y)
    viewpoint_storage[self.pindex].cursor_pos = { x = point.x, y = point.y }
 end
 
@@ -85,6 +85,17 @@ end
 function Viewpoint:set_cursor_enabled(enabled)
    assert(enabled ~= nil)
    viewpoint_storage[self.pindex].cursor_enabled = enabled
+end
+
+---@return boolean
+function Viewpoint:get_cursor_anchored()
+   return viewpoint_storage[self.pindex].cursor_anchored
+end
+
+---@param val boolean
+function Viewpoint:set_cursor_anchored(val)
+   assert(type(val) == "boolean")
+   viewpoint_storage[self.pindex].cursor_anchored = val
 end
 
 ---@return boolean

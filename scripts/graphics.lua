@@ -85,7 +85,6 @@ function mod.sync_build_cursor_graphics(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
    local cursor_pos = vp:get_cursor_pos()
    local cursor_size = vp:get_cursor_size()
-   local cursor_enabled = vp:get_cursor_enabled()
    local width = nil
    local height = nil
    local left_top = nil
@@ -94,7 +93,7 @@ function mod.sync_build_cursor_graphics(pindex)
       --Redraw direction indicator arrow
       if dir_indicator ~= nil then player.building_dir_arrow.destroy() end
       local arrow_pos = vp:get_cursor_pos()
-      if storage.players[pindex].build_lock and not cursor_enabled and stack.name ~= "rail" then
+      if storage.players[pindex].build_lock and stack.name ~= "rail" then
          arrow_pos = FaUtils.center_of_tile(
             FaUtils.offset_position_legacy(arrow_pos, storage.players[pindex].player_direction, -2)
          )
@@ -129,7 +128,7 @@ function mod.sync_build_cursor_graphics(pindex)
          position = vp:get_cursor_pos(),
          building_direction = dir,
          player_direction = p_dir,
-         cursor_enabled = cursor_enabled,
+
          build_lock = storage.players[pindex].build_lock,
          is_rail_vehicle = (stack.name == "rail"),
       })

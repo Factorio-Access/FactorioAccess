@@ -46,7 +46,7 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
    local stack = p.cursor_stack
    local vp = Viewpoint.get_viewpoint(pindex)
    local pos = vp:get_cursor_pos()
-   local cursor_enabled = vp:get_cursor_enabled()
+
    local cursor_size = vp:get_cursor_size()
 
    -- Ensure building footprint is up to date
@@ -72,59 +72,25 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
       local position = nil
       local placing_underground_belt = stack.prototype.place_result.type == "underground-belt"
 
-      if not cursor_enabled then
-         --Not in cursor mode
-         local old_pos = game.get_player(pindex).position
-         if
-            stack.name == "locomotive"
-            or stack.name == "cargo-wagon"
-            or stack.name == "fluid-wagon"
-            or stack.name == "artillery-wagon"
-         then
-            --Allow easy placement onto rails by simply offsetting to the faced direction.
-            local rail_vehicle_offset = 2.5
-            position =
-               FaUtils.offset_position_legacy(old_pos, storage.players[pindex].player_direction, rail_vehicle_offset)
-         else
-            --Calculate footprint using centralized function
-            local footprint = FaUtils.calculate_building_footprint({
-               entity_prototype = stack.prototype.place_result,
-               position = pos,
-               building_direction = storage.players[pindex].building_direction,
-               player_direction = storage.players[pindex].player_direction,
-               cursor_enabled = cursor_enabled,
-               build_lock = storage.players[pindex].build_lock,
-               is_rail_vehicle = (stack.name == "rail"),
-            })
+      --Cursor mode: Calculate footprint using centralized function
+      local footprint = FaUtils.calculate_building_footprint({
+         entity_prototype = stack.prototype.place_result,
+         position = pos,
+         building_direction = storage.players[pindex].building_direction,
+         player_direction = storage.players[pindex].player_direction,
 
-            turn_to_cursor_direction_cardinal(pindex)
+         build_lock = storage.players[pindex].build_lock,
+         is_rail_vehicle = false,
+      })
 
-            position = footprint.center
+      turn_to_cursor_direction_cardinal(pindex)
 
-            -- Store the calculated footprint for later use
-            storage.players[pindex].building_footprint_left_top = footprint.left_top
-            storage.players[pindex].building_footprint_right_bottom = footprint.right_bottom
-         end
-      else
-         --Cursor mode: Calculate footprint using centralized function
-         local footprint = FaUtils.calculate_building_footprint({
-            entity_prototype = stack.prototype.place_result,
-            position = pos,
-            building_direction = storage.players[pindex].building_direction,
-            player_direction = storage.players[pindex].player_direction,
-            cursor_enabled = cursor_enabled,
-            build_lock = storage.players[pindex].build_lock,
-            is_rail_vehicle = false,
-         })
+      position = footprint.center
 
-         turn_to_cursor_direction_cardinal(pindex)
+      -- Store the calculated footprint for later use
+      storage.players[pindex].building_footprint_left_top = footprint.left_top
+      storage.players[pindex].building_footprint_right_bottom = footprint.right_bottom
 
-         position = footprint.center
-
-         -- Store the calculated footprint for later use
-         storage.players[pindex].building_footprint_left_top = footprint.left_top
-         storage.players[pindex].building_footprint_right_bottom = footprint.right_bottom
-      end
       -- Electric pole placement checks
       local pole_configs = {
          ["small-electric-pole"] = { min_distance = 6.5, max_radius = 7.6, use_center_tile = true },
@@ -236,11 +202,11 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
       --Tile placement
       local p = game.get_player(pindex)
       local t_size = cursor_size * 2 + 1
-      if cursor_enabled and storage.players[pindex].preferences.tiles_placed_from_northwest_corner then
-         pos.x = pos.x - cursor_size
-         pos.y = pos.y - cursor_size
-         vp:set_cursor_pos(pos)
-      end
+
+      pos.x = pos.x - cursor_size
+      pos.y = pos.y - cursor_size
+      vp:set_cursor_pos(pos)
+
       if p.can_build_from_cursor({ position = pos, terrain_building_size = t_size }) then
          p.build_from_cursor({ position = pos, terrain_building_size = t_size })
       else
@@ -446,7 +412,7 @@ function mod.nudge_key(direction, event)
             position = FaUtils.offset_position_legacy(ent.position, direction, 1),
             building_direction = ent.direction,
             player_direction = dirs.north, -- Not relevant for nudging
-            cursor_enabled = true, -- Nudging uses entity position directly
+
             build_lock = false,
             is_rail_vehicle = false,
          })
@@ -491,11 +457,9 @@ function mod.nudge_key(direction, event)
          else
             --Successfully teleported and so nudged
             Speech.speak(pindex, { "fa.nudged-one-direction", { "fa.direction", direction } })
-            if vp:get_cursor_enabled() then
-               vp:set_cursor_pos(FaUtils.offset_position_legacy(vp:get_cursor_pos(), direction, 1))
-               Graphics.draw_cursor_highlight(pindex, ent, "train-visualization")
-               --Graphics.sync_build_cursor_graphics(pindex)
-            end
+
+            vp:set_cursor_pos(FaUtils.offset_position_legacy(vp:get_cursor_pos(), direction, 1))
+
             if ent.type == "electric-pole" then
                -- laterdo **bugfix when nudged electric poles have extra wire reach, cut wires
                -- if ent.clone{position = new_pos, surface = ent.surface, force = ent.force, create_build_effect_smoke = false} == true then
@@ -574,7 +538,7 @@ function mod.build_preview_checks_info(stack, pindex)
    local surf = game.get_player(pindex).surface
    local vp = Viewpoint.get_viewpoint(pindex)
    local pos = vp:get_cursor_pos()
-   local cursor_enabled = vp:get_cursor_enabled()
+
    local result = { "" }
    local build_dir = storage.players[pindex].building_direction
    local ent_p = stack.prototype.place_result --it is an entity prototype!
@@ -1037,34 +1001,10 @@ function mod.build_preview_checks_info(stack, pindex)
    if ent_p.electric_energy_source_prototype ~= nil then
       local position = pos
       local build_dir = storage.players[pindex].building_direction
-      if cursor_enabled then
-         position.x = position.x + math.ceil(2 * ent_p.selection_box.right_bottom.x) / 2 - 0.5
-         position.y = position.y + math.ceil(2 * ent_p.selection_box.right_bottom.y) / 2 - 0.5
-      elseif storage.players[pindex].player_direction == defines.direction.north then
-         if build_dir == dirs.north or build_dir == dirs.south then
-            position.y = position.y + math.ceil(2 * ent_p.selection_box.left_top.y) / 2 + 0.5
-         elseif build_dir == dirs.east or build_dir == dirs.west then
-            position.y = position.y + math.ceil(2 * ent_p.selection_box.left_top.x) / 2 + 0.5
-         end
-      elseif storage.players[pindex].player_direction == defines.direction.south then
-         if build_dir == dirs.north or build_dir == dirs.south then
-            position.y = position.y + math.ceil(2 * ent_p.selection_box.right_bottom.y) / 2 - 0.5
-         elseif build_dir == dirs.east or build_dir == dirs.west then
-            position.y = position.y + math.ceil(2 * ent_p.selection_box.right_bottom.x) / 2 - 0.5
-         end
-      elseif storage.players[pindex].player_direction == defines.direction.west then
-         if build_dir == dirs.north or build_dir == dirs.south then
-            position.x = position.x + math.ceil(2 * ent_p.selection_box.left_top.x) / 2 + 0.5
-         elseif build_dir == dirs.east or build_dir == dirs.west then
-            position.x = position.x + math.ceil(2 * ent_p.selection_box.left_top.y) / 2 + 0.5
-         end
-      elseif storage.players[pindex].player_direction == defines.direction.east then
-         if build_dir == dirs.north or build_dir == dirs.south then
-            position.x = position.x + math.ceil(2 * ent_p.selection_box.right_bottom.x) / 2 - 0.5
-         elseif build_dir == dirs.east or build_dir == dirs.west then
-            position.x = position.x + math.ceil(2 * ent_p.selection_box.right_bottom.y) / 2 - 0.5
-         end
-      end
+
+      position.x = position.x + math.ceil(2 * ent_p.selection_box.right_bottom.x) / 2 - 0.5
+      position.y = position.y + math.ceil(2 * ent_p.selection_box.right_bottom.y) / 2 - 0.5
+
       local dict = prototypes.get_entity_filtered({ { filter = "type", type = "electric-pole" } })
       local poles = {}
       for i, v in pairs(dict) do
@@ -1131,7 +1071,7 @@ function mod.build_preview_checks_info(stack, pindex)
       end
    end
 
-   if cursor_enabled and util.distance(pos, storage.players[pindex].position) > p.reach_distance + 2 then
+   if util.distance(pos, storage.players[pindex].position) > p.reach_distance + 2 then
       table.insert(result, { "fa.connection-cursor-out-of-reach" })
    end
    return result

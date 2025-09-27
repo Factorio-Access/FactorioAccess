@@ -39,7 +39,6 @@ local test_files = {
    "belt-direction-test", -- Test transport belt direction detection
    "assembler-recipe-test", -- Test assembling machine recipe management
    "assembling-machine-ui-test", -- Test assembling machine UI with recipe selection
-   "building-footprint-tests", -- Test centralized building footprint calculations
    "hidden-technology-filter-test", -- Test filtering of hidden technologies
    "roboport-cursor-distance-test", -- Test roboport distance calculations in cursor mode
    -- "fa-info-smoke-test", -- Test entity information extraction system (temporarily disabled)

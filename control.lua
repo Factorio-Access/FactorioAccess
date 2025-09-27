@@ -237,73 +237,9 @@ function check_for_player(index)
    end
 end
 
----Teleports the player character to the nearest tile center position to allow grid aligned cursor movement.
----@param pindex number
-local function center_player_character(pindex)
-   local p = game.get_player(pindex)
-   local can_port = p.surface.can_place_entity({ name = "character", position = FaUtils.center_of_tile(p.position) })
-   local ents = p.surface.find_entities_filtered({
-      position = FaUtils.center_of_tile(p.position),
-      radius = 0.1,
-      type = { "character" },
-      invert = true,
-   })
-   if #ents > 0 and ents[1].valid then
-      local ent = ents[1]
-      --Ignore ents you can walk through, laterdo better collision checks**
-      can_port = can_port and all_ents_are_walkable(p.position)
-   end
-   if can_port then p.teleport(FaUtils.center_of_tile(p.position)) end
-   storage.players[pindex].position = p.position
-   local vp = Viewpoint.get_viewpoint(pindex)
-   local cursor_pos = vp:get_cursor_pos()
-   cursor_pos = FaUtils.center_of_tile(cursor_pos)
-   vp:set_cursor_pos(cursor_pos)
-   Mouse.move_mouse_pointer(cursor_pos, pindex)
-end
-
 --Toggles remote view on or off. Appropriately affects build lock or remote view.
 local function toggle_remote_view(pindex, force_true, force_false, muted)
    --TODO issue #282, calls for remote view changed.
-   do
-      return
-   end
-   if (storage.players[pindex].remote_view ~= true or force_true == true) and force_false ~= true then
-      storage.players[pindex].remote_view = true
-      local vp = Viewpoint.get_viewpoint(pindex)
-      vp:set_cursor_enabled(true)
-      storage.players[pindex].build_lock = false
-      center_player_character(pindex)
-      if muted ~= true then read_tile(pindex, "Remote view opened, ") end
-   else
-      storage.players[pindex].remote_view = false
-      storage.players[pindex].build_lock = false
-      if muted ~= true then read_tile(pindex, "Remote view closed, ") end
-      --game.get_player(pindex).close_map()
-   end
-
-   --Fix zoom
-   Zoom.fix_zoom(pindex)
-end
-
--- Force the mod to disable/reset nall cursor modes. Useful for KK.
-function force_cursor_off(pindex)
-   local p = game.get_player(pindex)
-   local vp = Viewpoint.get_viewpoint(pindex)
-
-   --Disable
-   vp:set_cursor_enabled(false)
-   local pos = FaUtils.to_neighboring_tile(storage.players[pindex].position, storage.players[pindex].player_direction)
-   pos = FaUtils.center_of_tile(pos)
-   vp:set_cursor_pos(pos)
-   Mouse.move_mouse_pointer(pos, pindex)
-   Graphics.sync_build_cursor_graphics(pindex)
-   storage.players[pindex].plr_direction = p.character.direction
-   storage.players[pindex].build_lock = false
-
-   --Close Remote view
-   toggle_remote_view(pindex, false, true, true)
-   --p.close_map()
 end
 
 --refresh_player_tile has been moved to EntitySelection module
@@ -395,48 +331,6 @@ EventManager.on_event(defines.events.on_player_changed_position, function(event,
    storage.players[pindex].position = p.position
    local pos = p.position
    local vp = Viewpoint.get_viewpoint(pindex)
-   local cursor_enabled = vp:get_cursor_enabled()
-   if p.walking_state.direction ~= storage.players[pindex].player_direction and cursor_enabled == false then
-      --Directions mismatch. Turn to new direction --turn (Note, this code handles diagonal turns and other direction changes)
-      if p.character ~= nil then
-         storage.players[pindex].player_direction = p.character.direction
-      else
-         storage.players[pindex].player_direction = p.walking_state.direction
-         if p.walking_state.direction == nil then storage.players[pindex].player_direction = dirs.north end
-      end
-      local new_pos = (FaUtils.offset_position_legacy(pos, storage.players[pindex].player_direction, 1.0))
-      vp:set_cursor_pos(new_pos)
-
-      --Build lock building + rotate belts in hand unless cursor mode
-      local stack = p.cursor_stack
-      if
-         storage.players[pindex].build_lock
-         and stack.valid_for_read
-         and stack.valid
-         and stack.prototype.place_result ~= nil
-         and (stack.prototype.place_result.type == "transport-belt" or stack.name == "rail")
-      then
-         turn_to_cursor_direction_cardinal(pindex)
-         storage.players[pindex].building_direction = storage.players[pindex].player_direction
-         BuildingTools.build_item_in_hand(pindex) --build extra belt when turning
-      end
-   elseif cursor_enabled == false then
-      --Directions same: Walk straight
-      local new_pos = (FaUtils.offset_position_legacy(pos, storage.players[pindex].player_direction, 1))
-      vp:set_cursor_pos(new_pos)
-
-      --Build lock building + rotate belts in hand unless cursor mode
-      if storage.players[pindex].build_lock then
-         local stack = p.cursor_stack
-         if stack and stack.valid_for_read and stack.valid then
-            if stack.prototype.place_result ~= nil and stack.prototype.place_result.type == "transport-belt" then
-               turn_to_cursor_direction_cardinal(pindex)
-               storage.players[pindex].building_direction = storage.players[pindex].player_direction
-            end
-            BuildingTools.build_item_in_hand(pindex)
-         end
-      end
-   end
 
    --Update cursor graphics
    local stack = p.cursor_stack
@@ -476,40 +370,6 @@ EventManager.on_event(defines.events.on_player_changed_position, function(event,
    --Play a sound for audio ruler alignment (smooth walk)
    Rulers.update_from_cursor(pindex)
 end)
-
---Calls the appropriate menu movement function for a player and the input direction.
-local function menu_cursor_move(direction, pindex)
-   storage.players[pindex].preferences.inventory_wraps_around = true --laterdo make this a setting to toggle
-   if direction == defines.direction.north then
-      menu_cursor_up(pindex)
-   elseif direction == defines.direction.south then
-      menu_cursor_down(pindex)
-   elseif direction == defines.direction.east then
-      menu_cursor_right(pindex)
-   elseif direction == defines.direction.west then
-      menu_cursor_left(pindex)
-   end
-end
-
---Moves upwards in a menu. Todo: split by menu. "menu_up"
-function menu_cursor_up(pindex)
-   local router = UiRouter.get_router(pindex)
-end
-
---Moves downwards in a menu. Todo: split by menu."menu_down"
-function menu_cursor_down(pindex)
-   local router = UiRouter.get_router(pindex)
-end
-
---Moves to the left in a menu. Todo: split by menu."menu_left"
-function menu_cursor_left(pindex)
-   local router = UiRouter.get_router(pindex)
-end
-
-----Moves to the right  in a menu. Todo: split by menu. "menu_right"
-function menu_cursor_right(pindex)
-   local router = UiRouter.get_router(pindex)
-end
 
 --Schedules a function to be called after a certain number of ticks.
 function schedule(ticks_in_the_future, func_to_call, data_to_pass_1, data_to_pass_2, data_to_pass_3)
@@ -555,16 +415,6 @@ local function move_characters(event)
       local router = UiRouter.get_router(pindex)
       local vp = Viewpoint.get_viewpoint(pindex)
       local cursor_pos = vp:get_cursor_pos()
-
-      if vp:get_cursor_enabled() then
-         local p = game.get_player(pindex)
-         -- Careful! You have to write a table for the game to pick it up.
-         if p.character then
-            local ws = p.character.walking_state
-            ws.walking = false
-            p.character.walking_state = ws
-         end
-      end
 
       if player.vanilla_mode == true then
          player.player.game_view_settings.update_entity_selection = true
@@ -1670,7 +1520,7 @@ local function cursor_mode_move(direction, pindex, single_only)
    if single_only then diff = 1 end
    local p = game.get_player(pindex)
 
-   cursor_pos = FaUtils.center_of_tile(FaUtils.offset_position_legacy(cursor_pos, direction, diff))
+   cursor_pos = FaUtils.offset_position_legacy(cursor_pos, direction, diff)
    vp:set_cursor_pos(cursor_pos)
 
    if cursor_size == 0 then
@@ -1736,7 +1586,6 @@ local function move_key(direction, event, force_single_tile)
    local p = game.get_player(pindex)
    local router = UiRouter.get_router(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
-   local cursor_enabled = vp:get_cursor_enabled()
 
    --Stop any enabled mouse entity selection
    if storage.players[pindex].vanilla_mode ~= true then
@@ -1749,45 +1598,17 @@ local function move_key(direction, event, force_single_tile)
    --Save the key press event
    BumpDetection.save_key_press(event.player_index, direction, event.tick)
 
-   if cursor_enabled then
-      -- Cursor mode: Move cursor on map
-      cursor_mode_move(direction, pindex, force_single_tile)
-   else
-      -- General case: Move character
-      move(direction, pindex)
-   end
-
-   --Play a sound to indicate ongoing selection
-   if storage.players[pindex].bp_selecting then sounds.play_cursor_moved_while_selecting(pindex) end
+   -- Cursor mode: Move cursor on map
+   cursor_mode_move(direction, pindex, force_single_tile)
 
    --Play a sound for audio ruler alignment (cursor mode moved)
-   if cursor_enabled then Rulers.update_from_cursor(pindex) end
-
-   --Handle vehicle behavior
-   if p.vehicle then
-      if p.vehicle.type == "car" then
-         --Deactivate (and stop) cars when in a menu
-         if cursor_enabled then p.vehicle.active = false end
-         --Re-activate inactive cars when in no menu
-         if not cursor_enabled and p.vehicle.active == false then
-            p.vehicle.active = true
-            p.vehicle.speed = 0
-         end
-         --Re-activate inactive cars if in Kruise Kontrol
-         if KruiseKontrol.is_active(pindex) then
-            p.vehicle.active = true
-            p.vehicle.speed = 0
-         end
-      end
-   end
+   Rulers.update_from_cursor(pindex)
 end
 
 EventManager.on_event(
    "fa-w",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-
       move_key(defines.direction.north, event)
    end
 )
@@ -1796,8 +1617,6 @@ EventManager.on_event(
    "fa-a",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-
       move_key(defines.direction.west, event)
    end
 )
@@ -1806,8 +1625,6 @@ EventManager.on_event(
    "fa-s",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-
       move_key(defines.direction.south, event)
    end
 )
@@ -1816,49 +1633,7 @@ EventManager.on_event(
    "fa-d",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-
       move_key(defines.direction.east, event)
-   end
-)
-
-EventManager.on_event(
-   "fa-up",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-      local vp = Viewpoint.get_viewpoint(pindex)
-      if vp:get_cursor_enabled() then move_key(dirs.north, event, true) end
-   end
-)
-
-EventManager.on_event(
-   "fa-left",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-      local vp = Viewpoint.get_viewpoint(pindex)
-      if vp:get_cursor_enabled() then move_key(dirs.west, event, true) end
-   end
-)
-
-EventManager.on_event(
-   "fa-down",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-      local vp = Viewpoint.get_viewpoint(pindex)
-      if vp:get_cursor_enabled() then move_key(dirs.south, event, true) end
-   end
-)
-
-EventManager.on_event(
-   "fa-right",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-      local vp = Viewpoint.get_viewpoint(pindex)
-      if vp:get_cursor_enabled() then move_key(dirs.east, event, true) end
    end
 )
 
@@ -2183,10 +1958,6 @@ EventManager.on_event(
    "fa-s-w",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
-         return
-      end
-
       cursor_skip(pindex, defines.direction.north)
    end
 )
@@ -2195,10 +1966,6 @@ EventManager.on_event(
    "fa-s-a",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
-         return
-      end
-
       cursor_skip(pindex, defines.direction.west)
    end
 )
@@ -2207,10 +1974,6 @@ EventManager.on_event(
    "fa-s-s",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
-         return
-      end
-
       cursor_skip(pindex, defines.direction.south)
    end
 )
@@ -2219,10 +1982,6 @@ EventManager.on_event(
    "fa-s-d",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
-         return
-      end
-
       cursor_skip(pindex, defines.direction.east)
    end
 )
@@ -2231,10 +1990,6 @@ EventManager.on_event(
    "fa-c-w",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
-         return
-      end
-
       cursor_skip(pindex, defines.direction.north, 1000, true)
    end
 )
@@ -2243,10 +1998,6 @@ EventManager.on_event(
    "fa-c-a",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
-         return
-      end
-
       cursor_skip(pindex, defines.direction.west, 1000, true)
    end
 )
@@ -2255,10 +2006,6 @@ EventManager.on_event(
    "fa-c-s",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
-         return
-      end
-
       cursor_skip(pindex, defines.direction.south, 1000, true)
    end
 )
@@ -2267,10 +2014,6 @@ EventManager.on_event(
    "fa-c-d",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      if storage.players[pindex].vanilla_mode or Viewpoint.get_viewpoint(pindex):get_cursor_enabled() == false then
-         return
-      end
-
       cursor_skip(pindex, defines.direction.east, 1000, true)
    end
 )
@@ -2279,8 +2022,6 @@ EventManager.on_event(
    "fa-s-up",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-
       BuildingTools.nudge_key(defines.direction.north, event)
    end
 )
@@ -2289,8 +2030,6 @@ EventManager.on_event(
    "fa-s-left",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-
       BuildingTools.nudge_key(defines.direction.west, event)
    end
 )
@@ -2299,8 +2038,6 @@ EventManager.on_event(
    "fa-s-down",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-
       BuildingTools.nudge_key(defines.direction.south, event)
    end
 )
@@ -2309,8 +2046,6 @@ EventManager.on_event(
    "fa-s-right",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-
       BuildingTools.nudge_key(defines.direction.east, event)
    end
 )
@@ -2477,7 +2212,7 @@ local function read_coords(pindex, start_phrase)
 
       --If there is a build preview, give its dimensions and which way they extend
       local stack = game.get_player(pindex).cursor_stack
-      local cursor_enabled = vp:get_cursor_enabled()
+
       if
          stack
          and stack.valid_for_read
@@ -2501,9 +2236,9 @@ local function read_coords(pindex, start_phrase)
          message:fragment({ "fa.build-preview-wide", tostring(width_tiles) })
 
          -- Width direction
-         if cursor_enabled or p_dir == dirs.east or p_dir == dirs.south or p_dir == dirs.north then
+         if p_dir == dirs.east or p_dir == dirs.south or p_dir == dirs.north then
             message:fragment({ "fa.build-preview-east" })
-         elseif not cursor_enabled and p_dir == dirs.west then
+         elseif p_dir == dirs.west then
             message:fragment({ "fa.build-preview-west" })
          end
 
@@ -2519,9 +2254,9 @@ local function read_coords(pindex, start_phrase)
          message:fragment({ "fa.build-preview-high", tostring(height_tiles) })
 
          -- Height direction
-         if cursor_enabled or p_dir == dirs.east or p_dir == dirs.south or p_dir == dirs.west then
+         if p_dir == dirs.east or p_dir == dirs.south or p_dir == dirs.west then
             message:fragment({ "fa.build-preview-south" })
-         elseif not cursor_enabled and p_dir == dirs.north then
+         elseif p_dir == dirs.north then
             message:fragment({ "fa.build-preview-north" })
          end
       elseif stack and stack.valid_for_read and stack.valid and stack.is_blueprint and stack.is_blueprint_setup() then
@@ -2533,7 +2268,7 @@ local function read_coords(pindex, start_phrase)
       elseif stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result ~= nil then
          --Paving preview size
          local size = vp:get_cursor_size() * 2 + 1
-         if cursor_enabled and storage.players[pindex].preferences.tiles_placed_from_northwest_corner then
+         if storage.players[pindex].preferences.tiles_placed_from_northwest_corner then
             message:fragment({ "fa.paving-preview-northwest", tostring(size), tostring(size) })
          else
             message:fragment({ "fa.paving-preview-centered", tostring(size), tostring(size) })
@@ -2717,10 +2452,10 @@ EventManager.on_event(
       local router = UiRouter.get_router(pindex)
       local p = game.get_player(pindex)
 
-      if router and Viewpoint.get_viewpoint(pindex):get_cursor_enabled() then
-         kb_jump_to_player(event)
-      elseif p.driving and (p.vehicle.train ~= nil or p.vehicle.type == "car") then
+      if p.driving and (p.vehicle.train ~= nil or p.vehicle.type == "car") then
          kb_read_driving_structure_ahead(event)
+      else
+         kb_jump_to_player(event)
       end
    end
 )
@@ -2862,47 +2597,23 @@ local function toggle_cursor_mode(pindex, muted)
    local p = game.get_player(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
    if p.character == nil then
-      vp:set_cursor_enabled(true)
+      vp:set_cursor_anchored(false)
       storage.players[pindex].build_lock = false
+      Speech.speak("Cannot anchor cursor while there is no character", pindex)
       return
    end
 
-   if not vp:get_cursor_enabled() and not vp:get_cursor_hidden() then
+   if not vp:get_cursor_anchored() then
       --Enable
-      vp:set_cursor_enabled(true)
+      vp:set_cursor_anchored(true)
       storage.players[pindex].build_lock = false
-
-      --Teleport to the center of the nearest tile to align
-      center_player_character(pindex)
 
       --Finally, read the new tile
       if muted ~= true then read_tile(pindex, "Cursor mode enabled, ") end
    else
-      force_cursor_off(pindex)
-
       --Finally, read the new tile
+      vp:set_cursor_anchored(false)
       if muted ~= true then read_tile(pindex, "Cursor mode disabled, ") end
-   end
-   local cursor_pos = vp:get_cursor_pos()
-   local cursor_size = vp:get_cursor_size()
-   if cursor_size < 2 then
-      --Update cursor highlight
-      local ent = EntitySelection.get_first_ent_at_tile(pindex)
-      if ent and ent.valid then
-         Graphics.draw_cursor_highlight(pindex, ent, nil)
-      else
-         Graphics.draw_cursor_highlight(pindex, nil, nil)
-      end
-   else
-      local left_top = {
-         math.floor(cursor_pos.x) - cursor_size,
-         math.floor(cursor_pos.y) - cursor_size,
-      }
-      local right_bottom = {
-         math.floor(cursor_pos.x) + cursor_size + 1,
-         math.floor(cursor_pos.y) + cursor_size + 1,
-      }
-      Graphics.draw_large_cursor(left_top, right_bottom, pindex)
    end
 end
 
@@ -2910,8 +2621,6 @@ EventManager.on_event(
    "fa-i",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-
       toggle_cursor_mode(pindex, false)
    end
 )
@@ -2922,7 +2631,6 @@ local CURSOR_SIZES = { 0, 1, 2, 5, 10, 25, 50, 125 }
 
 ---Adjusts the cursor size for a given player by stepping through predefined cursor size options.
 ---Direction +1 increases the size to the next larger value, -1 decreases it.
----Redraws the cursor box and announces the new size with TTS and sound feedback.
 ---@param pindex number Player index
 ---@param direction number Step direction in CURSOR_SIZES (+1 to increase, -1 to decrease)
 local function adjust_cursor_size(pindex, direction)
@@ -2948,17 +2656,6 @@ local function adjust_cursor_size(pindex, direction)
 
    local say_size = new_size * 2 + 1
    Speech.speak(pindex, { "fa.cursor-size", tostring(say_size), tostring(say_size) })
-
-   local scan_left_top = {
-      math.floor(cursor_pos.x) - new_size,
-      math.floor(cursor_pos.y) - new_size,
-   }
-   local scan_right_bottom = {
-      math.floor(cursor_pos.x) + new_size + 1,
-      math.floor(cursor_pos.y) + new_size + 1,
-   }
-
-   Graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
    sounds.play_close_inventory(pindex)
 end
 
@@ -4007,7 +3704,7 @@ local function kb_toggle_vanilla_mode(event)
    sounds.play_confirm(p.index)
    if storage.players[pindex].vanilla_mode == false then
       p.print("Vanilla mode : ON")
-      vp:set_cursor_enabled(false)
+
       if p.character then p.character_running_speed_modifier = 0 end
       vp:set_cursor_hidden(true)
       Speech.speak(pindex, "Vanilla mode enabled")
@@ -4163,7 +3860,7 @@ local function kb_pipette_tool_info(event)
          storage.players[pindex].building_direction = ent.direction
          vp:set_cursor_rotation_offset(0)
       end
-      if vp:get_cursor_enabled() then vp:set_cursor_pos(FaUtils.get_ent_northwest_corner_position(ent)) end
+      vp:set_cursor_pos(FaUtils.get_ent_northwest_corner_position(ent))
       Graphics.sync_build_cursor_graphics(pindex)
       Graphics.draw_cursor_highlight(pindex, ent, nil, nil)
    end

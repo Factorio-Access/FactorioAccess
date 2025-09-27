@@ -356,7 +356,6 @@ Parameters:
 - params.position: The base position (cursor or player position)
 - params.building_direction: The entity's rotation (dirs.north, dirs.east, etc.)
 - params.player_direction: The player's facing direction (for non-cursor mode)
-- params.cursor_enabled: Whether cursor mode is active
 - params.build_lock: Whether build lock mode is active
 - params.is_rail_vehicle: Special handling for locomotives/wagons
 
@@ -397,31 +396,6 @@ function mod.calculate_building_footprint(params)
    }
 
    -- Apply offsets for non-cursor mode based on player direction
-   if not params.cursor_enabled then
-      if params.player_direction == dirs.west then
-         left_top.x = left_top.x - width + 1
-         right_bottom.x = right_bottom.x - width + 1
-      elseif params.player_direction == dirs.north then
-         left_top.y = left_top.y - height + 1
-         right_bottom.y = right_bottom.y - height + 1
-      end
-
-      -- Apply build lock mode offsets (building from behind)
-      if params.build_lock and not params.is_rail_vehicle then
-         local base_offset = -2
-         local size_offset = 0
-
-         if params.player_direction == dirs.north or params.player_direction == dirs.south then
-            size_offset = -height + 1
-         elseif params.player_direction == dirs.east or params.player_direction == dirs.west then
-            size_offset = -width + 1
-         end
-
-         local total_offset = base_offset + size_offset
-         left_top = mod.offset_position_legacy(left_top, params.player_direction, total_offset)
-         right_bottom = mod.offset_position_legacy(right_bottom, params.player_direction, total_offset)
-      end
-   end
 
    -- Calculate center position
    local center = {
@@ -1138,26 +1112,6 @@ function mod.find_prototype(name)
    end
 
    return nil
-end
-
--- Get the effective position for distance checks and relative vectors (cursor position when in cursor mode, player position otherwise)
----@param pindex number
----@return fa.Point
-function mod.get_player_relative_origin(pindex)
-   local player = game.get_player(pindex)
-   assert(player)
-
-   local vp = Viewpoint.get_viewpoint(pindex)
-
-   -- Check if in cursor mode
-   if vp:get_cursor_enabled() then
-      return vp:get_cursor_pos()
-   elseif player.character then
-      return { x = player.character.position.x, y = player.character.position.y }
-   else
-      -- God mode or similar - use player position
-      return { x = player.position.x, y = player.position.y }
-   end
 end
 
 -- Formats a power value in watts to a localized string

@@ -84,7 +84,7 @@ function FastTravelController:travel_to_point(id)
    local vp = Viewpoint.get_viewpoint(self.pindex)
    local success = Teleport.teleport_to_closest(self.pindex, point.position, false, false)
 
-   if success and vp:get_cursor_enabled() then
+   if success and vp:get_cursor_anchored() then
       vp:set_cursor_pos(table.deepcopy(point.position))
    else
       vp:set_cursor_pos(

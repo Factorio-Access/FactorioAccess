@@ -218,8 +218,7 @@ function mod.aim_gun_at_nearest_enemy(pindex, enemy_in)
    --Return if missing a gun or ammo
    if gun_stack == nil or not gun_stack.valid_for_read or not gun_stack.valid then return false end
    if ammo_stack == nil or not ammo_stack.valid_for_read or not ammo_stack.valid then return false end
-   --Return if in Cursormode
-   if vp:get_cursor_enabled() then return false end
+
    --Check for nearby enemies
    if enemy_in == nil or not enemy_in.valid then
       enemy = p.surface.find_nearest_enemy({ position = p.position, max_distance = 50, force = p.force })

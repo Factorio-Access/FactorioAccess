@@ -61,14 +61,6 @@ function mod.activate_kk(pindex)
       end
 
       -- Okay. Finally we're good.  Let's kick this off.
-
-      -- If cursor mode is on then the best case is that the mod announces a bunch of stuff it shouldn't, but sometimes
-      -- this just flat out means that KK doesn't work.  I don't know why; I'm guessing that's to do with how we hack
-      -- WASD not to move the player.
-      --
-      -- Don't say anything either, this is silent.
-      force_cursor_off(pindex)
-
       ---@type table
       local opts = { x = math.floor(kk_pos.x), y = math.floor(kk_pos.y) }
       remote.call(interface_name, "start_job", pindex, opts, target)
