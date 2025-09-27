@@ -80,17 +80,6 @@ function Viewpoint:set_cursor_size(size)
 end
 
 ---@return boolean
-function Viewpoint:get_cursor_enabled()
-   return viewpoint_storage[self.pindex].cursor_enabled
-end
-
----@param enabled boolean
-function Viewpoint:set_cursor_enabled(enabled)
-   assert(enabled ~= nil)
-   viewpoint_storage[self.pindex].cursor_enabled = enabled
-end
-
----@return boolean
 function Viewpoint:get_cursor_anchored()
    return viewpoint_storage[self.pindex].cursor_anchored
 end
