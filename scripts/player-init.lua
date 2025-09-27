@@ -72,7 +72,6 @@ function mod.initialize(player)
    faplayer.remote_view_tiles = faplayer.remote_view_tiles or 0
    faplayer.cursor_size = faplayer.cursor_size or 0
    faplayer.ruler = faplayer.ruler or nil
-   faplayer.build_lock = faplayer.build_lock or false
    faplayer.inventory = faplayer.inventory
       or {
          lua_inventory = character.get_main_inventory(),

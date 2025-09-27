@@ -1503,24 +1503,8 @@ local function move(direction, pindex, nudged)
          storage.players[pindex].position = new_pos
          if nudged ~= true then
             vp:set_cursor_pos(FaUtils.offset_position_legacy(storage.players[pindex].position, direction, 1))
+            read_tile(pindex)
          end
-         --Telestep walking sounds
-         if
-            EntitySelection.get_tile_cache(pindex).previous ~= nil
-            and EntitySelection.get_tile_cache(pindex).previous.valid
-            and EntitySelection.get_tile_cache(pindex).previous.type == "transport-belt"
-         then
-            sounds.play_metal_walking(pindex)
-         else
-            local tile = game.get_player(pindex).surface.get_tile(new_pos.x, new_pos.y)
-            local sound_path = "tile-walking/" .. tile.name
-            if helpers.is_valid_sound_path(sound_path) then
-               sounds.play_tile_walking(pindex, tile.name)
-            else
-               sounds.play_tile_walking(pindex)
-            end
-         end
-         if nudged ~= true then read_tile(pindex) end
 
          local stack = first_player.cursor_stack
          if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result ~= nil then
