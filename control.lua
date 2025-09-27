@@ -237,11 +237,6 @@ function check_for_player(index)
    end
 end
 
---Toggles remote view on or off. Appropriately affects build lock or remote view.
-local function toggle_remote_view(pindex, force_true, force_false, muted)
-   --TODO issue #282, calls for remote view changed.
-end
-
 --refresh_player_tile has been moved to EntitySelection module
 
 -- Lua's version of a forward declaration.
@@ -1465,12 +1460,6 @@ local function kb_pause_menu(event)
 
    -- Play UI close sound
    sounds.play_close_inventory(player.index)
-
-   -- Close remote view if open
-   if storage.players[pindex].remote_view then
-      toggle_remote_view(pindex, false, true)
-      Speech.speak(pindex, "Remote view closed")
-   end
 
    -- Close mod GUIs
    clear_fa_gui(pindex)
@@ -2772,9 +2761,7 @@ EventManager.on_event(
    "fa-a-i",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-
-      toggle_remote_view(pindex)
+      -- For remote view toggle, but remote view is currently not working in Factorio 2.0.
    end
 )
 
