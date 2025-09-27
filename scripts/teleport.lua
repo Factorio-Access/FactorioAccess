@@ -6,6 +6,7 @@ local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
 local Speech = require("scripts.speech")
 local BumpDetection = require("scripts.bump-detection")
+local MovementHistory = require("scripts.movement-history")
 
 local mod = {}
 
@@ -96,6 +97,7 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
             .play_sound({ path = "utility/scenario_message", volume_modifier = 0.8, position = old_pos })
       end
       local teleported = false
+      MovementHistory.reset_and_increment_generation(pindex)
       if muted then
          teleported = char.teleport(new_pos)
       else

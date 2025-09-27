@@ -35,6 +35,7 @@ local KruiseKontrol = require("scripts.kruise-kontrol-wrapper")
 local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
 local Mouse = require("scripts.mouse")
+local MovementHistory = require("scripts.movement-history")
 local PlayerInit = require("scripts.player-init")
 local PlayerMiningTools = require("scripts.player-mining-tools")
 local Quickbar = require("scripts.quickbar")
@@ -327,6 +328,14 @@ EventManager.on_event(
       local router = UiRouter.get_router(pindex)
 
       local p = game.get_player(pindex)
+      local old_pos = storage.players[pindex].position
+      local new_pos = p.position
+
+      -- Check for teleportation (large position jump)
+      if old_pos and util.distance(old_pos, new_pos) > 10 then
+         MovementHistory.reset_and_increment_generation(pindex)
+      end
+
       storage.players[pindex].position = p.position
       local pos = p.position
       local vp = Viewpoint.get_viewpoint(pindex)
@@ -445,6 +454,7 @@ end
 --Called every tick. Used to call scheduled and repeated functions.
 function on_tick(event)
    ScannerEntrypoint.on_tick()
+   MovementHistory.update_all_players()
 
    if storage.scheduled_events[event.tick] then
       for _, to_call in pairs(storage.scheduled_events[event.tick]) do
@@ -541,6 +551,7 @@ EventManager.on_event(
       local router = UiRouter.get_router(pindex)
 
       BumpDetection.reset_bump_stats(pindex)
+      MovementHistory.reset_and_increment_generation(pindex)
       game.get_player(pindex).clear_cursor()
       storage.players[pindex].last_train_orientation = nil
       if game.get_player(pindex).driving then
@@ -570,6 +581,16 @@ EventManager.on_event(
       else
          Speech.speak(pindex, { "fa.driving-state-changed" })
       end
+   end
+)
+
+--Called when a player changes surface
+EventManager.on_event(
+   defines.events.on_player_changed_surface,
+   ---@param event EventData.on_player_changed_surface
+   ---@param pindex integer
+   function(event, pindex)
+      MovementHistory.reset_and_increment_generation(pindex)
    end
 )
 
@@ -1302,6 +1323,7 @@ EventManager.on_event(
       local position = game.get_player(pindex).position
       storage.players[pindex].position = position
       vp:set_cursor_pos({ x = position.x, y = position.y })
+      MovementHistory.reset_and_increment_generation(pindex)
    end
 )
 
@@ -1598,9 +1620,6 @@ local function move_key(direction, event, force_single_tile)
 
    --Reset unconfirmed actions
    storage.players[pindex].confirm_action_tick = 0
-
-   --Save the key press event
-   BumpDetection.save_key_press(event.player_index, direction, event.tick)
 
    -- Cursor mode: Move cursor on map
    cursor_mode_move(direction, pindex, force_single_tile)
