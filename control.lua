@@ -485,8 +485,6 @@ function on_tick(event)
          end
          --Report the KK state, if any.
          KruiseKontrol.status_read(pindex, false)
-         --Clear unwanted GUI remnants
-         --Graphics.clear_player_GUI_remnants(pindex)
       end
    end
 end
