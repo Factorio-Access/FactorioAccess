@@ -15,6 +15,13 @@ local mod = {}
 
 --todo cleanup blueprint calls in control.lua so that blueprint data editing calls happen only within this module
 
+function mod.get_blueprint_label(stack)
+   local bp_data = mod.get_bp_data_for_edit(stack)
+   local label = bp_data.blueprint.label
+   if label == nil then label = "no name" end
+   return label
+end
+
 function mod.get_bp_data_for_edit(stack)
    ---@diagnostic disable-next-line: param-type-mismatch
    return helpers.json_to_table(helpers.decode_string(string.sub(stack.export_stack(), 2)))
