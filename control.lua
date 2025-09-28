@@ -3,6 +3,8 @@ require("syntrax")
 --Main file for mod runtime
 local Logging = require("scripts.logging")
 Logging.init()
+-- Set logging level
+Logging.set_level("INFO")
 
 -- Create logger for control.lua
 local logger = Logging.Logger("control")
@@ -467,12 +469,18 @@ function on_tick(event)
    -- Check alerts via AudioCues
    AudioCues.check_cues(event.tick, players)
 
+   -- Check bump detection every tick for all players
+   for _, player in pairs(game.players) do
+      if player.connected then
+         BumpDetection.check_and_play_bump_alert_sound(player.index, event.tick)
+         BumpDetection.check_and_play_stuck_alert_sound(player.index, event.tick)
+      end
+   end
+
    --The elseifs can schedule up to 16 events.
    if event.tick % 15 == 0 then
       for pindex, player in pairs(players) do
-         --Bump checks
-         BumpDetection.check_and_play_bump_alert_sound(pindex, event.tick)
-         BumpDetection.check_and_play_stuck_alert_sound(pindex, event.tick)
+         -- Other periodic checks can go here
       end
    elseif event.tick % 90 == 13 then
       for pindex, player in pairs(players) do
@@ -1556,6 +1564,7 @@ local function cursor_mode_move(direction, pindex, single_only)
 
    if cursor_size == 0 then
       -- Cursor size 0 ("1 by 1"): Read tile
+      EntitySelection.refresh_player_tile(pindex)
       read_tile(pindex)
 
       --Update drawn cursor

@@ -21,7 +21,9 @@ local RingBuffer = require("ds.fixed-ringbuffer")
 
 local StorageManager = require("scripts.storage-manager")
 local Uid = require("scripts.uid")
+local Logging = require("scripts.logging")
 
+local logger = Logging.Logger("movement-history")
 local mod = {}
 
 ---@class fa.MovementHistory.State
@@ -118,6 +120,15 @@ local function update_player_if_needed(pindex)
          entry.kind = mod.MOVEMENT_KINDS.WALKING
          entry.direction = walking_state.direction or defines.direction.north
          entry.velocity = player.character_running_speed
+         logger:debug(
+            string.format(
+               "WALKING: pos=(%.2f,%.2f), dir=%d, vel=%.3f",
+               entry.position.x,
+               entry.position.y,
+               entry.direction,
+               entry.velocity
+            )
+         )
       else
          entry.kind = mod.MOVEMENT_KINDS.NONE
          entry.direction = defines.direction.north
