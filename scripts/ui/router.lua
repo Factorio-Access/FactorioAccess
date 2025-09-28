@@ -108,6 +108,7 @@ mod.UI_NAMES = {
    BLUEPRINT_AREA_SELECTOR = "blueprint_area_selector",
    DECON_AREA_SELECTOR = "decon_area_selector",
    UPGRADE_AREA_SELECTOR = "upgrade_area_selector",
+   COPY_PASTE_AREA_SELECTOR = "copy_paste_area_selector",
 }
 
 ---@class fa.ui.RouterState

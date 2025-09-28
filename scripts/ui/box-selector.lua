@@ -70,6 +70,7 @@ function BoxSelector:on_child_result(pindex, result_context, result, controller)
    -- BoxSelector doesn't have children, so this is empty
 end
 
+---@param controller fa.ui.RouterController
 function BoxSelector:_handle_click(pindex, modifiers, is_right_click, controller)
    local viewpoint = Viewpoint.get_viewpoint(pindex)
    local cursor_pos = viewpoint:get_cursor_pos()
@@ -111,7 +112,10 @@ function BoxSelector:_handle_click(pindex, modifiers, is_right_click, controller
       }
 
       -- Execute callback if provided
-      if self.callback then self.callback(pindex, state.callback_params, result) end
+      if self.callback then
+         self.callback(pindex, state.callback_params, result)
+         controller:close()
+      end
 
       -- Close with result
       controller:close_with_result(result)

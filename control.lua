@@ -58,6 +58,7 @@ require("scripts.ui.menus.blueprints-menu")
 require("scripts.ui.selectors.decon-selector")
 require("scripts.ui.selectors.upgrade-selector")
 require("scripts.ui.selectors.blueprint-selector")
+require("scripts.ui.selectors.copy-paste-selector")
 require("scripts.ui.menus.gun-menu")
 require("scripts.ui.menus.main-menu")
 require("scripts.ui.menus.fast-travel-menu")
@@ -3292,6 +3293,20 @@ EventManager.on_event(
                   math.floor(cursor_pos.y),
                },
                second_message = { "fa.planner-blueprint-second-point" },
+            })
+            return
+         elseif stack.name == "copy-paste-tool" then
+            -- Start selection for copy
+            local vp = Viewpoint.get_viewpoint(pindex)
+            local cursor_pos = vp:get_cursor_pos()
+            router:open_ui(UiRouter.UI_NAMES.COPY_PASTE_AREA_SELECTOR, {
+               first_point = { x = cursor_pos.x, y = cursor_pos.y },
+               intro_message = {
+                  "fa.planner-copy-first-point",
+                  math.floor(cursor_pos.x),
+                  math.floor(cursor_pos.y),
+               },
+               second_message = { "fa.planner-select-second-point" },
             })
             return
          end
