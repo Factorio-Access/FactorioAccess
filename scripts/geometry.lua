@@ -66,9 +66,7 @@ end
 ---@return number ny normalized y component
 function mod.normalize_2d(x, y)
    local mag = math.sqrt(x * x + y * y)
-   if mag < 0.001 then
-      return 0, 0
-   end
+   if mag < 0.001 then return 0, 0 end
    return x / mag, y / mag
 end
 
@@ -84,9 +82,7 @@ function mod.angle_between_2d(x1, y1, x2, y2)
    local len1 = math.sqrt(x1 * x1 + y1 * y1)
    local len2 = math.sqrt(x2 * x2 + y2 * y2)
 
-   if len1 < 0.001 or len2 < 0.001 then
-      return 0
-   end
+   if len1 < 0.001 or len2 < 0.001 then return 0 end
 
    local cos_angle = dot / (len1 * len2)
    cos_angle = math.max(-1, math.min(1, cos_angle))

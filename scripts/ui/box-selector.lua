@@ -31,15 +31,17 @@ function BoxSelector:open(pindex, parameters, controller)
       callback_params = parameters or {},
    }
 
-   -- Use custom intro message if provided in parameters, otherwise default
-   local intro_message
-   if parameters and parameters.first_point then
-      -- If first point is pre-set, skip to second point message
-      intro_message = (parameters and parameters.second_message) or { "fa.box-selector-second-point" }
-   else
-      intro_message = (parameters and parameters.intro_message) or { "fa.box-selector-intro" }
-   end
-   Speech.speak(pindex, intro_message)
+   -- Build message combining intro and second message if both provided
+   local message = Speech.new()
+
+   -- Use intro message
+   local intro_msg = (parameters and parameters.intro_message) or { "fa.box-selector-intro" }
+   message:fragment(intro_msg)
+
+   -- If second message provided, add it
+   if parameters and parameters.second_message then message:fragment(parameters.second_message) end
+
+   Speech.speak(pindex, message:build())
 end
 
 function BoxSelector:close(pindex)
@@ -75,7 +77,10 @@ function BoxSelector:_handle_click(pindex, modifiers, is_right_click, controller
          modifiers = modifiers or {},
          is_right_click = is_right_click,
       }
-      Speech.speak(pindex, { "fa.box-selector-second-point" })
+      -- Speak second point message, including custom second_message if provided
+      local second_message = (state.callback_params and state.callback_params.second_message)
+         or { "fa.box-selector-second-point" }
+      Speech.speak(pindex, second_message)
    else
       -- Second click - complete selection
       local result = {

@@ -57,6 +57,7 @@ local EntityUI = require("scripts.ui.entity-ui")
 require("scripts.ui.menus.blueprints-menu")
 require("scripts.ui.selectors.decon-selector")
 require("scripts.ui.selectors.upgrade-selector")
+require("scripts.ui.selectors.blueprint-selector")
 require("scripts.ui.menus.gun-menu")
 require("scripts.ui.menus.main-menu")
 require("scripts.ui.menus.fast-travel-menu")
@@ -3253,7 +3254,7 @@ EventManager.on_event(
       local stack = p.cursor_stack
       local ghost = p.cursor_ghost
 
-      -- Handle upgrade/deconstruction planners specially
+      -- Handle planners specially
       if stack and stack.valid_for_read then
          if stack.is_deconstruction_item then
             -- Start selection for deconstruction (action determined by alt modifier on second click)
@@ -3277,6 +3278,20 @@ EventManager.on_event(
                first_point = { x = cursor_pos.x, y = cursor_pos.y },
                intro_message = { "fa.planner-upgrade-first-point", math.floor(cursor_pos.x), math.floor(cursor_pos.y) },
                second_message = { "fa.planner-select-second-point" },
+            })
+            return
+         elseif stack.is_blueprint then
+            -- Start selection for blueprint
+            local vp = Viewpoint.get_viewpoint(pindex)
+            local cursor_pos = vp:get_cursor_pos()
+            router:open_ui(UiRouter.UI_NAMES.BLUEPRINT_AREA_SELECTOR, {
+               first_point = { x = cursor_pos.x, y = cursor_pos.y },
+               intro_message = {
+                  "fa.planner-blueprint-first-point",
+                  math.floor(cursor_pos.x),
+                  math.floor(cursor_pos.y),
+               },
+               second_message = { "fa.planner-blueprint-second-point" },
             })
             return
          end
@@ -3934,27 +3949,6 @@ EventManager.on_event(
    function(event, pindex)
       if storage.players[pindex].vanilla_mode then return end
       TravelTools.fast_travel_menu_open(pindex)
-   end
-)
-
-EventManager.on_event(
-   "fa-a-b",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      if storage.players[pindex].vanilla_mode then return end
-      local p = game.get_player(pindex)
-      if not p then return end
-
-      -- Put an empty blueprint in the player's hand
-      p.cursor_stack.set_stack({ name = "blueprint", count = 1 })
-
-      -- Open the blueprint area selector with a custom intro message
-      -- NOTE: The on_player_cursor_stack_changed event will announce "blueprint 1" which overrides
-      -- this intro message. This is a known issue that we're living with for now.
-      local router = UiRouter.get_router(pindex)
-      router:open_ui(UiRouter.UI_NAMES.BLUEPRINT_AREA_SELECTOR, {
-         intro_message = { "fa.ui-blueprints-create-new-intro" },
-      })
    end
 )
 

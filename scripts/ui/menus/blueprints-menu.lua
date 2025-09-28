@@ -224,34 +224,4 @@ mod.blueprint_menu_tabs = TabList.declare_tablist({
 -- Register with the UI event routing system for event interception
 UiRouter.register_ui(mod.blueprint_menu_tabs)
 
--- Register box selector for blueprint area selection with callback
-local blueprint_area_selector = BoxSelector.declare_box_selector({
-   ui_name = UiRouter.UI_NAMES.BLUEPRINT_AREA_SELECTOR,
-   callback = function(pindex, params, result)
-      local p = game.get_player(pindex)
-      if not p then return end
-
-      -- Get the blueprint item
-      local bp = p.cursor_stack
-      if not bp or not bp.is_blueprint then return end
-
-      -- Create blueprint from selected area (using engine defaults for optional parameters)
-      bp.create_blueprint({
-         surface = p.surface,
-         force = p.force,
-         area = result.box,
-      })
-
-      -- Provide feedback about what was captured
-      local entity_count = bp.get_blueprint_entity_count()
-      if entity_count > 0 then
-         Speech.speak(pindex, { "fa.ui-blueprints-created-with-entities", entity_count })
-      else
-         Speech.speak(pindex, { "fa.ui-blueprints-created-empty" })
-      end
-   end,
-})
-
-UiRouter.register_ui(blueprint_area_selector)
-
 return mod
