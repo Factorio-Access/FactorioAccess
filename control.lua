@@ -3220,14 +3220,19 @@ local function kb_click_hand(event)
 
    -- Check if the item in hand can be built
    if stack and stack.valid_for_read then
-      local proto = stack.prototype
-      if proto.place_result or proto.place_as_tile_result then
-         -- Item can be placed/built
-         BuildingTools.build_item_in_hand(pindex)
+      if stack.is_blueprint and stack.is_blueprint_setup() then
+         -- Blueprint building - use the mod's paste function
+         Blueprints.paste_blueprint(pindex)
       else
-         -- Item cannot be built (e.g., intermediate products, tools, etc.)
-         -- Could add a message or different action here if needed
-         Speech.speak(pindex, { "fa.cannot-build-item" })
+         local proto = stack.prototype
+         if proto.place_result or proto.place_as_tile_result then
+            -- Item can be placed/built
+            BuildingTools.build_item_in_hand(pindex)
+         else
+            -- Item cannot be built (e.g., intermediate products, tools, etc.)
+            -- Could add a message or different action here if needed
+            Speech.speak(pindex, { "fa.cannot-build-item" })
+         end
       end
    elseif player.cursor_ghost then
       -- Ghost building
@@ -3282,19 +3287,23 @@ EventManager.on_event(
             })
             return
          elseif stack.is_blueprint then
-            -- Start selection for blueprint
-            local vp = Viewpoint.get_viewpoint(pindex)
-            local cursor_pos = vp:get_cursor_pos()
-            router:open_ui(UiRouter.UI_NAMES.BLUEPRINT_AREA_SELECTOR, {
-               first_point = { x = cursor_pos.x, y = cursor_pos.y },
-               intro_message = {
-                  "fa.planner-blueprint-first-point",
-                  math.floor(cursor_pos.x),
-                  math.floor(cursor_pos.y),
-               },
-               second_message = { "fa.planner-blueprint-second-point" },
-            })
-            return
+            -- Only start selection for empty blueprints
+            if not stack.is_blueprint_setup() then
+               -- Start selection for empty blueprint
+               local vp = Viewpoint.get_viewpoint(pindex)
+               local cursor_pos = vp:get_cursor_pos()
+               router:open_ui(UiRouter.UI_NAMES.BLUEPRINT_AREA_SELECTOR, {
+                  first_point = { x = cursor_pos.x, y = cursor_pos.y },
+                  intro_message = {
+                     "fa.planner-blueprint-first-point",
+                     math.floor(cursor_pos.x),
+                     math.floor(cursor_pos.y),
+                  },
+                  second_message = { "fa.planner-blueprint-second-point" },
+               })
+               return
+            end
+            -- Blueprint is set up - fall through to normal click behavior
          elseif stack.name == "copy-paste-tool" then
             -- Start selection for copy
             local vp = Viewpoint.get_viewpoint(pindex)
