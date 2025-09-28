@@ -18,10 +18,17 @@ mod.blueprint_area_selector = BoxSelector.declare_box_selector({
          return
       end
 
-      -- Create the area from the box
+      -- Create the area from the box Careful! Positive y is south, and additionally if we grab the edges of the tiles
+      -- sometimes this grabs entities outside the blueprint. SO, offset to the center of tiles.
       local area = {
-         left_top = result.box.left_top,
-         right_bottom = result.box.right_bottom,
+         left_top = {
+            x = math.floor(result.box.left_top.x) + 0.5,
+            y = math.floor(result.box.left_top.y) + 0.5,
+         },
+         right_bottom = {
+            x = math.ceil(result.box.right_bottom.x + 0.5) - 0.5,
+            y = math.ceil(result.box.right_bottom.y + 0.5) - 0.5,
+         },
       }
 
       -- Create blueprint from selected area

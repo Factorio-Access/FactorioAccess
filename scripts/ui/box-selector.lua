@@ -1,3 +1,9 @@
+--[[
+A box selector.
+
+The player selects two points and we return them Note that this *DOES* mean that the second point = the first point if
+the player didn't move the cursor, and that in effect from the player's perspective this box includes the second point.
+]]
 local StorageManager = require("scripts.storage-manager")
 local Viewpoint = require("scripts.viewpoint")
 local Speech = require("scripts.speech")
