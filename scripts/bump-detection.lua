@@ -30,6 +30,10 @@ local Geometry = require("scripts.geometry")
 local logger = Logging.Logger("bump-detection")
 local mod = {}
 
+-- Callbacks for bump events
+---@type function[]
+local bump_callbacks = {}
+
 ---@class fa.BumpDetection.BumpState
 ---@field last_bump_tick number
 ---@field last_stuck_tick number
@@ -47,6 +51,20 @@ function mod.reset_bump_stats(pindex)
       last_bump_tick = 0,
       last_stuck_tick = 0,
    }
+end
+
+---Register a callback to be called when a bump is detected
+---@param callback function
+function mod.register_bump_callback(callback)
+   table.insert(bump_callbacks, callback)
+end
+
+---Notify all registered callbacks of a bump
+---@param pindex number
+local function notify_bump_callbacks(pindex)
+   for _, callback in ipairs(bump_callbacks) do
+      callback(pindex)
+   end
 end
 
 ---Checks and plays bump alert sounds when collision is detected
@@ -159,6 +177,9 @@ function mod.check_and_play_bump_alert_sound(pindex, this_tick)
    if angle_degrees > 20 or path_angle_degrees > 30 then
       bump.last_bump_tick = this_tick
 
+      -- Notify registered callbacks
+      notify_bump_callbacks(pindex)
+
       -- Select appropriate sound based on collision type
       if angle_degrees > 20 and angle_degrees < 70 and path_angle_degrees < 30 then
          -- Sliding along wall: moving wrong direction but smoothly
@@ -228,6 +249,10 @@ function mod.check_and_play_stuck_alert_sound(pindex, this_tick)
    -- This means the player has been trying to walk for 3+ ticks but hasn't moved
    if stuck and walking_count >= 3 then
       bump.last_stuck_tick = this_tick
+
+      -- Notify registered callbacks
+      notify_bump_callbacks(pindex)
+
       logger:info("Playing stuck sound!")
       sounds.play_player_bump_stuck(pindex)
    end

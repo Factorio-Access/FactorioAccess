@@ -1020,8 +1020,8 @@ local function ent_info_pole_neighbors(ctx)
    for t, quals in pairs(neighbors) do
       for q, ents in pairs(quals) do
          table.sort(ents, function(a, b)
-            local a_dist = FaUtils.distance(a.position, ctx.cursor_pos)
-            local b_dist = FaUtils.distance(b.position, ctx.cursor_pos)
+            local a_dist = FaUtils.distance(a.position, ctx.ent.position)
+            local b_dist = FaUtils.distance(b.position, ctx.ent.position)
             if a_dist < b_dist then return true end
             -- Careful: if the distances aren't equal then continuing is a bad
             -- sort function.
@@ -1029,8 +1029,8 @@ local function ent_info_pole_neighbors(ctx)
 
             -- We want the 8-way direction here, as there is little point in
             -- reporting 16-way for poles.
-            local a_dir = FaUtils.get_direction_biased(a.position, ctx.cursor_pos)
-            local b_dir = FaUtils.get_direction_biased(b.position, ctx.cursor_pos)
+            local a_dir = FaUtils.get_direction_biased(a.position, ctx.ent.position)
+            local b_dir = FaUtils.get_direction_biased(b.position, ctx.ent.position)
             return a_dir < b_dir
          end)
       end
@@ -1052,8 +1052,8 @@ local function ent_info_pole_neighbors(ctx)
          for _, e in pairs(ents) do
             table.insert(ent_parts, {
                "fa.dir-dist",
-               FaUtils.direction_lookup(FaUtils.get_direction_biased(e.position, ctx.cursor_pos)),
-               FaUtils.distance_speech_friendly(ctx.cursor_pos, e.position),
+               FaUtils.direction_lookup(FaUtils.get_direction_biased(e.position, ctx.ent.position)),
+               FaUtils.distance_speech_friendly(ctx.ent.position, e.position),
             })
          end
 

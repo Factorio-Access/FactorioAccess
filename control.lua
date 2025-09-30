@@ -4,7 +4,7 @@ require("syntrax")
 local Logging = require("scripts.logging")
 Logging.init()
 -- Set logging level
-Logging.set_level("INFO")
+Logging.set_level("DEBUG")
 
 -- Create logger for control.lua
 local logger = Logging.Logger("control")
@@ -15,6 +15,11 @@ local AreaOperations = require("scripts.area-operations")
 local AudioCues = require("scripts.audio-cues")
 local Blueprints = require("scripts.blueprints")
 local BuildingTools = require("scripts.building-tools")
+local BuildLock = require("scripts.build-lock")
+-- Register build lock backends
+BuildLock.register_backend(require("scripts.build-lock-backends.transport-belts"))
+BuildLock.register_backend(require("scripts.build-lock-backends.electric-poles"))
+BuildLock.register_backend(require("scripts.build-lock-backends.simple"))
 local BumpDetection = require("scripts.bump-detection")
 local CircuitNetworks = require("scripts.circuit-networks")
 local Combat = require("scripts.combat")
@@ -476,6 +481,8 @@ function on_tick(event)
       if player.connected then
          BumpDetection.check_and_play_bump_alert_sound(player.index, event.tick)
          BumpDetection.check_and_play_stuck_alert_sound(player.index, event.tick)
+         -- Process build lock for walking movement
+         BuildLock.process_walking_movement(player.index)
       end
    end
 
@@ -1562,7 +1569,8 @@ local function cursor_mode_move(direction, pindex, single_only)
    local p = game.get_player(pindex)
 
    cursor_pos = FaUtils.offset_position_legacy(cursor_pos, direction, diff)
-   vp:set_cursor_pos(cursor_pos)
+   -- Use continuous movement tracking for WASD movements
+   vp:set_cursor_pos_continuous(cursor_pos, direction)
 
    if cursor_size == 0 then
       -- Cursor size 0 ("1 by 1"): Read tile
@@ -3735,7 +3743,7 @@ EventManager.on_event(
 ---@param event EventData.CustomInputEvent
 local function kb_toggle_build_lock(event)
    local pindex = event.player_index
-   Speech.speak(pindex, "Build lock needs reimplementation for 2.0")
+   BuildLock.toggle(pindex)
 end
 
 --Toggle building while walking

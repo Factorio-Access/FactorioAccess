@@ -171,4 +171,47 @@ function mod.get_viewpoint(pindex)
    return viewpoint_cache[pindex]
 end
 
+-- Listener system for cursor events
+---@type table<string, function[]>
+local listeners = {}
+
+---Register a listener for cursor events
+---@param event_name string "cursor_moved_continuous" or "cursor_jumped"
+---@param callback function
+function mod.register_listener(event_name, callback)
+   if not listeners[event_name] then listeners[event_name] = {} end
+   table.insert(listeners[event_name], callback)
+end
+
+---Notify listeners of an event
+---@param event_name string
+---@param pindex number
+---@param data table?
+local function notify_listeners(event_name, pindex, data)
+   if listeners[event_name] then
+      for _, callback in ipairs(listeners[event_name]) do
+         callback(pindex, data)
+      end
+   end
+end
+
+---Set cursor position for continuous movement (called only from WASD handlers)
+---This tracks continuous cursor movement and notifies listeners
+---@param point fa.Point
+---@param direction defines.direction
+function Viewpoint:set_cursor_pos_continuous(point, direction)
+   assert(point and point.x and point.y)
+   assert(direction ~= nil)
+
+   local old_pos = self:get_cursor_pos()
+   viewpoint_storage[self.pindex].cursor_pos = { x = math.floor(point.x), y = math.floor(point.y) }
+
+   -- Notify listeners of continuous movement
+   notify_listeners("cursor_moved_continuous", self.pindex, {
+      old_position = old_pos,
+      new_position = { x = math.floor(point.x), y = math.floor(point.y) },
+      direction = direction,
+   })
+end
+
 return mod

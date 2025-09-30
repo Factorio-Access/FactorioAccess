@@ -394,8 +394,6 @@ function mod.calculate_building_footprint(params)
       y = left_top.y + height,
    }
 
-   -- Apply offsets for non-cursor mode based on player direction
-
    -- Calculate center position
    local center = {
       x = left_top.x + math.floor(width / 2),

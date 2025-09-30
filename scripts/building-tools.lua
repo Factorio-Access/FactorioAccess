@@ -35,13 +35,27 @@ local function check_electric_pole_placement(surface, position, pole_name, min_d
    return all_beyond_min and any_connects, any_found
 end
 
---[[Attempts to build the item in hand.
+---@class fa.BuildingTools.BuildItemParams
+---@field pindex integer Player index
+---@field building_direction defines.direction Direction to build in
+---@field teleport_player? boolean Whether to teleport player out of build area (default true)
+---@field play_error_sound? boolean Whether to play error sounds (default true)
+---@field speak_errors? boolean Whether to speak error messages (default true)
+
+--[[Attempts to build the item in hand with explicit parameters.
 * Does nothing if the hand is empty or the item is not a place-able entity.
 * If the item is an offshore pump, calls a different, special function for it.
-* You can offset the building with respect to the direction the player is facing. The offset is multiplied by the placed building width.
+* @param params fa.BuildingTools.BuildItemParams Build parameters
+* @return boolean True if build was successful
 ]]
 -- Precondition: Caller must ensure cursor_stack is valid_for_read
-function mod.build_item_in_hand(pindex, free_place_straight_rail)
+function mod.build_item_in_hand_with_params(params)
+   local pindex = params.pindex
+   local building_direction = params.building_direction
+   local teleport_player = params.teleport_player ~= false -- default true
+   local play_error_sound = params.play_error_sound ~= false -- default true
+   local speak_errors = params.speak_errors ~= false -- default true
+
    local p = game.get_player(pindex)
    local stack = p.cursor_stack
    local vp = Viewpoint.get_viewpoint(pindex)
@@ -68,7 +82,7 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
    --General build cases
    if stack.prototype.place_result ~= nil then
       local ent = stack.prototype.place_result
-      local dimensions = FaUtils.get_tile_dimensions(stack.prototype, storage.players[pindex].building_direction)
+      local dimensions = FaUtils.get_tile_dimensions(stack.prototype, building_direction)
       local position = nil
       local placing_underground_belt = stack.prototype.place_result.type == "underground-belt"
 
@@ -76,7 +90,7 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
       local footprint = FaUtils.calculate_building_footprint({
          entity_prototype = stack.prototype.place_result,
          position = pos,
-         building_direction = storage.players[pindex].building_direction,
+         building_direction = building_direction,
          player_direction = storage.players[pindex].player_direction,
          is_rail_vehicle = false,
       })
@@ -89,10 +103,10 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
       storage.players[pindex].building_footprint_left_top = footprint.left_top
       storage.players[pindex].building_footprint_right_bottom = footprint.right_bottom
 
+      local actual_build_direction = building_direction
       if placing_underground_belt and storage.players[pindex].underground_connects == true then
          --Flip the chute
-         storage.players[pindex].building_direction = (storage.players[pindex].building_direction + dirs.south)
-            % (2 * dirs.south)
+         actual_build_direction = (building_direction + dirs.south) % (2 * dirs.south)
       end
 
       --Clear build area obstacles
@@ -102,19 +116,21 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
          pindex
       )
 
-      --Teleport player out of build area
-      mod.teleport_player_out_of_build_area(
-         storage.players[pindex].building_footprint_left_top,
-         storage.players[pindex].building_footprint_right_bottom,
-         pindex
-      )
+      --Teleport player out of build area (if enabled)
+      if teleport_player then
+         mod.teleport_player_out_of_build_area(
+            storage.players[pindex].building_footprint_left_top,
+            storage.players[pindex].building_footprint_right_bottom,
+            pindex
+         )
+      end
 
       --Try to build it
       local build_successful = false
       local building = {
          position = position,
          --position = center_of_tile(position),
-         direction = storage.players[pindex].building_direction,
+         direction = actual_build_direction,
          alt = false,
       }
       if building.position ~= nil and game.get_player(pindex).can_build_from_cursor(building) then
@@ -123,33 +139,23 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
          schedule(2, "read_tile", pindex)
          build_successful = true
       else
-         --Report errors
-         game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
+         --Report errors (if enabled)
+         if play_error_sound then game.get_player(pindex).play_sound({ path = "utility/cannot_build" }) end
 
-         --Explain build error
-         local result = "Cannot place that there "
-         local build_area = {
-            storage.players[pindex].building_footprint_left_top,
-            storage.players[pindex].building_footprint_right_bottom,
-         }
-         result = mod.identify_building_obstacle(pindex, build_area, nil)
-         Speech.speak(pindex, result)
-      end
-      --Restore the original underground belt chute preview
-      if placing_underground_belt and storage.players[pindex].underground_connects == true then
-         storage.players[pindex].building_direction = (storage.players[pindex].building_direction + dirs.south)
-            % (2 * dirs.south)
-         local stack = game.get_player(pindex).cursor_stack
-         if
-            stack
-            and stack.valid_for_read
-            and stack.valid
-            and stack.prototype.place_result.type == "underground-belt"
-         then
-            stack.set_stack({ name = stack.name, count = stack.count })
+         --Explain build error (if enabled)
+         if speak_errors then
+            local result = "Cannot place that there "
+            local build_area = {
+               storage.players[pindex].building_footprint_left_top,
+               storage.players[pindex].building_footprint_right_bottom,
+            }
+            result = mod.identify_building_obstacle(pindex, build_area, nil)
+            Speech.speak(pindex, result)
          end
       end
-      --Flip pipe-to-ground in hand
+      --Note: Underground belt chute handling was removed - direction is passed directly
+
+      --Flip pipe-to-ground direction in storage for next placement
       if
          build_successful
          and stack
@@ -161,6 +167,8 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
          storage.players[pindex].building_direction = FaUtils.rotate_180(storage.players[pindex].building_direction)
          game.get_player(pindex).play_sound({ path = "Rotate-Hand-Sound" })
       end
+
+      return build_successful
    elseif stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result ~= nil then
       --Tile placement
       local p = game.get_player(pindex)
@@ -172,11 +180,14 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
 
       if p.can_build_from_cursor({ position = pos, terrain_building_size = t_size }) then
          p.build_from_cursor({ position = pos, terrain_building_size = t_size })
+         return true
       else
          p.play_sound({ path = "utility/cannot_build" })
+         return false
       end
    else
       game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
+      return false
    end
 
    --Update cursor highlight (end)
@@ -186,6 +197,27 @@ function mod.build_item_in_hand(pindex, free_place_straight_rail)
    else
       Graphics.draw_cursor_highlight(pindex, nil, nil)
    end
+end
+
+--[[Wrapper that takes simple parameters for backwards compatibility
+* Precondition: Caller must ensure cursor_stack is valid_for_read
+]]
+function mod.build_item_in_hand_with_direction(pindex, building_direction, free_place_straight_rail)
+   return mod.build_item_in_hand_with_params({
+      pindex = pindex,
+      building_direction = building_direction,
+   })
+end
+
+--[[Wrapper for build_item_in_hand_with_params that uses storage.players[pindex].building_direction
+* This maintains compatibility with existing code that expects the old behavior.
+* Precondition: Caller must ensure cursor_stack is valid_for_read
+]]
+function mod.build_item_in_hand(pindex, free_place_straight_rail)
+   return mod.build_item_in_hand_with_params({
+      pindex = pindex,
+      building_direction = storage.players[pindex].building_direction,
+   })
 end
 
 --[[Assisted building function for offshore pumps.
