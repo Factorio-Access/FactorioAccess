@@ -37,7 +37,7 @@ function mod.activate_kk(pindex)
 
       -- we must duplicate a bit of logic since the mouse is not on our side; FA
       -- has its own idea of selections.
-      EntitySelection.refresh_player_tile(pindex)
+      EntitySelection.reset_entity_index(pindex)
       local target = EntitySelection.get_first_ent_at_tile(pindex)
 
       -- Okay, but what other edge cases can we find?  Turns out that, again, KK

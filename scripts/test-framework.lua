@@ -53,6 +53,7 @@ local test_files = {
    -- "event-manager-player-init-test", -- Test EventManager player initialization (requires custom events)
    -- "event-priority-test", -- Test EventManager priority system (requires custom events)
    "entity-ui-test", -- Test generic entity UI system
+   "entity-selection-test", -- Test stable entity ordering (issue #265)
 }
 
 -- Test execution state

@@ -98,7 +98,7 @@ function FastTravelController:travel_to_point(id)
 
    Graphics.sync_build_cursor_graphics(self.pindex)
 
-   if not EntitySelection.refresh_player_tile(self.pindex) then
+   if not EntitySelection.reset_entity_index(self.pindex) then
       Speech.speak(self.pindex, { "fa.travel-tile-out-of-range" })
       return false
    end

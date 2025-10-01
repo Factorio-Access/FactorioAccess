@@ -456,7 +456,7 @@ function mod.get_entity_part_at_cursor(pindex)
    local cursor_pos = vp:get_cursor_pos()
    local x = cursor_pos.x
    local y = cursor_pos.y
-   local ents = EntitySelection.get_tile_cache(pindex).ents
+   local ents = EntitySelection.get_ents_on_tile(p.surface, cursor_pos.x, cursor_pos.y, pindex)
    local north_same = false
    local south_same = false
    local east_same = false

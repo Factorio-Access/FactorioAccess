@@ -6,19 +6,13 @@ local StorageManager = require("scripts.storage-manager")
 local Viewpoint = require("scripts.viewpoint")
 
 ---@class fa.EntitySelection.StorageState
----@field ents LuaEntity[]
----@field ent_index number
----@field last_returned_index number
----@field tile string
----@field tile_object LuaTile
+---@field ent_index number Current index for cycling
 
 ---@type table<number, fa.EntitySelection.StorageState>
 local ent_selection_storage = StorageManager.declare_storage_module("entity_selection", {
-   ents = {},
-   ent_index = 0,
-   last_returned_index = 0,
-   tile = nil,
-   tile_object = nil,
+   ent_index = 1,
+}, {
+   ephemeral_state_version = 1,
 })
 
 --- Define primary ents, which are ents that show up first when reading tiles.
@@ -36,184 +30,194 @@ function mod.ent_is_primary(ent, pindex)
       and (ent.type ~= "character" or ent.player ~= pindex)
 end
 
---- Sorts a list of entities by bringing primary entities to the start
----@param pindex number The player index
----@param ents table Array of entities to sort
-function mod.sort_ents_by_primary_first(pindex, ents, check_end_rail_fn)
+---Check if an entity should be included in tile queries
+---@param ent LuaEntity
+---@return boolean
+local function should_include_entity(ent)
+   if not ent or not ent.valid then return false end
+   for _, excluded in ipairs(Consts.EXCLUDED_ENT_NAMES) do
+      if ent.name == excluded then return false end
+   end
+   return true
+end
+
+---Implements stable total ordering over entities per issue #265
+---@param a LuaEntity
+---@param b LuaEntity
+---@param pindex number For primary entity detection
+---@return boolean True if a < b
+local function compare_entities(a, b, pindex)
+   -- Preferred prototypes first (primary entities)
+   local a_is_primary = mod.ent_is_primary(a, pindex)
+   local b_is_primary = mod.ent_is_primary(b, pindex)
+   if a_is_primary and not b_is_primary then return true end
+   if b_is_primary and not a_is_primary then return false end
+
+   -- Has unit_number before doesn't
+   local a_has_unit = a.unit_number ~= nil
+   local b_has_unit = b.unit_number ~= nil
+   if a_has_unit and not b_has_unit then return true end
+   if b_has_unit and not a_has_unit then return false end
+
+   -- Compare unit_numbers if both have
+   if a_has_unit and b_has_unit then return a.unit_number < b.unit_number end
+
+   -- Has mining_target before doesn't (only check on mining drills)
+   if a.type == "mining-drill" and b.type == "mining-drill" then
+      local a_has_mining = a.mining_target ~= nil
+      local b_has_mining = b.mining_target ~= nil
+      if a_has_mining and not b_has_mining then return true end
+      if b_has_mining and not a_has_mining then return false end
+   end
+
+   -- Compare prototype names lexicographically
+   if a.name ~= b.name then return a.name < b.name end
+
+   -- For item-on-ground, compare item names
+   if a.type == "item-entity" and b.type == "item-entity" then
+      local a_stack = a.stack
+      local b_stack = b.stack
+      if a_stack and b_stack and a_stack.name ~= b_stack.name then return a_stack.name < b_stack.name end
+   end
+
+   -- Last resort: register for destruction and compare registration numbers
+   local reg_num_a = script.register_on_object_destroyed(a)
+   local reg_num_b = script.register_on_object_destroyed(b)
+
+   return reg_num_a < reg_num_b
+end
+
+---Get entities on a tile in stable sorted order
+---@param surface LuaSurface
+---@param x number Tile x coordinate (will be floored)
+---@param y number Tile y coordinate (will be floored)
+---@param pindex number Player index (for primary entity detection)
+---@return LuaEntity[] Sorted entities in stable order
+function mod.get_ents_on_tile(surface, x, y, pindex)
+   local floor_x = math.floor(x)
+   local floor_y = math.floor(y)
+
+   local search_area = {
+      { x = floor_x + 0.001, y = floor_y + 0.001 },
+      { x = floor_x + 0.999, y = floor_y + 0.999 },
+   }
+
+   -- Get all entities in area
+   local all_ents = surface.find_entities_filtered({ area = search_area })
+
+   -- Filter to included entities
+   local ents = {}
+   for _, ent in ipairs(all_ents) do
+      if should_include_entity(ent) then table.insert(ents, ent) end
+   end
+
+   -- Add corpses separately
+   local corpses = surface.find_entities_filtered({
+      area = search_area,
+      type = "corpse",
+   })
+   for _, corpse in ipairs(corpses) do
+      if should_include_entity(corpse) then table.insert(ents, corpse) end
+   end
+
+   -- Sort with stable ordering
    table.sort(ents, function(a, b)
-      -- Return false if either are invalid
-      if a == nil or a.valid == false then return false end
-      if b == nil or b.valid == false then return false end
-
-      -- Check if primary
-      local a_is_primary = mod.ent_is_primary(a, pindex)
-      local b_is_primary = mod.ent_is_primary(b, pindex)
-
-      -- Both or none are primary
-      if a_is_primary == b_is_primary then return false end
-
-      -- a is primary while b is not
-      if a_is_primary then return true end
-
-      -- b is primary while a is not
-      return false
+      return compare_entities(a, b, pindex)
    end)
+
+   return ents
 end
 
 --- Get the first entity at a tile
 -- The entity list is sorted to have primary entities first, so a primary entity is expected.
 ---@param pindex number The player index
----@return LuaEntity|nil The first valid entity at the tile, or nil if none found
+---@return LuaEntity|nil The first entity at the tile, or nil if none found
 function mod.get_first_ent_at_tile(pindex)
-   local ents = ent_selection_storage[pindex].ents
+   local player = game.get_player(pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local c_pos = vp:get_cursor_pos()
 
-   --Return nil for an empty ents list
-   if ents == nil or #ents == 0 then return nil end
+   local ents = mod.get_ents_on_tile(player.surface, c_pos.x, c_pos.y, pindex)
+   if #ents == 0 then return nil end
 
-   --Attempt to find the next ent (init to end)
-   for i = 1, #ents, 1 do
-      local current = ents[i]
-      if current and current.valid then
-         ent_selection_storage[pindex].ent_index = i
-         ent_selection_storage[pindex].last_returned_index = i
-         return current
-      end
-   end
-
-   --By this point there are no valid ents
-   return nil
+   ent_selection_storage[pindex].ent_index = 1
+   return ents[1]
 end
 
 --- Get the next entity at this tile and note its index.
 -- The tile entity list is already sorted such that primary ents are listed first.
+-- Cycles through with modulus wrapping.
 ---@param pindex number The player index
----@return LuaEntity|nil The next valid entity at the tile, or nil if none found
+---@return LuaEntity|nil The next entity at the tile, or nil if none found
 function mod.get_next_ent_at_tile(pindex)
-   local ents = ent_selection_storage[pindex].ents
-   local init_index = ent_selection_storage[pindex].ent_index
-   local last_returned_index = ent_selection_storage[pindex].last_returned_index
-   local current = ents[init_index]
-
-   --Return nil for an empty ents list
-   if ents == nil or #ents == 0 then return nil end
-
-   --Attempt to find the next ent (init to end)
-   for i = init_index, #ents, 1 do
-      current = ents[i]
-      if current and current.valid then
-         --If this is not a repeat then return it
-         if last_returned_index == 0 or last_returned_index ~= i then
-            ent_selection_storage[pindex].ent_index = i
-            ent_selection_storage[pindex].last_returned_index = i
-            return current
-         end
-      end
-   end
-
-   --Return nil to get the tile info instead
-   if last_returned_index ~= 0 then
-      ent_selection_storage[pindex].ent_index = 0
-      ent_selection_storage[pindex].last_returned_index = 0
-      return nil
-   end
-
-   --Attempt to find the next ent (start to init)
-   for i = 1, init_index - 1, 1 do
-      current = ents[i]
-      if current and current.valid then
-         --If this is not a repeat then return it
-         if last_returned_index == 0 or last_returned_index ~= i then
-            ent_selection_storage[pindex].ent_index = i
-            ent_selection_storage[pindex].last_returned_index = i
-            return current
-         end
-      end
-   end
-
-   --By this point there are no valid ents
-   ent_selection_storage[pindex].ent_index = 0
-   ent_selection_storage[pindex].last_returned_index = 0
-   return nil
-end
-
---- Produce an iterator over all valid entities for a player's selected tile,
--- while filtering out the player themselves.
----@param pindex number The player index
----@return function Iterator function that returns entities
----@return nil
----@return nil
-function mod.iterate_selected_ents(pindex)
-   local tile = ent_selection_storage[pindex]
-   local ents = tile.ents
-   local i = 1
-
-   local next_fn
-   next_fn = function()
-      -- Ignore all entities that are a character belonging to this player. It
-      -- should only be one, but we don't mutate so we don't know.
-      while i <= #ents do
-         local ent = ents[i]
-         i = i + 1
-
-         if ent and ent.valid then
-            if ent.type ~= "character" or ent.player ~= pindex then return ent end
-         end
-      end
-
-      return nil
-   end
-
-   return next_fn, nil, nil
-end
-
---- Refresh the entity list for the player's current cursor tile
----@param pindex number The player index
----@return boolean True if refresh succeeded, false if an error occurred
-function mod.refresh_player_tile(pindex)
-   local surf = game.get_player(pindex).surface
+   local state = ent_selection_storage[pindex]
+   local player = game.get_player(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
    local c_pos = vp:get_cursor_pos()
-   local x = c_pos.x + 0.5
-   local y = c_pos.y + 0.5
-   local search_area = {
-      { x = math.floor(x) + 0.001, y = math.floor(y) + 0.001 },
-      { x = math.ceil(x) - 0.01, y = math.ceil(y) - 0.01 },
-   }
-   ent_selection_storage[pindex].ents =
-      surf.find_entities_filtered({ area = search_area, name = Consts.EXCLUDED_ENT_NAMES, invert = true })
 
-   -- Sort entities without rail-specific sorting
-   mod.sort_ents_by_primary_first(pindex, ent_selection_storage[pindex].ents, nil)
-   --Draw the tile
-   --rendering.draw_rectangle{left_top = search_area[1], right_bottom = search_area[2], color = {1,0,1}, surface = surf, time_to_live = 100}--
-   local remnants = surf.find_entities_filtered({ area = search_area, type = "corpse" })
-   for i, remnant in ipairs(remnants) do
-      table.insert(ent_selection_storage[pindex].ents, remnant)
-   end
-   ent_selection_storage[pindex].ent_index = 1
-   if #ent_selection_storage[pindex].ents == 0 then ent_selection_storage[pindex].ent_index = 0 end
-   ent_selection_storage[pindex].last_returned_index = 0
-   if
-      not (
-         pcall(function()
-            local vp = Viewpoint.get_viewpoint(pindex)
-            local cursor_pos = vp:get_cursor_pos()
-            local tile = surf.get_tile(cursor_pos.x, cursor_pos.y)
-            ent_selection_storage[pindex].tile = tile.name
-            ent_selection_storage[pindex].tile_object = tile
-         end)
-      )
-   then
-      return false
-   end
-   return true
+   local ents = mod.get_ents_on_tile(player.surface, c_pos.x, c_pos.y, pindex)
+   if #ents == 0 then return nil end
+
+   -- Increment and wrap with modulus
+   state.ent_index = (state.ent_index % #ents) + 1
+   return ents[state.ent_index]
 end
 
---- Get the cached tile data for a player
+--- Produce an iterator over all entities for a player's selected tile,
+-- while filtering out the player themselves.
 ---@param pindex number The player index
----@return table The tile cache containing ents, tile name, and tile object
-function mod.get_tile_cache(pindex)
-   return ent_selection_storage[pindex]
+---@return function, nil, nil
+function mod.iterate_selected_ents(pindex)
+   local player = game.get_player(pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local c_pos = vp:get_cursor_pos()
+
+   local ents = mod.get_ents_on_tile(player.surface, c_pos.x, c_pos.y, pindex)
+   local i = 0
+
+   return function()
+      while i < #ents do
+         i = i + 1
+         local ent = ents[i]
+         if ent.type ~= "character" or ent.player ~= pindex then return ent end
+      end
+      return nil
+   end,
+      nil,
+      nil
+end
+
+--- Get the tile info for the player's current cursor tile
+---@param pindex number The player index
+---@return string?, LuaTile? Tile name and tile object, or nil if error
+function mod.get_player_tile(pindex)
+   local player = game.get_player(pindex)
+   local surf = player.surface
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local c_pos = vp:get_cursor_pos()
+
+   -- Reset cycling state
+   ent_selection_storage[pindex].ent_index = 1
+
+   -- Get tile info
+   local tile_name, tile_object
+   if
+      not pcall(function()
+         local tile = surf.get_tile(c_pos.x, c_pos.y)
+         tile_name = tile.name
+         tile_object = tile
+      end)
+   then
+      return nil, nil
+   end
+
+   return tile_name, tile_object
+end
+
+--- Reset entity cycling index (for when cursor moves)
+---@param pindex number The player index
+function mod.reset_entity_index(pindex)
+   ent_selection_storage[pindex].ent_index = 1
 end
 
 return mod

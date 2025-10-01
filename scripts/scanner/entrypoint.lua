@@ -452,7 +452,7 @@ local function announce_cursor_pos(pindex, ps)
       -- we can't remove, so just set it first.
       vp:set_cursor_pos(announcing.position)
       -- And for the same reason--we shouldn't be caching tile contents, but we do.
-      EntitySelection.refresh_player_tile(pindex)
+      EntitySelection.reset_entity_index(pindex)
       announcing.backend:update_entry(pobj, announcing)
       -- Until we have a cursor module or the like, we must then manually try to
       -- select the entity if there is one.

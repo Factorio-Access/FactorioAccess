@@ -73,7 +73,6 @@ function mod.process_walking_announcements(pindex)
       vp:set_cursor_pos(FaUtils.to_neighboring_tile(char_pos, direction))
 
       -- Only announce if there's an entity or the tile is unwalkable
-      EntitySelection.refresh_player_tile(pindex)
       local ent = EntitySelection.get_first_ent_at_tile(pindex)
       if
          not storage.players[pindex].vanilla_mode
@@ -107,7 +106,6 @@ function mod.process_walking_announcements(pindex)
       end
    else
       -- NON-ANCHORED MODE: Check for entities/obstacles at cursor position
-      EntitySelection.refresh_player_tile(pindex)
       local ent = EntitySelection.get_first_ent_at_tile(pindex)
 
       if

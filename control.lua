@@ -265,22 +265,21 @@ end
 read_tile_inner = function(pindex, start_text)
    local result = {}
 
-   if not EntitySelection.refresh_player_tile(pindex) then return { "Tile uncharted and out of range" } end
+   local tile_name, tile_object = EntitySelection.get_player_tile(pindex)
+   if not tile_name then return { "Tile uncharted and out of range" } end
+
    local ent = EntitySelection.get_first_ent_at_tile(pindex)
    if not (ent and ent.valid) then
       --If there is no ent, read the tile instead
-      local tile_cache = EntitySelection.get_tile_cache(pindex)
-      tile_cache.previous = nil
-      local tile = tile_cache.tile
-      table.insert(result, Localising.get_localised_name_with_fallback(tile_cache.tile_object))
+      table.insert(result, Localising.get_localised_name_with_fallback(tile_object))
       if
-         tile == "water"
-         or tile == "deepwater"
-         or tile == "water-green"
-         or tile == "deepwater-green"
-         or tile == "water-shallow"
-         or tile == "water-mud"
-         or tile == "water-wube"
+         tile_name == "water"
+         or tile_name == "deepwater"
+         or tile_name == "water-green"
+         or tile_name == "deepwater-green"
+         or tile_name == "water-shallow"
+         or tile_name == "water-mud"
+         or tile_name == "water-wube"
       then
          --Identify shores and crevices and so on for water tiles
          table.insert(result, FaUtils.identify_water_shores(pindex))
@@ -291,9 +290,6 @@ read_tile_inner = function(pindex, start_text)
       table.insert(result, FaInfo.ent_info(pindex, ent))
       Graphics.draw_cursor_highlight(pindex, ent, nil)
       game.get_player(pindex).selected = ent
-
-      --game.get_player(pindex).print(result)--
-      EntitySelection.get_tile_cache(pindex).previous = ent
    end
    if not ent or ent.type == "resource" then --possible bug here with the h box being a new tile ent
       local stack = game.get_player(pindex).cursor_stack
@@ -1500,7 +1496,7 @@ local function move(direction, pindex, nudged)
       end
 
       --Read the new entity or unwalkable surface found upon turning
-      EntitySelection.refresh_player_tile(pindex)
+      EntitySelection.reset_entity_index(pindex)
       local ent = EntitySelection.get_first_ent_at_tile(pindex)
       if
          not storage.players[pindex].vanilla_mode
@@ -1548,7 +1544,7 @@ local function cursor_mode_move(direction, pindex, single_only)
 
    if cursor_size == 0 then
       -- Cursor size 0 ("1 by 1"): Read tile
-      EntitySelection.refresh_player_tile(pindex)
+      EntitySelection.reset_entity_index(pindex)
       read_tile(pindex)
 
       --Update drawn cursor
@@ -1670,7 +1666,7 @@ local function cursor_skip_iteration(pindex, direction, iteration_limit)
    --
    ---@returns LuaEntity?
    local function compute_current()
-      EntitySelection.refresh_player_tile(pindex)
+      EntitySelection.reset_entity_index(pindex)
       for ent in EntitySelection.iterate_selected_ents(pindex) do
          local bad = ent.type == "logistic-robot"
             or ent.type == "construction-robot"
@@ -1693,7 +1689,7 @@ local function cursor_skip_iteration(pindex, direction, iteration_limit)
             local dir_neighbor = FaUtils.get_direction_biased(con.target_position, start.position)
             if con.connection_type == "underground" and dir_neighbor == direction then
                vp:set_cursor_pos(con.target.get_pipe_connections(1)[1].position)
-               EntitySelection.refresh_player_tile(pindex)
+               EntitySelection.reset_entity_index(pindex)
                current = EntitySelection.get_first_ent_at_tile(pindex)
                return dist
             end
@@ -1708,7 +1704,7 @@ local function cursor_skip_iteration(pindex, direction, iteration_limit)
          local dir_neighbor = FaUtils.get_direction_biased(other_end.position, start.position)
          if dir_neighbor == direction then
             vp:set_cursor_pos(other_end.position)
-            EntitySelection.refresh_player_tile(pindex)
+            EntitySelection.reset_entity_index(pindex)
             current = EntitySelection.get_first_ent_at_tile(pindex)
             return dist
          end
@@ -2595,7 +2591,7 @@ local function kb_cs_p(event)
    storage.players[pindex].last_damage_alert_pos = position
    Graphics.draw_cursor_highlight(pindex, nil, nil)
    Graphics.sync_build_cursor_graphics(pindex)
-   EntitySelection.refresh_player_tile(pindex)
+   EntitySelection.reset_entity_index(pindex)
 end
 
 EventManager.on_event(
@@ -2880,7 +2876,8 @@ local function kb_tile_cycle(event)
       Speech.speak(pindex, FaInfo.ent_info(pindex, ent))
       game.get_player(pindex).selected = ent
    else
-      Speech.speak(pindex, EntitySelection.get_tile_cache(pindex).tile)
+      local tile_name = EntitySelection.get_player_tile(pindex)
+      Speech.speak(pindex, tile_name)
    end
 end
 
