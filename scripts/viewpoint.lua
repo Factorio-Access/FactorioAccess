@@ -8,7 +8,7 @@ characters at all.
 There's a few things tangled together, which basically turn into a "viewpoint" because they describe what a character is
 looking at and has access to:
 
-- The position of the cursor, whether it is enabled, etc.
+- The position of the cursor
 - The size of the cursor.
 - What's in the player's hand.
 - Whether the player has a character and if not where to get inventories from etc.

@@ -1,0 +1,146 @@
+--[[
+Walking module - handles cursor announcements during player movement.
+
+When cursor is anchored:
+- Updates cursor to one tile ahead of player on tile border crossing
+- Announces entities and unwalkable tiles
+
+When cursor is not anchored:
+- Checks for entities/obstacles at cursor position
+- Announces entities and unwalkable tiles
+
+Uses movement history to detect:
+- Tile border crossings (comparing floored positions)
+- Discontinuities (teleports, respawns via generation tracking)
+]]
+
+local StorageManager = require("scripts.storage-manager")
+local MovementHistory = require("scripts.movement-history")
+local Viewpoint = require("scripts.viewpoint")
+local FaUtils = require("scripts.fa-utils")
+local EntitySelection = require("scripts.entity-selection")
+local Graphics = require("scripts.graphics")
+local Sounds = require("scripts.ui.sounds")
+
+local mod = {}
+
+---@class fa.Walking.State
+---@field last_generation number? Last movement history generation we processed
+
+local walking_storage = StorageManager.declare_storage_module("walking", {
+   last_generation = nil,
+})
+
+---Process walking announcements for a player
+---@param pindex number
+function mod.process_walking_announcements(pindex)
+   local player = game.get_player(pindex)
+   if not player or not player.character then return end
+
+   local reader = MovementHistory.get_movement_history_reader(pindex)
+   local current_generation = reader:get_generation()
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local state = walking_storage[pindex]
+
+   -- Detect discontinuities (teleport, respawn, surface change, etc.)
+   local had_discontinuity = false
+   if state.last_generation ~= current_generation then
+      state.last_generation = current_generation
+      had_discontinuity = true
+   end
+
+   -- Detect tile border crossing
+   local current = reader:get(0)
+   local previous = reader:get(1)
+   local crossed_tile = false
+
+   if not previous then
+      -- First movement entry
+      crossed_tile = true
+   elseif current then
+      local current_tile = { x = math.floor(current.position.x), y = math.floor(current.position.y) }
+      local previous_tile = { x = math.floor(previous.position.x), y = math.floor(previous.position.y) }
+      if current_tile.x ~= previous_tile.x or current_tile.y ~= previous_tile.y then crossed_tile = true end
+   end
+
+   -- Only process if we crossed a tile or had a discontinuity
+   if not (crossed_tile or had_discontinuity) then return end
+
+   if vp:get_cursor_anchored() then
+      -- ANCHORED MODE: Update cursor ahead and announce if notable
+      local char_pos = player.character.position
+      local direction = current and current.direction or defines.direction.north
+      vp:set_cursor_pos(FaUtils.to_neighboring_tile(char_pos, direction))
+
+      -- Only announce if there's an entity or the tile is unwalkable
+      EntitySelection.refresh_player_tile(pindex)
+      local ent = EntitySelection.get_first_ent_at_tile(pindex)
+      if
+         not storage.players[pindex].vanilla_mode
+         and (
+            (ent ~= nil and ent.valid)
+            or (player.surface.can_place_entity({ name = "character", position = vp:get_cursor_pos() }) == false)
+         )
+      then
+         Graphics.draw_cursor_highlight(pindex, ent, nil)
+         if player.driving then return end
+
+         if
+            ent ~= nil
+            and ent.valid
+            and (
+               player.character == nil or (player.character ~= nil and player.character.unit_number ~= ent.unit_number)
+            )
+         then
+            Graphics.draw_cursor_highlight(pindex, ent, nil)
+            player.selected = ent
+            Sounds.play_close_inventory(pindex)
+         else
+            Graphics.draw_cursor_highlight(pindex, nil, nil)
+            player.selected = nil
+         end
+
+         read_tile(pindex)
+      else
+         Graphics.draw_cursor_highlight(pindex, nil, nil)
+         player.selected = nil
+      end
+   else
+      -- NON-ANCHORED MODE: Check for entities/obstacles at cursor position
+      EntitySelection.refresh_player_tile(pindex)
+      local ent = EntitySelection.get_first_ent_at_tile(pindex)
+
+      if
+         not storage.players[pindex].vanilla_mode
+         and (
+            (ent ~= nil and ent.valid)
+            or (player.surface.can_place_entity({ name = "character", position = vp:get_cursor_pos() }) == false)
+         )
+      then
+         Graphics.draw_cursor_highlight(pindex, ent, nil)
+         if player.driving then return end
+
+         if
+            ent ~= nil
+            and ent.valid
+            and (
+               player.character == nil or (player.character ~= nil and player.character.unit_number ~= ent.unit_number)
+            )
+         then
+            Graphics.draw_cursor_highlight(pindex, ent, nil)
+            player.selected = ent
+            Sounds.play_close_inventory(pindex)
+         else
+            Graphics.draw_cursor_highlight(pindex, nil, nil)
+            player.selected = nil
+         end
+
+         read_tile(pindex)
+      else
+         Graphics.draw_cursor_highlight(pindex, nil, nil)
+         player.selected = nil
+      end
+   end
+end
+
+return mod

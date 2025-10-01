@@ -77,6 +77,7 @@ require("scripts.ui.internal.search-setter")
 local GameGui = require("scripts.ui.game-gui")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
+local Walking = require("scripts.walking")
 local Warnings = require("scripts.warnings")
 local WorkQueue = require("scripts.work-queue")
 local WorkerRobots = require("scripts.worker-robots")
@@ -355,37 +356,6 @@ EventManager.on_event(
       local stack = p.cursor_stack
       if stack and stack.valid_for_read and stack.valid then Graphics.sync_build_cursor_graphics(pindex) end
 
-      --Name a detected entity that you can or cannot walk on, or a tile you cannot walk on, and play a sound to indicate multiple consecutive detections
-      EntitySelection.refresh_player_tile(pindex)
-      local ent = EntitySelection.get_first_ent_at_tile(pindex)
-      if
-         not storage.players[pindex].vanilla_mode
-         and (
-            (ent ~= nil and ent.valid)
-            or (p.surface.can_place_entity({ name = "character", position = vp:get_cursor_pos() }) == false)
-         )
-      then
-         Graphics.draw_cursor_highlight(pindex, ent, nil)
-         if p.driving then return end
-
-         if
-            ent ~= nil
-            and ent.valid
-            and (p.character == nil or (p.character ~= nil and p.character.unit_number ~= ent.unit_number))
-         then
-            Graphics.draw_cursor_highlight(pindex, ent, nil)
-            p.selected = ent
-            sounds.play_close_inventory(p.index)
-         else
-            Graphics.draw_cursor_highlight(pindex, nil, nil)
-            p.selected = nil
-         end
-
-         read_tile(pindex)
-      else
-         Graphics.draw_cursor_highlight(pindex, nil, nil)
-         p.selected = nil
-      end
       --Play a sound for audio ruler alignment (smooth walk)
       Rulers.update_from_cursor(pindex)
    end
@@ -485,6 +455,8 @@ function on_tick(event)
          BumpDetection.check_and_play_stuck_alert_sound(player.index, event.tick)
          -- Process build lock for walking movement
          BuildLock.process_walking_movement(player.index)
+         -- Process walking announcements (anchored cursor or entity detection)
+         Walking.process_walking_announcements(player.index)
       end
    end
 
@@ -2651,11 +2623,12 @@ local function toggle_cursor_mode(pindex, muted)
       vp:set_cursor_anchored(true)
 
       --Finally, read the new tile
-      if muted ~= true then read_tile(pindex, "Cursor mode enabled, ") end
+      Speech.speak(pindex, "Cursor anchored")
    else
       --Finally, read the new tile
       vp:set_cursor_anchored(false)
-      if muted ~= true then read_tile(pindex, "Cursor mode disabled, ") end
+      -- For the unanchored case it's worth reading the tile the cursor ended up on.
+      if muted ~= true then read_tile(pindex, "Cursor mode unanchored, ") end
    end
 end
 
