@@ -1,5 +1,6 @@
 --Here: localisation functions, including event handlers
 local Speech = require("scripts.speech")
+local LocalisedStringCache = require("scripts.localised-string-cache")
 
 local mod = {}
 --Returns the localised name of an object as a string. Used for ents and items and fluids
@@ -111,6 +112,10 @@ function mod.handler(event)
    local pindex = event.player_index
    local player = storage.players[pindex]
    local successful = event.translated
+
+   -- Check if this is a localised string cache request
+   if successful and LocalisedStringCache.handle_translation(pindex, event.id, event.result) then return end
+
    local translated_thing = player.translation_id_lookup[event.id]
    if not translated_thing then return end
    player.translation_id_lookup[event.id] = nil

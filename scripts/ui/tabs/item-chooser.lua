@@ -93,6 +93,7 @@ local function build_item_tree(ctx)
          label = function(ctx)
             ctx.message:fragment(Localising.get_localised_name_with_fallback(group))
          end,
+         exclude_from_search = true,
       })
 
       local sorted_subgroups = {}
@@ -111,6 +112,7 @@ local function build_item_tree(ctx)
             label = function(ctx)
                ctx.message:fragment(Localising.get_localised_name_with_fallback(subgroup))
             end,
+            exclude_from_search = true,
          })
 
          local items = items_by_group_and_subgroup[group_name][subgroup_name]

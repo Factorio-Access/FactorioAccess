@@ -32,6 +32,8 @@ local StorageManager = require("scripts.storage-manager")
 local EventManager = require("scripts.event-manager")
 local GameGui = require("scripts.ui.game-gui")
 local UiSounds = require("scripts.ui.sounds")
+local Speech = require("scripts.speech")
+local LocalisedStringCache = require("scripts.localised-string-cache")
 
 local mod = {}
 
@@ -109,14 +111,26 @@ mod.UI_NAMES = {
    DECON_AREA_SELECTOR = "decon_area_selector",
    UPGRADE_AREA_SELECTOR = "upgrade_area_selector",
    COPY_PASTE_AREA_SELECTOR = "copy_paste_area_selector",
+   SIMPLE_TEXTBOX = "simple_textbox",
+   SEARCH_SETTER = "search_setter",
+}
+
+---@enum fa.ui.SearchResult
+mod.SEARCH_RESULT = {
+   NO_SUPPORT = 1, -- UI doesn't support search
+   DIDNT_MOVE = 2, -- Supports search but no match or already on it
+   MOVED = 3, -- Moved to a match
+   WRAPPED = 4, -- Wrapped around to find a match
 }
 
 ---@class fa.ui.RouterState
 ---@field ui_stack {name: fa.ui.UiName, context?: any}[] Stack of open UIs with contexts (top is last)
+---@field search_pattern string? Current search pattern (literal substring)
 
 ---@type table<number, fa.ui.RouterState>
 local router_state = StorageManager.declare_storage_module("ui_router", {
    ui_stack = {},
+   search_pattern = nil,
 }, {
    ephemeral_state_version = 3,
 })
@@ -157,6 +171,23 @@ end
 function RouterController:open_textbox(initial_text, context)
    -- Store the context - result will go to top of stack when textbox closes
    GameGui.open_textbox(self.pindex, initial_text, context)
+end
+
+---Set the search pattern for the current player
+---@param pattern string?
+function RouterController:set_search_pattern(pattern)
+   router_state[self.pindex].search_pattern = pattern
+end
+
+---Get the current search pattern for the current player
+---@return string?
+function RouterController:get_search_pattern()
+   return router_state[self.pindex].search_pattern
+end
+
+---Clear the search pattern for the current player
+function RouterController:clear_search_pattern()
+   router_state[self.pindex].search_pattern = nil
 end
 
 ---@param name fa.ui.UiName
@@ -453,5 +484,137 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event)
    -- Not our textbox or no UI open
    return nil
 end, EventManager.EVENT_KIND.UI)
+
+-- Search navigation handlers
+-- fa-s-enter: Next search result
+register_ui_event("fa-s-enter", function(event, pindex)
+   local router = mod.get_router(pindex)
+   local stack = router_state[pindex].ui_stack
+
+   if #stack > 0 then
+      local top_entry = stack[#stack]
+      local ui_name = top_entry.name
+      if registered_uis[ui_name] then
+         local ui = registered_uis[ui_name]
+         if ui.supports_search and ui:supports_search(pindex, router.controller) then
+            local pattern = router.controller:get_search_pattern()
+            if not pattern or pattern == "" then
+               UiSounds.play_ui_edge(pindex)
+               Speech.speak(pindex, { "fa.search-no-more-results" })
+               return EventManager.FINISHED
+            end
+
+            local pattern_lower = string.lower(pattern)
+            local matcher = function(localised_string)
+               local text = LocalisedStringCache.get(pindex, localised_string)
+               if not text then return false end
+               return string.find(string.lower(text), pattern_lower, 1, true) ~= nil
+            end
+
+            local message = Speech.new()
+            local result = ui:search_move(message, pindex, 1, matcher, router.controller)
+            if result == mod.SEARCH_RESULT.MOVED then
+               UiSounds.play_menu_move(pindex)
+               local msg = message:build()
+               if msg then Speech.speak(pindex, msg) end
+               return EventManager.FINISHED
+            elseif result == mod.SEARCH_RESULT.WRAPPED then
+               UiSounds.play_menu_wrap(pindex)
+               local msg = message:build()
+               if msg then Speech.speak(pindex, msg) end
+               return EventManager.FINISHED
+            elseif result == mod.SEARCH_RESULT.DIDNT_MOVE then
+               UiSounds.play_ui_edge(pindex)
+               Speech.speak(pindex, { "fa.search-no-more-results" })
+               return EventManager.FINISHED
+            end
+            -- NO_SUPPORT falls through
+         end
+      end
+   end
+   return nil
+end)
+
+-- fa-c-enter: Previous search result
+register_ui_event("fa-c-enter", function(event, pindex)
+   local router = mod.get_router(pindex)
+   local stack = router_state[pindex].ui_stack
+
+   if #stack > 0 then
+      local top_entry = stack[#stack]
+      local ui_name = top_entry.name
+      if registered_uis[ui_name] then
+         local ui = registered_uis[ui_name]
+         if ui.supports_search and ui:supports_search(pindex, router.controller) then
+            local pattern = router.controller:get_search_pattern()
+            if not pattern or pattern == "" then
+               UiSounds.play_ui_edge(pindex)
+               Speech.speak(pindex, { "fa.search-no-more-results" })
+               return EventManager.FINISHED
+            end
+
+            local pattern_lower = string.lower(pattern)
+            local matcher = function(localised_string)
+               local text = LocalisedStringCache.get(pindex, localised_string)
+               if not text then return false end
+               return string.find(string.lower(text), pattern_lower, 1, true) ~= nil
+            end
+
+            local message = Speech.new()
+            local result = ui:search_move(message, pindex, -1, matcher, router.controller)
+            if result == mod.SEARCH_RESULT.MOVED then
+               UiSounds.play_menu_move(pindex)
+               local msg = message:build()
+               if msg then Speech.speak(pindex, msg) end
+               return EventManager.FINISHED
+            elseif result == mod.SEARCH_RESULT.WRAPPED then
+               UiSounds.play_menu_wrap(pindex)
+               local msg = message:build()
+               if msg then Speech.speak(pindex, msg) end
+               return EventManager.FINISHED
+            elseif result == mod.SEARCH_RESULT.DIDNT_MOVE then
+               UiSounds.play_ui_edge(pindex)
+               Speech.speak(pindex, { "fa.search-no-more-results" })
+               return EventManager.FINISHED
+            end
+            -- NO_SUPPORT falls through
+         end
+      end
+   end
+   return nil
+end)
+
+-- fa-c-f: Open search pattern setter
+register_ui_event("fa-c-f", function(event, pindex)
+   local router = mod.get_router(pindex)
+   local stack = router_state[pindex].ui_stack
+
+   if #stack > 0 then
+      local top_entry = stack[#stack]
+      local ui_name = top_entry.name
+      if registered_uis[ui_name] then
+         local ui = registered_uis[ui_name]
+         -- Check if this UI supports search
+         if ui.supports_search then
+            local supports = ui:supports_search(pindex, router.controller)
+            if supports then
+               -- Populate the search cache by requesting translations (async, in background)
+               ui:search_hint(pindex, function(localised_string)
+                  LocalisedStringCache.hint_submit(pindex, localised_string)
+               end, router.controller)
+
+               -- Open search setter (translations populate in background while user types)
+               router:open_child_ui(mod.UI_NAMES.SEARCH_SETTER, {}, "search_setter")
+               return EventManager.FINISHED
+            end
+         end
+      end
+   end
+
+   -- UI doesn't support search
+   UiSounds.play_ui_edge(pindex)
+   Speech.speak(pindex, { "fa.search-not-supported" })
+   return EventManager.FINISHED
+end)
 
 return mod

@@ -77,6 +77,8 @@ naturally with how the UX for a UI should be.
 ]]
 local TH = require("scripts.table-helpers")
 local UiSounds = require("scripts.ui.sounds")
+local Speech = require("scripts.speech")
+local UiRouter = require("scripts.ui.router")
 
 local mod = {}
 
@@ -101,6 +103,7 @@ local mod = {}
 ---@field on_right_click fa.ui.graph.SimpleCallback?
 ---@field on_read_coords fa.ui.graph.SimpleCallback?
 ---@field on_child_result fa.ui.graph.ChildResultCallback?
+---@field exclude_from_search boolean? If true, this node won't be included in search results. Default false.
 
 ---@class fa.ui.graph.TransitionVtable
 ---@field label fa.ui.graph.SimpleCallback?
@@ -446,6 +449,120 @@ function Graph:on_child_result(ctx, result, context)
          node.vtable.on_child_result(wrapped_ctx, result)
       end
    end)
+end
+
+-- Search support
+
+---Check if this UI supports search (always true for KeyGraph)
+---@param _ctx fa.ui.TabContext
+---@return boolean
+function Graph:supports_search(_ctx)
+   return true
+end
+
+---Hint localised strings for caching
+---@param ctx fa.ui.TabContext
+---@param hint_callback fun(localised_string: table)
+function Graph:search_hint(ctx, hint_callback)
+   self:_with_render(ctx, function()
+      local render = self.render
+      local key_order = ctx.state.key_order or {}
+
+      for _, key in ipairs(key_order) do
+         local node = render.nodes[key]
+         if node and not node.vtable.exclude_from_search then
+            -- Create a temporary message builder
+            local temp_message = Speech.new()
+            local temp_ctx = self:_wrap_ctx(ctx, self.name, NO_MODIFIERS)
+            temp_ctx.message = temp_message
+
+            -- Call the label to collect localised strings
+            node.vtable.label(temp_ctx)
+
+            -- Extract localised strings from the message
+            local built = temp_message:build()
+            if built and type(built) == "table" then hint_callback(built) end
+         end
+      end
+   end)
+end
+
+---Move to next/previous search result
+---@param message fa.Speech Message builder to populate with announcement
+---@param ctx fa.ui.TabContext
+---@param direction integer 1 for next, -1 for previous
+---@param matcher fun(localised_string: table): boolean Function to test if a localised string matches
+---@return fa.ui.SearchResult
+function Graph:search_move(message, ctx, direction, matcher)
+   local result = UiRouter.SEARCH_RESULT.DIDNT_MOVE
+
+   self:_with_render(ctx, function()
+      local render = self.render
+      local key_order = ctx.state.key_order or {}
+      local current_key = ctx.state.cur_key
+
+      -- Find current position
+      local current_index = nil
+      for i, key in ipairs(key_order) do
+         if key == current_key then
+            current_index = i
+            break
+         end
+      end
+
+      if not current_index then return end
+
+      local start_index = current_index
+      local i = current_index
+      local wrapped = false
+
+      -- Search loop
+      while true do
+         i = i + direction
+         if direction > 0 and i > #key_order then
+            i = 1
+            wrapped = true
+         elseif direction < 0 and i < 1 then
+            i = #key_order
+            wrapped = true
+         end
+
+         local key = key_order[i]
+         local node = render.nodes[key]
+         if node and not node.vtable.exclude_from_search then
+            -- Build the label as a localised string
+            local temp_msg = Speech.new()
+            local msg_ctx = self:_wrap_ctx(ctx, self.name, NO_MODIFIERS)
+            msg_ctx.message = temp_msg
+            node.vtable.label(msg_ctx)
+            local label_localised = temp_msg:build()
+
+            if label_localised and matcher(label_localised) then
+               -- Found a match
+               ctx.state.cur_key = key
+               -- Build announcement into provided message
+               msg_ctx.message = message
+               node.vtable.label(msg_ctx)
+
+               result = wrapped and UiRouter.SEARCH_RESULT.WRAPPED or UiRouter.SEARCH_RESULT.MOVED
+               return
+            end
+         end
+
+         -- If we've wrapped and returned to start, no more matches
+         if i == start_index then break end
+      end
+   end)
+
+   return result
+end
+
+---Search from the start and move to first match
+---@param ctx fa.ui.TabContext
+---@return fa.ui.SearchResult
+function Graph:search_all_from_start(ctx)
+   -- TODO: Implement with matcher callback pattern when needed
+   return UiRouter.SEARCH_RESULT.DIDNT_MOVE
 end
 
 ---@class fa.ui.graph.Declaration

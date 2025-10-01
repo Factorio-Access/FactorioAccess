@@ -719,6 +719,122 @@ function CategoryRows:on_tab_focused(ctx, modifiers)
    announce_position(ctx, category, item_index)
 end
 
+---Check if this UI supports search
+---@param ctx fa.ui.TabContext
+---@return boolean
+function CategoryRows:supports_search(ctx)
+   return true
+end
+
+---Hint search system with all searchable items
+---@param ctx fa.ui.TabContext
+---@param hint_callback fun(localised_string: table)
+function CategoryRows:search_hint(ctx, hint_callback)
+   local render = self.render_callback(ctx)
+   if not render then return end
+
+   -- Hint all item labels
+   for _, category in ipairs(render.categories) do
+      for _, item in ipairs(category.items) do
+         local msg_builder = Speech.new()
+         local item_ctx = create_item_context(ctx)
+         item_ctx.message = msg_builder
+         item.vtable.label(item_ctx)
+         local built = msg_builder:build()
+         if built then hint_callback(built) end
+      end
+   end
+end
+
+---Search for next/prev match
+---@param message fa.Speech Message builder to populate with announcement
+---@param ctx fa.ui.TabContext
+---@param direction integer 1 for next, -1 for prev
+---@param matcher fun(localised_string: table): boolean Function to test if a localised string matches
+---@return fa.ui.SearchResult
+function CategoryRows:search_move(message, ctx, direction, matcher)
+   local render = self.render_callback(ctx)
+   if not render or check_empty_categories(ctx, render) then return UiRouter.SEARCH_RESULT.DIDNT_MOVE end
+
+   local state = prepare_state(ctx, render)
+
+   -- Build flat list of all items with their positions
+   local all_items = {}
+   for cat_idx, category in ipairs(render.categories) do
+      for item_idx, item in ipairs(category.items) do
+         table.insert(all_items, {
+            cat_idx = cat_idx,
+            item_idx = item_idx,
+            category = category,
+            item = item,
+         })
+      end
+   end
+
+   if #all_items == 0 then return UiRouter.SEARCH_RESULT.DIDNT_MOVE end
+
+   -- Find current position in flat list
+   local cat_idx, item_idx = _get_position(state, render)
+   local current_flat_idx = nil
+   for i, entry in ipairs(all_items) do
+      if entry.cat_idx == cat_idx and entry.item_idx == item_idx then
+         current_flat_idx = i
+         break
+      end
+   end
+
+   if not current_flat_idx then current_flat_idx = 0 end
+
+   local start_idx = current_flat_idx
+   local i = current_flat_idx
+   local wrapped = false
+
+   -- Search loop
+   while true do
+      i = i + direction
+      if direction > 0 and i > #all_items then
+         i = 1
+         wrapped = true
+      elseif direction < 0 and i < 1 then
+         i = #all_items
+         wrapped = true
+      end
+
+      local entry = all_items[i]
+      -- Build the label as a localised string
+      local temp_msg = Speech.new()
+      local item_ctx = create_item_context(ctx)
+      item_ctx.message = temp_msg
+      entry.item.vtable.label(item_ctx)
+      local label_localised = temp_msg:build()
+
+      if label_localised and matcher(label_localised) then
+         -- Found a match
+         state.current_category_key = entry.category.key
+         state.cursor_by_category[entry.category.key] = entry.item.key
+
+         -- Build announcement into provided message (always announce category per user request)
+         local announce_ctx = {
+            pindex = ctx.pindex,
+            player = ctx.player,
+            message = message,
+            state = ctx.state,
+            shared_state = ctx.shared_state,
+            parameters = ctx.parameters,
+            controller = ctx.controller,
+         }
+         announce_position(announce_ctx, entry.category, entry.item_idx, true)
+
+         return wrapped and UiRouter.SEARCH_RESULT.WRAPPED or UiRouter.SEARCH_RESULT.MOVED
+      end
+
+      -- If we've wrapped and returned to start, no more matches
+      if i == start_idx then break end
+   end
+
+   return UiRouter.SEARCH_RESULT.DIDNT_MOVE
+end
+
 ---@class fa.ui.CategoryRows.Declaration
 ---@field title LocalisedString?
 ---@field render_callback fun(ctx: fa.ui.TabContext): fa.ui.CategoryRows.Render?

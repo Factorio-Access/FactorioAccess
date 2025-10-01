@@ -32,6 +32,7 @@ local Speech = require("scripts.speech")
 local StorageManager = require("scripts.storage-manager")
 local TH = require("scripts.table-helpers")
 local Sounds = require("scripts.ui.sounds")
+local UiRouter = require("scripts.ui.router")
 
 local mod = {}
 
@@ -65,6 +66,10 @@ local mod = {}
 ---@field on_read_info fa.ui.SimpleTabHandler?
 ---@field on_child_result fa.ui.SimpleTabHandler?
 ---@field enabled fun(number): boolean
+---@field supports_search fun(self, ctx: fa.ui.TabContext): boolean? Returns true if search is supported
+---@field search_hint fun(self, ctx: fa.ui.TabContext, hint_callback: fun(localised_string: table))? Called to hint strings for caching
+---@field search_move fun(self, message: fa.Speech, ctx: fa.ui.TabContext, direction: integer, matcher: fun(localised_string: table): boolean): fa.ui.SearchResult? Move to next/prev search result, populate message with announcement
+---@field search_all_from_start fun(self, ctx: fa.ui.TabContext): fa.ui.SearchResult? Search from start, move to first match
 
 ---@class fa.ui.TabDescriptor
 ---@field name string
@@ -475,6 +480,122 @@ end
 function TabList:on_previous_section(pindex, modifiers, controller)
    -- Section navigation doesn't use modifiers, but we pass controller through
    self:_cycle_section(pindex, -1, controller)
+end
+
+-- Search support - delegate to active tab
+
+function TabList:supports_search(pindex, controller)
+   if not tablist_storage[pindex] or not tablist_storage[pindex][self.ui_name] then return false end
+
+   local tl = tablist_storage[pindex][self.ui_name]
+   if not tl or not tl.currently_open then return false end
+
+   local tabname = self.tab_order[tl.active_tab]
+   local tabstate = tl.tab_states[tabname]
+   local callbacks = self.descriptors[tabname].callbacks
+
+   if callbacks.supports_search then
+      local ctx = {
+         pindex = pindex,
+         player = game.get_player(pindex),
+         state = tabstate,
+         parameters = tl.parameters,
+         controller = controller,
+         message = Speech.new(),
+         shared_state = tl.shared_state,
+      }
+      return callbacks:supports_search(ctx)
+   end
+
+   return false
+end
+
+function TabList:search_hint(pindex, hint_callback, controller)
+   if not tablist_storage[pindex] or not tablist_storage[pindex][self.ui_name] then return end
+
+   local tl = tablist_storage[pindex][self.ui_name]
+   if not tl or not tl.currently_open then return end
+
+   local tabname = self.tab_order[tl.active_tab]
+   local tabstate = tl.tab_states[tabname]
+   local callbacks = self.descriptors[tabname].callbacks
+
+   if callbacks.search_hint then
+      local ctx = {
+         pindex = pindex,
+         player = game.get_player(pindex),
+         state = tabstate,
+         parameters = tl.parameters,
+         controller = controller,
+         message = Speech.new(),
+         shared_state = tl.shared_state,
+      }
+      callbacks:search_hint(ctx, hint_callback)
+      -- Save state back
+      tl.tab_states[tabname] = ctx.state
+   end
+end
+
+function TabList:search_move(message, pindex, direction, matcher, controller)
+   if not tablist_storage[pindex] or not tablist_storage[pindex][self.ui_name] then
+      return UiRouter.SEARCH_RESULT.NO_SUPPORT
+   end
+
+   local tl = tablist_storage[pindex][self.ui_name]
+   if not tl or not tl.currently_open then return UiRouter.SEARCH_RESULT.NO_SUPPORT end
+
+   local tabname = self.tab_order[tl.active_tab]
+   local tabstate = tl.tab_states[tabname]
+   local callbacks = self.descriptors[tabname].callbacks
+
+   if callbacks.search_move then
+      local ctx = {
+         pindex = pindex,
+         player = game.get_player(pindex),
+         state = tabstate,
+         parameters = tl.parameters,
+         controller = controller,
+         message = message,
+         shared_state = tl.shared_state,
+      }
+      local result = callbacks:search_move(message, ctx, direction, matcher)
+      -- Save state back
+      tl.tab_states[tabname] = ctx.state
+      return result
+   end
+
+   return UiRouter.SEARCH_RESULT.NO_SUPPORT
+end
+
+function TabList:search_all_from_start(pindex, controller)
+   if not tablist_storage[pindex] or not tablist_storage[pindex][self.ui_name] then
+      return UiRouter.SEARCH_RESULT.NO_SUPPORT
+   end
+
+   local tl = tablist_storage[pindex][self.ui_name]
+   if not tl or not tl.currently_open then return UiRouter.SEARCH_RESULT.NO_SUPPORT end
+
+   local tabname = self.tab_order[tl.active_tab]
+   local tabstate = tl.tab_states[tabname]
+   local callbacks = self.descriptors[tabname].callbacks
+
+   if callbacks.search_all_from_start then
+      local ctx = {
+         pindex = pindex,
+         player = game.get_player(pindex),
+         state = tabstate,
+         parameters = tl.parameters,
+         controller = controller,
+         message = Speech.new(),
+         shared_state = tl.shared_state,
+      }
+      local result = callbacks:search_all_from_start(ctx)
+      -- Save state back
+      tl.tab_states[tabname] = ctx.state
+      return result
+   end
+
+   return UiRouter.SEARCH_RESULT.NO_SUPPORT
 end
 
 ---@param controller fa.ui.RouterController

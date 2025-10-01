@@ -376,6 +376,13 @@ data:extend({
 
    {
       type = "custom-input",
+      name = "fa-c-f",
+      key_sequence = "CONTROL + F",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
       name = "fa-e",
       key_sequence = "E",
       consuming = "none",
@@ -1163,5 +1170,20 @@ data:extend({
       name = "fa-cas-r",
       key_sequence = "CONTROL + ALT + SHIFT + R",
       consuming = "game-only",
+   },
+
+   -- Search navigation
+   {
+      type = "custom-input",
+      name = "fa-s-enter",
+      key_sequence = "SHIFT + RETURN",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "fa-c-enter",
+      key_sequence = "CONTROL + RETURN",
+      consuming = "none",
    },
 })

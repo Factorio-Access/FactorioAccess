@@ -4,7 +4,7 @@ require("syntrax")
 local Logging = require("scripts.logging")
 Logging.init()
 -- Set logging level
-Logging.set_level("DEBUG")
+--Logging.set_level("DEBUG")
 
 -- Create logger for control.lua
 local logger = Logging.Logger("control")
@@ -72,6 +72,8 @@ require("scripts.ui.tabs.item-chooser")
 require("scripts.ui.menus.roboport-menu")
 require("scripts.ui.menus.spidertron-menu")
 require("scripts.ui.generic-inventory")
+require("scripts.ui.simple-textbox")
+require("scripts.ui.internal.search-setter")
 local GameGui = require("scripts.ui.game-gui")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
