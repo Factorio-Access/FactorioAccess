@@ -18,6 +18,12 @@ local TH = require("scripts.table-helpers")
 
 local mod = {}
 
+---@enum fa.ui.CategoryRows.CategoryPosition
+mod.CATEGORY_POSITION = {
+   BEFORE = "before",
+   AFTER = "after",
+}
+
 ---@class fa.ui.CategoryRows.ItemVtable
 ---@field label fun(ctx: fa.ui.CategoryRows.ItemContext)
 ---@field on_click? fun(ctx: fa.ui.CategoryRows.ItemContext, modifiers: {control?: boolean, shift?: boolean, alt?: boolean})
@@ -320,9 +326,9 @@ end
 ---@param ctx fa.ui.TabContext
 ---@param category fa.ui.CategoryRows.Category
 ---@param item_index number? nil to skip item announcement
----@param announce_category boolean? whether to announce category (default true)
-local function announce_position(ctx, category, item_index, announce_category)
-   if announce_category ~= false then
+---@param category_position fa.ui.CategoryRows.CategoryPosition? where to announce category (nil to skip category)
+local function announce_position(ctx, category, item_index, category_position)
+   if category_position == mod.CATEGORY_POSITION.BEFORE then
       ctx.message:fragment(category.label)
       ctx.message:list_item_forced_comma()
    end
@@ -335,6 +341,11 @@ local function announce_position(ctx, category, item_index, announce_category)
          local item_ctx = create_item_context(ctx)
          item.vtable.label(item_ctx)
       end
+   end
+
+   if category_position == mod.CATEGORY_POSITION.AFTER then
+      ctx.message:list_item_forced_comma()
+      ctx.message:fragment(category.label)
    end
 end
 
@@ -403,7 +414,7 @@ local function handle_vertical_navigation(ctx, render, direction)
    -- Announce position
    local cursor_key = state.cursor_by_category[new_category.key]
    local item_index = cursor_key and find_item_index(new_category, cursor_key) or nil
-   announce_position(ctx, new_category, item_index)
+   announce_position(ctx, new_category, item_index, mod.CATEGORY_POSITION.BEFORE)
 end
 
 ---Handle horizontal navigation (between items in category)
@@ -431,7 +442,7 @@ local function handle_horizontal_navigation(ctx, render, direction)
    state.cursor_by_category[category.key] = new_item.key
 
    -- Announce item only (no category)
-   announce_position(ctx, category, new_index, false)
+   announce_position(ctx, category, new_index, nil)
 end
 
 ---Handle click events
@@ -601,7 +612,7 @@ local function jump_to_category(ctx, render, target_index)
    local category = render.categories[target_index]
    local cursor_key = state.cursor_by_category[category.key]
    local item_index = cursor_key and find_item_index(category, cursor_key) or nil
-   announce_position(ctx, category, item_index)
+   announce_position(ctx, category, item_index, mod.CATEGORY_POSITION.BEFORE)
 end
 
 ---Helper function to jump to a specific item in current category (first or last)
@@ -635,7 +646,7 @@ local function jump_to_item(ctx, render, target_index_fn)
    end
 
    -- Announce target item only (no category)
-   announce_position(ctx, category, target_index, false)
+   announce_position(ctx, category, target_index, nil)
 end
 
 ---@param ctx fa.ui.TabContext
@@ -716,7 +727,7 @@ function CategoryRows:on_tab_focused(ctx, modifiers)
    local category = render.categories[cat_index]
 
    -- Announce position
-   announce_position(ctx, category, item_index)
+   announce_position(ctx, category, item_index, mod.CATEGORY_POSITION.BEFORE)
 end
 
 ---Check if this UI supports search
@@ -813,7 +824,7 @@ function CategoryRows:search_move(message, ctx, direction, matcher)
          state.current_category_key = entry.category.key
          state.cursor_by_category[entry.category.key] = entry.item.key
 
-         -- Build announcement into provided message (always announce category per user request)
+         -- Build announcement into provided message (announce category after item for search)
          local announce_ctx = {
             pindex = ctx.pindex,
             player = ctx.player,
@@ -823,7 +834,7 @@ function CategoryRows:search_move(message, ctx, direction, matcher)
             parameters = ctx.parameters,
             controller = ctx.controller,
          }
-         announce_position(announce_ctx, entry.category, entry.item_idx, true)
+         announce_position(announce_ctx, entry.category, entry.item_idx, mod.CATEGORY_POSITION.AFTER)
 
          return wrapped and UiRouter.SEARCH_RESULT.WRAPPED or UiRouter.SEARCH_RESULT.MOVED
       end
