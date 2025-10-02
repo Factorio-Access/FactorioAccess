@@ -1,0 +1,4 @@
+# MaterialAmountType
+
+**Type:** `double`
+

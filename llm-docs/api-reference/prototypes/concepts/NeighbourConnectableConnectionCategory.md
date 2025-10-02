@@ -1,0 +1,4 @@
+# NeighbourConnectableConnectionCategory
+
+**Type:** `string`
+

@@ -272,3 +272,11 @@ Or just:
 ```
 -- code, we'll crash if we index it.
 ```
+
+# Factorio 2.0 API
+
+This is a Factorio 2.0 project.  Your knowledge cutoff and training data did not contain Factorio 2.0 API changes.
+
+A complete reference (one file per class, concept, define, etc) is at llm-docs/api-reference. List this directory recursively for a "table of contents".
+
+You **MUST** double check that you understand APIs before using them.

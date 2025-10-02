@@ -1,0 +1,4 @@
+# BlueprintInventory
+
+**Type:** `table`
+

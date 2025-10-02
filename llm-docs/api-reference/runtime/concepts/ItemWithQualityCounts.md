@@ -1,0 +1,4 @@
+# ItemWithQualityCounts
+
+**Type:** Array[`ItemWithQualityCount`]
+

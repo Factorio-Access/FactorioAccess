@@ -1,0 +1,4 @@
+# ItemCountType
+
+**Type:** `uint`
+

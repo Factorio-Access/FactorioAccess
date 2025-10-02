@@ -1,0 +1,4 @@
+# ScriptRenderMode
+
+**Type:** `"game"` | `"chart"`
+
