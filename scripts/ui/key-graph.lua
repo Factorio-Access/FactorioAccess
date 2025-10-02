@@ -489,9 +489,8 @@ end
 
 ---Hint localised strings for caching
 ---@param ctx fa.ui.TabContext
----@param hint_callback fun(localised_string: table)
+---@param hint_callback fun(localised_string: LocalisedString)
 function Graph:search_hint(ctx, hint_callback)
-   ---@diagnostic disable-next-line: param-type-mismatch
    self:_with_render(ctx, function()
       local render = self.render
       local key_order = ctx.state.key_order or {}
@@ -520,12 +519,10 @@ end
 ---@param message fa.MessageBuilder Message builder to populate with announcement
 ---@param ctx fa.ui.TabContext
 ---@param direction integer 1 for next, -1 for previous
----@param matcher fun(localised_string: table): boolean Function to test if a localised string matches
+---@param matcher fun(localised_string: LocalisedString): boolean Function to test if a localised string matches
 ---@return fa.ui.SearchResult
 function Graph:search_move(message, ctx, direction, matcher)
    local result = UiRouter.SEARCH_RESULT.DIDNT_MOVE
-
-   ---@diagnostic disable-next-line: param-type-mismatch
    self:_with_render(ctx, function()
       local render = self.render
       local key_order = ctx.state.key_order or {}
@@ -568,7 +565,6 @@ function Graph:search_move(message, ctx, direction, matcher)
             node.vtable.label(msg_ctx)
             local label_localised = temp_msg:build()
 
-            ---@diagnostic disable-next-line: param-type-mismatch
             if label_localised and matcher(label_localised) then
                -- Found a match
                ctx.state.cur_key = key

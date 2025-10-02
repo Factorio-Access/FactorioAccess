@@ -43,7 +43,7 @@ local mod = {}
 ---@field state table Goes into storage.
 ---@field shared_state table
 ---@field parameters table Whatever was passed to :open()
----@field controller fa.ui.RouterController Controller for UI management
+---@field controller fa.ui.RouterController? Controller for UI management. Nil for close callback.
 ---@field message fa.MessageBuilder
 
 ---@alias fa.ui.SimpleTabHandler fun(self, fa.ui.TabContext, modifiers?: {control?: boolean, shift?: boolean, alt?: boolean})
@@ -70,8 +70,8 @@ local mod = {}
 ---@field on_clear fa.ui.SimpleTabHandler?
 ---@field enabled fun(number): boolean
 ---@field supports_search fun(self, ctx: fa.ui.TabContext): boolean? Returns true if search is supported
----@field search_hint fun(self, ctx: fa.ui.TabContext, hint_callback: fun(localised_string: table))? Called to hint strings for caching
----@field search_move fun(self, message: fa.MessageBuilder, ctx: fa.ui.TabContext, direction: integer, matcher: fun(localised_string: table): boolean): fa.ui.SearchResult? Move to next/prev search result, populate message with announcement
+---@field search_hint fun(self, ctx: fa.ui.TabContext, hint_callback: fun(localised_string: LocalisedString))? Called to hint strings for caching
+---@field search_move fun(self, message: fa.MessageBuilder, ctx: fa.ui.TabContext, direction: integer, matcher: fun(localised_string: LocalisedString): boolean): fa.ui.SearchResult? Move to next/prev search result, populate message with announcement
 ---@field search_all_from_start fun(self, ctx: fa.ui.TabContext): fa.ui.SearchResult? Search from start, move to first match
 
 ---@class fa.ui.TabDescriptor
@@ -122,7 +122,7 @@ mod.TabList = TabList
 -- of actions.
 ---@param msg_builder fa.MessageBuilder?
 ---@param params any[]?
----@param controller fa.ui.RouterController
+---@param controller? fa.ui.RouterController Not present for close
 function TabList:_do_callback(pindex, target_tab_index, cb_name, msg_builder, params, controller)
    msg_builder = msg_builder or MessageBuilder.new()
    params = params or {}
@@ -677,10 +677,7 @@ function TabList:close(pindex, force_reset)
 
    if tablist_storage[pindex][self.ui_name].currently_open then
       for i = 1, #self.tab_order do
-         -- Create a dummy controller for the close callback
-         ---@type fa.ui.RouterController
-         local dummy_controller = {}
-         self:_do_callback(pindex, i, "on_tab_list_closed", nil, nil, dummy_controller)
+         self:_do_callback(pindex, i, "on_tab_list_closed", nil, nil, nil)
       end
    end
 

@@ -740,7 +740,7 @@ end
 
 ---Hint search system with all searchable items
 ---@param ctx fa.ui.TabContext
----@param hint_callback fun(localised_string: table)
+---@param hint_callback fun(localised_string: LocalisedString)
 function CategoryRows:search_hint(ctx, hint_callback)
    local render = self.render_callback(ctx)
    if not render then return end
@@ -762,7 +762,7 @@ end
 ---@param message fa.MessageBuilder Message builder to populate with announcement
 ---@param ctx fa.ui.TabContext
 ---@param direction integer 1 for next, -1 for prev
----@param matcher fun(localised_string: table): boolean Function to test if a localised string matches
+---@param matcher fun(localised_string: LocalisedString): boolean Function to test if a localised string matches
 ---@return fa.ui.SearchResult
 function CategoryRows:search_move(message, ctx, direction, matcher)
    local render = self.render_callback(ctx)

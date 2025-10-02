@@ -272,6 +272,7 @@ def create_or_update_luarc(config_path: str) -> None:
         json.dump(config, f, indent=2)
 
     print(f"[INFO] Updated {luarc_path}")
+    
 
 
 def check_lua_annotations() -> Tuple[int, List[str]]:

@@ -1,3 +1,8 @@
+---@diagnostic disable: inject-field
+-- LuaLS incorrectly believes CircuitConditionDefinition lacks first_signal, second_signal,
+-- constant, and comparator fields. These fields are documented in the Factorio API and exist
+-- as optional fields on CircuitConditionDefinition. See llm-docs/api-reference/runtime/concepts/CircuitConditionDefinition.md
+
 local Menu = require("scripts.ui.menu")
 local UiUtils = require("scripts.ui.ui-utils")
 local UiSounds = require("scripts.ui.sounds")
@@ -291,6 +296,7 @@ function FormBuilder:add_condition(name, get_value, set_value)
       end,
       on_clear = function(ctx)
          local condition = get_value() or {}
+         ---@diagnostic disable-next-line: inject-field
          condition.first_signal = nil
          set_value(condition)
          ctx.controller.message:fragment({ "fa.empty" })
@@ -333,6 +339,7 @@ function FormBuilder:add_condition(name, get_value, set_value)
             new_index = #comparators
          end
 
+         ---@diagnostic disable-next-line: inject-field
          condition.comparator = comparators[new_index].value
          set_value(condition)
          UiSounds.play_menu_move(ctx.pindex)
@@ -367,7 +374,9 @@ function FormBuilder:add_condition(name, get_value, set_value)
             -- Result is a string from textbox
             local num = tonumber(result)
             if num then
+               ---@diagnostic disable-next-line: inject-field
                condition.constant = num
+               ---@diagnostic disable-next-line: inject-field
                condition.second_signal = nil
                set_value(condition)
                ctx.controller.message:fragment(tostring(num))
@@ -377,7 +386,9 @@ function FormBuilder:add_condition(name, get_value, set_value)
             end
          else
             -- Result is a SignalID from signal chooser
+            ---@diagnostic disable-next-line: inject-field
             condition.second_signal = result
+            ---@diagnostic disable-next-line: inject-field
             condition.constant = nil
             set_value(condition)
             if result and result.name then
@@ -418,7 +429,9 @@ function FormBuilder:add_condition(name, get_value, set_value)
       end,
       on_clear = function(ctx)
          local condition = get_value() or {}
+         ---@diagnostic disable-next-line: inject-field
          condition.second_signal = nil
+         ---@diagnostic disable-next-line: inject-field
          condition.constant = 0
          set_value(condition)
          ctx.controller.message:fragment("0")
@@ -509,6 +522,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
       end,
       on_child_result = function(ctx, result)
          local condition = get_condition() or {}
+         ---@diagnostic disable-next-line: inject-field
          condition.first_signal = result
          set_condition(condition)
          if result and result.name then
@@ -520,6 +534,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
       end,
       on_clear = function(ctx)
          local condition = get_condition() or {}
+         ---@diagnostic disable-next-line: inject-field
          condition.first_signal = nil
          set_condition(condition)
          ctx.controller.message:fragment({ "fa.empty" })
@@ -562,6 +577,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
             new_index = #comparators
          end
 
+         ---@diagnostic disable-next-line: inject-field
          condition.comparator = comparators[new_index].value
          set_condition(condition)
          UiSounds.play_menu_move(ctx.pindex)
@@ -596,7 +612,9 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
             -- Result is a string from textbox
             local num = tonumber(result)
             if num then
+               ---@diagnostic disable-next-line: inject-field
                condition.constant = num
+               ---@diagnostic disable-next-line: inject-field
                condition.second_signal = nil
                set_condition(condition)
                ctx.controller.message:fragment(tostring(num))
@@ -606,7 +624,9 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
             end
          else
             -- Result is a SignalID from signal chooser
+            ---@diagnostic disable-next-line: inject-field
             condition.second_signal = result
+            ---@diagnostic disable-next-line: inject-field
             condition.constant = nil
             set_condition(condition)
             if result and result.name then
@@ -647,7 +667,9 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
       end,
       on_clear = function(ctx)
          local condition = get_condition() or {}
+         ---@diagnostic disable-next-line: inject-field
          condition.second_signal = nil
+         ---@diagnostic disable-next-line: inject-field
          condition.constant = 0
          set_condition(condition)
          ctx.controller.message:fragment("0")

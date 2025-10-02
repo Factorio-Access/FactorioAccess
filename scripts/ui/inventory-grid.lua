@@ -25,7 +25,7 @@ local mod = {}
 ---@field inventory_index defines.inventory
 
 ---@class fa.ui.InventoryGrid.Context: fa.ui.graph.Ctx
----@field parameters table<string, fa.ui.InventoryGrid.Parameters>
+---@field parameters fa.ui.InventoryGrid.Parameters
 ---@field tablist_shared_state table<string, fa.ui.InventoryGrid.State>
 
 -- Constants
