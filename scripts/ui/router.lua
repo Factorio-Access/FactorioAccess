@@ -100,7 +100,6 @@ mod.UI_NAMES = {
    ROBOPORT = "roboport",
    BLUEPRINT = "blueprint",
    BLUEPRINT_BOOK = "blueprint_book",
-   CIRCUIT_NETWORK = "circuit_network",
    SIGNAL_SELECTOR = "signal_selector",
    SPIDERTRON = "spidertron",
    DEBUG = "debug",

@@ -2801,59 +2801,14 @@ EventManager.on_event("fa-s-end", function(event)
    ScannerEntrypoint.do_refresh(event.player_index, char.direction)
 end)
 
---For a building, opens circuit menu
----@param event EventData.CustomInputEvent
-local function kb_open_circuit_menu(event)
-   local pindex = event.player_index
-   local router = UiRouter.get_router(pindex)
-
-   local p = game.get_player(pindex)
-   --In a building menu
-
-   local ent = p.selected or EntitySelection.get_first_ent_at_tile(pindex)
-   if ent == nil or ent.valid == false or (ent.get_control_behavior() == nil and ent.type ~= "electric-pole") then
-      --Sort scan results instead
-      return
-   end
-   --Building has a circuit network
-   p.opened = ent
-   if ent.type == "electric-pole" then
-      --Open the menu
-      CircuitNetworks.circuit_network_menu_open(pindex, ent)
-      return
-   elseif ent.type == "constant-combinator" then
-      CircuitNetworks.circuit_network_menu_open(pindex, ent)
-      return
-   elseif ent.type == "arithmetic-combinator" or ent.type == "decider-combinator" then
-      Speech.speak(pindex, "Error: This combinator is not supported")
-      return
-   end
-   --Building has control behavior
-   local control = ent.get_control_behavior()
-   if control == nil then
-      Speech.speak(pindex, "No control behavior for this building")
-      return
-   end
-   --Building has a circuit network
-   local nw1 = control.get_circuit_network(defines.wire_connector_id.circuit_red)
-   local nw2 = control.get_circuit_network(defines.wire_connector_id.circuit_green)
-   if nw1 == nil and nw2 == nil then
-      Speech.speak(
-         pindex,
-         { "fa.entity-not-connected-circuit-network", Localising.get_localised_name_with_fallback(ent) }
-      )
-      return
-   end
-   --Open the menu
-   CircuitNetworks.circuit_network_menu_open(pindex, ent)
-end
+-- Circuit network menu removed - only wire dragging remains functional
+-- Use drag_wire functionality with red/green/copper wires in hand
 
 EventManager.on_event(
    "fa-n",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      ---This can probably be refactored
-      kb_open_circuit_menu(event)
+      -- Now just resorts the scanner
       ScannerEntrypoint.resort(pindex)
    end
 )
@@ -3203,6 +3158,9 @@ local function kb_click_hand(event)
       if stack.is_blueprint and stack.is_blueprint_setup() then
          -- Blueprint building - use the mod's paste function
          Blueprints.paste_blueprint(pindex)
+      elseif stack.name == "red-wire" or stack.name == "green-wire" or stack.name == "copper-cable" then
+         -- Wire dragging - red/green circuit wires or copper electrical wire
+         CircuitNetworks.drag_wire_and_read(pindex)
       else
          local proto = stack.prototype
          if proto.place_result or proto.place_as_tile_result then

@@ -510,6 +510,49 @@ def write_events(events: List[Dict[str, Any]], output_dir: Path):
                         f.write(f"{field_desc}\n\n")
 
 
+def write_define_subkeys(subkeys: List[Dict[str, Any]], parent_path: Path, parent_name: str):
+    """Recursively write nested define subkeys to markdown files."""
+    for subkey in subkeys:
+        subkey_name = subkey["name"]
+        output_file = parent_path / f"{subkey_name}.md"
+
+        with open(output_file, "w", encoding="utf-8") as f:
+            full_name = f"{parent_name}.{subkey_name}"
+            f.write(f"# {full_name}\n\n")
+
+            if subkey.get("description"):
+                f.write(f"{subkey['description']}\n\n")
+
+            # Handle values (leaf node)
+            values = subkey.get("values", [])
+            if values:
+                f.write("## Values\n\n")
+                for value in values:
+                    value_name = value["name"]
+                    f.write(f"### {value_name}\n\n")
+
+                    if value.get("description"):
+                        f.write(f"{value['description']}\n\n")
+
+                    if "value" in value:
+                        f.write(f"**Value:** `{value['value']}`\n\n")
+
+            # Handle nested subkeys (recursive)
+            nested_subkeys = subkey.get("subkeys", [])
+            if nested_subkeys:
+                # Create subdirectory for nested subkeys
+                subkey_dir = parent_path / subkey_name
+                subkey_dir.mkdir(parents=True, exist_ok=True)
+
+                f.write("## Subkeys\n\n")
+                for nested in sorted(nested_subkeys, key=lambda x: x.get("order", 0)):
+                    nested_name = nested["name"]
+                    f.write(f"- [{nested_name}]({subkey_name}/{nested_name}.md)\n")
+
+                # Recursively process nested subkeys
+                write_define_subkeys(nested_subkeys, subkey_dir, full_name)
+
+
 def write_defines(defines: List[Dict[str, Any]], output_dir: Path):
     """Write defines to markdown files."""
     if not defines:
@@ -539,6 +582,7 @@ def write_defines(defines: List[Dict[str, Any]], output_dir: Path):
             if define_info.get("description"):
                 f.write(f"{define_info['description']}\n\n")
 
+            # Handle values (simple define)
             values = define_info.get("values", [])
             if values:
                 f.write("## Values\n\n")
@@ -551,6 +595,21 @@ def write_defines(defines: List[Dict[str, Any]], output_dir: Path):
 
                     if "value" in value:
                         f.write(f"**Value:** `{value['value']}`\n\n")
+
+            # Handle subkeys (nested define)
+            subkeys = define_info.get("subkeys", [])
+            if subkeys:
+                # Create subdirectory for subkeys
+                define_subdir = defines_dir / define_name
+                define_subdir.mkdir(parents=True, exist_ok=True)
+
+                f.write("## Subkeys\n\n")
+                for subkey in sorted(subkeys, key=lambda x: x.get("order", 0)):
+                    subkey_name = subkey["name"]
+                    f.write(f"- [{subkey_name}]({define_name}/{subkey_name}.md)\n")
+
+                # Process subkeys
+                write_define_subkeys(subkeys, define_subdir, define_name)
 
 
 def write_builtin_types(builtin_types: List[Dict[str, Any]], output_dir: Path):

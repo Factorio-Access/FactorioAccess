@@ -1,0 +1,6 @@
+# prototypes.shortcut
+
+## Values
+
+### shortcut
+
