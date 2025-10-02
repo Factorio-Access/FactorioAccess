@@ -70,6 +70,7 @@ require("scripts.ui.menus.fast-travel-menu")
 require("scripts.ui.menus.debug-menu")
 require("scripts.ui.tabs.item-chooser")
 require("scripts.ui.tabs.signal-chooser")
+require("scripts.ui.logistics-config")
 require("scripts.ui.menus.roboport-menu")
 require("scripts.ui.menus.spidertron-menu")
 require("scripts.ui.generic-inventory")
@@ -4284,6 +4285,28 @@ EventManager.on_event("fa-cas-d", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
    router:open_ui(UiRouter.UI_NAMES.DEBUG)
+end)
+
+EventManager.on_event("fa-ca-l", function(event)
+   local pindex = event.player_index
+   local player = game.get_player(pindex)
+   if not player then return end
+
+   local entity = player.selected
+   if not entity or not entity.valid then
+      Speech.speak(pindex, { "fa.entity-invalid" })
+      return
+   end
+
+   -- Check if entity has logistics support
+   local point = entity.get_logistic_point(defines.logistic_member_index.character_requester)
+   if not point then
+      Speech.speak(pindex, { "fa.entity-no-logistics" })
+      return
+   end
+
+   local router = UiRouter.get_router(pindex)
+   router:open_ui(UiRouter.UI_NAMES.LOGISTICS_CONFIG, { entity = entity })
 end)
 
 EventManager.on_event(

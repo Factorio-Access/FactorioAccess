@@ -108,6 +108,7 @@ mod.UI_NAMES = {
    DEBUG_FORMBUILDER = "debug_formbuilder",
    ITEM_CHOOSER = "item_chooser",
    SIGNAL_CHOOSER = "signal_chooser",
+   LOGISTICS_CONFIG = "logistics_config",
    BOX_SELECTOR = "box_selector",
    BLUEPRINT_AREA_SELECTOR = "blueprint_area_selector",
    DECON_AREA_SELECTOR = "decon_area_selector",
@@ -176,9 +177,10 @@ end
 ---Open a textbox for user input
 ---@param initial_text string
 ---@param context any Any value to help identify which node/item opened the textbox
-function RouterController:open_textbox(initial_text, context)
+---@param intro_message LocalisedString? Optional intro message to speak when opening
+function RouterController:open_textbox(initial_text, context, intro_message)
    -- Store the context - result will go to top of stack when textbox closes
-   GameGui.open_textbox(self.pindex, initial_text, context)
+   GameGui.open_textbox(self.pindex, initial_text, context, intro_message)
 end
 
 ---Set the search pattern for the current player

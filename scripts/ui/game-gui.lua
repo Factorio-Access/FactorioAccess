@@ -4,6 +4,7 @@ This provides a centralized way to show UI indicators and collect text input.
 ]]
 
 local StorageManager = require("scripts.storage-manager")
+local Speech = require("scripts.speech")
 
 local mod = {}
 
@@ -111,7 +112,8 @@ end
 ---@param pindex number
 ---@param initial_text string
 ---@param context any? Context to help identify which node/item opened the textbox
-function mod.open_textbox(pindex, initial_text, context)
+---@param intro_message LocalisedString? Optional intro message to speak when opening
+function mod.open_textbox(pindex, initial_text, context, intro_message)
    local state = gui_storage[pindex]
 
    if not state.active_ui_name then error("Cannot open textbox without an active UI") end
@@ -133,6 +135,9 @@ function mod.open_textbox(pindex, initial_text, context)
 
    -- Store the context
    state.textbox_context = context
+
+   -- Speak intro message (default to "Enter text" if not provided)
+   Speech.speak(pindex, intro_message or { "fa.textbox-enter-text" })
 end
 
 ---Close the textbox
