@@ -6,6 +6,7 @@ Provides a vertical menu interface for managing spidertron remotes.
 local Functools = require("scripts.functools")
 local Menu = require("scripts.ui.menu")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 local TabList = require("scripts.ui.tab-list")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local UiRouter = require("scripts.ui.router")
@@ -65,7 +66,7 @@ local function render_spidertron_menu(ctx)
       label_ctx:render({ "fa.spidertron-menu-info" })
    end, function(action_ctx)
       local spidertrons = p.spidertron_remote_selection
-      local message = Speech.new()
+      local message = MessageBuilder.new()
       if spidertrons ~= nil and #spidertrons > 0 then
          if #spidertrons == 1 then
             if spidertrons[1].entity_label ~= nil then
@@ -104,7 +105,7 @@ local function render_spidertron_menu(ctx)
          else
             table.insert(spidertrons, cursortarget)
             p.spidertron_remote_selection = spidertrons
-            local message = Speech.new()
+            local message = MessageBuilder.new()
             if cursortarget.entity_label and cursortarget.entity_label ~= "" then
                message:fragment({ "fa.spidertron-remote-linked-added-named", cursortarget.entity_label })
             else

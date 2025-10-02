@@ -5,6 +5,7 @@ local Mouse = require("scripts.mouse")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 local BumpDetection = require("scripts.bump-detection")
 local MovementHistory = require("scripts.movement-history")
 
@@ -151,7 +152,7 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
          print(serpent.line(pos), serpent.line(new_pos))
          if math.floor(new_pos.x) ~= math.floor(pos.x) or math.floor(new_pos.y) ~= math.floor(pos.y) then
             if not muted then
-               local message = Speech.new()
+               local message = MessageBuilder.new()
                message:fragment({
                   "fa.teleport-distance",
                   -- This is a bit weird. We can either be too high or too low. But if off by one tile we want to be too

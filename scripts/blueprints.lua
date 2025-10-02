@@ -5,6 +5,7 @@ local BuildingTools = require("scripts.building-tools")
 local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 local PlayerMiningTools = require("scripts.player-mining-tools")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
@@ -58,14 +59,14 @@ function mod.create_blueprint(pindex, point_1, point_2, prior_bp_data)
    local ent_count = p.cursor_stack.get_blueprint_entity_count()
    if ent_count == 0 then
       if prior_bp_data == nil then p.cursor_stack.set_stack({ name = "blueprint" }) end
-      local message = Speech.new()
+      local message = MessageBuilder.new()
       message:fragment({ "fa.blueprints-selection-empty" })
       if prior_bp_data ~= nil then message:fragment({ "fa.blueprints-keeping-old" }) end
       Speech.speak(pindex, message:build())
    else
       local prior_name = ""
       if prior_bp_data ~= nil then prior_name = prior_bp_data.blueprint.label or "" end
-      local message = Speech.new()
+      local message = MessageBuilder.new()
       message:fragment({ "fa.blueprints-created", prior_name })
       message:fragment(FaUtils.format_count(ent_count, { "fa.blueprints-entities" }))
       message:fragment({ "fa.blueprints-in-hand" })
@@ -535,7 +536,7 @@ function mod.run_blueprint_book_menu(pindex, menu_index, list_mode, left_clicked
       --Blueprint book list mode
       if index == 0 then
          --stuff
-         local message = Speech.new()
+         local message = MessageBuilder.new()
          message:fragment({ "fa.blueprints-browsing-book", mod.blueprint_book_get_label(pindex) })
          message:fragment({ "fa.blueprints-with-items", tostring(item_count) })
          message:fragment({ "fa.blueprints-book-navigation" })

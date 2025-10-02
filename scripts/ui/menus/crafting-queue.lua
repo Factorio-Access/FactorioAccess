@@ -99,7 +99,7 @@ function mod.on_click(ctx, modifiers)
    -- Announce what was cancelled
    local recipe_proto = prototypes.recipe[item.recipe]
    if recipe_proto then
-      local message = Speech.new()
+      local message = MessageBuilder.new()
       message:fragment({ "fa.crafting-queue-cancelled" })
       message:fragment(tostring(math.min(cancel_count, item.count)))
       message:fragment(localising.get_localised_name_with_fallback(recipe_proto))

@@ -1,6 +1,7 @@
 --Here: Quickbar related functions
 local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 local UiRouter = require("scripts.ui.router")
 
 local mod = {}
@@ -50,13 +51,13 @@ function mod.read_quick_bar_slot(index, pindex)
       local stack = game.get_player(pindex).cursor_stack
       if stack and stack.valid_for_read then
          count = count + stack.count
-         local msg = Speech.new()
+         local msg = MessageBuilder.new()
          msg:fragment({ "fa.quickbar-unselected" })
          msg:fragment(Localising.get_localised_name_with_fallback(proto))
          msg:fragment({ "fa.quickbar-count", count })
          Speech.speak(pindex, msg:build())
       else
-         local msg = Speech.new()
+         local msg = MessageBuilder.new()
          msg:fragment({ "fa.quickbar-selected" })
          msg:fragment(Localising.get_localised_name_with_fallback(proto))
          msg:fragment({ "fa.quickbar-count", count })
@@ -76,19 +77,19 @@ function mod.set_quick_bar_slot(index, pindex)
    local ent = p.selected
    if stack_cur and stack_cur.valid_for_read and stack_cur.valid == true then
       game.get_player(pindex).set_quick_bar_slot(index + 10 * page, stack_cur)
-      local msg = Speech.new()
+      local msg = MessageBuilder.new()
       msg:fragment({ "fa.quickbar-assigned", index })
       msg:fragment(Localising.get_localised_name_with_fallback(stack_cur))
       Speech.speak(pindex, msg:build())
    elseif stack_inv and stack_inv.valid_for_read and stack_inv.valid == true then
       game.get_player(pindex).set_quick_bar_slot(index + 10 * page, stack_inv)
-      local msg = Speech.new()
+      local msg = MessageBuilder.new()
       msg:fragment({ "fa.quickbar-assigned", index })
       msg:fragment(Localising.get_localised_name_with_fallback(stack_inv))
       Speech.speak(pindex, msg:build())
    elseif ent ~= nil and ent.valid and ent.force == p.force and prototypes.item[ent.name] ~= nil then
       game.get_player(pindex).set_quick_bar_slot(index + 10 * page, ent.name)
-      local msg = Speech.new()
+      local msg = MessageBuilder.new()
       msg:fragment({ "fa.quickbar-assigned", index })
       msg:fragment(Localising.get_localised_name_with_fallback(ent))
       Speech.speak(pindex, msg:build())
@@ -99,7 +100,7 @@ function mod.set_quick_bar_slot(index, pindex)
       if item ~= nil then item_desc = Localising.get_localised_name_with_fallback(item) end
       ---@diagnostic disable-next-line: param-type-mismatch
       game.get_player(pindex).set_quick_bar_slot(index + 10 * page, nil)
-      local msg = Speech.new()
+      local msg = MessageBuilder.new()
       msg:fragment({ "fa.quickbar-unassigned", index })
       if item_desc then msg:fragment(item_desc) end
       Speech.speak(pindex, msg:build())
@@ -109,7 +110,7 @@ end
 function mod.read_switched_quick_bar(index, pindex)
    local page = game.get_player(pindex).get_active_quick_bar_page(index)
    local item = game.get_player(pindex).get_quick_bar_slot(1 + 10 * (index - 1))
-   local msg = Speech.new()
+   local msg = MessageBuilder.new()
    msg:fragment({ "fa.quickbar-page-selected", index })
    if item ~= nil then
       msg:fragment(Localising.get_localised_name_with_fallback(prototypes.item[item.name]))

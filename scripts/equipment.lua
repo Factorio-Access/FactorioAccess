@@ -5,6 +5,7 @@ local Electrical = require("scripts.electrical")
 local FaUtils = require("scripts.fa-utils")
 local localising = require("scripts.localising")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 local UiRouter = require("scripts.ui.router")
 
 local mod = {}
@@ -14,7 +15,7 @@ local mod = {}
 function mod.equip_it(stack, pindex)
    local router = UiRouter.get_router(pindex)
 
-   local message = Speech.new()
+   local message = MessageBuilder.new()
 
    if stack.is_armor then
       local armor = game.get_player(pindex).get_inventory(defines.inventory.character_armor)
@@ -113,7 +114,7 @@ function mod.read_weapons_and_ammo(pindex)
 
    if guns_count == 0 then return { "fa.equipment-no-weapons" } end
 
-   local result = Speech.new()
+   local result = MessageBuilder.new()
    result:fragment({ "fa.equipment-weapons-header" })
 
    for i = 1, 3, 1 do
@@ -387,7 +388,7 @@ function mod.read_equipment_list(pindex)
    if armor_inv[1].grid == nil or not armor_inv[1].grid.valid then return { "fa.equipment-no-grid" } end
    --Armor with Equipment
    local grid
-   local result = Speech.new()
+   local result = MessageBuilder.new()
    grid = armor_inv[1].grid
    result:fragment({ "fa.equipment-armor" })
    if grid.equipment == nil or grid.equipment == {} then return { "fa.equipment-no-equipment-installed" } end

@@ -33,6 +33,7 @@ local Graphics = require("scripts.graphics")
 local Heat = require("scripts.heat")
 local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 local NetworkShape = require("scripts.network-shape")
 -- Rails removed (Factorio 2.0 incompatibility)
 -- local Rails = require("scripts.rails")
@@ -48,7 +49,7 @@ local BotLogistics = require("scripts.worker-robots")
 local mod = {}
 
 ---@class fa.Info.EntInfoContext
----@field message fa.Speech
+---@field message fa.MessageBuilder
 ---@field is_scanner boolean
 ---@field ent LuaEntity
 ---@field pindex number
@@ -56,7 +57,7 @@ local mod = {}
 ---@field cursor_pos fa.Point Not necessarily the player's actual cursor.
 
 ---@class fa.Info.EntStatusContext
----@field message fa.Speech
+---@field message fa.MessageBuilder
 ---@field ent LuaEntity
 ---@field pindex number
 ---@field player LuaPlayer
@@ -1161,7 +1162,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    local ctx = {
       ent = ent,
       pindex = pindex,
-      message = Speech.new(),
+      message = MessageBuilder.new(),
       is_scanner = is_scanner,
       player = p,
       cursor_pos = vp:get_cursor_pos(),
@@ -1911,7 +1912,7 @@ function mod.read_selected_entity_status(pindex)
    local ctx = {
       ent = ent,
       pindex = pindex,
-      message = Speech.new(),
+      message = MessageBuilder.new(),
       player = p,
       power_rate = power_rate,
       drain = drain,
@@ -1965,7 +1966,7 @@ end
 ---@param right_bottom fa.Point
 ---@return LocalisedString
 function mod.area_scan_summary_info(pindex, left_top, right_bottom)
-   local msg = Speech.new()
+   local msg = MessageBuilder.new()
 
    local chunk_lt_x = math.floor(left_top.x / 32)
    local chunk_lt_y = math.floor(left_top.y / 32)

@@ -7,6 +7,7 @@ the player didn't move the cursor, and that in effect from the player's perspect
 local StorageManager = require("scripts.storage-manager")
 local Viewpoint = require("scripts.viewpoint")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 local serpent = require("serpent")
 
 local mod = {}
@@ -38,7 +39,7 @@ function BoxSelector:open(pindex, parameters, controller)
    }
 
    -- Build message combining intro and second message if both provided
-   local message = Speech.new()
+   local message = MessageBuilder.new()
 
    -- Use intro message
    local intro_msg = (parameters and parameters.intro_message) or { "fa.box-selector-intro" }

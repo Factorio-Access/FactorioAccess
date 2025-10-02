@@ -4,6 +4,7 @@ local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
 local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 local UiRouter = require("scripts.ui.router")
 local Sounds = require("scripts.ui.sounds")
 local Viewpoint = require("scripts.viewpoint")
@@ -248,7 +249,7 @@ local function modify_logistic_request_with_announcement(pindex, ent, item, min_
       return
    end
 
-   local msg = Speech.new()
+   local msg = MessageBuilder.new()
    if not did then
       Sounds.play_ui_edge(pindex)
       msg:fragment(min_or_max):fragment("Unchanged. Current value is"):fragment(tostring(new))
@@ -376,7 +377,7 @@ local function find_player_logistic_target(pindex)
 end
 
 -- Push a readout of a logistic request to the provided builder as a fragment.
----@param msg_builder fa.Speech
+---@param msg_builder fa.MessageBuilder
 ---@param req LogisticFilter
 local function push_request_readout(msg_builder, req)
    -- Error conditions are unlocalised because they should never happen.  We
@@ -421,7 +422,7 @@ end
 ---@param pindex number
 ---@param req LogisticFilter
 function mod.readout_logistic_request(pindex, req)
-   local msg = Speech.new()
+   local msg = MessageBuilder.new()
    push_request_readout(msg, req)
    Speech.speak(pindex, msg:build())
 end
@@ -540,7 +541,7 @@ end
 --Returns summary info string
 function mod.player_logistic_requests_summary_info(pindex)
    local p = game.get_player(pindex)
-   local msg = Speech.new()
+   local msg = MessageBuilder.new()
    local char = p.character
 
    local position = Viewpoint.get_viewpoint(pindex):get_cursor_pos()
@@ -647,7 +648,7 @@ function mod.player_logistic_request_read(item_name, pindex, additional_checks)
       return
    else
       --Report request counts and inventory counts
-      local msg = Speech.new()
+      local msg = MessageBuilder.new()
 
       if current_slot.max ~= nil or current_slot.min ~= nil then
          local min_result = ""
@@ -780,7 +781,7 @@ function mod.read_entity_requests_summary(ent, pindex)
       end
    end
 
-   local msg = Speech.new():fragment(tostring(req_count)):fragment("requests.")
+   local msg = MessageBuilder.new():fragment(tostring(req_count)):fragment("requests.")
    for _, req in pairs(reqs) do
       msg:list_item()
       push_request_readout(msg, req)

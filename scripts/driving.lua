@@ -3,6 +3,7 @@
 local util = require("util")
 local FaUtils = require("scripts.fa-utils")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 local dirs = defines.direction
 
 local mod = {}
@@ -15,7 +16,7 @@ function mod.vehicle_info(pindex)
    local train = game.get_player(pindex).vehicle.train
    if train == nil then
       --This is a type of car or tank.
-      local result = Speech.new()
+      local result = MessageBuilder.new()
       result:fragment({ "fa.driving-car", { "entity-name." .. vehicle.name } })
       result:fragment(", ")
       result:fragment(mod.fuel_inventory_info(vehicle))
@@ -35,7 +36,7 @@ function mod.fuel_inventory_info(ent)
    end)
    if #itemtable == 0 then return { "fa.driving-no-fuel" } end
 
-   local result = Speech.new()
+   local result = MessageBuilder.new()
    result:fragment({ "fa.driving-contains-fuel" })
    result:fragment({ "fa.driving-fuel-item", { "item-name." .. itemtable[1].name }, tostring(itemtable[1].count) })
    result:fragment(" ")

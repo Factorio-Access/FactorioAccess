@@ -97,7 +97,7 @@ function mod.on_click(ctx, modifiers)
 
    -- Announce what was removed
    if tech_to_remove then
-      local message = Speech.new()
+      local message = MessageBuilder.new()
       message:fragment({ "fa.research-queue-removed" })
       message:fragment(get_tech_name(tech_to_remove))
       Speech.speak(ctx.pindex, message:build())

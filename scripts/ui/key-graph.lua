@@ -78,6 +78,7 @@ naturally with how the UX for a UI should be.
 local TH = require("scripts.table-helpers")
 local UiSounds = require("scripts.ui.sounds")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 local UiRouter = require("scripts.ui.router")
 
 local mod = {}
@@ -85,7 +86,7 @@ local mod = {}
 ---@alias fa.ui.graph.Modifiers { control: boolean, alt: boolean, shift: boolean }
 
 ---@class fa.ui.graph.Ctx
----@field message fa.Speech
+---@field message fa.MessageBuilder
 ---@field modifiers fa.ui.graph.Modifiers Set for things using the keyboard. Non-nil but garbage for all others.
 ---@field controller fa.ui.RouterController The router's controller for UI management
 ---@field state any
@@ -498,7 +499,7 @@ function Graph:search_hint(ctx, hint_callback)
          local node = render.nodes[key]
          if node and not node.vtable.exclude_from_search then
             -- Create a temporary message builder
-            local temp_message = Speech.new()
+            local temp_message = MessageBuilder.new()
             local temp_ctx = self:_wrap_ctx(ctx, self.name, NO_MODIFIERS)
             temp_ctx.message = temp_message
 
@@ -514,7 +515,7 @@ function Graph:search_hint(ctx, hint_callback)
 end
 
 ---Move to next/previous search result
----@param message fa.Speech Message builder to populate with announcement
+---@param message fa.MessageBuilder Message builder to populate with announcement
 ---@param ctx fa.ui.TabContext
 ---@param direction integer 1 for next, -1 for previous
 ---@param matcher fun(localised_string: table): boolean Function to test if a localised string matches
@@ -557,7 +558,7 @@ function Graph:search_move(message, ctx, direction, matcher)
          local node = render.nodes[key]
          if node and not node.vtable.exclude_from_search then
             -- Build the label as a localised string
-            local temp_msg = Speech.new()
+            local temp_msg = MessageBuilder.new()
             local msg_ctx = self:_wrap_ctx(ctx, self.name, NO_MODIFIERS)
             msg_ctx.message = temp_msg
             node.vtable.label(msg_ctx)

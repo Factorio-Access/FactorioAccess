@@ -41,6 +41,7 @@ local ItemDescriptions = require("scripts.item-descriptions")
 local KruiseKontrol = require("scripts.kruise-kontrol-wrapper")
 local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 local Mouse = require("scripts.mouse")
 local MovementHistory = require("scripts.movement-history")
 local PlayerInit = require("scripts.player-init")
@@ -2131,7 +2132,7 @@ local function read_coords(pindex, start_phrase)
       local vehicle = game.get_player(pindex).vehicle
       assert(vehicle ~= nil) -- When driving is true, vehicle is guaranteed to exist
       local speed = vehicle.speed * 215
-      local message = Speech.new()
+      local message = MessageBuilder.new()
 
       if start_phrase then message:fragment(start_phrase) end
 
@@ -2176,7 +2177,7 @@ local function read_coords(pindex, start_phrase)
    else
       --Simply give coords (floored for the readout, extra precision for the console)
       local location = FaUtils.get_entity_part_at_cursor(pindex)
-      local message = Speech.new()
+      local message = MessageBuilder.new()
 
       if start_phrase then message:fragment(start_phrase) end
 
@@ -2880,7 +2881,7 @@ local function kb_read_menu_name(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 
-   local msg = Speech.Speech.new()
+   local msg = Speech.MessageBuilder.new()
 
    msg:fragment("No menu")
 

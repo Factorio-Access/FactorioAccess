@@ -29,6 +29,7 @@ generic containers.  Until the wider form, two limitations must be observed:
 ]]
 local Math2 = require("math-helpers")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 local StorageManager = require("scripts.storage-manager")
 local TH = require("scripts.table-helpers")
 local Sounds = require("scripts.ui.sounds")
@@ -43,7 +44,7 @@ local mod = {}
 ---@field shared_state table
 ---@field parameters table Whatever was passed to :open()
 ---@field controller fa.ui.RouterController Controller for UI management
----@field message fa.Speech
+---@field message fa.MessageBuilder
 
 ---@alias fa.ui.SimpleTabHandler fun(self, fa.ui.TabContext, modifiers?: {control?: boolean, shift?: boolean, alt?: boolean})
 
@@ -70,7 +71,7 @@ local mod = {}
 ---@field enabled fun(number): boolean
 ---@field supports_search fun(self, ctx: fa.ui.TabContext): boolean? Returns true if search is supported
 ---@field search_hint fun(self, ctx: fa.ui.TabContext, hint_callback: fun(localised_string: table))? Called to hint strings for caching
----@field search_move fun(self, message: fa.Speech, ctx: fa.ui.TabContext, direction: integer, matcher: fun(localised_string: table): boolean): fa.ui.SearchResult? Move to next/prev search result, populate message with announcement
+---@field search_move fun(self, message: fa.MessageBuilder, ctx: fa.ui.TabContext, direction: integer, matcher: fun(localised_string: table): boolean): fa.ui.SearchResult? Move to next/prev search result, populate message with announcement
 ---@field search_all_from_start fun(self, ctx: fa.ui.TabContext): fa.ui.SearchResult? Search from start, move to first match
 
 ---@class fa.ui.TabDescriptor
@@ -119,11 +120,11 @@ mod.TabList = TabList
 -- nothing if this tablist is not open, which can happen when calling a bunch of
 -- events back to back if the tab list has to close in the middle of a sequence
 -- of actions.
----@param msg_builder fa.Speech?
+---@param msg_builder fa.MessageBuilder?
 ---@param params any[]?
 ---@param controller fa.ui.RouterController
 function TabList:_do_callback(pindex, target_tab_index, cb_name, msg_builder, params, controller)
-   msg_builder = msg_builder or Speech.new()
+   msg_builder = msg_builder or MessageBuilder.new()
    params = params or {}
 
    local tl = tablist_storage[pindex][self.ui_name]
@@ -343,7 +344,7 @@ end
 
 -- Perform the flow for focusing a tab. Does this unconditionally, so be careful
 -- not to over-call it.
----@param msg_builder fa.Speech? Optional message builder to prepend section info to
+---@param msg_builder fa.MessageBuilder? Optional message builder to prepend section info to
 ---@param play_sound boolean? Optional boolean, defaults to true. Set to false to suppress sound.
 ---@param controller fa.ui.RouterController
 function TabList:_set_active_tab(pindex, active_tab, msg_builder, play_sound, controller)
@@ -353,7 +354,7 @@ function TabList:_set_active_tab(pindex, active_tab, msg_builder, play_sound, co
    if play_sound ~= false then Sounds.play_change_menu_tab(pindex) end
 
    -- Use provided message builder or create new one
-   msg_builder = msg_builder or Speech.new()
+   msg_builder = msg_builder or MessageBuilder.new()
    local desc = self.descriptors[self.tab_order[active_tab]]
    local title = desc.title
    if title then msg_builder:list_item(title) end
@@ -481,7 +482,7 @@ function TabList:_cycle_section(pindex, direction, controller)
          -- Build message with section title (if present) and let _set_active_tab add the tab title
          local msg_builder = nil
          if section.title then
-            msg_builder = Speech.new()
+            msg_builder = MessageBuilder.new()
             msg_builder:fragment(section.title)
          end
          -- Pass the message builder to _set_active_tab so it can add the tab title
@@ -521,7 +522,7 @@ function TabList:supports_search(pindex, controller)
          state = tabstate,
          parameters = tl.parameters,
          controller = controller,
-         message = Speech.new(),
+         message = MessageBuilder.new(),
          shared_state = tl.shared_state,
       }
       return callbacks:supports_search(ctx)
@@ -547,7 +548,7 @@ function TabList:search_hint(pindex, hint_callback, controller)
          state = tabstate,
          parameters = tl.parameters,
          controller = controller,
-         message = Speech.new(),
+         message = MessageBuilder.new(),
          shared_state = tl.shared_state,
       }
       callbacks:search_hint(ctx, hint_callback)
@@ -606,7 +607,7 @@ function TabList:search_all_from_start(pindex, controller)
          state = tabstate,
          parameters = tl.parameters,
          controller = controller,
-         message = Speech.new(),
+         message = MessageBuilder.new(),
          shared_state = tl.shared_state,
       }
       local result = callbacks:search_all_from_start(ctx)

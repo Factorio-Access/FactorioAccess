@@ -7,6 +7,7 @@ local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
 local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 local Mouse = require("scripts.mouse")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
@@ -32,21 +33,21 @@ function mod.repair_pack_used(ent, pindex)
       local dura = stack.durability or 0
       if health_diff < 10 then --free repair for tiny damages
          ent.health = ent.max_health
-         local msg = Speech.new()
+         local msg = MessageBuilder.new()
          msg:fragment({ "fa.combat-fully-repaired" })
          msg:fragment(Localising.get_localised_name_with_fallback(ent))
          Speech.speak(pindex, msg:build())
       elseif health_diff < dura then
          ent.health = ent.max_health
          stack.drain_durability(health_diff)
-         local msg = Speech.new()
+         local msg = MessageBuilder.new()
          msg:fragment({ "fa.combat-fully-repaired" })
          msg:fragment(Localising.get_localised_name_with_fallback(ent))
          Speech.speak(pindex, msg:build())
       else --if health_diff >= dura then
          stack.drain_durability(dura)
          ent.health = ent.health + dura
-         local msg = Speech.new()
+         local msg = MessageBuilder.new()
          msg:fragment({ "fa.combat-partially-repaired" })
          msg:fragment(Localising.get_localised_name_with_fallback(ent))
          msg:fragment({ "fa.combat-consumed-repair-pack" })

@@ -76,32 +76,32 @@ local MESSAGE_BUILDER_STATE = {
    BUILT = "built",
 }
 
----@class fa.Speech
+---@class fa.MessageBuilder
 ---@field _no_storage fun()
 ---@field state fa.Speech.MessageBuilderState
 ---@field parts LocalisedString[]
 ---@field is_first_list_item boolean Used to avoid an extra comma at the start of lists.
-local Speech = {}
-mod.Speech = Speech
-local Speech_meta = { __index = Speech }
+local MessageBuilder = {}
+mod.MessageBuilder = MessageBuilder
+local MessageBuilder_meta = { __index = MessageBuilder }
 
----@return fa.Speech
-function Speech.new()
+---@return fa.MessageBuilder
+function MessageBuilder.new()
    return setmetatable({
       _no_storage = __cannot_be_in_storage,
       state = MESSAGE_BUILDER_STATE.INITIAL,
       is_first_list_item = true,
       parts = {},
-   }, Speech_meta)
+   }, MessageBuilder_meta)
 end
 
-function Speech:_check_not_built()
+function MessageBuilder:_check_not_built()
    assert(self.state ~= MESSAGE_BUILDER_STATE.BUILT, "Ateempt to use a message builder twice")
 end
 
 ---@param fragment LocalisedString
----@return fa.Speech
-function Speech:fragment(fragment)
+---@return fa.MessageBuilder
+function MessageBuilder:fragment(fragment)
    self:_check_not_built()
 
    -- Warn about common mistake: fragment(" ") is unnecessary as spaces are added automatically
@@ -129,8 +129,8 @@ function Speech:fragment(fragment)
 end
 
 ---@param fragment LocalisedString? If present, pushed after the separator.
----@return fa.Speech
-function Speech:list_item(fragment)
+---@return fa.MessageBuilder
+function MessageBuilder:list_item(fragment)
    self:_check_not_built()
 
    self.state = MESSAGE_BUILDER_STATE.LIST_ITEM
@@ -141,8 +141,8 @@ end
 -- Just like list_item, but will force a comma even if this is the first item in a list.  This is used e.g. in grids,
 -- which should always be "label, dims".
 ---@param fragment LocalisedString? If present, pushed after the separator.
----@return fa.Speech
-function Speech:list_item_forced_comma(fragment)
+---@return fa.MessageBuilder
+function MessageBuilder:list_item_forced_comma(fragment)
    self:_check_not_built()
    self:list_item()
    self.is_first_list_item = false
@@ -152,7 +152,7 @@ end
 
 -- It is an error to keep using this builder after building.
 ---@return LocalisedString? Nil if nothing was done.
-function Speech:build()
+function MessageBuilder:build()
    self:_check_not_built()
    self.state = MESSAGE_BUILDER_STATE.BUILT
 
@@ -162,7 +162,7 @@ function Speech:build()
 end
 
 -- Convenience function at module level
-mod.new = Speech.new
+mod.new = MessageBuilder.new
 
 ---Send a localized string to the external launcher for text-to-speech rendering.
 ---This is the primary way the mod communicates with blind players.
@@ -192,9 +192,6 @@ function mod.speak(pindex, str)
       SpeechLogger.log_speech(str, pindex)
    end
 end
-
--- For backwards compatibility during migration
-mod.MessageBuilder = Speech
 
 -- Test helper functions
 ---Enable speech capture for testing

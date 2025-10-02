@@ -3,6 +3,7 @@ local UiRouter = require("scripts.ui.router")
 local FormBuilder = require("scripts.ui.form-builder")
 local KeyGraph = require("scripts.ui.key-graph")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 
 local mod = {}
 
@@ -66,7 +67,7 @@ local function build_test_form(ctx)
 
    -- Add an action button that opens a child UI
    builder:add_action("test_action", { "fa.form-test-action" }, function(controller)
-      local msg = Speech.new()
+      local msg = MessageBuilder.new()
       msg:fragment("Action button clicked! Opening item chooser...")
       Speech.speak(ctx.pindex, msg:build())
       controller:open_child_ui(UiRouter.UI_NAMES.ITEM_CHOOSER)
@@ -74,7 +75,7 @@ local function build_test_form(ctx)
 
    -- Add another action that just announces
    builder:add_action("test_announce", { "fa.form-test-announce" }, function(controller)
-      local msg = Speech.new()
+      local msg = MessageBuilder.new()
       msg:fragment("This is a test announcement from the action button!")
       Speech.speak(ctx.pindex, msg:build())
    end)
@@ -143,7 +144,7 @@ mod.debug_formbuilder = TabList.declare_tablist({
       -- Results from child UIs (the form builder handles textbox results internally)
       if result then
          -- Handle results from other child UIs like item chooser
-         local msg = Speech.new()
+         local msg = MessageBuilder.new()
          msg:fragment("Child UI returned: ")
          msg:fragment(tostring(result))
          Speech.speak(pindex, msg:build())

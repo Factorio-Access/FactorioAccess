@@ -12,6 +12,7 @@ to support sticky horizontal positions.
 ]]
 
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 local UiRouter = require("scripts.ui.router")
 local sounds = require("scripts.ui.sounds")
 local TH = require("scripts.table-helpers")
@@ -53,7 +54,7 @@ mod.CATEGORY_POSITION = {
 ---@class fa.ui.CategoryRows.ItemContext
 ---@field pindex number
 ---@field player LuaPlayer
----@field message fa.Speech
+---@field message fa.MessageBuilder
 ---@field state table
 ---@field shared_state table
 ---@field parameters table
@@ -747,7 +748,7 @@ function CategoryRows:search_hint(ctx, hint_callback)
    -- Hint all item labels
    for _, category in ipairs(render.categories) do
       for _, item in ipairs(category.items) do
-         local msg_builder = Speech.new()
+         local msg_builder = MessageBuilder.new()
          local item_ctx = create_item_context(ctx)
          item_ctx.message = msg_builder
          item.vtable.label(item_ctx)
@@ -758,7 +759,7 @@ function CategoryRows:search_hint(ctx, hint_callback)
 end
 
 ---Search for next/prev match
----@param message fa.Speech Message builder to populate with announcement
+---@param message fa.MessageBuilder Message builder to populate with announcement
 ---@param ctx fa.ui.TabContext
 ---@param direction integer 1 for next, -1 for prev
 ---@param matcher fun(localised_string: table): boolean Function to test if a localised string matches
@@ -813,7 +814,7 @@ function CategoryRows:search_move(message, ctx, direction, matcher)
 
       local entry = all_items[i]
       -- Build the label as a localised string
-      local temp_msg = Speech.new()
+      local temp_msg = MessageBuilder.new()
       local item_ctx = create_item_context(ctx)
       item_ctx.message = temp_msg
       entry.item.vtable.label(item_ctx)

@@ -2,6 +2,7 @@
 local TransportBelts = require("scripts.transport-belts")
 local Viewpoint = require("scripts.viewpoint")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 local FaUtils = require("scripts.fa-utils")
 local localising = require("scripts.localising")
 
@@ -23,7 +24,7 @@ function mod.read_warnings_slot(pindex)
    then
       local ent = warnings[storage.players[pindex].warnings.category].ents[storage.players[pindex].warnings.index]
       if ent ~= nil and ent.valid then
-         local message = Speech.new()
+         local message = MessageBuilder.new()
          message:fragment(localising.get_localised_name_with_fallback(ent))
          message:fragment({ "fa.warnings-has-warning" })
          message:fragment({ "fa.warning-type-" .. warnings[storage.players[pindex].warnings.category].name })
@@ -70,7 +71,7 @@ function mod.scan_for_warnings(L, H, pindex)
       end
    end
    local result = {}
-   local summary_message = Speech.new()
+   local summary_message = MessageBuilder.new()
    local has_warnings = false
 
    for i, warning in pairs(warnings) do

@@ -7,6 +7,7 @@ Supports ratio-based transfers and item filtering.
 local Localising = require("scripts.localising")
 local FaUtils = require("scripts.fa-utils")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 local TH = require("scripts.table-helpers")
 
 local mod = {}
@@ -15,7 +16,7 @@ local mod = {}
 ---@param moved table<string, integer> Table of moved items {[item_name] = count}
 ---@return LocalisedString
 local function build_item_list_message(moved)
-   local message = Speech.new()
+   local message = MessageBuilder.new()
 
    -- Convert to array and sort by count (descending)
    local items = {}

@@ -9,7 +9,7 @@ local Localising = require("scripts.localising")
 local mod = {}
 
 ---Read recipe ingredients and products
----@param message fa.Speech The message builder to append to
+---@param message fa.MessageBuilder The message builder to append to
 ---@param recipe LuaRecipe The recipe to read
 function mod.read_recipe_details(message, recipe)
    -- Read ingredients
@@ -59,7 +59,7 @@ function mod.read_recipe_details(message, recipe)
 end
 
 ---Read recipe details including crafting time (for machines)
----@param message fa.Speech The message builder to append to
+---@param message fa.MessageBuilder The message builder to append to
 ---@param recipe LuaRecipe The recipe to read
 function mod.read_recipe_details_with_time(message, recipe)
    mod.read_recipe_details(message, recipe)
@@ -69,7 +69,7 @@ function mod.read_recipe_details_with_time(message, recipe)
 end
 
 ---Create a label for a recipe, optionally marking it as current
----@param message fa.Speech The message builder to append to
+---@param message fa.MessageBuilder The message builder to append to
 ---@param recipe LuaRecipe The recipe
 ---@param pindex number Player index
 ---@param is_current boolean? Whether this is the currently selected recipe

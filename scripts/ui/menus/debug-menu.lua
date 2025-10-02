@@ -3,6 +3,7 @@ local UiRouter = require("scripts.ui.router")
 local Menu = require("scripts.ui.menu")
 local KeyGraph = require("scripts.ui.key-graph")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 local BoxSelector = require("scripts.ui.box-selector")
 local serpent = require("serpent")
 
@@ -85,7 +86,7 @@ local test_box_selector = BoxSelector.declare_box_selector({
    ui_name = UiRouter.UI_NAMES.BOX_SELECTOR,
    callback = function(pindex, params, result)
       -- This is called when selection completes
-      local msg = Speech.new()
+      local msg = MessageBuilder.new()
       msg:fragment("Box selection result: ")
       msg:fragment(serpent.line(result, { nocode = true }))
       Speech.speak(pindex, msg:build())

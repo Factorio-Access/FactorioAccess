@@ -33,6 +33,7 @@ local EventManager = require("scripts.event-manager")
 local GameGui = require("scripts.ui.game-gui")
 local UiSounds = require("scripts.ui.sounds")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 local LocalisedStringCache = require("scripts.localised-string-cache")
 
 local mod = {}
@@ -561,7 +562,7 @@ register_ui_event("fa-s-enter", function(event, pindex)
                return string.find(string.lower(text), pattern_lower, 1, true) ~= nil
             end
 
-            local message = Speech.new()
+            local message = MessageBuilder.new()
             local result = ui:search_move(message, pindex, 1, matcher, router.controller)
             if result == mod.SEARCH_RESULT.MOVED then
                UiSounds.play_menu_move(pindex)
@@ -610,7 +611,7 @@ register_ui_event("fa-c-enter", function(event, pindex)
                return string.find(string.lower(text), pattern_lower, 1, true) ~= nil
             end
 
-            local message = Speech.new()
+            local message = MessageBuilder.new()
             local result = ui:search_move(message, pindex, -1, matcher, router.controller)
             if result == mod.SEARCH_RESULT.MOVED then
                UiSounds.play_menu_move(pindex)
