@@ -10,7 +10,7 @@ local mod = {}
 local function build_item_tree(ctx)
    local builder = TreeChooser.TreeChooserBuilder.new()
    local player = game.get_player(ctx.pindex)
-   local force = player.force
+   local force = player.force --[[@as LuaForce]]
 
    -- Use signal helper to add items (with unlocked filter)
    -- Pass converter to return just the name string, not SignalID

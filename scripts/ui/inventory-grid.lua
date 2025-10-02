@@ -200,9 +200,9 @@ local function render_inventory_grid(ctx)
                      count = cursor_stack.count,
                      quality = cursor_stack.quality and cursor_stack.quality.name or nil,
                   })
-                  Speech.speak(click_ctx.pindex, { "fa.grabbed-stuff", item_description })
+                  click_ctx.controller.message:fragment({ "fa.grabbed-stuff", item_description })
                else
-                  Speech.speak(click_ctx.pindex, { "fa.grabbed-nothing" })
+                  click_ctx.controller.message:fragment({ "fa.grabbed-nothing" })
                end
             end
          end,
@@ -223,7 +223,7 @@ local function render_inventory_grid(ctx)
                   if half > 0 then
                      inv_stack.set_stack({ name = cursor_stack.name, count = half, quality = cursor_stack.quality })
                      cursor_stack.count = cursor_stack.count - half
-                     Speech.speak(click_ctx.pindex, { "fa.placed-stuff", { "fa.half-stack" } })
+                     click_ctx.controller.message:fragment({ "fa.placed-stuff", { "fa.half-stack" } })
                   end
                elseif not cursor_stack.valid_for_read and inv_stack.valid_for_read then
                   -- Cursor is empty, inventory has items - take half
@@ -236,7 +236,7 @@ local function render_inventory_grid(ctx)
                         count = cursor_stack.count,
                         quality = cursor_stack.quality and cursor_stack.quality.name or nil,
                      })
-                     Speech.speak(click_ctx.pindex, { "fa.grabbed-stuff", item_description })
+                     click_ctx.controller.message:fragment({ "fa.grabbed-stuff", item_description })
                   end
                elseif cursor_stack.valid_for_read and inv_stack.valid_for_read then
                   -- Both have items - swap like left click
@@ -246,7 +246,7 @@ local function render_inventory_grid(ctx)
                      count = cursor_stack.count,
                      quality = cursor_stack.quality and cursor_stack.quality.name or nil,
                   })
-                  Speech.speak(click_ctx.pindex, { "fa.grabbed-stuff", item_description })
+                  click_ctx.controller.message:fragment({ "fa.grabbed-stuff", item_description })
                end
             end
          end,

@@ -491,6 +491,7 @@ end
 ---@param ctx fa.ui.TabContext
 ---@param hint_callback fun(localised_string: table)
 function Graph:search_hint(ctx, hint_callback)
+   ---@diagnostic disable-next-line: param-type-mismatch
    self:_with_render(ctx, function()
       local render = self.render
       local key_order = ctx.state.key_order or {}
@@ -500,6 +501,7 @@ function Graph:search_hint(ctx, hint_callback)
          if node and not node.vtable.exclude_from_search then
             -- Create a temporary message builder
             local temp_message = MessageBuilder.new()
+            ---@diagnostic disable-next-line: param-type-mismatch
             local temp_ctx = self:_wrap_ctx(ctx, self.name, NO_MODIFIERS)
             temp_ctx.message = temp_message
 
@@ -523,6 +525,7 @@ end
 function Graph:search_move(message, ctx, direction, matcher)
    local result = UiRouter.SEARCH_RESULT.DIDNT_MOVE
 
+   ---@diagnostic disable-next-line: param-type-mismatch
    self:_with_render(ctx, function()
       local render = self.render
       local key_order = ctx.state.key_order or {}
@@ -559,11 +562,13 @@ function Graph:search_move(message, ctx, direction, matcher)
          if node and not node.vtable.exclude_from_search then
             -- Build the label as a localised string
             local temp_msg = MessageBuilder.new()
+            ---@diagnostic disable-next-line: param-type-mismatch
             local msg_ctx = self:_wrap_ctx(ctx, self.name, NO_MODIFIERS)
             msg_ctx.message = temp_msg
             node.vtable.label(msg_ctx)
             local label_localised = temp_msg:build()
 
+            ---@diagnostic disable-next-line: param-type-mismatch
             if label_localised and matcher(label_localised) then
                -- Found a match
                ctx.state.cur_key = key

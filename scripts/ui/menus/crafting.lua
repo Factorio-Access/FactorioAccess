@@ -92,7 +92,7 @@ end
 local function render_crafting_menu(ctx)
    local player = ctx.player
    if not player.character then
-      Speech.speak(ctx.pindex, { "fa.crafting-no-character" })
+      ctx.controller.message:fragment({ "fa.crafting-no-character" })
       ctx.controller:close()
       return nil
    end

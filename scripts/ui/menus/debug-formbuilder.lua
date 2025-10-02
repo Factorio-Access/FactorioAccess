@@ -67,17 +67,13 @@ local function build_test_form(ctx)
 
    -- Add an action button that opens a child UI
    builder:add_action("test_action", { "fa.form-test-action" }, function(controller)
-      local msg = MessageBuilder.new()
-      msg:fragment("Action button clicked! Opening item chooser...")
-      Speech.speak(ctx.pindex, msg:build())
+      ctx.controller.message:fragment("Action button clicked! Opening item chooser...")
       controller:open_child_ui(UiRouter.UI_NAMES.ITEM_CHOOSER)
    end)
 
    -- Add another action that just announces
    builder:add_action("test_announce", { "fa.form-test-announce" }, function(controller)
-      local msg = MessageBuilder.new()
-      msg:fragment("This is a test announcement from the action button!")
-      Speech.speak(ctx.pindex, msg:build())
+      ctx.controller.message:fragment("This is a test announcement from the action button!")
    end)
 
    -- Add another checkbox to test multiple checkboxes
@@ -144,10 +140,8 @@ mod.debug_formbuilder = TabList.declare_tablist({
       -- Results from child UIs (the form builder handles textbox results internally)
       if result then
          -- Handle results from other child UIs like item chooser
-         local msg = MessageBuilder.new()
-         msg:fragment("Child UI returned: ")
-         msg:fragment(tostring(result))
-         Speech.speak(pindex, msg:build())
+         controller.message:fragment("Child UI returned: ")
+         controller.message:fragment(tostring(result))
       end
    end,
 })

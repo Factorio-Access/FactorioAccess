@@ -49,7 +49,7 @@ end
 local function render_spidertron_menu(ctx)
    local remote = ctx.tablist_shared_state.remote
    if not remote or not remote.valid_for_read then
-      Speech.speak(ctx.pindex, "Spidertron remote not available")
+      ctx.controller.message:fragment("Spidertron remote not available")
       ctx.controller:close()
       return nil
    end
@@ -81,7 +81,7 @@ local function render_spidertron_menu(ctx)
          message:fragment({ "fa.spidertron-not-connected" })
       end
       message:fragment({ "fa.spidertron-menu-instructions" })
-      Speech.speak(ctx.pindex, message:build())
+      ctx.controller.message:fragment(message:build())
    end)
 
    -- Menu item 1: Link/add spidertron
@@ -101,7 +101,7 @@ local function render_spidertron_menu(ctx)
             end
          end
          if already_linked then
-            Speech.speak(ctx.pindex, { "fa.spidertron-already-linked" })
+            ctx.controller.message:fragment({ "fa.spidertron-already-linked" })
          else
             table.insert(spidertrons, cursortarget)
             p.spidertron_remote_selection = spidertrons
@@ -112,10 +112,10 @@ local function render_spidertron_menu(ctx)
                message:fragment({ "fa.spidertron-remote-linked-added-unnamed" })
             end
             message:fragment({ "fa.spidertrons-connected", #p.spidertron_remote_selection })
-            Speech.speak(ctx.pindex, message:build())
+            ctx.controller.message:fragment(message:build())
          end
       else
-         Speech.speak(ctx.pindex, { "fa.spidertron-invalid-link-target" })
+         ctx.controller.message:fragment({ "fa.spidertron-invalid-link-target" })
       end
    end)
 
@@ -127,9 +127,9 @@ local function render_spidertron_menu(ctx)
       if spidertrons ~= nil and #spidertrons > 0 then
          -- Clear the list
          p.spidertron_remote_selection = {}
-         Speech.speak(ctx.pindex, { "fa.spidertron-clear-all-confirm" })
+         ctx.controller.message:fragment({ "fa.spidertron-clear-all-confirm" })
       else
-         Speech.speak(ctx.pindex, { "fa.spidertron-clear-all-none" })
+         ctx.controller.message:fragment({ "fa.spidertron-clear-all-none" })
       end
    end)
 
@@ -138,12 +138,12 @@ local function render_spidertron_menu(ctx)
       label_ctx:render({ "fa.spidertron-menu-send-to-cursor" })
    end, function(action_ctx)
       if p.spidertron_remote_selection == nil or #p.spidertron_remote_selection == 0 then
-         Speech.speak(ctx.pindex, { "fa.spidertron-link-first-move" })
+         ctx.controller.message:fragment({ "fa.spidertron-link-first-move" })
       else
          for _, s in ipairs(p.spidertron_remote_selection) do
             s.autopilot_destination = cursor
          end
-         Speech.speak(ctx.pindex, {
+         ctx.controller.message:fragment({
             "fa.spidertrons-sent-to-coords",
             #p.spidertron_remote_selection,
             tostring(math.floor(cursor.x)),
@@ -157,12 +157,12 @@ local function render_spidertron_menu(ctx)
       label_ctx:render({ "fa.spidertron-menu-add-to-queue" })
    end, function(action_ctx)
       if p.spidertron_remote_selection == nil or #p.spidertron_remote_selection == 0 then
-         Speech.speak(ctx.pindex, { "fa.spidertron-link-first-move" })
+         ctx.controller.message:fragment({ "fa.spidertron-link-first-move" })
       else
          for _, s in ipairs(p.spidertron_remote_selection) do
             s.add_autopilot_destination(cursor)
          end
-         Speech.speak(ctx.pindex, {
+         ctx.controller.message:fragment({
             "fa.spidertrons-added-coords",
             tostring(math.floor(cursor.x)),
             tostring(math.floor(cursor.y)),
@@ -179,9 +179,9 @@ local function render_spidertron_menu(ctx)
          for _, s in ipairs(p.spidertron_remote_selection) do
             s.follow_target = cursortarget
          end
-         Speech.speak(ctx.pindex, { "fa.spidertron-started-following", #p.spidertron_remote_selection })
+         ctx.controller.message:fragment({ "fa.spidertron-started-following", #p.spidertron_remote_selection })
       else
-         Speech.speak(ctx.pindex, { "fa.spidertron-link-required" })
+         ctx.controller.message:fragment({ "fa.spidertron-link-required" })
       end
    end)
 

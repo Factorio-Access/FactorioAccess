@@ -51,10 +51,10 @@ local function handle_slot_click(ctx, slot_index, is_ammo)
       -- Hand has item - validate and swap
       local item_type = cursor_stack.type
       if is_ammo and item_type ~= "ammo" then
-         Speech.speak(ctx.pindex, { "fa.equipment-error-ammo-only" })
+         ctx.controller.message:fragment({ "fa.equipment-error-ammo-only" })
          return
       elseif not is_ammo and item_type ~= "gun" then
-         Speech.speak(ctx.pindex, { "fa.equipment-error-gun-only" })
+         ctx.controller.message:fragment({ "fa.equipment-error-gun-only" })
          return
       end
 
@@ -63,7 +63,7 @@ local function handle_slot_click(ctx, slot_index, is_ammo)
          cursor_stack.swap_stack(target_stack)
          -- If swap failed, it means incompatible item
          if cursor_stack.valid_for_read and cursor_stack.name == target_stack.name then
-            Speech.speak(ctx.pindex, { "fa.equipment-error-incompatible" })
+            ctx.controller.message:fragment({ "fa.equipment-error-incompatible" })
          end
       end
    else
@@ -71,7 +71,7 @@ local function handle_slot_click(ctx, slot_index, is_ammo)
       if target_stack and target_stack.valid_for_read then
          cursor_stack.swap_stack(target_stack)
       else
-         Speech.speak(ctx.pindex, { "fa.equipment-no-action" })
+         ctx.controller.message:fragment({ "fa.equipment-no-action" })
       end
    end
 end
@@ -106,7 +106,7 @@ local function handle_slot_right_click(ctx, slot_index, is_ammo)
          if half > 0 then
             target_stack.set_stack({ name = cursor_stack.name, count = half, quality = cursor_stack.quality })
             cursor_stack.count = cursor_stack.count - half
-            Speech.speak(ctx.pindex, { "fa.placed-stuff", { "fa.half-stack" } })
+            ctx.controller.message:fragment({ "fa.placed-stuff", { "fa.half-stack" } })
          end
       elseif not cursor_stack.valid_for_read and target_stack.valid_for_read then
          -- Cursor is empty, slot has items - take half
@@ -119,7 +119,7 @@ local function handle_slot_right_click(ctx, slot_index, is_ammo)
                count = cursor_stack.count,
                quality = cursor_stack.quality and cursor_stack.quality.name or nil,
             })
-            Speech.speak(ctx.pindex, { "fa.grabbed-stuff", item_description })
+            ctx.controller.message:fragment({ "fa.grabbed-stuff", item_description })
          end
       else
          -- Both have items or both empty - just swap
@@ -216,6 +216,7 @@ mod.gun_tab = UiKeyGraph.declare_graph({
 
 -- Add a state setup callback to ensure we have the inventories
 mod.gun_tab.callbacks = mod.gun_tab.callbacks or {}
+---@diagnostic disable-next-line: inject-field
 mod.gun_tab.callbacks.state_setup = function(ctx)
    return state_setup(ctx.pindex, {})
 end

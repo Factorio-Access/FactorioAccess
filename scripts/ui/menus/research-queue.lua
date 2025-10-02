@@ -43,6 +43,7 @@ function mod.render(ctx)
 
    -- Add researches from the queue, next research first
    for i, tech in ipairs(queue) do
+      ---@cast tech LuaTechnology
       -- Use research name as key
       local key = tech.name
 
@@ -65,7 +66,7 @@ function mod.on_click(ctx, modifiers)
 
    local queue = player.force.research_queue
    if not queue or #queue == 0 then
-      Speech.speak(ctx.pindex, { "fa.research-queue-empty" })
+      ctx.controller.message:fragment({ "fa.research-queue-empty" })
       return
    end
 
@@ -97,10 +98,8 @@ function mod.on_click(ctx, modifiers)
 
    -- Announce what was removed
    if tech_to_remove then
-      local message = MessageBuilder.new()
-      message:fragment({ "fa.research-queue-removed" })
-      message:fragment(get_tech_name(tech_to_remove))
-      Speech.speak(ctx.pindex, message:build())
+      ctx.controller.message:fragment({ "fa.research-queue-removed" })
+      ctx.controller.message:fragment(get_tech_name(tech_to_remove))
    end
 
    -- Request re-render

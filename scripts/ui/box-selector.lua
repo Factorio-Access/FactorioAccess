@@ -38,17 +38,12 @@ function BoxSelector:open(pindex, parameters, controller)
       callback_params = parameters or {},
    }
 
-   -- Build message combining intro and second message if both provided
-   local message = MessageBuilder.new()
-
    -- Use intro message
    local intro_msg = (parameters and parameters.intro_message) or { "fa.box-selector-intro" }
-   message:fragment(intro_msg)
+   controller.message:fragment(intro_msg)
 
    -- If second message provided, add it
-   if parameters and parameters.second_message then message:fragment(parameters.second_message) end
-
-   Speech.speak(pindex, message:build())
+   if parameters and parameters.second_message then controller.message:fragment(parameters.second_message) end
 end
 
 function BoxSelector:close(pindex)
@@ -88,7 +83,7 @@ function BoxSelector:_handle_click(pindex, modifiers, is_right_click, controller
       -- Speak second point message, including custom second_message if provided
       local second_message = (state.callback_params and state.callback_params.second_message)
          or { "fa.box-selector-second-point" }
-      Speech.speak(pindex, second_message)
+      controller.message:fragment(second_message)
    else
       -- Second click - complete selection
       local result = {

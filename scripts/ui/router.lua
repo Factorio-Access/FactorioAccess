@@ -154,6 +154,7 @@ local Router_meta = { __index = Router }
 ---@class fa.ui.RouterController
 ---@field router fa.ui.Router
 ---@field pindex number
+---@field message fa.MessageBuilder? Temporary message accumulator during event processing
 local RouterController = {}
 local RouterController_meta = { __index = RouterController }
 
@@ -402,8 +403,19 @@ local function create_ui_handler(method_name, modifiers)
             local ui = registered_uis[ui_name]
             -- Check if this UI has the method we're looking for
             if ui[method_name] then
+               -- Create message builder for this event
+               router.controller.message = MessageBuilder.new()
+
                -- Call the method on the UI, passing modifiers and controller
                ui[method_name](ui, pindex, modifiers, router.controller)
+
+               -- Speak accumulated message if any
+               local msg = router.controller.message:build()
+               if msg then Speech.speak(pindex, msg) end
+
+               -- Clear message
+               router.controller.message = nil
+
                -- Return FINISHED to prevent world handlers from running
                return EventManager.FINISHED
             end
@@ -474,7 +486,18 @@ register_ui_event("fa-ca-c", function(event, pindex)
       if registered_uis[ui_name] then
          local ui = registered_uis[ui_name]
          if ui.on_accelerator then
+            -- Create message builder for this event
+            router.controller.message = MessageBuilder.new()
+
             ui:on_accelerator(pindex, mod.ACCELERATORS.ENTER_CONSTANT, nil, router.controller)
+
+            -- Speak accumulated message if any
+            local msg = router.controller.message:build()
+            if msg then Speech.speak(pindex, msg) end
+
+            -- Clear message
+            router.controller.message = nil
+
             return EventManager.FINISHED
          end
       end
@@ -492,7 +515,18 @@ register_ui_event("fa-ca-s", function(event, pindex)
       if registered_uis[ui_name] then
          local ui = registered_uis[ui_name]
          if ui.on_accelerator then
+            -- Create message builder for this event
+            router.controller.message = MessageBuilder.new()
+
             ui:on_accelerator(pindex, mod.ACCELERATORS.SELECT_SIGNAL, nil, router.controller)
+
+            -- Speak accumulated message if any
+            local msg = router.controller.message:build()
+            if msg then Speech.speak(pindex, msg) end
+
+            -- Clear message
+            router.controller.message = nil
+
             return EventManager.FINISHED
          end
       end
@@ -524,8 +558,18 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event)
          -- Send result to the top UI on the stack
          local ui = registered_uis[top_ui_name]
          if ui and ui.on_child_result then
+            -- Create message builder for this event
+            router.controller.message = MessageBuilder.new()
+
             -- Pass result first, then context to the handler
             ui:on_child_result(pindex, event.element.text, context, router.controller)
+
+            -- Speak accumulated message if any
+            local msg = router.controller.message:build()
+            if msg then Speech.speak(pindex, msg) end
+
+            -- Clear message
+            router.controller.message = nil
          end
          -- Close the textbox
          GameGui.close_textbox(pindex)

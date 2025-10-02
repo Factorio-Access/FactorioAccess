@@ -37,14 +37,14 @@ local function render_circuit_network(ctx)
 
    local control_behavior = entity.get_control_behavior()
    if not control_behavior then
-      Speech.speak(ctx.pindex, { "fa.circuit-network-no-control-behavior" })
+      ctx.controller.message:fragment({ "fa.circuit-network-no-control-behavior" })
       return nil
    end
 
    -- Get the descriptor for this control behavior type
    local descriptor = ControlBehaviorDescriptors.describe_control_behavior(control_behavior.type)
    if not descriptor or not descriptor.fields or #descriptor.fields == 0 then
-      Speech.speak(ctx.pindex, { "fa.circuit-network-no-fields" })
+      ctx.controller.message:fragment({ "fa.circuit-network-no-fields" })
       return nil
    end
 

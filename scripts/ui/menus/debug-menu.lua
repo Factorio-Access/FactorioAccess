@@ -21,7 +21,7 @@ local function build_debug_menu(ctx)
          click_ctx.controller:open_child_ui(UiRouter.UI_NAMES.ITEM_CHOOSER, {}, { node = "choose_item" })
       end,
       on_child_result = function(result_ctx, item_name)
-         if item_name then Speech.speak(result_ctx.pindex, { "fa.debug-item-chosen", item_name }) end
+         if item_name then result_ctx.controller.message:fragment({ "fa.debug-item-chosen", item_name }) end
       end,
    })
 
@@ -32,7 +32,7 @@ local function build_debug_menu(ctx)
       on_child_result = function(result_ctx, signal_id)
          if signal_id then
             local msg = { "fa.debug-signal-chosen", signal_id.type or "item", signal_id.name or "unknown" }
-            Speech.speak(result_ctx.pindex, msg)
+            result_ctx.controller.message:fragment(msg)
          end
       end,
    })
@@ -52,7 +52,7 @@ local function build_debug_menu(ctx)
       end,
       on_child_result = function(result_ctx, result)
          if result then
-            Speech.speak(result_ctx.pindex, "Form builder test closed with result: " .. tostring(result))
+            result_ctx.controller.message:fragment("Form builder test closed with result: " .. tostring(result))
          end
       end,
    })

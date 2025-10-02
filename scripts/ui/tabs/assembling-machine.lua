@@ -57,7 +57,7 @@ local function render_assembling_machine_recipes(ctx)
    -- Check if this is an assembling machine (players can set recipes on these)
    -- Furnaces also support recipes via API but players can't change them
    if not RecipeHelpers.can_player_set_recipe(entity) then
-      Speech.speak(ctx.pindex, { "fa.assembling-machine-cannot-set-recipe" })
+      ctx.controller.message:fragment({ "fa.assembling-machine-cannot-set-recipe" })
 
       return nil
    end

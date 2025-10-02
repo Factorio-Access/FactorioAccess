@@ -47,7 +47,7 @@ end
 local function render_roboport_menu(ctx)
    local port = ctx.tablist_shared_state.port
    if not port or not port.valid then
-      Speech.speak(ctx.pindex, { "fa.robots-roboport-menu-requires" })
+      ctx.controller.message:fragment({ "fa.robots-roboport-menu-requires" })
       ctx.controller:close()
       return nil
    end

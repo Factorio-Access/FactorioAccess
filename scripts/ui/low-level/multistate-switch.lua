@@ -148,27 +148,27 @@ local test_switch = mod.create({
    },
 })
 
-assert(test_switch.current(fake_entity) == "is off")
+assert(test_switch:current(fake_entity) == "is off")
 
-assert(test_switch.next(fake_entity) == "is 0")
+assert(test_switch:next(fake_entity) == "is 0")
 assert(fake_entity.on == true)
 assert(fake_entity.state == 0)
 
-assert(test_switch.next(fake_entity) == "is 1")
+assert(test_switch:next(fake_entity) == "is 1")
 assert(fake_entity.on == true)
 assert(fake_entity.state == 1)
 
-assert(test_switch.next(fake_entity) == "is 2")
+assert(test_switch:next(fake_entity) == "is 2")
 assert(fake_entity.on == true)
 assert(fake_entity.state == 2)
 
-assert(test_switch.next(fake_entity) == "is off")
+assert(test_switch:next(fake_entity) == "is off")
 assert(fake_entity.on == false)
 -- When switching to off, the other property is left alone.
 assert(fake_entity.state == 2)
 
-assert(test_switch.prev(fake_entity) == "is 2")
-assert(test_switch.prev(fake_entity) == "is 1")
+assert(test_switch:prev(fake_entity) == "is 2")
+assert(test_switch:prev(fake_entity) == "is 1")
 assert(fake_entity.on == true)
 assert(fake_entity.state == 1)
 

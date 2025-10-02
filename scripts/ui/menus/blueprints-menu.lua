@@ -132,6 +132,7 @@ local function render(ctx)
          end,
          ---@param result string
          on_child_result = function(ctx, result)
+            ---@diagnostic disable-next-line: inject-field
             bp.blueprint_description = result
             ctx.message:fragment({ "fa.ui-blueprints-description-updated" })
          end,

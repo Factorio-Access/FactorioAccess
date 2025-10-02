@@ -47,7 +47,7 @@ function FormBuilder:add_checkbox(name, label, get_value, set_value)
          UiSounds.play_menu_move(ctx.pindex)
          -- Only announce the new state, not the label
          local state_text = new_val and { "fa.checked" } or { "fa.unchecked" }
-         Speech.speak(ctx.pindex, state_text)
+         ctx.controller.message:fragment(state_text)
       end,
    })
 
@@ -84,7 +84,7 @@ function FormBuilder:add_textfield(name, label, get_value, set_value)
          set_value(result)
          -- Only announce the new value
          local value_text = result ~= "" and result or { "fa.empty" }
-         Speech.speak(ctx.pindex, value_text)
+         ctx.controller.message:fragment(value_text)
       end,
    })
 
@@ -138,7 +138,7 @@ function FormBuilder:add_choice_field(name, get_value, set_value, choices)
          set_value(choices[new_index].value)
          UiSounds.play_menu_move(ctx.pindex)
          -- Only announce the new choice, not the full label
-         Speech.speak(ctx.pindex, choices[new_index].label)
+         ctx.controller.message:fragment(choices[new_index].label)
       end,
    })
 
@@ -200,15 +200,15 @@ function FormBuilder:add_signal(name, label, get_value, set_value)
          -- Announce the new value
          if result and result.name then
             local signal_type = result.type or "item"
-            Speech.speak(ctx.pindex, signal_type .. " " .. result.name)
+            ctx.controller.message:fragment(signal_type .. " " .. result.name)
          else
-            Speech.speak(ctx.pindex, { "fa.empty" })
+            ctx.controller.message:fragment({ "fa.empty" })
          end
       end,
       on_clear = function(ctx)
          -- Clear the signal
          set_value(nil)
-         Speech.speak(ctx.pindex, { "fa.empty" })
+         ctx.controller.message:fragment({ "fa.empty" })
       end,
    })
 
@@ -284,16 +284,16 @@ function FormBuilder:add_condition(name, get_value, set_value)
          set_value(condition)
          if result and result.name then
             local signal_type = result.type or "item"
-            Speech.speak(ctx.pindex, signal_type .. " " .. result.name)
+            ctx.controller.message:fragment(signal_type .. " " .. result.name)
          else
-            Speech.speak(ctx.pindex, { "fa.empty" })
+            ctx.controller.message:fragment({ "fa.empty" })
          end
       end,
       on_clear = function(ctx)
          local condition = get_value() or {}
          condition.first_signal = nil
          set_value(condition)
-         Speech.speak(ctx.pindex, { "fa.empty" })
+         ctx.controller.message:fragment({ "fa.empty" })
       end,
    }, name)
 
@@ -311,7 +311,7 @@ function FormBuilder:add_condition(name, get_value, set_value)
          -- Check if first signal is configured
          if not condition.first_signal or not condition.first_signal.name then
             UiSounds.play_ui_edge(ctx.pindex)
-            Speech.speak(ctx.pindex, { "fa.condition-error-first-signal-required" })
+            ctx.controller.message:fragment({ "fa.condition-error-first-signal-required" })
             return
          end
 
@@ -336,7 +336,7 @@ function FormBuilder:add_condition(name, get_value, set_value)
          condition.comparator = comparators[new_index].value
          set_value(condition)
          UiSounds.play_menu_move(ctx.pindex)
-         Speech.speak(ctx.pindex, comparators[new_index].label)
+         ctx.controller.message:fragment(comparators[new_index].label)
       end,
    }, name)
 
@@ -370,10 +370,10 @@ function FormBuilder:add_condition(name, get_value, set_value)
                condition.constant = num
                condition.second_signal = nil
                set_value(condition)
-               Speech.speak(ctx.pindex, tostring(num))
+               ctx.controller.message:fragment(tostring(num))
             else
                UiSounds.play_ui_edge(ctx.pindex)
-               Speech.speak(ctx.pindex, { "fa.condition-error-invalid-number" })
+               ctx.controller.message:fragment({ "fa.condition-error-invalid-number" })
             end
          else
             -- Result is a SignalID from signal chooser
@@ -382,9 +382,9 @@ function FormBuilder:add_condition(name, get_value, set_value)
             set_value(condition)
             if result and result.name then
                local signal_type = result.type or "item"
-               Speech.speak(ctx.pindex, signal_type .. " " .. result.name)
+               ctx.controller.message:fragment(signal_type .. " " .. result.name)
             else
-               Speech.speak(ctx.pindex, { "fa.empty" })
+               ctx.controller.message:fragment({ "fa.empty" })
             end
          end
       end,
@@ -394,12 +394,12 @@ function FormBuilder:add_condition(name, get_value, set_value)
          -- Check prerequisites
          if not condition.first_signal or not condition.first_signal.name then
             UiSounds.play_ui_edge(ctx.pindex)
-            Speech.speak(ctx.pindex, { "fa.condition-error-first-signal-required" })
+            ctx.controller.message:fragment({ "fa.condition-error-first-signal-required" })
             return
          end
          if not condition.comparator then
             UiSounds.play_ui_edge(ctx.pindex)
-            Speech.speak(ctx.pindex, { "fa.condition-error-operator-required" })
+            ctx.controller.message:fragment({ "fa.condition-error-operator-required" })
             return
          end
 
@@ -421,7 +421,7 @@ function FormBuilder:add_condition(name, get_value, set_value)
          condition.second_signal = nil
          condition.constant = 0
          set_value(condition)
-         Speech.speak(ctx.pindex, "0")
+         ctx.controller.message:fragment("0")
       end,
    }, name)
 
@@ -486,7 +486,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
          set_enabled(new_val)
          UiSounds.play_menu_move(ctx.pindex)
          local state_text = new_val and { "fa.checked" } or { "fa.unchecked" }
-         Speech.speak(ctx.pindex, state_text)
+         ctx.controller.message:fragment(state_text)
       end,
    }, name)
 
@@ -513,16 +513,16 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
          set_condition(condition)
          if result and result.name then
             local signal_type = result.type or "item"
-            Speech.speak(ctx.pindex, signal_type .. " " .. result.name)
+            ctx.controller.message:fragment(signal_type .. " " .. result.name)
          else
-            Speech.speak(ctx.pindex, { "fa.empty" })
+            ctx.controller.message:fragment({ "fa.empty" })
          end
       end,
       on_clear = function(ctx)
          local condition = get_condition() or {}
          condition.first_signal = nil
          set_condition(condition)
-         Speech.speak(ctx.pindex, { "fa.empty" })
+         ctx.controller.message:fragment({ "fa.empty" })
       end,
    }, name)
 
@@ -540,7 +540,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
          -- Check if first signal is configured
          if not condition.first_signal or not condition.first_signal.name then
             UiSounds.play_ui_edge(ctx.pindex)
-            Speech.speak(ctx.pindex, { "fa.condition-error-first-signal-required" })
+            ctx.controller.message:fragment({ "fa.condition-error-first-signal-required" })
             return
          end
 
@@ -565,7 +565,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
          condition.comparator = comparators[new_index].value
          set_condition(condition)
          UiSounds.play_menu_move(ctx.pindex)
-         Speech.speak(ctx.pindex, comparators[new_index].label)
+         ctx.controller.message:fragment(comparators[new_index].label)
       end,
    }, name)
 
@@ -599,10 +599,10 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
                condition.constant = num
                condition.second_signal = nil
                set_condition(condition)
-               Speech.speak(ctx.pindex, tostring(num))
+               ctx.controller.message:fragment(tostring(num))
             else
                UiSounds.play_ui_edge(ctx.pindex)
-               Speech.speak(ctx.pindex, { "fa.condition-error-invalid-number" })
+               ctx.controller.message:fragment({ "fa.condition-error-invalid-number" })
             end
          else
             -- Result is a SignalID from signal chooser
@@ -611,9 +611,9 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
             set_condition(condition)
             if result and result.name then
                local signal_type = result.type or "item"
-               Speech.speak(ctx.pindex, signal_type .. " " .. result.name)
+               ctx.controller.message:fragment(signal_type .. " " .. result.name)
             else
-               Speech.speak(ctx.pindex, { "fa.empty" })
+               ctx.controller.message:fragment({ "fa.empty" })
             end
          end
       end,
@@ -623,12 +623,12 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
          -- Check prerequisites
          if not condition.first_signal or not condition.first_signal.name then
             UiSounds.play_ui_edge(ctx.pindex)
-            Speech.speak(ctx.pindex, { "fa.condition-error-first-signal-required" })
+            ctx.controller.message:fragment({ "fa.condition-error-first-signal-required" })
             return
          end
          if not condition.comparator then
             UiSounds.play_ui_edge(ctx.pindex)
-            Speech.speak(ctx.pindex, { "fa.condition-error-operator-required" })
+            ctx.controller.message:fragment({ "fa.condition-error-operator-required" })
             return
          end
 
@@ -650,7 +650,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
          condition.second_signal = nil
          condition.constant = 0
          set_condition(condition)
-         Speech.speak(ctx.pindex, "0")
+         ctx.controller.message:fragment("0")
       end,
    }, name)
 

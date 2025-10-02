@@ -63,7 +63,7 @@ function mod.on_click(ctx, modifiers)
 
    local queue = player.crafting_queue
    if not queue or #queue == 0 then
-      Speech.speak(ctx.pindex, { "fa.crafting-queue-empty" })
+      ctx.controller.message:fragment({ "fa.crafting-queue-empty" })
       return
    end
 
@@ -99,11 +99,9 @@ function mod.on_click(ctx, modifiers)
    -- Announce what was cancelled
    local recipe_proto = prototypes.recipe[item.recipe]
    if recipe_proto then
-      local message = MessageBuilder.new()
-      message:fragment({ "fa.crafting-queue-cancelled" })
-      message:fragment(tostring(math.min(cancel_count, item.count)))
-      message:fragment(localising.get_localised_name_with_fallback(recipe_proto))
-      Speech.speak(ctx.pindex, message:build())
+      ctx.controller.message:fragment({ "fa.crafting-queue-cancelled" })
+      ctx.controller.message:fragment(tostring(math.min(cancel_count, item.count)))
+      ctx.controller.message:fragment(localising.get_localised_name_with_fallback(recipe_proto))
    end
 
    -- Request re-render

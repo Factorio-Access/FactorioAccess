@@ -82,7 +82,7 @@ local function render_logistics(ctx)
                   slot.value = result
                   section.set_slot(i, slot)
 
-                  Speech.speak(ctx.pindex, Localising.get_localised_name_with_fallback(prototypes.item[result]))
+                  ctx.controller.message:fragment(Localising.get_localised_name_with_fallback(prototypes.item[result]))
                end
             end,
          })
@@ -111,10 +111,10 @@ local function render_logistics(ctx)
                   slot.min = math.floor(num)
                   section.set_slot(i, slot)
 
-                  Speech.speak(ctx.pindex, tostring(math.floor(num)))
+                  ctx.controller.message:fragment(tostring(math.floor(num)))
                else
                   UiSounds.play_ui_edge(ctx.pindex)
-                  Speech.speak(ctx.pindex, { "fa.logistics-invalid-number" })
+                  ctx.controller.message:fragment({ "fa.logistics-invalid-number" })
                end
             end,
             on_clear = function(ctx)
@@ -125,7 +125,7 @@ local function render_logistics(ctx)
                slot.min = 0
                section.set_slot(i, slot)
 
-               Speech.speak(ctx.pindex, "0")
+               ctx.controller.message:fragment("0")
             end,
          })
 
@@ -158,7 +158,7 @@ local function render_logistics(ctx)
                   slot.max = nil
                   section.set_slot(i, slot)
 
-                  Speech.speak(ctx.pindex, { "fa.infinity" })
+                  ctx.controller.message:fragment({ "fa.infinity" })
                else
                   local num = tonumber(result)
                   if num and num >= 0 then
@@ -169,10 +169,10 @@ local function render_logistics(ctx)
                      slot.max = math.floor(num)
                      section.set_slot(i, slot)
 
-                     Speech.speak(ctx.pindex, tostring(math.floor(num)))
+                     ctx.controller.message:fragment(tostring(math.floor(num)))
                   else
                      UiSounds.play_ui_edge(ctx.pindex)
-                     Speech.speak(ctx.pindex, { "fa.logistics-invalid-number" })
+                     ctx.controller.message:fragment({ "fa.logistics-invalid-number" })
                   end
                end
             end,
@@ -184,7 +184,7 @@ local function render_logistics(ctx)
                slot.max = nil
                section.set_slot(i, slot)
 
-               Speech.speak(ctx.pindex, { "fa.infinity" })
+               ctx.controller.message:fragment({ "fa.infinity" })
             end,
          })
 
@@ -201,7 +201,7 @@ local function render_logistics(ctx)
                section.clear_slot(i)
 
                UiSounds.play_menu_move(ctx.pindex)
-               Speech.speak(ctx.pindex, { "fa.logistics-deleted" })
+               ctx.controller.message:fragment({ "fa.logistics-deleted" })
             end,
          })
 
@@ -229,10 +229,10 @@ local function render_logistics(ctx)
                max = nil, -- infinity
             })
 
-            Speech.speak(
-               ctx.pindex,
-               { "fa.logistics-request-added", Localising.get_localised_name_with_fallback(prototypes.item[result]) }
-            )
+            ctx.controller.message:fragment({
+               "fa.logistics-request-added",
+               Localising.get_localised_name_with_fallback(prototypes.item[result]),
+            })
          end
       end,
    })
@@ -241,7 +241,7 @@ local function render_logistics(ctx)
 end
 
 ---Create the logistics configuration tab
----@return fa.ui.TabDefinition
+---@return fa.ui.TabDescriptor
 function mod.get_logistics_tab()
    return KeyGraph.declare_graph({
       name = "logistics",
