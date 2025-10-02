@@ -1609,9 +1609,6 @@ local function move_key(direction, event, force_single_tile)
       game.get_player(pindex).game_view_settings.update_entity_selection = false
    end
 
-   --Reset unconfirmed actions
-   storage.players[pindex].confirm_action_tick = 0
-
    -- Cursor mode: Move cursor on map
    cursor_mode_move(direction, pindex, force_single_tile)
 

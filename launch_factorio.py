@@ -324,6 +324,70 @@ def check_lua_annotations() -> Tuple[int, List[str]]:
     return (1 if errors else 0, errors)
 
 
+def check_non_top_level_requires() -> Tuple[int, List[str]]:
+    """
+    Check for non-top-level require() statements.
+
+    require() statements should only appear at module level (no indentation),
+    not inside functions or other blocks.
+
+    Returns:
+        Tuple of (exit_code, error_list)
+    """
+    mod_path = Path(__file__).parent.resolve()
+    errors = []
+    files_checked = 0
+
+    # Files/patterns to skip (test infrastructure, CLI tools, etc.)
+    skip_patterns = [
+        "*-tests.lua",
+        "*-cli.lua",
+        "run-tests.lua",
+        "test-*.lua",
+    ]
+
+    # Find all Lua files
+    lua_files = glob.glob(str(mod_path / "**/*.lua"), recursive=True)
+
+    for file_path in lua_files:
+        # Skip test infrastructure files
+        file_name = Path(file_path).name
+        if any(glob.fnmatch.fnmatch(file_name, pattern) for pattern in skip_patterns):
+            continue
+
+        files_checked += 1
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+
+            # Check each line for non-top-level requires
+            for line_num, line in enumerate(content.splitlines(), 1):
+                # Skip comments
+                if line.strip().startswith("--"):
+                    continue
+
+                # Check if line contains require(
+                if "require(" in line:
+                    # Check if line has leading whitespace (indicating it's inside a block)
+                    if line and line[0] in (' ', '\t'):
+                        rel_path = Path(file_path).relative_to(mod_path)
+                        errors.append(
+                            f"{rel_path}:{line_num}: Non-top-level require() found"
+                        )
+                        errors.append(f"  {line.rstrip()}")
+                        errors.append(
+                            "  require() statements should only appear at module level (no indentation)"
+                        )
+
+        except Exception as e:
+            errors.append(f"Error checking {file_path}: {str(e)}")
+
+    if not errors:
+        print(f"[INFO] No non-top-level requires found in {files_checked} Lua files")
+
+    return (1 if errors else 0, errors)
+
+
 def run_lua_linter(lua_ls_path: Optional[str] = None) -> Tuple[int, str, str]:
     """Run lua-language-server on the mod files."""
     mod_path = Path(__file__).parent.resolve()
@@ -856,6 +920,14 @@ def main():
             for error in ann_errors:
                 print(error)
 
+        # Check for non-top-level requires
+        print(f"\n[INFO] Checking for non-top-level require() statements in {mod_path}")
+        req_exit_code, req_errors = check_non_top_level_requires()
+        if req_errors:
+            print(f"Found {len(req_errors) // 3} non-top-level require(s):")
+            for error in req_errors:
+                print(error)
+
         # Then run lua-language-server
         print(f"\n[INFO] Running lua-language-server on {mod_path}")
         exit_code, stdout, stderr = run_lua_linter(args.lua_ls_path)
@@ -865,8 +937,8 @@ def main():
         if stderr:
             print(stderr, file=sys.stderr)
 
-        # Return failure if either check failed
-        final_exit_code = max(ann_exit_code, exit_code)
+        # Return failure if any check failed
+        final_exit_code = max(ann_exit_code, req_exit_code, exit_code)
         if final_exit_code == 0:
             print("[INFO] All linting checks passed")
         else:

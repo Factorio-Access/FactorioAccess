@@ -241,7 +241,6 @@ function mod.initialize(player)
    faplayer.click_to_open = faplayer.click_to_open or "disabled"
    faplayer.entering_new_character_name = faplayer.entering_new_character_name or false
    faplayer.renaming_character_name = faplayer.renaming_character_name or ""
-   faplayer.confirm_action_tick = faplayer.confirm_action_tick or 0
    faplayer.idle_action_todo = faplayer.idle_action_todo or ""
    faplayer.idle_action_save = faplayer.idle_action_save or nil
    faplayer.last_running_direction = faplayer.last_running_direction or dirs.north

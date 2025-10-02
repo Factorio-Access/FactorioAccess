@@ -798,26 +798,8 @@ end
 ---@param custom_message string info about what action is being checked
 ---@return boolean to allow the action
 function mod.confirm_action(pindex, id_string, custom_message)
-   local message = custom_message or "Press again to confirm this action."
-   --Check the id string
-   if storage.players[pindex].confirm_action_id_string ~= id_string then
-      storage.players[pindex].confirm_action_id_string = id_string
-      storage.players[pindex].confirm_action_tick = game.tick
-      require("scripts.speech").speak(pindex, message)
-      return false
-   end
-   --Check the time stamp
-   if
-      storage.players[pindex].confirm_action_tick == nil
-      or game.tick - storage.players[pindex].confirm_action_tick > 600
-   then
-      storage.players[pindex].confirm_action_tick = game.tick
-      require("scripts.speech").speak(pindex, message)
-      return false
-   else
-      storage.players[pindex].confirm_action_tick = 0
-      return true
-   end
+   -- TODO: Reimplement this without global state
+   return true
 end
 
 -- Format a  number to e.g. "1.3m"
