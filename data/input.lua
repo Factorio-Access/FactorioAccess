@@ -1186,4 +1186,20 @@ data:extend({
       key_sequence = "CONTROL + RETURN",
       consuming = "none",
    },
+
+   -- Circuit network accelerator for signal selection
+   {
+      type = "custom-input",
+      name = "fa-ca-s",
+      key_sequence = "CONTROL + ALT + S",
+      consuming = "none",
+   },
+
+   -- Clear/backspace
+   {
+      type = "custom-input",
+      name = "fa-backspace",
+      key_sequence = "BACKSPACE",
+      consuming = "none",
+   },
 })

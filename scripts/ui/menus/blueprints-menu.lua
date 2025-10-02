@@ -34,7 +34,7 @@ local function render(ctx)
          on_click = function(ctx)
             ctx.controller:open_child_ui(UiRouter.UI_NAMES.BLUEPRINT_AREA_SELECTOR, {
                intro_message = { "fa.ui-blueprints-select-first-point" },
-            }, "select-area")
+            }, { node = "select-area" })
          end,
          on_child_result = function(ctx, result)
             if result and result.box then
@@ -199,7 +199,7 @@ local function render(ctx)
       on_click = function(ctx)
          ctx.controller:open_child_ui(UiRouter.UI_NAMES.BLUEPRINT_AREA_SELECTOR, {
             intro_message = { "fa.ui-blueprints-select-first-point" },
-         }, "reselect")
+         }, { node = "reselect" })
       end,
    })
    return builder:build()

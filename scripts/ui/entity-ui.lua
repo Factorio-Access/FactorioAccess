@@ -13,6 +13,7 @@ local UiRouter = require("scripts.ui.router")
 local inventory = require("scripts.ui.menus.inventory")
 local gun_menu = require("scripts.ui.menus.gun-menu")
 local assembling_machine_tab = require("scripts.ui.tabs.assembling-machine")
+local circuit_network_tab = require("scripts.ui.tabs.circuit-network")
 
 local mod = {}
 
@@ -119,6 +120,15 @@ local function build_configuration_tabs(entity)
    return #tabs > 0 and tabs or nil
 end
 
+---Build circuit network section based on control behavior
+---@param entity LuaEntity
+---@return fa.ui.TabDescriptor[]?
+local function build_circuit_network_tabs(entity)
+   if not circuit_network_tab.is_available(entity) then return nil end
+
+   return { circuit_network_tab.get_tab() }
+end
+
 ---Get player inventory section
 ---@param pindex number
 ---@return fa.ui.SectionDescriptor
@@ -162,6 +172,16 @@ local function build_entity_sections(pindex, entity)
          name = "configuration",
          title = { "fa.section-device-configuration" },
          tabs = config_tabs,
+      })
+   end
+
+   -- Build circuit network section
+   local circuit_tabs = build_circuit_network_tabs(entity)
+   if circuit_tabs then
+      table.insert(sections, {
+         name = "circuit-network",
+         title = { "fa.section-circuit-network" },
+         tabs = circuit_tabs,
       })
    end
 

@@ -93,6 +93,7 @@ local mod = {}
 ---@field pindex number
 ---@field parameters any Comes from the parent parameters, indexed by the name of the graph.
 ---@field global_parameters any The parent parameters, to enable "going sideways".
+---@field child_context any? Context from child UI result (only set in on_child_result)
 
 ---@alias fa.ui.graph.SimpleCallback fun(fa.ui.GraphCtx)
 ---@alias fa.ui.graph.ChildResultCallback fun(fa.ui.GraphCtx, any)
@@ -103,6 +104,8 @@ local mod = {}
 ---@field on_right_click fa.ui.graph.SimpleCallback?
 ---@field on_read_coords fa.ui.graph.SimpleCallback?
 ---@field on_child_result fa.ui.graph.ChildResultCallback?
+---@field on_accelerator fun(ctx: fa.ui.graph.Ctx, accelerator_name: string)? Handler for accelerator events
+---@field on_clear fa.ui.graph.SimpleCallback? Handler for clear (backspace) event
 ---@field exclude_from_search boolean? If true, this node won't be included in search results. Default false.
 
 ---@class fa.ui.graph.TransitionVtable
@@ -437,17 +440,40 @@ end
 
 ---@param ctx fa.ui.graph.InternalTabCtx
 ---@param result any
----@param context any The context from when child UI was opened
+---@param context any The context from when child UI was opened (should be {node = "key", ...})
 function Graph:on_child_result(ctx, result, context)
    self:_with_render(ctx, function()
       -- Find the node that opened the child UI using the stored context
-      -- The context should be the node key
-      local node = self.render.nodes[context]
+      -- Context should be a table with at least {node = "key"}
+      local node_key = type(context) == "table" and context.node or context
+      local node = self.render.nodes[node_key]
       if node and node.vtable.on_child_result then
          -- Call the node's on_child_result handler with the result
          local wrapped_ctx = self:_wrap_ctx(ctx, self.name, NO_MODIFIERS)
+         -- Add child_context to the wrapped context for handlers to inspect
+         wrapped_ctx.child_context = context
          node.vtable.on_child_result(wrapped_ctx, result)
       end
+   end)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+---@param accelerator_name string
+function Graph:on_accelerator(ctx, accelerator_name)
+   self:_with_render(ctx, function()
+      local n = self.render.nodes[ctx.state.cur_key]
+      if n and n.vtable.on_accelerator then
+         local wrapped_ctx = self:_wrap_ctx(ctx, self.name, NO_MODIFIERS)
+         n.vtable.on_accelerator(wrapped_ctx, accelerator_name)
+      end
+   end)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+function Graph:on_clear(ctx)
+   self:_with_render(ctx, function()
+      local n = self.render.nodes[ctx.state.cur_key]
+      self:_maybe_call(n, ctx, "on_clear", NO_MODIFIERS)
    end)
 end
 

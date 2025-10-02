@@ -127,8 +127,26 @@ function MenuBuilder:build()
 
    -- Build nodes
    for item_idx, item in ipairs(all_items) do
+      local row_idx = item_to_row[item_idx]
+      local row = self.rows[row_idx]
+      local vtable = item.vtable
+
+      -- If this is the first item in a multi-item row, wrap label to add count
+      if row.items[1] == item and #row.items > 1 then
+         local original_label = vtable.label
+         local wrapped_vtable = {}
+         for k, v in pairs(vtable) do
+            wrapped_vtable[k] = v
+         end
+         wrapped_vtable.label = function(ctx)
+            original_label(ctx)
+            ctx.message:fragment({ "fa.row-of-items", tostring(#row.items) })
+         end
+         vtable = wrapped_vtable
+      end
+
       render.nodes[item.key] = {
-         vtable = item.vtable,
+         vtable = vtable,
          transitions = {},
       }
    end

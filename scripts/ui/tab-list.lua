@@ -65,6 +65,8 @@ local mod = {}
 ---@field on_read_coords fa.ui.SimpleTabHandler?
 ---@field on_read_info fa.ui.SimpleTabHandler?
 ---@field on_child_result fa.ui.SimpleTabHandler?
+---@field on_accelerator fun(self, ctx: fa.ui.TabContext, accelerator_name: string)?
+---@field on_clear fa.ui.SimpleTabHandler?
 ---@field enabled fun(number): boolean
 ---@field supports_search fun(self, ctx: fa.ui.TabContext): boolean? Returns true if search is supported
 ---@field search_hint fun(self, ctx: fa.ui.TabContext, hint_callback: fun(localised_string: table))? Called to hint strings for caching
@@ -304,6 +306,24 @@ TabList.on_bottom = build_simple_method("on_bottom")
 TabList.on_leftmost = build_simple_method("on_leftmost")
 ---@type fun(self, number, table?, fa.ui.RouterController)
 TabList.on_rightmost = build_simple_method("on_rightmost")
+---@type fun(self, number, table?, fa.ui.RouterController)
+TabList.on_clear = build_simple_method("on_clear")
+
+---Handle accelerator events (one callback for all accelerators)
+---@param pindex number
+---@param accelerator_name string The accelerator constant name
+---@param modifiers table?
+---@param controller fa.ui.RouterController
+function TabList:on_accelerator(pindex, accelerator_name, modifiers, controller)
+   -- Re-render before handling the event (needs controller for potential close)
+   self:_rerender(pindex, controller)
+
+   local tl = tablist_storage[pindex][self.ui_name]
+   if not tl.currently_open then return end
+
+   -- Pass accelerator_name as first parameter to the callback
+   self:_do_callback(pindex, tl.active_tab, "on_accelerator", nil, { accelerator_name }, controller)
+end
 
 ---Handle child result from textbox or other child UI
 ---@param pindex number

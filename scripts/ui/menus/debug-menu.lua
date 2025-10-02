@@ -17,10 +17,22 @@ local function build_debug_menu(ctx)
 
    builder:add_clickable("choose_item", { "fa.debug-menu-choose-item" }, {
       on_click = function(click_ctx)
-         click_ctx.controller:open_child_ui(UiRouter.UI_NAMES.ITEM_CHOOSER)
+         click_ctx.controller:open_child_ui(UiRouter.UI_NAMES.ITEM_CHOOSER, {}, { node = "choose_item" })
       end,
       on_child_result = function(result_ctx, item_name)
          if item_name then Speech.speak(result_ctx.pindex, { "fa.debug-item-chosen", item_name }) end
+      end,
+   })
+
+   builder:add_clickable("choose_signal", { "fa.debug-menu-choose-signal" }, {
+      on_click = function(click_ctx)
+         click_ctx.controller:open_child_ui(UiRouter.UI_NAMES.SIGNAL_CHOOSER, {}, { node = "choose_signal" })
+      end,
+      on_child_result = function(result_ctx, signal_id)
+         if signal_id then
+            local msg = { "fa.debug-signal-chosen", signal_id.type or "item", signal_id.name or "unknown" }
+            Speech.speak(result_ctx.pindex, msg)
+         end
       end,
    })
 

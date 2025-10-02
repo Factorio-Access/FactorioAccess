@@ -24,7 +24,7 @@ function search_setter_ui:open(pindex, parameters, controller)
    controller:open_child_ui(UiRouter.UI_NAMES.SIMPLE_TEXTBOX, {
       intro_message = { "fa.search-enter-pattern" },
       initial_text = current_pattern,
-   }, "search_pattern_input")
+   }, { node = "search_pattern_input" })
 end
 
 ---Handle textbox result

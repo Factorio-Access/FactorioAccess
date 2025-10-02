@@ -82,6 +82,8 @@ end
 ---@field on_next_section? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_previous_section? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_child_result? fun(self, pindex: number, result: any, context: any, controller: fa.ui.RouterController)
+---@field on_accelerator? fun(self, pindex: number, accelerator_name: fa.ui.Accelerator, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_clear? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 
 ---@enum fa.ui.UiName
 mod.UI_NAMES = {
@@ -105,6 +107,7 @@ mod.UI_NAMES = {
    DEBUG = "debug",
    DEBUG_FORMBUILDER = "debug_formbuilder",
    ITEM_CHOOSER = "item_chooser",
+   SIGNAL_CHOOSER = "signal_chooser",
    BOX_SELECTOR = "box_selector",
    BLUEPRINT_AREA_SELECTOR = "blueprint_area_selector",
    DECON_AREA_SELECTOR = "decon_area_selector",
@@ -112,6 +115,12 @@ mod.UI_NAMES = {
    COPY_PASTE_AREA_SELECTOR = "copy_paste_area_selector",
    SIMPLE_TEXTBOX = "simple_textbox",
    SEARCH_SETTER = "search_setter",
+}
+
+---@enum fa.ui.Accelerator
+mod.ACCELERATORS = {
+   ENTER_CONSTANT = "enter_constant",
+   SELECT_SIGNAL = "select_signal",
 }
 
 ---@enum fa.ui.SearchResult
@@ -451,6 +460,46 @@ register_ui_event("fa-k", create_ui_handler("on_read_coords"))
 -- Y key reads custom info
 register_ui_event("fa-y", create_ui_handler("on_read_info"))
 
+-- Accelerator keys - map to constants for UI flexibility
+register_ui_event("fa-ca-c", function(event, pindex)
+   local router = mod.get_router(pindex)
+   local stack = router_state[pindex].ui_stack
+
+   if #stack > 0 then
+      local top_entry = stack[#stack]
+      local ui_name = top_entry.name
+      if registered_uis[ui_name] then
+         local ui = registered_uis[ui_name]
+         if ui.on_accelerator then
+            ui:on_accelerator(pindex, mod.ACCELERATORS.ENTER_CONSTANT, nil, router.controller)
+            return EventManager.FINISHED
+         end
+      end
+   end
+   return nil
+end)
+
+register_ui_event("fa-ca-s", function(event, pindex)
+   local router = mod.get_router(pindex)
+   local stack = router_state[pindex].ui_stack
+
+   if #stack > 0 then
+      local top_entry = stack[#stack]
+      local ui_name = top_entry.name
+      if registered_uis[ui_name] then
+         local ui = registered_uis[ui_name]
+         if ui.on_accelerator then
+            ui:on_accelerator(pindex, mod.ACCELERATORS.SELECT_SIGNAL, nil, router.controller)
+            return EventManager.FINISHED
+         end
+      end
+   end
+   return nil
+end)
+
+-- Backspace key for clearing
+register_ui_event("fa-backspace", create_ui_handler("on_clear"))
+
 -- E key closes the UI (inventory/menu close)
 register_ui_event("fa-e", function(event, pindex)
    local router = mod.get_router(pindex)
@@ -603,7 +652,7 @@ register_ui_event("fa-c-f", function(event, pindex)
                end, router.controller)
 
                -- Open search setter (translations populate in background while user types)
-               router:open_child_ui(mod.UI_NAMES.SEARCH_SETTER, {}, "search_setter")
+               router:open_child_ui(mod.UI_NAMES.SEARCH_SETTER, {}, { node = "search_setter" })
                return EventManager.FINISHED
             end
          end
