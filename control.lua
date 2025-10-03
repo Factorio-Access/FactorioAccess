@@ -72,6 +72,7 @@ require("scripts.ui.menus.debug-menu")
 require("scripts.ui.tabs.item-chooser")
 require("scripts.ui.tabs.signal-chooser")
 require("scripts.ui.logistics-config")
+require("scripts.ui.logistic-group-selector")
 require("scripts.ui.menus.roboport-menu")
 require("scripts.ui.menus.spidertron-menu")
 require("scripts.ui.generic-inventory")
@@ -1411,35 +1412,6 @@ EventManager.on_event(
 
 EventManager.on_event(defines.events.on_research_finished, Research.on_research_finished)
 -- New input event definitions
-
----@param pindex number
-local function clear_fa_gui(pindex)
-   local player = game.get_player(pindex)
-   for _, elem in ipairs(FaUtils.get_iterable_array(player.gui.children)) do
-      if elem.get_mod() == "FactorioAccess" or elem.get_mod() == nil then elem.clear() end
-   end
-end
-
---Pause / resume the game. If a menu GUI is open, ESC makes it close the menu instead
----@param event EventData.CustomInputEvent
-local function kb_pause_menu(event)
-   local pindex = event.player_index
-   local player = game.get_player(pindex)
-
-   -- Play UI close sound
-   sounds.play_close_inventory(player.index)
-
-   -- Close mod GUIs
-   clear_fa_gui(pindex)
-end
-
-EventManager.on_event(
-   "fa-escape",
-   ---@param event EventData.CustomInputEvent
-   function(event)
-      kb_pause_menu(event)
-   end
-)
 
 --Move the player character (or adapt the cursor to smooth walking)
 --Returns false if failed to move

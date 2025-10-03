@@ -790,6 +790,153 @@ function mod.read_entity_requests_summary(ent, pindex)
    Speech.speak(pindex, msg:build())
 end
 
+-- 2.0 Logistics Helpers --
+
+---Format a compiled logistic filter for readout (from point.filters)
+---@param msg_builder fa.MessageBuilder
+---@param filter table CompiledLogisticFilter
+function mod.push_compiled_filter_readout(msg_builder, filter)
+   local item_name = filter.name
+   if not item_name then
+      msg_builder:fragment("ERROR: unable to determine item")
+      return
+   end
+
+   local quality_name = filter.quality or "normal"
+   local min_val = filter.count or 0
+   local max_val = filter.max_count
+
+   -- Get localized names
+   local localised_item = Localising.get_localised_name_with_fallback(prototypes.item[item_name])
+   local quality_proto = prototypes.quality[quality_name]
+   local localised_quality = quality_proto and Localising.get_localised_name_with_fallback(quality_proto)
+      or quality_name
+
+   -- Build the message: "quality item min X max Y"
+   -- Only show quality if it's not "normal" to keep common case clean
+   if quality_name ~= "normal" then msg_builder:fragment(localised_quality) end
+
+   msg_builder:fragment(localised_item)
+
+   if min_val > 0 and max_val then
+      msg_builder:fragment("min")
+      msg_builder:fragment(tostring(min_val))
+      msg_builder:fragment("max")
+      msg_builder:fragment(tostring(max_val))
+   elseif min_val > 0 then
+      msg_builder:fragment("min")
+      msg_builder:fragment(tostring(min_val))
+   elseif max_val then
+      msg_builder:fragment("max")
+      msg_builder:fragment(tostring(max_val))
+   end
+   -- If neither min nor max, just the item name (unconstrained)
+end
+
+-- 2.0 Logistics Helpers --
+
+---Get all logistic points from an entity
+---@param entity LuaEntity
+---@return LuaLogisticPoint[]
+function mod.get_all_logistic_points(entity)
+   if not entity or not entity.valid then return {} end
+
+   local points_result = entity.get_logistic_point()
+   if not points_result then return {} end
+
+   -- If called without index, returns array of points
+   if type(points_result) == "table" and points_result.object_name ~= "LuaLogisticPoint" then
+      return points_result
+   else
+      -- Single point returned
+      return { points_result }
+   end
+end
+
+---Get unique group names from all sections in a point (excluding empty string)
+---@param point LuaLogisticPoint
+---@return string[]
+function mod.get_unique_groups_from_point(point)
+   if not point or not point.valid then return {} end
+
+   local groups_set = {}
+   for _, section in pairs(point.sections) do
+      if section.group and section.group ~= "" then groups_set[section.group] = true end
+   end
+
+   local groups = {}
+   for group, _ in pairs(groups_set) do
+      table.insert(groups, group)
+   end
+
+   table.sort(groups)
+   return groups
+end
+
+---Get the network name for a logistic point's network
+---@param point LuaLogisticPoint
+---@return string?
+function mod.get_network_name_for_point(point)
+   if not point or not point.valid then return nil end
+
+   local network = point.logistic_network
+   if not network or not network.valid then return nil end
+
+   -- Find a roboport in this network to get the name
+   local cells = network.cells
+   if not cells or #cells == 0 then return nil end
+
+   for _, cell in ipairs(cells) do
+      if cell and cell.owner and cell.owner.valid and cell.owner.supports_backer_name then
+         return cell.owner.backer_name
+      end
+   end
+
+   return nil
+end
+
+---Add formatted compiled filters from a point to a message builder
+---@param point LuaLogisticPoint
+---@param msg_builder fa.MessageBuilder
+---@param filter_type "filters" | "targeted_items_pickup" | "targeted_items_deliver"
+function mod.add_formatted_filters(point, msg_builder, filter_type)
+   if not point or not point.valid then return end
+
+   local items
+   if filter_type == "filters" then
+      items = point.filters
+   elseif filter_type == "targeted_items_pickup" then
+      items = point.targeted_items_pickup
+   elseif filter_type == "targeted_items_deliver" then
+      items = point.targeted_items_deliver
+   end
+
+   if not items or not next(items) then
+      msg_builder:list_item({ "fa.logistics-no-items" })
+      return
+   end
+
+   -- For filters (CompiledLogisticFilter array)
+   if filter_type == "filters" then
+      for _, filter in ipairs(items) do
+         if filter and filter.value then
+            msg_builder:list_item()
+            ---@diagnostic disable-next-line: param-type-mismatch
+            push_request_readout(msg_builder, filter)
+         end
+      end
+   else
+      -- For targeted_items (ItemWithQualityCounts - table of item_name -> count)
+      for item_name, count in pairs(items) do
+         if count and count > 0 then
+            msg_builder:list_item()
+            msg_builder:fragment(Localising.get_localised_name_with_fallback(prototypes.item[item_name]))
+            msg_builder:fragment(tostring(count))
+         end
+      end
+   end
+end
+
 -- vanilla does not have network names.  We add this ourselves: all roboports in the same network get the same backer
 -- name.
 function mod.get_network_name(port)

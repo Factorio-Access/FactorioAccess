@@ -110,6 +110,7 @@ mod.UI_NAMES = {
    ITEM_CHOOSER = "item_chooser",
    SIGNAL_CHOOSER = "signal_chooser",
    LOGISTICS_CONFIG = "logistics_config",
+   LOGISTIC_GROUP_SELECTOR = "logistic_group_selector",
    BOX_SELECTOR = "box_selector",
    BLUEPRINT_AREA_SELECTOR = "blueprint_area_selector",
    DECON_AREA_SELECTOR = "decon_area_selector",
@@ -537,10 +538,44 @@ end)
 -- Backspace key for clearing
 register_ui_event("fa-backspace", create_ui_handler("on_clear"))
 
--- E key closes the UI (inventory/menu close)
+-- E key closes all UIs (inventory/menu close)
 register_ui_event("fa-e", function(event, pindex)
    local router = mod.get_router(pindex)
-   router:close_ui()
+   router:_clear_ui_stack()
+   return EventManager.FINISHED
+end)
+
+-- Escape key pops one UI from the stack and announces the title of what we arrived at
+register_ui_event("fa-escape", function(event, pindex)
+   local router = mod.get_router(pindex)
+   local stack = router_state[pindex].ui_stack
+
+   -- Pop the current UI
+   local closed_ui = router:_pop_ui()
+
+   -- If there's still a UI on the stack, announce its title
+   if #stack > 0 then
+      local top_entry = stack[#stack]
+      local ui_name = top_entry.name
+      local ui = registered_uis[ui_name]
+
+      if ui then
+         -- Check if this is a TabList (has descriptors and tab_order)
+         if ui.descriptors and ui.tab_order then
+            -- Get the TabList storage directly from storage.players
+            local tablist_storage = storage.players[pindex].tab_list
+            if tablist_storage and tablist_storage[ui_name] then
+               local tl = tablist_storage[ui_name]
+               local active_tab = tl.active_tab
+               if active_tab and ui.tab_order[active_tab] then
+                  local desc = ui.descriptors[ui.tab_order[active_tab]]
+                  if desc and desc.title then Speech.speak(pindex, desc.title) end
+               end
+            end
+         end
+      end
+   end
+
    return EventManager.FINISHED
 end)
 
