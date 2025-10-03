@@ -26,6 +26,17 @@ function FormBuilder.new()
    }, FormBuilder_meta)
 end
 
+---Add a label (non-interactive display item)
+---@param key string Unique identifier
+---@param label LocalisedString | fun(fa.ui.graph.Ctx): LocalisedString
+---@return fa.ui.form.FormBuilder
+function FormBuilder:add_label(key, label)
+   self:add_item(key, {
+      label = UiUtils.to_label_function(label),
+   })
+   return self
+end
+
 ---Add a checkbox control
 ---@param name string Unique identifier for this control
 ---@param label LocalisedString | fun(fa.ui.graph.Ctx): LocalisedString

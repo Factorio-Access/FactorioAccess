@@ -289,8 +289,18 @@ function mod.open_entity_ui(pindex, entity)
       end
    end
 
-   -- Open the UI
+   -- Open the appropriate UI based on entity type
    local router = UiRouter.get_router(pindex)
+
+   -- Special case: constant combinators use their own UI
+   if entity.type == "constant-combinator" then
+      router:open_ui(UiRouter.UI_NAMES.CONSTANT_COMBINATOR, params)
+      return true
+   end
+
+   -- Default: generic entity UI
+   -- Note: Logistic containers open as normal chests to allow inventory access
+   -- Logistics config is accessed via explicit keybinding (fa-cas-l)
    router:open_ui(UiRouter.UI_NAMES.ENTITY, params)
    return true
 end

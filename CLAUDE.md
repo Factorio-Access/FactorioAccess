@@ -253,25 +253,60 @@ validity has already been checked elsewhere.
 
 ## Defensive Coding
 
+**CRITICAL**: Excessive validation hides bugs. Let code crash to find edge cases.
+
 **WRONG**:
 
+```lua
+function process_signals(entity)
+   if not entity or not entity.valid then return {} end
+
+   local cb = entity.get_control_behavior()
+   if not cb then return {} end
+
+   for _, section in ipairs(cb.sections or {}) do
+      local count = section.filters_count or 0
+      for i = 1, count do
+         local slot = section.get_slot(i)
+         if slot and slot.value then
+            -- process slot
+         end
+      end
+   end
+end
 ```
-if thing_which_is_not_supposed_to_be_nil == nil then return end
-```
+
+This hides bugs:
+- Returns empty table when entity is invalid (should crash)
+- `cb.sections or {}` returns empty on nil (should crash to find why cb.sections is nil)
+- `section.filters_count or 0` hides missing filters_count (should crash)
+- `if slot and slot.value` silently skips invalid slots (should crash if unexpected)
 
 **CORRECT**:
 
+```lua
+function process_signals(entity)
+   local cb = entity.get_control_behavior()
 
-```
-assert(thing_which_is_not_supposed_to_be_nil)
--- Code
+   for _, section in ipairs(cb.sections) do
+      for i = 1, section.filters_count do
+         local slot = section.get_slot(i)
+         if slot.value then  -- Only check what's expected to be nil
+            -- process slot
+         end
+      end
+   end
+end
 ```
 
-Or just:
+**When to validate:**
+- At UI entry points (user can trigger with bad state)
+- When nil is a valid expected value (e.g., `slot.value` can legitimately be nil for empty slots)
 
-```
--- code, we'll crash if we index it.
-```
+**When NOT to validate:**
+- Internal functions (caller should ensure valid state)
+- Properties that should always exist (let it crash to find the bug)
+- Returning empty/default silently (masks the real problem)
 
 # Factorio 2.0 API
 

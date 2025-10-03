@@ -992,6 +992,17 @@ def main():
     if args.benchmark:
         factorio_args.extend(["--benchmark", args.benchmark])
     if args.run_tests:
+        # Check for non-top-level requires before running tests
+        # These cause runtime crashes and must be fixed first
+        print("[INFO] Checking for non-top-level require() statements...")
+        req_exit_code, req_errors = check_non_top_level_requires()
+        if req_exit_code != 0:
+            print("[ERROR] Found non-top-level require() statements that will cause crashes:")
+            for error in req_errors:
+                print(error)
+            print("[ERROR] Fix these errors before running tests")
+            return req_exit_code
+
         # For tests, use benchmark mode
         factorio_args.extend(
             ["--benchmark", "lab_tiles.zip", "--benchmark-ticks", "5000"]

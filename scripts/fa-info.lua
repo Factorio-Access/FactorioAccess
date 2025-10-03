@@ -20,7 +20,7 @@ local Filters = require("scripts.filters")
 local UiRouter = require("scripts.ui.router")
 
 local BuildingTools = require("scripts.building-tools")
-local Circuits = require("scripts.circuit-networks")
+local Circuits = require("scripts.circuit-network")
 local Consts = require("scripts.consts")
 local Driving = require("scripts.driving")
 local Electrical = require("scripts.electrical")

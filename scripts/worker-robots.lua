@@ -795,7 +795,8 @@ end
 ---Format a compiled logistic filter for readout (from point.filters)
 ---@param msg_builder fa.MessageBuilder
 ---@param filter table CompiledLogisticFilter
-function mod.push_compiled_filter_readout(msg_builder, filter)
+---@param min_only boolean? If true, only show min value (for constant combinators)
+function mod.push_compiled_filter_readout(msg_builder, filter, min_only)
    local item_name = filter.name
    if not item_name then
       msg_builder:fragment("ERROR: unable to determine item")
@@ -818,17 +819,26 @@ function mod.push_compiled_filter_readout(msg_builder, filter)
 
    msg_builder:fragment(localised_item)
 
-   if min_val > 0 and max_val then
-      msg_builder:fragment("min")
-      msg_builder:fragment(tostring(min_val))
-      msg_builder:fragment("max")
-      msg_builder:fragment(tostring(max_val))
-   elseif min_val > 0 then
-      msg_builder:fragment("min")
-      msg_builder:fragment(tostring(min_val))
-   elseif max_val then
-      msg_builder:fragment("max")
-      msg_builder:fragment(tostring(max_val))
+   if min_only then
+      -- For constant combinators, only show the count
+      if min_val > 0 then
+         msg_builder:fragment("x")
+         msg_builder:fragment(tostring(min_val))
+      end
+   else
+      -- For logistic requests, show min and/or max
+      if min_val > 0 and max_val then
+         msg_builder:fragment("min")
+         msg_builder:fragment(tostring(min_val))
+         msg_builder:fragment("max")
+         msg_builder:fragment(tostring(max_val))
+      elseif min_val > 0 then
+         msg_builder:fragment("min")
+         msg_builder:fragment(tostring(min_val))
+      elseif max_val then
+         msg_builder:fragment("max")
+         msg_builder:fragment(tostring(max_val))
+      end
    end
    -- If neither min nor max, just the item name (unconstrained)
 end

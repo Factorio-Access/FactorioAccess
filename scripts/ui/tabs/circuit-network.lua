@@ -8,6 +8,7 @@ local ControlBehaviorDescriptors = require("scripts.control-behavior-descriptors
 local FormBuilder = require("scripts.ui.form-builder")
 local KeyGraph = require("scripts.ui.key-graph")
 local Speech = require("scripts.speech")
+local CircuitNetwork = require("scripts.circuit-network")
 
 local mod = {}
 
@@ -49,6 +50,21 @@ local function render_circuit_network(ctx)
    end
 
    local builder = FormBuilder.FormBuilder.new()
+
+   -- Add network ID info at the top
+   local red_network_id = CircuitNetwork.get_network_id_string(entity, defines.wire_connector_id.circuit_red)
+   local green_network_id = CircuitNetwork.get_network_id_string(entity, defines.wire_connector_id.circuit_green)
+
+   if red_network_id ~= "nil" or green_network_id ~= "nil" then
+      builder:add_label("network_info", function(ctx)
+         if red_network_id ~= "nil" then ctx.message:fragment({ "fa.circuit-network-in-red", red_network_id }) end
+         if green_network_id ~= "nil" then ctx.message:fragment({ "fa.circuit-network-in-green", green_network_id }) end
+      end)
+   else
+      builder:add_label("network_info", function(ctx)
+         ctx.message:fragment({ "fa.circuit-network-not-connected" })
+      end)
+   end
 
    -- Build form fields from descriptor
    for _, field in ipairs(descriptor.fields) do

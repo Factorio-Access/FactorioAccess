@@ -21,7 +21,7 @@ BuildLock.register_backend(require("scripts.build-lock-backends.transport-belts"
 BuildLock.register_backend(require("scripts.build-lock-backends.electric-poles"))
 BuildLock.register_backend(require("scripts.build-lock-backends.simple"))
 local BumpDetection = require("scripts.bump-detection")
-local CircuitNetworks = require("scripts.circuit-networks")
+local CircuitNetworks = require("scripts.circuit-network")
 local Combat = require("scripts.combat")
 local Consts = require("scripts.consts")
 local Crafting = require("scripts.crafting")
@@ -73,6 +73,7 @@ require("scripts.ui.tabs.item-chooser")
 require("scripts.ui.tabs.signal-chooser")
 require("scripts.ui.logistics-config")
 require("scripts.ui.selectors.logistic-group-selector")
+require("scripts.ui.constant-combinator")
 require("scripts.ui.menus.roboport-menu")
 require("scripts.ui.menus.spidertron-menu")
 require("scripts.ui.generic-inventory")
@@ -759,14 +760,8 @@ function clicked_on_entity(ent, pindex)
          end
       end
    elseif ent.type == "constant-combinator" then
-      --Toggle it
-      ent.get_control_behavior().enabled = not ent.get_control_behavior().enabled
-      local enabled = ent.get_control_behavior().enabled
-      if enabled == true then
-         Speech.speak(pindex, { "fa.switched-on" })
-      elseif enabled == false then
-         Speech.speak(pindex, { "fa.switched-off" })
-      end
+      -- Open constant combinator UI (toggle is now in the GUI)
+      EntityUI.open_entity_ui(pindex, ent)
    elseif ent.operable and ent.prototype.is_building then
       -- Open capability-based entity UI
       EntityUI.open_entity_ui(pindex, ent)
