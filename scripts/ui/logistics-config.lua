@@ -10,8 +10,8 @@ Provides:
 
 local TabList = require("scripts.ui.tab-list")
 local Router = require("scripts.ui.router")
-local LogisticsOverview = require("scripts.ui.logistics-overview")
-local LogisticsSectionEditor = require("scripts.ui.logistics-section-editor")
+local LogisticsOverview = require("scripts.ui.tabs.logistics-overview")
+local LogisticsSectionEditor = require("scripts.ui.tabs.logistics-section-editor")
 
 local mod = {}
 
