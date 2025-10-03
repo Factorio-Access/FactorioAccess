@@ -131,7 +131,7 @@ end
 
 ---Get player inventory section
 ---@param pindex number
----@return fa.ui.SectionDescriptor
+---@return fa.ui.TabstopDescriptor
 local function get_player_inventory_section(pindex)
    return {
       name = "player_inventories",
@@ -146,7 +146,7 @@ end
 ---Build all sections for the entity UI
 ---@param pindex number
 ---@param entity LuaEntity
----@return fa.ui.SectionDescriptor[]?
+---@return fa.ui.TabstopDescriptor[]?
 local function build_entity_sections(pindex, entity)
    if not entity.valid then return nil end
 

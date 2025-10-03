@@ -25,7 +25,7 @@ end
 ---Build tabs dynamically based on entity's logistic points and sections
 ---@param pindex number
 ---@param parameters any
----@return fa.ui.SectionDescriptor[]
+---@return fa.ui.TabstopDescriptor[]
 local function build_logistics_tabs(pindex, parameters)
    assert(parameters, "build_logistics_tabs: parameters is nil")
    local entity = parameters.entity
