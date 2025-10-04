@@ -10,6 +10,7 @@ local Grid = require("scripts.ui.grid")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local UiRouter = require("scripts.ui.router")
 local TabList = require("scripts.ui.tab-list")
+local circuit_network_tab = require("scripts.ui.tabs.circuit-network")
 
 local mod = {}
 
@@ -184,8 +185,11 @@ mod.belt_analyzer = TabList.declare_tablist({
    ui_name = UiRouter.UI_NAMES.BELT,
    resets_to_first_tab_on_open = true,
    shared_state_setup = state_setup,
-   tabs_callback = Functools.functionize({
-      {
+   tabs_callback = function(pindex, parameters)
+      local sections = {}
+
+      -- Belt analyzer tabs
+      table.insert(sections, {
          name = "main",
          tabs = {
             UiKeyGraph.declare_graph({
@@ -209,8 +213,20 @@ mod.belt_analyzer = TabList.declare_tablist({
                render_callback = downstream_renderer,
             }),
          },
-      },
-   }),
+      })
+
+      -- Add circuit network section if available
+      local entity = parameters and parameters.entity
+      if entity and circuit_network_tab.is_available(entity) then
+         table.insert(sections, {
+            name = "circuit-network",
+            title = { "fa.section-circuit-network" },
+            tabs = { circuit_network_tab.get_tab() },
+         })
+      end
+
+      return sections
+   end,
 })
 
 -- Register with the UI event routing system for event interception

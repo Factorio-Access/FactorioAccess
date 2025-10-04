@@ -264,7 +264,7 @@ function mod.localise_item_or_fluid(what, protos)
    local item_str = mod.get_localised_name_with_fallback(item_proto)
    local quality_str = mod.get_localised_name_with_fallback(quality_proto)
    local has_quality = (quality and quality_proto.name ~= "normal") and 1 or 0
-   local has_count = count and 1 or 0
+   local has_count = (count and count > 1) and 1 or 0
 
    return { "fa.item-quantity-quality", item_str, has_quality, quality_str, has_count, count }
 end

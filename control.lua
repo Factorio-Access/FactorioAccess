@@ -357,9 +357,6 @@ EventManager.on_event(
       --Update cursor graphics
       local stack = p.cursor_stack
       if stack and stack.valid_for_read and stack.valid then Graphics.sync_build_cursor_graphics(pindex) end
-
-      --Play a sound for audio ruler alignment (smooth walk)
-      Rulers.update_from_cursor(pindex)
    end
 )
 
@@ -438,6 +435,7 @@ end
 function on_tick(event)
    ScannerEntrypoint.on_tick()
    MovementHistory.update_all_players()
+   Rulers.update_all_players()
 
    if storage.scheduled_events[event.tick] then
       for _, to_call in pairs(storage.scheduled_events[event.tick]) do
@@ -1452,9 +1450,6 @@ local function move(direction, pindex, nudged)
          Speech.speak(pindex, "Tile Occupied")
          moved_success = false
       end
-
-      --Play a sound for audio ruler alignment (telestep moved)
-      Rulers.update_from_cursor(pindex)
    else
       --New direction: Turn character for smooth walking
       storage.players[pindex].player_direction = direction
@@ -1484,9 +1479,6 @@ local function move(direction, pindex, nudged)
 
       --Rotate belts in hand for build lock Mode
       local stack = game.get_player(pindex).cursor_stack
-
-      --Play a sound for audio ruler alignment (telestep turned)
-      Rulers.update_from_cursor(pindex)
    end
 
    --Update cursor highlight
@@ -1580,9 +1572,6 @@ local function move_key(direction, event, force_single_tile)
 
    -- Cursor mode: Move cursor on map
    cursor_mode_move(direction, pindex, force_single_tile)
-
-   --Play a sound for audio ruler alignment (cursor mode moved)
-   Rulers.update_from_cursor(pindex)
 end
 
 EventManager.on_event(
@@ -1694,11 +1683,9 @@ local function cursor_skip_iteration(pindex, direction, iteration_limit)
             --For audio rulers, stop if crossing into or out of alignment with any rulers
             local current_tile_is_ruler_aligned = Rulers.is_any_ruler_aligned(pindex, cursor_pos)
             if start_tile_is_ruler_aligned ~= current_tile_is_ruler_aligned then
-               Rulers.update_from_cursor(pindex)
                return moved
             --Also for rulers, stop if at the definiton point of any ruler
             elseif Rulers.is_at_any_ruler_definition(pindex, cursor_pos) then
-               Rulers.update_from_cursor(pindex)
                return moved
             end
             --Iterate again
@@ -1722,11 +1709,9 @@ local function cursor_skip_iteration(pindex, direction, iteration_limit)
       --For audio rulers, stop if crossing into or out of alignment with any rulers
       local current_tile_is_ruler_aligned = Rulers.is_any_ruler_aligned(pindex, cursor_pos)
       if start_tile_is_ruler_aligned ~= current_tile_is_ruler_aligned then
-         Rulers.update_from_cursor(pindex)
          return moved
       --Also for rulers, stop if at the definiton point of any ruler
       elseif Rulers.is_at_any_ruler_definition(pindex, cursor_pos) then
-         Rulers.update_from_cursor(pindex)
          return moved
       end
       --Check the current entity or tile against the starting one
@@ -2800,7 +2785,7 @@ EventManager.on_event(
 
 -- Circuit network navigator (Shift+N key)
 EventManager.on_event(
-   "fa-s-n",
+   "fa-ca-n",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       local player = game.get_player(pindex)
@@ -3119,14 +3104,23 @@ EventManager.on_event(
    end
 )
 
---Cut-paste-tool. NOTE: This keybind needs to be the same as that for the cut paste tool (default CONTROL + X). laterdo maybe keybind to game control somehow
+--Copy-paste-tool support. When cutting (not copying), mark area for deconstruction.
 EventManager.on_event(
    "fa-c-x",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local stack = game.get_player(pindex).cursor_stack
+      local player = game.get_player(pindex)
+      if not player then return end
+
+      local stack = player.cursor_stack
+
+      -- Check if we have the cut-paste-tool active
       if stack and stack.valid_for_read and stack.name == "cut-paste-tool" then
-         Speech.speak(pindex, "To disable this tool empty the hand, by pressing SHIFT + Q")
+         -- Tool is active - remind user how to use it
+         Speech.speak(pindex, {
+            "fa.copy-paste-tool-active",
+            "Select area with LEFT BRACKET twice. Empty hand with Q to stop.",
+         })
       end
    end
 )
@@ -3583,14 +3577,14 @@ EventManager.on_event(
    end
 )
 
---Reads the custom info for an item selected. If you are driving, it returns custom vehicle info
+--Reads detailed item info for the item in hand (router handles UI cases via on_read_info)
 EventManager.on_event(
    "fa-y",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-
-      ItemDescriptions.read_item_info(event)
+      -- UI routing is handled automatically by router.lua (line 485)
+      -- This is the fallback for when no UI is open
+      ItemDescriptions.read_item_in_hand(pindex)
    end
 )
 
@@ -4036,8 +4030,8 @@ end
 
 local function kb_inventory_read_equipment_list(event)
    local pindex = event.player_index
-   local router = UiRouter.get_router(pindex)
-   local vehicle = nil
+   local result = Equipment.read_equipment_list(pindex)
+   Speech.speak(pindex, result)
 end
 
 --SHIFT + G is used to disconnect rolling stock
@@ -4055,9 +4049,14 @@ EventManager.on_event(
    "fa-cs-g",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
+      local p = game.get_player(pindex)
+      if not p or not p.character then
+         Speech.speak(pindex, { "fa.equipment-no-character" })
+         return
+      end
 
-      local vehicle = nil
+      local result = Equipment.remove_equipment_and_armor(pindex)
+      Speech.speak(pindex, result)
    end
 )
 
@@ -4116,62 +4115,8 @@ EventManager.on_event(
    end
 )
 
---Help key and tutorial system WIP
-EventManager.on_event(
-   "fa-h",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      TutorialSystem.read_current_step(pindex)
-   end
-)
-
-EventManager.on_event(
-   "fa-c-h",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      TutorialSystem.next_step(pindex)
-   end
-)
-
-EventManager.on_event(
-   "fa-s-h",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      TutorialSystem.prev_step(pindex)
-   end
-)
-
-EventManager.on_event(
-   "fa-ca-h",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      TutorialSystem.next_chapter(pindex)
-   end
-)
-
-EventManager.on_event(
-   "fa-as-h",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      TutorialSystem.prev_chapter(pindex)
-   end
-)
-
-EventManager.on_event(
-   "fa-cs-h",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      TutorialSystem.toggle_header_detail(pindex)
-   end
-)
-
-EventManager.on_event(
-   "fa-a-h",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      TutorialSystem.read_other_once(pindex)
-   end
-)
+--Help key and tutorial system DISABLED (tutorial content nonfunctional)
+-- Tutorial system module and data left in place as dead code for future work
 
 EventManager.on_event(
    "fa-l",

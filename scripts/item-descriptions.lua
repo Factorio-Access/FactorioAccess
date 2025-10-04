@@ -1,205 +1,92 @@
 --[[
 Item Descriptions Module
-Provides functionality to read descriptions for various items, entities, and menu selections.
-Handles descriptions for selected entities, items in hand, inventory items, and menu items.
+Provides detailed information about items, especially equipment and buildings.
 ]]
 
-local UiRouter = require("scripts.ui.router")
-local Driving = require("scripts.driving")
-local Equipment = require("scripts.equipment")
-local Research = require("scripts.research")
+local Localising = require("scripts.localising")
+local FaUtils = require("scripts.fa-utils")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 
 local mod = {}
 
----Gets description for an item stack, handling place results
+---Push detailed information about an item to a message builder
+---Includes equipment specs, building dimensions, etc.
+---@param message fa.MessageBuilder
 ---@param stack LuaItemStack
----@return LocalisedString
-local function get_stack_description(stack)
-   if not stack or not stack.valid_for_read then return "No description" end
-
-   ---@type LocalisedString
-   local str = ""
-   if stack.prototype.place_result ~= nil then
-      str = stack.prototype.place_result.localised_description
-   else
-      str = stack.prototype.localised_description
-   end
-
-   if str == nil or str == "" then str = "No description" end
-   return str
-end
-
----Gets description for a recipe product
----@param recipe LuaRecipe
----@return LocalisedString
-local function get_recipe_product_description(recipe)
-   if recipe == nil or #recipe.products == 0 then return "No description found, menu error" end
-
-   local product_name = recipe.products[1].name
-   ---@type LuaItemPrototype | LuaFluidPrototype
-   local product = prototypes.item[product_name]
-   local product_is_item = true
-
-   if product == nil then
-      product = prototypes.fluid[product_name]
-      product_is_item = false
-   elseif product_name == "empty-barrel" and recipe.products[2] ~= nil then
-      product_name = recipe.products[2].name
-      product = prototypes.fluid[product_name]
-      product_is_item = false
-   end
-
-   ---@type LocalisedString
-   local str = ""
-   if product_is_item and product.place_result ~= nil then
-      str = product.place_result.localised_description
-   else
-      str = product.localised_description
-   end
-
-   if str == nil or str == "" then str = "No description found for this" end
-   return str
-end
-
----Reads description for selected entity or item in hand
----@param pindex number
-function mod.read_selected_or_hand_description(pindex)
-   local p = game.get_player(pindex)
-   local hand = p.cursor_stack
-
-   local ent = p.selected
-   if ent and ent.valid then
-      local str = ent.localised_description
-      if str == nil or str == "" then str = "No description for this entity" end
-      Speech.speak(pindex, str)
-   elseif hand and hand.valid_for_read then
-      local str = get_stack_description(hand)
-      local result = { "", "In hand: ", str }
-      Speech.speak(pindex, result)
-   else
-      Speech.speak(pindex, "Nothing selected, use this key to describe an entity or item that you select.")
-   end
-end
-
----Reads description for inventory slot
----@param pindex number
-function mod.read_inventory_slot_description(pindex)
-   local p = game.get_player(pindex)
-   local router = UiRouter.get_router(pindex)
-   local storage_players = storage.players[pindex]
-
-   local stack = storage_players.inventory.lua_inventory[storage_players.inventory.index]
-
-   local str = get_stack_description(stack)
-   Speech.speak(pindex, str)
-end
-
----Reads description for guns menu selection
----@param pindex number
-function mod.read_guns_menu_description(pindex)
-   local stack = Equipment.guns_menu_get_selected_slot(pindex)
-   if stack and stack.valid_for_read then
-      local str = stack.prototype.localised_description
-      if str == nil or str == "" then str = "No description" end
-      Speech.speak(pindex, str)
-   else
-      Speech.speak(pindex, "No description")
-   end
-end
-
----Reads description for crafting menu selection
----@param pindex number
-function mod.read_crafting_menu_description(pindex)
-   local storage_players = storage.players[pindex]
-   local recipe =
-      storage_players.crafting.lua_recipes[storage_players.crafting.category][storage_players.crafting.index]
-   local str = get_recipe_product_description(recipe)
-   Speech.speak(pindex, str)
-end
-
----Reads description for building/vehicle menu selection
----@param pindex number
-function mod.read_building_menu_description(pindex)
-   local storage_players = storage.players[pindex]
-
-   local offset = 0
-   if storage_players.building.recipe_list ~= nil then offset = 1 end
-
-   if storage_players.building.recipe_selection then
-      local recipe =
-         storage_players.building.recipe_list[storage_players.building.category][storage_players.building.index]
-      if recipe ~= nil and #recipe.products > 0 then
-         local product_name = recipe.products[1].name
-         local product = prototypes.item[product_name] or prototypes.fluid[product_name]
-         local str = product.localised_description
-         if str == nil or str == "" then str = "No description found for this" end
-         Speech.speak(pindex, str)
-      else
-         Speech.speak(pindex, "No description found, menu error")
-      end
-   elseif storage_players.building.sector <= #storage_players.building.sectors then
-      local inventory = storage_players.building.sectors[storage_players.building.sector].inventory
-      if inventory == nil or not inventory.valid then
-         Speech.speak(pindex, "No description found, menu error")
-         return
-      end
-
-      local sector_name = storage_players.building.sectors[storage_players.building.sector].name
-      if sector_name ~= "Fluid" and sector_name ~= "Filters" and inventory.is_empty() then
-         Speech.speak(pindex, "No description found, menu error")
-         return
-      end
-
-      local stack = inventory[storage_players.building.index]
-      local str = get_stack_description(stack)
-      if str == "No description" then str = "No description found for this item" end
-      Speech.speak(pindex, str)
-   end
-end
-
----Main function to read item descriptions based on context
----@param event EventData.CustomInputEvent
-function mod.read_item_info(event)
-   local pindex = event.player_index
-   mod.read_item_description(pindex)
-end
-
----Internal function to read item descriptions based on context
----@param pindex number
-function mod.read_item_description(pindex)
-   -- Default to world behavior (selected or hand)
-   local p = game.get_player(pindex)
-
-   -- Special case: driving
-   if p.driving then
-      Speech.speak(pindex, Driving.vehicle_info(pindex))
+function mod.push_equipment_info(message, stack)
+   if not stack or not stack.valid_for_read then
+      message:fragment({ "fa.item-info-no-item" })
       return
    end
 
-   -- Default: check selected or hand
-   mod.read_selected_or_hand_description(pindex)
+   local proto = stack.prototype
+   local quality = stack.quality
+
+   -- Start with item name and quality
+   message:fragment(Localising.localise_item({
+      name = stack.name,
+      count = 1,
+      quality = quality and quality.name or nil,
+   }))
+
+   -- Check if this is equipment
+   if proto.place_as_equipment_result then
+      local equip_proto = proto.place_as_equipment_result
+
+      -- Equipment dimensions
+      local shape = equip_proto.shape
+      message:fragment({ "fa.item-info-dimensions", shape.width, shape.height })
+
+      -- Power consumption (get_energy_consumption is a method that takes quality)
+      local consumption = equip_proto.get_energy_consumption(quality)
+      if consumption and consumption > 0 then
+         message:fragment({ "fa.item-info-consumes", FaUtils.format_power(consumption) })
+      end
+
+      -- Battery storage (energy_source.buffer_capacity for battery equipment)
+      if equip_proto.electric_energy_source_prototype then
+         local buffer = equip_proto.electric_energy_source_prototype.buffer_capacity
+         if buffer and buffer > 0 then message:fragment({ "fa.item-info-stores", FaUtils.format_power(buffer) }) end
+      end
+
+      -- Power generation
+      if equip_proto.energy_production and equip_proto.energy_production > 0 then
+         -- Special case for solar panels - check if it has solar panel properties
+         if equip_proto.solar_panel_performance_at_day then
+            message:fragment({
+               "fa.item-info-generates-solar",
+               FaUtils.format_power(equip_proto.energy_production),
+            })
+         else
+            message:fragment({ "fa.item-info-generates", FaUtils.format_power(equip_proto.energy_production) })
+         end
+      end
+   elseif proto.place_result then
+      -- This is a building
+      local entity_proto = proto.place_result
+      message:fragment({
+         "fa.item-info-building",
+         entity_proto.tile_width,
+         entity_proto.tile_height,
+      })
+   end
 end
 
----Reads description for last indexed scanner entity
----@param event EventData.CustomInputEvent
-function mod.read_last_indexed_item_info(event)
-   local pindex = event.player_index
-   mod.read_last_indexed_description(pindex)
-end
-
----Internal function to read description for last indexed scanner entity
+---Read item info for item in hand (global fa-y handler)
 ---@param pindex number
-function mod.read_last_indexed_description(pindex)
-   local ent = storage.players[pindex].last_indexed_ent
-   if ent == nil or not ent.valid then
-      Speech.speak(pindex, "No description, note that most resources need to be examined from up close")
+function mod.read_item_in_hand(pindex)
+   local player = game.get_player(pindex)
+   local cursor_stack = player.cursor_stack
+
+   if not cursor_stack or not cursor_stack.valid_for_read then
+      Speech.speak(pindex, { "fa.item-info-no-item" })
       return
    end
 
-   local str = ent.localised_description
-   if str == nil or str == "" then str = "No description found for this entity" end
-   Speech.speak(pindex, str)
+   local message = MessageBuilder.new()
+   mod.push_equipment_info(message, cursor_stack)
+   Speech.speak(pindex, message:build())
 end
 
 return mod

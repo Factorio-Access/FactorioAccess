@@ -12,6 +12,9 @@ local Speech = require("scripts.speech")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local sounds = require("scripts.ui.sounds")
 local Consts = require("scripts.consts")
+local Equipment = require("scripts.equipment")
+local UiRouter = require("scripts.ui.router")
+local ItemDescriptions = require("scripts.item-descriptions")
 
 local mod = {}
 
@@ -181,15 +184,28 @@ local function render_inventory_grid(ctx)
             end
          end,
          on_click = function(click_ctx)
-            -- Handle inventory slot clicks (item transfers - left click swaps stacks)
             local player = game.get_player(click_ctx.pindex)
             local cursor_stack = player.cursor_stack
             local inv_stack = inv[slot_index]
 
-            -- Play inventory click sound
+            -- SHIFT+[ : Equip from slot or repair item in slot
+            if click_ctx.modifiers.shift then
+               -- Check if hand has repair pack
+               if cursor_stack and cursor_stack.valid_for_read and cursor_stack.is_repair_tool then
+                  -- Repair item in this slot
+                  local result = Equipment.repair_item_in_slot(click_ctx.pindex, entity, inventory_index, slot_index)
+                  click_ctx.controller.message:fragment(result)
+               else
+                  -- Equip item from this slot to entity
+                  local result = Equipment.equip_item_from_slot(click_ctx.pindex, entity, inventory_index, slot_index)
+                  click_ctx.controller.message:fragment(result)
+               end
+               return
+            end
+
+            -- Normal click: swap stacks between cursor and inventory
             sounds.play_menu_click(click_ctx.pindex)
 
-            -- Swap stacks between cursor and inventory
             if cursor_stack and inv_stack then
                cursor_stack.swap_stack(inv_stack)
 
@@ -255,11 +271,50 @@ local function render_inventory_grid(ctx)
             local slot_index = grid_pos_to_slot(x, y)
             local row = y
             coord_ctx.message:fragment({ "fa.ui-inventory-slot-position", slot_index, row })
+
+            -- Also read item info (k = slot position + item info)
+            local stack = inv[slot_index]
+            ItemDescriptions.push_equipment_info(coord_ctx.message, stack)
+         end,
+         on_read_info = function(info_ctx, x, y)
+            -- Read detailed item info (y = just item info)
+            local slot_index = grid_pos_to_slot(x, y)
+            local stack = inv[slot_index]
+            ItemDescriptions.push_equipment_info(info_ctx.message, stack)
          end,
       })
    end
 
    return builder:build()
+end
+
+---Handle accelerator events for inventory grids
+---@param ctx fa.ui.InventoryGrid.Context
+---@param accelerator_name string
+local function handle_accelerator(ctx, accelerator_name)
+   -- Get current entity and inventory context from parameters
+   local entity = ctx.parameters.entity
+   local inv_index = ctx.parameters.inventory_index
+
+   if not entity or not entity.valid then
+      ctx.message:fragment({ "fa.equipment-error-invalid-entity" })
+      return
+   end
+
+   -- Handle different accelerators
+   if accelerator_name == UiRouter.ACCELERATORS.RELOAD_WEAPONS then
+      -- Reload weapons FROM this inventory TO entity's guns
+      local result = Equipment.reload_weapons(ctx.pindex, entity, inv_index, entity)
+      ctx.message:fragment(result)
+   elseif accelerator_name == UiRouter.ACCELERATORS.UNLOAD_GUNS then
+      -- Unload guns FROM entity TO this inventory
+      local result = Equipment.remove_weapons_and_ammo(ctx.pindex, entity, entity, inv_index)
+      ctx.message:fragment(result)
+   elseif accelerator_name == UiRouter.ACCELERATORS.UNLOAD_EQUIPMENT then
+      -- Unload equipment FROM entity TO this inventory
+      local result = Equipment.remove_equipment_and_armor(ctx.pindex, entity, entity, inv_index)
+      ctx.message:fragment(result)
+   end
 end
 
 ---Create an inventory grid graph declaration
@@ -270,6 +325,7 @@ function mod.create_inventory_grid(params)
       name = params.name,
       title = params.title or { "fa.ui-inventory-title" },
       render_callback = render_inventory_grid,
+      on_accelerator = handle_accelerator,
    })
 end
 

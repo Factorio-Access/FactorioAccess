@@ -22,6 +22,7 @@ local mod = {}
 
 ---@class fa.ui.grid.GridNodeVtable : fa.ui.graph.NodeVtable
 ---@field on_read_coords fa.ui.grid.CoordCallback?
+---@field on_read_info fa.ui.grid.CoordCallback?
 ---@field on_child_result fa.ui.graph.ChildResultCallback?
 
 ---@class fa.ui.grid.GridCell
@@ -141,6 +142,7 @@ function GridBuilder:build()
 
          local old_lab = node.vtable.label
          local old_read_coords = node.vtable.on_read_coords
+         local old_read_info = node.vtable.on_read_info
          -- The vtable could be from a constant, etc. Don't break it.
          node.vtable = TH.shallow_copy(node.vtable)
 
@@ -156,6 +158,14 @@ function GridBuilder:build()
             node.vtable.on_read_coords = function(ctx)
                -- Pass x,y as parameters to the callback
                old_read_coords(ctx, x, y)
+            end
+         end
+
+         -- Wrap on_read_info if it exists to provide x,y coordinates
+         if old_read_info then
+            node.vtable.on_read_info = function(ctx)
+               -- Pass x,y as parameters to the callback
+               old_read_info(ctx, x, y)
             end
          end
       end

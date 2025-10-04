@@ -346,8 +346,8 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "fa-s-n",
-      key_sequence = "SHIFT + N",
+      name = "fa-ca-n",
+      key_sequence = "CONTROL + ALT + N",
       consuming = "none",
    },
 
@@ -987,6 +987,13 @@ data:extend({
       type = "custom-input",
       name = "fa-cs-g",
       key_sequence = "CONTROL + SHIFT + G",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "fa-cs-r",
+      key_sequence = "CONTROL + SHIFT + R",
       consuming = "none",
    },
 

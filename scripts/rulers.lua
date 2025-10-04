@@ -15,6 +15,7 @@ over there with fast travel points.
 local StorageManager = require("scripts.storage-manager")
 local uid = require("scripts.uid").uid
 local Viewpoint = require("scripts.viewpoint")
+local MovementHistory = require("scripts.movement-history")
 
 local mod = {}
 
@@ -25,6 +26,8 @@ local mod = {}
 ---@class fa.RulerStorageState
 ---@field rulers fa.Ruler[]
 ---@field handle fa.RulerHandle? temporary, see comments below on how handles work.
+---@field last_cursor_tile {x: number, y: number}? Last cursor tile position checked
+---@field last_walking_tile {x: number, y: number}? Last walking tile position checked
 
 -- How far from the ruler do we give the boundary sound?
 local RULER_SIDE_DIST = 1
@@ -36,6 +39,8 @@ local DELETED_MSG = "Attempt to use a ruler handle which was previously deleted"
 local module_state = StorageManager.declare_storage_module("rulers", {
    -- For now only ever holds one; this is future proofing.
    rulers = {},
+   last_cursor_tile = nil,
+   last_walking_tile = nil,
 })
 
 --[[
@@ -262,6 +267,78 @@ function mod.is_any_ruler_aligned(pindex, position)
       if alignment == ALIGNMENT.CENTERED or alignment == ALIGNMENT.AT_DEFINITION then return true end
    end
    return false
+end
+
+---Update ruler checks for a single player based on movement history
+---Checks both walking and cursor movement, triggers on tile crossings
+---@param pindex number
+local function update_player(pindex)
+   local state = module_state[pindex]
+   if not state.handle then return end
+
+   local player = game.get_player(pindex)
+   if not player then return end
+
+   -- Check walking movement using movement history
+   local reader = MovementHistory.get_movement_history_reader(pindex)
+   local current_entry = reader:get(0)
+   local prev_entry = reader:get(1)
+
+   -- If currently walking or driving, check if we crossed a tile
+   if
+      current_entry
+      and (
+         current_entry.kind == MovementHistory.MOVEMENT_KINDS.WALKING
+         or current_entry.kind == MovementHistory.MOVEMENT_KINDS.DRIVING
+      )
+   then
+      local current_tile = {
+         x = math.floor(current_entry.position.x),
+         y = math.floor(current_entry.position.y),
+      }
+
+      -- Trigger if no previous tile OR crossed tile boundary
+      local should_trigger = false
+      if not state.last_walking_tile then
+         should_trigger = true
+      elseif current_tile.x ~= state.last_walking_tile.x or current_tile.y ~= state.last_walking_tile.y then
+         should_trigger = true
+      end
+
+      if should_trigger then
+         mod.on_viewpoint_moved(pindex, current_tile.x, current_tile.y)
+         state.last_walking_tile = current_tile
+      end
+   end
+
+   -- Check cursor movement
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
+   local cursor_tile = {
+      x = math.floor(cursor_pos.x),
+      y = math.floor(cursor_pos.y),
+   }
+
+   -- Trigger if no previous cursor tile OR crossed tile boundary
+   local should_trigger_cursor = false
+   if not state.last_cursor_tile then
+      should_trigger_cursor = true
+   elseif cursor_tile.x ~= state.last_cursor_tile.x or cursor_tile.y ~= state.last_cursor_tile.y then
+      should_trigger_cursor = true
+   end
+
+   if should_trigger_cursor then
+      mod.on_viewpoint_moved(pindex, cursor_tile.x, cursor_tile.y)
+      state.last_cursor_tile = cursor_tile
+   end
+end
+
+---Update ruler checks for all players
+---Should be called from on_tick in control.lua
+function mod.update_all_players()
+   for pindex, _ in pairs(storage.players) do
+      update_player(pindex)
+   end
 end
 
 return mod

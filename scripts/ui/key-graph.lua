@@ -104,6 +104,7 @@ local mod = {}
 ---@field on_click fa.ui.graph.SimpleCallback? By default, re-say the label instead.
 ---@field on_right_click fa.ui.graph.SimpleCallback?
 ---@field on_read_coords fa.ui.graph.SimpleCallback?
+---@field on_read_info fa.ui.graph.SimpleCallback? Y key - read detailed info about current item
 ---@field on_child_result fa.ui.graph.ChildResultCallback?
 ---@field on_accelerator fun(ctx: fa.ui.graph.Ctx, accelerator_name: string)? Handler for accelerator events
 ---@field on_clear fa.ui.graph.SimpleCallback? Handler for clear (backspace) event
@@ -342,6 +343,14 @@ function Graph:on_read_coords(ctx)
    self:_with_render(ctx, function()
       local n = self.render.nodes[ctx.state.cur_key]
       self:_maybe_call(n, ctx, "on_read_coords", NO_MODIFIERS)
+   end)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+function Graph:on_read_info(ctx)
+   self:_with_render(ctx, function()
+      local n = self.render.nodes[ctx.state.cur_key]
+      self:_maybe_call(n, ctx, "on_read_info", NO_MODIFIERS)
    end)
 end
 

@@ -128,6 +128,9 @@ mod.UI_NAMES = {
 mod.ACCELERATORS = {
    ENTER_CONSTANT = "enter_constant",
    SELECT_SIGNAL = "select_signal",
+   RELOAD_WEAPONS = "reload_weapons",
+   UNLOAD_GUNS = "unload_guns",
+   UNLOAD_EQUIPMENT = "unload_equipment",
 }
 
 ---@enum fa.ui.SearchResult
@@ -720,6 +723,79 @@ register_ui_event("fa-c-enter", function(event, pindex)
    end
    return nil
 end)
+
+-- Equipment/inventory accelerators (only work when UI is open)
+-- SHIFT+R: Reload weapons
+register_ui_event("fa-s-r", function(event, pindex)
+   local router = mod.get_router(pindex)
+   local stack = router_state[pindex].ui_stack
+
+   if #stack > 0 then
+      local top_entry = stack[#stack]
+      local ui_name = top_entry.name
+      if registered_uis[ui_name] then
+         local ui = registered_uis[ui_name]
+         if ui.on_accelerator then
+            router.controller.message = MessageBuilder.new()
+            ui:on_accelerator(pindex, mod.ACCELERATORS.RELOAD_WEAPONS, nil, router.controller)
+            local msg = router.controller.message:build()
+            if msg then Speech.speak(pindex, msg) end
+            router.controller.message = nil
+            return EventManager.FINISHED
+         end
+      end
+   end
+   return nil -- Let it fall through to world handler (rotation)
+end)
+
+-- CTRL+SHIFT+R: Unload guns/ammo
+register_ui_event("fa-cs-r", function(event, pindex)
+   local router = mod.get_router(pindex)
+   local stack = router_state[pindex].ui_stack
+
+   if #stack > 0 then
+      local top_entry = stack[#stack]
+      local ui_name = top_entry.name
+      if registered_uis[ui_name] then
+         local ui = registered_uis[ui_name]
+         if ui.on_accelerator then
+            router.controller.message = MessageBuilder.new()
+            ui:on_accelerator(pindex, mod.ACCELERATORS.UNLOAD_GUNS, nil, router.controller)
+            local msg = router.controller.message:build()
+            if msg then Speech.speak(pindex, msg) end
+            router.controller.message = nil
+            return EventManager.FINISHED
+         end
+      end
+   end
+   return nil
+end)
+
+-- CTRL+SHIFT+G: Unload equipment/armor (handled in UI, falls through to world handler)
+register_ui_event("fa-cs-g", function(event, pindex)
+   local router = mod.get_router(pindex)
+   local stack = router_state[pindex].ui_stack
+
+   if #stack > 0 then
+      local top_entry = stack[#stack]
+      local ui_name = top_entry.name
+      if registered_uis[ui_name] then
+         local ui = registered_uis[ui_name]
+         if ui.on_accelerator then
+            router.controller.message = MessageBuilder.new()
+            ui:on_accelerator(pindex, mod.ACCELERATORS.UNLOAD_EQUIPMENT, nil, router.controller)
+            local msg = router.controller.message:build()
+            if msg then Speech.speak(pindex, msg) end
+            router.controller.message = nil
+            return EventManager.FINISHED
+         end
+      end
+   end
+   return nil -- Fall through to world handler
+end)
+
+-- SHIFT+LEFTBRACKET is handled directly by UI on_click handlers (e.g., inventory-grid.lua)
+-- Falls through to world handler (equip from hand) when no UI is open
 
 -- fa-c-f: Open search pattern setter
 register_ui_event("fa-c-f", function(event, pindex)
