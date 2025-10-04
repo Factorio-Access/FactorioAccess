@@ -795,7 +795,7 @@ function clicked_on_entity(ent, pindex)
    end
 end
 
---[[Manages inventory transfers that are bigger than one stack. 
+--[[Manages inventory transfers that are bigger than one stack.
 * Has checks and speech output!
 ]]
 
@@ -1652,7 +1652,7 @@ local function cursor_skip_iteration(pindex, direction, iteration_limit)
             end
          end
       end
-   --For underground belts, apply a special case where you jump to the underground neighbour
+      --For underground belts, apply a special case where you jump to the underground neighbour
    elseif start ~= nil and start.valid and start.type == "underground-belt" then
       local neighbour = start.neighbours
       if neighbour then
@@ -1666,7 +1666,7 @@ local function cursor_skip_iteration(pindex, direction, iteration_limit)
             return dist
          end
       end
-   --For water start, find the first non-water tile
+      --For water start, find the first non-water tile
    elseif start_tile_is_water then
       local selected_tile_is_water = nil
       --Iterate first_tile
@@ -1684,7 +1684,7 @@ local function cursor_skip_iteration(pindex, direction, iteration_limit)
             local current_tile_is_ruler_aligned = Rulers.is_any_ruler_aligned(pindex, cursor_pos)
             if start_tile_is_ruler_aligned ~= current_tile_is_ruler_aligned then
                return moved
-            --Also for rulers, stop if at the definiton point of any ruler
+               --Also for rulers, stop if at the definiton point of any ruler
             elseif Rulers.is_at_any_ruler_definition(pindex, cursor_pos) then
                return moved
             end
@@ -1710,7 +1710,7 @@ local function cursor_skip_iteration(pindex, direction, iteration_limit)
       local current_tile_is_ruler_aligned = Rulers.is_any_ruler_aligned(pindex, cursor_pos)
       if start_tile_is_ruler_aligned ~= current_tile_is_ruler_aligned then
          return moved
-      --Also for rulers, stop if at the definiton point of any ruler
+         --Also for rulers, stop if at the definiton point of any ruler
       elseif Rulers.is_at_any_ruler_definition(pindex, cursor_pos) then
          return moved
       end
@@ -3065,11 +3065,7 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
 
-      -- Removed building menu fluid flush check
-      -- TODO: Move to capability-based UI
-      if false then
-         -- kb_flush_fluid(event) -- disabled
-      elseif not storage.players[pindex].vanilla_mode then
+      if not storage.players[pindex].vanilla_mode then
          local p = game.get_player(pindex)
          local stack = p.cursor_stack
          if stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result then
@@ -3417,8 +3413,8 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
 
-      --[[Imitates vanilla behavior: 
-   * Control click an item in an inventory to try smart transfer HALF of it. 
+      --[[Imitates vanilla behavior:
+   * Control click an item in an inventory to try smart transfer HALF of it.
    * Control click an empty slot to try to smart transfer HALF of all items from that inventory.
    ]]
    end
@@ -3484,7 +3480,7 @@ local function kb_read_item_pickup_state(event)
       if all[3] then result = result .. " and others" end
 
       result = result .. " from nearby belts"
-   --Check if there are ground items within n tiles
+      --Check if there are ground items within n tiles
    elseif #nearby_ground_items > 0 then
       result = "Picking up "
       if nearby_ground_items[1] and nearby_ground_items[1].valid then
