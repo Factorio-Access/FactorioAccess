@@ -186,6 +186,8 @@ local function build_constant_combinator_tabs(pindex, parameters)
          KeyGraph.declare_graph({
             name = "no_sections",
             title = { "fa.logistics-no-sections" },
+            ---@param ctx fa.ui.graph.Ctx
+            ---@return fa.ui.graph.Render
             render_callback = function(ctx)
                local menu = Menu.MenuBuilder.new()
                menu:add_label("no_sections_msg", function(ctx)

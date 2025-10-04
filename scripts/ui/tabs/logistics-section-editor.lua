@@ -56,6 +56,7 @@ local function render_section(ctx, point_index, section_index)
                local max_val = slot.max
 
                -- Localize the signal (works for both items and other signal types)
+               ---@cast slot.value SignalID
                ctx.message:fragment(CircuitNetwork.localise_signal(slot.value))
                ctx.message:fragment(tostring(min_val))
                ctx.message:fragment("to")
@@ -192,7 +193,7 @@ local function render_section(ctx, point_index, section_index)
                ctx.message:fragment({ "fa.logistics-delete" })
             end,
             on_click = function(ctx)
-               local section = get_section(entity, point_index, section_index)
+               local section = provider.get_section(section_index)
                if not section then return end
 
                section.clear_slot(i)
@@ -356,6 +357,8 @@ function mod.create_no_sections_tab()
    return KeyGraph.declare_graph({
       name = "no_sections",
       title = { "fa.logistics-no-sections" },
+      ---@param ctx fa.ui.graph.Ctx
+      ---@return fa.ui.graph.Render
       render_callback = function(ctx)
          local menu = Menu.MenuBuilder.new()
          menu:add_label("no_sections_msg", function(ctx)

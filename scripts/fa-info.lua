@@ -292,6 +292,14 @@ local function ent_info_constant_combinator(ctx)
 end
 
 ---@param ctx fa.Info.EntInfoContext
+local function ent_info_circuit_network(ctx)
+   local ent = ctx.ent
+   -- Check if entity has circuit network capability
+   local cb = ent.get_control_behavior()
+   if cb then Circuits.add_circuit_network_info(ent, ctx.message) end
+end
+
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_resource(ctx)
    local ent = ctx.ent
    if ent.type == "resource" then
@@ -1362,6 +1370,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    run_handler(ent_info_heat_neighbors)
 
    run_handler(ent_info_constant_combinator)
+   run_handler(ent_info_circuit_network)
 
    return ctx.message:build()
 end

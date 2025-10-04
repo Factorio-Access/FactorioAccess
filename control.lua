@@ -74,6 +74,7 @@ require("scripts.ui.tabs.signal-chooser")
 require("scripts.ui.logistics-config")
 require("scripts.ui.selectors.logistic-group-selector")
 require("scripts.ui.constant-combinator")
+require("scripts.ui.circuit-navigator")
 require("scripts.ui.menus.roboport-menu")
 require("scripts.ui.menus.spidertron-menu")
 require("scripts.ui.generic-inventory")
@@ -2768,15 +2769,46 @@ EventManager.on_event("fa-s-end", function(event)
    ScannerEntrypoint.do_refresh(event.player_index, char.direction)
 end)
 
--- Circuit network menu removed - only wire dragging remains functional
--- Use drag_wire functionality with red/green/copper wires in hand
-
+-- Circuit network neighbors (N key)
 EventManager.on_event(
    "fa-n",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      -- Now just resorts the scanner
-      ScannerEntrypoint.resort(pindex)
+      local player = game.get_player(pindex)
+      local ent = player.selected
+
+      -- Check if entity has circuit network capability
+      if ent and ent.valid then
+         local cb = ent.get_control_behavior()
+         if cb then
+            local msg = CircuitNetworks.get_circuit_neighbors_info(ent, pindex)
+            Speech.speak(pindex, msg)
+            return
+         end
+      end
+
+      Speech.speak(pindex, { "", "Not in a network" })
+   end
+)
+
+-- Circuit network navigator (Shift+N key)
+EventManager.on_event(
+   "fa-s-n",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local player = game.get_player(pindex)
+      local ent = player.selected
+
+      -- Check if entity has circuit network capability
+      if ent and ent.valid then
+         local cb = ent.get_control_behavior()
+         if cb then
+            UiRouter.get_router(pindex):open_ui(UiRouter.UI_NAMES.CIRCUIT_NAVIGATOR, { entity = ent })
+            return
+         end
+      end
+
+      Speech.speak(pindex, { "", "No circuit network capable entity selected" })
    end
 )
 

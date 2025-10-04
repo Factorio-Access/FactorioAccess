@@ -140,7 +140,7 @@ mod.TRANSITION_DIR = {
 ---@class fa.ui.graph.InternalTabCtx: fa.ui.TabContext
 ---@field state fa.ui.graph.StoredState
 
----@alias fa.ui.graph.RenderCallback fun(fa.ui.graph.Ctx)
+---@alias fa.ui.graph.RenderCallback fun(fa.ui.graph.Ctx): fa.ui.graph.Render?
 
 ---@class fa.ui.Graph: fa.ui.TabCallbacks
 ---@field render fa.ui.graph.Render

@@ -347,6 +347,13 @@ data:extend({
 
    {
       type = "custom-input",
+      name = "fa-s-n",
+      key_sequence = "SHIFT + N",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
       name = "fa-c-tab",
       key_sequence = "CONTROL + TAB",
       consuming = "none",

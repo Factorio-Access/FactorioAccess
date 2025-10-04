@@ -5,6 +5,8 @@ local localising = require("scripts.localising")
 local Viewpoint = require("scripts.viewpoint")
 local Speech = require("scripts.speech")
 local WorkerRobots = require("scripts.worker-robots")
+local FaUtils = require("scripts.fa-utils")
+local Localising = require("scripts.localising")
 
 local mod = {}
 
@@ -344,6 +346,47 @@ function mod.get_network_id_string(entity, wire_connector_id)
    return tostring(network.network_id)
 end
 
+---Get circuit network info for fa-info display
+---Returns info about all networks this entity is connected to
+---@param entity LuaEntity
+---@param msg fa.MessageBuilder Message builder to add info to
+function mod.add_circuit_network_info(entity, msg)
+   local networks = {}
+
+   -- Check red wire
+   local red_network = entity.get_circuit_network(defines.wire_connector_id.circuit_red)
+   if red_network then
+      table.insert(networks, {
+         id = red_network.network_id,
+         count = red_network.connected_circuit_count,
+         color = "red",
+      })
+   end
+
+   -- Check green wire
+   local green_network = entity.get_circuit_network(defines.wire_connector_id.circuit_green)
+   if green_network then
+      table.insert(networks, {
+         id = green_network.network_id,
+         count = green_network.connected_circuit_count,
+         color = "green",
+      })
+   end
+
+   if #networks == 0 then return end
+
+   -- Build message with list_item for each network
+   for _, network_info in ipairs(networks) do
+      local others = network_info.count - 1
+      msg:list_item()
+      if network_info.color == "red" then
+         msg:fragment({ "fa.circuit-network-info-red", tostring(network_info.id), tostring(others) })
+      else
+         msg:fragment({ "fa.circuit-network-info-green", tostring(network_info.id), tostring(others) })
+      end
+   end
+end
+
 ---Get all signals from a constant combinator
 ---Returns table of {signal=SignalID, count=number}
 ---@param entity LuaEntity
@@ -378,16 +421,144 @@ function mod.constant_combinator_signals_info(entity, pindex)
 
    local msg = Speech.MessageBuilder.new()
 
-   for i, signal_info in ipairs(all_signals) do
+   for _, signal_info in ipairs(all_signals) do
+      msg:list_item()
       msg:fragment(mod.localise_signal(signal_info.signal))
       if signal_info.count > 0 then
          msg:fragment("x")
          msg:fragment(tostring(signal_info.count))
       end
-      if i < #all_signals then msg:fragment(", ") end
    end
 
    return msg:build()
+end
+
+---Get immediate circuit network neighbors (directly connected entities)
+---Returns grouped and formatted string for display
+---@param entity LuaEntity
+---@param pindex number
+---@return LocalisedString
+function mod.get_circuit_neighbors_info(entity, pindex)
+   local neighbors = {}
+
+   -- Collect all directly connected entities via circuit wires
+   local connectors = entity.get_wire_connectors(false)
+   for _, connector in pairs(connectors) do
+      if connector.wire_type == defines.wire_type.red or connector.wire_type == defines.wire_type.green then
+         for _, connection in pairs(connector.connections) do
+            local other = connection.target.owner
+            if other.valid then
+               local n, q = other.name, other.quality.name
+               neighbors[n] = neighbors[n] or {}
+               neighbors[n][q] = neighbors[n][q] or {}
+               table.insert(neighbors[n][q], other)
+            end
+         end
+      end
+   end
+
+   if not next(neighbors) then return { "", "No circuit network connections" } end
+
+   -- Sort by distance then direction
+   for t, quals in pairs(neighbors) do
+      for q, ents in pairs(quals) do
+         table.sort(ents, function(a, b)
+            local a_dist = FaUtils.distance(a.position, entity.position)
+            local b_dist = FaUtils.distance(b.position, entity.position)
+            if a_dist < b_dist then return true end
+            if a_dist > b_dist then return false end
+
+            local a_dir = FaUtils.get_direction_biased(a.position, entity.position)
+            local b_dir = FaUtils.get_direction_biased(b.position, entity.position)
+            return a_dir < b_dir
+         end)
+      end
+   end
+
+   -- Build message
+   local msg = Speech.MessageBuilder.new()
+
+   for n, quals in pairs(neighbors) do
+      local proto = prototypes.entity[n]
+      local pname = Localising.get_localised_name_with_fallback(proto)
+
+      for q, ents in pairs(quals) do
+         msg:list_item()
+
+         -- Add quality prefix if not normal
+         if q ~= "normal" then
+            msg:fragment(Localising.get_localised_name_with_fallback(prototypes.quality[q]))
+         end
+
+         msg:fragment(pname)
+
+         -- Build list of direction/distance for each entity
+         local ent_parts = {}
+         for _, e in pairs(ents) do
+            table.insert(ent_parts, {
+               "fa.dir-dist",
+               FaUtils.direction_lookup(FaUtils.get_direction_biased(e.position, entity.position)),
+               FaUtils.distance_speech_friendly(entity.position, e.position),
+            })
+         end
+
+         -- Use build_list with "and" for the individual entities
+         msg:fragment(FaUtils.build_list(ent_parts))
+      end
+   end
+
+   return msg:build()
+end
+
+---Find all entities in a circuit network using BFS, sorted by hop distance
+---@param start_entity LuaEntity The entity to start from
+---@param wire_connector_id defines.wire_connector_id Which wire connector to follow
+---@return table[] Array of {entity: LuaEntity, hops: number} sorted by hops
+function mod.find_entities_in_network_by_hops(start_entity, wire_connector_id)
+   local network = start_entity.get_circuit_network(wire_connector_id)
+   if not network then return {} end
+
+   local target_network_id = network.network_id
+   local visited = {}
+   local queue = { { entity = start_entity, hops = 0 } }
+   local head = 1
+   local results = {}
+
+   while head <= #queue do
+      local current = queue[head]
+      head = head + 1
+
+      local unit_number = current.entity.unit_number
+      if not visited[unit_number] then
+         visited[unit_number] = true
+         table.insert(results, current)
+
+         -- Find all neighbors via circuit wires
+         local connectors = current.entity.get_wire_connectors(false)
+         for _, connector in pairs(connectors) do
+            if connector.wire_type == defines.wire_type.red or connector.wire_type == defines.wire_type.green then
+               -- Check if this connector is in our target network
+               if connector.network_id == target_network_id then
+                  -- Add all connected entities to queue
+                  for _, connection in pairs(connector.connections) do
+                     local neighbor = connection.target.owner
+                     if neighbor.valid and not visited[neighbor.unit_number] then
+                        table.insert(queue, { entity = neighbor, hops = current.hops + 1 })
+                     end
+                  end
+               end
+            end
+         end
+      end
+   end
+
+   -- Sort by hops (already mostly sorted due to BFS, but ensure it)
+   table.sort(results, function(a, b)
+      if a.hops ~= b.hops then return a.hops < b.hops end
+      return a.entity.unit_number < b.entity.unit_number
+   end)
+
+   return results
 end
 
 return mod

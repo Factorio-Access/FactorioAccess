@@ -119,6 +119,8 @@ mod.UI_NAMES = {
    COPY_PASTE_AREA_SELECTOR = "copy_paste_area_selector",
    SIMPLE_TEXTBOX = "simple_textbox",
    SEARCH_SETTER = "search_setter",
+   CIRCUIT_NAVIGATOR = "circuit_navigator",
+   CIRCUIT_NAVIGATOR_ENTITIES = "circuit_navigator_entities",
 }
 
 ---@enum fa.ui.Accelerator
