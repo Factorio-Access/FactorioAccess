@@ -16,7 +16,8 @@ local AudioCues = require("scripts.audio-cues")
 local Blueprints = require("scripts.blueprints")
 local BuildingTools = require("scripts.building-tools")
 local BuildLock = require("scripts.build-lock")
--- Register build lock backends
+-- Register build lock backends (tiles must be first to catch tile items before simple backend)
+BuildLock.register_backend(require("scripts.build-lock-backends.tiles"))
 BuildLock.register_backend(require("scripts.build-lock-backends.transport-belts"))
 BuildLock.register_backend(require("scripts.build-lock-backends.electric-poles"))
 BuildLock.register_backend(require("scripts.build-lock-backends.simple"))
@@ -2077,9 +2078,9 @@ local function read_coords(pindex, start_phrase)
    local router = UiRouter.get_router(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
 
-   local position = game.get_player(pindex).position
+   local position = vp:get_cursor_pos()
    local marked_pos = { x = position.x, y = position.y }
-   if storage.players[pindex].vanilla_mode then vp:set_cursor_pos(marked_pos) end
+
    if game.get_player(pindex).driving then
       --Give vehicle coords and orientation and speed --laterdo find exact speed coefficient
       local vehicle = game.get_player(pindex).vehicle

@@ -199,8 +199,10 @@ local function check_item_buildable(pindex)
       return false, "blueprints and deconstruction tools not supported"
    end
 
-   -- Must have a place result
-   if not stack.prototype.place_result then return false, "item not placeable" end
+   -- Must have a place result (entity or tile)
+   if not stack.prototype.place_result and not stack.prototype.place_as_tile_result then
+      return false, "item not placeable"
+   end
 
    return true
 end
@@ -491,10 +493,9 @@ local function attempt_build(pindex, build_state, current_position, movement_dir
    if not stack or not stack.valid_for_read then return BuildAction.RETRY end
 
    local item_prototype = stack.prototype
-   if not item_prototype.place_result then return BuildAction.RETRY end
+   if not item_prototype.place_result and not item_prototype.place_as_tile_result then return BuildAction.RETRY end
 
-   local entity_prototype = item_prototype.place_result
-   assert(entity_prototype, "place_result should not be nil after check")
+   local entity_prototype = item_prototype.place_result -- nil for tiles
    local item_quality = stack.quality
 
    -- Find appropriate backend
@@ -564,10 +565,10 @@ local function attempt_build_from_queue(pindex, build_state, pending_tiles, max_
    if not stack or not stack.valid_for_read then return nil end
 
    local item_prototype = stack.prototype
-   if not item_prototype.place_result then return nil end
+   if not item_prototype.place_result and not item_prototype.place_as_tile_result then return nil end
 
+   -- For tiles, entity_prototype will be nil (they use place_as_tile_result instead)
    local entity_prototype = item_prototype.place_result
-   assert(entity_prototype, "place_result should not be nil after check")
    local item_quality = stack.quality
 
    -- Find appropriate backend
@@ -583,7 +584,7 @@ local function attempt_build_from_queue(pindex, build_state, pending_tiles, max_
       player = player,
       item_prototype = item_prototype,
       item_quality = item_quality,
-      entity_prototype = entity_prototype,
+      entity_prototype = entity_prototype, -- nil for tiles
       current_position = nil, -- Will be set after tile selection
       movement_direction = nil, -- Will be set after tile selection
       building_direction = storage.players[pindex].building_direction,
@@ -597,7 +598,7 @@ local function attempt_build_from_queue(pindex, build_state, pending_tiles, max_
       build_state = build_state,
       player = player,
       stack = stack,
-      entity_prototype = entity_prototype,
+      entity_prototype = entity_prototype, -- nil for tiles
    }, BuildHelpers_meta)
 
    -- Phase 1: Select which tile to build at
