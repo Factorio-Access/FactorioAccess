@@ -48,7 +48,8 @@ local function sort_inventories(entity)
       local inv = entity.get_inventory(inv_index)
 
       -- Inventory can be nil. Docs don't specify that. The inventory list is actually a sparse array.
-      if inv then
+      -- Also filter out inventories with 0 slots (e.g., module inventory on machines that don't support modules)
+      if inv and #inv > 0 then
          local inv_name = inv.name
          if inv_name then
             local priority = Consts.INVENTORY_PRIORITIES[inv_name] or 100
@@ -185,6 +186,9 @@ local function build_entity_sections(pindex, entity)
       })
    end
 
+   -- Only add player inventory section if there are entity-specific sections
+   if #sections == 0 then return nil end
+
    -- Add player inventory section for convenience
    table.insert(sections, get_player_inventory_section(pindex))
 
@@ -301,6 +305,14 @@ function mod.open_entity_ui(pindex, entity)
    -- Default: generic entity UI
    -- Note: Logistic containers open as normal chests to allow inventory access
    -- Logistics config is accessed via explicit keybinding (fa-cas-l)
+
+   -- Check if the entity has any UI sections available
+   local sections = build_entity_sections(pindex, entity)
+   if not sections or #sections == 0 then
+      Speech.speak(pindex, { "fa.entity-no-ui-available" })
+      return false
+   end
+
    router:open_ui(UiRouter.UI_NAMES.ENTITY, params)
    return true
 end
