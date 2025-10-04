@@ -513,9 +513,7 @@ function mod.get_copper_wire_neighbors_info(entity, pindex)
          msg:list_item()
 
          -- Add quality prefix if not normal
-         if q ~= "normal" then
-            msg:fragment(Localising.get_localised_name_with_fallback(prototypes.quality[q]))
-         end
+         if q ~= "normal" then msg:fragment(Localising.get_localised_name_with_fallback(prototypes.quality[q])) end
 
          msg:fragment(pname)
 
@@ -590,9 +588,7 @@ function mod.get_circuit_neighbors_info(entity, pindex)
          msg:list_item()
 
          -- Add quality prefix if not normal
-         if q ~= "normal" then
-            msg:fragment(Localising.get_localised_name_with_fallback(prototypes.quality[q]))
-         end
+         if q ~= "normal" then msg:fragment(Localising.get_localised_name_with_fallback(prototypes.quality[q])) end
 
          msg:fragment(pname)
 

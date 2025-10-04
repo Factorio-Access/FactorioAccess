@@ -66,6 +66,15 @@ function BoxSelector:on_child_result(pindex, result_context, result, controller)
    -- BoxSelector doesn't have children, so this is empty
 end
 
+---Announce the intro message
+function BoxSelector:on_announce_title(pindex, modifiers, controller)
+   local state = box_selector_storage[pindex][self.ui_name]
+   if not state then return end
+
+   local intro_msg = (state.callback_params and state.callback_params.intro_message) or { "fa.box-selector-intro" }
+   controller.message:fragment(intro_msg)
+end
+
 ---@param controller fa.ui.RouterController
 function BoxSelector:_handle_click(pindex, modifiers, is_right_click, controller)
    local viewpoint = Viewpoint.get_viewpoint(pindex)

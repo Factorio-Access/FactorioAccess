@@ -85,6 +85,7 @@ end
 ---@field on_child_result? fun(self, pindex: number, result: any, context: any, controller: fa.ui.RouterController)
 ---@field on_accelerator? fun(self, pindex: number, accelerator_name: fa.ui.Accelerator, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_clear? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_announce_title? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 
 ---@enum fa.ui.UiName
 mod.UI_NAMES = {
@@ -541,6 +542,9 @@ end)
 -- Backspace key for clearing
 register_ui_event("fa-backspace", create_ui_handler("on_clear"))
 
+-- Shift+E key announces the current UI
+register_ui_event("fa-s-e", create_ui_handler("on_announce_title"))
+
 -- E key closes all UIs (inventory/menu close)
 register_ui_event("fa-e", function(event, pindex)
    local router = mod.get_router(pindex)
@@ -549,7 +553,7 @@ register_ui_event("fa-e", function(event, pindex)
 end)
 
 -- Escape key pops one UI from the stack and announces the title of what we arrived at
-register_ui_event("fa-escape", function(event, pindex)
+register_ui_event("fa-a-e", function(event, pindex)
    local router = mod.get_router(pindex)
    local stack = router_state[pindex].ui_stack
 

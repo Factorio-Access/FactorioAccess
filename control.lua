@@ -2881,19 +2881,13 @@ EventManager.on_event(
    end
 )
 
+-- Now handled by router.lua
 ---@param event EventData
 local function kb_read_menu_name(event)
    ---@cast event EventData.CustomInputEvent
    local pindex = event.player_index
-   local router = UiRouter.get_router(pindex)
 
-   local msg = Speech.MessageBuilder.new()
-
-   msg:fragment("No menu")
-
-   msg:fragment("Unknown menu")
-
-   Speech.speak(pindex, msg:build())
+   Speech.speak(pindex, { "fa.not-in-menu" })
 end
 
 EventManager.on_event("fa-s-e", function(event) --read_menu_name

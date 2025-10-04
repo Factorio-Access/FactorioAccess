@@ -4,9 +4,8 @@
 data:extend({
    {
       type = "custom-input",
-      name = "fa-escape",
-      key_sequence = "ESCAPE",
-      linked_game_control = "toggle-menu",
+      name = "fa-a-e",
+      key_sequence = "ALT + E",
       consuming = "none",
    },
 

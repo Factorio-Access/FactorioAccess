@@ -342,6 +342,18 @@ function TabList:on_child_result(pindex, result, context, controller)
    self:_do_callback(pindex, tl.active_tab, "on_child_result", nil, { result, context }, controller)
 end
 
+---Announce the current tab's title
+---@param pindex number
+---@param modifiers table?
+---@param controller fa.ui.RouterController
+function TabList:on_announce_title(pindex, modifiers, controller)
+   local tl = tablist_storage[pindex][self.ui_name]
+   if not tl or not tl.currently_open then return end
+
+   local desc = self.descriptors[self.tab_order[tl.active_tab]]
+   if desc and desc.title then controller.message:fragment(desc.title) end
+end
+
 -- Perform the flow for focusing a tab. Does this unconditionally, so be careful
 -- not to over-call it.
 ---@param msg_builder fa.MessageBuilder? Optional message builder to prepend tabstop info to
