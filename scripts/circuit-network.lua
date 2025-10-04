@@ -387,6 +387,33 @@ function mod.add_circuit_network_info(entity, msg)
    end
 end
 
+---Get copper wire neighbor count for fa-info display (electric poles)
+---@param entity LuaEntity
+---@param msg fa.MessageBuilder Message builder to add info to
+function mod.add_copper_wire_info(entity, msg)
+   -- Count unique neighbors via copper wires
+   local neighbor_count = 0
+   local seen = {}
+
+   local connectors = entity.get_wire_connectors(false)
+   for _, connector in pairs(connectors) do
+      if connector.wire_type == defines.wire_type.copper then
+         for _, connection in pairs(connector.connections) do
+            local other = connection.target.owner
+            if other.valid and not seen[other.unit_number] then
+               seen[other.unit_number] = true
+               neighbor_count = neighbor_count + 1
+            end
+         end
+      end
+   end
+
+   if neighbor_count > 0 then
+      msg:list_item()
+      msg:fragment({ "fa.copper-wire-neighbors", tostring(neighbor_count) })
+   end
+end
+
 ---Get all signals from a constant combinator
 ---Returns table of {signal=SignalID, count=number}
 ---@param entity LuaEntity
@@ -427,6 +454,83 @@ function mod.constant_combinator_signals_info(entity, pindex)
       if signal_info.count > 0 then
          msg:fragment("x")
          msg:fragment(tostring(signal_info.count))
+      end
+   end
+
+   return msg:build()
+end
+
+---Get immediate neighbors via copper wires (electric poles)
+---Returns grouped and formatted string for display
+---@param entity LuaEntity
+---@param pindex number
+---@return LocalisedString
+function mod.get_copper_wire_neighbors_info(entity, pindex)
+   local neighbors = {}
+
+   -- Collect all directly connected entities via copper wires
+   local connectors = entity.get_wire_connectors(false)
+   for _, connector in pairs(connectors) do
+      if connector.wire_type == defines.wire_type.copper then
+         for _, connection in pairs(connector.connections) do
+            local other = connection.target.owner
+            if other.valid then
+               local n, q = other.name, other.quality.name
+               neighbors[n] = neighbors[n] or {}
+               neighbors[n][q] = neighbors[n][q] or {}
+               table.insert(neighbors[n][q], other)
+            end
+         end
+      end
+   end
+
+   if not next(neighbors) then return { "", "No copper wire connections" } end
+
+   -- Sort by distance then direction
+   for t, quals in pairs(neighbors) do
+      for q, ents in pairs(quals) do
+         table.sort(ents, function(a, b)
+            local a_dist = FaUtils.distance(a.position, entity.position)
+            local b_dist = FaUtils.distance(b.position, entity.position)
+            if a_dist < b_dist then return true end
+            if a_dist > b_dist then return false end
+
+            local a_dir = FaUtils.get_direction_biased(a.position, entity.position)
+            local b_dir = FaUtils.get_direction_biased(b.position, entity.position)
+            return a_dir < b_dir
+         end)
+      end
+   end
+
+   -- Build message
+   local msg = Speech.MessageBuilder.new()
+
+   for n, quals in pairs(neighbors) do
+      local proto = prototypes.entity[n]
+      local pname = Localising.get_localised_name_with_fallback(proto)
+
+      for q, ents in pairs(quals) do
+         msg:list_item()
+
+         -- Add quality prefix if not normal
+         if q ~= "normal" then
+            msg:fragment(Localising.get_localised_name_with_fallback(prototypes.quality[q]))
+         end
+
+         msg:fragment(pname)
+
+         -- Build list of direction/distance for each entity
+         local ent_parts = {}
+         for _, e in pairs(ents) do
+            table.insert(ent_parts, {
+               "fa.dir-dist",
+               FaUtils.direction_lookup(FaUtils.get_direction_biased(e.position, entity.position)),
+               FaUtils.distance_speech_friendly(entity.position, e.position),
+            })
+         end
+
+         -- Use build_list with "and" for the individual entities
+         msg:fragment(FaUtils.build_list(ent_parts))
       end
    end
 

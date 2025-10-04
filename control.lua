@@ -2769,7 +2769,7 @@ EventManager.on_event("fa-s-end", function(event)
    ScannerEntrypoint.do_refresh(event.player_index, char.direction)
 end)
 
--- Circuit network neighbors (N key)
+-- Circuit/copper network neighbors (N key)
 EventManager.on_event(
    "fa-n",
    ---@param event EventData.CustomInputEvent
@@ -2777,8 +2777,15 @@ EventManager.on_event(
       local player = game.get_player(pindex)
       local ent = player.selected
 
-      -- Check if entity has circuit network capability
       if ent and ent.valid then
+         -- Check for electric pole (copper wires)
+         if ent.type == "electric-pole" then
+            local msg = CircuitNetworks.get_copper_wire_neighbors_info(ent, pindex)
+            Speech.speak(pindex, msg)
+            return
+         end
+
+         -- Check if entity has circuit network capability
          local cb = ent.get_control_behavior()
          if cb then
             local msg = CircuitNetworks.get_circuit_neighbors_info(ent, pindex)

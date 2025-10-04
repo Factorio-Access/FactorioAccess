@@ -1002,81 +1002,24 @@ local function ent_info_fluid_connections(ctx)
    present("fa.ent-info-fluid-connections-bidirectional", bidirectionals)
 end
 
--- "connects to small electric pole x east, y northwest"
+-- "connects to n"
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_pole_neighbors(ctx)
    if ctx.ent.type ~= "electric-pole" then return end
 
-   local neighbors = {}
+   local neighbor_count = 0
 
    Wires.call_on_connectors(ctx.ent, defines.wire_type.copper, function(_, conn)
-      ---@type LuaEntity
-      local other = conn.target.owner
-      local n, q = other.name, other.quality.name
-      neighbors[n] = neighbors[n] or {}
-      neighbors[n][q] = neighbors[n][q] or {}
-      table.insert(neighbors[n][q], other)
+      neighbor_count = neighbor_count + 1
       return true
    end)
 
-   if not next(neighbors) then
+   if neighbor_count == 0 then
       ctx.message:fragment({ "fa.ent-info-electrical-connections-nothing" })
       return
    end
 
-   -- Now we have grouped entities. We must convert that to strings. To do so, sort by distance then direction, to get
-   -- something consistently ordered...
-   for t, quals in pairs(neighbors) do
-      for q, ents in pairs(quals) do
-         table.sort(ents, function(a, b)
-            local a_dist = FaUtils.distance(a.position, ctx.ent.position)
-            local b_dist = FaUtils.distance(b.position, ctx.ent.position)
-            if a_dist < b_dist then return true end
-            -- Careful: if the distances aren't equal then continuing is a bad
-            -- sort function.
-            if a_dist > b_dist then return false end
-
-            -- We want the 8-way direction here, as there is little point in
-            -- reporting 16-way for poles.
-            local a_dir = FaUtils.get_direction_biased(a.position, ctx.ent.position)
-            local b_dir = FaUtils.get_direction_biased(b.position, ctx.ent.position)
-            return a_dir < b_dir
-         end)
-      end
-   end
-
-   -- For now, we don't care about quality sorting.
-   local will_announce = {}
-   for n, quals in pairs(neighbors) do
-      local proto = prototypes.entity[n]
-      local pname = Localising.get_localised_name_with_fallback(proto)
-
-      for q, ents in pairs(quals) do
-         local intro = pname
-         if q ~= "normal" then
-            intro = FaUtils.spacecat(Localising.get_localised_name_with_fallback(prototypes.quality[q]), pname)
-         end
-
-         local ent_parts = {}
-         for _, e in pairs(ents) do
-            table.insert(ent_parts, {
-               "fa.dir-dist",
-               FaUtils.direction_lookup(FaUtils.get_direction_biased(e.position, ctx.ent.position)),
-               FaUtils.distance_speech_friendly(ctx.ent.position, e.position),
-            })
-         end
-
-         table.insert(
-            will_announce,
-            { "fa.ent-info-electrical-connections-sublist", intro, FaUtils.localise_cat_table(ent_parts, ", ") }
-         )
-      end
-   end
-
-   ctx.message:fragment({
-      "fa.ent-info-electrical-connections-connected-to",
-      FaUtils.localise_cat_table(will_announce, ", "),
-   })
+   ctx.message:fragment({ "fa.ent-info-electrical-connections-count", tostring(neighbor_count) })
 end
 
 ---@param ctx fa.Info.EntInfoContext
