@@ -71,10 +71,7 @@ function mod.build_item_in_hand_with_params(params)
    Graphics.sync_build_cursor_graphics(pindex)
 
    --Exceptional build cases
-   if stack.name == "offshore-pump" then
-      mod.build_offshore_pump_in_hand(pindex)
-      return
-   elseif stack.name == "rail" then
+   if stack.name == "rail" then
       -- Rails not supported in 2.0 yet
       Speech.speak(pindex, { "fa.trains-not-supported" })
       return
@@ -214,8 +211,7 @@ function mod.build_offshore_pump_in_hand(pindex)
    local stack = p.cursor_stack
 
    if stack and stack.valid and stack.valid_for_read and stack.name == "offshore-pump" then
-      local ent = stack.prototype.place_result
-      storage.players[pindex].pump.positions = {}
+      local positions = {}
       local initial_position = p.position
       initial_position.x = math.floor(initial_position.x)
       initial_position.y = math.floor(initial_position.y)
@@ -223,25 +219,26 @@ function mod.build_offshore_pump_in_hand(pindex)
          for i2 = -10, 10 do
             for i3 = 0, 3 do
                local position = { x = initial_position.x + i1, y = initial_position.y + i2 }
+               -- BUG: factorio 2.0 plays a sound for can_build_from_cursor if pointed at out of reach tiles
+               if FaUtils.distance(position, p.position) > p.build_distance then goto continue end
+
                ---@type defines.direction
                local dir_3 = i3 * dirs.east
                if p.can_build_from_cursor({ name = "offshore-pump", position = position, direction = dir_3 }) then
-                  table.insert(storage.players[pindex].pump.positions, { position = position, direction = dir_3 })
+                  table.insert(positions, { position = position, direction = dir_3 })
                end
             end
+
+            ::continue::
          end
       end
-      if #storage.players[pindex].pump.positions == 0 then
+      if #positions == 0 then
          Speech.speak(pindex, { "fa.building-pump-no-positions" })
       else
-         UiRouter.get_router(pindex):open_ui(UiRouter.UI_NAMES.PUMP)
-         storage.players[pindex].move_queue = {}
-         Speech.speak(pindex, { "fa.building-pump-positions-available", #storage.players[pindex].pump.positions })
-         table.sort(storage.players[pindex].pump.positions, function(k1, k2)
+         table.sort(positions, function(k1, k2)
             return util.distance(initial_position, k1.position) < util.distance(initial_position, k2.position)
          end)
-
-         storage.players[pindex].pump.index = 0
+         UiRouter.get_router(pindex):open_ui(UiRouter.UI_NAMES.PUMP, { positions = positions })
       end
    end
 end

@@ -78,6 +78,7 @@ require("scripts.ui.constant-combinator")
 require("scripts.ui.circuit-navigator")
 require("scripts.ui.menus.roboport-menu")
 require("scripts.ui.menus.spidertron-menu")
+require("scripts.ui.menus.offshore-pump-placement")
 require("scripts.ui.generic-inventory")
 require("scripts.ui.simple-textbox")
 require("scripts.ui.internal.search-setter")
@@ -3276,6 +3277,20 @@ EventManager.on_event(
    end
 )
 
+EventManager.on_event(
+   "fa-a-leftbracket",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local p = game.get_player(pindex)
+      local stack = p.cursor_stack
+
+      -- Only handle offshore pumps with alt+[
+      if stack and stack.valid_for_read and stack.name == "offshore-pump" then
+         BuildingTools.build_offshore_pump_in_hand(pindex)
+      end
+   end
+)
+
 --Right click actions in menus (click_menu)
 ---@param event EventData.CustomInputEvent
 local function kb_click_menu_right(event)
@@ -3309,7 +3324,6 @@ local function kb_click_hand_right(event)
    if
       stack.prototype ~= nil
       and (stack.prototype.place_result ~= nil or stack.prototype.place_as_tile_result ~= nil)
-      and stack.name ~= "offshore-pump"
    then
       --Laterdo here: build as ghost
       kb_read_entity_status(event)

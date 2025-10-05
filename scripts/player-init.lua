@@ -225,7 +225,6 @@ function mod.initialize(player)
    faplayer.last_aggregate = faplayer.last_aggregate or {}
    faplayer.recent_item_name = faplayer.recent_item_name or ""
    faplayer.recent_fluid_name = faplayer.recent_fluid_name or ""
-   faplayer.pump = faplayer.pump or {}
    faplayer.spider_menu = faplayer.spider_menu or {}
    faplayer.last_line_id = faplayer.last_line_id or 0
    faplayer.tutorial_mode = faplayer.tutorial_mode or false
@@ -315,11 +314,6 @@ function mod.initialize(player)
          edit_export = false,
          edit_import = false,
       }
-
-   faplayer.pump = faplayer.pump or {
-      index = 0,
-      positions = {},
-   }
 
    -- Force rechart on empty map
    if table_size(faplayer.mapped) == 0 then player.force.rechart() end
