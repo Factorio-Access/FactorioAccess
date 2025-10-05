@@ -155,19 +155,24 @@ local router_state = StorageManager.declare_storage_module("ui_router", {
 
 ---@class fa.ui.Router
 ---@field pindex number
----@field controller fa.ui.RouterController
 local Router = {}
 local Router_meta = { __index = Router }
 
 ---@class fa.ui.RouterController
 ---@field router fa.ui.Router
 ---@field pindex number
----@field message fa.MessageBuilder? Temporary message accumulator during event processing
+---@field message fa.MessageBuilder Temporary message accumulator during event processing
 local RouterController = {}
 local RouterController_meta = { __index = RouterController }
 
 function RouterController:close()
    self.router:close_ui()
+end
+
+---Finalize the event by speaking accumulated message
+function RouterController:finalize()
+   local msg = self.message:build()
+   if msg then Speech.speak(self.pindex, msg) end
 end
 
 ---Close the current UI and return a result to the parent
@@ -210,6 +215,17 @@ function RouterController:clear_search_pattern()
    router_state[self.pindex].search_pattern = nil
 end
 
+---Create a controller for handling a UI event
+---@param router fa.ui.Router
+---@return fa.ui.RouterController
+local function create_controller_for_event(router)
+   return setmetatable({
+      router = router,
+      pindex = router.pindex,
+      message = MessageBuilder.new(),
+   }, RouterController_meta)
+end
+
 ---@param name fa.ui.UiName
 ---@param params? table Optional parameters to pass to the UI
 function Router:open_ui(name, params)
@@ -242,7 +258,11 @@ function Router:_push_ui(name, params, context)
    UiSounds.play_open_inventory(self.pindex)
 
    -- Call the UI's open method
-   if registered_uis[name] then registered_uis[name]:open(self.pindex, params or {}, self.controller) end
+   if registered_uis[name] then
+      local controller = create_controller_for_event(self)
+      registered_uis[name]:open(self.pindex, params or {}, controller)
+      controller:finalize()
+   end
 end
 
 ---Pop the top UI from the stack (close it)
@@ -356,7 +376,9 @@ function Router:close_with_result(result)
 
    -- Send result to parent if there is one
    if parent_ui and registered_uis[parent_ui.name] then
-      registered_uis[parent_ui.name]:on_child_result(self.pindex, result, context, self.controller)
+      local controller = create_controller_for_event(self)
+      registered_uis[parent_ui.name]:on_child_result(self.pindex, result, context, controller)
+      controller:finalize()
    end
 end
 
@@ -369,11 +391,6 @@ function mod.get_router(pindex)
    assert(pindex ~= nil)
    if router_cache[pindex] then return router_cache[pindex] end
    local new_router = setmetatable({ pindex = pindex }, Router_meta)
-   -- Create and cache the controller for this router
-   new_router.controller = setmetatable({
-      router = new_router,
-      pindex = pindex,
-   }, RouterController_meta)
    router_cache[pindex] = new_router
    return new_router
 end
@@ -411,20 +428,9 @@ local function create_ui_handler(method_name, modifiers)
             local ui = registered_uis[ui_name]
             -- Check if this UI has the method we're looking for
             if ui[method_name] then
-               -- Create message builder for this event
-               router.controller.message = MessageBuilder.new()
-
-               -- Call the method on the UI, passing modifiers and controller
-               ui[method_name](ui, pindex, modifiers, router.controller)
-
-               -- Speak accumulated message if any
-               local msg = router.controller.message:build()
-               if msg then Speech.speak(pindex, msg) end
-
-               -- Clear message
-               router.controller.message = nil
-
-               -- Return FINISHED to prevent world handlers from running
+               local controller = create_controller_for_event(router)
+               ui[method_name](ui, pindex, modifiers, controller)
+               controller:finalize()
                return EventManager.FINISHED
             end
          end
@@ -494,18 +500,9 @@ register_ui_event("fa-ca-c", function(event, pindex)
       if registered_uis[ui_name] then
          local ui = registered_uis[ui_name]
          if ui.on_accelerator then
-            -- Create message builder for this event
-            router.controller.message = MessageBuilder.new()
-
-            ui:on_accelerator(pindex, mod.ACCELERATORS.ENTER_CONSTANT, nil, router.controller)
-
-            -- Speak accumulated message if any
-            local msg = router.controller.message:build()
-            if msg then Speech.speak(pindex, msg) end
-
-            -- Clear message
-            router.controller.message = nil
-
+            local controller = create_controller_for_event(router)
+            ui:on_accelerator(pindex, mod.ACCELERATORS.ENTER_CONSTANT, nil, controller)
+            controller:finalize()
             return EventManager.FINISHED
          end
       end
@@ -523,18 +520,9 @@ register_ui_event("fa-ca-s", function(event, pindex)
       if registered_uis[ui_name] then
          local ui = registered_uis[ui_name]
          if ui.on_accelerator then
-            -- Create message builder for this event
-            router.controller.message = MessageBuilder.new()
-
-            ui:on_accelerator(pindex, mod.ACCELERATORS.SELECT_SIGNAL, nil, router.controller)
-
-            -- Speak accumulated message if any
-            local msg = router.controller.message:build()
-            if msg then Speech.speak(pindex, msg) end
-
-            -- Clear message
-            router.controller.message = nil
-
+            local controller = create_controller_for_event(router)
+            ui:on_accelerator(pindex, mod.ACCELERATORS.SELECT_SIGNAL, nil, controller)
+            controller:finalize()
             return EventManager.FINISHED
          end
       end
@@ -603,18 +591,9 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event)
          -- Send result to the top UI on the stack
          local ui = registered_uis[top_ui_name]
          if ui and ui.on_child_result then
-            -- Create message builder for this event
-            router.controller.message = MessageBuilder.new()
-
-            -- Pass result first, then context to the handler
-            ui:on_child_result(pindex, event.element.text, context, router.controller)
-
-            -- Speak accumulated message if any
-            local msg = router.controller.message:build()
-            if msg then Speech.speak(pindex, msg) end
-
-            -- Clear message
-            router.controller.message = nil
+            local controller = create_controller_for_event(router)
+            ui:on_child_result(pindex, event.element.text, context, controller)
+            controller:finalize()
          end
          -- Close the textbox
          GameGui.close_textbox(pindex)
@@ -636,8 +615,9 @@ register_ui_event("fa-s-enter", function(event, pindex)
       local ui_name = top_entry.name
       if registered_uis[ui_name] then
          local ui = registered_uis[ui_name]
-         if ui.supports_search and ui:supports_search(pindex, router.controller) then
-            local pattern = router.controller:get_search_pattern()
+         local controller = create_controller_for_event(router)
+         if ui.supports_search and ui:supports_search(pindex, controller) then
+            local pattern = controller:get_search_pattern()
             if not pattern or pattern == "" then
                UiSounds.play_ui_edge(pindex)
                Speech.speak(pindex, { "fa.search-no-more-results" })
@@ -652,7 +632,7 @@ register_ui_event("fa-s-enter", function(event, pindex)
             end
 
             local message = MessageBuilder.new()
-            local result = ui:search_move(message, pindex, 1, matcher, router.controller)
+            local result = ui:search_move(message, pindex, 1, matcher, controller)
             if result == mod.SEARCH_RESULT.MOVED then
                UiSounds.play_menu_move(pindex)
                local msg = message:build()
@@ -685,8 +665,9 @@ register_ui_event("fa-c-enter", function(event, pindex)
       local ui_name = top_entry.name
       if registered_uis[ui_name] then
          local ui = registered_uis[ui_name]
-         if ui.supports_search and ui:supports_search(pindex, router.controller) then
-            local pattern = router.controller:get_search_pattern()
+         local controller = create_controller_for_event(router)
+         if ui.supports_search and ui:supports_search(pindex, controller) then
+            local pattern = controller:get_search_pattern()
             if not pattern or pattern == "" then
                UiSounds.play_ui_edge(pindex)
                Speech.speak(pindex, { "fa.search-no-more-results" })
@@ -701,7 +682,7 @@ register_ui_event("fa-c-enter", function(event, pindex)
             end
 
             local message = MessageBuilder.new()
-            local result = ui:search_move(message, pindex, -1, matcher, router.controller)
+            local result = ui:search_move(message, pindex, -1, matcher, controller)
             if result == mod.SEARCH_RESULT.MOVED then
                UiSounds.play_menu_move(pindex)
                local msg = message:build()
@@ -736,11 +717,9 @@ register_ui_event("fa-s-r", function(event, pindex)
       if registered_uis[ui_name] then
          local ui = registered_uis[ui_name]
          if ui.on_accelerator then
-            router.controller.message = MessageBuilder.new()
-            ui:on_accelerator(pindex, mod.ACCELERATORS.RELOAD_WEAPONS, nil, router.controller)
-            local msg = router.controller.message:build()
-            if msg then Speech.speak(pindex, msg) end
-            router.controller.message = nil
+            local controller = create_controller_for_event(router)
+            ui:on_accelerator(pindex, mod.ACCELERATORS.RELOAD_WEAPONS, nil, controller)
+            controller:finalize()
             return EventManager.FINISHED
          end
       end
@@ -759,11 +738,9 @@ register_ui_event("fa-cs-r", function(event, pindex)
       if registered_uis[ui_name] then
          local ui = registered_uis[ui_name]
          if ui.on_accelerator then
-            router.controller.message = MessageBuilder.new()
-            ui:on_accelerator(pindex, mod.ACCELERATORS.UNLOAD_GUNS, nil, router.controller)
-            local msg = router.controller.message:build()
-            if msg then Speech.speak(pindex, msg) end
-            router.controller.message = nil
+            local controller = create_controller_for_event(router)
+            ui:on_accelerator(pindex, mod.ACCELERATORS.UNLOAD_GUNS, nil, controller)
+            controller:finalize()
             return EventManager.FINISHED
          end
       end
@@ -782,11 +759,9 @@ register_ui_event("fa-cs-g", function(event, pindex)
       if registered_uis[ui_name] then
          local ui = registered_uis[ui_name]
          if ui.on_accelerator then
-            router.controller.message = MessageBuilder.new()
-            ui:on_accelerator(pindex, mod.ACCELERATORS.UNLOAD_EQUIPMENT, nil, router.controller)
-            local msg = router.controller.message:build()
-            if msg then Speech.speak(pindex, msg) end
-            router.controller.message = nil
+            local controller = create_controller_for_event(router)
+            ui:on_accelerator(pindex, mod.ACCELERATORS.UNLOAD_EQUIPMENT, nil, controller)
+            controller:finalize()
             return EventManager.FINISHED
          end
       end
@@ -809,12 +784,13 @@ register_ui_event("fa-c-f", function(event, pindex)
          local ui = registered_uis[ui_name]
          -- Check if this UI supports search
          if ui.supports_search then
-            local supports = ui:supports_search(pindex, router.controller)
+            local controller = create_controller_for_event(router)
+            local supports = ui:supports_search(pindex, controller)
             if supports then
                -- Populate the search cache by requesting translations (async, in background)
                ui:search_hint(pindex, function(localised_string)
                   LocalisedStringCache.hint_submit(pindex, localised_string)
-               end, router.controller)
+               end, controller)
 
                -- Open search setter (translations populate in background while user types)
                router:open_child_ui(mod.UI_NAMES.SEARCH_SETTER, {}, { node = "search_setter" })
