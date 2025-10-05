@@ -3527,16 +3527,18 @@ local function kb_flip_blueprint_horizontal_info(event)
 end
 
 EventManager.on_event(
+   "fa-h",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_flip_blueprint_horizontal_info(event)
+   end
+)
+
+EventManager.on_event(
    "fa-f",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local p = game.get_player(pindex)
-      local bp = p.cursor_stack
-      if bp and bp.valid_for_read and bp.is_blueprint then
-         kb_flip_blueprint_horizontal_info(event)
-      else
-         kb_read_item_pickup_state(event)
-      end
+      kb_read_item_pickup_state(event)
    end
 )
 
@@ -3563,18 +3565,18 @@ local function kb_flip_blueprint_vertical_info(event)
 end
 
 EventManager.on_event(
+   "fa-v",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      kb_flip_blueprint_vertical_info(event)
+   end
+)
+
+EventManager.on_event(
    "fa-g",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-
-      local p = game.get_player(pindex)
-      local bp = p.cursor_stack
-      if bp ~= nil and bp.valid_for_read and bp.is_blueprint then
-         kb_flip_blueprint_vertical_info(event)
-      else
-         kb_read_health_and_armor_stats(event)
-      end
+      kb_read_health_and_armor_stats(event)
    end
 )
 
@@ -3921,7 +3923,7 @@ EventManager.on_event(
 )
 
 EventManager.on_event(
-   "fa-v",
+   "fa-a-v",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       if storage.players[pindex].vanilla_mode then return end
