@@ -37,6 +37,8 @@ local mod = {}
 ---@field cursor_rotation_offset  number
 ---@field cursor_jumping boolean
 ---@field building_direction defines.direction
+---@field flipped_horizontal boolean
+---@field flipped_vertical boolean
 
 ---@type table<number, fa.viewpoint.ViewpointState>
 local viewpoint_storage = StorageManager.declare_storage_module("viewpoint", {
@@ -48,6 +50,8 @@ local viewpoint_storage = StorageManager.declare_storage_module("viewpoint", {
    cursor_ent_highlight_box = nil,
    cursor_tile_highlight_box = nil,
    building_direction = defines.direction.north,
+   flipped_horizontal = false,
+   flipped_vertical = false,
 })
 
 ---@class fa.Viewpoint
@@ -166,6 +170,28 @@ end
 function Viewpoint:set_hand_direction(direction)
    assert(direction ~= nil)
    viewpoint_storage[self.pindex].building_direction = direction
+end
+
+---@return boolean
+function Viewpoint:get_flipped_horizontal()
+   return viewpoint_storage[self.pindex].flipped_horizontal
+end
+
+---@param flipped boolean
+function Viewpoint:set_flipped_horizontal(flipped)
+   assert(type(flipped) == "boolean")
+   viewpoint_storage[self.pindex].flipped_horizontal = flipped
+end
+
+---@return boolean
+function Viewpoint:get_flipped_vertical()
+   return viewpoint_storage[self.pindex].flipped_vertical
+end
+
+---@param flipped boolean
+function Viewpoint:set_flipped_vertical(flipped)
+   assert(type(flipped) == "boolean")
+   viewpoint_storage[self.pindex].flipped_vertical = flipped
 end
 
 local viewpoint_cache = {}

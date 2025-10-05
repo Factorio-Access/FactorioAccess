@@ -132,6 +132,8 @@ function mod.build_item_in_hand_with_params(params)
          --position = center_of_tile(position),
          direction = actual_build_direction,
          alt = false,
+         flip_horizontal = vp:get_flipped_horizontal(),
+         flip_vertical = vp:get_flipped_vertical(),
       }
       if building.position ~= nil and game.get_player(pindex).can_build_from_cursor(building) then
          --Build it
@@ -165,7 +167,7 @@ function mod.build_item_in_hand_with_params(params)
          and stack.prototype.place_result.name == "pipe-to-ground"
       then
          local vp = Viewpoint.get_viewpoint(pindex)
-         vp:set_hand_direction(FaUtils.rotate_180(vp:get_building_direction()))
+         vp:set_hand_direction(FaUtils.rotate_180(vp:get_hand_direction()))
          game.get_player(pindex).play_sound({ path = "Rotate-Hand-Sound" })
       end
 
@@ -463,7 +465,7 @@ function mod.build_preview_checks_info(stack, pindex)
    local pos = vp:get_cursor_pos()
 
    local result = { "" }
-   local build_dir = vp:get_building_direction()
+   local build_dir = vp:get_hand_direction()
    local ent_p = stack.prototype.place_result --it is an entity prototype!
    if ent_p == nil or not ent_p.valid then return "invalid entity" end
 
@@ -722,7 +724,7 @@ function mod.build_preview_checks_info(stack, pindex)
       --Same as pipe preview but for the faced direction only
    elseif stack.name == "pipe-to-ground" then
       local vp = Viewpoint.get_viewpoint(pindex)
-      local face_dir = vp:get_building_direction()
+      local face_dir = vp:get_hand_direction()
       local ent_pos = FaUtils.offset_position_legacy(pos, face_dir, 1)
       rendering.draw_circle({
          color = { 1, 0.0, 0.5 },
@@ -927,7 +929,7 @@ function mod.build_preview_checks_info(stack, pindex)
    if ent_p.electric_energy_source_prototype ~= nil then
       local vp = Viewpoint.get_viewpoint(pindex)
       local position = pos
-      local build_dir = vp:get_building_direction()
+      local build_dir = vp:get_hand_direction()
 
       position.x = position.x + math.ceil(2 * ent_p.selection_box.right_bottom.x) / 2 - 0.5
       position.y = position.y + math.ceil(2 * ent_p.selection_box.right_bottom.y) / 2 - 0.5
@@ -1131,7 +1133,7 @@ function mod.snap_place_steam_engine_to_a_boiler(pindex)
          local engine_position = output_location
          local dir = boiler.direction
          local vp = Viewpoint.get_viewpoint(pindex)
-         local old_building_dir = vp:get_building_direction()
+         local old_building_dir = vp:get_hand_direction()
          vp:set_hand_direction(dir)
          if dir == dirs.east then
             engine_position = FaUtils.offset_position_legacy(engine_position, dirs.east, 2)

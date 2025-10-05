@@ -831,6 +831,9 @@ EventManager.on_event(
          -- Reset building direction to north when cursor stack changes (Factorio 2.0 behavior)
          vp:set_hand_direction(dirs.north)
          vp:set_cursor_rotation_offset(0)
+         -- Reset flip states when hand contents change
+         vp:set_flipped_horizontal(false)
+         vp:set_flipped_vertical(false)
          read_hand(pindex)
       end
 
@@ -3507,12 +3510,13 @@ local function kb_read_item_pickup_state(event)
    Speech.speak(pindex, result)
 end
 
---Does not work yet
 ---@param event EventData.CustomInputEvent
 local function kb_flip_blueprint_horizontal_info(event)
    local pindex = event.player_index
-   local p = game.get_player(pindex)
-   Speech.speak(pindex, "Error: Flipping horizontal is not supported.")
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local flipped = not vp:get_flipped_horizontal()
+   vp:set_flipped_horizontal(flipped)
+   Speech.speak(pindex, flipped and "Flipped horizontal" or "Unflipped horizontal")
 end
 
 EventManager.on_event(
@@ -3542,13 +3546,13 @@ local function kb_read_health_and_armor_stats(event)
    Speech.speak(pindex, output)
 end
 
---Does not work yet
 ---@param event EventData.CustomInputEvent
 local function kb_flip_blueprint_vertical_info(event)
    local pindex = event.player_index
-   local p = game.get_player(pindex)
-   local bp = p.cursor_stack
-   Speech.speak(pindex, "Error: Flipping vertical is not supported.")
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local flipped = not vp:get_flipped_vertical()
+   vp:set_flipped_vertical(flipped)
+   Speech.speak(pindex, flipped and "Flipped vertical" or "Unflipped vertical")
 end
 
 EventManager.on_event(
