@@ -754,9 +754,10 @@ local function ent_info_heat_neighbors(ctx)
    if not connection_points or #connection_points == 0 then return end
 
    -- Gather only those ports the cursor is "on" (distance threshold)
+   local cursor_center = { x = ctx.cursor_pos.x + 0.5, y = ctx.cursor_pos.y + 0.5 }
    local relevant_ports = {}
    for _, conn in ipairs(connection_points) do
-      if FaUtils.distance(conn.position, ctx.cursor_pos) < 0.5 then table.insert(relevant_ports, conn) end
+      if FaUtils.distance(conn.position, cursor_center) < 0.5 then table.insert(relevant_ports, conn) end
    end
    if #relevant_ports == 0 then return end
 
@@ -883,7 +884,8 @@ local function ent_info_mining_drill_output_chute(ctx)
    local point = ResourceMining.get_solid_output_coords(ctx.ent)
    if not point then return false end
 
-   if util.distance(point.position, ctx.cursor_pos) < 0.6 then
+   local cursor_center = { x = ctx.cursor_pos.x + 0.5, y = ctx.cursor_pos.y + 0.5 }
+   if util.distance(point.position, cursor_center) < 0.6 then
       ctx.message:fragment({ "fa.ent-info-mining-drill-output" })
    end
 end
@@ -900,6 +902,7 @@ end
 
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_fluid_connections(ctx)
+   local cursor_center = { x = ctx.cursor_pos.x + 0.5, y = ctx.cursor_pos.y + 0.5 }
    local points = Fluids.get_connection_points(ctx.ent)
    ---@param p fa.Fluids.ConnectionPoint
    TH.retain_unordered(points, function(p)
@@ -909,7 +912,7 @@ local function ent_info_fluid_connections(ctx)
 
       if p.raw.target and p.raw.target.owner.type == "pipe" and ctx.ent.type == "pipe" then return false end
 
-      return FaUtils.distance(p.position, ctx.cursor_pos) < 0.5
+      return FaUtils.distance(p.position, cursor_center) < 0.5
    end)
 
    if not next(points) then return end
