@@ -4,7 +4,7 @@ This guide helps LLMs (particularly Claude) work effectively on the FactorioAcce
 
 ## Critical Rules (Read First!)
 
-### Top 5 Most Common Mistakes
+### Most Common Mistakes
 
 1. **API Access: Use dot notation for modules**
    ```lua
@@ -12,34 +12,34 @@ This guide helps LLMs (particularly Claude) work effectively on the FactorioAcce
    -- RIGHT: Viewpoint.get_viewpoint(pindex)
    ```
 
-2. **Table properties: MUST use local variable**
-   ```lua
-   -- WRONG: player.walking_state = {walking = false}  -- Engine ignores!
-   -- RIGHT:
-   local new_state = {walking = false}
-   player.walking_state = new_state
-   ```
-
-3. **Always format and test before committing**
+2. **Always format and test before committing**
    ```bash
    python launch_factorio.py --format
    python launch_factorio.py --run-tests --timeout 60
    ```
 
-4. **Debug output: Use print(), not game.print()**
+3. **Debug output: Use print(), not game.print()**
    ```lua
    -- WRONG: game.print("debug")  -- Goes to GUI, blind users can't see
    -- RIGHT: print("debug")        -- Goes to logs
    -- RIGHT: Speech.speak(pindex, "user message")  -- Goes to screen reader
    ```
 
-5. **LuaLS annotations: Use three dashes**
+4. **LuaLS annotations: Use three dashes**
    ```lua
    ---@param pindex integer   -- CORRECT
    -- @param pindex integer   -- WRONG (linter will fail)
    ```
 
 ## Development Essentials
+
+### Your Environment
+
+You are running in the mods/FactorioAccess directory of a Factorio install. `launch_factorio.py` is in your current working directory.
+
+The full factorio install is available at `../..`. You almost never need to consult it.
+
+Commands should always be relative to the current working directory.
 
 ### Key Commands
 ```bash
@@ -105,6 +105,22 @@ local message = MessageBuilder.new()
 message:fragment({"entity-name.transport-belt"})
 message:fragment({"fa.direction", "north"})
 Speech.speak(pindex, message:build())
+```
+
+**WARNING**: `MessageBuilder` handles spaces. `MessageBuilder:fragment(" ")` crashes in order to loudly catch this bug!
+
+Correct:
+
+```
+mb:fragment("foo"):fragment("bar")
+-- produces foo bar
+```
+
+Crashes!:
+
+```
+mb:fragment("foo":fragment(" "):fragment("bar")
+-- crashes: spaces were already added!
 ```
 
 ## Key Systems
@@ -194,14 +210,12 @@ local my_storage = storage_manager.declare_storage_module('my_module', {
 
 ## Known Issues (Factorio 2.0 Migration)
 
-- **Rails/Trains**: Completely broken, will be reimplemented
-- **Circuit Networks**: Wire connections non-functional
+- **Rails/Trains**: Removed from the mod and to be reimplemented. Available in the 1.1 version only.
 - **Syntrax**: Rail description language integrated but not yet active
 
 ## Important Notes
 
 - **Everything** goes through `launch_factorio.py`
-- Prefer `rg`/`grep` over reading huge files
 - Requires only work at file top-level
 - No global state beyond current file
 - Check `player and player.valid` always
@@ -230,16 +244,13 @@ Remember: This mod makes a visual game accessible through audio. Every feature m
 
 **CORRECT**: consider whether a comment is required.
 
-
 **WRONG**:
 
 ```
-- Changed to use controllers. Now handles force_close
+-- Changed to use controllers. Now handles force_close
 ```
 
-
 **CORRECT**:
-
 
 ```
 -- Can be closed with the controller
