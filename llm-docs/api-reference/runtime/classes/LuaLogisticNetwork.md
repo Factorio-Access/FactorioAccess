@@ -8,7 +8,17 @@ A single logistic network of a given force on a given surface.
 
 The unique logistic network ID.
 
-**Read type:** `uint`
+**Read type:** `uint32`
+
+### custom_name
+
+The custom logistic network name set by the player or by script, if any.
+
+**Read type:** `string`
+
+**Write type:** `string`
+
+**Optional:** Yes
 
 ### force
 
@@ -20,31 +30,31 @@ The force this logistic network belongs to.
 
 Number of logistic robots available for a job.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### all_logistic_robots
 
 The total number of logistic robots in the network (idle and active + in roboports).
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### available_construction_robots
 
 Number of construction robots available for a job.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### all_construction_robots
 
 The total number of construction robots in the network (idle and active + in roboports).
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### robot_limit
 
 Maximum number of robots the network can work with. Currently only used for the personal roboport.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### cells
 
@@ -161,7 +171,7 @@ Count given or all items in the network or given members.
 
 **Returns:**
 
-- `int`
+- `int32`
 
 ### get_contents
 
@@ -186,7 +196,7 @@ Remove items from the logistic network. This will actually remove the items from
 
 **Returns:**
 
-- `uint` - Number of items removed.
+- `uint32` - Number of items removed.
 
 ### insert
 
@@ -199,7 +209,7 @@ Insert items into the logistic network. This will actually insert the items into
 
 **Returns:**
 
-- `uint` - Number of items actually inserted.
+- `uint32` - Number of items actually inserted.
 
 ### find_cell_closest_to
 
@@ -247,7 +257,7 @@ Can the network satisfy a request for a given item and count.
 
 **Parameters:**
 
-- `count` `uint` *(optional)* - Count to check. Defaults to 1.
+- `count` `uint32` *(optional)* - Count to check. Defaults to 1.
 - `include_buffers` `boolean` *(optional)* - Should buffers be considered? Defaults to false.
 - `item` `ItemWithQualityID` - Item name to check.
 

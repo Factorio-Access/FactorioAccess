@@ -8,7 +8,7 @@
 
 Position of the corresponding filter slot.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

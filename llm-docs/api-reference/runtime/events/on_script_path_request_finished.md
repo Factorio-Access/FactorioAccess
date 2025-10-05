@@ -6,7 +6,7 @@ Called when a [LuaSurface::request_path](runtime:LuaSurface::request_path) call 
 
 ### id
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Handle to associate the callback with a particular call to [LuaSurface::request_path](runtime:LuaSurface::request_path).
 
@@ -24,7 +24,7 @@ The actual path that the pathfinder has determined. `nil` if pathfinding failed.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

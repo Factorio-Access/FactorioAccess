@@ -24,7 +24,7 @@ Tells how this condition is compared with the preceding conditions in the corres
 
 Constant to compare `first_signal` to. Has no effect when `second_signal` is set. When neither `second_signal` nor `constant` are specified, the effect is as though `constant` were specified with the value `0`.
 
-**Type:** `int`
+**Type:** `int32`
 
 **Optional:** Yes
 

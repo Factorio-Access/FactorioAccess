@@ -123,7 +123,7 @@ Register a handler to run every nth-tick(s). When the game is on tick 0 it will 
 **Parameters:**
 
 - `handler` function(`NthTickEventData`) | `nil` - The handler to run. Passing `nil` will unregister it for the provided nth-tick(s).
-- `tick` `uint` | Array[`uint`] | `nil` - The nth-tick(s) to invoke the handler on. Passing `nil` as the only parameter will unregister all nth-tick handlers.
+- `tick` `uint32` | Array[`uint32`] | `nil` - The nth-tick(s) to invoke the handler on. Passing `nil` as the only parameter will unregister all nth-tick handlers.
 
 ### register_on_object_destroyed
 
@@ -276,14 +276,14 @@ script.raise_event(defines.events.on_console_chat, data)
 **Parameters:**
 
 - `message` `string` - The chat message to send.
-- `player_index` `uint` - The player doing the chatting.
+- `player_index` `uint32` - The player doing the chatting.
 
 ### raise_player_crafted_item
 
 **Parameters:**
 
 - `item_stack` `LuaItemStack` - The item that has been crafted.
-- `player_index` `uint` - The player doing the crafting.
+- `player_index` `uint32` - The player doing the crafting.
 - `recipe` `RecipeID` - The recipe used to craft this item.
 
 ### raise_player_fast_transferred
@@ -293,7 +293,7 @@ script.raise_event(defines.events.on_console_chat, data)
 - `entity` `LuaEntity` - The entity transferred from or to.
 - `from_player` `boolean` - Whether the transfer was from player to entity. If `false`, the transfer was from entity to player.
 - `is_split` `boolean` - Whether the transfer was a split action (half stack).
-- `player_index` `uint` - The player transferred from or to.
+- `player_index` `uint32` - The player transferred from or to.
 
 ### raise_biter_base_built
 
@@ -305,10 +305,10 @@ script.raise_event(defines.events.on_console_chat, data)
 
 **Parameters:**
 
-- `count` `uint` - The amount of offers purchased.
+- `count` `uint32` - The amount of offers purchased.
 - `market` `LuaEntity` - The market entity.
-- `offer_index` `uint` - The index of the offer purchased.
-- `player_index` `uint` - The player who did the purchasing.
+- `offer_index` `uint32` - The index of the offer purchased.
+- `player_index` `uint32` - The player who did the purchasing.
 
 ### raise_script_built
 
@@ -341,7 +341,7 @@ script.raise_event(defines.events.on_console_chat, data)
 
 **Parameters:**
 
-- `surface_index` `uint` - The surface whose tiles have been changed.
+- `surface_index` `uint32` - The surface whose tiles have been changed.
 - `tiles` Array[`Tile`] - The tiles that have been changed.
 
 ### raise_script_destroy_segmented_unit

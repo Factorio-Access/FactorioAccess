@@ -22,7 +22,7 @@ The following operators are available, ordered by precedence:
 
 - `+x`, `-x`, `~x`: Unary plus and minus and unary bitwise not
 
-- `x*y`, `x/y`, `x%y`, `x%%y`: Multiplication and division, modulo and remainder.
+- `x*y`, `x/y`, `x%y`, `x%%y`: Multiplication and division, modulo and remainder
 
 - `x+y`, `x-y`: Addition and subtraction
 
@@ -41,6 +41,8 @@ Modulo is implemented as `x - floor(x / y) * y` and remainder uses C++ [`fmod(x,
 The boolean operators (less than, less than or equal, equal, not equal, greater than, greater than or equal) take two numbers and return 0 for false or 1 for true.
 
 The bitwise operators convert single-precision floating-point numbers to signed 32-bit integers before computing the result.
+
+Exponentiation and the unary operators are right-to-left associative. The rest of the operators are left-to-right associative.
 
 **Type:** `string` | `boolean` | `double`
 

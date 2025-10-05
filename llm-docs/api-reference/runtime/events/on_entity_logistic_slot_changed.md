@@ -18,7 +18,7 @@ Identifier of the event
 
 ### player_index
 
-**Type:** `uint` *(optional)*
+**Type:** `uint32` *(optional)*
 
 The player who changed the slot, or `nil` if changed by script.
 
@@ -30,13 +30,13 @@ The section changed.
 
 ### slot_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The slot index that was changed.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

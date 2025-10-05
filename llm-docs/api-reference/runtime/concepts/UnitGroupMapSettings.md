@@ -8,7 +8,7 @@
 
 The maximum number of automatically created unit groups gathering for attack at any time. Defaults to `30`.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -16,7 +16,7 @@ The maximum number of automatically created unit groups gathering for attack at 
 
 The maximum amount of time in ticks a group will spend gathering before setting off. The actual time is a random time between the minimum and maximum times. Defaults to `10*3 600=36 000` ticks.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -64,7 +64,7 @@ The maximum speed a percentage of its regular speed that a group member can spee
 
 The maximum number of members for an attack unit group. This only affects automatically created unit groups, manual groups created through the API are unaffected. Defaults to `200`.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -72,7 +72,7 @@ The maximum number of members for an attack unit group. This only affects automa
 
 After gathering has finished, the group is allowed to wait this long in ticks for delayed members. New members are not accepted anymore however. Defaults to `2*3 600=7 200` ticks.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -88,7 +88,7 @@ When a member of a group falls back more than this factor times the group radius
 
 The minimum amount of time in ticks a group will spend gathering before setting off. The actual time is a random time between the minimum and maximum times. Defaults to `3 600` ticks.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -102,7 +102,7 @@ The minimum group radius in tiles. The actual radius is adjusted based on the nu
 
 ### tick_tolerance_when_member_arrives
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

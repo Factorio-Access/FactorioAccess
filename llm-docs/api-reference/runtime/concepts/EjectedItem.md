@@ -20,7 +20,7 @@ An item thrown overboard on a space platform.
 
 ### item
 
-**Type:** `ItemWithQualityID`
+**Type:** `ItemIDAndQualityIDPair`
 
 **Required:** Yes
 

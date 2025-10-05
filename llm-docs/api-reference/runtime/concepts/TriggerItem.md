@@ -48,7 +48,7 @@ If `"enemy"`, the trigger will only affect entities whose force is different fro
 
 ### repeat_count
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

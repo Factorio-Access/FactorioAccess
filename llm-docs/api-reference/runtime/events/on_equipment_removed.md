@@ -6,7 +6,7 @@ Called after equipment is removed from an equipment grid.
 
 ### count
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The count of equipment removed.
 
@@ -36,7 +36,7 @@ The equipment quality.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

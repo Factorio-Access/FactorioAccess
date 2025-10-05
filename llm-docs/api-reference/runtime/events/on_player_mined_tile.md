@@ -12,17 +12,17 @@ Identifier of the event
 
 ### player_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 ### surface_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The surface the tile(s) were mined from.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

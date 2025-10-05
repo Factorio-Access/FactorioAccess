@@ -4,15 +4,15 @@
 
 ## Parameters
 
-### circuitParameters
-
-**Type:** `ProgrammableSpeakerCircuitParameters`
-
-**Required:** Yes
-
 ### circuit_condition
 
 **Type:** `CircuitCondition`
+
+**Required:** Yes
+
+### circuit_parameters
+
+**Type:** `ProgrammableSpeakerCircuitParameters`
 
 **Required:** Yes
 

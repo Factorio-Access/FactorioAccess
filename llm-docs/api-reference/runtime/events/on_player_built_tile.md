@@ -24,7 +24,7 @@ Identifier of the event
 
 ### player_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 ### quality
 
@@ -34,13 +34,13 @@ The quality of the item used to build the tiles
 
 ### surface_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The surface the tile(s) were built on.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

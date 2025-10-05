@@ -12,19 +12,19 @@ Identifier of the event
 
 ### old_train_id_1
 
-**Type:** `uint` *(optional)*
+**Type:** `uint32` *(optional)*
 
 The first old train id when splitting/merging trains.
 
 ### old_train_id_2
 
-**Type:** `uint` *(optional)*
+**Type:** `uint32` *(optional)*
 
 The second old train id when splitting/merging trains.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

@@ -12,7 +12,7 @@
 
 ### condition_size
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

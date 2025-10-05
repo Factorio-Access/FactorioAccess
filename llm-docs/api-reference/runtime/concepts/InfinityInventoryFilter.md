@@ -18,7 +18,7 @@ The count of the filter. Defaults to 0.
 
 The index of this filter in the filters list. Not required when writing a filter.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Optional:** Yes
 

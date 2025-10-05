@@ -1,4 +1,4 @@
 # ItemCountType
 
-**Type:** `uint`
+**Type:** `uint32`
 

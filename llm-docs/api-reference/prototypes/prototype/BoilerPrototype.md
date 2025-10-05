@@ -33,7 +33,7 @@ If `mode` is `"heat-fluid-inside"`, the fluid is heated up directly in this flui
 
 The output fluid box.
 
-If `mode` is `"output-to-separate-pipe"` and this has a [filter](prototype:FluidBox::filter), the heated input fluid is converted to the output fluid that is set in the filter. The conversion ratio is based on the heat capacity of the fluids: `output_fluid_amount = input_fluid_amount * (output_fluid_heat_capacity / input_fluid_heat_capacity)`
+If `mode` is `"output-to-separate-pipe"` and this has a [filter](prototype:FluidBox::filter), the heated input fluid is converted to the output fluid that is set in the filter. The conversion ratio is based on the [heat capacity](prototype:FluidPrototype::heat_capacity) of the fluids: `output_fluid_amount = input_fluid_amount * (output_fluid_heat_capacity / input_fluid_heat_capacity)`
 
 If `mode` is `"heat-fluid-inside"`, this fluidbox is unused.
 

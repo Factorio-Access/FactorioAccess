@@ -1,6 +1,6 @@
 # ProcessionGraphicCatalogueItem
 
-Either picture or animation must be provided.
+Either animation or sprite must be provided.
 
 **Type:** `Struct`
 
@@ -20,7 +20,7 @@ Either picture or animation must be provided.
 
 **Optional:** Yes
 
-### picture
+### sprite
 
 **Type:** `Sprite`
 

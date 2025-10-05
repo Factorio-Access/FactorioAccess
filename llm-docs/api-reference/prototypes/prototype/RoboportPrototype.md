@@ -107,7 +107,7 @@ The animation played when the roboport is idle.
 
 ### radar_range
 
-Defaults to the max of logistic range or construction range rounded up to chunks.
+In chunks. The radius of how many chunks this roboport charts around itself. Defaults to the max of logistic range or construction range rounded up to chunks.
 
 **Type:** `uint32`
 
@@ -246,6 +246,16 @@ The maximum circuit wire distance for this entity.
 **Type:** `CircuitConnectorDefinition`
 
 **Optional:** Yes
+
+### render_recharge_icon
+
+Whether to render the [no charge](prototype:UtilitySprites::recharge_icon) icon if the roboport has less energy than `recharge_minimum` in its internal buffer and is recovering from a blackout.
+
+**Type:** `boolean`
+
+**Optional:** Yes
+
+**Default:** True
 
 ### max_logistic_slots
 

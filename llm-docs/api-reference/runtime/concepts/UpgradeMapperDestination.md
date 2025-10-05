@@ -16,7 +16,7 @@ When upgrading modules, this defines the maximum number of this module to be ins
 
 When upgrading entities, this defines explicit modules to be installed in the destination entity. Lists empty slots as `{}`.
 
-**Type:** Array[`ItemIDAndQualityIDPair`]
+**Type:** Array[`BlueprintItemIDAndQualityIDPair`]
 
 **Optional:** Yes
 

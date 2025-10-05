@@ -308,3 +308,11 @@ The strings are entity types.
 
 **Optional:** Yes
 
+### recipe_icon_scale
+
+Must be larger than 0. This number is multiplied by the crafting machine's [radius](runtime:LuaEntityPrototype::radius) to get the final recipe icon scale for the chart.
+
+**Type:** `float`
+
+**Required:** Yes
+

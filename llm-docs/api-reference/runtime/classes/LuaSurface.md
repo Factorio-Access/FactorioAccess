@@ -18,7 +18,7 @@ The default surface can't be renamed.
 
 This surface's index in [LuaGameScript::surfaces](runtime:LuaGameScript::surfaces) (unique ID). It is assigned when a surface is created, and remains so until it is [deleted](runtime:on_surface_deleted). Indexes of deleted surfaces can be reused.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### map_gen_settings
 
@@ -110,9 +110,9 @@ True if daytime is currently frozen.
 
 The number of ticks per day for this surface.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### dusk
 
@@ -457,7 +457,7 @@ Count entities of given type or name in a given area. Works just like [LuaSurfac
 
 **Returns:**
 
-- `uint`
+- `uint32`
 
 ### count_tiles_filtered
 
@@ -471,7 +471,7 @@ If no `area` or `position` and `radius` is given, the entire surface is searched
 
 **Returns:**
 
-- `uint`
+- `uint32`
 
 ### find_non_colliding_position
 
@@ -631,12 +631,12 @@ Give a command to multiple units. This will automatically select suitable units 
 
 - `command` `Command`
 - `force` `ForceID` *(optional)* - Force of the units this command is to be given to. If not specified, uses the enemy force.
-- `unit_count` `uint` - Number of units to give the command to.
-- `unit_search_distance` `uint` *(optional)* - Radius to search for units. The search area is centered on the destination of the command. If not specified uses default value of 150.
+- `unit_count` `uint32` - Number of units to give the command to.
+- `unit_search_distance` `uint32` *(optional)* - Radius to search for units. The search area is centered on the destination of the command. If not specified uses default value of 150.
 
 **Returns:**
 
-- `uint` - Number of units actually sent. May be less than `count` if not enough units were available.
+- `uint32` - Number of units actually sent. May be less than `count` if not enough units were available.
 
 ### create_entity
 
@@ -665,7 +665,7 @@ Create an entity on this surface.
 - `spawn_decorations` `boolean` *(optional)* - If true, entity types that have [spawn_decoration](runtime:LuaEntityPrototype::spawn_decorations) property will apply triggers defined in the property. Defaults to `false`.
 - `spill` `boolean` *(optional)* - If false while fast_replace is true and player is nil any items from fast-replacing will be deleted instead of dropped on the ground. Defaults to `true`.
 - `target` `LuaEntity` | `MapPosition` *(optional)* - Entity with health for the new entity to target.
-- `undo_index` `uint` *(optional)* - The index of the undo item to add this action to. An index of `0` creates a new undo item for it. Defaults to putting it into the appropriate undo item automatically if not specified.
+- `undo_index` `uint32` *(optional)* - The index of the undo item to add this action to. An index of `0` creates a new undo item for it. Defaults to putting it into the appropriate undo item automatically if not specified.
 
 **Returns:**
 
@@ -780,7 +780,7 @@ The specified force must be AI-controlled; i.e. `force.ai_controllable` must be 
 
 - `force` `ForceID` *(optional)* - Force the new base will belong to. Defaults to enemy.
 - `position` `MapPosition` - Location of the new base.
-- `unit_count` `uint` - Number of biters to send for the base-building task.
+- `unit_count` `uint32` - Number of biters to send for the base-building task.
 
 ### get_tile
 
@@ -790,8 +790,8 @@ Non-integer values will result in them being rounded down.
 
 **Parameters:**
 
-- `x` `int`
-- `y` `int`
+- `x` `int32`
+- `y` `int32`
 
 **Returns:**
 
@@ -813,7 +813,7 @@ It is recommended to call this method once for all the tiles you want to change 
 - `remove_colliding_decoratives` `boolean` *(optional)* - Defaults to `true`.
 - `remove_colliding_entities` `boolean` | `"abort_on_collision"` *(optional)* - Defaults to `true`.
 - `tiles` Array[`Tile`]
-- `undo_index` `uint` *(optional)* - The index of the undo item to add this action to. An index of `0` creates a new undo item for it. Defaults to putting it into the appropriate undo item automatically if not specified.
+- `undo_index` `uint32` *(optional)* - The index of the undo item to add this action to. An index of `0` creates a new undo item for it. Defaults to putting it into the appropriate undo item automatically if not specified.
 
 ### pollute
 
@@ -852,7 +852,7 @@ Request that the game's map generator generate chunks at the given position for 
 **Parameters:**
 
 - `position` `MapPosition` - Where to generate the new chunks.
-- `radius` `uint` *(optional)* - The chunk radius from `position` to generate new chunks in. Defaults to `0`.
+- `radius` `uint32` *(optional)* - The chunk radius from `position` to generate new chunks in. Defaults to `0`.
 
 ### force_generate_chunk_requests
 
@@ -984,7 +984,7 @@ Cancel a deconstruction order.
 - `player` `PlayerIdentification` *(optional)* - The player to set the last_user to, if any.  Also the player whose undo queue this action should be added to.
 - `skip_fog_of_war` `boolean` *(optional)* - If chunks covered by fog-of-war are skipped. Defaults to `false`.
 - `super_forced` `boolean` *(optional)* - If the cancel deconstruction is super-forced. Defaults to `false`.
-- `undo_index` `uint` *(optional)* - The index of the undo item to add this action to. An index of `0` creates a new undo item for it. Defaults to putting it into the appropriate undo item automatically if not specified.
+- `undo_index` `uint32` *(optional)* - The index of the undo item to add this action to. An index of `0` creates a new undo item for it. Defaults to putting it into the appropriate undo item automatically if not specified.
 
 ### upgrade_area
 
@@ -1121,7 +1121,7 @@ Removes all decoratives from the given area. If no area and no position are give
 - `exclude_soft` `boolean` *(optional)* - Soft decoratives can be drawn over rails.
 - `from_layer` `string` *(optional)*
 - `invert` `boolean` *(optional)* - If the filters should be inverted.
-- `limit` `uint` *(optional)*
+- `limit` `uint32` *(optional)*
 - `name` `DecorativeID` | Array[`DecorativeID`] *(optional)*
 - `position` `TilePosition` *(optional)*
 - `to_layer` `string` *(optional)*
@@ -1150,7 +1150,7 @@ If no filters are given, returns all decoratives in the search area. If multiple
 - `exclude_soft` `boolean` *(optional)* - Soft decoratives can be drawn over rails.
 - `from_layer` `string` *(optional)*
 - `invert` `boolean` *(optional)* - If the filters should be inverted.
-- `limit` `uint` *(optional)*
+- `limit` `uint32` *(optional)*
 - `name` `DecorativeID` | Array[`DecorativeID`] *(optional)*
 - `position` `TilePosition` *(optional)*
 - `to_layer` `string` *(optional)*
@@ -1186,7 +1186,7 @@ Gets the resource amount of all resources on this surface
 
 **Returns:**
 
-- Dictionary[`string`, `uint`]
+- Dictionary[`string`, `uint32`]
 
 ### get_random_chunk
 
@@ -1278,15 +1278,15 @@ The resulting path is ultimately returned asynchronously via [on_script_path_req
 - `force` `ForceID` - The force for which to generate the path, determining which gates can be opened for example.
 - `goal` `MapPosition` - The position to find a path to.
 - `max_attack_distance` `double` *(optional)* - Defines the maximum allowed distance between the last traversable path waypoint and an obstacle entity to be destroyed. Only used when finding a discontiguous path, i.e. when `max_gap_size` > 0. This field filters out paths that are blocked by obstacles that are outside the entity's attack range. Allowed values are `0` or greater. Defaults to `max_gap_size`.
-- `max_gap_size` `int` *(optional)* - Defines the maximum allowed distance between path waypoints. 0 means that paths must be contiguous (as they are for biters). Values greater than 0 will produce paths with "gaps" that are suitable for spiders. Allowed values are from `0` to `31`. Defaults to `0`.
-- `path_resolution_modifier` `int` *(optional)* - Defines how coarse the pathfinder's grid is, where smaller values mean a coarser grid. Defaults to `0`, which equals a resolution of `1x1` tiles, centered on tile centers. Values range from `-8` to `8` inclusive, where each integer increment doubles/halves the resolution. So, a resolution of `-8` equals a grid of `256x256` tiles, and a resolution of `8` equals `1/256` of a tile.
+- `max_gap_size` `int32` *(optional)* - Defines the maximum allowed distance between path waypoints. 0 means that paths must be contiguous (as they are for biters). Values greater than 0 will produce paths with "gaps" that are suitable for spiders. Allowed values are from `0` to `31`. Defaults to `0`.
+- `path_resolution_modifier` `int32` *(optional)* - Defines how coarse the pathfinder's grid is, where smaller values mean a coarser grid. Defaults to `0`, which equals a resolution of `1x1` tiles, centered on tile centers. Values range from `-8` to `8` inclusive, where each integer increment doubles/halves the resolution. So, a resolution of `-8` equals a grid of `256x256` tiles, and a resolution of `8` equals `1/256` of a tile.
 - `pathfind_flags` `PathfinderFlags` *(optional)* - Flags that affect pathfinder behavior.
 - `radius` `double` *(optional)* - How close the pathfinder needs to get to its `goal` (in tiles). Defaults to `1`.
 - `start` `MapPosition` - The position from which to start pathfinding.
 
 **Returns:**
 
-- `uint` - A unique handle to identify this call when [on_script_path_request_finished](runtime:on_script_path_request_finished) fires.
+- `uint32` - A unique handle to identify this call when [on_script_path_request_finished](runtime:on_script_path_request_finished) fires.
 
 ### get_script_areas
 
@@ -1306,7 +1306,7 @@ Gets the first script area by name or id.
 
 **Parameters:**
 
-- `key` `string` | `uint` *(optional)* - The name or id of the area to get.
+- `key` `string` | `uint32` *(optional)* - The name or id of the area to get.
 
 **Returns:**
 
@@ -1319,7 +1319,7 @@ Sets the given script area to the new values.
 **Parameters:**
 
 - `area` `ScriptArea`
-- `id` `uint` - The area to edit.
+- `id` `uint32` - The area to edit.
 
 ### add_script_area
 
@@ -1331,7 +1331,7 @@ Adds the given script area.
 
 **Returns:**
 
-- `uint` - The id of the created area.
+- `uint32` - The id of the created area.
 
 ### remove_script_area
 
@@ -1339,7 +1339,7 @@ Removes the given script area.
 
 **Parameters:**
 
-- `id` `uint`
+- `id` `uint32`
 
 **Returns:**
 
@@ -1363,7 +1363,7 @@ Gets the first script position by name or id.
 
 **Parameters:**
 
-- `key` `string` | `uint` *(optional)* - The name or id of the position to get.
+- `key` `string` | `uint32` *(optional)* - The name or id of the position to get.
 
 **Returns:**
 
@@ -1375,7 +1375,7 @@ Sets the given script position to the new values.
 
 **Parameters:**
 
-- `id` `uint` - The position to edit.
+- `id` `uint32` - The position to edit.
 - `position` `ScriptPosition`
 
 ### add_script_position
@@ -1388,7 +1388,7 @@ Adds the given script position.
 
 **Returns:**
 
-- `uint` - The id of the created position.
+- `uint32` - The id of the created position.
 
 ### remove_script_position
 
@@ -1396,7 +1396,7 @@ Removes the given script position.
 
 **Parameters:**
 
-- `id` `uint`
+- `id` `uint32`
 
 **Returns:**
 
@@ -1511,7 +1511,7 @@ Places entities via the given blueprint string. These entities are force-built.
 
 **Returns:**
 
-- `int` *(optional)* - If the blueprint string was invalid, `1` is returned. Otherwise, `nil` is returned.
+- `int32` *(optional)* - If the blueprint string was invalid, `1` is returned. Otherwise, `nil` is returned.
 
 ### build_checkerboard
 

@@ -26,7 +26,7 @@ The direction the entity is facing. Only present for entities that can face in d
 
 The entity's unique identifier in the blueprint.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

@@ -32,11 +32,11 @@ If this connector is owned by an entity inside of a ghost. If any of 2 ends of a
 
 Amount of wires going out of this connector. It includes all wires (ghost wires and real wires).
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### connections
 
-All wire connectors this connector is connected to.
+All wire connectors this connector is connected to. It includes all wires (ghost wires and real wires).
 
 **Read type:** Array[`WireConnection`]
 
@@ -44,11 +44,11 @@ All wire connectors this connector is connected to.
 
 Amount of real wires going out of this connector. It only includes wires for which both wire connectors are real (not ghosts).
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### real_connections
 
-All wire connectors this connector is connected to with real wires. Wires are considered real if they are between two non-ghost entities.
+All wire connectors this connector is connected to with real wires. It only includes wires that are between two non-ghost entities.
 
 **Read type:** Array[`WireConnection`]
 
@@ -56,7 +56,7 @@ All wire connectors this connector is connected to with real wires. Wires are co
 
 Index of a CircuitNetwork or ElectricSubNetwork which is going through this wire connector. Returns 0 if there is no network associated with this wire connector right now. CircuitNetwork indexes are independent of indexes of ElectricSubNetwork so they may collide with each other.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### valid
 

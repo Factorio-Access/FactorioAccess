@@ -30,7 +30,7 @@ Identifier of the event
 
 ### player_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The player who did the confirming.
 
@@ -42,7 +42,7 @@ If shift was pressed.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

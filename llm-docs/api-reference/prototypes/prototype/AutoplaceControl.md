@@ -40,11 +40,23 @@ Whether there is an "enable" checkbox for the autoplace control in the map gener
 
 ### related_to_fight_achievements
 
-Whether this settings being lower than default disables fight related achievements
+Whether this settings being lower than default disables fight related achievements.
 
 **Type:** `boolean`
 
 **Optional:** Yes
 
 **Default:** False
+
+### hidden
+
+Hides the autoplace control from the map generation screen.
+
+**Type:** `boolean`
+
+**Optional:** Yes
+
+**Default:** False
+
+**Overrides parent:** Yes
 

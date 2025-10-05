@@ -22,7 +22,7 @@ The players in this group.
 
 The group ID
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### valid
 

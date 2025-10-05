@@ -40,7 +40,7 @@ Is this item allowed to stack at all?
 
 Maximum stack size of the item specified by this prototype.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### fuel_category
 
@@ -288,7 +288,7 @@ The gun attack parameters.
 
 The main inventory size for item-with-inventory-prototype.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -392,7 +392,7 @@ The name of a [LuaModuleCategoryPrototype](runtime:LuaModuleCategoryPrototype). 
 
 Tier of the module inside its category. Used when upgrading modules: Ctrl + click modules into an entity and it will replace lower tier modules with higher tier modules if they have the same category.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -466,7 +466,7 @@ If this selection tool skips things covered by fog of war.
 
 The number of entity filters this deconstruction item has.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -476,7 +476,7 @@ The number of entity filters this deconstruction item has.
 
 The number of tile filters this deconstruction item has.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -598,7 +598,7 @@ The number of ticks before this item spoils, or `0` if it does not spoil.
 
 **Returns:**
 
-- `uint`
+- `uint32`
 
 ### get_ammo_type
 
@@ -622,7 +622,19 @@ The inventory size bonus for this armor prototype.
 
 **Returns:**
 
-- `uint` *(optional)*
+- `uint32` *(optional)*
+
+### get_module_effects
+
+Effects of this module at the specified quality.
+
+**Parameters:**
+
+- `quality` `QualityID` *(optional)*
+
+**Returns:**
+
+- `ModuleEffects` *(optional)*
 
 ### get_selection_border_color
 

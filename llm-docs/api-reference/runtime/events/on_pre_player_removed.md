@@ -12,13 +12,13 @@ Identifier of the event
 
 ### player_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The index of the removed player.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

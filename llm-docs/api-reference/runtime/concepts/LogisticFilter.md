@@ -22,9 +22,9 @@ The maximum amount to keep in inventory. `nil` for infinite.
 
 ### min
 
-The minimum amount to satisfy.
+The minimum amount to satisfy. If `min` is non-zero, and `value` is present, then the quality condition inside `value` does not allow quality ranges.
 
-**Type:** `int`
+**Type:** `int32`
 
 **Optional:** Yes
 

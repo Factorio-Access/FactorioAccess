@@ -40,7 +40,7 @@ Whether undefined `autoplace_controls` should fall back to the default controls 
 
 Height in tiles. If `0`, the map has 'infinite' height, with the actual limitation being one million tiles in each direction from the center.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -72,7 +72,7 @@ Overrides for tile property value generators.
 
 The random seed used to generated this map.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -102,7 +102,7 @@ Positions of the starting areas.
 
 Width in tiles. If `0`, the map has 'infinite' width, with the actual limitation being one million tiles in each direction from the center.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

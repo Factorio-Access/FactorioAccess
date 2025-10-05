@@ -155,6 +155,8 @@ How long this flare stays alive after `shots_per_flare` amount of shots have bee
 
 The entity with the higher number is selectable before the entity with the lower number.
 
+The value `0` will be treated the same as `nil`.
+
 **Type:** `uint8`
 
 **Optional:** Yes

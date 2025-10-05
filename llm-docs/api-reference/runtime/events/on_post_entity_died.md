@@ -54,19 +54,19 @@ The quality of the entity that died.
 
 ### surface_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The surface the entity was on.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 
 ### unit_number
 
-**Type:** `uint` *(optional)*
+**Type:** `uint32` *(optional)*
 
 The unit number the entity had if any.
 

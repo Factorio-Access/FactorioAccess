@@ -30,7 +30,7 @@ The radar that did the scanning.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

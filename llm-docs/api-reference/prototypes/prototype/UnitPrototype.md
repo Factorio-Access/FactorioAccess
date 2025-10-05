@@ -109,6 +109,8 @@ If the unit is immune to movement by belts.
 
 ### radar_range
 
+In chunks. The radius of how many chunks this unit charts around itself.
+
 **Type:** `uint32`
 
 **Optional:** Yes

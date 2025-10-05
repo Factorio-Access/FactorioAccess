@@ -1,6 +1,6 @@
 # LuaSettings
 
-Object containing mod settings of three distinct types: `startup`, `global`, and `player`. An instance of LuaSettings is available through the global object named `settings`.
+Object containing the three different types of mod settings: startup settings, global runtime settings and per-player runtime settings. An instance of LuaSettings is available through the global object named `settings`.
 
 ## Attributes
 

@@ -14,19 +14,19 @@ Identifier of the event
 
 ### player_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The player index of the player viewing the cutscene.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 
 ### waypoint_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The index of the waypoint we just completed.
 

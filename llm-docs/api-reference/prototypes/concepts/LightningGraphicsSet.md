@@ -178,3 +178,11 @@ Must be less than or equal to `bolt_detail_level`.
 
 **Optional:** Yes
 
+### water_reflection
+
+Refer to [EntityPrototype::water_reflection](prototype:EntityPrototype::water_reflection).
+
+**Type:** `WaterReflectionDefinition`
+
+**Optional:** Yes
+

@@ -22,7 +22,7 @@ The name of this space platform.
 
 The unique index of this space platform.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### space_location
 
@@ -130,7 +130,7 @@ If this platform is scheduled for deletion.
 
 Returns how many ticks are left before the platform will be deleted. 0 if not scheduled for deletion.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### weight
 
@@ -178,7 +178,7 @@ Schedules this space platform for deletion.
 
 **Parameters:**
 
-- `ticks` `uint` *(optional)* - The number of ticks from now when this platform will be deleted.
+- `ticks` `uint32` *(optional)* - The number of ticks from now when this platform will be deleted.
 
 ### cancel_deletion
 
@@ -219,9 +219,13 @@ Destroys all asteroid chunks from the given area. If no area and no position are
 
 - `area` `BoundingBox` *(optional)*
 - `invert` `boolean` *(optional)* - If the filters should be inverted.
-- `limit` `uint` *(optional)*
+- `limit` `uint32` *(optional)*
 - `name` `AsteroidChunkID` | Array[`AsteroidChunkID`] *(optional)*
 - `position` `MapPosition` *(optional)*
+
+**Returns:**
+
+- `uint32` - The number of destroyed chunks.
 
 ### create_asteroid_chunks
 
@@ -241,7 +245,7 @@ If no filters are given, returns all asteroid chunks in the search area. If mult
 
 - `area` `BoundingBox` *(optional)*
 - `invert` `boolean` *(optional)* - If the filters should be inverted.
-- `limit` `uint` *(optional)*
+- `limit` `uint32` *(optional)*
 - `name` `AsteroidChunkID` | Array[`AsteroidChunkID`] *(optional)*
 - `position` `MapPosition` *(optional)*
 

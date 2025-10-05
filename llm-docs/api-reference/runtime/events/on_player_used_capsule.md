@@ -18,7 +18,7 @@ Identifier of the event
 
 ### player_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The player.
 
@@ -36,7 +36,7 @@ The quality of the capsule item used.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

@@ -16,7 +16,7 @@ Name of this prototype.
 
 ### size
 
-**Read type:** `int`
+**Read type:** `int32`
 
 ### spacing
 

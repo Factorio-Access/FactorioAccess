@@ -61,6 +61,8 @@ The orientation of the torso of the spider affects the shooting direction and th
 
 ### radar_range
 
+In chunks. The radius of how many chunks this spider unit charts around itself.
+
 **Type:** `uint32`
 
 **Optional:** Yes

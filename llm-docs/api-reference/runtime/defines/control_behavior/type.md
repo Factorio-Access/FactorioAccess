@@ -118,6 +118,10 @@
 
 [LuaSpacePlatformHubControlBehavior](runtime:LuaSpacePlatformHubControlBehavior)
 
+### splitter
+
+[LuaSplitterControlBehavior](runtime:LuaSplitterControlBehavior)
+
 ### storage_tank
 
 [LuaStorageTankControlBehavior](runtime:LuaStorageTankControlBehavior)

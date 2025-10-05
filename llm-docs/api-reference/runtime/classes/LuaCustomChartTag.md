@@ -12,13 +12,15 @@ This tag's icon, if it has one. Writing `nil` removes it.
 
 **Write type:** `SignalID`
 
+**Optional:** Yes
+
 ### last_user
 
 The player who last edited this tag.
 
 **Read type:** `LuaPlayer`
 
-**Write type:** `LuaPlayer`
+**Write type:** `PlayerIdentification`
 
 **Optional:** Yes
 
@@ -27,6 +29,8 @@ The player who last edited this tag.
 The position of this tag.
 
 **Read type:** `MapPosition`
+
+**Write type:** `MapPosition`
 
 ### text
 
@@ -38,7 +42,7 @@ The position of this tag.
 
 The unique ID for this tag on this force.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### force
 
@@ -51,6 +55,8 @@ The force this tag belongs to.
 The surface this tag belongs to.
 
 **Read type:** `LuaSurface`
+
+**Write type:** `LuaSurface`
 
 ### valid
 

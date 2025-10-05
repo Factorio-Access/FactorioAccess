@@ -8,7 +8,7 @@
 
 The value to output when not copying input. Defaults to `1`.
 
-**Type:** `int`
+**Type:** `int32`
 
 **Optional:** Yes
 

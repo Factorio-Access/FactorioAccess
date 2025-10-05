@@ -47,7 +47,7 @@ Mandatory if `variations` is defined.
 
 ### stateless_visualisation_variations
 
-**Type:** Array[`StatelessVisualisations`]
+**Type:** Array[`StatelessVisualisation` | Array[`StatelessVisualisation`]]
 
 **Optional:** Yes
 

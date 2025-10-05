@@ -12,13 +12,13 @@ Identifier of the event
 
 ### surface_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The surface whose tiles were changed.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

@@ -8,13 +8,13 @@ A table used to define a manual shape for a piece of equipment.
 
 ### x
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
 ### y
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

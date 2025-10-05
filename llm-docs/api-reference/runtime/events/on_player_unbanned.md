@@ -6,7 +6,7 @@ Called when a player is un-banned.
 
 ### by_player
 
-**Type:** `uint` *(optional)*
+**Type:** `uint32` *(optional)*
 
 The player that did the un-banning if any.
 
@@ -18,7 +18,7 @@ Identifier of the event
 
 ### player_index
 
-**Type:** `uint` *(optional)*
+**Type:** `uint32` *(optional)*
 
 The player un-banned.
 
@@ -36,7 +36,7 @@ The reason the player was banned if any.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

@@ -18,7 +18,7 @@ The territory that will be destroyed. This object will be valid so that you can 
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

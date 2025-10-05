@@ -86,7 +86,7 @@ The number of research units required for this technology.
 
 This is multiplied by the current research cost multiplier, unless [LuaTechnologyPrototype::ignore_tech_cost_multiplier](runtime:LuaTechnologyPrototype::ignore_tech_cost_multiplier) is `true`.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### research_unit_energy
 
@@ -104,9 +104,9 @@ The string used to alphabetically sort these prototypes. It is a simple string t
 
 The current level of this technology. For level-based technology writing to this is the same as researching the technology to the previous level. Writing the level will set [LuaTechnology::enabled](runtime:LuaTechnology::enabled) to `true`.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### research_unit_count_formula
 

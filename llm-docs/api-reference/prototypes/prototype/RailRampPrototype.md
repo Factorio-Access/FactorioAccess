@@ -19,7 +19,7 @@ Must be lower than 500 and at least 1.
 
 ### collision_mask_allow_on_deep_oil_ocean
 
-Defaults to the mask from [UtilityConstants::default_collision_masks](prototype:UtilityConstants::default_collision_masks) when indexed by `"allow_on_deep_oil_ocean"`.
+Defaults to the mask from [UtilityConstants::default_collision_masks](prototype:UtilityConstants::default_collision_masks) when indexed by `"rail-ramp/allow_on_deep_oil_ocean"`.
 
 **Type:** `CollisionMaskConnector`
 

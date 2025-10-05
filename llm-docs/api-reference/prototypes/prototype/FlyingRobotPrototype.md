@@ -19,6 +19,8 @@ The flying speed of the robot, in tiles/tick.
 
 The maximum flying speed of the robot, including bonuses, in tiles/tick. Useful to limit the impact of [worker robot speed research](prototype:WorkerRobotSpeedModifier).
 
+Must be >= speed.
+
 **Type:** `double`
 
 **Optional:** Yes

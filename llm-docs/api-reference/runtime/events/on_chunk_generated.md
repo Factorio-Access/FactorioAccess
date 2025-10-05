@@ -30,7 +30,7 @@ The surface the chunk is on.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

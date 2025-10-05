@@ -16,7 +16,7 @@ True if found path.
 
 If path was found, provides index of the specific goal to which the path goes to.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Optional:** Yes
 
@@ -48,7 +48,7 @@ Penalty of the path to goal if path was found.
 
 If path was found, provides index of the specific start from which the path to target goes from
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Optional:** Yes
 
@@ -56,7 +56,7 @@ If path was found, provides index of the specific start from which the path to t
 
 Amount of steps pathfinder performed. This is a measure of how expensive this search was.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

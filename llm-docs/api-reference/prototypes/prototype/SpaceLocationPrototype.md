@@ -211,3 +211,15 @@ Orientation of the starmap icon, defaults to pointing towards the sun.
 
 **Optional:** Yes
 
+### hidden
+
+Hides the space location from the planet selection lists and the space map.
+
+**Type:** `boolean`
+
+**Optional:** Yes
+
+**Default:** False
+
+**Overrides parent:** Yes
+

@@ -20,7 +20,7 @@ Identifier of the event
 
 ### source_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The index of the destroyed force.
 
@@ -32,7 +32,7 @@ The force destroyed.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

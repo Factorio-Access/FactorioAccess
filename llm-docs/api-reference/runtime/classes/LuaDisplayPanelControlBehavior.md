@@ -34,7 +34,7 @@ Get a specific message definition
 
 **Parameters:**
 
-- `index` `uint` - Message index.
+- `index` `uint32` - Message index.
 
 **Returns:**
 
@@ -46,6 +46,6 @@ Set the message at the specified index
 
 **Parameters:**
 
-- `index` `uint` - Message index. Use `-1` to append new element.
+- `index` `uint32` - Message index. Use `-1` to append new element.
 - `message` `DisplayPanelMessageDefinition` - The message definition for the specified index. Specify `nil` to remove the message.
 

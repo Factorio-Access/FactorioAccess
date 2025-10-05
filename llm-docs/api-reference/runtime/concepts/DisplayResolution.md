@@ -6,13 +6,13 @@
 
 ### height
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
 ### width
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

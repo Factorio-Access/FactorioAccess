@@ -18,11 +18,11 @@ The chunks to be deleted.
 
 ### surface_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

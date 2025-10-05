@@ -24,7 +24,7 @@ The territory that was created.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

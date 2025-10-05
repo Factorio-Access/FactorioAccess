@@ -50,6 +50,8 @@ Deprecated, replaced by `"crafter_trash"`.
 
 ### cargo_unit
 
+Inventory of cargo pod.
+
 ### cargo_wagon
 
 ### character_ammo

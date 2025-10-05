@@ -85,7 +85,7 @@ The number of module slots in this lab.
 
 ### quality_affects_module_slots
 
-If set, [QualityPrototype::beacon_module_slots_bonus](prototype:QualityPrototype::beacon_module_slots_bonus) will be added to module slots count.
+If set, [QualityPrototype::lab_module_slots_bonus](prototype:QualityPrototype::lab_module_slots_bonus) will be added to module slots count.
 
 **Type:** `boolean`
 

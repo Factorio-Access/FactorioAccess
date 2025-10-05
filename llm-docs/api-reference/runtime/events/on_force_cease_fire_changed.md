@@ -30,7 +30,7 @@ Which force was added or removed.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

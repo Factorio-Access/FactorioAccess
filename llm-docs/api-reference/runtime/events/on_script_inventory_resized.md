@@ -22,13 +22,13 @@ Identifier of the event
 
 ### new_size
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The new inventory size.
 
 ### old_size
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The old inventory size.
 
@@ -40,13 +40,13 @@ Any items which didn't fit into the new inventory size.
 
 ### player_index
 
-**Type:** `uint` *(optional)*
+**Type:** `uint32` *(optional)*
 
 If done by console command; the player who ran the command.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

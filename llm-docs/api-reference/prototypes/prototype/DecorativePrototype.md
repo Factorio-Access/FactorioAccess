@@ -20,7 +20,7 @@ Must contain at least 1 picture.
 
 Can be defined only when decorative is not "decal" (see `render_layer`).
 
-**Type:** `StatelessVisualisations`
+**Type:** `StatelessVisualisation` | Array[`StatelessVisualisation`]
 
 **Optional:** Yes
 
@@ -28,7 +28,7 @@ Can be defined only when decorative is not "decal" (see `render_layer`).
 
 Only loaded if `stateless_visualisation` is not defined. Can be defined only when decorative is not "decal" (see `render_layer`).
 
-**Type:** Array[`StatelessVisualisations`]
+**Type:** Array[`StatelessVisualisation` | Array[`StatelessVisualisation`]]
 
 **Optional:** Yes
 

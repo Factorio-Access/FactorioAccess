@@ -26,13 +26,13 @@ Construction radius of this cell.
 
 Number of stationed logistic robots in this cell.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### stationed_construction_robot_count
 
 Number of stationed construction robots in this cell.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### mobile
 
@@ -56,13 +56,13 @@ Radius at which the robots hover when waiting to be charged.
 
 Number of robots currently charging.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### to_charge_robot_count
 
 Number of robots waiting to charge.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### owner
 

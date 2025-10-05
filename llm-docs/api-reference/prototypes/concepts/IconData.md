@@ -84,7 +84,7 @@ Expected icon sizes:
 
 ### draw_background
 
-Outline is drawn using signed distance field generated on load. One icon image, will have only one SDF generated. But if the image is used in multiple icon with different scales, outline width won't match the desired width in all the scales but the largest one.
+Outline is drawn using signed distance field generated on load. One icon image will have only one SDF generated. That means if the image is used in multiple icons with different scales, the outline width won't match the desired width in all the scales except the largest one.
 
 **Type:** `boolean`
 

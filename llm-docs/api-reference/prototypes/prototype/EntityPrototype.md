@@ -229,6 +229,8 @@ Used to merge multiple entities into one entry in the deconstruction planner.
 
 The entity with the higher number is selectable before the entity with the lower number.
 
+The value `0` will be treated the same as `nil`.
+
 **Type:** `uint8`
 
 **Optional:** Yes
@@ -361,7 +363,7 @@ Name of a [ImpactCategory](prototype:ImpactCategory).
 
 ### stateless_visualisation
 
-**Type:** `StatelessVisualisations`
+**Type:** `StatelessVisualisation` | Array[`StatelessVisualisation`]
 
 **Optional:** Yes
 
@@ -409,7 +411,7 @@ This is simply a string, so any string can be used here. The entity that should 
 
 Name of the entity that will be automatically selected as the upgrade of this entity when using the [upgrade planner](https://wiki.factorio.com/Upgrade_planner) without configuration.
 
-This entity may not have "not-upgradable" flag set and must be minable. This entity mining result must not contain item product with "hidden" flag set. Mining results with no item products are allowed. This entity may not be a [RollingStockPrototype](prototype:RollingStockPrototype).
+This entity may not have "not-upgradable" flag set and must be minable. This entity mining result must not contain item product with [hidden](prototype:ItemPrototype::hidden) set to `true`. Mining results with no item products are allowed. This entity may not be a [RollingStockPrototype](prototype:RollingStockPrototype).
 
 The upgrade target entity needs to have the same bounding box, collision mask, and fast replaceable group as this entity. The upgrade target entity must have least 1 item that builds it that isn't hidden.
 

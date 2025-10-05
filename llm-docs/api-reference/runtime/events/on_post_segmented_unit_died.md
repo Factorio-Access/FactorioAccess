@@ -42,19 +42,19 @@ Information about each of the unit's individual segments when it died.
 
 ### surface_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The surface the entity was on.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 
 ### unit_number
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The unit number of the unit that died.
 

@@ -22,7 +22,7 @@ Defaults to `false`.
 
 ### index
 
-If index is not given, the record is appended.
+If record position is not given, the record is appended.
 
 **Type:** `ScheduleRecordPosition`
 

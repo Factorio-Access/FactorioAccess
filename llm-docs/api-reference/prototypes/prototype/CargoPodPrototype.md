@@ -51,3 +51,9 @@ Has to be of type 'pod-catalogue'.
 
 **Required:** Yes
 
+### impact_trigger
+
+**Type:** `Trigger`
+
+**Optional:** Yes
+

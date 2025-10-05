@@ -85,7 +85,7 @@ Loaded and drawn with all `pictures`, `picture` and `animations`. If graphics va
 
 ### stateless_visualisation_variations
 
-**Type:** Array[`StatelessVisualisations`]
+**Type:** Array[`StatelessVisualisation` | Array[`StatelessVisualisation`]]
 
 **Optional:** Yes
 

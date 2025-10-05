@@ -1,6 +1,6 @@
 # behavior_result
 
-AI command exit status. See [LuaEntity::set_command](runtime:LuaEntity::set_command)
+AI command exit status, see [LuaCommandable::set_command](runtime:LuaCommandable::set_command)
 
 ## Values
 

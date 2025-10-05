@@ -14,17 +14,21 @@ The owner of this schedule.
 
 ### interrupt_count
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### current
 
-**Read type:** `uint`
+The schedule index of the current destination.
+
+**Read type:** `uint32`
 
 ### tick_of_last_schedule_change
 
 **Read type:** `MapTick`
 
 ### tick_of_last_activity
+
+The time when the train or space platform was last considered active for the inactivity condition.
 
 Note: when writing, value must not be larger than LuaGameScript::tick
 
@@ -33,6 +37,8 @@ Note: when writing, value must not be larger than LuaGameScript::tick
 **Write type:** `MapTick`
 
 ### ticks_in_station
+
+How long this train or space platform has been in the current station.
 
 **Read type:** `MapTick`
 
@@ -66,8 +72,8 @@ Adds the given wait condition to the given record.
 
 **Parameters:**
 
-- `condition_index` `uint`
-- `record_index` `ScheduleRecordPosition`
+- `condition_index` `uint32`
+- `record_position` `ScheduleRecordPosition`
 - `type` `WaitConditionType`
 
 ### remove_wait_condition
@@ -76,8 +82,8 @@ Removes the given wait condition from the given record.
 
 **Parameters:**
 
-- `condition_index` `uint`
-- `record_index` `ScheduleRecordPosition`
+- `condition_index` `uint32`
+- `record_position` `ScheduleRecordPosition`
 
 ### set_wait_condition_mode
 
@@ -85,9 +91,9 @@ Sets the comparison on the given wait condition.
 
 **Parameters:**
 
-- `condition_index` `uint`
+- `condition_index` `uint32`
 - `mode` `string` - `"and"`, or `"or"`
-- `record_index` `ScheduleRecordPosition`
+- `record_position` `ScheduleRecordPosition`
 
 ### change_wait_condition
 
@@ -95,8 +101,8 @@ Changes the wait condition on the given record to the new values.
 
 **Parameters:**
 
-- `condition_index` `uint`
-- `record_index` `ScheduleRecordPosition`
+- `condition_index` `uint32`
+- `record_position` `ScheduleRecordPosition`
 - `wait_condition` `WaitCondition`
 
 ### add_record
@@ -109,15 +115,15 @@ Adds the given record to the end of the current schedule or at the given index u
 
 **Returns:**
 
-- `uint` *(optional)* - The index the record was added at.
+- `uint32` *(optional)* - The index the record was added at.
 
 ### remove_record
 
-Removes the record at the given index, if the index is valid.
+Removes the record at the given record position, if the record position is valid.
 
 **Parameters:**
 
-- `index` `ScheduleRecordPosition`
+- `record_position` `ScheduleRecordPosition`
 
 ### copy_record
 
@@ -125,8 +131,8 @@ Copies the record from the given schedule at the given index into this schedule 
 
 **Parameters:**
 
-- `destination_index` `uint`
-- `source_index` `uint`
+- `destination_index` `uint32`
+- `source_index` `uint32`
 - `source_schedule` `LuaSchedule`
 
 ### add_interrupt
@@ -143,7 +149,7 @@ Removes the interrupt at the given index, if the index is valid.
 
 **Parameters:**
 
-- `index` `uint`
+- `index` `uint32`
 
 ### activate_interrupt
 
@@ -151,7 +157,7 @@ Activates the interrupt at the given index, if the index is valid.
 
 **Parameters:**
 
-- `index` `uint`
+- `index` `uint32`
 
 ### change_interrupt
 
@@ -159,7 +165,7 @@ Changes the interrupt at the given index to the provided values. Note, the names
 
 **Parameters:**
 
-- `index` `uint`
+- `index` `uint32`
 - `interrupt` `ScheduleInterrupt`
 
 ### rename_interrupt
@@ -171,11 +177,15 @@ Changes the interrupt at the given index to the provided values. Note, the names
 
 ### go_to_station
 
+Sets the train or space platform to go to a destination, including changing the train/space platform to automatic mode.
+
 **Parameters:**
 
-- `schedule_index` `uint` - The schedule index
+- `schedule_index` `uint32` - The schedule index
 
 ### set_stopped
+
+Sets whether this train is in [manual mode](runtime:LuaTrain::manual_mode) or this space platform is [paused](runtime:LuaSpacePlatform::paused).
 
 **Parameters:**
 
@@ -183,41 +193,41 @@ Changes the interrupt at the given index to the provided values. Note, the names
 
 ### set_allow_unloading
 
-Sets if unloading is allowed at the given schedule index.
+Sets if unloading is allowed at the given schedule record position. Only relevant for space platforms.
 
 **Parameters:**
 
 - `allow` `boolean`
-- `index` `ScheduleRecordPosition`
+- `record_position` `ScheduleRecordPosition`
 
 ### drag_record
 
 **Parameters:**
 
-- `from` `uint`
-- `interrupt_index` `uint` *(optional)* - The interrupt to operate on, if any.
-- `to` `uint`
+- `from` `uint32`
+- `interrupt_index` `uint32` *(optional)* - The interrupt to operate on, if any.
+- `to` `uint32`
 
 ### drag_interrupt
 
 **Parameters:**
 
-- `from` `uint`
-- `to` `uint`
+- `from` `uint32`
+- `to` `uint32`
 
 ### drag_wait_condition
 
 **Parameters:**
 
-- `from` `uint`
-- `index` `ScheduleRecordPosition` - The record to change.
-- `to` `uint`
+- `from` `uint32`
+- `record_position` `ScheduleRecordPosition` - The record to change.
+- `to` `uint32`
 
 ### get_record
 
 **Parameters:**
 
-- `index` `ScheduleRecordPosition`
+- `record_position` `ScheduleRecordPosition`
 
 **Returns:**
 
@@ -227,7 +237,7 @@ Sets if unloading is allowed at the given schedule index.
 
 **Parameters:**
 
-- `interrupt_index` `uint` *(optional)* - If provided, gets the records for this interrupt.
+- `interrupt_index` `uint32` *(optional)* - If provided, gets the records for this interrupt.
 
 **Returns:**
 
@@ -237,20 +247,20 @@ Sets if unloading is allowed at the given schedule index.
 
 **Parameters:**
 
-- `interrupt_index` `uint` *(optional)* - If provided, the records will be set on this interrupt.
+- `interrupt_index` `uint32` *(optional)* - If provided, the records will be set on this interrupt.
 - `records` Array[`ScheduleRecord`]
 
 ### clear_records
 
 **Parameters:**
 
-- `interrupt_index` `uint` *(optional)* - If provided, clears the records for this interrupt.
+- `interrupt_index` `uint32` *(optional)* - If provided, clears the records for this interrupt.
 
 ### get_interrupt
 
 **Parameters:**
 
-- `index` `uint`
+- `index` `uint32`
 
 **Returns:**
 
@@ -274,12 +284,12 @@ Removes all interrupts.
 
 ### get_wait_condition
 
-Gets the wait condition at the given index if one exists.
+Gets the wait condition at the given record position if one exists.
 
 **Parameters:**
 
-- `condition_index` `uint`
-- `schedule_index` `ScheduleRecordPosition`
+- `condition_index` `uint32`
+- `record_position` `ScheduleRecordPosition`
 
 **Returns:**
 
@@ -287,11 +297,11 @@ Gets the wait condition at the given index if one exists.
 
 ### get_wait_conditions
 
-Gets the wait conditions at the given index if they exist.
+Gets the wait conditions at the given record position if they exist.
 
 **Parameters:**
 
-- `schedule_index` `ScheduleRecordPosition`
+- `record_position` `ScheduleRecordPosition`
 
 **Returns:**
 
@@ -303,11 +313,11 @@ The number of wait conditions in the given schedule record.
 
 **Parameters:**
 
-- `index` `ScheduleRecordPosition`
+- `record_position` `ScheduleRecordPosition`
 
 **Returns:**
 
-- `uint` *(optional)*
+- `uint32` *(optional)*
 
 ### get_inside_interrupt
 
@@ -315,7 +325,7 @@ Gets if the given interrupt can be triggered inside other interrupts.
 
 **Parameters:**
 
-- `interrupt_index` `uint`
+- `interrupt_index` `uint32`
 
 **Returns:**
 
@@ -327,7 +337,7 @@ Sets if the given interrupt can be triggered inside other interrupts.
 
 **Parameters:**
 
-- `interrupt_index` `uint`
+- `interrupt_index` `uint32`
 - `value` `boolean`
 
 ### get_record_count
@@ -336,9 +346,9 @@ If the given index is invalid, `nil` is returned.
 
 **Parameters:**
 
-- `interrupt_index` `uint` *(optional)* - If provided, the record count in this interrupt is read.
+- `interrupt_index` `uint32` *(optional)* - If provided, the record count in this interrupt is read.
 
 **Returns:**
 
-- `uint` *(optional)*
+- `uint32` *(optional)*
 

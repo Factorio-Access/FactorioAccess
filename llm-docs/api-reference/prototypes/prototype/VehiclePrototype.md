@@ -123,6 +123,8 @@ Name of a [DeliverCategory](prototype:DeliverCategory).
 
 ### chunk_exploration_radius
 
+In chunks. The radius of the radar range of the vehicle, so how many chunks it charts around itself.
+
 **Type:** `uint32`
 
 **Optional:** Yes

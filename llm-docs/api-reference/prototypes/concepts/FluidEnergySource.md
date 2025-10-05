@@ -44,7 +44,7 @@ All standard fluid box configurations are acceptable, but the type must be `"inp
 
 ### burns_fluid
 
-If set to `true`, the energy source will calculate power based on the fluid's `fuel_value`, else it will calculate based on fluid temperature.
+If set to `true`, the available power output is based on the [FluidPrototype::fuel_value](prototype:FluidPrototype::fuel_value). Otherwise, the available power output will be based on the fluid temperature and [FluidPrototype::heat_capacity](prototype:FluidPrototype::heat_capacity): `energy = fluid_amount * (fluid_temperature - fluid_default_temperature) * fluid_heat_capacity * effectivity`
 
 **Type:** `boolean`
 

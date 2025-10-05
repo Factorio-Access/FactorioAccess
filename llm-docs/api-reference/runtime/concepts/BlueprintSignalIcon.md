@@ -8,7 +8,7 @@
 
 Index of the icon in the blueprint icons slots. An integer in the range [1, 4].
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

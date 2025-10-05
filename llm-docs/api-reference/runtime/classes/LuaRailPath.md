@@ -8,13 +8,13 @@ A rail path.
 
 The total number of rails in this path.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### current
 
 The current rail index.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### total_distance
 
@@ -32,7 +32,7 @@ The total distance traveled.
 
 Array of the rails that this path travels over.
 
-**Read type:** LuaCustomTable[`uint`, `LuaEntity`]
+**Read type:** LuaCustomTable[`uint32`, `LuaEntity`]
 
 ### is_front
 

@@ -20,13 +20,13 @@ The mod that owns this setting.
 
 The default value of this setting.
 
-**Read type:** `boolean` | `double` | `int` | `string` | `Color`
+**Read type:** `boolean` | `double` | `int32` | `string` | `Color`
 
 ### minimum_value
 
 The minimum value for this setting. `nil` if this setting type doesn't support a minimum.
 
-**Read type:** `double` | `int`
+**Read type:** `double` | `int32`
 
 **Optional:** Yes
 
@@ -34,7 +34,7 @@ The minimum value for this setting. `nil` if this setting type doesn't support a
 
 The maximum value for this setting. `nil` if this setting type doesn't support a maximum.
 
-**Read type:** `double` | `int`
+**Read type:** `double` | `int32`
 
 **Optional:** Yes
 
@@ -42,7 +42,7 @@ The maximum value for this setting. `nil` if this setting type doesn't support a
 
 The allowed values for this setting. `nil` if this setting doesn't use the a fixed set of values.
 
-**Read type:** Array[`string`] | Array[`int`] | Array[`double`]
+**Read type:** Array[`string`] | Array[`int32`] | Array[`double`]
 
 **Optional:** Yes
 

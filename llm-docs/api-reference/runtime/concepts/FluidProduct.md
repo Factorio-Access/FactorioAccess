@@ -30,7 +30,7 @@ Minimal amount of the fluid to give. Not returned if `amount` is returned.
 
 ### fluidbox_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Optional:** Yes
 

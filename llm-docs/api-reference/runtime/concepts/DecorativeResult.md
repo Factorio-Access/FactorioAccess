@@ -6,7 +6,7 @@
 
 ### amount
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

@@ -16,7 +16,7 @@ The color of the prototype
 
 Level basically specifies the stat-increasing value of this quality level.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### next
 
@@ -120,11 +120,11 @@ The probability multiplier of getting the next level of quality.
 
 ### logistic_cell_charging_station_count_bonus
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### asteroid_collector_collection_radius_bonus
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### beacon_module_slots_bonus
 

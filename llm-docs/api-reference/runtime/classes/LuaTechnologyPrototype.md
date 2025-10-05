@@ -68,7 +68,7 @@ The number of research units required for this technology.
 
 This is multiplied by the current research cost multiplier, unless [LuaTechnologyPrototype::ignore_tech_cost_multiplier](runtime:LuaTechnologyPrototype::ignore_tech_cost_multiplier) is `true`.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### research_unit_energy
 
@@ -80,13 +80,13 @@ Amount of energy required to finish a unit of research.
 
 The level of this research.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### max_level
 
 The max level of this research.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### research_unit_count_formula
 

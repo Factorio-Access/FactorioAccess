@@ -18,13 +18,13 @@ Identifier of the event
 
 ### player_index
 
-**Type:** `uint` *(optional)*
+**Type:** `uint32` *(optional)*
 
 The player who did the re-arranging if any.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

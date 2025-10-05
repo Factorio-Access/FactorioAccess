@@ -32,7 +32,7 @@ Create a line.
 - `players` Array[`PlayerIdentification`] *(optional)* - The players that this object is rendered to. Passing `nil` or an empty table will render it to all players.
 - `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 - `surface` `SurfaceIdentification`
-- `time_to_live` `uint` *(optional)* - In ticks. Defaults to living forever.
+- `time_to_live` `uint32` *(optional)* - In ticks. Defaults to living forever.
 - `to` `ScriptRenderTarget`
 - `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
 - `width` `float` - In pixels (32 per tile).
@@ -76,7 +76,7 @@ Not all fonts support scaling.
 - `surface` `SurfaceIdentification`
 - `target` `ScriptRenderTarget`
 - `text` `LocalisedString` - The text to display.
-- `time_to_live` `uint` *(optional)* - In ticks. Defaults to living forever.
+- `time_to_live` `uint32` *(optional)* - In ticks. Defaults to living forever.
 - `use_rich_text` `boolean` *(optional)* - If rich text rendering is enabled. Defaults to false.
 - `vertical_alignment` `VerticalTextAlign` *(optional)* - Defaults to "top".
 - `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
@@ -102,7 +102,7 @@ Create a circle.
 - `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 - `surface` `SurfaceIdentification`
 - `target` `ScriptRenderTarget`
-- `time_to_live` `uint` *(optional)* - In ticks. Defaults to living forever.
+- `time_to_live` `uint32` *(optional)* - In ticks. Defaults to living forever.
 - `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
 - `width` `float` *(optional)* - Width of the outline, used only if filled = false. Value is in pixels (32 per tile). Defaults to 1.
 
@@ -127,7 +127,7 @@ Create a rectangle.
 - `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 - `right_bottom` `ScriptRenderTarget`
 - `surface` `SurfaceIdentification`
-- `time_to_live` `uint` *(optional)* - In ticks. Defaults to living forever.
+- `time_to_live` `uint32` *(optional)* - In ticks. Defaults to living forever.
 - `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
 - `width` `float` *(optional)* - Width of the outline, used only if filled = false. Value is in pixels (32 per tile). Defaults to 1.
 
@@ -161,7 +161,7 @@ Create an arc.
 - `start_angle` `float` - Where the arc starts, in radian.
 - `surface` `SurfaceIdentification`
 - `target` `ScriptRenderTarget`
-- `time_to_live` `uint` *(optional)* - In ticks. Defaults to living forever.
+- `time_to_live` `uint32` *(optional)* - In ticks. Defaults to living forever.
 - `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
 
 **Returns:**
@@ -185,7 +185,7 @@ Create a triangle mesh defined by a triangle strip.
 - `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 - `surface` `SurfaceIdentification`
 - `target` `ScriptRenderTarget` *(optional)* - Acts like an offset applied to all vertices that are not set to an entity.
-- `time_to_live` `uint` *(optional)* - In ticks. Defaults to living forever.
+- `time_to_live` `uint32` *(optional)* - In ticks. Defaults to living forever.
 - `use_target_orientation` `boolean` *(optional)* - Only used if `orientation_target` is a LuaEntity.
 - `vertices` Array[`ScriptRenderTarget`]
 - `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
@@ -208,10 +208,11 @@ Create a sprite.
 - `oriented_offset` `Vector` *(optional)* - Offsets the center of the sprite if `orientation_target` is given. This offset will rotate together with the sprite.
 - `players` Array[`PlayerIdentification`] *(optional)* - The players that this object is rendered to. Passing `nil` or an empty table will render it to all players.
 - `render_layer` `RenderLayer` *(optional)* - Render layer of the sprite. Defaults to `"arrow"`.
+- `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 - `sprite` `SpritePath`
 - `surface` `SurfaceIdentification`
 - `target` `ScriptRenderTarget` - Center of the sprite.
-- `time_to_live` `uint` *(optional)* - In ticks. Defaults to living forever.
+- `time_to_live` `uint32` *(optional)* - In ticks. Defaults to living forever.
 - `tint` `Color` *(optional)*
 - `use_target_orientation` `boolean` *(optional)* - Only used if `orientation_target` is a LuaEntity.
 - `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
@@ -232,7 +233,6 @@ rendering.draw_sprite{sprite = "item.iron-plate", target = game.player.character
 ```
 -- This will draw an iron plate icon at the character's head. The sprite will move together with the character.
 rendering.draw_sprite{sprite = "item.iron-plate", target = {entity = game.player.character, offset = {0, -2}}, surface = game.player.surface}
-$field(render_mode, ScriptRenderMode, $optional) Mode which this object should render in. Defaults to "game".
 ```
 
 ### draw_light
@@ -257,7 +257,7 @@ The base game uses the utility sprites `light_medium` and `light_small` for ligh
 - `sprite` `SpritePath`
 - `surface` `SurfaceIdentification`
 - `target` `ScriptRenderTarget` - Center of the light.
-- `time_to_live` `uint` *(optional)* - In ticks. Defaults to living forever.
+- `time_to_live` `uint32` *(optional)* - In ticks. Defaults to living forever.
 - `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
 
 **Returns:**
@@ -284,7 +284,7 @@ Create an animation.
 - `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 - `surface` `SurfaceIdentification`
 - `target` `ScriptRenderTarget` - Center of the animation.
-- `time_to_live` `uint` *(optional)* - In ticks. Defaults to living forever.
+- `time_to_live` `uint32` *(optional)* - In ticks. Defaults to living forever.
 - `tint` `Color` *(optional)*
 - `use_target_orientation` `boolean` *(optional)* - Only used if `orientation_target` is a LuaEntity.
 - `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.

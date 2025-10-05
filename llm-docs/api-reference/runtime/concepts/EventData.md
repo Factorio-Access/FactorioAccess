@@ -26,7 +26,7 @@ The identifier of the event this handler was registered to.
 
 The tick during which the event happened.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

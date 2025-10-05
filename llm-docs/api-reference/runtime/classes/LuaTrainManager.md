@@ -26,7 +26,7 @@ Searches for a train with given ID.
 
 **Parameters:**
 
-- `train_id` `uint` - Train ID to search
+- `train_id` `uint32` - Train ID to search
 
 **Returns:**
 
@@ -68,7 +68,7 @@ Direct access to train pathfinder. Allows to search rail paths or querying which
 - `search_direction` `"respect-movement-direction"` | `"any-direction-with-locomotives"` *(optional)* - Only relevant if `starts` was not provided in which case 2 starts (front and back) are deduced from the train. Selects which train ends should be considered as starts. Defaults to `"any-direction-with-locomotives"`.
 - `shortest_path` `boolean` *(optional)* - Defaults to `false`. If set to true, only length of rails is added to penalties causing search to look for shortest path (not smallest penalty)
 - `starts` Array[`RailEndStart`] *(optional)* - Manually provided starting positions.
-- `steps_limit` `uint` *(optional)* - Maximum amount of steps pathfinder is allowed to perform.
+- `steps_limit` `uint32` *(optional)* - Maximum amount of steps pathfinder is allowed to perform.
 - `train` `LuaTrain` *(optional)* - Mandatory if `starts` is not provided, optional otherwise. Selects a context for the pathfinder to decide which train to exclude from penalties and which signals are considered possible to reacquire. If `starts` is not provided, then it is also used to collect front and back ends for the search
 - `type` `TrainPathRequestType` *(optional)* - Request type. Determines the return type of the method. Defaults to `"path"`.
 

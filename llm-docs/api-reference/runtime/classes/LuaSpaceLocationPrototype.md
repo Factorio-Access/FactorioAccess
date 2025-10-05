@@ -34,7 +34,7 @@ An alternative prototype that will be used to display info about this prototype 
 
 ### map_seed_offset
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -74,7 +74,7 @@ An alternative prototype that will be used to display info about this prototype 
 
 ### ticks_between_player_effects
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 

@@ -1,5 +1,7 @@
 # NothingModifier
 
+Modifier that does nothing. Can be used to show custom scripted effects in the technology GUI.
+
 **Type:** `Struct`
 
 ## Properties

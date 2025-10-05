@@ -34,7 +34,7 @@ Control prototype name.
 
 ### placement_density
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

@@ -20,7 +20,7 @@ Whether this resource is infinite.
 
 Minimum amount of this resource.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -30,7 +30,7 @@ Minimum amount of this resource.
 
 The normal amount for this resource.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -40,7 +40,7 @@ The normal amount for this resource.
 
 Every time this infinite resource 'ticks' down, it is reduced by this amount. Meaningless if this isn't an infinite resource.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -158,7 +158,7 @@ Is this entity selectable?
 
 The selection priority of this entity - a value between `0` and `255`.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### weight
 
@@ -234,7 +234,7 @@ Repair-speed modifier for this entity, if any. Actual repair speed will be `tool
 
 The range of this turret.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -488,7 +488,7 @@ The instruments for this programmable speaker.
 
 The maximum polyphony for this programmable speaker.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -498,7 +498,7 @@ The maximum polyphony for this programmable speaker.
 
 The module inventory size. `nil` if this entity doesn't support modules.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -544,7 +544,7 @@ Properties of custom inventory. Only provided if inventory_type is `"with_custom
 
 The max number of ingredients this crafting machine prototype supports.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -554,7 +554,7 @@ The max number of ingredients this crafting machine prototype supports.
 
 The max number of item products this crafting machine prototype supports.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -600,7 +600,7 @@ The effectivity of this car prototype, generator prototype.
 
 **Optional:** Yes
 
-**Subclasses:** Car, Generator
+**Subclasses:** Car, Generator, FusionGenerator
 
 ### consumption
 
@@ -722,9 +722,19 @@ The speed multiplier when this flying robot is out of energy.
 
 ### max_payload_size
 
-The max payload size of this logistics or construction robot.
+The cargo carrying capacity of this logistics or construction robot.
 
-**Read type:** `uint`
+**Read type:** `uint32`
+
+**Optional:** Yes
+
+**Subclasses:** RobotWithLogisticsInterface
+
+### max_payload_size_after_bonus
+
+The maximum possible cargo carrying capacity of this logistics or construction robot. Bonuses from technologies/forces can't increase the carrying capacity beyond this number.
+
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -832,7 +842,7 @@ The heat buffer prototype this entity uses, if any.
 
 The log2 of [grid size](prototype:EntityPrototype::build_grid_size) of the building.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### fluid_usage_per_tick
 
@@ -862,7 +872,7 @@ Whether this generator prototype burns fluid.
 
 **Optional:** Yes
 
-**Subclasses:** Generator
+**Subclasses:** Generator, FusionGenerator
 
 ### scale_fluid_usage
 
@@ -1088,7 +1098,7 @@ If this simple-entity is counted as a rock for the deconstruction planner "trees
 
 The filter count of this inserter, loader, mining drill or logistic chest. For logistic containers, `nil` means no limit.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -1098,7 +1108,7 @@ The filter count of this inserter, loader, mining drill or logistic chest. For l
 
 The time to live for this prototype or `0` if prototype doesn't have time_to_live or time_before_removed.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### distribution_effectivity
 
@@ -1236,7 +1246,7 @@ The allowed module categories for this entity, if any.
 
 The rocket parts required for this rocket silo prototype.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -1392,7 +1402,7 @@ Name of the ammo category of this land mine.
 
 The time it takes this land mine to arm.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -1462,7 +1472,7 @@ The fluidbox prototypes for this entity.
 
 The amount of ammo that inserters automatically insert into this ammo-turret or artillery-turret.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -1598,7 +1608,7 @@ What spaces should be between the spawned units.
 
 ### radius
 
-The radius of this entity prototype.
+The radius of this entity prototype. The radius is defined as half the distance between the top left corner and bottom right corner of the collision box.
 
 **Read type:** `double`
 
@@ -1656,7 +1666,7 @@ A table of pollutions amounts that has to be absorbed by the unit's spawner befo
 
 The minimum pursue time of this unit prototype.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -1676,7 +1686,7 @@ The maximum pursue distance of this unit prototype.
 
 The radar range of this unit prototype.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -1716,7 +1726,7 @@ Whether this unit prototype is affected by tile walking speed modifiers.
 
 The distraction cooldown of this unit prototype.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -1834,7 +1844,7 @@ Whether this entity should remove decoratives that collide with it when this ent
 
 The built-in stack size bonus of this inserter prototype.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -1932,6 +1942,14 @@ The chain shooting cooldown modifier of this spider vehicle prototype.
 
 **Subclasses:** SpiderVehicle
 
+### spider_engine
+
+**Read type:** `SpiderEngineSpecification`
+
+**Optional:** Yes
+
+**Subclasses:** SpiderVehicle, SpiderUnit
+
 ### chunk_exploration_radius
 
 The chunk exploration radius of this vehicle prototype.
@@ -2016,13 +2034,13 @@ Whether this logistic container prototype uses exact mode
 
 Specifies the tiling size of the entity, is used to decide, if the center should be in the center of the tile (odd tile size dimension) or on the tile border (even tile size dimension)
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### tile_height
 
 Specifies the tiling size of the entity, is used to decide, if the center should be in the center of the tile (odd tile size dimension) or on the tile border (even tile size dimension)
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### vertical_selection_shift
 
@@ -2074,7 +2092,7 @@ Vertical selection shift used by rolling stocks. It affects selection box vertic
 
 ### growth_ticks
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -2108,7 +2126,7 @@ A table of pollutants that this plant will release when it is harvested.
 
 ### growth_grid_tile_size
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -2294,9 +2312,17 @@ The tile buildability rules of this entity prototype.
 
 **Optional:** Yes
 
+### support_range
+
+**Read type:** `float`
+
+**Optional:** Yes
+
+**Subclasses:** RailSupport, RailRamp
+
 ### territory_radius
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -2372,7 +2398,7 @@ The tile buildability rules of this entity prototype.
 
 ### ticks_per_scan
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -2406,7 +2432,7 @@ The movement speed of this character prototype.
 
 ### build_distance
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -2414,7 +2440,7 @@ The movement speed of this character prototype.
 
 ### drop_item_distance
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -2422,7 +2448,7 @@ The movement speed of this character prototype.
 
 ### reach_distance
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -2462,7 +2488,7 @@ The movement speed of this character prototype.
 
 ### ticks_to_keep_gun
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -2470,7 +2496,7 @@ The movement speed of this character prototype.
 
 ### ticks_to_keep_aiming_direction
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -2478,7 +2504,7 @@ The movement speed of this character prototype.
 
 ### ticks_to_stay_in_combat
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -2486,7 +2512,7 @@ The movement speed of this character prototype.
 
 ### respawn_time
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -2510,7 +2536,7 @@ The movement speed of this character prototype.
 
 ### arm_inventory_size_quality_increase
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -2518,7 +2544,7 @@ The movement speed of this character prototype.
 
 ### inventory_size_quality_increase
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -2558,7 +2584,7 @@ The movement speed of this character prototype.
 
 ### arm_count_base
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -2566,7 +2592,7 @@ The movement speed of this character prototype.
 
 ### arm_count_quality_scaling
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -2646,7 +2672,7 @@ The movement speed of this character prototype.
 
 ### minimal_arm_swing_segment_retraction
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -2683,6 +2709,104 @@ The movement speed of this character prototype.
 **Optional:** Yes
 
 **Subclasses:** AsteroidCollector
+
+### fluid_buffer_size
+
+**Read type:** `FluidAmount`
+
+**Optional:** Yes
+
+**Subclasses:** FluidTurret
+
+### activation_buffer_ratio
+
+**Read type:** `FluidAmount`
+
+**Optional:** Yes
+
+**Subclasses:** FluidTurret
+
+### fluid_buffer_input_flow
+
+**Read type:** `FluidAmount`
+
+**Optional:** Yes
+
+**Subclasses:** FluidTurret
+
+### range_from_player
+
+**Read type:** `double`
+
+**Optional:** Yes
+
+**Subclasses:** CombatRobot
+
+### combat_robot_friction
+
+**Read type:** `double`
+
+**Optional:** Yes
+
+**Subclasses:** CombatRobot
+
+### destroy_action
+
+**Read type:** Array[`TriggerItem`]
+
+**Optional:** Yes
+
+**Subclasses:** CombatRobot
+
+### follows_player
+
+**Read type:** `boolean`
+
+**Optional:** Yes
+
+**Subclasses:** CombatRobot
+
+### strike_effect
+
+**Read type:** Array[`TriggerItem`]
+
+**Optional:** Yes
+
+**Subclasses:** Lightning
+
+### attractor_hit_effect
+
+**Read type:** Array[`TriggerItem`]
+
+**Optional:** Yes
+
+**Subclasses:** Lightning
+
+### damage
+
+When lightning strikes something that is not a lightning attractor, this damage is applied to the target.
+
+**Read type:** `double`
+
+**Optional:** Yes
+
+**Subclasses:** Lightning
+
+### energy
+
+When lightning hits a lightning attractor this amount of energy is transferred to the lightning attractor.
+
+**Read type:** `double`
+
+**Optional:** Yes
+
+**Subclasses:** Lightning
+
+### connection_category
+
+**Read type:** Array[`string`]
+
+**Subclasses:** FluidWagon
 
 ### valid
 
@@ -2721,7 +2845,7 @@ Gets the base size of the given inventory on this entity or `nil` if the given i
 
 **Returns:**
 
-- `uint` *(optional)*
+- `uint32` *(optional)*
 
 ### get_crafting_speed
 
@@ -2853,7 +2977,7 @@ The radius of the area this radar can chart, in chunks.
 
 **Returns:**
 
-- `uint` *(optional)*
+- `uint32` *(optional)*
 
 ### get_max_distance_of_nearby_sector_revealed
 
@@ -2865,7 +2989,7 @@ The radius of the area constantly revealed by this radar, or cargo landing pad, 
 
 **Returns:**
 
-- `uint` *(optional)*
+- `uint32` *(optional)*
 
 ### get_max_health
 
@@ -2952,4 +3076,24 @@ Crafting machines will report 0 due to their fluid capacity being whatever a giv
 **Returns:**
 
 - `double`
+
+### get_attraction_range_elongation
+
+**Parameters:**
+
+- `quality` `QualityID` *(optional)*
+
+**Returns:**
+
+- `double` *(optional)*
+
+### get_energy_distribution_efficiency
+
+**Parameters:**
+
+- `quality` `QualityID` *(optional)*
+
+**Returns:**
+
+- `double` *(optional)*
 

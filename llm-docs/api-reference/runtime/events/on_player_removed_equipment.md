@@ -6,7 +6,7 @@ Called after the player removes equipment from an equipment grid
 
 ### count
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The count of equipment removed.
 
@@ -30,7 +30,7 @@ Identifier of the event
 
 ### player_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 ### quality
 
@@ -40,7 +40,7 @@ The equipment quality.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

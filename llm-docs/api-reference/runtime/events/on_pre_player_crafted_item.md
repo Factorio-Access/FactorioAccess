@@ -18,13 +18,13 @@ Identifier of the event
 
 ### player_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The player doing the crafting.
 
 ### queued_count
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The number of times the recipe is being queued.
 
@@ -36,7 +36,7 @@ The recipe being queued.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

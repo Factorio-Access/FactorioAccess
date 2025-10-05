@@ -8,7 +8,7 @@
 
 Number of available items in the active provider members.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -16,7 +16,7 @@ Number of available items in the active provider members.
 
 Number of available items in the buffer members.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -24,7 +24,7 @@ Number of available items in the buffer members.
 
 Number of available items in the passive provider members.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -32,7 +32,7 @@ Number of available items in the passive provider members.
 
 Number of available items in the storage members.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

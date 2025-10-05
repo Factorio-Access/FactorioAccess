@@ -6,9 +6,9 @@
 
 ### render_layer
 
-**Type:** `"entity-info-icon-below"` | `"entity-info-icon-above"` | `"air-entity-info-icon"`
+**Type:** `"entity-info-icon"` | `"entity-info-icon-above"` | `"air-entity-info-icon"`
 
-**Optional:** Yes
+**Required:** Yes
 
 ### scale
 

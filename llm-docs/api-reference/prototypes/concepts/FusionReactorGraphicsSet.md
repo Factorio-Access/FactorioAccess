@@ -74,3 +74,11 @@ Cannot be an empty string.
 
 **Required:** Yes
 
+### water_reflection
+
+Refer to [EntityPrototype::water_reflection](prototype:EntityPrototype::water_reflection).
+
+**Type:** `WaterReflectionDefinition`
+
+**Optional:** Yes
+

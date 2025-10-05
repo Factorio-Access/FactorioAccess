@@ -34,7 +34,7 @@ Only used if `type` is [surface](runtime:defines.cargo_destination.surface). Det
 
 Only used if `type` is [space_platform](runtime:defines.cargo_destination.space_platform). Only used for sending space platform starter packs to a platform that is waiting for a starter pack.
 
-**Type:** `SpacePlatformIdentification`
+**Type:** `LuaSpacePlatform`
 
 **Optional:** Yes
 

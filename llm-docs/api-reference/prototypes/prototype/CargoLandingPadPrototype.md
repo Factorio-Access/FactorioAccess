@@ -97,6 +97,8 @@ Played when a robot brings/takes items from this landing pad. Only loaded if `ro
 
 ### radar_range
 
+In chunks. The radius of how many chunks this cargo landing pad charts around itself.
+
 **Type:** `uint32`
 
 **Optional:** Yes

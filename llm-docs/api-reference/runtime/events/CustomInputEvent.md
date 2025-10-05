@@ -28,6 +28,12 @@ The mouse cursor position when the custom input was activated.
 
 The GUI element under the cursor when the custom input was activated.
 
+### in_gui
+
+**Type:** `boolean`
+
+If the cursor was over any GUI when the custom input was activated.
+
 ### input_name
 
 **Type:** `string`
@@ -42,7 +48,7 @@ Identifier of the event
 
 ### player_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The player that activated the custom input.
 
@@ -54,7 +60,7 @@ Information about the prototype that is selected when the custom input is used. 
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

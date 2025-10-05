@@ -26,9 +26,9 @@ Surface this object is rendered on.
 
 Time to live of this object. This will be 0 if the object does not expire.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### blink_interval
 

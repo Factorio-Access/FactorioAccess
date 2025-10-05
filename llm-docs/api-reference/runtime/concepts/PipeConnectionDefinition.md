@@ -32,7 +32,7 @@
 
 Only supplied if `connection_type` is `"linked"`.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Optional:** Yes
 
@@ -40,7 +40,7 @@ Only supplied if `connection_type` is `"linked"`.
 
 The maximum tile distance this underground connection can connect.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Optional:** Yes
 

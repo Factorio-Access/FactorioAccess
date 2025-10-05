@@ -12,7 +12,7 @@ Identifier of the event
 
 ### player_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Index of the player
 
@@ -30,7 +30,7 @@ Surface name contained in gps tag, even when such surface does not exists
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

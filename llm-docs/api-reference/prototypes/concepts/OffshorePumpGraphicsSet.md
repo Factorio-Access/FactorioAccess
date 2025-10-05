@@ -62,3 +62,11 @@ Drawn by tile renderer when water animation is enabled.
 
 **Optional:** Yes
 
+### water_reflection
+
+Refer to [EntityPrototype::water_reflection](prototype:EntityPrototype::water_reflection).
+
+**Type:** `WaterReflectionDefinition`
+
+**Optional:** Yes
+

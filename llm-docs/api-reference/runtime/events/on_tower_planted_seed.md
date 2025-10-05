@@ -24,7 +24,7 @@ The seed that was used.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

@@ -52,3 +52,11 @@ Must be larger than 0.
 
 **Default:** False
 
+### water_reflection
+
+Refer to [EntityPrototype::water_reflection](prototype:EntityPrototype::water_reflection).
+
+**Type:** `WaterReflectionDefinition`
+
+**Optional:** Yes
+

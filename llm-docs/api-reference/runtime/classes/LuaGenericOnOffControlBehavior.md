@@ -30,6 +30,8 @@ The circuit condition. Writing `nil` clears the circuit condition.
 
 **Write type:** `CircuitConditionDefinition`
 
+**Optional:** Yes
+
 ### connect_to_logistic_network
 
 `true` if this should connect to the logistic network.
@@ -45,4 +47,6 @@ The logistic condition. Writing `nil` clears the logistic condition.
 **Read type:** `CircuitConditionDefinition`
 
 **Write type:** `CircuitConditionDefinition`
+
+**Optional:** Yes
 

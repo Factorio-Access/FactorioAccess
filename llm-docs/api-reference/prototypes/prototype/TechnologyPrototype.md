@@ -214,3 +214,15 @@ List of effects of the technology (applied when the technology is researched).
 }
 ```
 
+### hidden
+
+Hides the technology from the tech screen.
+
+**Type:** `boolean`
+
+**Optional:** Yes
+
+**Default:** False
+
+**Overrides parent:** Yes
+

@@ -14,7 +14,7 @@ The comparator for quality. `nil` if any quality.
 
 ### count
 
-**Type:** `int`
+**Type:** `int32`
 
 **Required:** Yes
 

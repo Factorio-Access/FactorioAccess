@@ -24,7 +24,7 @@ Entity or unit group to pan the camera to.
 
 Time in ticks to wait before moving to the next waypoint.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -32,7 +32,7 @@ Time in ticks to wait before moving to the next waypoint.
 
 How many ticks it will take to reach this waypoint from the previous one.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

@@ -18,7 +18,7 @@ If a player won
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

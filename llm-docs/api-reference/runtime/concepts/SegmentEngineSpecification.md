@@ -10,7 +10,7 @@ A runtime representation of [SegmentEngineSpecification](prototype:SegmentEngine
 
 The maximum number of body nodes that a segmented unit instance can have.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

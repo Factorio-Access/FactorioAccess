@@ -14,7 +14,7 @@ All logistic sections of this entity.
 
 Amount of logistic sections this entity has.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### valid
 
@@ -48,7 +48,7 @@ Removes the given logistic section if possible. Removal may fail if the section 
 
 **Parameters:**
 
-- `section_index` `uint` - Index of the section.
+- `section_index` `uint32` - Index of the section.
 
 **Returns:**
 
@@ -60,7 +60,7 @@ Gets section on the selected index, if it exists.
 
 **Parameters:**
 
-- `section_index` `uint` - Index of the section.
+- `section_index` `uint32` - Index of the section.
 
 **Returns:**
 

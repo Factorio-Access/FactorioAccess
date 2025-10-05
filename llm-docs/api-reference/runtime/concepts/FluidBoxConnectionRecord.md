@@ -12,13 +12,13 @@
 
 ### other_linked_connection_id
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
 ### this_linked_connection_id
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

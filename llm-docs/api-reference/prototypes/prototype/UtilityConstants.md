@@ -1142,6 +1142,20 @@ Layer within `ground-natural` [tile render layer](prototype:TileRenderLayer) gro
 
 **Required:** Yes
 
+### quality_selector_dropdown_threshold
+
+**Type:** `uint8`
+
+**Required:** Yes
+
+### maximum_quality_jump
+
+Cap for how many steps of quality the output of something (miner/crafter) may be higher than the input (resource/ingredients). Must be >= 1.
+
+**Type:** `uint8`
+
+**Required:** Yes
+
 ### select_group_row_count
 
 Will be clamped to the range [1, 100].

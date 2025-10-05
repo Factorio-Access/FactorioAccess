@@ -72,13 +72,13 @@ Energy required to execute this recipe. This directly affects the crafting time:
 
 The multiplier used when this recipe is copied from an assembling machine to a requester chest. For each item in the recipe the item count * this value is set in the requester chest.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### overload_multiplier
 
 Used to determine how many extra items are put into an assembling machine before it's considered "full enough".
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### maximum_productivity
 

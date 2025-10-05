@@ -242,7 +242,7 @@ Array may be at most 32 elements.
 
 One of `nested_visualisations`, `animation` and `light` needs to be defined.
 
-**Type:** `StatelessVisualisations`
+**Type:** `StatelessVisualisation` | Array[`StatelessVisualisation`]
 
 **Optional:** Yes
 

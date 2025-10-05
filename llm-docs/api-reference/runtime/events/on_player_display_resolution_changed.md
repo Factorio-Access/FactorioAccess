@@ -18,13 +18,13 @@ The old display resolution
 
 ### player_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The player
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

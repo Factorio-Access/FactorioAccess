@@ -42,7 +42,7 @@ Gets the permission group with the given name or group ID.
 
 **Parameters:**
 
-- `group` `string` | `uint`
+- `group` `string` | `uint32`
 
 **Returns:**
 

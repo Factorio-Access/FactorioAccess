@@ -38,9 +38,9 @@ Type of the item prototype.
 
 Number of items in this stack.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### health
 
@@ -175,7 +175,7 @@ Transfers the given item stack into this item stack.
 
 **Parameters:**
 
-- `amount` `uint` *(optional)*
+- `amount` `uint32` *(optional)*
 - `stack` `ItemStackIdentification`
 
 **Returns:**
@@ -200,7 +200,7 @@ Import a supported item (blueprint, blueprint-book, deconstruction-planner, upgr
 
 **Returns:**
 
-- `int` - 0 if the import succeeded with no errors. -1 if the import succeeded with errors. 1 if the import failed.
+- `int32` - 0 if the import succeeded with no errors. -1 if the import succeeded with errors. 1 if the import failed.
 
 ### swap_stack
 

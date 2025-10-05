@@ -18,7 +18,7 @@ The packet data
 
 ### player_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The player index whose instance received this packet, or 0 if received on the server
 
@@ -30,7 +30,7 @@ The source port the packet was received from
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

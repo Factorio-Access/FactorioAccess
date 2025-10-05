@@ -8,7 +8,7 @@
 
 The value of the mod setting. The type depends on the kind of setting.
 
-**Type:** `int` | `double` | `boolean` | `string` | `Color`
+**Type:** `int32` | `double` | `boolean` | `string` | `Color`
 
 **Required:** Yes
 

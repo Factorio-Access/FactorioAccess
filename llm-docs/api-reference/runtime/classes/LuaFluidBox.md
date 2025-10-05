@@ -32,7 +32,7 @@ The prototype of this fluidbox index. If this is used on a fluidbox of a craftin
 
 **Parameters:**
 
-- `index` `uint`
+- `index` `uint32`
 
 **Returns:**
 
@@ -44,7 +44,7 @@ The capacity of the given fluidbox segment.
 
 **Parameters:**
 
-- `index` `uint`
+- `index` `uint32`
 
 **Returns:**
 
@@ -56,7 +56,7 @@ The fluidboxes to which the fluidbox at the given index is connected.
 
 **Parameters:**
 
-- `index` `uint`
+- `index` `uint32`
 
 **Returns:**
 
@@ -68,7 +68,7 @@ Get the fluid box's connections and associated data.
 
 **Parameters:**
 
-- `index` `uint`
+- `index` `uint32`
 
 **Returns:**
 
@@ -80,7 +80,7 @@ Get a fluid box filter
 
 **Parameters:**
 
-- `index` `uint` - The index of the filter to get.
+- `index` `uint32` - The index of the filter to get.
 
 **Returns:**
 
@@ -95,7 +95,7 @@ Some entities cannot have their fluidbox filter set, notably fluid wagons and cr
 **Parameters:**
 
 - `filter` `FluidBoxFilterSpec` | `nil` - The filter to set. Setting `nil` clears the filter.
-- `index` `uint` - The index of the filter to set.
+- `index` `uint32` - The index of the filter to set.
 
 **Returns:**
 
@@ -107,7 +107,7 @@ Returns the fluid the fluidbox is locked onto
 
 **Parameters:**
 
-- `index` `uint`
+- `index` `uint32`
 
 **Returns:**
 
@@ -119,11 +119,11 @@ Gets the unique ID of the fluid segment this fluid box belongs to. May return `n
 
 **Parameters:**
 
-- `index` `uint`
+- `index` `uint32`
 
 **Returns:**
 
-- `uint` *(optional)*
+- `uint32` *(optional)*
 
 ### get_fluid_segment_contents
 
@@ -133,11 +133,23 @@ Note that this method only ever returns one fluid, since fluids can't be mixed a
 
 **Parameters:**
 
-- `index` `uint`
+- `index` `uint32`
 
 **Returns:**
 
-- Dictionary[`string`, `uint`] *(optional)* - The counts, indexed by fluid name.
+- Dictionary[`string`, `uint32`] *(optional)* - The counts, indexed by fluid name.
+
+### get_fluid_segment_extent_bounding_box
+
+Gets the current extent bounding box of the fluid segment this fluid box belongs to. May return `nil` for fluid wagon, fluid turret's internal buffer, or a fluidbox which does not belong to a fluid segment.
+
+**Parameters:**
+
+- `index` `uint32`
+
+**Returns:**
+
+- `BoundingBox` *(optional)*
 
 ### flush
 
@@ -146,7 +158,7 @@ Flushes all fluid from this fluidbox and its fluid system.
 **Parameters:**
 
 - `fluid` `FluidID` *(optional)* - If provided, only this fluid is flushed.
-- `index` `uint`
+- `index` `uint32`
 
 **Returns:**
 
@@ -165,8 +177,8 @@ Linked connections cannot go to the same entity even if they would be part of ot
 **Parameters:**
 
 - `other_entity` `LuaEntity`
-- `other_linked_connection_id` `uint`
-- `this_linked_connection_id` `uint`
+- `other_linked_connection_id` `uint32`
+- `this_linked_connection_id` `uint32`
 
 ### remove_linked_connection
 
@@ -174,7 +186,7 @@ Removes linked connection record. If connected, other end will be also removed.
 
 **Parameters:**
 
-- `this_linked_connection_id` `uint`
+- `this_linked_connection_id` `uint32`
 
 ### get_linked_connection
 
@@ -182,12 +194,12 @@ Returns other end of a linked connection.
 
 **Parameters:**
 
-- `this_linked_connection_id` `uint`
+- `this_linked_connection_id` `uint32`
 
 **Returns:**
 
 - `LuaEntity` *(optional)* - Other entity to which a linked connection was made
-- `uint` *(optional)* - linked_connection_id on other entity
+- `uint32` *(optional)* - linked_connection_id on other entity
 
 ### get_linked_connections
 

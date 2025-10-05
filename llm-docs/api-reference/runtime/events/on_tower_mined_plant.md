@@ -28,7 +28,7 @@ The entity that has been mined.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

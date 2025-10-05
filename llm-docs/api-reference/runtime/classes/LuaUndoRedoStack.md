@@ -10,7 +10,7 @@ Items are added to the undo queue through player actions and Lua methods that em
 
 The index of the player to whom this stack belongs to.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### valid
 
@@ -32,7 +32,7 @@ Gets an undo item from the undo stack.
 
 **Parameters:**
 
-- `index` `uint` - The index of the undo item to get, ordered from most recent to oldest.
+- `index` `uint32` - The index of the undo item to get, ordered from most recent to oldest.
 
 **Returns:**
 
@@ -44,7 +44,7 @@ The number undo items in the undo stack.
 
 **Returns:**
 
-- `uint`
+- `uint32`
 
 ### remove_undo_item
 
@@ -52,7 +52,7 @@ Removes an undo item from the undo stack.
 
 **Parameters:**
 
-- `index` `uint` - The index of the undo item to remove, ordered from most recent to oldest.
+- `index` `uint32` - The index of the undo item to remove, ordered from most recent to oldest.
 
 ### remove_undo_action
 
@@ -60,8 +60,8 @@ Removes an undo action from the specified undo item on the undo stack.
 
 **Parameters:**
 
-- `action_index` `uint` - The index of the undo action to remove.
-- `item_index` `uint` - The index of the undo item to change, ordered from most recent to oldest.
+- `action_index` `uint32` - The index of the undo action to remove.
+- `item_index` `uint32` - The index of the undo item to change, ordered from most recent to oldest.
 
 ### get_redo_item
 
@@ -69,7 +69,7 @@ Gets an undo item from the redo stack.
 
 **Parameters:**
 
-- `index` `uint` - The index of the item to get, ordered from most recent to oldest.
+- `index` `uint32` - The index of the item to get, ordered from most recent to oldest.
 
 **Returns:**
 
@@ -81,7 +81,7 @@ The number of undo items in the redo stack.
 
 **Returns:**
 
-- `uint`
+- `uint32`
 
 ### remove_redo_item
 
@@ -89,7 +89,7 @@ Removes an undo item from the redo stack.
 
 **Parameters:**
 
-- `index` `uint` - The index of the undo item to remove, ordered from most recent to oldest.
+- `index` `uint32` - The index of the undo item to remove, ordered from most recent to oldest.
 
 ### remove_redo_action
 
@@ -97,8 +97,8 @@ Removes an undo action from the specified undo item on the redo stack.
 
 **Parameters:**
 
-- `action_index` `uint` - The index of the undo action to remove.
-- `item_index` `uint` - The index of the undo item to change, ordered from most recent to oldest.
+- `action_index` `uint32` - The index of the undo action to remove.
+- `item_index` `uint32` - The index of the undo item to change, ordered from most recent to oldest.
 
 ### get_undo_tags
 
@@ -106,8 +106,8 @@ Gets all tags for the given undo action.
 
 **Parameters:**
 
-- `action_index` `uint` - The index of the undo action.
-- `item_index` `uint` - The index of the undo item, ordered from most recent to oldest.
+- `action_index` `uint32` - The index of the undo action.
+- `item_index` `uint32` - The index of the undo item, ordered from most recent to oldest.
 
 **Returns:**
 
@@ -119,8 +119,8 @@ Gets the tag with the given name from a specific undo item action, or `nil` if i
 
 **Parameters:**
 
-- `action_index` `uint` - The index of the undo action.
-- `item_index` `uint` - The index of the undo item, ordered from most recent to oldest.
+- `action_index` `uint32` - The index of the undo action.
+- `item_index` `uint32` - The index of the undo item, ordered from most recent to oldest.
 - `tag_name` `string` - The name of the tag to get.
 
 **Returns:**
@@ -133,8 +133,8 @@ Sets a new tag with the given name and value on the specified undo item action.
 
 **Parameters:**
 
-- `action_index` `uint` - The index of the undo action.
-- `item_index` `uint` - The index of the undo item, ordered from most recent to oldest.
+- `action_index` `uint32` - The index of the undo action.
+- `item_index` `uint32` - The index of the undo item, ordered from most recent to oldest.
 - `tag` `AnyBasic` - The contents of the new tag.
 - `tag_name` `string` - The name of the tag to set.
 
@@ -144,8 +144,8 @@ Removes a tag with the given name from the specified undo item.
 
 **Parameters:**
 
-- `action_index` `uint` - The index of the undo action.
-- `item_index` `uint` - The index of the undo item, ordered from most recent to oldest.
+- `action_index` `uint32` - The index of the undo action.
+- `item_index` `uint32` - The index of the undo item, ordered from most recent to oldest.
 - `tag` `string` - The name of the tag to remove.
 
 **Returns:**
@@ -158,8 +158,8 @@ Gets all tags for the given redo action.
 
 **Parameters:**
 
-- `action_index` `uint` - The index of the redo action.
-- `item_index` `uint` - The index of the redo item, ordered from most recent to oldest.
+- `action_index` `uint32` - The index of the redo action.
+- `item_index` `uint32` - The index of the redo item, ordered from most recent to oldest.
 
 **Returns:**
 
@@ -171,8 +171,8 @@ Gets the tag with the given name from a specific redo item action, or `nil` if i
 
 **Parameters:**
 
-- `action_index` `uint` - The index of the redo action.
-- `item_index` `uint` - The index of the redo item, ordered from most recent to oldest.
+- `action_index` `uint32` - The index of the redo action.
+- `item_index` `uint32` - The index of the redo item, ordered from most recent to oldest.
 - `tag_name` `string` - The name of the tag to get.
 
 **Returns:**
@@ -185,8 +185,8 @@ Sets a new tag with the given name and value on the specified redo item action.
 
 **Parameters:**
 
-- `action_index` `uint` - The index of the redo action.
-- `item_index` `uint` - The index of the redo item, ordered from most recent to oldest.
+- `action_index` `uint32` - The index of the redo action.
+- `item_index` `uint32` - The index of the redo item, ordered from most recent to oldest.
 - `tag` `AnyBasic` - The contents of the new tag.
 - `tag_name` `string` - The name of the tag to set.
 
@@ -196,8 +196,8 @@ Removes a tag with the given name from the specified redo item.
 
 **Parameters:**
 
-- `action_index` `uint` - The index of the redo action.
-- `item_index` `uint` - The index of the redo item, ordered from most recent to oldest.
+- `action_index` `uint32` - The index of the redo action.
+- `item_index` `uint32` - The index of the redo item, ordered from most recent to oldest.
 - `tag` `string` - The name of the tag to remove.
 
 **Returns:**

@@ -56,7 +56,7 @@ Autoplace specification for this decorative prototype, if any.
 
 ### target_count
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### valid
 

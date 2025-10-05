@@ -12,7 +12,7 @@ Identifier of the event
 
 ### player_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 ### player_port
 
@@ -22,7 +22,7 @@ The player port used to respawn if one was used.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

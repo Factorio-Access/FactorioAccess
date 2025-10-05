@@ -104,3 +104,11 @@
 
 **Default:** "`{0.05, 0.05, 0.05, 1.0}`"
 
+### water_reflection
+
+Refer to [EntityPrototype::water_reflection](prototype:EntityPrototype::water_reflection).
+
+**Type:** `WaterReflectionDefinition`
+
+**Optional:** Yes
+

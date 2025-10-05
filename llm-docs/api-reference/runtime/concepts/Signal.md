@@ -10,7 +10,7 @@ An actual signal transmitted by the network.
 
 Value of the signal.
 
-**Type:** `int`
+**Type:** `int32`
 
 **Required:** Yes
 

@@ -28,7 +28,7 @@ Seeds that are close together will produce similar results. Seeds from 0 to 341 
 
 **Parameters:**
 
-- `seed` `uint`
+- `seed` `uint32`
 
 ## Operators
 

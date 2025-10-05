@@ -34,7 +34,7 @@ A standard table containing all [MapSettings](runtime:MapSettings) attributes pl
 
 If a behavior fails this many times, the enemy (or enemy group) is destroyed. This solves biters getting stuck within their own base.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

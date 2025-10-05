@@ -51,7 +51,7 @@ Write a file to the `script-output` folder, located in the game's [user data dir
 - `append` `boolean` *(optional)* - If `true`, `data` will be appended to the end of the file. Defaults to `false`, which will overwrite any pre-existing file with the new `data`.
 - `data` `LocalisedString` - The content to write to the file.
 - `filename` `string` - The name of the file. Providing a directory path (ex. `"save/here/example.txt"`) will create the necessary folder structure in `script-output`.
-- `for_player` `uint` *(optional)* - If given, the file will only be written for this `player_index`. Providing `0` will only write to the server's output if present. `for_player` cannot be used in settings and prototype stages.
+- `for_player` `uint32` *(optional)* - If given, the file will only be written for this `player_index`. Providing `0` will only write to the server's output if present. `for_player` cannot be used in settings and prototype stages.
 
 ### send_udp
 
@@ -62,7 +62,7 @@ This must be enabled per-instance with `--enable-lua-udp`.
 **Parameters:**
 
 - `data` `LocalisedString` - The content to send.
-- `for_player` `uint` *(optional)* - If given, the packet will only be sent from this `player_index`. Providing `0` will only send from the server if present. `for_player` cannot be used in settings and prototype stages.
+- `for_player` `uint32` *(optional)* - If given, the packet will only be sent from this `player_index`. Providing `0` will only send from the server if present. `for_player` cannot be used in settings and prototype stages.
 - `port` `uint16` - Destination port number (localhost only)
 
 ### recv_udp
@@ -79,7 +79,7 @@ Not available in settings and prototype stages.
 
 **Parameters:**
 
-- `for_player` `uint` *(optional)* - If given, packets will only be read from this `player_index`. Providing `0` will only read from the server if present.
+- `for_player` `uint32` *(optional)* - If given, packets will only be read from this `player_index`. Providing `0` will only read from the server if present.
 
 ### remove_path
 
@@ -223,5 +223,17 @@ Compares 2 version strings.
 
 **Returns:**
 
-- `int` - -1 if first is smaller than second, 0 if first equal second, 1 if first is greater than second.
+- `int32` - -1 if first is smaller than second, 0 if first equal second, 1 if first is greater than second.
+
+### multilingual_to_lower
+
+Converts the given string to lowercase and returns it. Unlike `string.lower()`, this function supports [non-Latin characters](https://factorio.com/blog/post/fff-436).
+
+**Parameters:**
+
+- `input` `string`
+
+**Returns:**
+
+- `string` - The input string converted to lowercase.
 

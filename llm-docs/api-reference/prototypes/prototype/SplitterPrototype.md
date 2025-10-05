@@ -51,3 +51,59 @@ The name of the [TransportBeltPrototype](prototype:TransportBeltPrototype) which
 
 **Optional:** Yes
 
+### circuit_wire_max_distance
+
+The maximum circuit wire distance for this entity.
+
+**Type:** `double`
+
+**Optional:** Yes
+
+**Default:** 0
+
+### draw_copper_wires
+
+**Type:** `boolean`
+
+**Optional:** Yes
+
+**Default:** True
+
+### draw_circuit_wires
+
+**Type:** `boolean`
+
+**Optional:** Yes
+
+**Default:** True
+
+### circuit_connector
+
+**Type:** (`CircuitConnectorDefinition`, `CircuitConnectorDefinition`, `CircuitConnectorDefinition`, `CircuitConnectorDefinition`)
+
+**Optional:** Yes
+
+### default_input_left_condition
+
+**Type:** `CircuitConditionConnector`
+
+**Optional:** Yes
+
+### default_input_right_condition
+
+**Type:** `CircuitConditionConnector`
+
+**Optional:** Yes
+
+### default_output_left_condition
+
+**Type:** `CircuitConditionConnector`
+
+**Optional:** Yes
+
+### default_output_right_condition
+
+**Type:** `CircuitConditionConnector`
+
+**Optional:** Yes
+

@@ -6,7 +6,7 @@ Called when a translation request generated through [LuaPlayer::request_translat
 
 ### id
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The unique id for this translation request.
 
@@ -24,7 +24,7 @@ Identifier of the event
 
 ### player_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The player whose locale was used for the translation.
 
@@ -36,7 +36,7 @@ The translated `localised_string`.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

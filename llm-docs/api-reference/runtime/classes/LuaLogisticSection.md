@@ -14,7 +14,7 @@ The [LuaEntity](runtime:LuaEntity) owner of this LuaLogisticSection.
 
 The section index of this section.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### filters
 
@@ -30,7 +30,7 @@ This can only be written to when the section [is manual](runtime:LuaLogisticSect
 
 Amount of filters this section has
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### group
 

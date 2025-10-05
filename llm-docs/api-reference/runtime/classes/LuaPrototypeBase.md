@@ -62,3 +62,11 @@ Subgroup of this prototype.
 
 **Read type:** `boolean`
 
+### custom_tooltip_fields
+
+Extra description items in the tooltip and Factoriopedia.
+
+**Read type:** Array[`CustomTooltipField`]
+
+**Optional:** Yes
+

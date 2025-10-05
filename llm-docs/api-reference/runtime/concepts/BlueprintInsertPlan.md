@@ -10,7 +10,7 @@ Defines an item type that a blueprint entity will request.
 
 The prototype name and quality of the item to request.
 
-**Type:** `ItemIDAndQualityIDPair`
+**Type:** `BlueprintItemIDAndQualityIDPair`
 
 **Required:** Yes
 

@@ -16,7 +16,7 @@ The surface this player's physical controller is on.
 
 Unique ID associated with the surface this player's physical controller is currently on.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### physical_position
 
@@ -54,7 +54,7 @@ When in a cutscene; the character this player would be using once the cutscene i
 
 This player's index in [LuaGameScript::players](runtime:LuaGameScript::players) (unique ID). It is assigned when a player is created, and remains so (even when the player is not [connected](runtime:LuaPlayer::connected)) until the player is irreversibly [removed](runtime:on_player_removed). Indexes of removed players can be reused.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### gui
 
@@ -204,19 +204,19 @@ The source entity used during entity settings copy-paste, if any.
 
 How many ticks since the last action of this player.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### online_time
 
 How many ticks did this player spend playing this save (all sessions combined).
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### last_online
 
 At what tick this player was last online.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### permission_group
 
@@ -244,9 +244,9 @@ Set to `nil` to immediately respawn the player.
 
 Set to any positive value to trigger the respawn state for this player.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Optional:** Yes
 
@@ -447,7 +447,7 @@ Setting a player to [defines.controllers.editor](runtime:defines.controllers.edi
 
 - `character` `LuaEntity` *(optional)* - Entity to control. Mandatory when `type` is [defines.controllers.character](runtime:defines.controllers.character), ignored otherwise.
 - `chart_mode_cutoff` `double` *(optional)* - If specified and `type` is [defines.controllers.cutscene](runtime:defines.controllers.cutscene), the game will switch to chart-mode (map zoomed out) rendering when the zoom level is less than this value.
-- `final_transition_time` `uint` *(optional)* - If specified and `type` is [defines.controllers.cutscene](runtime:defines.controllers.cutscene), it is the time in ticks it will take for the camera to pan from the final waypoint back to the starting position. If not given the camera will not pan back to the start position/zoom.
+- `final_transition_time` `uint32` *(optional)* - If specified and `type` is [defines.controllers.cutscene](runtime:defines.controllers.cutscene), it is the time in ticks it will take for the camera to pan from the final waypoint back to the starting position. If not given the camera will not pan back to the start position/zoom.
 - `position` `MapPosition` *(optional)* - If specified and `type` is [defines.controllers.remote](runtime:defines.controllers.remote), the position the remote controller will be centered on.
 - `start_position` `MapPosition` *(optional)* - If specified and `type` is [defines.controllers.cutscene](runtime:defines.controllers.cutscene), the cutscene will start at this position. If not given the start position will be the player position.
 - `start_zoom` `double` *(optional)* - If specified and `type` is [defines.controllers.cutscene](runtime:defines.controllers.cutscene), the cutscene will start at this zoom level. If not given the start zoom will be the player's zoom.
@@ -577,7 +577,7 @@ Get all alerts matching the given filters, or all alerts if no filters are given
 
 **Returns:**
 
-- Dictionary[`uint`, Dictionary[`defines.alert_type`, Array[`Alert`]]] - A mapping of surface index to an array of arrays of [alerts](runtime:Alert) indexed by the [alert type](runtime:defines.alert_type).
+- Dictionary[`uint32`, Dictionary[`defines.alert_type`, Array[`Alert`]]] - A mapping of surface index to an array of arrays of [alerts](runtime:Alert) indexed by the [alert type](runtime:defines.alert_type).
 
 ### mute_alert
 
@@ -698,11 +698,13 @@ Checks if this player can build what ever is in the cursor on the surface the pl
 
 **Parameters:**
 
-- `build_mode` `defines.build_mode` *(optional)* - Which build mode should be used instead of normal build. Defaults to normal.
+- `build_mode` `defines.build_mode` *(optional)* - Which build mode should be used instead of normal build. Defaults to `defines.build_mode.normal`.
 - `direction` `defines.direction` *(optional)* - Direction the entity would be placed
+- `flip_horizontal` `boolean` *(optional)* - Whether to flip the blueprint horizontally. Defaults to `false`.
+- `flip_vertical` `boolean` *(optional)* - Whether to flip the blueprint vertically. Defaults to `false`.
 - `position` `MapPosition` - Where the entity would be placed
-- `skip_fog_of_war` `boolean` *(optional)* - If chunks covered by fog-of-war are skipped.
-- `terrain_building_size` `uint` *(optional)* - The size for building terrain if building terrain. Defaults to 2.
+- `skip_fog_of_war` `boolean` *(optional)* - If chunks covered by fog-of-war are skipped. Defaults to `false`.
+- `terrain_building_size` `uint32` *(optional)* - The size for building terrain if building terrain. Defaults to `2`.
 
 **Returns:**
 
@@ -714,12 +716,14 @@ Builds whatever is in the cursor on the surface the player is on. The cursor sta
 
 **Parameters:**
 
-- `build_mode` `defines.build_mode` *(optional)* - Which build mode should be used instead of normal build. Defaults to normal.
+- `build_mode` `defines.build_mode` *(optional)* - Which build mode should be used instead of normal build. Defaults to `defines.build_mode.normal`.
 - `direction` `defines.direction` *(optional)* - Direction the entity would be placed
+- `flip_horizontal` `boolean` *(optional)* - Whether to flip the blueprint horizontally. Defaults to `false`.
+- `flip_vertical` `boolean` *(optional)* - Whether to flip the blueprint vertically. Defaults to `false`.
 - `mirror` `boolean` *(optional)* - Whether to mirror the entity
 - `position` `MapPosition` - Where the entity would be placed
-- `skip_fog_of_war` `boolean` *(optional)* - If chunks covered by fog-of-war are skipped.
-- `terrain_building_size` `uint` *(optional)* - The size for building terrain if building terrain. Defaults to 2.
+- `skip_fog_of_war` `boolean` *(optional)* - If chunks covered by fog-of-war are skipped. Defaults to `false`.
+- `terrain_building_size` `uint32` *(optional)* - The size for building terrain if building terrain. Defaults to `2`.
 
 ### clear_inventory_highlights
 
@@ -779,6 +783,18 @@ See [LuaPlayer::get_associated_characters](runtime:LuaPlayer::get_associated_cha
 
 - `character` `LuaEntity` - The character entity
 
+### swap_characters
+
+Swaps this player's character with another player's character.
+
+**Parameters:**
+
+- `player` `PlayerIdentification` - The player to swap characters with.
+
+**Returns:**
+
+- `boolean` - `true` if the swap was successful.
+
 ### create_local_flying_text
 
 Spawn flying text that is only visible to this player. Either `position` or `create_at_cursor` are required. When `create_at_cursor` is `true`, all parameters other than `text` are ignored.
@@ -795,7 +811,7 @@ Local flying text is not saved, which means it will disappear after a save/load-
 - `speed` `double` *(optional)* - The speed at which the text rises upwards in tiles/second. Can't be a negative value.
 - `surface` `SurfaceIdentification` *(optional)* - The surface which this text will be shown on. Defaults to player surface.
 - `text` `LocalisedString` - The flying text to show.
-- `time_to_live` `uint` *(optional)* - The amount of ticks that the flying text will be shown for. Defaults to `80`.
+- `time_to_live` `uint32` *(optional)* - The amount of ticks that the flying text will be shown for. Defaults to `80`.
 
 ### clear_local_flying_texts
 
@@ -807,7 +823,7 @@ Gets the quick bar filter for the given slot or `nil`.
 
 **Parameters:**
 
-- `index` `uint` - The slot index. 1 for the first slot of page one, 2 for slot two of page one, 11 for the first slot of page 2, etc.
+- `index` `uint32` - The slot index. 1 for the first slot of page one, 2 for slot two of page one, 11 for the first slot of page 2, etc.
 
 **Returns:**
 
@@ -820,7 +836,7 @@ Sets the quick bar filter for the given slot. If a [LuaItemStack](runtime:LuaIte
 **Parameters:**
 
 - `filter` `LuaItemStack` | `ItemWithQualityID` | `nil` - The filter or `nil` to clear it.
-- `index` `uint` - The slot index. 1 for the first slot of page one, 2 for slot two of page one, 11 for the first slot of page 2, etc.
+- `index` `uint32` - The slot index. 1 for the first slot of page one, 2 for slot two of page one, 11 for the first slot of page 2, etc.
 
 ### get_active_quick_bar_page
 
@@ -828,7 +844,7 @@ Gets which quick bar page is being used for the given screen page or `nil` if no
 
 **Parameters:**
 
-- `index` `uint` - The screen page. Index 1 is the top row in the gui. Index can go beyond the visible number of bars on the screen to account for the interface config setting change.
+- `index` `uint32` - The screen page. Index 1 is the top row in the gui. Index can go beyond the visible number of bars on the screen to account for the interface config setting change.
 
 **Returns:**
 
@@ -840,8 +856,8 @@ Sets which quick bar page is being used for the given screen page.
 
 **Parameters:**
 
-- `page_index` `uint` - The new quick bar page.
-- `screen_index` `uint` - The screen page. Index 1 is the top row in the gui. Index can go beyond the visible number of bars on the screen to account for the interface config setting change.
+- `page_index` `uint32` - The new quick bar page.
+- `screen_index` `uint32` - The screen page. Index 1 is the top row in the gui. Index can go beyond the visible number of bars on the screen to account for the interface config setting change.
 
 ### jump_to_cutscene_waypoint
 
@@ -849,7 +865,7 @@ Jump to the specified cutscene waypoint. Only works when the player is viewing a
 
 **Parameters:**
 
-- `waypoint_index` `uint`
+- `waypoint_index` `uint32`
 
 ### exit_cutscene
 
@@ -930,7 +946,7 @@ Does nothing if this player is not connected (see [LuaPlayer::connected](runtime
 
 **Returns:**
 
-- `uint` *(optional)* - The unique ID for the requested translation.
+- `uint32` *(optional)* - The unique ID for the requested translation.
 
 ### request_translations
 
@@ -944,7 +960,7 @@ Does nothing if this player is not connected (see [LuaPlayer::connected](runtime
 
 **Returns:**
 
-- Array[`uint`] *(optional)* - The unique IDs for the requested translations.
+- Array[`uint32`] *(optional)* - The unique IDs for the requested translations.
 
 ### get_infinity_inventory_filter
 
@@ -952,7 +968,7 @@ Gets the filter for this map editor infinity filters at the given index or `nil`
 
 **Parameters:**
 
-- `index` `uint` - The index to get.
+- `index` `uint32` - The index to get.
 
 **Returns:**
 
@@ -965,7 +981,7 @@ Sets the filter for this map editor infinity filters at the given index.
 **Parameters:**
 
 - `filter` `InfinityInventoryFilter` | `nil` - The new filter or `nil` to clear the filter.
-- `index` `uint` - The index to set.
+- `index` `uint32` - The index to set.
 
 ### clear_recipe_notifications
 
@@ -986,6 +1002,14 @@ Clears the given recipe from the list of recipe notifications for this player.
 **Parameters:**
 
 - `recipe` `RecipeID` - Recipe to clear.
+
+### get_recipe_notifications
+
+Get all recipes that currently have recipe notifications for this player.
+
+**Returns:**
+
+- Array[`LuaRecipePrototype`]
 
 ### add_to_clipboard
 
@@ -1018,7 +1042,7 @@ Enters the given space platform if possible.
 
 **Parameters:**
 
-- `space_platform` `SpacePlatformIdentification`
+- `space_platform` `LuaSpacePlatform`
 
 **Returns:**
 

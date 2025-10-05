@@ -18,7 +18,7 @@ Prototype of a achievement.
 
 ### amount
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -30,7 +30,7 @@ Prototype of a achievement.
 
 ### within
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -48,7 +48,7 @@ Prototype of a achievement.
 
 ### count
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 

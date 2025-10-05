@@ -8,7 +8,7 @@
 
 The trigger runs (count-in-stack / items_per_trigger) times; rounded up.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

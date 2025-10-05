@@ -6,13 +6,13 @@
 
 ### instrument_id
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
 ### note_id
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

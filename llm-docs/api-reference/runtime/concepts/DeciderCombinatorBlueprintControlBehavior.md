@@ -6,7 +6,7 @@
 
 ### decider_conditions
 
-**Type:** `DeciderCombinatorCondition`
+**Type:** `DeciderCombinatorParameters`
 
 **Required:** Yes
 

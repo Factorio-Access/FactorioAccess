@@ -14,11 +14,11 @@ Equipment category names for the [categories](runtime:LuaEquipmentPrototype::equ
 
 ### width
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### height
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### locked
 

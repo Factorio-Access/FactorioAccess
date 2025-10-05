@@ -57,6 +57,16 @@ Time in ticks this corpse lasts. May not be 0.
 
 **Default:** True
 
+### protected_from_tile_building
+
+**Type:** `boolean`
+
+**Optional:** Yes
+
+**Default:** False
+
+**Overrides parent:** Yes
+
 ### remove_on_entity_placement
 
 **Type:** `boolean`

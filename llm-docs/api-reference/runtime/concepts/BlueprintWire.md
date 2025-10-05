@@ -10,5 +10,5 @@ Describes a single wire in the blueprint. The members of the tuple are, in order
 
 - `target_wire_connector_id`
 
-**Type:** (`uint`, `defines.wire_connector_id`, `uint`, `defines.wire_connector_id`)
+**Type:** (`uint32`, `defines.wire_connector_id`, `uint32`, `defines.wire_connector_id`)
 

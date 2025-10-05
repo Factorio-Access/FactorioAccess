@@ -1,4 +1,4 @@
 # ProductPrototype
 
-**Type:** `ItemProductPrototype` | `FluidProductPrototype` | `ResearchProgressProductPrototype`
+**Type:** `ItemProductPrototype` | `FluidProductPrototype`
 

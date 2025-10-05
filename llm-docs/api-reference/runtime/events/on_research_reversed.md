@@ -24,7 +24,7 @@ The technology un-researched
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

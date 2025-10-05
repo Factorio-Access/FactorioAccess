@@ -36,13 +36,13 @@ The robot.
 
 ### surface_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The surface the tile(s) are build on.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

@@ -24,11 +24,11 @@ The table of emissions of this energy source in `pollution/Joule`, indexed by po
 
 ### fuel_inventory_size
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### burnt_inventory_size
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### smoke
 

@@ -16,7 +16,7 @@ Array of the same length as requested goals: each field will tell if related goa
 
 Amount of goals that are accessible.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -32,7 +32,7 @@ Array of the same length as requested goals. Only present if request type was `"
 
 Amount of steps pathfinder performed. This is a measure of how expensive this search was.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

@@ -14,9 +14,9 @@ Specifies how this condition is to be compared with the preceding conditions in 
 
 ### condition
 
-This is a CircuitCondition and only present when `type` is `"item_count"`, `"circuit"`, `"fluid_count"`, `"fuel_item_count_all"`, or `"fuel_item_count_any"`, and a circuit condition is configured. This is a ItemIDAndQualityIDPair and only present when `type` is `"request_satisfied"` or `"request_not_satisfied"`
+This is a CircuitCondition and only present when `type` is `"item_count"`, `"circuit"`, `"fluid_count"`, `"fuel_item_count_all"`, or `"fuel_item_count_any"`, and a circuit condition is configured. This is a BlueprintItemIDAndQualityIDPair and only present when `type` is `"request_satisfied"` or `"request_not_satisfied"`
 
-**Type:** `CircuitCondition` | `ItemIDAndQualityIDPair`
+**Type:** `CircuitCondition` | `BlueprintItemIDAndQualityIDPair`
 
 **Optional:** Yes
 
@@ -24,7 +24,7 @@ This is a CircuitCondition and only present when `type` is `"item_count"`, `"cir
 
 Amount of damage to take when `type` is `"damage_taken"`.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Optional:** Yes
 
@@ -48,7 +48,7 @@ Name of the station. Only present when `type` is "`specific_destination_full`", 
 
 Number of ticks to wait when `type` is `"time"`, or number of ticks of inactivity when `type` is `"inactivity"`.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Optional:** Yes
 

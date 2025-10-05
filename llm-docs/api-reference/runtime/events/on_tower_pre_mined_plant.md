@@ -18,7 +18,7 @@ The plant that is about to be mined.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

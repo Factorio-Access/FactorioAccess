@@ -14,7 +14,7 @@ The collision mask this tile uses
 
 ### layer
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### autoplace_specification
 

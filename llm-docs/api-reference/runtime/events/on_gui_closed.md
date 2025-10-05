@@ -58,19 +58,19 @@ The other player whose GUI was closed.
 
 ### player_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The player closing the GUI.
 
 ### surface_index
 
-**Type:** `uint` *(optional)*
+**Type:** `uint32` *(optional)*
 
 The surface index of the global electric network whose GUI was closed.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

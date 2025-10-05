@@ -2,7 +2,7 @@
 
 Returns one of the subtypes, depending on the value of `type`.
 
-**Type:** `ItemProduct` | `FluidProduct` | `ResearchProgressProduct`
+**Type:** `ItemProduct` | `FluidProduct`
 
 ## Examples
 

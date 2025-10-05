@@ -16,13 +16,13 @@ Identifier of the event
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 
 ### unit_number
 
-**Type:** `uint`
+**Type:** `uint32`
 
 unit_number/group_number of the unit/group which just completed a command.
 

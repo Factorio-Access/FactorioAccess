@@ -93,7 +93,7 @@ Takes priority over `animations`. Only the `north` sprite is used because this e
 
 Loaded and drawn with all `pictures`, `picture` and `animations`. If graphics variation is larger than number of `lower_pictures` variations this layer is not drawn.
 
-**Type:** Array[`StatelessVisualisations`]
+**Type:** Array[`StatelessVisualisation` | Array[`StatelessVisualisation`]]
 
 **Optional:** Yes
 

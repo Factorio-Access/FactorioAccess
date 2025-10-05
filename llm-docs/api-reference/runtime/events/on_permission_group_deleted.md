@@ -12,7 +12,7 @@ The group that was deleted.
 
 ### id
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The group id that was deleted.
 
@@ -24,13 +24,13 @@ Identifier of the event
 
 ### player_index
 
-**Type:** `uint` *(optional)*
+**Type:** `uint32` *(optional)*
 
 The player doing the deletion or `nil` if by a mod.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

@@ -106,17 +106,17 @@ The inserter stack size bonus for non stack inserters
 
 Number of items that can be transferred by bulk inserters. When writing to this value, it must be >= 0 and <= 254.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### belt_stack_size_bonus
 
 Belt stack size bonus.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### character_trash_slot_count
 
@@ -130,9 +130,9 @@ Number of character trash slots.
 
 Maximum number of follower robots.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### following_robots_lifetime_modifier
 
@@ -236,21 +236,21 @@ Modifies the running speed of all characters in this force by the given value as
 
 ### character_build_distance_bonus
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### character_item_drop_distance_bonus
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### character_reach_distance_bonus
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### character_resource_reach_distance_bonus
 
@@ -274,17 +274,17 @@ Modifies the running speed of all characters in this force by the given value as
 
 The number of additional inventory slots the character main inventory has.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### deconstruction_time_to_live
 
 The time, in ticks, before a deconstruction order is removed.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### character_health_bonus
 
@@ -294,15 +294,15 @@ The time, in ticks, before a deconstruction order is removed.
 
 ### max_successful_attempts_per_tick_per_construction_queue
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### max_failed_attempts_per_tick_per_construction_queue
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### character_logistic_requests
 
@@ -316,9 +316,9 @@ The time, in ticks, before a deconstruction order is removed.
 
 The number of rockets launched.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### items_launched
 
@@ -368,7 +368,7 @@ If sharing chart data is enabled for this force.
 
 This force's index in [LuaGameScript::forces](runtime:LuaGameScript::forces) (unique ID). It is assigned when a force is created, and remains so until it is [merged](runtime:on_forces_merged) (ie. deleted). Indexes of merged forces can be reused.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### research_queue
 
@@ -394,7 +394,7 @@ The space platforms that belong to this force mapped by their index value.
 
 This will include platforms that are pending deletion.
 
-**Read type:** Dictionary[`uint`, `LuaSpacePlatform`]
+**Read type:** Dictionary[`uint32`, `LuaSpacePlatform`]
 
 ### custom_color
 
@@ -438,7 +438,7 @@ This function has O(1) time complexity as entity counts are kept and maintained 
 
 **Returns:**
 
-- `uint` - Number of entities of given prototype belonging to this force.
+- `uint32` - Number of entities of given prototype belonging to this force.
 
 ### disable_research
 
@@ -760,7 +760,7 @@ Gets the count of a given item launched in rockets.
 
 **Returns:**
 
-- `uint` - The count of the item that has been launched.
+- `uint32` - The count of the item that has been launched.
 
 ### set_item_launched
 
@@ -768,7 +768,7 @@ Sets the count of a given item launched in rockets.
 
 **Parameters:**
 
-- `count` `uint` - The count to set
+- `count` `uint32` - The count to set
 - `item` `ItemID` - The item to set
 
 ### print
@@ -867,7 +867,7 @@ Gets the linked inventory for the given prototype and link ID if it exists or `n
 
 **Parameters:**
 
-- `link_id` `uint`
+- `link_id` `uint32`
 - `prototype` `EntityID`
 
 **Returns:**
@@ -1167,4 +1167,12 @@ Returns `nil` if the chunk has not been charted for this force.
 **Returns:**
 
 - `string` *(optional)* - The raw pixel data.
+
+### script_trigger_research
+
+Trigger the "scripted" [research trigger](runtime:ResearchTrigger) of a technology, researching it. Does nothing if the technology does not have a "scripted" research trigger.
+
+**Parameters:**
+
+- `technology` `TechnologyID`
 

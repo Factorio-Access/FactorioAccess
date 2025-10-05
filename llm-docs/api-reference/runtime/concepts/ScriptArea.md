@@ -20,7 +20,7 @@ An area defined using the map editor.
 
 ### id
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

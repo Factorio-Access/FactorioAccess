@@ -10,7 +10,7 @@ Prototype of an Active Trigger.
 
 The max number of jumps per trigger. default = 5.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### max_range_per_jump
 
@@ -28,7 +28,7 @@ The max distance jumps are allowed to travel away from the original target. defa
 
 The tick delay between each jump. 0 = all jumps instantaneous. default = 0.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### fork_chance
 
@@ -40,13 +40,13 @@ The chance that a new fork will spawn after each jump [0,1]. default = 0.
 
 The maximum number of forks that can spawn from a single jump. default = 1.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### max_forks
 
 maximum number of forks allowed to spawn for the entire chain. default = infinity.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### valid
 

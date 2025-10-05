@@ -15,6 +15,18 @@ The robot's cargo carrying capacity. Can be increased by [worker robot cargo siz
 
 **Required:** Yes
 
+### max_payload_size_after_bonus
+
+The robot's maximum possible cargo carrying capacity, including bonuses. Useful to limit the impact of [worker robot cargo size research](prototype:WorkerRobotStorageModifier).
+
+Must be >= max_payload_size.
+
+**Type:** `ItemCountType`
+
+**Optional:** Yes
+
+**Default:** "max ItemCountType"
+
 ### idle
 
 Only the first frame of the animation is drawn. This means that the graphics for the idle state cannot be animated.

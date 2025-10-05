@@ -8,7 +8,7 @@
 
 The number of equipment items.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

@@ -24,6 +24,12 @@
 
 **Required:** Yes
 
+### last_reverse_box_color
+
+**Type:** `Color`
+
+**Required:** Yes
+
 ### box_width
 
 **Type:** `float`

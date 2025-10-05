@@ -123,7 +123,7 @@ This only counts item ingredients, not fluid ingredients! This means if ingredie
 
 ### disabled_when_recipe_not_researched
 
-Defaults to true if fixed_recipe is not given.
+Defaults to true if `fixed_recipe` is not given.
 
 **Type:** `boolean`
 

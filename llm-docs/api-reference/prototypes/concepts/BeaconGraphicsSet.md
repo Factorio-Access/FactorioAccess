@@ -130,3 +130,11 @@ The visualisations available for displaying the modules in the beacon. The visua
 
 **Default:** "single-module"
 
+### water_reflection
+
+Refer to [EntityPrototype::water_reflection](prototype:EntityPrototype::water_reflection).
+
+**Type:** `WaterReflectionDefinition`
+
+**Optional:** Yes
+

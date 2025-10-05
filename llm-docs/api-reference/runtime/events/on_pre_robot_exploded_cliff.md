@@ -32,7 +32,7 @@ The quality of the cliff explosive used.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

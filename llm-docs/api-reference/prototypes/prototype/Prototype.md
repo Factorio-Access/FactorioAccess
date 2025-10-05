@@ -17,7 +17,7 @@ For example, if this is an [EntityPrototype](prototype:EntityPrototype), this pr
 
 ### custom_tooltip_fields
 
-Allows to add extra description items to the tooltip and factoriopedia.
+Allows to add extra description items to the tooltip and Factoriopedia.
 
 **Type:** Array[`CustomTooltipField`]
 

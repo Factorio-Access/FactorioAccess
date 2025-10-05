@@ -512,3 +512,15 @@ This property is not read by the game engine itself, but the quality mod's recyc
 
 **Default:** True
 
+### hidden
+
+Hides the recipe from crafting menus and other recipe selection lists.
+
+**Type:** `boolean`
+
+**Optional:** Yes
+
+**Default:** False
+
+**Overrides parent:** Yes
+

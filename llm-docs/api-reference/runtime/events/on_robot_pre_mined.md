@@ -24,7 +24,7 @@ The robot that's about to do the mining.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

@@ -34,13 +34,13 @@ The circuit network signals last tick. `nil` if there were no signals last tick.
 
 The circuit networks ID.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### connected_circuit_count
 
 The number of circuits connected to this network.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### valid
 
@@ -64,5 +64,5 @@ The class name of this object. Available even when `valid` is false. For LuaStru
 
 **Returns:**
 
-- `int` - The current value of the signal.
+- `int32` - The current value of the signal.
 

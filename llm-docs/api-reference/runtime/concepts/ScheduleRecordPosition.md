@@ -8,7 +8,7 @@
 
 The interrupt index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Optional:** Yes
 
@@ -16,7 +16,7 @@ The interrupt index
 
 The schedule index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Optional:** Yes
 

@@ -24,7 +24,7 @@ The parameter passed after the command, if there is one.
 
 The player who issued the command, or `nil` if it was issued from the server console.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Optional:** Yes
 
@@ -32,7 +32,7 @@ The player who issued the command, or `nil` if it was issued from the server con
 
 The tick the command was used in.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

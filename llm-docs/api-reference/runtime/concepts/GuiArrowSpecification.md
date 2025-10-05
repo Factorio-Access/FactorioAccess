@@ -8,7 +8,7 @@ Used for specifying where a GUI arrow should point to.
 
 ### margin
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

@@ -16,7 +16,7 @@ The surface this entity is currently on.
 
 Unique [index](runtime:LuaSurface::index) (ID) associated with the surface this entity is currently on.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### position
 
@@ -82,7 +82,7 @@ The force of this entity. Reading will always give a [LuaForce](runtime:LuaForce
 
 Unique [index](runtime:LuaForce::index) (ID) associated with the force of this entity.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### selected
 
@@ -112,7 +112,7 @@ Write supports any of the types. Read will return the `entity`, `equipment`, `eq
 
 Size of the crafting queue.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### crafting_queue_progress
 
@@ -268,73 +268,73 @@ When called on a [LuaPlayer](runtime:LuaPlayer), it must be associated with a ch
 
 When called on a [LuaPlayer](runtime:LuaPlayer), it must be associated with a character (see [LuaPlayer::character](runtime:LuaPlayer::character)).
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### character_item_drop_distance_bonus
 
 When called on a [LuaPlayer](runtime:LuaPlayer), it must be associated with a character (see [LuaPlayer::character](runtime:LuaPlayer::character)).
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### character_reach_distance_bonus
 
 When called on a [LuaPlayer](runtime:LuaPlayer), it must be associated with a character (see [LuaPlayer::character](runtime:LuaPlayer::character)).
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### character_resource_reach_distance_bonus
 
 When called on a [LuaPlayer](runtime:LuaPlayer), it must be associated with a character (see [LuaPlayer::character](runtime:LuaPlayer::character)).
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### character_item_pickup_distance_bonus
 
 When called on a [LuaPlayer](runtime:LuaPlayer), it must be associated with a character (see [LuaPlayer::character](runtime:LuaPlayer::character)).
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### character_loot_pickup_distance_bonus
 
 When called on a [LuaPlayer](runtime:LuaPlayer), it must be associated with a character (see [LuaPlayer::character](runtime:LuaPlayer::character)).
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### character_inventory_slots_bonus
 
 When called on a [LuaPlayer](runtime:LuaPlayer), it must be associated with a character (see [LuaPlayer::character](runtime:LuaPlayer::character)).
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### character_trash_slot_count_bonus
 
 When called on a [LuaPlayer](runtime:LuaPlayer), it must be associated with a character (see [LuaPlayer::character](runtime:LuaPlayer::character)).
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### character_maximum_following_robot_count_bonus
 
 When called on a [LuaPlayer](runtime:LuaPlayer), it must be associated with a character (see [LuaPlayer::character](runtime:LuaPlayer::character)).
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### character_health_bonus
 
@@ -354,19 +354,19 @@ When called on a [LuaPlayer](runtime:LuaPlayer), it must be associated with a ch
 
 The build distance of this character or max uint when not a character or player connected to a character.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### drop_item_distance
 
 The item drop distance of this character or max uint when not a character or player connected to a character.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### reach_distance
 
 The reach distance of this character or max uint when not a character or player connected to a character.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### item_pickup_distance
 
@@ -476,7 +476,7 @@ Insert items into this entity. This works the same way as inserters or shift-cli
 
 **Returns:**
 
-- `uint` - The number of items that were actually inserted.
+- `uint32` - The number of items that were actually inserted.
 
 ### set_gui_arrow
 
@@ -484,7 +484,7 @@ Create an arrow which points at this entity. This is used in the tutorial. For e
 
 **Parameters:**
 
-- `margin` `uint`
+- `margin` `uint32`
 - `type` `GuiArrowType` - Where to point to. This field determines what other fields are mandatory.
 
 ### clear_gui_arrow
@@ -501,7 +501,7 @@ Get the number of all or some items in this entity.
 
 **Returns:**
 
-- `uint`
+- `uint32`
 
 ### has_items_inside
 
@@ -537,7 +537,7 @@ Remove items from this entity.
 
 **Returns:**
 
-- `uint` - The number of items that were actually removed.
+- `uint32` - The number of items that were actually removed.
 
 ### teleport
 
@@ -603,7 +603,7 @@ Gets the count of the given recipe that can be crafted.
 
 **Returns:**
 
-- `uint` - The count that can be crafted.
+- `uint32` - The count that can be crafted.
 
 ### begin_crafting
 
@@ -611,13 +611,13 @@ Begins crafting the given count of the given recipe.
 
 **Parameters:**
 
-- `count` `uint` - The count to craft.
+- `count` `uint32` - The count to craft.
 - `recipe` `RecipeID` - The recipe to craft.
 - `silent` `boolean` *(optional)* - If false and the recipe can't be crafted the requested number of times printing the failure is skipped.
 
 **Returns:**
 
-- `uint` - The count that was actually started crafting.
+- `uint32` - The count that was actually started crafting.
 
 ### cancel_crafting
 
@@ -625,8 +625,8 @@ Cancels crafting the given count of the given crafting queue index.
 
 **Parameters:**
 
-- `count` `uint` - The count to cancel crafting.
-- `index` `uint` - The crafting queue index.
+- `count` `uint32` - The count to cancel crafting.
+- `index` `uint32` - The crafting queue index.
 
 ### mine_entity
 

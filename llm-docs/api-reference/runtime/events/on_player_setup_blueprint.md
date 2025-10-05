@@ -24,7 +24,7 @@ The item used to select the area.
 
 ### mapping
 
-**Type:** LuaLazyLoadedValue[Dictionary[`uint`, `LuaEntity`]]
+**Type:** LuaLazyLoadedValue[Dictionary[`uint32`, `LuaEntity`]]
 
 The blueprint entity index to source entity mapping. Note: if any mod changes the blueprint this will be incorrect.
 
@@ -36,7 +36,7 @@ Identifier of the event
 
 ### player_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The player doing the selection.
 
@@ -66,7 +66,7 @@ The surface selected.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

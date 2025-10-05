@@ -36,7 +36,7 @@ Identifier of the event
 
 ### surface_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The surface the effect happened on.
 
@@ -50,7 +50,7 @@ The surface the effect happened on.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

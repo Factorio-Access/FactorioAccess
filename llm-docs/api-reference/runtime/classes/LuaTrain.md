@@ -132,7 +132,7 @@ The destination train stop this train is currently pathing to, if any.
 
 The unique train ID.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### passengers
 
@@ -154,13 +154,13 @@ The players killed by this train.
 
 The keys are the player indices, the values are how often this train killed that player.
 
-**Read type:** Dictionary[`uint`, `uint`]
+**Read type:** Dictionary[`uint32`, `uint32`]
 
 ### kill_count
 
 The total number of kills by this train.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### path
 
@@ -224,7 +224,7 @@ Get the amount of a particular item stored in the train.
 
 **Returns:**
 
-- `uint`
+- `uint32`
 
 ### get_contents
 
@@ -244,7 +244,7 @@ Remove some items from the train.
 
 **Returns:**
 
-- `uint` - Number of items actually removed.
+- `uint32` - Number of items actually removed.
 
 ### insert
 
@@ -324,7 +324,7 @@ Go to the station specified by the index in the train's schedule.
 
 **Parameters:**
 
-- `index` `uint`
+- `index` `uint32`
 
 ### get_rails
 

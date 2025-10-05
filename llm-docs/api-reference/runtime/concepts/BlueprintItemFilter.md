@@ -14,7 +14,7 @@ The quality comparison type.
 
 ### index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

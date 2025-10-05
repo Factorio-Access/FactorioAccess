@@ -17,13 +17,23 @@ The position where any item results are placed, when the mining drill is facing 
 
 ### resource_searching_radius
 
-The distance from the centre of the mining drill to search for resources in.
+The distance from the center of the mining drill to search for resources in.
 
 This is 2.49 for electric mining drills (a 5x5 area) and 0.99 for burner mining drills (a 2x2 area). The drill searches resource outside its natural boundary box, which is 0.01 (the middle of the entity); making it 2.5 and 1.0 gives it another block radius.
 
 **Type:** `double`
 
 **Required:** Yes
+
+### resource_searching_offset
+
+Offset of the `resource_searching_radius` from the entity center when the mining drill is facing north.
+
+**Type:** `Vector`
+
+**Optional:** Yes
+
+**Default:** "`{0, 0}`"
 
 ### energy_usage
 

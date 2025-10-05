@@ -32,7 +32,7 @@ Checks if this record is in a preview state.
 
 ### is_blueprint_preview
 
-Is this blueprint record a preview? A preview record must be synced by the player before entity and tile data can be read.
+Is this blueprint record a preview? A preview record must be synced by the player before entity and tile data can be read. This property is deprecated in favor of [LuaRecord::is_preview](runtime:LuaRecord::is_preview) and should not be used.
 
 **Read type:** `boolean`
 
@@ -74,7 +74,7 @@ If absolute snapping is enabled on this blueprint.
 
 ### blueprint_description
 
-The description for this blueprint or blueprint book
+The description for this blueprint or blueprint book.
 
 **Read type:** `string`
 
@@ -178,7 +178,7 @@ If this deconstruction planner, is set to allow trees and rocks only.
 
 The number of entity filters this deconstruction planner supports.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Subclasses:** DeconstructionRecord
 
@@ -186,7 +186,7 @@ The number of entity filters this deconstruction planner supports.
 
 The number of tile filters this deconstruction planner supports.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Subclasses:** DeconstructionRecord
 
@@ -194,7 +194,7 @@ The number of tile filters this deconstruction planner supports.
 
 The current count of mappers in the upgrade item.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Subclasses:** UpgradeRecord
 
@@ -211,6 +211,14 @@ The class name of this object. Available even when `valid` is false. For LuaStru
 **Read type:** `string`
 
 ## Methods
+
+### export_record
+
+Exports this record to a string.
+
+**Returns:**
+
+- `string`
 
 ### clear_blueprint
 
@@ -263,7 +271,7 @@ Sets up this blueprint using the found blueprintable entities/tiles on the surfa
 
 **Returns:**
 
-- Dictionary[`uint`, `LuaEntity`] - The blueprint entity index to source entity mapping.
+- Dictionary[`uint32`, `LuaEntity`] - The blueprint entity index to source entity mapping.
 
 ### get_blueprint_entity_tags
 
@@ -271,7 +279,7 @@ Gets the tags for the given blueprint entity index in this blueprint.
 
 **Parameters:**
 
-- `index` `uint`
+- `index` `uint32`
 
 **Returns:**
 
@@ -283,16 +291,16 @@ Sets the tags on the given blueprint entity index in this blueprint.
 
 **Parameters:**
 
-- `index` `uint` - The entity index
+- `index` `uint32` - The entity index
 - `tags` `Tags`
 
 ### get_blueprint_entity_tag
 
-Gets the given tag on the given blueprint entity index in this blueprint blueprint.
+Gets the given tag on the given blueprint entity index in this blueprint.
 
 **Parameters:**
 
-- `index` `uint` - The entity index.
+- `index` `uint32` - The entity index.
 - `tag` `string` - The tag to get.
 
 **Returns:**
@@ -301,11 +309,11 @@ Gets the given tag on the given blueprint entity index in this blueprint bluepri
 
 ### set_blueprint_entity_tag
 
-Sets the given tag on the given blueprint entity index in this blueprint blueprint.
+Sets the given tag on the given blueprint entity index in this blueprint.
 
 **Parameters:**
 
-- `index` `uint` - The entity index.
+- `index` `uint32` - The entity index.
 - `tag` `string` - The tag to set.
 - `value` `AnyBasic` - The tag value to set or `nil` to clear the tag.
 
@@ -347,7 +355,7 @@ Gets the number of entities in this blueprint blueprint.
 
 **Returns:**
 
-- `uint`
+- `uint32`
 
 ### get_active_index
 
@@ -359,7 +367,21 @@ The active index of this BlueprintBookRecord. For records in "my blueprints", th
 
 **Returns:**
 
-- `uint`
+- `uint32`
+
+### get_selected_record
+
+Gets the currently selected record of the book for the given player.
+
+Note: this will return a record even if the book is in a preview state.
+
+**Parameters:**
+
+- `player` `PlayerIdentification`
+
+**Returns:**
+
+- `LuaRecord` *(optional)*
 
 ### get_entity_filter
 
@@ -367,7 +389,7 @@ Gets the entity filter at the given index for this deconstruction planner.
 
 **Parameters:**
 
-- `index` `uint`
+- `index` `uint32`
 
 **Returns:**
 
@@ -380,7 +402,7 @@ Sets the entity filter at the given index for this deconstruction planner.
 **Parameters:**
 
 - `filter` `ItemFilter` | `nil` - Writing `nil` removes the filter.
-- `index` `uint`
+- `index` `uint32`
 
 **Returns:**
 
@@ -392,7 +414,7 @@ Gets the tile filter at the given index for this deconstruction planner.
 
 **Parameters:**
 
-- `index` `uint`
+- `index` `uint32`
 
 **Returns:**
 
@@ -405,7 +427,7 @@ Sets the tile filter at the given index for this deconstruction planner.
 **Parameters:**
 
 - `filter` `string` | `LuaTilePrototype` | `LuaTile` - Setting to nil erases the filter.
-- `index` `uint`
+- `index` `uint32`
 
 **Returns:**
 
@@ -453,7 +475,7 @@ In contrast to [LuaRecord::set_mapper](runtime:LuaRecord::set_mapper), indices p
 
 **Parameters:**
 
-- `index` `uint` - The index of the mapper to read.
+- `index` `uint32` - The index of the mapper to read.
 - `type` `"from"` | `"to"`
 
 **Returns:**
@@ -468,7 +490,7 @@ In contrast to [LuaRecord::get_mapper](runtime:LuaRecord::get_mapper), indices p
 
 **Parameters:**
 
-- `index` `uint` - The index of the mapper to set.
+- `index` `uint32` - The index of the mapper to set.
 - `mapper` `UpgradeMapperSource` | `UpgradeMapperDestination` | `nil` - The mapper to set. Set `nil` to clear the mapper.
 - `type` `"from"` | `"to"`
 

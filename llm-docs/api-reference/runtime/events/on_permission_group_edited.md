@@ -36,19 +36,19 @@ The old group name when the `type` is `"rename"`.
 
 ### other_player_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The other player when the `type` is `"add-player"` or `"remove-player"`.
 
 ### player_index
 
-**Type:** `uint` *(optional)*
+**Type:** `uint32` *(optional)*
 
 The player that did the editing or `nil` if by a mod.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

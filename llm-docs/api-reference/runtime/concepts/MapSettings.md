@@ -28,9 +28,9 @@ Various game-related settings. Updating any of the attributes will immediately t
 
 If a behavior fails this many times, the enemy (or enemy group) is destroyed. This solves biters getting stuck within their own base.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### path_finder
 

@@ -62,7 +62,7 @@ Count some or all items on this line, similar to how [LuaInventory::get_item_cou
 
 **Returns:**
 
-- `uint`
+- `uint32`
 
 ### remove_item
 
@@ -74,7 +74,7 @@ Remove some items from this line.
 
 **Returns:**
 
-- `uint` - Number of items actually removed.
+- `uint32` - Number of items actually removed.
 
 ### can_insert_at
 

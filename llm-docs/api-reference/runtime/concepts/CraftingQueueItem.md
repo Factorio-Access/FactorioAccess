@@ -8,7 +8,7 @@
 
 The amount of items being crafted.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -16,7 +16,7 @@ The amount of items being crafted.
 
 The index of the item in the crafting queue.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

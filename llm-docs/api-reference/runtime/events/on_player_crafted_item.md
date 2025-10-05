@@ -18,7 +18,7 @@ Identifier of the event
 
 ### player_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The player doing the crafting.
 
@@ -30,7 +30,7 @@ The recipe used to craft this item.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

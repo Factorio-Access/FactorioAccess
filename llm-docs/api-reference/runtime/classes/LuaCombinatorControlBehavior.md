@@ -24,5 +24,5 @@ Gets the value of a specific signal sent by this combinator behavior last tick o
 
 **Returns:**
 
-- `int` *(optional)*
+- `int32` *(optional)*
 

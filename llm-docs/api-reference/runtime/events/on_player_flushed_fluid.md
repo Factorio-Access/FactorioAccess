@@ -36,13 +36,13 @@ True if flush was requested only on this entity
 
 ### player_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Index of the player
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

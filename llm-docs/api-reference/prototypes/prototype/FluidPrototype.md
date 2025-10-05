@@ -158,3 +158,15 @@ This property is not read by the game engine itself, but the base mod's data-upd
 
 **Default:** True
 
+### hidden
+
+Hides the fluid from the signal selection screen.
+
+**Type:** `boolean`
+
+**Optional:** Yes
+
+**Default:** False
+
+**Overrides parent:** Yes
+

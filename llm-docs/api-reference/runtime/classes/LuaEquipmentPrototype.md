@@ -154,7 +154,7 @@ The shield value of this equipment. 0 for non-shield equipment.
 
 **Returns:**
 
-- `uint` *(optional)*
+- `uint32` *(optional)*
 
 ### get_movement_bonus
 

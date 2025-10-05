@@ -28,15 +28,15 @@ Prototype of an optimized particle.
 
 ### fade_out_time
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### life_time
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### regular_trigger_effect_frequency
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### movement_modifier_when_on_ground
 

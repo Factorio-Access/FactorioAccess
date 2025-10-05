@@ -18,13 +18,13 @@ The previously active locale.
 
 ### player_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The player whose locale was changed.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

@@ -24,23 +24,23 @@ Prototype of a trivial smoke.
 
 ### duration
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### spread_duration
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### fade_away_duration
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### fade_in_duration
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### glow_fade_away_duration
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### cyclic
 

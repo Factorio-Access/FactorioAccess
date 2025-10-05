@@ -20,7 +20,7 @@ The number returned by [register_on_object_destroyed](runtime:LuaBootstrap::regi
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

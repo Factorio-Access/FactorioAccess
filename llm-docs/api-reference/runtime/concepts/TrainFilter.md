@@ -48,7 +48,7 @@ Checks if train is moving (has speed != 0) or not moving.
 
 Train must have at most that many stocks to pass
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Optional:** Yes
 
@@ -56,7 +56,7 @@ Train must have at most that many stocks to pass
 
 Train must have at least that many stocks to pass
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Optional:** Yes
 
@@ -80,7 +80,7 @@ Surface the train must be on in order to pass
 
 Train ID filter
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Optional:** Yes
 

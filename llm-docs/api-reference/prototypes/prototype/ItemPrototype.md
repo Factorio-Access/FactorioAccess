@@ -401,3 +401,15 @@ This property is not read by the game engine itself, but the quality mod's data-
 
 **Default:** True
 
+### hidden
+
+Item will not appear in lists of all items such as those for logistics requests, filters, etc.
+
+**Type:** `boolean`
+
+**Optional:** Yes
+
+**Default:** False
+
+**Overrides parent:** Yes
+

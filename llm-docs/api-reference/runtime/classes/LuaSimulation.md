@@ -24,9 +24,9 @@ The simulation object instance can be obtained from [LuaGameScript::simulation](
 
 ### camera_surface_index
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Optional:** Yes
 

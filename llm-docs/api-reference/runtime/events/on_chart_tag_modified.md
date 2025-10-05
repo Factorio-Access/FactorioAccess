@@ -1,6 +1,6 @@
 # on_chart_tag_modified
 
-Called when a chart tag is modified by a player.
+Called when a chart tag is modified by a player or by script.
 
 ## Event Data
 
@@ -20,7 +20,7 @@ Identifier of the event
 
 ### old_player_index
 
-**Type:** `uint` *(optional)*
+**Type:** `uint32` *(optional)*
 
 ### old_position
 
@@ -36,7 +36,7 @@ Identifier of the event
 
 ### player_index
 
-**Type:** `uint` *(optional)*
+**Type:** `uint32` *(optional)*
 
 ### tag
 
@@ -44,7 +44,7 @@ Identifier of the event
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

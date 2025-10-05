@@ -56,7 +56,7 @@ The entity that is directly dealing the damage, if available (e.g. the projectil
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

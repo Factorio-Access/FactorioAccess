@@ -1,5 +1,7 @@
 # LightningAttractorPrototype
 
+Absorbs [lightning](prototype:LightningPrototype) and optionally converts it into electricity.
+
 **Parent:** [EntityWithOwnerPrototype](EntityWithOwnerPrototype.md)
 **Type name:** `lightning-attractor`
 **Visibility:** space_age

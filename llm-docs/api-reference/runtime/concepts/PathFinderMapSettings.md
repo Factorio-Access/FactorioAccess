@@ -24,7 +24,7 @@ When looking for a path from cache, make sure it doesn't start too far from the 
 
 When looking for a connection to a cached path, search at most for this number of steps times the original estimate. Defaults to `100`.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -48,7 +48,7 @@ When assigning a rating to the best path, this multiplier times start distances 
 
 The maximum direct distance in tiles before a request is no longer considered short. Defaults to `100`.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -72,7 +72,7 @@ The collision penalty for collisions in the extended bounding box but outside th
 
 The pathfinder performs a step of the backward search every `fwd2bwd_ratio`'th step. The minimum allowed value is `2`, which means symmetric search. The default value is `5`.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -120,7 +120,7 @@ The minimal distance to the goal in tiles required to be searched in the long pa
 
 Number of elements in the long cache. Defaults to `25`.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -128,7 +128,7 @@ Number of elements in the long cache. Defaults to `25`.
 
 The amount of path finder requests accepted per tick regardless of the requested path's length. Defaults to `10`.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -136,7 +136,7 @@ The amount of path finder requests accepted per tick regardless of the requested
 
 When the `max_clients_to_accept_any_new_request` amount is exhausted, only path finder requests with a short estimate will be accepted until this amount (per tick) is reached. Defaults to `100`.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -152,7 +152,7 @@ The maximum number of nodes that are expanded per tick. Defaults to `1 000`.
 
 The maximum amount of work each pathfinding job is allowed to do per tick. Defaults to `8 000`.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -160,7 +160,7 @@ The maximum amount of work each pathfinding job is allowed to do per tick. Defau
 
 The minimum amount of steps that are guaranteed to be performed for every request. Defaults to `2000`.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -184,7 +184,7 @@ Same principle as `cache_accept_path_start_distance_ratio`, but used for negativ
 
 The delay in ticks between decrementing the score of all paths in the negative cache by one. Defaults to `20`.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -192,7 +192,7 @@ The delay in ticks between decrementing the score of all paths in the negative c
 
 The thresholds of waiting clients after each of which the per-tick work limit will be increased by the corresponding value in `overload_multipliers`. This is to avoid clients having to wait too long. Must have the same number of elements as `overload_multipliers`. Defaults to `{0, 100, 500}`.
 
-**Type:** Array[`uint`]
+**Type:** Array[`uint32`]
 
 **Required:** Yes
 
@@ -208,7 +208,7 @@ The multipliers to the amount of per-tick work applied after the corresponding t
 
 The minimal number of nodes required to be searched in the short path cache. Defaults to `50`.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -224,7 +224,7 @@ The minimal distance to the goal in tiles required to be searched in the short p
 
 Number of elements in the short cache. Defaults to `5`.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -232,7 +232,7 @@ Number of elements in the short cache. Defaults to `5`.
 
 The maximum amount of nodes a short request will traverse before being rescheduled as a long request. Defaults to `1000`.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

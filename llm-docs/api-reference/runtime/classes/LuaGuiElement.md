@@ -12,7 +12,7 @@ Each GUI element allows access to its children by having them as attributes. Thu
 
 The index of this GUI element (unique amongst the GUI elements of a LuaPlayer).
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### gui
 
@@ -110,7 +110,7 @@ Is this checkbox or radiobutton checked?
 
 Index into [LuaGameScript::players](runtime:LuaGameScript::players) specifying the player who owns this element.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### sprite
 
@@ -216,9 +216,9 @@ The items in this dropdown or listbox.
 
 The selected index for this dropdown or listbox. Returns `0` if none is selected.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Subclasses:** drop-down, list-box
 
@@ -328,9 +328,9 @@ The position this camera or minimap is focused on, if any.
 
 The surface index this camera or minimap is using.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Subclasses:** camera, minimap
 
@@ -348,9 +348,9 @@ The zoom this camera or minimap is using. This value must be positive.
 
 The player index this minimap is using.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Subclasses:** minimap
 
@@ -496,7 +496,7 @@ Whether this table should draw a horizontal grid line below the first table row.
 
 The number of columns in this table.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Subclasses:** table
 
@@ -580,6 +580,14 @@ Whether this textfield loses focus after [defines.events.on_gui_confirmed](runti
 
 **Subclasses:** textfield
 
+### icon_selector
+
+Whether this textfield or text-box was created with an icon selector.
+
+**Read type:** `boolean`
+
+**Subclasses:** textfield, text-box
+
 ### drag_target
 
 The `frame` that is being moved when dragging this GUI element, if any. This element needs to be a child of the `drag_target` at some level.
@@ -598,9 +606,9 @@ Only top-level elements in [LuaGui::screen](runtime:LuaGui::screen) can be `drag
 
 The selected tab index for this tabbed pane, if any.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Optional:** Yes
 
@@ -742,7 +750,7 @@ Add a new child element to this GuiElement.
 - `enabled` `boolean` *(optional)* - Whether the child element is enabled. Defaults to `true`.
 - `game_controller_interaction` `defines.game_controller_interaction` *(optional)* - How the element should interact with game controllers. Defaults to [defines.game_controller_interaction.normal](runtime:defines.game_controller_interaction.normal).
 - `ignored_by_interaction` `boolean` *(optional)* - Whether the child element is ignored by interaction. Defaults to `false`.
-- `index` `uint` *(optional)* - Location in its parent that the child element should slot into. By default, the child will be appended onto the end.
+- `index` `uint32` *(optional)* - Location in its parent that the child element should slot into. By default, the child will be appended onto the end.
 - `locked` `boolean` *(optional)* - Whether the child element is locked. Defaults to `false`.
 - `name` `string` *(optional)* - Name of the child element. It must be unique within the parent element.
 - `raise_hover_events` `boolean` *(optional)* - Whether this element will raise [on_gui_hover](runtime:on_gui_hover) and [on_gui_leave](runtime:on_gui_leave). Defaults to `false`.
@@ -796,7 +804,7 @@ This iterates through the children of the parent of this element, meaning this h
 
 **Returns:**
 
-- `uint`
+- `uint32`
 
 ### swap_children
 
@@ -804,8 +812,8 @@ Swaps the children at the given indices in this element.
 
 **Parameters:**
 
-- `index_1` `uint` - The index of the first child.
-- `index_2` `uint` - The index of the second child.
+- `index_1` `uint32` - The index of the first child.
+- `index_2` `uint32` - The index of the second child.
 
 ### clear_items
 
@@ -817,7 +825,7 @@ Gets the item at the given index from this dropdown or listbox.
 
 **Parameters:**
 
-- `index` `uint` - The index to get
+- `index` `uint32` - The index to get
 
 **Returns:**
 
@@ -829,7 +837,7 @@ Sets the given string at the given index in this dropdown or listbox.
 
 **Parameters:**
 
-- `index` `uint` - The index whose text to replace.
+- `index` `uint32` - The index whose text to replace.
 - `string` `LocalisedString` - The text to set at the given index.
 
 ### add_item
@@ -838,7 +846,7 @@ Inserts a string at the end or at the given index of this dropdown or listbox.
 
 **Parameters:**
 
-- `index` `uint` *(optional)* - The index at which to insert the item.
+- `index` `uint32` *(optional)* - The index at which to insert the item.
 - `string` `LocalisedString` - The text to insert.
 
 ### remove_item
@@ -847,7 +855,7 @@ Removes the item at the given index from this dropdown or listbox.
 
 **Parameters:**
 
-- `index` `uint` - The index
+- `index` `uint32` - The index
 
 ### get_slider_minimum
 
@@ -945,8 +953,8 @@ Selects a range of text in this textbox.
 
 **Parameters:**
 
-- `end_index` `int` - The index of the last character to select
-- `start_index` `int` - The index of the first character to select
+- `end_index` `int32` - The index of the last character to select
+- `start_index` `int32` - The index of the first character to select
 
 **Examples:**
 
@@ -989,7 +997,7 @@ Scrolls the scroll bar such that the specified listbox item is visible to the pl
 
 **Parameters:**
 
-- `index` `int` - The item index to scroll to.
+- `index` `int32` - The item index to scroll to.
 - `scroll_mode` `"in-view"` | `"top-third"` *(optional)* - Where the item should be positioned in the list-box. Defaults to `"in-view"`.
 
 ### bring_to_front

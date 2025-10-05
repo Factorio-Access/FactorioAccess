@@ -18,13 +18,13 @@ The old controller type.
 
 ### player_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The player who changed controllers.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

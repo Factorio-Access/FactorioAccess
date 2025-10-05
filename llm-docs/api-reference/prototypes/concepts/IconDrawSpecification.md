@@ -34,13 +34,13 @@ Scale of the icon when there are many items.
 
 **Default:** 1.0
 
-### renderLayer
+### render_layer
 
 Render layer of the icon.
 
-**Type:** `"entity-info-icon-below"` | `"entity-info-icon-above"` | `"air-entity-info-icon"`
+**Type:** `"entity-info-icon"` | `"entity-info-icon-above"` | `"air-entity-info-icon"`
 
 **Optional:** Yes
 
-**Default:** "entity-info-icon-below"
+**Default:** "entity-info-icon"
 

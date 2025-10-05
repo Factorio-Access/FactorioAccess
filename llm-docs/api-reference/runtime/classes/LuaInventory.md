@@ -84,7 +84,7 @@ The class name of this object. Available even when `valid` is false. For LuaStru
 
 ### clear
 
-Make this inventory empty.
+Clear this inventory of all items so that it becomes empty.
 
 ### can_insert
 
@@ -108,7 +108,7 @@ Insert items into this inventory.
 
 **Returns:**
 
-- `uint` - Number of items actually inserted.
+- `uint32` - Number of items actually inserted.
 
 ### remove
 
@@ -120,7 +120,7 @@ Remove items from this inventory.
 
 **Returns:**
 
-- `uint` - Number of items actually removed.
+- `uint32` - Number of items actually removed.
 
 ### get_item_count
 
@@ -132,7 +132,31 @@ Get the number of all or some items in this inventory.
 
 **Returns:**
 
-- `uint`
+- `uint32`
+
+### get_item_count_filtered
+
+Get the number of items in this inventory that match provided filter.
+
+**Parameters:**
+
+- `filter` `ItemFilter`
+
+**Returns:**
+
+- `uint32`
+
+### get_item_quality_counts
+
+Get the number of all or some items in this inventory, aggregated by quality.
+
+**Parameters:**
+
+- `item` `ItemID` *(optional)*
+
+**Returns:**
+
+- Dictionary[`string`, `uint32`]
 
 ### is_empty
 
@@ -178,7 +202,7 @@ Only useable if this inventory supports having a bar.
 
 **Returns:**
 
-- `uint`
+- `uint32`
 
 ### set_bar
 
@@ -188,7 +212,7 @@ Only useable if this inventory supports having a bar.
 
 **Parameters:**
 
-- `bar` `uint` *(optional)* - The new limit. Omitting this parameter or passing `nil` will clear the limit.
+- `bar` `uint32` *(optional)* - The new limit. Omitting this parameter or passing `nil` will clear the limit.
 
 ### supports_filters
 
@@ -213,7 +237,7 @@ If the given inventory slot filter can be set to the given filter.
 **Parameters:**
 
 - `filter` `ItemFilter` - The item filter
-- `index` `uint` - The item stack index
+- `index` `uint32` - The item stack index
 
 **Returns:**
 
@@ -225,7 +249,7 @@ Gets the filter for the given item stack index.
 
 **Parameters:**
 
-- `index` `uint` - The item stack index
+- `index` `uint32` - The item stack index
 
 **Returns:**
 
@@ -240,7 +264,7 @@ Some inventory slots don't allow some filters (gun ammo can't be filtered for no
 **Parameters:**
 
 - `filter` `ItemFilter` | `nil` - The new filter. `nil` erases any existing filter.
-- `index` `uint` - The item stack index.
+- `index` `uint32` - The item stack index.
 
 **Returns:**
 
@@ -257,7 +281,7 @@ Finds the first LuaItemStack in the inventory that matches the given item name.
 **Returns:**
 
 - `LuaItemStack` *(optional)* - The first matching stack, or `nil` if none match.
-- `uint` *(optional)* - The stack index of the matching stack, if any is found.
+- `uint32` *(optional)* - The stack index of the matching stack, if any is found.
 
 ### find_empty_stack
 
@@ -270,7 +294,7 @@ Finds the first empty stack. Filtered slots are excluded unless a filter item is
 **Returns:**
 
 - `LuaItemStack` *(optional)* - The first empty stack, or `nil` if there aren't any empty stacks.
-- `uint` *(optional)* - The stack index of the matching stack, if any is found.
+- `uint32` *(optional)* - The stack index of the matching stack, if any is found.
 
 ### count_empty_stacks
 
@@ -283,7 +307,7 @@ Counts the number of empty stacks.
 
 **Returns:**
 
-- `uint`
+- `uint32`
 
 ### get_insertable_count
 
@@ -299,7 +323,7 @@ This accounts for the 'bar' on the inventory.
 
 **Returns:**
 
-- `uint`
+- `uint32`
 
 ### sort_and_merge
 

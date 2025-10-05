@@ -8,7 +8,7 @@
 
 Constant to use as the first argument of the operation. Has no effect when `first_signal` is set. Defaults to `0`.
 
-**Type:** `int`
+**Type:** `int32`
 
 **Optional:** Yes
 
@@ -48,7 +48,7 @@ Specifies the signal to output.
 
 Constant to use as the second argument of the operation. Has no effect when `second_signal` is set. Defaults to `0`.
 
-**Type:** `int`
+**Type:** `int32`
 
 **Optional:** Yes
 

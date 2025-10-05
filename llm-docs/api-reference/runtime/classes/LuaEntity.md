@@ -8,6 +8,14 @@ Most functions on LuaEntity also work when the entity is contained in a ghost.
 
 ## Attributes
 
+### rail_length
+
+Length of this rail piece.
+
+**Read type:** `double`
+
+**Subclasses:** Rail
+
 ### name
 
 Name of the entity prototype. E.g. "inserter" or "fast-inserter".
@@ -76,11 +84,11 @@ This has no effect if the prototype does not support filters.
 
 Deactivating an entity will stop all its operations (car will stop moving, inserters will stop working, fish will stop moving etc).
 
-Entities that are not active naturally can't be set to be active (setting it to be active will do nothing)
+Writing to this is deprecated and affects only the [disabled_by_script](runtime:LuaEntity::disabled_by_script) state.
 
-Ghosts, simple smoke, and corpses can't be modified at this time.
+Reading from this returns `false` if the entity is deactivated in at least one of the following ways: [by script](runtime:LuaEntity::disabled_by_script), [by circuit network](runtime:LuaEntity::disabled_by_control_behavior), [by recipe](runtime:LuaEntity::disabled_by_recipe), [by freezing](runtime:LuaEntity::frozen), or by deconstruction.
 
-It is even possible to set the character to not be active, so he can't move and perform most of the tasks.
+Entities that are not active naturally can't be set to be active (setting it to be active will do nothing). Some entities (Corpse, FireFlame, Roboport, RollingStock, dying entities) need to remain active and will ignore writes.
 
 **Read type:** `boolean`
 
@@ -162,7 +170,9 @@ The current direction this entity is facing.
 
 ### mirroring
 
-If the entity is currently mirrored. This state is referred to as `flipped` elsewhere, such as on the [on_player_flipped_entity](runtime:on_player_flipped_entity) event.
+Whether the entity is currently mirrored. This state is referred to as `flipped` elsewhere, such as on the [on_player_flipped_entity](runtime:on_player_flipped_entity) event.
+
+If an entity is mirrored, it is flipped over the axis that is pointing in the entity's direction. For example if a mirrored entity is facing north, everything that was defined to be facing east in the prototype now faces west.
 
 **Read type:** `boolean`
 
@@ -176,7 +186,7 @@ Whether the entity has direction. When it is false for this entity, it will alwa
 
 ### orientation
 
-The smooth orientation of this entity.
+The smooth orientation of this entity. For turrets this is the orientation of the weapon.
 
 **Read type:** `RealOrientation`
 
@@ -195,6 +205,8 @@ The orientation of this cliff.
 The relative orientation of the vehicle turret, artillery turret, artillery wagon. `nil` if this entity isn't a vehicle with a vehicle turret or artillery turret/wagon.
 
 Writing does nothing if the vehicle doesn't have a turret.
+
+For the turret orientation of non-artillery turrets, use [LuaEntity::orientation](runtime:LuaEntity::orientation).
 
 **Read type:** `RealOrientation`
 
@@ -216,9 +228,9 @@ The torso orientation of this spider vehicle.
 
 Count of resource units contained.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Subclasses:** ResourceEntity
 
@@ -228,9 +240,9 @@ Count of initial resource units contained. `nil` if this is not an infinite reso
 
 If this is not an infinite resource, writing will produce an error.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Optional:** Yes
 
@@ -238,7 +250,7 @@ If this is not an infinite resource, writing will produce an error.
 
 ### effectivity_modifier
 
-Multiplies the acceleration the vehicle can create for one unit of energy. Defaults to `1`.
+Multiplies the acceleration the car can create for one unit of energy. Defaults to `1`.
 
 **Read type:** `float`
 
@@ -380,9 +392,9 @@ The entity this inserter will attempt to pick up items from. If there are multip
 
 Index of the currently selected weapon slot of this character, car, or spidertron. `nil` if this entity doesn't have guns.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Optional:** Yes
 
@@ -502,7 +514,7 @@ The ticks left before a combat robot, highlight box, smoke, or sticker entity is
 
 ### color
 
-The color of this character, rolling stock, corpse, train stop, simple-entity-with-owner, car, spider-vehicle, or lamp. `nil` if this entity doesn't use custom colors.
+The color of this character, rolling stock, corpse, character corpse, train stop, simple-entity-with-owner, car, spider-vehicle, or lamp. `nil` if this entity doesn't use custom colors.
 
 Car color is overridden by the color of the current driver/passenger, if there is one.
 
@@ -628,7 +640,7 @@ Whether this loader gets items from or puts item into a container.
 
 ### use_transitional_requests
 
-When true, the rocket silo will request items for space platforms in orbit.
+When true, the rocket silo will automatically request items for space platforms in orbit.
 
 Setting the value will have no effect when the silo doesn't support logistics.
 
@@ -638,13 +650,23 @@ Setting the value will have no effect when the silo doesn't support logistics.
 
 **Subclasses:** RocketSilo
 
+### transitional_request_target
+
+The space platform in orbit this rocket silo is automatically requesting items for.
+
+**Read type:** `LuaSpacePlatform`
+
+**Optional:** Yes
+
+**Subclasses:** RocketSilo
+
 ### rocket_parts
 
 Number of rocket parts in the silo.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Subclasses:** RocketSilo
 
@@ -712,9 +734,9 @@ The damage dealt by this turret, artillery turret, or artillery wagon.
 
 The number of units killed by this turret, artillery turret, or artillery wagon.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Subclasses:** Turret
 
@@ -808,6 +830,14 @@ The bonus mining progress for this mining drill. Read yields a number in range [
 
 **Optional:** Yes
 
+### mining_area
+
+Area in which this mining drill looks for resources to mine.
+
+**Read type:** `BoundingBox`
+
+**Subclasses:** MiningDrill
+
 ### power_production
 
 The power production specific to the ElectricEnergyInterface entity type.
@@ -870,7 +900,7 @@ The mining target, if any.
 
 The number of filter slots this inserter, loader, mining drill, asteroid collector or logistic storage container has. 0 if not one of those entities.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### loader_container
 
@@ -1038,7 +1068,7 @@ Returns the current target pickup count of the inserter.
 
 This considers the circuit network, manual override and the inserter stack size limit based on technology.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Subclasses:** Inserter
 
@@ -1048,9 +1078,9 @@ Sets the stack size limit on this inserter.
 
 Set to `0` to reset.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Subclasses:** Inserter
 
@@ -1058,9 +1088,9 @@ Set to `0` to reset.
 
 The number of products this machine finished crafting in its lifetime.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Subclasses:** CraftingMachine
 
@@ -1122,7 +1152,7 @@ The effects being applied to this entity, if any. For beacons, this is the effec
 
 Number of beacons affecting this effect receiver. Can only be used when the entity has an effect receiver (AssemblingMachine, Furnace, Lab, MiningDrills)
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -1152,9 +1182,9 @@ The player index associated with this character corpse.
 
 The index is not guaranteed to be valid so it should always be checked first if a player with that index actually exists.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Subclasses:** CharacterCorpse
 
@@ -1162,9 +1192,9 @@ The index is not guaranteed to be valid so it should always be checked first if 
 
 The tick this character corpse died at.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Subclasses:** CharacterCorpse
 
@@ -1198,9 +1228,9 @@ A character associated with a player is not directly controlled by any player.
 
 The last tick this character entity was attacked.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Subclasses:** Character
 
@@ -1208,9 +1238,9 @@ The last tick this character entity was attacked.
 
 The last tick this character entity was damaged.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Subclasses:** Character
 
@@ -1342,7 +1372,7 @@ Rail direction to which this train stop is binding. This returns a value even wh
 
 The number of trains in this rail block for this rail entity.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Subclasses:** Rail
 
@@ -1350,9 +1380,9 @@ The number of trains in this rail block for this rail entity.
 
 The timeout that's left on this landmine in ticks. It describes the time between the landmine being placed and it being armed.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Subclasses:** LandMine
 
@@ -1386,9 +1416,9 @@ The highlight box type of this highlight box entity.
 
 The blink interval of this highlight box entity. `0` indicates no blink.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Subclasses:** HighlightBox
 
@@ -1472,7 +1502,7 @@ If no override is defined, the threshold is taken from [LuaEntityPrototype::valv
 
 Returns the id of the electric network that this entity is connected to, if any.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Optional:** Yes
 
@@ -1550,9 +1580,9 @@ The tags associated with this entity ghost. `nil` if this is not an entity ghost
 
 The ticks until the next trigger effect of this smoke-with-trigger.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Subclasses:** SmokeWithTrigger
 
@@ -1584,7 +1614,7 @@ Train may be included multiple times when braking distance covers this train sto
 
 Value may be read even when train stop has no control behavior.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Subclasses:** TrainStop
 
@@ -1594,9 +1624,9 @@ Amount of trains above which no new trains will be sent to this train stop. Writ
 
 When a train stop has a control behavior with wire connected and set_trains_limit enabled, this value will be overwritten by it.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Subclasses:** TrainStop
 
@@ -1636,9 +1666,9 @@ The owner of this combat robot, if any.
 
 The link ID this linked container is using.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Subclasses:** LinkedContainer
 
@@ -1734,13 +1764,13 @@ The status of this rocket silo entity.
 
 Specifies the tiling size of the entity, is used to decide, if the center should be in the center of the tile (odd tile size dimension) or on the tile border (even tile size dimension). Uses the current direction of the entity.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### tile_height
 
 Specifies the tiling size of the entity, is used to decide, if the center should be in the center of the tile (odd tile size dimension) or on the tile border (even tile size dimension). Uses the current direction of the entity.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### crane_end_position_3d
 
@@ -1854,9 +1884,9 @@ Returns a LuaCommandable for this entity or nil if entity is not commandable. Un
 
 ### fluids_count
 
-Returns count of fluid storages. This includes fluid storages provided by FluidBoxes but also covers other fluid storages like FluidTurret's internal buffer and FluidWagon's fluid since they are not FluidBox and cannot be exposed through [LuaFluidBox](runtime:LuaFluidBox).
+Returns count of fluid storages. This includes fluid storages provided by fluidboxes but also covers other fluid storages like fluid turret's internal buffer and fluid wagon's fluid since they are not fluidbox and cannot be exposed through [LuaFluidBox](runtime:LuaFluidBox).
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### tick_grown
 
@@ -1934,7 +1964,7 @@ If the updatable entity is disabled by control behavior.
 
 ### disabled_by_recipe
 
-If the updatable entity is disabled by recipe.
+If the assembling machine is disabled by recipe, e.g. due to [AssemblingMachinePrototype::disabled_when_recipe_not_researched](prototype:AssemblingMachinePrototype::disabled_when_recipe_not_researched).
 
 **Read type:** `boolean`
 
@@ -2241,7 +2271,7 @@ Not all entities can be destroyed - things such as rails under trains cannot be 
 - `do_cliff_correction` `boolean` *(optional)* - Whether neighbouring cliffs should be corrected. Defaults to `false`.
 - `player` `PlayerIdentification` *(optional)* - The player whose undo queue this action should be added to.
 - `raise_destroy` `boolean` *(optional)* - If `true`, [script_raised_destroy](runtime:script_raised_destroy) will be called. Defaults to `false`.
-- `undo_index` `uint` *(optional)* - The index of the undo item to add this action to. An index of `0` creates a new undo item for it. Defaults to putting it into the appropriate undo item automatically if not specified.
+- `undo_index` `uint32` *(optional)* - The index of the undo item to add this action to. An index of `0` creates a new undo item for it. Defaults to putting it into the appropriate undo item automatically if not specified.
 
 **Returns:**
 
@@ -2323,7 +2353,7 @@ The other offers are moved down to fill the gap created by removing the offer, w
 
 **Parameters:**
 
-- `offer` `uint` - Index of offer to remove.
+- `offer` `uint32` - Index of offer to remove.
 
 **Returns:**
 
@@ -2349,7 +2379,7 @@ Sets the entity to be deconstructed by construction robots.
 
 - `force` `ForceID` - The force whose robots are supposed to do the deconstruction.
 - `player` `PlayerIdentification` *(optional)* - The player to set the last_user to, if any. Also the player whose undo queue this action should be added to.
-- `undo_index` `uint` *(optional)* - The index of the undo item to add this action to. An index of `0` creates a new undo item for it. An index of `1` adds the action to the latest undo action on the stack. Defaults to putting it into the appropriate undo item automatically if one is not specified.
+- `undo_index` `uint32` *(optional)* - The index of the undo item to add this action to. An index of `0` creates a new undo item for it. An index of `1` adds the action to the latest undo action on the stack. Defaults to putting it into the appropriate undo item automatically if one is not specified.
 
 **Returns:**
 
@@ -2381,7 +2411,7 @@ Sets the entity to be upgraded by construction robots.
 - `force` `ForceID` - The force whose robots are supposed to do the upgrade.
 - `player` `PlayerIdentification` *(optional)* - The player whose undo queue this action should be added to.
 - `target` `EntityWithQualityID` - The prototype of the entity to upgrade to.
-- `undo_index` `uint` *(optional)* - The index of the undo item to add this action to. An index of `0` creates a new undo item for it. Defaults to putting it into the appropriate undo item automatically if not specified.
+- `undo_index` `uint32` *(optional)* - The index of the undo item to add this action to. An index of `0` creates a new undo item for it. Defaults to putting it into the appropriate undo item automatically if not specified.
 
 **Returns:**
 
@@ -2453,7 +2483,7 @@ Returns whether a craft is currently in process. It does not indicate whether pr
 
 **Parameters:**
 
-- `extra_time` `uint` *(optional)* - Extra ticks to stay open.
+- `extra_time` `uint32` *(optional)* - Extra ticks to stay open.
 - `force` `ForceID` - The force that requests the gate to be open.
 
 ### request_to_close
@@ -2468,7 +2498,7 @@ Get a transport line of a belt or belt connectable entity.
 
 **Parameters:**
 
-- `index` `uint` - Index of the requested transport line. Transport lines are 1-indexed.
+- `index` `uint32` - Index of the requested transport line. Transport lines are 1-indexed.
 
 **Returns:**
 
@@ -2484,7 +2514,7 @@ Get an item insert specification onto a belt connectable: for a given map positi
 
 **Returns:**
 
-- `uint` - Index of the transport line that is closest to the provided map position.
+- `uint32` - Index of the transport line that is closest to the provided map position.
 - `float` - Position along the transport line where item should be dropped.
 
 ### get_line_item_position
@@ -2493,7 +2523,7 @@ Get a map position related to a position on a transport line.
 
 **Parameters:**
 
-- `index` `uint` - Index of the transport line. Transport lines are 1-indexed.
+- `index` `uint32` - Index of the transport line. Transport lines are 1-indexed.
 - `position` `float` - Linear position along the transport line. Clamped to the transport line range.
 
 **Returns:**
@@ -2506,7 +2536,7 @@ Get the maximum transport line index of a belt or belt connectable entity.
 
 **Returns:**
 
-- `uint`
+- `uint32`
 
 ### launch_rocket
 
@@ -2530,7 +2560,7 @@ Revive a ghost, which turns it from a ghost into a real entity or tile.
 
 **Returns:**
 
-- Dictionary[`string`, `uint`] *(optional)* - Any items the new real entity collided with or `nil` if the ghost could not be revived.
+- Dictionary[`string`, `uint32`] *(optional)* - Any items the new real entity collided with or `nil` if the ghost could not be revived.
 - `LuaEntity` *(optional)* - The revived entity if an entity ghost was successfully revived.
 - `LuaEntity` *(optional)* - The item request proxy if one was created.
 
@@ -2710,7 +2740,7 @@ Get the filter for a slot in an inserter, loader, mining drill, asteroid collect
 
 **Parameters:**
 
-- `slot_index` `uint` - Index of the slot to get the filter for.
+- `slot_index` `uint32` - Index of the slot to get the filter for.
 
 **Returns:**
 
@@ -2723,7 +2753,7 @@ Set the filter for a slot in an inserter (ItemFilter), loader (ItemFilter), mini
 **Parameters:**
 
 - `filter` `ItemFilter` | `ItemWithQualityID` | `EntityID` | `AsteroidChunkID` *(optional)* - The item or entity to filter, or `nil` to clear the filter.
-- `index` `uint` - Index of the slot to set the filter for.
+- `index` `uint32` - Index of the slot to set the filter for.
 
 ### get_infinity_container_filter
 
@@ -2731,7 +2761,7 @@ Gets the filter for this infinity container at the given index, or `nil` if the 
 
 **Parameters:**
 
-- `index` `uint` - The index to get.
+- `index` `uint32` - The index to get.
 
 **Returns:**
 
@@ -2744,7 +2774,7 @@ Sets the filter for this infinity container at the given index.
 **Parameters:**
 
 - `filter` `InfinityInventoryFilter` | `nil` - The new filter, or `nil` to clear the filter.
-- `index` `uint` - The index to set.
+- `index` `uint32` - The index to set.
 
 ### get_infinity_pipe_filter
 
@@ -2816,7 +2846,7 @@ Read a single signal from the selected wire connector
 
 **Returns:**
 
-- `int` - The current value of the signal.
+- `int32` - The current value of the signal.
 
 ### get_signals
 
@@ -2870,8 +2900,8 @@ Plays a note with the given instrument and note.
 
 **Parameters:**
 
-- `instrument` `uint`
-- `note` `uint`
+- `instrument` `uint32`
+- `note` `uint32`
 - `stop_playing_sounds` `boolean` *(optional)*
 
 **Returns:**
@@ -3036,7 +3066,7 @@ If information about fluid temperatures is required, [LuaEntity::fluidbox](runti
 
 Get amounts of all fluids in this entity.
 
-If information about fluid temperatures is required, [LuaEntity::fluidbox](runtime:LuaEntity::fluidbox) should be used instead.
+If information about fluid temperatures is required, [LuaEntity::get_fluid](runtime:LuaEntity::get_fluid) or [LuaEntity::fluidbox](runtime:LuaEntity::fluidbox) should be used instead.
 
 **Returns:**
 
@@ -3110,7 +3140,7 @@ Set the target of this beam.
 
 ### get_radius
 
-The radius of this entity.
+The radius of this entity. The radius is defined as half the distance between the top left corner and bottom right corner of the collision box.
 
 **Returns:**
 
@@ -3207,7 +3237,7 @@ Get the entity ID at the specified position in the turret's priority list.
 
 **Parameters:**
 
-- `index` `uint` - The index of the entry to fetch.
+- `index` `uint32` - The index of the entry to fetch.
 
 **Returns:**
 
@@ -3220,7 +3250,7 @@ Set the entity ID name at the specified position in the turret's priority list.
 **Parameters:**
 
 - `entity_id` `EntityID` *(optional)* - The name of the entity prototype, or `nil` to clear the entry.
-- `index` `uint` - The index of the entry to set.
+- `index` `uint32` - The index of the entry to set.
 
 ### can_wires_reach
 
@@ -3446,7 +3476,7 @@ The same as [LuaInventory::get_bar](runtime:LuaInventory::get_bar) but also work
 
 **Returns:**
 
-- `uint`
+- `uint32`
 
 ### set_inventory_bar
 
@@ -3454,7 +3484,7 @@ The same as [LuaInventory::set_bar](runtime:LuaInventory::set_bar) but also work
 
 **Parameters:**
 
-- `bar` `uint` *(optional)* - The new limit. Omitting this parameter or passing `nil` will clear the limit.
+- `bar` `uint32` *(optional)* - The new limit. Omitting this parameter or passing `nil` will clear the limit.
 - `inventory_index` `defines.inventory`
 
 ### inventory_supports_filters
@@ -3488,7 +3518,7 @@ The same as [LuaInventory::can_set_filter](runtime:LuaInventory::can_set_filter)
 **Parameters:**
 
 - `filter` `ItemFilter` - The item filter
-- `index` `uint` - The item stack index
+- `index` `uint32` - The item stack index
 - `inventory_index` `defines.inventory`
 
 **Returns:**
@@ -3501,7 +3531,7 @@ The same as [LuaInventory::get_filter](runtime:LuaInventory::get_filter) but als
 
 **Parameters:**
 
-- `index` `uint` - The item stack index
+- `index` `uint32` - The item stack index
 - `inventory_index` `defines.inventory`
 
 **Returns:**
@@ -3515,7 +3545,7 @@ The same as [LuaInventory::set_filter](runtime:LuaInventory::set_filter) but als
 **Parameters:**
 
 - `filter` `ItemFilter` | `nil` - The new filter. `nil` erases any existing filter.
-- `index` `uint` - The item stack index.
+- `index` `uint32` - The item stack index.
 - `inventory_index` `defines.inventory`
 
 **Returns:**
@@ -3538,32 +3568,53 @@ If the tree is already registered with a tower it will not be registered.
 
 - `boolean` - If the tree was registered.
 
-### get_fluid
+### get_movement
 
-Gets fluid of the i-th fluid storage.
+Gets the combined movement vector (direction and speed) of this combat robot or asteroid. The entity moves by this vector each tick.
 
-**Parameters:**
-
-- `index` `uint` - Fluid storage index. Valid values are from 1 up to [LuaEntity::fluids_count](runtime:LuaEntity::fluids_count).
+Note that for combat robots this does not include the constant drift in the direction they are facing.
 
 **Returns:**
 
-- `Fluid` *(optional)* - Fluid in this storage. nil if fluid storage is empty.
+- `Vector`
+
+### set_movement
+
+Sets the movement direction and movement speed for this combat robot or asteroid.
+
+Note that for combat robots this does not affect the constant drift in the direction they are facing.
+
+**Parameters:**
+
+- `direction` `Vector` - This normalized form of this vector is used for the movement direction.
+- `speed` `double` - Speed in tiles per tick. Cannot be less than 0.
+
+### get_fluid
+
+Gets fluid of the index-th fluid storage. This includes fluidbox and non-fluidbox fluid storages like fluid wagon contents. Refer to [LuaEntity::fluids_count](runtime:LuaEntity::fluids_count) for more information on available storages.
+
+**Parameters:**
+
+- `index` `uint32` - Fluid storage index. Valid values are from 1 up to [LuaEntity::fluids_count](runtime:LuaEntity::fluids_count).
+
+**Returns:**
+
+- `Fluid` *(optional)* - Fluid in this storage. `nil` if fluid storage is empty.
 
 ### set_fluid
 
-Sets fluid to the i-th fluid storage.
+Sets fluid to the index-th fluid storage. This includes fluidbox and non-fluidbox fluid storages like fluid wagon contents. Refer to [LuaEntity::fluids_count](runtime:LuaEntity::fluids_count) for more information on available storages.
 
-Fluid storages that are part of FluidBoxes (also available through [LuaFluidBox](runtime:LuaFluidBox)) may reject some fluids if they do not match filters or are above the FluidBox volume. To verify how much fluid was set a return value can be used which is the same as value that would be returned by [LuaEntity::get_fluid](runtime:LuaEntity::get_fluid).
+Fluid storages that are part of fluidboxes (also available through [LuaFluidBox](runtime:LuaFluidBox)) may reject some fluids if they do not match filters or are above the fluidbox volume. To verify how much fluid was set a return value can be used which is the same as value that would be returned by [LuaEntity::get_fluid](runtime:LuaEntity::get_fluid).
 
 **Parameters:**
 
 - `fluid` `Fluid` *(optional)* - Fluid to set. Fluid storage will be cleared if this is not provided.
-- `index` `uint` - Fluid storage index. Valid values are from 1 up to [LuaEntity::fluids_count](runtime:LuaEntity::fluids_count).
+- `index` `uint32` - Fluid storage index. Valid values are from 1 up to [LuaEntity::fluids_count](runtime:LuaEntity::fluids_count).
 
 **Returns:**
 
-- `Fluid` *(optional)* - Fluid in this storage after it was set. nil if fluid storage is empty.
+- `Fluid` *(optional)* - Fluid in this storage after it was set. `nil` if fluid storage is empty.
 
 ### get_logistic_sections
 

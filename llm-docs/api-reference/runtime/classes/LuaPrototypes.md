@@ -290,7 +290,7 @@ A dictionary containing every LuaProcessionLayerInheritanceGroupPrototype indexe
 
 ### max_force_distraction_chunk_distance
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### max_electric_pole_supply_area_distance
 
@@ -302,7 +302,7 @@ A dictionary containing every LuaProcessionLayerInheritanceGroupPrototype indexe
 
 ### max_beacon_supply_area_distance
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### max_gate_activation_distance
 

@@ -14,7 +14,7 @@ The entity that this belongs to.
 
 The index of this fluidbox prototype in the owning entity.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### pipe_connections
 
@@ -60,7 +60,7 @@ The maximum temperature, if any is set.
 
 The secondary draw orders for the 4 possible connection directions.
 
-**Read type:** Array[`int`]
+**Read type:** Array[`int32`]
 
 ### render_layer
 

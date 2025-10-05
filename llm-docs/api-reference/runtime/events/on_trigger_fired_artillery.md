@@ -20,7 +20,7 @@ Identifier of the event
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

@@ -28,6 +28,8 @@ See the [events page](runtime:events) for more info on what events contain and w
 
 ### on_cargo_pod_finished_descending
 
+### on_cargo_pod_started_ascending
+
 ### on_character_corpse_expired
 
 ### on_chart_tag_added
@@ -195,6 +197,8 @@ See the [events page](runtime:events) for more info on what events contain and w
 ### on_player_driving_changed_state
 
 ### on_player_dropped_item
+
+### on_player_dropped_item_into_entity
 
 ### on_player_fast_transferred
 

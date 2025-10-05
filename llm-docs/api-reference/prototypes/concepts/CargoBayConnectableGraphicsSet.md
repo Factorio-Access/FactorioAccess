@@ -32,3 +32,11 @@
 
 **Optional:** Yes
 
+### water_reflection
+
+Only loaded if this graphics set is used in a property called `graphics_set`, refer to [EntityPrototype::water_reflection](prototype:EntityPrototype::water_reflection).
+
+**Type:** `WaterReflectionDefinition`
+
+**Optional:** Yes
+

@@ -6,7 +6,7 @@ Called when a player cancels crafting.
 
 ### cancel_count
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The number of crafts that have been cancelled.
 
@@ -24,7 +24,7 @@ Identifier of the event
 
 ### player_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The player that did the crafting.
 
@@ -36,7 +36,7 @@ The recipe that has been cancelled.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

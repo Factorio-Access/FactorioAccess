@@ -78,7 +78,7 @@ Maximum energy per tick crated by this equipment on the current surface. Actual 
 
 Inventory size bonus.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### movement_bonus
 

@@ -16,7 +16,7 @@ Prototype of a space connection.
 
 ### length
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### asteroid_spawn_definitions
 

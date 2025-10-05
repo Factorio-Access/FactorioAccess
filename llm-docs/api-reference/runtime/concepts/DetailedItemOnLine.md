@@ -22,7 +22,7 @@ Linear position of this stack on this line.
 
 Unique identifier of this item while it is on transport lines.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

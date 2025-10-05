@@ -16,7 +16,7 @@ Amount of the item or fluid.
 
 How much of this ingredient is ignored by statistics.
 
-**Type:** `uint` | `double`
+**Type:** `uint32` | `double`
 
 **Optional:** Yes
 

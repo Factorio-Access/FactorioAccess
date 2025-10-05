@@ -6,7 +6,7 @@
 
 ### max_ray_portals_expanded_per_tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

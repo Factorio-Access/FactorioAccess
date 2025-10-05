@@ -6,7 +6,7 @@ Called when a player is kicked.
 
 ### by_player
 
-**Type:** `uint` *(optional)*
+**Type:** `uint32` *(optional)*
 
 The player that did the kicking if any.
 
@@ -18,7 +18,7 @@ Identifier of the event
 
 ### player_index
 
-**Type:** `uint`
+**Type:** `uint32`
 
 The player kicked.
 
@@ -30,7 +30,7 @@ The reason given if any.
 
 ### tick
 
-**Type:** `uint`
+**Type:** `uint32`
 
 Tick the event was generated.
 

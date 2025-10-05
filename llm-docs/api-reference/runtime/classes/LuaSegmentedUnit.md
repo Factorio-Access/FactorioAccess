@@ -102,7 +102,7 @@ This value represents unit's most recent change in speed. If its speed is not ch
 
 The maximum length of [LuaSegmentedUnit::get_body_nodes](runtime:LuaSegmentedUnit::get_body_nodes).
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### activity_mode
 

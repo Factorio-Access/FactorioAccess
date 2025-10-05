@@ -42,7 +42,7 @@ Whether enemy expansion is enabled at all.
 
 Defaults to `2`.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -50,7 +50,7 @@ Defaults to `2`.
 
 Defaults to `2`.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -66,7 +66,7 @@ A chunk has to have at most this high of a percentage of unbuildable tiles for i
 
 The maximum time between expansions in ticks. The actual cooldown is adjusted to the current evolution levels. Defaults to `60*3 600=216 000` ticks.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -74,7 +74,7 @@ The maximum time between expansions in ticks. The actual cooldown is adjusted to
 
 Distance in chunks from the furthest base around to prevent expansions from reaching too far into the player's territory. Defaults to `7`.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -82,7 +82,7 @@ Distance in chunks from the furthest base around to prevent expansions from reac
 
 The minimum time between expansions in ticks. The actual cooldown is adjusted to the current evolution levels. Defaults to `4*3 600=14 400` ticks.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -114,7 +114,7 @@ Defaults to `2.0`.
 
 The maximum size of a biter group that goes to build a new base. This is multiplied by the evolution factor. Defaults to `20`.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 
@@ -122,7 +122,7 @@ The maximum size of a biter group that goes to build a new base. This is multipl
 
 The minimum size of a biter group that goes to build a new base. This is multiplied by the evolution factor. Defaults to `5`.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

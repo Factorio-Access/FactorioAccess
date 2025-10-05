@@ -36,7 +36,7 @@ Get a table of all the players that currently exist. This sparse table allows yo
 
 If only a single player is required, [LuaGameScript::get_player](runtime:LuaGameScript::get_player) should be used instead, as it avoids the unnecessary overhead of passing the whole table to Lua.
 
-**Read type:** LuaCustomTable[`uint` | `string`, `LuaPlayer`]
+**Read type:** LuaCustomTable[`uint32` | `string`, `LuaPlayer`]
 
 ### map_settings
 
@@ -62,7 +62,7 @@ Current scenario difficulty.
 
 Get a table of all the forces that currently exist. This sparse table allows you to find forces by indexing it with either their `name` or `index`. Iterating this table with `pairs()` will provide the `name`s as the keys. Iterating with `ipairs()` will not work at all.
 
-**Read type:** LuaCustomTable[`uint` | `string`, `LuaForce`]
+**Read type:** LuaCustomTable[`uint32` | `string`, `LuaForce`]
 
 ### console_command_used
 
@@ -104,9 +104,9 @@ The number of ticks to be run while the tick is paused.
 
 When [LuaGameScript::tick_paused](runtime:LuaGameScript::tick_paused) is true, ticks_to_run behaves the following way: While this is > 0, the entity update is running normally and this value is decremented every tick. When this reaches 0, the game will pause again.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 ### finished
 
@@ -132,7 +132,7 @@ Speed to update the map at. 1.0 is normal speed -- 60 UPS. Minimum value is 0.01
 
 Get a table of all the surfaces that currently exist. This sparse table allows you to find surfaces by indexing it with either their `name` or `index`. Iterating this table with `pairs()` will provide the `name`s as the keys. Iterating with `ipairs()` will not work at all.
 
-**Read type:** LuaCustomTable[`uint` | `string`, `LuaSurface`]
+**Read type:** LuaCustomTable[`uint32` | `string`, `LuaSurface`]
 
 ### planets
 
@@ -154,7 +154,7 @@ This does *not* index using player index. See [LuaPlayer::index](runtime:LuaPlay
 
 Array of the names of all the backers that supported the game development early on. These are used as names for labs, locomotives, radars, roboports, and train stops.
 
-**Read type:** LuaCustomTable[`uint`, `string`]
+**Read type:** LuaCustomTable[`uint32`, `string`]
 
 ### default_map_gen_settings
 
@@ -345,13 +345,13 @@ If Factorio is running headless, this function will do nothing.
 - `path` `string` *(optional)* - The name of the image file. It should include a file extension indicating the desired format. Supports `.png`, `.jpg` /`.jpeg`, `.tga` and `.bmp`. Providing a directory path (ex. `"save/here/screenshot.png"`) will create the necessary folder structure in `script-output`. Defaults to `"screenshot.png"`.
 - `player` `PlayerIdentification` *(optional)* - The player to focus on. Defaults to the local player.
 - `position` `MapPosition` *(optional)* - If defined, the screenshot will be centered on this position. Otherwise, the screenshot will center on `player`.
-- `quality` `int` *(optional)* - The `.jpg` render quality as a percentage (from 0% to 100% inclusive), if used. A lower value means a more compressed image. Defaults to `80`.
+- `quality` `int32` *(optional)* - The `.jpg` render quality as a percentage (from 0% to 100% inclusive), if used. A lower value means a more compressed image. Defaults to `80`.
 - `resolution` `TilePosition` *(optional)* - The maximum allowed resolution is 16384x16384 (8192x8192 when `anti_alias` is `true`), but the maximum recommended resolution is 4096x4096 (resp. 2048x2048). The `x` value of the position is used as the width, the `y` value as the height.
 - `show_cursor_building_preview` `boolean` *(optional)* - When `true` and when `player` is specified, the building preview for the item in the player's cursor will also be rendered. Defaults to `false`.
 - `show_entity_info` `boolean` *(optional)* - Whether to include entity info ("Alt mode") or not. Defaults to `false`.
 - `show_gui` `boolean` *(optional)* - Whether to include GUIs in the screenshot or not. Defaults to `false`.
 - `surface` `SurfaceIdentification` *(optional)* - If defined, the screenshot will be taken on this surface.
-- `water_tick` `uint` *(optional)* - Overrides the tick of water animation, if animated water is enabled.
+- `water_tick` `uint32` *(optional)* - Overrides the tick of water animation, if animated water is enabled.
 - `zoom` `double` *(optional)* - The map zoom to take the screenshot at. Defaults to `1`.
 
 ### set_wait_for_screenshots_to_finish
@@ -366,7 +366,7 @@ Take a screenshot of the technology screen and save it to the `script-output` fo
 
 - `path` `string` *(optional)* - The name of the image file. It should include a file extension indicating the desired format. Supports `.png`, `.jpg` /`.jpeg`, `.tga` and `.bmp`. Providing a directory path (ex. `"save/here/screenshot.png"`) will create the necessary folder structure in `script-output`. Defaults to `"technology-screenshot.png"`.
 - `player` `PlayerIdentification` - The screenshot will be taken for this player.
-- `quality` `int` *(optional)* - The `.jpg` render quality as a percentage (from 0% to 100% inclusive), if used. A lower value means a more compressed image. Defaults to `80`.
+- `quality` `int32` *(optional)* - The `.jpg` render quality as a percentage (from 0% to 100% inclusive), if used. A lower value means a more compressed image. Defaults to `80`.
 - `selected_technology` `TechnologyID` *(optional)* - The technology to highlight.
 - `skip_disabled` `boolean` *(optional)* - If `true`, disabled technologies will be skipped. Their successors will be attached to the disabled technology's parents. Defaults to `false`.
 
@@ -477,7 +477,7 @@ Creates a deterministic standalone random generator with the given seed or if a 
 
 **Parameters:**
 
-- `seed` `uint` *(optional)*
+- `seed` `uint32` *(optional)*
 
 **Returns:**
 
@@ -565,7 +565,7 @@ Gets the given player or returns `nil` if no player is found.
 
 **Parameters:**
 
-- `player` `uint` | `string` - The player index or name.
+- `player` `uint32` | `string` - The player index or name.
 
 **Returns:**
 
@@ -579,7 +579,7 @@ This is a shortcut for [LuaGameScript::surfaces](runtime:LuaGameScript::surfaces
 
 **Parameters:**
 
-- `surface` `uint` | `string` - The surface index or name.
+- `surface` `uint32` | `string` - The surface index or name.
 
 **Returns:**
 
@@ -648,16 +648,16 @@ The pollution statistics for this the given surface.
 
 ### get_vehicles
 
-Returns vehicles in game
+Returns vehicles in game.
 
 **Parameters:**
 
 - `force` `ForceID` *(optional)*
 - `has_passenger` `boolean` *(optional)*
 - `is_moving` `boolean` *(optional)*
-- `surface` `SurfaceIdentification` *(optional)* - )
+- `surface` `SurfaceIdentification` *(optional)*
 - `type` `EntityID` | Array[`EntityID`] *(optional)*
-- `unit_number` `uint` *(optional)*
+- `unit_number` `uint32` *(optional)*
 
 **Returns:**
 
@@ -669,7 +669,7 @@ Returns entity with a specified unit number or nil if entity with such number wa
 
 **Parameters:**
 
-- `unit_number` `uint`
+- `unit_number` `uint32`
 
 **Returns:**
 

@@ -40,7 +40,7 @@ The force of this commandable.
 
 Unique identifier of this commandable.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 ### has_command
 

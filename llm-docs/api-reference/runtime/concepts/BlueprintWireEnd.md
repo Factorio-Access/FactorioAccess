@@ -16,3 +16,9 @@
 
 **Required:** Yes
 
+### surface_index
+
+**Type:** `uint32`
+
+**Optional:** Yes
+

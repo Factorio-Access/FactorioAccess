@@ -130,7 +130,7 @@ The type of AttackParameter.
 
 Number of ticks it takes for the weapon to actually shoot after it has been ordered to do so.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

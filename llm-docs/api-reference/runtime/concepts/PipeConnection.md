@@ -38,7 +38,7 @@ The connected fluidbox, if any.
 
 The index of the target fluidbox, if any.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Optional:** Yes
 
@@ -46,7 +46,7 @@ The index of the target fluidbox, if any.
 
 The index of the target fluidbox pipe connection, if any.
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Optional:** Yes
 

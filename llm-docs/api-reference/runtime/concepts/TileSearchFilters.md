@@ -54,7 +54,7 @@ If the filters should be inverted.
 
 ### limit
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Optional:** Yes
 

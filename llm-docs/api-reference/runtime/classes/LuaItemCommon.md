@@ -180,9 +180,9 @@ The default icons for a blueprint item.
 
 The active blueprint index for this blueprint book. `nil` if this blueprint book is empty.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Optional:** Yes
 
@@ -246,6 +246,76 @@ If this is an item with entity data, get the stored entity color.
 
 **Subclasses:** ItemWithEntityData
 
+### entity_logistic_sections
+
+If this is an item with entity data, get the stored logistic filters.
+
+**Read type:** `LogisticSections`
+
+**Write type:** `LogisticSections`
+
+**Subclasses:** ItemWithEntityData
+
+### entity_request_from_buffers
+
+If this is an item with entity data, get the stored request from buffer state.
+
+**Read type:** `boolean`
+
+**Write type:** `boolean`
+
+**Subclasses:** ItemWithEntityData
+
+### entity_logistics_enabled
+
+If this is an item with entity data, get the stored vehicle logistics enabled state.
+
+**Read type:** `boolean`
+
+**Write type:** `boolean`
+
+**Subclasses:** ItemWithEntityData
+
+### entity_enable_logistics_while_moving
+
+If this is an item with entity data, get the stored enable logistics while moving state.
+
+**Read type:** `boolean`
+
+**Write type:** `boolean`
+
+**Subclasses:** ItemWithEntityData
+
+### entity_driver_is_gunner
+
+If this is an item with entity data, get the stored driver is gunner state.
+
+**Read type:** `boolean`
+
+**Write type:** `boolean`
+
+**Subclasses:** ItemWithEntityData
+
+### entity_auto_target_without_gunner
+
+If this is an item with entity data, get the stored auto target without gunner state.
+
+**Read type:** `boolean`
+
+**Write type:** `boolean`
+
+**Subclasses:** ItemWithEntityData
+
+### entity_auto_target_with_gunner
+
+If this is an item with entity data, get the stored auto target with gunner state.
+
+**Read type:** `boolean`
+
+**Write type:** `boolean`
+
+**Subclasses:** ItemWithEntityData
+
 ### tags
 
 **Read type:** `Tags`
@@ -268,7 +338,7 @@ The custom description this item-with-tags. This is shown over the normal item d
 
 The number of entity filters this deconstruction item supports.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Subclasses:** DeconstructionItem
 
@@ -286,7 +356,7 @@ The entity filters for this deconstruction item. The attribute is a sparse array
 
 The number of tile filters this deconstruction item supports.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Subclasses:** DeconstructionItem
 
@@ -344,7 +414,7 @@ If this deconstruction item is set to allow trees and rocks only.
 
 The current count of mappers in the upgrade item.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
 **Subclasses:** UpgradeItem
 
@@ -362,9 +432,9 @@ Durability of the contained item. Automatically capped at the item's maximum dur
 
 Number of bullets left in the magazine.
 
-**Read type:** `uint`
+**Read type:** `uint32`
 
-**Write type:** `uint`
+**Write type:** `uint32`
 
 **Subclasses:** AmmoItem
 
@@ -433,7 +503,7 @@ Sets up this blueprint using the found blueprintable entities/tiles on the surfa
 
 **Returns:**
 
-- Dictionary[`uint`, `LuaEntity`] - The blueprint entity index to source entity mapping.
+- Dictionary[`uint32`, `LuaEntity`] - The blueprint entity index to source entity mapping.
 
 ### get_blueprint_entity_tags
 
@@ -441,7 +511,7 @@ Gets the tags for the given blueprint entity index in this blueprint item.
 
 **Parameters:**
 
-- `index` `uint`
+- `index` `uint32`
 
 **Returns:**
 
@@ -453,7 +523,7 @@ Sets the tags on the given blueprint entity index in this blueprint item.
 
 **Parameters:**
 
-- `index` `uint` - The entity index
+- `index` `uint32` - The entity index
 - `tags` `Tags`
 
 ### get_blueprint_entity_tag
@@ -462,7 +532,7 @@ Gets the given tag on the given blueprint entity index in this blueprint item.
 
 **Parameters:**
 
-- `index` `uint` - The entity index.
+- `index` `uint32` - The entity index.
 - `tag` `string` - The tag to get.
 
 **Returns:**
@@ -475,7 +545,7 @@ Sets the given tag on the given blueprint entity index in this blueprint item.
 
 **Parameters:**
 
-- `index` `uint` - The entity index.
+- `index` `uint32` - The entity index.
 - `tag` `string` - The tag to set.
 - `value` `AnyBasic` - The tag value to set or `nil` to clear the tag.
 
@@ -517,7 +587,7 @@ Gets the number of entities in this blueprint item.
 
 **Returns:**
 
-- `uint`
+- `uint32`
 
 ### get_tag
 
@@ -558,7 +628,7 @@ Gets the entity filter at the given index for this deconstruction item.
 
 **Parameters:**
 
-- `index` `uint`
+- `index` `uint32`
 
 **Returns:**
 
@@ -571,7 +641,7 @@ Sets the entity filter at the given index for this deconstruction item.
 **Parameters:**
 
 - `filter` `ItemFilter` | `nil` - Writing `nil` removes the filter.
-- `index` `uint`
+- `index` `uint32`
 
 **Returns:**
 
@@ -583,7 +653,7 @@ Gets the tile filter at the given index for this deconstruction item.
 
 **Parameters:**
 
-- `index` `uint`
+- `index` `uint32`
 
 **Returns:**
 
@@ -596,7 +666,7 @@ Sets the tile filter at the given index for this deconstruction item.
 **Parameters:**
 
 - `filter` `string` | `LuaTilePrototype` | `LuaTile` | `nil` - Writing `nil` removes the filter.
-- `index` `uint`
+- `index` `uint32`
 
 **Returns:**
 
@@ -644,7 +714,7 @@ In contrast to [LuaItemCommon::set_mapper](runtime:LuaItemCommon::set_mapper), i
 
 **Parameters:**
 
-- `index` `uint` - The index of the mapper to read.
+- `index` `uint32` - The index of the mapper to read.
 - `type` `"from"` | `"to"`
 
 **Returns:**
@@ -659,7 +729,7 @@ In contrast to [LuaItemCommon::get_mapper](runtime:LuaItemCommon::get_mapper), i
 
 **Parameters:**
 
-- `index` `uint` - The index of the mapper to set.
+- `index` `uint32` - The index of the mapper to set.
 - `mapper` `UpgradeMapperSource` | `UpgradeMapperDestination` | `nil` - The mapper to set. Set `nil` to clear the mapper.
 - `type` `"from"` | `"to"`
 

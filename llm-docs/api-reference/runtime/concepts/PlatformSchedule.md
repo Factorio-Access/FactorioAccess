@@ -8,7 +8,7 @@
 
 Index of the currently active record
 
-**Type:** `uint`
+**Type:** `uint32`
 
 **Required:** Yes
 

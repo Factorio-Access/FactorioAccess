@@ -14,13 +14,13 @@ A [ChunkPosition](runtime:ChunkPosition) with an added bounding box for the area
 
 ### x
 
-**Type:** `int`
+**Type:** `int32`
 
 **Required:** Yes
 
 ### y
 
-**Type:** `int`
+**Type:** `int32`
 
 **Required:** Yes
 

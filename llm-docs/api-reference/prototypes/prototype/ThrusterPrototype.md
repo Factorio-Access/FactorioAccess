@@ -1,5 +1,7 @@
 # ThrusterPrototype
 
+Consumes two fluids as fuel to produce thrust for a space platform.
+
 **Parent:** [EntityWithOwnerPrototype](EntityWithOwnerPrototype.md)
 **Type name:** `thruster`
 **Visibility:** space_age
@@ -22,11 +24,15 @@
 
 ### fuel_fluid_box
 
+If a [filter](prototype:FluidBox::filter) is set for this fluidbox it determines what the thruster considers the first fuel.
+
 **Type:** `FluidBox`
 
 **Required:** Yes
 
 ### oxidizer_fluid_box
+
+If a [filter](prototype:FluidBox::filter) is set for this fluidbox it determines what the thruster considers the second fuel.
 
 **Type:** `FluidBox`
 
