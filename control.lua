@@ -1806,10 +1806,10 @@ local function apply_skip_by_preview_size(pindex, direction)
          if width and height and (width + height > 2) then
             --For blueprints larger than 1x1, check if the height/width has been travelled.
             if direction == dirs.east or direction == dirs.west then
-               vp:set_cursor_pos(FaUtils.offset_position_legacy(cursor_pos, direction, width + 1))
+               vp:set_cursor_pos(FaUtils.offset_position_legacy(cursor_pos, direction, width))
                return width
             elseif direction == dirs.north or direction == dirs.south then
-               vp:set_cursor_pos(FaUtils.offset_position_legacy(cursor_pos, direction, height + 1))
+               vp:set_cursor_pos(FaUtils.offset_position_legacy(cursor_pos, direction, height))
                return height
             end
          end
@@ -3152,7 +3152,8 @@ local function kb_click_hand(event)
    if stack and stack.valid_for_read then
       if stack.is_blueprint and stack.is_blueprint_setup() then
          -- Blueprint building - use the mod's paste function
-         Blueprints.paste_blueprint(pindex)
+         local vp = Viewpoint.get_viewpoint(pindex)
+         Blueprints.paste_blueprint(pindex, vp:get_flipped_horizontal(), vp:get_flipped_vertical())
       elseif stack.name == "red-wire" or stack.name == "green-wire" or stack.name == "copper-cable" then
          -- Wire dragging - red/green circuit wires or copper electrical wire
          CircuitNetworks.drag_wire_and_read(pindex)
@@ -3164,6 +3165,8 @@ local function kb_click_hand(event)
             BuildingTools.build_item_in_hand_with_params({
                pindex = pindex,
                building_direction = vp:get_hand_direction(),
+               flip_horizontal = vp:get_flipped_horizontal(),
+               flip_vertical = vp:get_flipped_vertical(),
             })
          else
             -- Item cannot be built (e.g., intermediate products, tools, etc.)
@@ -3177,6 +3180,8 @@ local function kb_click_hand(event)
       BuildingTools.build_item_in_hand_with_params({
          pindex = pindex,
          building_direction = vp:get_hand_direction(),
+         flip_horizontal = vp:get_flipped_horizontal(),
+         flip_vertical = vp:get_flipped_vertical(),
       })
    end
 end
@@ -3407,6 +3412,8 @@ local function kb_alternate_build(event)
       BuildingTools.build_item_in_hand_with_params({
          pindex = pindex,
          building_direction = vp:get_hand_direction(),
+         flip_horizontal = vp:get_flipped_horizontal(),
+         flip_vertical = vp:get_flipped_vertical(),
       })
    elseif stack.name == "steam-engine" then
       BuildingTools.snap_place_steam_engine_to_a_boiler(pindex)

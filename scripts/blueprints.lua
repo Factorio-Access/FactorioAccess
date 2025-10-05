@@ -91,7 +91,10 @@ function mod.create_blueprint(pindex, point_1, point_2, prior_bp_data)
 end
 
 --Building function for bluelprints
-function mod.paste_blueprint(pindex)
+---@param pindex integer
+---@param flip_horizontal? boolean
+---@param flip_vertical? boolean
+function mod.paste_blueprint(pindex, flip_horizontal, flip_vertical)
    local p = game.get_player(pindex)
    local bp = p.cursor_stack
    local vp = Viewpoint.get_viewpoint(pindex)
@@ -110,25 +113,30 @@ function mod.paste_blueprint(pindex)
 
    --Build it and check if successful
    local dir = storage.players[pindex].blueprint_hand_direction
-   local result = bp.build_blueprint({
-      surface = p.surface,
-      force = p.force,
+   local can_build = p.can_build_from_cursor({
       position = build_pos,
       direction = dir,
-      by_player = p,
-      force_build = false,
+      flip_horizontal = flip_horizontal or false,
+      flip_vertical = flip_vertical or false,
    })
-   if result == nil or #result == 0 then
+
+   if can_build then
+      p.build_from_cursor({
+         position = build_pos,
+         direction = dir,
+         flip_horizontal = flip_horizontal or false,
+         flip_vertical = flip_vertical or false,
+      })
+      p.play_sound({ path = "Close-Inventory-Sound" }) --laterdo maybe better blueprint placement sound
+      Speech.speak(pindex, { "fa.blueprints-placed", mod.get_blueprint_label(bp) })
+      return true
+   else
       p.play_sound({ path = "utility/cannot_build" })
       --Explain build error
       local build_area = { left_top, right_bottom }
       local result = BuildingTools.identify_building_obstacle(pindex, build_area, nil)
       Speech.speak(pindex, result)
       return false
-   else
-      p.play_sound({ path = "Close-Inventory-Sound" }) --laterdo maybe better blueprint placement sound
-      Speech.speak(pindex, { "fa.blueprints-placed", mod.get_blueprint_label(bp) })
-      return true
    end
 end
 

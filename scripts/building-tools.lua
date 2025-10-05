@@ -38,6 +38,8 @@ end
 ---@class fa.BuildingTools.BuildItemParams
 ---@field pindex integer Player index
 ---@field building_direction defines.direction Direction to build in
+---@field flip_horizontal? boolean Whether to flip the blueprint horizontally (default false)
+---@field flip_vertical? boolean Whether to flip the blueprint vertically (default false)
 ---@field teleport_player? boolean Whether to teleport player out of build area (default true)
 ---@field play_error_sound? boolean Whether to play error sounds (default true)
 ---@field speak_errors? boolean Whether to speak error messages (default true)
@@ -52,6 +54,8 @@ end
 function mod.build_item_in_hand_with_params(params)
    local pindex = params.pindex
    local building_direction = params.building_direction
+   local flip_horizontal = params.flip_horizontal or false
+   local flip_vertical = params.flip_vertical or false
    local teleport_player = params.teleport_player ~= false -- default true
    local play_error_sound = params.play_error_sound ~= false -- default true
    local speak_errors = params.speak_errors ~= false -- default true
@@ -132,8 +136,8 @@ function mod.build_item_in_hand_with_params(params)
          --position = center_of_tile(position),
          direction = actual_build_direction,
          alt = false,
-         flip_horizontal = vp:get_flipped_horizontal(),
-         flip_vertical = vp:get_flipped_vertical(),
+         flip_horizontal = flip_horizontal,
+         flip_vertical = flip_vertical,
       }
       if building.position ~= nil and game.get_player(pindex).can_build_from_cursor(building) then
          --Build it
@@ -264,11 +268,14 @@ function mod.rotate_building_info_read(event, forward)
          or placed.type == "artillery-wagon"
       then
          --Locomotives and artillery wagons in hand are rotated 180 degrees
-         if placed.type == "locomotive" or placed.type == "artillery-wagon" then mult = mult * 2 end
+         if placed.type == "locomotive" or placed.type == "artillery-wagon" then mult = mult * 4 end
 
          --Update the assumed hand direction
          game.get_player(pindex).play_sound({ path = "Rotate-Hand-Sound" })
          build_dir = (build_dir + dirs.east * mult) % (2 * dirs.south)
+         vp:set_hand_direction(build_dir)
+         Speech.speak(pindex, { "fa.building-rotation-in-hand", FaUtils.direction_lookup(build_dir) })
+         return
       else
          Speech.speak(pindex, { "fa.building-no-rotate-support", { "item-name." .. stack.name } })
       end
@@ -309,8 +316,6 @@ function mod.rotate_building_info_read(event, forward)
          end
 
          Speech.speak(pindex, FaUtils.direction_lookup(new_dir))
-
-         --
       else
          Speech.speak(pindex, { "fa.building-no-rotate-support", { "entity-name." .. ent.name } })
       end
