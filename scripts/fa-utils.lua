@@ -293,7 +293,8 @@ function mod.rotate_270(dir)
 end
 
 function mod.reset_rotation(pindex)
-   storage.players[pindex].building_direction = dirs.north
+   local vp = Viewpoint.get_viewpoint(pindex)
+   vp:set_hand_direction(defines.direction.north)
 end
 
 --Converts the entity orientation into a heading direction, with all directions having equal bias.

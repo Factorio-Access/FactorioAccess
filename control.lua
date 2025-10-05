@@ -182,15 +182,13 @@ local function read_hand(pindex)
          Speech.speak(pindex, Blueprints.get_blueprint_book_info(cursor_stack, true))
       else
          --Any other valid item
+         local vp = Viewpoint.get_viewpoint(pindex)
          local out = { "fa.cursor-description" }
          table.insert(out, cursor_stack.prototype.localised_name)
          local build_entity = cursor_stack.prototype.place_result
          if build_entity and build_entity.supports_direction then
             table.insert(out, 1)
-            table.insert(
-               out,
-               { "fa.facing-direction", FaUtils.direction_lookup(storage.players[pindex].building_direction) }
-            )
+            table.insert(out, { "fa.facing-direction", FaUtils.direction_lookup(vp:get_hand_direction()) })
          else
             table.insert(out, 0)
             table.insert(out, "")
@@ -206,15 +204,13 @@ local function read_hand(pindex)
       end
    elseif cursor_ghost ~= nil then
       --Any ghost
+      local vp = Viewpoint.get_viewpoint(pindex)
       local out = { "fa.cursor-description" }
       table.insert(out, cursor_ghost.localised_name)
       local build_entity = cursor_ghost.place_result
       if build_entity and build_entity.supports_direction then
          table.insert(out, 1)
-         table.insert(
-            out,
-            { "fa.facing-direction", FaUtils.direction_lookup(storage.players[pindex].building_direction) }
-         )
+         table.insert(out, { "fa.facing-direction", FaUtils.direction_lookup(vp:get_hand_direction()) })
       else
          table.insert(out, 0)
          table.insert(out, "")
@@ -385,8 +381,9 @@ function on_player_join(pindex)
    end
    print("playerList " .. game.table_to_json(playerList))
 
-   --Reset the player building direction to match the vanilla behavior.
-   storage.players[pindex].building_direction = dirs.north --
+   --Reset the player building direction to match the vanilla behavior (Factorio 2.0)
+   local vp = Viewpoint.get_viewpoint(pindex)
+   vp:set_hand_direction(dirs.north)
 end
 
 EventManager.on_event(
@@ -807,6 +804,7 @@ EventManager.on_event(
    ---@param pindex integer
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
+      local vp = Viewpoint.get_viewpoint(pindex)
 
       local stack = game.get_player(pindex).cursor_stack
       local new_item_name = ""
@@ -830,7 +828,9 @@ EventManager.on_event(
 
       if storage.players[pindex].previous_hand_item_name ~= new_item_name then
          storage.players[pindex].previous_hand_item_name = new_item_name
-         --storage.players[pindex].lag_building_direction = true
+         -- Reset building direction to north when cursor stack changes (Factorio 2.0 behavior)
+         vp:set_hand_direction(dirs.north)
+         vp:set_cursor_rotation_offset(0)
          read_hand(pindex)
       end
 
@@ -2186,7 +2186,8 @@ local function read_coords(pindex, start_phrase)
          and stack.prototype.place_result ~= nil
          and (stack.prototype.place_result.tile_height > 1 or stack.prototype.place_result.tile_width > 1)
       then
-         local dir = storage.players[pindex].building_direction
+         local vp = Viewpoint.get_viewpoint(pindex)
+         local dir = vp:get_hand_direction()
          turn_to_cursor_direction_cardinal(pindex)
          local p_dir = storage.players[pindex].player_direction
 
@@ -3156,7 +3157,11 @@ local function kb_click_hand(event)
          local proto = stack.prototype
          if proto.place_result or proto.place_as_tile_result then
             -- Item can be placed/built
-            BuildingTools.build_item_in_hand(pindex)
+            local vp = Viewpoint.get_viewpoint(pindex)
+            BuildingTools.build_item_in_hand_with_params({
+               pindex = pindex,
+               building_direction = vp:get_hand_direction(),
+            })
          else
             -- Item cannot be built (e.g., intermediate products, tools, etc.)
             -- Could add a message or different action here if needed
@@ -3165,7 +3170,11 @@ local function kb_click_hand(event)
       end
    elseif player.cursor_ghost then
       -- Ghost building
-      BuildingTools.build_item_in_hand(pindex)
+      local vp = Viewpoint.get_viewpoint(pindex)
+      BuildingTools.build_item_in_hand_with_params({
+         pindex = pindex,
+         building_direction = vp:get_hand_direction(),
+      })
    end
 end
 
@@ -3391,7 +3400,11 @@ local function kb_alternate_build(event)
 
    if stack.name == "rail" then
       --Straight rail free placement
-      BuildingTools.build_item_in_hand(pindex, true)
+      local vp = Viewpoint.get_viewpoint(pindex)
+      BuildingTools.build_item_in_hand_with_params({
+         pindex = pindex,
+         building_direction = vp:get_hand_direction(),
+      })
    elseif stack.name == "steam-engine" then
       BuildingTools.snap_place_steam_engine_to_a_boiler(pindex)
    end
@@ -3837,7 +3850,7 @@ local function kb_pipette_tool_info(event)
    local vp = Viewpoint.get_viewpoint(pindex)
    if ent and ent.valid then
       if ent.supports_direction then
-         storage.players[pindex].building_direction = ent.direction
+         vp:set_hand_direction(defines.direction.north)
          vp:set_cursor_rotation_offset(0)
       end
       vp:set_cursor_pos(FaUtils.get_ent_northwest_corner_position(ent))

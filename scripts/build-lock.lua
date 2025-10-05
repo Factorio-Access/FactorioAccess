@@ -518,6 +518,7 @@ local function attempt_build(pindex, build_state, current_position, movement_dir
    local last_placed = get_last_placed_entity(build_state.entity_history)
 
    -- Build context
+   local vp = Viewpoint.get_viewpoint(pindex)
    local context = {
       pindex = pindex,
       player = player,
@@ -526,7 +527,7 @@ local function attempt_build(pindex, build_state, current_position, movement_dir
       entity_prototype = entity_prototype,
       current_position = current_position,
       movement_direction = movement_direction,
-      building_direction = storage.players[pindex].building_direction,
+      building_direction = vp:get_hand_direction(),
       entity_history = build_state.entity_history,
       backend_state = build_state.backend_state,
    }
@@ -594,6 +595,7 @@ local function attempt_build_from_queue(pindex, build_state, pending_tiles, max_
    end
 
    -- Build base context (without position yet)
+   local vp = Viewpoint.get_viewpoint(pindex)
    local context = {
       pindex = pindex,
       player = player,
@@ -602,7 +604,7 @@ local function attempt_build_from_queue(pindex, build_state, pending_tiles, max_
       entity_prototype = entity_prototype, -- nil for tiles
       current_position = nil, -- Will be set after tile selection
       movement_direction = nil, -- Will be set after tile selection
-      building_direction = storage.players[pindex].building_direction,
+      building_direction = vp:get_hand_direction(),
       entity_history = build_state.entity_history,
       backend_state = build_state.backend_state,
    }

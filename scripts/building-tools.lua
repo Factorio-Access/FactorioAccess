@@ -164,7 +164,8 @@ function mod.build_item_in_hand_with_params(params)
          and stack.prototype.place_result ~= nil
          and stack.prototype.place_result.name == "pipe-to-ground"
       then
-         storage.players[pindex].building_direction = FaUtils.rotate_180(storage.players[pindex].building_direction)
+         local vp = Viewpoint.get_viewpoint(pindex)
+         vp:set_hand_direction(FaUtils.rotate_180(vp:get_building_direction()))
          game.get_player(pindex).play_sound({ path = "Rotate-Hand-Sound" })
       end
 
@@ -199,29 +200,8 @@ function mod.build_item_in_hand_with_params(params)
    end
 end
 
---[[Wrapper that takes simple parameters for backwards compatibility
-* Precondition: Caller must ensure cursor_stack is valid_for_read
-]]
-function mod.build_item_in_hand_with_direction(pindex, building_direction, free_place_straight_rail)
-   return mod.build_item_in_hand_with_params({
-      pindex = pindex,
-      building_direction = building_direction,
-   })
-end
-
---[[Wrapper for build_item_in_hand_with_params that uses storage.players[pindex].building_direction
-* This maintains compatibility with existing code that expects the old behavior.
-* Precondition: Caller must ensure cursor_stack is valid_for_read
-]]
-function mod.build_item_in_hand(pindex, free_place_straight_rail)
-   return mod.build_item_in_hand_with_params({
-      pindex = pindex,
-      building_direction = storage.players[pindex].building_direction,
-   })
-end
-
 --[[Assisted building function for offshore pumps.
-* Called as a special case by build_item_in_hand
+* Called as a special case by build_item_in_hand_with_params
 ]]
 function mod.build_offshore_pump_in_hand(pindex)
    local p = game.get_player(pindex)
@@ -271,8 +251,8 @@ function mod.rotate_building_info_read(event, forward)
    if forward == false then mult = -1 end
    local ent = p.selected
    local stack = game.get_player(pindex).cursor_stack
-   local build_dir = storage.players[pindex].building_direction
    local vp = Viewpoint.get_viewpoint(pindex)
+   local build_dir = vp:get_hand_direction()
    if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result ~= nil then
       local placed = stack.prototype.place_result
       if
@@ -285,58 +265,8 @@ function mod.rotate_building_info_read(event, forward)
          if placed.type == "locomotive" or placed.type == "artillery-wagon" then mult = mult * 2 end
 
          --Update the assumed hand direction
-         if not storage.players[pindex].lag_building_direction then
-            game.get_player(pindex).play_sound({ path = "Rotate-Hand-Sound" })
-            build_dir = (build_dir + dirs.east * mult) % (2 * dirs.south)
-         end
-
-         --Exceptions
-         if stack.name == "rail" then
-            --The actual rotation is by 45 degrees only.
-            --Bug:This misaligns the preview. Clearing the cursor does not work. We need to track rotation offsets to fix it.
-            --It looks like 4 rotations fully invert it and 8 rotations fix it.
-            local rot_offset = vp:get_cursor_rotation_offset()
-            if rot_offset == nil then
-               rot_offset = mult
-            else
-               rot_offset = rot_offset + mult
-               if rot_offset >= 8 then
-                  rot_offset = rot_offset - 8
-               elseif rot_offset <= -8 then
-                  rot_offset = rot_offset + 8
-               end
-            end
-            vp:set_cursor_rotation_offset(rot_offset)
-            if rot_offset ~= 0 then build_dir = (build_dir - dirs.northeast * mult) % (2 * dirs.south) end
-
-            --Printout warning
-            if rot_offset > 0 then
-               Speech.speak(
-                  pindex,
-                  FaUtils.direction_lookup(build_dir)
-                     .. " rail rotation warning: rotate a rail "
-                     .. rot_offset
-                     .. " times backward to re-align cursor, and then rotate a different item in hand to select the rotation you want before placing a rail"
-               )
-            elseif rot_offset < 0 then
-               Speech.speak(
-                  pindex,
-                  FaUtils.direction_lookup(build_dir)
-                     .. " rail rotation warning: rotate a rail "
-                     .. -rot_offset
-                     .. " times forward to re-align cursor, and then rotate a different item in hand to select the rotation you want before placing a rail"
-               )
-            else
-               Speech.speak(pindex, { "fa.building-rotation-aligned", FaUtils.direction_lookup(build_dir) })
-            end
-            return
-         end
-
-         --Display and read the new direction info
-         storage.players[pindex].building_direction = build_dir
-         --Graphics.sync_build_cursor_graphics(pindex)
-         Speech.speak(pindex, { "fa.building-rotation-in-hand", FaUtils.direction_lookup(build_dir) })
-         storage.players[pindex].lag_building_direction = false
+         game.get_player(pindex).play_sound({ path = "Rotate-Hand-Sound" })
+         build_dir = (build_dir + dirs.east * mult) % (2 * dirs.south)
       else
          Speech.speak(pindex, { "fa.building-no-rotate-support", { "item-name." .. stack.name } })
       end
@@ -533,7 +463,7 @@ function mod.build_preview_checks_info(stack, pindex)
    local pos = vp:get_cursor_pos()
 
    local result = { "" }
-   local build_dir = storage.players[pindex].building_direction
+   local build_dir = vp:get_building_direction()
    local ent_p = stack.prototype.place_result --it is an entity prototype!
    if ent_p == nil or not ent_p.valid then return "invalid entity" end
 
@@ -607,10 +537,12 @@ function mod.build_preview_checks_info(stack, pindex)
       local check_dist = 10
       local closest_dist = 11
       local closest_cand = nil
-      local candidates =
-         game
-            .get_player(pindex).surface
-            .find_entities_filtered({ name = stack.name, position = pos, radius = check_dist, direction = FaUtils.rotate_180(build_dir) })
+      local candidates = game.get_player(pindex).surface.find_entities_filtered({
+         name = stack.name,
+         position = pos,
+         radius = check_dist,
+         direction = FaUtils.rotate_180(build_dir),
+      })
       if #candidates > 0 then
          for i, cand in ipairs(candidates) do
             rendering.draw_circle({
@@ -787,9 +719,10 @@ function mod.build_preview_checks_info(stack, pindex)
 
          if count > 1 then table.insert(result, { "fa.connection-warning-mixing-fluids" }) end
       end
-   --Same as pipe preview but for the faced direction only
+      --Same as pipe preview but for the faced direction only
    elseif stack.name == "pipe-to-ground" then
-      local face_dir = storage.players[pindex].building_direction
+      local vp = Viewpoint.get_viewpoint(pindex)
+      local face_dir = vp:get_building_direction()
       local ent_pos = FaUtils.offset_position_legacy(pos, face_dir, 1)
       rendering.draw_circle({
          color = { 1, 0.0, 0.5 },
@@ -992,8 +925,9 @@ function mod.build_preview_checks_info(stack, pindex)
 
    --For all electric powered entities, note whether powered, and from which direction. Otherwise report the nearest power pole.
    if ent_p.electric_energy_source_prototype ~= nil then
+      local vp = Viewpoint.get_viewpoint(pindex)
       local position = pos
-      local build_dir = storage.players[pindex].building_direction
+      local build_dir = vp:get_building_direction()
 
       position.x = position.x + math.ceil(2 * ent_p.selection_box.right_bottom.x) / 2 - 0.5
       position.y = position.y + math.ceil(2 * ent_p.selection_box.right_bottom.y) / 2 - 0.5
@@ -1025,7 +959,7 @@ function mod.build_preview_checks_info(stack, pindex)
                (position.x + math.floor(ent_p.selection_box.right_bottom.x) + supply_dist),
                (position.y + math.floor(ent_p.selection_box.right_bottom.y) + supply_dist),
             },
-            orientation = storage.players[pindex].building_direction / (2 * dirs.south),
+            orientation = build_dir / (2 * dirs.south),
          } --**laterdo "connected" check is a little buggy at the supply area edges, need to trim and tune, maybe re-enable direction based offset? The offset could be due to the pole width: 1 vs 2, maybe just make it more conservative?
          local T = {
             area = area,
@@ -1196,8 +1130,9 @@ function mod.snap_place_steam_engine_to_a_boiler(pindex)
          found_empty_spot = true
          local engine_position = output_location
          local dir = boiler.direction
-         local old_building_dir = storage.players[pindex].building_direction
-         storage.players[pindex].building_direction = dir
+         local vp = Viewpoint.get_viewpoint(pindex)
+         local old_building_dir = vp:get_building_direction()
+         vp:set_hand_direction(dir)
          if dir == dirs.east then
             engine_position = FaUtils.offset_position_legacy(engine_position, dirs.east, 2)
          elseif dir == dirs.south then

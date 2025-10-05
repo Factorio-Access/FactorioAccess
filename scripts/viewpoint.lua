@@ -36,6 +36,7 @@ local mod = {}
 ---@field cursor_tile_highlight_box LuaRenderObject?
 ---@field cursor_rotation_offset  number
 ---@field cursor_jumping boolean
+---@field building_direction defines.direction
 
 ---@type table<number, fa.viewpoint.ViewpointState>
 local viewpoint_storage = StorageManager.declare_storage_module("viewpoint", {
@@ -46,6 +47,7 @@ local viewpoint_storage = StorageManager.declare_storage_module("viewpoint", {
    cursor_bookmark = { x = 0, y = 0 },
    cursor_ent_highlight_box = nil,
    cursor_tile_highlight_box = nil,
+   building_direction = defines.direction.north,
 })
 
 ---@class fa.Viewpoint
@@ -153,6 +155,17 @@ end
 function Viewpoint:set_cursor_jumping(jumping)
    assert(jumping ~= nil)
    viewpoint_storage[self.pindex].cursor_jumping = jumping
+end
+
+---@return defines.direction
+function Viewpoint:get_hand_direction()
+   return viewpoint_storage[self.pindex].building_direction
+end
+
+---@param direction defines.direction
+function Viewpoint:set_hand_direction(direction)
+   assert(direction ~= nil)
+   viewpoint_storage[self.pindex].building_direction = direction
 end
 
 local viewpoint_cache = {}

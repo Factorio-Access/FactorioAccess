@@ -39,7 +39,7 @@ function mod.initialize(player)
    faplayer.num_elements = faplayer.num_elements or 0
    faplayer.player_direction = faplayer.player_direction or character.walking_state.direction
    faplayer.position = faplayer.position or FaUtils.center_of_tile(character.position)
-   faplayer.building_direction = faplayer.building_direction or dirs.north --top
+   -- building_direction has been moved to viewpoint storage
 
    if type(faplayer.building_footprint) == "number" then faplayer.building_footprint = nil end
 
