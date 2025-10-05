@@ -43,8 +43,6 @@ function mod.get_recipes(pindex, ent, load_all_categories)
    return result
 end
 
---Reads out the selected slot of the player crafting queue.
-
 --Returns a count of how many batches of this recipe are listed in the (entire) crafting queue.
 function mod.count_in_crafting_queue(recipe_name, pindex)
    local count = 0
@@ -57,14 +55,15 @@ function mod.count_in_crafting_queue(recipe_name, pindex)
    return count
 end
 
---Loads the crafting queue menu for a player.
-
 --Returns an info string about how many units of which ingredients are missing in order to craft one batch of this recipe.
 function mod.recipe_missing_ingredients_info(pindex, recipe_in)
    local recipe = recipe_in
-      or storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index]
+       or
+       storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category]
+       [storage.players[pindex].crafting.index]
    local p = game.get_player(pindex)
    local inv = p.get_main_inventory()
+   ---@type LocalisedString
    local result = { "", "Missing " }
    local missing = 0
    for i, ing in ipairs(recipe.ingredients) do
@@ -85,92 +84,6 @@ function mod.recipe_missing_ingredients_info(pindex, recipe_in)
    end
    if missing == 0 then result = "" end
    return result
-end
-
---Returns info text on the raw ingredients for a recipe.
-function mod.recipe_raw_ingredients_info(recipe, pindex)
-   local raw_ingredients = mod.get_raw_ingredients_table(recipe, pindex)
-   --Merge duplicates
-   local merged_table = {}
-   for i, ing in ipairs(raw_ingredients) do
-      local is_in_table = false
-      for j, ingt in ipairs(merged_table) do
-         if ingt.name == ing.name then
-            is_in_table = true
-            --Add the count to the existing table count.
-            ingt.amount = ingt.amount + ing.amount
-         end
-      end
-      if is_in_table == false then
-         --Add a new table entry
-         table.insert(merged_table, ing)
-      end
-   end
-
-   --Construct result array
-   local result = { "", "Base ingredients: " }
-   for j, ingt in ipairs(merged_table) do
-      local localised_name
-      ---@type LuaItemPrototype | LuaFluidPrototype
-      local ingredient_prototype = prototypes.item[ingt.name]
-
-      if ingredient_prototype then
-         localised_name = localising.get_localised_name_with_fallback(ingredient_prototype)
-      else
-         ingredient_prototype = prototypes.fluid[ingt.name]
-         if ingredient_prototype ~= nil then
-            localised_name = localising.get_localised_name_with_fallback(ingredient_prototype)
-         else
-            localised_name = ingt.name
-         end
-      end
-
-      table.insert(result, localised_name)
-      table.insert(result, ", ")
-   end
-   return result
-end
-
---Explores a recipe and its sub-recipes and returns a table that contains all ingredients that do not have their own sub-recipes.
---The same ingredient may appear multiple times in the table, so its entries need to be merged.
---Bug: Due to ratios of ingredients to products across multiple recipes, the counts are not being calculated correctly, so they are ignored.
-function mod.get_raw_ingredients_table(recipe, pindex, count_in)
-   local count = count_in or 1
-   local raw_ingredients_table = {}
-   for i, ing in ipairs(recipe.ingredients) do
-      --Check if a recipe of the ingredient's name exists
-      local sub_recipe = prototypes.recipe[ing.name]
-      if sub_recipe ~= nil and sub_recipe.valid then
-         --If the sub-recipe cannot be crafted by hand, add this ingredient to the main table
-         if
-            sub_recipe.category ~= "basic-crafting"
-            and sub_recipe.category ~= "crafting"
-            and sub_recipe.category ~= ""
-            and sub_recipe.category ~= nil
-         then
-            for i = 1, count, 1 do
-               table.insert(raw_ingredients_table, ing)
-            end
-         else
-            --Check the sub-recipe recursively
-            local sub_table = mod.get_raw_ingredients_table(sub_recipe, pindex) --, ing.amount)
-            if sub_table ~= nil then
-               --Copy the sub_table to the main table
-               for j, ing2 in ipairs(sub_table) do
-                  for i = 1, count, 1 do
-                     table.insert(raw_ingredients_table, ing2)
-                  end
-               end
-            end
-         end
-      else
-         --If a sub-recipe does not exist, add this ingredient to the main table
-         for i = 1, count, 1 do
-            table.insert(raw_ingredients_table, ing)
-         end
-      end
-   end
-   return raw_ingredients_table
 end
 
 return mod
