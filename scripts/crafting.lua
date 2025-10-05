@@ -58,9 +58,7 @@ end
 --Returns an info string about how many units of which ingredients are missing in order to craft one batch of this recipe.
 function mod.recipe_missing_ingredients_info(pindex, recipe_in)
    local recipe = recipe_in
-       or
-       storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category]
-       [storage.players[pindex].crafting.index]
+      or storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index]
    local p = game.get_player(pindex)
    local inv = p.get_main_inventory()
    ---@type LocalisedString

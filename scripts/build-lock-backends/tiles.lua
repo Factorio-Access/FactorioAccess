@@ -8,6 +8,7 @@ Directly calls Factorio API with terrain_building_size to place tiles.
 
 local BuildLock = require("scripts.build-lock")
 local Viewpoint = require("scripts.viewpoint")
+local FaUtils = require("scripts.fa-utils")
 
 local BuildAction = BuildLock.BuildAction
 local mod = {}
@@ -25,7 +26,7 @@ end
 ---Build tiles at the current position
 ---@param context fa.BuildLock.BuildContext
 ---@param helpers fa.BuildLock.BuildHelpers
----@return string action BuildAction constant (PLACED, SKIP, or RETRY)
+---@return string action BuildAction constant (PLACED, SKIP, or FAIL)
 function mod.build(context, helpers)
    local pindex = context.pindex
    local player = context.player
@@ -33,6 +34,15 @@ function mod.build(context, helpers)
    local stack = player.cursor_stack
 
    if not stack or not stack.valid_for_read then return BuildAction.SKIP end
+
+   -- Check if tile is out of reach - if so, disable build lock entirely
+   if player.character then
+      local distance = FaUtils.distance(player.character.position, current_position)
+      if distance > player.build_distance then
+         helpers:set_fail_reason("fa.build-lock-reason-out-of-reach")
+         return BuildAction.FAIL
+      end
+   end
 
    -- Get cursor size for terrain_building_size calculation
    local vp = Viewpoint.get_viewpoint(pindex)
@@ -51,15 +61,15 @@ function mod.build(context, helpers)
    if player.can_build_from_cursor({ position = build_pos, terrain_building_size = t_size }) then
       player.build_from_cursor({ position = build_pos, terrain_building_size = t_size })
    else
-      player.play_sound({ path = "utility/cannot_build" })
-      return BuildAction.RETRY
+      -- Can't build (likely overlapping or blocked) - just skip this tile
+      return BuildAction.SKIP
    end
 
    local new_item_count = stack.valid_for_read and stack.count or 0
 
    -- Check if tiles were placed (item count decreased)
    local placed = new_item_count < old_item_count
-   if not placed then return BuildAction.RETRY end
+   if not placed then return BuildAction.SKIP end
 
    return BuildAction.PLACED
 end

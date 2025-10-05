@@ -345,6 +345,8 @@ BuildLock.BuildAction = {
    SKIP = "skip",
    ---Failed to place, keep tile in queue for retry (e.g., blocked temporarily)
    RETRY = "retry",
+   ---Failed permanently, disable build lock entirely
+   FAIL = "fail",
 }
 local BuildAction = BuildLock.BuildAction
 
@@ -354,6 +356,7 @@ local BuildAction = BuildLock.BuildAction
 ---@field player LuaPlayer
 ---@field stack LuaItemStack
 ---@field entity_prototype LuaEntityPrototype
+---@field fail_reason string? Locale key for why build lock should fail
 local BuildHelpers = {}
 local BuildHelpers_meta = { __index = BuildHelpers }
 
@@ -397,6 +400,12 @@ function BuildHelpers:is_blocked_by_own_entity(position, entity_prototype, direc
    end
 
    return false
+end
+
+---Set the failure reason for build lock (causes FAIL action to disable build lock)
+---@param reason string Locale key for the failure reason
+function BuildHelpers:set_fail_reason(reason)
+   self.fail_reason = reason
 end
 
 ---Build an entity at the specified position and direction
@@ -541,11 +550,17 @@ local function attempt_build(pindex, build_state, current_position, movement_dir
       player = player,
       stack = stack,
       entity_prototype = entity_prototype,
+      fail_reason = nil,
    }, BuildHelpers_meta)
 
    -- Call backend's build method
    local action = backend.build(context, helpers)
-   return action or BuildAction.RETRY
+   action = action or BuildAction.RETRY
+
+   -- Handle FAIL action: disable build lock
+   if action == BuildAction.FAIL then BuildLock.set_enabled(pindex, false, false, helpers.fail_reason) end
+
+   return action
 end
 
 ---Attempts to build from a queue of pending tiles using two-phase approach
@@ -599,6 +614,7 @@ local function attempt_build_from_queue(pindex, build_state, pending_tiles, max_
       player = player,
       stack = stack,
       entity_prototype = entity_prototype, -- nil for tiles
+      fail_reason = nil,
    }, BuildHelpers_meta)
 
    -- Phase 1: Select which tile to build at
@@ -634,6 +650,12 @@ local function attempt_build_from_queue(pindex, build_state, pending_tiles, max_
    -- Phase 2: Build at selected position
    local action = backend.build(context, helpers)
    action = action or BuildAction.RETRY
+
+   -- Handle FAIL action: disable build lock and stop processing
+   if action == BuildAction.FAIL then
+      BuildLock.set_enabled(pindex, false, false, helpers.fail_reason)
+      return nil
+   end
 
    return { action = action, tile_index = tile_index }
 end
