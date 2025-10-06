@@ -582,4 +582,11 @@ function mod.on_research_finished(event)
    end
 end
 
+-- Export functions for UI
+mod.tech_name_string = tech_name_string
+mod.tech_description_string = tech_description_string
+mod.localise_research_requirements = localise_research_requirements
+mod.localise_research_rewards = localise_research_rewards
+mod.get_visible_researches = get_visible_researches
+
 return mod

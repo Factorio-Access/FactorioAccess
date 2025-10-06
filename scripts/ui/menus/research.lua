@@ -19,53 +19,19 @@ local CATEGORY_RESEARCHABLE = "researchable"
 local CATEGORY_LOCKED = "locked"
 local CATEGORY_RESEARCHED = "researched"
 
----Get the localized name for a technology
----@param tech LuaTechnology
----@return LocalisedString
-local function get_tech_name(tech)
-   return { "?", tech.localised_name, { string.format("fa.research-technology-name-%s", tech.name) }, tech.name }
-end
-
----Get the localized description for a technology
----@param tech LuaTechnology
----@return LocalisedString
-local function get_tech_description(tech)
-   return {
-      "?",
-      tech.localised_description,
-      { string.format("fa.research-technology-description-%s", tech.name) },
-      tech.name,
-   }
-end
-
----Categorize technologies into researchable, locked, and researched
+---Convert research entries from Research module to categorized format
 ---@param player LuaPlayer
 ---@return table<string, LuaTechnology[]>
 local function categorize_technologies(player)
-   local force = player.force
+   local entries = Research.get_visible_researches(player)
    local categories = {
       [CATEGORY_RESEARCHABLE] = {},
       [CATEGORY_LOCKED] = {},
       [CATEGORY_RESEARCHED] = {},
    }
 
-   for _, tech in pairs(force.technologies) do
-      if not tech.prototype.hidden then
-         if tech.researched then
-            table.insert(categories[CATEGORY_RESEARCHED], tech)
-         elseif tech.enabled then
-            table.insert(categories[CATEGORY_RESEARCHABLE], tech)
-         else
-            table.insert(categories[CATEGORY_LOCKED], tech)
-         end
-      end
-   end
-
-   -- Sort each category alphabetically by name
-   for _, category in pairs(categories) do
-      table.sort(category, function(a, b)
-         return a.name < b.name
-      end)
+   for _, entry in ipairs(entries) do
+      table.insert(categories[entry.list], entry.tech)
    end
 
    return categories
@@ -75,7 +41,7 @@ end
 ---@param ctx fa.ui.CategoryRows.ItemContext
 ---@param tech LuaTechnology
 local function create_tech_label(ctx, tech)
-   ctx.message:fragment(get_tech_name(tech))
+   ctx.message:fragment(Research.tech_name_string(tech))
 
    -- Add status information
    if tech.researched then
@@ -126,32 +92,13 @@ end
 local function read_tech_requirements(ctx, tech)
    -- Description
    ctx.message:fragment({ "fa.research-description" })
-   ctx.message:fragment(get_tech_description(tech))
+   ctx.message:fragment(Research.tech_description_string(tech))
 
-   -- Science cost or trigger
-   if tech.research_unit_count and tech.research_unit_count > 0 then
-      ctx.message:fragment({ "fa.research-cost", tech.research_unit_count })
+   -- Requirements (cost/trigger and prerequisites)
+   ctx.message:fragment(Research.localise_research_requirements(tech))
 
-      -- List science packs
-      ctx.message:fragment({ "fa.research-science-packs" })
-      for _, ingredient in pairs(tech.research_unit_ingredients) do
-         local proto = prototypes.item[ingredient.name]
-         if proto then
-            ctx.message:list_item(proto.localised_name or { "item-name." .. ingredient.name })
-            ctx.message:fragment({ "fa.research-amount-per-cycle", ingredient.amount })
-         end
-      end
-   elseif tech.research_trigger then
-      ctx.message:fragment({ "fa.research-has-trigger" })
-   end
-
-   -- Prerequisites
-   if next(tech.prerequisites) then
-      ctx.message:fragment({ "fa.research-prerequisites" })
-      for _, prereq in pairs(tech.prerequisites) do
-         ctx.message:list_item(get_tech_name(prereq))
-      end
-   end
+   -- Rewards
+   ctx.message:fragment(Research.localise_research_rewards(ctx.player, tech))
 end
 
 ---Render the research menu
