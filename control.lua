@@ -2583,7 +2583,7 @@ local function toggle_cursor_mode(pindex, muted)
       --Finally, read the new tile
       vp:set_cursor_anchored(false)
       -- For the unanchored case it's worth reading the tile the cursor ended up on.
-      if muted ~= true then read_tile(pindex, "Cursor mode unanchored, ") end
+      if muted ~= true then read_tile(pindex, "Cursor unanchored, ") end
    end
 end
 

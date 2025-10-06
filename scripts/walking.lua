@@ -105,39 +105,10 @@ function mod.process_walking_announcements(pindex)
          player.selected = nil
       end
    else
-      -- NON-ANCHORED MODE: Check for entities/obstacles at cursor position
-      local ent = EntitySelection.get_first_ent_at_tile(pindex)
-
-      if
-         not storage.players[pindex].vanilla_mode
-         and (
-            (ent ~= nil and ent.valid)
-            or (player.surface.can_place_entity({ name = "character", position = vp:get_cursor_pos() }) == false)
-         )
-      then
-         Graphics.draw_cursor_highlight(pindex, ent, nil)
-         if player.driving then return end
-
-         if
-            ent ~= nil
-            and ent.valid
-            and (
-               player.character == nil or (player.character ~= nil and player.character.unit_number ~= ent.unit_number)
-            )
-         then
-            Graphics.draw_cursor_highlight(pindex, ent, nil)
-            player.selected = ent
-            Sounds.play_close_inventory(pindex)
-         else
-            Graphics.draw_cursor_highlight(pindex, nil, nil)
-            player.selected = nil
-         end
-
-         read_tile(pindex)
-      else
-         Graphics.draw_cursor_highlight(pindex, nil, nil)
-         player.selected = nil
-      end
+      -- NON-ANCHORED MODE: Don't announce while walking
+      -- Cursor stays in place, so no need to read tile on every player movement
+      Graphics.draw_cursor_highlight(pindex, nil, nil)
+      player.selected = nil
    end
 end
 

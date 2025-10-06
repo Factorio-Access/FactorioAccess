@@ -448,14 +448,12 @@ local function announce_cursor_pos(pindex, ps)
 
    ::do_announce::
    if announcing then
-      -- fa-info has dependencies on having the cursor in the right place that
-      -- we can't remove, so just set it first.
-      vp:set_cursor_pos(announcing.position)
-      -- And for the same reason--we shouldn't be caching tile contents, but we do.
+      -- Update the entry first so position is current
       EntitySelection.reset_entity_index(pindex)
       announcing.backend:update_entry(pobj, announcing)
-      -- Until we have a cursor module or the like, we must then manually try to
-      -- select the entity if there is one.
+      -- Now set cursor to the updated position
+      vp:set_cursor_pos(announcing.position)
+      -- Try to select the entity if there is one
       local new_ent = EntitySelection.get_first_ent_at_tile(pindex)
       if new_ent then pobj.selected = new_ent end
       Speech.speak(pindex, {
