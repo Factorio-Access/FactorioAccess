@@ -1,5 +1,5 @@
 ---UI for setting the search pattern.
----Opens a simple textbox and stores the result in the router's search state.
+---Opens a textbox directly and stores the result in the router's search state.
 local UiRouter = require("scripts.ui.router")
 local Speech = require("scripts.speech")
 
@@ -20,20 +20,18 @@ function search_setter_ui:open(pindex, parameters, controller)
    -- Get current search pattern
    local current_pattern = controller:get_search_pattern() or ""
 
-   -- Open simple textbox with current pattern
-   controller:open_child_ui(UiRouter.UI_NAMES.SIMPLE_TEXTBOX, {
-      intro_message = { "fa.search-enter-pattern" },
-      initial_text = current_pattern,
-   }, { node = "search_pattern_input" })
+   -- Open textbox directly (no intermediate UI)
+   Speech.speak(pindex, { "fa.search-enter-pattern" })
+   controller:open_textbox(current_pattern, "search_pattern_input")
 end
 
 ---Handle textbox result
 ---@param pindex number
----@param result any The search pattern entered by the user
+---@param result any The search pattern entered by the user (nil if cancelled)
 ---@param context any The context (should be "search_pattern_input")
 ---@param controller fa.ui.RouterController
 function search_setter_ui:on_child_result(pindex, result, context, controller)
-   -- Set the search pattern (empty string clears it)
+   -- Set the search pattern (nil or empty string clears it)
    if result and result ~= "" then
       controller:set_search_pattern(result)
       Speech.speak(pindex, { "fa.search-pattern-set", result })

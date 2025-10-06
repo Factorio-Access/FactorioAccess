@@ -2595,6 +2595,37 @@ EventManager.on_event(
    end
 )
 
+-- Handle escape key: close textbox if open (sending nil to parent), otherwise give pause hint
+EventManager.on_event(
+   "fa-escape",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if GameGui.is_textbox_open(pindex) then
+         local router = UiRouter.get_router(pindex)
+         local top_ui_name = router:get_open_ui_name()
+
+         -- Send nil result to parent UI to signal cancellation
+         if top_ui_name then
+            local registered_uis = UiRouter.get_registered_uis()
+            local ui = registered_uis[top_ui_name]
+            if ui and ui.on_child_result then
+               local context = GameGui.get_textbox_context(pindex)
+               -- Use close_with_result to properly notify parent and clean up
+               GameGui.close_textbox(pindex)
+               router:close_with_result(nil)
+               return
+            end
+         end
+
+         -- Fallback: just close textbox and pop UI
+         GameGui.close_textbox(pindex)
+         router:close_ui()
+      else
+         Speech.speak(pindex, { "fa.escape-to-pause" })
+      end
+   end
+)
+
 ---Valid cursor sizes
 ---@type integer[]
 local CURSOR_SIZES = { 0, 1, 2, 5, 10, 25, 50, 125 }

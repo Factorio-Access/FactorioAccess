@@ -11,6 +11,13 @@ data:extend({
 
    {
       type = "custom-input",
+      name = "fa-escape",
+      key_sequence = "ESCAPE",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
       name = "fa-w",
       key_sequence = "W",
       consuming = "none",
