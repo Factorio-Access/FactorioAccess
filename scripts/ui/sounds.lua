@@ -91,6 +91,10 @@ function mod.play_open_inventory(pindex)
    play_sound_internal(pindex, { path = "Open-Inventory-Sound" })
 end
 
+function mod.play_inventory_move(pindex)
+   play_sound_internal(pindex, { path = "utility/inventory_move" })
+end
+
 -- Menu tab sound
 function mod.play_change_menu_tab(pindex)
    play_sound_internal(pindex, { path = "Change-Menu-Tab-Sound" })

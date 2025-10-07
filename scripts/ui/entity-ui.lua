@@ -6,6 +6,7 @@ Provides a dynamic UI that adapts to entity capabilities
 local Consts = require("scripts.consts")
 local Functools = require("scripts.functools")
 local InventoryGrid = require("scripts.ui.inventory-grid")
+local InventoryUtils = require("scripts.inventory-utils")
 local Speech = require("scripts.speech")
 local TabList = require("scripts.ui.tab-list")
 local UiKeyGraph = require("scripts.ui.key-graph")
@@ -275,13 +276,24 @@ function mod.open_entity_ui(pindex, entity)
       entity = entity,
    }
 
+   -- Find appropriate entity inventory for player → entity transfers
+   -- Priority: chest > crafter_input > car_trunk > spider_trunk
+   local entity_dest_inv_index = nil
+   local dest_inv =
+      InventoryUtils.get_inventory_by_priority(entity, "chest", "crafter_input", "car_trunk", "spider_trunk")
+   if dest_inv then entity_dest_inv_index = dest_inv.index end
+
+   -- Set up player inventory with entity as sibling
    if player.character then
       params.player_inventory = {
          entity = player.character,
          inventory_index = defines.inventory.character_main,
+         sibling_entity = entity_dest_inv_index and entity or nil,
+         sibling_inventory_id = entity_dest_inv_index,
       }
    end
 
+   -- Set up entity inventories with player as sibling
    for i = 1, entity.get_max_inventory_index() do
       ---@diagnostic disable-next-line
       local inv = entity.get_inventory(i)
@@ -289,6 +301,8 @@ function mod.open_entity_ui(pindex, entity)
          params["inv_" .. inv.name] = {
             entity = entity,
             inventory_index = i,
+            sibling_entity = player.character,
+            sibling_inventory_id = defines.inventory.character_main,
          }
       end
    end

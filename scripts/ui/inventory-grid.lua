@@ -16,6 +16,8 @@ local Equipment = require("scripts.equipment")
 local FaInfo = require("scripts.fa-info")
 local UiRouter = require("scripts.ui.router")
 local ItemDescriptions = require("scripts.item-descriptions")
+local InventoryUtils = require("scripts.inventory-utils")
+local MessageBuilder = Speech.MessageBuilder
 
 local mod = {}
 
@@ -23,6 +25,8 @@ local mod = {}
 ---@field entity LuaEntity The entity containing the inventory
 ---@field inventory_index defines.inventory The inventory to display
 ---@field title LocalisedString? Optional title for the inventory
+---@field sibling_entity LuaEntity? Entity for quick transfer destination (typically player or opened entity)
+---@field sibling_inventory_id defines.inventory? Inventory index for quick transfer destination
 
 ---@class fa.ui.InventoryGrid.State
 ---@field entity LuaEntity
@@ -189,18 +193,38 @@ local function render_inventory_grid(ctx)
             local cursor_stack = player.cursor_stack
             local inv_stack = inv[slot_index]
 
-            -- SHIFT+[ : Equip from slot or repair item in slot
+            -- SHIFT+[ : Equip from slot, repair item in slot, or quick transfer
             if click_ctx.modifiers.shift then
                -- Check if hand has repair pack
                if cursor_stack and cursor_stack.valid_for_read and cursor_stack.is_repair_tool then
                   -- Repair item in this slot
                   local result = Equipment.repair_item_in_slot(click_ctx.pindex, entity, inventory_index, slot_index)
                   click_ctx.controller.message:fragment(result)
-               else
-                  -- Equip item from this slot to entity
-                  local result = Equipment.equip_item_from_slot(click_ctx.pindex, entity, inventory_index, slot_index)
-                  click_ctx.controller.message:fragment(result)
+                  return
                end
+
+               -- Try to equip item from this slot
+               local equip_result =
+                  Equipment.equip_item_from_slot(click_ctx.pindex, entity, inventory_index, slot_index)
+               if equip_result ~= "" and equip_result ~= nil then
+                  click_ctx.controller.message:fragment(equip_result)
+                  return
+               end
+
+               -- Fallback: Quick transfer if sibling is configured
+               if ctx.parameters.sibling_entity and ctx.parameters.sibling_inventory_id then
+                  InventoryUtils.quick_transfer(
+                     click_ctx.pindex,
+                     click_ctx.controller.message,
+                     entity,
+                     inventory_index,
+                     slot_index,
+                     ctx.parameters.sibling_entity,
+                     ctx.parameters.sibling_inventory_id
+                  )
+                  return
+               end
+
                return
             end
 
@@ -238,7 +262,11 @@ local function render_inventory_grid(ctx)
                   -- Cursor has items, inventory slot is empty - transfer half to inventory
                   local half = math.floor(cursor_stack.count / 2)
                   if half > 0 then
-                     inv_stack.set_stack({ name = cursor_stack.name, count = half, quality = cursor_stack.quality })
+                     inv_stack.set_stack({
+                        name = cursor_stack.name,
+                        count = half,
+                        quality = cursor_stack.quality,
+                     })
                      cursor_stack.count = cursor_stack.count - half
                      click_ctx.controller.message:fragment({ "fa.placed-stuff", { "fa.half-stack" } })
                   end
