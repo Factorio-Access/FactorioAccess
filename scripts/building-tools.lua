@@ -105,9 +105,14 @@ function mod.build_item_in_hand_with_params(params)
       storage.players[pindex].building_footprint_right_bottom = footprint.right_bottom
 
       local actual_build_direction = building_direction
-      if placing_underground_belt and storage.players[pindex].underground_connects == true then
-         --Flip the chute
-         actual_build_direction = (building_direction + dirs.south) % (2 * dirs.south)
+      if placing_underground_belt then
+         -- Auto-detect if placing would form an exit
+         local would_auto_exit =
+            TransportBelts.would_form_underground_exit(p.surface, ent, position, building_direction)
+         if would_auto_exit then
+            --Flip the chute by 180 degrees
+            actual_build_direction = (building_direction + dirs.south) % (2 * dirs.south)
+         end
       end
 
       --Clear build area obstacles
@@ -525,14 +530,10 @@ function mod.build_preview_checks_info(stack, pindex)
                   tostring(math.floor(util.distance(cand.position, pos)) - 1),
                })
                connected = true
-               storage.players[pindex].underground_connects = true
             end
          end
       end
-      if not connected then
-         table.insert(result, { "fa.connection-not-connected-pipe" })
-         storage.players[pindex].underground_connects = false
-      end
+      if not connected then table.insert(result, { "fa.connection-not-connected-pipe" }) end
    end
 
    --For pipes to ground, state when connected

@@ -683,6 +683,35 @@ function Node:belt_analyzer_algo()
    return ret
 end
 
+---Check if placing an underground belt at the given position would form an exit.
+---This happens when there's a matching entrance nearby that the belt would connect to.
+---@param surface LuaSurface
+---@param prototype LuaEntityPrototype
+---@param position MapPosition
+---@param direction defines.direction
+---@return boolean
+function mod.would_form_underground_exit(surface, prototype, position, direction)
+   -- Create a test entrance to see if it would connect to an existing entrance
+   local entity = surface.create_entity({
+      name = prototype.name,
+      position = position,
+      direction = direction,
+      force = "player",
+      type = "output",
+      raise_built = false,
+   })
+
+   if not entity then return false end
+
+   -- If the entrance has a neighbour, placing here would want to be an exit
+   local would_connect = entity.neighbours ~= nil
+
+   -- Clean up the test entity
+   entity.destroy()
+
+   return would_connect
+end
+
 --Set the input priority or the output priority or filter for a splitter
 function mod.set_splitter_priority(splitter, is_input, is_left, filter_item_stack, clear)
    clear = clear or false
