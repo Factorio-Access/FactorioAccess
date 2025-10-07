@@ -842,7 +842,7 @@ local function ent_info_underground_belt_connection(ctx)
          ctx.message:fragment({
             "fa.ent-info-underground-belt-connection",
             FaUtils.direction(ent.position, ent.neighbours.position),
-            math.floor(FaUtils.distance(ent.position, ent.neighbours.position)) - 1,
+            math.floor(FaUtils.distance(ent.position, ent.neighbours.position)),
          })
       else
          ctx.message:fragment({ "fa.ent-info-underground-belt-not-connected" })
