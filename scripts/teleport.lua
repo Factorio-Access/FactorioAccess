@@ -2,7 +2,6 @@
 local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
 local Mouse = require("scripts.mouse")
-local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
@@ -24,8 +23,6 @@ end
 
 --Makes the player teleport to the closest valid position to a target position. Uses game's teleport function. Muted makes silent and effectless teleporting
 function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
-   local router = UiRouter.get_router(pindex)
-
    pos = table.deepcopy(pos)
    pos.x = math.floor(pos.x) + 0.5
    pos.y = math.floor(pos.y) + 0.5
@@ -149,7 +146,6 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
                .get_player(pindex)
                .play_sound({ path = "utility/scenario_message", volume_modifier = 0.8, position = new_pos })
          end
-         print(serpent.line(pos), serpent.line(new_pos))
          if math.floor(new_pos.x) ~= math.floor(pos.x) or math.floor(new_pos.y) ~= math.floor(pos.y) then
             if not muted then
                local message = MessageBuilder.new()
