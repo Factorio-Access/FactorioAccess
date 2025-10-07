@@ -863,6 +863,50 @@ local function ent_info_radar(ctx)
 end
 
 ---@param ctx fa.Info.EntInfoContext
+local function ent_info_electric_pole(ctx)
+   local ent = ctx.ent
+   if ent.type ~= "electric-pole" then return end
+
+   -- Count number of entities being supplied within supply area
+   local pos = ent.position
+   local sdist = ent.prototype.get_supply_area_distance(ent.quality)
+   local supply_area = { { pos.x - sdist, pos.y - sdist }, { pos.x + sdist, pos.y + sdist } }
+   local supplied_ents = ent.surface.find_entities_filtered({ area = supply_area })
+   local supplied_count = 0
+   local producer_count = 0
+   for i, ent2 in ipairs(supplied_ents) do
+      if ent2.prototype.get_max_energy_usage(ent2.quality) > 0 and ent2.prototype.is_building then
+         supplied_count = supplied_count + 1
+      elseif ent2.prototype.get_max_energy_production(ent2.quality) > 0 and ent2.prototype.is_building then
+         producer_count = producer_count + 1
+      end
+   end
+
+   ctx.message:fragment("supplying")
+   ctx.message:fragment(supplied_count)
+   ctx.message:fragment("buildings,")
+   if producer_count > 0 then
+      ctx.message:fragment("drawing from")
+      ctx.message:fragment(producer_count)
+      ctx.message:fragment("buildings,")
+   end
+   ctx.message:fragment("Check status for power flow information.")
+end
+
+---@param ctx fa.Info.EntInfoContext
+local function ent_info_power_switch(ctx)
+   local ent = ctx.ent
+   if ent.type ~= "power-switch" then return end
+
+   if ent.power_switch_state == false then
+      ctx.message:fragment("off,")
+   elseif ent.power_switch_state == true then
+      ctx.message:fragment("on,")
+   end
+   if (#ent.neighbours.red + #ent.neighbours.green) > 0 then ctx.message:fragment("observes circuit condition,") end
+end
+
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_spidertron(ctx)
    local ent = ctx.ent
    if ent.type == "spider-leg" then
@@ -1186,6 +1230,8 @@ function mod.ent_info(pindex, ent, is_scanner)
    run_handler(ent_info_splitter_states)
    run_handler(ent_info_cargo_wagon)
    run_handler(ent_info_radar)
+   run_handler(ent_info_electric_pole)
+   run_handler(ent_info_power_switch)
 
    if ent.name == "roboport" then
       local cell = ent.logistic_cell
