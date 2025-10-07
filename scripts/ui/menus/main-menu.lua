@@ -44,7 +44,7 @@ mod.main_menu = TabList.declare_tablist({
          title = { "fa.section-crafting" },
          tabs = {
             crafting.crafting_tab,
-            crafting_queue, -- This module exports itself as a tab
+            crafting_queue.crafting_queue_tab,
          },
       },
       {
@@ -52,7 +52,7 @@ mod.main_menu = TabList.declare_tablist({
          title = { "fa.section-research" },
          tabs = {
             research.research_tab,
-            research_queue, -- This module exports itself as a tab
+            research_queue.research_queue_tab,
          },
       },
    }),

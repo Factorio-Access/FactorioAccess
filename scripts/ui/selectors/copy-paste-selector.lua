@@ -4,16 +4,22 @@ local UiRouter = require("scripts.ui.router")
 
 local mod = {}
 
--- Register box selector for copy area selection
+-- Register box selector for copy/cut area selection
 mod.copy_paste_area_selector = BoxSelector.declare_box_selector({
    ui_name = UiRouter.UI_NAMES.COPY_PASTE_AREA_SELECTOR,
    callback = function(pindex, params, result)
       local p = game.get_player(pindex)
       if not p then return end
 
-      -- Get the copy tool item
+      -- Get the copy/cut tool item
       local tool = p.cursor_stack
-      if not tool or not tool.valid_for_read or tool.name ~= "copy-paste-tool" then
+      if not tool or not tool.valid_for_read then
+         Speech.speak(pindex, { "fa.planner-wrong-item" })
+         return
+      end
+
+      local is_cut = tool.name == "cut-paste-tool"
+      if not is_cut and tool.name ~= "copy-paste-tool" then
          Speech.speak(pindex, { "fa.planner-wrong-item" })
          return
       end
@@ -50,8 +56,8 @@ mod.copy_paste_area_selector = BoxSelector.declare_box_selector({
          )
       then
          p.clear_cursor()
-         p.cursor_stack.set_stack({ name = "copy-paste-tool" })
-         Speech.speak(pindex, { "fa.planner-copy-empty" })
+         p.cursor_stack.set_stack({ name = is_cut and "cut-paste-tool" or "copy-paste-tool" })
+         Speech.speak(pindex, { is_cut and "fa.planner-cut-empty" or "fa.planner-copy-empty" })
          return
       end
 
@@ -64,11 +70,26 @@ mod.copy_paste_area_selector = BoxSelector.declare_box_selector({
       -- Get entity count for feedback.  Needs to be after so that the blueprint is really in the cursor.
       local entity_count = p.cursor_stack.get_blueprint_entity_count()
 
+      -- If cutting, mark entities for deconstruction
+      local decon_count = 0
+      if is_cut then
+         local entities = p.surface.find_entities_filtered({ area = area, force = { p.force, "neutral" } })
+         for _, entity in ipairs(entities) do
+            if entity and entity.valid and entity.to_be_deconstructed() == false and entity.minable then
+               if entity.order_deconstruction(p.force) then decon_count = decon_count + 1 end
+            end
+         end
+      end
+
       -- Provide feedback about what was captured
       if entity_count > 0 then
-         Speech.speak(pindex, { "fa.planner-copy-created", entity_count })
+         if is_cut then
+            Speech.speak(pindex, { "fa.planner-cut-created", entity_count, decon_count })
+         else
+            Speech.speak(pindex, { "fa.planner-copy-created", entity_count })
+         end
       else
-         Speech.speak(pindex, { "fa.planner-copy-created-empty" })
+         Speech.speak(pindex, { is_cut and "fa.planner-cut-created-empty" or "fa.planner-copy-created-empty" })
       end
    end,
 })

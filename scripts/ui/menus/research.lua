@@ -4,7 +4,7 @@ Research menu UI using the CategoryRows system.
 Provides a category-based interface for research technologies where:
 - Categories are: Researchable, Locked, Researched
 - Items are technologies
-- Left click enqueues at front, Ctrl+click enqueues at back
+- Left click enqueues at back, Ctrl+click enqueues at front
 - K reads science pack requirements
 ]]
 
@@ -79,7 +79,7 @@ local function handle_tech_click(ctx, tech, modifiers)
    end
 
    -- Determine queue position
-   local queue_index = modifiers.control and nil or 1 -- nil means end of queue
+   local queue_index = modifiers.control and 1 or nil -- nil means end of queue
 
    -- Use Research module's enqueue function
    local message, success = Research.enqueue(ctx.player, tech.name, queue_index)

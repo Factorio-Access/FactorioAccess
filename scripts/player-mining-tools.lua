@@ -18,7 +18,9 @@ end
 function mod.try_to_mine_with_soun(ent, pindex)
    if ent ~= nil and ent.valid and ((ent.destructible and ent.type ~= "resource") or ent.name == "item-on-ground") then
       local ent_name = ent.name
-      if game.get_player(pindex).mine_entity(ent, false) and game.is_valid_sound_path("entity-mined/" .. ent_name) then
+      if
+         game.get_player(pindex).mine_entity(ent, false) and helpers.is_valid_sound_path("entity-mined/" .. ent_name)
+      then
          game.get_player(pindex).play_sound({ path = "entity-mined/" .. ent_name })
          return true
       else

@@ -8,16 +8,13 @@ local Menu = require("scripts.ui.menu")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
 local localising = require("scripts.localising")
+local KeyGraph = require("scripts.ui.key-graph")
 
 local mod = {}
 
----@param ctx fa.ui.TabContext
-function mod.state_setup(ctx)
-   -- Empty state setup required by TabList
-end
-
----@param ctx fa.ui.TabContext
-function mod.render(ctx)
+---@param ctx fa.ui.graph.Ctx
+---@return fa.ui.graph.Render
+local function render_crafting_queue(ctx)
    local builder = Menu.MenuBuilder.new()
    local player = game.get_player(ctx.pindex)
    if not player then return builder:build() end
@@ -36,17 +33,37 @@ function mod.render(ctx)
    end
 
    -- Add items from the queue, next item first
-   for i, item in ipairs(queue) do
-      local recipe_proto = prototypes.recipe[item.recipe]
+   for i, queue_item in ipairs(queue) do
+      local recipe_proto = prototypes.recipe[queue_item.recipe]
       if recipe_proto then
          -- Create unique key using prototype name and index
-         local key = item.recipe .. "-" .. i
+         local key = queue_item.recipe .. "-" .. i
 
          -- Build label with localized name and count
          builder:add_item(key, {
-            label = function(ctx)
+            label = function(label_ctx)
                local name = localising.get_localised_name_with_fallback(recipe_proto)
-               ctx.message:fragment(name):fragment(" x " .. item.count)
+               label_ctx.message:fragment(name):fragment(" x " .. queue_item.count)
+            end,
+            on_click = function(click_ctx, modifiers)
+               -- Cancel crafting
+               local cancel_count = 1
+               if modifiers and modifiers.shift then
+                  cancel_count = 5
+               elseif modifiers and modifiers.control then
+                  cancel_count = queue_item.count
+               end
+
+               -- Cancel the crafting
+               player.cancel_crafting({
+                  index = i,
+                  count = math.min(cancel_count, queue_item.count),
+               })
+
+               -- Announce what was cancelled
+               click_ctx.message:fragment({ "fa.crafting-queue-cancelled" })
+               click_ctx.message:fragment(tostring(math.min(cancel_count, queue_item.count)))
+               click_ctx.message:fragment(localising.get_localised_name_with_fallback(recipe_proto))
             end,
          })
       end
@@ -55,67 +72,11 @@ function mod.render(ctx)
    return builder:build()
 end
 
----@param ctx fa.ui.TabContext
----@param modifiers {control?: boolean, shift?: boolean, alt?: boolean}
-function mod.on_click(ctx, modifiers)
-   local player = game.get_player(ctx.pindex)
-   if not player then return end
-
-   local queue = player.crafting_queue
-   if not queue or #queue == 0 then
-      ctx.controller.message:fragment({ "fa.crafting-queue-empty" })
-      return
-   end
-
-   -- Get the selected key
-   local selected_key = ctx:get_cursor_key()
-   if not selected_key or selected_key == "empty" then return end
-
-   -- Extract the index from the key (format: "recipename-index")
-   local dash_pos = string.find(selected_key, "-[^-]*$")
-   if not dash_pos then return end
-
-   local index_str = string.sub(selected_key, dash_pos + 1)
-   local index = tonumber(index_str)
-   if not index or index < 1 or index > #queue then return end
-
-   local item = queue[index]
-   if not item then return end
-
-   -- Cancel crafting
-   local cancel_count = 1
-   if modifiers and modifiers.shift then
-      cancel_count = 5
-   elseif modifiers and modifiers.control then
-      cancel_count = item.count
-   end
-
-   -- Cancel the crafting
-   player.cancel_crafting({
-      index = index,
-      count = math.min(cancel_count, item.count),
-   })
-
-   -- Announce what was cancelled
-   local recipe_proto = prototypes.recipe[item.recipe]
-   if recipe_proto then
-      ctx.controller.message:fragment({ "fa.crafting-queue-cancelled" })
-      ctx.controller.message:fragment(tostring(math.min(cancel_count, item.count)))
-      ctx.controller.message:fragment(localising.get_localised_name_with_fallback(recipe_proto))
-   end
-
-   -- Request re-render
-   ctx:request_render()
-end
-
--- Create callbacks structure for TabList compatibility
-mod.callbacks = {
-   render = mod.render,
-   state_setup = mod.state_setup,
-   on_click = mod.on_click,
-}
-
-mod.name = "crafting_queue"
-mod.title = { "fa.crafting-queue-title" }
+-- Create the tab descriptor
+mod.crafting_queue_tab = KeyGraph.declare_graph({
+   name = "crafting_queue",
+   title = { "fa.crafting-queue-title" },
+   render_callback = render_crafting_queue,
+})
 
 return mod

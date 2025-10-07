@@ -304,28 +304,6 @@ read_tile_inner = function(pindex, start_text)
       end
    end
 
-   --If the player is holding a cut-paste tool, every entity being read gets mined as soon as you read a new tile.
-   local stack = game.get_player(pindex).cursor_stack
-   if
-      stack
-      and stack.valid_for_read
-      and stack.name == "cut-paste-tool"
-      and not storage.players[pindex].vanilla_mode
-   then
-      if ent and ent.valid then --not while loop, because it causes crashes
-         local name = ent.name
-         sounds.play_mine(pindex)
-         if PlayerMiningTools.try_to_mine_with_soun(ent, pindex) then result = result .. name .. " mined, " end
-         --Second round, in case two entities are there. While loops do not work!
-         ent = EntitySelection.get_first_ent_at_tile(pindex)
-         if ent and ent.valid then --not while
-            local name = ent.name
-            sounds.play_mine(pindex)
-            if PlayerMiningTools.try_to_mine_with_soun(ent, pindex) then result = result .. name .. " mined, " end
-         end
-      end
-   end
-
    --Add info on whether the tile is uncharted or blurred or distant
    table.insert(result, Mouse.cursor_visibility_info(pindex))
    return result
@@ -3137,27 +3115,6 @@ EventManager.on_event(
    end
 )
 
---Copy-paste-tool support. When cutting (not copying), mark area for deconstruction.
-EventManager.on_event(
-   "fa-c-x",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local player = game.get_player(pindex)
-      if not player then return end
-
-      local stack = player.cursor_stack
-
-      -- Check if we have the cut-paste-tool active
-      if stack and stack.valid_for_read and stack.name == "cut-paste-tool" then
-         -- Tool is active - remind user how to use it
-         Speech.speak(pindex, {
-            "fa.copy-paste-tool-active",
-            "Select area with LEFT BRACKET twice. Empty hand with Q to stop.",
-         })
-      end
-   end
-)
-
 --Left click actions in menus (click_menu)
 ---@param event EventData.CustomInputEvent
 local function kb_click_menu(event)
@@ -3282,14 +3239,15 @@ EventManager.on_event(
                return
             end
             -- Blueprint is set up - fall through to normal click behavior
-         elseif stack.name == "copy-paste-tool" then
-            -- Start selection for copy
+         elseif stack.name == "copy-paste-tool" or stack.name == "cut-paste-tool" then
+            -- Start selection for copy/cut
             local vp = Viewpoint.get_viewpoint(pindex)
             local cursor_pos = vp:get_cursor_pos()
+            local is_cut = stack.name == "cut-paste-tool"
             router:open_ui(UiRouter.UI_NAMES.COPY_PASTE_AREA_SELECTOR, {
                first_point = { x = cursor_pos.x, y = cursor_pos.y },
                intro_message = {
-                  "fa.planner-copy-first-point",
+                  is_cut and "fa.planner-cut-first-point" or "fa.planner-copy-first-point",
                   math.floor(cursor_pos.x),
                   math.floor(cursor_pos.y),
                },
