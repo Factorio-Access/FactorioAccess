@@ -45,25 +45,28 @@ local function render_crafting_queue(ctx)
                local name = localising.get_localised_name_with_fallback(recipe_proto)
                label_ctx.message:fragment(name):fragment(" x " .. queue_item.count)
             end,
-            on_click = function(click_ctx, modifiers)
+            on_click = function(click_ctx)
                -- Cancel crafting
-               local cancel_count = 1
-               if modifiers and modifiers.shift then
-                  cancel_count = 5
-               elseif modifiers and modifiers.control then
-                  cancel_count = queue_item.count
+               local count = 1
+               if click_ctx.modifiers.shift then
+                  count = 5
+               elseif click_ctx.modifiers.control then
+                  count = queue_item.count
                end
 
                -- Cancel the crafting
+               local cancelled_count = math.min(count, queue_item.count)
                player.cancel_crafting({
                   index = i,
-                  count = math.min(cancel_count, queue_item.count),
+                  count = cancelled_count,
                })
 
                -- Announce what was cancelled
-               click_ctx.message:fragment({ "fa.crafting-queue-cancelled" })
-               click_ctx.message:fragment(tostring(math.min(cancel_count, queue_item.count)))
-               click_ctx.message:fragment(localising.get_localised_name_with_fallback(recipe_proto))
+               click_ctx.message:fragment({
+                  "fa.crafting-queue-cancelled",
+                  cancelled_count,
+                  localising.get_localised_name_with_fallback(recipe_proto),
+               })
             end,
          })
       end

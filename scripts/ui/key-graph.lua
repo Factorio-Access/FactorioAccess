@@ -323,19 +323,20 @@ function Graph:_do_move(ctx, dir)
 end
 
 ---@param ctx fa.ui.graph.InternalTabCtx
----@param modifiers? fa.ui.graph.Modifiers
+---@param modifiers fa.ui.graph.Modifiers
 function Graph:on_click(ctx, modifiers)
    self:_with_render(ctx, function()
       local n = self.render.nodes[ctx.state.cur_key]
-      self:_maybe_call(n, ctx, "on_click", modifiers or NO_MODIFIERS)
+      self:_maybe_call(n, ctx, "on_click", modifiers)
    end)
 end
 
 ---@param ctx fa.ui.graph.InternalTabCtx
-function Graph:on_right_click(ctx)
+---@param modifiers fa.ui.graph.Modifiers
+function Graph:on_right_click(ctx, modifiers)
    self:_with_render(ctx, function()
       local n = self.render.nodes[ctx.state.cur_key]
-      self:_maybe_call(n, ctx, "on_right_click", NO_MODIFIERS)
+      self:_maybe_call(n, ctx, "on_right_click", modifiers)
    end)
 end
 
@@ -348,7 +349,7 @@ function Graph:on_read_coords(ctx)
 end
 
 ---@param ctx fa.ui.graph.InternalTabCtx
-function Graph:on_read_info(ctx)
+function Graph:on_read_info(ctx, modifiers)
    self:_with_render(ctx, function()
       local n = self.render.nodes[ctx.state.cur_key]
       self:_maybe_call(n, ctx, "on_read_info", NO_MODIFIERS)
@@ -506,7 +507,7 @@ function Graph:supports_search(_ctx)
 end
 
 ---Hint localised strings for caching
----@param ctx fa.ui.TabContext
+---@param ctx fa.ui.graph.InternalTabCtx
 ---@param hint_callback fun(localised_string: LocalisedString)
 function Graph:search_hint(ctx, hint_callback)
    self:_with_render(ctx, function()
@@ -535,7 +536,7 @@ end
 
 ---Move to next/previous search result
 ---@param message fa.MessageBuilder Message builder to populate with announcement
----@param ctx fa.ui.TabContext
+---@param ctx fa.ui.graph.InternalTabCtx
 ---@param direction integer 1 for next, -1 for previous
 ---@param matcher fun(localised_string: LocalisedString): boolean Function to test if a localised string matches
 ---@return fa.ui.SearchResult
