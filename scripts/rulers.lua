@@ -27,7 +27,6 @@ local mod = {}
 ---@field rulers fa.Ruler[]
 ---@field handle fa.RulerHandle? temporary, see comments below on how handles work.
 ---@field last_cursor_tile {x: number, y: number}? Last cursor tile position checked
----@field last_walking_tile {x: number, y: number}? Last walking tile position checked
 
 -- How far from the ruler do we give the boundary sound?
 local RULER_SIDE_DIST = 1
@@ -40,7 +39,6 @@ local module_state = StorageManager.declare_storage_module("rulers", {
    -- For now only ever holds one; this is future proofing.
    rulers = {},
    last_cursor_tile = nil,
-   last_walking_tile = nil,
 })
 
 --[[
@@ -287,6 +285,7 @@ local function update_player(pindex)
    -- If currently walking or driving, check if we crossed a tile
    if
       current_entry
+      and prev_entry
       and (
          current_entry.kind == MovementHistory.MOVEMENT_KINDS.WALKING
          or current_entry.kind == MovementHistory.MOVEMENT_KINDS.DRIVING
@@ -296,18 +295,14 @@ local function update_player(pindex)
          x = math.floor(current_entry.position.x),
          y = math.floor(current_entry.position.y),
       }
+      local prev_tile = {
+         x = math.floor(prev_entry.position.x),
+         y = math.floor(prev_entry.position.y),
+      }
 
-      -- Trigger if no previous tile OR crossed tile boundary
-      local should_trigger = false
-      if not state.last_walking_tile then
-         should_trigger = true
-      elseif current_tile.x ~= state.last_walking_tile.x or current_tile.y ~= state.last_walking_tile.y then
-         should_trigger = true
-      end
-
-      if should_trigger then
+      -- Check if we crossed a tile boundary
+      if current_tile.x ~= prev_tile.x or current_tile.y ~= prev_tile.y then
          mod.on_viewpoint_moved(pindex, current_tile.x, current_tile.y)
-         state.last_walking_tile = current_tile
       end
    end
 

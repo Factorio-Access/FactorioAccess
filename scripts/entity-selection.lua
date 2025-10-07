@@ -47,14 +47,12 @@ end
 ---@param pindex number For primary entity detection
 ---@return boolean True if a < b
 local function compare_entities(a, b, pindex)
-   
    -- Ghosts before non-ghosts
    local a_is_ghost = a.type == "entity-ghost" or a.type == "tile-ghost"
    local b_is_ghost = b.type == "entity-ghost" or b.type == "tile-ghost"
    if a_is_ghost and not b_is_ghost then return true end
    if b_is_ghost and not a_is_ghost then return false end
 
-   
    -- Preferred prototypes first (primary entities)
    local a_is_primary = mod.ent_is_primary(a, pindex)
    local b_is_primary = mod.ent_is_primary(b, pindex)
