@@ -12,6 +12,7 @@ local TabList = require("scripts.ui.tab-list")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local UiRouter = require("scripts.ui.router")
 local UiSounds = require("scripts.ui.sounds")
+local FaInfo = require("scripts.fa-info")
 
 local mod = {}
 
@@ -178,6 +179,12 @@ local function render_gun_grid(ctx)
          on_read_coords = function(coord_ctx)
             coord_ctx.message:fragment({ "fa.gun-slot", tostring(slot) })
          end,
+         on_production_stats_announcement = function(stats_ctx)
+            if gun_stack and gun_stack.valid_for_read then
+               local stats_message = FaInfo.selected_item_production_stats_info(stats_ctx.pindex, gun_stack.name)
+               stats_ctx.message:fragment(stats_message)
+            end
+         end,
       })
 
       -- Row 2: Ammo slots
@@ -200,6 +207,12 @@ local function render_gun_grid(ctx)
          end,
          on_read_coords = function(coord_ctx)
             coord_ctx.message:fragment({ "fa.ammo-slot", tostring(slot) })
+         end,
+         on_production_stats_announcement = function(stats_ctx)
+            if ammo_stack and ammo_stack.valid_for_read then
+               local stats_message = FaInfo.selected_item_production_stats_info(stats_ctx.pindex, ammo_stack.name)
+               stats_ctx.message:fragment(stats_message)
+            end
          end,
       })
    end
@@ -296,6 +309,12 @@ function mod.render_entity_guns(ctx, gun_inv_index, ammo_inv_index)
             on_read_coords = function(coord_ctx)
                coord_ctx.message:fragment({ "fa.gun-slot", tostring(slot) })
             end,
+            on_production_stats_announcement = function(stats_ctx)
+               if gun_stack and gun_stack.valid_for_read then
+                  local stats_message = FaInfo.selected_item_production_stats_info(stats_ctx.pindex, gun_stack.name)
+                  stats_ctx.message:fragment(stats_message)
+               end
+            end,
          })
       end
 
@@ -320,6 +339,12 @@ function mod.render_entity_guns(ctx, gun_inv_index, ammo_inv_index)
             end,
             on_read_coords = function(coord_ctx)
                coord_ctx.message:fragment({ "fa.ammo-slot", tostring(slot) })
+            end,
+            on_production_stats_announcement = function(stats_ctx)
+               if ammo_stack and ammo_stack.valid_for_read then
+                  local stats_message = FaInfo.selected_item_production_stats_info(stats_ctx.pindex, ammo_stack.name)
+                  stats_ctx.message:fragment(stats_message)
+               end
             end,
          })
       end

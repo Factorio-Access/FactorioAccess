@@ -489,6 +489,9 @@ register_ui_event("fa-k", create_ui_handler("on_read_coords"))
 -- Y key reads custom info
 register_ui_event("fa-y", create_ui_handler("on_read_info"))
 
+-- U key reads production stats
+register_ui_event("fa-u", create_ui_handler("on_production_stats_announcement"))
+
 -- Accelerator keys - map to constants for UI flexibility
 register_ui_event("fa-ca-c", function(event, pindex)
    local router = mod.get_router(pindex)

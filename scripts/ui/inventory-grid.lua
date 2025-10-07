@@ -13,6 +13,7 @@ local UiKeyGraph = require("scripts.ui.key-graph")
 local sounds = require("scripts.ui.sounds")
 local Consts = require("scripts.consts")
 local Equipment = require("scripts.equipment")
+local FaInfo = require("scripts.fa-info")
 local UiRouter = require("scripts.ui.router")
 local ItemDescriptions = require("scripts.item-descriptions")
 
@@ -281,6 +282,15 @@ local function render_inventory_grid(ctx)
             local slot_index = grid_pos_to_slot(x, y)
             local stack = inv[slot_index]
             ItemDescriptions.push_equipment_info(info_ctx.message, stack)
+         end,
+         on_production_stats_announcement = function(stats_ctx, x, y)
+            -- Read production stats for item in slot (u = production stats)
+            local slot_index = grid_pos_to_slot(x, y)
+            local stack = inv[slot_index]
+            if stack and stack.valid_for_read then
+               local stats_message = FaInfo.selected_item_production_stats_info(stats_ctx.pindex, stack.name)
+               stats_ctx.message:fragment(stats_message)
+            end
          end,
       })
    end

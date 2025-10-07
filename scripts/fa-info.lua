@@ -1438,16 +1438,31 @@ end
 -- when selecting a recipe, we choose the first fluid if there is one, otherwise
 -- the first item.  Ultimately for mods, we're going to need a GUI for it: there
 -- are too many cases in the wild.
-function mod.selected_item_production_stats_info(pindex)
+---@param pindex integer
+---@param prototype_name string|nil Optional prototype name to look up directly
+function mod.selected_item_production_stats_info(pindex, prototype_name)
    local p = game.get_player(pindex)
    local stats = p.force.get_item_production_statistics(p.surface)
    local item_stack = nil
    local recipe = nil
    local prototype = nil
 
-   -- Try the cursor stack
-   item_stack = p.cursor_stack
-   if item_stack and item_stack.valid_for_read then prototype = item_stack.prototype end
+   -- If a prototype name was provided, try to look it up directly
+   if prototype_name then
+      prototype = prototypes.item[prototype_name]
+      if not prototype then
+         prototype = prototypes.fluid[prototype_name]
+         if prototype then stats = p.force.get_fluid_production_statistics(p.surface) end
+      end
+      -- If provided but not found, return error immediately (don't try fallbacks)
+      if not prototype then return string.format("Error: Unknown item or fluid '%s'", prototype_name) end
+   end
+
+   -- Try the cursor stack (only if no prototype_name was provided)
+   if not prototype then
+      item_stack = p.cursor_stack
+      if item_stack and item_stack.valid_for_read then prototype = item_stack.prototype end
+   end
 
    --Otherwise try to get it from the inventory slots
    if prototype == nil and storage.players[pindex].menu == "inventory" then

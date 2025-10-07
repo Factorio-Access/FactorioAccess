@@ -13,6 +13,7 @@ local Crafting = require("scripts.crafting")
 local Localising = require("scripts.localising")
 local RecipeHelpers = require("scripts.recipe-helpers")
 local Speech = require("scripts.speech")
+local FaInfo = require("scripts.fa-info")
 
 local mod = {}
 
@@ -130,6 +131,31 @@ local function render_crafting_menu(ctx)
 
                function vtable.on_read_coords(item_ctx)
                   RecipeHelpers.read_recipe_details(item_ctx.message, recipe)
+               end
+
+               function vtable.on_production_stats_announcement(item_ctx)
+                  -- Get first item product from the recipe (prefer items over fluids)
+                  if recipe.products and #recipe.products > 0 then
+                     local chosen_product = nil
+                     for _, product in ipairs(recipe.products) do
+                        if product.type == "item" then
+                           chosen_product = product
+                           break
+                        end
+                     end
+                     -- Fallback to first product if no items found (could be fluid-only recipe)
+                     if not chosen_product then chosen_product = recipe.products[1] end
+
+                     if chosen_product and chosen_product.name then
+                        local stats_message =
+                           FaInfo.selected_item_production_stats_info(item_ctx.pindex, chosen_product.name)
+                        item_ctx.message:fragment(stats_message)
+                     else
+                        item_ctx.message:fragment("Error: Recipe has no valid product name")
+                     end
+                  else
+                     item_ctx.message:fragment("Error: Recipe has no products")
+                  end
                end
 
                builder:add_item(group_name, recipe.name, vtable)

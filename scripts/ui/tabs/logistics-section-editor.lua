@@ -18,6 +18,7 @@ local UiSounds = require("scripts.ui.sounds")
 local Localising = require("scripts.localising")
 local CircuitNetwork = require("scripts.circuit-network")
 local LogisticSectionProvider = require("scripts.logistic-section-provider")
+local FaInfo = require("scripts.fa-info")
 
 local mod = {}
 
@@ -84,6 +85,12 @@ local function render_section(ctx, point_index, section_index)
                   section.set_slot(i, slot)
 
                   ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
+               end
+            end,
+            on_production_stats_announcement = function(ctx)
+               if slot.value and slot.value.name then
+                  local stats_message = FaInfo.selected_item_production_stats_info(ctx.pindex, slot.value.name)
+                  ctx.message:fragment(stats_message)
                end
             end,
          })

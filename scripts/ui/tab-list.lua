@@ -65,6 +65,7 @@ local mod = {}
 ---@field on_right_click fa.ui.SimpleTabHandler?
 ---@field on_read_coords fa.ui.SimpleTabHandler?
 ---@field on_read_info fa.ui.SimpleTabHandler?
+---@field on_production_stats_announcement fa.ui.SimpleTabHandler?
 ---@field on_child_result fa.ui.SimpleTabHandler?
 ---@field on_accelerator fun(self, ctx: fa.ui.TabContext, accelerator_name: string)?
 ---@field on_clear fa.ui.SimpleTabHandler?
@@ -299,6 +300,8 @@ TabList.on_right_click = build_simple_method("on_right_click")
 TabList.on_read_coords = build_simple_method("on_read_coords")
 ---@type fun(self, number, table?, fa.ui.RouterController)
 TabList.on_read_info = build_simple_method("on_read_info")
+---@type fun(self, number, table?, fa.ui.RouterController)
+TabList.on_production_stats_announcement = build_simple_method("on_production_stats_announcement")
 ---@type fun(self, number, table?, fa.ui.RouterController)
 TabList.on_top = build_simple_method("on_top")
 ---@type fun(self, number, table?, fa.ui.RouterController)

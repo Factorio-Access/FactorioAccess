@@ -14,6 +14,7 @@ local Menu = require("scripts.ui.menu")
 local KeyGraph = require("scripts.ui.key-graph")
 local CircuitNetworks = require("scripts.circuit-network")
 local Localising = require("scripts.localising")
+local FaInfo = require("scripts.fa-info")
 
 local mod = {}
 
@@ -75,6 +76,12 @@ local function render_signals(ctx, title, both_wires, wire_connector_id)
             ctx.message:fragment(tostring(sig_info.total_count))
             ctx.message:fragment(", ")
             ctx.message:fragment({ "fa.circuit-network-quality-hint" })
+         end,
+         on_production_stats_announcement = function(ctx)
+            if sig_info.signal_id and sig_info.signal_id.name then
+               local stats_message = FaInfo.selected_item_production_stats_info(ctx.pindex, sig_info.signal_id.name)
+               ctx.message:fragment(stats_message)
+            end
          end,
       })
 
