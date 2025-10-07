@@ -47,14 +47,15 @@ function mod.select_tile_to_build(pending_tiles, max_count, context, helpers)
    ---@type fa.BuildLock.PlacedEntity?
    local last_pole = context.entity_history:get(0)
 
-   -- No previous pole? Place at first available tile
+   -- No previous pole? Select the first tile (don't skip current position)
    if not last_pole or not last_pole.entity or not last_pole.entity.valid then
       logger:debug("No last pole, selecting first tile")
-      -- Use default selection (first non-current tile)
-      return helpers:select_tile_to_build_default(pending_tiles, max_count, {
-         x = math.floor(context.player.character.position.x),
-         y = math.floor(context.player.character.position.y),
-      })
+      -- Select first tile in queue - if character is blocking, build() will return RETRY
+      if #pending_tiles > 0 then
+         return { action = BuildAction.PLACED, tile_index = 1 }
+      else
+         return nil
+      end
    end
 
    -- Find first tile that's out of wire reach by temporarily placing poles

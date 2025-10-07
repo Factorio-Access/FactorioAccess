@@ -39,6 +39,7 @@ local prototype_cache = {}
 
 ---@class fa.BuildLock.BuildState
 ---@field entity_history fa.ds.FixedRingBuffer of fa.BuildLock.PlacedEntity
+---@field placed_entity_units table<number, true> Set of all placed entity unit_numbers for O(1) collision checks
 ---@field backend_state table? Backend-specific state
 ---@field last_floored_position {x: number, y: number}? Last tile position checked (for walking)
 ---@field pending_tiles {x: number, y: number}[] Queue of tiles to build on (for walking)
@@ -47,6 +48,7 @@ local prototype_cache = {}
 local function create_build_state()
    return {
       entity_history = RingBuffer.new(5),
+      placed_entity_units = {},
       backend_state = nil,
       last_floored_position = nil,
       pending_tiles = {},
@@ -230,12 +232,20 @@ function BuildLock.set_enabled(pindex, enabled, silent, reason)
       state.walking_state = create_build_state()
       state.cursor_state = create_build_state()
 
-      -- Initialize walking state with current position to avoid building on current tile
+      -- Initialize walking state with current position
+      -- Add current tile to queue so first pole places where build lock was enabled
       if player.character then
-         state.walking_state.last_floored_position = {
+         local current_tile = {
             x = math.floor(player.character.position.x),
             y = math.floor(player.character.position.y),
          }
+         state.walking_state.last_floored_position = current_tile
+         -- Add current tile as first tile in queue with no direction (will be determined on placement)
+         table.insert(state.walking_state.pending_tiles, {
+            x = current_tile.x,
+            y = current_tile.y,
+            direction = defines.direction.north, -- Placeholder, backend will handle
+         })
       end
 
       state.last_cursor_stack_name = player.cursor_stack and player.cursor_stack.name or nil
@@ -381,21 +391,14 @@ function BuildHelpers:is_blocked_by_own_entity(position, entity_prototype, direc
       area = { footprint.left_top, footprint.right_bottom },
    })
 
-   ---@type fa.BuildLock.PlacedEntity?
-   local last_placed = self.build_state.entity_history:get(0)
-
    -- Check each blocking entity
    for _, entity in ipairs(entities) do
       if entity.valid then
          -- Check if it's the player character
          if entity.type == "character" and entity == self.player.character then return true end
 
-         -- Check if it's our last placed entity
-         if last_placed and last_placed.entity and last_placed.entity.valid then
-            -- Assert that buildable entities have unit_number
-            assert(last_placed.entity.unit_number, "buildable entities must have unit_number")
-            if entity.unit_number == last_placed.entity.unit_number then return true end
-         end
+         -- Check if it's any entity we've placed (O(1) lookup)
+         if entity.unit_number and self.build_state.placed_entity_units[entity.unit_number] then return true end
       end
    end
 
@@ -463,6 +466,8 @@ function BuildHelpers:build_entity(position, direction)
          direction = placed_entity.direction,
          name = entity_prototype.name,
       })
+      -- Add to collision check set
+      if placed_entity.unit_number then build_state.placed_entity_units[placed_entity.unit_number] = true end
       logger:debug(string.format("Added to history at index 0: dir=%d", placed_entity.direction))
       return placed_entity
    else
@@ -721,6 +726,7 @@ function BuildLock.process_walking_movement(pindex)
 
    -- Keep processing until we can't place anything or run out of tiles
    while #walking_state.pending_tiles > 0 do
+      logger:debug(string.format("Processing queue, %d tiles pending", #walking_state.pending_tiles))
       -- Attempt to build from queue (two-phase: select tile, then build)
       local result = attempt_build_from_queue(
          pindex,
@@ -736,15 +742,18 @@ function BuildLock.process_walking_movement(pindex)
       -- Handle action returned by backend
       if result.action == BuildAction.PLACED then
          -- Successfully placed - remove this tile and everything before it
+         logger:debug(string.format("Placed successfully, removing %d tiles", result.tile_index))
          for j = 1, result.tile_index do
             table.remove(walking_state.pending_tiles, 1)
          end
          -- Continue to try placing more
       elseif result.action == BuildAction.RETRY then
          -- Blocked temporarily (e.g., player in way), keep queue and stop for this tick
+         logger:debug("Build returned RETRY, stopping for this tick")
          break
       elseif result.action == BuildAction.SKIP then
          -- Skip this tile permanently, remove it and continue
+         logger:debug(string.format("Build returned SKIP, removing %d tiles", result.tile_index))
          for j = 1, result.tile_index do
             table.remove(walking_state.pending_tiles, 1)
          end
