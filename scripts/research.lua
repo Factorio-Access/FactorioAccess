@@ -105,7 +105,11 @@ function mod.enqueue(player, name, index)
 
    local force = player.force
    local queue = force.research_queue
-   table.insert(queue, index or 1, name)
+   if index then
+      table.insert(queue, index, name)
+   else
+      table.insert(queue, name) -- Append to end
+   end
    -- redundant? no—Factorio needs the copy written back
    force.research_queue = queue
    -- re-fetch in case the engine normalized it
