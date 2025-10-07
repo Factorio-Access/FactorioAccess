@@ -55,16 +55,16 @@ function mod.process_walking_announcements(pindex)
    local crossed_tile = false
 
    if not previous then
-      -- First movement entry
-      crossed_tile = true
+      -- First movement entry, char teleported or started walking.
+      had_discontinuity = true
    elseif current then
       local current_tile = { x = math.floor(current.position.x), y = math.floor(current.position.y) }
       local previous_tile = { x = math.floor(previous.position.x), y = math.floor(previous.position.y) }
       if current_tile.x ~= previous_tile.x or current_tile.y ~= previous_tile.y then crossed_tile = true end
    end
 
-   -- Only process if we crossed a tile or had a discontinuity
-   if not (crossed_tile or had_discontinuity) then return end
+   -- Only process if we crossed a tile. Do not process for discontinuity! Teleport isn't walking.
+   if had_discontinuity or not crossed_tile then return end
 
    if vp:get_cursor_anchored() then
       -- ANCHORED MODE: Update cursor ahead and announce if notable
@@ -107,8 +107,6 @@ function mod.process_walking_announcements(pindex)
    else
       -- NON-ANCHORED MODE: Don't announce while walking
       -- Cursor stays in place, so no need to read tile on every player movement
-      Graphics.draw_cursor_highlight(pindex, nil, nil)
-      player.selected = nil
    end
 end
 
