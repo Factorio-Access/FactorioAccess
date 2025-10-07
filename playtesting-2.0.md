@@ -29,7 +29,6 @@ Very important warnings:
 - blueprint books
 - roboport configuration
 - inserter filters
-- Underground belt exit assistance. To work around it, rotate the exit by 180 degrees before placing (getting this back is priority--expect it very soon).
 
 There's also a lot of roughness around the edges we're still spending down.
 Support for quality is intentionally sparse.  We are doing it where not doing so would cause tech debt, but quality is a space age feature and not priority at this time.
@@ -53,19 +52,19 @@ Build lock is no longer fragile when moving quickly, and should always place ele
 
 Build lock disables itself if you lose the line because you bumped into something.
 
-Build lock also now fills in every tile of transport belts always. This means that running at an angle will give you a "staircase" of belts.  That is almost never what you want, but is better than leaving  aton of junk belts around that do nothing.
+Build lock also now fills in every tile of transport belts always. This means that running at an angle will give you a "staircase" of belts.  That is almost never what you want, but is better than leaving  a ton of junk belts around that do nothing.
 
 Build lock is now better about not playing error sounds when it is actually working.
 
 Instant mining has been removed.  Instead, `ctrl+x` now supports most of the vanilla cut functionality.  Due to API limitations, it does not support preservation of external circuit network connections.
 
-Underground belt exit assistance is temporarily gone but will come back shortly.  Pipe to ground rotation is gone permanently.
+Pipe to ground rotation is gone permanently.  It only ever worked in limited circumstances.  If there is demand, build lock support will be added instead.
 
 To match vanilla, your hand always starts facing north when you put something in it.
 
 When placing tiles (concrete, landfill), we no longer have a math bug.  It is now properly placed with your cursor in the center.
 
-Steam engine snap assist is gone.  It is easy to do this with skip by preview instead.  We only ever offered this for steam engines, but many other entities have fluid connections.  Learning how to do this by yourself is important for midgame, late\ game, and space age.
+Steam engine snap assist is gone.  It is easy to do this with skip by preview instead.  We only ever offered this for steam engines, but many other entities have fluid connections.  Learning how to do this by yourself is important for midgame, late game, and space age.
 
 You may temporarily notice increased scanner latency.  Due to API limitations, our mechanism from 1.1 which allowed us to see all entities as they were placed is no longer available.  A new mechanism is being built.
 
@@ -99,7 +98,7 @@ Constant combinators fully support the 2.0 model in which they are sending the c
 
 All signal types are supported, chosen through a multi-level tree selector. You can in fact configure an assembler through the circuit network if you want.
 
-An experimental circuit network navigator GUI is available via `ctrl+alt+n`.  It exposes the structure of the graph.  As you click items, your cursor moves to them and the menu updates to be from that items perspective.
+An experimental circuit network navigator GUI is available via `ctrl+alt+n`.  It exposes the structure of the graph.  As you click items, your cursor moves to them and the menu updates to be from that items perspective. It does not yet support combinators which connect to multiple networks.
 
 Constant versus signal for the second parameter of circuit conditions are now controlled via an accelerators mechanism: hit ctrl+alt+s to select a signal, ctrl+alt+c for constant.
 
@@ -146,4 +145,4 @@ Belt announcement is now somewhat more verbose. Depending on feedback and availa
 
 Pipe announcement has been completely reworked to be based off shapes. For example, "connets north and south and east and west" is now "cross".  Build various pipe shapes to see how they are now announced.
 
-We are now briefer about bidirectional pipe connections and have in general tightened this messaging.
+We are now briefer about bidirectional pipe connections.
