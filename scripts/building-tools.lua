@@ -163,20 +163,6 @@ function mod.build_item_in_hand_with_params(params)
       end
       --Note: Underground belt chute handling was removed - direction is passed directly
 
-      --Flip pipe-to-ground direction in storage for next placement
-      if
-         build_successful
-         and stack
-         and stack.valid_for_read
-         and stack.valid
-         and stack.prototype.place_result ~= nil
-         and stack.prototype.place_result.name == "pipe-to-ground"
-      then
-         local vp = Viewpoint.get_viewpoint(pindex)
-         vp:set_hand_direction(FaUtils.rotate_180(vp:get_hand_direction()))
-         game.get_player(pindex).play_sound({ path = "Rotate-Hand-Sound" })
-      end
-
       return build_successful
    elseif stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result ~= nil then
       --Tile placement
