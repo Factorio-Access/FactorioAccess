@@ -808,27 +808,37 @@ function mod.build_preview_checks_info(stack, pindex)
       if con_count == 0 then table.insert(result, { "fa.connection-heat-pipe-to-nothing" }) end
    end
    --For electric poles, report the directions of up to 5 wire-connectible
-   -- electric poles that can connect TODO: we can actually just ask now, but
-   -- I'm just getting this running enough to limp along for 2.0.
+   -- electric poles that can connect.
    if ent_p.type == "electric-pole" then
+      -- Calculate center position of the entity being placed
+      local footprint = FaUtils.calculate_building_footprint({
+         entity_prototype = ent_p,
+         position = pos,
+         building_direction = build_dir,
+      })
+      local pole_center = footprint.center
+
       local pole_dict = surf.find_entities_filtered({
          type = "electric-pole",
-         position = pos,
+         position = pole_center,
          radius = ent_p.get_max_wire_distance(stack.quality),
       })
       local poles = {}
       for i, v in pairs(pole_dict) do
          local ent_p_mwd = ent_p.get_max_wire_distance(stack.quality)
          local pole_mwd = v.prototype.get_max_wire_distance(v.quality)
-         if pole_mwd >= ent_p_mwd or pole_mwd >= util.distance(v.position, pos) then table.insert(poles, v) end
+         local max_allowed = math.min(ent_p_mwd, pole_mwd)
+         -- Use center-to-center distance for accurate calculation
+         if max_allowed >= util.distance(v.position, pole_center) then table.insert(poles, v) end
       end
       if #poles > 0 then
          --List the first 4 poles within range
          table.insert(result, { "fa.connection-connecting" })
          for i, pole in ipairs(poles) do
             if i < 5 then
-               local dist = math.ceil(util.distance(pole.position, pos))
-               local dir = FaUtils.get_direction_biased(pole.position, pos)
+               -- Use center-to-center distance for accurate reporting
+               local dist = math.ceil(util.distance(pole.position, pole_center))
+               local dir = FaUtils.get_direction_biased(pole.position, pole_center)
                table.insert(result, FaUtils.format_distance_with_direction(dist, helpers.direction_to_string(dir)))
                table.insert(result, ", ")
             end
@@ -836,11 +846,11 @@ function mod.build_preview_checks_info(stack, pindex)
       else
          --Notify if no connections and state nearest electric pole
          table.insert(result, { "fa.connection-not-connected" })
-         local nearest_pole, min_dist = Electrical.find_nearest_electric_pole(nil, false, 50, surf, pos)
+         local nearest_pole, min_dist = Electrical.find_nearest_electric_pole(nil, false, 50, surf, pole_center)
          if min_dist == nil or min_dist >= 1000 then
             table.insert(result, { "fa.connection-no-poles-within" })
          else
-            local dir = FaUtils.get_direction_biased(nearest_pole.position, pos)
+            local dir = FaUtils.get_direction_biased(nearest_pole.position, pole_center)
             table.insert(result, {
                "fa.connection-to-nearest-pole",
                FaUtils.format_distance_with_direction(math.ceil(min_dist), helpers.direction_to_string(dir)),

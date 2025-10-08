@@ -161,8 +161,13 @@ end
 * The deciding ratio is 1 to 4, meaning that for an object that is 100 tiles north, it can be offset by up to 25 tiles east or west before it stops being counted as "directly" in the north.
 * The arctangent of 1/4 is about 14 degrees, meaning that the field of view that directly counts as a cardinal direction is about 30 degrees, while for a diagonal direction it is about 60 degrees.]]
 function mod.get_direction_biased(pos_target, pos_origin)
-   local diff_x = pos_target.x - pos_origin.x
-   local diff_y = pos_target.y - pos_origin.y
+   local ox = math.floor(pos_origin.x)
+   local oy = math.floor(pos_origin.y)
+   local tx = math.floor(pos_target.x)
+   local ty = math.floor(pos_target.y)
+
+   local diff_x = tx - ox
+   local diff_y = ty - oy
    ---@type defines.direction | -1
    local dir = dirs.north
 
@@ -397,8 +402,8 @@ function mod.calculate_building_footprint(params)
 
    -- Calculate center position
    local center = {
-      x = left_top.x + math.floor(width / 2),
-      y = left_top.y + math.floor(height / 2),
+      x = left_top.x + width / 2,
+      y = left_top.y + height / 2,
    }
 
    return {
