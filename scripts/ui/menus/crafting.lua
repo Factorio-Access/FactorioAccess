@@ -130,7 +130,7 @@ local function render_crafting_menu(ctx)
                end
 
                function vtable.on_read_coords(item_ctx)
-                  RecipeHelpers.read_recipe_details(item_ctx.message, recipe)
+                  RecipeHelpers.read_recipe_details_with_time(item_ctx.message, recipe)
                end
 
                function vtable.on_production_stats_announcement(item_ctx)
