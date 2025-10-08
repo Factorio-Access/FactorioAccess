@@ -21,8 +21,11 @@ local function draw_circle_at_position(surface, pos, color, radius, width, time_
 end
 
 -- Helper function to check if a preferred entity is at a given position
+-- Normalizes coordinates to tile center to handle both fractional (1.5, 2.5) and whole (1, 2) coordinates
 local function check_entity_at_position(surface, pos, preferred_unit_number, excluded_names)
-   local entities = surface.find_entities_filtered({ position = pos, name = excluded_names, invert = true })
+   -- Normalize to tile center: handles both Factorio 1.1 (fractional) and 2.0 (whole) coordinates
+   local tile_center = { x = math.floor(pos.x) + 0.5, y = math.floor(pos.y) + 0.5 }
+   local entities = surface.find_entities_filtered({ position = tile_center, name = excluded_names, invert = true })
    for i = 1, math.min(3, #entities) do
       if entities[i].unit_number == preferred_unit_number then return true end
    end
@@ -455,88 +458,62 @@ function mod.get_ent_northwest_corner_position(ent)
    return pos
 end
 
---Reports which part of the selected entity has the cursor. E.g. southwest corner, center...
+-- Lookup table for entity part location based on adjacent tile connectivity
+-- Index: (north_same ? 8 : 0) | (south_same ? 4 : 0) | (east_same ? 2 : 0) | (west_same ? 1 : 0)
+local ENTITY_PART_LOOKUP = {
+   [0] = { "fa.entity-part-all" }, -- No adjacent tiles: single-tile entity
+   [1] = { "fa.entity-part-east-tip" }, -- Only west connects
+   [2] = { "fa.entity-part-west-tip" }, -- Only east connects
+   [3] = { "fa.entity-part-middle" }, -- East-west corridor
+   [4] = { "fa.entity-part-north-tip" }, -- Only south connects
+   [5] = { "fa.entity-part-northeast-corner" }, -- South + west (L-shape)
+   [6] = { "fa.entity-part-northwest-corner" }, -- South + east (L-shape)
+   [7] = { "fa.entity-part-north-edge" }, -- South + east + west (T-shape)
+   [8] = { "fa.entity-part-south-tip" }, -- Only north connects
+   [9] = { "fa.entity-part-southeast-corner" }, -- North + west (L-shape)
+   [10] = { "fa.entity-part-southwest-corner" }, -- North + east (L-shape)
+   [11] = { "fa.entity-part-south-edge" }, -- North + east + west (T-shape)
+   [12] = { "fa.entity-part-middle" }, -- North-south corridor
+   [13] = { "fa.entity-part-east-edge" }, -- North + south + west (T-shape)
+   [14] = { "fa.entity-part-west-edge" }, -- North + south + east (T-shape)
+   [15] = { "fa.entity-part-center" }, -- All four directions connect
+}
+
+---Reports which part of a multi-tile entity is at the cursor position
+---@param pindex integer Player index
+---@return LocalisedString? Location description (e.g., {"fa.entity-part-center"}) or nil if no entity
 function mod.get_entity_part_at_cursor(pindex)
    local p = game.get_player(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
    local cursor_pos = vp:get_cursor_pos()
    local x = cursor_pos.x
    local y = cursor_pos.y
-   local ents = EntitySelection.get_ents_on_tile(p.surface, cursor_pos.x, cursor_pos.y, pindex)
-   local north_same = false
-   local south_same = false
-   local east_same = false
-   local west_same = false
-   local location = nil
 
-   --First check if there is an entity at the cursor
-   if #ents > 0 then
-      --Prefer the selected ent
-      local preferred_ent = p.selected
-      --Otherwise check for other ents at the cursor
-      if not preferred_ent or not preferred_ent.valid then
-         preferred_ent = EntitySelection.get_first_ent_at_tile(pindex)
-      end
-      if not preferred_ent or not preferred_ent.valid then return "unknown location" end
+   local ents = EntitySelection.get_ents_on_tile(p.surface, x, y, pindex)
+   if #ents == 0 then return nil end
 
-      --Report which part of the entity the cursor covers.
-      draw_circle_at_position(p.surface, { x = x, y = y - 1 })
-      draw_circle_at_position(p.surface, { x = x, y = y + 1 })
-      draw_circle_at_position(p.surface, { x = x - 1, y = y })
-      draw_circle_at_position(p.surface, { x = x + 1, y = y })
-
-      north_same =
-         check_entity_at_position(p.surface, { x = x, y = y - 1 }, preferred_ent.unit_number, Consts.EXCLUDED_ENT_NAMES)
-      south_same =
-         check_entity_at_position(p.surface, { x = x, y = y + 1 }, preferred_ent.unit_number, Consts.EXCLUDED_ENT_NAMES)
-      east_same =
-         check_entity_at_position(p.surface, { x = x + 1, y = y }, preferred_ent.unit_number, Consts.EXCLUDED_ENT_NAMES)
-      west_same =
-         check_entity_at_position(p.surface, { x = x - 1, y = y }, preferred_ent.unit_number, Consts.EXCLUDED_ENT_NAMES)
-
-      if north_same and south_same then
-         if east_same and west_same then
-            location = "center"
-         elseif east_same and not west_same then
-            location = "west edge"
-         elseif not east_same and west_same then
-            location = "east edge"
-         elseif not east_same and not west_same then
-            location = "middle"
-         end
-      elseif north_same and not south_same then
-         if east_same and west_same then
-            location = "south edge"
-         elseif east_same and not west_same then
-            location = "southwest corner"
-         elseif not east_same and west_same then
-            location = "southeast corner"
-         elseif not east_same and not west_same then
-            location = "south tip"
-         end
-      elseif not north_same and south_same then
-         if east_same and west_same then
-            location = "north edge"
-         elseif east_same and not west_same then
-            location = "northwest corner"
-         elseif not east_same and west_same then
-            location = "northeast corner"
-         elseif not east_same and not west_same then
-            location = "north tip"
-         end
-      elseif not north_same and not south_same then
-         if east_same and west_same then
-            location = "middle"
-         elseif east_same and not west_same then
-            location = "west tip"
-         elseif not east_same and west_same then
-            location = "east tip"
-         elseif not east_same and not west_same then
-            location = "all"
-         end
-      end
+   -- Prefer selected entity, fallback to first entity at tile
+   local preferred_ent = p.selected
+   if not preferred_ent or not preferred_ent.valid then
+      preferred_ent = EntitySelection.get_first_ent_at_tile(pindex)
    end
-   return location
+   if not preferred_ent or not preferred_ent.valid then return { "fa.entity-part-unknown" } end
+
+   -- Check adjacency: is the same entity present in each cardinal direction?
+   -- check_entity_at_position handles coordinate normalization internally
+   local unit_number = preferred_ent.unit_number
+   local excluded = Consts.EXCLUDED_ENT_NAMES
+   local surface = p.surface
+
+   local north_same = check_entity_at_position(surface, { x = x, y = y - 1 }, unit_number, excluded)
+   local south_same = check_entity_at_position(surface, { x = x, y = y + 1 }, unit_number, excluded)
+   local east_same = check_entity_at_position(surface, { x = x + 1, y = y }, unit_number, excluded)
+   local west_same = check_entity_at_position(surface, { x = x - 1, y = y }, unit_number, excluded)
+
+   -- Convert adjacency booleans to bit pattern: NSEW
+   local pattern = (north_same and 8 or 0) + (south_same and 4 or 0) + (east_same and 2 or 0) + (west_same and 1 or 0)
+
+   return ENTITY_PART_LOOKUP[pattern]
 end
 
 --Returns the top left and bottom right corners for a rectangle that takes pos_1 and pos_2 as any of its four corners.
