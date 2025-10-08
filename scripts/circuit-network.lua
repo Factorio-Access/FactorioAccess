@@ -22,9 +22,9 @@ function mod.drag_wire_and_read(pindex)
       p.play_sound({ path = "utility/cannot_build" })
       return
    end
-   local result = ""
+
    local wire_type = nil
-   local wire_name = { "item-name.wire" }
+   local wire_name = nil
    if p.cursor_stack.valid_for_read then
       wire_type = p.cursor_stack.name
       wire_name = localising.get_localised_name_with_fallback(p.cursor_stack.prototype)
@@ -33,6 +33,13 @@ function mod.drag_wire_and_read(pindex)
    else
       wire_type = storage.players[pindex].last_wire_type
       wire_name = storage.players[pindex].last_wire_name
+   end
+
+   -- If we still don't have a wire type/name, bail out
+   if not wire_type or not wire_name then
+      Speech.speak(pindex, { "fa.circuit-wire-no-wire-in-hand" })
+      p.play_sound({ path = "utility/cannot_build" })
+      return
    end
 
    local drag_target = p.drag_target
@@ -65,75 +72,64 @@ function mod.drag_wire_and_read(pindex)
    local last_c_ent = storage.players[pindex].last_wire_ent
    local network_found = nil
    if c_ent == nil or c_ent.valid == false then c_ent = p.selected end
+
+   local msg = Speech.MessageBuilder.new()
+
    if c_ent == nil or c_ent.valid == false then
-      result = wire_name .. " , " .. " no ent "
-   elseif wire_type == "red-wire" then
+      msg:fragment({ "fa.circuit-wire-no-entity", wire_name })
+   elseif wire_type == "red-wire" or wire_type == "green-wire" then
       if drag_target ~= nil then
          local target_ent = drag_target.target_entity
-         local target_network = drag_target.target_circuit_id
-         network_found = c_ent.get_circuit_network(defines.wire_connector_id.circuit_red)
+         local wire_connector_id = wire_type == "red-wire" and defines.wire_connector_id.circuit_red
+            or defines.wire_connector_id.circuit_green
+         local locale_key = wire_type == "red-wire" and "fa.circuit-wire-connected-red"
+            or "fa.circuit-wire-connected-green"
+
+         network_found = c_ent.get_circuit_network(wire_connector_id)
          if network_found == nil or network_found.valid == false then
             network_found = "nil"
          else
-            network_found = network_found.network_id
+            network_found = tostring(network_found.network_id)
          end
-         result = {
-            "",
-            " Connected ",
+         msg:fragment({
+            locale_key,
             localising.get_localised_name_with_fallback(target_ent),
-            " to red circuit network ID ",
             network_found,
-         }
+         })
       else
-         result = { "", " Disconnected ", wire_name }
+         msg:fragment({ "fa.circuit-wire-disconnected", wire_name })
       end
-   elseif wire_type == "green-wire" then
-      if drag_target ~= nil then
-         local target_ent = drag_target.target_entity
-         local target_network = drag_target.target_circuit_id
-         network_found = c_ent.get_circuit_network(defines.wire_connector_id.circuit_green)
-         if network_found == nil or network_found.valid == false then
-            network_found = "nil"
-         else
-            network_found = network_found.network_id
-         end
-         result = {
-            "",
-            " Connected ",
-            localising.get_localised_name_with_fallback(target_ent),
-            " to green circuit network ID ",
-            network_found,
-         }
-      else
-         result = { "", " Disconnected ", wire_name }
-      end
-   elseif wire_type == "copper-cable" then
-      if drag_target ~= nil then
+   elseif wire_type == "copper-wire" then
+      -- Copper wires can only connect to electric poles and power switches
+      local is_valid_copper_target = c_ent.type == "electric-pole" or c_ent.name == "power-switch"
+
+      if not is_valid_copper_target then
+         msg:fragment({ "fa.circuit-wire-invalid-copper-target", localising.get_localised_name_with_fallback(c_ent) })
+      elseif drag_target ~= nil then
          local target_ent = drag_target.target_entity
          local target_network = drag_target.target_wire_id
          network_found = c_ent.electric_network_id
-         if network_found == nil then network_found = "nil" end
-         result = {
-            "",
-            " Connected ",
+         if network_found == nil then
+            network_found = "nil"
+         else
+            network_found = tostring(network_found)
+         end
+         msg:fragment({
+            "fa.circuit-wire-connected-copper",
             localising.get_localised_name_with_fallback(target_ent),
-            " to electric network ID ",
             network_found,
-         }
+         })
       elseif
          (c_ent ~= nil and c_ent.name == "power-switch")
          or (last_c_ent ~= nil and last_c_ent.valid and last_c_ent.name == "power-switch")
       then
-         network_found = c_ent.electric_network_id
-         if network_found == nil then network_found = "nil" end
-         result = { "fa.circuit-wiring-power-switch" }
-         --result = " Connected " .. localising.get(c_ent,pindex) .. " to electric network ID " .. network_found
+         msg:fragment({ "fa.circuit-wiring-power-switch" })
       else
-         result = { "", " Disconnected ", wire_name }
+         msg:fragment({ "fa.circuit-wire-disconnected", wire_name })
       end
    end
-   --p.print(result,{volume_modifier=0})--**
-   Speech.speak(pindex, result)
+
+   Speech.speak(pindex, msg:build())
    storage.players[pindex].last_wire_ent = c_ent
 end
 

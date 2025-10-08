@@ -903,7 +903,8 @@ local function ent_info_power_switch(ctx)
    elseif ent.power_switch_state == true then
       ctx.message:fragment("on,")
    end
-   if (#ent.neighbours.red + #ent.neighbours.green) > 0 then ctx.message:fragment("observes circuit condition,") end
+
+   if Wires.has_circuit_connections(ent) then ctx.message:fragment("observes circuit condition,") end
 end
 
 ---@param ctx fa.Info.EntInfoContext

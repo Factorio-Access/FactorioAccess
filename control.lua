@@ -85,6 +85,7 @@ require("scripts.ui.internal.search-setter")
 local GameGui = require("scripts.ui.game-gui")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
+local Wires = require("scripts.wires")
 local Walking = require("scripts.walking")
 local Warnings = require("scripts.warnings")
 local WorkQueue = require("scripts.work-queue")
@@ -725,7 +726,7 @@ function clicked_on_entity(ent, pindex)
       router:open_ui(UiRouter.UI_NAMES.ROBOPORT)
    elseif ent.type == "power-switch" then
       --Toggle it, if in manual mode
-      if (#ent.neighbours.red + #ent.neighbours.green) > 0 then
+      if Wires.has_circuit_connections(ent) then
          Speech.speak(pindex, { "fa.observes-circuit-condition" })
       else
          ent.power_switch_state = not ent.power_switch_state
@@ -3143,7 +3144,7 @@ local function kb_click_hand(event)
          -- Blueprint building - use the mod's paste function
          local vp = Viewpoint.get_viewpoint(pindex)
          Blueprints.paste_blueprint(pindex, vp:get_flipped_horizontal(), vp:get_flipped_vertical())
-      elseif stack.name == "red-wire" or stack.name == "green-wire" or stack.name == "copper-cable" then
+      elseif stack.name == "red-wire" or stack.name == "green-wire" or stack.name == "copper-wire" then
          -- Wire dragging - red/green circuit wires or copper electrical wire
          CircuitNetworks.drag_wire_and_read(pindex)
       else

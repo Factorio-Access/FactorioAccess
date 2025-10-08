@@ -44,4 +44,17 @@ function mod.call_on_connectors(ent, network, callback)
    end
 end
 
+---Check if an entity has any circuit network connections (red or green wires)
+---@param ent LuaEntity
+---@return boolean
+function mod.has_circuit_connections(ent)
+   local connectors = ent.get_wire_connectors(false)
+   for _, connector in pairs(connectors) do
+      if connector.wire_type == defines.wire_type.red or connector.wire_type == defines.wire_type.green then
+         if #connector.connections > 0 then return true end
+      end
+   end
+   return false
+end
+
 return mod
