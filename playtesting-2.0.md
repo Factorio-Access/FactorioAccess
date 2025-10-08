@@ -6,7 +6,7 @@ This is a living document. Last updated 2025-10-05.
 
 First, note the following important warnings:
 
-- We do not support combat yet and that is not coming soon.
+- We do not support combat yet and that is not coming soon. Play in no enemies.
 - We may break your save. I mean on purpose, not by accident.  We are trying not to but getting rid of technical debt
   takes priority while we still have the opportunity to do so easily. Most breakage simply results in losing settings.
 - We do not support Space Age and that is not coming soon.
@@ -54,7 +54,7 @@ To launch the game cd into the launcher, activate your Python virtualenv (again 
 main.py`.
 
 Finally, you need to make sure space age, quality, and elevated rails are disabled before making your save. To do this,
-go into the launcher's mods menu.
+go into the launcher's mods menu.  You must also play in no enemies.
 
 ## Reporting
 
