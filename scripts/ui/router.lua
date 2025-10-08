@@ -215,6 +215,26 @@ function RouterController:clear_search_pattern()
    router_state[self.pindex].search_pattern = nil
 end
 
+---Suggest that search strings should be re-hinted (e.g., after tab switch)
+---Only re-hints if there's an active search pattern
+function RouterController:suggest_search_rehint()
+   local pattern = self:get_search_pattern()
+   if not pattern or pattern == "" then return end
+
+   local stack = router_state[self.pindex].ui_stack
+   if #stack == 0 then return end
+
+   local top_entry = stack[#stack]
+   local ui_name = top_entry.name
+   local ui = registered_uis[ui_name]
+   if not ui or not ui.search_hint then return end
+
+   -- Re-populate the cache with the current UI's searchable strings
+   ui:search_hint(self.pindex, function(localised_string)
+      LocalisedStringCache.hint_submit(self.pindex, localised_string)
+   end, self)
+end
+
 ---Create a controller for handling a UI event
 ---@param router fa.ui.Router
 ---@return fa.ui.RouterController

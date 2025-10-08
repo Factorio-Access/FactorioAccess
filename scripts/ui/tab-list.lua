@@ -377,6 +377,9 @@ function TabList:_set_active_tab(pindex, active_tab, msg_builder, play_sound, co
    self:_do_callback(pindex, active_tab, "on_tab_focused", msg_builder, nil, controller)
 
    tl.active_tab = active_tab
+
+   -- Re-hint search strings if there's an active search pattern
+   controller:suggest_search_rehint()
 end
 
 ---@param pindex number
