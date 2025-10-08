@@ -69,7 +69,7 @@ local function render_circuit_network(ctx)
    -- Build form fields from descriptor
    for _, field in ipairs(descriptor.fields) do
       local field_name = field.name
-      local field_label = { field.label }
+      local field_label = field.label
 
       if field.type == ControlBehaviorDescriptors.FIELD_TYPE.BOOLEAN then
          -- Boolean field (checkbox)
@@ -127,7 +127,7 @@ local function render_circuit_network(ctx)
          end)
       elseif field.type == ControlBehaviorDescriptors.FIELD_TYPE.CHOICE then
          -- Choice field
-         builder:add_choice_field(field_name, function()
+         builder:add_choice_field(field_name, field_label, function()
             local cb = entity.get_control_behavior()
             if not cb then return field.choices[1].value end
             return cb[field_name] or field.choices[1].value

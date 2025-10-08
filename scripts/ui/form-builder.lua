@@ -109,11 +109,12 @@ end
 
 ---Add a choice field control
 ---@param name string Unique identifier for this control
+---@param label LocalisedString | fun(fa.ui.graph.Ctx): LocalisedString
 ---@param get_value fun(): any Function that returns the current value
 ---@param set_value fun(any) Function that sets the new value
 ---@param choices {label: LocalisedString, value: any}[] Array of choices
 ---@return fa.ui.form.FormBuilder
-function FormBuilder:add_choice_field(name, get_value, set_value, choices)
+function FormBuilder:add_choice_field(name, label, get_value, set_value, choices)
    assert(#choices > 0, "Choice field must have at least one choice")
 
    local function find_current_index()
@@ -131,7 +132,8 @@ function FormBuilder:add_choice_field(name, get_value, set_value, choices)
 
    -- Create label builder function that uses the getter
    local function build_label(message, ctx)
-      message:fragment(name)
+      local base_label = UiUtils.to_label_function(label)(ctx)
+      message:fragment(base_label)
       message:fragment(": ")
       message:fragment(get_current_label())
    end

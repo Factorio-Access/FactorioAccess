@@ -51,6 +51,7 @@ local function build_test_form(ctx)
    -- Add a choice field with several options
    builder:add_choice_field(
       "test_choice",
+      { "fa.form-test-choice-label" },
       function()
          return ctx.state.form_values.test_choice
       end, -- getter
@@ -103,6 +104,7 @@ local function build_test_form(ctx)
    -- Add a choice field with different types of values
    builder:add_choice_field(
       "test_numbers",
+      { "fa.form-test-numbers-label" },
       function()
          return ctx.state.form_values.test_numbers
       end, -- getter
