@@ -4208,6 +4208,35 @@ EventManager.on_event("fa-cas-d", function(event)
    router:open_ui(UiRouter.UI_NAMES.DEBUG)
 end)
 
+-- Dangerous delete: Delete blueprint/decon/upgrade planner from hand
+EventManager.on_event("fa-c-backspace", function(event)
+   local pindex = event.player_index
+   local player = game.get_player(pindex)
+   if not player then return end
+
+   local cursor_stack = player.cursor_stack
+   if not cursor_stack or not cursor_stack.valid_for_read then
+      Speech.speak(pindex, { "fa.dangerous-delete-nothing-to-delete" })
+      return
+   end
+
+   -- Check if it's a planner item using API flags
+   if cursor_stack.is_blueprint or cursor_stack.is_deconstruction_item or cursor_stack.is_upgrade_item then
+      local item_description = Localising.localise_item({
+         name = cursor_stack.name,
+         count = cursor_stack.count,
+         quality = cursor_stack.quality and cursor_stack.quality.name or nil,
+      })
+
+      -- Clear the cursor
+      cursor_stack.clear()
+
+      Speech.speak(pindex, { "fa.dangerous-delete-deleted", item_description })
+   else
+      Speech.speak(pindex, { "fa.dangerous-delete-not-planner" })
+   end
+end, EventManager.EVENT_KIND.WORLD)
+
 EventManager.on_event("fa-ca-l", function(event)
    local pindex = event.player_index
    local player = game.get_player(pindex)

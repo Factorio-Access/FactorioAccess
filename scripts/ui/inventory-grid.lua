@@ -320,6 +320,32 @@ local function render_inventory_grid(ctx)
                stats_ctx.message:fragment(stats_message)
             end
          end,
+         on_dangerous_delete = function(delete_ctx, x, y)
+            -- Delete blueprint/decon/upgrade planners from slot
+            local slot_index = grid_pos_to_slot(x, y)
+            local stack = inv[slot_index]
+
+            if not stack or not stack.valid_for_read then
+               delete_ctx.message:fragment({ "fa.dangerous-delete-nothing-to-delete" })
+               return
+            end
+
+            -- Check if it's a planner item using API flags
+            if stack.is_blueprint or stack.is_deconstruction_item or stack.is_upgrade_item then
+               local item_description = Localising.localise_item({
+                  name = stack.name,
+                  count = stack.count,
+                  quality = stack.quality and stack.quality.name or nil,
+               })
+
+               -- Clear the stack
+               stack.clear()
+
+               delete_ctx.message:fragment({ "fa.dangerous-delete-deleted", item_description })
+            else
+               delete_ctx.message:fragment({ "fa.dangerous-delete-not-planner" })
+            end
+         end,
       })
    end
 

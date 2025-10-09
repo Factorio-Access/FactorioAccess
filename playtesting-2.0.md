@@ -150,7 +150,8 @@ The biggest part of the 2.0 mod is an overhaul to the GUI system:
 - Search is now universal in all menus, respects localisation, and searches all label text.
 - GUIs can be nested. When this happens, `E` closes all GUIs `alt+E` goes back one level.
 - Many things you would expect to support "resetting" support being reset with backspace. Expect more things to use that
-  as reset and/or delete in future (e.g. fluid flushing, deleting blueprint from book).
+  as reset and/or delete in future (e.g. fluid flushing).
+- Use ctrl+backspace for "dangerous" deletes such as fast travel points and planners.
 - Menus now support horizontal rows "row of 3 items", which is used for a variety of purposes to avoid for example
   having 3 menu items for every circuit condition. Move through a row with `a` and `d`.
 

@@ -109,6 +109,7 @@ local mod = {}
 ---@field on_child_result fa.ui.graph.ChildResultCallback?
 ---@field on_accelerator fun(ctx: fa.ui.graph.Ctx, accelerator_name: string)? Handler for accelerator events
 ---@field on_clear fa.ui.graph.SimpleCallback? Handler for clear (backspace) event
+---@field on_dangerous_delete fa.ui.graph.SimpleCallback? Handler for dangerous delete (ctrl+backspace) event
 ---@field exclude_from_search boolean? If true, this node won't be included in search results. Default false.
 
 ---@class fa.ui.graph.TransitionVtable
@@ -494,6 +495,14 @@ function Graph:on_clear(ctx)
    self:_with_render(ctx, function()
       local n = self.render.nodes[ctx.state.cur_key]
       self:_maybe_call(n, ctx, "on_clear", NO_MODIFIERS)
+   end)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+function Graph:on_dangerous_delete(ctx)
+   self:_with_render(ctx, function()
+      local n = self.render.nodes[ctx.state.cur_key]
+      self:_maybe_call(n, ctx, "on_dangerous_delete", NO_MODIFIERS)
    end)
 end
 

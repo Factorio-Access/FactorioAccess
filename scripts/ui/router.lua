@@ -85,6 +85,7 @@ end
 ---@field on_child_result? fun(self, pindex: number, result: any, context: any, controller: fa.ui.RouterController)
 ---@field on_accelerator? fun(self, pindex: number, accelerator_name: fa.ui.Accelerator, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_clear? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_dangerous_delete? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_announce_title? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 
 ---@enum fa.ui.UiName
@@ -555,6 +556,9 @@ end)
 
 -- Backspace key for clearing
 register_ui_event("fa-backspace", create_ui_handler("on_clear"))
+
+-- Ctrl+Backspace key for dangerous deletion (blueprints/planners)
+register_ui_event("fa-c-backspace", create_ui_handler("on_dangerous_delete"))
 
 -- Shift+E key announces the current UI
 register_ui_event("fa-s-e", create_ui_handler("on_announce_title"))

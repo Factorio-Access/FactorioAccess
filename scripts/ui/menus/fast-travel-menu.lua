@@ -47,6 +47,16 @@ local function render(ctx)
                Graphics.draw_cursor_highlight(ctx.pindex, nil, "train-visualization")
                ctx.message:fragment({ "fa.travel-cursor-moved-to", point.label })
             end,
+            on_dangerous_delete = function(ctx)
+               -- Delete travel point with Ctrl+Backspace
+               local deleted_name = point.label
+               if controller:delete_point(point_id) then
+                  ctx.message:fragment({ "fa.travel-deleted-point", deleted_name })
+                  -- Menu will re-render automatically
+               else
+                  ctx.message:fragment({ "fa.travel-failed-delete" })
+               end
+            end,
          })
 
          -- Teleport action

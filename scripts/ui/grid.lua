@@ -24,6 +24,7 @@ local mod = {}
 ---@field on_read_coords fa.ui.grid.CoordCallback?
 ---@field on_read_info fa.ui.grid.CoordCallback?
 ---@field on_production_stats_announcement fa.ui.grid.CoordCallback?
+---@field on_dangerous_delete fa.ui.grid.CoordCallback?
 ---@field on_child_result fa.ui.graph.ChildResultCallback?
 
 ---@class fa.ui.grid.GridCell
@@ -145,6 +146,7 @@ function GridBuilder:build()
          local old_read_coords = node.vtable.on_read_coords
          local old_read_info = node.vtable.on_read_info
          local old_production_stats = node.vtable.on_production_stats_announcement
+         local old_dangerous_delete = node.vtable.on_dangerous_delete
          -- The vtable could be from a constant, etc. Don't break it.
          node.vtable = TH.shallow_copy(node.vtable)
 
@@ -176,6 +178,14 @@ function GridBuilder:build()
             node.vtable.on_production_stats_announcement = function(ctx)
                -- Pass x,y as parameters to the callback
                old_production_stats(ctx, x, y)
+            end
+         end
+
+         -- Wrap on_dangerous_delete if it exists to provide x,y coordinates
+         if old_dangerous_delete then
+            node.vtable.on_dangerous_delete = function(ctx)
+               -- Pass x,y as parameters to the callback
+               old_dangerous_delete(ctx, x, y)
             end
          end
       end

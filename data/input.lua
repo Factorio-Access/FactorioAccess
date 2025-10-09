@@ -1229,4 +1229,12 @@ data:extend({
       key_sequence = "BACKSPACE",
       consuming = "none",
    },
+
+   -- Dangerous delete (blueprints/planners)
+   {
+      type = "custom-input",
+      name = "fa-c-backspace",
+      key_sequence = "CONTROL + BACKSPACE",
+      consuming = "none",
+   },
 })
