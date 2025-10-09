@@ -3225,9 +3225,24 @@ EventManager.on_event(
       local p = game.get_player(pindex)
       local stack = p.cursor_stack
 
-      -- Only handle offshore pumps with alt+[
+      -- Handle offshore pumps with alt+[
       if stack and stack.valid_for_read and stack.name == "offshore-pump" then
          BuildingTools.build_offshore_pump_in_hand(pindex)
+         return
+      end
+
+      -- Handle splitter filter set/clear
+      local selected = p.selected
+      if selected and selected.valid and selected.type == "splitter" then
+         local result
+         if stack and stack.valid_for_read then
+            -- Set filter to item in hand
+            result = TransportBelts.set_splitter_priority(selected, nil, nil, stack, false)
+         else
+            -- Clear filter with empty hand
+            result = TransportBelts.set_splitter_priority(selected, nil, nil, nil, true)
+         end
+         Speech.speak(pindex, result)
       end
    end
 )
