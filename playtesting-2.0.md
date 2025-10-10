@@ -154,6 +154,7 @@ The biggest part of the 2.0 mod is an overhaul to the GUI system:
 - To get to guns and ammo, press tab from your player inventory.
 - Menus no longer wrap. Instead they stop at edges.
 - Pressing ctrl+wasd moves to the edge of a menu or grid, exactly equivalent to pressing the key a bunch of times.
+  - To remember this, `ctrl+w` is top in Factorio, `ctrl+home` is top outside Factorio.
 - Search is now universal in all menus, respects localisation, and searches all label text.
 - GUIs can be nested. When this happens, `E` closes all GUIs `alt+E` goes back one level.
 - Many things you would expect to support "resetting" support being reset with backspace. Expect more things to use that
@@ -161,6 +162,7 @@ The biggest part of the 2.0 mod is an overhaul to the GUI system:
 - Use ctrl+backspace for "dangerous" deletes such as fast travel points and planners.
 - Menus now support horizontal rows "row of 3 items", which is used for a variety of purposes to avoid for example
   having 3 menu items for every circuit condition. Move through a row with `a` and `d`.
+- Inventory bars have moved to `-` and `+` with modifiers: ctrl for all or none, shift for moving by 5.
 
 This necessitated a number of compromises.  Most notably `e` no longer opens the vanilla character GUI. That has  been
 moved to `ctrl+alt+shift+e`.  You shouldn't need it unless playing with someone sighted.  We also no longer make any

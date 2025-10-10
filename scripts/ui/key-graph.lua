@@ -110,6 +110,12 @@ local mod = {}
 ---@field on_accelerator fun(ctx: fa.ui.graph.Ctx, accelerator_name: string)? Handler for accelerator events
 ---@field on_clear fa.ui.graph.SimpleCallback? Handler for clear (backspace) event
 ---@field on_dangerous_delete fa.ui.graph.SimpleCallback? Handler for dangerous delete (ctrl+backspace) event
+---@field on_bar_min fa.ui.graph.SimpleCallback? Handler for bar min (ctrl+-)
+---@field on_bar_max fa.ui.graph.SimpleCallback? Handler for bar max (ctrl++)
+---@field on_bar_up_small fa.ui.graph.SimpleCallback? Handler for bar up small (+)
+---@field on_bar_down_small fa.ui.graph.SimpleCallback? Handler for bar down small (-)
+---@field on_bar_up_large fa.ui.graph.SimpleCallback? Handler for bar up large (shift++)
+---@field on_bar_down_large fa.ui.graph.SimpleCallback? Handler for bar down large (shift+-)
 ---@field exclude_from_search boolean? If true, this node won't be included in search results. Default false.
 
 ---@class fa.ui.graph.TransitionVtable
@@ -503,6 +509,54 @@ function Graph:on_dangerous_delete(ctx)
    self:_with_render(ctx, function()
       local n = self.render.nodes[ctx.state.cur_key]
       self:_maybe_call(n, ctx, "on_dangerous_delete", NO_MODIFIERS)
+   end)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+function Graph:on_bar_min(ctx)
+   self:_with_render(ctx, function()
+      local n = self.render.nodes[ctx.state.cur_key]
+      self:_maybe_call(n, ctx, "on_bar_min", NO_MODIFIERS)
+   end)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+function Graph:on_bar_max(ctx)
+   self:_with_render(ctx, function()
+      local n = self.render.nodes[ctx.state.cur_key]
+      self:_maybe_call(n, ctx, "on_bar_max", NO_MODIFIERS)
+   end)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+function Graph:on_bar_up_small(ctx)
+   self:_with_render(ctx, function()
+      local n = self.render.nodes[ctx.state.cur_key]
+      self:_maybe_call(n, ctx, "on_bar_up_small", NO_MODIFIERS)
+   end)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+function Graph:on_bar_down_small(ctx)
+   self:_with_render(ctx, function()
+      local n = self.render.nodes[ctx.state.cur_key]
+      self:_maybe_call(n, ctx, "on_bar_down_small", NO_MODIFIERS)
+   end)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+function Graph:on_bar_up_large(ctx)
+   self:_with_render(ctx, function()
+      local n = self.render.nodes[ctx.state.cur_key]
+      self:_maybe_call(n, ctx, "on_bar_up_large", NO_MODIFIERS)
+   end)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+function Graph:on_bar_down_large(ctx)
+   self:_with_render(ctx, function()
+      local n = self.render.nodes[ctx.state.cur_key]
+      self:_maybe_call(n, ctx, "on_bar_down_large", NO_MODIFIERS)
    end)
 end
 

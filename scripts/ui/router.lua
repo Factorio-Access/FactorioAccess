@@ -87,6 +87,12 @@ end
 ---@field on_clear? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_dangerous_delete? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_announce_title? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_bar_min? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_bar_max? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_bar_up_small? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_bar_down_small? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_bar_up_large? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_bar_down_large? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 
 ---@enum fa.ui.UiName
 mod.UI_NAMES = {
@@ -833,5 +839,13 @@ register_ui_event("fa-c-f", function(event, pindex)
    Speech.speak(pindex, { "fa.search-not-supported" })
    return EventManager.FINISHED
 end)
+
+-- Bar controls (inventory slot locking)
+register_ui_event("fa-minus", create_ui_handler("on_bar_down_small"))
+register_ui_event("fa-equals", create_ui_handler("on_bar_up_small"))
+register_ui_event("fa-c-minus", create_ui_handler("on_bar_min"))
+register_ui_event("fa-c-equals", create_ui_handler("on_bar_max"))
+register_ui_event("fa-s-minus", create_ui_handler("on_bar_down_large"))
+register_ui_event("fa-s-equals", create_ui_handler("on_bar_up_large"))
 
 return mod

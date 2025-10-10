@@ -152,6 +152,65 @@ local function inventory_dimension_labeler(ctx, x, y)
    ctx.message:fragment({ "fa.ui-inventory-slot-position", slot_index, row })
 end
 
+---Handle bar movement for an inventory
+---@param ctx fa.ui.InventoryGrid.Context
+---@param delta integer Change in bar position (positive = unlock more, negative = lock more)
+local function move_bar(ctx, delta)
+   local entity = ctx.parameters.entity
+   local inventory_index = ctx.parameters.inventory_index
+
+   if not entity or not entity.valid then
+      ctx.message:fragment({ "fa.equipment-error-invalid-entity" })
+      return
+   end
+
+   local inv = entity.get_inventory(inventory_index)
+   if not inv or not inv.valid then return end
+
+   if not inv.supports_bar() then
+      ctx.message:fragment({ "fa.ui-inventory-bar-not-supported" })
+      return
+   end
+
+   local total_slots = #inv
+   local current_bar = inv.get_bar()
+   local new_bar = current_bar + delta
+
+   -- Clamp to valid range: 1 (all locked) to total_slots + 1 (all unlocked)
+   if new_bar < 1 then
+      new_bar = 1
+   elseif new_bar > total_slots + 1 then
+      new_bar = total_slots + 1
+   end
+
+   -- Check if bar actually moved
+   if new_bar == current_bar then
+      sounds.play_ui_edge(ctx.pindex)
+      -- Re-announce current state
+      local unlocked_count = new_bar - 1
+      if new_bar == 1 then
+         ctx.message:fragment({ "fa.ui-inventory-bar-all-locked" })
+      elseif new_bar > total_slots then
+         ctx.message:fragment({ "fa.ui-inventory-bar-all-unlocked" })
+      else
+         ctx.message:fragment({ "fa.ui-inventory-bar-moved", unlocked_count })
+      end
+      return
+   end
+
+   inv.set_bar(new_bar)
+
+   -- Announce the new state
+   local unlocked_count = new_bar - 1
+   if new_bar == 1 then
+      ctx.message:fragment({ "fa.ui-inventory-bar-all-locked" })
+   elseif new_bar > total_slots then
+      ctx.message:fragment({ "fa.ui-inventory-bar-all-unlocked" })
+   else
+      ctx.message:fragment({ "fa.ui-inventory-bar-moved", unlocked_count })
+   end
+end
+
 ---Render the inventory grid
 ---@param ctx fa.ui.InventoryGrid.Context
 ---@return fa.ui.graph.Render?
@@ -187,6 +246,33 @@ local function render_inventory_grid(ctx)
             if inv.supports_bar() and slot_index >= inv.get_bar() then
                label_ctx.message:fragment({ "fa.ui-inventory-slot-locked" })
             end
+         end,
+         on_bar_min = function(bar_ctx)
+            if not inv.supports_bar() then
+               move_bar(bar_ctx, 0) -- Will show "not supported" message
+               return
+            end
+            move_bar(bar_ctx, 1 - inv.get_bar())
+         end,
+         on_bar_max = function(bar_ctx)
+            if not inv.supports_bar() then
+               move_bar(bar_ctx, 0) -- Will show "not supported" message
+               return
+            end
+            local total_slots = #inv
+            move_bar(bar_ctx, (total_slots + 1) - inv.get_bar())
+         end,
+         on_bar_up_small = function(bar_ctx)
+            move_bar(bar_ctx, 1)
+         end,
+         on_bar_down_small = function(bar_ctx)
+            move_bar(bar_ctx, -1)
+         end,
+         on_bar_up_large = function(bar_ctx)
+            move_bar(bar_ctx, 5)
+         end,
+         on_bar_down_large = function(bar_ctx)
+            move_bar(bar_ctx, -5)
          end,
          on_click = function(click_ctx)
             local player = game.get_player(click_ctx.pindex)
@@ -382,12 +468,35 @@ local function handle_accelerator(ctx, accelerator_name)
 end
 
 ---Create an inventory grid graph declaration
----@param params { name: string, title?: LocalisedString }
+---@param params { name: string, title?: LocalisedString, entity?: LuaEntity, inventory_index?: defines.inventory }
 ---@return fa.ui.TabDescriptor
 function mod.create_inventory_grid(params)
+   local base_title = params.title or { "fa.ui-inventory-title" }
+
+   -- Build title with bar info if available
+   local title = base_title
+   if params.entity and params.entity.valid and params.inventory_index then
+      local inv = params.entity.get_inventory(params.inventory_index)
+      if inv and inv.valid and inv.supports_bar() then
+         local bar = inv.get_bar()
+         local total_slots = #inv
+         local unlocked_count = bar - 1
+
+         -- Add bar status to title
+         if bar == 1 then
+            -- All locked
+            title = { "", base_title, ", ", { "fa.ui-inventory-bar-all-locked" } }
+         elseif bar <= total_slots then
+            -- Some unlocked
+            title = { "", base_title, ", ", { "fa.ui-inventory-bar-slots-unlocked", unlocked_count } }
+         end
+         -- If bar > total_slots, all unlocked - don't show anything
+      end
+   end
+
    return UiKeyGraph.declare_graph({
       name = params.name,
-      title = params.title or { "fa.ui-inventory-title" },
+      title = title,
       render_callback = render_inventory_grid,
       on_accelerator = handle_accelerator,
    })

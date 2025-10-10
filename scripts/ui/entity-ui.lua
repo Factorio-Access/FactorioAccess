@@ -94,6 +94,8 @@ local function build_inventory_tabs(entity, sorted_invs, guns_ammo_invs)
       local tab = InventoryGrid.create_inventory_grid({
          name = "inv_" .. inv_data.name,
          title = get_inventory_title(inv_data.name),
+         entity = entity,
+         inventory_index = inv_data.index,
       })
 
       table.insert(tabs, tab)

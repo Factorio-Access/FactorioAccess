@@ -1244,4 +1244,47 @@ data:extend({
       key_sequence = "CONTROL + BACKSPACE",
       consuming = "none",
    },
+
+   -- Inventory bar controls
+   {
+      type = "custom-input",
+      name = "fa-minus",
+      key_sequence = "MINUS",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "fa-equals",
+      key_sequence = "EQUALS",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "fa-c-minus",
+      key_sequence = "CONTROL + MINUS",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "fa-c-equals",
+      key_sequence = "CONTROL + EQUALS",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "fa-s-minus",
+      key_sequence = "SHIFT + MINUS",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "fa-s-equals",
+      key_sequence = "SHIFT + EQUALS",
+      consuming = "none",
+   },
 })
