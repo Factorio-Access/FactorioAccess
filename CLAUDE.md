@@ -123,6 +123,24 @@ mb:fragment("foo":fragment(" "):fragment("bar")
 -- crashes: spaces were already added!
 ```
 
+
+Style rules:
+
+- Don't use `:` `()`.
+- Don't be verbose
+- Avoid emdash
+- Avoid unicode
+- Prefer MessageBuilder list_item() for managing placement of commas
+- Always familiarize with the contents of scripts/localising.lua and use those functions
+- Localisation keys should always be in section `fa` and must never contain `.`.  Example: `fa.foo-bar` is good, `fa.foo.bar` is bad.
+
+We are writing for a screen reader.  This means two core principles:
+
+- The sooner a message conveiying information varies, the faster the user can keep going.
+  - Ex: "cursor anchored" "cursor unanchored" makes the user listen to "cursor".
+  - ex: "anchored cursor" "unanchored cursor" lets the user move on as soon as the first syllable.
+- Less punctuation is better, unless it's comma or period.  Many setups read colon left paren etc.
+
 ## Key Systems
 
 ### Scanner System
