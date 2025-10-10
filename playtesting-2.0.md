@@ -24,6 +24,11 @@ A brief set of directions follows. If these aren't enough to get you running, it
 wait until we can make an official release (if you understand what all of this is and spot a bug, we do want to know
 about it).
 
+Two important notes:
+
+- The config directory will not exist until the game runs once, so make it if you don't have it.
+- If you do not own space age, the quality, elevated rails, and space age mods are not present at all and thus don't need to be disabled.
+
 Let `d` be your factorio directory e.g. the one with bin, data, factorio-current.log, etc.
 
 - get Python 3.11.  [uv](https://docs.astral.sh/uv/concepts/python-versions/#upgrading-python-versions) is your friend
