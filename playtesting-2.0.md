@@ -87,6 +87,8 @@ Telestep is gone. SO is honking.
 
 Fast travel has moved to alt+v so that `v` and `h` can match vanilla for item/blueprint flipping.
 
+Entering cursor coordinates has moved to `CTRL + ALT + t` to not conflict with artillery remotes and because it is rarely used.
+
 The tutorial system is un-wired and pending replacement.
 
 Instead of cursor mode, wasd now always moves the cursor.  Arrow keys always walk.  `i` now toggles whether or not the

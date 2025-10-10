@@ -82,6 +82,7 @@ require("scripts.ui.menus.offshore-pump-placement")
 require("scripts.ui.generic-inventory")
 require("scripts.ui.simple-textbox")
 require("scripts.ui.internal.search-setter")
+require("scripts.ui.internal.cursor-coordinate-input")
 local GameGui = require("scripts.ui.game-gui")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
@@ -2437,13 +2438,10 @@ EventManager.on_event(
 )
 
 EventManager.on_event(
-   "fa-a-t",
+   "fa-ca-t",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      Speech.speak(
-         pindex,
-         "Cursor coordinate jumping is temporarily unavailable while the text input system is being redesigned."
-      )
+      UiRouter.get_router(pindex):open_ui(UiRouter.UI_NAMES.CURSOR_COORDINATE_INPUT)
    end
 )
 

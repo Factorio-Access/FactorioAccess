@@ -248,6 +248,13 @@ data:extend({
 
    {
       type = "custom-input",
+      name = "fa-ca-t",
+      key_sequence = "CONTROL + ALT + T",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
       name = "fa-cs-p",
       key_sequence = "CONTROL + SHIFT + P",
       consuming = "none",
