@@ -190,9 +190,20 @@ local function render(ctx)
 
    builder:add_clickable("import", { "fa.ui-blueprints-menu-import" }, {
       on_click = function(ctx)
-         ctx.message:fragment(
-            "Blueprint import is temporarily unavailable while the text input system is being redesigned."
-         )
+         ctx.controller:open_textbox("", "import")
+         ctx.message:fragment({ "fa.ui-blueprints-import-prompt" })
+      end,
+      on_child_result = function(ctx, result)
+         if result and result ~= "" then
+            local import_result = bp.import_stack(result)
+            if import_result == 0 then
+               ctx.message:fragment({ "fa.ui-blueprints-import-success" })
+            else
+               ctx.message:fragment({ "fa.ui-blueprints-import-failed" })
+            end
+         else
+            ctx.message:fragment({ "fa.ui-blueprints-import-cancelled" })
+         end
       end,
    })
 
