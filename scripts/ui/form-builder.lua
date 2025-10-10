@@ -11,6 +11,15 @@ local UiRouter = require("scripts.ui.router")
 
 local mod = {}
 
+---@class (exact) fa.ui.form.BarConfig
+---@field label LocalisedString | fun(fa.ui.graph.Ctx): LocalisedString
+---@field get_value fun(): number
+---@field set_value fun(number)
+---@field min_value number
+---@field max_value number
+---@field small_step number?
+---@field large_step number?
+
 ---@class fa.ui.form.FormBuilder
 ---@field entries fa.ui.menu.Entry[]
 ---@field row_keys table<string, string> Maps entry key to row key (for grouping)
@@ -49,7 +58,6 @@ function FormBuilder:add_checkbox(name, label, get_value, set_value)
       local base_label = UiUtils.to_label_function(label)(ctx)
       local state_text = get_value() and { "fa.checked" } or { "fa.unchecked" }
       message:fragment(base_label)
-      message:fragment(": ")
       message:fragment(state_text)
    end
 
@@ -83,7 +91,6 @@ function FormBuilder:add_textfield(name, label, get_value, set_value)
       local val = get_value()
       local value_text = val and val ~= "" and val or { "fa.empty" }
       message:fragment(base_label)
-      message:fragment(": ")
       message:fragment(value_text)
    end
 
@@ -134,7 +141,6 @@ function FormBuilder:add_choice_field(name, label, get_value, set_value, choices
    local function build_label(message, ctx)
       local base_label = UiUtils.to_label_function(label)(ctx)
       message:fragment(base_label)
-      message:fragment(": ")
       message:fragment(get_current_label())
    end
 
@@ -180,6 +186,84 @@ function FormBuilder:add_action(name, label, callback)
    return self
 end
 
+---Add a bar control (numeric value adjustable with +/- keys)
+---@param name string Unique identifier for this control
+---@param config fa.ui.form.BarConfig
+---@return fa.ui.form.FormBuilder
+function FormBuilder:add_bar(name, config)
+   local small_step = config.small_step or 1
+   local large_step = config.large_step or 5
+
+   -- Helper to announce value change
+   local function announce_value(ctx, new_value)
+      ctx.controller.message:fragment(tostring(new_value))
+   end
+
+   -- Helper to adjust value
+   local function adjust_value(ctx, delta)
+      local current = config.get_value()
+      local new_value = math.max(config.min_value, math.min(config.max_value, current + delta))
+      if new_value ~= current then
+         config.set_value(new_value)
+         UiSounds.play_menu_move(ctx.pindex)
+         announce_value(ctx, new_value)
+      else
+         UiSounds.play_ui_edge(ctx.pindex)
+         announce_value(ctx, new_value)
+      end
+   end
+
+   -- Create label builder function
+   local function build_label(message, ctx)
+      local base_label = UiUtils.to_label_function(config.label)(ctx)
+      local value = config.get_value()
+      message:fragment(base_label)
+      message:fragment(tostring(value))
+   end
+
+   self:add_item(name, {
+      label = function(ctx)
+         build_label(ctx.message, ctx)
+      end,
+      on_bar_up_small = function(ctx)
+         adjust_value(ctx, small_step)
+      end,
+      on_bar_down_small = function(ctx)
+         adjust_value(ctx, -small_step)
+      end,
+      on_bar_up_large = function(ctx)
+         adjust_value(ctx, large_step)
+      end,
+      on_bar_down_large = function(ctx)
+         adjust_value(ctx, -large_step)
+      end,
+      on_bar_max = function(ctx)
+         local current = config.get_value()
+         if current ~= config.max_value then
+            config.set_value(config.max_value)
+            UiSounds.play_menu_move(ctx.pindex)
+            announce_value(ctx, config.max_value)
+         else
+            UiSounds.play_ui_edge(ctx.pindex)
+            announce_value(ctx, config.max_value)
+         end
+      end,
+      on_bar_min = function(ctx)
+         local current = config.get_value()
+         if current ~= config.min_value then
+            config.set_value(config.min_value)
+            UiSounds.play_menu_move(ctx.pindex)
+            announce_value(ctx, config.min_value)
+         else
+            UiSounds.play_ui_edge(ctx.pindex)
+            announce_value(ctx, config.min_value)
+         end
+      end,
+   })
+
+   return self
+end
+
 ---Add a signal selector field
 ---@param name string Unique identifier for this control
 ---@param label LocalisedString | fun(fa.ui.graph.Ctx): LocalisedString
@@ -200,7 +284,6 @@ function FormBuilder:add_signal(name, label, get_value, set_value)
          value_text = { "fa.empty" }
       end
       message:fragment(base_label)
-      message:fragment(": ")
       message:fragment(value_text)
    end
 
@@ -287,7 +370,7 @@ function FormBuilder:add_condition(name, get_value, set_value)
          if signal and signal.name then
             local signal_type = signal.type or "item"
             ctx.message:fragment({ "fa.condition-first-signal" })
-            ctx.message:fragment(": ")
+
             ctx.message:fragment(signal_type .. " " .. signal.name)
          else
             ctx.message:fragment({ "fa.condition-first-signal-empty" })
@@ -321,7 +404,7 @@ function FormBuilder:add_condition(name, get_value, set_value)
       label = function(ctx)
          local condition = get_value() or {}
          ctx.message:fragment({ "fa.condition-operator" })
-         ctx.message:fragment(": ")
+
          ctx.message:fragment(condition.comparator or "<")
       end,
       on_click = function(ctx)
@@ -365,7 +448,6 @@ function FormBuilder:add_condition(name, get_value, set_value)
       label = function(ctx)
          local condition = get_value() or {}
          ctx.message:fragment({ "fa.condition-second" })
-         ctx.message:fragment(": ")
 
          if condition.second_signal and condition.second_signal.name then
             local signal_type = condition.second_signal.type or "item"
@@ -500,7 +582,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
          local condition = get_condition()
 
          ctx.message:fragment(base_label)
-         ctx.message:fragment(": ")
+
          ctx.message:fragment(state_text)
          ctx.message:fragment(describe_condition(condition))
          if not condition or not condition.first_signal or not condition.first_signal.name then
@@ -524,7 +606,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
          if signal and signal.name then
             local signal_type = signal.type or "item"
             ctx.message:fragment({ "fa.condition-first-signal" })
-            ctx.message:fragment(": ")
+
             ctx.message:fragment(signal_type .. " " .. signal.name)
          else
             ctx.message:fragment({ "fa.condition-first-signal-empty" })
@@ -559,7 +641,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
       label = function(ctx)
          local condition = get_condition() or {}
          ctx.message:fragment({ "fa.condition-operator" })
-         ctx.message:fragment(": ")
+
          ctx.message:fragment(condition.comparator or "<")
       end,
       on_click = function(ctx)
@@ -603,7 +685,6 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
       label = function(ctx)
          local condition = get_condition() or {}
          ctx.message:fragment({ "fa.condition-second" })
-         ctx.message:fragment(": ")
 
          if condition.second_signal and condition.second_signal.name then
             local signal_type = condition.second_signal.type or "item"

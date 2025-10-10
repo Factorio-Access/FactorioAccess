@@ -15,6 +15,7 @@ local inventory = require("scripts.ui.menus.inventory")
 local gun_menu = require("scripts.ui.menus.gun-menu")
 local assembling_machine_tab = require("scripts.ui.tabs.assembling-machine")
 local circuit_network_tab = require("scripts.ui.tabs.circuit-network")
+local inserter_config_tab = require("scripts.ui.tabs.inserter-config")
 
 local mod = {}
 
@@ -115,6 +116,11 @@ local function build_configuration_tabs(entity)
 
    -- Add assembling machine recipe selector
    if prototype.type == "assembling-machine" then table.insert(tabs, assembling_machine_tab.assembling_machine_tab) end
+
+   -- Add inserter configuration
+   if prototype.type == "inserter" and inserter_config_tab.is_available(entity) then
+      table.insert(tabs, inserter_config_tab.inserter_config_tab)
+   end
 
    -- Future: Add other device-specific tabs here
    -- if prototype.type == "mining-drill" then ...

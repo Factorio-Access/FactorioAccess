@@ -10,6 +10,17 @@ local UiUtils = require("scripts.ui.ui-utils")
 
 local mod = {}
 
+---@class (exact) fa.ui.menu.ClickHandlers
+---@field on_click? fa.ui.graph.SimpleCallback
+---@field on_child_result? fa.ui.graph.ChildResultCallback
+---@field on_dangerous_delete? fa.ui.graph.SimpleCallback
+---@field on_bar_min? fa.ui.graph.SimpleCallback
+---@field on_bar_max? fa.ui.graph.SimpleCallback
+---@field on_bar_up_small? fa.ui.graph.SimpleCallback
+---@field on_bar_down_small? fa.ui.graph.SimpleCallback
+---@field on_bar_up_large? fa.ui.graph.SimpleCallback
+---@field on_bar_down_large? fa.ui.graph.SimpleCallback
+
 ---@class fa.ui.menu.Entry
 ---@field vtable fa.ui.graph.NodeVtable
 ---@field key string
@@ -91,7 +102,7 @@ end
 
 ---@param key string
 ---@param label LocalisedString | fun(fa.ui.graph.Ctx): LocalisedString
----@param click_handlers { on_click?: fa.ui.graph.SimpleCallback, on_child_result?: fa.ui.graph.ChildResultCallback, on_dangerous_delete?: fa.ui.graph.SimpleCallback }
+---@param click_handlers fa.ui.menu.ClickHandlers
 function MenuBuilder:add_clickable(key, label, click_handlers)
    local vtable = {
       label = UiUtils.to_label_function(label),
@@ -101,6 +112,12 @@ function MenuBuilder:add_clickable(key, label, click_handlers)
    if click_handlers.on_click then vtable.on_click = click_handlers.on_click end
    if click_handlers.on_child_result then vtable.on_child_result = click_handlers.on_child_result end
    if click_handlers.on_dangerous_delete then vtable.on_dangerous_delete = click_handlers.on_dangerous_delete end
+   if click_handlers.on_bar_min then vtable.on_bar_min = click_handlers.on_bar_min end
+   if click_handlers.on_bar_max then vtable.on_bar_max = click_handlers.on_bar_max end
+   if click_handlers.on_bar_up_small then vtable.on_bar_up_small = click_handlers.on_bar_up_small end
+   if click_handlers.on_bar_down_small then vtable.on_bar_down_small = click_handlers.on_bar_down_small end
+   if click_handlers.on_bar_up_large then vtable.on_bar_up_large = click_handlers.on_bar_up_large end
+   if click_handlers.on_bar_down_large then vtable.on_bar_down_large = click_handlers.on_bar_down_large end
 
    self:add_item(key, vtable)
 end

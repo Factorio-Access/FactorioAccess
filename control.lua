@@ -3241,6 +3241,42 @@ EventManager.on_event(
             result = TransportBelts.set_splitter_priority(selected, nil, nil, nil, true)
          end
          Speech.speak(pindex, result)
+         return
+      end
+
+      -- Handle inserter filter set/clear
+      if selected and selected.valid and selected.type == "inserter" then
+         -- Check if this inserter supports filters
+         if selected.filter_slot_count == 0 then
+            Speech.speak(pindex, { "fa.inserter-filters-not-supported" })
+            return
+         end
+
+         if stack and stack.valid_for_read then
+            -- Set filter to item in hand
+            -- Clear all existing filters first
+            for i = 1, selected.filter_slot_count do
+               Filters.set_filter(selected, i, nil)
+            end
+
+            -- Set to whitelist mode
+            selected.inserter_filter_mode = "whitelist"
+
+            -- Set the first filter to the item in hand
+            Filters.set_filter(selected, 1, { name = stack.name })
+
+            Speech.speak(pindex, {
+               "fa.inserter-filter-set",
+               stack.prototype.localised_name,
+            })
+         else
+            -- Clear all filters with empty hand
+            for i = 1, selected.filter_slot_count do
+               Filters.set_filter(selected, i, nil)
+            end
+
+            Speech.speak(pindex, { "fa.inserter-filter-cleared" })
+         end
       end
    end
 )

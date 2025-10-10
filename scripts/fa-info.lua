@@ -1140,7 +1140,13 @@ local function ent_info_filters(ctx)
 
       for _, proto in pairs(filts) do
          ctx.message:list_item()
-         if first then ctx.message:fragment("Filters for") end
+         if first then
+            if ctx.ent.type == "inserter" and ctx.ent.inserter_filter_mode == "blacklist" then
+               ctx.message:fragment("Denies")
+            else
+               ctx.message:fragment("Filters for")
+            end
+         end
          first = false
          --We seem to be getting string names in 2.0; lookup the actual prototype to use
          if type(proto) == "string" then proto = prototypes.item[proto] end
