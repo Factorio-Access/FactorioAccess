@@ -683,6 +683,56 @@ function Node:belt_analyzer_algo()
    return ret
 end
 
+---Find a matching underground belt entrance that would connect to an exit at the given position.
+---Returns the entrance entity and Manhattan distance, or nil if no match found.
+---Uses a hypothetical check based on prototype properties instead of actual placement.
+---@param surface LuaSurface
+---@param prototype LuaEntityPrototype
+---@param position MapPosition
+---@param direction defines.direction
+---@return LuaEntity?, number?
+function mod.find_underground_entrance(surface, prototype, position, direction)
+   -- NOTE: this includes the exit belt. E.g. for underground-belt (max underground 4) we get 5.
+   local max_dist = prototype.max_underground_distance
+   if not max_dist then return nil, nil end
+
+   -- In the API, exits and entrances face the SAME direction when connected
+   -- Search in the opposite direction (behind where the exit would face) to find the entrance
+   local search_direction = (direction + defines.direction.south) % (2 * defines.direction.south)
+   local search_offset_x, search_offset_y = Geometry.uv_for_direction(search_direction)
+
+   -- The entrance could be anywhere from 1 to (max_dist + 1) tiles away Total span is: entrance (1 tile) + underground
+   -- (max_dist tiles) + exit (1 tile) = max_dist + 2. But the prototype already accounts for the exit tile. So the
+   -- entrance can be up to max_dist + 1 tiles away from the exit position. Then, Lua loops include the endpoint, so we
+   -- again drop the +1.
+   for distance = 1, max_dist do
+      local search_pos = FaUtils.center_of_tile({
+         x = position.x + search_offset_x * distance,
+         y = position.y + search_offset_y * distance,
+      })
+
+      -- Look for an underground belt entrance at this position
+      -- It should face the SAME direction as the exit would face
+      local candidates = surface.find_entities_filtered({
+         position = search_pos,
+         radius = 0.1,
+         type = "underground-belt",
+         name = prototype.name,
+         direction = direction, -- Same direction as exit
+      })
+
+      for _, candidate in ipairs(candidates) do
+         -- Check if it's an entrance (input type) without a connection
+         if candidate.belt_to_ground_type == "input" and not candidate.neighbours then
+            -- Belts are only one tile always
+            return candidate, distance
+         end
+      end
+   end
+
+   return nil, nil
+end
+
 ---Check if placing an underground belt at the given position would form an exit.
 ---This happens when there's a matching entrance nearby that the belt would connect to.
 ---@param surface LuaSurface
@@ -691,25 +741,8 @@ end
 ---@param direction defines.direction
 ---@return boolean
 function mod.would_form_underground_exit(surface, prototype, position, direction)
-   -- Create a test entrance to see if it would connect to an existing entrance
-   local entity = surface.create_entity({
-      name = prototype.name,
-      position = position,
-      direction = direction,
-      force = "player",
-      type = "output",
-      raise_built = false,
-   })
-
-   if not entity then return false end
-
-   -- If the entrance has a neighbour, placing here would want to be an exit
-   local would_connect = entity.neighbours ~= nil
-
-   -- Clean up the test entity
-   entity.destroy()
-
-   return would_connect
+   local entrance = mod.find_underground_entrance(surface, prototype, position, direction)
+   return entrance ~= nil
 end
 
 --Set the input priority or the output priority or filter for a splitter

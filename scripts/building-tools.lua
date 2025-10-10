@@ -574,55 +574,26 @@ function mod.build_preview_checks_info(stack, pindex)
       return " cannot place this here "
    end
 
-   --For underground belts, state the potential neighbor: any neighborless matching underground of the same name and same/opposite direction, and along the correct axis
+   --For underground belts, state the potential neighbor
    if ent_p.type == "underground-belt" then
-      local connected = false
-      local check_dist = 5
-      if stack.name == "fast-underground-belt" then
-         check_dist = 7
-      elseif stack.name == "express-underground-belt" then
-         check_dist = 9
+      local entrance, actual_dist = TransportBelts.find_underground_entrance(surf, ent_p, pos, build_dir)
+      if entrance then
+         rendering.draw_circle({
+            color = { 0, 1, 0 },
+            radius = 1.0,
+            width = 3,
+            target = entrance.position,
+            surface = entrance.surface,
+            time_to_live = 60,
+         })
+         table.insert(result, {
+            "fa.connection-connects-underground",
+            { "fa.direction", build_dir },
+            tostring(actual_dist - 1),
+         })
+      else
+         table.insert(result, { "fa.connection-not-connected-pipe" })
       end
-      local candidates = game
-         .get_player(pindex).surface
-         .find_entities_filtered({ name = stack.name, position = pos, radius = check_dist, direction = build_dir })
-      if #candidates > 0 then
-         for i, cand in ipairs(candidates) do
-            rendering.draw_circle({
-               color = { 1, 1, 0 },
-               radius = 0.5,
-               width = 3,
-               target = cand.position,
-               surface = cand.surface,
-               time_to_live = 60,
-            })
-            local dist_x = cand.position.x - pos.x
-            local dist_y = cand.position.y - pos.y
-            if
-               cand.direction == build_dir
-               and cand.neighbours == nil
-               and cand.belt_to_ground_type == "input"
-               and (FaUtils.get_direction_biased(cand.position, pos) == FaUtils.rotate_180(build_dir))
-               and (dist_x == 0 or dist_y == 0)
-            then
-               rendering.draw_circle({
-                  color = { 0, 1, 0 },
-                  radius = 1.0,
-                  width = 3,
-                  target = cand.position,
-                  surface = cand.surface,
-                  time_to_live = 60,
-               })
-               table.insert(result, {
-                  "fa.connection-connects-underground",
-                  { "fa.direction", build_dir },
-                  tostring(math.floor(util.distance(cand.position, pos)) - 1),
-               })
-               connected = true
-            end
-         end
-      end
-      if not connected then table.insert(result, { "fa.connection-not-connected-pipe" }) end
    end
 
    --For pipes to ground, state when connected
