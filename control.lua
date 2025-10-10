@@ -3509,7 +3509,7 @@ local function kb_flip_blueprint_horizontal_info(event)
    local vp = Viewpoint.get_viewpoint(pindex)
    local flipped = not vp:get_flipped_horizontal()
    vp:set_flipped_horizontal(flipped)
-   Speech.speak(pindex, flipped and "Flipped horizontal" or "Unflipped horizontal")
+   Speech.speak(pindex, "Flipped horizontal")
 end
 
 EventManager.on_event(
@@ -3547,7 +3547,7 @@ local function kb_flip_blueprint_vertical_info(event)
    local vp = Viewpoint.get_viewpoint(pindex)
    local flipped = not vp:get_flipped_vertical()
    vp:set_flipped_vertical(flipped)
-   Speech.speak(pindex, flipped and "Flipped vertical" or "Unflipped vertical")
+   Speech.speak(pindex, "Flipped vertical")
 end
 
 EventManager.on_event(
