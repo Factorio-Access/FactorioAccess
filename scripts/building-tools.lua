@@ -15,6 +15,127 @@ local Viewpoint = require("scripts.viewpoint")
 
 local mod = {}
 
+---@class fa.BuildingTools.BuildDecision
+---@field entity_name? string Name of entity to build (nil for tiles)
+---@field tile_name? string Name of tile to build (nil for entities)
+---@field position MapPosition Final build position
+---@field direction defines.direction Final build direction
+---@field flip_horizontal boolean
+---@field flip_vertical boolean
+---@field footprint_left_top MapPosition
+---@field footprint_right_bottom MapPosition
+---@field is_tile boolean
+---@field terrain_building_size? integer For tiles only
+---@field skip_reason? LocalisedString If build should be skipped (e.g., rails)
+
+---Calculate what to build and where, without actually building it.
+---This is the "decider" function that determines all build parameters.
+---Includes some side effects: graphics sync, storage updates, turn_to_cursor_direction_cardinal.
+---@param params fa.BuildingTools.BuildItemParams
+---@return fa.BuildingTools.BuildDecision? decision nil if should skip (e.g., rails)
+function mod.calculate_build_params(params)
+   local pindex = params.pindex
+   local building_direction = params.building_direction
+   local flip_horizontal = params.flip_horizontal or false
+   local flip_vertical = params.flip_vertical or false
+
+   local p = game.get_player(pindex)
+   local stack = p.cursor_stack
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local pos = vp:get_cursor_pos()
+
+   -- Ensure building footprint is up to date
+   Graphics.sync_build_cursor_graphics(pindex)
+
+   -- Check for exceptional cases that should be skipped
+   if stack.name == "rail" or stack.name == "rail-signal" or stack.name == "rail-chain-signal" then return nil end
+
+   -- Handle entities
+   if stack.prototype.place_result ~= nil then
+      local ent = stack.prototype.place_result
+      local placing_underground_belt = stack.prototype.place_result.type == "underground-belt"
+
+      -- Calculate footprint using centralized function
+      local footprint = FaUtils.calculate_building_footprint({
+         entity_prototype = stack.prototype.place_result,
+         position = pos,
+         building_direction = building_direction,
+         player_direction = storage.players[pindex].player_direction,
+         is_rail_vehicle = false,
+      })
+
+      turn_to_cursor_direction_cardinal(pindex)
+
+      local position = footprint.center
+
+      -- Store the calculated footprint for later use
+      storage.players[pindex].building_footprint_left_top = footprint.left_top
+      storage.players[pindex].building_footprint_right_bottom = footprint.right_bottom
+
+      local actual_build_direction = building_direction
+      if placing_underground_belt then
+         -- Auto-detect if placing would form an exit
+         local would_auto_exit =
+            TransportBelts.would_form_underground_exit(p.surface, ent, position, building_direction)
+         if would_auto_exit then
+            --Flip the chute by 180 degrees
+            actual_build_direction = (building_direction + dirs.south) % (2 * dirs.south)
+         end
+      end
+
+      return {
+         entity_name = stack.prototype.place_result.name,
+         tile_name = nil,
+         position = position,
+         direction = actual_build_direction,
+         flip_horizontal = flip_horizontal,
+         flip_vertical = flip_vertical,
+         footprint_left_top = footprint.left_top,
+         footprint_right_bottom = footprint.right_bottom,
+         is_tile = false,
+      }
+   elseif stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result ~= nil then
+      -- Tile placement
+      local cursor_size = vp:get_cursor_size()
+      local t_size = cursor_size * 2 + 1
+
+      pos.x = pos.x - cursor_size
+      pos.y = pos.y - cursor_size
+      vp:set_cursor_pos(pos)
+
+      return {
+         entity_name = nil,
+         tile_name = stack.prototype.place_as_tile_result.name,
+         position = pos,
+         direction = building_direction,
+         flip_horizontal = false,
+         flip_vertical = false,
+         footprint_left_top = pos,
+         footprint_right_bottom = { x = pos.x + t_size, y = pos.y + t_size },
+         is_tile = true,
+         terrain_building_size = t_size,
+      }
+   else
+      -- Empty hand or invalid item
+      return nil
+   end
+end
+
+---Prepare the build area by clearing obstacles and teleporting player.
+---This is shared between cursor building and ghost placement.
+---@param pindex integer
+---@param decision fa.BuildingTools.BuildDecision
+---@param teleport_player boolean
+function mod.prepare_build_area(pindex, decision, teleport_player)
+   -- Clear build area obstacles
+   PlayerMiningTools.clear_obstacles_in_rectangle(decision.footprint_left_top, decision.footprint_right_bottom, pindex)
+
+   -- Teleport player out of build area (if enabled)
+   if teleport_player then
+      mod.teleport_player_out_of_build_area(decision.footprint_left_top, decision.footprint_right_bottom, pindex)
+   end
+end
+
 -- Helper function to check electric pole placement
 local function check_electric_pole_placement(surface, position, pole_name, min_distance, max_radius)
    local poles = surface.find_entities_filtered({ position = position, radius = max_radius, name = pole_name })
@@ -53,144 +174,126 @@ end
 -- Precondition: Caller must ensure cursor_stack is valid_for_read
 function mod.build_item_in_hand_with_params(params)
    local pindex = params.pindex
-   local building_direction = params.building_direction
-   local flip_horizontal = params.flip_horizontal or false
-   local flip_vertical = params.flip_vertical or false
    local teleport_player = params.teleport_player ~= false -- default true
    local play_error_sound = params.play_error_sound ~= false -- default true
    local speak_errors = params.speak_errors ~= false -- default true
 
    local p = game.get_player(pindex)
    local stack = p.cursor_stack
-   local vp = Viewpoint.get_viewpoint(pindex)
-   local pos = vp:get_cursor_pos()
 
-   local cursor_size = vp:get_cursor_size()
-
-   -- Ensure building footprint is up to date
-   Graphics.sync_build_cursor_graphics(pindex)
-
-   --Exceptional build cases
-   if stack.name == "rail" then
-      -- Rails not supported in 2.0 yet
+   -- Handle rails special case (must speak error before calculate_build_params)
+   if stack.name == "rail" or stack.name == "rail-signal" or stack.name == "rail-chain-signal" then
       Speech.speak(pindex, { "fa.trains-not-supported" })
-      return
-   elseif stack.name == "rail-signal" or stack.name == "rail-chain-signal" then
-      -- Rail signals not supported in 2.0 yet
-      Speech.speak(pindex, { "fa.trains-not-supported" })
-      return
-   end
-   --General build cases
-   if stack.prototype.place_result ~= nil then
-      local ent = stack.prototype.place_result
-      local dimensions = FaUtils.get_tile_dimensions(stack.prototype, building_direction)
-      local position = nil
-      local placing_underground_belt = stack.prototype.place_result.type == "underground-belt"
-
-      --Cursor mode: Calculate footprint using centralized function
-      local footprint = FaUtils.calculate_building_footprint({
-         entity_prototype = stack.prototype.place_result,
-         position = pos,
-         building_direction = building_direction,
-         player_direction = storage.players[pindex].player_direction,
-         is_rail_vehicle = false,
-      })
-
-      turn_to_cursor_direction_cardinal(pindex)
-
-      position = footprint.center
-
-      -- Store the calculated footprint for later use
-      storage.players[pindex].building_footprint_left_top = footprint.left_top
-      storage.players[pindex].building_footprint_right_bottom = footprint.right_bottom
-
-      local actual_build_direction = building_direction
-      if placing_underground_belt then
-         -- Auto-detect if placing would form an exit
-         local would_auto_exit =
-            TransportBelts.would_form_underground_exit(p.surface, ent, position, building_direction)
-         if would_auto_exit then
-            --Flip the chute by 180 degrees
-            actual_build_direction = (building_direction + dirs.south) % (2 * dirs.south)
-         end
-      end
-
-      --Clear build area obstacles
-      PlayerMiningTools.clear_obstacles_in_rectangle(
-         storage.players[pindex].building_footprint_left_top,
-         storage.players[pindex].building_footprint_right_bottom,
-         pindex
-      )
-
-      --Teleport player out of build area (if enabled)
-      if teleport_player then
-         mod.teleport_player_out_of_build_area(
-            storage.players[pindex].building_footprint_left_top,
-            storage.players[pindex].building_footprint_right_bottom,
-            pindex
-         )
-      end
-
-      --Try to build it
-      local build_successful = false
-      local building = {
-         position = position,
-         --position = center_of_tile(position),
-         direction = actual_build_direction,
-         alt = false,
-         flip_horizontal = flip_horizontal,
-         flip_vertical = flip_vertical,
-      }
-      if building.position ~= nil and game.get_player(pindex).can_build_from_cursor(building) then
-         --Build it
-         game.get_player(pindex).build_from_cursor(building)
-         schedule(2, "read_tile", pindex)
-         build_successful = true
-      else
-         --Report errors (if enabled)
-         if play_error_sound then game.get_player(pindex).play_sound({ path = "utility/cannot_build" }) end
-
-         --Explain build error (if enabled)
-         if speak_errors then
-            local result = "Cannot place that there "
-            local build_area = {
-               storage.players[pindex].building_footprint_left_top,
-               storage.players[pindex].building_footprint_right_bottom,
-            }
-            result = mod.identify_building_obstacle(pindex, build_area, nil)
-            Speech.speak(pindex, result)
-         end
-      end
-      --Note: Underground belt chute handling was removed - direction is passed directly
-
-      return build_successful
-   elseif stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result ~= nil then
-      --Tile placement
-      local p = game.get_player(pindex)
-      local t_size = cursor_size * 2 + 1
-
-      pos.x = pos.x - cursor_size
-      pos.y = pos.y - cursor_size
-      vp:set_cursor_pos(pos)
-
-      if p.can_build_from_cursor({ position = pos, terrain_building_size = t_size }) then
-         p.build_from_cursor({ position = pos, terrain_building_size = t_size })
-         return true
-      else
-         p.play_sound({ path = "utility/cannot_build" })
-         return false
-      end
-   else
-      game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
       return false
    end
 
-   --Update cursor highlight (end)
-   local ent = game.get_player(pindex).selected
-   if ent and ent.valid then
-      Graphics.draw_cursor_highlight(pindex, ent, nil)
+   -- Calculate what to build (includes graphics sync, storage updates, underground belt logic, etc)
+   local decision = mod.calculate_build_params(params)
+   if not decision then
+      -- Empty hand or invalid item
+      p.play_sound({ path = "utility/cannot_build" })
+      return false
+   end
+
+   -- Prepare build area (clear obstacles, teleport player)
+   mod.prepare_build_area(pindex, decision, teleport_player)
+
+   -- Execute the build
+   if decision.is_tile then
+      -- Tile placement
+      if
+         p.can_build_from_cursor({
+            position = decision.position,
+            terrain_building_size = decision.terrain_building_size,
+         })
+      then
+         p.build_from_cursor({ position = decision.position, terrain_building_size = decision.terrain_building_size })
+         return true
+      else
+         if play_error_sound then p.play_sound({ path = "utility/cannot_build" }) end
+         return false
+      end
    else
-      Graphics.draw_cursor_highlight(pindex, nil, nil)
+      -- Entity placement
+      local building = {
+         position = decision.position,
+         direction = decision.direction,
+         alt = false,
+         flip_horizontal = decision.flip_horizontal,
+         flip_vertical = decision.flip_vertical,
+      }
+
+      if p.can_build_from_cursor(building) then
+         p.build_from_cursor(building)
+         schedule(2, "read_tile", pindex)
+         return true
+      else
+         -- Report errors (if enabled)
+         if play_error_sound then p.play_sound({ path = "utility/cannot_build" }) end
+
+         -- Explain build error (if enabled)
+         if speak_errors then
+            local build_area = { decision.footprint_left_top, decision.footprint_right_bottom }
+            local result = mod.identify_building_obstacle(pindex, build_area, nil)
+            Speech.speak(pindex, result)
+         end
+         return false
+      end
+   end
+end
+
+---Place a ghost entity using the calculated build parameters.
+---This is a stub that will be implemented to support ghost placement without cursor interaction.
+---@param params fa.BuildingTools.BuildItemParams Build parameters
+---@return boolean success True if ghost was placed successfully
+function mod.place_ghost_with_params(params)
+   local pindex = params.pindex
+   local p = game.get_player(pindex)
+   local stack = p.cursor_stack
+
+   -- Handle unsupported cases
+   if stack.name == "rail" or stack.name == "rail-signal" or stack.name == "rail-chain-signal" then
+      Speech.speak(pindex, { "fa.trains-not-supported" })
+      return false
+   end
+
+   -- Calculate what to build
+   local decision = mod.calculate_build_params(params)
+   if not decision then
+      p.play_sound({ path = "utility/cannot_build" })
+      return false
+   end
+
+   -- Skip tiles for now (ghosts are primarily for entities)
+   if decision.is_tile then
+      Speech.speak(pindex, "Ghost tiles not yet supported")
+      return false
+   end
+
+   -- Create the ghost entity (no obstacle clearing or teleportation for ghosts)
+   local ghost = p.surface.create_entity({
+      name = "entity-ghost",
+      inner_name = decision.entity_name,
+      position = decision.position,
+      direction = decision.direction,
+      force = p.force,
+      player = pindex,
+      quality = stack.quality,
+   })
+
+   if ghost then
+      Speech.speak(pindex, { "", "Placed ghost ", { "entity-name." .. decision.entity_name } })
+      schedule(2, "read_tile", pindex)
+      return true
+   else
+      -- Ghost placement failed
+      if params.play_error_sound ~= false then p.play_sound({ path = "utility/cannot_build" }) end
+      if params.speak_errors ~= false then
+         local build_area = { decision.footprint_left_top, decision.footprint_right_bottom }
+         local result = mod.identify_building_obstacle(pindex, build_area, nil)
+         Speech.speak(pindex, result)
+      end
+      return false
    end
 end
 

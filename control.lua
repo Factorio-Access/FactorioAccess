@@ -3339,11 +3339,29 @@ EventManager.on_event(
    "fa-s-leftbracket",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
+      if storage.players[pindex].last_click_tick == event.tick then return end
+      storage.players[pindex].last_click_tick = event.tick
 
       local p = game.get_player(pindex)
       local stack = p.cursor_stack
-      if stack ~= nil and stack.valid_for_read and stack.valid then kb_equip_item(event) end
+
+      -- Place ghost if item in hand can be built
+      if stack and stack.valid_for_read then
+         local proto = stack.prototype
+         if proto.place_result or proto.place_as_tile_result then
+            -- Item can be placed as a ghost
+            local vp = Viewpoint.get_viewpoint(pindex)
+            BuildingTools.place_ghost_with_params({
+               pindex = pindex,
+               building_direction = vp:get_hand_direction(),
+               flip_horizontal = vp:get_flipped_horizontal(),
+               flip_vertical = vp:get_flipped_vertical(),
+            })
+         else
+            -- Item cannot be built
+            Speech.speak(pindex, { "fa.cannot-build-item" })
+         end
+      end
    end
 )
 
