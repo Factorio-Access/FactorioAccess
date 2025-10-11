@@ -279,7 +279,7 @@ local function render_inventory_grid(ctx)
             local cursor_stack = player.cursor_stack
             local inv_stack = inv[slot_index]
 
-            -- SHIFT+[ : Equip from slot, repair item in slot, or quick transfer
+            -- SHIFT+[ : Equip from slot, repair item in slot, or quick transfer full stack
             if click_ctx.modifiers.shift then
                -- Check if hand has repair pack
                if cursor_stack and cursor_stack.valid_for_read and cursor_stack.is_repair_tool then
@@ -311,6 +311,8 @@ local function render_inventory_grid(ctx)
                   return
                end
 
+               -- No action available
+               click_ctx.controller.message:fragment({ "fa.ui-inventory-no-action" })
                return
             end
 
@@ -334,6 +336,35 @@ local function render_inventory_grid(ctx)
             end
          end,
          on_right_click = function(click_ctx)
+            -- SHIFT+] : Quick transfer half stack
+            if click_ctx.modifiers.shift then
+               if ctx.parameters.sibling_entity and ctx.parameters.sibling_inventory_id then
+                  local inv_stack = inv[slot_index]
+                  if inv_stack and inv_stack.valid_for_read then
+                     local half = math.floor(inv_stack.count / 2)
+                     if half > 0 then
+                        InventoryUtils.quick_transfer(
+                           click_ctx.pindex,
+                           click_ctx.controller.message,
+                           entity,
+                           inventory_index,
+                           slot_index,
+                           ctx.parameters.sibling_entity,
+                           ctx.parameters.sibling_inventory_id,
+                           half
+                        )
+                     else
+                        click_ctx.controller.message:fragment({ "fa.transfer-empty-slot" })
+                     end
+                  else
+                     click_ctx.controller.message:fragment({ "fa.transfer-empty-slot" })
+                  end
+               else
+                  click_ctx.controller.message:fragment({ "fa.ui-inventory-no-action" })
+               end
+               return
+            end
+
             -- Handle right click (split stack)
             local player = game.get_player(click_ctx.pindex)
             local cursor_stack = player.cursor_stack

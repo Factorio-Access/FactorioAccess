@@ -117,8 +117,9 @@ end
 ---@param src_slot integer Slot index in source inventory (1-indexed)
 ---@param dest_ent LuaEntity Destination entity (can be player for player inventory)
 ---@param dest_inv_def defines.inventory? Destination inventory type
+---@param count integer? Optional count to transfer (nil = transfer entire stack)
 ---@return boolean success Whether the transfer succeeded
-function mod.quick_transfer(pindex, msg_builder, src_ent, src_inv_def, src_slot, dest_ent, dest_inv_def)
+function mod.quick_transfer(pindex, msg_builder, src_ent, src_inv_def, src_slot, dest_ent, dest_inv_def, count)
    -- Get source inventory
    local src_inv
    if src_ent and src_ent.valid then
@@ -164,8 +165,15 @@ function mod.quick_transfer(pindex, msg_builder, src_ent, src_inv_def, src_slot,
       return false
    end
 
+   -- Determine how much to transfer
+   local transfer_count = count or stack.count
+   if transfer_count > stack.count then transfer_count = stack.count end
+
+   -- Create a transfer stack with the specified count
+   local transfer_stack = { name = stack.name, count = transfer_count, quality = stack.quality }
+
    -- Check if destination can accept the stack
-   if not dest_inv.can_insert(stack) then
+   if not dest_inv.can_insert(transfer_stack) then
       local item_label = Localising.localise_item({
          name = stack.name,
          quality = stack.quality and stack.quality.name or nil,
@@ -180,7 +188,7 @@ function mod.quick_transfer(pindex, msg_builder, src_ent, src_inv_def, src_slot,
    -- Perform the transfer
    local item_name = stack.name
    local item_quality = stack.quality and stack.quality.name or nil
-   local inserted = dest_inv.insert(stack)
+   local inserted = dest_inv.insert(transfer_stack)
 
    if inserted > 0 then
       -- Remove from source
