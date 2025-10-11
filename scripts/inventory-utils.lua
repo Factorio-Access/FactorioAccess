@@ -2,6 +2,7 @@
 Inventory utility functions for transferring items between inventories
 ]]
 
+local Consts = require("scripts.consts")
 local Localising = require("scripts.localising")
 local sounds = require("scripts.ui.sounds")
 
@@ -103,6 +104,20 @@ end
 function mod.get_inventory_by_priority(entity, ...)
    local define_names = { ... }
    for _, define_name in ipairs(define_names) do
+      local inv = mod.get_inventory_safe(entity, define_name)
+      if inv then return inv end
+   end
+   return nil
+end
+
+---Get the main inventory for an entity
+---
+---Main inventories are the primary storage inventories like chest, car_trunk, character_main, etc.
+---This checks all known main inventory types and returns the first one that exists.
+---@param entity LuaEntity
+---@return LuaInventory? inventory The main inventory if it exists, nil otherwise
+function mod.get_main_inventory(entity)
+   for _, define_name in ipairs(Consts.MAIN_INVENTORIES) do
       local inv = mod.get_inventory_safe(entity, define_name)
       if inv then return inv end
    end

@@ -115,6 +115,27 @@ mod.ENT_TYPES_YOU_CAN_BUILD_OVER = {
 -- Entity names to exclude from various operations
 mod.EXCLUDED_ENT_NAMES = { "highlight-box" }
 
+-- Main inventories that represent primary storage for entities
+-- These are the inventories used for fast transfer operations
+---@type string[]
+mod.MAIN_INVENTORIES = {
+   "character_main",
+   "chest",
+   "car_trunk",
+   "spider_trunk",
+   "cargo_wagon",
+   "hub_main",
+   "cargo_landing_pad_main",
+   "linked_container_main",
+   "item_main",
+   "cargo_unit",
+   "god_main",
+   "editor_main",
+   "proxy_main",
+   "crafter_input",
+   "lab_input",
+}
+
 -- Inventory priorities for sorting in entity UI
 -- Lower numbers appear first
 ---@type table<string, number>

@@ -300,34 +300,44 @@ function mod.open_entity_ui(pindex, entity)
       entity = entity,
    }
 
-   -- Find appropriate entity inventory for player → entity transfers
-   -- Priority: chest > crafter_input > car_trunk > spider_trunk
-   local entity_dest_inv_index = nil
-   local dest_inv =
-      InventoryUtils.get_inventory_by_priority(entity, "chest", "crafter_input", "car_trunk", "spider_trunk")
-   if dest_inv then entity_dest_inv_index = dest_inv.index end
+   -- Find the main inventory for fast transfer operations
+   local entity_main_inv = InventoryUtils.get_main_inventory(entity)
+   local entity_main_inv_index = entity_main_inv and entity_main_inv.index or nil
 
-   -- Set up player inventory with entity as sibling
+   -- Set up sibling relationships only if player has a character
    if player.character then
+      -- Set up player inventory with entity main inventory as sibling
       params.player_inventory = {
          entity = player.character,
          inventory_index = defines.inventory.character_main,
-         sibling_entity = entity_dest_inv_index and entity or nil,
-         sibling_inventory_id = entity_dest_inv_index,
+         sibling_entity = entity_main_inv_index and entity or nil,
+         sibling_inventory_id = entity_main_inv_index,
       }
-   end
 
-   -- Set up entity inventories with player as sibling
-   for i = 1, entity.get_max_inventory_index() do
-      ---@diagnostic disable-next-line
-      local inv = entity.get_inventory(i)
-      if inv and inv.name then
-         params["inv_" .. inv.name] = {
-            entity = entity,
-            inventory_index = i,
-            sibling_entity = player.character,
-            sibling_inventory_id = defines.inventory.character_main,
-         }
+      -- Set up all entity inventories with player inventory as sibling
+      for i = 1, entity.get_max_inventory_index() do
+         ---@diagnostic disable-next-line
+         local inv = entity.get_inventory(i)
+         if inv and inv.name then
+            params["inv_" .. inv.name] = {
+               entity = entity,
+               inventory_index = i,
+               sibling_entity = player.character,
+               sibling_inventory_id = defines.inventory.character_main,
+            }
+         end
+      end
+   else
+      -- Player has no character, set up inventories without siblings
+      for i = 1, entity.get_max_inventory_index() do
+         ---@diagnostic disable-next-line
+         local inv = entity.get_inventory(i)
+         if inv and inv.name then
+            params["inv_" .. inv.name] = {
+               entity = entity,
+               inventory_index = i,
+            }
+         end
       end
    end
 

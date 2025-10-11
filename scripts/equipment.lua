@@ -112,7 +112,8 @@ local function equip_stack_to_entity(stack, target_entity, pindex, message)
    elseif prototype.place_result ~= nil or prototype.place_as_tile_result ~= nil then
       return false -- Buildable item, not equippable
    else
-      message:fragment({ "fa.equipment-cannot-equip", localising.get_localised_name_with_fallback(stack) })
+      -- Fall through. For bad code quality reasons, not setting a message lets inventory transfers work. Soon, this
+      -- will be done via an equipment grid instead.
       return false
    end
 end
