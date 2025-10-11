@@ -211,4 +211,118 @@ function mod.get_pipe_shape(ent)
    return NetworkShape.get_shape_from_directions(dirs)
 end
 
+---@class Fluids.FluidDescriptor
+---@field fluid_name string The localized fluid name
+---@field amount number The amount of fluid
+---@field direction_type string? One of: "input", "output", "bidirectional", or nil for none
+---@field locked boolean Whether the fluidbox is locked to this fluid
+---@field empty boolean Whether this is an empty fluidbox
+---@field sort_key string For deterministic ordering
+
+---Build fluid descriptors for an entity's GUI
+---@param entity LuaEntity
+---@return Fluids.FluidDescriptor[]
+function mod.build_fluid_descriptors(entity)
+   ---@type Fluids.FluidDescriptor[]
+   local descriptors = {}
+
+   local fluids_count = entity.fluids_count
+   if fluids_count == 0 then return descriptors end
+
+   local fluidbox = entity.fluidbox
+
+   -- For entities with fluidboxes, use fluidbox data exclusively
+   if fluidbox and #fluidbox > 0 then
+      for i = 1, #fluidbox do
+         local prototype = fluidbox.get_prototype(i)
+         local locked_fluid = fluidbox.get_locked_fluid(i)
+         local fluid_data = fluidbox[i]
+
+         -- Determine the production type
+         local production_type = nil
+         if prototype then
+            -- Handle cases where prototype might be an array (merged prototypes)
+            if type(prototype) == "table" and #prototype > 0 then
+               -- Multiple prototypes merged, need to combine their production types
+               local has_input = false
+               local has_output = false
+               for _, proto in ipairs(prototype) do
+                  if proto.production_type == "input" or proto.production_type == "input-output" then
+                     has_input = true
+                  end
+                  if proto.production_type == "output" or proto.production_type == "input-output" then
+                     has_output = true
+                  end
+               end
+               if has_input and has_output then
+                  production_type = "bidirectional"
+               elseif has_input then
+                  production_type = "input"
+               elseif has_output then
+                  production_type = "output"
+               end
+            else
+               -- Single prototype
+               local ptype = prototype.production_type
+               if ptype == "input-output" then
+                  production_type = "bidirectional"
+               elseif ptype == "input" then
+                  production_type = "input"
+               elseif ptype == "output" then
+                  production_type = "output"
+               end
+            end
+         end
+
+         -- Handle empty but locked fluidboxes
+         if locked_fluid and not fluid_data then
+            ---@type Fluids.FluidDescriptor
+            local descriptor = {
+               fluid_name = locked_fluid,
+               amount = 0,
+               direction_type = production_type,
+               locked = true,
+               empty = true,
+               sort_key = string.format("fluidbox-%03d", i),
+            }
+            table.insert(descriptors, descriptor)
+         elseif fluid_data then
+            -- Fluidbox has fluid - use amount from fluidbox (already local)
+            ---@type Fluids.FluidDescriptor
+            local descriptor = {
+               fluid_name = fluid_data.name,
+               amount = fluid_data.amount,
+               direction_type = production_type,
+               locked = locked_fluid ~= nil,
+               empty = false,
+               sort_key = string.format("fluidbox-%03d", i),
+            }
+            table.insert(descriptors, descriptor)
+         end
+      end
+   else
+      -- For entities without fluidboxes, use get_fluid_contents
+      local fluid_contents = entity.get_fluid_contents()
+      for fluid_name, amount in pairs(fluid_contents) do
+         ---@type Fluids.FluidDescriptor
+         local descriptor = {
+            fluid_name = fluid_name,
+            amount = amount,
+            direction_type = nil,
+            locked = false,
+            empty = false,
+            sort_key = string.format("fluid-%s", fluid_name),
+         }
+         table.insert(descriptors, descriptor)
+      end
+   end
+
+   -- Sort by sort_key for deterministic ordering
+   table.sort(descriptors, function(a, b)
+      return a.sort_key < b.sort_key
+   end)
+
+   return descriptors
+end
+
 return mod

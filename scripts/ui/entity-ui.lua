@@ -18,6 +18,7 @@ local circuit_network_tab = require("scripts.ui.tabs.circuit-network")
 local inserter_config_tab = require("scripts.ui.tabs.inserter-config")
 local infinity_chest_config_tab = require("scripts.ui.tabs.infinity-chest-config")
 local infinity_pipe_config_tab = require("scripts.ui.tabs.infinity-pipe-config")
+local fluids_tab = require("scripts.ui.tabs.fluids")
 
 local mod = {}
 
@@ -103,6 +104,9 @@ local function build_inventory_tabs(entity, sorted_invs, guns_ammo_invs)
 
       table.insert(tabs, tab)
    end
+
+   -- Add fluids tab as last inventory if entity has fluids
+   if fluids_tab.is_available(entity) then table.insert(tabs, fluids_tab.fluids_tab) end
 
    return tabs
 end
