@@ -279,8 +279,8 @@ local function render_inventory_grid(ctx)
             local cursor_stack = player.cursor_stack
             local inv_stack = inv[slot_index]
 
-            -- SHIFT+[ : Equip from slot, repair item in slot, or quick transfer full stack
-            if click_ctx.modifiers.shift then
+            -- CTRL+SHIFT+[ : Equip from slot, repair item in slot, or quick transfer full stack
+            if click_ctx.modifiers.shift and click_ctx.modifiers.control then
                -- Check if hand has repair pack
                if cursor_stack and cursor_stack.valid_for_read and cursor_stack.is_repair_tool then
                   -- Repair item in this slot
@@ -336,8 +336,8 @@ local function render_inventory_grid(ctx)
             end
          end,
          on_right_click = function(click_ctx)
-            -- SHIFT+] : Quick transfer half stack
-            if click_ctx.modifiers.shift then
+            -- CTRL + SHIFT+] : Quick transfer half stack
+            if click_ctx.modifiers.shift and click_ctx.modifiers.control then
                if ctx.parameters.sibling_entity and ctx.parameters.sibling_inventory_id then
                   local inv_stack = inv[slot_index]
                   if inv_stack and inv_stack.valid_for_read then

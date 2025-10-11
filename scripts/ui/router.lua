@@ -499,10 +499,10 @@ register_ui_event("fa-c-rightbracket", create_ui_handler("on_right_click", { con
 
 -- Shift+click
 register_ui_event("fa-s-leftbracket", create_ui_handler("on_click", { shift = true }))
-register_ui_event("fa-s-rightbracket", create_ui_handler("on_right_click", { shift = true }))
 
 -- Control+Shift+click
 register_ui_event("fa-cs-leftbracket", create_ui_handler("on_click", { control = true, shift = true }))
+register_ui_event("fa-cs-rightbracket", create_ui_handler("on_right_click", { control = true, shift = true }))
 
 -- Tab navigation (TAB and Shift+TAB)
 register_ui_event("fa-tab", create_ui_handler("on_next_tab"))
