@@ -1381,6 +1381,44 @@ local function move(direction, pindex, nudged)
 end
 
 --Moves the cursor, and conducts an area scan for larger cursors. If the player is in a slow moving vehicle, it is stopped.
+---Move a large cursor by n tiles and read the area
+---@param pindex number
+---@param direction defines.direction
+---@param tiles number Number of tiles to move
+---@param prefix_text string? Optional text to prepend to the reading
+local function move_large_cursor_by(pindex, direction, tiles, prefix_text)
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
+   local cursor_size = vp:get_cursor_size()
+   local p = game.get_player(pindex)
+
+   cursor_pos = FaUtils.offset_position_legacy(cursor_pos, direction, tiles)
+   vp:set_cursor_pos(cursor_pos)
+
+   local scan_left_top = {
+      x = math.floor(cursor_pos.x) - cursor_size,
+      y = math.floor(cursor_pos.y) - cursor_size,
+   }
+   local scan_right_bottom = {
+      x = math.floor(cursor_pos.x) + cursor_size + 1,
+      y = math.floor(cursor_pos.y) + cursor_size + 1,
+   }
+   local scan_summary = FaInfo.area_scan_summary_info(pindex, scan_left_top, scan_right_bottom)
+   if prefix_text and prefix_text ~= "" then scan_summary = prefix_text .. scan_summary end
+   Graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
+   Speech.speak(pindex, scan_summary)
+
+   if storage.players[pindex].remote_view then
+      sounds.play_building_placement(p.index, cursor_pos)
+   else
+      p.play_sound({
+         path = "Close-Inventory-Sound",
+         position = storage.players[pindex].position,
+         volume_modifier = 0.75,
+      })
+   end
+end
+
 local function cursor_mode_move(direction, pindex, single_only)
    local vp = Viewpoint.get_viewpoint(pindex)
    local cursor_pos = vp:get_cursor_pos()
@@ -1389,12 +1427,11 @@ local function cursor_mode_move(direction, pindex, single_only)
    if single_only then diff = 1 end
    local p = game.get_player(pindex)
 
-   cursor_pos = FaUtils.offset_position_legacy(cursor_pos, direction, diff)
-   -- Use continuous movement tracking for WASD movements
-   vp:set_cursor_pos_continuous(cursor_pos, direction)
-
    if cursor_size == 0 then
       -- Cursor size 0 ("1 by 1"): Read tile
+      cursor_pos = FaUtils.offset_position_legacy(cursor_pos, direction, diff)
+      vp:set_cursor_pos_continuous(cursor_pos, direction)
+
       EntitySelection.reset_entity_index(pindex)
       read_tile(pindex)
 
@@ -1416,34 +1453,24 @@ local function cursor_mode_move(direction, pindex, single_only)
       else
          Graphics.draw_cursor_highlight(pindex, nil, nil)
       end
+
+      if storage.players[pindex].remote_view then
+         sounds.play_building_placement(p.index, cursor_pos)
+      else
+         p.play_sound({
+            path = "Close-Inventory-Sound",
+            position = storage.players[pindex].position,
+            volume_modifier = 0.75,
+         })
+      end
    else
-      -- Larger cursor sizes: scan area
-      local scan_left_top = {
-         x = math.floor(cursor_pos.x) - cursor_size,
-         y = math.floor(cursor_pos.y) - cursor_size,
-      }
-      local scan_right_bottom = {
-         x = math.floor(cursor_pos.x) + cursor_size + 1,
-         y = math.floor(cursor_pos.y) + cursor_size + 1,
-      }
-      local scan_summary = FaInfo.area_scan_summary_info(pindex, scan_left_top, scan_right_bottom)
-      Graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
-      Speech.speak(pindex, scan_summary)
+      -- Use continuous movement tracking for WASD movements
+      vp:set_cursor_pos_continuous(cursor_pos, direction)
+      move_large_cursor_by(pindex, direction, diff)
    end
 
-   --Update player direction to face the cursor (after the vanilla move event that turns the character too, and only ends when the movement key is released)
+   --Update player direction to face the cursor
    turn_to_cursor_direction_precise(pindex)
-
-   --Play Sound
-   if storage.players[pindex].remote_view then
-      sounds.play_building_placement(p.index, cursor_pos)
-   else
-      p.play_sound({
-         path = "Close-Inventory-Sound",
-         position = storage.players[pindex].position,
-         volume_modifier = 0.75,
-      })
-   end
 end
 
 --Chooses the function to call after a movement keypress, according to the current mode.
@@ -1722,23 +1749,30 @@ end
 --Runs the cursor skip actions and reads out results
 local function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
    local vp = Viewpoint.get_viewpoint(pindex)
-   local cursor_pos = vp:get_cursor_pos()
    local cursor_size = vp:get_cursor_size()
    local p = game.get_player(pindex)
    local limit = iteration_limit or 100
-   local result = ""
-   local skip_by_preview_size = use_preview_size or false
 
-   --Run the iteration and play sound
+   --Special case: larger cursors move by 1 tile with ctrl+WASD
+   if use_preview_size and cursor_size > 0 then
+      move_large_cursor_by(pindex, direction, 1)
+      return
+   end
+
+   local cursor_pos = vp:get_cursor_pos()
+   local result = ""
    local moved_count = 0
-   if skip_by_preview_size == true then
+   if use_preview_size == true then
       moved_count = apply_skip_by_preview_size(pindex, direction)
       result = "Skipped by preview size " .. moved_count .. ", "
    else
       moved_count = cursor_skip_iteration(pindex, direction, limit)
       result = "Skipped "
    end
-   if skip_by_preview_size then
+
+   cursor_pos = vp:get_cursor_pos()
+
+   if use_preview_size then
       --Rolling always plays the regular moving sound
       if storage.players[pindex].remote_view then
          sounds.play_building_placement(p.index, cursor_pos)
@@ -1752,7 +1786,6 @@ local function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
    elseif moved_count < 0 then
       --No change found within the limit
       result = result .. limit .. " tiles without a change, "
-      --Play Sound
       if storage.players[pindex].remote_view then
          sounds.play_sound_at_position({ path = "inventory-wrap-around", volume_modifier = 1 }, cursor_pos)
       else
@@ -1764,7 +1797,6 @@ local function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
       end
    elseif moved_count == 1 then
       result = ""
-      --Play Sound
       if storage.players[pindex].remote_view then
          sounds.play_building_placement(p.index, cursor_pos)
       else
@@ -1777,7 +1809,6 @@ local function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
    elseif moved_count > 1 then
       --Change found, with more than 1 tile moved
       result = result .. moved_count .. " tiles, "
-      --Play Sound
       if storage.players[pindex].remote_view then
          sounds.play_sound_at_position({ path = "inventory-wrap-around", volume_modifier = 1 }, cursor_pos)
       else
@@ -1792,19 +1823,6 @@ local function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
    --Read the tile reached
    read_tile(pindex, result)
    Graphics.sync_build_cursor_graphics(pindex)
-
-   --Draw large cursor boxes if present
-   if cursor_size > 0 then
-      local left_top = {
-         math.floor(cursor_pos.x) - cursor_size,
-         math.floor(cursor_pos.y) - cursor_size,
-      }
-      local right_bottom = {
-         math.floor(cursor_pos.x) + cursor_size + 1,
-         math.floor(cursor_pos.y) + cursor_size + 1,
-      }
-      Graphics.draw_large_cursor(left_top, right_bottom, pindex)
-   end
 end
 
 EventManager.on_event(
