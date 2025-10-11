@@ -13,6 +13,7 @@ local TH = require("scripts.table-helpers")
 local TransportBelts = require("scripts.transport-belts")
 local Wires = require("scripts.wires")
 local Speech = require("scripts.speech")
+local Viewpoint = require("scripts.viewpoint")
 
 local mod = {}
 
@@ -77,6 +78,7 @@ local function cmd_fac(cmd)
    environment.TH = TH
    environment.TransportBelts = TransportBelts
    environment.Wires = Wires
+   environment.Viewpoint = viewpoint
 
    local chunk, err = load(with_return, "=(load)", "t", environment)
    if not chunk then

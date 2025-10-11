@@ -117,6 +117,7 @@ mod.UI_NAMES = {
    DEBUG_FORMBUILDER = "debug_formbuilder",
    ITEM_CHOOSER = "item_chooser",
    SIGNAL_CHOOSER = "signal_chooser",
+   FLUID_CHOOSER = "fluid_chooser",
    LOGISTICS_CONFIG = "logistics_config",
    LOGISTIC_GROUP_SELECTOR = "logistic_group_selector",
    CONSTANT_COMBINATOR = "constant_combinator",

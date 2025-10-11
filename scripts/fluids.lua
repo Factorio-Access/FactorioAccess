@@ -191,7 +191,7 @@ This function considers only pipe entities, and ignores undergrounds. Undergroun
 ---@param ent LuaEntity
 ---@return { shape: fa.NetworkShape.Shape, direction: defines.direction }
 function mod.get_pipe_shape(ent)
-   assert(ent.type == "pipe")
+   assert(ent.type == "pipe" or ent.type == "infinity-pipe")
    local fb = ent.fluidbox
    assert(#fb == 1)
 
@@ -199,7 +199,7 @@ function mod.get_pipe_shape(ent)
    local conns = fb.get_pipe_connections(1)
 
    for _, conn in pairs(conns) do
-      if conn.target and conn.target.owner.type == "pipe" then
+      if conn.target and (conn.target.owner.type == "pipe" or conn.target.owner.type == "infinity-pipe") then
          local dx = conn.target_position.x - conn.position.x
          local dy = conn.target_position.y - conn.position.y
          local dir = FaUtils.direction_of_vector({ x = dx, y = dy })

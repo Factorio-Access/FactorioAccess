@@ -423,15 +423,44 @@ local function ent_info_logistic_network(ctx)
 end
 
 ---@param ctx fa.Info.EntInfoContext
+local function ent_info_infinity_chest(ctx)
+   local ent = ctx.ent
+   if ent.type == "infinity-container" then
+      local filters = ent.infinity_container_filters
+      if filters and #filters > 0 then
+         ctx.message:fragment({ "fa.ent-info-infinity-chest-filters" })
+         for i, filter in ipairs(filters) do
+            if i > 3 then
+               ctx.message:fragment({ "fa.ent-info-and-others", #filters - 3 })
+               break
+            end
+            ctx.message:list_item()
+            local item_proto = prototypes.item[filter.name]
+            if item_proto then
+               ctx.message:fragment(item_proto.localised_name)
+            else
+               ctx.message:fragment(filter.name)
+            end
+            local mode = filter.mode or "exactly"
+            if mode == "at-least" then
+               ctx.message:fragment({ "fa.ent-info-infinity-chest-at-least", tostring(filter.count or 0) })
+            elseif mode == "at-most" then
+               ctx.message:fragment({ "fa.ent-info-infinity-chest-at-most", tostring(filter.count or 0) })
+            else
+               ctx.message:fragment({ "fa.ent-info-infinity-chest-exactly", tostring(filter.count or 0) })
+            end
+         end
+      end
+      if ent.remove_unfiltered_items then ctx.message:fragment({ "fa.ent-info-infinity-chest-trash-unrequested" }) end
+   end
+end
+
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_infinity_pipe(ctx)
    local ent = ctx.ent
    if ent.name == "infinity-pipe" then
       local filter = ent.get_infinity_pipe_filter()
-      if filter == nil then
-         ctx.message:fragment({ "fa.ent-info-infinity-pipe-draining" })
-      else
-         ctx.message:fragment({ "fa.ent-info-infinity-pipe-producing", filter.name })
-      end
+      if filter == nil then ctx.message:fragment({ "fa.ent-info-infinity-pipe-draining" }) end
    end
 end
 
@@ -491,7 +520,7 @@ end
 
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_pipe_shape(ctx)
-   if ctx.ent.type == "pipe" then
+   if ctx.ent.type == "pipe" or ctx.ent.type == "infinity-pipe" then
       local shape_info = Fluids.get_pipe_shape(ctx.ent)
       local s, d = shape_info.shape, shape_info.direction
       local d_str = FaUtils.direction_lookup(d)
@@ -948,12 +977,13 @@ end
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_fluid_connections(ctx)
    local cursor_center = { x = ctx.cursor_pos.x + 0.5, y = ctx.cursor_pos.y + 0.5 }
+   print(serpent.line(cursor_center))
    local points = Fluids.get_connection_points(ctx.ent)
    ---@param p fa.Fluids.ConnectionPoint
    TH.retain_unordered(points, function(p)
       -- If this entity is a pipe and the connection goes to nothing, then do
       -- not announce this connection because pipe shapes are handled elsewhere.
-      if p.raw.target == nil and ctx.ent.type == "pipe" then return false end
+      if p.raw.target == nil and ctx.ent.type == "pipe" or ctx.ent.type == "infinity-pipe" then return false end
 
       if p.raw.target and p.raw.target.owner.type == "pipe" and ctx.ent.type == "pipe" then return false end
 
@@ -1134,6 +1164,9 @@ end
 
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_filters(ctx)
+   -- Infinity containers have their own handler
+   if ctx.ent.type == "infinity-container" then return end
+
    local filts = Filters.get_all_filters(ctx.ent)
    if next(filts) then
       local first = true
@@ -1220,6 +1253,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    run_handler(ent_info_container)
    run_handler(ent_info_fluid_contents)
    run_handler(ent_info_logistic_network)
+   run_handler(ent_info_infinity_chest)
    run_handler(ent_info_infinity_pipe)
    run_handler(ent_info_pipe_shape)
    run_handler(ent_info_fluid_connections)

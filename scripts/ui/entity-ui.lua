@@ -16,6 +16,8 @@ local gun_menu = require("scripts.ui.menus.gun-menu")
 local assembling_machine_tab = require("scripts.ui.tabs.assembling-machine")
 local circuit_network_tab = require("scripts.ui.tabs.circuit-network")
 local inserter_config_tab = require("scripts.ui.tabs.inserter-config")
+local infinity_chest_config_tab = require("scripts.ui.tabs.infinity-chest-config")
+local infinity_pipe_config_tab = require("scripts.ui.tabs.infinity-pipe-config")
 
 local mod = {}
 
@@ -120,6 +122,16 @@ local function build_configuration_tabs(entity)
    -- Add inserter configuration
    if prototype.type == "inserter" and inserter_config_tab.is_available(entity) then
       table.insert(tabs, inserter_config_tab.inserter_config_tab)
+   end
+
+   -- Add infinity chest configuration
+   if prototype.type == "infinity-container" and infinity_chest_config_tab.is_available(entity) then
+      table.insert(tabs, infinity_chest_config_tab.infinity_chest_config_tab)
+   end
+
+   -- Add infinity pipe configuration
+   if prototype.type == "infinity-pipe" and infinity_pipe_config_tab.is_available(entity) then
+      table.insert(tabs, infinity_pipe_config_tab.infinity_pipe_config_tab)
    end
 
    -- Future: Add other device-specific tabs here

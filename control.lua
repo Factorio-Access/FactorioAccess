@@ -72,6 +72,7 @@ require("scripts.ui.menus.fast-travel-menu")
 require("scripts.ui.menus.debug-menu")
 require("scripts.ui.tabs.item-chooser")
 require("scripts.ui.tabs.signal-chooser")
+require("scripts.ui.tabs.fluid-chooser")
 require("scripts.ui.logistics-config")
 require("scripts.ui.selectors.logistic-group-selector")
 require("scripts.ui.constant-combinator")
@@ -1004,55 +1005,6 @@ function set_inserter_filter_by_hand(pindex, ent)
       end
       return "All filters full"
    end
-end
-
---If an infinity chest is selected, the item in hand is set as its filter item.
-function set_infinity_chest_filter_by_hand(pindex, ent)
-   local stack = game.get_player(pindex).cursor_stack
-   ent.remove_unfiltered_items = false
-   if stack == nil or stack.valid_for_read == false or stack.valid == false then
-      --Delete filters
-      ent.infinity_container_filters = {}
-      ent.remove_unfiltered_items = true
-      return "All filters cleared"
-   else
-      --Set item in hand as the filter
-      ent.infinity_container_filters = {}
-      ent.set_infinity_container_filter(1, { name = stack.name, count = stack.prototype.stack_size, mode = "exactly" })
-      ent.remove_unfiltered_items = true
-      return "Set filter to item in hand"
-   end
-end
-
-function set_infinity_pipe_filter_by_hand(pindex, ent)
-   local stack = game.get_player(pindex).cursor_stack
-   if stack == nil or stack.valid_for_read == false or stack.valid == false then
-      --Delete filters
-      ent.set_infinity_pipe_filter(nil)
-      return "All filters cleared"
-   else
-      --Get the fluid from the barrel in hand
-      local name = stack.name
-      local first, last = string.find(name, "-barrel")
-      if first then
-         local fluid_name = string.sub(name, 1, first - 1)
-         local temp = 25
-         if fluid_name == "water" then
-            temp = 15
-         elseif fluid_name == "empty" then
-            --Special case: Empty barrel sets steam
-            fluid_name = "steam"
-            temp = 500
-         end
-         if prototypes.fluid[fluid_name] then
-            ent.set_infinity_pipe_filter({ name = fluid_name, temperature = temp, percentage = 1.00, mode = "exactly" })
-            return "Set filter to fluid in hand"
-         end
-         return "Error: Unknown fluid in hand " .. fluid_name
-      end
-      return "Error: Not a fluid barrel in hand"
-   end
-   return "Error setting fluid"
 end
 
 --Alerts a force's players when their structures are destroyed. 300 ticks of cooldown.
