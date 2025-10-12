@@ -307,7 +307,7 @@ local function ent_info_resource(ctx)
          ctx.message:fragment({ "fa.ent-info-resource-noninfinite", ent.amount })
       else
          -- The game computes it this way then displays it as 403% or w/e.
-         local percentage = ent.prototype.normal_resource_amount / 100
+         local percentage = math.floor(ent.amount / ent.prototype.normal_resource_amount * 100)
          ctx.message:fragment({ "fa.ent-info-resource-infinite", percentage })
       end
    end
