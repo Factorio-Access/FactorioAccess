@@ -1244,6 +1244,14 @@ data:extend({
       consuming = "none",
    },
 
+   -- Remove wires
+   {
+      type = "custom-input",
+      name = "fa-a-n",
+      key_sequence = "ALT + N",
+      consuming = "none",
+   },
+
    -- Inventory bar controls
    {
       type = "custom-input",

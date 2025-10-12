@@ -2718,7 +2718,16 @@ EventManager.on_event(
    end
 )
 
--- Circuit network navigator (Shift+N key)
+-- Remove wires (Alt+N key)
+EventManager.on_event(
+   "fa-a-n",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      CircuitNetworks.remove_wires(pindex)
+   end
+)
+
+-- Circuit network navigator (Ctrl+Alt+N key)
 EventManager.on_event(
    "fa-ca-n",
    ---@param event EventData.CustomInputEvent

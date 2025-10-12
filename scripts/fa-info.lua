@@ -294,9 +294,8 @@ end
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_circuit_network(ctx)
    local ent = ctx.ent
-   -- Check if entity has circuit network capability
-   local cb = ent.get_control_behavior()
-   if cb then Circuits.add_circuit_network_info(ent, ctx.message) end
+   -- Check if entity has circuit network connections
+   Circuits.add_circuit_network_info(ent, ctx.message)
 end
 
 ---@param ctx fa.Info.EntInfoContext
@@ -913,13 +912,12 @@ local function ent_info_electric_pole(ctx)
 
    ctx.message:fragment("supplying")
    ctx.message:fragment(supplied_count)
-   ctx.message:fragment("buildings,")
+   ctx.message:fragment("buildings")
    if producer_count > 0 then
       ctx.message:fragment("drawing from")
       ctx.message:fragment(producer_count)
-      ctx.message:fragment("buildings,")
+      ctx.message:fragment("buildings")
    end
-   ctx.message:fragment("Check status for power flow information.")
 end
 
 ---@param ctx fa.Info.EntInfoContext

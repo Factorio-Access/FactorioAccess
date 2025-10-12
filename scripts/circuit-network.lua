@@ -4,11 +4,60 @@
 local localising = require("scripts.localising")
 local Viewpoint = require("scripts.viewpoint")
 local Speech = require("scripts.speech")
+local Sounds = require("scripts.ui.sounds")
 local WorkerRobots = require("scripts.worker-robots")
 local FaUtils = require("scripts.fa-utils")
 local Localising = require("scripts.localising")
 
 local mod = {}
+
+---Remove wires from the selected entity
+---Removes circuit wires first (red+green), then copper wires on subsequent presses
+---@param pindex integer
+function mod.remove_wires(pindex)
+   local p = game.get_player(pindex)
+   local ent = p.selected
+
+   if not ent or not ent.valid then
+      Speech.speak(pindex, { "fa.circuit-wires-no-wires-found" })
+      Sounds.play_cannot_build(pindex)
+      return
+   end
+
+   local connectors = ent.get_wire_connectors(false)
+
+   -- Try to remove circuit wires first (both red and green)
+   local removed_circuit = false
+   for _, connector in pairs(connectors) do
+      if
+         (connector.wire_type == defines.wire_type.red or connector.wire_type == defines.wire_type.green)
+         and connector.connection_count > 0
+      then
+         connector.disconnect_all()
+         removed_circuit = true
+      end
+   end
+
+   if removed_circuit then
+      Speech.speak(pindex, { "fa.circuit-wires-removed-red-green" })
+      Sounds.play_wire_disconnect(pindex)
+      return
+   end
+
+   -- No circuit wires, try copper wires
+   for _, connector in pairs(connectors) do
+      if connector.wire_type == defines.wire_type.copper and connector.connection_count > 0 then
+         connector.disconnect_all()
+         Speech.speak(pindex, { "fa.circuit-wires-removed-copper" })
+         Sounds.play_wire_disconnect(pindex)
+         return
+      end
+   end
+
+   -- No wires found
+   Speech.speak(pindex, { "fa.circuit-wires-no-wires-found" })
+   Sounds.play_cannot_build(pindex)
+end
 
 ---Handles dragging wires (circuit red/green and electrical copper) between entities
 ---@param pindex integer

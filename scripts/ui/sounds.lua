@@ -231,6 +231,11 @@ function mod.play_cursor_moved_while_selecting(pindex)
    play_sound_internal(pindex, { path = "cursor-moved-while-selecting" })
 end
 
+-- Wire connection sounds
+function mod.play_wire_disconnect(pindex)
+   play_sound_internal(pindex, { path = "utility/wire_disconnect" })
+end
+
 -- Walking sounds
 function mod.play_metal_walking(pindex)
    play_sound_internal(pindex, { path = "utility/metal_walking_sound", volume_modifier = 1 })
