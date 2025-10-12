@@ -58,7 +58,7 @@ local function render_overview(ctx)
          for _, signal_info in ipairs(all_signals) do
             ctx.message:list_item()
             ctx.message:fragment(CircuitNetwork.localise_signal(signal_info.signal))
-            if signal_info.count > 0 then
+            if signal_info.count ~= 0 then
                ctx.message:fragment("x")
                ctx.message:fragment(tostring(signal_info.count))
             end

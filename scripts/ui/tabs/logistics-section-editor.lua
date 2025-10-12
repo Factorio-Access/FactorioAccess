@@ -43,6 +43,10 @@ local function render_section(ctx, point_index, section_index)
 
    local menu = Menu.MenuBuilder.new()
 
+   -- Detect if this is a constant combinator to determine signal mode
+   local is_combinator = entity.type == "constant-combinator"
+   local signal_mode = is_combinator and "all" or "item"
+
    -- Add rows for each existing filter/request
    for i = 1, section.filters_count do
       local slot = section.get_slot(i)
@@ -70,7 +74,7 @@ local function render_section(ctx, point_index, section_index)
             on_click = function(ctx)
                ctx.controller:open_child_ui(
                   Router.UI_NAMES.SIGNAL_CHOOSER,
-                  {},
+                  { mode = signal_mode },
                   { node = row_key .. "_overview", slot_index = i }
                )
             end,
@@ -110,18 +114,26 @@ local function render_section(ctx, point_index, section_index)
             end,
             on_child_result = function(ctx, result)
                local num = tonumber(result)
-               if num and num >= 0 then
+               if not num then
+                  UiSounds.play_ui_edge(ctx.pindex)
+                  ctx.controller.message:fragment({ "fa.logistics-invalid-number" })
+               elseif not is_combinator and num < 0 then
+                  UiSounds.play_ui_edge(ctx.pindex)
+                  ctx.controller.message:fragment({ "fa.logistics-value-cannot-be-negative" })
+               else
                   local section = provider.get_section(section_index)
                   if not section then return end
 
                   local slot = section.get_slot(i)
-                  slot.min = math.floor(num)
-                  section.set_slot(i, slot)
+                  if slot.max and num > slot.max then
+                     UiSounds.play_ui_edge(ctx.pindex)
+                     ctx.controller.message:fragment({ "fa.logistics-min-must-be-at-most-max", tostring(slot.max) })
+                  else
+                     slot.min = math.floor(num)
+                     section.set_slot(i, slot)
 
-                  ctx.controller.message:fragment(tostring(math.floor(num)))
-               else
-                  UiSounds.play_ui_edge(ctx.pindex)
-                  ctx.controller.message:fragment({ "fa.logistics-invalid-number" })
+                     ctx.controller.message:fragment(tostring(math.floor(num)))
+                  end
                end
             end,
             on_clear = function(ctx)
@@ -167,18 +179,27 @@ local function render_section(ctx, point_index, section_index)
                   ctx.controller.message:fragment({ "fa.infinity" })
                else
                   local num = tonumber(result)
-                  if num and num >= 0 then
+                  if not num then
+                     UiSounds.play_ui_edge(ctx.pindex)
+                     ctx.controller.message:fragment({ "fa.logistics-invalid-number" })
+                  elseif num < 0 then
+                     UiSounds.play_ui_edge(ctx.pindex)
+                     ctx.controller.message:fragment({ "fa.logistics-value-cannot-be-negative" })
+                  else
                      local section = provider.get_section(section_index)
                      if not section then return end
 
                      local slot = section.get_slot(i)
-                     slot.max = math.floor(num)
-                     section.set_slot(i, slot)
+                     local min_val = slot.min or 0
+                     if num < min_val then
+                        UiSounds.play_ui_edge(ctx.pindex)
+                        ctx.controller.message:fragment({ "fa.logistics-max-must-be-at-least-min", tostring(min_val) })
+                     else
+                        slot.max = math.floor(num)
+                        section.set_slot(i, slot)
 
-                     ctx.controller.message:fragment(tostring(math.floor(num)))
-                  else
-                     UiSounds.play_ui_edge(ctx.pindex)
-                     ctx.controller.message:fragment({ "fa.logistics-invalid-number" })
+                        ctx.controller.message:fragment(tostring(math.floor(num)))
+                     end
                   end
                end
             end,
@@ -220,7 +241,7 @@ local function render_section(ctx, point_index, section_index)
          ctx.message:fragment({ "fa.logistics-add-request" })
       end,
       on_click = function(ctx)
-         ctx.controller:open_child_ui(Router.UI_NAMES.SIGNAL_CHOOSER, {}, { node = "add_filter" })
+         ctx.controller:open_child_ui(Router.UI_NAMES.SIGNAL_CHOOSER, { mode = signal_mode }, { node = "add_filter" })
       end,
       on_child_result = function(ctx, result)
          if result then

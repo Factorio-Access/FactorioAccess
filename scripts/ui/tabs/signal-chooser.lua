@@ -9,7 +9,18 @@ local mod = {}
 ---@param ctx fa.ui.graph.Ctx
 local function build_signal_tree(ctx)
    local builder = TreeChooser.TreeChooserBuilder.new()
+   local mode = ctx.global_parameters and ctx.global_parameters.mode
 
+   -- If mode is "item" or "fluid", add signals directly to root without category wrapper
+   if mode == "item" then
+      SignalHelpers.add_item_signals(builder, TreeChooser.ROOT, false, nil)
+      return builder:build()
+   elseif mode == "fluid" then
+      SignalHelpers.add_fluid_signals(builder, TreeChooser.ROOT)
+      return builder:build()
+   end
+
+   -- Default mode: show all signal types with categories
    -- Top-level signal type categories
    local signal_types = {
       {

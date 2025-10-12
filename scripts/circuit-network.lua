@@ -510,7 +510,7 @@ function mod.constant_combinator_signals_info(entity, pindex)
    for _, signal_info in ipairs(all_signals) do
       msg:list_item()
       msg:fragment(mod.localise_signal(signal_info.signal))
-      if signal_info.count > 0 then
+      if signal_info.count ~= 0 then
          msg:fragment("x")
          msg:fragment(tostring(signal_info.count))
       end
