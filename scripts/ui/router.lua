@@ -121,6 +121,7 @@ mod.UI_NAMES = {
    LOGISTICS_CONFIG = "logistics_config",
    LOGISTIC_GROUP_SELECTOR = "logistic_group_selector",
    CONSTANT_COMBINATOR = "constant_combinator",
+   POWER_SWITCH = "power_switch",
    BOX_SELECTOR = "box_selector",
    BLUEPRINT_AREA_SELECTOR = "blueprint_area_selector",
    DECON_AREA_SELECTOR = "decon_area_selector",

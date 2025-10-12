@@ -76,6 +76,7 @@ require("scripts.ui.tabs.fluid-chooser")
 require("scripts.ui.logistics-config")
 require("scripts.ui.selectors.logistic-group-selector")
 require("scripts.ui.constant-combinator")
+require("scripts.ui.power-switch")
 require("scripts.ui.circuit-navigator")
 require("scripts.ui.menus.roboport-menu")
 require("scripts.ui.menus.spidertron-menu")
@@ -677,18 +678,6 @@ function clicked_on_entity(ent, pindex)
       --For a roboport, open roboport menu
       local router = UiRouter.get_router(pindex)
       router:open_ui(UiRouter.UI_NAMES.ROBOPORT)
-   elseif ent.type == "power-switch" then
-      --Toggle it, if in manual mode
-      if Wires.has_circuit_connections(ent) then
-         Speech.speak(pindex, { "fa.observes-circuit-condition" })
-      else
-         ent.power_switch_state = not ent.power_switch_state
-         if ent.power_switch_state == true then
-            Speech.speak(pindex, { "fa.switched-on" })
-         elseif ent.power_switch_state == false then
-            Speech.speak(pindex, { "fa.switched-off" })
-         end
-      end
    elseif ent.type == "constant-combinator" then
       -- Open constant combinator UI (toggle is now in the GUI)
       EntityUI.open_entity_ui(pindex, ent)
@@ -3256,6 +3245,45 @@ EventManager.on_event(
 
             Speech.speak(pindex, { "fa.inserter-filter-cleared" })
          end
+      end
+   end
+)
+
+EventManager.on_event(
+   "fa-s-enter",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local p = game.get_player(pindex)
+      local ent = p.selected
+
+      if not ent or not ent.valid then return end
+
+      if ent.type == "constant-combinator" then
+         local cb = ent.get_control_behavior()
+         if cb then
+            cb.enabled = not cb.enabled
+            if cb.enabled then
+               Speech.speak(pindex, { "fa.switched-on" })
+            else
+               Speech.speak(pindex, { "fa.switched-off" })
+            end
+         end
+         return
+      end
+
+      if ent.type == "power-switch" then
+         local cb = ent.get_control_behavior()
+         if cb and (cb.circuit_enable_disable or cb.connect_to_logistic_network) then
+            Speech.speak(pindex, { "fa.power-switch-circuit-controlled" })
+         else
+            ent.power_switch_state = not ent.power_switch_state
+            if ent.power_switch_state then
+               Speech.speak(pindex, { "fa.switched-on" })
+            else
+               Speech.speak(pindex, { "fa.switched-off" })
+            end
+         end
+         return
       end
    end
 )

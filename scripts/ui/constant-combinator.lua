@@ -40,6 +40,11 @@ local function render_overview(ctx)
       end,
       on_click = function(ctx)
          cb.enabled = not cb.enabled
+         if cb.enabled then
+            ctx.controller.message:fragment({ "fa.constant-combinator-on" })
+         else
+            ctx.controller.message:fragment({ "fa.constant-combinator-off" })
+         end
       end,
    })
    menu:end_row()

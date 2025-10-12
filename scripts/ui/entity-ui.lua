@@ -366,6 +366,12 @@ function mod.open_entity_ui(pindex, entity)
       return true
    end
 
+   -- Special case: power switches use their own UI
+   if entity.type == "power-switch" then
+      router:open_ui(UiRouter.UI_NAMES.POWER_SWITCH, params)
+      return true
+   end
+
    -- Special case: belt-related entities use the belt analyzer
    if
       entity.type == "transport-belt"
