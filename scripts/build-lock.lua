@@ -667,6 +667,61 @@ local function attempt_build_from_queue(pindex, build_state, pending_tiles, max_
    return { action = action, tile_index = tile_index }
 end
 
+---Process the pending tiles queue, attempting to build entities
+---@param pindex number
+---@param build_state fa.BuildLock.BuildState
+---@param current_tile {x: number, y: number} Current tile position (floored)
+local function process_pending_tiles_queue(pindex, build_state, current_tile)
+   local player = game.get_player(pindex)
+   if not player then return end
+
+   local stack = player.cursor_stack
+   if not stack or not stack.valid_for_read or stack.count == 0 then return end
+
+   -- Keep processing until we can't place anything or run out of tiles
+   while #build_state.pending_tiles > 0 do
+      logger:debug(string.format("Processing queue, %d tiles pending", #build_state.pending_tiles))
+      local result = attempt_build_from_queue(
+         pindex,
+         build_state,
+         build_state.pending_tiles,
+         math.min(#build_state.pending_tiles, 10),
+         current_tile
+      )
+
+      -- If no tile selected or build failed, stop for this tick
+      if not result then break end
+
+      -- Handle action returned by backend
+      if result.action == BuildAction.PLACED then
+         -- Successfully placed - remove this tile and everything before it
+         logger:debug(string.format("Placed successfully, removing %d tiles", result.tile_index))
+         for j = 1, result.tile_index do
+            table.remove(build_state.pending_tiles, 1)
+         end
+      elseif result.action == BuildAction.RETRY then
+         -- Blocked temporarily (e.g., player in way), keep queue and stop for this tick
+         logger:debug("Build returned RETRY, stopping for this tick")
+         break
+      elseif result.action == BuildAction.SKIP then
+         -- Skip this tile permanently, remove it and continue
+         logger:debug(string.format("Build returned SKIP, removing %d tiles", result.tile_index))
+         for j = 1, result.tile_index do
+            table.remove(build_state.pending_tiles, 1)
+         end
+      end
+
+      -- Check if we ran out of items
+      stack = player.cursor_stack
+      if not stack or not stack.valid_for_read or stack.count == 0 then break end
+   end
+
+   -- If queue is too long, trim old tiles
+   while #build_state.pending_tiles > 10 do
+      table.remove(build_state.pending_tiles, 1)
+   end
+end
+
 ---Processes build lock for walking movement
 ---@param pindex number
 function BuildLock.process_walking_movement(pindex)
@@ -718,57 +773,8 @@ function BuildLock.process_walking_movement(pindex)
       end
    end
 
-   -- Process pending tiles using two-phase approach
-   -- Phase 1: Backend selects which tile to attempt
-   -- Phase 2: Backend attempts to build at selected tile
-   local stack = player.cursor_stack
-   if not stack or not stack.valid_for_read or stack.count == 0 then return end
-
-   -- Keep processing until we can't place anything or run out of tiles
-   while #walking_state.pending_tiles > 0 do
-      logger:debug(string.format("Processing queue, %d tiles pending", #walking_state.pending_tiles))
-      -- Attempt to build from queue (two-phase: select tile, then build)
-      local result = attempt_build_from_queue(
-         pindex,
-         walking_state,
-         walking_state.pending_tiles,
-         math.min(#walking_state.pending_tiles, 10),
-         current_tile
-      )
-
-      -- If no tile selected or build failed, stop for this tick
-      if not result then break end
-
-      -- Handle action returned by backend
-      if result.action == BuildAction.PLACED then
-         -- Successfully placed - remove this tile and everything before it
-         logger:debug(string.format("Placed successfully, removing %d tiles", result.tile_index))
-         for j = 1, result.tile_index do
-            table.remove(walking_state.pending_tiles, 1)
-         end
-         -- Continue to try placing more
-      elseif result.action == BuildAction.RETRY then
-         -- Blocked temporarily (e.g., player in way), keep queue and stop for this tick
-         logger:debug("Build returned RETRY, stopping for this tick")
-         break
-      elseif result.action == BuildAction.SKIP then
-         -- Skip this tile permanently, remove it and continue
-         logger:debug(string.format("Build returned SKIP, removing %d tiles", result.tile_index))
-         for j = 1, result.tile_index do
-            table.remove(walking_state.pending_tiles, 1)
-         end
-         -- Continue to try placing more
-      end
-
-      -- Check if we ran out of items
-      stack = player.cursor_stack
-      if not stack or not stack.valid_for_read or stack.count == 0 then break end
-   end
-
-   -- If queue is too long, trim old tiles
-   while #walking_state.pending_tiles > 10 do
-      table.remove(walking_state.pending_tiles, 1)
-   end
+   -- Process pending tiles queue
+   process_pending_tiles_queue(pindex, walking_state, current_tile)
 end
 
 ---Processes build lock for cursor movement
@@ -794,19 +800,35 @@ function BuildLock.process_cursor_movement(pindex, new_position, movement_direct
       return
    end
 
-   -- Check if position changed
    local cursor_state = state.cursor_state
-   local last_placed = get_last_placed_entity(cursor_state.entity_history)
+   local current_tile = {
+      x = math.floor(new_position.x),
+      y = math.floor(new_position.y),
+   }
 
-   if last_placed then
-      if last_placed.position.x == new_position.x and last_placed.position.y == new_position.y then
-         -- Same position, don't build
-         return
+   -- Check if cursor moved to a new tile
+   if cursor_state.last_floored_position then
+      local last_tile = cursor_state.last_floored_position
+      if current_tile.x ~= last_tile.x or current_tile.y ~= last_tile.y then
+         -- Cursor has moved to a new tile, generate path and add to queue
+         local path = generate_tile_path(last_tile, current_tile)
+         for _, tile in ipairs(path) do
+            table.insert(cursor_state.pending_tiles, tile)
+         end
+         cursor_state.last_floored_position = current_tile
       end
+   else
+      -- First cursor movement, initialize
+      cursor_state.last_floored_position = current_tile
+      table.insert(cursor_state.pending_tiles, {
+         x = current_tile.x,
+         y = current_tile.y,
+         direction = movement_direction,
+      })
    end
 
-   -- Attempt build at current position (no offset for cursor movement)
-   attempt_build(pindex, cursor_state, new_position, movement_direction)
+   -- Process pending tiles queue (same as walking)
+   process_pending_tiles_queue(pindex, cursor_state, current_tile)
 end
 
 ---Called when a bump is detected, disables build lock
@@ -819,7 +841,7 @@ function BuildLock.on_bump_detected(pindex)
    end
 end
 
--- Backends are registered in control.lua to avoid circular imports
+-- Backends register themselves to avoid circular imports.
 
 -- Register listener for continuous cursor movement
 Viewpoint.register_listener("cursor_moved_continuous", function(pindex, data)
