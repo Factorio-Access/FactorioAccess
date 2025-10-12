@@ -659,11 +659,13 @@ end
 --Checks a position to see if it has a water tile
 function mod.tile_is_water(surface, pos)
    local water_tiles = surface.find_tiles_filtered({
-      position = pos,
+      position = mod.center_of_tile(pos),
       radius = 0.1,
       name = Consts.WATER_TILE_NAMES,
    })
-   return (water_tiles ~= nil and #water_tiles > 0)
+   if not water_tiles then return false end
+   assert(#water_tiles <= 1)
+   return #water_tiles == 1
 end
 
 --If the cursor is over a water tile, this function is called to check if it is open water or a shore.
