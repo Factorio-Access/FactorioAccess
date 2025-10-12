@@ -47,19 +47,15 @@ local function render_signals(ctx, title, both_wires, wire_connector_id)
       return menu:build()
    end
 
-   -- Get signals from the specified wire(s)
-   local signals = CircuitNetworks.get_signals_from_entity(entity, both_wires, wire_connector_id)
+   -- Get aggregated signals from the specified wire(s)
+   local sorted_signals = CircuitNetworks.get_aggregated_signals_from_entity(entity, both_wires, wire_connector_id)
 
-   if not signals or #signals == 0 then
+   if not sorted_signals or #sorted_signals == 0 then
       menu:add_label("no_signals", function(ctx)
          ctx.message:fragment({ "fa.circuit-network-no-signals" })
       end)
       return menu:build()
    end
-
-   -- Aggregate and sort signals
-   local aggregated = CircuitNetworks.aggregate_signals(signals)
-   local sorted_signals = CircuitNetworks.sort_aggregated_signals(aggregated)
 
    -- Render each signal with expandable quality breakdown
    for i, sig_info in ipairs(sorted_signals) do

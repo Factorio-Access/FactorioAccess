@@ -213,53 +213,53 @@ function mod.localise_signal_with_count(signal_id, count)
    end
 end
 
----Create a key for grouping signals (ignoring quality)
----@param signal_id SignalID
----@return string
-local function get_signal_group_key(signal_id)
-   local signal_type = signal_id.type or "item"
-   return signal_type .. ":" .. signal_id.name
-end
-
 ---Aggregate signals from a circuit network, summing across qualities
----Returns a table mapping group keys to aggregated signal info
+---Returns a nested table: type -> name -> quality -> count
 ---@param signals Signal[]?
----@return table<string, {signal_id: SignalID, total_count: number, by_quality: table<string, number>}>
+---@return table<string, table<string, table<string, number>>>
 function mod.aggregate_signals(signals)
    if not signals then return {} end
 
    local aggregated = {}
 
    for _, signal in ipairs(signals) do
-      local key = get_signal_group_key(signal.signal)
+      local signal_type = signal.signal.type or "item"
+      local signal_name = signal.signal.name
       local quality = signal.signal.quality or "normal"
 
-      if not aggregated[key] then
-         aggregated[key] = {
-            signal_id = {
-               name = signal.signal.name,
-               type = signal.signal.type,
-               quality = "normal", -- Use normal for the base signal
-            },
-            total_count = 0,
-            by_quality = {},
-         }
-      end
-
-      aggregated[key].total_count = aggregated[key].total_count + signal.count
-      aggregated[key].by_quality[quality] = (aggregated[key].by_quality[quality] or 0) + signal.count
+      aggregated[signal_type] = aggregated[signal_type] or {}
+      aggregated[signal_type][signal_name] = aggregated[signal_type][signal_name] or {}
+      aggregated[signal_type][signal_name][quality] = (aggregated[signal_type][signal_name][quality] or 0)
+         + signal.count
    end
 
    return aggregated
 end
 
 ---Sort aggregated signals by total count (descending) then by name
----@param aggregated table<string, {signal_id: SignalID, total_count: number, by_quality: table<string, number>}>
+---Unrolls the nested table into a flat sorted array
+---@param aggregated table<string, table<string, table<string, number>>>
 ---@return {signal_id: SignalID, total_count: number, by_quality: table<string, number>}[]
 function mod.sort_aggregated_signals(aggregated)
    local sorted = {}
-   for _, info in pairs(aggregated) do
-      table.insert(sorted, info)
+
+   for signal_type, names in pairs(aggregated) do
+      for signal_name, qualities in pairs(names) do
+         local total_count = 0
+         for _, count in pairs(qualities) do
+            total_count = total_count + count
+         end
+
+         table.insert(sorted, {
+            signal_id = {
+               name = signal_name,
+               type = signal_type,
+               quality = "normal",
+            },
+            total_count = total_count,
+            by_quality = qualities,
+         })
+      end
    end
 
    table.sort(sorted, function(a, b)
@@ -326,6 +326,20 @@ function mod.get_signals_from_entity(entity, both_wires, wire_connector_id)
    end
 
    return #all_signals > 0 and all_signals or nil
+end
+
+---Get aggregated signals from an entity's circuit networks
+---Returns signals already aggregated and sorted, ready for display
+---@param entity LuaEntity
+---@param both_wires boolean If true, combine red and green networks
+---@param wire_connector_id defines.wire_connector_id? If both_wires is false, which wire to use
+---@return {signal_id: SignalID, total_count: number, by_quality: table<string, number>}[]?
+function mod.get_aggregated_signals_from_entity(entity, both_wires, wire_connector_id)
+   local signals = mod.get_signals_from_entity(entity, both_wires, wire_connector_id)
+   if not signals then return nil end
+
+   local aggregated = mod.aggregate_signals(signals)
+   return mod.sort_aggregated_signals(aggregated)
 end
 
 ---Get network ID for display purposes

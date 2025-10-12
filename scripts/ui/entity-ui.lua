@@ -15,6 +15,7 @@ local inventory = require("scripts.ui.menus.inventory")
 local gun_menu = require("scripts.ui.menus.gun-menu")
 local assembling_machine_tab = require("scripts.ui.tabs.assembling-machine")
 local circuit_network_tab = require("scripts.ui.tabs.circuit-network")
+local circuit_network_signals_tab = require("scripts.ui.tabs.circuit-network-signals")
 local inserter_config_tab = require("scripts.ui.tabs.inserter-config")
 local infinity_chest_config_tab = require("scripts.ui.tabs.infinity-chest-config")
 local infinity_pipe_config_tab = require("scripts.ui.tabs.infinity-pipe-config")
@@ -152,7 +153,22 @@ end
 local function build_circuit_network_tabs(entity)
    if not circuit_network_tab.is_available(entity) then return nil end
 
-   return { circuit_network_tab.get_tab() }
+   local tabs = {
+      circuit_network_tab.get_tab(),
+      circuit_network_signals_tab.create_signals_tab({ "fa.circuit-network-signals-all" }, true, nil),
+      circuit_network_signals_tab.create_signals_tab(
+         { "fa.circuit-network-signals-red" },
+         false,
+         defines.wire_connector_id.circuit_red
+      ),
+      circuit_network_signals_tab.create_signals_tab(
+         { "fa.circuit-network-signals-green" },
+         false,
+         defines.wire_connector_id.circuit_green
+      ),
+   }
+
+   return tabs
 end
 
 ---Get player inventory section
