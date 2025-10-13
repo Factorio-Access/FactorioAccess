@@ -23,6 +23,7 @@ local mod = {}
 ---@class fa.ui.form.FormBuilder
 ---@field entries fa.ui.menu.Entry[]
 ---@field row_keys table<string, string> Maps entry key to row key (for grouping)
+---@field accelerator_handler fun(ctx: fa.ui.graph.Ctx, accelerator_name: string)? Form-wide accelerator handler
 local FormBuilder = {}
 local FormBuilder_meta = { __index = FormBuilder }
 
@@ -32,7 +33,16 @@ function FormBuilder.new()
    return setmetatable({
       entries = {},
       row_keys = {},
+      accelerator_handler = nil,
    }, FormBuilder_meta)
+end
+
+---Set a form-wide accelerator handler that will be attached to all nodes
+---@param handler fun(ctx: fa.ui.graph.Ctx, accelerator_name: string)
+---@return fa.ui.form.FormBuilder
+function FormBuilder:set_accelerator_handler(handler)
+   self.accelerator_handler = handler
+   return self
 end
 
 ---Add a label (non-interactive display item)
@@ -119,7 +129,7 @@ end
 ---@param label LocalisedString | fun(fa.ui.graph.Ctx): LocalisedString
 ---@param get_value fun(): any Function that returns the current value
 ---@param set_value fun(any) Function that sets the new value
----@param choices {label: LocalisedString, value: any}[] Array of choices
+---@param choices {label: LocalisedString, value: any, default: boolean?}[] Array of choices
 ---@return fa.ui.form.FormBuilder
 function FormBuilder:add_choice_field(name, label, get_value, set_value, choices)
    assert(#choices > 0, "Choice field must have at least one choice")
@@ -128,6 +138,13 @@ function FormBuilder:add_choice_field(name, label, get_value, set_value, choices
       local current = get_value()
       for i, choice in ipairs(choices) do
          if choice.value == current then return i end
+      end
+      -- Value not found, look for default
+      for i, choice in ipairs(choices) do
+         if choice.default then
+            set_value(choice.value)
+            return i
+         end
       end
       error(string.format("Current value '%s' not found in choices for field '%s'", tostring(current), name))
    end
@@ -788,6 +805,13 @@ end
 ---@return fa.ui.graph.Render
 function FormBuilder:build()
    local menu_builder = Menu.MenuBuilder.new()
+
+   -- Attach accelerator handler to all vtables if one is set
+   if self.accelerator_handler then
+      for _, entry in ipairs(self.entries) do
+         if not entry.vtable.on_accelerator then entry.vtable.on_accelerator = self.accelerator_handler end
+      end
+   end
 
    -- Group entries by row
    local i = 1

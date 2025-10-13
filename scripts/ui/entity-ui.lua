@@ -372,6 +372,12 @@ function mod.open_entity_ui(pindex, entity)
       return true
    end
 
+   -- Special case: programmable speakers use their own UI
+   if entity.type == "programmable-speaker" then
+      router:open_ui(UiRouter.UI_NAMES.PROGRAMMABLE_SPEAKER, params)
+      return true
+   end
+
    -- Special case: belt-related entities use the belt analyzer
    if
       entity.type == "transport-belt"

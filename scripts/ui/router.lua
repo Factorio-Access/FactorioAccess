@@ -122,6 +122,7 @@ mod.UI_NAMES = {
    LOGISTIC_GROUP_SELECTOR = "logistic_group_selector",
    CONSTANT_COMBINATOR = "constant_combinator",
    POWER_SWITCH = "power_switch",
+   PROGRAMMABLE_SPEAKER = "programmable_speaker",
    BOX_SELECTOR = "box_selector",
    BLUEPRINT_AREA_SELECTOR = "blueprint_area_selector",
    DECON_AREA_SELECTOR = "decon_area_selector",
@@ -141,6 +142,7 @@ mod.ACCELERATORS = {
    RELOAD_WEAPONS = "reload_weapons",
    UNLOAD_GUNS = "unload_guns",
    UNLOAD_EQUIPMENT = "unload_equipment",
+   PREVIEW_SPEAKER = "preview_speaker",
 }
 
 ---@enum fa.ui.SearchResult
@@ -555,6 +557,26 @@ register_ui_event("fa-ca-s", function(event, pindex)
          if ui.on_accelerator then
             local controller = create_controller_for_event(router)
             ui:on_accelerator(pindex, mod.ACCELERATORS.SELECT_SIGNAL, nil, controller)
+            controller:finalize()
+            return EventManager.FINISHED
+         end
+      end
+   end
+   return nil
+end)
+
+register_ui_event("fa-p", function(event, pindex)
+   local router = mod.get_router(pindex)
+   local stack = router_state[pindex].ui_stack
+
+   if #stack > 0 then
+      local top_entry = stack[#stack]
+      local ui_name = top_entry.name
+      if registered_uis[ui_name] then
+         local ui = registered_uis[ui_name]
+         if ui.on_accelerator then
+            local controller = create_controller_for_event(router)
+            ui:on_accelerator(pindex, mod.ACCELERATORS.PREVIEW_SPEAKER, nil, controller)
             controller:finalize()
             return EventManager.FINISHED
          end

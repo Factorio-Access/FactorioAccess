@@ -29,42 +29,19 @@ function mod.is_available(entity)
    return descriptor.fields and #descriptor.fields > 0
 end
 
----Render the circuit network configuration form
----@param ctx fa.ui.graph.Ctx
----@return fa.ui.graph.Render?
-local function render_circuit_network(ctx)
-   local entity = ctx.global_parameters and ctx.global_parameters.entity
-   if not entity or not entity.valid then return nil end
+---Add control behavior fields to a FormBuilder based on entity's control behavior type
+---@param builder fa.ui.form.FormBuilder The FormBuilder to add fields to
+---@param entity LuaEntity The entity whose control behavior to use
+---@return boolean success Whether fields were added successfully
+function mod.add_control_behavior_fields(builder, entity)
+   if not entity or not entity.valid then return false end
 
    local control_behavior = entity.get_control_behavior()
-   if not control_behavior then
-      ctx.controller.message:fragment({ "fa.circuit-network-no-control-behavior" })
-      return nil
-   end
+   if not control_behavior then return false end
 
    -- Get the descriptor for this control behavior type
    local descriptor = ControlBehaviorDescriptors.describe_control_behavior(control_behavior.type)
-   if not descriptor or not descriptor.fields or #descriptor.fields == 0 then
-      ctx.controller.message:fragment({ "fa.circuit-network-no-fields" })
-      return nil
-   end
-
-   local builder = FormBuilder.FormBuilder.new()
-
-   -- Add network ID info at the top
-   local red_network_id = CircuitNetwork.get_network_id_string(entity, defines.wire_connector_id.circuit_red)
-   local green_network_id = CircuitNetwork.get_network_id_string(entity, defines.wire_connector_id.circuit_green)
-
-   if red_network_id ~= "nil" or green_network_id ~= "nil" then
-      builder:add_label("network_info", function(ctx)
-         if red_network_id ~= "nil" then ctx.message:fragment({ "fa.circuit-network-in-red", red_network_id }) end
-         if green_network_id ~= "nil" then ctx.message:fragment({ "fa.circuit-network-in-green", green_network_id }) end
-      end)
-   else
-      builder:add_label("network_info", function(ctx)
-         ctx.message:fragment({ "fa.circuit-network-not-connected" })
-      end)
-   end
+   if not descriptor or not descriptor.fields or #descriptor.fields == 0 then return false end
 
    -- Build form fields from descriptor
    for _, field in ipairs(descriptor.fields) do
@@ -138,6 +115,49 @@ local function render_circuit_network(ctx)
          end, field.choices)
       end
    end
+
+   return true
+end
+
+---Render the circuit network configuration form
+---@param ctx fa.ui.graph.Ctx
+---@return fa.ui.graph.Render?
+local function render_circuit_network(ctx)
+   local entity = ctx.global_parameters and ctx.global_parameters.entity
+   if not entity or not entity.valid then return nil end
+
+   local control_behavior = entity.get_control_behavior()
+   if not control_behavior then
+      ctx.controller.message:fragment({ "fa.circuit-network-no-control-behavior" })
+      return nil
+   end
+
+   -- Get the descriptor for this control behavior type
+   local descriptor = ControlBehaviorDescriptors.describe_control_behavior(control_behavior.type)
+   if not descriptor or not descriptor.fields or #descriptor.fields == 0 then
+      ctx.controller.message:fragment({ "fa.circuit-network-no-fields" })
+      return nil
+   end
+
+   local builder = FormBuilder.FormBuilder.new()
+
+   -- Add network ID info at the top
+   local red_network_id = CircuitNetwork.get_network_id_string(entity, defines.wire_connector_id.circuit_red)
+   local green_network_id = CircuitNetwork.get_network_id_string(entity, defines.wire_connector_id.circuit_green)
+
+   if red_network_id ~= "nil" or green_network_id ~= "nil" then
+      builder:add_label("network_info", function(ctx)
+         if red_network_id ~= "nil" then ctx.message:fragment({ "fa.circuit-network-in-red", red_network_id }) end
+         if green_network_id ~= "nil" then ctx.message:fragment({ "fa.circuit-network-in-green", green_network_id }) end
+      end)
+   else
+      builder:add_label("network_info", function(ctx)
+         ctx.message:fragment({ "fa.circuit-network-not-connected" })
+      end)
+   end
+
+   -- Add control behavior fields
+   mod.add_control_behavior_fields(builder, entity)
 
    return builder:build()
 end
