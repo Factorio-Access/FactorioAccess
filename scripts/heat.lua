@@ -188,4 +188,18 @@ function mod.get_total_heat_connections(ent)
    return total
 end
 
+---Returns the total number of valid heat pipe connections for the given entity.
+---Counts only heat-pipe-to-heat-pipe connections, excluding other heat entities.
+---@param ent LuaEntity
+---@return integer
+function mod.get_total_heat_pipe_connections(ent)
+   local total = 0
+   local cps = mod.get_connection_points(ent)
+   for _, cp in ipairs(cps) do
+      local neighbors = mod.get_connected_neighbors(ent, cp, true)
+      total = total + #neighbors
+   end
+   return total
+end
+
 return mod

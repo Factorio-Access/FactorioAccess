@@ -524,23 +524,25 @@ local function ent_info_pipe_shape(ctx)
       local s, d = shape_info.shape, shape_info.direction
       local d_str = FaUtils.direction_lookup(d)
       local conns = ctx.ent.fluidbox.get_pipe_connections(1)
-      local conn_count = 0
+      local pipe_conn_count = 0
       for _, c in pairs(conns) do
-         if c.target then conn_count = conn_count + 1 end
+         if c.target and (c.target.owner.type == "pipe" or c.target.owner.type == "infinity-pipe") then
+            pipe_conn_count = pipe_conn_count + 1
+         end
       end
 
       -- We must be careful.  Pipe shapes do not account for other kinds of connection, so we must compare with the
       -- expected count as well. Otherwise we will say that a pipe is both connected and not connected at the same time.
 
       -- This is just a boring if table which appends fragments.  no special logic here.
-      if s == NetworkShape.SHAPE.END and conn_count == 1 then
+      if s == NetworkShape.SHAPE.END and pipe_conn_count == 1 then
          ctx.message:fragment({ "fa.ent-info-pipe-end", FaUtils.direction_lookup(FaUtils.rotate_180(d)) })
-      elseif s == NetworkShape.SHAPE.ALONE and conn_count == 0 then
+      elseif s == NetworkShape.SHAPE.ALONE and pipe_conn_count == 0 then
          ctx.message:fragment({ "fa.ent-info-pipe-alone" })
-      elseif s == NetworkShape.SHAPE.STRAIGHT and conn_count == 2 then
+      elseif s == NetworkShape.SHAPE.STRAIGHT and pipe_conn_count == 2 then
          local key = d == defines.direction.north and "fa.ent-info-pipe-vertical" or "fa.ent-info-pipe-horizontal"
          ctx.message:fragment({ key })
-      elseif s == NetworkShape.SHAPE.CORNER and conn_count == 2 then
+      elseif s == NetworkShape.SHAPE.CORNER and pipe_conn_count == 2 then
          local c1, c2
          if d == defines.direction.northwest then
             c1 = defines.direction.south
@@ -559,7 +561,7 @@ local function ent_info_pipe_shape(ctx)
          end
 
          ctx.message:fragment({ "fa.ent-info-pipe-corner", FaUtils.direction_lookup(c1), FaUtils.direction_lookup(c2) })
-      elseif s == NetworkShape.SHAPE.CROSS and conn_count == 4 then
+      elseif s == NetworkShape.SHAPE.CROSS and pipe_conn_count == 4 then
          ctx.message:fragment({ "fa.ent-info-pipe-cross" })
       elseif s == NetworkShape.SHAPE.T then
          local key = "fa.ent-info-pipe-t-vertical"
@@ -666,20 +668,20 @@ local function ent_info_heat_pipe_shape(ctx)
       local shape_info = Heat.get_pipe_shape(ctx.ent)
       local s, d = shape_info.shape, shape_info.direction
       local d_str = FaUtils.direction_lookup(d)
-      local conn_count = Heat.get_total_heat_connections(ctx.ent)
+      local pipe_conn_count = Heat.get_total_heat_pipe_connections(ctx.ent)
 
       -- We must be careful.  Pipe shapes do not account for other kinds of connection, so we must compare with the
       -- expected count as well. Otherwise we will say that a pipe is both connected and not connected at the same time.
 
       -- This is just a boring if table which appends fragments.  no special logic here.
-      if s == NetworkShape.SHAPE.END and conn_count == 1 then
+      if s == NetworkShape.SHAPE.END and pipe_conn_count == 1 then
          ctx.message:fragment({ "fa.ent-info-pipe-end", FaUtils.direction_lookup(FaUtils.rotate_180(d)) })
-      elseif s == NetworkShape.SHAPE.ALONE and conn_count == 0 then
+      elseif s == NetworkShape.SHAPE.ALONE and pipe_conn_count == 0 then
          ctx.message:fragment({ "fa.ent-info-pipe-alone" })
-      elseif s == NetworkShape.SHAPE.STRAIGHT and conn_count == 2 then
+      elseif s == NetworkShape.SHAPE.STRAIGHT and pipe_conn_count == 2 then
          local key = d == defines.direction.north and "fa.ent-info-pipe-vertical" or "fa.ent-info-pipe-horizontal"
          ctx.message:fragment({ key })
-      elseif s == NetworkShape.SHAPE.CORNER and conn_count == 2 then
+      elseif s == NetworkShape.SHAPE.CORNER and pipe_conn_count == 2 then
          local c1, c2
          if d == defines.direction.northwest then
             c1 = defines.direction.south
@@ -698,7 +700,7 @@ local function ent_info_heat_pipe_shape(ctx)
          end
 
          ctx.message:fragment({ "fa.ent-info-pipe-corner", FaUtils.direction_lookup(c1), FaUtils.direction_lookup(c2) })
-      elseif s == NetworkShape.SHAPE.CROSS and conn_count == 4 then
+      elseif s == NetworkShape.SHAPE.CROSS and pipe_conn_count == 4 then
          ctx.message:fragment({ "fa.ent-info-pipe-cross" })
       elseif s == NetworkShape.SHAPE.T then
          local key = "fa.ent-info-pipe-t-vertical"
