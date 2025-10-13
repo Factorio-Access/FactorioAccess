@@ -2719,7 +2719,7 @@ EventManager.on_event(
 
 -- Circuit network navigator (Ctrl+Alt+N key)
 EventManager.on_event(
-   "fa-ca-n",
+   "fa-c-n",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       local player = game.get_player(pindex)

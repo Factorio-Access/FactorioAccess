@@ -360,8 +360,8 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "fa-ca-n",
-      key_sequence = "CONTROL + ALT + N",
+      name = "fa-c-n",
+      key_sequence = "CONTROL + N",
       consuming = "none",
    },
 
