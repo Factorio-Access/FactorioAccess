@@ -227,13 +227,6 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "fa-a-t",
-      key_sequence = "ALT + T",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
       name = "fa-s-t",
       key_sequence = "SHIFT + T",
       consuming = "none",
@@ -455,13 +448,6 @@ data:extend({
       type = "custom-input",
       name = "fa-cs-x",
       key_sequence = "CONTROL + SHIFT + X",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-c-x",
-      key_sequence = "CONTROL + X",
       consuming = "none",
    },
 
@@ -752,20 +738,6 @@ data:extend({
       type = "custom-input",
       name = "fa-ca-rightbracket",
       key_sequence = "CONTROL + ALT + RIGHTBRACKET",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-a-left",
-      key_sequence = "ALT + LEFT",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-a-right",
-      key_sequence = "ALT + RIGHT",
       consuming = "none",
    },
 
