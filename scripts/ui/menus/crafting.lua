@@ -58,10 +58,10 @@ local function handle_recipe_click(ctx, recipe, modifiers)
    local player = ctx.player
    local count = 1
 
-   if modifiers.shift then
-      count = 5
-   elseif modifiers.control then
+   if modifiers.shift and modifiers.control then
       count = get_craftable_count(player, recipe)
+   elseif modifiers.shift then
+      count = 5
    end
 
    if count == 0 then

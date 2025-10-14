@@ -279,8 +279,8 @@ local function render_inventory_grid(ctx)
             local cursor_stack = player.cursor_stack
             local inv_stack = inv[slot_index]
 
-            -- CTRL+SHIFT+[ : Equip from slot, repair item in slot, or quick transfer full stack
-            if click_ctx.modifiers.shift and click_ctx.modifiers.control then
+            -- CTRL+SHIFT+[ : Use item (equip from slot or repair item in slot)
+            if click_ctx.modifiers.control and click_ctx.modifiers.shift then
                -- Check if hand has repair pack
                if cursor_stack and cursor_stack.valid_for_read and cursor_stack.is_repair_tool then
                   -- Repair item in this slot
@@ -297,7 +297,13 @@ local function render_inventory_grid(ctx)
                   return
                end
 
-               -- Fallback: Quick transfer if sibling is configured
+               -- No action available
+               click_ctx.controller.message:fragment({ "fa.ui-inventory-no-action" })
+               return
+            end
+
+            -- SHIFT+[ : Quick transfer full stack
+            if click_ctx.modifiers.shift then
                if ctx.parameters.sibling_entity and ctx.parameters.sibling_inventory_id then
                   InventoryUtils.quick_transfer(
                      click_ctx.pindex,
@@ -311,7 +317,7 @@ local function render_inventory_grid(ctx)
                   return
                end
 
-               -- No action available
+               -- No sibling configured
                click_ctx.controller.message:fragment({ "fa.ui-inventory-no-action" })
                return
             end
@@ -336,8 +342,8 @@ local function render_inventory_grid(ctx)
             end
          end,
          on_right_click = function(click_ctx)
-            -- CTRL + SHIFT+] : Quick transfer half stack
-            if click_ctx.modifiers.shift and click_ctx.modifiers.control then
+            -- SHIFT+] : Quick transfer half stack
+            if click_ctx.modifiers.shift then
                if ctx.parameters.sibling_entity and ctx.parameters.sibling_inventory_id then
                   local inv_stack = inv[slot_index]
                   if inv_stack and inv_stack.valid_for_read then

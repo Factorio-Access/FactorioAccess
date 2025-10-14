@@ -701,22 +701,15 @@ data:extend({
 
    {
       type = "custom-input",
+      name = "fa-s-rightbracket",
+      key_sequence = "SHIFT + RIGHTBRACKET",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
       name = "fa-cs-leftbracket",
       key_sequence = "CONTROL + SHIFT + LEFTBRACKET",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-c-leftbracket",
-      key_sequence = "CONTROL + LEFTBRACKET",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-c-rightbracket",
-      key_sequence = "CONTROL + RIGHTBRACKET",
       consuming = "none",
    },
 
@@ -789,20 +782,6 @@ data:extend({
       type = "custom-input",
       name = "fa-t",
       key_sequence = "T",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-a-q",
-      key_sequence = "ALT + Q",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-cas-q",
-      key_sequence = "CONTROL + SHIFT + ALT + Q",
       consuming = "none",
    },
 
@@ -1092,13 +1071,6 @@ data:extend({
       type = "custom-input",
       name = "fa-cas-l",
       key_sequence = "CONTROL + SHIFT + ALT + L",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-a-l",
-      key_sequence = "ALT + L",
       consuming = "none",
    },
 

@@ -48,10 +48,10 @@ local function render_crafting_queue(ctx)
             on_click = function(click_ctx)
                -- Cancel crafting
                local count = 1
-               if click_ctx.modifiers.shift then
-                  count = 5
-               elseif click_ctx.modifiers.control then
+               if click_ctx.modifiers.shift and click_ctx.modifiers.control then
                   count = queue_item.count
+               elseif click_ctx.modifiers.shift then
+                  count = 5
                end
 
                -- Cancel the crafting

@@ -79,7 +79,7 @@ local function handle_tech_click(ctx, tech, modifiers)
    end
 
    -- Determine queue position
-   local queue_index = modifiers.control and 1 or nil -- nil means end of queue
+   local queue_index = (modifiers.control and modifiers.shift) and 1 or nil -- nil means end of queue
 
    -- Use Research module's enqueue function
    local message, success = Research.enqueue(ctx.player, tech.name, queue_index)

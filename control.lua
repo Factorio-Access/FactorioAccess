@@ -3451,30 +3451,6 @@ local function kb_alternate_build(event)
 end
 
 EventManager.on_event(
-   "fa-c-leftbracket",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-      local stack = game.get_player(pindex).cursor_stack
-
-      if stack ~= nil and stack.valid_for_read and stack.valid then kb_alternate_build(event) end
-   end
-)
-
-EventManager.on_event(
-   "fa-c-rightbracket",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-
-      --[[Imitates vanilla behavior:
-   * Control click an item in an inventory to try smart transfer HALF of it.
-   * Control click an empty slot to try to smart transfer HALF of all items from that inventory.
-   ]]
-   end
-)
-
-EventManager.on_event(
    "fa-ca-rightbracket",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
@@ -3688,23 +3664,6 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       kb_read_time_and_research_progress(event)
-   end
-)
-
-EventManager.on_event(
-   "fa-a-q",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      Research.queue_announce(pindex)
-   end
-)
-
---Clear the research queue
-EventManager.on_event(
-   "fa-cas-q",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      Research.clear_queue(pindex)
    end
 )
 
@@ -4242,22 +4201,6 @@ EventManager.on_event("fa-cas-r", function(event, pindex)
       "Reloading mod scripts (control.lua). Note: This does not reload localizations or prototypes. For full reload including translations, restart Factorio."
    )
    game.reload_script()
-end)
-
-EventManager.on_event("fa-a-l", function(event)
-   local pindex = event.player_index
-   local p = game.get_player(pindex)
-   local c = p.character
-   if not c then return end
-
-   local p = c.get_logistic_point(defines.logistic_member_index.character_requester)
-   if not p then return end
-
-   if p.enabled then
-      Speech.speak(pindex, { "fa.resumed-personal-logistics" })
-   else
-      Speech.speak(pindex, { "fa.paused-personal-logistics" })
-   end
 end)
 
 EventManager.on_event(
