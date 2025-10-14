@@ -3427,7 +3427,7 @@ EventManager.on_event(
       assert(player)
       if not player.cursor_stack.valid_for_read then return end
 
-      if player.cursor_stack.type == "repair-tool" then
+      if player.cursor_stack.is_repair_tool then
          kb_repair_area(event)
       else
          kb_equip_item(event)
