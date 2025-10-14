@@ -3423,9 +3423,15 @@ EventManager.on_event(
    "fa-cs-leftbracket",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      if storage.players[pindex].last_click_tick == event.tick then return end
+      local player = game.players[pindex]
+      assert(player)
+      if not player.cursor_stack.valid_for_read then return end
 
-      kb_repair_area(event)
+      if player.cursor_stack.type == "repair-tool" then
+         kb_repair_area(event)
+      else
+         kb_equip_item(event)
+      end
    end
 )
 
