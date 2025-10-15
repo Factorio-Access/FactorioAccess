@@ -237,7 +237,12 @@ local function ent_info_accumulator(ctx)
    if ent.type == "accumulator" then
       local level = math.ceil(ent.energy / ent.electric_buffer_size * 100) --In percentage
       local charge = math.ceil(ent.energy)
-      ctx.message:fragment({ "fa.ent-info-accumulator-charge", level, Electrical.get_power_string(charge) })
+      ctx.message:fragment({
+         "fa.ent-info-accumulator-charge",
+         level,
+         Electrical.get_power_string(charge),
+         Electrical.get_power_string(ent.electric_buffer_size),
+      })
    end
 end
 
