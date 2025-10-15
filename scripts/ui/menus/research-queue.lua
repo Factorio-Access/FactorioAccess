@@ -60,8 +60,7 @@ local function render_research_queue(ctx)
             player.force.research_queue = new_queue
 
             -- Announce what was removed
-            click_ctx.message:fragment({ "fa.research-queue-removed" })
-            click_ctx.message:fragment(get_tech_name(tech))
+            click_ctx.message:fragment({ "fa.research-queue-removed", get_tech_name(tech) })
          end,
       })
    end
