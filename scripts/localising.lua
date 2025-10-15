@@ -160,7 +160,7 @@ local function wrapped_pcall(f)
 end
 
 -- Build a localised string which will announce the localised_x field or, if not present, the name.
----@param what { name: string, localised_name: LocalisedString } | LuaItemStack | LuaEntity | LuaPrototypeBase
+---@param what { name: string, localised_name: LocalisedString? } | LuaItemStack | LuaEntity | LuaPrototypeBase
 ---@return LocalisedString
 function mod.get_localised_name_with_fallback(what)
    assert(what ~= nil, "get_localised_name_with_fallback called with nil")
