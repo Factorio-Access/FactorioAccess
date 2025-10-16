@@ -26,6 +26,7 @@ We now deploy automatic updates for everything except the game's config file.  T
     browser to save it.
   - You may need to update this file from time to time. We will hopefully apply updates through the launcher for you
     soon.
+- If you bought space age, disable the elevated rails, space age, and quality mods in the launcher's mods menu.
 
 ## Reporting
 
