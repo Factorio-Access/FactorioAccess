@@ -8,15 +8,15 @@ being used to partially replace less ideal code as a midpoint on the path to a
 proper UI system.  The goal is for this to become a detail inside a declared UI
 hierarchy.
 
-These cannot be saved in global, and are intentionally blocked from doing so.
+These cannot be saved in storage, and are intentionally blocked from doing so.
 They are static config.  That restriction will be lifted in future, but we are
-not yet at the point of ephemeral global state.
+not yet at the point of ephemeral state.
 
 First, you declare your UI:
 
 ```
-local multistate_switch = require('scripts.ui.low-level.multistate-switch')
 local F = require('scripts.field-ref')
+local multistate_switch = require('scripts.ui.low-level.multistate-switch')
 
 local switch = multistate_switch.create({
    on_off_field = F.controloler.something_boolean,
@@ -48,19 +48,19 @@ local cur_label = switch.current(e)
 Note that this abstraction does not care whether the entity is really a factorio
 entity.  Tables work, for example.
 ]]
-local circular_list = require("scripts.ds.circular-options-list")
+local circular_list = require("ds.circular-options-list")
 local F = require("scripts.field-ref") -- for self-tests
 local methods = require("scripts.methods")
 
 local mod = {}
 
---- @alias MultistateSwitchChoices { [1]: any, [2]: string }[]
+---@alias MultistateSwitchChoices { [1]: any, [2]: string }[]
 
---- @class MultistateSwitchOptions
---- @field on_off_field FieldRef A boolean field which will toggle it on or off.
---- @field state_field FieldRef The field that contains the state value.
---- @field off_label string The label to use for the off state.
---- @field choices MultistateSwitchChoices The choices for the on states.
+---@class MultistateSwitchOptions
+---@field on_off_field FieldRef A boolean field which will toggle it on or off.
+---@field state_field FieldRef The field that contains the state value.
+---@field off_label string The label to use for the off state.
+---@field choices MultistateSwitchChoices The choices for the on states.
 
 local function get_cur_key(instance, from_what)
    return { instance.on_off_field.get(from_what), instance.state_field.get(from_what) }
@@ -84,44 +84,44 @@ local function generic_movement(instance, entity, calling, do_set)
 end
 
 -- Our methods are just 3 variations on the above.
---- @class MultistateSwitch
+---@class MultistateSwitch
 local multistate_methods = {}
 
---- @param entity table<any, any>
---- @returns string
+---@param entity table<any, any>
+---@return string
 function multistate_methods:prev(entity)
    return generic_movement(self, entity, circular_list.prev, true)
 end
 
---- @param entity table<any, any>
---- @returns string
+---@param entity table<any, any>
+---@return string
 function multistate_methods:next(entity)
    return generic_movement(self, entity, circular_list.next, true)
 end
 
---- @param entity table<any, any>
---- @returns string
+---@param entity table<any, any>
+---@return string
 function multistate_methods:current(entity)
    return generic_movement(self, entity, circular_list.current, false)
 end
 
 local linker = methods.link("multistate-switch", multistate_methods)
 
---- @param opts MultistateSwitchOptions
---- @returns MultistateSwitch
+---@param opts MultistateSwitchOptions
+---@return MultistateSwitch
 function mod.create(opts)
    -- What we are actually going to do is compile to a circular list and save
    -- that.
    local instance = {
       on_off_field = opts.on_off_field,
       state_field = opts.state_field,
-      __no_global = function() end,
+      __no_storage = function() end,
    }
 
    -- Our keys are { onoff, state } and values { label = message }, using the
    -- wildcard to capture all the off states into one entry.
 
-   choices = {
+   local choices = {
       { { false, circular_list.ANY }, { label = opts.off_label } },
    }
 
@@ -148,27 +148,27 @@ local test_switch = mod.create({
    },
 })
 
-assert(test_switch.current(fake_entity) == "is off")
+assert(test_switch:current(fake_entity) == "is off")
 
-assert(test_switch.next(fake_entity) == "is 0")
+assert(test_switch:next(fake_entity) == "is 0")
 assert(fake_entity.on == true)
 assert(fake_entity.state == 0)
 
-assert(test_switch.next(fake_entity) == "is 1")
+assert(test_switch:next(fake_entity) == "is 1")
 assert(fake_entity.on == true)
 assert(fake_entity.state == 1)
 
-assert(test_switch.next(fake_entity) == "is 2")
+assert(test_switch:next(fake_entity) == "is 2")
 assert(fake_entity.on == true)
 assert(fake_entity.state == 2)
 
-assert(test_switch.next(fake_entity) == "is off")
+assert(test_switch:next(fake_entity) == "is off")
 assert(fake_entity.on == false)
 -- When switching to off, the other property is left alone.
 assert(fake_entity.state == 2)
 
-assert(test_switch.prev(fake_entity) == "is 2")
-assert(test_switch.prev(fake_entity) == "is 1")
+assert(test_switch:prev(fake_entity) == "is 2")
+assert(test_switch:prev(fake_entity) == "is 1")
 assert(fake_entity.on == true)
 assert(fake_entity.state == 1)
 

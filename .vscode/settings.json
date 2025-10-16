@@ -17,12 +17,22 @@
       "deprecated",
       "need-check-nil"
    ],
-   "Lua.workspace.library": [
-      "c:\\Program Files\\Factorio\\data"
-   ],
    "Lua.workspace.checkThirdParty": "ApplyInMemory",
    "Lua.runtime.version": "Lua 5.2",
    "[lua]": {
       "editor.defaultFormatter": "JohnnyMorganz.stylua"
-   }
+   },
+   "editor.rulers": [
+      120
+   ],
+   "cSpell.words": [
+      "Factorio",
+      "Kontrol",
+      "Kruise",
+      "localised",
+      "pindex"
+   ],
+   "Lua.workspace.userThirdParty": [
+      "c:\\Users\\austin\\AppData\\Roaming\\Code\\User\\workspaceStorage\\fc56fb59ba6ed3eb8345f3d950119ed6\\justarandomgeek.factoriomod-debug\\sumneko-3rd"
+   ]
 }

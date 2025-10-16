@@ -1,11 +1,13 @@
 --Here: The tutorial system
 
+local Speech = require("scripts.speech")
+
 local mod = {}
 
 --The tutorial strings are fetched according to locale, with the main set of tutorial strings being im English ("en").
 --Other locales are expected to have the same arrangement of tutorial steps.
 function mod.load_tutorial(pindex)
-   local tutorial = players[pindex].tutorial
+   local tutorial = storage.players[pindex].tutorial
    local p = game.get_player(pindex)
    tutorial = {}
 
@@ -100,44 +102,68 @@ function mod.load_tutorial(pindex)
    tutorial.starting_fuel_provided = false
 
    --Done
-   players[pindex].tutorial = tutorial
+   storage.players[pindex].tutorial = tutorial
 end
 
 function mod.read_current_step(pindex)
-   local tutorial = players[pindex].tutorial
+   local tutorial = storage.players[pindex].tutorial
    if tutorial == nil then
       mod.load_tutorial(pindex)
-      mod.run_tutorial_menu(pindex, players[pindex].tutorial.reading_the_header, players[pindex].tutorial.clicked)
+      mod.run_tutorial_menu(
+         pindex,
+         storage.players[pindex].tutorial.reading_the_header,
+         storage.players[pindex].tutorial.clicked
+      )
       return
    end
-   players[pindex].tutorial = tutorial
-   mod.run_tutorial_menu(pindex, players[pindex].tutorial.reading_the_header, players[pindex].tutorial.clicked)
+   storage.players[pindex].tutorial = tutorial
+   mod.run_tutorial_menu(
+      pindex,
+      storage.players[pindex].tutorial.reading_the_header,
+      storage.players[pindex].tutorial.clicked
+   )
 end
 
 function mod.toggle_header_detail(pindex)
-   local tutorial = players[pindex].tutorial
+   local tutorial = storage.players[pindex].tutorial
    if tutorial == nil then
       mod.load_tutorial(pindex)
-      mod.run_tutorial_menu(pindex, players[pindex].tutorial.reading_the_header, players[pindex].tutorial.clicked)
+      mod.run_tutorial_menu(
+         pindex,
+         storage.players[pindex].tutorial.reading_the_header,
+         storage.players[pindex].tutorial.clicked
+      )
       return
    end
    tutorial.reading_the_header = not tutorial.reading_the_header
-   players[pindex].tutorial = tutorial
-   mod.run_tutorial_menu(pindex, players[pindex].tutorial.reading_the_header, players[pindex].tutorial.clicked)
+   storage.players[pindex].tutorial = tutorial
+   mod.run_tutorial_menu(
+      pindex,
+      storage.players[pindex].tutorial.reading_the_header,
+      storage.players[pindex].tutorial.clicked
+   )
 end
 
 --Reads the header in detail mode and vice versa.
 function mod.read_other_once(pindex)
-   local tutorial = players[pindex].tutorial
+   local tutorial = storage.players[pindex].tutorial
    if tutorial == nil then mod.load_tutorial(pindex) end
-   mod.run_tutorial_menu(pindex, not players[pindex].tutorial.reading_the_header, players[pindex].tutorial.clicked)
+   mod.run_tutorial_menu(
+      pindex,
+      not storage.players[pindex].tutorial.reading_the_header,
+      storage.players[pindex].tutorial.clicked
+   )
 end
 
 function mod.prev_step(pindex)
-   local tutorial = players[pindex].tutorial
+   local tutorial = storage.players[pindex].tutorial
    if tutorial == nil then
       mod.load_tutorial(pindex)
-      mod.run_tutorial_menu(pindex, players[pindex].tutorial.reading_the_header, players[pindex].tutorial.clicked)
+      mod.run_tutorial_menu(
+         pindex,
+         storage.players[pindex].tutorial.reading_the_header,
+         storage.players[pindex].tutorial.clicked
+      )
       return
    end
    tutorial.step_index = tutorial.step_index - 1
@@ -163,15 +189,23 @@ function mod.prev_step(pindex)
    game.get_player(pindex).play_sound({ path = "Inventory-Move" })
 
    --Load menu
-   players[pindex].tutorial = tutorial
-   mod.run_tutorial_menu(pindex, players[pindex].tutorial.reading_the_header, players[pindex].tutorial.clicked)
+   storage.players[pindex].tutorial = tutorial
+   mod.run_tutorial_menu(
+      pindex,
+      storage.players[pindex].tutorial.reading_the_header,
+      storage.players[pindex].tutorial.clicked
+   )
 end
 
 function mod.prev_chapter(pindex)
-   local tutorial = players[pindex].tutorial
+   local tutorial = storage.players[pindex].tutorial
    if tutorial == nil then
       mod.load_tutorial(pindex)
-      mod.run_tutorial_menu(pindex, players[pindex].tutorial.reading_the_header, players[pindex].tutorial.clicked)
+      mod.run_tutorial_menu(
+         pindex,
+         storage.players[pindex].tutorial.reading_the_header,
+         storage.players[pindex].tutorial.clicked
+      )
       return
    end
    tutorial.step_index = 1
@@ -187,18 +221,25 @@ function mod.prev_chapter(pindex)
    game.get_player(pindex).play_sound({ path = "Inventory-Move" })
 
    --Load menu
-   players[pindex].tutorial = tutorial
-   mod.run_tutorial_menu(pindex, players[pindex].tutorial.reading_the_header, players[pindex].tutorial.clicked)
+   storage.players[pindex].tutorial = tutorial
+   mod.run_tutorial_menu(
+      pindex,
+      storage.players[pindex].tutorial.reading_the_header,
+      storage.players[pindex].tutorial.clicked
+   )
 end
 
 function mod.next_step(pindex)
-   local tutorial = players[pindex].tutorial
-   if tutorial == nil then
+   if storage.players[pindex].tutorial == nil then
       mod.load_tutorial(pindex)
-      mod.run_tutorial_menu(pindex, players[pindex].tutorial.reading_the_header, players[pindex].tutorial.clicked)
+      mod.run_tutorial_menu(
+         pindex,
+         storage.players[pindex].tutorial.reading_the_header,
+         storage.players[pindex].tutorial.clicked
+      )
       return
    end
-   local tutorial = players[pindex].tutorial
+   local tutorial = storage.players[pindex].tutorial
    tutorial.step_index = tutorial.step_index + 1
 
    --End of Chapter 0
@@ -228,15 +269,23 @@ function mod.next_step(pindex)
    game.get_player(pindex).play_sound({ path = "Inventory-Move" })
 
    --Load menu
-   players[pindex].tutorial = tutorial
-   mod.run_tutorial_menu(pindex, players[pindex].tutorial.reading_the_header, players[pindex].tutorial.clicked)
+   storage.players[pindex].tutorial = tutorial
+   mod.run_tutorial_menu(
+      pindex,
+      storage.players[pindex].tutorial.reading_the_header,
+      storage.players[pindex].tutorial.clicked
+   )
 end
 
 function mod.next_chapter(pindex)
-   local tutorial = players[pindex].tutorial
+   local tutorial = storage.players[pindex].tutorial
    if tutorial == nil then
       mod.load_tutorial(pindex)
-      mod.run_tutorial_menu(pindex, players[pindex].tutorial.reading_the_header, players[pindex].tutorial.clicked)
+      mod.run_tutorial_menu(
+         pindex,
+         storage.players[pindex].tutorial.reading_the_header,
+         storage.players[pindex].tutorial.clicked
+      )
       return
    end
    tutorial.step_index = 1
@@ -252,34 +301,38 @@ function mod.next_chapter(pindex)
    game.get_player(pindex).play_sound({ path = "Inventory-Move" })
 
    --Load menu
-   players[pindex].tutorial = tutorial
-   mod.run_tutorial_menu(pindex, players[pindex].tutorial.reading_the_header, players[pindex].tutorial.clicked)
+   storage.players[pindex].tutorial = tutorial
+   mod.run_tutorial_menu(
+      pindex,
+      storage.players[pindex].tutorial.reading_the_header,
+      storage.players[pindex].tutorial.clicked
+   )
 end
 
 --Read the header part of a step, which inlcudes its header text (summary) and its step count.
 function mod.read_current_header(pindex)
-   local tutorial = players[pindex].tutorial
+   local tutorial = storage.players[pindex].tutorial
    local i = tutorial.chapter_index
    local j = tutorial.step_index
    local str = tutorial.step_headers[i][j]
    local str2 = ", tutorial step " .. j .. " of " .. tutorial.chapter_lengths[i] .. " in chapter " .. i
    str = { "", str, str2 }
-   printout(str, pindex)
+   Speech.speak(pindex, str)
    game.get_player(pindex).print(str, { volume_modifier = 0 })
 end
 
 function mod.read_current_detail(pindex)
-   local tutorial = players[pindex].tutorial
+   local tutorial = storage.players[pindex].tutorial
    local i = tutorial.chapter_index
    local j = tutorial.step_index
    local str = tutorial.step_details[i][j]
    local str_h = tutorial.step_headers[i][j]
-   printout(str, pindex)
+   Speech.speak(pindex, str)
    game.get_player(pindex).print(
       "Tutorial message, chapter "
-         .. players[pindex].tutorial.chapter_index
+         .. storage.players[pindex].tutorial.chapter_index
          .. " , step "
-         .. players[pindex].tutorial.step_index
+         .. storage.players[pindex].tutorial.step_index
          .. ": ",
       { volume_modifier = 0 }
    ) --
@@ -289,37 +342,39 @@ end
 
 --For most steps this reads the already-loaded strings
 function mod.run_tutorial_menu(pindex, reading_the_header, clicked)
-   local tutorial = players[pindex].tutorial
+   local tutorial = storage.players[pindex].tutorial
    local chap = tutorial.chapter_index
    local step = tutorial.step_index
    local p = game.get_player(pindex)
    if chap == 0 and step == 1 then
       --Read out chapter 0 start message
       if reading_the_header == false then
-         printout(tutorial.chapter_0_messages[step], pindex)
+         Speech.speak(pindex, tutorial.chapter_0_messages[step])
          game.get_player(pindex).print("Tutorial start message " .. step .. ":", { volume_modifier = 0 }) --
          game.get_player(pindex).print(tutorial.chapter_0_messages[step], { volume_modifier = 0 })
       else
-         printout(tutorial.chapter_0_headers[step], pindex)
+         Speech.speak(pindex, tutorial.chapter_0_headers[step])
          game.get_player(pindex).print("Tutorial start message " .. step .. ":", { volume_modifier = 0 }) --
          game.get_player(pindex).print(tutorial.chapter_0_headers[step], { volume_modifier = 0 })
       end
 
       --Give starting fuel
-      if players[pindex].tutorial.starting_fuel_provided ~= true then p.insert({ name = "coal", count = 50 }) end
+      if storage.players[pindex].tutorial.starting_fuel_provided ~= true then
+         p.insert({ name = "coal", count = 50 })
+      end
 
       --Reload tutorial
       game.get_player(pindex).play_sound({ path = "Open-Inventory-Sound" })
       mod.load_tutorial(pindex)
-      players[pindex].tutorial.starting_fuel_provided = true
+      storage.players[pindex].tutorial.starting_fuel_provided = true
    elseif chap == 0 and step > 1 then
       --Read out chapter 0 start message
       if reading_the_header == false then
-         printout(tutorial.chapter_0_messages[step], pindex)
+         Speech.speak(pindex, tutorial.chapter_0_messages[step])
          game.get_player(pindex).print("Tutorial start message " .. step .. ":", { volume_modifier = 0 }) --
          game.get_player(pindex).print(tutorial.chapter_0_messages[step], { volume_modifier = 0 })
       else
-         printout(tutorial.chapter_0_headers[step], pindex)
+         Speech.speak(pindex, tutorial.chapter_0_headers[step])
          game.get_player(pindex).print("Tutorial start message " .. step .. ":", { volume_modifier = 0 }) --
          game.get_player(pindex).print(tutorial.chapter_0_headers[step], { volume_modifier = 0 })
       end
@@ -336,11 +391,11 @@ function mod.run_tutorial_menu(pindex, reading_the_header, clicked)
          --Run the check and print the appropriate tutorial check result string
          local ents = p.surface.find_entities_filtered({ position = p.position, radius = 100, name = "stone-furnace" })
          if #ents > 1 then --(more checks here)
-            --printout(tutorial.check_passed,pindex) --e.g. "Check passed"
+            --Speech.speak(tutorial.check_passed,pindex) --e.g. "Check passed"
          elseif #ents == 1 then --(more checks here)
-            --printout(tutorial.check_message_just_1_ent,pindex) --e.g. "Check issue, only 1 ent found"
+            --Speech.speak(tutorial.check_message_just_1_ent,pindex) --e.g. "Check issue, only 1 ent found"
          else
-            --printout(tutorial.check_failed,pindex) --e.g. "Check failed"
+            --Speech.speak(tutorial.check_failed,pindex) --e.g. "Check failed"
          end
       end
    elseif chap > 0 and step > 0 then
@@ -351,7 +406,7 @@ function mod.run_tutorial_menu(pindex, reading_the_header, clicked)
          mod.read_current_detail(pindex)
       end
    else
-      printout({ "tutorial.tutorial-error" }, pindex) --**
+      Speech.speak(pindex, { "tutorial.tutorial-error" }) --**
    end
 end
 

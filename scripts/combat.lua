@@ -2,10 +2,15 @@
 --Does not include event handlers, guns and equipment maanagement
 
 local util = require("util")
-local fa_utils = require("scripts.fa-utils")
-local fa_graphics = require("scripts.graphics")
-local fa_mouse = require("scripts.mouse")
-local fa_equipment = require("scripts.equipment")
+local Equipment = require("scripts.equipment")
+local FaUtils = require("scripts.fa-utils")
+local Graphics = require("scripts.graphics")
+local Localising = require("scripts.localising")
+local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
+local Mouse = require("scripts.mouse")
+local UiRouter = require("scripts.ui.router")
+local Viewpoint = require("scripts.viewpoint")
 
 local mod = {}
 
@@ -24,23 +29,32 @@ function mod.repair_pack_used(ent, pindex)
       and ent.name ~= "character"
    then
       p.play_sound({ path = "utility/default_manual_repair" })
-      local health_diff = ent.prototype.max_health - ent.health
+      local health_diff = ent.max_health - ent.health
       local dura = stack.durability or 0
       if health_diff < 10 then --free repair for tiny damages
-         ent.health = ent.prototype.max_health
-         printout("Fully repaired " .. ent.name, pindex)
+         ent.health = ent.max_health
+         local msg = MessageBuilder.new()
+         msg:fragment({ "fa.combat-fully-repaired" })
+         msg:fragment(Localising.get_localised_name_with_fallback(ent))
+         Speech.speak(pindex, msg:build())
       elseif health_diff < dura then
-         ent.health = ent.prototype.max_health
+         ent.health = ent.max_health
          stack.drain_durability(health_diff)
-         printout("Fully repaired " .. ent.name, pindex)
+         local msg = MessageBuilder.new()
+         msg:fragment({ "fa.combat-fully-repaired" })
+         msg:fragment(Localising.get_localised_name_with_fallback(ent))
+         Speech.speak(pindex, msg:build())
       else --if health_diff >= dura then
          stack.drain_durability(dura)
          ent.health = ent.health + dura
-         printout("Partially repaired " .. ent.name .. " and consumed a repair pack", pindex)
+         local msg = MessageBuilder.new()
+         msg:fragment({ "fa.combat-partially-repaired" })
+         msg:fragment(Localising.get_localised_name_with_fallback(ent))
+         msg:fragment({ "fa.combat-consumed-repair-pack" })
+         Speech.speak(pindex, msg:build())
          --Note: This automatically subtracts correctly and decerements the pack in hand.
       end
    end
-   --Note: game.get_player(pindex).use_from_cursor{players[pindex].cursor_pos.x,players[pindex].cursor_pos.y}--This does not work.
 end
 
 --Tries to repair all relevant entities within a certain distance from the player
@@ -52,7 +66,7 @@ function mod.repair_area(radius_in, pindex)
    local radius = math.min(radius_in, 25)
    if stack.count < 2 then
       --If you are low on repair packs, stop
-      printout("You need at least 2 repair packs to repair the area.", pindex)
+      Speech.speak(pindex, { "fa.combat-need-repair-packs" })
       return
    end
    local ents = p.surface.find_entities_filtered({ position = p.position, radius = radius })
@@ -68,25 +82,22 @@ function mod.repair_area(radius_in, pindex)
          and ent.name ~= "character"
       then
          p.play_sound({ path = "utility/default_manual_repair" })
-         local health_diff = ent.prototype.max_health - ent.health
+         local health_diff = ent.max_health - ent.health
          local dura = stack.durability or 0
          if health_diff < 10 then --free repair for tiny damages
-            ent.health = ent.prototype.max_health
+            ent.health = ent.max_health
             repaired_count = repaired_count + 1
          elseif health_diff < dura then
-            ent.health = ent.prototype.max_health
+            ent.health = ent.max_health
             stack.drain_durability(health_diff)
             repaired_count = repaired_count + 1
          elseif stack.count < 2 then
             --If you are low on repair packs, stop
-            printout(
-               "Repaired "
-                  .. repaired_count
-                  .. " structures using "
-                  .. packs_used
-                  .. " repair packs, stopped because you are low on repair packs.",
-               pindex
-            )
+            Speech.speak(pindex, {
+               "fa.combat-repaired-stopped-low-packs",
+               tostring(repaired_count),
+               tostring(packs_used),
+            })
             return
          else
             --Finish the current repair pack
@@ -96,25 +107,22 @@ function mod.repair_area(radius_in, pindex)
 
             --Repeat unhtil fully repaired or out of packs
             while ent.get_health_ratio() < 1 do
-               health_diff = ent.prototype.max_health - ent.health
+               health_diff = ent.max_health - ent.health
                dura = stack.durability or 0
                if health_diff < 10 then --free repair for tiny damages
-                  ent.health = ent.prototype.max_health
+                  ent.health = ent.max_health
                   repaired_count = repaired_count + 1
                elseif health_diff < dura then
-                  ent.health = ent.prototype.max_health
+                  ent.health = ent.max_health
                   stack.drain_durability(health_diff)
                   repaired_count = repaired_count + 1
                elseif stack.count < 2 then
                   --If you are low on repair packs, stop
-                  printout(
-                     "Repaired "
-                        .. repaired_count
-                        .. " structures using "
-                        .. packs_used
-                        .. " repair packs, stopped because you are low on repair packs.",
-                     pindex
-                  )
+                  Speech.speak(pindex, {
+                     "fa.combat-repaired-stopped-low-packs",
+                     tostring(repaired_count),
+                     tostring(packs_used),
+                  })
                   return
                else
                   --Finish the current repair pack
@@ -127,19 +135,15 @@ function mod.repair_area(radius_in, pindex)
       end
    end
    if repaired_count == 0 then
-      printout("Nothing to repair within " .. radius .. " tiles of you.", pindex)
+      Speech.speak(pindex, { "fa.combat-nothing-to-repair", radius })
       return
    end
-   printout(
-      "Repaired all "
-         .. repaired_count
-         .. " structures within "
-         .. radius
-         .. " tiles of you, using "
-         .. packs_used
-         .. " repair packs.",
-      pindex
-   )
+   Speech.speak(pindex, {
+      "fa.combat-repaired-all",
+      tostring(repaired_count),
+      tostring(radius),
+      tostring(packs_used),
+   })
 end
 
 --Plays enemy proximity alert sounds. Frequency is determined by distance andmode, and intensity is determined by the threat level.
@@ -180,7 +184,7 @@ function mod.check_and_play_enemy_alert_sound(mode_in)
             else
                for i, enemy in ipairs(enemies) do
                   --Also check for strong enemies: big/huge biters, huge spitters, medium or larger worms, not spawners
-                  if enemy.prototype.max_health > 360 then
+                  if enemy.max_health > 360 then
                      p.play_sound({ path = "alert-enemy-presence-high", position = pos })
                      return
                   end
@@ -200,8 +204,12 @@ end
 
 --Locks the cursor to the nearest enemy within 50 tiles. Also plays a sound if the enemy is within range of the gun in hand.
 function mod.aim_gun_at_nearest_enemy(pindex, enemy_in)
+   local router = UiRouter.get_router(pindex)
+
    local p = game.get_player(pindex)
    if p == nil or p.character == nil or p.character.valid == false then return end
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
    local gun_index = p.character.selected_gun_index
    local guns_inv = p.get_inventory(defines.inventory.character_guns)
    local ammo_inv = game.get_player(pindex).get_inventory(defines.inventory.character_ammo)
@@ -211,10 +219,7 @@ function mod.aim_gun_at_nearest_enemy(pindex, enemy_in)
    --Return if missing a gun or ammo
    if gun_stack == nil or not gun_stack.valid_for_read or not gun_stack.valid then return false end
    if ammo_stack == nil or not ammo_stack.valid_for_read or not ammo_stack.valid then return false end
-   --Return if in Cursormode
-   if players[pindex].cursor then return false end
-   --Return if in a menu
-   if players[pindex].in_menu then return false end
+
    --Check for nearby enemies
    if enemy_in == nil or not enemy_in.valid then
       enemy = p.surface.find_nearest_enemy({ position = p.position, max_distance = 50, force = p.force })
@@ -233,45 +238,30 @@ function mod.aim_gun_at_nearest_enemy(pindex, enemy_in)
    end
    --If in range, move the cursor onto the enemy to aim the gun
    if dist < range then
-      players[pindex].cursor_pos = enemy.position
-      fa_mouse.move_mouse_pointer(enemy.position, pindex)
-      fa_graphics.draw_cursor_highlight(pindex, nil, nil, true)
+      vp:set_cursor_pos({ x = enemy.position.x, y = enemy.position.y })
+      Mouse.move_mouse_pointer(enemy.position, pindex)
+      Graphics.draw_cursor_highlight(pindex, nil, nil, true)
    end
    return true
 end
 
---Max ranges are determined by the game GUI, min ranges represent the minimum distance where you will not get damaged.
+---Get the throw range for a capsule or grenade.
+---Returns 0 for anything but a throwable attack, otherwise returns the range from attack parameters.
+---@param stack LuaItemStack
+---@return number min_range
+---@return number max_range
 function mod.get_grenade_or_capsule_range(stack)
-   local max_range = 20
-   local min_range = 0
-   if stack == nil or stack.valid_for_read == false then
-      return min_range, max_range
-   elseif stack.name == "grenade" then
-      max_range = 15
-      min_range = 7
-   elseif stack.name == "cluster-grenade" then
-      max_range = 20
-      min_range = 12
-   elseif stack.name == "poison-capsule" then
-      max_range = 25
-      min_range = 12
-   elseif stack.name == "slowdown-capsule" then
-      max_range = 25
-      min_range = 0
-   elseif stack.name == "cliff-explosives" then
-      max_range = 10
-      min_range = 0
-   elseif stack.name == "defender-capsule" then
-      max_range = 20
-      min_range = 0
-   elseif stack.name == "distractor-capsule" then
-      max_range = 25
-      min_range = 0
-   elseif stack.name == "destroyer-capsule" then
-      max_range = 20
-      min_range = 0
-   end
-   return min_range, max_range
+   if stack == nil or not stack.valid_for_read then return 0, 0 end
+
+   local capsule_action = stack.prototype.capsule_action
+   if not capsule_action then return 0, 0 end
+
+   if capsule_action.type ~= "throw" then return 0, 0 end
+
+   local attack_params = capsule_action.attack_parameters
+   if not attack_params then return 0, 0 end
+
+   return attack_params.min_range or 0, attack_params.range or 0
 end
 
 --[[
@@ -287,15 +277,17 @@ end
 function mod.smart_aim_grenades_and_capsules(pindex, draw_circles_in)
    local draw_circles = draw_circles_in or false
    local p = game.get_player(pindex)
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
    local hand = p.cursor_stack
    if hand == nil or hand.valid_for_read == false then return end
    local running_dir = nil
    local player_pos = p.position
    --Get running direction
    if p.walking_state.walking then running_dir = p.walking_state.direction end
-   if p.vehicle and p.vehicle.valid and p.vehicle.speed > 0 then running_dir = fa_utils.get_heading_value(p.vehicle) end
+   if p.vehicle and p.vehicle.valid and p.vehicle.speed > 0 then running_dir = FaUtils.get_heading_value(p.vehicle) end
    if p.vehicle and p.vehicle.valid and p.vehicle.speed < 0 then
-      running_dir = fa_utils.rotate_180(fa_utils.get_heading_value(p.vehicle))
+      running_dir = FaUtils.rotate_180(FaUtils.get_heading_value(p.vehicle))
    end
    if p.vehicle and p.vehicle.valid and p.vehicle.type == "spider-vehicle" then running_dir = nil end
    --Determine max and min throwing ranges based on capsule type
@@ -322,7 +314,7 @@ function mod.smart_aim_grenades_and_capsules(pindex, draw_circles_in)
       })
    end
    --Scan for targets within range
-   potential_targets = p.surface.find_entities_filtered({
+   local potential_targets = p.surface.find_entities_filtered({
       surface = p.surface,
       position = player_pos,
       radius = max_range,
@@ -330,7 +322,7 @@ function mod.smart_aim_grenades_and_capsules(pindex, draw_circles_in)
       invert = true,
    })
    --Sort potential targets by distance from the player
-   potential_targets = fa_utils.sort_ents_by_distance_from_pos(player_pos, potential_targets)
+   potential_targets = FaUtils.sort_ents_by_distance_from_pos(player_pos, potential_targets)
    --Label potential targets
    for i, t in ipairs(potential_targets) do
       if t.valid and draw_circles then
@@ -349,7 +341,7 @@ function mod.smart_aim_grenades_and_capsules(pindex, draw_circles_in)
    for i, t in ipairs(potential_targets) do
       if t.valid and t.type == "unit-spawner" or t.type == "turret" then
          local dist = util.distance(player_pos, t.position)
-         local dir = fa_utils.get_direction_precise(t.position, player_pos)
+         local dir = FaUtils.get_direction_precise(t.position, player_pos)
          if dist > min_range and dist < max_range and dir ~= running_dir then
             return t.position
          elseif draw_circles then
@@ -370,7 +362,7 @@ function mod.smart_aim_grenades_and_capsules(pindex, draw_circles_in)
    for i, t in ipairs(potential_targets) do
       if t.valid and t.type == "unit" or t.type == "character" then
          local dist = util.distance(player_pos, t.position)
-         local dir = fa_utils.get_direction_precise(t.position, player_pos)
+         local dir = FaUtils.get_direction_precise(t.position, player_pos)
          if dist > min_range and dist < max_range and dir ~= running_dir then
             return t.position
          elseif draw_circles then
@@ -391,7 +383,7 @@ function mod.smart_aim_grenades_and_capsules(pindex, draw_circles_in)
    for i, t in ipairs(potential_targets) do
       if t.valid and (t.prototype.is_building or t.prototype.is_military_target) then
          local dist = util.distance(player_pos, t.position)
-         local dir = fa_utils.get_direction_precise(t.position, player_pos)
+         local dir = FaUtils.get_direction_precise(t.position, player_pos)
          if dist > min_range and dist < max_range and dir ~= running_dir then
             return t.position
          elseif draw_circles then
@@ -409,20 +401,18 @@ function mod.smart_aim_grenades_and_capsules(pindex, draw_circles_in)
       end
    end
    --3. Target the cursor position unless running at it
-   local cursor_dist = util.distance(player_pos, players[pindex].cursor_pos)
-   local cursor_dir = fa_utils.get_direction_precise(players[pindex].cursor_pos, player_pos)
-   if cursor_dist > min_range and cursor_dist < max_range and cursor_dir ~= running_dir then
-      return players[pindex].cursor_pos
-   end
+   local cursor_dist = util.distance(player_pos, cursor_pos)
+   local cursor_dir = FaUtils.get_direction_precise(cursor_pos, player_pos)
+   if cursor_dist > min_range and cursor_dist < max_range and cursor_dir ~= running_dir then return cursor_pos end
    --4. If running and if any enemies are close behind you, then target them
    --The player runs at least 8.9 tiles per second and the throw takes around half a second
    --so a displacement of 4 tiles is a safe bet. Also assume a max range penalty because it is behind you
    if running_dir ~= nil and #potential_targets > 0 then
-      back_dir = fa_utils.rotate_180(running_dir)
+      local back_dir = FaUtils.rotate_180(running_dir)
       for i, t in ipairs(potential_targets) do
          if t.valid and (t.prototype.is_building or t.prototype.is_military_target) then
             local dist = util.distance(player_pos, t.position)
-            local dir = fa_utils.get_direction_precise(t.position, player_pos)
+            local dir = FaUtils.get_direction_precise(t.position, player_pos)
             if dist > min_range - 4 and dist < max_range - 8 and dir == back_dir then return t.position end
          end
       end
@@ -437,6 +427,8 @@ end
 function mod.run_atomic_bomb_checks(pindex)
    local p = game.get_player(pindex)
    if p.character == nil then return end
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
    --local main_inv = p.get_inventory(defines.inventory.character_main)
    --local ammos_count = #ammo_inv - ammo_inv.count_empty_stacks()
    local ammo_inv = p.get_inventory(defines.inventory.character_ammo)
@@ -445,18 +437,18 @@ function mod.run_atomic_bomb_checks(pindex)
    local abort_missle = false
    local abort_message = ""
 
-   if selected_ammo == nil or selected_ammo.valid_for_read == false then return end
+   if not selected_ammo or not selected_ammo.valid_for_read then return end
 
    --Stop checking if atomic bombs are not equipped
    if selected_ammo.name ~= "atomic-bomb" then return end
 
    --Stop checking if vanilla mode
-   if players[pindex].vanilla_mode == true then return end
+   if storage.players[pindex].vanilla_mode == true then return end
 
    --If the target position is shown as the center of the screen where the player stands, it means the cursor is not on screen
    if target_pos == nil or util.distance(p.position, target_pos) < 1.5 then
-      target_pos = players[pindex].cursor_pos
-      p.shooting_state.position = players[pindex].cursor_pos
+      target_pos = cursor_pos
+      p.shooting_state.position = cursor_pos
       if selected_ammo.name == "atomic-bomb" then
          abort_missle = true
          abort_message = "Aiming alert, scroll mouse wheel to zoom out."
@@ -465,11 +457,11 @@ function mod.run_atomic_bomb_checks(pindex)
 
    --If the target position is shown as the center of the screen where the player stands, it means the cursor is not on screen
    local aim_dist_1 = util.distance(p.position, target_pos)
-   local aim_dist_2 = util.distance(p.position, players[pindex].cursor_pos)
+   local aim_dist_2 = util.distance(p.position, cursor_pos)
    if aim_dist_1 < 1.5 then
       abort_missle = true
       abort_message = "Aiming alert, scroll mouse wheel to zoom out."
-   elseif util.distance(target_pos, players[pindex].cursor_pos) > 2 then
+   elseif util.distance(target_pos, cursor_pos) > 2 then
       abort_missle = true
       abort_message = "Aiming alert, move cursor to sync mouse."
    end
@@ -482,11 +474,11 @@ function mod.run_atomic_bomb_checks(pindex)
    --Take actions to abort the firing
    if abort_missle then
       --Remove all atomic bombs
-      fa_equipment.delete_equipped_atomic_bombs(pindex)
+      Equipment.delete_equipped_atomic_bombs(pindex)
 
       --Warn the player
       p.play_sound({ path = "utility/cannot_build" })
-      printout(abort_message, pindex)
+      Speech.speak(pindex, abort_message)
 
       --Schedule to restore the items on a later tick
       schedule(310, "call_to_restore_equipped_atomic_bombs", pindex)

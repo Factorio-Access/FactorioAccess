@@ -17,9 +17,9 @@ the one thing that does come up here is that it's important for us to be able to
 cluster in batches. We thus do the clustering when dumping, but the work which
 is done at that time is saved.
 ]]
+local TileClusterer = require("ds.tile-clusterer")
 local Info = require("scripts.fa-info")
 local SC = require("scripts.scanner.scanner-consts")
-local TileClusterer = require("scripts.ds.tile-clusterer")
 local TH = require("scripts.table-helpers")
 
 local mod = {}
@@ -36,15 +36,12 @@ mod.TreeBackend = TreeBackend
 
 ---@return fa.scanner.backends.TreeBackend
 function TreeBackend.new(surface)
-   ---@type fa.scanner.backends.TreeBackend
-   local r = {
+   return setmetatable({
       clusterer = TileClusterer.TileClusterer.new({ track_interior = true }),
       chunk_size = SC.FOREST_CHUNK_SIZE,
       point_queue = {},
       surface = surface,
-   }
-
-   return setmetatable(r, TreeBackend_meta)
+   }, TreeBackend_meta)
 end
 
 function TreeBackend:on_new_entity(entity)
@@ -53,7 +50,7 @@ function TreeBackend:on_new_entity(entity)
    table.insert(self.point_queue, { x = cx, y = cy })
 end
 
----@param event EventData.on_entity_destroyed
+---@param event EventData.on_object_destroyed
 function TreeBackend:on_entity_destroyed(event) end
 
 function TreeBackend:update_entry(player, e)
@@ -72,7 +69,7 @@ end
 ---@param player LuaPlayer
 function TreeBackend:readout_entry(player, e)
    if e.backend_data.zoom_ent then
-      return Info.ent_info(player.index, e.backend_data.zoom_ent, nil, true)
+      return Info.ent_info(player.index, e.backend_data.zoom_ent, true)
    else
       return { "fa.scanner-forest", e.backend_data.tree_count }
    end

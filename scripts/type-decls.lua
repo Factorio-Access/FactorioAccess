@@ -13,3 +13,8 @@ lines already.  This means that Factorio might return for example a point in `{
 -- If this isn't an alias LuaLS gets mad about trying to use our otherwikse
 -- valid boxes in the Factorio API.
 ---@alias fa.AABB BoundingBox.0
+
+-- We find that a representation name->quality->count is very useful when
+-- dealing with aggregating objects for announcement, so rather than continue to
+-- type the large type we have this convenient alias.
+---@alias fa.NQC table<string, table<string, number>>

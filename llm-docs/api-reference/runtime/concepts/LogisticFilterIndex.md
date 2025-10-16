@@ -1,0 +1,4 @@
+# LogisticFilterIndex
+
+**Type:** `uint16`
+

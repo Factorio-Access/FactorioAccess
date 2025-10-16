@@ -1,1 +1,9 @@
 *.code-workspace
+__pycache__
+*.zip
+!lab_tiles.zip
+
+/.claude/settings*
+claude-task.md
+claude-prompt.md
+factorio_crash_*

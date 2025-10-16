@@ -1,37 +1,28 @@
 --[[
 A simple backend.
 
-This backend handles a vast majority of cases, all of which delegate to fa-info
-for reading and fa-utils to find the top-left corner.  This handles almost
-everything.  Rails is a special case, as for curved-rail we need the center; to
-deal with that, this code just hardcodes it in.  By doing so we match what the
-cursor would say.
+This backend handles a vast majority of cases, all of which delegate to fa-info for reading and fa-utils to find the
+top-left corner.  This handles almost everything.  Rails is a special case, as for curved-rail we need the center; to
+deal with that, this code just hardcodes it in.  By doing so we match what the cursor would say.
 
-The one thing this does not know about is category, so one must call
-declare_simple_backend with a (sub)category set of callbacks. Default is other,
-providing a way to see un-categorized things, and prototype name.  For future
-proofing, it is also possible to customize readouts.
+The one thing this does not know about is category, so one must call declare_simple_backend with a (sub)category set of
+callbacks. Default is other, providing a way to see un-categorized things, and prototype name.  For future proofing, it
+is also possible to customize readouts.
 
-Unfortunately, we get a notable performance increase if we cache entries.  So
-there is that as well.  We also get a large jump if we inline table constants
-when dumping to callbacks.  So this is a bit ugly, but it's ugly because
-performance--a midgame save goes down from 80ms to under 40ms with respect to
-scanning everything in the logistics category (belts, etc), for instance.  Note
-that it is crutial to update positions and subcategories when dumping, so even
-when pulling from the cache we must still do those fields.  The others can be
-brought forward on updates.
+Unfortunately, we get a notable performance increase if we cache entries.  So there is that as well.  We also get a
+large jump if we inline table constants when dumping to callbacks.  So this is a bit ugly, but it's ugly because
+performance--a midgame save goes down from 80ms to under 40ms with respect to scanning everything in the logistics
+category (belts, etc), for instance.  Note that it is crutial to update positions and subcategories when dumping, so
+even when pulling from the cache we must still do those fields.  The others can be brought forward on updates.
 
 For now, this assumes category cannot change.
 
-fa-utils corner finding relies on map queries and is slow.  As a result, the
-entry is put into the cache using an approximated top left corner and then that
-is made more accurate in update_entry.  The problem we face is that some
-entities, primarily rocket ship pieces in the initial crash site, don't quite
-line up with tiles.  A longer term solution is to use the bounding boxes.
-Unfortunately however, we aren't set up to do that safely until we have a better
-cursor handling solution because the points such boxes can return are by their
-nature highly irregular.  Since we can do this on a slow path and since we know
-that the old scanner used that successfully, we just do it.
+fa-utils corner finding relies on map queries and is slow.  As a result, the entry is put into the cache using an
+approximated top left corner and then that is made more accurate in update_entry.  The problem we face is that some
+entities, primarily rocket ship pieces in the initial crash site, don't quite line up with tiles.  A longer term
+solution is to use the bounding boxes. Unfortunately however, we aren't set up to do that safely until we have a better
+cursor handling solution because the points such boxes can return are by their nature highly irregular.  Since we can do
+this on a slow path and since we know that the old scanner used that successfully, we just do it.
 ]]
 local FaInfo = require("scripts.fa-info")
 local FaUtils = require("scripts.fa-utils")
@@ -49,7 +40,7 @@ local function default_subcategory_cb(ent)
 end
 
 local function default_readout_cb(player, ent)
-   return FaInfo.ent_info(player.index, ent, nil, true)
+   return FaInfo.ent_info(player.index, ent, true)
 end
 
 ---@class fa.scanner.backends.SimpleBackend: fa.scanner.ScannerBackend
@@ -87,10 +78,10 @@ end
 function SimpleBackend:on_new_entity(ent)
    if not ent.valid then return end
 
-   self.known_entities[script.register_on_entity_destroyed(ent)] = ent
+   self.known_entities[script.register_on_object_destroyed(ent)] = ent
 end
 
----@param event EventData.on_entity_destroyed
+---@param event EventData.on_object_destroyed
 function SimpleBackend:on_entity_destroyed(event)
    self.known_entities[event.registration_number] = nil
    self.entry_cache[event.registration_number] = nil

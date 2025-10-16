@@ -6,13 +6,14 @@ local BuildingTools = require("scripts.building-tools")
 local decl = require("scripts.scanner.backends.simple").declare_simple_backend
 local functionize = require("scripts.functools").functionize
 local Info = require("scripts.fa-info")
+local ResourceMining = require("scripts.resource-mining")
 local SC = require("scripts.scanner.scanner-consts")
 
 local mod = {}
 
 -- For things such as crafting machines, trains, etc. the category is
 -- 'prototype/recipe', 'prototype/train-name', etc.
-function cat2(c1, c2)
+local function cat2(c1, c2)
    return string.format("%s/%s", c1, c2)
 end
 
@@ -37,7 +38,7 @@ mod.CraftingMachine = decl("fa.scanner.backends.CraftingMachine", {
 mod.MiningDrill = decl("fa.scanner.backends.MiningDrill", {
    category_callback = functionize(SC.CATEGORIES.PRODUCTION),
    subcategory_callback = function(ent)
-      local under_drill = Info.compute_resources_under_drill(ent)
+      local under_drill = ResourceMining.compute_resources_under_drill(ent)
       local keys = {}
       for k in pairs(under_drill) do
          table.insert(keys, k)
@@ -128,7 +129,7 @@ mod.Spawner = decl("fa.scanner.backends.Spawner", {
          end
       end
 
-      local info_string = Info.ent_info(player.index, ent, nil, true)
+      local info_string = Info.ent_info(player.index, ent, true)
       return { "fa.scanner-spawner-announce", info_string, result }
    end,
 })
@@ -140,6 +141,7 @@ mod.LogisticsAndPower = decl_bound_category("fa.scanner.backends.LogisticsAndPow
 mod.Production = decl_bound_category("fa.scanner.backends.Production", SC.CATEGORIES.PRODUCTION)
 mod.Military = decl_bound_category("fa.scanner.backends.Military", SC.CATEGORIES.MILITARY)
 mod.Other = decl_bound_category("fa.scanner.backends.Other", SC.CATEGORIES.OTHER)
+mod.Terrain = decl_bound_category("fa.scanner.backends.Terrain", SC.CATEGORIES.TERRAIN)
 mod.Remnants = decl_bound_category("fa.scanner.backends.Remnants", SC.CATEGORIES.REMNANTS)
 
 mod.Containers = decl("fa.scanner.backends.Containers", {
@@ -147,7 +149,6 @@ mod.Containers = decl("fa.scanner.backends.Containers", {
    ---@param ent LuaEntity
    subcategory_callback = function(ent)
       local itemset = ent.get_inventory(defines.inventory.chest).get_contents()
-      local subcat
       -- This is a set not an array, and we care if it has 0, 1, or multiple
       -- items. To do that, pull out the first two keys.
       local key1 = next(itemset)

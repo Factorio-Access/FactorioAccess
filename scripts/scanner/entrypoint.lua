@@ -14,13 +14,17 @@ self-explanatory.  I recommend reading simple.lua for a good example that shows
 
 IMPORTANT: see devdocs/scanner.md for the whole picture.
 ]]
+local EntitySelection = require("scripts.entity-selection")
 local FaUtils = require("scripts.fa-utils")
-local GlobalManager = require("scripts.global-manager")
 local Memosort = require("scripts.memosort")
 local ScannerConsts = require("scripts.scanner.scanner-consts")
 local SurfaceScanner = require("scripts.scanner.surface-scanner")
+local GlobalManager = require("scripts.storage-manager")
 local TH = require("scripts.table-helpers")
+local UiRouter = require("scripts.ui.router")
+local Viewpoint = require("scripts.viewpoint")
 local WorkQueue = require("scripts.work-queue")
+local Speech = require("scripts.speech")
 
 local mod = {}
 
@@ -80,7 +84,7 @@ local function new_player_state(pindex)
 end
 
 ---@type table<number, fa.scanner.GlobalPlayerState>
-local player_state = GlobalManager.declare_global_module("scanner", new_player_state)
+local player_state = GlobalManager.declare_storage_module("scanner", new_player_state)
 
 ---@param player LuaPlayer
 ---@param pstate fa.scanner.GlobalPlayerState
@@ -109,7 +113,7 @@ local function do_refresh_after_sfx(pindex, direction_filter)
    local ps = player_state[pindex]
 
    do
-      local cat = ps.scanner_cursor.category
+      local cat = (ps.scanner_cursor and ps.scanner_cursor.category) or ScannerConsts.CATEGORIES.ALL
       player_state[pindex] = new_player_state(pindex)
       ps = player_state[pindex]
       ps.scanner_cursor.category = cat
@@ -214,9 +218,9 @@ is_chunk_charted(surface, { x = ex / 32, y = ey / 32 })
    apply_sort(player_obj, ps)
 
    if direction_filter then
-      printout({ "fa.scanner-refreshed-directional", FaUtils.direction_lookup(direction_filter) }, pindex)
+      Speech.speak(pindex, { "fa.scanner-refreshed-directional", FaUtils.direction_lookup(direction_filter) })
    else
-      printout({ "fa.scanner-refreshed" }, pindex)
+      Speech.speak(pindex, { "fa.scanner-refreshed" })
    end
 end
 
@@ -394,6 +398,7 @@ end
 ---@param ps fa.scanner.GlobalPlayerState
 local function announce_cursor_pos(pindex, ps)
    local pobj = assert(game.get_player(pindex))
+   local vp = Viewpoint.get_viewpoint(pindex)
    ---@cast pobj LuaPlayer
 
    -- The cursor is put before the beginning of the list so that it is possible
@@ -443,42 +448,40 @@ local function announce_cursor_pos(pindex, ps)
 
    ::do_announce::
    if announcing then
-      -- fa-info has dependencies on having the cursor in the right place that
-      -- we can't remove, so just set it first.
-      global.players[pindex].cursor_pos = announcing.position
-      -- And for the same reason--we shouldn't be caching tile contents, but we do.
-      refresh_player_tile(pindex)
+      -- Update the entry first so position is current
+      EntitySelection.reset_entity_index(pindex)
       announcing.backend:update_entry(pobj, announcing)
-      -- Until we have a cursor module or the like, we must then manually try to
-      -- select the entity if there is one.
-      local new_ent = get_first_ent_at_tile(pindex)
+      -- Now set cursor to the updated position
+      vp:set_cursor_pos(announcing.position)
+      -- Try to select the entity if there is one
+      local new_ent = EntitySelection.get_first_ent_at_tile(pindex)
       if new_ent then pobj.selected = new_ent end
-      printout({
+      Speech.speak(pindex, {
          "fa.scanner-full-presentation",
          announcing.backend:readout_entry(pobj, announcing),
          FaUtils.dir_dist_locale(pobj.position, announcing.position),
          tostring(ps.scanner_cursor.entry_index),
          tostring(count),
-      }, pindex)
-      -- See control.lua refresh_player_tile, which goes nuts if we aren't
+      })
+      -- See entity-selection.lua refresh_player_tile, which goes nuts if we aren't
       -- directly on the center of a tile; this can be removed when that's
       -- fixed.
-      global.players[pindex].cursor_pos = {
+      vp:set_cursor_pos({
          x = math.floor(announcing.position.x) + 0.5,
          y = math.floor(announcing.position.y) + 0.5,
-      }
+      })
    else
-      printout({
+      Speech.speak(pindex, {
          "fa.scanner-nothing-in-category",
          { "fa.scanner-category-" .. ps.scanner_cursor.category },
-      }, pindex)
+      })
    end
 end
 
 -- Play the sound if at the beginning or end. Does nothing if the value passed
 -- isn't the beginning or end.
 ---@param val fa.scanner.MoveResult
-function sound_for_end(val)
+local function sound_for_end(pindex, val)
    local pstate = player_state[pindex]
 
    if val == AT_BEGINNING or val == AT_END then game.get_player(pindex).play_sound({ path = "inventory-edge" }) end
@@ -487,44 +490,39 @@ end
 ---@param pindex number
 ---@param direction 1 | -1
 function mod.move_category(pindex, direction)
-   if global.players[pindex].in_menu then return end
    local pstate = player_state[pindex]
-   sound_for_end(move_category(pindex, pstate, direction))
-   printout({ "fa.scanner-category-" .. pstate.scanner_cursor.category }, pindex)
+   sound_for_end(pindex, move_category(pindex, pstate, direction))
+   Speech.speak(pindex, { "fa.scanner-category-" .. pstate.scanner_cursor.category })
 end
 
 ---@param pindex number
 ---@param direction 1 | -1
 function mod.move_subcategory(pindex, direction)
-   if global.players[pindex].in_menu then return end
    local pstate = player_state[pindex]
-   sound_for_end(move_subcategory(pindex, pstate, direction))
+   sound_for_end(pindex, move_subcategory(pindex, pstate, direction))
    announce_cursor_pos(pindex, pstate)
 end
 
 ---@param pindex number
 ---@param direction 1 | -1
 function mod.move_within_subcategory(pindex, direction)
-   if global.players[pindex].in_menu then return end
    local pstate = player_state[pindex]
-   sound_for_end(move_in_subcategory(pindex, pstate, direction))
+   sound_for_end(pindex, move_in_subcategory(pindex, pstate, direction))
    announce_cursor_pos(pindex, pstate)
 end
 
 ---@param pindex number
 function mod.announce_current_item(pindex)
-   if global.players[pindex].in_menu then return end
    local pstate = player_state[pindex]
    announce_cursor_pos(pindex, pstate)
 end
 
 function mod.resort(pindex)
-   if global.players[pindex].in_menu then return end
    local pstate = player_state[pindex]
    local player = assert(game.get_player(pindex))
    ---@cast player LuaPlayer
    apply_sort(player, pstate)
-   printout({ "fa.scanner-sorted" }, pindex)
+   Speech.speak(pindex, { "fa.scanner-sorted" })
 end
 
 --[[

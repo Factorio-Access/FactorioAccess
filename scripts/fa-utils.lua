@@ -1,8 +1,60 @@
 --Here: Utility functions called by other files. Examples include distance and position calculations, string processing.
 local util = require("util")
+local Viewpoint = require("scripts.viewpoint")
 local dirs = defines.direction
 
+local Consts = require("scripts.consts")
+local EntitySelection = require("scripts.entity-selection")
+
 local mod = {}
+
+-- Helper function to draw a circle at the given position
+local function draw_circle_at_position(surface, pos, color, radius, width, time_to_live)
+   rendering.draw_circle({
+      color = color or { 1, 0.0, 0.5 },
+      radius = radius or 0.1,
+      width = width or 2,
+      target = pos,
+      surface = surface,
+      time_to_live = time_to_live or 30,
+   })
+end
+
+-- Helper function to check if a preferred entity is at a given position
+-- Normalizes coordinates to tile center to handle both fractional (1.5, 2.5) and whole (1, 2) coordinates
+local function check_entity_at_position(surface, pos, preferred_unit_number, excluded_names)
+   -- Normalize to tile center: handles both Factorio 1.1 (fractional) and 2.0 (whole) coordinates
+   local tile_center = { x = math.floor(pos.x) + 0.5, y = math.floor(pos.y) + 0.5 }
+   local entities = surface.find_entities_filtered({ position = tile_center, name = excluded_names, invert = true })
+   for i = 1, math.min(3, #entities) do
+      if entities[i].unit_number == preferred_unit_number then return true end
+   end
+   return false
+end
+
+-- Lookup table for direction offsets
+local DIRECTION_OFFSETS = {
+   [dirs.north] = { x = 0, y = -1 },
+   [dirs.northeast] = { x = 1, y = -1 },
+   [dirs.east] = { x = 1, y = 0 },
+   [dirs.southeast] = { x = 1, y = 1 },
+   [dirs.south] = { x = 0, y = 1 },
+   [dirs.southwest] = { x = -1, y = 1 },
+   [dirs.west] = { x = -1, y = 0 },
+   [dirs.northwest] = { x = -1, y = -1 },
+}
+
+-- Lookup table for half-diagonal to full-diagonal mapping
+local HALF_DIAGONAL_MAP = {
+   [dirs.northnortheast] = dirs.northeast,
+   [dirs.eastnortheast] = dirs.northeast,
+   [dirs.eastsoutheast] = dirs.southeast,
+   [dirs.southsoutheast] = dirs.southeast,
+   [dirs.southsouthwest] = dirs.southwest,
+   [dirs.westsouthwest] = dirs.southwest,
+   [dirs.westnorthwest] = dirs.northwest,
+   [dirs.northnorthwest] = dirs.northwest,
+}
 
 function mod.center_of_tile(pos)
    return { x = math.floor(pos.x) + 0.5, y = math.floor(pos.y) + 0.5 }
@@ -20,23 +72,41 @@ function mod.mult_position(p, m)
    return { x = p.x * m, y = p.y * m }
 end
 
-function mod.offset_position(oldpos, direction, distance)
-   if direction == defines.direction.north then
-      return { x = oldpos.x, y = oldpos.y - distance }
-   elseif direction == defines.direction.south then
-      return { x = oldpos.x, y = oldpos.y + distance }
-   elseif direction == defines.direction.east then
-      return { x = oldpos.x + distance, y = oldpos.y }
-   elseif direction == defines.direction.west then
-      return { x = oldpos.x - distance, y = oldpos.y }
-   elseif direction == defines.direction.northwest then
-      return { x = oldpos.x - distance, y = oldpos.y - distance }
-   elseif direction == defines.direction.northeast then
-      return { x = oldpos.x + distance, y = oldpos.y - distance }
-   elseif direction == defines.direction.southwest then
-      return { x = oldpos.x - distance, y = oldpos.y + distance }
-   elseif direction == defines.direction.southeast then
-      return { x = oldpos.x + distance, y = oldpos.y + distance }
+-- This function is legacy. Do not use.  It cannot account for 16 directions and
+-- does not move by 1 on the diagonals. That is, it is *not* working in unit
+-- vectors.  Now that Factorio 2.0 is making us work with 16 directions, and
+-- given that space age does actually use 16 directions as well as new rails,
+-- that's not good enough.
+function mod.offset_position_legacy(oldpos, direction, distance)
+   local offset = DIRECTION_OFFSETS[direction]
+   if offset then return { x = oldpos.x + offset.x * distance, y = oldpos.y + offset.y * distance } end
+   return oldpos
+end
+
+--Offsets a position in a cardinal direction by a given distance
+function mod.offset_position_cardinal(oldpos, direction, distance)
+   local offset = DIRECTION_OFFSETS[direction]
+   if
+      offset
+      and (direction == dirs.north or direction == dirs.south or direction == dirs.east or direction == dirs.west)
+   then
+      return { x = oldpos.x + offset.x * distance, y = oldpos.y + offset.y * distance }
+   else
+      error("Unsupported direction for offset request: " .. tostring(direction))
+   end
+end
+
+--Gives the neighboring tile for each direction. Half diagonals are rounded to full diagonals.
+function mod.to_neighboring_tile(pos, facing_direction)
+   local dir = facing_direction
+   -- Map half diagonals to full diagonals
+   dir = HALF_DIAGONAL_MAP[dir] or dir
+
+   local offset = DIRECTION_OFFSETS[dir]
+   if offset then
+      return { x = pos.x + offset.x, y = pos.y + offset.y }
+   else
+      return pos
    end
 end
 
@@ -73,6 +143,15 @@ function mod.distance(pos1, pos2)
    return mod.dir_dist(pos1, pos2)[2]
 end
 
+function mod.distance_speech_friendly(pos1, pos2)
+   local dist = mod.distance(pos1, pos2)
+   local mul = 1
+   if dist < 1 then mul = 10 end
+
+   local rounded = math.ceil(dist * mul) / mul
+   return rounded
+end
+
 function mod.squared_distance(pos1, pos2)
    local offset = { x = pos1.x - pos2.x, y = pos1.y - pos2.y }
    local result = offset.x * offset.x + offset.y * offset.y
@@ -81,12 +160,17 @@ end
 
 --[[
 * Returns the direction of that entity from this entity, with a bias against the 4 cardinal directions so that you can align with them more easily.
-* Returns 1 of 8 main directions, based on the ratios of the x and y distances. 
-* The deciding ratio is 1 to 4, meaning that for an object that is 100 tiles north, it can be offset by up to 25 tiles east or west before it stops being counted as "directly" in the north. 
+* Returns 1 of 8 main directions, based on the ratios of the x and y distances.
+* The deciding ratio is 1 to 4, meaning that for an object that is 100 tiles north, it can be offset by up to 25 tiles east or west before it stops being counted as "directly" in the north.
 * The arctangent of 1/4 is about 14 degrees, meaning that the field of view that directly counts as a cardinal direction is about 30 degrees, while for a diagonal direction it is about 60 degrees.]]
 function mod.get_direction_biased(pos_target, pos_origin)
-   local diff_x = pos_target.x - pos_origin.x
-   local diff_y = pos_target.y - pos_origin.y
+   local ox = math.floor(pos_origin.x)
+   local oy = math.floor(pos_origin.y)
+   local tx = math.floor(pos_target.x)
+   local ty = math.floor(pos_target.y)
+
+   local diff_x = tx - ox
+   local diff_y = ty - oy
    ---@type defines.direction | -1
    local dir = dirs.north
 
@@ -119,44 +203,52 @@ function mod.get_direction_biased(pos_target, pos_origin)
    return dir
 end
 
---[[
-* Returns the direction of that entity from this entity, with each of 8 directions getting equal representation.
-* Returns 1 of 8 main directions, based on the ratios of the x and y distances. 
-* The deciding ratio is 1 to 2.5, meaning that for an object that is 25 tiles north, it can be offset by up to 10 tiles east or west before it stops being counted as "directly" in the north. 
-* The arctangent of 1/2.5 is about 22 degrees, meaning that the field of view that directly counts as a cardinal direction is about 44 degrees, while for a diagonal direction it is about 46 degrees.]]
+---@param vector fa.Point
+---@return defines.direction?
+function mod.direction_of_vector(vector)
+   --[[
+   The math, since not everyone knows it:
+
+   Factorio directions are 16 way.  Slice the circle like a pizza and you get
+   north, northeast etc. like the compass rose.  Vectors need to associate to
+   one of them, but will not always be perfectly aligned.  The angle between two
+   subsequent directions is 22.5.
+
+   Rotate the imaginary circle by 11.5 degrees, and now north lies directly in
+   the middle of a cone, whose extent is 11.5 degrees left, 11.5 degrees right,
+   22.5 degrees total.
+
+   Slice this circle again with the 16 directions and you get segments.  Number
+   these segments from 0 to 31.  Segments 0 and 31 are the special case and are
+   north.  Segments 1 and 2 form north-northeast. Segments 3 and 4 form
+   northeast.  So on.
+
+   If we did not have special cases we could map things by just dividing by 2
+   and taking the floor, but we need segment 31 to map to segment 0.  By adding
+   1, we get 1 through 32. Segment 1 maps to north, and segment 32 mod 32 maps
+   to north.  Segment 2 and 3 divided map to north-northeast, so on.
+
+   To fix at the end, then just take mod 16: 16 maps to 0 and all is well.
+   ]]
+   -- Arg 1 is opposite; arg 2 is adjacent; swapping them exchanges
+   -- counterclockwise of east to counterclockwise of north; negating then flips
+   -- to clockwise.
+   local angle = math.atan2(vector.x, -vector.y)
+   -- 2pi/32 = pi/16, lua will not fold the constants.
+   local segment = math.floor(angle / (math.pi / 16))
+   local segment_off = segment + 1
+   local mapped = segment % 32
+   local dir = math.floor(mapped / 2)
+   assert(dir < 16)
+   return dir --[[ @as defines.direction ]]
+end
+
 function mod.get_direction_precise(pos_target, pos_origin)
    local diff_x = pos_target.x - pos_origin.x
    local diff_y = pos_target.y - pos_origin.y
-   ---@type defines.direction
-   local dir = defines.direction.north
-
-   if math.abs(diff_x) > 2.5 * math.abs(diff_y) then --along east-west
-      if diff_x > 0 then
-         dir = defines.direction.east
-      else
-         dir = defines.direction.west
-      end
-   elseif math.abs(diff_y) > 2.5 * math.abs(diff_x) then --along north-south
-      if diff_y > 0 then
-         dir = defines.direction.south
-      else
-         dir = defines.direction.north
-      end
-   else --along diagonals
-      if diff_x > 0 and diff_y > 0 then
-         dir = defines.direction.southeast
-      elseif diff_x > 0 and diff_y < 0 then
-         dir = defines.direction.northeast
-      elseif diff_x < 0 and diff_y > 0 then
-         dir = defines.direction.southwest
-      elseif diff_x < 0 and diff_y < 0 then
-         dir = defines.direction.northwest
-      elseif diff_x == 0 and diff_y == 0 then
-         dir = defines.direction.north
-      end
-   end
-
-   return dir
+   -- For legacy reasons, this must default north: callers have never checked,
+   -- and this used to be a very complex if tree.
+   return mod.direction_of_vector({ x = diff_x, y = diff_y }) or dirs.north
 end
 
 --Checks whether a cardinal or diagonal direction is precisely aligned. All check positions are floored to their northwest corners.
@@ -182,10 +274,10 @@ end
 function mod.direction_lookup(dir)
    local reading = "unknown"
    if dir < 0 then return "unknown direction ID " .. dir end
-   if dir >= dirs.north and dir <= dirs.northwest then
-      return game.direction_to_string(dir)
+   if dir >= dirs.north and dir <= dirs.northnorthwest then
+      return helpers.direction_to_string(dir)
    else
-      if dir == 8 then --Returned by the game when there is no direction in particular
+      if dir == 16 then --Returned by the game when there is no direction in particular
          reading = ""
       elseif dir == 99 then --Defined by mod
          reading = "Here"
@@ -209,70 +301,50 @@ function mod.rotate_270(dir)
 end
 
 function mod.reset_rotation(pindex)
-   players[pindex].building_direction = dirs.north
-end
-
---Converts the entity orientation value to a heading direction string, with all directions having equal bias.
-function mod.get_heading_info(ent)
-   ---@diagnostic disable: cast-local-type
-   local heading = "unknown"
-   if ent == nil then return "nil error" end
-   local ori = ent.orientation
-   if ori < 0.0625 then
-      heading = mod.direction_lookup(dirs.north)
-   elseif ori < 0.1875 then
-      heading = mod.direction_lookup(dirs.northeast)
-   elseif ori < 0.3125 then
-      heading = mod.direction_lookup(dirs.east)
-   elseif ori < 0.4375 then
-      heading = mod.direction_lookup(dirs.southeast)
-   elseif ori < 0.5625 then
-      heading = mod.direction_lookup(dirs.south)
-   elseif ori < 0.6875 then
-      heading = mod.direction_lookup(dirs.southwest)
-   elseif ori < 0.8125 then
-      heading = mod.direction_lookup(dirs.west)
-   elseif ori < 0.9375 then
-      heading = mod.direction_lookup(dirs.northwest)
-   else
-      heading = mod.direction_lookup(dirs.north) --default
-   end
-   return heading
+   local vp = Viewpoint.get_viewpoint(pindex)
+   vp:set_hand_direction(defines.direction.north)
 end
 
 --Converts the entity orientation into a heading direction, with all directions having equal bias.
+--Returns the direction value, or nil if entity is nil.
 function mod.get_heading_value(ent)
-   local heading = nil
    if ent == nil then return nil end
    local ori = ent.orientation
    if ori < 0.0625 then
-      heading = dirs.north
+      return dirs.north
    elseif ori < 0.1875 then
-      heading = dirs.northeast
+      return dirs.northeast
    elseif ori < 0.3125 then
-      heading = dirs.east
+      return dirs.east
    elseif ori < 0.4375 then
-      heading = dirs.southeast
+      return dirs.southeast
    elseif ori < 0.5625 then
-      heading = dirs.south
+      return dirs.south
    elseif ori < 0.6875 then
-      heading = dirs.southwest
+      return dirs.southwest
    elseif ori < 0.8125 then
-      heading = dirs.west
+      return dirs.west
    elseif ori < 0.9375 then
-      heading = dirs.northwest
+      return dirs.northwest
    else
-      heading = dirs.north --default
+      return dirs.north --default
    end
-   return heading
+end
+
+--Converts the entity orientation value to a heading direction string, with all directions having equal bias.
+--Returns nil if entity is nil.
+function mod.get_heading_info(ent)
+   local heading_value = mod.get_heading_value(ent)
+   if heading_value == nil then return nil end
+   return mod.direction_lookup(heading_value)
 end
 
 --Returns the length and width of the entity version of an item.
 function mod.get_tile_dimensions(item, dir)
    if item.place_result ~= nil then
       local dimensions = item.place_result.selection_box
-      x = math.ceil(dimensions.right_bottom.x - dimensions.left_top.x)
-      y = math.ceil(dimensions.right_bottom.y - dimensions.left_top.y)
+      local x = math.ceil(dimensions.right_bottom.x - dimensions.left_top.x)
+      local y = math.ceil(dimensions.right_bottom.y - dimensions.left_top.y)
       if dir == dirs.north or dir == dirs.south then
          return { x = x, y = y }
       else
@@ -280,6 +352,70 @@ function mod.get_tile_dimensions(item, dir)
       end
    end
    return { x = 0, y = 0 }
+end
+
+--[[
+Calculates the complete building footprint for an entity, handling all placement modes and offsets.
+This centralizes the logic that was previously scattered across building-tools.lua and graphics.lua.
+
+Parameters:
+- params.entity_prototype: The entity prototype (or provide width/height directly)
+- params.width: Entity width in tiles (if not using prototype)
+- params.height: Entity height in tiles (if not using prototype)
+- params.position: The base position (cursor or player position)
+- params.building_direction: The entity's rotation (dirs.north, dirs.east, etc.)
+- params.player_direction: The player's facing direction (for non-cursor mode)
+- params.is_rail_vehicle: Special handling for locomotives/wagons
+
+Returns:
+{
+  left_top = {x, y},
+  right_bottom = {x, y},
+  center = {x, y},
+  width = number,
+  height = number
+}
+]]
+function mod.calculate_building_footprint(params)
+   local width, height
+
+   -- Get dimensions from prototype or direct parameters
+   if params.entity_prototype then
+      width = params.entity_prototype.tile_width
+      height = params.entity_prototype.tile_height
+   else
+      width = params.width or 1
+      height = params.height or 1
+   end
+
+   -- Handle direction rotation (east/west swap width and height)
+   if params.building_direction == dirs.east or params.building_direction == dirs.west then
+      width, height = height, width
+   end
+
+   -- Calculate initial footprint from position
+   local left_top = {
+      x = math.floor(params.position.x),
+      y = math.floor(params.position.y),
+   }
+   local right_bottom = {
+      x = left_top.x + width,
+      y = left_top.y + height,
+   }
+
+   -- Calculate center position
+   local center = {
+      x = left_top.x + width / 2,
+      y = left_top.y + height / 2,
+   }
+
+   return {
+      left_top = left_top,
+      right_bottom = right_bottom,
+      center = center,
+      width = width,
+      height = height,
+   }
 end
 
 --Small utility function for getting an entity's footprint area using just its name.
@@ -290,15 +426,7 @@ function mod.get_ent_area_from_name(ent_name, pindex)
    -- else
    -- return ents[1].tile_height * ents[1].tile_width
    -- end
-   return game.entity_prototypes[ent_name].tile_width * game.entity_prototypes[ent_name].tile_height
-end
-
---Returns true/false on whether an entity is located within a defined area.
-function mod.is_ent_inside_area(ent_name, area_left_top, area_right_bottom, pindex)
-   local ents = game
-      .get_player(pindex).surface
-      .find_entities_filtered({ name = ent_name, area = { area_left_top, area_right_bottom }, limit = 1 })
-   return #ents > 0
+   return prototypes.entity[ent_name].tile_width * prototypes.entity[ent_name].tile_height
 end
 
 --Returns the map position of the northwest corner of an entity.
@@ -330,220 +458,62 @@ function mod.get_ent_northwest_corner_position(ent)
    return pos
 end
 
---Reports which part of the selected entity has the cursor. E.g. southwest corner, center...
+-- Lookup table for entity part location based on adjacent tile connectivity
+-- Index: (north_same ? 8 : 0) | (south_same ? 4 : 0) | (east_same ? 2 : 0) | (west_same ? 1 : 0)
+local ENTITY_PART_LOOKUP = {
+   [0] = { "fa.entity-part-all" }, -- No adjacent tiles: single-tile entity
+   [1] = { "fa.entity-part-east-tip" }, -- Only west connects
+   [2] = { "fa.entity-part-west-tip" }, -- Only east connects
+   [3] = { "fa.entity-part-middle" }, -- East-west corridor
+   [4] = { "fa.entity-part-north-tip" }, -- Only south connects
+   [5] = { "fa.entity-part-northeast-corner" }, -- South + west (L-shape)
+   [6] = { "fa.entity-part-northwest-corner" }, -- South + east (L-shape)
+   [7] = { "fa.entity-part-north-edge" }, -- South + east + west (T-shape)
+   [8] = { "fa.entity-part-south-tip" }, -- Only north connects
+   [9] = { "fa.entity-part-southeast-corner" }, -- North + west (L-shape)
+   [10] = { "fa.entity-part-southwest-corner" }, -- North + east (L-shape)
+   [11] = { "fa.entity-part-south-edge" }, -- North + east + west (T-shape)
+   [12] = { "fa.entity-part-middle" }, -- North-south corridor
+   [13] = { "fa.entity-part-east-edge" }, -- North + south + west (T-shape)
+   [14] = { "fa.entity-part-west-edge" }, -- North + south + east (T-shape)
+   [15] = { "fa.entity-part-center" }, -- All four directions connect
+}
+
+---Reports which part of a multi-tile entity is at the cursor position
+---@param pindex integer Player index
+---@return LocalisedString? Location description (e.g., {"fa.entity-part-center"}) or nil if no entity
 function mod.get_entity_part_at_cursor(pindex)
    local p = game.get_player(pindex)
-   local x = players[pindex].cursor_pos.x
-   local y = players[pindex].cursor_pos.y
-   local ents = players[pindex].tile.ents
-   local north_same = false
-   local south_same = false
-   local east_same = false
-   local west_same = false
-   local location = nil
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
+   local x = cursor_pos.x
+   local y = cursor_pos.y
 
-   --First check if there is an entity at the cursor
-   if #ents > 0 then
-      --Prefer the selected ent
-      local preferred_ent = p.selected
-      --Otherwise check for other ents at the cursor
-      if preferred_ent == nil or preferred_ent.valid == false then preferred_ent = get_first_ent_at_tile(pindex) end
-      if preferred_ent == nil or preferred_ent.valid == false then return "unknown location" end
+   local ents = EntitySelection.get_ents_on_tile(p.surface, x, y, pindex)
+   if #ents == 0 then return nil end
 
-      --Report which part of the entity the cursor covers.
-      rendering.draw_circle({
-         color = { 1, 0.0, 0.5 },
-         radius = 0.1,
-         width = 2,
-         target = { x = x + 0, y = y - 1 },
-         surface = p.surface,
-         time_to_live = 30,
-      })
-      rendering.draw_circle({
-         color = { 1, 0.0, 0.5 },
-         radius = 0.1,
-         width = 2,
-         target = { x = x + 0, y = y + 1 },
-         surface = p.surface,
-         time_to_live = 30,
-      })
-      rendering.draw_circle({
-         color = { 1, 0.0, 0.5 },
-         radius = 0.1,
-         width = 2,
-         target = { x = x - 1, y = y - 0 },
-         surface = p.surface,
-         time_to_live = 30,
-      })
-      rendering.draw_circle({
-         color = { 1, 0.0, 0.5 },
-         radius = 0.1,
-         width = 2,
-         target = { x = x + 1, y = y - 0 },
-         surface = p.surface,
-         time_to_live = 30,
-      })
-
-      local ent_north =
-         p.surface.find_entities_filtered({ position = { x = x, y = y - 1 }, name = EXCLUDED_ENT_NAMES, invert = true })
-      if #ent_north > 0 and ent_north[1].unit_number == preferred_ent.unit_number then
-         north_same = true
-      elseif #ent_north > 1 and ent_north[2].unit_number == preferred_ent.unit_number then
-         north_same = true
-      elseif #ent_north > 2 and ent_north[3].unit_number == preferred_ent.unit_number then
-         north_same = true
-      end
-      local ent_south =
-         p.surface.find_entities_filtered({ position = { x = x, y = y + 1 }, name = EXCLUDED_ENT_NAMES, invert = true })
-      if #ent_south > 0 and ent_south[1].unit_number == preferred_ent.unit_number then
-         south_same = true
-      elseif #ent_south > 1 and ent_south[2].unit_number == preferred_ent.unit_number then
-         south_same = true
-      elseif #ent_south > 2 and ent_south[3].unit_number == preferred_ent.unit_number then
-         south_same = true
-      end
-      local ent_east =
-         p.surface.find_entities_filtered({ position = { x = x + 1, y = y }, name = EXCLUDED_ENT_NAMES, invert = true })
-      if #ent_east > 0 and ent_east[1].unit_number == preferred_ent.unit_number then
-         east_same = true
-      elseif #ent_east > 1 and ent_east[2].unit_number == preferred_ent.unit_number then
-         east_same = true
-      elseif #ent_east > 2 and ent_east[3].unit_number == preferred_ent.unit_number then
-         east_same = true
-      end
-      local ent_west =
-         p.surface.find_entities_filtered({ position = { x = x - 1, y = y }, name = EXCLUDED_ENT_NAMES, invert = true })
-      if #ent_west > 0 and ent_west[1].unit_number == preferred_ent.unit_number then
-         west_same = true
-      elseif #ent_west > 1 and ent_west[2].unit_number == preferred_ent.unit_number then
-         west_same = true
-      elseif #ent_west > 2 and ent_west[3].unit_number == preferred_ent.unit_number then
-         west_same = true
-      end
-
-      if north_same and south_same then
-         if east_same and west_same then
-            location = "center"
-         elseif east_same and not west_same then
-            location = "west edge"
-         elseif not east_same and west_same then
-            location = "east edge"
-         elseif not east_same and not west_same then
-            location = "middle"
-         end
-      elseif north_same and not south_same then
-         if east_same and west_same then
-            location = "south edge"
-         elseif east_same and not west_same then
-            location = "southwest corner"
-         elseif not east_same and west_same then
-            location = "southeast corner"
-         elseif not east_same and not west_same then
-            location = "south tip"
-         end
-      elseif not north_same and south_same then
-         if east_same and west_same then
-            location = "north edge"
-         elseif east_same and not west_same then
-            location = "northwest corner"
-         elseif not east_same and west_same then
-            location = "northeast corner"
-         elseif not east_same and not west_same then
-            location = "north tip"
-         end
-      elseif not north_same and not south_same then
-         if east_same and west_same then
-            location = "middle"
-         elseif east_same and not west_same then
-            location = "west tip"
-         elseif not east_same and west_same then
-            location = "east tip"
-         elseif not east_same and not west_same then
-            location = "all"
-         end
-      end
+   -- Prefer selected entity, fallback to first entity at tile
+   local preferred_ent = p.selected
+   if not preferred_ent or not preferred_ent.valid then
+      preferred_ent = EntitySelection.get_first_ent_at_tile(pindex)
    end
-   return location
-end
+   if not preferred_ent or not preferred_ent.valid then return { "fa.entity-part-unknown" } end
 
---For a list of edge points of an aggregate entity, returns the nearest one.
-function mod.nearest_edge(edges, pos, name)
-   local pos = table.deepcopy(pos)
-   if name == "forest" then
-      pos.x = pos.x / 8
-      pos.y = pos.y / 8
-   end
-   local result = {}
-   local min = math.huge
-   for str, b in pairs(edges) do
-      local edge_pos = mod.str2pos(str)
-      local d = util.distance(pos, edge_pos)
-      if d < min then
-         result = edge_pos
-         min = d
-      end
-   end
-   if name == "forest" then
-      result.x = result.x * 8 - 4
-      result.y = result.y * 8 - 4
-   end
-   return result
-end
+   -- Check adjacency: is the same entity present in each cardinal direction?
+   -- check_entity_at_position handles coordinate normalization internally
+   local unit_number = preferred_ent.unit_number
+   local excluded = Consts.EXCLUDED_ENT_NAMES
+   local surface = p.surface
 
---Checks whether a rectangle defined by the two points falls fully within the rectangular range value
-function mod.is_rectangle_fully_within_player_range(pindex, left_top, right_bottom, range)
-   local pos = game.get_player(pindex).position
-   if math.abs(left_top.x - pos.x) > range then return false end
-   if math.abs(left_top.y - pos.y) > range then return false end
-   if math.abs(right_bottom.x - pos.x) > range then return false end
-   if math.abs(right_bottom.y - pos.y) > range then return false end
-   return true
-end
+   local north_same = check_entity_at_position(surface, { x = x, y = y - 1 }, unit_number, excluded)
+   local south_same = check_entity_at_position(surface, { x = x, y = y + 1 }, unit_number, excluded)
+   local east_same = check_entity_at_position(surface, { x = x + 1, y = y }, unit_number, excluded)
+   local west_same = check_entity_at_position(surface, { x = x - 1, y = y }, unit_number, excluded)
 
-function mod.scale_area(area, factor)
-   result = table.deepcopy(area)
-   result.left_top.x = area.left_top.x * factor
-   result.left_top.y = area.left_top.y * factor
-   result.right_bottom.x = area.right_bottom.x * factor
-   result.right_bottom.y = area.right_bottom.y * factor
-   return result
-end
+   -- Convert adjacency booleans to bit pattern: NSEW
+   local pattern = (north_same and 8 or 0) + (south_same and 4 or 0) + (east_same and 2 or 0) + (west_same and 1 or 0)
 
---Checks whether a given position is at the edge of an area, in the selected direction
-function mod.area_edge(area, dir, pos, name)
-   local adjusted_area = table.deepcopy(area)
-   if name == "forest" then
-      local chunk_size = 8
-      adjusted_area.left_top.x = adjusted_area.left_top.x / chunk_size
-      adjusted_area.left_top.y = adjusted_area.left_top.y / chunk_size
-      adjusted_area.right_bottom.x = adjusted_area.right_bottom.x / chunk_size
-      adjusted_area.right_bottom.y = adjusted_area.right_bottom.y / chunk_size
-   end
-   if dir == dirs.north then
-      if adjusted_area.left_top.y == math.floor(pos.y) then
-         return true
-      else
-         return false
-      end
-   elseif dir == dirs.east then
-      if adjusted_area.right_bottom.x == math.ceil(0.001 + pos.x) then
-         return true
-      else
-         return false
-      end
-   elseif dir == dirs.south then
-      if adjusted_area.right_bottom.y == math.ceil(0.001 + pos.y) then
-         return true
-      else
-         return false
-      end
-   elseif dir == dirs.west then
-      if adjusted_area.left_top.x == math.floor(pos.x) then
-         return true
-      else
-         return false
-      end
-   end
+   return ENTITY_PART_LOOKUP[pattern]
 end
 
 --Returns the top left and bottom right corners for a rectangle that takes pos_1 and pos_2 as any of its four corners.
@@ -586,37 +556,9 @@ function mod.table_concat(T1, T2)
    end
 end
 
-function mod.pos2str(pos)
-   return pos.x .. " " .. pos.y
-end
-
-function mod.str2pos(str)
-   local t = {}
-   for s in string.gmatch(str, "([^%s]+)") do
-      table.insert(t, s)
-   end
-   return { x = t[1], y = t[2] }
-end
-
-function mod.breakup_string(str)
-   result = { "" }
-   if table_size(str) > 20 then
-      local i = 0
-      while i < #str do
-         if i % 20 == 0 then table.insert(result, { "" }) end
-         ---@diagnostic disable-next-line: param-type-mismatch
-         table.insert(result[math.ceil((i + 1) / 20) + 1], table.deepcopy(str[i + 1]))
-         i = i + 1
-      end
-      return result
-   else
-      return str
-   end
-end
-
 --Converts a dictionary into an iterable array.
 function mod.get_iterable_array(dict)
-   result = {}
+   local result = {}
    for i, v in pairs(dict) do
       table.insert(result, v)
    end
@@ -630,52 +572,6 @@ function mod.into_lookup(array)
       lookup[value] = key
    end
    return lookup
-end
-
---Returns the part of a substring before a space character. BUG: Breaks when parsing dashes.
-function mod.get_substring_before_space(str)
-   local first, final = string.find(str, " ")
-   if first == nil or first == 1 then --No space, or space at the start only
-      return str
-   else
-      return string.sub(str, 1, first - 1)
-   end
-end
-
---Returns the part of a substring after a space character. BUG: Breaks when parsing dashes.
-function mod.get_substring_after_space(str)
-   local first, final = string.find(str, " ")
-   if final == nil then --No spaces
-      return str
-   end
-   if first == 1 then --spaces at start only
-      return string.sub(str, final + 1, string.len(str))
-   end
-
-   if final == string.len(str) then --space at the end only?
-      return str
-   end
-
-   return string.sub(str, final + 1, string.len(str))
-end
-
---Returns the part of a substring before a comma character. BUG: Breaks when parsing dashes.
-function mod.get_substring_before_comma(str)
-   local first, final = string.find(str, ",")
-   if first == nil or first == 1 then
-      return str
-   else
-      return string.sub(str, 1, first - 1)
-   end
-end
-
-function mod.get_substring_before_dash(str)
-   local first, final = string.find(str, "-")
-   if first == nil or first == 1 then
-      return str
-   else
-      return string.sub(str, 1, first - 1)
-   end
 end
 
 --Reads the localised result for the distance and direction from one point to the other. Also mentions if they are precisely aligned. Distances are rounded.
@@ -695,8 +591,8 @@ function mod.ent_name_locale(ent)
       print("todo: forest isn't an entity")
       return { "fa.forest" }
    end
-   local entity_prototype = game.entity_prototypes[ent.name]
-   local resource_prototype = game.resource_category_prototypes[ent.name]
+   local entity_prototype = prototypes.entity[ent.name]
+   local resource_prototype = prototypes.resource_category[ent.name]
    local name = nil
    if ent.localised_name == nil and entity_prototype == nil and resource_prototype == nil then
       print("todo: " .. ent.name .. " is not an entity")
@@ -709,32 +605,6 @@ function mod.ent_name_locale(ent)
       name = resource_prototype.localised_name
    end
    return name
-end
-
---small utility function for getting the index of a named object from an array of objects.
-function mod.index_of_entity(array, value)
-   if next(array) == nil then return nil end
-   for i = 1, #array, 1 do
-      if array[i].name == value then return i end
-   end
-   return nil
-end
-
---Returns the first found item prototype in the currently selected crafting menu slot, if any. Else returns nil.
-function mod.get_prototype_of_item_product(pindex)
-   local recipe =
-      players[pindex].crafting.lua_recipes[players[pindex].crafting.category][players[pindex].crafting.index]
-   if recipe and recipe.valid and recipe.products and recipe.products[1] then
-      for i, product in ipairs(recipe.products) do
-         local prototype = nil
-         if product.type == "item" then
-            --Select product item #1
-            prototype = game.item_prototypes[product.name]
-            if prototype then return prototype end
-         end
-      end
-   end
-   return nil
 end
 
 --Rounds down a number to the nearest thousand after 10 thousand, and nearest 100 thousand after 1 million.
@@ -777,22 +647,10 @@ function mod.express_in_stacks(count, stack_size, precise)
    return result
 end
 
-function mod.factorio_default_sort(k1, k2)
-   if k1.group.order ~= k2.group.order then
-      return k1.group.order < k2.group.order
-   elseif k1.subgroup.order ~= k2.subgroup.order then
-      return k1.subgroup.order < k2.subgroup.order
-   elseif k1.order ~= k2.order then
-      return k1.order < k2.order
-   else
-      return k1.name < k2.name
-   end
-end
-
 function mod.sort_ents_by_distance_from_pos(pos, ents)
    table.sort(ents, function(k1, k2)
-      if k1 == nil or k1.valid == false then return true end
-      if k2 == nil or k2.valid == false then return false end
+      if not k1 or not k1.valid then return true end
+      if not k2 or not k2.valid then return false end
       return util.distance(pos, k1.position) < util.distance(pos, k2.position)
    end)
    return ents
@@ -801,59 +659,25 @@ end
 --Checks a position to see if it has a water tile
 function mod.tile_is_water(surface, pos)
    local water_tiles = surface.find_tiles_filtered({
-      position = pos,
+      position = mod.center_of_tile(pos),
       radius = 0.1,
-      name = {
-         "water",
-         "deepwater",
-         "water-green",
-         "deepwater-green",
-         "water-shallow",
-         "water-mud",
-         "water-wube",
-      },
+      name = Consts.WATER_TILE_NAMES,
    })
-   return (water_tiles ~= nil and #water_tiles > 0)
+   if not water_tiles then return false end
+   assert(#water_tiles <= 1)
+   return #water_tiles == 1
 end
 
 --If the cursor is over a water tile, this function is called to check if it is open water or a shore.
 function mod.identify_water_shores(pindex)
    local p = game.get_player(pindex)
-   local water_tile_names =
-      { "water", "deepwater", "water-green", "deepwater-green", "water-shallow", "water-mud", "water-wube" }
-   local pos = players[pindex].cursor_pos
-   rendering.draw_circle({
-      color = { 1, 0.0, 0.5 },
-      radius = 0.1,
-      width = 2,
-      target = { x = pos.x + 0, y = pos.y - 1 },
-      surface = p.surface,
-      time_to_live = 30,
-   })
-   rendering.draw_circle({
-      color = { 1, 0.0, 0.5 },
-      radius = 0.1,
-      width = 2,
-      target = { x = pos.x + 0, y = pos.y + 1 },
-      surface = p.surface,
-      time_to_live = 30,
-   })
-   rendering.draw_circle({
-      color = { 1, 0.0, 0.5 },
-      radius = 0.1,
-      width = 2,
-      target = { x = pos.x - 1, y = pos.y - 0 },
-      surface = p.surface,
-      time_to_live = 30,
-   })
-   rendering.draw_circle({
-      color = { 1, 0.0, 0.5 },
-      radius = 0.1,
-      width = 2,
-      target = { x = pos.x + 1, y = pos.y - 0 },
-      surface = p.surface,
-      time_to_live = 30,
-   })
+   local water_tile_names = Consts.WATER_TILE_NAMES
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local pos = vp:get_cursor_pos()
+   draw_circle_at_position(p.surface, { x = pos.x, y = pos.y - 1 })
+   draw_circle_at_position(p.surface, { x = pos.x, y = pos.y + 1 })
+   draw_circle_at_position(p.surface, { x = pos.x - 1, y = pos.y })
+   draw_circle_at_position(p.surface, { x = pos.x + 1, y = pos.y })
 
    local tile_north = #p.surface.find_tiles_filtered({
       position = { x = pos.x + 0, y = pos.y - 1 },
@@ -899,28 +723,6 @@ function mod.identify_water_shores(pindex)
    return result
 end
 
---Checks whether the player has not walked for 1 second. Uses the bump alert checks.
-function mod.player_was_still_for_1_second(pindex)
-   local b = players[pindex].bump
-   if b == nil or b.filled ~= true then
-      --It is too soon to report anything
-      return false
-   end
-   local diff_x1 = math.abs(b.last_pos_1.x - b.last_pos_2.x)
-   local diff_x2 = math.abs(b.last_pos_2.x - b.last_pos_3.x)
-   local diff_x3 = math.abs(b.last_pos_3.x - b.last_pos_4.x)
-   local diff_y1 = math.abs(b.last_pos_1.y - b.last_pos_2.y)
-   local diff_y2 = math.abs(b.last_pos_2.y - b.last_pos_3.y)
-   local diff_y3 = math.abs(b.last_pos_3.y - b.last_pos_4.y)
-   if (diff_x1 + diff_x2 + diff_x3 + diff_y1 + diff_y2 + diff_y3) == 0 then
-      --Confirmed no movement in the past 60 ticks
-      return true
-   else
-      --Confirmed some movement in the past 60 ticks
-      return false
-   end
-end
-
 -- Concatenate a bunch of stuff together, efficiently, and return this as a
 -- localised string.
 --
@@ -931,13 +733,15 @@ end
 ---@return LocalisedString
 mod.spacecat = function(...)
    local tab = table.pack(...)
-   return mod.spacecat_table(tab)
+   return mod.localise_cat_table(tab)
 end
 
--- Like spacecat but for a table.
+-- Like spacecat but for a table, and with custom separator.
 ---@param tab any[]
+---@param sep string? The separator, default space.
 ---@return LocalisedString
-function mod.spacecat_table(tab)
+function mod.localise_cat_table(tab, sep)
+   sep = sep or " "
    local will_cat = { "" }
 
    for i = 1, #tab do
@@ -945,7 +749,8 @@ function mod.spacecat_table(tab)
       local adding = type(ent) == "table" and ent or tostring(ent)
       if adding == nil then adding = "NIL!" end
       table.insert(will_cat, adding)
-      table.insert(will_cat, " ")
+      -- Careful: shouldn't add after the last element.
+      if tab[i + 1] then table.insert(will_cat, sep) end
    end
 
    -- 21 because 20 params, then the first is the "" part.
@@ -978,23 +783,8 @@ end
 ---@param custom_message string info about what action is being checked
 ---@return boolean to allow the action
 function mod.confirm_action(pindex, id_string, custom_message)
-   local message = custom_message or "Press again to confirm this action."
-   --Check the id string
-   if players[pindex].confirm_action_id_string ~= id_string then
-      players[pindex].confirm_action_id_string = id_string
-      players[pindex].confirm_action_tick = game.tick
-      printout(message, pindex)
-      return false
-   end
-   --Check the time stamp
-   if players[pindex].confirm_action_tick == nil or game.tick - players[pindex].confirm_action_tick > 600 then
-      players[pindex].confirm_action_tick = game.tick
-      printout(message, pindex)
-      return false
-   else
-      players[pindex].confirm_action_tick = 0
-      return true
-   end
+   -- TODO: Reimplement this without global state
+   return true
 end
 
 -- Format a  number to e.g. "1.3m"
@@ -1018,6 +808,262 @@ function mod.format_number(amount)
    end
 
    return tostring(amount) .. suffix
+end
+
+---@param point fa.Point
+---@param box fa.AABB
+---@return fa.Point?
+function mod.closest_point_in_box(point, box)
+   return {
+      x = math.max(math.min(point.x, box.right_bottom.x), box.left_top.x),
+      y = math.max(math.min(point.y, box.right_bottom.y), box.left_top.y),
+   }
+end
+
+local ALL_PROTO_KINDS = {
+   "item",
+   "font",
+   "map_gen_preset",
+   "style",
+   "entity",
+   "fluid",
+   "tile",
+   "equipment",
+   "damage",
+   "virtual_signal",
+   "equipment_grid",
+   "recipe",
+   "technology",
+   "decorative",
+   "particle",
+   "autoplace_control",
+   "mod_setting",
+   "custom_input",
+   "ammo_category",
+   "named_noise_expression",
+   "named_noise_function",
+   "item_subgroup",
+   "item_group",
+   "fuel_category",
+   "resource_category",
+   "achievement",
+   "module_category",
+   "equipment_category",
+   "trivial_smoke",
+   "shortcut",
+   "recipe_category",
+   "quality",
+   "surface_property",
+   "space_location",
+   "space_connection",
+   "custom_event",
+   "active_trigger",
+   "asteroid_chunk",
+   "collision_layer",
+   "airborne_pollutant",
+   "burner_usage",
+   "surface",
+   "procession",
+   "procession_layer_inheritance_group",
+}
+
+-- In 2.0 all the prototypes got split up into separate attributes of
+-- LuaPrototypes, but that's a userdata.  This function checks them all for a
+-- prototype, because in some cases we don't know what it actually is.
+---@param name string
+---@return LuaPrototypeBase?
+function mod.find_prototype(name)
+   for _, f in pairs(ALL_PROTO_KINDS) do
+      local p = prototypes[f]
+      if p and p[name] then return p[name] end
+   end
+
+   return nil
+end
+
+-- Formats a power value in watts to a localized string
+---@param power number Power value in watts
+---@return LocalisedString
+function mod.format_power(power)
+   if power > 1000000000000 then
+      return { "fa.unit-terawatts", string.format("%.1f", power / 1000000000000) }
+   elseif power > 1000000000 then
+      return { "fa.unit-gigawatts", string.format("%.1f", power / 1000000000) }
+   elseif power > 1000000 then
+      return { "fa.unit-megawatts", string.format("%.1f", power / 1000000) }
+   elseif power > 1000 then
+      return { "fa.unit-kilowatts", string.format("%.1f", power / 1000) }
+   else
+      return { "fa.unit-watts", string.format("%.1f", power) }
+   end
+end
+
+-- Formats a distance with direction to a localized string
+---@param distance number Distance in tiles
+---@param direction string|number Direction name (e.g., "north", "south") or direction number
+---@return LocalisedString
+function mod.format_distance_with_direction(distance, direction)
+   -- If direction is a string, we need to convert it to a number
+   -- This is a temporary fix - ideally callers should pass the numeric direction
+   if type(direction) == "string" then
+      -- Try to convert string directions back to numbers
+      local dir_map = {
+         ["North"] = 0,
+         ["NorthNorthEast"] = 1,
+         ["NorthEast"] = 2,
+         ["EastNorthEast"] = 3,
+         ["East"] = 4,
+         ["EastSouthEast"] = 5,
+         ["SouthEast"] = 6,
+         ["SouthSouthEast"] = 7,
+         ["South"] = 8,
+         ["SouthSouthWest"] = 9,
+         ["SouthWest"] = 10,
+         ["WestSouthWest"] = 11,
+         ["West"] = 12,
+         ["WestNorthWest"] = 13,
+         ["NorthWest"] = 14,
+         ["NorthNorthWest"] = 15,
+      }
+      direction = dir_map[direction] or 0
+   end
+   return { "fa.distance-tiles-direction", tostring(distance), { "fa.direction", direction } }
+end
+
+-- Builds a list with proper separators
+---@param items table Array of LocalisedString or string items
+---@param separator? LocalisedString Optional separator (defaults to comma-space)
+---@param last_separator? LocalisedString Optional last separator (defaults to "and")
+---@return LocalisedString
+function mod.build_list(items, separator, last_separator)
+   if #items == 0 then
+      return ""
+   elseif #items == 1 then
+      return items[1]
+   end
+
+   separator = separator or { "", ", " }
+   last_separator = last_separator or { "", " ", { "fa.list-and" }, " " }
+
+   local result = { "", items[1] }
+   for i = 2, #items - 1 do
+      table.insert(result, separator)
+      table.insert(result, items[i])
+   end
+   table.insert(result, last_separator)
+   table.insert(result, items[#items])
+
+   return result
+end
+
+-- Formats item count (e.g., "iron-plate x 100")
+---@param item_name LocalisedString Item localized name
+---@param count number Item count
+---@return LocalisedString
+function mod.format_item_count(item_name, count)
+   return { "fa.item-count", item_name, tostring(count) }
+end
+
+-- Formats a slot state (empty, contains item, filtered, etc.)
+---@param item_name? LocalisedString Item name if slot contains item
+---@param count? number Item count if applicable
+---@param is_filtered? boolean Whether slot is filtered
+---@param filter_name? LocalisedString Filter name if filtered
+---@return LocalisedString
+function mod.format_slot_state(item_name, count, is_filtered, filter_name)
+   if item_name then
+      if is_filtered then
+         return { "", { "fa.slot-filtered" }, " ", mod.format_item_count(item_name, count or 1) }
+      else
+         return mod.format_item_count(item_name, count or 1)
+      end
+   elseif is_filtered and filter_name then
+      return { "fa.slot-empty-filtered", filter_name }
+   else
+      return { "fa.slot-empty" }
+   end
+end
+
+-- Formats a position to a localized string (e.g., "at 10, 20")
+---@param x number X coordinate
+---@param y number Y coordinate
+---@return LocalisedString
+function mod.format_position(x, y)
+   return { "fa.position-at", tostring(math.floor(x)), tostring(math.floor(y)) }
+end
+
+-- Formats a percentage value
+---@param value number Value between 0 and 100
+---@param suffix? string Optional suffix key (e.g., "complete", "full")
+---@return LocalisedString
+function mod.format_percentage(value, suffix)
+   if suffix then
+      return { "fa.percentage-with-suffix", tostring(math.floor(value)), { "fa.percentage-suffix-" .. suffix } }
+   else
+      return { "fa.percentage", tostring(math.floor(value)) }
+   end
+end
+
+-- Formats a state/status string
+---@param state_key string The state key to look up
+---@param prefix? string Optional prefix for the locale key (defaults to "state")
+---@return LocalisedString
+function mod.format_state(state_key, prefix)
+   prefix = prefix or "state"
+   return { "fa." .. prefix .. "-" .. state_key }
+end
+
+-- Wave 5 formatting helpers
+-- Formats a count with item name (no pluralization needed)
+---@param count number The count to format
+---@param item_name LocalisedString The item name
+---@return LocalisedString
+function mod.format_count(count, item_name)
+   return { "fa.count-of-items", tostring(count), item_name }
+end
+
+-- Formats a distance value
+---@param distance number Distance in tiles
+---@param include_unit? boolean Whether to include "tiles" unit (default true)
+---@return LocalisedString
+function mod.format_distance(distance, include_unit)
+   include_unit = include_unit == nil and true or include_unit
+   if include_unit then
+      return { "fa.distance-tiles", string.format("%.1f", distance) }
+   else
+      return tostring(math.floor(distance))
+   end
+end
+
+-- Formats time from ticks to human-readable format
+---@param ticks number Game ticks
+---@return LocalisedString
+function mod.format_time(ticks)
+   local seconds = ticks / 60
+   local minutes = seconds / 60
+   local hours = minutes / 60
+
+   if hours >= 1 then
+      return { "fa.time-hours", string.format("%.1f", hours) }
+   elseif minutes >= 1 then
+      return { "fa.time-minutes", string.format("%.1f", minutes) }
+   else
+      return { "fa.time-seconds", string.format("%.1f", seconds) }
+   end
+end
+
+-- Formats coordinates in a standard way
+---@param x number X coordinate
+---@param y number Y coordinate
+---@param include_label? boolean Whether to include "coordinates" label (default true)
+---@return LocalisedString
+function mod.format_coordinates(x, y, include_label)
+   include_label = include_label == nil and true or include_label
+   if include_label then
+      return { "fa.coordinates-labeled", tostring(math.floor(x)), tostring(math.floor(y)) }
+   else
+      return { "fa.coordinates", tostring(math.floor(x)), tostring(math.floor(y)) }
+   end
 end
 
 return mod

@@ -1,6 +1,4 @@
-Last reviewed: 2024-10-18 (update this if reviewing this doc)
-
-NOTE: Current content is before Update 2.0.  Primarily this means that we refer to "global".  2.0 renames this to "storage".  If you are here after that rename and see references to global, this is what they mean.
+Last reviewed: 2024-10-21 (update this if reviewing this doc)
 
 # Introduction
 
@@ -31,7 +29,7 @@ If you need to do something more complicated, copy and modify an existing backen
 
 To add a new scanner category open scanner-consts.lua and add it to `CATEGORIES`.  Below, also add it to `CATEGORY_ORDER` so that the scanner knows to iterate it and where.  Then make sure a localised string of the form `scanner-categoryname` e.g. `scanner-category-production` is present.
 
-Finally you probably need to go to surface-scanner.lua and find the declaration of global-manager.  Increment `ephemeral_state_version` by 1.  This will wipe out and rebuild scanner information in saves as necessary.  This is not always required, but if you are unsure whether it is or not then this is always safe to do.
+Finally you probably need to go to surface-scanner.lua and find the declaration of storage-manager.  Increment `ephemeral_state_version` by 1.  This will wipe out and rebuild scanner information in saves as necessary.  This is not always required, but if you are unsure whether it is or not then this is always safe to do.
 
 Scanner ignores any prototype type not in these tables.  E.g. we leave out beams and explosions.
 
@@ -45,13 +43,13 @@ We must account for all of this in an efficient way.  We have under 16 milliseco
 
 # The Big Idea
 
-Let's step back and pretend that this isn't Factorio or Lua.  We are in some programming language which has all the features we might want and without the constraints of needing to be safe to store in global.  The obvious solution in that situation is to get some sort of list of new entities or tiles, and feed them into classes.  And indeed, that's what we do.  But with some Lua-specific and Factorio-specific tricks.  This allows pushing all of the complexity to one spot, and makes extension and modification of the scanner possible without having to understand the rest.  To see this, read any of the backends-- can you implement a callback that handles one entity?  Yes.
+Let's step back and pretend that this isn't Factorio or Lua.  We are in some programming language which has all the features we might want and without the constraints of needing to be safe to store in storage.  The obvious solution in that situation is to get some sort of list of new entities or tiles, and feed them into classes.  And indeed, that's what we do.  But with some Lua-specific and Factorio-specific tricks.  This allows pushing all of the complexity to one spot, and makes extension and modification of the scanner possible without having to understand the rest.  To see this, read any of the backends-- can you implement a callback that handles one entity?  Yes.
 
-But.  This is Lua.  So instead of classes we have closures and metatables.  And we don't get closures because we have to store in global.  Our only hammer is metatables, and as they say if all you have is a hammer... The way that Lua does OOP is via metatable tricks.  See [Programmihng in Lua](https://www.lua.org/pil/16.html) for some information.  This is Lua 5.1, but nothing changed about metatables in Lua 5.2.
+But.  This is Lua.  So instead of classes we have closures and metatables.  And we don't get closures because we have to store in storage.  Our only hammer is metatables, and as they say if all you have is a hammer... The way that Lua does OOP is via metatable tricks.  See [Programmihng in Lua](https://www.lua.org/pil/16.html) for some information.  This is Lua 5.1, but nothing changed about metatables in Lua 5.2.
 
 Factorio allows registering metatables by name with some boilerplate ceremony.  We already use this in e.g. rulers.  One invents a name which must never change, and then registers it at the top level.  This makes a number of things complicated, most notably inheritance.  For the sake of simplicity therefore we just drop empty methods in when a backend doesn't need them.  For the most part that means exactly one: `on_new_entity` or `on_new_chunk`.
 
-The elephant in the room of course is that single-entity.lua does in fact appear to be using callgbacks.  This is true, but that too is a trick.  In table-helpers.lua, a helper function called `nested_indexer` exists which knows how to chain metatables together.  By using this, we can write the function at the bottom of backends/simple.lua which is able to hide away the complexity of packing callbacks and other things that can't safely store into global behind metatable tricks.  The restriction is that one must do all of this at the top level of the code so that it loads when control.lua does, not after.  This is fine for scanner, and indeed as can be seen in single-entity.lua works quite well.
+The elephant in the room of course is that single-entity.lua does in fact appear to be using callgbacks.  This is true, but that too is a trick.  In table-helpers.lua, a helper function called `nested_indexer` exists which knows how to chain metatables together.  By using this, we can write the function at the bottom of backends/simple.lua which is able to hide away the complexity of packing callbacks and other things that can't safely store into storage behind metatable tricks.  The restriction is that one must do all of this at the top level of the code so that it loads when control.lua does, not after.  This is fine for scanner, and indeed as can be seen in single-entity.lua works quite well.
 
 The result of all of this is that one needs to know barely anything to add to it.  While Lua OOP isn't really friendly to new Lua users, copying code around and changing some strings is enough.
 

@@ -1,0 +1,4 @@
+# LayeredSpriteVariations
+
+**Type:** Array[`LayeredSprite`]
+

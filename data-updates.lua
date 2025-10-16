@@ -1,5 +1,4 @@
 local Consts = require("scripts.consts")
-local DataToRuntimeMap = require("scripts.data-to-runtime-map")
 
 for name, proto in pairs(data.raw.container) do
    proto.open_sound = proto.open_sound or { filename = "__base__/sound/metallic-chest-open.ogg", volume = 0.43 }
@@ -11,10 +10,6 @@ data.raw.character.character.has_belt_immunity = true
 
 ---Make the character unlikely to be selected by the mouse pointer when overlapping with entities
 data.raw.character.character.selection_priority = 2
-
-for _, item in pairs(vanilla_tip_and_tricks_item_table) do
-   remove_tip_and_tricks_item(item)
-end
 
 -- Modifications to Kruise Kontrol inputs (no longer needed)
 -- We will handle Kruise Kontrol driving through the remote API.  It binds
@@ -73,11 +68,8 @@ end
 
 ---Make selected vanilla objects not collide with players
 local function remove_player_collision(ent_p)
-   local new_mask = {}
-   for _, layer in pairs(ent_p.collision_mask or { "object-layer", "floor-layer", "water-tile" }) do
-      if layer ~= "player-layer" then table.insert(new_mask, layer) end
-   end
-   ent_p.collision_mask = new_mask
+   --todo: this won't work for entities that don't have their collision_mask defined since the vanilla default collision mask include the player.
+   (ent_p.collision_mask or {})["player"] = nil
 end
 for _, ent_type in pairs({ "pipe", "pipe-to-ground", "constant-combinator", "inserter" }) do
    for _, ent_p in pairs(data.raw[ent_type]) do
@@ -100,6 +92,10 @@ with other mods, we convert these to arrays, then tack ours on at the end.
 ]]
 
 local function augment_with_trigger(proto)
+   -- Issue #298, we found a crash in the game which cannot be worked around on our side.
+   do
+      return
+   end
    -- our trigger.
    ---@type data.Trigger
    local nt = {
@@ -132,28 +128,3 @@ for ty, children in pairs(data.raw) do
    end
    ::continue::
 end
-
---[[
-See https://forums.factorio.com/viewtopic.php?f=28&t=114820
-
-We need resource_patch_search_radius to write the scanner algorithm, though
-hopefully in future we can just ask the engine.  The problem of today is that we
-don't have it at runtime.  We therefore make a dummy item, and smuggle it
-across in the localised_description.  The format is:
-
-prototype-name=5
-other-prototype-name=10
-
-So on.  Parsed back out in scripts.scanner.resource-patches.lua.
-
-If nil we just don't write anything after the =.
-]]
-
-local resource_search_radiuses = {}
-
-for name, proto in pairs(data.raw["resource"]) do
-   if proto.type == "resource" then resource_search_radiuses[name] = proto.resource_patch_search_radius or 3 end
-end
-
-local DataToRuntimeMap = require("scripts.data-to-runtime-map")
-DataToRuntimeMap.build(Consts.RESOURCE_SEARCH_RADIUSES_MAP_NAME, resource_search_radiuses)

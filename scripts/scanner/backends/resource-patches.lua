@@ -1,9 +1,9 @@
 local Consts = require("scripts.consts")
 local DataToRuntimeMap = require("scripts.data-to-runtime-map")
+local Clusterer = require("ds.clusterer")
 local FaInfo = require("scripts.fa-info")
 local FaUtils = require("scripts.fa-utils")
 local Functools = require("scripts.functools")
-local Clusterer = require("scripts.ds.clusterer")
 local ScannerConsts = require("scripts.scanner.scanner-consts")
 local TableHelpers = require("scripts.table-helpers")
 
@@ -38,7 +38,7 @@ mod.ResourcePatchesBackend = ResourcePatchesBackend
 ---@param a fa.scanner.ResourcePatch
 ---@param b fa.scanner.ResourcePatch
 ---@return fa.scanner.ResourcePatch
-function fold_patches(a, b)
+local function fold_patches(a, b)
    local highest
 
    if a.highest_point.amount > b.highest_point.amount then
@@ -89,7 +89,7 @@ function ResourcePatchesBackend:get_clusterer_for(proto)
    local c = self.clusterers[proto]
    if c then return c end
 
-   local proto_def = game.entity_prototypes[proto]
+   local proto_def = prototypes.entity[proto]
 
    -- The radius of the resource is only available on the raw prototype.  While
    -- it is the case that the resource search distance is optional, we're a mod
@@ -153,7 +153,7 @@ function ResourcePatchesBackend:readout_entry(player, ent)
    local bd = ent.backend_data
    local pname = bd.prototype
 
-   if bd.zoom_override then return FaInfo.ent_info(pindex, bd.zoom_override, nil, true) end
+   if bd.zoom_override then return FaInfo.ent_info(player.index, bd.zoom_override, true) end
 
    local ents
 
@@ -169,8 +169,8 @@ function ResourcePatchesBackend:readout_entry(player, ent)
 
    local total_str
 
-   if game.entity_prototypes[pname].type == "resource" and game.entity_prototypes[pname].infinite_resource then
-      local t = math.floor(total / game.entity_prototypes[pname].normal_resource_amount * 100)
+   if prototypes.entity[pname].type == "resource" and prototypes.entity[pname].infinite_resource then
+      local t = math.floor(total / prototypes.entity[pname].normal_resource_amount * 100)
       total_str = string.format("%i percent", t)
    else
       total_str = FaUtils.format_number(total)
@@ -178,7 +178,7 @@ function ResourcePatchesBackend:readout_entry(player, ent)
 
    local percent = math.floor(total / bd.initial_total_amount * 100)
 
-   local pname = game.entity_prototypes[pname].localised_name
+   pname = prototypes.entity[pname].localised_name
 
    local res = {
       "fa.scanner-resource-patch",
@@ -200,7 +200,7 @@ function ResourcePatchesBackend:dump_entries_to_callback(player, callback)
       if seen_clusterers[c] then goto continue end
       seen_clusterers[c] = true
 
-      local is_infinite = game.entity_prototypes[n].infinite_resource
+      local is_infinite = prototypes.entity[n].infinite_resource
 
       local zoom_dist = nil
 

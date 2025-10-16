@@ -22,4 +22,18 @@ function mod.mod1(index, length)
    return ((index - 1) % length) + 1
 end
 
+---@param x number
+---@param low number
+---@param high number
+---@return number
+function mod.clamp(x, low, high)
+   if x < low then
+      return low
+   elseif x > high then
+      return high
+   else
+      return x
+   end
+end
+
 return mod

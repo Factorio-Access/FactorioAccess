@@ -1,0 +1,4 @@
+# EffectTexture
+
+**Type:** `Struct`
+

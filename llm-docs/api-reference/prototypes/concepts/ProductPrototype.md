@@ -1,0 +1,4 @@
+# ProductPrototype
+
+**Type:** `ItemProductPrototype` | `FluidProductPrototype`
+

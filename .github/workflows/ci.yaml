@@ -11,6 +11,6 @@ jobs:
     - name: 'stylua --check'
       shell: bash
       run: |
-        cargo install --version 0.20.0 stylua --features lua52
+        cargo install --version 2.3.0 stylua --features lua52
         stylua --check . -v
 

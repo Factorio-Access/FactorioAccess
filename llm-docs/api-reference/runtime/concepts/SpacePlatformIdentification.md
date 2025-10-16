@@ -1,0 +1,4 @@
+# SpacePlatformIdentification
+
+**Type:** `LuaSpacePlatform`
+

@@ -1,16 +1,17 @@
 local Functools = require("scripts.functools")
-local GlobalManager = require("scripts.global-manager")
 local Memosort = require("scripts.memosort")
 local ResourcePatchesBackend = require("scripts.scanner.backends.resource-patches")
-local ScannerConsts = require("scripts.scanner.scanner-consts")
 local SimpleBackend = require("scripts.scanner.backends.simple")
+local ScannerConsts = require("scripts.scanner.scanner-consts")
+local StorageManager = require("scripts.storage-manager")
 -- This is typed around 100 times and only used for the LUT, so we will shorten
 -- it.
+local SparseBitset = require("ds.sparse-bitset")
 local SEB = require("scripts.scanner.backends.single-entity")
-local SparseBitset = require("scripts.ds.sparse-bitset")
-local TH = require("scripts.table-helpers")
+local IcebergBackend = require("scripts.scanner.backends.iceberg")
 local TreeBackend = require("scripts.scanner.backends.trees")
 local WaterBackend = require("scripts.scanner.backends.water")
+local TH = require("scripts.table-helpers")
 local WorkQueue = require("scripts.work-queue")
 
 local mod = {}
@@ -45,7 +46,7 @@ local BACKEND_LUT = {
    ["cargo-wagon"] = SEB.TrainsNamed,
    ["character-corpse"] = SEB.Other,
    ["character"] = SEB.Character,
-   ["cliff"] = SEB.Other,
+   ["cliff"] = SEB.Terrain,
    ["combat-robot"] = SEB.Military,
    ["constant-combinator"] = SEB.LogisticsAndPower,
    ["construction-robot"] = SEB.LogisticsAndPower,
@@ -126,18 +127,18 @@ local BACKEND_NAME_OVERRIDES = Functools.cached(function()
 
    -- All our kinds of rocks.
    TH.merge_mappings(bno, {
-      ["rock-big"] = SEB.Rock,
-      ["rock-huge"] = SEB.Rock,
-      ["rock-medium"] = SEB.Rock,
-      ["rock-small"] = SEB.Rock,
-      ["rock-tiny"] = SEB.Rock,
-      ["sand-rock-big"] = SEB.Rock,
-      ["sand-rock-medium"] = SEB.Rock,
-      ["sand-rock-small"] = SEB.Rock,
+      ["big-rock"] = SEB.Rock,
+      ["big-sand-rock"] = SEB.Rock,
+      ["huge-rock"] = SEB.Rock,
+      ["medium-rock"] = SEB.Rock,
+      ["medium-sand-rock"] = SEB.Rock,
+      ["small-rock"] = SEB.Rock,
+      ["small-sand-rock"] = SEB.Rock,
+      ["tiny-rock"] = SEB.Rock,
    })
 
    -- remnants
-   for proto in pairs(game.entity_prototypes) do
+   for proto in pairs(prototypes.entity) do
       if proto:match("-remnants$") then bno[proto] = SEB.Remnants end
    end
 
@@ -146,6 +147,7 @@ end)
 ---@class fa.scanner.SurfaceBackends
 ---@field lut table<string, fa.scanner.ScannerBackend>
 ---@field name_lut table<string, fa.scanner.ScannerBackend>
+---@field iceberg_backend fa.scanner.IcebergBackend
 ---@field water_backend fa.scanner.WaterBackend
 
 -- Instantiate a set of backends, later wired up to a surface, by iterating over
@@ -172,6 +174,7 @@ local function instantiate_backends(surface)
    return {
       lut = lut,
       name_lut = name_lut,
+      iceberg_backend = IcebergBackend.IcebergBackend.new(surface),
       water_backend = WaterBackend.WaterBackend.new(surface),
    }
 end
@@ -197,10 +200,10 @@ local function new_empty_surface(key)
 end
 
 ---@type table<number, fa.scanner.GlobalSurfaceState>
-local surface_state = GlobalManager.declare_global_module(
+local surface_state = StorageManager.declare_storage_module(
    "scanner",
    new_empty_surface,
-   { root_field = "surfaces", ephemeral_state_version = 7 }
+   { root_field = "surfaces", ephemeral_state_version = 10 }
 )
 
 -- Given a backend setup and an array of entities, dispatch the entities to the
@@ -237,7 +240,7 @@ local function scan_chunk(cmd)
    -- We just got these from the surface with no gap, so do everything assuming
    -- it's valid.
    TH.retain_unordered(ents, function(item)
-      local dest_req = script.register_on_entity_destroyed(item)
+      local dest_req = script.register_on_object_destroyed(item)
       if state.seen_entities:test(dest_req) then return false end
 
       -- The entity may not have the center in this chunk.
@@ -263,6 +266,7 @@ local function scan_chunk(cmd)
 
    if not state.seen_chunks[cx][cy] then
       state.seen_chunks[cx][cy] = true
+      state.backends.iceberg_backend:on_new_chunk(chunk)
       state.backends.water_backend:on_new_chunk(chunk)
    end
 end
@@ -316,7 +320,7 @@ local work_queue = WorkQueue.declare_work_queue({
    idle_function = redispatch,
 })
 
----@param event EventData.on_entity_destroyed
+---@param event EventData.on_object_destroyed
 function mod.on_entity_destroyed(event)
    for _, s in pairs(surface_state) do
       if s.seen_entities:remove(event.registration_number) then
@@ -338,7 +342,7 @@ function mod.on_new_entity(surface_index, ent)
    if not ent.valid then return end
 
    local state = surface_state[surface_index]
-   local dest_req = script.register_on_entity_destroyed(ent)
+   local dest_req = script.register_on_object_destroyed(ent)
 
    if state.seen_entities:test(dest_req) then return end
    state.seen_entities:set(dest_req)
@@ -372,6 +376,7 @@ function mod.get_entries_snapshot(surface_index, player, callback)
       end
    end
 
+   state.backends.iceberg_backend:dump_entries_to_callback(player, callback)
    state.backends.water_backend:dump_entries_to_callback(player, callback)
 end
 

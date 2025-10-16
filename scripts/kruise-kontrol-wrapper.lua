@@ -1,5 +1,9 @@
 --Here: Functions related to Kruise Kontrol Remote
 
+local Viewpoint = require("scripts.viewpoint")
+local EntitySelection = require("scripts.entity-selection")
+local Speech = require("scripts.speech")
+
 local mod = {}
 
 local interface_name = "kruise_kontrol_updated"
@@ -28,12 +32,13 @@ function mod.activate_kk(pindex)
       --
       -- For now the fractional components are still present.  We're about to
       -- fix that.
-      local kk_pos = table.deepcopy(players[pindex].cursor_pos)
+      local vp = Viewpoint.get_viewpoint(pindex)
+      local kk_pos = vp:get_cursor_pos()
 
       -- we must duplicate a bit of logic since the mouse is not on our side; FA
       -- has its own idea of selections.
-      refresh_player_tile(pindex)
-      local target = get_first_ent_at_tile(pindex)
+      EntitySelection.reset_entity_index(pindex)
+      local target = EntitySelection.get_first_ent_at_tile(pindex)
 
       -- Okay, but what other edge cases can we find?  Turns out that, again, KK
       -- doesn't work if there's a blueprint in the player's hand.  This one is
@@ -56,17 +61,6 @@ function mod.activate_kk(pindex)
       end
 
       -- Okay. Finally we're good.  Let's kick this off.
-
-      close_menu_resets(pindex)
-
-      -- If cursor mode is on then the best case is that the mod announces a
-      -- bunch of stuff it shouldn't, but sometimes this just flat out means
-      -- that KK doesn't work.  I don't know why; I'm guessing that's to do with
-      -- how we hack WASD not to move the player.
-      --
-      -- Don't say anything either, this is silent.
-      force_cursor_off(pindex)
-
       ---@type table
       local opts = { x = math.floor(kk_pos.x), y = math.floor(kk_pos.y) }
       remote.call(interface_name, "start_job", pindex, opts, target)
@@ -76,7 +70,7 @@ function mod.activate_kk(pindex)
       return { "fa.kk-start", desc }
    end, { "fa.kk-not-available" })
 
-   printout(announcing, pindex)
+   Speech.speak(pindex, announcing)
 end
 
 --FA actions to take when KK cancel input is pressed
@@ -93,13 +87,13 @@ function mod.cancel_kk(pindex)
       remote.call(interface_name, "cancel", pindex)
 
       -- Prevent saying KK is done after it is cancelled.
-      players[pindex].kruise_kontrol_active_last_time = false
+      storage.players[pindex].kruise_kontrol_active_last_time = false
 
       -- We screwed around with the running modifier. Put it back based on
       -- cursor mode.
       fix_walk(pindex)
 
-      printout({ "fa.kk-cancel" }, pindex)
+      Speech.speak(pindex, { "fa.kk-cancel" })
    end)
    -- If in a car, make sure to stop it because we are exiting it too because of the overlapping keys
    if p.vehicle and p.vehicle.type == "car" and p.vehicle.active == true then p.vehicle.speed = 0 end
@@ -110,12 +104,12 @@ function mod.status_read(pindex, short_version)
       -- We must remember if KK was last active and then use it to detect the
       -- falling edge.  This is the only way to really know if it's finished.
       local active = remote.call(interface_name, "is_active", pindex)
-      local was_active = players[pindex].kruise_kontrol_active_last_time
-      players[pindex].kruise_kontrol_active_last_time = active
+      local was_active = storage.players[pindex].kruise_kontrol_active_last_time
+      storage.players[pindex].kruise_kontrol_active_last_time = active
       if active then
-         printout({ "fa.kk-state", remote.call(interface_name, "get_description", pindex) }, pindex)
+         Speech.speak(pindex, { "fa.kk-state", remote.call(interface_name, "get_description", pindex) })
       elseif not active and was_active then
-         printout({ "fa.kk-done" }, pindex)
+         Speech.speak(pindex, { "fa.kk-done" })
       end
    end)
 end

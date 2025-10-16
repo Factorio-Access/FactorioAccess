@@ -1,0 +1,4 @@
+# BeltConnectionType
+
+**Type:** `"input"` | `"output"`
+

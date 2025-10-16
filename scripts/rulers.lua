@@ -7,13 +7,15 @@ skipping.  Both of these will change later.  For the sake of the prototype,
 players place a ruler with alt+b and clear with alt+shift+b.  If they want to
 also have a bookmark there, we make them do so themselves.
 
-We return an opaque handle which may safely be stored in global, and we (for
+We return an opaque handle which may safely be stored in storage, and we (for
 now) use that ourselves.  The long term plan as of 2024-08-02 is to integrate
 this functionality with fast travel, so in future a handle will simply go live
 over there with fast travel points.
 ]]
-local GlobalManager = require("scripts.global-manager")
+local StorageManager = require("scripts.storage-manager")
 local uid = require("scripts.uid").uid
+local Viewpoint = require("scripts.viewpoint")
+local MovementHistory = require("scripts.movement-history")
 
 local mod = {}
 
@@ -21,9 +23,10 @@ local mod = {}
 ---@field x number
 ---@field y number
 
----@class fa.RulerGlobalState
+---@class fa.RulerStorageState
 ---@field rulers fa.Ruler[]
 ---@field handle fa.RulerHandle? temporary, see comments below on how handles work.
+---@field last_cursor_tile {x: number, y: number}? Last cursor tile position checked
 
 -- How far from the ruler do we give the boundary sound?
 local RULER_SIDE_DIST = 1
@@ -31,10 +34,11 @@ local RULER_SIDE_DIST = 1
 --- When using a handle to a ruler which was deleted, this message is thrown.
 local DELETED_MSG = "Attempt to use a ruler handle which was previously deleted"
 
----@type table<number, fa.RulerGlobalState>
-local module_state = GlobalManager.declare_global_module("rulers", {
+---@type table<number, fa.RulerStorageState>
+local module_state = StorageManager.declare_storage_module("rulers", {
    -- For now only ever holds one; this is future proofing.
    rulers = {},
+   last_cursor_tile = nil,
 })
 
 --[[
@@ -45,7 +49,7 @@ As promised in uid.lua, an explanation of the handle:
   the table (so that we need not take the overhead of looking it up, and so that
   code is simpler) and this unique id.
 - When deleting, the handle clears out it's table reference, then uses the
-  unique id to go   delete the ruler from global.
+  unique id to go   delete the ruler from storage.
 - Then the ruler handle switches itself off effectively by just asserting that
   the table reference is still there.  This gives users of the API a clear
   message if they are trying to use rulers they deleted by throwing an error,
@@ -56,10 +60,10 @@ delete.  Once they get integrated into fast travel, however, they will need to
 support being reconfigured--functions on this "class" is where that belongs.
 
 In practice right now it is one ruler per player; the handle is stashed in the
-`handle` field of our global per-player state.
+`handle` field of our stored per-player state.
 
 You can think of this like a Java class except with some ceremony that lets it
-live in global.
+live in storage.
 ]]
 ---@class fa.RulerHandle
 ---@field pindex number
@@ -156,7 +160,7 @@ local ALIGNMENT_SOUNDS = {
 local function play_ruler_alignment(pindex, alignment)
    local s = ALIGNMENT_SOUNDS[alignment]
    local p = game.get_player(pindex)
-   if not p then game.print("No player with pindex " .. tonumber(pindex)) end
+   if not p then error("No player with pindex " .. tonumber(pindex)) end
 
    -- Nothing to do, not aligned.
    if not s then return end
@@ -241,7 +245,7 @@ end
 -- especially with being able to walk in cursor mode on the horizon.  But it's
 -- fine to use it for now.
 function mod.update_from_cursor(pindex)
-   local cur = players[pindex].cursor_pos
+   local cur = Viewpoint.get_viewpoint(pindex):get_cursor_pos()
    mod.on_viewpoint_moved(pindex, cur.x, cur.y)
 end
 
@@ -261,6 +265,75 @@ function mod.is_any_ruler_aligned(pindex, position)
       if alignment == ALIGNMENT.CENTERED or alignment == ALIGNMENT.AT_DEFINITION then return true end
    end
    return false
+end
+
+---Update ruler checks for a single player based on movement history
+---Checks both walking and cursor movement, triggers on tile crossings
+---@param pindex number
+local function update_player(pindex)
+   local state = module_state[pindex]
+   if not state.handle then return end
+
+   local player = game.get_player(pindex)
+   if not player then return end
+
+   -- Check walking movement using movement history
+   local reader = MovementHistory.get_movement_history_reader(pindex)
+   local current_entry = reader:get(0)
+   local prev_entry = reader:get(1)
+
+   -- If currently walking or driving, check if we crossed a tile
+   if
+      current_entry
+      and prev_entry
+      and (
+         current_entry.kind == MovementHistory.MOVEMENT_KINDS.WALKING
+         or current_entry.kind == MovementHistory.MOVEMENT_KINDS.DRIVING
+      )
+   then
+      local current_tile = {
+         x = math.floor(current_entry.position.x),
+         y = math.floor(current_entry.position.y),
+      }
+      local prev_tile = {
+         x = math.floor(prev_entry.position.x),
+         y = math.floor(prev_entry.position.y),
+      }
+
+      -- Check if we crossed a tile boundary
+      if current_tile.x ~= prev_tile.x or current_tile.y ~= prev_tile.y then
+         mod.on_viewpoint_moved(pindex, current_tile.x, current_tile.y)
+      end
+   end
+
+   -- Check cursor movement
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
+   local cursor_tile = {
+      x = math.floor(cursor_pos.x),
+      y = math.floor(cursor_pos.y),
+   }
+
+   -- Trigger if no previous cursor tile OR crossed tile boundary
+   local should_trigger_cursor = false
+   if not state.last_cursor_tile then
+      should_trigger_cursor = true
+   elseif cursor_tile.x ~= state.last_cursor_tile.x or cursor_tile.y ~= state.last_cursor_tile.y then
+      should_trigger_cursor = true
+   end
+
+   if should_trigger_cursor then
+      mod.on_viewpoint_moved(pindex, cursor_tile.x, cursor_tile.y)
+      state.last_cursor_tile = cursor_tile
+   end
+end
+
+---Update ruler checks for all players
+---Should be called from on_tick in control.lua
+function mod.update_all_players()
+   for pindex, _ in pairs(storage.players) do
+      update_player(pindex)
+   end
 end
 
 return mod

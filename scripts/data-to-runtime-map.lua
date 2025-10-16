@@ -24,7 +24,7 @@ local mod = {}
 function mod.build(name, values)
    local index = 1
    for k, v in pairs(values) do
-      local v = tostring(v)
+      v = tostring(v)
 
       data:extend({
          {
@@ -34,6 +34,9 @@ function mod.build(name, values)
             icon_size = 2,
             stack_size = 1,
             localised_description = { k, v },
+            auto_recycle = false,
+            hidden = true,
+            hidden_in_factoriopedia = true,
          },
       })
 
@@ -43,7 +46,7 @@ function mod.build(name, values)
    if index == 1 then
       -- We didn't add anything; instead, record that it was empty.
 
-      values:extend({
+      data:extend({
          {
             type = "item",
             name = string.format("fa-data-map-%s-empty", name),
@@ -56,7 +59,7 @@ function mod.build(name, values)
    end
 end
 
---@param name string
+---@param name string
 ---@return table<string, string>
 function mod.load(name)
    local res = {}
@@ -64,7 +67,7 @@ function mod.load(name)
 
    while true do
       local protoname = string.format("fa-data-map-%s-%i", name, i)
-      local proto = game.item_prototypes[protoname]
+      local proto = prototypes.item[protoname]
       if not proto then break end
       local k = proto.localised_description[1]
       local v = proto.localised_description[2]
@@ -77,7 +80,7 @@ function mod.load(name)
    if i == 1 then
       -- It is empty. But let us make sure and fail loudly if it doesn't exist
       -- at all.
-      assert(game.item_prototypes[string.format("fa-dta-map-%s-empty", name)], "Map " .. name .. " was empty")
+      assert(prototypes.item[string.format("fa-data-map-%s-empty", name)], "Map " .. name .. " was never declared")
    end
 
    return res

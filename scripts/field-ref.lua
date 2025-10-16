@@ -24,7 +24,7 @@ assert(reference.get(example) == 10)
 An error is thrown if the path encounters a nil on any of the intermediate steps
 to the final value but will return nil for the final value itself.
 
-Field references cannot be stored in global.
+Field references cannot be stored in storage.
 
 (If you just want to use it, you can stop here. Devs who want to know how it
 works, read on).
@@ -57,13 +57,13 @@ For sanity we then just assert that the user is not trying to "compile" an empty
 path.
 ]]
 
---- @class FieldRef
---- @field get fun(target: any): any
---- @field set fun(target: any, value: any)
+---@class FieldRef
+---@field get fun(target: any): any
+---@field set fun(target: any, value: any)
 
---- @class FieldRefBuilder
+---@class FieldRefBuilder
 ---@field [string] FieldRefBuilder
---@field [number] FieldRefBuilder
+---@field [number] FieldRefBuilder
 ---@operator call: FieldRef
 
 -- By providing our own copy, this can be tested outside of Factorio at a shell.
@@ -181,7 +181,7 @@ end
 
 -- This variable is how it'd be imported by others, and returned at the end of
 -- this file.  The root is just an empty path.
---- @type FieldRefBuilder
+---@type FieldRefBuilder
 local F = capture_path_and_build({})
 
 local test_value = {
@@ -192,7 +192,7 @@ local test_value = {
 }
 
 -- No root path compilation.
-ok = pcall(function()
+local ok = pcall(function()
    F()
 end)
 assert(ok == false)

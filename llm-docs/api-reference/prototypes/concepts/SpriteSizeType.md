@@ -1,0 +1,4 @@
+# SpriteSizeType
+
+**Type:** `int16`
+

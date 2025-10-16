@@ -1,29 +1,15 @@
 --Here: Electricity related functions and menus
 local util = require("util")
-local fa_utils = require("scripts.fa-utils")
+local FaUtils = require("scripts.fa-utils")
+local Wires = require("scripts.wires")
 
 local mod = {}
 
---Formats a power value in watts to summarize it as a string according to its magnitude.
+--Formats a power value in watts to summarize it as a LocalisedString according to its magnitude.
 ---@param power float
+---@return LocalisedString
 function mod.get_power_string(power)
-   result = ""
-   if power > 1000000000000 then
-      power = power / 1000000000000
-      result = result .. string.format(" %.1f Terawatts", power)
-   elseif power > 1000000000 then
-      power = power / 1000000000
-      result = result .. string.format(" %.1f Gigawatts", power)
-   elseif power > 1000000 then
-      power = power / 1000000
-      result = result .. string.format(" %.1f Megawatts", power)
-   elseif power > 1000 then
-      power = power / 1000
-      result = result .. string.format(" %.1f Kilowatts", power)
-   else
-      result = result .. string.format(" %.1f Watts", power)
-   end
-   return result
+   return FaUtils.format_power(power)
 end
 
 --Spawns a lamp at the electric pole and uses its energy level to approximate the network satisfaction percentage with high accuracy
@@ -43,7 +29,7 @@ end
 --For an electricity producer, returns an info string on the current and maximum production.
 ---@param ent LuaEntity
 function mod.get_electricity_flow_info(ent)
-   local result = ""
+   local result = { "" }
    local power = 0
    local capacity = 0
    for i, v in pairs(ent.electric_network_statistics.output_counts) do
@@ -51,27 +37,31 @@ function mod.get_electricity_flow_info(ent)
          + (
             ent.electric_network_statistics.get_flow_count({
                name = i,
-               input = false,
+               category = "output",
                precision_index = defines.flow_precision_index.five_seconds,
             })
          )
       local cap_add = 0
       for _, power_ent in pairs(ent.surface.find_entities_filtered({ name = i, force = ent.force })) do
-         if power_ent.electric_network_id == ent.electric_network_id then cap_add = cap_add + 1 end
+         if power_ent.electric_network_id == ent.electric_network_id then
+            cap_add = cap_add + prototypes.entity[i].get_max_energy_production(power_ent.quality)
+         end
       end
-      cap_add = cap_add * game.entity_prototypes[i].max_energy_production
-      if game.entity_prototypes[i].type == "solar-panel" then
+
+      if prototypes.entity[i].type == "solar-panel" then
          cap_add = cap_add * ent.surface.solar_power_multiplier * (1 - ent.surface.darkness)
       end
       capacity = capacity + cap_add
    end
    power = power * 60
    capacity = capacity * 60
-   result = result
-      .. mod.get_power_string(power)
-      .. " being produced out of "
-      .. mod.get_power_string(capacity)
-      .. " capacity, "
+   result = {
+      "",
+      mod.get_power_string(power),
+      " being produced out of ",
+      mod.get_power_string(capacity),
+      " capacity, ",
+   }
    return result
 end
 
@@ -161,10 +151,10 @@ end
 function mod.report_nearest_supplied_electric_pole(ent)
    local result = ""
    local pole, dist = mod.find_nearest_electric_pole(ent, true)
-   local dir = -1
+   local dir
    if pole ~= nil then
-      dir = fa_utils.get_direction_biased(pole.position, ent.position)
-      result = "The nearest powered electric pole is " .. dist .. " tiles to the " .. fa_utils.direction_lookup(dir)
+      dir = FaUtils.get_direction_biased(pole.position, ent.position)
+      result = "The nearest powered electric pole is " .. dist .. " tiles to the " .. FaUtils.direction_lookup(dir)
    else
       result = "And there are no powered electric poles within ten thousand tiles. Generators may be out of energy."
    end
