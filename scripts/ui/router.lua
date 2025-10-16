@@ -824,6 +824,27 @@ register_ui_event("fa-cs-g", function(event, pindex)
    return nil -- Fall through to world handler
 end)
 
+-- CTRL+ALT+G: Type new logistic group (handled in UI)
+register_ui_event("fa-ca-g", function(event, pindex)
+   local router = mod.get_router(pindex)
+   local stack = router_state[pindex].ui_stack
+
+   if #stack > 0 then
+      local top_entry = stack[#stack]
+      local ui_name = top_entry.name
+      if registered_uis[ui_name] then
+         local ui = registered_uis[ui_name]
+         if ui.on_accelerator then
+            local controller = create_controller_for_event(router)
+            ui:on_accelerator(pindex, "fa-ca-g", nil, controller)
+            controller:finalize()
+            return EventManager.FINISHED
+         end
+      end
+   end
+   return nil
+end)
+
 -- SHIFT+LEFTBRACKET is handled directly by UI on_click handlers (e.g., inventory-grid.lua)
 -- Falls through to world handler (equip from hand) when no UI is open
 

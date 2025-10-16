@@ -17,35 +17,45 @@ local Speech = require("scripts.speech")
 local UiSounds = require("scripts.ui.sounds")
 local Localising = require("scripts.localising")
 local CircuitNetwork = require("scripts.circuit-network")
-local LogisticSectionProvider = require("scripts.logistic-section-provider")
 local FaInfo = require("scripts.fa-info")
+local BotLogistics = require("scripts.worker-robots")
 
 local mod = {}
 
 ---Build the unified section editor menu
----Works for both logistic points and constant combinators via provider
+---Works for all entities via entity.get_logistic_sections()
 ---@param ctx fa.ui.graph.Ctx
----@param point_index number? Only required for logistic points
 ---@param section_index number
 ---@return fa.ui.graph.Render?
-local function render_section(ctx, point_index, section_index)
+local function render_section(ctx, section_index)
    assert(ctx.global_parameters, "render_section: global_parameters is nil")
    local entity = ctx.global_parameters.entity
-   assert(entity and entity.valid, "render_section: entity is nil or invalid")
+
+   -- Validate entity at render callback entry
+   if not entity or not entity.valid then return nil end
+
    assert(section_index, "render_section: section_index is nil")
 
-   -- Create provider based on entity type
-   local provider = LogisticSectionProvider.create_provider(entity, point_index)
-   assert(provider, "render_section: failed to create provider")
+   -- Get sections directly from entity
+   local sections = entity.get_logistic_sections()
+   assert(sections, "render_section: entity has no logistic sections")
 
-   local section = provider.get_section(section_index)
+   local section = sections.get_section(section_index)
    assert(section, "render_section: section not found")
 
    local menu = Menu.MenuBuilder.new()
 
-   -- Detect if this is a constant combinator to determine signal mode
+   -- Determine signal mode based on entity type
    local is_combinator = entity.type == "constant-combinator"
-   local signal_mode = is_combinator and "all" or "item"
+   local is_roboport = entity.type == "roboport"
+   local signal_mode
+   if is_combinator then
+      signal_mode = "all"
+   elseif is_roboport then
+      signal_mode = "roboport-items"
+   else
+      signal_mode = "item"
+   end
 
    -- Add rows for each existing filter/request
    for i = 1, section.filters_count do
@@ -80,7 +90,9 @@ local function render_section(ctx, point_index, section_index)
             end,
             on_child_result = function(ctx, result)
                if result then
-                  local section = provider.get_section(section_index)
+                  local sections = entity.get_logistic_sections()
+                  if not sections then return end
+                  local section = sections.get_section(section_index)
                   if not section then return end
 
                   local slot = section.get_slot(i)
@@ -121,7 +133,9 @@ local function render_section(ctx, point_index, section_index)
                   UiSounds.play_ui_edge(ctx.pindex)
                   ctx.controller.message:fragment({ "fa.logistics-value-cannot-be-negative" })
                else
-                  local section = provider.get_section(section_index)
+                  local sections = entity.get_logistic_sections()
+                  if not sections then return end
+                  local section = sections.get_section(section_index)
                   if not section then return end
 
                   local slot = section.get_slot(i)
@@ -137,7 +151,9 @@ local function render_section(ctx, point_index, section_index)
                end
             end,
             on_clear = function(ctx)
-               local section = provider.get_section(section_index)
+               local sections = entity.get_logistic_sections()
+               if not sections then return end
+               local section = sections.get_section(section_index)
                if not section then return end
 
                local slot = section.get_slot(i)
@@ -169,7 +185,9 @@ local function render_section(ctx, point_index, section_index)
             on_child_result = function(ctx, result)
                if result == "" then
                   -- Empty means infinity
-                  local section = provider.get_section(section_index)
+                  local sections = entity.get_logistic_sections()
+                  if not sections then return end
+                  local section = sections.get_section(section_index)
                   if not section then return end
 
                   local slot = section.get_slot(i)
@@ -186,7 +204,9 @@ local function render_section(ctx, point_index, section_index)
                      UiSounds.play_ui_edge(ctx.pindex)
                      ctx.controller.message:fragment({ "fa.logistics-value-cannot-be-negative" })
                   else
-                     local section = provider.get_section(section_index)
+                     local sections = entity.get_logistic_sections()
+                     if not sections then return end
+                     local section = sections.get_section(section_index)
                      if not section then return end
 
                      local slot = section.get_slot(i)
@@ -204,7 +224,9 @@ local function render_section(ctx, point_index, section_index)
                end
             end,
             on_clear = function(ctx)
-               local section = provider.get_section(section_index)
+               local sections = entity.get_logistic_sections()
+               if not sections then return end
+               local section = sections.get_section(section_index)
                if not section then return end
 
                local slot = section.get_slot(i)
@@ -221,7 +243,9 @@ local function render_section(ctx, point_index, section_index)
                ctx.message:fragment({ "fa.logistics-delete" })
             end,
             on_click = function(ctx)
-               local section = provider.get_section(section_index)
+               local sections = entity.get_logistic_sections()
+               if not sections then return end
+               local section = sections.get_section(section_index)
                if not section then return end
 
                section.clear_slot(i)
@@ -245,7 +269,9 @@ local function render_section(ctx, point_index, section_index)
       end,
       on_child_result = function(ctx, result)
          if result then
-            local section = provider.get_section(section_index)
+            local sections = entity.get_logistic_sections()
+            if not sections then return end
+            local section = sections.get_section(section_index)
             if not section then return end
 
             local new_index = section.filters_count + 1
@@ -270,7 +296,12 @@ local function render_section(ctx, point_index, section_index)
    -- Group selector
    menu:add_item("group_selector", {
       label = function(ctx)
-         local section = provider.get_section(section_index)
+         local sections = entity.get_logistic_sections()
+         if not sections then
+            ctx.message:fragment({ "fa.logistics-no-group" })
+            return
+         end
+         local section = sections.get_section(section_index)
          if not section then
             ctx.message:fragment({ "fa.logistics-no-group" })
             return
@@ -284,11 +315,17 @@ local function render_section(ctx, point_index, section_index)
          ctx.message:fragment({ "fa.logistics-group-hint" })
       end,
       on_click = function(ctx)
-         ctx.controller:open_child_ui(Router.UI_NAMES.LOGISTIC_GROUP_SELECTOR, {}, { node = "group_selector" })
+         ctx.controller:open_child_ui(
+            Router.UI_NAMES.LOGISTIC_GROUP_SELECTOR,
+            { entity = entity },
+            { node = "group_selector" }
+         )
       end,
       on_child_result = function(ctx, result)
          if result ~= nil then
-            local section = provider.get_section(section_index)
+            local sections = entity.get_logistic_sections()
+            if not sections then return end
+            local section = sections.get_section(section_index)
             if not section then return end
 
             section.group = result
@@ -300,11 +337,18 @@ local function render_section(ctx, point_index, section_index)
          end
       end,
       on_clear = function(ctx)
-         local section = provider.get_section(section_index)
+         local sections = entity.get_logistic_sections()
+         if not sections then return end
+         local section = sections.get_section(section_index)
          if not section then return end
 
          section.group = ""
          ctx.controller.message:fragment({ "fa.logistics-group-cleared" })
+      end,
+      on_accelerator = function(ctx, accelerator_name)
+         if accelerator_name == "fa-ca-g" then
+            ctx.controller:open_textbox("", { node = "group_selector" }, { "fa.logistics-enter-group-name" })
+         end
       end,
    })
 
@@ -314,7 +358,8 @@ local function render_section(ctx, point_index, section_index)
          ctx.message:fragment({ "fa.logistics-delete-section" })
       end,
       on_click = function(ctx)
-         if provider.remove_section(section_index) then
+         local sections = entity.get_logistic_sections()
+         if sections and sections.remove_section(section_index) then
             UiSounds.play_menu_move(ctx.pindex)
             ctx.controller.message:fragment({ "fa.logistics-section-deleted" })
          else
@@ -330,7 +375,8 @@ local function render_section(ctx, point_index, section_index)
          ctx.message:fragment({ "fa.logistics-add-section-after" })
       end,
       on_click = function(ctx)
-         local new_section = provider.add_section("", section_index + 1)
+         local sections = entity.get_logistic_sections()
+         local new_section = sections and sections.add_section("", section_index + 1)
          if new_section then
             UiSounds.play_menu_move(ctx.pindex)
             ctx.controller.message:fragment({ "fa.logistics-section-added" })
@@ -347,7 +393,8 @@ local function render_section(ctx, point_index, section_index)
          ctx.message:fragment({ "fa.logistics-add-section-end" })
       end,
       on_click = function(ctx)
-         local new_section = provider.add_section()
+         local sections = entity.get_logistic_sections()
+         local new_section = sections and sections.add_section()
          if new_section then
             UiSounds.play_menu_move(ctx.pindex)
             ctx.controller.message:fragment({ "fa.logistics-section-added-end" })
@@ -364,17 +411,15 @@ local function render_section(ctx, point_index, section_index)
 end
 
 ---Create a section editor tab
----@param point_index number? Only required for logistic points, nil for constant combinators
 ---@param section_index number
 ---@param title? LocalisedString Optional title override
 ---@return fa.ui.TabDescriptor
-function mod.create_section_tab(point_index, section_index, title)
-   local name_suffix = point_index and ("_" .. point_index .. "_" .. section_index) or ("_" .. section_index)
+function mod.create_section_tab(section_index, title)
    return KeyGraph.declare_graph({
-      name = "section" .. name_suffix,
+      name = "section_" .. section_index,
       title = title or { "fa.logistics-section-title", tostring(section_index) },
       render_callback = function(ctx)
-         return render_section(ctx, point_index, section_index)
+         return render_section(ctx, section_index)
       end,
    })
 end

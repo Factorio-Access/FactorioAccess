@@ -401,26 +401,12 @@ end
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_logistic_network(ctx)
    local ent = ctx.ent
-   -- very unclear: isn't this just entity.logistic_network?  To revisit after
-   -- this file is refactored.
    if ent.type == "logistic-container" then
       local network = ent.surface.find_logistic_network_by_position(ent.position, ent.force)
       if network == nil then
-         local nearest_roboport = FaUtils.find_nearest_roboport(ent.surface, ent.position, 5000)
-         if nearest_roboport == nil then
-            ctx.message:fragment({ "fa.ent-info-logistic-not-in-network", 5000 })
-         else
-            local dist = math.ceil(util.distance(ent.position, nearest_roboport.position) - 25)
-            local dir = FaUtils.direction_lookup(FaUtils.get_direction_biased(nearest_roboport.position, ent.position))
-            ctx.message:fragment({
-               "fa.ent-info-logistic-not-in-network-with-near",
-               nearest_roboport.backer_name,
-               dist,
-               dir,
-            })
-         end
+         ctx.message:fragment({ "fa.ent-info-logistic-not-in-network", 5000 })
       else
-         local network_name = network.cells[1].owner.backer_name
+         local network_name = BotLogistics.get_network_name_from_network(network)
          ctx.message:fragment({ "fa.ent-info-logistic-in-network", network_name })
       end
    end
@@ -1219,6 +1205,10 @@ function mod.ent_info(pindex, ent, is_scanner)
          Localising.get_localised_name_with_fallback(ent),
          Localising.get_localised_name_with_fallback(ent.ghost_prototype),
       })
+   elseif ent.type == "roboport" then
+      -- For roboports, announce both prototype name and backer_name
+      ctx.message:fragment(Localising.get_localised_name_with_fallback(ent))
+      ctx.message:fragment(ent.backer_name)
    else
       ctx.message:fragment(Localising.get_localised_name_with_fallback(ent))
    end
@@ -1279,11 +1269,11 @@ function mod.ent_info(pindex, ent, is_scanner)
    run_handler(ent_info_electric_pole)
    run_handler(ent_info_power_switch)
 
-   if ent.name == "roboport" then
+   if ent.type == "roboport" then
       local cell = ent.logistic_cell
       local network = ent.logistic_cell.logistic_network
 
-      ctx.message:fragment("of network")
+      ctx.message:fragment("of")
       ctx.message:fragment(BotLogistics.get_network_name(ent))
       ctx.message:fragment(",")
       ctx.message:fragment(BotLogistics.roboport_contents_info(ent))

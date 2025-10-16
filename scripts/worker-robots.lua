@@ -8,10 +8,47 @@ local MessageBuilder = Speech.MessageBuilder
 local UiRouter = require("scripts.ui.router")
 local Sounds = require("scripts.ui.sounds")
 local Viewpoint = require("scripts.viewpoint")
+local StorageManager = require("scripts.storage-manager")
 local dirs = defines.direction
 local MAX_STACK_COUNT = 10
 
 local mod = {}
+
+-- Storage for pending logistics announcements
+local worker_robots_storage = StorageManager.declare_storage_module("worker_robots", {
+   pending_logistic_state_announcement = false,
+})
+
+---Cache of roboport-compatible item names, built at script load
+---@type string[]
+local roboport_compatible_items = nil
+
+---Get list of items that roboports can request (repair tools and robots)
+---@return string[]
+function mod.get_roboport_compatible_items()
+   if roboport_compatible_items then return roboport_compatible_items end
+
+   roboport_compatible_items = {}
+
+   -- Iterate over all item prototypes and find roboport-compatible types
+   for name, proto in pairs(prototypes.item) do
+      if proto.type == "repair-tool" or proto.type == "construction-robot" or proto.type == "logistic-robot" then
+         table.insert(roboport_compatible_items, name)
+      end
+   end
+
+   table.sort(roboport_compatible_items)
+   return roboport_compatible_items
+end
+
+---Determine the appropriate logistic group type for an entity
+---Does not validate entity
+---@param entity LuaEntity
+---@return defines.logistic_group_type
+function mod.get_logistic_group_type_for_entity(entity)
+   if entity.type == "roboport" then return defines.logistic_group_type.roboport end
+   return defines.logistic_group_type.with_trash
+end
 
 local function personal_logistics_enabled(pindex)
    local p = game.get_player(pindex)
@@ -25,73 +62,10 @@ local function personal_logistics_enabled(pindex)
    return false
 end
 
-local function toggle_personal_logistics(pindex)
-   local p = game.get_player(pindex)
-   local point = p.get_requester_point()
-   if not point then return end
-   point.enabled = not point.enabled
-   if point.enabled then
-      Speech.speak(pindex, { "fa.robots-resumed-personal-logistics" })
-   else
-      Speech.speak(pindex, { "fa.robots-paused-personal-logistics" })
-   end
-end
-
-local function logistics_request_toggle_spidertron_logistics(spidertron, pindex)
-   spidertron.vehicle_logistic_requests_enabled = not spidertron.vehicle_logistic_requests_enabled
-   if spidertron.vehicle_logistic_requests_enabled then
-      Speech.speak(pindex, { "fa.robots-resumed-spidertron-logistics" })
-   else
-      Speech.speak(pindex, { "fa.robots-paused-spidertron-logistics" })
-   end
-end
-
--- Find, if possible, the item name that a player is currently "looking at" in
--- the context of how we do logistic requests.
----@return string?, LocalisedString?
-local function find_player_item_name(pindex)
-   -- Now defaults to personal logistics behavior only
-
-   local p = game.get_player(pindex)
-   assert(p)
-   local char = p.character
-   if not char then return nil, { "fa.no-character" } end
-
-   --Personal logistics only
-   local stack = game.get_player(pindex).cursor_stack
-   local stack_inv = game.get_player(pindex).get_main_inventory()[storage.players[pindex].inventory.index]
-
-   if stack ~= nil and stack.valid_for_read and stack.valid then
-      --Item in hand
-      return stack.name, nil
-   else
-      --Empty hand, empty inventory slot
-      return nil, "No actions"
-   end
-end
-
--- Find the item stack target of the player trying to set a logistic request.
----@param pindex number
----@return LuaEntity?, LocalisedString?
-local function find_player_logistic_target(pindex)
-   local p = game.players[pindex]
-   assert(p)
-   local char = p.character
-   if not char then return nil, { "fa.no-character" } end
-
-   if p.opened_self then return char end
-
-   -- So this is actually the easy one.  The mod always sets player.opened for every menu we care about.  We just have
-   -- to check that it is something supporting logistics.
-   local target = p.opened or p.selected
-   if not target then return nil, { "fa.bots-nothing-to-control" } end
-
-   ---@cast target LuaEntity
-   if not type(target) == "userdata" or not target.object_name == "LuaEntity" then
-      return nil, { "fa.bots-nothing-to-control" }
-   end
-
-   return target
+local function schedule_personal_logistics_announcement(pindex)
+   -- The game's toggle-personal-logistic-requests control will handle the actual toggle
+   -- We just set a flag to announce the new state on the next tick
+   worker_robots_storage[pindex].pending_logistic_state_announcement = true
 end
 
 -- Push a readout of a logistic request to the provided builder as a fragment.
@@ -138,14 +112,8 @@ end
 
 function mod.logistics_info_key_handler(pindex)
    local p = game.get_player(pindex)
-   local ent = nil
-   local err = nil
-   local item = nil
-   ent, err = find_player_logistic_target(pindex)
-   if err then
-      Speech.speak(pindex, err)
-      return
-   end
+   local ent = p.selected
+   if not ent then return end
 
    -- At least as of right now there is no entity which can do both requests and filters, and players cannot do filters.
    if mod.can_set_logistic_filter(ent) then
@@ -165,8 +133,7 @@ end
 
 function mod.logistics_request_toggle_handler(pindex)
    -- Now only toggles personal logistics
-   local ent = game.get_player(pindex).opened
-   toggle_personal_logistics(pindex)
+   schedule_personal_logistics_announcement(pindex)
 end
 
 function mod.can_set_logistic_filter(ent)
@@ -212,6 +179,12 @@ function mod.push_compiled_filter_readout(msg_builder, filter, min_only)
    local quality_name = filter.quality or "normal"
    local min_val = filter.count or 0
    local max_val = filter.max_count
+
+   -- In compiled filters, infinity is represented as 4294967295 (2^32 - 1)
+   local INFINITY_SENTINEL = 4294967295
+   if max_val and max_val >= INFINITY_SENTINEL then
+      max_val = nil -- Treat as infinity
+   end
 
    -- Get localized names
    local localised_item = Localising.get_localised_name_with_fallback(prototypes.item[item_name])
@@ -287,6 +260,18 @@ function mod.get_unique_groups_from_point(point)
    return groups
 end
 
+---Get the network name directly from a network
+---@param network LuaLogisticNetwork
+---@return string
+function mod.get_network_name_from_network(network)
+   if not network or not network.valid then return "no network" end
+
+   -- Use custom_name if set, else fall back to network ID
+   if network.custom_name and network.custom_name ~= "" then return network.custom_name end
+
+   return tostring(network.network_id)
+end
+
 ---Get the network name for a logistic point's network
 ---@param point LuaLogisticPoint
 ---@return string?
@@ -294,19 +279,9 @@ function mod.get_network_name_for_point(point)
    if not point or not point.valid then return nil end
 
    local network = point.logistic_network
-   if not network or not network.valid then return nil end
+   if not network then return nil end
 
-   -- Find a roboport in this network to get the name
-   local cells = network.cells
-   if not cells or #cells == 0 then return nil end
-
-   for _, cell in ipairs(cells) do
-      if cell and cell.owner and cell.owner.valid and cell.owner.supports_backer_name then
-         return cell.owner.backer_name
-      end
-   end
-
-   return nil
+   return mod.get_network_name_from_network(network)
 end
 
 ---Add formatted compiled filters from a point to a message builder
@@ -351,45 +326,28 @@ function mod.add_formatted_filters(point, msg_builder, filter_type)
    end
 end
 
--- vanilla does not have network names.  We add this ourselves: all roboports in the same network get the same backer
--- name.
+---Get the network name (custom name if set, else network ID)
+---@param port LuaEntity
+---@return string
 function mod.get_network_name(port)
-   mod.fixup_network_name(port)
-   return port.backer_name
-end
-
-function mod.set_network_name(port, new_name)
-   --Rename this port
-   if new_name == nil or new_name == "" then return false end
-   port.backer_name = new_name
-   --Rename the rest, if any.  Note that this is not the same as the fixup function because this doesn't want to account
-   --for the oldest roboport.
    local nw = port.logistic_network
-   if nw == nil then return true end
-   local cells = nw.cells or {}
-   for i, cell in ipairs(cells) do
-      if cell.owner.supports_backer_name then cell.owner.backer_name = new_name end
-   end
-   return true
+   if not nw then return "no network" end
+
+   return mod.get_network_name_from_network(nw)
 end
 
---Finds the oldest roboport and applies its name across the network. Any built roboport will be newer and so the older
---names will be kept.  This can happen if the mod is added to a save, roboports are built in ways which don't go through
---the mod, if a roboport joins two networks, or (inn theory, though perhaps not in practice) if there is a power outage.
-function mod.fixup_network_name(port_in)
-   local oldest_port = port_in
-   local nw = oldest_port.logistic_network
-   --No network means resolved
-   if nw == nil then return end
-   local cells = nw.cells
-   --Check others
-   for i, cell in ipairs(cells) do
-      local port = cell.owner
-      if port ~= nil and port.valid and oldest_port.unit_number > port.unit_number then oldest_port = port end
-   end
-   --Rename all
-   mod.set_network_name(oldest_port, oldest_port.backer_name)
-   return
+---Set the network's custom name
+---@param port LuaEntity
+---@param new_name string
+---@return boolean
+function mod.set_network_name(port, new_name)
+   if new_name == nil or new_name == "" then return false end
+
+   local nw = port.logistic_network
+   if not nw then return false end
+
+   nw.custom_name = new_name
+   return true
 end
 
 function mod.roboport_contents_info(port)
@@ -495,6 +453,29 @@ function mod.logistic_network_chests_info(port)
       .. requester_chest_count
       .. " requester chests or buffer chests, "
    return result
+end
+
+---On tick handler to announce logistics state changes after the game has processed them
+---@param pindex number
+function mod.on_tick(pindex)
+   local player_storage = worker_robots_storage[pindex]
+
+   if player_storage.pending_logistic_state_announcement then
+      player_storage.pending_logistic_state_announcement = false
+
+      local p = game.get_player(pindex)
+      local char = p.character
+      if not char then return end
+
+      local point = char.get_logistic_point(defines.logistic_member_index.character_requester)
+      if not point then return end
+
+      if point.enabled then
+         Speech.speak(pindex, { "fa.robots-resumed-personal-logistics" })
+      else
+         Speech.speak(pindex, { "fa.robots-paused-personal-logistics" })
+      end
+   end
 end
 
 return mod

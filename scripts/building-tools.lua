@@ -934,7 +934,7 @@ function mod.build_preview_checks_info(stack, pindex)
    end
 
    --For roboports, like electric poles, list possible neighbors (anything within 100 distx or 100 disty will be a neighbor
-   if ent_p.name == "roboport" then
+   if ent_p.type == "roboport" then
       local reach = 48.5
       local top_left = { x = math.floor(pos.x - reach), y = math.floor(pos.y - reach) }
       local bottom_right = { x = math.ceil(pos.x + reach), y = math.ceil(pos.y + reach) }

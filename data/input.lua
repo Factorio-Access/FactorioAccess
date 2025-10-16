@@ -720,6 +720,15 @@ data:extend({
       consuming = "none",
    },
 
+   -- We ideally would link this to the in-game control for toggling personal logistics. There isn't one however, so we
+   -- have to make due by just mapping to the same key.
+   {
+      type = "custom-input",
+      name = "fa-a-l",
+      key_sequence = "ALT + L",
+      consuming = "none",
+   },
+
    {
       type = "custom-input",
       name = "fa-a-leftbracket",
@@ -958,6 +967,13 @@ data:extend({
       type = "custom-input",
       name = "fa-cs-g",
       key_sequence = "CONTROL + SHIFT + G",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "fa-ca-g",
+      key_sequence = "CONTROL + ALT + G",
       consuming = "none",
    },
 

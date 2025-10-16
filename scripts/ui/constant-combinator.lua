@@ -212,8 +212,7 @@ local function build_constant_combinator_tabs(pindex, parameters)
             title = { "fa.logistics-section-title", tostring(i) }
          end
 
-         -- For constant combinators, pass nil for point_index
-         table.insert(section_tabs, LogisticsSectionEditor.create_section_tab(nil, sec_info.section_index, title))
+         table.insert(section_tabs, LogisticsSectionEditor.create_section_tab(sec_info.section_index, title))
       end
    end
 

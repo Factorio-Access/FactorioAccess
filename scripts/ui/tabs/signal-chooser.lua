@@ -3,6 +3,8 @@ local KeyGraph = require("scripts.ui.key-graph")
 local TabList = require("scripts.ui.tab-list")
 local UiRouter = require("scripts.ui.router")
 local SignalHelpers = require("scripts.ui.signal-helpers")
+local Localising = require("scripts.localising")
+local BotLogistics = require("scripts.worker-robots")
 
 local mod = {}
 
@@ -17,6 +19,22 @@ local function build_signal_tree(ctx)
       return builder:build()
    elseif mode == "fluid" then
       SignalHelpers.add_fluid_signals(builder, TreeChooser.ROOT)
+      return builder:build()
+   elseif mode == "roboport-items" then
+      -- Build flat list of roboport-compatible items
+      local item_names = BotLogistics.get_roboport_compatible_items()
+
+      for _, item_name in ipairs(item_names) do
+         local proto = prototypes.item[item_name]
+         builder:add_node(item_name, TreeChooser.ROOT, {
+            label = function(ctx)
+               ctx.message:fragment(Localising.get_localised_name_with_fallback(proto))
+            end,
+            on_click = function(click_ctx)
+               click_ctx.controller:close_with_result({ type = "item", name = item_name })
+            end,
+         })
+      end
       return builder:build()
    end
 

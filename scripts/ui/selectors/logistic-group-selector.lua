@@ -10,6 +10,7 @@ local TabList = require("scripts.ui.tab-list")
 local Router = require("scripts.ui.router")
 local KeyGraph = require("scripts.ui.key-graph")
 local UiSounds = require("scripts.ui.sounds")
+local BotLogistics = require("scripts.worker-robots")
 
 local mod = {}
 
@@ -22,8 +23,15 @@ local function render_group_selector(ctx)
 
    local force = player.force
 
-   -- Get existing groups (with_trash type for player logistics)
-   local groups = force.get_logistic_groups(defines.logistic_group_type.with_trash) or {}
+   -- Validate entity at render time
+   local entity = ctx.global_parameters and ctx.global_parameters.entity
+   if not entity or not entity.valid then return nil end
+
+   -- Determine group type based on entity
+   local group_type = BotLogistics.get_logistic_group_type_for_entity(entity)
+
+   -- Get existing groups
+   local groups = force.get_logistic_groups(group_type) or {}
    table.sort(groups)
 
    local menu = Menu.MenuBuilder.new()
@@ -47,6 +55,16 @@ local function render_group_selector(ctx)
          on_click = function(ctx)
             ctx.controller:close_with_result(group_name)
          end,
+         on_dangerous_delete = function(ctx)
+            local force = game.get_player(ctx.pindex).force
+            local entity = ctx.global_parameters.entity
+            local group_type = BotLogistics.get_logistic_group_type_for_entity(entity)
+
+            force.delete_logistic_group(group_name, group_type)
+
+            UiSounds.play_menu_move(ctx.pindex)
+            ctx.controller.message:fragment({ "fa.logistics-group-deleted", group_name })
+         end,
       })
    end
 
@@ -62,8 +80,12 @@ local function render_group_selector(ctx)
          if result and result ~= "" then
             local force = game.get_player(ctx.pindex).force
 
+            -- Entity already validated at render callback entry
+            local entity = ctx.global_parameters.entity
+            local group_type = BotLogistics.get_logistic_group_type_for_entity(entity)
+
             -- Create the group (this is idempotent - safe to call if it exists)
-            force.create_logistic_group(result, defines.logistic_group_type.with_trash)
+            force.create_logistic_group(result, group_type)
 
             -- Return the new group name
             ctx.controller:close_with_result(result)

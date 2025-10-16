@@ -10,17 +10,10 @@ Provides:
 
 local TabList = require("scripts.ui.tab-list")
 local Router = require("scripts.ui.router")
-local LogisticsOverview = require("scripts.ui.tabs.logistics-overview")
+local LogisticsUnified = require("scripts.ui.tabs.logistics-unified")
 local LogisticsSectionEditor = require("scripts.ui.tabs.logistics-section-editor")
 
 local mod = {}
-
----Check if a logistic mode supports sections (requester or buffer)
----@param mode defines.logistic_mode
----@return boolean
-local function supports_sections(mode)
-   return mode == defines.logistic_mode.requester or mode == defines.logistic_mode.buffer
-end
 
 ---Build tabs dynamically based on entity's logistic points and sections
 ---@param pindex number
@@ -32,52 +25,23 @@ local function build_logistics_tabs(pindex, parameters)
    assert(entity, "build_logistics_tabs: entity is nil")
    assert(entity.valid, "build_logistics_tabs: entity is not valid")
 
-   -- Get all logistic points
-   local points_result = entity.get_logistic_point()
-   local points = {}
-   if points_result then
-      if type(points_result) == "table" and points_result.object_name ~= "LuaLogisticPoint" then
-         points = points_result
-      else
-         points = { points_result }
-      end
-   end
-
-   -- Sort points: requester/buffer first, then others
-   table.sort(points, function(a, b)
-      local a_supports = supports_sections(a.mode)
-      local b_supports = supports_sections(b.mode)
-      if a_supports ~= b_supports then
-         return a_supports -- true (requester/buffer) comes before false
-      end
-      return a.logistic_member_index < b.logistic_member_index
-   end)
-
-   -- Build point tabs
-   local point_tabs = {}
-   for i, point in ipairs(points) do
-      table.insert(point_tabs, LogisticsOverview.create_point_tab(i, point))
-   end
-
-   -- Collect all manual sections from all points
+   -- Get entity-level logistic sections (works on all entities)
+   local sections_obj = entity.get_logistic_sections()
    local all_sections = {}
-   for point_idx, point in ipairs(points) do
-      if supports_sections(point.mode) then
-         for section_idx, section in pairs(point.sections) do
-            if section.is_manual then
-               table.insert(all_sections, {
-                  point_index = point_idx,
-                  section_index = section_idx,
-                  section = section,
-               })
-            end
+
+   if sections_obj then
+      for section_idx, section in pairs(sections_obj.sections) do
+         if section.is_manual then
+            table.insert(all_sections, {
+               section_index = section_idx,
+               section = section,
+            })
          end
       end
    end
 
-   -- Sort sections by point index then section index
+   -- Sort sections by section index
    table.sort(all_sections, function(a, b)
-      if a.point_index ~= b.point_index then return a.point_index < b.point_index end
       return a.section_index < b.section_index
    end)
 
@@ -96,17 +60,14 @@ local function build_logistics_tabs(pindex, parameters)
             title = { "fa.logistics-section-title", tostring(i) }
          end
 
-         table.insert(
-            section_tabs,
-            LogisticsSectionEditor.create_section_tab(sec_info.point_index, sec_info.section_index, title)
-         )
+         table.insert(section_tabs, LogisticsSectionEditor.create_section_tab(sec_info.section_index, title))
       end
    end
 
    return {
       {
-         name = "points",
-         tabs = point_tabs,
+         name = "overview",
+         tabs = { LogisticsUnified.create_unified_tab() },
       },
       {
          name = "sections",

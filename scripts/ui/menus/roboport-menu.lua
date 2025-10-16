@@ -6,7 +6,7 @@ Provides a vertical menu interface for managing roboport networks.
 local Functools = require("scripts.functools")
 local WorkerRobots = require("scripts.worker-robots")
 local Localising = require("scripts.localising")
-local Menu = require("scripts.ui.menu")
+local FormBuilder = require("scripts.ui.form-builder")
 local Speech = require("scripts.speech")
 local TabList = require("scripts.ui.tab-list")
 local UiKeyGraph = require("scripts.ui.key-graph")
@@ -32,7 +32,7 @@ local function state_setup(pindex, params)
    local player = game.get_player(pindex)
    local port = player.opened or player.selected
 
-   if port and port.valid and port.name == "roboport" then return {
+   if port and port.valid and port.type == "roboport" then return {
       port = port,
    } end
 
@@ -52,152 +52,140 @@ local function render_roboport_menu(ctx)
       return nil
    end
 
-   local builder = Menu.MenuBuilder.new()
+   local form = FormBuilder.FormBuilder.new()
    local nw = port.logistic_network
 
    -- Menu item 0: Title/Instructions
-   builder:add_label("title", function(label_ctx)
+   form:add_label("title", function(label_ctx)
       label_ctx.message:fragment({ "fa.roboport-menu-title", WorkerRobots.get_network_name(port) })
       label_ctx.message:fragment({ "fa.roboport-menu-instructions" })
    end)
 
-   -- Menu item 1: Rename network (PLACEHOLDER - textboxes broken)
-   builder:add_clickable("rename", { "fa.robots-rename-this-network" }, {
-      on_click = function(click_ctx)
-         -- PLACEHOLDER: Just speak "not implemented" for now
-         -- Keep the actual renaming code commented for when textboxes are fixed
+   -- Menu item 1: Rename roboport
+   form:add_textfield("rename_roboport", { "fa.robots-rename-this-roboport" }, function()
+      return port.backer_name
+   end, function(new_name)
+      if new_name and new_name ~= "" then port.backer_name = new_name end
+   end)
 
-         -- Original code to restore later:
-         -- click_ctx.tablist_shared_state.renaming = true
-         -- Graphics.create_text_field_frame(click_ctx.pindex, "network-rename")
-         -- click_ctx.message:fragment({ "fa.robots-enter-new-network-name" })
+   -- Menu item 2: Rename network
+   form:add_textfield("rename_network", { "fa.robots-rename-this-network" }, function()
+      return WorkerRobots.get_network_name(port)
+   end, function(new_name)
+      WorkerRobots.set_network_name(port, new_name)
+   end)
 
-         click_ctx.message:fragment({ "fa.not-implemented" })
-      end,
-   })
+   -- Menu item 3: Read roboport neighbours
+   form:add_action("neighbours", { "fa.robots-read-roboport-neighbours" }, function(controller)
+      local cell = port.logistic_cell
+      local neighbour_count = #cell.neighbours
 
-   -- Menu item 2: Read roboport neighbours
-   builder:add_clickable("neighbours", { "fa.robots-read-roboport-neighbours" }, {
-      on_click = function(click_ctx)
-         local cell = port.logistic_cell
-         local neighbour_count = #cell.neighbours
+      if neighbour_count > 0 then
+         controller.message:fragment({ "fa.roboport-neighbours-count", neighbour_count })
+      else
+         controller.message:fragment({ "fa.roboport-no-neighbours" })
+      end
+   end)
 
-         if neighbour_count > 0 then
-            click_ctx.message:fragment({ "fa.roboport-neighbours-count", neighbour_count })
-         else
-            click_ctx.message:fragment({ "fa.roboport-no-neighbours" })
-         end
-      end,
-   })
+   -- Menu item 4: Read roboport contents
+   form:add_action("contents", { "fa.robots-read-roboport-contents" }, function(controller)
+      local cell = port.logistic_cell
+      controller.message:fragment({
+         "fa.roboport-contents",
+         cell.charging_robot_count,
+         cell.to_charge_robot_count,
+         cell.stationed_logistic_robot_count,
+         cell.stationed_construction_robot_count,
+         port.get_inventory(defines.inventory.roboport_material).get_item_count(),
+      })
+   end)
 
-   -- Menu item 3: Read roboport contents
-   builder:add_clickable("contents", { "fa.robots-read-roboport-contents" }, {
-      on_click = function(click_ctx)
-         local cell = port.logistic_cell
-         click_ctx.message:fragment({
-            "fa.roboport-contents",
-            cell.charging_robot_count,
-            cell.to_charge_robot_count,
-            cell.stationed_logistic_robot_count,
-            cell.stationed_construction_robot_count,
-            port.get_inventory(defines.inventory.roboport_material).get_item_count(),
+   -- Menu item 5: Network robots info
+   form:add_action("robots", { "fa.robots-read-robots-info" }, function(controller)
+      if nw then
+         controller.message:fragment({
+            "fa.network-robots-info",
+            #nw.cells,
+            nw.all_logistic_robots,
+            nw.available_logistic_robots,
+            nw.all_construction_robots,
+            nw.available_construction_robots,
          })
-      end,
-   })
+      else
+         controller.message:fragment({ "fa.robots-error-no-network" })
+      end
+   end)
 
-   -- Menu item 4: Network robots info
-   builder:add_clickable("robots", { "fa.robots-read-robots-info" }, {
-      on_click = function(click_ctx)
-         if nw then
-            click_ctx.message:fragment({
-               "fa.network-robots-info",
-               #nw.cells,
-               nw.all_logistic_robots,
-               nw.available_logistic_robots,
-               nw.all_construction_robots,
-               nw.available_construction_robots,
-            })
-         else
-            click_ctx.message:fragment({ "fa.robots-error-no-network" })
+   -- Menu item 6: Network chests info
+   form:add_action("chests", { "fa.robots-read-chests-info" }, function(controller)
+      if nw then
+         local storage_count = 0
+         for _, point in ipairs(nw.storage_points) do
+            if point.owner.type == "logistic-container" then storage_count = storage_count + 1 end
          end
-      end,
-   })
 
-   -- Menu item 5: Network chests info
-   builder:add_clickable("chests", { "fa.robots-read-chests-info" }, {
-      on_click = function(click_ctx)
-         if nw then
-            local storage_count = 0
-            for _, point in ipairs(nw.storage_points) do
-               if point.owner.type == "logistic-container" then storage_count = storage_count + 1 end
-            end
-
-            local passive_provider_count = 0
-            for _, point in ipairs(nw.passive_provider_points) do
-               if point.owner.type == "logistic-container" then passive_provider_count = passive_provider_count + 1 end
-            end
-
-            local active_provider_count = 0
-            for _, point in ipairs(nw.active_provider_points) do
-               if point.owner.type == "logistic-container" then active_provider_count = active_provider_count + 1 end
-            end
-
-            local requester_count = 0
-            for _, point in ipairs(nw.requester_points) do
-               if point.owner.type == "logistic-container" then requester_count = requester_count + 1 end
-            end
-
-            local total_count = storage_count + passive_provider_count + active_provider_count + requester_count
-
-            click_ctx.message:fragment({
-               "fa.network-chests-info",
-               total_count,
-               storage_count,
-               passive_provider_count,
-               active_provider_count,
-               requester_count,
-            })
-         else
-            click_ctx.message:fragment({ "fa.robots-error-no-network" })
+         local passive_provider_count = 0
+         for _, point in ipairs(nw.passive_provider_points) do
+            if point.owner.type == "logistic-container" then passive_provider_count = passive_provider_count + 1 end
          end
-      end,
-   })
 
-   -- Menu item 6: Network items info (simplified - shows all items at once)
-   builder:add_clickable("items", { "fa.robots-read-items-info" }, {
-      on_click = function(click_ctx)
-         if nw then
-            local itemset = nw.get_contents()
-            local itemtable = {}
-
-            for name, count in pairs(itemset) do
-               table.insert(itemtable, { name = name, count = count })
-            end
-
-            table.sort(itemtable, function(k1, k2)
-               return k1.count > k2.count
-            end)
-
-            if #itemtable == 0 then
-               click_ctx.message:fragment({ "fa.roboport-network-no-items" })
-            else
-               click_ctx.message:fragment({ "fa.roboport-network-contains" })
-               for _, item in ipairs(itemtable) do
-                  -- Use Localising.localise_item for proper item formatting
-                  local item_desc = Localising.localise_item({
-                     name = item.name,
-                     count = item.count,
-                  })
-                  click_ctx.message:list_item(item_desc)
-               end
-            end
-         else
-            click_ctx.message:fragment({ "fa.robots-error-no-network" })
+         local active_provider_count = 0
+         for _, point in ipairs(nw.active_provider_points) do
+            if point.owner.type == "logistic-container" then active_provider_count = active_provider_count + 1 end
          end
-      end,
-   })
 
-   return builder:build()
+         local requester_count = 0
+         for _, point in ipairs(nw.requester_points) do
+            if point.owner.type == "logistic-container" then requester_count = requester_count + 1 end
+         end
+
+         local total_count = storage_count + passive_provider_count + active_provider_count + requester_count
+
+         controller.message:fragment({
+            "fa.network-chests-info",
+            total_count,
+            storage_count,
+            passive_provider_count,
+            active_provider_count,
+            requester_count,
+         })
+      else
+         controller.message:fragment({ "fa.robots-error-no-network" })
+      end
+   end)
+
+   -- Menu item 7: Network items info (simplified - shows all items at once)
+   form:add_action("items", { "fa.robots-read-items-info" }, function(controller)
+      if nw then
+         local itemset = nw.get_contents()
+         local itemtable = {}
+
+         for name, count in pairs(itemset) do
+            table.insert(itemtable, { name = name, count = count })
+         end
+
+         table.sort(itemtable, function(k1, k2)
+            return k1.count > k2.count
+         end)
+
+         if #itemtable == 0 then
+            controller.message:fragment({ "fa.roboport-network-no-items" })
+         else
+            controller.message:fragment({ "fa.roboport-network-contains" })
+            for _, item in ipairs(itemtable) do
+               local item_desc = Localising.localise_item({
+                  name = item.name,
+                  count = item.count,
+               })
+               controller.message:list_item(item_desc)
+            end
+         end
+      else
+         controller.message:fragment({ "fa.robots-error-no-network" })
+      end
+   end)
+
+   return form:build()
 end
 
 -- TabList declaration

@@ -390,6 +390,8 @@ function on_tick(event)
          BuildLock.process_walking_movement(player.index)
          -- Process walking announcements (anchored cursor or entity detection)
          Walking.process_walking_announcements(player.index)
+         -- Check for pending logistics announcements
+         WorkerRobots.on_tick(player.index)
       end
    end
 
@@ -3186,6 +3188,14 @@ EventManager.on_event(
 )
 
 EventManager.on_event(
+   "fa-a-l",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      WorkerRobots.logistics_request_toggle_handler(pindex)
+   end
+)
+
+EventManager.on_event(
    "fa-a-leftbracket",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
@@ -4227,15 +4237,24 @@ EventManager.on_event("fa-ca-l", function(event)
       return
    end
 
-   -- Check if entity has logistics support
-   local point = entity.get_logistic_point(defines.logistic_member_index.character_requester)
-   if not point then
+   -- Check if entity has any logistics support
+   local points = entity.get_logistic_point()
+   if not points then
       Speech.speak(pindex, { "fa.entity-no-logistics" })
       return
    end
 
    local router = UiRouter.get_router(pindex)
    router:open_ui(UiRouter.UI_NAMES.LOGISTICS_CONFIG, { entity = entity })
+end)
+
+EventManager.on_event("fa-cas-l", function(event)
+   local pindex = event.player_index
+   local player = game.get_player(pindex)
+   if not player or not player.character then return end
+
+   local router = UiRouter.get_router(pindex)
+   router:open_ui(UiRouter.UI_NAMES.LOGISTICS_CONFIG, { entity = player.character })
 end)
 
 EventManager.on_event(
