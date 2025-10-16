@@ -3069,7 +3069,22 @@ local function kb_click_hand(event)
          CircuitNetworks.drag_wire_and_read(pindex)
       else
          local proto = stack.prototype
-         if proto.place_result or proto.place_as_tile_result then
+         local capsule_action = proto.capsule_action
+         if capsule_action then
+            -- Handle capsules and grenades
+            if capsule_action.type == "use-on-self" then
+               -- Use capsule on the player
+               player.use_from_cursor(player.position)
+            elseif capsule_action.type == "throw" then
+               -- Use smart aiming for throwable capsules
+               local target_pos = Combat.smart_aim_grenades_and_capsules(pindex, false)
+               if target_pos then player.use_from_cursor(target_pos) end
+            else
+               -- For other capsule types (artillery-remote, destroy-cliffs, etc.), use at cursor
+               local vp = Viewpoint.get_viewpoint(pindex)
+               player.use_from_cursor(vp:get_cursor_pos())
+            end
+         elseif proto.place_result or proto.place_as_tile_result then
             -- Item can be placed/built
             local vp = Viewpoint.get_viewpoint(pindex)
             BuildingTools.build_item_in_hand_with_params({

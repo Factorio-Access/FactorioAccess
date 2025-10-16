@@ -245,38 +245,23 @@ function mod.aim_gun_at_nearest_enemy(pindex, enemy_in)
    return true
 end
 
---Max ranges are determined by the game GUI, min ranges represent the minimum distance where you will not get damaged.
+---Get the throw range for a capsule or grenade.
+---Returns 0 for anything but a throwable attack, otherwise returns the range from attack parameters.
+---@param stack LuaItemStack
+---@return number min_range
+---@return number max_range
 function mod.get_grenade_or_capsule_range(stack)
-   local max_range = 20
-   local min_range = 0
-   if stack == nil or stack.valid_for_read == false then
-      return min_range, max_range
-   elseif stack.name == "grenade" then
-      max_range = 15
-      min_range = 7
-   elseif stack.name == "cluster-grenade" then
-      max_range = 20
-      min_range = 12
-   elseif stack.name == "poison-capsule" then
-      max_range = 25
-      min_range = 12
-   elseif stack.name == "slowdown-capsule" then
-      max_range = 25
-      min_range = 0
-   elseif stack.name == "cliff-explosives" then
-      max_range = 10
-      min_range = 0
-   elseif stack.name == "defender-capsule" then
-      max_range = 20
-      min_range = 0
-   elseif stack.name == "distractor-capsule" then
-      max_range = 25
-      min_range = 0
-   elseif stack.name == "destroyer-capsule" then
-      max_range = 20
-      min_range = 0
-   end
-   return min_range, max_range
+   if stack == nil or not stack.valid_for_read then return 0, 0 end
+
+   local capsule_action = stack.prototype.capsule_action
+   if not capsule_action then return 0, 0 end
+
+   if capsule_action.type ~= "throw" then return 0, 0 end
+
+   local attack_params = capsule_action.attack_parameters
+   if not attack_params then return 0, 0 end
+
+   return attack_params.min_range or 0, attack_params.range or 0
 end
 
 --[[
