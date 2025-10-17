@@ -75,113 +75,174 @@ local function render_roboport_menu(ctx)
       WorkerRobots.set_network_name(port, new_name)
    end)
 
-   -- Menu item 3: Read roboport neighbours
-   form:add_action("neighbours", { "fa.robots-read-roboport-neighbours" }, function(controller)
+   -- Menu item 3: Roboport neighbours
+   form:add_label("neighbours", function(label_ctx)
       local cell = port.logistic_cell
       local neighbour_count = #cell.neighbours
 
       if neighbour_count > 0 then
-         controller.message:fragment({ "fa.roboport-neighbours-count", neighbour_count })
+         label_ctx.message:fragment({ "fa.roboport-neighbours-count", neighbour_count })
       else
-         controller.message:fragment({ "fa.roboport-no-neighbours" })
+         label_ctx.message:fragment({ "fa.roboport-no-neighbours" })
       end
    end)
 
-   -- Menu item 4: Read roboport contents
-   form:add_action("contents", { "fa.robots-read-roboport-contents" }, function(controller)
+   -- Menu item 4: Network robots info
+   form:add_label("robots", function(label_ctx)
+      if nw then
+         local items = {}
+
+         table.insert(items, { name = "roboport", count = #nw.cells })
+
+         if nw.all_logistic_robots > 0 then
+            table.insert(items, { name = "logistic-robot", count = nw.all_logistic_robots })
+         end
+
+         if nw.all_construction_robots > 0 then
+            table.insert(items, { name = "construction-robot", count = nw.all_construction_robots })
+         end
+
+         local mb = label_ctx.message
+         mb:fragment({ "fa.network-robots-intro" })
+         for _, item in ipairs(items) do
+            mb:list_item(Localising.localise_item(item))
+         end
+      else
+         label_ctx.message:fragment({ "fa.robots-error-no-network" })
+      end
+   end)
+
+   -- Menu item 5: Roboport charging status
+   form:add_label("charging", function(label_ctx)
       local cell = port.logistic_cell
-      controller.message:fragment({
-         "fa.roboport-contents",
-         cell.charging_robot_count,
-         cell.to_charge_robot_count,
-         cell.stationed_logistic_robot_count,
-         cell.stationed_construction_robot_count,
-         port.get_inventory(defines.inventory.roboport_material).get_item_count(),
-      })
-   end)
+      local mb = label_ctx.message
 
-   -- Menu item 5: Network robots info
-   form:add_action("robots", { "fa.robots-read-robots-info" }, function(controller)
-      if nw then
-         controller.message:fragment({
-            "fa.network-robots-info",
-            #nw.cells,
-            nw.all_logistic_robots,
-            nw.available_logistic_robots,
-            nw.all_construction_robots,
-            nw.available_construction_robots,
-         })
+      if cell.charging_robot_count > 0 then
+         mb:fragment({ "fa.roboport-charging", cell.charging_robot_count })
       else
-         controller.message:fragment({ "fa.robots-error-no-network" })
+         mb:fragment({ "fa.roboport-not-charging" })
       end
    end)
 
-   -- Menu item 6: Network chests info
-   form:add_action("chests", { "fa.robots-read-chests-info" }, function(controller)
+   -- Menu item 6: Roboport queue status
+   form:add_label("queue", function(label_ctx)
+      local cell = port.logistic_cell
+      local mb = label_ctx.message
+
+      if cell.to_charge_robot_count > 0 then
+         mb:fragment({ "fa.roboport-queue", cell.to_charge_robot_count })
+      else
+         mb:fragment({ "fa.roboport-no-queue" })
+      end
+   end)
+
+   -- Menu item 7: Roboport contents
+   form:add_label("contents", function(label_ctx)
+      local cell = port.logistic_cell
+      local items = {}
+
+      if cell.stationed_logistic_robot_count > 0 then
+         table.insert(items, { name = "logistic-robot", count = cell.stationed_logistic_robot_count })
+      end
+
+      if cell.stationed_construction_robot_count > 0 then
+         table.insert(items, { name = "construction-robot", count = cell.stationed_construction_robot_count })
+      end
+
+      local repair_count = port.get_inventory(defines.inventory.roboport_material).get_item_count()
+      if repair_count > 0 then table.insert(items, { name = "repair-pack", count = repair_count }) end
+
+      local mb = label_ctx.message
+      if #items == 0 then
+         mb:fragment({ "fa.roboport-empty" })
+      else
+         mb:fragment({ "fa.roboport-contents-intro" })
+         for _, item in ipairs(items) do
+            mb:list_item(Localising.localise_item(item))
+         end
+      end
+   end)
+
+   -- Menu item 8: Network chests info
+   form:add_label("chests", function(label_ctx)
       if nw then
-         local storage_count = 0
+         local chest_counts = {}
+
          for _, point in ipairs(nw.storage_points) do
-            if point.owner.type == "logistic-container" then storage_count = storage_count + 1 end
+            if point.owner.type == "logistic-container" then
+               local name = point.owner.name
+               chest_counts[name] = (chest_counts[name] or 0) + 1
+            end
          end
 
-         local passive_provider_count = 0
          for _, point in ipairs(nw.passive_provider_points) do
-            if point.owner.type == "logistic-container" then passive_provider_count = passive_provider_count + 1 end
+            if point.owner.type == "logistic-container" then
+               local name = point.owner.name
+               chest_counts[name] = (chest_counts[name] or 0) + 1
+            end
          end
 
-         local active_provider_count = 0
          for _, point in ipairs(nw.active_provider_points) do
-            if point.owner.type == "logistic-container" then active_provider_count = active_provider_count + 1 end
+            if point.owner.type == "logistic-container" then
+               local name = point.owner.name
+               chest_counts[name] = (chest_counts[name] or 0) + 1
+            end
          end
 
-         local requester_count = 0
          for _, point in ipairs(nw.requester_points) do
-            if point.owner.type == "logistic-container" then requester_count = requester_count + 1 end
+            if point.owner.type == "logistic-container" then
+               local name = point.owner.name
+               chest_counts[name] = (chest_counts[name] or 0) + 1
+            end
          end
 
-         local total_count = storage_count + passive_provider_count + active_provider_count + requester_count
-
-         controller.message:fragment({
-            "fa.network-chests-info",
-            total_count,
-            storage_count,
-            passive_provider_count,
-            active_provider_count,
-            requester_count,
-         })
-      else
-         controller.message:fragment({ "fa.robots-error-no-network" })
-      end
-   end)
-
-   -- Menu item 7: Network items info (simplified - shows all items at once)
-   form:add_action("items", { "fa.robots-read-items-info" }, function(controller)
-      if nw then
-         local itemset = nw.get_contents()
-         local itemtable = {}
-
-         for name, count in pairs(itemset) do
-            table.insert(itemtable, { name = name, count = count })
+         local chest_list = {}
+         for name, count in pairs(chest_counts) do
+            table.insert(chest_list, { name = name, count = count })
          end
 
-         table.sort(itemtable, function(k1, k2)
-            return k1.count > k2.count
+         table.sort(chest_list, function(a, b)
+            return a.count > b.count
          end)
 
-         if #itemtable == 0 then
-            controller.message:fragment({ "fa.roboport-network-no-items" })
+         local mb = label_ctx.message
+         if #chest_list == 0 then
+            mb:fragment({ "fa.network-no-chests" })
          else
-            controller.message:fragment({ "fa.roboport-network-contains" })
-            for _, item in ipairs(itemtable) do
-               local item_desc = Localising.localise_item({
-                  name = item.name,
-                  count = item.count,
-               })
-               controller.message:list_item(item_desc)
+            mb:fragment({ "fa.network-chests-intro" })
+            for _, chest in ipairs(chest_list) do
+               mb:list_item(Localising.localise_item({ name = chest.name, count = chest.count }))
             end
          end
       else
-         controller.message:fragment({ "fa.robots-error-no-network" })
+         label_ctx.message:fragment({ "fa.robots-error-no-network" })
+      end
+   end)
+
+   -- Menu item 9: Network items info
+   form:add_label("items", function(label_ctx)
+      if nw then
+         local items = nw.get_contents()
+
+         if #items == 0 then
+            label_ctx.message:fragment({ "fa.roboport-network-no-items" })
+         else
+            table.sort(items, function(a, b)
+               return a.count > b.count
+            end)
+
+            label_ctx.message:fragment({ "fa.roboport-network-contains" })
+            for _, item in ipairs(items) do
+               local item_desc = Localising.localise_item({
+                  name = item.name,
+                  count = item.count,
+                  quality = item.quality,
+               })
+               label_ctx.message:list_item(item_desc)
+            end
+         end
+      else
+         label_ctx.message:fragment({ "fa.robots-error-no-network" })
       end
    end)
 
