@@ -1705,7 +1705,7 @@ local function apply_skip_by_preview_size(pindex, direction)
 
    --Check the moved count against the dimensions of the preview in hand
    local stack = p.cursor_stack
-   local width, height = BuildDimensions.get_stack_build_dimensions(stack, dirs.north)
+   local width, height = BuildDimensions.get_stack_build_dimensions(stack, vp:get_hand_direction())
 
    --Default to cursor size if not something else
    if not width or not height or (width + height <= 2) then
@@ -2063,60 +2063,22 @@ local function read_coords(pindex, start_phrase)
 
       --If there is a build preview, give its dimensions and which way they extend
       local stack = game.get_player(pindex).cursor_stack
+      local p_width, p_height = BuildDimensions.get_stack_build_dimensions(stack, vp:get_hand_direction())
 
-      if
-         stack
-         and stack.valid_for_read
-         and stack.valid
-         and stack.prototype.place_result ~= nil
-         and (stack.prototype.place_result.tile_height > 1 or stack.prototype.place_result.tile_width > 1)
-      then
+      -- Tiles are always 1x1, so tile case still triggers.
+      if p_width and p_height and (p_width > 1 or p_height > 1) then
          local vp = Viewpoint.get_viewpoint(pindex)
          local dir = vp:get_hand_direction()
          turn_to_cursor_direction_cardinal(pindex)
          local p_dir = storage.players[pindex].player_direction
 
          message:fragment({ "fa.build-preview-intro" })
-
-         -- Width dimension
-         local width_tiles
-         if dir == dirs.north or dir == dirs.south then
-            width_tiles = stack.prototype.place_result.tile_width
-         else
-            width_tiles = stack.prototype.place_result.tile_height
-         end
-         message:fragment({ "fa.build-preview-wide", tostring(width_tiles) })
-
+         message:fragment({ "fa.build-preview-wide", tostring(p_width) })
          -- Width direction
-         if p_dir == dirs.east or p_dir == dirs.south or p_dir == dirs.north then
-            message:fragment({ "fa.build-preview-east" })
-         elseif p_dir == dirs.west then
-            message:fragment({ "fa.build-preview-west" })
-         end
-
+         message:fragment({ "fa.build-preview-east" })
          message:fragment({ "fa.build-preview-and" })
-
-         -- Height dimension
-         local height_tiles
-         if dir == dirs.north or dir == dirs.south then
-            height_tiles = stack.prototype.place_result.tile_height
-         else
-            height_tiles = stack.prototype.place_result.tile_width
-         end
-         message:fragment({ "fa.build-preview-high", tostring(height_tiles) })
-
-         -- Height direction
-         if p_dir == dirs.east or p_dir == dirs.south or p_dir == dirs.west then
-            message:fragment({ "fa.build-preview-south" })
-         elseif p_dir == dirs.north then
-            message:fragment({ "fa.build-preview-north" })
-         end
-      elseif stack and stack.valid_for_read and stack.valid and stack.is_blueprint and stack.is_blueprint_setup() then
-         --Blueprints have their own data
-         local vp = Viewpoint.get_viewpoint(pindex)
-         local dir = vp:get_hand_direction()
-         local width, height = BuildDimensions.get_stack_build_dimensions(stack, dir)
-         message:fragment({ "fa.blueprint-preview", tostring(width), tostring(height) })
+         message:fragment({ "fa.build-preview-high", tostring(p_height) })
+         message:fragment({ "fa.build-preview-south" })
       elseif stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result ~= nil then
          --Paving preview size
          local size = vp:get_cursor_size() * 2 + 1
