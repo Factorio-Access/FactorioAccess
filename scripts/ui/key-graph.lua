@@ -116,6 +116,7 @@ local mod = {}
 ---@field on_bar_down_small fa.ui.graph.SimpleCallback? Handler for bar down small (-)
 ---@field on_bar_up_large fa.ui.graph.SimpleCallback? Handler for bar up large (shift++)
 ---@field on_bar_down_large fa.ui.graph.SimpleCallback? Handler for bar down large (shift+-)
+---@field on_trash fa.ui.graph.SimpleCallback? Handler for trash (o key)
 ---@field exclude_from_search boolean? If true, this node won't be included in search results. Default false.
 
 ---@class fa.ui.graph.TransitionVtable
@@ -487,13 +488,22 @@ end
 ---@param ctx fa.ui.graph.InternalTabCtx
 ---@param accelerator_name string
 function Graph:on_accelerator(ctx, accelerator_name)
-   self:_with_render(ctx, function()
-      local n = self.render.nodes[ctx.state.cur_key]
-      if n and n.vtable.on_accelerator then
+   -- Check if there's a graph-level on_accelerator handler
+   if self.on_accelerator_callback then
+      self:_with_render(ctx, function()
          local wrapped_ctx = self:_wrap_ctx(ctx, self.name, NO_MODIFIERS)
-         n.vtable.on_accelerator(wrapped_ctx, accelerator_name)
-      end
-   end)
+         self.on_accelerator_callback(wrapped_ctx, accelerator_name)
+      end)
+   else
+      -- Fall back to node-level handler
+      self:_with_render(ctx, function()
+         local n = self.render.nodes[ctx.state.cur_key]
+         if n and n.vtable.on_accelerator then
+            local wrapped_ctx = self:_wrap_ctx(ctx, self.name, NO_MODIFIERS)
+            n.vtable.on_accelerator(wrapped_ctx, accelerator_name)
+         end
+      end)
+   end
 end
 
 ---@param ctx fa.ui.graph.InternalTabCtx
@@ -557,6 +567,14 @@ function Graph:on_bar_down_large(ctx)
    self:_with_render(ctx, function()
       local n = self.render.nodes[ctx.state.cur_key]
       self:_maybe_call(n, ctx, "on_bar_down_large", NO_MODIFIERS)
+   end)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+function Graph:on_trash(ctx)
+   self:_with_render(ctx, function()
+      local n = self.render.nodes[ctx.state.cur_key]
+      self:_maybe_call(n, ctx, "on_trash", NO_MODIFIERS)
    end)
 end
 
@@ -679,6 +697,7 @@ end
 ---@field title LocalisedString
 ---@field render_callback fa.ui.graph.RenderCallback
 ---@field name string
+---@field on_accelerator fun(ctx: fa.ui.graph.Ctx, accelerator_name: string)?
 
 ---@param declaration fa.ui.graph.Declaration
 ---@return fa.ui.TabDescriptor
@@ -686,6 +705,7 @@ function mod.declare_graph(declaration)
    local graph = setmetatable({
       render_callback = declaration.render_callback,
       name = declaration.name,
+      on_accelerator_callback = declaration.on_accelerator,
       -- For debugging, because otherwise it is very unclear that this is a metatable trick.
       _callbacks_are_from_metatable = "yes because this is KeyGraph",
    }, Graph_meta)

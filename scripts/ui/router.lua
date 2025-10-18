@@ -93,6 +93,7 @@ end
 ---@field on_bar_down_small? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_bar_up_large? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_bar_down_large? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_trash? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 
 ---@enum fa.ui.UiName
 mod.UI_NAMES = {
@@ -889,5 +890,8 @@ register_ui_event("fa-c-minus", create_ui_handler("on_bar_min"))
 register_ui_event("fa-c-equals", create_ui_handler("on_bar_max"))
 register_ui_event("fa-s-minus", create_ui_handler("on_bar_down_large"))
 register_ui_event("fa-s-equals", create_ui_handler("on_bar_up_large"))
+
+-- O key sends to trash
+register_ui_event("fa-o", create_ui_handler("on_trash"))
 
 return mod

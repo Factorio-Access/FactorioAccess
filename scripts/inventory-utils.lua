@@ -124,6 +124,28 @@ function mod.get_main_inventory(entity)
    return nil
 end
 
+---Find the trash inventory for an entity
+---
+---Checks all possible trash inventory types and returns the first one that exists.
+---@param entity LuaEntity
+---@return LuaInventory? inventory The trash inventory if it exists, nil otherwise
+function mod.find_trash_inventory(entity)
+   return mod.get_inventory_by_priority(
+      entity,
+      "character_trash",
+      "car_trash",
+      "spider_trash",
+      "assembling_machine_trash",
+      "cargo_landing_pad_trash",
+      "crafter_trash",
+      "furnace_trash",
+      "hub_trash",
+      "lab_trash",
+      "logistic_container_trash",
+      "rocket_silo_trash"
+   )
+end
+
 ---Quick transfer a stack from source to destination inventory
 ---@param pindex integer Player index performing the transfer (for sound playback)
 ---@param msg_builder fa.MessageBuilder Message builder to append transfer results to

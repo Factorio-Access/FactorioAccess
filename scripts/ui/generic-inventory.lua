@@ -49,6 +49,24 @@ local function setup_shared_state(pindex, params)
       entity = p.character,
       inventory_index = defines.inventory.character_main,
    }
+
+   -- Add trash inventory for vehicles if vehicle logistics is enabled
+   local trash_inv_index = nil
+   local show_trash = false
+
+   if entity.type == "car" or entity.type == "spider-vehicle" then
+      trash_inv_index = defines.inventory.car_trash
+      -- For vehicles: only show if vehicle logistics is enabled
+      show_trash = entity.force.vehicle_logistics
+   end
+
+   if show_trash and trash_inv_index and entity.get_inventory(trash_inv_index) then
+      ret["trash_inventory"] = {
+         entity = entity,
+         inventory_index = trash_inv_index,
+      }
+   end
+
    return ret
 end
 
@@ -67,6 +85,12 @@ PERSONAL_GRID.callbacks.enabled = function(pindex)
    return game.players[pindex] ~= nil and game.players[pindex].character ~= nil and game.players[pindex].character.valid
 end
 
+local TRASH_GRID = InventoryGrid.create_inventory_grid({
+   name = "trash_inventory",
+   title = { "fa.ui-inventory-trash-title" },
+   subkey = "trash_inventory",
+})
+
 -- Create the TabList declaration for generic inventories.
 mod.generic_inventory = TabList.declare_tablist({
    ui_name = UiRouter.UI_NAMES.GENERIC_INVENTORY,
@@ -78,6 +102,7 @@ mod.generic_inventory = TabList.declare_tablist({
          tabs = {
             GENERIC_GRID,
             PERSONAL_GRID,
+            TRASH_GRID,
          },
       },
    }),

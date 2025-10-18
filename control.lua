@@ -38,6 +38,7 @@ local F = require("scripts.field-ref")
 local Filters = require("scripts.filters")
 local Graphics = require("scripts.graphics")
 local InventoryTransfers = require("scripts.inventory-transfers")
+local InventoryUtils = require("scripts.inventory-utils")
 local ItemDescriptions = require("scripts.item-descriptions")
 local KruiseKontrol = require("scripts.kruise-kontrol-wrapper")
 local Localising = require("scripts.localising")
@@ -67,7 +68,7 @@ require("scripts.ui.selectors.upgrade-selector")
 require("scripts.ui.selectors.blueprint-selector")
 require("scripts.ui.selectors.copy-paste-selector")
 require("scripts.ui.menus.gun-menu")
-require("scripts.ui.menus.main-menu")
+local MainMenu = require("scripts.ui.menus.main-menu")
 require("scripts.ui.menus.fast-travel-menu")
 require("scripts.ui.menus.debug-menu")
 require("scripts.ui.tabs.item-chooser")
@@ -2785,12 +2786,8 @@ local function kb_open_player_inventory(event)
    sounds.play_open_inventory(p.index)
    p.selected = nil
 
-   -- Use the router to open the main menu
-   local router = UiRouter.get_router(pindex)
-   router:open_ui(
-      UiRouter.UI_NAMES.MAIN,
-      { player_inventory = { entity = p.character, inventory_index = defines.inventory.character_main } }
-   )
+   -- Open the main menu
+   MainMenu.open_main_menu(pindex)
 end
 
 EventManager.on_event(
@@ -4189,16 +4186,6 @@ EventManager.on_event("fa-cas-r", function(event, pindex)
    game.reload_script()
 end)
 
-EventManager.on_event(
-   "fa-o",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local p = game.get_player(pindex)
-      if p.character == nil then return end
-      if p.driving == true then Driving.pda_read_cruise_control_toggled_info(event.player_index) end
-   end
-)
-
 EventManager.on_event("fa-c-o", function(event)
    Speech.speak(
       event.player_index,
@@ -4279,3 +4266,47 @@ EventManager.on_event(
       KruiseKontrol.cancel_kk(pindex)
    end
 )
+
+-- Send hand contents to trash: O key
+EventManager.on_event("fa-o", function(event)
+   local pindex = event.player_index
+   local player = game.get_player(pindex)
+   if not player or not player.character then return end
+
+   local cursor_stack = player.cursor_stack
+   if not cursor_stack or not cursor_stack.valid_for_read then
+      Speech.speak(pindex, { "fa.trash-nothing-in-hand" })
+      return
+   end
+
+   -- Get character's trash inventory
+   local trash_inventory = InventoryUtils.find_trash_inventory(player.character)
+   if not trash_inventory then
+      Speech.speak(pindex, { "fa.trash-not-available" })
+      return
+   end
+
+   -- Try to insert into trash
+   local item_name = cursor_stack.name
+   local item_count = cursor_stack.count
+   local item_quality = cursor_stack.quality and cursor_stack.quality.name or nil
+
+   local inserted = trash_inventory.insert({ name = item_name, count = item_count, quality = item_quality })
+
+   if inserted > 0 then
+      -- Remove from hand
+      cursor_stack.count = cursor_stack.count - inserted
+
+      -- Announce success
+      local item_description = Localising.localise_item({
+         name = item_name,
+         count = inserted,
+         quality = item_quality,
+      })
+      Speech.speak(pindex, { "fa.trash-sent-to-trash", item_description })
+
+      if inserted < item_count then Speech.speak(pindex, { "fa.trash-full", tostring(item_count - inserted) }) end
+   else
+      Speech.speak(pindex, { "fa.trash-full-none-inserted" })
+   end
+end, EventManager.EVENT_KIND.WORLD)
