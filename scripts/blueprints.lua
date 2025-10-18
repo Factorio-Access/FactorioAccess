@@ -1,6 +1,7 @@
 --Here: Functions related to ghosts, blueprints and blueprint books
 --Does not include event handlers
 
+local BuildDimensions = require("scripts.build-dimensions")
 local BuildingTools = require("scripts.building-tools")
 local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
@@ -85,9 +86,11 @@ function mod.create_blueprint(pindex, point_1, point_2, prior_bp_data)
    end
 
    --Use this opportunity to update saved information about the blueprint's corners (used when drawing the footprint)
-   local width, height = mod.get_blueprint_width_and_height(pindex)
-   storage.players[pindex].blueprint_width_in_hand = width + 1
-   storage.players[pindex].blueprint_height_in_hand = height + 1
+   local width, height = BuildDimensions.get_stack_build_dimensions(p.cursor_stack, dirs.north)
+   if width and height then
+      storage.players[pindex].blueprint_width_in_hand = width + 1
+      storage.players[pindex].blueprint_height_in_hand = height + 1
+   end
 end
 
 --Building function for bluelprints
@@ -106,16 +109,14 @@ function mod.paste_blueprint(pindex, flip_horizontal, flip_vertical)
    if not bp.is_blueprint_setup() then return nil end
 
    --Get the offset blueprint positions
-   local width, height = mod.get_blueprint_width_and_height(pindex)
+   local dir = vp:get_hand_direction()
+   local width, height = BuildDimensions.get_stack_build_dimensions(bp, dir)
    local left_top = { x = math.floor(pos.x), y = math.floor(pos.y) }
    local right_bottom = { x = math.ceil(pos.x + width), y = math.ceil(pos.y + height) }
    local build_pos = { x = pos.x + width / 2, y = pos.y + height / 2 }
 
    --Clear build area for objects up to a certain range, while others are marked for deconstruction
    PlayerMiningTools.clear_obstacles_in_rectangle(left_top, right_bottom, pindex, 99)
-
-   --Build it and check if successful
-   local dir = storage.players[pindex].blueprint_hand_direction
    local can_build = p.can_build_from_cursor({
       position = build_pos,
       direction = dir,
@@ -141,70 +142,6 @@ function mod.paste_blueprint(pindex, flip_horizontal, flip_vertical)
       Speech.speak(pindex, result)
       return false
    end
-end
-
---Returns: bp_width, bp_height
-function mod.get_blueprint_width_and_height(pindex)
-   local p = game.get_player(pindex)
-   local bp = p.cursor_stack
-   if bp == nil or bp.valid_for_read == false or bp.is_blueprint == false then
-      bp = game.get_player(pindex).get_main_inventory()[storage.players[pindex].inventory.index]
-   end
-   if bp == nil or bp.valid_for_read == false or bp.is_blueprint == false then return nil, nil end
-   local vp = Viewpoint.get_viewpoint(pindex)
-   local pos = vp:get_cursor_pos()
-   local ents = bp.get_blueprint_entities()
-   local west_most_x = 0
-   local east_most_x = 0
-   local north_most_y = 0
-   local south_most_y = 0
-   local first_ent = true
-
-   --Empty blueprint
-   if not ents or bp.is_blueprint_setup() == false then return 0, 0 end
-
-   --Find the blueprint borders and corners
-   for i, ent in ipairs(ents) do
-      local ent_width = prototypes.entity[ent.name].tile_width
-      local ent_height = prototypes.entity[ent.name].tile_height
-      if ent.direction == dirs.east or ent.direction == dirs.west then
-         ent_width = prototypes.entity[ent.name].tile_height
-         ent_height = prototypes.entity[ent.name].tile_width
-      end
-      --Find the edges of this ent
-      local ent_north = ent.position.y - math.floor(ent_height / 2)
-      local ent_east = ent.position.x + math.floor(ent_width / 2)
-      local ent_south = ent.position.y + math.floor(ent_height / 2)
-      local ent_west = ent.position.x - math.floor(ent_width / 2)
-      --Initialize with this entity
-      if first_ent then
-         first_ent = false
-         west_most_x = ent_west
-         east_most_x = ent_east
-         north_most_y = ent_north
-         south_most_y = ent_south
-      else
-         --Compare ent edges with the blueprint edges
-         if west_most_x > ent_west then west_most_x = ent_west end
-         if east_most_x < ent_east then east_most_x = ent_east end
-         if north_most_y > ent_north then north_most_y = ent_north end
-         if south_most_y < ent_south then south_most_y = ent_south end
-      end
-   end
-   --Determine blueprint dimensions from the final edges
-   local bp_left_top = { x = math.floor(west_most_x), y = math.floor(north_most_y) }
-   local bp_right_bottom = { x = math.ceil(east_most_x), y = math.ceil(south_most_y) }
-   local bp_width = bp_right_bottom.x - bp_left_top.x
-   local bp_height = bp_right_bottom.y - bp_left_top.y
-   if
-      storage.players[pindex].blueprint_hand_direction == dirs.east
-      or storage.players[pindex].blueprint_hand_direction == dirs.west
-   then
-      --Flip width and height
-      bp_width = bp_right_bottom.y - bp_left_top.y - 1
-      bp_height = bp_right_bottom.x - bp_left_top.x - 1
-   end
-   return bp_width, bp_height
 end
 
 --Export and import the same blueprint so that its parameters reset, e.g. rotation.
@@ -248,10 +185,11 @@ function mod.get_blueprint_info(stack, in_hand, pindex)
 
    --Use this opportunity to update saved information about the blueprint's corners (used when drawing the footprint)
    if in_hand then
-      local width, height = mod.get_blueprint_width_and_height(pindex)
-      if width == nil or height == nil then return result end
-      storage.players[pindex].blueprint_width_in_hand = width + 1
-      storage.players[pindex].blueprint_height_in_hand = height + 1
+      local width, height = BuildDimensions.get_stack_build_dimensions(stack, dirs.north)
+      if width and height then
+         storage.players[pindex].blueprint_width_in_hand = width + 1
+         storage.players[pindex].blueprint_height_in_hand = height + 1
+      end
    end
    return result
 end
@@ -775,9 +713,11 @@ function mod.copy_selected_area_to_clipboard(pindex, point_1, point_2)
    p.activate_paste()
 
    --Use this opportunity to update saved information about the blueprint's corners (used when drawing the footprint)
-   local width, height = mod.get_blueprint_width_and_height(pindex)
-   storage.players[pindex].blueprint_width_in_hand = width + 1
-   storage.players[pindex].blueprint_height_in_hand = height + 1
+   local width, height = BuildDimensions.get_stack_build_dimensions(p.cursor_stack, dirs.north)
+   if width and height then
+      storage.players[pindex].blueprint_width_in_hand = width + 1
+      storage.players[pindex].blueprint_height_in_hand = height + 1
+   end
 end
 
 return mod

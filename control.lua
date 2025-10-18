@@ -15,6 +15,7 @@ local AreaOperations = require("scripts.area-operations")
 local AudioCues = require("scripts.audio-cues")
 local Blueprints = require("scripts.blueprints")
 local BuildingTools = require("scripts.building-tools")
+local BuildDimensions = require("scripts.build-dimensions")
 local BuildLock = require("scripts.build-lock")
 -- Register build lock backends (tiles must be first to catch tile items before simple backend)
 BuildLock.register_backend(require("scripts.build-lock-backends.tiles"))
@@ -743,7 +744,7 @@ EventManager.on_event(
                Blueprints.refresh_blueprint_in_hand(pindex)
             end
             --Use this opportunity to update saved information about the blueprint's corners (used when drawing the footprint)
-            local width, height = Blueprints.get_blueprint_width_and_height(pindex)
+            local width, height = BuildDimensions.get_stack_build_dimensions(stack, dirs.north)
             if width == nil or height == nil then return end
             storage.players[pindex].blueprint_width_in_hand = width + 1
             storage.players[pindex].blueprint_height_in_hand = height + 1
@@ -1702,18 +1703,9 @@ local function apply_skip_by_preview_size(pindex, direction)
    local vp = Viewpoint.get_viewpoint(pindex)
    local cursor_pos = vp:get_cursor_pos()
 
-   local width, height
-
    --Check the moved count against the dimensions of the preview in hand
    local stack = p.cursor_stack
-   if stack and stack.valid_for_read then
-      if stack.is_blueprint and stack.is_blueprint_setup() then
-         width, height = Blueprints.get_blueprint_width_and_height(pindex)
-      elseif stack.prototype.place_result then
-         width = stack.prototype.place_result.tile_width
-         height = stack.prototype.place_result.tile_height
-      end
-   end
+   local width, height = BuildDimensions.get_stack_build_dimensions(stack, dirs.north)
 
    --Default to cursor size if not something else
    if not width or not height or (width + height <= 2) then
@@ -2121,7 +2113,9 @@ local function read_coords(pindex, start_phrase)
          end
       elseif stack and stack.valid_for_read and stack.valid and stack.is_blueprint and stack.is_blueprint_setup() then
          --Blueprints have their own data
-         local width, height = Blueprints.get_blueprint_width_and_height(pindex)
+         local vp = Viewpoint.get_viewpoint(pindex)
+         local dir = vp:get_hand_direction()
+         local width, height = BuildDimensions.get_stack_build_dimensions(stack, dir)
          message:fragment({ "fa.blueprint-preview", tostring(width), tostring(height) })
       elseif stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result ~= nil then
          --Paving preview size

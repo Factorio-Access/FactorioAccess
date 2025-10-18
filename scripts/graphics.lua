@@ -1,6 +1,7 @@
 --Here: Mod GUI and graphics drawing
 --Note: Does not include every single rendering call made by the mod, such as circles being drawn by obstacle clearing.
 
+local BuildDimensions = require("scripts.build-dimensions")
 local FaUtils = require("scripts.fa-utils")
 local Mouse = require("scripts.mouse")
 local UiRouter = require("scripts.ui.router")
@@ -106,11 +107,7 @@ function mod.sync_build_cursor_graphics(pindex)
       --Redraw the direction indicator arrow
       if dir_indicator ~= nil then player.building_dir_arrow.destroy() end
       local arrow_pos = vp:get_cursor_pos()
-      local dir = storage.players[pindex].blueprint_hand_direction
-      if dir == nil then
-         storage.players[pindex].blueprint_hand_direction = dirs.north
-         dir = dirs.north
-      end
+      local dir = vp:get_hand_direction()
       player.building_dir_arrow = rendering.draw_sprite({
          sprite = "fluid.crude-oil",
          tint = { r = 0.25, b = 0.25, g = 1.0, a = 0.75 },
@@ -125,9 +122,8 @@ function mod.sync_build_cursor_graphics(pindex)
 
       --Redraw the bp footprint
       if player.building_footprint ~= nil then player.building_footprint.destroy() end
-      local bp_width = storage.players[pindex].blueprint_width_in_hand
-      local bp_height = storage.players[pindex].blueprint_height_in_hand
-      if bp_width ~= nil then
+      local bp_width, bp_height = BuildDimensions.get_stack_build_dimensions(stack, dir)
+      if bp_width and bp_height then
          local left_top = { x = math.floor(vp:get_cursor_pos().x), y = math.floor(vp:get_cursor_pos().y) }
          local right_bottom = { x = (left_top.x + bp_width), y = (left_top.y + bp_height) }
          local center_pos = { x = (left_top.x + bp_width / 2), y = (left_top.y + bp_height / 2) }

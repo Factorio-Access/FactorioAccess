@@ -371,20 +371,12 @@ function mod.rotate_building_info_read(event, forward)
          Speech.speak(pindex, { "fa.building-no-rotate-support", { "item-name." .. stack.name } })
       end
    elseif stack ~= nil and stack.valid_for_read and stack.is_blueprint and stack.is_blueprint_setup() then
-      --Rotate blueprints: They are tracked separately, and we reset them to north when cursor stack changes
+      --Rotate blueprints: Rotation is now handled by viewpoint, dimensions are computed dynamically
       game.get_player(pindex).play_sound({ path = "Rotate-Hand-Sound" })
-      storage.players[pindex].blueprint_hand_direction = (
-         storage.players[pindex].blueprint_hand_direction + dirs.east * mult
-      ) % (2 * dirs.south)
-      Speech.speak(pindex, FaUtils.direction_lookup(storage.players[pindex].blueprint_hand_direction))
-
-      --Flip the saved bp width and height
-      local temp = storage.players[pindex].blueprint_height_in_hand
-      storage.players[pindex].blueprint_height_in_hand = storage.players[pindex].blueprint_width_in_hand
-      storage.players[pindex].blueprint_width_in_hand = temp
-
-      --Call graphics update
-      --Graphics.sync_build_cursor_graphics(pindex)
+      local vp = Viewpoint.get_viewpoint(pindex)
+      local new_dir = (vp:get_hand_direction() + dirs.east * mult) % (2 * dirs.south)
+      vp:set_hand_direction(new_dir)
+      Speech.speak(pindex, FaUtils.direction_lookup(new_dir))
    elseif ent and ent.valid then
       if ent.supports_direction then
          --Assuming that the vanilla rotate event will now rotate the ent
