@@ -106,7 +106,10 @@ function mod.paste_blueprint(pindex, flip_horizontal, flip_vertical)
    if not bp.is_blueprint_setup() then return nil end
 
    --Get the offset blueprint positions
-   local left_top, right_bottom, build_pos = mod.get_blueprint_corners(pindex, false)
+   local width, height = mod.get_blueprint_width_and_height(pindex)
+   local left_top = { x = math.floor(pos.x), y = math.floor(pos.y) }
+   local right_bottom = { x = math.ceil(pos.x + width), y = math.ceil(pos.y + height) }
+   local build_pos = { x = pos.x + width / 2, y = pos.y + height / 2 }
 
    --Clear build area for objects up to a certain range, while others are marked for deconstruction
    PlayerMiningTools.clear_obstacles_in_rectangle(left_top, right_bottom, pindex, 99)
@@ -138,91 +141,6 @@ function mod.paste_blueprint(pindex, flip_horizontal, flip_vertical)
       Speech.speak(pindex, result)
       return false
    end
-end
-
---Returns the left top and right bottom corners of the blueprint, as well as the center position
-function mod.get_blueprint_corners(pindex, draw_rect)
-   local p = game.get_player(pindex)
-   local bp = p.cursor_stack
-   if bp == nil or bp.valid_for_read == false or bp.is_blueprint == false then error("invalid call. no blueprint") end
-   local vp = Viewpoint.get_viewpoint(pindex)
-   local pos = vp:get_cursor_pos()
-   local ents = bp.get_blueprint_entities() or {}
-   local west_most_x = 0
-   local east_most_x = 0
-   local north_most_y = 0
-   local south_most_y = 0
-   local first_ent = true
-   --Empty blueprint: Just report the tile of the cursor
-   if bp.is_blueprint_setup() == false then
-      local left_top = { x = math.floor(pos.x), y = math.floor(pos.y) }
-      local right_bottom = { x = math.ceil(pos.x), y = math.ceil(pos.y) }
-      return left_top, right_bottom, pos
-   end
-
-   --Find the blueprint borders and corners
-   for i, ent in ipairs(ents) do
-      local ent_width = prototypes.entity[ent.name].tile_width
-      local ent_height = prototypes.entity[ent.name].tile_height
-      if ent.direction == dirs.east or ent.direction == dirs.west then
-         ent_width = prototypes.entity[ent.name].tile_height
-         ent_height = prototypes.entity[ent.name].tile_width
-      end
-      --Find the edges of this ent
-      local ent_north = ent.position.y - math.floor(ent_height / 2)
-      local ent_east = ent.position.x + math.floor(ent_width / 2)
-      local ent_south = ent.position.y + math.floor(ent_height / 2)
-      local ent_west = ent.position.x - math.floor(ent_width / 2)
-      --Initialize with this entity
-      if first_ent then
-         first_ent = false
-         west_most_x = ent_west
-         east_most_x = ent_east
-         north_most_y = ent_north
-         south_most_y = ent_south
-      else
-         --Compare ent edges with the blueprint edges
-         if west_most_x > ent_west then west_most_x = ent_west end
-         if east_most_x < ent_east then east_most_x = ent_east end
-         if north_most_y > ent_north then north_most_y = ent_north end
-         if south_most_y < ent_south then south_most_y = ent_south end
-      end
-   end
-   --Determine blueprint dimensions from the final edges
-   local bp_left_top = { x = math.floor(west_most_x), y = math.floor(north_most_y) }
-   local bp_right_bottom = { x = math.ceil(east_most_x), y = math.ceil(south_most_y) }
-   local bp_width = bp_right_bottom.x - bp_left_top.x - 1
-   local bp_height = bp_right_bottom.y - bp_left_top.y - 1
-   if
-      storage.players[pindex].blueprint_hand_direction == dirs.east
-      or storage.players[pindex].blueprint_hand_direction == dirs.west
-   then
-      --Flip width and height
-      bp_width = bp_right_bottom.y - bp_left_top.y - 1
-      bp_height = bp_right_bottom.x - bp_left_top.x - 1
-   end
-   local left_top = { x = math.floor(pos.x), y = math.floor(pos.y) }
-   local right_bottom = { x = math.ceil(pos.x + bp_width), y = math.ceil(pos.y + bp_height) }
-
-   --Draw the build preview (default is false)
-   if draw_rect == true then
-      --Draw a temporary rectangle for debugging
-      rendering.draw_rectangle({
-         left_top = left_top,
-         right_bottom = right_bottom,
-         color = { r = 0.25, b = 0.25, g = 1.0, a = 0.75 },
-         width = 2,
-         draw_on_ground = true,
-         surface = p.surface,
-         players = nil,
-         time_to_live = 100,
-      })
-   end
-
-   --Get the mouse pointer position
-   local mouse_pos = { x = pos.x + bp_width / 2, y = pos.y + bp_height / 2 }
-
-   return left_top, right_bottom, mouse_pos
 end
 
 --Returns: bp_width, bp_height

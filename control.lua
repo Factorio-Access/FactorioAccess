@@ -1702,39 +1702,34 @@ local function apply_skip_by_preview_size(pindex, direction)
    local vp = Viewpoint.get_viewpoint(pindex)
    local cursor_pos = vp:get_cursor_pos()
 
+   local width, height
+
    --Check the moved count against the dimensions of the preview in hand
    local stack = p.cursor_stack
    if stack and stack.valid_for_read then
       if stack.is_blueprint and stack.is_blueprint_setup() then
-         local width, height = Blueprints.get_blueprint_width_and_height(pindex)
-         if width and height and (width + height > 2) then
-            --For blueprints larger than 1x1, check if the height/width has been travelled.
-            if direction == dirs.east or direction == dirs.west then
-               vp:set_cursor_pos(FaUtils.offset_position_legacy(cursor_pos, direction, width))
-               return width
-            elseif direction == dirs.north or direction == dirs.south then
-               vp:set_cursor_pos(FaUtils.offset_position_legacy(cursor_pos, direction, height))
-               return height
-            end
-         end
+         width, height = Blueprints.get_blueprint_width_and_height(pindex)
       elseif stack.prototype.place_result then
-         local width = stack.prototype.place_result.tile_width
-         local height = stack.prototype.place_result.tile_height
-         if width and height and (width + height > 2) then
-            --For entities larger than 1x1, check if the height/width has been travelled.
-            if direction == dirs.east or direction == dirs.west then
-               vp:set_cursor_pos(FaUtils.offset_position_legacy(cursor_pos, direction, width))
-               return width
-            elseif direction == dirs.north or direction == dirs.south then
-               vp:set_cursor_pos(FaUtils.offset_position_legacy(cursor_pos, direction, height))
-               return height
-            end
-         end
+         width = stack.prototype.place_result.tile_width
+         height = stack.prototype.place_result.tile_height
       end
    end
 
-   --Offset by cursor size if not something else
-   local shift = (vp:get_cursor_size() * 2 + 1)
+   --Default to cursor size if not something else
+   if not width or not height or (width + height <= 2) then
+      local shift = (vp:get_cursor_size() * 2 + 1)
+      vp:set_cursor_pos(FaUtils.offset_position_legacy(cursor_pos, direction, shift))
+      return shift
+   end
+
+   --For entities/blueprints larger than 1x1, move by the appropriate dimension
+   local shift
+   if direction == dirs.east or direction == dirs.west then
+      shift = width
+   elseif direction == dirs.north or direction == dirs.south then
+      shift = height
+   end
+
    vp:set_cursor_pos(FaUtils.offset_position_legacy(cursor_pos, direction, shift))
    return shift
 end
@@ -2126,10 +2121,8 @@ local function read_coords(pindex, start_phrase)
          end
       elseif stack and stack.valid_for_read and stack.valid and stack.is_blueprint and stack.is_blueprint_setup() then
          --Blueprints have their own data
-         local left_top, right_bottom, build_pos = Blueprints.get_blueprint_corners(pindex, false)
-         local bp_dim_1 = right_bottom.x - left_top.x
-         local bp_dim_2 = right_bottom.y - left_top.y
-         message:fragment({ "fa.blueprint-preview", tostring(bp_dim_1), tostring(bp_dim_2) })
+         local width, height = Blueprints.get_blueprint_width_and_height(pindex)
+         message:fragment({ "fa.blueprint-preview", tostring(width), tostring(height) })
       elseif stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result ~= nil then
          --Paving preview size
          local size = vp:get_cursor_size() * 2 + 1
