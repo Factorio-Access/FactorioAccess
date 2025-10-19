@@ -11,6 +11,7 @@ local FormBuilder = require("scripts.ui.form-builder")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local UiRouter = require("scripts.ui.router")
 local UiUtils = require("scripts.ui.ui-utils")
+local UiSounds = require("scripts.ui.sounds")
 local Filters = require("scripts.filters")
 local Localising = require("scripts.localising")
 
@@ -46,26 +47,54 @@ local function render_inserter_config(ctx)
    -- Get max stack size for this inserter
    local max_stack_size = get_max_stack_size(entity)
 
-   -- Row 1: Hand size control
-   form:add_bar("hand_size", {
-      label = { "fa.inserter-hand-size" },
-      get_value = function()
+   -- Row 1: Hand size control (textfield with 0 = unset)
+   local function build_hand_size_label(message, ctx)
+      message:fragment({ "fa.inserter-hand-size" })
+
+      local override = entity.inserter_stack_size_override
+      if override == 0 then
+         message:fragment({ "fa.inserter-hand-size-unset" })
+      else
+         message:fragment(tostring(override))
+      end
+
+      message:fragment({ "fa.inserter-hand-size-help" })
+   end
+
+   form:add_item("hand_size", {
+      label = function(ctx)
+         build_hand_size_label(ctx.message, ctx)
+      end,
+      on_click = function(ctx)
          local override = entity.inserter_stack_size_override
-         if override == 0 then
-            return max_stack_size
-         else
-            return override
-         end
+         local current_value = override == 0 and "" or tostring(override)
+         ctx.controller:open_textbox(current_value, "hand_size")
       end,
-      set_value = function(value)
-         if value == max_stack_size then
+      on_child_result = function(ctx, result)
+         if result == "" or result == nil then
+            -- Empty string means unset
             entity.inserter_stack_size_override = 0
+            ctx.controller.message:fragment({ "fa.inserter-hand-size-unset" })
          else
-            entity.inserter_stack_size_override = value
+            local num = tonumber(result)
+            if num and num >= 0 and num <= max_stack_size and math.floor(num) == num then
+               if num == 0 then
+                  entity.inserter_stack_size_override = 0
+                  ctx.controller.message:fragment({ "fa.inserter-hand-size-unset" })
+               else
+                  entity.inserter_stack_size_override = num
+                  ctx.controller.message:fragment(tostring(num))
+               end
+            else
+               UiSounds.play_ui_edge(ctx.pindex)
+               ctx.controller.message:fragment({ "fa.inserter-hand-size-invalid", tostring(max_stack_size) })
+            end
          end
       end,
-      min_value = 1,
-      max_value = max_stack_size,
+      on_clear = function(ctx)
+         entity.inserter_stack_size_override = 0
+         ctx.controller.message:fragment({ "fa.inserter-hand-size-unset" })
+      end,
    })
 
    -- Check if this inserter supports filters

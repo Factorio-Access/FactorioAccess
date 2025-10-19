@@ -93,8 +93,9 @@ end
 ---@param label LocalisedString | fun(fa.ui.graph.Ctx): LocalisedString
 ---@param get_value fun(): string Function that returns the current value
 ---@param set_value fun(string) Function that sets the new value
+---@param on_clear (fun(fa.ui.graph.Ctx))? Optional clear callback (triggered by backspace)
 ---@return fa.ui.form.FormBuilder
-function FormBuilder:add_textfield(name, label, get_value, set_value)
+function FormBuilder:add_textfield(name, label, get_value, set_value, on_clear)
    -- Create label builder function that uses the getter
    local function build_label(message, ctx)
       local base_label = UiUtils.to_label_function(label)(ctx)
@@ -104,7 +105,7 @@ function FormBuilder:add_textfield(name, label, get_value, set_value)
       message:fragment(value_text)
    end
 
-   self:add_item(name, {
+   local vtable = {
       label = function(ctx)
          build_label(ctx.message, ctx)
       end,
@@ -119,7 +120,12 @@ function FormBuilder:add_textfield(name, label, get_value, set_value)
          local value_text = result ~= "" and result or { "fa.empty" }
          ctx.controller.message:fragment(value_text)
       end,
-   })
+   }
+
+   -- Add clear callback if provided
+   if on_clear then vtable.on_clear = on_clear end
+
+   self:add_item(name, vtable)
 
    return self
 end
