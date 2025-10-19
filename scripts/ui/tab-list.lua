@@ -71,6 +71,9 @@ local mod = {}
 ---@field on_clear fa.ui.SimpleTabHandler?
 ---@field on_dangerous_delete fa.ui.SimpleTabHandler?
 ---@field on_trash fa.ui.SimpleTabHandler?
+---@field on_action1 fa.ui.SimpleTabHandler?
+---@field on_action2 fa.ui.SimpleTabHandler?
+---@field on_action3 fa.ui.SimpleTabHandler?
 ---@field enabled fun(number): boolean
 ---@field supports_search fun(self, ctx: fa.ui.TabContext): boolean? Returns true if search is supported
 ---@field search_hint fun(self, ctx: fa.ui.TabContext, hint_callback: fun(localised_string: LocalisedString))? Called to hint strings for caching
@@ -330,6 +333,12 @@ TabList.on_bar_up_large = build_simple_method("on_bar_up_large")
 TabList.on_bar_down_large = build_simple_method("on_bar_down_large")
 ---@type fun(self, number, table?, fa.ui.RouterController)
 TabList.on_trash = build_simple_method("on_trash")
+---@type fun(self, number, table?, fa.ui.RouterController)
+TabList.on_action1 = build_simple_method("on_action1")
+---@type fun(self, number, table?, fa.ui.RouterController)
+TabList.on_action2 = build_simple_method("on_action2")
+---@type fun(self, number, table?, fa.ui.RouterController)
+TabList.on_action3 = build_simple_method("on_action3")
 
 ---Handle accelerator events (one callback for all accelerators)
 ---@param pindex number

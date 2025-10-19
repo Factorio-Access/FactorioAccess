@@ -345,10 +345,8 @@ local function render_section(ctx, section_index)
          section.group = ""
          ctx.controller.message:fragment({ "fa.logistics-group-cleared" })
       end,
-      on_accelerator = function(ctx, accelerator_name)
-         if accelerator_name == "fa-ca-g" then
-            ctx.controller:open_textbox("", { node = "group_selector" }, { "fa.logistics-enter-group-name" })
-         end
+      on_action1 = function(ctx)
+         ctx.controller:open_textbox("", { node = "group_selector" }, { "fa.logistics-enter-group-name" })
       end,
    })
 

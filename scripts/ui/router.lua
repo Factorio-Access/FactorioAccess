@@ -94,6 +94,9 @@ end
 ---@field on_bar_up_large? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_bar_down_large? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_trash? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_action1? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_action2? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_action3? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 
 ---@enum fa.ui.UiName
 mod.UI_NAMES = {
@@ -522,47 +525,6 @@ register_ui_event("fa-y", create_ui_handler("on_read_info"))
 -- U key reads production stats
 register_ui_event("fa-u", create_ui_handler("on_production_stats_announcement"))
 
--- Accelerator keys - map to constants for UI flexibility
-register_ui_event("fa-ca-c", function(event, pindex)
-   local router = mod.get_router(pindex)
-   local stack = router_state[pindex].ui_stack
-
-   if #stack > 0 then
-      local top_entry = stack[#stack]
-      local ui_name = top_entry.name
-      if registered_uis[ui_name] then
-         local ui = registered_uis[ui_name]
-         if ui.on_accelerator then
-            local controller = create_controller_for_event(router)
-            ui:on_accelerator(pindex, mod.ACCELERATORS.ENTER_CONSTANT, nil, controller)
-            controller:finalize()
-            return EventManager.FINISHED
-         end
-      end
-   end
-   return nil
-end)
-
-register_ui_event("fa-ca-s", function(event, pindex)
-   local router = mod.get_router(pindex)
-   local stack = router_state[pindex].ui_stack
-
-   if #stack > 0 then
-      local top_entry = stack[#stack]
-      local ui_name = top_entry.name
-      if registered_uis[ui_name] then
-         local ui = registered_uis[ui_name]
-         if ui.on_accelerator then
-            local controller = create_controller_for_event(router)
-            ui:on_accelerator(pindex, mod.ACCELERATORS.SELECT_SIGNAL, nil, controller)
-            controller:finalize()
-            return EventManager.FINISHED
-         end
-      end
-   end
-   return nil
-end)
-
 register_ui_event("fa-p", function(event, pindex)
    local router = mod.get_router(pindex)
    local stack = router_state[pindex].ui_stack
@@ -825,27 +787,6 @@ register_ui_event("fa-cs-g", function(event, pindex)
    return nil -- Fall through to world handler
 end)
 
--- CTRL+ALT+G: Type new logistic group (handled in UI)
-register_ui_event("fa-ca-g", function(event, pindex)
-   local router = mod.get_router(pindex)
-   local stack = router_state[pindex].ui_stack
-
-   if #stack > 0 then
-      local top_entry = stack[#stack]
-      local ui_name = top_entry.name
-      if registered_uis[ui_name] then
-         local ui = registered_uis[ui_name]
-         if ui.on_accelerator then
-            local controller = create_controller_for_event(router)
-            ui:on_accelerator(pindex, "fa-ca-g", nil, controller)
-            controller:finalize()
-            return EventManager.FINISHED
-         end
-      end
-   end
-   return nil
-end)
-
 -- SHIFT+LEFTBRACKET is handled directly by UI on_click handlers (e.g., inventory-grid.lua)
 -- Falls through to world handler (equip from hand) when no UI is open
 
@@ -893,5 +834,21 @@ register_ui_event("fa-s-equals", create_ui_handler("on_bar_up_large"))
 
 -- O key sends to trash
 register_ui_event("fa-o", create_ui_handler("on_trash"))
+
+-- Action keys (m, comma, dot) - UI action handlers
+register_ui_event("fa-m", create_ui_handler("on_action1", {}))
+register_ui_event("fa-a-m", create_ui_handler("on_action1", { alt = true }))
+register_ui_event("fa-s-m", create_ui_handler("on_action1", { shift = true }))
+register_ui_event("fa-cs-m", create_ui_handler("on_action1", { control = true, shift = true }))
+
+register_ui_event("fa-comma", create_ui_handler("on_action2", {}))
+register_ui_event("fa-a-comma", create_ui_handler("on_action2", { alt = true }))
+register_ui_event("fa-s-comma", create_ui_handler("on_action2", { shift = true }))
+register_ui_event("fa-cs-comma", create_ui_handler("on_action2", { control = true, shift = true }))
+
+register_ui_event("fa-dot", create_ui_handler("on_action3", {}))
+register_ui_event("fa-a-dot", create_ui_handler("on_action3", { alt = true }))
+register_ui_event("fa-s-dot", create_ui_handler("on_action3", { shift = true }))
+register_ui_event("fa-cs-dot", create_ui_handler("on_action3", { control = true, shift = true }))
 
 return mod

@@ -22,6 +22,9 @@ local mod = {}
 ---@field on_bar_up_large? fa.ui.graph.SimpleCallback
 ---@field on_bar_down_large? fa.ui.graph.SimpleCallback
 ---@field on_trash? fa.ui.graph.SimpleCallback
+---@field on_action1? fa.ui.graph.SimpleCallback
+---@field on_action2? fa.ui.graph.SimpleCallback
+---@field on_action3? fa.ui.graph.SimpleCallback
 
 ---@class fa.ui.menu.Entry
 ---@field vtable fa.ui.graph.NodeVtable
@@ -122,6 +125,9 @@ function MenuBuilder:add_clickable(key, label, click_handlers)
    if click_handlers.on_bar_up_large then vtable.on_bar_up_large = click_handlers.on_bar_up_large end
    if click_handlers.on_bar_down_large then vtable.on_bar_down_large = click_handlers.on_bar_down_large end
    if click_handlers.on_trash then vtable.on_trash = click_handlers.on_trash end
+   if click_handlers.on_action1 then vtable.on_action1 = click_handlers.on_action1 end
+   if click_handlers.on_action2 then vtable.on_action2 = click_handlers.on_action2 end
+   if click_handlers.on_action3 then vtable.on_action3 = click_handlers.on_action3 end
 
    self:add_item(key, vtable)
 end

@@ -117,6 +117,9 @@ local mod = {}
 ---@field on_bar_up_large fa.ui.graph.SimpleCallback? Handler for bar up large (shift++)
 ---@field on_bar_down_large fa.ui.graph.SimpleCallback? Handler for bar down large (shift+-)
 ---@field on_trash fa.ui.graph.SimpleCallback? Handler for trash (o key)
+---@field on_action1 fa.ui.graph.SimpleCallback? Handler for action1 (m key)
+---@field on_action2 fa.ui.graph.SimpleCallback? Handler for action2 (comma key)
+---@field on_action3 fa.ui.graph.SimpleCallback? Handler for action3 (dot key)
 ---@field exclude_from_search boolean? If true, this node won't be included in search results. Default false.
 
 ---@class fa.ui.graph.TransitionVtable
@@ -575,6 +578,33 @@ function Graph:on_trash(ctx)
    self:_with_render(ctx, function()
       local n = self.render.nodes[ctx.state.cur_key]
       self:_maybe_call(n, ctx, "on_trash", NO_MODIFIERS)
+   end)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+---@param modifiers fa.ui.graph.Modifiers
+function Graph:on_action1(ctx, modifiers)
+   self:_with_render(ctx, function()
+      local n = self.render.nodes[ctx.state.cur_key]
+      self:_maybe_call(n, ctx, "on_action1", modifiers)
+   end)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+---@param modifiers fa.ui.graph.Modifiers
+function Graph:on_action2(ctx, modifiers)
+   self:_with_render(ctx, function()
+      local n = self.render.nodes[ctx.state.cur_key]
+      self:_maybe_call(n, ctx, "on_action2", modifiers)
+   end)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+---@param modifiers fa.ui.graph.Modifiers
+function Graph:on_action3(ctx, modifiers)
+   self:_with_render(ctx, function()
+      local n = self.render.nodes[ctx.state.cur_key]
+      self:_maybe_call(n, ctx, "on_action3", modifiers)
    end)
 end
 

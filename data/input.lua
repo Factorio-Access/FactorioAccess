@@ -972,13 +972,6 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "fa-ca-g",
-      key_sequence = "CONTROL + ALT + G",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
       name = "fa-cs-r",
       key_sequence = "CONTROL + SHIFT + R",
       consuming = "none",
@@ -1180,14 +1173,6 @@ data:extend({
       consuming = "none",
    },
 
-   -- Circuit network accelerator for signal selection
-   {
-      type = "custom-input",
-      name = "fa-ca-s",
-      key_sequence = "CONTROL + ALT + S",
-      consuming = "none",
-   },
-
    -- Clear/backspace
    {
       type = "custom-input",
@@ -1252,6 +1237,91 @@ data:extend({
       type = "custom-input",
       name = "fa-s-equals",
       key_sequence = "SHIFT + EQUALS",
+      consuming = "none",
+   },
+
+   -- UI action keys (m, comma, dot with modifiers)
+   {
+      type = "custom-input",
+      name = "fa-m",
+      key_sequence = "M",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "fa-a-m",
+      key_sequence = "ALT + M",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "fa-s-m",
+      key_sequence = "SHIFT + M",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "fa-cs-m",
+      key_sequence = "CONTROL + SHIFT + M",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "fa-comma",
+      key_sequence = "COMMA",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "fa-a-comma",
+      key_sequence = "ALT + COMMA",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "fa-s-comma",
+      key_sequence = "SHIFT + COMMA",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "fa-cs-comma",
+      key_sequence = "CONTROL + SHIFT + COMMA",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "fa-dot",
+      key_sequence = "PERIOD",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "fa-a-dot",
+      key_sequence = "ALT + PERIOD",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "fa-s-dot",
+      key_sequence = "SHIFT + PERIOD",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "fa-cs-dot",
+      key_sequence = "CONTROL + SHIFT + PERIOD",
       consuming = "none",
    },
 })

@@ -520,7 +520,7 @@ function FormBuilder:add_condition(name, get_value, set_value)
             end
          end
       end,
-      on_accelerator = function(ctx, accelerator_name)
+      on_click = function(ctx)
          local condition = get_value() or {}
 
          -- Check prerequisites
@@ -535,18 +535,31 @@ function FormBuilder:add_condition(name, get_value, set_value)
             return
          end
 
-         if accelerator_name == UiRouter.ACCELERATORS.ENTER_CONSTANT then
-            -- Open textbox for constant
-            local current_value = condition.constant or 0
-            ctx.controller:open_textbox(tostring(current_value), { node = name .. "_second", type = "constant" })
-         elseif accelerator_name == UiRouter.ACCELERATORS.SELECT_SIGNAL then
-            -- Open signal selector
-            ctx.controller:open_child_ui(
-               UiRouter.UI_NAMES.SIGNAL_CHOOSER,
-               {},
-               { node = name .. "_second", type = "signal" }
-            )
+         -- Open signal selector
+         ctx.controller:open_child_ui(
+            UiRouter.UI_NAMES.SIGNAL_CHOOSER,
+            {},
+            { node = name .. "_second", type = "signal" }
+         )
+      end,
+      on_action1 = function(ctx)
+         local condition = get_value() or {}
+
+         -- Check prerequisites
+         if not condition.first_signal or not condition.first_signal.name then
+            UiSounds.play_ui_edge(ctx.pindex)
+            ctx.controller.message:fragment({ "fa.condition-error-first-signal-required" })
+            return
          end
+         if not condition.comparator then
+            UiSounds.play_ui_edge(ctx.pindex)
+            ctx.controller.message:fragment({ "fa.condition-error-operator-required" })
+            return
+         end
+
+         -- Open textbox for constant
+         local current_value = condition.constant or 0
+         ctx.controller:open_textbox(tostring(current_value), { node = name .. "_second", type = "constant" })
       end,
       on_clear = function(ctx)
          local condition = get_value() or {}
@@ -757,7 +770,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
             end
          end
       end,
-      on_accelerator = function(ctx, accelerator_name)
+      on_click = function(ctx)
          local condition = get_condition() or {}
 
          -- Check prerequisites
@@ -772,18 +785,31 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
             return
          end
 
-         if accelerator_name == UiRouter.ACCELERATORS.ENTER_CONSTANT then
-            -- Open textbox for constant
-            local current_value = condition.constant or 0
-            ctx.controller:open_textbox(tostring(current_value), { node = name .. "_second", type = "constant" })
-         elseif accelerator_name == UiRouter.ACCELERATORS.SELECT_SIGNAL then
-            -- Open signal selector
-            ctx.controller:open_child_ui(
-               UiRouter.UI_NAMES.SIGNAL_CHOOSER,
-               {},
-               { node = name .. "_second", type = "signal" }
-            )
+         -- Open signal selector
+         ctx.controller:open_child_ui(
+            UiRouter.UI_NAMES.SIGNAL_CHOOSER,
+            {},
+            { node = name .. "_second", type = "signal" }
+         )
+      end,
+      on_action1 = function(ctx)
+         local condition = get_condition() or {}
+
+         -- Check prerequisites
+         if not condition.first_signal or not condition.first_signal.name then
+            UiSounds.play_ui_edge(ctx.pindex)
+            ctx.controller.message:fragment({ "fa.condition-error-first-signal-required" })
+            return
          end
+         if not condition.comparator then
+            UiSounds.play_ui_edge(ctx.pindex)
+            ctx.controller.message:fragment({ "fa.condition-error-operator-required" })
+            return
+         end
+
+         -- Open textbox for constant
+         local current_value = condition.constant or 0
+         ctx.controller:open_textbox(tostring(current_value), { node = name .. "_second", type = "constant" })
       end,
       on_clear = function(ctx)
          local condition = get_condition() or {}
