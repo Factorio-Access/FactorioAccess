@@ -37,16 +37,15 @@ local function build_test_form(ctx)
    )
 
    -- Add a textfield
-   builder:add_textfield(
-      "test_textfield",
-      { "fa.form-test-textfield" },
-      function()
+   builder:add_textfield("test_textfield", {
+      label = { "fa.form-test-textfield" },
+      get_value = function()
          return ctx.state.form_values.test_textfield
-      end, -- getter
-      function(new_text) -- setter
+      end,
+      set_value = function(new_text)
          ctx.state.form_values.test_textfield = new_text
-      end
-   )
+      end,
+   })
 
    -- Add a choice field with several options
    builder:add_choice_field(
@@ -90,16 +89,15 @@ local function build_test_form(ctx)
    )
 
    -- Add a second textfield
-   builder:add_textfield(
-      "test_textfield2",
-      { "fa.form-test-textfield2" },
-      function()
+   builder:add_textfield("test_textfield2", {
+      label = { "fa.form-test-textfield2" },
+      get_value = function()
          return ctx.state.form_values.test_textfield2
-      end, -- getter
-      function(new_text) -- setter
+      end,
+      set_value = function(new_text)
          ctx.state.form_values.test_textfield2 = new_text
-      end
-   )
+      end,
+   })
 
    -- Add a choice field with different types of values
    builder:add_choice_field(

@@ -62,18 +62,26 @@ local function render_roboport_menu(ctx)
    end)
 
    -- Menu item 1: Rename roboport
-   form:add_textfield("rename_roboport", { "fa.robots-rename-this-roboport" }, function()
-      return port.backer_name
-   end, function(new_name)
-      if new_name and new_name ~= "" then port.backer_name = new_name end
-   end)
+   form:add_textfield("rename_roboport", {
+      label = { "fa.robots-rename-this-roboport" },
+      get_value = function()
+         return port.backer_name
+      end,
+      set_value = function(new_name)
+         if new_name and new_name ~= "" then port.backer_name = new_name end
+      end,
+   })
 
    -- Menu item 2: Rename network
-   form:add_textfield("rename_network", { "fa.robots-rename-this-network" }, function()
-      return WorkerRobots.get_network_name(port)
-   end, function(new_name)
-      WorkerRobots.set_network_name(port, new_name)
-   end)
+   form:add_textfield("rename_network", {
+      label = { "fa.robots-rename-this-network" },
+      get_value = function()
+         return WorkerRobots.get_network_name(port)
+      end,
+      set_value = function(new_name)
+         WorkerRobots.set_network_name(port, new_name)
+      end,
+   })
 
    -- Menu item 3: Roboport neighbours
    form:add_label("neighbours", function(label_ctx)

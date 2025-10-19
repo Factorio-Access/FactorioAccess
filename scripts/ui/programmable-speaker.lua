@@ -194,13 +194,17 @@ local function render_speaker_config(ctx)
    end)
 
    -- Alert message textfield
-   builder:add_textfield("alert_message", { "fa.speaker-alert-message" }, function()
-      return entity.alert_parameters.alert_message
-   end, function(value)
-      local params = entity.alert_parameters
-      params.alert_message = value
-      entity.alert_parameters = params
-   end)
+   builder:add_textfield("alert_message", {
+      label = { "fa.speaker-alert-message" },
+      get_value = function()
+         return entity.alert_parameters.alert_message
+      end,
+      set_value = function(value)
+         local params = entity.alert_parameters
+         params.alert_message = value
+         entity.alert_parameters = params
+      end,
+   })
 
    -- Alert icon signal picker
    builder:add_signal("alert_icon", { "fa.speaker-alert-icon" }, function()

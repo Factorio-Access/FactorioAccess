@@ -20,6 +20,12 @@ local mod = {}
 ---@field small_step number?
 ---@field large_step number?
 
+---@class (exact) fa.FormBuilder.TextBoxParams
+---@field label LocalisedString | fun(fa.ui.graph.Ctx): LocalisedString
+---@field get_value fun(): string
+---@field set_value fun(string)
+---@field on_clear (fun(fa.ui.graph.Ctx))? Optional clear callback (triggered by backspace)
+
 ---@class fa.ui.form.FormBuilder
 ---@field entries fa.ui.menu.Entry[]
 ---@field row_keys table<string, string> Maps entry key to row key (for grouping)
@@ -90,16 +96,13 @@ end
 
 ---Add a textfield control
 ---@param name string Unique identifier for this control
----@param label LocalisedString | fun(fa.ui.graph.Ctx): LocalisedString
----@param get_value fun(): string Function that returns the current value
----@param set_value fun(string) Function that sets the new value
----@param on_clear (fun(fa.ui.graph.Ctx))? Optional clear callback (triggered by backspace)
+---@param params fa.FormBuilder.TextBoxParams
 ---@return fa.ui.form.FormBuilder
-function FormBuilder:add_textfield(name, label, get_value, set_value, on_clear)
+function FormBuilder:add_textfield(name, params)
    -- Create label builder function that uses the getter
    local function build_label(message, ctx)
-      local base_label = UiUtils.to_label_function(label)(ctx)
-      local val = get_value()
+      local base_label = UiUtils.to_label_function(params.label)(ctx)
+      local val = params.get_value()
       local value_text = val and val ~= "" and val or { "fa.empty" }
       message:fragment(base_label)
       message:fragment(value_text)
@@ -111,11 +114,11 @@ function FormBuilder:add_textfield(name, label, get_value, set_value, on_clear)
       end,
       on_click = function(ctx)
          -- Pass the node key as the context so Graph can route the result back
-         ctx.controller:open_textbox(get_value() or "", name)
+         ctx.controller:open_textbox(params.get_value() or "", name)
       end,
       on_child_result = function(ctx, result)
          -- This will be called when textbox returns
-         set_value(result)
+         params.set_value(result)
          -- Only announce the new value
          local value_text = result ~= "" and result or { "fa.empty" }
          ctx.controller.message:fragment(value_text)
@@ -123,7 +126,7 @@ function FormBuilder:add_textfield(name, label, get_value, set_value, on_clear)
    }
 
    -- Add clear callback if provided
-   if on_clear then vtable.on_clear = on_clear end
+   if params.on_clear then vtable.on_clear = params.on_clear end
 
    self:add_item(name, vtable)
 
