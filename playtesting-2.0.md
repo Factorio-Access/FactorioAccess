@@ -1,6 +1,6 @@
 # Overview of 2.0 Changes (so far)
 
-This is a living document. Last updated 2025-10-16.
+This is a living document. Last updated 2025-10-19.
 
 ## Directions
 
@@ -13,19 +13,12 @@ First, note the following important warnings:
 
 Next, read this document.  It tells you briefly what has changed, which is a lot.
 
-We now deploy automatic updates for everything except the game's config file.  To playtest:
+We now deploy automatic updates for everything.  To playtest:
 
 - Get Factorio from factorio.com as the stand-alone zip version and extract it.
 - Get the latest launcher from this page: https://github.com/factorio-access/factorio-access-launcher/releases
 - Put launcher.exe in the root of your factorio install. Same folder with `bin`, `mods`, `config-path.cfg` etc.
 - Run the launcher. It will offer to make config directories and apply config changes. Let it do so.
-- For now config updates do not apply through the launcher. You need to copy [this
-  file](https://raw.githubusercontent.com/Factorio-Access/FactorioAccess/refs/heads/main/sample-config.ini) to
-  config/config.ini. That link is always to the latest version.
-  - ctrl+a ctrl+v should be good enough. That's to the raw version of the file on GitHub. You can also ctrl+s in your
-    browser to save it.
-  - You may need to update this file from time to time. We will hopefully apply updates through the launcher for you
-    soon.
 - If you bought space age, disable the elevated rails, space age, and quality mods in the launcher's mods menu.
 
 ## Reporting
