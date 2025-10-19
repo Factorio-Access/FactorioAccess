@@ -1,4 +1,5 @@
 local Blueprints = require("scripts.blueprints")
+local BuildDimensions = require("scripts.build-dimensions")
 local FaUtils = require("scripts.fa-utils")
 local Functools = require("scripts.functools")
 local Graphics = require("scripts.graphics")
@@ -85,7 +86,7 @@ local function render(ctx)
 
       builder:add_label("count-and-dims", function(ctx)
          local count = bp.get_blueprint_entity_count()
-         local width, height = Blueprints.get_blueprint_width_and_height(ctx.pindex)
+         local width, height = BuildDimensions.get_stack_build_dimensions(bp, defines.direction.north)
          ctx.message:fragment({ "fa.ui-blueprints-menu-count-and-dims", width, height, count })
       end)
 
