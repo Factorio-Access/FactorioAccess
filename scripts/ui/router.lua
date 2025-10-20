@@ -97,6 +97,8 @@ end
 ---@field on_action1? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_action2? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_action3? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_drag_up? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_drag_down? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 
 ---@enum fa.ui.UiName
 mod.UI_NAMES = {
@@ -484,6 +486,10 @@ register_ui_event("fa-s", create_ui_handler("on_down"))
 register_ui_event("fa-a", create_ui_handler("on_left"))
 register_ui_event("fa-d", create_ui_handler("on_right"))
 
+-- Drag keys (Shift+WS for reordering)
+register_ui_event("fa-s-w", create_ui_handler("on_drag_up"))
+register_ui_event("fa-s-s", create_ui_handler("on_drag_down"))
+
 -- Arrow keys (removed - using cursor anchoring instead)
 
 -- Edge navigation (Ctrl+WASD)
@@ -786,6 +792,9 @@ register_ui_event("fa-cs-g", function(event, pindex)
    end
    return nil -- Fall through to world handler
 end)
+
+-- CTRL+SHIFT+LEFTBRACKET is handled directly by UI on_click handlers (e.g., inventory-grid.lua)
+-- Falls through to world handler (equip/repair) when no UI is open
 
 -- SHIFT+LEFTBRACKET is handled directly by UI on_click handlers (e.g., inventory-grid.lua)
 -- Falls through to world handler (equip from hand) when no UI is open

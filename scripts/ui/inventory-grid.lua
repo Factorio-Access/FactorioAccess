@@ -105,11 +105,7 @@ local function get_slot_label(inv, slot_index, locks)
    end
 
    -- Build the item label with count and quality
-   local item_label = Localising.localise_item({
-      name = stack.name,
-      count = stack.count,
-      quality = stack.quality and stack.quality.name or nil,
-   })
+   local item_label = Localising.localise_item(stack)
 
    -- Add lock info if this slot has one
    if lock_name then
@@ -281,6 +277,25 @@ local function render_inventory_grid(ctx)
 
             -- CTRL+SHIFT+[ : Use item (equip from slot or repair item in slot)
             if click_ctx.modifiers.control and click_ctx.modifiers.shift then
+               -- Check if hand has blueprint and slot has blueprint book
+               if cursor_stack and cursor_stack.valid_for_read and cursor_stack.is_blueprint then
+                  if inv_stack and inv_stack.valid_for_read and inv_stack.is_blueprint_book then
+                     -- Insert blueprint into book
+                     local book_inv = inv_stack.get_inventory(defines.inventory.item_main)
+                     if book_inv then
+                        local inserted = book_inv.insert(cursor_stack)
+                        if inserted > 0 then
+                           cursor_stack.clear()
+                           click_ctx.controller.message:fragment({ "fa.blueprint-inserted-into-book" })
+                           return
+                        else
+                           click_ctx.controller.message:fragment({ "fa.blueprint-book-full" })
+                           return
+                        end
+                     end
+                  end
+               end
+
                -- Check if hand has repair pack
                if cursor_stack and cursor_stack.valid_for_read and cursor_stack.is_repair_tool then
                   -- Repair item in this slot

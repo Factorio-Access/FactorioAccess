@@ -64,6 +64,7 @@ local TutorialSystem = require("scripts.tutorial-system")
 require("scripts.ui.belt-analyzer")
 local EntityUI = require("scripts.ui.entity-ui")
 require("scripts.ui.menus.blueprints-menu")
+require("scripts.ui.menus.blueprint-book-menu")
 require("scripts.ui.selectors.decon-selector")
 require("scripts.ui.selectors.upgrade-selector")
 require("scripts.ui.selectors.blueprint-selector")
@@ -2881,13 +2882,6 @@ EventManager.on_event(
 )
 
 ---@param event EventData.CustomInputEvent
-local function kb_remove_blueprint(event)
-   local pindex = event.player_index
-   local menu = storage.players[pindex].blueprint_book_menu
-   Blueprints.remove_item_from_book(pindex, game.get_player(pindex).cursor_stack, menu.index)
-end
-
----@param event EventData.CustomInputEvent
 local function kb_flush_fluid(event)
    local pindex = event.player_index
    local pb = storage.players[pindex].building
@@ -3006,10 +3000,10 @@ local function kb_click_hand(event)
 
    -- Check if the item in hand can be built
    if stack and stack.valid_for_read then
-      if stack.is_blueprint and stack.is_blueprint_setup() then
-         -- Blueprint building - use the mod's paste function
+      if (stack.is_blueprint and stack.is_blueprint_setup()) or stack.is_blueprint_book then
+         -- Blueprint or blueprint book building
          local vp = Viewpoint.get_viewpoint(pindex)
-         Blueprints.paste_blueprint(pindex, vp:get_flipped_horizontal(), vp:get_flipped_vertical())
+         BuildingTools.build_blueprint(pindex, vp:get_flipped_horizontal(), vp:get_flipped_vertical())
       elseif stack.name == "red-wire" or stack.name == "green-wire" or stack.name == "copper-wire" then
          -- Wire dragging - red/green circuit wires or copper electrical wire
          CircuitNetworks.drag_wire_and_read(pindex)
@@ -3121,6 +3115,28 @@ EventManager.on_event(
                return
             end
             -- Blueprint is set up - fall through to normal click behavior
+         elseif stack.is_blueprint_book then
+            -- Check if book has an active blueprint that is set up
+            local book_inv = stack.get_inventory(defines.inventory.item_main)
+            if book_inv and stack.active_index then
+               local active_bp = book_inv[stack.active_index]
+               if
+                  active_bp
+                  and active_bp.valid_for_read
+                  and active_bp.is_blueprint
+                  and active_bp.is_blueprint_setup()
+               then
+                  -- Active blueprint is set up - fall through to normal click behavior to place it
+               else
+                  -- Active blueprint not set up or invalid
+                  Speech.speak(pindex, { "fa.blueprint-book-no-active-blueprint" })
+                  return
+               end
+            else
+               -- No active blueprint or empty book
+               Speech.speak(pindex, { "fa.blueprint-book-no-active-blueprint" })
+               return
+            end
          elseif stack.name == "copy-paste-tool" or stack.name == "cut-paste-tool" then
             -- Start selection for copy/cut
             local vp = Viewpoint.get_viewpoint(pindex)
@@ -3300,7 +3316,8 @@ local function kb_click_hand_right(event)
       local router = UiRouter.get_router(pindex)
       router:open_ui(UiRouter.UI_NAMES.BLUEPRINT)
    elseif stack.is_blueprint_book then
-      Blueprints.blueprint_book_menu_open(pindex, false)
+      local router = UiRouter.get_router(pindex)
+      router:open_ui(UiRouter.UI_NAMES.BLUEPRINT_BOOK)
    elseif stack.is_deconstruction_item or stack.is_upgrade_item then
       -- Deconstruction and upgrade planners are now handled via left-click and alt+left-click
       Speech.speak(pindex, { "fa.planner-use-leftbracket" })
@@ -4148,6 +4165,74 @@ EventManager.on_event("fa-cas-d", function(event)
    router:open_ui(UiRouter.UI_NAMES.DEBUG)
 end)
 
+-- Blueprint book navigation at world level (when not in a menu)
+---@param pindex integer
+---@param offset integer 1 for next, -1 for previous
+local function cycle_blueprint_book(pindex, offset)
+   local player = game.get_player(pindex)
+   if not player then return end
+
+   local cursor_stack = player.cursor_stack
+   if not cursor_stack or not cursor_stack.valid_for_read or not cursor_stack.is_blueprint_book then return end
+
+   local book_inv = cursor_stack.get_inventory(defines.inventory.item_main)
+   if not book_inv or #book_inv == 0 then
+      Speech.speak(pindex, { "fa.blueprint-book-empty" })
+      return
+   end
+
+   local current = cursor_stack.active_index or 1
+   local new_idx = current + offset
+   if new_idx < 1 then
+      new_idx = #book_inv
+   elseif new_idx > #book_inv then
+      new_idx = 1
+   end
+
+   cursor_stack.active_index = new_idx
+   local active_bp = book_inv[new_idx]
+   if active_bp and active_bp.valid_for_read then
+      local bp_info = Blueprints.get_blueprint_info(active_bp, false, pindex)
+      Speech.speak(pindex, { "", { "fa.blueprint-book-switched" }, " ", bp_info })
+   end
+end
+
+EventManager.on_event("fa-comma", function(event)
+   local pindex = event.player_index
+   local player = game.get_player(pindex)
+   if not player then return end
+
+   local cursor_stack = player.cursor_stack
+   if not cursor_stack or not cursor_stack.valid_for_read or not cursor_stack.is_blueprint_book then return end
+
+   local book_inv = cursor_stack.get_inventory(defines.inventory.item_main)
+   if not book_inv or #book_inv == 0 then
+      Speech.speak(pindex, { "fa.blueprint-book-empty" })
+      return
+   end
+
+   if not cursor_stack.active_index then
+      Speech.speak(pindex, { "fa.blueprint-book-no-active" })
+      return
+   end
+
+   local active_bp = book_inv[cursor_stack.active_index]
+   if active_bp and active_bp.valid_for_read then
+      local bp_info = Blueprints.get_blueprint_info(active_bp, false, pindex)
+      Speech.speak(pindex, { "", { "fa.blueprint-book-active" }, " ", bp_info })
+   else
+      Speech.speak(pindex, { "fa.blueprint-book-empty-active" })
+   end
+end, EventManager.EVENT_KIND.WORLD)
+
+EventManager.on_event("fa-m", function(event)
+   cycle_blueprint_book(event.player_index, -1)
+end, EventManager.EVENT_KIND.WORLD)
+
+EventManager.on_event("fa-dot", function(event)
+   cycle_blueprint_book(event.player_index, 1)
+end, EventManager.EVENT_KIND.WORLD)
+
 -- Dangerous delete: Delete blueprint/decon/upgrade planner from hand
 EventManager.on_event("fa-c-backspace", function(event)
    local pindex = event.player_index
@@ -4161,7 +4246,12 @@ EventManager.on_event("fa-c-backspace", function(event)
    end
 
    -- Check if it's a planner item using API flags
-   if cursor_stack.is_blueprint or cursor_stack.is_deconstruction_item or cursor_stack.is_upgrade_item then
+   if
+      cursor_stack.is_blueprint
+      or cursor_stack.is_blueprint_book
+      or cursor_stack.is_deconstruction_item
+      or cursor_stack.is_upgrade_item
+   then
       local item_description = Localising.localise_item({
          name = cursor_stack.name,
          count = cursor_stack.count,

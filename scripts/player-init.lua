@@ -304,17 +304,6 @@ function mod.initialize(player)
          edit_import = false,
       }
 
-   faplayer.blueprint_book_menu = faplayer.blueprint_book_menu
-      or {
-         index = 0,
-         menu_length = 0,
-         list_mode = true,
-         edit_label = false,
-         edit_description = false,
-         edit_export = false,
-         edit_import = false,
-      }
-
    -- Force rechart on empty map
    if table_size(faplayer.mapped) == 0 then player.force.rechart() end
 

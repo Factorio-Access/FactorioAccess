@@ -229,6 +229,10 @@ function mod.localise_item_or_fluid(what, protos)
          name = stack.prototype,
          quality = stack.quality,
          count = stack.count,
+         is_blueprint = stack.is_blueprint,
+         blueprint_label = stack.is_blueprint and stack.label or nil,
+         is_blueprint_book = stack.is_blueprint_book,
+         blueprint_book_label = stack.is_blueprint_book and stack.label or nil,
       }
    else
       if what.name == mod.ITEM_OTHER then
@@ -265,6 +269,16 @@ function mod.localise_item_or_fluid(what, protos)
    local quality_str = mod.get_localised_name_with_fallback(quality_proto)
    local has_quality = (quality and quality_proto.name ~= "normal") and 1 or 0
    local has_count = (count and count > 1) and 1 or 0
+
+   -- Special case for blueprints with labels
+   if final_opts.is_blueprint and final_opts.blueprint_label then
+      return { "fa.item-blueprint", final_opts.blueprint_label, has_quality, quality_str, has_count, count }
+   end
+
+   -- Special case for blueprint books with labels
+   if final_opts.is_blueprint_book and final_opts.blueprint_book_label then
+      return { "fa.item-blueprint-book", final_opts.blueprint_book_label, has_quality, quality_str, has_count, count }
+   end
 
    return { "fa.item-quantity-quality", item_str, has_quality, quality_str, has_count, count }
 end

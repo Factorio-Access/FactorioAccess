@@ -1,4 +1,5 @@
 --Here: Functions for building with the mod, both basics and advanced tools.
+local BuildDimensions = require("scripts.build-dimensions")
 local Consts = require("scripts.consts")
 local Electrical = require("scripts.electrical")
 local FaUtils = require("scripts.fa-utils")
@@ -242,6 +243,93 @@ function mod.build_item_in_hand_with_params(params)
    end
 end
 
+---Build a blueprint or blueprint book
+---@param pindex integer Player index
+---@param flip_horizontal? boolean Whether to flip horizontally
+---@param flip_vertical? boolean Whether to flip vertically
+---@return boolean success True if blueprint was placed successfully
+function mod.build_blueprint(pindex, flip_horizontal, flip_vertical)
+   local p = game.get_player(pindex)
+   local cursor_stack = p.cursor_stack
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local pos = vp:get_cursor_pos()
+
+   -- Verify we have a blueprint or blueprint book
+   if not cursor_stack or not cursor_stack.valid_for_read then return false end
+   if not cursor_stack.is_blueprint and not cursor_stack.is_blueprint_book then return false end
+
+   local is_book = cursor_stack.is_blueprint_book
+   local temp_inv = nil
+
+   -- Handle blueprint books: temporarily swap to active blueprint
+   if is_book then
+      local book_inv = cursor_stack.get_inventory(defines.inventory.item_main)
+      if not book_inv or not cursor_stack.active_index then return false end
+
+      local active_bp = book_inv[cursor_stack.active_index]
+      if not active_bp or not active_bp.valid_for_read or not active_bp.is_blueprint_setup() then return false end
+
+      -- Create temporary script inventory to hold the book
+      temp_inv = game.create_inventory(1)
+
+      -- Move book to temp_inv, set cursor to active blueprint (clones it)
+      temp_inv[1].swap_stack(cursor_stack)
+      cursor_stack.set_stack(active_bp)
+   else
+      -- Regular blueprint
+      if not cursor_stack.is_blueprint_setup() then return false end
+   end
+
+   -- Get the build dimensions and position
+   local dir = vp:get_hand_direction()
+   local width, height = BuildDimensions.get_stack_build_dimensions(cursor_stack, dir)
+   local left_top = { x = math.floor(pos.x), y = math.floor(pos.y) }
+   local right_bottom = { x = math.ceil(pos.x + width), y = math.ceil(pos.y + height) }
+   local build_pos = { x = pos.x + width / 2, y = pos.y + height / 2 }
+
+   -- Clear build area
+   PlayerMiningTools.clear_obstacles_in_rectangle(left_top, right_bottom, pindex, 99)
+
+   -- Try to build
+   local can_build = p.can_build_from_cursor({
+      position = build_pos,
+      direction = dir,
+      flip_horizontal = flip_horizontal or false,
+      flip_vertical = flip_vertical or false,
+   })
+
+   local success = false
+   if can_build then
+      p.build_from_cursor({
+         position = build_pos,
+         direction = dir,
+         flip_horizontal = flip_horizontal or false,
+         flip_vertical = flip_vertical or false,
+      })
+      p.play_sound({ path = "Close-Inventory-Sound" })
+
+      -- Get label for feedback
+      local label = cursor_stack.label or "unnamed"
+      Speech.speak(pindex, { "fa.blueprints-placed", label })
+      success = true
+   else
+      p.play_sound({ path = "utility/cannot_build" })
+      -- Explain build error
+      local build_area = { left_top, right_bottom }
+      local result = mod.identify_building_obstacle(pindex, build_area, nil)
+      Speech.speak(pindex, result)
+      success = false
+   end
+
+   -- Restore book to cursor if we were using a blueprint book
+   if is_book and temp_inv then
+      temp_inv[1].swap_stack(p.cursor_stack)
+      temp_inv.destroy()
+   end
+
+   return success
+end
+
 ---Place a ghost entity using the calculated build parameters.
 ---This is a stub that will be implemented to support ghost placement without cursor interaction.
 ---@param params fa.BuildingTools.BuildItemParams Build parameters
@@ -349,35 +437,35 @@ function mod.rotate_building_info_read(event, forward)
    local ent = p.selected
    local stack = game.get_player(pindex).cursor_stack
    local vp = Viewpoint.get_viewpoint(pindex)
-   local build_dir = vp:get_hand_direction()
-   if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result ~= nil then
-      local placed = stack.prototype.place_result
-      if
-         placed.supports_direction
-         or placed.type == "car"
-         or placed.type == "locomotive"
-         or placed.type == "artillery-wagon"
-      then
-         --Locomotives and artillery wagons in hand are rotated 180 degrees
-         if placed.type == "locomotive" or placed.type == "artillery-wagon" then mult = mult * 4 end
 
-         --Update the assumed hand direction
+   -- Check if item in hand can rotate
+   if stack and stack.valid_for_read and stack.valid then
+      local rotation_count = BuildDimensions.get_rotation_count(stack)
+      if rotation_count then
+         -- Adjust mult for 2-way rotation (locomotives, artillery wagons)
+         if rotation_count == 2 then mult = mult * 4 end
+
+         -- Update the hand direction
          game.get_player(pindex).play_sound({ path = "Rotate-Hand-Sound" })
-         build_dir = (build_dir + dirs.east * mult) % (2 * dirs.south)
-         vp:set_hand_direction(build_dir)
-         Speech.speak(pindex, { "fa.building-rotation-in-hand", FaUtils.direction_lookup(build_dir) })
+         local build_dir = vp:get_hand_direction()
+         local new_dir = (build_dir + dirs.east * mult) % (2 * dirs.south)
+         vp:set_hand_direction(new_dir)
+
+         -- For blueprints and blueprint books, just announce direction
+         if stack.is_blueprint or stack.is_blueprint_book then
+            Speech.speak(pindex, FaUtils.direction_lookup(new_dir))
+         else
+            Speech.speak(pindex, { "fa.building-rotation-in-hand", FaUtils.direction_lookup(new_dir) })
+         end
          return
-      else
+      elseif stack.prototype.place_result then
          Speech.speak(pindex, { "fa.building-no-rotate-support", { "item-name." .. stack.name } })
+         return
       end
-   elseif stack ~= nil and stack.valid_for_read and stack.is_blueprint and stack.is_blueprint_setup() then
-      --Rotate blueprints: Rotation is now handled by viewpoint, dimensions are computed dynamically
-      game.get_player(pindex).play_sound({ path = "Rotate-Hand-Sound" })
-      local vp = Viewpoint.get_viewpoint(pindex)
-      local new_dir = (vp:get_hand_direction() + dirs.east * mult) % (2 * dirs.south)
-      vp:set_hand_direction(new_dir)
-      Speech.speak(pindex, FaUtils.direction_lookup(new_dir))
-   elseif ent and ent.valid then
+   end
+
+   -- Check if selected entity can rotate
+   if ent and ent.valid then
       if ent.supports_direction then
          --Assuming that the vanilla rotate event will now rotate the ent
          local new_dir = (ent.direction + dirs.east * mult) % (2 * dirs.south)

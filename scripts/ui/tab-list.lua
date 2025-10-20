@@ -339,6 +339,10 @@ TabList.on_action1 = build_simple_method("on_action1")
 TabList.on_action2 = build_simple_method("on_action2")
 ---@type fun(self, number, table?, fa.ui.RouterController)
 TabList.on_action3 = build_simple_method("on_action3")
+---@type fun(self, number, table?, fa.ui.RouterController)
+TabList.on_drag_up = build_simple_method("on_drag_up")
+---@type fun(self, number, table?, fa.ui.RouterController)
+TabList.on_drag_down = build_simple_method("on_drag_down")
 
 ---Handle accelerator events (one callback for all accelerators)
 ---@param pindex number

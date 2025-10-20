@@ -120,6 +120,8 @@ local mod = {}
 ---@field on_action1 fa.ui.graph.SimpleCallback? Handler for action1 (m key)
 ---@field on_action2 fa.ui.graph.SimpleCallback? Handler for action2 (comma key)
 ---@field on_action3 fa.ui.graph.SimpleCallback? Handler for action3 (dot key)
+---@field on_drag_up fa.ui.graph.SimpleCallback? Handler for drag up (shift+w)
+---@field on_drag_down fa.ui.graph.SimpleCallback? Handler for drag down (shift+s)
 ---@field exclude_from_search boolean? If true, this node won't be included in search results. Default false.
 
 ---@class fa.ui.graph.TransitionVtable
@@ -605,6 +607,24 @@ function Graph:on_action3(ctx, modifiers)
    self:_with_render(ctx, function()
       local n = self.render.nodes[ctx.state.cur_key]
       self:_maybe_call(n, ctx, "on_action3", modifiers)
+   end)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+---@param modifiers fa.ui.graph.Modifiers
+function Graph:on_drag_up(ctx, modifiers)
+   self:_with_render(ctx, function()
+      local n = self.render.nodes[ctx.state.cur_key]
+      self:_maybe_call(n, ctx, "on_drag_up", modifiers)
+   end)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+---@param modifiers fa.ui.graph.Modifiers
+function Graph:on_drag_down(ctx, modifiers)
+   self:_with_render(ctx, function()
+      local n = self.render.nodes[ctx.state.cur_key]
+      self:_maybe_call(n, ctx, "on_drag_down", modifiers)
    end)
 end
 
