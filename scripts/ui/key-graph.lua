@@ -192,6 +192,8 @@ end
 ---@param ctx fa.ui.graph.InternalTabCtx
 ---@private
 function Graph:_rerender(ctx)
+   self.render = nil
+
    local render = self.render_callback(self:_wrap_ctx(ctx, self.name, NO_MODIFIERS))
    if not render then
       -- Close via controller
