@@ -26,6 +26,8 @@ local function get_max_stack_size(entity)
 
    -- Base stack size from prototype
    local base_size = prototype.inserter_stack_size_bonus or 0
+   -- That's a bonus, so 1 less than the real value.
+   base_size = base_size + 1
 
    -- Add force bonuses
    if prototype.bulk then
@@ -77,14 +79,9 @@ local function render_inserter_config(ctx)
             ctx.controller.message:fragment({ "fa.inserter-hand-size-unset" })
          else
             local num = tonumber(result)
-            if num and num >= 0 and num <= max_stack_size and math.floor(num) == num then
-               if num == 0 then
-                  entity.inserter_stack_size_override = 0
-                  ctx.controller.message:fragment({ "fa.inserter-hand-size-unset" })
-               else
-                  entity.inserter_stack_size_override = num
-                  ctx.controller.message:fragment(tostring(num))
-               end
+            if num and num >= 1 and num <= max_stack_size and math.floor(num) == num then
+               entity.inserter_stack_size_override = num
+               ctx.controller.message:fragment(tostring(num))
             else
                UiSounds.play_ui_edge(ctx.pindex)
                ctx.controller.message:fragment({ "fa.inserter-hand-size-invalid", tostring(max_stack_size) })
