@@ -85,6 +85,7 @@ require("scripts.ui.circuit-navigator")
 require("scripts.ui.menus.roboport-menu")
 require("scripts.ui.menus.spidertron-menu")
 require("scripts.ui.menus.offshore-pump-placement")
+require("scripts.ui.menus.warnings")
 require("scripts.ui.generic-inventory")
 require("scripts.ui.simple-textbox")
 require("scripts.ui.internal.search-setter")
@@ -3871,29 +3872,13 @@ EventManager.on_event(
    end
 )
 
----@param event EventData.CustomInputEvent
-local function kb_open_warnings_menu(event)
-   local pindex = event.player_index
-   local router = UiRouter.get_router(pindex)
-
-   storage.players[pindex].warnings.short = Warnings.scan_for_warnings(30, 30, pindex)
-   storage.players[pindex].warnings.medium = Warnings.scan_for_warnings(100, 100, pindex)
-   storage.players[pindex].warnings.long = Warnings.scan_for_warnings(500, 500, pindex)
-   storage.players[pindex].warnings.index = 1
-   storage.players[pindex].warnings.sector = 1
-   storage.players[pindex].category = 1
-   router:open_ui(UiRouter.UI_NAMES.WARNINGS)
-   game.get_player(pindex).selected = nil
-   sounds.play_open_inventory(pindex)
-   Speech.speak(pindex, { "fa.warnings-menu-short-range", storage.players[pindex].warnings.short.summary })
-end
-
 EventManager.on_event(
    "fa-p",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       if storage.players[pindex].vanilla_mode then return end
-      kb_open_warnings_menu(event)
+      local router = UiRouter.get_router(pindex)
+      router:open_ui(UiRouter.UI_NAMES.WARNINGS)
    end
 )
 

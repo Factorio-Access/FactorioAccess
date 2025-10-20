@@ -1,42 +1,9 @@
 --Here: functions about the warnings menu
-local TransportBelts = require("scripts.transport-belts")
 local Viewpoint = require("scripts.viewpoint")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
-local FaUtils = require("scripts.fa-utils")
-local localising = require("scripts.localising")
 
 local mod = {}
-
---Reads out a selected warning from the menu.
-function mod.read_warnings_slot(pindex)
-   local warnings = {}
-   if storage.players[pindex].warnings.sector == 1 then
-      warnings = storage.players[pindex].warnings.short.warnings
-   elseif storage.players[pindex].warnings.sector == 2 then
-      warnings = storage.players[pindex].warnings.medium.warnings
-   elseif storage.players[pindex].warnings.sector == 3 then
-      warnings = storage.players[pindex].warnings.long.warnings
-   end
-   if
-      storage.players[pindex].warnings.category <= #warnings
-      and storage.players[pindex].warnings.index <= #warnings[storage.players[pindex].warnings.category].ents
-   then
-      local ent = warnings[storage.players[pindex].warnings.category].ents[storage.players[pindex].warnings.index]
-      if ent ~= nil and ent.valid then
-         local message = MessageBuilder.new()
-         message:fragment(localising.get_localised_name_with_fallback(ent))
-         message:fragment({ "fa.warnings-has-warning" })
-         message:fragment({ "fa.warning-type-" .. warnings[storage.players[pindex].warnings.category].name })
-         message:fragment(FaUtils.format_position(ent.position.x, ent.position.y))
-         Speech.speak(pindex, message:build())
-      else
-         Speech.speak(pindex, { "fa.warnings-blank" })
-      end
-   else
-      Speech.speak(pindex, { "fa.warnings-no-warnings" })
-   end
-end
 
 --Warnings menu: scans for problems in the production network it defines and creates the warnings list.
 function mod.scan_for_warnings(L, H, pindex)
@@ -47,7 +14,6 @@ function mod.scan_for_warnings(L, H, pindex)
    local warnings = {}
    warnings["noFuel"] = {}
    warnings["noRecipe"] = {}
-   warnings["noInserters"] = {}
    warnings["noPower"] = {}
    warnings["notConnected"] = {}
    for i, ent in pairs(ents) do
