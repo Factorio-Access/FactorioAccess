@@ -38,7 +38,6 @@ At this time we are seeing mostly bugs and not crashes, so for the moment AI use
 - Trains.
 - Decider, arithmetic, and selector combinators
 - spidertrons and other vehicles are only partly functional
-- blueprint books
 
 There's also a lot of roughness around the edges we're still spending down. Support for quality is intentionally sparse.
 We are doing it where not doing so would cause tech debt, but quality is a space age feature and not priority at this
