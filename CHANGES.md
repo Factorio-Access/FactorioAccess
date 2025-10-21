@@ -1,3 +1,12 @@
+# Version 0.16.6
+
+This is the first reasonably stable version supporting Factorio 2.0.  See [docs/2.0-migration](docs/2.0-migration.md).
+
+Your saves are not compatible across this version. You must:
+
+- Reinstall the game.
+- Make new saves.
+
 # Version 0.15.3 BETA
 Released on November 23rd, 2024.
 

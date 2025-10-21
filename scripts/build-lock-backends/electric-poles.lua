@@ -72,6 +72,7 @@ function mod.select_tile_to_build(pending_tiles, max_count, context, helpers)
          force = context.player.force,
          quality = quality,
          create_build_effect_smoke = false,
+         auto_connect = false,
       })
 
       if temp_pole and temp_pole.valid then
@@ -109,6 +110,7 @@ function mod.select_tile_to_build(pending_tiles, max_count, context, helpers)
          force = context.player.force,
          quality = quality,
          create_build_effect_smoke = false,
+         auto_connect = false,
       })
 
       if temp_pole and temp_pole.valid then
