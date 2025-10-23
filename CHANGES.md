@@ -16,6 +16,12 @@
 - `g` is now unmapped by the config migration (in vanilla it is an alt binding for entering vehicles; `enter` still works for that purpose).
   - Fixes reading armor stats while near a vehicle.
 - Mod documentation has been overhauled and split into separate files
+- As a temporary workaround, car and spidertron ammo inventories are directly exposed. Note:
+  - This is combat, thus the weak support
+  - Spidertrons take rockets and nukes
+  - cars take bullets
+  - API limitations prevent us perfectly detecting these filters.
+
 
 # Version 0.16.6
 

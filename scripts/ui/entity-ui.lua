@@ -69,8 +69,9 @@ local function sort_inventories(entity)
                priority = priority,
             }
 
-            -- Separate gun/ammo inventories by name pattern
-            if string.find(inv_name, "_guns") or string.find(inv_name, "_ammo") then
+            -- Separate character gun/ammo inventories (handled by gun menu tab)
+            -- Show all other ammo inventories (spider_ammo, car_ammo, etc.) normally
+            if inv_name == "character-guns" or inv_name == "character-ammo" then
                table.insert(guns_ammo, inv_data)
             else
                table.insert(all_inventories, inv_data)
