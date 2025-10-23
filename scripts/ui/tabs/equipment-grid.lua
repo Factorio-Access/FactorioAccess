@@ -226,29 +226,9 @@ local function render_equipment_grid(ctx)
    return builder:build()
 end
 
----Build the title for the equipment grid tab
----@param ctx fa.ui.graph.Ctx
----@return LocalisedString
-local function get_title(ctx)
-   local player = game.get_player(ctx.pindex)
-   if not player or not player.character then return { "fa.equipment-grid-title" } end
-
-   local grid = player.character.grid
-   if not grid then return { "fa.equipment-grid-title" } end
-
-   -- Count equipment
-   local equipment_count = #grid.equipment
-
-   if equipment_count == 0 then
-      return { "fa.equipment-grid-title-empty", grid.width, grid.height }
-   else
-      return { "fa.equipment-grid-title-with-count", equipment_count, grid.width, grid.height }
-   end
-end
-
 mod.equipment_grid_tab = UiKeyGraph.declare_graph({
    name = "equipment_grid",
-   title = get_title,
+   title = { "fa.equipment-grid-title" },
    render_callback = render_equipment_grid,
 })
 
