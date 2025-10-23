@@ -32,9 +32,9 @@ For testing, one may set persistent=false in opts.  If so, the stored state will
 be reset on first access.
 
 Some state such as that for the scanner is ephemeral.  If this is the case, one
-may set ephemeral_state_version to an integer.  When set for the first time or
-incremented, the state will be cleared before access for the first time the game
-starts with the mod updated.  This is useful for example to let the scanner
+may set ephemeral_state_version to an integer or string.  When set for the first
+time or changed, the state will be cleared before access for the first time the
+game starts with the mod updated.  This is useful for example to let the scanner
 pickup backend changes, but comes at the cost of throwing out state.  Use
 carefully.
 ]]
@@ -44,7 +44,7 @@ local mod = {}
 ---@class fa.StorageManagerOpts
 ---@field root_field string?
 ---@field persistent boolean?
----@field ephemeral_state_version number?
+---@field ephemeral_state_version (number|string)?
 
 ---@param module_name string
 ---@param default_value any

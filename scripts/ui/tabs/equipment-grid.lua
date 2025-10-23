@@ -11,6 +11,7 @@ local UiRouter = require("scripts.ui.router")
 local UiSounds = require("scripts.ui.sounds")
 local Equipment = require("scripts.equipment")
 local MessageBuilder = Speech.MessageBuilder
+local Help = require("scripts.ui.help")
 
 local mod = {}
 
@@ -230,6 +231,9 @@ mod.equipment_grid_tab = UiKeyGraph.declare_graph({
    name = "equipment_grid",
    title = { "fa.equipment-grid-title" },
    render_callback = render_equipment_grid,
+   get_help_metadata = function(ctx)
+      return { Help.message_list("equipment-grid-help") }
+   end,
 })
 
 return mod

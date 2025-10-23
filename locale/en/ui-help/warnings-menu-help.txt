@@ -1,0 +1,9 @@
+This menu displays warnings, to tell you about things that might be wrong.
+
+It is not necessarily the case that a warning means you need to do something about it.
+
+Advanced players tend to not lean on this menu so much later, because it can be quite a lot of information.  But the information here is very helpful while you are getting started.
+
+Warnings are sorted by distance from your cursor, and stop after 500 tiles.
+
+As an example of a false positive warning that you may encounter once you are an advanced player, it is sometimes perfectly fine if something is out of fuel.

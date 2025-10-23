@@ -9,6 +9,7 @@ local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
 local localising = require("scripts.localising")
 local KeyGraph = require("scripts.ui.key-graph")
+local Help = require("scripts.ui.help")
 
 local mod = {}
 
@@ -80,6 +81,12 @@ mod.crafting_queue_tab = KeyGraph.declare_graph({
    name = "crafting_queue",
    title = { "fa.crafting-queue-title" },
    render_callback = render_crafting_queue,
+   get_help_metadata = function(ctx)
+      return {
+         Help.message_list("crafting-queue-help"),
+         Help.message_list("menu-help"),
+      }
+   end,
 })
 
 return mod

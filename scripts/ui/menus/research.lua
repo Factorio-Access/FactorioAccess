@@ -11,6 +11,7 @@ Provides a category-based interface for research technologies where:
 local CategoryRows = require("scripts.ui.category-rows")
 local Research = require("scripts.research")
 local Speech = require("scripts.speech")
+local Help = require("scripts.ui.help")
 
 local mod = {}
 
@@ -184,6 +185,11 @@ mod.research_tab = CategoryRows.declare_category_rows({
    name = "research",
    title = { "fa.research-title" },
    render_callback = render_research_menu,
+   get_help_metadata = function(ctx)
+      return {
+         Help.message_list("research-menu-help"),
+      }
+   end,
 })
 
 return mod

@@ -1,0 +1,7 @@
+This UI consists of some categories as stacked rows.
+
+Moving up and down changes the category.
+
+Moving left and right moves through the items in a category.
+
+Unlike other menus, your position in each category is remembered separately.

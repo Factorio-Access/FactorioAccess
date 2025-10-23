@@ -8,6 +8,7 @@ local Menu = require("scripts.ui.menu")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
 local KeyGraph = require("scripts.ui.key-graph")
+local Help = require("scripts.ui.help")
 
 local mod = {}
 
@@ -73,6 +74,12 @@ mod.research_queue_tab = KeyGraph.declare_graph({
    name = "research_queue",
    title = { "fa.research-queue-title" },
    render_callback = render_research_queue,
+   get_help_metadata = function(ctx)
+      return {
+         Help.message_list("research-queue-help"),
+         Help.message_list("menu-help"),
+      }
+   end,
 })
 
 return mod

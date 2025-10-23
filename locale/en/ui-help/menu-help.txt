@@ -1,0 +1,3 @@
+This is a menu.
+
+It consists of some number of rows, sometimes with some items off to the right to control the main item.

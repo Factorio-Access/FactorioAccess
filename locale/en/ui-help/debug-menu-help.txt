@@ -1,0 +1,14 @@
+; Debug menu help
+The debug menu provides access to testing features for FactorioAccess development.
+
+Use W and S keys to navigate between menu items.
+
+Press left bracket to activate the selected item.
+
+The choose item option opens an item selector for testing item selection.
+
+The choose signal option opens a signal selector for testing signal selection.
+
+The box selection option tests the box selector interface.
+
+The form builder option demonstrates the form building system.

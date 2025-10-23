@@ -1,6 +1,7 @@
 --Here: localisation functions, including event handlers
 local Speech = require("scripts.speech")
 local LocalisedStringCache = require("scripts.localised-string-cache")
+local MessageLists = require("scripts.message-lists")
 
 local mod = {}
 --Returns the localised name of an object as a string. Used for ents and items and fluids
@@ -115,6 +116,9 @@ function mod.handler(event)
 
    -- Check if this is a localised string cache request
    if successful and LocalisedStringCache.handle_translation(pindex, event.id, event.result) then return end
+
+   -- Check if this is a message list request
+   if successful then MessageLists.on_string_translated(event) end
 
    local translated_thing = player.translation_id_lookup[event.id]
    if not translated_thing then return end

@@ -101,6 +101,7 @@ end
 ---@field on_drag_down? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_drag_left? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_drag_right? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field get_help_metadata? fun(self, pindex: number): fa.ui.help.HelpItem[]?
 
 ---@enum fa.ui.UiName
 mod.UI_NAMES = {
@@ -142,6 +143,7 @@ mod.UI_NAMES = {
    CIRCUIT_NAVIGATOR = "circuit_navigator",
    CIRCUIT_NAVIGATOR_ENTITIES = "circuit_navigator_entities",
    EQUIPMENT_SELECTOR = "equipment_selector",
+   HELP = "help",
 }
 
 ---@enum fa.ui.Accelerator
@@ -565,9 +567,18 @@ register_ui_event("fa-c-backspace", create_ui_handler("on_dangerous_delete"))
 register_ui_event("fa-s-e", create_ui_handler("on_announce_title"))
 
 -- E key closes all UIs (inventory/menu close)
+-- Special case: in help UI, E pops help instead of closing everything
 register_ui_event("fa-e", function(event, pindex)
    local router = mod.get_router(pindex)
-   router:_clear_ui_stack()
+   local stack = router_state[pindex].ui_stack
+
+   -- Check if help UI is open on top of the stack
+   if #stack > 0 and stack[#stack].name == mod.UI_NAMES.HELP then
+      -- Pop help UI instead of clearing everything
+      router:_pop_ui()
+   else
+      router:_clear_ui_stack()
+   end
    return EventManager.FINISHED
 end)
 
@@ -599,6 +610,42 @@ register_ui_event("fa-a-e", function(event, pindex)
                end
             end
          end
+      end
+   end
+
+   return EventManager.FINISHED
+end)
+
+-- Shift+/ (?) key toggles help UI
+register_ui_event("fa-s-slash", function(event, pindex)
+   local router = mod.get_router(pindex)
+   local stack = router_state[pindex].ui_stack
+
+   -- Check if help UI is open on top of the stack
+   if #stack > 0 and stack[#stack].name == mod.UI_NAMES.HELP then
+      -- Close help UI
+      router:_pop_ui()
+   else
+      -- Open help UI if we have help metadata from the current UI
+      if #stack > 0 then
+         local top_entry = stack[#stack]
+         local ui_name = top_entry.name
+         local ui = registered_uis[ui_name]
+
+         if ui and ui.get_help_metadata then
+            local help_items = ui:get_help_metadata(pindex)
+            if help_items and #help_items > 0 then
+               -- Create help parameters inline to avoid circular dependency
+               local help_params = { items = help_items }
+               router:open_child_ui(mod.UI_NAMES.HELP, help_params)
+            else
+               Speech.speak(pindex, { "fa.help-no-content" })
+            end
+         else
+            Speech.speak(pindex, { "fa.help-no-content" })
+         end
+      else
+         Speech.speak(pindex, { "fa.help-no-content" })
       end
    end
 

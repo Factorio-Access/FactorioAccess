@@ -1,0 +1,5 @@
+This is the crafting queue, which shows things you are personally crafting.
+
+The top of the menu is your current craft, and things below it are what is coming up next.
+
+Clicking an item here cancels 1.  Adding shift cancels 5, and ctrl shift cancels all.

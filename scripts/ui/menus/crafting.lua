@@ -14,6 +14,7 @@ local Localising = require("scripts.localising")
 local RecipeHelpers = require("scripts.recipe-helpers")
 local Speech = require("scripts.speech")
 local FaInfo = require("scripts.fa-info")
+local Help = require("scripts.ui.help")
 
 local mod = {}
 
@@ -172,6 +173,11 @@ mod.crafting_tab = CategoryRows.declare_category_rows({
    name = "crafting",
    title = { "fa.crafting-title" },
    render_callback = render_crafting_menu,
+   get_help_metadata = function(ctx)
+      return {
+         Help.message_list("crafting-menu-help"),
+      }
+   end,
 })
 
 return mod

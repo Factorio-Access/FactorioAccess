@@ -16,6 +16,7 @@ local TabList = require("scripts.ui.tab-list")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
 local WarningsModule = require("scripts.warnings")
+local Help = require("scripts.ui.help")
 
 local mod = {}
 
@@ -160,6 +161,11 @@ mod.warnings_menu = TabList.declare_tablist({
                   name = "warnings",
                   title = { "fa.warnings-menu-title" },
                   render_callback = render_warnings,
+                  get_help_metadata = function(ctx)
+                     return {
+                        Help.message_list("warnings-menu-help"),
+                     }
+                  end,
                }),
             },
          },

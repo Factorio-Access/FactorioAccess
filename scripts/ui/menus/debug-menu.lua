@@ -5,6 +5,7 @@ local KeyGraph = require("scripts.ui.key-graph")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
 local BoxSelector = require("scripts.ui.box-selector")
+local Help = require("scripts.ui.help")
 local serpent = require("serpent")
 
 -- Load the form builder test UI
@@ -64,6 +65,11 @@ local debug_menu_tab = KeyGraph.declare_graph({
    name = "debug_menu",
    render_callback = build_debug_menu,
    title = { "fa.debug-menu-title" },
+   get_help_metadata = function(ctx)
+      return {
+         Help.message_list("debug-menu-help"),
+      }
+   end,
 })
 
 mod.debug_menu = TabList.declare_tablist({

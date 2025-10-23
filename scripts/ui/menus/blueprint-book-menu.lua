@@ -7,6 +7,7 @@ local TabList = require("scripts.ui.tab-list")
 local Menu = require("scripts.ui.menu")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local UiSounds = require("scripts.ui.sounds")
+local Help = require("scripts.ui.help")
 
 local mod = {}
 
@@ -207,11 +208,23 @@ local blueprint_book_ui = TabList.declare_tablist({
                name = "blueprints-list",
                render_callback = render_blueprints_list,
                title = { "fa.ui-blueprint-book-tab-list" },
+               get_help_metadata = function(ctx)
+                  return {
+                     Help.message_list("blueprint-book-help"),
+                     Help.message_list("menu-help"),
+                  }
+               end,
             }),
             UiKeyGraph.declare_graph({
                name = "settings",
                render_callback = render_settings,
                title = { "fa.ui-blueprint-book-tab-settings" },
+               get_help_metadata = function(ctx)
+                  return {
+                     Help.message_list("blueprint-book-help"),
+                     Help.message_list("menu-help"),
+                  }
+               end,
             }),
          },
       },

@@ -868,10 +868,21 @@ function CategoryRows:search_move(message, ctx, direction, matcher)
    return UiRouter.SEARCH_RESULT.DIDNT_MOVE
 end
 
+function CategoryRows:get_help_metadata(ctx)
+   -- Call user-provided callback if it exists
+   local user_help = self.user_get_help_metadata and self.user_get_help_metadata(ctx) or {}
+
+   -- Inject category-rows generic help
+   table.insert(user_help, { kind = 1, value = "category-rows-help" }) -- MESSAGE_LIST
+
+   return user_help
+end
+
 ---@class fa.ui.CategoryRows.Declaration
 ---@field title LocalisedString?
 ---@field render_callback fun(ctx: fa.ui.TabContext): fa.ui.CategoryRows.Render?
 ---@field name string
+---@field get_help_metadata fun(ctx: fa.ui.TabContext): fa.ui.help.HelpItem[]?
 
 ---Declare a category-rows based tab
 ---@param declaration fa.ui.CategoryRows.Declaration
@@ -880,6 +891,7 @@ function mod.declare_category_rows(declaration)
    local category_rows = setmetatable({
       render_callback = declaration.render_callback,
       name = declaration.name,
+      user_get_help_metadata = declaration.get_help_metadata,
    }, CategoryRows_meta)
 
    return {

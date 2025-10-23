@@ -1,0 +1,45 @@
+This is a UI.  All UIs in Factorio Access have similar controls.
+
+Press w, a, s, and d to move around.  Add ctrl to go as far as possible in the given direction.  For example ctrl w moves to the top of menus.
+
+To get out of all UIs, press e.
+
+To find out what UI you are in, press shift e.
+
+Sometimes you are in a nested UI, for example opening a menu inside a menu. To go back one level, press alt e.
+
+Press ctrl tab and ctrl shift tab to cycle between tabs.
+
+Press tab and shift tab to cycle between subtabs.
+
+If the difference between tabs and subtabs does not make sense, try playing with your main menu, opened by pressing e on the map.
+
+UIs come in many different shapes and sizes.  The three most common are grids, menus, and category-based views.
+
+When in a UI without an obvious shape, we will give you information on what you need to press.
+
+Generally, grids are grids, menus are vertical options sometimes with horizontal commands on a row, and category-based views are like grids but the rows are of different lengths depending on how big the category is.
+
+The reason this isn't simple is because being able to move sideways lets us group commands in rows with the thing they control, so that you don't have to arrow past all of them when you don't care about them.
+
+basic interaction is called clicking, and is done with left or right bracket plus modifiers.
+
+For example shift click is shift left bracket.
+
+To trigger buttons or otherwise perform the primary action, you click.
+
+Other menus sometimes use modifiers and right click, which are generally documented in their help text.
+
+You can search all menus.  To set your search pattern, press ctrl f, type what you want to search, and hit enter.
+
+To cycle through search results, use shift enter for next and ctrl shift enter for previous.
+
+A small number of menus support drag.  When dragging is supported, you drag by adding shift to the movement keys.
+
+An even smaller number of menus support typing alternate values. This comes up for example when dealing with circuit conditions.  To type a value, you press m.  Menus tell you when this will work.
+
+Finally, backspace and ctrl backspace are delete/clear keys.
+
+Backspace does safe clearing.  This means setting a value back to zero or flushing a fluid.  Clearing done with backspace is safe because it can be recovered from easily.
+
+Ctrl backspace does dangerous delete.  This does things like permanently destroy blueprints!  Be careful.

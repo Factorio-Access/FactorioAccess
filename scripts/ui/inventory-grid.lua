@@ -17,6 +17,7 @@ local FaInfo = require("scripts.fa-info")
 local UiRouter = require("scripts.ui.router")
 local ItemDescriptions = require("scripts.item-descriptions")
 local InventoryUtils = require("scripts.inventory-utils")
+local Help = require("scripts.ui.help")
 local MessageBuilder = Speech.MessageBuilder
 
 local mod = {}
@@ -551,6 +552,9 @@ function mod.create_inventory_grid(params)
       title = title,
       render_callback = render_inventory_grid,
       on_accelerator = handle_accelerator,
+      get_help_metadata = function(ctx)
+         return { Help.message_list("inventory-grid-help") }
+      end,
    })
 end
 

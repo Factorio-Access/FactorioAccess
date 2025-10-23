@@ -1303,4 +1303,11 @@ data:extend({
       key_sequence = "CONTROL + SHIFT + PERIOD",
       consuming = "none",
    },
+
+   {
+      type = "custom-input",
+      name = "fa-s-slash",
+      key_sequence = "SHIFT + SLASH",
+      consuming = "none",
+   },
 })

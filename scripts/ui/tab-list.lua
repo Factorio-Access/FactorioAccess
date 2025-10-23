@@ -83,6 +83,7 @@ local mod = {}
 ---@field search_hint fun(self, ctx: fa.ui.TabContext, hint_callback: fun(localised_string: LocalisedString))? Called to hint strings for caching
 ---@field search_move fun(self, message: fa.MessageBuilder, ctx: fa.ui.TabContext, direction: integer, matcher: fun(localised_string: LocalisedString): boolean): fa.ui.SearchResult? Move to next/prev search result, populate message with announcement
 ---@field search_all_from_start fun(self, ctx: fa.ui.TabContext): fa.ui.SearchResult? Search from start, move to first match
+---@field get_help_metadata fun(self, ctx: fa.ui.TabContext): fa.ui.help.HelpItem[]? Returns help metadata for the current tab
 
 ---@class fa.ui.TabDescriptor
 ---@field name string
@@ -148,6 +149,7 @@ function TabList:_do_callback(pindex, target_tab_index, cb_name, msg_builder, pa
 
    -- The tab might not want to do anything.  But the message builder might
    -- still end up with stuff, if the parent added some.
+   local result = nil
    if callback then
       local player = game.get_player(pindex)
       assert(player, "Somehow got input from a dead player")
@@ -165,13 +167,15 @@ function TabList:_do_callback(pindex, target_tab_index, cb_name, msg_builder, pa
 
       -- It's a method on callbacks, so we must pass callbacks as the self
       -- parameter since we aren't using the `:` syntax.
-      callback(callbacks, context, table.unpack(params))
+      result = callback(callbacks, context, table.unpack(params))
       -- Makes assigning to state when initializing etc. work.
       tl.tab_states[tabname] = context.state
    end
 
    local msg = msg_builder:build()
    if msg then Speech.speak(pindex, msg) end
+
+   return result
 end
 
 -- Re-render the tabs, handling additions and removals
@@ -726,6 +730,37 @@ function TabList:open(pindex, parameters, controller)
 end
 
 ---@param force_reset boolean? If true, also dump state.
+---Get help metadata for the current active tab
+---@param pindex number
+---@return fa.ui.help.HelpItem[]?
+function TabList:get_help_metadata(pindex)
+   local tl = tablist_storage[pindex][self.ui_name]
+   if not tl or not tl.currently_open then return nil end
+
+   -- Get tab-specific help
+   local items = self:_do_callback(pindex, tl.active_tab, "get_help_metadata", nil, nil, nil) or {}
+
+   -- Append tab navigation message (inline to avoid circular dependency with help.lua)
+   table.insert(items, { kind = 2, value = { "fa.help-tab-navigation" } }) -- MESSAGE
+
+   -- Build list of available tabstops (high-level tabs accessed with ctrl+tab)
+   local mb = MessageBuilder.new()
+   mb:fragment({ "fa.help-tab-list-prefix" })
+   for i, tabstop in ipairs(self.tabstops) do
+      if tabstop.title then
+         mb:list_item(tabstop.title)
+      else
+         mb:list_item(tabstop.name)
+      end
+   end
+   table.insert(items, { kind = 2, value = mb:build() }) -- MESSAGE
+
+   -- Append general UI help
+   table.insert(items, { kind = 1, value = "general-ui-help" }) -- MESSAGE_LIST
+
+   return items
+end
+
 function TabList:close(pindex, force_reset)
    -- Our lame event handling story where more than one event handler can get called for the same event combined with
    -- the new GUI framework still being WIP means that double-close is apparently possible.  We already know we're going

@@ -250,6 +250,45 @@ This is why `Speech.speak()` is used for user messages.
 
 Remember: This mod makes a visual game accessible through audio. Every feature must be designed with audio-first interaction in mind!
 
+# Message List System for Help and Documentation
+
+The mod includes a message list system for providing help and documentation that integrates with Factorio's localization system.
+
+## Creating Message Lists
+
+1. Create a `.txt` file anywhere under `locale/<language>/` (e.g., `locale/en/ui-help/my-feature.txt` or `locale/en/docs/controls.txt`)
+2. Write messages separated by blank lines:
+   ```
+   ; Comments start with semicolon
+   This is the first message.
+
+   This is the second message.
+   It can span multiple lines.
+   ```
+3. Run `python build_message_lists.py` to generate locale files
+4. The message list name is the basename of the file (without `.txt`)
+5. Message list names must be globally unique across all directories
+
+## Using Message Lists in UIs
+
+```lua
+local Help = require("scripts.ui.help")
+
+-- In your KeyGraph declaration or TabList callbacks:
+get_help_metadata = function(ctx)
+   return {
+      Help.message_list("my-feature"),  -- From my-feature.txt
+      Help.message({"fa.some-other-message"}),  -- Direct localised string
+   }
+end
+```
+
+## How Users Access Help
+
+- Press `Shift+/` (question mark) while in a UI to open help
+- Use W/S to navigate between help messages
+- Press `Shift+/` again or `E` to close help
+
 # Common LLM Antipatterns
 
 ## Comments Referring To What Changed

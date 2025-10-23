@@ -1,0 +1,11 @@
+This is the crafting menu.  Clicking items here crafts them.
+
+Shift clicking items will craft 5.
+
+Ctrl shift clicking items will craft as many as you can craft.
+
+You do not need to craft ingredients before you can craft their item. For example, clicking on steam engine will craft the pipes and gears needed for it.
+
+To hear information on a recipe, press k.
+
+To get information on how much you have produced of a specific recipe, press u.

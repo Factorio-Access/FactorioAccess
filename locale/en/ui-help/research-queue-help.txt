@@ -1,0 +1,7 @@
+This is the research queue.
+
+Click technologies to cancel them.
+
+Technologies at the top are first.
+
+Due to API limitations, you can't drag technologies at this time.

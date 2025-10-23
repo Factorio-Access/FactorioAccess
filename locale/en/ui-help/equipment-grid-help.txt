@@ -1,0 +1,21 @@
+This is a low-level equipment grid view.
+
+If you are just trying to equip things for the first time, you probably want the equipment overview tab.
+
+In Factorio, equipment goes into this grid and has dimensions. For example 1 by 1 or 2 by 4.
+
+The position of equipment relative to other equipment does not matter. For example, it is not necessary to put batteries near solar panels.
+
+But, you can only equip something if this grid has room.
+
+To add equipment to the grid in a specific location, click an empty position.  This will open a selector menu which you can use to grab equipment from your inventory.
+
+If this entity also has an inventory, that equipment shows up in the selector as well.
+
+Click equipment in the grid to remove it.
+
+If you remove and readd equipment to the grid, it will lose things such as how much energy it is holding.
+
+To reposition, you may use shift plus w, a, s, and d to drag things around, if there is enough empty space in the direction you want to move it.  This is limited by the game, not by the mod.  If you cannot move items around with the free space in the grid, you have to remove them and put them back.
+
+Press backspace to order equipment removed from this grid.  The difference is that the equipment will be removed by bots, once you have unlocked them.

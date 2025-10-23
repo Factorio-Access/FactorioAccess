@@ -1,0 +1,29 @@
+This is an inventory, a 10 by some number of rows grid.
+
+Inventories have some number of slots. When that is not a multiple of 10, the bottom row has some unusable cells.
+
+To take a stack to your hand, click it.
+
+Right click takes half a stack instead.
+
+k gives you more information on an item.
+
+To put an item into the inventory, click an empty slot with that item in hand.
+
+You can use shift click to move stacks to sibling inventories.  This does not work in the main menu, but does work when an entity is open.  Shift right click instead moves half.
+
+Sometimes it is necessary to do something with an item without removing it.  You do this with ctrl shift click.
+
+Ctrl shift click with a repair pack repairs.
+
+Ctrl shift click on equipment tries to quickly equip it to the open entity.
+
+Ctrl shift click on a blueprint book with a blueprint in hand adds the blueprint to the book.
+
+A sibling inventory is your inventory if you are in the entity, or the entity's main inventory if you are in yours.
+
+For example, this can be used to quickly move things to and from chests.
+
+As a reminder, your inventory is available as the last tab in an entity's tabs, if that entity uses inventories.
+
+You may delete planners, blueprints, and books with ctrl backspace.

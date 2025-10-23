@@ -1,0 +1,26 @@
+This is a category based interface exposing the ability to research technologies.
+
+Press k to find out what a technology does and what it needs to unlock.
+
+There are two kinds of technology.
+
+Normal technology is researched in a lab.  You put science packs in the lab, give it power, and the technology makes progress.
+
+A small number of technologies are instead triggered by performing in-game actions and unlock instantly once the requirement is met.
+
+Research which can be researched manually is done via the research queue.
+
+Click a research to add it to the back of the queue, and ctrl click it to add it to the front.
+
+You can get the progress of the currently researching research by pressing t from anywhere.
+
+
+Technologies in the researchable category are what you can research now.
+
+Locked technologies are technologies which depend on other technologies.
+
+Finally, the last category is what you have already researched.
+
+Please note that if a technology requires multiple science packs, all of the kinds of science pack it needs must be in a lab at the same time.  Otherwise the lab will not contribute to progress.
+
+For example, if a technology needs 100 automation and 100 logistic science, you must have 1 of each in a lab for the lab to progress, and the lab will handle 1% of the research before it needs more.

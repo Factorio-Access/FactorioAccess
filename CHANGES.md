@@ -22,7 +22,9 @@
   - cars take bullets
   - API limitations prevent us perfectly detecting these filters.
 - Driving spiderttrons is again supported, but you can no longer open the spidertron configuration menus nor command them to do things by themselves.
-
+- All GUIs now offer some form of help.  To open it, press shift slash (aka question mark).
+  - This at least includes generic "here is how you use a UI" information
+  - When appropriate, it also includes menu specific information, such as the keys to use in an inventory.
 
 # Version 0.16.6
 

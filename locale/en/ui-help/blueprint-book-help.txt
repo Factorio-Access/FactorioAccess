@@ -1,0 +1,15 @@
+This is a blueprint book, a collection of multiple blueprints.
+
+Getting blueprints into this book is not done through these menus.
+
+To get blueprints into the book, put this book in your inventory and the blueprint in your hand. Then ctrl shift click on its slot.
+
+This menu consists of quick management commands for all blueprints in the book.
+
+Clicking the name of a blueprint sets it as the active blueprint.  The active blueprint is the blueprint that will be built if you build in the world.
+
+You can drag blueprints to reorder them.
+
+In the world, m, comma, and dot can be used to interact with this book without opening this UI.
+
+m and dot cycle through the blueprints in the book, and comma tells you which one is active.

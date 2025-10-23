@@ -548,6 +548,14 @@ function Graph:on_accelerator(ctx, accelerator_name)
    end
 end
 
+---Get help metadata for this graph
+---@param ctx fa.ui.TabContext
+---@return fa.ui.help.HelpItem[]?
+function Graph:get_help_metadata(ctx)
+   if self.get_help_metadata_callback then return self.get_help_metadata_callback(ctx) end
+   return nil
+end
+
 ---@param ctx fa.ui.graph.InternalTabCtx
 function Graph:on_clear(ctx)
    self:_with_render(ctx, function()
@@ -803,6 +811,7 @@ end
 ---@field render_callback fa.ui.graph.RenderCallback
 ---@field name string
 ---@field on_accelerator fun(ctx: fa.ui.graph.Ctx, accelerator_name: string)?
+---@field get_help_metadata fun(ctx: fa.ui.TabContext): fa.ui.help.HelpItem[]?
 
 ---@param declaration fa.ui.graph.Declaration
 ---@return fa.ui.TabDescriptor
@@ -811,6 +820,7 @@ function mod.declare_graph(declaration)
       render_callback = declaration.render_callback,
       name = declaration.name,
       on_accelerator_callback = declaration.on_accelerator,
+      get_help_metadata_callback = declaration.get_help_metadata,
       -- For debugging, because otherwise it is very unclear that this is a metatable trick.
       _callbacks_are_from_metatable = "yes because this is KeyGraph",
    }, Graph_meta)
