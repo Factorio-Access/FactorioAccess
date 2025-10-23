@@ -3,10 +3,13 @@
 
 local Electrical = require("scripts.electrical")
 local FaUtils = require("scripts.fa-utils")
+local ItemStackUtils = require("scripts.item-stack-utils")
 local localising = require("scripts.localising")
+local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
 local UiRouter = require("scripts.ui.router")
+local TH = require("scripts.table-helpers")
 
 local mod = {}
 
@@ -18,7 +21,10 @@ local mod = {}
 ---@param message fa.MessageBuilder Message builder to append results to
 ---@return boolean success True if anything was equipped
 local function equip_stack_to_entity(stack, target_entity, pindex, message)
-   if not stack.valid_for_read then return false end
+   if not stack.valid_for_read then
+      message:fragment("Error: stack not valid for read")
+      return false
+   end
 
    local item_name = stack.name
    local item_type = stack.type
@@ -74,15 +80,12 @@ local function equip_stack_to_entity(stack, target_entity, pindex, message)
          return false
       end
    elseif prototype.place_as_equipment_result ~= nil then
-      local armor_inv = target_entity.get_inventory(defines.inventory.character_armor)
-      if not armor_inv or armor_inv.is_empty() then
-         return false -- Equipment requires armor
+      -- Get grid - either from armor (characters) or directly from entity (vehicles)
+      local grid = target_entity.grid
+      if not grid then
+         message:fragment("Error: no equipment grid available on " .. target_entity.name)
+         return false
       end
-      if armor_inv[1].grid == nil or not armor_inv[1].grid.valid then
-         return false -- Armor has no grid
-      end
-
-      local grid = armor_inv[1].grid
       local placed = nil
       for i = 0, grid.width - 1 do
          for j = 0, grid.height - 1 do
@@ -120,13 +123,17 @@ end
 
 --Tries to equip a stack from hand. Called when SHIFT+[ pressed with inventory open.
 -- Precondition: Caller must ensure stack is valid_for_read
-function mod.equip_it(stack, pindex)
+function mod.equip_it(stack, pindex, target_entity)
    local p = game.get_player(pindex)
-   if not p or not p.character then return "" end
+   if not p then return "" end
+
+   -- Default to player character if no target specified
+   local entity = target_entity or p.character
+   if not entity then return "" end
 
    local message = MessageBuilder.new()
 
-   local success = equip_stack_to_entity(stack, p.character, pindex, message)
+   local success = equip_stack_to_entity(stack, entity, pindex, message)
 
    if success then storage.players[pindex].skip_read_hand = true end
 
@@ -598,6 +605,378 @@ function mod.equip_item_from_slot(pindex, source_entity, inv_index, slot_index)
    equip_stack_to_entity(stack, source_entity, pindex, message)
 
    return message:build()
+end
+
+---Get category description for equipment
+---@param equipment LuaEquipment
+---@return string
+function mod.get_equipment_category(equipment)
+   local type_name = equipment.type
+   if type_name == "battery-equipment" then
+      return "a battery"
+   elseif type_name == "energy-shield-equipment" then
+      return "a shield"
+   elseif type_name == "solar-panel-equipment" then
+      return "a solar panel"
+   elseif type_name == "generator-equipment" then
+      return "a generator"
+   elseif type_name == "roboport-equipment" then
+      return "a roboport"
+   elseif type_name == "night-vision-equipment" then
+      return "night vision"
+   elseif type_name == "belt-immunity-equipment" then
+      return "belt immunity"
+   elseif type_name == "active-defense-equipment" then
+      return "active defense"
+   elseif type_name == "movement-bonus-equipment" then
+      return "an exoskeleton"
+   elseif type_name == "inventory-bonus-equipment" then
+      return "inventory expansion"
+   else
+      return "equipment"
+   end
+end
+
+---Get the ordinal number for an equipment piece when there are multiple of the same type
+---@param grid LuaEquipmentGrid
+---@param equipment_to_find LuaEquipment
+---@return number? ordinal The ordinal number (1, 2, 3...) or nil if only one exists
+function mod.get_ordinal_for_equipment(grid, equipment_to_find)
+   -- Get all equipment of the same type and quality
+   local matching = {}
+   for _, equip in ipairs(grid.equipment) do
+      if
+         equip.prototype.name == equipment_to_find.prototype.name
+         and equip.quality.name == equipment_to_find.quality.name
+      then
+         table.insert(matching, equip)
+      end
+   end
+
+   -- If only one of this type, no ordinal needed
+   if #matching <= 1 then return nil end
+
+   -- Sort by position (top to bottom, left to right)
+   table.sort(matching, function(a, b)
+      if a.position.y ~= b.position.y then return a.position.y < b.position.y end
+      return a.position.x < b.position.x
+   end)
+
+   -- Find the ordinal
+   for i, equip in ipairs(matching) do
+      if equip == equipment_to_find then return i end
+   end
+
+   return nil
+end
+
+---Get label for an equipment piece (main navigation label)
+---@param grid LuaEquipmentGrid
+---@param equipment LuaEquipment
+---@return LocalisedString
+function mod.get_equipment_label(grid, equipment)
+   local mb = MessageBuilder.new()
+
+   -- Equipment name with quality
+   local equip_name = localising.get_localised_name_with_fallback(equipment.prototype)
+
+   -- Get ordinal if multiple of same type exist
+   local ordinal = mod.get_ordinal_for_equipment(grid, equipment)
+
+   if equipment.quality and equipment.quality.name ~= "normal" then
+      local quality_name = localising.get_localised_name_with_fallback(equipment.quality)
+      mb:fragment(quality_name):fragment(equip_name)
+   else
+      mb:fragment(equip_name)
+   end
+
+   -- Add ordinal if needed
+   if ordinal then mb:fragment(tostring(ordinal)) end
+
+   -- Add to be removed flag
+   if equipment.to_be_removed then mb:list_item("marked for removal") end
+
+   -- Add category
+   mb:list_item(mod.get_equipment_category(equipment))
+
+   -- Add power production if applicable
+   if equipment.max_solar_power > 0 then
+      mb:list_item({ "fa.equipment-produces", FaUtils.format_power(equipment.max_solar_power) })
+   end
+
+   if equipment.generator_power > 0 then
+      mb:list_item({ "fa.equipment-produces", FaUtils.format_power(equipment.generator_power * 60) })
+   end
+
+   -- Add shield status if applicable
+   if equipment.max_shield > 0 then
+      local shield_percent = math.floor((equipment.shield / equipment.max_shield) * 100)
+      mb:list_item({ "fa.equipment-shield-percent", shield_percent })
+   end
+
+   return mb:build()
+end
+
+---Get detailed info for an equipment piece (for read_coords / k key)
+---@param grid LuaEquipmentGrid
+---@param equipment LuaEquipment
+---@return LocalisedString
+function mod.get_equipment_info(grid, equipment)
+   local mb = MessageBuilder.new()
+
+   -- Basic label
+   mb:fragment(mod.get_equipment_label(grid, equipment))
+
+   -- Add dimensions
+   local shape = equipment.shape
+   mb:list_item(string.format("%d by %d", shape.width, shape.height))
+
+   -- Add battery capacity if applicable
+   if equipment.max_energy > 0 then
+      mb:list_item({ "fa.equipment-capacity", FaUtils.format_power(equipment.max_energy) })
+   end
+
+   -- Add movement bonus if applicable
+   if equipment.movement_bonus > 0 then
+      local bonus_percent = math.floor(equipment.movement_bonus * 100)
+      mb:list_item({ "fa.equipment-movement-bonus", bonus_percent })
+   end
+
+   -- Add inventory bonus if applicable
+   if equipment.inventory_bonus > 0 then mb:list_item({ "fa.equipment-inventory-bonus", equipment.inventory_bonus }) end
+
+   -- Add current energy for batteries
+   if equipment.max_energy > 0 then
+      local energy_percent = math.floor((equipment.energy / equipment.max_energy) * 100)
+      mb:list_item({ "fa.equipment-energy-stored", FaUtils.format_power(equipment.energy), energy_percent })
+   end
+
+   return mb:build()
+end
+
+---Get aggregated equipment items from an entity
+---@param entity LuaEntity
+---@return table[] Array of {name, quality, count, stacks}
+function mod.get_equipment_items_from_entity(entity)
+   if not entity or not entity.valid then return {} end
+
+   -- Equipment filter: only items that can be placed as equipment
+   local equipment_filter = function(stack)
+      return stack.prototype.place_as_equipment_result ~= nil
+   end
+
+   -- Collect all inventories from entity
+   local inventories = {}
+   for _, inv_type in ipairs({
+      defines.inventory.character_main,
+      defines.inventory.car_trunk,
+      defines.inventory.cargo_wagon,
+      defines.inventory.chest,
+      defines.inventory.spider_trunk,
+   }) do
+      local inv = entity.get_inventory(inv_type)
+      if inv then table.insert(inventories, inv) end
+   end
+
+   -- Aggregate across all inventories
+   return ItemStackUtils.aggregate_inventories(inventories, equipment_filter)
+end
+
+---Check if equipment can fit in given dimensions
+---@param equipment_proto_name string
+---@param max_x number?
+---@param max_y number?
+---@return boolean
+function mod.can_equipment_fit(equipment_proto_name, max_x, max_y)
+   if not max_x or not max_y then return true end
+
+   local item_proto = prototypes.item[equipment_proto_name]
+   if not item_proto or not item_proto.place_as_equipment_result then return false end
+
+   local equipment_proto = item_proto.place_as_equipment_result
+   return equipment_proto.shape.width <= max_x and equipment_proto.shape.height <= max_y
+end
+
+---Sort aggregated equipment for selection menu
+---@param items table[] Array from get_equipment_items_from_entity
+---@param max_x number?
+---@param max_y number?
+---@return table[] Sorted array of {name, quality, count, stacks, fits}
+function mod.sort_equipment_items(items, max_x, max_y)
+   -- Add fit information to each item
+   for _, item in ipairs(items) do
+      item.fits = mod.can_equipment_fit(item.name, max_x, max_y)
+   end
+
+   -- Sort
+   table.sort(items, function(a, b)
+      -- If dimensions given, sort by fit first (fits come first)
+      if max_x and max_y then
+         if a.fits ~= b.fits then return a.fits end
+      end
+
+      -- Sort by prototype name (string)
+      if a.name ~= b.name then return a.name < b.name end
+
+      -- Sort by quality level (decreasing)
+      local a_quality = prototypes.quality[a.quality]
+      local b_quality = prototypes.quality[b.quality]
+      return a_quality.level > b_quality.level
+   end)
+
+   return items
+end
+
+---Add equipment selection rows to a menu builder
+---@param builder fa.ui.menu.MenuBuilder
+---@param params table {character, equip_target, max_x, max_y}
+---@param on_select_callback fun(equip_data: table) Called when equipment is selected
+function mod.add_equipment_selection_rows(builder, params, on_select_callback)
+   local character = params.character
+   local equip_target = params.equip_target
+   local max_x = params.max_x
+   local max_y = params.max_y
+
+   -- Gather and sort equipment from both sources
+   local character_items = character and mod.get_equipment_items_from_entity(character) or {}
+   local character_sorted = mod.sort_equipment_items(character_items, max_x, max_y)
+
+   -- Only show entity items if it's a different entity from character
+   local show_entity_row = equip_target and (not character or equip_target ~= character)
+   local entity_items = show_entity_row and mod.get_equipment_items_from_entity(equip_target) or {}
+   local entity_sorted = mod.sort_equipment_items(entity_items, max_x, max_y)
+
+   -- Helper to get equipment prototype for dimensions
+   local function get_equipment_dimensions(proto_name)
+      local item_proto = prototypes.item[proto_name]
+      if not item_proto or not item_proto.place_as_equipment_result then return nil end
+      local equip_proto = item_proto.place_as_equipment_result
+      return equip_proto.shape.width, equip_proto.shape.height
+   end
+
+   -- Row 1: Equipment from character inventory
+   if #character_sorted > 0 then
+      builder:start_row("inventory")
+      -- Add row header
+      builder:add_label("inventory-header", { "fa.equipment-selector-your-inventory" })
+      for _, equip_data in ipairs(character_sorted) do
+         local key = string.format("inventory-%s-%s", equip_data.name, equip_data.quality)
+         local width, height = get_equipment_dimensions(equip_data.name)
+
+         builder:add_clickable(key, function(label_ctx)
+            -- Use localise_item to build label (handles quality automatically)
+            label_ctx.message:list_item(Localising.localise_item(equip_data.stacks[1]))
+
+            -- Add dimensions
+            if width and height then label_ctx.message:list_item(string.format("%d by %d", width, height)) end
+
+            -- Add "doesn't fit" if dimensions provided and doesn't fit
+            if max_x and max_y and not equip_data.fits then
+               label_ctx.message:list_item({ "fa.equipment-selector-doesnt-fit" })
+            end
+         end, {
+            on_click = function(click_ctx)
+               on_select_callback(equip_data)
+            end,
+            on_read_coords = function(info_ctx)
+               -- Show full equipment info (dimensions, category, power, etc.)
+               -- Since we don't have an actual placed equipment, build info manually
+               local item_proto = prototypes.item[equip_data.name]
+               if item_proto and item_proto.place_as_equipment_result then
+                  local equip_proto = item_proto.place_as_equipment_result
+                  local mb = MessageBuilder.new()
+
+                  -- Dimensions
+                  mb:list_item(string.format("%d by %d", equip_proto.shape.width, equip_proto.shape.height))
+
+                  -- Category
+                  mb:list_item(mod.get_equipment_category_from_type(equip_proto.type))
+
+                  info_ctx.message:fragment(mb:build())
+               end
+            end,
+         })
+      end
+      builder:end_row()
+   else
+      builder:add_label("inventory-empty", { "fa.equipment-selector-no-inventory" })
+   end
+
+   -- Row 2: Equipment from entity (only if different from character)
+   if show_entity_row and #entity_sorted > 0 then
+      builder:start_row("entity")
+      -- Add row header
+      builder:add_label("entity-header", { "fa.equipment-selector-entity-inventory" })
+      for _, equip_data in ipairs(entity_sorted) do
+         local key = string.format("entity-%s-%s", equip_data.name, equip_data.quality)
+         local width, height = get_equipment_dimensions(equip_data.name)
+
+         builder:add_clickable(key, function(label_ctx)
+            -- Use localise_item to build label (handles quality automatically)
+            label_ctx.message:list_item(Localising.localise_item(equip_data.stacks[1]))
+
+            -- Add dimensions
+            if width and height then label_ctx.message:list_item(string.format("%d by %d", width, height)) end
+
+            -- Add "doesn't fit" if dimensions provided and doesn't fit
+            if max_x and max_y and not equip_data.fits then
+               label_ctx.message:list_item({ "fa.equipment-selector-doesnt-fit" })
+            end
+         end, {
+            on_click = function(click_ctx)
+               on_select_callback(equip_data)
+            end,
+            on_read_coords = function(info_ctx)
+               -- Show full equipment info
+               local item_proto = prototypes.item[equip_data.name]
+               if item_proto and item_proto.place_as_equipment_result then
+                  local equip_proto = item_proto.place_as_equipment_result
+                  local mb = MessageBuilder.new()
+
+                  -- Dimensions
+                  mb:list_item(string.format("%d by %d", equip_proto.shape.width, equip_proto.shape.height))
+
+                  -- Category
+                  mb:list_item(mod.get_equipment_category_from_type(equip_proto.type))
+
+                  info_ctx.message:fragment(mb:build())
+               end
+            end,
+         })
+      end
+      builder:end_row()
+   elseif show_entity_row then
+      builder:add_label("entity-empty", { "fa.equipment-selector-no-entity" })
+   end
+end
+
+---Get equipment category string from equipment type
+---@param equip_type string
+---@return string
+function mod.get_equipment_category_from_type(equip_type)
+   if equip_type == "battery-equipment" then
+      return "a battery"
+   elseif equip_type == "energy-shield-equipment" then
+      return "a shield"
+   elseif equip_type == "solar-panel-equipment" then
+      return "a solar panel"
+   elseif equip_type == "generator-equipment" then
+      return "a generator"
+   elseif equip_type == "roboport-equipment" then
+      return "a roboport"
+   elseif equip_type == "active-defense-equipment" then
+      return "active defense"
+   elseif equip_type == "night-vision-equipment" then
+      return "night vision"
+   elseif equip_type == "belt-immunity-equipment" then
+      return "belt immunity"
+   elseif equip_type == "movement-bonus-equipment" then
+      return "movement bonus"
+   elseif equip_type == "inventory-bonus-equipment" then
+      return "inventory bonus"
+   else
+      return "equipment"
+   end
 end
 
 return mod

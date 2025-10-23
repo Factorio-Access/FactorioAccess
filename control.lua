@@ -76,6 +76,7 @@ require("scripts.ui.menus.debug-menu")
 require("scripts.ui.tabs.item-chooser")
 require("scripts.ui.tabs.signal-chooser")
 require("scripts.ui.tabs.fluid-chooser")
+require("scripts.ui.tabs.equipment-selector")
 require("scripts.ui.logistics-config")
 require("scripts.ui.selectors.logistic-group-selector")
 require("scripts.ui.constant-combinator")
@@ -3408,22 +3409,6 @@ local function kb_repair_area(event)
    end
 end
 
-EventManager.on_event(
-   "fa-cs-leftbracket",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local player = game.players[pindex]
-      assert(player)
-      if not player.cursor_stack.valid_for_read then return end
-
-      if player.cursor_stack.is_repair_tool then
-         kb_repair_area(event)
-      else
-         kb_equip_item(event)
-      end
-   end
-)
-
 --Default is control clicking
 ---@param event EventData.CustomInputEvent
 local function kb_alternate_build(event)
@@ -3977,17 +3962,6 @@ local function kb_connect_rail_vehicles(event)
    end
 end
 
--- Control G is used to connect rolling stock
-EventManager.on_event(
-   "fa-c-g",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-
-      kb_connect_rail_vehicles(event)
-   end
-)
-
 ---@param event EventData.CustomInputEvent
 local function kb_disconnect_rail_vehicles(event)
    local pindex = event.player_index
@@ -4033,21 +4007,6 @@ EventManager.on_event(
       local router = UiRouter.get_router(pindex)
 
       kb_inventory_read_equipment_list(event)
-   end
-)
-
-EventManager.on_event(
-   "fa-cs-g",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local p = game.get_player(pindex)
-      if not p or not p.character then
-         Speech.speak(pindex, { "fa.equipment-no-character" })
-         return
-      end
-
-      local result = Equipment.remove_equipment_and_armor(pindex)
-      Speech.speak(pindex, result)
    end
 )
 

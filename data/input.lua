@@ -708,13 +708,6 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "fa-cs-leftbracket",
-      key_sequence = "CONTROL + SHIFT + LEFTBRACKET",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
       name = "fa-cs-rightbracket",
       key_sequence = "CONTROL + SHIFT + RIGHTBRACKET",
       consuming = "none",
@@ -951,22 +944,8 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "fa-c-g",
-      key_sequence = "CONTROL + G",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
       name = "fa-s-g",
       key_sequence = "SHIFT + G",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-cs-g",
-      key_sequence = "CONTROL + SHIFT + G",
       consuming = "none",
    },
 

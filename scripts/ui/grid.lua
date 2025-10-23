@@ -246,7 +246,7 @@ function GridBuilder:build()
 end
 
 local function default_dim_namer(ctx, x, y)
-   ctx.message:fragment({ "fa.ui-grid-cell-location", x, y })
+   ctx.message:fragment({ "fa.ui-grid-cell-location", y, x })
 end
 
 ---@return fa.ui.grid.GridBuilder
@@ -258,6 +258,14 @@ function mod.grid_builder()
       max_x = 0,
       max_y = 0,
    }, GridBuilder_meta)
+end
+
+---Make a grid key from x and y coordinates
+---@param x number
+---@param y number
+---@return string
+function mod.make_key(x, y)
+   return string.format("%d-%d", x, y)
 end
 
 return mod

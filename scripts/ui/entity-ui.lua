@@ -20,6 +20,8 @@ local inserter_config_tab = require("scripts.ui.tabs.inserter-config")
 local infinity_chest_config_tab = require("scripts.ui.tabs.infinity-chest-config")
 local infinity_pipe_config_tab = require("scripts.ui.tabs.infinity-pipe-config")
 local fluids_tab = require("scripts.ui.tabs.fluids")
+local equipment_overview_tab = require("scripts.ui.tabs.equipment-overview")
+local equipment_grid_tab = require("scripts.ui.tabs.equipment-grid")
 
 local mod = {}
 
@@ -147,6 +149,24 @@ local function build_configuration_tabs(entity)
    return #tabs > 0 and tabs or nil
 end
 
+---Build equipment section based on entity having a grid
+---@param pindex number
+---@param entity LuaEntity
+---@return fa.ui.TabDescriptor[]?
+local function build_equipment_tabs(pindex, entity)
+   -- Check if entity has an equipment grid
+   if not equipment_overview_tab.is_available(entity) then return nil end
+
+   local tabs = {
+      equipment_overview_tab.equipment_overview_tab,
+   }
+
+   -- Add equipment grid tab if available
+   if equipment_grid_tab.is_available(entity) then table.insert(tabs, equipment_grid_tab.equipment_grid_tab) end
+
+   return tabs
+end
+
 ---Build circuit network section based on control behavior
 ---@param entity LuaEntity
 ---@return fa.ui.TabDescriptor[]?
@@ -204,6 +224,16 @@ local function build_entity_sections(pindex, entity)
          name = "inventories",
          title = { "fa.section-inventories" },
          tabs = inventory_tabs,
+      })
+   end
+
+   -- Build equipment section
+   local equipment_tabs = build_equipment_tabs(pindex, entity)
+   if equipment_tabs then
+      table.insert(sections, {
+         name = "equipment",
+         title = { "fa.section-equipment" },
+         tabs = equipment_tabs,
       })
    end
 

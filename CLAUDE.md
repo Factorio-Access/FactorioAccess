@@ -344,3 +344,7 @@ This is a Factorio 2.0 project.  Your knowledge cutoff and training data did not
 A complete reference (one file per class, concept, define, etc) is at llm-docs/api-reference. List this directory recursively for a "table of contents".
 
 You **MUST** double check that you understand APIs before using them.
+
+# Quick notes on common patterns
+
+- Before performing aggregations of items by quality to produce lists such as "legendary solar panel x 5", read scripts/item-stack-utils.lua to learn about aggregation functions that already exist.

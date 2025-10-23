@@ -1,8 +1,27 @@
+# 0.16.7 (unreleased)
+
+- Equipment overhauled:
+  - There is now an equipment tab on everything that has equipment capabilities.
+  - You can now access the equipment grid:
+    - left bracket on an empty slot opens a selector to find equipemnt from your inventory or the entity's inventory
+    - left bracket on a full slot removes to your inventory
+    - backspace on a full slot orders bots to remove it.
+    - Drag equipment with `shift + WASD`
+  - The equipment overview tab replaces `g`-based keybindings except for `g` itself:
+    - Use backspace to unequip armor or to clear all equipment
+    - Use the quick equip rows to quickly throw equipment into the grid as you used to be able to in 1.1
+    - Move to the right of armor to select the armor you want
+    - This all works the same for entities, minus armor
+  - The player's guns/ammo tab has been moved to equipment
+- `g` is now unmapped by the config migration (in vanilla it is an alt binding for entering vehicles; `enter` still works for that purpose).
+  - Fixes reading armor stats while near a vehicle.
+- Mod documentation has been overhauled and split into separate files
+
 # Version 0.16.6
 
 This is the first reasonably stable version supporting Factorio 2.0.  See [docs/2.0-migration](docs/2.0-migration.md).
 
-Your saves are not compatible across this version. You must:
+Your Factorio 1.1 saves are not compatible. You must:
 
 - Reinstall the game.
 - Make new saves.

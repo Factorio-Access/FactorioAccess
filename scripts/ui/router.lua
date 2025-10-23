@@ -99,6 +99,8 @@ end
 ---@field on_action3? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_drag_up? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_drag_down? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_drag_left? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_drag_right? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 
 ---@enum fa.ui.UiName
 mod.UI_NAMES = {
@@ -139,6 +141,7 @@ mod.UI_NAMES = {
    CURSOR_COORDINATE_INPUT = "cursor_coordinate_input",
    CIRCUIT_NAVIGATOR = "circuit_navigator",
    CIRCUIT_NAVIGATOR_ENTITIES = "circuit_navigator_entities",
+   EQUIPMENT_SELECTOR = "equipment_selector",
 }
 
 ---@enum fa.ui.Accelerator
@@ -486,9 +489,11 @@ register_ui_event("fa-s", create_ui_handler("on_down"))
 register_ui_event("fa-a", create_ui_handler("on_left"))
 register_ui_event("fa-d", create_ui_handler("on_right"))
 
--- Drag keys (Shift+WS for reordering)
+-- Drag keys (Shift+WASD for reordering/moving)
 register_ui_event("fa-s-w", create_ui_handler("on_drag_up"))
 register_ui_event("fa-s-s", create_ui_handler("on_drag_down"))
+register_ui_event("fa-s-a", create_ui_handler("on_drag_left"))
+register_ui_event("fa-s-d", create_ui_handler("on_drag_right"))
 
 -- Arrow keys (removed - using cursor anchoring instead)
 
@@ -511,7 +516,6 @@ register_ui_event("fa-s-leftbracket", create_ui_handler("on_click", { shift = tr
 register_ui_event("fa-s-rightbracket", create_ui_handler("on_right_click", { shift = true }))
 
 -- Control+Shift+click
-register_ui_event("fa-cs-leftbracket", create_ui_handler("on_click", { control = true, shift = true }))
 register_ui_event("fa-cs-rightbracket", create_ui_handler("on_right_click", { control = true, shift = true }))
 
 -- Tab navigation (TAB and Shift+TAB)
@@ -770,27 +774,6 @@ register_ui_event("fa-cs-r", function(event, pindex)
       end
    end
    return nil
-end)
-
--- CTRL+SHIFT+G: Unload equipment/armor (handled in UI, falls through to world handler)
-register_ui_event("fa-cs-g", function(event, pindex)
-   local router = mod.get_router(pindex)
-   local stack = router_state[pindex].ui_stack
-
-   if #stack > 0 then
-      local top_entry = stack[#stack]
-      local ui_name = top_entry.name
-      if registered_uis[ui_name] then
-         local ui = registered_uis[ui_name]
-         if ui.on_accelerator then
-            local controller = create_controller_for_event(router)
-            ui:on_accelerator(pindex, mod.ACCELERATORS.UNLOAD_EQUIPMENT, nil, controller)
-            controller:finalize()
-            return EventManager.FINISHED
-         end
-      end
-   end
-   return nil -- Fall through to world handler
 end)
 
 -- CTRL+SHIFT+LEFTBRACKET is handled directly by UI on_click handlers (e.g., inventory-grid.lua)

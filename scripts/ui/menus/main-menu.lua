@@ -10,6 +10,8 @@ local UiRouter = require("scripts.ui.router")
 -- Import all the individual tabs
 local inventory = require("scripts.ui.menus.inventory")
 local gun_menu = require("scripts.ui.menus.gun-menu")
+local equipment_overview = require("scripts.ui.tabs.equipment-overview")
+local equipment_grid = require("scripts.ui.tabs.equipment-grid")
 local crafting = require("scripts.ui.menus.crafting")
 local crafting_queue = require("scripts.ui.menus.crafting-queue")
 local research = require("scripts.ui.menus.research")
@@ -39,7 +41,6 @@ end
 local function build_inventory_tabs(pindex, params)
    local tabs = {
       inventory.inventory_tab,
-      gun_menu.gun_tab,
    }
 
    -- Add trash tab if it's in the parameters
@@ -54,29 +55,53 @@ mod.main_menu = TabList.declare_tablist({
    resets_to_first_tab_on_open = true,
    shared_state_setup = setup_shared_state,
    tabs_callback = function(pindex, params)
-      return {
+      local sections = {
          {
             name = "inventories",
             title = { "fa.section-inventories" },
             tabs = build_inventory_tabs(pindex, params),
          },
-         {
-            name = "crafting",
-            title = { "fa.section-crafting" },
-            tabs = {
-               crafting.crafting_tab,
-               crafting_queue.crafting_queue_tab,
-            },
-         },
-         {
-            name = "research",
-            title = { "fa.section-research" },
-            tabs = {
-               research.research_tab,
-               research_queue.research_queue_tab,
-            },
-         },
       }
+
+      -- Equipment section - always visible
+      local player = game.get_player(pindex)
+      local equipment_tabs = {
+         equipment_overview.equipment_overview_tab,
+      }
+      -- Add grid tab if available
+      if player and player.character and equipment_grid.is_available(player.character) then
+         table.insert(equipment_tabs, equipment_grid.equipment_grid_tab)
+      end
+      -- Add guns tab if available
+      if gun_menu.needs_gun_menu_tab(pindex) then table.insert(equipment_tabs, gun_menu.gun_tab) end
+
+      table.insert(sections, {
+         name = "equipment",
+         title = { "fa.section-equipment" },
+         tabs = equipment_tabs,
+      })
+
+      -- Add crafting section
+      table.insert(sections, {
+         name = "crafting",
+         title = { "fa.section-crafting" },
+         tabs = {
+            crafting.crafting_tab,
+            crafting_queue.crafting_queue_tab,
+         },
+      })
+
+      -- Add research section
+      table.insert(sections, {
+         name = "research",
+         title = { "fa.section-research" },
+         tabs = {
+            research.research_tab,
+            research_queue.research_queue_tab,
+         },
+      })
+
+      return sections
    end,
 })
 

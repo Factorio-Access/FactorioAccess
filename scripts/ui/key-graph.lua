@@ -85,10 +85,14 @@ local mod = {}
 
 ---@alias fa.ui.graph.Modifiers { control: boolean, alt: boolean, shift: boolean }
 
+---@class fa.ui.graph.GraphController
+---@field graph_state fa.ui.graph.StoredState
+
 ---@class fa.ui.graph.Ctx
 ---@field message fa.MessageBuilder
 ---@field modifiers fa.ui.graph.Modifiers Set for things using the keyboard. Non-nil but garbage for all others.
 ---@field controller fa.ui.RouterController The router's controller for UI management
+---@field graph_controller fa.ui.graph.GraphController Graph-specific controller with suggest_move
 ---@field state any
 ---@field tablist_shared_state any
 ---@field pindex number
@@ -122,6 +126,8 @@ local mod = {}
 ---@field on_action3 fa.ui.graph.SimpleCallback? Handler for action3 (dot key)
 ---@field on_drag_up fa.ui.graph.SimpleCallback? Handler for drag up (shift+w)
 ---@field on_drag_down fa.ui.graph.SimpleCallback? Handler for drag down (shift+s)
+---@field on_drag_left fa.ui.graph.SimpleCallback? Handler for drag left (shift+a)
+---@field on_drag_right fa.ui.graph.SimpleCallback? Handler for drag right (shift+d)
 ---@field exclude_from_search boolean? If true, this node won't be included in search results. Default false.
 
 ---@class fa.ui.graph.TransitionVtable
@@ -151,6 +157,7 @@ mod.TRANSITION_DIR = {
 ---@class fa.ui.graph.StoredState
 ---@field cur_key string
 ---@field key_order string[]? Not set the first time through.
+---@field next_suggested_move string? If set, silently move to this key on next render
 
 ---@class fa.ui.graph.InternalTabCtx: fa.ui.TabContext
 ---@field state fa.ui.graph.StoredState
@@ -164,7 +171,25 @@ mod.TRANSITION_DIR = {
 local Graph = {}
 local Graph_meta = { __index = Graph }
 
--- Controller class removed - we now pass through the router's controller
+---GraphController is a simple object with graph-specific methods
+---@class fa.ui.graph.GraphController
+local GraphController = {}
+local GraphController_meta = { __index = GraphController }
+
+---Suggest moving to a specific key on the next render
+---@param key string The key to move to
+function GraphController:suggest_move(key)
+   self.graph_state.next_suggested_move = key
+end
+
+---Create a GraphController
+---@param graph_state fa.ui.graph.StoredState
+---@return fa.ui.graph.GraphController
+local function create_graph_controller(graph_state)
+   return setmetatable({
+      graph_state = graph_state,
+   }, GraphController_meta)
+end
 
 ---@type fa.ui.graph.Modifiers
 local NO_MODIFIERS = { control = false, alt = false, shift = false }
@@ -174,11 +199,15 @@ local NO_MODIFIERS = { control = false, alt = false, shift = false }
 ---@return fa.ui.graph.Ctx
 ---@private
 function Graph:_wrap_ctx(outer_ctx, name, modifiers)
+   -- Create a GraphController for graph-specific operations
+   local graph_controller = create_graph_controller(outer_ctx.state)
+
    ---@type fa.ui.graph.Ctx
    local inner_ctx = {
       message = outer_ctx.message,
       modifiers = modifiers,
-      controller = outer_ctx.controller, -- Pass through the router's controller
+      controller = outer_ctx.controller,
+      graph_controller = graph_controller,
       state = outer_ctx.state,
       tablist_shared_state = outer_ctx.shared_state,
       pindex = outer_ctx.pindex,
@@ -205,6 +234,12 @@ function Graph:_rerender(ctx)
 
    local state = ctx.state
    local prev_key_order = state.key_order
+
+   -- Check for suggested move and apply it silently if the key exists
+   if state.next_suggested_move and render.nodes[state.next_suggested_move] then
+      state.cur_key = state.next_suggested_move
+      state.next_suggested_move = nil
+   end
 
    -- If the key is no longer present, find the closest key to it which is, then move the focus to there.  Otherwise
    -- move the focus to the start node.
@@ -627,6 +662,24 @@ function Graph:on_drag_down(ctx, modifiers)
    self:_with_render(ctx, function()
       local n = self.render.nodes[ctx.state.cur_key]
       self:_maybe_call(n, ctx, "on_drag_down", modifiers)
+   end)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+---@param modifiers fa.ui.graph.Modifiers
+function Graph:on_drag_left(ctx, modifiers)
+   self:_with_render(ctx, function()
+      local n = self.render.nodes[ctx.state.cur_key]
+      self:_maybe_call(n, ctx, "on_drag_left", modifiers)
+   end)
+end
+
+---@param ctx fa.ui.graph.InternalTabCtx
+---@param modifiers fa.ui.graph.Modifiers
+function Graph:on_drag_right(ctx, modifiers)
+   self:_with_render(ctx, function()
+      local n = self.render.nodes[ctx.state.cur_key]
+      self:_maybe_call(n, ctx, "on_drag_right", modifiers)
    end)
 end
 

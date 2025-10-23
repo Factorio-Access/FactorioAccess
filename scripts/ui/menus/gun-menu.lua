@@ -16,6 +16,19 @@ local FaInfo = require("scripts.fa-info")
 
 local mod = {}
 
+---Check if the gun menu tab is needed for this player
+---@param pindex number
+---@return boolean
+function mod.needs_gun_menu_tab(pindex)
+   local player = game.get_player(pindex)
+   if not player then return false end
+
+   local gun_inv = player.get_inventory(defines.inventory.character_guns)
+   local ammo_inv = player.get_inventory(defines.inventory.character_ammo)
+
+   return gun_inv ~= nil and ammo_inv ~= nil
+end
+
 ---@class fa.ui.GunMenu.SharedState
 -- For now there are none, just empty table.
 

@@ -254,7 +254,7 @@ function mod.localise_item_or_fluid(what, protos)
    elseif name then
       item_proto = name
    end
-   assert(item_proto, "unable to find item")
+   if not item_proto then error(item_proto, "unable to find item " .. name) end
 
    if quality and type(quality) == "string" then
       quality_proto = prototypes.quality[quality]
