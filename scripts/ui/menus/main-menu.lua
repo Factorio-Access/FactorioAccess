@@ -63,24 +63,6 @@ mod.main_menu = TabList.declare_tablist({
          },
       }
 
-      -- Equipment section - always visible
-      local player = game.get_player(pindex)
-      local equipment_tabs = {
-         equipment_overview.equipment_overview_tab,
-      }
-      -- Add grid tab if available
-      if player and player.character and equipment_grid.is_available(player.character) then
-         table.insert(equipment_tabs, equipment_grid.equipment_grid_tab)
-      end
-      -- Add guns tab if available
-      if gun_menu.needs_gun_menu_tab(pindex) then table.insert(equipment_tabs, gun_menu.gun_tab) end
-
-      table.insert(sections, {
-         name = "equipment",
-         title = { "fa.section-equipment" },
-         tabs = equipment_tabs,
-      })
-
       -- Add crafting section
       table.insert(sections, {
          name = "crafting",
@@ -97,8 +79,26 @@ mod.main_menu = TabList.declare_tablist({
          title = { "fa.section-research" },
          tabs = {
             research.research_tab,
-            research_queue.research_queue_tab,
+            research_queue.research_tab,
          },
+      })
+
+      -- Equipment section - always visible, last
+      local player = game.get_player(pindex)
+      local equipment_tabs = {
+         equipment_overview.equipment_overview_tab,
+      }
+      -- Add grid tab if available
+      if player and player.character and equipment_grid.is_available(player.character) then
+         table.insert(equipment_tabs, equipment_grid.equipment_grid_tab)
+      end
+      -- Add guns tab if available
+      if gun_menu.needs_gun_menu_tab(pindex) then table.insert(equipment_tabs, gun_menu.gun_tab) end
+
+      table.insert(sections, {
+         name = "equipment",
+         title = { "fa.section-equipment" },
+         tabs = equipment_tabs,
       })
 
       return sections

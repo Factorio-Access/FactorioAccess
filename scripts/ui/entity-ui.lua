@@ -227,16 +227,6 @@ local function build_entity_sections(pindex, entity)
       })
    end
 
-   -- Build equipment section
-   local equipment_tabs = build_equipment_tabs(pindex, entity)
-   if equipment_tabs then
-      table.insert(sections, {
-         name = "equipment",
-         title = { "fa.section-equipment" },
-         tabs = equipment_tabs,
-      })
-   end
-
    -- Build configuration section
    local config_tabs = build_configuration_tabs(entity)
    if config_tabs then
@@ -254,6 +244,16 @@ local function build_entity_sections(pindex, entity)
          name = "circuit-network",
          title = { "fa.section-circuit-network" },
          tabs = circuit_tabs,
+      })
+   end
+
+   -- Build equipment section (before player inventory)
+   local equipment_tabs = build_equipment_tabs(pindex, entity)
+   if equipment_tabs then
+      table.insert(sections, {
+         name = "equipment",
+         title = { "fa.section-equipment" },
+         tabs = equipment_tabs,
       })
    end
 
