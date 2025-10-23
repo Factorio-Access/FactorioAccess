@@ -3323,12 +3323,8 @@ local function kb_click_hand_right(event)
    elseif stack.is_deconstruction_item or stack.is_upgrade_item then
       -- Deconstruction and upgrade planners are now handled via left-click and alt+left-click
       Speech.speak(pindex, { "fa.planner-use-leftbracket" })
-   elseif stack.name == "spidertron-remote" then
-      --open spidermenu with the remote in hand
-      local router = UiRouter.get_router(pindex)
-      router:open_ui(UiRouter.UI_NAMES.SPIDERTRON)
    else
-      -- Regular item in hand - read entity status as fallback
+      -- Regular item in hand (including spidertron remote) - read entity status as fallback
       kb_read_entity_status(event)
    end
 end

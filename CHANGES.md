@@ -21,6 +21,7 @@
   - Spidertrons take rockets and nukes
   - cars take bullets
   - API limitations prevent us perfectly detecting these filters.
+- Driving spiderttrons is again supported, but you can no longer open the spidertron configuration menus nor command them to do things by themselves.
 
 
 # Version 0.16.6
