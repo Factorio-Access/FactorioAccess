@@ -1,4 +1,4 @@
-# 0.16.7 (unreleased)
+# 0.16.7 (2025-10-23)
 
 - Equipment overhauled:
   - There is now an equipment tab on everything that has equipment capabilities.
