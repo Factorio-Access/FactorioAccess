@@ -4,6 +4,8 @@
 
 ### For interacting
 
+Get help: shift + slash (/)
+
 Move in a UI: `wasd`
 
 Move as far as possible in a given direction: `ctrl + WASD`
