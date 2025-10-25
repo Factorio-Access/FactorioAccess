@@ -560,8 +560,8 @@ register_ui_event("fa-leftbracket", create_ui_handler("on_click", nil, true))
 register_ui_event("fa-rightbracket", create_ui_handler("on_right_click", nil, true))
 
 -- Modified click handlers with modifiers
--- Alt+click (only leftbracket exists)
-register_ui_event("fa-a-leftbracket", create_ui_handler("on_click", { alt = true }))
+-- Alt+click (only leftbracket exists) - enabled during overlay for planner cancellation
+register_ui_event("fa-a-leftbracket", create_ui_handler("on_click", { alt = true }, true))
 
 -- Shift+click
 register_ui_event("fa-s-leftbracket", create_ui_handler("on_click", { shift = true }))
