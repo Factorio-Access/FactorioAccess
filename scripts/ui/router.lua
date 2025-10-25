@@ -125,6 +125,7 @@ mod.UI_NAMES = {
    BLUEPRINT_BOOK = "blueprint_book",
    SIGNAL_SELECTOR = "signal_selector",
    SPIDERTRON = "spidertron",
+   SPIDERTRON_AUTOPILOT = "spidertron_autopilot",
    DEBUG = "debug",
    DEBUG_FORMBUILDER = "debug_formbuilder",
    ITEM_CHOOSER = "item_chooser",

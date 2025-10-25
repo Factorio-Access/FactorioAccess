@@ -20,6 +20,7 @@ local inserter_config_tab = require("scripts.ui.tabs.inserter-config")
 local infinity_chest_config_tab = require("scripts.ui.tabs.infinity-chest-config")
 local infinity_pipe_config_tab = require("scripts.ui.tabs.infinity-pipe-config")
 local fluids_tab = require("scripts.ui.tabs.fluids")
+local spidertron_config_tab = require("scripts.ui.tabs.spidertron-config")
 local equipment_overview_tab = require("scripts.ui.tabs.equipment-overview")
 local equipment_grid_tab = require("scripts.ui.tabs.equipment-grid")
 
@@ -140,6 +141,11 @@ local function build_configuration_tabs(entity)
    -- Add infinity pipe configuration
    if prototype.type == "infinity-pipe" and infinity_pipe_config_tab.is_available(entity) then
       table.insert(tabs, infinity_pipe_config_tab.infinity_pipe_config_tab)
+   end
+
+   -- Add spidertron configuration
+   if prototype.type == "spider-vehicle" and spidertron_config_tab.is_available(entity) then
+      table.insert(tabs, spidertron_config_tab.spidertron_config_tab)
    end
 
    -- Future: Add other device-specific tabs here
