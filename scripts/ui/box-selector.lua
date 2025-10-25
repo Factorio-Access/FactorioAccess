@@ -12,6 +12,10 @@ local mod = {}
 ---@field ui_name fa.ui.UiName
 ---@field callback? fun(pindex: number, params: table, result: table) Optional callback when selection completes
 
+---@class fa.ui.BoxSelectorParameters
+---@field intro_message? LocalisedString Custom intro message
+---@field second_message? LocalisedString|false Custom second message, or false to suppress
+
 ---@class fa.ui.BoxSelectorState
 ---@field first_click? {x: number, y: number, modifiers: table, is_right_click: boolean}
 
@@ -38,8 +42,11 @@ function mod.declare_box_selector(declaration)
                is_right_click = args.kind == MultipointSelector.SELECTION_KIND.RIGHT,
             }
 
-            local second_message = args.parameters.second_message or { "fa.box-selector-second-point" }
-            args.router_ctx.message:fragment(second_message)
+            -- Only speak second message if explicitly provided (false to suppress)
+            if args.parameters.second_message ~= false then
+               local second_message = args.parameters.second_message or { "fa.box-selector-second-point" }
+               args.router_ctx.message:fragment(second_message)
+            end
 
             return {
                result_kind = MultipointSelector.RESULT_KIND.KEEP_GOING,

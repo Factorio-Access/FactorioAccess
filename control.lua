@@ -3152,7 +3152,7 @@ EventManager.on_event(
                   math.floor(cursor_pos.x),
                   math.floor(cursor_pos.y),
                },
-               second_message = { "fa.planner-select-second-point" },
+               second_message = false,
             })
             return
          end
