@@ -13,6 +13,7 @@ local UiKeyGraph = require("scripts.ui.key-graph")
 local UiRouter = require("scripts.ui.router")
 local UiSounds = require("scripts.ui.sounds")
 local Viewpoint = require("scripts.viewpoint")
+local Localising = require("scripts.localising")
 
 local mod = {}
 
@@ -70,7 +71,28 @@ local function render_spidertron_config(ctx)
       end,
    })
 
-   -- Row 3: Autotarget without gunner
+   -- Row 3: Follow target selector
+   form:add_item("follow", {
+      label = function(ctx)
+         local target = entity.follow_target
+         if target and target.valid then
+            ctx.message:fragment({ "fa.spidertron-follow-target" })
+            ctx.message:fragment(Localising.get_localised_name_with_fallback(target))
+            ctx.message:fragment({ "fa.spidertron-follow-click-to-change" })
+         else
+            ctx.message:fragment({ "fa.spidertron-follow-none" })
+         end
+      end,
+      on_click = function(ctx)
+         ctx.controller:open_child_ui(UiRouter.UI_NAMES.SPIDERTRON_FOLLOW, { spidertron = entity }, "follow")
+      end,
+      on_clear = function(ctx)
+         entity.follow_target = nil
+         ctx.controller.message:fragment({ "fa.spidertron-follow-cleared" })
+      end,
+   })
+
+   -- Row 4: Autotarget without gunner
    local targeting = entity.vehicle_automatic_targeting_parameters
    form:add_checkbox("autotarget_without_gunner", { "fa.spidertron-autotarget-without-gunner" }, function()
       return entity.vehicle_automatic_targeting_parameters.auto_target_without_gunner
@@ -80,7 +102,7 @@ local function render_spidertron_config(ctx)
       entity.vehicle_automatic_targeting_parameters = params
    end)
 
-   -- Row 4: Autotarget with gunner
+   -- Row 5: Autotarget with gunner
    form:add_checkbox("autotarget_with_gunner", { "fa.spidertron-autotarget-with-gunner" }, function()
       return entity.vehicle_automatic_targeting_parameters.auto_target_with_gunner
    end, function(value)

@@ -5,6 +5,7 @@ Supports advanced cursor navigation while selecting points, and can be used for 
 ]]
 local StorageManager = require("scripts.storage-manager")
 local Viewpoint = require("scripts.viewpoint")
+local EntitySelection = require("scripts.entity-selection")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
 
@@ -30,6 +31,7 @@ mod.RESULT_KIND = {
 ---@class fa.ui.selectors.MultipointCallbackArgs
 ---@field kind fa.ui.selectors.MultipointSelectionKind LEFT or RIGHT click
 ---@field position MapPosition The position that was selected
+---@field entity LuaEntity? The entity at the cursor position (nil if none)
 ---@field modifiers {control: boolean?, shift: boolean?, alt: boolean?} Modifier keys pressed
 ---@field router_ctx fa.ui.RouterController Router controller for messaging
 ---@field state table Arbitrary state maintained for the callback
@@ -65,9 +67,13 @@ function MultipointSelector:open(pindex, parameters, controller)
 
    -- If initial_point provided, call the callback immediately with it
    if parameters and parameters.first_point then
+      -- Get entity at initial point if any
+      local entity = EntitySelection.get_first_ent_at_tile(pindex)
+
       local callback_args = {
          kind = mod.SELECTION_KIND.LEFT,
          position = parameters.first_point,
+         entity = entity,
          modifiers = {},
          router_ctx = controller,
          state = multipoint_selector_storage[pindex][self.ui_name].state,
@@ -106,12 +112,14 @@ end
 function MultipointSelector:_handle_click(pindex, modifiers, kind, controller)
    local viewpoint = Viewpoint.get_viewpoint(pindex)
    local cursor_pos = viewpoint:get_cursor_pos()
+   local entity = EntitySelection.get_first_ent_at_tile(pindex)
    local state = multipoint_selector_storage[pindex][self.ui_name]
 
    -- Prepare callback arguments
    local callback_args = {
       kind = kind,
       position = cursor_pos,
+      entity = entity,
       modifiers = modifiers or {},
       router_ctx = controller,
       state = state.state,

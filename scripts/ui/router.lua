@@ -126,6 +126,7 @@ mod.UI_NAMES = {
    SIGNAL_SELECTOR = "signal_selector",
    SPIDERTRON = "spidertron",
    SPIDERTRON_AUTOPILOT = "spidertron_autopilot",
+   SPIDERTRON_FOLLOW = "spidertron_follow",
    DEBUG = "debug",
    DEBUG_FORMBUILDER = "debug_formbuilder",
    ITEM_CHOOSER = "item_chooser",
