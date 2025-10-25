@@ -713,6 +713,13 @@ data:extend({
       consuming = "none",
    },
 
+   {
+      type = "custom-input",
+      name = "fa-cs-leftbracket",
+      key_sequence = "CONTROL + SHIFT + LEFTBRACKET",
+      consuming = "none",
+   },
+
    -- We ideally would link this to the in-game control for toggling personal logistics. There isn't one however, so we
    -- have to make due by just mapping to the same key.
    {

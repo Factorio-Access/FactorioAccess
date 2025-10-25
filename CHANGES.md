@@ -7,6 +7,7 @@
 - The map now has contextual help, accessed with `shift + /`. This includes:
   - Any help for what you are holding, if it has relevant special functionality
   - Information on the non-UI controls of the mod
+- Get `control + shift + left bracket` back. Somehow, the mapping for this went missing.
 
 # 0.16.7 (2025-10-23)
 
