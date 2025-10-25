@@ -882,7 +882,7 @@ end
 ---@field title LocalisedString?
 ---@field render_callback fun(ctx: fa.ui.TabContext): fa.ui.CategoryRows.Render?
 ---@field name string
----@field get_help_metadata fun(ctx: fa.ui.TabContext): fa.ui.help.HelpItem[]?
+---@field get_help_metadata (fun(ctx: fa.ui.TabContext): fa.ui.help.HelpItem[]?)?
 
 ---Declare a category-rows based tab
 ---@param declaration fa.ui.CategoryRows.Declaration

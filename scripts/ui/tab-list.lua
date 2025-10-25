@@ -83,7 +83,7 @@ local mod = {}
 ---@field search_hint fun(self, ctx: fa.ui.TabContext, hint_callback: fun(localised_string: LocalisedString))? Called to hint strings for caching
 ---@field search_move fun(self, message: fa.MessageBuilder, ctx: fa.ui.TabContext, direction: integer, matcher: fun(localised_string: LocalisedString): boolean): fa.ui.SearchResult? Move to next/prev search result, populate message with announcement
 ---@field search_all_from_start fun(self, ctx: fa.ui.TabContext): fa.ui.SearchResult? Search from start, move to first match
----@field get_help_metadata fun(self, ctx: fa.ui.TabContext): fa.ui.help.HelpItem[]? Returns help metadata for the current tab
+---@field get_help_metadata (fun(self, ctx: fa.ui.TabContext): fa.ui.help.HelpItem[]?)? Returns help metadata for the current tab
 
 ---@class fa.ui.TabDescriptor
 ---@field name string
@@ -729,7 +729,6 @@ function TabList:open(pindex, parameters, controller)
    self:_set_active_tab(pindex, tabstate.active_tab, nil, false, controller)
 end
 
----@param force_reset boolean? If true, also dump state.
 ---Get help metadata for the current active tab
 ---@param pindex number
 ---@return fa.ui.help.HelpItem[]?

@@ -71,8 +71,9 @@ local function render_section(ctx, section_index)
                local max_val = slot.max
 
                -- Localize the signal (works for both items and other signal types)
-               ---@cast slot.value SignalID
-               ctx.message:fragment(CircuitNetwork.localise_signal(slot.value))
+               local sid = slot.value
+               ---@cast sid SignalID
+               ctx.message:fragment(CircuitNetwork.localise_signal(sid))
                ctx.message:fragment(tostring(min_val))
                ctx.message:fragment("to")
                if max_val then

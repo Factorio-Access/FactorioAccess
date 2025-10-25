@@ -1,3 +1,10 @@
+# 0.16.8 (unreleased)
+
+- Restore the ability to use all cursor tools (fast travel, bookmarks, skipping, etc) while setting up blueprints
+  - Note: this is stil a UI and pressing e still cancels. Pressing e with another UI oppen just closes that one though,
+    dropping you back to what we internally call the overlay. So, you can go into fast travel and move your cursor and
+    use e to get out to the blueprint selection UI again, etc.
+
 # 0.16.7 (2025-10-23)
 
 - Equipment overhauled:

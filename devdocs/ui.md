@@ -262,3 +262,14 @@ to readd it: add `is_wrap = true` support to key-graph connections with Claude).
 The higher level builders mentioned at the top of this document are all built on this, except for category-rows which is
 special cased so that it can remember the position per category, and other things like textboxes and box selection which
 are flat out not menus.
+
+
+## Overlay Functionality
+
+UIs can opt into being an overlay by adding a `is_overlay` callback.  This does a few things:
+
+- passes everything but clicks to control.lua
+- Prevents closing when opening a UI, so that you can e.g. open fast travel while setting up a blueprint.
+- Closes to the overlay instead of the map on e, so that people can conveniently get back out of fast travel menus etc.
+
+Basically, in limited circumstances we need the cyclical behavior because the user needs to manipulate things with the cursor contextually, where the context is "I am making a  list of things by clicking them".  this lets them do that with all of their normal cursor tools.

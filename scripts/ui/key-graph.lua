@@ -101,12 +101,13 @@ local mod = {}
 ---@field child_context any? Context from child UI result (only set in on_child_result)
 
 ---@alias fa.ui.graph.SimpleCallback fun(fa.ui.GraphCtx)
+---@alias fa.ui.graph.ClickCallback fun(fa.ui.GraphCtx, fa.ui.Modifiers)
 ---@alias fa.ui.graph.ChildResultCallback fun(fa.ui.GraphCtx, any)
 
 ---@class fa.ui.graph.NodeVtable
 ---@field label fa.ui.graph.SimpleCallback Required always.
----@field on_click fa.ui.graph.SimpleCallback? By default, re-say the label instead.
----@field on_right_click fa.ui.graph.SimpleCallback?
+---@field on_click fa.ui.graph.ClickCallback? By default, re-say the label instead.
+---@field on_right_click fa.ui.graph.ClickCallback?
 ---@field on_read_coords fa.ui.graph.SimpleCallback?
 ---@field on_read_info fa.ui.graph.SimpleCallback? Y key - read detailed info about current item
 ---@field on_production_stats_announcement fa.ui.graph.SimpleCallback? U key - read production stats
@@ -168,6 +169,8 @@ mod.TRANSITION_DIR = {
 ---@field render fa.ui.graph.Render
 ---@field render_callback fa.ui.graph.RenderCallback
 ---@field name string
+---@field on_accelerator_callback fun(ctx: fa.ui.graph.Ctx, accelerator_name: string)? Handler for accelerator events
+---@field get_help_metadata_callback (fun(ctx: fa.ui.TabContext): fa.ui.help.HelpItem[]?)?
 local Graph = {}
 local Graph_meta = { __index = Graph }
 
@@ -811,7 +814,7 @@ end
 ---@field render_callback fa.ui.graph.RenderCallback
 ---@field name string
 ---@field on_accelerator fun(ctx: fa.ui.graph.Ctx, accelerator_name: string)?
----@field get_help_metadata fun(ctx: fa.ui.TabContext): fa.ui.help.HelpItem[]?
+---@field get_help_metadata (fun(ctx: fa.ui.TabContext): fa.ui.help.HelpItem[]?)?
 
 ---@param declaration fa.ui.graph.Declaration
 ---@return fa.ui.TabDescriptor

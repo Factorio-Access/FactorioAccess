@@ -4,11 +4,7 @@ A box selector.
 The player selects two points and we return them Note that this *DOES* mean that the second point = the first point if
 the player didn't move the cursor, and that in effect from the player's perspective this box includes the second point.
 ]]
-local StorageManager = require("scripts.storage-manager")
-local Viewpoint = require("scripts.viewpoint")
-local Speech = require("scripts.speech")
-local MessageBuilder = Speech.MessageBuilder
-local serpent = require("serpent")
+local MultipointSelector = require("scripts.ui.selectors.multipoint-selector")
 
 local mod = {}
 
@@ -18,128 +14,70 @@ local mod = {}
 
 ---@class fa.ui.BoxSelectorState
 ---@field first_click? {x: number, y: number, modifiers: table, is_right_click: boolean}
----@field callback_params table
-
----@type table<number, table<string, fa.ui.BoxSelectorState>>
-local box_selector_storage = StorageManager.declare_storage_module("box_selector", {}, {
-   ephemeral_state_version = 1,
-})
-
----@class fa.ui.BoxSelector : fa.ui.UiPanelBase
----@field callback? fun(pindex: number, params: table, result: table)
----@field declaration fa.ui.BoxSelectorDeclaration
-local BoxSelector = {}
-local BoxSelector_meta = { __index = BoxSelector }
-
-function BoxSelector:open(pindex, parameters, controller)
-   -- Always reinitialize state on open
-   box_selector_storage[pindex][self.ui_name] = {
-      first_click = parameters and parameters.first_point or nil,
-      callback_params = parameters or {},
-   }
-
-   -- Use intro message
-   local intro_msg = (parameters and parameters.intro_message) or { "fa.box-selector-intro" }
-   controller.message:fragment(intro_msg)
-
-   -- If second message provided, add it
-   if parameters and parameters.second_message then controller.message:fragment(parameters.second_message) end
-end
-
-function BoxSelector:close(pindex)
-   if box_selector_storage[pindex][self.ui_name] then
-      box_selector_storage[pindex][self.ui_name].first_click = nil
-      box_selector_storage[pindex][self.ui_name].callback_params = nil
-   end
-end
-
-function BoxSelector:on_click(pindex, modifiers, controller)
-   self:_handle_click(pindex, modifiers, false, controller)
-end
-
-function BoxSelector:on_right_click(pindex, modifiers, controller)
-   self:_handle_click(pindex, modifiers, true, controller)
-end
-
----Handle child result - not used for BoxSelector but needed for interface
-function BoxSelector:on_child_result(pindex, result_context, result, controller)
-   -- BoxSelector doesn't have children, so this is empty
-end
-
----Announce the intro message
-function BoxSelector:on_announce_title(pindex, modifiers, controller)
-   local state = box_selector_storage[pindex][self.ui_name]
-   if not state then return end
-
-   local intro_msg = (state.callback_params and state.callback_params.intro_message) or { "fa.box-selector-intro" }
-   controller.message:fragment(intro_msg)
-end
-
----@param controller fa.ui.RouterController
-function BoxSelector:_handle_click(pindex, modifiers, is_right_click, controller)
-   local viewpoint = Viewpoint.get_viewpoint(pindex)
-   local cursor_pos = viewpoint:get_cursor_pos()
-   local state = box_selector_storage[pindex][self.ui_name]
-
-   if not state.first_click then
-      -- First click
-      state.first_click = {
-         x = cursor_pos.x,
-         y = cursor_pos.y,
-         modifiers = modifiers or {},
-         is_right_click = is_right_click,
-      }
-      -- Speak second point message, including custom second_message if provided
-      local second_message = (state.callback_params and state.callback_params.second_message)
-         or { "fa.box-selector-second-point" }
-      controller.message:fragment(second_message)
-   else
-      -- Second click - complete selection
-      local result = {
-         first_click = state.first_click,
-         second_click = {
-            x = cursor_pos.x,
-            y = cursor_pos.y,
-            modifiers = modifiers or {},
-            is_right_click = is_right_click,
-         },
-         box = {
-            left_top = {
-               x = math.min(state.first_click.x, cursor_pos.x),
-               y = math.min(state.first_click.y, cursor_pos.y),
-            },
-            right_bottom = {
-               x = math.max(state.first_click.x, cursor_pos.x),
-               y = math.max(state.first_click.y, cursor_pos.y),
-            },
-         },
-         controller = controller,
-      }
-
-      -- Execute callback if provided
-      if self.callback then
-         self.callback(pindex, state.callback_params, result)
-         controller:close()
-      end
-
-      -- Close with result
-      controller:close_with_result(result)
-   end
-end
 
 ---@param declaration fa.ui.BoxSelectorDeclaration
----@return fa.ui.BoxSelector
+---@return fa.ui.UiPanelBase
 function mod.declare_box_selector(declaration)
    assert(declaration.ui_name, "BoxSelector declaration must have ui_name")
 
-   ---@type fa.ui.BoxSelector
-   local ret = setmetatable({
-      ui_name = declaration.ui_name,
-      callback = declaration.callback, -- Optional
-      declaration = declaration,
-   }, BoxSelector_meta)
+   local callback = declaration.callback
 
-   return ret
+   return MultipointSelector.declare_multipoint_selector({
+      ui_name = declaration.ui_name,
+      intro_message = { "fa.box-selector-intro" },
+      point_selected_callback = function(args)
+         ---@type fa.ui.BoxSelectorState
+         local state = args.state
+
+         if not state.first_click then
+            -- First click - store it
+            state.first_click = {
+               x = args.position.x,
+               y = args.position.y,
+               modifiers = args.modifiers or {},
+               is_right_click = args.kind == MultipointSelector.SELECTION_KIND.RIGHT,
+            }
+
+            local second_message = args.parameters.second_message or { "fa.box-selector-second-point" }
+            args.router_ctx.message:fragment(second_message)
+
+            return {
+               result_kind = MultipointSelector.RESULT_KIND.KEEP_GOING,
+               state = state,
+            }
+         else
+            -- Second click - build box and complete
+            local result = {
+               first_click = state.first_click,
+               second_click = {
+                  x = args.position.x,
+                  y = args.position.y,
+                  modifiers = args.modifiers or {},
+                  is_right_click = args.kind == MultipointSelector.SELECTION_KIND.RIGHT,
+               },
+               box = {
+                  left_top = {
+                     x = math.min(state.first_click.x, args.position.x),
+                     y = math.min(state.first_click.y, args.position.y),
+                  },
+                  right_bottom = {
+                     x = math.max(state.first_click.x, args.position.x),
+                     y = math.max(state.first_click.y, args.position.y),
+                  },
+               },
+               controller = args.router_ctx,
+            }
+
+            if callback then callback(args.router_ctx.pindex, args.parameters, result) end
+
+            args.router_ctx:close_with_result(result)
+
+            return {
+               result_kind = MultipointSelector.RESULT_KIND.STOP,
+            }
+         end
+      end,
+   })
 end
 
 return mod

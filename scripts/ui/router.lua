@@ -62,10 +62,13 @@ function mod.get_registered_uis()
    return registered_uis
 end
 
+---@alias fa.ui.Modifiers { control: boolean?, alt: boolean?, shift: boolean? }
+
 ---@class fa.ui.UiPanelBase
 ---@field ui_name fa.ui.UiName
 ---@field open fun(self, pindex: number, parameters: table, controller: fa.ui.RouterController)
 ---@field close? fun(self, pindex: number)
+---@field is_overlay? fun(self): boolean Return true if this UI is an overlay on the map
 ---@field on_click? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_right_click? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_up? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
@@ -272,9 +275,22 @@ end
 ---@param name fa.ui.UiName
 ---@param params? table Optional parameters to pass to the UI
 function Router:open_ui(name, params)
-   -- Clear stack then push new UI
-   self:_clear_ui_stack()
-   self:_push_ui(name, params)
+   -- If the top UI is an overlay, treat this as opening a child UI instead of clearing
+   if self:is_in_overlay(true) then
+      local stack = router_state[self.pindex].ui_stack
+      -- Check for cycles - don't allow opening a UI that's already in the stack
+      for _, entry in ipairs(stack) do
+         if entry.name == name then
+            Speech.speak(self.pindex, { "fa.ui-already-open" })
+            return
+         end
+      end
+      self:open_child_ui(name, params)
+   else
+      -- Clear stack then push new UI
+      self:_clear_ui_stack()
+      self:_push_ui(name, params)
+   end
 end
 
 function Router:close_ui()
@@ -284,7 +300,6 @@ end
 -- Core stack operations
 
 ---Push a UI onto the stack (open it)
----@private
 ---@param name fa.ui.UiName
 ---@param params? table
 ---@param context? any Context to store with this UI entry
@@ -309,7 +324,6 @@ function Router:_push_ui(name, params, context)
 end
 
 ---Pop the top UI from the stack (close it)
----@private
 ---@return fa.ui.UiName? The name of the UI that was closed
 function Router:_pop_ui()
    local stack = router_state[self.pindex].ui_stack
@@ -341,7 +355,6 @@ function Router:_pop_ui()
 end
 
 ---Clear all UIs from the stack
----@private
 function Router:_clear_ui_stack()
    local stack = router_state[self.pindex].ui_stack
    if #stack == 0 then return end
@@ -392,11 +405,45 @@ function Router:get_open_ui_name()
    return stack[#stack].name -- Return name from top of stack
 end
 
+---Check if there is an overlay in the UI stack
+---@param top_only? boolean If true, only check if the top UI is an overlay. If false/nil, check entire stack.
+---@return boolean
+function Router:is_in_overlay(top_only)
+   local stack = router_state[self.pindex].ui_stack
+   if #stack == 0 then return false end
+
+   if top_only then
+      -- Only check the top UI
+      local top_entry = stack[#stack]
+      local ui = registered_uis[top_entry.name]
+      if ui and ui.is_overlay and ui:is_overlay() then return true end
+   else
+      -- Check if any UI in the stack is an overlay
+      for _, entry in ipairs(stack) do
+         local ui = registered_uis[entry.name]
+         if ui and ui.is_overlay and ui:is_overlay() then return true end
+      end
+   end
+
+   return false
+end
+
 ---Open a child UI on top of the current one without closing it
 ---@param name fa.ui.UiName
 ---@param params? table Optional parameters to pass to the child UI
 ---@param context? any Optional context to store with this UI
 function Router:open_child_ui(name, params, context)
+   local stack = router_state[self.pindex].ui_stack
+
+   -- If we're in an overlay, check if this UI is already in the stack
+   if self:is_in_overlay() then
+      for _, entry in ipairs(stack) do
+         if entry.name == name then
+            error("Cannot enter UI " .. name .. " while already in it during overlay selection")
+         end
+      end
+   end
+
    -- Just push without clearing
    self:_push_ui(name, params, context)
 end
@@ -454,10 +501,12 @@ end
 ---Create a handler that routes to the appropriate TabList method
 ---@param method_name string The method name to call on the TabList
 ---@param modifiers? {control?: boolean, shift?: boolean, alt?: boolean} Optional modifier keys state
+---@param is_enabled_during_overlay? boolean If true, this handler works even when an overlay UI is open (default false)
 ---@return fun(event: EventData, pindex: integer): any
-local function create_ui_handler(method_name, modifiers)
+local function create_ui_handler(method_name, modifiers, is_enabled_during_overlay)
    -- Default to no modifiers if not provided
    modifiers = modifiers or { control = false, shift = false, alt = false }
+   is_enabled_during_overlay = is_enabled_during_overlay or false
 
    return function(event, pindex)
       local router = mod.get_router(pindex)
@@ -469,6 +518,11 @@ local function create_ui_handler(method_name, modifiers)
          local ui_name = top_entry.name
          if registered_uis[ui_name] then
             local ui = registered_uis[ui_name]
+
+            -- If we're in an overlay and this handler is not enabled during overlay, skip
+            local in_overlay = ui.is_overlay and ui:is_overlay()
+            if in_overlay and not is_enabled_during_overlay then return nil end
+
             -- Check if this UI has the method we're looking for
             if ui[method_name] then
                local controller = create_controller_for_event(router)
@@ -484,8 +538,6 @@ local function create_ui_handler(method_name, modifiers)
    end
 end
 
--- Register UI event handlers with UI priority at module load time
--- Movement keys (WASD)
 register_ui_event("fa-w", create_ui_handler("on_up"))
 register_ui_event("fa-s", create_ui_handler("on_down"))
 register_ui_event("fa-a", create_ui_handler("on_left"))
@@ -497,17 +549,15 @@ register_ui_event("fa-s-s", create_ui_handler("on_drag_down"))
 register_ui_event("fa-s-a", create_ui_handler("on_drag_left"))
 register_ui_event("fa-s-d", create_ui_handler("on_drag_right"))
 
--- Arrow keys (removed - using cursor anchoring instead)
-
--- Edge navigation (Ctrl+WASD)
+-- Edge navigation (Ctrl+WASD) - enabled during overlay for cursor navigation
 register_ui_event("fa-c-w", create_ui_handler("on_top"))
 register_ui_event("fa-c-s", create_ui_handler("on_bottom"))
 register_ui_event("fa-c-a", create_ui_handler("on_leftmost"))
 register_ui_event("fa-c-d", create_ui_handler("on_rightmost"))
 
--- Click/select (leftbracket is left click, rightbracket is right click)
-register_ui_event("fa-leftbracket", create_ui_handler("on_click"))
-register_ui_event("fa-rightbracket", create_ui_handler("on_right_click"))
+-- Click/select (leftbracket is left click, rightbracket is right click) - enabled during overlay
+register_ui_event("fa-leftbracket", create_ui_handler("on_click", nil, true))
+register_ui_event("fa-rightbracket", create_ui_handler("on_right_click", nil, true))
 
 -- Modified click handlers with modifiers
 -- Alt+click (only leftbracket exists)
@@ -528,11 +578,11 @@ register_ui_event("fa-s-tab", create_ui_handler("on_previous_tab"))
 register_ui_event("fa-c-tab", create_ui_handler("on_next_section"))
 register_ui_event("fa-cs-tab", create_ui_handler("on_previous_section"))
 
--- K key reads coordinates
-register_ui_event("fa-k", create_ui_handler("on_read_coords"))
+-- K key reads coordinates - enabled during overlay for cursor navigation
+register_ui_event("fa-k", create_ui_handler("on_read_coords", nil, true))
 
--- Y key reads custom info
-register_ui_event("fa-y", create_ui_handler("on_read_info"))
+-- Y key reads custom info - enabled during overlay for cursor navigation
+register_ui_event("fa-y", create_ui_handler("on_read_info", nil, true))
 
 -- U key reads production stats
 register_ui_event("fa-u", create_ui_handler("on_production_stats_announcement"))
@@ -567,7 +617,11 @@ register_ui_event("fa-c-backspace", create_ui_handler("on_dangerous_delete"))
 register_ui_event("fa-s-e", create_ui_handler("on_announce_title"))
 
 -- E key closes all UIs (inventory/menu close)
--- Special case: in help UI, E pops help instead of closing everything
+-- Special cases:
+-- 1. In help UI, E pops help instead of clearing everything
+-- 2. When in overlay context:
+--    - If overlay is on top: close just the overlay
+--    - If children above overlay: pop children until hitting overlay, but leave overlay open
 register_ui_event("fa-e", function(event, pindex)
    local router = mod.get_router(pindex)
    local stack = router_state[pindex].ui_stack
@@ -576,6 +630,30 @@ register_ui_event("fa-e", function(event, pindex)
    if #stack > 0 and stack[#stack].name == mod.UI_NAMES.HELP then
       -- Pop help UI instead of clearing everything
       router:_pop_ui()
+   elseif router:is_in_overlay() then
+      -- In overlay context
+      local top_entry = stack[#stack]
+      local top_ui = registered_uis[top_entry.name]
+      local top_is_overlay = top_ui and top_ui.is_overlay and top_ui:is_overlay()
+
+      if top_is_overlay then
+         -- Top is the overlay itself, close just the overlay
+         router:_pop_ui()
+      else
+         -- Children above overlay: pop until we hit the overlay (but don't pop it)
+         while #stack > 0 do
+            local current_entry = stack[#stack]
+            local current_ui = registered_uis[current_entry.name]
+            local is_overlay = current_ui and current_ui.is_overlay and current_ui:is_overlay()
+
+            if is_overlay then
+               -- Hit the overlay, stop without popping it
+               break
+            end
+
+            router:_pop_ui()
+         end
+      end
    else
       router:_clear_ui_stack()
    end
