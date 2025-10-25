@@ -696,7 +696,7 @@ register_ui_event("fa-a-e", function(event, pindex)
    return EventManager.FINISHED
 end)
 
--- Shift+/ (?) key toggles help UI
+-- Shift+/ (?) key toggles help UI - enabled during overlay to show UI help
 register_ui_event("fa-s-slash", function(event, pindex)
    local router = mod.get_router(pindex)
    local stack = router_state[pindex].ui_stack

@@ -77,6 +77,8 @@ require("scripts.ui.tabs.item-chooser")
 require("scripts.ui.tabs.signal-chooser")
 require("scripts.ui.tabs.fluid-chooser")
 require("scripts.ui.tabs.equipment-selector")
+local Help = require("scripts.ui.help")
+local MessageLists = require("scripts.message-lists")
 require("scripts.ui.logistics-config")
 require("scripts.ui.selectors.logistic-group-selector")
 require("scripts.ui.constant-combinator")
@@ -2634,6 +2636,38 @@ EventManager.on_event("fa-s-end", function(event)
    local char = player.character
    if not char then return end
    ScannerEntrypoint.do_refresh(event.player_index, char.direction)
+end)
+
+EventManager.on_event("fa-s-slash", function(event)
+   local pindex = event.player_index
+   local player = game.get_player(pindex)
+
+   local help_items = {}
+
+   -- Add hand status message
+   local cursor_stack = player.cursor_stack
+   if cursor_stack and cursor_stack.valid_for_read then
+      local item_name = Localising.get_localised_name_with_fallback(cursor_stack.prototype)
+      local msg = MessageBuilder.new():fragment({ "fa.hand-contains", item_name }):build()
+      table.insert(help_items, Help.message(msg))
+   else
+      table.insert(help_items, Help.message({ "fa.hand-empty" }))
+   end
+
+   -- If hand has item, check for prototype-specific help
+   if cursor_stack and cursor_stack.valid_for_read then
+      local prototype_type = cursor_stack.prototype.type
+      local help_list_name = prototype_type .. "-help"
+      if MessageLists.has_list(help_list_name) then table.insert(help_items, Help.message_list(help_list_name)) end
+   end
+
+   -- Add map help
+   table.insert(help_items, Help.message_list("map-help"))
+
+   -- Open help UI
+   local router = UiRouter.get_router(pindex)
+   local help_params = Help.create_parameters(help_items)
+   router:open_ui(UiRouter.UI_NAMES.HELP, help_params)
 end)
 
 -- Circuit/copper network neighbors (N key)

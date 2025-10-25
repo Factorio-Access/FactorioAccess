@@ -1,0 +1,104 @@
+This is the map view, which allows you to explore your local surface.  Please note that this menu is contextual, and will reveal more information for items that have special interactions.  That information will appear above this message so that you can easily find it.
+
+The following is a brief overview of basic controls. Please see the mod readme and the vanilla Factorio wiki for complete documentation of controls.
+
+Not all keys are provided by the mod.  Factorio itself has many keys not covered here.
+
+You have a cursor and a character.  Your cursor is like the mouse. Your character is your body.
+
+Your cursor is completely separate from your character, but your character must be close enough to things to build or configure them. In vanilla, this is around 10 tiles.
+
+To walk, use the arrow keys.
+
+To move the cursor, press w, a, s, and d.
+
+You can teleport with shift t.  This is a cheat, but many players find that it is fair because we are slower in many other aspects.
+
+When your cursor is on an entity, it is selected.
+
+Use k to get more information on the selected entity or what is in your hand.
+
+Right bracket provides even more information on the selected entity.
+
+Use q to empty your hand or perform the pipette action.  Use shift q to read your hand's contents.
+
+Use control left bracket to drop full stacks from your hand into the selected entity.
+
+Control right bracket drops a half stack instead.
+
+z drops one item.
+
+Picking loose items up is done by putting your character near them and holding f, or by mining them with x.
+
+Only holding f works if you want to grab from a belt, as mining removes the belt instead.
+
+j will return your cursor to your character, and i will toggle whether your cursor moves 1 tile in front of you when walking.
+
+Add shift to the cursor movement keys to move up to 100 tiles in any given direction, stopping early if an important change is found.
+
+Use control plus the cursor keys to move by the width or height of your item in hand, which can be used to easily build lines.
+
+To build, click with left bracket.
+
+Add shift to place a ghost instead.
+
+You mine by holding x.
+
+To rotate items clockwise press r.  This rotates your hand or the selected entity, depending on whether your hand is empty.
+
+Add shift to rotate counterclockwise.
+
+h and v flip horizontally and vertically, respectively. A flip is not always the same as rotating by 180 degrees.
+
+You can get to a variety of UIs from this view.
+
+To get to your main inventory, crafting, research, etc. use e.  This is often called the main menu.
+
+To get to the fast travel menu, use alt v.
+
+To get to the logistics interface for an item once you have unlocked bots, use control alt l.
+
+To open the UI for an entity, click it with left bracket.  Note that your hand sometimes must be empty to disambiguate between this and "fast replace", where for example a better chest will replace a worse one if you build over it.
+
+The mod supports a couple of lightweight features for orienting yourself.
+
+Use shift b to place a bookmark at the cursor and b to jump the cursor back to it.
+
+Rulers are a cross shape which play audio notifications whenever you cross one of the arms of the cross.
+
+To set a ruler, press control alt b.
+
+Once set, walk around and move your cursor to get a feel for how it works.
+
+To clear the ruler, use control shift b.
+
+Build lock is a feature which will place items behind you as your character runs.
+
+This is very useful to place things such as long lines of belts.
+
+Some entities have special build lock behavior.  The most important of these is belts, which will automatically face the way you are running.
+
+To enable build lock, press control b.
+
+Build lock disables if you bump into something, as the engine will move you off the line you intended to be on.
+
+Using build lock and rulers together is a fun way to quickly place long lines of belts and pipes.
+
+There are some important keys to get tools into your hand.  They are as follows.
+
+Use control c to get the copy tool.
+
+Use control x to get the cut tool.
+
+Use control v to get a temporary blueprint of whatever you last cut or copied.
+
+Use alt b to get an empty permanent blueprint.
+
+Use alt d to get a deconstruction planner.
+
+Use alt u to get an upgrade planner.
+
+Use control alt shift b to get a blueprint book.
+
+
+For controls related to driving, more advanced functions, and combat, please see the mod documentation on GitHub.

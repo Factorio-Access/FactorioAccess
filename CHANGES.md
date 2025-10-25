@@ -4,6 +4,9 @@
   - Note: this is stil a UI and pressing e still cancels. Pressing e with another UI oppen just closes that one though,
     dropping you back to what we internally call the overlay. So, you can go into fast travel and move your cursor and
     use e to get out to the blueprint selection UI again, etc.
+- The map now has contextual help, accessed with `shift + /`. This includes:
+  - Any help for what you are holding, if it has relevant special functionality
+  - Information on the non-UI controls of the mod
 
 # 0.16.7 (2025-10-23)
 

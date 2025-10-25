@@ -13,12 +13,13 @@ mod.MESSAGE_LISTS = {
    ["equipment-grid-help"] = true,
    ["general-ui-help"] = true,
    ["inventory-grid-help"] = true,
+   ["map-help"] = true,
    ["menu-help"] = true,
    ["research-menu-help"] = true,
    ["research-queue-help"] = true,
    ["warnings-menu-help"] = true,
 }
 
-mod.MESSAGE_LISTS_HASH = "0e5897258c515c722cbab7a013429549371d9cbf5e259712c1630044ff427a88"
+mod.MESSAGE_LISTS_HASH = "287bfd48d9bfbc1662b809275d60c6547e1f01f382942cedad431063647e3e0d"
 
 return mod

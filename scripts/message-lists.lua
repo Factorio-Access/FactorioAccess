@@ -105,6 +105,13 @@ function mod.get_message_list_meta(pindex, list_name)
    return { status = mod.STATUS.READY, metadata = metadata, messages = messages }
 end
 
+---Check if a message list exists.
+---@param list_name string
+---@return boolean
+function mod.has_list(list_name)
+   return MessageListIndex.MESSAGE_LISTS[list_name] ~= nil
+end
+
 ---Event handler for on_string_translated.
 ---Should be called from the main event handler in control.lua.
 ---@param event EventData.on_string_translated
