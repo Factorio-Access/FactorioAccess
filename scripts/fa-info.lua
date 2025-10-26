@@ -1318,7 +1318,7 @@ function mod.ent_info(pindex, ent, is_scanner)
       local drop = ent.drop_target
       local drop_name = nil
       if drop ~= nil and drop.valid then
-         drop_name = Localising.get(drop, pindex)
+         drop_name = Localising.get_localised_name_with_fallback(drop)
       else
          drop_name = "ground"
          local drop_area_ents = ent.surface.find_entities_filtered({ position = ent.drop_position })

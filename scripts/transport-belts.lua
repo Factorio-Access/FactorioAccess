@@ -28,6 +28,23 @@ local function count3(a, b, c)
    return (a and 1 or 0) + (b and 1 or 0) + (c and 1 or 0)
 end
 
+-- Get the input direction of a belt connectable.
+---@param connectable LuaEntity
+---@return defines.direction
+local function get_input_direction(connectable)
+   local incoming_dir = connectable.direction
+
+   if connectable.type == "transport-belt" then
+      if connectable.belt_shape == "left" then
+         incoming_dir = Geometry.dir_clockwise_90(incoming_dir)
+      elseif connectable.belt_shape == "right" then
+         incoming_dir = Geometry.dir_counterclockwise_90(incoming_dir)
+      end
+   end
+
+   return incoming_dir
+end
+
 --[[
 Return, as up to 3 values, the parents of a belt connectable.  The 3 values so
 returned are behind, left, right.  The relevant return values will be nil.  For
@@ -94,15 +111,7 @@ local function get_parents(connectable)
       -- sideloads, as that is an expensive operation.
       if #inputs == 1 and inputs[1].direction == outgoing_dir then return inputs[1], nil, nil end
 
-      local incoming_dir = connectable.direction
-
-      if connectable.type == "transport-belt" then
-         if connectable.belt_shape == "left" then
-            incoming_dir = Geometry.dir_clockwise_90(incoming_dir)
-         elseif connectable.belt_shape == "right" then
-            incoming_dir = Geometry.dir_counterclockwise_90(incoming_dir)
-         end
-      end
+      local incoming_dir = get_input_direction(connectable)
 
       -- Has (up to) 3 parents.  We figure out which parent is which by
       -- examining the directions of the input.  This is counterclockwise 90
@@ -238,27 +247,15 @@ function Node:get_shape_info()
    local children = get_children(e)
    ret.has_output = #children > 0
 
-   -- Work out pouring.
-   if e.type == "transport-belt" and e.belt_shape == "straight" and ret.has_output then
+   -- Work out pouring. A belt "pours" when its output direction doesn't align
+   -- with the child's input (perpendicular connection to the side). Check by
+   -- comparing output direction to the 180-degree rotation of the child's input.
+   if (e.type == "transport-belt" or e.type == "underground-belt") and ret.has_output then
       assert(#children == 1)
 
-      -- If the next thing is a transport belt and it is a corner then it is
-      -- outputting 90 degrees off based on which way it goes, and we must
-      -- account for that.  What we want is the direction of the input.  These
-      -- aren't backwards if you visualize it.  A left turn's input is 90
-      -- degrees to the clockwise because going left offset it 90 degrees
-      -- counterclockwise, and that's what we want to undo.
       local child = children[1]
-      local child_dir = child.direction
-      if child.type == "transport-belt" then
-         if child.belt_shape == "left" then
-            child_dir = Geometry.dir_clockwise_90(child_dir)
-         elseif child.belt_shape == "right" then
-            child_dir = Geometry.dir_counterclockwise_90(child_dir)
-         end
-      end
-
-      ret.is_pouring = e.direction ~= child_dir
+      local child_input_dir = get_input_direction(child)
+      ret.is_pouring = e.direction ~= child_input_dir
    end
 
    -- Translate corners to the enum.
@@ -297,7 +294,7 @@ The items table is prototype->quality->count.
 ---@return  fa.TransportBelts.SlotBucket[]
 function Node:get_line_contents(line)
    self:_assert_valid()
-   line = self.entity.get_transport_line(line --[[@as number]])
+   local line = self.entity.get_transport_line(line --[[@as number]])
 
    local buckets = {}
 
@@ -397,7 +394,7 @@ end
 ---@param line defines.transport_line
 function Node:is_line_full(line)
    self:_assert_valid()
-   line = self.entity.get_transport_line(line --[[@as number]])
+   local line = self.entity.get_transport_line(line --[[@as number]])
    local expected = line.line_length * 4
    return #line == expected
 end
@@ -748,6 +745,7 @@ end
 --Set the input priority or the output priority or filter for a splitter
 function mod.set_splitter_priority(splitter, is_input, is_left, filter_item_stack, clear)
    clear = clear or false
+   ---@type LocalisedString
    local result = { "fa.splitter-no-message" }
    local filter = splitter.splitter_filter
 
