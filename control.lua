@@ -60,7 +60,7 @@ local Teleport = require("scripts.teleport")
 local TestFramework = require("scripts.test-framework")
 local TransportBelts = require("scripts.transport-belts")
 local TravelTools = require("scripts.travel-tools")
-local TutorialSystem = require("scripts.tutorial-system")
+
 -- UI modules (required for registration with router)
 require("scripts.ui.belt-analyzer")
 local EntityUI = require("scripts.ui.entity-ui")
@@ -419,12 +419,7 @@ function on_tick(event)
    elseif event.tick % 450 == 14 then
       --Run regular reminders every 7.5 seconds
       for pindex, player in pairs(players) do
-         --Tutorial reminder every 10 seconds until you open it
-         if storage.players[pindex].started ~= true then
-            Speech.speak(pindex, { "fa.press-tab-to-begin" })
-         elseif storage.players[pindex].tutorial == nil then
-            Speech.speak(pindex, { "fa.press-h-for-tutorial" })
-         elseif game.get_player(pindex).ticks_to_respawn ~= nil then
+         if game.get_player(pindex).ticks_to_respawn ~= nil then
             Speech.speak(
                pindex,
                { "fa.respawn-countdown", tostring(math.floor(game.get_player(pindex).ticks_to_respawn / 60)) }
