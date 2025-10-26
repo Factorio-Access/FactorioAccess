@@ -54,6 +54,7 @@ local Research = require("scripts.research")
 local Rulers = require("scripts.rulers")
 local ScannerEntrypoint = require("scripts.scanner.entrypoint")
 local Spidertron = require("scripts.spidertron")
+local SpidertronRemote = require("scripts.spidertron-remote")
 local TH = require("scripts.table-helpers")
 local Teleport = require("scripts.teleport")
 local TestFramework = require("scripts.test-framework")
@@ -73,6 +74,7 @@ require("scripts.ui.menus.gun-menu")
 local MainMenu = require("scripts.ui.menus.main-menu")
 require("scripts.ui.menus.fast-travel-menu")
 require("scripts.ui.menus.debug-menu")
+local SpidertronRemoteSelector = require("scripts.ui.menus.spidertron-remote-selector")
 require("scripts.ui.tabs.item-chooser")
 require("scripts.ui.tabs.signal-chooser")
 require("scripts.ui.tabs.fluid-chooser")
@@ -2657,7 +2659,7 @@ EventManager.on_event("fa-s-slash", function(event)
    -- If hand has item, check for prototype-specific help
    if cursor_stack and cursor_stack.valid_for_read then
       local prototype_type = cursor_stack.prototype.type
-      local help_list_name = prototype_type .. "-help"
+      local help_list_name = prototype_type .. "-protohelp"
       if MessageLists.has_list(help_list_name) then table.insert(help_items, Help.message_list(help_list_name)) end
    end
 
@@ -3190,6 +3192,12 @@ EventManager.on_event(
                second_message = false,
             })
             return
+         elseif stack.prototype.type == "spidertron-remote" then
+            -- Add autopilot point for spidertron remote (enqueue, don't clear)
+            local vp = Viewpoint.get_viewpoint(pindex)
+            local cursor_pos = vp:get_cursor_pos()
+            SpidertronRemote.add_to_autopilot(p, cursor_pos, false)
+            return
          end
       end
 
@@ -3371,14 +3379,38 @@ EventManager.on_event(
    function(event, pindex)
       if storage.players[pindex].last_click_tick == event.tick then return end
       local router = UiRouter.get_router(pindex)
-      local stack = game.get_player(pindex).cursor_stack
+      local p = game.get_player(pindex)
+      local stack = p.cursor_stack
 
       if stack and stack.valid_for_read and stack.valid then
-         kb_click_hand_right(event)
+         if stack.prototype.type == "spidertron-remote" then
+            -- Toggle selected spidertron on remote
+            local entity = EntitySelection.get_first_ent_at_tile(pindex)
+            if entity and entity.type == "spider-vehicle" then
+               SpidertronRemote.toggle_spidertron(p, entity)
+            else
+               Speech.speak(pindex, { "fa.spidertron-remote-no-spidertron-selected" })
+            end
+         else
+            kb_click_hand_right(event)
+         end
       else
          -- Empty hand case - read entity status
 
          kb_read_entity_status(event)
+      end
+   end
+)
+
+EventManager.on_event(
+   "fa-a-rightbracket",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local p = game.get_player(pindex)
+      local stack = p.cursor_stack
+
+      if stack and stack.valid_for_read and stack.prototype.type == "spidertron-remote" then
+         SpidertronRemoteSelector.open_spidertron_selector(pindex)
       end
    end
 )
@@ -3411,6 +3443,14 @@ EventManager.on_event(
 
       -- Place ghost if item in hand can be built
       if stack and stack.valid_for_read then
+         if stack.prototype.type == "spidertron-remote" then
+            -- Clear autopilot and set new destination for spidertron remote
+            local vp = Viewpoint.get_viewpoint(pindex)
+            local cursor_pos = vp:get_cursor_pos()
+            SpidertronRemote.add_to_autopilot(p, cursor_pos, true)
+            return
+         end
+
          local proto = stack.prototype
          if proto.place_result or proto.place_as_tile_result then
             -- Item can be placed as a ghost
@@ -4202,14 +4242,32 @@ EventManager.on_event("fa-comma", function(event)
 end, EventManager.EVENT_KIND.WORLD)
 
 EventManager.on_event("fa-m", function(event)
-   cycle_blueprint_book(event.player_index, -1)
+   local pindex = event.player_index
+   local player = game.get_player(pindex)
+   local stack = player.cursor_stack
+
+   if stack and stack.valid_for_read and stack.prototype.type == "spidertron-remote" then
+      SpidertronRemote.cycle_spidertrons(player, -1)
+      read_tile(pindex)
+   else
+      cycle_blueprint_book(pindex, -1)
+   end
 end, EventManager.EVENT_KIND.WORLD)
 
 EventManager.on_event("fa-dot", function(event)
-   cycle_blueprint_book(event.player_index, 1)
+   local pindex = event.player_index
+   local player = game.get_player(pindex)
+   local stack = player.cursor_stack
+
+   if stack and stack.valid_for_read and stack.prototype.type == "spidertron-remote" then
+      SpidertronRemote.cycle_spidertrons(player, 1)
+      read_tile(pindex)
+   else
+      cycle_blueprint_book(pindex, 1)
+   end
 end, EventManager.EVENT_KIND.WORLD)
 
--- Dangerous delete: Delete blueprint/decon/upgrade planner from hand
+-- Dangerous delete: Delete blueprint/decon/upgrade planner from hand, or clear spidertron remote list
 EventManager.on_event("fa-c-backspace", function(event)
    local pindex = event.player_index
    local player = game.get_player(pindex)
@@ -4218,6 +4276,12 @@ EventManager.on_event("fa-c-backspace", function(event)
    local cursor_stack = player.cursor_stack
    if not cursor_stack or not cursor_stack.valid_for_read then
       Speech.speak(pindex, { "fa.dangerous-delete-nothing-to-delete" })
+      return
+   end
+
+   -- Check for spidertron remote
+   if cursor_stack.prototype.type == "spidertron-remote" then
+      SpidertronRemote.clear_remote(player)
       return
    end
 
@@ -4240,6 +4304,18 @@ EventManager.on_event("fa-c-backspace", function(event)
       Speech.speak(pindex, { "fa.dangerous-delete-deleted", item_description })
    else
       Speech.speak(pindex, { "fa.dangerous-delete-not-planner" })
+   end
+end, EventManager.EVENT_KIND.WORLD)
+
+-- Clear autopilot for spidertron remote
+EventManager.on_event("fa-backspace", function(event)
+   local pindex = event.player_index
+   local player = game.get_player(pindex)
+   if not player then return end
+
+   local cursor_stack = player.cursor_stack
+   if cursor_stack and cursor_stack.valid_for_read and cursor_stack.prototype.type == "spidertron-remote" then
+      SpidertronRemote.clear_autopilot(player)
    end
 end, EventManager.EVENT_KIND.WORLD)
 

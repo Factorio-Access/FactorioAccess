@@ -8,6 +8,12 @@
   - Any help for what you are holding, if it has relevant special functionality
   - Information on the non-UI controls of the mod
 - Get `control + shift + left bracket` back. Somehow, the mapping for this went missing.
+- Spidertron support is back:
+  - Spidertron UI has a spidertron configuration tab including renaming and setting autopilot.
+  - Spidertron remotes work and support 2.0 functionality. To learn how to use one, press alt + a (vanillayu keybinding)
+    and then hit `shift + slash` for context sensitive help.
+  - Moving forward, context sensitive help is how you will learn about item specific interactions and keys. As we
+    continue reimplementing, more and more information will appear there.
 
 # 0.16.7 (2025-10-23)
 

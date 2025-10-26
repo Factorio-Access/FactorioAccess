@@ -106,7 +106,7 @@ local BACKEND_LUT = {
    ["simple-entity-with-owner"] = SEB.Other,
    ["simple-entity"] = SEB.Other,
    ["solar-panel"] = SEB.LogisticsAndPower,
-   ["spider-vehicle"] = SEB.Vehicle,
+   ["spider-vehicle"] = SEB.Spidertron,
    ["splitter"] = SEB.LogisticsAndPower,
    ["storage-tank"] = SEB.LogisticsWithFluid,
    ["straight-rail"] = SEB.TrainsSimple,
@@ -203,7 +203,7 @@ end
 local surface_state = StorageManager.declare_storage_module(
    "scanner",
    new_empty_surface,
-   { root_field = "surfaces", ephemeral_state_version = 10 }
+   { root_field = "surfaces", ephemeral_state_version = 11 }
 )
 
 -- Given a backend setup and an array of entities, dispatch the entities to the

@@ -1,0 +1,17 @@
+This is a spidertron remote, used to control one or more spidertrons.
+
+To add a spidertron to the remote, move your cursor to a tile with a spidertron and press right bracket. Press right bracket again on a linked spidertron to unlink it.
+
+To open a menu to select multiple spidertrons, press alt right bracket. This menu shows all spidertrons on the relevant surface in your force.
+
+To remove all spidertrons from the remote, press ctrl backspace.
+
+To add your cursor position to the autopilot queue for all spidertrons, press left bracket. This adds a waypoint to the existing queue.
+
+To clear the autopilot queue and set a new destination, press shift left bracket. This replaces all existing waypoints with the cursor position.
+
+To clear the autopilot queue without setting a new destination, press backspace.
+
+To cycle through spidertrons on the remote, use m and dot. Your cursor will move to each spidertron and read the tile information.
+
+Please note that after moving spidertrons, they often all end up on the same tile, so it may seem like this is not working. We hope to improve this in future.

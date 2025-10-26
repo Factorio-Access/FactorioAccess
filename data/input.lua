@@ -738,6 +738,13 @@ data:extend({
 
    {
       type = "custom-input",
+      name = "fa-a-rightbracket",
+      key_sequence = "ALT + RIGHTBRACKET",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
       name = "fa-ca-rightbracket",
       key_sequence = "CONTROL + ALT + RIGHTBRACKET",
       consuming = "none",

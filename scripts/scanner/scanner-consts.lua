@@ -10,6 +10,7 @@ mod.CATEGORIES = {
    LOGISTICSAndPower = "logistics_and_power",
    PRODUCTION = "production",
    VEHICLES = "vehicles",
+   SPIDERTRONS = "spidertrons",
    TRAINS = "trains",
    GHOSTS = "ghosts",
    PLAYERS = "players", -- actually character.
@@ -32,6 +33,7 @@ mod.CATEGORY_ORDER = {
    mod.CATEGORIES.CONTAINERS,
    mod.CATEGORIES.MILITARY,
    mod.CATEGORIES.VEHICLES,
+   mod.CATEGORIES.SPIDERTRONS,
    mod.CATEGORIES.TRAINS,
    mod.CATEGORIES.GHOSTS,
    mod.CATEGORIES.PLAYERS,
