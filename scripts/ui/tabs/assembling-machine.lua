@@ -29,7 +29,7 @@ local function handle_recipe_click(ctx, recipe, entity)
    -- Announce the change
    ctx.message:fragment({
       "fa.assembling-machine-recipe-set",
-      Localising.get_recipe_from_name(recipe.name, ctx.pindex),
+      Localising.get_localised_name_with_fallback(recipe),
    })
 
    -- If items were removed, announce them
@@ -83,7 +83,7 @@ local function render_assembling_machine_recipes(ctx)
       if recipes and #recipes > 0 then
          -- Get group name from first recipe
          local group_name = recipes[1].group.name
-         local group_label = Localising.get_alt(recipes[1].group, ctx.pindex)
+         local group_label = Localising.get_localised_name_with_fallback(recipes[1].group)
 
          builder:add_category(group_name, group_label)
 

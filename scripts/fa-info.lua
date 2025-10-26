@@ -1221,7 +1221,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    pcall(function()
       if ent.get_recipe() ~= nil then
          ctx.message:fragment({ "fa.ent-info-producing" })
-         ctx.message:list_item(Localising.get_recipe_from_name(ent.get_recipe().name, pindex))
+         ctx.message:list_item(Localising.get_localised_name_with_fallback(ent.get_recipe()))
       end
    end)
    --For furnaces (which produce only 1 output item type at a time) state how many output units are ready
@@ -1303,7 +1303,7 @@ function mod.ent_info(pindex, ent, is_scanner)
       local pickup = ent.pickup_target
       local pickup_name = nil
       if pickup ~= nil and pickup.valid then
-         pickup_name = Localising.get(pickup, pindex)
+         pickup_name = Localising.get_localised_name_with_fallback(pickup)
       else
          pickup_name = "ground"
          local area_ents = ent.surface.find_entities_filtered({ position = ent.pickup_position })

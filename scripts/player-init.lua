@@ -309,7 +309,6 @@ function mod.initialize(player)
 
    faplayer.localisations = faplayer.localisations or {}
    faplayer.translation_id_lookup = faplayer.translation_id_lookup or {}
-   Localising.check_player(player.index)
 
    -- Bump detection is now self-initializing via StorageManager
 end

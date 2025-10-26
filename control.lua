@@ -320,7 +320,6 @@ end
 function on_player_join(pindex)
    schedule(3, "call_to_fix_zoom", pindex)
    schedule(4, "call_to_sync_graphics", pindex)
-   Localising.check_player(pindex)
    local playerList = {}
    for _, p in pairs(game.connected_players) do
       playerList["_" .. p.index] = p.name

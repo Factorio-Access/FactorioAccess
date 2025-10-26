@@ -74,7 +74,7 @@ end
 ---@param pindex number Player index
 ---@param is_current boolean? Whether this is the currently selected recipe
 function mod.create_recipe_label(message, recipe, pindex, is_current)
-   message:fragment(Localising.get_recipe_from_name(recipe.name, pindex))
+   message:fragment(Localising.get_localised_name_with_fallback(recipe))
 
    if is_current then message:fragment({ "fa.assembling-machine-current-recipe" }) end
 end
