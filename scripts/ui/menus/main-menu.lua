@@ -79,7 +79,7 @@ mod.main_menu = TabList.declare_tablist({
          title = { "fa.section-research" },
          tabs = {
             research.research_tab,
-            research_queue.research_tab,
+            research_queue.research_queue_tab,
          },
       })
 

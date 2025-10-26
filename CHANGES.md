@@ -1,6 +1,7 @@
 # 0.16.9 (unreleased)
 
 - Get ctrl shift left bracket back from git history. Dropped during equipment overhaul by mistake.
+- remount the research queue
 
 # 0.16.8 (2025-10-25)
 
