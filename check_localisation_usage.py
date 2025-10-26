@@ -31,6 +31,7 @@ DYNAMIC_PATTERNS = [
     "fa.warning-type-",
     "fa.messagelist--",
     "fa.spidertron-remote-autopilot-",
+    "fa.ent-info-heat-conn-",
 ]
 
 
