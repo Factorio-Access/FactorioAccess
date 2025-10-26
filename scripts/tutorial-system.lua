@@ -315,8 +315,8 @@ function mod.read_current_header(pindex)
    local i = tutorial.chapter_index
    local j = tutorial.step_index
    local str = tutorial.step_headers[i][j]
-   local str2 = ", tutorial step " .. j .. " of " .. tutorial.chapter_lengths[i] .. " in chapter " .. i
-   str = { "", str, str2 }
+   local str2 = { "fa.tutorial-step-info", j, tutorial.chapter_lengths[i], i }
+   str = { "", str, ", ", str2 }
    Speech.speak(pindex, str)
    game.get_player(pindex).print(str, { volume_modifier = 0 })
 end
@@ -328,16 +328,14 @@ function mod.read_current_detail(pindex)
    local str = tutorial.step_details[i][j]
    local str_h = tutorial.step_headers[i][j]
    Speech.speak(pindex, str)
-   game.get_player(pindex).print(
-      "Tutorial message, chapter "
-         .. storage.players[pindex].tutorial.chapter_index
-         .. " , step "
-         .. storage.players[pindex].tutorial.step_index
-         .. ": ",
-      { volume_modifier = 0 }
-   ) --
-   game.get_player(pindex).print(str_h, { volume_modifier = 0 }) --
-   game.get_player(pindex).print(str, { volume_modifier = 0 }) --
+   local label = {
+      "fa.tutorial-message-label",
+      storage.players[pindex].tutorial.chapter_index,
+      storage.players[pindex].tutorial.step_index,
+   }
+   game.get_player(pindex).print({ "", label, ": " }, { volume_modifier = 0 })
+   game.get_player(pindex).print(str_h, { volume_modifier = 0 })
+   game.get_player(pindex).print(str, { volume_modifier = 0 })
 end
 
 --For most steps this reads the already-loaded strings
@@ -350,11 +348,13 @@ function mod.run_tutorial_menu(pindex, reading_the_header, clicked)
       --Read out chapter 0 start message
       if reading_the_header == false then
          Speech.speak(pindex, tutorial.chapter_0_messages[step])
-         game.get_player(pindex).print("Tutorial start message " .. step .. ":", { volume_modifier = 0 }) --
+         local label = { "fa.tutorial-start-message-label", step }
+         game.get_player(pindex).print({ "", label, ":" }, { volume_modifier = 0 })
          game.get_player(pindex).print(tutorial.chapter_0_messages[step], { volume_modifier = 0 })
       else
          Speech.speak(pindex, tutorial.chapter_0_headers[step])
-         game.get_player(pindex).print("Tutorial start message " .. step .. ":", { volume_modifier = 0 }) --
+         local label = { "fa.tutorial-start-message-label", step }
+         game.get_player(pindex).print({ "", label, ":" }, { volume_modifier = 0 })
          game.get_player(pindex).print(tutorial.chapter_0_headers[step], { volume_modifier = 0 })
       end
 
@@ -371,11 +371,13 @@ function mod.run_tutorial_menu(pindex, reading_the_header, clicked)
       --Read out chapter 0 start message
       if reading_the_header == false then
          Speech.speak(pindex, tutorial.chapter_0_messages[step])
-         game.get_player(pindex).print("Tutorial start message " .. step .. ":", { volume_modifier = 0 }) --
+         local label = { "fa.tutorial-start-message-label", step }
+         game.get_player(pindex).print({ "", label, ":" }, { volume_modifier = 0 })
          game.get_player(pindex).print(tutorial.chapter_0_messages[step], { volume_modifier = 0 })
       else
          Speech.speak(pindex, tutorial.chapter_0_headers[step])
-         game.get_player(pindex).print("Tutorial start message " .. step .. ":", { volume_modifier = 0 }) --
+         local label = { "fa.tutorial-start-message-label", step }
+         game.get_player(pindex).print({ "", label, ":" }, { volume_modifier = 0 })
          game.get_player(pindex).print(tutorial.chapter_0_headers[step], { volume_modifier = 0 })
       end
    elseif chap == -1 and step == -1 then --Example

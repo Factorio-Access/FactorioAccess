@@ -67,10 +67,7 @@ local function render_signals(ctx, title, both_wires, wire_connector_id)
       menu:add_item(key_prefix .. "_summary", {
          label = function(ctx)
             local signal_name = CircuitNetworks.localise_signal(sig_info.signal_id)
-            ctx.message:fragment(signal_name)
-            ctx.message:fragment(" x ")
-            ctx.message:fragment(tostring(sig_info.total_count))
-            ctx.message:fragment(", ")
+            ctx.message:fragment({ "fa.circuit-network-signal-summary", signal_name, sig_info.total_count })
             ctx.message:fragment({ "fa.circuit-network-quality-hint" })
          end,
          on_production_stats_announcement = function(ctx)
@@ -89,9 +86,8 @@ local function render_signals(ctx, title, both_wires, wire_connector_id)
             label = function(ctx)
                -- Show quality name x count
                local quality_proto = prototypes.quality[quality_name]
-               ctx.message:fragment(Localising.get_localised_name_with_fallback(quality_proto))
-               ctx.message:fragment(" x ")
-               ctx.message:fragment(tostring(count))
+               local quality_label = Localising.get_localised_name_with_fallback(quality_proto)
+               ctx.message:fragment({ "fa.circuit-network-quality-count", quality_label, count })
             end,
          })
       end

@@ -51,16 +51,9 @@ local function render_inserter_config(ctx)
 
    -- Row 1: Hand size control (textfield with 0 = unset)
    local function build_hand_size_label(message, ctx)
-      message:fragment({ "fa.inserter-hand-size" })
-
       local override = entity.inserter_stack_size_override
-      if override == 0 then
-         message:fragment({ "fa.inserter-hand-size-unset" })
-      else
-         message:fragment(tostring(override))
-      end
-
-      message:fragment({ "fa.inserter-hand-size-help" })
+      local value_text = override == 0 and { "fa.inserter-hand-size-unset" } or tostring(override)
+      message:fragment({ "fa.inserter-hand-size-full", value_text })
    end
 
    form:add_item("hand_size", {
@@ -133,8 +126,7 @@ local function render_inserter_config(ctx)
             local signal = get_value()
             local value_text
             if signal and signal.name then
-               local signal_type = signal.type or "item"
-               value_text = signal_type .. " " .. signal.name
+               value_text = { "fa.inserter-signal-value", signal.type or "item", signal.name }
             else
                value_text = { "fa.empty" }
             end
@@ -152,8 +144,7 @@ local function render_inserter_config(ctx)
             on_child_result = function(ctx, result)
                set_value(result)
                if result and result.name then
-                  local signal_type = result.type or "item"
-                  ctx.controller.message:fragment(signal_type .. " " .. result.name)
+                  ctx.controller.message:fragment({ "fa.inserter-signal-value", result.type or "item", result.name })
                else
                   ctx.controller.message:fragment({ "fa.empty" })
                end

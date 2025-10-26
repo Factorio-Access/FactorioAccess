@@ -16,12 +16,7 @@ function mod.vehicle_info(pindex)
    local train = game.get_player(pindex).vehicle.train
    if train == nil then
       --This is a type of car or tank.
-      local result = MessageBuilder.new()
-      result:fragment({ "fa.driving-car", { "entity-name." .. vehicle.name } })
-      result:fragment(", ")
-      result:fragment(mod.fuel_inventory_info(vehicle))
-      --laterdo**: car info: health, ammo contents, trunk contents
-      return result:build()
+      return { "fa.driving-car", { "entity-name." .. vehicle.name }, mod.fuel_inventory_info(vehicle) }
    else
       --This is a type of locomotive or wagon - trains not supported
       return { "fa.driving-trains-not-supported" }
@@ -36,23 +31,15 @@ function mod.fuel_inventory_info(ent)
    end)
    if #itemtable == 0 then return { "fa.driving-no-fuel" } end
 
-   local result = MessageBuilder.new()
-   result:fragment({ "fa.driving-contains-fuel" })
-   result:fragment({ "fa.driving-fuel-item", { "item-name." .. itemtable[1].name }, tostring(itemtable[1].count) })
-   result:fragment(" ")
-
-   if #itemtable > 1 then
-      result:fragment({ "fa.and" })
-      result:fragment({ "fa.driving-fuel-item", { "item-name." .. itemtable[2].name }, tostring(itemtable[2].count) })
-      result:fragment(" ")
-   end
-   if #itemtable > 2 then
-      result:fragment({ "fa.and" })
-      result:fragment({ "fa.driving-fuel-item", { "item-name." .. itemtable[3].name }, tostring(itemtable[3].count) })
-      result:fragment(" ")
+   local fuel_items = {}
+   for i = 1, math.min(3, #itemtable) do
+      table.insert(
+         fuel_items,
+         { "fa.driving-fuel-item", { "item-name." .. itemtable[i].name }, tostring(itemtable[i].count) }
+      )
    end
 
-   return result:build()
+   return { "fa.driving-contains-fuel", FaUtils.build_list(fuel_items) }
 end
 
 --Plays an alert depending on the distance to the entity ahead. Returns whether a larger radius check is needed. Driving proximity alert

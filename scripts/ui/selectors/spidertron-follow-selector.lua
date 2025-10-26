@@ -40,10 +40,10 @@ local function on_point_selected(args)
       -- Set the follow target
       spidertron.follow_target = args.entity
 
-      local message = MessageBuilder.new()
-      message:fragment({ "fa.spidertron-follow-set" })
-      message:fragment(Localising.get_localised_name_with_fallback(args.entity))
-      args.router_ctx.message:fragment(message:build())
+      args.router_ctx.message:fragment({
+         "fa.spidertron-follow-set-entity",
+         Localising.get_localised_name_with_fallback(args.entity),
+      })
 
       return { result_kind = MultipointSelector.RESULT_KIND.STOP }
    end

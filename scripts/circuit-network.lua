@@ -503,7 +503,7 @@ end
 function mod.constant_combinator_signals_info(entity, pindex)
    local all_signals = mod.get_constant_combinator_filters(entity)
 
-   if #all_signals == 0 then return { "", "No outputs" } end
+   if #all_signals == 0 then return { "fa.circuit-no-outputs" } end
 
    local msg = Speech.MessageBuilder.new()
 
@@ -543,7 +543,7 @@ function mod.get_copper_wire_neighbors_info(entity, pindex)
       end
    end
 
-   if not next(neighbors) then return { "", "No copper wire connections" } end
+   if not next(neighbors) then return { "fa.circuit-no-copper-connections" } end
 
    -- Sort by distance then direction
    for t, quals in pairs(neighbors) do
@@ -618,7 +618,7 @@ function mod.get_circuit_neighbors_info(entity, pindex)
       end
    end
 
-   if not next(neighbors) then return { "", "No circuit network connections" } end
+   if not next(neighbors) then return { "fa.circuit-no-circuit-connections" } end
 
    -- Sort by distance then direction
    for t, quals in pairs(neighbors) do

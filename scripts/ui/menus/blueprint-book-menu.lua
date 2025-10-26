@@ -62,9 +62,9 @@ local function render_blueprints_list(ctx)
             if bp_stack.is_blueprint then
                c.message:fragment(Blueprints.get_blueprint_info(bp_stack, false, c.pindex))
             elseif bp_stack.is_blueprint_book then
-               c.message:fragment(bp_stack.label or "unnamed book")
+               c.message:fragment(bp_stack.label or { "fa.unnamed-book" })
             else
-               c.message:fragment("unknown item")
+               c.message:fragment({ "fa.unknown-item" })
             end
          end, {
             on_click = function(c)

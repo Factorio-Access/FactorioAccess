@@ -44,7 +44,7 @@ local function render_crafting_queue(ctx)
          builder:add_item(key, {
             label = function(label_ctx)
                local name = localising.get_localised_name_with_fallback(recipe_proto)
-               label_ctx.message:fragment(name):fragment(" x " .. queue_item.count)
+               label_ctx.message:fragment({ "fa.crafting-queue-item", name, queue_item.count })
             end,
             on_click = function(click_ctx)
                -- Cancel crafting

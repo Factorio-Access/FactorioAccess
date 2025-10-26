@@ -51,13 +51,18 @@ local function render_spidertron_config(ctx)
          local destinations = entity.autopilot_destinations
          if destinations and #destinations > 0 then
             local first = destinations[1]
-            ctx.message:fragment({ "fa.spidertron-autopilot-destination" })
-            ctx.message:fragment(tostring(math.floor(first.x)))
-            ctx.message:fragment(tostring(math.floor(first.y)))
+            local x = tostring(math.floor(first.x))
+            local y = tostring(math.floor(first.y))
             if #destinations > 1 then
-               ctx.message:fragment({ "fa.spidertron-autopilot-plus-more", tostring(#destinations - 1) })
+               ctx.message:fragment({
+                  "fa.spidertron-autopilot-destination-with-more",
+                  x,
+                  y,
+                  tostring(#destinations - 1),
+               })
+            else
+               ctx.message:fragment({ "fa.spidertron-autopilot-destination-simple", x, y })
             end
-            ctx.message:fragment({ "fa.spidertron-autopilot-click-to-change" })
          else
             ctx.message:fragment({ "fa.spidertron-autopilot-none" })
          end
@@ -76,9 +81,10 @@ local function render_spidertron_config(ctx)
       label = function(ctx)
          local target = entity.follow_target
          if target and target.valid then
-            ctx.message:fragment({ "fa.spidertron-follow-target" })
-            ctx.message:fragment(Localising.get_localised_name_with_fallback(target))
-            ctx.message:fragment({ "fa.spidertron-follow-click-to-change" })
+            ctx.message:fragment({
+               "fa.spidertron-follow-target-full",
+               Localising.get_localised_name_with_fallback(target),
+            })
          else
             ctx.message:fragment({ "fa.spidertron-follow-none" })
          end

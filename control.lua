@@ -1322,7 +1322,7 @@ local function move(direction, pindex, nudged)
          --If nudged then teleport now
          teleported = first_player.teleport(new_pos)
          if not teleported then
-            Speech.speak(pindex, "Teleport Failed")
+            Speech.speak(pindex, { "fa.teleport-failed" })
             moved_success = false
          else
             moved_success = true
@@ -1338,7 +1338,7 @@ local function move(direction, pindex, nudged)
             Graphics.sync_build_cursor_graphics(pindex)
          end
       else
-         Speech.speak(pindex, "Tile Occupied")
+         Speech.speak(pindex, { "fa.tile-occupied" })
          moved_success = false
       end
    else
@@ -1919,7 +1919,7 @@ local function nudge_self(event, direction, name)
       Speech.speak(pindex, { "fa.nudged-self", name })
       turn_to_cursor_direction_precise(pindex)
    else
-      Speech.speak(pindex, "Failed to nudge self")
+      Speech.speak(pindex, { "fa.nudge-failed" })
    end
 end
 
@@ -2081,13 +2081,7 @@ local function read_coords(pindex, start_phrase)
          turn_to_cursor_direction_cardinal(pindex)
          local p_dir = storage.players[pindex].player_direction
 
-         message:fragment({ "fa.build-preview-intro" })
-         message:fragment({ "fa.build-preview-wide", tostring(p_width) })
-         -- Width direction
-         message:fragment({ "fa.build-preview-east" })
-         message:fragment({ "fa.build-preview-and" })
-         message:fragment({ "fa.build-preview-high", tostring(p_height) })
-         message:fragment({ "fa.build-preview-south" })
+         message:fragment({ "fa.build-preview-dimensions", tostring(p_width), tostring(p_height) })
       elseif stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result ~= nil then
          --Paving preview size
          local size = vp:get_cursor_size() * 2 + 1
@@ -2119,7 +2113,7 @@ local function kb_read_cursor_distance_and_direction(event)
    local cursor_pos = vp:get_cursor_pos()
    --Read where the cursor is with respect to the player, e.g. "at 5 west"
    local dir_dist = FaUtils.dir_dist_locale(storage.players[pindex].position, cursor_pos)
-   local cursor_location_description = "At"
+   local cursor_location_description = { "fa.at" }
    local cursor_production = " "
    local cursor_description_of = " "
    local result = { "fa.thing-producing-listpos-dirdist", cursor_location_description }
@@ -2345,7 +2339,7 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       Rulers.clear_rulers(pindex)
-      Speech.speak(pindex, "Cleared rulers")
+      Speech.speak(pindex, { "fa.rulers-cleared" })
    end
 )
 
@@ -2388,7 +2382,7 @@ local function kb_cs_p(event)
    local vp = Viewpoint.get_viewpoint(pindex)
    local alert_pos = storage.players[pindex].last_damage_alert_pos
    if alert_pos == nil then
-      Speech.speak(pindex, "No target")
+      Speech.speak(pindex, { "fa.no-target" })
       return
    end
    vp:set_cursor_pos(alert_pos)
@@ -2418,7 +2412,7 @@ local function toggle_cursor_mode(pindex, muted)
    local vp = Viewpoint.get_viewpoint(pindex)
    if p.character == nil then
       vp:set_cursor_anchored(false)
-      Speech.speak(pindex, "Cannot anchor cursor while there is no character")
+      Speech.speak(pindex, { "fa.cannot-anchor-no-character" })
       return
    end
 
@@ -2427,12 +2421,12 @@ local function toggle_cursor_mode(pindex, muted)
       vp:set_cursor_anchored(true)
 
       --Finally, read the new tile
-      Speech.speak(pindex, "Cursor anchored")
+      Speech.speak(pindex, { "fa.anchored-cursor" })
    else
       --Finally, read the new tile
       vp:set_cursor_anchored(false)
       -- For the unanchored case it's worth reading the tile the cursor ended up on.
-      if muted ~= true then read_tile(pindex, "Cursor unanchored, ") end
+      if muted ~= true then read_tile(pindex, { "fa.unanchored-cursor" }) end
    end
 end
 
@@ -2928,13 +2922,13 @@ local function kb_flush_fluid(event)
    local sector = pb.sectors[pb.sector]
    local box = sector.inventory
    if sector.name ~= "Fluid" or not box or #box == 0 then
-      Speech.speak(pindex, "No fluids to flush")
+      Speech.speak(pindex, { "fa.no-fluids-to-flush" })
       return
    end
 
    local fluid = box[pb.index]
    if not (fluid and fluid.name) then
-      Speech.speak(pindex, "No fluids to flush")
+      Speech.speak(pindex, { "fa.no-fluids-to-flush" })
       return
    end
 
@@ -2971,7 +2965,7 @@ local function kb_mine_access_sounds(event)
    if ent and ent.valid and ent.prototype.mineable_properties.products and ent.type ~= "resource" then
       sounds.play_mine(p.index)
    elseif ent and ent.valid and ent.name == "character-corpse" then
-      Speech.speak(pindex, "Collecting items ")
+      Speech.speak(pindex, { "fa.collecting-items" })
    end
 end
 
@@ -3592,7 +3586,7 @@ local function kb_flip_blueprint_horizontal_info(event)
    local vp = Viewpoint.get_viewpoint(pindex)
    local flipped = not vp:get_flipped_horizontal()
    vp:set_flipped_horizontal(flipped)
-   Speech.speak(pindex, "Flipped horizontal")
+   Speech.speak(pindex, { "fa.flipped-horizontal" })
 end
 
 EventManager.on_event(
@@ -3630,7 +3624,7 @@ local function kb_flip_blueprint_vertical_info(event)
    local vp = Viewpoint.get_viewpoint(pindex)
    local flipped = not vp:get_flipped_vertical()
    vp:set_flipped_vertical(flipped)
-   Speech.speak(pindex, "Flipped vertical")
+   Speech.speak(pindex, { "fa.flipped-vertical" })
 end
 
 EventManager.on_event(
@@ -3735,7 +3729,7 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       game.auto_save("manual")
-      Speech.speak(pindex, "Saving Game, please wait 3 seconds.")
+      Speech.speak(pindex, { "fa.saving-game-wait" })
    end
 )
 
@@ -3765,13 +3759,13 @@ local function kb_toggle_vanilla_mode(event)
 
       if p.character then p.character_running_speed_modifier = 0 end
       vp:set_cursor_hidden(true)
-      Speech.speak(pindex, "Vanilla mode enabled")
+      Speech.speak(pindex, { "fa.vanilla-mode-enabled" })
       storage.players[pindex].vanilla_mode = true
    else
       p.print("Vanilla mode : OFF")
       vp:set_cursor_hidden(false)
       storage.players[pindex].vanilla_mode = false
-      Speech.speak(pindex, "Vanilla mode disabled")
+      Speech.speak(pindex, { "fa.vanilla-mode-disabled" })
    end
 end
 
@@ -4144,7 +4138,7 @@ EventManager.on_event(
    "fa-c-space",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      Speech.speak(pindex, "Not implemented in Factorio 2.0 yet due to API limitations")
+      Speech.speak(pindex, { "fa.not-implemented-factorio-2" })
    end
 )
 

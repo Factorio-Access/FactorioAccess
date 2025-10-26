@@ -78,7 +78,7 @@ local function push_request_readout(msg_builder, req)
 
    local protoname = req.value
    if not protoname then
-      msg_builder:fragment("ERROR: unable to determine item")
+      msg_builder:fragment({ "fa.error-unable-to-determine-item" })
       return
    end
 
@@ -107,7 +107,7 @@ local function push_request_readout(msg_builder, req)
       return
    end
 
-   msg_builder:fragment("Unable to handle this request. Serpent:"):fragment(serpent.line(req))
+   msg_builder:fragment({ "fa.error-unable-to-handle-request" }):fragment(serpent.line(req))
 end
 
 function mod.logistics_info_key_handler(pindex)
@@ -122,9 +122,9 @@ function mod.logistics_info_key_handler(pindex)
       local result
       if filter ~= nil then
          ---@diagnostic disable-next-line param-type-mismatch
-         result = { "", Localising.get_localised_name_with_fallback(filter), " set as logistic storage filter" }
+         result = { "fa.logistic-storage-filter-set", Localising.get_localised_name_with_fallback(filter) }
       else
-         result = { "", "Nothing set as logistic storage filter" }
+         result = { "fa.logistic-storage-filter-nothing" }
       end
       Speech.speak(pindex, result)
       return
@@ -156,12 +156,9 @@ function mod.set_logistic_filter(pindex, ent, name)
    ent.set_filter(1, name)
    local proto = prototypes.item[name]
    if proto then
-      Speech.speak(
-         pindex,
-         { "", Localising.get_localised_name_with_fallback(proto), " set as logistic storage filter " }
-      )
+      Speech.speak(pindex, { "fa.logistic-storage-filter-set", Localising.get_localised_name_with_fallback(proto) })
    else
-      Speech.speak(pindex, { "", name, " set as logistic storage filter " })
+      Speech.speak(pindex, { "fa.logistic-storage-filter-set", name })
    end
 end
 
@@ -172,7 +169,7 @@ end
 function mod.push_compiled_filter_readout(msg_builder, filter, min_only)
    local item_name = filter.name
    if not item_name then
-      msg_builder:fragment("ERROR: unable to determine item")
+      msg_builder:fragment({ "fa.error-unable-to-determine-item" })
       return
    end
 
@@ -200,23 +197,15 @@ function mod.push_compiled_filter_readout(msg_builder, filter, min_only)
 
    if min_only then
       -- For constant combinators, only show the count
-      if min_val > 0 then
-         msg_builder:fragment("x")
-         msg_builder:fragment(tostring(min_val))
-      end
+      if min_val > 0 then msg_builder:fragment({ "fa.filter-count-x", tostring(min_val) }) end
    else
       -- For logistic requests, show min and/or max
       if min_val > 0 and max_val then
-         msg_builder:fragment("min")
-         msg_builder:fragment(tostring(min_val))
-         msg_builder:fragment("max")
-         msg_builder:fragment(tostring(max_val))
+         msg_builder:fragment({ "fa.filter-count-min-max", tostring(min_val), tostring(max_val) })
       elseif min_val > 0 then
-         msg_builder:fragment("min")
-         msg_builder:fragment(tostring(min_val))
+         msg_builder:fragment({ "fa.filter-count-min", tostring(min_val) })
       elseif max_val then
-         msg_builder:fragment("max")
-         msg_builder:fragment(tostring(max_val))
+         msg_builder:fragment({ "fa.filter-count-max", tostring(max_val) })
       end
    end
    -- If neither min nor max, just the item name (unconstrained)
@@ -262,9 +251,9 @@ end
 
 ---Get the network name directly from a network
 ---@param network LuaLogisticNetwork
----@return string
+---@return LocalisedString
 function mod.get_network_name_from_network(network)
-   if not network or not network.valid then return "no network" end
+   if not network or not network.valid then return { "fa.error-no-network" } end
 
    -- Use custom_name if set, else fall back to network ID
    if network.custom_name and network.custom_name ~= "" then return network.custom_name end
@@ -328,10 +317,10 @@ end
 
 ---Get the network name (custom name if set, else network ID)
 ---@param port LuaEntity
----@return string
+---@return LocalisedString
 function mod.get_network_name(port)
    local nw = port.logistic_network
-   if not nw then return "no network" end
+   if not nw then return { "fa.error-no-network" } end
 
    return mod.get_network_name_from_network(nw)
 end
@@ -351,75 +340,55 @@ function mod.set_network_name(port, new_name)
 end
 
 function mod.roboport_contents_info(port)
-   local result = ""
    local cell = port.logistic_cell
-   result = result
-      .. " charging "
-      .. cell.charging_robot_count
-      .. " robots with "
-      .. cell.to_charge_robot_count
-      .. " in queue, "
-      .. " stationed "
-      .. cell.stationed_logistic_robot_count
-      .. " logistic robots and "
-      .. cell.stationed_construction_robot_count
-      .. " construction robots "
-      .. " and "
-      .. port.get_inventory(defines.inventory.roboport_material).get_item_count()
-      .. " repair packs "
-   return result
+   local repair_pack_count = port.get_inventory(defines.inventory.roboport_material).get_item_count()
+   return {
+      "fa.roboport-charging-info",
+      tostring(cell.charging_robot_count),
+      tostring(cell.to_charge_robot_count),
+      tostring(cell.stationed_logistic_robot_count),
+      tostring(cell.stationed_construction_robot_count),
+      tostring(repair_pack_count),
+   }
 end
 
 function mod.roboport_neighbours_info(port)
-   local result = ""
    local cell = port.logistic_cell
    local neighbour_count = #cell.neighbours
-   local neighbour_dirs = ""
-   for i, neighbour in ipairs(cell.neighbours) do
-      local dir = FaUtils.direction_lookup(FaUtils.get_direction_biased(neighbour.owner.position, port.position))
-      if i > 1 then neighbour_dirs = neighbour_dirs .. " and " end
-      neighbour_dirs = neighbour_dirs .. dir
-   end
-   if neighbour_count > 0 then
-      result = neighbour_count .. " neighbours" .. ", at the " .. neighbour_dirs
-   else
-      result = neighbour_count .. " neighbours"
-   end
 
-   return result
+   if neighbour_count == 0 then return { "fa.roboport-neighbours-none", tostring(neighbour_count) } end
+
+   -- Build list of directions
+   local dirs = {}
+   for _, neighbour in ipairs(cell.neighbours) do
+      local dir = FaUtils.direction_lookup(FaUtils.get_direction_biased(neighbour.owner.position, port.position))
+      table.insert(dirs, dir)
+   end
+   local neighbour_dirs = table.concat(dirs, " and ")
+
+   return { "fa.roboport-neighbours-info", tostring(neighbour_count), neighbour_dirs }
 end
 
 function mod.logistic_network_members_info(port)
-   local result = ""
    local cell = port.logistic_cell
    local nw = cell.logistic_network
-   if nw == nil or nw.valid == false then
-      result = " Error: no network "
-      return result
-   end
-   result = " Network has "
-      .. #nw.cells
-      .. " roboports, and "
-      .. nw.all_logistic_robots
-      .. " logistic robots with "
-      .. nw.available_logistic_robots
-      .. " available, and "
-      .. nw.all_construction_robots
-      .. " construction robots with "
-      .. nw.available_construction_robots
-      .. " available "
-   return result
+   if nw == nil or nw.valid == false then return { "fa.error-no-network" } end
+
+   return {
+      "fa.network-members-info",
+      tostring(#nw.cells),
+      tostring(nw.all_logistic_robots),
+      tostring(nw.available_logistic_robots),
+      tostring(nw.all_construction_robots),
+      tostring(nw.available_construction_robots),
+   }
 end
 
 function mod.logistic_network_chests_info(port)
-   local result = ""
    local cell = port.logistic_cell
    local nw = cell.logistic_network
 
-   if nw == nil or nw.valid == false then
-      result = " Error, no network "
-      return result
-   end
+   if nw == nil or nw.valid == false then return { "fa.error-no-network" } end
 
    local storage_chest_count = 0
    for i, ent in ipairs(nw.storage_points) do
@@ -441,18 +410,15 @@ function mod.logistic_network_chests_info(port)
       + passive_provider_chest_count
       + active_provider_chest_count
       + requester_chest_count
-   result = " Network has "
-      .. total_chest_count
-      .. " chests in total, with "
-      .. storage_chest_count
-      .. " storage chests, "
-      .. passive_provider_chest_count
-      .. " passive provider chests, "
-      .. active_provider_chest_count
-      .. " active provider chests, "
-      .. requester_chest_count
-      .. " requester chests or buffer chests, "
-   return result
+
+   return {
+      "fa.network-chests-info",
+      tostring(total_chest_count),
+      tostring(storage_chest_count),
+      tostring(passive_provider_chest_count),
+      tostring(active_provider_chest_count),
+      tostring(requester_chest_count),
+   }
 end
 
 ---On tick handler to announce logistics state changes after the game has processed them

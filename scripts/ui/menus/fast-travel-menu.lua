@@ -32,14 +32,17 @@ local function render(ctx)
 
          -- Point name and location
          builder:add_clickable("point-" .. point_id, function(ctx)
-            ctx.message:fragment(point.label)
-            ctx.message:fragment(FaUtils.format_position(point.position.x, point.position.y))
+            local position_str = FaUtils.format_position(point.position.x, point.position.y)
             if point.description and point.description ~= "" then
-               ctx.message:fragment(",")
-               ctx.message:fragment(point.description)
+               ctx.message:fragment({
+                  "fa.travel-point-label-with-description",
+                  point.label,
+                  position_str,
+                  point.description,
+               })
+            else
+               ctx.message:fragment({ "fa.travel-point-label-no-description", point.label, position_str })
             end
-            ctx.message:fragment(",")
-            ctx.message:fragment({ "fa.travel-click-move-cursor" })
          end, {
             on_click = function(ctx)
                -- Move cursor to show location
@@ -121,9 +124,7 @@ local function render(ctx)
 
          -- Edit description action
          builder:add_clickable("edit-desc-" .. point_id, function(ctx)
-            ctx.message:fragment({ "fa.travel-menu-rewrite-description" })
-            ctx.message:fragment("of")
-            ctx.message:fragment(point.label)
+            ctx.message:fragment({ "fa.travel-rewrite-description-of", point.label })
          end, {
             on_click = function(ctx)
                ctx.controller:open_textbox(point.description or "", "edit-desc-" .. point_id)

@@ -57,10 +57,11 @@ local function render_overview(ctx)
          ctx.message:list_item({ "fa.constant-combinator-outputs" })
          for _, signal_info in ipairs(all_signals) do
             ctx.message:list_item()
-            ctx.message:fragment(CircuitNetwork.localise_signal(signal_info.signal))
+            local signal_name = CircuitNetwork.localise_signal(signal_info.signal)
             if signal_info.count ~= 0 then
-               ctx.message:fragment("x")
-               ctx.message:fragment(tostring(signal_info.count))
+               ctx.message:fragment({ "fa.signal-count", signal_name, signal_info.count })
+            else
+               ctx.message:fragment(signal_name)
             end
          end
       else

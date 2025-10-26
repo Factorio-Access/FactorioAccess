@@ -73,8 +73,8 @@ function FormBuilder:add_checkbox(name, label, get_value, set_value)
    local function build_label(message, ctx)
       local base_label = UiUtils.to_label_function(label)(ctx)
       local state_text = get_value() and { "fa.checked" } or { "fa.unchecked" }
-      message:fragment(base_label)
       message:fragment(state_text)
+      message:fragment(base_label)
    end
 
    self:add_item(name, {
@@ -104,8 +104,8 @@ function FormBuilder:add_textfield(name, params)
       local base_label = UiUtils.to_label_function(params.label)(ctx)
       local val = params.get_value()
       local value_text = val and val ~= "" and val or { "fa.empty" }
-      message:fragment(base_label)
       message:fragment(value_text)
+      message:fragment(base_label)
    end
 
    local vtable = {
@@ -166,8 +166,8 @@ function FormBuilder:add_choice_field(name, label, get_value, set_value, choices
    -- Create label builder function that uses the getter
    local function build_label(message, ctx)
       local base_label = UiUtils.to_label_function(label)(ctx)
-      message:fragment(base_label)
       message:fragment(get_current_label())
+      message:fragment(base_label)
    end
 
    self:add_item(name, {
@@ -243,8 +243,8 @@ function FormBuilder:add_bar(name, config)
    local function build_label(message, ctx)
       local base_label = UiUtils.to_label_function(config.label)(ctx)
       local value = config.get_value()
-      message:fragment(base_label)
       message:fragment(tostring(value))
+      message:fragment(base_label)
    end
 
    self:add_item(name, {
@@ -305,12 +305,12 @@ function FormBuilder:add_signal(name, label, get_value, set_value)
       if signal and signal.name then
          -- Show signal type and name
          local signal_type = signal.type or "item"
-         value_text = signal_type .. " " .. signal.name
+         value_text = { "fa.signal-type-name", signal_type, signal.name }
       else
          value_text = { "fa.empty" }
       end
-      message:fragment(base_label)
       message:fragment(value_text)
+      message:fragment(base_label)
    end
 
    self:add_item(name, {
@@ -327,7 +327,7 @@ function FormBuilder:add_signal(name, label, get_value, set_value)
          -- Announce the new value
          if result and result.name then
             local signal_type = result.type or "item"
-            ctx.controller.message:fragment(signal_type .. " " .. result.name)
+            ctx.controller.message:fragment({ "fa.signal-type-name", signal_type, result.name })
          else
             ctx.controller.message:fragment({ "fa.empty" })
          end
@@ -364,16 +364,16 @@ function FormBuilder:add_condition(name, get_value, set_value)
          return { "fa.condition-unconfigured" }
       end
 
-      local first = (condition.first_signal.type or "item") .. " " .. condition.first_signal.name
+      local first = { "fa.signal-type-name", condition.first_signal.type or "item", condition.first_signal.name }
       local op = condition.comparator or "<"
 
       if condition.second_signal and condition.second_signal.name then
-         local second = (condition.second_signal.type or "item") .. " " .. condition.second_signal.name
-         return first .. " " .. op .. " " .. second
+         local second = { "fa.signal-type-name", condition.second_signal.type or "item", condition.second_signal.name }
+         return { "fa.condition-summary-second-signal", first, op, second }
       elseif condition.constant then
-         return first .. " " .. op .. " " .. tostring(condition.constant)
+         return { "fa.condition-summary-constant", first, op, condition.constant }
       else
-         return first .. " " .. op .. " 0"
+         return { "fa.condition-summary-constant", first, op, 0 }
       end
    end
 
@@ -395,9 +395,8 @@ function FormBuilder:add_condition(name, get_value, set_value)
          local signal = condition.first_signal
          if signal and signal.name then
             local signal_type = signal.type or "item"
+            ctx.message:fragment({ "fa.signal-type-name", signal_type, signal.name })
             ctx.message:fragment({ "fa.condition-first-signal" })
-
-            ctx.message:fragment(signal_type .. " " .. signal.name)
          else
             ctx.message:fragment({ "fa.condition-first-signal-empty" })
          end
@@ -411,7 +410,7 @@ function FormBuilder:add_condition(name, get_value, set_value)
          set_value(condition)
          if result and result.name then
             local signal_type = result.type or "item"
-            ctx.controller.message:fragment(signal_type .. " " .. result.name)
+            ctx.controller.message:fragment({ "fa.signal-type-name", signal_type, result.name })
          else
             ctx.controller.message:fragment({ "fa.empty" })
          end
@@ -473,17 +472,16 @@ function FormBuilder:add_condition(name, get_value, set_value)
    self:add_item(name .. "_second", {
       label = function(ctx)
          local condition = get_value() or {}
-         ctx.message:fragment({ "fa.condition-second" })
-
          if condition.second_signal and condition.second_signal.name then
             local signal_type = condition.second_signal.type or "item"
-            ctx.message:fragment(signal_type .. " " .. condition.second_signal.name)
+            ctx.message:fragment({ "fa.signal-type-name", signal_type, condition.second_signal.name })
          elseif condition.constant then
             ctx.message:fragment(tostring(condition.constant))
          else
             ctx.message:fragment("0")
          end
 
+         ctx.message:fragment({ "fa.condition-second" })
          -- Always show help text
          ctx.message:fragment({ "fa.condition-second-help" })
       end,
@@ -514,7 +512,7 @@ function FormBuilder:add_condition(name, get_value, set_value)
             set_value(condition)
             if result and result.name then
                local signal_type = result.type or "item"
-               ctx.controller.message:fragment(signal_type .. " " .. result.name)
+               ctx.controller.message:fragment({ "fa.signal-type-name", signal_type, result.name })
             else
                ctx.controller.message:fragment({ "fa.empty" })
             end
@@ -599,16 +597,16 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
          return { "fa.condition-unconfigured" }
       end
 
-      local first = (condition.first_signal.type or "item") .. " " .. condition.first_signal.name
+      local first = { "fa.signal-type-name", condition.first_signal.type or "item", condition.first_signal.name }
       local op = condition.comparator or "<"
 
       if condition.second_signal and condition.second_signal.name then
-         local second = (condition.second_signal.type or "item") .. " " .. condition.second_signal.name
-         return first .. " " .. op .. " " .. second
+         local second = { "fa.signal-type-name", condition.second_signal.type or "item", condition.second_signal.name }
+         return { "fa.condition-summary-second-signal", first, op, second }
       elseif condition.constant then
-         return first .. " " .. op .. " " .. tostring(condition.constant)
+         return { "fa.condition-summary-constant", first, op, condition.constant }
       else
-         return first .. " " .. op .. " 0"
+         return { "fa.condition-summary-constant", first, op, 0 }
       end
    end
 
@@ -620,9 +618,8 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
          local state_text = enabled and { "fa.checked" } or { "fa.unchecked" }
          local condition = get_condition()
 
-         ctx.message:fragment(base_label)
-
          ctx.message:fragment(state_text)
+         ctx.message:fragment(base_label)
          ctx.message:fragment(describe_condition(condition))
          if not condition or not condition.first_signal or not condition.first_signal.name then
             ctx.message:fragment({ "fa.condition-move-right-to-configure" })
@@ -644,9 +641,8 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
          local signal = condition.first_signal
          if signal and signal.name then
             local signal_type = signal.type or "item"
+            ctx.message:fragment({ "fa.signal-type-name", signal_type, signal.name })
             ctx.message:fragment({ "fa.condition-first-signal" })
-
-            ctx.message:fragment(signal_type .. " " .. signal.name)
          else
             ctx.message:fragment({ "fa.condition-first-signal-empty" })
          end
@@ -661,7 +657,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
          set_condition(condition)
          if result and result.name then
             local signal_type = result.type or "item"
-            ctx.controller.message:fragment(signal_type .. " " .. result.name)
+            ctx.controller.message:fragment({ "fa.signal-type-name", signal_type, result.name })
          else
             ctx.controller.message:fragment({ "fa.empty" })
          end
@@ -723,17 +719,16 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
    self:add_item(name .. "_second", {
       label = function(ctx)
          local condition = get_condition() or {}
-         ctx.message:fragment({ "fa.condition-second" })
-
          if condition.second_signal and condition.second_signal.name then
             local signal_type = condition.second_signal.type or "item"
-            ctx.message:fragment(signal_type .. " " .. condition.second_signal.name)
+            ctx.message:fragment({ "fa.signal-type-name", signal_type, condition.second_signal.name })
          elseif condition.constant then
             ctx.message:fragment(tostring(condition.constant))
          else
             ctx.message:fragment("0")
          end
 
+         ctx.message:fragment({ "fa.condition-second" })
          -- Always show help text
          ctx.message:fragment({ "fa.condition-second-help" })
       end,
@@ -764,7 +759,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
             set_condition(condition)
             if result and result.name then
                local signal_type = result.type or "item"
-               ctx.controller.message:fragment(signal_type .. " " .. result.name)
+               ctx.controller.message:fragment({ "fa.signal-type-name", signal_type, result.name })
             else
                ctx.controller.message:fragment({ "fa.empty" })
             end

@@ -125,17 +125,17 @@ local function render_unified_overview(ctx)
          menu:add_item("active_toggle", {
             label = function(ctx)
                if point.enabled then
-                  ctx.message:fragment("active")
+                  ctx.message:fragment({ "fa.logistics-active" })
                else
-                  ctx.message:fragment("inactive")
+                  ctx.message:fragment({ "fa.logistics-inactive" })
                end
             end,
             on_click = function(ctx)
                point.enabled = not point.enabled
                if point.enabled then
-                  ctx.controller.message:fragment("active")
+                  ctx.controller.message:fragment({ "fa.logistics-active" })
                else
-                  ctx.controller.message:fragment("inactive")
+                  ctx.controller.message:fragment({ "fa.logistics-inactive" })
                end
             end,
          })
@@ -154,9 +154,9 @@ local function render_unified_overview(ctx)
             on_click = function(ctx)
                entity.request_from_buffers = not entity.request_from_buffers
                if entity.request_from_buffers then
-                  ctx.controller.message:fragment("on")
+                  ctx.controller.message:fragment({ "fa.on" })
                else
-                  ctx.controller.message:fragment("off")
+                  ctx.controller.message:fragment({ "fa.off" })
                end
             end,
          })
@@ -176,9 +176,9 @@ local function render_unified_overview(ctx)
             on_click = function(ctx)
                point.trash_not_requested = not point.trash_not_requested
                if point.trash_not_requested then
-                  ctx.controller.message:fragment("on")
+                  ctx.controller.message:fragment({ "fa.on" })
                else
-                  ctx.controller.message:fragment("off")
+                  ctx.controller.message:fragment({ "fa.off" })
                end
             end,
          })

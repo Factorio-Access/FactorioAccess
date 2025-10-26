@@ -152,10 +152,10 @@ local function render_crafting_menu(ctx)
                            FaInfo.selected_item_production_stats_info(item_ctx.pindex, chosen_product.name)
                         item_ctx.message:fragment(stats_message)
                      else
-                        item_ctx.message:fragment("Error: Recipe has no valid product name")
+                        item_ctx.message:fragment({ "fa.crafting-error-no-product-name" })
                      end
                   else
-                     item_ctx.message:fragment("Error: Recipe has no products")
+                     item_ctx.message:fragment({ "fa.crafting-error-no-products" })
                   end
                end
 

@@ -176,7 +176,7 @@ function mod.get_blueprint_info(stack, in_hand, pindex)
    --Not a blueprint
    if stack.is_blueprint == false then return "" end
    --Empty blueprint
-   if not stack.is_blueprint_setup() then return "Blueprint empty" end
+   if not stack.is_blueprint_setup() then return { "fa.blueprints-empty" } end
 
    --Get name
    local name = mod.get_blueprint_label(stack)
@@ -281,9 +281,11 @@ function mod.get_blueprint_book_info(stack, in_hand)
    local item_count = book_inv and #book_inv or 0
 
    local result = { "" }
-   table.insert(result, "Blueprint book ")
-   table.insert(result, label)
-   if in_hand then table.insert(result, " in hand") end
+   if in_hand then
+      table.insert(result, { "fa.blueprints-book-label-in-hand", label })
+   else
+      table.insert(result, { "fa.blueprints-book-label", label })
+   end
    table.insert(result, ", ")
    table.insert(result, { "fa.blueprints-with-items", tostring(item_count) })
 

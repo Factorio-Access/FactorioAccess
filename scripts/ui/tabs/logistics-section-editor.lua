@@ -73,14 +73,12 @@ local function render_section(ctx, section_index)
                -- Localize the signal (works for both items and other signal types)
                local sid = slot.value
                ---@cast sid SignalID
-               ctx.message:fragment(CircuitNetwork.localise_signal(sid))
-               ctx.message:fragment(tostring(min_val))
-               ctx.message:fragment("to")
-               if max_val then
-                  ctx.message:fragment(tostring(max_val))
-               else
-                  ctx.message:fragment({ "fa.infinity" })
-               end
+               ctx.message:fragment({
+                  "fa.logistics-signal-range",
+                  CircuitNetwork.localise_signal(sid),
+                  tostring(min_val),
+                  max_val and tostring(max_val) or { "fa.infinity" },
+               })
             end,
             on_click = function(ctx)
                ctx.controller:open_child_ui(

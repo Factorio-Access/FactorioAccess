@@ -1166,9 +1166,9 @@ local function ent_info_filters(ctx)
          ctx.message:list_item()
          if first then
             if ctx.ent.type == "inserter" and ctx.ent.inserter_filter_mode == "blacklist" then
-               ctx.message:fragment("Denies")
+               ctx.message:fragment({ "fa.filter-denies" })
             else
-               ctx.message:fragment("Filters for")
+               ctx.message:fragment({ "fa.filter-allows" })
             end
          end
          first = false
@@ -1220,7 +1220,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    --Explain the recipe of a machine without pause and before the direction
    pcall(function()
       if ent.get_recipe() ~= nil then
-         ctx.message:fragment("producing")
+         ctx.message:fragment({ "fa.ent-info-producing" })
          ctx.message:list_item(Localising.get_recipe_from_name(ent.get_recipe().name, pindex))
       end
    end)
@@ -1426,23 +1426,23 @@ end
 function mod.read_pollution_level_at_position(pos, pindex)
    local p = game.get_player(pindex)
    local pol = p.surface.get_pollution(pos)
-   local result = " pollution detected"
+   local result
    if pol <= 0.1 then
-      result = "No" .. result
+      result = { "fa.pollution-level-none" }
    elseif pol < 10 then
-      result = "Minimal" .. result
+      result = { "fa.pollution-level-minimal" }
    elseif pol < 30 then
-      result = "Low" .. result
+      result = { "fa.pollution-level-low" }
    elseif pol < 60 then
-      result = "Medium" .. result
+      result = { "fa.pollution-level-medium" }
    elseif pol < 100 then
-      result = "High" .. result
+      result = { "fa.pollution-level-high" }
    elseif pol < 150 then
-      result = "Very high" .. result
+      result = { "fa.pollution-level-very-high" }
    elseif pol < 250 then
-      result = "Extremely high" .. result
+      result = { "fa.pollution-level-extremely-high" }
    elseif pol >= 250 then
-      result = "Maximal" .. result
+      result = { "fa.pollution-level-maximal" }
    end
    Speech.speak(pindex, result)
 end
@@ -1455,7 +1455,7 @@ function mod.read_nearest_damaged_ent_info(pos, pindex)
    local ents = p.surface.find_entities_filtered({ position = vp:get_cursor_pos(), radius = 1000, force = p.force })
    --Check for entities with health
    if ents == nil or #ents == 0 then
-      Speech.speak(pindex, "No damaged structures within 1000 tiles.")
+      Speech.speak(pindex, { "fa.no-damaged-structures-in-range", 1000 })
       return
    end
    local at_least_one_has_damage = false
@@ -1467,7 +1467,7 @@ function mod.read_nearest_damaged_ent_info(pos, pindex)
       end
    end
    if at_least_one_has_damage == false then
-      Speech.speak(pindex, "No damaged structures within 1000 tiles.")
+      Speech.speak(pindex, { "fa.no-damaged-structures-in-range", 1000 })
       return
    end
    --Narrow by distance
@@ -1482,7 +1482,7 @@ function mod.read_nearest_damaged_ent_info(pos, pindex)
       end
    end
    if closest == nil then
-      Speech.speak(pindex, "No damaged structures within 1000 tiles.")
+      Speech.speak(pindex, { "fa.no-damaged-structures-in-range", 1000 })
       return
    else
       --Move cursor to closest
@@ -1494,14 +1494,13 @@ function mod.read_nearest_damaged_ent_info(pos, pindex)
       local dir = FaUtils.get_direction_biased(closest.position, pos)
       local aligned_note = ""
       if FaUtils.is_direction_aligned(closest.position, pos) then aligned_note = "aligned " end
-      local result = Localising.get(closest, pindex)
-         .. "  damaged at "
-         .. min_dist
-         .. " "
-         .. aligned_note
-         .. FaUtils.direction_lookup(dir)
-         .. ", cursor moved. "
-      Speech.speak(pindex, result)
+      Speech.speak(pindex, {
+         "fa.damaged-entity-found",
+         Localising.get(closest, pindex),
+         min_dist,
+         aligned_note,
+         FaUtils.direction_lookup(dir),
+      })
    end
 end
 
@@ -1537,7 +1536,7 @@ function mod.selected_item_production_stats_info(pindex, prototype_name)
          if prototype then stats = p.force.get_fluid_production_statistics(p.surface) end
       end
       -- If provided but not found, return error immediately (don't try fallbacks)
-      if not prototype then return string.format("Error: Unknown item or fluid '%s'", prototype_name) end
+      if not prototype then return { "fa.error-unknown-item", prototype_name } end
    end
 
    -- Try the cursor stack (only if no prototype_name was provided)
@@ -1587,7 +1586,7 @@ function mod.selected_item_production_stats_info(pindex, prototype_name)
    end
 
    -- For now, we give up.
-   if not prototype then return "Error: No selected item or fluid" end
+   if not prototype then return { "fa.error-no-selected-item" } end
 
    -- We need both inputs and outputs. That's the same code, with one boolean
    -- changed.
@@ -1625,27 +1624,27 @@ function mod.selected_item_production_stats_info(pindex, prototype_name)
    local m1_in, m10_in, h1_in, h1000_in = get_stats(true)
    local m1_out, m10_out, h1_out, h1000_out = get_stats(false)
 
-   return FaUtils.spacecat(
-      Localising.get(prototype, pindex) .. ",",
-      "Produced",
-      m1_in,
-      "last minute,",
-      m10_in,
-      "last ten min,",
-      h1_in,
-      "last hour,",
-      h1000_in,
-      "last thousand hours.",
-      "Consumed",
-      m1_out,
-      "last minute,",
-      m10_out,
-      "last ten min,",
-      h1_out,
-      "last hour,",
-      h1000_out,
-      "last thousand hours."
-   )
+   local message = MessageBuilder.new()
+   message:fragment(Localising.get(prototype, pindex))
+   message:list_item({ "fa.production-stats-produced" })
+   message:fragment(m1_in)
+   message:fragment({ "fa.production-stats-last-minute" })
+   message:list_item(m10_in)
+   message:fragment({ "fa.production-stats-last-ten-min" })
+   message:list_item(h1_in)
+   message:fragment({ "fa.production-stats-last-hour" })
+   message:list_item(h1000_in)
+   message:fragment({ "fa.production-stats-last-thousand-hours" })
+   message:list_item({ "fa.production-stats-consumed" })
+   message:fragment(m1_out)
+   message:fragment({ "fa.production-stats-last-minute" })
+   message:list_item(m10_out)
+   message:fragment({ "fa.production-stats-last-ten-min" })
+   message:list_item(h1_out)
+   message:fragment({ "fa.production-stats-last-hour" })
+   message:list_item(h1000_out)
+   message:fragment({ "fa.production-stats-last-thousand-hours" })
+   return message:build()
 end
 
 --- Handles cargo wagons by reporting their top inventory contents instead of status text.
@@ -1680,7 +1679,7 @@ end
 local function ent_status_lookup(ctx)
    local ent = ctx.ent
    local status_lookup = FaUtils.into_lookup(defines.entity_status)
-   status_lookup[23] = "Full burnt result output" --weird exception
+   status_lookup[23] = "full_burnt_result_output" --weird exception
    local ent_status_id = ent.status
    if ent_status_id ~= nil then
       local ent_status_text = status_lookup[ent_status_id]

@@ -52,9 +52,7 @@ local function build_debug_menu(ctx)
          click_ctx.controller:open_child_ui(UiRouter.UI_NAMES.DEBUG_FORMBUILDER)
       end,
       on_child_result = function(result_ctx, result)
-         if result then
-            result_ctx.controller.message:fragment("Form builder test closed with result: " .. tostring(result))
-         end
+         if result then result_ctx.controller.message:fragment({ "fa.debug-form-builder-result", tostring(result) }) end
       end,
    })
 
@@ -93,8 +91,7 @@ local test_box_selector = BoxSelector.declare_box_selector({
    callback = function(pindex, params, result)
       -- This is called when selection completes
       local msg = MessageBuilder.new()
-      msg:fragment("Box selection result: ")
-      msg:fragment(serpent.line(result, { nocode = true }))
+      msg:fragment({ "fa.debug-box-selection-result", serpent.line(result, { nocode = true }) })
       Speech.speak(pindex, msg:build())
    end,
 })

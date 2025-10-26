@@ -126,17 +126,14 @@ local function render_entities_list(ctx)
                local qname = Localising.get_localised_name_with_fallback(prototypes.quality[ent.quality.name])
                pname = qname .. " " .. pname
             end
-            ctx.message:fragment(pname)
-            ctx.message:list_item()
+            local hops_text = hops > 0 and { "fa.circuit-navigator-hops", tostring(hops) } or ""
             ctx.message:fragment({
-               "fa.dir-dist",
+               "fa.circuit-navigator-entity-full",
+               pname,
                FaUtils.direction_lookup(FaUtils.get_direction_biased(ent.position, entity.position)),
                FaUtils.distance_speech_friendly(entity.position, ent.position),
+               hops_text,
             })
-            if hops > 0 then
-               ctx.message:list_item()
-               ctx.message:fragment({ "fa.circuit-navigator-hops", tostring(hops) })
-            end
          end,
          on_click = function(ctx)
             -- Jump to entity and update state to point to new entity

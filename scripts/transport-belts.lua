@@ -748,74 +748,75 @@ end
 --Set the input priority or the output priority or filter for a splitter
 function mod.set_splitter_priority(splitter, is_input, is_left, filter_item_stack, clear)
    clear = clear or false
-   local result = "no message"
+   local result = { "fa.splitter-no-message" }
    local filter = splitter.splitter_filter
 
    if clear then
       splitter.splitter_filter = nil
       filter = splitter.splitter_filter
-      result = "Cleared splitter filter"
+      result = { "fa.splitter-cleared-filter" }
       splitter.splitter_output_priority = "none"
    elseif filter_item_stack ~= nil and filter_item_stack.valid_for_read then
       splitter.splitter_filter = { name = filter_item_stack.prototype }
       filter = splitter.splitter_filter
-      result = "filter set to " .. filter_item_stack.name
+      local item_name = localising.get_localised_name_with_fallback(prototypes.item[filter_item_stack.prototype])
+      result = { "fa.splitter-filter-set", item_name }
       if splitter.splitter_output_priority == "none" then
          splitter.splitter_output_priority = "left"
-         result = result .. ", from the left"
+         result = MessageBuilder.new():fragment(result):fragment({ "fa.splitter-filter-from-left" }):build()
       end
    elseif is_input and is_left then
       if splitter.splitter_input_priority == "left" then
          splitter.splitter_input_priority = "none"
-         result = "equal input priority"
+         result = { "fa.splitter-equal-input-priority" }
       else
          splitter.splitter_input_priority = "left"
-         result = "left input priority"
+         result = { "fa.splitter-left-input-priority" }
       end
    elseif is_input and not is_left then
       if splitter.splitter_input_priority == "right" then
          splitter.splitter_input_priority = "none"
-         result = "equal input priority"
+         result = { "fa.splitter-equal-input-priority" }
       else
          splitter.splitter_input_priority = "right"
-         result = "right input priority"
+         result = { "fa.splitter-right-input-priority" }
       end
    elseif not is_input and is_left then
       if splitter.splitter_output_priority == "left" then
          if filter == nil then
             splitter.splitter_output_priority = "none"
-            result = "equal output priority"
+            result = { "fa.splitter-equal-output-priority" }
          else
-            result = "left filter output"
+            result = { "fa.splitter-left-filter-output" }
          end
       else
          if filter == nil then
             splitter.splitter_output_priority = "left"
-            result = "left output priority"
+            result = { "fa.splitter-left-output-priority" }
          else
             splitter.splitter_output_priority = "left"
-            result = "left filter output"
+            result = { "fa.splitter-left-filter-output" }
          end
       end
    elseif not is_input and not is_left then
       if splitter.splitter_output_priority == "right" then
          if filter == nil then
             splitter.splitter_output_priority = "none"
-            result = "equal output priority"
+            result = { "fa.splitter-equal-output-priority" }
          else
-            result = "right filter output"
+            result = { "fa.splitter-right-filter-output" }
          end
       else
          if filter == nil then
             splitter.splitter_output_priority = "right"
-            result = "right output priority"
+            result = { "fa.splitter-right-output-priority" }
          else
             splitter.splitter_output_priority = "right"
-            result = "right filter output"
+            result = { "fa.splitter-right-filter-output" }
          end
       end
    else
-      result = "Splitter config error"
+      result = { "fa.splitter-config-error" }
    end
 
    return result
@@ -831,48 +832,36 @@ function mod.splitter_priority_info(ent)
    local msg = MessageBuilder.new()
 
    if input == "none" then
-      msg:fragment("input balanced,")
+      msg:fragment({ "fa.splitter-info-input-balanced" })
    elseif input == "right" then
-      msg:fragment("input priority right")
-      msg:fragment("which is")
-
-      msg:fragment(FaUtils.direction_lookup(FaUtils.rotate_90(ent.direction)))
-      msg:fragment(",")
+      local direction = FaUtils.direction_lookup(FaUtils.rotate_90(ent.direction))
+      msg:fragment({ "fa.splitter-info-input-priority-right", direction })
    elseif input == "left" then
-      msg:fragment("input priority left which is")
-      msg:fragment(FaUtils.direction_lookup(FaUtils.rotate_270(ent.direction)))
-      msg:fragment(",")
+      local direction = FaUtils.direction_lookup(FaUtils.rotate_270(ent.direction))
+      msg:fragment({ "fa.splitter-info-input-priority-left", direction })
    end
+
    if filter == nil then
       if output == "none" then
-         msg:fragment(" output balanced,")
+         msg:fragment({ "fa.splitter-info-output-balanced" })
       elseif output == "right" then
-         msg:fragment("output priority right which is")
-
-         msg:fragment(FaUtils.direction_lookup(FaUtils.rotate_90(ent.direction)))
-         msg:fragment(",")
+         local direction = FaUtils.direction_lookup(FaUtils.rotate_90(ent.direction))
+         msg:fragment({ "fa.splitter-info-output-priority-right", direction })
       elseif output == "left" then
-         msg:fragment("output priority left which is")
-
-         msg:fragment(FaUtils.direction_lookup(FaUtils.rotate_270(ent.direction)))
-         msg:fragment(",")
+         local direction = FaUtils.direction_lookup(FaUtils.rotate_270(ent.direction))
+         msg:fragment({ "fa.splitter-info-output-priority-left", direction })
       end
    else
       local item_name = localising.get_localised_name_with_fallback(prototypes.item[filter.name])
-      msg:fragment("output filtering")
-      msg:fragment(item_name)
-      msg:fragment("to the")
-      msg:fragment(output)
-      msg:fragment("which is")
-
+      local direction
       if output == "right" then
-         msg:fragment(FaUtils.direction_lookup(FaUtils.rotate_90(ent.direction)))
+         direction = FaUtils.direction_lookup(FaUtils.rotate_90(ent.direction))
       elseif output == "left" then
-         msg:fragment(FaUtils.direction_lookup(FaUtils.rotate_270(ent.direction)))
+         direction = FaUtils.direction_lookup(FaUtils.rotate_270(ent.direction))
       end
-
-      msg:fragment(",")
+      msg:fragment({ "fa.splitter-info-output-filtering", item_name, output, direction })
    end
+
    return msg:build()
 end
 

@@ -42,7 +42,7 @@ function mod.read_recipe_details(message, recipe)
             name = product.name,
          }, protos)
          message:list_item(item_str)
-         message:fragment(" x " .. product.amount_min .. "-" .. product.amount_max)
+         message:fragment({ "fa.recipe-range", product.amount_min, product.amount_max })
       else
          -- No amount specified
          local item_str = Localising.localise_item_or_fluid({

@@ -33,12 +33,12 @@ local function on_point_selected(args)
          args.state.waypoint_count = (args.state.waypoint_count or 1) + 1
       end
 
-      local message = MessageBuilder.new()
-      message:fragment({ "fa.spidertron-autopilot-added" })
-      message:fragment(tostring(math.floor(args.position.x)))
-      message:fragment(tostring(math.floor(args.position.y)))
-      message:fragment({ "fa.spidertron-autopilot-queue-count", tostring(args.state.waypoint_count) })
-      args.router_ctx.message:fragment(message:build())
+      args.router_ctx.message:fragment({
+         "fa.spidertron-autopilot-added-at",
+         tostring(math.floor(args.position.x)),
+         tostring(math.floor(args.position.y)),
+         { "fa.spidertron-autopilot-queue-count", tostring(args.state.waypoint_count) },
+      })
 
       -- Keep going to allow multiple waypoints
       return { result_kind = MultipointSelector.RESULT_KIND.KEEP_GOING }

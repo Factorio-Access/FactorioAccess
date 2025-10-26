@@ -46,7 +46,7 @@ local function render(ctx)
          end,
       })
    else
-      builder:add_label("blueprint-info", { "fa.ui-blueprints-menu-basic", bp.label or "no name" })
+      builder:add_label("blueprint-info", { "fa.ui-blueprints-menu-basic", bp.label or { "fa.unnamed" } })
    end
 
    -- Blueprints which are empty can't have descriptions; don't show it.

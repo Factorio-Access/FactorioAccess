@@ -83,7 +83,7 @@ local function equip_stack_to_entity(stack, target_entity, pindex, message)
       -- Get grid - either from armor (characters) or directly from entity (vehicles)
       local grid = target_entity.grid
       if not grid then
-         message:fragment("Error: no equipment grid available on " .. target_entity.name)
+         message:fragment({ "fa.equipment-error-no-grid", target_entity.name })
          return false
       end
       local placed = nil
@@ -185,7 +185,7 @@ function mod.reload_weapons(pindex, source_entity, source_inv_index, target_enti
    local ammo_ent = target_entity or p.character
    local source_ent = source_entity or p.character
 
-   if not ammo_ent or not source_ent then return "Error: No character or entity" end
+   if not ammo_ent or not source_ent then return { "fa.equipment-error-no-character-entity" } end
 
    local ammo_inv = ammo_ent.get_inventory(defines.inventory.character_ammo)
    local main_inv = source_ent.get_inventory(source_inv_index or defines.inventory.character_main)
@@ -207,11 +207,11 @@ function mod.reload_weapons(pindex, source_entity, source_inv_index, target_enti
 
    --Check fullness
    if ammo_inv.is_full() then
-      result = "Fully reloaded all three weapons"
+      result = { "fa.equipment-fully-reloaded" }
    elseif moved_key_count == 0 then
-      result = "Error: No relevant ammo found for reloading"
+      result = { "fa.equipment-error-no-ammo-found" }
    else
-      result = "Reloaded weapons with any available ammunition, "
+      result = { "fa.equipment-reloaded-partial" }
    end
    return result
 end
@@ -228,7 +228,7 @@ function mod.remove_weapons_and_ammo(pindex, source_entity, target_entity, targe
    local source_ent = source_entity or p.character
    local target_ent = target_entity or p.character
 
-   if not source_ent or not target_ent then return "Error: No character or entity" end
+   if not source_ent or not target_ent then return { "fa.equipment-error-no-character-entity" } end
 
    local guns_inv = source_ent.get_inventory(defines.inventory.character_guns)
    local ammo_inv = source_ent.get_inventory(defines.inventory.character_ammo)
@@ -243,7 +243,7 @@ function mod.remove_weapons_and_ammo(pindex, source_entity, target_entity, targe
    local message = ""
 
    --Abort if not enough empty slots in inventory
-   if main_inv.count_empty_stacks() < 6 then return "Error: Not enough empty inventory slots, at least 6 needed" end
+   if main_inv.count_empty_stacks() < 6 then return { "fa.equipment-error-not-enough-slots" } end
 
    --Remove all ammo
    for i = 1, ammos_count, 1 do
@@ -336,7 +336,7 @@ function mod.read_shield_and_health_level(pindex, ent_in)
    else
       --Report for this player
       if char == nil or char.valid == false then
-         table.insert(result, "No character")
+         table.insert(result, { "fa.equipment-no-character" })
          return result
       end
       ent = char
@@ -492,7 +492,7 @@ function mod.remove_equipment_and_armor(pindex, source_entity, target_entity, ta
    local source_ent = source_entity or p.character
    local target_ent = target_entity or p.character
 
-   if not source_ent or not target_ent then return "Error: No character or entity" end
+   if not source_ent or not target_ent then return { "fa.equipment-error-no-character-entity" } end
 
    local armor_inv = source_ent.get_inventory(defines.inventory.character_armor)
    local char_main_inv = target_ent.get_inventory(target_inv_index or defines.inventory.character_main)
@@ -500,7 +500,7 @@ function mod.remove_equipment_and_armor(pindex, source_entity, target_entity, ta
    if not armor_inv or not char_main_inv then return "Error: Invalid inventory" end
 
    local result = ""
-   if armor_inv.is_empty() then return "No armor." end
+   if armor_inv.is_empty() then return { "fa.equipment-error-no-armor" } end
 
    local grid
    grid = armor_inv[1].grid
@@ -609,31 +609,31 @@ end
 
 ---Get category description for equipment
 ---@param equipment LuaEquipment
----@return string
+---@return LocalisedString
 function mod.get_equipment_category(equipment)
    local type_name = equipment.type
    if type_name == "battery-equipment" then
-      return "a battery"
+      return { "fa.equipment-category-battery" }
    elseif type_name == "energy-shield-equipment" then
-      return "a shield"
+      return { "fa.equipment-category-shield" }
    elseif type_name == "solar-panel-equipment" then
-      return "a solar panel"
+      return { "fa.equipment-category-solar-panel" }
    elseif type_name == "generator-equipment" then
-      return "a generator"
+      return { "fa.equipment-category-generator" }
    elseif type_name == "roboport-equipment" then
-      return "a roboport"
+      return { "fa.equipment-category-roboport" }
    elseif type_name == "night-vision-equipment" then
-      return "night vision"
+      return { "fa.equipment-category-night-vision" }
    elseif type_name == "belt-immunity-equipment" then
-      return "belt immunity"
+      return { "fa.equipment-category-belt-immunity" }
    elseif type_name == "active-defense-equipment" then
-      return "active defense"
+      return { "fa.equipment-category-active-defense" }
    elseif type_name == "movement-bonus-equipment" then
-      return "an exoskeleton"
+      return { "fa.equipment-category-exoskeleton" }
    elseif type_name == "inventory-bonus-equipment" then
-      return "inventory expansion"
+      return { "fa.equipment-category-inventory-expansion" }
    else
-      return "equipment"
+      return { "fa.equipment-category-generic" }
    end
 end
 
@@ -952,30 +952,30 @@ end
 
 ---Get equipment category string from equipment type
 ---@param equip_type string
----@return string
+---@return LocalisedString
 function mod.get_equipment_category_from_type(equip_type)
    if equip_type == "battery-equipment" then
-      return "a battery"
+      return { "fa.equipment-category-battery" }
    elseif equip_type == "energy-shield-equipment" then
-      return "a shield"
+      return { "fa.equipment-category-shield" }
    elseif equip_type == "solar-panel-equipment" then
-      return "a solar panel"
+      return { "fa.equipment-category-solar-panel" }
    elseif equip_type == "generator-equipment" then
-      return "a generator"
+      return { "fa.equipment-category-generator" }
    elseif equip_type == "roboport-equipment" then
-      return "a roboport"
+      return { "fa.equipment-category-roboport" }
    elseif equip_type == "active-defense-equipment" then
-      return "active defense"
+      return { "fa.equipment-category-active-defense" }
    elseif equip_type == "night-vision-equipment" then
-      return "night vision"
+      return { "fa.equipment-category-night-vision" }
    elseif equip_type == "belt-immunity-equipment" then
-      return "belt immunity"
+      return { "fa.equipment-category-belt-immunity" }
    elseif equip_type == "movement-bonus-equipment" then
-      return "movement bonus"
+      return { "fa.equipment-category-movement-bonus" }
    elseif equip_type == "inventory-bonus-equipment" then
-      return "inventory bonus"
+      return { "fa.equipment-category-inventory-expansion" }
    else
-      return "equipment"
+      return { "fa.equipment-category-generic" }
    end
 end
 

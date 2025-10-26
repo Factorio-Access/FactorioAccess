@@ -354,7 +354,7 @@ function mod.place_ghost_with_params(params)
 
    -- Skip tiles for now (ghosts are primarily for entities)
    if decision.is_tile then
-      Speech.speak(pindex, "Ghost tiles not yet supported")
+      Speech.speak(pindex, { "fa.building-ghost-tiles-not-supported" })
       return false
    end
 
@@ -370,7 +370,7 @@ function mod.place_ghost_with_params(params)
    })
 
    if ghost then
-      Speech.speak(pindex, { "", "Placed ghost ", { "entity-name." .. decision.entity_name } })
+      Speech.speak(pindex, { "fa.building-placed-ghost", { "entity-name." .. decision.entity_name } })
       schedule(2, "read_tile", pindex)
       return true
    else
@@ -651,7 +651,7 @@ function mod.build_preview_checks_info(stack, pindex)
       and ent_p.tile_height <= 1
       and not surf.can_place_entity({ name = ent_p.name, position = pos, direction = build_dir })
    then
-      return " cannot place this here "
+      return { "fa.building-cannot-place-here" }
    end
 
    --For underground belts, state the potential neighbor
@@ -1313,10 +1313,7 @@ function mod.snap_place_steam_engine_to_a_boiler(pindex)
             found_valid_spot = true
             Speech.speak(
                pindex,
-               "Placed steam engine near boiler at "
-                  .. math.floor(boiler.position.x)
-                  .. ","
-                  .. math.floor(boiler.position.y)
+               { "fa.building-placed-steam-engine", math.floor(boiler.position.x), math.floor(boiler.position.y) }
             )
             return
          end
@@ -1390,19 +1387,15 @@ function mod.identify_building_obstacle(pindex, area, ent_to_ignore)
    })
    --Report obstacles
    if obstacle_ent ~= nil then
-      table.insert(result, ", ")
-      table.insert(result, localising.get_localised_name_with_fallback(obstacle_ent))
-      table.insert(result, " in the way, at ")
-      table.insert(result, tostring(math.floor(obstacle_ent.position.x)))
-      table.insert(result, ", ")
-      table.insert(result, tostring(math.floor(obstacle_ent.position.y)))
+      table.insert(result, {
+         "fa.building-obstacle-in-way",
+         localising.get_localised_name_with_fallback(obstacle_ent),
+         math.floor(obstacle_ent.position.x),
+         math.floor(obstacle_ent.position.y),
+      })
    elseif #water_tiles_in_area > 0 then
       local water = water_tiles_in_area[1]
-      table.insert(result, ", water ")
-      table.insert(result, " in the way, at ")
-      table.insert(result, tostring(math.floor(water.position.x)))
-      table.insert(result, ", ")
-      table.insert(result, tostring(math.floor(water.position.y)))
+      table.insert(result, { "fa.building-water-in-way", math.floor(water.position.x), math.floor(water.position.y) })
    end
    return result
 end

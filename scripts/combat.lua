@@ -33,17 +33,11 @@ function mod.repair_pack_used(ent, pindex)
       local dura = stack.durability or 0
       if health_diff < 10 then --free repair for tiny damages
          ent.health = ent.max_health
-         local msg = MessageBuilder.new()
-         msg:fragment({ "fa.combat-fully-repaired" })
-         msg:fragment(Localising.get_localised_name_with_fallback(ent))
-         Speech.speak(pindex, msg:build())
+         Speech.speak(pindex, { "fa.combat-fully-repaired-entity", Localising.get_localised_name_with_fallback(ent) })
       elseif health_diff < dura then
          ent.health = ent.max_health
          stack.drain_durability(health_diff)
-         local msg = MessageBuilder.new()
-         msg:fragment({ "fa.combat-fully-repaired" })
-         msg:fragment(Localising.get_localised_name_with_fallback(ent))
-         Speech.speak(pindex, msg:build())
+         Speech.speak(pindex, { "fa.combat-fully-repaired-entity", Localising.get_localised_name_with_fallback(ent) })
       else --if health_diff >= dura then
          stack.drain_durability(dura)
          ent.health = ent.health + dura
@@ -451,7 +445,7 @@ function mod.run_atomic_bomb_checks(pindex)
       p.shooting_state.position = cursor_pos
       if selected_ammo.name == "atomic-bomb" then
          abort_missle = true
-         abort_message = "Aiming alert, scroll mouse wheel to zoom out."
+         abort_message = { "fa.combat-aiming-zoom-alert" }
       end
    end
 
@@ -460,14 +454,14 @@ function mod.run_atomic_bomb_checks(pindex)
    local aim_dist_2 = util.distance(p.position, cursor_pos)
    if aim_dist_1 < 1.5 then
       abort_missle = true
-      abort_message = "Aiming alert, scroll mouse wheel to zoom out."
+      abort_message = { "fa.combat-aiming-zoom-alert" }
    elseif util.distance(target_pos, cursor_pos) > 2 then
       abort_missle = true
-      abort_message = "Aiming alert, move cursor to sync mouse."
+      abort_message = { "fa.combat-aiming-sync-alert" }
    end
    if aim_dist_1 < 35 or aim_dist_2 < 35 then
       abort_missle = true
-      abort_message = "Range alert, target too close, hold to fire anyway."
+      abort_message = { "fa.combat-range-too-close-alert" }
    end
    --p.print("abort check")
 
