@@ -1,3 +1,11 @@
+# 0.16.10 (2025-10-26)
+
+- overhaul localisation. Expect crashes and weird messages. Sorry.
+- Fix announcement of pouring when the pouring belt is a corner
+- Rework how pipe shape announcement works: "lonely" is now the shape of pipes by themselves to avoid confusion with
+  "not connected", and "underground unconnnected" is now said to indicate when an underground pipe is not linked to
+  another one.
+
 # 0.16.9 (2025-10-25)
 
 - Get ctrl shift left bracket back from git history. Dropped during equipment overhaul by mistake.
