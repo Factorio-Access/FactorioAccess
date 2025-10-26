@@ -1,4 +1,4 @@
-# 0.16.8 (unreleased)
+# 0.16.8 (2025-10-25)
 
 - Restore the ability to use all cursor tools (fast travel, bookmarks, skipping, etc) while setting up blueprints
   - Note: this is stil a UI and pressing e still cancels. Pressing e with another UI oppen just closes that one though,
