@@ -40,7 +40,7 @@ local Filters = require("scripts.filters")
 local Graphics = require("scripts.graphics")
 local InventoryTransfers = require("scripts.inventory-transfers")
 local InventoryUtils = require("scripts.inventory-utils")
-local ItemDescriptions = require("scripts.item-descriptions")
+local ItemInfo = require("scripts.item-info")
 local KruiseKontrol = require("scripts.kruise-kontrol-wrapper")
 local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
@@ -3664,7 +3664,7 @@ EventManager.on_event(
    function(event, pindex)
       -- UI routing is handled automatically by router.lua (line 485)
       -- This is the fallback for when no UI is open
-      ItemDescriptions.read_item_in_hand(pindex)
+      ItemInfo.read_item_in_hand(pindex)
    end
 )
 
@@ -4291,7 +4291,7 @@ EventManager.on_event("fa-c-backspace", function(event)
       or cursor_stack.is_deconstruction_item
       or cursor_stack.is_upgrade_item
    then
-      local item_description = Localising.localise_item({
+      local item_description = ItemInfo.item_info({
          name = cursor_stack.name,
          count = cursor_stack.count,
          quality = cursor_stack.quality and cursor_stack.quality.name or nil,
@@ -4388,7 +4388,7 @@ EventManager.on_event("fa-o", function(event)
       cursor_stack.count = cursor_stack.count - inserted
 
       -- Announce success
-      local item_description = Localising.localise_item({
+      local item_description = ItemInfo.item_info({
          name = item_name,
          count = inserted,
          quality = item_quality,

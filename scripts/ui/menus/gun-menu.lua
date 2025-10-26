@@ -6,6 +6,7 @@ Provides a 3x2 grid interface for managing weapon and ammo slots.
 local Equipment = require("scripts.equipment")
 local Functools = require("scripts.functools")
 local Grid = require("scripts.ui.grid")
+local ItemInfo = require("scripts.item-info")
 local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
 local TabList = require("scripts.ui.tab-list")
@@ -128,7 +129,7 @@ local function handle_slot_right_click(ctx, slot_index, is_ammo)
          if half > 0 then
             cursor_stack.set_stack({ name = target_stack.name, count = half, quality = target_stack.quality })
             target_stack.count = target_stack.count - half
-            local item_description = Localising.localise_item({
+            local item_description = ItemInfo.item_info({
                name = cursor_stack.name,
                count = cursor_stack.count,
                quality = cursor_stack.quality and cursor_stack.quality.name or nil,
@@ -172,12 +173,12 @@ local function render_gun_grid(ctx)
       builder:add_control(slot, 1, {
          label = function(label_ctx)
             -- Build gun slot label inline
-            local gun_label = gun_stack and gun_stack.valid_for_read and Localising.localise_item(gun_stack)
+            local gun_label = gun_stack and gun_stack.valid_for_read and ItemInfo.item_info(gun_stack)
                or { "fa.equipment-empty-gun-slot" }
 
             -- Add ammo info
             if ammo_stack and ammo_stack.valid_for_read then
-               local ammo_label = Localising.localise_item(ammo_stack)
+               local ammo_label = ItemInfo.item_info(ammo_stack)
                label_ctx.message:fragment({ "fa.gun-menu-gun-using-ammo", gun_label, ammo_label })
             else
                label_ctx.message:fragment({ "fa.gun-menu-gun-no-ammo", gun_label })
@@ -204,10 +205,10 @@ local function render_gun_grid(ctx)
       builder:add_control(slot, 2, {
          label = function(label_ctx)
             -- Build ammo slot label inline
-            local ammo_label = ammo_stack and ammo_stack.valid_for_read and Localising.localise_item(ammo_stack)
+            local ammo_label = ammo_stack and ammo_stack.valid_for_read and ItemInfo.item_info(ammo_stack)
                or { "fa.equipment-empty-ammo-slot" }
 
-            local gun_label = gun_stack and gun_stack.valid_for_read and Localising.localise_item(gun_stack)
+            local gun_label = gun_stack and gun_stack.valid_for_read and ItemInfo.item_info(gun_stack)
                or { "fa.equipment-empty-gun-slot" }
 
             label_ctx.message:fragment({ "fa.gun-menu-ammo-for-gun", ammo_label, gun_label })
@@ -303,14 +304,14 @@ function mod.render_entity_guns(ctx, gun_inv_index, ammo_inv_index)
 
          builder:add_control(slot, 1, {
             label = function(label_ctx)
-               local gun_label = gun_stack and gun_stack.valid_for_read and Localising.localise_item(gun_stack)
+               local gun_label = gun_stack and gun_stack.valid_for_read and ItemInfo.item_info(gun_stack)
                   or { "fa.equipment-empty-gun-slot" }
 
                -- Check if there's corresponding ammo
                if ammo_inv and slot <= #ammo_inv then
                   local ammo_stack = ammo_inv[slot]
                   if ammo_stack and ammo_stack.valid_for_read then
-                     local ammo_label = Localising.localise_item(ammo_stack)
+                     local ammo_label = ItemInfo.item_info(ammo_stack)
                      label_ctx.message:fragment({ "fa.gun-menu-gun-using-ammo", gun_label, ammo_label })
                   else
                      label_ctx.message:fragment({ "fa.gun-menu-gun-no-ammo", gun_label })
@@ -337,13 +338,13 @@ function mod.render_entity_guns(ctx, gun_inv_index, ammo_inv_index)
 
          builder:add_control(slot, 2, {
             label = function(label_ctx)
-               local ammo_label = ammo_stack and ammo_stack.valid_for_read and Localising.localise_item(ammo_stack)
+               local ammo_label = ammo_stack and ammo_stack.valid_for_read and ItemInfo.item_info(ammo_stack)
                   or { "fa.equipment-empty-ammo-slot" }
 
                -- Check if there's corresponding gun
                if gun_inv and slot <= #gun_inv then
                   local gun_stack = gun_inv[slot]
-                  local gun_label = gun_stack and gun_stack.valid_for_read and Localising.localise_item(gun_stack)
+                  local gun_label = gun_stack and gun_stack.valid_for_read and ItemInfo.item_info(gun_stack)
                      or { "fa.equipment-empty-gun-slot" }
                   label_ctx.message:fragment({ "fa.gun-menu-ammo-for-gun", ammo_label, gun_label })
                else

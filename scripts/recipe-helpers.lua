@@ -4,6 +4,7 @@ Used by crafting menu, assembling machine tab, and other recipe-related features
 Takes MessageBuilder directly to avoid UI dependencies.
 ]]
 
+local ItemInfo = require("scripts.item-info")
 local Localising = require("scripts.localising")
 
 local mod = {}
@@ -15,9 +16,9 @@ function mod.read_recipe_details(message, recipe)
    -- Read ingredients
    message:fragment({ "fa.crafting-ingredients" })
    for _, ingredient in ipairs(recipe.ingredients) do
-      -- Use localise_item_or_fluid for proper formatting with count
+      -- Use item_or_fluid_info for proper formatting with count
       local protos = prototypes.item[ingredient.name] and prototypes.item or prototypes.fluid
-      local item_str = Localising.localise_item_or_fluid({
+      local item_str = ItemInfo.item_or_fluid_info({
          name = ingredient.name,
          count = ingredient.amount,
       }, protos)
@@ -31,21 +32,21 @@ function mod.read_recipe_details(message, recipe)
 
       if product.amount then
          -- Simple case with fixed amount
-         local item_str = Localising.localise_item_or_fluid({
+         local item_str = ItemInfo.item_or_fluid_info({
             name = product.name,
             count = product.amount,
          }, protos)
          message:list_item(item_str)
       elseif product.amount_min and product.amount_max then
          -- Variable amount - show range separately
-         local item_str = Localising.localise_item_or_fluid({
+         local item_str = ItemInfo.item_or_fluid_info({
             name = product.name,
          }, protos)
          message:list_item(item_str)
          message:fragment({ "fa.recipe-range", product.amount_min, product.amount_max })
       else
          -- No amount specified
-         local item_str = Localising.localise_item_or_fluid({
+         local item_str = ItemInfo.item_or_fluid_info({
             name = product.name,
          }, protos)
          message:list_item(item_str)

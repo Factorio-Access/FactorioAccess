@@ -31,6 +31,7 @@ local Fluids = require("scripts.fluids")
 local Geometry = require("scripts.geometry")
 local Graphics = require("scripts.graphics")
 local Heat = require("scripts.heat")
+local ItemInfo = require("scripts.item-info")
 local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
@@ -110,15 +111,12 @@ local function present_list(list, truncate, protos)
 
       table.insert(
          entries,
-         Localising.localise_item_or_fluid(
-            { name = e.name, quality = e.quality, count = e.count },
-            protos or prototypes.item
-         )
+         ItemInfo.item_or_fluid_info({ name = e.name, quality = e.quality, count = e.count }, protos or prototypes.item)
       )
    end
 
    if extra then
-      table.insert(entries, Localising.localise_item({ name = Localising.ITEM_OTHER, count = #final - truncate }))
+      table.insert(entries, ItemInfo.item_info({ name = ItemInfo.ITEM_OTHER, count = #final - truncate }))
    end
    local joined = FaUtils.localise_cat_table(entries, ", ")
 
@@ -1228,7 +1226,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    if ent.type == "furnace" then
       local output_stack = ent.get_output_inventory()[1]
       if output_stack and output_stack.valid_for_read then
-         local item_str = Localising.localise_item(output_stack)
+         local item_str = ItemInfo.item_info(output_stack)
          ctx.message:fragment({ "fa.ent-info-furnace-output-ready", item_str })
          ctx.message:list_item()
       end

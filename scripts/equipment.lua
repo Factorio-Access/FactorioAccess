@@ -3,6 +3,7 @@
 
 local Electrical = require("scripts.electrical")
 local FaUtils = require("scripts.fa-utils")
+local ItemInfo = require("scripts.item-info")
 local ItemStackUtils = require("scripts.item-stack-utils")
 local localising = require("scripts.localising")
 local Localising = require("scripts.localising")
@@ -865,7 +866,7 @@ function mod.add_equipment_selection_rows(builder, params, on_select_callback)
 
          builder:add_clickable(key, function(label_ctx)
             -- Use localise_item to build label (handles quality automatically)
-            label_ctx.message:list_item(Localising.localise_item(equip_data.stacks[1]))
+            label_ctx.message:list_item(ItemInfo.item_info(equip_data.stacks[1]))
 
             -- Add dimensions
             if width and height then label_ctx.message:list_item(string.format("%d by %d", width, height)) end
@@ -913,7 +914,7 @@ function mod.add_equipment_selection_rows(builder, params, on_select_callback)
 
          builder:add_clickable(key, function(label_ctx)
             -- Use localise_item to build label (handles quality automatically)
-            label_ctx.message:list_item(Localising.localise_item(equip_data.stacks[1]))
+            label_ctx.message:list_item(ItemInfo.item_info(equip_data.stacks[1]))
 
             -- Add dimensions
             if width and height then label_ctx.message:list_item(string.format("%d by %d", width, height)) end

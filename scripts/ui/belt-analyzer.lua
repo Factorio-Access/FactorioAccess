@@ -1,6 +1,7 @@
 local FaUtils = require("scripts.fa-utils")
 local Functools = require("scripts.functools")
 local Geometry = require("scripts.geometry")
+local ItemInfo = require("scripts.item-info")
 local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
@@ -81,7 +82,7 @@ local function label_local_cell(ctx, x, y)
 
    for name, quals in pairs(bucket.items) do
       for quality, count in pairs(quals) do
-         local item = Localising.localise_item({
+         local item = ItemInfo.item_info({
             name = name,
             quality = quality,
             count = count,
@@ -143,7 +144,7 @@ local function aggregate_grid_builder(field, length_field)
             builder:add_simple_label(
                col,
                row,
-               { "fa.ui-belt-analyzer-aggregation", Localising.localise_item(bucket), percent }
+               { "fa.ui-belt-analyzer-aggregation", ItemInfo.item_info(bucket), percent }
             )
          end
       end

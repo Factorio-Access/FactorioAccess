@@ -10,6 +10,7 @@ Provides recipe selection interface for assembling machines where:
 
 local CategoryRows = require("scripts.ui.category-rows")
 local Crafting = require("scripts.crafting")
+local ItemInfo = require("scripts.item-info")
 local Localising = require("scripts.localising")
 local RecipeHelpers = require("scripts.recipe-helpers")
 local Speech = require("scripts.speech")
@@ -37,7 +38,7 @@ local function handle_recipe_click(ctx, recipe, entity)
       ctx.message:fragment({ "fa.assembling-machine-items-removed" })
       for _, item in ipairs(removed_items) do
          if item.count > 0 then
-            local item_str = Localising.localise_item({
+            local item_str = ItemInfo.item_info({
                name = item.name,
                count = item.count,
             })

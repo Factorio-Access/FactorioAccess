@@ -4,8 +4,9 @@ Handles multi-stack transfers between player and building inventories.
 Supports ratio-based transfers and item filtering.
 ]]
 
-local Localising = require("scripts.localising")
 local FaUtils = require("scripts.fa-utils")
+local ItemInfo = require("scripts.item-info")
+local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
 local TH = require("scripts.table-helpers")
@@ -29,7 +30,7 @@ local function build_item_list_message(moved)
 
    for i, item in ipairs(items) do
       if i > 1 then message:fragment(", ") end
-      message:fragment(Localising.localise_item({ name = item.name, count = item.count }))
+      message:fragment(ItemInfo.item_info({ name = item.name, count = item.count }))
    end
 
    return message:build()

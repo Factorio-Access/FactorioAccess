@@ -15,7 +15,7 @@ local Consts = require("scripts.consts")
 local Equipment = require("scripts.equipment")
 local FaInfo = require("scripts.fa-info")
 local UiRouter = require("scripts.ui.router")
-local ItemDescriptions = require("scripts.item-descriptions")
+local ItemInfo = require("scripts.item-info")
 local InventoryUtils = require("scripts.inventory-utils")
 local Help = require("scripts.ui.help")
 local MessageBuilder = Speech.MessageBuilder
@@ -98,7 +98,7 @@ local function get_slot_label(inv, slot_index, locks)
             { "fa.ui-inventory-empty-slot" },
             {
                "fa.ui-inventory-slot-locked-to",
-               Localising.localise_item({ name = lock_name }),
+               ItemInfo.item_info({ name = lock_name }),
             },
          }
       end
@@ -106,14 +106,14 @@ local function get_slot_label(inv, slot_index, locks)
    end
 
    -- Build the item label with count and quality
-   local item_label = Localising.localise_item(stack)
+   local item_label = ItemInfo.item_info(stack)
 
    -- Add lock info if this slot has one
    if lock_name then
       return {
          "",
          item_label,
-         { "fa.ui-inventory-slot-locked-to", Localising.localise_item({ name = lock_name }) },
+         { "fa.ui-inventory-slot-locked-to", ItemInfo.item_info({ name = lock_name }) },
       }
    end
 
@@ -338,7 +338,7 @@ local function render_inventory_grid(ctx)
 
                -- Announce what's now in hand (or that hand is empty)
                if cursor_stack.valid_for_read then
-                  local item_description = Localising.localise_item({
+                  local item_description = ItemInfo.item_info({
                      name = cursor_stack.name,
                      count = cursor_stack.count,
                      quality = cursor_stack.quality and cursor_stack.quality.name or nil,
@@ -407,7 +407,7 @@ local function render_inventory_grid(ctx)
                   if half > 0 then
                      cursor_stack.set_stack({ name = inv_stack.name, count = half, quality = inv_stack.quality })
                      inv_stack.count = inv_stack.count - half
-                     local item_description = Localising.localise_item({
+                     local item_description = ItemInfo.item_info({
                         name = cursor_stack.name,
                         count = cursor_stack.count,
                         quality = cursor_stack.quality and cursor_stack.quality.name or nil,
@@ -417,7 +417,7 @@ local function render_inventory_grid(ctx)
                elseif cursor_stack.valid_for_read and inv_stack.valid_for_read then
                   -- Both have items - swap like left click
                   cursor_stack.swap_stack(inv_stack)
-                  local item_description = Localising.localise_item({
+                  local item_description = ItemInfo.item_info({
                      name = cursor_stack.name,
                      count = cursor_stack.count,
                      quality = cursor_stack.quality and cursor_stack.quality.name or nil,
@@ -434,13 +434,13 @@ local function render_inventory_grid(ctx)
 
             -- Also read item info (k = slot position + item info)
             local stack = inv[slot_index]
-            ItemDescriptions.push_equipment_info(coord_ctx.message, stack)
+            ItemInfo.get_item_stack_info(coord_ctx.message, stack, { verbosity = ItemInfo.VERBOSITY.VERBOSE })
          end,
          on_read_info = function(info_ctx, x, y)
             -- Read detailed item info (y = just item info)
             local slot_index = grid_pos_to_slot(x, y)
             local stack = inv[slot_index]
-            ItemDescriptions.push_equipment_info(info_ctx.message, stack)
+            ItemInfo.get_item_stack_info(info_ctx.message, stack, { verbosity = ItemInfo.VERBOSITY.VERBOSE })
          end,
          on_production_stats_announcement = function(stats_ctx, x, y)
             -- Read production stats for item in slot (u = production stats)
@@ -463,7 +463,7 @@ local function render_inventory_grid(ctx)
 
             -- Check if it's a planner item using API flags
             if stack.is_blueprint or stack.is_deconstruction_item or stack.is_upgrade_item then
-               local item_description = Localising.localise_item({
+               local item_description = ItemInfo.item_info({
                   name = stack.name,
                   count = stack.count,
                   quality = stack.quality and stack.quality.name or nil,
@@ -505,7 +505,7 @@ local function render_inventory_grid(ctx)
                stack.count = stack.count - inserted
 
                -- Announce success
-               local item_description = Localising.localise_item({
+               local item_description = ItemInfo.item_info({
                   name = item_name,
                   count = inserted,
                   quality = item_quality,

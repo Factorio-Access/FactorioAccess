@@ -3,6 +3,7 @@ Inventory utility functions for transferring items between inventories
 ]]
 
 local Consts = require("scripts.consts")
+local ItemInfo = require("scripts.item-info")
 local Localising = require("scripts.localising")
 local sounds = require("scripts.ui.sounds")
 
@@ -211,7 +212,7 @@ function mod.quick_transfer(pindex, msg_builder, src_ent, src_inv_def, src_slot,
 
    -- Check if destination can accept the stack
    if not dest_inv.can_insert(transfer_stack) then
-      local item_label = Localising.localise_item({
+      local item_label = ItemInfo.item_info({
          name = stack.name,
          quality = stack.quality and stack.quality.name or nil,
       })
@@ -235,7 +236,7 @@ function mod.quick_transfer(pindex, msg_builder, src_ent, src_inv_def, src_slot,
       sounds.play_inventory_move(pindex)
 
       -- Build success message
-      local item_label = Localising.localise_item({
+      local item_label = ItemInfo.item_info({
          name = item_name,
          count = inserted,
          quality = item_quality,

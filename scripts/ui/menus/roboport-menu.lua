@@ -4,8 +4,9 @@ Provides a vertical menu interface for managing roboport networks.
 ]]
 
 local Functools = require("scripts.functools")
-local WorkerRobots = require("scripts.worker-robots")
+local ItemInfo = require("scripts.item-info")
 local Localising = require("scripts.localising")
+local WorkerRobots = require("scripts.worker-robots")
 local FormBuilder = require("scripts.ui.form-builder")
 local Speech = require("scripts.speech")
 local TabList = require("scripts.ui.tab-list")
@@ -113,7 +114,7 @@ local function render_roboport_menu(ctx)
          local mb = label_ctx.message
          mb:fragment({ "fa.network-robots-intro" })
          for _, item in ipairs(items) do
-            mb:list_item(Localising.localise_item(item))
+            mb:list_item(ItemInfo.item_info(item))
          end
       else
          label_ctx.message:fragment({ "fa.robots-error-no-network" })
@@ -166,7 +167,7 @@ local function render_roboport_menu(ctx)
       else
          mb:fragment({ "fa.roboport-contents-intro" })
          for _, item in ipairs(items) do
-            mb:list_item(Localising.localise_item(item))
+            mb:list_item(ItemInfo.item_info(item))
          end
       end
    end)
@@ -219,7 +220,7 @@ local function render_roboport_menu(ctx)
          else
             mb:fragment({ "fa.network-chests-intro" })
             for _, chest in ipairs(chest_list) do
-               mb:list_item(Localising.localise_item({ name = chest.name, count = chest.count }))
+               mb:list_item(ItemInfo.item_info({ name = chest.name, count = chest.count }))
             end
          end
       else
@@ -241,7 +242,7 @@ local function render_roboport_menu(ctx)
 
             label_ctx.message:fragment({ "fa.roboport-network-contains" })
             for _, item in ipairs(items) do
-               local item_desc = Localising.localise_item({
+               local item_desc = ItemInfo.item_info({
                   name = item.name,
                   count = item.count,
                   quality = item.quality,

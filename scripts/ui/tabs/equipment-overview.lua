@@ -6,6 +6,7 @@ Works with any entity that has an equipment grid (character armor, vehicles, etc
 local Menu = require("scripts.ui.menu")
 local KeyGraph = require("scripts.ui.key-graph")
 local Equipment = require("scripts.equipment")
+local ItemInfo = require("scripts.item-info")
 local ItemStackUtils = require("scripts.item-stack-utils")
 local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
@@ -57,7 +58,7 @@ local function render_equipment_overview(ctx)
          local armor_stack = armor_inv[1]
          builder:add_clickable("current-armor", function(ctx)
             ctx.message:fragment({ "fa.equipment-overview-equipped" })
-            ctx.message:list_item(Localising.localise_item(armor_stack))
+            ctx.message:list_item(ItemInfo.item_info(armor_stack))
 
             -- Add equipment bonuses if available
             if grid then
@@ -110,7 +111,7 @@ local function render_equipment_overview(ctx)
             on_clear = function(ctx)
                -- Unequip armor to player inventory
                if main_inv and main_inv.can_insert(armor_stack) then
-                  local armor_name = Localising.localise_item(armor_stack)
+                  local armor_name = ItemInfo.item_info(armor_stack)
                   local inserted = main_inv.insert(armor_stack)
                   if inserted > 0 then
                      armor_stack.clear()
@@ -134,7 +135,7 @@ local function render_equipment_overview(ctx)
          for _, armor_data in ipairs(armor_items) do
             local key = string.format("armor-%s-%s", armor_data.name, armor_data.quality)
             builder:add_clickable(key, function(ctx)
-               ctx.message:fragment(Localising.localise_item(armor_data.stacks[1]))
+               ctx.message:fragment(ItemInfo.item_info(armor_data.stacks[1]))
             end, {
                on_click = function(ctx)
                   -- Equip the first stack
@@ -211,7 +212,7 @@ local function render_equipment_overview(ctx)
                count = item.count,
                quality = prototypes.quality[item.quality],
             }
-            ctx.message:list_item(Localising.localise_item(stack))
+            ctx.message:list_item(ItemInfo.item_info(stack))
          end
          ctx.message:fragment({ "fa.equipment-overview-backspace-to-clear-all" })
       end, {
