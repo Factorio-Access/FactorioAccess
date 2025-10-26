@@ -1,3 +1,7 @@
+# 0.16.9 (unreleased)
+
+- Get ctrl shift left bracket back from git history. Dropped during equipment overhaul by mistake.
+
 # 0.16.8 (2025-10-25)
 
 - Restore the ability to use all cursor tools (fast travel, bookmarks, skipping, etc) while setting up blueprints

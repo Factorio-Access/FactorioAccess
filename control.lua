@@ -3510,6 +3510,17 @@ EventManager.on_event(
    end
 )
 
+EventManager.on_event(
+   "fa-cs-leftbracket",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      local player = game.players[pindex]
+      if not player.cursor_stack.valid_for_read then return end
+
+      if player.cursor_stack.is_repair_tool then kb_repair_area(event) end
+   end
+)
+
 --Calls function to notify if items are being picked up via vanilla F key.
 ---@param event EventData.CustomInputEvent
 local function kb_read_item_pickup_state(event)
