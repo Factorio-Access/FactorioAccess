@@ -966,7 +966,6 @@ end
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_fluid_connections(ctx)
    local cursor_center = { x = ctx.cursor_pos.x + 0.5, y = ctx.cursor_pos.y + 0.5 }
-   print(serpent.line(cursor_center))
    local points = Fluids.get_connection_points(ctx.ent)
    ---@param p fa.Fluids.ConnectionPoint
    TH.retain_unordered(points, function(p)
@@ -981,15 +980,13 @@ local function ent_info_fluid_connections(ctx)
 
    if not next(points) then return end
 
-   -- To get convenient announcements, we will roll up into fluids and their
-   -- directions rather than handling these one by one.  If any connection
-   -- connects to an entity, we instead will handle it separately, so that
-   -- adjacent entity connections are announced.
+   -- To get convenient announcements, we will roll up into fluids and their directions rather than handling these one
+   -- by one.  If any connection connects to an entity, we instead will handle it separately, so that adjacent entity
+   -- connections are announced.
 
-   -- It is an engine invariant that only one fluidbox may be at any point, in
-   -- the sense that only one fluid may be handled.  Storage tanks are a weird
-   -- exception which break the documented stricter rule of no fluidboxes
-   -- sharing a point, as the corners are bidirectional in 2 directions.
+   -- It is an engine invariant that only one fluidbox may be at any point, in the sense that only one fluid may be
+   -- handled.  Storage tanks are a weird exception which break the documented stricter rule of no fluidboxes sharing a
+   -- point, as the corners are bidirectional in 2 directions.
    local out_dirs = {}
    local in_dirs = {}
 
@@ -1040,7 +1037,7 @@ local function ent_info_fluid_connections(ctx)
             for _, dirinfo in pairs(dirs) do
                local dir = dirinfo.direction
                local type = dirinfo.type
-               if type == "underground" and dirinfo.has_other_side then
+               if type == "underground" and not dirinfo.has_other_side then
                   table.insert(
                      dirparts,
                      { "fa.ent-info-fluid-connections-via-underground-not-connected", FaUtils.direction_lookup(dir) }
