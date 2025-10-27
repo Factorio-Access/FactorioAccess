@@ -1304,7 +1304,7 @@ function mod.ent_info(pindex, ent, is_scanner)
          local area_ents = ent.surface.find_entities_filtered({ position = ent.pickup_position })
          for i, area_ent in ipairs(area_ents) do
             if area_ent.type == "straight-rail" or area_ent.type == "curved-rail" then
-               pickup_name = Localising.get(area_ent, pindex)
+               pickup_name = Localising.get_localised_name_with_fallback(area_ent)
             end
          end
       end
@@ -1321,7 +1321,7 @@ function mod.ent_info(pindex, ent, is_scanner)
          local drop_area_ents = ent.surface.find_entities_filtered({ position = ent.drop_position })
          for i, drop_area_ent in ipairs(drop_area_ents) do
             if drop_area_ent.type == "straight-rail" or drop_area_ent.type == "curved-rail" then
-               drop_name = Localising.get(drop_area_ent, pindex)
+               drop_name = Localising.get_localised_name_with_fallback(drop_area_ent)
             end
          end
       end
@@ -1338,13 +1338,13 @@ function mod.ent_info(pindex, ent, is_scanner)
       local drop = ent.drop_target
       local drop_name = nil
       if drop ~= nil and drop.valid then
-         drop_name = Localising.get(drop, pindex)
+         drop_name = Localising.get_localised_name_with_fallback(drop)
       else
          drop_name = "ground"
          local drop_area_ents = ent.surface.find_entities_filtered({ position = ent.drop_position })
          for i, drop_area_ent in ipairs(drop_area_ents) do
             if drop_area_ent.type == "straight-rail" or drop_area_ent.type == "curved-rail" then
-               drop_name = Localising.get(drop_area_ent, pindex)
+               drop_name = Localising.get_localised_name_with_fallback(drop_area_ent)
             end
          end
       end
@@ -1491,7 +1491,7 @@ function mod.read_nearest_damaged_ent_info(pos, pindex)
       if FaUtils.is_direction_aligned(closest.position, pos) then aligned_note = "aligned " end
       Speech.speak(pindex, {
          "fa.damaged-entity-found",
-         Localising.get(closest, pindex),
+         Localising.get_localised_name_with_fallback(closest),
          min_dist,
          aligned_note,
          FaUtils.direction_lookup(dir),
@@ -1620,7 +1620,7 @@ function mod.selected_item_production_stats_info(pindex, prototype_name)
    local m1_out, m10_out, h1_out, h1000_out = get_stats(false)
 
    local message = MessageBuilder.new()
-   message:fragment(Localising.get(prototype, pindex))
+   message:fragment(Localising.get_localised_name_with_fallback(prototype))
    message:list_item({ "fa.production-stats-produced" })
    message:fragment(m1_in)
    message:fragment({ "fa.production-stats-last-minute" })
@@ -1678,9 +1678,6 @@ local function ent_status_lookup(ctx)
    local ent_status_id = ent.status
    if ent_status_id ~= nil then
       local ent_status_text = status_lookup[ent_status_id]
-      if ent_status_text == nil then
-         print("Weird no entity status lookup" .. ent.name .. "-" .. ent.type .. "-" .. ent_status_id)
-      end
       ctx.message:fragment({ "entity-status." .. ent_status_text:gsub("_", "-") })
       return true
    end
