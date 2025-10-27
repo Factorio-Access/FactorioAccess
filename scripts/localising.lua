@@ -62,10 +62,4 @@ function mod.get_localised_name_with_fallback(what)
    end
 end
 
---[[
-MOVED: localise_item, localise_item_or_fluid, and ITEM_OTHER have been moved to scripts/item-info.lua
-Use ItemInfo.item_info() instead of Localising.localise_item()
-(Functions have been renamed: localise_item -> item_info, localise_item_or_fluid -> item_or_fluid_info)
-]]
-
 return mod
