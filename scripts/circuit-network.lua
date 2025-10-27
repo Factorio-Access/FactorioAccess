@@ -1,13 +1,13 @@
 --Here: Functions relating to circuit networks and wiring buildings.
 --Includes wire dragging and pure functions for signal processing and aggregation.
 
-local localising = require("scripts.localising")
 local Viewpoint = require("scripts.viewpoint")
 local Speech = require("scripts.speech")
 local Sounds = require("scripts.ui.sounds")
 local WorkerRobots = require("scripts.worker-robots")
 local FaUtils = require("scripts.fa-utils")
 local Localising = require("scripts.localising")
+local ItemInfo = require("scripts.item-info")
 
 local mod = {}
 
@@ -225,7 +225,7 @@ function mod.localise_signal(signal_id)
 
    -- For items and fluids, use the quality-aware localisation
    if signal_type == "item" or signal_type == "fluid" then
-      return localising.localise_item_or_fluid({
+      return ItemInfo.item_or_fluid_info({
          name = proto,
          quality = signal_id.quality,
       }, proto_dict)
@@ -250,7 +250,7 @@ function mod.localise_signal_with_count(signal_id, count)
 
    -- For items and fluids, use the quality-aware localisation
    if signal_type == "item" or signal_type == "fluid" then
-      return localising.localise_item_or_fluid({
+      return ItemInfo.item_or_fluid_info({
          name = proto,
          quality = signal_id.quality,
          count = count,
