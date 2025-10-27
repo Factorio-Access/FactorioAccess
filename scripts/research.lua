@@ -32,7 +32,7 @@ local StorageManager = require("scripts.storage-manager")
 local TH = require("scripts.table-helpers")
 
 -- This is the workaround for the lack of counts in craft-item research
--- triggers. See data-updates.lua for the smuggling and a longer description.
+-- triggers. See data-final-fixes.lua for the data declaration.
 ---@type fun(): table<string, table<string, number>>
 local CRAFT_ITEM_COUNTS = Functools.cached(function()
    local map_outer = DataToRuntimeMap.load(Consts.RESEARCH_CRAFT_ITEMS_MAP_OUTER)
@@ -40,8 +40,9 @@ local CRAFT_ITEM_COUNTS = Functools.cached(function()
    local res = {}
 
    for protoname, mapname in pairs(map_outer) do
+      -- With ModData, numbers are stored directly, no need to convert from strings
       local inner_map = DataToRuntimeMap.load(mapname)
-      res[protoname] = TH.map(inner_map, tonumber)
+      res[protoname] = inner_map
    end
 
    return res

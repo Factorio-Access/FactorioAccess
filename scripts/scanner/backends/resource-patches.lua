@@ -11,12 +11,8 @@ local mod = {}
 
 ---@type function(): table<string, number>
 local PROTOTYPE_SEARCH_RADIUSES = Functools.cached(function()
-   local loaded = DataToRuntimeMap.load(Consts.RESOURCE_SEARCH_RADIUSES_MAP_NAME)
-   local res = {}
-   for k, v in pairs(loaded) do
-      res[k] = tonumber(v)
-   end
-   return res
+   -- With ModData, numbers are stored directly, no need to convert from strings
+   return DataToRuntimeMap.load(Consts.RESOURCE_SEARCH_RADIUSES_MAP_NAME)
 end)
 
 ---@class fa.scanner.ResourcePatch
