@@ -161,7 +161,7 @@ local function localise_trigger(tech, trig)
       table.insert(res, trig.amount)
    elseif trig.type == "capture-spawner" then
       table.insert(res, Localising.get_localised_name_with_fallback(prototypes.entity[trig.entity]))
-   elseif trig.type == "build-entityy" then
+   elseif trig.type == "build-entity" then
       -- TODO: We don't handle quality yet because that is very hard to
       -- localise, and we are just getting 1.0 parity at the moment.
       table.insert(res, Localising.get_localised_name_with_fallback(prototypes.entity[trig.entity.name]))
