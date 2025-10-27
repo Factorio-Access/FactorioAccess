@@ -387,3 +387,4 @@ You **MUST** double check that you understand APIs before using them.
 # Quick notes on common patterns
 
 - Before performing aggregations of items by quality to produce lists such as "legendary solar panel x 5", read scripts/item-stack-utils.lua to learn about aggregation functions that already exist.
+- imports are CamelCase, not snake_case or camelCase.
