@@ -76,7 +76,7 @@ function mod.drag_wire_and_read(pindex)
    local wire_name = nil
    if p.cursor_stack.valid_for_read then
       wire_type = p.cursor_stack.name
-      wire_name = localising.get_localised_name_with_fallback(p.cursor_stack.prototype)
+      wire_name = Localising.get_localised_name_with_fallback(p.cursor_stack.prototype)
       storage.players[pindex].last_wire_type = wire_type
       storage.players[pindex].last_wire_name = wire_name
    else
@@ -142,7 +142,7 @@ function mod.drag_wire_and_read(pindex)
          end
          msg:fragment({
             locale_key,
-            localising.get_localised_name_with_fallback(target_ent),
+            Localising.get_localised_name_with_fallback(target_ent),
             network_found,
          })
       else
@@ -153,7 +153,7 @@ function mod.drag_wire_and_read(pindex)
       local is_valid_copper_target = c_ent.type == "electric-pole" or c_ent.name == "power-switch"
 
       if not is_valid_copper_target then
-         msg:fragment({ "fa.circuit-wire-invalid-copper-target", localising.get_localised_name_with_fallback(c_ent) })
+         msg:fragment({ "fa.circuit-wire-invalid-copper-target", Localising.get_localised_name_with_fallback(c_ent) })
       elseif drag_target ~= nil then
          local target_ent = drag_target.target_entity
          local target_network = drag_target.target_wire_id
@@ -165,7 +165,7 @@ function mod.drag_wire_and_read(pindex)
          end
          msg:fragment({
             "fa.circuit-wire-connected-copper",
-            localising.get_localised_name_with_fallback(target_ent),
+            Localising.get_localised_name_with_fallback(target_ent),
             network_found,
          })
       elseif
@@ -231,7 +231,7 @@ function mod.localise_signal(signal_id)
       }, proto_dict)
    else
       -- For other signals, just get the localised name
-      return localising.get_localised_name_with_fallback(proto)
+      return Localising.get_localised_name_with_fallback(proto)
    end
 end
 
@@ -257,7 +257,7 @@ function mod.localise_signal_with_count(signal_id, count)
       }, proto_dict)
    else
       -- For other signals, just get name and append count
-      local name = localising.get_localised_name_with_fallback(proto)
+      local name = Localising.get_localised_name_with_fallback(proto)
       return { "", name, " x ", tostring(count) }
    end
 end

@@ -7,7 +7,7 @@ Left bracket cancels the selected item.
 local Menu = require("scripts.ui.menu")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
-local localising = require("scripts.localising")
+local Localising = require("scripts.localising")
 local KeyGraph = require("scripts.ui.key-graph")
 local Help = require("scripts.ui.help")
 
@@ -43,7 +43,7 @@ local function render_crafting_queue(ctx)
          -- Build label with localized name and count
          builder:add_item(key, {
             label = function(label_ctx)
-               local name = localising.get_localised_name_with_fallback(recipe_proto)
+               local name = Localising.get_localised_name_with_fallback(recipe_proto)
                label_ctx.message:fragment({ "fa.crafting-queue-item", name, queue_item.count })
             end,
             on_click = function(click_ctx)
@@ -66,7 +66,7 @@ local function render_crafting_queue(ctx)
                click_ctx.message:fragment({
                   "fa.crafting-queue-cancelled",
                   cancelled_count,
-                  localising.get_localised_name_with_fallback(recipe_proto),
+                  Localising.get_localised_name_with_fallback(recipe_proto),
                })
             end,
          })
