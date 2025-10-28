@@ -7,8 +7,9 @@ local mod = {}
 
 local WARNING_TYPES = {
    NO_FUEL = "no-fuel",
-   NO_RECIPE = "no-recipe",
+   NO_MINABLE_RESOURCES = "no-minable-resources",
    NO_POWER = "no-power",
+   NO_RECIPE = "no-recipe",
    NOT_CONNECTED = "not-connected",
 }
 
@@ -22,8 +23,9 @@ function mod.scan_for_warnings(L, H, pindex)
    local ents = surf.find_entities_filtered({ area = area, type = entity_types })
    local warnings = {}
    warnings[WARNING_TYPES.NO_FUEL] = {}
-   warnings[WARNING_TYPES.NO_RECIPE] = {}
+   warnings[WARNING_TYPES.NO_MINABLE_RESOURCES] = {}
    warnings[WARNING_TYPES.NO_POWER] = {}
+   warnings[WARNING_TYPES.NO_RECIPE] = {}
    warnings[WARNING_TYPES.NOT_CONNECTED] = {}
    for i, ent in pairs(ents) do
       if ent.prototype.burner_prototype ~= nil then
@@ -43,6 +45,10 @@ function mod.scan_for_warnings(L, H, pindex)
          recipe = ent.get_recipe()
       end) then
          if recipe == nil and ent.type ~= "furnace" then table.insert(warnings[WARNING_TYPES.NO_RECIPE], ent) end
+      end
+
+      if ent.type == "mining-drill" and ent.status == defines.entity_status.no_minable_resources then
+         table.insert(warnings[WARNING_TYPES.NO_MINABLE_RESOURCES], ent)
       end
    end
    local result = {}
