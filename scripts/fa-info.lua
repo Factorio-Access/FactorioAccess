@@ -21,6 +21,7 @@ local UiRouter = require("scripts.ui.router")
 
 local BuildingTools = require("scripts.building-tools")
 local Circuits = require("scripts.circuit-network")
+local CombinatorBoundingBoxes = require("scripts.combinator-bounding-boxes")
 local Consts = require("scripts.consts")
 local Driving = require("scripts.driving")
 local Electrical = require("scripts.electrical")
@@ -295,8 +296,67 @@ local function ent_info_constant_combinator(ctx)
 end
 
 ---@param ctx fa.Info.EntInfoContext
+local function ent_info_combinator_connections(ctx)
+   local ent = ctx.ent
+   local combinator_types = {
+      ["arithmetic-combinator"] = true,
+      ["decider-combinator"] = true,
+      ["selector-combinator"] = true,
+   }
+
+   if not combinator_types[ent.type] then return end
+
+   -- Check input connections
+   local input_red = ent.get_circuit_network(defines.wire_connector_id.combinator_input_red)
+   local input_green = ent.get_circuit_network(defines.wire_connector_id.combinator_input_green)
+
+   if input_red and input_green then
+      ctx.message:list_item()
+      ctx.message:fragment({
+         "fa.combinator-input-both",
+         tostring(input_red.network_id),
+         tostring(input_green.network_id),
+      })
+   elseif input_red then
+      ctx.message:list_item()
+      ctx.message:fragment({ "fa.combinator-input-red-only", tostring(input_red.network_id) })
+   elseif input_green then
+      ctx.message:list_item()
+      ctx.message:fragment({ "fa.combinator-input-green-only", tostring(input_green.network_id) })
+   end
+
+   -- Check output connections
+   local output_red = ent.get_circuit_network(defines.wire_connector_id.combinator_output_red)
+   local output_green = ent.get_circuit_network(defines.wire_connector_id.combinator_output_green)
+
+   if output_red and output_green then
+      ctx.message:list_item()
+      ctx.message:fragment({
+         "fa.combinator-output-both",
+         tostring(output_red.network_id),
+         tostring(output_green.network_id),
+      })
+   elseif output_red then
+      ctx.message:list_item()
+      ctx.message:fragment({ "fa.combinator-output-red-only", tostring(output_red.network_id) })
+   elseif output_green then
+      ctx.message:list_item()
+      ctx.message:fragment({ "fa.combinator-output-green-only", tostring(output_green.network_id) })
+   end
+end
+
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_circuit_network(ctx)
    local ent = ctx.ent
+
+   -- Skip combinators - they have specialized input/output handlers
+   local combinator_types = {
+      ["arithmetic-combinator"] = true,
+      ["decider-combinator"] = true,
+      ["selector-combinator"] = true,
+   }
+   if combinator_types[ent.type] then return end
+
    -- Check if entity has circuit network connections
    Circuits.add_circuit_network_info(ent, ctx.message)
 end
@@ -922,7 +982,32 @@ local function ent_info_power_switch(ctx)
       ctx.message:fragment("on,")
    end
 
-   if Wires.has_circuit_connections(ent) then ctx.message:fragment("observes circuit condition,") end
+   -- Announce copper connection network IDs
+   local left_network_id = nil
+   local right_network_id = nil
+
+   local left_connector = ent.get_wire_connector(defines.wire_connector_id.power_switch_left_copper, false)
+   if left_connector and left_connector.connection_count > 0 then
+      local net_id = left_connector.network_id
+      if net_id and net_id > 0 then left_network_id = net_id end
+   end
+
+   local right_connector = ent.get_wire_connector(defines.wire_connector_id.power_switch_right_copper, false)
+   if right_connector and right_connector.connection_count > 0 then
+      local net_id = right_connector.network_id
+      if net_id and net_id > 0 then right_network_id = net_id end
+   end
+
+   if left_network_id and right_network_id then
+      ctx.message:list_item()
+      ctx.message:fragment({ "fa.power-switch-both", tostring(left_network_id), tostring(right_network_id) })
+   elseif left_network_id then
+      ctx.message:list_item()
+      ctx.message:fragment({ "fa.power-switch-left-only", tostring(left_network_id) })
+   elseif right_network_id then
+      ctx.message:list_item()
+      ctx.message:fragment({ "fa.power-switch-right-only", tostring(right_network_id) })
+   end
 end
 
 ---@param ctx fa.Info.EntInfoContext
@@ -1393,6 +1478,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    run_handler(ent_info_heat_neighbors)
 
    run_handler(ent_info_constant_combinator)
+   run_handler(ent_info_combinator_connections)
    run_handler(ent_info_circuit_network)
 
    return ctx.message:build()

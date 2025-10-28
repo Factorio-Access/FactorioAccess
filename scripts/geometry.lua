@@ -96,4 +96,23 @@ function mod.radians_to_degrees(radians)
    return radians * 180 / math.pi
 end
 
+-- Rotate a vector by an entity's direction
+-- Transforms entity-local coordinates to world coordinates
+---@param local_x number Entity-relative x coordinate
+---@param local_y number Entity-relative y coordinate
+---@param direction defines.direction Entity's facing direction
+---@return number world_x World x coordinate
+---@return number world_y World y coordinate
+function mod.rotate_vec(local_x, local_y, direction)
+   local ux, uy = mod.uv_for_direction(direction)
+   -- The direction vector (ux, uy) points where the entity's forward faces
+   -- Entity-local "forward" is (0, -1) and "right" is (1, 0)
+   -- Rotation matrix maps entity-local to world coordinates:
+   --   forward (0, -1) -> (ux, uy)
+   --   right (1, 0) -> (-uy, ux)
+   -- Matrix: [-uy  -ux]
+   --         [ ux  -uy]
+   return -uy * local_x - ux * local_y, ux * local_x - uy * local_y
+end
+
 return mod

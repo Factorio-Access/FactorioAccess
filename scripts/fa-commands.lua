@@ -6,6 +6,7 @@ Handlers registered by this file are exported and not announced through our
 normal handling.  This is because the launcher cannot handle queueing.  We need
 the mod to be silent.
 ]]
+local CombinatorBoundingBoxes = require("scripts.combinator-bounding-boxes")
 local FaUtils = require("scripts.fa-utils")
 local Fluids = require("scripts.fluids")
 local Localising = require("scripts.localising")
@@ -71,6 +72,7 @@ local function cmd_fac(cmd)
       Speech.speak(actual_pindex, message)
    end
 
+   environment.CombinatorBoundingBoxes = CombinatorBoundingBoxes
    environment.FaUtils = FaUtils
    environment.Fluids = Fluids
    environment.Localising = Localising

@@ -47,3 +47,14 @@ for name, r in pairs(data.raw.technology) do
 end
 
 DataToRuntimeMap.build(Consts.RESEARCH_CRAFT_ITEMS_MAP_OUTER, research_craft_map_outer)
+
+--[[
+Combinator bounding boxes for wire connections.
+
+Combinators have separate input and output connection points, and the drag_wire API uses
+position to determine which side to connect to. We need the bounding box data from prototypes
+to calculate the correct positions for each side.
+]]
+
+local CombinatorBoundingBoxes = require("scripts.combinator-bounding-boxes")
+CombinatorBoundingBoxes.build_map()

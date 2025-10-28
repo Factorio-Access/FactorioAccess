@@ -1,6 +1,8 @@
 --Here: Functions relating to circuit networks and wiring buildings.
 --Includes wire dragging and pure functions for signal processing and aggregation.
 
+local CombinatorBoundingBoxes = require("scripts.combinator-bounding-boxes")
+local Geometry = require("scripts.geometry")
 local Viewpoint = require("scripts.viewpoint")
 local Speech = require("scripts.speech")
 local Sounds = require("scripts.ui.sounds")
@@ -10,6 +12,40 @@ local Localising = require("scripts.localising")
 local ItemInfo = require("scripts.item-info")
 
 local mod = {}
+
+---Calculate world position for a connection point from an AABB
+---@param entity LuaEntity
+---@param aabb fa.AABB Connection point AABB
+---@return MapPosition
+local function aabb_to_world_pos(entity, aabb)
+   -- Get center of the AABB in entity-local coordinates
+   local local_x = (aabb.left_top.x + aabb.right_bottom.x) / 2
+   local local_y = (aabb.left_top.y + aabb.right_bottom.y) / 2
+
+   -- Rotate to world coordinates
+   local world_x, world_y = Geometry.rotate_vec(local_x, local_y, entity.direction)
+
+   -- Add entity position
+   return {
+      x = entity.position.x + world_x,
+      y = entity.position.y + world_y,
+   }
+end
+
+---Calculate world position for a connection point from a position vector
+---@param entity LuaEntity
+---@param pos Vector Connection point position
+---@return MapPosition
+local function vec_to_world_pos(entity, pos)
+   -- Rotate to world coordinates
+   local world_x, world_y = Geometry.rotate_vec(pos.x, pos.y, entity.direction)
+
+   -- Add entity position
+   return {
+      x = entity.position.x + world_x,
+      y = entity.position.y + world_y,
+   }
+end
 
 ---Remove wires from the selected entity
 ---Removes circuit wires first (red+green), then copper wires on subsequent presses
@@ -61,11 +97,79 @@ end
 
 ---Handles dragging wires (circuit red/green and electrical copper) between entities
 ---@param pindex integer
-function mod.drag_wire_and_read(pindex)
+---@param side fa.ConnectionSide|nil Optional side for multi-connection entities ("input"|"output"|"left"|"right")
+function mod.drag_wire_and_read(pindex, side)
    --Start/end dragging wire
    local p = game.get_player(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
-   local something_happened = p.drag_wire({ position = vp:get_cursor_pos() })
+
+   -- Determine the position to use for dragging
+   local drag_pos = vp:get_cursor_pos()
+   local c_ent = p.selected
+
+   -- Determine wire type in hand
+   local wire_type = nil
+   if p.cursor_stack and p.cursor_stack.valid_for_read then wire_type = p.cursor_stack.name end
+
+   -- Check if entity has multiple connection points and calculate appropriate position
+   if c_ent and c_ent.valid then
+      local metadata = CombinatorBoundingBoxes.get_metadata(c_ent.name)
+      local needs_side_selection = false
+
+      if metadata then
+         -- Check if this entity needs side selection for the current wire type
+         if metadata.input_aabb then
+            -- Combinators always need side selection for circuit wires
+            needs_side_selection = true
+         elseif metadata.left_pos and wire_type == "copper-wire" then
+            -- Power switches need side selection only for copper wire
+            needs_side_selection = true
+         end
+      end
+
+      if needs_side_selection then
+         -- Entity has multiple connection points for this wire type
+         if not side then
+            -- No side specified, prompt user
+            if metadata.input_aabb then
+               -- It's a combinator
+               Speech.speak(pindex, { "fa.circuit-wire-multiple-connection-points-combinator" })
+            elseif metadata.left_pos then
+               -- It's a power switch with copper wire
+               Speech.speak(pindex, { "fa.circuit-wire-multiple-connection-points-power-switch" })
+            end
+            Sounds.play_cannot_build(pindex)
+            return
+         end
+
+         -- Calculate position based on side
+         -- Map "input" to "left" and "output" to "right" for power switches
+         local actual_side = side
+         if metadata.left_pos and side == "input" then
+            actual_side = "left"
+         elseif metadata.right_pos and side == "output" then
+            actual_side = "right"
+         end
+
+         if metadata.input_aabb and actual_side == "input" then
+            drag_pos = aabb_to_world_pos(c_ent, metadata.input_aabb)
+         elseif metadata.output_aabb and actual_side == "output" then
+            drag_pos = aabb_to_world_pos(c_ent, metadata.output_aabb)
+         elseif metadata.left_pos and actual_side == "left" then
+            drag_pos = vec_to_world_pos(c_ent, metadata.left_pos)
+         elseif metadata.right_pos and actual_side == "right" then
+            drag_pos = vec_to_world_pos(c_ent, metadata.right_pos)
+         end
+      else
+         -- Entity doesn't have multiple connection points for this wire type, use center of tile
+         drag_pos = FaUtils.center_of_tile(drag_pos)
+      end
+   else
+      -- No entity selected, use center of tile
+      drag_pos = FaUtils.center_of_tile(drag_pos)
+   end
+
+   local something_happened = p.drag_wire({ position = drag_pos })
    --Comment on it
    if not something_happened then
       p.play_sound({ path = "utility/cannot_build" })
@@ -665,6 +769,208 @@ function mod.get_circuit_neighbors_info(entity, pindex)
          msg:fragment(FaUtils.build_list(ent_parts))
       end
    end
+
+   return msg:build()
+end
+
+---Get neighbors for a specific wire connector
+---@param entity LuaEntity
+---@param connector_id defines.wire_connector_id
+---@return table Grouped neighbors by name and quality
+local function get_neighbors_for_connector(entity, connector_id)
+   local neighbors = {}
+   local connector = entity.get_wire_connector(connector_id, false)
+   if not connector or connector.connection_count == 0 then return neighbors end
+
+   for _, connection in pairs(connector.connections) do
+      local other = connection.target.owner
+      if other.valid then
+         local n, q = other.name, other.quality.name
+         neighbors[n] = neighbors[n] or {}
+         neighbors[n][q] = neighbors[n][q] or {}
+         table.insert(neighbors[n][q], other)
+      end
+   end
+
+   -- Sort by distance then direction
+   for t, quals in pairs(neighbors) do
+      for q, ents in pairs(quals) do
+         table.sort(ents, function(a, b)
+            local a_dist = FaUtils.distance(a.position, entity.position)
+            local b_dist = FaUtils.distance(b.position, entity.position)
+            if a_dist < b_dist then return true end
+            if a_dist > b_dist then return false end
+
+            local a_dir = FaUtils.get_direction_biased(a.position, entity.position)
+            local b_dir = FaUtils.get_direction_biased(b.position, entity.position)
+            return a_dir < b_dir
+         end)
+      end
+   end
+
+   return neighbors
+end
+
+---Add neighbors list to message with intro fragment
+---@param msg fa.MessageBuilder
+---@param entity LuaEntity
+---@param neighbors table Grouped neighbors
+---@param intro_key string Locale key for intro fragment
+local function add_neighbors_to_message(msg, entity, neighbors, intro_key)
+   if not next(neighbors) then return end
+
+   msg:fragment({ intro_key })
+
+   for n, quals in pairs(neighbors) do
+      local proto = prototypes.entity[n]
+      local pname = Localising.get_localised_name_with_fallback(proto)
+
+      local first = true
+
+      for q, ents in pairs(quals) do
+         if not first then msg:list_item() end
+         first = false
+
+         -- Add quality prefix if not normal
+         if q ~= "normal" then msg:fragment(Localising.get_localised_name_with_fallback(prototypes.quality[q])) end
+
+         msg:fragment(pname)
+
+         for _, e in pairs(ents) do
+            msg:list_item({
+               "fa.dir-dist",
+               FaUtils.direction_lookup(FaUtils.get_direction_biased(e.position, entity.position)),
+               FaUtils.distance_speech_friendly(entity.position, e.position),
+            })
+         end
+      end
+   end
+
+   -- Close this section with an empty list_item
+   msg:list_item()
+end
+
+---Get combinator neighbors info with separate sections for each connection point
+---@param entity LuaEntity
+---@param pindex number
+---@return LocalisedString
+function mod.get_combinator_neighbors_info(entity, pindex)
+   local msg = Speech.MessageBuilder.new()
+   local has_any = false
+
+   -- Input red
+   local input_red = get_neighbors_for_connector(entity, defines.wire_connector_id.combinator_input_red)
+   if next(input_red) then
+      add_neighbors_to_message(msg, entity, input_red, "fa.combinator-neighbors-input-red")
+      has_any = true
+   end
+
+   -- Input green
+   local input_green = get_neighbors_for_connector(entity, defines.wire_connector_id.combinator_input_green)
+   if next(input_green) then
+      add_neighbors_to_message(msg, entity, input_green, "fa.combinator-neighbors-input-green")
+      has_any = true
+   end
+
+   -- Output red
+   local output_red = get_neighbors_for_connector(entity, defines.wire_connector_id.combinator_output_red)
+   if next(output_red) then
+      add_neighbors_to_message(msg, entity, output_red, "fa.combinator-neighbors-output-red")
+      has_any = true
+   end
+
+   -- Output green
+   local output_green = get_neighbors_for_connector(entity, defines.wire_connector_id.combinator_output_green)
+   if next(output_green) then
+      add_neighbors_to_message(msg, entity, output_green, "fa.combinator-neighbors-output-green")
+      has_any = true
+   end
+
+   if not has_any then return { "fa.circuit-no-circuit-connections" } end
+
+   return msg:build()
+end
+
+---Get power switch neighbors info with separate sections for left/right copper and circuit
+---@param entity LuaEntity
+---@param pindex number
+---@return LocalisedString
+function mod.get_power_switch_neighbors_info(entity, pindex)
+   local msg = Speech.MessageBuilder.new()
+   local has_any = false
+
+   -- Left copper
+   local left_copper = get_neighbors_for_connector(entity, defines.wire_connector_id.power_switch_left_copper)
+   if next(left_copper) then
+      add_neighbors_to_message(msg, entity, left_copper, "fa.power-switch-neighbors-left")
+      has_any = true
+   end
+
+   -- Right copper
+   local right_copper = get_neighbors_for_connector(entity, defines.wire_connector_id.power_switch_right_copper)
+   if next(right_copper) then
+      add_neighbors_to_message(msg, entity, right_copper, "fa.power-switch-neighbors-right")
+      has_any = true
+   end
+
+   -- Circuit wires (red and green combined)
+   local circuit_neighbors = {}
+   local red_connector = entity.get_wire_connector(defines.wire_connector_id.circuit_red, false)
+   if red_connector and red_connector.connection_count > 0 then
+      for _, connection in pairs(red_connector.connections) do
+         local other = connection.target.owner
+         if other.valid then
+            local n, q = other.name, other.quality.name
+            circuit_neighbors[n] = circuit_neighbors[n] or {}
+            circuit_neighbors[n][q] = circuit_neighbors[n][q] or {}
+            table.insert(circuit_neighbors[n][q], other)
+         end
+      end
+   end
+
+   local green_connector = entity.get_wire_connector(defines.wire_connector_id.circuit_green, false)
+   if green_connector and green_connector.connection_count > 0 then
+      for _, connection in pairs(green_connector.connections) do
+         local other = connection.target.owner
+         if other.valid then
+            local n, q = other.name, other.quality.name
+            circuit_neighbors[n] = circuit_neighbors[n] or {}
+            circuit_neighbors[n][q] = circuit_neighbors[n][q] or {}
+            -- Only add if not already present
+            local already_added = false
+            for _, existing in ipairs(circuit_neighbors[n][q]) do
+               if existing == other then
+                  already_added = true
+                  break
+               end
+            end
+            if not already_added then table.insert(circuit_neighbors[n][q], other) end
+         end
+      end
+   end
+
+   if next(circuit_neighbors) then
+      -- Sort circuit neighbors
+      for t, quals in pairs(circuit_neighbors) do
+         for q, ents in pairs(quals) do
+            table.sort(ents, function(a, b)
+               local a_dist = FaUtils.distance(a.position, entity.position)
+               local b_dist = FaUtils.distance(b.position, entity.position)
+               if a_dist < b_dist then return true end
+               if a_dist > b_dist then return false end
+
+               local a_dir = FaUtils.get_direction_biased(a.position, entity.position)
+               local b_dir = FaUtils.get_direction_biased(b.position, entity.position)
+               return a_dir < b_dir
+            end)
+         end
+      end
+
+      add_neighbors_to_message(msg, entity, circuit_neighbors, "fa.power-switch-neighbors-circuit")
+      has_any = true
+   end
+
+   if not has_any then return { "fa.circuit-no-copper-connections" } end
 
    return msg:build()
 end

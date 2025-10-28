@@ -2669,6 +2669,24 @@ EventManager.on_event(
       local ent = player.selected
 
       if ent and ent.valid then
+         -- Check for combinators (multi-connection circuit entities)
+         if
+            ent.type == "arithmetic-combinator"
+            or ent.type == "decider-combinator"
+            or ent.type == "selector-combinator"
+         then
+            local msg = CircuitNetworks.get_combinator_neighbors_info(ent, pindex)
+            Speech.speak(pindex, msg)
+            return
+         end
+
+         -- Check for power switch (multi-connection entity with both copper and circuit)
+         if ent.type == "power-switch" then
+            local msg = CircuitNetworks.get_power_switch_neighbors_info(ent, pindex)
+            Speech.speak(pindex, msg)
+            return
+         end
+
          -- Check for electric pole (copper wires)
          if ent.type == "electric-pole" then
             local msg = CircuitNetworks.get_copper_wire_neighbors_info(ent, pindex)
@@ -4245,12 +4263,21 @@ EventManager.on_event("fa-m", function(event)
    local player = game.get_player(pindex)
    local stack = player.cursor_stack
 
-   if stack and stack.valid_for_read and stack.prototype.type == "spidertron-remote" then
-      SpidertronRemote.cycle_spidertrons(player, -1)
-      read_tile(pindex)
-   else
-      cycle_blueprint_book(pindex, -1)
+   -- Check if wire is in hand
+   if stack and stack.valid_for_read then
+      local wire_type = stack.name
+      if wire_type == "red-wire" or wire_type == "green-wire" or wire_type == "copper-wire" then
+         -- Wire in hand - select input/left side
+         CircuitNetworks.drag_wire_and_read(pindex, "input")
+         return
+      elseif stack.prototype.type == "spidertron-remote" then
+         SpidertronRemote.cycle_spidertrons(player, -1)
+         read_tile(pindex)
+         return
+      end
    end
+
+   cycle_blueprint_book(pindex, -1)
 end, EventManager.EVENT_KIND.WORLD)
 
 EventManager.on_event("fa-dot", function(event)
@@ -4258,12 +4285,21 @@ EventManager.on_event("fa-dot", function(event)
    local player = game.get_player(pindex)
    local stack = player.cursor_stack
 
-   if stack and stack.valid_for_read and stack.prototype.type == "spidertron-remote" then
-      SpidertronRemote.cycle_spidertrons(player, 1)
-      read_tile(pindex)
-   else
-      cycle_blueprint_book(pindex, 1)
+   -- Check if wire is in hand
+   if stack and stack.valid_for_read then
+      local wire_type = stack.name
+      if wire_type == "red-wire" or wire_type == "green-wire" or wire_type == "copper-wire" then
+         -- Wire in hand - select output/right side
+         CircuitNetworks.drag_wire_and_read(pindex, "output")
+         return
+      elseif stack.prototype.type == "spidertron-remote" then
+         SpidertronRemote.cycle_spidertrons(player, 1)
+         read_tile(pindex)
+         return
+      end
    end
+
+   cycle_blueprint_book(pindex, 1)
 end, EventManager.EVENT_KIND.WORLD)
 
 -- Dangerous delete: Delete blueprint/decon/upgrade planner from hand, or clear spidertron remote list
