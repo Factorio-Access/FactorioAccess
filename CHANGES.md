@@ -1,4 +1,4 @@
-# 0.16.14 (unreleased)
+# 0.16.14 (2025-10-28)
 
 - You now launch rockets with shift enter. Space would shoot your silo, and we are now using this key for other things.
 - Launching satellites now converts them to space science packs as expected
