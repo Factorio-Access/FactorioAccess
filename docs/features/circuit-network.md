@@ -6,6 +6,12 @@ Get a red, green, or copper wire: `alt + r`, `alt + g`, or `alt + c` respectivel
 
 Start dragging with a wire in hand: `left bracket`
 
+Drag to an entity: `left bracket`
+
+Drag to the left side of a power switch or input of a combinator: `m`
+
+Drag to the right side of a power switch or output of a combinator: `dot` (`.`)
+
 Stop connecting: `q` once
 
 Empty hand: `q` twice
@@ -14,13 +20,13 @@ See below for an understanding of the weird hand keys.
 
 Open the alpha circuit navigator: `ctrl + n`
 
-Drop all red/green wires: `alt + n`, on an entity with red and/or green connections
+Disconnect all red/green wires: `alt + n`, on an entity with red and/or green connections
 
-Drop all copper wires: `alt + n`, on an entity with only copper wires
+Disconnect all copper wires: `alt + n`, on an entity with only copper wires
 
 ## Description
 
-We support most of the circuit network, everything but decider, arithmetic, and selector combinators. Constant combinators are supported.
+We support most of the circuit network, everything but decider combinators.
 
 Teaching the circuit network is well beyond the scope of our documentation.  If you are new to the game, circuit network stuff is probably not for you.  Stop here and go play instead.
 
@@ -39,6 +45,8 @@ If this is confusing then we suggest emptying your hand, putting a wire in it, c
 To remove a wire between two entities specifically, you have to "connect" them again. So if you have a and b, the first a to b connects and the second a to b disconnects.
 
 You can drop all wires on something with `alt + n`.  This is like vanilla shift + click: first time drops circuit network, second time drops copper if applicable.
+
+Some advanced combinators as well as power switches connect to multiple networks at once, either via a left/right side (power switches) or input/output sides (combinators).  `m` and `dot` drag to the left/input and right/output respectively.  The mod will remind you of this if you attempt to click an entity with multiple connection points.
 
 ### The Alpha Circuit Navigator
 This is of limited use and may not be extended.

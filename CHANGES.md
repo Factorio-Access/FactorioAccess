@@ -1,3 +1,24 @@
+# 0.16.13 (2025-10-28)
+
+- Minor versions without changelog entries are for one-off playtesting fixes.
+- Add support for wiring combinators with separate inputs and outputs: press `m` to drag to input, `.` (dot) to drag to output.
+  - This is based off some geometry. If you find a combinator that doesn't work when rotated from north, let us know.
+- Announce the separate input networks and output networks of multi-connection-point combinators
+- Add support for wiring to the left/right side of power switches explicitly, in the same fashion as the combinator change.
+- Announce the ids of the electric networks a power switch is connected to
+  - If these are ever the same then you are using it wrong because the networks connect somewhere else, and turning it on and off won't do anything
+- Improve power switch state announcement
+- Introduce support for the non-space-age functions of the selector combinator
+  - There is code for some of the space age functionality but use it at your own risk; we do not officially support it yet.
+- Add support for the arithmetic combinator.
+- Add a warning for drills without mineable resources.
+- Support combinator descriptions:
+  - These are a new 2.0 feature, like programming language comments. You can put whatever you want in it as notes to yourself. It does save with blueprints as well.
+  - Edit it in the UI
+  - If a combinator has one set you can arrow over it on the map and it will be announced
+- Announce that you can't craft a recipe because it uses fluids rather than trying to compute what it is missing
+- A number of crash and localisation fixes
+
 # 0.16.10 (2025-10-26)
 
 - overhaul localisation. Expect crashes and weird messages. Sorry.
