@@ -4,6 +4,7 @@
 - Launching satellites now converts them to space science packs as expected
 - Rocket silos do not report that they are ready to launch a rocket during the period between having all needed parts and being ready for the launch
 - Rocket silo progress announcement respects the number of required parts from the prototype, for mod and space age compatibility.
+- Announce the contents of the cargo hub like we do for chests
 
 # 0.16.13 (2025-10-28)
 

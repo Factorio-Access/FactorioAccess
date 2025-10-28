@@ -438,9 +438,15 @@ end
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_container(ctx)
    local ent = ctx.ent
+   local inv = nil
+
    if ent.type == "container" or ent.type == "logistic-container" or ent.type == "infinity-container" then
-      --Chests etc: Report the most common item and say "and other items" if there are other types.
-      local inv = ent.get_inventory(defines.inventory.chest)
+      inv = ent.get_inventory(defines.inventory.chest)
+   elseif ent.type == "cargo-landing-pad" then
+      inv = ent.get_inventory(defines.inventory.cargo_landing_pad_main)
+   end
+
+   if inv then
       assert(inv)
       local presenting = present_list(inv.get_contents(), 3)
       if presenting then ctx.message:fragment(presenting) end
