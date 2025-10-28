@@ -5,6 +5,15 @@ local MessageBuilder = Speech.MessageBuilder
 
 local mod = {}
 
+local WARNING_TYPES = {
+   NO_FUEL = "no-fuel",
+   NO_RECIPE = "no-recipe",
+   NO_POWER = "no-power",
+   NOT_CONNECTED = "not-connected",
+}
+
+mod.WARNING_TYPES = WARNING_TYPES
+
 --Warnings menu: scans for problems in the production network it defines and creates the warnings list.
 function mod.scan_for_warnings(L, H, pindex)
    local surf = game.get_player(pindex).surface
@@ -12,28 +21,28 @@ function mod.scan_for_warnings(L, H, pindex)
    local area = { { pos.x - L, pos.y - H }, { pos.x + L, pos.y + H } }
    local ents = surf.find_entities_filtered({ area = area, type = entity_types })
    local warnings = {}
-   warnings["noFuel"] = {}
-   warnings["noRecipe"] = {}
-   warnings["noPower"] = {}
-   warnings["notConnected"] = {}
+   warnings[WARNING_TYPES.NO_FUEL] = {}
+   warnings[WARNING_TYPES.NO_RECIPE] = {}
+   warnings[WARNING_TYPES.NO_POWER] = {}
+   warnings[WARNING_TYPES.NOT_CONNECTED] = {}
    for i, ent in pairs(ents) do
       if ent.prototype.burner_prototype ~= nil then
          local fuel_inv = ent.get_fuel_inventory()
          if ent.energy == 0 and (fuel_inv == nil or (fuel_inv and fuel_inv.valid and fuel_inv.is_empty())) then
-            table.insert(warnings["noFuel"], ent)
+            table.insert(warnings[WARNING_TYPES.NO_FUEL], ent)
          end
       end
 
       if ent.prototype.electric_energy_source_prototype ~= nil and ent.is_connected_to_electric_network() == false then
-         table.insert(warnings["notConnected"], ent)
+         table.insert(warnings[WARNING_TYPES.NOT_CONNECTED], ent)
       elseif ent.prototype.electric_energy_source_prototype ~= nil and ent.energy == 0 then
-         table.insert(warnings["noPower"], ent)
+         table.insert(warnings[WARNING_TYPES.NO_POWER], ent)
       end
       local recipe = nil
       if pcall(function()
          recipe = ent.get_recipe()
       end) then
-         if recipe == nil and ent.type ~= "furnace" then table.insert(warnings["noRecipe"], ent) end
+         if recipe == nil and ent.type ~= "furnace" then table.insert(warnings[WARNING_TYPES.NO_RECIPE], ent) end
       end
    end
    local result = {}
