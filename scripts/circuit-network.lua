@@ -327,15 +327,25 @@ function mod.localise_signal(signal_id)
 
    if not proto then return { "", signal_id.name } end
 
+   local base_name
    -- For items and fluids, use the quality-aware localisation
    if signal_type == "item" or signal_type == "fluid" then
-      return ItemInfo.item_or_fluid_info({
+      base_name = ItemInfo.item_or_fluid_info({
          name = proto,
          quality = signal_id.quality,
       }, proto_dict)
    else
       -- For other signals, just get the localised name
-      return Localising.get_localised_name_with_fallback(proto)
+      base_name = Localising.get_localised_name_with_fallback(proto)
+   end
+
+   -- Add type suffix for entity and recipe signals to disambiguate
+   if signal_type == "entity" then
+      return { "", base_name, " ", { "fa.signal-suffix-entity" } }
+   elseif signal_type == "recipe" then
+      return { "", base_name, " ", { "fa.signal-suffix-recipe" } }
+   else
+      return base_name
    end
 end
 
