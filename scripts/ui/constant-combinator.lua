@@ -28,7 +28,27 @@ local function render_overview(ctx)
 
    local menu = Menu.MenuBuilder.new()
 
-   -- Row 1: Active toggle
+   -- Row 1: Description
+   menu:add_clickable("description", function(ctx)
+      local desc = entity.combinator_description or ""
+      ctx.message:fragment({ "fa.combinator-description" })
+      ctx.message:fragment(desc)
+   end, {
+      on_click = function(ctx)
+         local current_value = entity.combinator_description or ""
+         ctx.controller:open_textbox(current_value, "description")
+      end,
+      on_child_result = function(ctx, result)
+         entity.combinator_description = result
+         ctx.controller.message:fragment({ "fa.combinator-description-updated" })
+      end,
+      on_clear = function(ctx)
+         entity.combinator_description = ""
+         ctx.controller.message:fragment({ "fa.cleared" })
+      end,
+   })
+
+   -- Row 2: Active toggle
    menu:start_row("active_row")
    menu:add_item("active", {
       label = function(ctx)
@@ -49,7 +69,7 @@ local function render_overview(ctx)
    })
    menu:end_row()
 
-   -- Row 2: Outputs overview
+   -- Row 3: Outputs overview
    menu:add_label("outputs_overview", function(ctx)
       local all_signals = CircuitNetwork.get_constant_combinator_filters(entity)
 
@@ -69,7 +89,7 @@ local function render_overview(ctx)
       end
    end)
 
-   -- Row 3: Section management
+   -- Row 4: Section management
    menu:start_row("section_management")
 
    -- Section info

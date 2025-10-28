@@ -164,6 +164,23 @@ local function ent_info_marked_for_upgrade_deconstruct(ctx)
    -- Otherwise it is not marked.
 end
 
+---Announces combinator description if present
+---@param ctx fa.Info.EntInfoContext
+local function ent_info_combinator_description(ctx)
+   local ent = ctx.ent
+   local combinator_types = {
+      ["arithmetic-combinator"] = true,
+      ["decider-combinator"] = true,
+      ["selector-combinator"] = true,
+      ["constant-combinator"] = true,
+   }
+
+   if not combinator_types[ent.type] then return end
+
+   local desc = ent.combinator_description
+   if desc and desc ~= "" then ctx.message:fragment(desc) end
+end
+
 -- If this entity generates electricity, tell the player how much.
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_power_production(ctx)
@@ -1315,6 +1332,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    end
 
    run_handler(ent_info_facing, true)
+   run_handler(ent_info_combinator_description)
    run_handler(ent_info_underground_belt_type, true)
 
    run_handler(ent_info_belt_shape, true)

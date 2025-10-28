@@ -11,7 +11,6 @@ The form re-renders based on the selected operation mode.
 ]]
 
 local FormBuilder = require("scripts.ui.form-builder")
-local CombinatorUtils = require("scripts.ui.combinator-utils")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local UiRouter = require("scripts.ui.router")
 local UiSounds = require("scripts.ui.sounds")
@@ -199,8 +198,20 @@ local function render_selector_config(ctx)
 
    local builder = FormBuilder.FormBuilder.new()
 
-   -- Add common combinator settings (description)
-   CombinatorUtils.common_settings(builder, entity)
+   -- Description field
+   builder:add_textfield("description", {
+      label = { "fa.combinator-description" },
+      get_value = function()
+         return entity.combinator_description or ""
+      end,
+      set_value = function(value)
+         entity.combinator_description = value
+      end,
+      on_clear = function(ctx)
+         entity.combinator_description = ""
+         ctx.controller.message:fragment({ "fa.cleared" })
+      end,
+   })
 
    -- Get current parameters or create default
    local params = cb.parameters or { operation = "select" }
