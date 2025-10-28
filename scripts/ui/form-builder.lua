@@ -27,8 +27,8 @@ local mod = {}
 ---@field on_clear (fun(fa.ui.graph.Ctx))? Optional clear callback (triggered by backspace)
 
 ---@class fa.ui.form.FormBuilder
----@field entries fa.ui.menu.Entry[]
----@field row_keys table<string, string> Maps entry key to row key (for grouping)
+---@field operations fun(fa.ui.menu.MenuBuilder)[] Sequence of closures to apply to MenuBuilder
+---@field vtables fa.ui.graph.NodeVtable[] Vtables for accelerator handler attachment
 ---@field accelerator_handler fun(ctx: fa.ui.graph.Ctx, accelerator_name: string)? Form-wide accelerator handler
 local FormBuilder = {}
 local FormBuilder_meta = { __index = FormBuilder }
@@ -37,8 +37,8 @@ local FormBuilder_meta = { __index = FormBuilder }
 ---@return fa.ui.form.FormBuilder
 function FormBuilder.new()
    return setmetatable({
-      entries = {},
-      row_keys = {},
+      operations = {},
+      vtables = {},
       accelerator_handler = nil,
    }, FormBuilder_meta)
 end
@@ -378,6 +378,7 @@ function FormBuilder:add_condition(name, get_value, set_value)
    end
 
    -- Item 1: Overview
+   self:start_row(name)
    self:add_item(name .. "_overview", {
       label = function(ctx)
          local condition = get_value()
@@ -386,7 +387,7 @@ function FormBuilder:add_condition(name, get_value, set_value)
             ctx.message:fragment({ "fa.condition-move-right-to-configure" })
          end
       end,
-   }, name)
+   })
 
    -- Item 2: First signal
    self:add_item(name .. "_first", {
@@ -422,7 +423,7 @@ function FormBuilder:add_condition(name, get_value, set_value)
          set_value(condition)
          ctx.controller.message:fragment({ "fa.empty" })
       end,
-   }, name)
+   })
 
    -- Item 3: Operator
    self:add_item(name .. "_op", {
@@ -466,7 +467,7 @@ function FormBuilder:add_condition(name, get_value, set_value)
          UiSounds.play_menu_move(ctx.pindex)
          ctx.controller.message:fragment(comparators[new_index].label)
       end,
-   }, name)
+   })
 
    -- Item 4: Second signal/constant (hybrid)
    self:add_item(name .. "_second", {
@@ -568,7 +569,8 @@ function FormBuilder:add_condition(name, get_value, set_value)
          set_value(condition)
          ctx.controller.message:fragment("0")
       end,
-   }, name)
+   })
+   self:end_row()
 
    return self
 end
@@ -611,6 +613,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
    end
 
    -- Item 1: Overview + enable/disable toggle
+   self:start_row(name)
    self:add_item(name .. "_overview", {
       label = function(ctx)
          local base_label = UiUtils.to_label_function(label)(ctx)
@@ -632,7 +635,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
          local state_text = new_val and { "fa.checked" } or { "fa.unchecked" }
          ctx.controller.message:fragment(state_text)
       end,
-   }, name)
+   })
 
    -- Item 2: First signal
    self:add_item(name .. "_first", {
@@ -669,7 +672,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
          set_condition(condition)
          ctx.controller.message:fragment({ "fa.empty" })
       end,
-   }, name)
+   })
 
    -- Item 3: Operator
    self:add_item(name .. "_op", {
@@ -713,7 +716,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
          UiSounds.play_menu_move(ctx.pindex)
          ctx.controller.message:fragment(comparators[new_index].label)
       end,
-   }, name)
+   })
 
    -- Item 4: Second signal/constant (hybrid)
    self:add_item(name .. "_second", {
@@ -815,19 +818,40 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
          set_condition(condition)
          ctx.controller.message:fragment("0")
       end,
-   }, name)
+   })
+   self:end_row()
 
+   return self
+end
+
+---Start a row (forwards to MenuBuilder)
+---@param key string Row identifier
+---@return fa.ui.form.FormBuilder
+function FormBuilder:start_row(key)
+   table.insert(self.operations, function(menu_builder)
+      menu_builder:start_row(key)
+   end)
+   return self
+end
+
+---End the current row (forwards to MenuBuilder)
+---@return fa.ui.form.FormBuilder
+function FormBuilder:end_row()
+   table.insert(self.operations, function(menu_builder)
+      menu_builder:end_row()
+   end)
    return self
 end
 
 ---Internal method to add an item (delegates to menu builder pattern)
 ---@param key string
 ---@param vtable fa.ui.graph.NodeVtable
----@param row_key string? Optional row key for grouping items into rows
 ---@return fa.ui.form.FormBuilder
-function FormBuilder:add_item(key, vtable, row_key)
-   table.insert(self.entries, { key = key, vtable = vtable })
-   if row_key then self.row_keys[key] = row_key end
+function FormBuilder:add_item(key, vtable)
+   table.insert(self.vtables, vtable)
+   table.insert(self.operations, function(menu_builder)
+      menu_builder:add_item(key, vtable)
+   end)
    return self
 end
 
@@ -838,34 +862,14 @@ function FormBuilder:build()
 
    -- Attach accelerator handler to all vtables if one is set
    if self.accelerator_handler then
-      for _, entry in ipairs(self.entries) do
-         if not entry.vtable.on_accelerator then entry.vtable.on_accelerator = self.accelerator_handler end
+      for _, vtable in ipairs(self.vtables) do
+         if not vtable.on_accelerator then vtable.on_accelerator = self.accelerator_handler end
       end
    end
 
-   -- Group entries by row
-   local i = 1
-   while i <= #self.entries do
-      local entry = self.entries[i]
-      local row_key = self.row_keys[entry.key]
-
-      if row_key then
-         -- Start a row for grouped items
-         menu_builder:start_row(row_key)
-
-         -- Add all items with the same row_key
-         while i <= #self.entries and self.row_keys[self.entries[i].key] == row_key do
-            local row_entry = self.entries[i]
-            menu_builder:add_item(row_entry.key, row_entry.vtable)
-            i = i + 1
-         end
-
-         menu_builder:end_row()
-      else
-         -- Add as standalone item (implicit single-item row)
-         menu_builder:add_item(entry.key, entry.vtable)
-         i = i + 1
-      end
+   -- Execute operations on menu builder
+   for _, op in ipairs(self.operations) do
+      op(menu_builder)
    end
 
    return menu_builder:build()

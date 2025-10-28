@@ -24,6 +24,7 @@ local spidertron_config_tab = require("scripts.ui.tabs.spidertron-config")
 local equipment_overview_tab = require("scripts.ui.tabs.equipment-overview")
 local equipment_grid_tab = require("scripts.ui.tabs.equipment-grid")
 local selector_combinator_tab = require("scripts.ui.tabs.selector-combinator")
+local arithmetic_combinator_tab = require("scripts.ui.tabs.arithmetic-combinator")
 
 local mod = {}
 
@@ -152,6 +153,11 @@ local function build_configuration_tabs(entity)
    -- Add selector combinator configuration
    if prototype.type == "selector-combinator" then
       table.insert(tabs, selector_combinator_tab.selector_combinator_tab)
+   end
+
+   -- Add arithmetic combinator configuration
+   if prototype.type == "arithmetic-combinator" then
+      table.insert(tabs, arithmetic_combinator_tab.arithmetic_combinator_tab)
    end
 
    -- Future: Add other device-specific tabs here
