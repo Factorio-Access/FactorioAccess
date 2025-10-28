@@ -3289,6 +3289,22 @@ EventManager.on_event(
    end
 )
 
+---@param event EventData.CustomInputEvent
+---@param ent LuaEntity
+local function kb_launch_rocket(event, ent)
+   local pindex = event.player_index
+   local try_launch = ent.launch_rocket({
+      type = defines.cargo_destination.surface,
+      surface = ent.surface,
+      transform_launch_products = true,
+   })
+   if try_launch then
+      Speech.speak(pindex, { "fa.launch-successful" })
+   else
+      Speech.speak(pindex, { "fa.not-ready-to-launch" })
+   end
+end
+
 EventManager.on_event(
    "fa-s-enter",
    ---@param event EventData.CustomInputEvent
@@ -3298,7 +3314,9 @@ EventManager.on_event(
 
       if not ent or not ent.valid then return end
 
-      if ent.type == "constant-combinator" then
+      if ent.type == "rocket-silo" then
+         kb_launch_rocket(event, ent)
+      elseif ent.type == "constant-combinator" then
          local cb = ent.get_control_behavior()
          if cb then
             cb.enabled = not cb.enabled
@@ -4116,32 +4134,14 @@ local function find_rocket_silo(pindex)
    return ent
 end
 
----@param event EventData.CustomInputEvent
----@param ent LuaEntity
-local function kb_launch_rocket(event, ent)
-   local pindex = event.player_index
-   local try_launch = ent.launch_rocket()
-   if try_launch then
-      Speech.speak(pindex, { "fa.launch-successful" })
-   else
-      Speech.speak(pindex, { "fa.not-ready-to-launch" })
-   end
-end
-
 --Runs before shooting a weapon to check for selected atomic bombs and the target distance
 EventManager.on_event(
    "fa-space",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       local pindex = event.player_index
-      local ent = find_rocket_silo(pindex)
-      --Try to launch from the silo
-      if ent ~= nil and ent.valid and ent.name == "rocket-silo" then
-         ---@diagnostic disable-next-line: param-type-mismatch
-         kb_launch_rocket(event, ent)
-      else
-         Combat.run_atomic_bomb_checks(pindex)
-      end
+
+      Combat.run_atomic_bomb_checks(pindex)
    end
 )
 

@@ -284,10 +284,10 @@ end
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_rocket_silo(ctx)
    local ent = ctx.ent
-   if ent.name == "rocket-silo" then
-      if ent.rocket_parts ~= nil and ent.rocket_parts < 100 then
-         ctx.message:fragment({ "fa.ent-info-silo-partial", ent.rocket_parts })
-      elseif ent.rocket_parts ~= nil then
+   if ent.type == "rocket-silo" then
+      if ent.rocket_parts ~= nil and ent.rocket_parts < ent.prototype.rocket_parts_required then
+         ctx.message:fragment({ "fa.ent-info-silo-partial", ent.rocket_parts, ent.prototype.rocket_parts_required })
+      elseif ent.rocket_parts ~= nil and ent.status == defines.entity_status.waiting_to_launch_rocket then
          ctx.message:fragment({ "fa.ent-info-silo-complete" })
       end
    end
