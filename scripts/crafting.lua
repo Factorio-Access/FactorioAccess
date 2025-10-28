@@ -4,6 +4,7 @@ local util = require("util")
 local FaUtils = require("scripts.fa-utils")
 local localising = require("scripts.localising")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 
 local mod = {}
 
@@ -55,33 +56,54 @@ function mod.count_in_crafting_queue(recipe_name, pindex)
    return count
 end
 
---Returns an info string about how many units of which ingredients are missing in order to craft one batch of this recipe.
-function mod.recipe_missing_ingredients_info(pindex, recipe_in)
+--Check if a recipe requires fluid ingredients
+---@param recipe LuaRecipe
+---@return boolean
+function mod.recipe_requires_fluids(recipe)
+   for _, ing in ipairs(recipe.ingredients) do
+      if ing.type == "fluid" then return true end
+   end
+   return false
+end
+
+--Returns an info string about why crafting failed for this recipe.
+--Checks for fluid requirements first, then missing item ingredients.
+---@param pindex integer
+---@param recipe_in LuaRecipe?
+---@return LocalisedString?
+function mod.recipe_cannot_craft_reason(pindex, recipe_in)
    local recipe = recipe_in
       or storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index]
+
+   -- Check if recipe requires fluids (cannot be hand-crafted normally)
+   if mod.recipe_requires_fluids(recipe) then return { "fa.crafting-requires-fluids" } end
+
+   -- Check for missing item ingredients
    local p = game.get_player(pindex)
    local inv = p.get_main_inventory()
-   ---@type LocalisedString
-   local result = { "", "Missing " }
-   local missing = 0
-   for i, ing in ipairs(recipe.ingredients) do
-      local on_hand = inv.get_item_count(ing.name)
-      local needed = ing.amount - on_hand
-      if needed > 0 then
-         missing = missing + 1
-         if missing > 1 then table.insert(result, " and ") end
-         table.insert(result, tostring(needed))
-         table.insert(result, " ")
-         local proto = prototypes.item[ing.name]
-         if proto then
-            table.insert(result, localising.get_localised_name_with_fallback(proto))
-         else
-            table.insert(result, ing.name)
+   local message = MessageBuilder.new()
+   local found_missing = false
+
+   for _, ing in ipairs(recipe.ingredients) do
+      if ing.type == "item" then
+         local on_hand = inv.get_item_count(ing.name)
+         local needed = ing.amount - on_hand
+         if needed > 0 then
+            if not found_missing then
+               message:fragment({ "fa.crafting-missing" })
+               found_missing = true
+            end
+            local proto = prototypes.item[ing.name]
+            message:list_item({
+               "fa.crafting-missing-ingredient",
+               tostring(needed),
+               localising.get_localised_name_with_fallback(proto),
+            })
          end
       end
    end
-   if missing == 0 then result = "" end
-   return result
+
+   return message:build()
 end
 
 return mod

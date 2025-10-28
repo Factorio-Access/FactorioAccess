@@ -67,8 +67,8 @@ local function handle_recipe_click(ctx, recipe, modifiers)
 
    if count == 0 then
       ctx.message:fragment({ "fa.crafting-cannot-craft" })
-      local missing_info = Crafting.recipe_missing_ingredients_info(ctx.pindex, recipe)
-      ctx.message:fragment(missing_info)
+      local reason = Crafting.recipe_cannot_craft_reason(ctx.pindex, recipe)
+      if reason then ctx.message:fragment(reason) end
       return
    end
 
@@ -83,8 +83,8 @@ local function handle_recipe_click(ctx, recipe, modifiers)
       })
    else
       ctx.message:fragment({ "fa.crafting-cannot-craft" })
-      local missing_info = Crafting.recipe_missing_ingredients_info(ctx.pindex, recipe)
-      ctx.message:fragment(missing_info)
+      local reason = Crafting.recipe_cannot_craft_reason(ctx.pindex, recipe)
+      if reason then ctx.message:fragment(reason) end
    end
 end
 
