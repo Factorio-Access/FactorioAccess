@@ -1,3 +1,10 @@
+# 0.16.14 (unreleased)
+
+- You now launch rockets with shift enter. Space would shoot your silo, and we are now using this key for other things.
+- Launching satellites now converts them to space science packs as expected
+- Rocket silos do not report that they are ready to launch a rocket during the period between having all needed parts and being ready for the launch
+- Rocket silo progress announcement respects the number of required parts from the prototype, for mod and space age compatibility.
+
 # 0.16.13 (2025-10-28)
 
 - Minor versions without changelog entries are for one-off playtesting fixes.
