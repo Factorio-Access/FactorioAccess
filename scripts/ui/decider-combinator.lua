@@ -245,9 +245,10 @@ local function render_decider_config(ctx)
       end,
    })
 
-   -- Rows 2+: Individual conditions or empty placeholder
+   -- Rows 2+: Conditions row
+   menu:start_row("conditions_row")
    if #conditions == 0 then
-      -- Empty placeholder row - can add first condition with /
+      -- Empty placeholder - can add first condition with /
       menu:add_item("empty_conditions", {
          label = function(ctx)
             ctx.message:fragment({ "fa.decider-no-conditions" })
@@ -265,7 +266,7 @@ local function render_decider_config(ctx)
          end,
       })
    else
-      -- Individual condition rows
+      -- Individual conditions
       for i, condition in ipairs(conditions) do
          local row_key = "cond_" .. tostring(i)
 
@@ -412,10 +413,12 @@ local function render_decider_config(ctx)
          })
       end
    end
+   menu:end_row()
 
-   -- Outputs section
+   -- Outputs row
+   menu:start_row("outputs_row")
    if #outputs == 0 then
-      -- Empty placeholder row - can add first output with /
+      -- Empty placeholder - can add first output with /
       menu:add_item("empty_outputs", {
          label = function(ctx)
             ctx.message:fragment({ "fa.decider-no-outputs" })
@@ -431,7 +434,7 @@ local function render_decider_config(ctx)
          end,
       })
    else
-      -- Individual output rows
+      -- Individual outputs
       for i, output in ipairs(outputs) do
          local row_key = "out_" .. tostring(i)
 
@@ -540,6 +543,7 @@ local function render_decider_config(ctx)
          })
       end
    end
+   menu:end_row()
 
    return menu:build()
 end
