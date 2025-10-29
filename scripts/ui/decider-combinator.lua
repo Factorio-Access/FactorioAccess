@@ -23,21 +23,21 @@ local function patch_parameters(entity, closure)
    cb.parameters = params
 end
 
----Localise a CircuitNetworkSelection (red/green/both)
+---Localise a CircuitNetworkSelection (red/green, or nothing for both)
 ---@param networks CircuitNetworkSelection?
 ---@return LocalisedString
 local function localise_networks(networks)
-   if not networks then return { "fa.decider-both-networks" } end
+   if not networks then return "" end
    local red = networks.red ~= false
    local green = networks.green ~= false
    if red and green then
-      return { "fa.decider-both-networks" }
+      return "" -- Both is default, don't announce
    elseif red then
       return { "fa.decider-red-network" }
    elseif green then
       return { "fa.decider-green-network" }
    else
-      return { "fa.decider-both-networks" }
+      return "" -- Both is default
    end
 end
 
@@ -314,8 +314,8 @@ local function render_decider_config(ctx)
                end
             end,
 
-            -- .: Cycle comparator
-            on_action3 = function(ctx, modifiers)
+            -- ,: Cycle comparator
+            on_action2 = function(ctx, modifiers)
                patch_parameters(entity, function(params)
                   local cond = params.conditions[i]
                   if modifiers and modifiers.shift then
@@ -328,10 +328,10 @@ local function render_decider_config(ctx)
                end)
             end,
 
-            -- ,: Set second parameter
-            on_action2 = function(ctx, modifiers)
+            -- .: Set second parameter
+            on_action3 = function(ctx, modifiers)
                if modifiers and modifiers.ctrl then
-                  -- Ctrl+,: Cycle second signal networks
+                  -- Ctrl+.: Cycle second signal networks
                   patch_parameters(entity, function(params)
                      local cond = params.conditions[i]
                      cond.second_signal_networks = cycle_networks(cond.second_signal_networks)
@@ -339,7 +339,7 @@ local function render_decider_config(ctx)
                      ctx.controller.message:fragment(localise_networks(cond.second_signal_networks))
                   end)
                elseif modifiers and modifiers.shift then
-                  -- Shift+,: Set constant
+                  -- Shift+.: Set constant
                   local current_value = tostring(condition.constant or 0)
                   ctx.controller:open_textbox(
                      current_value,
@@ -347,7 +347,7 @@ local function render_decider_config(ctx)
                      { "fa.decider-enter-constant" }
                   )
                else
-                  -- ,: Select second signal
+                  -- .: Select second signal
                   ctx.controller:open_child_ui(
                      Router.UI_NAMES.SIGNAL_CHOOSER,
                      {},
