@@ -262,7 +262,6 @@ local function render_decider_config(ctx)
                })
             end)
             ctx.controller.message:fragment({ "fa.decider-condition-added" })
-            ctx.controller:hint_focus_graph_node("cond_1")
          end,
       })
    else
@@ -371,7 +370,6 @@ local function render_decider_config(ctx)
 
                ctx.controller.message:fragment({ "fa.decider-condition-added" })
                ctx.controller.message:fragment({ "fa.decider-connector-" .. compare_type })
-               ctx.controller:hint_focus_graph_node("cond_" .. tostring(i + 1))
             end,
 
             -- Backspace: Remove condition
@@ -380,13 +378,6 @@ local function render_decider_config(ctx)
                   table.remove(params.conditions, i)
                end)
                ctx.controller.message:fragment({ "fa.decider-condition-removed" })
-
-               -- Hint focus to previous condition or empty placeholder
-               if i > 1 then
-                  ctx.controller:hint_focus_graph_node("cond_" .. tostring(i - 1))
-               else
-                  ctx.controller:hint_focus_graph_node("empty_conditions")
-               end
             end,
 
             -- Handle child results (signal selection or textbox)
@@ -440,7 +431,6 @@ local function render_decider_config(ctx)
                })
             end)
             ctx.controller.message:fragment({ "fa.decider-output-added" })
-            ctx.controller:hint_focus_graph_node("out_1")
          end,
       })
    else
@@ -516,7 +506,6 @@ local function render_decider_config(ctx)
                end)
 
                ctx.controller.message:fragment({ "fa.decider-output-added" })
-               ctx.controller:hint_focus_graph_node("out_" .. tostring(i + 1))
             end,
 
             -- Backspace: Remove output
@@ -525,13 +514,6 @@ local function render_decider_config(ctx)
                   table.remove(params.outputs, i)
                end)
                ctx.controller.message:fragment({ "fa.decider-output-removed" })
-
-               -- Hint focus to previous output or empty placeholder
-               if i > 1 then
-                  ctx.controller:hint_focus_graph_node("out_" .. tostring(i - 1))
-               else
-                  ctx.controller:hint_focus_graph_node("empty_outputs")
-               end
             end,
 
             -- Handle child results (signal selection or textbox)
