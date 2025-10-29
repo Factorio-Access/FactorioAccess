@@ -469,9 +469,8 @@ local function render_decider_config(ctx)
                   if out.copy_count_from_input ~= false then
                      out.networks = cycle_networks(out.networks)
                      ctx.controller.message:fragment(localise_networks(out.networks))
-                  else
-                     ctx.controller.message:fragment({ "fa.error-networks-only-when-copying" })
                   end
+                  -- Do nothing silently if in constant mode
                end)
             end,
 
