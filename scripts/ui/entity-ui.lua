@@ -415,6 +415,12 @@ function mod.open_entity_ui(pindex, entity)
       return true
    end
 
+   -- Special case: decider combinators use their own UI
+   if entity.type == "decider-combinator" then
+      router:open_ui(UiRouter.UI_NAMES.DECIDER_COMBINATOR, params)
+      return true
+   end
+
    -- Special case: power switches use their own UI
    if entity.type == "power-switch" then
       router:open_ui(UiRouter.UI_NAMES.POWER_SWITCH, params)
