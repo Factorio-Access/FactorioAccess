@@ -243,10 +243,9 @@ local function render_decider_config(ctx)
             ctx.message:fragment({ "fa.decider-no-conditions" })
          end,
          on_add_to_row = function(ctx, modifiers)
-            -- Add first condition (always "or" but it doesn't matter)
+            -- Add first condition with defaults
             local new_cond = {
-               first_signal = { type = "virtual", name = "signal-anything" },
-               comparator = "=",
+               comparator = "<",
                constant = 0,
                compare_type = "or",
             }
@@ -300,7 +299,7 @@ local function render_decider_config(ctx)
                   ctx.controller:open_child_ui(
                      Router.UI_NAMES.SIGNAL_CHOOSER,
                      {},
-                     { node = row_key .. "_display", target = "first_signal", cond_index = i }
+                     { node = row_key .. "_display", target = "first_signal" }
                   )
                end
             end,
@@ -336,7 +335,7 @@ local function render_decider_config(ctx)
                   local current_value = tostring(condition.constant or 0)
                   ctx.controller:open_textbox(
                      current_value,
-                     { node = row_key .. "_display", target = "constant", cond_index = i },
+                     { node = row_key .. "_display", target = "constant" },
                      { "fa.decider-enter-constant" }
                   )
                else
@@ -344,7 +343,7 @@ local function render_decider_config(ctx)
                   ctx.controller:open_child_ui(
                      Router.UI_NAMES.SIGNAL_CHOOSER,
                      {},
-                     { node = row_key .. "_display", target = "second_signal", cond_index = i }
+                     { node = row_key .. "_display", target = "second_signal" }
                   )
                end
             end,
@@ -355,8 +354,7 @@ local function render_decider_config(ctx)
                if modifiers and modifiers.ctrl then compare_type = "or" end
 
                local new_cond = {
-                  first_signal = { type = "virtual", name = "signal-anything" },
-                  comparator = "=",
+                  comparator = "<",
                   constant = 0,
                   compare_type = compare_type,
                }
@@ -381,29 +379,29 @@ local function render_decider_config(ctx)
             end,
 
             -- Handle child results (signal selection or textbox)
-            on_child_result = function(ctx, result, result_state)
-               if not result_state then return end
+            on_child_result = function(ctx, result)
+               if not ctx.child_context then return end
 
-               local cond_idx = result_state.cond_index
-               local updated_cond = cb:get_condition(cond_idx)
+               local target = ctx.child_context.target
+               local updated_cond = cb:get_condition(i)
 
-               if result_state.target == "first_signal" then
+               if target == "first_signal" then
                   updated_cond.first_signal = result
-                  cb:set_condition(updated_cond, cond_idx)
+                  cb:set_condition(updated_cond, i)
                   ctx.controller.message:fragment({ "fa.decider-signal-selected" })
                   ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
-               elseif result_state.target == "second_signal" then
+               elseif target == "second_signal" then
                   updated_cond.second_signal = result
                   updated_cond.constant = nil
-                  cb:set_condition(updated_cond, cond_idx)
+                  cb:set_condition(updated_cond, i)
                   ctx.controller.message:fragment({ "fa.decider-signal-selected" })
                   ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
-               elseif result_state.target == "constant" then
+               elseif target == "constant" then
                   local num_value = tonumber(result)
                   if num_value then
                      updated_cond.second_signal = nil
                      updated_cond.constant = math.floor(num_value)
-                     cb:set_condition(updated_cond, cond_idx)
+                     cb:set_condition(updated_cond, i)
                      ctx.controller.message:fragment({ "fa.decider-constant-set" })
                      ctx.controller.message:fragment(tostring(updated_cond.constant))
                   else
@@ -426,8 +424,7 @@ local function render_decider_config(ctx)
          end,
          on_add_to_row = function(ctx)
             local new_output = {
-               signal = { type = "virtual", name = "signal-anything" },
-               constant = 0,
+               constant = 1,
                copy_count_from_input = false,
             }
             cb:add_output(1, new_output)
@@ -451,11 +448,7 @@ local function render_decider_config(ctx)
 
             -- m: Select signal
             on_action1 = function(ctx)
-               ctx.controller:open_child_ui(
-                  Router.UI_NAMES.SIGNAL_CHOOSER,
-                  {},
-                  { node = row_key .. "_display", out_index = i }
-               )
+               ctx.controller:open_child_ui(Router.UI_NAMES.SIGNAL_CHOOSER, {}, { node = row_key .. "_display" })
             end,
 
             -- ,: Set constant or toggle copy
@@ -494,7 +487,7 @@ local function render_decider_config(ctx)
                      local current_value = tostring(updated_out.constant or 1)
                      ctx.controller:open_textbox(
                         current_value,
-                        { node = row_key .. "_display", out_index = i },
+                        { node = row_key .. "_display" },
                         { "fa.decider-enter-constant" }
                      )
                   end
@@ -504,8 +497,7 @@ local function render_decider_config(ctx)
             -- /: Add output after this one
             on_add_to_row = function(ctx)
                local new_output = {
-                  signal = { type = "virtual", name = "signal-anything" },
-                  constant = 0,
+                  constant = 1,
                   copy_count_from_input = false,
                }
                cb:add_output(i + 1, new_output)
@@ -528,30 +520,25 @@ local function render_decider_config(ctx)
             end,
 
             -- Handle child results (signal selection or textbox)
-            on_child_result = function(ctx, result, result_state)
-               if not result_state or not result_state.out_index then return end
+            on_child_result = function(ctx, result)
+               local updated_out = cb:get_output(i)
 
-               local out_idx = result_state.out_index
-               local updated_out = cb:get_output(out_idx)
-
-               if result_state.node:match("_display$") then
-                  if type(result) == "table" and result.name then
-                     -- Signal selected
-                     updated_out.signal = result
-                     cb:set_output(out_idx, updated_out)
-                     ctx.controller.message:fragment({ "fa.decider-signal-selected" })
-                     ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
-                  elseif type(result) == "string" then
-                     -- Constant set from textbox
-                     local num_value = tonumber(result)
-                     if num_value then
-                        updated_out.constant = math.floor(num_value)
-                        cb:set_output(out_idx, updated_out)
-                        ctx.controller.message:fragment({ "fa.decider-constant-set" })
-                        ctx.controller.message:fragment(tostring(updated_out.constant))
-                     else
-                        ctx.controller.message:fragment({ "fa.error-invalid-number" })
-                     end
+               if type(result) == "table" and result.name then
+                  -- Signal selected
+                  updated_out.signal = result
+                  cb:set_output(i, updated_out)
+                  ctx.controller.message:fragment({ "fa.decider-signal-selected" })
+                  ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
+               elseif type(result) == "string" then
+                  -- Constant set from textbox
+                  local num_value = tonumber(result)
+                  if num_value then
+                     updated_out.constant = math.floor(num_value)
+                     cb:set_output(i, updated_out)
+                     ctx.controller.message:fragment({ "fa.decider-constant-set" })
+                     ctx.controller.message:fragment(tostring(updated_out.constant))
+                  else
+                     ctx.controller.message:fragment({ "fa.error-invalid-number" })
                   end
                end
             end,
