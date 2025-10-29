@@ -277,7 +277,7 @@ local function render_decider_config(ctx)
                })
             end)
             ctx.controller.message:fragment({ "fa.decider-condition-added" })
-            ctx.controller:suggest_move(get_condition_key(1))
+            ctx.graph_controller:suggest_move(get_condition_key(1))
          end,
       })
    else
@@ -380,7 +380,7 @@ local function render_decider_config(ctx)
                end)
 
                ctx.controller.message:fragment({ "fa.decider-connector-" .. compare_type })
-               ctx.controller:suggest_move(get_condition_key(i + 1))
+               ctx.graph_controller:suggest_move(get_condition_key(i + 1))
             end,
 
             -- Backspace: Remove condition
@@ -439,7 +439,7 @@ local function render_decider_config(ctx)
                })
             end)
             ctx.controller.message:fragment({ "fa.decider-output-added" })
-            ctx.controller:suggest_move(get_output_key(1))
+            ctx.graph_controller:suggest_move(get_output_key(1))
          end,
       })
    else
@@ -506,7 +506,7 @@ local function render_decider_config(ctx)
                end)
 
                ctx.controller.message:fragment({ "fa.decider-output-added" })
-               ctx.controller:suggest_move(get_output_key(i + 1))
+               ctx.graph_controller:suggest_move(get_output_key(i + 1))
             end,
 
             -- Backspace: Remove output
