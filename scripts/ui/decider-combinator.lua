@@ -184,27 +184,62 @@ local function read_outputs_summary(mb, outputs)
    end
 end
 
----Render the decider combinator conditions tab
+---Read overall summary of decider combinator
+---@param mb fa.MessageBuilder
+---@param conditions DeciderCombinatorCondition[]
+---@param outputs DeciderCombinatorOutput[]
+local function read_overall_summary(mb, conditions, outputs)
+   -- Outputs first
+   mb:fragment({ "fa.decider-outputs-label" })
+   read_outputs_summary(mb, outputs)
+
+   -- Then conditions
+   mb:fragment({ "fa.decider-if-label" })
+   read_conditions_summary(mb, conditions)
+end
+
+---Render the decider combinator configuration
 ---@param ctx fa.ui.graph.Ctx
 ---@return fa.ui.graph.Render?
-local function render_conditions(ctx)
+local function render_decider_config(ctx)
    local entity = ctx.global_parameters and ctx.global_parameters.entity
-   assert(entity and entity.valid, "render_conditions: entity is nil or invalid")
+   assert(entity and entity.valid, "render_decider_config: entity is nil or invalid")
 
    local cb = entity.get_control_behavior() --[[@as LuaDeciderCombinatorControlBehavior]]
-   assert(cb, "render_conditions: no control behavior found")
+   assert(cb, "render_decider_config: no control behavior found")
 
    local params = cb.parameters
    local conditions = params and params.conditions or {}
+   local outputs = params and params.outputs or {}
 
    local menu = Menu.MenuBuilder.new()
 
-   -- Row 1: Conditions summary
-   menu:add_label("conditions_summary", function(ctx)
+   -- Row 1: Overall summary
+   menu:add_label("overall_summary", function(ctx)
       local mb = MessageBuilder.new()
-      read_conditions_summary(mb, conditions)
+      read_overall_summary(mb, conditions, outputs)
       ctx.message:fragment(mb:build())
    end)
+
+   -- Row 2: Description
+   menu:add_clickable("description", function(ctx)
+      local desc = entity.combinator_description or ""
+      ctx.message:fragment({ "fa.combinator-description" })
+      ctx.message:fragment(desc)
+   end, {
+      on_click = function(ctx)
+         local current_value = entity.combinator_description or ""
+         ctx.controller:open_textbox(current_value, "description")
+      end,
+      on_child_result = function(ctx, result)
+         entity.combinator_description = result
+         ctx.controller.message:fragment({ "fa.combinator-description-updated" })
+      end,
+      on_clear = function(ctx)
+         entity.combinator_description = ""
+         ctx.controller.message:fragment({ "fa.cleared" })
+      end,
+   })
 
    -- Rows 2+: Individual conditions or empty placeholder
    if #conditions == 0 then
@@ -388,32 +423,7 @@ local function render_conditions(ctx)
       end
    end
 
-   return menu:build()
-end
-
----Render the decider combinator outputs tab
----@param ctx fa.ui.graph.Ctx
----@return fa.ui.graph.Render?
-local function render_outputs(ctx)
-   local entity = ctx.global_parameters and ctx.global_parameters.entity
-   assert(entity and entity.valid, "render_outputs: entity is nil or invalid")
-
-   local cb = entity.get_control_behavior() --[[@as LuaDeciderCombinatorControlBehavior]]
-   assert(cb, "render_outputs: no control behavior found")
-
-   local params = cb.parameters
-   local outputs = params and params.outputs or {}
-
-   local menu = Menu.MenuBuilder.new()
-
-   -- Row 1: Outputs summary
-   menu:add_label("outputs_summary", function(ctx)
-      local mb = MessageBuilder.new()
-      read_outputs_summary(mb, outputs)
-      ctx.message:fragment(mb:build())
-   end)
-
-   -- Rows 2+: Individual outputs or empty placeholder
+   -- Outputs section
    if #outputs == 0 then
       -- Empty placeholder row - can add first output with /
       menu:add_item("empty_outputs", {
@@ -570,33 +580,19 @@ local function build_decider_combinator_tabs(pindex, parameters)
    assert(entity, "build_decider_combinator_tabs: entity is nil")
    assert(entity.valid, "build_decider_combinator_tabs: entity is not valid")
 
-   -- Tabstop 1: Main (Conditions, Outputs, Circuit signals)
+   -- Tabstop 1: Main (Config, Circuit signals)
    local main_tabs = {}
 
-   -- Conditions tab
+   -- Config tab (conditions and outputs in one view)
    table.insert(
       main_tabs,
       KeyGraph.declare_graph({
-         name = "conditions",
-         title = { "fa.decider-conditions-title" },
-         render_callback = render_conditions,
+         name = "config",
+         title = { "fa.decider-config-title" },
+         render_callback = render_decider_config,
          get_help_metadata = function()
             return {
                Help.message_list("decider-combinator-conditions"),
-            }
-         end,
-      })
-   )
-
-   -- Outputs tab
-   table.insert(
-      main_tabs,
-      KeyGraph.declare_graph({
-         name = "outputs",
-         title = { "fa.decider-outputs-title" },
-         render_callback = render_outputs,
-         get_help_metadata = function()
-            return {
                Help.message_list("decider-combinator-outputs"),
             }
          end,
