@@ -309,7 +309,7 @@ local function render_decider_config(ctx)
 
             -- m: Select first signal
             on_action1 = function(ctx)
-               if ctx.modifiers and ctx.modifiers.ctrl then
+               if ctx.modifiers and ctx.modifiers.control then
                   -- Ctrl+m: Cycle first signal networks
                   patch_parameters(entity, function(params)
                      local cond = params.conditions[i]
@@ -341,7 +341,7 @@ local function render_decider_config(ctx)
 
             -- .: Set second parameter
             on_action3 = function(ctx)
-               if ctx.modifiers and ctx.modifiers.ctrl then
+               if ctx.modifiers and ctx.modifiers.control then
                   -- Ctrl+.: Cycle second signal networks
                   patch_parameters(entity, function(params)
                      local cond = params.conditions[i]
@@ -371,7 +371,7 @@ local function render_decider_config(ctx)
             -- /: Add condition after this one
             on_add_to_row = function(ctx)
                local compare_type = "and"
-               if ctx.modifiers and ctx.modifiers.ctrl then compare_type = "or" end
+               if ctx.modifiers and ctx.modifiers.control then compare_type = "or" end
 
                patch_parameters(entity, function(params)
                   table.insert(params.conditions, i + 1, {
