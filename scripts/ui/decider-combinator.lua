@@ -457,44 +457,27 @@ local function render_decider_config(ctx)
                ctx.message:fragment(mb:build())
             end,
 
-            -- m: Select signal
+            -- m: Select signal, Ctrl+m: Cycle networks (sets to copy mode)
             on_action1 = function(ctx)
-               ctx.controller:open_child_ui(Router.UI_NAMES.SIGNAL_CHOOSER, {}, { node = row_key })
-            end,
-
-            -- ,: Cycle networks (only when copying from input)
-            on_action2 = function(ctx)
-               patch_parameters(entity, function(params)
-                  local out = params.outputs[i]
-                  if out.copy_count_from_input ~= false then
-                     out.networks = cycle_networks(out.networks)
-                     ctx.controller.message:fragment(localise_networks(out.networks))
-                  end
-                  -- Do nothing silently if in constant mode
-               end)
-            end,
-
-            -- .: Toggle copy from input or set constant
-            on_action3 = function(ctx)
-               if ctx.modifiers and ctx.modifiers.shift then
-                  -- Shift+.: Set constant (automatically clears copy_from_input)
-                  local current_value = tostring(output.constant or 1)
-                  ctx.controller:open_textbox(current_value, { node = row_key }, { "fa.decider-enter-constant" })
-               else
-                  -- .: Toggle copy from input
+               if ctx.modifiers and ctx.modifiers.control then
+                  -- Ctrl+m: Cycle networks and set to copy mode
                   patch_parameters(entity, function(params)
                      local out = params.outputs[i]
-                     out.copy_count_from_input = not (out.copy_count_from_input ~= false)
-                     if out.copy_count_from_input then
-                        out.networks = cycle_networks({})
-                        out.constant = nil
-                        ctx.controller.message:fragment({ "fa.decider-copy-from-input" })
-                        ctx.controller.message:fragment(localise_networks(out.networks))
-                     else
-                        ctx.controller.message:fragment({ "fa.decider-constant-mode" })
-                     end
+                     out.networks = cycle_networks(out.networks)
+                     out.copy_count_from_input = true
+                     out.constant = nil
+                     ctx.controller.message:fragment(localise_networks(out.networks))
                   end)
+               else
+                  -- m: Select signal
+                  ctx.controller:open_child_ui(Router.UI_NAMES.SIGNAL_CHOOSER, {}, { node = row_key })
                end
+            end,
+
+            -- .: Enter constant (sets to constant mode)
+            on_action3 = function(ctx)
+               local current_value = tostring(output.constant or 1)
+               ctx.controller:open_textbox(current_value, { node = row_key }, { "fa.decider-enter-constant" })
             end,
 
             -- /: Add output after this one
