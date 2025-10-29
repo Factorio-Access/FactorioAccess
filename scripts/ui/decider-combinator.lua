@@ -138,13 +138,7 @@ local function read_conditions_summary(mb, conditions)
    for i, condition in ipairs(conditions) do
       local include_connector = i > 1
       read_condition(mb, condition, include_connector)
-
-      if i < #conditions then
-         local next_connector = conditions[i + 1].compare_type or "or"
-         mb:list_item({ "fa.decider-connector-" .. next_connector })
-      else
-         mb:list_item()
-      end
+      mb:list_item()
    end
 end
 

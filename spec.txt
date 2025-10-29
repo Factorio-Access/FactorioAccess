@@ -1,0 +1,93 @@
+This is the initial prompt.   Please review everything to see what still needs to be done, what deviated from the spec, etc. and address the remaining concerns.
+
+Today's goal is to get the decider UI working, now that it is clear we cannot share code.  We can share UI, so this in effect establishes the pattern for trains too.
+
+We need the decider UI to be convenient even though it is big and most players who use it won't be newbies, so we're going to have to take a complexity hit to make that happen.  But we have enough information to implement something.
+
+This is a **VERY HARD** task.  Think deeply, abstract well, and prepare code for future proofing, maintainability, and **lack of repetition**.
+
+m, comma, and dot map to on_action1...on_action3.  This is either completely or mostly implemented.  But the ui does not register variants with modifiers in router.lua.  Start by reading router.lua to understand how to pass modifiers.
+
+Then, we will add two things, which we will reuse later with trains, as UI callbacks:
+
+- `on_conjunction_modification`: maps to fa-n and is used to change and to or
+- `on_add_to_row`: maps to fa-slash, also needs modifiers.  Do **not** break help, fa-s-slash is not part of this.
+
+
+Funnel those through key-graph vtabs and tab-list.
+
+What we will do is let users "type" their conditions and outputs.  If you look at the standard qwerty layout we have: nm,./  If we make it so that n toggles the conjuction, m (possibly with modifiers) sets the first parameter, dot sets the operator, and comma sets the second parameter, then a user can go m,./ m,./ m,./ and it is a "tactile row".
+
+So as an overview:
+
+- n changes and/or
+- m selects first signal
+- dot changes operator
+- comma sets second signal or constant.
+
+Specifically, we want the following keys to do the following things:
+
+- / adds condition with and
+- ctrl / adds condition with or
+- m selects first signal
+- ctrl m changes red/green/both
+- dot selects operator cycling forward
+- shift dot sets operator cycling backward
+- comma sets second signal from selector
+- shift comma sets second signal as constant from textbox
+- ctrl comma cycles red/green/both for second signal
+- backspace removes a condition
+
+We lay this out as follows in a menu:
+
+- First row: spoken summary: "outputs x to y, z to w if c1 and c2, or, c3 and c4" (see below for comma management).
+- Second row: Either "no conditions" or conditions.  If "no copnditions" the only valid operation is /, to add the first one.
+  - For conditions, we read it as "sep p1 op p2" for example "and iron chest < 5". Be careful to use the proper signal localisation!  otherwise we won't be able to do entity and recipe signals correctly. I provide more specific rules below.
+- For outputs, we do the same thing except it's only m, comma, and  /: the above keybindings for "first signal" to select signal, comma can set the constant, we can use shift comma to set "copy from input".
+
+What we need for reading.
+
+If we write function `read_cond(msgbuilder, maybe_include_connector_prefix)` then we can define how a single condition is read.  This is always the same.  It uses :fragment() on th builder to push components.  The builder understands how to handle this even with lists ijn the parent.
+
+that's enough to get either "p1 < p2" or "and p1 < p2" depending on where we are using it.
+
+We can then write `read_condition_summary(msgbuilder)`, which:
+
+```
+for c in conditions do
+read_condition(msgbuilder, false)
+local connector=get_and_or_or_froim_next_condition
+msgbuilder:list_item(connector) -- ends current list item, condition, or
+msgbuilder:list_item() -- sets us up so that the next iteration will push fragments into a new item
+end
+```
+
+The outputs are the same pattern, except of course without a logical operator.
+
+Validation and edge cases.
+
+We need to make sure to handle these edge cases. Some have been alluded to above:
+
+- When no outputs, we need an empty row responsive to /
+- when no conditions, we need an empty row responsive to /
+- The first condition cannot have the connection changed
+- When using / to add things we need to use the graph controller to hint to move focus to the new key
+  - backspace to remove already handles itself fine
+- Everything needs to read the new value of what it changed.
+
+
+Help.
+
+This is a complex UI.  Mount and write a help messagelist in the style of the current messagelists for it.
+
+
+This task is intended to be completed autonomously.  There are no good checkpoints in the middle. We must unfortunately push all the way to the end and then debug it.  Here are some important suggestions to avoid mistakes:
+
+- We can't use form-builder, we have to use menu-builder. form-builder is too high level.
+- textboxes are tricky and you usually get it wrong. Look at how they are done for the bluepreints menu.
+- be sure to read all of key-graph.lua before playing with textboxes
+- Localisation is important but less so than usual. If we just have `decider-combinator-or=or` that's fine, in some cases we take what we can get.
+
+
+I would suggest dispatching a sonnet 4.5 subagent to do the initial pass at addingb the new callbacks, then **carefully reviewing what it did before proceeding**, then doing the rest yourself.  Addition of the new callbacks for the new keys is simple enough, but there's room for mistakes and it needs a second pair of eyes.  Frequently this goes wronjg via forgetting to feed it through one of the vtables, for example.
+
