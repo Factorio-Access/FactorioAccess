@@ -37,21 +37,21 @@ local function get_output_key(i)
    return "out_" .. tostring(i)
 end
 
----Localise a CircuitNetworkSelection (red/green/both)
+---Localise a CircuitNetworkSelection (red/green, or empty for both)
 ---@param networks CircuitNetworkSelection?
 ---@return LocalisedString
 local function localise_networks(networks)
-   if not networks then return { "fa.decider-both-networks" } end
+   if not networks then return "" end
    local red = networks.red ~= false
    local green = networks.green ~= false
    if red and green then
-      return { "fa.decider-both-networks" }
+      return "" -- Both is implied, don't announce
    elseif red then
       return { "fa.decider-red-network" }
    elseif green then
       return { "fa.decider-green-network" }
    else
-      return { "fa.decider-both-networks" }
+      return "" -- Both is implied
    end
 end
 
