@@ -452,47 +452,52 @@ local function render_decider_config(ctx)
                ctx.controller:open_child_ui(Router.UI_NAMES.SIGNAL_CHOOSER, {}, { node = row_key .. "_display" })
             end,
 
-            -- ,: Set constant or toggle copy
+            -- ,: Cycle networks (only when copying from input)
             on_action2 = function(ctx, modifiers)
+               patch_parameters(entity, function(params)
+                  local out = params.outputs[i]
+                  if out.copy_count_from_input ~= false then
+                     out.networks = cycle_networks(out.networks)
+                     ctx.controller.message:fragment({ "fa.decider-network-changed" })
+                     ctx.controller.message:fragment(localise_networks(out.networks))
+                  else
+                     ctx.controller.message:fragment({ "fa.error-networks-only-when-copying" })
+                  end
+               end)
+            end,
+
+            -- .: Set constant or manage copy mode
+            on_action3 = function(ctx, modifiers)
                if modifiers and modifiers.shift then
-                  -- Shift+,: Toggle copy from input
+                  -- Shift+.: Clear both constant and copy_from_input
+                  patch_parameters(entity, function(params)
+                     local out = params.outputs[i]
+                     out.constant = nil
+                     out.copy_count_from_input = false
+                     ctx.controller.message:fragment({ "fa.cleared" })
+                  end)
+               elseif modifiers and modifiers.ctrl then
+                  -- Ctrl+.: Toggle copy from input
                   patch_parameters(entity, function(params)
                      local out = params.outputs[i]
                      out.copy_count_from_input = not (out.copy_count_from_input ~= false)
-                     if out.copy_count_from_input then out.networks = cycle_networks({}) end
-
                      if out.copy_count_from_input then
+                        out.networks = cycle_networks({})
+                        out.constant = nil
                         ctx.controller.message:fragment({ "fa.decider-copy-from-input" })
                         ctx.controller.message:fragment(localise_networks(out.networks))
                      else
-                        ctx.controller.message:fragment({ "fa.decider-constant-set" })
-                        ctx.controller.message:fragment(tostring(out.constant or 1))
-                     end
-                  end)
-               elseif modifiers and modifiers.ctrl then
-                  -- Ctrl+,: Cycle networks (only when copying from input)
-                  patch_parameters(entity, function(params)
-                     local out = params.outputs[i]
-                     if out.copy_count_from_input ~= false then
-                        out.networks = cycle_networks(out.networks)
-                        ctx.controller.message:fragment({ "fa.decider-network-changed" })
-                        ctx.controller.message:fragment(localise_networks(out.networks))
-                     else
-                        ctx.controller.message:fragment({ "fa.error-networks-only-when-copying" })
+                        ctx.controller.message:fragment({ "fa.decider-constant-mode" })
                      end
                   end)
                else
-                  -- ,: Set constant (only when not copying from input)
-                  if output.copy_count_from_input ~= false then
-                     ctx.controller.message:fragment({ "fa.error-set-constant-when-not-copying" })
-                  else
-                     local current_value = tostring(output.constant or 1)
-                     ctx.controller:open_textbox(
-                        current_value,
-                        { node = row_key .. "_display" },
-                        { "fa.decider-enter-constant" }
-                     )
-                  end
+                  -- .: Set constant (automatically clears copy_from_input)
+                  local current_value = tostring(output.constant or 1)
+                  ctx.controller:open_textbox(
+                     current_value,
+                     { node = row_key .. "_display" },
+                     { "fa.decider-enter-constant" }
+                  )
                end
             end,
 
@@ -527,10 +532,11 @@ local function render_decider_config(ctx)
                      ctx.controller.message:fragment({ "fa.decider-signal-selected" })
                      ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
                   elseif type(result) == "string" then
-                     -- Constant set from textbox
+                     -- Constant set from textbox (automatically clears copy_from_input)
                      local num_value = tonumber(result)
                      if num_value then
                         out.constant = math.floor(num_value)
+                        out.copy_count_from_input = false
                         ctx.controller.message:fragment({ "fa.decider-constant-set" })
                         ctx.controller.message:fragment(tostring(out.constant))
                      else
