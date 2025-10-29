@@ -39,19 +39,20 @@ end
 
 ---Localise a CircuitNetworkSelection (red/green, or empty for both)
 ---@param networks CircuitNetworkSelection?
+---@param announce_both boolean? If true, announce "both" instead of returning empty string
 ---@return LocalisedString
-local function localise_networks(networks)
-   if not networks then return "" end
+local function localise_networks(networks, announce_both)
+   if not networks then return announce_both and { "fa.decider-both-networks" } or "" end
    local red = networks.red ~= false
    local green = networks.green ~= false
    if red and green then
-      return "" -- Both is implied, don't announce
+      return announce_both and { "fa.decider-both-networks" } or ""
    elseif red then
       return { "fa.decider-red-network" }
    elseif green then
       return { "fa.decider-green-network" }
    else
-      return "" -- Both is implied
+      return announce_both and { "fa.decider-both-networks" } or ""
    end
 end
 
@@ -81,7 +82,7 @@ local function cycle_item_networks(entity, item_type, index, field_name, ctx)
    patch_parameters(entity, function(params)
       local item = params[item_type][index]
       item[field_name] = cycle_networks(item[field_name])
-      ctx.controller.message:fragment(localise_networks(item[field_name]))
+      ctx.controller.message:fragment(localise_networks(item[field_name], true)) -- Announce "both" when cycling
    end)
 end
 
