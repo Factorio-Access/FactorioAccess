@@ -268,10 +268,9 @@ local function render_decider_config(ctx)
       -- Individual condition rows
       for i, condition in ipairs(conditions) do
          local row_key = "cond_" .. tostring(i)
-         menu:start_row(row_key)
 
          -- Condition display and editing
-         menu:add_item(row_key .. "_display", {
+         menu:add_item(row_key, {
             label = function(ctx)
                local mb = MessageBuilder.new()
                read_condition(mb, condition, i > 1)
@@ -308,7 +307,7 @@ local function render_decider_config(ctx)
                   ctx.controller:open_child_ui(
                      Router.UI_NAMES.SIGNAL_CHOOSER,
                      {},
-                     { node = row_key .. "_display", target = "first_signal" }
+                     { node = row_key, target = "first_signal" }
                   )
                end
             end,
@@ -342,7 +341,7 @@ local function render_decider_config(ctx)
                   local current_value = tostring(condition.constant or 0)
                   ctx.controller:open_textbox(
                      current_value,
-                     { node = row_key .. "_display", target = "constant" },
+                     { node = row_key, target = "constant" },
                      { "fa.decider-enter-constant" }
                   )
                else
@@ -350,7 +349,7 @@ local function render_decider_config(ctx)
                   ctx.controller:open_child_ui(
                      Router.UI_NAMES.SIGNAL_CHOOSER,
                      {},
-                     { node = row_key .. "_display", target = "second_signal" }
+                     { node = row_key, target = "second_signal" }
                   )
                end
             end,
@@ -411,8 +410,6 @@ local function render_decider_config(ctx)
                end)
             end,
          })
-
-         menu:end_row()
       end
    end
 
@@ -437,10 +434,9 @@ local function render_decider_config(ctx)
       -- Individual output rows
       for i, output in ipairs(outputs) do
          local row_key = "out_" .. tostring(i)
-         menu:start_row(row_key)
 
          -- Output display and editing
-         menu:add_item(row_key .. "_display", {
+         menu:add_item(row_key, {
             label = function(ctx)
                local mb = MessageBuilder.new()
                read_output(mb, output)
@@ -449,7 +445,7 @@ local function render_decider_config(ctx)
 
             -- m: Select signal
             on_action1 = function(ctx)
-               ctx.controller:open_child_ui(Router.UI_NAMES.SIGNAL_CHOOSER, {}, { node = row_key .. "_display" })
+               ctx.controller:open_child_ui(Router.UI_NAMES.SIGNAL_CHOOSER, {}, { node = row_key })
             end,
 
             -- ,: Cycle networks (only when copying from input)
@@ -493,11 +489,7 @@ local function render_decider_config(ctx)
                else
                   -- .: Set constant (automatically clears copy_from_input)
                   local current_value = tostring(output.constant or 1)
-                  ctx.controller:open_textbox(
-                     current_value,
-                     { node = row_key .. "_display" },
-                     { "fa.decider-enter-constant" }
-                  )
+                  ctx.controller:open_textbox(current_value, { node = row_key }, { "fa.decider-enter-constant" })
                end
             end,
 
@@ -546,8 +538,6 @@ local function render_decider_config(ctx)
                end)
             end,
          })
-
-         menu:end_row()
       end
    end
 
