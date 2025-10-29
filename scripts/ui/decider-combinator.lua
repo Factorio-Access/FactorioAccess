@@ -13,6 +13,16 @@ local Help = require("scripts.ui.help")
 
 local mod = {}
 
+---Patch decider combinator parameters by getting, modifying, and setting
+---@param entity LuaEntity
+---@param closure fun(params: DeciderCombinatorParameters)
+local function patch_parameters(entity, closure)
+   local cb = entity.get_control_behavior()
+   local params = cb.parameters
+   closure(params)
+   cb.parameters = params
+end
+
 ---Localise a CircuitNetworkSelection (red/green/both)
 ---@param networks CircuitNetworkSelection?
 ---@return LocalisedString
@@ -244,12 +254,13 @@ local function render_decider_config(ctx)
          end,
          on_add_to_row = function(ctx, modifiers)
             -- Add first condition with defaults
-            local new_cond = {
-               comparator = "<",
-               constant = 0,
-               compare_type = "or",
-            }
-            cb:add_condition(new_cond, 1)
+            patch_parameters(entity, function(params)
+               table.insert(params.conditions, 1, {
+                  comparator = "<",
+                  constant = 0,
+                  compare_type = "or",
+               })
+            end)
             ctx.controller.message:fragment({ "fa.decider-condition-added" })
             ctx.controller:hint_focus_graph_node("cond_1")
          end,
@@ -275,25 +286,24 @@ local function render_decider_config(ctx)
                   return
                end
 
-               local updated_cond = cb:get_condition(i)
-               updated_cond.compare_type = (updated_cond.compare_type == "and") and "or" or "and"
-               cb:set_condition(updated_cond, i)
-
-               local connector_msg = { "fa.decider-connector-" .. updated_cond.compare_type }
-               ctx.controller.message:fragment({ "fa.decider-connector-changed" })
-               ctx.controller.message:fragment(connector_msg)
+               patch_parameters(entity, function(params)
+                  local cond = params.conditions[i]
+                  cond.compare_type = (cond.compare_type == "and") and "or" or "and"
+                  ctx.controller.message:fragment({ "fa.decider-connector-changed" })
+                  ctx.controller.message:fragment({ "fa.decider-connector-" .. cond.compare_type })
+               end)
             end,
 
             -- m: Select first signal
             on_action1 = function(ctx, modifiers)
                if modifiers and modifiers.ctrl then
                   -- Ctrl+m: Cycle first signal networks
-                  local updated_cond = cb:get_condition(i)
-                  updated_cond.first_signal_networks = cycle_networks(updated_cond.first_signal_networks)
-                  cb:set_condition(updated_cond, i)
-
-                  ctx.controller.message:fragment({ "fa.decider-network-changed" })
-                  ctx.controller.message:fragment(localise_networks(updated_cond.first_signal_networks))
+                  patch_parameters(entity, function(params)
+                     local cond = params.conditions[i]
+                     cond.first_signal_networks = cycle_networks(cond.first_signal_networks)
+                     ctx.controller.message:fragment({ "fa.decider-network-changed" })
+                     ctx.controller.message:fragment(localise_networks(cond.first_signal_networks))
+                  end)
                else
                   -- m: Select first signal
                   ctx.controller:open_child_ui(
@@ -306,30 +316,28 @@ local function render_decider_config(ctx)
 
             -- .: Cycle comparator
             on_action3 = function(ctx, modifiers)
-               local updated_cond = cb:get_condition(i)
-               if modifiers and modifiers.shift then
-                  -- Shift+.: Cycle backward
-                  updated_cond.comparator = prev_comparator(updated_cond.comparator)
-               else
-                  -- .: Cycle forward
-                  updated_cond.comparator = next_comparator(updated_cond.comparator)
-               end
-               cb:set_condition(updated_cond, i)
-
-               ctx.controller.message:fragment({ "fa.decider-comparator-changed" })
-               ctx.controller.message:fragment(localise_comparator(updated_cond.comparator))
+               patch_parameters(entity, function(params)
+                  local cond = params.conditions[i]
+                  if modifiers and modifiers.shift then
+                     cond.comparator = prev_comparator(cond.comparator)
+                  else
+                     cond.comparator = next_comparator(cond.comparator)
+                  end
+                  ctx.controller.message:fragment({ "fa.decider-comparator-changed" })
+                  ctx.controller.message:fragment(localise_comparator(cond.comparator))
+               end)
             end,
 
             -- ,: Set second parameter
             on_action2 = function(ctx, modifiers)
                if modifiers and modifiers.ctrl then
                   -- Ctrl+,: Cycle second signal networks
-                  local updated_cond = cb:get_condition(i)
-                  updated_cond.second_signal_networks = cycle_networks(updated_cond.second_signal_networks)
-                  cb:set_condition(updated_cond, i)
-
-                  ctx.controller.message:fragment({ "fa.decider-network-changed" })
-                  ctx.controller.message:fragment(localise_networks(updated_cond.second_signal_networks))
+                  patch_parameters(entity, function(params)
+                     local cond = params.conditions[i]
+                     cond.second_signal_networks = cycle_networks(cond.second_signal_networks)
+                     ctx.controller.message:fragment({ "fa.decider-network-changed" })
+                     ctx.controller.message:fragment(localise_networks(cond.second_signal_networks))
+                  end)
                elseif modifiers and modifiers.shift then
                   -- Shift+,: Set constant
                   local current_value = tostring(condition.constant or 0)
@@ -353,12 +361,13 @@ local function render_decider_config(ctx)
                local compare_type = "and"
                if modifiers and modifiers.ctrl then compare_type = "or" end
 
-               local new_cond = {
-                  comparator = "<",
-                  constant = 0,
-                  compare_type = compare_type,
-               }
-               cb:add_condition(new_cond, i + 1)
+               patch_parameters(entity, function(params)
+                  table.insert(params.conditions, i + 1, {
+                     comparator = "<",
+                     constant = 0,
+                     compare_type = compare_type,
+                  })
+               end)
 
                ctx.controller.message:fragment({ "fa.decider-condition-added" })
                ctx.controller.message:fragment({ "fa.decider-connector-" .. compare_type })
@@ -367,7 +376,9 @@ local function render_decider_config(ctx)
 
             -- Backspace: Remove condition
             on_clear = function(ctx)
-               cb:remove_condition(i)
+               patch_parameters(entity, function(params)
+                  table.remove(params.conditions, i)
+               end)
                ctx.controller.message:fragment({ "fa.decider-condition-removed" })
 
                -- Hint focus to previous condition or empty placeholder
@@ -383,31 +394,30 @@ local function render_decider_config(ctx)
                if not ctx.child_context then return end
 
                local target = ctx.child_context.target
-               local updated_cond = cb:get_condition(i)
+               patch_parameters(entity, function(params)
+                  local cond = params.conditions[i]
 
-               if target == "first_signal" then
-                  updated_cond.first_signal = result
-                  cb:set_condition(updated_cond, i)
-                  ctx.controller.message:fragment({ "fa.decider-signal-selected" })
-                  ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
-               elseif target == "second_signal" then
-                  updated_cond.second_signal = result
-                  updated_cond.constant = nil
-                  cb:set_condition(updated_cond, i)
-                  ctx.controller.message:fragment({ "fa.decider-signal-selected" })
-                  ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
-               elseif target == "constant" then
-                  local num_value = tonumber(result)
-                  if num_value then
-                     updated_cond.second_signal = nil
-                     updated_cond.constant = math.floor(num_value)
-                     cb:set_condition(updated_cond, i)
-                     ctx.controller.message:fragment({ "fa.decider-constant-set" })
-                     ctx.controller.message:fragment(tostring(updated_cond.constant))
-                  else
-                     ctx.controller.message:fragment({ "fa.error-invalid-number" })
+                  if target == "first_signal" then
+                     cond.first_signal = result
+                     ctx.controller.message:fragment({ "fa.decider-signal-selected" })
+                     ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
+                  elseif target == "second_signal" then
+                     cond.second_signal = result
+                     cond.constant = nil
+                     ctx.controller.message:fragment({ "fa.decider-signal-selected" })
+                     ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
+                  elseif target == "constant" then
+                     local num_value = tonumber(result)
+                     if num_value then
+                        cond.second_signal = nil
+                        cond.constant = math.floor(num_value)
+                        ctx.controller.message:fragment({ "fa.decider-constant-set" })
+                        ctx.controller.message:fragment(tostring(cond.constant))
+                     else
+                        ctx.controller.message:fragment({ "fa.error-invalid-number" })
+                     end
                   end
-               end
+               end)
             end,
          })
 
@@ -423,11 +433,12 @@ local function render_decider_config(ctx)
             ctx.message:fragment({ "fa.decider-no-outputs" })
          end,
          on_add_to_row = function(ctx)
-            local new_output = {
-               constant = 1,
-               copy_count_from_input = false,
-            }
-            cb:add_output(1, new_output)
+            patch_parameters(entity, function(params)
+               table.insert(params.outputs, 1, {
+                  constant = 1,
+                  copy_count_from_input = false,
+               })
+            end)
             ctx.controller.message:fragment({ "fa.decider-output-added" })
             ctx.controller:hint_focus_graph_node("out_1")
          end,
@@ -453,38 +464,39 @@ local function render_decider_config(ctx)
 
             -- ,: Set constant or toggle copy
             on_action2 = function(ctx, modifiers)
-               local updated_out = cb:get_output(i)
-
                if modifiers and modifiers.shift then
                   -- Shift+,: Toggle copy from input
-                  updated_out.copy_count_from_input = not (updated_out.copy_count_from_input ~= false)
-                  if updated_out.copy_count_from_input then updated_out.networks = cycle_networks({}) end
-                  cb:set_output(i, updated_out)
+                  patch_parameters(entity, function(params)
+                     local out = params.outputs[i]
+                     out.copy_count_from_input = not (out.copy_count_from_input ~= false)
+                     if out.copy_count_from_input then out.networks = cycle_networks({}) end
 
-                  if updated_out.copy_count_from_input then
-                     ctx.controller.message:fragment({ "fa.decider-copy-from-input" })
-                     ctx.controller.message:fragment(localise_networks(updated_out.networks))
-                  else
-                     ctx.controller.message:fragment({ "fa.decider-constant-set" })
-                     ctx.controller.message:fragment(tostring(updated_out.constant or 1))
-                  end
+                     if out.copy_count_from_input then
+                        ctx.controller.message:fragment({ "fa.decider-copy-from-input" })
+                        ctx.controller.message:fragment(localise_networks(out.networks))
+                     else
+                        ctx.controller.message:fragment({ "fa.decider-constant-set" })
+                        ctx.controller.message:fragment(tostring(out.constant or 1))
+                     end
+                  end)
                elseif modifiers and modifiers.ctrl then
                   -- Ctrl+,: Cycle networks (only when copying from input)
-                  if updated_out.copy_count_from_input ~= false then
-                     updated_out.networks = cycle_networks(updated_out.networks)
-                     cb:set_output(i, updated_out)
-
-                     ctx.controller.message:fragment({ "fa.decider-network-changed" })
-                     ctx.controller.message:fragment(localise_networks(updated_out.networks))
-                  else
-                     ctx.controller.message:fragment({ "fa.error-networks-only-when-copying" })
-                  end
+                  patch_parameters(entity, function(params)
+                     local out = params.outputs[i]
+                     if out.copy_count_from_input ~= false then
+                        out.networks = cycle_networks(out.networks)
+                        ctx.controller.message:fragment({ "fa.decider-network-changed" })
+                        ctx.controller.message:fragment(localise_networks(out.networks))
+                     else
+                        ctx.controller.message:fragment({ "fa.error-networks-only-when-copying" })
+                     end
+                  end)
                else
                   -- ,: Set constant (only when not copying from input)
-                  if updated_out.copy_count_from_input ~= false then
+                  if output.copy_count_from_input ~= false then
                      ctx.controller.message:fragment({ "fa.error-set-constant-when-not-copying" })
                   else
-                     local current_value = tostring(updated_out.constant or 1)
+                     local current_value = tostring(output.constant or 1)
                      ctx.controller:open_textbox(
                         current_value,
                         { node = row_key .. "_display" },
@@ -496,11 +508,12 @@ local function render_decider_config(ctx)
 
             -- /: Add output after this one
             on_add_to_row = function(ctx)
-               local new_output = {
-                  constant = 1,
-                  copy_count_from_input = false,
-               }
-               cb:add_output(i + 1, new_output)
+               patch_parameters(entity, function(params)
+                  table.insert(params.outputs, i + 1, {
+                     constant = 1,
+                     copy_count_from_input = false,
+                  })
+               end)
 
                ctx.controller.message:fragment({ "fa.decider-output-added" })
                ctx.controller:hint_focus_graph_node("out_" .. tostring(i + 1))
@@ -508,7 +521,9 @@ local function render_decider_config(ctx)
 
             -- Backspace: Remove output
             on_clear = function(ctx)
-               cb:remove_output(i)
+               patch_parameters(entity, function(params)
+                  table.remove(params.outputs, i)
+               end)
                ctx.controller.message:fragment({ "fa.decider-output-removed" })
 
                -- Hint focus to previous output or empty placeholder
@@ -521,26 +536,26 @@ local function render_decider_config(ctx)
 
             -- Handle child results (signal selection or textbox)
             on_child_result = function(ctx, result)
-               local updated_out = cb:get_output(i)
+               patch_parameters(entity, function(params)
+                  local out = params.outputs[i]
 
-               if type(result) == "table" and result.name then
-                  -- Signal selected
-                  updated_out.signal = result
-                  cb:set_output(i, updated_out)
-                  ctx.controller.message:fragment({ "fa.decider-signal-selected" })
-                  ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
-               elseif type(result) == "string" then
-                  -- Constant set from textbox
-                  local num_value = tonumber(result)
-                  if num_value then
-                     updated_out.constant = math.floor(num_value)
-                     cb:set_output(i, updated_out)
-                     ctx.controller.message:fragment({ "fa.decider-constant-set" })
-                     ctx.controller.message:fragment(tostring(updated_out.constant))
-                  else
-                     ctx.controller.message:fragment({ "fa.error-invalid-number" })
+                  if type(result) == "table" and result.name then
+                     -- Signal selected
+                     out.signal = result
+                     ctx.controller.message:fragment({ "fa.decider-signal-selected" })
+                     ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
+                  elseif type(result) == "string" then
+                     -- Constant set from textbox
+                     local num_value = tonumber(result)
+                     if num_value then
+                        out.constant = math.floor(num_value)
+                        ctx.controller.message:fragment({ "fa.decider-constant-set" })
+                        ctx.controller.message:fragment(tostring(out.constant))
+                     else
+                        ctx.controller.message:fragment({ "fa.error-invalid-number" })
+                     end
                   end
-               end
+               end)
             end,
          })
 
