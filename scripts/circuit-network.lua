@@ -396,6 +396,34 @@ function mod.localise_comparator(comparator)
    return { key }
 end
 
+---Get next comparator (cycle forward)
+---@param current string Current comparator
+---@return string
+function mod.get_next_comparison_operator(current)
+   local comparators = { "<", "≤", "=", "≥", ">", "≠" }
+   local curr = current or "<"
+   for i, comp in ipairs(comparators) do
+      if comp == curr then return comparators[(i % #comparators) + 1] end
+   end
+   return "<"
+end
+
+---Get previous comparator (cycle backward)
+---@param current string Current comparator
+---@return string
+function mod.get_prev_comparison_operator(current)
+   local comparators = { "<", "≤", "=", "≥", ">", "≠" }
+   local curr = current or "<"
+   for i, comp in ipairs(comparators) do
+      if comp == curr then
+         local prev_idx = i - 1
+         if prev_idx < 1 then prev_idx = #comparators end
+         return comparators[prev_idx]
+      end
+   end
+   return "<"
+end
+
 ---Aggregate signals from a circuit network, summing across qualities
 ---Returns a nested table: type -> name -> quality -> count
 ---@param signals Signal[]?

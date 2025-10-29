@@ -100,34 +100,6 @@ local function validate_and_set_number(text_result, on_valid, ctx)
    end
 end
 
----Get next comparator (cycle forward)
----@param current ComparatorString?
----@return ComparatorString
-local function next_comparator(current)
-   local comparators = { "<", "≤", "=", "≠", "≥", ">" }
-   local curr = current or "<"
-   for i, comp in ipairs(comparators) do
-      if comp == curr then return comparators[(i % #comparators) + 1] end
-   end
-   return "<"
-end
-
----Get previous comparator (cycle backward)
----@param current ComparatorString?
----@return ComparatorString
-local function prev_comparator(current)
-   local comparators = { "<", "≤", "=", "≠", "≥", ">" }
-   local curr = current or "<"
-   for i, comp in ipairs(comparators) do
-      if comp == curr then
-         local prev_idx = i - 1
-         if prev_idx < 1 then prev_idx = #comparators end
-         return comparators[prev_idx]
-      end
-   end
-   return "<"
-end
-
 ---Read a single condition into a message builder
 ---@param mb fa.MessageBuilder
 ---@param condition DeciderCombinatorCondition
@@ -267,9 +239,9 @@ local function build_condition_vtable(entity, i, condition, row_key)
          patch_parameters(entity, function(params)
             local cond = params.conditions[i]
             if ctx.modifiers and ctx.modifiers.shift then
-               cond.comparator = prev_comparator(cond.comparator)
+               cond.comparator = CircuitNetwork.get_prev_comparison_operator(cond.comparator)
             else
-               cond.comparator = next_comparator(cond.comparator)
+               cond.comparator = CircuitNetwork.get_next_comparison_operator(cond.comparator)
             end
             ctx.controller.message:fragment(CircuitNetwork.localise_comparator(cond.comparator))
          end)

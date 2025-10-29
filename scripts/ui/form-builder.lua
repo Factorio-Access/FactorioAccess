@@ -349,16 +349,6 @@ end
 ---@param set_value fun(CircuitConditionDefinition?) Function that sets the new condition
 ---@return fa.ui.form.FormBuilder
 function FormBuilder:add_condition(name, get_value, set_value)
-   -- Comparator choices
-   local comparators = {
-      { label = "=", value = "=" },
-      { label = ">", value = ">" },
-      { label = "<", value = "<" },
-      { label = "≥", value = "≥" },
-      { label = "≤", value = "≤" },
-      { label = "≠", value = "≠" },
-   }
-
    -- Helper to build a description of the condition
    local function describe_condition(condition)
       if not condition or not condition.first_signal or not condition.first_signal.name then
@@ -446,27 +436,18 @@ function FormBuilder:add_condition(name, get_value, set_value)
 
          -- Cycle comparator
          local current = condition.comparator or "<"
-         local current_index = 1
-         for i, comp in ipairs(comparators) do
-            if comp.value == current then
-               current_index = i
-               break
-            end
-         end
-
-         local direction = (ctx.modifiers and ctx.modifiers.shift) and -1 or 1
-         local new_index = current_index + direction
-         if new_index > #comparators then
-            new_index = 1
-         elseif new_index < 1 then
-            new_index = #comparators
+         local new_comparator
+         if ctx.modifiers and ctx.modifiers.shift then
+            new_comparator = CircuitNetwork.get_prev_comparison_operator(current)
+         else
+            new_comparator = CircuitNetwork.get_next_comparison_operator(current)
          end
 
          ---@diagnostic disable-next-line: inject-field
-         condition.comparator = comparators[new_index].value
+         condition.comparator = new_comparator
          set_value(condition)
          UiSounds.play_menu_move(ctx.pindex)
-         ctx.controller.message:fragment(CircuitNetwork.localise_comparator(comparators[new_index].value))
+         ctx.controller.message:fragment(CircuitNetwork.localise_comparator(new_comparator))
       end,
    })
 
@@ -584,16 +565,6 @@ end
 ---@param set_condition fun(CircuitConditionDefinition?) Function that sets the new condition
 ---@return fa.ui.form.FormBuilder
 function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_enabled, get_condition, set_condition)
-   -- Comparator choices
-   local comparators = {
-      { label = "=", value = "=" },
-      { label = ">", value = ">" },
-      { label = "<", value = "<" },
-      { label = "≥", value = "≥" },
-      { label = "≤", value = "≤" },
-      { label = "≠", value = "≠" },
-   }
-
    -- Helper to build a description of the condition
    local function describe_condition(condition)
       if not condition or not condition.first_signal or not condition.first_signal.name then
@@ -695,27 +666,18 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
 
          -- Cycle comparator
          local current = condition.comparator or "<"
-         local current_index = 1
-         for i, comp in ipairs(comparators) do
-            if comp.value == current then
-               current_index = i
-               break
-            end
-         end
-
-         local direction = (ctx.modifiers and ctx.modifiers.shift) and -1 or 1
-         local new_index = current_index + direction
-         if new_index > #comparators then
-            new_index = 1
-         elseif new_index < 1 then
-            new_index = #comparators
+         local new_comparator
+         if ctx.modifiers and ctx.modifiers.shift then
+            new_comparator = CircuitNetwork.get_prev_comparison_operator(current)
+         else
+            new_comparator = CircuitNetwork.get_next_comparison_operator(current)
          end
 
          ---@diagnostic disable-next-line: inject-field
-         condition.comparator = comparators[new_index].value
+         condition.comparator = new_comparator
          set_condition(condition)
          UiSounds.play_menu_move(ctx.pindex)
-         ctx.controller.message:fragment(CircuitNetwork.localise_comparator(comparators[new_index].value))
+         ctx.controller.message:fragment(CircuitNetwork.localise_comparator(new_comparator))
       end,
    })
 
