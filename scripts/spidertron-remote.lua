@@ -120,11 +120,12 @@ function mod.add_to_autopilot(player, position, clear_first)
       spider.add_autopilot_destination(position)
    end
 
-   local key_base = clear_first and "fa.spidertron-remote-autopilot-replaced" or "fa.spidertron-remote-autopilot-set"
    if #current_list == 1 then
-      Speech.speak(player.index, { key_base .. "-singular" })
+      local key = clear_first and "fa.spidertron-remote-autopilot-replaced-singular" or "fa.spidertron-remote-autopilot-set-singular"
+      Speech.speak(player.index, { key })
    else
-      Speech.speak(player.index, { key_base .. "-plural", #current_list })
+      local key = clear_first and "fa.spidertron-remote-autopilot-replaced-plural" or "fa.spidertron-remote-autopilot-set-plural"
+      Speech.speak(player.index, { key, #current_list })
    end
 end
 
