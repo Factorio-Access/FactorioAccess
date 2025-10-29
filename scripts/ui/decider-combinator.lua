@@ -471,6 +471,9 @@ local function render_decider_config(ctx)
 
    -- Rows 2+: Conditions row
    menu:start_row("conditions_row")
+   menu:add_label("conditions_hint", function(ctx)
+      ctx.message:fragment({ "fa.decider-conditions-title" })
+   end)
    if #conditions == 0 then
       -- Empty placeholder - can add first condition with /
       menu:add_item("empty_conditions", {
@@ -501,6 +504,9 @@ local function render_decider_config(ctx)
 
    -- Outputs row
    menu:start_row("outputs_row")
+   menu:add_label("outputs_hint", function(ctx)
+      ctx.message:fragment({ "fa.decider-outputs-title" })
+   end)
    if #outputs == 0 then
       -- Empty placeholder - can add first output with /
       menu:add_item("empty_outputs", {
