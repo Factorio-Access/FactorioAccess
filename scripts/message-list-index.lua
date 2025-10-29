@@ -10,6 +10,8 @@ mod.MESSAGE_LISTS = {
    ["crafting-menu-help"] = true,
    ["crafting-queue-help"] = true,
    ["debug-menu-help"] = true,
+   ["decider-combinator-conditions"] = true,
+   ["decider-combinator-outputs"] = true,
    ["equipment-grid-help"] = true,
    ["general-ui-help"] = true,
    ["inventory-grid-help"] = true,
@@ -21,6 +23,6 @@ mod.MESSAGE_LISTS = {
    ["warnings-menu-help"] = true,
 }
 
-mod.MESSAGE_LISTS_HASH = "5f76e63f8d95bc98987c17f8fff6e31a862c6e1b9ce5783999ccfbb34648a5a4"
+mod.MESSAGE_LISTS_HASH = "5a88bd70216a1c649ac0b0cd268212f6fe6b7a4eb639641165837728d164c2a5"
 
 return mod

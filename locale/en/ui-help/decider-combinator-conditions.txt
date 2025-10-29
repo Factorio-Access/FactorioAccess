@@ -1,0 +1,17 @@
+; Help for decider combinator conditions editing
+
+The conditions tab lets you edit when the decider combinator triggers. Each condition has a first signal, comparator, and second signal or constant. Multiple conditions can be chained with and or or.
+
+Press slash to add a new condition with and, control slash to add with or.
+
+Press n to toggle a condition between and and or. The first condition cannot be changed.
+
+Press m to select the first signal, control m to cycle which networks it reads from: both, red only, or green only.
+
+Press dot to cycle the comparator forward, shift dot to cycle backward. Comparators are less than, less than or equal, equal, not equal, greater than or equal, greater than.
+
+Press comma to select the second signal, shift comma to enter a constant value, control comma to cycle networks for the second signal.
+
+Press backspace to remove a condition. Focus will move to the previous condition or the empty placeholder.
+
+When no conditions exist, press slash to add the first one.

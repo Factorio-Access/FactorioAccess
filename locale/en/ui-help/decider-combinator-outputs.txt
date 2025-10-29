@@ -1,0 +1,15 @@
+; Help for decider combinator outputs editing
+
+The outputs tab lets you configure what signals the combinator outputs when conditions are met. Each output has a signal and either copies values from input or outputs a constant.
+
+Press slash to add a new output.
+
+Press m to select the output signal.
+
+Press comma to set a constant value. This only works when not copying from input.
+
+Press shift comma to toggle between copying from input and outputting a constant. When copying, you can press control comma to cycle which input networks to copy from.
+
+Press backspace to remove an output. Focus will move to the previous output or the empty placeholder.
+
+When no outputs exist, press slash to add the first one.

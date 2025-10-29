@@ -1320,8 +1320,29 @@ data:extend({
 
    {
       type = "custom-input",
+      name = "fa-slash",
+      key_sequence = "SLASH",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "fa-c-slash",
+      key_sequence = "CONTROL + SLASH",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
       name = "fa-s-slash",
       key_sequence = "SHIFT + SLASH",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "fa-a-slash",
+      key_sequence = "ALT + SLASH",
       consuming = "none",
    },
 })

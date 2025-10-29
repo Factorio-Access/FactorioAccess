@@ -104,6 +104,8 @@ end
 ---@field on_drag_down? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_drag_left? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_drag_right? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_conjunction_modification? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_add_to_row? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field get_help_metadata? fun(self, pindex: number): fa.ui.help.HelpItem[]?
 
 ---@enum fa.ui.UiName
@@ -136,6 +138,7 @@ mod.UI_NAMES = {
    LOGISTICS_CONFIG = "logistics_config",
    LOGISTIC_GROUP_SELECTOR = "logistic_group_selector",
    CONSTANT_COMBINATOR = "constant_combinator",
+   DECIDER_COMBINATOR = "decider_combinator",
    POWER_SWITCH = "power_switch",
    PROGRAMMABLE_SPEAKER = "programmable_speaker",
    BOX_SELECTOR = "box_selector",
@@ -971,5 +974,13 @@ register_ui_event("fa-dot", create_ui_handler("on_action3", {}))
 register_ui_event("fa-a-dot", create_ui_handler("on_action3", { alt = true }))
 register_ui_event("fa-s-dot", create_ui_handler("on_action3", { shift = true }))
 register_ui_event("fa-cs-dot", create_ui_handler("on_action3", { control = true, shift = true }))
+
+-- N key for conjunction modification (circuit network)
+register_ui_event("fa-n", create_ui_handler("on_conjunction_modification", {}))
+
+-- Slash key for add to row (with modifiers)
+register_ui_event("fa-slash", create_ui_handler("on_add_to_row", {}))
+register_ui_event("fa-c-slash", create_ui_handler("on_add_to_row", { control = true }))
+register_ui_event("fa-a-slash", create_ui_handler("on_add_to_row", { alt = true }))
 
 return mod
