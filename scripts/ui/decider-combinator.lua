@@ -37,21 +37,21 @@ local function get_output_key(i)
    return "out_" .. tostring(i)
 end
 
----Localise a CircuitNetworkSelection (red/green, or nothing for both)
+---Localise a CircuitNetworkSelection (red/green/both)
 ---@param networks CircuitNetworkSelection?
 ---@return LocalisedString
 local function localise_networks(networks)
-   if not networks then return "" end
+   if not networks then return { "fa.decider-both-networks" } end
    local red = networks.red ~= false
    local green = networks.green ~= false
    if red and green then
-      return "" -- Both is default, don't announce
+      return { "fa.decider-both-networks" }
    elseif red then
       return { "fa.decider-red-network" }
    elseif green then
       return { "fa.decider-green-network" }
    else
-      return "" -- Both is default
+      return { "fa.decider-both-networks" }
    end
 end
 
@@ -308,8 +308,8 @@ local function render_decider_config(ctx)
             end,
 
             -- m: Select first signal
-            on_action1 = function(ctx, modifiers)
-               if modifiers and modifiers.ctrl then
+            on_action1 = function(ctx)
+               if ctx.modifiers and ctx.modifiers.ctrl then
                   -- Ctrl+m: Cycle first signal networks
                   patch_parameters(entity, function(params)
                      local cond = params.conditions[i]
@@ -327,10 +327,10 @@ local function render_decider_config(ctx)
             end,
 
             -- ,: Cycle comparator
-            on_action2 = function(ctx, modifiers)
+            on_action2 = function(ctx)
                patch_parameters(entity, function(params)
                   local cond = params.conditions[i]
-                  if modifiers and modifiers.shift then
+                  if ctx.modifiers and ctx.modifiers.shift then
                      cond.comparator = prev_comparator(cond.comparator)
                   else
                      cond.comparator = next_comparator(cond.comparator)
@@ -340,17 +340,19 @@ local function render_decider_config(ctx)
             end,
 
             -- .: Set second parameter
-            on_action3 = function(ctx, modifiers)
-               if modifiers and modifiers.ctrl then
+            on_action3 = function(ctx)
+               if ctx.modifiers and ctx.modifiers.ctrl then
                   -- Ctrl+.: Cycle second signal networks
                   patch_parameters(entity, function(params)
                      local cond = params.conditions[i]
                      cond.second_signal_networks = cycle_networks(cond.second_signal_networks)
                      ctx.controller.message:fragment(localise_networks(cond.second_signal_networks))
                   end)
-               elseif modifiers and modifiers.shift then
+               elseif ctx.modifiers and ctx.modifiers.shift then
                   -- Shift+.: Set constant
-                  local current_value = tostring(condition.constant or 0)
+                  local cb = entity.get_control_behavior()
+                  local params = cb.parameters
+                  local current_value = tostring(params.conditions[i].constant or 0)
                   ctx.controller:open_textbox(
                      current_value,
                      { node = row_key, target = "constant" },
@@ -367,9 +369,9 @@ local function render_decider_config(ctx)
             end,
 
             -- /: Add condition after this one
-            on_add_to_row = function(ctx, modifiers)
+            on_add_to_row = function(ctx)
                local compare_type = "and"
-               if modifiers and modifiers.ctrl then compare_type = "or" end
+               if ctx.modifiers and ctx.modifiers.ctrl then compare_type = "or" end
 
                patch_parameters(entity, function(params)
                   table.insert(params.conditions, i + 1, {
@@ -461,7 +463,7 @@ local function render_decider_config(ctx)
             end,
 
             -- ,: Cycle networks (only when copying from input)
-            on_action2 = function(ctx, modifiers)
+            on_action2 = function(ctx)
                patch_parameters(entity, function(params)
                   local out = params.outputs[i]
                   if out.copy_count_from_input ~= false then
@@ -474,8 +476,8 @@ local function render_decider_config(ctx)
             end,
 
             -- .: Toggle copy from input or set constant
-            on_action3 = function(ctx, modifiers)
-               if modifiers and modifiers.shift then
+            on_action3 = function(ctx)
+               if ctx.modifiers and ctx.modifiers.shift then
                   -- Shift+.: Set constant (automatically clears copy_from_input)
                   local current_value = tostring(output.constant or 1)
                   ctx.controller:open_textbox(current_value, { node = row_key }, { "fa.decider-enter-constant" })
