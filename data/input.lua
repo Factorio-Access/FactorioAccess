@@ -1250,6 +1250,13 @@ data:extend({
 
    {
       type = "custom-input",
+      name = "fa-c-m",
+      key_sequence = "CONTROL + M",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
       name = "fa-s-m",
       key_sequence = "SHIFT + M",
       consuming = "none",
@@ -1278,6 +1285,13 @@ data:extend({
 
    {
       type = "custom-input",
+      name = "fa-c-comma",
+      key_sequence = "CONTROL + COMMA",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
       name = "fa-s-comma",
       key_sequence = "SHIFT + COMMA",
       consuming = "none",
@@ -1301,6 +1315,13 @@ data:extend({
       type = "custom-input",
       name = "fa-a-dot",
       key_sequence = "ALT + PERIOD",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
+      name = "fa-c-dot",
+      key_sequence = "CONTROL + PERIOD",
       consuming = "none",
    },
 

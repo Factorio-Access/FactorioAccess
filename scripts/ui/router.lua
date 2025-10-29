@@ -962,16 +962,19 @@ register_ui_event("fa-o", create_ui_handler("on_trash"))
 -- Action keys (m, comma, dot) - UI action handlers
 register_ui_event("fa-m", create_ui_handler("on_action1", {}))
 register_ui_event("fa-a-m", create_ui_handler("on_action1", { alt = true }))
+register_ui_event("fa-c-m", create_ui_handler("on_action1", { control = true }))
 register_ui_event("fa-s-m", create_ui_handler("on_action1", { shift = true }))
 register_ui_event("fa-cs-m", create_ui_handler("on_action1", { control = true, shift = true }))
 
 register_ui_event("fa-comma", create_ui_handler("on_action2", {}))
 register_ui_event("fa-a-comma", create_ui_handler("on_action2", { alt = true }))
+register_ui_event("fa-c-comma", create_ui_handler("on_action2", { control = true }))
 register_ui_event("fa-s-comma", create_ui_handler("on_action2", { shift = true }))
 register_ui_event("fa-cs-comma", create_ui_handler("on_action2", { control = true, shift = true }))
 
 register_ui_event("fa-dot", create_ui_handler("on_action3", {}))
 register_ui_event("fa-a-dot", create_ui_handler("on_action3", { alt = true }))
+register_ui_event("fa-c-dot", create_ui_handler("on_action3", { control = true }))
 register_ui_event("fa-s-dot", create_ui_handler("on_action3", { shift = true }))
 register_ui_event("fa-cs-dot", create_ui_handler("on_action3", { control = true, shift = true }))
 
