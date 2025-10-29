@@ -99,6 +99,151 @@ local function validate_and_set_number(text_result, on_valid, ctx)
    end
 end
 
+---Localise a comparator string
+---@param comparator ComparatorString?
+---@return LocalisedString
+local function localise_comparator(comparator)
+   local comp = comparator or "<"
+   local key_map = {
+      ["<"] = "lt",
+      ["≤"] = "lte",
+      ["<="] = "lte",
+      ["="] = "eq",
+      ["≠"] = "ne",
+      ["!="] = "ne",
+      ["≥"] = "gte",
+      [">="] = "gte",
+      [">"] = "gt",
+   }
+   local key = "fa.comparator-" .. (key_map[comp] or "lt")
+   return { key }
+end
+
+---Get next comparator (cycle forward)
+---@param current ComparatorString?
+---@return ComparatorString
+local function next_comparator(current)
+   local comparators = { "<", "≤", "=", "≠", "≥", ">" }
+   local curr = current or "<"
+   for i, comp in ipairs(comparators) do
+      if comp == curr then return comparators[(i % #comparators) + 1] end
+   end
+   return "<"
+end
+
+---Get previous comparator (cycle backward)
+---@param current ComparatorString?
+---@return ComparatorString
+local function prev_comparator(current)
+   local comparators = { "<", "≤", "=", "≠", "≥", ">" }
+   local curr = current or "<"
+   for i, comp in ipairs(comparators) do
+      if comp == curr then
+         local prev_idx = i - 1
+         if prev_idx < 1 then prev_idx = #comparators end
+         return comparators[prev_idx]
+      end
+   end
+   return "<"
+end
+
+---Read a single condition into a message builder
+---@param mb fa.MessageBuilder
+---@param condition DeciderCombinatorCondition
+---@param include_connector boolean If true, prepends "and" or "or"
+local function read_condition(mb, condition, include_connector)
+   if include_connector then
+      local connector = condition.compare_type or "or"
+      mb:fragment({ "fa.decider-connector-" .. connector })
+   end
+
+   -- First signal with network
+   if condition.first_signal and condition.first_signal.name then
+      mb:fragment(CircuitNetwork.localise_signal(condition.first_signal))
+      mb:fragment(localise_networks(condition.first_signal_networks))
+   else
+      mb:fragment({ "fa.decider-no-signal" })
+   end
+
+   -- Comparator
+   mb:fragment(localise_comparator(condition.comparator))
+
+   -- Second signal or constant
+   if condition.second_signal and condition.second_signal.name then
+      mb:fragment(CircuitNetwork.localise_signal(condition.second_signal))
+      mb:fragment(localise_networks(condition.second_signal_networks))
+   else
+      local constant = condition.constant or 0
+      mb:fragment(tostring(constant))
+   end
+end
+
+---Read all conditions into a summary
+---@param mb fa.MessageBuilder
+---@param conditions DeciderCombinatorCondition[]
+local function read_conditions_summary(mb, conditions)
+   if #conditions == 0 then
+      mb:list_item({ "fa.decider-no-conditions" })
+      return
+   end
+
+   for i, condition in ipairs(conditions) do
+      local include_connector = i > 1
+      read_condition(mb, condition, include_connector)
+      mb:list_item()
+   end
+end
+
+---Read a single output into a message builder
+---@param mb fa.MessageBuilder
+---@param output DeciderCombinatorOutput
+local function read_output(mb, output)
+   -- Signal
+   if output.signal and output.signal.name then
+      mb:fragment(CircuitNetwork.localise_signal(output.signal))
+   else
+      mb:fragment({ "fa.decider-no-signal" })
+   end
+
+   -- Value source
+   if output.copy_count_from_input ~= false then
+      mb:fragment({ "fa.decider-copy-from-input" })
+      mb:fragment(localise_networks(output.networks))
+   else
+      local constant = output.constant or 1
+      mb:fragment(tostring(constant))
+   end
+end
+
+---Read all outputs into a summary
+---@param mb fa.MessageBuilder
+---@param outputs DeciderCombinatorOutput[]
+local function read_outputs_summary(mb, outputs)
+   if #outputs == 0 then
+      mb:list_item({ "fa.decider-no-outputs" })
+      return
+   end
+
+   for _, output in ipairs(outputs) do
+      read_output(mb, output)
+      mb:list_item()
+   end
+end
+
+---Read overall summary of decider combinator
+---@param mb fa.MessageBuilder
+---@param conditions DeciderCombinatorCondition[]
+---@param outputs DeciderCombinatorOutput[]
+local function read_overall_summary(mb, conditions, outputs)
+   -- Outputs first
+   mb:fragment({ "fa.decider-outputs-label" })
+   read_outputs_summary(mb, outputs)
+
+   -- Then conditions
+   mb:fragment({ "fa.decider-if-label" })
+   read_conditions_summary(mb, conditions)
+end
+
 ---Build vtable for a condition item
 ---@param entity LuaEntity
 ---@param i number Index of this condition
@@ -279,151 +424,6 @@ local function build_output_vtable(entity, i, output, row_key)
          end)
       end,
    }
-end
-
----Localise a comparator string
----@param comparator ComparatorString?
----@return LocalisedString
-local function localise_comparator(comparator)
-   local comp = comparator or "<"
-   local key_map = {
-      ["<"] = "lt",
-      ["≤"] = "lte",
-      ["<="] = "lte",
-      ["="] = "eq",
-      ["≠"] = "ne",
-      ["!="] = "ne",
-      ["≥"] = "gte",
-      [">="] = "gte",
-      [">"] = "gt",
-   }
-   local key = "fa.comparator-" .. (key_map[comp] or "lt")
-   return { key }
-end
-
----Get next comparator (cycle forward)
----@param current ComparatorString?
----@return ComparatorString
-local function next_comparator(current)
-   local comparators = { "<", "≤", "=", "≠", "≥", ">" }
-   local curr = current or "<"
-   for i, comp in ipairs(comparators) do
-      if comp == curr then return comparators[(i % #comparators) + 1] end
-   end
-   return "<"
-end
-
----Get previous comparator (cycle backward)
----@param current ComparatorString?
----@return ComparatorString
-local function prev_comparator(current)
-   local comparators = { "<", "≤", "=", "≠", "≥", ">" }
-   local curr = current or "<"
-   for i, comp in ipairs(comparators) do
-      if comp == curr then
-         local prev_idx = i - 1
-         if prev_idx < 1 then prev_idx = #comparators end
-         return comparators[prev_idx]
-      end
-   end
-   return "<"
-end
-
----Read a single condition into a message builder
----@param mb fa.MessageBuilder
----@param condition DeciderCombinatorCondition
----@param include_connector boolean If true, prepends "and" or "or"
-local function read_condition(mb, condition, include_connector)
-   if include_connector then
-      local connector = condition.compare_type or "or"
-      mb:fragment({ "fa.decider-connector-" .. connector })
-   end
-
-   -- First signal with network
-   if condition.first_signal and condition.first_signal.name then
-      mb:fragment(CircuitNetwork.localise_signal(condition.first_signal))
-      mb:fragment(localise_networks(condition.first_signal_networks))
-   else
-      mb:fragment({ "fa.decider-no-signal" })
-   end
-
-   -- Comparator
-   mb:fragment(localise_comparator(condition.comparator))
-
-   -- Second signal or constant
-   if condition.second_signal and condition.second_signal.name then
-      mb:fragment(CircuitNetwork.localise_signal(condition.second_signal))
-      mb:fragment(localise_networks(condition.second_signal_networks))
-   else
-      local constant = condition.constant or 0
-      mb:fragment(tostring(constant))
-   end
-end
-
----Read all conditions into a summary
----@param mb fa.MessageBuilder
----@param conditions DeciderCombinatorCondition[]
-local function read_conditions_summary(mb, conditions)
-   if #conditions == 0 then
-      mb:list_item({ "fa.decider-no-conditions" })
-      return
-   end
-
-   for i, condition in ipairs(conditions) do
-      local include_connector = i > 1
-      read_condition(mb, condition, include_connector)
-      mb:list_item()
-   end
-end
-
----Read a single output into a message builder
----@param mb fa.MessageBuilder
----@param output DeciderCombinatorOutput
-local function read_output(mb, output)
-   -- Signal
-   if output.signal and output.signal.name then
-      mb:fragment(CircuitNetwork.localise_signal(output.signal))
-   else
-      mb:fragment({ "fa.decider-no-signal" })
-   end
-
-   -- Value source
-   if output.copy_count_from_input ~= false then
-      mb:fragment({ "fa.decider-copy-from-input" })
-      mb:fragment(localise_networks(output.networks))
-   else
-      local constant = output.constant or 1
-      mb:fragment(tostring(constant))
-   end
-end
-
----Read all outputs into a summary
----@param mb fa.MessageBuilder
----@param outputs DeciderCombinatorOutput[]
-local function read_outputs_summary(mb, outputs)
-   if #outputs == 0 then
-      mb:list_item({ "fa.decider-no-outputs" })
-      return
-   end
-
-   for _, output in ipairs(outputs) do
-      read_output(mb, output)
-      mb:list_item()
-   end
-end
-
----Read overall summary of decider combinator
----@param mb fa.MessageBuilder
----@param conditions DeciderCombinatorCondition[]
----@param outputs DeciderCombinatorOutput[]
-local function read_overall_summary(mb, conditions, outputs)
-   -- Outputs first
-   mb:fragment({ "fa.decider-outputs-label" })
-   read_outputs_summary(mb, outputs)
-
-   -- Then conditions
-   mb:fragment({ "fa.decider-if-label" })
-   read_conditions_summary(mb, conditions)
 end
 
 ---Render the decider combinator configuration
