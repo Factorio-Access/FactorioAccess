@@ -23,6 +23,20 @@ local function patch_parameters(entity, closure)
    cb.parameters = params
 end
 
+---Get the key for a condition at index i
+---@param i number
+---@return string
+local function get_condition_key(i)
+   return "cond_" .. tostring(i)
+end
+
+---Get the key for an output at index i
+---@param i number
+---@return string
+local function get_output_key(i)
+   return "out_" .. tostring(i)
+end
+
 ---Localise a CircuitNetworkSelection (red/green, or nothing for both)
 ---@param networks CircuitNetworkSelection?
 ---@return LocalisedString
@@ -263,12 +277,13 @@ local function render_decider_config(ctx)
                })
             end)
             ctx.controller.message:fragment({ "fa.decider-condition-added" })
+            ctx.controller:suggest_move(get_condition_key(1))
          end,
       })
    else
       -- Individual conditions
       for i, condition in ipairs(conditions) do
-         local row_key = "cond_" .. tostring(i)
+         local row_key = get_condition_key(i)
 
          -- Condition display and editing
          menu:add_item(row_key, {
@@ -288,7 +303,6 @@ local function render_decider_config(ctx)
                patch_parameters(entity, function(params)
                   local cond = params.conditions[i]
                   cond.compare_type = (cond.compare_type == "and") and "or" or "and"
-                  ctx.controller.message:fragment({ "fa.decider-connector-changed" })
                   ctx.controller.message:fragment({ "fa.decider-connector-" .. cond.compare_type })
                end)
             end,
@@ -300,7 +314,6 @@ local function render_decider_config(ctx)
                   patch_parameters(entity, function(params)
                      local cond = params.conditions[i]
                      cond.first_signal_networks = cycle_networks(cond.first_signal_networks)
-                     ctx.controller.message:fragment({ "fa.decider-network-changed" })
                      ctx.controller.message:fragment(localise_networks(cond.first_signal_networks))
                   end)
                else
@@ -333,7 +346,6 @@ local function render_decider_config(ctx)
                   patch_parameters(entity, function(params)
                      local cond = params.conditions[i]
                      cond.second_signal_networks = cycle_networks(cond.second_signal_networks)
-                     ctx.controller.message:fragment({ "fa.decider-network-changed" })
                      ctx.controller.message:fragment(localise_networks(cond.second_signal_networks))
                   end)
                elseif modifiers and modifiers.shift then
@@ -367,8 +379,8 @@ local function render_decider_config(ctx)
                   })
                end)
 
-               ctx.controller.message:fragment({ "fa.decider-condition-added" })
                ctx.controller.message:fragment({ "fa.decider-connector-" .. compare_type })
+               ctx.controller:suggest_move(get_condition_key(i + 1))
             end,
 
             -- Backspace: Remove condition
@@ -389,19 +401,16 @@ local function render_decider_config(ctx)
 
                   if target == "first_signal" then
                      cond.first_signal = result
-                     ctx.controller.message:fragment({ "fa.decider-signal-selected" })
                      ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
                   elseif target == "second_signal" then
                      cond.second_signal = result
                      cond.constant = nil
-                     ctx.controller.message:fragment({ "fa.decider-signal-selected" })
                      ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
                   elseif target == "constant" then
                      local num_value = tonumber(result)
                      if num_value then
                         cond.second_signal = nil
                         cond.constant = math.floor(num_value)
-                        ctx.controller.message:fragment({ "fa.decider-constant-set" })
                         ctx.controller.message:fragment(tostring(cond.constant))
                      else
                         ctx.controller.message:fragment({ "fa.error-invalid-number" })
@@ -430,12 +439,13 @@ local function render_decider_config(ctx)
                })
             end)
             ctx.controller.message:fragment({ "fa.decider-output-added" })
+            ctx.controller:suggest_move(get_output_key(1))
          end,
       })
    else
       -- Individual outputs
       for i, output in ipairs(outputs) do
-         local row_key = "out_" .. tostring(i)
+         local row_key = get_output_key(i)
 
          -- Output display and editing
          menu:add_item(row_key, {
@@ -456,7 +466,6 @@ local function render_decider_config(ctx)
                   local out = params.outputs[i]
                   if out.copy_count_from_input ~= false then
                      out.networks = cycle_networks(out.networks)
-                     ctx.controller.message:fragment({ "fa.decider-network-changed" })
                      ctx.controller.message:fragment(localise_networks(out.networks))
                   else
                      ctx.controller.message:fragment({ "fa.error-networks-only-when-copying" })
@@ -497,6 +506,7 @@ local function render_decider_config(ctx)
                end)
 
                ctx.controller.message:fragment({ "fa.decider-output-added" })
+               ctx.controller:suggest_move(get_output_key(i + 1))
             end,
 
             -- Backspace: Remove output
@@ -515,7 +525,6 @@ local function render_decider_config(ctx)
                   if type(result) == "table" and result.name then
                      -- Signal selected
                      out.signal = result
-                     ctx.controller.message:fragment({ "fa.decider-signal-selected" })
                      ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
                   elseif type(result) == "string" then
                      -- Constant set from textbox (automatically clears copy_from_input)
@@ -523,7 +532,6 @@ local function render_decider_config(ctx)
                      if num_value then
                         out.constant = math.floor(num_value)
                         out.copy_count_from_input = false
-                        ctx.controller.message:fragment({ "fa.decider-constant-set" })
                         ctx.controller.message:fragment(tostring(out.constant))
                      else
                         ctx.controller.message:fragment({ "fa.error-invalid-number" })
