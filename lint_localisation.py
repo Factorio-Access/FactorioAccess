@@ -2,7 +2,11 @@
 """
 Analyzes localisation string usage in FactorioAccess mod.
 
-Finds:
+Commands:
+- lint: Analyze usage of locale keys in Lua code
+- extract: Extract all locale keys to a file for comparison
+
+Lint finds:
 - Defined locale keys that appear unused in Lua code
 - Used locale keys that are not defined in .cfg files
 - Prefix patterns (keys ending with -) that have no matching defined keys
@@ -18,6 +22,7 @@ Note: This analysis will have false positives/negatives due to:
 - Comments containing locale keys
 """
 
+import argparse
 import re
 from pathlib import Path
 from collections import defaultdict
@@ -26,7 +31,7 @@ from configparser import ConfigParser
 # Directories to scan
 LOCALE_DIR = Path("locale/en")
 
-# Only check fa section strings
+# Only check fa section strings for lint
 TARGET_SECTION = "fa"
 
 
@@ -35,7 +40,7 @@ def parse_cfg_files():
     defined_keys = set()
 
     for cfg_file in LOCALE_DIR.glob("*.cfg"):
-        parser = ConfigParser()
+        parser = ConfigParser(interpolation=None)
         try:
             parser.read(cfg_file, encoding='utf-8')
 
@@ -48,6 +53,44 @@ def parse_cfg_files():
             print(f"Warning: Could not parse {cfg_file}: {e}")
 
     return defined_keys
+
+
+def parse_all_cfg_keys():
+    """Parse all .cfg files and extract ALL keys from ALL sections.
+
+    Returns:
+        tuple: (all_keys, duplicates)
+        - all_keys: dict mapping full_key -> (section, cfg_file, key, value)
+        - duplicates: dict mapping full_key -> list of (section, cfg_file, key, value)
+    """
+    all_keys = {}
+    duplicates = defaultdict(list)
+
+    for cfg_file in LOCALE_DIR.glob("*.cfg"):
+        parser = ConfigParser(interpolation=None)
+        try:
+            parser.read(cfg_file, encoding='utf-8')
+
+            for section in parser.sections():
+                for key in parser[section]:
+                    full_key = f"{section}.{key}"
+                    value = parser[section][key]
+
+                    # Track location and value
+                    location = (section, str(cfg_file), key, value)
+
+                    # Check for duplicates
+                    if full_key in all_keys:
+                        # First duplicate - add both original and new
+                        if full_key not in duplicates:
+                            duplicates[full_key].append(all_keys[full_key])
+                        duplicates[full_key].append(location)
+                    else:
+                        all_keys[full_key] = location
+        except Exception as e:
+            print(f"Warning: Could not parse {cfg_file}: {e}")
+
+    return all_keys, duplicates
 
 
 def find_lua_files():
@@ -126,7 +169,8 @@ def extract_locale_references(lua_files):
     return exact_keys, prefix_patterns
 
 
-def main():
+def cmd_lint(args):
+    """Lint command: Analyze locale key usage."""
     print("=" * 80)
     print("FactorioAccess Localisation Usage Analysis")
     print("=" * 80)
@@ -247,6 +291,80 @@ def main():
     print("All checks passed!")
     print()
     return 0
+
+
+def cmd_extract(args):
+    """Extract command: Extract all locale keys to a file."""
+    output_file = args.output
+
+    print("=" * 80)
+    print("FactorioAccess Localisation Key Extraction")
+    print("=" * 80)
+    print()
+
+    print("Parsing .cfg files in locale/en/...")
+    all_keys, duplicates = parse_all_cfg_keys()
+    print(f"Found {len(all_keys)} total locale keys")
+    print()
+
+    # Check for duplicates
+    if duplicates:
+        print("=" * 80)
+        print(f"DUPLICATE KEYS FOUND: {len(duplicates)}")
+        print("=" * 80)
+        print()
+        for key in sorted(duplicates.keys()):
+            print(f"  {key}")
+            for section, cfg_file, _, value in duplicates[key]:
+                print(f"    -> {cfg_file} [{section}]")
+                print(f"       = {value}")
+        print()
+        print("ERROR: Duplicate keys found. Fix these before continuing.")
+        print()
+        return 1
+
+    # Write to output file
+    print(f"Writing keys and values to {output_file}...")
+    sorted_keys = sorted(all_keys.keys())
+
+    with open(output_file, 'w', encoding='utf-8') as f:
+        for key in sorted_keys:
+            _, _, _, value = all_keys[key]
+            f.write(f"{key}={value}\n")
+
+    print(f"Successfully wrote {len(sorted_keys)} keys to {output_file}")
+    print()
+    return 0
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="FactorioAccess localisation tools",
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+
+    subparsers = parser.add_subparsers(dest='command', help='Command to run')
+
+    # Lint subcommand
+    lint_parser = subparsers.add_parser('lint', help='Analyze locale key usage in Lua code')
+
+    # Extract subcommand
+    extract_parser = subparsers.add_parser('extract', help='Extract all locale keys to a file')
+    extract_parser.add_argument(
+        '-o', '--output',
+        default='locale_keys.txt',
+        help='Output file for extracted keys (default: locale_keys.txt)'
+    )
+
+    args = parser.parse_args()
+
+    if args.command == 'lint':
+        return cmd_lint(args)
+    elif args.command == 'extract':
+        return cmd_extract(args)
+    else:
+        parser.print_help()
+        return 1
 
 
 if __name__ == "__main__":
