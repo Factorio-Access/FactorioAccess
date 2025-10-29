@@ -464,18 +464,14 @@ local function render_decider_config(ctx)
                end)
             end,
 
-            -- .: Set constant or manage copy mode
+            -- .: Toggle copy from input or set constant
             on_action3 = function(ctx, modifiers)
                if modifiers and modifiers.shift then
-                  -- Shift+.: Clear both constant and copy_from_input
-                  patch_parameters(entity, function(params)
-                     local out = params.outputs[i]
-                     out.constant = nil
-                     out.copy_count_from_input = false
-                     ctx.controller.message:fragment({ "fa.cleared" })
-                  end)
-               elseif modifiers and modifiers.ctrl then
-                  -- Ctrl+.: Toggle copy from input
+                  -- Shift+.: Set constant (automatically clears copy_from_input)
+                  local current_value = tostring(output.constant or 1)
+                  ctx.controller:open_textbox(current_value, { node = row_key }, { "fa.decider-enter-constant" })
+               else
+                  -- .: Toggle copy from input
                   patch_parameters(entity, function(params)
                      local out = params.outputs[i]
                      out.copy_count_from_input = not (out.copy_count_from_input ~= false)
@@ -488,10 +484,6 @@ local function render_decider_config(ctx)
                         ctx.controller.message:fragment({ "fa.decider-constant-mode" })
                      end
                   end)
-               else
-                  -- .: Set constant (automatically clears copy_from_input)
-                  local current_value = tostring(output.constant or 1)
-                  ctx.controller:open_textbox(current_value, { node = row_key }, { "fa.decider-enter-constant" })
                end
             end,
 

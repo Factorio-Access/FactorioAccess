@@ -6,9 +6,11 @@ Press slash to add a new output.
 
 Press m to select the output signal.
 
-Press comma to set a constant value. This only works when not copying from input.
+Press dot to toggle between copying from input and constant mode.
 
-Press shift comma to toggle between copying from input and outputting a constant. When copying, you can press control comma to cycle which input networks to copy from.
+Press shift dot to set a constant value. This automatically switches to constant mode.
+
+Press comma to cycle which networks to copy from when in copy mode.
 
 Press backspace to remove an output. Focus will move to the previous output or the empty placeholder.
 
