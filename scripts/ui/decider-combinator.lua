@@ -71,6 +71,216 @@ local function cycle_networks(networks)
    end
 end
 
+---Helper to cycle networks for a condition or output field
+---@param entity LuaEntity
+---@param item_type string "conditions" or "outputs"
+---@param index number
+---@param field_name string Field name containing networks (e.g., "first_signal_networks")
+---@param ctx fa.ui.graph.Ctx
+local function cycle_item_networks(entity, item_type, index, field_name, ctx)
+   patch_parameters(entity, function(params)
+      local item = params[item_type][index]
+      item[field_name] = cycle_networks(item[field_name])
+      ctx.controller.message:fragment(localise_networks(item[field_name]))
+   end)
+end
+
+---Helper to validate and set a number from text input
+---@param text_result string
+---@param on_valid fun(num: number)
+---@param ctx fa.ui.graph.Ctx
+local function validate_and_set_number(text_result, on_valid, ctx)
+   local num_value = tonumber(text_result)
+   if num_value then
+      on_valid(math.floor(num_value))
+      ctx.controller.message:fragment(tostring(math.floor(num_value)))
+   else
+      ctx.controller.message:fragment({ "fa.error-invalid-number" })
+   end
+end
+
+---Build vtable for a condition item
+---@param entity LuaEntity
+---@param i number Index of this condition
+---@param condition DeciderCombinatorCondition
+---@param row_key string Key for this row
+---@return fa.ui.graph.NodeVtable
+local function build_condition_vtable(entity, i, condition, row_key)
+   return {
+      label = function(ctx)
+         local mb = MessageBuilder.new()
+         read_condition(mb, condition, i > 1)
+         ctx.message:fragment(mb:build())
+      end,
+
+      on_conjunction_modification = function(ctx)
+         if i == 1 then
+            ctx.controller.message:fragment({ "fa.error-cannot-modify-first-condition" })
+            return
+         end
+         patch_parameters(entity, function(params)
+            local cond = params.conditions[i]
+            cond.compare_type = (cond.compare_type == "and") and "or" or "and"
+            ctx.controller.message:fragment({ "fa.decider-connector-" .. cond.compare_type })
+         end)
+      end,
+
+      on_action1 = function(ctx)
+         if ctx.modifiers and ctx.modifiers.control then
+            cycle_item_networks(entity, "conditions", i, "first_signal_networks", ctx)
+         else
+            ctx.controller:open_child_ui(
+               Router.UI_NAMES.SIGNAL_CHOOSER,
+               {},
+               { node = row_key, target = "first_signal" }
+            )
+         end
+      end,
+
+      on_action2 = function(ctx)
+         patch_parameters(entity, function(params)
+            local cond = params.conditions[i]
+            if ctx.modifiers and ctx.modifiers.shift then
+               cond.comparator = prev_comparator(cond.comparator)
+            else
+               cond.comparator = next_comparator(cond.comparator)
+            end
+            ctx.controller.message:fragment(localise_comparator(cond.comparator))
+         end)
+      end,
+
+      on_action3 = function(ctx)
+         if ctx.modifiers and ctx.modifiers.control then
+            cycle_item_networks(entity, "conditions", i, "second_signal_networks", ctx)
+         elseif ctx.modifiers and ctx.modifiers.shift then
+            local cb = entity.get_control_behavior()
+            local params = cb.parameters
+            local current_value = tostring(params.conditions[i].constant or 0)
+            ctx.controller:open_textbox(
+               current_value,
+               { node = row_key, target = "constant" },
+               { "fa.decider-enter-constant" }
+            )
+         else
+            ctx.controller:open_child_ui(
+               Router.UI_NAMES.SIGNAL_CHOOSER,
+               {},
+               { node = row_key, target = "second_signal" }
+            )
+         end
+      end,
+
+      on_add_to_row = function(ctx)
+         local compare_type = "and"
+         if ctx.modifiers and ctx.modifiers.control then compare_type = "or" end
+         patch_parameters(entity, function(params)
+            table.insert(params.conditions, i + 1, {
+               comparator = "<",
+               constant = 0,
+               compare_type = compare_type,
+            })
+         end)
+         ctx.controller.message:fragment({ "fa.decider-connector-" .. compare_type })
+         ctx.graph_controller:suggest_move(get_condition_key(i + 1))
+      end,
+
+      on_clear = function(ctx)
+         patch_parameters(entity, function(params)
+            table.remove(params.conditions, i)
+         end)
+         ctx.controller.message:fragment({ "fa.decider-condition-removed" })
+      end,
+
+      on_child_result = function(ctx, result)
+         if not ctx.child_context then return end
+         local target = ctx.child_context.target
+         patch_parameters(entity, function(params)
+            local cond = params.conditions[i]
+            if target == "first_signal" then
+               cond.first_signal = result
+               ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
+            elseif target == "second_signal" then
+               cond.second_signal = result
+               cond.constant = nil
+               ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
+            elseif target == "constant" then
+               validate_and_set_number(result, function(num)
+                  cond.second_signal = nil
+                  cond.constant = num
+               end, ctx)
+            end
+         end)
+      end,
+   }
+end
+
+---Build vtable for an output item
+---@param entity LuaEntity
+---@param i number Index of this output
+---@param output DeciderCombinatorOutput
+---@param row_key string Key for this row
+---@return fa.ui.graph.NodeVtable
+local function build_output_vtable(entity, i, output, row_key)
+   return {
+      label = function(ctx)
+         local mb = MessageBuilder.new()
+         read_output(mb, output)
+         ctx.message:fragment(mb:build())
+      end,
+
+      on_action1 = function(ctx)
+         if ctx.modifiers and ctx.modifiers.control then
+            patch_parameters(entity, function(params)
+               local out = params.outputs[i]
+               out.copy_count_from_input = true
+               out.constant = nil
+            end)
+            cycle_item_networks(entity, "outputs", i, "networks", ctx)
+         else
+            ctx.controller:open_child_ui(Router.UI_NAMES.SIGNAL_CHOOSER, {}, { node = row_key })
+         end
+      end,
+
+      on_action3 = function(ctx)
+         local current_value = tostring(output.constant or 1)
+         ctx.controller:open_textbox(current_value, { node = row_key }, { "fa.decider-enter-constant" })
+      end,
+
+      on_add_to_row = function(ctx)
+         patch_parameters(entity, function(params)
+            table.insert(params.outputs, i + 1, {
+               constant = 1,
+               copy_count_from_input = false,
+            })
+         end)
+         ctx.controller.message:fragment({ "fa.decider-output-added" })
+         ctx.graph_controller:suggest_move(get_output_key(i + 1))
+      end,
+
+      on_clear = function(ctx)
+         patch_parameters(entity, function(params)
+            table.remove(params.outputs, i)
+         end)
+         ctx.controller.message:fragment({ "fa.decider-output-removed" })
+      end,
+
+      on_child_result = function(ctx, result)
+         patch_parameters(entity, function(params)
+            local out = params.outputs[i]
+            if type(result) == "table" and result.name then
+               out.signal = result
+               ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
+            elseif type(result) == "string" then
+               validate_and_set_number(result, function(num)
+                  out.constant = num
+                  out.copy_count_from_input = false
+               end, ctx)
+            end
+         end)
+      end,
+   }
+end
+
 ---Localise a comparator string
 ---@param comparator ComparatorString?
 ---@return LocalisedString
@@ -284,143 +494,7 @@ local function render_decider_config(ctx)
       -- Individual conditions
       for i, condition in ipairs(conditions) do
          local row_key = get_condition_key(i)
-
-         -- Condition display and editing
-         menu:add_item(row_key, {
-            label = function(ctx)
-               local mb = MessageBuilder.new()
-               read_condition(mb, condition, i > 1)
-               ctx.message:fragment(mb:build())
-            end,
-
-            -- n: Toggle conjunction (only for non-first conditions)
-            on_conjunction_modification = function(ctx)
-               if i == 1 then
-                  ctx.controller.message:fragment({ "fa.error-cannot-modify-first-condition" })
-                  return
-               end
-
-               patch_parameters(entity, function(params)
-                  local cond = params.conditions[i]
-                  cond.compare_type = (cond.compare_type == "and") and "or" or "and"
-                  ctx.controller.message:fragment({ "fa.decider-connector-" .. cond.compare_type })
-               end)
-            end,
-
-            -- m: Select first signal
-            on_action1 = function(ctx)
-               if ctx.modifiers and ctx.modifiers.control then
-                  -- Ctrl+m: Cycle first signal networks
-                  patch_parameters(entity, function(params)
-                     local cond = params.conditions[i]
-                     cond.first_signal_networks = cycle_networks(cond.first_signal_networks)
-                     ctx.controller.message:fragment(localise_networks(cond.first_signal_networks))
-                  end)
-               else
-                  -- m: Select first signal
-                  ctx.controller:open_child_ui(
-                     Router.UI_NAMES.SIGNAL_CHOOSER,
-                     {},
-                     { node = row_key, target = "first_signal" }
-                  )
-               end
-            end,
-
-            -- ,: Cycle comparator
-            on_action2 = function(ctx)
-               patch_parameters(entity, function(params)
-                  local cond = params.conditions[i]
-                  if ctx.modifiers and ctx.modifiers.shift then
-                     cond.comparator = prev_comparator(cond.comparator)
-                  else
-                     cond.comparator = next_comparator(cond.comparator)
-                  end
-                  ctx.controller.message:fragment(localise_comparator(cond.comparator))
-               end)
-            end,
-
-            -- .: Set second parameter
-            on_action3 = function(ctx)
-               if ctx.modifiers and ctx.modifiers.control then
-                  -- Ctrl+.: Cycle second signal networks
-                  patch_parameters(entity, function(params)
-                     local cond = params.conditions[i]
-                     cond.second_signal_networks = cycle_networks(cond.second_signal_networks)
-                     ctx.controller.message:fragment(localise_networks(cond.second_signal_networks))
-                  end)
-               elseif ctx.modifiers and ctx.modifiers.shift then
-                  -- Shift+.: Set constant
-                  local cb = entity.get_control_behavior()
-                  local params = cb.parameters
-                  local current_value = tostring(params.conditions[i].constant or 0)
-                  ctx.controller:open_textbox(
-                     current_value,
-                     { node = row_key, target = "constant" },
-                     { "fa.decider-enter-constant" }
-                  )
-               else
-                  -- .: Select second signal
-                  ctx.controller:open_child_ui(
-                     Router.UI_NAMES.SIGNAL_CHOOSER,
-                     {},
-                     { node = row_key, target = "second_signal" }
-                  )
-               end
-            end,
-
-            -- /: Add condition after this one
-            on_add_to_row = function(ctx)
-               local compare_type = "and"
-               if ctx.modifiers and ctx.modifiers.control then compare_type = "or" end
-
-               patch_parameters(entity, function(params)
-                  table.insert(params.conditions, i + 1, {
-                     comparator = "<",
-                     constant = 0,
-                     compare_type = compare_type,
-                  })
-               end)
-
-               ctx.controller.message:fragment({ "fa.decider-connector-" .. compare_type })
-               ctx.graph_controller:suggest_move(get_condition_key(i + 1))
-            end,
-
-            -- Backspace: Remove condition
-            on_clear = function(ctx)
-               patch_parameters(entity, function(params)
-                  table.remove(params.conditions, i)
-               end)
-               ctx.controller.message:fragment({ "fa.decider-condition-removed" })
-            end,
-
-            -- Handle child results (signal selection or textbox)
-            on_child_result = function(ctx, result)
-               if not ctx.child_context then return end
-
-               local target = ctx.child_context.target
-               patch_parameters(entity, function(params)
-                  local cond = params.conditions[i]
-
-                  if target == "first_signal" then
-                     cond.first_signal = result
-                     ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
-                  elseif target == "second_signal" then
-                     cond.second_signal = result
-                     cond.constant = nil
-                     ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
-                  elseif target == "constant" then
-                     local num_value = tonumber(result)
-                     if num_value then
-                        cond.second_signal = nil
-                        cond.constant = math.floor(num_value)
-                        ctx.controller.message:fragment(tostring(cond.constant))
-                     else
-                        ctx.controller.message:fragment({ "fa.error-invalid-number" })
-                     end
-                  end
-               end)
-            end,
-         })
+         menu:add_item(row_key, build_condition_vtable(entity, i, condition, row_key))
       end
    end
    menu:end_row()
@@ -448,82 +522,7 @@ local function render_decider_config(ctx)
       -- Individual outputs
       for i, output in ipairs(outputs) do
          local row_key = get_output_key(i)
-
-         -- Output display and editing
-         menu:add_item(row_key, {
-            label = function(ctx)
-               local mb = MessageBuilder.new()
-               read_output(mb, output)
-               ctx.message:fragment(mb:build())
-            end,
-
-            -- m: Select signal, Ctrl+m: Cycle networks (sets to copy mode)
-            on_action1 = function(ctx)
-               if ctx.modifiers and ctx.modifiers.control then
-                  -- Ctrl+m: Cycle networks and set to copy mode
-                  patch_parameters(entity, function(params)
-                     local out = params.outputs[i]
-                     out.networks = cycle_networks(out.networks)
-                     out.copy_count_from_input = true
-                     out.constant = nil
-                     ctx.controller.message:fragment(localise_networks(out.networks))
-                  end)
-               else
-                  -- m: Select signal
-                  ctx.controller:open_child_ui(Router.UI_NAMES.SIGNAL_CHOOSER, {}, { node = row_key })
-               end
-            end,
-
-            -- .: Enter constant (sets to constant mode)
-            on_action3 = function(ctx)
-               local current_value = tostring(output.constant or 1)
-               ctx.controller:open_textbox(current_value, { node = row_key }, { "fa.decider-enter-constant" })
-            end,
-
-            -- /: Add output after this one
-            on_add_to_row = function(ctx)
-               patch_parameters(entity, function(params)
-                  table.insert(params.outputs, i + 1, {
-                     constant = 1,
-                     copy_count_from_input = false,
-                  })
-               end)
-
-               ctx.controller.message:fragment({ "fa.decider-output-added" })
-               ctx.graph_controller:suggest_move(get_output_key(i + 1))
-            end,
-
-            -- Backspace: Remove output
-            on_clear = function(ctx)
-               patch_parameters(entity, function(params)
-                  table.remove(params.outputs, i)
-               end)
-               ctx.controller.message:fragment({ "fa.decider-output-removed" })
-            end,
-
-            -- Handle child results (signal selection or textbox)
-            on_child_result = function(ctx, result)
-               patch_parameters(entity, function(params)
-                  local out = params.outputs[i]
-
-                  if type(result) == "table" and result.name then
-                     -- Signal selected
-                     out.signal = result
-                     ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
-                  elseif type(result) == "string" then
-                     -- Constant set from textbox (automatically clears copy_from_input)
-                     local num_value = tonumber(result)
-                     if num_value then
-                        out.constant = math.floor(num_value)
-                        out.copy_count_from_input = false
-                        ctx.controller.message:fragment(tostring(out.constant))
-                     else
-                        ctx.controller.message:fragment({ "fa.error-invalid-number" })
-                     end
-                  end
-               end)
-            end,
-         })
+         menu:add_item(row_key, build_output_vtable(entity, i, output, row_key))
       end
    end
    menu:end_row()
