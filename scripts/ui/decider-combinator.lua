@@ -322,7 +322,6 @@ local function render_decider_config(ctx)
                   else
                      cond.comparator = next_comparator(cond.comparator)
                   end
-                  ctx.controller.message:fragment({ "fa.decider-comparator-changed" })
                   ctx.controller.message:fragment(localise_comparator(cond.comparator))
                end)
             end,
