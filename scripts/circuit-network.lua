@@ -376,6 +376,26 @@ function mod.localise_signal_with_count(signal_id, count)
    end
 end
 
+---Localize a comparator symbol to a LocalisedString
+---@param comparator string Comparator symbol (<, <=, =, !=, >=, >)
+---@return LocalisedString
+function mod.localise_comparator(comparator)
+   local comp = comparator or "<"
+   local key_map = {
+      ["<"] = "lt",
+      ["≤"] = "lte",
+      ["<="] = "lte",
+      ["="] = "eq",
+      ["≠"] = "ne",
+      ["!="] = "ne",
+      ["≥"] = "gte",
+      [">="] = "gte",
+      [">"] = "gt",
+   }
+   local key = "fa.comparator-" .. (key_map[comp] or "lt")
+   return { key }
+end
+
 ---Aggregate signals from a circuit network, summing across qualities
 ---Returns a nested table: type -> name -> quality -> count
 ---@param signals Signal[]?

@@ -8,6 +8,7 @@ local UiUtils = require("scripts.ui.ui-utils")
 local UiSounds = require("scripts.ui.sounds")
 local Speech = require("scripts.speech")
 local UiRouter = require("scripts.ui.router")
+local CircuitNetwork = require("scripts.circuit-network")
 
 local mod = {}
 
@@ -431,7 +432,7 @@ function FormBuilder:add_condition(name, get_value, set_value)
          local condition = get_value() or {}
          ctx.message:fragment({ "fa.condition-operator" })
 
-         ctx.message:fragment(condition.comparator or "<")
+         ctx.message:fragment(CircuitNetwork.localise_comparator(condition.comparator or "<"))
       end,
       on_click = function(ctx)
          local condition = get_value() or {}
@@ -465,7 +466,7 @@ function FormBuilder:add_condition(name, get_value, set_value)
          condition.comparator = comparators[new_index].value
          set_value(condition)
          UiSounds.play_menu_move(ctx.pindex)
-         ctx.controller.message:fragment(comparators[new_index].label)
+         ctx.controller.message:fragment(CircuitNetwork.localise_comparator(comparators[new_index].value))
       end,
    })
 
@@ -680,7 +681,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
          local condition = get_condition() or {}
          ctx.message:fragment({ "fa.condition-operator" })
 
-         ctx.message:fragment(condition.comparator or "<")
+         ctx.message:fragment(CircuitNetwork.localise_comparator(condition.comparator or "<"))
       end,
       on_click = function(ctx)
          local condition = get_condition() or {}
@@ -714,7 +715,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
          condition.comparator = comparators[new_index].value
          set_condition(condition)
          UiSounds.play_menu_move(ctx.pindex)
-         ctx.controller.message:fragment(comparators[new_index].label)
+         ctx.controller.message:fragment(CircuitNetwork.localise_comparator(comparators[new_index].value))
       end,
    })
 

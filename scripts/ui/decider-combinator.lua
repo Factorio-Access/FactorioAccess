@@ -100,26 +100,6 @@ local function validate_and_set_number(text_result, on_valid, ctx)
    end
 end
 
----Localise a comparator string
----@param comparator ComparatorString?
----@return LocalisedString
-local function localise_comparator(comparator)
-   local comp = comparator or "<"
-   local key_map = {
-      ["<"] = "lt",
-      ["≤"] = "lte",
-      ["<="] = "lte",
-      ["="] = "eq",
-      ["≠"] = "ne",
-      ["!="] = "ne",
-      ["≥"] = "gte",
-      [">="] = "gte",
-      [">"] = "gt",
-   }
-   local key = "fa.comparator-" .. (key_map[comp] or "lt")
-   return { key }
-end
-
 ---Get next comparator (cycle forward)
 ---@param current ComparatorString?
 ---@return ComparatorString
@@ -167,7 +147,7 @@ local function read_condition(mb, condition, include_connector)
    end
 
    -- Comparator
-   mb:fragment(localise_comparator(condition.comparator))
+   mb:fragment(CircuitNetwork.localise_comparator(condition.comparator))
 
    -- Second signal or constant
    if condition.second_signal and condition.second_signal.name then
@@ -291,7 +271,7 @@ local function build_condition_vtable(entity, i, condition, row_key)
             else
                cond.comparator = next_comparator(cond.comparator)
             end
-            ctx.controller.message:fragment(localise_comparator(cond.comparator))
+            ctx.controller.message:fragment(CircuitNetwork.localise_comparator(cond.comparator))
          end)
       end,
 
