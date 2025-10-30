@@ -1447,7 +1447,7 @@ function mod.ent_info(pindex, ent, is_scanner)
       if drop ~= nil and drop.valid then
          drop_name = Localising.get_localised_name_with_fallback(drop)
       else
-         drop_name = "ground"
+         drop_name = { "fa.ent-info-ground" }
          local drop_area_ents = ent.surface.find_entities_filtered({ position = ent.drop_position })
          for i, drop_area_ent in ipairs(drop_area_ents) do
             if drop_area_ent.type == "straight-rail" or drop_area_ent.type == "curved-rail" then
@@ -1456,25 +1456,25 @@ function mod.ent_info(pindex, ent, is_scanner)
          end
       end
       --Report info
-      if drop ~= nil and drop.valid then
-         ctx.message:fragment("outputs to")
-         ctx.message:fragment(drop_name)
-      end
+      if drop ~= nil and drop.valid then ctx.message:fragment({ "fa.ent-info-mining-drill-outputs-to", drop_name }) end
       if ent.status == defines.entity_status.waiting_for_space_in_destination then
          ctx.message:fragment(", output full ")
       end
       if table_size(dict) > 0 then
-         ctx.message:fragment(", Mining from")
+         ctx.message:fragment({ "fa.ent-info-mining-drill-mining-from" })
          for i, amount in pairs(dict) do
             if i == "crude-oil" then
-               ctx.message:fragment(i)
-               ctx.message:fragment("times")
-               ctx.message:fragment(tostring(math.floor(amount / 3000) / 10))
-               ctx.message:fragment("per second")
+               ctx.message:fragment({
+                  "fa.ent-info-mining-drill-crude-oil-rate",
+                  i,
+                  tostring(math.floor(amount / 3000) / 10),
+               })
             else
-               ctx.message:fragment(i)
-               ctx.message:fragment("times")
-               ctx.message:fragment(FaUtils.simplify_large_number(amount))
+               ctx.message:fragment({
+                  "fa.ent-info-mining-drill-resource-amount",
+                  i,
+                  FaUtils.simplify_large_number(amount),
+               })
             end
          end
       end
