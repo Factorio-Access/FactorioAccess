@@ -1,3 +1,10 @@
+# 0.16.15 (2025-10-29)
+
+- Add support for the decider combinator.  This is a very complicated UI, intended for advanced users.
+  - To learn the decider combinator UI, see [here](./docs/features/circuit-network.md)
+  - Note: the conditions UI will be reused for trains, one row per stop.
+- Centralize our logic for cycling between conditional operators, and say them with shorter names
+
 # 0.16.14 (2025-10-28)
 
 - You now launch rockets with shift enter. Space would shoot your silo, and we are now using this key for other things.
