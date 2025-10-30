@@ -1,4 +1,4 @@
-# 0.16.16 (unreleased)
+# 0.16.16 (2025-10-30)
 
 - Clean up the blueprint menu so that clicking on name and description edits rather than having other rows
 - In the blueprint menu, limit options when blueprints are temporary
