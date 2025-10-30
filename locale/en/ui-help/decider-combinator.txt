@@ -1,0 +1,34 @@
+This is the UI for the decider combinator.
+
+The control reference follows.  The mod readme and documentation outside the game provides more information on how to use this UI that is too complicated to be put in these small help menus.
+
+When on a condition, set the first signal, m.
+
+When on a condition, toggle which networks the first signal reads from, ctrl  m.
+
+When on a condition, change the operator, comma, shift comma to go back.
+
+When on a condition, set the second operand to a signal, dot.
+
+When on a condition, toggle the networks of the second operand, ctrl dot.
+
+When on a condition, set the second operand to a constant, shift dot.
+
+When on a condition, change the logical operator connecting it to the previous condition, n.
+
+When on a condition, add a new condition to the end separated from previous conditions by and, slash.
+
+When on a condition, add a new condition to the end separated from previous conditions by or, ctrl slash.
+
+When on a condition, remove it, backspace.
+
+When on an output, set the output's signal, m.
+
+When on an output, set the output to copy from input networks, ctrl m. Repeated presses cycle which.
+
+When on an output, set the output to output a constant, dot
+
+When on an output, add a new output, slash
+
+When on an output, remove the output, backspace
+

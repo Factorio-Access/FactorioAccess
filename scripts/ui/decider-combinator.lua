@@ -511,8 +511,7 @@ local function build_decider_combinator_tabs(pindex, parameters)
          render_callback = render_decider_config,
          get_help_metadata = function()
             return {
-               Help.message_list("decider-combinator-conditions"),
-               Help.message_list("decider-combinator-outputs"),
+               Help.message_list("decider-combinator"),
             }
          end,
       })
