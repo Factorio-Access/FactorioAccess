@@ -5,6 +5,7 @@ local BuildDimensions = require("scripts.build-dimensions")
 local BuildingTools = require("scripts.building-tools")
 local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
+local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
 local PlayerMiningTools = require("scripts.player-mining-tools")
@@ -178,29 +179,42 @@ function mod.get_blueprint_info(stack, in_hand, pindex)
    --Empty blueprint
    if not stack.is_blueprint_setup() then return { "fa.blueprints-empty" } end
 
+   local message = MessageBuilder.new()
+
    --Get name
    local name = mod.get_blueprint_label(stack)
    if name == nil then name = "" end
-   --Construct result
-   local result = { "", { "fa.blueprints-name-features", name } }
-   if in_hand then result = { "", { "fa.blueprints-name-in-hand-features", name } } end
+
+   --Add intro
+   if in_hand then
+      message:fragment({ "fa.blueprints-name-in-hand-features", name })
+   else
+      message:fragment({ "fa.blueprints-name-features", name })
+   end
+
    --Use icons as extra info (in case it is not named)
    local icons = stack.preview_icons
    if icons == nil or #icons == 0 then
-      result = { "", result, { "fa.blueprints-no-details" } }
-      return result
+      message:fragment({ "fa.blueprints-no-details" })
+      return message:build()
    end
 
    for i, signal in ipairs(icons) do
-      if signal.index > 1 then result = { "", result, { "fa.blueprints-and" } } end
+      if signal.index > 1 then message:fragment({ "fa.blueprints-and" }) end
+
       if signal.signal.name ~= nil then
-         result = { "", result, signal.signal.name } --***todo localise
+         local proto = FaUtils.find_prototype(signal.signal.name)
+         if proto then
+            message:fragment(Localising.get_localised_name_with_fallback(proto))
+         else
+            message:fragment(signal.signal.name)
+         end
       else
-         result = { "", result, { "fa.blueprints-unknown-icon" } }
+         message:fragment({ "fa.blueprints-unknown-icon" })
       end
    end
 
-   result = { "", result, { "fa.blueprints-entities-total", tostring(stack.get_blueprint_entity_count()) } }
+   message:fragment({ "fa.blueprints-entities-total", tostring(stack.get_blueprint_entity_count()) })
 
    --Use this opportunity to update saved information about the blueprint's corners (used when drawing the footprint)
    if in_hand then
@@ -210,7 +224,8 @@ function mod.get_blueprint_info(stack, in_hand, pindex)
          storage.players[pindex].blueprint_height_in_hand = height + 1
       end
    end
-   return result
+
+   return message:build()
 end
 
 function mod.get_blueprint_icons_info(bp_table)
