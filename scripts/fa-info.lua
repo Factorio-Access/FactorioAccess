@@ -1383,19 +1383,17 @@ function mod.ent_info(pindex, ent, is_scanner)
    if ent.type == "inserter" then
       --Read held item
       if ent.held_stack ~= nil and ent.held_stack.valid_for_read and ent.held_stack.valid then
-         ctx.message:fragment(", holding")
-         ctx.message:fragment(ent.held_stack.name)
+         ctx.message:fragment({ "fa.ent-info-inserter-holding", ent.held_stack.name })
          if ent.held_stack.count > 1 then
-            ctx.message:fragment("times")
-            ctx.message:fragment(ent.held_stack.count)
+            ctx.message:fragment({ "fa.ent-info-inserter-holding-count", ent.held_stack.count })
          end
       end
       --Take note of long handed inserters
-      local pickup_dist_dir = " at 1 " .. FaUtils.direction_lookup(ent.direction)
-      local drop_dist_dir = " at 1 " .. FaUtils.direction_lookup(FaUtils.rotate_180(ent.direction))
+      local pickup_dist = 1
+      local drop_dist = 1
       if ent.name == "long-handed-inserter" then
-         pickup_dist_dir = " at 2 " .. FaUtils.direction_lookup(ent.direction)
-         drop_dist_dir = " at 2 " .. FaUtils.direction_lookup(FaUtils.rotate_180(ent.direction))
+         pickup_dist = 2
+         drop_dist = 2
       end
       --Read the pickup position
       local pickup = ent.pickup_target
@@ -1403,7 +1401,7 @@ function mod.ent_info(pindex, ent, is_scanner)
       if pickup ~= nil and pickup.valid then
          pickup_name = Localising.get_localised_name_with_fallback(pickup)
       else
-         pickup_name = "ground"
+         pickup_name = { "fa.ent-info-ground" }
          local area_ents = ent.surface.find_entities_filtered({ position = ent.pickup_position })
          for i, area_ent in ipairs(area_ents) do
             if area_ent.type == "straight-rail" or area_ent.type == "curved-rail" then
@@ -1411,16 +1409,19 @@ function mod.ent_info(pindex, ent, is_scanner)
             end
          end
       end
-      ctx.message:fragment("picks up from")
-      ctx.message:fragment(pickup_name)
-      ctx.message:fragment(pickup_dist_dir)
+      ctx.message:fragment({
+         "fa.ent-info-inserter-picks-up-from",
+         pickup_name,
+         pickup_dist,
+         FaUtils.direction_lookup(ent.direction),
+      })
       --Read the drop position
       local drop = ent.drop_target
       local drop_name = nil
       if drop ~= nil and drop.valid then
          drop_name = Localising.get_localised_name_with_fallback(drop)
       else
-         drop_name = "ground"
+         drop_name = { "fa.ent-info-ground" }
          local drop_area_ents = ent.surface.find_entities_filtered({ position = ent.drop_position })
          for i, drop_area_ent in ipairs(drop_area_ents) do
             if drop_area_ent.type == "straight-rail" or drop_area_ent.type == "curved-rail" then
@@ -1428,9 +1429,12 @@ function mod.ent_info(pindex, ent, is_scanner)
             end
          end
       end
-      ctx.message:fragment(", drops to")
-      ctx.message:fragment(drop_name)
-      ctx.message:fragment(drop_dist_dir)
+      ctx.message:fragment({
+         "fa.ent-info-inserter-drops-to",
+         drop_name,
+         drop_dist,
+         FaUtils.direction_lookup(FaUtils.rotate_180(ent.direction)),
+      })
    end
 
    if ent.type == "mining-drill" then
