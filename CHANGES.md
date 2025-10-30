@@ -1,3 +1,10 @@
+# 0.16.16 (unreleased)
+
+- Clean up the blueprint menu so that clicking on name and description edits rather than having other rows
+- In the blueprint menu, limit options when blueprints are temporary
+- When importing a blueprint, mark the hand as permanent even if it was reached through a copy-paste blueprint
+- Properly set the cursor stack to not temporary after setting up blueprints. Players may again store blueprints in their inventories.
+
 # 0.16.15 (2025-10-29)
 
 - Add support for the decider combinator.  This is a very complicated UI, intended for advanced users.

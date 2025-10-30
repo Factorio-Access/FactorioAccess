@@ -24,6 +24,7 @@ local function render(ctx)
    if not bp.is_blueprint then return nil end
 
    local builder = Menu.MenuBuilder.new()
+   local is_temporary = p.cursor_stack_temporary
 
    if not bp.is_blueprint_setup() then
       -- Use custom intro message if provided in params, otherwise default
@@ -35,6 +36,7 @@ local function render(ctx)
          on_click = function(ctx)
             ctx.controller:open_child_ui(UiRouter.UI_NAMES.BLUEPRINT_AREA_SELECTOR, {
                intro_message = { "fa.ui-blueprints-select-first-point" },
+               permanent = true,
             }, { node = "select-area" })
          end,
          on_child_result = function(ctx, result)
@@ -45,18 +47,48 @@ local function render(ctx)
             end
          end,
       })
+   elseif is_temporary then
+      -- Temporary blueprint: show limited message but allow export
+      builder:add_label("blueprint-info", { "fa.ui-blueprints-menu-temporary" })
    else
       builder:add_label("blueprint-info", { "fa.ui-blueprints-menu-basic", bp.label or { "fa.unnamed" } })
    end
 
    -- Blueprints which are empty can't have descriptions; don't show it.
-   if bp.is_blueprint_setup() then
-      builder:add_label("description", function(ctx)
+   if bp.is_blueprint_setup() and not is_temporary then
+      builder:add_clickable("name", function(ctx)
          ctx.message:fragment({
-            "fa.ui-blueprints-menu-description",
+            "fa.ui-blueprints-menu-name-click-to-edit",
+            bp.label or { "fa.unnamed" },
+         })
+      end, {
+         on_click = function(ctx)
+            ctx.controller:open_textbox("", "name")
+            ctx.message:fragment({ "fa.ui-blueprints-enter-name" })
+         end,
+         on_child_result = function(ctx, result)
+            bp.label = result
+            ctx.message:fragment({ "fa.ui-blueprints-renamed", result })
+         end,
+      })
+
+      builder:add_clickable("description", function(ctx)
+         ctx.message:fragment({
+            "fa.ui-blueprints-menu-description-click-to-edit",
             bp.blueprint_description or "",
          })
-      end)
+      end, {
+         on_click = function(ctx)
+            ctx.controller:open_textbox("", "description")
+            ctx.message:fragment({ "fa.ui-blueprints-enter-description" })
+         end,
+         ---@param result string
+         on_child_result = function(ctx, result)
+            ---@diagnostic disable-next-line: inject-field
+            bp.blueprint_description = result
+            ctx.message:fragment({ "fa.ui-blueprints-description-updated" })
+         end,
+      })
 
       builder:add_label("icons", function(ctx)
          local icons = bp.preview_icons
@@ -115,30 +147,6 @@ local function render(ctx)
          end
       end)
 
-      builder:add_clickable("rename", { "fa.ui-blueprints-menu-rename" }, {
-         on_click = function(ctx)
-            ctx.controller:open_textbox("", "rename")
-            ctx.message:fragment({ "fa.ui-blueprints-enter-name" })
-         end,
-         on_child_result = function(ctx, result)
-            bp.label = result
-            ctx.message:fragment({ "fa.ui-blueprints-renamed", result })
-         end,
-      })
-
-      builder:add_clickable("edit-desc", { "fa.ui-blueprints-menu-edit-desc" }, {
-         on_click = function(ctx)
-            ctx.controller:open_textbox("", "edit-desc")
-            ctx.message:fragment({ "fa.ui-blueprints-enter-description" })
-         end,
-         ---@param result string
-         on_child_result = function(ctx, result)
-            ---@diagnostic disable-next-line: inject-field
-            bp.blueprint_description = result
-            ctx.message:fragment({ "fa.ui-blueprints-description-updated" })
-         end,
-      })
-
       builder:add_clickable("copy", { "fa.ui-blueprints-menu-copy" }, {
          on_click = function(ctx)
             local p = game.get_player(ctx.pindex)
@@ -167,6 +175,18 @@ local function render(ctx)
          end,
       })
 
+      builder:add_clickable("reselect", { "fa.ui-blueprints-menu-reselect" }, {
+         on_click = function(ctx)
+            ctx.controller:open_child_ui(UiRouter.UI_NAMES.BLUEPRINT_AREA_SELECTOR, {
+               intro_message = { "fa.ui-blueprints-select-first-point" },
+               permanent = true,
+            }, { node = "reselect" })
+         end,
+      })
+   end
+
+   -- Export is available for both temporary and non-temporary blueprints
+   if bp.is_blueprint_setup() then
       builder:add_clickable("export", { "fa.ui-blueprints-menu-export" }, {
          on_click = function(ctx)
             local export_string = bp.export_stack()
@@ -178,6 +198,8 @@ local function render(ctx)
             if result and result ~= "" then
                local import_result = bp.import_stack(result)
                if import_result == 0 then
+                  -- Mark as permanent after successful import
+                  p.cursor_stack_temporary = false
                   ctx.message:fragment({ "fa.ui-blueprints-import-success" })
                else
                   ctx.message:fragment({ "fa.ui-blueprints-import-failed" })
@@ -189,6 +211,7 @@ local function render(ctx)
       })
    end
 
+   -- Import is available for all blueprints
    builder:add_clickable("import", { "fa.ui-blueprints-menu-import" }, {
       on_click = function(ctx)
          ctx.controller:open_textbox("", "import")
@@ -198,6 +221,8 @@ local function render(ctx)
          if result and result ~= "" then
             local import_result = bp.import_stack(result)
             if import_result == 0 then
+               -- Mark as permanent after successful import
+               p.cursor_stack_temporary = false
                ctx.message:fragment({ "fa.ui-blueprints-import-success" })
             else
                ctx.message:fragment({ "fa.ui-blueprints-import-failed" })
@@ -208,13 +233,6 @@ local function render(ctx)
       end,
    })
 
-   builder:add_clickable("reselect", { "fa.ui-blueprints-menu-reselect" }, {
-      on_click = function(ctx)
-         ctx.controller:open_child_ui(UiRouter.UI_NAMES.BLUEPRINT_AREA_SELECTOR, {
-            intro_message = { "fa.ui-blueprints-select-first-point" },
-         }, { node = "reselect" })
-      end,
-   })
    return builder:build()
 end
 

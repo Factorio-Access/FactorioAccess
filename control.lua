@@ -3158,6 +3158,7 @@ EventManager.on_event(
                      math.floor(cursor_pos.y),
                   },
                   second_message = { "fa.planner-blueprint-second-point" },
+                  permanent = true,
                })
                return
             end

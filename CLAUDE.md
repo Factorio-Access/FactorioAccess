@@ -12,10 +12,11 @@ This guide helps LLMs (particularly Claude) work effectively on the FactorioAcce
    -- RIGHT: Viewpoint.get_viewpoint(pindex)
    ```
 
-2. **Always format and test before committing**
+2. **Always format, test, and lint localisation before committing**
    ```bash
    python launch_factorio.py --format
    python launch_factorio.py --run-tests --timeout 60
+   python lint_localisation.py lint
    ```
 
 3. **Debug output: Use print(), not game.print()**
@@ -54,6 +55,9 @@ python launch_factorio.py --run-tests --timeout 60
 
 # Run linter
 python launch_factorio.py --lint
+
+# Run localisation linter (checks for unused/missing locale keys)
+python lint_localisation.py lint
 ```
 
 ### Architecture Overview

@@ -38,6 +38,9 @@ mod.blueprint_area_selector = BoxSelector.declare_box_selector({
          area = area,
       })
 
+      -- If permanent param is set, mark the blueprint as permanent
+      if params and params.permanent then p.cursor_stack_temporary = false end
+
       -- Provide feedback about what was captured
       local entity_count = blueprint.get_blueprint_entity_count()
       if entity_count > 0 then
