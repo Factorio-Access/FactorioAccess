@@ -9,6 +9,7 @@ local Localising = require("scripts.localising")
 local PlayerMiningTools = require("scripts.player-mining-tools")
 local FaUtils = require("scripts.fa-utils")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 local Viewpoint = require("scripts.viewpoint")
 
 local mod = {}
@@ -151,9 +152,10 @@ function mod.mine_area(pindex)
    local stacks_collected = init_empty_stacks - game.get_player(pindex).get_main_inventory().count_empty_stacks()
 
    --Print result
-   local result = { "fa.cleared-objects", tostring(cleared_total) }
-   if stacks_collected >= 0 then result = { "", result, { "fa.and-collected-stacks", tostring(stacks_collected) } } end
-   Speech.speak(pindex, result)
+   local message = MessageBuilder.new()
+   message:fragment({ "fa.cleared-objects", tostring(cleared_total) })
+   if stacks_collected >= 0 then message:fragment({ "fa.and-collected-stacks", tostring(stacks_collected) }) end
+   Speech.speak(pindex, message:build())
 end
 
 ---Super mine area for long range ghost clearing
