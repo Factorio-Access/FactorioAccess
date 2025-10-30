@@ -541,16 +541,9 @@ function mod.nudge_key(direction, event)
             game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
 
             --Explain build error
-            local message = MessageBuilder.new()
-            message:fragment({ "fa.cannot-nudge-obstacle" })
             local build_area = { left_top, right_bottom }
-            local obstacle_info = mod.identify_building_obstacle(pindex, build_area, ent)
-            for i, v in ipairs(obstacle_info) do
-               if i > 1 then -- Skip the empty string at index 1
-                  message:fragment(v)
-               end
-            end
-            Speech.speak(pindex, message:build())
+            local obstacle_message = mod.identify_building_obstacle(pindex, build_area, ent)
+            Speech.speak(pindex, obstacle_message)
             return
          end
          if not actually_teleported then
@@ -1353,7 +1346,9 @@ end
 function mod.identify_building_obstacle(pindex, area, ent_to_ignore)
    local p = game.get_player(pindex)
    local ent_ignored = ent_to_ignore or nil
-   local result = { "", "Cannot build" }
+   local message = MessageBuilder.new()
+   message:fragment({ "fa.cannot-build" })
+
    --Check for an entity in the way
    local ents_in_area = p.surface.find_entities_filtered({
       area = area,
@@ -1389,7 +1384,7 @@ function mod.identify_building_obstacle(pindex, area, ent_to_ignore)
    })
    --Report obstacles
    if obstacle_ent ~= nil then
-      table.insert(result, {
+      message:fragment({
          "fa.building-obstacle-in-way",
          localising.get_localised_name_with_fallback(obstacle_ent),
          math.floor(obstacle_ent.position.x),
@@ -1397,9 +1392,9 @@ function mod.identify_building_obstacle(pindex, area, ent_to_ignore)
       })
    elseif #water_tiles_in_area > 0 then
       local water = water_tiles_in_area[1]
-      table.insert(result, { "fa.building-water-in-way", math.floor(water.position.x), math.floor(water.position.y) })
+      message:fragment({ "fa.building-water-in-way", math.floor(water.position.x), math.floor(water.position.y) })
    end
-   return result
+   return message:build()
 end
 
 return mod
