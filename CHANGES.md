@@ -4,6 +4,9 @@
 - In the blueprint menu, limit options when blueprints are temporary
 - When importing a blueprint, mark the hand as permanent even if it was reached through a copy-paste blueprint
 - Properly set the cursor stack to not temporary after setting up blueprints. Players may again store blueprints in their inventories.
+- Fix a bunch of old code to use MessageBuilder, which gets rid of missing spaces in messages
+  - Turns out a lot of these were "a,b" or "a5" where synths didn't distinguish.
+
 
 # 0.16.15 (2025-10-29)
 
