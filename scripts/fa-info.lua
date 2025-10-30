@@ -984,14 +984,8 @@ local function ent_info_electric_pole(ctx)
       end
    end
 
-   ctx.message:fragment("supplying")
-   ctx.message:fragment(supplied_count)
-   ctx.message:fragment("buildings")
-   if producer_count > 0 then
-      ctx.message:fragment("drawing from")
-      ctx.message:fragment(producer_count)
-      ctx.message:fragment("buildings")
-   end
+   ctx.message:fragment({ "fa.ent-info-electric-pole-supplying", supplied_count })
+   if producer_count > 0 then ctx.message:fragment({ "fa.ent-info-electric-pole-drawing-from", producer_count }) end
 end
 
 ---@param ctx fa.Info.EntInfoContext
