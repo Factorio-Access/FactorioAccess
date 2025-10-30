@@ -577,9 +577,9 @@ end
 --Reads the localised result for the distance and direction from one point to the other. Also mentions if they are precisely aligned. Distances are rounded.
 function mod.dir_dist_locale(pos1, pos2)
    local dir_dist = mod.dir_dist(pos1, pos2)
-   local aligned_note = ""
-   if mod.is_direction_aligned(pos1, pos2) then aligned_note = "aligned " end
-   return { "fa.dir-dist", aligned_note .. mod.direction_lookup(dir_dist[1]), math.floor(dir_dist[2] + 0.5) }
+   local is_aligned = mod.is_direction_aligned(pos1, pos2)
+   local locale_key = is_aligned and "fa.dir-dist-aligned" or "fa.dir-dist"
+   return { locale_key, mod.direction_lookup(dir_dist[1]), math.floor(dir_dist[2] + 0.5) }
 end
 
 function mod.ent_name_locale(ent)
