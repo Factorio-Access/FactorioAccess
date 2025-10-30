@@ -7,6 +7,7 @@ local localising = require("scripts.localising")
 local dirs = defines.direction
 local Graphics = require("scripts.graphics")
 local Speech = require("scripts.speech")
+local MessageBuilder = Speech.MessageBuilder
 local PlayerMiningTools = require("scripts.player-mining-tools")
 -- Rail builder removed (Factorio 2.0 incompatibility)
 local Teleport = require("scripts.teleport")
@@ -540,15 +541,16 @@ function mod.nudge_key(direction, event)
             game.get_player(pindex).play_sound({ path = "utility/cannot_build" })
 
             --Explain build error
-            local result = { "", "Cannot nudge, " }
+            local message = MessageBuilder.new()
+            message:fragment({ "fa.cannot-nudge-obstacle" })
             local build_area = { left_top, right_bottom }
             local obstacle_info = mod.identify_building_obstacle(pindex, build_area, ent)
             for i, v in ipairs(obstacle_info) do
                if i > 1 then -- Skip the empty string at index 1
-                  table.insert(result, v)
+                  message:fragment(v)
                end
             end
-            Speech.speak(pindex, result)
+            Speech.speak(pindex, message:build())
             return
          end
          if not actually_teleported then
