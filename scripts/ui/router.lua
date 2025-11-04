@@ -107,6 +107,9 @@ end
 ---@field on_conjunction_modification? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_add_to_row? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field get_help_metadata? fun(self, pindex: number): fa.ui.help.HelpItem[]?
+---@field supports_search? fun(self, pindex: number, controller: fa.ui.RouterController): boolean Check if this UI supports search
+---@field search_hint? fun(self, pindex: number, hint_callback: fun(localised_string: LocalisedString), controller: fa.ui.RouterController) Submit searchable strings for cache population
+---@field search_move? fun(self, message: fa.MessageBuilder, pindex: number, direction: integer, matcher: fun(localised_string: LocalisedString): boolean, controller: fa.ui.RouterController): integer Move to next/prev search result, returns fa.ui.SEARCH_RESULT
 
 ---@enum fa.ui.UiName
 mod.UI_NAMES = {
@@ -197,6 +200,17 @@ local Router_meta = { __index = Router }
 local RouterController = {}
 local RouterController_meta = { __index = RouterController }
 
+---Create a controller for handling a UI event
+---@param router fa.ui.Router
+---@return fa.ui.RouterController
+local function create_controller_for_event(router)
+   return setmetatable({
+      router = router,
+      pindex = router.pindex,
+      message = MessageBuilder.new(),
+   }, RouterController_meta)
+end
+
 function RouterController:close()
    self.router:close_ui()
 end
@@ -247,12 +261,9 @@ function RouterController:clear_search_pattern()
    router_state[self.pindex].search_pattern = nil
 end
 
----Suggest that search strings should be re-hinted (e.g., after tab switch)
----Only re-hints if there's an active search pattern
-function RouterController:suggest_search_rehint()
-   local pattern = self:get_search_pattern()
-   if not pattern or pattern == "" then return end
-
+---Refresh the search cache for the current top UI
+---Populates LocalisedStringCache with all searchable strings from the UI
+function RouterController:refresh_search_cache()
    local stack = router_state[self.pindex].ui_stack
    if #stack == 0 then return end
 
@@ -261,21 +272,39 @@ function RouterController:suggest_search_rehint()
    local ui = registered_uis[ui_name]
    if not ui or not ui.search_hint then return end
 
-   -- Re-populate the cache with the current UI's searchable strings
    ui:search_hint(self.pindex, function(localised_string)
       LocalisedStringCache.hint_submit(self.pindex, localised_string)
    end, self)
 end
 
----Create a controller for handling a UI event
----@param router fa.ui.Router
----@return fa.ui.RouterController
-local function create_controller_for_event(router)
-   return setmetatable({
-      router = router,
-      pindex = router.pindex,
-      message = MessageBuilder.new(),
-   }, RouterController_meta)
+---Called when player inventory changes
+---Refreshes search cache if there's an active search pattern and UI is open
+---@param pindex integer
+function mod.on_inventory_changed(pindex)
+   local stack = router_state[pindex].ui_stack
+   if #stack == 0 then return end
+
+   -- Only refresh if there's an active search pattern
+   local pattern = router_state[pindex].search_pattern
+   if not pattern or pattern == "" then return end
+
+   local top_entry = stack[#stack]
+   local ui = registered_uis[top_entry.name]
+   if not ui or not ui.search_hint then return end
+
+   -- Refresh the cache using the generic method
+   local router = mod.get_router(pindex)
+   local controller = create_controller_for_event(router)
+   controller:refresh_search_cache()
+end
+
+---Suggest that search strings should be re-hinted (e.g., after tab switch)
+---Only re-hints if there's an active search pattern
+function RouterController:suggest_search_rehint()
+   local pattern = self:get_search_pattern()
+   if not pattern or pattern == "" then return end
+
+   self:refresh_search_cache()
 end
 
 ---@param name fa.ui.UiName
@@ -294,6 +323,8 @@ function Router:open_ui(name, params)
       self:open_child_ui(name, params)
    else
       -- Clear stack then push new UI
+      -- Clear any stale search pattern from previous session
+      router_state[self.pindex].search_pattern = nil
       self:_clear_ui_stack()
       self:_push_ui(name, params)
    end
@@ -784,6 +815,9 @@ register_ui_event("fa-s-enter", function(event, pindex)
                return EventManager.FINISHED
             end
 
+            -- Refresh cache to pick up items that appeared since search was set
+            controller:refresh_search_cache()
+
             local pattern_lower = string.lower(pattern)
             local matcher = function(localised_string)
                local text = LocalisedStringCache.get(pindex, localised_string)
@@ -833,6 +867,9 @@ register_ui_event("fa-c-enter", function(event, pindex)
                Speech.speak(pindex, { "fa.search-no-more-results" })
                return EventManager.FINISHED
             end
+
+            -- Refresh cache to pick up items that appeared since search was set
+            controller:refresh_search_cache()
 
             local pattern_lower = string.lower(pattern)
             local matcher = function(localised_string)
@@ -930,9 +967,7 @@ register_ui_event("fa-c-f", function(event, pindex)
             local supports = ui:supports_search(pindex, controller)
             if supports then
                -- Populate the search cache by requesting translations (async, in background)
-               ui:search_hint(pindex, function(localised_string)
-                  LocalisedStringCache.hint_submit(pindex, localised_string)
-               end, controller)
+               controller:refresh_search_cache()
 
                -- Open search setter (translations populate in background while user types)
                router:open_child_ui(mod.UI_NAMES.SEARCH_SETTER, {}, { node = "search_setter" })

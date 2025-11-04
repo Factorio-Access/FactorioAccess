@@ -1,3 +1,8 @@
+# 0.16.17 (unreleased)
+
+- Menu search: periodically refresh, eagerly refresh after inventory changes, and refresh after not finding a search result.
+  - In non-programmer, this means that your inventory will again pick up items added to it in searches.
+
 # 0.16.16 (2025-10-30)
 
 - Clean up the blueprint menu so that clicking on name and description edits rather than having other rows

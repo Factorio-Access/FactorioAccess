@@ -411,6 +411,11 @@ function on_tick(event)
       for pindex, player in pairs(players) do
          -- Other periodic checks can go here
       end
+   elseif event.tick % 61 == 0 then
+      -- Refresh search cache periodically (coprime with other updates)
+      for pindex, player in pairs(players) do
+         if player.connected then UiRouter.on_inventory_changed(pindex) end
+      end
    elseif event.tick % 90 == 13 then
       for pindex, player in pairs(players) do
          --Fix running speed bug (toggle walk also fixes it)
@@ -1195,6 +1200,16 @@ EventManager.on_event(
       storage.players[pindex].position = position
       vp:set_cursor_pos({ x = position.x, y = position.y })
       MovementHistory.reset_and_increment_generation(pindex)
+   end
+)
+
+EventManager.on_event(
+   defines.events.on_player_main_inventory_changed,
+   ---@param event EventData.on_player_main_inventory_changed
+   ---@param pindex integer
+   function(event, pindex)
+      -- Refresh search cache if UI is open and search is active
+      UiRouter.on_inventory_changed(pindex)
    end
 )
 
