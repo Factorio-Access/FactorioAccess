@@ -16,6 +16,7 @@ stuff.
 ]]
 local dirs = defines.direction
 local util = require("util")
+local serpent = require("serpent")
 local Filters = require("scripts.filters")
 local UiRouter = require("scripts.ui.router")
 
@@ -393,15 +394,135 @@ local function ent_info_resource(ctx)
    end
 end
 
+---Helper to extract rail end debug info
+---@param rail_end LuaRailEnd
+---@param rail_center MapPosition
+---@return table
+local function extract_rail_end_info(rail_end, rail_center)
+   local info = {}
+
+   -- Rail end position (relative to center)
+   info.position = {
+      x = rail_end.location.position.x - rail_center.x,
+      y = rail_end.location.position.y - rail_center.y,
+   }
+
+   -- Which end (front/back)
+   info.end_type = rail_end.direction
+
+   -- Compass direction
+   info.direction = rail_end.location.direction
+
+   -- Signal positions (relative to center)
+   if rail_end.out_signal_location then
+      info.out_signal = {
+         x = rail_end.out_signal_location.position.x - rail_center.x,
+         y = rail_end.out_signal_location.position.y - rail_center.y,
+      }
+   end
+
+   if rail_end.alternative_out_signal_location then
+      info.alt_out_signal = {
+         x = rail_end.alternative_out_signal_location.position.x - rail_center.x,
+         y = rail_end.alternative_out_signal_location.position.y - rail_center.y,
+      }
+   end
+
+   if rail_end.in_signal_location then
+      info.in_signal = {
+         x = rail_end.in_signal_location.position.x - rail_center.x,
+         y = rail_end.in_signal_location.position.y - rail_center.y,
+      }
+   end
+
+   if rail_end.alternative_in_signal_location then
+      info.alt_in_signal = {
+         x = rail_end.alternative_in_signal_location.position.x - rail_center.x,
+         y = rail_end.alternative_in_signal_location.position.y - rail_center.y,
+      }
+   end
+
+   return info
+end
+
+---Test which connection directions work from a rail end
+---@param rail_end LuaRailEnd
+---@return table<string, boolean>
+local function test_rail_connections(rail_end)
+   local results = {}
+
+   -- Test left
+   local test_end = rail_end.make_copy()
+   results.left = test_end.move_forward(defines.rail_connection_direction.left)
+
+   -- Test straight
+   test_end = rail_end.make_copy()
+   results.straight = test_end.move_forward(defines.rail_connection_direction.straight)
+
+   -- Test right
+   test_end = rail_end.make_copy()
+   results.right = test_end.move_forward(defines.rail_connection_direction.right)
+
+   return results
+end
+
+---Debug function to output rail geometry info
+---@param ent LuaEntity
+---@return string
+local function debug_rail_info(ent)
+   local rail_types = {
+      ["straight-rail"] = true,
+      ["curved-rail-a"] = true,
+      ["curved-rail-b"] = true,
+      ["half-diagonal-rail"] = true,
+      ["elevated-straight-rail"] = true,
+      ["elevated-curved-rail-a"] = true,
+      ["elevated-curved-rail-b"] = true,
+      ["elevated-half-diagonal-rail"] = true,
+      ["rail-ramp"] = true,
+      ["legacy-straight-rail"] = true,
+      ["legacy-curved-rail"] = true,
+   }
+
+   if not rail_types[ent.name] then return "" end
+
+   local front_end = ent.get_rail_end(defines.rail_direction.front)
+   local back_end = ent.get_rail_end(defines.rail_direction.back)
+
+   local result = {
+      position = ent.position,
+      front = extract_rail_end_info(front_end, ent.position),
+      back = extract_rail_end_info(back_end, ent.position),
+   }
+
+   -- Add connection test results
+   result.front.connects = test_rail_connections(front_end)
+   result.back.connects = test_rail_connections(back_end)
+
+   return serpent.line(result, { nocode = true, comment = false })
+end
+
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_rail(ctx)
    local ent = ctx.ent
-   -- TODO: really we shouldn't need pindex here, but for now rails aren't
-   -- localised properly.
-   if ent.name == "straight-rail" or ent.name == "curved-rail" then
-      -- Rails not supported in 2.0 yet
-      ctx.message:fragment({ "fa.trains-not-supported" })
-      return ctx.message:build()
+
+   local rail_types = {
+      ["straight-rail"] = true,
+      ["curved-rail-a"] = true,
+      ["curved-rail-b"] = true,
+      ["half-diagonal-rail"] = true,
+      ["elevated-straight-rail"] = true,
+      ["elevated-curved-rail-a"] = true,
+      ["elevated-curved-rail-b"] = true,
+      ["elevated-half-diagonal-rail"] = true,
+      ["rail-ramp"] = true,
+      ["legacy-straight-rail"] = true,
+      ["legacy-curved-rail"] = true,
+   }
+
+   if rail_types[ent.name] then
+      local debug_output = debug_rail_info(ent)
+      ctx.message:fragment(debug_output)
    end
 end
 

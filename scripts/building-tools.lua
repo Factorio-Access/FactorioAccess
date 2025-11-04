@@ -9,7 +9,6 @@ local Graphics = require("scripts.graphics")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
 local PlayerMiningTools = require("scripts.player-mining-tools")
--- Rail builder removed (Factorio 2.0 incompatibility)
 local Teleport = require("scripts.teleport")
 local TransportBelts = require("scripts.transport-belts")
 local UiRouter = require("scripts.ui.router")
@@ -28,13 +27,13 @@ local mod = {}
 ---@field footprint_right_bottom MapPosition
 ---@field is_tile boolean
 ---@field terrain_building_size? integer For tiles only
----@field skip_reason? LocalisedString If build should be skipped (e.g., rails)
+---@field skip_reason? LocalisedString If build should be skipped
 
 ---Calculate what to build and where, without actually building it.
 ---This is the "decider" function that determines all build parameters.
 ---Includes some side effects: graphics sync, storage updates, turn_to_cursor_direction_cardinal.
 ---@param params fa.BuildingTools.BuildItemParams
----@return fa.BuildingTools.BuildDecision? decision nil if should skip (e.g., rails)
+---@return fa.BuildingTools.BuildDecision? decision nil if should skip
 function mod.calculate_build_params(params)
    local pindex = params.pindex
    local building_direction = params.building_direction
@@ -48,9 +47,6 @@ function mod.calculate_build_params(params)
 
    -- Ensure building footprint is up to date
    Graphics.sync_build_cursor_graphics(pindex)
-
-   -- Check for exceptional cases that should be skipped
-   if stack.name == "rail" or stack.name == "rail-signal" or stack.name == "rail-chain-signal" then return nil end
 
    -- Handle entities
    if stack.prototype.place_result ~= nil then
@@ -182,12 +178,6 @@ function mod.build_item_in_hand_with_params(params)
 
    local p = game.get_player(pindex)
    local stack = p.cursor_stack
-
-   -- Handle rails special case (must speak error before calculate_build_params)
-   if stack.name == "rail" or stack.name == "rail-signal" or stack.name == "rail-chain-signal" then
-      Speech.speak(pindex, { "fa.trains-not-supported" })
-      return false
-   end
 
    -- Calculate what to build (includes graphics sync, storage updates, underground belt logic, etc)
    local decision = mod.calculate_build_params(params)
@@ -340,12 +330,6 @@ function mod.place_ghost_with_params(params)
    local p = game.get_player(pindex)
    local stack = p.cursor_stack
 
-   -- Handle unsupported cases
-   if stack.name == "rail" or stack.name == "rail-signal" or stack.name == "rail-chain-signal" then
-      Speech.speak(pindex, { "fa.trains-not-supported" })
-      return false
-   end
-
    -- Calculate what to build
    local decision = mod.calculate_build_params(params)
    if not decision then
@@ -474,9 +458,17 @@ function mod.rotate_building_info_read(event, forward)
          if
             ent.name == "steam-engine"
             or ent.name == "steam-turbine"
-            or ent.name == "rail"
             or ent.name == "straight-rail"
-            or ent.name == "curved-rail"
+            or ent.name == "curved-rail-a"
+            or ent.name == "curved-rail-b"
+            or ent.name == "half-diagonal-rail"
+            or ent.name == "elevated-straight-rail"
+            or ent.name == "elevated-curved-rail-a"
+            or ent.name == "elevated-curved-rail-b"
+            or ent.name == "elevated-half-diagonal-rail"
+            or ent.name == "rail-ramp"
+            or ent.name == "legacy-straight-rail"
+            or ent.name == "legacy-curved-rail"
             or ent.name == "character"
          then
             --Exception: These ents do not rotate
@@ -1065,12 +1057,6 @@ function mod.build_preview_checks_info(stack, pindex)
          local network_name = network.cells[1].owner.backer_name
          table.insert(result, { "fa.connection-in-network", network_name })
       end
-   end
-
-   --For rail signals, check for valid placement
-   if ent_p.name == "rail-signal" or ent_p.name == "rail-chain-signal" then
-      -- Rail signals not supported in 2.0 yet
-      table.insert(result, { "fa.trains-not-supported" })
    end
 
    --For all electric powered entities, note whether powered, and from which direction. Otherwise report the nearest power pole.
