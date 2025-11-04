@@ -1,4 +1,4 @@
-# 0.16.17 (unreleased)
+# 0.16.17 (2025-11-04)
 
 - Menu search: periodically refresh, eagerly refresh after inventory changes, and refresh after not finding a search result.
   - In non-programmer, this means that your inventory will again pick up items added to it in searches.
