@@ -2,6 +2,8 @@
 
 - Menu search: periodically refresh, eagerly refresh after inventory changes, and refresh after not finding a search result.
   - In non-programmer, this means that your inventory will again pick up items added to it in searches.
+- Unmap `q`'s vanilla binding to pipette and replace it with our own
+- When pipetting, set the hand direction to the direction of the pipetted entity instead of north
 
 # 0.16.16 (2025-10-30)
 

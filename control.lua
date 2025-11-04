@@ -27,6 +27,7 @@ local CircuitNetworks = require("scripts.circuit-network")
 local Combat = require("scripts.combat")
 local Consts = require("scripts.consts")
 local Crafting = require("scripts.crafting")
+local CursorChanges = require("scripts.cursor-changes")
 local Driving = require("scripts.driving")
 local Electrical = require("scripts.electrical")
 local EntitySelection = require("scripts.entity-selection")
@@ -739,44 +740,7 @@ EventManager.on_event(
    ---@param event EventData.on_player_cursor_stack_changed
    ---@param pindex integer
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-      local vp = Viewpoint.get_viewpoint(pindex)
-
-      local stack = game.get_player(pindex).cursor_stack
-      local new_item_name = ""
-      if stack and stack.valid_for_read then
-         new_item_name = stack.name
-         if stack.is_blueprint and storage.players[pindex].blueprint_hand_direction ~= dirs.north then
-            --Reset blueprint rotation (unless it is a temporary blueprint)
-            storage.players[pindex].blueprint_hand_direction = dirs.north
-            if game.get_player(pindex).cursor_stack_temporary == false then
-               Blueprints.refresh_blueprint_in_hand(pindex)
-            end
-            --Use this opportunity to update saved information about the blueprint's corners (used when drawing the footprint)
-            local width, height = BuildDimensions.get_stack_build_dimensions(stack, dirs.north)
-            if width == nil or height == nil then return end
-            storage.players[pindex].blueprint_width_in_hand = width + 1
-            storage.players[pindex].blueprint_height_in_hand = height + 1
-         end
-      end
-
-      -- Blueprint UI will handle its own state changes when the cursor stack changes
-
-      if storage.players[pindex].previous_hand_item_name ~= new_item_name then
-         storage.players[pindex].previous_hand_item_name = new_item_name
-         -- Reset building direction to north when cursor stack changes (Factorio 2.0 behavior)
-         vp:set_hand_direction(dirs.north)
-         vp:set_cursor_rotation_offset(0)
-         -- Reset flip states when hand contents change
-         vp:set_flipped_horizontal(false)
-         vp:set_flipped_vertical(false)
-         read_hand(pindex)
-      end
-
-      storage.players[pindex].bp_selecting = false
-      storage.players[pindex].blueprint_reselecting = false
-      storage.players[pindex].ghost_rail_planning = false
-      Graphics.sync_build_cursor_graphics(pindex)
+      CursorChanges.on_cursor_stack_changed(event, pindex, read_hand)
    end
 )
 
@@ -3949,29 +3913,7 @@ EventManager.on_event(
    end
 )
 
-local function kb_pipette_tool_info(event)
-   local pindex = event.player_index
-   local p = game.get_player(pindex)
-   local ent = p.selected
-   local vp = Viewpoint.get_viewpoint(pindex)
-   if ent and ent.valid then
-      if ent.supports_direction then
-         vp:set_hand_direction(defines.direction.north)
-         vp:set_cursor_rotation_offset(0)
-      end
-      vp:set_cursor_pos(FaUtils.get_ent_northwest_corner_position(ent))
-      Graphics.sync_build_cursor_graphics(pindex)
-      Graphics.draw_cursor_highlight(pindex, ent, nil, nil)
-   end
-end
-
-EventManager.on_event(
-   "fa-q",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      kb_pipette_tool_info(event)
-   end
-)
+EventManager.on_event("fa-q", CursorChanges.kb_pipette_tool)
 
 EventManager.on_event(
    "fa-s-q",
