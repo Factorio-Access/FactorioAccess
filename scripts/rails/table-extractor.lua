@@ -222,8 +222,10 @@ function mod.extract_rail_table(surface, force)
                local rail_end = end_info.end_obj
                local end_direction = rail_end.location.direction
                local end_dir_str = DIRECTION_NAMES[end_direction]
+               local end_position = make_relative_pos(rail_end.location.position)
 
                rail_data[prototype_type][dir_str][end_dir_str] = {
+                  position = end_position,
                   signal_locations = {},
                   extensions = {},
                }

@@ -6,6 +6,7 @@ Generated from extracting all rail pieces at origin and analyzing their connecti
 
 ## Table of Contents
 
+- [Advanced Form](#advanced-form)
 - [Quick Reference](#quick-reference)
 - [Direction System](#direction-system)
 - [The Four Rail Types](#the-four-rail-types)
@@ -16,6 +17,83 @@ Generated from extracting all rail pieces at origin and analyzing their connecti
 - [Signal Locations](#signal-locations)
 - [Working With Rails](#working-with-rails)
 - [Data Tables](#data-tables)
+
+
+## Advanced Form
+
+This is the "quick reference" of the math, a list of properties for those familiar with bit shifts, chirality, and
+parity.  The rest of this document contains conceptually simpler if less elegant and useful ways of holding this in your
+head. If you are a user of the mod this entire document is aimed at devs; you don't need to know this to play.
+
+Definitions:
+
+- Chirality of a function f(dir): if f(dir) counterclockwise of dir, 0,else 1.
+- parity of a coordinate: (x % 2, y % 2), where % is proper modulus and not the C definition or undefined (e.g. -3 % 2 = 1)
+
+Start by ignoring the 8-way directions (we will come back to that).
+
+Each rail has two endpoints on it.  These endpoints always lie on integer coordinates.  The simplest thing to consider
+first is horizontal and vertical rails.  These form a grid of 2x2 size.  The axis lines of that grid go down the middle
+of the rails.  These are constrained to be placed with their centers at odd positions.  The endpoints of each rail thus
+have mismatching parity.  The centers have parity (1, 1) and you proceed 1 unit in a given direction to reach an end of parity (0, 1) or (1, 0).
+
+Don't be confused, the grid is based off the endpoints not the centers.
+
+Diagonal rails (not half diagonals) form a second grid of endpoints.  These are at parity (1, 1).  This is also a 2x2 grid, but it is offset 1 cell in both x and y from the grid of horizontal and vertical rails.
+
+Curved rails come in two forms, a and b:
+
+- a curves always transition from a cardinal direction to an intermediate direction
+- b rails always transition from an intermediate direction to a diagonal direction
+
+They may also be viewed as functions on parity:
+
+- Curved a swaps the parity of the horizontal or vertical end (e, o) to (o, e)
+- Curved b shifts the parity of one of the coordinates from even to odd (always the perpendicular one, e.g. north curved b shifts x).
+
+Remember that parity is mod 2.  It is thus not meaningful to say "is it shifting left or right?" because a shift by -1 is the same as a shift by 1.
+
+The form of a 90 degree turn from a cardinal to a cardinal is always a, b, b, a.  There are also a few more rules for rails going into a turn:
+
+- All cardinal ends always extend to a
+- All diagonal ends always extend to b
+
+The function of curved rails in other words is to shift parity to get from a grid of h/v to diagonals.  The segment a, bshifts from (1, 0) or (0, 1) to (1, 1).
+
+How this is done is interesting.  The a segment flips, then the b segment shifts.  So, technically a alone ends at the same parity as a, b, b, a, but not with the right orientation to go into a diagonal or cardinal.
+
+Half diagonal rails preserve parity.  If you have the parity of one end of the half diagonal, you have the parity of the other.
+
+Rails are 8 way but we have only been talking about 4 way.  There is a bit trick involved.  If you view the direction of a curved rail as 0bddc0, then c is the chirality bit.
+
+It is easiest to figure out curved rail b starting from a, because a forms an easy to visualize shape.  If you place two
+a rails at north (0b0000) and northeast (0b0010) you get an upright y.  This is the chirality bit.  If a train comes in
+from the south, it will turn left on the north-facing a, and it will turn right on the northeast facing a.  This can
+also be viewed as 0=left and 1=right.  The key is that "northeast" is meaningless.  "northeast" is north with the chirality bit set to clockwise.
+
+To extend a curved rail a facing north, you add a curved rail b facing north, and copy over the chirality bit.  The
+problem is that the chirality of a curved rail b is harder to define, because the relationship between the way the
+curved rail b faces and the ends of it is not straightforward: they don't form a second y or anything like that.  So,
+the best way to conceptualize it is to start with the a-formed y, then put two b rails on it extending the y's outgoing
+curves, and visualize it from that.
+
+As a worked example, a turn from north to west is a=0 b=0 b=6 a=6.  Or a=0b0000 b=0b0000, b=0b0110, a=0b0110.  Wh?
+
+First we form the north a-based y: a=0.  We are going left so chirality is 0.  This goes north to north northwest.  We then use the a-b extension rule: a b facing the same direction as the a.  This goes north northwest to northwest.  This has shifted us from parity (1, 0)  to parity (1, 1) and put us on the diagonal grid.
+
+The other half of the turn is east to southeast.  So we form the east-based y: a=4.  But we are turning clockwise, so we set the chirality bit, a=6.  Then we extend our a to get the other half, b=6.  We shifted from parity (0, 1) to parity (1, 1).
+
+let us call the 8 directions primary (cardinal + diagonal).  There is a simpler rule for the chirality bit that works in both cases without having to "form the y".  Visualize the incoming direction as the primary direction endpoint. E.g. our north-facing y is primary direction north.  Then:
+
+- For a curved rail a, left=0, right=1.
+- For a curved rail b, left=1, right=0.
+
+This may not seem obvious at first so pretend to be walking it.  You turn north to north northwest.  That's left 22.5 degrees.  You then turn north northwest to northwest for another 22.5 degrees, both left.  Now you turn around 180 degrees to go back.  But going back it is now actually a right turn.
+
+s-bends can be formed a to a or b to b.  In this case, the rule is fortunately very simple: a-a forms s-bends on the
+cardinals (sidesteps, if you will), b-b forms s-bends on the diagonals.  The half diagonal s-bends are a-a or b-b, but in the half diagonal case which you need depends on which way you're stepping and is most easily worked out by consulting the table.
+
+So to "sidestep" left of north, is an a going north (because left) and then south (because of 180)
 
 ## Quick Reference
 

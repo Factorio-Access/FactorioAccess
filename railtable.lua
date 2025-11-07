@@ -54,6 +54,10 @@ return {
                   prototype = "curved-rail-b",
                },
             },
+            position = {
+               x = 3,
+               y = -1,
+            },
             signal_locations = {
                alt_in_signal = {
                   direction = "eastnortheast",
@@ -77,6 +81,10 @@ return {
                   },
                },
             },
+         },
+         grid_offset = {
+            x = 0,
+            y = 1,
          },
          occupied_tiles = {
             {
@@ -140,10 +148,6 @@ return {
                y = -1,
             },
          },
-         shift = {
-            x = 0,
-            y = 1,
-         },
          west = {
             extensions = {
                west = {
@@ -186,6 +190,10 @@ return {
                   prototype = "curved-rail-a",
                },
             },
+            position = {
+               x = -2,
+               y = 0,
+            },
             signal_locations = {
                in_signal = {
                   direction = "west",
@@ -215,6 +223,10 @@ return {
                x = 0.3515625,
                y = 1.98828125,
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 0,
          },
          northnorthwest = {
             extensions = {
@@ -257,6 +269,10 @@ return {
                   },
                   prototype = "curved-rail-b",
                },
+            },
+            position = {
+               x = -1,
+               y = -3,
             },
             signal_locations = {
                alt_in_signal = {
@@ -344,10 +360,6 @@ return {
                y = 1,
             },
          },
-         shift = {
-            x = 1,
-            y = 0,
-         },
          south = {
             extensions = {
                south = {
@@ -390,6 +402,10 @@ return {
                   prototype = "curved-rail-a",
                },
             },
+            position = {
+               x = 0,
+               y = 2,
+            },
             signal_locations = {
                in_signal = {
                   direction = "south",
@@ -419,6 +435,10 @@ return {
                x = 1.046875,
                y = 1.98828125,
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 0,
          },
          northnortheast = {
             extensions = {
@@ -461,6 +481,10 @@ return {
                   },
                   prototype = "half-diagonal-rail",
                },
+            },
+            position = {
+               x = 1,
+               y = -3,
             },
             signal_locations = {
                alt_out_signal = {
@@ -548,10 +572,6 @@ return {
                y = -1,
             },
          },
-         shift = {
-            x = 1,
-            y = 0,
-         },
          south = {
             extensions = {
                south = {
@@ -593,6 +613,10 @@ return {
                   },
                   prototype = "curved-rail-a",
                },
+            },
+            position = {
+               x = 0,
+               y = 2,
             },
             signal_locations = {
                in_signal = {
@@ -666,6 +690,10 @@ return {
                   prototype = "curved-rail-a",
                },
             },
+            position = {
+               x = 2,
+               y = 0,
+            },
             signal_locations = {
                in_signal = {
                   direction = "east",
@@ -682,6 +710,10 @@ return {
                   },
                },
             },
+         },
+         grid_offset = {
+            x = 0,
+            y = 1,
          },
          occupied_tiles = {
             {
@@ -745,10 +777,6 @@ return {
                y = -1,
             },
          },
-         shift = {
-            x = 0,
-            y = 1,
-         },
          westnorthwest = {
             extensions = {
                northwest = {
@@ -791,6 +819,10 @@ return {
                   prototype = "half-diagonal-rail",
                },
             },
+            position = {
+               x = -3,
+               y = -1,
+            },
             signal_locations = {
                alt_out_signal = {
                   direction = "eastsoutheast",
@@ -827,6 +859,10 @@ return {
                x = 1.046875,
                y = 3.04296875,
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 0,
          },
          north = {
             extensions = {
@@ -869,6 +905,10 @@ return {
                   },
                   prototype = "curved-rail-a",
                },
+            },
+            position = {
+               x = 0,
+               y = -2,
             },
             signal_locations = {
                in_signal = {
@@ -949,10 +989,6 @@ return {
                y = 2,
             },
          },
-         shift = {
-            x = 1,
-            y = 0,
-         },
          southsoutheast = {
             extensions = {
                south = {
@@ -994,6 +1030,10 @@ return {
                   },
                   prototype = "half-diagonal-rail",
                },
+            },
+            position = {
+               x = 1,
+               y = 3,
             },
             signal_locations = {
                alt_in_signal = {
@@ -1074,6 +1114,10 @@ return {
                   prototype = "curved-rail-b",
                },
             },
+            position = {
+               x = 3,
+               y = 1,
+            },
             signal_locations = {
                alt_out_signal = {
                   direction = "westnorthwest",
@@ -1097,6 +1141,10 @@ return {
                   },
                },
             },
+         },
+         grid_offset = {
+            x = 0,
+            y = 1,
          },
          occupied_tiles = {
             {
@@ -1160,10 +1208,6 @@ return {
                y = 0,
             },
          },
-         shift = {
-            x = 0,
-            y = 1,
-         },
          west = {
             extensions = {
                west = {
@@ -1206,6 +1250,10 @@ return {
                   prototype = "curved-rail-a",
                },
             },
+            position = {
+               x = -2,
+               y = 0,
+            },
             signal_locations = {
                in_signal = {
                   direction = "west",
@@ -1235,6 +1283,10 @@ return {
                x = 0.3515625,
                y = 3.04296875,
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 0,
          },
          north = {
             extensions = {
@@ -1277,6 +1329,10 @@ return {
                   },
                   prototype = "curved-rail-a",
                },
+            },
+            position = {
+               x = 0,
+               y = -2,
             },
             signal_locations = {
                in_signal = {
@@ -1357,10 +1413,6 @@ return {
                y = 2,
             },
          },
-         shift = {
-            x = 1,
-            y = 0,
-         },
          southsouthwest = {
             extensions = {
                south = {
@@ -1402,6 +1454,10 @@ return {
                   },
                   prototype = "curved-rail-b",
                },
+            },
+            position = {
+               x = -1,
+               y = 3,
             },
             signal_locations = {
                alt_out_signal = {
@@ -1482,6 +1538,10 @@ return {
                   prototype = "curved-rail-a",
                },
             },
+            position = {
+               x = 2,
+               y = 0,
+            },
             signal_locations = {
                in_signal = {
                   direction = "east",
@@ -1498,6 +1558,10 @@ return {
                   },
                },
             },
+         },
+         grid_offset = {
+            x = 0,
+            y = 1,
          },
          occupied_tiles = {
             {
@@ -1561,10 +1625,6 @@ return {
                y = 0,
             },
          },
-         shift = {
-            x = 0,
-            y = 1,
-         },
          westsouthwest = {
             extensions = {
                southwest = {
@@ -1607,6 +1667,10 @@ return {
                   prototype = "half-diagonal-rail",
                },
             },
+            position = {
+               x = -3,
+               y = 1,
+            },
             signal_locations = {
                alt_in_signal = {
                   direction = "westsouthwest",
@@ -1645,6 +1709,10 @@ return {
                x = 0.765625,
                y = 1.9921875,
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 1,
          },
          northeast = {
             extensions = {
@@ -1687,6 +1755,10 @@ return {
                   },
                   prototype = "curved-rail-b",
                },
+            },
+            position = {
+               x = 2,
+               y = -2,
             },
             signal_locations = {
                in_signal = {
@@ -1771,10 +1843,6 @@ return {
                y = -2,
             },
          },
-         shift = {
-            x = 1,
-            y = 1,
-         },
          westsouthwest = {
             extensions = {
                southwest = {
@@ -1817,6 +1885,10 @@ return {
                   prototype = "half-diagonal-rail",
                },
             },
+            position = {
+               x = -2,
+               y = 1,
+            },
             signal_locations = {
                alt_in_signal = {
                   direction = "westsouthwest",
@@ -1853,6 +1925,10 @@ return {
                x = 0.25390625,
                y = 2.37109375,
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 1,
          },
          northwest = {
             extensions = {
@@ -1895,6 +1971,10 @@ return {
                   },
                   prototype = "curved-rail-b",
                },
+            },
+            position = {
+               x = -2,
+               y = -2,
             },
             signal_locations = {
                in_signal = {
@@ -1979,10 +2059,6 @@ return {
                y = 1,
             },
          },
-         shift = {
-            x = 1,
-            y = 1,
-         },
          southsoutheast = {
             extensions = {
                south = {
@@ -2025,6 +2101,10 @@ return {
                   prototype = "half-diagonal-rail",
                },
             },
+            position = {
+               x = 1,
+               y = 2,
+            },
             signal_locations = {
                alt_in_signal = {
                   direction = "southsoutheast",
@@ -2061,6 +2141,10 @@ return {
                x = 1.14453125,
                y = 2.37109375,
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 1,
          },
          northeast = {
             extensions = {
@@ -2103,6 +2187,10 @@ return {
                   },
                   prototype = "curved-rail-b",
                },
+            },
+            position = {
+               x = 2,
+               y = -2,
             },
             signal_locations = {
                in_signal = {
@@ -2187,10 +2275,6 @@ return {
                y = -1,
             },
          },
-         shift = {
-            x = 1,
-            y = 1,
-         },
          southsouthwest = {
             extensions = {
                south = {
@@ -2232,6 +2316,10 @@ return {
                   },
                   prototype = "curved-rail-b",
                },
+            },
+            position = {
+               x = -1,
+               y = 2,
             },
             signal_locations = {
                alt_out_signal = {
@@ -2312,6 +2400,10 @@ return {
                   prototype = "curved-rail-b",
                },
             },
+            position = {
+               x = 2,
+               y = 1,
+            },
             signal_locations = {
                alt_out_signal = {
                   direction = "westnorthwest",
@@ -2335,6 +2427,10 @@ return {
                   },
                },
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 1,
          },
          northwest = {
             extensions = {
@@ -2377,6 +2473,10 @@ return {
                   },
                   prototype = "curved-rail-b",
                },
+            },
+            position = {
+               x = -2,
+               y = -2,
             },
             signal_locations = {
                in_signal = {
@@ -2461,10 +2561,6 @@ return {
                y = 0,
             },
          },
-         shift = {
-            x = 1,
-            y = 1,
-         },
       },
       south = {
          bounding_box = {
@@ -2477,6 +2573,10 @@ return {
                x = 1.14453125,
                y = 2.50390625,
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 1,
          },
          northnorthwest = {
             extensions = {
@@ -2519,6 +2619,10 @@ return {
                   },
                   prototype = "curved-rail-b",
                },
+            },
+            position = {
+               x = -1,
+               y = -2,
             },
             signal_locations = {
                alt_in_signal = {
@@ -2610,10 +2714,6 @@ return {
                y = 1,
             },
          },
-         shift = {
-            x = 1,
-            y = 1,
-         },
          southeast = {
             extensions = {
                eastsoutheast = {
@@ -2656,6 +2756,10 @@ return {
                   prototype = "curved-rail-b",
                },
             },
+            position = {
+               x = 2,
+               y = 2,
+            },
             signal_locations = {
                in_signal = {
                   direction = "southeast",
@@ -2685,6 +2789,10 @@ return {
                x = 0.765625,
                y = 2.8828125,
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 1,
          },
          occupied_tiles = {
             {
@@ -2752,10 +2860,6 @@ return {
                y = 1,
             },
          },
-         shift = {
-            x = 1,
-            y = 1,
-         },
          southeast = {
             extensions = {
                eastsoutheast = {
@@ -2797,6 +2901,10 @@ return {
                   },
                   prototype = "curved-rail-b",
                },
+            },
+            position = {
+               x = 2,
+               y = 2,
             },
             signal_locations = {
                in_signal = {
@@ -2857,6 +2965,10 @@ return {
                   prototype = "half-diagonal-rail",
                },
             },
+            position = {
+               x = -2,
+               y = -1,
+            },
             signal_locations = {
                alt_out_signal = {
                   direction = "eastsoutheast",
@@ -2893,6 +3005,10 @@ return {
                x = 0.25390625,
                y = 2.50390625,
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 1,
          },
          northnortheast = {
             extensions = {
@@ -2935,6 +3051,10 @@ return {
                   },
                   prototype = "half-diagonal-rail",
                },
+            },
+            position = {
+               x = 1,
+               y = -2,
             },
             signal_locations = {
                alt_out_signal = {
@@ -3026,10 +3146,6 @@ return {
                y = -1,
             },
          },
-         shift = {
-            x = 1,
-            y = 1,
-         },
          southwest = {
             extensions = {
                southsouthwest = {
@@ -3071,6 +3187,10 @@ return {
                   },
                   prototype = "curved-rail-b",
                },
+            },
+            position = {
+               x = -2,
+               y = 2,
             },
             signal_locations = {
                in_signal = {
@@ -3144,6 +3264,10 @@ return {
                   prototype = "curved-rail-b",
                },
             },
+            position = {
+               x = 2,
+               y = -1,
+            },
             signal_locations = {
                alt_in_signal = {
                   direction = "eastnortheast",
@@ -3167,6 +3291,10 @@ return {
                   },
                },
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 1,
          },
          occupied_tiles = {
             {
@@ -3234,10 +3362,6 @@ return {
                y = -1,
             },
          },
-         shift = {
-            x = 1,
-            y = 1,
-         },
          southwest = {
             extensions = {
                southsouthwest = {
@@ -3279,6 +3403,10 @@ return {
                   },
                   prototype = "curved-rail-b",
                },
+            },
+            position = {
+               x = -2,
+               y = 2,
             },
             signal_locations = {
                in_signal = {
@@ -3354,6 +3482,10 @@ return {
                   prototype = "curved-rail-b",
                },
             },
+            position = {
+               x = 2,
+               y = -1,
+            },
             signal_locations = {
                alt_in_signal = {
                   direction = "eastnortheast",
@@ -3377,6 +3509,10 @@ return {
                   },
                },
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 1,
          },
          occupied_tiles = {
             {
@@ -3436,10 +3572,6 @@ return {
                y = -1,
             },
          },
-         shift = {
-            x = 1,
-            y = 1,
-         },
          westsouthwest = {
             extensions = {
                southwest = {
@@ -3482,6 +3614,10 @@ return {
                   prototype = "half-diagonal-rail",
                },
             },
+            position = {
+               x = -2,
+               y = 1,
+            },
             signal_locations = {
                alt_in_signal = {
                   direction = "westsouthwest",
@@ -3518,6 +3654,10 @@ return {
                x = 0.75,
                y = 1.8984375,
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 1,
          },
          northnorthwest = {
             extensions = {
@@ -3560,6 +3700,10 @@ return {
                   },
                   prototype = "curved-rail-b",
                },
+            },
+            position = {
+               x = -1,
+               y = -2,
             },
             signal_locations = {
                alt_in_signal = {
@@ -3643,10 +3787,6 @@ return {
                y = 1,
             },
          },
-         shift = {
-            x = 1,
-            y = 1,
-         },
          southsoutheast = {
             extensions = {
                south = {
@@ -3689,6 +3829,10 @@ return {
                   prototype = "half-diagonal-rail",
                },
             },
+            position = {
+               x = 1,
+               y = 2,
+            },
             signal_locations = {
                alt_in_signal = {
                   direction = "southsoutheast",
@@ -3725,6 +3869,10 @@ return {
                x = 0.75,
                y = 1.8984375,
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 1,
          },
          northnortheast = {
             extensions = {
@@ -3767,6 +3915,10 @@ return {
                   },
                   prototype = "half-diagonal-rail",
                },
+            },
+            position = {
+               x = 1,
+               y = -2,
             },
             signal_locations = {
                alt_out_signal = {
@@ -3850,10 +4002,6 @@ return {
                y = -1,
             },
          },
-         shift = {
-            x = 1,
-            y = 1,
-         },
          southsouthwest = {
             extensions = {
                south = {
@@ -3895,6 +4043,10 @@ return {
                   },
                   prototype = "curved-rail-b",
                },
+            },
+            position = {
+               x = -1,
+               y = 2,
             },
             signal_locations = {
                alt_out_signal = {
@@ -3975,6 +4127,10 @@ return {
                   prototype = "curved-rail-b",
                },
             },
+            position = {
+               x = 2,
+               y = 1,
+            },
             signal_locations = {
                alt_out_signal = {
                   direction = "westnorthwest",
@@ -3998,6 +4154,10 @@ return {
                   },
                },
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 1,
          },
          occupied_tiles = {
             {
@@ -4057,10 +4217,6 @@ return {
                y = 0,
             },
          },
-         shift = {
-            x = 1,
-            y = 1,
-         },
          westnorthwest = {
             extensions = {
                northwest = {
@@ -4103,6 +4259,10 @@ return {
                   prototype = "half-diagonal-rail",
                },
             },
+            position = {
+               x = -2,
+               y = -1,
+            },
             signal_locations = {
                alt_out_signal = {
                   direction = "eastsoutheast",
@@ -4139,6 +4299,10 @@ return {
                x = 0.75,
                y = 1.8984375,
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 1,
          },
          northnorthwest = {
             extensions = {
@@ -4181,6 +4345,10 @@ return {
                   },
                   prototype = "curved-rail-b",
                },
+            },
+            position = {
+               x = -1,
+               y = -2,
             },
             signal_locations = {
                alt_in_signal = {
@@ -4264,10 +4432,6 @@ return {
                y = 1,
             },
          },
-         shift = {
-            x = 1,
-            y = 1,
-         },
          southsoutheast = {
             extensions = {
                south = {
@@ -4309,6 +4473,10 @@ return {
                   },
                   prototype = "half-diagonal-rail",
                },
+            },
+            position = {
+               x = 1,
+               y = 2,
             },
             signal_locations = {
                alt_in_signal = {
@@ -4389,6 +4557,10 @@ return {
                   prototype = "curved-rail-b",
                },
             },
+            position = {
+               x = 2,
+               y = 1,
+            },
             signal_locations = {
                alt_out_signal = {
                   direction = "westnorthwest",
@@ -4412,6 +4584,10 @@ return {
                   },
                },
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 1,
          },
          occupied_tiles = {
             {
@@ -4471,10 +4647,6 @@ return {
                y = 0,
             },
          },
-         shift = {
-            x = 1,
-            y = 1,
-         },
          westnorthwest = {
             extensions = {
                northwest = {
@@ -4517,6 +4689,10 @@ return {
                   prototype = "half-diagonal-rail",
                },
             },
+            position = {
+               x = -2,
+               y = -1,
+            },
             signal_locations = {
                alt_out_signal = {
                   direction = "eastsoutheast",
@@ -4553,6 +4729,10 @@ return {
                x = 0.75,
                y = 1.8984375,
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 1,
          },
          northnortheast = {
             extensions = {
@@ -4595,6 +4775,10 @@ return {
                   },
                   prototype = "half-diagonal-rail",
                },
+            },
+            position = {
+               x = 1,
+               y = -2,
             },
             signal_locations = {
                alt_out_signal = {
@@ -4678,10 +4862,6 @@ return {
                y = -1,
             },
          },
-         shift = {
-            x = 1,
-            y = 1,
-         },
          southsouthwest = {
             extensions = {
                south = {
@@ -4723,6 +4903,10 @@ return {
                   },
                   prototype = "curved-rail-b",
                },
+            },
+            position = {
+               x = -1,
+               y = 2,
             },
             signal_locations = {
                alt_out_signal = {
@@ -4803,6 +4987,10 @@ return {
                   prototype = "curved-rail-b",
                },
             },
+            position = {
+               x = 2,
+               y = -1,
+            },
             signal_locations = {
                alt_in_signal = {
                   direction = "eastnortheast",
@@ -4826,6 +5014,10 @@ return {
                   },
                },
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 1,
          },
          occupied_tiles = {
             {
@@ -4885,10 +5077,6 @@ return {
                y = -1,
             },
          },
-         shift = {
-            x = 1,
-            y = 1,
-         },
          westsouthwest = {
             extensions = {
                southwest = {
@@ -4930,6 +5118,10 @@ return {
                   },
                   prototype = "half-diagonal-rail",
                },
+            },
+            position = {
+               x = -2,
+               y = 1,
             },
             signal_locations = {
                alt_in_signal = {
@@ -5012,6 +5204,10 @@ return {
                   prototype = "curved-rail-a",
                },
             },
+            position = {
+               x = 1,
+               y = 0,
+            },
             signal_locations = {
                in_signal = {
                   direction = "east",
@@ -5028,6 +5224,10 @@ return {
                   },
                },
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 1,
          },
          occupied_tiles = {
             {
@@ -5046,10 +5246,6 @@ return {
                x = 0,
                y = 0,
             },
-         },
-         shift = {
-            x = 1,
-            y = 1,
          },
          west = {
             extensions = {
@@ -5093,6 +5289,10 @@ return {
                   prototype = "curved-rail-a",
                },
             },
+            position = {
+               x = -1,
+               y = 0,
+            },
             signal_locations = {
                in_signal = {
                   direction = "west",
@@ -5121,6 +5321,10 @@ return {
                x = 0.69921875,
                y = 0.98828125,
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 1,
          },
          north = {
             extensions = {
@@ -5164,6 +5368,10 @@ return {
                   prototype = "curved-rail-a",
                },
             },
+            position = {
+               x = 0,
+               y = -1,
+            },
             signal_locations = {
                in_signal = {
                   direction = "north",
@@ -5198,10 +5406,6 @@ return {
                x = 0,
                y = 0,
             },
-         },
-         shift = {
-            x = 1,
-            y = 1,
          },
          south = {
             extensions = {
@@ -5244,6 +5448,10 @@ return {
                   },
                   prototype = "curved-rail-a",
                },
+            },
+            position = {
+               x = 0,
+               y = 1,
             },
             signal_locations = {
                in_signal = {
@@ -5275,6 +5483,10 @@ return {
                y = 1.34765625,
             },
          },
+         grid_offset = {
+            x = 0,
+            y = 0,
+         },
          northeast = {
             extensions = {
                eastnortheast = {
@@ -5316,6 +5528,10 @@ return {
                   },
                   prototype = "curved-rail-b",
                },
+            },
+            position = {
+               x = 1,
+               y = -1,
             },
             signal_locations = {
                in_signal = {
@@ -5367,10 +5583,6 @@ return {
                x = 1,
                y = -1,
             },
-         },
-         shift = {
-            x = 0,
-            y = 0,
          },
          southwest = {
             extensions = {
@@ -5414,6 +5626,10 @@ return {
                   prototype = "curved-rail-b",
                },
             },
+            position = {
+               x = -1,
+               y = 1,
+            },
             signal_locations = {
                in_signal = {
                   direction = "southwest",
@@ -5443,6 +5659,10 @@ return {
                x = 0.69921875,
                y = 1.34765625,
             },
+         },
+         grid_offset = {
+            x = 0,
+            y = 0,
          },
          northwest = {
             extensions = {
@@ -5485,6 +5705,10 @@ return {
                   },
                   prototype = "curved-rail-b",
                },
+            },
+            position = {
+               x = -1,
+               y = -1,
             },
             signal_locations = {
                in_signal = {
@@ -5537,10 +5761,6 @@ return {
                y = 0,
             },
          },
-         shift = {
-            x = 0,
-            y = 0,
-         },
          southeast = {
             extensions = {
                eastsoutheast = {
@@ -5583,6 +5803,10 @@ return {
                   prototype = "curved-rail-b",
                },
             },
+            position = {
+               x = 1,
+               y = 1,
+            },
             signal_locations = {
                in_signal = {
                   direction = "southeast",
@@ -5611,6 +5835,10 @@ return {
                x = 0.69921875,
                y = 0.98828125,
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 1,
          },
          north = {
             extensions = {
@@ -5654,6 +5882,10 @@ return {
                   prototype = "curved-rail-a",
                },
             },
+            position = {
+               x = 0,
+               y = -1,
+            },
             signal_locations = {
                in_signal = {
                   direction = "north",
@@ -5688,10 +5920,6 @@ return {
                x = 0,
                y = 0,
             },
-         },
-         shift = {
-            x = 1,
-            y = 1,
          },
          south = {
             extensions = {
@@ -5735,6 +5963,10 @@ return {
                   prototype = "curved-rail-a",
                },
             },
+            position = {
+               x = 0,
+               y = 1,
+            },
             signal_locations = {
                in_signal = {
                   direction = "south",
@@ -5764,6 +5996,10 @@ return {
                x = 0.69921875,
                y = 1.34765625,
             },
+         },
+         grid_offset = {
+            x = 0,
+            y = 0,
          },
          northwest = {
             extensions = {
@@ -5806,6 +6042,10 @@ return {
                   },
                   prototype = "curved-rail-b",
                },
+            },
+            position = {
+               x = -1,
+               y = -1,
             },
             signal_locations = {
                in_signal = {
@@ -5858,10 +6098,6 @@ return {
                y = 0,
             },
          },
-         shift = {
-            x = 0,
-            y = 0,
-         },
          southeast = {
             extensions = {
                eastsoutheast = {
@@ -5904,6 +6140,10 @@ return {
                   prototype = "curved-rail-b",
                },
             },
+            position = {
+               x = 1,
+               y = 1,
+            },
             signal_locations = {
                in_signal = {
                   direction = "southeast",
@@ -5933,6 +6173,10 @@ return {
                x = 0.69921875,
                y = 1.34765625,
             },
+         },
+         grid_offset = {
+            x = 0,
+            y = 0,
          },
          northeast = {
             extensions = {
@@ -5975,6 +6219,10 @@ return {
                   },
                   prototype = "curved-rail-b",
                },
+            },
+            position = {
+               x = 1,
+               y = -1,
             },
             signal_locations = {
                in_signal = {
@@ -6027,10 +6275,6 @@ return {
                y = -1,
             },
          },
-         shift = {
-            x = 0,
-            y = 0,
-         },
          southwest = {
             extensions = {
                southsouthwest = {
@@ -6072,6 +6316,10 @@ return {
                   },
                   prototype = "curved-rail-b",
                },
+            },
+            position = {
+               x = -1,
+               y = 1,
             },
             signal_locations = {
                in_signal = {
@@ -6145,6 +6393,10 @@ return {
                   prototype = "curved-rail-a",
                },
             },
+            position = {
+               x = 1,
+               y = 0,
+            },
             signal_locations = {
                in_signal = {
                   direction = "east",
@@ -6161,6 +6413,10 @@ return {
                   },
                },
             },
+         },
+         grid_offset = {
+            x = 1,
+            y = 1,
          },
          occupied_tiles = {
             {
@@ -6179,10 +6435,6 @@ return {
                x = 0,
                y = 0,
             },
-         },
-         shift = {
-            x = 1,
-            y = 1,
          },
          west = {
             extensions = {
@@ -6225,6 +6477,10 @@ return {
                   },
                   prototype = "curved-rail-a",
                },
+            },
+            position = {
+               x = -1,
+               y = 0,
             },
             signal_locations = {
                in_signal = {
