@@ -10,6 +10,7 @@ local CombinatorBoundingBoxes = require("scripts.combinator-bounding-boxes")
 local FaUtils = require("scripts.fa-utils")
 local Fluids = require("scripts.fluids")
 local Localising = require("scripts.localising")
+local RailTableExtractor = require("scripts.rails.table-extractor")
 local TH = require("scripts.table-helpers")
 local TransportBelts = require("scripts.transport-belts")
 local Wires = require("scripts.wires")
@@ -102,10 +103,42 @@ local function cmd_fac(cmd)
    Speech.speak(pindex, printbuffer)
 end
 
+--[[
+/railtable
+
+Generates a comprehensive table of all rail piece extensions and signal locations.
+Places each of the 4 rail types at origin in all 8 valid directions, extracts:
+- Both ends and their map directions
+- Signal locations (in, out, alt_in, alt_out)
+- All extensions (left, straight, right) with goal positions
+
+Outputs to script-output/rail-table.lua
+]]
+---@param cmd CustomCommandData
+local function cmd_railtable(cmd)
+   local pindex = cmd.player_index
+   local player = game.get_player(pindex)
+   if not player then return end
+
+   -- Extract rail data
+   local rail_data = RailTableExtractor.extract_rail_table(player.surface, player.force)
+
+   -- Write to file
+   local output = serpent.block(rail_data, { comment = false })
+   helpers.write_file("rail-table.lua", output, false)
+
+   Speech.speak(pindex, "rail table written to script-output/rail-table.lua")
+   print("rail table generation complete")
+end
+
 mod.COMMANDS = {
    fac = {
       help = "See commands.lua",
       handler = cmd_fac,
+   },
+   railtable = {
+      help = "Generate rail extension data table",
+      handler = cmd_railtable,
    },
 }
 
