@@ -70,13 +70,34 @@ local function rail_occupies_tile(rail, tile_x, tile_y)
 end
 
 ---Add a rail to the test surface
+---
+---Like the real game, this applies grid alignment by looking up the grid_offset
+---from the rail data and adjusting the position to match parity requirements.
+---
 ---@param rail_type railutils.RailType Type of rail to add
----@param position fa.Point Position to place the rail
+---@param position fa.Point Position to place the rail (will be adjusted for grid alignment)
 ---@param direction defines.direction Direction to place the rail
----@return railutils.RailInfo The added rail
+---@return railutils.RailInfo The added rail (with adjusted position)
 function TestSurface:add_rail(rail_type, position, direction)
+   -- Look up grid offset from rail data
+   local prototype_type = rail_type_to_prototype_type(rail_type)
+   local rail_entry = RailData[prototype_type]
+   if not rail_entry then error("Unknown rail prototype: " .. prototype_type) end
+
+   local direction_entry = rail_entry[direction]
+   if not direction_entry then error("Invalid direction for rail type: " .. direction) end
+
+   local grid_offset = direction_entry.grid_offset
+   if not grid_offset then error("No grid_offset found for rail") end
+
+   -- Apply grid offset (what the game does for parity alignment)
+   local adjusted_position = {
+      x = position.x + grid_offset.x,
+      y = position.y + grid_offset.y,
+   }
+
    local rail = {
-      prototype_position = { x = position.x, y = position.y },
+      prototype_position = adjusted_position,
       rail_type = rail_type,
       direction = direction,
       unit_number = self._next_unit_number,

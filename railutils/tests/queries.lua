@@ -18,11 +18,13 @@ end
 function mod.TestGetExtensionPoints_StraightRailNorth()
    local surface = TestSurface.new()
 
-   -- Place a straight rail at origin facing north
+   -- Place a straight rail facing north (grid offset will adjust position)
    -- According to rail-geometry.md, straight-rail at north has ends at north and south
    surface:add_rail(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
 
-   local extensions = Queries.get_extension_points_at_position(surface, { x = 0, y = 0 })
+   -- Query at the actual position where the rail was placed (after grid adjustment)
+   local adjusted_pos = Queries.get_adjusted_position(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
+   local extensions = Queries.get_extension_points_at_position(surface, adjusted_pos)
 
    -- A straight rail has 2 ends, each end has 3 extensions
    -- So we expect 6 unique goal directions
@@ -49,7 +51,8 @@ function mod.TestGetExtensionPoints_ExtensionDirections()
    -- Place a straight rail at origin facing north
    surface:add_rail(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
 
-   local extensions = Queries.get_extension_points_at_position(surface, { x = 0, y = 0 })
+   local adjusted_pos = Queries.get_adjusted_position(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
+   local extensions = Queries.get_extension_points_at_position(surface, adjusted_pos)
 
    -- From the north end (facing north), we should be able to extend to:
    -- - north (straight, offset 0)
@@ -71,7 +74,8 @@ function mod.TestGetExtensionPoints_UnitNumber()
 
    local rail = surface:add_rail(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
 
-   local extensions = Queries.get_extension_points_at_position(surface, { x = 0, y = 0 })
+   local adjusted_pos = Queries.get_adjusted_position(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
+   local extensions = Queries.get_extension_points_at_position(surface, adjusted_pos)
 
    -- All extensions should reference the rail's unit number
    for _, exts in pairs(extensions) do
@@ -84,12 +88,14 @@ end
 function mod.TestGetExtensionPoints_MultipleRails()
    local surface = TestSurface.new()
 
-   -- Place two different rails that might overlap at some tile
-   -- For simplicity, we'll place them at the same position but different orientations
+   -- Place two different rails at the same requested position but different orientations
+   -- They'll get grid-adjusted to the same actual position
    surface:add_rail(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
    surface:add_rail(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.east)
 
-   local extensions = Queries.get_extension_points_at_position(surface, { x = 0, y = 0 })
+   -- Both north and east straight rails have grid_offset (1, 1), so they end up at the same position
+   local adjusted_pos = Queries.get_adjusted_position(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
+   local extensions = Queries.get_extension_points_at_position(surface, adjusted_pos)
 
    -- Each rail has 6 unique goal directions, and they don't overlap
    -- So we should have 12 unique directions total
@@ -107,9 +113,11 @@ function mod.TestGetExtensionPoints_AbsolutePositions()
    local surface = TestSurface.new()
 
    -- Place a rail at a non-origin position
-   surface:add_rail(RailInfo.RailType.STRAIGHT, { x = 10, y = 20 }, defines.direction.north)
+   local requested_pos = { x = 10, y = 20 }
+   surface:add_rail(RailInfo.RailType.STRAIGHT, requested_pos, defines.direction.north)
 
-   local extensions = Queries.get_extension_points_at_position(surface, { x = 10, y = 20 })
+   local adjusted_pos = Queries.get_adjusted_position(RailInfo.RailType.STRAIGHT, requested_pos, defines.direction.north)
+   local extensions = Queries.get_extension_points_at_position(surface, adjusted_pos)
 
    -- Verify that positions are absolute (not relative to rail)
    for _, exts in pairs(extensions) do
@@ -119,6 +127,40 @@ function mod.TestGetExtensionPoints_AbsolutePositions()
          lu.assertNotEquals(ext.next_rail_position.x, 0, "Next rail position should be absolute, not relative")
       end
    end
+end
+
+function mod.TestGetAdjustedPosition_GridAlignment()
+   -- Test that grid adjustment works correctly for different rail types and directions
+
+   -- Straight rail north: grid_offset (1, 1)
+   local pos = Queries.get_adjusted_position(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
+   lu.assertEquals(pos.x, 1, "Straight north should adjust x by 1")
+   lu.assertEquals(pos.y, 1, "Straight north should adjust y by 1")
+
+   -- Straight rail northeast: grid_offset (0, 0)
+   pos = Queries.get_adjusted_position(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.northeast)
+   lu.assertEquals(pos.x, 0, "Straight northeast should not adjust x")
+   lu.assertEquals(pos.y, 0, "Straight northeast should not adjust y")
+
+   -- Curved-rail-a north: grid_offset (1, 0)
+   pos = Queries.get_adjusted_position(RailInfo.RailType.CURVE_A, { x = 0, y = 0 }, defines.direction.north)
+   lu.assertEquals(pos.x, 1, "Curved-a north should adjust x by 1")
+   lu.assertEquals(pos.y, 0, "Curved-a north should not adjust y")
+
+   -- Curved-rail-a west: grid_offset (0, 1)
+   pos = Queries.get_adjusted_position(RailInfo.RailType.CURVE_A, { x = 0, y = 0 }, defines.direction.west)
+   lu.assertEquals(pos.x, 0, "Curved-a west should not adjust x")
+   lu.assertEquals(pos.y, 1, "Curved-a west should adjust y by 1")
+
+   -- Curved-rail-b always: grid_offset (1, 1)
+   pos = Queries.get_adjusted_position(RailInfo.RailType.CURVE_B, { x = 0, y = 0 }, defines.direction.north)
+   lu.assertEquals(pos.x, 1, "Curved-b should adjust x by 1")
+   lu.assertEquals(pos.y, 1, "Curved-b should adjust y by 1")
+
+   -- Half-diagonal always: grid_offset (1, 1)
+   pos = Queries.get_adjusted_position(RailInfo.RailType.HALF_DIAGONAL, { x = 0, y = 0 }, defines.direction.northeast)
+   lu.assertEquals(pos.x, 1, "Half-diagonal should adjust x by 1")
+   lu.assertEquals(pos.y, 1, "Half-diagonal should adjust y by 1")
 end
 
 return mod

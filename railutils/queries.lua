@@ -25,6 +25,32 @@ local function rail_type_to_prototype_type(rail_type)
    error("Unknown rail type: " .. tostring(rail_type))
 end
 
+---Get the grid-adjusted position where a rail will actually be placed
+---
+---Rails have parity requirements and the game snaps them to the grid by applying
+---a grid_offset. This function returns the actual position where the rail will end up.
+---
+---@param rail_type railutils.RailType Type of rail to place
+---@param position fa.Point Requested position
+---@param direction defines.direction Direction to place the rail
+---@return fa.Point The actual position after grid adjustment
+function mod.get_adjusted_position(rail_type, position, direction)
+   local prototype_type = rail_type_to_prototype_type(rail_type)
+   local rail_entry = RailData[prototype_type]
+   if not rail_entry then error("Unknown rail prototype: " .. prototype_type) end
+
+   local direction_entry = rail_entry[direction]
+   if not direction_entry then error("Invalid direction for rail type: " .. direction) end
+
+   local grid_offset = direction_entry.grid_offset
+   if not grid_offset then error("No grid_offset found for rail") end
+
+   return {
+      x = position.x + grid_offset.x,
+      y = position.y + grid_offset.y,
+   }
+end
+
 ---Extension point information
 ---@class railutils.ExtensionPoint
 ---@field rail_unit_number number Unit number of the rail this extension is from
