@@ -2,8 +2,7 @@
 A simple backend.
 
 This backend handles a vast majority of cases, all of which delegate to fa-info for reading and fa-utils to find the
-top-left corner.  This handles almost everything.  Rails is a special case, as for curved-rail we need the center; to
-deal with that, this code just hardcodes it in.  By doing so we match what the cursor would say.
+top-left corner.  This handles almost everything.
 
 The one thing this does not know about is category, so one must call declare_simple_backend with a (sub)category set of
 callbacks. Default is other, providing a way to see un-categorized things, and prototype name.  For future proofing, it
@@ -59,12 +58,7 @@ end
 
 function SimpleBackend:update_entry(_player, entry)
    local entity = entry.backend_data
-   if entity.type == "curved-rail" then
-      -- curved-rail special case: take the center.
-      entry.position = entity.position
-   else
-      entry.position = FaUtils.get_ent_northwest_corner_position(entity)
-   end
+   entry.position = FaUtils.get_ent_northwest_corner_position(entity)
    entry.backend = self
    entry.backend_data = entity
    entry.category = self.category_callback(entity)
@@ -109,17 +103,11 @@ function SimpleBackend:dump_entries_to_callback(player, callback)
 
          local effective_x, effective_y
 
-         if entity.type == "curved-rail" then
-            -- curved-rail special case: take the center.
-            effective_x = x
-            effective_y = y
-         else
-            -- This is accurate and better than going through FaUtils in terms of
-            -- performance since that does map queries.  We will probably fix FaUtils
-            -- but for now we limit the fallout to here.
-            effective_x = x - htw
-            effective_y = y - hth
-         end
+         -- This is accurate and better than going through FaUtils in terms of
+         -- performance since that does map queries.  We will probably fix FaUtils
+         -- but for now we limit the fallout to here.
+         effective_x = x - htw
+         effective_y = y - hth
 
          local cached_entry = self.entry_cache[regnum]
          if cached_entry then

@@ -491,30 +491,17 @@ EventManager.on_event(
       BumpDetection.reset_bump_stats(pindex)
       MovementHistory.reset_and_increment_generation(pindex)
       game.get_player(pindex).clear_cursor()
-      storage.players[pindex].last_train_orientation = nil
       if game.get_player(pindex).driving then
          storage.players[pindex].last_vehicle = game.get_player(pindex).vehicle
          Speech.speak(
             pindex,
             { "fa.vehicle-entered", Localising.get_localised_name_with_fallback(game.get_player(pindex).vehicle) }
          )
-         if
-            storage.players[pindex].last_vehicle.train ~= nil
-            and storage.players[pindex].last_vehicle.train.schedule == nil
-         then
-            storage.players[pindex].last_vehicle.train.manual_mode = true
-         end
       elseif storage.players[pindex].last_vehicle ~= nil then
          Speech.speak(
             pindex,
             { "fa.vehicle-exited", Localising.get_localised_name_with_fallback(storage.players[pindex].last_vehicle) }
          )
-         if
-            storage.players[pindex].last_vehicle.train ~= nil
-            and storage.players[pindex].last_vehicle.train.schedule == nil
-         then
-            storage.players[pindex].last_vehicle.train.manual_mode = true
-         end
          Teleport.teleport_to_closest(pindex, storage.players[pindex].last_vehicle.position, true, true)
       else
          Speech.speak(pindex, { "fa.driving-state-changed" })
@@ -699,7 +686,7 @@ function clicked_on_entity(ent, pindex)
    elseif ent.operable and ent.prototype.is_building then
       -- Open capability-based entity UI
       EntityUI.open_entity_ui(pindex, ent)
-   elseif ent.type == "car" or ent.type == "spider-vehicle" or ent.train ~= nil then
+   elseif ent.type == "car" or ent.type == "spider-vehicle" then
       -- Open capability-based entity UI for vehicles
       EntityUI.open_entity_ui(pindex, ent)
    elseif ent.type == "spider-leg" then
@@ -907,39 +894,6 @@ EventManager.on_event(
    ---@param event EventData.on_object_destroyed
    function(event) --DOES NOT HAVE THE KEY PLAYER_INDEX
       ScannerEntrypoint.on_entity_destroyed(event)
-   end
-)
-
---Scripts regarding train state changes. NOTE: NO PINDEX
-EventManager.on_event(
-   defines.events.on_train_changed_state,
-   ---@param event EventData.on_train_changed_state
-   function(event)
-      if event.train.state == defines.train_state.no_schedule then
-         --Trains with no schedule are set back to manual mode
-         event.train.manual_mode = true
-      elseif event.train.state == defines.train_state.arrive_station then
-         --Announce arriving station to players on the train
-         for i, player in ipairs(event.train.passengers) do
-            local stop = event.train.path_end_stop
-            if stop ~= nil then Speech.speak(player.index, { "fa.train-arriving-at-station", stop.backer_name }) end
-         end
-      elseif event.train.state == defines.train_state.on_the_path then --laterdo make this announce only when near another trainstop.
-         --Announce heading station to players on the train
-         for i, player in ipairs(event.train.passengers) do
-            local stop = event.train.path_end_stop
-            if stop ~= nil then Speech.speak(player.index, { "fa.train-heading-to-station", stop.backer_name }) end
-         end
-      elseif event.train.state == defines.train_state.wait_signal then
-         --Announce the wait to players on the train
-         for i, player in ipairs(event.train.passengers) do
-            local stop = event.train.path_end_stop
-            if stop ~= nil then
-               local str = " Waiting at signal. "
-               Speech.speak(player.index, str)
-            end
-         end
-      end
    end
 )
 
@@ -2243,7 +2197,7 @@ EventManager.on_event(
       local router = UiRouter.get_router(pindex)
       local p = game.get_player(pindex)
 
-      if p.driving and (p.vehicle.train ~= nil or p.vehicle.type == "car") then
+      if p.driving and p.vehicle.type == "car" then
          kb_read_driving_structure_ahead(event)
       else
          kb_jump_to_player(event)
@@ -2989,7 +2943,7 @@ EventManager.on_event(
    end
 )
 
---Mines groups of entities depending on the name or type. Includes trees and rocks, rails.
+--Mines groups of entities depending on the name or type. Includes trees and rocks.
 
 EventManager.on_event(
    "fa-cs-x",
@@ -3493,18 +3447,7 @@ local function kb_alternate_build(event)
    local router = UiRouter.get_router(pindex)
    local stack = game.get_player(pindex).cursor_stack
 
-   if stack.name == "rail" then
-      --Straight rail free placement
-      local vp = Viewpoint.get_viewpoint(pindex)
-      BuildingTools.build_item_in_hand_with_params({
-         pindex = pindex,
-         building_direction = vp:get_hand_direction(),
-         flip_horizontal = vp:get_flipped_horizontal(),
-         flip_vertical = vp:get_flipped_vertical(),
-      })
-   elseif stack.name == "steam-engine" then
-      BuildingTools.snap_place_steam_engine_to_a_boiler(pindex)
-   end
+   if stack.name == "steam-engine" then BuildingTools.snap_place_steam_engine_to_a_boiler(pindex) end
 end
 
 EventManager.on_event(
@@ -3997,75 +3940,12 @@ EventManager.on_event(
    end
 )
 
----@param event EventData.CustomInputEvent
-local function kb_connect_rail_vehicles(event)
-   local pindex = event.player_index
-   local vehicle = nil
-   local ent = game.get_player(pindex).selected
-   if game.get_player(pindex).vehicle ~= nil and game.get_player(pindex).vehicle.train ~= nil then
-      vehicle = game.get_player(pindex).vehicle
-   elseif ent ~= nil and ent.valid and ent.train ~= nil then
-      vehicle = ent
-   end
-
-   if vehicle ~= nil then
-      --Connect rolling stock (or check if the default key bindings make the connection)
-      local connected = 0
-      if vehicle.connect_rolling_stock(defines.rail_direction.front) then connected = connected + 1 end
-      if vehicle.connect_rolling_stock(defines.rail_direction.back) then connected = connected + 1 end
-      if connected > 0 then
-         Speech.speak(pindex, { "fa.connected-this-vehicle" })
-      else
-         connected = 0
-         if vehicle.get_connected_rolling_stock(defines.rail_direction.front) ~= nil then connected = connected + 1 end
-         if vehicle.get_connected_rolling_stock(defines.rail_direction.back) ~= nil then connected = connected + 1 end
-         if connected > 0 then
-            Speech.speak(pindex, { "fa.connected-this-vehicle" })
-         else
-            Speech.speak(pindex, { "fa.nothing-was-connected" })
-         end
-      end
-   end
-end
-
----@param event EventData.CustomInputEvent
-local function kb_disconnect_rail_vehicles(event)
-   local pindex = event.player_index
-   local vehicle = nil
-   local ent = game.get_player(pindex).selected
-   if game.get_player(pindex).vehicle ~= nil and game.get_player(pindex).vehicle.train ~= nil then
-      vehicle = game.get_player(pindex).vehicle
-   elseif ent ~= nil and ent.train ~= nil then
-      vehicle = ent
-   end
-
-   if vehicle ~= nil then
-      --Disconnect rolling stock
-      local disconnected = 0
-      if vehicle.disconnect_rolling_stock(defines.rail_direction.front) then disconnected = disconnected + 1 end
-      if vehicle.disconnect_rolling_stock(defines.rail_direction.back) then disconnected = disconnected + 1 end
-      if disconnected > 0 then
-         Speech.speak(pindex, { "fa.disconnected-this-vehicle" })
-      else
-         local connected = 0
-         if vehicle.get_connected_rolling_stock(defines.rail_direction.front) ~= nil then connected = connected + 1 end
-         if vehicle.get_connected_rolling_stock(defines.rail_direction.back) ~= nil then connected = connected + 1 end
-         if connected > 0 then
-            Speech.speak(pindex, { "fa.disconnection-error" })
-         else
-            Speech.speak(pindex, { "fa.disconnected-this-vehicle" })
-         end
-      end
-   end
-end
-
 local function kb_inventory_read_equipment_list(event)
    local pindex = event.player_index
    local result = Equipment.read_equipment_list(pindex)
    Speech.speak(pindex, result)
 end
 
---SHIFT + G is used to disconnect rolling stock
 EventManager.on_event(
    "fa-s-g",
    ---@param event EventData.CustomInputEvent
@@ -4197,133 +4077,10 @@ local function positions_match(pos1, pos2)
    return math.abs(pos1.x - pos2.x) < 0.1 and math.abs(pos1.y - pos2.y) < 0.1
 end
 
----Classify an extension as left/straight/right based on goal direction
----Rails only turn by 1 increment max, so we can directly compare
----@param rail_end LuaRailEnd
----@param extension table RailExtensionData
----@return defines.rail_connection_direction
-local function classify_extension(rail_end, extension)
-   local start_dir = rail_end.location.direction
-   local goal_dir = extension.goal.direction
-
-   -- Rails turn at most 1 increment
-   local left_dir = (start_dir - 1 + 16) % 16
-   local right_dir = (start_dir + 1) % 16
-
-   if goal_dir == start_dir then
-      return defines.rail_connection_direction.straight
-   elseif goal_dir == left_dir then
-      return defines.rail_connection_direction.left
-   elseif goal_dir == right_dir then
-      return defines.rail_connection_direction.right
-   else
-      -- Shouldn't happen, but default to straight
-      return defines.rail_connection_direction.straight
-   end
-end
-
----Get the northmost and southmost rail ends
----For east/west rails, treat east as northmost
----@param rail LuaEntity
----@return LuaRailEnd northmost
----@return LuaRailEnd southmost
-local function get_north_south_rail_ends(rail)
-   local front_end = rail.get_rail_end(defines.rail_direction.front)
-   local back_end = rail.get_rail_end(defines.rail_direction.back)
-
-   local front_pos = front_end.location.position
-   local back_pos = back_end.location.position
-
-   -- Compare y coordinates (north is smaller y)
-   if front_pos.y < back_pos.y then
-      return front_end, back_end
-   elseif front_pos.y > back_pos.y then
-      return back_end, front_end
-   else
-      -- Same y (east/west rail), prefer east (larger x) as northmost
-      if front_pos.x > back_pos.x then
-         return front_end, back_end
-      else
-         return back_end, front_end
-      end
-   end
-end
-
----Helper: Explore rail extensions from current rail at cursor
----@param pindex integer
----@param use_north boolean true for north end, false for south end
----@param conn_dir defines.rail_connection_direction left, straight, or right
-local function explore_rail_extension(pindex, use_north, conn_dir)
-   local player = game.get_player(pindex)
-   local vp = Viewpoint.get_viewpoint(pindex)
-
-   local rail = player.selected
-   if not rail or not rail.valid or not rail.type:find("rail") then
-      Speech.speak(pindex, "no rail selected")
-      return false
-   end
-
-   local north_end, south_end = get_north_south_rail_ends(rail)
-   local rail_end = use_north and north_end or south_end
-
-   local extensions = rail_end.get_rail_extensions("rail")
-
-   if not extensions or #extensions == 0 then
-      Speech.speak(pindex, "no extensions")
-      return false
-   end
-
-   -- Find the extension matching the requested direction
-   local ext = nil
-   for _, candidate in ipairs(extensions) do
-      if classify_extension(rail_end, candidate) == conn_dir then
-         ext = candidate
-         break
-      end
-   end
-
-   if not ext then
-      Speech.speak(pindex, "no extension in that direction")
-      return false
-   end
-
-   local msg = string.format(
-      "%s at %.1f %.1f dir %d goal %.1f %.1f dir %d",
-      ext.name,
-      ext.position.x,
-      ext.position.y,
-      ext.direction,
-      ext.goal.position.x,
-      ext.goal.position.y,
-      ext.goal.direction
-   )
-   Speech.speak(pindex, msg)
-
-   local created = player.surface.create_entity({
-      name = ext.name,
-      position = ext.position,
-      direction = ext.direction,
-      force = player.force,
-   })
-
-   if not created then
-      Speech.speak(pindex, "failed to place")
-      return false
-   end
-
-   -- Move viewpoint to the new rail
-   vp:set_cursor_pos(ext.position)
-
-   return true
-end
-
 EventManager.on_event("fa-comma", function(event)
    local pindex = event.player_index
    local player = game.get_player(pindex)
    if not player then return end
-
-   -- Check for rail selected first (north end, straight)
-   if explore_rail_extension(pindex, true, defines.rail_connection_direction.straight) then return end
 
    local cursor_stack = player.cursor_stack
    if not cursor_stack or not cursor_stack.valid_for_read or not cursor_stack.is_blueprint_book then return end
@@ -4353,9 +4110,6 @@ EventManager.on_event("fa-m", function(event)
    local player = game.get_player(pindex)
    local stack = player.cursor_stack
 
-   -- Check for rail selected first (north end, left)
-   if explore_rail_extension(pindex, true, defines.rail_connection_direction.left) then return end
-
    -- Check if wire is in hand
    if stack and stack.valid_for_read then
       local wire_type = stack.name
@@ -4378,9 +4132,6 @@ EventManager.on_event("fa-dot", function(event)
    local player = game.get_player(pindex)
    local stack = player.cursor_stack
 
-   -- Check for rail selected first (north end, right)
-   if explore_rail_extension(pindex, true, defines.rail_connection_direction.right) then return end
-
    -- Check if wire is in hand
    if stack and stack.valid_for_read then
       local wire_type = stack.name
@@ -4396,25 +4147,6 @@ EventManager.on_event("fa-dot", function(event)
    end
 
    cycle_blueprint_book(pindex, 1)
-end, EventManager.EVENT_KIND.WORLD)
-
--- Rail exploration: south end (shift versions)
-EventManager.on_event("fa-s-m", function(event)
-   local pindex = event.player_index
-   if explore_rail_extension(pindex, false, defines.rail_connection_direction.left) then return end
-   -- Otherwise fall through to UI router
-end, EventManager.EVENT_KIND.WORLD)
-
-EventManager.on_event("fa-s-comma", function(event)
-   local pindex = event.player_index
-   if explore_rail_extension(pindex, false, defines.rail_connection_direction.straight) then return end
-   -- Otherwise fall through to UI router
-end, EventManager.EVENT_KIND.WORLD)
-
-EventManager.on_event("fa-s-dot", function(event)
-   local pindex = event.player_index
-   if explore_rail_extension(pindex, false, defines.rail_connection_direction.right) then return end
-   -- Otherwise fall through to UI router
 end, EventManager.EVENT_KIND.WORLD)
 
 -- Dangerous delete: Delete blueprint/decon/upgrade planner from hand, or clear spidertron remote list

@@ -427,7 +427,7 @@ function mod.rotate_building_info_read(event, forward)
    if stack and stack.valid_for_read and stack.valid then
       local rotation_count = BuildDimensions.get_rotation_count(stack)
       if rotation_count then
-         -- Adjust mult for 2-way rotation (locomotives, artillery wagons)
+         -- Adjust mult for 2-way rotation
          if rotation_count == 2 then mult = mult * 4 end
 
          -- Update the hand direction
@@ -455,22 +455,7 @@ function mod.rotate_building_info_read(event, forward)
          --Assuming that the vanilla rotate event will now rotate the ent
          local new_dir = (ent.direction + dirs.east * mult) % (2 * dirs.south)
 
-         if
-            ent.name == "steam-engine"
-            or ent.name == "steam-turbine"
-            or ent.name == "straight-rail"
-            or ent.name == "curved-rail-a"
-            or ent.name == "curved-rail-b"
-            or ent.name == "half-diagonal-rail"
-            or ent.name == "elevated-straight-rail"
-            or ent.name == "elevated-curved-rail-a"
-            or ent.name == "elevated-curved-rail-b"
-            or ent.name == "elevated-half-diagonal-rail"
-            or ent.name == "rail-ramp"
-            or ent.name == "legacy-straight-rail"
-            or ent.name == "legacy-curved-rail"
-            or ent.name == "character"
-         then
+         if ent.name == "steam-engine" or ent.name == "steam-turbine" or ent.name == "character" then
             --Exception: These ents do not rotate
             new_dir = (new_dir - dirs.east * mult) % (2 * dirs.south)
          elseif (ent.tile_width ~= ent.tile_height and ent.supports_direction) or ent.type == "underground-belt" then

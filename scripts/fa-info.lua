@@ -394,138 +394,6 @@ local function ent_info_resource(ctx)
    end
 end
 
----Helper to extract rail end debug info
----@param rail_end LuaRailEnd
----@param rail_center MapPosition
----@return table
-local function extract_rail_end_info(rail_end, rail_center)
-   local info = {}
-
-   -- Rail end position (relative to center)
-   info.position = {
-      x = rail_end.location.position.x - rail_center.x,
-      y = rail_end.location.position.y - rail_center.y,
-   }
-
-   -- Which end (front/back)
-   info.end_type = rail_end.direction
-
-   -- Compass direction
-   info.direction = rail_end.location.direction
-
-   -- Signal positions (relative to center)
-   if rail_end.out_signal_location then
-      info.out_signal = {
-         x = rail_end.out_signal_location.position.x - rail_center.x,
-         y = rail_end.out_signal_location.position.y - rail_center.y,
-      }
-   end
-
-   if rail_end.alternative_out_signal_location then
-      info.alt_out_signal = {
-         x = rail_end.alternative_out_signal_location.position.x - rail_center.x,
-         y = rail_end.alternative_out_signal_location.position.y - rail_center.y,
-      }
-   end
-
-   if rail_end.in_signal_location then
-      info.in_signal = {
-         x = rail_end.in_signal_location.position.x - rail_center.x,
-         y = rail_end.in_signal_location.position.y - rail_center.y,
-      }
-   end
-
-   if rail_end.alternative_in_signal_location then
-      info.alt_in_signal = {
-         x = rail_end.alternative_in_signal_location.position.x - rail_center.x,
-         y = rail_end.alternative_in_signal_location.position.y - rail_center.y,
-      }
-   end
-
-   return info
-end
-
----Test which connection directions work from a rail end
----@param rail_end LuaRailEnd
----@return table<string, boolean>
-local function test_rail_connections(rail_end)
-   local results = {}
-
-   -- Test left
-   local test_end = rail_end.make_copy()
-   results.left = test_end.move_forward(defines.rail_connection_direction.left)
-
-   -- Test straight
-   test_end = rail_end.make_copy()
-   results.straight = test_end.move_forward(defines.rail_connection_direction.straight)
-
-   -- Test right
-   test_end = rail_end.make_copy()
-   results.right = test_end.move_forward(defines.rail_connection_direction.right)
-
-   return results
-end
-
----Debug function to output rail geometry info
----@param ent LuaEntity
----@return string
-local function debug_rail_info(ent)
-   local rail_types = {
-      ["straight-rail"] = true,
-      ["curved-rail-a"] = true,
-      ["curved-rail-b"] = true,
-      ["half-diagonal-rail"] = true,
-      ["elevated-straight-rail"] = true,
-      ["elevated-curved-rail-a"] = true,
-      ["elevated-curved-rail-b"] = true,
-      ["elevated-half-diagonal-rail"] = true,
-      ["rail-ramp"] = true,
-      ["legacy-straight-rail"] = true,
-      ["legacy-curved-rail"] = true,
-   }
-
-   if not rail_types[ent.name] then return "" end
-
-   local front_end = ent.get_rail_end(defines.rail_direction.front)
-   local back_end = ent.get_rail_end(defines.rail_direction.back)
-
-   local result = {
-      position = ent.position,
-      front = extract_rail_end_info(front_end, ent.position),
-      back = extract_rail_end_info(back_end, ent.position),
-   }
-
-   -- Add connection test results
-   result.front.connects = test_rail_connections(front_end)
-   result.back.connects = test_rail_connections(back_end)
-
-   return serpent.line(result, { nocode = true, comment = false })
-end
-
----@param ctx fa.Info.EntInfoContext
-local function ent_info_rail(ctx)
-   local ent = ctx.ent
-
-   local rail_types = {
-      ["straight-rail"] = true,
-      ["curved-rail-a"] = true,
-      ["curved-rail-b"] = true,
-      ["half-diagonal-rail"] = true,
-      ["elevated-straight-rail"] = true,
-      ["elevated-curved-rail-a"] = true,
-      ["elevated-curved-rail-b"] = true,
-      ["elevated-half-diagonal-rail"] = true,
-      ["rail-ramp"] = true,
-      ["legacy-straight-rail"] = true,
-      ["legacy-curved-rail"] = true,
-   }
-
-   if rail_types[ent.name] then
-      local debug_output = debug_rail_info(ent)
-      ctx.message:fragment(debug_output)
-   end
-end
-
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_character(ctx)
    local ent = ctx.ent
@@ -782,43 +650,6 @@ local function ent_info_train_stop(ctx)
    if ent.name == "train-stop" then
       local limit = ent.trains_limit or 0
       ctx.message:fragment({ "fa.ent-info-train-stop", ent.backer_name, limit })
-   end
-end
-
--- Returns train name announcement with id fallback.
----@param ctx fa.Info.EntInfoContext
-local function ent_info_train_owner(ctx)
-   local ent = ctx.ent
-   if ent.name == "locomotive" or ent.name == "cargo-wagon" or ent.name == "fluid-wagon" then
-      -- Trains not supported in 2.0 yet
-      ctx.message:fragment({ "fa.trains-not-supported" })
-   end
-end
-
----@param ctx fa.Info.EntInfoContext
-local function ent_info_rail_signal_state(ctx)
-   -- TODO: this should be folded into basic entity state where it belongs.
-   local ent = ctx.ent
-   if ent.name == "rail-signal" or ent.name == "rail-chain-signal" then
-      if ent.status == defines.entity_status.not_connected_to_rail then
-         ctx.message:fragment({ "fa.ent-info-rail-signal-not-connected" })
-      elseif ent.status == defines.entity_status.cant_divide_segments then
-         ctx.message:fragment({ "fa.ent-info-rail-signal-not-dividing" })
-      else
-         -- Rail signals not supported in 2.0 yet
-         ctx.message:fragment({ "fa.trains-not-supported" })
-      end
-   end
-end
-
----@param ctx fa.Info.EntInfoContext
-local function ent_info_rail_signal_heading(ctx)
-   local ent = ctx.ent
-   if ent.name == "rail-signal" or ent.name == "rail-chain-signal" then
-      ctx.message:fragment({
-         "fa.ent-info-rail-signal-heading",
-         FaUtils.direction_lookup(FaUtils.rotate_180(ent.direction)),
-      })
    end
 end
 
@@ -1461,7 +1292,6 @@ function mod.ent_info(pindex, ent, is_scanner)
    run_handler(ent_info_pole_neighbors, true)
 
    run_handler(ent_info_resource)
-   run_handler(ent_info_rail)
    run_handler(ent_info_character)
    run_handler(ent_info_character_corpse)
    run_handler(ent_info_container)
@@ -1473,10 +1303,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    run_handler(ent_info_fluid_connections)
 
    run_handler(ent_info_train_stop)
-   run_handler(ent_info_train_owner)
-   run_handler(ent_info_rail_signal_state)
    run_handler(ent_info_mining_drill_output_chute)
-   run_handler(ent_info_rail_signal_heading)
 
    run_handler(ent_info_gate_connection_point)
    run_handler(ent_info_marked_for_upgrade_deconstruct)
@@ -1523,12 +1350,6 @@ function mod.ent_info(pindex, ent, is_scanner)
          pickup_name = Localising.get_localised_name_with_fallback(pickup)
       else
          pickup_name = { "fa.ent-info-ground" }
-         local area_ents = ent.surface.find_entities_filtered({ position = ent.pickup_position })
-         for i, area_ent in ipairs(area_ents) do
-            if area_ent.type == "straight-rail" or area_ent.type == "curved-rail" then
-               pickup_name = Localising.get_localised_name_with_fallback(area_ent)
-            end
-         end
       end
       ctx.message:fragment({
          "fa.ent-info-inserter-picks-up-from",
@@ -1543,12 +1364,6 @@ function mod.ent_info(pindex, ent, is_scanner)
          drop_name = Localising.get_localised_name_with_fallback(drop)
       else
          drop_name = { "fa.ent-info-ground" }
-         local drop_area_ents = ent.surface.find_entities_filtered({ position = ent.drop_position })
-         for i, drop_area_ent in ipairs(drop_area_ents) do
-            if drop_area_ent.type == "straight-rail" or drop_area_ent.type == "curved-rail" then
-               drop_name = Localising.get_localised_name_with_fallback(drop_area_ent)
-            end
-         end
       end
       ctx.message:fragment({
          "fa.ent-info-inserter-drops-to",
@@ -1569,12 +1384,6 @@ function mod.ent_info(pindex, ent, is_scanner)
          drop_name = Localising.get_localised_name_with_fallback(drop)
       else
          drop_name = { "fa.ent-info-ground" }
-         local drop_area_ents = ent.surface.find_entities_filtered({ position = ent.drop_position })
-         for i, drop_area_ent in ipairs(drop_area_ents) do
-            if drop_area_ent.type == "straight-rail" or drop_area_ent.type == "curved-rail" then
-               drop_name = Localising.get_localised_name_with_fallback(drop_area_ent)
-            end
-         end
       end
       --Report info
       if drop ~= nil and drop.valid then ctx.message:fragment({ "fa.ent-info-mining-drill-outputs-to", drop_name }) end

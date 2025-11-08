@@ -120,9 +120,6 @@ function mod.get_rotation_count(stack)
    if stack.prototype.place_result then
       local placed = stack.prototype.place_result
 
-      -- Locomotives and artillery wagons are 2-way (180° only)
-      if placed.type == "locomotive" or placed.type == "artillery-wagon" then return 2 end
-
       -- Cars and entities that support direction are 4-way
       if placed.supports_direction or placed.type == "car" then return 4 end
    end

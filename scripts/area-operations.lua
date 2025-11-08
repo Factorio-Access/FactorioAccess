@@ -1,7 +1,7 @@
 --[[
 Area Operations
 Provides functionality for area-based mining and clearing operations.
-Handles area mining for obstacles, rails, ghosts, and with special tools.
+Handles area mining for obstacles, ghosts, and with special tools.
 ]]
 
 local Consts = require("scripts.consts")
@@ -57,29 +57,6 @@ function mod.mine_area(pindex)
          --Obstacles within 5 tiles: trees and rocks and ground items
          game.get_player(pindex).play_sound({ path = "player-mine" })
          cleared_count, comment = PlayerMiningTools.clear_obstacles_in_circle(pos, 5, pindex)
-      elseif ent.name == "straight-rail" or ent.name == "curved-rail" then
-         --Railway objects within 10 tiles (and their signals)
-         local rail_ents = surf.find_entities_filtered({
-            position = pos,
-            radius = 10,
-            name = { "straight-rail", "curved-rail", "rail-signal", "rail-chain-signal", "train-stop" },
-         })
-         for i, rail_ent in ipairs(rail_ents) do
-            p.play_sound({ path = "entity-mined/straight-rail" })
-            p.mine_entity(rail_ent, true)
-            cleared_count = cleared_count + 1
-         end
-         --Draw the clearing range
-         rendering.draw_circle({
-            color = { 0, 1, 0 },
-            radius = 10,
-            width = 2,
-            target = pos,
-            surface = surf,
-            time_to_live = 60,
-         })
-         Speech.speak(pindex, { "fa.cleared-railway-objects", tostring(cleared_count) })
-         return
       elseif ent.name == "entity-ghost" then
          --Ghosts within 10 tiles
          local ghosts = surf.find_entities_filtered({ position = pos, radius = 10, name = { "entity-ghost" } })

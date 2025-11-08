@@ -45,15 +45,7 @@ function mod.sync_build_cursor_graphics(pindex)
       })
       dir_indicator = player.building_dir_arrow
       dir_indicator.visible = true
-      if
-         storage.players[pindex].hide_cursor
-         or stack.name == "locomotive"
-         or stack.name == "cargo-wagon"
-         or stack.name == "fluid-wagon"
-         or stack.name == "artillery-wagon"
-      then
-         dir_indicator.visible = false
-      end
+      if storage.players[pindex].hide_cursor then dir_indicator.visible = false end
 
       --Redraw footprint (ent)
       if player.building_footprint ~= nil then player.building_footprint.destroy() end
@@ -64,7 +56,6 @@ function mod.sync_build_cursor_graphics(pindex)
          position = vp:get_cursor_pos(),
          building_direction = dir,
          player_direction = p_dir,
-         is_rail_vehicle = (stack.name == "rail"),
       })
 
       left_top = footprint.left_top
@@ -86,15 +77,7 @@ function mod.sync_build_cursor_graphics(pindex)
       player.building_footprint.visible = true
 
       --Hide the drawing in the desired cases
-      if
-         storage.players[pindex].hide_cursor
-         or stack.name == "locomotive"
-         or stack.name == "cargo-wagon"
-         or stack.name == "fluid-wagon"
-         or stack.name == "artillery-wagon"
-      then
-         player.building_footprint.visible = false
-      end
+      if storage.players[pindex].hide_cursor then player.building_footprint.visible = false end
 
       --Move mouse pointer to the center of the footprint
       Mouse.move_mouse_pointer(footprint.center, pindex)
