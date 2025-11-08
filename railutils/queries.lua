@@ -9,10 +9,70 @@ local RailInfo = require("railutils.rail-info")
 
 local mod = {}
 
+---Map from defines.direction to direction name
+---@type table<defines.direction, string>
+mod.DIRECTION_NAMES = {
+   [defines.direction.north] = "north",
+   [defines.direction.northnortheast] = "northnortheast",
+   [defines.direction.northeast] = "northeast",
+   [defines.direction.eastnortheast] = "eastnortheast",
+   [defines.direction.east] = "east",
+   [defines.direction.eastsoutheast] = "eastsoutheast",
+   [defines.direction.southeast] = "southeast",
+   [defines.direction.southsoutheast] = "southsoutheast",
+   [defines.direction.south] = "south",
+   [defines.direction.southsouthwest] = "southsouthwest",
+   [defines.direction.southwest] = "southwest",
+   [defines.direction.westsouthwest] = "westsouthwest",
+   [defines.direction.west] = "west",
+   [defines.direction.westnorthwest] = "westnorthwest",
+   [defines.direction.northwest] = "northwest",
+   [defines.direction.northnorthwest] = "northnorthwest",
+}
+
+---Map from defines.direction to cardinal name (only for cardinals)
+---@type table<defines.direction, string>
+mod.CARDINAL_NAMES = {
+   [defines.direction.north] = "north",
+   [defines.direction.east] = "east",
+   [defines.direction.south] = "south",
+   [defines.direction.west] = "west",
+}
+
+---Map from defines.direction to diagonal name (only for diagonals)
+---@type table<defines.direction, string>
+mod.DIAGONAL_NAMES = {
+   [defines.direction.northeast] = "northeast",
+   [defines.direction.southeast] = "southeast",
+   [defines.direction.southwest] = "southwest",
+   [defines.direction.northwest] = "northwest",
+}
+
+---Get direction name
+---@param direction defines.direction
+---@return string
+function mod.get_direction_name(direction)
+   return mod.DIRECTION_NAMES[direction] or "unknown"
+end
+
+---Get cardinal name (only for cardinal directions)
+---@param direction defines.direction
+---@return string|nil
+function mod.get_cardinal_name(direction)
+   return mod.CARDINAL_NAMES[direction]
+end
+
+---Get diagonal name (only for diagonal directions)
+---@param direction defines.direction
+---@return string|nil
+function mod.get_diagonal_name(direction)
+   return mod.DIAGONAL_NAMES[direction]
+end
+
 ---Map RailType to prototype type string for table lookup
 ---@param rail_type railutils.RailType
 ---@return string
-local function rail_type_to_prototype_type(rail_type)
+function mod.rail_type_to_prototype_type(rail_type)
    if rail_type == RailInfo.RailType.STRAIGHT then
       return "straight-rail"
    elseif rail_type == RailInfo.RailType.CURVE_A then
@@ -25,6 +85,22 @@ local function rail_type_to_prototype_type(rail_type)
    error("Unknown rail type: " .. tostring(rail_type))
 end
 
+---Map prototype type string to RailType
+---@param prototype string Prototype type string like "curved-rail-a"
+---@return railutils.RailType
+function mod.prototype_type_to_rail_type(prototype)
+   if prototype == "straight-rail" then
+      return RailInfo.RailType.STRAIGHT
+   elseif prototype == "curved-rail-a" then
+      return RailInfo.RailType.CURVE_A
+   elseif prototype == "curved-rail-b" then
+      return RailInfo.RailType.CURVE_B
+   elseif prototype == "half-diagonal-rail" then
+      return RailInfo.RailType.HALF_DIAGONAL
+   end
+   error("Unknown prototype: " .. tostring(prototype))
+end
+
 ---Get the grid-adjusted position where a rail will actually be placed
 ---
 ---Rails have parity requirements and the game snaps them to the grid by applying
@@ -35,7 +111,7 @@ end
 ---@param direction defines.direction Direction to place the rail
 ---@return fa.Point The actual position after grid adjustment
 function mod.get_adjusted_position(rail_type, position, direction)
-   local prototype_type = rail_type_to_prototype_type(rail_type)
+   local prototype_type = mod.rail_type_to_prototype_type(rail_type)
    local rail_entry = RailData[prototype_type]
    if not rail_entry then error("Unknown rail prototype: " .. prototype_type) end
 
@@ -49,6 +125,32 @@ function mod.get_adjusted_position(rail_type, position, direction)
       x = position.x + grid_offset.x,
       y = position.y + grid_offset.y,
    }
+end
+
+---Get both end directions for a rail
+---
+---Every rail has two ends. This returns the directions of both ends.
+---
+---@param rail_type railutils.RailType Type of rail
+---@param placement_direction defines.direction Direction the rail is placed
+---@return defines.direction[] Array of two end directions
+function mod.get_end_directions(rail_type, placement_direction)
+   local prototype_type = mod.rail_type_to_prototype_type(rail_type)
+   local rail_entry = RailData[prototype_type]
+   if not rail_entry then error("Unknown rail prototype: " .. prototype_type) end
+
+   local direction_entry = rail_entry[placement_direction]
+   if not direction_entry then error("Invalid placement direction for rail type: " .. placement_direction) end
+
+   local end_directions = {}
+   for key, value in pairs(direction_entry) do
+      -- End directions are numeric keys with extension data
+      if type(key) == "number" and value.extensions then table.insert(end_directions, key) end
+   end
+
+   if #end_directions ~= 2 then error("Expected 2 ends, found " .. #end_directions) end
+
+   return end_directions
 end
 
 ---Extension point information
@@ -77,7 +179,7 @@ function mod.get_extension_points_at_position(surface, position)
    local extension_points = {}
 
    for _, rail in ipairs(rails) do
-      local prototype_type = rail_type_to_prototype_type(rail.rail_type)
+      local prototype_type = mod.rail_type_to_prototype_type(rail.rail_type)
       local rail_entry = RailData[prototype_type]
 
       if rail_entry then

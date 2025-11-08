@@ -190,7 +190,7 @@ end)
 ```
 
 **Remember**:
-- Add test to `test_files` table in `control.lua`
+- Add test to `test_files` table in `scripts/test-framework.lua` (around line 29)
 - Test mod behavior, not Factorio API
 - Use local variables for state
 

@@ -424,6 +424,41 @@ railtable[prototype_type][placement_direction] = {
 
 **Note:** All coordinates are relative to the rail piece's actual position after placement, not the requested origin. The `grid_offset` field records the offset that the API applied.
 
+### Grid Offset Patterns
+
+The game applies two types of corrections when placing rails:
+
+1. **Direction Correction**: Straight and half-diagonal rails have their direction corrected using `direction % 8`. Curved rails (a and b) preserve their requested direction.
+
+2. **Position Correction**: Grid offsets depend on rail type, direction, and **position parity**.
+
+The grid offset formulas enforce the parity grid constraints described above. Straight rails snap to ensure their centers land at parity (1, 1). Curved rails implement the parity-shifting behavior needed to transition between grids.
+
+Let `x_parity = abs(request_x) % 2` and `y_parity = abs(request_y) % 2`.
+
+| Rail Type | Direction(s) | Game Grid Offset Formula |
+|-----------|--------------|--------------------------|
+| `straight-rail` | 0, 4 | `(1 - x_parity, 1 - y_parity)` |
+| `straight-rail` | 2, 6 | `(x_parity, y_parity)` |
+| `curved-rail-a` | 0, 2, 8, 10 | `(1 - x_parity, y_parity)` |
+| `curved-rail-a` | 4, 6, 12, 14 | `(x_parity, 1 - y_parity)` |
+| `curved-rail-b` | all | `(1 - x_parity, 1 - y_parity)` |
+| `half-diagonal-rail` | all | `(1 - x_parity, 1 - y_parity)` |
+
+**Directions shown after mod 8 correction for straight/half-diagonal rails.*
+
+**Parity Grid Enforcement**:
+- Straight rails (dirs 0, 4): Inverted parity `(1 - x_parity, 1 - y_parity)` ensures centers at parity (1, 1), enforcing the H/V grid constraint
+- Curved-a: Different formulas per direction implement the parity-swapping behavior `(e,o) → (o,e)`
+- Curved-b: Inverted parity implements the coordinate-shifting to transition to diagonal grid
+- Half-diagonal: Inverted parity preserves the endpoint parity relationship
+
+**Example**: Requesting `straight-rail` at `(-8, -8)` with direction `0` (north):
+1. Direction corrected: already `0` (north)
+2. Calculate parity: `x_parity = 8 % 2 = 0`, `y_parity = 8 % 2 = 0`
+3. Grid offset formula for N/S straight: `(1 - x_parity, 1 - y_parity) = (1, 1)`
+4. Final position: `(-8 + 1, -8 + 1) = (-7, -7)`
+
 **Lookup pattern:**
 1. Know: current piece type and placement direction (or just end direction)
 2. Find: extensions[desired_goal_direction]

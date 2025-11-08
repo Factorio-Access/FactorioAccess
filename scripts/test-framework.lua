@@ -54,6 +54,7 @@ local test_files = {
    -- "event-priority-test", -- Test EventManager priority system (requires custom events)
    "entity-ui-test", -- Test generic entity UI system
    "entity-selection-test", -- Test stable entity ordering (issue #265)
+   "rail-grid-adjustment-test", -- Test that TestSurface matches game rail grid adjustment
 }
 
 -- Test execution state

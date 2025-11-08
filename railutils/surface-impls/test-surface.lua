@@ -6,6 +6,7 @@ require("polyfill")
 
 local RailData = require("railutils.rail-data")
 local RailInfo = require("railutils.rail-info")
+local Queries = require("railutils.queries")
 
 local mod = {}
 
@@ -25,29 +26,13 @@ function mod.new()
    }, TestSurface_meta)
 end
 
----Map RailType to prototype type string for table lookup
----@param rail_type railutils.RailType
----@return string
-local function rail_type_to_prototype_type(rail_type)
-   if rail_type == RailInfo.RailType.STRAIGHT then
-      return "straight-rail"
-   elseif rail_type == RailInfo.RailType.CURVE_A then
-      return "curved-rail-a"
-   elseif rail_type == RailInfo.RailType.CURVE_B then
-      return "curved-rail-b"
-   elseif rail_type == RailInfo.RailType.HALF_DIAGONAL then
-      return "half-diagonal-rail"
-   end
-   error("Unknown rail type: " .. tostring(rail_type))
-end
-
 ---Check if a rail occupies a specific tile
 ---@param rail railutils.RailInfo The rail to check
 ---@param tile_x number Integer tile x coordinate
 ---@param tile_y number Integer tile y coordinate
 ---@return boolean
 local function rail_occupies_tile(rail, tile_x, tile_y)
-   local prototype_type = rail_type_to_prototype_type(rail.rail_type)
+   local prototype_type = Queries.rail_type_to_prototype_type(rail.rail_type)
    local rail_entry = RailData[prototype_type]
    if not rail_entry then return false end
 
@@ -73,22 +58,56 @@ end
 ---
 ---Like the real game, this applies grid alignment by looking up the grid_offset
 ---from the rail data and adjusting the position to match parity requirements.
+---Also corrects direction for straight rails (mod 8).
 ---
 ---@param rail_type railutils.RailType Type of rail to add
 ---@param position fa.Point Position to place the rail (will be adjusted for grid alignment)
 ---@param direction defines.direction Direction to place the rail
----@return railutils.RailInfo The added rail (with adjusted position)
+---@return railutils.RailInfo The added rail (with adjusted position and direction)
 function TestSurface:add_rail(rail_type, position, direction)
-   -- Look up grid offset from rail data
-   local prototype_type = rail_type_to_prototype_type(rail_type)
-   local rail_entry = RailData[prototype_type]
-   if not rail_entry then error("Unknown rail prototype: " .. prototype_type) end
+   -- Correct direction for straight and half-diagonal rails (game applies mod 8)
+   local corrected_direction = direction
+   if rail_type == RailInfo.RailType.STRAIGHT or rail_type == RailInfo.RailType.HALF_DIAGONAL then
+      corrected_direction = direction % 8
+   end
 
-   local direction_entry = rail_entry[direction]
-   if not direction_entry then error("Invalid direction for rail type: " .. direction) end
-
-   local grid_offset = direction_entry.grid_offset
-   if not grid_offset then error("No grid_offset found for rail") end
+   -- Determine grid offset based on rail type, corrected direction, and position parity
+   -- These patterns match the game's actual behavior (see devdocs/rail-geometry.md)
+   local grid_offset
+   if rail_type == RailInfo.RailType.STRAIGHT then
+      -- Straight rails snap to 2x2 grid to ensure centers at parity (1,1)
+      -- Both N/S and E/W orientations use inverted parity formula
+      local x_parity = math.abs(position.x) % 2
+      local y_parity = math.abs(position.y) % 2
+      if corrected_direction == 0 or corrected_direction == 4 then
+         -- Directions 0, 4: inverted parity (most common orientations)
+         grid_offset = { x = 1 - x_parity, y = 1 - y_parity }
+      else -- corrected_direction == 2 or 6
+         -- Directions 2, 6: direct parity (alternate orientations)
+         grid_offset = { x = x_parity, y = y_parity }
+      end
+   elseif rail_type == RailInfo.RailType.CURVE_A then
+      -- Curved-a rails depend on both X and Y parity
+      local x_parity = math.abs(position.x) % 2
+      local y_parity = math.abs(position.y) % 2
+      if corrected_direction == 0 or corrected_direction == 2 or corrected_direction == 8 or corrected_direction == 10 then
+         grid_offset = { x = 1 - x_parity, y = y_parity }
+      else -- 4, 6, 12, 14
+         grid_offset = { x = x_parity, y = 1 - y_parity }
+      end
+   elseif rail_type == RailInfo.RailType.CURVE_B then
+      -- Curved-b rails depend on both X and Y parity
+      local x_parity = math.abs(position.x) % 2
+      local y_parity = math.abs(position.y) % 2
+      grid_offset = { x = 1 - x_parity, y = 1 - y_parity }
+   elseif rail_type == RailInfo.RailType.HALF_DIAGONAL then
+      -- Half-diagonal rails depend on both X and Y parity (after mod 8)
+      local x_parity = math.abs(position.x) % 2
+      local y_parity = math.abs(position.y) % 2
+      grid_offset = { x = 1 - x_parity, y = 1 - y_parity }
+   else
+      error("Unknown rail type: " .. tostring(rail_type))
+   end
 
    -- Apply grid offset (what the game does for parity alignment)
    local adjusted_position = {
@@ -99,7 +118,7 @@ function TestSurface:add_rail(rail_type, position, direction)
    local rail = {
       prototype_position = adjusted_position,
       rail_type = rail_type,
-      direction = direction,
+      direction = corrected_direction,
       unit_number = self._next_unit_number,
    }
 
