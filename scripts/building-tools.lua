@@ -217,7 +217,6 @@ function mod.build_item_in_hand_with_params(params)
 
       if p.can_build_from_cursor(building) then
          p.build_from_cursor(building)
-         read_tile(pindex)
          return true
       else
          -- Report errors (if enabled)
@@ -356,7 +355,6 @@ function mod.place_ghost_with_params(params)
 
    if ghost then
       Speech.speak(pindex, { "fa.building-placed-ghost", { "entity-name." .. decision.entity_name } })
-      read_tile(pindex)
       return true
    else
       -- Ghost placement failed

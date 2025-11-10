@@ -59,6 +59,7 @@ local SpidertronRemote = require("scripts.spidertron-remote")
 local TH = require("scripts.table-helpers")
 local Teleport = require("scripts.teleport")
 local TestFramework = require("scripts.test-framework")
+local TileReader = require("scripts.tile-reader")
 local TransportBelts = require("scripts.transport-belts")
 local TravelTools = require("scripts.travel-tools")
 local VirtualTrainDriving = require("scripts.rails.virtual-train-driving")
@@ -209,87 +210,24 @@ function check_for_player(index)
    end
 end
 
---refresh_player_tile has been moved to EntitySelection module
+---Local helper: Reads tile info and adds build preview info if player is holding a building
+---@param pindex integer Player index
+---@param start_text string? Optional text to prepend to the result
+local function read_tile_with_preview_info(pindex, start_text)
+   local result = TileReader.read_tile_inner(pindex)
 
--- Lua's version of a forward declaration.
-local read_tile_inner
-
---Reads the cursor tile and reads out the result. If an entity is found, its ent info is read. Otherwise info about the tile itself is read.
-function read_tile(pindex, start_text)
-   local res = read_tile_inner(pindex)
-   if start_text then table.insert(res, 1, start_text) end
-   Speech.speak(pindex, FaUtils.localise_cat_table(res))
-end
-
-read_tile_inner = function(pindex, start_text)
-   local result = {}
-
-   local tile_name, tile_object = EntitySelection.get_player_tile(pindex)
-   if not tile_name then return { "Tile uncharted and out of range" } end
-
+   -- Add build preview info if holding a building and tile is empty/has resources
    local ent = EntitySelection.get_first_ent_at_tile(pindex)
-   if not (ent and ent.valid) then
-      --If there is no ent, read the tile instead
-      table.insert(result, Localising.get_localised_name_with_fallback(tile_object))
-      if
-         tile_name == "water"
-         or tile_name == "deepwater"
-         or tile_name == "water-green"
-         or tile_name == "deepwater-green"
-         or tile_name == "water-shallow"
-         or tile_name == "water-mud"
-         or tile_name == "water-wube"
-      then
-         --Identify shores and crevices and so on for water tiles
-         table.insert(result, FaUtils.identify_water_shores(pindex))
-      end
-      Graphics.draw_cursor_highlight(pindex, nil, nil)
-      game.get_player(pindex).selected = nil
-   else --laterdo tackle the issue here where entities such as tree stumps block preview info
-      -- Special handling for rails: announce all rails at this position
-      if ent.type == "straight-rail" then
-         local player = game.get_player(pindex)
-         if player then
-            local floor_x = math.floor(ent.position.x)
-            local floor_y = math.floor(ent.position.y)
-            local search_area = {
-               { x = floor_x + 0.001, y = floor_y + 0.001 },
-               { x = floor_x + 0.999, y = floor_y + 0.999 },
-            }
-
-            -- Find all rail entities at this position
-            local rail_entities = player.surface.find_entities_filtered({
-               area = search_area,
-               type = { "straight-rail", "curved-rail-a", "curved-rail-b", "half-diagonal-rail" },
-            })
-
-            -- Announce each rail
-            if #rail_entities > 0 then
-               for _, rail_entity in ipairs(rail_entities) do
-                  if rail_entity and rail_entity.valid then
-                     table.insert(result, FaInfo.ent_info(pindex, rail_entity))
-                  end
-               end
-            end
-         end
-      else
-         table.insert(result, FaInfo.ent_info(pindex, ent))
-      end
-      Graphics.draw_cursor_highlight(pindex, ent, nil)
-      game.get_player(pindex).selected = ent
-   end
-   if not ent or ent.type == "resource" then --possible bug here with the h box being a new tile ent
+   if not ent or ent.type == "resource" then
       local stack = game.get_player(pindex).cursor_stack
-      --Run build preview checks
       if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result ~= nil then
          table.insert(result, BuildingTools.build_preview_checks_info(stack, pindex))
-         --game.get_player(pindex).print(result)--
       end
    end
 
-   --Add info on whether the tile is uncharted or blurred or distant
-   table.insert(result, Mouse.cursor_visibility_info(pindex))
-   return result
+   -- Add optional prefix and speak
+   if start_text then table.insert(result, 1, start_text) end
+   Speech.speak(pindex, FaUtils.localise_cat_table(result))
 end
 
 --Update the position info and cursor info during smooth walking.
@@ -1240,7 +1178,7 @@ local function move(direction, pindex, nudged)
          storage.players[pindex].position = new_pos
          if nudged ~= true then
             vp:set_cursor_pos(FaUtils.offset_position_legacy(storage.players[pindex].position, direction, 1))
-            read_tile(pindex)
+            read_tile_with_preview_info(pindex)
          end
 
          local stack = first_player.cursor_stack
@@ -1275,7 +1213,7 @@ local function move(direction, pindex, nudged)
          )
       then
          target_mouse_pointer_deprecated(pindex)
-         read_tile(pindex)
+         read_tile_with_preview_info(pindex)
       end
 
       --Rotate belts in hand for build lock Mode
@@ -1346,7 +1284,7 @@ local function cursor_mode_move(direction, pindex, single_only)
       vp:set_cursor_pos_continuous(cursor_pos, direction)
 
       EntitySelection.reset_entity_index(pindex)
-      read_tile(pindex)
+      read_tile_with_preview_info(pindex)
 
       --Update drawn cursor
       local stack = p.cursor_stack
@@ -1720,7 +1658,7 @@ local function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
    end
 
    --Read the tile reached
-   read_tile(pindex, result)
+   read_tile_with_preview_info(pindex, result)
    Graphics.sync_build_cursor_graphics(pindex)
 end
 
@@ -2010,7 +1948,7 @@ EventManager.on_event(
    "fa-k",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      -- Check for virtual train driving (status command doesn't need read_tile)
+      -- Check for virtual train driving (status command doesn't need TileReader.read_tile)
       if VirtualTrainDriving.on_kb_descriptive_action_name(event) then return end
 
       read_coords(pindex)
@@ -2230,7 +2168,7 @@ EventManager.on_event(
    function(event, pindex)
       -- Check for virtual train driving
       if VirtualTrainDriving.on_kb_descriptive_action_name(event) then
-         read_tile(pindex)
+         TileReader.read_tile(pindex)
          return
       end
 
@@ -2348,7 +2286,7 @@ local function toggle_cursor_mode(pindex, muted)
       --Finally, read the new tile
       vp:set_cursor_anchored(false)
       -- For the unanchored case it's worth reading the tile the cursor ended up on.
-      if muted ~= true then read_tile(pindex, { "fa.unanchored-cursor" }) end
+      if muted ~= true then read_tile_with_preview_info(pindex, { "fa.unanchored-cursor" }) end
    end
 end
 
@@ -3001,12 +2939,13 @@ local function kb_click_hand(event)
          elseif proto.place_result or proto.place_as_tile_result then
             -- Item can be placed/built
             local vp = Viewpoint.get_viewpoint(pindex)
-            BuildingTools.build_item_in_hand_with_params({
+            local success = BuildingTools.build_item_in_hand_with_params({
                pindex = pindex,
                building_direction = vp:get_hand_direction(),
                flip_horizontal = vp:get_flipped_horizontal(),
                flip_vertical = vp:get_flipped_vertical(),
             })
+            if success then TileReader.read_tile(pindex) end
          else
             -- Item cannot be built (e.g., intermediate products, tools, etc.)
             -- Could add a message or different action here if needed
@@ -3016,12 +2955,13 @@ local function kb_click_hand(event)
    elseif player.cursor_ghost then
       -- Ghost building
       local vp = Viewpoint.get_viewpoint(pindex)
-      BuildingTools.build_item_in_hand_with_params({
+      local success = BuildingTools.build_item_in_hand_with_params({
          pindex = pindex,
          building_direction = vp:get_hand_direction(),
          flip_horizontal = vp:get_flipped_horizontal(),
          flip_vertical = vp:get_flipped_vertical(),
       })
+      if success then TileReader.read_tile(pindex) end
    end
 end
 
@@ -3416,12 +3356,13 @@ EventManager.on_event(
          if proto.place_result or proto.place_as_tile_result then
             -- Item can be placed as a ghost
             local vp = Viewpoint.get_viewpoint(pindex)
-            BuildingTools.place_ghost_with_params({
+            local success = BuildingTools.place_ghost_with_params({
                pindex = pindex,
                building_direction = vp:get_hand_direction(),
                flip_horizontal = vp:get_flipped_horizontal(),
                flip_vertical = vp:get_flipped_vertical(),
             })
+            if success then TileReader.read_tile(pindex) end
          else
             -- Item cannot be built
             Speech.speak(pindex, { "fa.cannot-build-item" })
@@ -4082,7 +4023,7 @@ end
 EventManager.on_event("fa-comma", function(event)
    -- Check for virtual train driving
    if VirtualTrainDriving.on_kb_descriptive_action_name(event) then
-      read_tile(event.player_index)
+      TileReader.read_tile(event.player_index)
       return
    end
 
@@ -4116,7 +4057,7 @@ end, EventManager.EVENT_KIND.WORLD)
 EventManager.on_event("fa-m", function(event)
    -- Check for virtual train driving
    if VirtualTrainDriving.on_kb_descriptive_action_name(event) then
-      read_tile(event.player_index)
+      TileReader.read_tile(event.player_index)
       return
    end
 
@@ -4133,7 +4074,7 @@ EventManager.on_event("fa-m", function(event)
          return
       elseif stack.prototype.type == "spidertron-remote" then
          SpidertronRemote.cycle_spidertrons(player, -1)
-         read_tile(pindex)
+         TileReader.read_tile(pindex)
          return
       end
    end
@@ -4144,7 +4085,7 @@ end, EventManager.EVENT_KIND.WORLD)
 EventManager.on_event("fa-dot", function(event)
    -- Check for virtual train driving
    if VirtualTrainDriving.on_kb_descriptive_action_name(event) then
-      read_tile(event.player_index)
+      TileReader.read_tile(event.player_index)
       return
    end
 
@@ -4161,7 +4102,7 @@ EventManager.on_event("fa-dot", function(event)
          return
       elseif stack.prototype.type == "spidertron-remote" then
          SpidertronRemote.cycle_spidertrons(player, 1)
-         read_tile(pindex)
+         TileReader.read_tile(pindex)
          return
       end
    end
@@ -4225,7 +4166,7 @@ end, EventManager.EVENT_KIND.WORLD)
 EventManager.on_event("fa-backspace", function(event)
    -- Check for virtual train driving
    if VirtualTrainDriving.on_kb_descriptive_action_name(event) then
-      read_tile(event.player_index)
+      TileReader.read_tile(event.player_index)
       return
    end
 

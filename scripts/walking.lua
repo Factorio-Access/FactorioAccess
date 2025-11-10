@@ -21,6 +21,7 @@ local FaUtils = require("scripts.fa-utils")
 local EntitySelection = require("scripts.entity-selection")
 local Graphics = require("scripts.graphics")
 local Sounds = require("scripts.ui.sounds")
+local TileReader = require("scripts.tile-reader")
 
 local mod = {}
 
@@ -99,7 +100,7 @@ function mod.process_walking_announcements(pindex)
             player.selected = nil
          end
 
-         read_tile(pindex)
+         TileReader.read_tile(pindex)
       else
          Graphics.draw_cursor_highlight(pindex, nil, nil)
          player.selected = nil
