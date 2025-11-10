@@ -121,21 +121,6 @@ local dirs = defines.direction
 -- Initialize players as a deny-access table to catch any direct usage
 players = TH.deny_access_table()
 
---This function gets scheduled.
-function call_to_fix_zoom(pindex)
-   Zoom.fix_zoom(pindex)
-end
-
---This function gets scheduled.
-function call_to_sync_graphics(pindex)
-   Graphics.sync_build_cursor_graphics(pindex)
-end
-
---This function gets scheduled.
-function call_to_restore_equipped_atomic_bombs(pindex)
-   Equipment.restore_equipped_atomic_bombs(pindex)
-end
-
 --Reads the item in hand, its facing direction if applicable, its count, and its total count including units in the main inventory.
 ---@param pindex number
 local function read_hand(pindex)
@@ -334,23 +319,8 @@ EventManager.on_event(
    end
 )
 
---Schedules a function to be called after a certain number of ticks.
-function schedule(ticks_in_the_future, func_to_call, data_to_pass_1, data_to_pass_2, data_to_pass_3)
-   if type(_G[func_to_call]) ~= "function" then error(func_to_call .. " is not a function") end
-   if ticks_in_the_future <= 0 then
-      _G[func_to_call](data_to_pass_1, data_to_pass_2, data_to_pass_3)
-      return
-   end
-   local tick = game.tick + ticks_in_the_future
-   local schedule = storage.scheduled_events
-   schedule[tick] = schedule[tick] or {}
-   table.insert(schedule[tick], { func_to_call, data_to_pass_1, data_to_pass_2, data_to_pass_3 })
-end
-
 --Handles a player joining into a game session.
 function on_player_join(pindex)
-   schedule(3, "call_to_fix_zoom", pindex)
-   schedule(4, "call_to_sync_graphics", pindex)
    local playerList = {}
    for _, p in pairs(game.connected_players) do
       playerList["_" .. p.index] = p.name
@@ -405,18 +375,12 @@ local function move_characters(event)
    end
 end
 
---Called every tick. Used to call scheduled and repeated functions.
+--Called every tick.
 function on_tick(event)
    ScannerEntrypoint.on_tick()
    MovementHistory.update_all_players()
    Rulers.update_all_players()
 
-   if storage.scheduled_events[event.tick] then
-      for _, to_call in pairs(storage.scheduled_events[event.tick]) do
-         _G[to_call[1]](to_call[2], to_call[3], to_call[4])
-      end
-      storage.scheduled_events[event.tick] = nil
-   end
    move_characters(event)
 
    -- Check alerts via AudioCues
@@ -436,7 +400,6 @@ function on_tick(event)
       end
    end
 
-   --The elseifs can schedule up to 16 events.
    if event.tick % 15 == 0 then
       for pindex, player in pairs(players) do
          -- Other periodic checks can go here
@@ -822,8 +785,6 @@ function ensure_storage_structures_are_up_to_date()
       table.insert(building_types, i)
    end
    table.insert(building_types, "character")
-
-   storage.scheduled_events = storage.scheduled_events or {}
 end
 
 EventManager.on_load(function()
@@ -848,10 +809,7 @@ EventManager.on_event(
    defines.events.on_cutscene_cancelled,
    ---@param event EventData.on_cutscene_cancelled
    ---@param pindex integer
-   function(event, pindex)
-      schedule(3, "call_to_fix_zoom", pindex)
-      schedule(4, "call_to_sync_graphics", pindex)
-   end
+   function(event, pindex) end
 )
 
 EventManager.on_event(
@@ -859,8 +817,6 @@ EventManager.on_event(
    ---@param event EventData.on_cutscene_finished
    ---@param pindex integer
    function(event, pindex)
-      schedule(3, "call_to_fix_zoom", pindex)
-      schedule(4, "call_to_sync_graphics", pindex)
       --Speech.speak(pindex, "Press TAB to continue")
    end
 )
@@ -1118,8 +1074,6 @@ EventManager.on_event(
       game
          .get_player(pindex)
          .print("Display resolution changed: " .. new_res.width .. " x " .. new_res.height, { volume_modifier = 0 })
-      schedule(3, "call_to_fix_zoom", pindex)
-      schedule(4, "call_to_sync_graphics", pindex)
    end
 )
 
@@ -1131,8 +1085,6 @@ EventManager.on_event(
       local new_sc = game.get_player(pindex).display_scale
       if players and storage.players[pindex] then storage.players[pindex].display_resolution = new_sc end
       game.get_player(pindex).print("Display scale changed: " .. new_sc, { volume_modifier = 0 })
-      schedule(3, "call_to_fix_zoom", pindex)
-      schedule(4, "call_to_sync_graphics", pindex)
    end
 )
 

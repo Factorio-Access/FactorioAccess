@@ -467,15 +467,9 @@ function mod.run_atomic_bomb_checks(pindex)
 
    --Take actions to abort the firing
    if abort_missle then
-      --Remove all atomic bombs
-      Equipment.delete_equipped_atomic_bombs(pindex)
-
       --Warn the player
       p.play_sound({ path = "utility/cannot_build" })
       Speech.speak(pindex, abort_message)
-
-      --Schedule to restore the items on a later tick
-      schedule(310, "call_to_restore_equipped_atomic_bombs", pindex)
    else
       --Suppress alerts for 10 seconds?
    end
