@@ -61,6 +61,7 @@ local Teleport = require("scripts.teleport")
 local TestFramework = require("scripts.test-framework")
 local TransportBelts = require("scripts.transport-belts")
 local TravelTools = require("scripts.travel-tools")
+local VirtualTrainDriving = require("scripts.rails.virtual-train-driving")
 
 -- UI modules (required for registration with router)
 require("scripts.ui.belt-analyzer")
@@ -260,7 +261,35 @@ read_tile_inner = function(pindex, start_text)
       Graphics.draw_cursor_highlight(pindex, nil, nil)
       game.get_player(pindex).selected = nil
    else --laterdo tackle the issue here where entities such as tree stumps block preview info
-      table.insert(result, FaInfo.ent_info(pindex, ent))
+      -- Special handling for rails: announce all rails at this position
+      if ent.type == "straight-rail" then
+         local player = game.get_player(pindex)
+         if player then
+            local floor_x = math.floor(ent.position.x)
+            local floor_y = math.floor(ent.position.y)
+            local search_area = {
+               { x = floor_x + 0.001, y = floor_y + 0.001 },
+               { x = floor_x + 0.999, y = floor_y + 0.999 },
+            }
+
+            -- Find all rail entities at this position
+            local rail_entities = player.surface.find_entities_filtered({
+               area = search_area,
+               type = { "straight-rail", "curved-rail-a", "curved-rail-b", "half-diagonal-rail" },
+            })
+
+            -- Announce each rail
+            if #rail_entities > 0 then
+               for _, rail_entity in ipairs(rail_entities) do
+                  if rail_entity and rail_entity.valid then
+                     table.insert(result, FaInfo.ent_info(pindex, rail_entity))
+                  end
+               end
+            end
+         end
+      else
+         table.insert(result, FaInfo.ent_info(pindex, ent))
+      end
       Graphics.draw_cursor_highlight(pindex, ent, nil)
       game.get_player(pindex).selected = ent
    end
@@ -728,6 +757,7 @@ EventManager.on_event(
    ---@param pindex integer
    function(event, pindex)
       CursorChanges.on_cursor_stack_changed(event, pindex, read_hand)
+      VirtualTrainDriving.on_cursor_stack_changed(event)
    end
 )
 
@@ -2028,6 +2058,9 @@ EventManager.on_event(
    "fa-k",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
+      -- Check for virtual train driving (status command doesn't need read_tile)
+      if VirtualTrainDriving.on_kb_descriptive_action_name(event) then return end
+
       read_coords(pindex)
    end
 )
@@ -2219,6 +2252,9 @@ EventManager.on_event(
    "fa-s-b",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
+      -- Check for virtual train driving (create bookmark)
+      if VirtualTrainDriving.on_kb_descriptive_action_name(event) then return end
+
       kb_s_b(event)
    end
 )
@@ -2240,6 +2276,12 @@ EventManager.on_event(
    "fa-b",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
+      -- Check for virtual train driving
+      if VirtualTrainDriving.on_kb_descriptive_action_name(event) then
+         read_tile(pindex)
+         return
+      end
+
       kb_b(event)
    end
 )
@@ -3139,6 +3181,14 @@ EventManager.on_event(
             local cursor_pos = vp:get_cursor_pos()
             SpidertronRemote.add_to_autopilot(p, cursor_pos, false)
             return
+         elseif stack.prototype.rails then
+            -- Rail planner: check if there's a rail at cursor to lock onto
+            local ent = EntitySelection.get_first_ent_at_tile(pindex)
+            if ent and ent.valid and ent.type == "straight-rail" then
+               VirtualTrainDriving.lock_on_to_rail(pindex, ent)
+               return
+            end
+            -- No rail at cursor, fall through to normal click behavior
          end
       end
 
@@ -4078,6 +4128,12 @@ local function positions_match(pos1, pos2)
 end
 
 EventManager.on_event("fa-comma", function(event)
+   -- Check for virtual train driving
+   if VirtualTrainDriving.on_kb_descriptive_action_name(event) then
+      read_tile(event.player_index)
+      return
+   end
+
    local pindex = event.player_index
    local player = game.get_player(pindex)
    if not player then return end
@@ -4106,6 +4162,12 @@ EventManager.on_event("fa-comma", function(event)
 end, EventManager.EVENT_KIND.WORLD)
 
 EventManager.on_event("fa-m", function(event)
+   -- Check for virtual train driving
+   if VirtualTrainDriving.on_kb_descriptive_action_name(event) then
+      read_tile(event.player_index)
+      return
+   end
+
    local pindex = event.player_index
    local player = game.get_player(pindex)
    local stack = player.cursor_stack
@@ -4128,6 +4190,12 @@ EventManager.on_event("fa-m", function(event)
 end, EventManager.EVENT_KIND.WORLD)
 
 EventManager.on_event("fa-dot", function(event)
+   -- Check for virtual train driving
+   if VirtualTrainDriving.on_kb_descriptive_action_name(event) then
+      read_tile(event.player_index)
+      return
+   end
+
    local pindex = event.player_index
    local player = game.get_player(pindex)
    local stack = player.cursor_stack
@@ -4147,6 +4215,18 @@ EventManager.on_event("fa-dot", function(event)
    end
 
    cycle_blueprint_book(pindex, 1)
+end, EventManager.EVENT_KIND.WORLD)
+
+EventManager.on_event("fa-a-comma", function(event)
+   -- Check for virtual train driving
+   if VirtualTrainDriving.on_kb_descriptive_action_name(event) then return end
+end, EventManager.EVENT_KIND.WORLD)
+
+EventManager.on_event("fa-slash", function(event)
+   -- Check for virtual train driving first
+   if VirtualTrainDriving.on_kb_descriptive_action_name(event) then return end
+
+   -- Otherwise, fall through to UI handling (handled by router)
 end, EventManager.EVENT_KIND.WORLD)
 
 -- Dangerous delete: Delete blueprint/decon/upgrade planner from hand, or clear spidertron remote list
@@ -4191,6 +4271,12 @@ end, EventManager.EVENT_KIND.WORLD)
 
 -- Clear autopilot for spidertron remote
 EventManager.on_event("fa-backspace", function(event)
+   -- Check for virtual train driving
+   if VirtualTrainDriving.on_kb_descriptive_action_name(event) then
+      read_tile(event.player_index)
+      return
+   end
+
    local pindex = event.player_index
    local player = game.get_player(pindex)
    if not player then return end
@@ -4283,3 +4369,33 @@ EventManager.on_event("fa-o", function(event)
       Speech.speak(pindex, { "fa.trash-full-none-inserted" })
    end
 end, EventManager.EVENT_KIND.WORLD)
+
+-- Virtual train driving keys
+-- TODO: Add these key definitions to data.lua
+-- EventManager.on_event("fa-slash", function(event)
+--    VirtualTrainDriving.on_kb_descriptive_action_name(event)
+-- end, EventManager.EVENT_KIND.WORLD)
+
+-- EventManager.on_event("fa-alt-comma", function(event)
+--    VirtualTrainDriving.on_kb_descriptive_action_name(event)
+-- end, EventManager.EVENT_KIND.WORLD)
+
+-- EventManager.on_event("fa-shift-b", function(event)
+--    VirtualTrainDriving.on_kb_descriptive_action_name(event)
+-- end, EventManager.EVENT_KIND.WORLD)
+
+-- EventManager.on_event("fa-ctrl-m", function(event)
+--    VirtualTrainDriving.on_kb_descriptive_action_name(event)
+-- end, EventManager.EVENT_KIND.WORLD)
+
+-- EventManager.on_event("fa-ctrl-dot", function(event)
+--    VirtualTrainDriving.on_kb_descriptive_action_name(event)
+-- end, EventManager.EVENT_KIND.WORLD)
+
+-- EventManager.on_event("fa-shift-m", function(event)
+--    VirtualTrainDriving.on_kb_descriptive_action_name(event)
+-- end, EventManager.EVENT_KIND.WORLD)
+
+-- EventManager.on_event("fa-shift-dot", function(event)
+--    VirtualTrainDriving.on_kb_descriptive_action_name(event)
+-- end, EventManager.EVENT_KIND.WORLD)

@@ -48,6 +48,10 @@ local TransportBelts = require("scripts.transport-belts")
 local Viewpoint = require("scripts.viewpoint")
 local Wires = require("scripts.wires")
 local BotLogistics = require("scripts.worker-robots")
+local RailDescriber = require("railutils.rail-describer")
+local RailAnnouncer = require("scripts.rails.announcer")
+local SurfaceHelper = require("scripts.rails.surface-helper")
+local RailQueries = require("railutils.queries")
 
 local mod = {}
 
@@ -131,6 +135,16 @@ local function ent_info_facing(ctx)
    local effective_direction
    -- Set in the case where we detect symmetry.
    local secondary_effective_direction
+
+   -- Skip facing for rails - they have their own description system
+   if
+      ent.type == "straight-rail"
+      or ent.type == "half-diagonal-rail"
+      or ent.type == "curved-rail-a"
+      or ent.type == "curved-rail-b"
+   then
+      return
+   end
 
    if
       (ent.prototype.is_building and ent.supports_direction)
@@ -1228,6 +1242,33 @@ local function ent_info_filters(ctx)
    end
 end
 
+---Rail description using railutils
+---@param ctx fa.Info.EntInfoContext
+local function ent_info_rail(ctx)
+   if
+      ctx.ent.type ~= "straight-rail"
+      and ctx.ent.type ~= "half-diagonal-rail"
+      and ctx.ent.type ~= "curved-rail-a"
+      and ctx.ent.type ~= "curved-rail-b"
+   then
+      return
+   end
+
+   -- Wrap the surface (hardcoded to vanilla for now)
+   local wrapped_surface = SurfaceHelper.wrap_surface_vanilla(ctx.player.surface)
+   if not wrapped_surface then return end
+
+   -- Convert entity to railutils types
+   local rail_type = RailQueries.prototype_type_to_rail_type(ctx.ent.name)
+   if not rail_type then return end
+
+   -- Describe and announce the rail
+   local description = RailDescriber.describe_rail(wrapped_surface, rail_type, ctx.ent.direction, ctx.ent.position)
+   local announcement = RailAnnouncer.announce_rail(description)
+
+   ctx.message:fragment(announcement)
+end
+
 --Outputs basic entity info, usually called when the cursor selects an entity.
 ---@param ent LuaEntity
 ---@return LocalisedString
@@ -1258,6 +1299,13 @@ function mod.ent_info(pindex, ent, is_scanner)
       -- For roboports, announce both prototype name and backer_name
       ctx.message:fragment(Localising.get_localised_name_with_fallback(ent))
       ctx.message:fragment(ent.backer_name)
+   elseif
+      ent.type == "straight-rail"
+      or ent.type == "half-diagonal-rail"
+      or ent.type == "curved-rail-a"
+      or ent.type == "curved-rail-b"
+   then
+      -- For rails, skip entity name - rail classification will be announced by ent_info_rail handler
    else
       ctx.message:fragment(Localising.get_localised_name_with_fallback(ent))
    end
@@ -1284,6 +1332,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    end
 
    run_handler(ent_info_facing, true)
+   run_handler(ent_info_rail, true)
    run_handler(ent_info_combinator_description)
    run_handler(ent_info_underground_belt_type, true)
 

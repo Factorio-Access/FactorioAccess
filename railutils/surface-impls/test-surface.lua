@@ -90,7 +90,12 @@ function TestSurface:add_rail(rail_type, position, direction)
       -- Curved-a rails depend on both X and Y parity
       local x_parity = math.abs(position.x) % 2
       local y_parity = math.abs(position.y) % 2
-      if corrected_direction == 0 or corrected_direction == 2 or corrected_direction == 8 or corrected_direction == 10 then
+      if
+         corrected_direction == 0
+         or corrected_direction == 2
+         or corrected_direction == 8
+         or corrected_direction == 10
+      then
          grid_offset = { x = 1 - x_parity, y = y_parity }
       else -- 4, 6, 12, 14
          grid_offset = { x = x_parity, y = 1 - y_parity }

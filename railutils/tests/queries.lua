@@ -23,7 +23,8 @@ function mod.TestGetExtensionPoints_StraightRailNorth()
    surface:add_rail(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
 
    -- Query at the actual position where the rail was placed (after grid adjustment)
-   local adjusted_pos = Queries.get_adjusted_position(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
+   local adjusted_pos =
+      Queries.get_adjusted_position(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
    local extensions = Queries.get_extension_points_at_position(surface, adjusted_pos)
 
    -- A straight rail has 2 ends, each end has 3 extensions
@@ -51,7 +52,8 @@ function mod.TestGetExtensionPoints_ExtensionDirections()
    -- Place a straight rail at origin facing north
    surface:add_rail(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
 
-   local adjusted_pos = Queries.get_adjusted_position(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
+   local adjusted_pos =
+      Queries.get_adjusted_position(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
    local extensions = Queries.get_extension_points_at_position(surface, adjusted_pos)
 
    -- From the north end (facing north), we should be able to extend to:
@@ -74,7 +76,8 @@ function mod.TestGetExtensionPoints_UnitNumber()
 
    local rail = surface:add_rail(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
 
-   local adjusted_pos = Queries.get_adjusted_position(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
+   local adjusted_pos =
+      Queries.get_adjusted_position(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
    local extensions = Queries.get_extension_points_at_position(surface, adjusted_pos)
 
    -- All extensions should reference the rail's unit number
@@ -94,7 +97,8 @@ function mod.TestGetExtensionPoints_MultipleRails()
    surface:add_rail(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.east)
 
    -- Both north and east straight rails have grid_offset (1, 1), so they end up at the same position
-   local adjusted_pos = Queries.get_adjusted_position(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
+   local adjusted_pos =
+      Queries.get_adjusted_position(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
    local extensions = Queries.get_extension_points_at_position(surface, adjusted_pos)
 
    -- Each rail has 6 unique goal directions, and they don't overlap
@@ -116,7 +120,8 @@ function mod.TestGetExtensionPoints_AbsolutePositions()
    local requested_pos = { x = 10, y = 20 }
    surface:add_rail(RailInfo.RailType.STRAIGHT, requested_pos, defines.direction.north)
 
-   local adjusted_pos = Queries.get_adjusted_position(RailInfo.RailType.STRAIGHT, requested_pos, defines.direction.north)
+   local adjusted_pos =
+      Queries.get_adjusted_position(RailInfo.RailType.STRAIGHT, requested_pos, defines.direction.north)
    local extensions = Queries.get_extension_points_at_position(surface, adjusted_pos)
 
    -- Verify that positions are absolute (not relative to rail)
