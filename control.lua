@@ -4123,6 +4123,35 @@ EventManager.on_event("fa-slash", function(event)
    -- Otherwise, fall through to UI handling (handled by router)
 end, EventManager.EVENT_KIND.WORLD)
 
+-- Virtual train signal placement keybindings
+EventManager.on_event("fa-c-m", function(event)
+   if VirtualTrainDriving.on_kb_descriptive_action_name(event) then
+      TileReader.read_tile(event.player_index)
+      return
+   end
+end, EventManager.EVENT_KIND.WORLD)
+
+EventManager.on_event("fa-s-m", function(event)
+   if VirtualTrainDriving.on_kb_descriptive_action_name(event) then
+      TileReader.read_tile(event.player_index)
+      return
+   end
+end, EventManager.EVENT_KIND.WORLD)
+
+EventManager.on_event("fa-c-dot", function(event)
+   if VirtualTrainDriving.on_kb_descriptive_action_name(event) then
+      TileReader.read_tile(event.player_index)
+      return
+   end
+end, EventManager.EVENT_KIND.WORLD)
+
+EventManager.on_event("fa-s-dot", function(event)
+   if VirtualTrainDriving.on_kb_descriptive_action_name(event) then
+      TileReader.read_tile(event.player_index)
+      return
+   end
+end, EventManager.EVENT_KIND.WORLD)
+
 -- Dangerous delete: Delete blueprint/decon/upgrade planner from hand, or clear spidertron remote list
 EventManager.on_event("fa-c-backspace", function(event)
    local pindex = event.player_index

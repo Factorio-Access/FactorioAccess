@@ -261,4 +261,32 @@ function Traverser:get_alt_signal_pos(side)
    }
 end
 
+---Get signal direction on a specific side
+---@param side railutils.SignalSide LEFT or RIGHT
+---@return defines.direction Signal direction
+function Traverser:get_signal_direction(side)
+   local prototype = Queries.rail_type_to_prototype_type(self._rail_type)
+   local rail_entry = RailData[prototype]
+   if not rail_entry then error("Invalid rail type in traverser state") end
+
+   local direction_entry = rail_entry[self._placement_direction]
+   if not direction_entry then error("Invalid placement direction in traverser state") end
+
+   local end_data = direction_entry[self._end_direction]
+   if not end_data or not end_data.signal_locations then error("No signal locations for current end") end
+
+   local signal_data
+   if side == mod.SignalSide.LEFT then
+      signal_data = end_data.signal_locations.in_signal
+   elseif side == mod.SignalSide.RIGHT then
+      signal_data = end_data.signal_locations.out_signal
+   else
+      error("Invalid signal side: " .. tostring(side))
+   end
+
+   if not signal_data then error("No signal found for side: " .. tostring(side)) end
+
+   return signal_data.direction
+end
+
 return mod

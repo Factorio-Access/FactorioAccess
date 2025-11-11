@@ -611,18 +611,16 @@ function mod.place_signal(pindex, side, is_chain)
 
    local trav = create_traverser_from_move(current)
 
-   local signal_pos
-   if side == "left" then
-      signal_pos = trav:get_signal_pos(Traverser.SignalSide.LEFT)
-   else
-      signal_pos = trav:get_signal_pos(Traverser.SignalSide.RIGHT)
-   end
+   local signal_side = side == "left" and Traverser.SignalSide.LEFT or Traverser.SignalSide.RIGHT
+   local signal_pos = trav:get_signal_pos(signal_side)
+   local signal_dir = trav:get_signal_direction(signal_side)
 
    local signal_name = is_chain and "rail-chain-signal" or "rail-signal"
 
    local entity = player.surface.create_entity({
       name = signal_name,
       position = signal_pos,
+      direction = signal_dir,
       force = player.force,
       raise_built = false,
    })
