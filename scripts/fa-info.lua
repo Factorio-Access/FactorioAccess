@@ -662,7 +662,9 @@ end
 local function ent_info_train_stop(ctx)
    local ent = ctx.ent
    if ent.name == "train-stop" then
-      local limit = ent.trains_limit or 0
+      local limit = ent.trains_limit
+      -- 4294967295 is the max uint32 value, used to represent "unlimited"
+      if not limit or limit == 4294967295 then limit = 0 end
       ctx.message:fragment({ "fa.ent-info-train-stop", ent.backer_name, limit })
    end
 end
