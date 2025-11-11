@@ -627,7 +627,11 @@ function mod.place_signal(pindex, side, is_chain)
 
    if entity then
       player.surface.play_sound({ path = "utility/build_small", position = signal_pos })
-      Speech.speak(pindex, { "fa.virtual-train-signal-placed", signal_name, side })
+      local mb = MessageBuilder.new()
+      mb:fragment({
+         "fa.virtual-train-placed-" .. (is_chain and "chain-signal" or "signal"),
+      }):fragment({ "fa.direction", signal_dir })
+      Speech.speak(pindex, mb:build())
    else
       Speech.speak(pindex, { "fa.virtual-train-signal-failed", side })
    end
