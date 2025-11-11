@@ -46,7 +46,7 @@ function mod.read_tile_rails(pindex, message)
    -- Find all rail entities at this position
    local rail_entities = player.surface.find_entities_filtered({
       area = search_area,
-      type = Consts.RAIL_NAMES,
+      type = Consts.RAIL_TYPES,
    })
 
    if #rail_entities == 0 then return end
@@ -91,7 +91,7 @@ function mod.read_tile_inner(pindex, message)
    local ent = EntitySelection.get_first_ent_at_tile(pindex)
 
    -- Special handling for rails: announce all rails at this position
-   if ent and ent.valid and Consts.RAIL_NAMES_SET[ent.type] then
+   if ent and ent.valid and Consts.RAIL_TYPES_SET[ent.type] then
       mod.read_tile_rails(pindex, message)
       Graphics.draw_cursor_highlight(pindex, ent, nil)
       game.get_player(pindex).selected = ent

@@ -3077,7 +3077,7 @@ EventManager.on_event(
          elseif stack.prototype.rails then
             -- Rail planner: check if there's a rail at cursor to lock onto
             local ent = EntitySelection.get_first_ent_at_tile(pindex)
-            if ent and ent.valid and ent.type == "straight-rail" then
+            if ent and ent.valid and Consts.RAIL_TYPES_SET[ent.type] then
                VirtualTrainDriving.lock_on_to_rail(pindex, ent)
                return
             end

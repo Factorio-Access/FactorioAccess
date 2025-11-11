@@ -2,6 +2,7 @@
 ---
 ---Turtle graphics-style rail building where player "drives" a virtual train that lays tracks
 
+local Consts = require("scripts.consts")
 local StorageManager = require("scripts.storage-manager")
 local Speech = require("scripts.speech")
 local Viewpoint = require("scripts.viewpoint")
@@ -205,29 +206,89 @@ local function announce_rail(pindex)
    Speech.speak(pindex, mb:build())
 end
 
+---Check if a rail has a forward connection from a given end
+---@param rail_entity LuaEntity The rail entity
+---@param end_direction defines.direction The end direction to check from
+---@return boolean True if there's a connected rail forward
+local function has_forward_connection(rail_entity, end_direction)
+   local rail_type = Queries.prototype_type_to_rail_type(rail_entity.name)
+   if not rail_type then return false end
+
+   local position = { x = rail_entity.position.x, y = rail_entity.position.y }
+
+   -- Create traverser at this end
+   local trav = Traverser.new(rail_type, position, end_direction)
+
+   -- Try to move forward
+   trav:move_forward()
+
+   -- Get expected next rail
+   local expected_pos = trav:get_position()
+   local expected_direction = trav:get_placement_direction()
+   local expected_type = Queries.rail_type_to_prototype_type(trav:get_rail_kind())
+
+   -- Floor positions for comparison
+   local expected_floor_x = math.floor(expected_pos.x)
+   local expected_floor_y = math.floor(expected_pos.y)
+
+   local search_area = {
+      { x = expected_floor_x + 0.001, y = expected_floor_y + 0.001 },
+      { x = expected_floor_x + 0.999, y = expected_floor_y + 0.999 },
+   }
+
+   -- Find rails at next position
+   local rails_at_pos = rail_entity.surface.find_entities_filtered({
+      area = search_area,
+      type = Consts.RAIL_TYPES,
+   })
+
+   -- Check if any rail matches what we expect
+   for _, connected_rail in ipairs(rails_at_pos) do
+      if connected_rail.valid then
+         local rail_floor_x = math.floor(connected_rail.position.x)
+         local rail_floor_y = math.floor(connected_rail.position.y)
+         local pos_match = rail_floor_x == expected_floor_x and rail_floor_y == expected_floor_y
+         local type_match = connected_rail.name == expected_type
+         local direction_match = connected_rail.direction == expected_direction
+
+         if pos_match and type_match and direction_match then return true end
+      end
+   end
+
+   return false
+end
+
 ---Determine which end of a rail to start from
+---Prefers unconnected ends (end rails), otherwise chooses most counterclockwise
 ---@param rail_entity LuaEntity
 ---@return defines.rail_direction The LuaRailEnd direction (front or back)
 local function determine_initial_end(rail_entity)
-   -- Try both ends, pick the one with no forward connection
-   local front = rail_entity.get_rail_end(defines.rail_direction.front)
-   local back = rail_entity.get_rail_end(defines.rail_direction.back)
-
-   -- Try to move naturally from each end (checks if rails are connected)
-   local front_copy = front.make_copy()
-   local front_can_move = front_copy.move_natural()
-
-   local back_copy = back.make_copy()
-   local back_can_move = back_copy.move_natural()
-
-   -- If one end has no forward connection, use that
-   if not front_can_move then
+   -- Get rail type and both end directions
+   local rail_type = Queries.prototype_type_to_rail_type(rail_entity.name)
+   if not rail_type then
+      -- Fallback: just use front
       return defines.rail_direction.front
-   elseif not back_can_move then
-      return defines.rail_direction.back
    end
 
-   -- Both have connections, use front (lower direction number / most counterclockwise)
+   local end_dirs = Queries.get_end_directions(rail_type, rail_entity.direction)
+   if #end_dirs ~= 2 then
+      -- Fallback: just use front
+      return defines.rail_direction.front
+   end
+
+   -- Check if each end has a forward connection
+   local end1_connected = has_forward_connection(rail_entity, end_dirs[1])
+   local end2_connected = has_forward_connection(rail_entity, end_dirs[2])
+
+   -- If one end has no forward connection, use that (it's an end rail)
+   if not end1_connected and end2_connected then
+      return defines.rail_direction.front -- end_dirs[1] is unconnected
+   elseif end1_connected and not end2_connected then
+      return defines.rail_direction.back -- end_dirs[2] is unconnected
+   end
+
+   -- Both connected or both unconnected: choose most counterclockwise (numerically least)
+   -- end_dirs[1] is always the numerically smaller direction
    return defines.rail_direction.front
 end
 
@@ -247,8 +308,8 @@ function mod.lock_on_to_rail(pindex, rail_entity)
    -- Get rail entity (use provided one or player.selected)
    local rail = rail_entity or player.selected
 
-   -- Check if rail is valid
-   if not rail or not rail.valid or rail.type ~= "straight-rail" then
+   -- Check if rail is valid (check entity type)
+   if not rail or not rail.valid or not Consts.RAIL_TYPES_SET[rail.type] then
       Speech.speak(pindex, { "fa.virtual-train-no-rail" })
       return
    end

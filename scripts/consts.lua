@@ -2,6 +2,8 @@
 Constants for our mod.  Must load in the data stage as well as runtime.
 ]]
 
+local TableHelpers = require("scripts.table-helpers")
+
 local mod = {}
 
 -- We inject a trigger into all entities which allows us to subscribe to their
@@ -93,7 +95,7 @@ mod.WATER_TILE_NAMES_SET = {
 }
 
 ---@type string[]
-mod.RAIL_NAMES = {
+mod.RAIL_TYPES = {
    "straight-rail",
    "curved-rail-a",
    "curved-rail-b",
@@ -101,12 +103,7 @@ mod.RAIL_NAMES = {
 }
 
 ---@type table<string, true>
-mod.RAIL_NAMES_SET = {
-   ["straight-rail"] = true,
-   ["curved-rail-a"] = true,
-   ["curved-rail-b"] = true,
-   ["half-diagonal-rail"] = true,
-}
+mod.RAIL_TYPES_SET = TableHelpers.array_to_set({}, mod.RAIL_TYPES)
 
 -- Entity types that players can walk over without collision
 mod.ENT_TYPES_YOU_CAN_WALK_OVER = {

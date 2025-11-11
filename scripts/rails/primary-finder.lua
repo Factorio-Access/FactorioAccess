@@ -18,7 +18,6 @@ local mod = {}
 ---@param placement_direction defines.direction Direction the rail is placed
 ---@param position fa.Point Position of the rail
 local function push_connected_unit_numbers(connected_set, rail_ent, rail_type, placement_direction, position)
-
    -- Get both end directions for this rail (always 2)
    local end_directions = RailQueries.get_end_directions(rail_type, placement_direction)
 
@@ -60,7 +59,7 @@ local function push_connected_unit_numbers(connected_set, rail_ent, rail_type, p
          -- Find rails at next position
          local rails_at_pos = rail_ent.surface.find_entities_filtered({
             area = search_area,
-            type = Consts.RAIL_NAMES,
+            type = Consts.RAIL_TYPES,
          })
 
          -- Add rails that match the expected type, direction, and position
