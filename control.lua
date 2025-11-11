@@ -607,39 +607,8 @@ function clicked_on_entity(ent, pindex)
    end
 
    p.selected = ent
-   if ent.name == "roboport" then
-      --For a roboport, open roboport menu
-      local router = UiRouter.get_router(pindex)
-      router:open_ui(UiRouter.UI_NAMES.ROBOPORT)
-   elseif ent.type == "constant-combinator" then
-      -- Open constant combinator UI (toggle is now in the GUI)
-      EntityUI.open_entity_ui(pindex, ent)
-   elseif ent.operable and ent.prototype.is_building then
-      -- Open capability-based entity UI
-      EntityUI.open_entity_ui(pindex, ent)
-   elseif ent.type == "car" or ent.type == "spider-vehicle" then
-      -- Open capability-based entity UI for vehicles
-      EntityUI.open_entity_ui(pindex, ent)
-   elseif ent.type == "cargo-wagon" or ent.type == "artillery-wagon" or ent.type == "locomotive" then
-      -- Open capability-based entity UI for rolling stock
-      EntityUI.open_entity_ui(pindex, ent)
-   elseif ent.type == "spider-leg" then
-      --Find and open the spider
-      local spiders =
-         ent.surface.find_entities_filtered({ position = ent.position, radius = 5, type = "spider-vehicle" })
-      local spider = ent.surface.get_closest(ent.position, spiders)
-      if spider and spider.valid then
-         -- Open capability-based entity UI for the spider
-         EntityUI.open_entity_ui(pindex, spider)
-      end
-   elseif ent.name == "rocket-silo-rocket-shadow" or ent.name == "rocket-silo-rocket" then
-      --Find and open the silo
-      local silos = ent.surface.find_entities_filtered({ position = ent.position, radius = 5, type = "rocket-silo" })
-      local silo = ent.surface.get_closest(ent.position, silos)
-      if silo and silo.valid then
-         -- Open capability-based entity UI for the rocket silo
-         EntityUI.open_entity_ui(pindex, silo)
-      end
+   if EntityUI.maybe_open_entity(pindex, ent) then
+      -- UI opened successfully
    elseif ent.operable then
       if ent then Speech.speak(pindex, { "fa.no-menu-for", Localising.get_localised_name_with_fallback(ent) }) end
    elseif ent.type == "resource" and ent.name ~= "crude-oil" and ent.name ~= "uranium-ore" then
