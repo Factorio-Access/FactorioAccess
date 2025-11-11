@@ -20,12 +20,11 @@ function mod.announce_rail(description, prefix_rail)
 
    local message = MessageBuilder.new()
 
-   -- Main rail kind (with optional "rail" prefix)
-   if prefix_rail then
-      message:fragment({ "fa.rail-prefixed-" .. description.kind })
-   else
-      message:fragment({ "fa.rail-" .. description.kind })
-   end
+   -- Add "rail" prefix if requested
+   if prefix_rail then message:fragment("rail") end
+
+   -- Main rail kind
+   message:fragment({ "fa.rails-descriptions-" .. description.kind })
 
    -- Add lonely modifier or disconnected end (not both - lonely means all ends disconnected)
    if description.lonely then
