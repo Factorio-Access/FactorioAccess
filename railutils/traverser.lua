@@ -186,6 +186,17 @@ function Traverser:get_position()
    return { x = self._position.x, y = self._position.y }
 end
 
+---Clone this traverser to create an independent copy
+---@return railutils.Traverser
+function Traverser:clone()
+   return setmetatable({
+      _rail_type = self._rail_type,
+      _placement_direction = self._placement_direction,
+      _position = { x = self._position.x, y = self._position.y },
+      _end_direction = self._end_direction,
+   }, Traverser_meta)
+end
+
 ---Get signal position on a specific side
 ---@param side railutils.SignalSide LEFT or RIGHT
 ---@return fa.Point Absolute signal position

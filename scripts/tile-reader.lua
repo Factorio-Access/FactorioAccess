@@ -7,6 +7,7 @@ local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
 local Localising = require("scripts.localising")
 local Mouse = require("scripts.mouse")
+local PrimaryFinder = require("scripts.rails.primary-finder")
 local RailAnnouncer = require("scripts.rails.announcer")
 local RailDescriber = require("railutils.rail-describer")
 local RailQueries = require("railutils.queries")
@@ -50,6 +51,11 @@ function mod.read_tile_rails(pindex, message)
 
    if #rail_entities == 0 then return end
 
+   -- Deduplicate secondary rails (e.g., at forks, curved pieces connected to straight pieces)
+   rail_entities = PrimaryFinder.deduplicate_secondary_rails(rail_entities)
+
+   if #rail_entities == 0 then return end
+
    -- Wrap the surface (hardcoded to vanilla for now)
    local wrapped_surface = SurfaceHelper.wrap_surface_vanilla(player.surface)
    if not wrapped_surface then return end
@@ -61,8 +67,8 @@ function mod.read_tile_rails(pindex, message)
          local rail_type = RailQueries.prototype_type_to_rail_type(rail_entity.name)
          if rail_type then
             -- Describe and announce the rail
-            local description =
-               RailDescriber.describe_rail(wrapped_surface, rail_type, rail_entity.direction, rail_entity.position)
+            local pos = { x = rail_entity.position.x, y = rail_entity.position.y }
+            local description = RailDescriber.describe_rail(wrapped_surface, rail_type, rail_entity.direction, pos)
             -- First rail gets "rail" prefix, subsequent ones don't
             local announcement = RailAnnouncer.announce_rail(description, i == 1)
 
@@ -91,7 +97,7 @@ function mod.read_tile_inner(pindex, message)
       game.get_player(pindex).selected = ent
    elseif not (ent and ent.valid) then
       --If there is no ent, read the tile instead
-      message:fragment(Localising.get_localised_name_with_fallback(tile_object))
+      if tile_object then message:fragment(Localising.get_localised_name_with_fallback(tile_object)) end
       if Consts.WATER_TILE_NAMES_SET[tile_name] then
          --Identify shores and crevices and so on for water tiles
          message:fragment(FaUtils.identify_water_shores(pindex))
