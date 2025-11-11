@@ -620,6 +620,9 @@ function clicked_on_entity(ent, pindex)
    elseif ent.type == "car" or ent.type == "spider-vehicle" then
       -- Open capability-based entity UI for vehicles
       EntityUI.open_entity_ui(pindex, ent)
+   elseif ent.type == "cargo-wagon" or ent.type == "artillery-wagon" or ent.type == "locomotive" then
+      -- Open capability-based entity UI for rolling stock
+      EntityUI.open_entity_ui(pindex, ent)
    elseif ent.type == "spider-leg" then
       --Find and open the spider
       local spiders =

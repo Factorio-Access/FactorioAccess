@@ -203,8 +203,9 @@ mod.INVENTORY_PRIORITIES = {
    rocket_silo_trash = 5,
    logistic_container_trash = 5,
 
-   -- Fuel inventories (priority 6)
+   -- Fuel and ammo inventories (priority 6)
    fuel = 6,
+   artillery_wagon_ammo = 6,
 
    -- Robot/material inventories (priority 7)
    roboport_robot = 7,
