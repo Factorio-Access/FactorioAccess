@@ -27,6 +27,10 @@ function mod.ent_is_primary(ent, pindex)
       and ent.type ~= "corpse"
       and ent.type ~= "rocket-silo-rocket-shadow"
       and ent.type ~= "resource"
+      and ent.type ~= "straight-rail"
+      and ent.type ~= "curved-rail"
+      and ent.type ~= "legacy-straight-rail"
+      and ent.type ~= "legacy-curved-rail"
       and (ent.type ~= "character" or ent.player ~= pindex)
 end
 
