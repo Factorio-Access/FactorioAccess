@@ -206,21 +206,16 @@ local function announce_rail(pindex)
    Speech.speak(pindex, mb:build())
 end
 
----Check if a rail has a forward connection from a given end
----@param rail_entity LuaEntity The rail entity
----@param end_direction defines.direction The end direction to check from
----@return boolean True if there's a connected rail forward
-local function has_forward_connection(rail_entity, end_direction)
-   local rail_type = Queries.prototype_type_to_rail_type(rail_entity.name)
-   if not rail_type then return false end
-
+---Check if a connection exists by trying a move function
+---@param rail_entity LuaEntity
+---@param rail_type railutils.RailType
+---@param end_direction defines.direction
+---@param move_fn fun(trav: railutils.Traverser)
+---@return boolean
+local function check_connection(rail_entity, rail_type, end_direction, move_fn)
    local position = { x = rail_entity.position.x, y = rail_entity.position.y }
-
-   -- Create traverser at this end
    local trav = Traverser.new(rail_type, position, end_direction)
-
-   -- Try to move forward
-   trav:move_forward()
+   move_fn(trav)
 
    -- Get expected next rail
    local expected_pos = trav:get_position()
@@ -244,52 +239,81 @@ local function has_forward_connection(rail_entity, end_direction)
 
    -- Check if any rail matches what we expect
    for _, connected_rail in ipairs(rails_at_pos) do
-      if connected_rail.valid then
-         local rail_floor_x = math.floor(connected_rail.position.x)
-         local rail_floor_y = math.floor(connected_rail.position.y)
-         local pos_match = rail_floor_x == expected_floor_x and rail_floor_y == expected_floor_y
-         local type_match = connected_rail.name == expected_type
-         local direction_match = connected_rail.direction == expected_direction
+      local rail_floor_x = math.floor(connected_rail.position.x)
+      local rail_floor_y = math.floor(connected_rail.position.y)
+      local pos_match = rail_floor_x == expected_floor_x and rail_floor_y == expected_floor_y
+      local type_match = connected_rail.name == expected_type
+      local direction_match = connected_rail.direction == expected_direction
 
-         if pos_match and type_match and direction_match then return true end
-      end
+      if pos_match and type_match and direction_match then return true end
    end
 
    return false
 end
 
----Determine which end of a rail to start from
----Prefers unconnected ends (end rails), otherwise chooses most counterclockwise
+---Count total connections (forward, left, right) for a rail end
 ---@param rail_entity LuaEntity
----@return defines.rail_direction The LuaRailEnd direction (front or back)
+---@param end_direction defines.direction
+---@return integer count Number of connections (0-3)
+local function count_connections(rail_entity, end_direction)
+   local rail_type = Queries.prototype_type_to_rail_type(rail_entity.name)
+   if not rail_type then return 0 end
+
+   local count = 0
+
+   -- Check forward
+   if check_connection(rail_entity, rail_type, end_direction, function(t)
+      t:move_forward()
+   end) then
+      count = count + 1
+   end
+
+   -- Check left
+   if check_connection(rail_entity, rail_type, end_direction, function(t)
+      t:move_left()
+   end) then
+      count = count + 1
+   end
+
+   -- Check right
+   if check_connection(rail_entity, rail_type, end_direction, function(t)
+      t:move_right()
+   end) then
+      count = count + 1
+   end
+
+   return count
+end
+
+---Determine which end direction to use when locking onto a rail
+---Prefers ends with fewer connections, otherwise chooses most counterclockwise
+---@param rail_entity LuaEntity
+---@return defines.direction The end direction to use
 local function determine_initial_end(rail_entity)
    -- Get rail type and both end directions
    local rail_type = Queries.prototype_type_to_rail_type(rail_entity.name)
-   if not rail_type then
-      -- Fallback: just use front
-      return defines.rail_direction.front
-   end
+   if not rail_type then error(string.format("%s not a rail!", rail_entity.name)) end
 
    local end_dirs = Queries.get_end_directions(rail_type, rail_entity.direction)
-   if #end_dirs ~= 2 then
-      -- Fallback: just use front
-      return defines.rail_direction.front
+   if #end_dirs ~= 2 then error("Rail data corrupt!") end
+
+   -- Count connections at each end
+   local end1_connections = count_connections(rail_entity, end_dirs[1])
+   local end2_connections = count_connections(rail_entity, end_dirs[2])
+
+   -- Prefer the end with no connections.
+   if end1_connections == 0 then
+      return end_dirs[1]
+   elseif end2_connections == 0 then
+      return end_dirs[2]
    end
 
-   -- Check if each end has a forward connection
-   local end1_connected = has_forward_connection(rail_entity, end_dirs[1])
-   local end2_connected = has_forward_connection(rail_entity, end_dirs[2])
-
-   -- If one end has no forward connection, use that (it's an end rail)
-   if not end1_connected and end2_connected then
-      return defines.rail_direction.front -- end_dirs[1] is unconnected
-   elseif end1_connected and not end2_connected then
-      return defines.rail_direction.back -- end_dirs[2] is unconnected
+   -- Equal connections: choose most counterclockwise (numerically least)
+   if end_dirs[1] < end_dirs[2] then
+      return end_dirs[1]
+   else
+      return end_dirs[2]
    end
-
-   -- Both connected or both unconnected: choose most counterclockwise (numerically least)
-   -- end_dirs[1] is always the numerically smaller direction
-   return defines.rail_direction.front
 end
 
 ---Lock onto a rail at the cursor position
@@ -314,9 +338,6 @@ function mod.lock_on_to_rail(pindex, rail_entity)
       return
    end
 
-   -- Determine which end to use
-   local lua_rail_direction = determine_initial_end(rail)
-
    -- Convert entity name to rail type
    local rail_type = Queries.prototype_type_to_rail_type(rail.name)
    if not rail_type then
@@ -324,12 +345,8 @@ function mod.lock_on_to_rail(pindex, rail_entity)
       return
    end
 
-   -- Get the end directions from our rail data
-   local end_dirs = Queries.get_end_directions(rail_type, rail.direction)
-
-   -- Map LuaRailEnd direction to our end direction
-   -- front = lower index (end_dirs[1]), back = higher index (end_dirs[2])
-   local chosen_end_direction = lua_rail_direction == defines.rail_direction.front and end_dirs[1] or end_dirs[2]
+   -- Determine which end direction to use
+   local chosen_end_direction = determine_initial_end(rail)
 
    -- Initialize state
    local state = vtd_storage[pindex]
