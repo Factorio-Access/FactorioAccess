@@ -13,12 +13,19 @@ local mod = {}
 
 ---Build announcement message for a rail
 ---@param description railutils.RailDescription Rail description from describer
+---@param prefix_rail boolean? If true, prefix with "rail" (default true for backwards compatibility)
 ---@return LocalisedString Message ready for speech
-function mod.announce_rail(description)
+function mod.announce_rail(description, prefix_rail)
+   if prefix_rail == nil then prefix_rail = true end
+
    local message = MessageBuilder.new()
 
-   -- Main rail kind
-   message:fragment({ "fa.rail-" .. description.kind })
+   -- Main rail kind (with optional "rail" prefix)
+   if prefix_rail then
+      message:fragment({ "fa.rail-prefixed-" .. description.kind })
+   else
+      message:fragment({ "fa.rail-" .. description.kind })
+   end
 
    -- Add lonely modifier or disconnected end (not both - lonely means all ends disconnected)
    if description.lonely then

@@ -92,6 +92,22 @@ mod.WATER_TILE_NAMES_SET = {
    ["water-wube"] = true,
 }
 
+---@type string[]
+mod.RAIL_NAMES = {
+   "straight-rail",
+   "curved-rail-a",
+   "curved-rail-b",
+   "half-diagonal-rail",
+}
+
+---@type table<string, true>
+mod.RAIL_NAMES_SET = {
+   ["straight-rail"] = true,
+   ["curved-rail-a"] = true,
+   ["curved-rail-b"] = true,
+   ["half-diagonal-rail"] = true,
+}
+
 -- Entity types that players can walk over without collision
 mod.ENT_TYPES_YOU_CAN_WALK_OVER = {
    "resource",
