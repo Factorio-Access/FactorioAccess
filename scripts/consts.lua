@@ -81,6 +81,17 @@ mod.WATER_TILE_NAMES = {
    "water-wube",
 }
 
+---@type table<string, true>
+mod.WATER_TILE_NAMES_SET = {
+   ["water"] = true,
+   ["deepwater"] = true,
+   ["water-green"] = true,
+   ["deepwater-green"] = true,
+   ["water-shallow"] = true,
+   ["water-mud"] = true,
+   ["water-wube"] = true,
+}
+
 -- Entity types that players can walk over without collision
 mod.ENT_TYPES_YOU_CAN_WALK_OVER = {
    "resource",

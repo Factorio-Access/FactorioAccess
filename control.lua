@@ -212,22 +212,23 @@ end
 
 ---Local helper: Reads tile info and adds build preview info if player is holding a building
 ---@param pindex integer Player index
----@param start_text string? Optional text to prepend to the result
+---@param start_text LocalisedString? Optional text to prepend to the result
 local function read_tile_with_preview_info(pindex, start_text)
-   local result = TileReader.read_tile_inner(pindex)
+   local message = MessageBuilder.new()
+   if start_text then message:fragment(start_text) end
+
+   TileReader.read_tile_inner(pindex, message)
 
    -- Add build preview info if holding a building and tile is empty/has resources
    local ent = EntitySelection.get_first_ent_at_tile(pindex)
    if not ent or ent.type == "resource" then
       local stack = game.get_player(pindex).cursor_stack
       if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result ~= nil then
-         table.insert(result, BuildingTools.build_preview_checks_info(stack, pindex))
+         message:fragment(BuildingTools.build_preview_checks_info(stack, pindex))
       end
    end
 
-   -- Add optional prefix and speak
-   if start_text then table.insert(result, 1, start_text) end
-   Speech.speak(pindex, FaUtils.localise_cat_table(result))
+   Speech.speak(pindex, message:build())
 end
 
 --Update the position info and cursor info during smooth walking.
