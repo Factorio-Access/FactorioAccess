@@ -103,4 +103,43 @@ function mod.push_state_message(msgbuilder, rolling_stock)
    return false
 end
 
+---Get the combined fuel contents from all locomotives in a train.
+---@param rolling_stock LuaEntity A rolling stock entity (locomotive, wagon, etc)
+---@return ({ name: string, quality: string, count: number})[] Array of fuel items
+function mod.get_fuel(rolling_stock)
+   local train = rolling_stock.train
+   if not train then return {} end
+
+   local locomotives = train.locomotives
+   local all_fuel = {}
+
+   -- Collect fuel from all front movers
+   if locomotives.front_movers then
+      for _, loco in ipairs(locomotives.front_movers) do
+         local fuel_inv = loco.get_fuel_inventory()
+         if fuel_inv then
+            local contents = fuel_inv.get_contents()
+            for _, item in ipairs(contents) do
+               table.insert(all_fuel, item)
+            end
+         end
+      end
+   end
+
+   -- Collect fuel from all back movers
+   if locomotives.back_movers then
+      for _, loco in ipairs(locomotives.back_movers) do
+         local fuel_inv = loco.get_fuel_inventory()
+         if fuel_inv then
+            local contents = fuel_inv.get_contents()
+            for _, item in ipairs(contents) do
+               table.insert(all_fuel, item)
+            end
+         end
+      end
+   end
+
+   return all_fuel
+end
+
 return mod

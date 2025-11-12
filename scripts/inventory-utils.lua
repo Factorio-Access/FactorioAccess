@@ -3,9 +3,12 @@ Inventory utility functions for transferring items between inventories
 ]]
 
 local Consts = require("scripts.consts")
+local F = require("scripts.field-ref")
+local FaUtils = require("scripts.fa-utils")
 local ItemInfo = require("scripts.item-info")
 local Localising = require("scripts.localising")
 local sounds = require("scripts.ui.sounds")
+local TH = require("scripts.table-helpers")
 
 local mod = {}
 
@@ -248,6 +251,64 @@ function mod.quick_transfer(pindex, msg_builder, src_ent, src_inv_def, src_slot,
       msg_builder:fragment({ "fa.transfer-failed" })
       return false
    end
+end
+
+-- Present a list like iron plate x1, transport belt legendary x2, ...
+---@param list ({ name: string|LuaItemPrototype, quality: string|LuaQualityPrototype|nil, count: number})[]
+---@param truncate number?
+---@param protos table<string, LuaItemPrototype | LuaFluidPrototype>?
+---@return LocalisedString?
+function mod.present_list(list, truncate, protos)
+   local contents = TH.rollup2(list, F.name().get, function(i)
+      return i.quality or "normal"
+   end, F.count().get)
+
+   -- Now that everything is together we must unroll it again, then sort.
+   ---@type ({ count: number, name: string, quality: LuaQualityPrototype })[]
+   local final = {}
+
+   for name, quals in pairs(contents) do
+      for qual, count in pairs(quals) do
+         table.insert(final, { count = count, name = name, quality = prototypes.quality[qual] })
+      end
+   end
+
+   -- Careful: this is actually a reverse sort.
+   table.sort(final, function(a, b)
+      if a.count == b.count and a.name == b.name then
+         return a.quality.level > b.quality.level
+      elseif a.count == b.count then
+         return a.name > b.name
+      else
+         return a.count > b.count
+      end
+   end)
+
+   local endpoint = #final
+   local extra = false
+   if truncate then
+      extra = truncate < endpoint
+      endpoint = math.min(endpoint, truncate)
+   end
+
+   if not next(final) then return { "fa.ent-info-inventory-empty" } end
+
+   local entries = {}
+   for i = 1, endpoint do
+      local e = final[i]
+
+      table.insert(
+         entries,
+         ItemInfo.item_or_fluid_info({ name = e.name, quality = e.quality, count = e.count }, protos or prototypes.item)
+      )
+   end
+
+   if extra then
+      table.insert(entries, ItemInfo.item_info({ name = ItemInfo.ITEM_OTHER, count = #final - truncate }))
+   end
+   local joined = FaUtils.localise_cat_table(entries, ", ")
+
+   return { "fa.ent-info-inventory-presentation", joined }
 end
 
 return mod

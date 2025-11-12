@@ -4,9 +4,12 @@ Locomotive configuration tab.
 Provides a configuration form for locomotives with:
 - Manual/automatic mode toggle
 - Train name
+- Train contents
+- Train fuel
 ]]
 
 local FormBuilder = require("scripts.ui.form-builder")
+local InventoryUtils = require("scripts.inventory-utils")
 local TrainHelpers = require("scripts.rails.train-helpers")
 local UiKeyGraph = require("scripts.ui.key-graph")
 
@@ -45,6 +48,28 @@ local function render_locomotive_config(ctx)
          TrainHelpers.set_name(entity, value)
       end,
    })
+
+   -- Train contents label
+   builder:add_label("contents", function(label_ctx)
+      local train_contents = train.get_contents()
+      local presenting = InventoryUtils.present_list(train_contents)
+      if presenting then
+         label_ctx.message:fragment({ "fa.locomotive-train-contents", presenting })
+      else
+         label_ctx.message:fragment({ "fa.locomotive-train-contents", { "fa.ent-info-inventory-empty" } })
+      end
+   end)
+
+   -- Train fuel label
+   builder:add_label("fuel", function(label_ctx)
+      local train_fuel = TrainHelpers.get_fuel(entity)
+      local presenting = InventoryUtils.present_list(train_fuel)
+      if presenting then
+         label_ctx.message:fragment({ "fa.locomotive-train-fuel", presenting })
+      else
+         label_ctx.message:fragment({ "fa.locomotive-train-fuel", { "fa.ent-info-inventory-empty" } })
+      end
+   end)
 
    return builder:build()
 end

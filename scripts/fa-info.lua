@@ -33,6 +33,7 @@ local Fluids = require("scripts.fluids")
 local Geometry = require("scripts.geometry")
 local Graphics = require("scripts.graphics")
 local Heat = require("scripts.heat")
+local InventoryUtils = require("scripts.inventory-utils")
 local ItemInfo = require("scripts.item-info")
 local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
@@ -72,63 +73,6 @@ local mod = {}
 ---@field power_rate number
 ---@field drain number
 ---@field uses_energy boolean
-
--- Present a list like iron plate x1, transport belt legendary x2, ...
----@param list ({ name: string|LuaItemPrototype, quality: string|LuaQualityPrototype|nil, count: number})[]
----@param truncate number?
----@param protos table<string, LuaItemPrototype | LuaFluidPrototype>?
-local function present_list(list, truncate, protos)
-   local contents = TH.rollup2(list, F.name().get, function(i)
-      return i.quality or "normal"
-   end, F.count().get)
-
-   -- Now that everything is together we must unroll it again, then sort.
-   ---@type ({ count: number, name: string, quality: LuaQualityPrototype })[]
-   local final = {}
-
-   for name, quals in pairs(contents) do
-      for qual, count in pairs(quals) do
-         table.insert(final, { count = count, name = name, quality = prototypes.quality[qual] })
-      end
-   end
-
-   -- Careful: this is actually a reverse sort.
-   table.sort(final, function(a, b)
-      if a.count == b.count and a.name == b.name then
-         return a.quality.level > b.quality.level
-      elseif a.count == b.count then
-         return a.name > b.name
-      else
-         return a.count > b.count
-      end
-   end)
-
-   local endpoint = #final
-   local extra = false
-   if truncate then
-      extra = truncate < endpoint
-      endpoint = math.min(endpoint, truncate)
-   end
-
-   if not next(final) then return { "fa.ent-info-inventory-empty" } end
-
-   local entries = {}
-   for i = 1, endpoint do
-      local e = final[i]
-
-      table.insert(
-         entries,
-         ItemInfo.item_or_fluid_info({ name = e.name, quality = e.quality, count = e.count }, protos or prototypes.item)
-      )
-   end
-
-   if extra then
-      table.insert(entries, ItemInfo.item_info({ name = ItemInfo.ITEM_OTHER, count = #final - truncate }))
-   end
-   local joined = FaUtils.localise_cat_table(entries, ", ")
-
-   return { "fa.ent-info-inventory-presentation", joined }
-end
 
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_facing(ctx)
@@ -315,7 +259,7 @@ local function ent_info_beacon_status(ctx)
    if ent.name == "beacon" then
       local modules = ent.get_module_inventory()
       if not modules then return end
-      local presenting = present_list(modules.get_contents())
+      local presenting = InventoryUtils.present_list(modules.get_contents())
       if presenting then ctx.message:fragment(presenting) end
    end
 end
@@ -452,7 +396,7 @@ local function ent_info_container(ctx)
 
    if inv then
       assert(inv)
-      local presenting = present_list(inv.get_contents(), 3)
+      local presenting = InventoryUtils.present_list(inv.get_contents(), 3)
       if presenting then ctx.message:fragment(presenting) end
    end
 end
@@ -480,7 +424,7 @@ local function ent_info_fluid_contents(ctx)
       table.insert(unrolled, { name = f, count = rounded_count })
    end
 
-   ctx.message:fragment(present_list(unrolled, nil, prototypes.fluid))
+   ctx.message:fragment(InventoryUtils.present_list(unrolled, nil, prototypes.fluid))
 end
 
 ---@param ctx fa.Info.EntInfoContext
@@ -1029,7 +973,7 @@ local function ent_info_cargo_wagon(ctx)
    if ctx.ent.name == "cargo-wagon" then
       local inv = ctx.ent.get_inventory(defines.inventory.cargo_wagon)
       assert(inv)
-      local presenting = present_list(inv.get_contents())
+      local presenting = InventoryUtils.present_list(inv.get_contents())
       if presenting then ctx.message:fragment(presenting) end
    end
 end
