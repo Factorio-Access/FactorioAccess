@@ -52,6 +52,7 @@ local RailDescriber = require("railutils.rail-describer")
 local RailAnnouncer = require("scripts.rails.announcer")
 local SurfaceHelper = require("scripts.rails.surface-helper")
 local RailQueries = require("railutils.queries")
+local TrainHelpers = require("scripts.rails.train-helpers")
 
 local mod = {}
 
@@ -1033,6 +1034,20 @@ local function ent_info_cargo_wagon(ctx)
    end
 end
 
+---Handler for announcing train state on rolling stock (low priority, runs last)
+---@param ctx fa.Info.EntInfoContext
+local function ent_info_train_state(ctx)
+   local ent_type = ctx.ent.type
+   if
+      ent_type == "cargo-wagon"
+      or ent_type == "artillery-wagon"
+      or ent_type == "locomotive"
+      or ent_type == "fluid-wagon"
+   then
+      TrainHelpers.push_state_message(ctx.message, ctx.ent)
+   end
+end
+
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_fluid_connections(ctx)
    local cursor_center = { x = ctx.cursor_pos.x + 0.5, y = ctx.cursor_pos.y + 0.5 }
@@ -1308,6 +1323,19 @@ function mod.ent_info(pindex, ent, is_scanner)
       or ent.type == "curved-rail-b"
    then
       -- For rails, skip entity name - rail classification will be announced by ent_info_rail handler
+   elseif
+      ent.type == "cargo-wagon"
+      or ent.type == "artillery-wagon"
+      or ent.type == "locomotive"
+      or ent.type == "fluid-wagon"
+   then
+      -- For rolling stock, include train name
+      local train_name = TrainHelpers.get_name(ent)
+      ctx.message:fragment({
+         "fa.ent-info-rolling-stock-of-train",
+         Localising.get_localised_name_with_fallback(ent),
+         train_name,
+      })
    else
       ctx.message:fragment(Localising.get_localised_name_with_fallback(ent))
    end
@@ -1483,6 +1511,9 @@ function mod.ent_info(pindex, ent, is_scanner)
    run_handler(ent_info_constant_combinator)
    run_handler(ent_info_combinator_connections)
    run_handler(ent_info_circuit_network)
+
+   -- Train state handler (lowest priority, runs last)
+   run_handler(ent_info_train_state)
 
    return ctx.message:build()
 end

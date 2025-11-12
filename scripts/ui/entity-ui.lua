@@ -26,6 +26,7 @@ local equipment_grid_tab = require("scripts.ui.tabs.equipment-grid")
 local selector_combinator_tab = require("scripts.ui.tabs.selector-combinator")
 local arithmetic_combinator_tab = require("scripts.ui.tabs.arithmetic-combinator")
 local train_stop_tab = require("scripts.ui.tabs.train-stop")
+local locomotive_config_tab = require("scripts.ui.tabs.locomotive-config")
 
 local mod = {}
 
@@ -181,6 +182,9 @@ local function build_configuration_tabs(entity)
 
    -- Add train stop configuration
    if prototype.type == "train-stop" then table.insert(tabs, train_stop_tab.train_stop_tab) end
+
+   -- Add locomotive configuration
+   if prototype.type == "locomotive" then table.insert(tabs, locomotive_config_tab.locomotive_config_tab) end
 
    -- Future: Add other device-specific tabs here
    -- if prototype.type == "mining-drill" then ...
