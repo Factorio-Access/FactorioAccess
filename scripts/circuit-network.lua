@@ -424,6 +424,57 @@ function mod.get_prev_comparison_operator(current)
    return "<"
 end
 
+---@class fa.CircuitConditionReadOptions
+---@field empty_message LocalisedString? Message to show when condition is unconfigured (defaults to generic message)
+
+---Helper to get network text for display (red, green, or empty for both)
+---@param networks CircuitNetworkSelection?
+---@return LocalisedString
+local function get_network_text(networks)
+   if not networks then return "" end
+   local red = networks.red ~= false
+   local green = networks.green ~= false
+   if red and not green then
+      return { "fa.decider-red-network" }
+   elseif green and not red then
+      return { "fa.decider-green-network" }
+   else
+      return ""
+   end
+end
+
+---Read a circuit condition into a MessageBuilder
+---Unified function for reading CircuitCondition or CircuitConditionDefinition
+---Network fields (first_signal_networks, second_signal_networks) are only present on DeciderCombinatorCondition
+---@param mb fa.MessageBuilder MessageBuilder to write to
+---@param condition CircuitCondition|CircuitConditionDefinition? The condition to read
+---@param options fa.CircuitConditionReadOptions? Optional configuration
+function mod.read_condition(mb, condition, options)
+   options = options or {}
+
+   -- Handle unconfigured condition
+   if not condition or not condition.first_signal or not condition.first_signal.name then
+      mb:fragment(options.empty_message or { "fa.condition-unconfigured" })
+      return
+   end
+
+   -- First signal with optional network (only on DeciderCombinatorCondition)
+   mb:fragment(mod.localise_signal(condition.first_signal))
+   if condition.first_signal_networks then mb:fragment(get_network_text(condition.first_signal_networks)) end
+
+   -- Comparator
+   mb:fragment(mod.localise_comparator(condition.comparator))
+
+   -- Second signal or constant
+   if condition.second_signal and condition.second_signal.name then
+      mb:fragment(mod.localise_signal(condition.second_signal))
+      if condition.second_signal_networks then mb:fragment(get_network_text(condition.second_signal_networks)) end
+   else
+      local constant = condition.constant or 0
+      mb:fragment(tostring(constant))
+   end
+end
+
 ---Aggregate signals from a circuit network, summing across qualities
 ---Returns a nested table: type -> name -> quality -> count
 ---@param signals Signal[]?

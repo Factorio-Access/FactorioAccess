@@ -351,21 +351,9 @@ end
 function FormBuilder:add_condition(name, get_value, set_value)
    -- Helper to build a description of the condition
    local function describe_condition(condition)
-      if not condition or not condition.first_signal or not condition.first_signal.name then
-         return { "fa.condition-unconfigured" }
-      end
-
-      local first = { "fa.signal-type-name", condition.first_signal.type or "item", condition.first_signal.name }
-      local op = condition.comparator or "<"
-
-      if condition.second_signal and condition.second_signal.name then
-         local second = { "fa.signal-type-name", condition.second_signal.type or "item", condition.second_signal.name }
-         return { "fa.condition-summary-second-signal", first, op, second }
-      elseif condition.constant then
-         return { "fa.condition-summary-constant", first, op, condition.constant }
-      else
-         return { "fa.condition-summary-constant", first, op, 0 }
-      end
+      local mb = Speech.MessageBuilder.new()
+      CircuitNetwork.read_condition(mb, condition)
+      return mb:build()
    end
 
    -- Item 1: Overview
@@ -567,21 +555,9 @@ end
 function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_enabled, get_condition, set_condition)
    -- Helper to build a description of the condition
    local function describe_condition(condition)
-      if not condition or not condition.first_signal or not condition.first_signal.name then
-         return { "fa.condition-unconfigured" }
-      end
-
-      local first = { "fa.signal-type-name", condition.first_signal.type or "item", condition.first_signal.name }
-      local op = condition.comparator or "<"
-
-      if condition.second_signal and condition.second_signal.name then
-         local second = { "fa.signal-type-name", condition.second_signal.type or "item", condition.second_signal.name }
-         return { "fa.condition-summary-second-signal", first, op, second }
-      elseif condition.constant then
-         return { "fa.condition-summary-constant", first, op, condition.constant }
-      else
-         return { "fa.condition-summary-constant", first, op, 0 }
-      end
+      local mb = Speech.MessageBuilder.new()
+      CircuitNetwork.read_condition(mb, condition)
+      return mb:build()
    end
 
    -- Item 1: Overview + enable/disable toggle

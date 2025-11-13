@@ -8,7 +8,6 @@ local KeyGraph = require("scripts.ui.key-graph")
 local CircuitNetworkSignals = require("scripts.ui.tabs.circuit-network-signals")
 local CircuitNetwork = require("scripts.circuit-network")
 local Speech = require("scripts.speech")
-local MessageBuilder = Speech.MessageBuilder
 local Help = require("scripts.ui.help")
 
 local mod = {}
@@ -100,37 +99,6 @@ local function validate_and_set_number(text_result, on_valid, ctx)
    end
 end
 
----Read a single condition into a message builder
----@param mb fa.MessageBuilder
----@param condition DeciderCombinatorCondition
----@param include_connector boolean If true, prepends "and" or "or"
-local function read_condition(mb, condition, include_connector)
-   if include_connector then
-      local connector = condition.compare_type or "or"
-      mb:fragment({ "fa.decider-connector-" .. connector })
-   end
-
-   -- First signal with network
-   if condition.first_signal and condition.first_signal.name then
-      mb:fragment(CircuitNetwork.localise_signal(condition.first_signal))
-      mb:fragment(localise_networks(condition.first_signal_networks))
-   else
-      mb:fragment({ "fa.decider-no-signal" })
-   end
-
-   -- Comparator
-   mb:fragment(CircuitNetwork.localise_comparator(condition.comparator))
-
-   -- Second signal or constant
-   if condition.second_signal and condition.second_signal.name then
-      mb:fragment(CircuitNetwork.localise_signal(condition.second_signal))
-      mb:fragment(localise_networks(condition.second_signal_networks))
-   else
-      local constant = condition.constant or 0
-      mb:fragment(tostring(constant))
-   end
-end
-
 ---Read all conditions into a summary
 ---@param mb fa.MessageBuilder
 ---@param conditions DeciderCombinatorCondition[]
@@ -141,8 +109,13 @@ local function read_conditions_summary(mb, conditions)
    end
 
    for i, condition in ipairs(conditions) do
-      local include_connector = i > 1
-      read_condition(mb, condition, include_connector)
+      -- Add connector for conditions after the first
+      if i > 1 then
+         local connector = condition.compare_type or "or"
+         mb:fragment({ "fa.decider-connector-" .. connector })
+      end
+
+      CircuitNetwork.read_condition(mb, condition, { empty_message = { "fa.decider-no-signal" } })
       mb:list_item()
    end
 end
@@ -206,9 +179,13 @@ end
 local function build_condition_vtable(entity, i, condition, row_key)
    return {
       label = function(ctx)
-         local mb = MessageBuilder.new()
-         read_condition(mb, condition, i > 1)
-         ctx.message:fragment(mb:build())
+         -- Add connector for conditions after the first
+         if i > 1 then
+            local connector = condition.compare_type or "or"
+            ctx.message:fragment({ "fa.decider-connector-" .. connector })
+         end
+
+         CircuitNetwork.read_condition(ctx.message, condition, { empty_message = { "fa.decider-no-signal" } })
       end,
 
       on_conjunction_modification = function(ctx)
@@ -321,9 +298,7 @@ end
 local function build_output_vtable(entity, i, output, row_key)
    return {
       label = function(ctx)
-         local mb = MessageBuilder.new()
-         read_output(mb, output)
-         ctx.message:fragment(mb:build())
+         read_output(ctx.message, output)
       end,
 
       on_action1 = function(ctx)
@@ -397,9 +372,7 @@ local function render_decider_config(ctx)
 
    -- Row 1: Overall summary
    menu:add_label("overall_summary", function(ctx)
-      local mb = MessageBuilder.new()
-      read_overall_summary(mb, conditions, outputs)
-      ctx.message:fragment(mb:build())
+      read_overall_summary(ctx.message, conditions, outputs)
    end)
 
    -- Row 2: Description
