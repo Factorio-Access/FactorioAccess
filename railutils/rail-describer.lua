@@ -129,69 +129,70 @@ local function detect_turn(surface, rail_type, placement_direction, position)
    local turn_info = TURN_TABLE[rail_type] and TURN_TABLE[rail_type][placement_direction]
    if not turn_info then return nil end
 
-   -- Try verify_forward first (count > 0), otherwise use verify_back
-   local verify = turn_info.verify_forward.count > 0 and turn_info.verify_forward or turn_info.verify_back
-
-   if
-      verify_turn_exists(
-         surface,
-         rail_type,
-         placement_direction,
-         position,
-         verify.end_dir,
-         verify.turn_dir,
-         verify.count
-      )
-   then
-      local from_name = Queries.get_cardinal_name(turn_info.from_cardinal) or "north"
-      local to_name = Queries.get_cardinal_name(turn_info.to_cardinal) or "south"
-
-      return turn_info.position .. "-of-" .. from_name .. "-to-" .. to_name .. "-turn"
+   -- Verify both forward and backward directions (if counts > 0)
+   if turn_info.verify_forward.count > 0 then
+      if
+         not verify_turn_exists(
+            surface,
+            rail_type,
+            placement_direction,
+            position,
+            turn_info.verify_forward.end_dir,
+            turn_info.verify_forward.turn_dir,
+            turn_info.verify_forward.count
+         )
+      then
+         return nil
+      end
    end
 
-   return nil
+   if turn_info.verify_back.count > 0 then
+      if
+         not verify_turn_exists(
+            surface,
+            rail_type,
+            placement_direction,
+            position,
+            turn_info.verify_back.end_dir,
+            turn_info.verify_back.turn_dir,
+            turn_info.verify_back.count
+         )
+      then
+         return nil
+      end
+   end
+
+   -- Both verifications passed (or had count=0)
+   local from_name = Queries.get_cardinal_name(turn_info.from_cardinal) or "north"
+   local to_name = Queries.get_cardinal_name(turn_info.to_cardinal) or "south"
+
+   return turn_info.position .. "-of-" .. from_name .. "-to-" .. to_name .. "-turn"
 end
 
----Map cardinal direction and side to RailKind
----@type table<defines.direction, table<string, railutils.RailKind>>
-local CARDINAL_CURVE_MAP = {
-   [defines.direction.north] = {
-      left = RailInfo.RailKind.LEFT_OF_NORTH,
-      right = RailInfo.RailKind.RIGHT_OF_NORTH,
-   },
-   [defines.direction.east] = {
-      left = RailInfo.RailKind.LEFT_OF_EAST,
-      right = RailInfo.RailKind.RIGHT_OF_EAST,
-   },
-   [defines.direction.south] = {
-      left = RailInfo.RailKind.LEFT_OF_SOUTH,
-      right = RailInfo.RailKind.RIGHT_OF_SOUTH,
-   },
-   [defines.direction.west] = {
-      left = RailInfo.RailKind.LEFT_OF_WEST,
-      right = RailInfo.RailKind.RIGHT_OF_WEST,
-   },
+---Direct lookup table for curved-rail-a fallback descriptions
+---@type table<defines.direction, railutils.RailKind>
+local CURVE_A_FALLBACK = {
+   [defines.direction.north] = RailInfo.RailKind.LEFT_OF_NORTH,
+   [defines.direction.northeast] = RailInfo.RailKind.RIGHT_OF_NORTH,
+   [defines.direction.east] = RailInfo.RailKind.LEFT_OF_EAST,
+   [defines.direction.southeast] = RailInfo.RailKind.RIGHT_OF_EAST,
+   [defines.direction.south] = RailInfo.RailKind.LEFT_OF_SOUTH,
+   [defines.direction.southwest] = RailInfo.RailKind.RIGHT_OF_SOUTH,
+   [defines.direction.west] = RailInfo.RailKind.LEFT_OF_WEST,
+   [defines.direction.northwest] = RailInfo.RailKind.RIGHT_OF_WEST,
 }
 
----Map diagonal direction and side to RailKind
----@type table<defines.direction, table<string, railutils.RailKind>>
-local DIAGONAL_CURVE_MAP = {
-   [defines.direction.northeast] = {
-      left = RailInfo.RailKind.LEFT_OF_NORTHEAST,
-      right = RailInfo.RailKind.RIGHT_OF_NORTHEAST,
-   },
-   [defines.direction.southeast] = {
-      left = RailInfo.RailKind.LEFT_OF_SOUTHEAST,
-      right = RailInfo.RailKind.RIGHT_OF_SOUTHEAST,
-   },
-   [defines.direction.southwest] = {
-      left = RailInfo.RailKind.LEFT_OF_SOUTHWEST,
-      right = RailInfo.RailKind.RIGHT_OF_SOUTHWEST,
-   },
-   [defines.direction.northwest] = {
-      left = RailInfo.RailKind.LEFT_OF_NORTHWEST,
-      right = RailInfo.RailKind.RIGHT_OF_NORTHWEST,
-   },
+---Direct lookup table for curved-rail-b fallback descriptions
+---@type table<defines.direction, railutils.RailKind>
+local CURVE_B_FALLBACK = {
+   [defines.direction.north] = RailInfo.RailKind.RIGHT_OF_SOUTHEAST,
+   [defines.direction.northeast] = RailInfo.RailKind.LEFT_OF_SOUTHWEST,
+   [defines.direction.east] = RailInfo.RailKind.RIGHT_OF_SOUTHWEST,
+   [defines.direction.southeast] = RailInfo.RailKind.LEFT_OF_NORTHWEST,
+   [defines.direction.south] = RailInfo.RailKind.RIGHT_OF_NORTHWEST,
+   [defines.direction.southwest] = RailInfo.RailKind.LEFT_OF_NORTHEAST,
+   [defines.direction.west] = RailInfo.RailKind.RIGHT_OF_NORTHEAST,
+   [defines.direction.northwest] = RailInfo.RailKind.LEFT_OF_SOUTHEAST,
 }
 
 ---Get fallback description for curved rails
@@ -199,53 +200,17 @@ local DIAGONAL_CURVE_MAP = {
 ---@param placement_direction defines.direction
 ---@return railutils.RailKind
 local function get_curve_fallback(rail_type, placement_direction)
-   -- Curve-a: left/right of cardinal
    if rail_type == RailInfo.RailType.CURVE_A then
-      -- Find nearest cardinal direction
-      local nearest_cardinal = 0
-      local min_dist = 16
-
-      for dir = 0, 12, 4 do
-         local dist = math.abs(placement_direction - dir)
-         if dist > 8 then dist = 16 - dist end -- Wrap around
-         if dist < min_dist then
-            min_dist = dist
-            nearest_cardinal = dir
-         end
-      end
-
-      -- Determine left or right based on which side of the cardinal
-      local diff = (placement_direction - nearest_cardinal + 16) % 16
-      local is_right = diff > 0 and diff < 8
-      local side = is_right and "right" or "left"
-
-      return CARDINAL_CURVE_MAP[nearest_cardinal][side]
+      local kind = CURVE_A_FALLBACK[placement_direction]
+      if kind then return kind end
    end
 
-   -- Curve-b: left/right of diagonal
    if rail_type == RailInfo.RailType.CURVE_B then
-      -- Find nearest diagonal direction
-      local nearest_diagonal = 2
-      local min_dist = 16
-
-      for dir = 2, 14, 4 do
-         local dist = math.abs(placement_direction - dir)
-         if dist > 8 then dist = 16 - dist end -- Wrap around
-         if dist < min_dist then
-            min_dist = dist
-            nearest_diagonal = dir
-         end
-      end
-
-      -- Determine left or right based on which side of the diagonal
-      local diff = (placement_direction - nearest_diagonal + 16) % 16
-      local is_right = diff > 0 and diff < 8
-      local side = is_right and "right" or "left"
-
-      return DIAGONAL_CURVE_MAP[nearest_diagonal][side]
+      local kind = CURVE_B_FALLBACK[placement_direction]
+      if kind then return kind end
    end
 
-   error("Unknown rail type for curve fallback")
+   error("Unknown rail type or placement direction for curve fallback")
 end
 
 ---Describe a rail on a surface

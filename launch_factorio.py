@@ -506,6 +506,8 @@ def run_lua_tests(test_suite: str = "all") -> Tuple[int, str, str]:
         test_files.append("syntrax-tests.lua")
     if test_suite in ["ds", "all"]:
         test_files.append("ds-tests.lua")
+    if test_suite in ["railutils", "all"]:
+        test_files.append("railutils-tests.lua")
 
     for test_file in test_files:
         if not Path(test_file).exists():
@@ -808,7 +810,7 @@ def parse_factorio_args() -> argparse.Namespace:
     test_options = parser.add_argument_group("test options")
     test_options.add_argument(
         "--lua-tests",
-        choices=["all", "syntrax", "ds"],
+        choices=["all", "syntrax", "ds", "railutils"],
         default="all",
         help="Which Lua tests to run",
     )
@@ -1142,7 +1144,8 @@ def main():
             test_desc = {
                 "syntrax": "SYNTRAX TESTS",
                 "ds": "DATA STRUCTURES TESTS",
-                "all": "LUA TESTS (SYNTRAX & DATA STRUCTURES)",
+                "railutils": "RAILUTILS TESTS",
+                "all": "LUA TESTS (SYNTRAX & DATA STRUCTURES & RAILUTILS)",
             }
             print(f"RUNNING {test_desc[args.lua_tests]}")
             print("=" * 60)

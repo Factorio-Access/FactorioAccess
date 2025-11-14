@@ -23,7 +23,7 @@ return {
          verify_back = { end_dir = defines.direction.northnortheast, turn_dir = 1, count = 3 },
       },
       [defines.direction.east] = {
-         position = "top", -- east-to-north
+         position = "bottom", -- east-to-north
          from_cardinal = defines.direction.east,
          to_cardinal = defines.direction.north,
          verify_forward = { end_dir = defines.direction.eastnortheast, turn_dir = -1, count = 3 },
@@ -37,14 +37,14 @@ return {
          verify_back = { end_dir = defines.direction.west, turn_dir = -1, count = 0 },
       },
       [defines.direction.south] = {
-         position = "bottom", -- west-to-north
+         position = "top", -- west-to-north
          from_cardinal = defines.direction.west,
          to_cardinal = defines.direction.north,
          verify_forward = { end_dir = defines.direction.north, turn_dir = 1, count = 0 },
          verify_back = { end_dir = defines.direction.southsoutheast, turn_dir = -1, count = 3 },
       },
       [defines.direction.southwest] = {
-         position = "bottom", -- east-to-north
+         position = "top", -- east-to-north
          from_cardinal = defines.direction.east,
          to_cardinal = defines.direction.north,
          verify_forward = { end_dir = defines.direction.north, turn_dir = -1, count = 0 },
@@ -58,7 +58,7 @@ return {
          verify_back = { end_dir = defines.direction.east, turn_dir = 1, count = 0 },
       },
       [defines.direction.northwest] = {
-         position = "top", -- west-to-north
+         position = "bottom", -- west-to-north
          from_cardinal = defines.direction.west,
          to_cardinal = defines.direction.north,
          verify_forward = { end_dir = defines.direction.westnorthwest, turn_dir = 1, count = 3 },
@@ -82,7 +82,7 @@ return {
          verify_back = { end_dir = defines.direction.northeast, turn_dir = 1, count = 2 },
       },
       [defines.direction.east] = {
-         position = "upper-half", -- east-to-north
+         position = "lower-half", -- east-to-north
          from_cardinal = defines.direction.east,
          to_cardinal = defines.direction.north,
          verify_forward = { end_dir = defines.direction.northeast, turn_dir = -1, count = 2 },
@@ -96,14 +96,14 @@ return {
          verify_back = { end_dir = defines.direction.westnorthwest, turn_dir = -1, count = 1 },
       },
       [defines.direction.south] = {
-         position = "lower-half", -- west-to-north
+         position = "upper-half", -- west-to-north
          from_cardinal = defines.direction.west,
          to_cardinal = defines.direction.north,
          verify_forward = { end_dir = defines.direction.northnorthwest, turn_dir = 1, count = 1 },
          verify_back = { end_dir = defines.direction.southeast, turn_dir = -1, count = 2 },
       },
       [defines.direction.southwest] = {
-         position = "lower-half", -- east-to-north
+         position = "upper-half", -- east-to-north
          from_cardinal = defines.direction.east,
          to_cardinal = defines.direction.north,
          verify_forward = { end_dir = defines.direction.northnortheast, turn_dir = -1, count = 1 },
@@ -117,7 +117,7 @@ return {
          verify_back = { end_dir = defines.direction.eastnortheast, turn_dir = 1, count = 1 },
       },
       [defines.direction.northwest] = {
-         position = "upper-half", -- west-to-north
+         position = "lower-half", -- west-to-north
          from_cardinal = defines.direction.west,
          to_cardinal = defines.direction.north,
          verify_forward = { end_dir = defines.direction.northwest, turn_dir = 1, count = 2 },
