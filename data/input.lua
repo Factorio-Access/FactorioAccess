@@ -353,6 +353,13 @@ data:extend({
 
    {
       type = "custom-input",
+      name = "fa-j",
+      key_sequence = "J",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
       name = "fa-c-n",
       key_sequence = "CONTROL + N",
       consuming = "none",

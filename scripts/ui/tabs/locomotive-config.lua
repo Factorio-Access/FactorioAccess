@@ -12,6 +12,7 @@ local FormBuilder = require("scripts.ui.form-builder")
 local InventoryUtils = require("scripts.inventory-utils")
 local TrainHelpers = require("scripts.rails.train-helpers")
 local UiKeyGraph = require("scripts.ui.key-graph")
+local Router = require("scripts.ui.router")
 
 local mod = {}
 
@@ -69,6 +70,11 @@ local function render_locomotive_config(ctx)
       else
          label_ctx.message:fragment({ "fa.locomotive-train-fuel", { "fa.ent-info-inventory-empty" } })
       end
+   end)
+
+   -- Edit schedule button
+   builder:add_action("edit_schedule", { "fa.locomotive-edit-schedule" }, function(controller)
+      controller:open_child_ui(Router.UI_NAMES.SCHEDULE_EDITOR, { entity = entity })
    end)
 
    return builder:build()

@@ -80,6 +80,7 @@ local mod = {}
 ---@field on_drag_right fa.ui.SimpleTabHandler?
 ---@field on_conjunction_modification fa.ui.SimpleTabHandler?
 ---@field on_add_to_row fa.ui.SimpleTabHandler?
+---@field on_toggle_supertype fa.ui.SimpleTabHandler?
 ---@field enabled fun(number): boolean
 ---@field supports_search fun(self, ctx: fa.ui.TabContext): boolean? Returns true if search is supported
 ---@field search_hint fun(self, ctx: fa.ui.TabContext, hint_callback: fun(localised_string: LocalisedString))? Called to hint strings for caching
@@ -361,6 +362,8 @@ TabList.on_drag_right = build_simple_method("on_drag_right")
 TabList.on_conjunction_modification = build_simple_method("on_conjunction_modification")
 ---@type fun(self, number, table?, fa.ui.RouterController)
 TabList.on_add_to_row = build_simple_method("on_add_to_row")
+---@type fun(self, number, table?, fa.ui.RouterController)
+TabList.on_toggle_supertype = build_simple_method("on_toggle_supertype")
 
 ---Handle accelerator events (one callback for all accelerators)
 ---@param pindex number
