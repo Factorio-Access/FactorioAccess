@@ -102,9 +102,9 @@ Insert items at a given position.
 
 **Parameters:**
 
-- `belt_stack_size` `uint8` *(optional)* - Maximum size of stack created on belt
-- `items` `ItemStackIdentification` - Items to insert.
 - `position` `float` - Where on the line to insert the items.
+- `items` `ItemStackIdentification` - Items to insert.
+- `belt_stack_size` `uint8` *(optional)* - Maximum size of stack created on belt
 
 **Returns:**
 
@@ -116,8 +116,8 @@ Insert items at the back of this line.
 
 **Parameters:**
 
-- `belt_stack_size` `uint8` *(optional)* - Maximum size of stack created on belt
 - `items` `ItemStackIdentification`
+- `belt_stack_size` `uint8` *(optional)* - Maximum size of stack created on belt
 
 **Returns:**
 
@@ -129,9 +129,9 @@ Force insert item at a given position. Inserts item onto a transport line. If a 
 
 **Parameters:**
 
-- `belt_stack_size` `uint8` *(optional)* - Maximum size of stack created on belt
-- `items` `ItemStackIdentification` - Items to insert.
 - `position` `float` - Where on the line to insert the items.
+- `items` `ItemStackIdentification` - Items to insert.
+- `belt_stack_size` `uint8` *(optional)* - Maximum size of stack created on belt
 
 ### get_contents
 

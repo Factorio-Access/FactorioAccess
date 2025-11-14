@@ -551,11 +551,11 @@ You can also pass 1 or 2 numbers as the parameters and they will be used as rela
 
 **Parameters:**
 
-- `build_check_type` `defines.build_check_type` *(optional)* - The build check type done when teleporting to the destination. Defaults to `script`. This is ignored when teleporting between surfaces.
 - `position` `MapPosition` - Where to teleport to.
+- `surface` `SurfaceIdentification` *(optional)* - Surface to teleport to. If not given, will teleport to the entity's current surface. Only players, cars, and spidertrons can be teleported cross-surface.
 - `raise_teleported` `boolean` *(optional)* - If true, [defines.events.script_raised_teleported](runtime:defines.events.script_raised_teleported) will be fired on successful entity teleportation.
 - `snap_to_grid` `boolean` *(optional)* - If false the exact position given is used to instead of snapping to the normal entity grid. This only applies if the entity normally snaps to the grid.
-- `surface` `SurfaceIdentification` *(optional)* - Surface to teleport to. If not given, will teleport to the entity's current surface. Only players, cars, and spidertrons can be teleported cross-surface.
+- `build_check_type` `defines.build_check_type` *(optional)* - The build check type done when teleporting to the destination. Defaults to `script`. This is ignored when teleporting between surfaces.
 
 **Returns:**
 
@@ -625,8 +625,8 @@ Cancels crafting the given count of the given crafting queue index.
 
 **Parameters:**
 
-- `count` `uint32` - The count to cancel crafting.
 - `index` `uint32` - The crafting queue index.
+- `count` `uint32` - The count to cancel crafting.
 
 ### mine_entity
 
@@ -722,9 +722,9 @@ Checks if this character or player can build the given entity at the given locat
 
 **Parameters:**
 
-- `direction` `defines.direction` *(optional)* - Direction the entity would be facing. Defaults to `north`.
 - `name` `EntityID` - Name of the entity that would be built.
 - `position` `MapPosition` - Where the entity would be placed.
+- `direction` `defines.direction` *(optional)* - Direction the entity would be facing. Defaults to `north`.
 
 **Returns:**
 

@@ -48,8 +48,8 @@ Sets the condition at `index`.
 
 **Parameters:**
 
-- `condition` `DeciderCombinatorCondition` - Data to set selected condition to.
 - `index` `uint32` - Index of condition to modify.
+- `condition` `DeciderCombinatorCondition` - Data to set selected condition to.
 
 ### add_condition
 
@@ -95,8 +95,8 @@ Adds a new output.
 
 **Parameters:**
 
-- `index` `uint32` *(optional)* - Index to insert new output at. If not specified, appends to the end.
 - `output` `DeciderCombinatorOutput` - New output to insert.
+- `index` `uint32` *(optional)* - Index to insert new output at. If not specified, appends to the end.
 
 ### remove_output
 

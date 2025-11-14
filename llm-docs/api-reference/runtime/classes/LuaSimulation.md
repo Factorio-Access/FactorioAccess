@@ -92,9 +92,9 @@ The class name of this object. Available even when `valid` is false. For LuaStru
 
 **Parameters:**
 
-- `inventory` `"character"` | `"entity"` *(optional)* - Defaults to `"character"`.
 - `inventory_index` `InventoryIndex`
 - `slot_index` `ItemStackIndex` - This index is 0-based, unlike other inventory indices.
+- `inventory` `"character"` | `"entity"` *(optional)* - Defaults to `"character"`.
 
 **Returns:**
 
@@ -104,9 +104,9 @@ The class name of this object. Available even when `valid` is false. For LuaStru
 
 **Parameters:**
 
+- `type` `SimulationWidgetType`
 - `data` `string` *(optional)*
 - `data2` `string` *(optional)*
-- `type` `SimulationWidgetType`
 
 **Returns:**
 
@@ -118,9 +118,9 @@ Activate the rail planner at the given position.
 
 **Parameters:**
 
-- `build_mode` `defines.build_mode` *(optional)* - Defaults to [normal](runtime:defines.build_mode.normal).
-- `ghost_mode` `boolean` *(optional)* - Defaults to `false`.
 - `position` `MapPosition` *(optional)*
+- `ghost_mode` `boolean` *(optional)* - Defaults to `false`.
+- `build_mode` `defines.build_mode` *(optional)* - Defaults to [normal](runtime:defines.build_mode.normal).
 
 ### deactivate_rail_planner
 

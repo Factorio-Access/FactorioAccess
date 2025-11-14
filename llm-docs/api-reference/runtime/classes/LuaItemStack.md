@@ -175,8 +175,8 @@ Transfers the given item stack into this item stack.
 
 **Parameters:**
 
-- `amount` `uint32` *(optional)*
 - `stack` `ItemStackIdentification`
+- `amount` `uint32` *(optional)*
 
 **Returns:**
 

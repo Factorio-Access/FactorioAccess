@@ -20,22 +20,22 @@ Create a line.
 
 **Parameters:**
 
-- `blink_interval` `uint16` *(optional)* - In ticks. Defaults to 0 (no blinking). Game alerts use 30.
 - `color` `Color`
+- `width` `float` - In pixels (32 per tile).
+- `gap_length` `double` *(optional)* - Length of the gaps that this line has, in tiles. Default is 0.
 - `dash_length` `double` *(optional)* - Length of the dashes that this line has. Used only if gap_length > 0. Default is 0.
 - `dash_offset` `double` *(optional)* - Starting offset to apply to dashes. Cannot be greater than dash_length + gap_length. Default is 0.
-- `draw_on_ground` `boolean` *(optional)* - If this should be drawn below sprites and entities. Defaults to false.
-- `forces` `ForceSet` *(optional)* - The forces that this object is rendered to. Passing `nil` or an empty table will render it to all forces.
 - `from` `ScriptRenderTarget`
-- `gap_length` `double` *(optional)* - Length of the gaps that this line has, in tiles. Default is 0.
-- `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
-- `players` Array[`PlayerIdentification`] *(optional)* - The players that this object is rendered to. Passing `nil` or an empty table will render it to all players.
-- `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
+- `to` `ScriptRenderTarget`
 - `surface` `SurfaceIdentification`
 - `time_to_live` `uint32` *(optional)* - In ticks. Defaults to living forever.
-- `to` `ScriptRenderTarget`
+- `blink_interval` `uint16` *(optional)* - In ticks. Defaults to 0 (no blinking). Game alerts use 30.
+- `forces` `ForceSet` *(optional)* - The forces that this object is rendered to. Passing `nil` or an empty table will render it to all forces.
+- `players` Array[`PlayerIdentification`] *(optional)* - The players that this object is rendered to. Passing `nil` or an empty table will render it to all players.
 - `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
-- `width` `float` - In pixels (32 per tile).
+- `draw_on_ground` `boolean` *(optional)* - If this should be drawn below sprites and entities. Defaults to false.
+- `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
+- `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 
 **Returns:**
 
@@ -61,25 +61,25 @@ Not all fonts support scaling.
 
 **Parameters:**
 
-- `alignment` `TextAlign` *(optional)* - Defaults to "left".
-- `blink_interval` `uint16` *(optional)* - In ticks. Defaults to 0 (no blinking). Game alerts use 30.
-- `color` `Color`
-- `draw_on_ground` `boolean` *(optional)* - If this should be drawn below sprites and entities. Rich text does not support this option. Defaults to false.
-- `font` `string` *(optional)* - Name of font to use. Defaults to the same font as flying-text.
-- `forces` `ForceSet` *(optional)* - The forces that this object is rendered to. Passing `nil` or an empty table will render it to all forces.
-- `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
-- `orientation` `RealOrientation` *(optional)* - The orientation of the text. Default is 0.
-- `players` Array[`PlayerIdentification`] *(optional)* - The players that this object is rendered to. Passing `nil` or an empty table will render it to all players.
-- `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
-- `scale` `double` *(optional)*
-- `scale_with_zoom` `boolean` *(optional)* - Defaults to false. If true, the text scales with player zoom, resulting in it always being the same size on screen, and the size compared to the game world changes.
+- `text` `LocalisedString` - The text to display.
 - `surface` `SurfaceIdentification`
 - `target` `ScriptRenderTarget`
-- `text` `LocalisedString` - The text to display.
+- `color` `Color`
+- `scale` `double` *(optional)*
+- `font` `string` *(optional)* - Name of font to use. Defaults to the same font as flying-text.
 - `time_to_live` `uint32` *(optional)* - In ticks. Defaults to living forever.
-- `use_rich_text` `boolean` *(optional)* - If rich text rendering is enabled. Defaults to false.
-- `vertical_alignment` `VerticalTextAlign` *(optional)* - Defaults to "top".
+- `blink_interval` `uint16` *(optional)* - In ticks. Defaults to 0 (no blinking). Game alerts use 30.
+- `forces` `ForceSet` *(optional)* - The forces that this object is rendered to. Passing `nil` or an empty table will render it to all forces.
+- `players` Array[`PlayerIdentification`] *(optional)* - The players that this object is rendered to. Passing `nil` or an empty table will render it to all players.
 - `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
+- `draw_on_ground` `boolean` *(optional)* - If this should be drawn below sprites and entities. Rich text does not support this option. Defaults to false.
+- `orientation` `RealOrientation` *(optional)* - The orientation of the text. Default is 0.
+- `alignment` `TextAlign` *(optional)* - Defaults to "left".
+- `vertical_alignment` `VerticalTextAlign` *(optional)* - Defaults to "top".
+- `scale_with_zoom` `boolean` *(optional)* - Defaults to false. If true, the text scales with player zoom, resulting in it always being the same size on screen, and the size compared to the game world changes.
+- `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
+- `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
+- `use_rich_text` `boolean` *(optional)* - If rich text rendering is enabled. Defaults to false.
 
 **Returns:**
 
@@ -91,20 +91,20 @@ Create a circle.
 
 **Parameters:**
 
-- `blink_interval` `uint16` *(optional)* - In ticks. Defaults to 0 (no blinking). Game alerts use 30.
 - `color` `Color`
-- `draw_on_ground` `boolean` *(optional)* - If this should be drawn below sprites and entities. Defaults to false.
-- `filled` `boolean` *(optional)* - If the circle should be filled. Defaults to false.
-- `forces` `ForceSet` *(optional)* - The forces that this object is rendered to. Passing `nil` or an empty table will render it to all forces.
-- `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
-- `players` Array[`PlayerIdentification`] *(optional)* - The players that this object is rendered to. Passing `nil` or an empty table will render it to all players.
 - `radius` `double` - In tiles.
-- `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
-- `surface` `SurfaceIdentification`
-- `target` `ScriptRenderTarget`
-- `time_to_live` `uint32` *(optional)* - In ticks. Defaults to living forever.
-- `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
 - `width` `float` *(optional)* - Width of the outline, used only if filled = false. Value is in pixels (32 per tile). Defaults to 1.
+- `filled` `boolean` *(optional)* - If the circle should be filled. Defaults to false.
+- `target` `ScriptRenderTarget`
+- `surface` `SurfaceIdentification`
+- `time_to_live` `uint32` *(optional)* - In ticks. Defaults to living forever.
+- `blink_interval` `uint16` *(optional)* - In ticks. Defaults to 0 (no blinking). Game alerts use 30.
+- `forces` `ForceSet` *(optional)* - The forces that this object is rendered to. Passing `nil` or an empty table will render it to all forces.
+- `players` Array[`PlayerIdentification`] *(optional)* - The players that this object is rendered to. Passing `nil` or an empty table will render it to all players.
+- `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
+- `draw_on_ground` `boolean` *(optional)* - If this should be drawn below sprites and entities. Defaults to false.
+- `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
+- `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 
 **Returns:**
 
@@ -116,20 +116,20 @@ Create a rectangle.
 
 **Parameters:**
 
-- `blink_interval` `uint16` *(optional)* - In ticks. Defaults to 0 (no blinking). Game alerts use 30.
 - `color` `Color`
-- `draw_on_ground` `boolean` *(optional)* - If this should be drawn below sprites and entities. Defaults to false.
+- `width` `float` *(optional)* - Width of the outline, used only if filled = false. Value is in pixels (32 per tile). Defaults to 1.
 - `filled` `boolean` *(optional)* - If the rectangle should be filled. Defaults to false.
-- `forces` `ForceSet` *(optional)* - The forces that this object is rendered to. Passing `nil` or an empty table will render it to all forces.
 - `left_top` `ScriptRenderTarget`
-- `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
-- `players` Array[`PlayerIdentification`] *(optional)* - The players that this object is rendered to. Passing `nil` or an empty table will render it to all players.
-- `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 - `right_bottom` `ScriptRenderTarget`
 - `surface` `SurfaceIdentification`
 - `time_to_live` `uint32` *(optional)* - In ticks. Defaults to living forever.
+- `blink_interval` `uint16` *(optional)* - In ticks. Defaults to 0 (no blinking). Game alerts use 30.
+- `forces` `ForceSet` *(optional)* - The forces that this object is rendered to. Passing `nil` or an empty table will render it to all forces.
+- `players` Array[`PlayerIdentification`] *(optional)* - The players that this object is rendered to. Passing `nil` or an empty table will render it to all players.
 - `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
-- `width` `float` *(optional)* - Width of the outline, used only if filled = false. Value is in pixels (32 per tile). Defaults to 1.
+- `draw_on_ground` `boolean` *(optional)* - If this should be drawn below sprites and entities. Defaults to false.
+- `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
+- `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 
 **Returns:**
 
@@ -148,21 +148,21 @@ Create an arc.
 
 **Parameters:**
 
-- `angle` `float` - The angle of the arc, in radian.
-- `blink_interval` `uint16` *(optional)* - In ticks. Defaults to 0 (no blinking). Game alerts use 30.
 - `color` `Color`
-- `draw_on_ground` `boolean` *(optional)* - If this should be drawn below sprites and entities. Defaults to false.
-- `forces` `ForceSet` *(optional)* - The forces that this object is rendered to. Passing `nil` or an empty table will render it to all forces.
 - `max_radius` `double` - The radius of the outer edge of the arc, in tiles.
 - `min_radius` `double` - The radius of the inner edge of the arc, in tiles.
-- `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
-- `players` Array[`PlayerIdentification`] *(optional)* - The players that this object is rendered to. Passing `nil` or an empty table will render it to all players.
-- `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 - `start_angle` `float` - Where the arc starts, in radian.
-- `surface` `SurfaceIdentification`
+- `angle` `float` - The angle of the arc, in radian.
 - `target` `ScriptRenderTarget`
+- `surface` `SurfaceIdentification`
 - `time_to_live` `uint32` *(optional)* - In ticks. Defaults to living forever.
+- `blink_interval` `uint16` *(optional)* - In ticks. Defaults to 0 (no blinking). Game alerts use 30.
+- `forces` `ForceSet` *(optional)* - The forces that this object is rendered to. Passing `nil` or an empty table will render it to all forces.
+- `players` Array[`PlayerIdentification`] *(optional)* - The players that this object is rendered to. Passing `nil` or an empty table will render it to all players.
 - `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
+- `draw_on_ground` `boolean` *(optional)* - If this should be drawn below sprites and entities. Defaults to false.
+- `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
+- `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 
 **Returns:**
 
@@ -174,21 +174,21 @@ Create a triangle mesh defined by a triangle strip.
 
 **Parameters:**
 
-- `blink_interval` `uint16` *(optional)* - In ticks. Defaults to 0 (no blinking). Game alerts use 30.
 - `color` `Color`
-- `draw_on_ground` `boolean` *(optional)* - If this should be drawn below sprites and entities. Defaults to false.
-- `forces` `ForceSet` *(optional)* - The forces that this object is rendered to. Passing `nil` or an empty table will render it to all forces.
-- `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
+- `vertices` Array[`ScriptRenderTarget`]
+- `target` `ScriptRenderTarget` *(optional)* - Acts like an offset applied to all vertices that are not set to an entity.
 - `orientation` `RealOrientation` *(optional)* - The orientation applied to all vertices. Default is 0.
 - `orientation_target` `ScriptRenderTarget` *(optional)* - If given, the vertices (that are not set to an entity) rotate so that it faces this target. Note that `orientation` is still applied.
-- `players` Array[`PlayerIdentification`] *(optional)* - The players that this object is rendered to. Passing `nil` or an empty table will render it to all players.
-- `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
-- `surface` `SurfaceIdentification`
-- `target` `ScriptRenderTarget` *(optional)* - Acts like an offset applied to all vertices that are not set to an entity.
-- `time_to_live` `uint32` *(optional)* - In ticks. Defaults to living forever.
 - `use_target_orientation` `boolean` *(optional)* - Only used if `orientation_target` is a LuaEntity.
-- `vertices` Array[`ScriptRenderTarget`]
+- `surface` `SurfaceIdentification`
+- `time_to_live` `uint32` *(optional)* - In ticks. Defaults to living forever.
+- `blink_interval` `uint16` *(optional)* - In ticks. Defaults to 0 (no blinking). Game alerts use 30.
+- `forces` `ForceSet` *(optional)* - The forces that this object is rendered to. Passing `nil` or an empty table will render it to all forces.
+- `players` Array[`PlayerIdentification`] *(optional)* - The players that this object is rendered to. Passing `nil` or an empty table will render it to all players.
 - `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
+- `draw_on_ground` `boolean` *(optional)* - If this should be drawn below sprites and entities. Defaults to false.
+- `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
+- `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 
 **Returns:**
 
@@ -200,24 +200,24 @@ Create a sprite.
 
 **Parameters:**
 
-- `blink_interval` `uint16` *(optional)* - In ticks. Defaults to 0 (no blinking). Game alerts use 30.
-- `forces` `ForceSet` *(optional)* - The forces that this object is rendered to. Passing `nil` or an empty table will render it to all forces.
-- `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
-- `orientation` `RealOrientation` *(optional)* - The orientation of the sprite. Default is 0.
-- `orientation_target` `ScriptRenderTarget` *(optional)* - If given, the sprite rotates so that it faces this target. Note that `orientation` is still applied to the sprite.
-- `oriented_offset` `Vector` *(optional)* - Offsets the center of the sprite if `orientation_target` is given. This offset will rotate together with the sprite.
-- `players` Array[`PlayerIdentification`] *(optional)* - The players that this object is rendered to. Passing `nil` or an empty table will render it to all players.
-- `render_layer` `RenderLayer` *(optional)* - Render layer of the sprite. Defaults to `"arrow"`.
-- `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 - `sprite` `SpritePath`
-- `surface` `SurfaceIdentification`
-- `target` `ScriptRenderTarget` - Center of the sprite.
-- `time_to_live` `uint32` *(optional)* - In ticks. Defaults to living forever.
-- `tint` `Color` *(optional)*
-- `use_target_orientation` `boolean` *(optional)* - Only used if `orientation_target` is a LuaEntity.
-- `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
+- `orientation` `RealOrientation` *(optional)* - The orientation of the sprite. Default is 0.
 - `x_scale` `double` *(optional)* - Horizontal scale of the sprite. Default is 1.
 - `y_scale` `double` *(optional)* - Vertical scale of the sprite. Default is 1.
+- `tint` `Color` *(optional)*
+- `render_layer` `RenderLayer` *(optional)* - Render layer of the sprite. Defaults to `"arrow"`.
+- `orientation_target` `ScriptRenderTarget` *(optional)* - If given, the sprite rotates so that it faces this target. Note that `orientation` is still applied to the sprite.
+- `use_target_orientation` `boolean` *(optional)* - Only used if `orientation_target` is a LuaEntity.
+- `oriented_offset` `Vector` *(optional)* - Offsets the center of the sprite if `orientation_target` is given. This offset will rotate together with the sprite.
+- `target` `ScriptRenderTarget` - Center of the sprite.
+- `surface` `SurfaceIdentification`
+- `time_to_live` `uint32` *(optional)* - In ticks. Defaults to living forever.
+- `blink_interval` `uint16` *(optional)* - In ticks. Defaults to 0 (no blinking). Game alerts use 30.
+- `forces` `ForceSet` *(optional)* - The forces that this object is rendered to. Passing `nil` or an empty table will render it to all forces.
+- `players` Array[`PlayerIdentification`] *(optional)* - The players that this object is rendered to. Passing `nil` or an empty table will render it to all players.
+- `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
+- `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
+- `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 
 **Returns:**
 
@@ -243,22 +243,22 @@ The base game uses the utility sprites `light_medium` and `light_small` for ligh
 
 **Parameters:**
 
-- `blink_interval` `uint16` *(optional)* - In ticks. Defaults to 0 (no blinking). Game alerts use 30.
-- `color` `Color` *(optional)* - Defaults to white (no tint).
-- `forces` `ForceSet` *(optional)* - The forces that this object is rendered to. Passing `nil` or an empty table will render it to all forces.
+- `sprite` `SpritePath`
+- `orientation` `RealOrientation` *(optional)* - The orientation of the light. Default is 0.
+- `scale` `float` *(optional)* - Default is 1.
 - `intensity` `float` *(optional)* - Default is 1.
 - `minimum_darkness` `float` *(optional)* - The minimum darkness at which this light is rendered. Default is 0.
-- `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
-- `orientation` `RealOrientation` *(optional)* - The orientation of the light. Default is 0.
 - `oriented` `boolean` *(optional)* - If this light has the same orientation as the entity target, default is false. Note that `orientation` is still applied to the sprite.
-- `players` Array[`PlayerIdentification`] *(optional)* - The players that this object is rendered to. Passing `nil` or an empty table will render it to all players.
-- `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
-- `scale` `float` *(optional)* - Default is 1.
-- `sprite` `SpritePath`
-- `surface` `SurfaceIdentification`
+- `color` `Color` *(optional)* - Defaults to white (no tint).
 - `target` `ScriptRenderTarget` - Center of the light.
+- `surface` `SurfaceIdentification`
 - `time_to_live` `uint32` *(optional)* - In ticks. Defaults to living forever.
+- `blink_interval` `uint16` *(optional)* - In ticks. Defaults to 0 (no blinking). Game alerts use 30.
+- `forces` `ForceSet` *(optional)* - The forces that this object is rendered to. Passing `nil` or an empty table will render it to all forces.
+- `players` Array[`PlayerIdentification`] *(optional)* - The players that this object is rendered to. Passing `nil` or an empty table will render it to all players.
 - `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
+- `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
+- `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 
 **Returns:**
 
@@ -271,25 +271,25 @@ Create an animation.
 **Parameters:**
 
 - `animation` `string` - Name of an [AnimationPrototype](prototype:AnimationPrototype).
-- `animation_offset` `double` *(optional)* - Offset of the animation in frames. Default is 0.
-- `animation_speed` `double` *(optional)* - How many frames the animation goes forward per tick. Default is 1.
-- `blink_interval` `uint16` *(optional)* - In ticks. Defaults to 0 (no blinking). Game alerts use 30.
-- `forces` `ForceSet` *(optional)* - The forces that this object is rendered to. Passing `nil` or an empty table will render it to all forces.
-- `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
 - `orientation` `RealOrientation` *(optional)* - The orientation of the animation. Default is 0.
-- `orientation_target` `ScriptRenderTarget` *(optional)* - If given, the animation rotates so that it faces this target. Note that `orientation` is still applied to the animation.
-- `oriented_offset` `Vector` *(optional)* - Offsets the center of the animation if `orientation_target` is given. This offset will rotate together with the animation.
-- `players` Array[`PlayerIdentification`] *(optional)* - The players that this object is rendered to. Passing `nil` or an empty table will render it to all players.
-- `render_layer` `RenderLayer` *(optional)* - Render layer of the animation. Defaults to `"arrow"`.
-- `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
-- `surface` `SurfaceIdentification`
-- `target` `ScriptRenderTarget` - Center of the animation.
-- `time_to_live` `uint32` *(optional)* - In ticks. Defaults to living forever.
-- `tint` `Color` *(optional)*
-- `use_target_orientation` `boolean` *(optional)* - Only used if `orientation_target` is a LuaEntity.
-- `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
 - `x_scale` `double` *(optional)* - Horizontal scale of the animation. Default is 1.
 - `y_scale` `double` *(optional)* - Vertical scale of the animation. Default is 1.
+- `tint` `Color` *(optional)*
+- `render_layer` `RenderLayer` *(optional)* - Render layer of the animation. Defaults to `"arrow"`.
+- `animation_speed` `double` *(optional)* - How many frames the animation goes forward per tick. Default is 1.
+- `animation_offset` `double` *(optional)* - Offset of the animation in frames. Default is 0.
+- `orientation_target` `ScriptRenderTarget` *(optional)* - If given, the animation rotates so that it faces this target. Note that `orientation` is still applied to the animation.
+- `use_target_orientation` `boolean` *(optional)* - Only used if `orientation_target` is a LuaEntity.
+- `oriented_offset` `Vector` *(optional)* - Offsets the center of the animation if `orientation_target` is given. This offset will rotate together with the animation.
+- `target` `ScriptRenderTarget` - Center of the animation.
+- `surface` `SurfaceIdentification`
+- `time_to_live` `uint32` *(optional)* - In ticks. Defaults to living forever.
+- `blink_interval` `uint16` *(optional)* - In ticks. Defaults to 0 (no blinking). Game alerts use 30.
+- `forces` `ForceSet` *(optional)* - The forces that this object is rendered to. Passing `nil` or an empty table will render it to all forces.
+- `players` Array[`PlayerIdentification`] *(optional)* - The players that this object is rendered to. Passing `nil` or an empty table will render it to all players.
+- `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
+- `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
+- `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 
 **Returns:**
 

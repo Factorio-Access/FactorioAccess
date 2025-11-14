@@ -94,8 +94,8 @@ Some entities cannot have their fluidbox filter set, notably fluid wagons and cr
 
 **Parameters:**
 
-- `filter` `FluidBoxFilterSpec` | `nil` - The filter to set. Setting `nil` clears the filter.
 - `index` `uint32` - The index of the filter to set.
+- `filter` `FluidBoxFilterSpec` | `nil` - The filter to set. Setting `nil` clears the filter.
 
 **Returns:**
 
@@ -157,8 +157,8 @@ Flushes all fluid from this fluidbox and its fluid system.
 
 **Parameters:**
 
-- `fluid` `FluidID` *(optional)* - If provided, only this fluid is flushed.
 - `index` `uint32`
+- `fluid` `FluidID` *(optional)* - If provided, only this fluid is flushed.
 
 **Returns:**
 
@@ -176,9 +176,9 @@ Linked connections cannot go to the same entity even if they would be part of ot
 
 **Parameters:**
 
+- `this_linked_connection_id` `uint32`
 - `other_entity` `LuaEntity`
 - `other_linked_connection_id` `uint32`
-- `this_linked_connection_id` `uint32`
 
 ### remove_linked_connection
 

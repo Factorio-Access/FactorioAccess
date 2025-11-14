@@ -98,8 +98,8 @@ Register a handler to run on the specified event(s). Each mod can only register 
 **Parameters:**
 
 - `event` `LuaEventType` | Array[`LuaEventType`] - The event(s) or custom-input to invoke the handler on.
-- `filters` `EventFilter` *(optional)* - The filters for this event. Can only be used when registering for individual events.
 - `handler` function(`EventData`) | `nil` - The handler for this event. Passing `nil` will unregister it.
+- `filters` `EventFilter` *(optional)* - The filters for this event. Can only be used when registering for individual events.
 
 **Examples:**
 
@@ -122,8 +122,8 @@ Register a handler to run every nth-tick(s). When the game is on tick 0 it will 
 
 **Parameters:**
 
-- `handler` function(`NthTickEventData`) | `nil` - The handler to run. Passing `nil` will unregister it for the provided nth-tick(s).
 - `tick` `uint32` | Array[`uint32`] | `nil` - The nth-tick(s) to invoke the handler on. Passing `nil` as the only parameter will unregister all nth-tick handlers.
+- `handler` function(`NthTickEventData`) | `nil` - The handler to run. Passing `nil` will unregister it for the provided nth-tick(s).
 
 ### register_on_object_destroyed
 
@@ -172,8 +172,8 @@ setmetatable(table, metatable)
 
 **Parameters:**
 
-- `metatable` `table` - The metatable to register.
 - `name` `string` - The name of this metatable. Names must be unique per mod.
+- `metatable` `table` - The metatable to register.
 
 ### generate_event_name
 
@@ -260,8 +260,8 @@ Raise an event. Only events generated with [LuaBootstrap::generate_event_name](r
 
 **Parameters:**
 
-- `data` `table` - Table with extra data that will be passed to the event handler. Any invalid LuaObjects will silently stop the event from being raised.
 - `event` `LuaEventType` - ID or name of the event to raise.
+- `data` `table` - Table with extra data that will be passed to the event handler. Any invalid LuaObjects will silently stop the event from being raised.
 
 **Examples:**
 
@@ -275,8 +275,8 @@ script.raise_event(defines.events.on_console_chat, data)
 
 **Parameters:**
 
-- `message` `string` - The chat message to send.
 - `player_index` `uint32` - The player doing the chatting.
+- `message` `string` - The chat message to send.
 
 ### raise_player_crafted_item
 
@@ -290,10 +290,10 @@ script.raise_event(defines.events.on_console_chat, data)
 
 **Parameters:**
 
+- `player_index` `uint32` - The player transferred from or to.
 - `entity` `LuaEntity` - The entity transferred from or to.
 - `from_player` `boolean` - Whether the transfer was from player to entity. If `false`, the transfer was from entity to player.
 - `is_split` `boolean` - Whether the transfer was a split action (half stack).
-- `player_index` `uint32` - The player transferred from or to.
 
 ### raise_biter_base_built
 
@@ -305,10 +305,10 @@ script.raise_event(defines.events.on_console_chat, data)
 
 **Parameters:**
 
-- `count` `uint32` - The amount of offers purchased.
+- `player_index` `uint32` - The player who did the purchasing.
 - `market` `LuaEntity` - The market entity.
 - `offer_index` `uint32` - The index of the offer purchased.
-- `player_index` `uint32` - The player who did the purchasing.
+- `count` `uint32` - The amount of offers purchased.
 
 ### raise_script_built
 
@@ -334,8 +334,8 @@ script.raise_event(defines.events.on_console_chat, data)
 **Parameters:**
 
 - `entity` `LuaEntity` - The entity that was teleported.
-- `old_position` `MapPosition` - The entity's position before the teleportation.
 - `old_surface_index` `uint8` - The entity's surface before the teleportation.
+- `old_position` `MapPosition` - The entity's position before the teleportation.
 
 ### raise_script_set_tiles
 

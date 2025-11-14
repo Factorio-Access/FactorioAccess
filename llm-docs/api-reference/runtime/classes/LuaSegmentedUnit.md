@@ -154,9 +154,9 @@ Unlike [LuaSegmentedUnit::destroy](runtime:LuaSegmentedUnit::destroy), `die` wil
 
 **Parameters:**
 
+- `force` `ForceID` *(optional)* - The force to attribute the kill to. Defaults to the `"neutral"` force.
 - `cause` `LuaEntity` *(optional)* - The cause to attribute the kill to.
 - `damage_type` `DamageTypeID` *(optional)* - The final damage type that caused the unit to die.
-- `force` `ForceID` *(optional)* - The force to attribute the kill to. Defaults to the `"neutral"` force.
 
 ### damage
 
@@ -164,11 +164,11 @@ Damages the unit.
 
 **Parameters:**
 
-- `cause` `LuaEntity` *(optional)* - The entity that originally triggered the events that led to this damage being dealt. This can be the player character, turret, unit, etc. that pulled the trigger. Does not need to be on the same surface as the segmented unit being damaged.
 - `damage` `float` - The amount of damage to be done.
 - `force` `ForceID` - The force that is doing the damage.
-- `source` `LuaEntity` *(optional)* - The entity that is directly dealing the damage. This is the projectile, flame, sticker, grenade, laster beam, etc. Must be on the same surface as the entity being damaged.
 - `type` `DamageTypeID` *(optional)* - The type of damage being done. Defaults to `"impact"`.
+- `source` `LuaEntity` *(optional)* - The entity that is directly dealing the damage. This is the projectile, flame, sticker, grenade, laster beam, etc. Must be on the same surface as the entity being damaged.
+- `cause` `LuaEntity` *(optional)* - The entity that originally triggered the events that led to this damage being dealt. This can be the player character, turret, unit, etc. that pulled the trigger. Does not need to be on the same surface as the segmented unit being damaged.
 
 **Returns:**
 
@@ -188,9 +188,9 @@ Clones this unit.
 
 **Parameters:**
 
-- `force` `ForceID` *(optional)* - The new unit's force.
 - `position` `MapPosition` - The destination position of the head segment. The rest of the body nodes will be copied relative to this.
 - `surface` `LuaSurface` *(optional)* - The destination surface. If different from this unit's surface, then the clone will not copy the original unit's territory.
+- `force` `ForceID` *(optional)* - The new unit's force.
 - `territory` `LuaTerritory` *(optional)* - The territory that the clone should guard. Must be on the same surface as the destination surface.
 
 **Returns:**

@@ -314,8 +314,8 @@ Pollution changes by this are not included in pollution statistics and do not af
 
 **Parameters:**
 
-- `amount` `double` - New amount of pollution to be set on the chunk. Must be >= 0.
 - `position` `MapPosition` - The position to set the chunk's pollution
+- `amount` `double` - New amount of pollution to be set on the chunk. Must be >= 0.
 
 ### can_place_entity
 
@@ -323,13 +323,13 @@ Check for collisions with terrain or other entities.
 
 **Parameters:**
 
-- `build_check_type` `defines.build_check_type` *(optional)* - Which type of check should be carried out. Defaults to `ghost_revive`.
-- `direction` `defines.direction` *(optional)* - Direction of the placed entity. Defaults to `north`.
-- `force` `ForceID` *(optional)* - The force that would place the entity. Defaults to the `"neutral"` force.
-- `forced` `boolean` *(optional)* - If `true`, entities that can be marked for deconstruction are ignored. Only used if `build_check_type` is either `manual_ghost`, `script_ghost` or `blueprint_ghost`. Defaults to `false`.
-- `inner_name` `string` *(optional)* - The prototype name of the entity contained in the ghost. Only used if `name` is `entity-ghost`.
 - `name` `EntityID` - Name of the entity prototype to check.
 - `position` `MapPosition` - Where the entity would be placed.
+- `direction` `defines.direction` *(optional)* - Direction of the placed entity. Defaults to `north`.
+- `force` `ForceID` *(optional)* - The force that would place the entity. Defaults to the `"neutral"` force.
+- `build_check_type` `defines.build_check_type` *(optional)* - Which type of check should be carried out. Defaults to `ghost_revive`.
+- `forced` `boolean` *(optional)* - If `true`, entities that can be marked for deconstruction are ignored. Only used if `build_check_type` is either `manual_ghost`, `script_ghost` or `blueprint_ghost`. Defaults to `false`.
+- `inner_name` `string` *(optional)* - The prototype name of the entity contained in the ghost. Only used if `name` is `entity-ghost`.
 
 **Returns:**
 
@@ -341,10 +341,10 @@ If there exists an entity at the given location that can be fast-replaced with t
 
 **Parameters:**
 
-- `direction` `defines.direction` *(optional)* - Direction the entity would be placed. Defaults to `north`.
-- `force` `ForceID` *(optional)* - The force that would place the entity. Defaults to the `"neutral"` force.
 - `name` `EntityID` - Name of the entity to check.
 - `position` `MapPosition` - Where the entity would be placed.
+- `direction` `defines.direction` *(optional)* - Direction the entity would be placed. Defaults to `north`.
+- `force` `ForceID` *(optional)* - The force that would place the entity. Defaults to the `"neutral"` force.
 
 **Returns:**
 
@@ -481,11 +481,11 @@ Special care needs to be taken when using a radius of `0`. The game will not sto
 
 **Parameters:**
 
-- `center` `MapPosition` - Center of the search area.
-- `force_to_tile_center` `boolean` *(optional)* - Will only check tile centers. This can be useful when your intent is to place a building at the resulting position, as they must generally be placed at tile centers. Defaults to `false`.
 - `name` `EntityID` - Prototype name of the entity to find a position for. (The bounding box for the collision checking is taken from this prototype.)
-- `precision` `double` - The step length from the given position as it searches, in tiles. Minimum value is `0.01`.
+- `center` `MapPosition` - Center of the search area.
 - `radius` `double` - Max distance from `center` to search in. A radius of `0` means an infinitely-large search area.
+- `precision` `double` - The step length from the given position as it searches, in tiles. Minimum value is `0.01`.
+- `force_to_tile_center` `boolean` *(optional)* - Will only check tile centers. This can be useful when your intent is to place a building at the resulting position, as they must generally be placed at tile centers. Defaults to `false`.
 
 **Returns:**
 
@@ -497,10 +497,10 @@ Find a non-colliding position within a given rectangle.
 
 **Parameters:**
 
-- `force_to_tile_center` `boolean` *(optional)* - Will only check tile centers. This can be useful when your intent is to place a building at the resulting position, as they must generally be placed at tile centers. Defaults to `false`.
 - `name` `EntityID` - Prototype name of the entity to find a position for. (The bounding box for the collision checking is taken from this prototype.)
-- `precision` `double` - The step length from the given position as it searches, in tiles. Minimum value is 0.01.
 - `search_space` `BoundingBox` - The rectangle to search inside.
+- `precision` `double` - The step length from the given position as it searches, in tiles. Minimum value is 0.01.
+- `force_to_tile_center` `boolean` *(optional)* - Will only check tile centers. This can be useful when your intent is to place a building at the resulting position, as they must generally be placed at tile centers. Defaults to `false`.
 
 **Returns:**
 
@@ -512,14 +512,14 @@ Spill items on the ground centered at a given location.
 
 **Parameters:**
 
-- `allow_belts` `boolean` *(optional)* - Whether items can be spilled onto belts. Defaults to `true`.
-- `drop_full_stack` `boolean` *(optional)* - If item on ground should be made out of an entire provided stack. Defaults to `false`.
-- `enable_looted` `boolean` *(optional)* - When true, each created item will be flagged with the [LuaEntity::to_be_looted](runtime:LuaEntity::to_be_looted) flag. Defaults to `false`.
-- `force` `ForceID` *(optional)* - When provided (and not `nil`) the items will be marked for deconstruction by this force.
-- `max_radius` `double` *(optional)* - Max radius from the specified `position` to spill items.
 - `position` `MapPosition` - Center of the spillage
 - `stack` `ItemStackIdentification` - Stack of items to spill
+- `enable_looted` `boolean` *(optional)* - When true, each created item will be flagged with the [LuaEntity::to_be_looted](runtime:LuaEntity::to_be_looted) flag. Defaults to `false`.
+- `force` `ForceID` *(optional)* - When provided (and not `nil`) the items will be marked for deconstruction by this force.
+- `allow_belts` `boolean` *(optional)* - Whether items can be spilled onto belts. Defaults to `true`.
+- `max_radius` `double` *(optional)* - Max radius from the specified `position` to spill items.
 - `use_start_position_on_failure` `boolean` *(optional)* - Allow spilling items at `position` if no non-colliding position is found. Note: Setting to false might cause some items not to be spilled. Defaults to `true`.
+- `drop_full_stack` `boolean` *(optional)* - If item on ground should be made out of an entire provided stack. Defaults to `false`.
 
 **Returns:**
 
@@ -531,14 +531,14 @@ Spill inventory on the ground centered at a given location.
 
 **Parameters:**
 
-- `allow_belts` `boolean` *(optional)* - Whether items can be spilled onto belts. Defaults to `true`.
-- `drop_full_stack` `boolean` *(optional)* - If item on ground should be made out of an entire provided stack. Defaults to `false`.
+- `position` `MapPosition` - Center of the spillage
+- `inventory` `LuaInventory` - Inventory to spill
 - `enable_looted` `boolean` *(optional)* - When true, each created item will be flagged with the [LuaEntity::to_be_looted](runtime:LuaEntity::to_be_looted) flag. Defaults to `false`.
 - `force` `ForceID` *(optional)* - When provided (and not `nil`) the items will be marked for deconstruction by this force.
-- `inventory` `LuaInventory` - Inventory to spill
+- `allow_belts` `boolean` *(optional)* - Whether items can be spilled onto belts. Defaults to `true`.
 - `max_radius` `double` *(optional)* - Max radius from the specified `position` to spill items.
-- `position` `MapPosition` - Center of the spillage
 - `use_start_position_on_failure` `boolean` *(optional)* - Allow spilling items at `position` if no non-colliding position is found. Note: Setting to false might cause some items not to be spilled. Defaults to `true`.
+- `drop_full_stack` `boolean` *(optional)* - If item on ground should be made out of an entire provided stack. Defaults to `false`.
 
 **Returns:**
 
@@ -553,8 +553,8 @@ This is more efficient than [LuaSurface::find_entities](runtime:LuaSurface::find
 **Parameters:**
 
 - `center` `MapPosition` - Center of the search area
-- `force` `ForceID` *(optional)* - Force to find enemies of. If not given, uses the player force.
 - `radius` `double` - Radius of the circular search area
+- `force` `ForceID` *(optional)* - Force to find enemies of. If not given, uses the player force.
 
 **Returns:**
 
@@ -576,8 +576,8 @@ This is more efficient than [LuaSurface::find_entities](runtime:LuaSurface::find
 **Parameters:**
 
 - `area` `BoundingBox` - Box to find units within.
-- `condition` `ForceCondition` - Only forces which meet the condition will be included in the search.
 - `force` `ForceID` - Force performing the search.
+- `condition` `ForceCondition` - Only forces which meet the condition will be included in the search.
 
 **Returns:**
 
@@ -601,9 +601,9 @@ Find the enemy military target ([military entity](https://wiki.factorio.com/Mili
 
 **Parameters:**
 
-- `force` `ForceID` *(optional)* - The force the result will be an enemy of. Uses the player force if not specified.
-- `max_distance` `double` - Radius of the circular search area.
 - `position` `MapPosition` - Center of the search area.
+- `max_distance` `double` - Radius of the circular search area.
+- `force` `ForceID` *(optional)* - The force the result will be an enemy of. Uses the player force if not specified.
 
 **Returns:**
 
@@ -615,9 +615,9 @@ Find the enemy entity-with-owner closest to the given position.
 
 **Parameters:**
 
-- `force` `ForceID` *(optional)* - The force the result will be an enemy of. Uses the player force if not specified.
-- `max_distance` `double` - Radius of the circular search area.
 - `position` `MapPosition` - Center of the search area.
+- `max_distance` `double` - Radius of the circular search area.
+- `force` `ForceID` *(optional)* - The force the result will be an enemy of. Uses the player force if not specified.
 
 **Returns:**
 
@@ -630,8 +630,8 @@ Give a command to multiple units. This will automatically select suitable units 
 **Parameters:**
 
 - `command` `Command`
-- `force` `ForceID` *(optional)* - Force of the units this command is to be given to. If not specified, uses the enemy force.
 - `unit_count` `uint32` - Number of units to give the command to.
+- `force` `ForceID` *(optional)* - Force of the units this command is to be given to. If not specified, uses the enemy force.
 - `unit_search_distance` `uint32` *(optional)* - Radius to search for units. The search area is centered on the destination of the command. If not specified uses default value of 150.
 
 **Returns:**
@@ -644,28 +644,28 @@ Create an entity on this surface.
 
 **Parameters:**
 
-- `burner_fuel_inventory` `BlueprintInventoryWithFilters` *(optional)* - Used by entities with a burner energy source.
-- `cause` `LuaEntity` | `ForceID` *(optional)* - Cause entity / force. The entity or force that triggered the chain of events that led to this entity being created. Used for beams, projectiles, stickers, etc. so that the damage receiver can know which entity or force to retaliate against. Defaults to the value of `source`.
-- `character` `LuaEntity` *(optional)* - If fast_replace is true simulate fast replace using this character.
-- `create_build_effect_smoke` `boolean` *(optional)* - If false, the building effect smoke will not be shown around the new entity. Defaults to `true`.
-- `direction` `defines.direction` *(optional)* - Desired orientation of the entity after creation.
-- `fast_replace` `boolean` *(optional)* - If true, building will attempt to simulate fast-replace building. Defaults to `false`.
-- `force` `ForceID` *(optional)* - Force of the entity, default is enemy.
-- `item` `LuaItemStack` *(optional)* - If provided, the entity will attempt to pull stored values from this item (for example; creating a spidertron from a previously named and mined spidertron)
-- `move_stuck_players` `boolean` *(optional)* - If true, any characters that are in the way of the entity are teleported out of the way.
 - `name` `EntityID` - The entity prototype name to create.
-- `player` `PlayerIdentification` *(optional)* - If given set the last_user to this player. If fast_replace is true simulate fast replace using this player. Also the player whose undo queue this action should be added to.
 - `position` `MapPosition` - Where to create the entity.
-- `preserve_ghosts_and_corpses` `boolean` *(optional)* - If true, colliding ghosts and corpses will not be removed by the creation of some entity types. Defaults to `false`.
+- `direction` `defines.direction` *(optional)* - Desired orientation of the entity after creation.
 - `quality` `QualityID` *(optional)* - Quality of the entity to be created. Defaults to `normal`.
-- `raise_built` `boolean` *(optional)* - If true; [defines.events.script_raised_built](runtime:defines.events.script_raised_built) will be fired on successful entity creation. Defaults to `false`.
-- `register_plant` `boolean` *(optional)* - If true, plants created will register in any in-range agricultural towers.
-- `snap_to_grid` `boolean` *(optional)* - If false the exact position given is used to instead of snapping to the normal entity grid. This only applies if the entity normally snaps to the grid.
-- `source` `LuaEntity` | `MapPosition` *(optional)* - Source entity. Used for beams, projectiles, and highlight-boxes.
-- `spawn_decorations` `boolean` *(optional)* - If true, entity types that have [spawn_decoration](runtime:LuaEntityPrototype::spawn_decorations) property will apply triggers defined in the property. Defaults to `false`.
-- `spill` `boolean` *(optional)* - If false while fast_replace is true and player is nil any items from fast-replacing will be deleted instead of dropped on the ground. Defaults to `true`.
+- `force` `ForceID` *(optional)* - Force of the entity, default is enemy.
 - `target` `LuaEntity` | `MapPosition` *(optional)* - Entity with health for the new entity to target.
+- `source` `LuaEntity` | `MapPosition` *(optional)* - Source entity. Used for beams, projectiles, and highlight-boxes.
+- `cause` `LuaEntity` | `ForceID` *(optional)* - Cause entity / force. The entity or force that triggered the chain of events that led to this entity being created. Used for beams, projectiles, stickers, etc. so that the damage receiver can know which entity or force to retaliate against. Defaults to the value of `source`.
+- `snap_to_grid` `boolean` *(optional)* - If false the exact position given is used to instead of snapping to the normal entity grid. This only applies if the entity normally snaps to the grid.
+- `fast_replace` `boolean` *(optional)* - If true, building will attempt to simulate fast-replace building. Defaults to `false`.
 - `undo_index` `uint32` *(optional)* - The index of the undo item to add this action to. An index of `0` creates a new undo item for it. Defaults to putting it into the appropriate undo item automatically if not specified.
+- `player` `PlayerIdentification` *(optional)* - If given set the last_user to this player. If fast_replace is true simulate fast replace using this player. Also the player whose undo queue this action should be added to.
+- `character` `LuaEntity` *(optional)* - If fast_replace is true simulate fast replace using this character.
+- `spill` `boolean` *(optional)* - If false while fast_replace is true and player is nil any items from fast-replacing will be deleted instead of dropped on the ground. Defaults to `true`.
+- `raise_built` `boolean` *(optional)* - If true; [defines.events.script_raised_built](runtime:defines.events.script_raised_built) will be fired on successful entity creation. Defaults to `false`.
+- `create_build_effect_smoke` `boolean` *(optional)* - If false, the building effect smoke will not be shown around the new entity. Defaults to `true`.
+- `spawn_decorations` `boolean` *(optional)* - If true, entity types that have [spawn_decoration](runtime:LuaEntityPrototype::spawn_decorations) property will apply triggers defined in the property. Defaults to `false`.
+- `move_stuck_players` `boolean` *(optional)* - If true, any characters that are in the way of the entity are teleported out of the way.
+- `item` `LuaItemStack` *(optional)* - If provided, the entity will attempt to pull stored values from this item (for example; creating a spidertron from a previously named and mined spidertron)
+- `preserve_ghosts_and_corpses` `boolean` *(optional)* - If true, colliding ghosts and corpses will not be removed by the creation of some entity types. Defaults to `false`.
+- `register_plant` `boolean` *(optional)* - If true, plants created will register in any in-range agricultural towers.
+- `burner_fuel_inventory` `BlueprintInventoryWithFilters` *(optional)* - Used by entities with a burner energy source.
 
 **Returns:**
 
@@ -715,9 +715,9 @@ Create a segmented unit on the surface. This differs from creating an entity wit
 
 **Parameters:**
 
-- `force` `ForceID` *(optional)* - Force of the segmented unit. Defaults to `enemy`.
 - `name` `EntityID` - The segmented-unit prototype name to create. Must be of type `"segmented-unit"`.
 - `quality` `QualityID` *(optional)* - Quality of the entity to be created. Defaults to `normal`.
+- `force` `ForceID` *(optional)* - Force of the segmented unit. Defaults to `enemy`.
 - `territory` `LuaTerritory` *(optional)* - The territory that the segmented unit is assigned to. If `nil`, the segmented unit will patrol around its spawn location. Must be located on this same surface.
 
 **Returns:**
@@ -750,12 +750,12 @@ Creates a particle at the given location
 
 **Parameters:**
 
-- `frame_speed` `float`
-- `height` `float`
-- `movement` `Vector`
 - `name` `ParticleID` - The particle name.
 - `position` `MapPosition` - Where to create the particle.
+- `movement` `Vector`
+- `height` `float`
 - `vertical_speed` `float`
+- `frame_speed` `float`
 
 ### create_unit_group
 
@@ -763,8 +763,8 @@ Create a new unit group at a given position.
 
 **Parameters:**
 
-- `force` `ForceID` *(optional)* - Force of the new unit group. Defaults to `"enemy"`.
 - `position` `MapPosition` - Initial position of the new unit group.
+- `force` `ForceID` *(optional)* - Force of the new unit group. Defaults to `"enemy"`.
 
 **Returns:**
 
@@ -778,9 +778,9 @@ The specified force must be AI-controlled; i.e. `force.ai_controllable` must be 
 
 **Parameters:**
 
-- `force` `ForceID` *(optional)* - Force the new base will belong to. Defaults to enemy.
 - `position` `MapPosition` - Location of the new base.
 - `unit_count` `uint32` - Number of biters to send for the base-building task.
+- `force` `ForceID` *(optional)* - Force the new base will belong to. Defaults to enemy.
 
 ### get_tile
 
@@ -807,12 +807,12 @@ It is recommended to call this method once for all the tiles you want to change 
 
 **Parameters:**
 
-- `correct_tiles` `boolean` *(optional)* - If `false`, the correction logic is not applied to the changed tiles. Defaults to `true`.
-- `player` `PlayerIdentification` *(optional)* - The player whose undo queue to add these actions to.
-- `raise_event` `boolean` *(optional)* - Defaults to `false`.
-- `remove_colliding_decoratives` `boolean` *(optional)* - Defaults to `true`.
-- `remove_colliding_entities` `boolean` | `"abort_on_collision"` *(optional)* - Defaults to `true`.
 - `tiles` Array[`Tile`]
+- `correct_tiles` `boolean` *(optional)* - If `false`, the correction logic is not applied to the changed tiles. Defaults to `true`.
+- `remove_colliding_entities` `boolean` | `"abort_on_collision"` *(optional)* - Defaults to `true`.
+- `remove_colliding_decoratives` `boolean` *(optional)* - Defaults to `true`.
+- `raise_event` `boolean` *(optional)* - Defaults to `false`.
+- `player` `PlayerIdentification` *(optional)* - The player whose undo queue to add these actions to.
 - `undo_index` `uint32` *(optional)* - The index of the undo item to add this action to. An index of `0` creates a new undo item for it. Defaults to putting it into the appropriate undo item automatically if not specified.
 
 ### pollute
@@ -821,9 +821,9 @@ Spawn pollution at the given position.
 
 **Parameters:**
 
+- `source` `MapPosition` - Where to spawn the pollution.
 - `amount` `double` - How much pollution to add.
 - `prototype` `EntityID` *(optional)* - The entity prototype to attribute the pollution change to in statistics. If not defined, the pollution change will not show up in statistics.
-- `source` `MapPosition` - Where to spawn the pollution.
 
 ### get_chunks
 
@@ -926,8 +926,8 @@ Find the logistic network that covers a given position.
 
 **Parameters:**
 
-- `force` `ForceID` - Force the logistic network should belong to.
 - `position` `MapPosition`
+- `force` `ForceID` - Force the logistic network should belong to.
 
 **Returns:**
 
@@ -939,8 +939,8 @@ Find the logistic network with a cell closest to a given position.
 
 **Parameters:**
 
-- `force` `ForceID` - Force the logistic network should belong to.
 - `position` `MapPosition`
+- `force` `ForceID` - Force the logistic network should belong to.
 
 **Returns:**
 
@@ -952,8 +952,8 @@ Finds all of the logistics networks whose construction area intersects with the 
 
 **Parameters:**
 
-- `force` `ForceID` - Force the logistic networks should belong to.
 - `position` `MapPosition`
+- `force` `ForceID` - Force the logistic networks should belong to.
 
 **Returns:**
 
@@ -967,9 +967,9 @@ Place a deconstruction request.
 
 - `area` `BoundingBox` - The area to mark for deconstruction.
 - `force` `ForceID` - The force whose bots should perform the deconstruction.
-- `item` `LuaItemStack` *(optional)* - The deconstruction item to use if any.
 - `player` `PlayerIdentification` *(optional)* - The player to set the last_user to if any.
 - `skip_fog_of_war` `boolean` *(optional)* - If chunks covered by fog-of-war are skipped. Defaults to `false`.
+- `item` `LuaItemStack` *(optional)* - The deconstruction item to use if any.
 - `super_forced` `boolean` *(optional)* - If the deconstruction is super-forced. Defaults to `false`.
 
 ### cancel_deconstruct_area
@@ -980,11 +980,11 @@ Cancel a deconstruction order.
 
 - `area` `BoundingBox` - The area to cancel deconstruction orders in.
 - `force` `ForceID` - The force whose deconstruction orders to cancel.
-- `item` `LuaItemStack` *(optional)* - The deconstruction item to use if any.
 - `player` `PlayerIdentification` *(optional)* - The player to set the last_user to, if any.  Also the player whose undo queue this action should be added to.
 - `skip_fog_of_war` `boolean` *(optional)* - If chunks covered by fog-of-war are skipped. Defaults to `false`.
-- `super_forced` `boolean` *(optional)* - If the cancel deconstruction is super-forced. Defaults to `false`.
+- `item` `LuaItemStack` *(optional)* - The deconstruction item to use if any.
 - `undo_index` `uint32` *(optional)* - The index of the undo item to add this action to. An index of `0` creates a new undo item for it. Defaults to putting it into the appropriate undo item automatically if not specified.
+- `super_forced` `boolean` *(optional)* - If the cancel deconstruction is super-forced. Defaults to `false`.
 
 ### upgrade_area
 
@@ -994,9 +994,9 @@ Place an upgrade request.
 
 - `area` `BoundingBox` - The area to mark for upgrade.
 - `force` `ForceID` - The force whose bots should perform the upgrade.
-- `item` `LuaItemStack` - The upgrade item to use.
 - `player` `PlayerIdentification` *(optional)* - The player to set the last_user to if any.
 - `skip_fog_of_war` `boolean` *(optional)* - If chunks covered by fog-of-war are skipped.
+- `item` `LuaItemStack` - The upgrade item to use.
 
 ### cancel_upgrade_area
 
@@ -1006,9 +1006,9 @@ Cancel a upgrade order.
 
 - `area` `BoundingBox` - The area to cancel upgrade orders in.
 - `force` `ForceID` - The force whose upgrade orders to cancel.
-- `item` `LuaItemStack` - The upgrade item to use.
 - `player` `PlayerIdentification` *(optional)* - The player to set the last_user to if any.
 - `skip_fog_of_war` `boolean` *(optional)* - If chunks covered by fog-of-war are skipped.
+- `item` `LuaItemStack` - The upgrade item to use.
 
 ### get_hidden_tile
 
@@ -1062,10 +1062,10 @@ This won't find tiles in non-generated chunks.
 
 **Parameters:**
 
-- `area` `BoundingBox` *(optional)* - The area to find connected tiles in. If provided the start position must be in this area.
-- `include_diagonal` `boolean` *(optional)* - Include tiles that are connected diagonally.
 - `position` `TilePosition` - The tile position to start at.
 - `tiles` Array[`TileID`] - The tiles to search for.
+- `include_diagonal` `boolean` *(optional)* - Include tiles that are connected diagonally.
+- `area` `BoundingBox` *(optional)* - The area to find connected tiles in. If provided the start position must be in this area.
 
 **Returns:**
 
@@ -1085,8 +1085,8 @@ All specified entity prototypes must be autoplacable. If nothing is given all en
 
 **Parameters:**
 
-- `chunks` Array[`ChunkPosition`] *(optional)* - The chunk positions to regenerate the entities on. If not given all chunks are regenerated. Note chunks with status < entities are ignored.
 - `entities` `string` | Array[`string`] *(optional)* - Prototype names of entity or entities to autoplace. When `nil` all entities with an autoplace are used.
+- `chunks` Array[`ChunkPosition`] *(optional)* - The chunk positions to regenerate the entities on. If not given all chunks are regenerated. Note chunks with status < entities are ignored.
 
 ### regenerate_decorative
 
@@ -1096,8 +1096,8 @@ All specified decorative prototypes must be autoplacable. If nothing is given al
 
 **Parameters:**
 
-- `chunks` Array[`ChunkPosition`] *(optional)* - The chunk positions to regenerate the decoratives on. If not given all chunks are regenerated. Note chunks with status < entities are ignored.
 - `decoratives` `string` | Array[`string`] *(optional)* - Prototype names of decorative or decoratives to autoplace. When `nil` all decoratives with an autoplace are used.
+- `chunks` Array[`ChunkPosition`] *(optional)* - The chunk positions to regenerate the decoratives on. If not given all chunks are regenerated. Note chunks with status < entities are ignored.
 
 ### print
 
@@ -1117,14 +1117,14 @@ Removes all decoratives from the given area. If no area and no position are give
 **Parameters:**
 
 - `area` `BoundingBox` *(optional)*
-- `collision_mask` `CollisionLayerID` | Array[`CollisionLayerID`] | Dictionary[`CollisionLayerID`, `True`] *(optional)*
-- `exclude_soft` `boolean` *(optional)* - Soft decoratives can be drawn over rails.
-- `from_layer` `string` *(optional)*
-- `invert` `boolean` *(optional)* - If the filters should be inverted.
-- `limit` `uint32` *(optional)*
-- `name` `DecorativeID` | Array[`DecorativeID`] *(optional)*
 - `position` `TilePosition` *(optional)*
+- `name` `DecorativeID` | Array[`DecorativeID`] *(optional)*
+- `collision_mask` `CollisionLayerID` | Array[`CollisionLayerID`] | Dictionary[`CollisionLayerID`, `True`] *(optional)*
+- `from_layer` `string` *(optional)*
 - `to_layer` `string` *(optional)*
+- `exclude_soft` `boolean` *(optional)* - Soft decoratives can be drawn over rails.
+- `limit` `uint32` *(optional)*
+- `invert` `boolean` *(optional)* - If the filters should be inverted.
 
 ### create_decoratives
 
@@ -1146,14 +1146,14 @@ If no filters are given, returns all decoratives in the search area. If multiple
 **Parameters:**
 
 - `area` `BoundingBox` *(optional)*
-- `collision_mask` `CollisionLayerID` | Array[`CollisionLayerID`] | Dictionary[`CollisionLayerID`, `True`] *(optional)*
-- `exclude_soft` `boolean` *(optional)* - Soft decoratives can be drawn over rails.
-- `from_layer` `string` *(optional)*
-- `invert` `boolean` *(optional)* - If the filters should be inverted.
-- `limit` `uint32` *(optional)*
-- `name` `DecorativeID` | Array[`DecorativeID`] *(optional)*
 - `position` `TilePosition` *(optional)*
+- `name` `DecorativeID` | Array[`DecorativeID`] *(optional)*
+- `collision_mask` `CollisionLayerID` | Array[`CollisionLayerID`] | Dictionary[`CollisionLayerID`, `True`] *(optional)*
+- `from_layer` `string` *(optional)*
 - `to_layer` `string` *(optional)*
+- `exclude_soft` `boolean` *(optional)* - Soft decoratives can be drawn over rails.
+- `limit` `uint32` *(optional)*
+- `invert` `boolean` *(optional)* - If the filters should be inverted.
 
 **Returns:**
 
@@ -1204,17 +1204,17 @@ Entities are cloned in an order such that they can always be created, eg rails b
 
 **Parameters:**
 
-- `clear_destination_decoratives` `boolean` *(optional)* - If the destination decoratives should be cleared
-- `clear_destination_entities` `boolean` *(optional)* - If the destination entities should be cleared
-- `clone_decoratives` `boolean` *(optional)* - If decoratives should be cloned
-- `clone_entities` `boolean` *(optional)* - If entities should be cloned
-- `clone_tiles` `boolean` *(optional)* - If tiles should be cloned
-- `create_build_effect_smoke` `boolean` *(optional)* - If true, the building effect smoke will be shown around the new entities. Defaults to `false`.
-- `destination_area` `BoundingBox`
-- `destination_force` `ForceID` *(optional)*
-- `destination_surface` `SurfaceIdentification` *(optional)*
-- `expand_map` `boolean` *(optional)* - If the destination surface should be expanded when destination_area is outside current bounds. Defaults to `false`.
 - `source_area` `BoundingBox`
+- `destination_area` `BoundingBox`
+- `destination_surface` `SurfaceIdentification` *(optional)*
+- `destination_force` `ForceID` *(optional)*
+- `clone_tiles` `boolean` *(optional)* - If tiles should be cloned
+- `clone_entities` `boolean` *(optional)* - If entities should be cloned
+- `clone_decoratives` `boolean` *(optional)* - If decoratives should be cloned
+- `clear_destination_entities` `boolean` *(optional)* - If the destination entities should be cleared
+- `clear_destination_decoratives` `boolean` *(optional)* - If the destination decoratives should be cleared
+- `expand_map` `boolean` *(optional)* - If the destination surface should be expanded when destination_area is outside current bounds. Defaults to `false`.
+- `create_build_effect_smoke` `boolean` *(optional)* - If true, the building effect smoke will be shown around the new entities. Defaults to `false`.
 
 ### clone_brush
 
@@ -1226,19 +1226,19 @@ Entities are cloned in an order such that they can always be created, eg rails b
 
 **Parameters:**
 
-- `clear_destination_decoratives` `boolean` *(optional)* - If the destination decoratives should be cleared
-- `clear_destination_entities` `boolean` *(optional)* - If the destination entities should be cleared
-- `clone_decoratives` `boolean` *(optional)* - If decoratives should be cloned
-- `clone_entities` `boolean` *(optional)* - If entities should be cloned
-- `clone_tiles` `boolean` *(optional)* - If tiles should be cloned
-- `create_build_effect_smoke` `boolean` *(optional)* - If true, the building effect smoke will be shown around the new entities.
-- `destination_force` `LuaForce` | `string` *(optional)*
+- `source_offset` `TilePosition`
 - `destination_offset` `TilePosition`
+- `source_positions` Array[`TilePosition`]
 - `destination_surface` `SurfaceIdentification` *(optional)*
+- `destination_force` `LuaForce` | `string` *(optional)*
+- `clone_tiles` `boolean` *(optional)* - If tiles should be cloned
+- `clone_entities` `boolean` *(optional)* - If entities should be cloned
+- `clone_decoratives` `boolean` *(optional)* - If decoratives should be cloned
+- `clear_destination_entities` `boolean` *(optional)* - If the destination entities should be cleared
+- `clear_destination_decoratives` `boolean` *(optional)* - If the destination decoratives should be cleared
 - `expand_map` `boolean` *(optional)* - If the destination surface should be expanded when destination_area is outside current bounds. Defaults to `false`.
 - `manual_collision_mode` `boolean` *(optional)* - If manual-style collision checks should be done.
-- `source_offset` `TilePosition`
-- `source_positions` Array[`TilePosition`]
+- `create_build_effect_smoke` `boolean` *(optional)* - If true, the building effect smoke will be shown around the new entities.
 
 ### clone_entities
 
@@ -1248,12 +1248,12 @@ Entities are cloned in an order such that they can always be created, eg rails b
 
 **Parameters:**
 
-- `create_build_effect_smoke` `boolean` *(optional)* - If true, the building effect smoke will be shown around the new entities.
-- `destination_force` `ForceID` *(optional)*
+- `entities` Array[`LuaEntity`]
 - `destination_offset` `Vector`
 - `destination_surface` `SurfaceIdentification` *(optional)*
-- `entities` Array[`LuaEntity`]
+- `destination_force` `ForceID` *(optional)*
 - `snap_to_grid` `boolean` *(optional)*
+- `create_build_effect_smoke` `boolean` *(optional)* - If true, the building effect smoke will be shown around the new entities.
 
 ### clear
 
@@ -1272,17 +1272,17 @@ The resulting path is ultimately returned asynchronously via [on_script_path_req
 **Parameters:**
 
 - `bounding_box` `BoundingBox` - The dimensions of the object that's supposed to travel the path.
-- `can_open_gates` `boolean` *(optional)* - Whether the path request can open gates. Defaults to `false`.
 - `collision_mask` `CollisionMask` - The collision mask the `bounding_box` collides with.
-- `entity_to_ignore` `LuaEntity` *(optional)* - Makes the pathfinder ignore collisions with this entity if it is given.
-- `force` `ForceID` - The force for which to generate the path, determining which gates can be opened for example.
-- `goal` `MapPosition` - The position to find a path to.
-- `max_attack_distance` `double` *(optional)* - Defines the maximum allowed distance between the last traversable path waypoint and an obstacle entity to be destroyed. Only used when finding a discontiguous path, i.e. when `max_gap_size` > 0. This field filters out paths that are blocked by obstacles that are outside the entity's attack range. Allowed values are `0` or greater. Defaults to `max_gap_size`.
-- `max_gap_size` `int32` *(optional)* - Defines the maximum allowed distance between path waypoints. 0 means that paths must be contiguous (as they are for biters). Values greater than 0 will produce paths with "gaps" that are suitable for spiders. Allowed values are from `0` to `31`. Defaults to `0`.
-- `path_resolution_modifier` `int32` *(optional)* - Defines how coarse the pathfinder's grid is, where smaller values mean a coarser grid. Defaults to `0`, which equals a resolution of `1x1` tiles, centered on tile centers. Values range from `-8` to `8` inclusive, where each integer increment doubles/halves the resolution. So, a resolution of `-8` equals a grid of `256x256` tiles, and a resolution of `8` equals `1/256` of a tile.
-- `pathfind_flags` `PathfinderFlags` *(optional)* - Flags that affect pathfinder behavior.
-- `radius` `double` *(optional)* - How close the pathfinder needs to get to its `goal` (in tiles). Defaults to `1`.
 - `start` `MapPosition` - The position from which to start pathfinding.
+- `goal` `MapPosition` - The position to find a path to.
+- `force` `ForceID` - The force for which to generate the path, determining which gates can be opened for example.
+- `radius` `double` *(optional)* - How close the pathfinder needs to get to its `goal` (in tiles). Defaults to `1`.
+- `pathfind_flags` `PathfinderFlags` *(optional)* - Flags that affect pathfinder behavior.
+- `can_open_gates` `boolean` *(optional)* - Whether the path request can open gates. Defaults to `false`.
+- `path_resolution_modifier` `int32` *(optional)* - Defines how coarse the pathfinder's grid is, where smaller values mean a coarser grid. Defaults to `0`, which equals a resolution of `1x1` tiles, centered on tile centers. Values range from `-8` to `8` inclusive, where each integer increment doubles/halves the resolution. So, a resolution of `-8` equals a grid of `256x256` tiles, and a resolution of `8` equals `1/256` of a tile.
+- `max_gap_size` `int32` *(optional)* - Defines the maximum allowed distance between path waypoints. 0 means that paths must be contiguous (as they are for biters). Values greater than 0 will produce paths with "gaps" that are suitable for spiders. Allowed values are from `0` to `31`. Defaults to `0`.
+- `max_attack_distance` `double` *(optional)* - Defines the maximum allowed distance between the last traversable path waypoint and an obstacle entity to be destroyed. Only used when finding a discontiguous path, i.e. when `max_gap_size` > 0. This field filters out paths that are blocked by obstacles that are outside the entity's attack range. Allowed values are `0` or greater. Defaults to `max_gap_size`.
+- `entity_to_ignore` `LuaEntity` *(optional)* - Makes the pathfinder ignore collisions with this entity if it is given.
 
 **Returns:**
 
@@ -1318,8 +1318,8 @@ Sets the given script area to the new values.
 
 **Parameters:**
 
-- `area` `ScriptArea`
 - `id` `uint32` - The area to edit.
+- `area` `ScriptArea`
 
 ### add_script_area
 
@@ -1424,8 +1424,8 @@ Gets the closest entity in the list to this position.
 
 **Parameters:**
 
-- `entities` Array[`LuaEntity`] - The Entities to check.
 - `position` `MapPosition`
+- `entities` Array[`LuaEntity`] - The Entities to check.
 
 **Returns:**
 
@@ -1445,10 +1445,10 @@ Whether the given entity prototype collides at the given position and direction.
 
 **Parameters:**
 
-- `direction` `defines.direction` *(optional)*
-- `position` `MapPosition` - The position to check.
 - `prototype` `EntityID` - The entity prototype to check.
+- `position` `MapPosition` - The position to check.
 - `use_map_generation_bounding_box` `boolean` - If the map generation bounding box should be used instead of the collision bounding box.
+- `direction` `defines.direction` *(optional)*
 
 **Returns:**
 
@@ -1460,8 +1460,8 @@ Whether the given decorative prototype collides at the given position and direct
 
 **Parameters:**
 
-- `position` `MapPosition` - The position to check.
 - `prototype` `DecorativeID` - The decorative prototype to check.
+- `position` `MapPosition` - The position to check.
 
 **Returns:**
 
@@ -1473,8 +1473,8 @@ Calculate values for a list of tile properties at a list of positions. Requests 
 
 **Parameters:**
 
-- `positions` Array[`MapPosition`] - Positions for which to calculate property values.
 - `property_names` Array[`string`] - Names of properties (`"elevation"`, etc) to calculate.
+- `positions` Array[`MapPosition`] - Positions for which to calculate property values.
 
 **Returns:**
 
@@ -1486,8 +1486,8 @@ Returns all the military targets (entities with force) on this chunk for the giv
 
 **Parameters:**
 
-- `force` `ForceID` - Entities of this force will be returned.
 - `position` `ChunkPosition` - The chunk's position.
+- `force` `ForceID` - Entities of this force will be returned.
 
 **Returns:**
 
@@ -1501,13 +1501,13 @@ Places entities via the given blueprint string. These entities are force-built.
 
 **Parameters:**
 
-- `by_player` `PlayerIdentification` *(optional)* - The player that placed the blueprint. Defaults to `nil`.
+- `string` `string` - The blueprint string to import.
+- `position` `MapPosition` - The position to place the blueprint at.
+- `force` `ForceID` *(optional)* - The force to place the blueprint for. Defaults to the player force.
 - `direction` `defines.direction` *(optional)* - The direction to place the blueprint in. Defaults to north.
 - `flip_horizontal` `boolean` *(optional)* - Whether to flip the blueprint horizontally. Defaults to `false`.
 - `flip_vertical` `boolean` *(optional)* - Whether to flip the blueprint vertically. Defaults to `false`.
-- `force` `ForceID` *(optional)* - The force to place the blueprint for. Defaults to the player force.
-- `position` `MapPosition` - The position to place the blueprint at.
-- `string` `string` - The blueprint string to import.
+- `by_player` `PlayerIdentification` *(optional)* - The player that placed the blueprint. Defaults to `nil`.
 
 **Returns:**
 

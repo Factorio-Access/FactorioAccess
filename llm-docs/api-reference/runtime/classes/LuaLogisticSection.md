@@ -96,8 +96,8 @@ This can only be called when the section [is manual](runtime:LuaLogisticSection:
 
 **Parameters:**
 
-- `filter` `LogisticFilter` - The details of the filter to set.
 - `slot_index` `LogisticFilterIndex` - Index of a slot to set.
+- `filter` `LogisticFilter` - The details of the filter to set.
 
 **Returns:**
 

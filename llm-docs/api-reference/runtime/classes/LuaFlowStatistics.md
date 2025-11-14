@@ -70,8 +70,8 @@ Sets the total input count for a given prototype.
 
 **Parameters:**
 
-- `count` `uint64` | `double` - The new count. The type depends on the instance of the statistics.
 - `id` `FlowStatisticsID` - The prototype ID.
+- `count` `uint64` | `double` - The new count. The type depends on the instance of the statistics.
 
 ### get_output_count
 
@@ -91,8 +91,8 @@ Sets the total output count for a given prototype.
 
 **Parameters:**
 
-- `count` `uint64` | `double` - The new count. The type depends on the instance of the statistics.
 - `id` `FlowStatisticsID` - The prototype ID.
+- `count` `uint64` | `double` - The new count. The type depends on the instance of the statistics.
 
 ### get_storage_count
 
@@ -112,8 +112,8 @@ Sets the total storage count for a given prototype.
 
 **Parameters:**
 
-- `count` `uint64` | `double` - The new count. The type depends on the instance of the statistics.
 - `id` `FlowStatisticsID` - The prototype ID.
+- `count` `uint64` | `double` - The new count. The type depends on the instance of the statistics.
 
 ### get_flow_count
 
@@ -125,11 +125,11 @@ All return values are normalized to be per-tick for electric networks and per-mi
 
 **Parameters:**
 
-- `category` `string` - The statistics category to read from. Valid choices are `"input"`, `"output"` and `"storage"`.
-- `count` `boolean` *(optional)* - If true, the count of items/fluids/entities is returned instead of the per-time-frame value.
 - `name` `FlowStatisticsID` - The prototype ID.
+- `category` `string` - The statistics category to read from. Valid choices are `"input"`, `"output"` and `"storage"`.
 - `precision_index` `defines.flow_precision_index` - The precision to read.
 - `sample_index` `uint16` *(optional)* - The sample index to read from within the precision range. If not provided, the entire precision range is read. Must be between 1 and 300 where 1 is the most recent sample and 300 is the oldest.
+- `count` `boolean` *(optional)* - If true, the count of items/fluids/entities is returned instead of the per-time-frame value.
 
 **Returns:**
 
@@ -141,8 +141,8 @@ Adds a value to this flow statistics.
 
 **Parameters:**
 
-- `count` `float` - The count: positive or negative determines if the value goes in the input or output statistics.
 - `id` `FlowStatisticsID` - The prototype ID.
+- `count` `float` - The count: positive or negative determines if the value goes in the input or output statistics.
 
 ### clear
 

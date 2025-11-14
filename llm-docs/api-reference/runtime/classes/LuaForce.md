@@ -494,8 +494,8 @@ Chart a portion of the map. The chart for the given area is refreshed; it create
 
 **Parameters:**
 
-- `area` `BoundingBox` - The area on the given surface to chart.
 - `surface` `SurfaceIdentification`
+- `area` `BoundingBox` - The area on the given surface to chart.
 
 **Examples:**
 
@@ -542,9 +542,9 @@ Copies the given surface's chart from the given force to this force.
 
 **Parameters:**
 
-- `destination_surface` `SurfaceIdentification` - The surface to copy to.
 - `source_force` `ForceID` - The force to copy from
 - `source_surface` `SurfaceIdentification` - The surface to copy from.
+- `destination_surface` `SurfaceIdentification` - The surface to copy to.
 
 ### is_chunk_charted
 
@@ -552,8 +552,8 @@ Has a chunk been charted?
 
 **Parameters:**
 
-- `position` `ChunkPosition` - Position of the chunk.
 - `surface` `SurfaceIdentification`
+- `position` `ChunkPosition` - Position of the chunk.
 
 **Returns:**
 
@@ -565,8 +565,8 @@ Is the given chunk currently charted and visible (not covered by fog of war) on 
 
 **Parameters:**
 
-- `position` `ChunkPosition`
 - `surface` `SurfaceIdentification`
+- `position` `ChunkPosition`
 
 **Returns:**
 
@@ -578,8 +578,8 @@ Has a chunk been requested for charting?
 
 **Parameters:**
 
-- `position` `ChunkPosition` - Position of the chunk.
 - `surface` `SurfaceIdentification`
+- `position` `ChunkPosition` - Position of the chunk.
 
 **Returns:**
 
@@ -641,8 +641,8 @@ Cancels pending chart requests for the given surface or all surfaces.
 
 **Parameters:**
 
-- `modifier` `double`
 - `turret` `EntityID` - Turret prototype name
+- `modifier` `double`
 
 ### set_cease_fire
 
@@ -650,8 +650,8 @@ Add `other` force to this force's cease fire list. Forces on the cease fire list
 
 **Parameters:**
 
-- `cease_fire` `boolean`
 - `other` `ForceID`
+- `cease_fire` `boolean`
 
 ### get_cease_fire
 
@@ -671,8 +671,8 @@ Add `other` force to this force's friends list. Friends have unrestricted access
 
 **Parameters:**
 
-- `friend` `boolean`
 - `other` `ForceID`
+- `friend` `boolean`
 
 ### get_friend
 
@@ -730,8 +730,8 @@ Kill all units and flush the pathfinder.
 
 **Parameters:**
 
-- `hidden` `boolean` - Whether to hide the surface or not.
 - `surface` `SurfaceIdentification` - Surface to set hidden for.
+- `hidden` `boolean` - Whether to hide the surface or not.
 
 ### get_surface_hidden
 
@@ -768,8 +768,8 @@ Sets the count of a given item launched in rockets.
 
 **Parameters:**
 
-- `count` `uint32` - The count to set
 - `item` `ItemID` - The item to set
+- `count` `uint32` - The count to set
 
 ### print
 
@@ -803,8 +803,8 @@ Finds all custom chart tags within a given area on the given surface. If no area
 
 **Parameters:**
 
-- `area` `BoundingBox` *(optional)*
 - `surface` `SurfaceIdentification`
+- `area` `BoundingBox` *(optional)*
 
 **Returns:**
 
@@ -842,8 +842,8 @@ Sets if the given recipe can be hand-crafted. This is used to explicitly disable
 
 **Parameters:**
 
-- `hand_crafting_disabled` `boolean`
 - `recipe` `RecipeID`
+- `hand_crafting_disabled` `boolean`
 
 ### add_research
 
@@ -867,8 +867,8 @@ Gets the linked inventory for the given prototype and link ID if it exists or `n
 
 **Parameters:**
 
-- `link_id` `uint32`
 - `prototype` `EntityID`
+- `link_id` `uint32`
 
 **Returns:**
 
@@ -1161,8 +1161,8 @@ Returns `nil` if the chunk has not been charted for this force.
 
 **Parameters:**
 
-- `position` `ChunkPosition`
 - `surface` `SurfaceIdentification`
+- `position` `ChunkPosition`
 
 **Returns:**
 

@@ -78,8 +78,8 @@ Checks if this connector has any wire going to the other connector.
 
 **Parameters:**
 
-- `origin` `defines.wire_origin` *(optional)* - Origin of the wire. Defaults to `defines.wire_origin.player`.
 - `target` `LuaWireConnector` - Other connector to check for a connection to.
+- `origin` `defines.wire_origin` *(optional)* - Origin of the wire. Defaults to `defines.wire_origin.player`.
 
 **Returns:**
 
@@ -91,9 +91,9 @@ Connects this connector to other wire connector.
 
 **Parameters:**
 
-- `origin` `defines.wire_origin` *(optional)* - Origin of the wire. Defaults to `defines.wire_origin.player`.
-- `reach_check` `boolean` *(optional)* - True by default. For wires out of reach or on different surfaces, `false` must be provided.
 - `target` `LuaWireConnector` - Other connector to which a wire should be added.
+- `reach_check` `boolean` *(optional)* - True by default. For wires out of reach or on different surfaces, `false` must be provided.
+- `origin` `defines.wire_origin` *(optional)* - Origin of the wire. Defaults to `defines.wire_origin.player`.
 
 **Returns:**
 
@@ -105,8 +105,8 @@ Disconnects this connector from other wire connector.
 
 **Parameters:**
 
-- `origin` `defines.wire_origin` *(optional)* - Origin of the wire. Defaults to `defines.wire_origin.player`.
 - `target` `LuaWireConnector` - Other connector to which wire to be removed should be removed.
+- `origin` `defines.wire_origin` *(optional)* - Origin of the wire. Defaults to `defines.wire_origin.player`.
 
 **Returns:**
 
@@ -142,8 +142,8 @@ Checks if this and other wire connector have a common neighbour.
 
 **Parameters:**
 
-- `ignore_ghost_neighbours` `boolean` *(optional)*
 - `other_connector` `LuaWireConnector` - Other connector to check for common neighbour.
+- `ignore_ghost_neighbours` `boolean` *(optional)*
 
 **Returns:**
 

@@ -130,9 +130,9 @@ Remove an equipment from the grid.
 
 **Parameters:**
 
-- `by_player` `PlayerIdentification` *(optional)* - If provided the action is done 'as' this player and [on_player_removed_equipment](runtime:on_player_removed_equipment) is triggered.
-- `equipment` `LuaEquipment` *(optional)* - Take this exact equipment.
 - `position` `EquipmentPosition` *(optional)* - Take the equipment that contains this position in the grid.
+- `equipment` `LuaEquipment` *(optional)* - Take this exact equipment.
+- `by_player` `PlayerIdentification` *(optional)* - If provided the action is done 'as' this player and [on_player_removed_equipment](runtime:on_player_removed_equipment) is triggered.
 
 **Returns:**
 
@@ -164,11 +164,11 @@ Insert an equipment into the grid.
 
 **Parameters:**
 
+- `name` `EquipmentID` - Equipment prototype name
+- `quality` `QualityID` *(optional)* - The quality, `nil` for any or if not provided `normal` is used.
+- `position` `EquipmentPosition` *(optional)* - Grid position to put the equipment in.
 - `by_player` `PlayerIdentification` *(optional)* - If provided the action is done 'as' this player and [on_player_placed_equipment](runtime:on_player_placed_equipment) is triggered.
 - `ghost` `boolean` *(optional)* - If true, place the equipment as a ghost.
-- `name` `EquipmentID` - Equipment prototype name
-- `position` `EquipmentPosition` *(optional)* - Grid position to put the equipment in.
-- `quality` `QualityID` *(optional)* - The quality, `nil` for any or if not provided `normal` is used.
 
 **Returns:**
 

@@ -240,14 +240,14 @@ Built entities can be come invalid between the building of the blueprint and the
 
 **Parameters:**
 
-- `build_mode` `defines.build_mode` *(optional)* - If `normal`, blueprint will not be built if any one thing can't be built. If `forced`, anything that can be built is built and obstructing nature entities will be deconstructed. If `superforced`, all obstructions will be deconstructed and the blueprint will be built.
-- `by_player` `PlayerIdentification` *(optional)* - The player to use if any. If provided [defines.events.on_built_entity](runtime:defines.events.on_built_entity) will also be fired on successful entity creation.
-- `direction` `defines.direction` *(optional)* - The direction to use when building
+- `surface` `SurfaceIdentification` - Surface to build on
 - `force` `ForceID` - Force to use for the building
 - `position` `MapPosition` - The position to build at
-- `raise_built` `boolean` *(optional)* - If true; [defines.events.script_raised_built](runtime:defines.events.script_raised_built) will be fired on successful entity creation. Note: this is ignored if by_player is provided.
+- `direction` `defines.direction` *(optional)* - The direction to use when building
+- `build_mode` `defines.build_mode` *(optional)* - If `normal`, blueprint will not be built if any one thing can't be built. If `forced`, anything that can be built is built and obstructing nature entities will be deconstructed. If `superforced`, all obstructions will be deconstructed and the blueprint will be built.
 - `skip_fog_of_war` `boolean` *(optional)* - If chunks covered by fog-of-war are skipped.
-- `surface` `SurfaceIdentification` - Surface to build on
+- `by_player` `PlayerIdentification` *(optional)* - The player to use if any. If provided [defines.events.on_built_entity](runtime:defines.events.on_built_entity) will also be fired on successful entity creation.
+- `raise_built` `boolean` *(optional)* - If true; [defines.events.script_raised_built](runtime:defines.events.script_raised_built) will be fired on successful entity creation. Note: this is ignored if by_player is provided.
 
 **Returns:**
 
@@ -259,15 +259,15 @@ Sets up this blueprint using the found blueprintable entities/tiles on the surfa
 
 **Parameters:**
 
-- `always_include_tiles` `boolean` *(optional)* - When true, blueprintable tiles are always included in the blueprint. When false they're only included if no entities exist in the setup area. Defaults to false.
-- `area` `BoundingBox` - The bounding box
+- `surface` `SurfaceIdentification` - Surface to create from
 - `force` `ForceID` - Force to use for the creation
+- `area` `BoundingBox` - The bounding box
+- `always_include_tiles` `boolean` *(optional)* - When true, blueprintable tiles are always included in the blueprint. When false they're only included if no entities exist in the setup area. Defaults to false.
 - `include_entities` `boolean` *(optional)* - When true, entities are included in the blueprint. Defaults to true.
-- `include_fuel` `boolean` *(optional)* - When true, train fuel is included in the blueprint, Defaults to true.
 - `include_modules` `boolean` *(optional)* - When true, modules are included in the blueprint. Defaults to true.
 - `include_station_names` `boolean` *(optional)* - When true, station names are included in the blueprint. Defaults to false.
 - `include_trains` `boolean` *(optional)* - When true, trains are included in the blueprint. Defaults to false.
-- `surface` `SurfaceIdentification` - Surface to create from
+- `include_fuel` `boolean` *(optional)* - When true, train fuel is included in the blueprint, Defaults to true.
 
 **Returns:**
 
@@ -401,8 +401,8 @@ Sets the entity filter at the given index for this deconstruction planner.
 
 **Parameters:**
 
-- `filter` `ItemFilter` | `nil` - Writing `nil` removes the filter.
 - `index` `uint32`
+- `filter` `ItemFilter` | `nil` - Writing `nil` removes the filter.
 
 **Returns:**
 
@@ -426,8 +426,8 @@ Sets the tile filter at the given index for this deconstruction planner.
 
 **Parameters:**
 
-- `filter` `string` | `LuaTilePrototype` | `LuaTile` - Setting to nil erases the filter.
 - `index` `uint32`
+- `filter` `string` | `LuaTilePrototype` | `LuaTile` - Setting to nil erases the filter.
 
 **Returns:**
 
@@ -439,12 +439,12 @@ Deconstruct the given area with this deconstruction planner.
 
 **Parameters:**
 
-- `area` `BoundingBox` - The area to deconstruct
-- `by_player` `PlayerIdentification` *(optional)* - The player to use if any.
-- `force` `ForceID` - Force to use for the deconstruction
-- `skip_fog_of_war` `boolean` *(optional)* - If chunks covered by fog-of-war are skipped. Defaults to `false`.
-- `super_forced` `boolean` *(optional)* - If the deconstruction is super-forced. Defaults to `false`.
 - `surface` `SurfaceIdentification` - Surface to deconstruct on
+- `force` `ForceID` - Force to use for the deconstruction
+- `area` `BoundingBox` - The area to deconstruct
+- `skip_fog_of_war` `boolean` *(optional)* - If chunks covered by fog-of-war are skipped. Defaults to `false`.
+- `by_player` `PlayerIdentification` *(optional)* - The player to use if any.
+- `super_forced` `boolean` *(optional)* - If the deconstruction is super-forced. Defaults to `false`.
 
 ### cancel_deconstruct_area
 
@@ -452,12 +452,12 @@ Cancel deconstruct the given area with this deconstruction planner.
 
 **Parameters:**
 
-- `area` `BoundingBox` - The area to deconstruct
-- `by_player` `PlayerIdentification` *(optional)* - The player to use if any.
-- `force` `ForceID` - Force to use for canceling deconstruction
-- `skip_fog_of_war` `boolean` *(optional)* - If chunks covered by fog-of-war are skipped. Defaults to `false`.
-- `super_forced` `boolean` *(optional)* - If the cancel deconstruction is super-forced. Defaults to `false`.
 - `surface` `SurfaceIdentification` - Surface to cancel deconstruct on
+- `force` `ForceID` - Force to use for canceling deconstruction
+- `area` `BoundingBox` - The area to deconstruct
+- `skip_fog_of_war` `boolean` *(optional)* - If chunks covered by fog-of-war are skipped. Defaults to `false`.
+- `by_player` `PlayerIdentification` *(optional)* - The player to use if any.
+- `super_forced` `boolean` *(optional)* - If the cancel deconstruction is super-forced. Defaults to `false`.
 
 ### clear_deconstruction_data
 
@@ -491,6 +491,6 @@ In contrast to [LuaRecord::get_mapper](runtime:LuaRecord::get_mapper), indices p
 **Parameters:**
 
 - `index` `uint32` - The index of the mapper to set.
-- `mapper` `UpgradeMapperSource` | `UpgradeMapperDestination` | `nil` - The mapper to set. Set `nil` to clear the mapper.
 - `type` `"from"` | `"to"`
+- `mapper` `UpgradeMapperSource` | `UpgradeMapperDestination` | `nil` - The mapper to set. Set `nil` to clear the mapper.
 

@@ -46,9 +46,9 @@ This shows the usage of the table that gets passed to any function handling a cu
 
 **Parameters:**
 
-- `function` function(`CustomCommandData`) - The function that will be called when this command is invoked.
-- `help` `LocalisedString` - The localised help message. It will be shown to players using the `/help` command.
 - `name` `string` - The desired name of the command (case sensitive).
+- `help` `LocalisedString` - The localised help message. It will be shown to players using the `/help` command.
+- `function` function(`CustomCommandData`) - The function that will be called when this command is invoked.
 
 ### remove_command
 

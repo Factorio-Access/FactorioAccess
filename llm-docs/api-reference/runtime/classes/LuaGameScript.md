@@ -222,10 +222,10 @@ Set scenario state. Any parameters not provided do not change the current state.
 
 **Parameters:**
 
-- `can_continue` `boolean` *(optional)*
 - `game_finished` `boolean` *(optional)*
-- `next_level` `string` *(optional)*
 - `player_won` `boolean` *(optional)*
+- `next_level` `string` *(optional)*
+- `can_continue` `boolean` *(optional)*
 
 ### reset_game_state
 
@@ -237,11 +237,11 @@ Set winning ending information for the current scenario.
 
 **Parameters:**
 
+- `title` `LocalisedString`
+- `message` `LocalisedString` *(optional)*
 - `bullet_points` Array[`LocalisedString`] *(optional)*
 - `final_message` `LocalisedString` *(optional)*
 - `image_path` `string` *(optional)*
-- `message` `LocalisedString` *(optional)*
-- `title` `LocalisedString`
 
 ### set_lose_ending_info
 
@@ -249,11 +249,11 @@ Set losing ending information for the current scenario.
 
 **Parameters:**
 
+- `title` `LocalisedString`
+- `message` `LocalisedString` *(optional)*
 - `bullet_points` Array[`LocalisedString`] *(optional)*
 - `final_message` `LocalisedString` *(optional)*
 - `image_path` `string` *(optional)*
-- `message` `LocalisedString` *(optional)*
-- `title` `LocalisedString`
 
 ### get_entity_by_tag
 
@@ -275,10 +275,10 @@ Can only be used when the map contains exactly one player.
 
 **Parameters:**
 
+- `text` `LocalisedString` - What the dialog should say
 - `image` `string` *(optional)* - Path to an image to show on the dialog
 - `point_to` `GuiArrowSpecification` *(optional)* - If specified, dialog will show an arrow pointing to this place. When not specified, the arrow will point to the player's position. (Use `point_to={type="nowhere"}` to remove the arrow entirely.) The dialog itself will be placed near the arrow's target.
 - `style` `string` *(optional)* - The gui style to use for this speech bubble. Must be of type speech_bubble.
-- `text` `LocalisedString` - What the dialog should say
 - `wrapper_frame_style` `string` *(optional)* - Must be of type flow_style.
 
 ### is_demo
@@ -335,24 +335,24 @@ If Factorio is running headless, this function will do nothing.
 
 **Parameters:**
 
-- `allow_in_replay` `boolean` *(optional)* - Whether to save the screenshot even during replay playback. Defaults to `false`.
-- `anti_alias` `boolean` *(optional)* - Whether to render in double resolution and downscale the result (including GUI). Defaults to `false`.
+- `player` `PlayerIdentification` *(optional)* - The player to focus on. Defaults to the local player.
 - `by_player` `PlayerIdentification` *(optional)* - If defined, the screenshot will only be taken for this player.
-- `daytime` `double` *(optional)* - Overrides the current surface daytime for the duration of screenshot rendering.
-- `force_render` `boolean` *(optional)* - Screenshot requests are processed in between game update and render. The game may skip rendering (ie. drop frames) if the previous frame has not finished rendering or the game simulation starts to fall below 60 updates per second. If `force_render` is set to `true`, the game won't drop frames and process the screenshot request at the end of the update in which the request was created. This is not honored on multiplayer clients that are catching up to server. Defaults to `false`.
+- `surface` `SurfaceIdentification` *(optional)* - If defined, the screenshot will be taken on this surface.
+- `position` `MapPosition` *(optional)* - If defined, the screenshot will be centered on this position. Otherwise, the screenshot will center on `player`.
+- `resolution` `TilePosition` *(optional)* - The maximum allowed resolution is 16384x16384 (8192x8192 when `anti_alias` is `true`), but the maximum recommended resolution is 4096x4096 (resp. 2048x2048). The `x` value of the position is used as the width, the `y` value as the height.
+- `zoom` `double` *(optional)* - The map zoom to take the screenshot at. Defaults to `1`.
+- `path` `string` *(optional)* - The name of the image file. It should include a file extension indicating the desired format. Supports `.png`, `.jpg` /`.jpeg`, `.tga` and `.bmp`. Providing a directory path (ex. `"save/here/screenshot.png"`) will create the necessary folder structure in `script-output`. Defaults to `"screenshot.png"`.
+- `show_gui` `boolean` *(optional)* - Whether to include GUIs in the screenshot or not. Defaults to `false`.
+- `show_entity_info` `boolean` *(optional)* - Whether to include entity info ("Alt mode") or not. Defaults to `false`.
+- `show_cursor_building_preview` `boolean` *(optional)* - When `true` and when `player` is specified, the building preview for the item in the player's cursor will also be rendered. Defaults to `false`.
+- `anti_alias` `boolean` *(optional)* - Whether to render in double resolution and downscale the result (including GUI). Defaults to `false`.
 - `hide_clouds` `boolean` *(optional)* - If `true` cloud shadows on ground won't be rendered. Defaults to `false`.
 - `hide_fog` `boolean` *(optional)* - If `true` fog effect and foreground space dust effect won't be rendered. Defaults to `false`.
-- `path` `string` *(optional)* - The name of the image file. It should include a file extension indicating the desired format. Supports `.png`, `.jpg` /`.jpeg`, `.tga` and `.bmp`. Providing a directory path (ex. `"save/here/screenshot.png"`) will create the necessary folder structure in `script-output`. Defaults to `"screenshot.png"`.
-- `player` `PlayerIdentification` *(optional)* - The player to focus on. Defaults to the local player.
-- `position` `MapPosition` *(optional)* - If defined, the screenshot will be centered on this position. Otherwise, the screenshot will center on `player`.
 - `quality` `int32` *(optional)* - The `.jpg` render quality as a percentage (from 0% to 100% inclusive), if used. A lower value means a more compressed image. Defaults to `80`.
-- `resolution` `TilePosition` *(optional)* - The maximum allowed resolution is 16384x16384 (8192x8192 when `anti_alias` is `true`), but the maximum recommended resolution is 4096x4096 (resp. 2048x2048). The `x` value of the position is used as the width, the `y` value as the height.
-- `show_cursor_building_preview` `boolean` *(optional)* - When `true` and when `player` is specified, the building preview for the item in the player's cursor will also be rendered. Defaults to `false`.
-- `show_entity_info` `boolean` *(optional)* - Whether to include entity info ("Alt mode") or not. Defaults to `false`.
-- `show_gui` `boolean` *(optional)* - Whether to include GUIs in the screenshot or not. Defaults to `false`.
-- `surface` `SurfaceIdentification` *(optional)* - If defined, the screenshot will be taken on this surface.
+- `allow_in_replay` `boolean` *(optional)* - Whether to save the screenshot even during replay playback. Defaults to `false`.
+- `daytime` `double` *(optional)* - Overrides the current surface daytime for the duration of screenshot rendering.
 - `water_tick` `uint32` *(optional)* - Overrides the tick of water animation, if animated water is enabled.
-- `zoom` `double` *(optional)* - The map zoom to take the screenshot at. Defaults to `1`.
+- `force_render` `boolean` *(optional)* - Screenshot requests are processed in between game update and render. The game may skip rendering (ie. drop frames) if the previous frame has not finished rendering or the game simulation starts to fall below 60 updates per second. If `force_render` is set to `true`, the game won't drop frames and process the screenshot request at the end of the update in which the request was created. This is not honored on multiplayer clients that are catching up to server. Defaults to `false`.
 
 ### set_wait_for_screenshots_to_finish
 
@@ -366,9 +366,9 @@ Take a screenshot of the technology screen and save it to the `script-output` fo
 
 - `path` `string` *(optional)* - The name of the image file. It should include a file extension indicating the desired format. Supports `.png`, `.jpg` /`.jpeg`, `.tga` and `.bmp`. Providing a directory path (ex. `"save/here/screenshot.png"`) will create the necessary folder structure in `script-output`. Defaults to `"technology-screenshot.png"`.
 - `player` `PlayerIdentification` - The screenshot will be taken for this player.
-- `quality` `int32` *(optional)* - The `.jpg` render quality as a percentage (from 0% to 100% inclusive), if used. A lower value means a more compressed image. Defaults to `80`.
 - `selected_technology` `TechnologyID` *(optional)* - The technology to highlight.
 - `skip_disabled` `boolean` *(optional)* - If `true`, disabled technologies will be skipped. Their successors will be attached to the disabled technology's parents. Defaults to `false`.
+- `quality` `int32` *(optional)* - The `.jpg` render quality as a percentage (from 0% to 100% inclusive), if used. A lower value means a more compressed image. Defaults to `80`.
 
 ### remove_offline_players
 
@@ -406,8 +406,8 @@ The source force is not removed until the end of the current tick, or if called 
 
 **Parameters:**
 
-- `destination` `ForceID` - The force to reassign all entities to.
 - `source` `ForceID` - The force to remove.
+- `destination` `ForceID` - The force to reassign all entities to.
 
 ### create_surface
 
@@ -609,8 +609,8 @@ Make sure to destroy it when you are done with it using [LuaInventory::destroy](
 
 **Parameters:**
 
-- `gui_title` `LocalisedString` *(optional)* - The title of the GUI that is shown when this inventory is opened.
 - `size` `uint16` - The number of slots the inventory initially has.
+- `gui_title` `LocalisedString` *(optional)* - The title of the GUI that is shown when this inventory is opened.
 
 **Returns:**
 
@@ -652,12 +652,12 @@ Returns vehicles in game.
 
 **Parameters:**
 
+- `unit_number` `uint32` *(optional)*
 - `force` `ForceID` *(optional)*
-- `has_passenger` `boolean` *(optional)*
-- `is_moving` `boolean` *(optional)*
 - `surface` `SurfaceIdentification` *(optional)*
 - `type` `EntityID` | Array[`EntityID`] *(optional)*
-- `unit_number` `uint32` *(optional)*
+- `is_moving` `boolean` *(optional)*
+- `has_passenger` `boolean` *(optional)*
 
 **Returns:**
 

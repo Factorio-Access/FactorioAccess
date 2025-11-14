@@ -198,9 +198,9 @@ Damages the given tile if it exists, the chunk is generated, and it is a platfor
 
 **Parameters:**
 
-- `cause` `LuaEntity` *(optional)*
-- `damage` `float`
 - `position` `TilePosition`
+- `damage` `float`
+- `cause` `LuaEntity` *(optional)*
 
 ### repair_tile
 
@@ -208,8 +208,8 @@ Repairs the given tile if it's damaged.
 
 **Parameters:**
 
-- `amount` `float` *(optional)*
 - `position` `TilePosition`
+- `amount` `float` *(optional)*
 
 ### destroy_asteroid_chunks
 
@@ -218,10 +218,10 @@ Destroys all asteroid chunks from the given area. If no area and no position are
 **Parameters:**
 
 - `area` `BoundingBox` *(optional)*
-- `invert` `boolean` *(optional)* - If the filters should be inverted.
-- `limit` `uint32` *(optional)*
-- `name` `AsteroidChunkID` | Array[`AsteroidChunkID`] *(optional)*
 - `position` `MapPosition` *(optional)*
+- `name` `AsteroidChunkID` | Array[`AsteroidChunkID`] *(optional)*
+- `limit` `uint32` *(optional)*
+- `invert` `boolean` *(optional)* - If the filters should be inverted.
 
 **Returns:**
 
@@ -244,10 +244,10 @@ If no filters are given, returns all asteroid chunks in the search area. If mult
 **Parameters:**
 
 - `area` `BoundingBox` *(optional)*
-- `invert` `boolean` *(optional)* - If the filters should be inverted.
-- `limit` `uint32` *(optional)*
-- `name` `AsteroidChunkID` | Array[`AsteroidChunkID`] *(optional)*
 - `position` `MapPosition` *(optional)*
+- `name` `AsteroidChunkID` | Array[`AsteroidChunkID`] *(optional)*
+- `limit` `uint32` *(optional)*
+- `invert` `boolean` *(optional)* - If the filters should be inverted.
 
 **Returns:**
 
@@ -283,8 +283,8 @@ If a LuaItemStack is provided, the actual item is ejected and removed from the s
 **Parameters:**
 
 - `item` `ItemStackIdentification`
-- `movement` `Vector` - When inserters drop items into space, the [InserterPrototype::insert_position](prototype:InserterPrototype::insert_position) rotated to the inserter direction is used.
 - `position` `MapPosition`
+- `movement` `Vector` - When inserters drop items into space, the [InserterPrototype::insert_position](prototype:InserterPrototype::insert_position) rotated to the inserter direction is used.
 
 ### clear_ejected_items
 

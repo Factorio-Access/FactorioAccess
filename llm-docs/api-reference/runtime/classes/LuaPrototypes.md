@@ -518,8 +518,8 @@ Gets the prototype history for the given type and name.
 
 **Parameters:**
 
-- `name` `string`
 - `type` `string`
+- `name` `string`
 
 **Returns:**
 

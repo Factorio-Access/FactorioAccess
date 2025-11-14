@@ -402,8 +402,8 @@ Setup the screen to be shown when the game is finished.
 
 **Parameters:**
 
-- `file` `string` *(optional)* - Path to image to be shown.
 - `message` `LocalisedString` - Message to be shown.
+- `file` `string` *(optional)* - Path to image to be shown.
 
 ### print
 
@@ -434,8 +434,8 @@ Set the text in the goal window (top left).
 
 **Parameters:**
 
-- `only_update` `boolean` *(optional)* - When `true`, won't play the "goal updated" sound.
 - `text` `LocalisedString` *(optional)* - The text to display. Lines can be delimited with `\n`. Passing an empty string or omitting this parameter entirely will make the goal window disappear.
+- `only_update` `boolean` *(optional)* - When `true`, won't play the "goal updated" sound.
 
 ### set_controller
 
@@ -445,15 +445,15 @@ Setting a player to [defines.controllers.editor](runtime:defines.controllers.edi
 
 **Parameters:**
 
+- `type` `defines.controllers` - Which controller to use.
 - `character` `LuaEntity` *(optional)* - Entity to control. Mandatory when `type` is [defines.controllers.character](runtime:defines.controllers.character), ignored otherwise.
-- `chart_mode_cutoff` `double` *(optional)* - If specified and `type` is [defines.controllers.cutscene](runtime:defines.controllers.cutscene), the game will switch to chart-mode (map zoomed out) rendering when the zoom level is less than this value.
-- `final_transition_time` `uint32` *(optional)* - If specified and `type` is [defines.controllers.cutscene](runtime:defines.controllers.cutscene), it is the time in ticks it will take for the camera to pan from the final waypoint back to the starting position. If not given the camera will not pan back to the start position/zoom.
-- `position` `MapPosition` *(optional)* - If specified and `type` is [defines.controllers.remote](runtime:defines.controllers.remote), the position the remote controller will be centered on.
+- `waypoints` Array[`CutsceneWaypoint`] *(optional)* - List of waypoints for the cutscene controller. This parameter is mandatory when `type` is [defines.controllers.cutscene](runtime:defines.controllers.cutscene).
 - `start_position` `MapPosition` *(optional)* - If specified and `type` is [defines.controllers.cutscene](runtime:defines.controllers.cutscene), the cutscene will start at this position. If not given the start position will be the player position.
 - `start_zoom` `double` *(optional)* - If specified and `type` is [defines.controllers.cutscene](runtime:defines.controllers.cutscene), the cutscene will start at this zoom level. If not given the start zoom will be the player's zoom.
+- `final_transition_time` `uint32` *(optional)* - If specified and `type` is [defines.controllers.cutscene](runtime:defines.controllers.cutscene), it is the time in ticks it will take for the camera to pan from the final waypoint back to the starting position. If not given the camera will not pan back to the start position/zoom.
+- `chart_mode_cutoff` `double` *(optional)* - If specified and `type` is [defines.controllers.cutscene](runtime:defines.controllers.cutscene), the game will switch to chart-mode (map zoomed out) rendering when the zoom level is less than this value.
+- `position` `MapPosition` *(optional)* - If specified and `type` is [defines.controllers.remote](runtime:defines.controllers.remote), the position the remote controller will be centered on.
 - `surface` `SurfaceIdentification` *(optional)* - If specified and `type` is [defines.controllers.remote](runtime:defines.controllers.remote), the surface the remote controller will be put on.
-- `type` `defines.controllers` - Which controller to use.
-- `waypoints` Array[`CutsceneWaypoint`] *(optional)* - List of waypoints for the cutscene controller. This parameter is mandatory when `type` is [defines.controllers.cutscene](runtime:defines.controllers.cutscene).
 
 ### drag_wire
 
@@ -556,12 +556,12 @@ Removes all alerts matching the given filters or if an empty filters table is gi
 **Parameters:**
 
 - `entity` `LuaEntity` *(optional)*
+- `prototype` `EntityID` *(optional)*
+- `position` `MapPosition` *(optional)*
+- `type` `defines.alert_type` *(optional)*
+- `surface` `SurfaceIdentification` *(optional)*
 - `icon` `SignalID` *(optional)*
 - `message` `LocalisedString` *(optional)*
-- `position` `MapPosition` *(optional)*
-- `prototype` `EntityID` *(optional)*
-- `surface` `SurfaceIdentification` *(optional)*
-- `type` `defines.alert_type` *(optional)*
 
 ### get_alerts
 
@@ -570,10 +570,10 @@ Get all alerts matching the given filters, or all alerts if no filters are given
 **Parameters:**
 
 - `entity` `LuaEntity` *(optional)*
-- `position` `MapPosition` *(optional)*
 - `prototype` `LuaEntityPrototype` *(optional)*
-- `surface` `SurfaceIdentification` *(optional)*
+- `position` `MapPosition` *(optional)*
 - `type` `defines.alert_type` *(optional)*
+- `surface` `SurfaceIdentification` *(optional)*
 
 **Returns:**
 
@@ -657,13 +657,13 @@ Adds a pin to this player for the given pin specification. Either entity, player
 
 **Parameters:**
 
+- `label` `string` *(optional)*
+- `preview_distance` `uint16` *(optional)* - Defaults to `16`.
 - `always_visible` `boolean` *(optional)* - Defaults to `true`.
 - `entity` `LuaEntity` *(optional)* - The entity to pin.
-- `label` `string` *(optional)*
 - `player` `PlayerIdentification` *(optional)* - The player to pin.
-- `position` `MapPosition` *(optional)* - Where to create the pin. Required when surface is defined.
-- `preview_distance` `uint16` *(optional)* - Defaults to `16`.
 - `surface` `SurfaceIdentification` *(optional)* - The surface to create the pin on.
+- `position` `MapPosition` *(optional)* - Where to create the pin. Required when surface is defined.
 
 ### pipette_entity
 
@@ -671,8 +671,8 @@ Invokes the "smart pipette" action on the player as if the user pressed it. This
 
 **Parameters:**
 
-- `allow_ghost` `boolean` *(optional)* - Defaults to false.
 - `entity` `EntityWithQualityID`
+- `allow_ghost` `boolean` *(optional)* - Defaults to false.
 
 **Returns:**
 
@@ -684,9 +684,9 @@ Invokes the "smart pipette" action on the player as if the user pressed it.
 
 **Parameters:**
 
-- `allow_ghost` `boolean` *(optional)* - Defaults to false.
 - `id` `PipetteID`
 - `quality` `QualityID` *(optional)*
+- `allow_ghost` `boolean` *(optional)* - Defaults to false.
 
 **Returns:**
 
@@ -698,13 +698,13 @@ Checks if this player can build what ever is in the cursor on the surface the pl
 
 **Parameters:**
 
-- `build_mode` `defines.build_mode` *(optional)* - Which build mode should be used instead of normal build. Defaults to `defines.build_mode.normal`.
+- `position` `MapPosition` - Where the entity would be placed
 - `direction` `defines.direction` *(optional)* - Direction the entity would be placed
 - `flip_horizontal` `boolean` *(optional)* - Whether to flip the blueprint horizontally. Defaults to `false`.
 - `flip_vertical` `boolean` *(optional)* - Whether to flip the blueprint vertically. Defaults to `false`.
-- `position` `MapPosition` - Where the entity would be placed
-- `skip_fog_of_war` `boolean` *(optional)* - If chunks covered by fog-of-war are skipped. Defaults to `false`.
+- `build_mode` `defines.build_mode` *(optional)* - Which build mode should be used instead of normal build. Defaults to `defines.build_mode.normal`.
 - `terrain_building_size` `uint32` *(optional)* - The size for building terrain if building terrain. Defaults to `2`.
+- `skip_fog_of_war` `boolean` *(optional)* - If chunks covered by fog-of-war are skipped. Defaults to `false`.
 
 **Returns:**
 
@@ -716,14 +716,14 @@ Builds whatever is in the cursor on the surface the player is on. The cursor sta
 
 **Parameters:**
 
-- `build_mode` `defines.build_mode` *(optional)* - Which build mode should be used instead of normal build. Defaults to `defines.build_mode.normal`.
+- `position` `MapPosition` - Where the entity would be placed
 - `direction` `defines.direction` *(optional)* - Direction the entity would be placed
+- `mirror` `boolean` *(optional)* - Whether to mirror the entity
 - `flip_horizontal` `boolean` *(optional)* - Whether to flip the blueprint horizontally. Defaults to `false`.
 - `flip_vertical` `boolean` *(optional)* - Whether to flip the blueprint vertically. Defaults to `false`.
-- `mirror` `boolean` *(optional)* - Whether to mirror the entity
-- `position` `MapPosition` - Where the entity would be placed
-- `skip_fog_of_war` `boolean` *(optional)* - If chunks covered by fog-of-war are skipped. Defaults to `false`.
+- `build_mode` `defines.build_mode` *(optional)* - Which build mode should be used instead of normal build. Defaults to `defines.build_mode.normal`.
 - `terrain_building_size` `uint32` *(optional)* - The size for building terrain if building terrain. Defaults to `2`.
+- `skip_fog_of_war` `boolean` *(optional)* - If chunks covered by fog-of-war are skipped. Defaults to `false`.
 
 ### clear_inventory_highlights
 
@@ -805,13 +805,13 @@ Local flying text is not saved, which means it will disappear after a save/load-
 
 **Parameters:**
 
-- `color` `Color` *(optional)* - The color of the flying text. Defaults to white text.
-- `create_at_cursor` `boolean` *(optional)* - If `true`, the flying text is created at the player's cursor. Defaults to `false`.
-- `position` `MapPosition` *(optional)* - The location on the map at which to show the flying text.
-- `speed` `double` *(optional)* - The speed at which the text rises upwards in tiles/second. Can't be a negative value.
-- `surface` `SurfaceIdentification` *(optional)* - The surface which this text will be shown on. Defaults to player surface.
 - `text` `LocalisedString` - The flying text to show.
+- `position` `MapPosition` *(optional)* - The location on the map at which to show the flying text.
+- `surface` `SurfaceIdentification` *(optional)* - The surface which this text will be shown on. Defaults to player surface.
+- `create_at_cursor` `boolean` *(optional)* - If `true`, the flying text is created at the player's cursor. Defaults to `false`.
+- `color` `Color` *(optional)* - The color of the flying text. Defaults to white text.
 - `time_to_live` `uint32` *(optional)* - The amount of ticks that the flying text will be shown for. Defaults to `80`.
+- `speed` `double` *(optional)* - The speed at which the text rises upwards in tiles/second. Can't be a negative value.
 
 ### clear_local_flying_texts
 
@@ -835,8 +835,8 @@ Sets the quick bar filter for the given slot. If a [LuaItemStack](runtime:LuaIte
 
 **Parameters:**
 
-- `filter` `LuaItemStack` | `ItemWithQualityID` | `nil` - The filter or `nil` to clear it.
 - `index` `uint32` - The slot index. 1 for the first slot of page one, 2 for slot two of page one, 11 for the first slot of page 2, etc.
+- `filter` `LuaItemStack` | `ItemWithQualityID` | `nil` - The filter or `nil` to clear it.
 
 ### get_active_quick_bar_page
 
@@ -856,8 +856,8 @@ Sets which quick bar page is being used for the given screen page.
 
 **Parameters:**
 
-- `page_index` `uint32` - The new quick bar page.
 - `screen_index` `uint32` - The screen page. Index 1 is the top row in the gui. Index can go beyond the visible number of bars on the screen to account for the interface config setting change.
+- `page_index` `uint32` - The new quick bar page.
 
 ### jump_to_cutscene_waypoint
 
@@ -914,8 +914,8 @@ Make a custom Lua shortcut available or unavailable.
 
 **Parameters:**
 
-- `available` `boolean`
 - `prototype_name` `string` - Prototype name of the custom shortcut.
+- `available` `boolean`
 
 ### connect_to_server
 
@@ -926,8 +926,8 @@ This only does anything when used on a multiplayer peer. Single player and serve
 **Parameters:**
 
 - `address` `string` - The server (address:port) if port is not given the default Factorio port is used.
-- `description` `LocalisedString` *(optional)*
 - `name` `LocalisedString` *(optional)* - The name of the server.
+- `description` `LocalisedString` *(optional)*
 - `password` `string` *(optional)* - The password if different from the one used to join this game. Note, if the current password is not empty but the one required to join the new server is an empty string should be given for this field.
 
 ### toggle_map_editor
@@ -980,8 +980,8 @@ Sets the filter for this map editor infinity filters at the given index.
 
 **Parameters:**
 
-- `filter` `InfinityInventoryFilter` | `nil` - The new filter or `nil` to clear the filter.
 - `index` `uint32` - The index to set.
+- `filter` `InfinityInventoryFilter` | `nil` - The new filter or `nil` to clear the filter.
 
 ### clear_recipe_notifications
 

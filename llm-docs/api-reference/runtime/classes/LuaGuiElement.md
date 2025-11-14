@@ -744,21 +744,21 @@ Add a new child element to this GuiElement.
 
 **Parameters:**
 
-- `anchor` `GuiAnchor` *(optional)* - Where to position the child element when in the `relative` element.
+- `type` `GuiElementType` - The kind of element to add, which potentially has its own attributes as listed below.
+- `name` `string` *(optional)* - Name of the child element. It must be unique within the parent element.
 - `caption` `LocalisedString` *(optional)* - Text displayed on the child element. For frames, this is their title. For other elements, like buttons or labels, this is the content. Whilst this attribute may be used on all elements, it doesn't make sense for tables and flows as they won't display it.
+- `tooltip` `LocalisedString` *(optional)* - Tooltip of the child element.
 - `elem_tooltip` `ElemID` *(optional)* - Elem tooltip of the child element. Will be displayed above `tooltip`.
 - `enabled` `boolean` *(optional)* - Whether the child element is enabled. Defaults to `true`.
-- `game_controller_interaction` `defines.game_controller_interaction` *(optional)* - How the element should interact with game controllers. Defaults to [defines.game_controller_interaction.normal](runtime:defines.game_controller_interaction.normal).
-- `ignored_by_interaction` `boolean` *(optional)* - Whether the child element is ignored by interaction. Defaults to `false`.
-- `index` `uint32` *(optional)* - Location in its parent that the child element should slot into. By default, the child will be appended onto the end.
+- `visible` `boolean` *(optional)* - Whether the child element is visible. Defaults to `true`.
 - `locked` `boolean` *(optional)* - Whether the child element is locked. Defaults to `false`.
-- `name` `string` *(optional)* - Name of the child element. It must be unique within the parent element.
-- `raise_hover_events` `boolean` *(optional)* - Whether this element will raise [on_gui_hover](runtime:on_gui_hover) and [on_gui_leave](runtime:on_gui_leave). Defaults to `false`.
+- `ignored_by_interaction` `boolean` *(optional)* - Whether the child element is ignored by interaction. Defaults to `false`.
 - `style` `string` *(optional)* - The name of the style prototype to apply to the new element.
 - `tags` `Tags` *(optional)* - [Tags](runtime:Tags) associated with the child element.
-- `tooltip` `LocalisedString` *(optional)* - Tooltip of the child element.
-- `type` `GuiElementType` - The kind of element to add, which potentially has its own attributes as listed below.
-- `visible` `boolean` *(optional)* - Whether the child element is visible. Defaults to `true`.
+- `index` `uint32` *(optional)* - Location in its parent that the child element should slot into. By default, the child will be appended onto the end.
+- `anchor` `GuiAnchor` *(optional)* - Where to position the child element when in the `relative` element.
+- `game_controller_interaction` `defines.game_controller_interaction` *(optional)* - How the element should interact with game controllers. Defaults to [defines.game_controller_interaction.normal](runtime:defines.game_controller_interaction.normal).
+- `raise_hover_events` `boolean` *(optional)* - Whether this element will raise [on_gui_hover](runtime:on_gui_hover) and [on_gui_leave](runtime:on_gui_leave). Defaults to `false`.
 
 **Returns:**
 
@@ -846,8 +846,8 @@ Inserts a string at the end or at the given index of this dropdown or listbox.
 
 **Parameters:**
 
-- `index` `uint32` *(optional)* - The index at which to insert the item.
 - `string` `LocalisedString` - The text to insert.
+- `index` `uint32` *(optional)* - The index at which to insert the item.
 
 ### remove_item
 
@@ -879,8 +879,8 @@ Sets this sliders minimum and maximum values. The minimum can't be >= the maximu
 
 **Parameters:**
 
-- `maximum` `double`
 - `minimum` `double`
+- `maximum` `double`
 
 ### get_slider_value_step
 
@@ -953,8 +953,8 @@ Selects a range of text in this textbox.
 
 **Parameters:**
 
-- `end_index` `int32` - The index of the last character to select
 - `start_index` `int32` - The index of the first character to select
+- `end_index` `int32` - The index of the last character to select
 
 **Examples:**
 
@@ -974,8 +974,8 @@ Adds the given tab and content widgets to this tabbed pane as a new tab.
 
 **Parameters:**
 
-- `content` `LuaGuiElement` - The content to show when this tab is selected. Can be any type of GUI element.
 - `tab` `LuaGuiElement` - The tab to add, must be a GUI element of type "tab".
+- `content` `LuaGuiElement` - The content to show when this tab is selected. Can be any type of GUI element.
 
 ### remove_tab
 

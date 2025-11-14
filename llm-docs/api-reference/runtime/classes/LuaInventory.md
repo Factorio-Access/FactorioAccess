@@ -236,8 +236,8 @@ If the given inventory slot filter can be set to the given filter.
 
 **Parameters:**
 
-- `filter` `ItemFilter` - The item filter
 - `index` `uint32` - The item stack index
+- `filter` `ItemFilter` - The item filter
 
 **Returns:**
 
@@ -263,8 +263,8 @@ Some inventory slots don't allow some filters (gun ammo can't be filtered for no
 
 **Parameters:**
 
-- `filter` `ItemFilter` | `nil` - The new filter. `nil` erases any existing filter.
 - `index` `uint32` - The item stack index.
+- `filter` `ItemFilter` | `nil` - The new filter. `nil` erases any existing filter.
 
 **Returns:**
 
@@ -302,8 +302,8 @@ Counts the number of empty stacks.
 
 **Parameters:**
 
-- `include_bar` `boolean` *(optional)* - If true, slots blocked by the current bar will be included. Defaults to true.
 - `include_filtered` `boolean` *(optional)* - If true, filtered slots will be included. Defaults to false.
+- `include_bar` `boolean` *(optional)* - If true, slots blocked by the current bar will be included. Defaults to true.
 
 **Returns:**
 

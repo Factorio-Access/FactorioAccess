@@ -2242,11 +2242,11 @@ Damages the entity.
 
 **Parameters:**
 
-- `cause` `LuaEntity` *(optional)* - The entity that originally triggered the events that led to this damage being dealt (e.g. the character, turret, enemy, etc. that pulled the trigger). Does not need to be on the same surface as the entity being damaged.
 - `damage` `float` - The amount of damage to be done.
 - `force` `ForceID` - The force that will be doing the damage.
-- `source` `LuaEntity` *(optional)* - The entity that is directly dealing the damage (e.g. the projectile, flame, sticker, grenade, laser beam, etc.). Needs to be on the same surface as the entity being damaged.
 - `type` `DamageTypeID` *(optional)* - The type of damage to be done, defaults to `"impact"`.
+- `source` `LuaEntity` *(optional)* - The entity that is directly dealing the damage (e.g. the projectile, flame, sticker, grenade, laser beam, etc.). Needs to be on the same surface as the entity being damaged.
+- `cause` `LuaEntity` *(optional)* - The entity that originally triggered the events that led to this damage being dealt (e.g. the character, turret, enemy, etc. that pulled the trigger). Does not need to be on the same surface as the entity being damaged.
 
 **Returns:**
 
@@ -2269,8 +2269,8 @@ Not all entities can be destroyed - things such as rails under trains cannot be 
 **Parameters:**
 
 - `do_cliff_correction` `boolean` *(optional)* - Whether neighbouring cliffs should be corrected. Defaults to `false`.
-- `player` `PlayerIdentification` *(optional)* - The player whose undo queue this action should be added to.
 - `raise_destroy` `boolean` *(optional)* - If `true`, [script_raised_destroy](runtime:script_raised_destroy) will be called. Defaults to `false`.
+- `player` `PlayerIdentification` *(optional)* - The player whose undo queue this action should be added to.
 - `undo_index` `uint32` *(optional)* - The index of the undo item to add this action to. An index of `0` creates a new undo item for it. Defaults to putting it into the appropriate undo item automatically if not specified.
 
 **Returns:**
@@ -2285,8 +2285,8 @@ Unlike [LuaEntity::destroy](runtime:LuaEntity::destroy), `die` will trigger the 
 
 **Parameters:**
 
-- `cause` `LuaEntity` *(optional)* - The cause to attribute the kill to.
 - `force` `ForceID` *(optional)* - The force to attribute the kill to.
+- `cause` `LuaEntity` *(optional)* - The cause to attribute the kill to.
 
 **Returns:**
 
@@ -2408,9 +2408,9 @@ Sets the entity to be upgraded by construction robots.
 
 **Parameters:**
 
+- `target` `EntityWithQualityID` - The prototype of the entity to upgrade to.
 - `force` `ForceID` - The force whose robots are supposed to do the upgrade.
 - `player` `PlayerIdentification` *(optional)* - The player whose undo queue this action should be added to.
-- `target` `EntityWithQualityID` - The prototype of the entity to upgrade to.
 - `undo_index` `uint32` *(optional)* - The index of the undo item to add this action to. An index of `0` creates a new undo item for it. Defaults to putting it into the appropriate undo item automatically if not specified.
 
 **Returns:**
@@ -2483,8 +2483,8 @@ Returns whether a craft is currently in process. It does not indicate whether pr
 
 **Parameters:**
 
-- `extra_time` `uint32` *(optional)* - Extra ticks to stay open.
 - `force` `ForceID` - The force that requests the gate to be open.
+- `extra_time` `uint32` *(optional)* - Extra ticks to stay open.
 
 ### request_to_close
 
@@ -2542,8 +2542,8 @@ Get the maximum transport line index of a belt or belt connectable entity.
 
 **Parameters:**
 
-- `character` `LuaEntity` *(optional)* - If provided, must be of `character` type.
 - `destination` `CargoDestination` *(optional)*
+- `character` `LuaEntity` *(optional)* - If provided, must be of `character` type.
 
 **Returns:**
 
@@ -2555,8 +2555,8 @@ Revive a ghost, which turns it from a ghost into a real entity or tile.
 
 **Parameters:**
 
-- `overflow` `LuaInventory` *(optional)* - Items that would be deleted will be transferred to this inventory. Must be a script inventory or inventory of other entity. Inventory references obtained from proxy container are not allowed.
 - `raise_revive` `boolean` *(optional)* - If true, and an entity ghost; [script_raised_revive](runtime:script_raised_revive) will be called. Else if true, and a tile ghost; [script_raised_set_tiles](runtime:script_raised_set_tiles) will be called.
+- `overflow` `LuaInventory` *(optional)* - Items that would be deleted will be transferred to this inventory. Must be a script inventory or inventory of other entity. Inventory references obtained from proxy container are not allowed.
 
 **Returns:**
 
@@ -2570,8 +2570,8 @@ Revives a ghost silently, so the revival makes no sound and no smoke is created.
 
 **Parameters:**
 
-- `overflow` `LuaInventory` *(optional)* - Items that would be deleted will be transferred to this inventory. Must be a script inventory or inventory of other entity. Inventory references obtained from proxy container are not allowed.
 - `raise_revive` `boolean` *(optional)* - If true, and an entity ghost; [script_raised_revive](runtime:script_raised_revive) will be called. Else if true, and a tile ghost; [script_raised_set_tiles](runtime:script_raised_set_tiles) will be called.
+- `overflow` `LuaInventory` *(optional)* - Items that would be deleted will be transferred to this inventory. Must be a script inventory or inventory of other entity. Inventory references obtained from proxy container are not allowed.
 
 **Returns:**
 
@@ -2583,8 +2583,8 @@ Revives a ghost silently, so the revival makes no sound and no smoke is created.
 
 **Parameters:**
 
-- `rail_connection_direction` `defines.rail_connection_direction`
 - `rail_direction` `defines.rail_direction`
+- `rail_connection_direction` `defines.rail_connection_direction`
 
 **Returns:**
 
@@ -2752,8 +2752,8 @@ Set the filter for a slot in an inserter (ItemFilter), loader (ItemFilter), mini
 
 **Parameters:**
 
-- `filter` `ItemFilter` | `ItemWithQualityID` | `EntityID` | `AsteroidChunkID` *(optional)* - The item or entity to filter, or `nil` to clear the filter.
 - `index` `uint32` - Index of the slot to set the filter for.
+- `filter` `ItemFilter` | `ItemWithQualityID` | `EntityID` | `AsteroidChunkID` *(optional)* - The item or entity to filter, or `nil` to clear the filter.
 
 ### get_infinity_container_filter
 
@@ -2773,8 +2773,8 @@ Sets the filter for this infinity container at the given index.
 
 **Parameters:**
 
-- `filter` `InfinityInventoryFilter` | `nil` - The new filter, or `nil` to clear the filter.
 - `index` `uint32` - The index to set.
+- `filter` `InfinityInventoryFilter` | `nil` - The new filter, or `nil` to clear the filter.
 
 ### get_infinity_pipe_filter
 
@@ -2840,9 +2840,9 @@ Read a single signal from the selected wire connector
 
 **Parameters:**
 
-- `extra_wire_connector_id` `defines.wire_connector_id` *(optional)* - Additional wire connector ID. If specified, signal will be added to the result
 - `signal` `SignalID` - The signal to read.
 - `wire_connector_id` `defines.wire_connector_id` - Wire connector ID from which to get the signal
+- `extra_wire_connector_id` `defines.wire_connector_id` *(optional)* - Additional wire connector ID. If specified, signal will be added to the result
 
 **Returns:**
 
@@ -2854,8 +2854,8 @@ Read all signals from the selected wire connector.
 
 **Parameters:**
 
-- `extra_wire_connector_id` `defines.wire_connector_id` *(optional)* - Additional wire connector ID. If specified, signals will be added to the result
 - `wire_connector_id` `defines.wire_connector_id` - Wire connector ID from which to get the signal
+- `extra_wire_connector_id` `defines.wire_connector_id` *(optional)* - Additional wire connector ID. If specified, signals will be added to the result
 
 **Returns:**
 
@@ -2875,8 +2875,8 @@ Copies settings from the given entity onto this entity.
 
 **Parameters:**
 
-- `by_player` `PlayerIdentification` *(optional)* - If provided, the copying is done 'as' this player and [on_entity_settings_pasted](runtime:on_entity_settings_pasted) is triggered.
 - `entity` `LuaEntity`
+- `by_player` `PlayerIdentification` *(optional)* - If provided, the copying is done 'as' this player and [on_entity_settings_pasted](runtime:on_entity_settings_pasted) is triggered.
 
 **Returns:**
 
@@ -2951,8 +2951,8 @@ Sets the given recipe in this assembly machine.
 
 **Parameters:**
 
-- `quality` `QualityID` *(optional)* - The quality. If not provided `normal` is used.
 - `recipe` `RecipeID` *(optional)* - The new recipe. Writing `nil` clears the recipe, if any.
+- `quality` `QualityID` *(optional)* - The quality. If not provided `normal` is used.
 
 **Returns:**
 
@@ -2964,8 +2964,8 @@ Rotates this entity as if the player rotated it.
 
 **Parameters:**
 
-- `by_player` `PlayerIdentification` *(optional)*
 - `reverse` `boolean` *(optional)* - If `true`, rotate the entity in the counter-clockwise direction.
+- `by_player` `PlayerIdentification` *(optional)*
 
 **Returns:**
 
@@ -3039,10 +3039,10 @@ Clones this entity.
 
 **Parameters:**
 
-- `create_build_effect_smoke` `boolean` *(optional)* - If false, the building effect smoke will not be shown around the new entity.
-- `force` `ForceID` *(optional)*
 - `position` `MapPosition` - The destination position
 - `surface` `LuaSurface` *(optional)* - The destination surface
+- `force` `ForceID` *(optional)*
+- `create_build_effect_smoke` `boolean` *(optional)* - If false, the building effect smoke will not be shown around the new entity.
 
 **Returns:**
 
@@ -3080,10 +3080,10 @@ If temperature is given only fluid matching that exact temperature is removed. I
 
 **Parameters:**
 
-- `amount` `double` - Amount to remove
-- `maximum_temperature` `double` *(optional)*
-- `minimum_temperature` `double` *(optional)*
 - `name` `string` - Fluid prototype name.
+- `amount` `double` - Amount to remove
+- `minimum_temperature` `double` *(optional)*
+- `maximum_temperature` `double` *(optional)*
 - `temperature` `double` *(optional)*
 
 **Returns:**
@@ -3176,8 +3176,8 @@ Whether this character can shoot the given entity or position.
 
 **Parameters:**
 
-- `position` `MapPosition`
 - `target` `LuaEntity`
+- `position` `MapPosition`
 
 **Returns:**
 
@@ -3218,10 +3218,10 @@ The result of mining the entity (the item(s) it produces when mined) will be dro
 
 **Parameters:**
 
-- `force` `boolean` *(optional)* - If true, when the item(s) don't fit into the given inventory the entity is force mined. If false, the mining operation fails when there isn't enough room to transfer all of the items into the inventory. Defaults to false. This is ignored and acts as `true` if no inventory is provided.
-- `ignore_minable` `boolean` *(optional)* - If true, the minable state of the entity is ignored. Defaults to `false`. If false, an entity that isn't minable (set as not-minable in the prototype or isn't minable for other reasons) will fail to be mined.
 - `inventory` `LuaInventory` *(optional)* - If provided the item(s) will be transferred into this inventory. If provided, this must be an inventory created with [LuaGameScript::create_inventory](runtime:LuaGameScript::create_inventory) or be a basic inventory owned by some entity.
+- `force` `boolean` *(optional)* - If true, when the item(s) don't fit into the given inventory the entity is force mined. If false, the mining operation fails when there isn't enough room to transfer all of the items into the inventory. Defaults to false. This is ignored and acts as `true` if no inventory is provided.
 - `raise_destroyed` `boolean` *(optional)* - If true, [script_raised_destroy](runtime:script_raised_destroy) will be raised. Defaults to `true`.
+- `ignore_minable` `boolean` *(optional)* - If true, the minable state of the entity is ignored. Defaults to `false`. If false, an entity that isn't minable (set as not-minable in the prototype or isn't minable for other reasons) will fail to be mined.
 
 **Returns:**
 
@@ -3249,8 +3249,8 @@ Set the entity ID name at the specified position in the turret's priority list.
 
 **Parameters:**
 
-- `entity_id` `EntityID` *(optional)* - The name of the entity prototype, or `nil` to clear the entry.
 - `index` `uint32` - The index of the entry to set.
+- `entity_id` `EntityID` *(optional)* - The name of the entity prototype, or `nil` to clear the entry.
 
 ### can_wires_reach
 
@@ -3353,8 +3353,8 @@ Gets a single wire connector of this entity
 
 **Parameters:**
 
-- `or_create` `boolean` - If true and connector does not exist, it will be allocated if possible
 - `wire_connector_id` `defines.wire_connector_id` - Identifier of a specific connector to get
+- `or_create` `boolean` - If true and connector does not exist, it will be allocated if possible
 
 **Returns:**
 
@@ -3484,8 +3484,8 @@ The same as [LuaInventory::set_bar](runtime:LuaInventory::set_bar) but also work
 
 **Parameters:**
 
-- `bar` `uint32` *(optional)* - The new limit. Omitting this parameter or passing `nil` will clear the limit.
 - `inventory_index` `defines.inventory`
+- `bar` `uint32` *(optional)* - The new limit. Omitting this parameter or passing `nil` will clear the limit.
 
 ### inventory_supports_filters
 
@@ -3517,9 +3517,9 @@ The same as [LuaInventory::can_set_filter](runtime:LuaInventory::can_set_filter)
 
 **Parameters:**
 
-- `filter` `ItemFilter` - The item filter
-- `index` `uint32` - The item stack index
 - `inventory_index` `defines.inventory`
+- `index` `uint32` - The item stack index
+- `filter` `ItemFilter` - The item filter
 
 **Returns:**
 
@@ -3531,8 +3531,8 @@ The same as [LuaInventory::get_filter](runtime:LuaInventory::get_filter) but als
 
 **Parameters:**
 
-- `index` `uint32` - The item stack index
 - `inventory_index` `defines.inventory`
+- `index` `uint32` - The item stack index
 
 **Returns:**
 
@@ -3544,9 +3544,9 @@ The same as [LuaInventory::set_filter](runtime:LuaInventory::set_filter) but als
 
 **Parameters:**
 
-- `filter` `ItemFilter` | `nil` - The new filter. `nil` erases any existing filter.
-- `index` `uint32` - The item stack index.
 - `inventory_index` `defines.inventory`
+- `index` `uint32` - The item stack index.
+- `filter` `ItemFilter` | `nil` - The new filter. `nil` erases any existing filter.
 
 **Returns:**
 
@@ -3609,8 +3609,8 @@ Fluid storages that are part of fluidboxes (also available through [LuaFluidBox]
 
 **Parameters:**
 
-- `fluid` `Fluid` *(optional)* - Fluid to set. Fluid storage will be cleared if this is not provided.
 - `index` `uint32` - Fluid storage index. Valid values are from 1 up to [LuaEntity::fluids_count](runtime:LuaEntity::fluids_count).
+- `fluid` `Fluid` *(optional)* - Fluid to set. Fluid storage will be cleared if this is not provided.
 
 **Returns:**
 
@@ -3631,8 +3631,8 @@ Sets inventory size override. When set, supported entity will ignore inventory s
 **Parameters:**
 
 - `inventory_index` `defines.inventory`
-- `overflow` `LuaInventory` *(optional)* - Items that would be deleted due to change of inventory size will be transferred to this inventory. Must be a script inventory or inventory of other entity. Inventory references obtained from proxy container are not allowed.
 - `size_override` `uint16` | `nil`
+- `overflow` `LuaInventory` *(optional)* - Items that would be deleted due to change of inventory size will be transferred to this inventory. Must be a script inventory or inventory of other entity. Inventory references obtained from proxy container are not allowed.
 
 ### get_inventory_size_override
 

@@ -24,8 +24,8 @@ Add a remote interface.
 
 **Parameters:**
 
-- `functions` Dictionary[`string`, function()] - List of functions that are members of the new interface.
 - `name` `string` - Name of the interface. If the name matches any existing interface, an error is thrown.
+- `functions` Dictionary[`string`, function()] - List of functions that are members of the new interface.
 
 ### remove_interface
 
@@ -47,8 +47,8 @@ Providing an unknown interface or function name will result in a script error.
 
 **Parameters:**
 
-- `function` `string` - Function name that belongs to the `interface`.
 - `interface` `string` - Interface to look up `function` in.
+- `function` `string` - Function name that belongs to the `interface`.
 
 **Returns:**
 

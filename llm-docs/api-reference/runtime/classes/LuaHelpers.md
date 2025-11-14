@@ -48,9 +48,9 @@ Write a file to the `script-output` folder, located in the game's [user data dir
 
 **Parameters:**
 
-- `append` `boolean` *(optional)* - If `true`, `data` will be appended to the end of the file. Defaults to `false`, which will overwrite any pre-existing file with the new `data`.
-- `data` `LocalisedString` - The content to write to the file.
 - `filename` `string` - The name of the file. Providing a directory path (ex. `"save/here/example.txt"`) will create the necessary folder structure in `script-output`.
+- `data` `LocalisedString` - The content to write to the file.
+- `append` `boolean` *(optional)* - If `true`, `data` will be appended to the end of the file. Defaults to `false`, which will overwrite any pre-existing file with the new `data`.
 - `for_player` `uint32` *(optional)* - If given, the file will only be written for this `player_index`. Providing `0` will only write to the server's output if present. `for_player` cannot be used in settings and prototype stages.
 
 ### send_udp
@@ -61,9 +61,9 @@ This must be enabled per-instance with `--enable-lua-udp`.
 
 **Parameters:**
 
+- `port` `uint16` - Destination port number (localhost only)
 - `data` `LocalisedString` - The content to send.
 - `for_player` `uint32` *(optional)* - If given, the packet will only be sent from this `player_index`. Providing `0` will only send from the server if present. `for_player` cannot be used in settings and prototype stages.
-- `port` `uint16` - Destination port number (localhost only)
 
 ### recv_udp
 

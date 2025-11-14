@@ -229,10 +229,10 @@ Find the 'best' logistic point with this item ID and from the given position or 
 
 **Parameters:**
 
-- `include_buffers` `boolean` *(optional)* - Whether to consider buffer chests or not. Defaults to false. Only considered if selecting with position.
-- `members` `"active-provider"` | `"passive-provider"` | `"buffer"` | `"storage"` *(optional)* - When given, it will find from only the specific type of member. If not specified, selects with normal priorities. Not considered if position is specified.
 - `name` `ItemWithQualityID` - Name of the item to pick up.
 - `position` `MapPosition` *(optional)* - When given, it will find the storage 'best' storage point from this position.
+- `include_buffers` `boolean` *(optional)* - Whether to consider buffer chests or not. Defaults to false. Only considered if selecting with position.
+- `members` `"active-provider"` | `"passive-provider"` | `"buffer"` | `"storage"` *(optional)* - When given, it will find from only the specific type of member. If not specified, selects with normal priorities. Not considered if position is specified.
 
 **Returns:**
 
@@ -244,8 +244,8 @@ Find a logistic point to drop the specific item stack.
 
 **Parameters:**
 
-- `members` `"storage"` | `"storage-empty"` | `"storage-empty-slot"` | `"requester"` *(optional)* - When given, it will find from only the specific type of member. If not specified, selects with normal priorities.
 - `stack` `ItemStackIdentification` - Name of the item to drop off.
+- `members` `"storage"` | `"storage-empty"` | `"storage-empty-slot"` | `"requester"` *(optional)* - When given, it will find from only the specific type of member. If not specified, selects with normal priorities.
 
 **Returns:**
 
@@ -257,9 +257,9 @@ Can the network satisfy a request for a given item and count.
 
 **Parameters:**
 
+- `item` `ItemWithQualityID` - Item name to check.
 - `count` `uint32` *(optional)* - Count to check. Defaults to 1.
 - `include_buffers` `boolean` *(optional)* - Should buffers be considered? Defaults to false.
-- `item` `ItemWithQualityID` - Item name to check.
 
 **Returns:**
 

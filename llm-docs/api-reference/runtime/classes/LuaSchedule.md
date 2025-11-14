@@ -72,8 +72,8 @@ Adds the given wait condition to the given record.
 
 **Parameters:**
 
-- `condition_index` `uint32`
 - `record_position` `ScheduleRecordPosition`
+- `condition_index` `uint32`
 - `type` `WaitConditionType`
 
 ### remove_wait_condition
@@ -82,8 +82,8 @@ Removes the given wait condition from the given record.
 
 **Parameters:**
 
-- `condition_index` `uint32`
 - `record_position` `ScheduleRecordPosition`
+- `condition_index` `uint32`
 
 ### set_wait_condition_mode
 
@@ -91,9 +91,9 @@ Sets the comparison on the given wait condition.
 
 **Parameters:**
 
+- `record_position` `ScheduleRecordPosition`
 - `condition_index` `uint32`
 - `mode` `string` - `"and"`, or `"or"`
-- `record_position` `ScheduleRecordPosition`
 
 ### change_wait_condition
 
@@ -101,8 +101,8 @@ Changes the wait condition on the given record to the new values.
 
 **Parameters:**
 
-- `condition_index` `uint32`
 - `record_position` `ScheduleRecordPosition`
+- `condition_index` `uint32`
 - `wait_condition` `WaitCondition`
 
 ### add_record
@@ -131,9 +131,9 @@ Copies the record from the given schedule at the given index into this schedule 
 
 **Parameters:**
 
-- `destination_index` `uint32`
-- `source_index` `uint32`
 - `source_schedule` `LuaSchedule`
+- `source_index` `uint32`
+- `destination_index` `uint32`
 
 ### add_interrupt
 
@@ -172,8 +172,8 @@ Changes the interrupt at the given index to the provided values. Note, the names
 
 **Parameters:**
 
-- `new_name` `string` - The new name - if it already exists, does nothing.
 - `old_name` `string` - The interrupt to rename
+- `new_name` `string` - The new name - if it already exists, does nothing.
 
 ### go_to_station
 
@@ -197,16 +197,16 @@ Sets if unloading is allowed at the given schedule record position. Only relevan
 
 **Parameters:**
 
-- `allow` `boolean`
 - `record_position` `ScheduleRecordPosition`
+- `allow` `boolean`
 
 ### drag_record
 
 **Parameters:**
 
 - `from` `uint32`
-- `interrupt_index` `uint32` *(optional)* - The interrupt to operate on, if any.
 - `to` `uint32`
+- `interrupt_index` `uint32` *(optional)* - The interrupt to operate on, if any.
 
 ### drag_interrupt
 
@@ -219,8 +219,8 @@ Sets if unloading is allowed at the given schedule record position. Only relevan
 
 **Parameters:**
 
-- `from` `uint32`
 - `record_position` `ScheduleRecordPosition` - The record to change.
+- `from` `uint32`
 - `to` `uint32`
 
 ### get_record
@@ -247,8 +247,8 @@ Sets if unloading is allowed at the given schedule record position. Only relevan
 
 **Parameters:**
 
-- `interrupt_index` `uint32` *(optional)* - If provided, the records will be set on this interrupt.
 - `records` Array[`ScheduleRecord`]
+- `interrupt_index` `uint32` *(optional)* - If provided, the records will be set on this interrupt.
 
 ### clear_records
 
@@ -288,8 +288,8 @@ Gets the wait condition at the given record position if one exists.
 
 **Parameters:**
 
-- `condition_index` `uint32`
 - `record_position` `ScheduleRecordPosition`
+- `condition_index` `uint32`
 
 **Returns:**
 

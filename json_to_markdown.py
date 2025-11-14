@@ -178,8 +178,11 @@ def write_runtime_class(class_info: Dict[str, Any], output_dir: Path):
                 # Parameters
                 params = method.get("parameters", [])
                 if params:
+                    # Sort parameters by their order field to show correct calling order
+                    sorted_params = sorted(params, key=lambda p: p.get("order", 0))
+
                     f.write("**Parameters:**\n\n")
-                    for param in params:
+                    for param in sorted_params:
                         param_name = param["name"]
                         param_type = format_type(param.get("type", "unknown"))
                         param_desc = param.get("description", "")
