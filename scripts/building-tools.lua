@@ -408,6 +408,16 @@ function mod.build_offshore_pump_in_hand(pindex)
    end
 end
 
+---Check if the item in cursor can be rotated (has rotation support)
+---@param stack LuaItemStack
+---@return boolean can_rotate True if the stack can be rotated
+function mod.can_rotate_item(stack)
+   if not stack or not stack.valid_for_read or not stack.valid then return false end
+
+   local rotation_count = BuildDimensions.get_rotation_count(stack)
+   return rotation_count ~= nil
+end
+
 --Reads the result of rotating an item in hand
 function mod.rotate_item_in_hand(event, forward)
    local pindex = event.player_index
@@ -420,29 +430,27 @@ function mod.rotate_item_in_hand(event, forward)
    local vp = Viewpoint.get_viewpoint(pindex)
 
    -- Check if item in hand can rotate
-   if stack and stack.valid_for_read and stack.valid then
+   if mod.can_rotate_item(stack) then
       local rotation_count = BuildDimensions.get_rotation_count(stack)
-      if rotation_count then
-         -- Adjust mult for 2-way rotation
-         if rotation_count == 2 then mult = mult * 2 end
+      -- Adjust mult for 2-way rotation
+      if rotation_count == 2 then mult = mult * 2 end
 
-         -- Update the hand direction
-         p.play_sound({ path = "Rotate-Hand-Sound" })
-         local build_dir = vp:get_hand_direction()
-         local new_dir = (build_dir + dirs.east * mult) % (2 * dirs.south)
-         vp:set_hand_direction(new_dir)
+      -- Update the hand direction
+      p.play_sound({ path = "Rotate-Hand-Sound" })
+      local build_dir = vp:get_hand_direction()
+      local new_dir = (build_dir + dirs.east * mult) % (2 * dirs.south)
+      vp:set_hand_direction(new_dir)
 
-         -- For blueprints and blueprint books, just announce direction
-         if stack.is_blueprint or stack.is_blueprint_book then
-            Speech.speak(pindex, FaUtils.direction_lookup(new_dir))
-         else
-            Speech.speak(pindex, { "fa.building-rotation-in-hand", FaUtils.direction_lookup(new_dir) })
-         end
-         return
-      elseif stack.prototype.place_result then
-         Speech.speak(pindex, { "fa.building-no-rotate-support", { "item-name." .. stack.name } })
-         return
+      -- For blueprints and blueprint books, just announce direction
+      if stack.is_blueprint or stack.is_blueprint_book then
+         Speech.speak(pindex, FaUtils.direction_lookup(new_dir))
+      else
+         Speech.speak(pindex, { "fa.building-rotation-in-hand", FaUtils.direction_lookup(new_dir) })
       end
+      return
+   elseif stack and stack.valid_for_read and stack.valid and stack.prototype.place_result then
+      Speech.speak(pindex, { "fa.building-no-rotate-support", { "item-name." .. stack.name } })
+      return
    end
 
    -- Nothing in hand - entity rotation will be handled by on_player_rotated_entity event
@@ -464,6 +472,74 @@ function mod.on_entity_rotated(event)
    end
 
    Speech.speak(pindex, FaUtils.direction_lookup(dir))
+end
+
+--Handles flipping an item in hand horizontally
+function mod.flip_item_in_hand_horizontal(event)
+   local pindex = event.player_index
+   local p = game.get_player(pindex)
+   if not check_for_player(pindex) then return end
+
+   local stack = p.cursor_stack
+   local vp = Viewpoint.get_viewpoint(pindex)
+
+   -- Only blueprints and blueprint books can be flipped in hand
+   if stack and stack.valid_for_read and stack.valid and (stack.is_blueprint or stack.is_blueprint_book) then
+      local flipped = not vp:get_flipped_horizontal()
+      vp:set_flipped_horizontal(flipped)
+      Speech.speak(pindex, { "fa.flipped-horizontal" })
+      return
+   end
+
+   -- If there's a rotatable item in hand that's not a blueprint, error
+   if mod.can_rotate_item(stack) then
+      Speech.speak(pindex, { "fa.cannot-flip-non-blueprint-in-hand" })
+      return
+   end
+
+   -- Nothing in hand - entity flipping will be handled by on_player_flipped_entity event
+end
+
+--Handles flipping an item in hand vertically
+function mod.flip_item_in_hand_vertical(event)
+   local pindex = event.player_index
+   local p = game.get_player(pindex)
+   if not check_for_player(pindex) then return end
+
+   local stack = p.cursor_stack
+   local vp = Viewpoint.get_viewpoint(pindex)
+
+   -- Only blueprints and blueprint books can be flipped in hand
+   if stack and stack.valid_for_read and stack.valid and (stack.is_blueprint or stack.is_blueprint_book) then
+      local flipped = not vp:get_flipped_vertical()
+      vp:set_flipped_vertical(flipped)
+      Speech.speak(pindex, { "fa.flipped-vertical" })
+      return
+   end
+
+   -- If there's a rotatable item in hand that's not a blueprint, error
+   if mod.can_rotate_item(stack) then
+      Speech.speak(pindex, { "fa.cannot-flip-non-blueprint-in-hand" })
+      return
+   end
+
+   -- Nothing in hand - entity flipping will be handled by on_player_flipped_entity event
+end
+
+--Reads the result of flipping an entity on the map (called from on_player_flipped_entity event)
+function mod.on_entity_flipped(event)
+   local pindex = event.player_index
+   local ent = event.entity
+   local horizontal = event.horizontal
+
+   if not ent or not ent.valid then return end
+
+   -- Announce which flip was performed
+   if horizontal then
+      Speech.speak(pindex, { "fa.flipped-horizontal" })
+   else
+      Speech.speak(pindex, { "fa.flipped-vertical" })
+   end
 end
 
 --Does everything to handle the nudging feature, taking the keypress event and the nudge direction as the input. Nothing happens if an entity cannot be selected.

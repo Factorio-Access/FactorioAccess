@@ -3451,20 +3451,11 @@ local function kb_read_item_pickup_state(event)
    Speech.speak(pindex, result)
 end
 
----@param event EventData.CustomInputEvent
-local function kb_flip_blueprint_horizontal_info(event)
-   local pindex = event.player_index
-   local vp = Viewpoint.get_viewpoint(pindex)
-   local flipped = not vp:get_flipped_horizontal()
-   vp:set_flipped_horizontal(flipped)
-   Speech.speak(pindex, { "fa.flipped-horizontal" })
-end
-
 EventManager.on_event(
    "fa-h",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      kb_flip_blueprint_horizontal_info(event)
+      BuildingTools.flip_item_in_hand_horizontal(event)
    end
 )
 
@@ -3489,20 +3480,11 @@ local function kb_read_health_and_armor_stats(event)
    Speech.speak(pindex, output)
 end
 
----@param event EventData.CustomInputEvent
-local function kb_flip_blueprint_vertical_info(event)
-   local pindex = event.player_index
-   local vp = Viewpoint.get_viewpoint(pindex)
-   local flipped = not vp:get_flipped_vertical()
-   vp:set_flipped_vertical(flipped)
-   Speech.speak(pindex, { "fa.flipped-vertical" })
-end
-
 EventManager.on_event(
    "fa-v",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      kb_flip_blueprint_vertical_info(event)
+      BuildingTools.flip_item_in_hand_vertical(event)
    end
 )
 
@@ -3540,6 +3522,15 @@ EventManager.on_event(
    ---@param event EventData.on_player_rotated_entity
    function(event)
       BuildingTools.on_entity_rotated(event)
+   end
+)
+
+--Called when player flips an entity on the map
+EventManager.on_event(
+   defines.events.on_player_flipped_entity,
+   ---@param event EventData.on_player_flipped_entity
+   function(event)
+      BuildingTools.on_entity_flipped(event)
    end
 )
 

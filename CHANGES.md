@@ -5,7 +5,10 @@
 - Use vanilla events to properly report rotation.
   - Unfortunately, rotating an empty hand not over an entity now provides no feedback.
   - Tradeoff is that we are now accurate wrt things like trains.
-
+- Like with the hand rotation, use vanilla events for flipping: no more spurious "flipped", but you no longer get
+  feedback if nothing happened.
+- Properly tell you that flipping non-blueprint entities in hand doesn't work
+  - I don't think Vanilla supports this either because flipping some things requires setting the recipe. If it does we can revisit.
 
 # 0.16.18 (2025-11-14)
 
