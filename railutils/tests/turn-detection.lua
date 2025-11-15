@@ -64,9 +64,7 @@ local function test_piece_detection(pieces, piece_index, turn_name)
 
       -- Add pieces according to permutation
       for i, present in ipairs(perm) do
-         if present then
-            surface:add_rail(pieces[i].rail_type, pieces[i].position, pieces[i].placement_direction)
-         end
+         if present then surface:add_rail(pieces[i].rail_type, pieces[i].position, pieces[i].placement_direction) end
       end
 
       -- Can only query if the test piece is present
@@ -76,12 +74,8 @@ local function test_piece_detection(pieces, piece_index, turn_name)
       end
 
       -- Try to classify the test piece
-      local desc = RailDescriber.describe_rail(
-         surface,
-         test_piece.rail_type,
-         test_piece.placement_direction,
-         test_piece.position
-      )
+      local desc =
+         RailDescriber.describe_rail(surface, test_piece.rail_type, test_piece.placement_direction, test_piece.position)
 
       -- Should only detect turn when all 4 pieces are present
       local all_present = perm[1] and perm[2] and perm[3] and perm[4]

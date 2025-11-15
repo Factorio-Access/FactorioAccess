@@ -120,6 +120,16 @@ function mod.get_rotation_count(stack)
    if stack.prototype.place_result then
       local placed = stack.prototype.place_result
 
+      -- Rolling stock (locomotives, wagons) only rotate 180 degrees
+      if
+         placed.type == "locomotive"
+         or placed.type == "cargo-wagon"
+         or placed.type == "fluid-wagon"
+         or placed.type == "artillery-wagon"
+      then
+         return 2
+      end
+
       -- Cars and entities that support direction are 4-way
       if placed.supports_direction or placed.type == "car" then return 4 end
    end

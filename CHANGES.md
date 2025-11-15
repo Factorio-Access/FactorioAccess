@@ -1,3 +1,9 @@
+# 0.16.19 (unreleased)
+
+- Sort of fix rotation of locomotives in hand. Reports "north" and "south" but this is more like "flipped" and "unflipped".
+  - It's unclear if we can do better. The visual equivalent for rotation depends on where the cursor is at any given time, among other things.
+
+
 # 0.16.18 (2025-11-14)
 
 - Land prototype of trains. See [this](./docs/features/rails.md) before you try to use it.

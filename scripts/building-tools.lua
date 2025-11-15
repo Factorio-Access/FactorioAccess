@@ -426,7 +426,7 @@ function mod.rotate_building_info_read(event, forward)
       local rotation_count = BuildDimensions.get_rotation_count(stack)
       if rotation_count then
          -- Adjust mult for 2-way rotation
-         if rotation_count == 2 then mult = mult * 4 end
+         if rotation_count == 2 then mult = mult * 2 end
 
          -- Update the hand direction
          game.get_player(pindex).play_sound({ path = "Rotate-Hand-Sound" })
@@ -458,7 +458,7 @@ function mod.rotate_building_info_read(event, forward)
             new_dir = (new_dir - dirs.east * mult) % (2 * dirs.south)
          elseif (ent.tile_width ~= ent.tile_height and ent.supports_direction) or ent.type == "underground-belt" then
             --Exceptions: None-square ents rotate 2x , while underground belts simply flip instead
-            --Examples, boiler, pump, flamethrower, heat exchanger,
+            --Examples, boiler, pump, flamethrower, heat exchanger, rolling stock
             new_dir = (new_dir + dirs.east * mult) % (2 * dirs.south)
          end
 
