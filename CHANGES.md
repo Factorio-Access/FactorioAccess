@@ -1,3 +1,8 @@
+# 0.16.18 (unreleased)
+
+- Drop prototype of trains. See [this](./docs/features/rails.md) before you try to use it.
+- Tons of internal refactoring that might cause crashes which was necessary to make trains work
+
 # 0.16.17 (2025-11-04)
 
 - Menu search: periodically refresh, eagerly refresh after inventory changes, and refresh after not finding a search result.
