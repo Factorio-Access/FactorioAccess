@@ -48,28 +48,19 @@ local function has_rail_at(surface, position, expected_rail_type, expected_direc
    return false
 end
 
----Map from (direction % 8) to RailKind for straight and half-diagonal rails
+---Map from (direction % 8) to RailKind for straight rails
 ---Opposite directions differ by 8, so mod 8 collapses them to same value
----@type table<number, table<railutils.RailType, railutils.RailKind>>
+---Only straight rails are classified; curves handled separately
+---@type table<number, railutils.RailKind>
 local SIMPLE_RAIL_MAP = {
-   [0] = { -- north/south
-      [RailInfo.RailType.STRAIGHT] = RailInfo.RailKind.VERTICAL,
-   },
-   [1] = { -- NNE/SSW
-      [RailInfo.RailType.HALF_DIAGONAL] = RailInfo.RailKind.NORTHNORTHEAST,
-   },
-   [3] = { -- ENE/WSW
-      [RailInfo.RailType.HALF_DIAGONAL] = RailInfo.RailKind.EASTNORTHEAST,
-   },
-   [4] = { -- east/west
-      [RailInfo.RailType.STRAIGHT] = RailInfo.RailKind.HORIZONTAL,
-   },
-   [5] = { -- ESE/WNW
-      [RailInfo.RailType.HALF_DIAGONAL] = RailInfo.RailKind.EASTSOUTHEAST,
-   },
-   [7] = { -- SSE/NNW
-      [RailInfo.RailType.HALF_DIAGONAL] = RailInfo.RailKind.SOUTHSOUTHEAST,
-   },
+   [0] = RailInfo.RailKind.VERTICAL, -- north/south
+   [1] = RailInfo.RailKind.NORTHNORTHEAST, -- NNE/SSW
+   [2] = RailInfo.RailKind.NORTHEAST, -- NE/SW
+   [3] = RailInfo.RailKind.EASTNORTHEAST, -- ENE/WSW
+   [4] = RailInfo.RailKind.HORIZONTAL, -- east/west
+   [5] = RailInfo.RailKind.EASTSOUTHEAST, -- ESE/WNW
+   [6] = RailInfo.RailKind.SOUTHEAST, -- SE/NW
+   [7] = RailInfo.RailKind.SOUTHSOUTHEAST, -- SSE/NNW
 }
 
 ---Classify straight and half-diagonal rails
@@ -77,9 +68,24 @@ local SIMPLE_RAIL_MAP = {
 ---@param placement_direction defines.direction
 ---@return railutils.RailKind|nil Kind string or nil if not a simple rail
 local function classify_simple_rail(rail_type, placement_direction)
+   if rail_type ~= RailInfo.RailType.STRAIGHT and rail_type ~= RailInfo.RailType.HALF_DIAGONAL then
+      return nil
+   end
+
    local ends = Queries.get_end_directions(rail_type, placement_direction)
-   local type_map = SIMPLE_RAIL_MAP[ends[1] % 8]
-   return type_map and type_map[rail_type]
+   local dir_mod_8 = ends[1] % 8
+   local rail_kind = SIMPLE_RAIL_MAP[dir_mod_8]
+
+   -- Validate rail type matches expected type for this direction
+   -- STRAIGHT: even directions (0, 2, 4, 6) - cardinals and diagonals
+   -- HALF_DIAGONAL: odd directions (1, 3, 5, 7) - half-diagonals
+   if rail_type == RailInfo.RailType.STRAIGHT and (dir_mod_8 % 2 == 0) then
+      return rail_kind
+   elseif rail_type == RailInfo.RailType.HALF_DIAGONAL and (dir_mod_8 % 2 == 1) then
+      return rail_kind
+   end
+
+   return nil
 end
 
 ---90-degree turn detection table (imported from turn-table.lua)

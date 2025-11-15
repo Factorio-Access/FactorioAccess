@@ -25,14 +25,18 @@ mod.RailKind = {
    VERTICAL = "vertical",
    HORIZONTAL = "horizontal",
 
-   -- Half-diagonal rails (8 intermediate directions)
+   -- Half-diagonal and diagonal rails (12 directions)
    NORTHNORTHEAST = "northnortheast",
+   NORTHEAST = "northeast",
    EASTNORTHEAST = "eastnortheast",
    EASTSOUTHEAST = "eastsoutheast",
+   SOUTHEAST = "southeast",
    SOUTHSOUTHEAST = "southsoutheast",
    SOUTHSOUTHWEST = "southsouthwest",
+   SOUTHWEST = "southwest",
    WESTSOUTHWEST = "westsouthwest",
    WESTNORTHWEST = "westnorthwest",
+   NORTHWEST = "northwest",
    NORTHNORTHWEST = "northnorthwest",
 
    -- 90-degree turn positions (4 turns × 4 positions)
