@@ -36,27 +36,27 @@ function mod.read_wait_condition(mb, condition)
    -- Item count (cargo) - don't say "cargo", it's obvious from item
    elseif cond_type == "item_count" then
       ---@diagnostic disable-next-line: param-type-mismatch
-      CircuitNetwork.read_condition(mb, condition.condition, { empty_message = { "fa.schedule-no-condition" } })
+      CircuitNetwork.read_condition(mb, condition.condition, { empty_message = { "fa.schedule-contents-condition-not-configured" } })
    -- Fluid count - don't say "fluid", it's obvious from fluid name
    elseif cond_type == "fluid_count" then
       ---@diagnostic disable-next-line: param-type-mismatch
-      CircuitNetwork.read_condition(mb, condition.condition, { empty_message = { "fa.schedule-no-condition" } })
+      CircuitNetwork.read_condition(mb, condition.condition, { empty_message = { "fa.schedule-contents-condition-not-configured" } })
    -- Fuel conditions - DO say "fuel" to disambiguate from cargo
    elseif cond_type == "fuel_item_count_all" then
       mb:fragment({ "fa.schedule-fuel-all" })
       ---@diagnostic disable-next-line: param-type-mismatch
-      CircuitNetwork.read_condition(mb, condition.condition, { empty_message = { "fa.schedule-no-condition" } })
+      CircuitNetwork.read_condition(mb, condition.condition, { empty_message = { "fa.schedule-contents-condition-not-configured" } })
    elseif cond_type == "fuel_item_count_any" then
       mb:fragment({ "fa.schedule-fuel-any" })
       ---@diagnostic disable-next-line: param-type-mismatch
-      CircuitNetwork.read_condition(mb, condition.condition, { empty_message = { "fa.schedule-no-condition" } })
+      CircuitNetwork.read_condition(mb, condition.condition, { empty_message = { "fa.schedule-contents-condition-not-configured" } })
    elseif cond_type == "fuel_full" then
       mb:fragment({ "fa.schedule-fuel-full" })
    -- Circuit condition - DO say "circuit" to disambiguate
    elseif cond_type == "circuit" then
       mb:fragment({ "fa.schedule-circuit" })
       ---@diagnostic disable-next-line: param-type-mismatch
-      CircuitNetwork.read_condition(mb, condition.condition, { empty_message = { "fa.schedule-no-condition" } })
+      CircuitNetwork.read_condition(mb, condition.condition, { empty_message = { "fa.schedule-contents-condition-not-configured" } })
    -- Robot conditions
    elseif cond_type == "robots_inactive" then
       mb:fragment({ "fa.schedule-robots-inactive" })
