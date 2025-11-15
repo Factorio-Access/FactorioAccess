@@ -3520,7 +3520,7 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
       ---From event rotate-building
-      BuildingTools.rotate_building_info_read(event, true)
+      BuildingTools.rotate_item_in_hand(event, true)
    end
 )
 
@@ -3530,7 +3530,16 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
 
-      BuildingTools.rotate_building_info_read(event, false)
+      BuildingTools.rotate_item_in_hand(event, false)
+   end
+)
+
+--Called when player rotates an entity on the map
+EventManager.on_event(
+   defines.events.on_player_rotated_entity,
+   ---@param event EventData.on_player_rotated_entity
+   function(event)
+      BuildingTools.on_entity_rotated(event)
    end
 )
 

@@ -2,6 +2,9 @@
 
 - Sort of fix rotation of locomotives in hand. Reports "north" and "south" but this is more like "flipped" and "unflipped".
   - It's unclear if we can do better. The visual equivalent for rotation depends on where the cursor is at any given time, among other things.
+- Use vanilla events to properly report rotation.
+  - Unfortunately, rotating an empty hand not over an entity now provides no feedback.
+  - Tradeoff is that we are now accurate wrt things like trains.
 
 
 # 0.16.18 (2025-11-14)

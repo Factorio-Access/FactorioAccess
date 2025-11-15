@@ -408,17 +408,15 @@ function mod.build_offshore_pump_in_hand(pindex)
    end
 end
 
---Reads the result of trying to rotate a building, which is a vanilla action.
-function mod.rotate_building_info_read(event, forward)
+--Reads the result of rotating an item in hand
+function mod.rotate_item_in_hand(event, forward)
    local pindex = event.player_index
-   local router = UiRouter.get_router(pindex)
-
    local p = game.get_player(pindex)
    if not check_for_player(pindex) then return end
+
    local mult = 1
    if forward == false then mult = -1 end
-   local ent = p.selected
-   local stack = game.get_player(pindex).cursor_stack
+   local stack = p.cursor_stack
    local vp = Viewpoint.get_viewpoint(pindex)
 
    -- Check if item in hand can rotate
@@ -429,7 +427,7 @@ function mod.rotate_building_info_read(event, forward)
          if rotation_count == 2 then mult = mult * 2 end
 
          -- Update the hand direction
-         game.get_player(pindex).play_sound({ path = "Rotate-Hand-Sound" })
+         p.play_sound({ path = "Rotate-Hand-Sound" })
          local build_dir = vp:get_hand_direction()
          local new_dir = (build_dir + dirs.east * mult) % (2 * dirs.south)
          vp:set_hand_direction(new_dir)
@@ -447,28 +445,25 @@ function mod.rotate_building_info_read(event, forward)
       end
    end
 
-   -- Check if selected entity can rotate
-   if ent and ent.valid then
-      if ent.supports_direction then
-         --Assuming that the vanilla rotate event will now rotate the ent
-         local new_dir = (ent.direction + dirs.east * mult) % (2 * dirs.south)
+   -- Nothing in hand - entity rotation will be handled by on_player_rotated_entity event
+end
 
-         if ent.name == "steam-engine" or ent.name == "steam-turbine" or ent.name == "character" then
-            --Exception: These ents do not rotate
-            new_dir = (new_dir - dirs.east * mult) % (2 * dirs.south)
-         elseif (ent.tile_width ~= ent.tile_height and ent.supports_direction) or ent.type == "underground-belt" then
-            --Exceptions: None-square ents rotate 2x , while underground belts simply flip instead
-            --Examples, boiler, pump, flamethrower, heat exchanger, rolling stock
-            new_dir = (new_dir + dirs.east * mult) % (2 * dirs.south)
-         end
+--Reads the result of rotating an entity on the map (called from on_player_rotated_entity event)
+function mod.on_entity_rotated(event)
+   local pindex = event.player_index
+   local ent = event.entity
 
-         Speech.speak(pindex, FaUtils.direction_lookup(new_dir))
-      else
-         Speech.speak(pindex, { "fa.building-no-rotate-support", { "entity-name." .. ent.name } })
-      end
+   if not ent or not ent.valid then return end
+
+   -- Use direction for entities that support it, orientation for vehicles and others
+   local dir
+   if ent.supports_direction then
+      dir = ent.direction
    else
-      Speech.speak(pindex, { "fa.building-cannot-rotate" })
+      dir = FaUtils.get_heading_value(ent)
    end
+
+   Speech.speak(pindex, FaUtils.direction_lookup(dir))
 end
 
 --Does everything to handle the nudging feature, taking the keypress event and the nudge direction as the input. Nothing happens if an entity cannot be selected.
