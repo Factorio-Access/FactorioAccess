@@ -82,19 +82,232 @@ local function get_schedule(entity)
    return train.get_schedule()
 end
 
----Helper to validate and set a number from text input
----@param text_result string
----@param on_valid fun(num: number)
----@param ctx fa.ui.graph.Ctx
-local function validate_and_set_number(text_result, on_valid, ctx)
-   local num_value = tonumber(text_result)
-   if num_value then
-      on_valid(math.floor(num_value))
-      ctx.controller.message:fragment(tostring(math.floor(num_value)))
-   else
-      ctx.controller.message:fragment({ "fa.error-invalid-number" })
-   end
-end
+---Parameter handler for each condition type and parameter
+---Each handler has:
+---  - constant(condition, new_value) -> new_condition_data | nil (for textbox input)
+---  - setter(condition, new_value) -> new_condition_data | nil (for signal chooser input)
+---  - get_current(condition) -> string (to pre-populate textbox)
+---  - announcer(new_value, condition) -> message fragment
+local PARAM_HANDLERS = {}
+
+-- Time condition handlers
+PARAM_HANDLERS.time = {
+   p1 = {
+      constant = function(condition, new_value)
+         local seconds = tonumber(new_value)
+         if not seconds then return nil end
+
+         return {
+            type = "time",
+            ticks = math.floor(seconds) * 60,
+         }
+      end,
+      get_current = function(condition)
+         return tostring((condition.ticks or 0) / 60)
+      end,
+      announcer = function(new_value, condition)
+         return tostring(math.floor(tonumber(new_value)))
+      end,
+   },
+}
+
+-- Inactivity condition handlers
+PARAM_HANDLERS.inactivity = {
+   p1 = {
+      constant = function(condition, new_value)
+         local seconds = tonumber(new_value)
+         if not seconds then return nil end
+
+         return {
+            type = "inactivity",
+            ticks = math.floor(seconds) * 60,
+         }
+      end,
+      get_current = function(condition)
+         return tostring((condition.ticks or 0) / 60)
+      end,
+      announcer = function(new_value, condition)
+         return tostring(math.floor(tonumber(new_value)))
+      end,
+   },
+}
+
+-- Item count condition handlers
+PARAM_HANDLERS.item_count = {
+   p1 = {
+      setter = function(condition, new_value)
+         local signal = new_value
+         if not signal or not signal.name then return nil end
+
+         -- Auto-convert to fluid_count if signal is a fluid
+         local new_type = is_fluid_signal(signal) and "fluid_count" or "item_count"
+
+         return {
+            type = new_type,
+            condition = {
+               first_signal = signal,
+               comparator = (condition.condition and condition.condition.comparator) or "<",
+               constant = (condition.condition and condition.condition.constant) or 0,
+            },
+         }
+      end,
+      announcer = function(new_value, condition)
+         return CircuitNetwork.localise_signal(new_value)
+      end,
+   },
+   constant = {
+      constant = function(condition, new_value)
+         local num = tonumber(new_value)
+         if not num then return nil end
+
+         return {
+            type = condition.type,
+            condition = {
+               first_signal = condition.condition and condition.condition.first_signal,
+               comparator = (condition.condition and condition.condition.comparator) or "<",
+               constant = math.floor(num),
+            },
+         }
+      end,
+      get_current = function(condition)
+         return tostring((condition.condition and condition.condition.constant) or 0)
+      end,
+      announcer = function(new_value, condition)
+         return tostring(math.floor(tonumber(new_value)))
+      end,
+   },
+}
+
+-- Fluid count uses same handlers as item_count
+PARAM_HANDLERS.fluid_count = PARAM_HANDLERS.item_count
+
+-- Circuit condition handlers
+PARAM_HANDLERS.circuit = {
+   p1 = {
+      setter = function(condition, new_value)
+         local signal = new_value
+         if not signal or not signal.name then return nil end
+
+         return {
+            type = "circuit",
+            condition = {
+               first_signal = signal,
+               comparator = (condition.condition and condition.condition.comparator) or "<",
+               constant = (condition.condition and condition.condition.constant) or 0,
+            },
+         }
+      end,
+      announcer = function(new_value, condition)
+         return CircuitNetwork.localise_signal(new_value)
+      end,
+   },
+   p2 = {
+      setter = function(condition, new_value)
+         local signal = new_value
+         if not signal or not signal.name then return nil end
+
+         return {
+            type = "circuit",
+            condition = {
+               first_signal = condition.condition and condition.condition.first_signal,
+               comparator = (condition.condition and condition.condition.comparator) or "<",
+               second_signal = signal,
+            },
+         }
+      end,
+      announcer = function(new_value, condition)
+         return CircuitNetwork.localise_signal(new_value)
+      end,
+   },
+   constant = {
+      constant = function(condition, new_value)
+         local num = tonumber(new_value)
+         if not num then return nil end
+
+         return {
+            type = "circuit",
+            condition = {
+               first_signal = condition.condition and condition.condition.first_signal,
+               comparator = (condition.condition and condition.condition.comparator) or "<",
+               constant = math.floor(num),
+            },
+         }
+      end,
+      get_current = function(condition)
+         return tostring((condition.condition and condition.condition.constant) or 0)
+      end,
+      announcer = function(new_value, condition)
+         return tostring(math.floor(tonumber(new_value)))
+      end,
+   },
+}
+
+-- Fuel condition handlers (both all and any use same logic)
+local fuel_handlers = {
+   p1 = {
+      setter = function(condition, new_value)
+         local signal = new_value
+         if not signal or not signal.name then return nil end
+
+         return {
+            type = condition.type,
+            condition = {
+               first_signal = signal,
+               comparator = (condition.condition and condition.condition.comparator) or "<",
+               constant = (condition.condition and condition.condition.constant) or 0,
+            },
+         }
+      end,
+      announcer = function(new_value, condition)
+         return CircuitNetwork.localise_signal(new_value)
+      end,
+   },
+   constant = {
+      constant = function(condition, new_value)
+         local num = tonumber(new_value)
+         if not num then return nil end
+
+         return {
+            type = condition.type,
+            condition = {
+               first_signal = condition.condition and condition.condition.first_signal,
+               comparator = (condition.condition and condition.condition.comparator) or "<",
+               constant = math.floor(num),
+            },
+         }
+      end,
+      get_current = function(condition)
+         return tostring((condition.condition and condition.condition.constant) or 0)
+      end,
+      announcer = function(new_value, condition)
+         return tostring(math.floor(tonumber(new_value)))
+      end,
+   },
+}
+
+PARAM_HANDLERS.fuel_item_count_all = fuel_handlers
+PARAM_HANDLERS.fuel_item_count_any = fuel_handlers
+
+-- Specific destination condition handlers
+local destination_handlers = {
+   p1 = {
+      constant = function(condition, new_value)
+         return {
+            type = condition.type,
+            station = new_value,
+         }
+      end,
+      get_current = function(condition)
+         return condition.station or ""
+      end,
+      announcer = function(new_value, condition)
+         return new_value
+      end,
+   },
+}
+
+PARAM_HANDLERS.specific_destination_full = destination_handlers
+PARAM_HANDLERS.specific_destination_not_full = destination_handlers
 
 ---Build vtable for a wait condition
 ---@param entity LuaEntity Locomotive entity
@@ -150,29 +363,25 @@ local function build_condition_vtable(entity, schedule, record_index, condition_
 
       on_action1 = function(ctx)
          local cond_type = condition.type
+         local type_handlers = PARAM_HANDLERS[cond_type]
+
+         if not type_handlers or not type_handlers.p1 then
+            ctx.controller.message:fragment({ "fa.schedule-no-action1" })
+            return
+         end
 
          if ctx.modifiers and ctx.modifiers.shift then
-            -- Shift+M: type a value (for station names, constants, etc.)
-            if cond_type == "time" or cond_type == "inactivity" then
-               local current_seconds = (condition.ticks or 0) / 60
-               ctx.controller:open_textbox(tostring(current_seconds), { node = row_key, target = "seconds" })
-            elseif cond_type == "specific_destination_full" or cond_type == "specific_destination_not_full" then
-               ctx.controller:open_textbox(condition.station or "", { node = row_key, target = "station" })
+            -- Shift+M: textbox (if p1 has constant)
+            if type_handlers.p1.constant then
+               local current = type_handlers.p1.get_current(condition)
+               ctx.controller:open_textbox(current, { node = row_key, target = "p1" })
             else
                ctx.controller.message:fragment({ "fa.schedule-no-text-param" })
             end
          else
-            -- M: select signal/item
-            if cond_type == "item_count" or cond_type == "fluid_count" then
-               ctx.controller:open_child_ui(Router.UI_NAMES.SIGNAL_CHOOSER, {}, { node = row_key, target = "signal" })
-            elseif cond_type == "circuit" then
-               ctx.controller:open_child_ui(
-                  Router.UI_NAMES.SIGNAL_CHOOSER,
-                  {},
-                  { node = row_key, target = "first_signal" }
-               )
-            elseif cond_type == "fuel_item_count_all" or cond_type == "fuel_item_count_any" then
-               ctx.controller:open_child_ui(Router.UI_NAMES.SIGNAL_CHOOSER, {}, { node = row_key, target = "signal" })
+            -- M: signal chooser (if p1 has setter)
+            if type_handlers.p1.setter then
+               ctx.controller:open_child_ui(Router.UI_NAMES.SIGNAL_CHOOSER, {}, { node = row_key, target = "p1" })
             else
                ctx.controller.message:fragment({ "fa.schedule-no-signal-param" })
             end
@@ -218,29 +427,25 @@ local function build_condition_vtable(entity, schedule, record_index, condition_
 
       on_action3 = function(ctx)
          local cond_type = condition.type
+         local type_handlers = PARAM_HANDLERS[cond_type]
+
+         if not type_handlers then
+            ctx.controller.message:fragment({ "fa.schedule-no-action3" })
+            return
+         end
 
          if ctx.modifiers and ctx.modifiers.shift then
-            -- Shift+dot: type a constant
-            if
-               cond_type == "item_count"
-               or cond_type == "fluid_count"
-               or cond_type == "circuit"
-               or cond_type == "fuel_item_count_all"
-               or cond_type == "fuel_item_count_any"
-            then
-               local current_value = (condition.condition and condition.condition.constant) or 0
-               ctx.controller:open_textbox(tostring(current_value), { node = row_key, target = "constant" })
+            -- Shift+dot: type a constant (if constant parameter has constant function)
+            if type_handlers.constant and type_handlers.constant.constant then
+               local current = type_handlers.constant.get_current(condition)
+               ctx.controller:open_textbox(current, { node = row_key, target = "constant" })
             else
                ctx.controller.message:fragment({ "fa.schedule-no-constant-param" })
             end
          else
-            -- Dot: select second signal (circuit conditions only)
-            if cond_type == "circuit" then
-               ctx.controller:open_child_ui(
-                  Router.UI_NAMES.SIGNAL_CHOOSER,
-                  {},
-                  { node = row_key, target = "second_signal" }
-               )
+            -- Dot: select p2 signal (if p2 has setter)
+            if type_handlers.p2 and type_handlers.p2.setter then
+               ctx.controller:open_child_ui(Router.UI_NAMES.SIGNAL_CHOOSER, {}, { node = row_key, target = "p2" })
             else
                ctx.controller.message:fragment({ "fa.schedule-no-second-signal" })
             end
@@ -293,98 +498,37 @@ local function build_condition_vtable(entity, schedule, record_index, condition_
          local target = ctx.child_context.target
          local cond_type = condition.type
 
-         if target == "signal" then
-            -- For item_count/fluid_count: auto-convert based on signal type
-            local signal = result
-            if not signal or not signal.name then
-               ctx.controller.message:fragment({ "fa.schedule-invalid-signal" })
-               return
-            end
-
-            -- Determine if we need to switch between item_count and fluid_count
-            local new_type = cond_type
-            if cond_type == "item_count" or cond_type == "fluid_count" then
-               new_type = is_fluid_signal(signal) and "fluid_count" or "item_count"
-            end
-
-            local new_condition_data = {
-               type = new_type,
-               condition = {
-                  first_signal = signal,
-                  comparator = (condition.condition and condition.condition.comparator) or "<",
-                  constant = (condition.condition and condition.condition.constant) or 0,
-               },
-            }
-            schedule.change_wait_condition(record_position, condition_index, new_condition_data)
-            ctx.controller.message:fragment(CircuitNetwork.localise_signal(signal))
-         elseif target == "first_signal" then
-            -- Circuit condition first signal
-            local signal = result
-            if not signal or not signal.name then
-               ctx.controller.message:fragment({ "fa.schedule-invalid-signal" })
-               return
-            end
-
-            local new_condition_data = {
-               type = cond_type,
-               condition = {
-                  first_signal = signal,
-                  comparator = (condition.condition and condition.condition.comparator) or "<",
-                  constant = (condition.condition and condition.condition.constant) or 0,
-               },
-            }
-            schedule.change_wait_condition(record_position, condition_index, new_condition_data)
-            ctx.controller.message:fragment(CircuitNetwork.localise_signal(signal))
-         elseif target == "second_signal" then
-            -- Circuit condition second signal
-            local signal = result
-            if not signal or not signal.name then
-               ctx.controller.message:fragment({ "fa.schedule-invalid-signal" })
-               return
-            end
-
-            local new_condition_data = {
-               type = cond_type,
-               condition = {
-                  first_signal = condition.condition and condition.condition.first_signal,
-                  comparator = (condition.condition and condition.condition.comparator) or "<",
-                  second_signal = signal,
-               },
-            }
-            schedule.change_wait_condition(record_position, condition_index, new_condition_data)
-            ctx.controller.message:fragment(CircuitNetwork.localise_signal(signal))
-         elseif target == "constant" then
-            -- Set constant for conditions with CircuitCondition
-            validate_and_set_number(result, function(num)
-               local new_condition_data = {
-                  type = cond_type,
-                  condition = {
-                     first_signal = condition.condition and condition.condition.first_signal,
-                     comparator = (condition.condition and condition.condition.comparator) or "<",
-                     constant = num,
-                  },
-               }
-               schedule.change_wait_condition(record_position, condition_index, new_condition_data)
-            end, ctx)
-         elseif target == "seconds" then
-            -- Time/inactivity seconds
-            validate_and_set_number(result, function(seconds)
-               local new_condition_data = {
-                  type = cond_type,
-                  ticks = seconds * 60,
-               }
-               schedule.change_wait_condition(record_position, condition_index, new_condition_data)
-               ctx.controller.message:fragment({ "fa.schedule-seconds-set", tostring(seconds) })
-            end, ctx)
-         elseif target == "station" then
-            -- Station name for specific_destination conditions
-            local new_condition_data = {
-               type = cond_type,
-               station = result,
-            }
-            schedule.change_wait_condition(record_position, condition_index, new_condition_data)
-            ctx.controller.message:fragment({ "fa.schedule-station-set", result })
+         -- Look up handler for this condition type and parameter
+         local type_handlers = PARAM_HANDLERS[cond_type]
+         if not type_handlers then
+            ctx.controller.message:fragment({ "fa.schedule-unknown-condition", tostring(cond_type) })
+            return
          end
+
+         local param_handler = type_handlers[target]
+         if not param_handler then
+            ctx.controller.message:fragment({ "fa.error-invalid-parameter" })
+            return
+         end
+
+         -- Try constant first, then setter
+         local new_condition_data
+         if param_handler.constant then
+            new_condition_data = param_handler.constant(condition, result)
+         elseif param_handler.setter then
+            new_condition_data = param_handler.setter(condition, result)
+         end
+
+         if not new_condition_data then
+            ctx.controller.message:fragment({ "fa.error-invalid-value" })
+            return
+         end
+
+         -- Apply the change
+         schedule.change_wait_condition(record_position, condition_index, new_condition_data)
+
+         -- Announce the new value
+         ctx.controller.message:fragment(param_handler.announcer(result, condition))
       end,
    }
 end
