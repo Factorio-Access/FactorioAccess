@@ -9,6 +9,7 @@
   feedback if nothing happened.
 - Properly tell you that flipping non-blueprint entities in hand doesn't work
   - I don't think Vanilla supports this either because flipping some things requires setting the recipe. If it does we can revisit.
+- Tweak rail strings to be "southeast ends southeast" instead of "southeast southeast end", to avoid the confusing double-identical direction
 
 # 0.16.18 (2025-11-14)
 
