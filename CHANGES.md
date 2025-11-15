@@ -1,6 +1,6 @@
-# 0.16.18 (unreleased)
+# 0.16.18 (2025-11-14)
 
-- Drop prototype of trains. See [this](./docs/features/rails.md) before you try to use it.
+- Land prototype of trains. See [this](./docs/features/rails.md) before you try to use it.
 - Tons of internal refactoring that might cause crashes which was necessary to make trains work
 
 # 0.16.17 (2025-11-04)
