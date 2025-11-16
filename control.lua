@@ -2141,8 +2141,11 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       -- Check for virtual train driving
-      if VirtualTrainDriving.on_kb_descriptive_action_name(event) then
-         TileReader.read_tile(pindex)
+      if VirtualTrainDriving.is_locked(pindex) then
+         local success = VirtualTrainDriving.return_to_bookmark(pindex)
+         if success then
+            TileReader.read_tile(pindex)
+         end
          return
       end
 

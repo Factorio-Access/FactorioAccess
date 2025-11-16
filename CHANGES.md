@@ -10,6 +10,8 @@
 - Properly tell you that flipping non-blueprint entities in hand doesn't work
   - I don't think Vanilla supports this either because flipping some things requires setting the recipe. If it does we can revisit.
 - Tweak rail strings to be "southeast ends southeast" instead of "southeast southeast end", to avoid the confusing double-identical direction
+- Fix rail builder bookmarks to not remove rails when resetting
+- Rail builder now reports when there are no bookmarks rather than reading a tile
 
 # 0.16.18 (2025-11-14)
 

@@ -50,6 +50,13 @@ local function has_rail_planner(player)
    return prototype.rails ~= nil
 end
 
+---Check if virtual train is locked for a player
+---@param pindex integer
+---@return boolean
+function mod.is_locked(pindex)
+   return vtd_storage[pindex].locked
+end
+
 ---Unlock from rails and reset state
 ---@param pindex integer
 ---@param announce boolean
@@ -166,15 +173,16 @@ end
 
 ---Pop a move from the stack
 ---@param pindex integer
+---@param destroy_entity boolean Whether to destroy the rail entity
 ---@return vtd.Move|nil The popped move, or nil if stack empty
-local function pop_move(pindex)
+local function pop_move(pindex, destroy_entity)
    local state = vtd_storage[pindex]
    if #state.moves == 0 then return nil end
 
    local move = table.remove(state.moves)
 
-   -- Destroy entity if it exists
-   if move.entity and move.entity.valid then move.entity.destroy() end
+   -- Destroy entity if requested and it exists
+   if destroy_entity and move.entity and move.entity.valid then move.entity.destroy() end
 
    return move
 end
@@ -531,12 +539,13 @@ end
 
 ---Return to last bookmark
 ---@param pindex integer
+---@return boolean success Whether a bookmark was found and returned to
 function mod.return_to_bookmark(pindex)
    local state = vtd_storage[pindex]
 
    if state.speculating then
       Speech.speak(pindex, { "fa.virtual-train-cannot-use-bookmark-speculating" })
-      return
+      return false
    end
 
    -- Find last bookmark
@@ -550,15 +559,18 @@ function mod.return_to_bookmark(pindex)
 
    if not bookmark_index then
       Speech.speak(pindex, { "fa.virtual-train-no-bookmarks" })
-      return
+      return false
    end
 
-   -- Remove all moves after bookmark
+   -- Remove all moves after bookmark (don't destroy rails)
    local removed_count = 0
    while #state.moves > bookmark_index do
-      pop_move(pindex)
+      pop_move(pindex, false)
       removed_count = removed_count + 1
    end
+
+   -- Clear bookmark flag so user can access earlier bookmarks
+   state.moves[bookmark_index].is_bookmark = false
 
    -- Update cursor position
    local current = get_current_move(pindex)
@@ -568,6 +580,7 @@ function mod.return_to_bookmark(pindex)
    end
 
    Speech.speak(pindex, { "fa.virtual-train-returned-to-bookmark", removed_count })
+   return true
 end
 
 ---Backspace (undo last move)
@@ -580,7 +593,7 @@ function mod.backspace(pindex)
       return
    end
 
-   pop_move(pindex)
+   pop_move(pindex, true)
 
    if #state.moves == 0 then
       -- Removed last move, unlock
@@ -678,9 +691,6 @@ function mod.on_kb_descriptive_action_name(event)
    -- Bookmarks
    if action == "fa-s-b" then
       mod.create_bookmark(pindex)
-      return true
-   elseif action == "fa-b" then
-      mod.return_to_bookmark(pindex)
       return true
    end
 
