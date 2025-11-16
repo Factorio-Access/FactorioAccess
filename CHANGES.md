@@ -1,4 +1,4 @@
-# 0.16.19 (unreleased)
+# 0.16.19 (2025-11-15)
 
 - Sort of fix rotation of locomotives in hand. Reports "north" and "south" but this is more like "flipped" and "unflipped".
   - It's unclear if we can do better. The visual equivalent for rotation depends on where the cursor is at any given time, among other things.
