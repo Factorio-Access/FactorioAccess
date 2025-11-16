@@ -52,10 +52,16 @@ local BACKEND_LUT = {
    ["construction-robot"] = SEB.LogisticsAndPower,
    ["container"] = SEB.Containers,
    ["corpse"] = SEB.Corpses,
+   ["curved-rail-a"] = SEB.TrainsSimple,
+   ["curved-rail-b"] = SEB.TrainsSimple,
    ["decider-combinator"] = SEB.LogisticsAndPower,
    ["electric-energy-interface"] = SEB.LogisticsAndPower,
    ["electric-pole"] = SEB.LogisticsAndPower,
    ["electric-turret"] = SEB.Military,
+   ["elevated-curved-rail-a"] = SEB.TrainsSimple,
+   ["elevated-curved-rail-b"] = SEB.TrainsSimple,
+   ["elevated-half-diagonal-rail"] = SEB.TrainsSimple,
+   ["elevated-straight-rail"] = SEB.TrainsSimple,
    ["entity-ghost"] = SEB.Ghosts,
    ["fire"] = SEB.Other,
    ["fish"] = SEB.Other,
@@ -65,6 +71,7 @@ local BACKEND_LUT = {
    ["furnace"] = SEB.Furnace,
    ["gate"] = SEB.Military,
    ["generator"] = SEB.LogisticsAndPower,
+   ["half-diagonal-rail"] = SEB.TrainsSimple,
    ["heat-interface"] = SEB.LogisticsAndPower,
    ["heat-pipe"] = SEB.LogisticsAndPower,
    ["infinity-container"] = SEB.Containers,
@@ -73,6 +80,8 @@ local BACKEND_LUT = {
    ["item-entity"] = SEB.Other,
    ["lab"] = SEB.Production,
    ["lamp"] = SEB.LogisticsAndPower,
+   ["legacy-curved-rail"] = SEB.TrainsSimple,
+   ["legacy-straight-rail"] = SEB.TrainsSimple,
    ["land-mine"] = SEB.Military,
    ["linked-belt"] = SEB.LogisticsAndPower,
    ["linked-container"] = SEB.LogisticsAndPower,
@@ -93,8 +102,10 @@ local BACKEND_LUT = {
    ["pump"] = SEB.LogisticsAndPower,
    ["radar"] = SEB.Military,
    ["rail-chain-signal"] = SEB.TrainsSimple,
+   ["rail-ramp"] = SEB.TrainsSimple,
    ["rail-remmnants"] = SEB.Remnants,
    ["rail-signal"] = SEB.TrainsSimple,
+   ["rail-support"] = SEB.TrainsSimple,
    ["reactor"] = SEB.LogisticsAndPower,
    ["resource"] = ResourcePatchesBackend.ResourcePatchesBackend,
    ["roboport"] = SEB.Roboport,
@@ -108,6 +119,7 @@ local BACKEND_LUT = {
    ["spider-vehicle"] = SEB.Spidertron,
    ["splitter"] = SEB.LogisticsAndPower,
    ["storage-tank"] = SEB.LogisticsWithFluid,
+   ["straight-rail"] = SEB.TrainsSimple,
    ["tile-ghost"] = SEB.Ghosts,
    ["train-stop"] = SEB.TrainsSimple,
    ["transport-belt"] = SEB.LogisticsAndPower,
@@ -201,7 +213,7 @@ end
 local surface_state = StorageManager.declare_storage_module(
    "scanner",
    new_empty_surface,
-   { root_field = "surfaces", ephemeral_state_version = 11 }
+   { root_field = "surfaces", ephemeral_state_version = 12 }
 )
 
 -- Given a backend setup and an array of entities, dispatch the entities to the

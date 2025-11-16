@@ -66,7 +66,7 @@ mod.Vehicle = decl_bound_category("fa.scanner.backends.Vehicle", SC.CATEGORIES.V
 
 mod.Spidertron = decl_bound_category("fa.scanner.backends.Spidertron", SC.CATEGORIES.SPIDERTRONS)
 
--- rail, curved-rail, signals are all "boring". Stops and cars are more
+-- rail, curved-rail-x, signals are all "boring". Stops and cars are more
 -- complicated.
 mod.TrainsSimple = decl_bound_category("fa.scanner.backends.TrainsSimple", SC.CATEGORIES.TRAINS)
 
