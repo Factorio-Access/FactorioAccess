@@ -1,3 +1,10 @@
+# 0.16.20 (2025-11-16)
+
+- Validate that text boxes aren't empty in lots of places. You are now forced to use backspace to clear/set some values to infinity.
+- Start most textboxes with an empty value rather than the current value
+- Get rails back into the scanner.
+- NOTE: this resets scanner state so it will take a minute or two to catch back up on large saves.
+
 # 0.16.19 (2025-11-15)
 
 - Sort of fix rotation of locomotives in hand. Reports "north" and "south" but this is more like "flipped" and "unflipped".
