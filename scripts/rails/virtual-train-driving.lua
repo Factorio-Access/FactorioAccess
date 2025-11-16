@@ -26,7 +26,6 @@ local mod = {}
 ---@field locked boolean Whether the player is locked to rails
 ---@field moves vtd.Move[] Stack of moves representing the path
 ---@field speculating boolean Whether we're in speculative mode
----@field speculation_start integer|nil Index where speculation started
 
 ---Initialize state for a player
 ---@return vtd.State
@@ -35,7 +34,6 @@ local function init_state()
       locked = false,
       moves = {},
       speculating = false,
-      speculation_start = nil,
    }
 end
 
@@ -411,13 +409,7 @@ local function move_in_direction(pindex, move_func, direction_name)
 
    local state = vtd_storage[pindex]
    if state.speculating then
-      -- In speculation mode, update the speculation_start state (which is what we'll restore to)
-      state.speculation_start.position = new_pos
-      state.speculation_start.end_direction = new_end_dir
-      state.speculation_start.rail_type = new_rail_type
-      state.speculation_start.placement_direction = new_placement_dir
-
-      -- Update cursor position (caller will read tile)
+      -- In speculation mode, just update cursor position without modifying stack
       local vp = Viewpoint.get_viewpoint(pindex)
       vp:set_cursor_pos(new_pos)
    else
@@ -495,27 +487,17 @@ function mod.toggle_speculation(pindex)
    if not current then return end
 
    if state.speculating then
-      -- Exit speculation: restore state from speculation_start
-      local saved = state.speculation_start
-      push_move(pindex, saved.position, saved.end_direction, saved.rail_type, saved.placement_direction, nil, false)
-
-      -- Update cursor position
+      -- Exit speculation: restore cursor to current stack position
+      -- (Stack was never modified during speculation)
       local vp = Viewpoint.get_viewpoint(pindex)
-      vp:set_cursor_pos(saved.position)
+      vp:set_cursor_pos(current.position)
 
       state.speculating = false
-      state.speculation_start = nil
 
       Speech.speak(pindex, { "fa.virtual-train-speculation-exit" })
    else
-      -- Enter speculation: save current state
+      -- Enter speculation mode
       state.speculating = true
-      state.speculation_start = {
-         position = { x = current.position.x, y = current.position.y },
-         end_direction = current.end_direction,
-         rail_type = current.rail_type,
-         placement_direction = current.placement_direction,
-      }
 
       Speech.speak(pindex, { "fa.virtual-train-speculation-enter" })
    end

@@ -12,6 +12,7 @@
 - Tweak rail strings to be "southeast ends southeast" instead of "southeast southeast end", to avoid the confusing double-identical direction
 - Fix rail builder bookmarks to not remove rails when resetting
 - Rail builder now reports when there are no bookmarks rather than reading a tile
+- Rail builder now restores your position properly when exiting speculation
 
 # 0.16.18 (2025-11-14)
 
