@@ -35,8 +35,7 @@ local function render_overview(ctx)
       ctx.message:fragment(desc)
    end, {
       on_click = function(ctx)
-         local current_value = entity.combinator_description or ""
-         ctx.controller:open_textbox(current_value, "description")
+         ctx.controller:open_textbox("", "description")
       end,
       on_child_result = function(ctx, result)
          entity.combinator_description = result

@@ -230,9 +230,8 @@ local function build_condition_vtable(entity, i, condition, row_key)
          elseif ctx.modifiers and ctx.modifiers.shift then
             local cb = entity.get_control_behavior()
             local params = cb.parameters
-            local current_value = tostring(params.conditions[i].constant or 0)
             ctx.controller:open_textbox(
-               current_value,
+               "",
                { node = row_key, target = "constant" },
                { "fa.decider-enter-constant" }
             )
@@ -315,8 +314,7 @@ local function build_output_vtable(entity, i, output, row_key)
       end,
 
       on_action3 = function(ctx)
-         local current_value = tostring(output.constant or 1)
-         ctx.controller:open_textbox(current_value, { node = row_key }, { "fa.decider-enter-constant" })
+         ctx.controller:open_textbox("", { node = row_key }, { "fa.decider-enter-constant" })
       end,
 
       on_add_to_row = function(ctx)
@@ -382,8 +380,7 @@ local function render_decider_config(ctx)
       ctx.message:fragment(desc)
    end, {
       on_click = function(ctx)
-         local current_value = entity.combinator_description or ""
-         ctx.controller:open_textbox(current_value, "description")
+         ctx.controller:open_textbox("", "description")
       end,
       on_child_result = function(ctx, result)
          entity.combinator_description = result

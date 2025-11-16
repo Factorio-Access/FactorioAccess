@@ -13,6 +13,7 @@ local InventoryUtils = require("scripts.inventory-utils")
 local TrainHelpers = require("scripts.rails.train-helpers")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local Router = require("scripts.ui.router")
+local UiSounds = require("scripts.ui.sounds")
 
 local mod = {}
 
@@ -40,13 +41,24 @@ local function render_locomotive_config(ctx)
    end)
 
    -- Train name field
-   builder:add_textfield("name", {
-      label = { "fa.locomotive-train-name" },
-      get_value = function()
-         return TrainHelpers.get_name(entity)
+   builder:add_item("name", {
+      label = function(ctx)
+         local name = TrainHelpers.get_name(entity)
+         local value_text = name ~= "" and name or { "fa.empty" }
+         ctx.message:fragment(value_text)
+         ctx.message:fragment({ "fa.locomotive-train-name" })
       end,
-      set_value = function(value)
-         TrainHelpers.set_name(entity, value)
+      on_click = function(ctx)
+         ctx.controller:open_textbox("", "name")
+      end,
+      on_child_result = function(ctx, result)
+         if not result or result == "" then
+            UiSounds.play_ui_edge(ctx.pindex)
+            ctx.controller.message:fragment({ "fa.locomotive-name-cannot-be-empty" })
+         else
+            TrainHelpers.set_name(entity, result)
+            ctx.controller.message:fragment(result)
+         end
       end,
    })
 

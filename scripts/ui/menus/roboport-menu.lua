@@ -12,6 +12,7 @@ local Speech = require("scripts.speech")
 local TabList = require("scripts.ui.tab-list")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local UiRouter = require("scripts.ui.router")
+local UiSounds = require("scripts.ui.sounds")
 
 local mod = {}
 
@@ -63,13 +64,24 @@ local function render_roboport_menu(ctx)
    end)
 
    -- Menu item 1: Rename roboport
-   form:add_textfield("rename_roboport", {
-      label = { "fa.robots-rename-this-roboport" },
-      get_value = function()
-         return port.backer_name
+   form:add_item("rename_roboport", {
+      label = function(ctx)
+         local name = port.backer_name or ""
+         local value_text = name ~= "" and name or { "fa.empty" }
+         ctx.message:fragment(value_text)
+         ctx.message:fragment({ "fa.robots-rename-this-roboport" })
       end,
-      set_value = function(new_name)
-         if new_name and new_name ~= "" then port.backer_name = new_name end
+      on_click = function(ctx)
+         ctx.controller:open_textbox("", "rename_roboport")
+      end,
+      on_child_result = function(ctx, result)
+         if not result or result == "" then
+            UiSounds.play_ui_edge(ctx.pindex)
+            ctx.controller.message:fragment({ "fa.roboport-name-cannot-be-empty" })
+         else
+            port.backer_name = result
+            ctx.controller.message:fragment(result)
+         end
       end,
    })
 

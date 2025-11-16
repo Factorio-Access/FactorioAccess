@@ -373,8 +373,7 @@ local function build_condition_vtable(entity, schedule, record_index, condition_
          if ctx.modifiers and ctx.modifiers.shift then
             -- Shift+M: textbox (if p1 has constant)
             if type_handlers.p1.constant then
-               local current = type_handlers.p1.get_current(condition)
-               ctx.controller:open_textbox(current, { node = row_key, target = "p1" })
+               ctx.controller:open_textbox("", { node = row_key, target = "p1" })
             else
                ctx.controller.message:fragment({ "fa.schedule-no-text-param" })
             end
@@ -437,8 +436,7 @@ local function build_condition_vtable(entity, schedule, record_index, condition_
          if ctx.modifiers and ctx.modifiers.shift then
             -- Shift+dot: type a constant (if constant parameter has constant function)
             if type_handlers.constant and type_handlers.constant.constant then
-               local current = type_handlers.constant.get_current(condition)
-               ctx.controller:open_textbox(current, { node = row_key, target = "constant" })
+               ctx.controller:open_textbox("", { node = row_key, target = "constant" })
             else
                ctx.controller.message:fragment({ "fa.schedule-no-constant-param" })
             end
@@ -558,8 +556,7 @@ local function build_record_vtable(entity, schedule, record_index, record, row_k
       on_action1 = function(ctx)
          if ctx.modifiers and ctx.modifiers.shift then
             -- Type a station name
-            local current_value = record.station or ""
-            ctx.controller:open_textbox(current_value, { node = row_key, target = "station" })
+            ctx.controller:open_textbox("", { node = row_key, target = "station" })
          else
             -- TODO: Open station selector?
             ctx.controller.message:fragment({ "fa.schedule-station-selector-not-implemented" })
@@ -601,6 +598,11 @@ local function build_record_vtable(entity, schedule, record_index, record, row_k
 
          if target == "station" then
             -- Set the station name
+            if not result or result == "" then
+               UiSounds.play_ui_edge(ctx.pindex)
+               ctx.controller.message:fragment({ "fa.schedule-station-name-required" })
+               return
+            end
             schedule.remove_record(record_position)
             schedule.add_record({
                station = result,

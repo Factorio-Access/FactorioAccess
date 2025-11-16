@@ -89,8 +89,7 @@ local function add_input_field(builder, params, cb, is_first)
          end
       end,
       on_action1 = function(ctx)
-         local current_value = params[constant_field] or 0
-         ctx.controller:open_textbox(tostring(current_value), field_name)
+         ctx.controller:open_textbox("", field_name)
       end,
       on_clear = function(ctx)
          params[signal_field] = nil

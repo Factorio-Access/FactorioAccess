@@ -17,12 +17,9 @@ local search_setter_ui = {
 ---@param parameters table
 ---@param controller fa.ui.RouterController
 function search_setter_ui:open(pindex, parameters, controller)
-   -- Get current search pattern
-   local current_pattern = controller:get_search_pattern() or ""
-
    -- Open textbox directly (no intermediate UI)
    Speech.speak(pindex, { "fa.search-enter-pattern" })
-   controller:open_textbox(current_pattern, "search_pattern_input")
+   controller:open_textbox("", "search_pattern_input")
 end
 
 ---Handle textbox result

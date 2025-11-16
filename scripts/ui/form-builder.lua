@@ -115,7 +115,7 @@ function FormBuilder:add_textfield(name, params)
       end,
       on_click = function(ctx)
          -- Pass the node key as the context so Graph can route the result back
-         ctx.controller:open_textbox(params.get_value() or "", name)
+         ctx.controller:open_textbox("", name)
       end,
       on_child_result = function(ctx, result)
          -- This will be called when textbox returns
@@ -527,8 +527,7 @@ function FormBuilder:add_condition(name, get_value, set_value)
          end
 
          -- Open textbox for constant
-         local current_value = condition.constant or 0
-         ctx.controller:open_textbox(tostring(current_value), { node = name .. "_second", type = "constant" })
+         ctx.controller:open_textbox("", { node = name .. "_second", type = "constant" })
       end,
       on_clear = function(ctx)
          local condition = get_value() or {}
@@ -745,8 +744,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
          end
 
          -- Open textbox for constant
-         local current_value = condition.constant or 0
-         ctx.controller:open_textbox(tostring(current_value), { node = name .. "_second", type = "constant" })
+         ctx.controller:open_textbox("", { node = name .. "_second", type = "constant" })
       end,
       on_clear = function(ctx)
          local condition = get_condition() or {}

@@ -195,7 +195,7 @@ local function render_infinity_chest_config(ctx)
             if not current then return end
 
             ctx.controller:open_textbox(
-               tostring(current.count or 0),
+               "",
                { node = row_key .. "_count", filter_index = i },
                { "fa.infinity-chest-enter-count" }
             )

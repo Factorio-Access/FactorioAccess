@@ -102,8 +102,7 @@ local function add_select_mode_params(builder, params, cb)
       end,
       on_action1 = function(ctx)
          -- M key always opens textbox for constant
-         local current_value = params.index_constant or 0
-         ctx.controller:open_textbox(tostring(current_value), "index")
+         ctx.controller:open_textbox("", "index")
       end,
       on_clear = function(ctx)
          params.index_signal = nil
@@ -139,8 +138,7 @@ local function add_random_mode_params(builder, params, cb)
          ctx.message:fragment({ "fa.selector-random-update-interval" })
       end,
       on_click = function(ctx)
-         local current_value = params.random_update_interval or 0
-         ctx.controller:open_textbox(tostring(current_value), "random_update_interval")
+         ctx.controller:open_textbox("", "random_update_interval")
       end,
       on_child_result = function(ctx, result)
          local num = tonumber(result)

@@ -98,7 +98,7 @@ local function render_blueprints_list(ctx)
          -- Rename option
          builder:add_clickable("rename-" .. idx, { "fa.ui-blueprint-book-rename" }, {
             on_click = function(c)
-               c.controller:open_textbox(bp_stack.label or "", "rename-" .. idx)
+               c.controller:open_textbox("", "rename-" .. idx)
             end,
             on_child_result = function(c, result)
                bp_stack.label = result
@@ -161,7 +161,7 @@ local function render_settings(ctx)
 
    builder:add_clickable("rename-book", { "fa.ui-blueprint-book-rename-book" }, {
       on_click = function(c)
-         c.controller:open_textbox(book_stack.label or "", "rename-book")
+         c.controller:open_textbox("", "rename-book")
       end,
       on_child_result = function(c, result)
          book_stack.label = result
@@ -171,8 +171,7 @@ local function render_settings(ctx)
 
    builder:add_clickable("export", { "fa.ui-blueprint-book-export" }, {
       on_click = function(c)
-         local export_string = book_stack.export_stack()
-         c.controller:open_textbox(export_string, "export")
+         c.controller:open_textbox("", "export")
          c.message:fragment({ "fa.ui-blueprint-book-export-string-shown" })
       end,
    })

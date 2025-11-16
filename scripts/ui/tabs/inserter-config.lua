@@ -61,15 +61,13 @@ local function render_inserter_config(ctx)
          build_hand_size_label(ctx.message, ctx)
       end,
       on_click = function(ctx)
-         local override = entity.inserter_stack_size_override
-         local current_value = override == 0 and "" or tostring(override)
-         ctx.controller:open_textbox(current_value, "hand_size")
+         ctx.controller:open_textbox("", "hand_size")
       end,
       on_child_result = function(ctx, result)
          if result == "" or result == nil then
-            -- Empty string means unset
-            entity.inserter_stack_size_override = 0
-            ctx.controller.message:fragment({ "fa.inserter-hand-size-unset" })
+            -- Error on empty - tell user to use backspace
+            UiSounds.play_ui_edge(ctx.pindex)
+            ctx.controller.message:fragment({ "fa.inserter-use-backspace-to-clear" })
          else
             local num = tonumber(result)
             if num and num >= 1 and num <= max_stack_size and math.floor(num) == num then

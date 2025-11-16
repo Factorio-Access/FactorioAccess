@@ -118,7 +118,7 @@ local function render_section(ctx, section_index)
             end,
             on_click = function(ctx)
                ctx.controller:open_textbox(
-                  tostring(slot.min or 0),
+                  "",
                   { node = row_key .. "_min", slot_index = i },
                   { "fa.logistics-enter-min" }
                )
@@ -174,26 +174,17 @@ local function render_section(ctx, section_index)
                end
             end,
             on_click = function(ctx)
-               local current_val = slot.max and tostring(slot.max) or ""
                ctx.controller:open_textbox(
-                  current_val,
+                  "",
                   { node = row_key .. "_max", slot_index = i },
                   { "fa.logistics-enter-max" }
                )
             end,
             on_child_result = function(ctx, result)
                if result == "" then
-                  -- Empty means infinity
-                  local sections = entity.get_logistic_sections()
-                  if not sections then return end
-                  local section = sections.get_section(section_index)
-                  if not section then return end
-
-                  local slot = section.get_slot(i)
-                  slot.max = nil
-                  section.set_slot(i, slot)
-
-                  ctx.controller.message:fragment({ "fa.infinity" })
+                  -- Error on empty - tell user to use backspace
+                  UiSounds.play_ui_edge(ctx.pindex)
+                  ctx.controller.message:fragment({ "fa.logistics-use-backspace-to-clear" })
                else
                   local num = tonumber(result)
                   if not num then

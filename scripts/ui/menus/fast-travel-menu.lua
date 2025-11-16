@@ -109,7 +109,7 @@ local function render(ctx)
             ctx.message:fragment(point.label)
          end, {
             on_click = function(ctx)
-               ctx.controller:open_textbox(point.label, "rename-" .. point_id)
+               ctx.controller:open_textbox("", "rename-" .. point_id)
                ctx.message:fragment({ "fa.travel-enter-name" })
             end,
             on_child_result = function(ctx, result)
@@ -127,7 +127,7 @@ local function render(ctx)
             ctx.message:fragment({ "fa.travel-rewrite-description-of", point.label })
          end, {
             on_click = function(ctx)
-               ctx.controller:open_textbox(point.description or "", "edit-desc-" .. point_id)
+               ctx.controller:open_textbox("", "edit-desc-" .. point_id)
                ctx.message:fragment({ "fa.travel-enter-description" })
             end,
             on_child_result = function(ctx, result)

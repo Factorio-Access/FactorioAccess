@@ -28,13 +28,24 @@ local function render_train_stop_config(ctx)
    local builder = FormBuilder.FormBuilder.new()
 
    -- Name field
-   builder:add_textfield("name", {
-      label = { "fa.train-stop-name" },
-      get_value = function()
-         return entity.backer_name or ""
+   builder:add_item("name", {
+      label = function(ctx)
+         local name = entity.backer_name or ""
+         local value_text = name ~= "" and name or { "fa.empty" }
+         ctx.message:fragment(value_text)
+         ctx.message:fragment({ "fa.train-stop-name" })
       end,
-      set_value = function(value)
-         entity.backer_name = value
+      on_click = function(ctx)
+         ctx.controller:open_textbox("", "name")
+      end,
+      on_child_result = function(ctx, result)
+         if not result or result == "" then
+            UiSounds.play_ui_edge(ctx.pindex)
+            ctx.controller.message:fragment({ "fa.train-stop-name-cannot-be-empty" })
+         else
+            entity.backer_name = result
+            ctx.controller.message:fragment(result)
+         end
       end,
    })
 
@@ -46,8 +57,7 @@ local function render_train_stop_config(ctx)
          ctx.message:fragment(tostring(priority))
       end,
       on_click = function(ctx)
-         local current_priority = entity.train_stop_priority or 50
-         ctx.controller:open_textbox(tostring(current_priority), "priority")
+         ctx.controller:open_textbox("", "priority")
       end,
       on_child_result = function(ctx, result)
          local num = tonumber(result)
@@ -78,10 +88,7 @@ local function render_train_stop_config(ctx)
          end
       end,
       on_click = function(ctx)
-         local current_limit = entity.trains_limit
-         -- 4294967295 is the max uint32 value, used to represent "unlimited"
-         if not current_limit or current_limit == 4294967295 then current_limit = 0 end
-         ctx.controller:open_textbox(tostring(current_limit), "limit")
+         ctx.controller:open_textbox("", "limit")
       end,
       on_child_result = function(ctx, result)
          local num = tonumber(result)
