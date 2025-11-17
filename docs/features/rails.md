@@ -101,8 +101,7 @@ Sometimes, you will observe more than one track on a tile.  This can happen in t
 - If using shift + f to cycle, in which case the track may be spurious because some track pieces share tiles to connect
 - When moving, in which case you are on some form of crossing where two tracks overlap.
 
-We simplify each tile into a layout description.  NOTE: forks are described but not listed in this doc because they're
-WIP, I'm making it better.
+We simplify each tile into a layout description.
 
 You may find:
 
@@ -110,12 +109,17 @@ You may find:
 - Diagonal rails facing northeast or southeast
 - Half-diagonal rails facing in any of the secondary eastern directions, for example east northeast
 - Various kinds of curves
+- Various kinds of forks:
+  - Fork: 3-way in a given direction
+  - fork left/right of dir: fork continuing in direction dir, and also turning left/right
+  - split: The track does not continue straight. It splits into left/right instead. This can also be thought of as a y.
 
 The straight rails only ever face half of the compass because they are bidirectional. A horizontal east is also a
 horizontal west.
 
 The mod helps out with curves by abstracting where possible.  It will announce either a direction and a "left/right"
-specifier, or it will announce "x and y turn".
+specifier, or it will announce "x and y turn" if it understands that this is part of a 90-degree turn between cardinal
+directions (for example north and east).
 
 Some examples:
 
@@ -132,7 +136,7 @@ can use this to help guide you as to whether or not you have built what you want
 For 90 degree turns off the cardinals we use the interesting fact that all turns have a "height" and assign the 4
 segments a bottom/lower half/upper half/top designation, going from southmost to northmost on the map.
 
-I recommend building a circle (m or dot 16 times from a straight rail's end) then going around the circle to see how it
+We recommend building a circle (m or dot 16 times from a straight rail's end) then going around the circle to see how it
 reports the 90 degree turns.
 
 Unlike 1.1, there is no requirement that straight pieces be present anywhere.  You can now do circles with only curved
