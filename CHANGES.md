@@ -1,3 +1,14 @@
+# 0.16.21 (2025-11-16)
+
+- Tweak tile sorting. It now goes:
+  - Rails
+  - Corpses, trees, whatever
+  - Your buildings
+  - Your vehicles
+  - Enemies
+  - Your character
+- This may need further tweaking based on feedback
+
 # 0.16.20 (2025-11-16)
 
 - Validate that text boxes aren't empty in lots of places. You are now forced to use backspace to clear/set some values to infinity.
