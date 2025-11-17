@@ -72,7 +72,7 @@ function mod.read_tile_rails(pindex, message)
             -- First rail gets "rail" prefix, subsequent ones don't
             local announcement = RailAnnouncer.announce_rail(description, i == 1)
 
-            message:list_item(announcement)
+            message:list_item_forced_comma(announcement)
          end
       end
    end
