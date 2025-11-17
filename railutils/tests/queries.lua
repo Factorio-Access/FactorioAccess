@@ -7,130 +7,102 @@ local RailInfo = require("railutils.rail-info")
 
 local mod = {}
 
-function mod.TestGetExtensionPoints_EmptySurface()
-   local surface = TestSurface.new()
-
-   local extensions = Queries.get_extension_points_at_position(surface, { x = 0, y = 0 })
-
-   lu.assertEquals(table_size(extensions), 0, "Empty surface should have no extension points")
-end
-
-function mod.TestGetExtensionPoints_StraightRailNorth()
-   local surface = TestSurface.new()
-
-   -- Place a straight rail facing north (grid offset will adjust position)
-   -- According to rail-geometry.md, straight-rail at north has ends at north and south
-   surface:add_rail(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
-
-   -- Query at the actual position where the rail was placed (after grid adjustment)
-   local adjusted_pos =
-      Queries.get_adjusted_position(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
-   local extensions = Queries.get_extension_points_at_position(surface, adjusted_pos)
-
-   -- A straight rail has 2 ends, each end has 3 extensions
-   -- So we expect 6 unique goal directions
-   lu.assertEquals(table_size(extensions), 6, "Straight rail should have 6 unique goal directions")
-
-   -- Verify we have extensions from both ends by checking end_directions in the extension points
-   local has_north_end = false
-   local has_south_end = false
-
-   for _, exts in pairs(extensions) do
-      for _, ext in ipairs(exts) do
-         if ext.end_direction == defines.direction.north then has_north_end = true end
-         if ext.end_direction == defines.direction.south then has_south_end = true end
-      end
-   end
-
-   lu.assertTrue(has_north_end, "Should have extensions from north-facing end")
-   lu.assertTrue(has_south_end, "Should have extensions from south-facing end")
-end
-
-function mod.TestGetExtensionPoints_ExtensionDirections()
-   local surface = TestSurface.new()
-
-   -- Place a straight rail at origin facing north
-   surface:add_rail(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
-
-   local adjusted_pos =
-      Queries.get_adjusted_position(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
-   local extensions = Queries.get_extension_points_at_position(surface, adjusted_pos)
+function mod.TestGetExtensionsFromEnd_StraightRailNorthEnd()
+   -- Test getting extensions from the north end of a straight rail facing north
+   local position = { x = 1, y = 1 } -- Grid-adjusted position for straight north
+   local extensions = Queries.get_extensions_from_end(
+      position,
+      RailInfo.RailType.STRAIGHT,
+      defines.direction.north,
+      defines.direction.north
+   )
 
    -- From the north end (facing north), we should be able to extend to:
-   -- - north (straight, offset 0)
+   -- - north (straight ahead, offset 0)
    -- - northnortheast (turn right, offset +1)
    -- - northnorthwest (turn left, offset -1)
-   -- Now we can just check if these directions exist as keys
-   lu.assertNotNil(extensions[defines.direction.north], "Should be able to extend north")
-   lu.assertNotNil(extensions[defines.direction.northnortheast], "Should be able to extend northnortheast")
-   lu.assertNotNil(extensions[defines.direction.northnorthwest], "Should be able to extend northnorthwest")
+   lu.assertEquals(#extensions, 3, "North end should have 3 extensions")
 
-   -- Each should have exactly one extension point
-   lu.assertEquals(#extensions[defines.direction.north], 1, "North extension should have 1 option")
-   lu.assertEquals(#extensions[defines.direction.northnortheast], 1, "NNE extension should have 1 option")
-   lu.assertEquals(#extensions[defines.direction.northnorthwest], 1, "NNW extension should have 1 option")
-end
-
-function mod.TestGetExtensionPoints_UnitNumber()
-   local surface = TestSurface.new()
-
-   local rail = surface:add_rail(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
-
-   local adjusted_pos =
-      Queries.get_adjusted_position(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
-   local extensions = Queries.get_extension_points_at_position(surface, adjusted_pos)
-
-   -- All extensions should reference the rail's unit number
-   for _, exts in pairs(extensions) do
-      for _, ext in ipairs(exts) do
-         lu.assertEquals(ext.rail_unit_number, rail.unit_number, "Extension should reference correct rail unit number")
-      end
+   -- Verify goal directions
+   local goal_directions = {}
+   for _, ext in ipairs(extensions) do
+      goal_directions[ext.goal_direction] = true
+      lu.assertEquals(ext.end_direction, defines.direction.north, "All extensions should be from north end")
    end
+
+   lu.assertTrue(goal_directions[defines.direction.north], "Should extend straight north")
+   lu.assertTrue(goal_directions[defines.direction.northnortheast], "Should extend to NNE")
+   lu.assertTrue(goal_directions[defines.direction.northnorthwest], "Should extend to NNW")
 end
 
-function mod.TestGetExtensionPoints_MultipleRails()
-   local surface = TestSurface.new()
+function mod.TestGetExtensionsFromEnd_StraightRailSouthEnd()
+   -- Test getting extensions from the south end of a straight rail facing north
+   local position = { x = 1, y = 1 }
+   local extensions = Queries.get_extensions_from_end(
+      position,
+      RailInfo.RailType.STRAIGHT,
+      defines.direction.north,
+      defines.direction.south
+   )
 
-   -- Place two different rails at the same requested position but different orientations
-   -- They'll get grid-adjusted to the same actual position
-   surface:add_rail(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
-   surface:add_rail(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.east)
+   -- From the south end (facing south), we should be able to extend to:
+   -- - south (straight ahead)
+   -- - southsoutheast (turn right)
+   -- - southsouthwest (turn left)
+   lu.assertEquals(#extensions, 3, "South end should have 3 extensions")
 
-   -- Both north and east straight rails have grid_offset (1, 1), so they end up at the same position
-   local adjusted_pos =
-      Queries.get_adjusted_position(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
-   local extensions = Queries.get_extension_points_at_position(surface, adjusted_pos)
-
-   -- Each rail has 6 unique goal directions, and they don't overlap
-   -- So we should have 12 unique directions total
-   lu.assertEquals(table_size(extensions), 12, "Two rails should have 12 unique goal directions")
-
-   -- Count total extension points across all directions
-   local total_count = 0
-   for _, exts in pairs(extensions) do
-      total_count = total_count + #exts
+   -- Verify goal directions
+   local goal_directions = {}
+   for _, ext in ipairs(extensions) do
+      goal_directions[ext.goal_direction] = true
+      lu.assertEquals(ext.end_direction, defines.direction.south, "All extensions should be from south end")
    end
-   lu.assertEquals(total_count, 12, "Should have 12 total extension points")
+
+   lu.assertTrue(goal_directions[defines.direction.south], "Should extend straight south")
+   lu.assertTrue(goal_directions[defines.direction.southsoutheast], "Should extend to SSE")
+   lu.assertTrue(goal_directions[defines.direction.southsouthwest], "Should extend to SSW")
 end
 
-function mod.TestGetExtensionPoints_AbsolutePositions()
-   local surface = TestSurface.new()
-
-   -- Place a rail at a non-origin position
+function mod.TestGetExtensionsFromEnd_AbsolutePositions()
+   -- Test that positions are absolute, not relative
    local requested_pos = { x = 10, y = 20 }
-   surface:add_rail(RailInfo.RailType.STRAIGHT, requested_pos, defines.direction.north)
-
    local adjusted_pos =
       Queries.get_adjusted_position(RailInfo.RailType.STRAIGHT, requested_pos, defines.direction.north)
-   local extensions = Queries.get_extension_points_at_position(surface, adjusted_pos)
 
-   -- Verify that positions are absolute (not relative to rail)
-   for _, exts in pairs(extensions) do
-      for _, ext in ipairs(exts) do
-         -- End positions and next rail positions should be offset from the rail position
-         lu.assertNotEquals(ext.end_position.x, 0, "End position should be absolute, not relative")
-         lu.assertNotEquals(ext.next_rail_position.x, 0, "Next rail position should be absolute, not relative")
-      end
+   local extensions = Queries.get_extensions_from_end(
+      adjusted_pos,
+      RailInfo.RailType.STRAIGHT,
+      defines.direction.north,
+      defines.direction.north
+   )
+
+   -- Verify that positions are absolute (offset from rail position)
+   for _, ext in ipairs(extensions) do
+      lu.assertNotEquals(ext.end_position.x, 0, "End position should be absolute, not relative")
+      lu.assertNotEquals(ext.next_rail_position.x, 0, "Next rail position should be absolute, not relative")
+      -- They should be based on the adjusted position, not zero
+      lu.assertTrue(ext.end_position.x > 5, "End position x should be offset from rail at x=11")
+      lu.assertTrue(ext.next_rail_position.x > 5, "Next rail position x should be offset from rail")
+   end
+end
+
+function mod.TestGetExtensionsFromEnd_CurvedRail()
+   -- Test extensions from a curved rail
+   -- curved-rail-a at north (cardinal) has ends at south (8) and northnorthwest (15)
+   local position = { x = 1, y = 0 } -- Grid-adjusted position for curved-a north
+   local extensions = Queries.get_extensions_from_end(
+      position,
+      RailInfo.RailType.CURVE_A,
+      defines.direction.north,
+      defines.direction.northnorthwest
+   )
+
+   -- Curved rails also have 3 extensions per end
+   lu.assertEquals(#extensions, 3, "Curved rail end should have 3 extensions")
+
+   -- All extensions should be from the correct end
+   for _, ext in ipairs(extensions) do
+      lu.assertEquals(ext.end_direction, defines.direction.northnorthwest, "All extensions should be from NNW end")
    end
 end
 

@@ -246,20 +246,23 @@ function mod.describe_rail(surface, rail_type, placement_direction, position)
       end
    end
 
-   -- Get extension points
-   local extensions = Queries.get_extension_points_at_position(surface, position)
+   -- Get the two ends of this rail
+   local ends = Queries.get_end_directions(rail_type, placement_direction)
 
-   -- Check connectivity and forks
+   -- Track connections: map from end_direction to array of connected extensions
+   local connected_extensions = {}
    local total_connected = 0
-   local end_has_connection = {}
 
-   for goal_dir, exts in pairs(extensions) do
-      for _, ext in ipairs(exts) do
+   for _, end_dir in ipairs(ends) do
+      local extensions = Queries.get_extensions_from_end(position, rail_type, placement_direction, end_dir)
+      connected_extensions[end_dir] = {}
+
+      for _, ext in ipairs(extensions) do
          -- Check if expected rail exists at this extension point
          local expected_rail_type = Queries.prototype_type_to_rail_type(ext.next_rail_prototype)
          if has_rail_at(surface, ext.next_rail_position, expected_rail_type, ext.next_rail_direction) then
+            table.insert(connected_extensions[end_dir], ext)
             total_connected = total_connected + 1
-            end_has_connection[ext.end_direction] = (end_has_connection[ext.end_direction] or 0) + 1
          end
       end
    end
@@ -268,37 +271,28 @@ function mod.describe_rail(surface, rail_type, placement_direction, position)
    description.lonely = (total_connected == 0)
 
    -- Determine disconnected end
-   local ends = Queries.get_end_directions(rail_type, placement_direction)
    for _, end_dir in ipairs(ends) do
-      if not end_has_connection[end_dir] then
+      if #connected_extensions[end_dir] == 0 then
          description.end_direction = end_dir
          break
       end
    end
 
    -- Determine forks
-   for end_dir, count in pairs(end_has_connection) do
-      if count >= 2 then
+   for end_dir, exts in pairs(connected_extensions) do
+      if #exts >= 2 then
          -- This end has a fork
          -- Find which directions fork
-         for goal_dir, exts in pairs(extensions) do
-            for _, ext in ipairs(exts) do
-               local expected_rail_type = Queries.prototype_type_to_rail_type(ext.next_rail_prototype)
-               if
-                  ext.end_direction == end_dir
-                  and has_rail_at(surface, ext.next_rail_position, expected_rail_type, ext.next_rail_direction)
-               then
-                  -- Determine if this is left or right
-                  local offset = (goal_dir - end_dir + 16) % 16
-                  local side = (offset == 1) and "right" or (offset == 15) and "left" or "forward"
+         for _, ext in ipairs(exts) do
+            -- Determine if this is left or right
+            local offset = (ext.goal_direction - end_dir + 16) % 16
+            local side = (offset == 1) and "right" or (offset == 15) and "left" or "forward"
 
-                  if side ~= "forward" then
-                     table.insert(description.forks, {
-                        direction = end_dir, -- Direction we're facing, not where fork leads
-                        side = side,
-                     })
-                  end
-               end
+            if side ~= "forward" then
+               table.insert(description.forks, {
+                  direction = end_dir, -- Direction we're facing, not where fork leads
+                  side = side,
+               })
             end
          end
       end
