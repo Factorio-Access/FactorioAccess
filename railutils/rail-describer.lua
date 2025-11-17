@@ -13,15 +13,15 @@ local Traverser = require("railutils.traverser")
 
 local mod = {}
 
----@class railutils.ForkDescription
----@field direction defines.direction Direction the fork leads to
----@field side "left"|"right" Which side of the current direction
+---@class railutils.JunctionDescription
+---@field direction defines.direction The end direction facing this junction
+---@field kind railutils.JunctionKind Type of junction (split, fork-left, fork-right, fork-both)
 
 ---@class railutils.RailDescription
 ---@field kind railutils.RailKind Descriptive kind (e.g., "horizontal", "top-of-east-to-north-turn")
 ---@field end_direction defines.direction|nil Direction of disconnected end if any
 ---@field lonely boolean True if no extensions exist
----@field forks railutils.ForkDescription[] Array of forks (0-2), sorted by direction
+---@field junctions railutils.JunctionDescription[] Array of junctions (0-2), sorted by direction
 
 ---Check if a specific rail exists at a position on the surface
 ---@param surface railutils.RailsSurface
@@ -228,7 +228,7 @@ function mod.describe_rail(surface, rail_type, placement_direction, position)
       kind = "",
       end_direction = nil,
       lonely = false,
-      forks = {},
+      junctions = {},
    }
 
    -- Try simple classification first
@@ -278,28 +278,49 @@ function mod.describe_rail(surface, rail_type, placement_direction, position)
       end
    end
 
-   -- Determine forks
+   -- Determine junctions (splits and forks)
    for end_dir, exts in pairs(connected_extensions) do
       if #exts >= 2 then
-         -- This end has a fork
-         -- Find which directions fork
-         for _, ext in ipairs(exts) do
-            -- Determine if this is left or right
-            local offset = (ext.goal_direction - end_dir + 16) % 16
-            local side = (offset == 1) and "right" or (offset == 15) and "left" or "forward"
+         -- This end has multiple connections - check which directions exist
+         local has_straight = false
+         local has_left = false
+         local has_right = false
 
-            if side ~= "forward" then
-               table.insert(description.forks, {
-                  direction = end_dir, -- Direction we're facing, not where fork leads
-                  side = side,
-               })
+         for _, ext in ipairs(exts) do
+            local offset = (ext.goal_direction - end_dir + 16) % 16
+            if offset == 0 then
+               has_straight = true
+            elseif offset == 1 then
+               has_right = true
+            elseif offset == 15 then
+               has_left = true
             end
+         end
+
+         -- Classify the junction based on which directions exist
+         local junction_kind = nil
+         if not has_straight and has_left and has_right then
+            junction_kind = RailInfo.JunctionKind.SPLIT
+         elseif has_straight and has_left and not has_right then
+            junction_kind = RailInfo.JunctionKind.FORK_LEFT
+         elseif has_straight and not has_left and has_right then
+            junction_kind = RailInfo.JunctionKind.FORK_RIGHT
+         elseif has_straight and has_left and has_right then
+            junction_kind = RailInfo.JunctionKind.FORK_BOTH
+         end
+
+         -- Only add if it's a recognized junction type (ignore single connections)
+         if junction_kind then
+            table.insert(description.junctions, {
+               direction = end_dir,
+               kind = junction_kind,
+            })
          end
       end
    end
 
-   -- Sort forks by direction
-   table.sort(description.forks, function(a, b)
+   -- Sort junctions by direction
+   table.sort(description.junctions, function(a, b)
       return a.direction < b.direction
    end)
 

@@ -20,7 +20,7 @@ function mod.TestDescriber_VerticalRail()
 
    lu.assertEquals(desc.kind, "vertical")
    lu.assertTrue(desc.lonely, "Single rail should be lonely")
-   lu.assertEquals(#desc.forks, 0)
+   lu.assertEquals(#desc.junctions, 0)
 end
 
 function mod.TestDescriber_HorizontalRail()
@@ -89,7 +89,7 @@ function mod.TestDescriber_SingleRailIsLonely()
    lu.assertNotNil(desc.end_direction, "Should have at least one disconnected end")
 end
 
-function mod.TestDescriber_NoForks()
+function mod.TestDescriber_NoJunctions()
    local surface = TestSurface.new()
 
    -- Place a single straight rail
@@ -97,7 +97,7 @@ function mod.TestDescriber_NoForks()
 
    local desc = RailDescriber.describe_rail(surface, rail.rail_type, rail.direction, rail.prototype_position)
 
-   lu.assertEquals(#desc.forks, 0, "Single rail should have no forks")
+   lu.assertEquals(#desc.junctions, 0, "Single rail should have no junctions")
 end
 
 function mod.TestDescriber_TurnDetection_IsolatedCurve()

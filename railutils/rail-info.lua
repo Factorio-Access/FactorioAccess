@@ -80,6 +80,16 @@ mod.RailKind = {
    RIGHT_OF_NORTHWEST = "right-of-northwest",
 }
 
+---Junction types (for fork/split detection)
+---String values use dashes for localization compatibility
+---@enum railutils.JunctionKind
+mod.JunctionKind = {
+   SPLIT = "split", -- Left and right turns exist, no straight
+   FORK_LEFT = "fork-left", -- Straight and left turn exist, no right
+   FORK_RIGHT = "fork-right", -- Straight and right turn exist, no left
+   FORK_BOTH = "fork-both", -- All three: straight, left, and right
+}
+
 ---Information about a rail piece
 ---@class railutils.RailInfo
 ---@field prototype_position fa.Point Position where the rail is placed (center, on the 1x1 grid)

@@ -34,22 +34,13 @@ function mod.announce_rail(description, prefix_rail)
       message:fragment({ "fa.rail-end-direction", { "fa.direction", description.end_direction } })
    end
 
-   -- Add forks
-   if #description.forks > 0 then
-      message:fragment({ "fa.rail-forks" })
+   -- Add junctions (splits and forks)
+   if #description.junctions > 0 then
+      for _, junction in ipairs(description.junctions) do
+         -- Junction kind is one of: split, fork-left, fork-right, fork-both
+         local junction_desc = { "fa.rail-junction-" .. junction.kind, { "fa.direction", junction.direction } }
 
-      for _, fork in ipairs(description.forks) do
-         local fork_desc
-
-         if fork.side == "left" then
-            fork_desc = { "fa.rail-fork-left", { "fa.direction", fork.direction } }
-         elseif fork.side == "right" then
-            fork_desc = { "fa.rail-fork-right", { "fa.direction", fork.direction } }
-         else
-            fork_desc = { "fa.direction", fork.direction }
-         end
-
-         message:list_item(fork_desc)
+         message:list_item(junction_desc)
       end
    end
 
