@@ -2143,9 +2143,7 @@ EventManager.on_event(
       -- Check for virtual train driving
       if VirtualTrainDriving.is_locked(pindex) then
          local success = VirtualTrainDriving.return_to_bookmark(pindex)
-         if success then
-            TileReader.read_tile(pindex)
-         end
+         if success then TileReader.read_tile(pindex) end
          return
       end
 

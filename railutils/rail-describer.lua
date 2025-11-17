@@ -68,9 +68,7 @@ local SIMPLE_RAIL_MAP = {
 ---@param placement_direction defines.direction
 ---@return railutils.RailKind|nil Kind string or nil if not a simple rail
 local function classify_simple_rail(rail_type, placement_direction)
-   if rail_type ~= RailInfo.RailType.STRAIGHT and rail_type ~= RailInfo.RailType.HALF_DIAGONAL then
-      return nil
-   end
+   if rail_type ~= RailInfo.RailType.STRAIGHT and rail_type ~= RailInfo.RailType.HALF_DIAGONAL then return nil end
 
    local ends = Queries.get_end_directions(rail_type, placement_direction)
    local dir_mod_8 = ends[1] % 8

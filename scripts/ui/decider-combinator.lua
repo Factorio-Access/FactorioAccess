@@ -230,11 +230,7 @@ local function build_condition_vtable(entity, i, condition, row_key)
          elseif ctx.modifiers and ctx.modifiers.shift then
             local cb = entity.get_control_behavior()
             local params = cb.parameters
-            ctx.controller:open_textbox(
-               "",
-               { node = row_key, target = "constant" },
-               { "fa.decider-enter-constant" }
-            )
+            ctx.controller:open_textbox("", { node = row_key, target = "constant" }, { "fa.decider-enter-constant" })
          else
             ctx.controller:open_child_ui(
                Router.UI_NAMES.SIGNAL_CHOOSER,

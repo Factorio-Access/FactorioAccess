@@ -15,23 +15,56 @@ local ent_selection_storage = StorageManager.declare_storage_module("entity_sele
    ephemeral_state_version = 1,
 })
 
---- Define primary ents, which are ents that show up first when reading tiles.
--- Notably, the definition is done by listing which types count as secondary.
----@param ent LuaEntity The entity to check
----@param pindex number The player index
----@return boolean True if the entity is primary
-function mod.ent_is_primary(ent, pindex)
-   return ent.type ~= "logistic-robot"
-      and ent.type ~= "construction-robot"
-      and ent.type ~= "combat-robot"
-      and ent.type ~= "corpse"
-      and ent.type ~= "rocket-silo-rocket-shadow"
-      and ent.type ~= "resource"
-      and ent.type ~= "straight-rail"
-      and ent.type ~= "curved-rail"
-      and ent.type ~= "legacy-straight-rail"
-      and ent.type ~= "legacy-curved-rail"
-      and (ent.type ~= "character" or ent.player ~= pindex)
+--- Sort priorities by entity type. Higher priority entities appear first.
+--- Default priority is 0 if not listed.
+local SORT_PRIORITIES = {
+   -- Secondary entities (priority -2)
+   ["logistic-robot"] = -2,
+   ["construction-robot"] = -2,
+   ["combat-robot"] = -2,
+   ["capture-robot"] = -2,
+   ["corpse"] = -2,
+   ["character-corpse"] = -2,
+   ["rocket-silo-rocket-shadow"] = -2,
+   ["resource"] = -2,
+
+   -- Rail shapes (priority -1)
+   ["straight-rail"] = -1,
+   ["curved-rail-a"] = -1,
+   ["curved-rail-b"] = -1,
+   ["elevated-straight-rail"] = -1,
+   ["elevated-curved-rail-a"] = -1,
+   ["elevated-curved-rail-b"] = -1,
+   ["half-diagonal-rail"] = -1,
+   ["elevated-half-diagonal-rail"] = -1,
+   ["legacy-straight-rail"] = -1,
+   ["legacy-curved-rail"] = -1,
+   ["rail-ramp"] = -1,
+   ["rail-support"] = -1,
+
+   -- Vehicles and rolling stock (priority 1)
+   ["car"] = 1,
+   ["spider-vehicle"] = 1,
+   ["locomotive"] = 1,
+   ["cargo-wagon"] = 1,
+   ["fluid-wagon"] = 1,
+   ["artillery-wagon"] = 1,
+   ["infinity-cargo-wagon"] = 1,
+   ["cargo-pod"] = 1,
+
+   -- Characters and enemies (priority 2)
+   ["character"] = 2,
+   ["unit"] = 2,
+   ["unit-spawner"] = 2,
+   ["segmented-unit"] = 2,
+   ["spider-unit"] = 2,
+}
+
+---Get the sort priority for an entity type
+---@param entity_type string The entity type
+---@return number The sort priority (default 0)
+local function get_sort_priority(entity_type)
+   return SORT_PRIORITIES[entity_type] or 0
 end
 
 ---Check if an entity should be included in tile queries
@@ -48,7 +81,7 @@ end
 ---Implements stable total ordering over entities per issue #265
 ---@param a LuaEntity
 ---@param b LuaEntity
----@param pindex number For primary entity detection
+---@param pindex number For player index
 ---@return boolean True if a < b
 local function compare_entities(a, b, pindex)
    -- Ghosts before non-ghosts
@@ -57,11 +90,10 @@ local function compare_entities(a, b, pindex)
    if a_is_ghost and not b_is_ghost then return true end
    if b_is_ghost and not a_is_ghost then return false end
 
-   -- Preferred prototypes first (primary entities)
-   local a_is_primary = mod.ent_is_primary(a, pindex)
-   local b_is_primary = mod.ent_is_primary(b, pindex)
-   if a_is_primary and not b_is_primary then return true end
-   if b_is_primary and not a_is_primary then return false end
+   -- Compare by priority (higher priority first)
+   local a_priority = get_sort_priority(a.type)
+   local b_priority = get_sort_priority(b.type)
+   if a_priority ~= b_priority then return a_priority > b_priority end
 
    -- Has unit_number before doesn't
    local a_has_unit = a.unit_number ~= nil
