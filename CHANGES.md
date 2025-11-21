@@ -1,3 +1,10 @@
+# 0.16.22 (unreleased)
+
+- Better descriptions for rail forks
+- Fix a bug that would cause the rail classifier to go nuts when multiple curved rails shared a tile
+- Fix: only show circuit mode of operation on buffer and requester chests
+
+
 # 0.16.21 (2025-11-16)
 
 - Tweak tile sorting. It now goes:

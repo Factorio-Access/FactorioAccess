@@ -382,6 +382,11 @@ local descriptors = {
                   label = { "fa.cb-choice-logistic-container-exclusive-mode-set-requests" },
                },
             },
+            available = function(entity)
+               local prototype = entity.prototype
+               local mode = prototype.logistic_mode
+               return mode == "requester" or mode == "buffer"
+            end,
          },
          {
             type = mod.FIELD_TYPE.CONDITION_WITH_ENABLE,

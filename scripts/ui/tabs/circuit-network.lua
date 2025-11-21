@@ -45,6 +45,9 @@ function mod.add_control_behavior_fields(builder, entity)
 
    -- Build form fields from descriptor
    for _, field in ipairs(descriptor.fields) do
+      -- Check if field is available for this entity
+      if field.available and not field.available(entity) then goto continue end
+
       local field_name = field.name
       local field_label = field.label
 
@@ -114,6 +117,8 @@ function mod.add_control_behavior_fields(builder, entity)
             cb[field_name] = value
          end, field.choices)
       end
+
+      ::continue::
    end
 
    return true
