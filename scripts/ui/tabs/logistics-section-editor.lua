@@ -357,24 +357,6 @@ local function render_section(ctx, section_index)
       end,
    })
 
-   -- Add new section after this one
-   menu:add_item("add_section_after", {
-      label = function(ctx)
-         ctx.message:fragment({ "fa.logistics-add-section-after" })
-      end,
-      on_click = function(ctx)
-         local sections = entity.get_logistic_sections()
-         local new_section = sections and sections.add_section("", section_index + 1)
-         if new_section then
-            UiSounds.play_menu_move(ctx.pindex)
-            ctx.controller.message:fragment({ "fa.logistics-section-added" })
-         else
-            UiSounds.play_ui_edge(ctx.pindex)
-            ctx.controller.message:fragment({ "fa.logistics-section-add-failed" })
-         end
-      end,
-   })
-
    -- Add new section to end
    menu:add_item("add_section_end", {
       label = function(ctx)

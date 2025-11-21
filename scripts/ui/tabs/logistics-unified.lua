@@ -243,21 +243,6 @@ local function render_unified_overview(ctx)
          end,
       })
 
-      -- Add section at start
-      menu:add_item("add_section_start", {
-         label = function(ctx)
-            ctx.message:fragment({ "fa.logistics-add-section-start" })
-         end,
-         on_click = function(ctx)
-            local new_section = sections_obj.add_section("", 1)
-            if new_section then
-               ctx.controller.message:fragment({ "fa.logistics-section-added" })
-            else
-               ctx.controller.message:fragment({ "fa.logistics-section-add-failed" })
-            end
-         end,
-      })
-
       -- Add section at end
       menu:add_item("add_section_end", {
          label = function(ctx)
