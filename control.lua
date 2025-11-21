@@ -3077,6 +3077,14 @@ EventManager.on_event(
 )
 
 EventManager.on_event(
+   "fa-a-f",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      WorkerRobots.announce_robot_dispatch_status(pindex)
+   end
+)
+
+EventManager.on_event(
    "fa-a-leftbracket",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)

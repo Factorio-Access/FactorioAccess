@@ -738,6 +738,13 @@ data:extend({
 
    {
       type = "custom-input",
+      name = "fa-a-f",
+      key_sequence = "ALT + F",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
       name = "fa-a-leftbracket",
       key_sequence = "ALT + LEFTBRACKET",
       consuming = "none",

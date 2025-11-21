@@ -1,3 +1,8 @@
+# 0.16.22 (unreleased)
+
+- Add feedback for alt + f, which toggles personal roboports (not the same as alt + l, which toggles personal logistics).
+- Add a button in the character's equipment GUI to toggle roboports, for those who do not find the key.
+
 # 0.16.22 (2025-11-20)
 
 - Better descriptions for rail forks
