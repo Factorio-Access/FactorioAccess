@@ -1,4 +1,4 @@
-# 0.16.22 (unreleased)
+# 0.16.22 (2025-11-20)
 
 - Better descriptions for rail forks
 - Fix a bug that would cause the rail classifier to go nuts when multiple curved rails shared a tile
