@@ -269,6 +269,8 @@ function mod.get_network_name_for_point(point)
 
    local network = point.logistic_network
    if not network then return nil end
+   -- API surprise! Points not in a network also return networks, they're just invalid.
+   if not network.valid then return nil end
 
    return mod.get_network_name_from_network(network)
 end

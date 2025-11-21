@@ -5,6 +5,9 @@
 - Fix: only show circuit mode of operation on buffer and requester chests
 - Remove "add section to start" in the logistics interface. The Factorio API turns out only to support adding sections to the end.
 - Also remove "add section after this" for the same reason.
+- Get rid of "error: no network" in logistic UIs outside networks.
+  - Internal note: turns out the API gives us invalid networks in this case, not nil networks.
+
 # 0.16.21 (2025-11-16)
 
 - Tweak tile sorting. It now goes:
