@@ -266,7 +266,6 @@ function on_player_join(pindex)
    for _, p in pairs(game.connected_players) do
       playerList["_" .. p.index] = p.name
    end
-   print("playerList " .. game.table_to_json(playerList))
 
    --Reset the player building direction to match the vanilla behavior (Factorio 2.0)
    local vp = Viewpoint.get_viewpoint(pindex)
