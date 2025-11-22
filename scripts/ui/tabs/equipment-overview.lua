@@ -13,7 +13,6 @@ local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
 local UiRouter = require("scripts.ui.router")
 local UiSounds = require("scripts.ui.sounds")
-local Electrical = require("scripts.electrical")
 
 local mod = {}
 
@@ -61,49 +60,7 @@ local function render_equipment_overview(ctx)
             ctx.message:list_item(ItemInfo.item_info(armor_stack))
 
             -- Add equipment bonuses if available
-            if grid then
-               -- Shield
-               if grid.max_shield > 0 then
-                  ctx.message:list_item({
-                     "fa.equipment-shield-capacity",
-                     tostring(math.floor(grid.shield)),
-                     tostring(math.floor(grid.max_shield)),
-                  })
-               end
-
-               -- Battery
-               if grid.battery_capacity > 0 then
-                  local battery_percent = math.floor(100 * grid.available_in_batteries / grid.battery_capacity)
-                  ctx.message:list_item({ "fa.equipment-battery-percent", tostring(battery_percent) })
-               end
-
-               -- Power generation
-               if grid.get_generator_energy() > 0 then
-                  ctx.message:list_item({
-                     "fa.equipment-generator-power",
-                     Electrical.get_power_string(grid.get_generator_energy() * 60),
-                  })
-               end
-               if grid.max_solar_energy > 0 then
-                  ctx.message:list_item({
-                     "fa.equipment-solar-power",
-                     Electrical.get_power_string(grid.max_solar_energy * 60),
-                  })
-               end
-
-               -- Movement bonus
-               if grid.movement_bonus > 0 then
-                  ctx.message:list_item({
-                     "fa.equipment-movement-bonus",
-                     tostring(math.floor(grid.movement_bonus * 100)),
-                  })
-               end
-
-               -- Inventory bonus
-               if grid.inventory_bonus > 0 then
-                  ctx.message:list_item({ "fa.equipment-inventory-bonus", tostring(grid.inventory_bonus) })
-               end
-            end
+            if grid then Equipment.add_equipment_bonuses_to_message(ctx.message, grid) end
 
             -- Add backspace hint
             ctx.message:fragment({ "fa.equipment-overview-backspace-to-unequip" })
@@ -169,48 +126,7 @@ local function render_equipment_overview(ctx)
       if grid then
          builder:add_label("equipment-bonuses", function(ctx)
             ctx.message:fragment({ "fa.equipment-overview-entity-bonuses" })
-
-            -- Shield
-            if grid.max_shield > 0 then
-               ctx.message:list_item({
-                  "fa.equipment-shield-capacity",
-                  tostring(math.floor(grid.shield)),
-                  tostring(math.floor(grid.max_shield)),
-               })
-            end
-
-            -- Battery
-            if grid.battery_capacity > 0 then
-               local battery_percent = math.floor(100 * grid.available_in_batteries / grid.battery_capacity)
-               ctx.message:list_item({ "fa.equipment-battery-percent", tostring(battery_percent) })
-            end
-
-            -- Power generation
-            if grid.get_generator_energy() > 0 then
-               ctx.message:list_item({
-                  "fa.equipment-generator-power",
-                  Electrical.get_power_string(grid.get_generator_energy() * 60),
-               })
-            end
-            if grid.max_solar_energy > 0 then
-               ctx.message:list_item({
-                  "fa.equipment-solar-power",
-                  Electrical.get_power_string(grid.max_solar_energy * 60),
-               })
-            end
-
-            -- Movement bonus
-            if grid.movement_bonus > 0 then
-               ctx.message:list_item({
-                  "fa.equipment-movement-bonus",
-                  tostring(math.floor(grid.movement_bonus * 100)),
-               })
-            end
-
-            -- Inventory bonus
-            if grid.inventory_bonus > 0 then
-               ctx.message:list_item({ "fa.equipment-inventory-bonus", tostring(grid.inventory_bonus) })
-            end
+            Equipment.add_equipment_bonuses_to_message(ctx.message, grid)
          end)
       else
          builder:add_label("no-grid", { "fa.equipment-overview-no-grid" })

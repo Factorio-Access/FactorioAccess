@@ -980,4 +980,51 @@ function mod.get_equipment_category_from_type(equip_type)
    end
 end
 
+---Add equipment grid bonuses to a message as list items
+---@param message fa.MessageBuilder Message builder to append to
+---@param grid LuaEquipmentGrid Equipment grid to read bonuses from
+function mod.add_equipment_bonuses_to_message(message, grid)
+   -- Shield
+   if grid.max_shield > 0 then
+      message:list_item({
+         "fa.equipment-shield-capacity",
+         tostring(math.floor(grid.shield)),
+         tostring(math.floor(grid.max_shield)),
+      })
+   end
+
+   -- Battery
+   if grid.battery_capacity > 0 then
+      local battery_percent = math.floor(100 * grid.available_in_batteries / grid.battery_capacity)
+      message:list_item({ "fa.equipment-battery-percent", tostring(battery_percent) })
+   end
+
+   -- Power generation
+   if grid.get_generator_energy() > 0 then
+      message:list_item({
+         "fa.equipment-generator-power",
+         Electrical.get_power_string(grid.get_generator_energy() * 60),
+      })
+   end
+   if grid.max_solar_energy > 0 then
+      message:list_item({
+         "fa.equipment-solar-power",
+         Electrical.get_power_string(grid.max_solar_energy * 60),
+      })
+   end
+
+   -- Movement bonus
+   if grid.movement_bonus > 0 then
+      message:list_item({
+         "fa.equipment-movement-bonus",
+         tostring(math.floor(grid.movement_bonus * 100)),
+      })
+   end
+
+   -- Inventory bonus
+   if grid.inventory_bonus > 0 then
+      message:list_item({ "fa.equipment-inventory-bonus", tostring(grid.inventory_bonus) })
+   end
+end
+
 return mod
