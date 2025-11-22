@@ -470,10 +470,7 @@ local function build_condition_vtable(entity, schedule, record_index, condition_
 
          schedule.drag_wait_condition(record_position, condition_index, condition_index - 1)
          ctx.controller.message:fragment({ "fa.schedule-condition-moved-up" })
-         ctx.graph_controller:hint_key(
-            get_condition_key(record_index, condition_index),
-            get_condition_key(record_index, condition_index - 1)
-         )
+         ctx.graph_controller:suggest_move(get_condition_key(record_index, condition_index - 1))
       end,
 
       on_drag_down = function(ctx)
@@ -485,10 +482,7 @@ local function build_condition_vtable(entity, schedule, record_index, condition_
 
          schedule.drag_wait_condition(record_position, condition_index, condition_index + 1)
          ctx.controller.message:fragment({ "fa.schedule-condition-moved-down" })
-         ctx.graph_controller:hint_key(
-            get_condition_key(record_index, condition_index),
-            get_condition_key(record_index, condition_index + 1)
-         )
+         ctx.graph_controller:suggest_move(get_condition_key(record_index, condition_index + 1))
       end,
 
       on_child_result = function(ctx, result)
@@ -577,7 +571,7 @@ local function build_record_vtable(entity, schedule, record_index, record, row_k
 
          schedule.drag_record(record_index, record_index - 1)
          ctx.controller.message:fragment({ "fa.schedule-record-moved-up" })
-         ctx.graph_controller:hint_key(get_record_key(record_index), get_record_key(record_index - 1))
+         ctx.graph_controller:suggest_move(get_record_key(record_index - 1))
       end,
 
       on_drag_down = function(ctx)
@@ -589,7 +583,7 @@ local function build_record_vtable(entity, schedule, record_index, record, row_k
 
          schedule.drag_record(record_index, record_index + 1)
          ctx.controller.message:fragment({ "fa.schedule-record-moved-down" })
-         ctx.graph_controller:hint_key(get_record_key(record_index), get_record_key(record_index + 1))
+         ctx.graph_controller:suggest_move(get_record_key(record_index + 1))
       end,
 
       on_child_result = function(ctx, result)

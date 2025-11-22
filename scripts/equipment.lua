@@ -141,7 +141,6 @@ function mod.equip_it(stack, pindex, target_entity)
    return message:build()
 end
 
-
 --Reload all ammo possible from the inventory. Existing stacks have priority over fuller stacks.
 ---@param pindex number
 ---@param source_entity LuaEntity? Entity containing source inventory (defaults to player character)
@@ -239,8 +238,6 @@ function mod.remove_weapons_and_ammo(pindex, source_entity, target_entity, targe
 
    return message
 end
-
-
 
 function mod.count_empty_equipment_slots(grid)
    local slots_left = 0
@@ -511,7 +508,6 @@ function mod.repair_item_in_slot(pindex, entity, inv_index, slot_index)
       tostring(math.floor(stack.health * 100)),
    }
 end
-
 
 ---Get category description for equipment
 ---@param equipment LuaEquipment

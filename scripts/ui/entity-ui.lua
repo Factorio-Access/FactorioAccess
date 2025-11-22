@@ -262,6 +262,18 @@ local function build_entity_sections(pindex, entity)
    -- Get sorted inventories
    local sorted_invs, guns_ammo = sort_inventories(entity)
 
+   -- Build configuration section
+   local config_tabs = build_configuration_tabs(entity)
+
+   -- For locomotives, add configuration before inventories
+   if entity.prototype.type == "locomotive" and config_tabs then
+      table.insert(sections, {
+         name = "configuration",
+         title = { "fa.section-device-configuration" },
+         tabs = config_tabs,
+      })
+   end
+
    -- Build inventory section
    local inventory_tabs = build_inventory_tabs(entity, sorted_invs, guns_ammo)
    if #inventory_tabs > 0 then
@@ -272,9 +284,8 @@ local function build_entity_sections(pindex, entity)
       })
    end
 
-   -- Build configuration section
-   local config_tabs = build_configuration_tabs(entity)
-   if config_tabs then
+   -- For non-locomotives, add configuration after inventories
+   if entity.prototype.type ~= "locomotive" and config_tabs then
       table.insert(sections, {
          name = "configuration",
          title = { "fa.section-device-configuration" },
