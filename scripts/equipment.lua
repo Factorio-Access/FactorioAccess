@@ -141,38 +141,6 @@ function mod.equip_it(stack, pindex, target_entity)
    return message:build()
 end
 
---Returns info on weapons and ammo
-function mod.read_weapons_and_ammo(pindex)
-   local guns_inv = game.get_player(pindex).get_inventory(defines.inventory.character_guns)
-   local ammo_inv = game.get_player(pindex).get_inventory(defines.inventory.character_ammo)
-   local guns_count = #guns_inv - guns_inv.count_empty_stacks()
-   local ammos_count = #ammo_inv - ammo_inv.count_empty_stacks()
-
-   if guns_count == 0 then return { "fa.equipment-no-weapons" } end
-
-   local result = MessageBuilder.new()
-   result:fragment({ "fa.equipment-weapons-header" })
-
-   for i = 1, 3, 1 do
-      if i > 1 then result:fragment({ "fa.equipment-and" }) end
-      if guns_inv[i] and guns_inv[i].valid and guns_inv[i].valid_for_read then
-         result:fragment(localising.get_localised_name_with_fallback(guns_inv[i]))
-      else
-         result:fragment({ "fa.equipment-empty-weapon-slot" })
-      end
-      if ammo_inv[i] ~= nil and ammo_inv[i].valid and ammo_inv[i].valid_for_read then
-         result:fragment({
-            "fa.equipment-with-ammo",
-            tostring(ammo_inv[i].count),
-            localising.get_localised_name_with_fallback(ammo_inv[i]),
-         })
-      else
-         result:fragment({ "fa.equipment-no-ammunition" })
-      end
-   end
-
-   return result:build()
-end
 
 --Reload all ammo possible from the inventory. Existing stacks have priority over fuller stacks.
 ---@param pindex number
@@ -272,45 +240,7 @@ function mod.remove_weapons_and_ammo(pindex, source_entity, target_entity, targe
    return message
 end
 
---Temporary safety measure for preventing accidental shooting of atomic bombs
-function mod.delete_equipped_atomic_bombs(pindex)
-   local ammo_inv = game.get_player(pindex).get_inventory(defines.inventory.character_ammo)
-   local main_inv = game.get_player(pindex).get_inventory(defines.inventory.character_main)
-   local ammos_count = #ammo_inv - ammo_inv.count_empty_stacks()
-   local resulted_remove_count = 0
 
-   --Remove all atomic bombs
-   for i = 1, ammos_count, 1 do
-      if ammo_inv[i] and ammo_inv[i].valid_for_read and ammo_inv[i].name == "atomic-bomb" then
-         local removed = ammo_inv.remove(ammo_inv[i])
-         resulted_remove_count = resulted_remove_count + removed
-      end
-   end
-
-   --Save removed amount
-   local restore_count = storage.players[pindex].restore_count
-   if restore_count == nil or restore_count < resulted_remove_count then
-      storage.players[pindex].restore_count = resulted_remove_count
-   end
-   return
-end
-
---Temporary safety measure for preventing accidental shooting of atomic bombs
-function mod.restore_equipped_atomic_bombs(pindex)
-   local guns_inv = game.get_player(pindex).get_inventory(defines.inventory.character_guns)
-   local ammo_inv = game.get_player(pindex).get_inventory(defines.inventory.character_ammo)
-   local main_inv = game.get_player(pindex).get_inventory(defines.inventory.character_main)
-   local guns_count = #guns_inv - guns_inv.count_empty_stacks()
-   local ammos_count = #ammo_inv - ammo_inv.count_empty_stacks()
-
-   --Create stack
-   local restore_count = storage.players[pindex].restore_count
-   if restore_count == nil then restore_count = 1 end
-   local stack = { name = "atomic-bomb", count = restore_count }
-
-   --Equip all atomic bombs according to count
-   if restore_count > 0 and ammo_inv.can_insert(stack) then local inserted = ammo_inv.insert(stack) end
-end
 
 function mod.count_empty_equipment_slots(grid)
    local slots_left = 0
@@ -582,31 +512,6 @@ function mod.repair_item_in_slot(pindex, entity, inv_index, slot_index)
    }
 end
 
---Equip an item from a specific inventory slot to an entity
----@param pindex number
----@param source_entity LuaEntity Entity containing the inventory with the item
----@param inv_index defines.inventory Inventory index
----@param slot_index number Slot index (1-based)
----@return LocalisedString|string Result message
-function mod.equip_item_from_slot(pindex, source_entity, inv_index, slot_index)
-   local p = game.get_player(pindex)
-   if not p then return "Error: No player" end
-
-   if not source_entity or not source_entity.valid then return "Error: Invalid entity" end
-
-   local inv = source_entity.get_inventory(inv_index)
-   if not inv then return "Error: Invalid inventory" end
-
-   local stack = inv[slot_index]
-   if not stack or not stack.valid_for_read then return { "fa.equipment-empty-slot" } end
-
-   local message = MessageBuilder.new()
-
-   -- Equip to the entity that owns this inventory
-   equip_stack_to_entity(stack, source_entity, pindex, message)
-
-   return message:build()
-end
 
 ---Get category description for equipment
 ---@param equipment LuaEquipment
