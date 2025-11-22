@@ -142,4 +142,24 @@ function mod.get_fuel(rolling_stock)
    return all_fuel
 end
 
+---Get all unique train groups for a force.
+---@param force ForceID The force to get groups for
+---@return string[] Sorted array of group names (excluding empty groups)
+function mod.get_train_groups(force)
+   local groups = {}
+   local seen = {}
+
+   local trains = game.train_manager.get_trains({ force = force })
+   for _, train in ipairs(trains) do
+      local group = train.group
+      if group and group ~= "" and not seen[group] then
+         seen[group] = true
+         table.insert(groups, group)
+      end
+   end
+
+   table.sort(groups)
+   return groups
+end
+
 return mod

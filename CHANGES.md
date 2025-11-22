@@ -5,6 +5,11 @@
 - Risk an internal cleanup refactor to how equipment bonuses are announced
 - Fix dragging stops up and down in the train schedule editor
 - Make the train config panel the first tab for locomotives, since locomotive inventories are rarely accessed
+- Support for train groups. Set a group in the locomotive configuration panel. The following behaviors match vanilla:
+  - New groups are created when you type their names.
+  - Backspace clears the group, but does not clear the schedule
+  - Setting the group overwrites the schedule of any other train in that group.
+  - If the last train in a group is destroyed, the group goes away.
 
 # 0.16.22 (2025-11-20)
 

@@ -220,9 +220,8 @@ documentation.
 
 Teaching how train schedules work is beyond the scope of mod documentation.  See the wiki for that.
 
-This covers the schedule editor.  It's over one tab from the inventories of a locomotive attached to a train (no more
-"it must be at a station").  The schedule editor now exposes all 1.1 functionality.  2.0 interrupts are not yet
-implemented.
+The schedule editor now exposes all 1.1 functionality.  2.0 interrupts are not yet
+implemented.  To get to it, click edit schedule.
 
 The controls are at the top of this document, but they borrow the controls of the decider combinator. M is parameter 1,
 comma is the operator, and dot is parameter two.  What these are changes based on the schedule condition type, toggled
@@ -231,7 +230,7 @@ Rather than shifting whether or not m and dot open text boxes, we instead requir
 only be set from a text box.  In future that will basically just be numbers, but for today we do require you to enter
 stop names manually--there is no stop selector yet.
 
-Just like with the decider n controls how the condition joins with the previous (and/or) and slash adds a new one and
+Just like with the decider, n controls how the condition joins with the previous (and/or) and slash adds a new one and
 moves you to it (combined using or, add ctrl for and).  The key that we add to this is j, to toggle through the
 condition types (wait, passenger present, cargo has a specific thing, etc).
 
@@ -242,3 +241,8 @@ simplicity and to get off the ground, you must type your stop names yourself.
 Like with the decider combinator, the idea is that you view these controls like reading text or similar (j doesn't fit
 the analogy, but it needed one more key and b is too important).  If we put braille on your keyboard with one "field"
 per key, it would "fit" on n m comma dot, and then slash adds to the "end" of the row as a whole.
+
+Train groups are supported and are set at the locomotive config level, that is outside the schedule editor.  As with
+other vanilla functionality, see the regular Factorio wiki for information on how to use them. To cover the one unclear
+point, groups are created by just deciding to use their name and are destroyed by destroying the last train (or ghost)
+using the group.  This slightly unintuitive behavior matches vanilla.

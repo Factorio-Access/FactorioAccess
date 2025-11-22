@@ -141,6 +141,7 @@ mod.UI_NAMES = {
    FLUID_CHOOSER = "fluid_chooser",
    LOGISTICS_CONFIG = "logistics_config",
    LOGISTIC_GROUP_SELECTOR = "logistic_group_selector",
+   TRAIN_GROUP_SELECTOR = "train_group_selector",
    CONSTANT_COMBINATOR = "constant_combinator",
    DECIDER_COMBINATOR = "decider_combinator",
    POWER_SWITCH = "power_switch",
