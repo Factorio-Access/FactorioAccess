@@ -10,6 +10,7 @@
   - Backspace clears the group, but does not clear the schedule
   - Setting the group overwrites the schedule of any other train in that group.
   - If the last train in a group is destroyed, the group goes away.
+- Fix: opening a UI, closing the game with it open, and reopening the save no longer crashes because of search refreshes. Also, such UIs may be searched.
 
 # 0.16.22 (2025-11-20)
 

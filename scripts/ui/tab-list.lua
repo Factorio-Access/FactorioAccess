@@ -581,6 +581,10 @@ function TabList:supports_search(pindex, controller)
    local tl = tablist_storage[pindex][self.ui_name]
    if not tl or not tl.currently_open then return false end
 
+   -- Re-render to ensure descriptors are populated (e.g., after load)
+   self:_rerender(pindex, controller)
+   if not tl.currently_open then return false end -- Rerender might have closed
+
    local tabname = self.tab_order[tl.active_tab]
    local tabstate = tl.tab_states[tabname]
    local callbacks = self.descriptors[tabname].callbacks
@@ -606,6 +610,10 @@ function TabList:search_hint(pindex, hint_callback, controller)
 
    local tl = tablist_storage[pindex][self.ui_name]
    if not tl or not tl.currently_open then return end
+
+   -- Re-render to ensure descriptors are populated (e.g., after load)
+   self:_rerender(pindex, controller)
+   if not tl.currently_open then return end -- Rerender might have closed
 
    local tabname = self.tab_order[tl.active_tab]
    local tabstate = tl.tab_states[tabname]
@@ -634,6 +642,10 @@ function TabList:search_move(message, pindex, direction, matcher, controller)
 
    local tl = tablist_storage[pindex][self.ui_name]
    if not tl or not tl.currently_open then return UiRouter.SEARCH_RESULT.NO_SUPPORT end
+
+   -- Re-render to ensure descriptors are populated (e.g., after load)
+   self:_rerender(pindex, controller)
+   if not tl.currently_open then return UiRouter.SEARCH_RESULT.NO_SUPPORT end -- Rerender might have closed
 
    local tabname = self.tab_order[tl.active_tab]
    local tabstate = tl.tab_states[tabname]
@@ -665,6 +677,10 @@ function TabList:search_all_from_start(pindex, controller)
 
    local tl = tablist_storage[pindex][self.ui_name]
    if not tl or not tl.currently_open then return UiRouter.SEARCH_RESULT.NO_SUPPORT end
+
+   -- Re-render to ensure descriptors are populated (e.g., after load)
+   self:_rerender(pindex, controller)
+   if not tl.currently_open then return UiRouter.SEARCH_RESULT.NO_SUPPORT end -- Rerender might have closed
 
    local tabname = self.tab_order[tl.active_tab]
    local tabstate = tl.tab_states[tabname]
