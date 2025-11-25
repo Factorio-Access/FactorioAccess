@@ -52,6 +52,7 @@ local PlayerInit = require("scripts.player-init")
 local PlayerMiningTools = require("scripts.player-mining-tools")
 local Quickbar = require("scripts.quickbar")
 local Research = require("scripts.research")
+require("scripts.rich-text") -- registers rich text processor with speech.lua
 local Rulers = require("scripts.rulers")
 local ScannerEntrypoint = require("scripts.scanner.entrypoint")
 local Spidertron = require("scripts.spidertron")

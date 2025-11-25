@@ -1,5 +1,4 @@
 --Train schedule editor UI
---Provides editing interface for train schedules (non-interrupt records only)
 --Uses 2D layout: each row is a stop with its conditions
 
 local TabList = require("scripts.ui.tab-list")
@@ -11,7 +10,6 @@ local ScheduleReader = require("scripts.rails.schedule-reader")
 local Speech = require("scripts.speech")
 local Help = require("scripts.ui.help")
 local UiSounds = require("scripts.ui.sounds")
-local RichText = require("scripts.rich-text")
 local TrainHelpers = require("scripts.rails.train-helpers")
 
 local mod = {}
@@ -38,9 +36,9 @@ local MAIN_SCHEDULE_CONDITION_TYPES = {
 
 ---Condition type cycle order for interrupt trigger conditions
 local INTERRUPT_TRIGGER_CONDITION_TYPES = {
+   "damage_taken",
    "at_station",
    "not_at_station",
-   "damage_taken",
    "specific_destination_full",
    "specific_destination_not_full",
    "destination_full_or_no_path",
@@ -55,8 +53,27 @@ local INTERRUPT_TRIGGER_CONDITION_TYPES = {
    "circuit",
 }
 
----Backward compatibility alias
-local CONDITION_TYPE_ORDER = MAIN_SCHEDULE_CONDITION_TYPES
+-- Lookup tables for condition type field preservation when cycling types
+local TYPES_WITH_TICKS = { time = true, inactivity = true }
+local TYPES_WITH_CONDITION = {
+   item_count = true,
+   circuit = true,
+   fuel_item_count_all = true,
+   fuel_item_count_any = true,
+}
+local TYPES_WITH_STATION = {
+   specific_destination_full = true,
+   specific_destination_not_full = true,
+   at_station = true,
+   not_at_station = true,
+}
+local TYPES_WITH_COMPARATOR = {
+   item_count = true,
+   fluid_count = true,
+   circuit = true,
+   fuel_item_count_all = true,
+   fuel_item_count_any = true,
+}
 
 ---Get the next condition type in the cycle
 ---@param current_type WaitConditionType
@@ -149,66 +166,105 @@ local function get_schedule(entity)
    return train.get_schedule()
 end
 
----Parameter handler for each condition type and parameter
----Each handler has:
----  - constant(condition, new_value) -> new_condition_data | nil (for textbox input)
----  - setter(condition, new_value) -> new_condition_data | nil (for signal chooser input)
----  - get_current(condition) -> string (to pre-populate textbox)
----  - announcer(new_value, condition) -> message fragment
-local PARAM_HANDLERS = {}
+---Extract station name from rich text result, announcing any errors
+---@param result string|{value: string, errors: LocalisedString[]?} Rich text result or plain string
+---@param ctx fa.ui.graph.Ctx Context for error announcement
+---@return string? station_name The extracted station name, or nil if empty
+local function extract_station_name(result, ctx)
+   local station_name
+   if type(result) == "table" and result.value then
+      if result.errors then
+         UiSounds.play_ui_edge(ctx.pindex)
+         for _, error_msg in ipairs(result.errors) do
+            ctx.controller.message:fragment(error_msg)
+         end
+      end
+      station_name = result.value
+   else
+      station_name = result
+   end
 
--- Time condition handlers
-PARAM_HANDLERS.time = {
-   p1 = {
+   if not station_name or station_name == "" then
+      UiSounds.play_ui_edge(ctx.pindex)
+      ctx.controller.message:fragment({ "fa.schedule-station-name-required" })
+      return nil
+   end
+
+   return station_name
+end
+
+---Generate condition key and suggest move, handling both interrupt and main schedule
+---@param ctx fa.ui.graph.Ctx
+---@param record_position ScheduleRecordPosition
+---@param new_condition_index number
+---@param key_prefix string
+---@param records ScheduleRecord[]
+local function suggest_condition_move(ctx, record_position, new_condition_index, key_prefix, records)
+   local new_key
+   if record_position.interrupt_index and not record_position.schedule_index then
+      new_key = key_prefix .. "c" .. tostring(new_condition_index)
+   else
+      new_key = get_condition_key(records, record_position.schedule_index, new_condition_index, key_prefix)
+   end
+   ctx.graph_controller:suggest_move(new_key)
+end
+
+-- Shared announcers
+local function announce_number(new_value)
+   return tostring(math.floor(tonumber(new_value)))
+end
+
+local function announce_signal(new_value)
+   return CircuitNetwork.localise_signal(new_value)
+end
+
+-- Factory for ticks-based conditions (time, inactivity)
+local function make_ticks_handler(type_name)
+   return {
+      p1 = {
+         constant = function(condition, new_value)
+            local seconds = tonumber(new_value)
+            if not seconds then return nil end
+            return { type = type_name, ticks = math.floor(seconds) * 60 }
+         end,
+         get_current = function(condition)
+            return tostring((condition.ticks or 0) / 60)
+         end,
+         announcer = announce_number,
+      },
+   }
+end
+
+-- Shared constant handler for circuit-like conditions
+local function make_circuit_constant_handler(fixed_type)
+   return {
       constant = function(condition, new_value)
-         local seconds = tonumber(new_value)
-         if not seconds then return nil end
-
+         local num = tonumber(new_value)
+         if not num then return nil end
          return {
-            type = "time",
-            ticks = math.floor(seconds) * 60,
+            type = fixed_type or condition.type,
+            condition = {
+               first_signal = condition.condition and condition.condition.first_signal,
+               comparator = (condition.condition and condition.condition.comparator) or "<",
+               constant = math.floor(num),
+            },
          }
       end,
       get_current = function(condition)
-         return tostring((condition.ticks or 0) / 60)
+         return tostring((condition.condition and condition.condition.constant) or 0)
       end,
-      announcer = function(new_value, condition)
-         return tostring(math.floor(tonumber(new_value)))
-      end,
-   },
-}
+      announcer = announce_number,
+   }
+end
 
--- Inactivity condition handlers
-PARAM_HANDLERS.inactivity = {
-   p1 = {
-      constant = function(condition, new_value)
-         local seconds = tonumber(new_value)
-         if not seconds then return nil end
-
-         return {
-            type = "inactivity",
-            ticks = math.floor(seconds) * 60,
-         }
-      end,
-      get_current = function(condition)
-         return tostring((condition.ticks or 0) / 60)
-      end,
-      announcer = function(new_value, condition)
-         return tostring(math.floor(tonumber(new_value)))
-      end,
-   },
-}
-
--- Item count condition handlers
-PARAM_HANDLERS.item_count = {
-   p1 = {
+-- Shared p1 signal setter for circuit-like conditions
+local function make_signal_setter(fixed_type, auto_fluid)
+   return {
       setter = function(condition, new_value)
          local signal = new_value
          if not signal or not signal.name then return nil end
-
-         -- Auto-convert to fluid_count if signal is a fluid
-         local new_type = is_fluid_signal(signal) and "fluid_count" or "item_count"
-
+         local new_type = fixed_type or condition.type
+         if auto_fluid and is_fluid_signal(signal) then new_type = "fluid_count" end
          return {
             type = new_type,
             condition = {
@@ -218,207 +274,85 @@ PARAM_HANDLERS.item_count = {
             },
          }
       end,
-      announcer = function(new_value, condition)
-         return CircuitNetwork.localise_signal(new_value)
-      end,
-   },
-   constant = {
-      constant = function(condition, new_value)
-         local num = tonumber(new_value)
-         if not num then return nil end
+      announcer = announce_signal,
+   }
+end
 
-         return {
-            type = condition.type,
-            condition = {
-               first_signal = condition.condition and condition.condition.first_signal,
-               comparator = (condition.condition and condition.condition.comparator) or "<",
-               constant = math.floor(num),
-            },
-         }
-      end,
-      get_current = function(condition)
-         return tostring((condition.condition and condition.condition.constant) or 0)
-      end,
-      announcer = function(new_value, condition)
-         return tostring(math.floor(tonumber(new_value)))
-      end,
-   },
-}
-
--- Fluid count uses same handlers as item_count
-PARAM_HANDLERS.fluid_count = PARAM_HANDLERS.item_count
-
--- Circuit condition handlers
-PARAM_HANDLERS.circuit = {
+-- Station name handler (shared by destination and at_station conditions)
+local station_name_handler = {
    p1 = {
-      setter = function(condition, new_value)
-         local signal = new_value
-         if not signal or not signal.name then return nil end
-
-         return {
-            type = "circuit",
-            condition = {
-               first_signal = signal,
-               comparator = (condition.condition and condition.condition.comparator) or "<",
-               constant = (condition.condition and condition.condition.constant) or 0,
-            },
-         }
-      end,
-      announcer = function(new_value, condition)
-         return CircuitNetwork.localise_signal(new_value)
-      end,
-   },
-   p2 = {
-      setter = function(condition, new_value)
-         local signal = new_value
-         if not signal or not signal.name then return nil end
-
-         return {
-            type = "circuit",
-            condition = {
-               first_signal = condition.condition and condition.condition.first_signal,
-               comparator = (condition.condition and condition.condition.comparator) or "<",
-               second_signal = signal,
-            },
-         }
-      end,
-      announcer = function(new_value, condition)
-         return CircuitNetwork.localise_signal(new_value)
-      end,
-   },
-   constant = {
       constant = function(condition, new_value)
-         local num = tonumber(new_value)
-         if not num then return nil end
-
-         return {
-            type = "circuit",
-            condition = {
-               first_signal = condition.condition and condition.condition.first_signal,
-               comparator = (condition.condition and condition.condition.comparator) or "<",
-               constant = math.floor(num),
-            },
-         }
+         return { type = condition.type, station = new_value }
       end,
       get_current = function(condition)
-         return tostring((condition.condition and condition.condition.constant) or 0)
+         return condition.station or ""
       end,
-      announcer = function(new_value, condition)
-         return tostring(math.floor(tonumber(new_value)))
+      announcer = function(new_value)
+         return new_value
       end,
    },
 }
 
--- Fuel condition handlers (both all and any use same logic)
+-- Build PARAM_HANDLERS using factories
+local PARAM_HANDLERS = {
+   time = make_ticks_handler("time"),
+   inactivity = make_ticks_handler("inactivity"),
+
+   item_count = {
+      p1 = make_signal_setter("item_count", true), -- auto_fluid converts to fluid_count
+      constant = make_circuit_constant_handler(),
+   },
+
+   circuit = {
+      p1 = make_signal_setter("circuit"),
+      p2 = {
+         setter = function(condition, new_value)
+            local signal = new_value
+            if not signal or not signal.name then return nil end
+            return {
+               type = "circuit",
+               condition = {
+                  first_signal = condition.condition and condition.condition.first_signal,
+                  comparator = (condition.condition and condition.condition.comparator) or "<",
+                  second_signal = signal,
+               },
+            }
+         end,
+         announcer = announce_signal,
+      },
+      constant = make_circuit_constant_handler("circuit"),
+   },
+
+   damage_taken = {
+      p1 = {
+         constant = function(condition, new_value)
+            local damage = tonumber(new_value)
+            if not damage then return nil end
+            return { type = "damage_taken", damage = math.floor(damage) }
+         end,
+         get_current = function(condition)
+            return tostring(condition.damage or 1000)
+         end,
+         announcer = announce_number,
+      },
+   },
+
+   specific_destination_full = station_name_handler,
+   specific_destination_not_full = station_name_handler,
+   at_station = station_name_handler,
+   not_at_station = station_name_handler,
+}
+
+-- Fuel handlers use same pattern as item_count but preserve type
 local fuel_handlers = {
-   p1 = {
-      setter = function(condition, new_value)
-         local signal = new_value
-         if not signal or not signal.name then return nil end
-
-         return {
-            type = condition.type,
-            condition = {
-               first_signal = signal,
-               comparator = (condition.condition and condition.condition.comparator) or "<",
-               constant = (condition.condition and condition.condition.constant) or 0,
-            },
-         }
-      end,
-      announcer = function(new_value, condition)
-         return CircuitNetwork.localise_signal(new_value)
-      end,
-   },
-   constant = {
-      constant = function(condition, new_value)
-         local num = tonumber(new_value)
-         if not num then return nil end
-
-         return {
-            type = condition.type,
-            condition = {
-               first_signal = condition.condition and condition.condition.first_signal,
-               comparator = (condition.condition and condition.condition.comparator) or "<",
-               constant = math.floor(num),
-            },
-         }
-      end,
-      get_current = function(condition)
-         return tostring((condition.condition and condition.condition.constant) or 0)
-      end,
-      announcer = function(new_value, condition)
-         return tostring(math.floor(tonumber(new_value)))
-      end,
-   },
+   p1 = make_signal_setter(), -- nil type means preserve condition.type
+   constant = make_circuit_constant_handler(),
 }
-
 PARAM_HANDLERS.fuel_item_count_all = fuel_handlers
 PARAM_HANDLERS.fuel_item_count_any = fuel_handlers
-
--- Specific destination condition handlers
-local destination_handlers = {
-   p1 = {
-      constant = function(condition, new_value)
-         return {
-            type = condition.type,
-            station = new_value,
-         }
-      end,
-      get_current = function(condition)
-         return condition.station or ""
-      end,
-      announcer = function(new_value, condition)
-         return new_value
-      end,
-   },
-}
-
-PARAM_HANDLERS.specific_destination_full = destination_handlers
-PARAM_HANDLERS.specific_destination_not_full = destination_handlers
-
--- at_station / not_at_station (interrupt triggers)
-local at_station_handlers = {
-   p1 = {
-      constant = function(condition, new_value)
-         return {
-            type = condition.type,
-            station = new_value,
-         }
-      end,
-      get_current = function(condition)
-         return condition.station or ""
-      end,
-      announcer = function(new_value, condition)
-         return new_value
-      end,
-   },
-}
-
-PARAM_HANDLERS.at_station = at_station_handlers
-PARAM_HANDLERS.not_at_station = at_station_handlers
-
--- damage_taken (interrupt trigger)
-PARAM_HANDLERS.damage_taken = {
-   p1 = {
-      constant = function(condition, new_value)
-         local damage = tonumber(new_value)
-         if not damage then return nil end
-         return {
-            type = "damage_taken",
-            damage = math.floor(damage),
-         }
-      end,
-      get_current = function(condition)
-         return tostring(condition.damage or 1000)
-      end,
-      announcer = function(new_value, condition)
-         return tostring(math.floor(tonumber(new_value)))
-      end,
-   },
-}
+PARAM_HANDLERS.fluid_count = PARAM_HANDLERS.item_count
 
 ---Build vtable for a wait condition
----@param entity LuaEntity Locomotive entity
 ---@param schedule LuaSchedule
 ---@param record_position ScheduleRecordPosition
 ---@param condition_index number
@@ -427,9 +361,9 @@ PARAM_HANDLERS.damage_taken = {
 ---@param key_prefix string? Prefix for node keys
 ---@param records ScheduleRecord[] All records for key generation
 ---@param allowed_types string[]? Allowed condition types (defaults to MAIN_SCHEDULE_CONDITION_TYPES)
+---@param default_type WaitConditionType? Default type when adding new conditions
 ---@return fa.ui.graph.NodeVtable
 local function build_condition_vtable(
-   entity,
    schedule,
    record_position,
    condition_index,
@@ -437,10 +371,12 @@ local function build_condition_vtable(
    row_key,
    key_prefix,
    records,
-   allowed_types
+   allowed_types,
+   default_type
 )
    key_prefix = key_prefix or ""
    allowed_types = allowed_types or MAIN_SCHEDULE_CONDITION_TYPES
+   default_type = default_type or allowed_types[1]
 
    return {
       label = function(ctx)
@@ -469,15 +405,11 @@ local function build_condition_vtable(
          local new_condition = { type = new_type }
 
          -- Preserve compatible fields when changing types
-         if new_type == "time" or new_type == "inactivity" then
-            new_condition.ticks = condition.ticks or 3600 -- Default 60 seconds
-         elseif new_type == "item_count" or new_type == "circuit" then
+         if TYPES_WITH_TICKS[new_type] then
+            new_condition.ticks = condition.ticks or 3600
+         elseif TYPES_WITH_CONDITION[new_type] then
             if condition.condition then new_condition.condition = condition.condition end
-         elseif new_type == "fuel_item_count_all" or new_type == "fuel_item_count_any" then
-            if condition.condition then new_condition.condition = condition.condition end
-         elseif new_type == "specific_destination_full" or new_type == "specific_destination_not_full" then
-            new_condition.station = condition.station or "Station"
-         elseif new_type == "at_station" or new_type == "not_at_station" then
+         elseif TYPES_WITH_STATION[new_type] then
             new_condition.station = condition.station or "Station"
          elseif new_type == "damage_taken" then
             new_condition.damage = condition.damage or 1000
@@ -516,38 +448,30 @@ local function build_condition_vtable(
       on_action2 = function(ctx)
          local cond_type = condition.type
 
-         -- Comma: change operator (for circuit/item/fluid conditions)
-         if
-            cond_type == "item_count"
-            or cond_type == "fluid_count"
-            or cond_type == "circuit"
-            or cond_type == "fuel_item_count_all"
-            or cond_type == "fuel_item_count_any"
-         then
-            if not condition.condition then
-               ctx.controller.message:fragment({ "fa.schedule-no-condition-set" })
-               return
-            end
-
-            local current_op = condition.condition.comparator or "<"
-            local new_op = ctx.modifiers
-                  and ctx.modifiers.shift
-                  and CircuitNetwork.get_prev_comparison_operator(current_op)
-               or CircuitNetwork.get_next_comparison_operator(current_op)
-
-            local new_condition_data = {
-               type = cond_type,
-               condition = {
-                  first_signal = condition.condition.first_signal,
-                  comparator = new_op,
-                  constant = condition.condition.constant,
-               },
-            }
-            schedule.change_wait_condition(record_position, condition_index, new_condition_data)
-            ctx.controller.message:fragment(CircuitNetwork.localise_comparator(new_op))
-         else
+         if not TYPES_WITH_COMPARATOR[cond_type] then
             ctx.controller.message:fragment({ "fa.schedule-no-operator" })
+            return
          end
+
+         if not condition.condition then
+            ctx.controller.message:fragment({ "fa.schedule-no-condition-set" })
+            return
+         end
+
+         local current_op = condition.condition.comparator or "<"
+         local new_op = (ctx.modifiers and ctx.modifiers.shift)
+               and CircuitNetwork.get_prev_comparison_operator(current_op)
+            or CircuitNetwork.get_next_comparison_operator(current_op)
+
+         schedule.change_wait_condition(record_position, condition_index, {
+            type = cond_type,
+            condition = {
+               first_signal = condition.condition.first_signal,
+               comparator = new_op,
+               constant = condition.condition.constant,
+            },
+         })
+         ctx.controller.message:fragment(CircuitNetwork.localise_comparator(new_op))
       end,
 
       on_action3 = function(ctx)
@@ -577,12 +501,9 @@ local function build_condition_vtable(
       end,
 
       on_add_to_row = function(ctx)
-         local new_type = "time" -- Default condition type
-         schedule.add_wait_condition(record_position, condition_index + 1, new_type)
+         schedule.add_wait_condition(record_position, condition_index + 1, default_type)
          ctx.controller.message:fragment({ "fa.schedule-condition-added" })
-         ctx.graph_controller:suggest_move(
-            get_condition_key(records, record_position.schedule_index, condition_index + 1, key_prefix)
-         )
+         suggest_condition_move(ctx, record_position, condition_index + 1, key_prefix, records)
       end,
 
       on_clear = function(ctx)
@@ -598,9 +519,7 @@ local function build_condition_vtable(
 
          schedule.drag_wait_condition(record_position, condition_index, condition_index - 1)
          ctx.controller.message:fragment({ "fa.schedule-condition-moved-up" })
-         ctx.graph_controller:suggest_move(
-            get_condition_key(records, record_position.schedule_index, condition_index - 1, key_prefix)
-         )
+         suggest_condition_move(ctx, record_position, condition_index - 1, key_prefix, records)
       end,
 
       on_drag_down = function(ctx)
@@ -612,9 +531,7 @@ local function build_condition_vtable(
 
          schedule.drag_wait_condition(record_position, condition_index, condition_index + 1)
          ctx.controller.message:fragment({ "fa.schedule-condition-moved-down" })
-         ctx.graph_controller:suggest_move(
-            get_condition_key(records, record_position.schedule_index, condition_index + 1, key_prefix)
-         )
+         suggest_condition_move(ctx, record_position, condition_index + 1, key_prefix, records)
       end,
 
       on_child_result = function(ctx, result)
@@ -658,7 +575,6 @@ local function build_condition_vtable(
 end
 
 ---Build vtable for a schedule record (station/destination)
----@param entity LuaEntity Locomotive entity
 ---@param schedule LuaSchedule
 ---@param record_position ScheduleRecordPosition
 ---@param record ScheduleRecord
@@ -666,7 +582,7 @@ end
 ---@param key_prefix string? Prefix for node keys
 ---@param records ScheduleRecord[] All records for key generation
 ---@return fa.ui.graph.NodeVtable
-local function build_record_vtable(entity, schedule, record_position, record, row_key, key_prefix, records)
+local function build_record_vtable(schedule, record_position, record, row_key, key_prefix, records)
    key_prefix = key_prefix or ""
 
    return {
@@ -725,29 +641,9 @@ local function build_record_vtable(entity, schedule, record_position, record, ro
          local target = ctx.child_context.target
 
          if target == "station" then
-            -- Handle rich text result (table with value and errors) or plain string
-            local station_name
-            if type(result) == "table" and result.value then
-               if result.errors then
-                  -- Announce errors but still accept the value
-                  UiSounds.play_ui_edge(ctx.pindex)
-                  for _, error_msg in ipairs(result.errors) do
-                     ctx.controller.message:fragment(error_msg)
-                  end
-               end
-               station_name = result.value
-            else
-               station_name = result
-            end
+            local station_name = extract_station_name(result, ctx)
+            if not station_name then return end
 
-            -- Validation
-            if not station_name or station_name == "" then
-               UiSounds.play_ui_edge(ctx.pindex)
-               ctx.controller.message:fragment({ "fa.schedule-station-name-required" })
-               return
-            end
-
-            -- Update the schedule
             schedule.remove_record(record_position)
             schedule.add_record({
                station = station_name,
@@ -755,9 +651,7 @@ local function build_record_vtable(entity, schedule, record_position, record, ro
                index = record_position,
             })
 
-            -- Announce verbalized version
-            local verbalized = RichText.verbalize_rich_text(station_name)
-            ctx.controller.message:fragment(verbalized)
+            ctx.controller.message:fragment(station_name)
          end
       end,
    }
@@ -766,10 +660,9 @@ end
 ---Build a list of schedule records and their conditions
 ---@param builder MenuBuilder The menu builder to add to
 ---@param schedule LuaSchedule
----@param entity LuaEntity Locomotive entity
 ---@param interrupt_index number? Optional interrupt index
 ---@param key_prefix string? Prefix for node keys
-local function build_records_list(builder, schedule, entity, interrupt_index, key_prefix)
+local function build_records_list(builder, schedule, interrupt_index, key_prefix)
    key_prefix = key_prefix or ""
 
    local records
@@ -791,7 +684,7 @@ local function build_records_list(builder, schedule, entity, interrupt_index, ke
       local record_key = get_record_key(records, i, key_prefix)
       builder:add_item(
          record_key,
-         build_record_vtable(entity, schedule, record_position, record, record_key, key_prefix, records)
+         build_record_vtable(schedule, record_position, record, record_key, key_prefix, records)
       )
 
       -- Wait conditions
@@ -801,16 +694,7 @@ local function build_records_list(builder, schedule, entity, interrupt_index, ke
             local condition_key = get_condition_key(records, i, j, key_prefix)
             builder:add_item(
                condition_key,
-               build_condition_vtable(
-                  entity,
-                  schedule,
-                  record_position,
-                  j,
-                  condition,
-                  condition_key,
-                  key_prefix,
-                  records
-               )
+               build_condition_vtable(schedule, record_position, j, condition, condition_key, key_prefix, records)
             )
          end
       else
@@ -851,10 +735,15 @@ local function render_interrupt_tab(ctx, interrupt_index)
    if not interrupt then return nil end
 
    local builder = Menu.MenuBuilder.new()
+   local key_prefix = "interrupt-" .. tostring(interrupt_index) .. "-"
 
-   -- Interrupt name controls
-   builder:add_label("interrupt-name-header", { "fa.schedule-interrupt-name" })
-   builder:add_clickable("interrupt-name", interrupt.name, {
+   -- Interrupt name row: label + editable name + remove button
+   builder:start_row("interrupt-name-row")
+   builder:add_item("interrupt-name", {
+      label = function(label_ctx)
+         label_ctx.message:fragment({ "fa.schedule-interrupt-name" })
+         label_ctx.message:list_item(interrupt.name)
+      end,
       on_click = function(click_ctx)
          click_ctx.controller:open_textbox(interrupt.name, "rename_interrupt", {
             intro_message = { "fa.schedule-enter-interrupt-name" },
@@ -879,9 +768,10 @@ local function render_interrupt_tab(ctx, interrupt_index)
          click_ctx.controller.message:fragment({ "fa.schedule-interrupt-renamed", new_name })
       end,
    })
-
-   -- Remove interrupt button
-   builder:add_clickable("remove-interrupt", { "fa.schedule-remove-interrupt" }, {
+   builder:add_item("remove-interrupt", {
+      label = function(label_ctx)
+         label_ctx.message:fragment({ "fa.schedule-remove-interrupt" })
+      end,
       on_click = function(click_ctx)
          local name = interrupt.name
          schedule.remove_interrupt(interrupt_index)
@@ -889,21 +779,19 @@ local function render_interrupt_tab(ctx, interrupt_index)
          click_ctx.graph_controller:suggest_move("interrupts-header")
       end,
    })
+   builder:end_row()
 
-   -- Trigger conditions section (single row with all conditions)
-   builder:add_label("trigger-conditions-header", { "fa.schedule-trigger-conditions" })
-
+   -- Trigger conditions row: header + conditions on same row
    local conditions = interrupt.conditions or {}
-   local key_prefix = "interrupt-" .. tostring(interrupt_index) .. "-"
 
    builder:start_row("trigger-conditions-row")
+   builder:add_label("trigger-conditions-header", { "fa.schedule-trigger-conditions" })
 
    if #conditions > 0 then
       for i, condition in ipairs(conditions) do
          local condition_key = key_prefix .. "c" .. tostring(i)
 
          local interrupt_vtable = build_condition_vtable(
-            entity,
             schedule,
             { interrupt_index = interrupt_index },
             i,
@@ -923,7 +811,7 @@ local function render_interrupt_tab(ctx, interrupt_index)
             label_ctx.message:fragment({ "fa.schedule-no-conditions" })
          end,
          on_add_to_row = function(add_ctx)
-            schedule.add_wait_condition({ interrupt_index = interrupt_index }, 1, "at_station")
+            schedule.add_wait_condition({ interrupt_index = interrupt_index }, 1, "damage_taken")
             add_ctx.controller.message:fragment({ "fa.schedule-condition-added" })
             add_ctx.graph_controller:suggest_move(key_prefix .. "c1")
          end,
@@ -936,7 +824,7 @@ local function render_interrupt_tab(ctx, interrupt_index)
    builder:add_label("target-stops-header", { "fa.schedule-interrupt-targets" })
 
    -- Build the interrupt's target stops using build_records_list
-   build_records_list(builder, schedule, entity, interrupt_index, key_prefix)
+   build_records_list(builder, schedule, interrupt_index, key_prefix)
 
    -- Add target stop button
    builder:add_clickable("add-target-stop", { "fa.schedule-add-target-stop" }, {
@@ -948,24 +836,8 @@ local function render_interrupt_tab(ctx, interrupt_index)
          )
       end,
       on_child_result = function(click_ctx, result)
-         local station_name
-         if type(result) == "table" and result.value then
-            if result.errors then
-               UiSounds.play_ui_edge(click_ctx.pindex)
-               for _, error_msg in ipairs(result.errors) do
-                  click_ctx.controller.message:fragment(error_msg)
-               end
-            end
-            station_name = result.value
-         else
-            station_name = result
-         end
-
-         if not station_name or station_name == "" then
-            UiSounds.play_ui_edge(click_ctx.pindex)
-            click_ctx.controller.message:fragment({ "fa.schedule-station-name-required" })
-            return
-         end
+         local station_name = extract_station_name(result, click_ctx)
+         if not station_name then return end
 
          local new_index = schedule.add_record({
             station = station_name,
@@ -973,8 +845,7 @@ local function render_interrupt_tab(ctx, interrupt_index)
             index = { interrupt_index = interrupt_index },
          })
 
-         local verbalized = RichText.verbalize_rich_text(station_name)
-         click_ctx.controller.message:fragment({ "fa.schedule-record-added", verbalized })
+         click_ctx.controller.message:fragment({ "fa.schedule-record-added", station_name })
          if new_index then
             local updated_records = schedule.get_records(interrupt_index) or {}
             click_ctx.graph_controller:suggest_move(get_record_key(updated_records, new_index, key_prefix))
@@ -1008,7 +879,7 @@ local function render_schedule_editor(ctx)
    end)
 
    -- Build the main schedule records list
-   build_records_list(builder, schedule, entity, nil, "main-")
+   build_records_list(builder, schedule, nil, "main-")
 
    -- Add new stop button
    builder:add_clickable("add_stop", { "fa.schedule-add-stop" }, {
@@ -1020,36 +891,15 @@ local function render_schedule_editor(ctx)
          )
       end,
       on_child_result = function(click_ctx, result)
-         -- Handle rich text result (table with value and errors) or plain string
-         local station_name
-         if type(result) == "table" and result.value then
-            if result.errors then
-               -- Announce errors but still accept the value
-               UiSounds.play_ui_edge(click_ctx.pindex)
-               for _, error_msg in ipairs(result.errors) do
-                  click_ctx.controller.message:fragment(error_msg)
-               end
-            end
-            station_name = result.value
-         else
-            station_name = result
-         end
-
-         -- Validation
-         if not station_name or station_name == "" then
-            UiSounds.play_ui_edge(click_ctx.pindex)
-            click_ctx.controller.message:fragment({ "fa.schedule-station-name-required" })
-            return
-         end
+         local station_name = extract_station_name(result, click_ctx)
+         if not station_name then return end
 
          local new_index = schedule.add_record({
             station = station_name,
             wait_conditions = {},
          })
 
-         -- Announce verbalized version
-         local verbalized = RichText.verbalize_rich_text(station_name)
-         click_ctx.controller.message:fragment({ "fa.schedule-record-added", verbalized })
+         click_ctx.controller.message:fragment({ "fa.schedule-record-added", station_name })
          if new_index then
             local updated_records = schedule.get_records() or {}
             click_ctx.graph_controller:suggest_move(get_record_key(updated_records, new_index, "main-"))
@@ -1065,32 +915,31 @@ local function render_schedule_editor(ctx)
       local interrupt_key = "interrupt-" .. tostring(i)
       builder:add_clickable(interrupt_key, interrupt.name, {
          on_click = function(click_ctx)
-            -- Open the interrupt tab for this interrupt
             click_ctx.graph_controller:suggest_move("interrupt-tab-" .. tostring(i))
          end,
-         drag_enabled = true,
-         on_drag = function(drag_ctx, direction)
-            local new_index = i + direction
-            if new_index >= 1 and new_index <= #interrupts then
-               schedule.drag_interrupt(i, new_index)
-               if direction == -1 then
-                  drag_ctx.controller.message:fragment({ "fa.schedule-interrupt-moved-up" })
-               else
-                  drag_ctx.controller.message:fragment({ "fa.schedule-interrupt-moved-down" })
-               end
-               drag_ctx.graph_controller:suggest_move("interrupt-" .. tostring(new_index))
-            else
+         on_drag_up = function(drag_ctx)
+            if i == 1 then
                UiSounds.play_ui_edge(drag_ctx.pindex)
-               if direction == -1 then
-                  drag_ctx.controller.message:fragment({ "fa.schedule-already-first-interrupt" })
-               else
-                  drag_ctx.controller.message:fragment({ "fa.schedule-already-last-interrupt" })
-               end
+               drag_ctx.controller.message:fragment({ "fa.schedule-already-first-interrupt" })
+               return
             end
+            schedule.drag_interrupt(i, i - 1)
+            drag_ctx.controller.message:fragment({ "fa.schedule-interrupt-moved-up" })
+            drag_ctx.graph_controller:suggest_move("interrupt-" .. tostring(i - 1))
          end,
-         on_delete = function(delete_ctx)
+         on_drag_down = function(drag_ctx)
+            if i >= #interrupts then
+               UiSounds.play_ui_edge(drag_ctx.pindex)
+               drag_ctx.controller.message:fragment({ "fa.schedule-already-last-interrupt" })
+               return
+            end
+            schedule.drag_interrupt(i, i + 1)
+            drag_ctx.controller.message:fragment({ "fa.schedule-interrupt-moved-down" })
+            drag_ctx.graph_controller:suggest_move("interrupt-" .. tostring(i + 1))
+         end,
+         on_clear = function(clear_ctx)
             schedule.remove_interrupt(i)
-            delete_ctx.controller.message:fragment({ "fa.schedule-interrupt-removed", interrupt.name })
+            clear_ctx.controller.message:fragment({ "fa.schedule-interrupt-removed", interrupt.name })
          end,
       })
    end

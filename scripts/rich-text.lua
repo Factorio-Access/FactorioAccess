@@ -71,6 +71,9 @@ end
 ---@param text string
 ---@return LocalisedString
 function mod.verbalize_rich_text(text)
+   -- Early return: if no brackets, no rich text to process
+   if not text:find("[", 1, true) then return text end
+
    local mb = MessageBuilder.new()
    local pos = 1
 
@@ -265,5 +268,8 @@ function mod.parse_rich_text_shorthand(text)
    local expanded = table.concat(result)
    return expanded, (#errors > 0 and errors or nil)
 end
+
+-- Register with speech.lua for global rich text processing
+Speech.register_rich_text_processor_late(mod.verbalize_rich_text)
 
 return mod

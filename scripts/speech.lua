@@ -164,6 +164,39 @@ end
 -- Convenience function at module level
 mod.new = MessageBuilder.new
 
+-- Late-registered rich text processor (set by rich-text.lua to avoid circular dependency)
+local rich_text_processor = nil
+
+---Register the rich text processor function (called by rich-text.lua)
+---@param processor fun(text: string): LocalisedString
+function mod.register_rich_text_processor_late(processor)
+   rich_text_processor = processor
+end
+
+---Process rich text in a LocalisedString, converting rich text tags to readable text.
+---For strings: runs rich text verbalization.
+---For tables (locale keys): recursively processes indices >= 2 since index 1 is the key.
+---@param str LocalisedString
+---@return LocalisedString
+local function process_rich_text(str)
+   if type(str) == "string" then
+      if rich_text_processor then return rich_text_processor(str) end
+      return str
+   elseif type(str) == "table" then
+      -- Index 1 is the locale key/directive, process indices >= 2
+      local result = { str[1] }
+      for i = 2, #str do
+         result[i] = process_rich_text(str[i])
+      end
+      return result
+   else
+      -- Numbers, booleans, nil - return as-is
+      return str
+   end
+end
+
+mod.process_rich_text = process_rich_text
+
 ---Send a localized string to the external launcher for text-to-speech rendering.
 ---This is the primary way the mod communicates with blind players.
 ---@param pindex number Player index
@@ -172,24 +205,27 @@ function mod.speak(pindex, str)
    -- Assert to catch parameter order mistakes
    assert(type(pindex) == "number", "Speech.speak expects pindex as first parameter (number), got " .. type(pindex))
 
+   -- Process rich text before output
+   local processed = process_rich_text(str)
+
    -- Capture for tests if enabled
    if capture_state.enabled then
       table.insert(capture_state.messages, {
-         message = str,
+         message = processed,
          pindex = pindex,
       })
    end
 
    if pindex ~= nil and pindex > 0 then
-      storage.players[pindex].last = str
+      storage.players[pindex].last = processed
    else
       return
    end
    if storage.players[pindex].vanilla_mode == nil then storage.players[pindex].vanilla_mode = false end
    if not storage.players[pindex].vanilla_mode then
-      localised_print({ "", "out " .. pindex .. " ", str })
+      localised_print({ "", "out " .. pindex .. " ", processed })
       -- Also log to file for debugging
-      SpeechLogger.log_speech(str, pindex)
+      SpeechLogger.log_speech(processed, pindex)
    end
 end
 

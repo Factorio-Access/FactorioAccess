@@ -9,7 +9,6 @@ local UiSounds = require("scripts.ui.sounds")
 local Speech = require("scripts.speech")
 local UiRouter = require("scripts.ui.router")
 local CircuitNetwork = require("scripts.circuit-network")
-local RichText = require("scripts.rich-text")
 
 local mod = {}
 
@@ -141,13 +140,14 @@ end
 ---@param params fa.FormBuilder.TextBoxParams
 ---@return fa.ui.form.FormBuilder
 function FormBuilder:add_rich_textfield(name, params)
-   -- Create label builder function that uses the getter and verbalizes rich text
+   -- Create label builder function that uses the getter
    local function build_label(message, ctx)
       local base_label = UiUtils.to_label_function(params.label)(ctx)
       local val = params.get_value()
       local value_text
       if val and val ~= "" then
-         value_text = RichText.verbalize_rich_text(val)
+         -- Rich text processing happens globally in Speech.speak
+         value_text = val
       else
          value_text = { "fa.empty" }
       end
@@ -183,9 +183,9 @@ function FormBuilder:add_rich_textfield(name, params)
                end
             end
             -- Success: set the expanded value and announce
+            -- Rich text processing happens globally in Speech.speak
             params.set_value(result.value)
-            local value_text = RichText.verbalize_rich_text(result.value)
-            ctx.controller.message:fragment(value_text)
+            ctx.controller.message:fragment(result.value)
          end
       end,
    }
