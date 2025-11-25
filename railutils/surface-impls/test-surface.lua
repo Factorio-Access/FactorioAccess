@@ -10,6 +10,14 @@ local Queries = require("railutils.queries")
 
 local mod = {}
 
+---Calculate X and Y parity for grid alignment
+---@param position fa.Point
+---@return number x_parity 0 or 1
+---@return number y_parity 0 or 1
+local function get_parity(position)
+   return math.abs(position.x) % 2, math.abs(position.y) % 2
+end
+
 ---Test surface storing rail placements in memory
 ---@class railutils.TestSurface : railutils.RailsSurface
 ---@field _rails railutils.RailInfo[] List of rails placed on this surface
@@ -73,12 +81,11 @@ function TestSurface:add_rail(rail_type, position, direction)
 
    -- Determine grid offset based on rail type, corrected direction, and position parity
    -- These patterns match the game's actual behavior (see devdocs/rail-geometry.md)
+   local x_parity, y_parity = get_parity(position)
    local grid_offset
+
    if rail_type == RailInfo.RailType.STRAIGHT then
       -- Straight rails snap to 2x2 grid to ensure centers at parity (1,1)
-      -- Both N/S and E/W orientations use inverted parity formula
-      local x_parity = math.abs(position.x) % 2
-      local y_parity = math.abs(position.y) % 2
       if corrected_direction == 0 or corrected_direction == 4 then
          -- Directions 0, 4: inverted parity (most common orientations)
          grid_offset = { x = 1 - x_parity, y = 1 - y_parity }
@@ -87,9 +94,6 @@ function TestSurface:add_rail(rail_type, position, direction)
          grid_offset = { x = x_parity, y = y_parity }
       end
    elseif rail_type == RailInfo.RailType.CURVE_A then
-      -- Curved-a rails depend on both X and Y parity
-      local x_parity = math.abs(position.x) % 2
-      local y_parity = math.abs(position.y) % 2
       if
          corrected_direction == 0
          or corrected_direction == 2
@@ -100,15 +104,7 @@ function TestSurface:add_rail(rail_type, position, direction)
       else -- 4, 6, 12, 14
          grid_offset = { x = x_parity, y = 1 - y_parity }
       end
-   elseif rail_type == RailInfo.RailType.CURVE_B then
-      -- Curved-b rails depend on both X and Y parity
-      local x_parity = math.abs(position.x) % 2
-      local y_parity = math.abs(position.y) % 2
-      grid_offset = { x = 1 - x_parity, y = 1 - y_parity }
-   elseif rail_type == RailInfo.RailType.HALF_DIAGONAL then
-      -- Half-diagonal rails depend on both X and Y parity (after mod 8)
-      local x_parity = math.abs(position.x) % 2
-      local y_parity = math.abs(position.y) % 2
+   elseif rail_type == RailInfo.RailType.CURVE_B or rail_type == RailInfo.RailType.HALF_DIAGONAL then
       grid_offset = { x = 1 - x_parity, y = 1 - y_parity }
    else
       error("Unknown rail type: " .. tostring(rail_type))

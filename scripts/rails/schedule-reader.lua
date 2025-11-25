@@ -6,12 +6,41 @@ local Speech = require("scripts.speech")
 
 local mod = {}
 
----Convert ticks to seconds for time display
----@param ticks number
----@return number
-local function ticks_to_seconds(ticks)
-   return ticks / 60
-end
+-- Shared options for circuit condition reading
+local CONDITION_READ_OPTS = { empty_message = { "fa.schedule-contents-condition-not-configured" } }
+
+-- Simple conditions that just map to a locale key (no parameters)
+local SIMPLE_CONDITIONS = {
+   full = "fa.schedule-full",
+   empty = "fa.schedule-empty",
+   not_empty = "fa.schedule-not-empty",
+   fuel_full = "fa.schedule-fuel-full",
+   robots_inactive = "fa.schedule-robots-inactive",
+   passenger_present = "fa.schedule-passenger-present",
+   passenger_not_present = "fa.schedule-passenger-not-present",
+   all_requests_satisfied = "fa.schedule-all-requests-satisfied",
+   any_request_not_satisfied = "fa.schedule-any-request-not-satisfied",
+   any_request_zero = "fa.schedule-any-request-zero",
+   destination_full_or_no_path = "fa.schedule-destination-full-or-no-path",
+}
+
+-- Conditions with circuit condition data (uses CircuitNetwork.read_condition)
+-- Value is prefix locale key to speak before the condition (false = no prefix)
+local CIRCUIT_CONDITIONS = {
+   item_count = false,
+   fluid_count = false,
+   fuel_item_count_all = "fa.schedule-fuel-all",
+   fuel_item_count_any = "fa.schedule-fuel-any",
+   circuit = "fa.schedule-circuit",
+}
+
+-- Conditions with a station parameter
+local STATION_CONDITIONS = {
+   specific_destination_full = "fa.schedule-destination-full",
+   specific_destination_not_full = "fa.schedule-destination-not-full",
+   at_station = "fa.schedule-at-station",
+   not_at_station = "fa.schedule-not-at-station",
+}
 
 ---Read a single wait condition into a message builder
 ---@param mb fa.MessageBuilder
@@ -19,108 +48,50 @@ end
 function mod.read_wait_condition(mb, condition)
    local cond_type = condition.type
 
+   -- Simple conditions (no parameters)
+   local simple_key = SIMPLE_CONDITIONS[cond_type]
+   if simple_key then
+      mb:fragment({ simple_key })
+      return
+   end
+
+   -- Circuit conditions (with optional prefix)
+   local circuit_prefix = CIRCUIT_CONDITIONS[cond_type]
+   if circuit_prefix ~= nil then
+      if circuit_prefix then mb:fragment({ circuit_prefix }) end
+      ---@diagnostic disable-next-line: param-type-mismatch
+      CircuitNetwork.read_condition(mb, condition.condition, CONDITION_READ_OPTS)
+      return
+   end
+
+   -- Station conditions
+   local station_key = STATION_CONDITIONS[cond_type]
+   if station_key then
+      mb:fragment({ station_key, condition.station })
+      return
+   end
+
    -- Time-based conditions
    if cond_type == "time" then
-      local seconds = ticks_to_seconds(condition.ticks or 0)
-      mb:fragment({ "fa.schedule-time", tostring(seconds) })
+      mb:fragment({ "fa.schedule-time", tostring((condition.ticks or 0) / 60) })
    elseif cond_type == "inactivity" then
-      local seconds = ticks_to_seconds(condition.ticks or 0)
-      mb:fragment({ "fa.schedule-inactivity", tostring(seconds) })
-   -- Cargo/inventory conditions
-   elseif cond_type == "full" then
-      mb:fragment({ "fa.schedule-full" })
-   elseif cond_type == "empty" then
-      mb:fragment({ "fa.schedule-empty" })
-   elseif cond_type == "not_empty" then
-      mb:fragment({ "fa.schedule-not-empty" })
-   -- Item count (cargo) - don't say "cargo", it's obvious from item
-   elseif cond_type == "item_count" then
-      ---@diagnostic disable-next-line: param-type-mismatch
-      CircuitNetwork.read_condition(
-         mb,
-         condition.condition,
-         { empty_message = { "fa.schedule-contents-condition-not-configured" } }
-      )
-   -- Fluid count - don't say "fluid", it's obvious from fluid name
-   elseif cond_type == "fluid_count" then
-      ---@diagnostic disable-next-line: param-type-mismatch
-      CircuitNetwork.read_condition(
-         mb,
-         condition.condition,
-         { empty_message = { "fa.schedule-contents-condition-not-configured" } }
-      )
-   -- Fuel conditions - DO say "fuel" to disambiguate from cargo
-   elseif cond_type == "fuel_item_count_all" then
-      mb:fragment({ "fa.schedule-fuel-all" })
-      ---@diagnostic disable-next-line: param-type-mismatch
-      CircuitNetwork.read_condition(
-         mb,
-         condition.condition,
-         { empty_message = { "fa.schedule-contents-condition-not-configured" } }
-      )
-   elseif cond_type == "fuel_item_count_any" then
-      mb:fragment({ "fa.schedule-fuel-any" })
-      ---@diagnostic disable-next-line: param-type-mismatch
-      CircuitNetwork.read_condition(
-         mb,
-         condition.condition,
-         { empty_message = { "fa.schedule-contents-condition-not-configured" } }
-      )
-   elseif cond_type == "fuel_full" then
-      mb:fragment({ "fa.schedule-fuel-full" })
-   -- Circuit condition - DO say "circuit" to disambiguate
-   elseif cond_type == "circuit" then
-      mb:fragment({ "fa.schedule-circuit" })
-      ---@diagnostic disable-next-line: param-type-mismatch
-      CircuitNetwork.read_condition(
-         mb,
-         condition.condition,
-         { empty_message = { "fa.schedule-contents-condition-not-configured" } }
-      )
-   -- Robot conditions
-   elseif cond_type == "robots_inactive" then
-      mb:fragment({ "fa.schedule-robots-inactive" })
-   -- Passenger conditions
-   elseif cond_type == "passenger_present" then
-      mb:fragment({ "fa.schedule-passenger-present" })
-   elseif cond_type == "passenger_not_present" then
-      mb:fragment({ "fa.schedule-passenger-not-present" })
-   -- Request conditions (space platforms)
+      mb:fragment({ "fa.schedule-inactivity", tostring((condition.ticks or 0) / 60) })
+   -- Request conditions with item parameter
    elseif cond_type == "request_satisfied" then
-      -- condition.condition is BlueprintItemIDAndQualityIDPair, always present
       mb:fragment({ "fa.schedule-request-satisfied", condition.condition.name })
    elseif cond_type == "request_not_satisfied" then
       mb:fragment({ "fa.schedule-request-not-satisfied", condition.condition.name })
-   elseif cond_type == "all_requests_satisfied" then
-      mb:fragment({ "fa.schedule-all-requests-satisfied" })
-   elseif cond_type == "any_request_not_satisfied" then
-      mb:fragment({ "fa.schedule-any-request-not-satisfied" })
-   elseif cond_type == "any_request_zero" then
-      mb:fragment({ "fa.schedule-any-request-zero" })
-   -- Planet conditions (space platforms) - planet field is optional
+   -- Planet condition (optional planet parameter)
    elseif cond_type == "any_planet_import_zero" then
       if condition.planet then
          mb:fragment({ "fa.schedule-planet-import-zero", condition.planet })
       else
          mb:fragment({ "fa.schedule-any-planet-import-zero" })
       end
-   -- Destination conditions
-   elseif cond_type == "destination_full_or_no_path" then
-      mb:fragment({ "fa.schedule-destination-full-or-no-path" })
-   elseif cond_type == "specific_destination_full" then
-      -- Station is always present for specific destination conditions
-      mb:fragment({ "fa.schedule-destination-full", condition.station })
-   elseif cond_type == "specific_destination_not_full" then
-      mb:fragment({ "fa.schedule-destination-not-full", condition.station })
-   -- Station conditions - station is always present
-   elseif cond_type == "at_station" then
-      mb:fragment({ "fa.schedule-at-station", condition.station })
-   elseif cond_type == "not_at_station" then
-      mb:fragment({ "fa.schedule-not-at-station", condition.station })
    -- Damage condition
    elseif cond_type == "damage_taken" then
       mb:fragment({ "fa.schedule-damage-taken", tostring(condition.damage or 1000) })
-   -- Unknown condition type
+   -- Unknown
    else
       mb:fragment({ "fa.schedule-unknown-condition", tostring(cond_type) })
    end

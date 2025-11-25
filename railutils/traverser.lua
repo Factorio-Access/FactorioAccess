@@ -28,6 +28,56 @@ mod.SignalSide = {
 local Traverser = {}
 local Traverser_meta = { __index = Traverser }
 
+---Get the end data for the current state (internal helper)
+---@return table End data from RailData with extensions and signal_locations
+function Traverser:_get_end_data()
+   local prototype = Queries.rail_type_to_prototype_type(self._rail_type)
+   local rail_entry = RailData[prototype]
+   if not rail_entry then error("Invalid rail type in traverser state") end
+
+   local direction_entry = rail_entry[self._placement_direction]
+   if not direction_entry then error("Invalid placement direction in traverser state") end
+
+   local end_data = direction_entry[self._end_direction]
+   if not end_data then error("Invalid end direction in traverser state") end
+
+   return end_data
+end
+
+---Apply an extension result to update traverser state (internal helper)
+---@param ext railutils.ExtensionPoint
+function Traverser:_apply_extension(ext)
+   self._rail_type = Queries.prototype_type_to_rail_type(ext.next_rail_prototype)
+   self._placement_direction = ext.next_rail_direction
+   self._position = ext.next_rail_position
+   self._end_direction = ext.next_rail_goal_direction
+end
+
+---Get signal data for a specific side (internal helper)
+---@param end_data table End data from _get_end_data
+---@param side railutils.SignalSide LEFT or RIGHT
+---@param use_alt boolean If true, use alt_in_signal/alt_out_signal instead
+---@return table|nil Signal data with position and direction
+function Traverser:_get_signal_data(end_data, side, use_alt)
+   if not end_data.signal_locations then
+      if use_alt then return nil end
+      error("No signal locations for current end")
+   end
+
+   local signal_data
+   if side == mod.SignalSide.LEFT then
+      signal_data = use_alt and end_data.signal_locations.alt_in_signal or end_data.signal_locations.in_signal
+   elseif side == mod.SignalSide.RIGHT then
+      signal_data = use_alt and end_data.signal_locations.alt_out_signal or end_data.signal_locations.out_signal
+   else
+      error("Invalid signal side: " .. tostring(side))
+   end
+
+   if not signal_data and not use_alt then error("No signal found for side: " .. tostring(side)) end
+
+   return signal_data
+end
+
 ---Create a new traverser
 ---@param rail_type railutils.RailType Initial rail type
 ---@param position fa.Point Initial position (should already be grid-adjusted if binding to a real rail)
@@ -73,22 +123,10 @@ end
 ---@param direction_offset number 0=forward, 1=right, -1=left
 ---@return railutils.ExtensionPoint
 function Traverser:_get_extension(direction_offset)
-   -- Calculate goal direction (wrapping around 16-way compass)
    local goal_direction = (self._end_direction + direction_offset) % 16
+   local end_data = self:_get_end_data()
 
-   -- Get all extensions at current position
-   -- Note: In real usage, we're not querying a surface, we're using the static table
-   -- But get_extension_points_at_position works off rail data, so we need to simulate
-   -- Actually, let me just look up directly in the rail data
-   local prototype = Queries.rail_type_to_prototype_type(self._rail_type)
-   local rail_entry = RailData[prototype]
-   if not rail_entry then error("Invalid rail type in traverser state") end
-
-   local direction_entry = rail_entry[self._placement_direction]
-   if not direction_entry then error("Invalid placement direction in traverser state") end
-
-   local end_data = direction_entry[self._end_direction]
-   if not end_data or not end_data.extensions then error("Invalid end direction in traverser state") end
+   if not end_data.extensions then error("No extensions for current end") end
 
    local extension = end_data.extensions[goal_direction]
    if not extension then
@@ -102,7 +140,6 @@ function Traverser:_get_extension(direction_offset)
       )
    end
 
-   -- Convert to absolute positions
    return {
       next_rail_prototype = extension.prototype,
       next_rail_position = {
@@ -116,32 +153,17 @@ end
 
 ---Move forward (continue in same direction)
 function Traverser:move_forward()
-   local ext = self:_get_extension(0)
-
-   self._rail_type = Queries.prototype_type_to_rail_type(ext.next_rail_prototype)
-   self._placement_direction = ext.next_rail_direction
-   self._position = ext.next_rail_position
-   self._end_direction = ext.next_rail_goal_direction
+   self:_apply_extension(self:_get_extension(0))
 end
 
 ---Turn left (direction - 1)
 function Traverser:move_left()
-   local ext = self:_get_extension(-1)
-
-   self._rail_type = Queries.prototype_type_to_rail_type(ext.next_rail_prototype)
-   self._placement_direction = ext.next_rail_direction
-   self._position = ext.next_rail_position
-   self._end_direction = ext.next_rail_goal_direction
+   self:_apply_extension(self:_get_extension(-1))
 end
 
 ---Turn right (direction + 1)
 function Traverser:move_right()
-   local ext = self:_get_extension(1)
-
-   self._rail_type = Queries.prototype_type_to_rail_type(ext.next_rail_prototype)
-   self._placement_direction = ext.next_rail_direction
-   self._position = ext.next_rail_position
-   self._end_direction = ext.next_rail_goal_direction
+   self:_apply_extension(self:_get_extension(1))
 end
 
 ---Flip to the opposite end of the current rail
@@ -201,28 +223,9 @@ end
 ---@param side railutils.SignalSide LEFT or RIGHT
 ---@return fa.Point Absolute signal position
 function Traverser:get_signal_pos(side)
-   local prototype = Queries.rail_type_to_prototype_type(self._rail_type)
-   local rail_entry = RailData[prototype]
-   if not rail_entry then error("Invalid rail type in traverser state") end
+   local end_data = self:_get_end_data()
+   local signal_data = self:_get_signal_data(end_data, side, false)
 
-   local direction_entry = rail_entry[self._placement_direction]
-   if not direction_entry then error("Invalid placement direction in traverser state") end
-
-   local end_data = direction_entry[self._end_direction]
-   if not end_data or not end_data.signal_locations then error("No signal locations for current end") end
-
-   local signal_data
-   if side == mod.SignalSide.LEFT then
-      signal_data = end_data.signal_locations.in_signal
-   elseif side == mod.SignalSide.RIGHT then
-      signal_data = end_data.signal_locations.out_signal
-   else
-      error("Invalid signal side: " .. tostring(side))
-   end
-
-   if not signal_data then error("No signal found for side: " .. tostring(side)) end
-
-   -- Return absolute position
    return {
       x = self._position.x + signal_data.position.x,
       y = self._position.y + signal_data.position.y,
@@ -233,28 +236,10 @@ end
 ---@param side railutils.SignalSide LEFT or RIGHT
 ---@return fa.Point|nil Absolute signal position, or nil if no alt signal
 function Traverser:get_alt_signal_pos(side)
-   local prototype = Queries.rail_type_to_prototype_type(self._rail_type)
-   local rail_entry = RailData[prototype]
-   if not rail_entry then error("Invalid rail type in traverser state") end
-
-   local direction_entry = rail_entry[self._placement_direction]
-   if not direction_entry then error("Invalid placement direction in traverser state") end
-
-   local end_data = direction_entry[self._end_direction]
-   if not end_data or not end_data.signal_locations then return nil end
-
-   local signal_data
-   if side == mod.SignalSide.LEFT then
-      signal_data = end_data.signal_locations.alt_in_signal
-   elseif side == mod.SignalSide.RIGHT then
-      signal_data = end_data.signal_locations.alt_out_signal
-   else
-      error("Invalid signal side: " .. tostring(side))
-   end
-
+   local end_data = self:_get_end_data()
+   local signal_data = self:_get_signal_data(end_data, side, true)
    if not signal_data then return nil end
 
-   -- Return absolute position
    return {
       x = self._position.x + signal_data.position.x,
       y = self._position.y + signal_data.position.y,
@@ -265,27 +250,8 @@ end
 ---@param side railutils.SignalSide LEFT or RIGHT
 ---@return defines.direction Signal direction
 function Traverser:get_signal_direction(side)
-   local prototype = Queries.rail_type_to_prototype_type(self._rail_type)
-   local rail_entry = RailData[prototype]
-   if not rail_entry then error("Invalid rail type in traverser state") end
-
-   local direction_entry = rail_entry[self._placement_direction]
-   if not direction_entry then error("Invalid placement direction in traverser state") end
-
-   local end_data = direction_entry[self._end_direction]
-   if not end_data or not end_data.signal_locations then error("No signal locations for current end") end
-
-   local signal_data
-   if side == mod.SignalSide.LEFT then
-      signal_data = end_data.signal_locations.in_signal
-   elseif side == mod.SignalSide.RIGHT then
-      signal_data = end_data.signal_locations.out_signal
-   else
-      error("Invalid signal side: " .. tostring(side))
-   end
-
-   if not signal_data then error("No signal found for side: " .. tostring(side)) end
-
+   local end_data = self:_get_end_data()
+   local signal_data = self:_get_signal_data(end_data, side, false)
    return signal_data.direction
 end
 

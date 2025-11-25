@@ -14,6 +14,9 @@ local UiSounds = require("scripts.ui.sounds")
 
 local mod = {}
 
+-- Max uint32 value used by Factorio to represent "unlimited" trains
+local UNLIMITED_TRAINS = 4294967295
+
 ---@class fa.ui.TrainStopTabContext: fa.ui.TabContext
 ---@field tablist_shared_state fa.ui.EntityUI.SharedState
 
@@ -73,8 +76,7 @@ local function render_train_stop_config(ctx)
       label = function(ctx)
          local limit = entity.trains_limit
          ctx.message:fragment({ "fa.train-stop-limit" })
-         -- 4294967295 is the max uint32 value, used to represent "unlimited"
-         if not limit or limit == 4294967295 then
+         if not limit or limit == UNLIMITED_TRAINS then
             ctx.message:fragment({ "fa.train-stop-limit-disabled" })
          else
             ctx.message:fragment(tostring(limit))
@@ -94,8 +96,7 @@ local function render_train_stop_config(ctx)
          end
       end,
       on_clear = function(ctx)
-         -- Set to max uint32 value to represent "unlimited"
-         entity.trains_limit = 4294967295
+         entity.trains_limit = UNLIMITED_TRAINS
          ctx.controller.message:fragment({ "fa.train-stop-limit-disabled" })
       end,
    })

@@ -86,6 +86,18 @@ local function create_traverser_from_move(move)
    return trav
 end
 
+---Get a bounding box for the tile containing a position
+---@param position MapPosition
+---@return BoundingBox
+local function get_tile_search_area(position)
+   local floor_x = math.floor(position.x)
+   local floor_y = math.floor(position.y)
+   return {
+      { x = floor_x + 0.001, y = floor_y + 0.001 },
+      { x = floor_x + 0.999, y = floor_y + 0.999 },
+   }
+end
+
 ---Check if a rail already exists at position matching prototype and direction
 ---@param surface LuaSurface
 ---@param position MapPosition
@@ -93,15 +105,8 @@ end
 ---@param direction defines.direction
 ---@return LuaEntity|nil
 local function find_matching_rail(surface, position, prototype_name, direction)
-   local floor_x = math.floor(position.x)
-   local floor_y = math.floor(position.y)
-   local search_area = {
-      { x = floor_x + 0.001, y = floor_y + 0.001 },
-      { x = floor_x + 0.999, y = floor_y + 0.999 },
-   }
-
    local entities = surface.find_entities_filtered({
-      area = search_area,
+      area = get_tile_search_area(position),
       name = prototype_name,
    })
 
@@ -223,35 +228,28 @@ local function check_connection(rail_entity, rail_type, end_direction, move_fn)
    local trav = Traverser.new(rail_type, position, end_direction)
    move_fn(trav)
 
-   -- Get expected next rail
    local expected_pos = trav:get_position()
    local expected_direction = trav:get_placement_direction()
    local expected_type = Queries.rail_type_to_prototype_type(trav:get_rail_kind())
-
-   -- Floor positions for comparison
    local expected_floor_x = math.floor(expected_pos.x)
    local expected_floor_y = math.floor(expected_pos.y)
 
-   local search_area = {
-      { x = expected_floor_x + 0.001, y = expected_floor_y + 0.001 },
-      { x = expected_floor_x + 0.999, y = expected_floor_y + 0.999 },
-   }
-
-   -- Find rails at next position
    local rails_at_pos = rail_entity.surface.find_entities_filtered({
-      area = search_area,
+      area = get_tile_search_area(expected_pos),
       type = Consts.RAIL_TYPES,
    })
 
-   -- Check if any rail matches what we expect
    for _, connected_rail in ipairs(rails_at_pos) do
       local rail_floor_x = math.floor(connected_rail.position.x)
       local rail_floor_y = math.floor(connected_rail.position.y)
-      local pos_match = rail_floor_x == expected_floor_x and rail_floor_y == expected_floor_y
-      local type_match = connected_rail.name == expected_type
-      local direction_match = connected_rail.direction == expected_direction
-
-      if pos_match and type_match and direction_match then return true end
+      if
+         rail_floor_x == expected_floor_x
+         and rail_floor_y == expected_floor_y
+         and connected_rail.name == expected_type
+         and connected_rail.direction == expected_direction
+      then
+         return true
+      end
    end
 
    return false

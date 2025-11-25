@@ -69,36 +69,35 @@ function mod.get_diagonal_name(direction)
    return mod.DIAGONAL_NAMES[direction]
 end
 
+-- Bidirectional mapping between RailType and prototype names
+local RAIL_TYPE_TO_PROTOTYPE = {
+   [RailInfo.RailType.STRAIGHT] = "straight-rail",
+   [RailInfo.RailType.CURVE_A] = "curved-rail-a",
+   [RailInfo.RailType.CURVE_B] = "curved-rail-b",
+   [RailInfo.RailType.HALF_DIAGONAL] = "half-diagonal-rail",
+}
+
+local PROTOTYPE_TO_RAIL_TYPE = {}
+for rail_type, prototype in pairs(RAIL_TYPE_TO_PROTOTYPE) do
+   PROTOTYPE_TO_RAIL_TYPE[prototype] = rail_type
+end
+
 ---Map RailType to prototype type string for table lookup
 ---@param rail_type railutils.RailType
 ---@return string
 function mod.rail_type_to_prototype_type(rail_type)
-   if rail_type == RailInfo.RailType.STRAIGHT then
-      return "straight-rail"
-   elseif rail_type == RailInfo.RailType.CURVE_A then
-      return "curved-rail-a"
-   elseif rail_type == RailInfo.RailType.CURVE_B then
-      return "curved-rail-b"
-   elseif rail_type == RailInfo.RailType.HALF_DIAGONAL then
-      return "half-diagonal-rail"
-   end
-   error("Unknown rail type: " .. tostring(rail_type))
+   local result = RAIL_TYPE_TO_PROTOTYPE[rail_type]
+   if not result then error("Unknown rail type: " .. tostring(rail_type)) end
+   return result
 end
 
 ---Map prototype type string to RailType
 ---@param prototype string Prototype type string like "curved-rail-a"
 ---@return railutils.RailType
 function mod.prototype_type_to_rail_type(prototype)
-   if prototype == "straight-rail" then
-      return RailInfo.RailType.STRAIGHT
-   elseif prototype == "curved-rail-a" then
-      return RailInfo.RailType.CURVE_A
-   elseif prototype == "curved-rail-b" then
-      return RailInfo.RailType.CURVE_B
-   elseif prototype == "half-diagonal-rail" then
-      return RailInfo.RailType.HALF_DIAGONAL
-   end
-   error("Unknown prototype: " .. tostring(prototype))
+   local result = PROTOTYPE_TO_RAIL_TYPE[prototype]
+   if not result then error("Unknown prototype: " .. tostring(prototype)) end
+   return result
 end
 
 ---Get the grid-adjusted position where a rail will actually be placed

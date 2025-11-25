@@ -199,6 +199,21 @@ local CURVE_B_FALLBACK = {
    [defines.direction.northwest] = RailInfo.RailKind.LEFT_OF_SOUTHEAST,
 }
 
+---Junction classification lookup: [has_straight][has_left][has_right] -> JunctionKind
+---@type table<boolean, table<boolean, table<boolean, railutils.JunctionKind?>>>
+local JUNCTION_CLASSIFICATION = {
+   [false] = {
+      [true] = { [true] = RailInfo.JunctionKind.SPLIT },
+   },
+   [true] = {
+      [false] = { [true] = RailInfo.JunctionKind.FORK_RIGHT },
+      [true] = {
+         [false] = RailInfo.JunctionKind.FORK_LEFT,
+         [true] = RailInfo.JunctionKind.FORK_BOTH,
+      },
+   },
+}
+
 ---Get fallback description for curved rails
 ---@param rail_type railutils.RailType
 ---@param placement_direction defines.direction
@@ -298,16 +313,9 @@ function mod.describe_rail(surface, rail_type, placement_direction, position)
          end
 
          -- Classify the junction based on which directions exist
-         local junction_kind = nil
-         if not has_straight and has_left and has_right then
-            junction_kind = RailInfo.JunctionKind.SPLIT
-         elseif has_straight and has_left and not has_right then
-            junction_kind = RailInfo.JunctionKind.FORK_LEFT
-         elseif has_straight and not has_left and has_right then
-            junction_kind = RailInfo.JunctionKind.FORK_RIGHT
-         elseif has_straight and has_left and has_right then
-            junction_kind = RailInfo.JunctionKind.FORK_BOTH
-         end
+         local junction_kind = JUNCTION_CLASSIFICATION[has_straight]
+            and JUNCTION_CLASSIFICATION[has_straight][has_left]
+            and JUNCTION_CLASSIFICATION[has_straight][has_left][has_right]
 
          -- Only add if it's a recognized junction type (ignore single connections)
          if junction_kind then
