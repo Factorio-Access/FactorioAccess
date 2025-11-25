@@ -27,25 +27,18 @@ local function render_train_stop_config(ctx)
 
    local builder = FormBuilder.FormBuilder.new()
 
-   -- Name field
-   builder:add_item("name", {
-      label = function(ctx)
-         local name = entity.backer_name or ""
-         local value_text = name ~= "" and name or { "fa.empty" }
-         ctx.message:fragment(value_text)
-         ctx.message:fragment({ "fa.train-stop-name" })
+   -- Name field with rich text support
+   builder:add_rich_textfield("name", {
+      label = { "fa.train-stop-name" },
+      get_value = function()
+         return entity.backer_name or ""
       end,
-      on_click = function(ctx)
-         ctx.controller:open_textbox("", "name")
+      set_value = function(value)
+         entity.backer_name = value
       end,
-      on_child_result = function(ctx, result)
-         if not result or result == "" then
-            UiSounds.play_ui_edge(ctx.pindex)
-            ctx.controller.message:fragment({ "fa.train-stop-name-cannot-be-empty" })
-         else
-            entity.backer_name = result
-            ctx.controller.message:fragment(result)
-         end
+      validate = function(value)
+         if not value or value == "" then return false, { "fa.train-stop-name-cannot-be-empty" } end
+         return true
       end,
    })
 

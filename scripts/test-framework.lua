@@ -37,6 +37,7 @@ local test_files = {
    "inventory-coordinates-test", -- Test inventory coordinate announcements (test #12)
    -- Additional tests
    "belt-direction-test", -- Test transport belt direction detection
+   "rich-text-test", -- Test rich text processing and shorthand parsing
    "assembler-recipe-test", -- Test assembling machine recipe management
    "assembling-machine-ui-test", -- Test assembling machine UI with recipe selection
    "hidden-technology-filter-test", -- Test filtering of hidden technologies

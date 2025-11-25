@@ -35,6 +35,7 @@ local UiSounds = require("scripts.ui.sounds")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
 local LocalisedStringCache = require("scripts.localised-string-cache")
+local RichText = require("scripts.rich-text")
 
 local mod = {}
 
@@ -85,7 +86,7 @@ end
 ---@field on_previous_tab? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_next_section? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_previous_section? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_child_result? fun(self, pindex: number, result: any, context: any, controller: fa.ui.RouterController)
+---@field on_child_result? fun(self, pindex: number, result: any, context: any, controller: fa.ui.RouterController) Result is string (plain textbox), fa.ui.TextboxRichTextResult (rich text textbox), or child UI specific
 ---@field on_accelerator? fun(self, pindex: number, accelerator_name: fa.ui.Accelerator, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_clear? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_dangerous_delete? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
@@ -142,6 +143,7 @@ mod.UI_NAMES = {
    LOGISTICS_CONFIG = "logistics_config",
    LOGISTIC_GROUP_SELECTOR = "logistic_group_selector",
    TRAIN_GROUP_SELECTOR = "train_group_selector",
+   TRAIN_INTERRUPT_SELECTOR = "train_interrupt_selector",
    CONSTANT_COMBINATOR = "constant_combinator",
    DECIDER_COMBINATOR = "decider_combinator",
    POWER_SWITCH = "power_switch",
@@ -241,10 +243,9 @@ end
 ---Open a textbox for user input
 ---@param initial_text string
 ---@param context any Any value to help identify which node/item opened the textbox
----@param intro_message LocalisedString? Optional intro message to speak when opening
-function RouterController:open_textbox(initial_text, context, intro_message)
-   -- Store the context - result will go to top of stack when textbox closes
-   GameGui.open_textbox(self.pindex, initial_text, context, intro_message)
+---@param options fa.ui.TextboxOptions? Options for the textbox (intro_message, rich_text)
+function RouterController:open_textbox(initial_text, context, options)
+   GameGui.open_textbox(self.pindex, initial_text, context, options)
 end
 
 ---Set the search pattern for the current player
@@ -782,11 +783,23 @@ EventManager.on_event(defines.events.on_gui_confirmed, function(event)
 
       if top_ui_name then
          local context = GameGui.get_textbox_context(pindex)
+         local is_rich_text = GameGui.is_textbox_rich_text(pindex)
+         local result
+
+         -- Process rich text if enabled
+         if is_rich_text then
+            local text = event.element.text
+            local expanded, errors = RichText.parse_rich_text_shorthand(text)
+            result = { value = expanded, errors = errors }
+         else
+            result = event.element.text
+         end
+
          -- Send result to the top UI on the stack
          local ui = registered_uis[top_ui_name]
          if ui and ui.on_child_result then
             local controller = create_controller_for_event(router)
-            ui:on_child_result(pindex, event.element.text, context, controller)
+            ui:on_child_result(pindex, result, context, controller)
             controller:finalize()
          end
          -- Close the textbox

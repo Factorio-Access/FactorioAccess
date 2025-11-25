@@ -162,4 +162,43 @@ function mod.get_train_groups(force)
    return groups
 end
 
+---Get all unique train interrupt names for a force.
+---@param force ForceID The force to get interrupts for
+---@return string[] Sorted array of interrupt names (excluding empty names)
+function mod.get_train_interrupts(force)
+   local interrupts = {}
+   local seen = {}
+
+   local trains = game.train_manager.get_trains({ force = force })
+   for _, train in ipairs(trains) do
+      local schedule = train.get_schedule()
+      if schedule then
+         local train_interrupts = schedule.get_interrupts()
+         for _, interrupt in ipairs(train_interrupts) do
+            local name = interrupt.name
+            if name and name ~= "" and not seen[name] then
+               seen[name] = true
+               table.insert(interrupts, name)
+            end
+         end
+      end
+   end
+
+   table.sort(interrupts)
+   return interrupts
+end
+
+---Check if an interrupt name is unique within a schedule
+---@param schedule LuaSchedule
+---@param name string
+---@param exclude_index number? Optional index to exclude (for renames)
+---@return boolean
+function mod.is_interrupt_name_unique(schedule, name, exclude_index)
+   local interrupts = schedule.get_interrupts()
+   for i, interrupt in ipairs(interrupts) do
+      if i ~= exclude_index and interrupt.name == name then return false end
+   end
+   return true
+end
+
 return mod

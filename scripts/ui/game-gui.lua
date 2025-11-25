@@ -14,6 +14,7 @@ local mod = {}
 ---@field textbox_element LuaGuiElement?
 ---@field active_ui_name string?
 ---@field textbox_context any? Context to help identify which node/item opened the textbox
+---@field textbox_rich_text boolean? Whether rich text parsing is enabled for the textbox
 
 ---@type table<number, fa.ui.GameGuiState>
 local gui_storage = StorageManager.declare_storage_module("game_gui", {
@@ -22,6 +23,7 @@ local gui_storage = StorageManager.declare_storage_module("game_gui", {
    textbox_element = nil,
    active_ui_name = nil,
    textbox_context = nil,
+   textbox_rich_text = nil,
 })
 
 ---Cleanup any invalid GUI elements
@@ -35,6 +37,7 @@ local function cleanup_invalid_elements(pindex)
    if state.textbox_element and not state.textbox_element.valid then
       state.textbox_element = nil
       state.textbox_context = nil
+      state.textbox_rich_text = nil
    end
 end
 
@@ -106,17 +109,29 @@ function mod.clear_active_ui(pindex)
    state.textbox_element = nil
    state.active_ui_name = nil
    state.textbox_context = nil
+   state.textbox_rich_text = nil
 end
+
+---@class fa.ui.TextboxOptions
+---@field intro_message LocalisedString? Optional intro message to speak when opening
+---@field rich_text boolean? Whether to enable rich text parsing
+
+---@class fa.ui.TextboxRichTextResult
+---@field value string The expanded rich text
+---@field errors LocalisedString[]? Array of error messages if parsing failed
 
 ---Open a textbox for user input
 ---@param pindex number
 ---@param initial_text string
 ---@param context any? Context to help identify which node/item opened the textbox
----@param intro_message LocalisedString? Optional intro message to speak when opening
-function mod.open_textbox(pindex, initial_text, context, intro_message)
+---@param options fa.ui.TextboxOptions? Options for the textbox
+function mod.open_textbox(pindex, initial_text, context, options)
    local state = gui_storage[pindex]
 
    if not state.active_ui_name then error("Cannot open textbox without an active UI") end
+
+   -- Normalize options
+   options = options or {}
 
    -- Ensure frame exists
    local frame = ensure_frame_exists(pindex)
@@ -133,11 +148,12 @@ function mod.open_textbox(pindex, initial_text, context, intro_message)
    state.textbox_element.focus()
    state.textbox_element.select_all()
 
-   -- Store the context
+   -- Store the context and options
    state.textbox_context = context
+   state.textbox_rich_text = options.rich_text or false
 
    -- Speak intro message (default to "Enter text" if not provided)
-   Speech.speak(pindex, intro_message or { "fa.textbox-enter-text" })
+   Speech.speak(pindex, options.intro_message or { "fa.textbox-enter-text" })
 end
 
 ---Close the textbox
@@ -149,6 +165,7 @@ function mod.close_textbox(pindex)
 
    state.textbox_element = nil
    state.textbox_context = nil
+   state.textbox_rich_text = nil
 end
 
 ---Get the stored context for the textbox
@@ -156,6 +173,22 @@ end
 ---@return any?
 function mod.get_textbox_context(pindex)
    return gui_storage[pindex].textbox_context
+end
+
+---Check if rich text parsing is enabled for the textbox
+---@param pindex number
+---@return boolean
+function mod.is_textbox_rich_text(pindex)
+   return gui_storage[pindex].textbox_rich_text or false
+end
+
+---Get the textbox text
+---@param pindex number
+---@return string?
+function mod.get_textbox_text(pindex)
+   local state = gui_storage[pindex]
+   if state.textbox_element and state.textbox_element.valid then return state.textbox_element.text end
+   return nil
 end
 
 ---Check if a textbox is open

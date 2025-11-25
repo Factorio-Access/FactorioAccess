@@ -9,6 +9,7 @@ local UiSounds = require("scripts.ui.sounds")
 local Speech = require("scripts.speech")
 local UiRouter = require("scripts.ui.router")
 local CircuitNetwork = require("scripts.circuit-network")
+local RichText = require("scripts.rich-text")
 
 local mod = {}
 
@@ -26,6 +27,7 @@ local mod = {}
 ---@field get_value fun(): string
 ---@field set_value fun(string)
 ---@field on_clear (fun(fa.ui.graph.Ctx))? Optional clear callback (triggered by backspace)
+---@field validate (fun(string): boolean, LocalisedString?)? Optional validation callback, returns success and optional error message
 
 ---@class fa.ui.form.FormBuilder
 ---@field operations fun(fa.ui.menu.MenuBuilder)[] Sequence of closures to apply to MenuBuilder
@@ -123,6 +125,68 @@ function FormBuilder:add_textfield(name, params)
          -- Only announce the new value
          local value_text = result ~= "" and result or { "fa.empty" }
          ctx.controller.message:fragment(value_text)
+      end,
+   }
+
+   -- Add clear callback if provided
+   if params.on_clear then vtable.on_clear = params.on_clear end
+
+   self:add_item(name, vtable)
+
+   return self
+end
+
+---Add a rich textfield control (supports rich text shorthand notation)
+---@param name string Unique identifier for this control
+---@param params fa.FormBuilder.TextBoxParams
+---@return fa.ui.form.FormBuilder
+function FormBuilder:add_rich_textfield(name, params)
+   -- Create label builder function that uses the getter and verbalizes rich text
+   local function build_label(message, ctx)
+      local base_label = UiUtils.to_label_function(params.label)(ctx)
+      local val = params.get_value()
+      local value_text
+      if val and val ~= "" then
+         value_text = RichText.verbalize_rich_text(val)
+      else
+         value_text = { "fa.empty" }
+      end
+      message:fragment(value_text)
+      message:fragment(base_label)
+   end
+
+   local vtable = {
+      label = function(ctx)
+         build_label(ctx.message, ctx)
+      end,
+      on_click = function(ctx)
+         -- Open textbox with rich_text enabled
+         ctx.controller:open_textbox("", name, { rich_text = true })
+      end,
+      on_child_result = function(ctx, result)
+         -- Result is a table with {value, errors} when rich_text is enabled
+         if type(result) == "table" and result.errors then
+            -- Announce parsing errors
+            UiSounds.play_ui_edge(ctx.pindex)
+            for _, error_msg in ipairs(result.errors) do
+               ctx.controller.message:fragment(error_msg)
+            end
+            -- Don't set value, this is like a cancel
+         elseif type(result) == "table" and result.value then
+            -- Run validation if provided
+            if params.validate then
+               local valid, error_msg = params.validate(result.value)
+               if not valid then
+                  UiSounds.play_ui_edge(ctx.pindex)
+                  ctx.controller.message:fragment(error_msg or { "fa.invalid-value" })
+                  return
+               end
+            end
+            -- Success: set the expanded value and announce
+            params.set_value(result.value)
+            local value_text = RichText.verbalize_rich_text(result.value)
+            ctx.controller.message:fragment(value_text)
+         end
       end,
    }
 
