@@ -38,12 +38,6 @@ function mod.register_cue(name, check_function, tick_interval, tick_offset, per_
    }
 end
 
----Unregisters an audio cue
----@param name string
-function mod.unregister_cue(name)
-   cue_types[name] = nil
-end
-
 ---Checks all registered audio cues for the current tick
 ---@param tick number
 ---@param players table<number, LuaPlayer>

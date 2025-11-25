@@ -273,20 +273,6 @@ function mod.apply_blueprint_import(pindex, text)
    end
 end
 
-function mod.blueprint_menu_close(pindex, mute_in)
-   local mute = mute_in
-   --Set the player menu tracker to none
-   UiRouter.get_router(pindex):close_ui()
-
-   --Set the menu line counter to 0
-   storage.players[pindex].blueprint_menu.index = 0
-
-   --play sound
-   if not mute then game.get_player(pindex).play_sound({ path = "Close-Inventory-Sound" }) end
-
-   if game.get_player(pindex).opened ~= nil then game.get_player(pindex).opened = nil end
-end
-
 --Basic info for when the blueprint book item is read (using inventory API)
 function mod.get_blueprint_book_info(stack, in_hand)
    if not stack or not stack.is_blueprint_book then return "" end
@@ -305,37 +291,6 @@ function mod.get_blueprint_book_info(stack, in_hand)
    table.insert(result, { "fa.blueprints-with-items", tostring(item_count) })
 
    return result
-end
-
-function mod.copy_selected_area_to_clipboard(pindex, point_1, point_2)
-   local top_left, bottom_right = FaUtils.get_top_left_and_bottom_right(point_1, point_2)
-   local p = game.get_player(pindex)
-   if p.cursor_stack == nil or p.cursor_stack.valid_for_read == false then return end
-   p.cursor_stack.set_stack({ name = "blueprint", count = 1 })
-   p.cursor_stack.create_blueprint({ surface = p.surface, force = p.force, area = { top_left, bottom_right } })
-   if
-      not (
-         p.cursor_stack
-         and p.cursor_stack.valid_for_read
-         and p.cursor_stack.is_blueprint
-         and p.cursor_stack.is_blueprint_setup()
-      )
-   then
-      p.clear_cursor()
-      p.cursor_stack.set_stack({ name = "copy-paste-tool", count = 1 })
-      Speech.speak(pindex, { "fa.blueprints-copied-nothing" })
-      return
-   end
-   p.add_to_clipboard(p.cursor_stack)
-   p.clear_cursor()
-   p.activate_paste()
-
-   --Use this opportunity to update saved information about the blueprint's corners (used when drawing the footprint)
-   local width, height = BuildDimensions.get_stack_build_dimensions(p.cursor_stack, dirs.north)
-   if width and height then
-      storage.players[pindex].blueprint_width_in_hand = width + 1
-      storage.players[pindex].blueprint_height_in_hand = height + 1
-   end
 end
 
 return mod
