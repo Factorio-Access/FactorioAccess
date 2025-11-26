@@ -1,4 +1,4 @@
-# 0.16.24 (unreleased)
+# 0.16.24 (2025-11-26)
 
 - Support interrupts. Please see the expanded train documentation [here](./docs/features/rails.md)
 - Support limited reading of rich text globally
