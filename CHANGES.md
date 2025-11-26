@@ -1,3 +1,10 @@
+# 0.16.24 (unreleased)
+
+- Support interrupts. Please see the expanded train documentation [here](./docs/features/rails.md)
+- Support limited reading of rich text globally
+- Risk some internal cleanups that may cause crashes.
+- Fix a crash in a debug print still using a 1.1 API which could trigger if the game decided to fire on_player_joined_game by removing it.
+
 # 0.16.23 (2025-11-21)
 
 - Add feedback for alt + f, which toggles personal roboports (not the same as alt + l, which toggles personal logistics).
