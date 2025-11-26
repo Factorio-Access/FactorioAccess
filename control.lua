@@ -2580,13 +2580,6 @@ EventManager.on_event(
    end
 )
 
---Reprints the last sent string to the Factorio Access Launcher app for the vocalizer to read out.
----@param event EventData.CustomInputEvent
-local function kb_repeat_last_spoken(event)
-   local pindex = event.player_index
-   Speech.speak(pindex, storage.players[pindex].last)
-end
-
 -- fa-c-tab is now handled by the UI router for section navigation
 
 --Used when a tile has multiple overlapping entities. Reads out the next entity.
@@ -2771,29 +2764,6 @@ EventManager.on_event(
 )
 
 ---@param event EventData.CustomInputEvent
-local function kb_flush_fluid(event)
-   local pindex = event.player_index
-   local pb = storage.players[pindex].building
-   local sector = pb.sectors[pb.sector]
-   local box = sector.inventory
-   if sector.name ~= "Fluid" or not box or #box == 0 then
-      Speech.speak(pindex, { "fa.no-fluids-to-flush" })
-      return
-   end
-
-   local fluid = box[pb.index]
-   if not (fluid and fluid.name) then
-      Speech.speak(pindex, { "fa.no-fluids-to-flush" })
-      return
-   end
-
-   if pb.ent and pb.ent.valid and pb.ent.type == "fluid-turret" and pb.index ~= 1 then pb.index = 1 end
-
-   Speech.speak(pindex, { "fa.flushed-away", Localising.get_localised_name_with_fallback(fluid) })
-   box.flush(pb.index)
-end
-
----@param event EventData.CustomInputEvent
 local function kb_mine_tiles(event)
    local pindex = event.player_index
    local p = game.get_player(pindex)
@@ -2865,19 +2835,6 @@ EventManager.on_event(
    end
 )
 
---Left click actions in menus (click_menu)
----@param event EventData.CustomInputEvent
-local function kb_click_menu(event)
-   local pindex = event.player_index
-   local router = UiRouter.get_router(pindex)
-   local vp = Viewpoint.get_viewpoint(pindex)
-   local p = game.get_player(pindex)
-
-   storage.players[pindex].last_click_tick = event.tick
-   --Clear temporary cursor items instead of swapping them in
-   if p.cursor_stack_temporary then p.clear_cursor() end
-   --Act according to the type of menu open
-end
 ---Left click actions with items in hand
 ---@param event EventData.CustomInputEvent
 local function kb_click_hand(event)
@@ -3208,16 +3165,6 @@ EventManager.on_event(
    end
 )
 
---Right click actions in menus (click_menu)
----@param event EventData.CustomInputEvent
-local function kb_click_menu_right(event)
-   local pindex = event.player_index
-   local router = UiRouter.get_router(pindex)
-   storage.players[pindex].last_click_tick = event.tick
-   local p = game.get_player(pindex)
-   local stack = p.cursor_stack
-end
-
 --Reads the entity status but also adds on extra info depending on the entity
 ---@param event EventData.CustomInputEvent
 local function kb_read_entity_status(event)
@@ -3301,22 +3248,6 @@ EventManager.on_event(
    end
 )
 
---You can equip armor, armor equipment, guns, ammo. You can equip from the hand, or from the inventory with an empty hand.
----@param event EventData.CustomInputEvent
-local function kb_equip_item(event)
-   local pindex = event.player_index
-   local router = UiRouter.get_router(pindex)
-
-   local stack = game.get_player(pindex).cursor_stack
-   --Equip item grabbed in hand, for selected menus
-   local result = Equipment.equip_it(stack, pindex)
-
-   if result ~= "" then
-      --game.get_player(pindex).print(result)--**
-      Speech.speak(pindex, result)
-   end
-end
-
 EventManager.on_event(
    "fa-s-leftbracket",
    ---@param event EventData.CustomInputEvent
@@ -3366,16 +3297,6 @@ local function kb_repair_area(event)
    if stack and stack.valid_for_read and stack.valid and stack.is_repair_tool then
       Combat.repair_area(math.ceil(p.reach_distance), pindex)
    end
-end
-
---Default is control clicking
----@param event EventData.CustomInputEvent
-local function kb_alternate_build(event)
-   local pindex = event.player_index
-   local router = UiRouter.get_router(pindex)
-   local stack = game.get_player(pindex).cursor_stack
-
-   if stack.name == "steam-engine" then BuildingTools.snap_place_steam_engine_to_a_boiler(pindex) end
 end
 
 EventManager.on_event(
@@ -3884,23 +3805,6 @@ EventManager.on_event(
    end
 )
 
----@param pindex number
-local function find_rocket_silo(pindex)
-   ---@diagnostic disable: cast-local-type
-   ---@diagnostic disable: assign-type-mismatch
-   local p = game.get_player(pindex)
-   local ent = p.selected
-   if p.selected == nil or p.selected.valid == false then ent = p.opened end
-   --For rocket entities, return the silo instead
-   if ent and (ent.name == "rocket-silo-rocket-shadow" or ent.name == "rocket-silo-rocket") then
-      local ents = ent.surface.find_entities_filtered({ position = ent.position, radius = 20, name = "rocket-silo" })
-      for i, silo in ipairs(ents) do
-         ent = silo
-      end
-   end
-   return ent
-end
-
 --Runs before shooting a weapon to check for selected atomic bombs and the target distance
 EventManager.on_event(
    "fa-space",
@@ -3995,14 +3899,6 @@ local function cycle_blueprint_book(pindex, offset)
       local bp_info = Blueprints.get_blueprint_info(active_bp, false, pindex)
       Speech.speak(pindex, { "", { "fa.blueprint-book-switched" }, " ", bp_info })
    end
-end
-
----Check if two positions are close enough to be the same
----@param pos1 MapPosition
----@param pos2 MapPosition
----@return boolean
-local function positions_match(pos1, pos2)
-   return math.abs(pos1.x - pos2.x) < 0.1 and math.abs(pos1.y - pos2.y) < 0.1
 end
 
 EventManager.on_event("fa-comma", function(event)

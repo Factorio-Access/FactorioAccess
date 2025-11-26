@@ -501,22 +501,6 @@ local function announce_under_pos(researches, pos)
    return tech_name_string(researches[pos.index].tech)
 end
 
--- Implements a/d, left/right movement.
----@param player LuaPlayer
----@param direction -1|1
----@return LocalisedString, boolean
-local function move_in_list_impl(player, direction)
-   local researches = get_visible_researches(player)
-   local pos = research_state[player.index].research_menu_pos
-
-   if not normalize_pos(researches, pos) then return { "fa.research-list-no-technologies" }, false end
-
-   local index = find_index_relative(researches, pos.index, direction, pos.focused_list)
-   if index then pos.index = index end
-
-   return announce_under_pos(researches, pos), index ~= nil
-end
-
 function mod.clear_queue(pindex)
    local player = game.get_player(pindex)
    assert(player)

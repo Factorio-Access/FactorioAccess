@@ -13,29 +13,6 @@ local TH = require("scripts.table-helpers")
 
 local mod = {}
 
----Build a message listing transferred items
----@param moved table<string, integer> Table of moved items {[item_name] = count}
----@return LocalisedString
-local function build_item_list_message(moved)
-   local message = MessageBuilder.new()
-
-   -- Convert to array and sort by count (descending)
-   local items = {}
-   for name, count in pairs(moved) do
-      table.insert(items, { name = name, count = count })
-   end
-   table.sort(items, function(a, b)
-      return a.count > b.count
-   end)
-
-   for i, item in ipairs(items) do
-      if i > 1 then message:fragment(", ") end
-      message:fragment(ItemInfo.item_info({ name = item.name, count = item.count }))
-   end
-
-   return message:build()
-end
-
 ---Transfer inventory items between entities
 ---@param args {from: LuaInventory, to: LuaInventory|LuaEntity|LuaPlayer, name?: string, ratio: number}
 ---@return table<string, integer> moved Items moved {[item_name] = count}

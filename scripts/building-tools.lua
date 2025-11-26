@@ -134,26 +134,6 @@ function mod.prepare_build_area(pindex, decision, teleport_player)
    end
 end
 
--- Helper function to check electric pole placement
-local function check_electric_pole_placement(surface, position, pole_name, min_distance, max_radius)
-   local poles = surface.find_entities_filtered({ position = position, radius = max_radius, name = pole_name })
-   local all_beyond_min = true
-   local any_connects = false
-   local any_found = false
-
-   for i, pole in ipairs(poles) do
-      any_found = true
-      local distance = util.distance(position, pole.position)
-      if distance < min_distance then
-         all_beyond_min = false
-      elseif distance >= min_distance then
-         any_connects = true
-      end
-   end
-
-   return all_beyond_min and any_connects, any_found
-end
-
 ---@class fa.BuildingTools.BuildItemParams
 ---@field pindex integer Player index
 ---@field building_direction defines.direction Direction to build in

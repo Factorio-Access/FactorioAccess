@@ -55,18 +55,6 @@ function mod.get_logistic_group_type_for_entity(entity)
    return defines.logistic_group_type.with_trash
 end
 
-local function personal_logistics_enabled(pindex)
-   local p = game.get_player(pindex)
-   local char = p.character
-   if not char then return false end
-   local point = char.get_logistic_point(defines.logistic_member_index.character_requester)
-   for _, sec in pairs(point.sections) do
-      if sec.active then return true end
-   end
-
-   return false
-end
-
 local function schedule_personal_logistics_announcement(pindex)
    -- The game's toggle-personal-logistic-requests control will handle the actual toggle
    -- We just set a flag to announce the new state on the next tick

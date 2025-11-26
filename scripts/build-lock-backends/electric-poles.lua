@@ -23,15 +23,6 @@ function mod.can_handle(item_prototype)
    return item_prototype.place_result.type == "electric-pole"
 end
 
----Get maximum wire reach for a pole, accounting for quality
----@param entity_prototype LuaEntityPrototype
----@param quality LuaQualityPrototype?
----@return number
-local function get_max_wire_distance(entity_prototype, quality)
-   -- In Factorio 2.0, this is a method on the prototype
-   return entity_prototype.get_max_wire_distance(quality or prototypes.quality["normal"])
-end
-
 ---Select which tile from queue to place pole at
 ---Uses wire reach to find the furthest tile that would still connect to last pole
 ---@param pending_tiles table Array of pending tiles
