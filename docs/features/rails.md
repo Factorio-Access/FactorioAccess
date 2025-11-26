@@ -220,8 +220,9 @@ documentation.
 
 Teaching how train schedules work is beyond the scope of mod documentation.  See the wiki for that.
 
-The schedule editor now exposes all 1.1 functionality.  2.0 interrupts are not yet
-implemented.  To get to it, click edit schedule.
+The schedule editor now exposes all functionality.  To get to it, click a locomotive and find the schedule editor on the
+second row to the right of manual mode.  The typical flow is to put the train in manual mode, edit the schedule, then
+turn the train back to automatic.
 
 The controls are at the top of this document, but they borrow the controls of the decider combinator. M is parameter 1,
 comma is the operator, and dot is parameter two.  What these are changes based on the schedule condition type, toggled
@@ -244,5 +245,47 @@ per key, it would "fit" on n m comma dot, and then slash adds to the "end" of th
 
 Train groups are supported and are set at the locomotive config level, that is outside the schedule editor.  As with
 other vanilla functionality, see the regular Factorio wiki for information on how to use them. To cover the one unclear
-point, groups are created by just deciding to use their name and are destroyed by destroying the last train (or ghost)
-using the group.  This slightly unintuitive behavior matches vanilla.
+point, groups are created by just deciding to use their name (press m instead of clicking into the group selector) and
+are destroyed by destroying the last train (or ghost) using the group.  This slightly unintuitive behavior matches
+vanilla.  It's more like channels than groups: any train "tuned" to the same name "receives" the schedule.
+
+## Interrupts and Rich Text
+
+The mod has support for reading properly formatted rich text globally.  In the train related text fields, it also supports some shorthands.
+
+This is relevant to trains (and pretty much only trains) so it is documented here.  In the interrupt system, it is
+possible to put icons into station names and then make an interrupt condition like "any cargo > 5".  The train will then
+go to (for example) "copper plate item dropoff" if it happens to be copper plates and there is a station with that name,
+or "iron plate item dropoff" if it is iron plates.  As with other game mechanics, see the Factorio wiki's railway page
+to learn the power of this system--here we just explain how it currently works with the mod.  The two wiki pages you need are:
+
+- For railways: https://wiki.factorio.com/Railway
+- For rich text: https://wiki.factorio.com/rich_text
+- For prototype names (see below): https://wiki.factorio.com/Data.raw#half-diagonal-rail
+
+If you are reading this document and don't know what an interrupt does, start by reading those pages.
+
+To start with how to get to and make interrupts, the train schedule GUI has an add interrupt button; like with groups,
+to make a new one or type the name of an existing one, press m.  Also like groups, there is no explicit create or
+delete.  If a train is using an interrupt it exists, otherwise it does not. So to create one just start using the name.  Interrupts can be dragged like stops to
+change their priority, and are edited by pressing tab, which will cycle through child schedule editors for all of your
+interrupts.
+
+
+This brings us to the stuff about rich text.  There are two places you may wish to use a wildcard:
+
+- In conditions. To find this, it is in the item selector signals -> unsorted -> parameters.
+- In station names.  For that, use what we are about to explain.
+
+There are two ways to enter rich text when typing into train-related text fields. One is to use `[item=prototypename]`.
+The other is to use our shorthands.  In order to make it feasible to type rich text, we havae introduced a few
+shorthands starting with `:`.  They take the form `:t.name`.  For example, `:i.iron-plate` is iron plates.  To find the iron-plate part, that is the prototype name from the above wiki page. We will be making this bette rin future.
+
+The full list of shorthands is as follows:
+
+- `:i.x`: item icon of prototype x
+- `:f.x`: fluid of prototype x
+- ` :s.x`: virtual signal icon of type x.
+- `:*` followed by i (item), f (fluid), s (signal), or fu (fuel): the wildcard icon for that type. For example `:*i` is "any item".
+
+These are not stored in your save.  We will likely simplify them in future.  What gets stored in the train stop name is the corresponding official long form.
