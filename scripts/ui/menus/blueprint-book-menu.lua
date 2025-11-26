@@ -171,7 +171,7 @@ local function render_settings(ctx)
 
    builder:add_clickable("export", { "fa.ui-blueprint-book-export" }, {
       on_click = function(c)
-         c.controller:open_textbox("", "export")
+         c.controller:open_textbox(book_stack.export_stack(), "export")
          c.message:fragment({ "fa.ui-blueprint-book-export-string-shown" })
       end,
    })

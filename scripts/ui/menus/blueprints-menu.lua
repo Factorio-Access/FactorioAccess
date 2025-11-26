@@ -189,7 +189,7 @@ local function render(ctx)
    if bp.is_blueprint_setup() then
       builder:add_clickable("export", { "fa.ui-blueprints-menu-export" }, {
          on_click = function(ctx)
-            ctx.controller:open_textbox("", "export")
+            ctx.controller:open_textbox(bp.export_stack(), "export")
             ctx.message:fragment({ "fa.ui-blueprints-export-string-shown" })
          end,
          on_child_result = function(ctx, result)

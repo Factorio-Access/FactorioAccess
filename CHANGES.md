@@ -4,6 +4,7 @@
 - Support limited reading of rich text globally
 - Risk some internal cleanups that may cause crashes.
 - Fix a crash in a debug print still using a 1.1 API which could trigger if the game decided to fire on_player_joined_game by removing it.
+- Fix blueprint and blueprint book export. Use ctrl+a, ctrl+c.  We will copy this directly to your clipboard in the near future.
 
 # 0.16.23 (2025-11-21)
 
