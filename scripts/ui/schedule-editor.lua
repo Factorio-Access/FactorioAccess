@@ -614,6 +614,13 @@ local function build_record_vtable(schedule, record_position, record, row_key, k
          end
       end,
 
+      -- Right click: go to this station (main schedule only, not interrupts)
+      on_right_click = not record_position.interrupt_index and function(ctx)
+         schedule.go_to_station(record_position.schedule_index)
+         local destination = record.station or { "fa.schedule-rail-position" }
+         ctx.controller.message:fragment({ "fa.schedule-going-to", destination })
+      end or nil,
+
       on_clear = function(ctx)
          -- Remove the entire record
          schedule.remove_record(record_position)
@@ -888,7 +895,9 @@ local function render_schedule_editor(ctx)
    -- Build the main schedule records list
    build_records_list(builder, schedule, nil, "main-")
 
-   -- Add new stop button
+   -- Add stop buttons row
+   builder:start_row("add-stops-row")
+
    builder:add_clickable("add_stop", { "fa.schedule-add-stop" }, {
       on_click = function(click_ctx)
          click_ctx.controller:open_textbox(
@@ -913,6 +922,34 @@ local function render_schedule_editor(ctx)
          end
       end,
    })
+
+   builder:add_clickable("add_temp_stop", { "fa.schedule-add-temporary-stop" }, {
+      on_click = function(click_ctx)
+         click_ctx.controller:open_textbox(
+            "",
+            "add_temp_stop",
+            { intro_message = { "fa.schedule-enter-station-name" }, rich_text = true }
+         )
+      end,
+      on_child_result = function(click_ctx, result)
+         local station_name = extract_station_name(result, click_ctx)
+         if not station_name then return end
+
+         local new_index = schedule.add_record({
+            station = station_name,
+            wait_conditions = {},
+            temporary = true,
+         })
+
+         click_ctx.controller.message:fragment({ "fa.schedule-temporary-record-added", station_name })
+         if new_index then
+            local updated_records = schedule.get_records() or {}
+            click_ctx.graph_controller:suggest_move(get_record_key(updated_records, new_index, "main-"))
+         end
+      end,
+   })
+
+   builder:end_row()
 
    -- Interrupts section
    builder:add_label("interrupts-header", { "fa.schedule-interrupts" })
