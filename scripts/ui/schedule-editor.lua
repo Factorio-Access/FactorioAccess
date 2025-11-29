@@ -587,7 +587,14 @@ local function build_record_vtable(schedule, record_position, record, row_key, k
 
    return {
       label = function(ctx)
-         -- Just the destination name or rail position
+         -- Announce temporary or interrupt status first (varies sooner = better for screen readers)
+         if record.created_by_interrupt then
+            ctx.message:fragment({ "fa.schedule-from-interrupt" })
+         elseif record.temporary then
+            ctx.message:fragment({ "fa.schedule-temporary" })
+         end
+
+         -- Destination name or rail position
          if record.station then
             ctx.message:fragment({ "fa.schedule-station", record.station })
          elseif record.rail then
