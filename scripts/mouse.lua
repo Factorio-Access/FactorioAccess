@@ -36,7 +36,7 @@ local function move_pointer_to_pixels(pos, pindex)
    local x = math.ceil(pos.x)
    local y = math.ceil(pos.y)
    local text_pos = " " .. x .. "," .. y
-   --print("setCursor " .. pindex .. text_pos)
+   print("setCursor " .. pindex .. text_pos)
    --game.get_player(pindex).print("moved to" .. text_pos, { volume_modifier = 0 })
 end
 
