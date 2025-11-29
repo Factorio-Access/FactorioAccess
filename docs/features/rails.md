@@ -48,6 +48,8 @@ Toggle the logical operator joining this condition to the previous one: n
 
 Toggle the condition type: j
 
+Set the active stop in a schedule: right bracket
+
 ## Explanation
 
 IMPORTANT: See https://wiki.factorio.com/Railway if you don't know how rails work. This is documentation of mod
@@ -78,17 +80,27 @@ Note (at least) the following:
 - No rail builder menu; if you want forks you need to use the virtual train (the point of the virtual train is that you
   can do it without, but it will come back)
 - No syntrax, yet.
-- No "automatic driving"/setting the active schedule record. Right now do that by removing all records, adding a record
-  with wait condition passenger present or passenger not present depending on if you are in the train, and then
-  rebuilding it.  This is one of the higher priorities to fix.
 - "robots idle" is an exposed schedule condition which is always present but this is only used by mods that add
   equipment grids to trains.
 - We don't exactly require that you remove trees and rocks
 - No path warnings are gone. They have to come back in a new form, so that is tbd.
 - There will be shifts in the UI and schedule editor (especially tab and element orders)
-- No interrupts or wildcard interrupts yet.
 - No train station previews (1.1's version of this was also sort of breaky, not sure what we're doing yet)
 - Definitely lots of others.
+
+## Overview of Driving
+
+You can run trains in two modes: manual and automatic.  In automatic mode, trains follow a schedule.  This unlocks after you research automated rail transportation.
+
+This section mostly exists to tell you: don't try manual driving.  To do it, you use the arrow keys (west is left, etc) but because track layouts are very complex the train is not likely to do what you think. Additionally, it is liable to run into other trains.
+
+A sighted player who wants to drive a train through a complicated base, and the accessible way for you to do so, is to use the schedule editor. You add a temporary stop for the station you want, add "passenger not present" as a condition, then hit right bracket on the stop to set it to the active stop.
+
+What we do offer is a radar that tells you which way and how fast a train is moving. When sitting in a moving train, you
+will hear a quiet tone in the direction the train is going.  Higher pitch is "more north", and pan is east/west.  So a
+high leftish tone is northwest, etc.  The tone plays when the train changes orientation, or after the train has traveled
+50 tiles. This at least allows you to (1) have the sighted experience of advanced players who can't really drive trains
+manually anyhow, and (2) know what's going on and roughly where and how far you have gone.
 
 ## Overview of Track Reporting
 
@@ -216,7 +228,7 @@ bothering.
 ## Schedules and Stations
 
 There is a station UI. It works like any other UI and lets you set things like any other UI, and doesn't deserve more
-documentation.
+documentation. The only special thing about it is that train station names support rich text--see below on interrupts for why that is important.
 
 Teaching how train schedules work is beyond the scope of mod documentation.  See the wiki for that.
 
@@ -271,7 +283,6 @@ delete.  If a train is using an interrupt it exists, otherwise it does not. So t
 change their priority, and are edited by pressing tab, which will cycle through child schedule editors for all of your
 interrupts.
 
-
 This brings us to the stuff about rich text.  There are two places you may wish to use a wildcard:
 
 - In conditions. To find this, it is in the item selector signals -> unsorted -> parameters.
@@ -289,3 +300,21 @@ The full list of shorthands is as follows:
 - `:*` followed by i (item), f (fluid), s (signal), or fu (fuel): the wildcard icon for that type. For example `:*i` is "any item".
 
 These are not stored in your save.  We will likely simplify them in future.  What gets stored in the train stop name is the corresponding official long form.
+
+
+## The Global Trains Overview
+
+One unique problem with trains is that they move around and do not stay still long enough for you to click them.  To solve this problem, a trains menu is available under `e`, past the equipment tab.
+
+
+This menu lets you open the train by clicking the name, but only if close enough; move your cursor to the train; and toggle the train to manual mode.
+
+A typical workflow (for now):
+
+- Find the train you can't find and toggle it to manual
+- Use the menu to move your cursor to it
+- Get close enough, and
+- reconfigure it
+
+Well-designed train layouts with proper signal placement are robust against trains suddenly switching to manual at any
+time.  Figuring out what well-designed means is the point of the game, however, and so not covered further here.

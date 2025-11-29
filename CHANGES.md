@@ -1,3 +1,15 @@
+# 0.16.25 (unreleased)
+
+IMPORTANT: this release requires a launcher update.  P{lease grab the latest launcher from here: https://github.com/factorio-access/factorio-access-launcher/releases
+
+- The launcher now autoupdates on Windows.  You should not need to update the launcher anymore unless you are running from source.
+- Introduce train direction tones.  Ride a moving train and you can now hear which way it is going.
+- Rearrange the locomotive config gui to be more sensibly laid out. Schedule editing is not to the right of manual and name is ast the top
+- Add a global trains menu filtered to this surface or all surfaces to allow for checking on trains without having to go find them
+- Right bracket in the schedule editor can now be used to set the active stop
+- You can now add temporary stops to the schedule. It is to the right of add stop.
+- We now indicate when a stop is temporary or from an interrupt.
+
 # 0.16.24 (2025-11-26)
 
 - Support interrupts. Please see the expanded train documentation [here](./docs/features/rails.md)
