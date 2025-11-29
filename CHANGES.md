@@ -1,4 +1,4 @@
-# 0.16.25 (unreleased)
+# 0.16.25 (2025-11-28)
 
 IMPORTANT: this release requires a launcher update.  P{lease grab the latest launcher from here: https://github.com/factorio-access/factorio-access-launcher/releases
 
