@@ -167,4 +167,12 @@ function mod.is_interrupt_name_unique(schedule, name, exclude_index)
    return true
 end
 
+---Get trains for a force, optionally filtered by surface.
+---@param force ForceID
+---@param surface LuaSurface? If nil, returns all trains
+---@return LuaTrain[]
+function mod.get_trains(force, surface)
+   return game.train_manager.get_trains({ force = force, surface = surface })
+end
+
 return mod

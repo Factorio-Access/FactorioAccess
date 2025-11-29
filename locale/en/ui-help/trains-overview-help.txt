@@ -1,0 +1,7 @@
+This menu lists all trains.
+
+Each row shows a train with its name, position, and current state.
+
+To the right of each train are two controls: move cursor to the train, and toggle manual mode.
+
+Click a train to open its configuration menu.
