@@ -1,3 +1,16 @@
+# 0.16.26 (unreleased)
+
+- Placing rails is no longer free.
+  - There may be bugs where you lose rails instead of getting them back especially around backspace. If so, please report.
+- Backspacing out placed rails after adding signals to them removes the signals too.
+  - Note: this doesn't work on signals previously placed, only signals placed during this virtual train session. It works by remembering what signals you placed, not by checking the map.
+- You can now use force build (shift + left bracket) and superforce (ctrl + shift + left bracket) when building rails
+  - These place ghosts. Fill them in with Kruise Kontrol, construction robots, or by hand.
+  - Force build marks trees and rocks for deconstruction, and places landfill as needed.
+  - Superforce marks your buildings for deconstruction as well.
+  - We will not define these in mod documentation or moving forward as they are vanilla concepts, not mod specific ones.
+
+
 # 0.16.25 (2025-11-28)
 
 IMPORTANT: this release requires a launcher update.  P{lease grab the latest launcher from here: https://github.com/factorio-access/factorio-access-launcher/releases

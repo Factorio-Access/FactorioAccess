@@ -4,6 +4,10 @@
 
 Lock onto a track and start driving the virtual train: left bracket on a  rail with a rail in hand
 
+Lock on in force build mode: shift + left bracket with a rail in hand
+
+Lock on in superforce mode: control + shift + left bracket with a rail in hand
+
 Move the virtual train forward: comma
 
 Move the virtual train left: m
