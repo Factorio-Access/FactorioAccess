@@ -29,6 +29,7 @@ local Consts = require("scripts.consts")
 local Crafting = require("scripts.crafting")
 local CursorChanges = require("scripts.cursor-changes")
 local Driving = require("scripts.driving")
+local HandMonitor = require("scripts.hand-monitor")
 local Electrical = require("scripts.electrical")
 local EntitySelection = require("scripts.entity-selection")
 local Equipment = require("scripts.equipment")
@@ -380,6 +381,7 @@ EventManager.on_event(
       on_tick(event)
       WorkQueue.on_tick()
       TestFramework.on_tick(event)
+      HandMonitor.on_tick()
    end
 )
 
@@ -635,6 +637,9 @@ EventManager.on_event(
    ---@param event EventData.on_player_cursor_stack_changed
    ---@param pindex integer
    function(event, pindex)
+      -- Skip if suppressed (e.g., during rail building hand swaps)
+      if not HandMonitor.is_enabled(pindex) then return end
+
       CursorChanges.on_cursor_stack_changed(event, pindex, read_hand)
       VirtualTrainDriving.on_cursor_stack_changed(event)
    end
@@ -3270,6 +3275,15 @@ EventManager.on_event(
             return
          end
 
+         -- Rail planner: lock on with force mode
+         if stack.prototype.rails then
+            local ent = EntitySelection.get_first_ent_at_tile(pindex)
+            if ent and ent.valid and Consts.RAIL_TYPES_SET[ent.type] then
+               VirtualTrainDriving.lock_on_to_rail(pindex, ent, defines.build_mode.forced)
+               return
+            end
+         end
+
          local proto = stack.prototype
          if proto.place_result or proto.place_as_tile_result then
             -- Item can be placed as a ghost
@@ -3315,6 +3329,15 @@ EventManager.on_event(
    function(event, pindex)
       local player = game.players[pindex]
       if not player.cursor_stack.valid_for_read then return end
+
+      -- Rail planner: lock on with superforce mode
+      if player.cursor_stack.prototype.rails then
+         local ent = EntitySelection.get_first_ent_at_tile(pindex)
+         if ent and ent.valid and Consts.RAIL_TYPES_SET[ent.type] then
+            VirtualTrainDriving.lock_on_to_rail(pindex, ent, defines.build_mode.superforced)
+            return
+         end
+      end
 
       if player.cursor_stack.is_repair_tool then kb_repair_area(event) end
    end
@@ -3905,8 +3928,9 @@ end
 
 EventManager.on_event("fa-comma", function(event)
    -- Check for virtual train driving
-   if VirtualTrainDriving.on_kb_descriptive_action_name(event) then
-      TileReader.read_tile(event.player_index)
+   local handled, should_read = VirtualTrainDriving.on_kb_descriptive_action_name(event)
+   if handled then
+      if should_read then TileReader.read_tile(event.player_index) end
       return
    end
 
@@ -3939,8 +3963,9 @@ end, EventManager.EVENT_KIND.WORLD)
 
 EventManager.on_event("fa-m", function(event)
    -- Check for virtual train driving
-   if VirtualTrainDriving.on_kb_descriptive_action_name(event) then
-      TileReader.read_tile(event.player_index)
+   local handled, should_read = VirtualTrainDriving.on_kb_descriptive_action_name(event)
+   if handled then
+      if should_read then TileReader.read_tile(event.player_index) end
       return
    end
 
@@ -3967,8 +3992,9 @@ end, EventManager.EVENT_KIND.WORLD)
 
 EventManager.on_event("fa-dot", function(event)
    -- Check for virtual train driving
-   if VirtualTrainDriving.on_kb_descriptive_action_name(event) then
-      TileReader.read_tile(event.player_index)
+   local handled, should_read = VirtualTrainDriving.on_kb_descriptive_action_name(event)
+   if handled then
+      if should_read then TileReader.read_tile(event.player_index) end
       return
    end
 
@@ -4007,29 +4033,33 @@ end, EventManager.EVENT_KIND.WORLD)
 
 -- Virtual train signal placement keybindings
 EventManager.on_event("fa-c-m", function(event)
-   if VirtualTrainDriving.on_kb_descriptive_action_name(event) then
-      TileReader.read_tile(event.player_index)
+   local handled, should_read = VirtualTrainDriving.on_kb_descriptive_action_name(event)
+   if handled then
+      if should_read then TileReader.read_tile(event.player_index) end
       return
    end
 end, EventManager.EVENT_KIND.WORLD)
 
 EventManager.on_event("fa-s-m", function(event)
-   if VirtualTrainDriving.on_kb_descriptive_action_name(event) then
-      TileReader.read_tile(event.player_index)
+   local handled, should_read = VirtualTrainDriving.on_kb_descriptive_action_name(event)
+   if handled then
+      if should_read then TileReader.read_tile(event.player_index) end
       return
    end
 end, EventManager.EVENT_KIND.WORLD)
 
 EventManager.on_event("fa-c-dot", function(event)
-   if VirtualTrainDriving.on_kb_descriptive_action_name(event) then
-      TileReader.read_tile(event.player_index)
+   local handled, should_read = VirtualTrainDriving.on_kb_descriptive_action_name(event)
+   if handled then
+      if should_read then TileReader.read_tile(event.player_index) end
       return
    end
 end, EventManager.EVENT_KIND.WORLD)
 
 EventManager.on_event("fa-s-dot", function(event)
-   if VirtualTrainDriving.on_kb_descriptive_action_name(event) then
-      TileReader.read_tile(event.player_index)
+   local handled, should_read = VirtualTrainDriving.on_kb_descriptive_action_name(event)
+   if handled then
+      if should_read then TileReader.read_tile(event.player_index) end
       return
    end
 end, EventManager.EVENT_KIND.WORLD)
@@ -4077,8 +4107,9 @@ end, EventManager.EVENT_KIND.WORLD)
 -- Clear autopilot for spidertron remote
 EventManager.on_event("fa-backspace", function(event)
    -- Check for virtual train driving
-   if VirtualTrainDriving.on_kb_descriptive_action_name(event) then
-      TileReader.read_tile(event.player_index)
+   local handled, should_read = VirtualTrainDriving.on_kb_descriptive_action_name(event)
+   if handled then
+      if should_read then TileReader.read_tile(event.player_index) end
       return
    end
 

@@ -7,10 +7,185 @@ local F = require("scripts.field-ref")
 local FaUtils = require("scripts.fa-utils")
 local ItemInfo = require("scripts.item-info")
 local Localising = require("scripts.localising")
-local sounds = require("scripts.ui.sounds")
+local Sounds = require("scripts.ui.sounds")
+local Speech = require("scripts.speech")
 local TH = require("scripts.table-helpers")
 
 local mod = {}
+
+--------------------------------------------------------------------------------
+-- Deductor: Promise-based inventory deduction
+--------------------------------------------------------------------------------
+
+---@class fa.InventoryUtils.DeductSource
+---@field inventory LuaInventory? The inventory to deduct from (nil = cursor)
+---@field name string Item name
+---@field count integer Amount to deduct
+
+---@class fa.InventoryUtils.Deductor
+---@field private _player LuaPlayer
+---@field private _deductions fa.InventoryUtils.DeductSource[]
+local Deductor = {}
+mod.Deductor = Deductor
+local Deductor_meta = { __index = Deductor }
+
+---Create a new deductor for a player
+---@param pindex integer
+---@return fa.InventoryUtils.Deductor
+function Deductor.new(pindex)
+   return setmetatable({
+      _player = game.get_player(pindex),
+      _deductions = {},
+   }, Deductor_meta)
+end
+
+---Compute where to deduct items from
+---@param name string Item prototype name
+---@param count integer Amount needed
+---@return fa.InventoryUtils.DeductSource[]|nil sources Sources to deduct from, or nil if insufficient
+---@private
+function Deductor:_compute_deduct(name, count)
+   local remaining = count
+   local sources = {}
+
+   -- First: try main inventory (from character, not player)
+   if self._player.character then
+      local main_inv = self._player.character.get_inventory(defines.inventory.character_main)
+      if main_inv then
+         local available = main_inv.get_item_count(name)
+         if available > 0 then
+            local take = math.min(available, remaining)
+            table.insert(sources, { inventory = main_inv, name = name, count = take })
+            remaining = remaining - take
+         end
+      end
+   end
+
+   -- Second: try hand (cursor stack)
+   if remaining > 0 then
+      local cursor = self._player.cursor_stack
+      if cursor and cursor.valid_for_read and cursor.name == name then
+         local available = cursor.count
+         if available > 0 then
+            local take = math.min(available, remaining)
+            -- For cursor, we store nil inventory and handle specially in commit
+            table.insert(sources, { inventory = nil, name = name, count = take })
+            remaining = remaining - take
+         end
+      end
+   end
+
+   if remaining > 0 then return nil end
+   return sources
+end
+
+---Add a deduction to be performed on commit
+---@param name string Item prototype name
+---@param count integer Amount to deduct
+---@return boolean success True if the deduction can be satisfied
+function Deductor:add_deduct(name, count)
+   local sources = self:_compute_deduct(name, count)
+   if not sources then return false end
+
+   for _, source in ipairs(sources) do
+      table.insert(self._deductions, source)
+   end
+   return true
+end
+
+---Commit all recorded deductions
+---Crashes if deductions cannot be satisfied (API misuse)
+function Deductor:commit()
+   for _, deduction in ipairs(self._deductions) do
+      if deduction.inventory then
+         -- Deduct from inventory
+         local removed = deduction.inventory.remove({ name = deduction.name, count = deduction.count })
+         assert(removed == deduction.count, "Deductor: failed to remove expected count from inventory")
+      else
+         -- Deduct from cursor
+         local cursor = self._player.cursor_stack
+         assert(cursor and cursor.valid_for_read, "Deductor: cursor invalid at commit")
+         assert(cursor.name == deduction.name, "Deductor: cursor item changed")
+         assert(cursor.count >= deduction.count, "Deductor: cursor count insufficient")
+         cursor.count = cursor.count - deduction.count
+      end
+   end
+
+   self._deductions = {}
+end
+
+---Check if this deductor has any pending deductions
+---@return boolean
+function Deductor:is_empty()
+   return #self._deductions == 0
+end
+
+---Check if a single item requirement can be satisfied
+---@param player LuaPlayer
+---@param name string Item prototype name
+---@param count integer Amount needed
+---@return boolean
+local function can_deduct_item(player, name, count)
+   local remaining = count
+
+   -- Check main inventory
+   if player.character then
+      local main_inv = player.character.get_inventory(defines.inventory.character_main)
+      if main_inv then
+         remaining = remaining - main_inv.get_item_count(name)
+         if remaining <= 0 then return true end
+      end
+   end
+
+   -- Check cursor
+   local cursor = player.cursor_stack
+   if cursor and cursor.valid_for_read and cursor.name == name then remaining = remaining - cursor.count end
+
+   return remaining <= 0
+end
+
+---Create a deductor for placing an entity prototype
+---Tries all items_to_place_this options, not just the first
+---@param pindex integer
+---@param proto_name string Entity prototype name
+---@param silent boolean? If true, don't announce errors
+---@return fa.InventoryUtils.Deductor|nil deductor The deductor, or nil if items unavailable
+function mod.deductor_to_place(pindex, proto_name, silent)
+   local player = game.get_player(pindex)
+   if not player then return nil end
+
+   local proto = prototypes.entity[proto_name]
+   if not proto then
+      if not silent then
+         Sounds.play_cannot_build(pindex)
+         Speech.speak(pindex, { "fa.cannot-build" })
+      end
+      return nil
+   end
+
+   local items = proto.items_to_place_this
+   if not items or #items == 0 then
+      -- Free to place (no items required)
+      return Deductor.new(pindex)
+   end
+
+   -- Try each possible item until one works
+   for _, required in ipairs(items) do
+      if can_deduct_item(player, required.name, required.count) then
+         local deductor = Deductor.new(pindex)
+         deductor:add_deduct(required.name, required.count)
+         return deductor
+      end
+   end
+
+   -- None of the options worked - report the first one as the missing item
+   if not silent then
+      Sounds.play_cannot_build(pindex)
+      local needed_list = mod.present_list({ { name = items[1].name, count = items[1].count } }, nil, nil, true)
+      Speech.speak(pindex, { "fa.missing-items", needed_list or "" })
+   end
+   return nil
+end
 
 ---@alias fa.InventoryDefineName
 ---| "agricultural_tower_input"
@@ -236,7 +411,7 @@ function mod.quick_transfer(pindex, msg_builder, src_ent, src_inv_def, src_slot,
       src_inv.remove({ name = item_name, count = inserted, quality = item_quality })
 
       -- Play sound for the player performing the transfer
-      sounds.play_inventory_move(pindex)
+      Sounds.play_inventory_move(pindex)
 
       -- Build success message
       local item_label = ItemInfo.item_info({
@@ -257,8 +432,9 @@ end
 ---@param list ({ name: string|LuaItemPrototype, quality: string|LuaQualityPrototype|nil, count: number})[]
 ---@param truncate number?
 ---@param protos table<string, LuaItemPrototype | LuaFluidPrototype>?
+---@param raw boolean? If true, return just the list without "Has" wrapper
 ---@return LocalisedString?
-function mod.present_list(list, truncate, protos)
+function mod.present_list(list, truncate, protos, raw)
    local contents = TH.rollup2(list, F.name().get, function(i)
       return i.quality or "normal"
    end, F.count().get)
@@ -308,6 +484,7 @@ function mod.present_list(list, truncate, protos)
    end
    local joined = FaUtils.localise_cat_table(entries, ", ")
 
+   if raw then return joined end
    return { "fa.ent-info-inventory-presentation", joined }
 end
 
