@@ -16,6 +16,24 @@ local InventoryUtils = require("scripts.inventory-utils")
 
 local MessageBuilder = Speech.MessageBuilder
 
+---Get effective rail name from entity (handles ghosts)
+---@param ent LuaEntity
+---@return string The rail prototype name
+local function get_effective_name(ent)
+   if ent.type == "entity-ghost" then return ent.ghost_name end
+   return ent.name
+end
+
+---Check if an entity is a rail (real or ghost)
+---@param ent LuaEntity?
+---@return boolean
+local function is_rail_entity(ent)
+   if not ent or not ent.valid then return false end
+   if Consts.RAIL_TYPES_SET[ent.type] then return true end
+   if ent.type == "entity-ghost" and Consts.RAIL_TYPES_SET[ent.ghost_type] then return true end
+   return false
+end
+
 local mod = {}
 
 ---@class vtd.Inventories
@@ -452,7 +470,7 @@ end
 ---@param end_direction defines.direction
 ---@return integer count Number of connections (0-3)
 local function count_connections(rail_entity, end_direction)
-   local rail_type = Queries.prototype_type_to_rail_type(rail_entity.name)
+   local rail_type = Queries.prototype_type_to_rail_type(get_effective_name(rail_entity))
    if not rail_type then return 0 end
 
    local count = 0
@@ -487,8 +505,9 @@ end
 ---@return defines.direction The end direction to use
 local function determine_initial_end(rail_entity)
    -- Get rail type and both end directions
-   local rail_type = Queries.prototype_type_to_rail_type(rail_entity.name)
-   if not rail_type then error(string.format("%s not a rail!", rail_entity.name)) end
+   local rail_name = get_effective_name(rail_entity)
+   local rail_type = Queries.prototype_type_to_rail_type(rail_name)
+   if not rail_type then error(string.format("%s not a rail!", rail_name)) end
 
    local end_dirs = Queries.get_end_directions(rail_type, rail_entity.direction)
    if #end_dirs ~= 2 then error("Rail data corrupt!") end
@@ -532,13 +551,13 @@ function mod.lock_on_to_rail(pindex, rail_entity, build_mode)
    local rail = rail_entity or player.selected
 
    -- Check if rail is valid (check entity type)
-   if not rail or not rail.valid or not Consts.RAIL_TYPES_SET[rail.type] then
+   if not is_rail_entity(rail) then
       Speech.speak(pindex, { "fa.virtual-train-no-rail" })
       return
    end
 
    -- Convert entity name to rail type
-   local rail_type = Queries.prototype_type_to_rail_type(rail.name)
+   local rail_type = Queries.prototype_type_to_rail_type(get_effective_name(rail))
    if not rail_type then
       Speech.speak(pindex, { "fa.virtual-train-no-rail-info" })
       return

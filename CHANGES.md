@@ -12,6 +12,8 @@
 - Try to report the shapes for ghost rails.
   - This considers ghost rails and regular rails as separate networks entirely. SO, a regular rail connecting to a ghost rail counts as an end on both sides.
   - Do not expect significant improvement here because there are too many regular+ghost rail combinations once they start mixing and you need to know which is which.
+  - For now, to build in normal mode, you must start from a real rail.
+- When trying to force or superforce build with the virtual train, you may lock onto ghost rails.
 
 
 # 0.16.25 (2025-11-28)

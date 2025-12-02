@@ -3275,10 +3275,15 @@ EventManager.on_event(
             return
          end
 
-         -- Rail planner: lock on with force mode
+         -- Rail planner: lock on with force mode (real or ghost rails)
          if stack.prototype.rails then
             local ent = EntitySelection.get_first_ent_at_tile(pindex)
-            if ent and ent.valid and Consts.RAIL_TYPES_SET[ent.type] then
+            local is_rail = ent and ent.valid and Consts.RAIL_TYPES_SET[ent.type]
+            local is_ghost_rail = ent
+               and ent.valid
+               and ent.type == "entity-ghost"
+               and Consts.RAIL_TYPES_SET[ent.ghost_type]
+            if is_rail or is_ghost_rail then
                VirtualTrainDriving.lock_on_to_rail(pindex, ent, defines.build_mode.forced)
                return
             end
@@ -3330,10 +3335,15 @@ EventManager.on_event(
       local player = game.players[pindex]
       if not player.cursor_stack.valid_for_read then return end
 
-      -- Rail planner: lock on with superforce mode
+      -- Rail planner: lock on with superforce mode (real or ghost rails)
       if player.cursor_stack.prototype.rails then
          local ent = EntitySelection.get_first_ent_at_tile(pindex)
-         if ent and ent.valid and Consts.RAIL_TYPES_SET[ent.type] then
+         local is_rail = ent and ent.valid and Consts.RAIL_TYPES_SET[ent.type]
+         local is_ghost_rail = ent
+            and ent.valid
+            and ent.type == "entity-ghost"
+            and Consts.RAIL_TYPES_SET[ent.ghost_type]
+         if is_rail or is_ghost_rail then
             VirtualTrainDriving.lock_on_to_rail(pindex, ent, defines.build_mode.superforced)
             return
          end
