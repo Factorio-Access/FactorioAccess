@@ -8,6 +8,7 @@ Provides controls for:
 
 local Menu = require("scripts.ui.menu")
 local UiKeyGraph = require("scripts.ui.key-graph")
+local Controls = require("scripts.ui.controls")
 local UiRouter = require("scripts.ui.router")
 local UiUtils = require("scripts.ui.ui-utils")
 local UiSounds = require("scripts.ui.sounds")
@@ -40,23 +41,18 @@ local function render_infinity_chest_config(ctx)
    local menu = Menu.MenuBuilder.new()
 
    -- Row 1: Trash unrequested checkbox
-   menu:add_clickable("trash_unrequested", function(ctx)
-      ctx.message:fragment({ "fa.infinity-chest-trash-unrequested" })
-      if entity.remove_unfiltered_items then
-         ctx.message:fragment({ "fa.enabled" })
-      else
-         ctx.message:fragment({ "fa.disabled" })
-      end
-   end, {
-      on_click = function(ctx)
-         entity.remove_unfiltered_items = not entity.remove_unfiltered_items
-         if entity.remove_unfiltered_items then
-            ctx.controller.message:fragment({ "fa.enabled" })
-         else
-            ctx.controller.message:fragment({ "fa.disabled" })
-         end
-      end,
-   })
+   menu:add_item(
+      "trash_unrequested",
+      Controls.checkbox({
+         label = { "fa.infinity-chest-trash-unrequested" },
+         get = function()
+            return entity.remove_unfiltered_items
+         end,
+         set = function(v)
+            entity.remove_unfiltered_items = v
+         end,
+      })
+   )
 
    -- Get all existing filters
    local filters = entity.infinity_container_filters or {}

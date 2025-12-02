@@ -5,6 +5,7 @@ Works with any entity that has an equipment grid (character armor, vehicles, etc
 
 local Menu = require("scripts.ui.menu")
 local KeyGraph = require("scripts.ui.key-graph")
+local Controls = require("scripts.ui.controls")
 local Equipment = require("scripts.equipment")
 local ItemInfo = require("scripts.item-info")
 local ItemStackUtils = require("scripts.item-stack-utils")
@@ -107,20 +108,18 @@ local function render_equipment_overview(ctx)
       builder:end_row()
 
       -- Personal roboport dispatch control (only for characters)
-      builder:add_clickable("roboport-dispatch", function(ctx)
-         local enabled = entity.allow_dispatching_robots
-         local state_text = enabled and { "fa.checked" } or { "fa.unchecked" }
-         ctx.message:fragment({ "fa.equipment-allow-roboport-dispatch" })
-         ctx.message:fragment(state_text)
-      end, {
-         on_click = function(ctx)
-            entity.allow_dispatching_robots = not entity.allow_dispatching_robots
-            local new_state = entity.allow_dispatching_robots
-            local state_text = new_state and { "fa.checked" } or { "fa.unchecked" }
-            ctx.message:fragment(state_text)
-            UiSounds.play_menu_move(ctx.pindex)
-         end,
-      })
+      builder:add_item(
+         "roboport-dispatch",
+         Controls.checkbox({
+            label = { "fa.equipment-allow-roboport-dispatch" },
+            get = function()
+               return entity.allow_dispatching_robots
+            end,
+            set = function(v)
+               entity.allow_dispatching_robots = v
+            end,
+         })
+      )
    else
       -- For non-character entities (vehicles, etc), show equipment bonuses directly
       if grid then

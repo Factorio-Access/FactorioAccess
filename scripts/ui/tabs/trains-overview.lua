@@ -7,6 +7,7 @@ Each train row has: name/position/state, move cursor, manual mode toggle.
 
 local Menu = require("scripts.ui.menu")
 local KeyGraph = require("scripts.ui.key-graph")
+local Controls = require("scripts.ui.controls")
 local TrainHelpers = require("scripts.rails.train-helpers")
 local EntityUi = require("scripts.ui.entity-ui")
 local Viewpoint = require("scripts.viewpoint")
@@ -89,18 +90,18 @@ local function build_train_rows(builder, trains)
       })
 
       -- Manual mode checkbox
-      builder:add_clickable("manual-" .. train_id, function(ctx)
-         local state_text = train.manual_mode and { "fa.checked" } or { "fa.unchecked" }
-         ctx.message:fragment(state_text)
-         ctx.message:fragment({ "fa.trains-overview-manual-mode" })
-      end, {
-         on_click = function(ctx)
-            train.manual_mode = not train.manual_mode
-            UiSounds.play_menu_move(ctx.pindex)
-            local state_text = train.manual_mode and { "fa.checked" } or { "fa.unchecked" }
-            ctx.message:fragment(state_text)
-         end,
-      })
+      builder:add_item(
+         "manual-" .. train_id,
+         Controls.checkbox({
+            label = { "fa.trains-overview-manual-mode" },
+            get = function()
+               return train.manual_mode
+            end,
+            set = function(v)
+               train.manual_mode = v
+            end,
+         })
+      )
 
       builder:end_row()
    end

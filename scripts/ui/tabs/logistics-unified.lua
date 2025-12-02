@@ -8,6 +8,7 @@ not the internal point-based API structure.
 
 local Menu = require("scripts.ui.menu")
 local KeyGraph = require("scripts.ui.key-graph")
+local Controls = require("scripts.ui.controls")
 local Router = require("scripts.ui.router")
 local LogisticDescriptors = require("scripts.logistic-descriptors")
 local WorkerRobots = require("scripts.worker-robots")
@@ -122,66 +123,51 @@ local function render_unified_overview(ctx)
       -- Active toggle (characters only)
       if is_character and #requester_points > 0 then
          local point = requester_points[1]
-         menu:add_item("active_toggle", {
-            label = function(ctx)
-               if point.enabled then
-                  ctx.message:fragment({ "fa.logistics-active" })
-               else
-                  ctx.message:fragment({ "fa.logistics-inactive" })
-               end
-            end,
-            on_click = function(ctx)
-               point.enabled = not point.enabled
-               if point.enabled then
-                  ctx.controller.message:fragment({ "fa.logistics-active" })
-               else
-                  ctx.controller.message:fragment({ "fa.logistics-inactive" })
-               end
-            end,
-         })
+         menu:add_item(
+            "active_toggle",
+            Controls.checkbox({
+               label = { "fa.logistics-active" },
+               get = function()
+                  return point.enabled
+               end,
+               set = function(v)
+                  point.enabled = v
+               end,
+            })
+         )
       end
 
       -- Request from buffers (requester chests only)
       if is_requester_chest(entity) then
-         menu:add_item("request_from_buffers", {
-            label = function(ctx)
-               if entity.request_from_buffers then
-                  ctx.message:fragment({ "fa.logistics-request-from-buffers-on" })
-               else
-                  ctx.message:fragment({ "fa.logistics-request-from-buffers-off" })
-               end
-            end,
-            on_click = function(ctx)
-               entity.request_from_buffers = not entity.request_from_buffers
-               if entity.request_from_buffers then
-                  ctx.controller.message:fragment({ "fa.on" })
-               else
-                  ctx.controller.message:fragment({ "fa.off" })
-               end
-            end,
-         })
+         menu:add_item(
+            "request_from_buffers",
+            Controls.checkbox({
+               label = { "fa.logistics-request-from-buffers" },
+               get = function()
+                  return entity.request_from_buffers
+               end,
+               set = function(v)
+                  entity.request_from_buffers = v
+               end,
+            })
+         )
       end
 
       -- Trash unrequested (any requester point)
       if has_requester and #requester_points > 0 then
          local point = requester_points[1]
-         menu:add_item("trash_unrequested", {
-            label = function(ctx)
-               if point.trash_not_requested then
-                  ctx.message:fragment({ "fa.logistics-trash-unrequested-on" })
-               else
-                  ctx.message:fragment({ "fa.logistics-trash-unrequested-off" })
-               end
-            end,
-            on_click = function(ctx)
-               point.trash_not_requested = not point.trash_not_requested
-               if point.trash_not_requested then
-                  ctx.controller.message:fragment({ "fa.on" })
-               else
-                  ctx.controller.message:fragment({ "fa.off" })
-               end
-            end,
-         })
+         menu:add_item(
+            "trash_unrequested",
+            Controls.checkbox({
+               label = { "fa.logistics-trash-unrequested" },
+               get = function()
+                  return point.trash_not_requested
+               end,
+               set = function(v)
+                  point.trash_not_requested = v
+               end,
+            })
+         )
       end
 
       menu:end_row()

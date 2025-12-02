@@ -4,6 +4,7 @@
 -- as optional fields on CircuitConditionDefinition. See llm-docs/api-reference/runtime/concepts/CircuitConditionDefinition.md
 
 local Menu = require("scripts.ui.menu")
+local Controls = require("scripts.ui.controls")
 local UiUtils = require("scripts.ui.ui-utils")
 local UiSounds = require("scripts.ui.sounds")
 local Speech = require("scripts.speech")
@@ -71,27 +72,14 @@ end
 ---@param set_value fun(boolean) Function that sets the new value
 ---@return fa.ui.form.FormBuilder
 function FormBuilder:add_checkbox(name, label, get_value, set_value)
-   -- Create label builder function that uses the getter
-   local function build_label(message, ctx)
-      local base_label = UiUtils.to_label_function(label)(ctx)
-      local state_text = get_value() and { "fa.checked" } or { "fa.unchecked" }
-      message:fragment(state_text)
-      message:fragment(base_label)
-   end
-
-   self:add_item(name, {
-      label = function(ctx)
-         build_label(ctx.message, ctx)
-      end,
-      on_click = function(ctx)
-         local new_val = not get_value()
-         set_value(new_val)
-         UiSounds.play_menu_move(ctx.pindex)
-         -- Only announce the new state, not the label
-         local state_text = new_val and { "fa.checked" } or { "fa.unchecked" }
-         ctx.controller.message:fragment(state_text)
-      end,
-   })
+   self:add_item(
+      name,
+      Controls.checkbox({
+         label = label,
+         get = get_value,
+         set = set_value,
+      })
+   )
 
    return self
 end

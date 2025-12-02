@@ -12,6 +12,7 @@ This component is designed to be embedded in the main logistics UI.
 
 local Menu = require("scripts.ui.menu")
 local KeyGraph = require("scripts.ui.key-graph")
+local Controls = require("scripts.ui.controls")
 local Router = require("scripts.ui.router")
 local Speech = require("scripts.speech")
 local UiSounds = require("scripts.ui.sounds")
@@ -392,34 +393,26 @@ local function render_section(ctx, section_index)
    })
 
    -- Active checkbox
-   menu:add_item("active", {
-      label = function(ctx)
-         local sections = entity.get_logistic_sections()
-         if not sections then return end
-         local section = sections.get_section(section_index)
-         if not section then return end
-
-         ctx.message:fragment({ "fa.logistics-active" })
-         if section.active then
-            ctx.message:fragment({ "fa.checked" })
-         else
-            ctx.message:fragment({ "fa.unchecked" })
-         end
-      end,
-      on_click = function(ctx)
-         local sections = entity.get_logistic_sections()
-         if not sections then return end
-         local section = sections.get_section(section_index)
-         if not section then return end
-
-         section.active = not section.active
-         if section.active then
-            ctx.controller.message:fragment({ "fa.checked" })
-         else
-            ctx.controller.message:fragment({ "fa.unchecked" })
-         end
-      end,
-   })
+   menu:add_item(
+      "active",
+      Controls.checkbox({
+         label = { "fa.logistics-active" },
+         get = function()
+            local sections = entity.get_logistic_sections()
+            if not sections then return false end
+            local section = sections.get_section(section_index)
+            if not section then return false end
+            return section.active
+         end,
+         set = function(v)
+            local sections = entity.get_logistic_sections()
+            if not sections then return end
+            local section = sections.get_section(section_index)
+            if not section then return end
+            section.active = v
+         end,
+      })
+   )
 
    menu:end_row()
 

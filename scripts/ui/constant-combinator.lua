@@ -10,6 +10,7 @@ local TabList = require("scripts.ui.tab-list")
 local Router = require("scripts.ui.router")
 local Menu = require("scripts.ui.menu")
 local KeyGraph = require("scripts.ui.key-graph")
+local Controls = require("scripts.ui.controls")
 local CircuitNetworkSignals = require("scripts.ui.tabs.circuit-network-signals")
 local CircuitNetwork = require("scripts.circuit-network")
 local LogisticsSectionEditor = require("scripts.ui.tabs.logistics-section-editor")
@@ -49,23 +50,18 @@ local function render_overview(ctx)
 
    -- Row 2: Active toggle
    menu:start_row("active_row")
-   menu:add_item("active", {
-      label = function(ctx)
-         if cb.enabled then
-            ctx.message:fragment({ "fa.logistics-active-checked" })
-         else
-            ctx.message:fragment({ "fa.logistics-active-unchecked" })
-         end
-      end,
-      on_click = function(ctx)
-         cb.enabled = not cb.enabled
-         if cb.enabled then
-            ctx.controller.message:fragment({ "fa.constant-combinator-on" })
-         else
-            ctx.controller.message:fragment({ "fa.constant-combinator-off" })
-         end
-      end,
-   })
+   menu:add_item(
+      "active",
+      Controls.checkbox({
+         label = { "fa.logistics-active" },
+         get = function()
+            return cb.enabled
+         end,
+         set = function(v)
+            cb.enabled = v
+         end,
+      })
+   )
    menu:end_row()
 
    -- Row 3: Outputs overview
