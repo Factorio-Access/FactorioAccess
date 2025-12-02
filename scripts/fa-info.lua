@@ -431,9 +431,16 @@ end
 local function ent_info_logistic_network(ctx)
    local ent = ctx.ent
    if ent.type == "logistic-container" then
-      local network = ent.surface.find_logistic_network_by_position(ent.position, ent.force)
-      if network == nil then
-         ctx.message:fragment({ "fa.ent-info-logistic-not-in-network", 5000 })
+      local network, distance, direction =
+         BotLogistics.find_closest_network_with_distance(ent.surface, ent.position, ent.force)
+      if not network then
+         ctx.message:fragment({ "fa.ent-info-logistic-no-network" })
+      elseif distance and distance > 0 then
+         local dir = FaUtils.direction_lookup(direction)
+         ctx.message:fragment({
+            "fa.ent-info-logistic-not-in-network",
+            FaUtils.format_distance_with_direction(math.ceil(distance), dir),
+         })
       else
          local network_name = BotLogistics.get_network_name_from_network(network)
          ctx.message:fragment({ "fa.ent-info-logistic-in-network", network_name })

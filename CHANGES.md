@@ -14,7 +14,9 @@
   - Do not expect significant improvement here because there are too many regular+ghost rail combinations once they start mixing and you need to know which is which.
   - For now, to build in normal mode, you must start from a real rail.
 - When trying to force or superforce build with the virtual train, you may lock onto ghost rails.
-
+- Fix: roboport preview connection announcement is now relative to the cursor and accounts for where the center of the new roboport will be
+- Fix: entities outside a logistic network now report where the nearest network is instead of claiming there isn't ever one
+- We now try to support mixed roboports e.g. from mods like Bob Logistics. As is usual, this is for now untested.
 
 # 0.16.25 (2025-11-28)
 

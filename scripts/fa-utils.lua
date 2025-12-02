@@ -523,31 +523,6 @@ function mod.get_top_left_and_bottom_right(pos_1, pos_2)
    return top_left, bottom_right
 end
 
---Finds the nearest roboport
-function mod.find_nearest_roboport(surf, pos, radius_in)
-   local nearest = nil
-   local min_dist = radius_in
-   local ports = surf.find_entities_filtered({ name = "roboport", position = pos, radius = radius_in })
-   for i, port in ipairs(ports) do
-      local dist = math.ceil(util.distance(pos, port.position))
-      if dist < min_dist then
-         min_dist = dist
-         nearest = port
-      end
-   end
-   if nearest ~= nil then
-      rendering.draw_circle({
-         color = { 1, 1, 0 },
-         radius = 4,
-         width = 4,
-         target = nearest.position,
-         surface = surf,
-         time_to_live = 90,
-      })
-   end
-   return nearest, min_dist
-end
-
 function mod.table_concat(T1, T2)
    if T2 == nil then return end
    if T1 == nil then T1 = {} end

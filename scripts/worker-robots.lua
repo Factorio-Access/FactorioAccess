@@ -422,6 +422,64 @@ function mod.logistic_network_chests_info(port)
    }
 end
 
+---Calculate the distance from a position to the edge of a logistic cell's coverage box.
+---Logistic coverage is a square with half-side = logistic_radius.
+---@param position MapPosition
+---@param cell LuaLogisticCell
+---@return number distance Positive if outside, negative if inside
+local function distance_to_cell_coverage(position, cell)
+   local center = cell.owner.position
+   local radius = cell.logistic_radius
+
+   -- Box bounds
+   local min_x = center.x - radius
+   local max_x = center.x + radius
+   local min_y = center.y - radius
+   local max_y = center.y + radius
+
+   local px, py = position.x, position.y
+
+   -- Check if inside the box
+   local inside = px >= min_x and px <= max_x and py >= min_y and py <= max_y
+
+   if inside then
+      -- Distance to nearest edge (negative = inside)
+      local dist_to_left = px - min_x
+      local dist_to_right = max_x - px
+      local dist_to_top = py - min_y
+      local dist_to_bottom = max_y - py
+      return -math.min(dist_to_left, dist_to_right, dist_to_top, dist_to_bottom)
+   else
+      -- Closest point on box
+      local closest_x = math.max(min_x, math.min(px, max_x))
+      local closest_y = math.max(min_y, math.min(py, max_y))
+      return util.distance(position, { x = closest_x, y = closest_y })
+   end
+end
+
+---Find the closest logistic network and calculate distance to its coverage area.
+---@param surface LuaSurface
+---@param position MapPosition
+---@param force ForceID
+---@return LuaLogisticNetwork? network The closest network, or nil if none found
+---@return number? distance Distance to coverage edge (positive=outside, negative=inside), nil if no network
+---@return integer? direction Direction toward the network, nil if no network or inside coverage
+function mod.find_closest_network_with_distance(surface, position, force)
+   local network = surface.find_closest_logistic_network_by_position(position, force)
+   if not network then return nil, nil, nil end
+
+   local cell = network.find_cell_closest_to(position)
+   if not cell then return network, nil, nil end
+
+   local distance = distance_to_cell_coverage(position, cell)
+
+   -- Only provide direction if outside the coverage
+   local direction = nil
+   if distance > 0 then direction = FaUtils.get_direction_biased(cell.owner.position, position) end
+
+   return network, distance, direction
+end
+
 ---On tick handler to announce logistics state changes after the game has processed them
 ---@param pindex number
 function mod.on_tick(pindex)

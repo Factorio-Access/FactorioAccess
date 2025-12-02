@@ -1,4 +1,5 @@
 --Here: Functions for building with the mod, both basics and advanced tools.
+local BotLogistics = require("scripts.worker-robots")
 local BuildDimensions = require("scripts.build-dimensions")
 local Consts = require("scripts.consts")
 local Electrical = require("scripts.electrical")
@@ -15,6 +16,20 @@ local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
 
 local mod = {}
+
+---Maximum connection radius of any roboport prototype.
+---Uses logistic_radius as approximation since logistics_connection_distance >= logistic_radius.
+local max_roboport_connection_radius = 0
+do
+   local roboports = prototypes.get_entity_filtered({ { filter = "type", type = "roboport" } })
+   for _, proto in pairs(roboports) do
+      if proto.logistic_radius and proto.logistic_radius > max_roboport_connection_radius then
+         max_roboport_connection_radius = proto.logistic_radius
+      end
+   end
+   -- Fallback to vanilla value if no roboports found (shouldn't happen)
+   if max_roboport_connection_radius == 0 then max_roboport_connection_radius = 25 end
+end
 
 ---@class fa.BuildingTools.BuildDecision
 ---@field entity_name? string Name of entity to build (nil for tiles)
@@ -1034,23 +1049,44 @@ function mod.build_preview_checks_info(stack, pindex)
       end
    end
 
-   --For roboports, like electric poles, list possible neighbors (anything within 100 distx or 100 disty will be a neighbor
+   --For roboports, list possible neighbors that would connect (boxes overlap)
    if ent_p.type == "roboport" then
-      local reach = 48.5
-      local top_left = { x = math.floor(pos.x - reach), y = math.floor(pos.y - reach) }
-      local bottom_right = { x = math.ceil(pos.x + reach), y = math.ceil(pos.y + reach) }
-      local port_dict = surf.find_entities_filtered({ type = "roboport", area = { top_left, bottom_right } })
-      local ports = {}
-      for i, v in pairs(port_dict) do
-         table.insert(ports, v)
+      -- Calculate center of roboport being placed
+      local footprint = FaUtils.calculate_building_footprint({
+         entity_prototype = ent_p,
+         position = pos,
+         building_direction = build_dir,
+      })
+      local new_center = footprint.center
+      local new_radius = ent_p.logistic_radius -- connection distance >= logistic_radius
+
+      -- Search box: sum of max possible connection radii for any two roboports
+      local search_radius = new_radius + max_roboport_connection_radius
+      local port_dict = surf.find_entities_filtered({
+         type = "roboport",
+         area = {
+            { new_center.x - search_radius, new_center.y - search_radius },
+            { new_center.x + search_radius, new_center.y + search_radius },
+         },
+      })
+
+      -- Filter to only roboports that would actually connect (box overlap)
+      local connecting_ports = {}
+      for _, port in pairs(port_dict) do
+         local port_radius = port.logistic_cell.logistics_connection_distance
+         local sum_radii = new_radius + port_radius
+         local dx = math.abs(new_center.x - port.position.x)
+         local dy = math.abs(new_center.y - port.position.y)
+         -- Boxes connect if both dx and dy are within sum of radii
+         if dx <= sum_radii and dy <= sum_radii then table.insert(connecting_ports, port) end
       end
-      if #ports > 0 then
-         --List the first 5 poles within range
+
+      if #connecting_ports > 0 then
          table.insert(result, { "fa.connection-connecting" })
-         for i, port in ipairs(ports) do
+         for i, port in ipairs(connecting_ports) do
             if i <= 5 then
-               local dist = math.ceil(util.distance(port.position, pos))
-               local dir = FaUtils.get_direction_biased(port.position, pos)
+               local dist = math.ceil(util.distance(port.position, new_center))
+               local dir = FaUtils.get_direction_biased(port.position, new_center)
                table.insert(result, FaUtils.format_distance_with_direction(dist, helpers.direction_to_string(dir)))
                table.insert(result, ", ")
             end
@@ -1058,12 +1094,26 @@ function mod.build_preview_checks_info(stack, pindex)
       else
          --Notify if no connections and state nearest roboport
          table.insert(result, { "fa.connection-not-connected" })
-         local max_dist = 2000
-         local nearest_port, min_dist = FaUtils.find_nearest_roboport(p.surface, p.position, max_dist)
-         if min_dist == nil or min_dist >= max_dist then
+         -- Search for nearest roboport (any type) within a large radius
+         local far_ports = surf.find_entities_filtered({
+            type = "roboport",
+            position = new_center,
+            radius = 2000,
+         })
+         if #far_ports == 0 then
             table.insert(result, { "fa.connection-no-roboports-within" })
          else
-            local dir = FaUtils.get_direction_biased(nearest_port.position, pos)
+            -- Find the closest one
+            local nearest_port = nil
+            local min_dist = math.huge
+            for _, port in pairs(far_ports) do
+               local dist = util.distance(port.position, new_center)
+               if dist < min_dist then
+                  min_dist = dist
+                  nearest_port = port
+               end
+            end
+            local dir = FaUtils.get_direction_biased(nearest_port.position, new_center)
             table.insert(result, {
                "fa.connection-to-nearest-roboport",
                FaUtils.format_distance_with_direction(math.ceil(min_dist), helpers.direction_to_string(dir)),
@@ -1074,21 +1124,17 @@ function mod.build_preview_checks_info(stack, pindex)
 
    --For logistic chests, list whether there is a network nearby
    if ent_p.type == "logistic-container" then
-      local network = p.surface.find_logistic_network_by_position(pos, p.force)
-      if network == nil then
-         local nearest_roboport = FaUtils.find_nearest_roboport(p.surface, pos, 5000)
-         if nearest_roboport == nil then
-            table.insert(result, { "fa.connection-not-in-network" })
-         else
-            local dist = math.ceil(util.distance(pos, nearest_roboport.position) - 25)
-            local dir = FaUtils.direction_lookup(FaUtils.get_direction_biased(nearest_roboport.position, pos))
-            table.insert(
-               result,
-               { "fa.connection-not-in-network-nearest", FaUtils.format_distance_with_direction(dist, dir) }
-            )
-         end
+      local network, distance, direction = BotLogistics.find_closest_network_with_distance(p.surface, pos, p.force)
+      if not network then
+         table.insert(result, { "fa.connection-not-in-network" })
+      elseif distance and distance > 0 then
+         local dir = FaUtils.direction_lookup(direction)
+         table.insert(
+            result,
+            { "fa.connection-not-in-network-nearest", FaUtils.format_distance_with_direction(math.ceil(distance), dir) }
+         )
       else
-         local network_name = network.cells[1].owner.backer_name
+         local network_name = BotLogistics.get_network_name_from_network(network)
          table.insert(result, { "fa.connection-in-network", network_name })
       end
    end
