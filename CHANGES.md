@@ -1,4 +1,4 @@
-# 0.16.26 (unreleased)
+# 0.16.26 (2025-12-01)
 
 - Placing rails is no longer free.
   - There may be bugs where you lose rails instead of getting them back especially around backspace. If so, please report.
