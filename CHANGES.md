@@ -22,6 +22,7 @@
 - Fix: say "with x robots y available" even when x and y are zero
 - Merge the charging and charging queue roboport menu items into one
 - The logistic section editor now folds the item the row is for into the label, and remembers your column in the table of requests.
+- Logistic sections: expose multiplier and enabled/disabled checkbox
 
 # 0.16.25 (2025-11-28)
 

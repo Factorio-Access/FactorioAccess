@@ -289,8 +289,8 @@ local function render_section(ctx, section_index)
       end,
    })
 
-   -- Bottom row: section management controls
-   menu:start_row("section_controls")
+   -- Section settings row: group, multiplier, active
+   menu:start_row("section_settings")
 
    -- Group selector
    menu:add_item("group_selector", {
@@ -348,6 +348,83 @@ local function render_section(ctx, section_index)
          ctx.controller:open_textbox("", { node = "group_selector" }, { "fa.logistics-enter-group-name" })
       end,
    })
+
+   -- Multiplier
+   menu:add_item("multiplier", {
+      label = function(ctx)
+         local sections = entity.get_logistic_sections()
+         if not sections then return end
+         local section = sections.get_section(section_index)
+         if not section then return end
+
+         ctx.message:fragment({ "fa.logistics-multiplier", tostring(section.multiplier) })
+      end,
+      on_click = function(ctx)
+         ctx.controller:open_textbox("", { node = "multiplier" }, { "fa.logistics-enter-multiplier" })
+      end,
+      on_child_result = function(ctx, result)
+         local num = tonumber(result)
+         if not num then
+            UiSounds.play_ui_edge(ctx.pindex)
+            ctx.controller.message:fragment({ "fa.logistics-invalid-number" })
+         elseif num < 0 then
+            UiSounds.play_ui_edge(ctx.pindex)
+            ctx.controller.message:fragment({ "fa.logistics-multiplier-cannot-be-negative" })
+         else
+            local sections = entity.get_logistic_sections()
+            if not sections then return end
+            local section = sections.get_section(section_index)
+            if not section then return end
+
+            section.multiplier = num
+            ctx.controller.message:fragment({ "fa.logistics-multiplier", tostring(num) })
+         end
+      end,
+      on_clear = function(ctx)
+         local sections = entity.get_logistic_sections()
+         if not sections then return end
+         local section = sections.get_section(section_index)
+         if not section then return end
+
+         section.multiplier = 1
+         ctx.controller.message:fragment({ "fa.logistics-multiplier", "1" })
+      end,
+   })
+
+   -- Active checkbox
+   menu:add_item("active", {
+      label = function(ctx)
+         local sections = entity.get_logistic_sections()
+         if not sections then return end
+         local section = sections.get_section(section_index)
+         if not section then return end
+
+         ctx.message:fragment({ "fa.logistics-active" })
+         if section.active then
+            ctx.message:fragment({ "fa.checked" })
+         else
+            ctx.message:fragment({ "fa.unchecked" })
+         end
+      end,
+      on_click = function(ctx)
+         local sections = entity.get_logistic_sections()
+         if not sections then return end
+         local section = sections.get_section(section_index)
+         if not section then return end
+
+         section.active = not section.active
+         if section.active then
+            ctx.controller.message:fragment({ "fa.checked" })
+         else
+            ctx.controller.message:fragment({ "fa.unchecked" })
+         end
+      end,
+   })
+
+   menu:end_row()
+
+   -- Section management row: delete, add
+   menu:start_row("section_management")
 
    -- Delete this section
    menu:add_item("delete_section", {
