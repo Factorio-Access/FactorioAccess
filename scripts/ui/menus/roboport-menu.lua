@@ -3,6 +3,8 @@ Roboport menu UI using the new TabList/Menu system.
 Provides a vertical menu interface for managing roboport networks.
 ]]
 
+local CircuitNetworkTab = require("scripts.ui.tabs.circuit-network")
+local CircuitNetworkSignalsTab = require("scripts.ui.tabs.circuit-network-signals")
 local Functools = require("scripts.functools")
 local ItemInfo = require("scripts.item-info")
 local Localising = require("scripts.localising")
@@ -31,10 +33,9 @@ local mod = {}
 ---@param params fa.ui.RoboportMenu.Parameters
 ---@return fa.ui.RoboportMenu.SharedState
 local function state_setup(pindex, params)
-   local player = game.get_player(pindex)
-   local port = player.opened or player.selected
+   local port = params.entity
 
-   if port and port.valid and port.type == "roboport" then return {
+   if port.valid and port.type == "roboport" then return {
       port = port,
    } end
 
@@ -270,12 +271,40 @@ local function render_roboport_menu(ctx)
    return form:build()
 end
 
--- TabList declaration
-mod.roboport_menu = TabList.declare_tablist({
-   ui_name = UiRouter.UI_NAMES.ROBOPORT,
-   resets_to_first_tab_on_open = true,
-   shared_state_setup = state_setup,
-   tabs_callback = Functools.functionize({
+---Build circuit network tabs if the roboport supports them
+---@param port LuaEntity
+---@return fa.ui.TabstopDescriptor?
+local function build_circuit_network_section(port)
+   if not CircuitNetworkTab.is_available(port) then return nil end
+
+   return {
+      name = "circuit-network",
+      title = { "fa.section-circuit-network" },
+      tabs = {
+         CircuitNetworkTab.get_tab(),
+         CircuitNetworkSignalsTab.create_signals_tab({ "fa.circuit-network-signals-all" }, true, nil),
+         CircuitNetworkSignalsTab.create_signals_tab(
+            { "fa.circuit-network-signals-red" },
+            false,
+            defines.wire_connector_id.circuit_red
+         ),
+         CircuitNetworkSignalsTab.create_signals_tab(
+            { "fa.circuit-network-signals-green" },
+            false,
+            defines.wire_connector_id.circuit_green
+         ),
+      },
+   }
+end
+
+---Build all tabs for the roboport menu
+---@param pindex number
+---@param params fa.ui.RoboportMenu.Parameters
+---@return fa.ui.TabstopDescriptor[]
+local function build_tabs(pindex, params)
+   local port = params.entity
+
+   local sections = {
       {
          name = "main",
          tabs = {
@@ -286,7 +315,23 @@ mod.roboport_menu = TabList.declare_tablist({
             }),
          },
       },
-   }),
+   }
+
+   -- Add circuit network section if available
+   if port.valid then
+      local circuit_section = build_circuit_network_section(port)
+      if circuit_section then table.insert(sections, circuit_section) end
+   end
+
+   return sections
+end
+
+-- TabList declaration
+mod.roboport_menu = TabList.declare_tablist({
+   ui_name = UiRouter.UI_NAMES.ROBOPORT,
+   resets_to_first_tab_on_open = true,
+   shared_state_setup = state_setup,
+   tabs_callback = build_tabs,
 })
 
 -- Register with the UI event routing system for event interception

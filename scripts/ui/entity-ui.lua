@@ -398,7 +398,7 @@ function mod.maybe_open_entity(pindex, entity)
    -- Handle roboport special UI
    if entity.name == "roboport" then
       local router = UiRouter.get_router(pindex)
-      router:open_ui(UiRouter.UI_NAMES.ROBOPORT)
+      router:open_ui(UiRouter.UI_NAMES.ROBOPORT, { entity = entity })
       return true
    end
 
