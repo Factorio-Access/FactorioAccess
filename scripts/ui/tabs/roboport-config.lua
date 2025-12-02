@@ -1,59 +1,31 @@
 --[[
-Roboport menu UI using the new TabList/Menu system.
-Provides a vertical menu interface for managing roboport networks.
+Roboport configuration tab.
+
+Provides a configuration form for roboports with:
+- Roboport name
+- Network name
+- Network statistics (robots, chests, items)
+- Roboport status (charging, queue, contents)
 ]]
 
-local CircuitNetworkTab = require("scripts.ui.tabs.circuit-network")
-local CircuitNetworkSignalsTab = require("scripts.ui.tabs.circuit-network-signals")
-local Functools = require("scripts.functools")
-local ItemInfo = require("scripts.item-info")
-local Localising = require("scripts.localising")
-local WorkerRobots = require("scripts.worker-robots")
 local FormBuilder = require("scripts.ui.form-builder")
-local Speech = require("scripts.speech")
-local TabList = require("scripts.ui.tab-list")
+local ItemInfo = require("scripts.item-info")
 local UiKeyGraph = require("scripts.ui.key-graph")
-local UiRouter = require("scripts.ui.router")
 local UiSounds = require("scripts.ui.sounds")
+local WorkerRobots = require("scripts.worker-robots")
 
 local mod = {}
 
----@class fa.ui.RoboportMenu.SharedState
----@field port LuaEntity? The roboport being examined
+---@class fa.ui.RoboportTabContext: fa.ui.TabContext
+---@field tablist_shared_state fa.ui.EntityUI.SharedState
 
----@class fa.ui.RoboportMenu.Parameters
--- Empty for now but available for extensions
-
----@class fa.ui.RoboportMenu.Context: fa.ui.graph.Ctx
----@field parameters fa.ui.RoboportMenu.Parameters
----@field tablist_shared_state fa.ui.RoboportMenu.SharedState
-
--- Shared state setup function
----@param pindex number
----@param params fa.ui.RoboportMenu.Parameters
----@return fa.ui.RoboportMenu.SharedState
-local function state_setup(pindex, params)
-   local port = params.entity
-
-   if port.valid and port.type == "roboport" then return {
-      port = port,
-   } end
-
-   return {
-      port = nil,
-   }
-end
-
--- Main render function
----@param ctx fa.ui.RoboportMenu.Context
+---Render the roboport configuration form
+---@param ctx fa.ui.RoboportTabContext
 ---@return fa.ui.graph.Render?
-local function render_roboport_menu(ctx)
-   local port = ctx.tablist_shared_state.port
-   if not port or not port.valid then
-      ctx.controller.message:fragment({ "fa.robots-roboport-menu-requires" })
-      ctx.controller:close()
-      return nil
-   end
+local function render_roboport_config(ctx)
+   local port = ctx.tablist_shared_state.entity
+   if not port or not port.valid then return nil end
+   assert(port.type == "roboport", "render: entity is not a roboport")
 
    local form = FormBuilder.FormBuilder.new()
    local nw = port.logistic_network
@@ -66,22 +38,22 @@ local function render_roboport_menu(ctx)
 
    -- Menu item 1: Rename roboport
    form:add_item("rename_roboport", {
-      label = function(ctx)
+      label = function(item_ctx)
          local name = port.backer_name or ""
          local value_text = name ~= "" and name or { "fa.empty" }
-         ctx.message:fragment(value_text)
-         ctx.message:fragment({ "fa.robots-rename-this-roboport" })
+         item_ctx.message:fragment(value_text)
+         item_ctx.message:fragment({ "fa.robots-rename-this-roboport" })
       end,
-      on_click = function(ctx)
-         ctx.controller:open_textbox("", "rename_roboport")
+      on_click = function(item_ctx)
+         item_ctx.controller:open_textbox("", "rename_roboport")
       end,
-      on_child_result = function(ctx, result)
+      on_child_result = function(item_ctx, result)
          if not result or result == "" then
-            UiSounds.play_ui_edge(ctx.pindex)
-            ctx.controller.message:fragment({ "fa.roboport-name-cannot-be-empty" })
+            UiSounds.play_ui_edge(item_ctx.pindex)
+            item_ctx.controller.message:fragment({ "fa.roboport-name-cannot-be-empty" })
          else
             port.backer_name = result
-            ctx.controller.message:fragment(result)
+            item_ctx.controller.message:fragment(result)
          end
       end,
    })
@@ -271,70 +243,11 @@ local function render_roboport_menu(ctx)
    return form:build()
 end
 
----Build circuit network tabs if the roboport supports them
----@param port LuaEntity
----@return fa.ui.TabstopDescriptor?
-local function build_circuit_network_section(port)
-   if not CircuitNetworkTab.is_available(port) then return nil end
-
-   return {
-      name = "circuit-network",
-      title = { "fa.section-circuit-network" },
-      tabs = {
-         CircuitNetworkTab.get_tab(),
-         CircuitNetworkSignalsTab.create_signals_tab({ "fa.circuit-network-signals-all" }, true, nil),
-         CircuitNetworkSignalsTab.create_signals_tab(
-            { "fa.circuit-network-signals-red" },
-            false,
-            defines.wire_connector_id.circuit_red
-         ),
-         CircuitNetworkSignalsTab.create_signals_tab(
-            { "fa.circuit-network-signals-green" },
-            false,
-            defines.wire_connector_id.circuit_green
-         ),
-      },
-   }
-end
-
----Build all tabs for the roboport menu
----@param pindex number
----@param params fa.ui.RoboportMenu.Parameters
----@return fa.ui.TabstopDescriptor[]
-local function build_tabs(pindex, params)
-   local port = params.entity
-
-   local sections = {
-      {
-         name = "main",
-         tabs = {
-            UiKeyGraph.declare_graph({
-               name = "roboport",
-               title = { "fa.roboport-menu-main" },
-               render_callback = render_roboport_menu,
-            }),
-         },
-      },
-   }
-
-   -- Add circuit network section if available
-   if port.valid then
-      local circuit_section = build_circuit_network_section(port)
-      if circuit_section then table.insert(sections, circuit_section) end
-   end
-
-   return sections
-end
-
--- TabList declaration
-mod.roboport_menu = TabList.declare_tablist({
-   ui_name = UiRouter.UI_NAMES.ROBOPORT,
-   resets_to_first_tab_on_open = true,
-   shared_state_setup = state_setup,
-   tabs_callback = build_tabs,
+-- Create the tab descriptor
+mod.roboport_config_tab = UiKeyGraph.declare_graph({
+   name = "roboport-config",
+   title = { "fa.roboport-config-title" },
+   render_callback = render_roboport_config,
 })
-
--- Register with the UI event routing system for event interception
-UiRouter.register_ui(mod.roboport_menu)
 
 return mod

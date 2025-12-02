@@ -13,26 +13,26 @@ local UiKeyGraph = require("scripts.ui.key-graph")
 local UiRouter = require("scripts.ui.router")
 local inventory = require("scripts.ui.menus.inventory")
 local gun_menu = require("scripts.ui.menus.gun-menu")
+local arithmetic_combinator_tab = require("scripts.ui.tabs.arithmetic-combinator")
 local assembling_machine_tab = require("scripts.ui.tabs.assembling-machine")
 local circuit_network_tab = require("scripts.ui.tabs.circuit-network")
 local circuit_network_signals_tab = require("scripts.ui.tabs.circuit-network-signals")
-local inserter_config_tab = require("scripts.ui.tabs.inserter-config")
+local equipment_grid_tab = require("scripts.ui.tabs.equipment-grid")
+local equipment_overview_tab = require("scripts.ui.tabs.equipment-overview")
+local fluids_tab = require("scripts.ui.tabs.fluids")
 local infinity_chest_config_tab = require("scripts.ui.tabs.infinity-chest-config")
 local infinity_pipe_config_tab = require("scripts.ui.tabs.infinity-pipe-config")
-local fluids_tab = require("scripts.ui.tabs.fluids")
-local spidertron_config_tab = require("scripts.ui.tabs.spidertron-config")
-local equipment_overview_tab = require("scripts.ui.tabs.equipment-overview")
-local equipment_grid_tab = require("scripts.ui.tabs.equipment-grid")
-local selector_combinator_tab = require("scripts.ui.tabs.selector-combinator")
-local arithmetic_combinator_tab = require("scripts.ui.tabs.arithmetic-combinator")
-local train_stop_tab = require("scripts.ui.tabs.train-stop")
+local inserter_config_tab = require("scripts.ui.tabs.inserter-config")
 local locomotive_config_tab = require("scripts.ui.tabs.locomotive-config")
+local roboport_config_tab = require("scripts.ui.tabs.roboport-config")
+local selector_combinator_tab = require("scripts.ui.tabs.selector-combinator")
+local spidertron_config_tab = require("scripts.ui.tabs.spidertron-config")
+local train_stop_tab = require("scripts.ui.tabs.train-stop")
 
 local mod = {}
 
 -- Entity names that have UIs (for exact name matching)
 local ENTITY_NAMES_WITH_UI = {
-   ["roboport"] = true,
    ["rocket-silo-rocket-shadow"] = true,
    ["rocket-silo-rocket"] = true,
 }
@@ -46,6 +46,13 @@ local ENTITY_TYPES_WITH_UI = {
    ["cargo-wagon"] = true,
    ["artillery-wagon"] = true,
    ["locomotive"] = true,
+   ["roboport"] = true,
+}
+
+-- Entity types that should show configuration section before inventories
+local CONFIG_FIRST_TYPES = {
+   ["locomotive"] = true,
+   ["roboport"] = true,
 }
 
 ---@class fa.ui.EntityUI.SharedState
@@ -186,6 +193,9 @@ local function build_configuration_tabs(entity)
    -- Add locomotive configuration
    if prototype.type == "locomotive" then table.insert(tabs, locomotive_config_tab.locomotive_config_tab) end
 
+   -- Add roboport configuration
+   if prototype.type == "roboport" then table.insert(tabs, roboport_config_tab.roboport_config_tab) end
+
    -- Future: Add other device-specific tabs here
    -- if prototype.type == "mining-drill" then ...
    -- if prototype.type == "lab" then ...
@@ -264,9 +274,10 @@ local function build_entity_sections(pindex, entity)
 
    -- Build configuration section
    local config_tabs = build_configuration_tabs(entity)
+   local config_first = CONFIG_FIRST_TYPES[entity.prototype.type]
 
-   -- For locomotives, add configuration before inventories
-   if entity.prototype.type == "locomotive" and config_tabs then
+   -- For config-first entities, add configuration before inventories
+   if config_first and config_tabs then
       table.insert(sections, {
          name = "configuration",
          title = { "fa.section-device-configuration" },
@@ -284,8 +295,8 @@ local function build_entity_sections(pindex, entity)
       })
    end
 
-   -- For non-locomotives, add configuration after inventories
-   if entity.prototype.type ~= "locomotive" and config_tabs then
+   -- For other entities, add configuration after inventories
+   if not config_first and config_tabs then
       table.insert(sections, {
          name = "configuration",
          title = { "fa.section-device-configuration" },
@@ -394,13 +405,6 @@ end
 function mod.maybe_open_entity(pindex, entity)
    -- Early exit if entity has no UI
    if not mod.has_ui(entity) then return false end
-
-   -- Handle roboport special UI
-   if entity.name == "roboport" then
-      local router = UiRouter.get_router(pindex)
-      router:open_ui(UiRouter.UI_NAMES.ROBOPORT, { entity = entity })
-      return true
-   end
 
    -- Handle entity indirection cases
    local target_entity = entity

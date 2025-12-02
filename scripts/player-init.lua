@@ -115,8 +115,6 @@ function mod.initialize(player)
 
    faplayer.guns_menu = faplayer.guns_menu or {}
 
-   faplayer.roboport_menu = faplayer.roboport_menu or {}
-
    faplayer.blueprint_menu = faplayer.blueprint_menu or {}
 
    faplayer.menu_history = faplayer.menu_history or {}
@@ -287,12 +285,6 @@ function mod.initialize(player)
       index = 0,
       renaming = false,
       spider = nil,
-   }
-
-   faplayer.roboport_menu = faplayer.roboport_menu or {
-      port = nil,
-      index = 0,
-      renaming = false,
    }
 
    faplayer.blueprint_menu = faplayer.blueprint_menu

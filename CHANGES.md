@@ -17,6 +17,8 @@
 - Fix: roboport preview connection announcement is now relative to the cursor and accounts for where the center of the new roboport will be
 - Fix: entities outside a logistic network now report where the nearest network is instead of claiming there isn't ever one
 - We now try to support mixed roboports e.g. from mods like Bob Logistics. As is usual, this is for now untested.
+- Roboportts now expose their inventories (like other entities, but as the second tab, since normally you want the overview menu)
+- Roboports expose circuit network config
 
 # 0.16.25 (2025-11-28)
 

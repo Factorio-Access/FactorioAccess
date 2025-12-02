@@ -127,7 +127,6 @@ mod.UI_NAMES = {
    BELT = "belt",
    WARNINGS = "warnings",
    PUMP = "pump",
-   ROBOPORT = "roboport",
    BLUEPRINT = "blueprint",
    BLUEPRINT_BOOK = "blueprint_book",
    SIGNAL_SELECTOR = "signal_selector",
