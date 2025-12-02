@@ -44,9 +44,6 @@ Commands should always be relative to the current working directory.
 
 ### Key Commands
 ```bash
-# Run Factorio with save
-python launch_factorio.py --timeout 300 --load-game mysave.zip
-
 # Format code (REQUIRED before committing)
 python launch_factorio.py --format
 
@@ -103,6 +100,8 @@ local my_menu = TabList.declare_tablist({
 })
 ```
 
+scripts/ui/controls.lua, scripts/ui/form-builder.lua, and scripts/ui/menu-builder.lua are the major UI entrypoints for implementing a new GUI.  scripts/ui/router.lua is the entrypoint for non-UI interaction with the UI system, e.g. opening a UI.
+
 #### Localization (MessageBuilder)
 ```lua
 local message = MessageBuilder.new()
@@ -123,24 +122,24 @@ mb:fragment("foo"):fragment("bar")
 Crashes!:
 
 ```
-mb:fragment("foo":fragment(" "):fragment("bar")
+mb:fragment("foo"):fragment(" "):fragment("bar")
 -- crashes: spaces were already added!
 ```
 
-
 Style rules:
 
-- Don't use `:` `()`.
+- Don't use `:` `()`.  Screen readers read these symbols verbatim in many setups. Better to use comma (aka list_item) or just leave out the punctuation.
 - Don't be verbose
 - Avoid emdash
 - Avoid unicode
 - Prefer MessageBuilder list_item() for managing placement of commas
 - Always familiarize with the contents of scripts/localising.lua and use those functions
 - Localisation keys should always be in section `fa` and must never contain `.`.  Example: `fa.foo-bar` is good, `fa.foo.bar` is bad.
+- When possible, fold things into a parameterized localisation key rather than using `fragment({"fa.key-intro}"):fragment(p1)...`. This allows the word order to be changed in translations.
 
 We are writing for a screen reader.  This means two core principles:
 
-- The sooner a message conveiying information varies, the faster the user can keep going.
+- The sooner a message conveying information varies, the faster the user can keep going.
   - Ex: "cursor anchored" "cursor unanchored" makes the user listen to "cursor".
   - ex: "anchored cursor" "unanchored cursor" lets the user move on as soon as the first syllable.
 - Less punctuation is better, unless it's comma or period.  Many setups read colon left paren etc.
@@ -148,7 +147,8 @@ We are writing for a screen reader.  This means two core principles:
 ## Key Systems
 
 ### Scanner System
-The flagship feature for finding entities:
+Used to find and categorize entities.  Effectively a streaming database which picks up new entities and tiles, grouping them and running fixed queries.
+
 - **Entry**: `scripts/scanner/entrypoint.lua`
 - **Engine**: `scripts/scanner/surface-scanner.lua`
 - **Backends**: `scripts/scanner/backends/`
@@ -160,15 +160,7 @@ Modern graph-based architecture:
 - **TabList**: Multi-tab support with shared state
 - **Builders**: Menu and Grid builders for common patterns
 - Dynamic rendering with React-like rebuilding
-
-### Movement System
-- Files: `scripts/movement.lua`, `scripts/character-walking.lua`
-
-### Building System
-- Audio preview before placement
-- Collision detection
-- Area operations
-- File: `scripts/building-tools.lua`
+- Explicit re-render is not possible because the UI does not have a painting step and is really a description of how to say things.  Controls which change values often say their new value.
 
 ## Testing
 
@@ -211,10 +203,7 @@ end)
 2. Handle in `control.lua`: `script.on_event("fa-keyname")`
 3. Add locale in `locale/en/locale.cfg` under `[controls]`
 
-#### Add Scanner Backend
-1. Create `scripts/scanner/backends/your-backend.lua`
-2. Copy structure from `simple.lua`
-3. Implement required methods: `get_category()`, `get_surface_scan_results()`
+Our keys are named `fa-s` (s, with no modifiers) or `fa-flags-s` where flags is c, a, or s (shift), e.g. `fa-cas-s` is s with control+alt+shift.
 
 #### Add Storage Module
 ```lua
@@ -232,7 +221,6 @@ local my_storage = storage_manager.declare_storage_module('my_module', {
 
 ## Known Issues (Factorio 2.0 Migration)
 
-- **Rails/Trains**: Removed from the mod and to be reimplemented. Available in the 1.1 version only.
 - **Syntrax**: Rail description language integrated but not yet active
 
 ## Important Notes
@@ -267,7 +255,6 @@ The mod includes a message list system for providing help and documentation that
    This is the first message.
 
    This is the second message.
-   It can span multiple lines.
    ```
 3. Run `python build_message_lists.py` to generate locale files
 4. The message list name is the basename of the file (without `.txt`)
@@ -382,13 +369,24 @@ end
 
 # Factorio 2.0 API
 
-This is a Factorio 2.0 project.  Your knowledge cutoff and training data did not contain Factorio 2.0 API changes.
+This is a Factorio 2.0 project, not a Factorio 1.1 project.  Factorio 2.0 comes with many API changes.
 
-A complete reference (one file per class, concept, define, etc) is at llm-docs/api-reference. List this directory recursively for a "table of contents".
+A complete reference (one file per class, concept, define, etc) is at `./llm-docs/api-reference`. List this directory recursively for a "table of contents".
 
-You **MUST** double check that you understand APIs before using them.
+Read `./llm-docs/CLAUDE.md` for more specific information on browsing this documentation.
+
+You **MUST** double check that you understand APIs before using them.  Your training knowledge cutoff was only barely after the Factorio 2.0 release and a vast majority of your training data refers to 1.1 APIs.  In addition to changes, the 2.0 API adds a lot of new functions and objects which may also simplify mod tasks.
+
+IMPORTANT: the docs are at the root of this repo, `./` relative to your invocation working directory. They are not at the root of the Factorio install.  For example, you can run exactly this command to list all files (thousands of them!):
+
+```
+find ./llm-docs -type f
+```
+
+Due to the sheer number of files, searching with your built-in search tools is a better approach.  This is just illustrating the locations of files--don't run it unless you're sure you want all that output!
 
 # Quick notes on common patterns
 
 - Before performing aggregations of items by quality to produce lists such as "legendary solar panel x 5", read scripts/item-stack-utils.lua to learn about aggregation functions that already exist.
+- See `inventory-utils.lua` for inventory-like list presentation helpers.
 - imports are CamelCase, not snake_case or camelCase.
