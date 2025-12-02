@@ -84,49 +84,31 @@ local function render_roboport_config(ctx)
    -- Menu item 4: Network robots info
    form:add_label("robots", function(label_ctx)
       if nw then
-         local items = {}
-
-         table.insert(items, { name = "roboport", count = #nw.cells })
-
-         if nw.all_logistic_robots > 0 then
-            table.insert(items, { name = "logistic-robot", count = nw.all_logistic_robots })
-         end
-
-         if nw.all_construction_robots > 0 then
-            table.insert(items, { name = "construction-robot", count = nw.all_construction_robots })
-         end
-
-         local mb = label_ctx.message
-         mb:fragment({ "fa.network-robots-intro" })
-         for _, item in ipairs(items) do
-            mb:list_item(ItemInfo.item_info(item))
-         end
+         label_ctx.message:fragment({
+            "fa.network-members-info",
+            #nw.cells,
+            nw.all_logistic_robots,
+            nw.available_logistic_robots,
+            nw.all_construction_robots,
+            nw.available_construction_robots,
+         })
       else
          label_ctx.message:fragment({ "fa.robots-error-no-network" })
       end
    end)
 
-   -- Menu item 5: Roboport charging status
+   -- Menu item 5: Roboport charging status with queue
    form:add_label("charging", function(label_ctx)
       local cell = port.logistic_cell
-      local mb = label_ctx.message
 
       if cell.charging_robot_count > 0 then
-         mb:fragment({ "fa.roboport-charging", cell.charging_robot_count })
+         label_ctx.message:fragment({
+            "fa.roboport-charging-with-queue",
+            cell.charging_robot_count,
+            cell.to_charge_robot_count,
+         })
       else
-         mb:fragment({ "fa.roboport-not-charging" })
-      end
-   end)
-
-   -- Menu item 6: Roboport queue status
-   form:add_label("queue", function(label_ctx)
-      local cell = port.logistic_cell
-      local mb = label_ctx.message
-
-      if cell.to_charge_robot_count > 0 then
-         mb:fragment({ "fa.roboport-queue", cell.to_charge_robot_count })
-      else
-         mb:fragment({ "fa.roboport-no-queue" })
+         label_ctx.message:fragment({ "fa.roboport-not-charging" })
       end
    end)
 

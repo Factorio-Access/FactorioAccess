@@ -19,6 +19,8 @@
 - We now try to support mixed roboports e.g. from mods like Bob Logistics. As is usual, this is for now untested.
 - Roboportts now expose their inventories (like other entities, but as the second tab, since normally you want the overview menu)
 - Roboports expose circuit network config
+- Fix: say "with x robots y available" even when x and y are zero
+- Merge the charging and charging queue roboport menu items into one
 
 # 0.16.25 (2025-11-28)
 
