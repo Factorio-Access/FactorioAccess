@@ -61,11 +61,12 @@ local function render_section(ctx, section_index)
    for i = 1, section.filters_count do
       local slot = section.get_slot(i)
       if slot and slot.value then
-         local row_key = "filter_" .. i
-         menu:start_row(row_key)
+         local item_key = "filter_" .. i
+         -- All filter rows share the same key for column navigation
+         menu:start_row("filter")
 
          -- Item 1: Overview + signal selector
-         menu:add_item(row_key .. "_overview", {
+         menu:add_item(item_key .. "_overview", {
             label = function(ctx)
                local min_val = slot.min or 0
                local max_val = slot.max
@@ -84,7 +85,7 @@ local function render_section(ctx, section_index)
                ctx.controller:open_child_ui(
                   Router.UI_NAMES.SIGNAL_CHOOSER,
                   { mode = signal_mode },
-                  { node = row_key .. "_overview", slot_index = i }
+                  { node = item_key .. "_overview", slot_index = i }
                )
             end,
             on_child_result = function(ctx, result)
@@ -111,15 +112,20 @@ local function render_section(ctx, section_index)
          })
 
          -- Item 2: Min value
-         menu:add_item(row_key .. "_min", {
+         menu:add_item(item_key .. "_min", {
             label = function(ctx)
-               ctx.message:fragment({ "fa.logistics-min" })
-               ctx.message:fragment(tostring(slot.min or 0))
+               local sid = slot.value
+               ---@cast sid SignalID
+               ctx.message:fragment({
+                  "fa.logistics-min-for",
+                  tostring(slot.min or 0),
+                  CircuitNetwork.localise_signal(sid),
+               })
             end,
             on_click = function(ctx)
                ctx.controller:open_textbox(
                   "",
-                  { node = row_key .. "_min", slot_index = i },
+                  { node = item_key .. "_min", slot_index = i },
                   { "fa.logistics-enter-min" }
                )
             end,
@@ -164,19 +170,20 @@ local function render_section(ctx, section_index)
          })
 
          -- Item 3: Max value
-         menu:add_item(row_key .. "_max", {
+         menu:add_item(item_key .. "_max", {
             label = function(ctx)
-               ctx.message:fragment({ "fa.logistics-max" })
-               if slot.max then
-                  ctx.message:fragment(tostring(slot.max))
-               else
-                  ctx.message:fragment({ "fa.infinity" })
-               end
+               local sid = slot.value
+               ---@cast sid SignalID
+               ctx.message:fragment({
+                  "fa.logistics-max-for",
+                  slot.max and tostring(slot.max) or { "fa.infinity" },
+                  CircuitNetwork.localise_signal(sid),
+               })
             end,
             on_click = function(ctx)
                ctx.controller:open_textbox(
                   "",
-                  { node = row_key .. "_max", slot_index = i },
+                  { node = item_key .. "_max", slot_index = i },
                   { "fa.logistics-enter-max" }
                )
             end,
@@ -228,9 +235,11 @@ local function render_section(ctx, section_index)
          })
 
          -- Item 4: Delete button
-         menu:add_item(row_key .. "_delete", {
+         menu:add_item(item_key .. "_delete", {
             label = function(ctx)
-               ctx.message:fragment({ "fa.logistics-delete" })
+               local sid = slot.value
+               ---@cast sid SignalID
+               ctx.message:fragment({ "fa.logistics-delete-for", CircuitNetwork.localise_signal(sid) })
             end,
             on_click = function(ctx)
                local sections = entity.get_logistic_sections()
