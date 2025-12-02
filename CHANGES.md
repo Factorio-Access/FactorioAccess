@@ -9,6 +9,9 @@
   - Force build marks trees and rocks for deconstruction, and places landfill as needed.
   - Superforce marks your buildings for deconstruction as well.
   - We will not define these in mod documentation or moving forward as they are vanilla concepts, not mod specific ones.
+- Try to report the shapes for ghost rails.
+  - This considers ghost rails and regular rails as separate networks entirely. SO, a regular rail connecting to a ghost rail counts as an end on both sides.
+  - Do not expect significant improvement here because there are too many regular+ghost rail combinations once they start mixing and you need to know which is which.
 
 
 # 0.16.25 (2025-11-28)

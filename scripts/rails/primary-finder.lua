@@ -11,13 +11,30 @@ local Traverser = require("railutils.traverser")
 
 local mod = {}
 
+---Get effective rail type from entity (handles ghosts)
+---@param ent LuaEntity
+---@return string The rail type (e.g., "straight-rail")
+local function get_effective_type(ent)
+   if ent.type == "entity-ghost" then return ent.ghost_type end
+   return ent.type
+end
+
+---Get effective rail name from entity (handles ghosts)
+---@param ent LuaEntity
+---@return string The rail prototype name
+local function get_effective_name(ent)
+   if ent.type == "entity-ghost" then return ent.ghost_name end
+   return ent.name
+end
+
 ---Push all connected rail unit numbers into a set
 ---@param connected_set table<integer, true> Set to add connected unit numbers to
 ---@param rail_ent LuaEntity Rail entity to find neighbors for
 ---@param rail_type railutils.RailType Type of the rail
 ---@param placement_direction defines.direction Direction the rail is placed
 ---@param position fa.Point Position of the rail
-local function push_connected_unit_numbers(connected_set, rail_ent, rail_type, placement_direction, position)
+---@param query_fn fun(area: BoundingBox.0): LuaEntity[] Function to query rails at an area
+local function push_connected_unit_numbers(connected_set, rail_ent, rail_type, placement_direction, position, query_fn)
    -- Get both end directions for this rail (always 2)
    local end_directions = RailQueries.get_end_directions(rail_type, placement_direction)
 
@@ -56,11 +73,8 @@ local function push_connected_unit_numbers(connected_set, rail_ent, rail_type, p
             { x = expected_floor_x + 0.999, y = expected_floor_y + 0.999 },
          }
 
-         -- Find rails at next position
-         local rails_at_pos = rail_ent.surface.find_entities_filtered({
-            area = search_area,
-            type = Consts.RAIL_TYPES,
-         })
+         -- Find rails at next position using provided query function
+         local rails_at_pos = query_fn(search_area)
 
          -- Add rails that match the expected type, direction, and position
          for _, connected_rail in ipairs(rails_at_pos) do
@@ -69,7 +83,7 @@ local function push_connected_unit_numbers(connected_set, rail_ent, rail_type, p
                local rail_floor_x = math.floor(connected_rail.position.x)
                local rail_floor_y = math.floor(connected_rail.position.y)
                local pos_match = rail_floor_x == expected_floor_x and rail_floor_y == expected_floor_y
-               local type_match = connected_rail.name == expected_type
+               local type_match = get_effective_name(connected_rail) == expected_type
                local direction_match = connected_rail.direction == expected_direction
 
                if pos_match and type_match and direction_match then connected_set[connected_rail.unit_number] = true end
@@ -102,15 +116,16 @@ end
 ---A rail is considered secondary if it connects to a rail we've already decided to keep.
 ---
 ---@param rail_list LuaEntity[] Array of rail entities at the same position
+---@param query_fn fun(area: BoundingBox.0): LuaEntity[] Function to query rails at an area
 ---@return LuaEntity[] Filtered array with only primary rails
-function mod.deduplicate_secondary_rails(rail_list)
+function mod.deduplicate_secondary_rails(rail_list, query_fn)
    if #rail_list <= 1 then return rail_list end
 
    -- Sort by priority: straight > half-diagonal > curve-a > curve-b
    -- Tie-break by unit number for stability
    table.sort(rail_list, function(a, b)
-      local priority_a = get_rail_priority(a.type)
-      local priority_b = get_rail_priority(b.type)
+      local priority_a = get_rail_priority(get_effective_type(a))
+      local priority_b = get_rail_priority(get_effective_type(b))
       if priority_a ~= priority_b then return priority_a < priority_b end
       return (a.unit_number or 0) < (b.unit_number or 0)
    end)
@@ -128,13 +143,14 @@ function mod.deduplicate_secondary_rails(rail_list)
             table.insert(result, rail_ent)
 
             -- Mark all rails connected to this one
-            local rail_type = RailQueries.prototype_type_to_rail_type(rail_ent.name)
+            local rail_type = RailQueries.prototype_type_to_rail_type(get_effective_name(rail_ent))
             push_connected_unit_numbers(
                connected_to_primary,
                rail_ent,
                rail_type,
                rail_ent.direction,
-               { x = rail_ent.position.x, y = rail_ent.position.y }
+               { x = rail_ent.position.x, y = rail_ent.position.y },
+               query_fn
             )
          end
       end

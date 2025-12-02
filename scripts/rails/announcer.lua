@@ -13,12 +13,18 @@ local mod = {}
 
 ---Build announcement message for a rail
 ---@param description railutils.RailDescription Rail description from describer
----@param prefix_rail boolean? If true, prefix with "rail" (default true for backwards compatibility)
+---@param opts { prefix_rail: boolean?, is_ghost: boolean? }? Options
 ---@return LocalisedString Message ready for speech
-function mod.announce_rail(description, prefix_rail)
+function mod.announce_rail(description, opts)
+   opts = opts or {}
+   local prefix_rail = opts.prefix_rail
+   local is_ghost = opts.is_ghost or false
    if prefix_rail == nil then prefix_rail = true end
 
    local message = MessageBuilder.new()
+
+   -- Add "ghost" prefix if this is a ghost rail
+   if is_ghost then message:fragment({ "fa.rail-ghost-prefix" }) end
 
    -- Add "rail" prefix if requested
    if prefix_rail then message:fragment("rail") end

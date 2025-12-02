@@ -34,45 +34,66 @@ end
 function mod.read_tile_rails(pindex, message)
    local player = game.get_player(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
-   local pos = vp:get_cursor_pos()
+   local cursor_pos = vp:get_cursor_pos()
 
-   local floor_x = math.floor(pos.x)
-   local floor_y = math.floor(pos.y)
+   local floor_x = math.floor(cursor_pos.x)
+   local floor_y = math.floor(cursor_pos.y)
    local search_area = {
       { x = floor_x + 0.001, y = floor_y + 0.001 },
       { x = floor_x + 0.999, y = floor_y + 0.999 },
    }
 
-   -- Find all rail entities at this position
-   local rail_entities = player.surface.find_entities_filtered({
-      area = search_area,
-      type = Consts.RAIL_TYPES,
-   })
+   -- Query functions for deduplication
+   local function query_real_rails(area)
+      return player.surface.find_entities_filtered({ area = area, type = Consts.RAIL_TYPES })
+   end
+   local function query_ghost_rails(area)
+      return player.surface.find_entities_filtered({ area = area, ghost_type = Consts.RAIL_TYPES })
+   end
 
-   if #rail_entities == 0 then return end
+   -- Find real and ghost rails
+   local rail_entities = query_real_rails(search_area)
+   local ghost_entities = query_ghost_rails(search_area)
 
-   -- Deduplicate secondary rails (e.g., at forks, curved pieces connected to straight pieces)
-   rail_entities = PrimaryFinder.deduplicate_secondary_rails(rail_entities)
+   if #rail_entities == 0 and #ghost_entities == 0 then return end
 
-   if #rail_entities == 0 then return end
+   local is_first = true
 
-   -- Wrap the surface (hardcoded to vanilla for now)
-   local wrapped_surface = SurfaceHelper.wrap_surface_vanilla(player.surface)
-   if not wrapped_surface then return end
+   -- Announce real rails
+   if #rail_entities > 0 then
+      rail_entities = PrimaryFinder.deduplicate_secondary_rails(rail_entities, query_real_rails)
+      local wrapped_surface = SurfaceHelper.wrap_surface_vanilla(player.surface)
 
-   -- Announce each rail
-   for i, rail_entity in ipairs(rail_entities) do
-      if rail_entity and rail_entity.valid then
-         -- Convert entity to railutils types
-         local rail_type = RailQueries.prototype_type_to_rail_type(rail_entity.name)
-         if rail_type then
-            -- Describe and announce the rail
-            local pos = { x = rail_entity.position.x, y = rail_entity.position.y }
-            local description = RailDescriber.describe_rail(wrapped_surface, rail_type, rail_entity.direction, pos)
-            -- First rail gets "rail" prefix, subsequent ones don't
-            local announcement = RailAnnouncer.announce_rail(description, i == 1)
+      for _, rail_entity in ipairs(rail_entities) do
+         if rail_entity and rail_entity.valid then
+            local rail_type = RailQueries.prototype_type_to_rail_type(rail_entity.name)
+            if rail_type then
+               local pos = { x = rail_entity.position.x, y = rail_entity.position.y }
+               local description = RailDescriber.describe_rail(wrapped_surface, rail_type, rail_entity.direction, pos)
+               local announcement = RailAnnouncer.announce_rail(description, { prefix_rail = is_first })
+               message:list_item_forced_comma(announcement)
+               is_first = false
+            end
+         end
+      end
+   end
 
-            message:list_item_forced_comma(announcement)
+   -- Announce ghost rails
+   if #ghost_entities > 0 then
+      ghost_entities = PrimaryFinder.deduplicate_secondary_rails(ghost_entities, query_ghost_rails)
+      local ghost_surface = SurfaceHelper.wrap_surface_vanilla_ghosts(player.surface)
+
+      for _, ghost_entity in ipairs(ghost_entities) do
+         if ghost_entity and ghost_entity.valid then
+            local rail_type = RailQueries.prototype_type_to_rail_type(ghost_entity.ghost_name)
+            if rail_type then
+               local pos = { x = ghost_entity.position.x, y = ghost_entity.position.y }
+               local description = RailDescriber.describe_rail(ghost_surface, rail_type, ghost_entity.direction, pos)
+               local announcement =
+                  RailAnnouncer.announce_rail(description, { prefix_rail = is_first, is_ghost = true })
+               message:list_item_forced_comma(announcement)
+               is_first = false
+            end
          end
       end
    end
@@ -91,7 +112,9 @@ function mod.read_tile_inner(pindex, message)
    local ent = EntitySelection.get_first_ent_at_tile(pindex)
 
    -- Special handling for rails: announce all rails at this position
-   if ent and ent.valid and Consts.RAIL_TYPES_SET[ent.type] then
+   local is_rail = ent and ent.valid and Consts.RAIL_TYPES_SET[ent.type]
+   local is_ghost_rail = ent and ent.valid and ent.type == "entity-ghost" and Consts.RAIL_TYPES_SET[ent.ghost_type]
+   if is_rail or is_ghost_rail then
       mod.read_tile_rails(pindex, message)
       Graphics.draw_cursor_highlight(pindex, ent, nil)
       game.get_player(pindex).selected = ent

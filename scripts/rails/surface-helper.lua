@@ -83,4 +83,21 @@ function mod.wrap_surface_vanilla(surface)
    })
 end
 
+---Wrap a surface for ghost rail queries using vanilla rail names
+---@param surface LuaSurface
+---@return railutils.GameSurface
+function mod.wrap_surface_vanilla_ghosts(surface)
+   local planner_description = {
+      straight_rail_name = "straight-rail",
+      curved_rail_a_name = "curved-rail-a",
+      curved_rail_b_name = "curved-rail-b",
+      half_diagonal_rail_name = "half-diagonal-rail",
+   }
+
+   return GameSurface.wrap_surface(surface, {
+      planner_description = planner_description,
+      ghosts_only = true,
+   })
+end
+
 return mod

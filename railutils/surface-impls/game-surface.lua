@@ -18,11 +18,13 @@ local mod = {}
 ---Options for wrapping a surface
 ---@class railutils.SurfaceWrapperOpts
 ---@field planner_description railutils.RailPlannerDescription Rail entity names to query
+---@field ghosts_only boolean? If true, only query ghost rails; if false/nil, only query real rails
 
 ---Wrapped surface implementing railutils.RailsSurface
 ---@class railutils.GameSurface : railutils.RailsSurface
 ---@field _surface LuaSurface The underlying Factorio surface
 ---@field _planner railutils.RailPlannerDescription Rail entity names
+---@field _ghosts_only boolean Whether to query ghosts only
 local GameSurface = {}
 local GameSurface_meta = { __index = GameSurface }
 
@@ -34,6 +36,7 @@ function mod.wrap_surface(surface, opts)
    return setmetatable({
       _surface = surface,
       _planner = opts.planner_description,
+      _ghosts_only = opts.ghosts_only or false,
    }, GameSurface_meta)
 end
 
@@ -78,13 +81,19 @@ function GameSurface:get_rails_at_point(point)
    local rails = {}
 
    for _, rail_name in ipairs(rail_names) do
-      local entities = self._surface.find_entities_filtered({
-         area = search_area,
-         name = rail_name,
-      })
+      local filter = { area = search_area }
+      if self._ghosts_only then
+         filter.ghost_name = rail_name
+      else
+         filter.name = rail_name
+      end
+
+      local entities = self._surface.find_entities_filtered(filter)
 
       for _, entity in ipairs(entities) do
-         local rail_type = entity_name_to_rail_type(entity.name, self._planner)
+         -- For ghosts, use ghost_name; for real entities, use name
+         local entity_name = self._ghosts_only and entity.ghost_name or entity.name
+         local rail_type = entity_name_to_rail_type(entity_name, self._planner)
          if rail_type then
             table.insert(rails, {
                prototype_position = {

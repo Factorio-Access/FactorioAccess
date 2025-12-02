@@ -1203,29 +1203,40 @@ local function ent_info_filters(ctx)
    end
 end
 
+---Check if a type string is a rail type
+---@param type_str string
+---@return boolean
+local function is_rail_type(type_str)
+   return type_str == "straight-rail"
+      or type_str == "half-diagonal-rail"
+      or type_str == "curved-rail-a"
+      or type_str == "curved-rail-b"
+end
+
 ---Rail description using railutils
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_rail(ctx)
-   if
-      ctx.ent.type ~= "straight-rail"
-      and ctx.ent.type ~= "half-diagonal-rail"
-      and ctx.ent.type ~= "curved-rail-a"
-      and ctx.ent.type ~= "curved-rail-b"
-   then
-      return
-   end
+   local is_ghost = ctx.ent.type == "entity-ghost"
+   local entity_type = is_ghost and ctx.ent.ghost_type or ctx.ent.type
+   local entity_name = is_ghost and ctx.ent.ghost_name or ctx.ent.name
+
+   if not is_rail_type(entity_type) then return end
 
    -- Wrap the surface (hardcoded to vanilla for now)
-   local wrapped_surface = SurfaceHelper.wrap_surface_vanilla(ctx.player.surface)
-   if not wrapped_surface then return end
+   -- Use ghost surface for ghost rails, real surface for real rails
+   local wrapped_surface
+   if is_ghost then
+      wrapped_surface = SurfaceHelper.wrap_surface_vanilla_ghosts(ctx.player.surface)
+   else
+      wrapped_surface = SurfaceHelper.wrap_surface_vanilla(ctx.player.surface)
+   end
 
    -- Convert entity to railutils types
-   local rail_type = RailQueries.prototype_type_to_rail_type(ctx.ent.name)
-   if not rail_type then return end
+   local rail_type = RailQueries.prototype_type_to_rail_type(entity_name)
 
    -- Describe and announce the rail
    local description = RailDescriber.describe_rail(wrapped_surface, rail_type, ctx.ent.direction, ctx.ent.position)
-   local announcement = RailAnnouncer.announce_rail(description)
+   local announcement = RailAnnouncer.announce_rail(description, { is_ghost = is_ghost })
 
    ctx.message:fragment(announcement)
 end
@@ -1250,7 +1261,10 @@ function mod.ent_info(pindex, ent, is_scanner)
 
    -- We need to special case ghosts, so that we can fold the "x of y" in, e.g.
    -- "entity ghost of transport belt".
-   if ent.type == "entity-ghost" or ent.type == "tile-ghost" then
+   -- Rail ghosts are handled by ent_info_rail, so skip the generic ghost message for them.
+   if ent.type == "entity-ghost" and is_rail_type(ent.ghost_type) then
+      -- Rail ghosts: skip entity name - rail classification will be announced by ent_info_rail handler
+   elseif ent.type == "entity-ghost" or ent.type == "tile-ghost" then
       ctx.message:fragment({
          "fa.ent-info-ghost",
          Localising.get_localised_name_with_fallback(ent),
@@ -1260,12 +1274,7 @@ function mod.ent_info(pindex, ent, is_scanner)
       -- For roboports, announce both prototype name and backer_name
       ctx.message:fragment(Localising.get_localised_name_with_fallback(ent))
       ctx.message:fragment(ent.backer_name)
-   elseif
-      ent.type == "straight-rail"
-      or ent.type == "half-diagonal-rail"
-      or ent.type == "curved-rail-a"
-      or ent.type == "curved-rail-b"
-   then
+   elseif is_rail_type(ent.type) then
       -- For rails, skip entity name - rail classification will be announced by ent_info_rail handler
    elseif
       ent.type == "cargo-wagon"
