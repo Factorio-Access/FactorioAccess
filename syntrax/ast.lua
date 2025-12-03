@@ -33,6 +33,16 @@ mod.NODE_TYPE = {
 
    -- Position manipulation
    FLIP = "flip",
+
+   -- Signal placement commands
+   SIGLEFT = "sigleft",
+   SIGRIGHT = "sigright",
+   CHAINLEFT = "chainleft",
+   CHAINRIGHT = "chainright",
+   SIG = "sig",
+   CHAIN = "chain",
+   SIGCHAIN = "sigchain",
+   CHAINSIG = "chainsig",
 }
 
 ---@class syntrax.ast.Node Base class for all AST nodes
@@ -181,6 +191,80 @@ end
 function mod.flip(span)
    return {
       type = mod.NODE_TYPE.FLIP,
+      span = span,
+   }
+end
+
+-- Signal node factories
+
+---@param span syntrax.Span
+---@return syntrax.ast.Node
+function mod.sigleft(span)
+   return {
+      type = mod.NODE_TYPE.SIGLEFT,
+      span = span,
+   }
+end
+
+---@param span syntrax.Span
+---@return syntrax.ast.Node
+function mod.sigright(span)
+   return {
+      type = mod.NODE_TYPE.SIGRIGHT,
+      span = span,
+   }
+end
+
+---@param span syntrax.Span
+---@return syntrax.ast.Node
+function mod.chainleft(span)
+   return {
+      type = mod.NODE_TYPE.CHAINLEFT,
+      span = span,
+   }
+end
+
+---@param span syntrax.Span
+---@return syntrax.ast.Node
+function mod.chainright(span)
+   return {
+      type = mod.NODE_TYPE.CHAINRIGHT,
+      span = span,
+   }
+end
+
+---@param span syntrax.Span
+---@return syntrax.ast.Node
+function mod.sig(span)
+   return {
+      type = mod.NODE_TYPE.SIG,
+      span = span,
+   }
+end
+
+---@param span syntrax.Span
+---@return syntrax.ast.Node
+function mod.chain(span)
+   return {
+      type = mod.NODE_TYPE.CHAIN,
+      span = span,
+   }
+end
+
+---@param span syntrax.Span
+---@return syntrax.ast.Node
+function mod.sigchain(span)
+   return {
+      type = mod.NODE_TYPE.SIGCHAIN,
+      span = span,
+   }
+end
+
+---@param span syntrax.Span
+---@return syntrax.ast.Node
+function mod.chainsig(span)
+   return {
+      type = mod.NODE_TYPE.CHAINSIG,
       span = span,
    }
 end

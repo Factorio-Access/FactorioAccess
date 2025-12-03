@@ -69,6 +69,22 @@ function Compiler:compile_node(node)
       self:emit(Vm.bytecode(Vm.BYTECODE_KIND.RESET), node.span)
    elseif node.type == Ast.NODE_TYPE.FLIP then
       self:emit(Vm.bytecode(Vm.BYTECODE_KIND.FLIP), node.span)
+   elseif node.type == Ast.NODE_TYPE.SIGLEFT then
+      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.SIGLEFT), node.span)
+   elseif node.type == Ast.NODE_TYPE.SIGRIGHT then
+      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.SIGRIGHT), node.span)
+   elseif node.type == Ast.NODE_TYPE.CHAINLEFT then
+      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.CHAINLEFT), node.span)
+   elseif node.type == Ast.NODE_TYPE.CHAINRIGHT then
+      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.CHAINRIGHT), node.span)
+   elseif node.type == Ast.NODE_TYPE.SIG then
+      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.SIG), node.span)
+   elseif node.type == Ast.NODE_TYPE.CHAIN then
+      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.CHAIN), node.span)
+   elseif node.type == Ast.NODE_TYPE.SIGCHAIN then
+      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.SIGCHAIN), node.span)
+   elseif node.type == Ast.NODE_TYPE.CHAINSIG then
+      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.CHAINSIG), node.span)
    elseif node.type == Ast.NODE_TYPE.L45 then
       -- l45 = 2 left turns
       self:emit_sequence({

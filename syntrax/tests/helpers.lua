@@ -3,6 +3,23 @@ local Syntrax = require("syntrax")
 
 local mod = {}
 
+---Flatten placement groups into a simple list of placements (using first alternative of each group)
+---@param placement_groups syntrax.vm.PlacementGroup[]
+---@return syntrax.vm.Placement[]
+function mod.flatten_placements(placement_groups)
+   local result = {}
+   for _, group in ipairs(placement_groups) do
+      -- Take the first alternative of each group
+      local first_alt = group[1]
+      if first_alt then
+         for _, placement in ipairs(first_alt) do
+            table.insert(result, placement)
+         end
+      end
+   end
+   return result
+end
+
 --- Deep copy the table, breaking any loops/recursive references. Useful to get luaunit to print in a way that lets one
 --  paste values from the terminal.
 function mod.deepcopy_unrecursive(tab)
@@ -20,16 +37,17 @@ end
 ---@param source string The Syntrax source code
 ---@param initial_position fa.Point? Optional initial position
 ---@param initial_direction number? Optional initial direction
----@return syntrax.vm.RailPlacement[] The generated rails
+---@return syntrax.vm.Placement[] The generated placements (flattened from groups)
 function mod.assert_compilation_succeeds(source, initial_position, initial_direction)
-   local rails, err = Syntrax.execute(source, initial_position, initial_direction)
+   local placement_groups, err = Syntrax.execute(source, initial_position, initial_direction)
    if err then
       -- Provide helpful error message that includes the source
       lu.fail(string.format("Expected compilation to succeed for:\n%s\nBut got error: %s", source, err.message))
    end
-   lu.assertNotNil(rails)
-   assert(rails)
-   return rails
+   lu.assertNotNil(placement_groups)
+   assert(placement_groups)
+   -- Flatten the placement groups for backward compatibility with existing tests
+   return mod.flatten_placements(placement_groups)
 end
 
 ---Execute Syntrax code and assert it fails with expected error

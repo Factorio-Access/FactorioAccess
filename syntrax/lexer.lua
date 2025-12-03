@@ -117,6 +117,15 @@ mod.TOKEN_TYPE = {
    RPUSH = "rpush",
    RPOP = "rpop",
    RESET = "reset",
+   -- Signal commands
+   SIGLEFT = "sigleft",
+   SIGRIGHT = "sigright",
+   CHAINLEFT = "chainleft",
+   CHAINRIGHT = "chainright",
+   SIG = "sig",
+   CHAIN = "chain",
+   SIGCHAIN = "sigchain",
+   CHAINSIG = "chainsig",
 }
 
 ---@class syntrax.Token
@@ -178,6 +187,22 @@ local function build_tokens(untyped_tokens)
          tok.type = mod.TOKEN_TYPE.RPOP
       elseif text == "reset" or text == ";" then
          tok.type = mod.TOKEN_TYPE.RESET
+      elseif text == "sigleft" then
+         tok.type = mod.TOKEN_TYPE.SIGLEFT
+      elseif text == "sigright" then
+         tok.type = mod.TOKEN_TYPE.SIGRIGHT
+      elseif text == "chainleft" then
+         tok.type = mod.TOKEN_TYPE.CHAINLEFT
+      elseif text == "chainright" then
+         tok.type = mod.TOKEN_TYPE.CHAINRIGHT
+      elseif text == "sig" then
+         tok.type = mod.TOKEN_TYPE.SIG
+      elseif text == "chain" then
+         tok.type = mod.TOKEN_TYPE.CHAIN
+      elseif text == "sigchain" then
+         tok.type = mod.TOKEN_TYPE.SIGCHAIN
+      elseif text == "chainsig" then
+         tok.type = mod.TOKEN_TYPE.CHAINSIG
       elseif string.match(text, IDENT_PATTERN) then
          tok.type = mod.TOKEN_TYPE.IDENTIFIER
       elseif string.match(text, NUMBER_PATTERN) then

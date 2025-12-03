@@ -125,6 +125,30 @@ function parse_statement(state)
    elseif tok.type == Lexer.TOKEN_TYPE.FLIP then
       state:advance()
       return Ast.flip(tok.span), nil
+   elseif tok.type == Lexer.TOKEN_TYPE.SIGLEFT then
+      state:advance()
+      return Ast.sigleft(tok.span), nil
+   elseif tok.type == Lexer.TOKEN_TYPE.SIGRIGHT then
+      state:advance()
+      return Ast.sigright(tok.span), nil
+   elseif tok.type == Lexer.TOKEN_TYPE.CHAINLEFT then
+      state:advance()
+      return Ast.chainleft(tok.span), nil
+   elseif tok.type == Lexer.TOKEN_TYPE.CHAINRIGHT then
+      state:advance()
+      return Ast.chainright(tok.span), nil
+   elseif tok.type == Lexer.TOKEN_TYPE.SIG then
+      state:advance()
+      return Ast.sig(tok.span), nil
+   elseif tok.type == Lexer.TOKEN_TYPE.CHAIN then
+      state:advance()
+      return Ast.chain(tok.span), nil
+   elseif tok.type == Lexer.TOKEN_TYPE.SIGCHAIN then
+      state:advance()
+      return Ast.sigchain(tok.span), nil
+   elseif tok.type == Lexer.TOKEN_TYPE.CHAINSIG then
+      state:advance()
+      return Ast.chainsig(tok.span), nil
    elseif tok.type == Lexer.TOKEN_TYPE.TREE then
       -- Only square brackets are allowed for sequences
       if tok.bracket_type ~= "[" then

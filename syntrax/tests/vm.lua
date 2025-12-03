@@ -3,8 +3,14 @@ local serpent = require("serpent")
 
 local Vm = require("syntrax.vm")
 local Directions = require("syntrax.directions")
+local Helpers = require("syntrax.tests.helpers")
 
 local mod = {}
+
+-- Helper to flatten placement groups for test compatibility
+local function flatten(placement_groups)
+   return Helpers.flatten_placements(placement_groups)
+end
 
 -- Helper to create bytecode sequences
 local function bc(...)
@@ -31,8 +37,9 @@ function mod.TestBasicRailPlacement()
       bc(Vm.BYTECODE_KIND.RIGHT),
    }
 
-   local rails = vm:run()
-   assert(rails)
+   local placement_groups = vm:run()
+   assert(placement_groups)
+   local rails = flatten(placement_groups)
 
    lu.assertEquals(#rails, 3)
 
@@ -107,8 +114,9 @@ function mod.TestJNZInstruction()
       bc(Vm.BYTECODE_KIND.RIGHT),
    }
 
-   local rails = vm:run()
-   assert(rails)
+   local placement_groups = vm:run()
+   assert(placement_groups)
+   local rails = flatten(placement_groups)
 
    -- Only one rail should be placed (the right turn)
    lu.assertEquals(#rails, 1)
@@ -130,8 +138,9 @@ function mod.TestJNZLoop()
       bc(Vm.BYTECODE_KIND.JNZ, reg(1), val(-2)),
    }
 
-   local rails = vm:run()
-   assert(rails)
+   local placement_groups = vm:run()
+   assert(placement_groups)
+   local rails = flatten(placement_groups)
 
    -- Should place 3 rails (left turns)
    lu.assertEquals(#rails, 3)
@@ -156,8 +165,9 @@ function mod.TestCompleteCircle()
       bc(Vm.BYTECODE_KIND.JNZ, reg(1), val(-2)),
    }
 
-   local rails = vm:run()
-   assert(rails)
+   local placement_groups = vm:run()
+   assert(placement_groups)
+   local rails = flatten(placement_groups)
 
    -- 16 left turns creates rails
    -- Due to deduplication, exact count depends on rail geometry overlap

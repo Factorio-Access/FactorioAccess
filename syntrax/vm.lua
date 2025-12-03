@@ -38,6 +38,15 @@ mod.BYTECODE_KIND = {
    RPUSH = "rpush",
    RPOP = "rpop",
    RESET = "reset",
+   -- Signal commands
+   SIGLEFT = "sigleft",
+   SIGRIGHT = "sigright",
+   CHAINLEFT = "chainleft",
+   CHAINRIGHT = "chainright",
+   SIG = "sig",
+   CHAIN = "chain",
+   SIGCHAIN = "sigchain",
+   CHAINSIG = "chainsig",
 }
 
 ---@enum syntrax.vm.MathOp
@@ -66,10 +75,21 @@ mod.RAIL_KIND = {
 ---@field span syntrax.Span? Optional span for error reporting
 
 ---@class syntrax.vm.RailPlacement
+---@field type "rail" Discriminator for placement type
 ---@field position fa.Point Position where the rail should be placed
 ---@field rail_type string "straight-rail", "curved-rail-a", "curved-rail-b", or "half-diagonal-rail"
 ---@field placement_direction number 0-15 direction for placement
 ---@field span syntrax.Span? Source span for error reporting
+
+---@class syntrax.vm.SignalPlacement
+---@field type "signal" Discriminator for placement type
+---@field position fa.Point Position where the signal should be placed
+---@field signal_type "rail-signal"|"rail-chain-signal" Type of signal to place
+---@field direction number 0-15 direction for placement
+---@field span syntrax.Span? Source span for error reporting
+
+---@alias syntrax.vm.Placement syntrax.vm.RailPlacement|syntrax.vm.SignalPlacement
+---@alias syntrax.vm.PlacementGroup syntrax.vm.Placement[][] Array of alternatives, each alternative is an array of placements
 
 ---@class syntrax.vm.RailStackEntry
 ---@field traverser railutils.Traverser Cloned traverser state
@@ -77,7 +97,7 @@ mod.RAIL_KIND = {
 ---@class syntrax.vm.State
 ---@field registers table<number, syntrax.vm.Operand> Array of registers
 ---@field bytecode syntrax.vm.Bytecode[] Array of bytecode instructions
----@field rails syntrax.vm.RailPlacement[] Output list of rail placements
+---@field placements syntrax.vm.PlacementGroup[] Output list of placement groups (each group has alternatives)
 ---@field pc number Program counter
 ---@field traverser railutils.Traverser? Current traverser (nil until first rail)
 ---@field position_to_index table<string, number> Position key to rail index for dedup
@@ -101,7 +121,7 @@ function mod.new()
    return setmetatable({
       registers = {},
       bytecode = {},
-      rails = {},
+      placements = {},
       pc = 1,
       traverser = nil, -- Initialized on first rail or via run()
       position_to_index = {},
@@ -186,14 +206,99 @@ function VM:place_rail(kind, span)
    end
 
    local rail = {
+      type = "rail",
       position = pos,
       rail_type = rail_type, -- Already a string like "straight-rail"
       placement_direction = placement_dir,
       span = span,
    }
 
-   table.insert(self.rails, rail)
-   self.position_to_index[key] = #self.rails
+   -- Wrap in new format: one group with one alternative containing one entity
+   table.insert(self.placements, { { rail } })
+   self.position_to_index[key] = #self.placements
+end
+
+---Place a single signal with alternatives for regular/alt positions
+---@param side railutils.SignalSide LEFT or RIGHT
+---@param signal_type "rail-signal"|"rail-chain-signal"
+---@param span syntrax.Span?
+function VM:place_signal(side, signal_type, span)
+   local alternatives = {}
+
+   -- Regular position (always exists)
+   local pos = self.traverser:get_signal_pos(side)
+   local dir = self.traverser:get_signal_direction(side)
+   table.insert(alternatives, {
+      {
+         type = "signal",
+         position = pos,
+         signal_type = signal_type,
+         direction = dir,
+         span = span,
+      },
+   })
+
+   -- Alt position (may not exist)
+   local alt_pos = self.traverser:get_alt_signal_pos(side)
+   if alt_pos then
+      table.insert(alternatives, {
+         {
+            type = "signal",
+            position = alt_pos,
+            signal_type = signal_type,
+            direction = dir, -- Same direction as regular
+            span = span,
+         },
+      })
+   end
+
+   table.insert(self.placements, alternatives)
+end
+
+---Place a pair of signals with all valid alternative combinations
+---@param left_type "rail-signal"|"rail-chain-signal"
+---@param right_type "rail-signal"|"rail-chain-signal"
+---@param span syntrax.Span?
+function VM:place_signal_pair(left_type, right_type, span)
+   local left_pos = self.traverser:get_signal_pos(Traverser.SignalSide.LEFT)
+   local right_pos = self.traverser:get_signal_pos(Traverser.SignalSide.RIGHT)
+   local left_dir = self.traverser:get_signal_direction(Traverser.SignalSide.LEFT)
+   local right_dir = self.traverser:get_signal_direction(Traverser.SignalSide.RIGHT)
+   local left_alt = self.traverser:get_alt_signal_pos(Traverser.SignalSide.LEFT)
+   local right_alt = self.traverser:get_alt_signal_pos(Traverser.SignalSide.RIGHT)
+
+   -- Build list of left positions
+   local left_positions = { { pos = left_pos } }
+   if left_alt then table.insert(left_positions, { pos = left_alt }) end
+
+   -- Build list of right positions
+   local right_positions = { { pos = right_pos } }
+   if right_alt then table.insert(right_positions, { pos = right_alt }) end
+
+   -- Generate cartesian product of alternatives
+   local alternatives = {}
+   for _, lp in ipairs(left_positions) do
+      for _, rp in ipairs(right_positions) do
+         table.insert(alternatives, {
+            {
+               type = "signal",
+               position = lp.pos,
+               signal_type = left_type,
+               direction = left_dir,
+               span = span,
+            },
+            {
+               type = "signal",
+               position = rp.pos,
+               signal_type = right_type,
+               direction = right_dir,
+               span = span,
+            },
+         })
+      end
+   end
+
+   table.insert(self.placements, alternatives)
 end
 
 ---@param instr syntrax.vm.Bytecode
@@ -329,6 +434,30 @@ function VM:execute_instruction()
       local _, err = self:execute_reset(instr)
       if err then return false, err end
       self.pc = self.pc + 1
+   elseif instr.kind == mod.BYTECODE_KIND.SIGLEFT then
+      self:place_signal(Traverser.SignalSide.LEFT, "rail-signal", instr.span)
+      self.pc = self.pc + 1
+   elseif instr.kind == mod.BYTECODE_KIND.SIGRIGHT then
+      self:place_signal(Traverser.SignalSide.RIGHT, "rail-signal", instr.span)
+      self.pc = self.pc + 1
+   elseif instr.kind == mod.BYTECODE_KIND.CHAINLEFT then
+      self:place_signal(Traverser.SignalSide.LEFT, "rail-chain-signal", instr.span)
+      self.pc = self.pc + 1
+   elseif instr.kind == mod.BYTECODE_KIND.CHAINRIGHT then
+      self:place_signal(Traverser.SignalSide.RIGHT, "rail-chain-signal", instr.span)
+      self.pc = self.pc + 1
+   elseif instr.kind == mod.BYTECODE_KIND.SIG then
+      self:place_signal_pair("rail-signal", "rail-signal", instr.span)
+      self.pc = self.pc + 1
+   elseif instr.kind == mod.BYTECODE_KIND.CHAIN then
+      self:place_signal_pair("rail-chain-signal", "rail-chain-signal", instr.span)
+      self.pc = self.pc + 1
+   elseif instr.kind == mod.BYTECODE_KIND.SIGCHAIN then
+      self:place_signal_pair("rail-signal", "rail-chain-signal", instr.span)
+      self.pc = self.pc + 1
+   elseif instr.kind == mod.BYTECODE_KIND.CHAINSIG then
+      self:place_signal_pair("rail-chain-signal", "rail-signal", instr.span)
+      self.pc = self.pc + 1
    else
       error("Unknown bytecode kind: " .. tostring(instr.kind))
    end
@@ -339,7 +468,7 @@ end
 ---Run the VM with the given starting position
 ---@param initial_position fa.Point? Starting position (default: {x=0, y=0})
 ---@param initial_direction number? Starting direction 0-15 (default: north/0)
----@return syntrax.vm.RailPlacement[]?, syntrax.Error?
+---@return syntrax.vm.PlacementGroup[]?, syntrax.Error?
 function VM:run(initial_position, initial_direction)
    -- Default to origin facing north
    local pos = initial_position or { x = 0, y = 0 }
@@ -357,7 +486,7 @@ function VM:run(initial_position, initial_direction)
       if not continue then break end
    end
 
-   return self.rails, nil
+   return self.placements, nil
 end
 
 -- Pretty printing support

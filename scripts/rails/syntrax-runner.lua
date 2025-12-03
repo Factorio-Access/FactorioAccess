@@ -9,6 +9,14 @@ local Syntrax = require("syntrax")
 
 local mod = {}
 
+---Destroy a list of ghosts (only if valid)
+---@param ghosts LuaEntity[]
+local function destroy_ghosts(ghosts)
+   for _, g in ipairs(ghosts) do
+      if g.valid then g.destroy() end
+   end
+end
+
 ---@class syntrax_runner.ExecuteOptions
 ---@field pindex integer Player index
 ---@field source string Syntrax source code
@@ -35,35 +43,71 @@ local function map_rail_type(generic_type, planner_description)
    end
 end
 
----Categorize placements into what needs to be built vs what already exists
----@param surface LuaSurface
----@param placements {name: string, position: MapPosition, direction: defines.direction}[]
----@return {name: string, position: MapPosition, direction: defines.direction}[] to_place New placements that need ghosts
----@return LuaEntity[] existing_ghosts Ghosts that already exist and just need revival
-local function categorize_placements(surface, placements)
-   local to_place = {}
-   local existing_ghosts = {}
+---Convert a syntrax placement to game placement format
+---@param placement syntrax.vm.Placement
+---@param planner_description railutils.RailPlannerDescription
+---@return {name: string, position: MapPosition, direction: defines.direction}
+local function convert_placement(placement, planner_description)
+   if placement.type == "rail" then
+      return {
+         name = map_rail_type(placement.rail_type, planner_description),
+         position = placement.position,
+         direction = placement.placement_direction,
+      }
+   elseif placement.type == "signal" then
+      return {
+         name = placement.signal_type,
+         position = placement.position,
+         direction = placement.direction,
+      }
+   else
+      error("Unknown placement type: " .. tostring(placement.type))
+   end
+end
 
-   for _, placement in ipairs(placements) do
-      -- Check if real entity already exists - skip entirely
+---Try to place an alternative (array of placements) as ghosts
+---@param pindex integer
+---@param surface LuaSurface
+---@param alternative syntrax.vm.Placement[]
+---@param planner_description railutils.RailPlannerDescription
+---@param build_mode defines.build_mode
+---@return LuaEntity[]|nil ghosts All ghosts (created + existing) if successful, nil if failed
+---@return LuaEntity[]|nil created_ghosts Ghosts we created (for cleanup tracking)
+local function try_alternative(pindex, surface, alternative, planner_description, build_mode)
+   local all_ghosts = {}
+   local created_ghosts = {}
+
+   for _, syntrax_placement in ipairs(alternative) do
+      local placement = convert_placement(syntrax_placement, planner_description)
+
+      -- Check if real entity already exists - counts as success, no ghost needed
       local existing =
          BuildHelpers.find_expected_entity(surface, placement.position, placement.name, placement.direction)
       if existing then goto continue end
 
-      -- Check if ghost already exists - just needs revival, no cost
+      -- Check if ghost already exists - counts as success, but we didn't create it
       local ghost = BuildHelpers.find_expected_ghost(surface, placement.position, placement.name, placement.direction)
       if ghost then
-         table.insert(existing_ghosts, ghost)
+         table.insert(all_ghosts, ghost)
          goto continue
       end
 
-      -- Need to place new ghost
-      table.insert(to_place, placement)
+      -- Try to place new ghost
+      local new_ghosts = BuildHelpers.place_ghosts(pindex, { placement }, build_mode)
+      if not new_ghosts or #new_ghosts == 0 then
+         -- Failed to place - clean up only ghosts WE created
+         destroy_ghosts(created_ghosts)
+         return nil, nil
+      end
+
+      local new_ghost = new_ghosts[1]
+      table.insert(all_ghosts, new_ghost)
+      table.insert(created_ghosts, new_ghost)
 
       ::continue::
    end
 
-   return to_place, existing_ghosts
+   return all_ghosts, created_ghosts
 end
 
 ---Execute syntrax code and place rails
@@ -75,62 +119,61 @@ function mod.execute(opts)
    if not player then return nil, "Invalid player" end
 
    -- Parse and execute syntrax
-   local rails, err = Syntrax.execute(opts.source, opts.position, opts.direction)
+   local placement_groups, err = Syntrax.execute(opts.source, opts.position, opts.direction)
    if err then return nil, err.message end
 
    -- Handle empty result
-   if not rails or #rails == 0 then return {}, nil end
+   if not placement_groups or #placement_groups == 0 then return {}, nil end
 
-   -- Convert syntrax output to placement format using rail planner prototypes
-   local placements = {}
-   for _, rail in ipairs(rails) do
-      table.insert(placements, {
-         name = map_rail_type(rail.rail_type, opts.planner_description),
-         position = rail.position,
-         direction = rail.placement_direction,
-      })
-   end
-
-   -- Categorize: what needs placing vs what already exists
-   local to_place, existing_ghosts = categorize_placements(player.surface, placements)
-
-   -- In normal mode, check cost for all entities (new placements + existing ghosts to revive)
-   local deductor
-   if opts.build_mode == defines.build_mode.normal then
-      local proto_names = {}
-      for _, placement in ipairs(to_place) do
-         table.insert(proto_names, placement.name)
-      end
-      for _, ghost in ipairs(existing_ghosts) do
-         table.insert(proto_names, ghost.ghost_name)
-      end
-
-      deductor = InventoryUtils.deductor_for_placements(opts.pindex, proto_names, false)
-      if not deductor then return nil, "Insufficient items" end
-   end
-
-   -- Place new ghosts
-   local new_ghosts = {}
-   if #to_place > 0 then
-      new_ghosts = BuildHelpers.place_ghosts(opts.pindex, to_place, opts.build_mode)
-      if not new_ghosts then return nil, "Failed to place rails" end
-   end
-
-   -- Commit cost after successful placement
-   if deductor then deductor:commit() end
-
-   -- Combine all ghosts
+   -- Process each placement group, trying alternatives until one works
    local all_ghosts = {}
-   for _, g in ipairs(existing_ghosts) do
-      table.insert(all_ghosts, g)
-   end
-   for _, g in ipairs(new_ghosts) do
-      table.insert(all_ghosts, g)
+   local all_created = {} -- Track only ghosts we created, for cleanup
+
+   for group_idx, group in ipairs(placement_groups) do
+      local group_ghosts, group_created = nil, nil
+
+      -- Try each alternative in order
+      for _, alternative in ipairs(group) do
+         group_ghosts, group_created =
+            try_alternative(opts.pindex, player.surface, alternative, opts.planner_description, opts.build_mode)
+         if group_ghosts then break end
+      end
+
+      if not group_ghosts then
+         -- No alternative worked - clean up only what we created
+         destroy_ghosts(all_created)
+         return nil, string.format("Failed to place group %d - no valid alternative", group_idx)
+      end
+
+      for _, g in ipairs(group_ghosts) do
+         table.insert(all_ghosts, g)
+      end
+      for _, g in ipairs(group_created) do
+         table.insert(all_created, g)
+      end
    end
 
-   -- In normal mode, revive ghosts
-   if opts.build_mode == defines.build_mode.normal then return BuildHelpers.revive_ghosts(all_ghosts), nil end
+   -- All groups placed successfully as ghosts
+   -- Now handle costs and revival
 
+   if opts.build_mode == defines.build_mode.normal then
+      -- Check cost for all placed ghosts
+      local proto_names = {}
+      for _, ghost in ipairs(all_ghosts) do
+         if ghost.valid then table.insert(proto_names, ghost.ghost_name) end
+      end
+
+      local deductor = InventoryUtils.deductor_for_placements(opts.pindex, proto_names, false)
+      if not deductor then
+         destroy_ghosts(all_created)
+         return nil, "Insufficient items"
+      end
+
+      deductor:commit()
+      return BuildHelpers.revive_ghosts(all_ghosts), nil
+   end
+
+   -- Force/superforce mode - just return ghosts
    return all_ghosts, nil
 end
 
