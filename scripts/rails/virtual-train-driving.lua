@@ -986,14 +986,14 @@ function mod.execute_syntrax(pindex, source)
    local current = get_current_move(pindex)
    if not current then return nil, "No current position" end
 
-   return SyntraxRunner.execute(
-      pindex,
-      source,
-      current.position,
-      current.end_direction,
-      state.planner_description,
-      state.build_mode
-   )
+   return SyntraxRunner.execute({
+      pindex = pindex,
+      source = source,
+      position = current.position,
+      direction = current.end_direction,
+      planner_description = state.planner_description,
+      build_mode = state.build_mode,
+   })
 end
 
 return mod

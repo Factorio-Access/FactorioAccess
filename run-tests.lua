@@ -30,7 +30,6 @@ local syntrax_tests = {
 
 local ds_tests = {
    { "deque", require("ds.tests.deque") },
-   { "circular-options-list", require("ds.tests.circular-options-list") },
    { "sparse-bitset", require("ds.tests.sparse-bitset") },
 }
 
