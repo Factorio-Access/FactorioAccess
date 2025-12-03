@@ -10,7 +10,7 @@ Syntrax is a domain-specific language for describing Factorio train rail layouts
 
 - **Rail Commands**: `l` (left), `r` (right), `s` (straight)
 - **Rail Stack Commands**: `rpush` (save position), `rpop` (restore position), `reset` (return to initial)
-- **Keywords**: `rep` (repetition)
+- **Keywords**: `x` (repetition)
 - **Numbers**: Decimal integers (e.g., `1`, `42`, `100`)
 - **Brackets**: `[` `]` (sequences only; parentheses and braces reserved)
 - **Whitespace**: Space, tab, newline (ignored between tokens)
@@ -26,7 +26,7 @@ program     = statement*
 statement   = command | sequence | repetition
 command     = "l" | "r" | "s" | "rpush" | "rpop" | "reset"
 sequence    = "[" statement* "]"
-repetition  = sequence "rep" number
+repetition  = sequence "x" number
 number      = [0-9]+
 ```
 
@@ -60,14 +60,14 @@ Square brackets group statements: `[l r s]`
 
 ### Repetition
 
-The `rep` keyword repeats a sequence a fixed number of times:
+The `x` keyword repeats a sequence a fixed number of times:
 ```
-[l r s] rep 3   -- Expands to: l r s l r s l r s
+[l r s] x 3   -- Expands to: l r s l r s l r s
 ```
 
 - Repetition count must be a positive integer
 - Repetition only applies to sequences (not individual commands)
-- Nested repetitions are allowed: `[[l] rep 2] rep 3`
+- Nested repetitions are allowed: `[[l] x 2] x 3`
 
 ## Execution Model
 
@@ -106,12 +106,12 @@ The implementation compiles to bytecode executed by a stack-based VM:
 
 ### Circle
 ```
-[l l s] rep 8   -- Creates a complete circle
+[l l s] x 8   -- Creates a complete circle
 ```
 
 ### Square
 ```
-[[s s s s] [r r r r]] rep 4   -- Four straight sides with 90° turns
+[[s s s s] [r r r r]] x 4   -- Four straight sides with 90° turns
 ```
 
 ### 3-way Fork
@@ -126,10 +126,10 @@ r s l            -- Last branch
 ```
 s s rpush [
   rpop rpush           -- Return and save position
-  l l [s] rep 10       -- Station siding
+  l l [s] x 10         -- Station siding
   rpop                 -- Return to mainline
   s s s rpush          -- Advance for next station
-] rep 5                -- 5 stations
+] x 5                  -- 5 stations
 ```
 
 ### Empty Program

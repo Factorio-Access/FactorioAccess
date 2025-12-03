@@ -1,11 +1,16 @@
 --[[
 Virtual Machine for Syntrax language.
 
-Executes bytecode to produce a graph of rail placements.
+Executes bytecode to produce a list of rail placements with positions.
+Uses railutils.Traverser for computing rail geometry.
 ]]
+
+require("polyfill")
 
 local Directions = require("syntrax.directions")
 local Errors = require("syntrax.errors")
+local Traverser = require("railutils.traverser")
+local RailInfo = require("railutils.rail-info")
 
 local mod = {}
 
@@ -27,6 +32,7 @@ mod.BYTECODE_KIND = {
    LEFT = "left",
    RIGHT = "right",
    STRAIGHT = "straight",
+   FLIP = "flip",
    JNZ = "jnz",
    MATH = "math",
    CMP = "cmp",
@@ -54,6 +60,7 @@ mod.CMP_OP = {
    NE = "!=",
 }
 
+-- Legacy RAIL_KIND kept for backwards compatibility with tests
 ---@enum syntrax.vm.RailKind
 mod.RAIL_KIND = {
    LEFT = "left",
@@ -71,6 +78,14 @@ mod.RAIL_KIND = {
 ---@field arguments syntrax.vm.Operand[]
 ---@field span syntrax.Span? Optional span for error reporting
 
+---New output format: rail placement with position
+---@class syntrax.vm.RailPlacement
+---@field position fa.Point Position where the rail should be placed
+---@field rail_type string "straight-rail", "curved-rail-a", "curved-rail-b", or "half-diagonal-rail"
+---@field placement_direction number 0-15 direction for placement
+---@field span syntrax.Span? Source span for error reporting
+
+---Legacy output format for backwards compatibility
 ---@class syntrax.vm.Rail
 ---@field parent number? Index of parent rail (nil for first rail)
 ---@field kind syntrax.vm.RailKind
@@ -78,33 +93,29 @@ mod.RAIL_KIND = {
 ---@field outgoing_direction number Direction hand faces after placement
 
 ---@class syntrax.vm.RailStackEntry
----@field rail_index number Index of the rail
----@field hand_direction number Hand direction when rail was pushed
+---@field traverser railutils.Traverser Cloned traverser state
 
 ---@class syntrax.vm.State
 ---@field registers table<number, syntrax.vm.Operand> Array of registers
 ---@field bytecode syntrax.vm.Bytecode[] Array of bytecode instructions
----@field rails syntrax.vm.Rail[] Output graph of rails
+---@field rails syntrax.vm.RailPlacement[] Output list of rail placements
 ---@field pc number Program counter
----@field hand_direction number Current hand direction (0-15)
----@field parent_rail number? Index of last placed rail
----@field rail_stack syntrax.vm.RailStackEntry[] Stack of saved rail positions
----@field initial_rail number? Initial rail index
----@field initial_hand_direction number Initial hand direction
----@field resolve_operand fun(self: syntrax.vm.State, operand: syntrax.vm.Operand): syntrax.vm.Operand
----@field place_rail fun(self: syntrax.vm.State, kind: syntrax.vm.RailKind)
----@field execute_jnz fun(self: syntrax.vm.State, instr: syntrax.vm.Bytecode)
----@field execute_math fun(self: syntrax.vm.State, instr: syntrax.vm.Bytecode)
----@field execute_cmp fun(self: syntrax.vm.State, instr: syntrax.vm.Bytecode)
----@field execute_mov fun(self: syntrax.vm.State, instr: syntrax.vm.Bytecode)
----@field execute_rpush fun(self: syntrax.vm.State, instr: syntrax.vm.Bytecode): nil, syntrax.Error?
----@field execute_rpop fun(self: syntrax.vm.State, instr: syntrax.vm.Bytecode): nil, syntrax.Error?
----@field execute_reset fun(self: syntrax.vm.State, instr: syntrax.vm.Bytecode): nil, syntrax.Error?
----@field execute_instruction fun(self: syntrax.vm.State): boolean, syntrax.Error?
----@field run fun(self: syntrax.vm.State, initial_rail: number?, initial_hand_direction: number?): syntrax.vm.Rail[]?, syntrax.Error?
+---@field traverser railutils.Traverser? Current traverser (nil until first rail)
+---@field position_to_index table<string, number> Position key to rail index for dedup
+---@field rail_stack syntrax.vm.RailStackEntry[] Stack of saved traverser states
+---@field initial_traverser railutils.Traverser? Initial traverser for reset
 
 local VM = {}
 local VM_meta = { __index = VM }
+
+---Create a key for deduplication (position + direction + rail type)
+---@param pos fa.Point
+---@param direction number
+---@param rail_type string
+---@return string
+local function dedup_key(pos, direction, rail_type)
+   return string.format("%d,%d,%d,%s", pos.x, pos.y, direction, rail_type)
+end
 
 ---@return syntrax.vm.State
 function mod.new()
@@ -113,11 +124,10 @@ function mod.new()
       bytecode = {},
       rails = {},
       pc = 1,
-      hand_direction = Directions.NORTH, -- Start facing north
-      parent_rail = nil,
+      traverser = nil, -- Initialized on first rail or via run()
+      position_to_index = {},
       rail_stack = {},
-      initial_rail = nil,
-      initial_hand_direction = Directions.NORTH,
+      initial_traverser = nil,
    }, VM_meta)
 end
 
@@ -177,29 +187,55 @@ function VM:resolve_operand(operand)
    end
 end
 
----@param kind syntrax.vm.RailKind
-function VM:place_rail(kind)
-   local incoming = self.hand_direction
-   local outgoing = incoming
-
-   -- Update direction based on rail type
+---Place a rail and update traverser state
+---@param kind syntrax.vm.RailKind "left", "right", or "straight"
+---@param span syntrax.Span? Source span for error reporting
+function VM:place_rail(kind, span)
+   -- Move the traverser based on rail kind
    if kind == mod.RAIL_KIND.LEFT then
-      outgoing = Directions.rotate(incoming, -1)
+      self.traverser:move_left()
    elseif kind == mod.RAIL_KIND.RIGHT then
-      outgoing = Directions.rotate(incoming, 1)
-      -- STRAIGHT doesn't change direction
+      self.traverser:move_right()
+   else -- STRAIGHT
+      self.traverser:move_forward()
+   end
+
+   -- Get the new rail info from traverser
+   local pos = self.traverser:get_position()
+   local rail_type = self.traverser:get_rail_kind()
+   local placement_dir = self.traverser:get_placement_direction()
+
+   -- Create dedup key including position, direction, and rail type
+   local key = dedup_key(pos, placement_dir, rail_type)
+
+   -- Check for deduplication - if we've already placed this exact rail, skip
+   if self.position_to_index[key] then
+      return -- Already have this exact rail
+   end
+
+   -- Convert rail type enum to string
+   local rail_type_str
+   if rail_type == RailInfo.RailType.STRAIGHT then
+      rail_type_str = "straight-rail"
+   elseif rail_type == RailInfo.RailType.CURVE_A then
+      rail_type_str = "curved-rail-a"
+   elseif rail_type == RailInfo.RailType.CURVE_B then
+      rail_type_str = "curved-rail-b"
+   elseif rail_type == RailInfo.RailType.HALF_DIAGONAL then
+      rail_type_str = "half-diagonal-rail"
+   else
+      error("Unknown rail type: " .. tostring(rail_type))
    end
 
    local rail = {
-      parent = self.parent_rail,
-      kind = kind,
-      incoming_direction = incoming,
-      outgoing_direction = outgoing,
+      position = pos,
+      rail_type = rail_type_str,
+      placement_direction = placement_dir,
+      span = span,
    }
 
    table.insert(self.rails, rail)
-   self.parent_rail = #self.rails
-   self.hand_direction = outgoing
+   self.position_to_index[key] = #self.rails
 end
 
 ---@param instr syntrax.vm.Bytecode
@@ -287,10 +323,9 @@ end
 ---@param instr syntrax.vm.Bytecode
 ---@return nil, syntrax.Error?
 function VM:execute_rpush(instr)
-   -- Push current rail index and hand direction to the stack
+   -- Push a clone of the current traverser to the stack
    local entry = {
-      rail_index = self.parent_rail or self.initial_rail,
-      hand_direction = self.hand_direction,
+      traverser = self.traverser:clone(),
    }
    table.insert(self.rail_stack, entry)
    return nil, nil
@@ -305,10 +340,9 @@ function VM:execute_rpop(instr)
          Errors.error_builder(Errors.ERROR_CODE.RUNTIME_ERROR, "Cannot rpop from empty rail stack", instr.span):build()
    end
 
-   -- Pop the last entry
+   -- Pop and restore the traverser
    local entry = table.remove(self.rail_stack)
-   self.parent_rail = entry.rail_index
-   self.hand_direction = entry.hand_direction
+   self.traverser = entry.traverser
    return nil, nil
 end
 
@@ -317,9 +351,16 @@ end
 function VM:execute_reset(instr)
    -- Clear the rail stack
    self.rail_stack = {}
-   -- Return to initial position
-   self.parent_rail = self.initial_rail
-   self.hand_direction = self.initial_hand_direction
+   -- Return to initial position by restoring from initial_traverser
+   if self.initial_traverser then self.traverser = self.initial_traverser:clone() end
+   return nil, nil
+end
+
+---@param instr syntrax.vm.Bytecode
+---@return nil, syntrax.Error?
+function VM:execute_flip(instr)
+   -- Flip to the other end of the current rail
+   self.traverser:flip_ends()
    return nil, nil
 end
 
@@ -332,13 +373,17 @@ function VM:execute_instruction()
    local instr = self.bytecode[self.pc]
 
    if instr.kind == mod.BYTECODE_KIND.LEFT then
-      self:place_rail(mod.RAIL_KIND.LEFT)
+      self:place_rail(mod.RAIL_KIND.LEFT, instr.span)
       self.pc = self.pc + 1
    elseif instr.kind == mod.BYTECODE_KIND.RIGHT then
-      self:place_rail(mod.RAIL_KIND.RIGHT)
+      self:place_rail(mod.RAIL_KIND.RIGHT, instr.span)
       self.pc = self.pc + 1
    elseif instr.kind == mod.BYTECODE_KIND.STRAIGHT then
-      self:place_rail(mod.RAIL_KIND.STRAIGHT)
+      self:place_rail(mod.RAIL_KIND.STRAIGHT, instr.span)
+      self.pc = self.pc + 1
+   elseif instr.kind == mod.BYTECODE_KIND.FLIP then
+      local _, err = self:execute_flip(instr)
+      if err then return false, err end
       self.pc = self.pc + 1
    elseif instr.kind == mod.BYTECODE_KIND.JNZ then
       self:execute_jnz(instr)
@@ -367,19 +412,19 @@ function VM:execute_instruction()
    return true
 end
 
----@param initial_rail number?
----@param initial_hand_direction number?
----@return syntrax.vm.Rail[]?, syntrax.Error?
-function VM:run(initial_rail, initial_hand_direction)
-   -- Set initial values if provided
-   if initial_rail then
-      self.initial_rail = initial_rail
-      self.parent_rail = initial_rail
-   end
-   if initial_hand_direction then
-      self.initial_hand_direction = initial_hand_direction
-      self.hand_direction = initial_hand_direction
-   end
+---Run the VM with the given starting position
+---@param initial_position fa.Point? Starting position (default: {x=0, y=0})
+---@param initial_direction number? Starting direction 0-15 (default: north/0)
+---@return syntrax.vm.RailPlacement[]?, syntrax.Error?
+function VM:run(initial_position, initial_direction)
+   -- Default to origin facing north
+   local pos = initial_position or { x = 0, y = 0 }
+   local dir = initial_direction or Directions.NORTH
+
+   -- Create the initial traverser at a straight rail at the starting position/direction
+   -- This represents "standing at the end of a straight rail facing dir"
+   self.traverser = Traverser.new(RailInfo.RailType.STRAIGHT, pos, dir)
+   self.initial_traverser = self.traverser:clone()
 
    -- Execute instructions until done or error
    while true do

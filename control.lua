@@ -105,6 +105,7 @@ require("scripts.ui.generic-inventory")
 require("scripts.ui.simple-textbox")
 require("scripts.ui.internal.search-setter")
 require("scripts.ui.internal.cursor-coordinate-input")
+require("scripts.ui.internal.syntrax-input")
 require("scripts.ui.help")
 local GameGui = require("scripts.ui.game-gui")
 local UiRouter = require("scripts.ui.router")
@@ -3053,6 +3054,9 @@ EventManager.on_event(
    "fa-a-leftbracket",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
+      -- Handle syntrax input when in VTD mode
+      if VirtualTrainDriving.open_syntrax_input(pindex) then return end
+
       local p = game.get_player(pindex)
       local stack = p.cursor_stack
 

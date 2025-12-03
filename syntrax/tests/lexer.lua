@@ -61,7 +61,7 @@ ghi]],
 end
 
 function mod.TestBasicTokenizing()
-   local text = "l s l r s r 5 rep"
+   local text = "l s l r s r 5 x"
    local result, err = Lexer.tokenize(text)
    lu.assertIsNil(err)
    lu.assertEquals(result, {
@@ -76,7 +76,7 @@ function mod.TestBasicTokenizing()
          type = "number",
          value = "5",
       },
-      { span = { start = 15, stop = 17, text = text }, type = "rep", value = "rep" },
+      { span = { start = 15, stop = 15, text = text }, type = "x", value = "x" },
    })
 end
 

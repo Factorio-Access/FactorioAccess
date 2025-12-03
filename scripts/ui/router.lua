@@ -155,6 +155,7 @@ mod.UI_NAMES = {
    SIMPLE_TEXTBOX = "simple_textbox",
    SEARCH_SETTER = "search_setter",
    CURSOR_COORDINATE_INPUT = "cursor_coordinate_input",
+   SYNTRAX_INPUT = "syntrax_input",
    CIRCUIT_NAVIGATOR = "circuit_navigator",
    CIRCUIT_NAVIGATOR_ENTITIES = "circuit_navigator_entities",
    EQUIPMENT_SELECTOR = "equipment_selector",

@@ -17,7 +17,7 @@ As of the current version, Syntrax has been copied into the FactorioAccess codeb
 
 ### Grouping and Repetition
 - `[l r s]` - Group commands in a sequence
-- `[l r] rep 4` - Repeat a sequence 4 times
+- `[l r] x 4` - Repeat a sequence 4 times
 
 ### Rail Stack Commands (for creating junctions)
 - `rpush` - Save current position and direction
@@ -31,7 +31,7 @@ As of the current version, Syntrax has been copied into the FactorioAccess codeb
 s s s s
 
 # Circle (8 repetitions of left-left-straight)
-[l l s] rep 8
+[l l s] x 8
 
 # T-junction
 s s rpush l s s reset r s s
@@ -39,10 +39,10 @@ s s rpush l s s reset r s s
 # Station with sidings
 s s rpush [
   rpop rpush           # Return and save position
-  l l [s] rep 10       # Station siding
+  l l [s] x 10         # Station siding
   rpop                 # Return to mainline
   s s s rpush          # Advance for next station
-] rep 5                # 5 stations
+] x 5                  # 5 stations
 ```
 
 ## API Usage
@@ -78,7 +78,7 @@ The Syntrax implementation consists of:
 ### Command Line Interface
 ```bash
 # Test a program
-lua syntrax-cli.lua -c "[l r s] rep 4"
+lua syntrax-cli.lua -c "[l r s] x 4"
 
 # Show compilation stages
 lua syntrax-cli.lua -c "l r s" -o all

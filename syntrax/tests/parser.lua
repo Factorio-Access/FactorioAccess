@@ -65,7 +65,7 @@ function mod.TestParseSequence()
 end
 
 function mod.TestParseSimpleRepetition()
-   local ast, err = Parser.parse("[l s] rep 3")
+   local ast, err = Parser.parse("[l s] x 3")
    ast = assertParseSuccess(ast, err)
    lu.assertEquals(ast.type, Ast.NODE_TYPE.SEQUENCE)
    lu.assertEquals(#ast.statements, 1)
@@ -79,7 +79,7 @@ function mod.TestParseSimpleRepetition()
 end
 
 function mod.TestParseComplexProgram()
-   local ast, err = Parser.parse("l l s [r r s] rep 4 s")
+   local ast, err = Parser.parse("l l s [r r s] x 4 s")
    ast = assertParseSuccess(ast, err)
 
    check_ast_structure(ast, Ast.NODE_TYPE.SEQUENCE, {
@@ -106,7 +106,7 @@ function mod.TestParseWithComments()
    -- Comments should be ignored by lexer
    local ast, err = Parser.parse([[
       l s -- turn left then straight
-      [r s] rep 2 -- repeat right-straight twice
+      [r s] x 2 -- repeat right-straight twice
    ]])
    ast = assertParseSuccess(ast, err)
    lu.assertEquals(#ast.statements, 3)
@@ -114,7 +114,7 @@ function mod.TestParseWithComments()
 end
 
 function mod.TestParseNestedParentheses()
-   -- Test that square brackets without rep are handled
+   -- Test that square brackets without x are handled
    local ast, err = Parser.parse("l [s r] l")
    ast = assertParseSuccess(ast, err)
    check_ast_structure(ast, Ast.NODE_TYPE.SEQUENCE, {
@@ -141,12 +141,12 @@ function mod.TestSpanMerging()
    lu.assertEquals(c2, 5) -- ends at 'r'
 
    -- Test repetition span
-   ast, err = Parser.parse("[l s] rep 3")
+   ast, err = Parser.parse("[l s] x 3")
    ast = assertParseSuccess(ast, err)
    local rep = ast.statements[1]
    l1, c1, l2, c2 = rep.span:get_printable_range()
    lu.assertEquals(c1, 1) -- starts at '['
-   lu.assertEquals(c2, 11) -- ends at '3'
+   lu.assertEquals(c2, 9) -- ends at '3' ("[l s] x 3" = 9 chars)
 end
 
 -- Error cases
@@ -157,14 +157,14 @@ function mod.TestParseErrors()
    lu.assertEquals(#ast.statements, 0)
 
    -- Empty brackets are now allowed
-   ast, err = Parser.parse("[] rep 3")
+   ast, err = Parser.parse("[] x 3")
    ast = assertParseSuccess(ast, err)
    lu.assertEquals(ast.statements[1].type, Ast.NODE_TYPE.REPETITION)
    local rep = ast.statements[1] --[[@as syntrax.ast.Repetition]]
    lu.assertEquals(#rep.body.statements, 0)
 
-   -- Missing number after rep
-   ast, err = Parser.parse("[l s] rep")
+   -- Missing number after x
+   ast, err = Parser.parse("[l s] x")
    assertParseError(ast, err, Errors.ERROR_CODE.EXPECTED_NUMBER)
 
    -- Invalid token
@@ -172,15 +172,15 @@ function mod.TestParseErrors()
    assertParseError(ast, err, Errors.ERROR_CODE.UNEXPECTED_TOKEN)
 
    -- Rep without number
-   ast, err = Parser.parse("[l s] rep r")
+   ast, err = Parser.parse("[l s] x r")
    assertParseError(ast, err, Errors.ERROR_CODE.EXPECTED_NUMBER)
 
    -- Parentheses not allowed
-   ast, err = Parser.parse("(l s) rep 3")
+   ast, err = Parser.parse("(l s) x 3")
    assertParseError(ast, err, Errors.ERROR_CODE.UNEXPECTED_TOKEN)
 
    -- Curly braces not allowed
-   ast, err = Parser.parse("{l s} rep 3")
+   ast, err = Parser.parse("{l s} x 3")
    assertParseError(ast, err, Errors.ERROR_CODE.UNEXPECTED_TOKEN)
 end
 
@@ -190,10 +190,10 @@ function mod.TestEndToEndParsing()
       { input = "", expected_count = 0 }, -- Empty program
       { input = "l", expected_count = 1 },
       { input = "l s r", expected_count = 3 },
-      { input = "[l s] rep 5", expected_count = 1 }, -- One repetition node
-      { input = "l [s r] rep 2 s", expected_count = 3 }, -- l, rep, s
-      { input = "l l s [r r s] rep 4 s", expected_count = 5 },
-      { input = "[] rep 10", expected_count = 1 }, -- Empty sequence repetition
+      { input = "[l s] x 5", expected_count = 1 }, -- One repetition node
+      { input = "l [s r] x 2 s", expected_count = 3 }, -- l, rep, s
+      { input = "l l s [r r s] x 4 s", expected_count = 5 },
+      { input = "[] x 10", expected_count = 1 }, -- Empty sequence repetition
    }
 
    for _, tc in ipairs(test_cases) do

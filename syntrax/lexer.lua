@@ -104,10 +104,15 @@ mod.TOKEN_TYPE = {
    L = "l",
    R = "r",
    S = "s",
+   L45 = "l45",
+   R45 = "r45",
+   L90 = "l90",
+   R90 = "r90",
+   FLIP = "flip",
    IDENTIFIER = "identifier",
    -- This special token is a token tree, some bracketed text.
    TREE = "tree",
-   REP = "rep",
+   X = "x",
    NUMBER = "number",
    RPUSH = "rpush",
    RPOP = "rpop",
@@ -155,13 +160,23 @@ local function build_tokens(untyped_tokens)
          tok.type = mod.TOKEN_TYPE.R
       elseif text == "s" then
          tok.type = mod.TOKEN_TYPE.S
-      elseif text == "rep" then
-         tok.type = mod.TOKEN_TYPE.REP
+      elseif text == "l45" then
+         tok.type = mod.TOKEN_TYPE.L45
+      elseif text == "r45" then
+         tok.type = mod.TOKEN_TYPE.R45
+      elseif text == "l90" then
+         tok.type = mod.TOKEN_TYPE.L90
+      elseif text == "r90" then
+         tok.type = mod.TOKEN_TYPE.R90
+      elseif text == "flip" then
+         tok.type = mod.TOKEN_TYPE.FLIP
+      elseif text == "x" then
+         tok.type = mod.TOKEN_TYPE.X
       elseif text == "rpush" then
          tok.type = mod.TOKEN_TYPE.RPUSH
       elseif text == "rpop" then
          tok.type = mod.TOKEN_TYPE.RPOP
-      elseif text == "reset" then
+      elseif text == "reset" or text == ";" then
          tok.type = mod.TOKEN_TYPE.RESET
       elseif string.match(text, IDENT_PATTERN) then
          tok.type = mod.TOKEN_TYPE.IDENTIFIER

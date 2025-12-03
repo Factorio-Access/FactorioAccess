@@ -13,6 +13,7 @@ local FaUtils = require("scripts.fa-utils")
 local BlueprintSynthesizer = require("scripts.blueprint-synthesizer")
 local HandMonitor = require("scripts.hand-monitor")
 local InventoryUtils = require("scripts.inventory-utils")
+local UiRouter = require("scripts.ui.router")
 
 local MessageBuilder = Speech.MessageBuilder
 
@@ -941,6 +942,23 @@ function mod.on_kb_descriptive_action_name(event)
    end
 
    return false, false
+end
+
+---Open syntrax input UI if locked onto a rail
+---@param pindex integer
+---@return boolean opened True if UI was opened
+function mod.open_syntrax_input(pindex)
+   local state = vtd_storage[pindex]
+   if not state.locked then return false end
+
+   local current = get_current_move(pindex)
+   if not current then return false end
+
+   UiRouter.get_router(pindex):open_ui(UiRouter.UI_NAMES.SYNTRAX_INPUT, {
+      position = current.position,
+      direction = current.end_direction,
+   })
+   return true
 end
 
 return mod

@@ -58,6 +58,28 @@ function Compiler:compile_node(node)
       self:emit(Vm.bytecode(Vm.BYTECODE_KIND.RPOP), node.span)
    elseif node.type == Ast.NODE_TYPE.RESET then
       self:emit(Vm.bytecode(Vm.BYTECODE_KIND.RESET), node.span)
+   elseif node.type == Ast.NODE_TYPE.FLIP then
+      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.FLIP), node.span)
+   elseif node.type == Ast.NODE_TYPE.L45 then
+      -- l45 = 2 left turns
+      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.LEFT), node.span)
+      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.LEFT), node.span)
+   elseif node.type == Ast.NODE_TYPE.R45 then
+      -- r45 = 2 right turns
+      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.RIGHT), node.span)
+      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.RIGHT), node.span)
+   elseif node.type == Ast.NODE_TYPE.L90 then
+      -- l90 = 4 left turns
+      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.LEFT), node.span)
+      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.LEFT), node.span)
+      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.LEFT), node.span)
+      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.LEFT), node.span)
+   elseif node.type == Ast.NODE_TYPE.R90 then
+      -- r90 = 4 right turns
+      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.RIGHT), node.span)
+      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.RIGHT), node.span)
+      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.RIGHT), node.span)
+      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.RIGHT), node.span)
    elseif node.type == Ast.NODE_TYPE.SEQUENCE then
       -- Simply compile each statement in order
       ---@cast node syntrax.ast.Sequence
@@ -74,7 +96,7 @@ end
 
 ---@param node syntrax.ast.Repetition
 function Compiler:compile_repetition(node)
-   -- For "body rep N", we generate:
+   -- For "[body] x N", we generate:
    -- MOV counter, N
    -- loop_start:
    -- <body>

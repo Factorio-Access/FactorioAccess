@@ -34,13 +34,13 @@ local rail_sequence_tests = {
    },
    {
       name = "simple_repetition",
-      source = "[s] rep 3",
+      source = "[s] x 3",
       expected_count = 3,
       expected_kinds = { "straight", "straight", "straight" },
    },
    {
       name = "complex_repetition",
-      source = "[l r] rep 2",
+      source = "[l r] x 2",
       expected_count = 4,
       expected_kinds = { "left", "right", "left", "right" },
    },
@@ -56,15 +56,15 @@ local rail_sequence_tests = {
 local error_tests = {
    {
       name = "invalid_token",
-      source = "x",
+      source = "foo",
       expected_error = Errors.ERROR_CODE.UNEXPECTED_TOKEN,
-      error_pattern = "Unexpected token 'x'",
+      error_pattern = "Unexpected token 'foo'",
    },
    {
-      name = "rep_without_sequence",
-      source = "l rep 3",
+      name = "x_without_sequence",
+      source = "l x 3",
       expected_error = Errors.ERROR_CODE.UNEXPECTED_TOKEN,
-      error_pattern = "Unexpected token 'rep'",
+      error_pattern = "Unexpected token 'x'",
    },
    {
       name = "unclosed_bracket",
@@ -79,8 +79,8 @@ local error_tests = {
       error_pattern = "Expected ]",
    },
    {
-      name = "rep_without_number",
-      source = "[l] rep",
+      name = "x_without_number",
+      source = "[l] x",
       expected_error = Errors.ERROR_CODE.EXPECTED_NUMBER,
       error_pattern = "Expected number",
    },

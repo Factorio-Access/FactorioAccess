@@ -14,7 +14,13 @@ mod.NODE_TYPE = {
    RIGHT = "right",
    STRAIGHT = "straight",
 
-   -- Repetition: (body) rep count
+   -- Degree turns (l45 = 2 lefts, l90 = 4 lefts, etc.)
+   L45 = "l45",
+   R45 = "r45",
+   L90 = "l90",
+   R90 = "r90",
+
+   -- Repetition: [body] x count
    REPETITION = "repetition",
 
    -- Sequence of commands - implicit grouping, also used at top level
@@ -24,6 +30,9 @@ mod.NODE_TYPE = {
    RPUSH = "rpush",
    RPOP = "rpop",
    RESET = "reset",
+
+   -- Position manipulation
+   FLIP = "flip",
 }
 
 ---@class syntrax.ast.Node Base class for all AST nodes
@@ -48,6 +57,8 @@ mod.NODE_TYPE = {
 ---@class syntrax.ast.Rpop: syntrax.ast.Node
 
 ---@class syntrax.ast.Reset: syntrax.ast.Node
+
+---@class syntrax.ast.Flip: syntrax.ast.Node
 
 -- Factory functions for creating AST nodes
 
@@ -74,6 +85,42 @@ end
 function mod.straight(span)
    return {
       type = mod.NODE_TYPE.STRAIGHT,
+      span = span,
+   }
+end
+
+---@param span syntrax.Span
+---@return syntrax.ast.Node
+function mod.l45(span)
+   return {
+      type = mod.NODE_TYPE.L45,
+      span = span,
+   }
+end
+
+---@param span syntrax.Span
+---@return syntrax.ast.Node
+function mod.r45(span)
+   return {
+      type = mod.NODE_TYPE.R45,
+      span = span,
+   }
+end
+
+---@param span syntrax.Span
+---@return syntrax.ast.Node
+function mod.l90(span)
+   return {
+      type = mod.NODE_TYPE.L90,
+      span = span,
+   }
+end
+
+---@param span syntrax.Span
+---@return syntrax.ast.Node
+function mod.r90(span)
+   return {
+      type = mod.NODE_TYPE.R90,
       span = span,
    }
 end
@@ -125,6 +172,15 @@ end
 function mod.reset(span)
    return {
       type = mod.NODE_TYPE.RESET,
+      span = span,
+   }
+end
+
+---@param span syntrax.Span
+---@return syntrax.ast.Flip
+function mod.flip(span)
+   return {
+      type = mod.NODE_TYPE.FLIP,
       span = span,
    }
 end

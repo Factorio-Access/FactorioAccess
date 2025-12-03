@@ -7,9 +7,9 @@ Syntrax is a domain-specific language for specifying Factorio train layouts as p
 - Basic commands: `l` (left curve), `r` (right curve), `s` (straight)
 - Rail stack commands: `rpush` (save position), `rpop` (restore position), `reset` (return to initial)
 - Sequences: `[commands]` - groups commands, can be empty
-- Repetition: `[pattern] rep n` - repeats pattern n times
+- Repetition: `[pattern] x n` - repeats pattern n times
 - Empty programs are valid (useful as a no-op or placeholder)
-- Example: `[l l s] rep 8` creates a complete circle with 8 repetitions of left-left-straight
+- Example: `[l l s] x 8` creates a complete circle with 8 repetitions of left-left-straight
 - Fork example: `rpush l r s reset s s s reset r s l` creates a 3-way split
 - Note: Only square brackets `[]` are allowed for sequences (parentheses and curly braces reserved for future use)
 
@@ -155,7 +155,7 @@ The lexer produces a hierarchical structure where bracketed expressions are pre-
 The "minimal subset" currently consists of just l/r/s commands. For example:
 ```
 -- Full syntax
-[l s r] rep 3
+[l s r] x 3
 -- Minimal subset (after expansion)
 l s r l s r l s r
 ```

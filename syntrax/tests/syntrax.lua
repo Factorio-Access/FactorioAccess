@@ -10,7 +10,7 @@ function mod.TestExecuteSimple()
 end
 
 function mod.TestExecuteWithRepetition()
-   local rails = helpers.assert_compilation_succeeds("[l] rep 4")
+   local rails = helpers.assert_compilation_succeeds("[l] x 4")
    helpers.assert_rail_sequence(rails, { "left", "left", "left", "left" })
 end
 
@@ -20,11 +20,11 @@ function mod.TestExecuteEmpty()
 end
 
 function mod.TestExecuteError()
-   helpers.assert_compilation_fails("l rep 3", "unexpected_token", "Unexpected token 'rep'")
+   helpers.assert_compilation_fails("l x 3", "unexpected_token", "Unexpected token 'x'")
 end
 
 function mod.TestExecuteInvalidToken()
-   helpers.assert_compilation_fails("x y z", "unexpected_token")
+   helpers.assert_compilation_fails("foo bar baz", "unexpected_token")
 end
 
 function mod.TestVersion()
@@ -36,14 +36,15 @@ function mod.TestRailStructure()
    local rails = helpers.assert_compilation_succeeds("l r")
    lu.assertEquals(#rails, 2)
 
-   -- First rail has no parent
-   helpers.assert_rail_connects_to(rails, 1, nil)
-   lu.assertNotNil(rails[1].incoming_direction)
-   lu.assertNotNil(rails[1].outgoing_direction)
+   -- New format: check that rails have position and rail_type
+   helpers.assert_rail_exists(rails, 1)
+   lu.assertNotNil(rails[1].position)
+   lu.assertNotNil(rails[1].rail_type)
+   lu.assertNotNil(rails[1].placement_direction)
 
-   -- Second rail's parent is the first
-   helpers.assert_rail_connects_to(rails, 2, 1)
-   lu.assertEquals(rails[2].incoming_direction, rails[1].outgoing_direction)
+   helpers.assert_rail_exists(rails, 2)
+   lu.assertNotNil(rails[2].position)
+   lu.assertNotNil(rails[2].rail_type)
 end
 
 return mod

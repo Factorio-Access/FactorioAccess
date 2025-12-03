@@ -101,6 +101,18 @@ function parse_statement(state)
    elseif tok.type == Lexer.TOKEN_TYPE.S then
       state:advance()
       return Ast.straight(tok.span), nil
+   elseif tok.type == Lexer.TOKEN_TYPE.L45 then
+      state:advance()
+      return Ast.l45(tok.span), nil
+   elseif tok.type == Lexer.TOKEN_TYPE.R45 then
+      state:advance()
+      return Ast.r45(tok.span), nil
+   elseif tok.type == Lexer.TOKEN_TYPE.L90 then
+      state:advance()
+      return Ast.l90(tok.span), nil
+   elseif tok.type == Lexer.TOKEN_TYPE.R90 then
+      state:advance()
+      return Ast.r90(tok.span), nil
    elseif tok.type == Lexer.TOKEN_TYPE.RPUSH then
       state:advance()
       return Ast.rpush(tok.span), nil
@@ -110,6 +122,9 @@ function parse_statement(state)
    elseif tok.type == Lexer.TOKEN_TYPE.RESET then
       state:advance()
       return Ast.reset(tok.span), nil
+   elseif tok.type == Lexer.TOKEN_TYPE.FLIP then
+      state:advance()
+      return Ast.flip(tok.span), nil
    elseif tok.type == Lexer.TOKEN_TYPE.TREE then
       -- Only square brackets are allowed for sequences
       if tok.bracket_type ~= "[" then
@@ -132,15 +147,14 @@ function parse_statement(state)
       if err then return nil, err end
       assert(body) -- parse_tree_contents always returns a sequence when successful
 
-      -- Check if this is followed by 'rep'
-      local rep_tok = state:consume_token(Lexer.TOKEN_TYPE.REP)
-      if rep_tok then
-         -- Expect a number after 'rep'
+      -- Check if this is followed by 'x' (repetition)
+      local x_tok = state:consume_token(Lexer.TOKEN_TYPE.X)
+      if x_tok then
+         -- Expect a number after 'x'
          local num_tok = state:current_token()
          if not num_tok or num_tok.type ~= Lexer.TOKEN_TYPE.NUMBER then
             return nil,
-               Errors.error_builder(Errors.ERROR_CODE.EXPECTED_NUMBER, "Expected number after 'rep'", rep_tok.span)
-                  :build()
+               Errors.error_builder(Errors.ERROR_CODE.EXPECTED_NUMBER, "Expected number after 'x'", x_tok.span):build()
          end
          state:advance()
 
