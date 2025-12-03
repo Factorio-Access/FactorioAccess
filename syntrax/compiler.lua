@@ -39,6 +39,15 @@ function Compiler:emit(bc, span)
    table.insert(self.bytecode, bc)
 end
 
+---Emit multiple bytecodes with a shared span
+---@param bytecodes syntrax.vm.Bytecode[]
+---@param span syntrax.Span?
+function Compiler:emit_sequence(bytecodes, span)
+   for _, bc in ipairs(bytecodes) do
+      self:emit(bc, span)
+   end
+end
+
 ---@return number Current bytecode position (1-indexed)
 function Compiler:current_position()
    return #self.bytecode + 1
@@ -62,24 +71,32 @@ function Compiler:compile_node(node)
       self:emit(Vm.bytecode(Vm.BYTECODE_KIND.FLIP), node.span)
    elseif node.type == Ast.NODE_TYPE.L45 then
       -- l45 = 2 left turns
-      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.LEFT), node.span)
-      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.LEFT), node.span)
+      self:emit_sequence({
+         Vm.bytecode(Vm.BYTECODE_KIND.LEFT),
+         Vm.bytecode(Vm.BYTECODE_KIND.LEFT),
+      }, node.span)
    elseif node.type == Ast.NODE_TYPE.R45 then
       -- r45 = 2 right turns
-      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.RIGHT), node.span)
-      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.RIGHT), node.span)
+      self:emit_sequence({
+         Vm.bytecode(Vm.BYTECODE_KIND.RIGHT),
+         Vm.bytecode(Vm.BYTECODE_KIND.RIGHT),
+      }, node.span)
    elseif node.type == Ast.NODE_TYPE.L90 then
       -- l90 = 4 left turns
-      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.LEFT), node.span)
-      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.LEFT), node.span)
-      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.LEFT), node.span)
-      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.LEFT), node.span)
+      self:emit_sequence({
+         Vm.bytecode(Vm.BYTECODE_KIND.LEFT),
+         Vm.bytecode(Vm.BYTECODE_KIND.LEFT),
+         Vm.bytecode(Vm.BYTECODE_KIND.LEFT),
+         Vm.bytecode(Vm.BYTECODE_KIND.LEFT),
+      }, node.span)
    elseif node.type == Ast.NODE_TYPE.R90 then
       -- r90 = 4 right turns
-      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.RIGHT), node.span)
-      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.RIGHT), node.span)
-      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.RIGHT), node.span)
-      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.RIGHT), node.span)
+      self:emit_sequence({
+         Vm.bytecode(Vm.BYTECODE_KIND.RIGHT),
+         Vm.bytecode(Vm.BYTECODE_KIND.RIGHT),
+         Vm.bytecode(Vm.BYTECODE_KIND.RIGHT),
+         Vm.bytecode(Vm.BYTECODE_KIND.RIGHT),
+      }, node.span)
    elseif node.type == Ast.NODE_TYPE.SEQUENCE then
       -- Simply compile each statement in order
       ---@cast node syntrax.ast.Sequence

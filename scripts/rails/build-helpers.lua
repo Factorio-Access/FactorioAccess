@@ -16,7 +16,11 @@ local function init_inventories()
    return {}
 end
 
-local build_inventories = StorageManager.declare_storage_module("build_helper_invs", init_inventories)
+-- IMPORTANT: changing the name of this or bumping the ephemeral version will leak inventories. That is fine as long as
+-- it is only ever done occasionally, but if we need to do so more often then that is bad.  If this is moved to another
+-- file, it must keep the name.
+---@type table<number, build_helpers.Inventories>
+local build_inventories = StorageManager.declare_storage_module("train_building_invs", init_inventories)
 
 ---Get or create a temporary inventory for storing the player's hand during builds
 ---@param pindex integer
@@ -79,8 +83,9 @@ end
 ---@param entity_name string
 ---@param position MapPosition
 ---@param direction defines.direction
+---@param build_mode defines.build_mode
 ---@return LuaEntity|nil ghost The placed ghost, or nil if failed
-function mod.place_ghost(pindex, entity_name, position, direction)
+function mod.place_ghost(pindex, entity_name, position, direction, build_mode)
    local player = game.get_player(pindex)
    if not player then return nil end
 
@@ -119,18 +124,16 @@ function mod.place_ghost(pindex, entity_name, position, direction)
       return nil
    end
 
-   -- Try to build from cursor (superforced to avoid collision issues)
+   -- Try to build from cursor with specified build mode
    local can_build = player.can_build_from_cursor({
       position = position,
-      build_mode = defines.build_mode.superforced,
+      build_mode = build_mode,
    })
 
-   if can_build then
-      player.build_from_cursor({
-         position = position,
-         build_mode = defines.build_mode.superforced,
-      })
-   end
+   if can_build then player.build_from_cursor({
+      position = position,
+      build_mode = build_mode,
+   }) end
 
    -- Clear blueprint and restore hand
    cursor.clear()
@@ -145,8 +148,9 @@ end
 ---If any placement fails, destroys all previously placed ghosts and returns nil
 ---@param pindex integer
 ---@param placements {name: string, position: MapPosition, direction: defines.direction}[]
+---@param build_mode defines.build_mode
 ---@return LuaEntity[]|nil ghosts All placed ghosts, or nil if any failed
-function mod.place_ghosts(pindex, placements)
+function mod.place_ghosts(pindex, placements, build_mode)
    local player = game.get_player(pindex)
    if not player then return nil end
 
@@ -169,7 +173,7 @@ function mod.place_ghosts(pindex, placements)
       end
 
       -- Place ghost
-      local ghost = mod.place_ghost(pindex, placement.name, placement.position, placement.direction)
+      local ghost = mod.place_ghost(pindex, placement.name, placement.position, placement.direction, build_mode)
       if not ghost then
          -- Failed - destroy all placed ghosts
          for _, g in ipairs(ghosts) do

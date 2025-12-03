@@ -19,7 +19,6 @@ mod.OPERAND_KIND = {
    VALUE = "value",
    REGISTER = "register",
    MATH_OP = "math_op",
-   CMP_OP = "cmp_op",
 }
 
 ---@enum syntrax.vm.ValueType
@@ -35,7 +34,6 @@ mod.BYTECODE_KIND = {
    FLIP = "flip",
    JNZ = "jnz",
    MATH = "math",
-   CMP = "cmp",
    MOV = "mov",
    RPUSH = "rpush",
    RPOP = "rpop",
@@ -50,17 +48,6 @@ mod.MATH_OP = {
    DIV = "/",
 }
 
----@enum syntrax.vm.CmpOp
-mod.CMP_OP = {
-   LT = "<",
-   LE = "<=",
-   EQ = "==",
-   GE = ">=",
-   GT = ">",
-   NE = "!=",
-}
-
--- Legacy RAIL_KIND kept for backwards compatibility with tests
 ---@enum syntrax.vm.RailKind
 mod.RAIL_KIND = {
    LEFT = "left",
@@ -78,19 +65,11 @@ mod.RAIL_KIND = {
 ---@field arguments syntrax.vm.Operand[]
 ---@field span syntrax.Span? Optional span for error reporting
 
----New output format: rail placement with position
 ---@class syntrax.vm.RailPlacement
 ---@field position fa.Point Position where the rail should be placed
 ---@field rail_type string "straight-rail", "curved-rail-a", "curved-rail-b", or "half-diagonal-rail"
 ---@field placement_direction number 0-15 direction for placement
 ---@field span syntrax.Span? Source span for error reporting
-
----Legacy output format for backwards compatibility
----@class syntrax.vm.Rail
----@field parent number? Index of parent rail (nil for first rail)
----@field kind syntrax.vm.RailKind
----@field incoming_direction number Direction hand was facing when placed
----@field outgoing_direction number Direction hand faces after placement
 
 ---@class syntrax.vm.RailStackEntry
 ---@field traverser railutils.Traverser Cloned traverser state
@@ -154,13 +133,6 @@ function mod.math_op(op)
    }
 end
 
-function mod.cmp_op(op)
-   return {
-      kind = mod.OPERAND_KIND.CMP_OP,
-      argument = op,
-   }
-end
-
 -- Helper to create bytecode
 function mod.bytecode(kind, ...)
    return {
@@ -179,7 +151,7 @@ function VM:resolve_operand(operand)
       if not value then error(string.format("Register r%d not initialized", operand.argument)) end
       if value.kind == mod.OPERAND_KIND.REGISTER then error("Register contains another register reference") end
       return value
-   elseif operand.kind == mod.OPERAND_KIND.MATH_OP or operand.kind == mod.OPERAND_KIND.CMP_OP then
+   elseif operand.kind == mod.OPERAND_KIND.MATH_OP then
       -- Operations are not resolved, they're used directly
       return operand
    else
@@ -213,23 +185,9 @@ function VM:place_rail(kind, span)
       return -- Already have this exact rail
    end
 
-   -- Convert rail type enum to string
-   local rail_type_str
-   if rail_type == RailInfo.RailType.STRAIGHT then
-      rail_type_str = "straight-rail"
-   elseif rail_type == RailInfo.RailType.CURVE_A then
-      rail_type_str = "curved-rail-a"
-   elseif rail_type == RailInfo.RailType.CURVE_B then
-      rail_type_str = "curved-rail-b"
-   elseif rail_type == RailInfo.RailType.HALF_DIAGONAL then
-      rail_type_str = "half-diagonal-rail"
-   else
-      error("Unknown rail type: " .. tostring(rail_type))
-   end
-
    local rail = {
       position = pos,
-      rail_type = rail_type_str,
+      rail_type = rail_type, -- Already a string like "straight-rail"
       placement_direction = placement_dir,
       span = span,
    }
@@ -275,38 +233,6 @@ function VM:execute_math(instr)
    end
 
    self.registers[dest.argument] = mod.value(mod.VALUE_TYPE.NUMBER, result)
-   self.pc = self.pc + 1
-end
-
----@param instr syntrax.vm.Bytecode
-function VM:execute_cmp(instr)
-   local dest = instr.arguments[1]
-   if dest.kind ~= mod.OPERAND_KIND.REGISTER then error("CMP destination must be a register") end
-
-   local val1 = self:resolve_operand(instr.arguments[2])
-   local val2 = self:resolve_operand(instr.arguments[3])
-   local op = instr.arguments[4]
-
-   if op.kind ~= mod.OPERAND_KIND.CMP_OP then error("CMP operation must be a CMP_OP operand") end
-
-   local result
-   if op.argument == mod.CMP_OP.LT then
-      result = val1.argument < val2.argument
-   elseif op.argument == mod.CMP_OP.LE then
-      result = val1.argument <= val2.argument
-   elseif op.argument == mod.CMP_OP.EQ then
-      result = val1.argument == val2.argument
-   elseif op.argument == mod.CMP_OP.GE then
-      result = val1.argument >= val2.argument
-   elseif op.argument == mod.CMP_OP.GT then
-      result = val1.argument > val2.argument
-   elseif op.argument == mod.CMP_OP.NE then
-      result = val1.argument ~= val2.argument
-   else
-      error("Unknown comparison operation: " .. tostring(op.argument))
-   end
-
-   self.registers[dest.argument] = mod.value(mod.VALUE_TYPE.NUMBER, result and 1 or 0)
    self.pc = self.pc + 1
 end
 
@@ -389,8 +315,6 @@ function VM:execute_instruction()
       self:execute_jnz(instr)
    elseif instr.kind == mod.BYTECODE_KIND.MATH then
       self:execute_math(instr)
-   elseif instr.kind == mod.BYTECODE_KIND.CMP then
-      self:execute_cmp(instr)
    elseif instr.kind == mod.BYTECODE_KIND.MOV then
       self:execute_mov(instr)
    elseif instr.kind == mod.BYTECODE_KIND.RPUSH then
@@ -443,8 +367,6 @@ function mod.format_operand(operand)
    elseif operand.kind == mod.OPERAND_KIND.REGISTER then
       return string.format("r(%d)", operand.argument)
    elseif operand.kind == mod.OPERAND_KIND.MATH_OP then
-      return string.format("op(%s)", operand.argument)
-   elseif operand.kind == mod.OPERAND_KIND.CMP_OP then
       return string.format("op(%s)", operand.argument)
    else
       return "?"

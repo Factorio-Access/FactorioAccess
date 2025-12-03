@@ -3,21 +3,9 @@
 
 local UiRouter = require("scripts.ui.router")
 local Speech = require("scripts.speech")
-local StorageManager = require("scripts.storage-manager")
-local SyntraxRunner = require("scripts.rails.syntrax-runner")
+local VTD = require("scripts.rails.virtual-train-driving")
 
 local mod = {}
-
----@class syntrax_input.State
----@field position MapPosition? Position to start building from
----@field direction defines.direction? Direction to start building
-
----@return syntrax_input.State
-local function init_state()
-   return {}
-end
-
-local syntrax_state = StorageManager.declare_storage_module("syntrax_input", init_state)
 
 ---@type fa.ui.UiPanelBase
 local syntrax_input_ui = {
@@ -31,11 +19,6 @@ local syntrax_input_ui = {
 ---@param parameters {position: MapPosition, direction: defines.direction}
 ---@param controller fa.ui.RouterController
 function syntrax_input_ui:open(pindex, parameters, controller)
-   -- Store parameters for use after textbox completes
-   local state = syntrax_state[pindex]
-   state.position = parameters.position
-   state.direction = parameters.direction
-
    -- Open textbox for syntrax code input
    controller:open_textbox("", "syntrax_input", { "fa.syntrax-enter" })
 end
@@ -52,16 +35,8 @@ function syntrax_input_ui:on_child_result(pindex, result, context, controller)
       return
    end
 
-   -- Get stored parameters
-   local state = syntrax_state[pindex]
-   if not state.position or not state.direction then
-      Speech.speak(pindex, { "fa.syntrax-error", "no position" })
-      controller:close()
-      return
-   end
-
-   -- Execute syntrax
-   local entities, err = SyntraxRunner.execute(pindex, result, state.position, state.direction)
+   -- Execute syntrax via VTD (which has stored state)
+   local entities, err = VTD.execute_syntrax(pindex, result)
 
    if err then
       Speech.speak(pindex, { "fa.syntrax-error", err })
@@ -70,10 +45,6 @@ function syntrax_input_ui:on_child_result(pindex, result, context, controller)
    else
       Speech.speak(pindex, { "fa.syntrax-placed", 0 })
    end
-
-   -- Clear stored state
-   state.position = nil
-   state.direction = nil
 
    -- Close this UI
    controller:close()

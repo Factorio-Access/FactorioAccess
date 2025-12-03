@@ -93,32 +93,6 @@ function mod.TestMATHInstructions()
    lu.assertEquals(vm.registers[6].argument, 2) -- 10 / 5
 end
 
-function mod.TestCMPInstructions()
-   local vm = Vm.new()
-
-   vm.bytecode = {
-      -- r1 = 10
-      bc(Vm.BYTECODE_KIND.MOV, reg(1), val(10)),
-      -- r2 = 5
-      bc(Vm.BYTECODE_KIND.MOV, reg(2), val(5)),
-      -- r3 = (r1 < r2)
-      bc(Vm.BYTECODE_KIND.CMP, reg(3), reg(1), reg(2), Vm.cmp_op(Vm.CMP_OP.LT)),
-      -- r4 = (r1 > r2)
-      bc(Vm.BYTECODE_KIND.CMP, reg(4), reg(1), reg(2), Vm.cmp_op(Vm.CMP_OP.GT)),
-      -- r5 = (r1 == r1)
-      bc(Vm.BYTECODE_KIND.CMP, reg(5), reg(1), reg(1), Vm.cmp_op(Vm.CMP_OP.EQ)),
-      -- r6 = (r1 != r2)
-      bc(Vm.BYTECODE_KIND.CMP, reg(6), reg(1), reg(2), Vm.cmp_op(Vm.CMP_OP.NE)),
-   }
-
-   vm:run()
-
-   lu.assertEquals(vm.registers[3].argument, 0) -- 10 < 5 is false
-   lu.assertEquals(vm.registers[4].argument, 1) -- 10 > 5 is true
-   lu.assertEquals(vm.registers[5].argument, 1) -- 10 == 10 is true
-   lu.assertEquals(vm.registers[6].argument, 1) -- 10 != 5 is true
-end
-
 function mod.TestJNZInstruction()
    local vm = Vm.new()
 

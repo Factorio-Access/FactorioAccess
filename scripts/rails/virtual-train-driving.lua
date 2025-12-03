@@ -14,6 +14,8 @@ local BlueprintSynthesizer = require("scripts.blueprint-synthesizer")
 local HandMonitor = require("scripts.hand-monitor")
 local InventoryUtils = require("scripts.inventory-utils")
 local UiRouter = require("scripts.ui.router")
+local SurfaceHelper = require("scripts.rails.surface-helper")
+local SyntraxRunner = require("scripts.rails.syntrax-runner")
 
 local MessageBuilder = Speech.MessageBuilder
 
@@ -61,6 +63,7 @@ local vtd_inventories = StorageManager.declare_storage_module("virtual_train_inv
 ---@field moves vtd.Move[] Stack of moves representing the path
 ---@field speculating boolean Whether we're in speculative mode
 ---@field build_mode defines.build_mode Build mode for placing entities
+---@field planner_description railutils.RailPlannerDescription? Rail planner captured at lock time
 
 ---Initialize state for a player
 ---@return vtd.State
@@ -70,6 +73,7 @@ local function init_state()
       moves = {},
       speculating = false,
       build_mode = defines.build_mode.normal,
+      planner_description = nil,
    }
 end
 
@@ -542,8 +546,14 @@ function mod.lock_on_to_rail(pindex, rail_entity, build_mode)
    local player = game.get_player(pindex)
    if not player then return end
 
-   -- Check if player has rail planner
+   -- Check if player has rail planner and get its description
    if not has_rail_planner(player) then
+      Speech.speak(pindex, { "fa.virtual-train-need-planner" })
+      return
+   end
+
+   local planner_description = SurfaceHelper.get_planner_description(player.cursor_stack.prototype)
+   if not planner_description then
       Speech.speak(pindex, { "fa.virtual-train-need-planner" })
       return
    end
@@ -573,6 +583,7 @@ function mod.lock_on_to_rail(pindex, rail_entity, build_mode)
    state.moves = {}
    state.speculating = false
    state.build_mode = build_mode or defines.build_mode.normal
+   state.planner_description = planner_description
 
    -- Add initial rail to moves (entity = rail, not nil, but we won't destroy it on undo)
    -- Actually, use nil since it already exists and we shouldn't destroy it
@@ -950,6 +961,7 @@ end
 function mod.open_syntrax_input(pindex)
    local state = vtd_storage[pindex]
    if not state.locked then return false end
+   if not state.planner_description then return false end
 
    local current = get_current_move(pindex)
    if not current then return false end
@@ -959,6 +971,29 @@ function mod.open_syntrax_input(pindex)
       direction = current.end_direction,
    })
    return true
+end
+
+---Execute syntrax code using stored VTD state
+---@param pindex integer
+---@param source string Syntrax source code
+---@return LuaEntity[]|nil entities The placed rails/ghosts, or nil on failure
+---@return string|nil error Error message if failed
+function mod.execute_syntrax(pindex, source)
+   local state = vtd_storage[pindex]
+   if not state.locked then return nil, "Not locked to rails" end
+   if not state.planner_description then return nil, "No rail planner" end
+
+   local current = get_current_move(pindex)
+   if not current then return nil, "No current position" end
+
+   return SyntraxRunner.execute(
+      pindex,
+      source,
+      current.position,
+      current.end_direction,
+      state.planner_description,
+      state.build_mode
+   )
 end
 
 return mod
