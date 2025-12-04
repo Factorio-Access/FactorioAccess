@@ -135,7 +135,6 @@ mod.UI_NAMES = {
    SPIDERTRON_FOLLOW = "spidertron_follow",
    SPIDERTRON_REMOTE_SELECTOR = "spidertron_remote_selector",
    DEBUG = "debug",
-   DEBUG_FORMBUILDER = "debug_formbuilder",
    ITEM_CHOOSER = "item_chooser",
    SIGNAL_CHOOSER = "signal_chooser",
    FLUID_CHOOSER = "fluid_chooser",

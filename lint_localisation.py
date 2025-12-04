@@ -34,6 +34,12 @@ LOCALE_DIR = Path("locale/en")
 # Only check fa section strings for lint
 TARGET_SECTION = "fa"
 
+# Prefixes that are intentionally empty (used as override hooks with fallbacks)
+WHITELISTED_EMPTY_PREFIXES = {
+    "fa.research-technology-name-",
+    "fa.research-technology-description-",
+}
+
 
 def parse_cfg_files():
     """Parse all .cfg files and extract fa.* keys using configparser."""
@@ -142,6 +148,10 @@ def extract_locale_references(lua_files):
     # Pattern matches quoted strings containing fa. followed by word characters and hyphens
     pattern = re.compile(r'"(fa\.[\w-]+)"')
 
+    # Pattern for string.format("fa.prefix-%s", ...) - extracts "fa.prefix-" as a prefix
+    # Matches: string.format("fa.something-%s" where something is word chars and hyphens
+    string_format_pattern = re.compile(r'string\.format\s*\(\s*"(fa\.[\w-]+-)%s"')
+
     exact_keys = defaultdict(list)  # key -> list of (file, line_num)
     prefix_patterns = defaultdict(list)  # prefix -> list of (file, line_num)
 
@@ -155,6 +165,11 @@ def extract_locale_references(lua_files):
                     # Skip lines with register_metatable (not locale keys)
                     if 'register_metatable' in line:
                         continue
+
+                    # Check for string.format patterns first (these are prefix patterns)
+                    format_matches = string_format_pattern.findall(line)
+                    for match in format_matches:
+                        prefix_patterns[match].append((str(lua_file), line_num))
 
                     matches = pattern.findall(line)
                     for match in matches:
@@ -204,6 +219,8 @@ def cmd_lint(args):
     # Check for invalid prefixes (prefixes with no matching defined keys)
     invalid_prefixes = []
     for prefix in prefix_patterns:
+        if prefix in WHITELISTED_EMPTY_PREFIXES:
+            continue
         matching_keys = [key for key in defined_keys if key.startswith(prefix)]
         if not matching_keys:
             invalid_prefixes.append(prefix)

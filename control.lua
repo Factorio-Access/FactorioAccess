@@ -1101,16 +1101,6 @@ function general_mod_menu_down(pindex, menu, upper_limit)
 end
 
 EventManager.on_event(
-   defines.events.on_script_trigger_effect,
-   ---@param event EventData.on_script_trigger_effect
-   function(event)
-      if event.effect_id == Consts.NEW_ENTITY_SUBSCRIBER_TRIGGER_ID then
-         ScannerEntrypoint.on_new_entity(event.surface_index, event.source_entity)
-      end
-   end
-)
-
-EventManager.on_event(
    defines.events.on_surface_created,
    ---@param event EventData.on_surface_created
    function(event)

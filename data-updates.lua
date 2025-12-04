@@ -1,5 +1,3 @@
-local Consts = require("scripts.consts")
-
 for name, proto in pairs(data.raw.container) do
    proto.open_sound = proto.open_sound or { filename = "__base__/sound/metallic-chest-open.ogg", volume = 0.43 }
    proto.close_sound = proto.close_sound or { filename = "__base__/sound/metallic-chest-close.ogg", volume = 0.43 }
@@ -79,52 +77,3 @@ end
 --TODO:should probably just filter electric poles by their collision_box size...
 remove_player_collision(data.raw["electric-pole"]["small-electric-pole"])
 remove_player_collision(data.raw["electric-pole"]["medium-electric-pole"])
-
---[[
-We will now inject a trigger on entity creation, which will send control.lua an
-event on the creation of any map-placed entity.  This is slow, and it should
-also be possible to tone it back in future if that ever becomes problematic. The
-purpose is being able to scan efficiently, rather than trying to scan surfaces
-every time we get a request.  See scripts.scanner.entrypoint.
-
-A trigger is either a single trigger or an array of triggers.  To be compatible
-with other mods, we convert these to arrays, then tack ours on at the end.
-]]
-
-local function augment_with_trigger(proto)
-   -- Issue #298, we found a crash in the game which cannot be worked around on our side.
-   do
-      return
-   end
-   -- our trigger.
-   ---@type data.Trigger
-   local nt = {
-
-      type = "direct",
-      action_delivery = {
-         type = "instant",
-         source_effects = {
-            type = "script",
-            effect_id = Consts.NEW_ENTITY_SUBSCRIBER_TRIGGER_ID,
-         },
-      },
-   }
-
-   if not proto.created_effect then
-      proto.created_effect = {}
-   elseif not proto.created_effect[1] then
-      -- This is how we ask lua if something is an array.
-      proto.created_effect = { proto.created_effect }
-   end
-
-   table.insert(proto.created_effect, nt)
-end
-
-for ty, children in pairs(data.raw) do
-   if not defines.prototypes.entity[ty] then goto continue end
-
-   for _name, proto in pairs(children) do
-      augment_with_trigger(proto)
-   end
-   ::continue::
-end
