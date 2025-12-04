@@ -187,6 +187,22 @@ def launch_factorio(
 
 def find_factorio_type_definitions() -> Optional[str]:
     """Find Factorio type definitions for lua-language-server."""
+    # First, try to read from .vscode/settings.json
+    vscode_settings_path = Path(".vscode/settings.json")
+    if vscode_settings_path.exists():
+        try:
+            with open(vscode_settings_path, "r") as f:
+                settings = json.load(f)
+            user_third_party = settings.get("Lua.workspace.userThirdParty", [])
+            if user_third_party:
+                # userThirdParty points to sumneko-3rd, we need factorio/library inside it
+                lib_path = Path(user_third_party[0]) / "factorio" / "library"
+                if lib_path.exists():
+                    return str(lib_path)
+        except (json.JSONDecodeError, IOError):
+            pass  # Fall through to glob approach
+
+    # Fallback: glob for workspace storage
     search_paths = [
         # VSCode on Windows
         os.path.expanduser(

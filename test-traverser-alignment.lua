@@ -9,7 +9,7 @@ print()
 
 -- Start at (1, 1) with a straight-rail, bind to the east end (direction 4)
 print("Creating traverser at position (1, 1), binding to east end (direction 4)")
-local trav = Traverser.new(RailInfo.RailType.STRAIGHT, { x = 1, y = 1 }, 4)
+local trav = Traverser.new(RailInfo.RailType.STRAIGHT, { x = 1, y = 1 }, defines.direction.east)
 
 print("  Current position:", trav:get_position().x, trav:get_position().y)
 print("  End direction:", trav:get_direction())

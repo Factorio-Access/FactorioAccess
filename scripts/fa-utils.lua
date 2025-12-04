@@ -1,7 +1,6 @@
 --Here: Utility functions called by other files. Examples include distance and position calculations, string processing.
 local util = require("util")
 local Viewpoint = require("scripts.viewpoint")
-local dirs = defines.direction
 
 local Consts = require("scripts.consts")
 local EntitySelection = require("scripts.entity-selection")
@@ -34,26 +33,26 @@ end
 
 -- Lookup table for direction offsets
 local DIRECTION_OFFSETS = {
-   [dirs.north] = { x = 0, y = -1 },
-   [dirs.northeast] = { x = 1, y = -1 },
-   [dirs.east] = { x = 1, y = 0 },
-   [dirs.southeast] = { x = 1, y = 1 },
-   [dirs.south] = { x = 0, y = 1 },
-   [dirs.southwest] = { x = -1, y = 1 },
-   [dirs.west] = { x = -1, y = 0 },
-   [dirs.northwest] = { x = -1, y = -1 },
+   [defines.direction.north] = { x = 0, y = -1 },
+   [defines.direction.northeast] = { x = 1, y = -1 },
+   [defines.direction.east] = { x = 1, y = 0 },
+   [defines.direction.southeast] = { x = 1, y = 1 },
+   [defines.direction.south] = { x = 0, y = 1 },
+   [defines.direction.southwest] = { x = -1, y = 1 },
+   [defines.direction.west] = { x = -1, y = 0 },
+   [defines.direction.northwest] = { x = -1, y = -1 },
 }
 
 -- Lookup table for half-diagonal to full-diagonal mapping
 local HALF_DIAGONAL_MAP = {
-   [dirs.northnortheast] = dirs.northeast,
-   [dirs.eastnortheast] = dirs.northeast,
-   [dirs.eastsoutheast] = dirs.southeast,
-   [dirs.southsoutheast] = dirs.southeast,
-   [dirs.southsouthwest] = dirs.southwest,
-   [dirs.westsouthwest] = dirs.southwest,
-   [dirs.westnorthwest] = dirs.northwest,
-   [dirs.northnorthwest] = dirs.northwest,
+   [defines.direction.northnortheast] = defines.direction.northeast,
+   [defines.direction.eastnortheast] = defines.direction.northeast,
+   [defines.direction.eastsoutheast] = defines.direction.southeast,
+   [defines.direction.southsoutheast] = defines.direction.southeast,
+   [defines.direction.southsouthwest] = defines.direction.southwest,
+   [defines.direction.westsouthwest] = defines.direction.southwest,
+   [defines.direction.westnorthwest] = defines.direction.northwest,
+   [defines.direction.northnorthwest] = defines.direction.northwest,
 }
 
 function mod.center_of_tile(pos)
@@ -88,7 +87,12 @@ function mod.offset_position_cardinal(oldpos, direction, distance)
    local offset = DIRECTION_OFFSETS[direction]
    if
       offset
-      and (direction == dirs.north or direction == dirs.south or direction == dirs.east or direction == dirs.west)
+      and (
+         direction == defines.direction.north
+         or direction == defines.direction.south
+         or direction == defines.direction.east
+         or direction == defines.direction.west
+      )
    then
       return { x = oldpos.x + offset.x * distance, y = oldpos.y + offset.y * distance }
    else
@@ -171,8 +175,8 @@ function mod.get_direction_biased(pos_target, pos_origin)
 
    local diff_x = tx - ox
    local diff_y = ty - oy
-   ---@type defines.direction | -1
-   local dir = dirs.north
+   ---@type defines.direction
+   local dir = defines.direction.north
 
    if math.abs(diff_x) > 4 * math.abs(diff_y) then --along east-west
       if diff_x > 0 then
@@ -248,7 +252,7 @@ function mod.get_direction_precise(pos_target, pos_origin)
    local diff_y = pos_target.y - pos_origin.y
    -- For legacy reasons, this must default north: callers have never checked,
    -- and this used to be a very complex if tree.
-   return mod.direction_of_vector({ x = diff_x, y = diff_y }) or dirs.north
+   return mod.direction_of_vector({ x = diff_x, y = diff_y }) or defines.direction.north
 end
 
 --Checks whether a cardinal or diagonal direction is precisely aligned. All check positions are floored to their northwest corners.
@@ -274,7 +278,7 @@ end
 function mod.direction_lookup(dir)
    local reading = "unknown"
    if dir < 0 then return "unknown direction ID " .. dir end
-   if dir >= dirs.north and dir <= dirs.northnorthwest then
+   if dir >= defines.direction.north and dir <= defines.direction.northnorthwest then
       return helpers.direction_to_string(dir)
    else
       if dir == 16 then --Returned by the game when there is no direction in particular
@@ -289,15 +293,15 @@ function mod.direction_lookup(dir)
 end
 
 function mod.rotate_90(dir)
-   return (dir + dirs.east) % (2 * dirs.south)
+   return (dir + defines.direction.east) % (2 * defines.direction.south)
 end
 
 function mod.rotate_180(dir)
-   return (dir + dirs.south) % (2 * dirs.south)
+   return (dir + defines.direction.south) % (2 * defines.direction.south)
 end
 
 function mod.rotate_270(dir)
-   return (dir + dirs.east * 3) % (2 * dirs.south)
+   return (dir + defines.direction.east * 3) % (2 * defines.direction.south)
 end
 
 function mod.reset_rotation(pindex)
@@ -311,23 +315,23 @@ function mod.get_heading_value(ent)
    if ent == nil then return nil end
    local ori = ent.orientation
    if ori < 0.0625 then
-      return dirs.north
+      return defines.direction.north
    elseif ori < 0.1875 then
-      return dirs.northeast
+      return defines.direction.northeast
    elseif ori < 0.3125 then
-      return dirs.east
+      return defines.direction.east
    elseif ori < 0.4375 then
-      return dirs.southeast
+      return defines.direction.southeast
    elseif ori < 0.5625 then
-      return dirs.south
+      return defines.direction.south
    elseif ori < 0.6875 then
-      return dirs.southwest
+      return defines.direction.southwest
    elseif ori < 0.8125 then
-      return dirs.west
+      return defines.direction.west
    elseif ori < 0.9375 then
-      return dirs.northwest
+      return defines.direction.northwest
    else
-      return dirs.north --default
+      return defines.direction.north --default
    end
 end
 
@@ -345,7 +349,7 @@ function mod.get_tile_dimensions(item, dir)
       local dimensions = item.place_result.selection_box
       local x = math.ceil(dimensions.right_bottom.x - dimensions.left_top.x)
       local y = math.ceil(dimensions.right_bottom.y - dimensions.left_top.y)
-      if dir == dirs.north or dir == dirs.south then
+      if dir == defines.direction.north or dir == defines.direction.south then
          return { x = x, y = y }
       else
          return { x = y, y = x }
@@ -363,7 +367,7 @@ Parameters:
 - params.width: Entity width in tiles (if not using prototype)
 - params.height: Entity height in tiles (if not using prototype)
 - params.position: The base position (cursor or player position)
-- params.building_direction: The entity's rotation (dirs.north, dirs.east, etc.)
+- params.building_direction: The entity's rotation (defines.direction.north, defines.direction.east, etc.)
 - params.player_direction: The player's facing direction (for non-cursor mode)
 - params.is_rail_vehicle: Special handling for locomotives/wagons
 
@@ -389,7 +393,7 @@ function mod.calculate_building_footprint(params)
    end
 
    -- Handle direction rotation (east/west swap width and height)
-   if params.building_direction == dirs.east or params.building_direction == dirs.west then
+   if params.building_direction == defines.direction.east or params.building_direction == defines.direction.west then
       width, height = height, width
    end
 

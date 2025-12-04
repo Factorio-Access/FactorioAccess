@@ -3,6 +3,7 @@
 
 local Electrical = require("scripts.electrical")
 local FaUtils = require("scripts.fa-utils")
+local InventoryTransfers = require("scripts.inventory-transfers")
 local ItemInfo = require("scripts.item-info")
 local ItemStackUtils = require("scripts.item-stack-utils")
 local localising = require("scripts.localising")
@@ -167,7 +168,7 @@ function mod.reload_weapons(pindex, source_entity, source_inv_index, target_enti
    end
 
    --Apply an inventory transfer to the ammo inventory.
-   local res, full = transfer_inventory({ from = main_inv, to = ammo_inv })
+   local res, full = InventoryTransfers.transfer_inventory({ from = main_inv, to = ammo_inv })
    local moved_key_count = 0
    for key, val in pairs(res) do
       moved_key_count = moved_key_count + 1

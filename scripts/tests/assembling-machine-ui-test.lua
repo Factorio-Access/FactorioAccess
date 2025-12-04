@@ -4,9 +4,9 @@ local UiRouter = require("scripts.ui.router")
 local TabList = require("scripts.ui.tab-list")
 local AssemblingMachine = require("scripts.ui.tabs.assembling-machine")
 
--- Define test UI names as constants
-local TEST_UI_NAME = "test-assembling-machine"
-local TEST_UI_NAME_FOCUS = "test-assembling-machine-focus"
+-- Use enum constants for test UI names
+local TEST_UI_NAME = UiRouter.UI_NAMES.TEST_ASSEMBLING_MACHINE
+local TEST_UI_NAME_FOCUS = UiRouter.UI_NAMES.TEST_ASSEMBLING_MACHINE_FOCUS
 
 -- Create TabLists at module level for testing
 local test_tablist = TabList.declare_tablist({

@@ -109,8 +109,8 @@ function mod.TestTraverser_FlipEnds()
    -- Rail type should remain the same
    lu.assertEquals(trav:get_rail_kind(), RailInfo.RailType.STRAIGHT)
 
-   -- For a straight rail, opposite end should be 180 degrees (8 steps)
-   lu.assertEquals(new_dir, (initial_dir + 8) % 16)
+   -- For a straight rail, opposite end should be 180 degrees (south direction offset)
+   lu.assertEquals(new_dir, (initial_dir + defines.direction.south) % 16)
 end
 
 function mod.TestTraverser_GetSignalPos()

@@ -81,7 +81,7 @@ local function cmd_fac(cmd)
    environment.TH = TH
    environment.TransportBelts = TransportBelts
    environment.Wires = Wires
-   environment.Viewpoint = viewpoint
+   environment.Viewpoint = Viewpoint
 
    local chunk, err = load(with_return, "=(load)", "t", environment)
    if not chunk then

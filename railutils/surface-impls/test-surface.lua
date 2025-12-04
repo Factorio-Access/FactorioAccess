@@ -86,22 +86,22 @@ function TestSurface:add_rail(rail_type, position, direction)
 
    if rail_type == RailInfo.RailType.STRAIGHT then
       -- Straight rails snap to 2x2 grid to ensure centers at parity (1,1)
-      if corrected_direction == 0 or corrected_direction == 4 then
-         -- Directions 0, 4: inverted parity (most common orientations)
+      if corrected_direction == defines.direction.north or corrected_direction == defines.direction.east then
+         -- Directions north, east: inverted parity (most common orientations)
          grid_offset = { x = 1 - x_parity, y = 1 - y_parity }
-      else -- corrected_direction == 2 or 6
-         -- Directions 2, 6: direct parity (alternate orientations)
+      else -- corrected_direction == northeast or southeast
+         -- Directions northeast, southeast: direct parity (alternate orientations)
          grid_offset = { x = x_parity, y = y_parity }
       end
    elseif rail_type == RailInfo.RailType.CURVE_A then
       if
-         corrected_direction == 0
-         or corrected_direction == 2
-         or corrected_direction == 8
-         or corrected_direction == 10
+         corrected_direction == defines.direction.north
+         or corrected_direction == defines.direction.northeast
+         or corrected_direction == defines.direction.south
+         or corrected_direction == defines.direction.southwest
       then
          grid_offset = { x = 1 - x_parity, y = y_parity }
-      else -- 4, 6, 12, 14
+      else -- east, southeast, west, northwest
          grid_offset = { x = x_parity, y = 1 - y_parity }
       end
    elseif rail_type == RailInfo.RailType.CURVE_B or rail_type == RailInfo.RailType.HALF_DIAGONAL then

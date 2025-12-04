@@ -88,7 +88,7 @@ end
 
 function mod.TestGetExtensionsFromEnd_CurvedRail()
    -- Test extensions from a curved rail
-   -- curved-rail-a at north (cardinal) has ends at south (8) and northnorthwest (15)
+   -- curved-rail-a at north (cardinal) has ends at south and northnorthwest
    local position = { x = 1, y = 0 } -- Grid-adjusted position for curved-a north
    local extensions = Queries.get_extensions_from_end(
       position,

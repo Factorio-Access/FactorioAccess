@@ -82,4 +82,6 @@ end
 -- This was used for building/vehicle inventory transfers which are being
 -- replaced with capability-based UI system
 
+mod.transfer_inventory = transfer_inventory
+
 return mod

@@ -5,36 +5,38 @@
 if script then return end
 
 ---@diagnostic disable: lowercase-global
+---@diagnostic disable: missing-fields
+---@diagnostic disable: inject-field
 
 -- intentionally global
-defines = {}
+-- We use rawset to avoid LuaLS seeing the assignment and overriding Factorio's type definitions
+rawset(_G, "defines", rawget(_G, "defines") or {})
 
----@type defines.direction
 local dirdefs = {
-   north = 0 --[[@as defines.direction.north ]],
-   northnortheast = 1 --[[@as defines.direction.northnortheast ]],
-   northeast = 2 --[[@as defines.direction.northeast ]],
-   eastnortheast = 3 --[[@as defines.direction.eastnortheast ]],
-   east = 4 --[[@as defines.direction.east ]],
-   eastsoutheast = 5 --[[@as defines.direction.eastsoutheast ]],
-   southeast = 6 --[[@as defines.direction.southeast ]],
-   southsoutheast = 7 --[[@as defines.direction.southsoutheast ]],
-   south = 8 --[[@as defines.direction.south ]],
-   southsouthwest = 9 --[[@as defines.direction.southsouthwest ]],
-   southwest = 10 --[[@as defines.direction.southwest ]],
-   westsouthwest = 11 --[[@as defines.direction.westsouthwest ]],
-   west = 12 --[[@as defines.direction.west ]],
-   westnorthwest = 13 --[[@as defines.direction.westnorthwest ]],
-   northwest = 14 --[[@as defines.direction.northwest ]],
-   northnorthwest = 15 --[[@as defines.direction.northnorthwest ]],
+   north = 0,
+   northnortheast = 1,
+   northeast = 2,
+   eastnortheast = 3,
+   east = 4,
+   eastsoutheast = 5,
+   southeast = 6,
+   southsoutheast = 7,
+   south = 8,
+   southsouthwest = 9,
+   southwest = 10,
+   westsouthwest = 11,
+   west = 12,
+   westnorthwest = 13,
+   northwest = 14,
+   northnorthwest = 15,
 }
 
-defines.direction = dirdefs
+rawset(defines, "direction", dirdefs)
 
-defines.rail_direction = {
+rawset(defines, "rail_direction", {
    front = 0,
    back = 1,
-}
+})
 
 ---Polyfill for Factorio's table_size function
 ---Counts the number of keys in a table (both array and hash parts)
