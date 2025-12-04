@@ -113,7 +113,7 @@ function Compiler:compile_node(node)
          Vm.bytecode(Vm.BYTECODE_KIND.RIGHT),
          Vm.bytecode(Vm.BYTECODE_KIND.RIGHT),
       }, node.span)
-   elseif node.type == Ast.NODE_TYPE.SEQUENCE then
+   elseif node.type == Ast.NODE_TYPE.SEQUENCE or node.type == Ast.NODE_TYPE.IMPLICIT_SEQUENCE then
       -- Simply compile each statement in order
       ---@cast node syntrax.ast.Sequence
       for _, stmt in ipairs(node.statements) do

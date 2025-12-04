@@ -62,7 +62,7 @@ local error_tests = {
    },
    {
       name = "x_without_sequence",
-      source = "l x 3",
+      source = "x 3", -- x without a preceding primitive or bracket
       expected_error = Errors.ERROR_CODE.UNEXPECTED_TOKEN,
       error_pattern = "Unexpected token 'x'",
    },

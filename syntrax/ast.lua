@@ -26,6 +26,9 @@ mod.NODE_TYPE = {
    -- Sequence of commands - implicit grouping, also used at top level
    SEQUENCE = "sequence",
 
+   -- Implicit sequence created by chord parsing (e.g., sx5 becomes [s] x 5)
+   IMPLICIT_SEQUENCE = "implicit_sequence",
+
    -- Rail stack manipulation
    RPUSH = "rpush",
    RPOP = "rpop",
@@ -58,8 +61,11 @@ mod.NODE_TYPE = {
 ---@class syntrax.ast.Sequence: syntrax.ast.Node
 ---@field statements syntrax.ast.Node[]
 
+---@class syntrax.ast.ImplicitSequence: syntrax.ast.Node
+---@field statements syntrax.ast.Node[]
+
 ---@class syntrax.ast.Repetition: syntrax.ast.Node
----@field body syntrax.ast.Sequence The statement(s) to repeat
+---@field body syntrax.ast.Sequence|syntrax.ast.ImplicitSequence The statement(s) to repeat
 ---@field count number How many times to repeat
 
 ---@class syntrax.ast.Rpush: syntrax.ast.Node
@@ -146,7 +152,18 @@ function mod.sequence(statements, span)
    }
 end
 
----@param body syntrax.ast.Sequence
+---@param statements syntrax.ast.Node[]
+---@param span syntrax.Span
+---@return syntrax.ast.ImplicitSequence
+function mod.implicit_sequence(statements, span)
+   return {
+      type = mod.NODE_TYPE.IMPLICIT_SEQUENCE,
+      statements = statements,
+      span = span,
+   }
+end
+
+---@param body syntrax.ast.Sequence|syntrax.ast.ImplicitSequence
 ---@param count number
 ---@param span syntrax.Span
 ---@return syntrax.ast.Repetition

@@ -60,6 +60,44 @@ end
 -- Forward declaration
 local parse_statement
 
+--- Checks if the next token is 'x' followed by a number, and if so,
+--- wraps the node in a repetition with an implicit sequence.
+--- This enables chord syntax like `sx5` to mean `[s] x 5`.
+---@param state syntrax.ParserState
+---@param node syntrax.ast.Node The primitive node to potentially wrap
+---@param start_span syntrax.Span The span of the primitive token
+---@return syntrax.ast.Node? node The original node or a repetition wrapping it
+---@return syntrax.Error? err
+local function try_wrap_repetition(state, node, start_span)
+   local x_tok = state:consume_token(Lexer.TOKEN_TYPE.X)
+   if not x_tok then return node, nil end
+
+   -- Expect a number after 'x'
+   local num_tok = state:current_token()
+   if not num_tok or num_tok.type ~= Lexer.TOKEN_TYPE.NUMBER then
+      return nil,
+         Errors.error_builder(Errors.ERROR_CODE.EXPECTED_NUMBER, "Expected number after 'x'", x_tok.span):build()
+   end
+   state:advance()
+
+   local count = tonumber(num_tok.value)
+   if not count or count < 1 then
+      return nil,
+         Errors.error_builder(
+            Errors.ERROR_CODE.EXPECTED_NUMBER,
+            "Repetition count must be a positive integer",
+            num_tok.span
+         )
+            :build()
+   end
+
+   -- Wrap the primitive in an implicit sequence
+   local body = Ast.implicit_sequence({ node }, start_span)
+   local span = start_span:merge(num_tok.span)
+
+   return Ast.repetition(body, count, span), nil
+end
+
 ---@param state syntrax.ParserState
 ---@param tree_token syntrax.Token
 ---@return syntrax.ast.Sequence?, syntrax.Error?
@@ -91,40 +129,41 @@ function parse_statement(state)
       return nil, nil -- End of input
    end
 
-   -- Handle basic rail commands
+   -- Handle chord primitives (can be followed by x for repetition)
    if tok.type == Lexer.TOKEN_TYPE.L then
       state:advance()
-      return Ast.left(tok.span), nil
+      return try_wrap_repetition(state, Ast.left(tok.span), tok.span)
    elseif tok.type == Lexer.TOKEN_TYPE.R then
       state:advance()
-      return Ast.right(tok.span), nil
+      return try_wrap_repetition(state, Ast.right(tok.span), tok.span)
    elseif tok.type == Lexer.TOKEN_TYPE.S then
       state:advance()
-      return Ast.straight(tok.span), nil
+      return try_wrap_repetition(state, Ast.straight(tok.span), tok.span)
    elseif tok.type == Lexer.TOKEN_TYPE.L45 then
       state:advance()
-      return Ast.l45(tok.span), nil
+      return try_wrap_repetition(state, Ast.l45(tok.span), tok.span)
    elseif tok.type == Lexer.TOKEN_TYPE.R45 then
       state:advance()
-      return Ast.r45(tok.span), nil
+      return try_wrap_repetition(state, Ast.r45(tok.span), tok.span)
    elseif tok.type == Lexer.TOKEN_TYPE.L90 then
       state:advance()
-      return Ast.l90(tok.span), nil
+      return try_wrap_repetition(state, Ast.l90(tok.span), tok.span)
    elseif tok.type == Lexer.TOKEN_TYPE.R90 then
       state:advance()
-      return Ast.r90(tok.span), nil
+      return try_wrap_repetition(state, Ast.r90(tok.span), tok.span)
+   elseif tok.type == Lexer.TOKEN_TYPE.RESET then
+      state:advance()
+      return try_wrap_repetition(state, Ast.reset(tok.span), tok.span)
+   elseif tok.type == Lexer.TOKEN_TYPE.FLIP then
+      state:advance()
+      return try_wrap_repetition(state, Ast.flip(tok.span), tok.span)
+   -- Non-chord primitives (no repetition support)
    elseif tok.type == Lexer.TOKEN_TYPE.RPUSH then
       state:advance()
       return Ast.rpush(tok.span), nil
    elseif tok.type == Lexer.TOKEN_TYPE.RPOP then
       state:advance()
       return Ast.rpop(tok.span), nil
-   elseif tok.type == Lexer.TOKEN_TYPE.RESET then
-      state:advance()
-      return Ast.reset(tok.span), nil
-   elseif tok.type == Lexer.TOKEN_TYPE.FLIP then
-      state:advance()
-      return Ast.flip(tok.span), nil
    elseif tok.type == Lexer.TOKEN_TYPE.SIGLEFT then
       state:advance()
       return Ast.sigleft(tok.span), nil

@@ -146,6 +146,129 @@ local BRACKET_INVERSE = {
    ["}"] = "{",
 }
 
+-- Chord patterns: tokens that can be written adjacent without spaces.
+-- Ordered by length (longest first) so l90 matches before l.
+local CHORD_PATTERNS = {
+   { pattern = "^l90", type = mod.TOKEN_TYPE.L90 },
+   { pattern = "^r90", type = mod.TOKEN_TYPE.R90 },
+   { pattern = "^l45", type = mod.TOKEN_TYPE.L45 },
+   { pattern = "^r45", type = mod.TOKEN_TYPE.R45 },
+   { pattern = "^l", type = mod.TOKEN_TYPE.L },
+   { pattern = "^r", type = mod.TOKEN_TYPE.R },
+   { pattern = "^s", type = mod.TOKEN_TYPE.S },
+   { pattern = "^f", type = mod.TOKEN_TYPE.FLIP },
+   { pattern = "^;", type = mod.TOKEN_TYPE.RESET },
+   { pattern = "^x%d+", type = "x_with_number" }, -- Special: x followed by digits
+}
+
+--- Extracts the first chord token from a string starting at position pos.
+---@param text string
+---@param pos number Starting position (1-based)
+---@return string? token_text The matched token text, or nil if no match
+---@return syntrax.TOKEN_TYPE|"x_with_number"|nil token_type The token type
+---@return number new_pos The position after the match
+local function get_chord_token(text, pos)
+   local substr = string.sub(text, pos)
+
+   for _, entry in ipairs(CHORD_PATTERNS) do
+      local match = string.match(substr, entry.pattern)
+      if match then return match, entry.type, pos + #match end
+   end
+
+   return nil, nil, pos
+end
+
+--- Checks if the entire string consists only of chord tokens.
+---@param text string
+---@return boolean
+local function is_chord_string(text)
+   local pos = 1
+   local len = #text
+
+   while pos <= len do
+      local match, _, new_pos = get_chord_token(text, pos)
+      if not match then return false end
+      pos = new_pos
+   end
+
+   return true
+end
+
+--- Splits a chord string into individual tokens with appropriate spans.
+---@param text string The chord text to split
+---@param base_span syntrax.Span The span of the entire chord in source
+---@return { text: string, span: syntrax.Span, type: syntrax.TOKEN_TYPE }[]
+local function split_chord(text, base_span)
+   local tokens = {}
+   local pos = 1
+   local len = #text
+   local base_start = base_span.start
+   local source_text = base_span.text
+
+   while pos <= len do
+      local match, tok_type, new_pos = get_chord_token(text, pos)
+      assert(match, "split_chord called on non-chord string")
+
+      local token_start = base_start + (pos - 1)
+      local token_stop = base_start + (new_pos - 1) - 1
+      local span = Span.new(source_text, token_start, token_stop)
+
+      if tok_type == "x_with_number" then
+         -- Split x and number into separate tokens
+         local x_span = Span.new(source_text, token_start, token_start)
+         table.insert(tokens, { text = "x", span = x_span, type = mod.TOKEN_TYPE.X })
+
+         local num_text = string.sub(match, 2) -- Everything after 'x'
+         local num_start = token_start + 1
+         local num_span = Span.new(source_text, num_start, token_stop)
+         table.insert(tokens, { text = num_text, span = num_span, type = mod.TOKEN_TYPE.NUMBER })
+      else
+         table.insert(tokens, { text = match, span = span, type = tok_type })
+      end
+
+      pos = new_pos
+   end
+
+   return tokens
+end
+
+mod._get_chord_token = get_chord_token
+mod._is_chord_string = is_chord_string
+mod._split_chord = split_chord
+
+--- Expands chord strings in the token list.
+--- If a token contains multiple chord tokens concatenated (e.g., "lrsx5"),
+--- it is split into individual tokens.
+---@param tokens { text: string, span: syntrax.Span }[]
+---@return { text: string, span: syntrax.Span }[]
+local function expand_chords(tokens)
+   local result = {}
+
+   for _, tok in ipairs(tokens) do
+      -- Check if this token is a chord that needs splitting.
+      -- A chord needs splitting if it's a valid chord string AND
+      -- contains more than one chord token.
+      if is_chord_string(tok.text) then
+         local chord_tokens = split_chord(tok.text, tok.span)
+         if #chord_tokens > 1 then
+            -- Multiple tokens - expand them (as untyped for build_tokens)
+            for _, ct in ipairs(chord_tokens) do
+               table.insert(result, { text = ct.text, span = ct.span })
+            end
+         else
+            -- Single chord token or not a chord - keep as-is
+            table.insert(result, tok)
+         end
+      else
+         -- Not a chord string - keep as-is
+         table.insert(result, tok)
+      end
+   end
+
+   return result
+end
+mod._expand_chords = expand_chords
+
 ---@param untyped_tokens { text: string, span: syntrax.Span }
 ---@return syntrax.Token[]?, syntrax.Error?
 local function build_tokens(untyped_tokens)
@@ -177,7 +300,7 @@ local function build_tokens(untyped_tokens)
          tok.type = mod.TOKEN_TYPE.L90
       elseif text == "r90" then
          tok.type = mod.TOKEN_TYPE.R90
-      elseif text == "flip" then
+      elseif text == "flip" or text == "f" then
          tok.type = mod.TOKEN_TYPE.FLIP
       elseif text == "x" then
          tok.type = mod.TOKEN_TYPE.X
@@ -275,7 +398,8 @@ function mod.tokenize(text)
    if string.match(text, "^%s*$") then return {} end
 
    local split = split_at_possibles(text)
-   return build_tokens(split)
+   local expanded = expand_chords(split)
+   return build_tokens(expanded)
 end
 
 return mod

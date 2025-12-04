@@ -20,7 +20,8 @@ function mod.TestExecuteEmpty()
 end
 
 function mod.TestExecuteError()
-   helpers.assert_compilation_fails("l x 3", "unexpected_token", "Unexpected token 'x'")
+   -- x without a preceding primitive or bracket is still an error
+   helpers.assert_compilation_fails("x 3", "unexpected_token", "Unexpected token 'x'")
 end
 
 function mod.TestExecuteInvalidToken()
