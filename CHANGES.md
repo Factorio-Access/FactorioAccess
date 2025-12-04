@@ -1,3 +1,13 @@
+# 0.16.27 (2025-12-03)
+
+- Release a basic form of Syntrax. See [this document](./docs/features/syntrax.md).
+  - Expect a proper builder/manager menu in the next few days.
+  - Force/superforce work with it as well as normal building.
+- Unify our checkbox experience.  Most checkboxes are now all the same, rather than being ad-hoc labels.
+- Perform the following two very risky changes, to take advantage of our last playtesting window:
+  - Get Claude's linter to zero warnings/errors, mostly by replacing raw constants with defines.direction
+  - Get rid of some unused localisation keys.
+
 # 0.16.26 (2025-12-01)
 
 - Placing rails is no longer free.
