@@ -14,6 +14,7 @@ function mod.TestIsChordString()
    lu.assertTrue(Lexer._is_chord_string("r"))
    lu.assertTrue(Lexer._is_chord_string("s"))
    lu.assertTrue(Lexer._is_chord_string("f"))
+   lu.assertTrue(Lexer._is_chord_string("m"))
    lu.assertTrue(Lexer._is_chord_string(";"))
    lu.assertTrue(Lexer._is_chord_string("l45"))
    lu.assertTrue(Lexer._is_chord_string("r45"))
@@ -29,10 +30,12 @@ function mod.TestIsChordString()
    lu.assertTrue(Lexer._is_chord_string("fx3"))
    lu.assertTrue(Lexer._is_chord_string(";x5"))
    lu.assertTrue(Lexer._is_chord_string("lrsf;"))
+   lu.assertTrue(Lexer._is_chord_string("lrsm"))
 
    -- Invalid chord strings
    lu.assertFalse(Lexer._is_chord_string("flip")) -- Full word, not chord token
    lu.assertFalse(Lexer._is_chord_string("reset"))
+   lu.assertFalse(Lexer._is_chord_string("mark")) -- Full word, not chord token
    lu.assertFalse(Lexer._is_chord_string("rpush"))
    lu.assertFalse(Lexer._is_chord_string("rpop"))
    lu.assertFalse(Lexer._is_chord_string("abc"))
@@ -176,6 +179,62 @@ end
 function mod.TestNonChordTokensRequireSpaces()
    -- "flipreset" should be tokenized as a single identifier, which is an error
    TestHelpers.assert_compilation_fails("flipreset", "unexpected_token")
+end
+
+-- Test m is a valid chord token (alias for mark)
+function mod.TestMIsChordToken()
+   lu.assertTrue(Lexer._is_chord_string("m"))
+   lu.assertTrue(Lexer._is_chord_string("lrsm"))
+   lu.assertTrue(Lexer._is_chord_string("mx3"))
+end
+
+-- Test m alias for mark tokenizes correctly
+function mod.TestMAliasForMark()
+   local text = "m"
+   local tokens, _ = Lexer.tokenize(text)
+   lu.assertNotNil(tokens)
+   lu.assertEquals(#tokens, 1)
+   lu.assertEquals(tokens[1].type, "mark")
+
+   -- Also test as part of chord
+   text = "lms"
+   tokens, _ = Lexer.tokenize(text)
+   lu.assertNotNil(tokens)
+   lu.assertEquals(#tokens, 3)
+   lu.assertEquals(tokens[1].type, "l")
+   lu.assertEquals(tokens[2].type, "mark")
+   lu.assertEquals(tokens[3].type, "s")
+end
+
+-- Test mark in parser
+function mod.TestMarkParsing()
+   local ast, err = Parser.parse("s mark s")
+   lu.assertNil(err)
+   lu.assertNotNil(ast)
+   lu.assertEquals(#ast.statements, 3)
+   lu.assertEquals(ast.statements[1].type, Ast.NODE_TYPE.STRAIGHT)
+   lu.assertEquals(ast.statements[2].type, Ast.NODE_TYPE.MARK)
+   lu.assertEquals(ast.statements[3].type, Ast.NODE_TYPE.STRAIGHT)
+end
+
+-- Test mark and reset work together
+function mod.TestMarkAndReset()
+   -- s mark l ; r produces:
+   -- s: straight from start
+   -- mark: set mark
+   -- l: left turn
+   -- ;: reset to mark
+   -- r: right turn (different direction than l, so different rail)
+   local rails = TestHelpers.assert_compilation_succeeds("s mark l ; r")
+   -- We should get 3 rails: s, l, r (l and r are at same position but different turns)
+   lu.assertEquals(#rails, 3)
+end
+
+-- Test that mark is also a chord token and works in chords
+function mod.TestMarkInChord()
+   -- sml;r = s mark l ; r
+   local rails = TestHelpers.assert_compilation_succeeds("sml;r")
+   lu.assertEquals(#rails, 3)
 end
 
 return mod

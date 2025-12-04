@@ -154,6 +154,9 @@ function parse_statement(state)
    elseif tok.type == Lexer.TOKEN_TYPE.RESET then
       state:advance()
       return try_wrap_repetition(state, Ast.reset(tok.span), tok.span)
+   elseif tok.type == Lexer.TOKEN_TYPE.MARK then
+      state:advance()
+      return try_wrap_repetition(state, Ast.mark(tok.span), tok.span)
    elseif tok.type == Lexer.TOKEN_TYPE.FLIP then
       state:advance()
       return try_wrap_repetition(state, Ast.flip(tok.span), tok.span)

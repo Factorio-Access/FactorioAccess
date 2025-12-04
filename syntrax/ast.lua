@@ -33,6 +33,7 @@ mod.NODE_TYPE = {
    RPUSH = "rpush",
    RPOP = "rpop",
    RESET = "reset",
+   MARK = "mark",
 
    -- Position manipulation
    FLIP = "flip",
@@ -73,6 +74,8 @@ mod.NODE_TYPE = {
 ---@class syntrax.ast.Rpop: syntrax.ast.Node
 
 ---@class syntrax.ast.Reset: syntrax.ast.Node
+
+---@class syntrax.ast.Mark: syntrax.ast.Node
 
 ---@class syntrax.ast.Flip: syntrax.ast.Node
 
@@ -199,6 +202,15 @@ end
 function mod.reset(span)
    return {
       type = mod.NODE_TYPE.RESET,
+      span = span,
+   }
+end
+
+---@param span syntrax.Span
+---@return syntrax.ast.Mark
+function mod.mark(span)
+   return {
+      type = mod.NODE_TYPE.MARK,
       span = span,
    }
 end

@@ -38,6 +38,7 @@ mod.BYTECODE_KIND = {
    RPUSH = "rpush",
    RPOP = "rpop",
    RESET = "reset",
+   MARK = "mark",
    -- Signal commands
    SIGLEFT = "sigleft",
    SIGRIGHT = "sigright",
@@ -103,6 +104,7 @@ mod.RAIL_KIND = {
 ---@field position_to_index table<string, number> Position key to rail index for dedup
 ---@field rail_stack syntrax.vm.RailStackEntry[] Stack of saved traverser states
 ---@field initial_traverser railutils.Traverser? Initial traverser for reset
+---@field mark_traverser railutils.Traverser? Current mark position (reset jumps here)
 
 local VM = {}
 local VM_meta = { __index = VM }
@@ -127,6 +129,7 @@ function mod.new()
       position_to_index = {},
       rail_stack = {},
       initial_traverser = nil,
+      mark_traverser = nil,
    }, VM_meta)
 end
 
@@ -380,10 +383,16 @@ end
 ---@param instr syntrax.vm.Bytecode
 ---@return nil, syntrax.Error?
 function VM:execute_reset(instr)
-   -- Clear the rail stack
-   self.rail_stack = {}
-   -- Return to initial position by restoring from initial_traverser
-   if self.initial_traverser then self.traverser = self.initial_traverser:clone() end
+   -- Go to the mark (like rpop without the pop)
+   if self.mark_traverser then self.traverser = self.mark_traverser:clone() end
+   return nil, nil
+end
+
+---@param instr syntrax.vm.Bytecode
+---@return nil, syntrax.Error?
+function VM:execute_mark(instr)
+   -- Set current position as the mark
+   if self.traverser then self.mark_traverser = self.traverser:clone() end
    return nil, nil
 end
 
@@ -434,6 +443,10 @@ function VM:execute_instruction()
       local _, err = self:execute_reset(instr)
       if err then return false, err end
       self.pc = self.pc + 1
+   elseif instr.kind == mod.BYTECODE_KIND.MARK then
+      local _, err = self:execute_mark(instr)
+      if err then return false, err end
+      self.pc = self.pc + 1
    elseif instr.kind == mod.BYTECODE_KIND.SIGLEFT then
       self:place_signal(Traverser.SignalSide.LEFT, "rail-signal", instr.span)
       self.pc = self.pc + 1
@@ -478,6 +491,7 @@ function VM:run(initial_position, initial_direction)
    -- This represents "standing at the end of a straight rail facing dir"
    self.traverser = Traverser.new(RailInfo.RailType.STRAIGHT, pos, dir)
    self.initial_traverser = self.traverser:clone()
+   self.mark_traverser = self.traverser:clone()
 
    -- Execute instructions until done or error
    while true do

@@ -117,6 +117,7 @@ mod.TOKEN_TYPE = {
    RPUSH = "rpush",
    RPOP = "rpop",
    RESET = "reset",
+   MARK = "mark",
    -- Signal commands
    SIGLEFT = "sigleft",
    SIGRIGHT = "sigright",
@@ -157,6 +158,7 @@ local CHORD_PATTERNS = {
    { pattern = "^r", type = mod.TOKEN_TYPE.R },
    { pattern = "^s", type = mod.TOKEN_TYPE.S },
    { pattern = "^f", type = mod.TOKEN_TYPE.FLIP },
+   { pattern = "^m", type = mod.TOKEN_TYPE.MARK },
    { pattern = "^;", type = mod.TOKEN_TYPE.RESET },
    { pattern = "^x%d+", type = "x_with_number" }, -- Special: x followed by digits
 }
@@ -310,6 +312,8 @@ local function build_tokens(untyped_tokens)
          tok.type = mod.TOKEN_TYPE.RPOP
       elseif text == "reset" or text == ";" then
          tok.type = mod.TOKEN_TYPE.RESET
+      elseif text == "mark" or text == "m" then
+         tok.type = mod.TOKEN_TYPE.MARK
       elseif text == "sigleft" then
          tok.type = mod.TOKEN_TYPE.SIGLEFT
       elseif text == "sigright" then

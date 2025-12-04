@@ -67,6 +67,8 @@ function Compiler:compile_node(node)
       self:emit(Vm.bytecode(Vm.BYTECODE_KIND.RPOP), node.span)
    elseif node.type == Ast.NODE_TYPE.RESET then
       self:emit(Vm.bytecode(Vm.BYTECODE_KIND.RESET), node.span)
+   elseif node.type == Ast.NODE_TYPE.MARK then
+      self:emit(Vm.bytecode(Vm.BYTECODE_KIND.MARK), node.span)
    elseif node.type == Ast.NODE_TYPE.FLIP then
       self:emit(Vm.bytecode(Vm.BYTECODE_KIND.FLIP), node.span)
    elseif node.type == Ast.NODE_TYPE.SIGLEFT then
