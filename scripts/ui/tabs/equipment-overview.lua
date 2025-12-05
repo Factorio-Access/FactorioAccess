@@ -163,7 +163,7 @@ local function render_equipment_overview(ctx)
                      local taken = grid.take({ equipment = equipment })
                      if taken then
                         -- Try to insert to inventory
-                        ---@cast taken ItemStackDefinition
+                        ---@diagnostic disable-next-line: param-type-mismatch
                         local inserted = main_inv.insert(taken)
                         if inserted > 0 then
                            removed_count = removed_count + 1

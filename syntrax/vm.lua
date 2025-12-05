@@ -485,11 +485,10 @@ end
 function VM:run(initial_position, initial_direction)
    -- Default to origin facing north
    local pos = initial_position or { x = 0, y = 0 }
-   local dir = initial_direction or Directions.NORTH
+   local dir = initial_direction or defines.direction.north
 
    -- Create the initial traverser at a straight rail at the starting position/direction
    -- This represents "standing at the end of a straight rail facing dir"
-   ---@cast dir defines.direction
    self.traverser = Traverser.new(RailInfo.RailType.STRAIGHT, pos, dir)
    self.initial_traverser = self.traverser:clone()
    self.mark_traverser = self.traverser:clone()

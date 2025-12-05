@@ -80,7 +80,7 @@ describe("Rail Grid Adjustment", function()
                      })
 
                      -- Place on test surface
-                     ---@cast dir defines.direction
+                     ---@diagnostic disable-next-line: param-type-mismatch
                      local test_rail = test_surface:add_rail(rail_type, { x = x, y = y }, dir)
 
                      if real_rail then
