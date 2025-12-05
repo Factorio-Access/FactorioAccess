@@ -142,6 +142,7 @@ mod.UI_NAMES = {
    LOGISTIC_GROUP_SELECTOR = "logistic_group_selector",
    TRAIN_GROUP_SELECTOR = "train_group_selector",
    TRAIN_INTERRUPT_SELECTOR = "train_interrupt_selector",
+   STOP_SELECTOR = "stop_selector",
    CONSTANT_COMBINATOR = "constant_combinator",
    DECIDER_COMBINATOR = "decider_combinator",
    POWER_SWITCH = "power_switch",
@@ -350,6 +351,11 @@ end
 ---@param params? table
 ---@param context? any Context to store with this UI entry
 function Router:_push_ui(name, params, context)
+   assert(
+      registered_uis[name],
+      "UI '" .. tostring(name) .. "' is not registered. Did you forget to require() the module?"
+   )
+
    local stack = router_state[self.pindex].ui_stack
 
    -- Add to stack with context
@@ -362,11 +368,9 @@ function Router:_push_ui(name, params, context)
    UiSounds.play_open_inventory(self.pindex)
 
    -- Call the UI's open method
-   if registered_uis[name] then
-      local controller = create_controller_for_event(self)
-      registered_uis[name]:open(self.pindex, params or {}, controller)
-      controller:finalize()
-   end
+   local controller = create_controller_for_event(self)
+   registered_uis[name]:open(self.pindex, params or {}, controller)
+   controller:finalize()
 end
 
 ---Pop the top UI from the stack (close it)

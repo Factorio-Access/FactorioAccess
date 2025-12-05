@@ -609,8 +609,14 @@ local function build_record_vtable(schedule, record_position, record, row_key, k
             -- Type a station name with rich text support
             ctx.controller:open_textbox("", { node = row_key, target = "station" }, { rich_text = true })
          else
-            -- TODO: Open station selector?
-            ctx.controller.message:fragment({ "fa.schedule-station-selector-not-implemented" })
+            -- Open station selector filtered to same surface
+            local entity = ctx.global_parameters and ctx.global_parameters.entity
+            local surface = entity and entity.valid and entity.surface or nil
+            ctx.controller:open_child_ui(
+               Router.UI_NAMES.STOP_SELECTOR,
+               { surface = surface },
+               { node = row_key, target = "station" }
+            )
          end
       end,
 

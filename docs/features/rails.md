@@ -78,6 +78,13 @@ high leftish tone is northwest, etc.  The tone plays when the train changes orie
 50 tiles. This at least allows you to (1) have the sighted experience of advanced players who can't really drive trains
 manually anyhow, and (2) know what's going on and roughly where and how far you have gone.
 
+We also offer two buttons in a locomotive's config menu, "go to station and wait for passenger" and "go to station and
+wait for passenger to disembark", which will add a temporary stop to the locomotive's schedule and then set it as the
+active stop. You may be familiar with this from 1.1 as "semiautomatic driving".  If you are coming from 1.1, note that
+the 2.0 version of this feature is simpler and more straightforward, but requires you to pick whether you want it to
+wait for you to get on or off by selecting the right button (this resolves many bugs from 1.1, most notably the "it
+can't drive to stations in the middle of tracks" issue).
+
 ### Overview of Track Reporting
 
 Factorio's train system consists of 3 track shapes: straight (can be oriented 16 ways), and two kinds of curves (a and

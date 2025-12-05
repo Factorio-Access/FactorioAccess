@@ -4,6 +4,7 @@ Locomotive configuration tab.
 Provides a configuration form for locomotives with:
 - Manual/automatic mode toggle
 - Train name
+- Train driving (go to stop)
 - Train contents
 - Train fuel
 ]]
@@ -15,6 +16,62 @@ local UiKeyGraph = require("scripts.ui.key-graph")
 local Router = require("scripts.ui.router")
 local UiSounds = require("scripts.ui.sounds")
 local Speech = require("scripts.speech")
+
+---Build a vtable for a "go to stop" button that adds a temporary schedule entry
+---@param entity LuaEntity The locomotive entity
+---@param wait_condition_type WaitConditionType The wait condition type to use
+---@param label LocalisedString The button label
+---@param node_key string The node key for child context
+---@return fa.ui.graph.NodeVtable
+local function build_go_to_stop_vtable(entity, wait_condition_type, label, node_key)
+   return {
+      label = function(ctx)
+         ctx.message:fragment(label)
+      end,
+      on_click = function(ctx)
+         local surface = entity.valid and entity.surface or nil
+         ctx.controller:open_child_ui(Router.UI_NAMES.STOP_SELECTOR, { surface = surface }, { node = node_key })
+      end,
+      on_child_result = function(ctx, result)
+         local station_name = result
+         if not station_name or station_name == "" then
+            UiSounds.play_ui_edge(ctx.pindex)
+            ctx.controller.message:fragment({ "fa.locomotive-no-station-selected" })
+            return
+         end
+
+         local train = entity.train
+         if not train then
+            UiSounds.play_ui_edge(ctx.pindex)
+            ctx.controller.message:fragment({ "fa.locomotive-train-invalid" })
+            return
+         end
+
+         local schedule = train.get_schedule()
+         if not schedule then
+            UiSounds.play_ui_edge(ctx.pindex)
+            ctx.controller.message:fragment({ "fa.locomotive-no-schedule" })
+            return
+         end
+
+         -- Add temporary stop with wait condition
+         local new_index = schedule.add_record({
+            station = station_name,
+            temporary = true,
+            wait_conditions = { { type = wait_condition_type } },
+         })
+
+         if new_index then
+            -- Go to the new station (sets train to automatic)
+            schedule.go_to_station(new_index)
+            ctx.controller.message:fragment({ "fa.locomotive-going-to-stop", station_name })
+         else
+            UiSounds.play_ui_edge(ctx.pindex)
+            ctx.controller.message:fragment({ "fa.locomotive-failed-to-add-stop" })
+         end
+      end,
+   }
+end
 
 local mod = {}
 
@@ -143,6 +200,31 @@ local function render_locomotive_config(ctx)
          end
       end,
    })
+
+   builder:end_row()
+
+   -- Train driving row
+   builder:start_row("driving")
+
+   builder:add_item(
+      "go_to_wait_passenger",
+      build_go_to_stop_vtable(
+         entity,
+         "passenger_present",
+         { "fa.locomotive-go-wait-passenger" },
+         "go_to_wait_passenger"
+      )
+   )
+
+   builder:add_item(
+      "go_to_wait_disembark",
+      build_go_to_stop_vtable(
+         entity,
+         "passenger_not_present",
+         { "fa.locomotive-go-wait-disembark" },
+         "go_to_wait_disembark"
+      )
+   )
 
    builder:end_row()
 
