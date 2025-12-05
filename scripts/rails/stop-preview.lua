@@ -4,7 +4,7 @@
 ---if a train stopped at a nearby station. This helps blind users
 ---understand train positioning without a train present.
 ---
----Works only on straight rails that are part of a segment ending at a train stop.
+---Works only on straight rails leading to a train stop.
 
 local FaUtils = require("scripts.fa-utils")
 local Geometry = require("scripts.geometry")
@@ -56,17 +56,6 @@ local function get_rail_orientation(rail)
    return nil
 end
 
----Find the train stop at the end of a rail segment
----@param rail LuaEntity
----@param rail_direction defines.rail_direction
----@return LuaEntity? stop The train stop entity, or nil if none
----@return defines.rail_direction? direction The direction used to find the stop
-local function find_segment_stop(rail, rail_direction)
-   local stop = rail.get_rail_segment_stop(rail_direction)
-   if stop then return stop, rail_direction end
-   return nil, nil
-end
-
 ---Calculate signed distance from cursor to stop rail
 ---Positive means cursor is "behind" the stop (on arrival side)
 ---@param cursor_pos MapPosition Cursor position (tile center)
@@ -102,22 +91,97 @@ local function calculate_signed_distance(cursor_pos, stop_rail_pos, orientation,
    return diff
 end
 
----Traverse from current rail to the stop, checking all rails are straight
----@param rail LuaEntity Starting rail
----@param rail_direction defines.rail_direction Direction toward the stop
----@return boolean success True if all rails in path are straight
-local function verify_path_is_straight(rail, rail_direction)
-   local rail_end = rail.get_rail_end(rail_direction)
+---Check if a stop is valid for preview (connected to axis-aligned rail, on correct side)
+---@param stop LuaEntity
+---@return LuaEntity? stop_rail The rail the stop is connected to, or nil if invalid
+---@return defines.direction? stop_facing The direction the stop faces
+---@return "vertical"|"horizontal"? orientation The rail orientation
+local function validate_stop(stop)
+   local stop_rail = stop.connected_rail
+   if not stop_rail then return nil end
 
-   -- Walk to segment end, checking each rail
-   -- No cycle guard needed: straight rails can't form cycles
-   while true do
-      if not is_straight_rail(rail_end.rail) then return false end
+   local orientation = get_rail_orientation(stop_rail)
+   if not orientation then return nil end
 
-      if not rail_end.move_natural() then break end
+   -- Get the compass direction the stop faces
+   local rail_end = stop_rail.get_rail_end(stop.connected_rail_direction)
+   local stop_facing = rail_end.location.direction
+
+   -- Verify the stop is on the correct side of its connected rail
+   -- The rail should be 2 units in direction 90° counterclockwise from stop_facing
+   local expected_rail_dir = Geometry.dir_counterclockwise_90(stop_facing)
+   local rail_ux, rail_uy = Geometry.uv_for_direction(expected_rail_dir)
+   local expected_rail_x = stop.position.x + rail_ux * 2
+   local expected_rail_y = stop.position.y + rail_uy * 2
+
+   local rail_dx = stop_rail.position.x - expected_rail_x
+   local rail_dy = stop_rail.position.y - expected_rail_y
+   if math.abs(rail_dx) > 0.5 or math.abs(rail_dy) > 0.5 then
+      return nil -- Stop is on wrong side of rail for our direction
    end
 
-   return true
+   return stop_rail, stop_facing, orientation
+end
+
+---Find nearby train stops that could form a preview
+---@param surface LuaSurface
+---@param position MapPosition Center position to search from
+---@return table<uint, {stop: LuaEntity, rail: LuaEntity, facing: defines.direction, orientation: "vertical"|"horizontal"}>
+local function find_candidate_stops(surface, position)
+   local candidates = {}
+
+   local stops = surface.find_entities_filtered({
+      type = "train-stop",
+      position = position,
+      radius = MAX_PREVIEW_DISTANCE + 10, -- A bit extra for the stop offset from rail
+   })
+
+   for _, stop in ipairs(stops) do
+      local stop_rail, stop_facing, orientation = validate_stop(stop)
+      if stop_rail then
+         candidates[stop_rail.unit_number] = {
+            stop = stop,
+            rail = stop_rail,
+            facing = stop_facing,
+            orientation = orientation,
+         }
+      end
+   end
+
+   return candidates
+end
+
+---Extend from a rail in one direction, looking for a candidate stop rail
+---@param rail LuaEntity Starting rail
+---@param rail_direction defines.rail_direction Direction to extend
+---@param candidates table<uint, table> Map of unit_number to candidate info
+---@param cursor_pos MapPosition Cursor position for distance calculation
+---@return table? candidate The matched candidate, or nil
+local function extend_and_find(rail, rail_direction, candidates, cursor_pos)
+   local rail_end = rail.get_rail_end(rail_direction)
+   local tiles_traveled = 0
+
+   while true do
+      local current_rail = rail_end.rail
+
+      -- Check if current rail is a candidate
+      local candidate = candidates[current_rail.unit_number]
+      if candidate then return candidate end
+
+      -- Check if we've gone too far
+      tiles_traveled = tiles_traveled + 2 -- Each straight rail is 2 tiles
+      if tiles_traveled > MAX_PREVIEW_DISTANCE then return nil end
+
+      -- Try to move forward (straight only)
+      if not rail_end.move_forward(defines.rail_connection_direction.straight) then
+         return nil -- Hit end of line or would need to turn
+      end
+
+      -- Check if next rail is straight
+      if not is_straight_rail(rail_end.rail) then
+         return nil -- Hit a curve
+      end
+   end
 end
 
 ---Get stop preview information for a rail
@@ -135,38 +199,30 @@ function mod.get_stop_preview(rail, cursor_pos)
    local orientation = get_rail_orientation(rail)
    if not orientation then return nil end
 
-   -- Check both ends for a train stop
-   local stop, stop_direction = find_segment_stop(rail, defines.rail_direction.front)
-   if not stop then
-      stop, stop_direction = find_segment_stop(rail, defines.rail_direction.back)
+   -- Find all candidate stops nearby
+   local candidates = find_candidate_stops(rail.surface, cursor_pos)
+   if not next(candidates) then return nil end
+
+   -- Check if current rail is itself a candidate
+   local candidate = candidates[rail.unit_number]
+
+   -- If not, extend in both directions to find one
+   if not candidate then
+      -- Try front direction
+      candidate = extend_and_find(rail, defines.rail_direction.front, candidates, cursor_pos)
+
+      -- Try back direction if front didn't find anything
+      if not candidate then candidate = extend_and_find(rail, defines.rail_direction.back, candidates, cursor_pos) end
    end
 
-   if not stop then return nil end
+   if not candidate then return nil end
 
-   -- Get the rail the stop is connected to
-   local stop_rail = stop.connected_rail
-   if not stop_rail then return nil end
+   local stop = candidate.stop
+   local stop_rail = candidate.rail
+   local stop_facing = candidate.facing
 
-   -- Get the compass direction the stop faces using LuaRailEnd
-   local rail_end = stop_rail.get_rail_end(stop.connected_rail_direction)
-   local stop_facing_direction = rail_end.location.direction
-
-   -- Verify the stop is on the correct side of its connected rail
-   -- The rail should be 2 units in direction 90° counterclockwise from stop_facing_direction
-   local expected_rail_dir = Geometry.dir_counterclockwise_90(stop_facing_direction)
-   local rail_ux, rail_uy = Geometry.uv_for_direction(expected_rail_dir)
-   local expected_rail_x = stop.position.x + rail_ux * 2
-   local expected_rail_y = stop.position.y + rail_uy * 2
-
-   local rail_dx = stop_rail.position.x - expected_rail_x
-   local rail_dy = stop_rail.position.y - expected_rail_y
-   if math.abs(rail_dx) > 0.5 or math.abs(rail_dy) > 0.5 then
-      return nil -- Stop is on wrong side of rail for our direction
-   end
-
-   -- Check if this stop is "for" our rail
-   -- Trains travel in stop_facing_direction to reach the stop, so they arrive from opposite
-   local arrival_direction = Geometry.dir_rot180(stop_facing_direction)
+   -- Check if this stop is "for" our rail (we're on the arrival side)
+   local arrival_direction = Geometry.dir_rot180(stop_facing)
 
    -- Vector from stop_rail to our rail should match arrival direction
    local dx = rail.position.x - stop_rail.position.x
@@ -178,14 +234,11 @@ function mod.get_stop_preview(rail, cursor_pos)
       if direction_from_stop ~= arrival_direction then return nil end
    end
 
-   -- Verify the path to the stop is all straight rails
-   if not verify_path_is_straight(rail, stop_direction) then return nil end
-
    -- Use center of tile for consistent distance from both sides of stop
    local tile_center = FaUtils.center_of_tile(cursor_pos)
 
    -- Calculate signed distance (positive = behind stop, negative = past stop)
-   local signed_dist = calculate_signed_distance(tile_center, stop_rail.position, orientation, stop_facing_direction)
+   local signed_dist = calculate_signed_distance(tile_center, stop_rail.position, orientation, stop_facing)
 
    -- If we're past the stop (negative distance), don't show preview
    if signed_dist < 0 then return nil end
