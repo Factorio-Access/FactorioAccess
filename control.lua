@@ -65,7 +65,8 @@ local TileReader = require("scripts.tile-reader")
 local TransportBelts = require("scripts.transport-belts")
 local TravelTools = require("scripts.travel-tools")
 local VirtualTrainDriving = require("scripts.rails.virtual-train-driving")
-local TrainSounds = require("scripts.rails.train-sounds")
+local TrainSounds = require("scripts.sonifiers.train")
+local InserterSonifier = require("scripts.sonifiers.inserter")
 
 -- UI modules (required for registration with router)
 require("scripts.ui.belt-analyzer")
@@ -328,6 +329,7 @@ function on_tick(event)
    MovementHistory.update_all_players()
    Rulers.update_all_players()
    TrainSounds.on_tick()
+   InserterSonifier.on_tick()
 
    move_characters(event)
 
