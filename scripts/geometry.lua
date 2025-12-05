@@ -115,4 +115,17 @@ function mod.rotate_vec(local_x, local_y, direction)
    return -uy * local_x - ux * local_y, ux * local_x - uy * local_y
 end
 
+-- Convert a vector (dx, dy) to the nearest cardinal direction
+-- Only handles the 4 cardinal directions (N/E/S/W) for axis-aligned vectors
+---@param dx number
+---@param dy number
+---@return defines.direction
+function mod.vector_to_direction_cardinal(dx, dy)
+   if math.abs(dx) > math.abs(dy) then
+      return dx > 0 and defines.direction.east or defines.direction.west
+   else
+      return dy > 0 and defines.direction.south or defines.direction.north
+   end
+end
+
 return mod

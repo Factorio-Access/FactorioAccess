@@ -7,6 +7,7 @@
 ---them into localized messages using MessageBuilder.
 
 local SignalStationClassifier = require("scripts.rails.signal-station-classifier")
+local StopPreview = require("scripts.rails.stop-preview")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
 
@@ -66,7 +67,7 @@ end
 
 ---Build announcement message for a rail
 ---@param description railutils.RailDescription Rail description from describer
----@param opts { prefix_rail: boolean?, is_ghost: boolean?, rail_entity: LuaEntity? }? Options
+---@param opts { prefix_rail: boolean?, is_ghost: boolean?, rail_entity: LuaEntity?, cursor_pos: MapPosition? }? Options
 ---@return LocalisedString Message ready for speech
 function mod.announce_rail(description, opts)
    opts = opts or {}
@@ -109,6 +110,12 @@ function mod.announce_rail(description, opts)
       local signal_info = SignalStationClassifier.get_signal_station_info(rail_entity)
       local signal_announcement = build_signal_station_announcement(signal_info)
       if signal_announcement then message:list_item(signal_announcement) end
+
+      -- Add stop preview (shows where train cars would be)
+      if opts.cursor_pos then
+         local stop_preview = StopPreview.get_stop_preview(rail_entity, opts.cursor_pos)
+         if stop_preview then message:list_item(stop_preview) end
+      end
    end
 
    return message:build()
