@@ -59,46 +59,18 @@ Set the active stop in a schedule: right bracket
 IMPORTANT: See https://wiki.factorio.com/Railway if you don't know how rails work. This is documentation of mod
 functionality, not of vanilla behavior.
 
-### Warnings and Limitations
+### Overview of Driving
 
-This is a prototype of the final trains code and the documentation you are reading is for playtesters.
+You can run trains in two modes: manual and automatic.  In automatic mode, trains follow a schedule.  This unlocks after
+you research automated rail transportation.
 
-The point is finding out if we like it, not finding all the bugs. Many are already known to me.
+This section mostly exists to tell you: don't try manual driving.  To do it, you use the arrow keys (west is left, etc)
+but because track layouts are very complex the train is not likely to do what you think. Additionally, it is liable to
+run into other trains.
 
-It is my belief that fixing the remaining bugs will not break your save, but we are not ready to make that promise.  My
-promise right now is: if this does break your save, we can fix it but your save may have to remove all rail and train
-entities.
-
-The biggest weirdness is that we don't yet go through the building APIs so your tracks are free to place, and let's just
-say that if you place over trees your train is going to be a bulldozer whenever it goes through there rather than
-erroring that you can't build.  Technically tracks don't collide with trees, and we aren't invoking that logic, so you
-can very much have a track with a tree on it.
-
-Note (at least) the following:
-
-- Tracks are free to place
-- Not super tested.
-- Tracks will place over water right now
-- Bad verbalization around signal states and train states Primarily that they're silent unless explicitly checked.
-- You type stop names directly, no list.
-- No rail builder menu; if you want forks you need to use the virtual train (the point of the virtual train is that you
-  can do it without, but it will come back)
-- No syntrax, yet.
-- "robots idle" is an exposed schedule condition which is always present but this is only used by mods that add
-  equipment grids to trains.
-- We don't exactly require that you remove trees and rocks
-- No path warnings are gone. They have to come back in a new form, so that is tbd.
-- There will be shifts in the UI and schedule editor (especially tab and element orders)
-- No train station previews (1.1's version of this was also sort of breaky, not sure what we're doing yet)
-- Definitely lots of others.
-
-## Overview of Driving
-
-You can run trains in two modes: manual and automatic.  In automatic mode, trains follow a schedule.  This unlocks after you research automated rail transportation.
-
-This section mostly exists to tell you: don't try manual driving.  To do it, you use the arrow keys (west is left, etc) but because track layouts are very complex the train is not likely to do what you think. Additionally, it is liable to run into other trains.
-
-A sighted player who wants to drive a train through a complicated base, and the accessible way for you to do so, is to use the schedule editor. You add a temporary stop for the station you want, add "passenger not present" as a condition, then hit right bracket on the stop to set it to the active stop.
+A sighted player who wants to drive a train through a complicated base, and the accessible way for you to do so, is to
+use the schedule editor. You add a temporary stop for the station you want, add "passenger not present" as a condition,
+then hit right bracket on the stop to set it to the active stop.
 
 What we do offer is a radar that tells you which way and how fast a train is moving. When sitting in a moving train, you
 will hear a quiet tone in the direction the train is going.  Higher pitch is "more north", and pan is east/west.  So a
@@ -106,7 +78,7 @@ high leftish tone is northwest, etc.  The tone plays when the train changes orie
 50 tiles. This at least allows you to (1) have the sighted experience of advanced players who can't really drive trains
 manually anyhow, and (2) know what's going on and roughly where and how far you have gone.
 
-## Overview of Track Reporting
+### Overview of Track Reporting
 
 Factorio's train system consists of 3 track shapes: straight (can be oriented 16 ways), and two kinds of curves (a and
 b, hidden behind the mod).  Most of this is hidden from you.  You can place straight rails in the 8 primary directions,
@@ -159,7 +131,10 @@ Unlike 1.1, there is no requirement that straight pieces be present anywhere.  Y
 pieces.  You can do long straight paths with s-bends going back and forth like a snake.  I don't suggest either for a
 variety of reasons but you can, so can the sighted, and it's your game.
 
-## Basic Rail Building: The Virtual Train
+Ghosts are supported.  The only thing to note is that tiles containing both ghosts and non-ghosts are potentially overly
+verbose.  We cannot do better here in any reasonable amount of time.
+
+### Basic Rail Building: The Virtual Train
 
 The sighted user of Factorio does not place most rails directly, and instead uses a rail planner, which lets them draw
 the path they want.  You also do not place most rails directly, and use the virtual train, which lets you draw the path
@@ -177,8 +152,8 @@ that.
 The virtual train builds tracks as you drive it.  You turn it left with m, move it forward with comma, and turn it right
 with dot.  For example, a 90 degree left turn is pressing m 4 times.
 
-You will notice that the keys are a group of 3.  To remember the controls, the train is comma and you're turning left
-with m because m is left of the train.
+Notice that the keys are a group of 3.  To remember the controls, the train is comma and you're turning left with m
+because m is left of the train.
 
 Sometimes, you need to turn around.  To do so, you use alt + comma.  This does not turn the train 180 degrees, however.
 All rail building must happen from a rail end, so you are instead grabbing the other end of the just placed rail.  For
@@ -187,7 +162,7 @@ example, a north to north northwest curve's ends are south and north northwest.
 It is necessary to place signals and it is necessary sometimes to place signals at the exact position relative to a
 rail's end so that you have an extra tile of space.  Adding ctrl to m or dot places a signal on that side of the track.
 Using shift instead places a chain signal.  Explaining the rules of Factorio signals are beyond this document, but if
-you are following them, ctrl/shift + dot is always "going this way" and ctrl/shift + comma is "going against the flow".
+you are following them, ctrl/shift + dot is always "going this way" and ctrl/shift + m is "going against the flow".
 
 The virtual train moves over but does not replace perfectly matching tracks.  For example, if you build the exact same
 structure from the exact same starting point twice, the second time succeeds but doesn't place anything.  This solves a
@@ -229,10 +204,51 @@ put a bookmark at each fork as you type it).  If you don't follow the idea of a 
 bookmarks at all here; anything that can be accomplished without the stack part can be accomplished fine by just not
 bothering.
 
-## Schedules and Stations
+The rail builder supports force and superforce building.  Add shift and control shift, respectively.
+
+As a cheaty sort of thing, the rail builder does not actually validate that you are close enough to the rails when
+placing them, and allows you to place normal rails anywhere.  This is for both implementation simplicity and
+playability.  The actual rules for a sighted player are complicated. In practice, this isn't as bad as it sounds.  When
+you start building networks of hundreds of rails, the inability to have enough in your inventory will force the use of
+blueprints or ghosts.
+
+### Building Larger Layouts
+
+The mod offers two closely related ways to build extremely large layouts.
+
+The first and simplest is the rail builder menu. To access it, hit alt left bracket while locked onto a rail.  This menu
+consists of a number of rows, each containing a list of structures. So, move up and down to the category you want, the
+move right and click.
+
+In this menu, "left" and "right" are relative to the rail end you are on right now.
+
+The only two non-obvious structures should be "intersection entrance" and "intersection exit".  These are a chain signal
+on the right and signal on the left for entrances, and a chain signal on the left and signal on the right for exits. The
+Factorio convention for a properly functioning rail network for those who do not know what they're doing is to build
+intersections by using the "intersect entrance" pair when facing into the itnersection and the "intersection exit" pair
+when facing out of it.  If you play with this, you will observe that these are actually the same thing if you turn
+around.
+
+The second is Syntrax, which is what the builder menu uses to store structures.  If you are a bit of a coder or are
+willing to learn a text based format, Syntrax is documented [here](./syntrax.md). The builder menu supports saving
+custom Syntrax programs for later use, which can be used to get Syntrax programs from others.  Please note that these
+are saved in your save and will not follow you between games.  We do not have the ability to offer global data like that
+at this time. You should keep a text file around and set them up in new games as you need them.
+
+If you prefer, you may type Syntrax directly. To do so, you hit alt right bracket.  This jumps straight into a text box:
+type your Syntrax and hit enter.
+
+You may be wondering how to learn Syntrax.  The trick is that Syntrax matches the virtual train.  If you are not a coder
+and want to write down what you did, replace m with l, comma with s, and dot with r.  The full syntax is documented in
+the dedicated document, but the idea is that you start here until you are comfortable with trains, then use Syntrax when
+building very large structures.
+
+
+### Schedules and Stations
 
 There is a station UI. It works like any other UI and lets you set things like any other UI, and doesn't deserve more
-documentation. The only special thing about it is that train station names support rich text--see below on interrupts for why that is important.
+documentation. The only special thing about it is that train station names support rich text--see below on interrupts
+for why that is important.
 
 Teaching how train schedules work is beyond the scope of mod documentation.  See the wiki for that.
 
@@ -265,15 +281,17 @@ point, groups are created by just deciding to use their name (press m instead of
 are destroyed by destroying the last train (or ghost) using the group.  This slightly unintuitive behavior matches
 vanilla.  It's more like channels than groups: any train "tuned" to the same name "receives" the schedule.
 
-## Interrupts and Rich Text
+### Interrupts and Rich Text
 
-The mod has support for reading properly formatted rich text globally.  In the train related text fields, it also supports some shorthands.
+The mod has support for reading properly formatted rich text globally.  In the train related text fields, it also
+supports some shorthands.
 
 This is relevant to trains (and pretty much only trains) so it is documented here.  In the interrupt system, it is
 possible to put icons into station names and then make an interrupt condition like "any cargo > 5".  The train will then
 go to (for example) "copper plate item dropoff" if it happens to be copper plates and there is a station with that name,
 or "iron plate item dropoff" if it is iron plates.  As with other game mechanics, see the Factorio wiki's railway page
-to learn the power of this system--here we just explain how it currently works with the mod.  The two wiki pages you need are:
+to learn the power of this system--here we just explain how it currently works with the mod.  The two wiki pages you
+need are:
 
 - For railways: https://wiki.factorio.com/Railway
 - For rich text: https://wiki.factorio.com/rich_text
@@ -283,9 +301,9 @@ If you are reading this document and don't know what an interrupt does, start by
 
 To start with how to get to and make interrupts, the train schedule GUI has an add interrupt button; like with groups,
 to make a new one or type the name of an existing one, press m.  Also like groups, there is no explicit create or
-delete.  If a train is using an interrupt it exists, otherwise it does not. So to create one just start using the name.  Interrupts can be dragged like stops to
-change their priority, and are edited by pressing tab, which will cycle through child schedule editors for all of your
-interrupts.
+delete.  If a train is using an interrupt it exists, otherwise it does not. So to create one just start using the name.
+Interrupts can be dragged like stops to change their priority, and are edited by pressing tab, which will cycle through
+child schedule editors for all of your interrupts.
 
 This brings us to the stuff about rich text.  There are two places you may wish to use a wildcard:
 
@@ -293,25 +311,28 @@ This brings us to the stuff about rich text.  There are two places you may wish 
 - In station names.  For that, use what we are about to explain.
 
 There are two ways to enter rich text when typing into train-related text fields. One is to use `[item=prototypename]`.
-The other is to use our shorthands.  In order to make it feasible to type rich text, we havae introduced a few
-shorthands starting with `:`.  They take the form `:t.name`.  For example, `:i.iron-plate` is iron plates.  To find the iron-plate part, that is the prototype name from the above wiki page. We will be making this bette rin future.
+The other is to use our shorthands.  In order to make it feasible to type rich text, we have introduced a few shorthands
+starting with `:`.  They take the form `:t.name`.  For example, `:i.iron-plate` is iron plates.  To find the iron-plate
+part, that is the prototype name from the above wiki page. We will be making this better in future.
 
 The full list of shorthands is as follows:
 
 - `:i.x`: item icon of prototype x
 - `:f.x`: fluid of prototype x
 - ` :s.x`: virtual signal icon of type x.
-- `:*` followed by i (item), f (fluid), s (signal), or fu (fuel): the wildcard icon for that type. For example `:*i` is "any item".
+- `:*` followed by i (item), f (fluid), s (signal), or fu (fuel): the wildcard icon for that type. For example `:*i` is
+  "any item".
 
-These are not stored in your save.  We will likely simplify them in future.  What gets stored in the train stop name is the corresponding official long form.
+These are not stored in your save.  We will likely simplify them in future.  What gets stored in the train stop name is
+the corresponding official long form.
 
+### The Global Trains Overview
 
-## The Global Trains Overview
+One unique problem with trains is that they move around and do not stay still long enough for you to click them.  To
+solve this problem, a trains menu is available under `e`, past the equipment tab.
 
-One unique problem with trains is that they move around and do not stay still long enough for you to click them.  To solve this problem, a trains menu is available under `e`, past the equipment tab.
-
-
-This menu lets you open the train by clicking the name, but only if close enough; move your cursor to the train; and toggle the train to manual mode.
+This menu lets you open the train by clicking the name, but only if close enough; move your cursor to the train; and
+toggle the train to manual mode.
 
 A typical workflow (for now):
 
