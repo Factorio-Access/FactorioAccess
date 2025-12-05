@@ -3,10 +3,13 @@
 ---When multiple rails occupy the same tile (like at forks), we want to report only
 ---the "primary" rails - the ones that aren't connected to other rails we're already reporting.
 ---This avoids verbose announcements like "rail forks left and right of north curved rail bottom of west to south turn".
+---
+---Rails with signals or stations are always considered primary and reported individually.
 
 local Consts = require("scripts.consts")
 local RailInfo = require("railutils.rail-info")
 local RailQueries = require("railutils.queries")
+local SignalStationClassifier = require("scripts.rails.signal-station-classifier")
 local Traverser = require("railutils.traverser")
 
 local mod = {}
@@ -110,10 +113,21 @@ local function get_rail_priority(rail_type)
    end
 end
 
+---Check if a rail has signals or stations (handles ghosts)
+---@param rail_ent LuaEntity
+---@return boolean
+local function has_signals_or_station(rail_ent)
+   -- Ghosts can't have real signals/stations
+   if rail_ent.type == "entity-ghost" then return false end
+   return SignalStationClassifier.has_signals_or_station(rail_ent)
+end
+
 ---Deduplicate secondary rails that are connected to primary rails
 ---
 ---When multiple rails occupy the same tile, this filters to keep only "primary" rails.
 ---A rail is considered secondary if it connects to a rail we've already decided to keep.
+---
+---Rails with signals or stations are always considered primary and never grouped.
 ---
 ---@param rail_list LuaEntity[] Array of rail entities at the same position
 ---@param query_fn fun(area: BoundingBox.0): LuaEntity[] Function to query rails at an area
@@ -121,20 +135,57 @@ end
 function mod.deduplicate_secondary_rails(rail_list, query_fn)
    if #rail_list <= 1 then return rail_list end
 
-   -- Sort by priority: straight > half-diagonal > curve-a > curve-b
+   -- Separate rails with signals/stations from those without
+   local signal_rails = {}
+   local regular_rails = {}
+
+   for _, rail_ent in ipairs(rail_list) do
+      if rail_ent.valid then
+         if has_signals_or_station(rail_ent) then
+            table.insert(signal_rails, rail_ent)
+         else
+            table.insert(regular_rails, rail_ent)
+         end
+      end
+   end
+
+   -- Rails with signals/stations are always primary
+   local result = {}
+   local connected_to_primary = {} -- Set of unit numbers connected to rails we're keeping
+
+   -- Add all signal/station rails as primaries first
+   for _, rail_ent in ipairs(signal_rails) do
+      if rail_ent.unit_number then
+         table.insert(result, rail_ent)
+
+         -- Mark all rails connected to this one
+         local rail_type = RailQueries.prototype_type_to_rail_type(get_effective_name(rail_ent))
+         push_connected_unit_numbers(
+            connected_to_primary,
+            rail_ent,
+            rail_type,
+            rail_ent.direction,
+            { x = rail_ent.position.x, y = rail_ent.position.y },
+            query_fn
+         )
+      end
+   end
+
+   -- If we have no regular rails to process, we're done
+   if #regular_rails == 0 then return result end
+
+   -- Sort regular rails by priority: straight > half-diagonal > curve-a > curve-b
    -- Tie-break by unit number for stability
-   table.sort(rail_list, function(a, b)
+   table.sort(regular_rails, function(a, b)
       local priority_a = get_rail_priority(get_effective_type(a))
       local priority_b = get_rail_priority(get_effective_type(b))
       if priority_a ~= priority_b then return priority_a < priority_b end
       return (a.unit_number or 0) < (b.unit_number or 0)
    end)
 
-   local result = {}
-   local connected_to_primary = {} -- Set of unit numbers connected to rails we're keeping
-
-   for _, rail_ent in ipairs(rail_list) do
-      if rail_ent.valid and rail_ent.unit_number then
+   -- Process regular rails
+   for _, rail_ent in ipairs(regular_rails) do
+      if rail_ent.unit_number then
          -- Check if this rail is connected to something we already added
          local is_secondary = connected_to_primary[rail_ent.unit_number]
 

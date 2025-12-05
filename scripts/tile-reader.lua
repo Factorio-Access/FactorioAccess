@@ -70,7 +70,8 @@ function mod.read_tile_rails(pindex, message)
             if rail_type then
                local pos = { x = rail_entity.position.x, y = rail_entity.position.y }
                local description = RailDescriber.describe_rail(wrapped_surface, rail_type, rail_entity.direction, pos)
-               local announcement = RailAnnouncer.announce_rail(description, { prefix_rail = is_first })
+               local announcement =
+                  RailAnnouncer.announce_rail(description, { prefix_rail = is_first, rail_entity = rail_entity })
                message:list_item_forced_comma(announcement)
                is_first = false
             end

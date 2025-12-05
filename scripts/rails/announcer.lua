@@ -6,19 +6,73 @@
 ---This module takes RailDescription objects from the railutils describer and converts
 ---them into localized messages using MessageBuilder.
 
+local SignalStationClassifier = require("scripts.rails.signal-station-classifier")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
 
 local mod = {}
 
+---Build announcement for signal/station info
+---@param info fa.rails.SignalStationInfo Signal and station info
+---@return LocalisedString? Message fragment or nil if nothing to announce
+local function build_signal_station_announcement(info)
+   if not info then return nil end
+
+   local message = MessageBuilder.new()
+   local dir = { "fa.direction", info.direction }
+
+   -- Determine signal configuration
+   local left = info.left
+   local right = info.right
+
+   if left and right then
+      -- Pair case
+      if left == right then
+         -- Same type on both sides
+         if left == "signal" then
+            message:fragment({ "fa.rail-signal-pair", dir })
+         else
+            message:fragment({ "fa.rail-chain-pair", dir })
+         end
+      else
+         -- Mixed pair - say which side is chained
+         if left == "chain" then
+            message:fragment({ "fa.rail-pair-chained-left", dir })
+         else
+            message:fragment({ "fa.rail-pair-chained-right", dir })
+         end
+      end
+   elseif right then
+      -- Only right side (out signal)
+      if right == "signal" then
+         message:fragment({ "fa.rail-signal-out", dir })
+      else
+         message:fragment({ "fa.rail-chain-out", dir })
+      end
+   elseif left then
+      -- Only left side (in signal)
+      if left == "signal" then
+         message:fragment({ "fa.rail-signal-in", dir })
+      else
+         message:fragment({ "fa.rail-chain-in", dir })
+      end
+   end
+
+   -- Add station
+   if info.station then message:list_item({ "fa.rail-at-station" }) end
+
+   return message:build()
+end
+
 ---Build announcement message for a rail
 ---@param description railutils.RailDescription Rail description from describer
----@param opts { prefix_rail: boolean?, is_ghost: boolean? }? Options
+---@param opts { prefix_rail: boolean?, is_ghost: boolean?, rail_entity: LuaEntity? }? Options
 ---@return LocalisedString Message ready for speech
 function mod.announce_rail(description, opts)
    opts = opts or {}
    local prefix_rail = opts.prefix_rail
    local is_ghost = opts.is_ghost or false
+   local rail_entity = opts.rail_entity
    if prefix_rail == nil then prefix_rail = true end
 
    local message = MessageBuilder.new()
@@ -48,6 +102,13 @@ function mod.announce_rail(description, opts)
 
          message:list_item(junction_desc)
       end
+   end
+
+   -- Add signal/station info if rail entity provided (not for ghosts)
+   if rail_entity and not is_ghost then
+      local signal_info = SignalStationClassifier.get_signal_station_info(rail_entity)
+      local signal_announcement = build_signal_station_announcement(signal_info)
+      if signal_announcement then message:list_item(signal_announcement) end
    end
 
    return message:build()
