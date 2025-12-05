@@ -602,22 +602,23 @@ local function build_record_vtable(schedule, record_position, record, row_key, k
          else
             ctx.message:fragment({ "fa.schedule-no-destination" })
          end
+         ctx.message:fragment({ "fa.schedule-station-hint" })
+      end,
+
+      on_click = function(ctx)
+         -- Open station selector filtered to same surface
+         local entity = ctx.global_parameters and ctx.global_parameters.entity
+         local surface = entity and entity.valid and entity.surface or nil
+         ctx.controller:open_child_ui(
+            Router.UI_NAMES.STOP_SELECTOR,
+            { surface = surface },
+            { node = row_key, target = "station" }
+         )
       end,
 
       on_action1 = function(ctx)
-         if ctx.modifiers and ctx.modifiers.shift then
-            -- Type a station name with rich text support
-            ctx.controller:open_textbox("", { node = row_key, target = "station" }, { rich_text = true })
-         else
-            -- Open station selector filtered to same surface
-            local entity = ctx.global_parameters and ctx.global_parameters.entity
-            local surface = entity and entity.valid and entity.surface or nil
-            ctx.controller:open_child_ui(
-               Router.UI_NAMES.STOP_SELECTOR,
-               { surface = surface },
-               { node = row_key, target = "station" }
-            )
-         end
+         -- Type a station name with rich text support
+         ctx.controller:open_textbox("", { node = row_key, target = "station" }, { rich_text = true })
       end,
 
       -- Right click: go to this station (main schedule only, not interrupts)
@@ -849,6 +850,15 @@ local function render_interrupt_tab(ctx, interrupt_index)
    -- Add target stop button
    builder:add_clickable("add-target-stop", { "fa.schedule-add-target-stop" }, {
       on_click = function(click_ctx)
+         local entity = click_ctx.global_parameters and click_ctx.global_parameters.entity
+         local surface = entity and entity.valid and entity.surface or nil
+         click_ctx.controller:open_child_ui(
+            Router.UI_NAMES.STOP_SELECTOR,
+            { surface = surface },
+            { node = "add-target-stop" }
+         )
+      end,
+      on_action1 = function(click_ctx)
          click_ctx.controller:open_textbox(
             "",
             { node = "add-target-stop" },
@@ -906,6 +916,11 @@ local function render_schedule_editor(ctx)
 
    builder:add_clickable("add_stop", { "fa.schedule-add-stop" }, {
       on_click = function(click_ctx)
+         local entity = click_ctx.global_parameters and click_ctx.global_parameters.entity
+         local surface = entity and entity.valid and entity.surface or nil
+         click_ctx.controller:open_child_ui(Router.UI_NAMES.STOP_SELECTOR, { surface = surface }, { node = "add_stop" })
+      end,
+      on_action1 = function(click_ctx)
          click_ctx.controller:open_textbox(
             "",
             "add_stop",
@@ -931,6 +946,15 @@ local function render_schedule_editor(ctx)
 
    builder:add_clickable("add_temp_stop", { "fa.schedule-add-temporary-stop" }, {
       on_click = function(click_ctx)
+         local entity = click_ctx.global_parameters and click_ctx.global_parameters.entity
+         local surface = entity and entity.valid and entity.surface or nil
+         click_ctx.controller:open_child_ui(
+            Router.UI_NAMES.STOP_SELECTOR,
+            { surface = surface },
+            { node = "add_temp_stop" }
+         )
+      end,
+      on_action1 = function(click_ctx)
          click_ctx.controller:open_textbox(
             "",
             "add_temp_stop",

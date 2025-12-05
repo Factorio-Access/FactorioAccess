@@ -143,14 +143,7 @@ local function render_locomotive_config(ctx)
             ctx.message:fragment(group)
          end
          ctx.message:fragment({ "fa.locomotive-train-group" })
-
-         -- Add hint
-         local groups = TrainHelpers.get_train_groups(player.force)
-         if #groups > 0 then
-            ctx.message:fragment({ "fa.locomotive-group-hint" })
-         else
-            ctx.message:fragment({ "fa.locomotive-no-groups-available" })
-         end
+         ctx.message:fragment({ "fa.locomotive-group-hint" })
       end,
       on_click = function(ctx)
          local player = game.get_player(ctx.pindex)
