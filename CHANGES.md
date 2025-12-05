@@ -1,4 +1,4 @@
-# 0.16.28 (unreleased)
+# 0.16.28 (2025-12-05)
 
 - Fix fluid wagons to again announce their contents
 - The train schedule editor now supports selecting the stop from a list. To do so, left bracket as usual.
