@@ -12,6 +12,7 @@ local mod = {}
 
 ---@class (exact) fa.ui.menu.ClickHandlers
 ---@field on_click? fa.ui.graph.SimpleCallback
+---@field on_right_click? fa.ui.graph.ClickCallback
 ---@field on_child_result? fa.ui.graph.ChildResultCallback
 ---@field on_clear? fa.ui.graph.SimpleCallback
 ---@field on_dangerous_delete? fa.ui.graph.SimpleCallback
@@ -117,6 +118,7 @@ function MenuBuilder:add_clickable(key, label, click_handlers)
 
    -- Copy over any provided handlers
    if click_handlers.on_click then vtable.on_click = click_handlers.on_click end
+   if click_handlers.on_right_click then vtable.on_right_click = click_handlers.on_right_click end
    if click_handlers.on_child_result then vtable.on_child_result = click_handlers.on_child_result end
    if click_handlers.on_clear then vtable.on_clear = click_handlers.on_clear end
    if click_handlers.on_dangerous_delete then vtable.on_dangerous_delete = click_handlers.on_dangerous_delete end

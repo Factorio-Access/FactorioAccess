@@ -80,6 +80,8 @@ require("scripts.ui.menus.gun-menu")
 local MainMenu = require("scripts.ui.menus.main-menu")
 require("scripts.ui.menus.fast-travel-menu")
 require("scripts.ui.menus.debug-menu")
+require("scripts.ui.menus.rail-builder")
+require("scripts.ui.menus.syntrax-program")
 local SpidertronRemoteSelector = require("scripts.ui.menus.spidertron-remote-selector")
 require("scripts.ui.tabs.item-chooser")
 require("scripts.ui.tabs.signal-chooser")
@@ -3044,8 +3046,11 @@ EventManager.on_event(
    "fa-a-leftbracket",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      -- Handle syntrax input when in VTD mode
-      if VirtualTrainDriving.open_syntrax_input(pindex) then return end
+      -- Handle rail builder when locked to rails in VTD mode
+      if VirtualTrainDriving.is_locked(pindex) then
+         UiRouter.get_router(pindex):open_ui(UiRouter.UI_NAMES.RAIL_BUILDER)
+         return
+      end
 
       local p = game.get_player(pindex)
       local stack = p.cursor_stack
@@ -3239,6 +3244,9 @@ EventManager.on_event(
    "fa-a-rightbracket",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
+      -- Handle syntrax input when locked to rails in VTD mode
+      if VirtualTrainDriving.open_syntrax_input(pindex) then return end
+
       local p = game.get_player(pindex)
       local stack = p.cursor_stack
 

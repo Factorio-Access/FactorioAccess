@@ -241,6 +241,7 @@ def create_or_update_luarc(config_path: str) -> None:
         },
         "diagnostics": {
             "enable": True,
+            "workspaceDelay": 1,
             "globals": [
                 # Custom mod globals
                 "players",
@@ -268,9 +269,15 @@ def create_or_update_luarc(config_path: str) -> None:
                 "assign-type-mismatch": "Information",
             },
         },
+        "completion": { "enable": False },
+        "codeLens": { "enable": False },
         "format": {"enable": False},
         "telemetry": {"enable": False},
-        "hint": {"enable": True, "setType": False},
+        "hint": {"enable": False, "setType": False},
+        "type": {
+            "weakNilCheck": True,
+            "weakUnionCheck": True,
+        }
     }
 
     if factorio_lib:
@@ -405,8 +412,12 @@ def check_non_top_level_requires() -> Tuple[int, List[str]]:
     return (1 if errors else 0, errors)
 
 
-def run_lua_linter(lua_ls_path: Optional[str] = None) -> Tuple[int, str, str]:
-    """Run lua-language-server on the mod files."""
+def run_lua_linter(lua_ls_path: Optional[str] = None) -> int:
+    """Run lua-language-server on the mod files.
+
+    Output goes directly to stdout/stderr (not captured).
+    Returns exit code (0 = success, -1 = timeout/error).
+    """
     mod_path = Path(__file__).parent.resolve()
 
     if lua_ls_path is None:
@@ -433,35 +444,26 @@ def run_lua_linter(lua_ls_path: Optional[str] = None) -> Tuple[int, str, str]:
                     break
 
     if not lua_ls_path:
-        return (
-            -1,
-            "",
-            "lua-language-server not found. Install the sumneko.lua VSCode extension.",
-        )
+        print("lua-language-server not found. Install the sumneko.lua VSCode extension.", file=sys.stderr)
+        return -1
 
     # Create temporary .luarc.json config (don't pollute the mod directory)
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as tmp:
         config_file = tmp.name
         create_or_update_luarc(config_file)
 
-    # Run lua-language-server with temp config
-    cmd = [lua_ls_path, "--check", ".", "--configpath", config_file]
+    # Run lua-language-server with temp config, inheriting stdout/stderr
+    cmd = [lua_ls_path, "--check", mod_path, "--configpath", config_file]
 
     try:
         result = subprocess.run(
             cmd,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=60,
             cwd=str(mod_path),
         )
-        return result.returncode, result.stdout, result.stderr
-    except subprocess.TimeoutExpired:
-        return -1, "", "lua-language-server timed out after 60 seconds"
+        return result.returncode
     except Exception as e:
-        return -1, "", f"Error running lua-language-server: {e}"
+        print(f"Error running lua-language-server: {e}", file=sys.stderr)
+        return -1
     finally:
         # Clean up temp config file
         try:
@@ -949,15 +951,18 @@ def main():
 
         # Then run lua-language-server
         print(f"\n[INFO] Running lua-language-server on {mod_path}")
-        exit_code, stdout, stderr = run_lua_linter(args.lua_ls_path)
+        exit_code = run_lua_linter(args.lua_ls_path)
 
-        if stdout:
-            print(stdout)
-        if stderr:
-            print(stderr, file=sys.stderr)
+        # Return failure if any check failed (can't use max() since -1 means timeout)
+        if ann_exit_code != 0:
+            final_exit_code = ann_exit_code
+        elif req_exit_code != 0:
+            final_exit_code = req_exit_code
+        elif exit_code != 0:
+            final_exit_code = exit_code
+        else:
+            final_exit_code = 0
 
-        # Return failure if any check failed
-        final_exit_code = max(ann_exit_code, req_exit_code, exit_code)
         if final_exit_code == 0:
             print("[INFO] All linting checks passed")
         else:
