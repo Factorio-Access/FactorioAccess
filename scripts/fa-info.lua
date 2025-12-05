@@ -407,8 +407,8 @@ local function ent_info_fluid_contents(ctx)
    -- status.
    if Consts.CRAFTING_MACHINES[ctx.ent.type] then return end
 
-   -- If it can't hold fluids, no point.
-   if #ctx.ent.fluidbox == 0 then return end
+   -- If it can't hold fluids, no point. Fluid wagons have no fluidbox but do have get_fluid_contents.
+   if #ctx.ent.fluidbox == 0 and ctx.ent.type ~= "fluid-wagon" then return end
 
    local fluids = ctx.ent.get_fluid_contents()
 
@@ -1722,30 +1722,27 @@ function mod.selected_item_production_stats_info(pindex, prototype_name)
    return message:build()
 end
 
---- Handles cargo wagons by reporting their top inventory contents instead of status text.
----@param ctx fa.Info.EntStatusContext The context for the current entity.
----@return boolean handled True if this handler added information to the message.
-local function ent_status_cargo_wagon(ctx)
-   local ent = ctx.ent
-   if ent.prototype.type == "cargo-wagon" then
-      -- Trains not supported in 2.0 yet
-      ctx.message:fragment({ "fa.trains-not-supported" })
-      return true
-   end
-   return false
-end
-
 --- Handles fluid wagons by reporting their fluid contents instead of status text.
 ---@param ctx fa.Info.EntStatusContext The context for the current entity.
 ---@return boolean handled True if this handler added information to the message.
 local function ent_status_fluid_wagon(ctx)
    local ent = ctx.ent
-   if ent.prototype.type == "fluid-wagon" then
-      -- Trains not supported in 2.0 yet
-      ctx.message:fragment({ "fa.trains-not-supported" })
+   if ent.prototype.type ~= "fluid-wagon" then return false end
+
+   local fluids = ent.get_fluid_contents()
+   if not next(fluids) then
+      ctx.message:fragment({ "fa.ent-info-inventory-empty" })
       return true
    end
-   return false
+
+   local unrolled = {}
+   for f, c in pairs(fluids) do
+      local rounded_count = math.floor(c * 10 + 0.5) / 10
+      table.insert(unrolled, { name = f, count = rounded_count })
+   end
+
+   ctx.message:fragment(InventoryUtils.present_list(unrolled, nil, prototypes.fluid))
+   return true
 end
 
 --- Handles status text if it exists
@@ -2051,10 +2048,7 @@ function mod.read_selected_entity_status(pindex)
 
    -- Try each in turn, stopping on the first that returns true
    -- discard final result with `_` variable
-   local _ = run_handler(ent_status_cargo_wagon)
-      or run_handler(ent_status_fluid_wagon)
-      or run_handler(ent_status_lookup)
-      or run_handler(ent_status_fallback)
+   local _ = run_handler(ent_status_fluid_wagon) or run_handler(ent_status_lookup) or run_handler(ent_status_fallback)
 
    if status ~= nil then
       --For working or normal entities, give some extra info about specific entities in terms of speeds or bonuses.
