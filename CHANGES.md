@@ -1,3 +1,24 @@
+# 0.16.28 (unreleased)
+
+- Fix fluid wagons to again announce their contents
+- The train schedule editor now supports selecting the stop from a list. To do so, left bracket as usual.
+- You may now drive locomotives to a stop from their main menu. This adds a temporary stop.
+- IMPORTANT: unlike 1.1, we do not check stop reachability. This is because the only efficient ways to do it sometimes exclude stops that already have trains at them, even if those trains are going to leave.
+- The train stop preview is back and:
+  - No longer accidentally "extends" through curves, claiming that tracks 90 degrees off are part of the preview
+  - Breaks down the cars by position rather than giving you groups of 2 (e.g. position 1-6 and gap are all separate)
+  - NOTE: like in 1.1, it does not work if the stop or the rails are ghosts.
+- Refine some train-related labels to make it clearer when you can use m to type
+- Move Syntrax to alt + right bracket.
+- Bring the rail builder menu back when you are connected to a rail.  This respects your build mode and supports:
+  - Forks
+  - Signal pairs
+  - Turns
+  - Saving and using custom Syntrax programs from others
+  - IMPORTANT: Syntrax programs are saved in your save and will not move to other saves with you. You must re-add them.
+  - For the moment you cannot get Syntrax programs back out either, because prepopulation of the textbox causes issues.
+- Bring back signal announcements. Rails with signals on them now announce their signals. This does not work on ghosts.
+
 # 0.16.27 (2025-12-03)
 
 - Release a basic form of Syntrax. See [this document](./docs/features/syntrax.md).
