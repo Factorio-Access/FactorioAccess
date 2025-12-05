@@ -447,7 +447,7 @@ end
 ---Unified function for reading CircuitCondition or CircuitConditionDefinition
 ---Network fields (first_signal_networks, second_signal_networks) are only present on DeciderCombinatorCondition
 ---@param mb fa.MessageBuilder MessageBuilder to write to
----@param condition CircuitCondition|CircuitConditionDefinition? The condition to read
+---@param condition CircuitCondition|CircuitConditionDefinition|DeciderCombinatorCondition|nil The condition to read
 ---@param options fa.CircuitConditionReadOptions? Optional configuration
 function mod.read_condition(mb, condition, options)
    options = options or {}

@@ -17,7 +17,7 @@ mod.VERSION = "0.1.0-dev"
 ---Execute Syntrax source code and return rail placements
 ---@param source string The Syntrax source code
 ---@param initial_position fa.Point? Starting position, defaults to {x=0, y=0}
----@param initial_direction number? Starting direction (0-15), defaults to north (0)
+---@param initial_direction (number|defines.direction)? Starting direction (0-15), defaults to north (0)
 ---@return syntrax.vm.RailPlacement[]? rails Array of rail placements, or nil on error
 ---@return syntrax.Error? error Error object if compilation or execution failed
 function mod.execute(source, initial_position, initial_direction)

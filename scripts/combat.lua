@@ -429,6 +429,7 @@ function mod.run_atomic_bomb_checks(pindex)
    local selected_ammo = ammo_inv[p.character.selected_gun_index]
    local target_pos = p.shooting_state.position
    local abort_missle = false
+   ---@type LocalisedString
    local abort_message = ""
 
    if not selected_ammo or not selected_ammo.valid_for_read then return end

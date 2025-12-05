@@ -80,6 +80,7 @@ describe("Rail Grid Adjustment", function()
                      })
 
                      -- Place on test surface
+                     ---@cast dir defines.direction
                      local test_rail = test_surface:add_rail(rail_type, { x = x, y = y }, dir)
 
                      if real_rail then

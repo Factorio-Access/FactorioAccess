@@ -679,7 +679,7 @@ local function build_record_vtable(schedule, record_position, record, row_key, k
 end
 
 ---Build a list of schedule records and their conditions
----@param builder MenuBuilder The menu builder to add to
+---@param builder fa.ui.menu.MenuBuilder The menu builder to add to
 ---@param schedule LuaSchedule
 ---@param interrupt_index number? Optional interrupt index
 ---@param key_prefix string? Prefix for node keys

@@ -3143,6 +3143,7 @@ EventManager.on_event(
          kb_launch_rocket(event, ent)
       elseif ent.type == "constant-combinator" then
          local cb = ent.get_control_behavior()
+         ---@cast cb LuaConstantCombinatorControlBehavior?
          if cb then
             cb.enabled = not cb.enabled
             if cb.enabled then

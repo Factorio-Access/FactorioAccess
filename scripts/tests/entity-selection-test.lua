@@ -8,7 +8,8 @@ local it = TestRegistry.it
 describe("Entity Selection Stable Ordering", function()
    it("should return entities in stable order", function(ctx)
       local entities = {}
-      local surface = nil
+      ---@type LuaSurface
+      local surface
       local test_pos = { x = 10, y = 10 }
 
       ctx:init(function()
@@ -64,7 +65,8 @@ describe("Entity Selection Stable Ordering", function()
 
    it("should use registration numbers for identical entities", function(ctx)
       local trees = {}
-      local surface = nil
+      ---@type LuaSurface
+      local surface
       local test_pos = { x = 15, y = 15 }
 
       ctx:init(function()
@@ -117,7 +119,8 @@ describe("Entity Selection Stable Ordering", function()
 
    it("should sort primary entities before secondary entities", function(ctx)
       local entities = {}
-      local surface = nil
+      ---@type LuaSurface
+      local surface
       local test_pos = { x = 20, y = 20 }
 
       ctx:init(function()
@@ -161,7 +164,8 @@ describe("Entity Selection Stable Ordering", function()
 
    it("should sort by unit_number when both entities have them", function(ctx)
       local entities = {}
-      local surface = nil
+      ---@type LuaSurface
+      local surface
       local test_pos = { x = 25, y = 25 }
 
       ctx:init(function()
@@ -213,7 +217,8 @@ describe("Entity Selection Stable Ordering", function()
 
    it("should sort by lexicographic name when same type", function(ctx)
       local entities = {}
-      local surface = nil
+      ---@type LuaSurface
+      local surface
       local test_pos = { x = 30, y = 30 }
 
       ctx:init(function()
@@ -248,7 +253,8 @@ describe("Entity Selection Stable Ordering", function()
 
    it("should sort by item name for item-on-ground entities", function(ctx)
       local entities = {}
-      local surface = nil
+      ---@type LuaSurface
+      local surface
       local test_pos = { x = 35, y = 35 }
 
       ctx:init(function()
@@ -294,7 +300,8 @@ describe("Entity Selection Stable Ordering", function()
 
    it("should sort mining drills with mining_target before those without", function(ctx)
       local entities = {}
-      local surface = nil
+      ---@type LuaSurface
+      local surface
       local test_pos = { x = 40, y = 40 }
 
       ctx:init(function()
@@ -347,7 +354,8 @@ describe("Entity Selection Stable Ordering", function()
 
    it("should handle mixed entity types with complex sorting", function(ctx)
       local entities = {}
-      local surface = nil
+      ---@type LuaSurface
+      local surface
       local test_pos = { x = 45, y = 45 }
 
       ctx:init(function()

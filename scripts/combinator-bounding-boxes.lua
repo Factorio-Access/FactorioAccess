@@ -23,8 +23,8 @@ local mod = {}
 ---@field right_pos Vector
 
 ---Convert AABB to named format if needed
----@param aabb table Either array format {{x1, y1}, {x2, y2}} or named format {left_top = {x, y}, right_bottom = {x, y}}
----@return fa.AABB Named format: {left_top = {x, y}, right_bottom = {x, y}}
+---@param aabb table? Either array format {{x1, y1}, {x2, y2}} or named format {left_top = {x, y}, right_bottom = {x, y}}
+---@return fa.AABB? Named format: {left_top = {x, y}, right_bottom = {x, y}}
 local function convert_aabb(aabb)
    if not aabb then return nil end
 
@@ -39,8 +39,8 @@ local function convert_aabb(aabb)
 end
 
 ---Convert position vector to named format if needed
----@param pos table Either array format {x, y} or named format {x = ..., y = ...}
----@return Vector Named format: {x = ..., y = ...}
+---@param pos table? Either array format {x, y} or named format {x = ..., y = ...}
+---@return Vector? Named format: {x = ..., y = ...}
 local function convert_vec(pos)
    if not pos then return nil end
 

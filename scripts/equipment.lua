@@ -161,6 +161,7 @@ function mod.reload_weapons(pindex, source_entity, source_inv_index, target_enti
 
    if not ammo_inv or not main_inv then return "Error: Invalid inventory" end
 
+   ---@type LocalisedString
    local result = ""
    if ammo_inv.is_full() then
       result = "All ammo slots are already full."
@@ -209,6 +210,7 @@ function mod.remove_weapons_and_ammo(pindex, source_entity, target_entity, targe
    local ammos_count = #ammo_inv - ammo_inv.count_empty_stacks()
    local expected_remove_count = guns_count + ammos_count
    local resulted_remove_count = 0
+   ---@type LocalisedString
    local message = ""
 
    --Abort if not enough empty slots in inventory
@@ -428,6 +430,7 @@ function mod.remove_equipment_and_armor(pindex, source_entity, target_entity, ta
 
    if not armor_inv or not char_main_inv then return "Error: Invalid inventory" end
 
+   ---@type LocalisedString
    local result = ""
    if armor_inv.is_empty() then return { "fa.equipment-error-no-armor" } end
 

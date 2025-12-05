@@ -148,6 +148,7 @@ function mod.check_and_play_bump_alert_sound(pindex, this_tick)
 
    -- Get intended movement direction as a unit vector
    -- This is where the player WANTS to go based on their input
+   ---@cast intended_direction defines.direction
    local intended_x, intended_y = Geometry.uv_for_direction(intended_direction)
 
    logger:debug(string.format("Intended: (%.2f,%.2f), Actual: (%.2f,%.2f)", intended_x, intended_y, actual_x, actual_y))

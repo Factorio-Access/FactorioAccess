@@ -353,7 +353,7 @@ end
 function Router:_push_ui(name, params, context)
    assert(
       registered_uis[name],
-      "UI '" .. tostring(name) .. "' is not registered. Did you forget to require() the module?"
+      "UI '" .. tostring(name) .. "' is not registered. Did you forget to require the module?"
    )
 
    local stack = router_state[self.pindex].ui_stack

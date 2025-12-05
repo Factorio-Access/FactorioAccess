@@ -111,7 +111,7 @@ local VM_meta = { __index = VM }
 
 ---Create a key for deduplication (position + direction + rail type)
 ---@param pos fa.Point
----@param direction number
+---@param direction number|defines.direction
 ---@param rail_type string
 ---@return string
 local function dedup_key(pos, direction, rail_type)
@@ -489,6 +489,7 @@ function VM:run(initial_position, initial_direction)
 
    -- Create the initial traverser at a straight rail at the starting position/direction
    -- This represents "standing at the end of a straight rail facing dir"
+   ---@cast dir defines.direction
    self.traverser = Traverser.new(RailInfo.RailType.STRAIGHT, pos, dir)
    self.initial_traverser = self.traverser:clone()
    self.mark_traverser = self.traverser:clone()

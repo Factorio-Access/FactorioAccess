@@ -466,7 +466,7 @@ function mod.open_entity_ui(pindex, entity)
       return false
    end
 
-   ---@type table<any, any>
+   ---@type table
    local params = {
       entity = entity,
    }
@@ -490,6 +490,7 @@ function mod.open_entity_ui(pindex, entity)
          ---@diagnostic disable-next-line
          local inv = entity.get_inventory(i)
          if inv and inv.name then
+            ---@diagnostic disable-next-line: missing-fields
             params["inv_" .. inv.name] = {
                entity = entity,
                inventory_index = i,
@@ -504,6 +505,7 @@ function mod.open_entity_ui(pindex, entity)
          ---@diagnostic disable-next-line
          local inv = entity.get_inventory(i)
          if inv and inv.name then
+            ---@diagnostic disable-next-line: missing-fields
             params["inv_" .. inv.name] = {
                entity = entity,
                inventory_index = i,
