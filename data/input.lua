@@ -1165,6 +1165,13 @@ data:extend({
       consuming = "game-only",
    },
 
+   {
+      type = "custom-input",
+      name = "fa-cas-m",
+      key_sequence = "CONTROL + SHIFT + ALT + M",
+      consuming = "none",
+   },
+
    -- Search navigation
    {
       type = "custom-input",

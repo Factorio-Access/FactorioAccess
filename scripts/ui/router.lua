@@ -163,6 +163,7 @@ mod.UI_NAMES = {
    EQUIPMENT_SELECTOR = "equipment_selector",
    HELP = "help",
    SCHEDULE_EDITOR = "schedule_editor",
+   SETTINGS = "settings",
    -- Test UI names (used in automated tests)
    TEST_ASSEMBLING_MACHINE = "test-assembling-machine",
    TEST_ASSEMBLING_MACHINE_FOCUS = "test-assembling-machine-focus",
