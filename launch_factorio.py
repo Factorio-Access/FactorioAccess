@@ -412,10 +412,44 @@ def check_non_top_level_requires() -> Tuple[int, List[str]]:
     return (1 if errors else 0, errors)
 
 
+def filter_luals_output(output: str) -> str:
+    """Filter out lua-language-server progress lines.
+
+    LuaLS outputs progress lines like:
+        Initializing ...
+        >=================== 001/274
+        >>================== 014/274
+        >>>>>=============== 066/274 [Found 1 problems in 1 files]
+        Diagnosis completed, no problems found
+
+    It also outputs lines that are just whitespace (from progress bar overwrites).
+
+    We want to keep only the meaningful diagnostic output.
+    """
+    # Pattern matches progress lines: optional >, =, spaces, and NNN/NNN format
+    # Also matches "Initializing ..." and similar status lines
+    progress_pattern = re.compile(
+        r"^\s*[>= ]*\d{3}/\d{3}.*$|"  # Progress bars like ">====== 001/274" or with "[Found X problems...]"
+        r"^\s*Initializing\s*\.{3}\s*$|"  # "Initializing ..."
+        r"^\s+$"  # Lines that are only whitespace
+    )
+
+    lines = output.splitlines()
+    filtered_lines = []
+
+    for line in lines:
+        # Skip progress lines and whitespace-only lines
+        if progress_pattern.match(line):
+            continue
+        filtered_lines.append(line)
+
+    return "\n".join(filtered_lines)
+
+
 def run_lua_linter(lua_ls_path: Optional[str] = None) -> int:
     """Run lua-language-server on the mod files.
 
-    Output goes directly to stdout/stderr (not captured).
+    Captures output, filters progress lines, and displays meaningful diagnostics.
     Returns exit code (0 = success, -1 = timeout/error).
     """
     mod_path = Path(__file__).parent.resolve()
@@ -452,14 +486,31 @@ def run_lua_linter(lua_ls_path: Optional[str] = None) -> int:
         config_file = tmp.name
         create_or_update_luarc(config_file)
 
-    # Run lua-language-server with temp config, inheriting stdout/stderr
+    # Run lua-language-server with temp config, capturing output
     cmd = [lua_ls_path, "--check", mod_path, "--configpath", config_file]
 
     try:
         result = subprocess.run(
             cmd,
             cwd=str(mod_path),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
         )
+
+        # Filter and display stdout
+        if result.stdout:
+            filtered_stdout = filter_luals_output(result.stdout)
+            if filtered_stdout.strip():
+                print(filtered_stdout)
+
+        # Filter and display stderr
+        if result.stderr:
+            filtered_stderr = filter_luals_output(result.stderr)
+            if filtered_stderr.strip():
+                print(filtered_stderr, file=sys.stderr)
+
         return result.returncode
     except Exception as e:
         print(f"Error running lua-language-server: {e}", file=sys.stderr)
