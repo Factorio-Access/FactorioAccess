@@ -1,4 +1,4 @@
-# 0.16.30 (2025-12-05)
+# 0.16.29 (2025-12-05)
 
 - Add a settings menu, ctrl alt shift m (m for mod)
 - Add an undocumented setting to enable the inserter sonifier. When enabled, hovering your cursor over inserters plays a rhythm to help you understand how fast they are currently moving.
