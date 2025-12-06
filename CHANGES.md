@@ -1,3 +1,10 @@
+# 0.16.30 (2025-12-05)
+
+- Add a settings menu, ctrl alt shift m (m for mod)
+- Add an undocumented setting to enable the inserter sonifier. When enabled, hovering your cursor over inserters plays a rhythm to help you understand how fast they are currently moving.
+  - The higher tone is it picking up, the lower is it dropping
+  - There are some bugs and it very much needs better sounds, but I want it in your hands early.
+
 # 0.16.28 (2025-12-05)
 
 - Fix fluid wagons to again announce their contents

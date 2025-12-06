@@ -97,6 +97,11 @@ function mod.on_tick()
          goto continue
       end
 
+      if not settings.get_player_settings(pindex)["fa-inserter-sonification"].value then
+         reset_state(state)
+         goto continue
+      end
+
       local selected = player.selected
       if not selected or not selected.valid or selected.type ~= "inserter" then
          reset_state(state)

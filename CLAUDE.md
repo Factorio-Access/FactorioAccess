@@ -212,6 +212,36 @@ local my_storage = storage_manager.declare_storage_module('my_module', {
 })
 ```
 
+#### Add a Setting
+Settings allow users to configure mod behavior. They're defined in the settings stage and accessed at runtime.
+
+1. **Add declaration** in `scripts/settings-decls.lua`:
+   ```lua
+   {
+      name = "fa-my-setting",
+      type = "bool-setting",  -- or "int-setting", "double-setting", "string-setting"
+      setting_type = "runtime-per-user",
+      default_value = false,
+      order = "b",  -- Controls display order in settings menu
+   },
+   ```
+
+2. **Add locale** in `locale/en/settings.cfg`:
+   ```ini
+   [mod-setting-name]
+   fa-my-setting=My setting label
+
+   [mod-setting-description]
+   fa-my-setting=Description shown in settings menu
+   ```
+
+3. **Read at runtime**:
+   ```lua
+   local enabled = settings.get_player_settings(pindex)["fa-my-setting"].value
+   ```
+
+Settings automatically appear in the FA settings menu (opened via keybind). The menu is built dynamically from `settings-decls.lua`.
+
 ## Performance Tips
 
 - Cache globals locally
