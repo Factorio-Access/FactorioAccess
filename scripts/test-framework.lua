@@ -50,7 +50,6 @@ local test_files = {
    "speech-logger-test", -- Test speech logging to file
    -- "inventory-transfer-test", -- Removed: functionality migrated to capability-based UI
 
-   "tab-crash-test", -- Test TAB key doesn't crash with no UI open
    -- "event-manager-player-init-test", -- Test EventManager player initialization (requires custom events)
    -- "event-priority-test", -- Test EventManager priority system (requires custom events)
    "entity-ui-test", -- Test generic entity UI system
