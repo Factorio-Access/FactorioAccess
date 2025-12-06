@@ -6,84 +6,92 @@ allowing blind players to monitor inserter activity by hovering their cursor
 over an inserter.
 ]]
 
+local FaUtils = require("scripts.fa-utils")
 local LauncherAudio = require("scripts.launcher-audio")
-local RingBuffer = require("ds.fixed-ringbuffer")
 local StorageManager = require("scripts.storage-manager")
 
 local mod = {}
 
 -- Configuration
 local THRESHOLD = 0.2 -- Distance threshold for detecting arrival at endpoint
-local VOLUME = 0.2
-local DURATION = 0.15
-local FADE_OUT = 0.1
+local PICKUP_VOLUME = 0.1
+local DROPOFF_VOLUME = 0.2
 
 -- Sound IDs
 local PICKUP_SOUND_ID = "fa_inserter_pickup"
 local DROPOFF_SOUND_ID = "fa_inserter_dropoff"
 
--- Note frequencies (C4 = 261.63 Hz, E4 = 329.63 Hz)
-local PICKUP_FREQUENCY = 329.63 -- E4
-local DROPOFF_FREQUENCY = 261.63 -- C4
+-- Audio files
+local PICKUP_FILE = "sonifiers/inserter/hand_up.ogg"
+local DROPOFF_FILE = "sonifiers/inserter/hand_down.ogg"
+
+---@class fa.InserterSonifier.EdgeState
+---@field dist number? Previous distance
+---@field armed boolean Edge armed state
 
 ---@class fa.InserterSonifier.State
 ---@field unit_number integer? Unit number of tracked inserter
----@field pickup_dist number? Previous distance to pickup
----@field dropoff_dist number? Previous distance to dropoff
----@field pickup_edge_armed boolean True when crossed into pickup threshold
----@field dropoff_edge_armed boolean True when crossed into dropoff threshold
+---@field pickup fa.InserterSonifier.EdgeState
+---@field dropoff fa.InserterSonifier.EdgeState
 
----@type table<integer, fa.InserterSonifier.State>
-local inserter_storage = StorageManager.declare_storage_module("inserter_sonifier", function()
+---@return fa.InserterSonifier.State
+local function make_default_state()
    return {
       unit_number = nil,
-      pickup_dist = nil,
-      dropoff_dist = nil,
-      pickup_edge_armed = false,
-      dropoff_edge_armed = false,
+      pickup = { dist = nil, armed = false },
+      dropoff = { dist = nil, armed = false },
    }
-end)
-
----Calculate distance between two positions
----@param pos1 MapPosition
----@param pos2 MapPosition
----@return number
-local function distance(pos1, pos2)
-   local dx = pos1.x - pos2.x
-   local dy = pos1.y - pos2.y
-   return math.sqrt(dx * dx + dy * dy)
 end
+
+---@type table<integer, fa.InserterSonifier.State>
+local inserter_storage = StorageManager.declare_storage_module("inserter_sonifier", make_default_state, {
+   ephemeral_state_version = 1,
+})
 
 ---Play the pickup sound
 ---@param pindex integer
 local function play_pickup_sound(pindex)
-   LauncherAudio.patch(PICKUP_SOUND_ID)
-      :sine(PICKUP_FREQUENCY)
-      :duration(DURATION)
-      :fade_out(FADE_OUT)
-      :volume(VOLUME)
-      :send(pindex)
+   LauncherAudio.patch(PICKUP_SOUND_ID):file(PICKUP_FILE):volume(PICKUP_VOLUME):send(pindex)
 end
 
 ---Play the dropoff sound
 ---@param pindex integer
 local function play_dropoff_sound(pindex)
-   LauncherAudio.patch(DROPOFF_SOUND_ID)
-      :sine(DROPOFF_FREQUENCY)
-      :duration(DURATION)
-      :fade_out(FADE_OUT)
-      :volume(VOLUME)
-      :send(pindex)
+   LauncherAudio.patch(DROPOFF_SOUND_ID):file(DROPOFF_FILE):volume(DROPOFF_VOLUME):send(pindex)
 end
 
 ---Reset state for a player
 ---@param state fa.InserterSonifier.State
 local function reset_state(state)
    state.unit_number = nil
-   state.pickup_dist = nil
-   state.dropoff_dist = nil
-   state.pickup_edge_armed = false
-   state.dropoff_edge_armed = false
+   state.pickup.dist = nil
+   state.pickup.armed = false
+   state.dropoff.dist = nil
+   state.dropoff.armed = false
+end
+
+---Process edge detection for one endpoint
+---@param edge fa.InserterSonifier.EdgeState
+---@param current_dist number
+---@return boolean fired True if sound should play
+local function process_edge(edge, current_dist)
+   local prev_dist = edge.dist
+   edge.dist = current_dist
+
+   if not prev_dist then return false end
+
+   local fired = false
+   if prev_dist > THRESHOLD and current_dist <= THRESHOLD then
+      if not edge.armed then
+         edge.armed = true
+         fired = true
+      end
+   end
+   if current_dist > prev_dist then
+      edge.armed = false
+   end
+
+   return fired
 end
 
 ---On tick handler
@@ -117,52 +125,17 @@ function mod.on_tick()
 
       -- Calculate current distances
       local hand_pos = selected.held_stack_position
-      local pickup_dist = distance(hand_pos, selected.pickup_position)
-      local dropoff_dist = distance(hand_pos, selected.drop_position)
+      local pickup_dist = FaUtils.distance(hand_pos, selected.pickup_position)
+      local dropoff_dist = FaUtils.distance(hand_pos, selected.drop_position)
 
-      -- Get previous distances
-      local prev_pickup = state.pickup_dist
-      local prev_dropoff = state.dropoff_dist
-
-      -- If hand hasn't moved, do nothing
-      if prev_pickup and prev_dropoff and pickup_dist == prev_pickup and dropoff_dist == prev_dropoff then
+      -- Skip if hand hasn't moved
+      if state.pickup.dist and pickup_dist == state.pickup.dist and dropoff_dist == state.dropoff.dist then
          goto continue
       end
 
-      -- Store current distances
-      state.pickup_dist = pickup_dist
-      state.dropoff_dist = dropoff_dist
-
-      -- Need previous values for edge detection
-      if not prev_pickup or not prev_dropoff then goto continue end
-
-      -- Edge detection for pickup
-      local pickup_fired = false
-      if prev_pickup > THRESHOLD and pickup_dist <= THRESHOLD then
-         -- Crossed into threshold - arm and fire
-         if not state.pickup_edge_armed then
-            state.pickup_edge_armed = true
-            pickup_fired = true
-         end
-      end
-      if pickup_dist > prev_pickup then
-         -- Moving away - disarm
-         state.pickup_edge_armed = false
-      end
-
-      -- Edge detection for dropoff
-      local dropoff_fired = false
-      if prev_dropoff > THRESHOLD and dropoff_dist <= THRESHOLD then
-         -- Crossed into threshold - arm and fire
-         if not state.dropoff_edge_armed then
-            state.dropoff_edge_armed = true
-            dropoff_fired = true
-         end
-      end
-      if dropoff_dist > prev_dropoff then
-         -- Moving away - disarm
-         state.dropoff_edge_armed = false
-      end
+      -- Process edge detection
+      local pickup_fired = process_edge(state.pickup, pickup_dist)
+      local dropoff_fired = process_edge(state.dropoff, dropoff_dist)
 
       -- Play sounds (pickup takes priority)
       if pickup_fired then

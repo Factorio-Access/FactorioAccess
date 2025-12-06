@@ -17,7 +17,7 @@ return {
       name = "fa-inserter-sonification",
       type = "bool-setting",
       setting_type = "runtime-per-user",
-      default_value = false,
+      default_value = true,
       order = "a",
    },
 }
