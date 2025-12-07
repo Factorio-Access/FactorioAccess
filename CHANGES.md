@@ -1,3 +1,16 @@
+# 0.16.30 (2025-12-06)
+
+- Fix: arrowing over infinity chest ghosts no longer crashes
+- Inserter sonification now uses real sounds
+- Inserter sonification is on by default for new saves
+- You may now control zoom with = and - at the map level. Alt+z reads your zoom in tiles.  Zoom is reported as the maximum number of tiles on your screen.
+- Introduce a crafting machine sonifier, off by default.  This again uses waveforms instead of proper sounds:
+  - The sonified range equals your zoom.
+  - The position is relative to the cursor
+  - Crafting machines beep every time they craft
+  - Triangle wave is to the north of your cursor, sine wave is to the south
+  - Combat will use a similar mechanism.
+
 # 0.16.29 (2025-12-05)
 
 - Add a settings menu, ctrl alt shift m (m for mod)
