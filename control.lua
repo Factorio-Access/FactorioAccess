@@ -67,6 +67,7 @@ local TravelTools = require("scripts.travel-tools")
 local VirtualTrainDriving = require("scripts.rails.virtual-train-driving")
 local TrainSounds = require("scripts.sonifiers.train")
 local InserterSonifier = require("scripts.sonifiers.inserter")
+local Zoom = require("scripts.zoom")
 
 -- UI modules (required for registration with router)
 require("scripts.ui.belt-analyzer")
@@ -1000,6 +1001,7 @@ EventManager.on_event(
       game
          .get_player(pindex)
          .print("Display resolution changed: " .. new_res.width .. " x " .. new_res.height, { volume_modifier = 0 })
+      Zoom.clear_cache(pindex)
    end
 )
 
@@ -1011,6 +1013,16 @@ EventManager.on_event(
       local new_sc = game.get_player(pindex).display_scale
       if players and storage.players[pindex] then storage.players[pindex].display_resolution = new_sc end
       game.get_player(pindex).print("Display scale changed: " .. new_sc, { volume_modifier = 0 })
+      Zoom.clear_cache(pindex)
+   end
+)
+
+EventManager.on_event(
+   defines.events.on_player_display_density_scale_changed,
+   ---@param event EventData.on_player_display_density_scale_changed
+   ---@param pindex integer
+   function(event, pindex)
+      Zoom.clear_cache(pindex)
    end
 )
 
@@ -4195,3 +4207,16 @@ end, EventManager.EVENT_KIND.WORLD)
 -- EventManager.on_event("fa-shift-dot", function(event)
 --    VirtualTrainDriving.on_kb_descriptive_action_name(event)
 -- end, EventManager.EVENT_KIND.WORLD)
+
+-- Zoom controls (WORLD priority so UI bar handlers take precedence)
+EventManager.on_event("fa-minus", function(event, pindex)
+   Zoom.zoom_out(pindex)
+end, EventManager.EVENT_KIND.WORLD)
+
+EventManager.on_event("fa-equals", function(event, pindex)
+   Zoom.zoom_in(pindex)
+end, EventManager.EVENT_KIND.WORLD)
+
+EventManager.on_event("fa-a-z", function(event, pindex)
+   Zoom.announce_zoom(pindex)
+end, EventManager.EVENT_KIND.WORLD)
