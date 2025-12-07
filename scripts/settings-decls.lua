@@ -20,4 +20,11 @@ return {
       default_value = true,
       order = "a",
    },
+   {
+      name = "fa-crafting-sonification",
+      type = "bool-setting",
+      setting_type = "runtime-per-user",
+      default_value = false,
+      order = "b",
+   },
 }

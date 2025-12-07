@@ -67,6 +67,8 @@ local TravelTools = require("scripts.travel-tools")
 local VirtualTrainDriving = require("scripts.rails.virtual-train-driving")
 local TrainSounds = require("scripts.sonifiers.train")
 local InserterSonifier = require("scripts.sonifiers.inserter")
+local GridSonifier = require("scripts.sonifiers.grid-sonifier")
+local CraftingBackend = require("scripts.sonifiers.grid-backends.crafting")
 local Zoom = require("scripts.zoom")
 
 -- UI modules (required for registration with router)
@@ -124,6 +126,9 @@ local WorkerRobots = require("scripts.worker-robots")
 local sounds = require("scripts.ui.sounds")
 
 ---@meta scripts.shared-types
+
+-- Register grid sonifier backends
+GridSonifier.register_backend_factory("crafting", CraftingBackend.new, CraftingBackend.ENTITY_TYPES)
 
 entity_types = {}
 production_types = {}
@@ -348,6 +353,10 @@ function on_tick(event)
          Walking.process_walking_announcements(player.index)
          -- Check for pending logistics announcements
          WorkerRobots.on_tick(player.index)
+         -- Grid-based sonification (crafting machines etc)
+         if settings.get_player_settings(player.index)["fa-crafting-sonification"].value then
+            GridSonifier.tick(player.index)
+         end
       end
    end
 
