@@ -1187,7 +1187,12 @@ end
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_filters(ctx)
    -- Infinity containers have their own handler
-   if ctx.ent.type == "infinity-container" then return end
+   if
+      ctx.ent.type == "infinity-container"
+      or ctx.ent.type == "entity-ghost" and ctx.ent.ghost_type == "infinity-container"
+   then
+      return
+   end
 
    local filts = Filters.get_all_filters(ctx.ent)
    if next(filts) then
