@@ -120,7 +120,6 @@ local Walking = require("scripts.walking")
 local Warnings = require("scripts.warnings")
 local WorkQueue = require("scripts.work-queue")
 local WorkerRobots = require("scripts.worker-robots")
-local Zoom = require("scripts.zoom")
 local sounds = require("scripts.ui.sounds")
 
 ---@meta scripts.shared-types
@@ -3674,67 +3673,6 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       kb_clear_renders(event)
-   end
-)
-
----@param event EventData.CustomInputEvent
-local function kb_recalibrate_zoom(event)
-   local pindex = event.player_index
-   Zoom.fix_zoom(pindex)
-   Graphics.sync_build_cursor_graphics(pindex)
-   Speech.speak(pindex, { "fa.recalibrated" })
-end
-
-EventManager.on_event(
-   "fa-c-end",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      kb_recalibrate_zoom(event)
-   end
-)
-
----@param event EventData.CustomInputEvent
----@param level integer 0 = furthest, 1 = standard, 2 = closest
-local function kb_set_zoom_mode(event, level)
-   local pindex = event.player_index
-   local message
-   if level == 0 then
-      level = Zoom.MIN_ZOOM
-      message = "Set furthest zoom."
-   elseif level == 1 then
-      ---level is the value we want; leave it
-      message = "Set standard zoom."
-   elseif level == 2 then
-      level = Zoom.MAX_ZOOM
-      message = "Set closest zoom."
-   end
-
-   Zoom.set_zoom(level, pindex)
-   Graphics.sync_build_cursor_graphics(pindex)
-   Speech.speak(pindex, message)
-end
-
-EventManager.on_event(
-   "fa-a-z",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      kb_set_zoom_mode(event, 1)
-   end
-)
-
-EventManager.on_event(
-   "fa-as-z",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      kb_set_zoom_mode(event, 2)
-   end
-)
-
-EventManager.on_event(
-   "fa-ca-z",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      kb_set_zoom_mode(event, 0)
    end
 )
 

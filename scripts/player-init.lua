@@ -53,7 +53,6 @@ function mod.initialize(player)
    faplayer.previous_hand_item_name = faplayer.previous_hand_item_name or ""
    faplayer.last = faplayer.last or ""
    faplayer.last_indexed_ent = faplayer.last_indexed_ent or nil
-   faplayer.zoom = faplayer.zoom or 1
    faplayer.last_move_tick = faplayer.last_move_tick or 0
    faplayer.last_build_tick = faplayer.last_build_tick or 0
    faplayer.last_click_tick = faplayer.last_click_tick or 0

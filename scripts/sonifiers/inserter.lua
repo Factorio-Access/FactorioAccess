@@ -87,9 +87,7 @@ local function process_edge(edge, current_dist)
          fired = true
       end
    end
-   if current_dist > prev_dist then
-      edge.armed = false
-   end
+   if current_dist > prev_dist then edge.armed = false end
 
    return fired
 end
