@@ -1,10 +1,11 @@
-# 0.16.31 (2025.12.08)
+# 0.16.33 (2025-12-08)
 
 - Syntrax: move comments to /**/ becasue the game drops newlines on paste and we do not yet have a workaround
 - Syntrax: try to tell the player where to look when a group fails to palce
 - Be more verbose about entity statuses like "can't divide segments" by doing this in a generic way and maintaining a table of problematic ones
 - Start reading statuses of signals again
 - Fix a missing key localisation issue when telling the user that entities don't need rotating.
+- Fix the inserter sonifier to work when the mod is zipped
 
 # 0.16.30 (2025-12-06)
 
