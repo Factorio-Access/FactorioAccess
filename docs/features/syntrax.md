@@ -37,7 +37,7 @@ A Syntrax program consists of some number of words and brackets separated by whi
 example, `s s s` places 3 straight rails.  Whitespace is always required, save for as explained below in the chord
 section.
 
-Syntrax supports line comments `--` both at the end of lines and on lines by themselves.
+Syntrax supports block comments `/* comment */` which can appear anywhere in the code.
 
 The following commands do what the virtual train would do and correspond to virtual train keys:
 

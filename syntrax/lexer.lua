@@ -32,11 +32,8 @@ local MUNCHERS = {
    -- Whitepace.
    { "^%s+", false },
 
-   -- A comment, which happens to be at the end of the file.
-   { "^%-%-[^\n]*$", false },
-
-   -- A comment not at the end of the file.
-   { "^%-%-[^\n]*\n", false },
+   -- Block comment /* ... */ (non-greedy match)
+   { "^/%*.-%*/", false },
 
    -- (possible) identifiers: a set of letters, numbers, _.  Also (possible) numbers: an identifier that happens to be
    -- all digits.

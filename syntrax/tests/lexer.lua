@@ -22,13 +22,15 @@ function mod.TestSplittingPossibles()
 
    -- Some sequences of ascii come out right...
    check("abc def ghi", { "abc", "def", "ghi" })
-   -- Comments are ignored.
+   -- Block comments are ignored.
    check(
       [[abc
-def -- a comment
-ghi -- a comment at the end of the file]],
+def /* a comment */
+ghi /* another comment */]],
       { "abc", "def", "ghi" }
    )
+   -- Inline block comments work too.
+   check("abc /* comment */ def", { "abc", "def" })
 
    -- We break at punctuation.
    check("a$b cde", { "a", "$", "b", "cde" })

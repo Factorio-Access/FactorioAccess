@@ -103,10 +103,10 @@ function mod.TestParseComplexProgram()
 end
 
 function mod.TestParseWithComments()
-   -- Comments should be ignored by lexer
+   -- Block comments should be ignored by lexer
    local ast, err = Parser.parse([[
-      l s -- turn left then straight
-      [r s] x 2 -- repeat right-straight twice
+      l s /* turn left then straight */
+      [r s] x 2 /* repeat right-straight twice */
    ]])
    ast = assertParseSuccess(ast, err)
    lu.assertEquals(#ast.statements, 3)
