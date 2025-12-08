@@ -224,4 +224,58 @@ mod.INVENTORY_PRIORITIES = {
    rocket_silo_modules = 4, -- maps to crafter_modules
 }
 
+-- Entity statuses that should be announced in the brief cursor form, not just right bracket.
+-- These are error states or rarely-seen conditions that warrant immediate attention.
+---@type table<defines.entity_status, true>
+mod.VERBOSE_STATUSES = {
+   -- Error states
+   [defines.entity_status.broken] = true,
+   [defines.entity_status.cant_divide_segments] = true,
+   [defines.entity_status.disabled] = true,
+   [defines.entity_status.disabled_by_control_behavior] = true,
+   [defines.entity_status.disabled_by_script] = true,
+   [defines.entity_status.frozen] = true,
+
+   -- Output problems
+   [defines.entity_status.full_burnt_result_output] = true,
+   [defines.entity_status.full_output] = true,
+
+   -- Power problems
+   [defines.entity_status.low_power] = true,
+   [defines.entity_status.no_power] = true,
+   [defines.entity_status.not_plugged_in_electric_network] = true,
+
+   -- Resource/fuel/ingredient problems
+   [defines.entity_status.no_fuel] = true,
+   [defines.entity_status.no_ammo] = true,
+   [defines.entity_status.no_minable_resources] = true,
+   [defines.entity_status.missing_required_fluid] = true,
+   [defines.entity_status.no_ingredients] = true,
+   [defines.entity_status.no_input_fluid] = true,
+   [defines.entity_status.item_ingredient_shortage] = true,
+   [defines.entity_status.fluid_ingredient_shortage] = true,
+
+   -- Rail signal problems
+   [defines.entity_status.not_connected_to_rail] = true,
+
+   -- Path problems
+   [defines.entity_status.no_path] = true,
+
+   -- Pipe problems
+   [defines.entity_status.pipeline_overextended] = true,
+
+   -- Logistics problems
+   [defines.entity_status.out_of_logistic_network] = true,
+
+   -- Space/cargo problems
+   [defines.entity_status.not_connected_to_hub_or_pad] = true,
+   [defines.entity_status.not_enough_thrust] = true,
+
+   -- Misc problems
+   [defines.entity_status.marked_for_deconstruction] = true,
+   [defines.entity_status.recharging_after_power_outage] = true,
+   [defines.entity_status.recipe_not_researched] = true,
+   [defines.entity_status.no_filter] = true,
+}
+
 return mod

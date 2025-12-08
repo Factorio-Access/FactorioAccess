@@ -161,32 +161,6 @@ local function ent_info_power_production(ctx)
    end
 end
 
--- If the entity has a status which is super important, for example no power or
--- output full, tell the player.  These are things that we judge to be important
--- enough that checking status shouldn't be required.
----@param ctx fa.Info.EntInfoContext
-local function ent_info_important_statuses(ctx)
-   local ent = ctx.ent
-   local status = ent.status
-   local stat = defines.entity_status
-   if status ~= nil and status ~= stat.normal and status ~= stat.working then
-      if
-         status == stat.no_ingredients
-         or status == stat.no_input_fluid
-         or status == stat.no_minable_resources
-         or status == stat.item_ingredient_shortage
-         or status == stat.missing_required_fluid
-         or status == stat.no_ammo
-      then
-         ctx.message:fragment({ "fa.ent-info-input-missing" })
-      elseif status == stat.full_output or status == stat.full_burnt_result_output then
-         ctx.message:fragment({ "fa.ent-info-output-full" })
-      elseif status == defines.entity_status.pipeline_overextended then
-         ctx.message:fragment({ "entity-status.pipeline-overextended" })
-      end
-   end
-end
-
 -- "not connected to power" etc.
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_power_status(ctx)
@@ -233,6 +207,18 @@ local function ent_info_rail_signal_state(ctx)
          ctx.message:fragment({ "fa.ent-info-chain-signal-partially-open" })
       end
    end
+end
+
+-- Announces important entity statuses in the brief form.
+-- Only statuses in Consts.VERBOSE_STATUSES are announced here.
+---@param ctx fa.Info.EntInfoContext
+local function ent_info_verbose_status(ctx)
+   local ent = ctx.ent
+   local status = ent.status
+   if status == nil then return end
+   if not Consts.VERBOSE_STATUSES[status] then return end
+
+   ctx.message:fragment(Localising.entity_status_localised(status))
 end
 
 ---@param ctx fa.Info.EntInfoContext
@@ -1399,6 +1385,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    end
    run_handler(ent_info_spidertron)
    run_handler(ent_info_filters)
+   run_handler(ent_info_verbose_status)
 
    --Inserters: Explain held items, pickup and drop positions
    if ent.type == "inserter" then
@@ -1488,7 +1475,6 @@ function mod.ent_info(pindex, ent, is_scanner)
       if fuel_inv and fuel_inv.valid and fuel_inv.is_empty() then ctx.message:fragment(", Out of Fuel") end
    end
 
-   run_handler(ent_info_important_statuses)
    run_handler(ent_info_power_status)
 
    run_handler(ent_info_accumulator)
@@ -1784,12 +1770,9 @@ end
 ---@return boolean handled True if this handler added information to the message.
 local function ent_status_lookup(ctx)
    local ent = ctx.ent
-   local status_lookup = FaUtils.into_lookup(defines.entity_status)
-   status_lookup[23] = "full_burnt_result_output" --weird exception
-   local ent_status_id = ent.status
-   if ent_status_id ~= nil then
-      local ent_status_text = status_lookup[ent_status_id]
-      ctx.message:fragment({ "entity-status." .. ent_status_text:gsub("_", "-") })
+   local status = ent.status
+   if status ~= nil then
+      ctx.message:fragment(Localising.entity_status_localised(status))
       return true
    end
    return false
