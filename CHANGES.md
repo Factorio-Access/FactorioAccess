@@ -4,6 +4,7 @@
 - Syntrax: try to tell the player where to look when a group fails to palce
 - Be more verbose about entity statuses like "can't divide segments" by doing this in a generic way and maintaining a table of problematic ones
 - Start reading statuses of signals again
+- Fix a missing key localisation issue when telling the user that entities don't need rotating.
 
 # 0.16.30 (2025-12-06)
 

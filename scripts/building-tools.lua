@@ -4,7 +4,7 @@ local BuildDimensions = require("scripts.build-dimensions")
 local Consts = require("scripts.consts")
 local Electrical = require("scripts.electrical")
 local FaUtils = require("scripts.fa-utils")
-local localising = require("scripts.localising")
+local Localising = require("scripts.localising")
 local dirs = defines.direction
 local Graphics = require("scripts.graphics")
 local Speech = require("scripts.speech")
@@ -444,7 +444,10 @@ function mod.rotate_item_in_hand(event, forward)
       end
       return
    elseif stack and stack.valid_for_read and stack.valid and stack.prototype.place_result then
-      Speech.speak(pindex, { "fa.building-no-rotate-support", { "item-name." .. stack.name } })
+      Speech.speak(
+         pindex,
+         { "fa.building-no-rotate-support", Localising.get_localised_name_with_fallback(stack.prototype) }
+      )
       return
    end
 
@@ -849,7 +852,7 @@ function mod.build_preview_checks_info(stack, pindex)
          if relevant_fluid_north ~= nil then
             table.insert(result, {
                "fa.connection-fluid-at-direction",
-               localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_north]),
+               Localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_north]),
                { "fa.direction", dirs.north },
             })
             count = count + 1
@@ -857,7 +860,7 @@ function mod.build_preview_checks_info(stack, pindex)
          if relevant_fluid_east ~= nil then
             table.insert(result, {
                "fa.connection-fluid-at-direction",
-               localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_east]),
+               Localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_east]),
                { "fa.direction", dirs.east },
             })
             count = count + 1
@@ -865,7 +868,7 @@ function mod.build_preview_checks_info(stack, pindex)
          if relevant_fluid_south ~= nil then
             table.insert(result, {
                "fa.connection-fluid-at-direction",
-               localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_south]),
+               Localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_south]),
                { "fa.direction", dirs.south },
             })
             count = count + 1
@@ -873,7 +876,7 @@ function mod.build_preview_checks_info(stack, pindex)
          if relevant_fluid_west ~= nil then
             table.insert(result, {
                "fa.connection-fluid-at-direction",
-               localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_west]),
+               Localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_west]),
                { "fa.direction", dirs.west },
             })
             count = count + 1
@@ -931,7 +934,7 @@ function mod.build_preview_checks_info(stack, pindex)
          table.insert(result, {
             "fa.connection-connects-directly",
             { "fa.direction", face_dir },
-            localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_faced]),
+            Localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_faced]),
          })
       else
          table.insert(result, { "fa.connection-not-above-ground" })
@@ -1452,7 +1455,7 @@ function mod.identify_building_obstacle(pindex, area, ent_to_ignore)
    if obstacle_ent ~= nil then
       message:fragment({
          "fa.building-obstacle-in-way",
-         localising.get_localised_name_with_fallback(obstacle_ent),
+         Localising.get_localised_name_with_fallback(obstacle_ent),
          math.floor(obstacle_ent.position.x),
          math.floor(obstacle_ent.position.y),
       })
