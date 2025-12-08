@@ -25,13 +25,14 @@ function mod.get_planner_description(rail_planner_prototype)
 
    for _, rail_proto in ipairs(rails) do
       local name = rail_proto.name
-      if name:match("straight%-rail") then
+      local type = rail_proto.type
+      if type == "straight-rail" then
          description.straight_rail_name = name
-      elseif name:match("curved%-rail%-a") then
+      elseif type == "curved-rail-a" then
          description.curved_rail_a_name = name
-      elseif name:match("curved%-rail%-b") then
+      elseif type == "curved-rail-b" then
          description.curved_rail_b_name = name
-      elseif name:match("half%-diagonal%-rail") then
+      elseif type == "half-diagonal-rail" then
          description.half_diagonal_rail_name = name
       end
    end
