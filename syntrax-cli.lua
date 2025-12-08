@@ -148,7 +148,16 @@ local function print_ast(node, indent)
       if #node.statements == 0 then
          print(prefix .. "  (empty)")
       else
-         for i, stmt in ipairs(node.statements) do
+         for _, stmt in ipairs(node.statements) do
+            print_ast(stmt, indent + 1)
+         end
+      end
+   elseif node.type == Ast.NODE_TYPE.IMPLICIT_SEQUENCE then
+      print(prefix .. "implicit_sequence:")
+      if #node.statements == 0 then
+         print(prefix .. "  (empty)")
+      else
+         for _, stmt in ipairs(node.statements) do
             print_ast(stmt, indent + 1)
          end
       end
@@ -174,11 +183,31 @@ local function print_ast(node, indent)
       print(prefix .. "rpop")
    elseif node.type == Ast.NODE_TYPE.RESET then
       print(prefix .. "reset")
+   elseif node.type == Ast.NODE_TYPE.MARK then
+      print(prefix .. "mark")
+   elseif node.type == Ast.NODE_TYPE.SIGLEFT then
+      print(prefix .. "sigleft")
+   elseif node.type == Ast.NODE_TYPE.SIGRIGHT then
+      print(prefix .. "sigright")
+   elseif node.type == Ast.NODE_TYPE.CHAINLEFT then
+      print(prefix .. "chainleft")
+   elseif node.type == Ast.NODE_TYPE.CHAINRIGHT then
+      print(prefix .. "chainright")
+   elseif node.type == Ast.NODE_TYPE.SIG then
+      print(prefix .. "sig")
+   elseif node.type == Ast.NODE_TYPE.CHAIN then
+      print(prefix .. "chain")
+   elseif node.type == Ast.NODE_TYPE.SIGCHAIN then
+      print(prefix .. "sigchain")
+   elseif node.type == Ast.NODE_TYPE.CHAINSIG then
+      print(prefix .. "chainsig")
    elseif node.type == Ast.NODE_TYPE.REPETITION then
       print(prefix .. "repetition:")
       print(prefix .. "  count: " .. node.count)
       print(prefix .. "  body:")
       print_ast(node.body, indent + 2)
+   else
+      print(prefix .. "unknown: " .. tostring(node.type))
    end
 end
 
@@ -248,24 +277,36 @@ local function run_demo()
    assert(rails)
 
    -- Print results with new format
-   print(string.format("\nGenerated %d rail placements:", #rails))
-   for i, rail in ipairs(rails) do
-      print(
-         string.format(
-            "  Rail %d: %s at (%d, %d) dir=%d",
-            i,
-            rail.rail_type,
-            rail.position.x,
-            rail.position.y,
-            rail.placement_direction
-         )
-      )
+   print(string.format("\nGenerated %d placement groups:", #rails))
+   local placement_num = 0
+   for _, group in ipairs(rails) do
+      local first_alt = group[1]
+      for _, placement in ipairs(first_alt) do
+         placement_num = placement_num + 1
+         if placement.type == "rail" then
+            print(
+               string.format(
+                  "  Rail %d: %s at (%d, %d) dir=%d",
+                  placement_num,
+                  placement.rail_type,
+                  placement.position.x,
+                  placement.position.y,
+                  placement.placement_direction
+               )
+            )
+         end
+      end
    end
 
-   -- Summary by rail type
+   -- Summary by type
    local type_counts = {}
-   for _, rail in ipairs(rails) do
-      type_counts[rail.rail_type] = (type_counts[rail.rail_type] or 0) + 1
+   for _, group in ipairs(rails) do
+      local first_alt = group[1]
+      for _, placement in ipairs(first_alt) do
+         if placement.type == "rail" then
+            type_counts[placement.rail_type] = (type_counts[placement.rail_type] or 0) + 1
+         end
+      end
    end
    print("\nSummary by rail type:")
    for rail_type, count in pairs(type_counts) do
@@ -395,34 +436,61 @@ local function main(args)
    assert(rails)
 
    -- Show rails output
+   -- rails is now PlacementGroup[] where each group is alternatives (Placement[][])
    if options.output == "rails" or options.output == "all" then
       if not options.quiet then
-         print("=== Rails Output ===")
-         print(string.format("Generated %d rail placements:", #rails))
+         print("=== Placements Output ===")
+         print(string.format("Generated %d placement groups:", #rails))
       end
 
-      for i, rail in ipairs(rails) do
-         print(
-            string.format(
-               "Rail %d: %s at (%d, %d) dir=%d",
-               i,
-               rail.rail_type,
-               rail.position.x,
-               rail.position.y,
-               rail.placement_direction
-            )
-         )
+      local placement_num = 0
+      for _, group in ipairs(rails) do
+         -- Each group contains alternatives; show first alternative
+         local first_alt = group[1]
+         for _, placement in ipairs(first_alt) do
+            placement_num = placement_num + 1
+            if placement.type == "rail" then
+               print(
+                  string.format(
+                     "Rail %d: %s at (%d, %d) dir=%d",
+                     placement_num,
+                     placement.rail_type,
+                     placement.position.x,
+                     placement.position.y,
+                     placement.placement_direction
+                  )
+               )
+            elseif placement.type == "signal" then
+               local alt_count = #group
+               local alt_info = alt_count > 1 and string.format(" (%d alternatives)", alt_count) or ""
+               print(
+                  string.format(
+                     "Signal %d: %s at (%d, %d) dir=%d%s",
+                     placement_num,
+                     placement.signal_type,
+                     placement.position.x,
+                     placement.position.y,
+                     placement.direction,
+                     alt_info
+                  )
+               )
+            end
+         end
       end
 
       if not options.quiet then
-         -- Summary by rail type
+         -- Summary by type
          local type_counts = {}
-         for _, rail in ipairs(rails) do
-            type_counts[rail.rail_type] = (type_counts[rail.rail_type] or 0) + 1
+         for _, group in ipairs(rails) do
+            local first_alt = group[1]
+            for _, placement in ipairs(first_alt) do
+               local key = placement.type == "rail" and placement.rail_type or placement.signal_type
+               type_counts[key] = (type_counts[key] or 0) + 1
+            end
          end
-         print("\nSummary by rail type:")
-         for rail_type, count in pairs(type_counts) do
-            print(string.format("  %s: %d", rail_type, count))
+         print("\nSummary by type:")
+         for item_type, count in pairs(type_counts) do
+            print(string.format("  %s: %d", item_type, count))
          end
       end
    end
