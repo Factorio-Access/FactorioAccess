@@ -208,6 +208,34 @@ local function ent_info_gate_connection_point(ctx)
 end
 
 ---@param ctx fa.Info.EntInfoContext
+local function ent_info_rail_signal_state(ctx)
+   local ent = ctx.ent
+   if ent.type == "rail-signal" then
+      local state = ent.signal_state
+      if state == defines.signal_state.open then
+         ctx.message:fragment({ "fa.ent-info-signal-open" })
+      elseif state == defines.signal_state.closed then
+         ctx.message:fragment({ "fa.ent-info-signal-closed" })
+      elseif state == defines.signal_state.reserved then
+         ctx.message:fragment({ "fa.ent-info-signal-reserved" })
+      elseif state == defines.signal_state.reserved_by_circuit_network then
+         ctx.message:fragment({ "fa.ent-info-signal-reserved-by-circuit" })
+      end
+   elseif ent.type == "rail-chain-signal" then
+      local state = ent.chain_signal_state
+      if state == defines.chain_signal_state.all_open then
+         ctx.message:fragment({ "fa.ent-info-chain-signal-all-open" })
+      elseif state == defines.chain_signal_state.none then
+         ctx.message:fragment({ "fa.ent-info-chain-signal-none" })
+      elseif state == defines.chain_signal_state.none_open then
+         ctx.message:fragment({ "fa.ent-info-chain-signal-none-open" })
+      elseif state == defines.chain_signal_state.partially_open then
+         ctx.message:fragment({ "fa.ent-info-chain-signal-partially-open" })
+      end
+   end
+end
+
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_accumulator(ctx)
    local ent = ctx.ent
    if ent.type == "accumulator" then
@@ -1348,6 +1376,7 @@ function mod.ent_info(pindex, ent, is_scanner)
 
    run_handler(ent_info_train_stop)
    run_handler(ent_info_mining_drill_output_chute)
+   run_handler(ent_info_rail_signal_state)
 
    run_handler(ent_info_gate_connection_point)
    run_handler(ent_info_marked_for_upgrade_deconstruct)
