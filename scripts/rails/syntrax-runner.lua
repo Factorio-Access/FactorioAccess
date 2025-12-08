@@ -65,6 +65,21 @@ local function convert_placement(placement, planner_description)
    end
 end
 
+---Format an error message for a failed placement
+---@param group_idx integer
+---@param placement syntrax.vm.Placement
+---@return string
+local function format_placement_error(group_idx, placement)
+   local entity_type = placement.type == "rail" and placement.rail_type or placement.signal_type
+   return string.format(
+      "Failed to place group %d, %s at (%d, %d)",
+      group_idx,
+      entity_type,
+      placement.position.x,
+      placement.position.y
+   )
+end
+
 ---Try to place an alternative (array of placements) as ghosts
 ---@param pindex integer
 ---@param surface LuaSurface
@@ -73,6 +88,7 @@ end
 ---@param build_mode defines.build_mode
 ---@return LuaEntity[]|nil ghosts All ghosts (created + existing) if successful, nil if failed
 ---@return LuaEntity[]|nil created_ghosts Ghosts we created (for cleanup tracking)
+---@return syntrax.vm.Placement|nil failed_placement The placement that failed, if any
 local function try_alternative(pindex, surface, alternative, planner_description, build_mode)
    local all_ghosts = {}
    local created_ghosts = {}
@@ -97,7 +113,7 @@ local function try_alternative(pindex, surface, alternative, planner_description
       if not new_ghosts or #new_ghosts == 0 then
          -- Failed to place - clean up only ghosts WE created
          destroy_ghosts(created_ghosts)
-         return nil, nil
+         return nil, nil, syntrax_placement
       end
 
       local new_ghost = new_ghosts[1]
@@ -131,18 +147,22 @@ function mod.execute(opts)
 
    for group_idx, group in ipairs(placement_groups) do
       local group_ghosts, group_created = nil, nil
+      local last_failed_placement = nil
 
       -- Try each alternative in order
       for _, alternative in ipairs(group) do
-         group_ghosts, group_created =
+         local failed
+         group_ghosts, group_created, failed =
             try_alternative(opts.pindex, player.surface, alternative, opts.planner_description, opts.build_mode)
          if group_ghosts then break end
+         if failed then last_failed_placement = failed end
       end
 
       if not group_ghosts then
          -- No alternative worked - clean up only what we created
          destroy_ghosts(all_created)
-         return nil, string.format("Failed to place group %d - no valid alternative", group_idx)
+         if last_failed_placement then return nil, format_placement_error(group_idx, last_failed_placement) end
+         return nil, string.format("Failed to place group %d", group_idx)
       end
 
       for _, g in ipairs(group_ghosts) do
