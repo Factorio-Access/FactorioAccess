@@ -25,6 +25,20 @@ LauncherAudio.patch()
 -- Stop a sound by ID
 LauncherAudio.stop(sound_id):send(pindex)
 
+-- Play with low-pass filter (muffled sound)
+LauncherAudio.patch()
+   :file("sounds/ambient.flac")
+   :lpf(500)  -- 500 Hz cutoff
+   :filter_gain(1.0)  -- fully filtered
+   :send(pindex)
+
+-- Crossfade from filtered to unfiltered over time
+LauncherAudio.patch()
+   :file("sounds/reveal.flac")
+   :lpf(800)
+   :filter_gain(LauncherAudio.envelope():linear(0, 1.0):linear(2, 0.0):build())
+   :send(pindex)
+
 -- Batch multiple commands
 LauncherAudio.compound()
    :add(LauncherAudio.patch():file("a.flac"))
@@ -64,6 +78,10 @@ local mod = {}
 
 ---@alias fa.LauncherAudio.Source fa.LauncherAudio.EncodedBytesSource|fa.LauncherAudio.WaveformSource
 
+---@class fa.LauncherAudio.LpfConfig
+---@field cutoff number Frequency threshold in Hz (immutable after creation)
+---@field enabled boolean Whether LPF is active
+
 ---@class fa.LauncherAudio.PatchCommand
 ---@field command "patch"
 ---@field id string
@@ -73,6 +91,8 @@ local mod = {}
 ---@field looping boolean?
 ---@field playback_rate number?
 ---@field start_time number?
+---@field lpf fa.LauncherAudio.LpfConfig?
+---@field filter_gain fa.LauncherAudio.Parameter?
 
 ---@class fa.LauncherAudio.StopCommand
 ---@field command "stop"
@@ -148,6 +168,8 @@ end
 ---@field _looping boolean?
 ---@field _playback_rate number?
 ---@field _start_time number?
+---@field _lpf fa.LauncherAudio.LpfConfig?
+---@field _filter_gain fa.LauncherAudio.Parameter?
 PatchBuilder = {}
 local PatchBuilder_meta = { __index = PatchBuilder }
 
@@ -297,6 +319,30 @@ function PatchBuilder:start_time(seconds)
    return self
 end
 
+---Configure low-pass filter (immutable after sound creation)
+---@param cutoff number Frequency threshold in Hz
+---@param enabled boolean? Whether LPF is active, defaults to true
+---@return fa.LauncherAudio.PatchBuilder
+function PatchBuilder:lpf(cutoff, enabled)
+   self._lpf = {
+      cutoff = cutoff,
+      enabled = enabled ~= false,
+   }
+   return self
+end
+
+---Set filter gain for crossfading between filtered/unfiltered (0.0 = unfiltered, 1.0 = fully filtered)
+---@param value number|fa.LauncherAudio.EnvelopeBuilder|fa.LauncherAudio.EnvelopePoint[]
+---@return fa.LauncherAudio.PatchBuilder
+function PatchBuilder:filter_gain(value)
+   if type(value) == "table" and value.build then
+      self._filter_gain = value:build()
+   else
+      self._filter_gain = value
+   end
+   return self
+end
+
 ---Build the command structure
 ---@return fa.LauncherAudio.PatchCommand
 function PatchBuilder:build()
@@ -312,6 +358,8 @@ function PatchBuilder:build()
    if self._looping ~= nil then cmd.looping = self._looping end
    if self._playback_rate then cmd.playback_rate = self._playback_rate end
    if self._start_time then cmd.start_time = self._start_time end
+   if self._lpf then cmd.lpf = self._lpf end
+   if self._filter_gain then cmd.filter_gain = self._filter_gain end
 
    return cmd
 end

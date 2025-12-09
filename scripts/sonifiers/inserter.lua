@@ -8,6 +8,7 @@ over an inserter.
 
 local FaUtils = require("scripts.fa-utils")
 local LauncherAudio = require("scripts.launcher-audio")
+local SoundModel = require("scripts.sound-model")
 local StorageManager = require("scripts.storage-manager")
 
 local mod = {}
@@ -48,16 +49,22 @@ local inserter_storage = StorageManager.declare_storage_module("inserter_sonifie
    ephemeral_state_version = 1,
 })
 
----Play the pickup sound
+---Play the pickup sound with spatial audio
 ---@param pindex integer
-local function play_pickup_sound(pindex)
-   LauncherAudio.patch(PICKUP_SOUND_ID):file(PICKUP_FILE):volume(PICKUP_VOLUME):send(pindex)
+---@param params fa.SoundModel.DirectionalParams
+local function play_pickup_sound(pindex, params)
+   local builder = LauncherAudio.patch(PICKUP_SOUND_ID):file(PICKUP_FILE):volume(PICKUP_VOLUME):pan(params.pan)
+   SoundModel.apply_lpf(builder, params)
+   builder:send(pindex)
 end
 
----Play the dropoff sound
+---Play the dropoff sound with spatial audio
 ---@param pindex integer
-local function play_dropoff_sound(pindex)
-   LauncherAudio.patch(DROPOFF_SOUND_ID):file(DROPOFF_FILE):volume(DROPOFF_VOLUME):send(pindex)
+---@param params fa.SoundModel.DirectionalParams
+local function play_dropoff_sound(pindex, params)
+   local builder = LauncherAudio.patch(DROPOFF_SOUND_ID):file(DROPOFF_FILE):volume(DROPOFF_VOLUME):pan(params.pan)
+   SoundModel.apply_lpf(builder, params)
+   builder:send(pindex)
 end
 
 ---Reset state for a player
@@ -137,9 +144,21 @@ function mod.on_tick()
 
       -- Play sounds (pickup takes priority)
       if pickup_fired then
-         play_pickup_sound(pindex)
+         -- Pan based on direction from inserter center to pickup position
+         local inserter_pos = selected.position
+         local pickup_pos = selected.pickup_position
+         local dx = pickup_pos.x - inserter_pos.x
+         local dy = pickup_pos.y - inserter_pos.y
+         local params = SoundModel.map_relative_position(dx, dy)
+         play_pickup_sound(pindex, params)
       elseif dropoff_fired then
-         play_dropoff_sound(pindex)
+         -- Pan based on direction from inserter center to dropoff position
+         local inserter_pos = selected.position
+         local drop_pos = selected.drop_position
+         local dx = drop_pos.x - inserter_pos.x
+         local dy = drop_pos.y - inserter_pos.y
+         local params = SoundModel.map_relative_position(dx, dy)
+         play_dropoff_sound(pindex, params)
       end
 
       ::continue::
