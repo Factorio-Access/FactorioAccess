@@ -71,6 +71,7 @@ local TrainSounds = require("scripts.sonifiers.train")
 local InserterSonifier = require("scripts.sonifiers.inserter")
 local GridSonifier = require("scripts.sonifiers.grid-sonifier")
 local CraftingBackend = require("scripts.sonifiers.grid-backends.crafting")
+local EnemyRadar = require("scripts.sonifiers.combat.enemy-radar")
 local Zoom = require("scripts.zoom")
 
 -- UI modules (required for registration with router)
@@ -359,6 +360,8 @@ function on_tick(event)
          if settings.get_player_settings(player.index)[SETTING_NAMES.SONIFICATION_CRAFTING].value then
             GridSonifier.tick(player.index)
          end
+         -- Enemy radar sonification (combat)
+         EnemyRadar.tick(player.index)
       end
    end
 
