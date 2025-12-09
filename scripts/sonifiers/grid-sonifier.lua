@@ -186,9 +186,10 @@ end
 ---@param right number
 ---@param bottom number
 local function process_events(pindex, events, left, top, right, bottom)
-   -- Cursor is at center of visible area
-   local center_x = (left + right) / 2
-   local center_y = (top + bottom) / 2
+   -- Get reference position from sound model (cursor or character depending on mode)
+   local ref_pos = SoundModel.get_reference_position(pindex)
+   local center_x = ref_pos.x
+   local center_y = ref_pos.y
 
    -- Reference distance for attenuation: 1/4 of zoom (half-tiles from center to edge)
    local half_width = (right - left) / 2

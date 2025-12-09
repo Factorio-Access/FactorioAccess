@@ -4,11 +4,43 @@
 local util = require("util")
 local FaUtils = require("scripts.fa-utils")
 local Localising = require("scripts.localising")
+local SoundModel = require("scripts.sound-model")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
+local StorageManager = require("scripts.storage-manager")
 local Viewpoint = require("scripts.viewpoint")
 
 local mod = {}
+
+---@class fa.Combat.State
+---@field combat_mode boolean Whether combat mode is active
+
+---@type table<integer, fa.Combat.State>
+local combat_storage = StorageManager.declare_storage_module("combat", {
+   combat_mode = false,
+})
+
+---Check if combat mode is active for a player
+---@param pindex integer
+---@return boolean
+function mod.is_combat_mode(pindex)
+   return combat_storage[pindex].combat_mode
+end
+
+---Toggle combat mode for a player
+---@param pindex integer
+function mod.toggle_combat_mode(pindex)
+   local state = combat_storage[pindex]
+   state.combat_mode = not state.combat_mode
+
+   if state.combat_mode then
+      SoundModel.set_reference_point(pindex, SoundModel.ReferencePoint.CHARACTER)
+      Speech.speak(pindex, { "fa.combat-mode-enabled" })
+   else
+      SoundModel.set_reference_point(pindex, SoundModel.ReferencePoint.CURSOR)
+      Speech.speak(pindex, { "fa.combat-mode-disabled" })
+   end
+end
 
 --One-click repair pack usage.
 function mod.repair_pack_used(ent, pindex)

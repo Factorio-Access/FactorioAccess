@@ -3869,6 +3869,11 @@ EventManager.on_event("fa-cas-m", function(event)
    router:open_ui(UiRouter.UI_NAMES.SETTINGS)
 end)
 
+-- Toggle combat mode (changes sound reference point from cursor to character)
+EventManager.on_event("fa-cs-i", function(event)
+   Combat.toggle_combat_mode(event.player_index)
+end)
+
 -- Blueprint book navigation at world level (when not in a menu)
 ---@param pindex integer
 ---@param offset integer 1 for next, -1 for previous

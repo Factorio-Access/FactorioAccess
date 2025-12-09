@@ -130,10 +130,13 @@ function mod.tick(pindex)
 
    local state = radar_storage[pindex]
 
-   -- Get visible area
+   -- Get visible area (for entity search bounds)
    local left, top, right, bottom = get_visible_area(pindex)
-   local center_x = (left + right) / 2
-   local center_y = (top + bottom) / 2
+   local search_center_x = (left + right) / 2
+   local search_center_y = (top + bottom) / 2
+
+   -- Get reference position from sound model (cursor or character depending on mode)
+   local ref_pos = SoundModel.get_reference_position(pindex)
 
    -- Reference distance for attenuation
    local half_width = (right - left) / 2
@@ -142,7 +145,7 @@ function mod.tick(pindex)
    -- Find enemy units in visible area
    local surface = player.surface
    local enemies = surface.find_enemy_units(
-      { x = center_x, y = center_y },
+      { x = search_center_x, y = search_center_y },
       half_width * 1.5, -- Search slightly beyond visible area
       player.force
    )
@@ -179,10 +182,10 @@ function mod.tick(pindex)
       end
    end
 
-   -- Play sounds for current clusters
+   -- Play sounds for current clusters relative to reference position
    for sound_id, cluster in pairs(current_sounds) do
-      local dx = cluster.center_x - center_x
-      local dy = cluster.center_y - center_y
+      local dx = cluster.center_x - ref_pos.x
+      local dy = cluster.center_y - ref_pos.y
       local params = SoundModel.map_relative_position(dx, dy, ref_distance)
 
       local builder = build_cluster_sound(sound_id, params)

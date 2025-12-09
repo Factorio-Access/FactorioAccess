@@ -4,12 +4,65 @@ Sound Model - Directional audio model for spatial sound.
 Maps relative position to audio parameters:
 - Pan: sine of angle off forward axis (normalized x component)
 - LPF: enabled when target is behind the listener (positive y in Factorio)
+
+Also manages the sound reference point (cursor vs character) for different contexts.
 ]]
+
+local StorageManager = require("scripts.storage-manager")
+local Viewpoint = require("scripts.viewpoint")
 
 local mod = {}
 
+---@enum fa.SoundModel.ReferencePoint
+mod.ReferencePoint = {
+   CURSOR = "cursor",
+   CHARACTER = "character",
+}
+
+---@class fa.SoundModel.State
+---@field reference_point fa.SoundModel.ReferencePoint
+
+---@type table<integer, fa.SoundModel.State>
+local sound_model_storage = StorageManager.declare_storage_module("sound_model", {
+   reference_point = mod.ReferencePoint.CURSOR,
+})
+
 -- Default LPF cutoff for "behind player" filtering
 local DEFAULT_LPF_CUTOFF = 800
+
+---Set the sound reference point for a player
+---@param pindex integer
+---@param reference_point fa.SoundModel.ReferencePoint
+function mod.set_reference_point(pindex, reference_point)
+   sound_model_storage[pindex].reference_point = reference_point
+end
+
+---Get the current sound reference point setting for a player
+---@param pindex integer
+---@return fa.SoundModel.ReferencePoint
+function mod.get_reference_point_setting(pindex)
+   return sound_model_storage[pindex].reference_point
+end
+
+---Get the current reference position for spatial audio calculations.
+---Returns the cursor position or character position depending on the current setting.
+---@param pindex integer
+---@return fa.Point
+function mod.get_reference_position(pindex)
+   local state = sound_model_storage[pindex]
+   local player = game.get_player(pindex)
+
+   if state.reference_point == mod.ReferencePoint.CHARACTER then
+      if player and player.character and player.character.valid then
+         local pos = player.character.position
+         return { x = pos.x, y = pos.y }
+      end
+   end
+
+   -- Default to cursor position
+   local viewpoint = Viewpoint.get_viewpoint(pindex)
+   return viewpoint:get_cursor_pos()
+end
 
 ---@class fa.SoundModel.DirectionalParams
 ---@field pan number Pan value (-1 to 1)
