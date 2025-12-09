@@ -16,9 +16,8 @@ local mod = {}
 mod.ENTITY_TYPES = Consts.CRAFTING_MACHINES
 
 -- Sound configuration
-local SOUND_DURATION = 0.1
-local SOUND_FADEOUT = 0.05
-local SOUND_VOLUME = 0.3
+local SOUND_FILE = "sonifiers/grid/crafting_machine/complete.ogg"
+local SOUND_VOLUME = 1.0
 
 ---@class fa.GridSonifier.CraftingBackend: fa.GridSonifier.Backend
 ---@field tracked_entities table<integer, fa.GridSonifier.CraftingBackend.TrackedEntity>
@@ -59,22 +58,13 @@ end
 
 ---Build sound for a crafting completion event
 ---@param id string
----@param u number
----@param v number
+---@param params fa.SoundModel.DirectionalParams
 ---@return fa.LauncherAudio.PatchBuilder
-local function build_crafting_sound(id, u, v)
-   local pan, pitch = SoundModel.map_uv_to_pitch_pan(u, v)
-
-   local builder = LauncherAudio.patch(id)
-
-   -- Use triangle wave for north (v < 0), sine for south
-   if v < 0 then
-      builder:triangle(pitch)
-   else
-      builder:sine(pitch)
-   end
-
-   return builder:duration(SOUND_DURATION):fade_out(SOUND_FADEOUT):volume(SOUND_VOLUME):pan(pan)
+local function build_crafting_sound(id, params)
+   local volume = SOUND_VOLUME * (params.gain or 1)
+   local builder = LauncherAudio.patch(id):file(SOUND_FILE):volume(volume):pan(params.pan)
+   SoundModel.apply_lpf(builder, params)
+   return builder
 end
 
 ---Tick handler - checks for products_finished increments and emits events

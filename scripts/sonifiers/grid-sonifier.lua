@@ -10,6 +10,7 @@ at large scales while maintaining precision at close zoom levels.
 
 local GridConsts = require("scripts.sonifiers.grid-consts")
 local LauncherAudio = require("scripts.launcher-audio")
+local SoundModel = require("scripts.sound-model")
 local StorageManager = require("scripts.storage-manager")
 local TH = require("scripts.table-helpers")
 local Viewpoint = require("scripts.viewpoint")
@@ -20,7 +21,7 @@ local mod = {}
 ---@class fa.GridSonifier.Event
 ---@field x number World X coordinate
 ---@field y number World Y coordinate
----@field sound_builder fun(id: string, u: number, v: number): fa.LauncherAudio.PatchBuilder
+---@field sound_builder fun(id: string, params: fa.SoundModel.DirectionalParams): fa.LauncherAudio.PatchBuilder
 ---@field deduplication_key string
 ---@field grid fa.GridSonifier.Grid
 ---@field unit_number integer
@@ -185,6 +186,14 @@ end
 ---@param right number
 ---@param bottom number
 local function process_events(pindex, events, left, top, right, bottom)
+   -- Cursor is at center of visible area
+   local center_x = (left + right) / 2
+   local center_y = (top + bottom) / 2
+
+   -- Reference distance for attenuation: 1/4 of zoom (half-tiles from center to edge)
+   local half_width = (right - left) / 2
+   local ref_distance = half_width / 4
+
    -- Group events by grid cell [cell_x][cell_y][dedup_key] -> event[]
    local cells = TH.defaulting_table()
 
@@ -217,10 +226,14 @@ local function process_events(pindex, events, left, top, right, bottom)
             for i, event in ipairs(cell_events) do
                if not use_unit_number and i > GridConsts.EVENTS_PER_CELL_LIMIT then break end
 
-               local u, v = world_to_uv(event.x, event.y, left, top, right, bottom)
                local sound_id = build_sound_id(cell_x, cell_y, dedup_key, i, event.unit_number, use_unit_number)
 
-               local builder = event.sound_builder(sound_id, u, v)
+               -- Compute directional params from event position relative to cursor
+               local dx = event.x - center_x
+               local dy = event.y - center_y
+               local params = SoundModel.map_relative_position(dx, dy, ref_distance)
+
+               local builder = event.sound_builder(sound_id, params)
                compound:add(builder)
                has_sounds = true
             end
