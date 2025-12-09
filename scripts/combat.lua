@@ -2,14 +2,10 @@
 --Does not include event handlers, guns and equipment maanagement
 
 local util = require("util")
-local Equipment = require("scripts.equipment")
 local FaUtils = require("scripts.fa-utils")
-local Graphics = require("scripts.graphics")
 local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
-local Mouse = require("scripts.mouse")
-local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
 
 local mod = {}
@@ -138,105 +134,6 @@ function mod.repair_area(radius_in, pindex)
       tostring(radius),
       tostring(packs_used),
    })
-end
-
---Plays enemy proximity alert sounds. Frequency is determined by distance andmode, and intensity is determined by the threat level.
-function mod.check_and_play_enemy_alert_sound(mode_in)
-   for pindex, player in pairs(players) do
-      local mode = mode_in or 1
-      local p = game.get_player(pindex)
-      if p ~= nil and p.valid then
-         local nearest_enemy =
-            p.surface.find_nearest_enemy({ position = p.position, max_distance = 100, force = p.force })
-         local dist = -1
-         if nearest_enemy ~= nil and nearest_enemy.valid then
-            dist = math.floor(util.distance(nearest_enemy.position, p.position))
-         else
-            return
-         end
-         --Attempt to detect if west or east
-         local diffx = nearest_enemy.position.x - p.position.x
-         local diffy = nearest_enemy.position.y - p.position.y
-         local x_offset = 0
-         if math.abs(diffx) > 2 * math.abs(diffy) then
-            --Counts as east or west
-            if diffx > 0 then
-               x_offset = 7
-            elseif diffx < 0 then
-               x_offset = -7
-            end
-         end
-         local pos = { x = p.position.x + x_offset, y = p.position.y }
-
-         --Play sounds according tomode
-         if mode == 1 then -- Nearest enemy is far (lowest freq)
-            if dist < 100 then p.play_sound({ path = "alert-enemy-presence-low", position = pos }) end
-            --Additional alert if there are more than 5 enemies nearby
-            local enemies = p.surface.find_enemy_units(p.position, 25, p.force)
-            if #enemies > 5 then
-               p.play_sound({ path = "alert-enemy-presence-high", position = pos })
-            else
-               for i, enemy in ipairs(enemies) do
-                  --Also check for strong enemies: big/huge biters, huge spitters, medium or larger worms, not spawners
-                  if enemy.max_health > 360 then
-                     p.play_sound({ path = "alert-enemy-presence-high", position = pos })
-                     return
-                  end
-               end
-            end
-         elseif mode == 2 then -- Nearest enemy is closer (medium freq)
-            if dist < 50 then p.play_sound({ path = "alert-enemy-presence-low", position = pos }) end
-            --Additional alert if there are more than 10 enemies nearby
-            local enemies = p.surface.find_enemy_units(p.position, 25, p.force)
-            if #enemies > 10 then p.play_sound({ path = "alert-enemy-presence-high", position = pos }) end
-         elseif mode == 3 then -- Nearest enemy is too close (highest freq)
-            if dist < 25 then p.play_sound({ path = "alert-enemy-presence-low", position = pos }) end
-         end
-      end
-   end
-end
-
---Locks the cursor to the nearest enemy within 50 tiles. Also plays a sound if the enemy is within range of the gun in hand.
-function mod.aim_gun_at_nearest_enemy(pindex, enemy_in)
-   local router = UiRouter.get_router(pindex)
-
-   local p = game.get_player(pindex)
-   if p == nil or p.character == nil or p.character.valid == false then return end
-   local vp = Viewpoint.get_viewpoint(pindex)
-   local cursor_pos = vp:get_cursor_pos()
-   local gun_index = p.character.selected_gun_index
-   local guns_inv = p.get_inventory(defines.inventory.character_guns)
-   local ammo_inv = game.get_player(pindex).get_inventory(defines.inventory.character_ammo)
-   local gun_stack = guns_inv[gun_index]
-   local ammo_stack = ammo_inv[gun_index]
-   local enemy = enemy_in
-   --Return if missing a gun or ammo
-   if gun_stack == nil or not gun_stack.valid_for_read or not gun_stack.valid then return false end
-   if ammo_stack == nil or not ammo_stack.valid_for_read or not ammo_stack.valid then return false end
-
-   --Check for nearby enemies
-   if enemy_in == nil or not enemy_in.valid then
-      enemy = p.surface.find_nearest_enemy({ position = p.position, max_distance = 50, force = p.force })
-   end
-   if enemy == nil or not enemy.valid then return false end
-   --Play a sound when the enemy is within range of the gun
-   local range = gun_stack.prototype.attack_parameters.range
-   local dist = util.distance(p.position, enemy.position)
-   if dist < range and p.character.can_shoot(enemy, enemy.position) then
-      p.play_sound({ path = "player-aim-locked", volume_modifier = 0.5 })
-   end
-   --Return if there is a gun and ammo combination that already aims by itself
-   if gun_stack.name == "pistol" or gun_stack.name == "submachine-gun" and dist < 10 then --or ammo_stack.name == "rocket" or ammo_stack.name == "explosive-rocket" then
-      --**Note: normal/explosive rockets only fire when they lock on a target anyway. Meanwhile the SMG auto-aims only when close enough
-      return true
-   end
-   --If in range, move the cursor onto the enemy to aim the gun
-   if dist < range then
-      vp:set_cursor_pos({ x = enemy.position.x, y = enemy.position.y })
-      Mouse.move_mouse_pointer(enemy.position, pindex)
-      Graphics.draw_cursor_highlight(pindex, nil, nil, true)
-   end
-   return true
 end
 
 ---Get the throw range for a capsule or grenade.
@@ -414,66 +311,6 @@ function mod.smart_aim_grenades_and_capsules(pindex, draw_circles_in)
 
    p.play_sound({ path = "utility/cannot_build" })
    return nil
-end
-
---Checks if the conditions are valid for shooting an atomic bomb
---laterdo review
-function mod.run_atomic_bomb_checks(pindex)
-   local p = game.get_player(pindex)
-   if p.character == nil then return end
-   local vp = Viewpoint.get_viewpoint(pindex)
-   local cursor_pos = vp:get_cursor_pos()
-   --local main_inv = p.get_inventory(defines.inventory.character_main)
-   --local ammos_count = #ammo_inv - ammo_inv.count_empty_stacks()
-   local ammo_inv = p.get_inventory(defines.inventory.character_ammo)
-   local selected_ammo = ammo_inv[p.character.selected_gun_index]
-   local target_pos = p.shooting_state.position
-   local abort_missle = false
-   ---@type LocalisedString
-   local abort_message = ""
-
-   if not selected_ammo or not selected_ammo.valid_for_read then return end
-
-   --Stop checking if atomic bombs are not equipped
-   if selected_ammo.name ~= "atomic-bomb" then return end
-
-   --Stop checking if vanilla mode
-   if storage.players[pindex].vanilla_mode == true then return end
-
-   --If the target position is shown as the center of the screen where the player stands, it means the cursor is not on screen
-   if target_pos == nil or util.distance(p.position, target_pos) < 1.5 then
-      target_pos = cursor_pos
-      p.shooting_state.position = cursor_pos
-      if selected_ammo.name == "atomic-bomb" then
-         abort_missle = true
-         abort_message = { "fa.combat-aiming-zoom-alert" }
-      end
-   end
-
-   --If the target position is shown as the center of the screen where the player stands, it means the cursor is not on screen
-   local aim_dist_1 = util.distance(p.position, target_pos)
-   local aim_dist_2 = util.distance(p.position, cursor_pos)
-   if aim_dist_1 < 1.5 then
-      abort_missle = true
-      abort_message = { "fa.combat-aiming-zoom-alert" }
-   elseif util.distance(target_pos, cursor_pos) > 2 then
-      abort_missle = true
-      abort_message = { "fa.combat-aiming-sync-alert" }
-   end
-   if aim_dist_1 < 35 or aim_dist_2 < 35 then
-      abort_missle = true
-      abort_message = { "fa.combat-range-too-close-alert" }
-   end
-   --p.print("abort check")
-
-   --Take actions to abort the firing
-   if abort_missle then
-      --Warn the player
-      p.play_sound({ path = "utility/cannot_build" })
-      Speech.speak(pindex, abort_message)
-   else
-      --Suppress alerts for 10 seconds?
-   end
 end
 
 return mod

@@ -1,10 +1,9 @@
 --[[
 Audio Cues
 Centralized management of various audio cues that need to be played periodically.
-Handles enemy alerts, driving alerts, mining sounds, and crafting sounds.
+Handles driving alerts, mining sounds, and crafting sounds.
 ]]
 
-local Combat = require("scripts.combat")
 local Driving = require("scripts.driving")
 local PlayerMiningTools = require("scripts.player-mining-tools")
 local sounds = require("scripts.ui.sounds")
@@ -57,11 +56,6 @@ end
 
 ---Initialize default audio cues
 function mod.on_init()
-   -- Enemy alerts at different frequencies
-   mod.register_cue("enemy_3", Combat.check_and_play_enemy_alert_sound, 15, 1, false, { 3 })
-   mod.register_cue("enemy_2", Combat.check_and_play_enemy_alert_sound, 30, 1, false, { 2 })
-   mod.register_cue("enemy_1", Combat.check_and_play_enemy_alert_sound, 60, 1, false, { 1 })
-
    -- Driving alerts (cascading checks)
    mod.register_cue("driving", function(pindex, tick)
       local check_further = Driving.check_and_play_driving_alert_sound(pindex, tick, 1)
@@ -82,15 +76,9 @@ function mod.on_init()
       if p ~= nil and p.mining_state.mining == true then PlayerMiningTools.play_mining_sound(pindex) end
    end, 30, 8, true)
 
-   -- Combat aiming and crafting sounds
-   mod.register_cue("combat_crafting", function(pindex, tick)
+   -- Crafting sounds
+   mod.register_cue("crafting", function(pindex, tick)
       local p = game.get_player(pindex)
-
-      -- Enemy aiming
-      local enemy = p.surface.find_nearest_enemy({ position = p.position, max_distance = 50, force = p.force })
-      if enemy ~= nil and enemy.valid then Combat.aim_gun_at_nearest_enemy(pindex, enemy) end
-
-      -- Crafting sound
       if p.character and p.crafting_queue ~= nil and #p.crafting_queue > 0 and p.crafting_queue_size > 0 then
          sounds.play_crafting(pindex)
       end

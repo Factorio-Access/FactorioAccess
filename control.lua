@@ -3810,17 +3810,6 @@ EventManager.on_event(
    end
 )
 
---Runs before shooting a weapon to check for selected atomic bombs and the target distance
-EventManager.on_event(
-   "fa-space",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local pindex = event.player_index
-
-      Combat.run_atomic_bomb_checks(pindex)
-   end
-)
-
 --Toggle whether rockets are launched automatically when they have cargo
 EventManager.on_event(
    "fa-c-space",
