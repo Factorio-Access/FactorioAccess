@@ -11,20 +11,29 @@
 ---@field maximum_value number?
 ---@field allowed_values string[]?
 
+local mod = {}
+
+mod.SETTING_NAMES = {
+   SONIFICATION_INSERTER = "fa-inserter-sonification",
+   SONIFICATION_CRAFTING = "fa-crafting-sonification",
+}
+
 ---@type fa.SettingDecl[]
-return {
+mod.declarations = {
    {
-      name = "fa-inserter-sonification",
+      name = mod.SETTING_NAMES.SONIFICATION_INSERTER,
       type = "bool-setting",
       setting_type = "runtime-per-user",
       default_value = true,
       order = "a",
    },
    {
-      name = "fa-crafting-sonification",
+      name = mod.SETTING_NAMES.SONIFICATION_CRAFTING,
       type = "bool-setting",
       setting_type = "runtime-per-user",
-      default_value = false,
+      default_value = true,
       order = "b",
    },
 }
+
+return mod

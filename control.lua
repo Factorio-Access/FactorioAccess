@@ -26,6 +26,8 @@ local BumpDetection = require("scripts.bump-detection")
 local CircuitNetworks = require("scripts.circuit-network")
 local Combat = require("scripts.combat")
 local Consts = require("scripts.consts")
+local SettingDecls = require("scripts.settings-decls")
+local SETTING_NAMES = SettingDecls.SETTING_NAMES
 local Crafting = require("scripts.crafting")
 local CursorChanges = require("scripts.cursor-changes")
 local Driving = require("scripts.driving")
@@ -354,7 +356,7 @@ function on_tick(event)
          -- Check for pending logistics announcements
          WorkerRobots.on_tick(player.index)
          -- Grid-based sonification (crafting machines etc)
-         if settings.get_player_settings(player.index)["fa-crafting-sonification"].value then
+         if settings.get_player_settings(player.index)[SETTING_NAMES.SONIFICATION_CRAFTING].value then
             GridSonifier.tick(player.index)
          end
       end

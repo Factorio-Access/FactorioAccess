@@ -40,9 +40,7 @@ function mod.map_relative_position(dx, dy, ref_distance)
 
    -- Distance attenuation: inverse distance falloff
    local gain = 1.0
-   if ref_distance then
-      gain = ref_distance / (ref_distance + dist)
-   end
+   if ref_distance then gain = ref_distance / (ref_distance + dist) end
 
    return {
       pan = pan,

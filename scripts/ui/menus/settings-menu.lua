@@ -12,7 +12,7 @@ local function build_settings_menu(ctx)
    local builder = FormBuilder.FormBuilder.new()
    local player_settings = settings.get_player_settings(pindex)
 
-   for _, decl in ipairs(setting_decls) do
+   for _, decl in ipairs(setting_decls.declarations) do
       local name = decl.name
 
       if decl.type == "bool-setting" then

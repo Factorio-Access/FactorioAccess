@@ -8,8 +8,11 @@ over an inserter.
 
 local FaUtils = require("scripts.fa-utils")
 local LauncherAudio = require("scripts.launcher-audio")
+local SettingDecls = require("scripts.settings-decls")
 local SoundModel = require("scripts.sound-model")
 local StorageManager = require("scripts.storage-manager")
+
+local SETTING_NAMES = SettingDecls.SETTING_NAMES
 
 local mod = {}
 
@@ -110,7 +113,7 @@ function mod.on_tick()
          goto continue
       end
 
-      if not settings.get_player_settings(pindex)["fa-inserter-sonification"].value then
+      if not settings.get_player_settings(pindex)[SETTING_NAMES.SONIFICATION_INSERTER].value then
          reset_state(state)
          goto continue
       end
