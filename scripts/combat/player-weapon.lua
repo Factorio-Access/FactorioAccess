@@ -5,12 +5,12 @@ Provides functions to query weapon range, aiming type, and danger zones
 for the player's currently equipped weapons and ammo.
 ]]
 
-local WeaponAmmoData = require("scripts.combat.weapon-ammo-data")
+local CombatData = require("scripts.combat.combat-data")
 
 local mod = {}
 
 -- Re-export the AimingType enum for convenience
-mod.AimingType = WeaponAmmoData.AimingType
+mod.AimingType = CombatData.AimingType
 
 ---Get the player's character entity, handling vehicles
 ---@param pindex integer
@@ -79,7 +79,7 @@ function mod.is_holding_weapon_capsule(pindex)
    if proto.type ~= "capsule" then return false, nil end
 
    -- Get capsule data to check if it's weapon-like
-   local capsule_data = WeaponAmmoData.get_capsule_data(cursor.name)
+   local capsule_data = CombatData.get_capsule_data(cursor.name)
    if not capsule_data then return false, nil end
 
    -- Consider it weapon-like if it can deal damage or spawns combat entities
@@ -101,8 +101,8 @@ function mod.get_hard_min_range(pindex)
 
    if not gun_name then return nil end
 
-   local gun_data = WeaponAmmoData.get_gun_data(gun_name)
-   local ammo_data = ammo_name and WeaponAmmoData.get_ammo_data(ammo_name)
+   local gun_data = CombatData.get_gun_data(gun_name)
+   local ammo_data = ammo_name and CombatData.get_ammo_data(ammo_name)
 
    -- Hard min range comes from gun's attack_parameters.min_range
    -- or from ammo's min_range
@@ -123,7 +123,7 @@ end
 ---@param gun_name string
 ---@return number? min_range
 function mod.get_hard_min_range_from_prototype(gun_name)
-   local gun_data = WeaponAmmoData.get_gun_data(gun_name)
+   local gun_data = CombatData.get_gun_data(gun_name)
    return gun_data and gun_data.min_range
 end
 
@@ -135,7 +135,7 @@ function mod.get_soft_min_range(pindex)
    local ammo_name = mod.get_selected_ammo(pindex)
    if not ammo_name then return nil end
 
-   local ammo_data = WeaponAmmoData.get_ammo_data(ammo_name)
+   local ammo_data = CombatData.get_ammo_data(ammo_name)
    if not ammo_data then return nil end
 
    return ammo_data.soft_min_range
@@ -145,7 +145,7 @@ end
 ---@param ammo_name string
 ---@return number? soft_min_range
 function mod.get_soft_min_range_from_prototype(ammo_name)
-   local ammo_data = WeaponAmmoData.get_ammo_data(ammo_name)
+   local ammo_data = CombatData.get_ammo_data(ammo_name)
    return ammo_data and ammo_data.soft_min_range
 end
 
@@ -153,7 +153,7 @@ end
 ---@param capsule_name string
 ---@return number? soft_min_range
 function mod.get_soft_min_range_from_capsule(capsule_name)
-   local capsule_data = WeaponAmmoData.get_capsule_data(capsule_name)
+   local capsule_data = CombatData.get_capsule_data(capsule_name)
    return capsule_data and capsule_data.soft_min_range
 end
 
@@ -166,14 +166,14 @@ function mod.get_max_range(pindex)
 
    if not gun_name then return nil end
 
-   local gun_data = WeaponAmmoData.get_gun_data(gun_name)
+   local gun_data = CombatData.get_gun_data(gun_name)
    if not gun_data then return nil end
 
    local base_range = gun_data.max_range
 
    -- Apply ammo range modifier if present
    if ammo_name then
-      local ammo_data = WeaponAmmoData.get_ammo_data(ammo_name)
+      local ammo_data = CombatData.get_ammo_data(ammo_name)
       if ammo_data and ammo_data.range_modifier then base_range = base_range * ammo_data.range_modifier end
    end
 
@@ -184,7 +184,7 @@ end
 ---@param gun_name string
 ---@return number? max_range
 function mod.get_max_range_from_prototype(gun_name)
-   local gun_data = WeaponAmmoData.get_gun_data(gun_name)
+   local gun_data = CombatData.get_gun_data(gun_name)
    return gun_data and gun_data.max_range
 end
 
@@ -192,7 +192,7 @@ end
 ---@param capsule_name string
 ---@return number? max_range
 function mod.get_max_range_from_capsule(capsule_name)
-   local capsule_data = WeaponAmmoData.get_capsule_data(capsule_name)
+   local capsule_data = CombatData.get_capsule_data(capsule_name)
    return capsule_data and capsule_data.max_range
 end
 
@@ -203,7 +203,7 @@ function mod.get_aiming_type(pindex)
    local ammo_name = mod.get_selected_ammo(pindex)
    if not ammo_name then return nil end
 
-   local ammo_data = WeaponAmmoData.get_ammo_data(ammo_name)
+   local ammo_data = CombatData.get_ammo_data(ammo_name)
    if not ammo_data then return nil end
 
    return ammo_data.target_type
@@ -213,7 +213,7 @@ end
 ---@param ammo_name string
 ---@return fa.AimingType? aiming_type
 function mod.get_aiming_type_from_prototype(ammo_name)
-   local ammo_data = WeaponAmmoData.get_ammo_data(ammo_name)
+   local ammo_data = CombatData.get_ammo_data(ammo_name)
    return ammo_data and ammo_data.target_type
 end
 
@@ -232,7 +232,7 @@ function mod.can_damage_self(pindex)
    local ammo_name = mod.get_selected_ammo(pindex)
    if not ammo_name then return false end
 
-   local ammo_data = WeaponAmmoData.get_ammo_data(ammo_name)
+   local ammo_data = CombatData.get_ammo_data(ammo_name)
    if not ammo_data then return false end
 
    return ammo_data.can_damage_self or false
@@ -242,7 +242,7 @@ end
 ---@param ammo_name string
 ---@return boolean can_damage
 function mod.can_damage_self_from_prototype(ammo_name)
-   local ammo_data = WeaponAmmoData.get_ammo_data(ammo_name)
+   local ammo_data = CombatData.get_ammo_data(ammo_name)
    return ammo_data and ammo_data.can_damage_self or false
 end
 
@@ -250,7 +250,7 @@ end
 ---@param capsule_name string
 ---@return boolean can_damage
 function mod.can_damage_self_from_capsule(capsule_name)
-   local capsule_data = WeaponAmmoData.get_capsule_data(capsule_name)
+   local capsule_data = CombatData.get_capsule_data(capsule_name)
    return capsule_data and capsule_data.can_damage_self or false
 end
 
@@ -261,7 +261,7 @@ function mod.get_area_damage_radius(pindex)
    local ammo_name = mod.get_selected_ammo(pindex)
    if not ammo_name then return nil end
 
-   local ammo_data = WeaponAmmoData.get_ammo_data(ammo_name)
+   local ammo_data = CombatData.get_ammo_data(ammo_name)
    if not ammo_data or not ammo_data.has_area_damage then return nil end
 
    return ammo_data.area_radius
@@ -271,7 +271,7 @@ end
 ---@param ammo_name string
 ---@return number? radius
 function mod.get_area_damage_radius_from_prototype(ammo_name)
-   local ammo_data = WeaponAmmoData.get_ammo_data(ammo_name)
+   local ammo_data = CombatData.get_ammo_data(ammo_name)
    return ammo_data and ammo_data.has_area_damage and ammo_data.area_radius or nil
 end
 
@@ -279,7 +279,7 @@ end
 ---@param capsule_name string
 ---@return number? radius
 function mod.get_area_damage_radius_from_capsule(capsule_name)
-   local capsule_data = WeaponAmmoData.get_capsule_data(capsule_name)
+   local capsule_data = CombatData.get_capsule_data(capsule_name)
    return capsule_data and capsule_data.has_area_damage and capsule_data.area_radius or nil
 end
 
@@ -287,7 +287,7 @@ end
 ---@param capsule_name string
 ---@return string? action_type "throw", "use-on-self", etc.
 function mod.get_capsule_action_type(capsule_name)
-   local capsule_data = WeaponAmmoData.get_capsule_data(capsule_name)
+   local capsule_data = CombatData.get_capsule_data(capsule_name)
    return capsule_data and capsule_data.action_type
 end
 
@@ -295,7 +295,7 @@ end
 ---@param capsule_name string
 ---@return boolean heals
 function mod.capsule_heals_player(capsule_name)
-   local capsule_data = WeaponAmmoData.get_capsule_data(capsule_name)
+   local capsule_data = CombatData.get_capsule_data(capsule_name)
    return capsule_data and capsule_data.heals_player or false
 end
 
@@ -303,7 +303,7 @@ end
 ---@param capsule_name string
 ---@return string? entity_name
 function mod.get_capsule_spawned_entity(capsule_name)
-   local capsule_data = WeaponAmmoData.get_capsule_data(capsule_name)
+   local capsule_data = CombatData.get_capsule_data(capsule_name)
    return capsule_data and capsule_data.spawns_entity
 end
 

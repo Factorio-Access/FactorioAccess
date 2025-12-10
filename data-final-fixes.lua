@@ -60,9 +60,9 @@ local CombinatorBoundingBoxes = require("scripts.combinator-bounding-boxes")
 CombinatorBoundingBoxes.build_map()
 
 --[[
-Weapon and ammo data for combat utilities.
-Extracts targeting type, range limits, and area damage info from prototypes.
+Combat data extraction.
+Extracts targeting type, range limits, area damage info, and enemy stats from prototypes.
 ]]
 
-local WeaponAmmoData = require("scripts.combat.weapon-ammo-data")
-WeaponAmmoData.build_map()
+local CombatData = require("scripts.combat.combat-data")
+CombatData.build_map()

@@ -1,10 +1,10 @@
 --[[
-Weapon and ammo data extraction.
+Combat data extraction.
 
 This module is used both at data-final-fixes stage (to extract prototype data)
 and at runtime (to access the computed data).
 
-At data stage, call build_map() to extract and store weapon/ammo properties.
+At data stage, call build_map() to extract and store weapon/ammo/enemy properties.
 At runtime, call load_map() to get the precomputed data.
 ]]
 
@@ -13,7 +13,7 @@ local Functools = require("scripts.functools")
 
 local mod = {}
 
-local MAP_NAME = "weapon-ammo-data"
+local MAP_NAME = "combat-data"
 
 ---@enum fa.AimingType
 mod.AimingType = {
@@ -50,22 +50,37 @@ mod.AimingType = {
 ---@field heals_player boolean Whether this heals the player
 ---@field spawns_entity string? Entity spawned by this capsule (combat robots, etc.)
 
----@class fa.WeaponAmmoMap
+---@class fa.EnemyData
+---@field entity_type string "unit", "turret", "unit-spawner", "spider-unit", "segmented-unit"
+---@field max_health number Maximum health
+---@field attack_range number? Attack range (nil for spawners)
+---@field attack_damage number? Base damage per hit (nil for spawners)
+---@field damage_type string? Type of damage dealt (nil for spawners)
+---@field damage_modifier number? Multiplier on damage (from attack_parameters)
+---@field attack_type string? "projectile", "stream", "beam" (nil for spawners)
+---@field movement_speed number? Movement speed (nil for turrets/spawners)
+
+---@class fa.CombatDataMap
 ---@field guns table<string, fa.GunData>
 ---@field ammo table<string, fa.AmmoData>
 ---@field capsules table<string, fa.CapsuleData>
+---@field enemies table<string, fa.EnemyData>
 
 ---@class fa.TriggerAnalysis
 ---@field radius number?
 ---@field has_area boolean
 ---@field force string?
+---@field total_damage number? Total damage from all damage effects
+---@field damage_type string? Primary damage type
 
----Recursively search triggers for area damage and compute the maximum radius
+---Recursively search triggers for area damage, damage values, and compute the maximum radius
 ---@param triggers table[]?
 ---@param force_condition string?
 ---@return fa.TriggerAnalysis
 local function analyze_triggers(triggers, force_condition)
-   if not triggers then return { radius = nil, has_area = false, force = force_condition } end
+   if not triggers then
+      return { radius = nil, has_area = false, force = force_condition, total_damage = nil, damage_type = nil }
+   end
 
    -- Handle single trigger vs array of triggers
    if triggers.type then triggers = { triggers } end
@@ -73,6 +88,8 @@ local function analyze_triggers(triggers, force_condition)
    local max_radius = nil
    local has_area = false
    local final_force = force_condition
+   local total_damage = 0
+   local primary_damage_type = nil
 
    for _, trigger in ipairs(triggers) do
       -- Check force condition
@@ -91,12 +108,20 @@ local function analyze_triggers(triggers, force_condition)
          if deliveries.type then deliveries = { deliveries } end
 
          for _, delivery in ipairs(deliveries) do
-            -- Check target_effects for nested triggers
+            -- Check target_effects for damage and nested triggers
             if delivery.target_effects then
                local effects = delivery.target_effects
                if effects.type then effects = { effects } end
 
                for _, effect in ipairs(effects) do
+                  -- Extract damage from damage effects
+                  if effect.type == "damage" and effect.damage then
+                     local dmg = effect.damage.amount or 0
+                     total_damage = total_damage + dmg
+                     -- Track the first damage type as primary
+                     if not primary_damage_type and effect.damage.type then primary_damage_type = effect.damage.type end
+                  end
+
                   if effect.type == "nested-result" and effect.action then
                      -- Recurse into nested action
                      local nested = analyze_triggers(effect.action, final_force)
@@ -107,6 +132,8 @@ local function analyze_triggers(triggers, force_condition)
                         end
                      end
                      if nested.force then final_force = nested.force end
+                     if nested.total_damage then total_damage = total_damage + nested.total_damage end
+                     if nested.damage_type and not primary_damage_type then primary_damage_type = nested.damage_type end
                   end
                end
             end
@@ -114,7 +141,13 @@ local function analyze_triggers(triggers, force_condition)
       end
    end
 
-   return { radius = max_radius, has_area = has_area, force = final_force }
+   return {
+      radius = max_radius,
+      has_area = has_area,
+      force = final_force,
+      total_damage = total_damage > 0 and total_damage or nil,
+      damage_type = primary_damage_type,
+   }
 end
 
 ---Check if triggers can damage the player themselves (not just "their team")
@@ -151,12 +184,51 @@ local function extract_attack_params(attack_params)
    }
 end
 
----Build the weapon/ammo data map in data stage
+---Extract damage info from attack parameters
+---@param attack_params table?
+---@return number? damage, string? damage_type
+local function extract_attack_damage(attack_params)
+   if not attack_params then return nil, nil end
+
+   local ammo_type = attack_params.ammo_type
+   if not ammo_type then return nil, nil end
+
+   local action = ammo_type.action
+   if not action then return nil, nil end
+
+   local analysis = analyze_triggers(action, nil)
+   return analysis.total_damage, analysis.damage_type
+end
+
+---Process enemy entity prototypes
+---@param entity_type string
+---@param protos table
+---@param enemies table
+local function process_enemy_prototypes(entity_type, protos, enemies)
+   for name, proto in pairs(protos or {}) do
+      local attack_params = proto.attack_parameters
+      local attack_damage, damage_type = extract_attack_damage(attack_params)
+
+      enemies[name] = {
+         entity_type = entity_type,
+         max_health = proto.max_health or 0,
+         attack_range = attack_params and attack_params.range or nil,
+         attack_damage = attack_damage,
+         damage_type = damage_type,
+         damage_modifier = attack_params and attack_params.damage_modifier or nil,
+         attack_type = attack_params and attack_params.type or nil,
+         movement_speed = proto.speed or proto.movement_speed or nil,
+      }
+   end
+end
+
+---Build the combat data map in data stage
 function mod.build_map()
-   local weapon_data = {
+   local combat_data = {
       guns = {},
       ammo = {},
       capsules = {},
+      enemies = {},
    }
 
    -- Process all gun items
@@ -174,7 +246,7 @@ function mod.build_map()
          end
       end
 
-      weapon_data.guns[name] = {
+      combat_data.guns[name] = {
          attack_parameters_type = params.attack_type,
          min_range = params.min_range,
          max_range = params.max_range,
@@ -269,7 +341,7 @@ function mod.build_map()
          local soft_min = nil
          if has_area and area_radius and can_damage_self(force_cond) then soft_min = area_radius end
 
-         weapon_data.ammo[name] = {
+         combat_data.ammo[name] = {
             target_type = target_type,
             min_range = ammo_type.min_range,
             max_range = ammo_type.range or 0,
@@ -400,7 +472,7 @@ function mod.build_map()
             -- Artillery targeting flare
          end
 
-         weapon_data.capsules[name] = {
+         combat_data.capsules[name] = {
             action_type = action_type,
             min_range = min_range,
             max_range = max_range,
@@ -414,16 +486,23 @@ function mod.build_map()
       end
    end
 
-   DataToRuntimeMap.build(MAP_NAME, weapon_data)
+   -- Process enemy entity prototypes
+   process_enemy_prototypes("unit", data.raw["unit"], combat_data.enemies)
+   process_enemy_prototypes("turret", data.raw["turret"], combat_data.enemies)
+   process_enemy_prototypes("unit-spawner", data.raw["unit-spawner"], combat_data.enemies)
+   process_enemy_prototypes("spider-unit", data.raw["spider-unit"], combat_data.enemies)
+   process_enemy_prototypes("segmented-unit", data.raw["segmented-unit"], combat_data.enemies)
+
+   DataToRuntimeMap.build(MAP_NAME, combat_data)
 end
 
----@type fun(): fa.WeaponAmmoMap
+---@type fun(): fa.CombatDataMap
 local load_map_cached = Functools.cached(function()
    return DataToRuntimeMap.load(MAP_NAME)
 end)
 
----Load the weapon/ammo data map at runtime (memoized)
----@return fa.WeaponAmmoMap
+---Load the combat data map at runtime (memoized)
+---@return fa.CombatDataMap
 function mod.load_map()
    return load_map_cached()
 end
@@ -450,6 +529,14 @@ end
 function mod.get_capsule_data(name)
    local map = mod.load_map()
    return map.capsules[name]
+end
+
+---Get enemy data by prototype name
+---@param name string
+---@return fa.EnemyData?
+function mod.get_enemy_data(name)
+   local map = mod.load_map()
+   return map.enemies[name]
 end
 
 return mod
