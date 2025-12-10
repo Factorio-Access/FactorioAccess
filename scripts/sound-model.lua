@@ -110,7 +110,7 @@ end
 function mod.apply_lpf(builder, params, cutoff)
    cutoff = cutoff or DEFAULT_LPF_CUTOFF
    builder:lpf(cutoff)
-   builder:filter_gain(params.lpf and 0.5 or 0.0)
+   builder:filter_gain(params.lpf and 1.0 or 0.0)
    return builder
 end
 

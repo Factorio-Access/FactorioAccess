@@ -6,11 +6,9 @@ cluster's centroid. Sound IDs are stable based on the minimum unit number in eac
 group, providing consistent audio even as enemies move.
 ]]
 
-local GridConsts = require("scripts.sonifiers.grid-consts")
 local LauncherAudio = require("scripts.launcher-audio")
 local SoundModel = require("scripts.sound-model")
 local StorageManager = require("scripts.storage-manager")
-local Viewpoint = require("scripts.viewpoint")
 local Zoom = require("scripts.zoom")
 
 local mod = {}
@@ -19,18 +17,37 @@ local mod = {}
 local CLUSTER_THRESHOLD = 2
 local CLUSTER_THRESHOLD_SQ = CLUSTER_THRESHOLD * CLUSTER_THRESHOLD
 
--- Sound configuration (reusing crafting machine sound for prototype)
-local SOUND_FILE = "sonifiers/grid/crafting_machine/complete.ogg"
+local SOUND_FILE = "sonifiers/combat/enemy.ogg"
 local SOUND_VOLUME = 0.8
 
--- Tick interval (every tick for responsive combat feedback)
-local TICK_INTERVAL = 1
+-- Tick interval: 4 times per second (60 ticks / 4 = 15 ticks)
+local TICK_INTERVAL = 15
+
+-- Fraction of enemies to ping each interval (random subset)
+local ENEMY_SAMPLE_FRACTION = 0.5
+
+-- Health-based pitch scaling (higher health = higher pitch, like a gauge)
+local BASE_HEALTH = 15 -- Small biter health (reference point)
+local PITCH_SCALE = 0.18 -- How much log(health ratio) affects pitch
+local MIN_PITCH = 0.7 -- Lowest pitch (small enemies)
+local MAX_PITCH = 1.5 -- Highest pitch (behemoths)
+
+---Calculate pitch based on max health
+---@param max_health number
+---@return number
+local function health_to_pitch(max_health)
+   if max_health <= 0 then return 1.0 end
+   local log_ratio = math.log(max_health / BASE_HEALTH)
+   local pitch = 1.0 + PITCH_SCALE * log_ratio
+   return math.max(MIN_PITCH, math.min(MAX_PITCH, pitch))
+end
 
 ---@class fa.EnemyRadar.Cluster
 ---@field center_x number
 ---@field center_y number
 ---@field count integer
 ---@field min_unit_number integer
+---@field max_health number Highest max_health of any enemy in cluster
 
 ---@class fa.EnemyRadar.State
 ---@field active_sounds table<string, true> Sound IDs currently playing
@@ -46,6 +63,20 @@ end
 local radar_storage = StorageManager.declare_storage_module("enemy_radar", make_default_state, {
    ephemeral_state_version = 1,
 })
+
+---Randomly sample a fraction of enemies
+---@param enemies LuaEntity[]
+---@param fraction number Fraction to keep (0-1)
+---@return LuaEntity[]
+local function sample_enemies(enemies, fraction)
+   if #enemies == 0 or fraction >= 1 then return enemies end
+
+   local sampled = {}
+   for _, enemy in ipairs(enemies) do
+      if math.random() < fraction then sampled[#sampled + 1] = enemy end
+   end
+   return sampled
+end
 
 ---Leader-based clustering of enemy positions
 ---@param enemies LuaEntity[]
@@ -63,6 +94,7 @@ local function cluster_enemies(enemies)
 
    for _, enemy in ipairs(enemies) do
       local pos = enemy.position
+      local enemy_max_health = enemy.max_health
       local found_cluster = false
 
       -- Try to join an existing cluster
@@ -76,6 +108,8 @@ local function cluster_enemies(enemies)
             cluster.center_x = (cluster.center_x * old_count + pos.x) / cluster.count
             cluster.center_y = (cluster.center_y * old_count + pos.y) / cluster.count
             -- min_unit_number stays the same since we sorted ascending
+            -- Track the strongest enemy in the cluster
+            if enemy_max_health > cluster.max_health then cluster.max_health = enemy_max_health end
             found_cluster = true
             break
          end
@@ -88,6 +122,7 @@ local function cluster_enemies(enemies)
             center_y = pos.y,
             count = 1,
             min_unit_number = enemy.unit_number,
+            max_health = enemy_max_health,
          }
       end
    end
@@ -95,26 +130,26 @@ local function cluster_enemies(enemies)
    return clusters
 end
 
----Get the visible area based on cursor position and zoom
+---Get the search area centered on the sound model reference point (cursor or character)
 ---@param pindex integer
 ---@return number left, number top, number right, number bottom
-local function get_visible_area(pindex)
-   local viewpoint = Viewpoint.get_viewpoint(pindex)
-   local cursor_pos = viewpoint:get_cursor_pos()
+local function get_search_area(pindex)
+   local ref_pos = SoundModel.get_reference_position(pindex)
    local tiles = Zoom.get_current_zoom_tiles(pindex)
 
    local half_tiles = tiles / 2
 
-   return cursor_pos.x - half_tiles, cursor_pos.y - half_tiles, cursor_pos.x + half_tiles, cursor_pos.y + half_tiles
+   return ref_pos.x - half_tiles, ref_pos.y - half_tiles, ref_pos.x + half_tiles, ref_pos.y + half_tiles
 end
 
 ---Build sound for a cluster
 ---@param id string
 ---@param params fa.SoundModel.DirectionalParams
+---@param pitch number
 ---@return fa.LauncherAudio.PatchBuilder
-local function build_cluster_sound(id, params)
+local function build_cluster_sound(id, params, pitch)
    local volume = SOUND_VOLUME * (params.gain or 1)
-   local builder = LauncherAudio.patch(id):file(SOUND_FILE):volume(volume):pan(params.pan)
+   local builder = LauncherAudio.patch(id):file(SOUND_FILE):volume(volume):pan(params.pan):playback_rate(pitch)
    SoundModel.apply_lpf(builder, params)
    return builder
 end
@@ -130,27 +165,32 @@ function mod.tick(pindex)
 
    local state = radar_storage[pindex]
 
-   -- Get visible area (for entity search bounds)
-   local left, top, right, bottom = get_visible_area(pindex)
-   local search_center_x = (left + right) / 2
-   local search_center_y = (top + bottom) / 2
-
    -- Get reference position from sound model (cursor or character depending on mode)
    local ref_pos = SoundModel.get_reference_position(pindex)
+
+   -- Get search area centered on reference position
+   local left, top, right, bottom = get_search_area(pindex)
 
    -- Reference distance for attenuation
    local half_width = (right - left) / 2
    local ref_distance = half_width / 4
 
-   -- Find enemy units in visible area
+   -- Find enemy units in search area
    local surface = player.surface
    local enemies = surface.find_enemy_units(
-      { x = search_center_x, y = search_center_y },
+      ref_pos,
       half_width * 1.5, -- Search slightly beyond visible area
       player.force
    )
 
-   -- Filter to only enemies within visible bounds
+   -- Also find enemy turrets (worms)
+   local turrets = surface.find_entities_filtered({
+      area = { { left, top }, { right, bottom } },
+      type = "turret",
+      force = "enemy",
+   })
+
+   -- Filter units to only those within visible bounds
    local visible_enemies = {}
    for _, enemy in ipairs(enemies) do
       if enemy.valid then
@@ -161,8 +201,16 @@ function mod.tick(pindex)
       end
    end
 
-   -- Cluster the enemies
-   local clusters = cluster_enemies(visible_enemies)
+   -- Add turrets (already filtered by area)
+   for _, turret in ipairs(turrets) do
+      if turret.valid then visible_enemies[#visible_enemies + 1] = turret end
+   end
+
+   -- Sample a random subset of enemies for this tick
+   local sampled_enemies = sample_enemies(visible_enemies, ENEMY_SAMPLE_FRACTION)
+
+   -- Cluster the sampled enemies
+   local clusters = cluster_enemies(sampled_enemies)
 
    -- Build sound IDs for current clusters
    local current_sounds = {}
@@ -187,8 +235,9 @@ function mod.tick(pindex)
       local dx = cluster.center_x - ref_pos.x
       local dy = cluster.center_y - ref_pos.y
       local params = SoundModel.map_relative_position(dx, dy, ref_distance)
+      local pitch = health_to_pitch(cluster.max_health)
 
-      local builder = build_cluster_sound(sound_id, params)
+      local builder = build_cluster_sound(sound_id, params, pitch)
       compound:add(builder)
       has_commands = true
    end

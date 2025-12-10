@@ -16,6 +16,8 @@ local mod = {}
 mod.SETTING_NAMES = {
    SONIFICATION_INSERTER = "fa-inserter-sonification",
    SONIFICATION_CRAFTING = "fa-crafting-sonification",
+   SONIFICATION_COMBAT_ENEMIES = "fa-combat-enemy-sonification",
+   SONIFICATION_COMBAT_SPAWNERS = "fa-combat-spawner-sonification",
 }
 
 ---@type fa.SettingDecl[]
@@ -33,6 +35,20 @@ mod.declarations = {
       setting_type = "runtime-per-user",
       default_value = true,
       order = "b",
+   },
+   {
+      name = mod.SETTING_NAMES.SONIFICATION_COMBAT_ENEMIES,
+      type = "bool-setting",
+      setting_type = "runtime-per-user",
+      default_value = true,
+      order = "c",
+   },
+   {
+      name = mod.SETTING_NAMES.SONIFICATION_COMBAT_SPAWNERS,
+      type = "bool-setting",
+      setting_type = "runtime-per-user",
+      default_value = true,
+      order = "d",
    },
 }
 

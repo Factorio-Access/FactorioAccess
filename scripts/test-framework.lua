@@ -212,6 +212,10 @@ end
 function mod.is_test_save()
    if not game then return false end
 
+   do
+      return false
+   end
+
    local surface = game.surfaces[1]
    if not surface then return false end
 
