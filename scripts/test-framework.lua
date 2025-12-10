@@ -55,6 +55,7 @@ local test_files = {
    "entity-ui-test", -- Test generic entity UI system
    "entity-selection-test", -- Test stable entity ordering (issue #265)
    "rail-grid-adjustment-test", -- Test that TestSurface matches game rail grid adjustment
+   "weapon-ammo-utils-test", -- Test weapon/ammo property detection
 }
 
 -- Test execution state
