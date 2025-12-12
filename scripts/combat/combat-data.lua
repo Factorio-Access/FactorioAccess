@@ -166,6 +166,46 @@ local function can_damage_self(force_condition)
    return false
 end
 
+---Analyze a smoke-with-trigger entity's action for area damage info
+---@param smoke_name string
+---@return fa.TriggerAnalysis
+local function analyze_smoke_entity(smoke_name)
+   local smoke_proto = data.raw["smoke-with-trigger"] and data.raw["smoke-with-trigger"][smoke_name]
+   if not smoke_proto or not smoke_proto.action then
+      return { radius = nil, has_area = false, force = nil, total_damage = nil, damage_type = nil }
+   end
+   return analyze_triggers(smoke_proto.action, nil)
+end
+
+---Search triggers for create-smoke effects and return the smoke entity name
+---@param triggers table[]?
+---@return string? smoke_entity_name
+local function find_smoke_entity_in_triggers(triggers)
+   if not triggers then return nil end
+
+   -- Handle single trigger vs array
+   if triggers.type then triggers = { triggers } end
+
+   for _, trigger in ipairs(triggers) do
+      if trigger.action_delivery then
+         local deliveries = trigger.action_delivery
+         if deliveries.type then deliveries = { deliveries } end
+
+         for _, delivery in ipairs(deliveries) do
+            if delivery.target_effects then
+               local effects = delivery.target_effects
+               if effects.type then effects = { effects } end
+
+               for _, effect in ipairs(effects) do
+                  if effect.type == "create-smoke" and effect.entity_name then return effect.entity_name end
+               end
+            end
+         end
+      end
+   end
+   return nil
+end
+
 ---@class fa.AttackParamsData
 ---@field min_range number?
 ---@field max_range number
@@ -334,6 +374,19 @@ function mod.build_map()
                   end
                end
                if final_analysis.force then force_cond = final_analysis.force end
+
+               -- Check if the projectile creates a smoke-with-trigger entity
+               local smoke_name = find_smoke_entity_in_triggers(proj_proto.action)
+               if smoke_name then
+                  local smoke_analysis = analyze_smoke_entity(smoke_name)
+                  if smoke_analysis.has_area then
+                     has_area = true
+                     if smoke_analysis.radius and (not area_radius or smoke_analysis.radius > area_radius) then
+                        area_radius = smoke_analysis.radius
+                     end
+                  end
+                  if smoke_analysis.force then force_cond = smoke_analysis.force end
+               end
             end
          end
 
@@ -426,6 +479,19 @@ function mod.build_map()
                            end
                         end
                         if proj_analysis.force then force_cond = proj_analysis.force end
+
+                        -- Check if the projectile creates a smoke-with-trigger entity
+                        local smoke_name = find_smoke_entity_in_triggers(proj_proto.action)
+                        if smoke_name then
+                           local smoke_analysis = analyze_smoke_entity(smoke_name)
+                           if smoke_analysis.has_area then
+                              has_area = true
+                              if smoke_analysis.radius and (not area_radius or smoke_analysis.radius > area_radius) then
+                                 area_radius = smoke_analysis.radius
+                              end
+                           end
+                           if smoke_analysis.force then force_cond = smoke_analysis.force end
+                        end
                      end
                   end
 

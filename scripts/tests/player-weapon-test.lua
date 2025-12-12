@@ -252,6 +252,43 @@ describe("Weapon Ammo Utils", function()
             player.cursor_stack.clear()
          end)
       end)
+
+      it("should detect poison capsule area damage from smoke entity", function(ctx)
+         ctx:init(function()
+            local capsule_data = CombatData.get_capsule_data("poison-capsule")
+            ctx:assert_not_nil(capsule_data, "Poison capsule data should exist")
+            ctx:assert_equals("throw", capsule_data.action_type, "Poison capsule should be thrown")
+            ctx:assert(capsule_data.has_area_damage, "Poison capsule should have area damage")
+            ctx:assert_equals(
+               11,
+               capsule_data.area_radius,
+               "Poison capsule should have 11 tile radius from smoke cloud"
+            )
+            ctx:assert(capsule_data.can_damage_self, "Poison capsule can damage self (player breathes air)")
+            ctx:assert(
+               capsule_data.soft_min_range and capsule_data.soft_min_range > 0,
+               "Poison capsule should have soft min range"
+            )
+            print("Poison capsule data:")
+            print("  has_area_damage=" .. tostring(capsule_data.has_area_damage))
+            print("  area_radius=" .. tostring(capsule_data.area_radius))
+            print("  can_damage_self=" .. tostring(capsule_data.can_damage_self))
+            print("  soft_min_range=" .. tostring(capsule_data.soft_min_range))
+         end)
+      end)
+
+      it("should detect slowdown capsule does not damage self", function(ctx)
+         ctx:init(function()
+            local capsule_data = CombatData.get_capsule_data("slowdown-capsule")
+            ctx:assert_not_nil(capsule_data, "Slowdown capsule data should exist")
+            ctx:assert_equals("throw", capsule_data.action_type, "Slowdown capsule should be thrown")
+            -- Slowdown capsule has force="enemy" so it won't damage the player
+            ctx:assert_equals(false, capsule_data.can_damage_self, "Slowdown capsule should not damage self")
+            print("Slowdown capsule data:")
+            print("  has_area_damage=" .. tostring(capsule_data.has_area_damage))
+            print("  can_damage_self=" .. tostring(capsule_data.can_damage_self))
+         end)
+      end)
    end)
 
    describe("Prototype-only Functions", function()
