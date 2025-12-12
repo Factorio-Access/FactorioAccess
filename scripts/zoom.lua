@@ -2,9 +2,7 @@
 Zoom control.
 
 Provides functions to set and read zoom levels calibrated to show a specific number of tiles.
-The cache must be cleared when display resolution changes as zoom values depend on window dimensions.
 ]]
-local StorageManager = require("scripts.storage-manager")
 local SoundModel = require("scripts.sound-model")
 local Speech = require("scripts.speech")
 
@@ -14,52 +12,18 @@ local mod = {}
 -- the character view.
 mod.ZOOM_LEVELS = { 20, 50, 100, 200 }
 
----@class fa.ZoomCache
----@field tile_to_zoom_cache table<number, number> Mapping from tile count to zoom value
-
----@type table<number, fa.ZoomCache>
-local zoom_cache = StorageManager.declare_storage_module("zoom_cache", {
-   tile_to_zoom_cache = {},
-})
-
----Clear the zoom cache for a player.
----Call this when display resolution or scale changes.
----@param pindex integer
-function mod.clear_cache(pindex)
-   zoom_cache[pindex].tile_to_zoom_cache = {}
-end
+-- The base pixels per tile at zoom=1.
+local base_pixels_per_tile = 32
 
 ---Get the zoom value needed to see t tiles across the screen.
----This temporarily manipulates zoom limits to measure the actual zoom, then restores them.
----Results are cached per-player until clear_cache is called.
 ---@param pindex integer
 ---@param t number Number of tiles (diameter)
 ---@return number zoom The zoom value that shows t tiles
 function mod.zoom_for_tiles(pindex, t)
-   local cache = zoom_cache[pindex]
-   if cache.tile_to_zoom_cache[t] then return cache.tile_to_zoom_cache[t] end
-
    local player = game.get_player(pindex)
-
-   -- Save current zoom limits
-   local original_limits = player.zoom_limits
-
-   -- Set all limits to the target tile count
-   player.zoom_limits = {
-      closest = { distance = t, max_distance = t },
-      furthest = { distance = t, max_distance = t },
-      furthest_game_view = { distance = t, max_distance = t },
-   }
-
-   -- Read the actual zoom value that Factorio computed
-   local zoom = player.zoom
-
-   -- Restore original limits
-   player.zoom_limits = original_limits
-
-   -- Cache and return
-   cache.tile_to_zoom_cache[t] = zoom
-   return zoom
+   local screen = player.display_resolution
+   local screen_dimension = math.max(screen.width, screen.height)
+   return screen_dimension / (t * base_pixels_per_tile * player.display_density_scale)
 end
 
 ---Find the closest index in ZOOM_LEVELS to the current player zoom.
@@ -97,6 +61,7 @@ local function set_zoom_and_announce(pindex, tiles)
 
    -- Read back and compare
    local actual_zoom = player.zoom
+
    local epsilon = 1e-3
 
    if math.abs(actual_zoom - target_zoom) > epsilon then
@@ -107,41 +72,15 @@ local function set_zoom_and_announce(pindex, tiles)
    end
 end
 
----Binary search to find the current zoom level in tiles.
----Searches from 1 to 1000 tiles to find what tile count matches the player's current zoom.
+---Get the current zoom level in tiles.
+---Inverse of zoom_for_tiles.
 ---@param pindex integer
----@return integer tiles The approximate tile count for the current zoom
+---@return integer tiles The tile count for the current zoom
 function mod.get_current_zoom_tiles(pindex)
    local player = game.get_player(pindex)
-   local current_zoom = player.zoom
-
-   local low = 1
-   local high = 1000
-
-   -- Binary search: zoom_for_tiles returns smaller values for larger tile counts
-   -- So if current_zoom < zoom_for_tiles(mid), we need more tiles (go higher)
-   while high - low > 1 do
-      local mid = math.floor((low + high) / 2)
-      local mid_zoom = mod.zoom_for_tiles(pindex, mid)
-
-      if current_zoom < mid_zoom then
-         -- Current zoom is more zoomed out, need more tiles
-         low = mid
-      else
-         -- Current zoom is more zoomed in, need fewer tiles
-         high = mid
-      end
-   end
-
-   -- Check which endpoint is closer
-   local low_zoom = mod.zoom_for_tiles(pindex, low)
-   local high_zoom = mod.zoom_for_tiles(pindex, high)
-
-   if math.abs(current_zoom - low_zoom) < math.abs(current_zoom - high_zoom) then
-      return low
-   else
-      return high
-   end
+   local screen = player.display_resolution
+   local screen_dimension = math.max(screen.width, screen.height)
+   return math.floor(screen_dimension / (player.zoom * base_pixels_per_tile * player.display_density_scale) + 0.5)
 end
 
 ---Announce the current zoom level in tiles

@@ -1025,7 +1025,6 @@ EventManager.on_event(
       game
          .get_player(pindex)
          .print("Display resolution changed: " .. new_res.width .. " x " .. new_res.height, { volume_modifier = 0 })
-      Zoom.clear_cache(pindex)
    end
 )
 
@@ -1037,16 +1036,6 @@ EventManager.on_event(
       local new_sc = game.get_player(pindex).display_scale
       if players and storage.players[pindex] then storage.players[pindex].display_resolution = new_sc end
       game.get_player(pindex).print("Display scale changed: " .. new_sc, { volume_modifier = 0 })
-      Zoom.clear_cache(pindex)
-   end
-)
-
-EventManager.on_event(
-   defines.events.on_player_display_density_scale_changed,
-   ---@param event EventData.on_player_display_density_scale_changed
-   ---@param pindex integer
-   function(event, pindex)
-      Zoom.clear_cache(pindex)
    end
 )
 
