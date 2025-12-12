@@ -1369,4 +1369,30 @@ data:extend({
       key_sequence = "CONTROL + SHIFT + I",
       consuming = "none",
    },
+
+   -- Combat mode capsule force-fire (ctrl+shift+wasd)
+   {
+      type = "custom-input",
+      name = "fa-cs-w",
+      key_sequence = "CONTROL + SHIFT + W",
+      consuming = "none",
+   },
+   {
+      type = "custom-input",
+      name = "fa-cs-a",
+      key_sequence = "CONTROL + SHIFT + A",
+      consuming = "none",
+   },
+   {
+      type = "custom-input",
+      name = "fa-cs-s",
+      key_sequence = "CONTROL + SHIFT + S",
+      consuming = "none",
+   },
+   {
+      type = "custom-input",
+      name = "fa-cs-d",
+      key_sequence = "CONTROL + SHIFT + D",
+      consuming = "none",
+   },
 })

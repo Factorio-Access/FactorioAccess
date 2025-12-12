@@ -151,6 +151,7 @@ end
 ---@class fa.combat.AimAssist.Options
 ---@field preferred_direction_amount number? Minimum dot product to consider "in preferred direction" (default 0)
 ---@field allow_preferred_direction_only boolean? If true, only return targets in the preferred direction (default false)
+---@field direction defines.direction? Override the aim direction (default uses player's stored aim direction)
 
 ---Find and sort all valid targets for the player
 ---@param pindex integer
@@ -169,6 +170,7 @@ function mod.get_sorted_targets(pindex, options)
    if not character then return nil, nil end
 
    local state = aim_storage[pindex]
+   local aim_direction = options.direction or state.direction
    local player_pos = character.position
    local surface = player.surface
 
@@ -228,7 +230,7 @@ function mod.get_sorted_targets(pindex, options)
 
          -- Check range constraints
          if dist >= effective_min and dist <= max_range then
-            local dir_score = compute_direction_score(enemy_pos, player_pos, state.direction)
+            local dir_score = compute_direction_score(enemy_pos, player_pos, aim_direction)
             local in_preferred = dir_score >= preferred_direction_amount
 
             -- Skip targets not in preferred direction if allow_preferred_direction_only is set

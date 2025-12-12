@@ -74,6 +74,7 @@ local CraftingBackend = require("scripts.sonifiers.grid-backends.crafting")
 local EnemyRadar = require("scripts.sonifiers.combat.enemy-radar")
 local SpawnerRadar = require("scripts.sonifiers.combat.spawner-radar")
 local AimAssist = require("scripts.combat.aim-assist")
+local Capsules = require("scripts.combat.capsules")
 local Zoom = require("scripts.zoom")
 
 -- UI modules (required for registration with router)
@@ -1681,11 +1682,28 @@ local function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
    Graphics.sync_build_cursor_graphics(pindex)
 end
 
+---Handle shift+direction key press
+---In combat mode with capsule: use capsule in direction
+---Otherwise: cursor skip
+---@param pindex integer
+---@param direction defines.direction
+local function handle_shift_direction(pindex, direction)
+   -- In combat mode, shift+wasd throws capsules if one is held
+   if Combat.is_combat_mode(pindex) then
+      if Capsules.get_held_capsule_data(pindex) then
+         Capsules.use_capsule_in_direction(pindex, direction, false)
+         return
+      end
+   end
+   -- Otherwise do normal cursor skip
+   cursor_skip(pindex, direction)
+end
+
 EventManager.on_event(
    "fa-s-w",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      cursor_skip(pindex, defines.direction.north)
+      handle_shift_direction(pindex, defines.direction.north)
    end
 )
 
@@ -1693,7 +1711,7 @@ EventManager.on_event(
    "fa-s-a",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      cursor_skip(pindex, defines.direction.west)
+      handle_shift_direction(pindex, defines.direction.west)
    end
 )
 
@@ -1701,7 +1719,7 @@ EventManager.on_event(
    "fa-s-s",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      cursor_skip(pindex, defines.direction.south)
+      handle_shift_direction(pindex, defines.direction.south)
    end
 )
 
@@ -1709,7 +1727,7 @@ EventManager.on_event(
    "fa-s-d",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      cursor_skip(pindex, defines.direction.east)
+      handle_shift_direction(pindex, defines.direction.east)
    end
 )
 
@@ -1742,6 +1760,47 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       cursor_skip(pindex, defines.direction.east, 1000, true)
+   end
+)
+
+-- Ctrl+shift+wasd force-fires capsules even in safe mode
+EventManager.on_event(
+   "fa-cs-w",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if Combat.is_combat_mode(pindex) and Capsules.get_held_capsule_data(pindex) then
+         Capsules.use_capsule_in_direction(pindex, defines.direction.north, true)
+      end
+   end
+)
+
+EventManager.on_event(
+   "fa-cs-a",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if Combat.is_combat_mode(pindex) and Capsules.get_held_capsule_data(pindex) then
+         Capsules.use_capsule_in_direction(pindex, defines.direction.west, true)
+      end
+   end
+)
+
+EventManager.on_event(
+   "fa-cs-s",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if Combat.is_combat_mode(pindex) and Capsules.get_held_capsule_data(pindex) then
+         Capsules.use_capsule_in_direction(pindex, defines.direction.south, true)
+      end
+   end
+)
+
+EventManager.on_event(
+   "fa-cs-d",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if Combat.is_combat_mode(pindex) and Capsules.get_held_capsule_data(pindex) then
+         Capsules.use_capsule_in_direction(pindex, defines.direction.east, true)
+      end
    end
 )
 
@@ -2900,16 +2959,13 @@ local function kb_click_hand(event)
          local proto = stack.prototype
          local capsule_action = proto.capsule_action
          if capsule_action then
-            -- Handle capsules and grenades
-            if capsule_action.type == "use-on-self" then
-               -- Use capsule on the player
+            -- Handle capsules
+            if Combat.is_combat_mode(pindex) then
+               Capsules.use_capsule_undirected(pindex)
+            elseif capsule_action.type == "use-on-self" then
                player.use_from_cursor(player.position)
-            elseif capsule_action.type == "throw" then
-               -- Use smart aiming for throwable capsules
-               local target_pos = Combat.smart_aim_grenades_and_capsules(pindex, false)
-               if target_pos then player.use_from_cursor(target_pos) end
             else
-               -- For other capsule types (artillery-remote, destroy-cliffs, etc.), use at cursor
+               -- Throwables, remotes, cliff explosives: use at cursor
                local vp = Viewpoint.get_viewpoint(pindex)
                player.use_from_cursor(vp:get_cursor_pos())
             end
