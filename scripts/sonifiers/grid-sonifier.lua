@@ -13,7 +13,6 @@ local LauncherAudio = require("scripts.launcher-audio")
 local SoundModel = require("scripts.sound-model")
 local StorageManager = require("scripts.storage-manager")
 local TH = require("scripts.table-helpers")
-local Viewpoint = require("scripts.viewpoint")
 local Zoom = require("scripts.zoom")
 
 local mod = {}
@@ -107,22 +106,6 @@ local function ensure_backends_initialized(pindex)
    for name, reg in pairs(backend_registrations) do
       if not state.backends[name] then state.backends[name] = reg.factory() end
    end
-end
-
----Get the visible area bounding box based on cursor position and zoom
----@param pindex integer
----@return number left_top_x
----@return number left_top_y
----@return number right_bottom_x
----@return number right_bottom_y
-local function get_visible_area(pindex)
-   local viewpoint = Viewpoint.get_viewpoint(pindex)
-   local cursor_pos = viewpoint:get_cursor_pos()
-   local tiles = Zoom.get_current_zoom_tiles(pindex)
-
-   local half_tiles = tiles / 2
-
-   return cursor_pos.x - half_tiles, cursor_pos.y - half_tiles, cursor_pos.x + half_tiles, cursor_pos.y + half_tiles
 end
 
 ---Map world coordinates to UV coordinates (-1 to 1)
@@ -273,7 +256,8 @@ function mod.tick(pindex)
    end
 
    -- Get visible area
-   local left, top, right, bottom = get_visible_area(pindex)
+   local area = Zoom.get_search_area(pindex)
+   local left, top, right, bottom = area.left, area.top, area.right, area.bottom
 
    -- Query entities in visible area (single query for all backend types)
    local surface = player.surface

@@ -1362,4 +1362,18 @@ data:extend({
       key_sequence = "CONTROL + SHIFT + I",
       consuming = "none",
    },
+
+   -- Combat mode aim assist controls
+   {
+      type = "custom-input",
+      name = "fa-c-q",
+      key_sequence = "CONTROL + Q",
+      consuming = "none",
+   },
+   {
+      type = "custom-input",
+      name = "fa-a-q",
+      key_sequence = "ALT + Q",
+      consuming = "none",
+   },
 })

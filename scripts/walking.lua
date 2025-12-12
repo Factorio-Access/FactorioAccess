@@ -22,6 +22,7 @@ local EntitySelection = require("scripts.entity-selection")
 local Graphics = require("scripts.graphics")
 local Sounds = require("scripts.ui.sounds")
 local TileReader = require("scripts.tile-reader")
+local Combat = require("scripts.combat")
 
 local mod = {}
 
@@ -85,6 +86,9 @@ function mod.process_walking_announcements(pindex)
          Graphics.draw_cursor_highlight(pindex, ent, nil)
          if player.driving then return end
 
+         -- In combat mode, don't set selected entity (aim assist controls targeting)
+         local skip_selection = Combat.is_combat_mode(pindex)
+
          if
             ent ~= nil
             and ent.valid
@@ -93,17 +97,17 @@ function mod.process_walking_announcements(pindex)
             )
          then
             Graphics.draw_cursor_highlight(pindex, ent, nil)
-            player.selected = ent
+            if not skip_selection then player.selected = ent end
             Sounds.play_close_inventory(pindex)
          else
             Graphics.draw_cursor_highlight(pindex, nil, nil)
-            player.selected = nil
+            if not skip_selection then player.selected = nil end
          end
 
          TileReader.read_tile(pindex)
       else
          Graphics.draw_cursor_highlight(pindex, nil, nil)
-         player.selected = nil
+         if not Combat.is_combat_mode(pindex) then player.selected = nil end
       end
    else
       -- NON-ANCHORED MODE: Don't announce while walking

@@ -9,15 +9,18 @@ local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
 local StorageManager = require("scripts.storage-manager")
 local Viewpoint = require("scripts.viewpoint")
+local AimAssist = require("scripts.combat.aim-assist")
 
 local mod = {}
 
 ---@class fa.Combat.State
 ---@field combat_mode boolean Whether combat mode is active
+---@field last_too_close_warning integer? Tick of last too-close warning to avoid spam
 
 ---@type table<integer, fa.Combat.State>
 local combat_storage = StorageManager.declare_storage_module("combat", {
    combat_mode = false,
+   last_too_close_warning = nil,
 })
 
 ---Check if combat mode is active for a player
@@ -27,18 +30,54 @@ function mod.is_combat_mode(pindex)
    return combat_storage[pindex].combat_mode
 end
 
+---Enter combat mode for a player
+---@param pindex integer
+local function enter_combat_mode(pindex)
+   local state = combat_storage[pindex]
+   state.combat_mode = true
+   state.last_too_close_warning = nil
+
+   -- Close any open GUI
+   local player = game.get_player(pindex)
+   if player and player.valid then
+      -- Close opened GUI
+      if player.opened then player.opened = nil end
+      -- Clear selected entity
+      player.selected = nil
+   end
+
+   SoundModel.set_reference_point(pindex, SoundModel.ReferencePoint.CHARACTER)
+   Speech.speak(pindex, { "fa.combat-mode-enabled" })
+end
+
+---Exit combat mode for a player
+---@param pindex integer
+local function exit_combat_mode(pindex)
+   local state = combat_storage[pindex]
+   state.combat_mode = false
+   state.last_too_close_warning = nil
+
+   -- Stop any ongoing shooting when exiting combat mode
+   local player = game.get_player(pindex)
+   if player and player.valid and player.character then
+      player.shooting_state = {
+         state = defines.shooting.not_shooting,
+         position = player.position,
+      }
+   end
+
+   SoundModel.set_reference_point(pindex, SoundModel.ReferencePoint.CURSOR)
+   Speech.speak(pindex, { "fa.combat-mode-disabled" })
+end
+
 ---Toggle combat mode for a player
 ---@param pindex integer
 function mod.toggle_combat_mode(pindex)
    local state = combat_storage[pindex]
-   state.combat_mode = not state.combat_mode
-
    if state.combat_mode then
-      SoundModel.set_reference_point(pindex, SoundModel.ReferencePoint.CHARACTER)
-      Speech.speak(pindex, { "fa.combat-mode-enabled" })
+      exit_combat_mode(pindex)
    else
-      SoundModel.set_reference_point(pindex, SoundModel.ReferencePoint.CURSOR)
-      Speech.speak(pindex, { "fa.combat-mode-disabled" })
+      enter_combat_mode(pindex)
    end
 end
 
@@ -343,6 +382,63 @@ function mod.smart_aim_grenades_and_capsules(pindex, draw_circles_in)
 
    p.play_sound({ path = "utility/cannot_build" })
    return nil
+end
+
+-- Minimum ticks between "too close" warnings
+local TOO_CLOSE_WARNING_COOLDOWN = 120
+
+---Process shooting for a player in combat mode
+---Called every tick for players in combat mode who are firing
+---@param pindex integer
+function mod.tick_shooting(pindex)
+   local state = combat_storage[pindex]
+   if not state.combat_mode then return end
+
+   local player = game.get_player(pindex)
+   if not player or not player.valid then return end
+
+   local character = player.character
+   if not character then return end
+
+   -- Check if player is currently firing
+   local shooting_state = player.shooting_state
+   if shooting_state.state == defines.shooting.not_shooting then return end
+
+   -- Player is firing, redirect to best target
+   local target, reason = AimAssist.get_best_target(pindex)
+
+   if target and target.valid then
+      -- Aim at the target
+      player.shooting_state = {
+         -- SHOOTING_ENEMIES USES POSITION AS A GUIDE, SHOOTING_SELECTED REQUIRES ACTUALLY SELECTING.
+         state = defines.shooting.shooting_enemies,
+         position = target.position,
+      }
+   else
+      -- No valid target, stop shooting and warn player
+      player.shooting_state = {
+         state = defines.shooting.not_shooting,
+         position = player.position,
+      }
+
+      -- Warn player about why they can't shoot
+      local now = game.tick
+      local last_warning = state.last_too_close_warning
+      if not last_warning or (now - last_warning) >= TOO_CLOSE_WARNING_COOLDOWN then
+         state.last_too_close_warning = now
+
+         local R = AimAssist.NoTargetReason
+         if reason == R.ALL_TOO_CLOSE_SAFE then
+            Speech.speak(pindex, { "fa.aim-all-too-close-safe" })
+         elseif reason == R.ALL_TOO_CLOSE then
+            Speech.speak(pindex, { "fa.aim-all-too-close" })
+         elseif reason == R.NO_WEAPON then
+            Speech.speak(pindex, { "fa.aim-no-weapon" })
+         elseif reason == R.NO_ENEMIES or reason == R.NO_ENEMIES_IN_RANGE then
+            Speech.speak(pindex, { "fa.aim-no-enemies" })
+         end
+      end
+   end
 end
 
 return mod

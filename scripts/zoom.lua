@@ -5,6 +5,7 @@ Provides functions to set and read zoom levels calibrated to show a specific num
 The cache must be cleared when display resolution changes as zoom values depend on window dimensions.
 ]]
 local StorageManager = require("scripts.storage-manager")
+local SoundModel = require("scripts.sound-model")
 local Speech = require("scripts.speech")
 
 local mod = {}
@@ -174,6 +175,30 @@ function mod.zoom_in(pindex)
    else
       set_zoom_and_announce(pindex, mod.ZOOM_LEVELS[new_index])
    end
+end
+
+---@class fa.Zoom.SearchArea
+---@field left number
+---@field top number
+---@field right number
+---@field bottom number
+---@field half_width number
+
+---Get the search area centered on the sound model reference point (cursor or character)
+---@param pindex integer
+---@return fa.Zoom.SearchArea
+function mod.get_search_area(pindex)
+   local ref_pos = SoundModel.get_reference_position(pindex)
+   local tiles = mod.get_current_zoom_tiles(pindex)
+   local half_tiles = tiles / 2
+
+   return {
+      left = ref_pos.x - half_tiles,
+      top = ref_pos.y - half_tiles,
+      right = ref_pos.x + half_tiles,
+      bottom = ref_pos.y + half_tiles,
+      half_width = half_tiles,
+   }
 end
 
 return mod

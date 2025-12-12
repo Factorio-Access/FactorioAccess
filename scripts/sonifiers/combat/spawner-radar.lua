@@ -39,18 +39,6 @@ local radar_storage = StorageManager.declare_storage_module("spawner_radar", mak
    ephemeral_state_version = 1,
 })
 
----Get the search area centered on the sound model reference point (cursor or character)
----@param pindex integer
----@return number left, number top, number right, number bottom
-local function get_search_area(pindex)
-   local ref_pos = SoundModel.get_reference_position(pindex)
-   local tiles = Zoom.get_current_zoom_tiles(pindex)
-
-   local half_tiles = tiles / 2
-
-   return ref_pos.x - half_tiles, ref_pos.y - half_tiles, ref_pos.x + half_tiles, ref_pos.y + half_tiles
-end
-
 ---Build sound for a spawner
 ---@param id string
 ---@param params fa.SoundModel.DirectionalParams
@@ -77,10 +65,9 @@ function mod.tick(pindex)
    local ref_pos = SoundModel.get_reference_position(pindex)
 
    -- Get search area centered on reference position
-   local left, top, right, bottom = get_search_area(pindex)
-
-   -- Reference distance for attenuation
-   local half_width = (right - left) / 2
+   local area = Zoom.get_search_area(pindex)
+   local left, top, right, bottom = area.left, area.top, area.right, area.bottom
+   local half_width = area.half_width
    local ref_distance = half_width / 4
 
    -- Find spawners in visible area

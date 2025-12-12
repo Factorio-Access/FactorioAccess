@@ -73,6 +73,7 @@ local GridSonifier = require("scripts.sonifiers.grid-sonifier")
 local CraftingBackend = require("scripts.sonifiers.grid-backends.crafting")
 local EnemyRadar = require("scripts.sonifiers.combat.enemy-radar")
 local SpawnerRadar = require("scripts.sonifiers.combat.spawner-radar")
+local AimAssist = require("scripts.combat.aim-assist")
 local Zoom = require("scripts.zoom")
 
 -- UI modules (required for registration with router)
@@ -368,6 +369,8 @@ function on_tick(event)
          if settings.get_player_settings(player.index)[SETTING_NAMES.SONIFICATION_COMBAT_SPAWNERS].value then
             SpawnerRadar.tick(player.index)
          end
+         -- Combat mode shooting (every tick when firing)
+         if Combat.is_combat_mode(player.index) then Combat.tick_shooting(player.index) end
       end
    end
 
@@ -1344,6 +1347,12 @@ local function move_key(direction, event, force_single_tile)
    --Stop any enabled mouse entity selection
    if storage.players[pindex].vanilla_mode ~= true then
       game.get_player(pindex).game_view_settings.update_entity_selection = false
+   end
+
+   -- Combat mode: Set aim direction instead of moving cursor
+   if Combat.is_combat_mode(pindex) then
+      AimAssist.set_direction(pindex, direction)
+      return
    end
 
    -- Cursor mode: Move cursor on map
@@ -3716,7 +3725,36 @@ EventManager.on_event(
    end
 )
 
-EventManager.on_event("fa-q", CursorChanges.kb_pipette_tool)
+-- Q: Pipette tool, or in combat mode toggle healthiest first
+EventManager.on_event(
+   "fa-q",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if Combat.is_combat_mode(pindex) then
+         AimAssist.toggle_healthiest_first(pindex)
+      else
+         CursorChanges.kb_pipette_tool(event)
+      end
+   end
+)
+
+-- Ctrl+Q: Toggle spawners first (combat mode only)
+EventManager.on_event(
+   "fa-c-q",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if Combat.is_combat_mode(pindex) then AimAssist.toggle_spawners_first(pindex) end
+   end
+)
+
+-- Alt+Q: Toggle safe mode (combat mode only)
+EventManager.on_event(
+   "fa-a-q",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      if Combat.is_combat_mode(pindex) then AimAssist.toggle_safe_mode(pindex) end
+   end
+)
 
 EventManager.on_event(
    "fa-s-q",

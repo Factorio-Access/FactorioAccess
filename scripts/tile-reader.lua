@@ -15,6 +15,7 @@ local Speech = require("scripts.speech")
 local SurfaceHelper = require("scripts.rails.surface-helper")
 local Viewpoint = require("scripts.viewpoint")
 local MessageBuilder = Speech.MessageBuilder
+local Combat = require("scripts.combat")
 
 local mod = {}
 
@@ -114,13 +115,16 @@ function mod.read_tile_inner(pindex, message)
 
    local ent = EntitySelection.get_first_ent_at_tile(pindex)
 
+   -- In combat mode, don't set selected entity (aim assist controls targeting)
+   local skip_selection = Combat.is_combat_mode(pindex)
+
    -- Special handling for rails: announce all rails at this position
    local is_rail = ent and ent.valid and Consts.RAIL_TYPES_SET[ent.type]
    local is_ghost_rail = ent and ent.valid and ent.type == "entity-ghost" and Consts.RAIL_TYPES_SET[ent.ghost_type]
    if is_rail or is_ghost_rail then
       mod.read_tile_rails(pindex, message)
       Graphics.draw_cursor_highlight(pindex, ent, nil)
-      game.get_player(pindex).selected = ent
+      if not skip_selection then game.get_player(pindex).selected = ent end
    elseif not (ent and ent.valid) then
       --If there is no ent, read the tile instead
       if tile_object then message:fragment(Localising.get_localised_name_with_fallback(tile_object)) end
@@ -129,12 +133,12 @@ function mod.read_tile_inner(pindex, message)
          message:fragment(FaUtils.identify_water_shores(pindex))
       end
       Graphics.draw_cursor_highlight(pindex, nil, nil)
-      game.get_player(pindex).selected = nil
+      if not skip_selection then game.get_player(pindex).selected = nil end
    else
       --Regular entity handling
       message:fragment(FaInfo.ent_info(pindex, ent))
       Graphics.draw_cursor_highlight(pindex, ent, nil)
-      game.get_player(pindex).selected = ent
+      if not skip_selection then game.get_player(pindex).selected = ent end
    end
 
    --Add info on whether the tile is uncharted or blurred or distant
