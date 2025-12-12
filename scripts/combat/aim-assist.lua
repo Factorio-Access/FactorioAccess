@@ -51,7 +51,7 @@ local function make_default_state()
       direction = defines.direction.north,
       spawners_first = true,
       healthiest_first = false,
-      safe_mode = false,
+      safe_mode = true,
    }
 end
 
