@@ -239,7 +239,7 @@ function mod.get_sorted_targets(pindex, options)
                   direction_score = dir_score,
                   in_preferred_direction = in_preferred,
                   is_spawner = is_spawner(enemy),
-                  health = enemy.health or 0,
+                  health = enemy.max_health or 0,
                })
             end
          elseif dist < effective_min then
