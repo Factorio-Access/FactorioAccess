@@ -189,10 +189,10 @@ local function use_area_capsule(pindex, direction, info, force_fire)
       player.use_from_cursor(target.entity.position)
       return { success = true }
    else
-      -- No targets, throw at max range
+      -- No targets, warn but throw at max range anyway
       local target_pos = compute_max_range_position(player, direction, max_range)
       player.use_from_cursor(target_pos)
-      return { success = true }
+      return { success = true, message = { "fa.capsule-no-targets" } }
    end
 end
 
