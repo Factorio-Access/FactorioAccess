@@ -21,6 +21,9 @@ local Zoom = require("scripts.zoom")
 
 local mod = {}
 
+-- Buffer distance added to soft min range in safe mode
+local SOFT_MIN_EPSILON = 1.5
+
 ---Reasons why no target is available
 ---@enum fa.combat.NoTargetReason
 mod.NoTargetReason = {
@@ -178,7 +181,7 @@ function mod.get_sorted_targets(pindex, options)
 
    -- Determine effective min range based on safe mode
    local effective_min = hard_min
-   if state.safe_mode and soft_min then effective_min = math.max(hard_min, soft_min) end
+   if state.safe_mode and soft_min then effective_min = math.max(hard_min, soft_min + SOFT_MIN_EPSILON) end
 
    -- Get zoom area for finding spawners/turrets
    local area = Zoom.get_search_area(pindex)
