@@ -3519,13 +3519,30 @@ EventManager.on_event(
    end
 )
 
+-- Shift+R: Toggle spawners first (aim assist)
 EventManager.on_event(
    "fa-s-r",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
+      AimAssist.toggle_spawners_first(pindex)
+   end
+)
 
-      BuildingTools.rotate_item_in_hand(event, false)
+-- Ctrl+R: Toggle strongest/closest (aim assist)
+EventManager.on_event(
+   "fa-c-r",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      AimAssist.toggle_healthiest_first(pindex)
+   end
+)
+
+-- Ctrl+Shift+R: Toggle safe mode (aim assist)
+EventManager.on_event(
+   "fa-cs-r",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      AimAssist.toggle_safe_mode(pindex)
    end
 )
 
@@ -3725,34 +3742,12 @@ EventManager.on_event(
    end
 )
 
--- Q: Pipette tool, or in combat mode toggle healthiest first
+-- Q: Pipette tool
 EventManager.on_event(
    "fa-q",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      if Combat.is_combat_mode(pindex) then
-         AimAssist.toggle_healthiest_first(pindex)
-      else
-         CursorChanges.kb_pipette_tool(event)
-      end
-   end
-)
-
--- Ctrl+Q: Toggle spawners first (combat mode only)
-EventManager.on_event(
-   "fa-c-q",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      if Combat.is_combat_mode(pindex) then AimAssist.toggle_spawners_first(pindex) end
-   end
-)
-
--- Alt+Q: Toggle safe mode (combat mode only)
-EventManager.on_event(
-   "fa-a-q",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      if Combat.is_combat_mode(pindex) then AimAssist.toggle_safe_mode(pindex) end
+      CursorChanges.kb_pipette_tool(event)
    end
 )
 

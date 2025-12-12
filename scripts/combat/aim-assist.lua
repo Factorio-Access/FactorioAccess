@@ -93,7 +93,7 @@ function mod.toggle_healthiest_first(pindex)
    state.healthiest_first = not state.healthiest_first
 
    if state.healthiest_first then
-      Speech.speak(pindex, { "fa.aim-healthiest-first" })
+      Speech.speak(pindex, { "fa.aim-strongest-first" })
    else
       Speech.speak(pindex, { "fa.aim-closest-first" })
    end

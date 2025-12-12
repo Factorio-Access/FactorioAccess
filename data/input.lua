@@ -979,6 +979,13 @@ data:extend({
 
    {
       type = "custom-input",
+      name = "fa-c-r",
+      key_sequence = "CONTROL + R",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
       name = "fa-cs-r",
       key_sequence = "CONTROL + SHIFT + R",
       consuming = "none",
@@ -1360,20 +1367,6 @@ data:extend({
       type = "custom-input",
       name = "fa-cs-i",
       key_sequence = "CONTROL + SHIFT + I",
-      consuming = "none",
-   },
-
-   -- Combat mode aim assist controls
-   {
-      type = "custom-input",
-      name = "fa-c-q",
-      key_sequence = "CONTROL + Q",
-      consuming = "none",
-   },
-   {
-      type = "custom-input",
-      name = "fa-a-q",
-      key_sequence = "ALT + Q",
       consuming = "none",
    },
 })
