@@ -7,6 +7,7 @@ local Menu = require("scripts.ui.menu")
 local KeyGraph = require("scripts.ui.key-graph")
 local Controls = require("scripts.ui.controls")
 local Equipment = require("scripts.equipment")
+local InventoryUtils = require("scripts.inventory-utils")
 local ItemInfo = require("scripts.item-info")
 local ItemStackUtils = require("scripts.item-stack-utils")
 local Localising = require("scripts.localising")
@@ -15,7 +16,418 @@ local MessageBuilder = Speech.MessageBuilder
 local UiRouter = require("scripts.ui.router")
 local UiSounds = require("scripts.ui.sounds")
 
+-- Load selectors (registers them with router)
+local WeaponSelector = require("scripts.ui.selectors.weapon-selector")
+local AmmoSelector = require("scripts.ui.selectors.ammo-selector")
+
 local mod = {}
+
+--------------------------------------------------------------------------------
+-- Weapon Actions
+--------------------------------------------------------------------------------
+
+---Clear ammo from slot to a target inventory
+---@param entity LuaEntity
+---@param slot number
+---@param target_inv LuaInventory
+---@return boolean success
+local function clear_ammo_to_inventory(entity, slot, target_inv)
+   local ammo_inv = InventoryUtils.get_ammo_inventory(entity)
+   if ammo_inv and slot <= #ammo_inv then
+      local ammo_stack = ammo_inv[slot]
+      if ammo_stack and ammo_stack.valid_for_read then
+         if not target_inv.can_insert(ammo_stack) then return false end
+         target_inv.insert(ammo_stack)
+         ammo_stack.clear()
+      end
+   end
+   return true
+end
+
+---Set a weapon in a slot using swap
+---@param entity LuaEntity
+---@param slot number
+---@param weapon_stack LuaItemStack
+---@return boolean success
+---@return LocalisedString message
+local function set_weapon_in_slot(entity, slot, weapon_stack)
+   local gun_inv = InventoryUtils.get_gun_inventory(entity)
+   local ammo_inv = InventoryUtils.get_ammo_inventory(entity)
+   if not gun_inv then return false, { "fa.weapon-error-no-gun-inventory" } end
+   assert(slot <= #gun_inv, "slot out of bounds for gun inventory")
+
+   local main_inv = InventoryUtils.get_main_inventory(entity)
+
+   -- Clear ammo first - need to validate space
+   if ammo_inv and slot <= #ammo_inv then
+      local ammo_stack = ammo_inv[slot]
+      if ammo_stack and ammo_stack.valid_for_read then
+         if not main_inv or not main_inv.can_insert(ammo_stack) then
+            return false, { "fa.weapon-error-inventory-full-for-ammo" }
+         end
+         main_inv.insert(ammo_stack)
+         ammo_stack.clear()
+      end
+   end
+
+   -- Swap weapons - old weapon goes where new weapon was
+   local gun_slot = gun_inv[slot]
+   local success = gun_slot.swap_stack(weapon_stack)
+   if success then
+      return true, { "fa.weapon-equipped", Localising.get_localised_name_with_fallback(gun_slot) }
+   else
+      return false, { "fa.weapon-error-cannot-equip" }
+   end
+end
+
+---Remove weapon from slot to entity's inventory
+---@param entity LuaEntity
+---@param slot number
+---@return boolean success
+---@return LocalisedString message
+local function remove_weapon_to_inventory(entity, slot)
+   local gun_inv = InventoryUtils.get_gun_inventory(entity)
+   if not gun_inv then return false, { "fa.weapon-error-no-gun-inventory" } end
+
+   local main_inv = InventoryUtils.get_main_inventory(entity)
+   if not main_inv then return false, { "fa.weapon-error-no-main-inventory" } end
+
+   local gun_slot = gun_inv[slot]
+   if not gun_slot or not gun_slot.valid_for_read then return false, { "fa.weapon-error-no-weapon-in-slot" } end
+
+   -- Validate weapon space first
+   if not main_inv.can_insert(gun_slot) then return false, { "fa.weapon-error-inventory-full" } end
+
+   -- Clear ammo first
+   if not clear_ammo_to_inventory(entity, slot, main_inv) then
+      return false, { "fa.weapon-error-inventory-full-for-ammo" }
+   end
+
+   local weapon_name = Localising.get_localised_name_with_fallback(gun_slot)
+   main_inv.insert(gun_slot)
+   gun_slot.clear()
+
+   return true, { "fa.weapon-removed-to-inventory", weapon_name }
+end
+
+---Remove weapon from slot to player's hand
+---@param entity LuaEntity
+---@param slot number
+---@param pindex number
+---@return boolean success
+---@return LocalisedString message
+local function remove_weapon_to_hand(entity, slot, pindex)
+   local player = game.get_player(pindex)
+   if not player then return false, { "fa.weapon-error-no-player" } end
+
+   local gun_inv = InventoryUtils.get_gun_inventory(entity)
+   if not gun_inv then return false, { "fa.weapon-error-no-gun-inventory" } end
+
+   local gun_slot = gun_inv[slot]
+   if not gun_slot or not gun_slot.valid_for_read then return false, { "fa.weapon-error-no-weapon-in-slot" } end
+
+   if player.cursor_stack and player.cursor_stack.valid_for_read then
+      return false, { "fa.weapon-error-hand-not-empty" }
+   end
+
+   -- Clear ammo to entity's inventory first
+   local entity_main_inv = InventoryUtils.get_main_inventory(entity)
+   assert(entity_main_inv, "entity with guns must have a main inventory")
+   if not clear_ammo_to_inventory(entity, slot, entity_main_inv) then
+      return false, { "fa.weapon-error-inventory-full-for-ammo" }
+   end
+
+   local weapon_name = Localising.get_localised_name_with_fallback(gun_slot)
+   player.cursor_stack.transfer_stack(gun_slot)
+
+   return true, { "fa.weapon-removed-to-hand", weapon_name }
+end
+
+---Remove weapon from slot to player's inventory
+---@param entity LuaEntity
+---@param slot number
+---@param character LuaEntity
+---@return boolean success
+---@return LocalisedString message
+local function remove_weapon_to_player(entity, slot, character)
+   local gun_inv = InventoryUtils.get_gun_inventory(entity)
+   if not gun_inv then return false, { "fa.weapon-error-no-gun-inventory" } end
+
+   local char_main_inv = InventoryUtils.get_main_inventory(character)
+   if not char_main_inv then return false, { "fa.weapon-error-no-main-inventory" } end
+
+   local gun_slot = gun_inv[slot]
+   if not gun_slot or not gun_slot.valid_for_read then return false, { "fa.weapon-error-no-weapon-in-slot" } end
+
+   -- Validate weapon space first
+   if not char_main_inv.can_insert(gun_slot) then return false, { "fa.weapon-error-inventory-full" } end
+
+   -- Clear ammo to player's inventory first
+   if not clear_ammo_to_inventory(entity, slot, char_main_inv) then
+      return false, { "fa.weapon-error-inventory-full-for-ammo" }
+   end
+
+   local weapon_name = Localising.get_localised_name_with_fallback(gun_slot)
+   char_main_inv.insert(gun_slot)
+   gun_slot.clear()
+
+   return true, { "fa.weapon-removed-to-player", weapon_name }
+end
+
+--------------------------------------------------------------------------------
+-- Ammo Actions
+--------------------------------------------------------------------------------
+
+---Set ammo in a slot using swap
+---@param entity LuaEntity
+---@param slot number
+---@param ammo_stack LuaItemStack
+---@return boolean success
+---@return LocalisedString message
+local function set_ammo_in_slot(entity, slot, ammo_stack)
+   local ammo_inv = InventoryUtils.get_ammo_inventory(entity)
+   if not ammo_inv then return false, { "fa.weapon-error-no-ammo-inventory" } end
+   assert(slot <= #ammo_inv, "slot out of bounds for ammo inventory")
+
+   local ammo_slot = ammo_inv[slot]
+   local success = ammo_slot.swap_stack(ammo_stack)
+   if success then
+      return true, { "fa.ammo-loaded", Localising.get_localised_name_with_fallback(ammo_slot) }
+   else
+      return false, { "fa.weapon-error-cannot-load-ammo" }
+   end
+end
+
+---Remove ammo from slot to entity's inventory
+---@param entity LuaEntity
+---@param slot number
+---@return boolean success
+---@return LocalisedString message
+local function remove_ammo_to_inventory(entity, slot)
+   local ammo_inv = InventoryUtils.get_ammo_inventory(entity)
+   if not ammo_inv then return false, { "fa.weapon-error-no-ammo-inventory" } end
+
+   local main_inv = InventoryUtils.get_main_inventory(entity)
+   if not main_inv then return false, { "fa.weapon-error-no-main-inventory" } end
+
+   local ammo_slot = ammo_inv[slot]
+   if not ammo_slot or not ammo_slot.valid_for_read then return false, { "fa.ammo-error-no-ammo-in-slot" } end
+
+   if not main_inv.can_insert(ammo_slot) then return false, { "fa.ammo-error-inventory-full" } end
+
+   local ammo_name = Localising.get_localised_name_with_fallback(ammo_slot)
+   main_inv.insert(ammo_slot)
+   ammo_slot.clear()
+
+   return true, { "fa.ammo-removed-to-inventory", ammo_name }
+end
+
+---Remove ammo from slot to player's hand
+---@param entity LuaEntity
+---@param slot number
+---@param pindex number
+---@return boolean success
+---@return LocalisedString message
+local function remove_ammo_to_hand(entity, slot, pindex)
+   local player = game.get_player(pindex)
+   if not player then return false, { "fa.weapon-error-no-player" } end
+
+   local ammo_inv = InventoryUtils.get_ammo_inventory(entity)
+   if not ammo_inv then return false, { "fa.weapon-error-no-ammo-inventory" } end
+
+   local ammo_slot = ammo_inv[slot]
+   if not ammo_slot or not ammo_slot.valid_for_read then return false, { "fa.ammo-error-no-ammo-in-slot" } end
+
+   if player.cursor_stack and player.cursor_stack.valid_for_read then
+      return false, { "fa.weapon-error-hand-not-empty" }
+   end
+
+   local ammo_name = Localising.get_localised_name_with_fallback(ammo_slot)
+   player.cursor_stack.transfer_stack(ammo_slot)
+
+   return true, { "fa.ammo-removed-to-hand", ammo_name }
+end
+
+---Remove ammo from slot to player's inventory
+---@param entity LuaEntity
+---@param slot number
+---@param character LuaEntity
+---@return boolean success
+---@return LocalisedString message
+local function remove_ammo_to_player(entity, slot, character)
+   local ammo_inv = InventoryUtils.get_ammo_inventory(entity)
+   if not ammo_inv then return false, { "fa.weapon-error-no-ammo-inventory" } end
+
+   local char_main_inv = InventoryUtils.get_main_inventory(character)
+   if not char_main_inv then return false, { "fa.weapon-error-no-main-inventory" } end
+
+   local ammo_slot = ammo_inv[slot]
+   if not ammo_slot or not ammo_slot.valid_for_read then return false, { "fa.ammo-error-no-ammo-in-slot" } end
+
+   if not char_main_inv.can_insert(ammo_slot) then return false, { "fa.ammo-error-inventory-full" } end
+
+   local ammo_name = Localising.get_localised_name_with_fallback(ammo_slot)
+   char_main_inv.insert(ammo_slot)
+   ammo_slot.clear()
+
+   return true, { "fa.ammo-removed-to-player", ammo_name }
+end
+
+---Get total ammo count in main inventory for a specific ammo type
+---@param entity LuaEntity
+---@param ammo_name string
+---@param quality string?
+---@return number
+local function get_ammo_in_inventory(entity, ammo_name, quality)
+   local main_inv = InventoryUtils.get_main_inventory(entity)
+   if not main_inv then return 0 end
+   local count = 0
+   for i = 1, #main_inv do
+      local stack = main_inv[i]
+      if stack.valid_for_read and stack.name == ammo_name then
+         if not quality or stack.quality.name == quality then count = count + stack.count end
+      end
+   end
+   return count
+end
+
+---Build the weapon row label for a slot
+---@param entity LuaEntity
+---@param slot number
+---@return LocalisedString
+local function build_weapon_row_label(entity, slot)
+   local mb = MessageBuilder.new()
+
+   local gun_stack = InventoryUtils.get_gun_in_slot(entity, slot)
+   local ammo_stack = InventoryUtils.get_ammo_in_slot(entity, slot)
+
+   if gun_stack then
+      mb:fragment(ItemInfo.item_info({ name = gun_stack.name, quality = gun_stack.quality.name }))
+
+      if ammo_stack then
+         mb:fragment({ "fa.weapon-with-ammo", ItemInfo.item_info(ammo_stack) })
+         local inv_count = get_ammo_in_inventory(entity, ammo_stack.name, ammo_stack.quality.name)
+         local total = ammo_stack.count + inv_count
+         mb:list_item({ "fa.weapon-total-in-inventory", tostring(total) })
+      else
+         mb:list_item({ "fa.weapon-no-ammo-loaded" })
+      end
+
+      mb:fragment({ "fa.weapon-hints" })
+   else
+      mb:fragment({ "fa.weapon-empty-slot", tostring(slot) })
+      mb:fragment({ "fa.weapon-hint-m-only" })
+   end
+
+   return mb:build()
+end
+
+---Handle weapon selector result
+---@param entity LuaEntity
+---@param character LuaEntity?
+---@param slot number
+---@param pindex number
+---@param result fa.WeaponSelectorResult
+---@return boolean success
+---@return LocalisedString message
+local function handle_weapon_result(entity, character, slot, pindex, result)
+   local K = WeaponSelector.KIND
+   if result.kind == K.EQUIP then
+      return set_weapon_in_slot(entity, slot, result.stack)
+   elseif result.kind == K.REMOVE_TO_INVENTORY then
+      return remove_weapon_to_inventory(entity, slot)
+   elseif result.kind == K.REMOVE_TO_HAND then
+      return remove_weapon_to_hand(entity, slot, pindex)
+   elseif result.kind == K.REMOVE_TO_PLAYER then
+      return remove_weapon_to_player(entity, slot, character)
+   end
+   return false, ""
+end
+
+---Handle ammo selector result
+---@param entity LuaEntity
+---@param character LuaEntity?
+---@param slot number
+---@param pindex number
+---@param result fa.AmmoSelectorResult
+---@return boolean success
+---@return LocalisedString message
+local function handle_ammo_result(entity, character, slot, pindex, result)
+   local K = AmmoSelector.KIND
+   if result.kind == K.LOAD then
+      return set_ammo_in_slot(entity, slot, result.stack)
+   elseif result.kind == K.REMOVE_TO_INVENTORY then
+      return remove_ammo_to_inventory(entity, slot)
+   elseif result.kind == K.REMOVE_TO_HAND then
+      return remove_ammo_to_hand(entity, slot, pindex)
+   elseif result.kind == K.REMOVE_TO_PLAYER then
+      return remove_ammo_to_player(entity, slot, character)
+   end
+   return false, ""
+end
+
+---Add weapon row to a menu builder
+---@param builder fa.ui.menu.MenuBuilder
+---@param entity LuaEntity
+---@param character LuaEntity?
+---@param pindex number
+local function add_weapon_row(builder, entity, character, pindex)
+   local gun_inv = InventoryUtils.get_gun_inventory(entity)
+   if not gun_inv then return end
+
+   local slot_count = #gun_inv
+   if slot_count == 0 then return end
+
+   builder:start_row("weapons")
+   for slot = 1, slot_count do
+      local key = string.format("weapon-slot-%d", slot)
+
+      builder:add_clickable(key, function(ctx)
+         ctx.message:fragment(build_weapon_row_label(entity, slot))
+      end, {
+         on_action1 = function(ctx)
+            ctx.controller:open_child_ui(UiRouter.UI_NAMES.WEAPON_SELECTOR, {
+               entity = entity,
+               character = character,
+               slot = slot,
+               pindex = pindex,
+            }, { node = key })
+         end,
+         on_action3 = function(ctx)
+            local gun_stack = InventoryUtils.get_gun_in_slot(entity, slot)
+            if not gun_stack then
+               ctx.message:fragment({ "fa.weapon-error-no-weapon-for-ammo" })
+               return
+            end
+            ctx.controller:open_child_ui(UiRouter.UI_NAMES.AMMO_SELECTOR, {
+               entity = entity,
+               character = character,
+               slot = slot,
+               gun_name = gun_stack.name,
+               pindex = pindex,
+            }, { node = key })
+         end,
+         on_child_result = function(result_ctx, result)
+            if not result then return end
+
+            local success, message
+            if result.type == "weapon" then
+               success, message = handle_weapon_result(entity, character, slot, pindex, result)
+            elseif result.type == "ammo" then
+               success, message = handle_ammo_result(entity, character, slot, pindex, result)
+            end
+
+            if message then result_ctx.message:fragment(message) end
+            if success then UiSounds.play_menu_click(pindex) end
+         end,
+      })
+   end
+   builder:end_row()
+end
+
+--------------------------------------------------------------------------------
+-- Equipment Overview
+--------------------------------------------------------------------------------
 
 ---Build the equipment overview menu
 ---@param ctx fa.ui.graph.Ctx
@@ -132,7 +544,7 @@ local function render_equipment_overview(ctx)
       end
    end
 
-   -- Row 2: Equipment in armor (aggregated)
+   -- Equipment in armor (aggregated)
    if grid and #grid.equipment > 0 then
       builder:add_clickable("equipment-list", function(ctx)
          ctx.message:fragment({ "fa.equipment-overview-contains" })
@@ -211,6 +623,9 @@ local function render_equipment_overview(ctx)
       ctx.message:fragment(result_msg)
       UiSounds.play_menu_click(ctx.pindex)
    end)
+
+   -- Weapon row - shows weapons with ammo info, use A/D to navigate, M to change weapon, . to change ammo
+   add_weapon_row(builder, entity, player.character, ctx.pindex)
 
    return builder:build()
 end

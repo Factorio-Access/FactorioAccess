@@ -486,4 +486,54 @@ function mod.present_list(list, truncate, protos, raw)
    return { "fa.ent-info-inventory-presentation", joined }
 end
 
+---Get the gun inventory for an entity
+---
+---Only characters have swappable gun inventories. Vehicles have built-in guns.
+---@param entity LuaEntity
+---@return LuaInventory? inventory The gun inventory if it exists, nil otherwise
+function mod.get_gun_inventory(entity)
+   return mod.get_inventory_safe(entity, "character_guns")
+end
+
+---Get the ammo inventory for an entity
+---
+---Checks all possible ammo inventory types and returns the first one that exists.
+---@param entity LuaEntity
+---@return LuaInventory? inventory The ammo inventory if it exists, nil otherwise
+function mod.get_ammo_inventory(entity)
+   return mod.get_inventory_by_priority(
+      entity,
+      "character_ammo",
+      "car_ammo",
+      "spider_ammo",
+      "turret_ammo",
+      "artillery_turret_ammo",
+      "artillery_wagon_ammo"
+   )
+end
+
+---Get gun stack in a slot
+---@param entity LuaEntity
+---@param slot number
+---@return LuaItemStack?
+function mod.get_gun_in_slot(entity, slot)
+   local gun_inv = mod.get_gun_inventory(entity)
+   if not gun_inv or slot > #gun_inv then return nil end
+   local stack = gun_inv[slot]
+   if stack and stack.valid_for_read then return stack end
+   return nil
+end
+
+---Get ammo stack in a slot
+---@param entity LuaEntity
+---@param slot number
+---@return LuaItemStack?
+function mod.get_ammo_in_slot(entity, slot)
+   local ammo_inv = mod.get_ammo_inventory(entity)
+   if not ammo_inv or slot > #ammo_inv then return nil end
+   local stack = ammo_inv[slot]
+   if stack and stack.valid_for_read then return stack end
+   return nil
+end
+
 return mod
