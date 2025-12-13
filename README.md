@@ -135,6 +135,7 @@ For step by step instructions continue to the next section.
 There are a huge number of keystrokes and functions in the mod. To help keep this README reasonable, we have divided them into other documents:
 
 - [Basics](docs/features/basics.md) explains walking, the cursor, and building.
+- [Combat, Vehicles, and Military](./docs/features/combat.md)
 - [Ui](docs/features/ui.md) explains how menus and other controls work
 - [Blueprints and Planners](docs/features/blueprints-and-planners.md) explains how to use blueprints, blueprint books, deconstruction planners, and upgrade planners.
 - [Circuit Network](docs/features/circuit-network.md) explains functionality applying specifically to the circuit network, such as how to drag wires.
