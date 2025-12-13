@@ -536,4 +536,69 @@ function mod.get_ammo_in_slot(entity, slot)
    return nil
 end
 
+--------------------------------------------------------------------------------
+-- Gun Info (abstraction over inventory guns vs built-in guns)
+--------------------------------------------------------------------------------
+
+---@class fa.GunInfo
+---@field name string Gun prototype name
+---@field quality string? Quality name (nil for built-in guns)
+---@field is_builtin boolean True if this is a built-in gun (cannot be changed)
+---@field stack LuaItemStack? The gun stack if from inventory
+---@field prototype LuaItemPrototype? The gun prototype if built-in
+
+---Get the number of weapon slots for an entity
+---Characters have gun inventories, vehicles have built-in guns from prototype.indexed_guns
+---@param entity LuaEntity
+---@return number slot_count
+function mod.get_weapon_slot_count(entity)
+   -- First check for gun inventory (characters)
+   local gun_inv = mod.get_gun_inventory(entity)
+   if gun_inv then return #gun_inv end
+
+   -- For vehicles, check indexed_guns on the prototype
+   local indexed_guns = entity.prototype.indexed_guns
+   if indexed_guns then return #indexed_guns end
+
+   return 0
+end
+
+---Get gun info for a slot, abstracting over inventory guns vs built-in guns
+---@param entity LuaEntity
+---@param slot number
+---@return fa.GunInfo?
+function mod.get_gun_info_for_slot(entity, slot)
+   -- First check for gun inventory (characters)
+   local gun_inv = mod.get_gun_inventory(entity)
+   if gun_inv then
+      if slot > #gun_inv then return nil end
+      local stack = gun_inv[slot]
+      if stack and stack.valid_for_read then
+         return {
+            name = stack.name,
+            quality = stack.quality.name,
+            is_builtin = false,
+            stack = stack,
+            prototype = nil,
+         }
+      end
+      return nil
+   end
+
+   -- For vehicles, check indexed_guns on the prototype
+   local indexed_guns = entity.prototype.indexed_guns
+   if indexed_guns and slot <= #indexed_guns then
+      local gun_proto = indexed_guns[slot]
+      return {
+         name = gun_proto.name,
+         quality = nil,
+         is_builtin = true,
+         stack = nil,
+         prototype = gun_proto,
+      }
+   end
+
+   return nil
+end
+
 return mod

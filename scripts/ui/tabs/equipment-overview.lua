@@ -298,11 +298,16 @@ end
 local function build_weapon_row_label(entity, slot)
    local mb = MessageBuilder.new()
 
-   local gun_stack = InventoryUtils.get_gun_in_slot(entity, slot)
+   local gun_info = InventoryUtils.get_gun_info_for_slot(entity, slot)
    local ammo_stack = InventoryUtils.get_ammo_in_slot(entity, slot)
 
-   if gun_stack then
-      mb:fragment(ItemInfo.item_info({ name = gun_stack.name, quality = gun_stack.quality.name }))
+   if gun_info then
+      -- Display gun name (with quality for inventory guns, without for built-in)
+      if gun_info.quality then
+         mb:fragment(ItemInfo.item_info({ name = gun_info.name, quality = gun_info.quality }))
+      else
+         mb:fragment({ "item-name." .. gun_info.name })
+      end
 
       if ammo_stack then
          mb:fragment({ "fa.weapon-with-ammo", ItemInfo.item_info(ammo_stack) })
@@ -313,7 +318,12 @@ local function build_weapon_row_label(entity, slot)
          mb:list_item({ "fa.weapon-no-ammo-loaded" })
       end
 
-      mb:fragment({ "fa.weapon-hints" })
+      -- Different hints for built-in vs swappable guns
+      if gun_info.is_builtin then
+         mb:fragment({ "fa.weapon-hints-builtin" })
+      else
+         mb:fragment({ "fa.weapon-hints" })
+      end
    else
       mb:fragment({ "fa.weapon-empty-slot", tostring(slot) })
       mb:fragment({ "fa.weapon-hint-m-only" })
@@ -372,11 +382,11 @@ end
 ---@param character LuaEntity?
 ---@param pindex number
 local function add_weapon_row(builder, entity, character, pindex)
-   local gun_inv = InventoryUtils.get_gun_inventory(entity)
-   if not gun_inv then return end
-
-   local slot_count = #gun_inv
+   local slot_count = InventoryUtils.get_weapon_slot_count(entity)
    if slot_count == 0 then return end
+
+   -- Check if this entity has built-in guns (no gun inventory)
+   local has_gun_inventory = InventoryUtils.get_gun_inventory(entity) ~= nil
 
    builder:start_row("weapons")
    for slot = 1, slot_count do
@@ -386,6 +396,11 @@ local function add_weapon_row(builder, entity, character, pindex)
          ctx.message:fragment(build_weapon_row_label(entity, slot))
       end, {
          on_action1 = function(ctx)
+            -- Only allow weapon selector if entity has a gun inventory (not built-in guns)
+            if not has_gun_inventory then
+               ctx.message:fragment({ "fa.weapon-builtin-cannot-change" })
+               return
+            end
             ctx.controller:open_child_ui(UiRouter.UI_NAMES.WEAPON_SELECTOR, {
                entity = entity,
                character = character,
@@ -394,8 +409,8 @@ local function add_weapon_row(builder, entity, character, pindex)
             }, { node = key })
          end,
          on_action3 = function(ctx)
-            local gun_stack = InventoryUtils.get_gun_in_slot(entity, slot)
-            if not gun_stack then
+            local gun_info = InventoryUtils.get_gun_info_for_slot(entity, slot)
+            if not gun_info then
                ctx.message:fragment({ "fa.weapon-error-no-weapon-for-ammo" })
                return
             end
@@ -403,7 +418,7 @@ local function add_weapon_row(builder, entity, character, pindex)
                entity = entity,
                character = character,
                slot = slot,
-               gun_name = gun_stack.name,
+               gun_name = gun_info.name,
                pindex = pindex,
             }, { node = key })
          end,
@@ -426,8 +441,241 @@ local function add_weapon_row(builder, entity, character, pindex)
 end
 
 --------------------------------------------------------------------------------
--- Equipment Overview
+-- Equipment Overview - Section Builders
 --------------------------------------------------------------------------------
+
+---Add character armor management section
+---@param builder fa.ui.menu.MenuBuilder
+---@param player LuaPlayer
+---@param entity LuaEntity
+---@param grid LuaEquipmentGrid?
+---@param main_inv LuaInventory?
+local function add_character_armor_section(builder, player, entity, grid, main_inv)
+   local armor_inv = player.get_inventory(defines.inventory.character_armor)
+   local has_armor = armor_inv and not armor_inv.is_empty() and armor_inv[1].valid_for_read
+
+   -- Get aggregated armor from inventory
+   local armor_filter = function(stack)
+      return stack.is_armor
+   end
+   local armor_items = main_inv and ItemStackUtils.aggregate_inventory(main_inv, armor_filter) or {}
+
+   builder:start_row("armor-management")
+
+   if has_armor then
+      local armor_stack = armor_inv[1]
+      builder:add_clickable("current-armor", function(ctx)
+         ctx.message:fragment({ "fa.equipment-overview-equipped" })
+         ctx.message:list_item(ItemInfo.item_info(armor_stack))
+
+         -- Add equipment bonuses if available
+         if grid then Equipment.add_equipment_bonuses_to_message(ctx.message, grid) end
+
+         -- Add backspace hint
+         ctx.message:fragment({ "fa.equipment-overview-backspace-to-unequip" })
+      end, {
+         on_clear = function(ctx)
+            -- Unequip armor to player inventory
+            if main_inv and main_inv.can_insert(armor_stack) then
+               local armor_name = ItemInfo.item_info(armor_stack)
+               local inserted = main_inv.insert(armor_stack)
+               if inserted > 0 then
+                  armor_stack.clear()
+                  ctx.message:fragment({ "fa.equipment-overview-unequipped", armor_name })
+                  UiSounds.play_menu_click(ctx.pindex)
+               else
+                  ctx.message:fragment({ "fa.equipment-overview-inventory-full" })
+               end
+            else
+               ctx.message:fragment({ "fa.equipment-overview-inventory-full" })
+            end
+         end,
+      })
+   else
+      builder:add_label("no-armor", { "fa.equipment-overview-no-armor-move-right" })
+   end
+
+   -- Add available armors from inventory to the same row
+   for _, armor_data in ipairs(armor_items) do
+      local key = string.format("armor-%s-%s", armor_data.name, armor_data.quality)
+      builder:add_clickable(key, function(ctx)
+         ctx.message:fragment(ItemInfo.item_info(armor_data.stacks[1]))
+      end, {
+         on_click = function(ctx)
+            -- Equip the first stack
+            local result_msg = Equipment.equip_it(armor_data.stacks[1], ctx.pindex)
+            ctx.message:fragment(result_msg)
+            UiSounds.play_menu_click(ctx.pindex)
+         end,
+      })
+   end
+
+   builder:end_row()
+
+   -- Personal roboport dispatch control
+   builder:add_item(
+      "roboport-dispatch",
+      Controls.checkbox({
+         label = { "fa.equipment-allow-roboport-dispatch" },
+         get = function()
+            return entity.allow_dispatching_robots
+         end,
+         set = function(v)
+            entity.allow_dispatching_robots = v
+         end,
+      })
+   )
+end
+
+---Add equipment bonuses label for vehicles with grids
+---@param builder fa.ui.menu.MenuBuilder
+---@param grid LuaEquipmentGrid
+local function add_vehicle_equipment_bonuses(builder, grid)
+   builder:add_label("equipment-bonuses", function(ctx)
+      ctx.message:fragment({ "fa.equipment-overview-entity-bonuses" })
+      Equipment.add_equipment_bonuses_to_message(ctx.message, grid)
+   end)
+end
+
+---Add equipment list section showing grid contents
+---@param builder fa.ui.menu.MenuBuilder
+---@param grid LuaEquipmentGrid
+---@param main_inv LuaInventory?
+local function add_equipment_list_section(builder, grid, main_inv)
+   if #grid.equipment > 0 then
+      builder:add_clickable("equipment-list", function(ctx)
+         ctx.message:fragment({ "fa.equipment-overview-contains" })
+         local contents = grid.get_contents()
+         for _, item in ipairs(contents) do
+            local stack = {
+               name = item.name,
+               count = item.count,
+               quality = prototypes.quality[item.quality],
+            }
+            ctx.message:list_item(ItemInfo.item_info(stack))
+         end
+         ctx.message:fragment({ "fa.equipment-overview-backspace-to-clear-all" })
+      end, {
+         on_clear = function(ctx)
+            -- Remove all equipment from grid to player inventory
+            if not main_inv then return end
+
+            local equipment_list = grid.equipment
+            local total_count = #equipment_list
+            local removed_count = 0
+
+            -- Loop through all equipment and take each one
+            for i = total_count, 1, -1 do
+               local equipment = equipment_list[i]
+               if equipment and equipment.valid then
+                  -- Save position before taking
+                  local position = equipment.position
+                  local taken = grid.take({ equipment = equipment })
+                  if taken then
+                     -- Try to insert to inventory
+                     ---@diagnostic disable-next-line: param-type-mismatch
+                     local inserted = main_inv.insert(taken)
+                     if inserted > 0 then
+                        removed_count = removed_count + 1
+                     else
+                        -- Failed to insert - put it back in the grid
+                        grid.put({
+                           name = taken.name,
+                           position = position,
+                           quality = taken.quality,
+                        })
+                     end
+                  end
+               end
+            end
+
+            if removed_count == total_count then
+               ctx.message:fragment({ "fa.equipment-overview-cleared-all-equipment" })
+               UiSounds.play_menu_click(ctx.pindex)
+            elseif removed_count > 0 then
+               ctx.message:fragment({ "fa.equipment-overview-cleared-partial-equipment", tostring(removed_count) })
+               UiSounds.play_menu_click(ctx.pindex)
+            else
+               ctx.message:fragment({ "fa.equipment-overview-inventory-full" })
+            end
+         end,
+      })
+   else
+      builder:add_label("equipment-list", { "fa.equipment-overview-no-equipment" })
+   end
+end
+
+---Add quick equip rows for selecting equipment from inventories
+---@param builder fa.ui.menu.MenuBuilder
+---@param ctx fa.ui.graph.Ctx
+---@param player LuaPlayer
+---@param entity LuaEntity
+---@param grid LuaEquipmentGrid
+local function add_quick_equip_section(builder, ctx, player, entity, grid)
+   Equipment.add_equipment_selection_rows(builder, {
+      character = player.character,
+      equip_target = entity,
+      max_x = grid.width,
+      max_y = grid.height,
+   }, function(equip_data)
+      -- When equipment is selected, try to equip it to the target entity
+      local result_msg = Equipment.equip_it(equip_data.stacks[1], ctx.pindex, entity)
+      ctx.message:fragment(result_msg)
+      UiSounds.play_menu_click(ctx.pindex)
+   end)
+end
+
+--------------------------------------------------------------------------------
+-- Equipment Overview - Main Render
+--------------------------------------------------------------------------------
+
+---Build the equipment overview for a character (always shows armor section)
+---@param ctx fa.ui.graph.Ctx
+---@param builder fa.ui.menu.MenuBuilder
+---@param player LuaPlayer
+---@param entity LuaEntity
+local function render_character_overview(ctx, builder, player, entity)
+   local grid = entity.grid
+   local main_inv = player.get_inventory(defines.inventory.character_main)
+
+   -- Characters always get armor management (even without armor equipped)
+   add_character_armor_section(builder, player, entity, grid, main_inv)
+
+   -- Equipment list and quick equip only if grid exists (armor equipped)
+   if grid then
+      add_equipment_list_section(builder, grid, main_inv)
+      add_quick_equip_section(builder, ctx, player, entity, grid)
+   end
+
+   add_weapon_row(builder, entity, player.character, ctx.pindex)
+end
+
+---Build the equipment overview for a vehicle with equipment grid support
+---@param ctx fa.ui.graph.Ctx
+---@param builder fa.ui.menu.MenuBuilder
+---@param player LuaPlayer
+---@param entity LuaEntity
+local function render_vehicle_with_grid(ctx, builder, player, entity)
+   local grid = entity.grid
+   local main_inv = player.character and player.get_inventory(defines.inventory.character_main)
+
+   if grid then
+      add_vehicle_equipment_bonuses(builder, grid)
+      add_equipment_list_section(builder, grid, main_inv)
+      add_quick_equip_section(builder, ctx, player, entity, grid)
+   end
+
+   add_weapon_row(builder, entity, player.character, ctx.pindex)
+end
+
+---Build the equipment overview for an entity with only weapons (no grid support)
+---@param ctx fa.ui.graph.Ctx
+---@param builder fa.ui.menu.MenuBuilder
+---@param player LuaPlayer
+---@param entity LuaEntity
+local function render_weapons_only(ctx, builder, player, entity)
+   add_weapon_row(builder, entity, player.character, ctx.pindex)
+end
 
 ---Build the equipment overview menu
 ---@param ctx fa.ui.graph.Ctx
@@ -442,200 +690,31 @@ local function render_equipment_overview(ctx)
    if not entity or not entity.valid then return nil end
 
    local builder = Menu.MenuBuilder.new()
-   local is_character = entity.type == "character"
 
-   -- Get equipment grid
-   local grid = entity.grid
-
-   -- Get player main inventory (used for unequipping equipment)
-   local main_inv = player.character and player.get_inventory(defines.inventory.character_main)
-
-   -- Get armor inventory (only for characters)
-   local armor_inv = is_character and player.get_inventory(defines.inventory.character_armor)
-   local has_armor = armor_inv and not armor_inv.is_empty() and armor_inv[1].valid_for_read
-
-   -- Row 1: Armor management or Equipment Bonuses
-   if is_character then
-      -- Armor management (current + available) - only for characters
-
-      -- Get aggregated armor from inventory
-      local armor_filter = function(stack)
-         return stack.is_armor
-      end
-      local armor_items = main_inv and ItemStackUtils.aggregate_inventory(main_inv, armor_filter) or {}
-
-      builder:start_row("armor-management")
-
-      if has_armor then
-         local armor_stack = armor_inv[1]
-         builder:add_clickable("current-armor", function(ctx)
-            ctx.message:fragment({ "fa.equipment-overview-equipped" })
-            ctx.message:list_item(ItemInfo.item_info(armor_stack))
-
-            -- Add equipment bonuses if available
-            if grid then Equipment.add_equipment_bonuses_to_message(ctx.message, grid) end
-
-            -- Add backspace hint
-            ctx.message:fragment({ "fa.equipment-overview-backspace-to-unequip" })
-         end, {
-            on_clear = function(ctx)
-               -- Unequip armor to player inventory
-               if main_inv and main_inv.can_insert(armor_stack) then
-                  local armor_name = ItemInfo.item_info(armor_stack)
-                  local inserted = main_inv.insert(armor_stack)
-                  if inserted > 0 then
-                     armor_stack.clear()
-                     ctx.message:fragment({ "fa.equipment-overview-unequipped", armor_name })
-                     UiSounds.play_menu_click(ctx.pindex)
-                  else
-                     ctx.message:fragment({ "fa.equipment-overview-inventory-full" })
-                  end
-               else
-                  ctx.message:fragment({ "fa.equipment-overview-inventory-full" })
-               end
-            end,
-         })
-      else
-         builder:add_label("no-armor", { "fa.equipment-overview-no-armor-move-right" })
-      end
-
-      -- Add available armors from inventory to the same row
-      if #armor_items > 0 then
-         -- Add each armor type/quality as a clickable
-         for _, armor_data in ipairs(armor_items) do
-            local key = string.format("armor-%s-%s", armor_data.name, armor_data.quality)
-            builder:add_clickable(key, function(ctx)
-               ctx.message:fragment(ItemInfo.item_info(armor_data.stacks[1]))
-            end, {
-               on_click = function(ctx)
-                  -- Equip the first stack
-                  local result_msg = Equipment.equip_it(armor_data.stacks[1], ctx.pindex)
-                  ctx.message:fragment(result_msg)
-                  UiSounds.play_menu_click(ctx.pindex)
-               end,
-            })
-         end
-      end
-
-      builder:end_row()
-
-      -- Personal roboport dispatch control (only for characters)
-      builder:add_item(
-         "roboport-dispatch",
-         Controls.checkbox({
-            label = { "fa.equipment-allow-roboport-dispatch" },
-            get = function()
-               return entity.allow_dispatching_robots
-            end,
-            set = function(v)
-               entity.allow_dispatching_robots = v
-            end,
-         })
-      )
+   if entity.type == "character" then
+      render_character_overview(ctx, builder, player, entity)
+   elseif entity.prototype.grid_prototype then
+      render_vehicle_with_grid(ctx, builder, player, entity)
    else
-      -- For non-character entities (vehicles, etc), show equipment bonuses directly
-      if grid then
-         builder:add_label("equipment-bonuses", function(ctx)
-            ctx.message:fragment({ "fa.equipment-overview-entity-bonuses" })
-            Equipment.add_equipment_bonuses_to_message(ctx.message, grid)
-         end)
-      else
-         builder:add_label("no-grid", { "fa.equipment-overview-no-grid" })
-      end
+      render_weapons_only(ctx, builder, player, entity)
    end
-
-   -- Equipment in armor (aggregated)
-   if grid and #grid.equipment > 0 then
-      builder:add_clickable("equipment-list", function(ctx)
-         ctx.message:fragment({ "fa.equipment-overview-contains" })
-         local contents = grid.get_contents()
-         for i, item in ipairs(contents) do
-            local stack = {
-               name = item.name,
-               count = item.count,
-               quality = prototypes.quality[item.quality],
-            }
-            ctx.message:list_item(ItemInfo.item_info(stack))
-         end
-         ctx.message:fragment({ "fa.equipment-overview-backspace-to-clear-all" })
-      end, {
-         on_clear = function(ctx)
-            -- Remove all equipment from grid to player inventory
-            if grid and main_inv then
-               local equipment_list = grid.equipment
-               local total_count = #equipment_list
-               local removed_count = 0
-
-               -- Loop through all equipment and take each one
-               for i = total_count, 1, -1 do
-                  local equipment = equipment_list[i]
-                  if equipment and equipment.valid then
-                     -- Save position before taking
-                     local position = equipment.position
-                     local taken = grid.take({ equipment = equipment })
-                     if taken then
-                        -- Try to insert to inventory
-                        ---@diagnostic disable-next-line: param-type-mismatch
-                        local inserted = main_inv.insert(taken)
-                        if inserted > 0 then
-                           removed_count = removed_count + 1
-                        else
-                           -- Failed to insert - put it back in the grid
-                           grid.put({
-                              name = taken.name,
-                              position = position,
-                              quality = taken.quality,
-                           })
-                        end
-                     end
-                  end
-               end
-
-               if removed_count == total_count then
-                  ctx.message:fragment({ "fa.equipment-overview-cleared-all-equipment" })
-                  UiSounds.play_menu_click(ctx.pindex)
-               elseif removed_count > 0 then
-                  ctx.message:fragment({ "fa.equipment-overview-cleared-partial-equipment", tostring(removed_count) })
-                  UiSounds.play_menu_click(ctx.pindex)
-               else
-                  ctx.message:fragment({ "fa.equipment-overview-inventory-full" })
-               end
-            end
-         end,
-      })
-   else
-      builder:add_label("equipment-list", { "fa.equipment-overview-no-equipment" })
-   end
-
-   -- Quick equip rows (from entity and player inventories)
-   -- Use the shared equipment selection row builder
-   local max_x = grid and grid.width or nil
-   local max_y = grid and grid.height or nil
-
-   Equipment.add_equipment_selection_rows(builder, {
-      character = player.character,
-      equip_target = entity,
-      max_x = max_x,
-      max_y = max_y,
-   }, function(equip_data)
-      -- When equipment is selected, try to equip it to the target entity
-      local result_msg = Equipment.equip_it(equip_data.stacks[1], ctx.pindex, entity)
-      ctx.message:fragment(result_msg)
-      UiSounds.play_menu_click(ctx.pindex)
-   end)
-
-   -- Weapon row - shows weapons with ammo info, use A/D to navigate, M to change weapon, . to change ammo
-   add_weapon_row(builder, entity, player.character, ctx.pindex)
 
    return builder:build()
 end
 
 ---Check if equipment overview is available for an entity
+---Available if entity is a character, could have equipment grid, or has weapons
 ---@param entity LuaEntity
 ---@return boolean
 function mod.is_available(entity)
    if not entity or not entity.valid then return false end
-   return entity.grid ~= nil
+   -- Characters always have armor management
+   if entity.type == "character" then return true end
+   -- Vehicles that could have equipment grids
+   if entity.prototype.grid_prototype then return true end
+   -- Entities with weapons
+   if InventoryUtils.get_weapon_slot_count(entity) > 0 then return true end
+   return false
 end
 
 mod.equipment_overview_tab = KeyGraph.declare_graph({
