@@ -972,13 +972,6 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "fa-s-g",
-      key_sequence = "SHIFT + G",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
       name = "fa-c-r",
       key_sequence = "CONTROL + R",
       consuming = "none",

@@ -6,6 +6,8 @@
 - Add an alerts tab to the world menu exposing vanilla alerts.
 - Start filtering out gun and ammo inventories because they can now be reliably managed via the equipment overview
 - Drop the legacy gun/ammo grid in favor of the new equipment overview controls
+- Remove shift+g. This is now in the equipment overview.
+- Start announcing how many empty slots an armor contains with the equipment list.
 
 # 0.16.33 (2025-12-08)
 

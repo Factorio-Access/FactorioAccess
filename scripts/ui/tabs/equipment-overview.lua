@@ -542,8 +542,10 @@ end
 ---@param grid LuaEquipmentGrid
 ---@param main_inv LuaInventory?
 local function add_equipment_list_section(builder, grid, main_inv)
+   local empty_slots = Equipment.count_empty_equipment_slots(grid)
    if #grid.equipment > 0 then
       builder:add_clickable("equipment-list", function(ctx)
+         ctx.message:fragment({ "fa.equipment-empty-slots", tostring(empty_slots) })
          ctx.message:fragment({ "fa.equipment-overview-contains" })
          local contents = grid.get_contents()
          for _, item in ipairs(contents) do
@@ -601,7 +603,10 @@ local function add_equipment_list_section(builder, grid, main_inv)
          end,
       })
    else
-      builder:add_label("equipment-list", { "fa.equipment-overview-no-equipment" })
+      builder:add_label("equipment-list", function(ctx)
+         ctx.message:fragment({ "fa.equipment-empty-slots", tostring(empty_slots) })
+         ctx.message:fragment({ "fa.equipment-overview-no-equipment" })
+      end)
    end
 end
 

@@ -3887,22 +3887,6 @@ EventManager.on_event(
    end
 )
 
-local function kb_inventory_read_equipment_list(event)
-   local pindex = event.player_index
-   local result = Equipment.read_equipment_list(pindex)
-   Speech.speak(pindex, result)
-end
-
-EventManager.on_event(
-   "fa-s-g",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-
-      kb_inventory_read_equipment_list(event)
-   end
-)
-
 --Toggle whether rockets are launched automatically when they have cargo
 EventManager.on_event(
    "fa-c-space",
