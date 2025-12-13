@@ -12,7 +12,6 @@ local TabList = require("scripts.ui.tab-list")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local UiRouter = require("scripts.ui.router")
 local inventory = require("scripts.ui.menus.inventory")
-local gun_menu = require("scripts.ui.menus.gun-menu")
 local arithmetic_combinator_tab = require("scripts.ui.tabs.arithmetic-combinator")
 local assembling_machine_tab = require("scripts.ui.tabs.assembling-machine")
 local circuit_network_tab = require("scripts.ui.tabs.circuit-network")
@@ -58,7 +57,6 @@ local CONFIG_FIRST_TYPES = {
 ---@class fa.ui.EntityUI.SharedState
 ---@field entity LuaEntity The entity being viewed
 ---@field sorted_inventories table[] Sorted list of inventory data
----@field guns_ammo_inventories table[] Gun/ammo inventories to combine
 
 ---Get localized title for an inventory
 ---@param inv_name string The inventory name (key from defines.inventory)
@@ -67,17 +65,28 @@ local function get_inventory_title(inv_name)
    return { "fa.inventory-title-" .. inv_name }
 end
 
----Sort inventories by priority and extract gun/ammo inventories
+---Check if an inventory name is a gun or ammo inventory that should be filtered out
+---These are handled by the equipment overview weapon row instead
+---@param inv_name string
+---@return boolean
+local function is_gun_or_ammo_inventory(inv_name)
+   -- Filter character-guns (weapons handled by equipment overview)
+   if inv_name == "character-guns" then return true end
+   -- Filter all ammo inventories (names ending in -ammo)
+   if inv_name:sub(-5) == "-ammo" then return true end
+   return false
+end
+
+---Sort inventories by priority, filtering out gun/ammo inventories
 ---@param entity LuaEntity
----@return table[] sorted_inventories, table[] guns_ammo_inventories
+---@return table[] sorted_inventories
 local function sort_inventories(entity)
    local all_inventories = {}
-   local guns_ammo = {}
 
    -- Get the maximum inventory index for this entity
    local max_index = entity.get_max_inventory_index()
 
-   if not max_index or max_index == 0 then return {}, {} end
+   if not max_index or max_index == 0 then return {} end
 
    -- Iterate through all possible inventory indices
    for inv_index = 1, max_index do
@@ -89,7 +98,7 @@ local function sort_inventories(entity)
       -- Also filter out inventories with 0 slots (e.g., module inventory on machines that don't support modules)
       if inv and #inv > 0 then
          local inv_name = inv.name
-         if inv_name then
+         if inv_name and not is_gun_or_ammo_inventory(inv_name) then
             local priority = Consts.INVENTORY_PRIORITIES[inv_name] or 100
 
             local inv_data = {
@@ -99,32 +108,25 @@ local function sort_inventories(entity)
                priority = priority,
             }
 
-            -- Separate character gun/ammo inventories (handled by gun menu tab)
-            -- Show all other ammo inventories (spider_ammo, car_ammo, etc.) normally
-            if inv_name == "character-guns" or inv_name == "character-ammo" then
-               table.insert(guns_ammo, inv_data)
-            else
-               table.insert(all_inventories, inv_data)
-            end
+            table.insert(all_inventories, inv_data)
          end
       end
    end
 
-   -- Sort non-gun inventories by priority, then alphabetically
+   -- Sort inventories by priority, then alphabetically
    table.sort(all_inventories, function(a, b)
       if a.priority == b.priority then return a.name < b.name end
       return a.priority < b.priority
    end)
 
-   return all_inventories, guns_ammo
+   return all_inventories
 end
 
 ---Build inventory tabs for an entity
 ---@param entity LuaEntity
----@param sorted_invs table[] Sorted non-gun inventories
----@param guns_ammo_invs table[] Gun/ammo inventories
+---@param sorted_invs table[] Sorted inventories
 ---@return fa.ui.TabDescriptor[]
-local function build_inventory_tabs(entity, sorted_invs, guns_ammo_invs)
+local function build_inventory_tabs(entity, sorted_invs)
    local tabs = {}
 
    -- Add a tab for each non-gun inventory
@@ -247,15 +249,13 @@ local function build_circuit_network_tabs(entity)
 end
 
 ---Get player inventory section
----@param pindex number
 ---@return fa.ui.TabstopDescriptor
-local function get_player_inventory_section(pindex)
+local function get_player_inventory_section()
    return {
       name = "player_inventories",
       title = { "fa.section-player-inventories" },
       tabs = {
          inventory.inventory_tab,
-         gun_menu.gun_tab,
       },
    }
 end
@@ -269,8 +269,8 @@ local function build_entity_sections(pindex, entity)
 
    local sections = {}
 
-   -- Get sorted inventories
-   local sorted_invs, guns_ammo = sort_inventories(entity)
+   -- Get sorted inventories (gun/ammo inventories are filtered out)
+   local sorted_invs = sort_inventories(entity)
 
    -- Build configuration section
    local config_tabs = build_configuration_tabs(entity)
@@ -286,7 +286,7 @@ local function build_entity_sections(pindex, entity)
    end
 
    -- Build inventory section
-   local inventory_tabs = build_inventory_tabs(entity, sorted_invs, guns_ammo)
+   local inventory_tabs = build_inventory_tabs(entity, sorted_invs)
    if #inventory_tabs > 0 then
       table.insert(sections, {
          name = "inventories",
@@ -328,7 +328,7 @@ local function build_entity_sections(pindex, entity)
    if #sections == 0 then return nil end
 
    -- Add player inventory section for convenience
-   table.insert(sections, get_player_inventory_section(pindex))
+   table.insert(sections, get_player_inventory_section())
 
    return sections
 end
@@ -339,21 +339,17 @@ end
 ---@return table
 local function setup_shared_state(pindex, params)
    local entity = params.entity
-   if not entity or not entity.valid then
-      return {
-         entity = nil,
-         sorted_inventories = {},
-         guns_ammo_inventories = {},
-      }
-   end
+   if not entity or not entity.valid then return {
+      entity = nil,
+      sorted_inventories = {},
+   } end
 
-   local sorted_invs, guns_ammo = sort_inventories(entity)
+   local sorted_invs = sort_inventories(entity)
 
    -- Create shared state with inventory data pre-populated
    local state = {
       entity = entity,
       sorted_inventories = sorted_invs,
-      guns_ammo_inventories = guns_ammo,
    }
 
    -- Also add inventory states for the inventory grids

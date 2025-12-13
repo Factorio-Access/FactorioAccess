@@ -9,7 +9,6 @@ local UiRouter = require("scripts.ui.router")
 
 -- Import all the individual tabs
 local inventory = require("scripts.ui.menus.inventory")
-local gun_menu = require("scripts.ui.menus.gun-menu")
 local equipment_overview = require("scripts.ui.tabs.equipment-overview")
 local equipment_grid = require("scripts.ui.tabs.equipment-grid")
 local crafting = require("scripts.ui.menus.crafting")
@@ -103,8 +102,6 @@ mod.main_menu = TabList.declare_tablist({
       if player and player.character and equipment_grid.is_available(player.character) then
          table.insert(equipment_tabs, equipment_grid.equipment_grid_tab)
       end
-      -- Add guns tab if available
-      if gun_menu.needs_gun_menu_tab(pindex) then table.insert(equipment_tabs, gun_menu.gun_tab) end
 
       table.insert(sections, {
          name = "equipment",
