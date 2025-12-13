@@ -15,7 +15,6 @@ local crafting = require("scripts.ui.menus.crafting")
 local crafting_queue = require("scripts.ui.menus.crafting-queue")
 local research = require("scripts.ui.menus.research")
 local research_queue = require("scripts.ui.menus.research-queue")
-local trains_overview = require("scripts.ui.tabs.trains-overview")
 local InventoryGrid = require("scripts.ui.inventory-grid")
 
 local mod = {}
@@ -80,16 +79,6 @@ mod.main_menu = TabList.declare_tablist({
          tabs = {
             research.research_tab,
             research_queue.research_queue_tab,
-         },
-      })
-
-      -- Add trains section
-      table.insert(sections, {
-         name = "trains",
-         title = { "fa.section-trains" },
-         tabs = {
-            trains_overview.surface_trains_tab,
-            trains_overview.all_trains_tab,
          },
       })
 

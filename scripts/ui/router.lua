@@ -117,6 +117,8 @@ end
 mod.UI_NAMES = {
    -- New unified UI that subsumes inventory, guns, crafting, crafting_queue, technology
    MAIN = "main",
+   -- World menu for global/cross-surface information (trains, etc.)
+   WORLD = "world",
    -- New inventory, but we need the old name for a little bit while we roll over.
    GENERIC_INVENTORY = "inventory2",
    -- BUILDING and VEHICLE removed - migrating to capability-based UI

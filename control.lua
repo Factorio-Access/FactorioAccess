@@ -88,6 +88,7 @@ require("scripts.ui.selectors.blueprint-selector")
 require("scripts.ui.selectors.copy-paste-selector")
 require("scripts.ui.menus.gun-menu")
 local MainMenu = require("scripts.ui.menus.main-menu")
+local WorldMenu = require("scripts.ui.menus.world-menu")
 require("scripts.ui.menus.fast-travel-menu")
 require("scripts.ui.menus.debug-menu")
 require("scripts.ui.menus.settings-menu")
@@ -2719,6 +2720,14 @@ EventManager.on_event(
    function(event, pindex)
       -- Always open inventory - closing is handled by the UI event system
       kb_open_player_inventory(event)
+   end
+)
+
+EventManager.on_event(
+   "fa-a-w",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      WorldMenu.open_world_menu(pindex)
    end
 )
 
