@@ -253,23 +253,22 @@ function mod.count_empty_equipment_slots(grid)
    return slots_left
 end
 
+---@param pindex integer
+---@param ent_in LuaEntity?
+---@return LocalisedString
 function mod.read_shield_and_health_level(pindex, ent_in)
    local p = game.get_player(pindex)
    local char = p.character
+   local mb = MessageBuilder.new()
    local ent
    local grid
-   local result = { "" }
+
    if ent_in then
-      --Report for the ent
       ent = ent_in
       grid = ent.grid
-      table.insert(result, ent.localised_name)
+      mb:fragment(ent.localised_name)
    else
-      --Report for this player
-      if char == nil or char.valid == false then
-         table.insert(result, { "fa.equipment-no-character" })
-         return result
-      end
+      if not char or not char.valid then return { "fa.equipment-no-character" } end
       ent = char
       local armor_inv = p.get_inventory(defines.inventory.character_armor)
       if armor_inv[1] and armor_inv[1].valid_for_read and armor_inv[1].grid and armor_inv[1].grid.valid then
@@ -277,103 +276,113 @@ function mod.read_shield_and_health_level(pindex, ent_in)
       end
    end
 
-   --Check shield health remaining (if supported)
+   -- Check shield health remaining (if supported)
    local empty_shield = false
    if grid then
       if grid.shield > 0 and grid.shield == grid.max_shield then
-         table.insert(result, " Shield full, ")
+         mb:list_item({ "fa.equipment-shield-full" })
       elseif grid.shield > 0 then
          local shield_left = math.floor(grid.shield / grid.max_shield * 100 + 0.5)
-         table.insert(result, { "fa.equipment-shield-percent", tostring(shield_left) })
+         mb:list_item({ "fa.equipment-shield-percent", tostring(shield_left) })
       else
          empty_shield = true
       end
    end
-   --Check health
+
+   -- Check health
    if ent.is_entity_with_health then
       if ent.get_health_ratio() == 1 then
-         table.insert(result, { "fa.ent-status-full-health" })
+         mb:list_item({ "fa.ent-status-full-health" })
       else
-         table.insert(result, { "fa.ent-status-percent-health", math.floor(ent.get_health_ratio() * 100) })
+         mb:list_item({ "fa.ent-status-percent-health", math.floor(ent.get_health_ratio() * 100) })
       end
    end
+
    -- State shield empty at the end (if supported)
-   if grid and empty_shield then table.insert(result, { "fa.armor-shield-empty" }) end
-   return result
+   if grid and empty_shield then mb:list_item({ "fa.armor-shield-empty" }) end
+
+   return mb:build()
 end
 
---Read armor stats such as type and bonuses. Default option is the player's own armor.
+---Read armor stats such as type and bonuses. Default option is the player's own armor.
+---@param pindex integer
+---@param ent_in LuaEntity?
+---@return LocalisedString
 function mod.read_armor_stats(pindex, ent_in)
-   local ent = ent_in
+   local mb = MessageBuilder.new()
    local armor_inv = game.get_player(pindex).get_inventory(defines.inventory.character_armor)
-   local result = mod.read_shield_and_health_level(pindex, ent_in) --First report health and shield
-   table.insert(result, ", ")
+
+   -- First report health and shield
+   mb:fragment(mod.read_shield_and_health_level(pindex, ent_in))
+
    local grid
    if ent_in == nil then
-      --Player armor
+      -- Player armor
       if armor_inv.is_empty() then
-         table.insert(result, { "fa.armor-no-armor" })
-         return result
+         mb:list_item({ "fa.armor-no-armor" })
+         return mb:build()
       elseif armor_inv[1].grid == nil or not armor_inv[1].grid.valid then
-         table.insert(
-            result,
-            { "fa.armor-equipped-no-grid", localising.get_localised_name_with_fallback(armor_inv[1].prototype) }
-         )
-         return result
+         mb:list_item({
+            "fa.armor-equipped-no-grid",
+            localising.get_localised_name_with_fallback(armor_inv[1].prototype),
+         })
+         return mb:build()
       end
-      --Player armor with non-empty equipment grid
+      -- Player armor with non-empty equipment grid
       grid = armor_inv[1].grid
-      table.insert(result, { "fa.armor-equipped", localising.get_localised_name_with_fallback(armor_inv[1].prototype) })
+      mb:list_item({ "fa.armor-equipped", localising.get_localised_name_with_fallback(armor_inv[1].prototype) })
    else
-      --Entity grid
-      grid = ent.grid
-      if grid == nil or grid.valid == false then
-         --No more info to report
-         return result
+      -- Entity grid
+      grid = ent_in.grid
+      if grid == nil or not grid.valid then
+         -- No more info to report
+         return mb:build()
       end
-      --Entity with non-empty equipment grid
-      --(continue)
+      -- Entity with non-empty equipment grid
+      -- (continue)
    end
-   --Stop if no equipment
+
+   -- Stop if no equipment
    if grid.count() == 0 then
-      table.insert(result, { "fa.armor-no-equipment" })
-      return result
+      mb:list_item({ "fa.armor-no-equipment" })
+      return mb:build()
    end
-   --Read battery level
+
+   -- Read battery level
    if grid.battery_capacity > 0 then
       if grid.available_in_batteries == grid.battery_capacity then
-         table.insert(result, { "fa.armor-batteries-full" })
+         mb:list_item({ "fa.armor-batteries-full" })
       elseif grid.available_in_batteries == 0 then
-         table.insert(result, { "fa.armor-batteries-empty" })
+         mb:list_item({ "fa.armor-batteries-empty" })
       else
          local battery_level = math.ceil(100 * grid.available_in_batteries / grid.battery_capacity)
-         table.insert(result, { "fa.armor-batteries-percent", tostring(battery_level) })
+         mb:list_item({ "fa.armor-batteries-percent", tostring(battery_level) })
       end
    else
-      table.insert(result, { "fa.armor-no-batteries" })
+      mb:list_item({ "fa.armor-no-batteries" })
    end
-   --Energy Producers
+
+   -- Energy Producers
    if grid.get_generator_energy() > 0 or grid.max_solar_energy > 0 then
-      table.insert(result, { "fa.armor-generating" })
+      mb:list_item({ "fa.armor-generating" })
       if grid.get_generator_energy() > 0 then
-         table.insert(
-            result,
-            { "fa.armor-power-nonstop", Electrical.get_power_string(grid.get_generator_energy() * 60) }
-         )
+         mb:fragment({ "fa.armor-power-nonstop", Electrical.get_power_string(grid.get_generator_energy() * 60) })
       end
       if grid.max_solar_energy > 0 then
-         table.insert(result, { "fa.armor-power-daytime", Electrical.get_power_string(grid.max_solar_energy * 60) })
+         mb:fragment({ "fa.armor-power-daytime", Electrical.get_power_string(grid.max_solar_energy * 60) })
       end
    end
-   --Movement bonus
+
+   -- Movement bonus
    if grid.count("exoskeleton-equipment") > 0 then
-      table.insert(result, {
+      mb:list_item({
          "fa.armor-movement-bonus",
          tostring(grid.count("exoskeleton-equipment") * 30),
          Electrical.get_power_string(grid.count("exoskeleton-equipment") * 200000),
       })
    end
-   return result
+
+   return mb:build()
 end
 
 --Remove all armor equipment and then the armor
