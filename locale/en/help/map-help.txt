@@ -56,6 +56,8 @@ To get to your main inventory, crafting, research, etc. use e.  This is often ca
 
 To get to the fast travel menu, use alt v.
 
+To get to the world menu, for train alerts and other functions, use alt w.
+
 To get to the logistics interface for an item once you have unlocked bots, use control alt l.
 
 To open the UI for an entity, click it with left bracket.  Note that your hand sometimes must be empty to disambiguate between this and "fast replace", where for example a better chest will replace a worse one if you build over it.

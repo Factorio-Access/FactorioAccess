@@ -1,3 +1,12 @@
+# 0.16.34 (unreleased)
+
+- Overhaul combat and equipment. See [ouor docs](./docs/features/combat.md)
+- Add a new world menu under alt w.
+- Move the trains UI to the world menu.
+- Add an alerts tab to the world menu exposing vanilla alerts.
+- Start filtering out gun and ammo inventories because they can now be reliably managed via the equipment overview
+- Drop the legacy gun/ammo grid in favor of the new equipment overview controls
+
 # 0.16.33 (2025-12-08)
 
 - Syntrax: move comments to /**/ becasue the game drops newlines on paste and we do not yet have a workaround

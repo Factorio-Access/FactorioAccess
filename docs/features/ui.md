@@ -68,6 +68,8 @@ Dangerous delete: `ctrl + backspace` (e.g. destroy planners)
 
 Access the character UI: `e` with nothing open
 
+Access the world menu: `alt w`
+
 Access your logistics GUI: `ctrl + alt + shift + l`
 
 Access the logistics GUI of the selected entity: `ctrl + alt + l`
