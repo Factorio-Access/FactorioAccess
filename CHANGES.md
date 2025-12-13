@@ -8,6 +8,7 @@
 - Drop the legacy gun/ammo grid in favor of the new equipment overview controls
 - Remove shift+g. This is now in the equipment overview.
 - Start announcing how many empty slots an armor contains with the equipment list.
+- Try to again make pipes walkable. This may have side effects and if it does, it will get rolled back.
 
 # 0.16.33 (2025-12-08)
 
