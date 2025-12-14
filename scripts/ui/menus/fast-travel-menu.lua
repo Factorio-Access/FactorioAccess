@@ -48,6 +48,7 @@ local function render(ctx)
                -- Move cursor to show location
                vp:set_cursor_pos(FaUtils.center_of_tile(point.position))
                Graphics.draw_cursor_highlight(ctx.pindex, nil, "train-visualization")
+               ctx.controller:close()
                ctx.message:fragment({ "fa.travel-cursor-moved-to", point.label })
             end,
             on_dangerous_delete = function(ctx)

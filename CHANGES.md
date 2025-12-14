@@ -13,6 +13,8 @@
 - Change how alerts work. Instead of getting an annoying loud beep every time there is an alert, you get a quieter
   periodic tone. Alerts are in the world menu. Entities still play a global sound when destroyed.
 - Start tracking when turrets fire, and alert you via the alerts mechanism. You may now know about battles before they fully reach your walls.
+- Fast travel menu now closes after moving your cursor
+
 
 # 0.16.33 (2025-12-08)
 
