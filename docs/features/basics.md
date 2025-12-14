@@ -86,6 +86,8 @@ Do the appropriate action for the item in hand, for example equipping equipment:
 
 Enable/disable build lock: `ctrl + b`
 
+Cycle your cursor through vehicles near your cursor: `shift + v`
+
 ## Description
 
 The mod replaces the mouse with keyboard commands.  We call this the cursor.  This is the mod equivalent of the sighted cursor.

@@ -944,6 +944,13 @@ data:extend({
 
    {
       type = "custom-input",
+      name = "fa-s-v",
+      key_sequence = "SHIFT + V",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
       name = "fa-as-left",
       key_sequence = "SHIFT + ALT + LEFT",
       consuming = "none",

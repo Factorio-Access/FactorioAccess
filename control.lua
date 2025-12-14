@@ -127,6 +127,7 @@ require("scripts.ui.internal.syntrax-input")
 require("scripts.ui.help")
 local GameGui = require("scripts.ui.game-gui")
 local UiRouter = require("scripts.ui.router")
+local VehicleCycler = require("scripts.vehicle-cycler")
 local Viewpoint = require("scripts.viewpoint")
 local Wires = require("scripts.wires")
 local Walking = require("scripts.walking")
@@ -3447,6 +3448,14 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       BuildingTools.flip_item_in_hand_vertical(event)
+   end
+)
+
+EventManager.on_event(
+   "fa-s-v",
+   ---@param event EventData.CustomInputEvent
+   function(event, pindex)
+      VehicleCycler.cycle_to_next_vehicle(pindex)
    end
 )
 
