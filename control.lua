@@ -74,6 +74,7 @@ local CraftingBackend = require("scripts.sonifiers.grid-backends.crafting")
 local EnemyRadar = require("scripts.sonifiers.combat.enemy-radar")
 local SpawnerRadar = require("scripts.sonifiers.combat.spawner-radar")
 local BattleNotice = require("scripts.sonifiers.battle-notice")
+local HealthBar = require("scripts.sonifiers.health-bar")
 local ForceGhostEnabler = require("scripts.force-ghost-enabler")
 local AimAssist = require("scripts.combat.aim-assist")
 local Capsules = require("scripts.combat.capsules")
@@ -880,9 +881,12 @@ EventManager.on_event(
       if ent == nil or not ent.valid then
          return
       elseif ent.name == "character" then
-         --Check character has any energy shield health remaining
          if ent.player == nil or not ent.player.valid then return end
-         local shield_left = nil
+         local pindex = ent.player.index
+         local health_ratio = ent.get_health_ratio()
+
+         -- Check for energy shield
+         local shield_ratio = nil
          local armor_inv = ent.player.get_inventory(defines.inventory.character_armor)
          if
             armor_inv[1]
@@ -892,12 +896,13 @@ EventManager.on_event(
             and armor_inv[1].grid.valid
          then
             local grid = armor_inv[1].grid
-            if grid.shield > 0 then shield_left = grid.shield end
+            if grid.max_shield > 0 then shield_ratio = grid.shield / grid.max_shield end
          end
-         --Play shield and/or character damaged sound
-         if shield_left ~= nil then sounds.play_player_damaged_shield(ent.player.index) end
-         if shield_left == nil or (shield_left < 1.0 and ent.get_health_ratio() < 1.0) then
-            sounds.play_player_damaged_character(ent.player.index)
+
+         -- Play sounds with pan based on current levels
+         if shield_ratio and shield_ratio > 0 then HealthBar.play_shield(pindex, shield_ratio) end
+         if not shield_ratio or (shield_ratio < 0.01 and health_ratio < 1.0) then
+            HealthBar.play_health(pindex, health_ratio)
          end
          return
       elseif ent.get_health_ratio() == 1.0 then
@@ -3496,11 +3501,31 @@ EventManager.on_event(
 ---@param event EventData.CustomInputEvent
 local function kb_read_health_and_armor_stats(event)
    local pindex = event.player_index
-   local router = UiRouter.get_router(pindex)
    local p = game.get_player(pindex)
-   local output = { "" }
+   local char = p.character
 
-   --Player health and armor equipment stats
+   -- Play health bar sonifier
+   if char and char.valid then
+      local health_ratio = char.get_health_ratio()
+      local shield_ratio = nil
+
+      local armor_inv = p.get_inventory(defines.inventory.character_armor)
+      if
+         armor_inv[1]
+         and armor_inv[1].valid_for_read
+         and armor_inv[1].valid
+         and armor_inv[1].grid
+         and armor_inv[1].grid.valid
+      then
+         local grid = armor_inv[1].grid
+         if grid.max_shield > 0 then shield_ratio = grid.shield / grid.max_shield end
+      end
+
+      HealthBar.play_status(pindex, health_ratio, shield_ratio)
+   end
+
+   -- Speak health and armor equipment stats
+   local output = { "" }
    local result = Equipment.read_armor_stats(pindex, nil)
    table.insert(output, result)
    Speech.speak(pindex, output)
