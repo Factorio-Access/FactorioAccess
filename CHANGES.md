@@ -9,6 +9,10 @@
 - Remove shift+g. This is now in the equipment overview.
 - Start announcing how many empty slots an armor contains with the equipment list.
 - Try to again make pipes walkable. This may have side effects and if it does, it will get rolled back.
+- Buildings that die now produce ghosts even before construction robotics is unlocked.
+- Change how alerts work. Instead of getting an annoying loud beep every time there is an alert, you get a quieter
+  periodic tone. Alerts are in the world menu. Entities still play a global sound when destroyed.
+- Start tracking when turrets fire, and alert you via the alerts mechanism. You may now know about battles before they fully reach your walls.
 
 # 0.16.33 (2025-12-08)
 
