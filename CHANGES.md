@@ -15,6 +15,7 @@
 - Start tracking when turrets fire, and alert you via the alerts mechanism. You may now know about battles before they fully reach your walls.
 - Fast travel menu now closes after moving your cursor
 - Fast travel menu creation and moving options are now relative to the cursor.
+- Perform a risky internal cleanup which should have been done months ago to remove the final remnants of telestep.
 
 # 0.16.33 (2025-12-08)
 

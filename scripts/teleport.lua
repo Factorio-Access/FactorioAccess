@@ -15,8 +15,8 @@ function mod.teleport_to_cursor(pindex, muted, ignore_enemies, return_cursor)
    local vp = Viewpoint.get_viewpoint(pindex)
    local result = mod.teleport_to_closest(pindex, vp:get_cursor_pos(), muted, ignore_enemies)
    if return_cursor then
-      local position = storage.players[pindex].position
-      vp:set_cursor_pos({ x = position.x, y = position.y })
+      local p = game.get_player(pindex)
+      vp:set_cursor_pos({ x = p.position.x, y = p.position.y })
    end
    return result
 end
@@ -105,7 +105,6 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
       end
       if teleported then
          char.force.chart(char.surface, { { new_pos.x - 15, new_pos.y - 15 }, { new_pos.x + 15, new_pos.y + 15 } })
-         storage.players[pindex].position = table.deepcopy(new_pos)
          BumpDetection.reset_bump_stats(pindex)
          if not muted then
             --Draw teleporting visuals at target

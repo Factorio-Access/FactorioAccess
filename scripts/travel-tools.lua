@@ -87,13 +87,7 @@ function FastTravelController:travel_to_point(id)
    if success and vp:get_cursor_anchored() then
       vp:set_cursor_pos(table.deepcopy(point.position))
    else
-      vp:set_cursor_pos(
-         FaUtils.offset_position_legacy(
-            storage.players[self.pindex].position,
-            storage.players[self.pindex].player_direction,
-            1
-         )
-      )
+      vp:set_cursor_pos(p.position)
    end
 
    Graphics.sync_build_cursor_graphics(self.pindex)

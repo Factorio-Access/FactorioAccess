@@ -382,8 +382,6 @@ function BuildHelpers:is_blocked_by_own_entity(position, entity_prototype, direc
       entity_prototype = entity_prototype,
       position = position,
       building_direction = direction,
-      player_direction = direction,
-      is_rail_vehicle = false,
    })
 
    -- Find all entities in the build area

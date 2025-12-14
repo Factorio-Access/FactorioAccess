@@ -360,16 +360,13 @@ end
 
 --[[
 Calculates the complete building footprint for an entity, handling all placement modes and offsets.
-This centralizes the logic that was previously scattered across building-tools.lua and graphics.lua.
 
 Parameters:
 - params.entity_prototype: The entity prototype (or provide width/height directly)
 - params.width: Entity width in tiles (if not using prototype)
 - params.height: Entity height in tiles (if not using prototype)
-- params.position: The base position (cursor or player position)
+- params.position: The base position (cursor position)
 - params.building_direction: The entity's rotation (defines.direction.north, defines.direction.east, etc.)
-- params.player_direction: The player's facing direction (for non-cursor mode)
-- params.is_rail_vehicle: Special handling for locomotives/wagons
 
 Returns:
 {

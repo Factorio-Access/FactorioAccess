@@ -22,7 +22,6 @@ function mod.sync_build_cursor_graphics(pindex)
    turn_to_cursor_direction_cardinal(pindex)
    local dir = player.building_direction
    local dir_indicator = player.building_dir_arrow
-   local p_dir = player.player_direction
    local vp = Viewpoint.get_viewpoint(pindex)
    local cursor_pos = vp:get_cursor_pos()
    local cursor_size = vp:get_cursor_size()
@@ -55,7 +54,6 @@ function mod.sync_build_cursor_graphics(pindex)
          entity_prototype = stack.prototype.place_result,
          position = vp:get_cursor_pos(),
          building_direction = dir,
-         player_direction = p_dir,
       })
 
       left_top = footprint.left_top

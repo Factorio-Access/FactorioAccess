@@ -73,8 +73,6 @@ function mod.calculate_build_params(params)
          entity_prototype = stack.prototype.place_result,
          position = pos,
          building_direction = building_direction,
-         player_direction = storage.players[pindex].player_direction,
-         is_rail_vehicle = false,
       })
 
       turn_to_cursor_direction_cardinal(pindex)
@@ -559,8 +557,6 @@ function mod.nudge_key(direction, event)
             height = ent.tile_height,
             position = FaUtils.offset_position_legacy(ent.position, direction, 1),
             building_direction = ent.direction,
-            player_direction = dirs.north, -- Not relevant for nudging
-            is_rail_vehicle = false,
          })
          local left_top = footprint.left_top
          local right_bottom = footprint.right_bottom
@@ -1217,7 +1213,7 @@ function mod.build_preview_checks_info(stack, pindex)
       end
    end
 
-   if util.distance(pos, storage.players[pindex].position) > p.reach_distance + 2 then
+   if util.distance(pos, p.position) > p.reach_distance + 2 then
       table.insert(result, { "fa.connection-cursor-out-of-reach" })
    end
    return result

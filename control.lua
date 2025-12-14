@@ -263,20 +263,15 @@ EventManager.on_event(
    ---@param event EventData.on_player_changed_position
    ---@param pindex integer
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-
       local p = game.get_player(pindex)
-      local old_pos = storage.players[pindex].position
-      local new_pos = p.position
 
       -- Check for teleportation (large position jump)
-      if old_pos and util.distance(old_pos, new_pos) > 10 then
+      local reader = MovementHistory.get_movement_history_reader(pindex)
+      local prev_entry = reader:get(0)
+      local old_pos = prev_entry and prev_entry.position
+      if old_pos and util.distance(old_pos, p.position) > 10 then
          MovementHistory.reset_and_increment_generation(pindex)
       end
-
-      storage.players[pindex].position = p.position
-      local pos = p.position
-      local vp = Viewpoint.get_viewpoint(pindex)
 
       --Update cursor graphics
       local stack = p.cursor_stack
@@ -421,37 +416,17 @@ EventManager.on_event(
    end
 )
 
---Makes the character face the cursor, choosing the nearest of 4 cardinal directions. Can be overwriten by vanilla move keys.
+--Makes the character face the cursor, choosing the nearest of 4 cardinal directions (north or south only).
 function turn_to_cursor_direction_cardinal(pindex)
    local p = game.get_player(pindex)
-   if p.character == nil then return end
-   local pex = storage.players[pindex]
+   if not p.character then return end
    local vp = Viewpoint.get_viewpoint(pindex)
    local dir = FaUtils.get_direction_precise(vp:get_cursor_pos(), p.position)
    if dir == dirs.northwest or dir == dirs.north or dir == dirs.northeast then
       p.character.direction = dirs.north
-      pex.player_direction = dirs.north
    elseif dir == dirs.southwest or dir == dirs.south or dir == dirs.southeast then
       p.character.direction = dirs.south
-      pex.player_direction = dirs.south
-   else
-      --p.character.direction = dir
-      pex.player_direction = dir
    end
-   --game.print("set cardinal pindex_dir: " .. direction_lookup(pex.player_direction))--
-   --game.print("set cardinal charct_dir: " .. direction_lookup(p.character.direction))--
-end
-
---Makes the character face the cursor, choosing the nearest of 8 directions. Can be overwriten by vanilla move keys.
-function turn_to_cursor_direction_precise(pindex)
-   local p = game.get_player(pindex)
-   if p.character == nil then return end
-   local pex = storage.players[pindex]
-   local vp = Viewpoint.get_viewpoint(pindex)
-   local dir = FaUtils.get_direction_precise(vp:get_cursor_pos(), p.position)
-   pex.player_direction = dir
-   --game.print("set precise pindex_dir: " .. direction_lookup(pex.player_direction))--
-   --game.print("set precise charct_dir: " .. direction_lookup(p.character.direction))--
 end
 
 --Called when a player enters or exits a vehicle
@@ -813,7 +788,6 @@ function fix_walk(pindex)
    if not player.character then return end
    -- Always use normal walking speed
    player.character_running_speed_modifier = 0 -- 100% + 0 = 100%
-   storage.players[pindex].position = player.position
 end
 
 EventManager.on_event(
@@ -1013,7 +987,6 @@ EventManager.on_event(
    function(event, pindex)
       local vp = Viewpoint.get_viewpoint(pindex)
       local position = game.get_player(pindex).position
-      storage.players[pindex].position = position
       vp:set_cursor_pos({ x = position.x, y = position.y })
       MovementHistory.reset_and_increment_generation(pindex)
    end
@@ -1114,91 +1087,6 @@ EventManager.on_event(
 EventManager.on_event(defines.events.on_research_finished, Research.on_research_finished)
 -- New input event definitions
 
---Move the player character (or adapt the cursor to smooth walking)
---Returns false if failed to move
-local function move(direction, pindex, nudged)
-   local router = UiRouter.get_router(pindex)
-
-   local p = game.get_player(pindex)
-   if p.character == nil then return false end
-   if p.vehicle then return true end
-   local first_player = game.get_player(pindex)
-   local pos = storage.players[pindex].position
-   local new_pos = FaUtils.offset_position_legacy(pos, direction, 1)
-   local moved_success = false
-   local vp = Viewpoint.get_viewpoint(pindex)
-
-   --Compare the input direction and facing direction
-   if storage.players[pindex].player_direction == direction or nudged == true then
-      --Same direction or nudging: For smooth walking, just return as Factorio handles movement
-      if nudged ~= true then return end
-      new_pos = FaUtils.center_of_tile(new_pos)
-      can_port = first_player.surface.can_place_entity({ name = "character", position = new_pos })
-      if can_port then
-         --If nudged then teleport now
-         teleported = first_player.teleport(new_pos)
-         if not teleported then
-            Speech.speak(pindex, { "fa.teleport-failed" })
-            moved_success = false
-         else
-            moved_success = true
-         end
-         storage.players[pindex].position = new_pos
-         if nudged ~= true then
-            vp:set_cursor_pos(FaUtils.offset_position_legacy(storage.players[pindex].position, direction, 1))
-            read_tile_with_preview_info(pindex)
-         end
-
-         local stack = first_player.cursor_stack
-         if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result ~= nil then
-            Graphics.sync_build_cursor_graphics(pindex)
-         end
-      else
-         Speech.speak(pindex, { "fa.tile-occupied" })
-         moved_success = false
-      end
-   else
-      --New direction: Turn character for smooth walking
-      storage.players[pindex].player_direction = direction
-      vp:set_cursor_pos(new_pos)
-      moved_success = true
-
-      local stack = first_player.cursor_stack
-      if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result ~= nil then
-         Graphics.sync_build_cursor_graphics(pindex)
-      end
-
-      --Read the new entity or unwalkable surface found upon turning
-      EntitySelection.reset_entity_index(pindex)
-      local ent = EntitySelection.get_first_ent_at_tile(pindex)
-      if
-         not storage.players[pindex].vanilla_mode
-         and (
-            (ent ~= nil and ent.valid)
-            or not game
-               .get_player(pindex).surface
-               .can_place_entity({ name = "character", position = vp:get_cursor_pos() })
-         )
-      then
-         target_mouse_pointer_deprecated(pindex)
-         read_tile_with_preview_info(pindex)
-      end
-
-      --Rotate belts in hand for build lock Mode
-      local stack = game.get_player(pindex).cursor_stack
-   end
-
-   --Update cursor highlight
-   local ent = EntitySelection.get_first_ent_at_tile(pindex)
-   if ent and ent.valid then
-      Graphics.draw_cursor_highlight(pindex, ent, nil)
-   else
-      Graphics.draw_cursor_highlight(pindex, nil, nil)
-   end
-
-   return moved_success
-end
-
 --Moves the cursor, and conducts an area scan for larger cursors. If the player is in a slow moving vehicle, it is stopped.
 ---Move a large cursor by n tiles and read the area
 ---@param pindex number
@@ -1232,7 +1120,7 @@ local function move_large_cursor_by(pindex, direction, tiles, prefix_text)
    else
       p.play_sound({
          path = "Close-Inventory-Sound",
-         position = storage.players[pindex].position,
+         position = p.position,
          volume_modifier = 0.75,
       })
    end
@@ -1278,7 +1166,7 @@ local function cursor_mode_move(direction, pindex, single_only)
       else
          p.play_sound({
             path = "Close-Inventory-Sound",
-            position = storage.players[pindex].position,
+            position = p.position,
             volume_modifier = 0.75,
          })
       end
@@ -1287,9 +1175,6 @@ local function cursor_mode_move(direction, pindex, single_only)
       vp:set_cursor_pos_continuous(cursor_pos, direction)
       move_large_cursor_by(pindex, direction, diff)
    end
-
-   --Update player direction to face the cursor
-   turn_to_cursor_direction_precise(pindex)
 end
 
 --Chooses the function to call after a movement keypress, according to the current mode.
@@ -1590,7 +1475,7 @@ local function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
       else
          p.play_sound({
             path = "Close-Inventory-Sound",
-            position = storage.players[pindex].position,
+            position = p.position,
             volume_modifier = 1,
          })
       end
@@ -1602,7 +1487,7 @@ local function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
       else
          p.play_sound({
             path = "inventory-wrap-around",
-            position = storage.players[pindex].position,
+            position = p.position,
             volume_modifier = 1,
          })
       end
@@ -1613,7 +1498,7 @@ local function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
       else
          p.play_sound({
             path = "Close-Inventory-Sound",
-            position = storage.players[pindex].position,
+            position = p.position,
             volume_modifier = 1,
          })
       end
@@ -1625,7 +1510,7 @@ local function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
       else
          p.play_sound({
             path = "inventory-wrap-around",
-            position = storage.players[pindex].position,
+            position = p.position,
             volume_modifier = 1,
          })
       end
@@ -1795,12 +1680,43 @@ EventManager.on_event(
 ---@param name string
 local function nudge_self(event, direction, name)
    local pindex = event.player_index
-   if move(direction, pindex, true) then
-      Speech.speak(pindex, { "fa.nudged-self", name })
-      turn_to_cursor_direction_precise(pindex)
-   else
+   local p = game.get_player(pindex)
+
+   if not p.character then
       Speech.speak(pindex, { "fa.nudge-failed" })
+      return
    end
+
+   if p.vehicle then
+      Speech.speak(pindex, { "fa.nudged-self", name })
+      return
+   end
+
+   local new_pos = FaUtils.center_of_tile(FaUtils.offset_position_legacy(p.position, direction, 1))
+
+   if not p.surface.can_place_entity({ name = "character", position = new_pos }) then
+      Speech.speak(pindex, { "fa.tile-occupied" })
+      return
+   end
+
+   if not p.teleport(new_pos) then
+      Speech.speak(pindex, { "fa.teleport-failed" })
+      return
+   end
+
+   local stack = p.cursor_stack
+   if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result then
+      Graphics.sync_build_cursor_graphics(pindex)
+   end
+
+   local ent = EntitySelection.get_first_ent_at_tile(pindex)
+   if ent and ent.valid then
+      Graphics.draw_cursor_highlight(pindex, ent, nil)
+   else
+      Graphics.draw_cursor_highlight(pindex, nil, nil)
+   end
+
+   Speech.speak(pindex, { "fa.nudged-self", name })
 end
 
 EventManager.on_event(
@@ -1956,11 +1872,6 @@ local function read_coords(pindex, start_phrase)
 
       -- Tiles are always 1x1, so tile case still triggers.
       if p_width and p_height and (p_width > 1 or p_height > 1) then
-         local vp = Viewpoint.get_viewpoint(pindex)
-         local dir = vp:get_hand_direction()
-         turn_to_cursor_direction_cardinal(pindex)
-         local p_dir = storage.players[pindex].player_direction
-
          message:fragment({ "fa.build-preview-dimensions", tostring(p_width), tostring(p_height) })
       elseif stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result ~= nil then
          --Paving preview size
@@ -1991,11 +1902,11 @@ EventManager.on_event(
 ---@param event EventData.CustomInputEvent
 local function kb_read_cursor_distance_and_direction(event)
    local pindex = event.player_index
-   local router = UiRouter.get_router(pindex)
+   local p = game.get_player(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
    local cursor_pos = vp:get_cursor_pos()
    --Read where the cursor is with respect to the player, e.g. "at 5 west"
-   local dir_dist = FaUtils.dir_dist_locale(storage.players[pindex].position, cursor_pos)
+   local dir_dist = FaUtils.dir_dist_locale(p.position, cursor_pos)
    local cursor_location_description = { "fa.at" }
    local cursor_production = " "
    local cursor_description_of = " "
@@ -2004,14 +1915,14 @@ local function kb_read_cursor_distance_and_direction(event)
    table.insert(result, cursor_description_of) --listpos
    table.insert(result, dir_dist)
    Speech.speak(pindex, result)
-   game.get_player(pindex).print(result, { volume_modifier = 0 })
+   p.print(result, { volume_modifier = 0 })
    --Draw the point
    rendering.draw_circle({
       color = { 1, 0.2, 0 },
       radius = 0.1,
       width = 5,
       target = cursor_pos,
-      surface = game.get_player(pindex).surface,
+      surface = p.surface,
       time_to_live = 180,
    })
 end
@@ -2028,9 +1939,10 @@ EventManager.on_event(
 ---@param event EventData.CustomInputEvent
 local function kb_read_cursor_distance_vector(event)
    local pindex = event.player_index
+   local p = game.get_player(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
    local c_pos = vp:get_cursor_pos()
-   local p_pos = storage.players[pindex].position
+   local p_pos = p.position
    local diff_x = math.floor(c_pos.x) - math.floor(p_pos.x)
    local diff_y = math.floor(c_pos.y) - math.floor(p_pos.y)
 
@@ -2052,14 +1964,14 @@ local function kb_read_cursor_distance_vector(event)
       .. " "
       .. FaUtils.direction_lookup(dir_y)
    Speech.speak(pindex, result)
-   game.get_player(pindex).print(result, { volume_modifier = 0 })
+   p.print(result, { volume_modifier = 0 })
    --Show cursor position
    rendering.draw_circle({
       color = { 1, 0.2, 0 },
       radius = 0.1,
       width = 5,
       target = c_pos,
-      surface = game.get_player(pindex).surface,
+      surface = p.surface,
       time_to_live = 180,
    })
 end
@@ -2282,7 +2194,6 @@ local function kb_cs_p(event)
    Teleport.teleport_to_cursor(pindex, false, true, true)
    local position = game.get_player(pindex).position
    vp:set_cursor_pos({ x = position.x, y = position.y })
-   storage.players[pindex].position = position
    storage.players[pindex].last_damage_alert_pos = position
    Graphics.draw_cursor_highlight(pindex, nil, nil)
    Graphics.sync_build_cursor_graphics(pindex)
