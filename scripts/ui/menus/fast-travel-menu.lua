@@ -82,13 +82,7 @@ local function render(ctx)
             ctx.message:fragment(point.label)
          end, {
             on_click = function(ctx)
-               local p = game.get_player(ctx.pindex)
-               if not p or not p.character then
-                  ctx.message:fragment({ "fa.travel-cannot-relocate-no-character" })
-                  return
-               end
-
-               local position = storage.players[ctx.pindex].position
+               local position = vp:get_cursor_pos()
                if controller:relocate_point(point_id, position) then
                   ctx.message:fragment({
                      "fa.travel-relocated-point",
@@ -172,13 +166,10 @@ local function render(ctx)
       end,
       on_child_result = function(ctx, result)
          if result and result ~= "" then
-            local p = game.get_player(ctx.pindex)
-            if p and p.character then
-               local position = storage.players[ctx.pindex].position
-               controller:create_point(result, position)
-               ctx.message:fragment({ "fa.travel-point-created", result })
-               -- Menu will re-render automatically
-            end
+            local position = vp:get_cursor_pos()
+            controller:create_point(result, position)
+            ctx.message:fragment({ "fa.travel-point-created", result })
+            -- Menu will re-render automatically
          end
       end,
    })
