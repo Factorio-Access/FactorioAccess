@@ -18,6 +18,8 @@
 - Perform a risky internal cleanup which should have been done months ago to remove the final remnants of telestep.
 - Fix: build lock now fires on the first tile when moving the cursor
 - Add the vehicle cycler. Shift+v cycles your cursor through vehicles near your character. Intended to make driving around more viable, since you can now find your car again.
+- Don't announce that things are out of fuel twice
+- Out of fuel is no longer reported if an entity is consuming its last piece of fuel.
 
 # 0.16.33 (2025-12-08)
 
