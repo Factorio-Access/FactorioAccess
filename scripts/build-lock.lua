@@ -232,21 +232,33 @@ function BuildLock.set_enabled(pindex, enabled, silent, reason)
       state.walking_state = create_build_state()
       state.cursor_state = create_build_state()
 
-      -- Initialize walking state with current position
-      -- Add current tile to queue so first pole places where build lock was enabled
+      -- Initialize walking state with current character position
       if player.character then
          local current_tile = {
             x = math.floor(player.character.position.x),
             y = math.floor(player.character.position.y),
          }
          state.walking_state.last_floored_position = current_tile
-         -- Add current tile as first tile in queue with no direction (will be determined on placement)
          table.insert(state.walking_state.pending_tiles, {
             x = current_tile.x,
             y = current_tile.y,
-            direction = defines.direction.north, -- Placeholder, backend will handle
+            direction = defines.direction.north,
          })
       end
+
+      -- Initialize cursor state with current cursor position
+      local vp = Viewpoint.get_viewpoint(pindex)
+      local cursor_pos = vp:get_cursor_pos()
+      local cursor_tile = {
+         x = math.floor(cursor_pos.x),
+         y = math.floor(cursor_pos.y),
+      }
+      state.cursor_state.last_floored_position = cursor_tile
+      table.insert(state.cursor_state.pending_tiles, {
+         x = cursor_tile.x,
+         y = cursor_tile.y,
+         direction = vp:get_hand_direction(),
+      })
 
       state.last_cursor_stack_name = player.cursor_stack and player.cursor_stack.name or nil
       state.last_cursor_stack_count = player.cursor_stack and player.cursor_stack.count or nil

@@ -16,6 +16,7 @@
 - Fast travel menu now closes after moving your cursor
 - Fast travel menu creation and moving options are now relative to the cursor.
 - Perform a risky internal cleanup which should have been done months ago to remove the final remnants of telestep.
+- Fix: build lock now fires on the first tile when moving the cursor
 
 # 0.16.33 (2025-12-08)
 
