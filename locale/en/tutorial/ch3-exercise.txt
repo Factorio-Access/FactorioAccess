@@ -1,0 +1,8 @@
+; Chapter 3 Exercise: Mining and Placing
+; This is a placeholder for the exercise content.
+
+Practice exercise for Chapter 3.
+
+Try mining a tree by moving to it and pressing X.
+
+Pick up an item and try placing it with F.

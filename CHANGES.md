@@ -1,3 +1,14 @@
+# 0.16.36 (2025-12-14)
+
+- Add shift+j to cycle backward in train schedule condition type cycling (j cycles forward)
+- Add train fluid contents display to the locomotive overview
+- Add artillery configuration tab with auto-targeting toggle
+- Add turret configuration tab with priority targets and ignore unprioritized targets settings
+- Add splitter configuration tab (replaces the old ctrl+alt+arrow keys for splitter priorities)
+- Remove ctrl+alt+left/right for splitter priority (use the new splitter config tab instead)
+- Add tutorial system accessible via ctrl+alt+/ from anywhere
+- Add entity chooser UI for selecting entity prototypes
+
 # 0.16.35 (2025-12-14)
 
 - Revert making pipes walkable because it breaks offshore pumps

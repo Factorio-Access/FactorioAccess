@@ -221,7 +221,7 @@ local function render_locomotive_config(ctx)
 
    builder:end_row()
 
-   -- Train contents label
+   -- Train contents label (items)
    builder:add_label("contents", function(label_ctx)
       local train_contents = train.get_contents()
       local presenting = InventoryUtils.present_list(train_contents)
@@ -229,6 +229,17 @@ local function render_locomotive_config(ctx)
          label_ctx.message:fragment({ "fa.locomotive-train-contents", presenting })
       else
          label_ctx.message:fragment({ "fa.locomotive-train-contents", { "fa.ent-info-inventory-empty" } })
+      end
+   end)
+
+   -- Train fluid contents label
+   builder:add_label("fluids", function(label_ctx)
+      local fluid_contents = train.get_fluid_contents()
+      local presenting = InventoryUtils.present_fluid_list(fluid_contents)
+      if presenting then
+         label_ctx.message:fragment({ "fa.locomotive-train-fluids", presenting })
+      else
+         label_ctx.message:fragment({ "fa.locomotive-train-fluids", { "fa.ent-info-inventory-empty" } })
       end
    end)
 

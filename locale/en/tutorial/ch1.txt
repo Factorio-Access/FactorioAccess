@@ -1,0 +1,8 @@
+; Chapter 1: Getting Started
+; This is a placeholder for the tutorial chapter content.
+
+Welcome to Factorio Access!
+
+This tutorial will help you learn how to play Factorio with the accessibility mod.
+
+Press W, A, S, D to navigate the tutorial using the standard menu navigation keys.

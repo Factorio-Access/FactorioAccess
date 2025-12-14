@@ -165,7 +165,9 @@ mod.UI_NAMES = {
    EQUIPMENT_SELECTOR = "equipment_selector",
    WEAPON_SELECTOR = "weapon_selector",
    AMMO_SELECTOR = "ammo_selector",
+   ENTITY_CHOOSER = "entity_chooser",
    HELP = "help",
+   TUTORIAL = "tutorial",
    SCHEDULE_EDITOR = "schedule_editor",
    SETTINGS = "settings",
    -- Test UI names (used in automated tests)
@@ -682,9 +684,9 @@ register_ui_event("fa-e", function(event, pindex)
    local router = mod.get_router(pindex)
    local stack = router_state[pindex].ui_stack
 
-   -- Check if help UI is open on top of the stack
-   if #stack > 0 and stack[#stack].name == mod.UI_NAMES.HELP then
-      -- Pop help UI instead of clearing everything
+   -- Check if help or tutorial UI is open on top of the stack
+   if #stack > 0 and (stack[#stack].name == mod.UI_NAMES.HELP or stack[#stack].name == mod.UI_NAMES.TUTORIAL) then
+      -- Pop help/tutorial UI instead of clearing everything
       router:_pop_ui()
    elseif router:is_in_overlay() then
       -- In overlay context
@@ -781,6 +783,23 @@ register_ui_event("fa-s-slash", function(event, pindex)
       else
          Speech.speak(pindex, { "fa.help-no-content" })
       end
+   end
+
+   return EventManager.FINISHED
+end)
+
+-- Ctrl+Alt+/ key toggles tutorial UI - can be opened from anywhere including GUIs
+register_ui_event("fa-ca-slash", function(event, pindex)
+   local router = mod.get_router(pindex)
+   local stack = router_state[pindex].ui_stack
+
+   -- Check if tutorial UI is on top of the stack
+   if #stack > 0 and stack[#stack].name == mod.UI_NAMES.TUTORIAL then
+      -- Close tutorial UI
+      router:_pop_ui()
+   else
+      -- Open tutorial UI
+      router:open_child_ui(mod.UI_NAMES.TUTORIAL, {})
    end
 
    return EventManager.FINISHED
@@ -1048,6 +1067,7 @@ register_ui_event("fa-n", create_ui_handler("on_conjunction_modification", {}))
 
 -- J key for toggle supertype (condition type cycling)
 register_ui_event("fa-j", create_ui_handler("on_toggle_supertype", {}))
+register_ui_event("fa-s-j", create_ui_handler("on_toggle_supertype", { shift = true }))
 
 -- Slash key for add to row (with modifiers)
 register_ui_event("fa-slash", create_ui_handler("on_add_to_row", {}))

@@ -1365,6 +1365,13 @@ data:extend({
 
    {
       type = "custom-input",
+      name = "fa-ca-slash",
+      key_sequence = "CONTROL + ALT + SLASH",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
       name = "fa-cs-i",
       key_sequence = "CONTROL + SHIFT + I",
       consuming = "none",

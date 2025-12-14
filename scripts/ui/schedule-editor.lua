@@ -75,11 +75,12 @@ local TYPES_WITH_COMPARATOR = {
    fuel_item_count_any = true,
 }
 
----Get the next condition type in the cycle
+---Get the next or previous condition type in the cycle
 ---@param current_type WaitConditionType
 ---@param allowed_types string[]? List of allowed types (defaults to MAIN_SCHEDULE_CONDITION_TYPES)
+---@param reverse boolean? If true, cycle backward instead of forward
 ---@return WaitConditionType
-local function get_next_condition_type(current_type, allowed_types)
+local function get_next_condition_type(current_type, allowed_types, reverse)
    allowed_types = allowed_types or MAIN_SCHEDULE_CONDITION_TYPES
 
    -- Normalize fluid_count to item_count for cycling
@@ -87,7 +88,12 @@ local function get_next_condition_type(current_type, allowed_types)
 
    for i, ctype in ipairs(allowed_types) do
       if ctype == search_type then
-         local next_index = (i % #allowed_types) + 1
+         local next_index
+         if reverse then
+            next_index = ((i - 2) % #allowed_types) + 1
+         else
+            next_index = (i % #allowed_types) + 1
+         end
          return allowed_types[next_index]
       end
    end
@@ -401,7 +407,8 @@ local function build_condition_vtable(
       end,
 
       on_toggle_supertype = function(ctx)
-         local new_type = get_next_condition_type(condition.type, allowed_types)
+         local reverse = ctx.modifiers and ctx.modifiers.shift
+         local new_type = get_next_condition_type(condition.type, allowed_types, reverse)
          local new_condition = { type = new_type }
 
          -- Preserve compatible fields when changing types

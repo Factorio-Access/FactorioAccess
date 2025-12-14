@@ -12,6 +12,7 @@ local UiKeyGraph = require("scripts.ui.key-graph")
 local UiRouter = require("scripts.ui.router")
 local TabList = require("scripts.ui.tab-list")
 local circuit_network_tab = require("scripts.ui.tabs.circuit-network")
+local splitter_config_tab = require("scripts.ui.tabs.splitter-config")
 
 local mod = {}
 
@@ -216,8 +217,17 @@ mod.belt_analyzer = TabList.declare_tablist({
          },
       })
 
-      -- Add circuit network section if available
+      -- Add splitter configuration section if entity is a splitter
       local entity = parameters and parameters.entity
+      if entity and splitter_config_tab.is_available(entity) then
+         table.insert(sections, {
+            name = "configuration",
+            title = { "fa.section-device-configuration" },
+            tabs = { splitter_config_tab.splitter_config_tab },
+         })
+      end
+
+      -- Add circuit network section if available
       if entity and circuit_network_tab.is_available(entity) then
          table.insert(sections, {
             name = "circuit-network",

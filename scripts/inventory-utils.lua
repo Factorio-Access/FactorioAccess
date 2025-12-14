@@ -563,6 +563,46 @@ function mod.get_weapon_slot_count(entity)
    return 0
 end
 
+---Present a fluid contents dictionary (from train.get_fluid_contents() or similar)
+---@param contents table<string, double> Dictionary of fluid name to amount
+---@param truncate number? Maximum number of entries to show
+---@return LocalisedString?
+function mod.present_fluid_list(contents, truncate)
+   if not contents or not next(contents) then return nil end
+
+   ---@type { name: string, count: number }[]
+   local fluids = {}
+   for name, amount in pairs(contents) do
+      table.insert(fluids, { name = name, count = math.floor(amount) })
+   end
+
+   -- Sort by count descending
+   table.sort(fluids, function(a, b)
+      if a.count == b.count then return a.name > b.name end
+      return a.count > b.count
+   end)
+
+   local endpoint = #fluids
+   local extra = false
+   if truncate then
+      extra = truncate < endpoint
+      endpoint = math.min(endpoint, truncate)
+   end
+
+   local entries = {}
+   for i = 1, endpoint do
+      local e = fluids[i]
+      table.insert(entries, ItemInfo.item_or_fluid_info({ name = e.name, count = e.count }, prototypes.fluid))
+   end
+
+   if extra then
+      table.insert(entries, ItemInfo.item_info({ name = ItemInfo.ITEM_OTHER, count = #fluids - truncate }))
+   end
+
+   local joined = FaUtils.localise_cat_table(entries, ", ")
+   return { "fa.ent-info-inventory-presentation", joined }
+end
+
 ---Get gun info for a slot, abstracting over inventory guns vs built-in guns
 ---@param entity LuaEntity
 ---@param slot number

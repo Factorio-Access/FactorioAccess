@@ -13,6 +13,7 @@ local UiKeyGraph = require("scripts.ui.key-graph")
 local UiRouter = require("scripts.ui.router")
 local inventory = require("scripts.ui.menus.inventory")
 local arithmetic_combinator_tab = require("scripts.ui.tabs.arithmetic-combinator")
+local artillery_config_tab = require("scripts.ui.tabs.artillery-config")
 local assembling_machine_tab = require("scripts.ui.tabs.assembling-machine")
 local circuit_network_tab = require("scripts.ui.tabs.circuit-network")
 local circuit_network_signals_tab = require("scripts.ui.tabs.circuit-network-signals")
@@ -27,6 +28,7 @@ local roboport_config_tab = require("scripts.ui.tabs.roboport-config")
 local selector_combinator_tab = require("scripts.ui.tabs.selector-combinator")
 local spidertron_config_tab = require("scripts.ui.tabs.spidertron-config")
 local train_stop_tab = require("scripts.ui.tabs.train-stop")
+local turret_config_tab = require("scripts.ui.tabs.turret-config")
 
 local mod = {}
 
@@ -197,6 +199,12 @@ local function build_configuration_tabs(entity)
 
    -- Add roboport configuration
    if prototype.type == "roboport" then table.insert(tabs, roboport_config_tab.roboport_config_tab) end
+
+   -- Add artillery configuration
+   if artillery_config_tab.is_available(entity) then table.insert(tabs, artillery_config_tab.artillery_config_tab) end
+
+   -- Add turret configuration
+   if turret_config_tab.is_available(entity) then table.insert(tabs, turret_config_tab.turret_config_tab) end
 
    -- Future: Add other device-specific tabs here
    -- if prototype.type == "mining-drill" then ...

@@ -2471,6 +2471,15 @@ EventManager.on_event("fa-s-slash", function(event)
    router:open_ui(UiRouter.UI_NAMES.HELP, help_params)
 end)
 
+-- Tutorial (Ctrl+Alt+/)
+EventManager.on_event("fa-ca-slash", function(event)
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+
+   -- Open tutorial UI
+   router:open_ui(UiRouter.UI_NAMES.TUTORIAL, {})
+end)
+
 -- Circuit/copper network neighbors (N key)
 EventManager.on_event(
    "fa-n",
@@ -3741,53 +3750,6 @@ EventManager.on_event(
    function(event, pindex)
       if storage.players[pindex].vanilla_mode then return end
       TravelTools.fast_travel_menu_open(pindex)
-   end
-)
-
----@param event EventData.CustomInputEvent
----@param ent LuaEntity
----@param is_input boolean
----@param is_left boolean
-local function kb_set_splitter_priority(event, ent, is_input, is_left)
-   local pindex = event.player_index
-
-   local result = TransportBelts.set_splitter_priority(ent, is_input, is_left, nil)
-   Speech.speak(pindex, result)
-end
-
-EventManager.on_event(
-   "fa-as-left",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local ent = game.get_player(pindex).selected
-      if ent and ent.valid and ent.type == "splitter" then kb_set_splitter_priority(event, ent, true, true) end
-   end
-)
-
-EventManager.on_event(
-   "fa-as-right",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local ent = game.get_player(pindex).selected
-      if ent and ent.valid and ent.type == "splitter" then kb_set_splitter_priority(event, ent, true, false) end
-   end
-)
-
-EventManager.on_event(
-   "fa-ca-left",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local ent = game.get_player(pindex).selected
-      if ent and ent.valid and ent.type == "splitter" then kb_set_splitter_priority(event, ent, false, true) end
-   end
-)
-
-EventManager.on_event(
-   "fa-ca-right",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      local ent = game.get_player(pindex).selected
-      if ent and ent.valid and ent.type == "splitter" then kb_set_splitter_priority(event, ent, false, false) end
    end
 )
 

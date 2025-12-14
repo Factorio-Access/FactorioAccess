@@ -88,6 +88,8 @@ Enable/disable build lock: `ctrl + b`
 
 Cycle your cursor through vehicles near your cursor: `shift + v`
 
+Open the tutorial: `ctrl + alt + /`
+
 ## Description
 
 The mod replaces the mouse with keyboard commands.  We call this the cursor.  This is the mod equivalent of the sighted cursor.

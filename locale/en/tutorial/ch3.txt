@@ -1,0 +1,8 @@
+; Chapter 3: Mining and Placing
+; This is a placeholder for the tutorial chapter content.
+
+In this chapter you will learn about mining and placing objects.
+
+Press X to mine what is at the cursor.
+
+Press F to place what is in your hand.
