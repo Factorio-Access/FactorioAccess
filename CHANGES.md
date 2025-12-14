@@ -1,3 +1,7 @@
+# 0.16.35 (2025-12-14)
+
+- Revert making pipes walkable because it breaks offshore pumps
+
 # 0.16.34 (2025-12-13)
 
 - Overhaul combat and equipment. See [ouor docs](./docs/features/combat.md)
