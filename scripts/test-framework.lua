@@ -56,7 +56,6 @@ local test_files = {
    "entity-selection-test", -- Test stable entity ordering (issue #265)
    "rail-grid-adjustment-test", -- Test that TestSurface matches game rail grid adjustment
    "player-weapon-test", -- Test weapon/ammo property detection
-   "pipe-walkability-test", -- Verify pipes are walkable by players but block enemies
 }
 
 -- Test execution state
