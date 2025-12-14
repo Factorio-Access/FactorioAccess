@@ -1,4 +1,4 @@
-# 0.16.34 (unreleased)
+# 0.16.34 (2025-12-13)
 
 - Overhaul combat and equipment. See [ouor docs](./docs/features/combat.md)
 - Add a new world menu under alt w.
