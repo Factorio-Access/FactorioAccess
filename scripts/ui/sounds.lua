@@ -147,19 +147,6 @@ function mod.play_aim_locked(pindex)
    play_sound_internal(pindex, { path = "player-aim-locked" })
 end
 
--- Alert sounds
-function mod.play_enemy_presence_high(pindex)
-   play_sound_internal(pindex, { path = "alert-enemy-presence-high" })
-end
-
-function mod.play_enemy_presence_low(pindex)
-   play_sound_internal(pindex, { path = "alert-enemy-presence-low" })
-end
-
-function mod.play_structure_damaged(pindex)
-   play_sound_internal(pindex, { path = "alert-structure-damaged" })
-end
-
 -- Vehicle sounds
 function mod.play_car_horn(pindex)
    play_sound_internal(pindex, { path = "car-horn" })
@@ -213,10 +200,6 @@ end
 
 function mod.play_picked_up_item(pindex)
    play_sound_internal(pindex, { path = "utility/picked_up_item", volume_modifier = 1 })
-end
-
-function mod.play_alert_destroyed(pindex)
-   play_sound_internal(pindex, { path = "utility/alert_destroyed", volume_modifier = 0.5 })
 end
 
 -- Mining/entity sounds

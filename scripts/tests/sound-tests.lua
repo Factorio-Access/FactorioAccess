@@ -60,27 +60,14 @@ describe("Sound System Tests", function()
       end)
 
       test_ctx:in_ticks(10, function(ctx)
-         -- Play alert sounds
-         sounds.play_enemy_presence_low(2)
-         sounds.play_structure_damaged(2)
-
+         -- Verify sounds from earlier tick are still in history
          local history = sounds.get_sound_history()
-         ctx:assert_equals(7, #history, "Should have 7 sounds total")
+         ctx:assert_equals(5, #history, "Should have 5 sounds total")
 
-         -- Verify all sounds are for correct players
-         local player1_sounds = 0
-         local player2_sounds = 0
-
+         -- Verify all sounds are for player 1
          for _, sound_data in ipairs(history) do
-            if sound_data.pindex == 1 then
-               player1_sounds = player1_sounds + 1
-            elseif sound_data.pindex == 2 then
-               player2_sounds = player2_sounds + 1
-            end
+            ctx:assert_equals(1, sound_data.pindex, "All sounds should be for player 1")
          end
-
-         ctx:assert_equals(5, player1_sounds, "Player 1 should have 5 sounds")
-         ctx:assert_equals(2, player2_sounds, "Player 2 should have 2 sounds")
       end)
    end)
 

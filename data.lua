@@ -104,28 +104,10 @@ data.raw["map-gen-presets"].default["faccess-peaceful"] = {
 data:extend({
    {
       type = "sound",
-      name = "alert-enemy-presence-high",
+      name = "fa-battle-notice",
       category = "alert",
-      filename = "__FactorioAccess__/audio/alert-enemy-presence-high-zapsplat-trimmed-science_fiction_alarm_fast_high_pitched_warning_tone_emergency_003_60104.wav",
-      volume = 0.4,
-      preload = true,
-   },
-
-   {
-      type = "sound",
-      name = "alert-enemy-presence-low",
-      category = "alert",
-      filename = "__FactorioAccess__/audio/alert-enemy-presence-low-zapsplat-modified_multimedia_game_tone_short_bright_futuristic_beep_action_tone_002_59161.wav",
-      volume = 0.4,
-      preload = true,
-   },
-
-   {
-      type = "sound",
-      name = "alert-structure-damaged",
-      category = "alert",
-      filename = "__FactorioAccess__/audio/alert-structure-damaged-zapsplat-modified-emergency_alarm_003.wav",
-      volume = 1,
+      filename = "__FactorioAccess__/audio/battle-notice.ogg", -- TODO: Add sound file
+      volume = 0.7,
       preload = true,
    },
 

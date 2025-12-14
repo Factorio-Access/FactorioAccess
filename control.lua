@@ -73,6 +73,8 @@ local GridSonifier = require("scripts.sonifiers.grid-sonifier")
 local CraftingBackend = require("scripts.sonifiers.grid-backends.crafting")
 local EnemyRadar = require("scripts.sonifiers.combat.enemy-radar")
 local SpawnerRadar = require("scripts.sonifiers.combat.spawner-radar")
+local BattleNotice = require("scripts.sonifiers.battle-notice")
+local ForceGhostEnabler = require("scripts.force-ghost-enabler")
 local AimAssist = require("scripts.combat.aim-assist")
 local Capsules = require("scripts.combat.capsules")
 local Zoom = require("scripts.zoom")
@@ -343,6 +345,8 @@ function on_tick(event)
    Rulers.update_all_players()
    TrainSounds.on_tick()
    InserterSonifier.on_tick()
+   BattleNotice.on_tick()
+   ForceGhostEnabler.on_tick()
 
    move_characters(event)
 
@@ -866,7 +870,7 @@ function set_inserter_filter_by_hand(pindex, ent)
    end
 end
 
---Alerts a force's players when their structures are destroyed. 300 ticks of cooldown.
+--Notifies battle sonifier when structures are damaged, plays character damage sounds
 EventManager.on_event(
    defines.events.on_entity_damaged,
    ---@param event EventData.on_entity_damaged
@@ -888,10 +892,7 @@ EventManager.on_event(
             and armor_inv[1].grid.valid
          then
             local grid = armor_inv[1].grid
-            if grid.shield > 0 then
-               shield_left = grid.shield
-               --game.print(armor_inv[1].grid.shield,{volume_modifier=0})
-            end
+            if grid.shield > 0 then shield_left = grid.shield end
          end
          --Play shield and/or character damaged sound
          if shield_left ~= nil then sounds.play_player_damaged_shield(ent.player.index) end
@@ -907,60 +908,18 @@ EventManager.on_event(
          return
       end
 
-      local attacker_force = event.force
-      local damaged_force = ent.force
-      --Alert all players of the damaged force
-      for pindex, player in pairs(players) do
-         if
-            storage.players[pindex] ~= nil
-            and game.get_player(pindex).force.name == damaged_force.name
-            and (
-               storage.players[pindex].last_damage_alert_tick == nil
-               or (tick - storage.players[pindex].last_damage_alert_tick) > 300
-            )
-         then
-            storage.players[pindex].last_damage_alert_tick = tick
-            storage.players[pindex].last_damage_alert_pos = ent.position
-            local dist = math.ceil(util.distance(storage.players[pindex].position, ent.position))
-            local dir =
-               FaUtils.direction_lookup(FaUtils.get_direction_biased(ent.position, storage.players[pindex].position))
-            local result = ent.name .. " damaged by " .. attacker_force.name .. " forces at " .. dist .. " " .. dir
-            Speech.speak(pindex, result)
-            --game.get_player(pindex).print(result,{volume_modifier=0})--**
-            sounds.play_structure_damaged(pindex)
-         end
-      end
+      BattleNotice.notify(ent.force)
    end
 )
 
---Alerts a force's players when their structures are destroyed. No cooldown.
+--Notifies battle sonifier when structures are destroyed
 EventManager.on_event(
    defines.events.on_entity_died,
    ---@param event EventData.on_entity_died
    function(event)
       local ent = event.entity
-      local causer = event.cause
-      if ent == nil then
-         return
-      elseif ent.name == "character" then
-         return
-      end
-      local attacker_force = event.force
-      local damaged_force = ent.force
-      --Alert all players of the damaged force
-      for pindex, player in pairs(players) do
-         if storage.players[pindex] ~= nil and game.get_player(pindex).force.name == damaged_force.name then
-            storage.players[pindex].last_damage_alert_tick = event.tick
-            storage.players[pindex].last_damage_alert_pos = ent.position
-            local dist = math.ceil(util.distance(storage.players[pindex].position, ent.position))
-            local dir =
-               FaUtils.direction_lookup(FaUtils.get_direction_biased(ent.position, storage.players[pindex].position))
-            local result = ent.name .. " destroyed by " .. attacker_force.name .. " forces at " .. dist .. " " .. dir
-            Speech.speak(pindex, result)
-            --game.get_player(pindex).print(result,{volume_modifier=0})--**
-            sounds.play_alert_destroyed(pindex)
-         end
-      end
+      if ent == nil or ent.name == "character" then return end
+      BattleNotice.notify(ent.force)
    end
 )
 
