@@ -438,6 +438,12 @@ function BuildHelpers:build_entity(position, direction)
    local old_cursor_pos = vp:get_cursor_pos()
    vp:set_cursor_pos({ x = position.x, y = position.y })
 
+   -- Check if we can build here at all (silently fail for pre-existing entities, vehicles, etc.)
+   if not player.can_build_from_cursor({ position = position, direction = direction }) then
+      vp:set_cursor_pos(old_cursor_pos)
+      return nil
+   end
+
    -- Use BuildingTools to place the entity with explicit direction
    -- Disable player teleport and let build lock handle error sounds
    local old_item_count = stack.count

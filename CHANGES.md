@@ -1,3 +1,7 @@
+# 0.16.37 (unreleased)
+
+- Build lock is now silent if it can't build.  It's either this or spamming errors so deal.
+
 # 0.16.36 (2025-12-14)
 
 NOTE: the removed keys are controversial but we will bring them back if we need to. The problem is the maintenance
