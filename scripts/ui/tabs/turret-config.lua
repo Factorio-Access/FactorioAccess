@@ -26,7 +26,7 @@ local function get_ammo_summary(entity)
    if not ammo_inv then return { "fa.turret-no-ammo-slot" } end
 
    local contents = ammo_inv.get_contents()
-   local presenting = InventoryUtils.present_list(contents)
+   local presenting = InventoryUtils.present_list(contents, nil, nil, true)
    if presenting then
       return presenting
    else

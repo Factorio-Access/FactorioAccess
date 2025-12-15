@@ -1,13 +1,20 @@
 # 0.16.36 (2025-12-14)
 
-- Add shift+j to cycle backward in train schedule condition type cycling (j cycles forward)
+NOTE: the removed keys are controversial but we will bring them back if we need to. The problem is the maintenance
+burden and discoverability.  Only existing players ever find them, only once told, and the operations they perform are
+rarely needed.
+
+- Support shif to cycle train schedule conditions backward
 - Add train fluid contents display to the locomotive overview
-- Add artillery configuration tab with auto-targeting toggle
-- Add turret configuration tab with priority targets and ignore unprioritized targets settings
+- Add artillery configuration tab with auto-targeting toggle, but not yet to trains.
+- Add turret configuration tab with priority targets and ignore unprioritized checkbox
 - Add splitter configuration tab (replaces the old ctrl+alt+arrow keys for splitter priorities)
 - Remove ctrl+alt+left/right for splitter priority (use the new splitter config tab instead)
-- Add tutorial system accessible via ctrl+alt+/ from anywhere
-- Add entity chooser UI for selecting entity prototypes
+- Remove inserter keys for setting/clearing filters. Do this via the UI instead.
+- Add tutorial system accessible via ctrl+alt+/ from anywhere, but with dummy content
+- Tile/entity reading now tells you whether a turret prioritizes
+- Turret ranges are now exposed in the turret configuration tab
+- Try a fix for the Kruise Kontrol freezing issue experienced by some players
 
 # 0.16.35 (2025-12-14)
 
