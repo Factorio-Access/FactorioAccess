@@ -501,6 +501,10 @@ end
 
 ---@param ctx fa.ui.graph.InternalTabCtx
 function Graph:on_tab_list_opened(ctx)
+   -- Got to be a bit careful. If the tablist persisted the state, we are already somewhere.
+   -- We will detect closure/key correction on the next operation, if that's necessary.
+   if ctx.state.cur_key then return end
+
    self:_with_render(ctx, function()
       ctx.state.cur_key = self.render.start_key
    end)

@@ -166,26 +166,11 @@ end
 mod.tutorial_ui = TabList.declare_tablist({
    ui_name = Router.UI_NAMES.TUTORIAL,
    resets_to_first_tab_on_open = false, -- Preserve position
+   persist_state = true,
    tabs_callback = build_tutorial_tabs,
 })
 
 -- Register with router
 Router.register_ui(mod.tutorial_ui)
-
----Get the persistent tutorial state for a player
----@param pindex number
----@return { last_chapter: number, last_subtab: number }
-function mod.get_tutorial_state(pindex)
-   return tutorial_storage[pindex]
-end
-
----Set the persistent tutorial state for a player
----@param pindex number
----@param chapter number
----@param subtab number
-function mod.set_tutorial_state(pindex, chapter, subtab)
-   tutorial_storage[pindex].last_chapter = chapter
-   tutorial_storage[pindex].last_subtab = subtab
-end
 
 return mod
