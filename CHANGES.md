@@ -5,6 +5,7 @@ burden and discoverability.  Only existing players ever find them, only once tol
 rarely needed.
 
 - Support shif to cycle train schedule conditions backward
+- Fix: cycling the condition in a train schedule no longer resets the logical operator to and
 - Add train fluid contents display to the locomotive overview
 - Add artillery configuration tab with auto-targeting toggle, but not yet to trains.
 - Add turret configuration tab with priority targets and ignore unprioritized checkbox

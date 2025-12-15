@@ -409,7 +409,7 @@ local function build_condition_vtable(
       on_toggle_supertype = function(ctx)
          local reverse = ctx.modifiers and ctx.modifiers.shift
          local new_type = get_next_condition_type(condition.type, allowed_types, reverse)
-         local new_condition = { type = new_type }
+         local new_condition = { type = new_type, compare_type = condition.compare_type }
 
          -- Preserve compatible fields when changing types
          if TYPES_WITH_TICKS[new_type] then
