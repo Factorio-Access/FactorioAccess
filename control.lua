@@ -101,6 +101,7 @@ local SpidertronRemoteSelector = require("scripts.ui.menus.spidertron-remote-sel
 require("scripts.ui.tabs.item-chooser")
 require("scripts.ui.tabs.signal-chooser")
 require("scripts.ui.tabs.fluid-chooser")
+require("scripts.ui.tabs.entity-chooser")
 require("scripts.ui.tabs.equipment-selector")
 local Help = require("scripts.ui.help")
 local MessageLists = require("scripts.message-lists")

@@ -8,6 +8,7 @@ Provides controls for:
 ]]
 
 local Controls = require("scripts.ui.controls")
+local EntityChooser = require("scripts.ui.tabs.entity-chooser")
 local InventoryUtils = require("scripts.inventory-utils")
 local Localising = require("scripts.localising")
 local Menu = require("scripts.ui.menu")
@@ -16,28 +17,6 @@ local UiRouter = require("scripts.ui.router")
 local UiSounds = require("scripts.ui.sounds")
 
 local mod = {}
-
--- Number of priority target slots (Factorio standard)
-local PRIORITY_SLOT_COUNT = 10
-
--- Entity types that can be turret priority targets
-local TARGETABLE_TYPES = {
-   ["unit"] = true,
-   ["unit-spawner"] = true,
-   ["turret"] = true,
-   ["car"] = true,
-   ["spider-vehicle"] = true,
-   ["asteroid"] = true,
-   ["segment"] = true,
-   ["segmented-unit"] = true,
-}
-
----Check if an entity prototype can be a turret target
----@param proto LuaEntityPrototype
----@return boolean
-local function is_targetable_entity(proto)
-   return TARGETABLE_TYPES[proto.type] or false
-end
 
 ---Get ammo summary for a turret
 ---@param entity LuaEntity
@@ -95,24 +74,32 @@ local function render_turret_config(ctx)
       end,
    })
 
-   -- Priority target slots
-   for i = 1, PRIORITY_SLOT_COUNT do
+   -- Priority target slots - iterate over actual targets plus one empty slot for adding
+   local targets = entity.priority_targets
+   local slot_count = #targets + 1 -- Current targets plus one empty slot for adding
+
+   for i = 1, slot_count do
       local slot_index = i
       local slot_key = "priority_" .. i
+      local is_empty_slot = i > #targets
 
       builder:add_item(slot_key, {
          label = function(label_ctx)
-            local target = entity.get_priority_target(slot_index)
-            if target then
-               label_ctx.message:fragment(Localising.get_localised_name_with_fallback(target))
-            else
+            if is_empty_slot then
                label_ctx.message:fragment({ "fa.empty" })
+            else
+               local target = targets[slot_index]
+               if target then
+                  label_ctx.message:fragment(Localising.get_localised_name_with_fallback(target))
+               else
+                  label_ctx.message:fragment({ "fa.empty" })
+               end
             end
          end,
          on_click = function(click_ctx)
             -- Open entity chooser filtered to targetable entities
             click_ctx.controller:open_child_ui(UiRouter.UI_NAMES.ENTITY_CHOOSER, {
-               filter_func = is_targetable_entity,
+               filter_type = EntityChooser.FILTER_TYPES.TURRET_PRIORITY,
             }, { node = slot_key })
          end,
          on_child_result = function(result_ctx, result)
@@ -125,31 +112,37 @@ local function render_turret_config(ctx)
             end
          end,
          on_clear = function(clear_ctx)
-            entity.set_priority_target(slot_index, nil)
-            clear_ctx.controller.message:fragment({ "fa.empty" })
+            if not is_empty_slot then
+               entity.set_priority_target(slot_index, nil)
+               clear_ctx.controller.message:fragment({ "fa.empty" })
+            end
          end,
-         on_drag_up = function(drag_ctx)
-            -- Swap with previous slot
-            if slot_index > 1 then
-               local current = entity.get_priority_target(slot_index)
-               local prev = entity.get_priority_target(slot_index - 1)
+         on_drag_left = function(drag_ctx)
+            -- Swap with previous slot (move item left/earlier in priority)
+            if slot_index > 1 and not is_empty_slot then
+               local current_targets = entity.priority_targets
+               local current = current_targets[slot_index]
+               local prev = current_targets[slot_index - 1]
                entity.set_priority_target(slot_index, prev and prev.name or nil)
                entity.set_priority_target(slot_index - 1, current and current.name or nil)
                UiSounds.play_menu_move(drag_ctx.pindex)
-               drag_ctx.controller.message:fragment({ "fa.turret-swapped-with-previous" })
+               drag_ctx.controller.message:fragment({ "fa.turret-priority-moved-left" })
+               drag_ctx.graph_controller:suggest_move("priority_" .. (slot_index - 1))
             else
                UiSounds.play_ui_edge(drag_ctx.pindex)
             end
          end,
-         on_drag_down = function(drag_ctx)
-            -- Swap with next slot
-            if slot_index < PRIORITY_SLOT_COUNT then
-               local current = entity.get_priority_target(slot_index)
-               local next_target = entity.get_priority_target(slot_index + 1)
+         on_drag_right = function(drag_ctx)
+            -- Swap with next slot (move item right/later in priority)
+            local current_targets = entity.priority_targets
+            if slot_index < #current_targets and not is_empty_slot then
+               local current = current_targets[slot_index]
+               local next_target = current_targets[slot_index + 1]
                entity.set_priority_target(slot_index, next_target and next_target.name or nil)
                entity.set_priority_target(slot_index + 1, current and current.name or nil)
                UiSounds.play_menu_move(drag_ctx.pindex)
-               drag_ctx.controller.message:fragment({ "fa.turret-swapped-with-next" })
+               drag_ctx.controller.message:fragment({ "fa.turret-priority-moved-right" })
+               drag_ctx.graph_controller:suggest_move("priority_" .. (slot_index + 1))
             else
                UiSounds.play_ui_edge(drag_ctx.pindex)
             end

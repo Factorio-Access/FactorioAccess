@@ -1,7 +1,7 @@
 --[[
 Entity chooser for selecting entity prototypes.
 Primarily used for turret priority targets.
-Supports filtering to specific entity types.
+Supports filtering via predefined filter types.
 ]]
 
 local TreeChooser = require("scripts.ui.tree-chooser")
@@ -12,17 +12,40 @@ local Localising = require("scripts.localising")
 
 local mod = {}
 
----@class fa.ui.EntityChooserParams
----@field filter_func (fun(proto: LuaEntityPrototype): boolean)? Optional filter function
+-- Predefined filter types
+mod.FILTER_TYPES = {
+   TURRET_PRIORITY = "turret_priority",
+}
+
+-- Entity types that can be turret priority targets
+local TURRET_PRIORITY_TYPES = {
+   ["unit"] = true,
+   ["unit-spawner"] = true,
+   ["turret"] = true,
+   ["car"] = true,
+   ["spider-vehicle"] = true,
+   ["spider-unit"] = true,
+   ["asteroid"] = true,
+   ["segment"] = true,
+   ["segmented-unit"] = true,
+}
+
+-- Filter functions by type
+local FILTERS = {
+   [mod.FILTER_TYPES.TURRET_PRIORITY] = function(proto)
+      return TURRET_PRIORITY_TYPES[proto.type] or false
+   end,
+}
 
 ---Build the entity tree with optional filtering
 ---@param ctx fa.ui.graph.Ctx
 local function build_entity_tree(ctx)
    local builder = TreeChooser.TreeChooserBuilder.new()
 
-   -- Get filter function from parameters
-   local params = ctx.ui_params or {}
-   local filter_func = params.filter_func
+   -- Get filter type from global parameters (passed to open_child_ui)
+   local params = ctx.global_parameters or {}
+   local filter_type = params.filter_type
+   local filter_func = filter_type and FILTERS[filter_type]
 
    -- Collect entities by group/subgroup
    local entities_by_group = {}

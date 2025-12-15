@@ -899,6 +899,25 @@ local function ent_info_radar(ctx)
 end
 
 ---@param ctx fa.Info.EntInfoContext
+local function ent_info_turret_priority(ctx)
+   local ent = ctx.ent
+   if ent.type ~= "ammo-turret" and ent.type ~= "electric-turret" and ent.type ~= "fluid-turret" then return end
+
+   local targets = ent.priority_targets
+   if not targets or #targets == 0 then return end
+
+   if ent.ignore_unprioritised_targets then
+      ctx.message:fragment({ "fa.ent-info-turret-only-shoots" })
+   else
+      ctx.message:fragment({ "fa.ent-info-turret-prioritizes" })
+   end
+   for i, target_proto in ipairs(targets) do
+      if i > 1 then ctx.message:list_item() end
+      ctx.message:fragment(Localising.get_localised_name_with_fallback(target_proto))
+   end
+end
+
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_electric_pole(ctx)
    local ent = ctx.ent
    if ent.type ~= "electric-pole" then return end
@@ -1386,6 +1405,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    run_handler(ent_info_spidertron)
    run_handler(ent_info_filters)
    run_handler(ent_info_verbose_status)
+   run_handler(ent_info_turret_priority)
 
    --Inserters: Explain held items, pickup and drop positions
    if ent.type == "inserter" then
