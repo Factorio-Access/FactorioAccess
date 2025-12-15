@@ -4,6 +4,7 @@ Provides a dynamic UI that adapts to entity capabilities
 ]]
 
 local Consts = require("scripts.consts")
+local EntityAccess = require("scripts.entity-access")
 local Functools = require("scripts.functools")
 local InventoryGrid = require("scripts.ui.inventory-grid")
 local InventoryUtils = require("scripts.inventory-utils")
@@ -454,19 +455,10 @@ function mod.open_entity_ui(pindex, entity)
       return false
    end
 
-   -- Check if player can access the entity
-   local can_access = false
-
-   -- Ghosts are always accessible
-   if entity.type == "entity-ghost" then
-      can_access = true
-   -- Check if player can reach the entity
-   elseif player.can_reach_entity(entity) then
-      can_access = true
-   end
-
+   -- Check if player can access the entity (in reach, or charted for remote viewing)
+   local can_access, error_message = EntityAccess.can_open_entity(pindex, entity)
    if not can_access then
-      Speech.speak(pindex, { "fa.entity-out-of-reach" })
+      Speech.speak(pindex, error_message)
       return false
    end
 

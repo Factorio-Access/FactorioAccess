@@ -78,12 +78,12 @@ describe("Entity UI", function()
       -- Cleanup handled automatically by test framework
    end)
 
-   it("should fail to open for out-of-reach entity", function(ctx)
+   it("should open for charted out-of-reach entity in read-only mode", function(ctx)
       local player, far_chest
 
       ctx:init(function()
          player = game.get_player(1)
-         -- Create a chest far from the player
+         -- Create a chest far from the player (but on charted terrain)
          far_chest = player.surface.create_entity({
             name = "wooden-chest",
             position = { player.position.x + 100, player.position.y + 100 },
@@ -91,19 +91,69 @@ describe("Entity UI", function()
          })
          assert(far_chest ~= nil, "Failed to create far chest")
          assert(far_chest.valid, "Far chest should be valid")
+         -- Ensure the chunk is charted (for remote viewing)
+         local chunk_pos =
+            { x = math.floor((player.position.x + 100) / 32), y = math.floor((player.position.y + 100) / 32) }
+         player.force.chart(player.surface, {
+            { chunk_pos.x * 32, chunk_pos.y * 32 },
+            { (chunk_pos.x + 1) * 32, (chunk_pos.y + 1) * 32 },
+         })
       end)
 
       ctx:at_tick(5, function()
-         -- Try to open the entity UI - should fail
+         -- Try to open the entity UI - should succeed for remote viewing
          local success = EntityUI.open_entity_ui(1, far_chest)
-         assert(success == false, "Should fail to open UI for out-of-reach entity")
+         assert(success == true, "Should open UI for charted out-of-reach entity")
       end)
 
       ctx:at_tick(10, function()
-         -- Check that the UI is NOT open
+         -- Check that the UI IS open (for reading)
          local router = UiRouter.get_router(1)
          local is_open = router:is_ui_open(UiRouter.UI_NAMES.ENTITY)
-         assert(is_open == false, "Entity UI should not be open")
+         assert(is_open == true, "Entity UI should be open for reading")
+      end)
+
+      -- Cleanup handled automatically by test framework
+   end)
+
+   it("should fail to open for uncharted out-of-reach entity", function(ctx)
+      local player, far_chest
+
+      ctx:init(function()
+         player = game.get_player(1)
+         -- Create a chest in an uncharted area
+         local far_pos = { x = player.position.x + 2000, y = player.position.y + 2000 }
+         -- Ensure the chunk is NOT charted by picking a distant location
+         local chunk_pos = { x = math.floor(far_pos.x / 32), y = math.floor(far_pos.y / 32) }
+         local is_charted = player.force.is_chunk_charted(player.surface, chunk_pos)
+
+         -- Only create the chest if the chunk is uncharted (skip test otherwise)
+         if not is_charted then
+            far_chest = player.surface.create_entity({
+               name = "wooden-chest",
+               position = far_pos,
+               force = player.force,
+            })
+            assert(far_chest ~= nil, "Failed to create far chest")
+            assert(far_chest.valid, "Far chest should be valid")
+         end
+      end)
+
+      ctx:at_tick(5, function()
+         if far_chest then
+            -- Try to open the entity UI - should fail for uncharted areas
+            local success = EntityUI.open_entity_ui(1, far_chest)
+            assert(success == false, "Should fail to open UI for uncharted out-of-reach entity")
+         end
+      end)
+
+      ctx:at_tick(10, function()
+         if far_chest then
+            -- Check that the UI is NOT open
+            local router = UiRouter.get_router(1)
+            local is_open = router:is_ui_open(UiRouter.UI_NAMES.ENTITY)
+            assert(is_open == false, "Entity UI should not be open for uncharted entity")
+         end
       end)
 
       -- Cleanup handled automatically by test framework

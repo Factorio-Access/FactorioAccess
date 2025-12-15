@@ -18,6 +18,7 @@ local UiRouter = require("scripts.ui.router")
 local ItemInfo = require("scripts.item-info")
 local InventoryUtils = require("scripts.inventory-utils")
 local Help = require("scripts.ui.help")
+local EntityAccess = require("scripts.entity-access")
 local MessageBuilder = Speech.MessageBuilder
 
 local mod = {}
@@ -139,6 +140,31 @@ local function grid_pos_to_slot(x, y)
    return (y - 1) * GRID_WIDTH + x
 end
 
+---Check if a write operation is allowed for the given entity
+---Returns true if allowed, false if denied (and appends error message)
+---@param ctx { pindex: integer, controller: { message: fa.MessageBuilder } }
+---@param entity LuaEntity
+---@param sibling_entity LuaEntity? If this is a transfer, the destination entity
+---@return boolean allowed
+local function check_write_access(ctx, entity, sibling_entity)
+   if sibling_entity then
+      -- Transfer operation: check both source and destination
+      local result = EntityAccess.can_transfer_between(ctx.pindex, entity, sibling_entity)
+      if not result.allowed then
+         ctx.controller.message:fragment(result.reason)
+         return false
+      end
+   else
+      -- Single entity operation
+      local result = EntityAccess.can_write_to_entity(ctx.pindex, entity)
+      if not result.allowed then
+         ctx.controller.message:fragment(result.reason)
+         return false
+      end
+   end
+   return true
+end
+
 ---Custom dimension labeler for inventory slots
 ---@param ctx fa.ui.InventoryGrid.Context
 ---@param x number
@@ -158,6 +184,13 @@ local function move_bar(ctx, delta)
 
    if not entity or not entity.valid then
       ctx.message:fragment({ "fa.equipment-error-invalid-entity" })
+      return
+   end
+
+   -- Check write access
+   local access_result = EntityAccess.can_write_to_entity(ctx.pindex, entity)
+   if not access_result.allowed then
+      ctx.message:fragment(access_result.reason)
       return
    end
 
@@ -278,6 +311,9 @@ local function render_inventory_grid(ctx)
 
             -- CTRL+SHIFT+[ : Blueprint book insertion or repair
             if click_ctx.modifiers.control and click_ctx.modifiers.shift then
+               -- Check write access for entity operations
+               if not check_write_access(click_ctx, entity, nil) then return end
+
                -- Check if hand has blueprint and slot has blueprint book
                if cursor_stack and cursor_stack.valid_for_read and cursor_stack.is_blueprint then
                   if inv_stack and inv_stack.valid_for_read and inv_stack.is_blueprint_book then
@@ -313,6 +349,9 @@ local function render_inventory_grid(ctx)
             -- SHIFT+[ : Quick transfer full stack
             if click_ctx.modifiers.shift then
                if ctx.parameters.sibling_entity and ctx.parameters.sibling_inventory_id then
+                  -- Check write access for both source and destination
+                  if not check_write_access(click_ctx, entity, ctx.parameters.sibling_entity) then return end
+
                   InventoryUtils.quick_transfer(
                      click_ctx.pindex,
                      click_ctx.controller.message,
@@ -331,6 +370,9 @@ local function render_inventory_grid(ctx)
             end
 
             -- Normal click: swap stacks between cursor and inventory
+            -- Check write access for entity
+            if not check_write_access(click_ctx, entity, nil) then return end
+
             sounds.play_menu_click(click_ctx.pindex)
 
             if cursor_stack and inv_stack then
@@ -353,6 +395,9 @@ local function render_inventory_grid(ctx)
             -- SHIFT+] : Quick transfer half stack
             if click_ctx.modifiers.shift then
                if ctx.parameters.sibling_entity and ctx.parameters.sibling_inventory_id then
+                  -- Check write access for both source and destination
+                  if not check_write_access(click_ctx, entity, ctx.parameters.sibling_entity) then return end
+
                   local inv_stack = inv[slot_index]
                   if inv_stack and inv_stack.valid_for_read then
                      local half = math.floor(inv_stack.count / 2)
@@ -380,6 +425,9 @@ local function render_inventory_grid(ctx)
             end
 
             -- Handle right click (split stack)
+            -- Check write access for entity
+            if not check_write_access(click_ctx, entity, nil) then return end
+
             local player = game.get_player(click_ctx.pindex)
             local cursor_stack = player.cursor_stack
             local inv_stack = inv[slot_index]
@@ -452,6 +500,9 @@ local function render_inventory_grid(ctx)
             end
          end,
          on_dangerous_delete = function(delete_ctx, x, y)
+            -- Check write access for entity
+            if not check_write_access(delete_ctx, entity, nil) then return end
+
             -- Delete blueprint/decon/upgrade planners from slot
             local slot_index = grid_pos_to_slot(x, y)
             local stack = inv[slot_index]
@@ -478,6 +529,9 @@ local function render_inventory_grid(ctx)
             end
          end,
          on_trash = function(trash_ctx)
+            -- Check write access for entity
+            if not check_write_access(trash_ctx, entity, nil) then return end
+
             -- Send item in slot to trash (slot_index captured from loop)
             local stack = inv[slot_index]
 
