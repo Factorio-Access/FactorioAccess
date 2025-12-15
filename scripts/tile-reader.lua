@@ -16,6 +16,7 @@ local SurfaceHelper = require("scripts.rails.surface-helper")
 local Viewpoint = require("scripts.viewpoint")
 local MessageBuilder = Speech.MessageBuilder
 local Combat = require("scripts.combat")
+local KruiseKontrol = require("scripts.kruise-kontrol-wrapper")
 
 local mod = {}
 
@@ -115,8 +116,8 @@ function mod.read_tile_inner(pindex, message)
 
    local ent = EntitySelection.get_first_ent_at_tile(pindex)
 
-   -- In combat mode, don't set selected entity (aim assist controls targeting)
-   local skip_selection = Combat.is_combat_mode(pindex)
+   -- In combat mode or during KK, don't set selected entity
+   local skip_selection = Combat.is_combat_mode(pindex) or KruiseKontrol.is_active(pindex)
 
    -- Special handling for rails: announce all rails at this position
    local is_rail = ent and ent.valid and Consts.RAIL_TYPES_SET[ent.type]

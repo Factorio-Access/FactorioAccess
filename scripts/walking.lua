@@ -23,6 +23,7 @@ local Graphics = require("scripts.graphics")
 local Sounds = require("scripts.ui.sounds")
 local TileReader = require("scripts.tile-reader")
 local Combat = require("scripts.combat")
+local KruiseKontrol = require("scripts.kruise-kontrol-wrapper")
 
 local mod = {}
 
@@ -86,8 +87,8 @@ function mod.process_walking_announcements(pindex)
          Graphics.draw_cursor_highlight(pindex, ent, nil)
          if player.driving then return end
 
-         -- In combat mode, don't set selected entity (aim assist controls targeting)
-         local skip_selection = Combat.is_combat_mode(pindex)
+         -- In combat mode or during KK, don't set selected entity
+         local skip_selection = Combat.is_combat_mode(pindex) or KruiseKontrol.is_active(pindex)
 
          if
             ent ~= nil
@@ -107,7 +108,7 @@ function mod.process_walking_announcements(pindex)
          TileReader.read_tile(pindex)
       else
          Graphics.draw_cursor_highlight(pindex, nil, nil)
-         if not Combat.is_combat_mode(pindex) then player.selected = nil end
+         if not Combat.is_combat_mode(pindex) and not KruiseKontrol.is_active(pindex) then player.selected = nil end
       end
    else
       -- NON-ANCHORED MODE: Don't announce while walking
