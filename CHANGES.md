@@ -8,6 +8,7 @@
 - Fix: you can now set your quickbar slots after you die the first time.
 - The quickbar assignment now only considers what is in hand. If your hand is empty it clears. If your hand contains something it sets.
   - Ideally this will let us move to using the vanilla keys in the future.
+- The crash site is back by popular demand.
 
 # 0.16.37 (2025-12-15)
 
