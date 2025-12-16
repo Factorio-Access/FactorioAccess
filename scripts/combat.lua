@@ -18,13 +18,15 @@ local mod = {}
 ---@class fa.Combat.State
 ---@field combat_mode boolean Whether combat mode is active
 ---@field last_warning_tick table<string, integer> Map of warning key to last tick it was spoken
+---@field last_gun_index integer? The last selected gun index for change detection
 
 ---@type table<integer, fa.Combat.State>
 local combat_storage = StorageManager.declare_storage_module("combat", {
    combat_mode = false,
    last_warning_tick = {},
+   last_gun_index = nil,
 }, {
-   ephemeral_state_version = 2,
+   ephemeral_state_version = 3,
 })
 
 ---Check if combat mode is active for a player
@@ -324,6 +326,24 @@ local function tick_non_combat_mode(pindex, player, character)
    if not player.selected then shoot_at_position(player, cursor_pos) end
 end
 
+---Check for gun index changes and announce
+---@param pindex integer
+---@param character LuaEntity
+local function tick_gun_change(pindex, character)
+   local state = combat_storage[pindex]
+   local current_gun_index = character.selected_gun_index
+   if current_gun_index == state.last_gun_index then return end
+
+   state.last_gun_index = current_gun_index
+   if not current_gun_index then return end
+
+   local gun_inv = character.get_inventory(defines.inventory.character_guns)
+   local gun_stack = gun_inv[current_gun_index]
+   if not gun_stack.valid_for_read then return end
+
+   Speech.speak(pindex, Localising.get_localised_name_with_fallback(gun_stack))
+end
+
 ---Process shooting for a player each tick
 ---@param pindex integer
 function mod.on_tick(pindex)
@@ -332,6 +352,8 @@ function mod.on_tick(pindex)
 
    local character = player.character
    if not character then return end
+
+   tick_gun_change(pindex, character)
 
    if combat_storage[pindex].combat_mode then
       tick_combat_mode(pindex, player)
