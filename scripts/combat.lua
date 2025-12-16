@@ -332,6 +332,7 @@ end
 local function tick_gun_change(pindex, character)
    local state = combat_storage[pindex]
    local current_gun_index = character.selected_gun_index
+   if state.last_gun_index == nil then state.last_gun_index = current_gun_index end
    if current_gun_index == state.last_gun_index then return end
 
    state.last_gun_index = current_gun_index
