@@ -5,6 +5,9 @@
 - Try to put some validation around the arithmetic combinator.
 - Don't play any sounds when pressing tab on the map. This was left over old UI code.
 - Wontfix: we only announce your active gun if it changes.
+- Fix: you can now set your quickbar slots after you die the first time.
+- The quickbar assignment now only considers what is in hand. If your hand is empty it clears. If your hand contains something it sets.
+  - Ideally this will let us move to using the vanilla keys in the future.
 
 # 0.16.37 (2025-12-15)
 

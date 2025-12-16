@@ -1648,47 +1648,7 @@ function mod.selected_item_production_stats_info(pindex, prototype_name)
       if item_stack and item_stack.valid_for_read then prototype = item_stack.prototype end
    end
 
-   --Otherwise try to get it from the inventory slots
-   if prototype == nil and storage.players[pindex].menu == "inventory" then
-      item_stack = storage.players[pindex].inventory.lua_inventory[storage.players[pindex].inventory.index]
-      if item_stack and item_stack.valid_for_read then prototype = item_stack.prototype end
-   elseif prototype == nil and storage.players[pindex].menu == "guns" then
-      item_stack = Equipment.guns_menu_get_selected_slot(pindex)
-      if item_stack and item_stack.valid_for_read then prototype = item_stack.prototype end
-   end
-
-   --Try crafting menu.
-   if prototype == nil and storage.players[pindex].menu == "crafting" then
-      recipe =
-         storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index]
-      if recipe and recipe.valid and recipe.products then
-         local first_item, first_fluid
-         for i, prod in ipairs(recipe.products) do
-            if first_item and first_fluid then
-               break
-            elseif prod.type == "item" then
-               first_item = prod
-            elseif prod.type == "fluid" then
-               first_fluid = prod
-            end
-         end
-
-         local chosen = first_fluid or first_item
-
-         if not chosen then
-            -- do nothing
-         elseif chosen.type == "item" then
-            --Select product item #1
-            prototype = prototypes.item[chosen.name]
-         elseif chosen.type == "fluid" then
-            --Select product fluid #1
-            stats = p.force.get_fluid_production_statistics(p.surface)
-            prototype = prototypes.fluid[chosen.name]
-         end
-      end
-   end
-
-   -- For now, we give up.
+   -- UI is now handled by the new UI system.
    if not prototype then return { "fa.error-no-selected-item" } end
 
    -- We need both inputs and outputs. That's the same code, with one boolean

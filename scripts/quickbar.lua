@@ -73,25 +73,12 @@ function mod.set_quick_bar_slot(index, pindex)
    local router = UiRouter.get_router(pindex)
    local page = game.get_player(pindex).get_active_quick_bar_page(1) - 1
    local stack_cur = game.get_player(pindex).cursor_stack
-   local stack_inv = storage.players[pindex].inventory.lua_inventory[storage.players[pindex].inventory.index]
    local ent = p.selected
    if stack_cur and stack_cur.valid_for_read and stack_cur.valid == true then
       game.get_player(pindex).set_quick_bar_slot(index + 10 * page, stack_cur)
       local msg = MessageBuilder.new()
       msg:fragment({ "fa.quickbar-assigned", index })
       msg:fragment(Localising.get_localised_name_with_fallback(stack_cur))
-      Speech.speak(pindex, msg:build())
-   elseif stack_inv and stack_inv.valid_for_read and stack_inv.valid == true then
-      game.get_player(pindex).set_quick_bar_slot(index + 10 * page, stack_inv)
-      local msg = MessageBuilder.new()
-      msg:fragment({ "fa.quickbar-assigned", index })
-      msg:fragment(Localising.get_localised_name_with_fallback(stack_inv))
-      Speech.speak(pindex, msg:build())
-   elseif ent ~= nil and ent.valid and ent.force == p.force and prototypes.item[ent.name] ~= nil then
-      game.get_player(pindex).set_quick_bar_slot(index + 10 * page, ent.name)
-      local msg = MessageBuilder.new()
-      msg:fragment({ "fa.quickbar-assigned", index })
-      msg:fragment(Localising.get_localised_name_with_fallback(ent))
       Speech.speak(pindex, msg:build())
    else
       --Clear the slot

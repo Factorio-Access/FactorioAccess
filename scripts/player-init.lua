@@ -70,7 +70,6 @@ function mod.initialize(player)
    faplayer.ruler = faplayer.ruler or nil
    faplayer.inventory = faplayer.inventory
       or {
-         lua_inventory = character.get_main_inventory(),
          index = 1,
          width = 10,
          max = #character.get_main_inventory(),
