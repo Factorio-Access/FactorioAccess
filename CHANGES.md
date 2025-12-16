@@ -3,6 +3,11 @@
 - Build lock is now silent if it can't build.  It's either this or spamming errors so deal.
 - Fix shift+space. It now respects safe mode and shoots at the given tile when there is no selected entity. Please note,
   not all weapons will shoot a tile (e.g. the machine gun).  I have specifically tested the atomic bomb.
+- Pressing tab again announces the active gun.
+- You may now open entities remotely as long as they are on a charted chunk, giving you a use for radars:
+  - You can reconfigure them, view their inventories, etc.
+  - You cannot change their inventories, etc. No stealing items out from 1000 tiles away.
+  - Among other things, this allows configuring train related entities from a distance.
 
 # 0.16.36 (2025-12-14)
 
