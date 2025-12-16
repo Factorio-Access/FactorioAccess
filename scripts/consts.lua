@@ -224,6 +224,15 @@ mod.INVENTORY_PRIORITIES = {
    rocket_silo_modules = 4, -- maps to crafter_modules
 }
 
+-- Logic signal names (virtual signals with special combinator behavior)
+-- These are: signal-everything, signal-anything, signal-each
+---@type table<string, true>
+mod.LOGIC_SIGNAL_NAMES = {
+   ["signal-everything"] = true,
+   ["signal-anything"] = true,
+   ["signal-each"] = true,
+}
+
 -- Entity statuses that should be announced in the brief cursor form, not just right bracket.
 -- These are error states or rarely-seen conditions that warrant immediate attention.
 ---@type table<defines.entity_status, true>

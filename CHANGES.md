@@ -2,6 +2,7 @@
 
 - Fix: don't double-announce something as marked for deconstruction
 - Move cancellation of deconstruction/upgrade to shift left bracket, as this matches vanilla.
+- Try to put some validation around the arithmetic combinator.
 
 # 0.16.37 (2025-12-15)
 

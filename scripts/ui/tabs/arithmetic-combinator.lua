@@ -12,8 +12,55 @@ local UiKeyGraph = require("scripts.ui.key-graph")
 local UiRouter = require("scripts.ui.router")
 local UiSounds = require("scripts.ui.sounds")
 local CircuitNetwork = require("scripts.circuit-network")
+local Consts = require("scripts.consts")
 
 local mod = {}
+
+---Check if a signal is one of the logic signals (everything, anything, each)
+---@param signal SignalID?
+---@return boolean
+local function is_logic_signal(signal)
+   if not signal or not signal.name then return false end
+   if signal.type and signal.type ~= "virtual" then return false end
+   return Consts.LOGIC_SIGNAL_NAMES[signal.name] == true
+end
+
+---Check if a signal is specifically signal-each
+---@param signal SignalID?
+---@return boolean
+local function is_each_signal(signal)
+   if not signal or not signal.name then return false end
+   if signal.type and signal.type ~= "virtual" then return false end
+   return signal.name == "signal-each"
+end
+
+---Validate arithmetic combinator state
+---Returns nil if valid, or a LocalisedString error message if invalid
+---@param first_signal SignalID?
+---@param second_signal SignalID?
+---@param output_signal SignalID?
+---@return LocalisedString?
+local function validate_arithmetic_state(first_signal, second_signal, output_signal)
+   -- Check first signal: must be normal or each, not everything/anything
+   if is_logic_signal(first_signal) and not is_each_signal(first_signal) then
+      return { "fa.arithmetic-first-signal-invalid" }
+   end
+   -- Check second signal: must be normal or each, not everything/anything
+   if is_logic_signal(second_signal) and not is_each_signal(second_signal) then
+      return { "fa.arithmetic-second-signal-invalid" }
+   end
+   -- Check output: everything/anything are never valid
+   if is_logic_signal(output_signal) and not is_each_signal(output_signal) then
+      return { "fa.arithmetic-output-logic-signal-invalid" }
+   end
+   -- Check output: each is only valid if at least one input is each
+   if is_each_signal(output_signal) then
+      if not is_each_signal(first_signal) and not is_each_signal(second_signal) then
+         return { "fa.arithmetic-output-each-invalid" }
+      end
+   end
+   return nil
+end
 
 -- Arithmetic operations in order for cycling
 local OPERATIONS = { "*", "/", "+", "-", "%", "^", "<<", ">>", "AND", "OR", "XOR" }
@@ -69,6 +116,15 @@ local function add_input_field(builder, params, cb, is_first)
          if type(result) == "string" then
             local num = tonumber(result)
             if num and math.floor(num) == num then
+               -- Validate proposed state with this input as constant (nil signal)
+               local new_first = is_first and nil or params.first_signal
+               local new_second = is_first and params.second_signal or nil
+               local error = validate_arithmetic_state(new_first, new_second, params.output_signal)
+               if error then
+                  UiSounds.play_ui_edge(ctx.pindex)
+                  ctx.controller.message:fragment(error)
+                  return
+               end
                params[constant_field] = num
                params[signal_field] = nil
                cb.parameters = params
@@ -78,6 +134,15 @@ local function add_input_field(builder, params, cb, is_first)
                ctx.controller.message:fragment({ "fa.arithmetic-input-invalid" })
             end
          else
+            -- Validate proposed state with this new signal
+            local new_first = is_first and result or params.first_signal
+            local new_second = is_first and params.second_signal or result
+            local error = validate_arithmetic_state(new_first, new_second, params.output_signal)
+            if error then
+               UiSounds.play_ui_edge(ctx.pindex)
+               ctx.controller.message:fragment(error)
+               return
+            end
             params[signal_field] = result
             params[constant_field] = 0
             cb.parameters = params
@@ -92,6 +157,15 @@ local function add_input_field(builder, params, cb, is_first)
          ctx.controller:open_textbox("", field_name)
       end,
       on_clear = function(ctx)
+         -- Validate proposed state with this input cleared (nil signal)
+         local new_first = is_first and nil or params.first_signal
+         local new_second = is_first and params.second_signal or nil
+         local error = validate_arithmetic_state(new_first, new_second, params.output_signal)
+         if error then
+            UiSounds.play_ui_edge(ctx.pindex)
+            ctx.controller.message:fragment(error)
+            return
+         end
          params[signal_field] = nil
          params[constant_field] = 0
          cb.parameters = params
@@ -204,13 +278,41 @@ local function render_arithmetic_config(ctx)
    -- Second input
    add_input_field(builder, params, cb, false)
 
-   -- Output signal
-   builder:add_signal("output_signal", { "fa.arithmetic-output-signal" }, function()
-      return params.output_signal
-   end, function(value)
-      params.output_signal = value
-      cb.parameters = params
-   end)
+   -- Output signal (with validation based on input signals)
+   builder:add_item("output_signal", {
+      label = function(ctx)
+         ctx.message:fragment({ "fa.arithmetic-output-signal" })
+         if params.output_signal and params.output_signal.name then
+            ctx.message:fragment(CircuitNetwork.localise_signal(params.output_signal))
+         else
+            ctx.message:fragment({ "fa.empty" })
+         end
+      end,
+      on_click = function(ctx)
+         ctx.controller:open_child_ui(UiRouter.UI_NAMES.SIGNAL_CHOOSER, {}, { node = "output_signal" })
+      end,
+      on_child_result = function(ctx, result)
+         -- Validate proposed state with this new output
+         local error = validate_arithmetic_state(params.first_signal, params.second_signal, result)
+         if error then
+            UiSounds.play_ui_edge(ctx.pindex)
+            ctx.controller.message:fragment(error)
+            return
+         end
+         params.output_signal = result
+         cb.parameters = params
+         if result and result.name then
+            ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
+         else
+            ctx.controller.message:fragment({ "fa.empty" })
+         end
+      end,
+      on_clear = function(ctx)
+         params.output_signal = nil
+         cb.parameters = params
+         ctx.controller.message:fragment({ "fa.empty" })
+      end,
+   })
 
    return builder:build()
 end
