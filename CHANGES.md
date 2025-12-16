@@ -13,6 +13,7 @@
 - Disable the crash site in new saves. Instead, the crash site items go directly to your inventory.
   - Justification: it's a bunch of explosion noises, a press tab thing that people get stuck at all the time, and a
     bunch of garbage to mine that doesn't even obviously seem like it's mining.
+- Fix: use get_localised_name_with_fallback when building summaries for larger cursors.
 
 # 0.16.36 (2025-12-14)
 

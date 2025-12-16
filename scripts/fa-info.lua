@@ -2235,10 +2235,9 @@ function mod.area_scan_summary_info(pindex, left_top, right_bottom)
          localised_name = { "tile-name.refined-concrete" }
       else
          -- Try entity name first, then fall back to raw name
+
          if prototypes.entity[entry.name] then
-            localised_name = { "entity-name." .. entry.name }
-         else
-            localised_name = entry.name
+            localised_name = Localising.get_localised_name_with_fallback(prototypes.entity[entry.name])
          end
       end
 
