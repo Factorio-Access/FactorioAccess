@@ -1,8 +1,0 @@
-; Chapter 1 Exercise: Getting Started
-; This is a placeholder for the exercise content.
-
-Practice exercise for Chapter 1.
-
-Try pressing E to close this tutorial.
-
-Then press Ctrl+Alt+/ to open it again.

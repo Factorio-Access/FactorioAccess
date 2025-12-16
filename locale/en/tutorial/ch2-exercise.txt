@@ -1,8 +1,0 @@
-; Chapter 2 Exercise: Movement and Cursor
-; This is a placeholder for the exercise content.
-
-Practice exercise for Chapter 2.
-
-Try using the arrow keys to move around.
-
-Then try using the cursor navigation keys.

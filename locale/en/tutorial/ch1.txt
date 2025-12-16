@@ -1,8 +1,77 @@
-; Chapter 1: Getting Started
-; This is a placeholder for the tutorial chapter content.
+Welcome to the Factorio Access tutorial.  Before we get started, this chapter tells you a bit about what Factorio is, explains how to use the tutorial interface, and runs through a few basic checks.  To navigate through tutorial messages, press w and s.
 
-Welcome to Factorio Access!
+To get back here, use controll alt slash.
 
-This tutorial will help you learn how to play Factorio with the accessibility mod.
+To close the tutorial interface, press e. This puts you back in whatever UI you were in, and remembers your place for next time.
 
-Press W, A, S, D to navigate the tutorial using the standard menu navigation keys.
+e opens your main menu if nothing else was open. If you hit e while the tutorial is closed, you will end up there. To get out of it again, press e a second time.
+
+Most of the time, pressing e closes all open UI.  The tutorial UI is a special case.  Instead, e closes just the tutorial. This lets you read the tutorial while other menus are open without losing your place.
+
+Before you go further, it is important that we confirm that you have not enabled space age. If you have, you will need to recreate your save.
+
+If you did not purchase space age, this does not apply to you.
+
+If you did, please exit the game, go into the launcher's mod menu, and disable quality, elevated rails, and space age.
+
+It is also advantageous to enable peaceful mode. This means that you have as much time as you want before enemies attack.  You may wish to do that now as well.  To do so, customize your save in the launcher's menu, go to enemies, and toggle it.  The Compass valley preset does this for you if you are using it.
+
+The tutorial consists of chapters.  You move between chapters with control tab.  We call these tabs.
+
+Each chapter has 3 subtabs.  You move between these with tab by itself.  They are the chapter's text, a detailed exercise for the chapter, and some example blueprints.  We will talk more about blueprints in a little while.
+
+Game UIs are organized the same exact wayh.
+
+Chapter exercises are extremely detailed instructions on how to build whatever the chapter talks about.  We encourage you to try to figure it out without that, as figuring this stuff out is a big part of the game.  But it is there if you need it.
+
+Now that you know how to use the tutorial, we can talk about the game.
+
+Factorio is a game about building a factory, as is obvious from the name.  Your goal is to build up a base which can launch a rocket.
+
+To do this, you need to build labs, and then put science packs in them to conduct research.
+
+There are 7 kinds of science pack.  The first one you will encounter is automation science.  As the game progresses, you unlock more and have to get them all to the same place at the same time.  This is the main driving mechanic of Factorio.
+
+Roughly, each science pack doubles the complexity of the game.  Getting through the first few is pretty easy, enough so that you can do it without building a factory if you're patient, but the last ones are a real challenge.
+
+If you are ever lost, one way of figuring out what to do next is to see which of your  researches are the most expensive, or if you can research a new science pack.
+
+Once you have researched most of the technologies in the game, you craft and launch a rocket.
+
+Maybe that sounds easy.  But it's not.  And on top of all of that, you've got various kinds of enemies that really don't want you to be around!  So if you aren't in peaceful mode, you'd better be prepared to fight back.
+
+Normally, you would get a very involved graphical tutorial and a lot of hints showing you how Wube wants you to play Factorio.  But we can't do that, so here is a brief explanation of how to think about it.
+
+Factorio is a game about solving problems inside other problems.
+
+First, you learn how the basic pieces work.
+
+then, you put the basic pieces together into small things, around 10 by 10 in size.  These use conveyor belts (called transport belts by the game) and inserters (robot hands) to make one kind of thing.
+
+You then use those to make bigger pieces that put a few things together into a larger product.
+
+As this continues, it becomes harder and harder to get everything into the same place or to move stuff around, so your scope continues to widen, and you unlock more tools to connect things over longer distances.
+
+Remember how I said that you have to get the science packs to the same place?  At the end of the game, science packs need to travel hundreds of tiles.
+
+The map is infinite for all practical purposes, and endgame bases are often hundreds of tiels on a side.
+
+This has a few implications as to what makes a successful Factorio player, especially if you are blind.
+
+Being organized is very important.  Working out repeating patterns that are easy to put together is also very important.  These tutorials will help you with the repeating patterns thing a bit further on.
+
+The trick to doing really well is that if you are organized, you don't need to remember where you put hundreds of things.  Just that over here we make automation sciendce.
+
+When you go back to it, because you solved the problems on a small scale the same way, you can look at it and get it back into your head much more easily.
+
+It may sound like we are saying "you are blind, so you have to be dumb", but this is very far from the case, and one of the things that makes Factorio a great game.
+
+Sighted players play the same way.  The game even has systems to let you save and quickly place down groups of buildings, called blueprints.  There is even a clipboard.
+
+The reward isn't "look at how I placed 1000 things that work", though you can play it that way.  Instead, it's "look how I elegantly solved the problem Factorio confronted me with, and integrated it into the rest of my stuff".
+
+Usually, a sighted player will start byh being haphazard for their first run, throwing whatever they need at the time wherever.  Then, they learn to be more and more organized.  The only real difference is that as a blind player, being organized to start makes the game much easier.  The really painful place for us is organically discovering that this is required, which is why this tutorial spends so long explaining how Factorio wants you to play it.
+
+As you get better at the game, your designs will tend to use more repeating patterns, but those repeating patterns will become absurdly complicated, and they will be smaller parts of even larger things.
+
+Now, it is time to move on to doing stuff for real.  Press control tab to move to the first real chapter, and we can get started on building our first lab.

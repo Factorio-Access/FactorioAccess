@@ -1,8 +1,0 @@
-; Chapter 2: Movement and Cursor
-; This is a placeholder for the tutorial chapter content.
-
-In this chapter you will learn about movement and the cursor.
-
-The arrow keys move your character.
-
-The cursor is a separate concept from your character position.
