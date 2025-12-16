@@ -1,6 +1,8 @@
 # 0.16.37 (unreleased)
 
 - Build lock is now silent if it can't build.  It's either this or spamming errors so deal.
+- Fix shift+space. It now respects safe mode and shoots at the given tile when there is no selected entity. Please note,
+  not all weapons will shoot a tile (e.g. the machine gun).  I have specifically tested the atomic bomb.
 
 # 0.16.36 (2025-12-14)
 

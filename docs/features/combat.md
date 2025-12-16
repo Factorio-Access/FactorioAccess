@@ -8,7 +8,7 @@ Enter or exit combat mode: control shift i
 
 Fire your weapon: hold space
 
-Fire at the selected entity, in or out of combat mode: hold c with your cursor over something
+Fire at the selected entity or approximately at the tile under the cursor: shift + space outside combat mode. N/a in combat mode since that disables your cursor.
 
 Set your aiming preference direction: w, a, s, or d
 

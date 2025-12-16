@@ -2,8 +2,10 @@
 --Does not include event handlers, guns and equipment maanagement
 
 local util = require("util")
+local EntitySelection = require("scripts.entity-selection")
 local FaUtils = require("scripts.fa-utils")
 local Localising = require("scripts.localising")
+local PlayerWeapon = require("scripts.combat.player-weapon")
 local SoundModel = require("scripts.sound-model")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
@@ -15,12 +17,14 @@ local mod = {}
 
 ---@class fa.Combat.State
 ---@field combat_mode boolean Whether combat mode is active
----@field last_too_close_warning integer? Tick of last too-close warning to avoid spam
+---@field last_warning_tick table<string, integer> Map of warning key to last tick it was spoken
 
 ---@type table<integer, fa.Combat.State>
 local combat_storage = StorageManager.declare_storage_module("combat", {
    combat_mode = false,
-   last_too_close_warning = nil,
+   last_warning_tick = {},
+}, {
+   ephemeral_state_version = 2,
 })
 
 ---Check if combat mode is active for a player
@@ -35,7 +39,7 @@ end
 local function enter_combat_mode(pindex)
    local state = combat_storage[pindex]
    state.combat_mode = true
-   state.last_too_close_warning = nil
+   state.last_warning_tick = {}
 
    -- Close any open GUI
    local player = game.get_player(pindex)
@@ -55,7 +59,7 @@ end
 local function exit_combat_mode(pindex)
    local state = combat_storage[pindex]
    state.combat_mode = false
-   state.last_too_close_warning = nil
+   state.last_warning_tick = {}
 
    -- Stop any ongoing shooting when exiting combat mode
    local player = game.get_player(pindex)
@@ -207,60 +211,132 @@ function mod.repair_area(radius_in, pindex)
    })
 end
 
--- Minimum ticks between "too close" warnings
-local TOO_CLOSE_WARNING_COOLDOWN = 120
+-- Minimum ticks between warnings
+local WARNING_COOLDOWN = 120
 
----Process shooting for a player in combat mode
----Called every tick for players in combat mode who are firing
+-- Buffer distance added to soft min range in safe mode (same as in aim-assist)
+local SOFT_MIN_EPSILON = 1.5
+
+---Speak a warning with rate limiting
 ---@param pindex integer
-function mod.tick_shooting(pindex)
+---@param key string Unique identifier for this warning type
+---@param message LocalisedString
+local function warn_with_cooldown(pindex, key, message)
    local state = combat_storage[pindex]
-   if not state.combat_mode then return end
+   local now = game.tick
+   local last = state.last_warning_tick[key]
+   if not last or (now - last) >= WARNING_COOLDOWN then
+      state.last_warning_tick[key] = now
+      Speech.speak(pindex, message)
+   end
+end
 
+---Stop shooting and return the player to not_shooting state
+---@param player LuaPlayer
+local function stop_shooting(player)
+   player.shooting_state = {
+      state = defines.shooting.not_shooting,
+      position = player.position,
+   }
+end
+
+---Shoot enemies at a position
+---@param player LuaPlayer
+---@param position MapPosition
+local function shoot_at_position(player, position)
+   player.shooting_state = {
+      state = defines.shooting.shooting_enemies,
+      position = position,
+   }
+   print(serpent.line(player.shooting_state))
+end
+
+---Handle shooting in combat mode (aim assist)
+---@param pindex integer
+---@param player LuaPlayer
+local function tick_combat_mode(pindex, player)
+   local shooting_state = player.shooting_state
+   if shooting_state.state == defines.shooting.not_shooting then return end
+
+   -- shooting_selected (shift+space) is not applicable in combat mode
+   if shooting_state.state == defines.shooting.shooting_selected then
+      stop_shooting(player)
+      warn_with_cooldown(pindex, "shooting-selected", { "fa.shooting-selected-not-in-combat-mode" })
+      return
+   end
+
+   -- Redirect to best target via aim assist
+   local target, reason = AimAssist.get_best_target(pindex)
+
+   if target and target.valid then
+      shoot_at_position(player, target.position)
+   else
+      stop_shooting(player)
+
+      -- Warn about why there's no target
+      local R = AimAssist.NoTargetReason
+      if reason == R.ALL_TOO_CLOSE_SAFE then
+         warn_with_cooldown(pindex, "too-close-safe", { "fa.aim-all-too-close-safe" })
+      elseif reason == R.ALL_TOO_CLOSE then
+         warn_with_cooldown(pindex, "too-close", { "fa.aim-all-too-close" })
+      elseif reason == R.NO_WEAPON then
+         warn_with_cooldown(pindex, "no-weapon", { "fa.aim-no-weapon" })
+      elseif reason == R.NO_ENEMIES or reason == R.NO_ENEMIES_IN_RANGE then
+         warn_with_cooldown(pindex, "no-enemies", { "fa.aim-no-enemies" })
+      end
+   end
+end
+
+---Handle shooting_selected outside combat mode
+---@param pindex integer
+---@param player LuaPlayer
+---@param character LuaEntity
+local function tick_non_combat_mode(pindex, player, character)
+   local shooting_state = player.shooting_state
+   if shooting_state.state ~= defines.shooting.shooting_selected then return end
+
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local cursor_pos = vp:get_cursor_pos()
+
+   -- Check safe mode constraints against cursor position first
+   local aim_state = AimAssist.get_state(pindex)
+   if aim_state.safe_mode then
+      local soft_min = PlayerWeapon.get_soft_min_range(pindex)
+      if soft_min and soft_min > 0 then
+         local hard_min = PlayerWeapon.get_hard_min_range(pindex) or 0
+         local effective_min = math.max(hard_min, soft_min + SOFT_MIN_EPSILON)
+         local dist = util.distance(character.position, cursor_pos)
+
+         if dist < effective_min then
+            stop_shooting(player)
+            warn_with_cooldown(pindex, "cursor-too-close-safe", { "fa.cursor-too-close-safe" })
+            return
+         end
+      end
+   end
+
+   -- Try to find and select an entity at cursor
+   player.selected = nil
+   local target = EntitySelection.get_first_ent_at_tile(pindex)
+   if target then player.selected = target end
+
+   -- If no entity or not selectable, shoot at cursor position
+   if not player.selected then shoot_at_position(player, cursor_pos) end
+end
+
+---Process shooting for a player each tick
+---@param pindex integer
+function mod.on_tick(pindex)
    local player = game.get_player(pindex)
    if not player or not player.valid then return end
 
    local character = player.character
    if not character then return end
 
-   -- Check if player is currently firing
-   local shooting_state = player.shooting_state
-   if shooting_state.state == defines.shooting.not_shooting then return end
-
-   -- Player is firing, redirect to best target
-   local target, reason = AimAssist.get_best_target(pindex)
-
-   if target and target.valid then
-      -- Aim at the target
-      player.shooting_state = {
-         -- SHOOTING_ENEMIES USES POSITION AS A GUIDE, SHOOTING_SELECTED REQUIRES ACTUALLY SELECTING.
-         state = defines.shooting.shooting_enemies,
-         position = target.position,
-      }
+   if combat_storage[pindex].combat_mode then
+      tick_combat_mode(pindex, player)
    else
-      -- No valid target, stop shooting and warn player
-      player.shooting_state = {
-         state = defines.shooting.not_shooting,
-         position = player.position,
-      }
-
-      -- Warn player about why they can't shoot
-      local now = game.tick
-      local last_warning = state.last_too_close_warning
-      if not last_warning or (now - last_warning) >= TOO_CLOSE_WARNING_COOLDOWN then
-         state.last_too_close_warning = now
-
-         local R = AimAssist.NoTargetReason
-         if reason == R.ALL_TOO_CLOSE_SAFE then
-            Speech.speak(pindex, { "fa.aim-all-too-close-safe" })
-         elseif reason == R.ALL_TOO_CLOSE then
-            Speech.speak(pindex, { "fa.aim-all-too-close" })
-         elseif reason == R.NO_WEAPON then
-            Speech.speak(pindex, { "fa.aim-no-weapon" })
-         elseif reason == R.NO_ENEMIES or reason == R.NO_ENEMIES_IN_RANGE then
-            Speech.speak(pindex, { "fa.aim-no-enemies" })
-         end
-      end
+      tick_non_combat_mode(pindex, player, character)
    end
 end
 

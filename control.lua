@@ -374,8 +374,8 @@ function on_tick(event)
          if settings.get_player_settings(player.index)[SETTING_NAMES.SONIFICATION_COMBAT_SPAWNERS].value then
             SpawnerRadar.tick(player.index)
          end
-         -- Combat mode shooting (every tick when firing)
-         if Combat.is_combat_mode(player.index) then Combat.tick_shooting(player.index) end
+         -- Handle shooting (combat mode aim assist or shooting_selected with safe mode)
+         Combat.on_tick(player.index)
       end
    end
 
