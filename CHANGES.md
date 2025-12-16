@@ -1,4 +1,4 @@
-# 0.16.38 (unreleased)
+# 0.16.38 (2025-12-16)
 
 NOTE: 0.16.37 didn't release. Combined 0.16.37 changes into 0.16.38.
 
