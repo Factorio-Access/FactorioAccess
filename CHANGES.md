@@ -8,6 +8,8 @@
   - You can reconfigure them, view their inventories, etc.
   - You cannot change their inventories, etc. No stealing items out from 1000 tiles away.
   - Among other things, this allows configuring train related entities from a distance.
+- When building fails and your cursor is over something with a menu, open the menu.  You still get the build error sound, and there is not much I can do about that.
+- Fix: un-buildable items in hand no longer block opening objects.
 
 # 0.16.36 (2025-12-14)
 

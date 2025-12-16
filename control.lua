@@ -2863,11 +2863,24 @@ local function kb_click_hand(event)
                flip_horizontal = vp:get_flipped_horizontal(),
                flip_vertical = vp:get_flipped_vertical(),
             })
-            if success then TileReader.read_tile(pindex) end
+            if success then
+               TileReader.read_tile(pindex)
+            else
+               -- Build failed, try opening entity menu if one exists at cursor
+               local ent = EntitySelection.get_first_ent_at_tile(pindex)
+               if ent and EntityUI.has_ui(ent) then
+                  clicked_on_entity(ent, pindex)
+               end
+            end
          else
             -- Item cannot be built (e.g., intermediate products, tools, etc.)
-            -- Could add a message or different action here if needed
-            Speech.speak(pindex, { "fa.cannot-build-item" })
+            -- If there's an entity with a menu at the cursor, open its menu
+            local ent = EntitySelection.get_first_ent_at_tile(pindex)
+            if ent and EntityUI.has_ui(ent) then
+               clicked_on_entity(ent, pindex)
+            else
+               Speech.speak(pindex, { "fa.cannot-build-item" })
+            end
          end
       end
    elseif player.cursor_ghost then
