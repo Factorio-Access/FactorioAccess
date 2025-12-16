@@ -733,12 +733,8 @@ EventManager.on_configuration_changed(ensure_storage_structures_are_up_to_date)
 EventManager.on_init(function()
    ---@type any
    local freeplay = remote.interfaces["freeplay"]
-   if freeplay and freeplay["set_skip_intro"] then
-      remote.call("freeplay", "set_skip_intro", true)
-   end
-   if freeplay and freeplay["set_disable_crashsite"] then
-      remote.call("freeplay", "set_disable_crashsite", true)
-   end
+   if freeplay and freeplay["set_skip_intro"] then remote.call("freeplay", "set_skip_intro", true) end
+   if freeplay and freeplay["set_disable_crashsite"] then remote.call("freeplay", "set_disable_crashsite", true) end
    ensure_storage_structures_are_up_to_date()
    TestFramework.on_init()
    AudioCues.on_init()

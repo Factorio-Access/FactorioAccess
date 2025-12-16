@@ -115,18 +115,22 @@ local function build_chapter_blueprints_tab(chapter)
             local bp_data = bp -- Capture for closure
             menu:add_clickable("bp_" .. i, bp_data.title, {
                on_click = function(click_ctx)
-                  -- Import the blueprint to clipboard
+                  -- Import the blueprint to player's hand
                   local player = game.get_player(click_ctx.pindex)
-                  if player then
-                     local result = player.import_blueprint_string(bp_data.blueprint)
-                     if result then
-                        UiSounds.play_menu_move(click_ctx.pindex)
-                        click_ctx.controller.message:fragment({ "fa.tutorial-blueprint-imported" })
-                     else
-                        UiSounds.play_ui_edge(click_ctx.pindex)
-                        click_ctx.controller.message:fragment({ "fa.tutorial-blueprint-failed" })
-                     end
+                  local cursor_stack = player.cursor_stack
+                  if cursor_stack.valid_for_read then
+                     -- Hand is not empty
+                     UiSounds.play_ui_edge(click_ctx.pindex)
+                     click_ctx.controller.message:fragment({ "fa.tutorial-blueprint-hand-not-empty" })
+                     return
                   end
+
+                  -- Set a blank blueprint in hand, then import the string
+                  cursor_stack.set_stack({ name = "blueprint" })
+                  local result = cursor_stack.import_stack(bp_data.blueprint)
+                  assert(result <= 0, "Failed to import tutorial blueprint: " .. bp_data.title)
+                  UiSounds.play_menu_move(click_ctx.pindex)
+                  click_ctx.controller.message:fragment({ "fa.tutorial-blueprint-imported" })
                end,
             })
          end
