@@ -31,8 +31,8 @@ mod.decon_area_selector = BoxSelector.declare_box_selector({
          },
       }
 
-      -- Check if alt was held on the second click to determine if we're canceling
-      local is_cancel = result.second_click.modifiers.alt
+      -- Check if shift was held on the second click to determine if we're canceling
+      local is_cancel = result.second_click.modifiers.shift
 
       if is_cancel then
          -- Alt was held - cancel deconstruction

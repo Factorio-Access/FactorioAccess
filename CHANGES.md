@@ -1,3 +1,8 @@
+# 0.16.38 (unreleased)
+
+- Fix: don't double-announce something as marked for deconstruction
+- Move cancellation of deconstruction/upgrade to shift left bracket, as this matches vanilla.
+
 # 0.16.37 (2025-12-15)
 
 - Build lock is now silent if it can't build.  It's either this or spamming errors so deal.

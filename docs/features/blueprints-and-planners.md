@@ -8,7 +8,7 @@ Start selecting a blueprint, upgrade, or deconstruction planner's area: `left br
 
 Finish selecting: `left bracket` on a second point
 
-Cancel upgrade or deconstruction: replace the second click with `alt + left bracket`
+Cancel upgrade or deconstruction: replace the second click with `shift + left bracket`
 
 Open the menu for the item: `right bracket` with the item in hand
 

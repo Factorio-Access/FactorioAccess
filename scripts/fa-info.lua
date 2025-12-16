@@ -111,17 +111,10 @@ local function ent_info_facing(ctx)
    end
 end
 
--- Announces if the entity is marked for upgrading or deconstruction. Folded
--- into one function, as these are mutually exclusive states as far as we know.
+-- Announces if the entity is marked for upgrading ow.
 ---@param ctx fa.Info.EntInfoContext
-local function ent_info_marked_for_upgrade_deconstruct(ctx)
-   if ctx.ent.to_be_deconstructed() then
-      ctx.message:fragment({ "fa.ent-info-marked-for-deconstruction" })
-   elseif ctx.ent.to_be_upgraded() then
-      ctx.message:fragment({ "fa.ent-info-marked-for-upgrading" })
-   end
-
-   -- Otherwise it is not marked.
+local function ent_info_marked_for_upgrade(ctx)
+   if ctx.ent.to_be_upgraded() then ctx.message:fragment({ "fa.ent-info-marked-for-upgrading" }) end
 end
 
 ---Announces combinator description if present
@@ -1384,7 +1377,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    run_handler(ent_info_rail_signal_state)
 
    run_handler(ent_info_gate_connection_point)
-   run_handler(ent_info_marked_for_upgrade_deconstruct)
+   run_handler(ent_info_marked_for_upgrade)
    run_handler(ent_info_power_production)
    run_handler(ent_info_underground_belt_connection)
    run_handler(ent_info_splitter_states)
