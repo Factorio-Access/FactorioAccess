@@ -1,20 +1,19 @@
 # 0.16.38 (unreleased)
 
+NOTE: 0.16.37 didn't release. Combined 0.16.37 changes into 0.16.38.
+
 - Fix: don't double-announce something as marked for deconstruction
 - Move cancellation of deconstruction/upgrade to shift left bracket, as this matches vanilla.
 - Try to put some validation around the arithmetic combinator.
 - Don't play any sounds when pressing tab on the map. This was left over old UI code.
-- Wontfix: we only announce your active gun if it changes.
+- tab again reads changes in your active gun.
+  - Wontfix: we only announce your active gun if it changes.
 - Fix: you can now set your quickbar slots after you die the first time.
 - The quickbar assignment now only considers what is in hand. If your hand is empty it clears. If your hand contains something it sets.
   - Ideally this will let us move to using the vanilla keys in the future.
-
-# 0.16.37 (2025-12-15)
-
 - Build lock is now silent if it can't build.  It's either this or spamming errors so deal.
 - Fix shift+space. It now respects safe mode and shoots at the given tile when there is no selected entity. Please note,
   not all weapons will shoot a tile (e.g. the machine gun).  I have specifically tested the atomic bomb.
-- Pressing tab again announces the active gun.
 - You may now open entities remotely as long as they are on a charted chunk, giving you a use for radars:
   - You can reconfigure them, view their inventories, etc.
   - You cannot change their inventories, etc. No stealing items out from 1000 tiles away.
@@ -25,6 +24,11 @@
   - Justification: it's a bunch of explosion noises, a press tab thing that people get stuck at all the time, and a
     bunch of garbage to mine that doesn't even obviously seem like it's mining.
 - Fix: use get_localised_name_with_fallback when building summaries for larger cursors.
+
+
+# 0.16.37 (2025-12-15)
+
+NOTE: bad release, changes were moved to and released with 0.16.38.
 
 # 0.16.36 (2025-12-14)
 
