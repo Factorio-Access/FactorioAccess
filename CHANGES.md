@@ -1,3 +1,9 @@
+# 0.16.39 (unreleased)
+
+- Don't anchor the cursor to the character in combat
+- Guard a bunch of our cursor related keys to make it clear that they are unavailable if combat mode is on
+- Fix: don't cursor skip in combat mode if the player's hand does not contain a capsule. Instead, error.
+
 # 0.16.38 (2025-12-16)
 
 - Fix: don't double-announce something as marked for deconstruction

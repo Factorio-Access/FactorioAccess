@@ -148,6 +148,17 @@ production_types = {}
 building_types = {}
 local dirs = defines.direction
 
+---Check if in combat mode and speak feedback if so
+---@param pindex integer
+---@return boolean true if in combat mode (caller should return early)
+local function skip_in_combat_mode(pindex)
+   if Combat.is_combat_mode(pindex) then
+      Speech.speak(pindex, { "fa.not-available-in-combat-mode" })
+      return true
+   end
+   return false
+end
+
 -- Initialize players as a deny-access table to catch any direct usage
 players = TH.deny_access_table()
 
@@ -1518,7 +1529,7 @@ end
 
 ---Handle shift+direction key press
 ---In combat mode with capsule: use capsule in direction
----Otherwise: cursor skip
+---Outside combat mode: cursor skip
 ---@param pindex integer
 ---@param direction defines.direction
 local function handle_shift_direction(pindex, direction)
@@ -1526,10 +1537,12 @@ local function handle_shift_direction(pindex, direction)
    if Combat.is_combat_mode(pindex) then
       if Capsules.get_held_capsule_data(pindex) then
          Capsules.use_capsule_in_direction(pindex, direction, false)
-         return
+      else
+         Speech.speak(pindex, { "fa.no-capsule-in-hand" })
       end
+      return
    end
-   -- Otherwise do normal cursor skip
+   -- Outside combat mode, do normal cursor skip
    cursor_skip(pindex, direction)
 end
 
@@ -1569,6 +1582,7 @@ EventManager.on_event(
    "fa-c-w",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
+      if skip_in_combat_mode(pindex) then return end
       cursor_skip(pindex, defines.direction.north, 1000, true)
    end
 )
@@ -1577,6 +1591,7 @@ EventManager.on_event(
    "fa-c-a",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
+      if skip_in_combat_mode(pindex) then return end
       cursor_skip(pindex, defines.direction.west, 1000, true)
    end
 )
@@ -1585,6 +1600,7 @@ EventManager.on_event(
    "fa-c-s",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
+      if skip_in_combat_mode(pindex) then return end
       cursor_skip(pindex, defines.direction.south, 1000, true)
    end
 )
@@ -1593,6 +1609,7 @@ EventManager.on_event(
    "fa-c-d",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
+      if skip_in_combat_mode(pindex) then return end
       cursor_skip(pindex, defines.direction.east, 1000, true)
    end
 )
@@ -2061,6 +2078,8 @@ EventManager.on_event(
 
       if p.driving and p.vehicle.type == "car" then
          kb_read_driving_structure_ahead(event)
+      elseif Combat.is_combat_mode(pindex) then
+         Speech.speak(pindex, { "fa.not-available-in-combat-mode" })
       else
          kb_jump_to_player(event)
       end
@@ -2084,6 +2103,7 @@ EventManager.on_event(
       -- Check for virtual train driving (create bookmark)
       if VirtualTrainDriving.on_kb_descriptive_action_name(event) then return end
 
+      if skip_in_combat_mode(pindex) then return end
       kb_s_b(event)
    end
 )
@@ -2112,6 +2132,7 @@ EventManager.on_event(
          return
       end
 
+      if skip_in_combat_mode(pindex) then return end
       kb_b(event)
    end
 )
@@ -2233,6 +2254,7 @@ EventManager.on_event(
    "fa-i",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
+      if skip_in_combat_mode(pindex) then return end
       toggle_cursor_mode(pindex, false)
    end
 )
@@ -2307,6 +2329,7 @@ EventManager.on_event(
    "fa-s-i",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
+      if skip_in_combat_mode(pindex) then return end
       adjust_cursor_size(pindex, 1)
    end
 )
@@ -2316,6 +2339,7 @@ EventManager.on_event(
    "fa-c-i",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
+      if skip_in_combat_mode(pindex) then return end
       adjust_cursor_size(pindex, -1)
    end
 )

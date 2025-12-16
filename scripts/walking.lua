@@ -69,7 +69,8 @@ function mod.process_walking_announcements(pindex)
    -- Only process if we crossed a tile. Do not process for discontinuity! Teleport isn't walking.
    if had_discontinuity or not crossed_tile then return end
 
-   if vp:get_cursor_anchored() then
+   -- In combat mode, treat cursor as unanchored (don't update cursor position while walking)
+   if vp:get_cursor_anchored() and not Combat.is_combat_mode(pindex) then
       -- ANCHORED MODE: Update cursor ahead and announce if notable
       local char_pos = player.character.position
       local direction = current and current.direction or defines.direction.north
