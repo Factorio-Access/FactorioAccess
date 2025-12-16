@@ -734,7 +734,6 @@ EventManager.on_init(function()
    ---@type any
    local freeplay = remote.interfaces["freeplay"]
    if freeplay and freeplay["set_skip_intro"] then remote.call("freeplay", "set_skip_intro", true) end
-   if freeplay and freeplay["set_disable_crashsite"] then remote.call("freeplay", "set_disable_crashsite", true) end
    ensure_storage_structures_are_up_to_date()
    TestFramework.on_init()
    AudioCues.on_init()
@@ -2624,96 +2623,6 @@ EventManager.on_event("fa-s-e", function(event) --read_menu_name
    local pindex = event.player_index
    kb_read_menu_name(event)
 end)
-
----@param event EventData.CustomInputEvent
-local function kb_switch_menu_or_gun(event)
-   local pindex = event.player_index
-   local router = UiRouter.get_router(pindex)
-   if storage.players[pindex].started ~= true then
-      storage.players[pindex].started = true
-      return
-   end
-
-   sounds.play_change_menu_tab(pindex)
-
-   --Gun related changes (this seems to run before the actual switch happens so even when we write the new index, it will change, so we need to be predictive)
-   local p = game.get_player(pindex)
-   if p.character == nil then return end
-   if p.vehicle ~= nil then
-      --laterdo tank weapon naming ***
-      return
-   end
-   local guns_inv = p.get_inventory(defines.inventory.character_guns)
-   local ammo_inv = game.get_player(pindex).get_inventory(defines.inventory.character_ammo)
-   ---@type string|LocalisedString
-   local result = ""
-   local switched_index = -2
-
-   --switch_success = swap_weapon_backward(pindex,true)
-   switched_index = swap_weapon_backward(pindex, true)
-   return
-end
-
----@param event EventData.CustomInputEvent
-local function kb_reverse_switch_menu_or_gun(event)
-   local pindex = event.player_index
-   local router = UiRouter.get_router(pindex)
-
-   sounds.play_change_menu_tab(pindex)
-
-   --Gun related changes (Vanilla Factorio DOES NOT have shift + tab weapon revserse switching, so we add it without prediction needed)
-   local p = game.get_player(pindex)
-   if p.character == nil then return end
-   if p.vehicle ~= nil then
-      --laterdo tank weapon naming ***
-      return
-   end
-   local guns_inv = p.get_inventory(defines.inventory.character_guns)
-   local ammo_inv = game.get_player(pindex).get_inventory(defines.inventory.character_ammo)
-   ---@type string|LocalisedString
-   local result = ""
-   local switched_index = -2
-
-   switched_index = swap_weapon_backward(pindex, true)
-
-   --Declare the selected weapon
-   local gun_index = switched_index
-   local ammo_stack = nil
-   local gun_stack = nil
-
-   if gun_index < 1 then
-      result = "No ready weapons"
-   else
-      local ammo_stack = ammo_inv[gun_index]
-      local gun_stack = guns_inv[gun_index]
-      --game.print("print " .. gun_index)--
-      result = {
-         "fa.gun-with-ammo",
-         Localising.get_localised_name_with_fallback(gun_stack),
-         tostring(ammo_stack.count),
-         Localising.get_localised_name_with_fallback(ammo_stack),
-      }
-   end
-
-   sounds.play_menu_move(p.index)
-   Speech.speak(pindex, result)
-end
-
-EventManager.on_event(
-   "fa-tab",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      kb_switch_menu_or_gun(event)
-   end
-)
-
-EventManager.on_event(
-   "fa-s-tab",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      kb_reverse_switch_menu_or_gun(event)
-   end
-)
 
 ---@param event EventData.CustomInputEvent
 local function kb_delete(event)

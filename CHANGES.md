@@ -3,6 +3,8 @@
 - Fix: don't double-announce something as marked for deconstruction
 - Move cancellation of deconstruction/upgrade to shift left bracket, as this matches vanilla.
 - Try to put some validation around the arithmetic combinator.
+- Don't play any sounds when pressing tab on the map. This was left over old UI code.
+- Wontfix: we only announce your active gun if it changes.
 
 # 0.16.37 (2025-12-15)
 
