@@ -741,13 +741,6 @@ EventManager.on_init(function()
 end)
 
 EventManager.on_event(
-   defines.events.on_cutscene_cancelled,
-   ---@param event EventData.on_cutscene_cancelled
-   ---@param pindex integer
-   function(event, pindex) end
-)
-
-EventManager.on_event(
    defines.events.on_cutscene_finished,
    ---@param event EventData.on_cutscene_finished
    ---@param pindex integer
@@ -2868,9 +2861,7 @@ local function kb_click_hand(event)
             else
                -- Build failed, try opening entity menu if one exists at cursor
                local ent = EntitySelection.get_first_ent_at_tile(pindex)
-               if ent and EntityUI.has_ui(ent) then
-                  clicked_on_entity(ent, pindex)
-               end
+               if ent and EntityUI.has_ui(ent) then clicked_on_entity(ent, pindex) end
             end
          else
             -- Item cannot be built (e.g., intermediate products, tools, etc.)
