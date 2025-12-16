@@ -10,6 +10,9 @@
   - Among other things, this allows configuring train related entities from a distance.
 - When building fails and your cursor is over something with a menu, open the menu.  You still get the build error sound, and there is not much I can do about that.
 - Fix: un-buildable items in hand no longer block opening objects.
+- Disable the crash site in new saves. Instead, the crash site items go directly to your inventory.
+  - Justification: it's a bunch of explosion noises, a press tab thing that people get stuck at all the time, and a
+    bunch of garbage to mine that doesn't even obviously seem like it's mining.
 
 # 0.16.36 (2025-12-14)
 
