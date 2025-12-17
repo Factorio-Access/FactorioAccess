@@ -1,3 +1,8 @@
+# 0.16.41 (2025-12-17)
+
+- Add a background tick handler that forces game_view_settings.update_entity_selection to false so that other mods or
+  users turning it bakc on can't break our manipulation of player.selected.
+
 # 0.16.39 (2025-12-16)
 
 - Don't anchor the cursor to the character in combat

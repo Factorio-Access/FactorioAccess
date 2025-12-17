@@ -47,6 +47,7 @@ local InventoryUtils = require("scripts.inventory-utils")
 local ItemInfo = require("scripts.item-info")
 local KruiseKontrol = require("scripts.kruise-kontrol-wrapper")
 local Localising = require("scripts.localising")
+local NoHover = require("scripts.no-hover")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
 local Mouse = require("scripts.mouse")
@@ -350,6 +351,7 @@ end
 
 --Called every tick.
 function on_tick(event)
+   NoHover.on_tick()
    ScannerEntrypoint.on_tick()
    MovementHistory.update_all_players()
    Rulers.update_all_players()
