@@ -58,7 +58,6 @@ local Research = require("scripts.research")
 require("scripts.rich-text") -- registers rich text processor with speech.lua
 local Rulers = require("scripts.rulers")
 local ScannerEntrypoint = require("scripts.scanner.entrypoint")
-local SelectedSync = require("scripts.selected-sync")
 local Spidertron = require("scripts.spidertron")
 local SpidertronRemote = require("scripts.spidertron-remote")
 local TH = require("scripts.table-helpers")
@@ -351,7 +350,6 @@ end
 
 --Called every tick.
 function on_tick(event)
-   SelectedSync.on_tick()
    ScannerEntrypoint.on_tick()
    MovementHistory.update_all_players()
    Rulers.update_all_players()
