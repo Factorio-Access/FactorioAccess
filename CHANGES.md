@@ -1,4 +1,4 @@
-# 0.16.39 (unreleased)
+# 0.16.39 (2025-12-16)
 
 - Don't anchor the cursor to the character in combat
 - Guard a bunch of our cursor related keys to make it clear that they are unavailable if combat mode is on
