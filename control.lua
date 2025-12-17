@@ -3375,12 +3375,16 @@ EventManager.on_event(
    end
 )
 
--- Shift+R: Toggle spawners first (aim assist)
+-- Shift+R: Counterclockwise rotation, or toggle spawners first in combat mode
 EventManager.on_event(
    "fa-s-r",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      AimAssist.toggle_spawners_first(pindex)
+      if Combat.is_combat_mode(pindex) then
+         AimAssist.toggle_spawners_first(pindex)
+      else
+         BuildingTools.rotate_item_in_hand(event, false)
+      end
    end
 )
 
