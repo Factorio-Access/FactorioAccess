@@ -82,12 +82,12 @@ local function get_recipe_locks(entity, inventory_index)
    return locks
 end
 
----Generate a label for an inventory slot
+---Build a label for an inventory slot into a MessageBuilder
+---@param message fa.MessageBuilder
 ---@param inv LuaInventory
 ---@param slot_index number
 ---@param locks table<number, string>? Recipe locks for this inventory
----@return LocalisedString
-local function get_slot_label(inv, slot_index, locks)
+local function build_slot_label(message, inv, slot_index, locks)
    local stack = inv[slot_index]
    local lock_name = locks and locks[slot_index]
 
@@ -95,28 +95,19 @@ local function get_slot_label(inv, slot_index, locks)
    local filter = nil
    if inv.supports_filters() then filter = inv.get_filter(slot_index) end
 
-   -- Build the label parts
-   local label_parts = { "" }
-
    -- If empty slot with a lock, show what it's locked to
    if not stack or not stack.valid_for_read then
+      message:fragment({ "fa.ui-inventory-empty-slot" })
       if lock_name then
-         table.insert(label_parts, { "fa.ui-inventory-empty-slot" })
-         table.insert(label_parts, {
-            "fa.ui-inventory-slot-locked-to",
-            ItemInfo.item_info({ name = lock_name }),
-         })
-      else
-         table.insert(label_parts, { "fa.ui-inventory-empty-slot" })
+         message:list_item({ "fa.ui-inventory-slot-locked-to", ItemInfo.item_info({ name = lock_name }) })
       end
    else
       -- Build the item label with count and quality
-      local item_label = ItemInfo.item_info(stack)
-      table.insert(label_parts, item_label)
+      message:fragment(ItemInfo.item_info(stack))
 
       -- Add lock info if this slot has one
       if lock_name then
-         table.insert(label_parts, { "fa.ui-inventory-slot-locked-to", ItemInfo.item_info({ name = lock_name }) })
+         message:list_item({ "fa.ui-inventory-slot-locked-to", ItemInfo.item_info({ name = lock_name }) })
       end
    end
 
@@ -125,11 +116,9 @@ local function get_slot_label(inv, slot_index, locks)
       local filter_name = type(filter) == "string" and filter or filter.name
       if filter_name and prototypes.item[filter_name] then
          local item_name = Localising.get_localised_name_with_fallback(prototypes.item[filter_name])
-         table.insert(label_parts, { "fa.ui-inventory-filtered-to", item_name })
+         message:list_item({ "fa.ui-inventory-filtered-to", item_name })
       end
    end
-
-   return label_parts
 end
 
 ---Calculate grid position from slot index
@@ -277,15 +266,13 @@ local function render_inventory_grid(ctx)
    -- Build the grid
    for slot_index = 1, total_slots do
       local x, y = slot_to_grid_pos(slot_index)
-      local label = get_slot_label(inv, slot_index, locks)
-
       builder:add_control(x, y, {
          label = function(label_ctx)
-            label_ctx.message:fragment(label)
+            build_slot_label(label_ctx.message, inv, slot_index, locks)
 
             -- Add bar/locked status if applicable
             if inv.supports_bar() and slot_index >= inv.get_bar() then
-               label_ctx.message:fragment({ "fa.ui-inventory-slot-locked" })
+               label_ctx.message:list_item({ "fa.ui-inventory-slot-locked" })
             end
          end,
          on_bar_min = function(bar_ctx)
