@@ -108,6 +108,8 @@ end
 ---@field on_conjunction_modification? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_add_to_row? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_toggle_supertype? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_set_filter? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_clear_filter? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
 ---@field get_help_metadata? fun(self, pindex: number): fa.ui.help.HelpItem[]?
 ---@field supports_search? fun(self, pindex: number, controller: fa.ui.RouterController): boolean Check if this UI supports search
 ---@field search_hint? fun(self, pindex: number, hint_callback: fun(localised_string: LocalisedString), controller: fa.ui.RouterController) Submit searchable strings for cache population
@@ -1076,5 +1078,8 @@ register_ui_event("fa-s-j", create_ui_handler("on_toggle_supertype", { shift = t
 register_ui_event("fa-slash", create_ui_handler("on_add_to_row", {}))
 register_ui_event("fa-c-slash", create_ui_handler("on_add_to_row", { control = true }))
 register_ui_event("fa-a-slash", create_ui_handler("on_add_to_row", { alt = true }))
+
+-- Alt+rightbracket for clearing filters (inventory slot filters)
+register_ui_event("fa-a-rightbracket", create_ui_handler("on_clear_filter"))
 
 return mod

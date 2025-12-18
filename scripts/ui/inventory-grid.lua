@@ -91,34 +91,45 @@ local function get_slot_label(inv, slot_index, locks)
    local stack = inv[slot_index]
    local lock_name = locks and locks[slot_index]
 
+   -- Get filter info if inventory supports filters
+   local filter = nil
+   if inv.supports_filters() then filter = inv.get_filter(slot_index) end
+
+   -- Build the label parts
+   local label_parts = { "" }
+
    -- If empty slot with a lock, show what it's locked to
    if not stack or not stack.valid_for_read then
       if lock_name then
-         return {
-            "",
-            { "fa.ui-inventory-empty-slot" },
-            {
-               "fa.ui-inventory-slot-locked-to",
-               ItemInfo.item_info({ name = lock_name }),
-            },
-         }
+         table.insert(label_parts, { "fa.ui-inventory-empty-slot" })
+         table.insert(label_parts, {
+            "fa.ui-inventory-slot-locked-to",
+            ItemInfo.item_info({ name = lock_name }),
+         })
+      else
+         table.insert(label_parts, { "fa.ui-inventory-empty-slot" })
       end
-      return { "fa.ui-inventory-empty-slot" }
+   else
+      -- Build the item label with count and quality
+      local item_label = ItemInfo.item_info(stack)
+      table.insert(label_parts, item_label)
+
+      -- Add lock info if this slot has one
+      if lock_name then
+         table.insert(label_parts, { "fa.ui-inventory-slot-locked-to", ItemInfo.item_info({ name = lock_name }) })
+      end
    end
 
-   -- Build the item label with count and quality
-   local item_label = ItemInfo.item_info(stack)
-
-   -- Add lock info if this slot has one
-   if lock_name then
-      return {
-         "",
-         item_label,
-         { "fa.ui-inventory-slot-locked-to", ItemInfo.item_info({ name = lock_name }) },
-      }
+   -- Add filter info if a filter is set
+   if filter then
+      local filter_name = type(filter) == "string" and filter or filter.name
+      if filter_name and prototypes.item[filter_name] then
+         local item_name = Localising.get_localised_name_with_fallback(prototypes.item[filter_name])
+         table.insert(label_parts, { "fa.ui-inventory-filtered-to", item_name })
+      end
    end
 
-   return item_label
+   return label_parts
 end
 
 ---Calculate grid position from slot index
@@ -343,6 +354,22 @@ local function render_inventory_grid(ctx)
 
                -- No action available
                click_ctx.controller.message:fragment({ "fa.ui-inventory-no-action" })
+               return
+            end
+
+            -- ALT+[ : Set slot filter (open item chooser)
+            if click_ctx.modifiers.alt then
+               if not inv.supports_filters() then
+                  click_ctx.controller.message:fragment({ "fa.ui-inventory-filters-not-supported" })
+                  return
+               end
+               -- Open item chooser to select filter
+               local grid_x, grid_y = slot_to_grid_pos(slot_index)
+               click_ctx.controller:open_child_ui(
+                  UiRouter.UI_NAMES.ITEM_CHOOSER,
+                  {},
+                  { node = Grid.make_key(grid_x, grid_y), slot_index = slot_index }
+               )
                return
             end
 
@@ -572,6 +599,42 @@ local function render_inventory_grid(ctx)
             else
                trash_ctx.message:fragment({ "fa.trash-full-none-inserted" })
             end
+         end,
+         on_child_result = function(result_ctx, result)
+            -- Handle item chooser result for setting slot filter
+            if result and type(result) == "string" then
+               -- Check write access
+               if not check_write_access(result_ctx, entity, nil) then return end
+
+               -- Set the filter
+               local success = inv.set_filter(slot_index, result)
+               if success then
+                  local item_name = Localising.get_localised_name_with_fallback(prototypes.item[result])
+                  result_ctx.controller.message:fragment({ "fa.ui-inventory-filter-set", item_name })
+               else
+                  result_ctx.controller.message:fragment({ "fa.ui-inventory-filter-cannot-set" })
+               end
+            end
+         end,
+         on_clear_filter = function(clear_ctx, x, y)
+            -- Check if filters are supported
+            if not inv.supports_filters() then
+               clear_ctx.message:fragment({ "fa.ui-inventory-filters-not-supported" })
+               return
+            end
+
+            -- Check write access
+            if not check_write_access(clear_ctx, entity, nil) then return end
+
+            local current_filter = inv.get_filter(slot_index)
+            if not current_filter then
+               clear_ctx.message:fragment({ "fa.ui-inventory-filter-already-clear" })
+               return
+            end
+
+            -- Clear the filter
+            inv.set_filter(slot_index, nil)
+            clear_ctx.message:fragment({ "fa.ui-inventory-filter-cleared" })
          end,
       })
    end

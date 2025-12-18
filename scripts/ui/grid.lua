@@ -26,6 +26,8 @@ local mod = {}
 ---@field on_production_stats_announcement fa.ui.grid.CoordCallback?
 ---@field on_dangerous_delete fa.ui.grid.CoordCallback?
 ---@field on_child_result fa.ui.graph.ChildResultCallback?
+---@field on_set_filter fa.ui.grid.CoordCallback?
+---@field on_clear_filter fa.ui.grid.CoordCallback?
 
 ---@class fa.ui.grid.GridCell
 ---@field vtable fa.ui.grid.GridNodeVtable
@@ -186,6 +188,22 @@ function GridBuilder:build()
             node.vtable.on_dangerous_delete = function(ctx)
                -- Pass x,y as parameters to the callback
                old_dangerous_delete(ctx, x, y)
+            end
+         end
+
+         -- Wrap on_set_filter if it exists to provide x,y coordinates
+         local old_set_filter = node.vtable.on_set_filter
+         if old_set_filter then
+            node.vtable.on_set_filter = function(ctx)
+               old_set_filter(ctx, x, y)
+            end
+         end
+
+         -- Wrap on_clear_filter if it exists to provide x,y coordinates
+         local old_clear_filter = node.vtable.on_clear_filter
+         if old_clear_filter then
+            node.vtable.on_clear_filter = function(ctx)
+               old_clear_filter(ctx, x, y)
             end
          end
       end

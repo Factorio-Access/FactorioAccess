@@ -1,3 +1,9 @@
+# 0.16.44 (unreleased)
+
+- Support inventory filters. Use alt+left bracket to open an item chooser.n Use alt+right bracket to clear.
+  - Turns out we don't have API access good enough to know if you should be able to do this, as it claims all invs are filtewrable.  You need to know where this is applicable.
+  - This is an advanced feature primarily intended for train megabasing.
+
 # 0.16.43 (2025-12-17)
 
 - Support blueprint configuration. When selecting the area for a blueprint, press right bracket instead to get to the

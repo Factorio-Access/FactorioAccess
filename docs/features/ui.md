@@ -20,6 +20,10 @@ Type a secondary value (rarely used): `m`
 
 In an inventory, fast transfer to a related inventory: `shift + left bracket` for whole, replace with `right bracket` for half
 
+In an inventory, set a filter on this slot: `alt + left bracket`
+
+In an inventory, clear a slot's filter: `alt + right bracket`
+
 In an inventory, adjust number of unlocked slots: `-` and `=`, add `shift` for 5, add `ctrl` to move to 0 or max.
 
 In the crafting menu, craft 5: `shift + left bracket`
