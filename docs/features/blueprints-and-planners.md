@@ -8,6 +8,8 @@ Start selecting a blueprint, upgrade, or deconstruction planner's area: `left br
 
 Finish selecting: `left bracket` on a second point
 
+Finish selecting for a blueprint, but go to the advanced configuration menu instead of creating it: `right bracket`.
+
 Cancel upgrade or deconstruction: replace the second click with `shift + left bracket`
 
 Open the menu for the item: `right bracket` with the item in hand
@@ -50,6 +52,11 @@ To stop selecting if you change your mind, hit `e`.  Blueprint selection is a ki
 Blueprints have names, import/export functionality, descriptions, etc. This is all accessed by pressing `right bracket` with a blueprint in hand.
 
 To build a blueprint, click with `left bracket`.  Rotation, flipping, etc. all work the same as buildings, and you are building from the top left, same as buildings.
+
+For advanced users, Factorio allows controlling what a blueprint will contain. For example it is possible to blueprint
+only tiles, even if entities are over them.  This must be done at blueprint setup time both for blind and sighted users.
+To do so, end your selection with `right bracket`.  This will open the blueprint creation menu, which has checkboxes for
+these options.
 
 Due to API limitations, blueprints always take an inventory slot.  We cannot get access to the blueprint library, which is how sighted players work around this.  See the next section.
 

@@ -21,6 +21,7 @@ mod.SELECTION_KIND = {
 mod.RESULT_KIND = {
    KEEP_GOING = 1,
    STOP = 2,
+   STOP_ALREADY_CLOSED = 3, -- Callback already called close_with_result, don't close again
 }
 
 ---@class fa.ui.selectors.MultipointSelectorDeclaration

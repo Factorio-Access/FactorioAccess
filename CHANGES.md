@@ -1,3 +1,8 @@
+# 0.16.42 (unreleased)
+
+- Support blueprint configuration. When selecting the area for a blueprint, press right bracket instead to get to the
+  blueprint configuration menu with checkboxes for what to include.
+
 # 0.16.41 (2025-12-17)
 
 - Add a background tick handler that forces game_view_settings.update_entity_selection to false so that other mods or

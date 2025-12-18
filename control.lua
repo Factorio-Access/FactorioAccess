@@ -89,6 +89,8 @@ require("scripts.ui.menus.blueprint-book-menu")
 require("scripts.ui.selectors.decon-selector")
 require("scripts.ui.selectors.upgrade-selector")
 require("scripts.ui.selectors.blueprint-selector")
+require("scripts.ui.menus.blueprint-setup")
+require("scripts.ui.menus.blueprint-setup-config")
 require("scripts.ui.selectors.copy-paste-selector")
 require("scripts.ui.menus.gun-menu")
 local MainMenu = require("scripts.ui.menus.main-menu")
@@ -2874,7 +2876,7 @@ EventManager.on_event(
                -- Start selection for empty blueprint
                local vp = Viewpoint.get_viewpoint(pindex)
                local cursor_pos = vp:get_cursor_pos()
-               router:open_ui(UiRouter.UI_NAMES.BLUEPRINT_AREA_SELECTOR, {
+               router:open_ui(UiRouter.UI_NAMES.BLUEPRINT_SETUP, {
                   first_point = { x = cursor_pos.x, y = cursor_pos.y },
                   intro_message = {
                      "fa.planner-blueprint-first-point",

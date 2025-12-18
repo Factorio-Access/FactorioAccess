@@ -170,6 +170,8 @@ mod.UI_NAMES = {
    TUTORIAL = "tutorial",
    SCHEDULE_EDITOR = "schedule_editor",
    SETTINGS = "settings",
+   BLUEPRINT_SETUP = "blueprint_setup",
+   BLUEPRINT_SETUP_CONFIG = "blueprint_setup_config",
    -- Test UI names (used in automated tests)
    TEST_ASSEMBLING_MACHINE = "test-assembling-machine",
    TEST_ASSEMBLING_MACHINE_FOCUS = "test-assembling-machine-focus",
@@ -573,6 +575,7 @@ local function create_ui_handler(method_name, modifiers, is_enabled_during_overl
       if #stack > 0 then
          local top_entry = stack[#stack]
          local ui_name = top_entry.name
+
          if registered_uis[ui_name] then
             local ui = registered_uis[ui_name]
 

@@ -79,8 +79,9 @@ function mod.declare_box_selector(declaration)
 
             args.router_ctx:close_with_result(result)
 
+            -- Use STOP_ALREADY_CLOSED since we called close_with_result above
             return {
-               result_kind = MultipointSelector.RESULT_KIND.STOP,
+               result_kind = MultipointSelector.RESULT_KIND.STOP_ALREADY_CLOSED,
             }
          end
       end,

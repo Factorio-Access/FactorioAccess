@@ -34,17 +34,10 @@ local function render(ctx)
       -- Add option to select area for empty blueprint
       builder:add_clickable("select-area", { "fa.ui-blueprints-menu-reselect" }, {
          on_click = function(ctx)
-            ctx.controller:open_child_ui(UiRouter.UI_NAMES.BLUEPRINT_AREA_SELECTOR, {
+            ctx.controller:open_child_ui(UiRouter.UI_NAMES.BLUEPRINT_SETUP, {
                intro_message = { "fa.ui-blueprints-select-first-point" },
                permanent = true,
             }, { node = "select-area" })
-         end,
-         on_child_result = function(ctx, result)
-            if result and result.box then
-               ctx.message:fragment({ "fa.ui-blueprints-area-selected" })
-            else
-               ctx.message:fragment({ "fa.ui-blueprints-selection-cancelled" })
-            end
          end,
       })
    elseif is_temporary then
@@ -177,7 +170,7 @@ local function render(ctx)
 
       builder:add_clickable("reselect", { "fa.ui-blueprints-menu-reselect" }, {
          on_click = function(ctx)
-            ctx.controller:open_child_ui(UiRouter.UI_NAMES.BLUEPRINT_AREA_SELECTOR, {
+            ctx.controller:open_child_ui(UiRouter.UI_NAMES.BLUEPRINT_SETUP, {
                intro_message = { "fa.ui-blueprints-select-first-point" },
                permanent = true,
             }, { node = "reselect" })
