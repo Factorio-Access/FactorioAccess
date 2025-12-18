@@ -1,4 +1,4 @@
-# 0.16.42 (unreleased)
+# 0.16.43 (2025-12-17)
 
 - Support blueprint configuration. When selecting the area for a blueprint, press right bracket instead to get to the
   blueprint configuration menu with checkboxes for what to include.
