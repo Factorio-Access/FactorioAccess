@@ -93,5 +93,8 @@ declare_tutorial_chapter({ "fa.tutorial-ch2-title" })
 declare_tutorial_chapter({ "fa.tutorial-ch3-title" })
 
 declare_tutorial_chapter({ "fa.tutorial-ch4-title" })
+declare_tutorial_chapter({ "fa.tutorial-ch5-title" })
+declare_tutorial_chapter({ "fa.tutorial-ch6-title" })
+declare_tutorial_chapter({ "fa.tutorial-ch7-title" })
 
 return mod

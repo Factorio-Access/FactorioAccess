@@ -1,0 +1,21 @@
+Before we go further, it is now necessary for you to learn how to move around efficiently.  Until you can get a bit further, you have to monitor this drill setup and come back to it to get coal.  Soon, you will have lots of buildings and will need to navigate efficiently.  So how can we make that happen?  This short chapter teaches you what your options are, before we return to our main job of smelting.
+
+The first and simplest way is with bookmarks.  Pressing shift b sets a bookmark, and b returns the cursor to it.  You can put your cursor on the chest and hitn shift b, for example.
+
+You only get one bookmark, so the second option is the fast travel menu. Opened with alt v, the fast travel menu lets you create named fast travel points.
+
+It consists of one row per point.  Each row has a number of commands.  Start by making a named travel point at your coal setup by putting your cursor where youw ant it and hitting create njew.  Then, explore the menu to see what is available.
+
+The two most important items are teleport and move cursor, which are how you can monitor the drill.  Either teleport or move the cursor and use Kruise Kontrol when you need to get back to it.
+
+The third thing to discuss which doesn't fit nicely anywhere but which you need to know now is cursor skipping.
+
+Holding shift and using wasd moves your cursor up to 100 tiles in the given direction, stopping at the first change.
+
+What change means varies a little bit based on the situation, but it's usually what you would expect.
+
+In this case, use cursor skipping on your coal patch to find out how big it is in general, and what the shape is.  It should be reasonably self-explanatory.
+
+You will probably learn that it is much bigger than you thought.  Don't worry, it will be covered in drills soon enough.
+
+In the next chapter, we will return to your regularly scheduled building.

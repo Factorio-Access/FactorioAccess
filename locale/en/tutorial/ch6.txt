@@ -1,0 +1,63 @@
+It is now time to set up a basic smelting setup.  Also, to stop ignoring the crash site.
+
+In order to do anything without having to come back to it all the time, we need a second drill.  But drills  take plates.  They also take stone furnaces.  Before going further, go find the burner mining drill recipe and check the ingrediewnts.
+
+Iron gear wheel is also a recipe, taking 2 iron plates.  If you do the math, you need 9 iron plates and 5 stone.
+
+Fortunately, crafting is smart.  If you have enough and try to craft the drill, the game will craft the smaller things for you.
+
+Unfortunately, the mod is less smart.  We will try to tell you what's missing, but in this case we will for example claim it's the furnace.  So, you have to look a bit yourself.  The number you can craft is generally always correct.
+
+Now, we need 9 iron plates.  8 of them are easy.  They are in the crash site.  All of the crash site buildings may be mined, thjough they require holding x for a while to do it.  Some things in Factorio can be set to mine slower, and these are an example.  The buildings that contain items however are also containers, show up under the scanner as such, and support the container controls we taught in previous chapters.
+
+the 9th plate has to come from our furnace.  Use your scanner to find a patch of iron ore, then travel to it. Next, mien in the same way you mined coal, until you ahve at least one iron ore.
+
+Once you do, pick a location to drop your furnace.  Usually, this is in the middle of the iron ore patch becasue drills can output to it directly.
+
+Then, use the controls of your choice to put both some coal and some iron ore in it.
+
+The mod introduces sounds for when various things happen, one of which is for when a crafting machine finishes crafting.  You will know that you have an iron plate because the furnace will play a soft beep, and moving your cursor over it will say that there is one ready as well.
+
+We actually link this to the zoom.  You change the zoom with dash and equals, which controls how much of your factory you hear around you at once, and also sets what is on screen from the sighted perspective.
+
+Drills are the only entity in Factorio which output their items directly onto the ground.  Furnaces have an output inventory, and will hold up to 100 plates before stopping.
+
+You can get the items out with any of the methods we have previously discussed.
+
+Since this is the first machine with multiple inventories, remember that you can examine them by pressing tab with the machine's UI open.  To open a machine's UI, click it.
+
+The mod tries to allow you to open menus even if you have items in hand, but you may sometimes need to empty your hand especially if those items are buildings.  This is an unfortunate limitation we don't have a good way around.
+
+Whether you mine the crash site or smelt 9 plates directly, proceed until you can craft a second burner mining drill.
+
+You now have a choice to make.  You can use this burner mining drill in two ways.
+
+They are both the same mechnanic.  If a burner mining drill is placed so that it would output into another building, it will drop the output there.
+
+For example, if you put it south of the furnace facing north, the northwest corner of the drill is just below the furnace and the furnace is in the same position as your chest from earliedr.
+
+Your first choice is to take your drill, face it toward your furnace, and fuel it.  This will automate smelting, at least as long as both the drill and furnace have coal, and your job will be to make sure that fuel stays in all three places.
+
+The second option is a bit more subtle, though just as easy to set up.  You can also place this seocnd drill facing your first drill.
+
+Remember that drills output more coal than they need as fuel.  So, if you fuel the back drill it can fuel the one in front of it.  The ratio here is such that you will basically have fuelled the setup forever if you fill up the back dril with coal.
+
+You can also face the drills toward each other.  In this case, they will fuel each other forever, and you can skim off the top.  You can extract ll of the fuel from one drill with any of the quick transfer controls.  As long as you don't take from both, the setup will keep going, but unlike the chest it will stop and wait for you to take things out much sooner.
+
+We will teach you a more interesting setup shortly.  But for now your goal is to get 4 drills total, and a second furnace.
+
+once you have, use two drills to make a self-sustaining coal mine, then use the drill and furnace combination once on iron and once on copper.  Put fuel in everything, and let it run.
+
+Your goal for this chapter is to complete electronics and steam power.  If you do iron first and it is your first time through, that will probably happen around the time you finish setting things up.
+
+It's  a good idea to put fast travel points near your smelting setups.  Everything you craft by hand or otherwise is going to need plates.
+
+It is also a good time for us to talk about scanner subcategories.  You may have noticed that the scann er says things like "burner mining drill 1 of 2".
+
+This is because we grouipo things one more level.  WHen you place buildings that are similar to each other, or when you have multiple iron ore patches for example, we pkut them in a subcategory.  You navigate between instances with shift page up and down.
+
+If this seems inefficient now, it will make sense later.  This is how we make it possiblew to organize hundreds of buildings.
+
+Finally, you may want to know how close you are.  If you put a plate in hand and press u, the mod is able to tell you how many you have made so far.  This also works on any recipe in the crafting menu.
+
+Before continuing, you should work by yourself to unlock both electronics and steam power.  If you are able to get here with lots of time to spare, feel free to read ahead and congratulations on being a skilled player.
