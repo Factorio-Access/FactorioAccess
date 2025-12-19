@@ -379,16 +379,10 @@ function on_tick(event)
          -- Check for pending logistics announcements
          WorkerRobots.on_tick(player.index)
          -- Grid-based sonification (crafting machines etc)
-         if settings.get_player_settings(player.index)[SETTING_NAMES.SONIFICATION_CRAFTING].value then
-            GridSonifier.tick(player.index)
-         end
+         if settings.global[SETTING_NAMES.SONIFICATION_CRAFTING].value then GridSonifier.tick(player.index) end
          -- Combat sonification
-         if settings.get_player_settings(player.index)[SETTING_NAMES.SONIFICATION_COMBAT_ENEMIES].value then
-            EnemyRadar.tick(player.index)
-         end
-         if settings.get_player_settings(player.index)[SETTING_NAMES.SONIFICATION_COMBAT_SPAWNERS].value then
-            SpawnerRadar.tick(player.index)
-         end
+         if settings.global[SETTING_NAMES.SONIFICATION_COMBAT_ENEMIES].value then EnemyRadar.tick(player.index) end
+         if settings.global[SETTING_NAMES.SONIFICATION_COMBAT_SPAWNERS].value then SpawnerRadar.tick(player.index) end
          -- Handle shooting (combat mode aim assist or shooting_selected with safe mode)
          Combat.on_tick(player.index)
       end

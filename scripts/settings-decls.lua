@@ -4,7 +4,7 @@
 ---@class fa.SettingDecl
 ---@field name string
 ---@field type "bool-setting"|"int-setting"|"double-setting"|"string-setting"
----@field setting_type "runtime-per-user"
+---@field setting_type "runtime-global"
 ---@field default_value boolean|number|string
 ---@field order string
 ---@field minimum_value number?
@@ -25,28 +25,28 @@ mod.declarations = {
    {
       name = mod.SETTING_NAMES.SONIFICATION_INSERTER,
       type = "bool-setting",
-      setting_type = "runtime-per-user",
+      setting_type = "runtime-global",
       default_value = true,
       order = "a",
    },
    {
       name = mod.SETTING_NAMES.SONIFICATION_CRAFTING,
       type = "bool-setting",
-      setting_type = "runtime-per-user",
+      setting_type = "runtime-global",
       default_value = true,
       order = "b",
    },
    {
       name = mod.SETTING_NAMES.SONIFICATION_COMBAT_ENEMIES,
       type = "bool-setting",
-      setting_type = "runtime-per-user",
+      setting_type = "runtime-global",
       default_value = true,
       order = "c",
    },
    {
       name = mod.SETTING_NAMES.SONIFICATION_COMBAT_SPAWNERS,
       type = "bool-setting",
-      setting_type = "runtime-per-user",
+      setting_type = "runtime-global",
       default_value = true,
       order = "d",
    },

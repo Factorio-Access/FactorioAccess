@@ -8,18 +8,16 @@ local mod = {}
 
 ---@param ctx fa.ui.graph.Ctx
 local function build_settings_menu(ctx)
-   local pindex = ctx.pindex
    local builder = FormBuilder.FormBuilder.new()
-   local player_settings = settings.get_player_settings(pindex)
 
    for _, decl in ipairs(setting_decls.declarations) do
       local name = decl.name
 
       if decl.type == "bool-setting" then
          builder:add_checkbox(name, { "mod-setting-name." .. name }, function()
-            return player_settings[name].value --[[@as boolean]]
+            return settings.global[name].value --[[@as boolean]]
          end, function(value)
-            player_settings[name] = { value = value }
+            settings.global[name] = { value = value }
          end)
       end
       -- Future: add int/string/double handling

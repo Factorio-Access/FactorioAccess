@@ -113,7 +113,7 @@ function mod.on_tick()
          goto continue
       end
 
-      if not settings.get_player_settings(pindex)[SETTING_NAMES.SONIFICATION_INSERTER].value then
+      if not settings.global[SETTING_NAMES.SONIFICATION_INSERTER].value then
          reset_state(state)
          goto continue
       end
