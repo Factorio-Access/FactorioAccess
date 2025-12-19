@@ -18,11 +18,9 @@ It is also advantageous to enable peaceful mode. This means that you have as muc
 
 The tutorial consists of chapters.  You move between chapters with control tab.  We call these tabs.
 
-Each chapter has 3 subtabs.  You move between these with tab by itself.  They are the chapter's text, a detailed exercise for the chapter, and some example blueprints.  We will talk more about blueprints in a little while.
+Each chapter has 2 subtabs.  You move between these with tab by itself.  They are the chapter's text and some example blueprints.  We will talk more about blueprints in a little while.
 
 Game UIs are organized the same exact wayh.
-
-Chapter exercises are extremely detailed instructions on how to build whatever the chapter talks about.  We encourage you to try to figure it out without that, as figuring this stuff out is a big part of the game.  But it is there if you need it.
 
 Now that you know how to use the tutorial, we can talk about the game.
 
@@ -60,7 +58,7 @@ This has a few implications as to what makes a successful Factorio player, espec
 
 Being organized is very important.  Working out repeating patterns that are easy to put together is also very important.  These tutorials will help you with the repeating patterns thing a bit further on.
 
-The trick to doing really well is that if you are organized, you don't need to remember where you put hundreds of things.  Just that over here we make automation sciendce.
+The trick to doing really well is that if you are organized, you don't need to remember where you put hundreds of things.  Just that over here we make automation sciendce, and that you solve that problem with this general shape.
 
 When you go back to it, because you solved the problems on a small scale the same way, you can look at it and get it back into your head much more easily.
 

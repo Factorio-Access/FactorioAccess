@@ -1,7 +1,7 @@
 --[[
 Tutorial UI viewer.
 
-Displays tutorial chapters with text, exercises, and example blueprints.
+Displays tutorial chapters with text and example blueprints.
 The tutorial state persists across close/reopen operations.
 ]]
 
@@ -45,44 +45,6 @@ local function build_chapter_text_tab(chapter)
          elseif result.status == MessageLists.STATUS.READY then
             if #result.messages == 0 then
                menu:add_label("empty", { "fa.tutorial-text-empty" })
-            else
-               for i, message in ipairs(result.messages) do
-                  menu:add_label("msg_" .. i, message)
-               end
-            end
-         end
-
-         return menu:build()
-      end,
-   })
-end
-
----Build the chapter exercise subtab
----@param chapter fa.tutorial.Chapter
----@return fa.ui.TabDescriptor
-local function build_chapter_exercise_tab(chapter)
-   local list_name = TutorialData.get_chapter_exercise_list(chapter.chapter_number)
-
-   return UiKeyGraph.declare_graph({
-      name = "ch" .. chapter.chapter_number .. "-exercise",
-      title = { "fa.tutorial-subtab-exercise" },
-      render_callback = function(ctx)
-         local menu = Menu.MenuBuilder.new()
-
-         if not chapter.has_exercise then
-            menu:add_label("no-exercise", { "fa.tutorial-no-exercise" })
-            return menu:build()
-         end
-
-         local result = MessageLists.get_message_list_meta(ctx.pindex, list_name)
-
-         if result.status == MessageLists.STATUS.NOT_FOUND then
-            menu:add_label("not-found", { "fa.tutorial-exercise-not-found" })
-         elseif result.status == MessageLists.STATUS.PENDING then
-            menu:add_label("pending", { "fa.tutorial-loading" })
-         elseif result.status == MessageLists.STATUS.READY then
-            if #result.messages == 0 then
-               menu:add_label("empty", { "fa.tutorial-exercise-empty" })
             else
                for i, message in ipairs(result.messages) do
                   menu:add_label("msg_" .. i, message)
@@ -152,7 +114,6 @@ local function build_tutorial_tabs(pindex)
    for _, chapter in ipairs(chapters) do
       local chapter_tabs = {
          build_chapter_text_tab(chapter),
-         build_chapter_exercise_tab(chapter),
          build_chapter_blueprints_tab(chapter),
       }
 

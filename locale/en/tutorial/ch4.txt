@@ -1,7 +1,5 @@
 You now know enough to be dangerous, though not efficient, so it is time to begin moving faster and opening up the game to you.
 
-This is the first tutorial chapter with an exercise, so if you need more specific directions press tab for a very long and thorough breakdown.
-
 You have accessed your inventory before.  Under that same UI are a bunch of others.  There are 3 mod UIs to concerrn yourself with, the main menu (e), the world menu(alt + w), and the mod configuration menu (control alt shift m).
 
 The latter two do not matter for a very long time, and so we will not discuss them much in this tutorial.
@@ -35,3 +33,26 @@ in this case, electronics is "craft copper plate x 10 of normal quality" and ste
 Quality is a space age thing.  All you need to know is that you won't ever find a quality better than normal in the base game, what you are playing now.
 
 We now know what we need.  How do we get it?  Go back one tab to the crafting tab, then search for plate.
+
+If you click either of the plate recipes, the game will tell you that you can't craft it!  That's because these must be done in a machine.
+
+to find out what machines you can craft something in, press k.  This will also tell you what it needs as inggredients.
+
+We can't easily filter the list down to machines you have right now for a variety of reasons, but if you check all of them you will find out in this case that the one you have is a stone furnace.
+
+you started the game with one, but the reason that the stone from earlier in this tutorial is so useful is that you can now use it to make more.
+
+But now it's time to circle back.  The last chapter of this tutorial said we would teach you how to fix your burner mining drill.
+
+The punchline if you will is that stone furnaces require coal to function.  Coal and ore goes in and plates come out.
+
+So, what we are actually going to do is this.  Use the scanner to find a tree, then let Kruise Kontrol mine a few for you.
+
+This will give you wood.  You will never have a shortage of wood because very few things use it, so don't worry about running out.
+
+
+Once you have some, you can craft a wooden chest.
+
+Earlier, you found where the burner mining drill drops coal.  GO back there (you can find the drill with the scanner), and place the chest on that tile.
+
+If the chest is in the right place and the drill has fuel, it will now begin to slowly fill the chest with coal.

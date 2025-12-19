@@ -4,12 +4,10 @@ Tutorial chapter data declarations.
 Each chapter consists of:
 - A title (localised string)
 - Chapter text (message list at locale/en/tutorial/chN.txt)
-- Optional exercise (message list at locale/en/tutorial/chN-exercise.txt)
 - Optional example blueprints
 
 Usage:
    declare_tutorial_chapter({"your-title-key-here"}, {
-      exercise = true,  -- If true, looks for chN-exercise message list
       example_blueprints = {
          {"your-blueprint-title-key", "blueprint-import-string"},
       }
@@ -21,7 +19,6 @@ local mod = {}
 ---@class fa.tutorial.Chapter
 ---@field title LocalisedString
 ---@field chapter_number number
----@field has_exercise boolean
 ---@field example_blueprints { title: LocalisedString, blueprint: string }[]?
 
 ---@type fa.tutorial.Chapter[]
@@ -29,7 +26,7 @@ local chapters = {}
 
 ---Declare a tutorial chapter
 ---@param title LocalisedString The chapter title
----@param options { exercise: boolean?, example_blueprints: { [1]: LocalisedString, [2]: string }[]? }?
+---@param options { example_blueprints: { [1]: LocalisedString, [2]: string }[]? }?
 local function declare_tutorial_chapter(title, options)
    options = options or {}
 
@@ -49,7 +46,6 @@ local function declare_tutorial_chapter(title, options)
    table.insert(chapters, {
       title = title,
       chapter_number = chapter_number,
-      has_exercise = options.exercise or false,
       example_blueprints = example_blueprints,
    })
 end
@@ -84,33 +80,18 @@ function mod.get_chapter_text_list(chapter_number)
    return "ch" .. chapter_number
 end
 
----Get the message list name for a chapter's exercise
----@param chapter_number number
----@return string
-function mod.get_chapter_exercise_list(chapter_number)
-   return "ch" .. chapter_number .. "-exercise"
-end
-
 --------------------------------------------------------------------------------
 -- Tutorial Chapters
 --------------------------------------------------------------------------------
 
 -- Chapter 1: Getting Started
-declare_tutorial_chapter({ "fa.tutorial-ch1-title" }, {
-   exercise = false,
-})
+declare_tutorial_chapter({ "fa.tutorial-ch1-title" })
 
-declare_tutorial_chapter({ "fa.tutorial-ch2-title" }, {
-   exercise = false,
-})
+declare_tutorial_chapter({ "fa.tutorial-ch2-title" })
 
 -- Chapter 3: Mining and Placing
-declare_tutorial_chapter({ "fa.tutorial-ch3-title" }, {
-   exercise = false,
-})
+declare_tutorial_chapter({ "fa.tutorial-ch3-title" })
 
-declare_tutorial_chapter({ "fa.tutorial-ch4-title" }, {
-   exercise = false,
-})
+declare_tutorial_chapter({ "fa.tutorial-ch4-title" })
 
 return mod
