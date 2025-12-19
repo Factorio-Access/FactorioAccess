@@ -1,0 +1,37 @@
+You now know enough to be dangerous, though not efficient, so it is time to begin moving faster and opening up the game to you.
+
+This is the first tutorial chapter with an exercise, so if you need more specific directions press tab for a very long and thorough breakdown.
+
+You have accessed your inventory before.  Under that same UI are a bunch of others.  There are 3 mod UIs to concerrn yourself with, the main menu (e), the world menu(alt + w), and the mod configuration menu (control alt shift m).
+
+The latter two do not matter for a very long time, and so we will not discuss them much in this tutorial.
+
+Mod UIs are divided into a two level hierarchy.
+
+The top-level hierarchy, tabs, are things like "inventories", "crafting", and "research".  You navigate between these with control tab and control shift tab.
+
+One level below that are subtabs or controls, navigated with tab.  If you are in the inventories tab, this is every possible inventory for the building for example.
+
+UIs also offer a help system, available with shift slash.  Close help with e, returning to the UI you were in.
+
+There are two more important keys.  K, which gives you information on what is focused if such is available, and control + wasd, which moves as far as possible in a given direction. So for example, control w is top of menu.
+
+We will discuss research first.  While crafting lets us fix your drill, research is how you know why it matters and what to aim for.
+
+Open your main menu, then go over to the research tab.  This is composed of 3 rows one on top of the other: researchable, locked, and rpeviously researched.
+
+Use w and s to switch rows, and a and d to explore the row.
+
+Many of our UIs are like this, taking a not intuitive "shape" to make it so that you don't have to scroll through long menus.
+
+Fortunately, every UI is searchable just like you searched your inventory earlier.
+
+Right now you have two researchable researches, steam power and electronics.
+
+Factorio has two kinds of research, research which you select and research which automatically unlocks.  Both currently available researches have an unlock condition instead of a science requireemtn.  To find out what it is, press k.
+
+in this case, electronics is "craft copper plate x 10 of normal quality" and steam power is "craft iron plate x 10 of normal quality".
+
+Quality is a space age thing.  All you need to know is that you won't ever find a quality better than normal in the base game, what you are playing now.
+
+We now know what we need.  How do we get it?  Go back one tab to the crafting tab, then search for plate.

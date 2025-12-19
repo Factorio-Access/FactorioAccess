@@ -1,0 +1,119 @@
+Now that we have what we need to bootstrap our base, we can begin to build for real.  But before we do that, it is time to talk about a few more mod features.
+
+the mod has a concept of a virtual cursor, just called the cursor.  When all UIs are closed, wasd moves the cursor around.
+
+The cursor is your hand in the world, the blind equivalent to a mouse.  It can be used to examine things and take actions.
+
+Your character also has a body, usually just called the character.  This is where your physical presence is.
+
+To build, your character must be within 10 tiles of the cursor.
+
+Doing that means that you need to walk around.  You have three options.
+
+The first, and easiest, is to use Kruise Kontrol.  Just like you did in the last chapter, you can invoke KK.  If you do so on an empty tile or resource patch, KK will walk you there provided that there is a path to do so.
+
+If you did it on a resource patch, it's going to start mining after it gets there.  You can just cancel it with enter once it arrives.
+
+The next option is to use alt+k.  Alt+k announces how far the cursor is from your character.
+
+The arrow keys can be used to walk around, and alt+k can be used to know where you are going.
+
+This is awkward for two reasons.
+
+The first is that you need to press i. I controls whether or not the cursor follows the character while it wal,ks.  If the cursor is anchored to your character, then moving moves the cursor, which defeats the purpose.
+
+The second is that the arrow keys do not do pathfinding. For now, that' will work because your character is able to slide up against trees and rocks, but once you build your first buildings you will have issues.
+
+Finally, the third option is teleporting.  This is by far the easiest, and also a cheat.  The community is split on how much of a cheat it is.  On the one hand, teleporting instantly moves your character.  But on the other, Factorio is a game about building, not exploring, and you are already slower than sighted players.
+
+To teleport put your cursor where you want to go and press shift t.
+
+The one non-cheat use of teleportation which is very important is that it can be used to get your character positioned perfectly on a specific tile.  We will discuss that more later, but very short distance teleports are a commonly done thing for various reasons.  The one which may concern you now is that this can be used to get your character out of the way of building.
+
+Finally, you may return the cursor to the character at any time.  To do so, press j.
+
+That's great, but you are probably wondering where we are going.  Both figuratively and literally.  The answer is, to your coal patch.  If you explored your inventory, you noticed that you have a burner mining drill. It is time to turn it on.
+
+Every map has a starting area, around the coordinates 0, 0.  To get your coordinates press k.  Starting areas are guaranteed to contain iron, copper, coal, stone, and water within a hundred tiles or so.
+
+The crash site is also around the coordinates 0, 0.  We will talk about that more later--for the most part, it's decorative.
+
+It is time to find your coal patch.  The world has thousands of things in it by the end, and even right now the scanner is very spammy.
+
+You can deal with this by changing the scanner category.  To do so, press controll page up and control page down.
+
+The list of scanner categories changes based on whether or not a category has something in it right now.
+
+Cycle to the resources category, then use page up and down to find your coal patch.
+
+You will now also want to explore some with your cursor, so it is a good time to note that the scanner remembers what you are on. Pressing home will move your cursor back to the scanner's  current item.
+
+When you found the coal patch, your cursor was moved to the middle of it.  The mod will say somethjing like "coal x 1234".  Coal is the resource, and the njumber is how much of it is still available on this tile.
+
+The scanner also tracks overall use of patches, so that you can remotely monitor how much is left.  Please note that this is known to break after some mod updates or when the mod is added to an existing save.  This is becaause it is a heuristic which relies on seeing the patches before any mining happened.
+
+in any case, use Kruise Kontrol to walk to the coal.
+
+At the end of the last chapter, we said that there is a way to get coal without using stone.  That way is by hand mining the resource patch.
+
+Factorio mining includes getting resources, chopping down trees, and deconstructing buildings you already placed.
+
+Kruise Kontrol will try to mine the coal for you, but you need to learn the manual controls.  To mine manually, put the cursor on something mineable which is within 10 tiles or so of your character, then hold x.
+
+If x is on a resource, you will hear your character mining it by hand.  You get one piece of coal a second or so.
+
+It doesn't matter how much coal you have at this moment, as long as it's at least a few pieces.
+
+It is time to place your first building.  To do so, open your inventory, find the mining drill, and press left bracket.
+
+We call left bracket clicking, and the tutorial will refer to it that way from now on.  It's like the mouse buttons: left bracket is left mouse button, and right bracket is right mouse button.  Where possible, we match the sighted meanings, though this is not always possible.
+
+When you click the drill, the mod puts it in your hand.  You may now build it by clicking the ground where you want it to be placed.
+
+Burner mining drills are 2 by 2, and mine everything directly under them.
+
+You are holding it by the top left (northwest) corner.  Inj this case, it will extend one tile ot the right and one tile down from your cursor's position.
+
+Use r to change the direction it will face.  In this case, face it north, so that it will match this tutorial.
+
+Then click the coal with it in your hand, and it will instantly build itself.
+
+Factorio never permanently takes a structure away.  You can get it back at no cost. To do so, just mine it.
+
+Once placed, move your cursor around a bit to see what the drill says.  In particular, note that it says it is out of fuel.
+
+Like your character, buildings can have inventories.  In this case, the drill has a fuel inventory.
+
+We will discuss your options in more detail later, but for now we will explain quick transfers.
+
+Go to your inventory and click coal to get it into your hand.  Then put your hand over the drill.
+
+Items in Factorio come in stacks.  Press shift q to find out what is in your hand, and what the stack size is.
+
+There are three controls to drop items.  Because dropping items is a physical action (not just configuration), your character must be close to the drill.
+
+The first is control left bracket, aka control clicking.  With something in your hand that the machine "wants" and your hand over the machine, control click intelligently drops one whole stack of items into the most appropriate place.
+
+In this case, that's the fuel inventory, and the item is coal.
+
+If you don't have a full stack, it drops whatever you did have.
+
+Just like this, control right bracket, aka control right clicking, will drop half a stack.
+
+This works a bit differently when you do not have a full stack, however.  In that case, it drops half of what is left.
+
+Coal's stack size is 50.  So if you had 200 coal, it would drop 25.  But if you only had 10, it would only drop 5.
+
+The last option is z.  Z drops one item only.  This can be useful when you want to only put a little bit of something into a machine.
+
+Take some coal in hand, and use one of the above options to put it in the drill.
+
+You will hear the drill come on for a moment, then stop, even if you put 50 coal into it.
+
+If you put your cursor on the northwest corner of the drill, you will hear the word "output chute".  Drills drop stuff onto the ground one tile away from the output chute.  In this case, it is one tile north and a single piece of coal.  Find that now, and you will understand how drills work.
+
+When your character is physically on top of an item, you can pick it up by holding f.  Alternatively, tap x if it is in your character's reach and your cursor is on it.  Don't blame us--these are vanilla controls.
+
+The problem you now have is that your drill has nowhere to put coal after it lets the first piece out.  The rule is that tiles on the ground can hold exactly one item each.  Even though coal stacks to 50, only one coal will come out at a time.  unfortunately, the rules for when a machine will stop like that are not entirely consistent.  The other twoi cases--furnaces and crafting machines--work differently.
+
+We can fix this.  We will do so with a chest, in the next chapter where you learn how to craft items.

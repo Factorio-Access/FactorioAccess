@@ -55,25 +55,6 @@ local function declare_tutorial_chapter(title, options)
 end
 
 --------------------------------------------------------------------------------
--- Tutorial Chapters
---------------------------------------------------------------------------------
-
--- Chapter 1: Getting Started
-declare_tutorial_chapter({ "fa.tutorial-ch1-title" }, {
-   exercise = true,
-})
-
--- Chapter 2: Movement and Cursor
-declare_tutorial_chapter({ "fa.tutorial-ch2-title" }, {
-   exercise = true,
-})
-
--- Chapter 3: Mining and Placing
-declare_tutorial_chapter({ "fa.tutorial-ch3-title" }, {
-   exercise = true,
-})
-
---------------------------------------------------------------------------------
 -- Module API
 --------------------------------------------------------------------------------
 
@@ -109,5 +90,27 @@ end
 function mod.get_chapter_exercise_list(chapter_number)
    return "ch" .. chapter_number .. "-exercise"
 end
+
+--------------------------------------------------------------------------------
+-- Tutorial Chapters
+--------------------------------------------------------------------------------
+
+-- Chapter 1: Getting Started
+declare_tutorial_chapter({ "fa.tutorial-ch1-title" }, {
+   exercise = false,
+})
+
+declare_tutorial_chapter({ "fa.tutorial-ch2-title" }, {
+   exercise = false,
+})
+
+-- Chapter 3: Mining and Placing
+declare_tutorial_chapter({ "fa.tutorial-ch3-title" }, {
+   exercise = false,
+})
+
+declare_tutorial_chapter({ "fa.tutorial-ch4-title" }, {
+   exercise = false,
+})
 
 return mod

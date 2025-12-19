@@ -1,0 +1,51 @@
+Now that you have some idea of the game, it is time to talk about your initial goals and what you must do to achieve them.
+
+Research in Factorio is done in labs.  Labs need power.  Power needs steam engines and boilers.  Steam engines and boilers need the basic resources, which you will start learning about now.
+
+This phrasing may seem awkward, but it's how you can most easily think about Factorio. You find your goal, then you work backward from it until you get to something you can do.
+
+The mod offers a number of features to navigate the world.  The first of these is the scanner.  The scanner takes the map and turns it into a list of features.
+
+The simplest use of the scanner is to find rocks.  Rocks, when mined, contain stone.  Some also contain coal.
+
+To scan, press end.  This will refresh the list of things that the scanner shows you, and sort them by distance from your character.
+
+To move between things in the scanner list, press page up and page down.
+
+The mod offers a few ways of moving around.  The first we will teach you is Kruise Kontrol.
+
+Since Factorio is a building game, we integrated a second mod which automates a variety of tasks that aren't critical to gameplay.  Kruise Kontrol, often referred to as KK, is a mod by one of the Factorio developers which can do some simple tasks.
+
+In this case, we can use it to mine rocks without having to find them one by one.  Please read a bit further before trying to use it, as you will not be able to read this tutorial at the same time.
+
+To start KK, you press control alt right bracket with the cursor on an item.  We will talk about the cursor more in a little while, but for now what you need to know is that it is moved by the scanner.
+
+To stop KK, you press enter while it is doing something.
+
+While KK is enabled, the mod still continues to function--but using it can interrupt what KK is trying to do.
+
+Now, press end, then use page up and page down to find a rock.  Once you have, press control alt right bracket.  After your character has mined a few rocks, press enter.
+
+Your character has now mined stone.  If you were lucky, your character also mined coal.
+
+To find out if it did or not, open the inventory with e. Please note that e also closes this tutorial. You can get back to it with control alt slash once you have opened the inventory, and close it out with e.
+
+E serves two functions.  If no UI is open, it opens one. Otherwise, it closes one.
+
+The inventory is a grid, navigated with w, a, s, and d.  in the mod, w, a, s, d are arranged like and used as arrow keys.  We usually spell it wasd.
+
+Inventories are presented as 10-by-x grids, where the last row is truncated if the number of slots is not a multiple of 10.
+
+They sort so that all items are at the beginning.
+
+It is awkward to navigate it in this form, which is why we also support search functionality.  That is what you will use here.
+
+With the inventory open, press control f, type coal, and press enter.  This sets the search pattern, but does not yet move you to it.
+
+To cycle through search results, press shift enter for next and control enter for previous.
+
+These controls are odd for technical reasons.  To remember it, shift is next because shift is above control.
+
+It is good to note that search results update without you doing anything.  You don't need to worry about that now, but once you start crafting you don't need to repeatedly press control f to find out if something showed up.
+
+If you get no search results for coal, you have not found any yet.  You have two choices.  The first choice is to mine some more rocks.  The second choice is to continue to the next chapter, where we will discuss mining from resource patches.
