@@ -67,7 +67,7 @@ function mod.recipe_requires_fluids(recipe)
 end
 
 --Returns an info string about why crafting failed for this recipe.
---Checks for fluid requirements first, then missing item ingredients.
+--Checks for: unsupported category, fluid requirements, then missing item ingredients.
 ---@param pindex integer
 ---@param recipe_in LuaRecipe?
 ---@return LocalisedString?
@@ -75,11 +75,17 @@ function mod.recipe_cannot_craft_reason(pindex, recipe_in)
    local recipe = recipe_in
       or storage.players[pindex].crafting.lua_recipes[storage.players[pindex].crafting.category][storage.players[pindex].crafting.index]
 
+   -- Check if recipe category can be hand-crafted
+   local p = game.get_player(pindex)
+   if p.character then
+      local crafting_categories = p.character.prototype.crafting_categories
+      if not crafting_categories[recipe.category] then return { "fa.crafting-requires-machine" } end
+   end
+
    -- Check if recipe requires fluids (cannot be hand-crafted normally)
    if mod.recipe_requires_fluids(recipe) then return { "fa.crafting-requires-fluids" } end
 
    -- Check for missing item ingredients
-   local p = game.get_player(pindex)
    local inv = p.get_main_inventory()
    local message = MessageBuilder.new()
    local found_missing = false

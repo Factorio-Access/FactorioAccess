@@ -59,7 +59,64 @@ function mod.read_recipe_details(message, recipe)
    end
 end
 
----Read recipe details including crafting time (for machines)
+---Get all categories a recipe belongs to
+---@param recipe LuaRecipe
+---@return string[]
+local function get_recipe_categories(recipe)
+   local categories = { recipe.category }
+   if recipe.additional_categories then
+      for _, cat in ipairs(recipe.additional_categories) do
+         table.insert(categories, cat)
+      end
+   end
+   return categories
+end
+
+---Get crafters that can make a recipe, separated into hand-craftable and machines
+---@param recipe LuaRecipe
+---@return boolean can_hand_craft
+---@return LuaEntityPrototype[] machines
+function mod.get_recipe_crafters(recipe)
+   local categories = get_recipe_categories(recipe)
+   local can_hand_craft = false
+   local machines_seen = {}
+   local machines = {}
+
+   -- Check if any character prototype can craft this recipe
+   local characters = prototypes.get_entity_filtered({ { filter = "type", type = "character" } })
+   for _, char_proto in pairs(characters) do
+      if char_proto.crafting_categories then
+         for _, category in ipairs(categories) do
+            if char_proto.crafting_categories[category] then
+               can_hand_craft = true
+               break
+            end
+         end
+      end
+      if can_hand_craft then break end
+   end
+
+   -- Get machines that can craft this recipe
+   for _, category in ipairs(categories) do
+      local entities =
+         prototypes.get_entity_filtered({ { filter = "crafting-category", crafting_category = category } })
+      for name, proto in pairs(entities) do
+         if proto.type ~= "character" and not machines_seen[name] then
+            machines_seen[name] = true
+            table.insert(machines, proto)
+         end
+      end
+   end
+
+   -- Sort machines alphabetically by name for consistency
+   table.sort(machines, function(a, b)
+      return a.name < b.name
+   end)
+
+   return can_hand_craft, machines
+end
+
+---Read recipe details including crafting time and what can craft it
 ---@param message fa.MessageBuilder The message builder to append to
 ---@param recipe LuaRecipe The recipe to read
 function mod.read_recipe_details_with_time(message, recipe)
@@ -67,6 +124,14 @@ function mod.read_recipe_details_with_time(message, recipe)
 
    -- Add crafting time
    message:fragment({ "fa.assembling-machine-crafting-time", recipe.energy })
+
+   -- Add what can craft this recipe
+   local can_hand_craft, machines = mod.get_recipe_crafters(recipe)
+   message:fragment({ "fa.recipe-crafted-by" })
+   if can_hand_craft then message:list_item({ "fa.recipe-crafted-by-hand" }) end
+   for _, machine in ipairs(machines) do
+      message:list_item(Localising.get_localised_name_with_fallback(machine))
+   end
 end
 
 ---Create a label for a recipe, optionally marking it as current
