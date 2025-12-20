@@ -1,4 +1,4 @@
-# 0.16.44 (unreleased)
+# 0.16.44 (2025-12-19)
 
 - Publish the first 7 chapters of the tutorial. Access it with control alt slash.
   - We may move this key.
