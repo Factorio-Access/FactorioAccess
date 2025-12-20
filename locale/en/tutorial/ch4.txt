@@ -1,6 +1,6 @@
 You now know enough to be dangerous, though not efficient, so it is time to begin moving faster and opening up the game to you.
 
-You have accessed your inventory before.  Under that same UI are a bunch of others.  There are 3 mod UIs to concerrn yourself with, the main menu (e), the world menu(alt + w), and the mod configuration menu (control alt shift m).
+You have accessed your inventory before.  Under that same UI are a bunch of others.  There are 3 mod UIs to concern yourself with, the main menu (e), the world menu (alt + w), and the mod configuration menu (control alt shift m).
 
 The latter two do not matter for a very long time, and so we will not discuss them much in this tutorial.
 
@@ -16,7 +16,7 @@ There are two more important keys.  K, which gives you information on what is fo
 
 We will discuss research first.  While crafting lets us fix your drill, research is how you know why it matters and what to aim for.
 
-Open your main menu, then go over to the research tab.  This is composed of 3 rows one on top of the other: researchable, locked, and rpeviously researched.
+Open your main menu, then go over to the research tab.  This is composed of 3 rows one on top of the other: researchable, locked, and previously researched.
 
 Use w and s to switch rows, and a and d to explore the row.
 
@@ -24,9 +24,9 @@ Many of our UIs are like this, taking a not intuitive "shape" to make it so that
 
 Fortunately, every UI is searchable just like you searched your inventory earlier.
 
-Right now you have two researchable researches, steam power and electronics.
+Right now you have two researchable technologies, steam power and electronics.
 
-Factorio has two kinds of research, research which you select and research which automatically unlocks.  Both currently available researches have an unlock condition instead of a science requireemtn.  To find out what it is, press k.
+Factorio has two kinds of technology, technology which you select and technology which automatically unlocks.  Both currently available technologies have an unlock condition instead of a science requirement.  To find out what it is, press k.
 
 in this case, electronics is "craft copper plate x 10 of normal quality" and steam power is "craft iron plate x 50 of normal quality".
 
@@ -36,7 +36,7 @@ We now know what we need.  How do we get it?  Go back one tab to the crafting ta
 
 If you click either of the plate recipes, the game will tell you that you can't craft it!  That's because these must be done in a machine.
 
-to find out what machines you can craft something in, press k.  This will also tell you what it needs as inggredients.
+To find out what machines you can craft something in, press k.  This will also tell you what it needs as ingredients.
 
 We can't easily filter the list down to machines you have right now for a variety of reasons, but if you check all of them you will find out in this case that the one you have is a stone furnace.
 
@@ -44,7 +44,7 @@ you started the game with one, but the reason that the stone from earlier in thi
 
 But now it's time to circle back.  The last chapter of this tutorial said we would teach you how to fix your burner mining drill.
 
-The punchline if you will is that stone furnaces require coal to function.  Coal and ore goes in and plates come out.  This is not obvious from the crafting menu, and indeed electric furnaces don't need the coal.  In general, you can recognize if a device needs fuel by seeing if it complains about not having any, or checking if it has a fuel inventorey.
+The punchline if you will is that stone furnaces require coal to function.  Coal and ore goes in and plates come out.  This is not obvious from the crafting menu, and indeed electric furnaces don't need the coal.  In general, you can recognize if a device needs fuel by seeing if it complains about not having any, or checking if it has a fuel inventory.
 
 So, what we are actually going to do is this.  Use the scanner to find a tree, then let Kruise Kontrol mine a few for you.
 
@@ -52,7 +52,7 @@ This will give you wood.  You will never have a shortage of wood because very fe
 
 Once you have some, you can craft a wooden chest.
 
-Earlier, you found where the burner mining drill drops coal.  GO back there (you can find the drill with the scanner), and place the chest on that tile.
+Earlier, you found where the burner mining drill drops coal.  Go back there (you can find the drill with the scanner), and place the chest on that tile.
 
 If the chest is in the right place and the drill has fuel, it will now begin to slowly fill the chest with coal.
 
@@ -69,14 +69,14 @@ Third is by opening the inventory itself.  You can click items to put them in ha
 
 We call these sibling inventories, and it also works in reverse.  If you explore the available tabs for the chest, you will see that the other one is your own inventory.  The shift click controls will work in your inventory to instead move things to the chest.
 
-Your responsibility--for now--is to keep an eye on this setup.  Every so often, the drill will require more fuel.  You will need to grab some coal from the chest and put it in the drill when it runs out.  Soon, we will have a few ways of fixing this that do not require youi to keep checking in.
+Your responsibility--for now--is to keep an eye on this setup.  Every so often, the drill will require more fuel.  You will need to grab some coal from the chest and put it in the drill when it runs out.  Soon, we will have a few ways of fixing this that do not require you to keep checking in.
 
 Before we close this chapter, you should know that you are now producing pollution.  This tutorial doesn't spend much time on it because you are supposed to be in peaceful, but it does matter even there.
 
-As the game goes on, your factory produces pollution.  How much depends on how many machines yoiu have built and how manya re running at a given time.  Thissingle drill produces a very small amount very slowly, but as you buiild mroe you produce it faster and faster.
+As the game goes on, your factory produces pollution.  How much depends on how many machines you have built and how many are running at a given time.  This single drill produces a very small amount very slowly, but as you build more you produce it faster and faster.
 
-As enemy spawners see polution, they get stronger.  ANd if you aren't in peaceful,m they eventually come at you.
+As enemy spawners see pollution, they get stronger.  And if you aren't in peaceful, they eventually come at you.
 
-Polution spreads realistically, so you can get the amount at your cursor with shift u.
+Pollution spreads realistically, so you can get the amount at your cursor with shift u.
 
-In the next chapter, we will talk about faster ways of moving around, then we will get to smelting to unlock those researches.
+In the next chapter, we will talk about faster ways of moving around, then we will get to smelting to unlock those technologies.

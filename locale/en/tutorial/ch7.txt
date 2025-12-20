@@ -1,14 +1,14 @@
 It is now time to set up power.
 
-Before you continue with this tutorial, use your knowledge to craft a steam engine, a boiler, an offshore pump, a lab, a pipe to ground, 4 or 5 regular pipes, and at least one electrric pole.
+Before you continue with this tutorial, use your knowledge to craft a steam engine, a boiler, an offshore pump, a lab, a pipe to ground, 4 or 5 regular pipes, and at least one electric pole.
 
 You could also craft transport belts and inserters, but we don't teach those now because you need a whole bunch to do anything with them.  On future runs, this is a place where you would start automating things while you wait, but for the sake of learning we choose to delay that a little bit longer.
 
 You should know enough from previous chapters to get this far without our help.  The only thing that is new is that the electric pole recipe outputs two electric poles per run, that is you cannot just craft one only.
 
-once you craft the lab, the research automation science pack will complete itself, and you have now reached the first set of traditional techjnologies and the main driving loop of Factorio.
+Once you craft the lab, the technology automation science pack will complete itself, and you have now reached the first set of traditional technologies and the main driving loop of Factorio.
 
-You should take this time to check a few things.  This tutorial will spell out what they are, becasue they are how you find out what to do next.
+You should take this time to check a few things.  This tutorial will spell out what they are, because they are how you find out what to do next.
 
 First find the research "logistic science pack".  To figure out what to aim for, you always aim for the next science pack, at least until you can research the rocket silo.
 
@@ -18,17 +18,17 @@ Next, find the automation science pack recipe.  Notice that it takes 5 seconds o
 
 You have now reached Factorio's motivation for scaling.  If you did this by hand, it would take quite a long time.  Later technologies need multiple science packs at once, and run into the hundreds and even the thousands.  Until now, Factorio may have felt like a weird survival game or something.  But now you are at the core of the game, and the core of the game is figuring out how to scale up production to meet the demand of the labs.
 
-In fact, by the end of the game, you don't even have to walk to build stuff because your robots wil just do it for you.
+In fact, by the end of the game, you don't even have to walk to build stuff because your robots will just do it for you.
 
-Sometimes, yuour next science pack is locked until you meet the prerequisites. In this case, yhou find it in the row of locked technologies.
+Sometimes, your next science pack is locked until you meet the prerequisites. In this case, you find it in the row of locked technologies.
 
-Since there's a ton of technologies, we will provide a minor spoiler.  YUou want to unlock logistic science pack.  From there, you can do chemical and military science packs.  After that, production and utility science packs are doable, and with all of them unlocked you can research the silo and win the game.
+Since there's a ton of technologies, we will provide a minor spoiler.  You want to unlock logistic science pack.  From there, you can do chemical and military science packs.  After that, production and utility science packs are doable, and with all of them unlocked you can research the silo and win the game.
 
 The research you actually care about right now is "automation", which gets you an assembling machine.  Assembling machines craft for you.  When fed ingredients, they can make anything you can make.  The version you unlock now is slower than you, but you can run as many as you can supply at a time.
 
 This chapter of the tutorial has an attached set of example blueprints.  What we are about to explain is complicated, and so to help you we have given you as many pieces as we can if you need to look at them.
 
-Blueprints are like buildings, but place more than one structure at a time and palce what are called ghosts instead of real strujctures.  if you ahve the items, invoking Kruise Kontrol on a ghost will build all ghosts it can fijnd, filling out the blueprint for you.
+Blueprints are like buildings, but place more than one structure at a time and place what are called ghosts instead of real structures.  If you have the items, invoking Kruise Kontrol on a ghost will build all ghosts it can find, filling out the blueprint for you.
 
 in this way, you can share structures with others.
 
@@ -40,19 +40,19 @@ this tutorial will explain the setup from the south to north.  The setup we are 
 
 the southmmost building to place is a boiler facing north.  This is a 3 wide by 2 high building that converts water to steam.
 
-once you have placed it, explore it and you will find 3 connection points on the edge.  On the southwest and southeast corners are two water connections, and in the middle of the north side is where steam comes out.  The mod tells you which direction the connection faces.  in this case, the southwest connectgion faces west, and the southeast connection faces east.
+Once you have placed it, explore it and you will find 3 connection points on the edge.  On the southwest and southeast corners are two water connections, and in the middle of the north side is where steam comes out.  The mod tells you which direction the connection faces.  In this case, the southwest connection faces west, and the southeast connection faces east.
 
-To connect entities that use fluids together, you place a pipe or another entity next to the connection point in the direction it is facing. SO, in this case, a pipe to the west of the boiler's southwest corner would work.
+To connect entities that use fluids together, you place a pipe or another entity next to the connection point in the direction it is facing. So, in this case, a pipe to the west of the boiler's southwest corner would work.
 
 Also notice that the mod doesn't say that the water connections are inputs.  The convention here is that the mod doesn't say when it can go in both directions.  You can connect a line of boilers together and give water to the first one, and everything in line will get some.
 
 Next, place the steam engine.  It is 3 wide by 5 high.  Count 5 tiles up from the northwest corner of the boiler.
 
-If you explore the steam engine, you will see that it has a bidirectional steam connection at the top center and bottom center.  if you palced it right, the sotuh-facing steam connection is one tile north of the boiler's north-0facing output.
+If you explore the steam engine, you will see that it has a bidirectional steam connection at the top center and bottom center.  If you placed it right, the south-facing steam connection is one tile north of the boiler's north-facing output.
 
-In a minute, we will give the boiler water asnd fuel, and that will fill the steam engine with steam.  When you scale power, you can stack multiple steam engines on top of eaach other, and they can feed through to each other.
+In a minute, we will give the boiler water and fuel, and that will fill the steam engine with steam.  When you scale power, you can stack multiple steam engines on top of each other, and they can feed through to each other.
 
-Third, north of the northwest conrer of the steam engine, place a small electric pole.
+Third, north of the northwest corner of the steam engine, place a small electric pole.
 
 And then, counting 3 tiles north of that, place the lab.
 
@@ -60,7 +60,7 @@ What is going on here is this.  Electric poles have two values, their supply are
 
 The supply area of a small electric pole is a 5x5 box with the pole at the center.  If any part of an adjacent building is in that box, it will interface with this electric pole.
 
-What we did above is put the steam engine (a power producer) and the lab (a power consumer) next to this pole, both in range.  When the lab weants power, the steam engine will t8urn on to give it so0me.
+What we did above is put the steam engine (a power producer) and the lab (a power consumer) next to this pole, both in range.  When the lab wants power, the steam engine will turn on to give it some.
 
 Next up we need to get this setup some water.
 
@@ -70,24 +70,24 @@ The rule for an offshore pump is that it is 3 wide by 2 high.  The frontmost til
 
 To get to the helper menu, get your character near water, put an offshore pump in hand, and alt click.  This will give you a list of candidate locations. Click one, and the pump will build.  Then, find the pump with your scanner.
 
-Pipes are a little bit magical.  Factorio models fluids as instant teleportation.  If a pipe has water in it and something at the other end needs it, then the thing at the other end gets the water even if it is a very long pipe.  Factorio limits this to around 300 tiles, and counts buildings in that length. Later on, you may get "pipelinje overextended".  in that case, you have to make it shorter or use pumps, which you unlock much later on.
+Pipes are a little bit magical.  Factorio models fluids as instant teleportation.  If a pipe has water in it and something at the other end needs it, then the thing at the other end gets the water even if it is a very long pipe.  Factorio limits this to around 300 tiles, and counts buildings in that length. Later on, you may get "pipeline overextended".  In that case, you have to make it shorter or use pumps, which you unlock much later on.
 
 Factorio also does not allow mixing two fluids in the same pipe.  That doesn't matter much now, but will definitely matter later.
 
-The placement rule for pipes is that a pipe connects to everything it can. So, if you place 9 pipes in a 3x3 box, you get a 3x3 pipe-like thing where all pipes connect up.  In this case, putting a pipe next to the boiler's watoer connections connects it to the boiler, putting a pipe next to the water output of the offshore pump connects itr to the offshore pump, and drawing a line of pipes to the boiler connects the boiler to the water.
+The placement rule for pipes is that a pipe connects to everything it can. So, if you place 9 pipes in a 3x3 box, you get a 3x3 pipe-like thing where all pipes connect up.  In this case, putting a pipe next to the boiler's water connections connects it to the boiler, putting a pipe next to the water output of the offshore pump connects it to the offshore pump, and drawing a line of pipes to the boiler connects the boiler to the water.
 
 Unfortunately, you cannot walk through pipes.  That is the function of a pipe to ground.
 
-Pipe to ground is more complicated.  It only connects to a pipe "in front" of it.  That is, if you face it north it must be south of a pipe to connect.  The facing direction is trhe above ground portion of an underground pipe tunnel.
+Pipe to ground is more complicated.  It only connects to a pipe "in front" of it.  That is, if you face it north it must be south of a pipe to connect.  The facing direction is the above ground portion of an underground pipe tunnel.
 
-If you place two in a line close enough together, they connect underground.  The rule is that they may be separated up to 9 tiles.  SO, youi could palce one facing west at say (5, 0), and that would connect to a second one facing east at (10, 0).
+If you place two in a line close enough together, they connect underground.  The rule is that they may be separated up to 9 tiles.  So, you could place one facing west at say (5, 0), and that would connect to a second one facing east at (10, 0).
 
 If you placed a third facing east at (7, 0), though, it would link to (5, 0) and leave (10, 0) unconnected.
 
-In either case, your immediate goal is to hand-craft 10 automation science packs, get water and coal in the boiler, put the science packs in the alb, then click on automation in the research tab.
+In either case, your immediate goal is to hand-craft 10 automation science packs, get water and coal in the boiler, put the science packs in the lab, then click on automation in the research tab.
 
-Research is queued, and clicking puts it in the back of the queue. Since yoiu haven't got anyhthing else running, it's up next.  Check research progress with t, and if you want to cancel get to the research queue by tabbing over from the technology list and clicking what you want to cancel.
+Research is queued, and clicking puts it in the back of the queue. Since you haven't got anything else running, it's up next.  Check research progress with t, and if you want to cancel get to the research queue by tabbing over from the technology list and clicking what you want to cancel.
 
 You can also enqueue to the front with control shift click.
 
-To finish out this stage and move onto inserters, assemblers, and transport belts, you should complete trhe automation research.
+To finish out this stage and move onto inserters, assemblers, and transport belts, you should complete the automation research.

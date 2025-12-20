@@ -20,9 +20,9 @@ The arrow keys can be used to walk around, and alt+k can be used to know where y
 
 This is awkward for two reasons.
 
-The first is that you need to press i. I controls whether or not the cursor follows the character while it wal,ks.  If the cursor is anchored to your character, then moving moves the cursor, which defeats the purpose.
+The first is that you need to press i. I controls whether or not the cursor follows the character while it walks.  If the cursor is anchored to your character, then moving moves the cursor, which defeats the purpose.
 
-The second is that the arrow keys do not do pathfinding. For now, that' will work because your character is able to slide up against trees and rocks, but once you build your first buildings you will have issues.
+The second is that the arrow keys do not do pathfinding. For now, that will work because your character is able to slide up against trees and rocks, but once you build your first buildings you will have issues.
 
 Finally, the third option is teleporting.  This is by far the easiest, and also a cheat.  The community is split on how much of a cheat it is.  On the one hand, teleporting instantly moves your character.  But on the other, Factorio is a game about building, not exploring, and you are already slower than sighted players.
 
@@ -40,7 +40,7 @@ The crash site is also around the coordinates 0, 0.  We will talk about that mor
 
 It is time to find your coal patch.  The world has thousands of things in it by the end, and even right now the scanner is very spammy.
 
-You can deal with this by changing the scanner category.  To do so, press controll page up and control page down.
+You can deal with this by changing the scanner category.  To do so, press control page up and control page down.
 
 The list of scanner categories changes based on whether or not a category has something in it right now.
 
@@ -48,9 +48,9 @@ Cycle to the resources category, then use page up and down to find your coal pat
 
 You will now also want to explore some with your cursor, so it is a good time to note that the scanner remembers what you are on. Pressing home will move your cursor back to the scanner's  current item.
 
-When you found the coal patch, your cursor was moved to the middle of it.  The mod will say somethjing like "coal x 1234".  Coal is the resource, and the njumber is how much of it is still available on this tile.
+When you found the coal patch, your cursor was moved to the middle of it.  The mod will say something like "coal x 1234".  Coal is the resource, and the number is how much of it is still available on this tile.
 
-The scanner also tracks overall use of patches, so that you can remotely monitor how much is left.  Please note that this is known to break after some mod updates or when the mod is added to an existing save.  This is becaause it is a heuristic which relies on seeing the patches before any mining happened.
+The scanner also tracks overall use of patches, so that you can remotely monitor how much is left.  Please note that this is known to break after some mod updates or when the mod is added to an existing save.  This is because it is a heuristic which relies on seeing the patches before any mining happened.
 
 in any case, use Kruise Kontrol to walk to the coal.
 
@@ -72,7 +72,7 @@ When you click the drill, the mod puts it in your hand.  You may now build it by
 
 Burner mining drills are 2 by 2, and mine everything directly under them.
 
-You are holding it by the top left (northwest) corner.  Inj this case, it will extend one tile ot the right and one tile down from your cursor's position.
+You are holding it by the top left (northwest) corner.  In this case, it will extend one tile to the right and one tile down from your cursor's position.
 
 Use r to change the direction it will face.  In this case, face it north, so that it will match this tutorial.
 
@@ -114,6 +114,6 @@ If you put your cursor on the northwest corner of the drill, you will hear the w
 
 When your character is physically on top of an item, you can pick it up by holding f.  Alternatively, tap x if it is in your character's reach and your cursor is on it.  Don't blame us--these are vanilla controls.
 
-The problem you now have is that your drill has nowhere to put coal after it lets the first piece out.  The rule is that tiles on the ground can hold exactly one item each.  Even though coal stacks to 50, only one coal will come out at a time.  unfortunately, the rules for when a machine will stop like that are not entirely consistent.  The other twoi cases--furnaces and crafting machines--work differently.
+The problem you now have is that your drill has nowhere to put coal after it lets the first piece out.  The rule is that tiles on the ground can hold exactly one item each.  Even though coal stacks to 50, only one coal will come out at a time.  Unfortunately, the rules for when a machine will stop like that are not entirely consistent.  The other two cases--furnaces and crafting machines--work differently.
 
 We can fix this.  We will do so with a chest, in the next chapter where you learn how to craft items.
