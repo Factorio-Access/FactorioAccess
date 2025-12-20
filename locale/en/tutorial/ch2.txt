@@ -1,8 +1,8 @@
 Now that you have some idea of the game, it is time to talk about your initial goals and what you must do to achieve them.
 
-Research in Factorio is done in labs.  Labs need power.  Power needs steam engines and boilers.  Steam engines and boilers need all of the basic resources.
-
 This is how you think about Factorio.  You find your goal, then you work backward from it until you get to something you can do.
+
+Research in Factorio is done in labs.  Labs need power.  Power needs steam engines and boilers.  Steam engines and boilers need all of the basic resources.
 
 The mod offers a number of features to navigate the world.  The first of these is the scanner.  The scanner takes the map and turns it into a list of features.
 

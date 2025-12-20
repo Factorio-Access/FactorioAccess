@@ -36,8 +36,12 @@ local function declare_tutorial_chapter(title, options)
    if options.example_blueprints then
       example_blueprints = {}
       for _, bp in ipairs(options.example_blueprints) do
+         -- Wrap the title key as a LocalisedString if it's a plain string
+         local bp_title = bp[1]
+         if type(bp_title) == "string" then bp_title = { bp_title } end
+
          table.insert(example_blueprints, {
-            title = bp[1],
+            title = bp_title,
             blueprint = bp[2],
          })
       end
@@ -95,6 +99,17 @@ declare_tutorial_chapter({ "fa.tutorial-ch3-title" })
 declare_tutorial_chapter({ "fa.tutorial-ch4-title" })
 declare_tutorial_chapter({ "fa.tutorial-ch5-title" })
 declare_tutorial_chapter({ "fa.tutorial-ch6-title" })
-declare_tutorial_chapter({ "fa.tutorial-ch7-title" })
+declare_tutorial_chapter({ "fa.tutorial-ch7-title" }, {
+   example_blueprints = {
+      {
+         "fa.tutorial-example-blueprint-power-and-lab",
+         "0eNp90dtqhDAQBuBXCXMdl/W0rb5KKSXqIAPJKEksu0jevYm2thTZqxz48yUzWaHTC86W2EO7woCutzR7mhhaUKKbSKOVwnlURiCPxCgFauy9pV7Mk45LxYPQqgMJ1E/soH1bwdHISieSlcFobUK2CxBilAe8Q5sHeRJO2m+mCO8SkD15wl3fFo8PXkyHNiLy70EJ8+RoL2GFeD4rb+WllvCI0/xSh3TlP6E4BGeU1tlPhVmq8FSsvsXrOVjK08Kfva08l6pD2j/jqfESUq/Io0n542dlagzGDgPelZk1Ckc8xiFuC4d+mWPkE63b0PpWNFXT1K952TTXKoQvPAay+w==",
+      },
+      {
+         "fa.tutorial-example-blueprint-single-pipe-to-ground",
+         "0eNqdkd1KxDAQRl8lzHW62F+3vfM5RCRth+5AMwlpql1K3t10K7jKroh3Ezic75vMCu04o3XEHpoVepw6R9aTYWjgSViyKLwRgzMz90J5odVCetbCKR5QinfyJ6GEw2Eeldt5wwJVdxLIPUigzvAEzfMKEw2sxi2Glcbo32gIEeEeF2jSIO9AiTfJXuEKz8KLBGRPnnAPuDzOrzzrFl30yW9BEqyZaF9thShI8io9lBLOcSwOZdjifygyeafGr7L8tiz/e5/H24biP3Wq6JLQk8NuB47bx5FHHT1f15cwqhbHT/fV0XFR2o5b3zd008VQVlld1HV5TPO6fihC+AAtm75h",
+      },
+   },
+})
 
 return mod

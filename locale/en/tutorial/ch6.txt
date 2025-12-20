@@ -6,9 +6,11 @@ Iron gear wheel is also a recipe, taking 2 iron plates.  If you do the math, you
 
 Fortunately, crafting is smart.  If you have enough and try to craft the drill, the game will craft the smaller things for you.
 
-Unfortunately, the mod is less smart.  We will try to tell you what's missing, but in this case we will for example claim it's the furnace.  So, you have to look a bit yourself.  The number you can craft is generally always correct.
+Unfortunately, the mod is less smart.  We will try to tell you what's missing, but in this case we will for example claim it's the furnace.  So, you have to look a bit yourself.  The number you can craft is generally always correct, but figuring it out when it's zero is not.
 
 Now, we need 9 iron plates.  8 of them are easy.  They are in the crash site.  All of the crash site buildings may be mined, though they require holding x for a while to do it.  Some things in Factorio can be set to mine slower, and these are an example.  The buildings that contain items however are also containers, show up under the scanner as such, and support the container controls we taught in previous chapters.
+
+Choose whichever way you prefer to get the plates from the crash site pieces.
 
 The 9th plate has to come from our furnace.  Use your scanner to find a patch of iron ore, then travel to it. Next, mine in the same way you mined coal, until you have at least one iron ore.
 
@@ -40,7 +42,7 @@ Your first choice is to take your drill, face it toward your furnace, and fuel i
 
 The second option is a bit more subtle, though just as easy to set up.  You can also place this second drill facing your first drill.
 
-Remember that drills output more coal than they need as fuel.  So, if you fuel the back drill it can fuel the one in front of it.  The ratio here is such that you will basically have fuelled the setup forever if you fill up the back drill with coal.
+Remember that drills output more coal than they need as fuel.  If you fuel the back drill it can fuel the one in front of it.  Filling the back drill with coal is good for thousands of items.
 
 You can also face the drills toward each other.  In this case, they will fuel each other forever, and you can skim off the top.  You can extract all of the fuel from one drill with any of the quick transfer controls.  As long as you don't take from both, the setup will keep going, but unlike the chest it will stop and wait for you to take things out much sooner.
 
@@ -58,6 +60,8 @@ This is because we group things one more level.  When you place buildings that a
 
 If this seems inefficient now, it will make sense later.  This is how we make it possible to organize hundreds of buildings.
 
-Finally, you may want to know how close you are.  If you put a plate in hand and press u, the mod is able to tell you how many you have made so far.  This also works on any recipe in the crafting menu.
+The reason that this is suddenly important is that furnaces are in categories.  In particular, all non-functional furnaces are in the same category.  Since a furnace changes what it is making based on what you put in it, the scanner cannot separate it out without it working on a recipe.
+
+Finally, you may want to know how close you are to finishing.  If you put a plate in hand and press u, the mod is able to tell you how many you have made so far.  This also works on any recipe in the crafting menu.
 
 Before continuing, you should work by yourself to unlock both electronics and steam power.  If you are able to get here with lots of time to spare, feel free to read ahead and congratulations on being a skilled player.

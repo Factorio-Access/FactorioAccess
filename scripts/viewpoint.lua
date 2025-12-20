@@ -44,7 +44,7 @@ local mod = {}
 local viewpoint_storage = StorageManager.declare_storage_module("viewpoint", {
    cursor_pos = { x = 0, y = 0 },
    cursor_size = 0,
-   cursor_anchored = true,
+   cursor_anchored = false,
    cursor_hidden = false,
    cursor_bookmark = { x = 0, y = 0 },
    cursor_ent_highlight_box = nil,

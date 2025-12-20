@@ -36,11 +36,11 @@ If you are ever lost, one way of figuring out what to do next is to see which of
 
 Once you have researched most of the technologies in the game, you craft and launch a rocket.
 
-Maybe that sounds easy.  But it's not.  And on top of all of that, you've got various kinds of enemies that really don't want you to be around!  So if you aren't in peaceful mode, you'd better be prepared to fight back.
+Maybe that sounds easy.  But it's not.  And on top of all of that, you've got various kinds of enemies that really don't want you to be around!  If you aren't in peaceful mode, you also have to fight back.
 
 Normally, you would get a very involved graphical tutorial and a lot of hints showing you how Wube wants you to play Factorio.  But we can't do that, so here is a brief explanation of how to think about it.
 
-Factorio is a game about solving problems inside other problems.
+Factorio is a game about solving problems nested in other problems.
 
 First, you learn how the basic pieces work.
 
@@ -50,15 +50,15 @@ You then use those to make bigger pieces that put a few things together into a l
 
 As this continues, it becomes harder and harder to get everything into the same place or to move stuff around, so your scope continues to widen, and you unlock more tools to connect things over longer distances.
 
-Remember how I said that you have to get the science packs to the same place?  At the end of the game, science packs need to travel hundreds of tiles.
+At the end of the game, science packs need to travel hundreds of tiles, and take hundreds of tiles to build as well.
 
 The map is infinite for all practical purposes, and endgame bases are often hundreds of tiles on a side.
 
 This has a few implications as to what makes a successful Factorio player, especially if you are blind.
 
-Being organized is very important.  Working out repeating patterns that are easy to put together is also very important.  These tutorials will help you with the repeating patterns thing a bit further on.
+Being organized is very important.  Working out repeating patterns that are easy to put together is also very important.  These tutorials will help you with learning some repeating patterns later.
 
-The trick to doing really well is that if you are organized, you don't need to remember where you put hundreds of things.  Just that over here we make automation science, and that you solve that problem with this general shape.
+The trick to doing really well is that if you are organized, you don't need to remember where you put hundreds of things.  Just that over here we make automation science, and that you solved it with a solution shaped like this.
 
 When you go back to it, because you solved the problems on a small scale the same way, you can look at it and get it back into your head much more easily.
 
@@ -66,8 +66,8 @@ One of the things that makes Factorio a great game is that sighted players play 
 
 The reward isn't "look at how I placed 1000 things that work", though you can play it that way.  Instead, it's "look how I elegantly solved the problem Factorio confronted me with, and integrated it into the rest of my stuff".
 
-Usually, a sighted player will start by being haphazard for their first run, throwing whatever they need at the time wherever.  Then, they learn to be more and more organized.  The only real difference is that as a blind player, being organized to start makes the game much easier.  The really painful place for us is organically discovering that this is required, which is why this tutorial spends so long explaining how Factorio wants you to play it.
+Usually, a sighted player will start by being haphazard for their first run, throwing whatever they need at the time wherever.  Then, they learn to be more and more organized.  The only real difference is that as a blind player, being organized to start makes the game much easier.  The really painful place for us is organically discovering that this is required, which is why this tutorial spends so long explaining how Factorio wants you to play it.  Most sighted players fumble through for a while, because to them being disorganized is just a minor inconvenience.
 
-As you get better at the game, your designs will tend to use more repeating patterns, but those repeating patterns will become absurdly complicated, and they will be smaller parts of even larger things.
+As you get better at the game, your designs will tend to use more repeating patterns, but those repeating patterns will become complicated, and they will nest in larger things.
 
 Now, it is time to move on to doing stuff for real.  Press control tab to move to the first real chapter, and we can get started on building our first lab.

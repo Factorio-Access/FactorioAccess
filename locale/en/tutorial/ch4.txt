@@ -1,8 +1,8 @@
-You now know enough to be dangerous, though not efficient, so it is time to begin moving faster and opening up the game to you.
+You now know enough to make progress, though not efficiently.  It is time to begin moving faster and opening up the game to you.  This is the part of the tutorial where things suddenly jump in complexity.
 
 You have accessed your inventory before.  Under that same UI are a bunch of others.  There are 3 mod UIs to concern yourself with, the main menu (e), the world menu (alt + w), and the mod configuration menu (control alt shift m).
 
-The latter two do not matter for a very long time, and so we will not discuss them much in this tutorial.
+The latter two do not matter for a very long time, and we will not discuss them much.
 
 Mod UIs are divided into a two level hierarchy.
 
@@ -38,6 +38,8 @@ If you click either of the plate recipes, the game will tell you that you can't 
 
 To find out what machines you can craft something in, press k.  This will also tell you what it needs as ingredients.
 
+You may also want to know what outputs of a recipe are for.  For this, press y to find out what kind of thing it is and what properties it has.
+
 We can't easily filter the list down to machines you have right now for a variety of reasons, but if you check all of them you will find out in this case that the one you have is a stone furnace.
 
 you started the game with one, but the reason that the stone from earlier in this tutorial is so useful is that you can now use it to make more.
@@ -46,7 +48,9 @@ But now it's time to circle back.  The last chapter of this tutorial said we wou
 
 The punchline if you will is that stone furnaces require coal to function.  Coal and ore goes in and plates come out.  This is not obvious from the crafting menu, and indeed electric furnaces don't need the coal.  In general, you can recognize if a device needs fuel by seeing if it complains about not having any, or checking if it has a fuel inventory.
 
-So, what we are actually going to do is this.  Use the scanner to find a tree, then let Kruise Kontrol mine a few for you.
+If we don't have a stable supply of coal, it is not possible to make progress.
+
+We will fix this by making a wooden chest.  Use the scanner to find a tree, then let Kruise Kontrol mine a few for you.
 
 This will give you wood.  You will never have a shortage of wood because very few things use it, so don't worry about running out.
 
@@ -56,8 +60,9 @@ Earlier, you found where the burner mining drill drops coal.  Go back there (you
 
 If the chest is in the right place and the drill has fuel, it will now begin to slowly fill the chest with coal.
 
+Soon, we will discuss more efficient ways to keep the burner mining drill going.  The important thing to know for now is that it produces more coal than it uses.
 
-Soon, we will discuss more efficient ways to keep the burner mining drill going.  The important thing to know for now is that produces more coal than it uses.
+That means that you can put coal from the drill back into the drill to keep it running.
 
 You have a few ways to get stuff out of the chest.
 
@@ -69,7 +74,7 @@ Third is by opening the inventory itself.  You can click items to put them in ha
 
 We call these sibling inventories, and it also works in reverse.  If you explore the available tabs for the chest, you will see that the other one is your own inventory.  The shift click controls will work in your inventory to instead move things to the chest.
 
-Your responsibility--for now--is to keep an eye on this setup.  Every so often, the drill will require more fuel.  You will need to grab some coal from the chest and put it in the drill when it runs out.  Soon, we will have a few ways of fixing this that do not require you to keep checking in.
+Your responsibility for now is to keep an eye on this setup.  Every so often, the drill will require more fuel.  You will need to grab some coal from the chest and put it in the drill when it runs out.  Soon, we will have a few ways of fixing this that do not require you to keep checking in.
 
 Before we close this chapter, you should know that you are now producing pollution.  This tutorial doesn't spend much time on it because you are supposed to be in peaceful, but it does matter even there.
 
@@ -77,6 +82,6 @@ As the game goes on, your factory produces pollution.  How much depends on how m
 
 As enemy spawners see pollution, they get stronger.  And if you aren't in peaceful, they eventually come at you.
 
-Pollution spreads realistically, so you can get the amount at your cursor with shift u.
+Pollution spreads realistically as a cloud starting at your machines.  You can get the amount at your cursor with shift u.
 
 In the next chapter, we will talk about faster ways of moving around, then we will get to smelting to unlock those technologies.

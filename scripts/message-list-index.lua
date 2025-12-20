@@ -8,11 +8,12 @@ mod.MESSAGE_LISTS = {
    ["blueprint-book-help"] = true,
    ["category-rows-help"] = true,
    ["ch1"] = true,
-   ["ch1-exercise"] = true,
    ["ch2"] = true,
-   ["ch2-exercise"] = true,
    ["ch3"] = true,
-   ["ch3-exercise"] = true,
+   ["ch4"] = true,
+   ["ch5"] = true,
+   ["ch6"] = true,
+   ["ch7"] = true,
    ["crafting-menu-help"] = true,
    ["crafting-queue-help"] = true,
    ["debug-menu-help"] = true,
@@ -29,6 +30,6 @@ mod.MESSAGE_LISTS = {
    ["warnings-menu-help"] = true,
 }
 
-mod.MESSAGE_LISTS_HASH = "ec7b1cd148b77e5e22aee30fe5b66998bd0f9c30b1fd3a3e450864b7b0c9c3d6"
+mod.MESSAGE_LISTS_HASH = "a932f4515ff189bb8ed015f74b6f881cd43042181b39cf63e192e9b3406db4ce"
 
 return mod

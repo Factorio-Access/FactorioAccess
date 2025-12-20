@@ -49,6 +49,7 @@ local function build_chapter_text_tab(chapter)
                for i, message in ipairs(result.messages) do
                   menu:add_label("msg_" .. i, message)
                end
+               menu:add_label("end-of-chapter", { "fa.tutorial-end-of-chapter" })
             end
          end
 
@@ -109,6 +110,7 @@ local function build_tutorial_tabs(pindex)
    local chapters = TutorialData.get_chapters()
    if #chapters == 0 then return nil end
 
+   local total_chapters = #chapters
    local sections = {}
 
    for _, chapter in ipairs(chapters) do
@@ -119,7 +121,7 @@ local function build_tutorial_tabs(pindex)
 
       table.insert(sections, {
          name = "chapter_" .. chapter.chapter_number,
-         title = chapter.title,
+         title = { "fa.tutorial-chapter-title", chapter.title, chapter.chapter_number, total_chapters },
          tabs = chapter_tabs,
       })
    end

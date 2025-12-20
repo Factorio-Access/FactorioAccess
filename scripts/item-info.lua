@@ -495,6 +495,19 @@ local BUILDING_INFO_HANDLERS = {
    ["logistic-container"] = building_container_info,
 }
 
+---Add fuel info to message if the item is a fuel
+---@param message fa.MessageBuilder
+---@param item_proto LuaItemPrototype
+local function fuel_info(message, item_proto)
+   local fuel_value = item_proto.fuel_value
+   if not fuel_value or fuel_value <= 0 then return end
+
+   message:list_item({ "fa.item-info-fuel-value", FaUtils.format_power(fuel_value, "j") })
+
+   local fuel_category = item_proto.fuel_category
+   if fuel_category then message:list_item({ "fa.item-info-fuel-category", fuel_category }) end
+end
+
 ---@class fa.ItemInfo.GetItemStackInfoOptions
 ---@field verbosity integer VERBOSITY.BRIEF or VERBOSITY.VERBOSE
 
@@ -554,6 +567,9 @@ function mod.get_item_info_from_prototype(message, item_proto, quality, options)
       local handler = BUILDING_INFO_HANDLERS[entity_proto.type]
       if handler then handler(ctx) end
    end
+
+   -- Add fuel info for any item that can be used as fuel
+   fuel_info(message, item_proto)
 end
 
 ---Get detailed information about an item stack

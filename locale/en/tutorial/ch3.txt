@@ -22,9 +22,11 @@ This is awkward for two reasons.
 
 The first is that you need to press i. I controls whether or not the cursor follows the character while it walks.  If the cursor is anchored to your character, then moving moves the cursor, which defeats the purpose.
 
-The second is that the arrow keys do not do pathfinding. For now, that will work because your character is able to slide up against trees and rocks, but once you build your first buildings you will have issues.
+In new saves the cursor starts unanchored, and this is what you normally want.  Depending on user feedback, we may even remove this feature.
 
-Finally, the third option is teleporting.  This is by far the easiest, and also a cheat.  The community is split on how much of a cheat it is.  On the one hand, teleporting instantly moves your character.  But on the other, Factorio is a game about building, not exploring, and you are already slower than sighted players.
+The second problem is that the arrow keys do not do pathfinding. For now, you can walk because your character is able to slide up against trees and rocks, but once you build your first buildings you will have issues.
+
+The third movement option is teleporting.  This is by far the easiest, and also a cheat.  The community is split on how much of a cheat it is.  On the one hand, teleporting instantly moves your character.  But on the other, Factorio is a game about building, not exploring, and you are already slower than sighted players.
 
 To teleport put your cursor where you want to go and press shift t.
 
@@ -32,9 +34,13 @@ The one non-cheat use of teleportation which is very important is that it can be
 
 Finally, you may return the cursor to the character at any time.  To do so, press j.
 
-That's great, but you are probably wondering where we are going.  Both figuratively and literally.  The answer is, to your coal patch.  If you explored your inventory, you noticed that you have a burner mining drill. It is time to turn it on.
+You are probably wondering where this is going.  The answer is to the coal patch.  If you explored your inventory, you noticed that you have a burner mining drill. It is time to turn it on.
 
 Every map has a starting area, around the coordinates 0, 0.  To get your coordinates press k.  Starting areas are guaranteed to contain iron, copper, coal, stone, and water within a hundred tiles or so.
+
+You can move your cursor to specific coordinates. To do so, press control alt t, type two numbers separated by space, and hit enter.
+
+Now is a good time to note that negative y is north in Factorio.  Though this is confusing, it is not something we can change.
 
 The crash site is also around the coordinates 0, 0.  We will talk about that more later--for the most part, it's decorative.
 
@@ -50,13 +56,15 @@ You will now also want to explore some with your cursor, so it is a good time to
 
 When you found the coal patch, your cursor was moved to the middle of it.  The mod will say something like "coal x 1234".  Coal is the resource, and the number is how much of it is still available on this tile.
 
+The number is called the richness.  Resource patches are the richest near their centers, and become less rich as you move toward the edge.
+
 The scanner also tracks overall use of patches, so that you can remotely monitor how much is left.  Please note that this is known to break after some mod updates or when the mod is added to an existing save.  This is because it is a heuristic which relies on seeing the patches before any mining happened.
 
 in any case, use Kruise Kontrol to walk to the coal.
 
 At the end of the last chapter, we said that there is a way to get coal without using stone.  That way is by hand mining the resource patch.
 
-Factorio mining includes getting resources, chopping down trees, and deconstructing buildings you already placed.
+Factorio mining includes getting resources, chopping down trees, and deconstructing buildings you already placed.  These all use the controls we will now describe.
 
 Kruise Kontrol will try to mine the coal for you, but you need to learn the manual controls.  To mine manually, put the cursor on something mineable which is within 10 tiles or so of your character, then hold x.
 
@@ -92,13 +100,13 @@ Items in Factorio come in stacks.  Press shift q to find out what is in your han
 
 There are three controls to drop items.  Because dropping items is a physical action (not just configuration), your character must be close to the drill.
 
-The first is control left bracket, aka control clicking.  With something in your hand that the machine "wants" and your hand over the machine, control click intelligently drops one whole stack of items into the most appropriate place.
+The first is control left bracket, or control clicking.  With something in your hand that the machine "wants" and your hand over the machine, control click intelligently drops one whole stack of items into the most appropriate place.
 
 In this case, that's the fuel inventory, and the item is coal.
 
 If you don't have a full stack, it drops whatever you did have.
 
-Just like this, control right bracket, aka control right clicking, will drop half a stack.
+Control right bracket, aka control right clicking, will drop half a stack.
 
 This works a bit differently when you do not have a full stack, however.  In that case, it drops half of what is left.
 
@@ -110,10 +118,10 @@ Take some coal in hand, and use one of the above options to put it in the drill.
 
 You will hear the drill come on for a moment, then stop, even if you put 50 coal into it.
 
-If you put your cursor on the northwest corner of the drill, you will hear the word "output chute".  Drills drop stuff onto the ground one tile away from the output chute.  In this case, it is one tile north and a single piece of coal.  Find that now, and you will understand how drills work.
+If you put your cursor on the northwest corner of the drill, you will hear the word "output chute".  Drills drop stuff onto the ground one tile away from the output chute.  In this case, it is one tile north and a single piece of coal.  Find that now by moving your cursor around.
 
-When your character is physically on top of an item, you can pick it up by holding f.  Alternatively, tap x if it is in your character's reach and your cursor is on it.  Don't blame us--these are vanilla controls.
+When your character is physically on top of an item, you can pick it up by holding f.  Alternatively, tap x if it is in your character's reach and your cursor is on it.  We can't make those controls better.
 
-The problem you now have is that your drill has nowhere to put coal after it lets the first piece out.  The rule is that tiles on the ground can hold exactly one item each.  Even though coal stacks to 50, only one coal will come out at a time.  Unfortunately, the rules for when a machine will stop like that are not entirely consistent.  The other two cases--furnaces and crafting machines--work differently.
+The problem you now have is that your drill has nowhere to put coal after it lets the first piece out.  The rule is that tiles on the ground can hold exactly one item each.  Even though coal stacks to 50, only one coal will come out at a time.  Unfortunately, the rules for when a machine will stop like that are not entirely consistent.  The other important cases work differently.
 
 We can fix this.  We will do so with a chest, in the next chapter where you learn how to craft items.
