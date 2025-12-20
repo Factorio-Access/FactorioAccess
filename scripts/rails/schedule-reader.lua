@@ -67,7 +67,9 @@ function mod.read_wait_condition(mb, condition)
    -- Station conditions
    local station_key = STATION_CONDITIONS[cond_type]
    if station_key then
-      mb:fragment({ station_key, condition.station })
+      local station_name = condition.station
+      if not station_name or station_name == "" then station_name = "nil" end
+      mb:fragment({ station_key, station_name })
       return
    end
 

@@ -36,7 +36,6 @@ local MAIN_SCHEDULE_CONDITION_TYPES = {
 
 ---Condition type cycle order for interrupt trigger conditions
 local INTERRUPT_TRIGGER_CONDITION_TYPES = {
-   "damage_taken",
    "at_station",
    "not_at_station",
    "specific_destination_full",
@@ -329,6 +328,7 @@ local PARAM_HANDLERS = {
       constant = make_circuit_constant_handler("circuit"),
    },
 
+   -- damage_taken is not in the cycle list but we keep the handler for reading existing conditions
    damage_taken = {
       p1 = {
          constant = function(condition, new_value)
@@ -839,7 +839,7 @@ local function render_interrupt_tab(ctx, interrupt_index)
             label_ctx.message:fragment({ "fa.schedule-no-conditions" })
          end,
          on_add_to_row = function(add_ctx)
-            schedule.add_wait_condition({ interrupt_index = interrupt_index }, 1, "damage_taken")
+            schedule.add_wait_condition({ interrupt_index = interrupt_index }, 1, "at_station")
             add_ctx.controller.message:fragment({ "fa.schedule-condition-added" })
             add_ctx.graph_controller:suggest_move(key_prefix .. "c1")
          end,
