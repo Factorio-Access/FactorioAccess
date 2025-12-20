@@ -30,6 +30,7 @@ mod.CATEGORY_POSITION = {
 ---@field on_click? fun(ctx: fa.ui.CategoryRows.ItemContext, modifiers: {control?: boolean, shift?: boolean, alt?: boolean})
 ---@field on_right_click? fun(ctx: fa.ui.CategoryRows.ItemContext, modifiers: {control?: boolean, shift?: boolean, alt?: boolean})
 ---@field on_read_coords? fun(ctx: fa.ui.CategoryRows.ItemContext)
+---@field on_read_info? fun(ctx: fa.ui.CategoryRows.ItemContext)
 ---@field on_production_stats_announcement? fun(ctx: fa.ui.CategoryRows.ItemContext)
 
 ---@class fa.ui.CategoryRows.Item
@@ -702,6 +703,26 @@ end
 function CategoryRows:on_read_coords(ctx, modifiers)
    local render = self.render_callback(ctx)
    if render then handle_read_coords(ctx, render) end
+end
+
+---@param ctx fa.ui.TabContext
+---@param modifiers any
+function CategoryRows:on_read_info(ctx, modifiers)
+   local render = self.render_callback(ctx)
+   if not render then return end
+
+   local state = prepare_state(ctx, render)
+   if #render.categories == 0 then return end
+
+   local cat_index, item_index = _get_position(state, render)
+   if not cat_index or not item_index then return end
+
+   local category = render.categories[cat_index]
+   local item = category.items[item_index]
+   if item.vtable.on_read_info then
+      local item_ctx = create_item_context(ctx)
+      item.vtable.on_read_info(item_ctx)
+   end
 end
 
 ---@param ctx fa.ui.TabContext

@@ -10,6 +10,7 @@ local MessageBuilder = Speech.MessageBuilder
 local Localising = require("scripts.localising")
 local KeyGraph = require("scripts.ui.key-graph")
 local Help = require("scripts.ui.help")
+local ItemInfo = require("scripts.item-info")
 
 local mod = {}
 
@@ -68,6 +69,10 @@ local function render_crafting_queue(ctx)
                   cancelled_count,
                   Localising.get_localised_name_with_fallback(recipe_proto),
                })
+            end,
+            on_read_info = function(info_ctx)
+               -- Y key: read detailed info about all products
+               ItemInfo.get_recipe_products_info(info_ctx.message, recipe_proto)
             end,
          })
       end

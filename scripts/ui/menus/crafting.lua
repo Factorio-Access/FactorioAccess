@@ -14,6 +14,7 @@ local Localising = require("scripts.localising")
 local RecipeHelpers = require("scripts.recipe-helpers")
 local Speech = require("scripts.speech")
 local FaInfo = require("scripts.fa-info")
+local ItemInfo = require("scripts.item-info")
 local Help = require("scripts.ui.help")
 
 local mod = {}
@@ -132,6 +133,11 @@ local function render_crafting_menu(ctx)
 
                function vtable.on_read_coords(item_ctx)
                   RecipeHelpers.read_recipe_details_with_time(item_ctx.message, recipe)
+               end
+
+               function vtable.on_read_info(item_ctx)
+                  -- Y key: read detailed info about all products
+                  ItemInfo.get_recipe_products_info(item_ctx.message, recipe)
                end
 
                function vtable.on_production_stats_announcement(item_ctx)

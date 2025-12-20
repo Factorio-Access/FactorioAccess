@@ -498,34 +498,35 @@ local BUILDING_INFO_HANDLERS = {
 ---@class fa.ItemInfo.GetItemStackInfoOptions
 ---@field verbosity integer VERBOSITY.BRIEF or VERBOSITY.VERBOSE
 
----Get detailed information about an item stack
+---@class fa.ItemInfo.GetItemInfoFromPrototypeOptions
+---@field verbosity integer VERBOSITY.BRIEF or VERBOSITY.VERBOSE
+---@field name_override LocalisedString? Override the name announced (for cases where name is already known)
+
+---Get detailed information about an item from its prototype and quality
+---This is the core function used by both stack-based and prototype-based queries
 ---@param message fa.MessageBuilder
----@param stack LuaItemStack
----@param options fa.ItemInfo.GetItemStackInfoOptions?
-function mod.get_item_stack_info(message, stack, options)
+---@param item_proto LuaItemPrototype
+---@param quality LuaQualityPrototype?
+---@param options fa.ItemInfo.GetItemInfoFromPrototypeOptions?
+function mod.get_item_info_from_prototype(message, item_proto, quality, options)
    options = options or { verbosity = mod.VERBOSITY.BRIEF }
+   quality = quality or prototypes.quality["normal"]
 
-   if not stack or not stack.valid_for_read then
-      message:fragment({ "fa.item-info-no-item" })
-      return
+   -- Start with item name (unless overridden)
+   if not options.name_override then
+      message:fragment(mod.item_info({
+         name = item_proto,
+         count = 1,
+         quality = quality and quality.name or nil,
+      }))
    end
-
-   local proto = stack.prototype
-   local quality = stack.quality
-
-   -- Start with item name and quality (BRIEF mode - just the item localization)
-   message:fragment(mod.item_info({
-      name = stack.name,
-      count = 1,
-      quality = quality and quality.name or nil,
-   }))
 
    -- Only add detailed info for VERBOSE mode
    if options.verbosity == mod.VERBOSITY.BRIEF then return end
 
    -- Check if this is equipment
-   if proto.place_as_equipment_result then
-      local equip_proto = proto.place_as_equipment_result
+   if item_proto.place_as_equipment_result then
+      local equip_proto = item_proto.place_as_equipment_result
       local ctx = {
          message = message,
          prototype = equip_proto,
@@ -536,9 +537,9 @@ function mod.get_item_stack_info(message, stack, options)
       equipment_power_consumption_info(ctx)
       equipment_battery_storage_info(ctx)
       equipment_power_generation_info(ctx)
-   elseif proto.place_result then
+   elseif item_proto.place_result then
       -- This is a building
-      local entity_proto = proto.place_result
+      local entity_proto = item_proto.place_result
       local ctx = {
          message = message,
          prototype = entity_proto,
@@ -552,6 +553,75 @@ function mod.get_item_stack_info(message, stack, options)
       -- Call type-specific handler if available
       local handler = BUILDING_INFO_HANDLERS[entity_proto.type]
       if handler then handler(ctx) end
+   end
+end
+
+---Get detailed information about an item stack
+---@param message fa.MessageBuilder
+---@param stack LuaItemStack
+---@param options fa.ItemInfo.GetItemStackInfoOptions?
+function mod.get_item_stack_info(message, stack, options)
+   options = options or { verbosity = mod.VERBOSITY.BRIEF }
+
+   if not stack or not stack.valid_for_read then
+      message:fragment({ "fa.item-info-no-item" })
+      return
+   end
+
+   mod.get_item_info_from_prototype(message, stack.prototype, stack.quality, options)
+end
+
+---@alias fa.ItemInfo.Product ItemProduct | FluidProduct
+
+---Get detailed information about a recipe product (item or fluid)
+---For item products, provides full building/equipment info
+---For fluid products, just announces the fluid name
+---@param message fa.MessageBuilder
+---@param product fa.ItemInfo.Product
+---@param quality LuaQualityPrototype? Quality level (for item products)
+---@param options fa.ItemInfo.GetItemInfoFromPrototypeOptions?
+function mod.get_product_info(message, product, quality, options)
+   options = options or { verbosity = mod.VERBOSITY.VERBOSE }
+   quality = quality or prototypes.quality["normal"]
+
+   if product.type == "item" then
+      local item_proto = prototypes.item[product.name]
+      if item_proto then
+         mod.get_item_info_from_prototype(message, item_proto, quality, options)
+      else
+         -- Fallback if item not found (shouldn't happen)
+         message:fragment(product.name)
+      end
+   elseif product.type == "fluid" then
+      -- For fluids, just announce the fluid name
+      local fluid_proto = prototypes.fluid[product.name]
+      if fluid_proto then
+         message:fragment(Localising.get_localised_name_with_fallback(fluid_proto))
+      else
+         message:fragment(product.name)
+      end
+   else
+      -- Unknown product type
+      message:fragment(product.name)
+   end
+end
+
+---Get info for all products of a recipe
+---@param message fa.MessageBuilder
+---@param recipe LuaRecipe | LuaRecipePrototype
+---@param quality LuaQualityPrototype?
+---@param options fa.ItemInfo.GetItemInfoFromPrototypeOptions?
+function mod.get_recipe_products_info(message, recipe, quality, options)
+   options = options or { verbosity = mod.VERBOSITY.VERBOSE }
+
+   local products = recipe.products
+   if not products or #products == 0 then
+      message:fragment({ "fa.item-info-no-products" })
+      return
+   end
+
+   for _, product in ipairs(products) do
+      mod.get_product_info(message, product, quality, options)
    end
 end
 

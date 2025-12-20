@@ -30,6 +30,8 @@ Decrease the size of the cursor: `ctrl + i`
 
 Announce cursor coordinates and other info depending on context: `k`
 
+Announce a detailed description of the item in your hand: `y`
+
 Announce cursor's relative position to the character: `alt + k`
 
 Build, configure, interact, and perform other "primary" actions: `left bracket`

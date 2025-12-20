@@ -14,6 +14,9 @@ Drag items in the rare menu that supports it: `shift + wasd`
 
 Read information for a slot or control: `k` (e.g. recipe ingredients, kind of equipment, building dimensions, etc)
 
+
+Read alt information for a control: `y` (rarely used, most notably in the crafting menus where it tells you what the products of a recipe do).
+
 Activate an item: `left bracket`
 
 Type a secondary value (rarely used): `m`
