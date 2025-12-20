@@ -1,8 +1,27 @@
 # 0.16.44 (unreleased)
 
-- Support inventory filters. Use alt+left bracket to open an item chooser.n Use alt+right bracket to clear.
-  - Turns out we don't have API access good enough to know if you should be able to do this, as it claims all invs are filtewrable.  You need to know where this is applicable.
+- Publish the first 7 chapters of the tutorial. Access it with control alt slash.
+  - We may move this key.
+  - The new tutorial system is a traditional UI, including chapter-local search
+  - The new tutorial has blueprint examples attached to some chapters (as of this changelog chapter 7 only)
+  - The tutorial may be opened at any time from any UI.
+  - Pressing e closes the tutorial only so that you can look at it while doing other things in UIs
+  - The tutorial remembers your place when you leave and come back
+- Support inventory filters. Use alt+left bracket to open an item chooser. Use alt+right bracket to clear.
+  - Turns out we don't have API access good enough to know if you should be able to do this, as it claims all invs are filterable.  You need to know where this is applicable.
   - This is an advanced feature primarily intended for train megabasing.
+- better support reading item info.  This was primarily done by Claude, so there are likely bugs. It tries to be quality aware. We now support:
+  - k in the inventory reads dynamicly extracted item properties such as fuel values and supply reach
+  - On the map, y reads the dynamic properties of what is in your hand (k already has a lot of info on it here)
+  - In the crafting menu, y reads all of the info available for all of the products of the recipe.
+- Turn anchor cursor to character off by default in new saves.
+  - I'm debating removing this all together. If you have a good use for it please speak up.
+- Change sonifier settings to be per save instead of per player
+  - There seems to be a Factorio bug. Changing these from lua does not sync them to other saves, and mod updates cannot change defaults after the fact either.
+- Remove damage taken from the train schedule editor. This is only applicable to space age and triggers game crashes
+  - If you have a train using this, you may need to delete the train. It causes an engine level crash and is nonfunctional.  The mod may or may not crash trying to edit it to a good value.
+- Fix the train schedule readers to read unset station names in conditions  as nil rather than as `__1__`.
+- Validate that min and max as well as other numeric values are under UINT32_MAX in the section editors to prevent crashes.
 
 # 0.16.43 (2025-12-17)
 

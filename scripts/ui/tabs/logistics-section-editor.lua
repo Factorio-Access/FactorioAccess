@@ -20,6 +20,7 @@ local Localising = require("scripts.localising")
 local CircuitNetwork = require("scripts.circuit-network")
 local FaInfo = require("scripts.fa-info")
 local BotLogistics = require("scripts.worker-robots")
+local Consts = require("scripts.consts")
 
 local mod = {}
 
@@ -138,6 +139,9 @@ local function render_section(ctx, section_index)
                elseif not is_combinator and num < 0 then
                   UiSounds.play_ui_edge(ctx.pindex)
                   ctx.controller.message:fragment({ "fa.logistics-value-cannot-be-negative" })
+               elseif num < Consts.INT32_MIN or num > Consts.INT32_MAX then
+                  UiSounds.play_ui_edge(ctx.pindex)
+                  ctx.controller.message:fragment({ "fa.logistics-value-out-of-range" })
                else
                   local sections = entity.get_logistic_sections()
                   if not sections then return end
@@ -201,6 +205,9 @@ local function render_section(ctx, section_index)
                   elseif num < 0 then
                      UiSounds.play_ui_edge(ctx.pindex)
                      ctx.controller.message:fragment({ "fa.logistics-value-cannot-be-negative" })
+                  elseif num > Consts.INT32_MAX then
+                     UiSounds.play_ui_edge(ctx.pindex)
+                     ctx.controller.message:fragment({ "fa.logistics-value-out-of-range" })
                   else
                      local sections = entity.get_logistic_sections()
                      if not sections then return end
@@ -371,6 +378,9 @@ local function render_section(ctx, section_index)
          elseif num < 0 then
             UiSounds.play_ui_edge(ctx.pindex)
             ctx.controller.message:fragment({ "fa.logistics-multiplier-cannot-be-negative" })
+         elseif num > Consts.INT32_MAX then
+            UiSounds.play_ui_edge(ctx.pindex)
+            ctx.controller.message:fragment({ "fa.logistics-value-out-of-range" })
          else
             local sections = entity.get_logistic_sections()
             if not sections then return end

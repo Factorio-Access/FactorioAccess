@@ -6,6 +6,10 @@ local TableHelpers = require("scripts.table-helpers")
 
 local mod = {}
 
+-- Numeric limits for Factorio's 32-bit integer fields
+mod.INT32_MAX = 2147483647
+mod.INT32_MIN = -2147483648
+
 mod.RESOURCE_SEARCH_RADIUSES_MAP_NAME = "resource-search-radiuses"
 
 mod.ENT_NAMES_CLEARED_AS_OBSTACLES = {
