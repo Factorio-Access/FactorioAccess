@@ -24,7 +24,7 @@ Game UIs are organized the same exact wayh.
 
 Now that you know how to use the tutorial, we can talk about the game.
 
-Factorio is a game about building a factory, as is obvious from the name.  Your goal is to build up a base which can launch a rocket.
+Factorio is a game about building a factory.  Your goal is to build up a base which can launch a rocket.
 
 To do this, you need to build labs, and then put science packs in them to conduct research.
 
@@ -62,9 +62,7 @@ The trick to doing really well is that if you are organized, you don't need to r
 
 When you go back to it, because you solved the problems on a small scale the same way, you can look at it and get it back into your head much more easily.
 
-It may sound like we are saying "you are blind, so you have to be dumb", but this is very far from the case, and one of the things that makes Factorio a great game.
-
-Sighted players play the same way.  The game even has systems to let you save and quickly place down groups of buildings, called blueprints.  There is even a clipboard.
+One of the things that makes Factorio a great game is that sighted players play the same way.  The game even has systems to let you save and quickly place down groups of buildings, called blueprints.  There is even a clipboard.
 
 The reward isn't "look at how I placed 1000 things that work", though you can play it that way.  Instead, it's "look how I elegantly solved the problem Factorio confronted me with, and integrated it into the rest of my stuff".
 

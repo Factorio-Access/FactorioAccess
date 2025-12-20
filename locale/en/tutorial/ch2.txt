@@ -1,8 +1,8 @@
 Now that you have some idea of the game, it is time to talk about your initial goals and what you must do to achieve them.
 
-Research in Factorio is done in labs.  Labs need power.  Power needs steam engines and boilers.  Steam engines and boilers need the basic resources, which you will start learning about now.
+Research in Factorio is done in labs.  Labs need power.  Power needs steam engines and boilers.  Steam engines and boilers need all of the basic resources.
 
-This phrasing may seem awkward, but it's how you can most easily think about Factorio. You find your goal, then you work backward from it until you get to something you can do.
+This is how you think about Factorio.  You find your goal, then you work backward from it until you get to something you can do.
 
 The mod offers a number of features to navigate the world.  The first of these is the scanner.  The scanner takes the map and turns it into a list of features.
 
@@ -22,9 +22,9 @@ To start KK, you press control alt right bracket with the cursor on an item.  We
 
 To stop KK, you press enter while it is doing something.
 
-While KK is enabled, the mod still continues to function--but using it can interrupt what KK is trying to do.
+The mod still continues to function while KK runs, but using it can interrupt what KK is trying to do, so it is generally best to leave it alone.
 
-Now, press end, then use page up and page down to find a rock.  Once you have, press control alt right bracket.  After your character has mined a few rocks, press enter.
+Now, press end, then use page up and page down to find a rock.  Once you have, press control alt right bracket.  After your character has mined a few rocks, press enter to stop KK.
 
 Your character has now mined stone.  If you were lucky, your character also mined coal.
 
@@ -46,6 +46,6 @@ To cycle through search results, press shift enter for next and control enter fo
 
 These controls are odd for technical reasons.  To remember it, shift is next because shift is above control.
 
-It is good to note that search results update without you doing anything.  You don't need to worry about that now, but once you start crafting you don't need to repeatedly press control f to find out if something showed up.
+It is good to note that search results update without you doing anything.  You don't need to worry about that now, but once you start crafting you don't need to repeatedly press control f to find out if something showed up, just keep using shift enter.
 
 If you get no search results for coal, you have not found any yet.  You have two choices.  The first choice is to mine some more rocks.  The second choice is to continue to the next chapter, where we will discuss mining from resource patches.
