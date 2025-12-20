@@ -1,6 +1,6 @@
 It is now time to set up a basic smelting setup.  Also, to stop ignoring the crash site.
 
-In order to do anything without having to come back to it all the time, we need a second drill.  But drills take plates.  They also take stone furnaces.  Before going further, go find the burner mining drill recipe and check the ingredients.
+In order to do anything without having to come back to it all the time, we need a second drill.  But drills need plates to craft.  They also need stone furnaces.  Before going further, go find the burner mining drill recipe and check the ingredients.
 
 Iron gear wheel is also a recipe, taking 2 iron plates.  If you do the math, you need 9 iron plates and 5 stone.
 
@@ -20,13 +20,13 @@ Then, use the controls of your choice to put both some coal and some iron ore in
 
 The mod introduces sounds for when various things happen, one of which is for when a crafting machine finishes crafting.  You will know that you have an iron plate because the furnace will play a soft beep, and moving your cursor over it will say that there is one ready as well.
 
-We actually link this to the zoom.  You change the zoom with dash and equals, which controls how much of your factory you hear around you at once, and also sets what is on screen from the sighted perspective.
+We link this to the zoom.  Change the zoom with dash and equals, which controls how much of your factory you hear around you at once, and also sets what is on screen from the sighted perspective.
 
 Drills are the only entity in Factorio which output their items directly onto the ground.  Furnaces have an output inventory, and will hold up to 100 plates before stopping.
 
 You can get the items out with any of the methods we have previously discussed.
 
-Since this is the first machine with multiple inventories, remember that you can examine them by pressing tab with the machine's UI open.  To open a machine's UI, click it.
+Since this is the first machine with multiple inventories, you can examine them by pressing tab with the machine's UI open.  To open a machine's UI, click it.
 
 The mod tries to allow you to open menus even if you have items in hand, but you may sometimes need to empty your hand especially if those items are buildings.  This is an unfortunate limitation we don't have a good way around.
 

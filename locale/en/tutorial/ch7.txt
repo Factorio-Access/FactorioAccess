@@ -28,6 +28,12 @@ Since there's a ton of technologies, we will provide a minor spoiler.  You want 
 
 The research you actually care about right now is "automation", which gets you an assembling machine.  Assembling machines craft for you.  When fed ingredients, they can make anything you can make.  The version you unlock now is slower than you, but you can run as many as you can supply at a time.
 
+This tutorial keeps giving you item properties, but now is a good time to tell you how to get those yourself.
+
+k also works in your inventory, and provides a lot of details.  It also works on the map, though the map version is much less verbose.
+
+y in the crafting menu will tell you what all of the products of a recipe do.  On the map, it reads all of the properties of the item in hand.
+
 This chapter of the tutorial has an attached set of example blueprints.  What we are about to explain is complicated, and so to help you we have given you as many pieces as we can if you need to look at them.
 
 Blueprints are like buildings, but place more than one structure at a time and place what are called ghosts instead of real structures.  If you have the items, invoking Kruise Kontrol on a ghost will build all ghosts it can find, filling out the blueprint for you.
@@ -50,7 +56,7 @@ the southmmost building to place is a boiler facing north.  This is a 3 wide by 
 
 Once you have placed it, explore it and you will find 3 connection points on the edge.  On the southwest and southeast corners are two water connections, and in the middle of the north side is where steam comes out.  The mod tells you which direction the connection faces.  In this case, the southwest connection faces west, and the southeast connection faces east.
 
-To connect entities that use fluids together, you place a pipe or another entity next to the connection point in the direction it is facing. So, in this case, a pipe to the west of the boiler's southwest corner would work.
+To connect entities that use fluids together, you place a pipe or another entity next to the connection point in the direction it is facing. So, in this case, a pipe to the west of the boiler's southwest corner would work.  Being to the west does matter.
 
 Also notice that the mod doesn't say that the water connections are inputs.  The convention here is that the mod doesn't say when it can go in both directions.  You can connect a line of boilers together and give water to the first one, and everything in line will get some.
 
@@ -64,7 +70,7 @@ Third, north of the northwest corner of the steam engine, place a small electric
 
 Electric poles move electricity.  The game automatically handles wires, so you can think of them like wireless power transmitters.
 
-They have two values, the supply range and the wire reach. Don't worry about the wire reach for now.
+They have two values, the supply range and the wire reach. Don't worry about the wire reach for now, as we will cover it in a later chapter.
 
 The supply area of a small electric pole is a 5x5 box with the pole at the center.  If any part of an adjacent building is in that box, it will interface with this electric pole.  Electric pole supply areas are always presented like this, as well as most other "box"-shaped ranges.
 
@@ -72,9 +78,7 @@ Right now your electric pole is feeding from the steam engine because the steam 
 
 Next, count 3 north from the pole and place the lab, making the setup 3 tiles wide by 11 tiles high.
 
-When the lab wants power, the steam engine will turn on to give it some.  Until then, nothing runs.
-
-Next up we need to get this setup some water.
+Now we need to get this setup some water.
 
 Offshore pumps draw water from water tiles, but they have a complicated placing rule.  Most players will only ever place one or two for the entire game, so we offer a helper menu.
 
@@ -101,6 +105,8 @@ If you place two in a line close enough together, they connect underground.  The
 If you then placed a third facing east at (7, 0), though, it would link to (5, 0) and disconnect (10, 0).
 
 You can visualize these exactly like a buried garden hose, where the hose ends are the pieces that you are placing and they are pointing in the direction you should face those pieces.
+
+The other function of a pipe to ground is to let you run pipes close together without mixing fluids.  Unfortunately, practical examples of doing that are many hours away.
 
 In either case, your immediate goal is to hand-craft 10 automation science packs, get water and coal in the boiler, put the science packs in the lab, then click on automation in the research tab.
 
