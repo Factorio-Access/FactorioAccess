@@ -127,13 +127,14 @@ end
 ---@class fa.ItemInfo.BuildingContext
 ---@field message fa.MessageBuilder
 ---@field prototype LuaEntityPrototype
+---@field quality LuaQualityPrototype
 
 ---Add equipment power consumption info to message
 ---@param ctx fa.ItemInfo.EquipmentContext
 local function equipment_power_consumption_info(ctx)
    local consumption = ctx.prototype.get_energy_consumption(ctx.quality) * 60
    if consumption and consumption > 0 then
-      ctx.message:fragment({ "fa.item-info-consumes", FaUtils.format_power(consumption) })
+      ctx.message:list_item({ "fa.item-info-consumes", FaUtils.format_power(consumption) })
    end
 end
 
@@ -142,7 +143,9 @@ end
 local function equipment_battery_storage_info(ctx)
    if ctx.prototype.electric_energy_source_prototype then
       local buffer = ctx.prototype.electric_energy_source_prototype.buffer_capacity
-      if buffer and buffer > 0 then ctx.message:fragment({ "fa.item-info-stores", FaUtils.format_power(buffer) }) end
+      if buffer and buffer > 0 then
+         ctx.message:list_item({ "fa.item-info-stores", FaUtils.format_power(buffer, "j") })
+      end
    end
 end
 
@@ -151,12 +154,12 @@ end
 local function equipment_power_generation_info(ctx)
    if ctx.prototype.energy_production and ctx.prototype.energy_production > 0 then
       if ctx.prototype.solar_panel_performance_at_day then
-         ctx.message:fragment({
+         ctx.message:list_item({
             "fa.item-info-generates-solar",
             FaUtils.format_power(ctx.prototype.energy_production * 60),
          })
       else
-         ctx.message:fragment({ "fa.item-info-generates", FaUtils.format_power(ctx.prototype.energy_production * 60) })
+         ctx.message:list_item({ "fa.item-info-generates", FaUtils.format_power(ctx.prototype.energy_production * 60) })
       end
    end
 end
@@ -165,18 +168,332 @@ end
 ---@param ctx fa.ItemInfo.EquipmentContext
 local function equipment_dimensions_info(ctx)
    local shape = ctx.prototype.shape
-   ctx.message:fragment({ "fa.item-info-dimensions", shape.width, shape.height })
+   ctx.message:list_item({ "fa.item-info-equipment", shape.width, shape.height })
 end
 
----Add building dimensions info to message
+---Map entity types to their locale keys for building intro
+local BUILDING_TYPE_LOCALE = {
+   ["electric-pole"] = "fa.item-info-electric-pole",
+   ["beacon"] = "fa.item-info-beacon",
+   ["inserter"] = "fa.item-info-inserter",
+   ["transport-belt"] = "fa.item-info-belt",
+   ["splitter"] = "fa.item-info-splitter",
+   ["underground-belt"] = "fa.item-info-underground-belt",
+   ["pipe-to-ground"] = "fa.item-info-pipe-to-ground",
+   ["roboport"] = "fa.item-info-roboport",
+   ["assembling-machine"] = "fa.item-info-crafting-machine",
+   ["furnace"] = "fa.item-info-crafting-machine",
+   ["rocket-silo"] = "fa.item-info-crafting-machine",
+   ["lab"] = "fa.item-info-lab",
+   ["mining-drill"] = "fa.item-info-mining-drill",
+   ["pump"] = "fa.item-info-pump",
+   ["offshore-pump"] = "fa.item-info-pump",
+   ["generator"] = "fa.item-info-generator",
+   ["burner-generator"] = "fa.item-info-generator",
+   ["solar-panel"] = "fa.item-info-solar-panel",
+   ["accumulator"] = "fa.item-info-accumulator",
+   ["ammo-turret"] = "fa.item-info-turret",
+   ["electric-turret"] = "fa.item-info-turret",
+   ["fluid-turret"] = "fa.item-info-turret",
+   ["artillery-turret"] = "fa.item-info-turret",
+   ["radar"] = "fa.item-info-radar",
+   ["reactor"] = "fa.item-info-reactor",
+   ["container"] = "fa.item-info-container",
+   ["logistic-container"] = "fa.item-info-container",
+}
+
+---Add electric pole info to message
 ---@param ctx fa.ItemInfo.BuildingContext
-local function building_dimensions_info(ctx)
-   ctx.message:fragment({
-      "fa.item-info-building",
-      ctx.prototype.tile_width,
-      ctx.prototype.tile_height,
-   })
+local function building_electric_pole_info(ctx)
+   local proto = ctx.prototype
+   local quality = ctx.quality
+
+   local supply_radius = proto.get_supply_area_distance(quality)
+   local wire_distance = proto.get_max_wire_distance(quality)
+
+   if supply_radius and supply_radius > 0 then
+      local diameter = math.floor(supply_radius * 2)
+      ctx.message:list_item({ "fa.item-info-supply-area", diameter })
+   end
+   if wire_distance and wire_distance > 0 then
+      ctx.message:list_item({ "fa.item-info-wire-reach", string.format("%.1f", wire_distance) })
+   end
 end
+
+---Add beacon info to message
+---@param ctx fa.ItemInfo.BuildingContext
+local function building_beacon_info(ctx)
+   local proto = ctx.prototype
+   local quality = ctx.quality
+
+   local supply_radius = proto.get_supply_area_distance(quality)
+   local effectivity = proto.distribution_effectivity
+   local effectivity_bonus = proto.distribution_effectivity_bonus_per_quality_level
+
+   if supply_radius and supply_radius > 0 then
+      local diameter = math.floor(supply_radius * 2)
+      ctx.message:list_item({ "fa.item-info-supply-area", diameter })
+   end
+
+   if effectivity then
+      local total_effectivity = effectivity
+      if effectivity_bonus and quality then total_effectivity = effectivity + (effectivity_bonus * quality.level) end
+      ctx.message:list_item({ "fa.item-info-transmission-efficiency", string.format("%.0f%%", total_effectivity * 100) })
+   end
+
+   if proto.module_inventory_size then
+      ctx.message:list_item({ "fa.item-info-module-slots", proto.module_inventory_size })
+   end
+end
+
+---Add inserter info to message
+---@param ctx fa.ItemInfo.BuildingContext
+local function building_inserter_info(ctx)
+   local proto = ctx.prototype
+
+   local stack_bonus = proto.inserter_stack_size_bonus
+   if stack_bonus and stack_bonus > 0 then ctx.message:list_item({ "fa.item-info-stack-bonus", stack_bonus }) end
+
+   if proto.bulk then ctx.message:list_item({ "fa.item-info-bulk-inserter" }) end
+end
+
+---Add transport belt info to message
+---@param ctx fa.ItemInfo.BuildingContext
+local function building_transport_belt_info(ctx)
+   local proto = ctx.prototype
+
+   if proto.belt_speed then
+      local items_per_second = proto.belt_speed * 480
+      ctx.message:list_item({ "fa.item-info-belt-speed", string.format("%.1f", items_per_second) })
+   end
+end
+
+---Add splitter info to message
+---@param ctx fa.ItemInfo.BuildingContext
+local function building_splitter_info(ctx)
+   local proto = ctx.prototype
+
+   if proto.belt_speed then
+      -- Splitters have two lanes, so throughput is doubled
+      local items_per_second = proto.belt_speed * 480 * 2
+      ctx.message:list_item({ "fa.item-info-belt-speed", string.format("%.1f", items_per_second) })
+   end
+end
+
+---Add underground belt info to message
+---@param ctx fa.ItemInfo.BuildingContext
+local function building_underground_belt_info(ctx)
+   local proto = ctx.prototype
+
+   if proto.belt_speed then
+      local items_per_second = proto.belt_speed * 480
+      ctx.message:list_item({ "fa.item-info-belt-speed", string.format("%.1f", items_per_second) })
+   end
+   if proto.max_underground_distance then
+      ctx.message:list_item({ "fa.item-info-underground-distance", proto.max_underground_distance })
+   end
+end
+
+---Add pipe to ground info to message
+---@param ctx fa.ItemInfo.BuildingContext
+local function building_pipe_to_ground_info(ctx)
+   local proto = ctx.prototype
+
+   if proto.max_underground_distance then
+      ctx.message:list_item({ "fa.item-info-underground-distance", proto.max_underground_distance })
+   end
+end
+
+---Add roboport info to message
+---@param ctx fa.ItemInfo.BuildingContext
+local function building_roboport_info(ctx)
+   local proto = ctx.prototype
+
+   if proto.logistic_radius then
+      local diameter = math.floor(proto.logistic_radius * 2)
+      ctx.message:list_item({ "fa.item-info-logistics-area", diameter })
+   end
+   if proto.construction_radius then
+      local diameter = math.floor(proto.construction_radius * 2)
+      ctx.message:list_item({ "fa.item-info-construction-area", diameter })
+   end
+end
+
+---Add crafting machine info to message
+---@param ctx fa.ItemInfo.BuildingContext
+local function building_crafting_machine_info(ctx)
+   local proto = ctx.prototype
+   local quality = ctx.quality
+
+   local speed = proto.get_crafting_speed(quality)
+   if speed then ctx.message:list_item({ "fa.item-info-crafting-speed", string.format("%.1f", speed) }) end
+
+   if proto.module_inventory_size then
+      ctx.message:list_item({ "fa.item-info-module-slots", proto.module_inventory_size })
+   end
+end
+
+---Add lab info to message
+---@param ctx fa.ItemInfo.BuildingContext
+local function building_lab_info(ctx)
+   local proto = ctx.prototype
+   local quality = ctx.quality
+
+   local speed = proto.get_researching_speed(quality)
+   if speed then ctx.message:list_item({ "fa.item-info-research-speed", string.format("%.1f", speed) }) end
+
+   if proto.module_inventory_size then
+      ctx.message:list_item({ "fa.item-info-module-slots", proto.module_inventory_size })
+   end
+end
+
+---Add mining drill info to message
+---@param ctx fa.ItemInfo.BuildingContext
+local function building_mining_drill_info(ctx)
+   local proto = ctx.prototype
+   local quality = ctx.quality
+
+   local radius = proto.get_mining_drill_radius(quality)
+   if radius then ctx.message:list_item({ "fa.item-info-mining-radius", string.format("%.1f", radius) }) end
+
+   if proto.mining_speed then
+      ctx.message:list_item({ "fa.item-info-mining-speed", string.format("%.1f", proto.mining_speed) })
+   end
+
+   if proto.module_inventory_size then
+      ctx.message:list_item({ "fa.item-info-module-slots", proto.module_inventory_size })
+   end
+end
+
+---Add pump info to message
+---@param ctx fa.ItemInfo.BuildingContext
+local function building_pump_info(ctx)
+   local proto = ctx.prototype
+   local quality = ctx.quality
+
+   local speed = proto.get_pumping_speed(quality)
+   if speed then
+      local per_second = speed * 60
+      ctx.message:list_item({ "fa.item-info-pumping-speed", string.format("%.0f", per_second) })
+   end
+end
+
+---Add generator info to message
+---@param ctx fa.ItemInfo.BuildingContext
+local function building_generator_info(ctx)
+   local proto = ctx.prototype
+   local quality = ctx.quality
+
+   -- Use get_max_energy_production for consistency with fa-info.lua
+   -- This returns energy per tick, multiply by 60 to get Watts
+   local max_energy = proto.get_max_energy_production(quality)
+   if max_energy and max_energy > 0 then
+      ctx.message:list_item({ "fa.item-info-generates", FaUtils.format_power(max_energy * 60) })
+   end
+end
+
+---Add solar panel info to message
+---@param ctx fa.ItemInfo.BuildingContext
+local function building_solar_panel_info(ctx)
+   local proto = ctx.prototype
+   local quality = ctx.quality
+
+   local max_power = proto.get_max_energy_production(quality)
+   if max_power and max_power > 0 then
+      ctx.message:list_item({ "fa.item-info-generates-solar", FaUtils.format_power(max_power * 60) })
+   end
+end
+
+---Add accumulator info to message
+---@param ctx fa.ItemInfo.BuildingContext
+local function building_accumulator_info(ctx)
+   local proto = ctx.prototype
+
+   if proto.electric_energy_source_prototype then
+      local buffer = proto.electric_energy_source_prototype.buffer_capacity
+      if buffer and buffer > 0 then
+         ctx.message:list_item({ "fa.item-info-stores", FaUtils.format_power(buffer, "j") })
+      end
+   end
+end
+
+---Add turret info to message
+---@param ctx fa.ItemInfo.BuildingContext
+local function building_turret_info(ctx)
+   local proto = ctx.prototype
+
+   if proto.turret_range then ctx.message:list_item({ "fa.item-info-turret-range", proto.turret_range }) end
+end
+
+---Add radar info to message
+---@param ctx fa.ItemInfo.BuildingContext
+local function building_radar_info(ctx)
+   local proto = ctx.prototype
+   local quality = ctx.quality
+
+   local nearby = proto.get_max_distance_of_nearby_sector_revealed(quality)
+   local scan = proto.get_max_distance_of_sector_revealed(quality)
+
+   if nearby then ctx.message:list_item({ "fa.item-info-radar-nearby", nearby }) end
+   if scan then ctx.message:list_item({ "fa.item-info-radar-scan", scan }) end
+end
+
+---Add reactor info to message
+---@param ctx fa.ItemInfo.BuildingContext
+local function building_reactor_info(ctx)
+   local proto = ctx.prototype
+   local quality = ctx.quality
+
+   local max_power = proto.get_max_energy_production(quality)
+   if max_power and max_power > 0 then
+      ctx.message:list_item({ "fa.item-info-generates", FaUtils.format_power(max_power * 60) })
+   end
+
+   if proto.neighbour_bonus then
+      ctx.message:list_item({ "fa.item-info-neighbor-bonus", string.format("%.0f%%", proto.neighbour_bonus * 100) })
+   end
+end
+
+---Add container info to message
+---@param ctx fa.ItemInfo.BuildingContext
+local function building_container_info(ctx)
+   local proto = ctx.prototype
+   local quality = ctx.quality
+
+   local size = proto.get_inventory_size(defines.inventory.chest, quality)
+   if size then ctx.message:list_item({ "fa.item-info-inventory-size", size }) end
+end
+
+---Map of entity type to info function
+local BUILDING_INFO_HANDLERS = {
+   ["electric-pole"] = building_electric_pole_info,
+   ["beacon"] = building_beacon_info,
+   ["inserter"] = building_inserter_info,
+   ["transport-belt"] = building_transport_belt_info,
+   ["splitter"] = building_splitter_info,
+   ["underground-belt"] = building_underground_belt_info,
+   ["pipe-to-ground"] = building_pipe_to_ground_info,
+   ["roboport"] = building_roboport_info,
+   ["assembling-machine"] = building_crafting_machine_info,
+   ["furnace"] = building_crafting_machine_info,
+   ["rocket-silo"] = building_crafting_machine_info,
+   ["lab"] = building_lab_info,
+   ["mining-drill"] = building_mining_drill_info,
+   ["pump"] = building_pump_info,
+   ["offshore-pump"] = building_pump_info,
+   ["generator"] = building_generator_info,
+   ["burner-generator"] = building_generator_info,
+   ["solar-panel"] = building_solar_panel_info,
+   ["accumulator"] = building_accumulator_info,
+   ["ammo-turret"] = building_turret_info,
+   ["electric-turret"] = building_turret_info,
+   ["fluid-turret"] = building_turret_info,
+   ["artillery-turret"] = building_turret_info,
+   ["radar"] = building_radar_info,
+   ["reactor"] = building_reactor_info,
+   ["container"] = building_container_info,
+   ["logistic-container"] = building_container_info,
+}
 
 ---@class fa.ItemInfo.GetItemStackInfoOptions
 ---@field verbosity integer VERBOSITY.BRIEF or VERBOSITY.VERBOSE
@@ -225,8 +542,16 @@ function mod.get_item_stack_info(message, stack, options)
       local ctx = {
          message = message,
          prototype = entity_proto,
+         quality = quality,
       }
-      building_dimensions_info(ctx)
+
+      -- Add building intro with type-specific or generic description
+      local locale_key = BUILDING_TYPE_LOCALE[entity_proto.type] or "fa.item-info-building"
+      message:list_item({ locale_key, entity_proto.tile_width, entity_proto.tile_height })
+
+      -- Call type-specific handler if available
+      local handler = BUILDING_INFO_HANDLERS[entity_proto.type]
+      if handler then handler(ctx) end
    end
 end
 

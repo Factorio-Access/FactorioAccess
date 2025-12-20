@@ -856,20 +856,24 @@ function mod.find_prototype(name)
    return nil
 end
 
--- Formats a power value in watts to a localized string
----@param power number Power value in watts
+-- Formats a power or energy value to a localized string
+---@param value number Value in watts or joules
+---@param unit "w"|"j"|nil Unit type: "w" for watts (power), "j" for joules (energy). Default "w".
 ---@return LocalisedString
-function mod.format_power(power)
-   if power > 1000000000000 then
-      return { "fa.unit-terawatts", string.format("%.1f", power / 1000000000000) }
-   elseif power > 1000000000 then
-      return { "fa.unit-gigawatts", string.format("%.1f", power / 1000000000) }
-   elseif power > 1000000 then
-      return { "fa.unit-megawatts", string.format("%.1f", power / 1000000) }
-   elseif power > 1000 then
-      return { "fa.unit-kilowatts", string.format("%.1f", power / 1000) }
+function mod.format_power(value, unit)
+   unit = unit or "w"
+   local suffix = unit == "j" and "joules" or "watts"
+
+   if value > 1000000000000 then
+      return { "fa.unit-tera" .. suffix, string.format("%.1f", value / 1000000000000) }
+   elseif value > 1000000000 then
+      return { "fa.unit-giga" .. suffix, string.format("%.1f", value / 1000000000) }
+   elseif value > 1000000 then
+      return { "fa.unit-mega" .. suffix, string.format("%.1f", value / 1000000) }
+   elseif value > 1000 then
+      return { "fa.unit-kilo" .. suffix, string.format("%.1f", value / 1000) }
    else
-      return { "fa.unit-watts", string.format("%.1f", power) }
+      return { "fa.unit-" .. suffix, string.format("%.1f", value) }
    end
 end
 

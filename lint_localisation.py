@@ -40,6 +40,15 @@ WHITELISTED_EMPTY_PREFIXES = {
     "fa.research-technology-description-",
 }
 
+# Partial keys that are dynamically concatenated (e.g., "fa.unit-tera" .. "joules")
+WHITELISTED_PARTIAL_KEYS = {
+    "fa.unit-tera",
+    "fa.unit-giga",
+    "fa.unit-mega",
+    "fa.unit-kilo",
+    "fa.unit-",
+}
+
 
 def parse_cfg_files():
     """Parse all .cfg files and extract fa.* keys using configparser."""
@@ -270,7 +279,7 @@ def cmd_lint(args):
         print()
 
     # Missing keys (exact references that are not defined)
-    missing = sorted(set(exact_keys.keys()) - defined_keys)
+    missing = sorted(set(exact_keys.keys()) - defined_keys - WHITELISTED_PARTIAL_KEYS)
     print(f"POTENTIALLY MISSING KEYS: {len(missing)}")
     print("-" * 80)
     if missing:
