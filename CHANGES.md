@@ -1,4 +1,4 @@
-# 0.16.45 (unreleased)
+# 0.16.45 (2025-12-20)
 
 - Always report inserter throughput, even when un-powered and in inventories
 - Report inserter throughput as swings per second from the prototype API, instead of guessed items per second from a
@@ -10,6 +10,7 @@
   - You now hear the shift enter hint when tiles are read and don't need to find it with right click.
 - Remap entering cursor coords to shift c.
 - Remap tutorial to control t
+- Publish a couple more tutorial chapters
 - NOTE: we will not be able to avoid the control alt namespace forever.
 - Note: cycle weapon is now provided by vanilla, on c.
 
