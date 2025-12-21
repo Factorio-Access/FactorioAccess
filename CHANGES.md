@@ -2,6 +2,9 @@
 
 - Tutorial and help UIs no longer have a one tick lag, unless you manage to open them within one tick of a mod update
 - Your search pattern persists between open and closes of the UI
+- Add `/fagive prototypename` for developers.  Gives a full stack of whatever prototypename is.
+  - This is a cheat and will not be documented centrally. Note however that you can do this with `/c` or the map editor
+    or in a number of other ways.  I needed to be able to do the tutorial testing without going nuts.
 
 # 0.16.45 (2025-12-20)
 

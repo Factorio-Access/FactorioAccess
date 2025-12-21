@@ -43,7 +43,7 @@ local function cmd_fac(cmd)
    local script = cmd.parameter
 
    if not cmd.parameter or cmd.parameter == "" then
-      Speech.speak(pindex, { "fa.fa-commands-script-required" })
+      Speech.speak(pindex, { "fa.cmd-script-required" })
       return
    end
 
@@ -133,10 +133,44 @@ local function cmd_railtable(cmd)
    print("rail table generation complete")
 end
 
+--[[
+/fagive <item-name>
+
+Gives the player a full stack of the specified item prototype. Used for testing
+and debugging.
+
+Example: /fagive iron-plate
+]]
+---@param cmd CustomCommandData
+local function cmd_fagive(cmd)
+   local pindex = cmd.player_index
+   local player = game.get_player(pindex)
+   if not player then return end
+
+   local pname = cmd.parameter
+   if not pname or pname == "" then
+      Speech.speak(pindex, { "fa.cmd-item-name-required" })
+      return
+   end
+
+   local prototype = prototypes.item[pname]
+   if not prototype then
+      Speech.speak(pindex, { "fa.cmd-unknown-item", pname })
+      return
+   end
+
+   local inserted = player.get_main_inventory().insert(pname)
+   Speech.speak(pindex, { "fa.cmd-gave-items", inserted, prototype.localised_name })
+end
+
 mod.COMMANDS = {
    fac = {
       help = "See commands.lua",
       handler = cmd_fac,
+   },
+   fagive = {
+      help = "Give a full stack of an item: /fagive <item-name>",
+      handler = cmd_fagive,
    },
    railtable = {
       help = "Generate rail extension data table",
