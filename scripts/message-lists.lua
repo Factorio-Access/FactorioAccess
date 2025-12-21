@@ -20,31 +20,46 @@ mod.STATUS = {
 ---@class fa.MessageLists.State
 ---@field metadata_cache table<string, fa.MessageLists.Metadata> Cached metadata by list name
 ---@field pending_translations table<number, string> Map of translation request ID to list name
+---@field pending_list_names table<string, boolean> Set of list names with pending translations
+---@field all_translated boolean True once all lists have been translated
 
 ---@type table<number, fa.MessageLists.State>
 local message_list_storage = StorageManager.declare_storage_module("message_lists", function(_pindex)
    return {
       metadata_cache = {},
       pending_translations = {},
+      pending_list_names = {},
+      all_translated = false,
    }
 end, {
-   ephemeral_state_version = MessageListIndex.MESSAGE_LISTS_HASH,
+   -- The string concatenation is to let us chjange the implementation of this module. this is saying "reset if the
+   -- message list contents or this module changes", where changing this module is bumping the second term.
+   ephemeral_state_version = MessageListIndex.MESSAGE_LISTS_HASH .. "0",
 })
 
 ---Request translation for a message list's metadata.
 ---@param pindex integer
 ---@param list_name string
+---@return boolean requested True if a new request was made
 local function request_metadata_translation(pindex, list_name)
    local player = game.get_player(pindex)
-   if not player then return end
+   if not player then return false end
 
    local state = message_list_storage[pindex]
+
+   -- Skip if already pending
+   if state.pending_list_names[list_name] then return false end
 
    -- Request translation for the metadata key
    local meta_key = { "fa.messagelist--" .. list_name .. "--meta" }
    local request_id = player.request_translation(meta_key)
 
-   if request_id then state.pending_translations[request_id] = list_name end
+   if request_id then
+      state.pending_translations[request_id] = list_name
+      state.pending_list_names[list_name] = true
+      return true
+   end
+   return false
 end
 
 ---Handle a translation result from on_string_translated event.
@@ -71,6 +86,7 @@ function mod.handle_translation(pindex, request_id, result)
    }
 
    state.pending_translations[request_id] = nil
+   state.pending_list_names[list_name] = nil
    return true
 end
 
@@ -118,6 +134,40 @@ end
 function mod.on_string_translated(event)
    local pindex = event.player_index
    mod.handle_translation(pindex, event.id, event.result)
+end
+
+---Try to translate all message lists for a player.
+---@param pindex integer
+local function try_translate_all(pindex)
+   local state = message_list_storage[pindex]
+
+   if state.all_translated then return end
+
+   local any_requested = false
+   local any_pending = false
+
+   for list_name, _ in pairs(MessageListIndex.MESSAGE_LISTS) do
+      if state.metadata_cache[list_name] then
+         -- Already cached
+      elseif state.pending_list_names[list_name] then
+         any_pending = true
+      else
+         if request_metadata_translation(pindex, list_name) then any_requested = true end
+      end
+   end
+
+   if not any_requested and not any_pending then state.all_translated = true end
+end
+
+---Try to translate all message lists for all players.
+---Call this from on_tick. Rate-limited internally to tick 1 and every 60 ticks.
+function mod.try_translate_all_players()
+   local tick = game.tick
+   if tick % 60 ~= 0 then return end
+
+   for _, player in pairs(game.players) do
+      if player.valid then try_translate_all(player.index) end
+   end
 end
 
 return mod

@@ -1,3 +1,7 @@
+# 0.16.46 (unreleased)
+
+- Tutorial and help UIs no longer have a one tick lag, unless you manage to open them within one tick of a mod update
+
 # 0.16.45 (2025-12-20)
 
 - Always report inserter throughput, even when un-powered and in inventories

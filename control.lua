@@ -353,6 +353,7 @@ end
 
 --Called every tick.
 function on_tick(event)
+   MessageLists.try_translate_all_players()
    NoHover.on_tick()
    ScannerEntrypoint.on_tick()
    MovementHistory.update_all_players()
