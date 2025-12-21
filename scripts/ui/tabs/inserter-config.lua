@@ -14,28 +14,9 @@ local UiUtils = require("scripts.ui.ui-utils")
 local UiSounds = require("scripts.ui.sounds")
 local Filters = require("scripts.filters")
 local Localising = require("scripts.localising")
+local ItemInfo = require("scripts.item-info")
 
 local mod = {}
-
----Get the maximum stack size for an inserter based on prototype and force bonuses
----@param entity LuaEntity
----@return number
-local function get_max_stack_size(entity)
-   local force = entity.force
-   local prototype = entity.prototype
-
-   -- Base stack size from prototype
-   local base_size = prototype.inserter_stack_size_bonus or 0
-   -- That's a bonus, so 1 less than the real value.
-   base_size = base_size + 1
-
-   -- Add force bonuses
-   if prototype.bulk then
-      return base_size + force.bulk_inserter_capacity_bonus
-   else
-      return base_size + force.inserter_stack_size_bonus
-   end
-end
 
 ---Render the inserter configuration form
 ---@param ctx fa.ui.TabContext
@@ -47,7 +28,7 @@ local function render_inserter_config(ctx)
    local form = FormBuilder.FormBuilder.new()
 
    -- Get max stack size for this inserter
-   local max_stack_size = get_max_stack_size(entity)
+   local max_stack_size = ItemInfo.inserter_max_stack_size(entity)
 
    -- Row 1: Hand size control (textfield with 0 = unset)
    local function build_hand_size_label(message, ctx)

@@ -1,3 +1,10 @@
+# 0.16.45 (unreleased)
+
+- Always report inserter throughput, even when un-powered and in inventories
+- Report inserter throughput as swings per second from the prototype API, instead of guessed items per second from a
+  list. For example "2.5 swings per second as stacks of 3".
+  - This respects stack size overrides on the map.
+
 # 0.16.44 (2025-12-19)
 
 - Publish the first 7 chapters of the tutorial. Access it with control alt slash.

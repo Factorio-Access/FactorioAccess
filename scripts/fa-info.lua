@@ -1787,6 +1787,27 @@ local function ent_status_belt_speed(ctx)
    return false
 end
 
+--- Reports swings per second and stack size for inserters
+---@param ctx fa.Info.EntStatusContext The context for the current entity.
+---@return boolean handled True if this handler added information to the message.
+local function ent_status_inserter_speed(ctx)
+   local ent = ctx.ent
+   if ent.prototype.type ~= "inserter" then return false end
+
+   local rotation_speed = ent.prototype.get_inserter_rotation_speed(ent.quality)
+   if rotation_speed then
+      local swings_per_second = ItemInfo.inserter_swings_per_second(rotation_speed)
+      local stack_size = ItemInfo.inserter_effective_stack_size(ent)
+      ctx.message:fragment({
+         "fa.ent-status-inserter-speed",
+         string.format("%.1f", swings_per_second),
+         stack_size,
+      })
+      return true
+   end
+   return false
+end
+
 --- Reports crafting speed, currently for assembling-machine and furnace
 --- Crafting cycles per minute based on recipe time and the STATED craft speed
 --- Todo maybe extend this to all "crafting machine" types?
@@ -2035,11 +2056,14 @@ function mod.read_selected_entity_status(pindex)
    -- discard final result with `_` variable
    local _ = run_handler(ent_status_fluid_wagon) or run_handler(ent_status_lookup) or run_handler(ent_status_fallback)
 
+   -- Static speed properties (always reported regardless of power status)
+   run_handler(ent_status_belt_speed)
+   run_handler(ent_status_inserter_speed)
+
    if status ~= nil then
       --For working or normal entities, give some extra info about specific entities in terms of speeds or bonuses.
       local status_list = defines.entity_status
       if status ~= status_list.no_power and status ~= status_list.no_fuel then
-         run_handler(ent_status_belt_speed)
          _ = run_handler(ent_status_crafting_speed)
             or run_handler(ent_status_mining_speed)
             or run_handler(ent_status_lab_speed)

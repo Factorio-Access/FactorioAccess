@@ -496,13 +496,23 @@ local function render_inventory_grid(ctx)
 
             -- Also read item info (k = slot position + item info)
             local stack = inv[slot_index]
-            ItemInfo.get_item_stack_info(coord_ctx.message, stack, { verbosity = ItemInfo.VERBOSITY.VERBOSE })
+            local player = game.get_player(coord_ctx.pindex)
+            ItemInfo.get_item_stack_info(
+               coord_ctx.message,
+               stack,
+               { verbosity = ItemInfo.VERBOSITY.VERBOSE, force = player.force }
+            )
          end,
          on_read_info = function(info_ctx, x, y)
             -- Read detailed item info (y = just item info)
             local slot_index = grid_pos_to_slot(x, y)
             local stack = inv[slot_index]
-            ItemInfo.get_item_stack_info(info_ctx.message, stack, { verbosity = ItemInfo.VERBOSITY.VERBOSE })
+            local player = game.get_player(info_ctx.pindex)
+            ItemInfo.get_item_stack_info(
+               info_ctx.message,
+               stack,
+               { verbosity = ItemInfo.VERBOSITY.VERBOSE, force = player.force }
+            )
          end,
          on_production_stats_announcement = function(stats_ctx, x, y)
             -- Read production stats for item in slot (u = production stats)

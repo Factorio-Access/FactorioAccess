@@ -17,6 +17,58 @@ mod.VERBOSITY = {
    VERBOSE = 2,
 }
 
+---Calculate inserter swings per second from rotation speed.
+---Inserters must complete half-turns in whole ticks, so actual cycle time
+---is truncated to the next lowest even number of ticks.
+---@param rotation_speed number Rotation speed in rotations per tick
+---@return number swings_per_second
+function mod.inserter_swings_per_second(rotation_speed)
+   local ticks_per_half_turn = math.floor(1 / rotation_speed / 2)
+   return 60 / (ticks_per_half_turn * 2)
+end
+
+---Get the base stack size for an inserter from its prototype.
+---This is the stack size without force research bonuses.
+---@param prototype LuaEntityPrototype
+---@return number
+function mod.inserter_base_stack_size(prototype)
+   local base_size = prototype.inserter_stack_size_bonus or 0
+   return base_size + 1
+end
+
+---Get the stack size for an inserter prototype with force research bonuses.
+---@param prototype LuaEntityPrototype
+---@param force LuaForce
+---@return number
+function mod.inserter_stack_size_with_force(prototype, force)
+   local base_size = prototype.inserter_stack_size_bonus or 0
+   base_size = base_size + 1
+
+   if prototype.bulk then
+      return base_size + force.bulk_inserter_capacity_bonus
+   else
+      return base_size + force.inserter_stack_size_bonus
+   end
+end
+
+---Get the maximum stack size for a placed inserter entity.
+---Accounts for force research bonuses but not any override.
+---@param entity LuaEntity
+---@return number
+function mod.inserter_max_stack_size(entity)
+   return mod.inserter_stack_size_with_force(entity.prototype, entity.force)
+end
+
+---Get the effective stack size for a placed inserter entity.
+---Uses override if set, otherwise returns max stack size with force bonuses.
+---@param entity LuaEntity
+---@return number
+function mod.inserter_effective_stack_size(entity)
+   local override = entity.inserter_stack_size_override
+   if override and override > 0 then return override end
+   return mod.inserter_max_stack_size(entity)
+end
+
 ---Marker to say "other item" in localise_item
 mod.ITEM_OTHER = {}
 
@@ -128,6 +180,7 @@ end
 ---@field message fa.MessageBuilder
 ---@field prototype LuaEntityPrototype
 ---@field quality LuaQualityPrototype
+---@field force LuaForce? Optional force for research bonus calculations
 
 ---Add equipment power consumption info to message
 ---@param ctx fa.ItemInfo.EquipmentContext
@@ -251,8 +304,21 @@ end
 local function building_inserter_info(ctx)
    local proto = ctx.prototype
 
-   local stack_bonus = proto.inserter_stack_size_bonus
-   if stack_bonus and stack_bonus > 0 then ctx.message:list_item({ "fa.item-info-stack-bonus", stack_bonus }) end
+   local rotation_speed = proto.get_inserter_rotation_speed(ctx.quality)
+   if rotation_speed then
+      local swings_per_second = mod.inserter_swings_per_second(rotation_speed)
+      local stack_size
+      if ctx.force then
+         stack_size = mod.inserter_stack_size_with_force(proto, ctx.force)
+      else
+         stack_size = mod.inserter_base_stack_size(proto)
+      end
+      ctx.message:list_item({
+         "fa.item-info-inserter-speed",
+         string.format("%.1f", swings_per_second),
+         stack_size,
+      })
+   end
 
    if proto.bulk then ctx.message:list_item({ "fa.item-info-bulk-inserter" }) end
 end
@@ -510,10 +576,12 @@ end
 
 ---@class fa.ItemInfo.GetItemStackInfoOptions
 ---@field verbosity integer VERBOSITY.BRIEF or VERBOSITY.VERBOSE
+---@field force LuaForce? Optional force for research bonus calculations
 
 ---@class fa.ItemInfo.GetItemInfoFromPrototypeOptions
 ---@field verbosity integer VERBOSITY.BRIEF or VERBOSITY.VERBOSE
 ---@field name_override LocalisedString? Override the name announced (for cases where name is already known)
+---@field force LuaForce? Optional force for research bonus calculations
 
 ---Get detailed information about an item from its prototype and quality
 ---This is the core function used by both stack-based and prototype-based queries
@@ -557,6 +625,7 @@ function mod.get_item_info_from_prototype(message, item_proto, quality, options)
          message = message,
          prototype = entity_proto,
          quality = quality,
+         force = options.force,
       }
 
       -- Add building intro with type-specific or generic description
@@ -653,7 +722,7 @@ function mod.read_item_in_hand(pindex)
    end
 
    local message = MessageBuilder.new()
-   mod.get_item_stack_info(message, cursor_stack, { verbosity = mod.VERBOSITY.VERBOSE })
+   mod.get_item_stack_info(message, cursor_stack, { verbosity = mod.VERBOSITY.VERBOSE, force = player.force })
    Speech.speak(pindex, message:build())
 end
 
