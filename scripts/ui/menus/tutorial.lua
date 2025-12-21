@@ -91,7 +91,7 @@ local function build_chapter_blueprints_tab(chapter)
                   -- Set a blank blueprint in hand, then import the string
                   cursor_stack.set_stack({ name = "blueprint" })
                   local result = cursor_stack.import_stack(bp_data.blueprint)
-                  assert(result <= 0, "Failed to import tutorial blueprint: " .. bp_data.title)
+                  assert(result <= 0, "Failed to import tutorial blueprint: " .. bp_data.title[1])
                   UiSounds.play_menu_move(click_ctx.pindex)
                   click_ctx.controller.message:fragment({ "fa.tutorial-blueprint-imported" })
                end,

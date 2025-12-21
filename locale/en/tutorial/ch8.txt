@@ -1,0 +1,106 @@
+It is now time to talk about transport belts and inserters.  We will also discuss the quickbar, which will get rid of the need to open your inventory all the time, and the pipette tool, which lets you quickly grab more things if your cursor is over one on the map.
+
+Please bear with us, as this chapter doesn't have much "now go play the game" content.  You need this chapter and the next one before you can get back to serious building.
+
+We will revisit transport belts one more time in the future to talk about their more complicated possibilities, and do a brief revisit of inserters at that time for a few more features as well.
+
+Since this is a lot of information, what we are going to build at the end is one version of a scalable coal setup.  We will teach you how to sacle it later, but this is the first repeating pattern: something which makes a bigger version when built next to a copy of itself.
+
+Inserters are the easiest to understand.  AN inserter is a robotic hand.  It swings back and forth grabbing stuff and putting it where it needs to go.
+
+It is important to be aware that factorio actually does a physical simulation of the hand.  For that reason, numbers like "x items per second" are not as meaningful as you might want.  Maybe there's not enough items right now.  And of course the throughput from a chest to a belt is different than from a chest to a chest, becasue they ahve slightly different shapes on the map.
+
+To report this to you, we tell you the approximate number of swings per second.  AN inserter faces what it is going to pick up from, grabs stuff, swings around half a circle, and drops stuff.  Then it returns to the start.
+
+For example, an inserter doing 1 swing per second completes a full circle once per second.
+
+When inserters aren't busy, they idle at their starting location.
+
+In addition to reporting numbers to you, we also add sounds when your cursor is over an inserter. The high click is the inserter reaching the start location, and the lower pitched click is it reaching the endpoint to drop stuff off.  You can use this to get a feel for how fast they are, as well as whether or not a given inserter is always busy.  We don't play these sounds all the time because you will have too many inserters for that to be practical.
+
+An inserter always picks up from one tile in front of it, and it always drops off to one tile behind it.  If there isn't an entity in front of it, it will pick up from the grou8nd instead, and if there isn't an entity behind it, it will drop to the ground.  Just like with drills, the one item per tile rule applies here, so an inserter using the ground to move stuff is very, very slow.  It will become more clear later why this is the case.
+
+To determine what to pick up, it looks at the entity it is going to drop items into, and sees what that entity needs.  For example a chest takes anything, but a crafting machine needs only the ingredients for the set recipe.  If any of these things are in front of it, it will pick them up.
+
+To determine where to drop it off, it does the same thing as control clicking, and intelligently picks the best inventory in the target.
+
+You currently have two kinds of inserter: the burner inserter and the inserter.  The difference is that inserters take electricity, but burner inserters run on fuel.
+
+Burner inserters are what you need to start with, because they function without electricity.  Instead, they take fuel.  This works identically to every other entity that takes fuel which you have encountered so far.
+
+A burner inserter is a little bit smart.  When it needs fuel and it also happens to be moving fuel, it will take some of the fuel for itself.
+
+that means that burner inserters moving iron need refuelling, but burner inserters moving coal will take a bit of the coal as needed.
+
+The only other fuel you currently have access to is wood.
+
+If you want to practice, you can make two chests and a burner inserter.  Place the burner inserter between the two chests facing toward one of them, then put a stack of coal in the chest in front of it.  The coal will then move to the chest behind it, minus the little bit the inserter took for itself.  This chapter attaches that as  an example blueprint, coal not included.
+
+The inserter needs power.  It otherwise works the same way, but it must be in the supply range of a powern pole.  We aren't using it yet because it is not practical to wire a bgunch of things up to y7our steam engines when you still have to run around to fuel them.  If you do that, you will get stuck fuelling them all the time, and won't have the time you need to build other things.
+
+Now let's switch focus.  Transport belts are conveyor belts.  For playability, they do not require electricity to function.  Each transport belt covers one tile.  Transport belts move items in the direction they are facing.  For example a belt facing north moves items north.
+
+Each belt is also divided into two lanes.  You can think of it like cars on a highway, except the lanes go in the same direction and items never switch lanes.  The game does not stop mixing items or anything like that, to be clear.  The reason we will be revisiting belts later is because you need to understand how to manipulate and use the lanes.  But for now, you can mostly ignore them.
+
+If you want a good wayh of thinking of it, there are two smaller belts next to each other on the tile facing in the direction you placed the larger one.
+
+To form belt corners, you place a few straight belts and then face the one at the end in the new direction.  If you do it right, the mod will annouce that the last piece as a corner when you move the cursor over the tile.  There are no specific dedicated shapes.  The engine just looks at the orientations and goes "yes this is the right placement for a corner" and magically forms it.
+
+If you do it wrong, you may get a sideload (which we discuss later) or a unit (which means that you have a belt facing entirely backward).
+
+To put it simply, place a belt facing north.  Then move one tile north and place a belt facing east.  This formed a corner, and the mod will tell you where.
+
+Each individual belt holds 8 items, 4 on each lane, and moves a certain nuymber of items per second.  Right now, the basic transport belt you have access to moves 15 items per second, or 900 per minute.  being aware of these numbers and using u to track logistics is a good way to keep on top of whether or not something is wrong with your factory.  For example if you only have one belt of iron plates and are producing 900 per minute, adding more furnaces can't help until you also figure out more belts.
+
+To find out these sorts of numbers, right click the belt on the map for a much more verbose description of the entity.  This works on mostthings to provide you with information that you don't usually need, either because it is not super important or bec uase you will memorize it over time.
+
+Here is the trick this chapter teaches.  The drill outputs more coal than it needs by a lot.  So we can take a belt from the drill to where we want to go, and as long as we are clever about it, we can alsop pull some of the coal back in with a burner inserter at the same time.  This is attached as an example blueprint as well.  It is much easier to look at than it is to explain.
+
+To build this, you set up a 2 wide by 4 high setup with the burner mining drill taking the bottom half facing north.
+
+Then you place a belt unit facing north at the drill's output, and two belt units facing east across the top.
+
+One tile in this setup is empty, and it is perfectly positioned for an inserter.  Placing an inserter in it facing north will grab coal from the belt and put it back in the drill.
+
+You can then run belts from that to wherever you want coal to go.
+
+If you did it right, coal exits from the northeast corner going east.  Don't forget that everything rotates, including blueprints.  WHether you build it yourself or rotate the example blueprint attached to this chapter, you can also build a version of this where coal exits west from the southwest corner, or even north from the northwest corner.  It all depends on the orientation of the first drill.
+
+Though not related to this chapter as such, it is important to highlight that you must supply the first piece of coal to start the drill.
+
+The rule to get items onto belts is simple.  It either needs an inserter dropping to it or it needs to be at the output tile of a drill.
+
+The rule to get items off belts is even simpler.  Getting items off belts always uses an inserter, without exception.  Items do not flow off the end.  Instead, full belts stop moving until there is space.
+
+No machine besides drills outputs items to the ground.  All other machines must use inserters to move things as well.
+
+If you want to get things off belts manually, teleport your character onto the belt and hold f.  The mod makes a best effort attempt to report what you are picking up, but this is highly inaccurate especially when belts don't have lots of items on them.
+
+Finally, it is time to discuss the quickbar and pipette tool.  The numbers 1 through 0 are a standard game-style quickbar which may have items assigned to it.
+
+To assign items, put them in your hand, and press control plus the number.
+
+Later, pressing  the number will bring the item to hand as long as you have some in your inventory.
+
+To clear a slot, assign the empty hand to it.
+
+10 slots is a pretty small number.  For that reason, you actually have 10 quickbars.  You change the active quickbar with shift 1 through 0.  TO assign to further quickbars, switch to them, then assign as described above.  Quickbars do not change on you without you first pressing a number.
+
+A very good way to do this is to have a quickbar per category.  For example, quickbar 1 can be all kinds of belts, 2 can be all kinds of inserters, 3 can be for power, etc.
+
+The pipette tool is arguably more and less useful at the same time.  When  your hand is full q empties it, but when your hand is empty the pipette tool is invoked.
+
+This is a bit like the smart inserting we did earlier, but in reverse.  Pipette on a building brings more of that building to your hand.  Pipette on water grabs an offshore pump.  Pipette on a resource grabs a drill.  Etc.  Try it to learn what it does.  Also, expect this list to grow slowly over time.
+
+The reason pipette is valuable is because sometimes you are working with buildings for a little while that you will not touch again for hours.  An example of this could be storage tanks, if we limit yourself to what you have unlocked now.
+
+In that case, it is often more convenient to use pipette than it is to set up a whole quickbar of stuff.
+
+It also works on ghosts, to put the item for the ghost in your hand.  Using pipette on a ghost gives you what you need to build it. Moving to the top left corner and placing it will then palce it over the ghost, and copy the settings.
+
+The final advantage of the pipette tool is that it matches the direction of the item on the ground.  You may quickly notice and likely be irritated by the quickbar always facing your hand to the north.  Because we need to match vanilla in some ways, we can't change this--but even in vanilla pipette preserves orientation.  SO, pipette on a south-facing belt gets you a belt of the same kind facing in the same direction.
+
+To move on, we will next discuss building long lines of things.  If you want to, you should now know enough to automate power.  But this will require polacing hundreds of belt segments by hand, tile by tile.  The next chapter covers your alternatives.
+
+If you want something to be doing while you continue reading, now is a good time to start crafting belts. A hundred or so can't hurt to say the least.  Note that the belt recipe is like the power pole, and outputs 2 belts per run.
+

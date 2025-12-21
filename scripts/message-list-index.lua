@@ -14,6 +14,7 @@ mod.MESSAGE_LISTS = {
    ["ch5"] = true,
    ["ch6"] = true,
    ["ch7"] = true,
+   ["ch8"] = true,
    ["crafting-menu-help"] = true,
    ["crafting-queue-help"] = true,
    ["debug-menu-help"] = true,
@@ -30,6 +31,6 @@ mod.MESSAGE_LISTS = {
    ["warnings-menu-help"] = true,
 }
 
-mod.MESSAGE_LISTS_HASH = "8b4760968cf12c616f3422fca4c50d5a94450cd45d96a8f8f1cb954d0699316e"
+mod.MESSAGE_LISTS_HASH = "be16dda38b7e4d48842af9faa962b5627077afa8f6ce738da2ba93464393f6a0"
 
 return mod

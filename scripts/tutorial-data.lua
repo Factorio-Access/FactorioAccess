@@ -111,5 +111,18 @@ declare_tutorial_chapter({ "fa.tutorial-ch7-title" }, {
       },
    },
 })
+declare_tutorial_chapter({ "fa.tutorial-ch8-title" }, {
+   example_blueprints = {
+      {
+         "fa.tutorial-example-blueprint-chest-inserter-chest",
+         "0eNqdkdtqhDAQhl8lzHVcuuuB1VdZSlEz1AGdSDLWLpJ3bzR0KXTpRe8m8OfjP2zQjQvOjlig2cCg7x3NQpahAVmtWq01yKof0ItXK8mgWtUtjtEpYo9O4tGhrBhVMuAEGqi37KG5beDpndtxJ3M7YUQmXHbgIEQpG/yE5hxeNSALCWH6eTzub7xMHboo0E8JGmbrKdndIIKyKj+VGu77VZ3KEPQv1OWBSjGy7xh/08pI02DIYZ8U1yfs/B82i91mjE8Sy2t+7KFhbDuM7cGj6JaN2ldJc0TFBzp/YMvqUhd1XV7PeV2/FCF8AcPTnZg="
+      },
+      {
+         "fa.tutorial-example-blueprint-drill-and-belts",
+         "0eNqdkttqwzAMhl/F6Nopy2k0eZUxhpNorcBRgg9jJfjd59gwRtdtdBcGGev/9EvyBoP2uBpiB/0GE9rR0OpoYejBIgp3jse7xZDSYjyr1aEBCTQubKF/2sDSiZXexaxmjKrBG0ZTzMTEp2IypDWEqOAJ36Evg7yhcUaxXRfjigG1+5JehWcJyI4cYa6XLpcX9vMQnfSl/IEhYV0s5U42iKjiWB1aCZcY1Yc2lpjI4JgTmt3VFbn6DzkG4QarllfTIbZo8ii/wco/YM0dxsq7Wm7lb0u81XeGl2FfEzmcd+nnh5KgVTSWfpJ+Lay3TiWgyHiR8SLhhbfpJTZio/INjU2V2seqa7quPZZ11z00IXwAdYLm0A==",
+      },
+   },
+})
+
 
 return mod
