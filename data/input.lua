@@ -65,6 +65,12 @@ data:extend({
       key_sequence = "SHIFT + D",
       consuming = "none",
    },
+   {
+      type = "custom-input",
+      name = "fa-s-c",
+      key_sequence = "SHIFT + C",
+      consuming = "none",
+   },
 
    {
       type = "custom-input",
@@ -236,13 +242,6 @@ data:extend({
       type = "custom-input",
       name = "fa-cs-t",
       key_sequence = "CONTROL + SHIFT + T",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-ca-t",
-      key_sequence = "CONTROL + ALT + T",
       consuming = "none",
    },
 

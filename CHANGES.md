@@ -9,6 +9,7 @@
   - Fix rocket launching so that launches trigger space science pack tech unlock
   - You now hear the shift enter hint when tiles are read and don't need to find it with right click.
 - remap next weapon from c to tab, as this is provided by vanilla now.  Previous weapon is gone but you only ever get three.
+- Remap entering cursor coords to shift c.
 
 # 0.16.44 (2025-12-19)
 

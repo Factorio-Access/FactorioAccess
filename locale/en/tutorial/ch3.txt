@@ -38,7 +38,7 @@ You are probably wondering where this is going.  The answer is to the coal patch
 
 Every map has a starting area, around the coordinates 0, 0.  To get your coordinates press k.  Starting areas are guaranteed to contain iron, copper, coal, stone, and water within a hundred tiles or so.
 
-You can move your cursor to specific coordinates. To do so, press control alt t, type two numbers separated by space, and hit enter.
+You can move your cursor to specific coordinates. To do so, press shift c, type two numbers separated by space, and hit enter.
 
 Now is a good time to note that negative y is north in Factorio.  Though this is confusing, it is not something we can change.
 

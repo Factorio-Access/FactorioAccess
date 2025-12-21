@@ -12,7 +12,7 @@ Toggle whether the cursor stays in front of you when walking: `i`
 
 Return the cursor to your character: `j`
 
-Enter cursor coordinates and jump to them: `ctrl + alt + t`
+Enter cursor coordinates and jump to them: `shift + c`
 
 Open fast travel: `alt + v`
 

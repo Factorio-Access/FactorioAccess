@@ -2172,7 +2172,7 @@ EventManager.on_event(
 )
 
 EventManager.on_event(
-   "fa-ca-t",
+   "fa-s-c",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       UiRouter.get_router(pindex):open_ui(UiRouter.UI_NAMES.CURSOR_COORDINATE_INPUT)

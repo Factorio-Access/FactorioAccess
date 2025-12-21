@@ -115,7 +115,7 @@ declare_tutorial_chapter({ "fa.tutorial-ch8-title" }, {
    example_blueprints = {
       {
          "fa.tutorial-example-blueprint-chest-inserter-chest",
-         "0eNqdkdtqhDAQhl8lzHVcuuuB1VdZSlEz1AGdSDLWLpJ3bzR0KXTpRe8m8OfjP2zQjQvOjlig2cCg7x3NQpahAVmtWq01yKof0ItXK8mgWtUtjtEpYo9O4tGhrBhVMuAEGqi37KG5beDpndtxJ3M7YUQmXHbgIEQpG/yE5hxeNSALCWH6eTzub7xMHboo0E8JGmbrKdndIIKyKj+VGu77VZ3KEPQv1OWBSjGy7xh/08pI02DIYZ8U1yfs/B82i91mjE8Sy2t+7KFhbDuM7cGj6JaN2ldJc0TFBzp/YMvqUhd1XV7PeV2/FCF8AcPTnZg="
+         "0eNqdkdtqhDAQhl8lzHVcuuuB1VdZSlEz1AGdSDLWLpJ3bzR0KXTpRe8m8OfjP2zQjQvOjlig2cCg7x3NQpahAVmtWq01yKof0ItXK8mgWtUtjtEpYo9O4tGhrBhVMuAEGqi37KG5beDpndtxJ3M7YUQmXHbgIEQpG/yE5hxeNSALCWH6eTzub7xMHboo0E8JGmbrKdndIIKyKj+VGu77VZ3KEPQv1OWBSjGy7xh/08pI02DIYZ8U1yfs/B82i91mjE8Sy2t+7KFhbDuM7cGj6JaN2ldJc0TFBzp/YMvqUhd1XV7PeV2/FCF8AcPTnZg=",
       },
       {
          "fa.tutorial-example-blueprint-drill-and-belts",
@@ -123,6 +123,5 @@ declare_tutorial_chapter({ "fa.tutorial-ch8-title" }, {
       },
    },
 })
-
 
 return mod
