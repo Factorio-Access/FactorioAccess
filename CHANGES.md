@@ -10,6 +10,8 @@
   - You now hear the shift enter hint when tiles are read and don't need to find it with right click.
 - remap next weapon from c to tab, as this is provided by vanilla now.  Previous weapon is gone but you only ever get three.
 - Remap entering cursor coords to shift c.
+- Remap tutorial to control t
+- NOTE: we will not be able to avoid the control alt namespace forever.
 
 # 0.16.44 (2025-12-19)
 

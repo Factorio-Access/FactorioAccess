@@ -2487,8 +2487,8 @@ EventManager.on_event("fa-s-slash", function(event)
    router:open_ui(UiRouter.UI_NAMES.HELP, help_params)
 end)
 
--- Tutorial (Ctrl+Alt+/)
-EventManager.on_event("fa-ca-slash", function(event)
+-- Tutorial (Ctrl+T)
+EventManager.on_event("fa-c-t", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
 

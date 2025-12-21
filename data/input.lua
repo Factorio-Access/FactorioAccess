@@ -96,6 +96,12 @@ data:extend({
       key_sequence = "CONTROL + D",
       consuming = "none",
    },
+   {
+      type = "custom-input",
+      name = "fa-c-t",
+      key_sequence = "CONTROL + T",
+      consuming = "none",
+   },
 
    {
       type = "custom-input",
@@ -1359,13 +1365,6 @@ data:extend({
       type = "custom-input",
       name = "fa-a-slash",
       key_sequence = "ALT + SLASH",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-ca-slash",
-      key_sequence = "CONTROL + ALT + SLASH",
       consuming = "none",
    },
 

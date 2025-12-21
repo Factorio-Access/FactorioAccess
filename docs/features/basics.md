@@ -90,7 +90,7 @@ Enable/disable build lock: `ctrl + b`
 
 Cycle your cursor through vehicles near your cursor: `shift + v`
 
-Open the tutorial: `ctrl + alt + /`
+Open the tutorial: `control + t`
 
 ## Description
 

@@ -793,8 +793,8 @@ register_ui_event("fa-s-slash", function(event, pindex)
    return EventManager.FINISHED
 end)
 
--- Ctrl+Alt+/ key toggles tutorial UI - can be opened from anywhere including GUIs
-register_ui_event("fa-ca-slash", function(event, pindex)
+-- Ctrl+T key toggles tutorial UI - can be opened from anywhere including GUIs
+register_ui_event("fa-c-t", function(event, pindex)
    local router = mod.get_router(pindex)
    local stack = router_state[pindex].ui_stack
 

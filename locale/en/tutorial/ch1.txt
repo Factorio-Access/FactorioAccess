@@ -1,6 +1,6 @@
 Welcome to the Factorio Access tutorial.  Before we get started, this chapter tells you a bit about what Factorio is, explains how to use the tutorial interface, and runs through a few basic checks.  To navigate through tutorial messages, press w and s.
 
-To get back here, use control alt slash.
+To get back here, use alt t.
 
 To close the tutorial interface, press e. This puts you back in whatever UI you were in, and remembers your place for next time.
 
