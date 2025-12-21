@@ -1,6 +1,7 @@
 # 0.16.46 (unreleased)
 
 - Tutorial and help UIs no longer have a one tick lag, unless you manage to open them within one tick of a mod update
+- Your search pattern persists between open and closes of the UI
 
 # 0.16.45 (2025-12-20)
 

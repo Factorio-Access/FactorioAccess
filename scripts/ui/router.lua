@@ -344,8 +344,6 @@ function Router:open_ui(name, params)
       self:open_child_ui(name, params)
    else
       -- Clear stack then push new UI
-      -- Clear any stale search pattern from previous session
-      router_state[self.pindex].search_pattern = nil
       self:_clear_ui_stack()
       self:_push_ui(name, params)
    end
@@ -382,6 +380,9 @@ function Router:_push_ui(name, params, context)
    local controller = create_controller_for_event(self)
    registered_uis[name]:open(self.pindex, params or {}, controller)
    controller:finalize()
+
+   -- Populate search cache for the new UI
+   controller:refresh_search_cache()
 end
 
 ---Pop the top UI from the stack (close it)
@@ -408,6 +409,9 @@ function Router:_pop_ui()
    -- Update GUI to show new top (or clear if empty)
    if #stack > 0 then
       GameGui.set_active_ui(self.pindex, stack[#stack].name)
+      -- Populate search cache for the UI we're returning to
+      local controller = create_controller_for_event(self)
+      controller:refresh_search_cache()
    else
       GameGui.clear_active_ui(self.pindex)
    end
