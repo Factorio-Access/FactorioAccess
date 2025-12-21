@@ -4,6 +4,10 @@
 - Report inserter throughput as swings per second from the prototype API, instead of guessed items per second from a
   list. For example "2.5 swings per second as stacks of 3".
   - This respects stack size overrides on the map.
+- Rocket silo fixes and improvements:
+  - Error if you have cargo and cannot receive the output because you didn't build a landing pad yet
+  - Fix rocket launching so that launches trigger space science pack tech unlock
+  - You now hear the shift enter hint when tiles are read and don't need to find it with right click.
 
 # 0.16.44 (2025-12-19)
 

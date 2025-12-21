@@ -2987,13 +2987,35 @@ EventManager.on_event(
 ---@param ent LuaEntity
 local function kb_launch_rocket(event, ent)
    local pindex = event.player_index
-   local try_launch = ent.launch_rocket({
-      type = defines.cargo_destination.surface,
-      surface = ent.surface,
-      transform_launch_products = true,
-   })
+   local cargo_inventory = ent.get_inventory(defines.inventory.rocket_silo_rocket)
+
+   local destination
+   if cargo_inventory and not cargo_inventory.is_empty() then
+      -- Cargo present, need a landing pad
+      local landing_pads = ent.surface.find_entities_filtered({ type = "cargo-landing-pad" })
+      if #landing_pads == 0 then
+         Speech.speak(pindex, { "fa.no-cargo-landing-pad" })
+         return
+      end
+      destination = {
+         type = defines.cargo_destination.station,
+         station = landing_pads[1],
+         transform_launch_products = true,
+      }
+   else
+      -- No cargo, launch to orbit
+      destination = {
+         type = defines.cargo_destination.orbit,
+      }
+   end
+
+   local try_launch = ent.launch_rocket(destination)
    if try_launch then
-      Speech.speak(pindex, { "fa.launch-successful" })
+      if destination.type == defines.cargo_destination.orbit then
+         Speech.speak(pindex, { "fa.launch-to-orbit-successful" })
+      else
+         Speech.speak(pindex, { "fa.launch-successful" })
+      end
    else
       Speech.speak(pindex, { "fa.not-ready-to-launch" })
    end

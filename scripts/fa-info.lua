@@ -248,16 +248,26 @@ local function ent_info_solar(ctx)
    end
 end
 
+--- Shared helper for rocket silo status. Returns true if info was added.
+---@param message fa.MessageBuilder
+---@param ent LuaEntity
+---@return boolean
+local function add_rocket_silo_info(message, ent)
+   if ent.type ~= "rocket-silo" then return false end
+
+   if ent.status == defines.entity_status.waiting_to_launch_rocket then
+      message:fragment({ "fa.ent-info-silo-complete" })
+      return true
+   elseif ent.rocket_parts ~= nil and ent.rocket_parts < ent.prototype.rocket_parts_required then
+      message:fragment({ "fa.ent-info-silo-partial", ent.rocket_parts, ent.prototype.rocket_parts_required })
+      return true
+   end
+   return false
+end
+
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_rocket_silo(ctx)
-   local ent = ctx.ent
-   if ent.type == "rocket-silo" then
-      if ent.rocket_parts ~= nil and ent.rocket_parts < ent.prototype.rocket_parts_required then
-         ctx.message:fragment({ "fa.ent-info-silo-partial", ent.rocket_parts, ent.prototype.rocket_parts_required })
-      elseif ent.rocket_parts ~= nil and ent.status == defines.entity_status.waiting_to_launch_rocket then
-         ctx.message:fragment({ "fa.ent-info-silo-complete" })
-      end
-   end
+   add_rocket_silo_info(ctx.message, ctx.ent)
 end
 
 ---@param ctx fa.Info.EntInfoContext
@@ -2083,6 +2093,10 @@ function mod.read_selected_entity_status(pindex)
 
    --Spawners: Report evolution factor
    run_handler(ent_status_spawner_evolution)
+
+   --Rocket silo status
+   if add_rocket_silo_info(ctx.message, ent) then ctx.message:list_item() end
+
    return ctx.message:build()
 end
 
