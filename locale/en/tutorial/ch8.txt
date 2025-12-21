@@ -88,19 +88,18 @@ To clear a slot, assign the empty hand to it.
 
 A very good way to do this is to have a quickbar per category.  For example, quickbar 1 can be all kinds of belts, 2 can be all kinds of inserters, 3 can be for power, etc.
 
-The pipette tool is arguably more and less useful at the same time.  When  your hand is full q empties it, but when your hand is empty the pipette tool is invoked.
+The pipette tool is much more situational, but invaluable when it applies.  You invoke it by pressing q.  When  your hand is full q empties it, but when your hand is empty the pipette tool is invoked instead.
 
 This is a bit like the smart inserting we did earlier, but in reverse.  Pipette on a building brings more of that building to your hand.  Pipette on water grabs an offshore pump.  Pipette on a resource grabs a drill.  Etc.  Try it to learn what it does.  Also, expect this list to grow slowly over time.
 
-The reason pipette is valuable is because sometimes you are working with buildings for a little while that you will not touch again for hours.  An example of this could be storage tanks, if you limit yourself to what you have unlocked now.
+One reason pipette is valuable is because sometimes you are working with buildings for a little while that you will not touch again for hours.  An example of this could be storage tanks, if you limit yourself to what you have unlocked now.  There are many more later.
 
 In that case, it is often more convenient to use pipette than it is to set up a whole quickbar of stuff.
 
 It also works on ghosts, to put the item for the ghost in your hand.  Using pipette on a ghost gives you what you need to build it. Moving to the top left corner and placing it will then place it over the ghost, and copy the settings.
 
-The final advantage of the pipette tool is that it matches the direction of the item on the ground.  You may quickly notice and likely be irritated by the quickbar always facing your hand to the north.  Because we need to match vanilla in some ways, we can't change this--but even in vanilla pipette preserves orientation.  So, pipette on a south-facing belt gets you a belt of the same kind facing in the same direction.
+The final advantage of the pipette tool is that it matches the direction of the item on the ground.  You may quickly notice and likely be irritated by the quickbar always facing your hand to the north.  Pipette on a south-facing belt gets you a belt of the same kind facing in the same direction, not just a belt facing north.
 
 To move on, we will next discuss building long lines of things.  If you want to, you should now know enough to automate power.  But this will require placing hundreds of belt segments by hand, tile by tile.  The next chapter covers your alternatives.
 
 If you want something to be doing while you continue reading, now is a good time to start crafting belts. A hundred or so can't hurt to say the least.  Note that the belt recipe is like the power pole, and outputs 2 belts per run.
-

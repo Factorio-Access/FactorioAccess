@@ -14,7 +14,9 @@ If you did not purchase space age, this does not apply to you.
 
 If you did, please exit the game, go into the launcher's mod menu, and disable quality, elevated rails, and space age.
 
-It is also advantageous to enable peaceful mode. This means that you have as much time as you want before enemies attack.  You may wish to do that now as well.  To do so, customize your save in the launcher's menu, go to enemies, and toggle it.  The Compass valley preset does this for you if you are using it.
+It is also advantageous to enable peaceful mode. This means that you have as much time as you want before enemies attack.  You may wish to do that now as well, but that means remaking your save.
+
+To do so, customize your save in the launcher's menu, go to enemies, and toggle it.  The Compass valley preset does this for you if you are using it.
 
 The tutorial consists of chapters.  You move between chapters with control tab.  We call these tabs.
 
