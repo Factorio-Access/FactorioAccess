@@ -40,13 +40,15 @@ For example, if you put it south of the furnace facing north, the northwest corn
 
 Your first choice is to take your drill, face it toward your furnace, and fuel it.  This will automate smelting, at least as long as both the drill and furnace have coal, and your job will be to make sure that fuel stays in all three places.
 
-The second option is a bit more subtle, though just as easy to set up.  You can also place this second drill facing your first drill.
+The second option is a bit more subtle, though just as easy to set up.  You can also place this second drill facing your first drill on the coal patch, so that you always have coal ready.
 
 Remember that drills output more coal than they need as fuel.  If you fuel the back drill it can fuel the one in front of it.  Filling the back drill with coal is good for thousands of items.
 
 You can also face the drills toward each other.  In this case, they will fuel each other forever, and you can skim off the top.  You can extract all of the fuel from one drill with any of the quick transfer controls.  As long as you don't take from both, the setup will keep going, but unlike the chest it will stop and wait for you to take things out much sooner.
 
-We will teach you a more interesting setup shortly.  But for now your goal is to get 4 drills total, and a second furnace.
+We will teach you a more interesting setup later.  In a normal run, the above setups are needed to get you far enough to be crafting more complicated things, and those things are what let you build the more interesting options.
+
+For now your goal is to get 4 drills total, and a second furnace.
 
 once you have, use two drills to make a self-sustaining coal mine, then use the drill and furnace combination once on iron and once on copper.  Put fuel in everything, and let it run.
 
@@ -56,9 +58,11 @@ It's  a good idea to put fast travel points near your smelting setups.  Everythi
 
 It is also a good time for us to talk about scanner subcategories.  You may have noticed that the scanner says things like "burner mining drill 1 of 2".
 
-This is because we group things one more level.  When you place buildings that are similar to each other, or when you have multiple iron ore patches for example, we put them in a subcategory.  You navigate between instances with shift page up and down.
+This is because we group things into one more level.  When you place buildings that are similar to each other, or when you have multiple iron ore patches for example, we put them in a subcategory.  You navigate between instances with shift page up and down.
 
 If this seems inefficient now, it will make sense later.  This is how we make it possible to organize hundreds of buildings.
+
+Some things, for example forests, even split into multiple entries as you move closer.
 
 The reason that this is suddenly important is that furnaces are in categories.  In particular, all non-functional furnaces are in the same category.  Since a furnace changes what it is making based on what you put in it, the scanner cannot separate it out without it working on a recipe.
 

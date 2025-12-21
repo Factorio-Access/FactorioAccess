@@ -66,7 +66,7 @@ That means that you can put coal from the drill back into the drill to keep it r
 
 You have a few ways to get stuff out of the chest.
 
-First are control click/right click, like you are doing a smart insert, but this time with an empty hand.  in this case, the game will take things out intelligently.  For a chest, this is "remove everything".
+First and second are control click/right click, like you are doing a smart insert, but this time with an empty hand.  In this case, the game will take things out intelligently.  For a chest, this is "remove everything".
 
 You empty your hand by pressing q.  Q serves a second function when your hand is already empty, however, so if it says it put something in your hand instead just hit q again.  We will talk about that in a little bit.
 
