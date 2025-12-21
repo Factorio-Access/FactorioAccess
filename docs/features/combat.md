@@ -6,6 +6,8 @@ NOTE: Most of these only work in combat mode because they have other meanings el
 
 Enter or exit combat mode: control shift i
 
+Cycle between equipped weapons: c
+
 Fire your weapon: hold space
 
 Fire at the selected entity or approximately at the tile under the cursor: shift + space outside combat mode. N/a in combat mode since that disables your cursor.
