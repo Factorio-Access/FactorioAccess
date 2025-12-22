@@ -48,6 +48,8 @@ Cut will take the box you mark and mark everything in it for destruction, then g
 
 You can use cut to grab a large setup and move it sideways by a few tiles for example, by just placing the blueprint and invoking KK.
 
+Just like a traditional clipboard, you can get whatever is on the clipboard back with control v.
+
 Unfortunately, we must now discuss an edge case.  Sighted players build from the center of buildings and blueprints, not from the northwest corner.  For this reason, the mod has to compute the dimensions of the blueprint by what is in it.  This means that if you put one entity in the blueprint and then select a 1000 by 1000 box, you will only get the one entity.  If that's a chest, your blueprint is only 1 by 1!
 
 This can also get tricky because there is not necessarily an entity at every corner.  To make an example, place 4 chests in a square, delete the northwest chest, and then blueprint it.  You will find that your blueprint is still 4 by 4, and that when placed your cursor is over the hole!
