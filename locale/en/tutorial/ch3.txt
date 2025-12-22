@@ -78,13 +78,17 @@ We call left bracket clicking, and the tutorial will refer to it that way from n
 
 When you click the drill, the mod puts it in your hand.  You may now build it by clicking the ground where you want it to be placed.
 
-Burner mining drills are 2 by 2, and mine everything directly under them.
+Burner mining drills are 2 by 2, and mine everything directly under them.  So, a drill over coal gives coal.
+
+In some rare cases, patches generate close enough together that a drill on the edge can be on two patches at once. When that happens, you get both resources out of the drill.  But patches never overlap, that is there are never two resources on the same tile.  Because you are building near the center of the patch, this is not a concern even if your save did generate that way.
 
 You are holding it by the top left (northwest) corner.  In this case, it will extend one tile to the right and one tile down from your cursor's position.
 
-Use r to change the direction it will face.  In this case, face it north, so that it will match this tutorial.
+Use r to change the direction it will face.  It started facing north, but now is a good moment to become comfortable with the controls.  In this case, leave it facing north, so that it will match this tutorial.
 
-Then click the coal with it in your hand, and it will instantly build itself.
+Note that shift r rotates counterclockwise.
+
+Now click the coal with it in your hand, and it will instantly build itself.
 
 Factorio never permanently takes a structure away.  You can get it back at no cost. To do so, just mine it.
 
