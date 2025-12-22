@@ -221,7 +221,7 @@ function mod.tick(pindex)
    for sound_id, cluster in pairs(current_sounds) do
       local dx = cluster.center_x - ref_pos.x
       local dy = cluster.center_y - ref_pos.y
-      local params = SoundModel.map_relative_position(dx, dy, ref_distance)
+      local params = SoundModel.map_relative_position(dx, dy, half_width, ref_distance)
       local pitch = health_to_pitch(cluster.max_health)
 
       local builder = build_cluster_sound(sound_id, params, pitch)

@@ -17,9 +17,9 @@ local SETTING_NAMES = SettingDecls.SETTING_NAMES
 local mod = {}
 
 -- Configuration
-local THRESHOLD = 0.2 -- Distance threshold for detecting arrival at endpoint
-local PICKUP_VOLUME = 0.1
-local DROPOFF_VOLUME = 0.2
+local THRESHOLD = 0.5 -- Distance threshold for detecting arrival at endpoint
+local PICKUP_VOLUME = 0.4
+local DROPOFF_VOLUME = 0.6
 
 -- Sound IDs
 local PICKUP_SOUND_ID = "fa_inserter_pickup"
@@ -152,7 +152,7 @@ function mod.on_tick()
          local pickup_pos = selected.pickup_position
          local dx = pickup_pos.x - inserter_pos.x
          local dy = pickup_pos.y - inserter_pos.y
-         local params = SoundModel.map_relative_position(dx, dy)
+         local params = SoundModel.map_relative_position(dx, dy, 3)
          play_pickup_sound(pindex, params)
       elseif dropoff_fired then
          -- Pan based on direction from inserter center to dropoff position
@@ -160,7 +160,7 @@ function mod.on_tick()
          local drop_pos = selected.drop_position
          local dx = drop_pos.x - inserter_pos.x
          local dy = drop_pos.y - inserter_pos.y
-         local params = SoundModel.map_relative_position(dx, dy)
+         local params = SoundModel.map_relative_position(dx, dy, 3)
          play_dropoff_sound(pindex, params)
       end
 

@@ -7,6 +7,10 @@
     or in a number of other ways.  I needed to be able to do the tutorial testing without going nuts.
 - Improve scanner latency by making up for our WONTFIX engine crash issue that prevented scanner from being instant by hooking every possible event that might signify a new entity.
 - Bring back the hand crafting queue not empty sound
+- Tweak our sonifiers:
+  - Move the pan model to be less harsh when objects are vertically aligned with your cursor
+  - Make the inserter sonifier louder
+  - Make the inserter sonifier more robust when chasing items on transport belts
 
 # 0.16.45 (2025-12-20)
 

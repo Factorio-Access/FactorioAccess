@@ -122,7 +122,7 @@ function mod.tick(pindex)
       local pos = spawner.position
       local dx = pos.x - ref_pos.x
       local dy = pos.y - ref_pos.y
-      local params = SoundModel.map_relative_position(dx, dy, ref_distance)
+      local params = SoundModel.map_relative_position(dx, dy, half_width, ref_distance)
 
       local builder = build_spawner_sound(sound_id, params)
       compound:add(builder)

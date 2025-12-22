@@ -72,18 +72,14 @@ end
 ---Map a relative position to directional audio parameters.
 ---@param dx number X offset from listener to target (positive = east/right)
 ---@param dy number Y offset from listener to target (positive = south/behind in Factorio)
+---@param pan_range number Radius for panning (pan = dx / pan_range, clamped to -1..1)
 ---@param ref_distance number? Reference distance for attenuation (gain = 0.5 at this distance)
 ---@return fa.SoundModel.DirectionalParams
-function mod.map_relative_position(dx, dy, ref_distance)
+function mod.map_relative_position(dx, dy, pan_range, ref_distance)
    local dist = math.sqrt(dx * dx + dy * dy)
 
-   local pan
-   if dist < 0.8 then
-      pan = 0
-   else
-      -- sin(angle off forward) = dx / distance
-      pan = dx / dist
-   end
+   -- Percentage-based panning: position relative to pan_range
+   local pan = dx / pan_range
    pan = math.max(-1, math.min(1, pan))
 
    -- In Factorio, positive y is south (behind the player facing north)

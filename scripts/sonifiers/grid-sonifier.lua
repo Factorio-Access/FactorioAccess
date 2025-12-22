@@ -215,7 +215,7 @@ local function process_events(pindex, events, left, top, right, bottom)
                -- Compute directional params from event position relative to cursor
                local dx = event.x - center_x
                local dy = event.y - center_y
-               local params = SoundModel.map_relative_position(dx, dy, ref_distance)
+               local params = SoundModel.map_relative_position(dx, dy, half_width, ref_distance)
 
                local builder = event.sound_builder(sound_id, params)
                compound:add(builder)
