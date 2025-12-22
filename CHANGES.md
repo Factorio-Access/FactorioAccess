@@ -1,3 +1,8 @@
+# 0.16.48 (unreleased)
+
+- Remove mistaken checks blocking creation of tile-only blueprints
+- When blueprints contain tiles, include the tiles in the bounding box calculations
+
 # 0.16.47 (2025-12-22)
 
 - Fix: apparently crafting_queue_size throws when the player does not have a character yet, aka at tick 0, aka you can't make new games.

@@ -16,7 +16,6 @@ local function analyze_blueprint_base_dimensions(stack)
    if not stack.is_blueprint_setup() then return 0, 0 end
 
    local ents = stack.get_blueprint_entities()
-   if not ents then return 0, 0 end
 
    local west_most_x = 0
    local east_most_x = 0
@@ -24,30 +23,56 @@ local function analyze_blueprint_base_dimensions(stack)
    local south_most_y = 0
    local first_ent = true
 
-   for i, ent in ipairs(ents) do
-      local ent_width = prototypes.entity[ent.name].tile_width
-      local ent_height = prototypes.entity[ent.name].tile_height
-      if ent.direction == defines.direction.east or ent.direction == defines.direction.west then
-         ent_width = prototypes.entity[ent.name].tile_height
-         ent_height = prototypes.entity[ent.name].tile_width
+   if ents then
+      for i, ent in ipairs(ents) do
+         local ent_width = prototypes.entity[ent.name].tile_width
+         local ent_height = prototypes.entity[ent.name].tile_height
+         if ent.direction == defines.direction.east or ent.direction == defines.direction.west then
+            ent_width = prototypes.entity[ent.name].tile_height
+            ent_height = prototypes.entity[ent.name].tile_width
+         end
+
+         local ent_north = ent.position.y - math.floor(ent_height / 2)
+         local ent_east = ent.position.x + math.floor(ent_width / 2)
+         local ent_south = ent.position.y + math.floor(ent_height / 2)
+         local ent_west = ent.position.x - math.floor(ent_width / 2)
+
+         if first_ent then
+            first_ent = false
+            west_most_x = ent_west
+            east_most_x = ent_east
+            north_most_y = ent_north
+            south_most_y = ent_south
+         else
+            if west_most_x > ent_west then west_most_x = ent_west end
+            if east_most_x < ent_east then east_most_x = ent_east end
+            if north_most_y > ent_north then north_most_y = ent_north end
+            if south_most_y < ent_south then south_most_y = ent_south end
+         end
       end
+   end
 
-      local ent_north = ent.position.y - math.floor(ent_height / 2)
-      local ent_east = ent.position.x + math.floor(ent_width / 2)
-      local ent_south = ent.position.y + math.floor(ent_height / 2)
-      local ent_west = ent.position.x - math.floor(ent_width / 2)
+   local tiles = stack.get_blueprint_tiles()
+   if tiles then
+      for _, tile in ipairs(tiles) do
+         -- Tiles are 1x1, position is top-left corner (integer coords)
+         local tile_north = tile.position.y
+         local tile_east = tile.position.x + 1
+         local tile_south = tile.position.y + 1
+         local tile_west = tile.position.x
 
-      if first_ent then
-         first_ent = false
-         west_most_x = ent_west
-         east_most_x = ent_east
-         north_most_y = ent_north
-         south_most_y = ent_south
-      else
-         if west_most_x > ent_west then west_most_x = ent_west end
-         if east_most_x < ent_east then east_most_x = ent_east end
-         if north_most_y > ent_north then north_most_y = ent_north end
-         if south_most_y < ent_south then south_most_y = ent_south end
+         if first_ent then
+            first_ent = false
+            west_most_x = tile_west
+            east_most_x = tile_east
+            north_most_y = tile_north
+            south_most_y = tile_south
+         else
+            if west_most_x > tile_west then west_most_x = tile_west end
+            if east_most_x < tile_east then east_most_x = tile_east end
+            if north_most_y > tile_north then north_most_y = tile_north end
+            if south_most_y < tile_south then south_most_y = tile_south end
+         end
       end
    end
 

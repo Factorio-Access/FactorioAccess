@@ -78,8 +78,12 @@ local function render_config_form(ctx)
 
       -- Provide feedback about what was captured
       local entity_count = blueprint.get_blueprint_entity_count()
+      local tiles = blueprint.get_blueprint_tiles()
+      local tile_count = tiles and #tiles or 0
       if entity_count > 0 then
          controller.message:fragment({ "fa.planner-blueprint-created", entity_count })
+      elseif tile_count > 0 then
+         controller.message:fragment({ "fa.planner-blueprint-created-tiles", tile_count })
       else
          controller.message:fragment({ "fa.planner-blueprint-created-empty" })
       end
