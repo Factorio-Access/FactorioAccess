@@ -1,4 +1,4 @@
-It is now time to set up a basic smelting setup.  Also, to stop ignoring the crash site.
+It is now time to set up basic smelting, and to stop ignoring the crash site.
 
 In order to do anything without having to come back to it all the time, we need a second drill.  But drills need plates to craft.  They also need stone furnaces.  Before going further, go find the burner mining drill recipe and check the ingredients.
 
@@ -8,7 +8,9 @@ Fortunately, crafting is smart.  If you have enough and try to craft the drill, 
 
 Unfortunately, the mod is less smart.  We will try to tell you what's missing, but in this case we will for example claim it's the furnace.  So, you have to look a bit yourself.  The number you can craft is generally always correct, but figuring it out when it's zero is not.
 
-Now, we need 9 iron plates.  8 of them are easy.  They are in the crash site.  All of the crash site buildings may be mined, though they require holding x for a while to do it.  Some things in Factorio can be set to mine slower, and these are an example.  The buildings that contain items however are also containers, show up under the scanner as such, and support the container controls we taught in previous chapters.
+Now, we need 9 iron plates.  8 of them are in the crash site.  All of the crash site buildings may be mined, though they require holding x for a while.  Some things in Factorio mine slower than others.
+
+The crash site buildings that contain items are also containers.  They show up under the scanner as such and support the container controls we taught earlier.
 
 Choose whichever way you prefer to get the plates from the crash site pieces.
 
@@ -18,7 +20,7 @@ Once you do, pick a location to drop your furnace.  Usually, this is in the midd
 
 Then, use the controls of your choice to put both some coal and some iron ore in it.
 
-The mod introduces sounds for when various things happen, one of which is for when a crafting machine finishes crafting.  You will know that you have an iron plate because the furnace will play a soft beep, and moving your cursor over it will say that there is one ready as well.
+The mod plays a soft beep when a crafting machine finishes.  You will also see the output if you move your cursor over the furnace.
 
 We link this to the zoom.  Change the zoom with dash and equals, which controls how much of your factory you hear around you at once, and also sets what is on screen from the sighted perspective.
 
@@ -28,7 +30,7 @@ You can get the items out with any of the methods we have previously discussed.
 
 Since this is the first machine with multiple inventories, you can examine them by pressing tab with the machine's UI open.  To open a machine's UI, click it.
 
-The mod tries to allow you to open menus even if you have items in hand, but you may sometimes need to empty your hand especially if those items are buildings.  This is an unfortunate limitation we don't have a good way around.
+The mod tries to allow you to open menus even if you have items in hand, but you may sometimes need to empty your hand, especially if those items are buildings.
 
 Whether you mine the crash site or smelt 9 plates directly, proceed until you can craft a second burner mining drill.
 
@@ -68,4 +70,4 @@ The reason that this is suddenly important is that furnaces are in categories.  
 
 Finally, you may want to know how close you are to finishing.  If you put a plate in hand and press u, the mod is able to tell you how many you have made so far.  This also works on any recipe in the crafting menu.
 
-Before continuing, you should work by yourself to unlock both electronics and steam power.  If you are able to get here with lots of time to spare, feel free to read ahead and congratulations on being a skilled player.
+Before continuing, you should work by yourself to unlock both electronics and steam power.  If you finish with time to spare, feel free to read ahead.

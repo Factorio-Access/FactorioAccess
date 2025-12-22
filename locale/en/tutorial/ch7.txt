@@ -2,7 +2,7 @@ It is now time to set up power.
 
 Before you continue with this tutorial, use your knowledge to craft a steam engine, a boiler, an offshore pump, a lab, a pipe to ground, 4 or 5 regular pipes, and at least one electric pole.
 
-You could also craft transport belts and inserters, but we don't teach those now because you need a whole bunch to do anything with them.  On future runs, this is a place where you would start automating things while you wait, but for the sake of learning we choose to delay that a little bit longer.
+You could also craft transport belts and inserters, but we don't teach those now because you need a whole bunch to do anything with them.  On future runs, this is where you would start automating while you wait.
 
 You should know enough from previous chapters to get this far without our help.  The only thing that is new is that the electric pole recipe outputs two electric poles per run, which means that if you do the math you will find that it is taking 0.5 wood each.
 
@@ -18,9 +18,9 @@ If you press k on it, you'll notice that this takes 75 automation science packs.
 
 Next, find the automation science pack recipe.  Notice that it takes 5 seconds on top of the ingredients.  Those ingredients also take time.
 
-If you did this by hand, it would take quite a long time.  Later technologies need multiple science packs at once, and run into the hundreds and even the thousands.  Until now, Factorio may have felt like a weird survival game or something.  But now you are at the core of the game, and the core of the game is figuring out how to scale up production to meet the demand of the labs.
+If you did this by hand, it would take quite a long time.  Later technologies need multiple science packs at once, and run into the hundreds and even the thousands.  Until now, Factorio may have felt like a weird survival game.  But now you are at the core of the game, and the core of the game is figuring out how to scale up production to meet the demand of the labs.
 
-In fact, by the end of the game, even a sighted player doesn't have to walk to build, as their robots will just do it for them.
+By the end of the game, even a sighted player doesn't have to walk to build, as their robots will just do it for them.
 
 Sometimes, your next science pack is locked until you meet the prerequisites. In this case, you find it in the row of locked technologies.
 
@@ -34,7 +34,7 @@ k also works in your inventory, and provides a lot of details.  It also works on
 
 y in the crafting menu will tell you what all of the products of a recipe do.  On the map, it reads all of the properties of the item in hand.
 
-This chapter of the tutorial has an attached set of example blueprints.  What we are about to explain is complicated, and so to help you we have given you as many pieces as we can if you need to look at them.
+This chapter of the tutorial has attached example blueprints.  What we are about to explain is complicated, so we have provided pieces you can look at.
 
 Blueprints are like buildings, but place more than one structure at a time and place what are called ghosts instead of real structures.  If you have the items, invoking Kruise Kontrol on a ghost will build all ghosts it can find, filling out the blueprint for you.
 
@@ -46,7 +46,9 @@ The two example blueprints here are the boiler assembly we are about to describe
 
 These blueprints are permanent items which go to your inventory when your hand is emptied.  You can destroy them instead with control backspace, either from the map with it in your hand or from an inventory with it focused.
 
-Control backspace is dangerous delete, which is used when destroying something in a way you can't get it back. This applies to various kinds of items containing data, but to answer a commonly asked question, you cannot destroy regular physical items this way.  Indeed the only way to destroy regular items is to put them in a chest, then shoot the chest.
+Control backspace is dangerous delete, used when destroying something you can't get back. This applies to various kinds of items containing data.
+
+To answer a commonly asked question, you cannot destroy regular physical items this way.  The only way to destroy regular items is to put them in a chest, then shoot the chest.
 
 The first thing you want to do now is find water.  This is in the resource category of your scanner.  Your cursor is placed on the part of the water closest to your character.  Get your character over there.  Note that your character cannot swim, so you need it to be on land.
 
@@ -86,7 +88,9 @@ The rule for an offshore pump is that it is 3 wide by 2 high.  The frontmost til
 
 To get to the helper menu, get your character near water, put an offshore pump in hand, and alt click.  This will give you a list of candidate locations. Click one, and the pump will build.  Then, find the pump with your scanner.
 
-Pipes are a little bit magical.  Factorio models fluids as instant teleportation.  If a pipe has water in it and something at the other end needs it, then the thing at the other end gets the water even if it is a very long pipe.  Factorio limits this to around 300 tiles, and counts buildings in that length. Later on, you may see a "pipeline overextended" error.  In that case, you have to make it shorter or use pumps, which you unlock later.
+Pipes are a little bit magical.  Factorio models fluids as instant teleportation.  If a pipe has water in it and something at the other end needs it, then the thing at the other end gets the water even if it is a very long pipe.
+
+Factorio limits this to around 300 tiles, and counts buildings in that length. Later on, you may see a "pipeline overextended" error.  In that case, you have to make it shorter or use pumps, which you unlock later.
 
 Careful here.  Offshore pumps and pumps are not the same thing.
 

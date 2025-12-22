@@ -4,7 +4,7 @@ Build lock is the most important.  When build lock is enabled, every movement of
 
 Movements of your cursor also try to build one tile behind your cursor (for example pressing once builds on the current tile then moves), but game API limitations prevent this from working nicely, and it is best avoided.
 
-Walking in general is not advantageous, but there is one exception: walking an already known to be cleared line.
+Walking in general is not advantageous, but there is one exception: walking a line you have already cleared of obstacles.
 
 If you know you want to build 200 transport belts in a line, you can turn build lock on, use the arrow keys to run the line, then fix the ends.  The ends will usually be a few tiles longer than you wanted.
 
@@ -16,7 +16,9 @@ The first one is transport belts.  For transport belts, the belts follow your ch
 
 The other case is electric poles.  For electric poles, we place them at the maximum reach to connect to the last one in the chain.  So for small electric poles the first one is always placed as soon as possible, then every 7 tiles thereafter.
 
-We closed the last chapter by setting up your self-maintaining coal mine, but your steam engine and boiler is probably very far away because it needs to be near water.  Now you have a tool to make the line conveniently.  Work out where the long line needs to be, turn build lock on, and run it. Then change the ends to where they need to be.  If you used the transport belt version of the sustaining coal mine, the input end needs to be at that belt, and then the output end goes within one tile of the boiler so an inserter can reach it.
+We closed the last chapter by setting up your self-maintaining coal mine, but your steam engine and boiler is probably very far away because it needs to be near water.  Now you have a tool to make the line conveniently.
+
+Work out where the long line needs to be, turn build lock on, and run it. Then change the ends to where they need to be.  If you used the transport belt version of the sustaining coal mine, the input end needs to be at that belt, and then the output end goes within one tile of the boiler so an inserter can reach it.
 
 If you do this right, then you now have a power setup that will run until the drill runs out of coal. That enables you to use inserters and electric mining drills.  We will talk more about electric mining drills in a little bit.
 
@@ -36,7 +38,7 @@ What it does not do is turn build lock off.  We cannot know if that's why you wa
 
 As a concrete example, you can place an audio ruler at your boiler, use cursor skipping to see how far it is, then run a belt until it hits the ruler before turning toward the boiler.
 
-The thing vanilla offers which we interface with is the clipboard.  You have worked with blueprints before.  The clipboard is just like that, but the blueprints it makes delete themselves when you press q.
+Vanilla offers the clipboard, which we interface with.  You have worked with blueprints before.  The clipboard is just like that, but the blueprints it makes delete themselves when you press q.
 
 To use it, you press control c to get the copy tool, then you click two points.  The mod will take everything inside that box and turn it into a blueprint.  Just like the other blueprints you have seen, it can be rotated.
 
@@ -50,13 +52,13 @@ You can use cut to grab a large setup and move it sideways by a few tiles for ex
 
 Just like a traditional clipboard, you can get whatever is on the clipboard back with control v.
 
-Unfortunately, we must now discuss an edge case.  Sighted players build from the center of buildings and blueprints, not from the northwest corner.  For this reason, the mod has to compute the dimensions of the blueprint by what is in it.  This means that if you put one entity in the blueprint and then select a 1000 by 1000 box, you will only get the one entity.  If that's a chest, your blueprint is only 1 by 1!
+There is an edge case here.  Sighted players build from the center of buildings and blueprints, not from the northwest corner.  For this reason, the mod has to compute the dimensions of the blueprint by what is in it.  This means that if you put one entity in the blueprint and then select a 1000 by 1000 box, you will only get the one entity.  If that's a chest, your blueprint is only 1 by 1!
 
 This can also get tricky because there is not necessarily an entity at every corner.  To make an example, place 4 chests in a square, delete the northwest chest, and then blueprint it.  You will find that your blueprint is still 4 by 4, and that when placed your cursor is over the hole!
 
 These are very important points to remember.  If you ever need to force a blueprint to be a certain size, consider some cheap wooden chests at all 4 corners.
 
-It is perhaps not immediately obvious why this belongs here, so here is how you use it to build a line.
+Here is how you use this to build a line.
 
 Place 5 belt segments.  Say facing east.  Hit control c, click the first belt segment, hit shift d to skip to the eastern end, and click again.  You now have a blueprint of 5 belt segments in your hand.
 
@@ -76,7 +78,7 @@ Blueprints deal with trees for you by marking them for deconstruction.  So when 
 
 Now that you are armed with these tools, you should be able to complete your power setup.
 
-As stated previously though, power does not run unless there is something that needs it.  So, we will jump ahead a little bit.  The one thing you can craft right now which will always use power no matter what is the accessibility radar.  Craft one of these and use it to test your power setup.  We will explain what it is for later, but placing one as soon as possible and leaving it on is something you want to do.
+Power does not run unless there is something that needs it.  The one thing you can craft right now which will always use power no matter what is the accessibility radar.  Craft one and use it to test your power setup.  We will explain what it is for later, but placing one as soon as possible and leaving it on is something you want to do.
 
 Right clicking on power poles gives you more information, including satisfaction, an abstract measure of how well you are doing at meeting the electrical demands of your machines.  Now is a good time to figure out how this all looks when it is working correctly.
 

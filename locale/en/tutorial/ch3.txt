@@ -1,4 +1,4 @@
-Now that we have what we need to bootstrap our base, we can begin to build for real.  But before we do that, it is time to talk about a few more mod features.
+Now we can talk about more mod features, and then place our first building.
 
 the mod has a concept of a virtual cursor, just called the cursor.  When all UIs are closed, wasd moves the cursor around.
 
@@ -34,7 +34,7 @@ The one non-cheat use of teleportation which is very important is that it can be
 
 Finally, you may return the cursor to the character at any time.  To do so, press j.
 
-You are probably wondering where this is going.  The answer is to the coal patch.  If you explored your inventory, you noticed that you have a burner mining drill. It is time to turn it on.
+Now, let's find the coal patch.  If you explored your inventory, you noticed that you have a burner mining drill. It is time to place it.
 
 Every map has a starting area, around the coordinates 0, 0.  To get your coordinates press k.  Starting areas are guaranteed to contain iron, copper, coal, stone, and water within a hundred tiles or so.
 
@@ -74,13 +74,13 @@ It doesn't matter how much coal you have at this moment, as long as it's at leas
 
 It is time to place your first building.  To do so, open your inventory, find the mining drill, and press left bracket.
 
-We call left bracket clicking, and the tutorial will refer to it that way from now on.  It's like the mouse buttons: left bracket is left mouse button, and right bracket is right mouse button.  Where possible, we match the sighted meanings, though this is not always possible.
+The tutorial calls left bracket clicking from now on.  It's like mouse buttons: left bracket is left click, right bracket is right click.  Where possible, we match the sighted meanings, though this is not always possible.
 
 When you click the drill, the mod puts it in your hand.  You may now build it by clicking the ground where you want it to be placed.
 
 Burner mining drills are 2 by 2, and mine everything directly under them.  So, a drill over coal gives coal.
 
-In some rare cases, patches generate close enough together that a drill on the edge can be on two patches at once. When that happens, you get both resources out of the drill.  But patches never overlap, that is there are never two resources on the same tile.  Because you are building near the center of the patch, this is not a concern even if your save did generate that way.
+In some rare cases, patches generate close enough together that a drill on the edge can be on two patches at once. When that happens, you get both resources out of the drill.  Patches never overlap though - there are never two resources on the same tile.  Because you are building near the center of the patch, this is not a concern.
 
 You are holding it by the top left (northwest) corner.  In this case, it will extend one tile to the right and one tile down from your cursor's position.
 
@@ -90,7 +90,7 @@ Note that shift r rotates counterclockwise.
 
 Now click the coal with it in your hand, and it will instantly build itself.
 
-Factorio never permanently takes a structure away.  You can get it back at no cost. To do so, just mine it.
+Mining structures gives them back at no cost.
 
 Once placed, move your cursor around a bit to see what the drill says.  In particular, note that it says it is out of fuel.
 
@@ -124,8 +124,10 @@ You will hear the drill come on for a moment, then stop, even if you put 50 coal
 
 If you put your cursor on the northwest corner of the drill, you will hear the word "output chute".  Drills drop stuff onto the ground one tile away from the output chute.  In this case, it is one tile north and a single piece of coal.  Find that now by moving your cursor around.
 
-When your character is physically on top of an item, you can pick it up by holding f.  Alternatively, tap x if it is in your character's reach and your cursor is on it.  We can't make those controls better.
+When your character is physically on top of an item, you can pick it up by holding f.  Alternatively, tap x if it is in your character's reach and your cursor is on it.
 
-The problem you now have is that your drill has nowhere to put coal after it lets the first piece out.  The rule is that tiles on the ground can hold exactly one item each.  Even though coal stacks to 50, only one coal will come out at a time.  Unfortunately, the rules for when a machine will stop like that are not entirely consistent.  The other important cases work differently.
+The problem you now have is that your drill has nowhere to put coal after it lets the first piece out.  The rule is that tiles on the ground can hold exactly one item each.  Even though coal stacks to 50, only one coal will come out at a time.
+
+Unfortunately, the rules for when a machine will stop like that are not entirely consistent.  The other important cases work differently.
 
 We can fix this.  We will do so with a chest, in the next chapter where you learn how to craft items.

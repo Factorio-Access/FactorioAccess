@@ -1,14 +1,14 @@
 It is now time to automate science.  This chapter introduces only one new feature, then you can get to the building.
 
-The new feature is very simple, often referred to as larger cursors. Shift i zooms out, increasing the size of your cursor, and control i makes it smaller.
+The new feature is often referred to as larger cursors. Shift i zooms out, increasing the size of your cursor, and control i makes it smaller.
 
 When your cursor is zoomed out, you get a summary of what is in the area, and your cursor moves by the larger size.  For example, at size 3, each move is by 3 tiles, and you are getting a summary of the 3x3 area centered at your cursor's position.
 
-This is important for a bunch of reasons, but for this chapter the point of it is to find somewhere to build.
+For this chapter, the point is to find somewhere to build.
 
 Control shift i toggles combat mode.  If you turn combat mode on, the cursor will stop working and a bunch of controls change meaning.  If you press it by accident, press it again to get out.
 
-Anyway, let's get to it.  Start by finding some empty space to build. Rocks and trees are fine, but cliffs and resource patches are not.  You can't build over cliffs, and if you build over resource patches you have to take it down later to put drills there instead.
+Start by finding some empty space to build. Rocks and trees are fine, but cliffs and resource patches are not.  You can't build over cliffs, and if you build over resource patches you have to take it down later to put drills there instead.
 
 The recipe for automation science packs is one copper plate and one iron gear wheel, and the recipe for an iron gear wheel is 2 iron plates.
 
@@ -50,7 +50,7 @@ Next up, you can smart insert into them with control click.  Smart insert a bunc
 
 After they are configured, they have inventories.  If you click again, you can see their inventories as the first tab, and change the recipe by hitting control tab to get to the building configuration.
 
-Note that this can take a few hundred ms, so if you go super fast you might not see the inventories yet.
+Note that this can take a moment, so if you go super fast you might not see the inventories yet.
 
 The first inventory is the inputs, and the mod will tell you what it can accept.  Once configured, assembling machines only take the items they need for the current recipe.
 
@@ -58,7 +58,7 @@ Now, select some technologies and research them.  This setup will produce an aut
 
 The iron gear wheel machine often says output full.  This is expected.  It happens because the iron gear wheel recipe takes only 0.5 seconds (1 second in the machine, since it is 2 times slower than you are).  That means that this one gear assembler can satisfy up to 10 automation assemblers.
 
-It's not worth making use of that now.  Early game, technology is cheap enough that you might as well wait until you have the basics unlocked.
+It's not worth building all 10 now.  Early game, technology is cheap enough that you might as well wait until you have the basics unlocked.
 
 To continue on, you should spend some time playing around.  At this point, you can unlock everything that only needs automation science packs, though slowly.
 
@@ -88,4 +88,4 @@ The problem is, though, that every steam engine needs to be in the supply range 
 
 For that reason, you have to leave some gaps every so often to get poles in the right place.
 
-Look at the blueprint and this will probably make a lot more sense.  But on the flip side this is a tutorial, not a walkthrough, and discovering these setups for yourself is a large part of the game.  So we won't spend more time explaining it.
+Look at the blueprint and this will probably make a lot more sense.  But this is a tutorial, not a walkthrough, and discovering these setups for yourself is a large part of the game.

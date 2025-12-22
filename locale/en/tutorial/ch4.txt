@@ -1,6 +1,6 @@
-You now know enough to make progress, though not efficiently.  It is time to begin moving faster and opening up the game to you.  This is the part of the tutorial where things suddenly jump in complexity.
+You now know enough to make progress, though not efficiently.  This chapter picks up the pace.
 
-You have accessed your inventory before.  Under that same UI are a bunch of others.  There are 3 mod UIs to concern yourself with, the main menu (e), the world menu (alt + w), and the mod configuration menu (control alt shift m).
+The main menu (e) contains several tabs.  There are also the world menu (alt + w) and mod configuration menu (control alt shift m).
 
 The latter two do not matter for a very long time, and we will not discuss them much.
 
@@ -20,7 +20,7 @@ Open your main menu, then go over to the research tab.  This is composed of 3 ro
 
 Use w and s to switch rows, and a and d to explore the row.
 
-Many of our UIs are like this, taking a not intuitive "shape" to make it so that you don't have to scroll through long menus.
+Many of our UIs take a non-obvious shape like this, so you don't have to scroll through long menus.
 
 Fortunately, every UI is searchable just like you searched your inventory earlier.
 
@@ -40,19 +40,17 @@ To find out what machines you can craft something in, press k.  This will also t
 
 You may also want to know what outputs of a recipe are for.  For this, press y to find out what kind of thing it is and what properties it has.
 
-We can't easily filter the list down to machines you have right now for a variety of reasons, but if you check all of them you will find out in this case that the one you have is a stone furnace.
+We can't easily filter to machines you have, but if you check all of them you will find out that in this case the one you have is a stone furnace.
 
 you started the game with one, but the reason that the stone from earlier in this tutorial is so useful is that you can now use it to make more.
 
-But now it's time to circle back.  The last chapter of this tutorial said we would teach you how to fix your burner mining drill.
-
-The punchline if you will is that stone furnaces require coal to function.  Coal and ore goes in and plates come out.  This is not obvious from the crafting menu, and indeed electric furnaces don't need the coal.  In general, you can recognize if a device needs fuel by seeing if it complains about not having any, or checking if it has a fuel inventory.
+Now, back to fixing your burner mining drill.  Stone furnaces require coal to function.  Coal and ore goes in and plates come out.  This is not obvious from the crafting menu, and indeed electric furnaces don't need the coal.  In general, you can recognize if a device needs fuel by seeing if it complains about not having any, or checking if it has a fuel inventory.
 
 If we don't have a stable supply of coal, it is not possible to make progress.
 
 We will fix this by making a wooden chest.  Use the scanner to find a tree, then let Kruise Kontrol mine a few for you.
 
-This will give you wood.  You will never have a shortage of wood because very few things use it, so don't worry about running out.
+This will give you wood.  Very few things use wood, so don't worry about running out.
 
 Once you have some, you can craft a wooden chest.
 
@@ -68,7 +66,7 @@ You have a few ways to get stuff out of the chest.
 
 First and second are control click/right click, like you are doing a smart insert, but this time with an empty hand.  In this case, the game will take things out intelligently.  For a chest, this is "remove everything".
 
-You empty your hand by pressing q.  Q serves a second function when your hand is already empty, however, so if it says it put something in your hand instead just hit q again.  We will talk about that in a little bit.
+You empty your hand by pressing q.  Q serves a second function when your hand is already empty, which we will discuss later.  If it says it put something in your hand instead, hit q again.
 
 Third is by opening the inventory itself.  You can click items to put them in hand, then press q to empty your hand to your inventory.  Alternatively, shift click will move things to your inventory one full slot at a time, and shift right click will move half of whatever is in the slot.
 

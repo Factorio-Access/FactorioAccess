@@ -14,7 +14,7 @@ If you did not purchase space age, this does not apply to you.
 
 If you did, please exit the game, go into the launcher's mod menu, and disable quality, elevated rails, and space age.
 
-It is also advantageous to enable peaceful mode. This means that you have as much time as you want before enemies attack.  You may wish to do that now as well, but that means remaking your save.
+You may also want to enable peaceful mode, which stops enemies from attacking until you attack them first. You may wish to do that now as well, but that means remaking your save.
 
 To do so, customize your save in the launcher's menu, go to enemies, and toggle it.  The Compass valley preset does this for you if you are using it.
 
@@ -24,7 +24,7 @@ Each chapter has 2 subtabs.  You move between these with tab by itself.  They ar
 
 Game UIs are organized the same exact way.
 
-Now that you know how to use the tutorial, we can talk about the game.
+Now, on to the game itself.
 
 Factorio is a game about building a factory.  Your goal is to build up a base which can launch a rocket.
 
@@ -46,7 +46,7 @@ Factorio is a game about solving problems nested in other problems.
 
 First, you learn how the basic pieces work.
 
-then, you put the basic pieces together into small things, around 10 by 10 in size.  These use conveyor belts (called transport belts by the game) and inserters (robot hands) to make one kind of thing.
+then, you put the basic pieces together into small things, around 10 by 10 in size.  These use transport belts and inserters (robot arms) to make one kind of thing.
 
 You then use those to make bigger pieces that put a few things together into a larger product.
 
@@ -68,7 +68,7 @@ One of the things that makes Factorio a great game is that sighted players play 
 
 The reward isn't "look at how I placed 1000 things that work", though you can play it that way.  Instead, it's "look how I elegantly solved the problem Factorio confronted me with, and integrated it into the rest of my stuff".
 
-Usually, a sighted player will start by being haphazard for their first run, throwing whatever they need at the time wherever.  Then, they learn to be more and more organized.  The only real difference is that as a blind player, being organized to start makes the game much easier.  The really painful place for us is organically discovering that this is required, which is why this tutorial spends so long explaining how Factorio wants you to play it.  Most sighted players fumble through for a while, because to them being disorganized is just a minor inconvenience.
+Usually, a sighted player will start by being haphazard for their first run, throwing whatever they need at the time wherever.  Then, they learn to be more and more organized.  The difference is that as a blind player, being organized from the start matters more. Sighted players can fumble through disorganization because they can glance around and reorient. We can't, so this tutorial front-loads the "how to think about it" stuff.
 
 As you get better at the game, your designs will tend to use more repeating patterns, but those repeating patterns will become complicated, and they will nest in larger things.
 
