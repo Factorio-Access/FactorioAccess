@@ -1089,6 +1089,32 @@ EventManager.on_event(
    end
 )
 
+-- Scanner: entity creation events (most use "entity" field)
+EventManager.on_event({
+   defines.events.on_built_entity,
+   defines.events.on_robot_built_entity,
+   defines.events.script_raised_built,
+   defines.events.on_entity_spawned,
+   defines.events.on_biter_base_built,
+}, ScannerEntrypoint.build_new_entity_handler("entity"))
+
+-- Scanner: entity creation events with different field names
+EventManager.on_event(defines.events.on_entity_cloned, ScannerEntrypoint.build_new_entity_handler("destination"))
+
+-- Scanner: Space Age entity creation events
+if script.feature_flags.space_travel then
+   EventManager.on_event(
+      defines.events.on_space_platform_built_entity,
+      ScannerEntrypoint.build_new_entity_handler("entity")
+   )
+   EventManager.on_event(defines.events.on_segment_entity_created, ScannerEntrypoint.build_new_entity_handler("entity"))
+   EventManager.on_event(defines.events.on_tower_planted_seed, ScannerEntrypoint.build_new_entity_handler("plant"))
+   EventManager.on_event(
+      defines.events.on_cargo_pod_delivered_cargo,
+      ScannerEntrypoint.build_new_entity_handler("spawned_container", true)
+   )
+end
+
 EventManager.on_event(defines.events.on_research_finished, Research.on_research_finished)
 -- New input event definitions
 

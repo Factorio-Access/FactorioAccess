@@ -552,6 +552,22 @@ function mod.on_new_entity(surface_index, entity)
    new_entity_queue:enqueue({ surface_index = surface_index, entity = entity })
 end
 
+-- Returns an event handler that extracts an entity from the given field and
+-- passes it to the scanner.
+---@param field_name string
+---@param allow_nil boolean? If true, nil entity is allowed (for optional fields). Default false.
+---@return fun(event: table)
+function mod.build_new_entity_handler(field_name, allow_nil)
+   return function(event)
+      local entity = event[field_name]
+      if not entity then
+         if not allow_nil then error("Expected entity in field '" .. field_name .. "' but got nil") end
+         return
+      end
+      if entity.valid then mod.on_new_entity(entity.surface.index, entity) end
+   end
+end
+
 function mod.on_entity_destroyed(event)
    SurfaceScanner.on_entity_destroyed(event)
 end
