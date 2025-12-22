@@ -6,6 +6,7 @@
   - This is a cheat and will not be documented centrally. Note however that you can do this with `/c` or the map editor
     or in a number of other ways.  I needed to be able to do the tutorial testing without going nuts.
 - Improve scanner latency by making up for our WONTFIX engine crash issue that prevented scanner from being instant by hooking every possible event that might signify a new entity.
+- Bring back the hand crafting queue not empty sound
 
 # 0.16.45 (2025-12-20)
 
