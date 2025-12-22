@@ -39,7 +39,8 @@ function mod.on_tick()
       local state = crafting_storage[pindex]
 
       -- Check if player has a non-empty crafting queue
-      if player.crafting_queue_size == 0 then
+      -- Apparently this throws if the player does not have a character
+      if not player.character or player.crafting_queue_size == 0 then
          state.last_played_tick = nil
          goto continue
       end

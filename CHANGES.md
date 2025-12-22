@@ -1,4 +1,8 @@
-# 0.16.46 (unreleased)
+# 0.16.47 (2025-12-22)
+
+- Fix: apparently crafting_queue_size throws when the player does not have a character yet, aka at tick 0, aka you can't make new games.
+
+# 0.16.46 (2025-12-21)
 
 - Tutorial and help UIs no longer have a one tick lag, unless you manage to open them within one tick of a mod update
 - Your search pattern persists between open and closes of the UI
