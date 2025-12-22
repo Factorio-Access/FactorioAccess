@@ -11,6 +11,7 @@
   - Move the pan model to be less harsh when objects are vertically aligned with your cursor
   - Make the inserter sonifier louder
   - Make the inserter sonifier more robust when chasing items on transport belts
+- Publish tutorial chapter 10, talking about how to automate research for the first time
 
 # 0.16.45 (2025-12-20)
 

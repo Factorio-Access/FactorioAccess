@@ -124,5 +124,17 @@ declare_tutorial_chapter({ "fa.tutorial-ch8-title" }, {
    },
 })
 declare_tutorial_chapter({ "fa.tutorial-ch9-title" }, {})
+declare_tutorial_chapter({ "fa.tutorial-ch10-title" }, {
+   example_blueprints = {
+      {
+         "fa.tutorial-example-blueprint-2-assemblers-and-lab",
+         "0eNqVk2GPgjAMhv8K6efNyAQV/ooxZsxGmxuF2+A8Y/jvt4me5kLM+Ymsa5+3b1cuUNkeW0fcQXkBMg17KDcX8HRgbWOMdY1QgvYe68oSH2StzZEYZQqDAOI9fkOZDmKiyOrqKUcNWwHIHXWEo8r1cN5xX1foAkTcC32trZVo0XSOjGwbiyCgbXyobTgqBJ7MlrNcwBnK1SwfYgN/eOpdnnrNW4iX05gArm/A8A1zcGiojeXkGpYH1E6ejogW7le7z17boBhSuHGhZ5joIvvtgtij60LsxWhG5T0FgfE+VRPM/G1n2bQz3XdNrWOm9IaQDcpWm4/3HC7/5VC95XAlnpdyAjd/wsVFPQVg3NJNKnKhRL4NMeqwDoTHPyMiLTxgCSp5TC65Tc4nmveJTkbFL3T+KpgvVZEVRb5OF0Uxz4bhBw9XJwU=",
+      },
+      {
+         "fa.tutorial-example-blueprint-4-steam-and-poles",
+         "0eNqV0s1ugzAMAOBXQT6HakBCCa9SVVOgVmUphIqk2yqUd58BrT2MreWWWPbn/HiExl7xMpALUI9Abe881IcRPJ2dsVPMmQ6hBh/QdCm6MzmEKIDcCb+gzuJRALpAgXCpnDe3d3ftGhw4QawKAi6956LeTT0YSnW5UwJuvNrvVIzil5S/LBVPpOIhdcbaFC22YaA2vfR2Fax+QLkOyq1g9gRU218tX5fK7a/2h7S/S01PliP/nCZbA6oXgOIB8GB90jBP1aEQSkihjhyjgN1E3OdWgDUN8qxCniywF4lM5usmy3U5YNwpmX7Dc/4Hp8xNVZlrqbWqskLrNxnjN22M/Ek=",
+      },
+   },
+})
 
 return mod

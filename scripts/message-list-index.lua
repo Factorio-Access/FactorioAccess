@@ -8,6 +8,7 @@ mod.MESSAGE_LISTS = {
    ["blueprint-book-help"] = true,
    ["category-rows-help"] = true,
    ["ch1"] = true,
+   ["ch10"] = true,
    ["ch2"] = true,
    ["ch3"] = true,
    ["ch4"] = true,
@@ -32,6 +33,6 @@ mod.MESSAGE_LISTS = {
    ["warnings-menu-help"] = true,
 }
 
-mod.MESSAGE_LISTS_HASH = "cbb7b868c6ce3de251743da6f0dff35ea60d6fd6edd880e80cd96a3d0eac8247"
+mod.MESSAGE_LISTS_HASH = "707da2709e64e2d3e602fb21855f242304fb5fd931ad11cfd556bc70e1622438"
 
 return mod
