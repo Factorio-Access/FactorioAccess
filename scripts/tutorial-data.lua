@@ -136,5 +136,13 @@ declare_tutorial_chapter({ "fa.tutorial-ch10-title" }, {
       },
    },
 })
+declare_tutorial_chapter({ "fa.tutorial-ch11-title" }, {
+   example_blueprints = {
+      {
+         "fa.tutorial-example-blueprint-tileable-smelter",
+         "0eNqd1O1uwiAUBuBbMec3GKGtlt6KWRZazxwJhQZw0Zje+2hddIk01v7rBzwHXj6uUOsTdk6ZANUVVGONh2p/Ba+ORurhm5EtQgXBSeM76wKtUQfoCShzwDNUrP8ggCaooPDWd3y5fJpTW6OLDciEQaCzPnazZqgTKSrEuiBwiU/Zuuh78mTxJRZPW9kbVvnCypdYE3Ms7pa25ki/Zcz5QJXx6EL8nxB3/0UCB+WwuTVgPFFgey8wC+Wz0N0sNH8PLe+oD9Yg/To5IxtMydu/BFKJijdWJ5vMskzIbLOE5rPoReeGpfcU40s26BT2ODm+lVpT1HEiTjW0szq9OK/EfEmM7DnGeBWpgG10HvcaAS2jNdhKo6w1rnwbbXQrPMu2G4f8g86PRrHlIheiKFkmxCbv+1/VxKuF",
+      },
+   },
+})
 
 return mod
