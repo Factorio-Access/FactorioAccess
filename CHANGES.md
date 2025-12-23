@@ -1,10 +1,11 @@
-# 0.16.48 (unreleased)
+# 0.16.48 (2025-12-22)
 
 - Remove mistaken checks blocking creation of tile-only blueprints
 - When blueprints contain tiles, include the tiles in the bounding box calculations
 - Start announcing the number of seconds per research unit.
   - The API is unclear. Please report bugs if you find weird numbers.
 - Get rid of shift+r. It used to be weapon reload but that has been replaced by proper ammo management and never quite did what you think it was for.
+- Add a tutorial chapter on electric mining drills and inserters
 
 # 0.16.47 (2025-12-22)
 
