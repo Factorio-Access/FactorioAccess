@@ -184,7 +184,6 @@ mod.UI_NAMES = {
 mod.ACCELERATORS = {
    ENTER_CONSTANT = "enter_constant",
    SELECT_SIGNAL = "select_signal",
-   RELOAD_WEAPONS = "reload_weapons",
    UNLOAD_GUNS = "unload_guns",
    UNLOAD_EQUIPMENT = "unload_equipment",
    PREVIEW_SPEAKER = "preview_speaker",
@@ -961,27 +960,6 @@ register_ui_event("fa-c-enter", function(event, pindex)
 end)
 
 -- Equipment/inventory accelerators (only work when UI is open)
--- SHIFT+R: Reload weapons
-register_ui_event("fa-s-r", function(event, pindex)
-   local router = mod.get_router(pindex)
-   local stack = router_state[pindex].ui_stack
-
-   if #stack > 0 then
-      local top_entry = stack[#stack]
-      local ui_name = top_entry.name
-      if registered_uis[ui_name] then
-         local ui = registered_uis[ui_name]
-         if ui.on_accelerator then
-            local controller = create_controller_for_event(router)
-            ui:on_accelerator(pindex, mod.ACCELERATORS.RELOAD_WEAPONS, nil, controller)
-            controller:finalize()
-            return EventManager.FINISHED
-         end
-      end
-   end
-   return nil -- Let it fall through to world handler (rotation)
-end)
-
 -- CTRL+SHIFT+R: Unload guns/ammo
 register_ui_event("fa-cs-r", function(event, pindex)
    local router = mod.get_router(pindex)

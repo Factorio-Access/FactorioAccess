@@ -226,6 +226,18 @@ local function localise_science_cost(tech)
    end
 end
 
+---Get the time per research unit for a technology.
+---Returns nil for trigger-based research (no lab time).
+---@param tech LuaTechnology
+---@return LocalisedString?
+local function localise_research_time_per_unit(tech)
+   -- Trigger-based research doesn't have a time per unit
+   if tech.prototype.research_trigger then return nil end
+
+   local ticks = tech.research_unit_energy
+   return { "fa.research-time-per-unit", FaUtils.format_time(ticks) }
+end
+
 ---@param tech LuaTechnology
 local function localise_research_requirements(tech)
    local trig_or_cost
@@ -576,6 +588,7 @@ mod.tech_name_string = tech_name_string
 mod.tech_description_string = tech_description_string
 mod.localise_research_requirements = localise_research_requirements
 mod.localise_research_rewards = localise_research_rewards
+mod.localise_research_time_per_unit = localise_research_time_per_unit
 mod.get_visible_researches = get_visible_researches
 
 return mod

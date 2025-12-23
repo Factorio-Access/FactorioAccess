@@ -100,6 +100,10 @@ local function read_tech_requirements(ctx, tech)
 
    -- Rewards
    ctx.message:fragment(Research.localise_research_rewards(ctx.player, tech))
+
+   -- Time per unit (if not trigger-based)
+   local time_per_unit = Research.localise_research_time_per_unit(tech)
+   if time_per_unit then ctx.message:fragment(time_per_unit) end
 end
 
 ---Render the research menu

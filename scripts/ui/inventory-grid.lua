@@ -653,11 +653,7 @@ local function handle_accelerator(ctx, accelerator_name)
    end
 
    -- Handle different accelerators
-   if accelerator_name == UiRouter.ACCELERATORS.RELOAD_WEAPONS then
-      -- Reload weapons FROM this inventory TO entity's guns
-      local result = Equipment.reload_weapons(ctx.pindex, entity, inv_index, entity)
-      ctx.message:fragment(result)
-   elseif accelerator_name == UiRouter.ACCELERATORS.UNLOAD_GUNS then
+   if accelerator_name == UiRouter.ACCELERATORS.UNLOAD_GUNS then
       -- Unload guns FROM entity TO this inventory
       local result = Equipment.remove_weapons_and_ammo(ctx.pindex, entity, entity, inv_index)
       ctx.message:fragment(result)

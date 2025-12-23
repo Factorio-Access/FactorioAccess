@@ -1,0 +1,3 @@
+If you have followed the tutorial so far, you should have the following recipes unlocked: electric mining drill, long-handed inserter, splitter, and underground belt.  This chapter will talk about the first two, and the next chapter will revisit belts.
+
+At this point, you know all core mod features.
