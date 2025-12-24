@@ -107,3 +107,5 @@ The final advantage of the pipette tool is that it matches the direction of the 
 To move on, we will next discuss building long lines of things.  If you want to, you should now know enough to automate power.  But this will require placing hundreds of belt segments by hand, tile by tile.  The next chapter covers your alternatives.
 
 If you want something to be doing while you continue reading, now is a good time to start crafting belts. A hundred or so is a good start.  Note that the belt recipe is like the power pole, and outputs 2 belts per run.
+
+Since you are now crafting lots of items, be aware that shift click crafts 5, and control shift click crafts as many as possible.
