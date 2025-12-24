@@ -1,0 +1,183 @@
+It is now time to revisit belts.  This is the second-most complicated topic in Factorio behind only trains.  This tutorial doesn't teach trains, and it is not recommended that you use them in a first run, so if you can get past these concepts you can likely win the game.
+
+This chapter comes with a bunch of example blueprints showing the proper layouts of the various things we are discussing, enough so that we are not going to discuss them in detail here.
+
+What you need to know is that they are all set up so that you input to the blueprint from the south side.
+
+By now you should have the splitter and underground belt unlocked.
+
+A problem you may have encountered already is that sometimes belts need to cross each other.  This is solved by the underground belt.
+
+The rule is that underground belt entrances and exits face in the same direction as regular belt units, but if an exit is in range of an entrance then they connect underground, just like underground pipes.  The difference is that the ends don't point in opposite directions.
+
+Building them is a little bit weird.  You build an entrance and an exit both by placing an underground belt.  They are the same item.  If you place a valid exit, it will automatically turn into an exit, otherwise it becomes an entrance.
+
+Except for understanding how they are placed, there is not much tricky about underground belts.  You should know only that you cannot mix underground belt tiers.  Later in the game, you will unlock faster belts.  So for example a fast underground belt will only connect to other fast underground belts.
+
+If you think of it like tunnels at different depths, that's pretty accurate.  Though not represented that way visually, you can do everything tunnels at different depths implies.  You could also think of it as teleporters tuned to a frequency, etc.
+
+There are in fact advanced techniques that we do not teach which allow you to put a bunch of underground belts in the same line, to get multiple belts through a one-tile-wide line.  There is no real use for it in vanilla, but if you want a challenge, try to work out how this works.
+
+If you form a cross shape of underground belts, the north-south pair goes north-south and the east-west pair goes east-west, and they do not interact underground in any way.
+
+The next piece of belt infrastructure to discuss is the splitter.  A splitter is a 2 by 1 tile entity.  Consider the larger dimension the width.  So if you place it north, it is wider east-west, and belts are moving through it from the south.
+
+There are two tiles behind the splitter and two tiles in front of the splitter, which you can think of as connection points.
+
+If you place belts on the tiles behind the splitter facing in the same direction as the splitter, they connect to the splitter.
+
+Tiles in front are more complicated.  Belts in front of the splitter always connect in some way.  If you placed a long straight belt going east to west, you would get sideloads.  If you place two belts facing outward, you can split directly into two corners.  We will discuss sideloads in a minute, but if you want to keep it simple you can just always fill the output tiles with belts facing in the same direction.
+
+There are some interesting things about splitters.  The first of these is that they are sort of badly named.  It only actually functions as a splitter if there is one belt behind it and two in front.
+
+If you put two belts behind it and one in front, it merges instead.
+
+If all 4 belts are present, what it actually does is called balancing.  Suppose one of the belts behind the splitter is mostly full, and the other is mostly empty.
+
+In this case, the splitter splits the traffic, not the belts.  The two outgoing belts will have equal amounts on both sides, even though the input belts did not.
+
+It is very important to mention that splitters will happily mix belts of different items.  If you put nice single-item belts behind it and they are of different items, both outgoing belts will end up with both items in some ratio.
+
+In general, you do not ever want to mix multiple items on one belt lane, and splitters make this very easy to do by mistake.
+
+Splitters also have a configuration tab.  We will discuss the belt analyzer at the end of this chapter, but clicking a splitter opens the splitter's menu instead.  Pressing control tab from there moves to the splitter's config.  You will rarely need this screen, but when you do it is one of the most important screens in Factorio.
+
+The labels tell you what keys to press to do what, so we won't be specific here and will just describe the features and the item chooser.
+
+Splitters have an input priority.  When set, the input priority means that it will prefer to pull from that side if there is anything on it, and won't use the other side until there isn't.
+
+For example, if you are using a splitter to join multiple mines together, this can make it so that one specific mine is drained first by letting those items through before all others.
+
+Splitters also have an output priority, which functions the same way.  If there is space on the preferred side that side will get items first.
+
+The third thing splitters can do is filter items.  After setting the output priority, you can click the priority button again to set a filter.
+
+This opens the item chooser, which is a tree-like control.  Moving left and right changes category, and moving downward drills down to more specific categories until you get to actual items at the bottom.
+
+Like all others, this menu is also searchable.
+
+To clear the filter, use backspace.
+
+When the filter is set, the output priority stops being a priority.  Instead, it is the direction of the filter.
+
+Suppose you set the output filter to the left of our north-facing splitter and chose iron plates.
+
+Then the west outgoing belt would have iron plates, and the east outgoing belt would have everything else.
+
+This is very useful when you need it, but shouldn't be overused.  One really good place to use it is for dealing with overlapping resource patches.
+
+As we discussed earlier, drills are happy to mine from multiple resources if multiple resources are in range.  A splitter with a filter can fix this, by taking a belt that occasionally has other stuff on it, and sorting it.
+
+It is very important to understand this next point though.  If iron plates are going left, they will never go right.  That means that if the belts behind the splitter are all full of iron and the belt leading out of the filtered side is full, the splitter will jam on you because none of the iron can get through, and the other belt will be left empty.
+
+This is why you cannot overuse them, or use them to put all your items on one belt and just sort it later.
+
+They function very nicely to sort items at high throughput junctions.  For example sorting iron plates and copper plates works reliably, because both sides are being drained rapidly by the rest of the factory and there is always extra space.
+
+As you build more complex setups, you might want to know what's going on.  For this we have the belt analyzer.  To open it, click a belt.
+
+When you open it, the mod takes a snapshot of the current state and presents it to you.  It offers four tabs: this belt, upstream, downstream, and total.
+
+This belt shows a slot-by-slot breakdown of what is on the current belt segment.
+
+The other three tabs show total counts of what is on the belt.  Total is everything, upstream is behind, and downstream is ahead.
+
+The analysis stops at belts which have multiple incoming or outgoing belts (splitters, plus the things we discuss below), as well as outgoing sideloads.  It does not consider other belts sideloading onto this one.  Basically, you can think of it as showing you one long straight piece.
+
+For advanced players, this mostly matches the circuit network definition, though we are not willing to guarantee that it is perfect.
+
+It is now time to discuss lanes and sideloads, terms which we have already had to use in this chapter.  We needed to cover simpler topics first before we could explain these concepts properly.
+
+Something you may have noticed is that your belts have a left and a right, and your machines often only fill one side.
+
+Belts are two for the price of one.  When you place a belt, you get two half-tile belts instead of one whole-tile belt, and each side is a lane.
+
+Lanes never mix by accident, not even when running through splitters.  So, each belt can hold up to two items on it without jamming: one on the left side, and one on the right.
+
+At corners, the belts both turn at the same time when you form the corner.
+
+Left of north is west, left of south is east, etc.  Pretend you are facing in the direction of the belt.  The belt's left would be your left.
+
+In Factorio, both belts and trains require being able to perform this transformation, so we don't report it as east and west.  After a little while, you will be able to do it in your head.
+
+The rules for getting things onto belts are easy.  An inserter always reaches as far as it can.  So an inserter on the left side of a belt will put things on the right lane.
+
+If you want to practice that, you can do so with a chest and an inserter to see what happens.
+
+For drills, a belt starting at the drill will use the right lane, otherwise it is the lane the drill is touching.  To understand that, consider what happens if you run a straight belt in front of a bunch of drills.
+
+You will want to do that in fact, as it is how you scale up mining resources.
+
+Here is where lanes become complicated.  Belts touching other belts interact in various ways when not forming a corner.
+
+If you place a long belt going to the north and then touch it with another belt from one of the sides, the second belt will pour onto it.  The mod tells you that the piece of the second belt is pouring, and that the piece of the first belt is sideloading.
+
+In this configuration, what happens is that both lanes of the horizontal belt fill up the left lane of the vertical belt.
+
+Because belts are moving at a constant speed, a single lane of a given belt type is half the throughput, so you have also potentially created a bottleneck.  The throughput of a transport belt is 900 items per minute, but only one lane of it is 450.  So when you sideload, you give up half the throughput.
+
+What you get in exchange is the ability to have more than one item on the belt without mixing up the lanes.
+
+It is possible to sideload from both sides at once, and in so doing combine two normal belts into one.
+
+If you do so, then you can use this to get up to 2 different kinds of items in front of one inserter reliably.
+
+Combined with a long-handed inserter and some puzzle solving, this lets you get up to 4 ingredients into the same machine using only one side.
+
+There are however 3 special cases that need more description.
+
+First, you likely never want to sideload into an underground belt entrance or exit.  If you do so, one lane is blocked and will not make progress, because the game is designed so that the lane closest to the underground entrance runs into what is visually the wall of the tunnel rather than continuing on.
+
+If that makes no sense, that's fine, the important thing is you shouldn't do it unless you are a very advanced player trying to do clever tricks.
+
+The second case to discuss is what happens if you sideload onto a corner, or if you try to form a sideload with the end of a belt.
+
+The rule for that is that belts prefer to be straight.  If you place 2 north-facing belt segments and then try to sideload from the west, you get a sideload from the west, not the south.  This is because the piece that could form a corner has a piece behind it, which gives it the option to form a straight piece instead.  Given the choice, individual belt pieces will always be straight.
+
+Finally, the last special case here is the most important one, so much so that the mod gives it a name: a merge.  Technically this is just a double sideload at a special position, but it is also the most important belt trick.
+
+A merge happens when you sideload both sides of the start of a belt.
+
+If you form a corner going east to north, then sideload that corner with a belt going west, the corner stops being a corner and becomes a straight belt with two sideloads.
+
+Because there is nothing behind the straight piece, you can know beyond all doubt that the belt safely merges the two incoming belts: one to the left lane, one to the right, but never mixing anything else in.
+
+The mod helps you recognize this case by saying merge.
+
+Merges are how you take 4 belts of one item each, and get to two belts of two items each.  We phrase it that way because that's the point when they're not very optional.  You can always do two items on two belts, but 4 items to the same machine will need a merge somewhere.
+
+Before closing out this chapter, there is one special thing about blueprints that doesn't fit anywhere convenient.
+
+This chapter contains an example blueprint with some drills.  Normally, you cannot place a drill over normal ground, and must build it on a resource patch.
+
+This is also true of blueprints, but the game will not error when you build it.  Instead, it will just ignore the drills it cannot place.
+
+That lets players have reusable blueprints for mining which do not need the patches to be of specific shapes.
+
+In any case, if you don't want spoilers, stop here.  The rest of this chapter isn't very long, but it provides a solution to a core part of the game for those who cannot otherwise figure out how to organize their factories.
+
+That solution is called the bus.  It's a technical term that the playerbase adopted to describe this strategy.
+
+To build a bus, you build very long parallel belts with a few tiles between them.
+
+Each belt in the bus gets one material, and you remember the order.  So if you were building a bus going east, you might remember the order starting from the north: iron, copper, gears, etc...
+
+Because you know the order, you know which belts you need to grab for any given thing.  To grab them, you use splitters.  Then you place underground belts to pass the items under the bus, and build off the side.  So if your bus goes east, you build little mini-factory towers of machines going north every so often.
+
+You can then turn around and add a lane to the bus starting at the output of these subfactories, and make your bus one lane wider each time you make something new.
+
+This strategy is boring and not the only way, and it also has some disadvantages.
+
+The biggest disadvantage is that things near the beginning of the bus get resources first, so if you do not have enough then sometimes things late in the factory rarely get to run.
+
+The second disadvantage is needing to pass the science packs to labs, which usually means adding some bus lanes going in the other direction.
+
+What you will quickly learn about doing it is that very long belts take a while to pass items down them.  What happens is that after a few hundred tiles or so, if things go wrong, it takes a very long time for everything to start back up.  Things have to travel down the bus slowly, then the science packs have to make their way back.
+
+You also have to run fluids along the bus eventually, which means dealing with pumps and pipes.
+
+But the advantage it has for you is that it definitely works and is easy to explain.  If you are stuck, the bus is simple to build and doesn't require too much creativity.
+
+Other ways to solve this include making bunches of smaller factories, for example "the automation science pack factory", doing complicated things with trains, moving ores and smelting at the machines that need them and doing everything via direct insertion, or limping slowly through the game until you unlock logistic robots and then never using belts again.
+
+If you chose to read this section, the choice you have is essentially whether you want to have a creative adventure or if you want to just grab a strategy that gets there in the end.
