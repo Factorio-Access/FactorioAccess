@@ -6,6 +6,7 @@
   for a variety of reasons, seems like it effectively hasn't worked at all for a long time, and I do not have time to rewrite it at the moment.
 - UIs now close immediately when their dependencies go away, for example emptying your hand or having the entity you are configuring
   get destroyed rather than waiting for your next interaction or erroring.
+- Exporting blueprint and blueprint books now copies directly to your clipboard without needing you to use the textbox
 
 # 0.16.48 (2025-12-22)
 

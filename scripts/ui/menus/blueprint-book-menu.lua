@@ -1,13 +1,14 @@
 local Blueprints = require("scripts.blueprints")
 local Functools = require("scripts.functools")
-local Localising = require("scripts.localising")
-local Speech = require("scripts.speech")
-local UiRouter = require("scripts.ui.router")
-local TabList = require("scripts.ui.tab-list")
-local Menu = require("scripts.ui.menu")
-local UiKeyGraph = require("scripts.ui.key-graph")
-local UiSounds = require("scripts.ui.sounds")
 local Help = require("scripts.ui.help")
+local LauncherCommands = require("scripts.launcher-commands")
+local Localising = require("scripts.localising")
+local Menu = require("scripts.ui.menu")
+local Speech = require("scripts.speech")
+local TabList = require("scripts.ui.tab-list")
+local UiKeyGraph = require("scripts.ui.key-graph")
+local UiRouter = require("scripts.ui.router")
+local UiSounds = require("scripts.ui.sounds")
 
 local mod = {}
 
@@ -171,8 +172,8 @@ local function render_settings(ctx)
 
    builder:add_clickable("export", { "fa.ui-blueprint-book-export" }, {
       on_click = function(c)
-         c.controller:open_textbox(book_stack.export_stack(), "export")
-         c.message:fragment({ "fa.ui-blueprint-book-export-string-shown" })
+         LauncherCommands.copy_to_clipboard(c.pindex, book_stack.export_stack())
+         c.message:fragment({ "fa.ui-blueprint-book-exported-to-clipboard" })
       end,
    })
 

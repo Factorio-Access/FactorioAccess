@@ -1,16 +1,17 @@
 local Blueprints = require("scripts.blueprints")
+local BoxSelector = require("scripts.ui.box-selector")
 local BuildDimensions = require("scripts.build-dimensions")
 local FaUtils = require("scripts.fa-utils")
 local Functools = require("scripts.functools")
 local Graphics = require("scripts.graphics")
+local LauncherCommands = require("scripts.launcher-commands")
 local Localising = require("scripts.localising")
+local Menu = require("scripts.ui.menu")
 local Speech = require("scripts.speech")
+local TabList = require("scripts.ui.tab-list")
 local TH = require("scripts.table-helpers")
 local UiKeyGraph = require("scripts.ui.key-graph")
-local Menu = require("scripts.ui.menu")
 local UiRouter = require("scripts.ui.router")
-local TabList = require("scripts.ui.tab-list")
-local BoxSelector = require("scripts.ui.box-selector")
 
 local mod = {}
 
@@ -182,23 +183,8 @@ local function render(ctx)
    if bp.is_blueprint_setup() then
       builder:add_clickable("export", { "fa.ui-blueprints-menu-export" }, {
          on_click = function(ctx)
-            ctx.controller:open_textbox(bp.export_stack(), "export")
-            ctx.message:fragment({ "fa.ui-blueprints-export-string-shown" })
-         end,
-         on_child_result = function(ctx, result)
-            -- User might paste a different blueprint string to import
-            if result and result ~= "" then
-               local import_result = bp.import_stack(result)
-               if import_result == 0 then
-                  -- Mark as permanent after successful import
-                  p.cursor_stack_temporary = false
-                  ctx.message:fragment({ "fa.ui-blueprints-import-success" })
-               else
-                  ctx.message:fragment({ "fa.ui-blueprints-import-failed" })
-               end
-            else
-               ctx.message:fragment({ "fa.ui-blueprints-export-closed" })
-            end
+            LauncherCommands.copy_to_clipboard(ctx.pindex, bp.export_stack())
+            ctx.message:fragment({ "fa.ui-blueprints-exported-to-clipboard" })
          end,
       })
    end
