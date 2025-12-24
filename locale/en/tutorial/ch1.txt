@@ -1,5 +1,7 @@
 Welcome to the Factorio Access tutorial.  Before we get started, this chapter tells you a bit about what Factorio is, explains how to use the tutorial interface, and runs through a few basic checks.  To navigate through tutorial messages, press w and s.
 
+before we continue, please note this is a tutorial.  It does not teach you everything the mod has to offer.  If you want to learn about topics intentionally left out here, please consult the reference documentation on the mod's GitHub readme.  The final chapters of the tutorial will give you a brief introduction to things we left out as well.
+
 To get back here, use alt t.
 
 To close the tutorial interface, press e. This puts you back in whatever UI you were in, and remembers your place for next time.
