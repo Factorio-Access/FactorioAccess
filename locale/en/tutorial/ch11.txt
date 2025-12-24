@@ -44,9 +44,21 @@ Before we go much further, two warnings.
 
 First, electric mining drills use lots of power.  You need to keep an eye on that.
 
-Second, if you use electric mining drills to get coal and your power stops working, then you will have no power until you fuel it by hand.  Worse, if you are running at capacity, there may not be enough power to get the drills running reliably enough to keep the power running.
+Second, if you use electric mining drills to get coal and your power stops working, then you will have no power until you fuel it by hand.  Worse, if you are running at capacity, there may not be enough power to get the drills running reliably enough for the factory to start up again.  This is worth explaining further.
 
-For these reasons, burner mining drills still have their place, even if you will only ever use a few.
+If you try to use electric mining drills for coal, it falls apart like this.  Your factory uses all of the power.  Then the drills slow down.  The coal to your generators decreases, and now your generators are producing less power.
+
+As this happens, all belts are emptying as machines use up ingredients but don't get more.
+
+When you try to fix it, all the drills and assembling machines and inserters turn on trying to refill all the now-empty belts as fast as possible.
+
+That will then consume more power than usual, which raises the demand for coal to your generators.
+
+If you are sufficiently unlucky, your setup cannot meet this power requirement, and will run out of coal almost immediately.  Then, you repeat the cycle.
+
+For these reasons, burner mining drills still have their place, even if you will only ever use a few.  At minimum, they serve as a valuable backup method to make sure you always have coal coming for your steam engines, though many players just choose to always mine their coal with them and not worry about it at all.
+
+Much, much later you may need more coal than you can get from burner mining drills, but you can worry about it then.  At that point in the game, you are probably expanding far enough to have a second coal patch, so you can just reserve one for power.
 
 You can stop reading here if you want to discover the game for yourself.  The rest of this chapter discusses the practical implications of these mechanics, and is a whole bunch of spoilers without new mod features.
 
