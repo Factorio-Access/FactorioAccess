@@ -674,6 +674,7 @@ function mod.build_preview_checks_info(stack, pindex)
    local surf = game.get_player(pindex).surface
    local vp = Viewpoint.get_viewpoint(pindex)
    local pos = vp:get_cursor_pos()
+   local tile_center = FaUtils.center_of_tile(pos)
 
    local result = { "" }
    local build_dir = vp:get_hand_direction()
@@ -691,7 +692,7 @@ function mod.build_preview_checks_info(stack, pindex)
 
    --For underground belts, state the potential neighbor
    if ent_p.type == "underground-belt" then
-      local entrance, actual_dist = TransportBelts.find_underground_entrance(surf, ent_p, pos, build_dir)
+      local entrance, actual_dist = TransportBelts.find_underground_entrance(surf, ent_p, tile_center, build_dir)
       if entrance then
          rendering.draw_circle({
             color = { 0, 1, 0 },
@@ -712,15 +713,16 @@ function mod.build_preview_checks_info(stack, pindex)
    end
 
    --For pipes to ground, state when connected
-   if stack.name == "pipe-to-ground" then
+   if ent_p.type == "pipe-to-ground" then
       local connected = false
-      local check_dist = 10
-      local closest_dist = 11
+      local check_dist = ent_p.max_underground_distance
+      assert(check_dist)
+      local closest_dist = check_dist + 1
       local closest_cand = nil
       local candidates = game.get_player(pindex).surface.find_entities_filtered({
          name = stack.name,
-         position = pos,
-         radius = check_dist,
+         position = tile_center,
+         radius = closest_dist,
          direction = FaUtils.rotate_180(build_dir),
       })
       if #candidates > 0 then
@@ -733,13 +735,9 @@ function mod.build_preview_checks_info(stack, pindex)
                surface = cand.surface,
                time_to_live = 60,
             })
-            local dist_x = cand.position.x - pos.x
-            local dist_y = cand.position.y - pos.y
-            if
-               cand.direction == FaUtils.rotate_180(build_dir)
-               and (FaUtils.get_direction_biased(pos, cand.position) == build_dir)
-               and (dist_x == 0 or dist_y == 0)
-            then
+            local dist_x = cand.position.x - tile_center.x
+            local dist_y = cand.position.y - tile_center.y
+            if (FaUtils.get_direction_biased(pos, cand.position) == build_dir) and (dist_x == 0 or dist_y == 0) then
                rendering.draw_circle({
                   color = { 0, 1, 0 },
                   radius = 1.0,
@@ -767,174 +765,6 @@ function mod.build_preview_checks_info(stack, pindex)
          end
       end
       if not connected then table.insert(result, { "fa.connection-not-connected-underground" }) end
-   end
-
-   --For pipes, read the fluids in fluidboxes of surrounding entities, if any. Also warn if there are multiple fluids, hence a mixing error. Pipe preview
-   if stack.name == "pipe" then
-      rendering.draw_circle({
-         color = { 1, 0.0, 0.5 },
-         radius = 0.1,
-         width = 2,
-         target = { x = pos.x + 0, y = pos.y - 1 },
-         surface = p.surface,
-         time_to_live = 30,
-      })
-      rendering.draw_circle({
-         color = { 1, 0.0, 0.5 },
-         radius = 0.1,
-         width = 2,
-         target = { x = pos.x + 0, y = pos.y + 1 },
-         surface = p.surface,
-         time_to_live = 30,
-      })
-      rendering.draw_circle({
-         color = { 1, 0.0, 0.5 },
-         radius = 0.1,
-         width = 2,
-         target = { x = pos.x - 1, y = pos.y - 0 },
-         surface = p.surface,
-         time_to_live = 30,
-      })
-      rendering.draw_circle({
-         color = { 1, 0.0, 0.5 },
-         radius = 0.1,
-         width = 2,
-         target = { x = pos.x + 1, y = pos.y - 0 },
-         surface = p.surface,
-         time_to_live = 30,
-      })
-      local ents_north = p.surface.find_entities_filtered({ position = { x = pos.x + 0, y = pos.y - 1 } })
-      local ents_south = p.surface.find_entities_filtered({ position = { x = pos.x + 0, y = pos.y + 1 } })
-      local ents_east = p.surface.find_entities_filtered({ position = { x = pos.x + 1, y = pos.y + 0 } })
-      local ents_west = p.surface.find_entities_filtered({ position = { x = pos.x - 1, y = pos.y + 0 } })
-      local relevant_fluid_north = nil
-      local relevant_fluid_east = nil
-      local relevant_fluid_south = nil
-      local relevant_fluid_west = nil
-      local box = nil
-      local dir_from_pos = nil
-
-      local north_ent = nil
-      for i, ent_cand in ipairs(ents_north) do
-         if ent_cand.valid and ent_cand.fluidbox ~= nil then north_ent = ent_cand end
-      end
-      local south_ent = nil
-      for i, ent_cand in ipairs(ents_south) do
-         if ent_cand.valid and ent_cand.fluidbox ~= nil then south_ent = ent_cand end
-      end
-      local east_ent = nil
-      for i, ent_cand in ipairs(ents_east) do
-         if ent_cand.valid and ent_cand.fluidbox ~= nil then east_ent = ent_cand end
-      end
-      local west_ent = nil
-      for i, ent_cand in ipairs(ents_west) do
-         if ent_cand.valid and ent_cand.fluidbox ~= nil then west_ent = ent_cand end
-      end
-      box, relevant_fluid_north, dir_from_pos = mod.get_relevant_fluidbox_and_fluid_name(north_ent, pos, dirs.north)
-      box, relevant_fluid_south, dir_from_pos = mod.get_relevant_fluidbox_and_fluid_name(south_ent, pos, dirs.south)
-      box, relevant_fluid_east, dir_from_pos = mod.get_relevant_fluidbox_and_fluid_name(east_ent, pos, dirs.east)
-      box, relevant_fluid_west, dir_from_pos = mod.get_relevant_fluidbox_and_fluid_name(west_ent, pos, dirs.west)
-
-      --Prepare result string
-      if
-         relevant_fluid_north ~= nil
-         or relevant_fluid_east ~= nil
-         or relevant_fluid_south ~= nil
-         or relevant_fluid_west ~= nil
-      then
-         local count = 0
-         table.insert(result, { "fa.connection-pipe-can-connect" })
-
-         if relevant_fluid_north ~= nil then
-            table.insert(result, {
-               "fa.connection-fluid-at-direction",
-               Localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_north]),
-               { "fa.direction", dirs.north },
-            })
-            count = count + 1
-         end
-         if relevant_fluid_east ~= nil then
-            table.insert(result, {
-               "fa.connection-fluid-at-direction",
-               Localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_east]),
-               { "fa.direction", dirs.east },
-            })
-            count = count + 1
-         end
-         if relevant_fluid_south ~= nil then
-            table.insert(result, {
-               "fa.connection-fluid-at-direction",
-               Localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_south]),
-               { "fa.direction", dirs.south },
-            })
-            count = count + 1
-         end
-         if relevant_fluid_west ~= nil then
-            table.insert(result, {
-               "fa.connection-fluid-at-direction",
-               Localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_west]),
-               { "fa.direction", dirs.west },
-            })
-            count = count + 1
-         end
-
-         --Check which fluids are empty or equal (and thus not mixing invalidly). "Empty" counts too because sometimes a pipe itself is empty but it is still part of a network...
-         if
-            relevant_fluid_north ~= nil
-            and (
-               relevant_fluid_north == relevant_fluid_south
-               or relevant_fluid_north == relevant_fluid_east
-               or relevant_fluid_north == relevant_fluid_west
-            )
-         then
-            count = count - 1
-         end
-         if
-            relevant_fluid_east ~= nil
-            and (relevant_fluid_east == relevant_fluid_south or relevant_fluid_east == relevant_fluid_west)
-         then
-            count = count - 1
-         end
-         if relevant_fluid_south ~= nil and (relevant_fluid_south == relevant_fluid_west) then count = count - 1 end
-
-         if count > 1 then table.insert(result, { "fa.connection-warning-mixing-fluids" }) end
-      end
-      --Same as pipe preview but for the faced direction only
-   elseif stack.name == "pipe-to-ground" then
-      local vp = Viewpoint.get_viewpoint(pindex)
-      local face_dir = vp:get_hand_direction()
-      local ent_pos = FaUtils.offset_position_legacy(pos, face_dir, 1)
-      rendering.draw_circle({
-         color = { 1, 0.0, 0.5 },
-         radius = 0.1,
-         width = 2,
-         target = ent_pos,
-         surface = p.surface,
-         time_to_live = 30,
-      })
-
-      local ents_faced = p.surface.find_entities_filtered({ position = ent_pos })
-      local relevant_fluid_faced = nil
-      local box = nil
-      local dir_from_pos = nil
-
-      local faced_ent = nil
-      for i, ent_cand in ipairs(ents_faced) do
-         if ent_cand.valid and ent_cand.fluidbox ~= nil then faced_ent = ent_cand end
-      end
-
-      box, relevant_fluid_faced, dir_from_pos = mod.get_relevant_fluidbox_and_fluid_name(faced_ent, pos, face_dir)
-      --Prepare result string
-      if relevant_fluid_faced ~= nil then
-         local count = 0
-         table.insert(result, {
-            "fa.connection-connects-directly",
-            { "fa.direction", face_dir },
-            Localising.get_localised_name_with_fallback(prototypes.fluid[relevant_fluid_faced]),
-         })
-      else
-         table.insert(result, { "fa.connection-not-above-ground" })
-      end
    end
 
    --For heat pipes, preview the connection directions

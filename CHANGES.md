@@ -1,6 +1,9 @@
 # 0.16.49 (unreleased)
 
 - Move logistics controls: control l for your cursor, control shift l for your own
+- Fix announcement of underground pipe preview connections
+- Remove support for trying to tell you what above-ground entities a given previewed pipe connects to.  This is broken
+  for a variety of reasons, seems like it effectively hasn't worked at all for a long time, and I do not have time to rewrite it at the moment.
 
 # 0.16.48 (2025-12-22)
 
