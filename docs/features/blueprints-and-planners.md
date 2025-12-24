@@ -71,7 +71,7 @@ In terms of building, blueprint books work almost identically to blueprints.  Th
 
 Blueprint books also have blueprint book level config. To get to it press `tab` as with other UIs.
 
-To get a blueprint into a book, put the blueprint in your hand and the book in your inventory. Find the book and hit `ctrl + shift + left bracket`.  We will hopefully be adding more convenient ways to do this in future.
+To get a blueprint into a book, use the labeled row in the blueprint book's config tab to pull them from your inventory.
 
 ### Planners
 

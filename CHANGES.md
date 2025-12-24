@@ -7,6 +7,8 @@
 - UIs now close immediately when their dependencies go away, for example emptying your hand or having the entity you are configuring
   get destroyed rather than waiting for your next interaction or erroring.
 - Exporting blueprint and blueprint books now copies directly to your clipboard without needing you to use the textbox
+- Add a row to the blueprint book config tab which allows pulling blueprints to it from your inventory rather than making you do the drop book, find book, control click dance. The old way is still available, if you want it for some reason.
+- Fix dragging blueprints in a book.
 
 # 0.16.48 (2025-12-22)
 

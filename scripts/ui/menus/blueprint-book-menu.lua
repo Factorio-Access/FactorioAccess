@@ -1,6 +1,7 @@
 local Blueprints = require("scripts.blueprints")
 local Functools = require("scripts.functools")
 local Help = require("scripts.ui.help")
+local ItemInfo = require("scripts.item-info")
 local LauncherCommands = require("scripts.launcher-commands")
 local Localising = require("scripts.localising")
 local Menu = require("scripts.ui.menu")
@@ -78,10 +79,17 @@ local function render_blueprints_list(ctx)
                   return
                end
 
-               -- Swap with previous item
-               book_inv.swap_stack(idx, idx - 1)
-               local moved_bp = book_inv[idx - 1]
-               c.message:fragment({ "fa.ui-blueprint-book-moved-to-row", idx - 1, moved_bp.label or "unnamed" })
+               -- Save label before swap, then swap with previous item
+               local bp_label = bp_stack.label or "unnamed"
+               book_inv[idx].swap_stack(book_inv[idx - 1])
+               -- New position is idx-1; the item before that is at idx-2
+               if idx - 1 == 1 then
+                  c.message:fragment({ "fa.ui-blueprint-book-moved-to-first", bp_label })
+               else
+                  local after_label = book_inv[idx - 2].label or "unnamed"
+                  c.message:fragment({ "fa.ui-blueprint-book-moved-to-row", idx - 1, bp_label, after_label })
+               end
+               c.graph_controller:suggest_move("item-" .. (idx - 1))
             end,
             on_drag_down = function(c)
                if idx == #book_inv then
@@ -89,10 +97,13 @@ local function render_blueprints_list(ctx)
                   return
                end
 
-               -- Swap with next item
-               book_inv.swap_stack(idx, idx + 1)
-               local moved_bp = book_inv[idx + 1]
-               c.message:fragment({ "fa.ui-blueprint-book-moved-to-row", idx + 1, moved_bp.label or "unnamed" })
+               -- Save label before swap, then swap with next item
+               local bp_label = bp_stack.label or "unnamed"
+               book_inv[idx].swap_stack(book_inv[idx + 1])
+               -- New position is idx+1; the item before that (at idx) now contains what was at idx+1
+               local after_label = book_inv[idx].label or "unnamed"
+               c.message:fragment({ "fa.ui-blueprint-book-moved-to-row", idx + 1, bp_label, after_label })
+               c.graph_controller:suggest_move("item-" .. (idx + 1))
             end,
          })
 
@@ -152,11 +163,31 @@ local function render_blueprints_list(ctx)
    return builder:build()
 end
 
+---Get blueprints from player inventory that can be added to the book
+---@param pindex number
+---@return LuaItemStack[] blueprints Array of blueprint stacks from inventory
+local function get_blueprints_from_inventory(pindex)
+   local player = game.get_player(pindex)
+   if not player then return {} end
+
+   local main_inv = player.get_main_inventory()
+   if not main_inv then return {} end
+
+   local blueprints = {}
+   for i = 1, #main_inv do
+      local stack = main_inv[i]
+      if stack.valid_for_read and stack.is_blueprint then table.insert(blueprints, stack) end
+   end
+   return blueprints
+end
+
 ---Render the settings tab
 ---@type fun(fa.ui.graph.Ctx): fa.ui.graph.Render?
 local function render_settings(ctx)
    local book_stack = get_book_stack(ctx)
    if not book_stack then return nil end
+
+   local book_inv = get_book_inventory(ctx)
 
    local builder = Menu.MenuBuilder.new()
 
@@ -193,6 +224,43 @@ local function render_settings(ctx)
          end
       end,
    })
+
+   -- Add row for adding blueprints from inventory
+   local inv_blueprints = get_blueprints_from_inventory(ctx.pindex)
+   if book_inv then
+      builder:start_row("add-from-inventory")
+
+      if #inv_blueprints > 0 then
+         builder:add_label("add-intro", { "fa.ui-blueprint-book-add-from-inventory" })
+
+         for idx, bp_stack in ipairs(inv_blueprints) do
+            local key = "inv-bp-" .. idx
+            builder:add_clickable(key, function(c)
+               -- Show blueprint info with slot number
+               local slot_num = #book_inv + 1
+               c.message:fragment(Blueprints.get_blueprint_info(bp_stack, false, c.pindex))
+               c.message:list_item({ "fa.ui-blueprint-book-would-be-slot", slot_num })
+            end, {
+               on_click = function(c)
+                  -- Insert the blueprint into the book
+                  local inserted = book_inv.insert(bp_stack)
+                  if inserted > 0 then
+                     local bp_name = bp_stack.label or { "fa.unnamed" }
+                     bp_stack.clear()
+                     c.message:fragment({ "fa.ui-blueprint-book-added-to-book", bp_name })
+                     UiSounds.play_menu_click(c.pindex)
+                  else
+                     c.message:fragment({ "fa.ui-blueprint-book-book-full" })
+                  end
+               end,
+            })
+         end
+      else
+         builder:add_label("add-intro", { "fa.ui-blueprint-book-no-blueprints-in-inventory" })
+      end
+
+      builder:end_row()
+   end
 
    return builder:build()
 end
