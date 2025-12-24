@@ -1,0 +1,19 @@
+The tutorial has given you blueprints.  It is time to learn how to make some.  This chapter is important, but also a little bit optional.  You can come back to it later if you want.
+
+Factorio has 3 items, collectively called planners.  The deconstruction planner, the upgrade planner, and the blueprint.  All three function in the same way.  You take one in hand, click the corners of the box to select, and then it does the thing.
+
+To get an upgrade planner, use alt u.  For deconstruction, use alt d.  For blueprints use alt b.
+
+Upgrade planners are the most limited, and you can expect better support in future.  When you select the area to upgrade, everything with a better item gets marked for upgrade.
+
+there are sighted configurations not yet exposed to you, but that doesn't mean it's useless.  The best use of an upgrade planner is this. Find a belt corner and use that as the first point. Then cursor skip to the other end, and select that as your second point.  Then, the whole belt upgrades.
+
+Deconstruction planners mark areas for deconstruction.  Once marked, entities stop functioning and wait for you to remove them.
+
+In both cases, Kruise Kontrol on a marked entity will perform the action, though there are known hard-to-fix bugs around upgrading transport belts that occasionally leave a piece alone, so it is a good idea to check by cursor skipping along belts you expected to be upgraded until you unlock construction robots.
+
+In both of these cases, the item is temporary just like blueprints.  You can get them into an inventory, but if you hit q it just goes away.
+
+Finally, in both cases holding shift when you select the second point will cancel any deconstruction or upgrade orders in the area.
+
+Let's turn to blueprints.  You have already learned to use blueprints.
