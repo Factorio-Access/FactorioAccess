@@ -1,4 +1,4 @@
-The tutorial has given you blueprints.  It is time to learn how to make some.  This chapter is important, but also a little bit optional.  You can come back to it later if you want.
+The tutorial has given you example blueprints.  It is time to learn how to make some.  This chapter is important, but also a little bit optional.  You can come back to it later if you want.
 
 Factorio has 3 items, collectively called planners.  The deconstruction planner, the upgrade planner, and the blueprint.  All three function in the same way.  You take one in hand, click the corners of the box to select, and then it does the thing.
 
@@ -6,7 +6,7 @@ To get an upgrade planner, use alt u.  For deconstruction, use alt d.  For bluep
 
 Upgrade planners are the most limited, and you can expect better support in future.  When you select the area to upgrade, everything with a better item gets marked for upgrade.
 
-there are sighted configurations not yet exposed to you, but that doesn't mean it's useless.  The best use of an upgrade planner is this. Find a belt corner and use that as the first point. Then cursor skip to the other end, and select that as your second point.  Then, the whole belt upgrades.
+There are sighted configurations not yet exposed to you, but that doesn't mean it's useless.  The best use of an upgrade planner is this. Find a belt corner and use that as the first point. Then cursor skip to the other end, and select that as your second point.  Then, the whole belt upgrades.
 
 Deconstruction planners mark areas for deconstruction.  Once marked, entities stop functioning and wait for you to remove them.
 
@@ -16,4 +16,56 @@ In both of these cases, the item is temporary just like blueprints.  You can get
 
 Finally, in both cases holding shift when you select the second point will cancel any deconstruction or upgrade orders in the area.
 
-Let's turn to blueprints.  You have already learned to use blueprints.
+Let's turn to blueprints.  You have already learned to use blueprints, but not how to make them.
+
+Just like with the other planners, you select the two corners to make a blueprint.  But instead of doing something it saves the data.
+
+When you first press alt b, you get an empty blueprint.  This is temporary like the other planners.  Once you select a box, it becomes permanent, and emptying your hand will send it to your inventory.
+
+Blueprints also have a configuration menu. With a blueprint in hand and all other UIs closed, right click to access it.
+
+You can set the name and description, as well as export the blueprint to your clipboard.
+
+You can also import from this menu, by clicking the option,  pasting the string, and hitting enter.  This overwrites any data in the blueprint with what is in the blueprint string.
+
+You may want to delete planners.  To do this, either hold the planner in hand with all UIs closed, or select it in an inventory.  Then hit control backspace, which we call "dangerous delete".  Dangerous delete is the keystroke that is used when the action you are about to take cannot be undone.
+
+Without exception, dangerous delete on the map operates on what is in your hand and dangerous delete in a UI operates on what is selected in the UI.
+
+If you are in a UI and try to use dangerous delete when it is not supported, nothing happens regardless of what is in your hand.
+
+Though you have likely not yet done this and won't for a long time, Factorio and the mod support placing tiles.  For this case, you should be aware of an extra feature.
+
+By default blueprints do not include tiles unless there are no buildings in range.  So, if you blueprint some buildings over concrete, you just get the buildings.
+
+If you end the selection with a right click, you can access a menu with checkboxes as to what to include instead of going straight to setting the blueprint up.  One option in there is "always include tiles", off by default.
+
+In addition to tiles, this supports other things such as fuel in vehicles which are more useful later once you have unlocked robots.
+
+A problem we have is that blueprints are not organized.  In particular, we cannot access the blueprint library, so they always take up an inventory slot.
+
+Sighted people organize their blueprints by putting them into blueprint books, and the mod supports this as well.  The book still has to take up a slot because of our lack of access to the blueprint library, but it only ever takes one and may hold as many blueprints as you want.
+
+The difference is that for the sighted a blueprint book takes no slots at all most of the time.
+
+To get a book, press control alt shift b.
+
+The interface for a book has two subtabs under the first tab, one for the blueprints in the book and one to manipulate the book itself. 
+
+Just like with blueprints, the book can be named and exported.
+
+To get more blueprints into the book, you can use the "move right and click to add blueprints from your inventory" row in the blueprint book settings.  This will move the blueprint from your inventory into the book.
+
+Like with fast travel, blueprints in the book have commands to manipulate them to the right of each blueprint.
+
+In addition, you may hold shift and use w and s to drag blueprints up and down.
+
+Building with the book is a bit different.  The book has a concept of the active blueprint, which you set by clicking in the menu.
+
+To find out what is active on the map, press comma.
+
+To cycle between the blueprints in the book without opening it, press m and dot.
+
+You have seen these three keys before in the splitter UI.  In general, the mod uses m, comma, and dot as context sensitive buttons for cases like this.  They will come up again a few times later, most notably for trains and the circuit network.
+
+Finally, you should be aware that books as well as the other planner items may be put on your quickbar.  Unlike a sighted player they still take up inventory slots, but they can at least be accessed quickly.  Unfortunately, you cannot put a blueprint inside a book directly on your quickbar at this time.

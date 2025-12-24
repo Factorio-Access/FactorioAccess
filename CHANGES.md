@@ -9,6 +9,8 @@
 - Exporting blueprint and blueprint books now copies directly to your clipboard without needing you to use the textbox
 - Add a row to the blueprint book config tab which allows pulling blueprints to it from your inventory rather than making you do the drop book, find book, control click dance. The old way is still available, if you want it for some reason.
 - Fix dragging blueprints in a book.
+- tutorial chapter 12 (the complex belt intersections) and 13 (blueprints, and upgrade/decon planners)
+  - If you are playtesting chapter 14 will be the "everything we don't have a good place for" chapter, then everyhthing after that is optional specific content.
 
 # 0.16.48 (2025-12-22)
 
