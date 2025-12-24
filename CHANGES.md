@@ -1,4 +1,4 @@
-# 0.16.49 (unreleased)
+# 0.16.49 (2025-12-23)
 
 - Move logistics controls: control l for your cursor, control shift l for your own
 - Fix announcement of underground pipe preview connections
