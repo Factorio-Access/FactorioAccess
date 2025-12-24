@@ -1090,15 +1090,15 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "fa-ca-l",
-      key_sequence = "CONTROL + ALT + L",
+      name = "fa-c-l",
+      key_sequence = "CONTROL + L",
       consuming = "none",
    },
 
    {
       type = "custom-input",
-      name = "fa-cas-l",
-      key_sequence = "CONTROL + SHIFT + ALT + L",
+      name = "fa-cs-l",
+      key_sequence = "CONTROL + SHIFT + L",
       consuming = "none",
    },
 

@@ -551,7 +551,7 @@ function mod.open_entity_ui(pindex, entity)
 
    -- Default: generic entity UI
    -- Note: Logistic containers open as normal chests to allow inventory access
-   -- Logistics config is accessed via explicit keybinding (fa-cas-l)
+   -- Logistics config is accessed via explicit keybinding (fa-cs-l)
 
    -- Check if the entity has any UI sections available
    local sections = build_entity_sections(pindex, entity)

@@ -3988,7 +3988,7 @@ EventManager.on_event("fa-backspace", function(event)
    end
 end, EventManager.EVENT_KIND.WORLD)
 
-EventManager.on_event("fa-ca-l", function(event)
+EventManager.on_event("fa-c-l", function(event)
    local pindex = event.player_index
    local player = game.get_player(pindex)
    if not player then return end
@@ -4010,7 +4010,7 @@ EventManager.on_event("fa-ca-l", function(event)
    router:open_ui(UiRouter.UI_NAMES.LOGISTICS_CONFIG, { entity = entity })
 end)
 
-EventManager.on_event("fa-cas-l", function(event)
+EventManager.on_event("fa-cs-l", function(event)
    local pindex = event.player_index
    local player = game.get_player(pindex)
    if not player or not player.character then return end

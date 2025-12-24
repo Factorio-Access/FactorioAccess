@@ -77,9 +77,9 @@ Access the character UI: `e` with nothing open
 
 Access the world menu: `alt w`
 
-Access your logistics GUI: `ctrl + alt + shift + l`
+Access your logistics GUI: `ctrl + shift + l`
 
-Access the logistics GUI of the selected entity: `ctrl + alt + l`
+Access the logistics GUI of the selected entity: `ctrl + l`
 
 Access the normal configuration GUIs of an entity: `left bracket`
 

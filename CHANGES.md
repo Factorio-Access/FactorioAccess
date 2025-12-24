@@ -1,3 +1,7 @@
+# 0.16.49 (unreleased)
+
+- Move logistics controls: control l for your cursor, control shift l for your own
+
 # 0.16.48 (2025-12-22)
 
 - Remove mistaken checks blocking creation of tile-only blueprints
