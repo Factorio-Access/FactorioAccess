@@ -1,6 +1,6 @@
 # UI System
 
-Last reviewed: 2025-09-30
+Last reviewed: 2025-12-23
 
 # The TLDRs
 
@@ -272,4 +272,47 @@ UIs can opt into being an overlay by adding a `is_overlay` callback.  This does 
 - Prevents closing when opening a UI, so that you can e.g. open fast travel while setting up a blueprint.
 - Closes to the overlay instead of the map on e, so that people can conveniently get back out of fast travel menus etc.
 
-Basically, in limited circumstances we need the cyclical behavior because the user needs to manipulate things with the cursor contextually, where the context is "I am making a  list of things by clicking them".  this lets them do that with all of their normal cursor tools.
+Basically, in limited circumstances we need the cyclical behavior because the user needs to manipulate things with the
+cursor contextually, where the context is "I am making a  list of things by clicking them".  this lets them do that with
+all of their normal cursor tools.
+
+## UI Binds
+
+UIs often depend on game state that can become invalid while the UI is open, for example the player changing their hand
+or an entity being destroyed. This is because the backing game objects become invalid.
+
+Binds tie a UI to its underlying state. When that state becomes invalid, the entire UI stack closes automatically, as if
+the player had closed it.
+
+There are two bind types: entity destruction and hand contents changes. Entity binds use Factorio's
+`register_on_object_destroyed` mechanism. Hand binds watch `on_player_cursor_stack_changed`.
+
+UIs declare binds via a `get_binds` callback. The return value has three meanings:
+
+- Return nil to signal invalid state and close immediately. Use this when the UI can't even open, like if the entity is
+  already gone.
+- Return an empty table to signal valid state with no binds. The UI stays open and nothing watches for invalidation.
+- Return a table of binds to register them. The UI closes when any bind is violated.
+
+The nil-vs-empty distinction matters for child UIs. Consider blueprint selection: the parent blueprint-setup UI binds to
+hand contents, then opens a child box selector for area selection. The child doesn't need its own bind since it's
+protected by the parent. If the hand changes, the whole stack closes. But the child must return empty, not nil. Nil
+would close it immediately on open.
+
+This is a subtle point for anyone implementing low-level UI components. If your component class defines `get_binds` at
+all, it must return empty when there's no declaration-level callback. The method existing but returning nil means "I
+tried to compute binds and failed" not "I have no binds".
+
+It is important to implement your UI without binds first.  That is, you still need to perform validation.  The bind
+system is not a mechanism to prevent errors, it is a mechanism to prevent players from seeing errors.  If binds wer
+removed, the following flow would be possible (and is the flow that prompted binds):
+
+- Player starts selecting a blueprint
+- Player puts transport belt in hand
+- Player clicks to place belt
+- UI system goes but a UI is open, let's handle it
+- Blueprint selector goes not a blueprint
+- Player gets a "wrong planner" error instead
+
+In particular docs are not very specific on if we get on_object_destroyed at the exact instance an object is destroyed,
+or if there is a small window of invalidity.

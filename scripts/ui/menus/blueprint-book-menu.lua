@@ -199,6 +199,9 @@ end
 ---@type fa.ui.UiPanelBase
 local blueprint_book_ui = TabList.declare_tablist({
    ui_name = UiRouter.UI_NAMES.BLUEPRINT_BOOK,
+   get_binds = function(pindex, parameters)
+      return { { kind = UiRouter.BIND_KIND.HAND_CONTENTS } }
+   end,
    tabs_callback = Functools.functionize({
       {
          name = "main",

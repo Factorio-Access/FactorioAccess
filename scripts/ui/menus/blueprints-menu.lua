@@ -242,6 +242,9 @@ mod.blueprint_menu_tabs = TabList.declare_tablist({
          },
       },
    }),
+   get_binds = function(pindex, parameters)
+      return { { kind = UiRouter.BIND_KIND.HAND_CONTENTS } }
+   end,
 })
 
 -- Register with the UI event routing system for event interception

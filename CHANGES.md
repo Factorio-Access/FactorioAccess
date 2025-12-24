@@ -4,6 +4,8 @@
 - Fix announcement of underground pipe preview connections
 - Remove support for trying to tell you what above-ground entities a given previewed pipe connects to.  This is broken
   for a variety of reasons, seems like it effectively hasn't worked at all for a long time, and I do not have time to rewrite it at the moment.
+- UIs now close immediately when their dependencies go away, for example emptying your hand or having the entity you are configuring
+  get destroyed rather than waiting for your next interaction or erroring.
 
 # 0.16.48 (2025-12-22)
 

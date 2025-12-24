@@ -11,6 +11,7 @@ local mod = {}
 ---@class fa.ui.BoxSelectorDeclaration
 ---@field ui_name fa.ui.UiName
 ---@field callback? fun(pindex: number, params: table, result: table) Optional callback when selection completes
+---@field get_binds? fun(pindex: number, parameters: table): fa.ui.Bind[]? Optional bind callback
 
 ---@class fa.ui.BoxSelectorParameters
 ---@field intro_message? LocalisedString Custom intro message
@@ -29,6 +30,7 @@ function mod.declare_box_selector(declaration)
    return MultipointSelector.declare_multipoint_selector({
       ui_name = declaration.ui_name,
       intro_message = { "fa.box-selector-intro" },
+      get_binds = declaration.get_binds,
       point_selected_callback = function(args)
          ---@type fa.ui.BoxSelectorState
          local state = args.state

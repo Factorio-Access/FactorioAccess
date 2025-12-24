@@ -381,6 +381,11 @@ mod.entity_ui = TabList.declare_tablist({
       local entity = parameters and parameters.entity
       return build_entity_sections(pindex, entity)
    end,
+   get_binds = function(pindex, parameters)
+      local entity = parameters and parameters.entity
+      if not entity or not entity.valid then return nil end
+      return { { kind = UiRouter.BIND_KIND.ENTITY, entity = entity } }
+   end,
 })
 
 ---Check if an entity has a UI accessible via the entity UI system

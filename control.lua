@@ -668,6 +668,9 @@ EventManager.on_event(
 
       CursorChanges.on_cursor_stack_changed(event, pindex, read_hand)
       VirtualTrainDriving.on_cursor_stack_changed(event)
+
+      -- Close UIs that are bound to hand contents
+      UiRouter.on_hand_contents_changed(pindex)
    end
 )
 
@@ -818,6 +821,9 @@ EventManager.on_event(
    ---@param event EventData.on_object_destroyed
    function(event) --DOES NOT HAVE THE KEY PLAYER_INDEX
       ScannerEntrypoint.on_entity_destroyed(event)
+
+      -- Close UIs that are bound to this entity
+      UiRouter.on_entity_destroyed(event.registration_number)
    end
 )
 

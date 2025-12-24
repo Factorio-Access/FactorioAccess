@@ -106,6 +106,11 @@ mod.generic_inventory = TabList.declare_tablist({
          },
       },
    }),
+   get_binds = function(pindex, parameters)
+      local entity = parameters and parameters.entity
+      if not entity or not entity.valid then return nil end
+      return { { kind = UiRouter.BIND_KIND.ENTITY, entity = entity } }
+   end,
 })
 
 -- Register with the UI event routing system

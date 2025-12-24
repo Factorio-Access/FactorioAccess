@@ -7,6 +7,9 @@ local mod = {}
 -- Register box selector for upgrade planner area selection
 mod.upgrade_area_selector = BoxSelector.declare_box_selector({
    ui_name = UiRouter.UI_NAMES.UPGRADE_AREA_SELECTOR,
+   get_binds = function(pindex, parameters)
+      return { { kind = UiRouter.BIND_KIND.HAND_CONTENTS } }
+   end,
    callback = function(pindex, params, result)
       local p = game.get_player(pindex)
       if not p then return end

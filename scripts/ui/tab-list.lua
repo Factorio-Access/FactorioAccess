@@ -44,7 +44,7 @@ local mod = {}
 ---@field shared_state table
 ---@field parameters table Whatever was passed to :open()
 ---@field controller fa.ui.RouterController? Controller for UI management. Nil for close callback.
----@field message fa.MessageBuilder
+---@field message fa.MessageBuilder? Nil for non-rendering contexts like get_binds.
 
 ---@alias fa.ui.SimpleTabHandler fun(self, fa.ui.TabContext, modifiers?: {control?: boolean, shift?: boolean, alt?: boolean})
 
@@ -89,6 +89,7 @@ local mod = {}
 ---@field search_move fun(self, message: fa.MessageBuilder, ctx: fa.ui.TabContext, direction: integer, matcher: fun(localised_string: LocalisedString): boolean): fa.ui.SearchResult? Move to next/prev search result, populate message with announcement
 ---@field search_all_from_start fun(self, ctx: fa.ui.TabContext): fa.ui.SearchResult? Search from start, move to first match
 ---@field get_help_metadata (fun(self, ctx: fa.ui.TabContext): fa.ui.help.HelpItem[]?)? Returns help metadata for the current tab
+---@field get_binds (fun(self, ctx: fa.ui.TabContext): fa.ui.Bind[]?)? Returns binds for the tab
 
 ---@class fa.ui.TabDescriptor
 ---@field name string
@@ -106,6 +107,7 @@ local mod = {}
 ---@field shared_state_setup (fun(number, table): table)? passed the parameters and pindex, should return a shaerd state.
 ---@field resets_to_first_tab_on_open boolean?
 ---@field persist_state boolean?
+---@field get_binds (fun(pindex: number, parameters: table): fa.ui.Bind[]?)? TabList-level binds callback
 
 ---@class fa.ui.TabListStorageState
 ---@field active_tabstop number
@@ -791,6 +793,59 @@ function TabList:get_help_metadata(pindex)
    return items
 end
 
+---Get binds from all tabs in this TabList
+---Called before open, so we call tabs_callback directly
+---@param pindex number
+---@param parameters table
+---@return fa.ui.Bind[]?
+function TabList:get_binds(pindex, parameters)
+   local all_binds = {}
+   local player = game.get_player(pindex)
+
+   -- Add TabList-level binds if present
+   if self.get_binds_callback then
+      local tablist_binds = self.get_binds_callback(pindex, parameters)
+      if tablist_binds == nil then
+         -- TabList-level callback returned nil, UI should not open
+         return nil
+      end
+      for _, bind in ipairs(tablist_binds) do
+         table.insert(all_binds, bind)
+      end
+   end
+
+   -- Get tabs from callback
+   local tabstops = self.tabs_callback(pindex, parameters)
+   if not tabstops then return nil end
+
+   -- Iterate all tabs and collect their binds
+   for _, tabstop in ipairs(tabstops) do
+      if tabstop.tabs then
+         for _, tab in ipairs(tabstop.tabs) do
+            if tab.callbacks and tab.callbacks.get_binds then
+               -- Create minimal context for the get_binds call
+               ---@type fa.ui.TabContext
+               local ctx = {
+                  pindex = pindex,
+                  player = player,
+                  parameters = parameters,
+                  state = {},
+                  shared_state = {},
+               }
+               local binds = tab.callbacks:get_binds(ctx)
+               if binds then
+                  for _, bind in ipairs(binds) do
+                     table.insert(all_binds, bind)
+                  end
+               end
+            end
+         end
+      end
+   end
+
+   return all_binds
+end
+
 function TabList:close(pindex, force_reset)
    -- Our lame event handling story where more than one event handler can get called for the same event combined with
    -- the new GUI framework still being WIP means that double-close is apparently possible.  We already know we're going
@@ -821,6 +876,7 @@ function mod.declare_tablist(declaration)
       descriptors = {},
       tabs_callback = declaration.tabs_callback,
       shared_state_initializer = declaration.shared_state_setup,
+      get_binds_callback = declaration.get_binds,
       declaration = declaration,
    }, TabList_meta)
 

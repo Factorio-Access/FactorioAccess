@@ -114,6 +114,7 @@ end
 ---@field supports_search? fun(self, pindex: number, controller: fa.ui.RouterController): boolean Check if this UI supports search
 ---@field search_hint? fun(self, pindex: number, hint_callback: fun(localised_string: LocalisedString), controller: fa.ui.RouterController) Submit searchable strings for cache population
 ---@field search_move? fun(self, message: fa.MessageBuilder, pindex: number, direction: integer, matcher: fun(localised_string: LocalisedString): boolean, controller: fa.ui.RouterController): integer Move to next/prev search result, returns fa.ui.SEARCH_RESULT
+---@field get_binds? fun(self, pindex: number, parameters: table): fa.ui.Bind[]? Return binds for this UI, nil closes immediately
 
 ---@enum fa.ui.UiName
 mod.UI_NAMES = {
@@ -197,8 +198,25 @@ mod.SEARCH_RESULT = {
    WRAPPED = 4, -- Wrapped around to find a match
 }
 
+---@enum fa.ui.BindKind
+mod.BIND_KIND = {
+   NONE = "none", -- Default, no binding
+   ENTITY = "entity", -- Close if entity is destroyed
+   HAND_CONTENTS = "hand", -- Close if player's hand contents change
+}
+
+---@class fa.ui.Bind
+---@field kind fa.ui.BindKind
+---@field entity LuaEntity? Only for ENTITY kind
+
+---@class fa.ui.StackEntry
+---@field name fa.ui.UiName
+---@field context any?
+---@field binds fa.ui.Bind[]?
+---@field entity_registration_numbers uint64[]?
+
 ---@class fa.ui.RouterState
----@field ui_stack {name: fa.ui.UiName, context?: any}[] Stack of open UIs with contexts (top is last)
+---@field ui_stack fa.ui.StackEntry[] Stack of open UIs with contexts (top is last)
 ---@field search_pattern string? Current search pattern (literal substring)
 
 ---@type table<number, fa.ui.RouterState>
@@ -364,10 +382,38 @@ function Router:_push_ui(name, params, context)
       "UI '" .. tostring(name) .. "' is not registered. Did you forget to require the module?"
    )
 
+   local ui = registered_uis[name]
    local stack = router_state[self.pindex].ui_stack
 
-   -- Add to stack with context
-   table.insert(stack, { name = name, context = context })
+   -- Process binds if the UI defines get_binds
+   local binds = nil
+   local entity_reg_numbers = nil
+   if ui.get_binds then
+      binds = ui:get_binds(self.pindex, params or {})
+      if binds == nil then
+         -- Bind callback returned nil, UI should not open
+         return
+      end
+
+      -- Register entities for destruction notification
+      entity_reg_numbers = {}
+      for _, bind in ipairs(binds) do
+         if bind.kind == mod.BIND_KIND.ENTITY and bind.entity and bind.entity.valid then
+            local reg_number = script.register_on_object_destroyed(bind.entity)
+            table.insert(entity_reg_numbers, reg_number)
+         end
+      end
+   end
+
+   -- Add to stack with context and binds
+   ---@type fa.ui.StackEntry
+   local entry = {
+      name = name,
+      context = context,
+      binds = binds,
+      entity_registration_numbers = entity_reg_numbers,
+   }
+   table.insert(stack, entry)
 
    -- Update GUI to show new top
    GameGui.set_active_ui(self.pindex, name)
@@ -377,7 +423,7 @@ function Router:_push_ui(name, params, context)
 
    -- Call the UI's open method
    local controller = create_controller_for_event(self)
-   registered_uis[name]:open(self.pindex, params or {}, controller)
+   ui:open(self.pindex, params or {}, controller)
    controller:finalize()
 
    -- Populate search cache for the new UI
@@ -441,6 +487,35 @@ function Router:_clear_ui_stack()
 
    -- Clear the GUI
    GameGui.clear_active_ui(self.pindex)
+end
+
+---Check if any UI in the stack has a HAND_CONTENTS bind
+---@return boolean
+function Router:_has_hand_bind()
+   local stack = router_state[self.pindex].ui_stack
+   for _, entry in ipairs(stack) do
+      if entry.binds then
+         for _, bind in ipairs(entry.binds) do
+            if bind.kind == mod.BIND_KIND.HAND_CONTENTS then return true end
+         end
+      end
+   end
+   return false
+end
+
+---Get all entity registration numbers tracked by UIs in the stack
+---@return uint64[]
+function Router:_get_all_registration_numbers()
+   local result = {}
+   local stack = router_state[self.pindex].ui_stack
+   for _, entry in ipairs(stack) do
+      if entry.entity_registration_numbers then
+         for _, reg_num in ipairs(entry.entity_registration_numbers) do
+            table.insert(result, reg_num)
+         end
+      end
+   end
+   return result
 end
 
 --[[
@@ -1063,5 +1138,30 @@ register_ui_event("fa-a-slash", create_ui_handler("on_add_to_row", { alt = true 
 
 -- Alt+rightbracket for clearing filters (inventory slot filters)
 register_ui_event("fa-a-rightbracket", create_ui_handler("on_clear_filter"))
+
+-- Bind invalidation handlers (called from control.lua)
+
+---Called when player's hand contents change. Closes all UIs if any have HAND_CONTENTS bind.
+---@param pindex number
+function mod.on_hand_contents_changed(pindex)
+   local router = mod.get_router(pindex)
+   if router:_has_hand_bind() then router:_clear_ui_stack() end
+end
+
+---Called when an entity is destroyed. Closes all UIs if the registration number is tracked.
+---@param registration_number uint64
+function mod.on_entity_destroyed(registration_number)
+   -- Must check all players since on_object_destroyed has no player_index
+   for pindex, _ in pairs(router_state) do
+      local router = mod.get_router(pindex)
+      local reg_numbers = router:_get_all_registration_numbers()
+      for _, reg_num in ipairs(reg_numbers) do
+         if reg_num == registration_number then
+            router:_clear_ui_stack()
+            break
+         end
+      end
+   end
+end
 
 return mod

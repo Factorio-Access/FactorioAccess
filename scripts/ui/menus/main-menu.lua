@@ -100,6 +100,11 @@ mod.main_menu = TabList.declare_tablist({
 
       return sections
    end,
+   get_binds = function(pindex, parameters)
+      local player = game.get_player(pindex)
+      if not player or not player.character or not player.character.valid then return nil end
+      return { { kind = UiRouter.BIND_KIND.ENTITY, entity = player.character } }
+   end,
 })
 
 ---Open the main menu for a player

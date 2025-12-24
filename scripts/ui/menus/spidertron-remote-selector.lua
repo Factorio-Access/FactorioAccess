@@ -99,6 +99,9 @@ local spidertron_selector_tab = KeyGraph.declare_graph({
 mod.spidertron_selector_menu = TabList.declare_tablist({
    ui_name = UiRouter.UI_NAMES.SPIDERTRON_REMOTE_SELECTOR,
    resets_to_first_tab_on_open = true,
+   get_binds = function(pindex, parameters)
+      return { { kind = UiRouter.BIND_KIND.HAND_CONTENTS } }
+   end,
    tabs_callback = function()
       return {
          {

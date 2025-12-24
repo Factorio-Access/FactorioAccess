@@ -136,6 +136,9 @@ mod.blueprint_setup_config_ui = TabList.declare_tablist({
    ui_name = UiRouter.UI_NAMES.BLUEPRINT_SETUP_CONFIG,
    resets_to_first_tab_on_open = true,
    shared_state_setup = state_setup,
+   get_binds = function(pindex, parameters)
+      return { { kind = UiRouter.BIND_KIND.HAND_CONTENTS } }
+   end,
    tabs_callback = function()
       return {
          {

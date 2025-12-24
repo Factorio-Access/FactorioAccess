@@ -49,6 +49,14 @@ end
 local BlueprintSetup = {}
 local BlueprintSetup_meta = { __index = BlueprintSetup }
 
+---Return binds for this UI
+---@param pindex number
+---@param parameters fa.ui.BlueprintSetup.Parameters
+---@return fa.ui.Bind[]?
+function BlueprintSetup:get_binds(pindex, parameters)
+   return { { kind = UiRouter.BIND_KIND.HAND_CONTENTS } }
+end
+
 ---Open the blueprint setup - opens the area selector as a child
 ---@param pindex number
 ---@param parameters fa.ui.BlueprintSetup.Parameters

@@ -899,11 +899,19 @@ function CategoryRows:get_help_metadata(ctx)
    return user_help
 end
 
+---@param ctx fa.ui.TabContext
+---@return fa.ui.Bind[]?
+function CategoryRows:get_binds(ctx)
+   if self.get_binds_callback then return self.get_binds_callback(ctx) end
+   return {}
+end
+
 ---@class fa.ui.CategoryRows.Declaration
 ---@field title LocalisedString?
 ---@field render_callback fun(ctx: fa.ui.TabContext): fa.ui.CategoryRows.Render?
 ---@field name string
 ---@field get_help_metadata (fun(ctx: fa.ui.TabContext): fa.ui.help.HelpItem[]?)?
+---@field get_binds (fun(ctx: fa.ui.TabContext): fa.ui.Bind[]?)?
 
 ---Declare a category-rows based tab
 ---@param declaration fa.ui.CategoryRows.Declaration
@@ -913,6 +921,7 @@ function mod.declare_category_rows(declaration)
       render_callback = declaration.render_callback,
       name = declaration.name,
       user_get_help_metadata = declaration.get_help_metadata,
+      get_binds_callback = declaration.get_binds,
    }, CategoryRows_meta)
 
    return {
