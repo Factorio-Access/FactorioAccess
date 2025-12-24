@@ -144,5 +144,37 @@ declare_tutorial_chapter({ "fa.tutorial-ch11-title" }, {
       },
    },
 })
+declare_tutorial_chapter({ "fa.tutorial-ch12-title" }, {
+   example_blueprints = {
+      {
+         "fa.tutorial-ch12-bp-belt-and-underground",
+         "0eNqdkttugzAMhl8F+TpUHKeFV5mmKUBELYGDcliHEO8+h16s2tpp7CrJH/v7bScrtGPQs0Xy0KyAnSEHzcsKDgdSY9RITRoa8FaRm431aatHD5sApF5/QJNv4k544Es7WMPr94RiexWgyaNHfTXbD8sbhanVloniIUXAbBwnGopeDEvzLDvVAhbelqeaXfwyx1QT/Byi7Q98IR709Cu82OE9Wt1dI6o76PIIOj+Erv6OlvIQuf7nuPPbcSPt0+aXRa8nFr7+lYBRMY01rZy/KNsnEZ5c0J8T4j7O6WCQhuTGPumscS6KGAHv2rq9iPqpkJWU9XNeSplV2/YJCVPpZA==",
+      },
+      {
+         "fa.tutorial-ch12-bp-merge",
+         "0eNqd0ttqwzAMBuBXKbpWS5zEZc6rlFGSVhQNWwm2M1qC331ucrHBUthyZxv9n+XDBJ0dafAsEZoJ+NJLgOY0QeCbtPa5Jq0jaCD6VsLQ+7jvyEZICCxXukOj0jsCSeTItGTnyeMso+vI5wJ8YSAMfcixXp77ZGqviuKgER55WB10SvgLKzdh5TpW/QdTPzGEK3u6LBX1Cl3/nTbmpazKFVpv6lqtX8FxS5+zlV+dI7mc/P5CCLbN6bwW2A2Wdo78jXYfoywHQvgkH2ZTH0tTG6PfVGVMUaf0BYIW1Ew=",
+      },
+      {
+         "fa.tutorial-ch12-bp-splitter",
+         "0eNqdkmFrwyAQhv+K3Gdbqolj5q+UUUwn3YE5g17XleB/n0kZG1vGWL/pcfe87/k6QR/OfkxIDN0EeIyUodtPkPFELsw1coOHDjg5ymNMvOl9YCgSkJ79G3SqyJX2PAZk9ulLoy5PEjwxMvqbyHK5Hug89LWzU/IXMQljzHUs0qxQURu101sj4VqPzdaU2cI3mJY/rKxibhC9Dmn+40j94ai9az21DjN3OVtgNQVkP9TRz+wlBFfHa82Jj/cSF+QXMUOziCRcCKIV9YOQPzLSSTCGmqOEV5/yImcetG2tNY+qsXbXlvIOTGbGmg==",
+      },
+      {
+         "fa.tutorial-ch12-bp-double-sideload",
+         "0eNqd0c1qwzAMAOBXCTq7I87PmPMqZQyn1obAkYPtjJbgd5/SMnZYemhvspA+S2iF0S84R+IMwwp0CpxgOK6Q6Iut33JsJ4QBcrSc5hDzYUSfoSggdniGQZd3BciZMuGt9/q4fPAyjRilQN0xFMwhSVvg7R+hDrpuXnoFFwklKEX9w5pHsPYX04IpcBTxdKvoduj2qTn1/pzdU1i9j/WPYPru0rrZTkUZJ5H+7q7AW9Ekh2c7zR6r8FnZyoVllDiRQx+sk7JvjOkK9a+N6Yzp33RrTN2V8gOiP73s",
+      },
+      {
+         "fa.tutorial-ch12-bp-sideload-instead-of-corner",
+         "0eNqdkM1qwzAQhF9F7FkJ8V+p/SqhlLW1aRfklZGUkGD07l0nhxbaHtrb7jDzDcwKoz/TElkyDCvwFCTBcFwh8Zug3zTBmWCAHFHSEmLejeQzFAssjq4wVOXFAknmzPTI3p/bq5znkaIa7C8MC0tIGguy9ShqVx2afWfhpme977TDcaTp4WiL/Yau/4Kuv6J/gDX/glUbTBfgTLNGP+e04FHjqtEV58WTCSeDYlgu6NmZKUShaPI7ZnMKcU4GTWJHPqBTU8qETiEXiune3D3Vfdv33XPV9P2hLeUDeMeSxg==",
+      },
+      {
+         "fa.tutorial-ch12-bp-tileable-drill-setup",
+         "0eNqdlMtuwyAQRX8FzRpHxo/48StVVZEwSkbC2AJSNYr878Wuki6Ko4adGcE5w/iKGxz0BSdLxkN/AzqOxkH/dgNHJyP1UjNyQOgBNR69pWM2kCFzypQlrWHmQEbhF/RifueAxpMn/EGsi+uHuQwHtGEDf47iMI0unB7NYg3ErM13NYdr+Cp2dTApsuHguqGa+R9B8RB4K42bRuuzA2ofITftS+TyBXJzJ5eBHGFVKawizqpfHmlTb15cFBHD/mFwg9Q6e3imUePTwYp4y03K9TdYbQorj7O69HTm/4mQyBPS+T+ySBjDxhREkcDa+DuiTE9nHglneF7I4xBwv08WBy1De6FWsRXq2MUFA1t6Zo4U6lGqpeBHdg5LJg27d8OWDDMyzJ+RDaTUmuhPtG5V1vuiq7qubkXZdXk1z99Mr7Gw",
+      },
+      {
+         "fa.tutorial-ch12-furnace",
+         "0eNqllW1vgyAQx7+K4TU2HorVfpVlWailjoSCAdzWNP3uO9uteyhm6l4pl+P3P7gHTmSre9k5ZQLZnIhqrPFk83AiXrVG6MFmxEGSDQlOGN9ZF9Kt1IGcKVFmJ9/IBs404u6DNTLd986IRn7zZudHSqQJKih5Vbosjk+mP2ylQxz9RPS4w7XO4veqSUlnPW60ZhBCWAqQrTglx+G3WHGUCcdu2Gv70PVDlHd8RkdOFKPDD3qElt9oynjpAtoinKz+FeVOOdlcXYBFsMWMILNiHF5F2PzG9gehdSo1ejvVpJ3V8o87zuO3UC670xHaehmNxWnVjaatadNngVW1SydmK5+Urfo/EmySBGTzNcqZxwCYVszl3Ni/Wu7nVIjBq89SjuUS8rm1m/G/qg1m9RofP3sRg/NljcymNDKUy+D5JPh66RyG73NYmZExDNWyLoeRLNZzBzFMql2WLahdFouQwbJswX228AV9xfXwfD5wyim2BX9EowrygPivF50SLVACbR9h+2SvtFamTbY2PCdaGDTZfSKSj0hepPMXFV6yuqhrXkFe1xl24ztAdZ+/",
+      },
+   },
+})
 
 return mod
