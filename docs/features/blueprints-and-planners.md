@@ -73,6 +73,11 @@ Blueprint books also have blueprint book level config. To get to it press `tab` 
 
 To get a blueprint into a book, use the labeled row in the blueprint book's config tab to pull them from your inventory.
 
+We do not support all blueprint books.  We only support those consisting of blueprints.  Some sighted blueprint books
+contain blueprints in folders, and for a variety of reasons we cannot read those accurately, nor do we guarantee we
+won't crash on it.  This is an unfortunate limitation of the API which is too big of a problem to work around given the
+effort it would take.
+
 ### Planners
 
 The upgrade and deconstruction planners are pending better support.  For now, you can mark everything in an area for deconstruction or upgrade.  To do so, get the planner, then click the corners of the box.

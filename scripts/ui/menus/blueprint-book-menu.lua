@@ -13,6 +13,31 @@ local UiSounds = require("scripts.ui.sounds")
 
 local mod = {}
 
+---Safely get the label of a stack, returning "empty slot" if not valid
+---@param stack LuaItemStack
+---@return string
+local function get_stack_label(stack)
+   if stack.valid_for_read then
+      return stack.label or "unnamed"
+   else
+      return "empty slot"
+   end
+end
+
+---Compress a blueprint book inventory by removing empty slots
+---@param book_inv LuaInventory
+local function compress_blueprint_book(book_inv)
+   -- Find all valid stacks and shift them to the front
+   local write_idx = 1
+   for read_idx = 1, #book_inv do
+      local stack = book_inv[read_idx]
+      if stack.valid_for_read then
+         if read_idx ~= write_idx then book_inv[write_idx].swap_stack(stack) end
+         write_idx = write_idx + 1
+      end
+   end
+end
+
 ---Get the blueprint book inventory
 ---@param ctx fa.ui.graph.Ctx
 ---@return LuaInventory?
@@ -80,13 +105,13 @@ local function render_blueprints_list(ctx)
                end
 
                -- Save label before swap, then swap with previous item
-               local bp_label = bp_stack.label or "unnamed"
+               local bp_label = get_stack_label(bp_stack)
                book_inv[idx].swap_stack(book_inv[idx - 1])
                -- New position is idx-1; the item before that is at idx-2
                if idx - 1 == 1 then
                   c.message:fragment({ "fa.ui-blueprint-book-moved-to-first", bp_label })
                else
-                  local after_label = book_inv[idx - 2].label or "unnamed"
+                  local after_label = get_stack_label(book_inv[idx - 2])
                   c.message:fragment({ "fa.ui-blueprint-book-moved-to-row", idx - 1, bp_label, after_label })
                end
                c.graph_controller:suggest_move("item-" .. (idx - 1))
@@ -98,10 +123,10 @@ local function render_blueprints_list(ctx)
                end
 
                -- Save label before swap, then swap with next item
-               local bp_label = bp_stack.label or "unnamed"
+               local bp_label = get_stack_label(bp_stack)
                book_inv[idx].swap_stack(book_inv[idx + 1])
                -- New position is idx+1; the item before that (at idx) now contains what was at idx+1
-               local after_label = book_inv[idx].label or "unnamed"
+               local after_label = get_stack_label(book_inv[idx])
                c.message:fragment({ "fa.ui-blueprint-book-moved-to-row", idx + 1, bp_label, after_label })
                c.graph_controller:suggest_move("item-" .. (idx + 1))
             end,
@@ -144,8 +169,9 @@ local function render_blueprints_list(ctx)
                -- Create a copy in inventory
                local inserted = p.insert(bp_stack)
                if inserted > 0 then
-                  -- Clear the slot
+                  -- Clear the slot and compress the book
                   bp_stack.clear()
+                  compress_blueprint_book(book_inv)
                   c.message:fragment({ "fa.ui-blueprint-book-removed" })
                else
                   c.message:fragment({ "fa.ui-blueprint-book-inventory-full" })
@@ -265,9 +291,23 @@ local function render_settings(ctx)
    return builder:build()
 end
 
+---Setup shared state - compress the book on open
+---@param pindex number
+---@param _params table
+---@return table
+local function state_setup(pindex, _params)
+   local p = game.get_player(pindex)
+   if p and p.cursor_stack and p.cursor_stack.valid_for_read and p.cursor_stack.is_blueprint_book then
+      local book_inv = p.cursor_stack.get_inventory(defines.inventory.item_main)
+      if book_inv then compress_blueprint_book(book_inv) end
+   end
+   return {}
+end
+
 ---@type fa.ui.UiPanelBase
 local blueprint_book_ui = TabList.declare_tablist({
    ui_name = UiRouter.UI_NAMES.BLUEPRINT_BOOK,
+   shared_state_setup = state_setup,
    get_binds = function(pindex, parameters)
       return { { kind = UiRouter.BIND_KIND.HAND_CONTENTS } }
    end,
