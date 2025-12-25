@@ -1,8 +1,8 @@
-Congratulations on reaching the end of the tutorial.  You now know enough to play and hopefully to win the game.  This chapter is a grab bag of important explanations that do not fit nicely elsehwere but which you are unlikely to discover on your own, each only a couple paragraphs.  The tutorials after this one either provide spoilers or discuss late-game mechanics.
+Congratulations on reaching the end of the tutorial.  You now know enough to play and hopefully to win the game.  This chapter is a grab bag of important explanations that do not fit nicely elsewhere but which you are unlikely to discover on your own, each only a couple paragraphs.  The tutorials after this one either provide spoilers or discuss late-game mechanics.
 
 As a reminder, we have reference documentation on our GitHub, with full key lists and reference-style documentation.
 
-The first and most crucial thing is the accessibility radar.  We promised we would explain it, and then we didn't.  This is because it has been doing what it is supoposed to this whole time, as long as you plcaed it back when we suggested it as a way to test power.
+The first and most crucial thing is the accessibility radar.  We promised we would explain it, and then we didn't.  This is because it has been doing what it is supposed to this whole time, as long as you placed it back when we suggested it as a way to test power.
 
 Factorio calls 32 by 32 tile areas chunks.  The map is made of chunks.  As the game needs more map, it generates more chunks.  A chunk may be visible, charted, uncharted, or not generated.
 
@@ -20,19 +20,19 @@ If you want to chart faster, radars work together, so you can just place more.
 
 Next, we need to revisit inserters.  There are 3 things you should know.
 
-First, not all inserters move one item at a time.  We said that using the ground to mvoe items is slower for reasons which would become evident later.  the reason for that is that inserters can grab more than one item at once if more than one item is under their hand.  So for example a full belt gives it the opportunity to grab up to 16 at a time, and a chest much more trhan that.  They can also drop more than one at a time if there is space.
+First, not all inserters move one item at a time.  We said that using the ground to move items is slower for reasons which would become evident later.  The reason for that is that inserters can grab more than one item at once if more than one item is under their hand.  So for example a full belt gives it the opportunity to grab up to 16 at a time, and a chest much more than that.  They can also drop more than one at a time if there is space.
 
 You get access to this in two ways, either by researching inserter stack size bonuses or using the bulk inserter.
 
 Second, everything but the burner inserter has filters.  Filters are available by clicking the inserter, and can be used to lock the inserter to specific items only.
 
-This is not overly useful, but it is extremely helpful in situations where you have shaerd chests and similar, so it is good to know about.  There is at least one late gam e situation in which it is essential, but we won't spoil that for you here.
+This is not overly useful, but it is extremely helpful in situations where you have shared chests and similar, so it is good to know about.  There is at least one late game situation in which it is essential, but we won't spoil that for you here.
 
 Third, inserters have a special rule with labs.  Labs function like a chest and a crafting machine at the same time.
 
 If you make a chain of labs with inserters between them, the game will move science packs to the furthest lab and then fill the labs up one after another with just enough to do research.
 
-This means that instead of having to figure out how to get science packs to all labs, you can drop it to one lab, and just use inserters between labs to scale it.  This is useful, being as you eventually n eed to get at least 6 science packs into all labs.
+This means that instead of having to figure out how to get science packs to all labs, you can drop it to one lab, and just use inserters between labs to scale it.  This is useful, being as you eventually need to get at least 6 science packs into all labs.
 
 Next up is the car.  Driving manually is weird, and we don't recommend it unless you are doing combat.  But Kruise Kontrol can drive for you.
 
@@ -58,7 +58,7 @@ Second, there is a bug.  If you hold x, you will mine a little bit extra.  Why t
 
 To work around it, just briefly tap x instead.
 
-there are also some special interactions with planners--these aren't implemented by us.
+There are also some special interactions with planners--these aren't implemented by us.
 
 First, a blueprint by default only includes tiles if you did not select any entities.  To always include tiles, right click instead and check the box.
 
@@ -68,7 +68,6 @@ This, too, can be changed in planner config.
 
 Remember, though: changing planner config makes the planner permanent, so you will need to explicitly delete it or keep it around.
 
-
 In any case, good luck.  From this point, you might need the occasional bit of help to figure things out, but you should know everything you need to know to operate the mod.
 
-The only remaining tutorial chapter that is essential is on logistic and construction robots, which you will unlock many hours from now.  From time to time we mayh add other non-essential chapters after this one, and when we do so we will make sure to put them in the change log.
+The only remaining tutorial chapter that is essential is on logistic and construction robots, which you will unlock many hours from now.  From time to time we may add other non-essential chapters after this one, and when we do so we will make sure to put them in the change log.

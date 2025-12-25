@@ -12,6 +12,7 @@ mod.MESSAGE_LISTS = {
    ["ch11"] = true,
    ["ch12"] = true,
    ["ch13"] = true,
+   ["ch14"] = true,
    ["ch2"] = true,
    ["ch3"] = true,
    ["ch4"] = true,
@@ -36,6 +37,6 @@ mod.MESSAGE_LISTS = {
    ["warnings-menu-help"] = true,
 }
 
-mod.MESSAGE_LISTS_HASH = "1a3ceab356fbfa5fba7b293776e60be8bdb9c7ab97d374c7703d8700296f189e"
+mod.MESSAGE_LISTS_HASH = "51cc378734327d4227bb32ac5075f1f2d2ae35f05cb455f52289b4c317ce95c8"
 
 return mod
