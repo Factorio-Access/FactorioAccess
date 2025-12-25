@@ -2,6 +2,8 @@ The tutorial has given you example blueprints.  It is time to learn how to make 
 
 Factorio has 3 items, collectively called planners.  The deconstruction planner, the upgrade planner, and the blueprint.  All three function in the same way.  You take one in hand, click the corners of the box to select, and then it does the thing.
 
+For upgrade and deconstructionn planners, you may also click with a larger cursor. In this case, it applies to everything under the cursor. This is useful for selectively clearing areas without having to figure out the corners, for example forests.
+
 To get an upgrade planner, use alt u.  For deconstruction, use alt d.  For blueprints use alt b.
 
 Upgrade planners are the most limited, and you can expect better support in future.  When you select the area to upgrade, everything with a better item gets marked for upgrade.
@@ -15,6 +17,12 @@ In both cases, Kruise Kontrol on a marked entity will perform the action, though
 In both of these cases, the item is temporary just like blueprints.  You can get them into an inventory, but if you hit q it just goes away.
 
 Finally, in both cases holding shift when you select the second point will cancel any deconstruction or upgrade orders in the area.
+
+Configuration for upgrade planners and deconstruction planners is under active development.  To find out what is possible for the sighted in this regard, check the official Factorio wiki.  To find out what we support, please consult the docs on our GitHub.
+
+We have limited bandwidth to maintain custom config support, so at this time they are known to be buggy and unstable.  Use them at your own risk.
+
+to access what we do support, press right bracket with an upgrade or deconstruction planner in hand.
 
 Let's turn to blueprints.  You have already learned to use blueprints, but not how to make them.
 
@@ -42,6 +50,8 @@ If you end the selection with a right click, you can access a menu with checkbox
 
 In addition to tiles, this supports other things such as fuel in vehicles which are more useful later once you have unlocked robots.
 
+Unlike upgrade and deconstruction planners, this config screen is complete and stable.
+
 A problem we have is that blueprints are not organized.  In particular, we cannot access the blueprint library, so they always take up an inventory slot.
 
 Sighted people organize their blueprints by putting them into blueprint books, and the mod supports this as well.  The book still has to take up a slot because of our lack of access to the blueprint library, but it only ever takes one and may hold as many blueprints as you want.
@@ -67,5 +77,9 @@ To find out what is active on the map, press comma.
 To cycle between the blueprints in the book without opening it, press m and dot.
 
 You have seen these three keys before in the splitter UI.  In general, the mod uses m, comma, and dot as context sensitive buttons for cases like this.  They will come up again a few times later, most notably for trains and the circuit network.
+
+You may also put upgrade and deconstruction planners in your books.  Like with blueprints, cycling to it will use it as if it were directly in your hand.
+
+This is not useful for default upgrade and deconstruction planners, but you can use our alpha-quality config dialogs or you can get and import strings from the sighted to build a library of planners with other settings.
 
 Finally, you should be aware that books as well as the other planner items may be put on your quickbar.  Unlike a sighted player they still take up inventory slots, but they can at least be accessed quickly.  Unfortunately, you cannot put a blueprint inside a book directly on your quickbar at this time.

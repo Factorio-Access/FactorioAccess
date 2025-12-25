@@ -36,6 +36,8 @@ y in the crafting menu will tell you what all of the products of a recipe do.  O
 
 This chapter of the tutorial has attached example blueprints.  What we are about to explain is complicated, so we have provided pieces you can look at.
 
+As a reminder, you can get to the example blueprints with tab.
+
 Blueprints are like buildings, but place more than one structure at a time and place what are called ghosts instead of real structures.  If you have the items, invoking Kruise Kontrol on a ghost will build all ghosts it can find, filling out the blueprint for you.
 
 in this way, you can share structures with others.
