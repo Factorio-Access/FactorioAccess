@@ -4,7 +4,10 @@
 
 These use all the normal keys, with only a few changes:
 
-Start selecting a blueprint, upgrade, or deconstruction planner's area: `left bracket`
+Start selecting a blueprint, upgrade, or deconstruction planner's area: `left bracket` with a 1x1 cursor
+
+Directly apply a deconstruction or upgrade planner to what is under your cursor: `[` with a larger cursor
+
 
 Finish selecting: `left bracket` on a second point
 
@@ -81,6 +84,8 @@ effort it would take.
 ### Planners
 
 You can mark everything in an area for deconstruction or upgrade.  To do so, get the planner, then click the corners of the box.
+
+If you instead click with a larger cursor, the planner will directly apply to everything under that cursor.
 
 You can "undo" or "cancel" by getting the same kind of planner in the hand, reselecting the same box, but replacing the second click with `alt + left bracket`.
 

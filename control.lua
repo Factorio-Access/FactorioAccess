@@ -2881,37 +2881,67 @@ EventManager.on_event(
       local ghost = p.cursor_ghost
 
       -- Handle planners specially (direct or in book)
+      local vp = Viewpoint.get_viewpoint(pindex)
+      local cursor_pos = vp:get_cursor_pos()
+      local cursor_size = vp:get_cursor_size()
+
       if PlannerUtils.has_decon_planner(pindex) then
-         -- Start selection for deconstruction (action determined by shift modifier on second click)
-         local vp = Viewpoint.get_viewpoint(pindex)
-         local cursor_pos = vp:get_cursor_pos()
-         router:open_ui(UiRouter.UI_NAMES.DECON_AREA_SELECTOR, {
-            first_point = { x = cursor_pos.x, y = cursor_pos.y },
-            intro_message = {
-               "fa.planner-deconstruct-first-point",
-               math.floor(cursor_pos.x),
-               math.floor(cursor_pos.y),
-            },
-            second_message = { "fa.planner-select-second-point" },
-         })
+         if cursor_size > 0 then
+            -- Cursor larger than 1x1: apply planner directly to cursor area
+            local planner = PlannerUtils.get_decon_planner(pindex)
+            local area = {
+               left_top = { x = cursor_pos.x - cursor_size + 0.5, y = cursor_pos.y - cursor_size + 0.5 },
+               right_bottom = { x = cursor_pos.x + cursor_size + 0.5, y = cursor_pos.y + cursor_size + 0.5 },
+            }
+            p.surface.deconstruct_area({
+               area = area,
+               force = p.force,
+               player = p,
+               item = planner,
+            })
+            Speech.speak(pindex, { "fa.planner-marked-for-deconstruction" })
+         else
+            -- 1x1 cursor: start area selection
+            router:open_ui(UiRouter.UI_NAMES.DECON_AREA_SELECTOR, {
+               first_point = { x = cursor_pos.x, y = cursor_pos.y },
+               intro_message = {
+                  "fa.planner-deconstruct-first-point",
+                  math.floor(cursor_pos.x),
+                  math.floor(cursor_pos.y),
+               },
+               second_message = { "fa.planner-select-second-point" },
+            })
+         end
          return
       elseif PlannerUtils.has_upgrade_planner(pindex) then
-         -- Start selection for upgrade (action determined by shift modifier on second click)
-         local vp = Viewpoint.get_viewpoint(pindex)
-         local cursor_pos = vp:get_cursor_pos()
-         router:open_ui(UiRouter.UI_NAMES.UPGRADE_AREA_SELECTOR, {
-            first_point = { x = cursor_pos.x, y = cursor_pos.y },
-            intro_message = { "fa.planner-upgrade-first-point", math.floor(cursor_pos.x), math.floor(cursor_pos.y) },
-            second_message = { "fa.planner-select-second-point" },
-         })
+         if cursor_size > 0 then
+            -- Cursor larger than 1x1: apply planner directly to cursor area
+            local planner = PlannerUtils.get_upgrade_planner(pindex)
+            local area = {
+               left_top = { x = cursor_pos.x - cursor_size + 0.5, y = cursor_pos.y - cursor_size + 0.5 },
+               right_bottom = { x = cursor_pos.x + cursor_size + 0.5, y = cursor_pos.y + cursor_size + 0.5 },
+            }
+            p.surface.upgrade_area({
+               area = area,
+               force = p.force,
+               player = p,
+               item = planner,
+            })
+            Speech.speak(pindex, { "fa.planner-marked-for-upgrade" })
+         else
+            -- 1x1 cursor: start area selection
+            router:open_ui(UiRouter.UI_NAMES.UPGRADE_AREA_SELECTOR, {
+               first_point = { x = cursor_pos.x, y = cursor_pos.y },
+               intro_message = { "fa.planner-upgrade-first-point", math.floor(cursor_pos.x), math.floor(cursor_pos.y) },
+               second_message = { "fa.planner-select-second-point" },
+            })
+         end
          return
       elseif stack and stack.valid_for_read then
          if stack.is_blueprint then
             -- Only start selection for empty blueprints
             if not stack.is_blueprint_setup() then
                -- Start selection for empty blueprint
-               local vp = Viewpoint.get_viewpoint(pindex)
-               local cursor_pos = vp:get_cursor_pos()
                router:open_ui(UiRouter.UI_NAMES.BLUEPRINT_SETUP, {
                   first_point = { x = cursor_pos.x, y = cursor_pos.y },
                   intro_message = {
@@ -2949,8 +2979,6 @@ EventManager.on_event(
             end
          elseif stack.name == "copy-paste-tool" or stack.name == "cut-paste-tool" then
             -- Start selection for copy/cut
-            local vp = Viewpoint.get_viewpoint(pindex)
-            local cursor_pos = vp:get_cursor_pos()
             local is_cut = stack.name == "cut-paste-tool"
             router:open_ui(UiRouter.UI_NAMES.COPY_PASTE_AREA_SELECTOR, {
                first_point = { x = cursor_pos.x, y = cursor_pos.y },
@@ -2964,8 +2992,6 @@ EventManager.on_event(
             return
          elseif stack.prototype.type == "spidertron-remote" then
             -- Add autopilot point for spidertron remote (enqueue, don't clear)
-            local vp = Viewpoint.get_viewpoint(pindex)
-            local cursor_pos = vp:get_cursor_pos()
             SpidertronRemote.add_to_autopilot(p, cursor_pos, false)
             return
          elseif stack.prototype.rails then

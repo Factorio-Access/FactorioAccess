@@ -6,6 +6,7 @@
   - This makes the upgrade planner permanent
   - The experience is alpha quality and we do not have the bandwidth to make it uch better
   - To do a module rule instead of an entity rule, press m instead of clicking
+- When holding an upgrade or deconstruction planner and clicking with a larger cursor, that planner now directly applies to the area under the cursor.
 
 # 0.16.49 (2025-12-23)
 
