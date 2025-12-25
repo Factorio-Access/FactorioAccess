@@ -80,8 +80,10 @@ effort it would take.
 
 ### Planners
 
-The upgrade and deconstruction planners are pending better support.  For now, you can mark everything in an area for deconstruction or upgrade.  To do so, get the planner, then click the corners of the box.
+You can mark everything in an area for deconstruction or upgrade.  To do so, get the planner, then click the corners of the box.
 
 You can "undo" or "cancel" by getting the same kind of planner in the hand, reselecting the same box, but replacing the second click with `alt + left bracket`.
 
-Better support for these is coming in the near future.
+We have alpha quality support for configuring upgrade planners. When configured, the upgrade planner becomes permanent.  You can set an entity rule by clicking one of the slots, or set a module rule by pressing m on one of the slots.  We do not have the bandwidth to put significant effort into fixing bugs here, so use this at your own risk.
+
+You can pull planners into blueprint books and use them from the book as if they were directly in your hand.

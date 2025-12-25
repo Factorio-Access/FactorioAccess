@@ -1,3 +1,12 @@
+# 0.16.50 (unreleased)
+
+- Blueprint books now support control backspace to permanently delete a book
+- Add support for putting upgrade and deconstruction planners in blueprint books. They work just like if they were outside of the book.
+- Add upgrade planner config. To access it, press rightbracket with an upgrade planner in hand. Please note the following important details:
+  - This makes the upgrade planner permanent
+  - The experience is alpha quality and we do not have the bandwidth to make it uch better
+  - To do a module rule instead of an entity rule, press m instead of clicking
+
 # 0.16.49 (2025-12-23)
 
 - Move logistics controls: control l for your cursor, control shift l for your own
