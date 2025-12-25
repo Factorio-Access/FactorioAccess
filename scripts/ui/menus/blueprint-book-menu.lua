@@ -25,6 +25,17 @@ local function get_stack_label(stack)
    end
 end
 
+---Count valid items in a blueprint book inventory
+---@param book_inv LuaInventory
+---@return integer
+local function count_valid_items(book_inv)
+   local count = 0
+   for i = 1, #book_inv do
+      if book_inv[i].valid_for_read then count = count + 1 end
+   end
+   return count
+end
+
 ---Compress a blueprint book inventory by removing empty slots
 ---@param book_inv LuaInventory
 local function compress_blueprint_book(book_inv)
@@ -137,10 +148,26 @@ local function render_blueprints_list(ctx)
                c.message:fragment({ "fa.ui-blueprint-book-moved-to-row", idx + 1, bp_label, after_label })
                c.graph_controller:suggest_move("item-" .. (idx + 1))
             end,
+            on_dangerous_delete = function(c)
+               local deleted_name = bp_stack.label or "unnamed"
+               local original_count = count_valid_items(book_inv)
+               bp_stack.clear()
+               compress_blueprint_book(book_inv)
+               c.message:fragment({ "fa.ui-blueprint-book-deleted", deleted_name })
+               -- Suggest moving to row above if possible, otherwise row below
+               if idx > 1 then
+                  c.graph_controller:suggest_move("item-" .. (idx - 1))
+               elseif original_count > 1 then
+                  c.graph_controller:suggest_move("item-1")
+               end
+            end,
          })
 
          -- Rename option
-         builder:add_clickable("rename-" .. idx, { "fa.ui-blueprint-book-rename" }, {
+         builder:add_clickable("rename-" .. idx, function(c)
+            c.message:fragment({ "fa.ui-blueprint-book-rename" })
+            c.message:fragment(bp_stack.label or "unnamed")
+         end, {
             on_click = function(c)
                c.controller:open_textbox("", "rename-" .. idx)
             end,
@@ -151,7 +178,10 @@ local function render_blueprints_list(ctx)
          })
 
          -- Copy blueprint to inventory
-         builder:add_clickable("copy-" .. idx, { "fa.ui-blueprint-book-copy-to-hand" }, {
+         builder:add_clickable("copy-" .. idx, function(c)
+            c.message:fragment({ "fa.ui-blueprint-book-copy-to-hand" })
+            c.message:fragment(bp_stack.label or "unnamed")
+         end, {
             on_click = function(c)
                local p = game.get_player(c.pindex)
                if not p then return end
@@ -168,20 +198,50 @@ local function render_blueprints_list(ctx)
          })
 
          -- Remove from book (places in character's inventory)
-         builder:add_clickable("remove-" .. idx, { "fa.ui-blueprint-book-remove" }, {
+         builder:add_clickable("remove-" .. idx, function(c)
+            c.message:fragment({ "fa.ui-blueprint-book-remove" })
+            c.message:fragment(bp_stack.label or "unnamed")
+         end, {
             on_click = function(c)
                local p = game.get_player(c.pindex)
                if not p then return end
 
                -- Create a copy in inventory
+               local original_count = count_valid_items(book_inv)
                local inserted = p.insert(bp_stack)
                if inserted > 0 then
                   -- Clear the slot and compress the book
                   bp_stack.clear()
                   compress_blueprint_book(book_inv)
                   c.message:fragment({ "fa.ui-blueprint-book-removed" })
+                  -- Suggest moving to row above if possible, otherwise row below
+                  if idx > 1 then
+                     c.graph_controller:suggest_move("item-" .. (idx - 1))
+                  elseif original_count > 1 then
+                     c.graph_controller:suggest_move("item-1")
+                  end
                else
                   c.message:fragment({ "fa.ui-blueprint-book-inventory-full" })
+               end
+            end,
+         })
+
+         -- Permanently delete from book
+         builder:add_clickable("delete-" .. idx, function(c)
+            c.message:fragment({ "fa.ui-blueprint-book-delete" })
+            c.message:fragment(bp_stack.label or "unnamed")
+         end, {
+            on_click = function(c)
+               local deleted_name = bp_stack.label or "unnamed"
+               local original_count = count_valid_items(book_inv)
+               bp_stack.clear()
+               compress_blueprint_book(book_inv)
+               c.message:fragment({ "fa.ui-blueprint-book-deleted", deleted_name })
+               -- Suggest moving to row above if possible, otherwise row below
+               if idx > 1 then
+                  c.graph_controller:suggest_move("item-" .. (idx - 1))
+               elseif original_count > 1 then
+                  c.graph_controller:suggest_move("item-1")
                end
             end,
          })
