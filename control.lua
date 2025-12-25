@@ -95,6 +95,8 @@ require("scripts.ui.selectors.blueprint-selector")
 require("scripts.ui.menus.blueprint-setup")
 require("scripts.ui.menus.blueprint-setup-config")
 require("scripts.ui.planners.upgrade-planner-menu")
+require("scripts.ui.planners.decon-planner-menu")
+require("scripts.ui.tabs.tile-chooser")
 require("scripts.ui.selectors.copy-paste-selector")
 require("scripts.ui.menus.gun-menu")
 local MainMenu = require("scripts.ui.menus.main-menu")
@@ -188,6 +190,13 @@ local function read_hand(pindex)
          local message = MessageBuilder.new()
          UpgradePlanner.describe_planner(message, cursor_stack)
          Speech.speak(pindex, message:build())
+      elseif cursor_stack.is_deconstruction_item then
+         local label = cursor_stack.label
+         if label and label ~= "" then
+            Speech.speak(pindex, { "fa.item-decon-planner-labeled", label })
+         else
+            Speech.speak(pindex, { "item-name.deconstruction-planner" })
+         end
       else
          --Any other valid item
          local vp = Viewpoint.get_viewpoint(pindex)
@@ -3192,6 +3201,9 @@ EventManager.on_event(
       elseif stack and stack.valid_for_read and stack.is_upgrade_item then
          -- Open upgrade planner menu (direct only, not in book - book opens book menu)
          router:open_ui(UiRouter.UI_NAMES.UPGRADE_PLANNER)
+      elseif stack and stack.valid_for_read and stack.is_deconstruction_item then
+         -- Open deconstruction planner menu
+         router:open_ui(UiRouter.UI_NAMES.DECON_PLANNER)
       elseif stack and stack.valid_for_read then
          kb_click_hand_right(event)
       else

@@ -17,6 +17,7 @@ mod.FILTER_TYPES = {
    TURRET_PRIORITY = "turret_priority",
    UPGRADEABLE = "upgradeable",
    SAME_FAST_GROUP = "same_fast_group",
+   DECONSTRUCTABLE = "deconstructable",
 }
 
 -- Entity types that can be turret priority targets
@@ -45,6 +46,12 @@ local FILTERS = {
       local target_group = params and params.fast_replaceable_group
       if not target_group then return false end
       return proto.fast_replaceable_group == target_group
+   end,
+   [mod.FILTER_TYPES.DECONSTRUCTABLE] = function(proto)
+      if proto.has_flag("not-deconstructable") then return false end
+      if proto.type == "cliff" then return true end
+      local mineable = proto.mineable_properties
+      return mineable and mineable.minable
    end,
 }
 

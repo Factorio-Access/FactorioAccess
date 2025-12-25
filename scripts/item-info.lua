@@ -729,6 +729,18 @@ local function get_upgrade_planner_verbose_info(message, stack)
    UpgradePlanner.describe_planner(message, stack, nil)
 end
 
+---Get verbose info for a decon planner (just the name with label)
+---@param message fa.MessageBuilder
+---@param stack LuaItemStack
+local function get_decon_planner_verbose_info(message, stack)
+   local label = stack.label
+   if label and label ~= "" then
+      message:fragment({ "fa.item-decon-planner-labeled", label })
+   else
+      message:fragment({ "item-name.deconstruction-planner" })
+   end
+end
+
 ---Handlers for special item verbose info, keyed by detection function
 ---Each handler takes (message, stack) and returns true if it handled the item
 ---@type (fun(message: fa.MessageBuilder, stack: LuaItemStack): boolean)[]
@@ -736,6 +748,11 @@ local SPECIAL_STACK_VERBOSE_HANDLERS = {
    function(message, stack)
       if not stack.is_upgrade_item then return false end
       get_upgrade_planner_verbose_info(message, stack)
+      return true
+   end,
+   function(message, stack)
+      if not stack.is_deconstruction_item then return false end
+      get_decon_planner_verbose_info(message, stack)
       return true
    end,
 }
