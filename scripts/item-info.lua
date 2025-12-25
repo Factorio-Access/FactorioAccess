@@ -2,11 +2,15 @@
 Item Info Module
 Provides detailed information about items, especially equipment and buildings.
 Includes item localization (moved from localising.lua).
+
+Special item types (blueprints, planners, etc.) have their own handlers
+that provide custom naming and verbose descriptions.
 ]]
 
 local Localising = require("scripts.localising")
 local FaUtils = require("scripts.fa-utils")
 local Speech = require("scripts.speech")
+local UpgradePlanner = require("scripts.upgrade-planner")
 local MessageBuilder = Speech.MessageBuilder
 
 local mod = {}
@@ -16,6 +20,93 @@ mod.VERBOSITY = {
    BRIEF = 1,
    VERBOSE = 2,
 }
+
+--------------------------------------------------------------------------------
+-- Special Item Type Handlers
+--
+-- Blueprints, upgrade planners, deconstruction planners, etc. need custom
+-- handling for both naming and verbose descriptions. Each handler returns
+-- a LocalisedString for the item name, or nil to fall through to default.
+--------------------------------------------------------------------------------
+
+---@class fa.ItemInfo.SpecialItemContext
+---@field stack LuaItemStack The item stack
+---@field quality_str LocalisedString The quality name
+---@field has_quality integer 1 if non-normal quality, 0 otherwise
+---@field has_count integer 1 if count > 1, 0 otherwise
+---@field count integer The item count
+
+---Get name for a blueprint with a label
+---@param ctx fa.ItemInfo.SpecialItemContext
+---@return LocalisedString|nil
+local function get_blueprint_name(ctx)
+   if not ctx.stack.is_blueprint then return nil end
+   local label = ctx.stack.label
+   if not label or label == "" then return nil end
+   return { "fa.item-blueprint", label, ctx.has_quality, ctx.quality_str, ctx.has_count, ctx.count }
+end
+
+---Get name for a blueprint book with a label
+---@param ctx fa.ItemInfo.SpecialItemContext
+---@return LocalisedString|nil
+local function get_blueprint_book_name(ctx)
+   if not ctx.stack.is_blueprint_book then return nil end
+   local label = ctx.stack.label
+   if not label or label == "" then return nil end
+   return { "fa.item-blueprint-book", label, ctx.has_quality, ctx.quality_str, ctx.has_count, ctx.count }
+end
+
+---Get name for an upgrade planner (always uses custom name format)
+---@param ctx fa.ItemInfo.SpecialItemContext
+---@return LocalisedString|nil
+local function get_upgrade_planner_name(ctx)
+   if not ctx.stack.is_upgrade_item then return nil end
+   local label = ctx.stack.label
+   if label and label ~= "" then return { "fa.item-upgrade-planner-labeled", label } end
+   return { "item-name.upgrade-planner" }
+end
+
+---Get name for a deconstruction planner (always uses custom name format)
+---@param ctx fa.ItemInfo.SpecialItemContext
+---@return LocalisedString|nil
+local function get_decon_planner_name(ctx)
+   if not ctx.stack.is_deconstruction_item then return nil end
+   local label = ctx.stack.label
+   if label and label ~= "" then return { "fa.item-decon-planner-labeled", label } end
+   return { "item-name.deconstruction-planner" }
+end
+
+---Handlers for special item names, checked in order
+---@type (fun(ctx: fa.ItemInfo.SpecialItemContext): LocalisedString|nil)[]
+local SPECIAL_ITEM_NAME_HANDLERS = {
+   get_upgrade_planner_name,
+   get_decon_planner_name,
+   get_blueprint_name,
+   get_blueprint_book_name,
+}
+
+---Check if a stack is a special item type (planner, blueprint with label, etc.)
+---Returns a LocalisedString for the name, or nil to use default handling
+---@param stack LuaItemStack
+---@param quality_str LocalisedString
+---@param has_quality integer
+---@param has_count integer
+---@param count integer
+---@return LocalisedString|nil
+local function get_special_item_name(stack, quality_str, has_quality, has_count, count)
+   local ctx = {
+      stack = stack,
+      quality_str = quality_str,
+      has_quality = has_quality,
+      has_count = has_count,
+      count = count,
+   }
+   for _, handler in ipairs(SPECIAL_ITEM_NAME_HANDLERS) do
+      local result = handler(ctx)
+      if result then return result end
+   end
+   return nil
+end
 
 ---Calculate inserter swings per second from rotation speed.
 ---Inserters must complete half-turns in whole ticks, so actual cycle time
@@ -90,7 +181,10 @@ string or a LuaXXXPrototype. It:
   quality and (if present) count. That is, leaving stuff out is how you prevent
   it being announced.
 
-for the case of "and 5 other items" you may use mod.ITEM_OTHER in place of the
+For special items (blueprints with labels, upgrade planners, etc.), custom
+naming handlers provide appropriate descriptions.
+
+For the case of "and 5 other items" you may use mod.ITEM_OTHER in place of the
 name.
 ]]
 ---Get item or fluid info as a LocalisedString
@@ -98,45 +192,36 @@ name.
 ---@param protos table<string, LuaItemPrototype|LuaFluidPrototype>
 ---@return LocalisedString
 function mod.item_or_fluid_info(what, protos)
-   ---@type fa.ItemInfo.LocaliseItemOpts
-   local final_opts
-
-   if type(what) == "userdata" then
-      ---@type LuaItemStack
-      local stack = what --[[@as LuaItemStack ]]
-      assert(stack.object_name == "LuaItemStack")
-
-      final_opts = {
-         name = stack.prototype,
-         quality = stack.quality,
-         count = stack.count,
-         is_blueprint = stack.is_blueprint,
-         blueprint_label = stack.is_blueprint and stack.label or nil,
-         is_blueprint_book = stack.is_blueprint_book,
-         blueprint_book_label = stack.is_blueprint_book and stack.label or nil,
-      }
-   else
-      if what.name == mod.ITEM_OTHER then
-         assert(what.count, "it does not make sense to ask to localise ITEM_OTHER without also giving a count")
-         return { "fa.item-other", what.count }
-      end
-
-      final_opts = what --[[ @as fa.ItemInfo.LocaliseItemOpts ]]
+   -- Handle ITEM_OTHER case early
+   if type(what) == "table" and what.name == mod.ITEM_OTHER then
+      assert(what.count, "it does not make sense to ask to localise ITEM_OTHER without also giving a count")
+      return { "fa.item-other", what.count }
    end
 
-   local quality = final_opts.quality
-   local name = final_opts.name
-   local count = final_opts.count
+   -- Extract common values depending on input type
+   local name, quality, count, stack
+   if type(what) == "userdata" then
+      stack = what --[[@as LuaItemStack ]]
+      assert(stack.object_name == "LuaItemStack")
+      name = stack.prototype
+      quality = stack.quality
+      count = stack.count
+   else
+      name = what.name
+      quality = what.quality
+      count = what.count
+   end
 
-   local item_proto, quality_proto
-
+   -- Resolve prototypes
+   local item_proto
    if type(name) == "string" then
       item_proto = protos[name]
    elseif name then
       item_proto = name
    end
-   if not item_proto then error("unable to find item " .. name) end
+   if not item_proto then error("unable to find item " .. tostring(name)) end
 
+   local quality_proto
    if quality and type(quality) == "string" then
       quality_proto = prototypes.quality[quality]
    elseif quality then
@@ -144,23 +229,19 @@ function mod.item_or_fluid_info(what, protos)
    else
       quality_proto = prototypes.quality["normal"]
    end
-   assert((not quality) or quality_proto)
 
-   local item_str = Localising.get_localised_name_with_fallback(item_proto)
    local quality_str = Localising.get_localised_name_with_fallback(quality_proto)
    local has_quality = (quality and quality_proto.name ~= "normal") and 1 or 0
    local has_count = (count and count > 1) and 1 or 0
 
-   -- Special case for blueprints with labels
-   if final_opts.is_blueprint and final_opts.blueprint_label then
-      return { "fa.item-blueprint", final_opts.blueprint_label, has_quality, quality_str, has_count, count }
+   -- For actual stacks, check for special item types (planners, labeled blueprints, etc.)
+   if stack then
+      local special_name = get_special_item_name(stack, quality_str, has_quality, has_count, count)
+      if special_name then return special_name end
    end
 
-   -- Special case for blueprint books with labels
-   if final_opts.is_blueprint_book and final_opts.blueprint_book_label then
-      return { "fa.item-blueprint-book", final_opts.blueprint_book_label, has_quality, quality_str, has_count, count }
-   end
-
+   -- Default: standard item name with quality and count
+   local item_str = Localising.get_localised_name_with_fallback(item_proto)
    return { "fa.item-quantity-quality", item_str, has_quality, quality_str, has_count, count }
 end
 
@@ -641,6 +722,24 @@ function mod.get_item_info_from_prototype(message, item_proto, quality, options)
    fuel_info(message, item_proto)
 end
 
+---Get verbose info for an upgrade planner
+---@param message fa.MessageBuilder
+---@param stack LuaItemStack
+local function get_upgrade_planner_verbose_info(message, stack)
+   UpgradePlanner.describe_planner(message, stack, nil)
+end
+
+---Handlers for special item verbose info, keyed by detection function
+---Each handler takes (message, stack) and returns true if it handled the item
+---@type (fun(message: fa.MessageBuilder, stack: LuaItemStack): boolean)[]
+local SPECIAL_STACK_VERBOSE_HANDLERS = {
+   function(message, stack)
+      if not stack.is_upgrade_item then return false end
+      get_upgrade_planner_verbose_info(message, stack)
+      return true
+   end,
+}
+
 ---Get detailed information about an item stack
 ---@param message fa.MessageBuilder
 ---@param stack LuaItemStack
@@ -651,6 +750,13 @@ function mod.get_item_stack_info(message, stack, options)
    if not stack or not stack.valid_for_read then
       message:fragment({ "fa.item-info-no-item" })
       return
+   end
+
+   -- For verbose mode, check if this is a special item type that needs stack access
+   if options.verbosity == mod.VERBOSITY.VERBOSE then
+      for _, handler in ipairs(SPECIAL_STACK_VERBOSE_HANDLERS) do
+         if handler(message, stack) then return end
+      end
    end
 
    mod.get_item_info_from_prototype(message, stack.prototype, stack.quality, options)
