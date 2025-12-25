@@ -312,10 +312,13 @@ local function render_inventory_grid(ctx)
                -- Check write access for entity operations
                if not check_write_access(click_ctx, entity, nil) then return end
 
-               -- Check if hand has blueprint and slot has blueprint book
-               if cursor_stack and cursor_stack.valid_for_read and cursor_stack.is_blueprint then
+               -- Check if hand has bookable item and slot has blueprint book
+               local is_bookable = cursor_stack
+                  and cursor_stack.valid_for_read
+                  and (cursor_stack.is_blueprint or cursor_stack.is_upgrade_item or cursor_stack.is_deconstruction_item)
+               if is_bookable then
                   if inv_stack and inv_stack.valid_for_read and inv_stack.is_blueprint_book then
-                     -- Insert blueprint into book
+                     -- Insert item into book
                      local book_inv = inv_stack.get_inventory(defines.inventory.item_main)
                      if book_inv then
                         local inserted = book_inv.insert(cursor_stack)

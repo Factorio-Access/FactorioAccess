@@ -174,7 +174,8 @@ end
 ---@param unlocked_only? boolean If true, only show unlocked items (default: false)
 ---@param force? LuaForce Force to use for unlocked filter (required if unlocked_only is true)
 ---@param result_converter? fun(name: string): any Optional function to convert item name to result (defaults to SignalID)
-function mod.add_item_signals(builder, root, unlocked_only, force, result_converter)
+---@param extra_filter? fun(proto: LuaItemPrototype): boolean Optional additional filter function
+function mod.add_item_signals(builder, root, unlocked_only, force, result_converter, extra_filter)
    local unlocked_items = nil
 
    if unlocked_only then
@@ -232,9 +233,18 @@ function mod.add_item_signals(builder, root, unlocked_only, force, result_conver
       end
    end
 
-   local filter = unlocked_only and function(proto)
-      return unlocked_items[proto.name]
-   end or nil
+   local filter
+   if unlocked_only and extra_filter then
+      filter = function(proto)
+         return unlocked_items[proto.name] and extra_filter(proto)
+      end
+   elseif unlocked_only then
+      filter = function(proto)
+         return unlocked_items[proto.name]
+      end
+   elseif extra_filter then
+      filter = extra_filter
+   end
 
    add_signals_with_hierarchy(builder, prototypes.item, "item", "item", root, filter, result_converter)
 end

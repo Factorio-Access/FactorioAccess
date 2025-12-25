@@ -67,6 +67,8 @@ local TestFramework = require("scripts.test-framework")
 local TileReader = require("scripts.tile-reader")
 local TransportBelts = require("scripts.transport-belts")
 local TravelTools = require("scripts.travel-tools")
+local UpgradePlanner = require("scripts.upgrade-planner")
+local PlannerUtils = require("scripts.planner-utils")
 local VirtualTrainDriving = require("scripts.rails.virtual-train-driving")
 local TrainSounds = require("scripts.sonifiers.train")
 local InserterSonifier = require("scripts.sonifiers.inserter")
@@ -92,6 +94,7 @@ require("scripts.ui.selectors.upgrade-selector")
 require("scripts.ui.selectors.blueprint-selector")
 require("scripts.ui.menus.blueprint-setup")
 require("scripts.ui.menus.blueprint-setup-config")
+require("scripts.ui.planners.upgrade-planner-menu")
 require("scripts.ui.selectors.copy-paste-selector")
 require("scripts.ui.menus.gun-menu")
 local MainMenu = require("scripts.ui.menus.main-menu")
@@ -181,6 +184,10 @@ local function read_hand(pindex)
          Speech.speak(pindex, Blueprints.get_blueprint_info(cursor_stack, true, pindex))
       elseif cursor_stack.is_blueprint_book then
          Speech.speak(pindex, Blueprints.get_blueprint_book_info(cursor_stack, true))
+      elseif cursor_stack.is_upgrade_item then
+         local message = MessageBuilder.new()
+         UpgradePlanner.describe_planner(message, cursor_stack)
+         Speech.speak(pindex, message:build())
       else
          --Any other valid item
          local vp = Viewpoint.get_viewpoint(pindex)
@@ -2873,33 +2880,33 @@ EventManager.on_event(
       local stack = p.cursor_stack
       local ghost = p.cursor_ghost
 
-      -- Handle planners specially
-      if stack and stack.valid_for_read then
-         if stack.is_deconstruction_item then
-            -- Start selection for deconstruction (action determined by alt modifier on second click)
-            local vp = Viewpoint.get_viewpoint(pindex)
-            local cursor_pos = vp:get_cursor_pos()
-            router:open_ui(UiRouter.UI_NAMES.DECON_AREA_SELECTOR, {
-               first_point = { x = cursor_pos.x, y = cursor_pos.y },
-               intro_message = {
-                  "fa.planner-deconstruct-first-point",
-                  math.floor(cursor_pos.x),
-                  math.floor(cursor_pos.y),
-               },
-               second_message = { "fa.planner-select-second-point" },
-            })
-            return
-         elseif stack.is_upgrade_item then
-            -- Start selection for upgrade (action determined by alt modifier on second click)
-            local vp = Viewpoint.get_viewpoint(pindex)
-            local cursor_pos = vp:get_cursor_pos()
-            router:open_ui(UiRouter.UI_NAMES.UPGRADE_AREA_SELECTOR, {
-               first_point = { x = cursor_pos.x, y = cursor_pos.y },
-               intro_message = { "fa.planner-upgrade-first-point", math.floor(cursor_pos.x), math.floor(cursor_pos.y) },
-               second_message = { "fa.planner-select-second-point" },
-            })
-            return
-         elseif stack.is_blueprint then
+      -- Handle planners specially (direct or in book)
+      if PlannerUtils.has_decon_planner(pindex) then
+         -- Start selection for deconstruction (action determined by shift modifier on second click)
+         local vp = Viewpoint.get_viewpoint(pindex)
+         local cursor_pos = vp:get_cursor_pos()
+         router:open_ui(UiRouter.UI_NAMES.DECON_AREA_SELECTOR, {
+            first_point = { x = cursor_pos.x, y = cursor_pos.y },
+            intro_message = {
+               "fa.planner-deconstruct-first-point",
+               math.floor(cursor_pos.x),
+               math.floor(cursor_pos.y),
+            },
+            second_message = { "fa.planner-select-second-point" },
+         })
+         return
+      elseif PlannerUtils.has_upgrade_planner(pindex) then
+         -- Start selection for upgrade (action determined by shift modifier on second click)
+         local vp = Viewpoint.get_viewpoint(pindex)
+         local cursor_pos = vp:get_cursor_pos()
+         router:open_ui(UiRouter.UI_NAMES.UPGRADE_AREA_SELECTOR, {
+            first_point = { x = cursor_pos.x, y = cursor_pos.y },
+            intro_message = { "fa.planner-upgrade-first-point", math.floor(cursor_pos.x), math.floor(cursor_pos.y) },
+            second_message = { "fa.planner-select-second-point" },
+         })
+         return
+      elseif stack and stack.valid_for_read then
+         if stack.is_blueprint then
             -- Only start selection for empty blueprints
             if not stack.is_blueprint_setup() then
                -- Start selection for empty blueprint
@@ -3148,18 +3155,19 @@ EventManager.on_event(
       local p = game.get_player(pindex)
       local stack = p.cursor_stack
 
-      if stack and stack.valid_for_read and stack.valid then
-         if stack.prototype.type == "spidertron-remote" then
-            -- Toggle selected spidertron on remote
-            local entity = EntitySelection.get_first_ent_at_tile(pindex)
-            if entity and entity.type == "spider-vehicle" then
-               SpidertronRemote.toggle_spidertron(p, entity)
-            else
-               Speech.speak(pindex, { "fa.spidertron-remote-no-spidertron-selected" })
-            end
+      if stack and stack.valid_for_read and stack.valid and stack.prototype.type == "spidertron-remote" then
+         -- Toggle selected spidertron on remote
+         local entity = EntitySelection.get_first_ent_at_tile(pindex)
+         if entity and entity.type == "spider-vehicle" then
+            SpidertronRemote.toggle_spidertron(p, entity)
          else
-            kb_click_hand_right(event)
+            Speech.speak(pindex, { "fa.spidertron-remote-no-spidertron-selected" })
          end
+      elseif stack and stack.valid_for_read and stack.is_upgrade_item then
+         -- Open upgrade planner menu (direct only, not in book - book opens book menu)
+         router:open_ui(UiRouter.UI_NAMES.UPGRADE_PLANNER)
+      elseif stack and stack.valid_for_read then
+         kb_click_hand_right(event)
       else
          -- Empty hand case - read entity status
 
@@ -3790,10 +3798,9 @@ local function cycle_blueprint_book(pindex, offset)
    end
 
    cursor_stack.active_index = new_idx
-   local active_bp = book_inv[new_idx]
-   if active_bp and active_bp.valid_for_read then
-      local bp_info = Blueprints.get_blueprint_info(active_bp, false, pindex)
-      Speech.speak(pindex, { "", { "fa.blueprint-book-switched" }, " ", bp_info })
+   local active_item = book_inv[new_idx]
+   if active_item and active_item.valid_for_read then
+      Speech.speak(pindex, { "", { "fa.blueprint-book-switched" }, " ", ItemInfo.item_info(active_item) })
    end
 end
 
@@ -3823,10 +3830,9 @@ EventManager.on_event("fa-comma", function(event)
       return
    end
 
-   local active_bp = book_inv[cursor_stack.active_index]
-   if active_bp and active_bp.valid_for_read then
-      local bp_info = Blueprints.get_blueprint_info(active_bp, false, pindex)
-      Speech.speak(pindex, { "", { "fa.blueprint-book-active" }, " ", bp_info })
+   local active_item = book_inv[cursor_stack.active_index]
+   if active_item and active_item.valid_for_read then
+      Speech.speak(pindex, { "", { "fa.blueprint-book-active" }, " ", ItemInfo.item_info(active_item) })
    else
       Speech.speak(pindex, { "fa.blueprint-book-empty-active" })
    end

@@ -6,17 +6,34 @@ local SignalHelpers = require("scripts.ui.signal-helpers")
 
 local mod = {}
 
+-- Predefined filter types for item chooser
+mod.FILTER_TYPES = {
+   MODULE = "module",
+}
+
+-- Filter functions by type
+local FILTERS = {
+   [mod.FILTER_TYPES.MODULE] = function(proto)
+      return proto.type == "module"
+   end,
+}
+
 ---@param ctx fa.ui.graph.Ctx
 local function build_item_tree(ctx)
    local builder = TreeChooser.TreeChooserBuilder.new()
    local player = game.get_player(ctx.pindex)
    local force = player.force --[[@as LuaForce]]
 
-   -- Use signal helper to add items (with unlocked filter)
+   -- Get filter type from global parameters (passed to open_child_ui)
+   local params = ctx.global_parameters or {}
+   local filter_type = params.filter_type
+   local extra_filter = filter_type and FILTERS[filter_type]
+
+   -- Use signal helper to add items (with unlocked filter and optional extra filter)
    -- Pass converter to return just the name string, not SignalID
    SignalHelpers.add_item_signals(builder, TreeChooser.ROOT, true, force, function(name)
       return name
-   end)
+   end, extra_filter)
 
    return builder:build()
 end

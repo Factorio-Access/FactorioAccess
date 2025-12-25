@@ -10,6 +10,7 @@ local TabList = require("scripts.ui.tab-list")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local UiRouter = require("scripts.ui.router")
 local UiSounds = require("scripts.ui.sounds")
+local UpgradePlanner = require("scripts.upgrade-planner")
 
 local mod = {}
 
@@ -90,6 +91,12 @@ local function render_blueprints_list(ctx)
                c.message:fragment(Blueprints.get_blueprint_info(bp_stack, false, c.pindex))
             elseif bp_stack.is_blueprint_book then
                c.message:fragment(bp_stack.label or { "fa.unnamed-book" })
+            elseif bp_stack.is_upgrade_item then
+               local mb = Speech.MessageBuilder.new()
+               UpgradePlanner.describe_planner(mb, bp_stack)
+               c.message:fragment(mb:build())
+            elseif bp_stack.is_deconstruction_item then
+               c.message:fragment(bp_stack.label or { "item-name.deconstruction-planner" })
             else
                c.message:fragment({ "fa.unknown-item" })
             end
@@ -189,22 +196,29 @@ local function render_blueprints_list(ctx)
    return builder:build()
 end
 
----Get blueprints from player inventory that can be added to the book
+---Check if a stack can be stored in a blueprint book
+---@param stack LuaItemStack
+---@return boolean
+local function is_bookable_item(stack)
+   return stack.is_blueprint or stack.is_blueprint_book or stack.is_upgrade_item or stack.is_deconstruction_item
+end
+
+---Get planners from player inventory that can be added to the book
 ---@param pindex number
----@return LuaItemStack[] blueprints Array of blueprint stacks from inventory
-local function get_blueprints_from_inventory(pindex)
+---@return LuaItemStack[] planners Array of planner stacks from inventory
+local function get_planners_from_inventory(pindex)
    local player = game.get_player(pindex)
    if not player then return {} end
 
    local main_inv = player.get_main_inventory()
    if not main_inv then return {} end
 
-   local blueprints = {}
+   local planners = {}
    for i = 1, #main_inv do
       local stack = main_inv[i]
-      if stack.valid_for_read and stack.is_blueprint then table.insert(blueprints, stack) end
+      if stack.valid_for_read and is_bookable_item(stack) then table.insert(planners, stack) end
    end
-   return blueprints
+   return planners
 end
 
 ---Render the settings tab
@@ -251,29 +265,39 @@ local function render_settings(ctx)
       end,
    })
 
-   -- Add row for adding blueprints from inventory
-   local inv_blueprints = get_blueprints_from_inventory(ctx.pindex)
+   -- Add row for adding planners from inventory
+   local inv_planners = get_planners_from_inventory(ctx.pindex)
    if book_inv then
       builder:start_row("add-from-inventory")
 
-      if #inv_blueprints > 0 then
+      if #inv_planners > 0 then
          builder:add_label("add-intro", { "fa.ui-blueprint-book-add-from-inventory" })
 
-         for idx, bp_stack in ipairs(inv_blueprints) do
+         for idx, planner_stack in ipairs(inv_planners) do
             local key = "inv-bp-" .. idx
             builder:add_clickable(key, function(c)
-               -- Show blueprint info with slot number
+               -- Show planner info with slot number
                local slot_num = #book_inv + 1
-               c.message:fragment(Blueprints.get_blueprint_info(bp_stack, false, c.pindex))
+               if planner_stack.is_blueprint then
+                  c.message:fragment(Blueprints.get_blueprint_info(planner_stack, false, c.pindex))
+               elseif planner_stack.is_upgrade_item then
+                  local mb = Speech.MessageBuilder.new()
+                  UpgradePlanner.describe_planner(mb, planner_stack)
+                  c.message:fragment(mb:build())
+               elseif planner_stack.is_deconstruction_item then
+                  c.message:fragment(planner_stack.label or { "item-name.deconstruction-planner" })
+               elseif planner_stack.is_blueprint_book then
+                  c.message:fragment(planner_stack.label or { "fa.unnamed-book" })
+               end
                c.message:list_item({ "fa.ui-blueprint-book-would-be-slot", slot_num })
             end, {
                on_click = function(c)
-                  -- Insert the blueprint into the book
-                  local inserted = book_inv.insert(bp_stack)
+                  -- Insert the planner into the book
+                  local inserted = book_inv.insert(planner_stack)
                   if inserted > 0 then
-                     local bp_name = bp_stack.label or { "fa.unnamed" }
-                     bp_stack.clear()
-                     c.message:fragment({ "fa.ui-blueprint-book-added-to-book", bp_name })
+                     local planner_name = planner_stack.label or { "fa.unnamed" }
+                     planner_stack.clear()
+                     c.message:fragment({ "fa.ui-blueprint-book-added-to-book", planner_name })
                      UiSounds.play_menu_click(c.pindex)
                   else
                      c.message:fragment({ "fa.ui-blueprint-book-book-full" })

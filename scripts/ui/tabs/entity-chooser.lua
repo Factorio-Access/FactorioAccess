@@ -15,6 +15,8 @@ local mod = {}
 -- Predefined filter types
 mod.FILTER_TYPES = {
    TURRET_PRIORITY = "turret_priority",
+   UPGRADEABLE = "upgradeable",
+   SAME_FAST_GROUP = "same_fast_group",
 }
 
 -- Entity types that can be turret priority targets
@@ -31,9 +33,18 @@ local TURRET_PRIORITY_TYPES = {
 }
 
 -- Filter functions by type
+-- Functions receive (proto, params) where params is global_parameters
 local FILTERS = {
    [mod.FILTER_TYPES.TURRET_PRIORITY] = function(proto)
       return TURRET_PRIORITY_TYPES[proto.type] or false
+   end,
+   [mod.FILTER_TYPES.UPGRADEABLE] = function(proto)
+      return proto.fast_replaceable_group ~= nil
+   end,
+   [mod.FILTER_TYPES.SAME_FAST_GROUP] = function(proto, params)
+      local target_group = params and params.fast_replaceable_group
+      if not target_group then return false end
+      return proto.fast_replaceable_group == target_group
    end,
 }
 
@@ -52,7 +63,7 @@ local function build_entity_tree(ctx)
    local ungrouped = {}
 
    for name, proto in pairs(prototypes.entity) do
-      if not filter_func or filter_func(proto) then
+      if not filter_func or filter_func(proto, params) then
          local group = proto.group
          local subgroup = proto.subgroup
 

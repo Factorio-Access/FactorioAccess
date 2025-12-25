@@ -1,6 +1,7 @@
 local BoxSelector = require("scripts.ui.box-selector")
 local Speech = require("scripts.speech")
 local UiRouter = require("scripts.ui.router")
+local PlannerUtils = require("scripts.planner-utils")
 
 local mod = {}
 
@@ -14,9 +15,9 @@ mod.upgrade_area_selector = BoxSelector.declare_box_selector({
       local p = game.get_player(pindex)
       if not p then return end
 
-      -- Get the planner item
-      local planner = p.cursor_stack
-      if not planner or not planner.valid_for_read or not planner.is_upgrade_item then
+      -- Get the planner item (direct or in book)
+      local planner = PlannerUtils.get_upgrade_planner(pindex)
+      if not planner then
          Speech.speak(pindex, { "fa.planner-wrong-item" })
          return
       end

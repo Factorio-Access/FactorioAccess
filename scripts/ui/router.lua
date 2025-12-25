@@ -175,6 +175,7 @@ mod.UI_NAMES = {
    SETTINGS = "settings",
    BLUEPRINT_SETUP = "blueprint_setup",
    BLUEPRINT_SETUP_CONFIG = "blueprint_setup_config",
+   UPGRADE_PLANNER = "upgrade_planner",
    -- Test UI names (used in automated tests)
    TEST_ASSEMBLING_MACHINE = "test-assembling-machine",
    TEST_ASSEMBLING_MACHINE_FOCUS = "test-assembling-machine-focus",
