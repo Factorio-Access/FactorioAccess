@@ -1,4 +1,4 @@
-# 0.16.50 (unreleased)
+# 0.16.50 (2025-12-24)
 
 - Blueprint books now support control backspace to permanently delete a book
 - Add support for putting upgrade and deconstruction planners in blueprint books. They work just like if they were outside of the book.
