@@ -1,6 +1,12 @@
 # 0.16.51 (unreleased)
 
 - When teleporting to fast travel points, don't say "tile out of range" for no reason
+- You can no longer get to the belt analyzer on splitters or loaders.  This was always returning nonsense.
+- The belt analyzer no longer stops at incoming sideloads, because it's supposed to match vanilla  circuit network
+- The belt analyzer now understands that corners have lanes of different lengths
+- Document that the belt analyzer can return over 100% in a few specific situations:
+  - Space age, when belts are stacked
+  - When belts are temporarily compressed for any of a variety of reasons
 
 # 0.16.50 (2025-12-24)
 
