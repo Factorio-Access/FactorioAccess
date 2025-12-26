@@ -14,6 +14,7 @@ local Localising = require("scripts.localising")
 local RailTableExtractor = require("scripts.rails.table-extractor")
 local TH = require("scripts.table-helpers")
 local TransportBelts = require("scripts.transport-belts")
+local TutorialTranscript = require("scripts.tutorial-transcript")
 local Wires = require("scripts.wires")
 local Speech = require("scripts.speech")
 local Viewpoint = require("scripts.viewpoint")
@@ -163,6 +164,30 @@ local function cmd_fagive(cmd)
    Speech.speak(pindex, { "fa.cmd-gave-items", inserted, prototype.localised_name })
 end
 
+--[[
+/fa-tutorial-transcript
+
+Generates a markdown transcript of the tutorial to script-output/tutorial-transcript.md.
+The transcript uses the player's configured language.
+
+Will error if message list metadata is not yet available (typically only happens
+in the first second after loading).
+]]
+---@param cmd CustomCommandData
+local function cmd_tutorial_transcript(cmd)
+   local pindex = cmd.player_index
+
+   local success, err = TutorialTranscript.generate_transcript(pindex)
+
+   if success then
+      Speech.speak(pindex, { "fa.cmd-transcript-success" })
+      print("Tutorial transcript written")
+   else
+      Speech.speak(pindex, { "", { "fa.cmd-transcript-failed" }, ", ", err })
+      print("Tutorial transcript failed: " .. err)
+   end
+end
+
 mod.COMMANDS = {
    fac = {
       help = "See commands.lua",
@@ -175,6 +200,10 @@ mod.COMMANDS = {
    railtable = {
       help = "Generate rail extension data table",
       handler = cmd_railtable,
+   },
+   ["fa-tutorial-transcript"] = {
+      help = "Generate tutorial transcript to script-output/tutorial-transcript.md",
+      handler = cmd_tutorial_transcript,
    },
 }
 

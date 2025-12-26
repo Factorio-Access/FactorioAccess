@@ -7,6 +7,8 @@
 - Document that the belt analyzer can return over 100% in a few specific situations:
   - Space age, when belts are stacked
   - When belts are temporarily compressed for any of a variety of reasons
+- Add `/fa-tutorial-transcript`. When run at the console, puts a tutorial-transcript.md in your script-output directory.
+- Commit a tutorial transcript, see [here](./docs/tutorial-transcript.md)
 
 # 0.16.50 (2025-12-24)
 
