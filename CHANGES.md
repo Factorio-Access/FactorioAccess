@@ -1,4 +1,4 @@
-# 0.16.51 (unreleased)
+# 0.16.51 (2025-12-25)
 
 - When teleporting to fast travel points, don't say "tile out of range" for no reason
 - You can no longer get to the belt analyzer on splitters or loaders.  This was always returning nonsense.
