@@ -226,3 +226,27 @@ What happens depends on what the cursor is on:
 Kruise Kontrol supports vehicles, and can thus be used to easily drive places.
 
 It will continue the current action until there is nothing else to act on close by.  Triggering on a ghost for example will build all ghosts until it can't find any ghosts or can't find the items to build it.
+
+
+### Belts
+
+Belts are explained in the tutorial and mostly match vanilla but there are some specific notes that should be coverred here.
+
+The mod provides the belt analyzer.  This is a 4-tab interface:
+
+- This belt is a 2x4 grid, showing the current belt discretized into 8 slots
+- Upstream is a summary of all belts behind this one ("toward the source of the river")
+- Downstream is a summary of all belts ahead of this one
+- Total is both upstream and downstream, plus this belt
+
+The reason it deserves documentation is because of some edge cases which you may need to be aware of.
+
+First, note that it stops where the circuit network would: at a splitter or a pouring end.  It also doesn't traverse loops more than once, and may give somewhat nonsensical results in that situation (which part of the loop is upstream?)
+
+There are two odd behaviors you may observe, both happening for roughly the same reason: percents over 100% and seeing two items on the same belt slot.
+
+This can happen for two reasons.  The first is that you are playing space age with stacked belts.  In that case the percentage is a measure of how "stacked" the belt is.
+
+The second is a bit more subtle.  Belts have 8 slots for items in the steady state.  But when inserters or drills place items on them, they form corners, or they feed a splitter this stops being true by a small amount.  This happens because the game allows things to temporarily crunch together by a little bit to keep things running.  The specific rules for when this occurs are not straightforward, but in general the easiest way to see percents over 100% is to turn a belt segment to the side so that it becomes a corner, then turn it straight again after it fills up.
+
+This said, if you are playing in 2.0 base or space age without stack inserters and see numbers significantly over 100%, you may have found a bug; please report it to us.

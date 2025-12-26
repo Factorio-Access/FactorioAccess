@@ -40,7 +40,7 @@ It is very important to mention that splitters will happily mix belts of differe
 
 In general, you do not ever want to mix multiple items on one belt lane, and splitters make this very easy to do by mistake.
 
-Splitters also have a configuration tab.  We will discuss the belt analyzer at the end of this chapter, but clicking a splitter opens the splitter's menu instead.  Pressing control tab from there moves to the splitter's config.  You will rarely need this screen, but when you do it is one of the most important screens in Factorio.
+Splitters also have a configuration pane, opened by clicking them.  Be careful.  If you place a belt over a splitter, the game will turn the splitter into a regular belt, so you should do this with an empty hand.
 
 The labels tell you what keys to press to do what, so we won't be specific here and will just describe the features and the item chooser.
 
@@ -85,6 +85,8 @@ The other three tabs show total counts of what is on the belt.  Total is everyth
 The analysis stops at belts which have multiple incoming or outgoing belts (splitters, plus the things we discuss below), as well as outgoing sideloads.  It does not consider other belts sideloading onto this one.  Basically, you can think of it as showing you one long straight piece.
 
 For advanced players, this mostly matches the circuit network definition, though we are not willing to guarantee that it is perfect.
+
+Please note that you may occasionally see percents higher than 100% in the belt analyzer.  This is normal and happens because the game sometimes allows belts to have a little bit extra on them temporarily.  Our documentation on GitHub explains this in more detail, but it is mostly inconsequential.
 
 It is now time to discuss lanes and sideloads, terms which we have already had to use in this chapter.  We needed to cover simpler topics first before we could explain these concepts properly.
 
