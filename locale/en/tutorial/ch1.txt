@@ -10,6 +10,10 @@ e opens your main menu if nothing else was open. If you hit e while the tutorial
 
 Most of the time, pressing e closes all open UI.  The tutorial UI is a special case.  Instead, e closes just the tutorial. This lets you read the tutorial while other menus are open without losing your place.
 
+To save your game press f1.  Your game also saves automatically every couple of minutes, signalled by two clicks.
+
+Finally, a markdown transcript of this tutorial is available in English in our GitHub.  You can also generate it with the console command /fa-tutorial-transcript.
+
 Before you go further, it is important that we confirm that you have not enabled space age. If you have, you will need to recreate your save.
 
 If you did not purchase space age, this does not apply to you.

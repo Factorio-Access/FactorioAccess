@@ -37,6 +37,6 @@ mod.MESSAGE_LISTS = {
    ["warnings-menu-help"] = true,
 }
 
-mod.MESSAGE_LISTS_HASH = "f9c2b7e9f3fd7ae1b15209052316ef3aceede2cb6b328127f8de127edd1fb775"
+mod.MESSAGE_LISTS_HASH = "1862ba986b6ec371c80fcf0bafc68fd0cbef7806e48dd1641786423bf2566dad"
 
 return mod
