@@ -28,6 +28,7 @@ local locomotive_config_tab = require("scripts.ui.tabs.locomotive-config")
 local roboport_config_tab = require("scripts.ui.tabs.roboport-config")
 local selector_combinator_tab = require("scripts.ui.tabs.selector-combinator")
 local spidertron_config_tab = require("scripts.ui.tabs.spidertron-config")
+local splitter_config_tab = require("scripts.ui.tabs.splitter-config")
 local train_stop_tab = require("scripts.ui.tabs.train-stop")
 local turret_config_tab = require("scripts.ui.tabs.turret-config")
 
@@ -206,6 +207,9 @@ local function build_configuration_tabs(entity)
 
    -- Add turret configuration
    if turret_config_tab.is_available(entity) then table.insert(tabs, turret_config_tab.turret_config_tab) end
+
+   -- Add splitter configuration
+   if splitter_config_tab.is_available(entity) then table.insert(tabs, splitter_config_tab.splitter_config_tab) end
 
    -- Future: Add other device-specific tabs here
    -- if prototype.type == "mining-drill" then ...
@@ -543,13 +547,7 @@ function mod.open_entity_ui(pindex, entity)
    end
 
    -- Special case: belt-related entities use the belt analyzer
-   if
-      entity.type == "transport-belt"
-      or entity.type == "underground-belt"
-      or entity.type == "splitter"
-      or entity.type == "loader"
-      or entity.type == "loader-1x1"
-   then
+   if entity.type == "transport-belt" or entity.type == "underground-belt" then
       router:open_ui(UiRouter.UI_NAMES.BELT, params)
       return true
    end

@@ -22,9 +22,9 @@ local mod = {}
 ---@field upstream fa.BeltAnalyzer.SortedEntries[]
 ---@field downstream fa.BeltAnalyzer.SortedEntries[]
 ---@field total fa.BeltAnalyzer.SortedEntries[]
----@field upstream_length number
----@field downstream_length number
----@field total_length number
+---@field upstream_length fa.TransportBelts.LaneLengths
+---@field downstream_length fa.TransportBelts.LaneLengths
+---@field total_length fa.TransportBelts.LaneLengths
 
 ---@class fa.ui.BeltAnalyzer.SharedState
 ---@field node fa.TransportBelts.Node
@@ -140,8 +140,10 @@ local function aggregate_grid_builder(field, length_field)
       end
 
       for col = 1, 2 do
+         local lane_key = col == 1 and "left" or "right"
+         local lane_length = analysis[length_field][lane_key]
          for row, bucket in pairs(state[col]) do
-            local percent = string.format("%.1f", 100 * bucket.count / analysis[length_field])
+            local percent = lane_length > 0 and string.format("%.1f", 100 * bucket.count / lane_length) or "0.0"
             builder:add_simple_label(
                col,
                row,

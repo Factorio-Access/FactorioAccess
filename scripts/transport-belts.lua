@@ -556,31 +556,52 @@ function Node:carries_heuristic(line_index, depth_limit)
    return result
 end
 
+---@class fa.TransportBelts.LaneLengths
+---@field left number Length in slots for left lane
+---@field right number Length in slots for right lane
+
 ---@class fa.TransportBelts.BeltAnalyzerData
 ---@field left { upstream: fa.NQC, downstream: fa.NQC, total: fa.NQC }
 ---@field right { upstream: fa.NQC, downstream: fa.NQC, total: fa.NQC }
----@field upstream_length number in "slots", always a multiple of 4.
----@field downstream_length number
----@field total_length number
+---@field upstream_length fa.TransportBelts.LaneLengths
+---@field downstream_length fa.TransportBelts.LaneLengths
+---@field total_length fa.TransportBelts.LaneLengths
 
+---Get the length of each lane in slots for a belt entity.
+---At corners, the outside lane is longer and the inside lane is shorter.
 ---@param ent LuaEntity
----@return number
+---@return fa.TransportBelts.LaneLengths
 local function belt_length_in_slots(ent)
-   -- Underground belt exits are also special: they have 0.5-length lines which are used, and two lines left empty.
-   if ent.type == "underground-belt" and ent.belt_to_ground_type == "output" then return 2 end
+   -- Underground belt exits: 0.5-length lines, symmetric
+   if ent.type == "underground-belt" and ent.belt_to_ground_type == "output" then return { left = 2, right = 2 } end
 
-   -- Underground belt entrances are where we get the length of the underground part from.
+   -- Underground belt entrances: above ground + underground portions
    if ent.type == "underground-belt" and ent.belt_to_ground_type == "input" then
-      local l1 = ent.get_transport_line(1).line_length
-      local l2 = ent.get_transport_line(3).line_length
-      return (l1 + l2) * 4
+      local left_above = ent.get_transport_line(1).line_length
+      local left_underground = ent.get_transport_line(3).line_length
+      local right_above = ent.get_transport_line(2).line_length
+      local right_underground = ent.get_transport_line(4).line_length
+      return {
+         left = (left_above + left_underground) * 4,
+         right = (right_above + right_underground) * 4,
+      }
    end
 
-   if ent.type == "loader" then return 0 end
+   -- Loaders have no meaningful length for analysis
+   if ent.type == "loader" or ent.type == "loader-1x1" then return { left = 0, right = 0 } end
 
-   -- Everything else is 4: transport belts for the obvious reason and splitters
-   -- because they are complicated and 4 is a good enough approximation.
-   return 4
+   -- Transport belts: measure actual line lengths (differs at corners)
+   if ent.type == "transport-belt" then
+      local left_length = ent.get_transport_line(1).line_length
+      local right_length = ent.get_transport_line(2).line_length
+      return {
+         left = left_length * 4,
+         right = right_length * 4,
+      }
+   end
+
+   -- Fallback for any other type
+   return { left = 4, right = 4 }
 end
 
 --[[
@@ -602,10 +623,9 @@ function Node:belt_analyzer_algo()
          total = {},
       },
       right = { upstream = {}, downstream = {}, total = {} },
-      upstream_length = 0,
-      downstream_length = 0,
-      -- There is always at least this belt.
-      total_length = 0,
+      upstream_length = { left = 0, right = 0 },
+      downstream_length = { left = 0, right = 0 },
+      total_length = { left = 0, right = 0 },
    }
 
    ---@param tab fa.NQC
@@ -659,23 +679,31 @@ function Node:belt_analyzer_algo()
    add_node(self)
 
    self:walk_single_parents(function(e)
+      if e.type == "splitter" or e.type == "loader" or e.type == "loader-1x1" then return false end
       local n = Node.create(e)
       if add_node(n, "upstream") then
-         ret.upstream_length = ret.upstream_length + belt_length_in_slots(e)
+         local lengths = belt_length_in_slots(e)
+         ret.upstream_length.left = ret.upstream_length.left + lengths.left
+         ret.upstream_length.right = ret.upstream_length.right + lengths.right
          return true
       end
       return false
    end)
 
    self:walk_single_child(function(e)
+      if e.type == "splitter" or e.type == "loader" or e.type == "loader-1x1" then return false end
       if add_node(Node.create(e), "downstream") then
-         ret.downstream_length = ret.downstream_length + belt_length_in_slots(e)
+         local lengths = belt_length_in_slots(e)
+         ret.downstream_length.left = ret.downstream_length.left + lengths.left
+         ret.downstream_length.right = ret.downstream_length.right + lengths.right
          return true
       end
       return false
    end)
 
-   ret.total_length = belt_length_in_slots(self.entity) + ret.upstream_length + ret.downstream_length
+   local self_lengths = belt_length_in_slots(self.entity)
+   ret.total_length.left = self_lengths.left + ret.upstream_length.left + ret.downstream_length.left
+   ret.total_length.right = self_lengths.right + ret.upstream_length.right + ret.downstream_length.right
 
    return ret
 end
