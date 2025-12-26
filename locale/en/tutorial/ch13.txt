@@ -6,9 +6,9 @@ For upgrade and deconstructionn planners, you may also click with a larger curso
 
 To get an upgrade planner, use alt u.  For deconstruction, use alt d.  For blueprints use alt b.
 
-Upgrade planners are the most limited, and you can expect better support in future.  When you select the area to upgrade, everything with a better item gets marked for upgrade.
+When using the upgrade planner, the default behavior is to mark everything that can be upgraded: belts to their next tier, inserters to fast inserters, etc.
 
-There are sighted configurations not yet exposed to you, but that doesn't mean it's useless.  The best use of an upgrade planner is this. Find a belt corner and use that as the first point. Then cursor skip to the other end, and select that as your second point.  Then, the whole belt upgrades.
+We expose a limited form of the sighted configurations to the upgrade planner under right clicking.
 
 Deconstruction planners mark areas for deconstruction.  Once marked, entities stop functioning and wait for you to remove them.
 
@@ -16,13 +16,11 @@ In both cases, Kruise Kontrol on a marked entity will perform the action, though
 
 In both of these cases, the item is temporary just like blueprints.  You can get them into an inventory, but if you hit q it just goes away.
 
+If you change configuration, however, we assume you want it to be permanent.  This happens even if you change your mind and return the configuration to the defaults.  To delete it in this case hit control backspace.
+
 Finally, in both cases holding shift when you select the second point will cancel any deconstruction or upgrade orders in the area.
 
-Configuration for upgrade planners and deconstruction planners is under active development.  To find out what is possible for the sighted in this regard, check the official Factorio wiki.  To find out what we support, please consult the docs on our GitHub.
-
-We have limited bandwidth to maintain custom config support, so at this time they are known to be buggy and unstable.  Use them at your own risk.
-
-to access what we do support, press right bracket with an upgrade or deconstruction planner in hand.
+Configuration for upgrade planners and deconstruction planners is under active development.  We have limited bandwidth to maintain custom config support, so at this time they are known to be buggy and unstable.  Use them at your own risk.
 
 Let's turn to blueprints.  You have already learned to use blueprints, but not how to make them.
 
