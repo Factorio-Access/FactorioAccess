@@ -425,11 +425,11 @@ end
 ---@field distance number Negative for behind, 0 for "here", positive ahead.
 ---@field results table<string, table<string, number>> item->quality->count
 
--- Walk this node's parents until either a ghost or a connectable with more than
--- one parent is found.  Stop if the passed callback returns false or if a loop
--- is detected.
+-- Walk upstream following the lane. Continues through sideloads by following
+-- the "behind" parent, ignoring left/right sideload parents. Stops at mergers
+-- (no behind parent), ghosts, or loops. Stop if the callback returns false.
 ---@param callback fun(LuaEntity, number): boolean second arg is number of steps so far, starts at 1.
-function Node:walk_single_parents(callback)
+function Node:walk_lane_upstream(callback)
    self:_assert_valid()
 
    local e = self.entity
@@ -441,15 +441,11 @@ function Node:walk_single_parents(callback)
 
    while true do
       local b, l, r = get_parents(e)
-      if count3(b, l, r) ~= 1 then return end
+      -- Only follow the "behind" parent, ignoring sideloads.
+      -- Stop at mergers (no behind parent) or dead ends.
+      if not b then return end
 
-      -- Makes stylua happy (because it will otherwise clobber this function)
-      -- and LuaLS happy (because it thinks that p is nil).
-      do
-         local p = b or l or r
-         assert(p)
-         e = p
-      end
+      e = b
       if e.type == "entity-ghost" then return end
       if seen[e.unit_number] then return end
       seen[e.unit_number] = true
@@ -531,7 +527,7 @@ function Node:carries_heuristic(line_index, depth_limit)
 
    handler(self.entity, 0, false)
 
-   if not contents then self:walk_single_parents(function(e, d)
+   if not contents then self:walk_lane_upstream(function(e, d)
       return handler(e, d, true)
    end) end
 
@@ -678,7 +674,7 @@ function Node:belt_analyzer_algo()
    -- Ourself, to total only.
    add_node(self)
 
-   self:walk_single_parents(function(e)
+   self:walk_lane_upstream(function(e)
       if e.type == "splitter" or e.type == "loader" or e.type == "loader-1x1" then return false end
       local n = Node.create(e)
       if add_node(n, "upstream") then
