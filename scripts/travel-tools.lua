@@ -92,11 +92,6 @@ function FastTravelController:travel_to_point(id)
 
    Graphics.sync_build_cursor_graphics(self.pindex)
 
-   if not EntitySelection.reset_entity_index(self.pindex) then
-      Speech.speak(self.pindex, { "fa.travel-tile-out-of-range" })
-      return false
-   end
-
    -- Update cursor highlight
    local ent = p.selected
    if ent and ent.valid then

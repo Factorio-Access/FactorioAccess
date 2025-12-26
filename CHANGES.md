@@ -1,3 +1,7 @@
+# 0.16.51 (unreleased)
+
+- When teleporting to fast travel points, don't say "tile out of range" for no reason
+
 # 0.16.50 (2025-12-24)
 
 - Blueprint books now support control backspace to permanently delete a book
