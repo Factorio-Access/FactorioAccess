@@ -61,7 +61,7 @@ data.raw["map-gen-presets"].default["faccess-compass-valley"] = {
          stone = resource_def,
          ["uranium-ore"] = resource_def,
       },
-      seed = 3814061204,
+      seed = 2703463849,
       starting_area = 4,
       peaceful_mode = true,
       cliff_settings = {
