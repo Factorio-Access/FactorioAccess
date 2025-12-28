@@ -3,7 +3,9 @@
 
 local util = require("util")
 local EntitySelection = require("scripts.entity-selection")
+local Equipment = require("scripts.equipment")
 local FaUtils = require("scripts.fa-utils")
+local HealthBar = require("scripts.sonifiers.health-bar")
 local Localising = require("scripts.localising")
 local PlayerWeapon = require("scripts.combat.player-weapon")
 local SoundModel = require("scripts.sound-model")
@@ -34,6 +36,94 @@ local combat_storage = StorageManager.declare_storage_module("combat", {
 ---@return boolean
 function mod.is_combat_mode(pindex)
    return combat_storage[pindex].combat_mode
+end
+
+---@class fa.Combat.HealthShields
+---@field health number Health ratio (0 to 1)
+---@field shields number? Shield ratio (0 to 1), nil if no shields
+
+---Get the effective health and shields for a player (character or vehicle)
+---@param pindex integer
+---@return fa.Combat.HealthShields? result nil if no valid entity
+function mod.get_effective_health_shields(pindex)
+   local player = game.get_player(pindex)
+   if not player or not player.valid then return nil end
+
+   -- If in a vehicle, use vehicle stats
+   if player.driving and player.vehicle and player.vehicle.valid then
+      local vehicle = player.vehicle
+      local health = vehicle.get_health_ratio()
+      local shields = nil
+
+      local grid = vehicle.grid
+      if grid and grid.valid and grid.max_shield > 0 then shields = grid.shield / grid.max_shield end
+
+      return { health = health, shields = shields }
+   end
+
+   -- Otherwise use character stats
+   local char = player.character
+   if not char or not char.valid then return nil end
+
+   local health = char.get_health_ratio()
+   local shields = nil
+
+   local armor_inv = player.get_inventory(defines.inventory.character_armor)
+   if
+      armor_inv[1]
+      and armor_inv[1].valid_for_read
+      and armor_inv[1].valid
+      and armor_inv[1].grid
+      and armor_inv[1].grid.valid
+   then
+      local grid = armor_inv[1].grid
+      if grid.max_shield > 0 then shields = grid.shield / grid.max_shield end
+   end
+
+   return { health = health, shields = shields }
+end
+
+---Notify a player of their current health/shields via sonification and optionally build speech
+---@param pindex integer
+---@param mb fa.MessageBuilder? If provided, append health/shield info to it instead of just playing sound
+---@return fa.Combat.HealthShields? result nil if no valid entity
+function mod.notify_health_shields(pindex, mb)
+   local player = game.get_player(pindex)
+   if not player or not player.valid then return nil end
+
+   local stats = mod.get_effective_health_shields(pindex)
+   if not stats then return nil end
+
+   -- Always play the health bar sound
+   HealthBar.play_status(pindex, stats.health, stats.shields)
+
+   -- If a MessageBuilder was provided, append the status to it
+   if mb then
+      local health_pct = math.floor(stats.health * 100 + 0.5)
+
+      if player.driving and player.vehicle and player.vehicle.valid then
+         -- Vehicle health status
+         local vehicle = player.vehicle
+         mb:fragment(Localising.get_localised_name_with_fallback(vehicle))
+         mb:fragment({ "fa.vehicle-health-percent", health_pct })
+         if stats.shields then
+            local shield_pct = math.floor(stats.shields * 100 + 0.5)
+            mb:fragment({ "fa.vehicle-shield-percent", shield_pct })
+         end
+         -- Add equipment bonuses if vehicle has a grid
+         local grid = vehicle.grid
+         if grid and grid.valid and grid.count() > 0 then Equipment.add_equipment_bonuses_to_message(mb, grid) end
+      else
+         -- Character health status
+         mb:fragment({ "fa.character-health-percent", health_pct })
+         if stats.shields then
+            local shield_pct = math.floor(stats.shields * 100 + 0.5)
+            mb:fragment({ "fa.character-shield-percent", shield_pct })
+         end
+      end
+   end
+
+   return stats
 end
 
 ---Enter combat mode for a player

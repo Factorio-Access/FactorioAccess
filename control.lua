@@ -77,7 +77,6 @@ local CraftingBackend = require("scripts.sonifiers.grid-backends.crafting")
 local EnemyRadar = require("scripts.sonifiers.combat.enemy-radar")
 local SpawnerRadar = require("scripts.sonifiers.combat.spawner-radar")
 local BattleNotice = require("scripts.sonifiers.battle-notice")
-local HealthBar = require("scripts.sonifiers.health-bar")
 local PlayerCraftingSonifier = require("scripts.sonifiers.player-crafting")
 local ForceGhostEnabler = require("scripts.force-ghost-enabler")
 local AimAssist = require("scripts.combat.aim-assist")
@@ -875,7 +874,18 @@ function set_inserter_filter_by_hand(pindex, ent)
    end
 end
 
---Notifies battle sonifier when structures are damaged, plays character damage sounds
+---Get the player from a driver/passenger entity (which may be a character or player)
+---@param occupant LuaEntity|LuaPlayer|nil
+---@return LuaPlayer?
+local function get_player_from_occupant(occupant)
+   if not occupant or not occupant.valid then return nil end
+   if occupant.object_name == "LuaPlayer" then return occupant end
+   -- It's a character entity, get its player
+   if occupant.player and occupant.player.valid then return occupant.player end
+   return nil
+end
+
+--Notifies battle sonifier when structures are damaged, plays character/vehicle damage sounds
 EventManager.on_event(
    defines.events.on_entity_damaged,
    ---@param event EventData.on_entity_damaged
@@ -886,28 +896,14 @@ EventManager.on_event(
          return
       elseif ent.name == "character" then
          if ent.player == nil or not ent.player.valid then return end
-         local pindex = ent.player.index
-         local health_ratio = ent.get_health_ratio()
-
-         -- Check for energy shield
-         local shield_ratio = nil
-         local armor_inv = ent.player.get_inventory(defines.inventory.character_armor)
-         if
-            armor_inv[1]
-            and armor_inv[1].valid_for_read
-            and armor_inv[1].valid
-            and armor_inv[1].grid
-            and armor_inv[1].grid.valid
-         then
-            local grid = armor_inv[1].grid
-            if grid.max_shield > 0 then shield_ratio = grid.shield / grid.max_shield end
-         end
-
-         -- Play sounds with pan based on current levels
-         if shield_ratio and shield_ratio > 0 then HealthBar.play_shield(pindex, shield_ratio) end
-         if not shield_ratio or (shield_ratio < 0.01 and health_ratio < 1.0) then
-            HealthBar.play_health(pindex, health_ratio)
-         end
+         Combat.notify_health_shields(ent.player.index, nil)
+         return
+      elseif Consts.VEHICLE_TYPES[ent.type] then
+         -- Vehicle with player(s) inside - notify both driver and passenger
+         local driver = get_player_from_occupant(ent.get_driver())
+         local passenger = get_player_from_occupant(ent.get_passenger())
+         if driver then Combat.notify_health_shields(driver.index, nil) end
+         if passenger then Combat.notify_health_shields(passenger.index, nil) end
          return
       elseif ent.get_health_ratio() == 1.0 then
          --Ignore alerts if an entity has full health despite being damaged
@@ -2076,8 +2072,8 @@ local function kb_jump_to_player(event)
    local vp = Viewpoint.get_viewpoint(pindex)
    local cursor_pos = vp:get_cursor_pos()
    local cursor_size = vp:get_cursor_size()
-   cursor_pos.x = math.floor(first_player.position.x) + 0.5
-   cursor_pos.y = math.floor(first_player.position.y) + 0.5
+   cursor_pos.x = math.floor(first_player.position.x)
+   cursor_pos.y = math.floor(first_player.position.y)
    vp:set_cursor_pos(cursor_pos)
    read_coords(pindex, "Cursor returned ")
    if cursor_size < 2 then
@@ -2103,7 +2099,7 @@ local function kb_read_driving_structure_ahead(event)
    if ent and ent.valid then
       local dir = FaUtils.get_heading_value(p.vehicle)
       local dir_ent = FaUtils.get_direction_biased(ent.position, p.vehicle.position)
-      if p.vehicle.speed >= 0 and (dir_ent == dir or math.abs(dir_ent - dir) == 1 or math.abs(dir_ent - dir) == 7) then
+      if p.vehicle.speed >= 0 and (dir_ent == dir or math.abs(dir_ent - dir) == 1 or math.abs(dir_ent - dir) == 15) then
          local dist = math.floor(util.distance(p.vehicle.position, ent.position))
          Speech.speak(
             pindex,
@@ -2126,9 +2122,7 @@ EventManager.on_event(
       local router = UiRouter.get_router(pindex)
       local p = game.get_player(pindex)
 
-      if p.driving and p.vehicle.type == "car" then
-         kb_read_driving_structure_ahead(event)
-      elseif Combat.is_combat_mode(pindex) then
+      if Combat.is_combat_mode(pindex) then
          Speech.speak(pindex, { "fa.not-available-in-combat-mode" })
       else
          kb_jump_to_player(event)
@@ -3414,33 +3408,17 @@ EventManager.on_event(
 local function kb_read_health_and_armor_stats(event)
    local pindex = event.player_index
    local p = game.get_player(pindex)
-   local char = p.character
 
-   -- Play health bar sonifier
-   if char and char.valid then
-      local health_ratio = char.get_health_ratio()
-      local shield_ratio = nil
+   local mb = MessageBuilder.new()
+   Combat.notify_health_shields(pindex, mb)
 
-      local armor_inv = p.get_inventory(defines.inventory.character_armor)
-      if
-         armor_inv[1]
-         and armor_inv[1].valid_for_read
-         and armor_inv[1].valid
-         and armor_inv[1].grid
-         and armor_inv[1].grid.valid
-      then
-         local grid = armor_inv[1].grid
-         if grid.max_shield > 0 then shield_ratio = grid.shield / grid.max_shield end
-      end
-
-      HealthBar.play_status(pindex, health_ratio, shield_ratio)
+   -- For character, also add armor equipment stats
+   if not p.driving then
+      mb:list_item()
+      mb:fragment(Equipment.read_armor_stats(pindex, nil))
    end
 
-   -- Speak health and armor equipment stats
-   local output = { "" }
-   local result = Equipment.read_armor_stats(pindex, nil)
-   table.insert(output, result)
-   Speech.speak(pindex, output)
+   Speech.speak(pindex, mb:build())
 end
 
 EventManager.on_event(

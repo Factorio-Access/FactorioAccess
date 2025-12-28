@@ -2,6 +2,9 @@
 
 - alt+z now also tells you your weapon's ranges (either max, or min safe to max)
 - Fix: properly distinguish between when we didn't fire because things are too close for the weapon's min range, and when this is because of safe mode
+- g and the audio health bars understand when you are in a vehicle and communicate the vehicle's info
+- Outside combat, j always returns the cursor to your character even when in vehicles
+  - Apparently the whole driving alert system has been broken for a while and either no one noticed or no one reported. I am leaving it in for now but this is possibly a candidate for future removal.
 
 # 0.16.51 (2025-12-25)
 

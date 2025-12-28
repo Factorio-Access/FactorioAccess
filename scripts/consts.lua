@@ -102,6 +102,17 @@ mod.RAIL_TYPES = {
 ---@type table<string, true>
 mod.RAIL_TYPES_SET = TableHelpers.array_to_set({}, mod.RAIL_TYPES)
 
+-- Vehicle entity types (can have drivers/passengers)
+---@type table<string, true>
+mod.VEHICLE_TYPES = {
+   ["car"] = true,
+   ["spider-vehicle"] = true,
+   ["locomotive"] = true,
+   ["cargo-wagon"] = true,
+   ["fluid-wagon"] = true,
+   ["artillery-wagon"] = true,
+}
+
 -- Entity types that players can walk over without collision
 mod.ENT_TYPES_YOU_CAN_WALK_OVER = {
    "resource",
