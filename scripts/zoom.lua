@@ -83,11 +83,12 @@ function mod.get_current_zoom_tiles(pindex)
    return math.floor(screen_dimension / (player.zoom * base_pixels_per_tile * player.display_density_scale) + 0.5)
 end
 
----Announce the current zoom level in tiles
+---Append zoom info to a MessageBuilder
 ---@param pindex integer
-function mod.announce_zoom(pindex)
+---@param mb fa.MessageBuilder
+function mod.append_zoom_info(pindex, mb)
    local tiles = mod.get_current_zoom_tiles(pindex)
-   Speech.speak(pindex, { "fa.zoom-current", tiles })
+   mb:fragment({ "fa.zoom-current", tiles })
 end
 
 ---Handle zoom out (minus key)

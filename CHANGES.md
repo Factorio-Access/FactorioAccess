@@ -1,3 +1,7 @@
+# 0.16.52 (unreleased)
+
+- alt+z now also tells you your weapon's ranges (either max, or min safe to max)
+
 # 0.16.51 (2025-12-25)
 
 - When teleporting to fast travel points, don't say "tile out of range" for no reason

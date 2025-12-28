@@ -82,6 +82,7 @@ local PlayerCraftingSonifier = require("scripts.sonifiers.player-crafting")
 local ForceGhostEnabler = require("scripts.force-ghost-enabler")
 local AimAssist = require("scripts.combat.aim-assist")
 local Capsules = require("scripts.combat.capsules")
+local PlayerWeapon = require("scripts.combat.player-weapon")
 local Zoom = require("scripts.zoom")
 
 -- UI modules (required for registration with router)
@@ -4161,5 +4162,31 @@ EventManager.on_event("fa-equals", function(event, pindex)
 end, EventManager.EVENT_KIND.WORLD)
 
 EventManager.on_event("fa-a-z", function(event, pindex)
-   Zoom.announce_zoom(pindex)
+   local mb = MessageBuilder.new()
+
+   -- Add zoom info
+   Zoom.append_zoom_info(pindex, mb)
+
+   -- Add weapon info
+   local gun_name, gun_proto = PlayerWeapon.get_selected_gun(pindex)
+   if gun_name and gun_proto then
+      mb:list_item()
+      mb:fragment(gun_proto.localised_name)
+
+      local ammo_name, ammo_proto = PlayerWeapon.get_selected_ammo(pindex)
+      if ammo_name and ammo_proto then mb:fragment({ "fa.zoom-weapon-with-ammo", ammo_proto.localised_name }) end
+
+      local max_range = PlayerWeapon.get_max_range(pindex)
+      local soft_min = PlayerWeapon.get_soft_min_range(pindex)
+
+      if soft_min and max_range then
+         mb:fragment({ "fa.zoom-weapon-range-with-min", soft_min, max_range })
+      elseif max_range then
+         mb:fragment({ "fa.zoom-weapon-range", max_range })
+      end
+   else
+      mb:list_item({ "fa.zoom-no-weapon" })
+   end
+
+   Speech.speak(pindex, mb:build())
 end, EventManager.EVENT_KIND.WORLD)
