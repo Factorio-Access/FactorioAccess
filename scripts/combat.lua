@@ -332,7 +332,7 @@ local function stop_shooting(player)
    }
 end
 
----Shoot enemies at a position
+---Shoot enemies at a position (fallback when no specific entity selected)
 ---@param player LuaPlayer
 ---@param position MapPosition
 local function shoot_at_position(player, position)
@@ -340,7 +340,17 @@ local function shoot_at_position(player, position)
       state = defines.shooting.shooting_enemies,
       position = position,
    }
-   print(serpent.line(player.shooting_state))
+end
+
+---Shoot at a specific selected entity (avoids friendly fire)
+---@param player LuaPlayer
+---@param target LuaEntity
+local function shoot_at_selected(player, target)
+   player.selected = target
+   player.shooting_state = {
+      state = defines.shooting.shooting_selected,
+      position = target.position,
+   }
 end
 
 ---Handle shooting in combat mode (aim assist)
@@ -350,20 +360,22 @@ local function tick_combat_mode(pindex, player)
    local shooting_state = player.shooting_state
    if shooting_state.state == defines.shooting.not_shooting then return end
 
-   -- shooting_selected (shift+space) is not applicable in combat mode
+   -- Reject shooting_selected in combat mode - player isn't controlling selection
    if shooting_state.state == defines.shooting.shooting_selected then
       stop_shooting(player)
       warn_with_cooldown(pindex, "shooting-selected", { "fa.shooting-selected-not-in-combat-mode" })
       return
    end
 
-   -- Redirect to best target via aim assist
+   -- Intercept shooting_enemies and redirect to best target via aim assist
    local target, reason = AimAssist.get_best_target(pindex)
 
    if target and target.valid then
-      shoot_at_position(player, target.position)
+      -- Use shooting_selected to avoid friendly fire
+      shoot_at_selected(player, target)
    else
       stop_shooting(player)
+      player.selected = nil
 
       -- Warn about why there's no target
       local R = AimAssist.NoTargetReason
