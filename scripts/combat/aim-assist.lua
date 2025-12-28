@@ -221,7 +221,8 @@ function mod.get_sorted_targets(pindex, options)
    -- Filter and score targets
    ---@type fa.combat.Target[]
    local targets = {}
-   local too_close_count = 0
+   local too_close_hard_count = 0 -- Within hard min range (weapon can't fire)
+   local too_close_safe_count = 0 -- Within safe mode buffer (would hurt self)
 
    for _, enemy in ipairs(all_enemies) do
       if enemy.valid then
@@ -244,16 +245,18 @@ function mod.get_sorted_targets(pindex, options)
                   health = enemy.max_health or 0,
                })
             end
+         elseif dist < hard_min then
+            too_close_hard_count = too_close_hard_count + 1
          elseif dist < effective_min then
-            too_close_count = too_close_count + 1
+            too_close_safe_count = too_close_safe_count + 1
          end
       end
    end
 
    if #targets == 0 then
-      if too_close_count > 0 and state.safe_mode then
+      if too_close_safe_count > 0 then
          return nil, mod.NoTargetReason.ALL_TOO_CLOSE_SAFE
-      elseif too_close_count > 0 then
+      elseif too_close_hard_count > 0 then
          return nil, mod.NoTargetReason.ALL_TOO_CLOSE
       else
          return nil, mod.NoTargetReason.NO_ENEMIES_IN_RANGE

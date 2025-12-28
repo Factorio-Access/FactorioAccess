@@ -1,6 +1,7 @@
 # 0.16.52 (unreleased)
 
 - alt+z now also tells you your weapon's ranges (either max, or min safe to max)
+- Fix: properly distinguish between when we didn't fire because things are too close for the weapon's min range, and when this is because of safe mode
 
 # 0.16.51 (2025-12-25)
 
