@@ -187,12 +187,8 @@ local function move_bar(ctx, delta)
       return
    end
 
-   -- Check write access
-   local access_result = EntityAccess.can_write_to_entity(ctx.pindex, entity)
-   if not access_result.allowed then
-      ctx.message:fragment(access_result.reason)
-      return
-   end
+   -- Bar adjustment is a configuration operation, not an item transfer.
+   -- If the inventory is open, the player should be able to adjust it.
 
    local inv = entity.get_inventory(inventory_index)
    if not inv or not inv.valid then return end
@@ -603,8 +599,7 @@ local function render_inventory_grid(ctx)
          on_child_result = function(result_ctx, result)
             -- Handle item chooser result for setting slot filter
             if result and type(result) == "string" then
-               -- Check write access
-               if not check_write_access(result_ctx, entity, nil) then return end
+               -- Filters are configuration, not item transfers - no distance check needed
 
                -- Set the filter
                local success = inv.set_filter(slot_index, result)
@@ -623,8 +618,7 @@ local function render_inventory_grid(ctx)
                return
             end
 
-            -- Check write access
-            if not check_write_access(clear_ctx, entity, nil) then return end
+            -- Filters are configuration, not item transfers - no distance check needed
 
             local current_filter = inv.get_filter(slot_index)
             if not current_filter then
