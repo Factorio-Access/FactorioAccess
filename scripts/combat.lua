@@ -181,36 +181,42 @@ end
 function mod.repair_pack_used(ent, pindex)
    local p = game.get_player(pindex)
    local stack = p.cursor_stack
-   --Repair the entity found
+   --Check if entity can be repaired
    if
-      ent
-      and ent.valid
-      and ent.is_entity_with_health
-      and ent.get_health_ratio() < 1
-      and ent.type ~= "resource"
-      and not ent.force.is_enemy(p.force)
-      and ent.name ~= "character"
+      not ent
+      or not ent.valid
+      or not ent.is_entity_with_health
+      or ent.type == "resource"
+      or ent.force.is_enemy(p.force)
+      or ent.name == "character"
    then
-      p.play_sound({ path = "utility/default_manual_repair" })
-      local health_diff = ent.max_health - ent.health
-      local dura = stack.durability or 0
-      if health_diff < 10 then --free repair for tiny damages
-         ent.health = ent.max_health
-         Speech.speak(pindex, { "fa.combat-fully-repaired-entity", Localising.get_localised_name_with_fallback(ent) })
-      elseif health_diff < dura then
-         ent.health = ent.max_health
-         stack.drain_durability(health_diff)
-         Speech.speak(pindex, { "fa.combat-fully-repaired-entity", Localising.get_localised_name_with_fallback(ent) })
-      else --if health_diff >= dura then
-         stack.drain_durability(dura)
-         ent.health = ent.health + dura
-         local msg = MessageBuilder.new()
-         msg:fragment({ "fa.combat-partially-repaired" })
-         msg:fragment(Localising.get_localised_name_with_fallback(ent))
-         msg:fragment({ "fa.combat-consumed-repair-pack" })
-         Speech.speak(pindex, msg:build())
-         --Note: This automatically subtracts correctly and decerements the pack in hand.
-      end
+      return
+   end
+   --Check if entity needs repair
+   if ent.get_health_ratio() >= 1 then
+      Speech.speak(pindex, { "fa.combat-entity-not-damaged", Localising.get_localised_name_with_fallback(ent) })
+      return
+   end
+   --Repair the entity
+   p.play_sound({ path = "utility/default_manual_repair" })
+   local health_diff = ent.max_health - ent.health
+   local dura = stack.durability or 0
+   if health_diff < 10 then --free repair for tiny damages
+      ent.health = ent.max_health
+      Speech.speak(pindex, { "fa.combat-fully-repaired-entity", Localising.get_localised_name_with_fallback(ent) })
+   elseif health_diff < dura then
+      ent.health = ent.max_health
+      stack.drain_durability(health_diff)
+      Speech.speak(pindex, { "fa.combat-fully-repaired-entity", Localising.get_localised_name_with_fallback(ent) })
+   else --if health_diff >= dura then
+      stack.drain_durability(dura)
+      ent.health = ent.health + dura
+      local msg = MessageBuilder.new()
+      msg:fragment({ "fa.combat-partially-repaired" })
+      msg:fragment(Localising.get_localised_name_with_fallback(ent))
+      msg:fragment({ "fa.combat-consumed-repair-pack" })
+      Speech.speak(pindex, msg:build())
+      --Note: This automatically subtracts correctly and decerements the pack in hand.
    end
 end
 

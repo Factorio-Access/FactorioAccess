@@ -6,6 +6,7 @@
 - Outside combat, j always returns the cursor to your character even when in vehicles
   - Apparently the whole driving alert system has been broken for a while and either no one noticed or no one reported. I am leaving it in for now but this is possibly a candidate for future removal.
 - Try a new aiming hack to avoid friendly fire with AoE weapons.
+- Restore functionality: clicking with a repair pack in hand tries to repair instead of opening entities
 
 # 0.16.51 (2025-12-25)
 

@@ -3006,6 +3006,10 @@ EventManager.on_event(
                return
             end
             -- No rail at cursor, fall through to normal click behavior
+         elseif stack.is_repair_tool then
+            local ent = EntitySelection.get_first_ent_at_tile(pindex)
+            if ent then Combat.repair_pack_used(ent, pindex) end
+            return
          end
       end
 
