@@ -77,6 +77,7 @@ local CraftingBackend = require("scripts.sonifiers.grid-backends.crafting")
 local EnemyRadar = require("scripts.sonifiers.combat.enemy-radar")
 local SpawnerRadar = require("scripts.sonifiers.combat.spawner-radar")
 local BattleNotice = require("scripts.sonifiers.battle-notice")
+local HealthBar = require("scripts.sonifiers.health-bar")
 local PlayerCraftingSonifier = require("scripts.sonifiers.player-crafting")
 local ForceGhostEnabler = require("scripts.force-ghost-enabler")
 local AimAssist = require("scripts.combat.aim-assist")
@@ -404,6 +405,8 @@ function on_tick(event)
          if settings.global[SETTING_NAMES.SONIFICATION_COMBAT_SPAWNERS].value then SpawnerRadar.tick(player.index) end
          -- Handle shooting (combat mode aim assist or shooting_selected with safe mode)
          Combat.on_tick(player.index)
+         -- Health bar sonification (polls for health/shield changes)
+         HealthBar.on_tick(player.index)
       end
    end
 
@@ -874,18 +877,8 @@ function set_inserter_filter_by_hand(pindex, ent)
    end
 end
 
----Get the player from a driver/passenger entity (which may be a character or player)
----@param occupant LuaEntity|LuaPlayer|nil
----@return LuaPlayer?
-local function get_player_from_occupant(occupant)
-   if not occupant or not occupant.valid then return nil end
-   if occupant.object_name == "LuaPlayer" then return occupant end
-   -- It's a character entity, get its player
-   if occupant.player and occupant.player.valid then return occupant.player end
-   return nil
-end
-
---Notifies battle sonifier when structures are damaged, plays character/vehicle damage sounds
+--Notifies battle sonifier when structures are damaged
+--Character/vehicle damage sounds are handled by the tick-based health-bar sonifier
 EventManager.on_event(
    defines.events.on_entity_damaged,
    ---@param event EventData.on_entity_damaged
@@ -895,15 +888,10 @@ EventManager.on_event(
       if ent == nil or not ent.valid then
          return
       elseif ent.name == "character" then
-         if ent.player == nil or not ent.player.valid then return end
-         Combat.notify_health_shields(ent.player.index, nil)
+         -- Character damage is handled by tick-based health-bar sonifier
          return
       elseif Consts.VEHICLE_TYPES[ent.type] then
-         -- Vehicle with player(s) inside - notify both driver and passenger
-         local driver = get_player_from_occupant(ent.get_driver())
-         local passenger = get_player_from_occupant(ent.get_passenger())
-         if driver then Combat.notify_health_shields(driver.index, nil) end
-         if passenger then Combat.notify_health_shields(passenger.index, nil) end
+         -- Vehicle damage is handled by tick-based health-bar sonifier
          return
       elseif ent.get_health_ratio() == 1.0 then
          --Ignore alerts if an entity has full health despite being damaged

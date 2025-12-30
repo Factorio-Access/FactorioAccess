@@ -2,10 +2,12 @@
 Health Bar Sonifier - Audio feedback for player health and shield levels.
 
 Plays damage sounds with pan position indicating current health/shield level.
-Right = full, left = empty. Called both on damage events and on-demand (G key).
+Right = full, left = empty. Uses tick-based polling to debounce rapid small damage
+events. Also called on-demand via the G key.
 ]]
 
 local LauncherAudio = require("scripts.launcher-audio")
+local StorageManager = require("scripts.storage-manager")
 
 local mod = {}
 
@@ -23,6 +25,23 @@ local SHIELD_VOLUME = 0.4
 -- Narrowed to avoid extreme positions sounding awkward
 local PAN_MIN = -0.6 -- Empty (0%)
 local PAN_MAX = 0.6 -- Full (100%)
+
+-- Tick interval for checking health changes
+local CHECK_INTERVAL = 10
+
+---@class fa.HealthBar.TrackedState
+---@field unit_number uint32? Unit number of the tracked entity
+---@field health_pct number? Last health percentage (0-100, integer)
+---@field shield_pct number? Last shield percentage (0-100, integer), nil if no shield
+
+---@type table<integer, fa.HealthBar.TrackedState>
+local health_storage = StorageManager.declare_storage_module("health_bar_sonifier", {
+   unit_number = nil,
+   health_pct = nil,
+   shield_pct = nil,
+}, {
+   ephemeral_state_version = 1,
+})
 
 ---Map a ratio (0-1) to pan position
 ---@param ratio number Health or shield ratio (0 to 1)
@@ -65,6 +84,83 @@ function mod.play_status(pindex, health_ratio, shield_ratio)
    end
 
    compound:send(pindex)
+end
+
+---Get the entity and health/shield state for a player's entity of interest
+---@param pindex integer
+---@return LuaEntity? entity The entity being tracked (vehicle or character)
+---@return number? health_pct Integer health percentage (0-100)
+---@return number? shield_pct Integer shield percentage (0-100), nil if no shields
+local function get_current_state(pindex)
+   local player = game.get_player(pindex)
+   if not player or not player.valid then return nil, nil, nil end
+
+   -- Prefer vehicle if driving
+   if player.driving and player.vehicle and player.vehicle.valid then
+      local vehicle = player.vehicle
+      local health_pct = math.floor(vehicle.get_health_ratio() * 100 + 0.5)
+      local shield_pct = nil
+
+      local grid = vehicle.grid
+      if grid and grid.valid and grid.max_shield > 0 then
+         shield_pct = math.floor((grid.shield / grid.max_shield) * 100 + 0.5)
+      end
+
+      return vehicle, health_pct, shield_pct
+   end
+
+   -- Otherwise use character
+   local char = player.character
+   if not char or not char.valid then return nil, nil, nil end
+
+   local health_pct = math.floor(char.get_health_ratio() * 100 + 0.5)
+   local shield_pct = nil
+
+   local armor_inv = player.get_inventory(defines.inventory.character_armor)
+   if armor_inv[1] and armor_inv[1].valid_for_read and armor_inv[1].grid then
+      local grid = armor_inv[1].grid
+      if grid.valid and grid.max_shield > 0 then
+         shield_pct = math.floor((grid.shield / grid.max_shield) * 100 + 0.5)
+      end
+   end
+
+   return char, health_pct, shield_pct
+end
+
+---Tick handler for health bar sonification
+---Polls health/shield percentages and plays sounds when they change
+---@param pindex integer
+function mod.on_tick(pindex)
+   local tick = game.tick
+   if tick % CHECK_INTERVAL ~= 0 then return end
+
+   local state = health_storage[pindex]
+   local entity, health_pct, shield_pct = get_current_state(pindex)
+
+   -- Determine the unit number (nil if no entity)
+   local unit_number = entity and entity.unit_number or nil
+
+   -- If entity changed, just snapshot and don't play sounds
+   if unit_number ~= state.unit_number then
+      state.unit_number = unit_number
+      state.health_pct = health_pct
+      state.shield_pct = shield_pct
+      return
+   end
+
+   -- No entity to track
+   if not entity then return end
+
+   -- Check for decreases and play sounds (only on damage, not healing/regen)
+   local health_decreased = state.health_pct and health_pct < state.health_pct
+   local shield_decreased = state.shield_pct and shield_pct and shield_pct < state.shield_pct
+
+   if health_decreased then mod.play_health(pindex, health_pct / 100) end
+   if shield_decreased then mod.play_shield(pindex, shield_pct / 100) end
+
+   -- Always update stored state
+   state.health_pct = health_pct
+   state.shield_pct = shield_pct
 end
 
 return mod
