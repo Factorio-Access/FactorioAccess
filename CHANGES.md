@@ -8,6 +8,8 @@
 - Try a new aiming hack to avoid friendly fire with AoE weapons.
 - Restore functionality: clicking with a repair pack in hand tries to repair instead of opening entities
 - You can now configure inventory bars and filters regardless of where your character is, as long as you can oepn the entity
+- Fix: pipe to ground preview now properly respects pipe to grounds facing in the same direction blocking a connection
+- Pipe to ground preview is just silent when there is no underground connection instead of spamming a useless unconnected message
 
 # 0.16.51 (2025-12-25)
 

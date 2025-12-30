@@ -36,6 +36,7 @@ via `network-shape.lua`, and reused by both fluids and heat systems.
 ]]
 local Consts = require("scripts.consts")
 local FaUtils = require("scripts.fa-utils")
+local Geometry = require("scripts.geometry")
 local NetworkShape = require("scripts.network-shape")
 local TH = require("scripts.table-helpers")
 
@@ -323,6 +324,72 @@ function mod.build_fluid_descriptors(entity)
    end)
 
    return descriptors
+end
+
+---@class fa.Fluids.PipeToGroundConnection
+---@field distance number Distance in tiles to the connected pipe (excluding endpoints)
+---@field facing_direction defines.direction The direction the underground segment faces
+
+--[[
+Get preview information for a pipe-to-ground placement.
+
+Searches for pipes of the same type within underground range that are:
+1. Behind the placement position (in the direction the pipe would face)
+2. Axis-aligned (on the same row or column)
+3. Facing the same or opposite direction (collinear - non-collinear pipes pass "under")
+
+Returns connection info if the closest collinear pipe faces the opposite direction.
+Returns nil if no connection (no pipes found, or closest faces same direction).
+]]
+---@param surface LuaSurface
+---@param position fa.Point Position where the pipe would be placed
+---@param direction defines.direction Direction the pipe would face
+---@param prototype LuaEntityPrototype The pipe-to-ground prototype
+---@return fa.Fluids.PipeToGroundConnection?
+function mod.get_pipe_to_ground_preview(surface, position, direction, prototype)
+   local tile_center = FaUtils.center_of_tile(position)
+   local max_distance = prototype.max_underground_distance
+
+   local candidates = surface.find_entities_filtered({
+      name = prototype.name,
+      position = tile_center,
+      radius = max_distance + 1,
+   })
+
+   local closest_dist = max_distance + 1
+   local closest_is_opposite = false
+
+   for _, cand in ipairs(candidates) do
+      local dx = cand.position.x - tile_center.x
+      local dy = cand.position.y - tile_center.y
+
+      -- Must be axis-aligned (same row or column, not diagonal)
+      if dx == 0 or dy == 0 then
+         -- Must be behind us (in the direction we're facing)
+         local direction_to_cand = FaUtils.get_direction_biased(tile_center, cand.position)
+         if direction_to_cand == direction then
+            -- Only consider collinear pipes (same or opposite direction)
+            -- Non-collinear pipes pass "under" without interacting
+            local collinear, opposite = Geometry.are_directions_collinear(direction, cand.direction)
+            if collinear then
+               local dist = FaUtils.distance(tile_center, cand.position)
+               if dist <= max_distance and dist < closest_dist then
+                  closest_dist = dist
+                  closest_is_opposite = opposite
+               end
+            end
+         end
+      end
+   end
+
+   if closest_is_opposite then
+      return {
+         distance = math.floor(closest_dist) - 1,
+         facing_direction = FaUtils.rotate_180(direction),
+      }
+   end
+
+   return nil
 end
 
 return mod

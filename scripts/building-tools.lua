@@ -4,6 +4,7 @@ local BuildDimensions = require("scripts.build-dimensions")
 local Consts = require("scripts.consts")
 local Electrical = require("scripts.electrical")
 local FaUtils = require("scripts.fa-utils")
+local Fluids = require("scripts.fluids")
 local Localising = require("scripts.localising")
 local dirs = defines.direction
 local Graphics = require("scripts.graphics")
@@ -714,57 +715,14 @@ function mod.build_preview_checks_info(stack, pindex)
 
    --For pipes to ground, state when connected
    if ent_p.type == "pipe-to-ground" then
-      local connected = false
-      local check_dist = ent_p.max_underground_distance
-      assert(check_dist)
-      local closest_dist = check_dist + 1
-      local closest_cand = nil
-      local candidates = game.get_player(pindex).surface.find_entities_filtered({
-         name = stack.name,
-         position = tile_center,
-         radius = closest_dist,
-         direction = FaUtils.rotate_180(build_dir),
-      })
-      if #candidates > 0 then
-         for i, cand in ipairs(candidates) do
-            rendering.draw_circle({
-               color = { 1, 1, 0 },
-               radius = 0.5,
-               width = 3,
-               target = cand.position,
-               surface = cand.surface,
-               time_to_live = 60,
-            })
-            local dist_x = cand.position.x - tile_center.x
-            local dist_y = cand.position.y - tile_center.y
-            if (FaUtils.get_direction_biased(pos, cand.position) == build_dir) and (dist_x == 0 or dist_y == 0) then
-               rendering.draw_circle({
-                  color = { 0, 1, 0 },
-                  radius = 1.0,
-                  width = 3,
-                  target = cand.position,
-                  surface = cand.surface,
-                  time_to_live = 60,
-               })
-               connected = true
-               --Check if closest cand
-               local cand_dist = util.distance(cand.position, pos)
-               if cand_dist <= closest_dist then
-                  closest_dist = cand_dist
-                  closest_cand = cand
-               end
-            end
-         end
-         --Report the closest candidate (therefore the correct one)
-         if closest_cand ~= nil then
-            table.insert(result, {
-               "fa.connection-connects-underground",
-               { "fa.direction", FaUtils.rotate_180(build_dir) },
-               tostring(math.floor(util.distance(closest_cand.position, pos)) - 1),
-            })
-         end
+      local connection = Fluids.get_pipe_to_ground_preview(p.surface, pos, build_dir, ent_p)
+      if connection then
+         table.insert(result, {
+            "fa.connection-connects-underground",
+            { "fa.direction", connection.facing_direction },
+            tostring(connection.distance),
+         })
       end
-      if not connected then table.insert(result, { "fa.connection-not-connected-underground" }) end
    end
 
    --For heat pipes, preview the connection directions

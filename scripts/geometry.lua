@@ -128,4 +128,20 @@ function mod.vector_to_direction_cardinal(dx, dy)
    end
 end
 
+-- Check if two directions are collinear (on the same axis, either same or opposite)
+---@param dir1 defines.direction
+---@param dir2 defines.direction
+---@return boolean collinear Whether the directions are on the same axis
+---@return boolean opposite If collinear, whether they face opposite directions
+function mod.are_directions_collinear(dir1, dir2)
+   local diff = (dir2 - dir1) % 16
+   if diff == 0 then
+      return true, false -- same direction
+   elseif diff == 8 then
+      return true, true -- opposite direction
+   else
+      return false, false
+   end
+end
+
 return mod
