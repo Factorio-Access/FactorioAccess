@@ -11,6 +11,7 @@
 - Fix: pipe to ground preview now properly respects pipe to grounds facing in the same direction blocking a connection
 - Pipe to ground preview is just silent when there is no underground connection instead of spamming a useless unconnected message
 - Change how pipe connections are announced. Instead of "via x tiles underground", we just say "x to the west", "x to 4 tiles east".
+- For above ground connections of underground pipes and other entities, start saying "not conected" when the connection is, in fact, not connected.
 
 # 0.16.51 (2025-12-25)
 

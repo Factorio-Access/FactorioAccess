@@ -1109,11 +1109,18 @@ local function ent_info_fluid_connections(ctx)
             for _, dirinfo in pairs(dirs) do
                local dir = dirinfo.direction
                local type = dirinfo.type
-               if type == "underground" and not dirinfo.has_other_side then
-                  table.insert(
-                     dirparts,
-                     { "fa.ent-info-fluid-connections-via-underground-not-connected", FaUtils.direction_lookup(dir) }
-                  )
+               if not dirinfo.has_other_side then
+                  if type == "underground" then
+                     table.insert(
+                        dirparts,
+                        { "fa.ent-info-fluid-connections-via-underground-not-connected", FaUtils.direction_lookup(dir) }
+                     )
+                  elseif type == "normal" then
+                     table.insert(
+                        dirparts,
+                        { "fa.ent-info-fluid-connections-not-connected", FaUtils.direction_lookup(dir) }
+                     )
+                  end
                else
                   table.insert(dirparts, FaUtils.direction_lookup(dir))
                end
