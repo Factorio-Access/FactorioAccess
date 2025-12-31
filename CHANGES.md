@@ -17,6 +17,8 @@
 - Generalize the train direction sonifier to cars/tanks because the 2.0 driving controls are weird.
 - better document the 2.0 driving controls, because they are weird.  For those who already know them, the issue is that
   the car will choose to reverse if you do not hit the intermediate directionn and directly press the opposite.
+- Capsules now do not fire in safe mode if we cannot find a target. To fire at max range, use control shift wasd.
+  - The issue was, because we always fired, you can't spam grenades without wasting all of them.  Now you can.
 
 # 0.16.51 (2025-12-25)
 

@@ -16,7 +16,7 @@ Set your aiming preference direction: w, a, s, or d
 
 Use a capsule in the given direction: shift + w, a, s, or d
 
-Use a capsule in the given direction, regardless of if it would hit you: control + shift + w, a, s, d
+Use a capsule in the given direction, at max range: control + shift + w, a, s, d
 
 Use a capsule on yourself, even if it is dangerous to do so: left bracket
 

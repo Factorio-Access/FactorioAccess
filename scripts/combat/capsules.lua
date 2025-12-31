@@ -172,15 +172,13 @@ local function use_area_capsule(pindex, direction, info, force_fire)
 
    local aim_state = AimAssist.get_state(pindex)
    local effective_min = min_range
-   if not force_fire and aim_state.safe_mode and soft_min then
-      effective_min = math.max(min_range, soft_min + SOFT_MIN_EPSILON)
-   end
+   if aim_state.safe_mode and soft_min then effective_min = math.max(min_range, soft_min + SOFT_MIN_EPSILON) end
 
    local targets = find_capsule_targets(pindex, direction, max_range, effective_min)
 
    if targets and #targets > 0 then
       local target = targets[1]
-      if not force_fire and aim_state.safe_mode and soft_min and target.distance < soft_min + SOFT_MIN_EPSILON then
+      if aim_state.safe_mode and soft_min and target.distance < soft_min + SOFT_MIN_EPSILON then
          return {
             success = false,
             message = { "fa.capsule-too-close-safe" },
@@ -188,11 +186,14 @@ local function use_area_capsule(pindex, direction, info, force_fire)
       end
       player.use_from_cursor(target.entity.position)
       return { success = true }
-   else
-      -- No targets, warn but throw at max range anyway
+   elseif force_fire then
+      -- No targets but force fire enabled, throw at max range
       local target_pos = compute_max_range_position(player, direction, max_range)
       player.use_from_cursor(target_pos)
       return { success = true, message = { "fa.capsule-no-targets" } }
+   else
+      -- No targets, block firing
+      return { success = false, message = { "fa.capsule-no-targets" } }
    end
 end
 
