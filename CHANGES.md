@@ -20,6 +20,7 @@
 - Capsules now do not fire in safe mode if we cannot find a target. To fire at max range, use control shift wasd.
   - The issue was, because we always fired, you can't spam grenades without wasting all of them.  Now you can.
 - Actually respect fog of war when letting you open entities.  I could have sworn I tested it properly but I did not.
+- Fix: syntrax on a curved rail now places rails in the correct positions
 
 # 0.16.51 (2025-12-25)
 

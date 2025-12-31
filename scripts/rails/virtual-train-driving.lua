@@ -991,6 +991,7 @@ function mod.execute_syntrax(pindex, source)
       source = source,
       position = current.position,
       direction = current.end_direction,
+      rail_type = current.rail_type,
       planner_description = state.planner_description,
       build_mode = state.build_mode,
    })

@@ -22,6 +22,7 @@ end
 ---@field source string Syntrax source code
 ---@field position MapPosition Starting position
 ---@field direction defines.direction Starting direction (0-15)
+---@field rail_type railutils.RailType Starting rail type
 ---@field planner_description railutils.RailPlannerDescription Rail planner for prototype names
 ---@field build_mode defines.build_mode Build mode for placement
 
@@ -135,7 +136,7 @@ function mod.execute(opts)
    if not player then return nil, "Invalid player" end
 
    -- Parse and execute syntrax
-   local placement_groups, err = Syntrax.execute(opts.source, opts.position, opts.direction)
+   local placement_groups, err = Syntrax.execute(opts.source, opts.position, opts.direction, opts.rail_type)
    if err then return nil, err.message end
 
    -- Handle empty result

@@ -8,6 +8,7 @@ All other modules are considered internal implementation details.
 local Parser = require("syntrax.parser")
 local Compiler = require("syntrax.compiler")
 local Vm = require("syntrax.vm")
+local RailInfo = require("railutils.rail-info")
 
 local mod = {}
 
@@ -18,9 +19,10 @@ mod.VERSION = "0.1.0-dev"
 ---@param source string The Syntrax source code
 ---@param initial_position fa.Point? Starting position, defaults to {x=0, y=0}
 ---@param initial_direction (number|defines.direction)? Starting direction (0-15), defaults to north (0)
+---@param initial_rail_type railutils.RailType? Starting rail type, defaults to STRAIGHT
 ---@return syntrax.vm.RailPlacement[]? rails Array of rail placements, or nil on error
 ---@return syntrax.Error? error Error object if compilation or execution failed
-function mod.execute(source, initial_position, initial_direction)
+function mod.execute(source, initial_position, initial_direction, initial_rail_type)
    -- Parse
    local ast, parse_err = Parser.parse(source)
    if parse_err then return nil, parse_err end
@@ -34,7 +36,7 @@ function mod.execute(source, initial_position, initial_direction)
    -- Execute
    local vm = Vm.new()
    vm.bytecode = bytecode
-   local rails, runtime_err = vm:run(initial_position, initial_direction)
+   local rails, runtime_err = vm:run(initial_position, initial_direction, initial_rail_type)
 
    if runtime_err then return nil, runtime_err end
 
