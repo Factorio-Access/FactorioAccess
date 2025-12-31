@@ -2,10 +2,10 @@
 Entity access control for remote viewing and interaction
 
 Implements vanilla-style access rules:
-- Can open and READ anything that is charted (for remote entities)
+- Can open and READ anything visible (in radar range)
 - Can only WRITE (modify inventory, etc.) when within reach distance
 - Player's own character always has full access
-- Vehicles, spidertrons, and trains bypass the charting requirement
+- Vehicles, spidertrons, and trains bypass the visibility requirement
 ]]
 
 local mod = {}
@@ -72,7 +72,7 @@ local function bypasses_charting(entity)
 end
 
 ---Check if a player can open an entity for reading (viewing contents)
----Returns true if within reach OR if charted (for remote viewing)
+---Returns true if within reach OR if visible via radar
 ---@param pindex integer
 ---@param entity LuaEntity
 ---@return boolean can_open
@@ -86,11 +86,11 @@ function mod.can_open_entity(pindex, entity)
    -- If player can reach it, they can open it
    if player.can_reach_entity(entity) then return true end
 
-   -- Special entities bypass charting check
+   -- Special entities bypass visibility check
    if bypasses_charting(entity) then return true end
 
-   -- Otherwise, check if the chunk is charted (not necessarily visible)
-   if is_position_charted(player.force, player.surface, entity.position) then return true end
+   -- Otherwise, check if the chunk is visible (in radar range)
+   if is_position_visible(player.force, player.surface, entity.position) then return true end
 
    -- Cannot access
    return false, { "fa.entity-out-of-reach" }
