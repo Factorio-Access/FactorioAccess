@@ -103,13 +103,30 @@ for strategy.  For example it makes sense to throw slowdown or poison capsules a
 
 ## Vehicles
 
-
 Vehicles work just like the player in terms of shooting, and the spidertron (a very late game vehicle) also walks like the player.
 
-unfortunately all other vehicles don't.  Vehicles in Factorio have slightly odd driving controls.  To drive north, you hold up arrow, etc.  That's good as far as it goes.  But if you are driving south and press up arrow, you break instead.
-You have to break, let go of the key, and then press it again.
+
+unfortunately all other vehicles don't, and instead turn like real life cars.  In these cases, a directional tone plays
+every 50 tiles or when the car is turning.
+
+Vehicles in Factorio have slightly odd driving controls.  In general, to drive in a given direction hold the arrow key
+in that direction.  We sonify the car's direction so that you can learn the following details.  You can also get info on
+heading and speed with k.  Anyway, here are the rules:
+
+- If the car is not initially facing the direction you want to move the game will turn it.  Cars have a turning radius, so this is not instant.
+- If the car is moving then holding the exact opposite direction breaks until the car stops.  The car will not continue
+  until you let go and press it again.
+- If the car is facing in a direction, stopped, and you hold the exact opposite direction, it will choose to reverse instead of doing a half circle.
 
 The mod cannot replace vanilla's driving controls. In fact we are already toggling a setting for you.  The default driving controls are even worse for the blind.
+
+As an alternative outside combat, using Kruise Kontrol can perform long-distance driving with pathfinding.  Note,
+however, that automatic driving in this way is not perfectly precise.  the game does not have an in-built pathfinder for
+vehicdles, so Kruise Kontrol does its best, but:
+
+- You may not end up exactly on your target point.  Usually you are within 10-20 tiles
+- Sometimes it just can't find a path because it'd have to ram through something, for example trees, and gives up even though you'd probably consider that fine
+
 
 ## Equipment Management
 

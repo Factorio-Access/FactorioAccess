@@ -14,6 +14,9 @@
 - For above ground connections of underground pipes and other entities, start saying "not conected" when the connection is, in fact, not connected.
 - Fix/improvement: the health/shield bars now only play when their tracked values change by at least 1%.
   - Put another way, feel free to drive your car through trees without being spammed
+- Generalize the train direction sonifier to cars/tanks because the 2.0 driving controls are weird.
+- better document the 2.0 driving controls, because they are weird.  For those who already know them, the issue is that
+  the car will choose to reverse if you do not hit the intermediate directionn and directly press the opposite.
 
 # 0.16.51 (2025-12-25)
 
