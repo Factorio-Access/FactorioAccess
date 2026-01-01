@@ -101,11 +101,11 @@ local function get_next_condition_type(current_type, allowed_types, reverse)
    return allowed_types[1]
 end
 
----Check if a signal is a fluid
+---Check if a signal is a fluid (including the "any fluid" virtual signal)
 ---@param signal SignalID
 ---@return boolean
 local function is_fluid_signal(signal)
-   return signal.type == "fluid"
+   return signal.type == "fluid" or (signal.type == "virtual" and signal.name == "signal-fluid-parameter")
 end
 
 ---Create a record position for schedule operations

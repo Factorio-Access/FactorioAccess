@@ -1,3 +1,7 @@
+# 0.16.53 (unreleased)
+
+- Make trains understand that the item wildcard and fluid wildcard must change to the correct schedule type.
+
 # 0.16.52 (2024-12-31)
 
 - alt+z now also tells you your weapon's ranges (either max, or min safe to max)
