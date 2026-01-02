@@ -214,8 +214,8 @@ function mod.draw_cursor_highlight(pindex, ent, box_type, skip_mouse_movement)
    end
 
    --Highlight the currently focused ground tile.
-   if math.floor(c_pos.x) == math.ceil(c_pos.x) then c_pos.x = c_pos.x - 0.01 end
-   if math.floor(c_pos.y) == math.ceil(c_pos.y) then c_pos.y = c_pos.y - 0.01 end
+   if math.floor(c_pos.x) == math.ceil(c_pos.x) then c_pos.x = c_pos.x + 0.01 end
+   if math.floor(c_pos.y) == math.ceil(c_pos.y) then c_pos.y = c_pos.y + 0.01 end
    h_tile = rendering.draw_rectangle({
       color = { 0.75, 1, 1, 0.75 },
       surface = p.surface,
