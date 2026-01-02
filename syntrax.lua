@@ -22,7 +22,7 @@ mod.VERSION = "0.1.0-dev"
 ---@param initial_rail_type railutils.RailType? Starting rail type, defaults to STRAIGHT
 ---@return syntrax.vm.RailPlacement[]? rails Array of rail placements, or nil on error
 ---@return syntrax.Error? error Error object if compilation or execution failed
-function mod.execute(source, initial_position, initial_direction, initial_rail_type)
+function mod.execute(source, initial_position, initial_direction, initial_rail_type, initial_placement_direction)
    -- Parse
    local ast, parse_err = Parser.parse(source)
    if parse_err then return nil, parse_err end
@@ -36,7 +36,8 @@ function mod.execute(source, initial_position, initial_direction, initial_rail_t
    -- Execute
    local vm = Vm.new()
    vm.bytecode = bytecode
-   local rails, runtime_err = vm:run(initial_position, initial_direction, initial_rail_type)
+   local rails, runtime_err =
+      vm:run(initial_position, initial_direction, initial_rail_type, initial_placement_direction)
 
    if runtime_err then return nil, runtime_err end
 

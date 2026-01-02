@@ -78,12 +78,13 @@ function Traverser:_get_signal_data(end_data, side, use_alt)
    return signal_data
 end
 
----Create a new traverser
+---Create a new traverser with explicit placement direction
 ---@param rail_type railutils.RailType Initial rail type
 ---@param position fa.Point Initial position (should already be grid-adjusted if binding to a real rail)
+---@param placement_direction defines.direction Direction the rail was placed
 ---@param end_direction defines.direction Which end to bind to
 ---@return railutils.Traverser
-function mod.new(rail_type, position, end_direction)
+function mod.new(rail_type, position, placement_direction, end_direction)
    -- Validate that the arguments match exact values in the rail data table
    local prototype = Queries.rail_type_to_prototype_type(rail_type)
    local rail_entry = RailData[prototype]
@@ -91,20 +92,24 @@ function mod.new(rail_type, position, end_direction)
       error(string.format("Invalid rail_type: %s (prototype: %s)", tostring(rail_type), tostring(prototype)))
    end
 
-   -- Find the placement direction that has this end_direction
-   local placement_direction = nil
-   for dir, dir_entry in pairs(rail_entry) do
-      if dir_entry[end_direction] then
-         placement_direction = dir
-         break
-      end
-   end
-
-   if not placement_direction then
+   local direction_entry = rail_entry[placement_direction]
+   if not direction_entry then
       error(
          string.format(
-            "No placement_direction found with end_direction %d for rail_type %s (prototype: %s)",
+            "Invalid placement_direction %d for rail_type %s (prototype: %s)",
+            placement_direction,
+            tostring(rail_type),
+            prototype
+         )
+      )
+   end
+
+   if not direction_entry[end_direction] then
+      error(
+         string.format(
+            "Invalid end_direction %d for placement_direction %d of rail_type %s (prototype: %s)",
             end_direction,
+            placement_direction,
             tostring(rail_type),
             prototype
          )

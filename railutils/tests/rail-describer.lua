@@ -123,7 +123,8 @@ function mod.TestDescriber_CompleteTurn()
    local start_rail = surface:add_rail(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.east)
 
    local ends = Queries.get_end_directions(start_rail.rail_type, start_rail.direction)
-   local trav = Traverser.new(start_rail.rail_type, start_rail.prototype_position, start_rail.direction)
+   -- For straight-rail placed at east, ends are east and west. Start at the first end.
+   local trav = Traverser.new(start_rail.rail_type, start_rail.prototype_position, start_rail.direction, ends[1])
 
    -- Navigate to east-facing end
    if trav:get_direction() ~= defines.direction.east then trav:flip_ends() end

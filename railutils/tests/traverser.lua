@@ -8,7 +8,8 @@ local mod = {}
 
 function mod.TestTraverser_Creation()
    -- Create a traverser on a straight rail facing north
-   local trav = Traverser.new(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
+   local trav =
+      Traverser.new(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north, defines.direction.north)
 
    -- Should have a rail type, direction, and position
    lu.assertNotNil(trav:get_rail_kind())
@@ -23,7 +24,8 @@ end
 
 function mod.TestTraverser_MoveForward()
    -- Start with a straight rail facing north
-   local trav = Traverser.new(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
+   local trav =
+      Traverser.new(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north, defines.direction.north)
 
    local initial_dir = trav:get_direction()
    local initial_pos = trav:get_position()
@@ -47,7 +49,8 @@ end
 
 function mod.TestTraverser_TurnRight()
    -- Start with a straight rail facing north
-   local trav = Traverser.new(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
+   local trav =
+      Traverser.new(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north, defines.direction.north)
 
    local initial_dir = trav:get_direction()
 
@@ -68,7 +71,8 @@ end
 
 function mod.TestTraverser_TurnLeft()
    -- Start with a straight rail facing north
-   local trav = Traverser.new(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
+   local trav =
+      Traverser.new(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north, defines.direction.north)
 
    local initial_dir = trav:get_direction()
 
@@ -89,7 +93,8 @@ end
 
 function mod.TestTraverser_FlipEnds()
    -- Start with a straight rail facing north
-   local trav = Traverser.new(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
+   local trav =
+      Traverser.new(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north, defines.direction.north)
 
    local initial_dir = trav:get_direction()
    local initial_pos = trav:get_position()
@@ -115,7 +120,8 @@ end
 
 function mod.TestTraverser_GetSignalPos()
    -- Start with a straight rail facing north
-   local trav = Traverser.new(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
+   local trav =
+      Traverser.new(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north, defines.direction.north)
 
    -- Should be able to get signal positions
    local left_signal = trav:get_signal_pos(Traverser.SignalSide.LEFT)
@@ -130,7 +136,8 @@ end
 
 function mod.TestTraverser_Movement_Sequence()
    -- Test a sequence of movements
-   local trav = Traverser.new(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north)
+   local trav =
+      Traverser.new(RailInfo.RailType.STRAIGHT, { x = 0, y = 0 }, defines.direction.north, defines.direction.north)
 
    -- Move forward 3 times, then turn right, then forward again
    trav:move_forward()
@@ -152,7 +159,9 @@ end
 
 function mod.TestTraverser_GetAltSignalPos()
    -- Start with a curved rail which might have alt signals
-   local trav = Traverser.new(RailInfo.RailType.CURVE_A, { x = 0, y = 0 }, defines.direction.north)
+   -- For CURVE_A, placement=south has end=north
+   local trav =
+      Traverser.new(RailInfo.RailType.CURVE_A, { x = 0, y = 0 }, defines.direction.south, defines.direction.north)
 
    -- Alt signal might or might not exist
    local alt_left = trav:get_alt_signal_pos(Traverser.SignalSide.LEFT)

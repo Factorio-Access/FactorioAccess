@@ -1,6 +1,7 @@
 # 0.16.53 (unreleased)
 
 - Make trains understand that the item wildcard and fluid wildcard must change to the correct schedule type.
+- Fix flipping to the other end of curved rails and likely a variety of other train rail reporting weirdness
 
 # 0.16.52 (2024-12-31)
 

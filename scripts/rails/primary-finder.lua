@@ -43,7 +43,7 @@ local function push_connected_unit_numbers(connected_set, rail_ent, rail_type, p
 
    -- For each end, check all 3 neighbors (forward, left, right) = 6 total extensions
    for _, end_direction in ipairs(end_directions) do
-      local base_trav = Traverser.new(rail_type, position, end_direction)
+      local base_trav = Traverser.new(rail_type, position, placement_direction, end_direction)
 
       -- Forward, left, right (all 3 always exist)
       local moves = {

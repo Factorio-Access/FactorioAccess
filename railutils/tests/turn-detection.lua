@@ -32,7 +32,10 @@ end
 ---@param turn_func function Function to turn (called 4 times)
 ---@return table[] Array of 4 pieces with rail_type, placement_direction, position
 local function get_turn_pieces(start_pos, start_dir, navigate_func, turn_func)
-   local trav = Traverser.new(RailInfo.RailType.STRAIGHT, start_pos, start_dir)
+   -- For straight rails, placement_direction is the cardinal/ordinal direction
+   -- If end_direction >= 8, the placement is end_direction - 8 (opposite ends share placement)
+   local placement_dir = start_dir >= 8 and (start_dir - 8) or start_dir
+   local trav = Traverser.new(RailInfo.RailType.STRAIGHT, start_pos, placement_dir, start_dir)
    local pieces = {}
 
    -- Navigate to starting position

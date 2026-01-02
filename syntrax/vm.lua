@@ -483,14 +483,28 @@ end
 ---@param initial_direction number? Starting direction 0-15 (default: north/0)
 ---@param initial_rail_type railutils.RailType? Starting rail type (default: STRAIGHT)
 ---@return syntrax.vm.PlacementGroup[]?, syntrax.Error?
-function VM:run(initial_position, initial_direction, initial_rail_type)
+function VM:run(initial_position, initial_direction, initial_rail_type, initial_placement_direction)
    -- Default to origin facing north on a straight rail
    local pos = initial_position or { x = 0, y = 0 }
    local dir = initial_direction or defines.direction.north
    local rail_type = initial_rail_type or RailInfo.RailType.STRAIGHT
 
+   -- Compute default placement_direction from end_direction for straight rails
+   -- For straight rails, opposite ends share a placement direction:
+   -- north/south share north, east/west share east, etc.
+   local placement_dir = initial_placement_direction
+   if not placement_dir then
+      if rail_type == RailInfo.RailType.STRAIGHT then
+         -- For straight rails, placement = end_direction if end < 8, else end - 8
+         placement_dir = dir >= 8 and (dir - 8) or dir
+      else
+         -- For other rails, caller must provide placement_direction
+         error("placement_direction required for non-straight rails when no initial context")
+      end
+   end
+
    -- Create the initial traverser at the starting position/direction/rail_type
-   self.traverser = Traverser.new(rail_type, pos, dir)
+   self.traverser = Traverser.new(rail_type, pos, placement_dir, dir)
    self.initial_traverser = self.traverser:clone()
    self.mark_traverser = self.traverser:clone()
 

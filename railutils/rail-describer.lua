@@ -104,7 +104,7 @@ if not TURN_TABLE then error("TURN_TABLE is nil - turn-table.lua import failed!"
 local function verify_turn_exists(surface, rail_type, placement_direction, position, end_dir, turn_dir, count)
    if count == 0 then return true end
 
-   local trav = Traverser.new(rail_type, position, end_dir)
+   local trav = Traverser.new(rail_type, position, placement_direction, end_dir)
 
    for i = 1, count do
       if turn_dir > 0 then

@@ -269,14 +269,7 @@ end
 ---@param move vtd.Move
 ---@return railutils.Traverser
 local function create_traverser_from_move(move)
-   -- Create traverser with rail type, position, and placement direction
-   local trav = Traverser.new(move.rail_type, move.position, move.end_direction)
-
-   -- The traverser starts at end_dirs[1], but we need it at move.end_direction
-   -- If they don't match, flip ends
-   if trav:get_direction() ~= move.end_direction then trav:flip_ends() end
-
-   return trav
+   return Traverser.new(move.rail_type, move.position, move.placement_direction, move.end_direction)
 end
 
 ---Get a bounding box for the tile containing a position
@@ -440,7 +433,7 @@ end
 ---@return boolean
 local function check_connection(rail_entity, rail_type, end_direction, move_fn)
    local position = { x = rail_entity.position.x, y = rail_entity.position.y }
-   local trav = Traverser.new(rail_type, position, end_direction)
+   local trav = Traverser.new(rail_type, position, rail_entity.direction, end_direction)
    move_fn(trav)
 
    local expected_pos = trav:get_position()
@@ -992,6 +985,7 @@ function mod.execute_syntrax(pindex, source)
       position = current.position,
       direction = current.end_direction,
       rail_type = current.rail_type,
+      placement_direction = current.placement_direction,
       planner_description = state.planner_description,
       build_mode = state.build_mode,
    })

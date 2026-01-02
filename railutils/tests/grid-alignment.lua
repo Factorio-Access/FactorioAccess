@@ -11,7 +11,8 @@ local mod = {}
 
 function mod.TestGridAlignment_ExtendNorth()
    -- Place a vertical rail at (1, 1)
-   local trav = Traverser.new(RailInfo.RailType.STRAIGHT, { x = 1, y = 1 }, defines.direction.north)
+   local trav =
+      Traverser.new(RailInfo.RailType.STRAIGHT, { x = 1, y = 1 }, defines.direction.north, defines.direction.north)
 
    -- Extend once north
    trav:move_forward()
@@ -26,7 +27,8 @@ end
 
 function mod.TestGridAlignment_ExtendSouth()
    -- Place a vertical rail at (1, 1)
-   local trav = Traverser.new(RailInfo.RailType.STRAIGHT, { x = 1, y = 1 }, defines.direction.north)
+   local trav =
+      Traverser.new(RailInfo.RailType.STRAIGHT, { x = 1, y = 1 }, defines.direction.north, defines.direction.north)
 
    -- Flip to face south
    trav:flip_ends()
@@ -43,7 +45,8 @@ end
 
 function mod.TestGridAlignment_ExtendEast()
    -- Place a horizontal rail at (1, 1)
-   local trav = Traverser.new(RailInfo.RailType.STRAIGHT, { x = 1, y = 1 }, defines.direction.east)
+   local trav =
+      Traverser.new(RailInfo.RailType.STRAIGHT, { x = 1, y = 1 }, defines.direction.east, defines.direction.east)
 
    -- Extend once east
    trav:move_forward()
