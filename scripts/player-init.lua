@@ -174,7 +174,6 @@ function mod.initialize(player)
    faplayer.cursor_horiz = faplayer.cursor_horiz or nil
    faplayer.cursor_verti = faplayer.cursor_verti or nil
    faplayer.cursor_round = faplayer.cursor_round or nil
-   faplayer.vanilla_mode = faplayer.vanilla_mode or false
    faplayer.draw_cursor = faplayer.draw_cursor or false
    faplayer.hide_cursor = faplayer.hide_cursor or false
    faplayer.hide_line = faplayer.hide_line or false

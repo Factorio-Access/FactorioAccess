@@ -24,6 +24,7 @@ local Sounds = require("scripts.ui.sounds")
 local TileReader = require("scripts.tile-reader")
 local Combat = require("scripts.combat")
 local KruiseKontrol = require("scripts.kruise-kontrol-wrapper")
+local VanillaMode = require("scripts.vanilla-mode")
 
 local mod = {}
 
@@ -79,7 +80,7 @@ function mod.process_walking_announcements(pindex)
       -- Only announce if there's an entity or the tile is unwalkable
       local ent = EntitySelection.get_first_ent_at_tile(pindex)
       if
-         not storage.players[pindex].vanilla_mode
+         not VanillaMode.is_enabled(pindex)
          and (
             (ent ~= nil and ent.valid)
             or (player.surface.can_place_entity({ name = "character", position = vp:get_cursor_pos() }) == false)

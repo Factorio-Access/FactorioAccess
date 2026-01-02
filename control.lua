@@ -69,6 +69,7 @@ local TransportBelts = require("scripts.transport-belts")
 local TravelTools = require("scripts.travel-tools")
 local UpgradePlanner = require("scripts.upgrade-planner")
 local PlannerUtils = require("scripts.planner-utils")
+local VanillaMode = require("scripts.vanilla-mode")
 local VirtualTrainDriving = require("scripts.rails.virtual-train-driving")
 local VehicleSounds = require("scripts.sonifiers.vehicle")
 local InserterSonifier = require("scripts.sonifiers.inserter")
@@ -246,20 +247,6 @@ local function read_hand(pindex)
    end
 end
 
---If there is an entity at the cursor, moves the mouse pointer to it, else moves to the cursor tile.
---TODO: remove this, by calling the appropriate mouse module functions instead.
-function target_mouse_pointer_deprecated(pindex)
-   if storage.players[pindex].vanilla_mode then return end
-   local vp = Viewpoint.get_viewpoint(pindex)
-   local surf = game.get_player(pindex).surface
-   local ents = surf.find_entities_filtered({ position = vp:get_cursor_pos() })
-   if ents and ents[1] and ents[1].valid then
-      Mouse.move_mouse_pointer(ents[1].position, pindex)
-   else
-      Mouse.move_mouse_pointer(vp:get_cursor_pos(), pindex)
-   end
-end
-
 --Checks if the storage players table has been created, and if the table entry for this player exists. Otherwise it is initialized.
 function check_for_player(index)
    if storage.players[index] == nil then
@@ -342,7 +329,7 @@ local function move_characters(event)
       local vp = Viewpoint.get_viewpoint(pindex)
       local cursor_pos = vp:get_cursor_pos()
 
-      if player.vanilla_mode == true then
+      if VanillaMode.is_enabled(pindex) then
          player.player.game_view_settings.update_entity_selection = true
       elseif player.player.game_view_settings.update_entity_selection == false then
          --Force the mouse pointer to the mod cursor if there is an item in hand
@@ -825,13 +812,7 @@ EventManager.on_event(
    ---@param pindex integer
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
-
       local p = game.get_player(pindex)
-
-      --Stop any enabled mouse entity selection
-      if storage.players[pindex].vanilla_mode ~= true then
-         game.get_player(pindex).game_view_settings.update_entity_selection = false
-      end
    end
 )
 
@@ -1223,11 +1204,6 @@ local function move_key(direction, event, force_single_tile)
    local p = game.get_player(pindex)
    local router = UiRouter.get_router(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
-
-   --Stop any enabled mouse entity selection
-   if storage.players[pindex].vanilla_mode ~= true then
-      game.get_player(pindex).game_view_settings.update_entity_selection = false
-   end
 
    -- Combat mode: Set aim direction instead of moving cursor
    if Combat.is_combat_mode(pindex) then
@@ -2745,14 +2721,12 @@ EventManager.on_event(
    function(event, pindex)
       local router = UiRouter.get_router(pindex)
 
-      if not storage.players[pindex].vanilla_mode then
-         local p = game.get_player(pindex)
-         local stack = p.cursor_stack
-         if stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result then
-            kb_mine_tiles(event)
-         end
-         kb_mine_access_sounds(event)
+      local p = game.get_player(pindex)
+      local stack = p.cursor_stack
+      if stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result then
+         kb_mine_tiles(event)
       end
+      kb_mine_access_sounds(event)
    end
 )
 
@@ -3004,7 +2978,7 @@ EventManager.on_event(
       -- Normal left-click behavior
       if ghost or (stack and stack.valid_for_read and stack.valid) then
          kb_click_hand(event)
-      elseif storage.players[pindex].vanilla_mode == false then
+      else
          kb_click_entity(event)
       end
    end
@@ -3546,7 +3520,6 @@ local function kb_read_time_and_research_progress(event)
    local progress_string = Research.get_progress_string(pindex)
 
    Speech.speak(pindex, FaUtils.spacecat(time_string, progress_string, total_time_string))
-   if storage.players[pindex].vanilla_mode then game.get_player(pindex).open_technology_gui() end
 end
 
 EventManager.on_event(
@@ -3581,34 +3554,9 @@ EventManager.on_event(
    end
 )
 
----@param event EventData.CustomInputEvent
-local function kb_toggle_vanilla_mode(event)
-   local pindex = event.player_index
-   local p = game.get_player(pindex)
-   local vp = Viewpoint.get_viewpoint(pindex)
-   sounds.play_confirm(p.index)
-   if storage.players[pindex].vanilla_mode == false then
-      p.print("Vanilla mode : ON")
-
-      if p.character then p.character_running_speed_modifier = 0 end
-      vp:set_cursor_hidden(true)
-      Speech.speak(pindex, { "fa.vanilla-mode-enabled" })
-      storage.players[pindex].vanilla_mode = true
-   else
-      p.print("Vanilla mode : OFF")
-      vp:set_cursor_hidden(false)
-      storage.players[pindex].vanilla_mode = false
-      Speech.speak(pindex, { "fa.vanilla-mode-disabled" })
-   end
-end
-
-EventManager.on_event(
-   "fa-ca-v",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      kb_toggle_vanilla_mode(event)
-   end
-)
+EventManager.on_event("fa-ca-v", function(event, pindex)
+   VanillaMode.toggle(pindex)
+end)
 
 ---@param event EventData.CustomInputEvent
 local function kb_toggle_cursor_hiding(event)
@@ -3695,7 +3643,6 @@ EventManager.on_event(
    "fa-p",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      if storage.players[pindex].vanilla_mode then return end
       local router = UiRouter.get_router(pindex)
       router:open_ui(UiRouter.UI_NAMES.WARNINGS)
    end
@@ -3713,7 +3660,6 @@ EventManager.on_event(
    "fa-a-v",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      if storage.players[pindex].vanilla_mode then return end
       TravelTools.fast_travel_menu_open(pindex)
    end
 )

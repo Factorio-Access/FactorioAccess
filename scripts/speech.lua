@@ -44,6 +44,7 @@ attempts to do so throw when the game saves.
 ]]
 local FaUtils = require("scripts.fa-utils")
 local SpeechLogger = require("scripts.speech-logger")
+local VanillaMode = require("scripts.vanilla-mode")
 
 local mod = {}
 
@@ -221,8 +222,7 @@ function mod.speak(pindex, str)
    else
       return
    end
-   if storage.players[pindex].vanilla_mode == nil then storage.players[pindex].vanilla_mode = false end
-   if not storage.players[pindex].vanilla_mode then
+   if not VanillaMode.is_enabled(pindex) then
       localised_print({ "", "out " .. pindex .. " ", processed })
       -- Also log to file for debugging
       SpeechLogger.log_speech(processed, pindex)

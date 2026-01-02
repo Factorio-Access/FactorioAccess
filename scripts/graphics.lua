@@ -5,6 +5,7 @@ local BuildDimensions = require("scripts.build-dimensions")
 local FaUtils = require("scripts.fa-utils")
 local Mouse = require("scripts.mouse")
 local UiRouter = require("scripts.ui.router")
+local VanillaMode = require("scripts.vanilla-mode")
 local Viewpoint = require("scripts.viewpoint")
 local dirs = defines.direction
 
@@ -231,7 +232,7 @@ function mod.draw_cursor_highlight(pindex, ent, box_type, skip_mouse_movement)
    if game.is_multiplayer() then mod.set_cursor_colors_to_player_colors(pindex) end
 
    --Highlight nearby entities by default means (reposition the cursor)
-   if storage.players[pindex].vanilla_mode or skip_mouse_movement == true then return end
+   if VanillaMode.is_enabled(pindex) or skip_mouse_movement == true then return end
    local stack = game.get_player(pindex).cursor_stack
    if
       stack ~= nil

@@ -4,6 +4,7 @@ local util = require("util")
 local FaUtils = require("scripts.fa-utils")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
+local VanillaMode = require("scripts.vanilla-mode")
 local dirs = defines.direction
 
 local mod = {}
@@ -44,7 +45,7 @@ function mod.check_and_play_driving_alert_sound(pindex, tick, mode_in)
    --Return in inapplicable cases
    if p == nil or p.valid == false or p.driving == false or p.vehicle == nil then return false end
    --Return in vanilla mode
-   if storage.players[pindex].vanilla_mode == true then return end
+   if VanillaMode.is_enabled(pindex) then return end
    --Return if beeped recently
    local min_delay = 15
    if storage.players[pindex].last_driving_alert_tick == nil then

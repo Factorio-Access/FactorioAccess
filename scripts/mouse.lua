@@ -5,6 +5,7 @@
 local base_pixels_per_tile = 32
 
 local FaUtils = require("scripts.fa-utils")
+local VanillaMode = require("scripts.vanilla-mode")
 local Viewpoint = require("scripts.viewpoint")
 local mod = {}
 
@@ -46,10 +47,7 @@ end
 ---@param position MapPosition
 ---@param pindex int
 function mod.move_mouse_pointer(position, pindex)
-   if
-      storage.players[pindex].vanilla_mode
-      or game.get_player(pindex).game_view_settings.update_entity_selection == true
-   then
+   if VanillaMode.is_enabled(pindex) or game.get_player(pindex).game_view_settings.update_entity_selection == true then
       return
    end
    local pixel_pos, on_screen, screen_center = get_pixel_pos_onscreen_center(position, pindex)
