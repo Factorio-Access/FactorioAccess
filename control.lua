@@ -2354,6 +2354,17 @@ local function adjust_cursor_size(pindex, direction)
    local say_size = new_size * 2 + 1
    Speech.speak(pindex, { "fa.cursor-size", tostring(say_size), tostring(say_size) })
    sounds.play_close_inventory(pindex)
+   Graphics.draw_large_cursor(
+      {
+         math.floor(cursor_pos.x) - new_size,
+         math.floor(cursor_pos.y) - new_size,
+      },
+      {
+         math.floor(cursor_pos.x) + new_size + 1,
+         math.floor(cursor_pos.y) + new_size + 1,
+      },
+      pindex
+   )
 end
 
 --We have cursor sizes 1,3,5,11,21,51,101,251
