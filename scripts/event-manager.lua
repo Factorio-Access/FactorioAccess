@@ -2,8 +2,48 @@
 ---Since Factorio's script.on_event is last-one-wins, this allows multiple handlers per event.
 ---Don't use that though, it's to support our tests.
 local PlayerInit = require("scripts.player-init")
+local VanillaMode = require("scripts.vanilla-mode")
 
 local mod = {}
+
+-- Events that run even when vanilla mode is enabled.
+local VANILLA_MODE_WHITELIST = {
+   -- Vanilla mode toggle itself
+   ["fa-cas-v"] = true,
+   ["fa-ca-v"] = true, -- legacy, will be removed
+
+   -- Essential game events
+   [defines.events.on_tick] = true,
+   [defines.events.on_player_joined_game] = true,
+   [defines.events.on_player_created] = true,
+   [defines.events.on_player_respawned] = true,
+
+   -- Scanner and state tracking (silent)
+   [defines.events.on_object_destroyed] = true,
+   [defines.events.on_built_entity] = true,
+   [defines.events.on_robot_built_entity] = true,
+   [defines.events.script_raised_built] = true,
+   [defines.events.on_entity_cloned] = true,
+   [defines.events.on_surface_created] = true,
+   [defines.events.on_surface_deleted] = true,
+   [defines.events.on_research_finished] = true,
+   [defines.events.on_string_translated] = true,
+   [defines.events.on_player_display_resolution_changed] = true,
+   [defines.events.on_player_display_scale_changed] = true,
+   [defines.events.on_player_cursor_stack_changed] = true,
+   [defines.events.on_player_main_inventory_changed] = true,
+
+   -- GUI and game state
+   [defines.events.on_gui_opened] = true,
+   [defines.events.on_gui_closed] = true,
+   [defines.events.on_cutscene_started] = true,
+   [defines.events.on_cutscene_finished] = true,
+   [defines.events.on_player_changed_surface] = true,
+   [defines.events.on_player_driving_changed_state] = true,
+   [defines.events.on_entity_damaged] = true,
+   [defines.events.on_entity_died] = true,
+   [defines.events.on_player_died] = true,
+}
 
 -- Event priority constants
 mod.EVENT_KIND = {
@@ -143,6 +183,11 @@ function mod._dispatch_event(event_id, event)
          local player = game.get_player(pindex)
          if player then PlayerInit.initialize(player) end
       end
+
+      -- Skip non-whitelisted events when vanilla mode is enabled.
+      -- pcall permitted: player_index can be stale/invalid in some edge cases.
+      local ok, is_vanilla = pcall(VanillaMode.is_enabled, pindex)
+      if ok and is_vanilla and not VANILLA_MODE_WHITELIST[event_id] then return end
    end
 
    -- Run handlers in priority order: test → ui → world
