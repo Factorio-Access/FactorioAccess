@@ -19,11 +19,10 @@ function mod.sync_build_cursor_graphics(pindex)
    if player == nil or player.player.character == nil then return end
    local p = game.get_player(pindex)
    local stack = game.get_player(pindex).cursor_stack
-   if player.building_direction == nil then player.building_direction = dirs.north end
    turn_to_cursor_direction_cardinal(pindex)
-   local dir = player.building_direction
    local dir_indicator = player.building_dir_arrow
    local vp = Viewpoint.get_viewpoint(pindex)
+   local dir = vp:get_hand_direction()
    local cursor_pos = vp:get_cursor_pos()
    local cursor_size = vp:get_cursor_size()
    local width = nil
