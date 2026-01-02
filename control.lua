@@ -2033,12 +2033,12 @@ local function kb_jump_to_player(event)
       Graphics.draw_cursor_highlight(pindex, nil, nil)
    else
       local scan_left_top = {
-         x = math.floor(cursor_pos.x) - cursor_size,
-         y = math.floor(cursor_pos.y) - cursor_size,
+         math.floor(cursor_pos.x) - cursor_size,
+         math.floor(cursor_pos.y) - cursor_size,
       }
       local scan_right_bottom = {
-         x = math.floor(cursor_pos.x) + cursor_size + 1,
-         y = math.floor(cursor_pos.y) + cursor_size + 1,
+         math.floor(cursor_pos.x) + cursor_size + 1,
+         math.floor(cursor_pos.y) + cursor_size + 1,
       }
       Graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
    end
@@ -2321,12 +2321,12 @@ local function adjust_cursor_size(pindex, direction)
    sounds.play_close_inventory(pindex)
    Graphics.draw_large_cursor(
       {
-         math.floor(cursor_pos.x) - new_size,
-         math.floor(cursor_pos.y) - new_size,
+         x = math.floor(cursor_pos.x) - new_size,
+         y = math.floor(cursor_pos.y) - new_size,
       },
       {
-         math.floor(cursor_pos.x) + new_size + 1,
-         math.floor(cursor_pos.y) + new_size + 1,
+         x = math.floor(cursor_pos.x) + new_size + 1,
+         y = math.floor(cursor_pos.y) + new_size + 1,
       },
       pindex
    )
