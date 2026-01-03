@@ -2,6 +2,8 @@
 
 - Make trains understand that the item wildcard and fluid wildcard must change to the correct schedule type.
 - Fix flipping to the other end of curved rails and likely a variety of other train rail reporting weirdness
+- Try to bring back a form of vanilla mode. This is on control alt shift v (shift v, alt v, and v are now all keystrokes for various reasons; it needs to be hard to hit).
+- Some graphical synchronization fixes
 
 # 0.16.52 (2024-12-31)
 
