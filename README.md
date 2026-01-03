@@ -142,7 +142,28 @@ There are a huge number of keystrokes and functions in the mod. To help keep thi
 
 Please note that the mod wiki is out of date. The above documentation is maintained by developers and is for 2.0. The wiki is by users and primarily for 1.1.
 
-There will be a tutorial system in the near future.
+To access the in-game tutorial, press control t.
+
+# Vanilla Mode
+
+NOTE: this section is *not* a recommendation that you should try multiplayer, and nothing here makes multiplayer better
+for you.  We maintain this feature for the small number of users who do such things anyway.  Your experience will
+continue to lag and parts of the game such as combat will continue to be unplayable with vanilla mode on or otherwise.
+
+Occasionally you may wish to let the sighted temporarily or permanently control your save with the mod installed, for
+multiplayer or a grab bag of other reasons.  The mod offers vanilla mode for this case, which is important to find for
+the few people who need it and thus brought up here in this readme.  To turn on vanilla mode, press control alt shift v.  Pressing it again turns vanilla mode off again.
+
+If the sighted person does not install our launcher config tweaks, their game should now function as if the mod is not
+present.  In the case of controlling the mod on the same machine, note that we remap a few keys.  It is best to have a
+separate sighted installation without those configuration tweaks.
+
+When enabled vanilla mode disables sounds and speech, stops all of our key handling, and closes any open UIs.  Your
+state such as fast travel points is left untouched, and you should be able to toggle vanilla mode without penalty.  This
+said, please note that comprehensive vanilla mode relies on active sighted users, so how complete it is at any given
+time can vary based on whether or not someone sighted is trying to use it.  By the nature of it, blind developers
+cannot test it at all, and whether or not this project is primarily maintained by the blind varies day to day.
+
 
 # Help and Support
 
