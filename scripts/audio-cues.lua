@@ -46,9 +46,7 @@ function mod.check_cues(tick, players)
       if (tick + cue.tick_offset) % cue.tick_interval == 0 then
          if cue.per_player then
             for pindex, player in pairs(players) do
-               if not VanillaMode.is_enabled(pindex) then
-                  cue.check_function(pindex, tick, table.unpack(cue.params))
-               end
+               if not VanillaMode.is_enabled(pindex) then cue.check_function(pindex, tick, table.unpack(cue.params)) end
             end
          else
             cue.check_function(tick, table.unpack(cue.params))

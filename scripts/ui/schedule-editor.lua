@@ -435,6 +435,24 @@ local function build_condition_vtable(
             return
          end
 
+         -- Station conditions get special handling
+         if TYPES_WITH_STATION[cond_type] then
+            if ctx.modifiers and ctx.modifiers.shift then
+               -- Shift+M: textbox with rich text for typing station name
+               ctx.controller:open_textbox("", { node = row_key, target = "p1" }, { rich_text = true })
+            else
+               -- M: open stop selector
+               local entity = ctx.global_parameters and ctx.global_parameters.entity
+               local surface = entity and entity.valid and entity.surface or nil
+               ctx.controller:open_child_ui(
+                  Router.UI_NAMES.STOP_SELECTOR,
+                  { surface = surface },
+                  { node = row_key, target = "p1" }
+               )
+            end
+            return
+         end
+
          if ctx.modifiers and ctx.modifiers.shift then
             -- Shift+M: textbox (if p1 has constant)
             if type_handlers.p1.constant then
@@ -559,12 +577,20 @@ local function build_condition_vtable(
             return
          end
 
+         -- For station conditions, extract station name from rich text result
+         local processed_result = result
+         if TYPES_WITH_STATION[cond_type] and target == "p1" then
+            local station_name = extract_station_name(result, ctx)
+            if not station_name then return end
+            processed_result = station_name
+         end
+
          -- Try constant first, then setter
          local new_condition_data
          if param_handler.constant then
-            new_condition_data = param_handler.constant(condition, result)
+            new_condition_data = param_handler.constant(condition, processed_result)
          elseif param_handler.setter then
-            new_condition_data = param_handler.setter(condition, result)
+            new_condition_data = param_handler.setter(condition, processed_result)
          end
 
          if not new_condition_data then
@@ -576,7 +602,7 @@ local function build_condition_vtable(
          schedule.change_wait_condition(record_position, condition_index, new_condition_data)
 
          -- Announce the new value
-         ctx.controller.message:fragment(param_handler.announcer(result, condition))
+         ctx.controller.message:fragment(param_handler.announcer(processed_result, condition))
       end,
    }
 end

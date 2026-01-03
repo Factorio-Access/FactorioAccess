@@ -4,6 +4,7 @@
 - Fix flipping to the other end of curved rails and likely a variety of other train rail reporting weirdness
 - Try to bring back a form of vanilla mode. This is on control alt shift v (shift v, alt v, and v are now all keystrokes for various reasons; it needs to be hard to hit).
 - Some graphical synchronization fixes
+- Train schedule conditions which require station names now support the rich text shorthand
 
 # 0.16.52 (2024-12-31)
 
