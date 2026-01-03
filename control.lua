@@ -2320,11 +2320,11 @@ local function adjust_cursor_size(pindex, direction)
    Speech.speak(pindex, { "fa.cursor-size", tostring(say_size), tostring(say_size) })
    sounds.play_close_inventory(pindex)
    Graphics.draw_large_cursor({
-      x = math.floor(cursor_pos.x) - new_size,
-      y = math.floor(cursor_pos.y) - new_size,
+      cursor_pos.x - new_size,
+      cursor_pos.y - new_size,
    }, {
-      x = math.floor(cursor_pos.x) + new_size + 1,
-      y = math.floor(cursor_pos.y) + new_size + 1,
+      cursor_pos.x + new_size + 1,
+      cursor_pos.y + new_size + 1,
    }, pindex)
 end
 
