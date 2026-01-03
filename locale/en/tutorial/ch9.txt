@@ -1,4 +1,4 @@
-It is now time to talk about rulers, build lock, and the clipboard.  These are your tools for building long lines.
+Having covered the basics of belts and inserters, we will now cover ways to build long lines of them. This chapter teaches you three tools: build lock for building behind you as you walk, audio rulers for precise alignment and measurement, and clipboard blueprints for quickly copying and pasting structures.
 
 Build lock is the most important.  When build lock is enabled, every movement of your character builds behind your character.
 

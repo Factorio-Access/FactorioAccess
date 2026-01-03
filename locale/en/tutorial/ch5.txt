@@ -1,4 +1,4 @@
-Before we go further, it is time to learn how to move around efficiently. You have to monitor this drill setup and come back to it for coal, and soon you will have lots of buildings to navigate between.
+Now that you have buildings to manage, you need efficient ways to navigate between them. This chapter teaches you three ways to navigate the cursor: The bookmark for one quick reference point, fast travel points for multiple named locations, and cursor skipping to explore large areas quickly.
 
 The first and simplest way is with bookmarks.  Pressing shift b sets a bookmark, and b returns the cursor to it.  You can put your cursor on the chest and hit shift b, for example.
 

@@ -1,4 +1,4 @@
-You now know enough to make progress, though not efficiently.  This chapter picks up the pace.
+Now that you can place buildings, it is time to learn the game's core systems. This chapter teaches you about the UI hierarchy, how to examine technologies, how to craft items, and how to transfer items between inventories. You will improve your burner mining drill by crafting a wooden chest.
 
 The main menu (e) contains several tabs.  There are also the world menu (alt + w) and mod configuration menu (control alt shift m).
 
