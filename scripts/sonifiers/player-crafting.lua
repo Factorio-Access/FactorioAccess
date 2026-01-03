@@ -28,32 +28,28 @@ local crafting_storage = StorageManager.declare_storage_module("player_crafting_
    ephemeral_state_version = 1,
 })
 
----On tick handler
-function mod.on_tick()
+---Per-player tick handler
+---@param pindex integer
+function mod.on_tick_per_player(pindex)
    local tick = game.tick
+   local player = game.get_player(pindex)
+   if not player or not player.valid then return end
 
-   for pindex, _ in pairs(game.players) do
-      local player = game.get_player(pindex)
-      if not player or not player.valid then goto continue end
+   local state = crafting_storage[pindex]
 
-      local state = crafting_storage[pindex]
-
-      -- Check if player has a non-empty crafting queue
-      -- Apparently this throws if the player does not have a character
-      if not player.character or player.crafting_queue_size == 0 then
-         state.last_played_tick = nil
-         goto continue
-      end
-
-      -- Check if enough time has passed since last sound
-      if state.last_played_tick and (tick - state.last_played_tick) < INTERVAL then goto continue end
-
-      -- Play the crafting sound
-      player.play_sound({ path = "player-crafting", volume_modifier = VOLUME })
-      state.last_played_tick = tick
-
-      ::continue::
+   -- Check if player has a non-empty crafting queue
+   -- Apparently this throws if the player does not have a character
+   if not player.character or player.crafting_queue_size == 0 then
+      state.last_played_tick = nil
+      return
    end
+
+   -- Check if enough time has passed since last sound
+   if state.last_played_tick and (tick - state.last_played_tick) < INTERVAL then return end
+
+   -- Play the crafting sound
+   player.play_sound({ path = "player-crafting", volume_modifier = VOLUME })
+   state.last_played_tick = tick
 end
 
 return mod

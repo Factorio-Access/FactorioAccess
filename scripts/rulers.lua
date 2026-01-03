@@ -16,6 +16,7 @@ local StorageManager = require("scripts.storage-manager")
 local uid = require("scripts.uid").uid
 local Viewpoint = require("scripts.viewpoint")
 local MovementHistory = require("scripts.movement-history")
+local VanillaMode = require("scripts.vanilla-mode")
 
 local mod = {}
 
@@ -332,7 +333,7 @@ end
 ---Should be called from on_tick in control.lua
 function mod.update_all_players()
    for pindex, _ in pairs(storage.players) do
-      update_player(pindex)
+      if not VanillaMode.is_enabled(pindex) then update_player(pindex) end
    end
 end
 

@@ -8,8 +8,10 @@ Battle activity is detected via:
 - Direct notify() calls from on_entity_damaged/on_entity_died events
 - Polling for combat-related alerts (entity_under_attack, entity_destroyed, turret_fire)
 
-Uses Factorio's native force.play_sound() API.
+Uses Factorio's native player.play_sound() API, skipping vanilla mode players.
 ]]
+
+local VanillaMode = require("scripts.vanilla-mode")
 
 local mod = {}
 
@@ -82,9 +84,13 @@ function mod.on_tick()
 
       if not state.notified then goto continue end
 
-      -- Clear the notification flag and play sound
+      -- Clear the notification flag and play sound for non-vanilla players
       state.notified = false
-      force.play_sound({ path = "fa-battle-notice" })
+      for _, player in ipairs(force.players) do
+         if player.connected and not VanillaMode.is_enabled(player.index) then
+            player.play_sound({ path = "fa-battle-notice" })
+         end
+      end
 
       ::continue::
    end

@@ -10,7 +10,6 @@ local mod = {}
 local VANILLA_MODE_WHITELIST = {
    -- Vanilla mode toggle itself
    ["fa-cas-v"] = true,
-   ["fa-ca-v"] = true, -- legacy, will be removed
 
    -- Essential game events
    [defines.events.on_tick] = true,

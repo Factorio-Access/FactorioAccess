@@ -7,6 +7,7 @@ Handles driving alerts, mining sounds, and crafting sounds.
 local Driving = require("scripts.driving")
 local PlayerMiningTools = require("scripts.player-mining-tools")
 local sounds = require("scripts.ui.sounds")
+local VanillaMode = require("scripts.vanilla-mode")
 
 local mod = {}
 
@@ -45,7 +46,9 @@ function mod.check_cues(tick, players)
       if (tick + cue.tick_offset) % cue.tick_interval == 0 then
          if cue.per_player then
             for pindex, player in pairs(players) do
-               cue.check_function(pindex, tick, table.unpack(cue.params))
+               if not VanillaMode.is_enabled(pindex) then
+                  cue.check_function(pindex, tick, table.unpack(cue.params))
+               end
             end
          else
             cue.check_function(tick, table.unpack(cue.params))

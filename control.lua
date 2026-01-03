@@ -71,15 +71,10 @@ local UpgradePlanner = require("scripts.upgrade-planner")
 local PlannerUtils = require("scripts.planner-utils")
 local VanillaMode = require("scripts.vanilla-mode")
 local VirtualTrainDriving = require("scripts.rails.virtual-train-driving")
-local VehicleSounds = require("scripts.sonifiers.vehicle")
-local InserterSonifier = require("scripts.sonifiers.inserter")
+local SonifierTickHandler = require("scripts.sonifiers.tick-handler")
 local GridSonifier = require("scripts.sonifiers.grid-sonifier")
 local CraftingBackend = require("scripts.sonifiers.grid-backends.crafting")
-local EnemyRadar = require("scripts.sonifiers.combat.enemy-radar")
-local SpawnerRadar = require("scripts.sonifiers.combat.spawner-radar")
 local BattleNotice = require("scripts.sonifiers.battle-notice")
-local HealthBar = require("scripts.sonifiers.health-bar")
-local PlayerCraftingSonifier = require("scripts.sonifiers.player-crafting")
 local ForceGhostEnabler = require("scripts.force-ghost-enabler")
 local AimAssist = require("scripts.combat.aim-assist")
 local Capsules = require("scripts.combat.capsules")
@@ -363,9 +358,7 @@ function on_tick(event)
    ScannerEntrypoint.on_tick()
    MovementHistory.update_all_players()
    Rulers.update_all_players()
-   VehicleSounds.on_tick()
-   InserterSonifier.on_tick()
-   PlayerCraftingSonifier.on_tick()
+   SonifierTickHandler.on_tick()
    BattleNotice.on_tick()
    ForceGhostEnabler.on_tick()
 
@@ -376,25 +369,21 @@ function on_tick(event)
 
    -- Check bump detection every tick for all players
    for _, player in pairs(game.players) do
-      if player.connected then
-         BumpDetection.check_and_play_bump_alert_sound(player.index, event.tick)
-         BumpDetection.check_and_play_stuck_alert_sound(player.index, event.tick)
-         -- Process build lock for walking movement
-         BuildLock.process_walking_movement(player.index)
-         -- Process walking announcements (anchored cursor or entity detection)
-         Walking.process_walking_announcements(player.index)
-         -- Check for pending logistics announcements
-         WorkerRobots.on_tick(player.index)
-         -- Grid-based sonification (crafting machines etc)
-         if settings.global[SETTING_NAMES.SONIFICATION_CRAFTING].value then GridSonifier.tick(player.index) end
-         -- Combat sonification
-         if settings.global[SETTING_NAMES.SONIFICATION_COMBAT_ENEMIES].value then EnemyRadar.tick(player.index) end
-         if settings.global[SETTING_NAMES.SONIFICATION_COMBAT_SPAWNERS].value then SpawnerRadar.tick(player.index) end
-         -- Handle shooting (combat mode aim assist or shooting_selected with safe mode)
-         Combat.on_tick(player.index)
-         -- Health bar sonification (polls for health/shield changes)
-         HealthBar.on_tick(player.index)
-      end
+      if not player.connected then goto continue end
+      if VanillaMode.is_enabled(player.index) then goto continue end
+
+      BumpDetection.check_and_play_bump_alert_sound(player.index, event.tick)
+      BumpDetection.check_and_play_stuck_alert_sound(player.index, event.tick)
+      -- Process build lock for walking movement
+      BuildLock.process_walking_movement(player.index)
+      -- Process walking announcements (anchored cursor or entity detection)
+      Walking.process_walking_announcements(player.index)
+      -- Check for pending logistics announcements
+      WorkerRobots.on_tick(player.index)
+      -- Handle shooting (combat mode aim assist or shooting_selected with safe mode)
+      Combat.on_tick(player.index)
+
+      ::continue::
    end
 
    if event.tick % 15 == 0 then
@@ -3554,8 +3543,35 @@ EventManager.on_event(
    end
 )
 
-EventManager.on_event("fa-ca-v", function(event, pindex)
-   VanillaMode.toggle(pindex)
+EventManager.on_event("fa-cas-v", function(event, pindex)
+   local p = game.get_player(pindex)
+   local router = UiRouter.get_router(pindex)
+   local enabling = not VanillaMode.is_enabled(pindex)
+
+   if enabling then
+      -- Speak before toggle so speech still works
+      Speech.speak(pindex, { "fa.vanilla-mode-enabled" })
+      sounds.play_confirm(pindex)
+
+      VanillaMode.toggle(pindex)
+
+      -- Close any open UI
+      router:close_ui()
+
+      -- Exit combat mode if active
+      if Combat.is_combat_mode(pindex) then Combat.toggle_combat_mode(pindex) end
+
+      -- Re-enable mouse entity selection
+      p.game_view_settings.update_entity_selection = true
+   else
+      VanillaMode.toggle(pindex)
+
+      -- Disable mouse entity selection
+      p.game_view_settings.update_entity_selection = false
+
+      sounds.play_confirm(pindex)
+      Speech.speak(pindex, { "fa.vanilla-mode-disabled" })
+   end
 end)
 
 ---@param event EventData.CustomInputEvent

@@ -102,69 +102,64 @@ local function process_edge(edge, current_dist)
    return fired
 end
 
----On tick handler
-function mod.on_tick()
-   for pindex, _ in pairs(game.players) do
-      local player = game.get_player(pindex)
-      local state = inserter_storage[pindex]
+---Per-player tick handler
+---@param pindex integer
+function mod.on_tick_per_player(pindex)
+   local player = game.get_player(pindex)
+   local state = inserter_storage[pindex]
 
-      if not player or not player.valid then
-         reset_state(state)
-         goto continue
-      end
+   if not player or not player.valid then
+      reset_state(state)
+      return
+   end
 
-      if not settings.global[SETTING_NAMES.SONIFICATION_INSERTER].value then
-         reset_state(state)
-         goto continue
-      end
+   if not settings.global[SETTING_NAMES.SONIFICATION_INSERTER].value then
+      reset_state(state)
+      return
+   end
 
-      local selected = player.selected
-      if not selected or not selected.valid or selected.type ~= "inserter" then
-         reset_state(state)
-         goto continue
-      end
+   local selected = player.selected
+   if not selected or not selected.valid or selected.type ~= "inserter" then
+      reset_state(state)
+      return
+   end
 
-      -- Check if we switched to a different inserter
-      if state.unit_number ~= selected.unit_number then
-         reset_state(state)
-         state.unit_number = selected.unit_number
-         goto continue
-      end
+   -- Check if we switched to a different inserter
+   if state.unit_number ~= selected.unit_number then
+      reset_state(state)
+      state.unit_number = selected.unit_number
+      return
+   end
 
-      -- Calculate current distances
-      local hand_pos = selected.held_stack_position
-      local pickup_dist = FaUtils.distance(hand_pos, selected.pickup_position)
-      local dropoff_dist = FaUtils.distance(hand_pos, selected.drop_position)
+   -- Calculate current distances
+   local hand_pos = selected.held_stack_position
+   local pickup_dist = FaUtils.distance(hand_pos, selected.pickup_position)
+   local dropoff_dist = FaUtils.distance(hand_pos, selected.drop_position)
 
-      -- Skip if hand hasn't moved
-      if state.pickup.dist and pickup_dist == state.pickup.dist and dropoff_dist == state.dropoff.dist then
-         goto continue
-      end
+   -- Skip if hand hasn't moved
+   if state.pickup.dist and pickup_dist == state.pickup.dist and dropoff_dist == state.dropoff.dist then return end
 
-      -- Process edge detection
-      local pickup_fired = process_edge(state.pickup, pickup_dist)
-      local dropoff_fired = process_edge(state.dropoff, dropoff_dist)
+   -- Process edge detection
+   local pickup_fired = process_edge(state.pickup, pickup_dist)
+   local dropoff_fired = process_edge(state.dropoff, dropoff_dist)
 
-      -- Play sounds (pickup takes priority)
-      if pickup_fired then
-         -- Pan based on direction from inserter center to pickup position
-         local inserter_pos = selected.position
-         local pickup_pos = selected.pickup_position
-         local dx = pickup_pos.x - inserter_pos.x
-         local dy = pickup_pos.y - inserter_pos.y
-         local params = SoundModel.map_relative_position(dx, dy, 3)
-         play_pickup_sound(pindex, params)
-      elseif dropoff_fired then
-         -- Pan based on direction from inserter center to dropoff position
-         local inserter_pos = selected.position
-         local drop_pos = selected.drop_position
-         local dx = drop_pos.x - inserter_pos.x
-         local dy = drop_pos.y - inserter_pos.y
-         local params = SoundModel.map_relative_position(dx, dy, 3)
-         play_dropoff_sound(pindex, params)
-      end
-
-      ::continue::
+   -- Play sounds (pickup takes priority)
+   if pickup_fired then
+      -- Pan based on direction from inserter center to pickup position
+      local inserter_pos = selected.position
+      local pickup_pos = selected.pickup_position
+      local dx = pickup_pos.x - inserter_pos.x
+      local dy = pickup_pos.y - inserter_pos.y
+      local params = SoundModel.map_relative_position(dx, dy, 3)
+      play_pickup_sound(pindex, params)
+   elseif dropoff_fired then
+      -- Pan based on direction from inserter center to dropoff position
+      local inserter_pos = selected.position
+      local drop_pos = selected.drop_position
+      local dx = drop_pos.x - inserter_pos.x
+      local dy = drop_pos.y - inserter_pos.y
+      local params = SoundModel.map_relative_position(dx, dy, 3)
+      play_dropoff_sound(pindex, params)
    end
 end
 

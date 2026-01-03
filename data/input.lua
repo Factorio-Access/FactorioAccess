@@ -850,8 +850,8 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "fa-ca-v",
-      key_sequence = "CONTROL + ALT + V",
+      name = "fa-cas-v",
+      key_sequence = "CONTROL + ALT + SHIFT + V",
       consuming = "none",
    },
 

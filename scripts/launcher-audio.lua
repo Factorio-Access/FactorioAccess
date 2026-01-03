@@ -51,6 +51,7 @@ This module builds those, and it is ultimately handled by that package.
 ]]
 
 local Uid = require("scripts.uid")
+local VanillaMode = require("scripts.vanilla-mode")
 
 local mod = {}
 
@@ -453,6 +454,7 @@ end
 ---@param pindex integer
 ---@param command fa.LauncherAudio.Command
 function mod.send(pindex, command)
+   if VanillaMode.is_enabled(pindex) then return end
    local json = helpers.table_to_json(command)
    print("acmd " .. pindex .. " " .. json)
 end

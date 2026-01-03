@@ -230,7 +230,7 @@ end
 
 ---Main tick handler - call every tick, internally throttled
 ---@param pindex integer
-function mod.tick(pindex)
+function mod.on_tick_per_player(pindex)
    -- Only run every TICK_INTERVAL ticks
    if game.tick % GridConsts.TICK_INTERVAL ~= 0 then return end
 

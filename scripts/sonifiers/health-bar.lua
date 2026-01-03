@@ -130,7 +130,7 @@ end
 ---Tick handler for health bar sonification
 ---Polls health/shield percentages and plays sounds when they change
 ---@param pindex integer
-function mod.on_tick(pindex)
+function mod.on_tick_per_player(pindex)
    local tick = game.tick
    if tick % CHECK_INTERVAL ~= 0 then return end
 

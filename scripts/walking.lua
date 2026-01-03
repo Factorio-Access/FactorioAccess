@@ -40,6 +40,7 @@ local walking_storage = StorageManager.declare_storage_module("walking", {
 function mod.process_walking_announcements(pindex)
    local player = game.get_player(pindex)
    if not player or not player.character then return end
+   if VanillaMode.is_enabled(pindex) then return end
 
    local reader = MovementHistory.get_movement_history_reader(pindex)
    local current_generation = reader:get_generation()
@@ -80,11 +81,8 @@ function mod.process_walking_announcements(pindex)
       -- Only announce if there's an entity or the tile is unwalkable
       local ent = EntitySelection.get_first_ent_at_tile(pindex)
       if
-         not VanillaMode.is_enabled(pindex)
-         and (
-            (ent ~= nil and ent.valid)
-            or (player.surface.can_place_entity({ name = "character", position = vp:get_cursor_pos() }) == false)
-         )
+         (ent ~= nil and ent.valid)
+         or (player.surface.can_place_entity({ name = "character", position = vp:get_cursor_pos() }) == false)
       then
          Graphics.draw_cursor_highlight(pindex, ent, nil)
          if player.driving then return end

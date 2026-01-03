@@ -107,56 +107,53 @@ local function is_trackable_vehicle(vehicle)
    return false
 end
 
----On tick handler
-function mod.on_tick()
-   for pindex, _ in pairs(game.players) do
-      local player = game.get_player(pindex)
-      local state = vehicle_sounds_storage[pindex]
+---Per-player tick handler
+---@param pindex integer
+function mod.on_tick_per_player(pindex)
+   local player = game.get_player(pindex)
+   local state = vehicle_sounds_storage[pindex]
 
-      if not player or not player.valid or not player.driving then
-         state.tracking = false
-         state.distance = 0
-         goto continue
-      end
+   if not player or not player.valid or not player.driving then
+      state.tracking = false
+      state.distance = 0
+      return
+   end
 
-      local vehicle = player.vehicle
-      if not is_trackable_vehicle(vehicle) then
-         state.tracking = false
-         state.distance = 0
-         goto continue
-      end
+   local vehicle = player.vehicle
+   if not is_trackable_vehicle(vehicle) then
+      state.tracking = false
+      state.distance = 0
+      return
+   end
 
-      local pos = vehicle.position
-      local orientation = get_travel_orientation(vehicle)
+   local pos = vehicle.position
+   local orientation = get_travel_orientation(vehicle)
 
-      if not state.tracking then
-         state.tracking = true
-         state.x = pos.x
-         state.y = pos.y
-         state.orientation = orientation
-         state.distance = 0
-         goto continue
-      end
-
-      -- Accumulate distance
-      local dx = pos.x - state.x
-      local dy = pos.y - state.y
-      state.distance = state.distance + math.sqrt(dx * dx + dy * dy)
+   if not state.tracking then
+      state.tracking = true
       state.x = pos.x
       state.y = pos.y
+      state.orientation = orientation
+      state.distance = 0
+      return
+   end
 
-      -- Check triggers
-      local dominated_distance = state.distance >= DISTANCE_THRESHOLD
-      local turned = orientation_distance(orientation, state.orientation) >= ORIENTATION_THRESHOLD
+   -- Accumulate distance
+   local dx = pos.x - state.x
+   local dy = pos.y - state.y
+   state.distance = state.distance + math.sqrt(dx * dx + dy * dy)
+   state.x = pos.x
+   state.y = pos.y
 
-      if dominated_distance or turned then
-         local reversing = not vehicle.train and vehicle.speed < 0
-         play_sound(pindex, orientation, reversing)
-         if dominated_distance then state.distance = state.distance - DISTANCE_THRESHOLD end
-         if turned then state.orientation = orientation end
-      end
+   -- Check triggers
+   local dominated_distance = state.distance >= DISTANCE_THRESHOLD
+   local turned = orientation_distance(orientation, state.orientation) >= ORIENTATION_THRESHOLD
 
-      ::continue::
+   if dominated_distance or turned then
+      local reversing = not vehicle.train and vehicle.speed < 0
+      play_sound(pindex, orientation, reversing)
+      if dominated_distance then state.distance = state.distance - DISTANCE_THRESHOLD end
+      if turned then state.orientation = orientation end
    end
 end
 
