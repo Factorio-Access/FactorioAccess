@@ -1,4 +1,4 @@
-It is now time to automate science.  This chapter introduces only one new feature, then you can get to the building.
+It is now time to automate science pack production.  This chapter introduces only one new feature, large cursors, and then you can get to building things.
 
 The new feature is often referred to as larger cursors. Shift i zooms out, increasing the size of your cursor, and control i makes it smaller.
 

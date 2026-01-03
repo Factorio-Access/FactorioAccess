@@ -1,8 +1,8 @@
-Now that you have some idea of the game, it is time to talk about your initial goals and what you must do to achieve them.
+Now that we have covered the overall approach for the game, it is time to talk about your initial goals. This chapter teaches you these essential skills: approaching problems by working your way backwards, using the scanner to find things in the world, using Kruise Kontrol to automate movement and mining, and searching through your inventory.
 
-This is how you think about Factorio.  You find your goal, then you work backward from it until you get to something you can do.
+This is how you think about goals in Factorio.  You find your goal, then you work backward from it until you get to something you can do now.
 
-Research in Factorio is done in labs.  Labs need power.  Power needs steam engines and boilers.  Steam engines and boilers need all of the basic resources.
+Launching a rocket requires researching all the needed technologies.  Research is done in labs.  Labs need power.  Power needs steam engines and boilers.  Steam engines and boilers need all of the basic resources.
 
 So first, you need to find and gather resources.  The mod offers a number of features to navigate the world.  The first of these is the scanner.  The scanner takes the map and turns it into a list of features.
 
@@ -46,4 +46,4 @@ These controls are odd for technical reasons.  To remember it, shift is next bec
 
 Search results update automatically.  You don't need to worry about that now, but once you start crafting you don't need to repeatedly press control f to find out if something showed up, just keep using shift enter.
 
-If you get no search results for coal, you have not found any yet.  You have two choices.  The first choice is to mine some more rocks.  The second choice is to continue to the next chapter, where we will discuss mining from resource patches.
+If you get no search results for coal, you have not found any yet.  You have two choices.  The first choice is to mine some more rocks.  The second choice is to mine from resource patches instead, which is covered in the next chapter.

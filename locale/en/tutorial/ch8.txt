@@ -1,6 +1,6 @@
 It is now time to talk about transport belts and inserters.  We will also discuss the quickbar, which will get rid of the need to open your inventory all the time, and the pipette tool, which lets you quickly grab more things if your cursor is over one on the map.
 
-This chapter doesn't have much "now go play the game" content.  You need this chapter and the next one before you can get back to serious building.
+This chapter doesn't have much "now go play the game" content.  You need to digest this chapter and the next one before you can get back to serious building.
 
 We will revisit transport belts one more time in the future to talk about their more complicated possibilities, and do a brief revisit of inserters at that time for a few more features as well.
 

@@ -46,7 +46,7 @@ Once you have researched most of the technologies in the game, you craft and lau
 
 Maybe that sounds easy.  But it's not.  And on top of all of that, you've got various kinds of enemies that really don't want you to be around!  If you aren't in peaceful mode, you also have to fight back.
 
-Normally, you would get a very involved graphical tutorial and a lot of hints showing you how Wube wants you to play Factorio.  But we can't do that, so here is a brief explanation of how to think about it.
+This tutorial teaches the same core concepts as the graphical tutorial, adapted for audio-based play.  It is not as interactive though, so we instead open with a brief explanation of how to think about the game.
 
 Factorio is a game about solving problems nested in other problems.
 
@@ -74,8 +74,8 @@ One of the things that makes Factorio a great game is that sighted players play 
 
 The reward isn't "look at how I placed 1000 things that work", though you can play it that way.  Instead, it's "look how I elegantly solved the problem Factorio confronted me with, and integrated it into the rest of my stuff".
 
-Usually, a sighted player will start by being haphazard for their first run, throwing whatever they need at the time wherever.  Then, they learn to be more and more organized.  The difference is that as a blind player, being organized from the start matters more. Sighted players can fumble through disorganization because they can glance around and reorient. We can't, so this tutorial front-loads the "how to think about it" stuff.
+Usually, a sighted player will start by being haphazard for their first run, throwing whatever they need at the time wherever.  Then, they learn to be more and more organized.  The difference is that as a blind player, being organized from the start matters more. Sighted players can fumble through disorganization because they can glance around and reorient. Without visual scanning, this kind of analysis on the fly is considerably more time consuming to do, so this tutorial front-loads the "how to think about it" stuff.
 
 As you get better at the game, your designs will tend to use more repeating patterns, but those repeating patterns will become complicated, and they will nest in larger things.
 
-Now, it is time to move on to doing stuff for real.  Press control tab to move to the first real chapter, and we can get started on building our first lab.
+Now, it is time to take the first steps.  Press control tab to move to the first real chapter, and we can get started on gathering resources and building our first lab. 

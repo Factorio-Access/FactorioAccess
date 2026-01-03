@@ -1,4 +1,4 @@
-Now we can talk about more mod features, and then place our first building.
+Stepping further into the game, it is time to place your first building. This chapter teaches you about the cursor system, how to move your character around the world, and how to place a burner mining drill on a coal patch.
 
 the mod has a concept of a virtual cursor, just called the cursor.  When all UIs are closed, wasd moves the cursor around.
 

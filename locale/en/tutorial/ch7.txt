@@ -1,4 +1,4 @@
-It is now time to set up power.
+It is now time to set up steam power and lab research.
 
 Before you continue with this tutorial, use your knowledge to craft a steam engine, a boiler, an offshore pump, a lab, a pipe to ground, 4 or 5 regular pipes, and at least one electric pole.
 
@@ -122,4 +122,4 @@ You can also enqueue to the front with control shift click.
 
 If everything is working, your steam engine, lab, and boiler will all begin to make audible noise.  All factorio buildings make some sound when they are working, so sudden silence is usually the sign of a problem.
 
-To finish out this stage and move onto inserters, assemblers, and transport belts, you should complete the automation research.
+Once automation science is complete, you will be able to use assembling machines to automate crafting. And to automate item transfer between the machines and labs, we will next cover transport belts and inserters.
