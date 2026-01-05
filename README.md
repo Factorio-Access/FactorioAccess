@@ -146,24 +146,29 @@ To access the in-game tutorial, press control t.
 
 # Vanilla Mode
 
-NOTE: this section is *not* a recommendation that you should try multiplayer, and nothing here makes multiplayer better
-for you.  We maintain this feature for the small number of users who do such things anyway.  Your experience will
-continue to lag and parts of the game such as combat will continue to be unplayable with vanilla mode on or otherwise.
+Vanilla Mode is for sighted people to play using mouse controls without disabling the mod. The most likely use case for
+this is when you play multiplayer with sighted friends, as this requires everyone to install identical mod lists. There
+may also be other reasons to use this mode such as sharing your save file and so on.
 
-Occasionally you may wish to let the sighted temporarily or permanently control your save with the mod installed, for
-multiplayer or a grab bag of other reasons.  The mod offers vanilla mode for this case, which is important to find for
-the few people who need it and thus brought up here in this readme.  To turn on vanilla mode, press control alt shift v.  Pressing it again turns vanilla mode off again.
+NOTE: Maintaining this mode is NOT a recommendation that you should try multiplayer, and nothing here makes multiplayer
+better for mod players. Your experience will continue to lag a lot and parts of the game such as combat will continue to
+be essentially unplayable in multiplayer, with vanilla mode or otherwise. We maintain this feature for the small number
+of users who want to play multiplayer anyway or have different use cases.
 
-If the sighted person does not install our launcher config tweaks, their game should now function as if the mod is not
-present.  In the case of controlling the mod on the same machine, note that we remap a few keys.  It is best to have a
-separate sighted installation without those configuration tweaks.
+When Vanilla Mode mode is toggled on, it disables sonifiers and speech, stops all of the mod's key handling, and closes
+any open mod UIs. Mod data such as fast travel points are left untouched, and so you should be able to toggle Vanilla
+Mode without any penalties. If the sighted person does not install our launcher config tweaks, then their game in
+Vanilla Mode should function as if this mod is not present. If the mod's config tweaks are used and then Vanilla Mode is
+enabled, the keymapping changes of the mod are still present but inactive. In this case one can play using the arrow
+keys and mouse while relying on GUI buttons to open most menus.
 
-When enabled vanilla mode disables sounds and speech, stops all of our key handling, and closes any open UIs.  Your
-state such as fast travel points is left untouched, and you should be able to toggle vanilla mode without penalty.  This
-said, please note that comprehensive vanilla mode relies on active sighted users, so how complete it is at any given
-time can vary based on whether or not someone sighted is trying to use it.  By the nature of it, blind developers
-cannot test it at all, and whether or not this project is primarily maintained by the blind varies day to day.
+Vanilla Mode is toggled on or off by pressing CONTROL + ALT + SHIFT + V.
 
+NOTE: If the ESCAPE key does not work for pausing the game, please try the alternative of SHIFT + ESCAPE.
+
+NOTE: Maintaining a bug-free Vanilla Mode relies on active sighted users and/or developers. By the nature of it, blind
+developers cannot test it at all, and whether or not this project is primarily maintained by the blind varies day to
+day.
 
 # Help and Support
 
