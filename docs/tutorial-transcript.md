@@ -50,7 +50,7 @@ Once you have researched most of the technologies in the game, you craft and lau
 
 Maybe that sounds easy.  But it's not.  And on top of all of that, you've got various kinds of enemies that really don't want you to be around!  If you aren't in peaceful mode, you also have to fight back.
 
-Normally, you would get a very involved graphical tutorial and a lot of hints showing you how Wube wants you to play Factorio.  But we can't do that, so here is a brief explanation of how to think about it.
+This tutorial teaches the same core concepts as the graphical tutorial, adapted for audio-based play.  It is not as interactive though, so we instead open with a brief explanation of how to think about the game.
 
 Factorio is a game about solving problems nested in other problems.
 
@@ -78,11 +78,11 @@ One of the things that makes Factorio a great game is that sighted players play 
 
 The reward isn't "look at how I placed 1000 things that work", though you can play it that way.  Instead, it's "look how I elegantly solved the problem Factorio confronted me with, and integrated it into the rest of my stuff".
 
-Usually, a sighted player will start by being haphazard for their first run, throwing whatever they need at the time wherever.  Then, they learn to be more and more organized.  The difference is that as a blind player, being organized from the start matters more. Sighted players can fumble through disorganization because they can glance around and reorient. We can't, so this tutorial front-loads the "how to think about it" stuff.
+Usually, a sighted player will start by being haphazard for their first run, throwing whatever they need at the time wherever.  Then, they learn to be more and more organized.  The difference is that as a blind player, being organized from the start matters more. Sighted players can fumble through disorganization because they can glance around and reorient. Without visual scanning, this kind of analysis on the fly is considerably more time consuming to do, so this tutorial front-loads the "how to think about it" stuff.
 
 As you get better at the game, your designs will tend to use more repeating patterns, but those repeating patterns will become complicated, and they will nest in larger things.
 
-Now, it is time to move on to doing stuff for real.  Press control tab to move to the first real chapter, and we can get started on building our first lab.
+Now, it is time to take the first steps.  Press control tab to move to the first real chapter, and we can get started on gathering resources and building our first lab.
 
 ### Example Blueprints
 
@@ -92,11 +92,11 @@ No blueprints
 
 ### Chapter Text
 
-Now that you have some idea of the game, it is time to talk about your initial goals and what you must do to achieve them.
+Now that we have covered the overall approach for the game, it is time to talk about your initial goals. This chapter teaches you these essential skills: approaching problems by working your way backwards, using the scanner to find things in the world, using Kruise Kontrol to automate movement and mining, and searching through your inventory.
 
-This is how you think about Factorio.  You find your goal, then you work backward from it until you get to something you can do.
+This is how you think about goals in Factorio.  You find your goal, then you work backward from it until you get to something you can do now.
 
-Research in Factorio is done in labs.  Labs need power.  Power needs steam engines and boilers.  Steam engines and boilers need all of the basic resources.
+Launching a rocket requires researching all the needed technologies.  Research is done in labs.  Labs need power.  Power needs steam engines and boilers.  Steam engines and boilers need all of the basic resources.
 
 So first, you need to find and gather resources.  The mod offers a number of features to navigate the world.  The first of these is the scanner.  The scanner takes the map and turns it into a list of features.
 
@@ -140,7 +140,7 @@ These controls are odd for technical reasons.  To remember it, shift is next bec
 
 Search results update automatically.  You don't need to worry about that now, but once you start crafting you don't need to repeatedly press control f to find out if something showed up, just keep using shift enter.
 
-If you get no search results for coal, you have not found any yet.  You have two choices.  The first choice is to mine some more rocks.  The second choice is to continue to the next chapter, where we will discuss mining from resource patches.
+If you get no search results for coal, you have not found any yet.  You have two choices.  The first choice is to mine some more rocks.  The second choice is to mine from resource patches instead, which is covered in the next chapter.
 
 ### Example Blueprints
 
@@ -150,7 +150,7 @@ No blueprints
 
 ### Chapter Text
 
-Now we can talk about more mod features, and then place our first building.
+Stepping further into the game, it is time to place your first building. This chapter teaches you about the cursor system, how to move your character around the world, and how to place a burner mining drill on a coal patch.
 
 the mod has a concept of a virtual cursor, just called the cursor.  When all UIs are closed, wasd moves the cursor around.
 
@@ -292,7 +292,7 @@ No blueprints
 
 ### Chapter Text
 
-You now know enough to make progress, though not efficiently.  This chapter picks up the pace.
+Now that you can place buildings, it is time to learn the game's core systems. This chapter teaches you about the UI hierarchy, how to examine technologies, how to craft items, and how to transfer items between inventories. You will improve your burner mining drill by crafting a wooden chest.
 
 The main menu (e) contains several tabs.  There are also the world menu (alt + w) and mod configuration menu (control alt shift m).
 
@@ -386,7 +386,7 @@ No blueprints
 
 ### Chapter Text
 
-Before we go further, it is time to learn how to move around efficiently. You have to monitor this drill setup and come back to it for coal, and soon you will have lots of buildings to navigate between.
+Now that you have buildings to manage, you need efficient ways to navigate between them. This chapter teaches you three ways to navigate the cursor: The bookmark for one quick reference point, fast travel points for multiple named locations, and cursor skipping to explore large areas quickly.
 
 The first and simplest way is with bookmarks.  Pressing shift b sets a bookmark, and b returns the cursor to it.  You can put your cursor on the chest and hit shift b, for example.
 
@@ -498,7 +498,7 @@ No blueprints
 
 ### Chapter Text
 
-It is now time to set up power.
+It is now time to set up steam power and lab research.
 
 Before you continue with this tutorial, use your knowledge to craft a steam engine, a boiler, an offshore pump, a lab, a pipe to ground, 4 or 5 regular pipes, and at least one electric pole.
 
@@ -622,7 +622,7 @@ You can also enqueue to the front with control shift click.
 
 If everything is working, your steam engine, lab, and boiler will all begin to make audible noise.  All factorio buildings make some sound when they are working, so sudden silence is usually the sign of a problem.
 
-To finish out this stage and move onto inserters, assemblers, and transport belts, you should complete the automation research.
+Once automation science is complete, you will be able to use assembling machines to automate crafting. And to automate item transfer between the machines and labs, we will next cover transport belts and inserters.
 
 ### Example Blueprints
 
@@ -636,7 +636,7 @@ A pair of pipe to ground at maximum range, with a single pipe piece on each end,
 
 It is now time to talk about transport belts and inserters.  We will also discuss the quickbar, which will get rid of the need to open your inventory all the time, and the pipette tool, which lets you quickly grab more things if your cursor is over one on the map.
 
-This chapter doesn't have much "now go play the game" content.  You need this chapter and the next one before you can get back to serious building.
+This chapter doesn't have much "now go play the game" content.  You need to digest this chapter and the next one before you can get back to serious building.
 
 We will revisit transport belts one more time in the future to talk about their more complicated possibilities, and do a brief revisit of inserters at that time for a few more features as well.
 
@@ -756,7 +756,7 @@ A burner mining drill, with an inserter and belt arrangement that feeds it forev
 
 ### Chapter Text
 
-It is now time to talk about rulers, build lock, and the clipboard.  These are your tools for building long lines.
+Having covered the basics of belts and inserters, we will now cover ways to build long lines of them. This chapter teaches you three tools: build lock for building behind you as you walk, audio rulers for precise alignment and measurement, and clipboard blueprints for quickly copying and pasting structures.
 
 Build lock is the most important.  When build lock is enabled, every movement of your character builds behind your character.
 
@@ -850,7 +850,7 @@ No blueprints
 
 ### Chapter Text
 
-It is now time to automate science.  This chapter introduces only one new feature, then you can get to the building.
+It is now time to automate science pack production.  This chapter introduces only one new feature, large cursors, and then you can get to building things.
 
 The new feature is often referred to as larger cursors. Shift i zooms out, increasing the size of your cursor, and control i makes it smaller.
 
@@ -1264,9 +1264,9 @@ For upgrade and deconstructionn planners, you may also click with a larger curso
 
 To get an upgrade planner, use alt u.  For deconstruction, use alt d.  For blueprints use alt b.
 
-Upgrade planners are the most limited, and you can expect better support in future.  When you select the area to upgrade, everything with a better item gets marked for upgrade.
+When using the upgrade planner, the default behavior is to mark everything that can be upgraded: belts to their next tier, inserters to fast inserters, etc.
 
-There are sighted configurations not yet exposed to you, but that doesn't mean it's useless.  The best use of an upgrade planner is this. Find a belt corner and use that as the first point. Then cursor skip to the other end, and select that as your second point.  Then, the whole belt upgrades.
+We expose a limited form of the sighted configurations to the upgrade planner under right clicking.
 
 Deconstruction planners mark areas for deconstruction.  Once marked, entities stop functioning and wait for you to remove them.
 
@@ -1274,13 +1274,11 @@ In both cases, Kruise Kontrol on a marked entity will perform the action, though
 
 In both of these cases, the item is temporary just like blueprints.  You can get them into an inventory, but if you hit q it just goes away.
 
+If you change configuration, however, we assume you want it to be permanent.  This happens even if you change your mind and return the configuration to the defaults.  To delete it in this case hit control backspace.
+
 Finally, in both cases holding shift when you select the second point will cancel any deconstruction or upgrade orders in the area.
 
-Configuration for upgrade planners and deconstruction planners is under active development.  To find out what is possible for the sighted in this regard, check the official Factorio wiki.  To find out what we support, please consult the docs on our GitHub.
-
-We have limited bandwidth to maintain custom config support, so at this time they are known to be buggy and unstable.  Use them at your own risk.
-
-to access what we do support, press right bracket with an upgrade or deconstruction planner in hand.
+Configuration for upgrade planners and deconstruction planners is under active development.  We have limited bandwidth to maintain custom config support, so at this time they are known to be buggy and unstable.  Use them at your own risk.
 
 Let's turn to blueprints.  You have already learned to use blueprints, but not how to make them.
 
