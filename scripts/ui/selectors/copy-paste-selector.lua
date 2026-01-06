@@ -7,6 +7,9 @@ local mod = {}
 -- Register box selector for copy/cut area selection
 mod.copy_paste_area_selector = BoxSelector.declare_box_selector({
    ui_name = UiRouter.UI_NAMES.COPY_PASTE_AREA_SELECTOR,
+   get_binds = function()
+      return { { kind = UiRouter.BIND_KIND.HAND_CONTENTS } }
+   end,
    callback = function(pindex, params, result)
       local p = game.get_player(pindex)
       if not p then return end

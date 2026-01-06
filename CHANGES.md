@@ -13,6 +13,7 @@
   - Shift right click to copy our rich text shorthand to your clipboard if applicable
 - Change train schedule wording slightly (in particular to distinguish between "no conditions" and "empty cargo")
 - Add full to the interrupt condition selector
+- copy/cut now close when your hand contents changes
 
 # 0.16.52 (2024-12-31)
 
