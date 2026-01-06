@@ -87,6 +87,8 @@ For items supporting it, access the item's UI: `right bracket` with the item in 
 
 Open the warnings and alerts UI: `p`
 
+Open the prototype lister, primarily used with trains: alt + p
+
 Access the beta circuit navigator: `ctrl + n` on an entity connected to a network
 
 

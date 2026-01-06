@@ -108,6 +108,7 @@ require("scripts.ui.tabs.item-chooser")
 require("scripts.ui.tabs.signal-chooser")
 require("scripts.ui.tabs.fluid-chooser")
 require("scripts.ui.tabs.entity-chooser")
+require("scripts.ui.tabs.prototype-lister")
 require("scripts.ui.tabs.equipment-selector")
 local Help = require("scripts.ui.help")
 local MessageLists = require("scripts.message-lists")
@@ -2500,6 +2501,13 @@ EventManager.on_event("fa-c-t", function(event)
 
    -- Open tutorial UI
    router:open_ui(UiRouter.UI_NAMES.TUTORIAL, {})
+end)
+
+-- Prototype lister (Alt+P)
+EventManager.on_event("fa-a-p", function(event)
+   local pindex = event.player_index
+   local router = UiRouter.get_router(pindex)
+   router:open_ui(UiRouter.UI_NAMES.PROTOTYPE_LISTER, {})
 end)
 
 -- Circuit/copper network neighbors (N key)

@@ -302,7 +302,6 @@ need are:
 
 - For railways: https://wiki.factorio.com/Railway
 - For rich text: https://wiki.factorio.com/rich_text
-- For prototype names (see below): https://wiki.factorio.com/Data.raw#half-diagonal-rail
 
 If you are reading this document and don't know what an interrupt does, start by reading those pages.
 
@@ -320,7 +319,13 @@ This brings us to the stuff about rich text.  There are two places you may wish 
 There are two ways to enter rich text when typing into train-related text fields. One is to use `[item=prototypename]`.
 The other is to use our shorthands.  In order to make it feasible to type rich text, we have introduced a few shorthands
 starting with `:`.  They take the form `:t.name`.  For example, `:i.iron-plate` is iron plates.  To find the iron-plate
-part, that is the prototype name from the above wiki page. We will be making this better in future.
+part, use the prototype lister.  Opened with alt + p, the prototype lister is a tree chooser of all prototypes in the
+game.  Click to get the prototype name, right click to spell it, shift click to copy it to your clipboard, and shift
+right click it to copy the shorthand form to your clipboard.  As a reminder, all mod UIs are searchable.
+
+If you prefer to get this data from the internet, Factorio wiki pages usually list the prototype name for a given item.
+There is also the [data.raw](https://wiki.factorio.com/Data.raw) page with a complete listing, though without further
+descriptions to go with them.
 
 The full list of shorthands is as follows:
 
@@ -330,16 +335,16 @@ The full list of shorthands is as follows:
 - `:*` followed by i (item), f (fluid), s (signal), or fu (fuel): the wildcard icon for that type. For example `:*i` is
   "any item".
 
-These are not stored in your save.  We will likely simplify them in future.  What gets stored in the train stop name is
-the corresponding official long form.
+These are not stored in your save.  What gets stored in the train stop name is the corresponding official long form, so
+any changes to this system will not break your game nor will it break a save shared with the sighted.
 
 ### The Global Trains Overview
 
 One unique problem with trains is that they move around and do not stay still long enough for you to click them.  To
-solve this problem, a trains menu is available under `e`, past the equipment tab.
+solve this problem, a trains menu is available in the world menu, `alt + w`.
 
-This menu lets you open the train by clicking the name, but only if close enough; move your cursor to the train; and
-toggle the train to manual mode.
+This menu lets you open the train by clicking the name; move your cursor to the train; and toggle the train to manual
+mode.
 
 A typical workflow (for now):
 

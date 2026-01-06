@@ -6,6 +6,11 @@
 - Some graphical synchronization fixes
 - Train schedule conditions which require station names now support the rich text shorthand
 - Small tutorial wording fixes and improvements
+- Add the prototype lister.  For train users, access with alt+p and:
+  - Left click to hear the prototype name
+  - Right click to spell the prototype name
+  - Shift left click to copy the prototype name to your clipboard
+  - Shift right click to copy our rich text shorthand to your clipboard if applicable
 
 # 0.16.52 (2024-12-31)
 

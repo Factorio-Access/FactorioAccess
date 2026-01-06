@@ -178,6 +178,7 @@ mod.UI_NAMES = {
    UPGRADE_PLANNER = "upgrade_planner",
    DECON_PLANNER = "decon_planner",
    TILE_CHOOSER = "tile_chooser",
+   PROTOTYPE_LISTER = "prototype_lister",
    -- Test UI names (used in automated tests)
    TEST_ASSEMBLING_MACHINE = "test-assembling-machine",
    TEST_ASSEMBLING_MACHINE_FOCUS = "test-assembling-machine-focus",

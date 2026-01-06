@@ -6,6 +6,32 @@ local Localising = require("scripts.localising")
 
 local mod = {}
 
+---Build default vtable that closes with a SignalID result
+---@param name string Prototype name
+---@param proto any Prototype object
+---@param signal_type string Signal type for SignalID
+---@param result_converter? fun(name: string): any Optional result converter
+---@return fa.ui.graph.NodeVtable
+local function default_vtable_builder(name, proto, signal_type, result_converter)
+   return {
+      label = function(ctx)
+         ctx.message:fragment(Localising.get_localised_name_with_fallback(proto))
+      end,
+      on_click = function(click_ctx)
+         local result
+         if result_converter then
+            result = result_converter(name)
+         else
+            result = {
+               type = signal_type,
+               name = name,
+            }
+         end
+         click_ctx.controller:close_with_result(result)
+      end,
+   }
+end
+
 ---Helper to add signals with group/subgroup hierarchy
 ---@param builder fa.ui.tree.TreeChooserBuilder
 ---@param prototype_dict table Dictionary of prototypes (e.g., prototypes.item)
@@ -14,6 +40,7 @@ local mod = {}
 ---@param root string Parent key for top-level groups
 ---@param filter_func? fun(prototype): boolean Optional filter function
 ---@param result_converter? fun(name: string): any Optional function to convert signal name to result (defaults to SignalID)
+---@param vtable_builder? fun(name: string, proto: any, signal_type: string): fa.ui.graph.NodeVtable Optional custom vtable builder
 local function add_signals_with_hierarchy(
    builder,
    prototype_dict,
@@ -21,7 +48,8 @@ local function add_signals_with_hierarchy(
    key_prefix,
    root,
    filter_func,
-   result_converter
+   result_converter,
+   vtable_builder
 )
    local signals_by_group_and_subgroup = {}
    local ungrouped_signals = {}
@@ -100,24 +128,13 @@ local function add_signals_with_hierarchy(
             local proto = prototype_dict[signal_name]
             local signal_key = key_prefix .. "-signal-" .. signal_name
 
-            builder:add_node(signal_key, subgroup_key, {
-               label = function(ctx)
-                  ctx.message:fragment(Localising.get_localised_name_with_fallback(proto))
-               end,
-               on_click = function(click_ctx)
-                  local result
-                  if result_converter then
-                     result = result_converter(signal_name)
-                  else
-                     -- Default: return SignalID
-                     result = {
-                        type = signal_type,
-                        name = signal_name,
-                     }
-                  end
-                  click_ctx.controller:close_with_result(result)
-               end,
-            })
+            local vtable
+            if vtable_builder then
+               vtable = vtable_builder(signal_name, proto, signal_type)
+            else
+               vtable = default_vtable_builder(signal_name, proto, signal_type, result_converter)
+            end
+            builder:add_node(signal_key, subgroup_key, vtable)
          end
       end
    end
@@ -146,24 +163,13 @@ local function add_signals_with_hierarchy(
          local proto = prototype_dict[signal_name]
          local signal_key = key_prefix .. "-signal-" .. signal_name
 
-         builder:add_node(signal_key, ungrouped_key, {
-            label = function(ctx)
-               ctx.message:fragment(Localising.get_localised_name_with_fallback(proto))
-            end,
-            on_click = function(click_ctx)
-               local result
-               if result_converter then
-                  result = result_converter(signal_name)
-               else
-                  -- Default: return SignalID
-                  result = {
-                     type = signal_type,
-                     name = signal_name,
-                  }
-               end
-               click_ctx.controller:close_with_result(result)
-            end,
-         })
+         local vtable
+         if vtable_builder then
+            vtable = vtable_builder(signal_name, proto, signal_type)
+         else
+            vtable = default_vtable_builder(signal_name, proto, signal_type, result_converter)
+         end
+         builder:add_node(signal_key, ungrouped_key, vtable)
       end
    end
 end
@@ -175,7 +181,8 @@ end
 ---@param force? LuaForce Force to use for unlocked filter (required if unlocked_only is true)
 ---@param result_converter? fun(name: string): any Optional function to convert item name to result (defaults to SignalID)
 ---@param extra_filter? fun(proto: LuaItemPrototype): boolean Optional additional filter function
-function mod.add_item_signals(builder, root, unlocked_only, force, result_converter, extra_filter)
+---@param vtable_builder? fun(name: string, proto: any, signal_type: string): fa.ui.graph.NodeVtable Optional custom vtable builder
+function mod.add_item_signals(builder, root, unlocked_only, force, result_converter, extra_filter, vtable_builder)
    local unlocked_items = nil
 
    if unlocked_only then
@@ -246,59 +253,84 @@ function mod.add_item_signals(builder, root, unlocked_only, force, result_conver
       filter = extra_filter
    end
 
-   add_signals_with_hierarchy(builder, prototypes.item, "item", "item", root, filter, result_converter)
+   add_signals_with_hierarchy(builder, prototypes.item, "item", "item", root, filter, result_converter, vtable_builder)
 end
 
 ---Add fluid signals to the tree
 ---@param builder fa.ui.tree.TreeChooserBuilder
 ---@param root string Parent key for top-level groups
-function mod.add_fluid_signals(builder, root)
-   add_signals_with_hierarchy(builder, prototypes.fluid, "fluid", "fluid", root)
+---@param vtable_builder? fun(name: string, proto: any, signal_type: string): fa.ui.graph.NodeVtable Optional custom vtable builder
+function mod.add_fluid_signals(builder, root, vtable_builder)
+   add_signals_with_hierarchy(builder, prototypes.fluid, "fluid", "fluid", root, nil, nil, vtable_builder)
 end
 
 ---Add virtual signals to the tree
 ---@param builder fa.ui.tree.TreeChooserBuilder
 ---@param root string Parent key for top-level groups
-function mod.add_virtual_signals(builder, root)
-   add_signals_with_hierarchy(builder, prototypes.virtual_signal, "virtual", "virtual", root)
+---@param vtable_builder? fun(name: string, proto: any, signal_type: string): fa.ui.graph.NodeVtable Optional custom vtable builder
+function mod.add_virtual_signals(builder, root, vtable_builder)
+   add_signals_with_hierarchy(builder, prototypes.virtual_signal, "virtual", "virtual", root, nil, nil, vtable_builder)
 end
 
 ---Add entity signals to the tree
 ---@param builder fa.ui.tree.TreeChooserBuilder
 ---@param root string Parent key for top-level groups
-function mod.add_entity_signals(builder, root)
-   add_signals_with_hierarchy(builder, prototypes.entity, "entity", "entity", root)
+---@param vtable_builder? fun(name: string, proto: any, signal_type: string): fa.ui.graph.NodeVtable Optional custom vtable builder
+function mod.add_entity_signals(builder, root, vtable_builder)
+   add_signals_with_hierarchy(builder, prototypes.entity, "entity", "entity", root, nil, nil, vtable_builder)
 end
 
 ---Add recipe signals to the tree
 ---@param builder fa.ui.tree.TreeChooserBuilder
 ---@param root string Parent key for top-level groups
-function mod.add_recipe_signals(builder, root)
-   add_signals_with_hierarchy(builder, prototypes.recipe, "recipe", "recipe", root)
+---@param vtable_builder? fun(name: string, proto: any, signal_type: string): fa.ui.graph.NodeVtable Optional custom vtable builder
+function mod.add_recipe_signals(builder, root, vtable_builder)
+   add_signals_with_hierarchy(builder, prototypes.recipe, "recipe", "recipe", root, nil, nil, vtable_builder)
 end
 
 ---Add space location signals to the tree
 ---@param builder fa.ui.tree.TreeChooserBuilder
 ---@param root string Parent key for top-level groups
-function mod.add_space_location_signals(builder, root)
+---@param vtable_builder? fun(name: string, proto: any, signal_type: string): fa.ui.graph.NodeVtable Optional custom vtable builder
+function mod.add_space_location_signals(builder, root, vtable_builder)
    if not script.feature_flags.space_travel then return end
-   add_signals_with_hierarchy(builder, prototypes.space_location, "space-location", "space-location", root)
+   add_signals_with_hierarchy(
+      builder,
+      prototypes.space_location,
+      "space-location",
+      "space-location",
+      root,
+      nil,
+      nil,
+      vtable_builder
+   )
 end
 
 ---Add asteroid chunk signals to the tree
 ---@param builder fa.ui.tree.TreeChooserBuilder
 ---@param root string Parent key for top-level groups
-function mod.add_asteroid_chunk_signals(builder, root)
+---@param vtable_builder? fun(name: string, proto: any, signal_type: string): fa.ui.graph.NodeVtable Optional custom vtable builder
+function mod.add_asteroid_chunk_signals(builder, root, vtable_builder)
    if not script.feature_flags.space_travel then return end
-   add_signals_with_hierarchy(builder, prototypes.asteroid_chunk, "asteroid-chunk", "asteroid-chunk", root)
+   add_signals_with_hierarchy(
+      builder,
+      prototypes.asteroid_chunk,
+      "asteroid-chunk",
+      "asteroid-chunk",
+      root,
+      nil,
+      nil,
+      vtable_builder
+   )
 end
 
 ---Add quality signals to the tree
 ---@param builder fa.ui.tree.TreeChooserBuilder
 ---@param root string Parent key for top-level groups
-function mod.add_quality_signals(builder, root)
+---@param vtable_builder? fun(name: string, proto: any, signal_type: string): fa.ui.graph.NodeVtable Optional custom vtable builder
+function mod.add_quality_signals(builder, root, vtable_builder)
    if not script.feature_flags.quality then return end
-   add_signals_with_hierarchy(builder, prototypes.quality, "quality", "quality", root)
+   add_signals_with_hierarchy(builder, prototypes.quality, "quality", "quality", root, nil, nil, vtable_builder)
 end
 
 return mod

@@ -194,6 +194,10 @@ function mod.play_cannot_build(pindex)
    play_sound_internal(pindex, { path = "utility/cannot_build" })
 end
 
+function mod.play_ui_error(pindex)
+   play_sound_internal(pindex, { path = "utility/cannot_build" })
+end
+
 function mod.play_confirm(pindex)
    play_sound_internal(pindex, { path = "utility/confirm" })
 end
