@@ -44,6 +44,7 @@ local INTERRUPT_TRIGGER_CONDITION_TYPES = {
    "passenger_present",
    "passenger_not_present",
    "item_count",
+   "full",
    "empty",
    "not_empty",
    "fuel_full",

@@ -11,6 +11,8 @@
   - Right click to spell the prototype name
   - Shift left click to copy the prototype name to your clipboard
   - Shift right click to copy our rich text shorthand to your clipboard if applicable
+- Change train schedule wording slightly (in particular to distinguish between "no conditions" and "empty cargo")
+- Add full to the interrupt condition selector
 
 # 0.16.52 (2024-12-31)
 
