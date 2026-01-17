@@ -1,6 +1,6 @@
 # DisplayPanelPrototype
 
-A display panel prototype to provide a prototype for display panels.
+Entity that display a signal icon and some text, either configured directly in the entity or through the circuit network.
 
 **Parent:** [EntityWithOwnerPrototype](EntityWithOwnerPrototype.md)
 **Type name:** `display-panel`
@@ -17,7 +17,7 @@ The display panel's graphics.
 
 ### max_text_width
 
-The maximum width of the text on the display panel.
+The maximum display width of the text on the display panel. If the text exceeds this width it will be wrapped so that it continues on the next line.
 
 **Type:** `uint32`
 

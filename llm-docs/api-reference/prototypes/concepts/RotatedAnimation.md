@@ -22,7 +22,7 @@ Only loaded if `layers` is not defined.
 
 The sequential animation instance is loaded equal to the entities direction within the `direction_count` setting.
 
-Direction count to [Direction](prototype:Direction) (animation sequence number):
+Direction count to [defines.direction](runtime:defines.direction) (animation sequence number):
 
 - `1`: North (1)
 

@@ -18,7 +18,7 @@ Position relative to entity's position where the connection point will be locate
 
 Direction this connection point will be facing to.
 
-**Type:** `Direction`
+**Type:** `defines.direction`
 
 **Required:** Yes
 

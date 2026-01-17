@@ -304,7 +304,7 @@ Must be >= 0.
 
 ### beacon_supply_area_distance_bonus
 
-Only affects beacons with [BeaconPrototype::quality_affects_supply_area](prototype:BeaconPrototype::quality_affects_supply_area) set.
+Only affects beacons with [BeaconPrototype::quality_affects_supply_area_distance](prototype:BeaconPrototype::quality_affects_supply_area_distance) set.
 
 Must be >= 0 and <= 64.
 
@@ -327,6 +327,10 @@ Must be >= 0.
 **Default:** "Value of `level`"
 
 ### logistic_cell_charging_station_count_bonus
+
+Only affects roboports with [RoboportPrototype::charging_station_count_affected_by_quality](prototype:RoboportPrototype::charging_station_count_affected_by_quality) set.
+
+Only affects roboport equipment with [RoboportEquipmentPrototype::charging_station_count_affected_by_quality](prototype:RoboportEquipmentPrototype::charging_station_count_affected_by_quality) set.
 
 **Type:** `uint32`
 

@@ -4,9 +4,23 @@
 
 ## Parameters
 
+### damage_taken_signal
+
+**Type:** `SignalID`
+
+**Optional:** Yes
+
 ### read_contents
 
 Defaults to `true`.
+
+**Type:** `boolean`
+
+**Optional:** Yes
+
+### read_damage_taken
+
+Defaults to `false`.
 
 **Type:** `boolean`
 

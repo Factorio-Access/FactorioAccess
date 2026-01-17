@@ -139,6 +139,8 @@ How long this flare stays alive after `shots_per_flare` amount of shots have bee
 
 ### shot_category
 
+Only artillery turrets/wagons whose ammo's [ammo_category](prototype:AmmoItemPrototype::ammo_category) matches this category will shoot at this flare. Defaults to all ammo categories being able to shoot at this flare.
+
 **Type:** `AmmoCategoryID`
 
 **Optional:** Yes

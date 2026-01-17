@@ -6,7 +6,7 @@
 
 ### filters
 
-**Type:** `SlotFilter`
+**Type:** Array[`SlotFilter`]
 
 **Optional:** Yes
 

@@ -40,6 +40,8 @@ If `false`, do not draw the small "constant" icon over the technology effect ico
 
 ### count
 
+Must be >= `1`.
+
 **Type:** `ItemCountType`
 
 **Optional:** Yes

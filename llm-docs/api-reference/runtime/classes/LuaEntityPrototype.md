@@ -2306,8 +2306,6 @@ An alternative prototype that will be used to display info about this prototype 
 
 ### tile_buildability_rules
 
-The tile buildability rules of this entity prototype.
-
 **Read type:** Array[`TileBuildabilityRule`]
 
 **Optional:** Yes

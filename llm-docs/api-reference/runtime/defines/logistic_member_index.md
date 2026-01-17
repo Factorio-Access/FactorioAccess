@@ -6,6 +6,12 @@
 
 ### car_requester
 
+### cargo_landing_pad_provider
+
+### cargo_landing_pad_requester
+
+### cargo_landing_pad_trash_provider
+
 ### character_provider
 
 ### character_requester

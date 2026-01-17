@@ -401,6 +401,8 @@ This allows you to replace an entity that's already placed, with a different one
 
 This is simply a string, so any string can be used here. The entity that should be replaced simply has to use the same string here.
 
+Entities with the same fast replaceable group can be configured as upgrades for each other in the upgrade planner. Refer to the [upgrade planner prototype's page](prototype:UpgradeItemPrototype) the full requirements for entities to be shown in the upgrade planner.
+
 **Type:** `string`
 
 **Optional:** Yes
@@ -409,7 +411,7 @@ This is simply a string, so any string can be used here. The entity that should 
 
 ### next_upgrade
 
-Name of the entity that will be automatically selected as the upgrade of this entity when using the [upgrade planner](https://wiki.factorio.com/Upgrade_planner) without configuration.
+Name of the entity that will be automatically selected as the upgrade of this entity when using the [upgrade planner](prototype:UpgradeItemPrototype) without configuration.
 
 This entity may not have "not-upgradable" flag set and must be minable. This entity mining result must not contain item product with [hidden](prototype:ItemPrototype::hidden) set to `true`. Mining results with no item products are allowed. This entity may not be a [RollingStockPrototype](prototype:RollingStockPrototype).
 

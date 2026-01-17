@@ -46,6 +46,6 @@ Set the message at the specified index
 
 **Parameters:**
 
-- `index` `uint32` - Message index. Use `-1` to append new element.
-- `message` `DisplayPanelMessageDefinition` - The message definition for the specified index. Specify `nil` to remove the message.
+- `index` `int32` - Message index. Use `-1` to append new element.
+- `message` `DisplayPanelMessageDefinition` | `nil` - The message definition for the specified index. Specify `nil` to remove the message.
 

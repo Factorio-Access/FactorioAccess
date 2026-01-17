@@ -32,3 +32,23 @@ Big additional hatch that goes over the actual hatches.
 
 **Optional:** Yes
 
+### is_input_station
+
+If set to false, this station will not accept incoming cargo units even if it has hatches that can. (can occur through linked cargo bays)
+
+**Type:** `boolean`
+
+**Optional:** Yes
+
+**Default:** True
+
+### is_output_station
+
+If set to false, this station will not dispatch cargo units even if it has hatches that can. (can occur through linked cargo bays)
+
+**Type:** `boolean`
+
+**Optional:** Yes
+
+**Default:** True
+

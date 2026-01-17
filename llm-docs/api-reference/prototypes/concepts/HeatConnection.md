@@ -20,7 +20,7 @@ The location of the heat pipe connection, relative to the center of the entity i
 
 The "outward" direction of this heat connection. For a connection to succeed, the other heat connection must face the opposite direction (a south-facing connection needs a north-facing connection to succeed). A connection rotates with the entity.
 
-**Type:** `Direction`
+**Type:** `defines.direction`
 
 **Required:** Yes
 

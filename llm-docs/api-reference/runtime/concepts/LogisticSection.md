@@ -8,7 +8,7 @@
 
 Defaults to true.
 
-**Type:** `float`
+**Type:** `boolean`
 
 **Optional:** Yes
 

@@ -2,6 +2,14 @@
 
 An [upgrade planner](https://wiki.factorio.com/Upgrade_planner).
 
+For an entity to be allowed as an upgrade source, it must be minable, may not have "not-upgradable" flag set and may not be [hidden](prototype:PrototypeBase::hidden). Additionally, the source entity's mining result must not be an item product that is [hidden](prototype:ItemPrototype::hidden). Mining results with no item products are allowed.
+
+For an entity to be allowed as an upgrade target, it must have least 1 item that builds it that isn't hidden.
+
+For two entities to be upgrades of each other, the two entities must have the same [fast replaceable group](prototype:EntityPrototype::fast_replaceable_group), the same [collision box](prototype:EntityPrototype::collision_box) and the same [collision mask](prototype:EntityPrototype::collision_mask). Additionally, [underground belts](prototype:UndergroundBeltPrototype) cannot be upgraded to [transport belts](prototype:TransportBeltPrototype) and vice versa.
+
+For an entity to be automatically upgraded to another entity without configuring the upgrade planner, the [next upgrade](prototype:EntityPrototype::next_upgrade) of the upgrade source entity must be set.
+
 **Parent:** [SelectionToolPrototype](SelectionToolPrototype.md)
 **Type name:** `upgrade-item`
 

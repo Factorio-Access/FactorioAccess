@@ -42,7 +42,7 @@ Primary direction this connection points to when entity direction is north and t
 
 Only loaded, and mandatory if `connection_type` is `"normal"` or `"underground"`.
 
-**Type:** `Direction`
+**Type:** `defines.direction`
 
 **Optional:** Yes
 

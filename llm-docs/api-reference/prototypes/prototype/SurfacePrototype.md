@@ -11,6 +11,14 @@
 
 **Optional:** Yes
 
+### icons
+
+Can't be an empty array.
+
+**Type:** Array[`IconData`]
+
+**Optional:** Yes
+
 ### icon
 
 Path to the icon file.

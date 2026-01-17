@@ -553,7 +553,7 @@ Has a chunk been charted?
 **Parameters:**
 
 - `surface` `SurfaceIdentification`
-- `position` `ChunkPosition` - Position of the chunk.
+- `chunk_position` `ChunkPosition` - Position of the chunk.
 
 **Returns:**
 
@@ -566,7 +566,7 @@ Is the given chunk currently charted and visible (not covered by fog of war) on 
 **Parameters:**
 
 - `surface` `SurfaceIdentification`
-- `position` `ChunkPosition`
+- `chunk_position` `ChunkPosition`
 
 **Returns:**
 
@@ -579,7 +579,7 @@ Has a chunk been requested for charting?
 **Parameters:**
 
 - `surface` `SurfaceIdentification`
-- `position` `ChunkPosition` - Position of the chunk.
+- `chunk_position` `ChunkPosition` - Position of the chunk.
 
 **Returns:**
 
@@ -747,7 +747,7 @@ Kill all units and flush the pathfinder.
 
 **Parameters:**
 
-- `position` `ChunkPosition` - The chunk position to unchart.
+- `chunk_position` `ChunkPosition` - The chunk position to unchart.
 - `surface` `SurfaceIdentification` - Surface to unchart on.
 
 ### get_item_launched
@@ -1162,7 +1162,7 @@ Returns `nil` if the chunk has not been charted for this force.
 **Parameters:**
 
 - `surface` `SurfaceIdentification`
-- `position` `ChunkPosition`
+- `chunk_position` `ChunkPosition`
 
 **Returns:**
 

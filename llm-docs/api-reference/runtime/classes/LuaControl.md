@@ -621,7 +621,7 @@ Begins crafting the given count of the given recipe.
 
 ### cancel_crafting
 
-Cancels crafting the given count of the given crafting queue index.
+Cancels the given amount of crafts at the given crafting queue position. If this causes any later crafts that depend on the cancelled one to have insufficient ingredients, those crafts will also be cancelled.
 
 **Parameters:**
 

@@ -84,9 +84,9 @@ This has no effect if the prototype does not support filters.
 
 Deactivating an entity will stop all its operations (car will stop moving, inserters will stop working, fish will stop moving etc).
 
-Writing to this is deprecated and affects only the [disabled_by_script](runtime:LuaEntity::disabled_by_script) state.
-
 Reading from this returns `false` if the entity is deactivated in at least one of the following ways: [by script](runtime:LuaEntity::disabled_by_script), [by circuit network](runtime:LuaEntity::disabled_by_control_behavior), [by recipe](runtime:LuaEntity::disabled_by_recipe), [by freezing](runtime:LuaEntity::frozen), or by deconstruction.
+
+Writing to this is deprecated and affects only the [disabled_by_script](runtime:LuaEntity::disabled_by_script) state.
 
 Entities that are not active naturally can't be set to be active (setting it to be active will do nothing). Some entities (Corpse, FireFlame, Roboport, RollingStock, dying entities) need to remain active and will ignore writes.
 
@@ -456,7 +456,7 @@ The train this rolling stock belongs to, if any. `nil` if this is not a rolling 
 
 A list of neighbours for certain types of entities. Applies to underground belts, walls, gates, reactors, heat pipes, cliffs, and pipe-connectable entities.
 
-**Read type:** Dictionary[`string`, Array[`LuaEntity`]] | Array[Array[`LuaEntity`]] | `LuaEntity`
+**Read type:** Dictionary[`string`, `LuaEntity`] | Array[Array[`LuaEntity`]] | `LuaEntity`
 
 **Optional:** Yes
 
@@ -662,11 +662,21 @@ The space platform in orbit this rocket silo is automatically requesting items f
 
 ### rocket_parts
 
-Number of rocket parts in the silo.
+Number of rocket parts in this rocket silo.
 
 **Read type:** `uint32`
 
 **Write type:** `uint32`
+
+**Subclasses:** RocketSilo
+
+### send_to_orbit_automatically
+
+Whether this rocket silo is set to send items to orbit automatically. Only relevant if there is an item prototype with [launch products](runtime:LuaItemPrototype::rocket_launch_products) with automated [send_to_orbit_mode](runtime:LuaItemPrototype::send_to_orbit_mode), such as the satellite in vanilla (without Space Age mod).
+
+**Read type:** `boolean`
+
+**Write type:** `boolean`
 
 **Subclasses:** RocketSilo
 
@@ -1938,7 +1948,7 @@ how far into the current procession the cargo pod is.
 
 ### is_updatable
 
-If the entity is updatable.
+Whether the entity is updatable and considered an UpdatableEntity.
 
 **Read type:** `boolean`
 
@@ -1947,6 +1957,8 @@ If the entity is updatable.
 If the updatable entity is disabled by script.
 
 Note: Some entities (Corpse, FireFlame, Roboport, RollingStock, dying entities) need to remain active and will ignore writes.
+
+If this entity is not considered [updatable](runtime:LuaEntity::is_updatable) then this always returns `false` and writes will be ignored.
 
 **Read type:** `boolean`
 
@@ -1958,6 +1970,8 @@ Note: Some entities (Corpse, FireFlame, Roboport, RollingStock, dying entities) 
 
 If the updatable entity is disabled by control behavior.
 
+Always returns `false` if this entity is not considered [updatable](runtime:LuaEntity::is_updatable).
+
 **Read type:** `boolean`
 
 **Subclasses:** UpdatableEntity
@@ -1966,19 +1980,23 @@ If the updatable entity is disabled by control behavior.
 
 If the assembling machine is disabled by recipe, e.g. due to [AssemblingMachinePrototype::disabled_when_recipe_not_researched](prototype:AssemblingMachinePrototype::disabled_when_recipe_not_researched).
 
+Always returns `false` if this entity is not considered [updatable](runtime:LuaEntity::is_updatable).
+
 **Read type:** `boolean`
 
 **Subclasses:** UpdatableEntity
 
 ### is_freezable
 
-If the entity is freezable.
+Whether the entity is freezable and considered a FreezableEntity.
 
 **Read type:** `boolean`
 
 ### frozen
 
-If the freezable entity is currently frozen.
+Whether the freezable entity is currently frozen.
+
+Always returns `false` if this entity is not considered [freezable](runtime:LuaEntity::is_freezable).
 
 **Read type:** `boolean`
 
@@ -2498,7 +2516,7 @@ Get a transport line of a belt or belt connectable entity.
 
 **Parameters:**
 
-- `index` `uint32` - Index of the requested transport line. Transport lines are 1-indexed.
+- `index` `defines.transport_line` - Index of the requested transport line. Transport lines are 1-indexed.
 
 **Returns:**
 
@@ -2523,7 +2541,7 @@ Get a map position related to a position on a transport line.
 
 **Parameters:**
 
-- `index` `uint32` - Index of the transport line. Transport lines are 1-indexed.
+- `index` `defines.transport_line` - Index of the transport line. Transport lines are 1-indexed.
 - `position` `float` - Linear position along the transport line. Clamped to the transport line range.
 
 **Returns:**
@@ -2536,7 +2554,7 @@ Get the maximum transport line index of a belt or belt connectable entity.
 
 **Returns:**
 
-- `uint32`
+- `defines.transport_line`
 
 ### launch_rocket
 
@@ -3349,7 +3367,7 @@ Sets the [speed](runtime:LuaEntity::speed) of the given SpiderVehicle to zero. N
 
 ### get_wire_connector
 
-Gets a single wire connector of this entity
+Gets a single wire connector of this entity, if any.
 
 **Parameters:**
 
@@ -3358,7 +3376,7 @@ Gets a single wire connector of this entity
 
 **Returns:**
 
-- `LuaWireConnector`
+- `LuaWireConnector` *(optional)*
 
 ### get_wire_connectors
 

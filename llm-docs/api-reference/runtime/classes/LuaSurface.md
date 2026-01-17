@@ -647,6 +647,7 @@ Create an entity on this surface.
 - `name` `EntityID` - The entity prototype name to create.
 - `position` `MapPosition` - Where to create the entity.
 - `direction` `defines.direction` *(optional)* - Desired orientation of the entity after creation.
+- `mirror` `boolean` *(optional)* - Whether this entity is mirrored. Defaults to `false`.
 - `quality` `QualityID` *(optional)* - Quality of the entity to be created. Defaults to `normal`.
 - `force` `ForceID` *(optional)* - Force of the entity, default is enemy.
 - `target` `LuaEntity` | `MapPosition` *(optional)* - Entity with health for the new entity to target.
@@ -829,6 +830,8 @@ Spawn pollution at the given position.
 
 Get an iterator going over every chunk on this surface.
 
+Chunks may or may not be generated; use [LuaSurface::is_chunk_generated](runtime:LuaSurface::is_chunk_generated) to check a chunk's state before accessing it.
+
 **Returns:**
 
 - `LuaChunkIterator`
@@ -839,7 +842,7 @@ Is a given chunk generated?
 
 **Parameters:**
 
-- `position` `ChunkPosition` - The chunk's position.
+- `chunk_position` `ChunkPosition` - The chunk's position.
 
 **Returns:**
 
@@ -864,7 +867,7 @@ Set generated status of a chunk. Useful when copying chunks.
 
 **Parameters:**
 
-- `position` `ChunkPosition` - The chunk's position.
+- `chunk_position` `ChunkPosition` - The chunk's position.
 - `status` `defines.chunk_generated_status` - The chunk's new status.
 
 ### get_territories
@@ -881,7 +884,7 @@ Get the territory that the given chunk is assigned to. If the chunk is not part 
 
 **Parameters:**
 
-- `position` `ChunkPosition` - The chunk's position. The chunk at this position does not need to exist.
+- `chunk_position` `ChunkPosition` - The chunk's position. The chunk at this position does not need to exist.
 
 **Returns:**
 
@@ -899,7 +902,7 @@ Territories that do not contain at least one generated chunk as a result of call
 
 **Parameters:**
 
-- `positions` Array[`ChunkPosition`] - The chunk positions. The chunks at these positions do not need to exist in order to be assigned to a territory.
+- `chunk_positions` Array[`ChunkPosition`] - The chunk positions. The chunks at these positions do not need to exist in order to be assigned to a territory.
 - `territory` `LuaTerritory` *(optional)* - The territory to associate the chunks with. If not `nil`, the territory must belong to this same surface or else an error will be produced. If `nil`, then the chunks get removed from the territory it is currently associated with and will prevent the map generator from automatically re-generate a new territory for the chunk in the future.
 
 ### clear_territory_for_chunks
@@ -910,7 +913,7 @@ Territories that do not contain at least one generated chunk as a result of call
 
 **Parameters:**
 
-- `positions` Array[`ChunkPosition`] - The chunk positions. The chunks at these positions does not need to exist.
+- `chunk_positions` Array[`ChunkPosition`] - The chunk positions. The chunks at these positions does not need to exist.
 
 ### get_segmented_units
 
@@ -1075,7 +1078,7 @@ This won't find tiles in non-generated chunks.
 
 **Parameters:**
 
-- `position` `ChunkPosition` - The chunk position to delete
+- `chunk_position` `ChunkPosition` - The chunk position to delete
 
 ### regenerate_entity
 
@@ -1486,7 +1489,7 @@ Returns all the military targets (entities with force) on this chunk for the giv
 
 **Parameters:**
 
-- `position` `ChunkPosition` - The chunk's position.
+- `chunk_position` `ChunkPosition` - The chunk's position.
 - `force` `ForceID` - Entities of this force will be returned.
 
 **Returns:**

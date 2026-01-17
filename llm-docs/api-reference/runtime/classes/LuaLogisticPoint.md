@@ -18,7 +18,7 @@ The [LuaEntity](runtime:LuaEntity) owner of this LuaLogisticPoint.
 
 The Logistic member index of this logistic point.
 
-**Read type:** `uint32`
+**Read type:** `defines.logistic_member_index`
 
 ### filters
 

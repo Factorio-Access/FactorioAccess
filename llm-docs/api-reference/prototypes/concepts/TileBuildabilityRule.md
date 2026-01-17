@@ -1,5 +1,9 @@
 # TileBuildabilityRule
 
+Defines restrictions on what tiles an entity can or must be built on.
+
+Note that once the entity has been placed, placing new tiles is not always restricted by these rules for performance reasons. In particular, for most entities these rules are only checked when placing tiles within the collision box of the entity. The exception to this are thrusters and asteroid collectors, for which the rules are always checked.
+
 **Type:** `Struct`
 
 ## Properties

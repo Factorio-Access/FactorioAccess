@@ -53,7 +53,7 @@ Name of the deliver impact combination.
 
 ### trigger_effect_item
 
-**Type:** `TriggerEffectItem`
+**Type:** `TriggerEffect`
 
 **Required:** Yes
 
