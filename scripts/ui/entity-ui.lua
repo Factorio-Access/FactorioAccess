@@ -26,6 +26,7 @@ local infinity_pipe_config_tab = require("scripts.ui.tabs.infinity-pipe-config")
 local inserter_config_tab = require("scripts.ui.tabs.inserter-config")
 local locomotive_config_tab = require("scripts.ui.tabs.locomotive-config")
 local roboport_config_tab = require("scripts.ui.tabs.roboport-config")
+local rocket_silo_config_tab = require("scripts.ui.tabs.rocket-silo-config")
 local selector_combinator_tab = require("scripts.ui.tabs.selector-combinator")
 local spidertron_config_tab = require("scripts.ui.tabs.spidertron-config")
 local splitter_config_tab = require("scripts.ui.tabs.splitter-config")
@@ -201,6 +202,11 @@ local function build_configuration_tabs(entity)
 
    -- Add roboport configuration
    if prototype.type == "roboport" then table.insert(tabs, roboport_config_tab.roboport_config_tab) end
+
+   -- Add rocket silo configuration
+   if rocket_silo_config_tab.is_available(entity) then
+      table.insert(tabs, rocket_silo_config_tab.rocket_silo_config_tab)
+   end
 
    -- Add artillery configuration
    if artillery_config_tab.is_available(entity) then table.insert(tabs, artillery_config_tab.artillery_config_tab) end

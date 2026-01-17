@@ -1,3 +1,7 @@
+# 0.16.54 (unreleased)
+
+- Rocket silos now have a config tab, and that tab exposes a checkbox for automatic launching.
+
 # 0.16.53 (2026-01-09)
 
 - Make trains understand that the item wildcard and fluid wildcard must change to the correct schedule type.
