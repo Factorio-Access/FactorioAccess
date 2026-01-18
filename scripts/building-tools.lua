@@ -156,6 +156,7 @@ end
 ---@field teleport_player? boolean Whether to teleport player out of build area (default true)
 ---@field play_error_sound? boolean Whether to play error sounds (default true)
 ---@field speak_errors? boolean Whether to speak error messages (default true)
+---@field build_mode? defines.build_mode Build mode (normal, forced, superforced). Default: normal
 
 --[[Attempts to build the item in hand with explicit parameters.
 * Does nothing if the hand is empty or the item is not a place-able entity.
@@ -204,7 +205,7 @@ function mod.build_item_in_hand_with_params(params)
       local building = {
          position = decision.position,
          direction = decision.direction,
-         alt = false,
+         build_mode = params.build_mode or defines.build_mode.normal,
          flip_horizontal = decision.flip_horizontal,
          flip_vertical = decision.flip_vertical,
       }
@@ -231,8 +232,9 @@ end
 ---@param pindex integer Player index
 ---@param flip_horizontal? boolean Whether to flip horizontally
 ---@param flip_vertical? boolean Whether to flip vertically
+---@param build_mode? defines.build_mode Build mode (normal, forced, superforced). Default: normal
 ---@return boolean success True if blueprint was placed successfully
-function mod.build_blueprint(pindex, flip_horizontal, flip_vertical)
+function mod.build_blueprint(pindex, flip_horizontal, flip_vertical, build_mode)
    local p = game.get_player(pindex)
    local cursor_stack = p.cursor_stack
    local vp = Viewpoint.get_viewpoint(pindex)
@@ -275,11 +277,13 @@ function mod.build_blueprint(pindex, flip_horizontal, flip_vertical)
    PlayerMiningTools.clear_obstacles_in_rectangle(left_top, right_bottom, pindex, 99)
 
    -- Try to build
+   local effective_build_mode = build_mode or defines.build_mode.normal
    local can_build = p.can_build_from_cursor({
       position = build_pos,
       direction = dir,
       flip_horizontal = flip_horizontal or false,
       flip_vertical = flip_vertical or false,
+      build_mode = effective_build_mode,
    })
 
    local success = false
@@ -289,6 +293,7 @@ function mod.build_blueprint(pindex, flip_horizontal, flip_vertical)
          direction = dir,
          flip_horizontal = flip_horizontal or false,
          flip_vertical = flip_vertical or false,
+         build_mode = effective_build_mode,
       })
       p.play_sound({ path = "Close-Inventory-Sound" })
 
@@ -312,54 +317,6 @@ function mod.build_blueprint(pindex, flip_horizontal, flip_vertical)
    end
 
    return success
-end
-
----Place a ghost entity using the calculated build parameters.
----This is a stub that will be implemented to support ghost placement without cursor interaction.
----@param params fa.BuildingTools.BuildItemParams Build parameters
----@return boolean success True if ghost was placed successfully
-function mod.place_ghost_with_params(params)
-   local pindex = params.pindex
-   local p = game.get_player(pindex)
-   local stack = p.cursor_stack
-
-   -- Calculate what to build
-   local decision = mod.calculate_build_params(params)
-   if not decision then
-      p.play_sound({ path = "utility/cannot_build" })
-      return false
-   end
-
-   -- Skip tiles for now (ghosts are primarily for entities)
-   if decision.is_tile then
-      Speech.speak(pindex, { "fa.building-ghost-tiles-not-supported" })
-      return false
-   end
-
-   -- Create the ghost entity (no obstacle clearing or teleportation for ghosts)
-   local ghost = p.surface.create_entity({
-      name = "entity-ghost",
-      inner_name = decision.entity_name,
-      position = decision.position,
-      direction = decision.direction,
-      force = p.force,
-      player = pindex,
-      quality = stack.quality,
-   })
-
-   if ghost then
-      Speech.speak(pindex, { "fa.building-placed-ghost", { "entity-name." .. decision.entity_name } })
-      return true
-   else
-      -- Ghost placement failed
-      if params.play_error_sound ~= false then p.play_sound({ path = "utility/cannot_build" }) end
-      if params.speak_errors ~= false then
-         local build_area = { decision.footprint_left_top, decision.footprint_right_bottom }
-         local result = mod.identify_building_obstacle(pindex, build_area, nil)
-         Speech.speak(pindex, result)
-      end
-      return false
-   end
 end
 
 --[[Assisted building function for offshore pumps.

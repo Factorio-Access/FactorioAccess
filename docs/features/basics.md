@@ -36,7 +36,9 @@ Announce cursor's relative position to the character: `alt + k`
 
 Build, configure, interact, and perform other "primary" actions: `left bracket`
 
-Place a ghost: `shift + [`
+Force buildt: `shift + [`
+
+Superforce build: `control + shift + left bracket`
 
 Mine: `hold x`
 

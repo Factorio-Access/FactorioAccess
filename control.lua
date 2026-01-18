@@ -3205,7 +3205,7 @@ EventManager.on_event(
       local p = game.get_player(pindex)
       local stack = p.cursor_stack
 
-      -- Place ghost if item in hand can be built
+      -- Force build: places through obstacles (auto-landfill)
       if stack and stack.valid_for_read then
          if stack.prototype.type == "spidertron-remote" then
             -- Clear autopilot and set new destination for spidertron remote
@@ -3229,15 +3229,28 @@ EventManager.on_event(
             end
          end
 
+         -- Blueprint force build
+         if (stack.is_blueprint and stack.is_blueprint_setup()) or stack.is_blueprint_book then
+            local vp = Viewpoint.get_viewpoint(pindex)
+            BuildingTools.build_blueprint(
+               pindex,
+               vp:get_flipped_horizontal(),
+               vp:get_flipped_vertical(),
+               defines.build_mode.forced
+            )
+            return
+         end
+
          local proto = stack.prototype
          if proto.place_result or proto.place_as_tile_result then
-            -- Item can be placed as a ghost
+            -- Force build: places landfill when needed
             local vp = Viewpoint.get_viewpoint(pindex)
-            local success = BuildingTools.place_ghost_with_params({
+            local success = BuildingTools.build_item_in_hand_with_params({
                pindex = pindex,
                building_direction = vp:get_hand_direction(),
                flip_horizontal = vp:get_flipped_horizontal(),
                flip_vertical = vp:get_flipped_vertical(),
+               build_mode = defines.build_mode.forced,
             })
             if success then TileReader.read_tile(pindex) end
          else
@@ -3273,10 +3286,11 @@ EventManager.on_event(
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
       local player = game.players[pindex]
-      if not player.cursor_stack.valid_for_read then return end
+      local stack = player.cursor_stack
+      if not stack.valid_for_read then return end
 
       -- Rail planner: lock on with superforce mode (real or ghost rails)
-      if player.cursor_stack.prototype.rails then
+      if stack.prototype.rails then
          local ent = EntitySelection.get_first_ent_at_tile(pindex)
          local is_rail = ent and ent.valid and Consts.RAIL_TYPES_SET[ent.type]
          local is_ghost_rail = ent
@@ -3289,7 +3303,37 @@ EventManager.on_event(
          end
       end
 
-      if player.cursor_stack.is_repair_tool then kb_repair_area(event) end
+      -- Repair tool: repair area
+      if stack.is_repair_tool then
+         kb_repair_area(event)
+         return
+      end
+
+      -- Blueprint superforce build
+      if (stack.is_blueprint and stack.is_blueprint_setup()) or stack.is_blueprint_book then
+         local vp = Viewpoint.get_viewpoint(pindex)
+         BuildingTools.build_blueprint(
+            pindex,
+            vp:get_flipped_horizontal(),
+            vp:get_flipped_vertical(),
+            defines.build_mode.superforced
+         )
+         return
+      end
+
+      -- Superforce build: replaces existing entities and places landfill
+      local proto = stack.prototype
+      if proto.place_result or proto.place_as_tile_result then
+         local vp = Viewpoint.get_viewpoint(pindex)
+         local success = BuildingTools.build_item_in_hand_with_params({
+            pindex = pindex,
+            building_direction = vp:get_hand_direction(),
+            flip_horizontal = vp:get_flipped_horizontal(),
+            flip_vertical = vp:get_flipped_vertical(),
+            build_mode = defines.build_mode.superforced,
+         })
+         if success then TileReader.read_tile(pindex) end
+      end
    end
 )
 

@@ -1,6 +1,10 @@
 # 0.16.54 (unreleased)
 
 - Rocket silos now have a config tab, and that tab exposes a checkbox for automatic launching.
+- Support force and superforce build modes properly
+  - You will receive a success message even when superforce/force build do not place blueprints because they may have partially applied changes. We cannot detect this case.
+  - Underground belt ends connecting to ghost entrances do not form exits. It is uncklear at this time if that is something that we want.
+  - Underground ghost exits do form when placed after a real entrance.  It is also unclear if that is what we want, so we might change it.
 
 # 0.16.53 (2026-01-09)
 
