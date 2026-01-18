@@ -1,4 +1,4 @@
-# 0.16.54 (unreleased)
+# 0.16.54 (2026-01-17)
 
 - Rocket silos now have a config tab, and that tab exposes a checkbox for automatic launching.
 - Support force and superforce build modes properly
