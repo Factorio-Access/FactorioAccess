@@ -1,3 +1,7 @@
+# 0.16.55 (unreleased)
+
+- Publish a logistic/construction robots and equipment tutorial chapter
+
 # 0.16.54 (2026-01-17)
 
 - Rocket silos now have a config tab, and that tab exposes a checkbox for automatic launching.
