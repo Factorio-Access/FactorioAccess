@@ -3,12 +3,7 @@
 This is an accessibility mod for the popular game Factorio which enables blind people to play and win the game.  It supports almost all game features including advanced things such as the circuit network.
 We have had players successfully build post-endgame bases with it in a reasonable amount of time.
 
-
 # Important Warnings
-
-You are reading a readme for a prerelease version of the mod for 2.0. If you are trying to install the 1.1 version, you need mod 0.15 or older.
-
-We are actively recruiting playtesters for 2.0.  See [this](./playtesting-2.0.md).
 
 The mod tries to support multiplayer but game limitations mean that your experience will be laggy and kind of terrible. We cannot do anything about this.  We also have limited ability to do anything about bugs, because that would require two mod developers playing at the same time.
 
@@ -24,6 +19,7 @@ The game can be purchased from Factorio.com or from Steam. Any purchase gives ac
 1. If needed, login using your Factorio account or Steam account.
 1. Among the install options, find the stable releases at the top half of the page. 
 1. Go to the section with "Other download options" and select "Download full game for Windows (ZIP package)". This will download a zip file that is about 1.5 gigabytes in size. It might also be called the manual install. Note that this is different from the regular Windows version, which downloads an exe file.
+1. If you got a .exe or are running an installer at any point in the process you got the wrong thing
 1. Create a folder where you want to keep the game. Extract the zip file into this folder.
 1. If you want, create a desktop shortcut for your Factorio folder.
 1. All done! You need to install the mod next.
