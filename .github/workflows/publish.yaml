@@ -1,0 +1,32 @@
+name: Publish to Mod Portal
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'  # Match version tags like 0.16.54
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install fmtk
+        run: npm install -g factoriomod-debug
+
+      - name: Build package
+        run: fmtk package
+
+      - name: Upload to Mod Portal
+        env:
+          FACTORIO_UPLOAD_API_KEY: ${{ secrets.FACTORIO_UPLOAD_API_KEY }}
+        run: |
+          MOD_NAME=$(jq -r .name info.json)
+          MOD_VERSION=$(jq -r .version info.json)
+          fmtk upload "${MOD_NAME}_${MOD_VERSION}.zip"
