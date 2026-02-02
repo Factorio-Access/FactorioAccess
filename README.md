@@ -7,6 +7,8 @@ We have had players successfully build post-endgame bases with it in a reasonabl
 
 The mod tries to support multiplayer but game limitations mean that your experience will be laggy and kind of terrible. We cannot do anything about this.  We also have limited ability to do anything about bugs, because that would require two mod developers playing at the same time.
 
+On Windows our launcher is currently flagged as a virus. We are working on fixing this but there is not much we can do. You may need to add your Factorio folder as an exception in Windows Defender.  It moves the mouse and does a bunch of things that look like a virus to antiviruses as part of interacting with the game.  If you run the launcher from source this is not a problem.  Please note that wee build the launcher from source in a GitHub Actions runner, so we are confident that our build is clean.
+
 Finally, we do not yet support space age. If you bought space age, you need to disable quality, elevated rails, and space age in the launcher's mod menu.
 
 # Installing Factorio
