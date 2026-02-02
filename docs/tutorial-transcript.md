@@ -1,4 +1,4 @@
-## Chapter 1 of 14: Getting Started
+## Chapter 1 of 15: Getting Started
 
 ### Chapter Text
 
@@ -88,7 +88,7 @@ Now, it is time to take the first steps.  Press control tab to move to the first
 
 No blueprints
 
-## Chapter 2 of 14: Your Initial Goals and Finding Coal and Stone
+## Chapter 2 of 15: Your Initial Goals and Finding Coal and Stone
 
 ### Chapter Text
 
@@ -146,7 +146,7 @@ If you get no search results for coal, you have not found any yet.  You have two
 
 No blueprints
 
-## Chapter 3 of 14: Mining Coal, learning advanced scanner use, and building for the first time
+## Chapter 3 of 15: Mining Coal, learning advanced scanner use, and building for the first time
 
 ### Chapter Text
 
@@ -288,7 +288,7 @@ We can fix this.  We will do so with a chest, in the next chapter where you lear
 
 No blueprints
 
-## Chapter 4 of 14: Crafting and Research
+## Chapter 4 of 15: Crafting and Research
 
 ### Chapter Text
 
@@ -382,7 +382,7 @@ In the next chapter, we will talk about faster ways of moving around, then we wi
 
 No blueprints
 
-## Chapter 5 of 14: Fast Travel, Bookmarks, and Cursor Skipping
+## Chapter 5 of 15: Fast Travel, Bookmarks, and Cursor Skipping
 
 ### Chapter Text
 
@@ -412,7 +412,7 @@ You will probably learn that it is much bigger than you thought.  Don't worry, i
 
 No blueprints
 
-## Chapter 6 of 14: Basic Smelting
+## Chapter 6 of 15: Basic Smelting
 
 ### Chapter Text
 
@@ -494,7 +494,7 @@ Before continuing, you should work by yourself to unlock both electronics and st
 
 No blueprints
 
-## Chapter 7 of 14: Setting up Power
+## Chapter 7 of 15: Setting up Power
 
 ### Chapter Text
 
@@ -630,7 +630,7 @@ A single steam engine and lab. Lab is at the north and boiler at the south.: 0eN
 
 A pair of pipe to ground at maximum range, with a single pipe piece on each end, arranged as a column.: 0eNqdkd1KxDAQRl8lzHW62F+3vfM5RCRth+5AMwlpql1K3t10K7jKroh3Ezic75vMCu04o3XEHpoVepw6R9aTYWjgSViyKLwRgzMz90J5odVCetbCKR5QinfyJ6GEw2Eeldt5wwJVdxLIPUigzvAEzfMKEw2sxi2Glcbo32gIEeEeF2jSIO9AiTfJXuEKz8KLBGRPnnAPuDzOrzzrFl30yW9BEqyZaF9thShI8io9lBLOcSwOZdjifygyeafGr7L8tiz/e5/H24biP3Wq6JLQk8NuB47bx5FHHT1f15cwqhbHT/fV0XFR2o5b3zd008VQVlld1HV5TPO6fihC+AAtm75h
 
-## Chapter 8 of 14: Belts, Inserters, and Faster Inventory Management
+## Chapter 8 of 15: Belts, Inserters, and Faster Inventory Management
 
 ### Chapter Text
 
@@ -752,7 +752,7 @@ Two chests and an inserter. Put coal in the southmost chest and it moves to the 
 
 A burner mining drill, with an inserter and belt arrangement that feeds it forever.: 0eNqdkttqwzAMhl/F6Nopy2k0eZUxhpNorcBRgg9jJfjd59gwRtdtdBcGGev/9EvyBoP2uBpiB/0GE9rR0OpoYejBIgp3jse7xZDSYjyr1aEBCTQubKF/2sDSiZXexaxmjKrBG0ZTzMTEp2IypDWEqOAJ36Evg7yhcUaxXRfjigG1+5JehWcJyI4cYa6XLpcX9vMQnfSl/IEhYV0s5U42iKjiWB1aCZcY1Yc2lpjI4JgTmt3VFbn6DzkG4QarllfTIbZo8ii/wco/YM0dxsq7Wm7lb0u81XeGl2FfEzmcd+nnh5KgVTSWfpJ+Lay3TiWgyHiR8SLhhbfpJTZio/INjU2V2seqa7quPZZ11z00IXwAdYLm0A==
 
-## Chapter 9 of 14: Build Lock, Rulers, and the Clipboard
+## Chapter 9 of 15: Build Lock, Rulers, and the Clipboard
 
 ### Chapter Text
 
@@ -846,7 +846,7 @@ Soon, you will need to scale your power output, which means connecting more boil
 
 No blueprints
 
-## Chapter 10 of 14: Automating Research
+## Chapter 10 of 15: Automating Research
 
 ### Chapter Text
 
@@ -948,7 +948,7 @@ Look at the blueprint and this will probably make a lot more sense.  But this is
 
 4 steam engines, 2 boilers, and the poles to make it work: 0eNqV0s1ugzAMAOBXQT6HakBCCa9SVVOgVmUphIqk2yqUd58BrT2MreWWWPbn/HiExl7xMpALUI9Abe881IcRPJ2dsVPMmQ6hBh/QdCm6MzmEKIDcCb+gzuJRALpAgXCpnDe3d3ftGhw4QawKAi6956LeTT0YSnW5UwJuvNrvVIzil5S/LBVPpOIhdcbaFC22YaA2vfR2Fax+QLkOyq1g9gRU218tX5fK7a/2h7S/S01PliP/nCZbA6oXgOIB8GB90jBP1aEQSkihjhyjgN1E3OdWgDUN8qxCniywF4lM5usmy3U5YNwpmX7Dc/4Hp8xNVZlrqbWqskLrNxnjN22M/Ek=
 
-## Chapter 11 of 14: Electric Mining Drills and Revisiting Inserters
+## Chapter 11 of 15: Electric Mining Drills and Revisiting Inserters
 
 ### Chapter Text
 
@@ -1046,7 +1046,7 @@ Sometimes, though, you will go back one step further and end up needing more dri
 
 Example of a tileable smelter: 0eNqd1O1uwiAUBuBbMec3GKGtlt6KWRZazxwJhQZw0Zje+2hddIk01v7rBzwHXj6uUOsTdk6ZANUVVGONh2p/Ba+ORurhm5EtQgXBSeM76wKtUQfoCShzwDNUrP8ggCaooPDWd3y5fJpTW6OLDciEQaCzPnazZqgTKSrEuiBwiU/Zuuh78mTxJRZPW9kbVvnCypdYE3Ms7pa25ki/Zcz5QJXx6EL8nxB3/0UCB+WwuTVgPFFgey8wC+Wz0N0sNH8PLe+oD9Yg/To5IxtMydu/BFKJijdWJ5vMskzIbLOE5rPoReeGpfcU40s26BT2ODm+lVpT1HEiTjW0szq9OK/EfEmM7DnGeBWpgG10HvcaAS2jNdhKo6w1rnwbbXQrPMu2G4f8g86PRrHlIheiKFkmxCbv+1/VxKuF
 
-## Chapter 12 of 14: Belts Revisited
+## Chapter 12 of 15: Belts Revisited
 
 ### Chapter Text
 
@@ -1252,7 +1252,7 @@ A tileable mining setup of 4 drills, using belt sideloading to squeeze an electr
 
 A furnace setup using most of this chapter's features, and filling both lanes of the output belt. Note: the underground belt makes it very expensive, so try designing a better one!: 0eNqllW1vgyAQx7+K4TU2HorVfpVlWailjoSCAdzWNP3uO9uteyhm6l4pl+P3P7gHTmSre9k5ZQLZnIhqrPFk83AiXrVG6MFmxEGSDQlOGN9ZF9Kt1IGcKVFmJ9/IBs404u6DNTLd986IRn7zZudHSqQJKih5Vbosjk+mP2ylQxz9RPS4w7XO4veqSUlnPW60ZhBCWAqQrTglx+G3WHGUCcdu2Gv70PVDlHd8RkdOFKPDD3qElt9oynjpAtoinKz+FeVOOdlcXYBFsMWMILNiHF5F2PzG9gehdSo1ejvVpJ3V8o87zuO3UC670xHaehmNxWnVjaatadNngVW1SydmK5+Urfo/EmySBGTzNcqZxwCYVszl3Ni/Wu7nVIjBq89SjuUS8rm1m/G/qg1m9RofP3sRg/NljcymNDKUy+D5JPh66RyG73NYmZExDNWyLoeRLNZzBzFMql2WLahdFouQwbJswX228AV9xfXwfD5wyim2BX9EowrygPivF50SLVACbR9h+2SvtFamTbY2PCdaGDTZfSKSj0hepPMXFV6yuqhrXkFe1xl24ztAdZ+/
 
-## Chapter 13 of 14: Blueprints and the Upgrade and Deconstruction Planners
+## Chapter 13 of 15: Blueprints and the Upgrade and Deconstruction Planners
 
 ### Chapter Text
 
@@ -1344,7 +1344,7 @@ Finally, you should be aware that books as well as the other planner items may b
 
 No blueprints
 
-## Chapter 14 of 14: Closing Explanations
+## Chapter 14 of 15: Closing Explanations
 
 ### Chapter Text
 
@@ -1421,6 +1421,88 @@ Remember, though: changing planner config makes the planner permanent, so you wi
 In any case, good luck.  From this point, you might need the occasional bit of help to figure things out, but you should know everything you need to know to operate the mod.
 
 The only remaining tutorial chapter that is essential is on logistic and construction robots, which you will unlock many hours from now.  From time to time we may add other non-essential chapters after this one, and when we do so we will make sure to put them in the change log.
+
+### Example Blueprints
+
+No blueprints
+
+## Chapter 15 of 15: Equipment and Logistic Robots
+
+### Chapter Text
+
+This tutorial covers logistic robots, construction robots, and basic equipment management.  These are late-game features, at least 30 hours in.  You should come here after you have unlocked at least modular armor, but waiting for construction and logistic robots as well as several other technologies may be worthwhile.  For the most part this is an explanation of vanilla mechanics which would otherwise be hard to figure out, but there are also a few mod features in here as well.
+
+We aren't going to spell out the tech tree.  There's a lot of technologies, and you will slowly unlock them as you advance.  Instead, we are going to discuss the pieces.  Please also note that this tutorial assumes you are playing in peaceful, but much of this can also be used with combat-related equipment, such as personal shields.  Let's get started.
+
+There are two recurring problems in Factorio: building large blueprints and moving things around.  Robots provide an alternative solution to this.  You will first unlock the modular armor, which allows you to get your equipment grid.  Then construction robots, which allows you to build things automatically, followed shortly after by logistic robots which move items.  At first this will only work from and to your own inventory, but you will then unlock the ability to use special chests to replace transport belts.
+
+Just like you have a factory, some armor offers an equipment grid.  Equipment grids are exposed via the equipment tab, which has explanatory tooltips telling you what keys to use.  If you are ready for this tutorial, you should go over there and equip a modular armor, portable solar panel, personal roboport, and personal battery.  This is the minimum setup for construction robots.  If you then get some construction bots and the required items in your inventory, you will now begin to automatically build ghosts close to your character.
+
+Equipment in the grid has dimensions.  You can see the actual grid itself by tabbing over from the equipment overview, but we instead recommend equipping from largest to smallest. If you do so, in vanilla, the mod generally uses the armor efficiently and does not leave many empty slots.
+
+Just like your external factory, armor has a concept of electricity.  In this case, you are getting it from the portable solar panel during the day, and storing it in the personal battery at night.  Again, you can see statistics in the equipment overview, or by pressing g.  When pressing g, you will also hear a panned sound for your health. All the way right is full health, and it pans left as your health decreases.
+
+You can toggle construction robots with the vanilla key alt+f.  This toggles only your personal robots.  We are about to discuss how to install construction robots in your base, so you should be aware that robots not in your armor cannot be toggled.
+
+The next item of interest is the roboport.  When powered, this 4x4 building establishes a 50x50 logistic network (25 tiles from the center, just like with poles).  When two roboports are placed close enough together, they connect to make the logistic network larger.  They also establish a much larger 100x100 construction range, where construction robots will fly out to build stuff.  More on that momentarily.
+
+You can rename the roboport as well as the network, so they also serve as good landmarks.
+
+A roboport does a few things.  The first is letting you put bots into the network.  To do so, control click with bots in hand, or click it and use the UIs.  Do note that getting robots out is hard, because they are usually travelling around.  This isn't a mod limitation--it's just how the game works.
+
+The other thing roboports do is charge bots.  When bots are charged, they can fly around doing work.  When they are low on power they return to a roboport and fly around until there is an empty charging port.
+
+Or put another way, you need roboports for two reasons: to extend the size of the network, and also to make sure that bots have enough places to charge at.  The game is somewhat smart about it, and will work to send bots to roboports with available ports.
+
+Before going crazy with them though, note that roboports are one of the most power-hungry items in the game!  That's one of the downsides of robots.
+
+You now have robots in the network but they need to be able to get items.  This is the function of the passive provider and storage chests.  These are called logistic containers, and serve the function of interacting with robots.  In both cases, items contained inside them are used by robots that need them.  They must be near a roboport to be in a network.
+
+So, if you put a bunch of transport belts in a storage chest, then place a blueprint, and if all of that is in range of a roboport with available construction robots, they will build the blueprint for you.  It doesn't matter where you are, which allows you to build from anywhere.  If your blueprints then in turn contain more roboports, the robots will build those and extend the network.  This means that a possible playstyle is to never move at all!  Robots can do most things instead.
+
+Just like normal containers, these interact with inserters.  This allows you to automate supplying the network.
+
+As a reminder, however, only your personal construction robots can be turned on and off. If you choose to put construction robots in the non-personal roboports, they'll always try to build whether you want them to or not.  And they move quick.  SO if you make a mistake placing ghosts, it may not be a ghost by the time you figure that out.
+
+Now let's talk about logistic robots.  Logistic robots are your mid-game replacement for transport belts.  Before going further, though, it should be made clear that there is a trade-off.  You can in theory win the game with just robots, but you will find it much harder than it needs to be.
+
+The problem with robots is that they move slowly and can pick up very little at a time.  They go in a straight line and automatically sort items for you, but they require tons and tons of power and are slower than even the slowest transport belt.  If you want to move 500 things at a time, then at least initially that will take 500 active robots.  Technologies exist to make them better, but only by so much.
+
+This makes them very good for moving large amounts of different items over short distances.  You don't have to use splitters, and if the chests are only a few tiles apart the robots zip back and forth a bunch of times before they have to go to charge.  But if you try to move a bunch of the same thing 200 tiles, the robots will take forever doing it, and will often have to recharge in the middle.  When they recharge they temporarily take the items with them to whatever roboport they pick, making them unavailable to the rest of the factory.
+
+So what are some good use cases?  There's quite a lot.  If you have nuclear power set up for example, the power cost isn't a concern and you can run thousands and thousands of robots.  If you use trains, it's very useful to load trains with bots.  If you have a bunch of high-value low-volume items like engine units that only need to move a few tiles, slap down a roboport and some logistic robots and you can avoid routing belts.  One less obvious use case that works is to establish a global network that covers your whole base, then use that to just move science packs back to the lab.
+
+Of course, you need to know how to interact with them.  That brings us to the logistics interfaces and the remaining chests.
+
+To start with, you will unlock personal logistics for yourself and nothing else.  This lets you use robots to resupply yourself.  You access your own logistic interface with control shift l.  This consists of an overview tab, and one or more section tabs.
+
+Each section contains some logistic requests in a table format. Click values to edit them, and use backspace to clear.  You can set an optional minimum and an optional maximum.  If you say 0 to 5, for example, then bots will remove items until you have at most 5.  If you say 7 to 10, bots will bring you items until you have at least 7.
+
+All of the requests in all of the sections are combined together.
+
+The reason you have multiple sections is because of the group buttons at the bottom of the section.  Logistic groups are saved configurations.  When a section is assigned to a group, changes to that section propagate to all other sections in the world with the same name.  For example, you could make the group "basic items", and put some requests in it to move a certain set of items to lots of different places.  Once linked, a section will broadcast changes to all other sections, so to edit it after the fact you just find an existing section in the group.  You can attach as many groups as you want to an item by just adding more sections, and of course you can also have entity specific requests that are outside groups by using a section that's not in a group.
+
+To delete groups, use control backspace in the group list, the dangerous delete key.  For advanced users who are also playing with trains, it should be noted here that train groups do not stay around once the last train using them is gone, but logistic groups do.  Logistic groups are "their own thing", but train groups are more like radio channels--it exists if it's being used, otherwise it doesn't.
+
+The last feature of personal logistics--before we move onto chests--is personal trash.  To trash items, press o.  This moves them to your logistic trash inventory, and will cause robots to come take them out of your inventory, and to any available storage chests in the network.
+
+Now let's turn to requester chests.  A requester chest is just like your own logistic interface, but is for moving items around.  It also has an overview configuration tab, and then a bunch of sections, and it works in all of the same ways.  To access it, press control l with the chest selected.
+
+If you place a requester chest like a normal chest so that it feeds an assembling machine then configure it to request the ingredients, the assembling machine will then be fed from the network.  By feeding a passive provider chest from the assembling machines to push the outputs back into the network, you can replace belts.  Robots will take from the passive provider chests and move things into requesters until requests are satisfied.
+
+As a special case, copy-pasting settings from an entity to a chest will set the chest to request the ingredients of that recipe. To do this, use apostrophe to copy, and semicolon to paste.
+
+There are two remaining chest types to discuss which have very niche uses, which we will cover briefly.
+
+The first is the buffer chest.  A buffer chest is a requester chest and a provider chest in one.  You can set requests on it to get items moved to it, then bots will supply you from it.  Unlike normal provider chests however, requester chests never get items from buffers unless you specifically check the "request from buffers" checkbox in the requester's tab.  The main use for buffer chests is to supply yourself or construction robots.  You can create the "basic supplies" group (or any other name you want) and add it to the buffer chests as you place them.  This will keep supplies stocked everywhere, so that there is always something close when you place things yourself or when construction bots want to build.
+
+The second is the active provider.  This has the same function as the passive provider chest but forces robots to remove from it first, even if nothing is requesting it.  For example, if you put a bunch of wood in one and then place a storage chest, the bots will go out of their way to move everything to the storage chest.
+
+The problem with active providers and the reason they are niche is that robots will handle active providers before anything else.  So for example if you place them as the output of a train station or something, all robots will become way too busy moving things out of them to storage and never get to the rest of your requests.
+
+Mostly, we include them in this tutorial to warn you off them--without being able to see what's going on, it is a common mistake to use active providers and then not figure out why everything stopped.  But they do exist because some people have uses for them.  Those uses are just very rare in vanilla.  They have many more uses in space age and when playing with other mods.
+
+This concludes the logistics chapter--if you took nothing else away "I get to the logistic interfaces with control l" is the big one.  There are more logistic interfaces we haven't covered, e.g. on roboports themselves, and a lot more subtlety to this system.  You are strongly encouraged to look up the logistic network on the official Factorio wiki.
 
 ### Example Blueprints
 
