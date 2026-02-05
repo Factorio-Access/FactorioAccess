@@ -1,3 +1,7 @@
+# 0.16.56 (2026-02-05)
+
+- Correct dependencies in the mod portal
+
 # 0.16.55 (2026-01-01)
 
 - Publish a logistic/construction robots and equipment tutorial chapter
