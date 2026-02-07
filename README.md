@@ -93,40 +93,26 @@ To install a mod release, follow the instructions below, depending on the versio
 1. Install speechd and python 3 through your distribution. Note that Instructions vary by distribution.
 1. Use Git or GitHub CLI to get the launcher from the [Factorio-Access-Launcher repository](https://github.com/Factorio-Access/Factorio-Access-Launcher).
 1. CD into the folder.
-1. If you want to use a virtual python environment, or an executable, run build_main.py. If not, run pip to install requirements.txt by:  "pip install -r requirements.txt"
+1. If you want to use a virtual python environment, or an executable, run build_main.py. If not, run pip to install requirements.txt by: `pip install -r requirements.txt`
 1. Run the executable or main.py
 1. If it complains it can't find your Factorio installation then add the path to the Factorio executable as an argument when launching.
 1. If you bought space age, go into the launcher's mod menu and disable elevated rails, quality, and space age.
 
 ## MacOS: Mod install and running via Python scripts
 
-### High level instructions
-
-For step by step instructions continue to the next section.
-
-1. Make sure you have python 3 installed.
-1. Use Git or GitHub CLI, or extract from the release zip, to get the FactorioAccess mod into Factorio's mods folder, which is "~/Library/Application Support/factorio/mods" on Mac.
-1. Use Git or GitHub CLI to get the launcher from the [Factorio-Access-Launcher repository](https://github.com/Factorio-Access/Factorio-Access-Launcher). It shouldn't matter where you put it.
-1. Enter the repository folder and run the launcher builder script: `python3.11 build_main.py`
-1. Run the mod launcher via python.
-1. Follow the launcher instructions while the game is configured. This may involve launching the game itself temporarily.
-1. The game is ready to play from the launcher when the main menu appears.
-1. If you bought space age, go into the launcher's mod menu and disable elevated rails, quality, and space age.
-
-### Step by step instructions
-
 1. Open the terminal.
-1. Run `python3` as a single word command to check which python version is installed. 
-1. If you have python3, the version number will be printed. You need python 3.11, but any python3 will work. To exit python, use the command `exit()`.
-1. If you do not have python3, then install it from the official website: https://www.python.org/downloads/release/python-3110/
+1. Run `python3 --version` to check which Python version is installed. You need Python 3.11 specifically.
+1. If you do not have Python 3.11, install it from the official website: https://www.python.org/downloads/release/python-3110/
 1. In the terminal, navigate to the folder you'd like the launcher folder to be inside. For example: `cd ~/Documents`
-1. Clone the launcher repository here: `git clone git@github.com:Factorio-Access/Factorio-Access-Launcher.git`
+1. Clone the launcher repository with its submodules: `git clone --recurse-submodules git@github.com:Factorio-Access/Factorio-Access-Launcher.git`
 1. Go into the newly created folder: `cd Factorio-Access-Launcher`
-1. Run the build script: `python3.11 build_main.py`
-1. The build script might error out but it will at least set up the virtual environment and install the required python modules.
-1. The mod should now be fully installed. Any time you want to run the launcher you can go to the same folder and run: `./venv/bin/python main.py`
+1. Ensure all submodules are initialised: `git submodule update --init --recursive`
+1. Create a virtual environment: `python3.11 -m venv venv`
+1. Install the required packages: `./venv/bin/pip install -r requirements.txt`
+1. The mod should now be fully installed. Any time you want to run the launcher, go to the same folder and run: `./venv/bin/python main.py`
+1. The launcher will prompt for permission to use voiceover features. This needs to be allowed.
 1. Follow the launcher's setup steps as instructed by it.
-1. If you bought space age, go into the launcher's mod menu and disable elevated rails, quality, and space age.
+1. If you bought Space Age, go into the launcher's mod menu and disable elevated rails, quality, and space age.
 
 # Mod Documentation
 
