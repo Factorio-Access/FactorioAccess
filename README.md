@@ -9,7 +9,7 @@ The mod tries to support multiplayer but game limitations mean that your experie
 
 On Windows our launcher is currently flagged as a virus. We are working on fixing this but there is not much we can do. You may need to add your Factorio folder as an exception in Windows Defender.  It moves the mouse and does a bunch of things that look like a virus to antiviruses as part of interacting with the game.  If you run the launcher from source this is not a problem.  Please note that wee build the launcher from source in a GitHub Actions runner, so we are confident that our build is clean.
 
-Finally, we do not yet support space age. If you bought space age, you need to disable quality, elevated rails, and space age in the launcher's mod menu.
+Finally, we do not yet support Space Age. If you bought Space Age, you need to disable quality, elevated rails, and Space Age in the launcher's mod menu.
 
 # Installing Factorio
 
@@ -69,7 +69,7 @@ To install a mod release, follow the instructions below, depending on the versio
 1. Put it in the root of the factorio zip, the same folder as bin and config-path.cfg
 1. Launch the launcher and follow the instructions. The launcher now downloads the mod.
 1. The game is ready to play from the launcher when the main menu appears.
-1. If you bought space age, go into the launcher's mod menu and disable elevated rails, quality, and space age.
+1. If you bought Space Age, go into the launcher's mod menu and disable elevated rails, quality, and Space Age.
 
 ## Windows Steam version or regular Windows version: Mod release install
 
@@ -86,7 +86,7 @@ To install a mod release, follow the instructions below, depending on the versio
 1. Try launching the game from Steam. This should now run the mod launcher instead, and say "Hello Factorio". If not setup correctly, the game might launch directly and you will hear music.
 1. Follow the mod launcher instructions while the game is configured. This may involve launching the game itself temporarily.
 1. The game is ready to play from the launcher when the main menu appears.
-1. If you bought space age, go into the launcher's mod menu and disable elevated rails, quality, and space age.
+1. If you bought Space Age, go into the launcher's mod menu and disable elevated rails, quality, and Space Age.
 
 ## Linux Version: Mod install and running via Python scripts
 
@@ -96,7 +96,7 @@ To install a mod release, follow the instructions below, depending on the versio
 1. If you want to use a virtual python environment, or an executable, run build_main.py. If not, run pip to install requirements.txt by: `pip install -r requirements.txt`
 1. Run the executable or main.py
 1. If it complains it can't find your Factorio installation then add the path to the Factorio executable as an argument when launching.
-1. If you bought space age, go into the launcher's mod menu and disable elevated rails, quality, and space age.
+1. If you bought Space Age, go into the launcher's mod menu and disable elevated rails, quality, and Space Age.
 
 ## MacOS: Mod install and running via Python scripts
 
@@ -112,7 +112,7 @@ To install a mod release, follow the instructions below, depending on the versio
 1. The mod should now be fully installed. Any time you want to run the launcher, go to the same folder and run: `./venv/bin/python main.py`
 1. The launcher will prompt for permission to use voiceover features. This needs to be allowed.
 1. Follow the launcher's setup steps as instructed by it.
-1. If you bought Space Age, go into the launcher's mod menu and disable elevated rails, quality, and space age.
+1. If you bought Space Age, go into the launcher's mod menu and disable elevated rails, quality, and Space Age.
 
 # Mod Documentation
 
