@@ -274,13 +274,9 @@ function mod.set_cursor_colors_to_player_colors(pindex)
    local p = game.get_player(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
    local h_tile = vp:get_cursor_tile_highlight_box()
-   if h_tile ~= nil and h_tile.valid then rendering.set_color(h_tile, p.color) end
-   if
-      storage.players[pindex].building_footprint ~= nil
-      and rendering.is_valid(storage.players[pindex].building_footprint)
-   then
-      rendering.set_color(storage.players[pindex].building_footprint, p.color)
-   end
+   if h_tile ~= nil and h_tile.valid then h_tile.color = p.color end
+   local footprint = storage.players[pindex].building_footprint
+   if footprint ~= nil and footprint.valid then footprint.color = p.color end
 end
 
 return mod
