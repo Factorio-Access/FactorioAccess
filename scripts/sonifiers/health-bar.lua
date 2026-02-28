@@ -117,7 +117,7 @@ local function get_current_state(pindex)
    local shield_pct = nil
 
    local armor_inv = player.get_inventory(defines.inventory.character_armor)
-   if armor_inv[1] and armor_inv[1].valid_for_read and armor_inv[1].grid then
+   if armor_inv and armor_inv[1] and armor_inv[1].valid_for_read and armor_inv[1].grid then
       local grid = armor_inv[1].grid
       if grid.valid and grid.max_shield > 0 then
          shield_pct = math.floor((grid.shield / grid.max_shield) * 100 + 0.5)
