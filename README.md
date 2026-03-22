@@ -7,7 +7,7 @@ We have had players successfully build post-endgame bases with it in a reasonabl
 
 The mod tries to support multiplayer but game limitations mean that your experience will be laggy and kind of terrible. We cannot do anything about this.  We also have limited ability to do anything about bugs, because that would require two mod developers playing at the same time.
 
-On Windows our launcher is currently flagged as a virus. We are working on fixing this but there is not much we can do. You may need to add your Factorio folder as an exception in Windows Defender.  It moves the mouse and does a bunch of things that look like a virus to antiviruses as part of interacting with the game.  If you run the launcher from source this is not a problem.  Please note that wee build the launcher from source in a GitHub Actions runner, so we are confident that our build is clean.
+On Windows our launcher is currently flagged as a virus. We are working on fixing this but there is not much we can do. You may need to add your Factorio folder as an exception in Windows Defender.  It moves the mouse and does a bunch of things that look like a virus to antiviruses as part of interacting with the game.  Please note that we build the launcher from source in a GitHub Actions runner, so we are confident that our build is clean.  If your antivirus will not allow an exception, see the **Running from source** note in the Windows install sections below.
 
 Finally, we do not yet support Space Age. If you bought Space Age, you need to disable quality, elevated rails, and Space Age in the launcher's mod menu.
 
@@ -71,6 +71,15 @@ To install a mod release, follow the instructions below, depending on the versio
 1. The game is ready to play from the launcher when the main menu appears.
 1. If you bought Space Age, go into the launcher's mod menu and disable elevated rails, quality, and Space Age.
 
+### Windows Zip version: Running from source instead
+
+If your antivirus blocks `launcher.exe`, you can run the launcher directly from Python instead:
+
+1. Install [git](https://git-scm.com) if you don't have it already.
+1. Clone the launcher repository: `git clone --recurse-submodules https://github.com/Factorio-Access/Factorio-Access-Launcher`
+1. Place the cloned folder in the root of the Factorio zip, the same folder as `bin` and `config-path.cfg`.
+1. Double-click `install-and-run.bat` to set up and start the launcher. On subsequent runs, double-click `install-and-run.bat` again.
+
 ## Windows Steam version or regular Windows version: Mod release install
 
 1. Download the latest launcher from here: https://github.com/factorio-access/factorio-access-launcher/releases
@@ -88,14 +97,26 @@ To install a mod release, follow the instructions below, depending on the versio
 1. The game is ready to play from the launcher when the main menu appears.
 1. If you bought Space Age, go into the launcher's mod menu and disable elevated rails, quality, and Space Age.
 
+### Windows Steam version: Running from source instead
+
+If your antivirus blocks `launcher.exe`, you can run the launcher directly from Python instead:
+
+1. Install [git](https://git-scm.com) if you don't have it already.
+1. Clone the launcher repository: `git clone --recurse-submodules https://github.com/Factorio-Access/Factorio-Access-Launcher`
+1. Place the cloned folder in `%AppData%/Factorio`.
+1. Double-click `install-and-run.bat` to set up and start the launcher.
+1. You still need to configure Steam launch options as described above, but use `install-and-run.bat` in place of `launcher.exe`.
+
 ## Linux Version: Mod install and running via Python scripts
 
-1. Install speechd and python 3 through your distribution. Note that Instructions vary by distribution.
-1. Use Git or GitHub CLI to get the launcher from the [Factorio-Access-Launcher repository](https://github.com/Factorio-Access/Factorio-Access-Launcher).
-1. CD into the folder.
-1. If you want to use a virtual python environment, or an executable, run build_main.py. If not, run pip to install requirements.txt by: `pip install -r requirements.txt`
-1. Run the executable or main.py
-1. If it complains it can't find your Factorio installation then add the path to the Factorio executable as an argument when launching.
+1. Install git, Python 3, and the speech daemon through your distribution. For example on Debian or Ubuntu: `sudo apt install git python3 python3-pip speech-dispatcher`
+1. Clone the launcher repository with its submodules: `git clone --recurse-submodules https://github.com/Factorio-Access/Factorio-Access-Launcher`
+1. Go into the newly created folder: `cd Factorio-Access-Launcher`
+1. Create a virtual environment: `python3 -m venv venv`
+1. Install the required packages: `./venv/bin/pip install -r requirements.txt`
+1. Run the launcher: `./venv/bin/python main.py`
+1. Any time you want to run the launcher again, go to the same folder and run: `./venv/bin/python main.py`
+1. If it complains it can't find your Factorio installation, pass the path to the Factorio executable: `./venv/bin/python main.py --executable-path /path/to/factorio`
 1. If you bought Space Age, go into the launcher's mod menu and disable elevated rails, quality, and Space Age.
 
 ## MacOS: Mod install and running via Python scripts
