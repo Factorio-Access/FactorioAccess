@@ -6,6 +6,15 @@ local mod = {}
 
 mod.ROOT = "__TREE_CHOOSER_ROOT__"
 
+-- All tree transitions play the same sound; sharing one vtable avoids allocating a closure per
+-- transition per render.
+---@type fa.ui.graph.TransitionVtable
+local MOVE_TRANSITION_VTAB = {
+   play_sound = function(ctx)
+      UiSounds.play_menu_move(ctx.pindex)
+   end,
+}
+
 ---@class fa.ui.tree.Node
 ---@field key string
 ---@field parent string
@@ -84,28 +93,35 @@ function TreeChooserBuilder:build()
 
    render.start_key = root_children[1]
 
+   -- Precompute each key's position among its siblings.  Scanning the sibling array from inside
+   -- the per-node loop below would be quadratic in the size of large categories.  A node can
+   -- linger in a former parent's children after reparenting, so only trust entries whose child
+   -- still points back at that parent.
+   local sibling_index = {}
+   for parent_key, node in pairs(self.nodes) do
+      for i, child in ipairs(node.children) do
+         local child_node = self.nodes[child]
+         if child_node and child_node.parent == parent_key then sibling_index[child] = i end
+      end
+   end
+   for i, key in ipairs(root_children) do
+      sibling_index[key] = i
+   end
+
    for key, node in pairs(self.nodes) do
       local transitions = {}
 
       if node.parent ~= mod.ROOT then
          transitions[UiKeyGraph.TRANSITION_DIR.UP] = {
             destination = node.parent,
-            vtable = {
-               play_sound = function(ctx)
-                  UiSounds.play_menu_move(ctx.pindex)
-               end,
-            },
+            vtable = MOVE_TRANSITION_VTAB,
          }
       end
 
       if #node.children > 0 then
          transitions[UiKeyGraph.TRANSITION_DIR.DOWN] = {
             destination = node.children[1],
-            vtable = {
-               play_sound = function(ctx)
-                  UiSounds.play_menu_move(ctx.pindex)
-               end,
-            },
+            vtable = MOVE_TRANSITION_VTAB,
          }
       end
 
@@ -116,24 +132,14 @@ function TreeChooserBuilder:build()
          siblings = self.nodes[node.parent].children
       end
 
-      local my_index = 1
-      for i, sibling in ipairs(siblings) do
-         if sibling == key then
-            my_index = i
-            break
-         end
-      end
+      local my_index = sibling_index[key] or 1
 
       if #siblings > 1 then
          -- Only add left transition if not at the first sibling
          if my_index > 1 then
             transitions[UiKeyGraph.TRANSITION_DIR.LEFT] = {
                destination = siblings[my_index - 1],
-               vtable = {
-                  play_sound = function(ctx)
-                     UiSounds.play_menu_move(ctx.pindex)
-                  end,
-               },
+               vtable = MOVE_TRANSITION_VTAB,
             }
          end
 
@@ -141,11 +147,7 @@ function TreeChooserBuilder:build()
          if my_index < #siblings then
             transitions[UiKeyGraph.TRANSITION_DIR.RIGHT] = {
                destination = siblings[my_index + 1],
-               vtable = {
-                  play_sound = function(ctx)
-                     UiSounds.play_menu_move(ctx.pindex)
-                  end,
-               },
+               vtable = MOVE_TRANSITION_VTAB,
             }
          end
       end

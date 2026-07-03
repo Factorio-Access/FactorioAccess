@@ -163,6 +163,9 @@ local function localise_trigger(tech, trig)
       table.insert(res, quality_name)
    elseif trig.type == "mine-entity" then
       local parts = {}
+      -- LuaLS's Factorio defs lack this field, but MineEntityTechnologyTrigger requires it. See
+      -- llm-docs/api-reference/prototypes/concepts/MineEntityTechnologyTrigger.md
+      ---@diagnostic disable-next-line: undefined-field
       for _, e in pairs(trig.entities) do
          table.insert(parts, Localising.get_localised_name_with_fallback(prototypes.entity[e]))
       end

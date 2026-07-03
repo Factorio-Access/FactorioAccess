@@ -394,7 +394,7 @@ function on_tick(event)
    elseif event.tick % 61 == 0 then
       -- Refresh search cache periodically (coprime with other updates)
       for pindex, player in pairs(players) do
-         if player.connected then UiRouter.on_inventory_changed(pindex) end
+         if player.connected then UiRouter.periodic_search_refresh(pindex) end
       end
    elseif event.tick % 90 == 13 then
       for pindex, player in pairs(players) do
@@ -977,16 +977,6 @@ EventManager.on_event(
    end
 )
 
-EventManager.on_event(
-   defines.events.on_player_main_inventory_changed,
-   ---@param event EventData.on_player_main_inventory_changed
-   ---@param pindex integer
-   function(event, pindex)
-      -- Refresh search cache if UI is open and search is active
-      UiRouter.on_inventory_changed(pindex)
-   end
-)
-
 --If the player has unexpected lateral movement while smooth running in a cardinal direction, like from bumping into an entity or being at the edge of water, play a sound.
 
 function all_ents_are_walkable(pos)
@@ -1273,7 +1263,8 @@ local function cursor_skip_iteration(pindex, direction, iteration_limit)
       local connections = start.get_fluid_box_pipe_connections(1)
       for i, con in ipairs(connections) do
          if con.target ~= nil then
-            local dist = math.ceil(util.distance(start.position, con.target.get_fluid_box_pipe_connections(1)[1].position))
+            local dist =
+               math.ceil(util.distance(start.position, con.target.get_fluid_box_pipe_connections(1)[1].position))
             local dir_neighbor = FaUtils.get_direction_biased(con.target_position, start.position)
             if con.connection_type == "underground" and dir_neighbor == direction then
                vp:set_cursor_pos(con.target.get_fluid_box_pipe_connections(1)[1].position)

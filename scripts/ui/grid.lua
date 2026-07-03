@@ -114,11 +114,9 @@ function GridBuilder:set_default_cell_vtab(vtab)
    return self
 end
 
--- Building strings is expensive!  Avoid that by caching these, since we need to use them a few times.  The cache is
--- valid up to keycache_x and keycache_y inclusive, and filled out as needed.
+-- Building strings is expensive!  Avoid that by caching these, since we need to use them a few times.  Filled out on
+-- demand; entries never change once created.
 local keycache = TH.defaulting_table()
-local keycache_x = 0
-local keycache_y = 0
 
 -- This helper table lets us iterate over all 4 directions to check for adjacent nodes.
 local ADJACENT_DIRS = {
@@ -211,9 +209,9 @@ function GridBuilder:build()
    end
 
    --- Fill out the key cache so that we have all needed keys.
-   for x = keycache_x, self.max_x do
-      for y = keycache_y, self.max_y do
-         keycache[x][y] = string.format("%d-%d", x, y)
+   for x = 1, self.max_x do
+      for y = 1, self.max_y do
+         if not keycache[x][y] then keycache[x][y] = string.format("%d-%d", x, y) end
       end
    end
 
@@ -241,7 +239,7 @@ function GridBuilder:build()
 
          -- For all adjacencies which have a node, add a transition to it.  For all adjacencies which also have a
          -- header, add the label to announce.
-         for _, adj in pairs(ADJACENT_DIRS) do
+         for _, adj in ipairs(ADJACENT_DIRS) do
             local dir, dx, dy = adj[1], adj[2], adj[3]
             local new_x = x + dx
             local new_y = y + dy

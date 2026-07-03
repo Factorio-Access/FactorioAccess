@@ -346,7 +346,6 @@ function Graph:_maybe_call(node, outer_ctx, callback_name, modifiers, ...)
    local inner_ctx = self:_wrap_ctx(outer_ctx, self.name, modifiers)
 
    local fallback_callback_name = CALLBACK_FALLBACKS[callback_name]
-   local sound = function() end
    local cb = node.vtable[callback_name]
    if not cb then cb = node.vtable[fallback_callback_name] end
 

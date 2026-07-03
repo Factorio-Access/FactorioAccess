@@ -90,7 +90,10 @@ end
 ---@param translated_text string The translated text
 function LocalisedStringCache:put(localised_string, translated_text)
    local canonical = canonicalize(self.trie_root, localised_string)
-   self.lru_cache:put(canonical, translated_text)
+   local evicted = self.lru_cache:put(canonical, translated_text)
+   -- Evicted entries must also leave the trie, or dead paths pile up in the save forever.  This
+   -- matters because labels often embed live values such as item counts.
+   if evicted then self:_remove_from_trie(evicted) end
 end
 
 ---Check if a localised string has a translation (does not mark as used)

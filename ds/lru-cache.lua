@@ -95,6 +95,7 @@ end
 ---Put a key-value pair into the cache
 ---@param key any
 ---@param value any
+---@return any|nil evicted_key Key evicted to make room, nil if nothing was evicted
 function LRUCache:put(key, value)
    local node = self.map[key]
 
@@ -107,8 +108,10 @@ function LRUCache:put(key, value)
       self:_add_to_head(node)
       self.size = self.size + 1
 
-      if self.size > self.capacity then self:evict_lru() end
+      if self.size > self.capacity then return self:evict_lru() end
    end
+
+   return nil
 end
 
 ---Remove a specific key from the cache

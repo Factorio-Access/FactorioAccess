@@ -10,6 +10,15 @@ local UiUtils = require("scripts.ui.ui-utils")
 
 local mod = {}
 
+-- All menu transitions play the same sound; sharing one vtable avoids allocating a closure per
+-- transition per render.
+---@type fa.ui.graph.TransitionVtable
+local MOVE_TRANSITION_VTAB = {
+   play_sound = function(ctx)
+      UiSounds.play_menu_move(ctx.pindex)
+   end,
+}
+
 ---@class (exact) fa.ui.menu.ClickHandlers
 ---@field on_click? fa.ui.graph.SimpleCallback
 ---@field on_right_click? fa.ui.graph.ClickCallback
@@ -207,11 +216,7 @@ function MenuBuilder:build()
    -- Helper to create vertical transition
    local function add_vertical_transition(node, direction, target_key)
       node.transitions[direction] = {
-         vtable = {
-            play_sound = function(ctx)
-               UiSounds.play_menu_move(ctx.pindex)
-            end,
-         },
+         vtable = MOVE_TRANSITION_VTAB,
          destination = target_key,
       }
    end
@@ -248,11 +253,7 @@ function MenuBuilder:build()
       if pos_in_row > 1 then
          local prev_item = current_row.items[pos_in_row - 1]
          render.nodes[item.key].transitions[UiKeyGraph.TRANSITION_DIR.LEFT] = {
-            vtable = {
-               play_sound = function(ctx)
-                  UiSounds.play_menu_move(ctx.pindex)
-               end,
-            },
+            vtable = MOVE_TRANSITION_VTAB,
             destination = prev_item.key,
          }
       end
@@ -261,11 +262,7 @@ function MenuBuilder:build()
       if pos_in_row < #current_row.items then
          local next_item = current_row.items[pos_in_row + 1]
          render.nodes[item.key].transitions[UiKeyGraph.TRANSITION_DIR.RIGHT] = {
-            vtable = {
-               play_sound = function(ctx)
-                  UiSounds.play_menu_move(ctx.pindex)
-               end,
-            },
+            vtable = MOVE_TRANSITION_VTAB,
             destination = next_item.key,
          }
       end
