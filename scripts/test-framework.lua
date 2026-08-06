@@ -56,6 +56,7 @@ local test_files = {
    "entity-selection-test", -- Test stable entity ordering (issue #265)
    "rail-grid-adjustment-test", -- Test that TestSurface matches game rail grid adjustment
    "player-weapon-test", -- Test weapon/ammo property detection
+   "mod-entity-settings-test", -- Test validation of settings schemas from other mods
 }
 
 -- Test execution state

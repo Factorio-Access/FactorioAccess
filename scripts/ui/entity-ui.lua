@@ -8,6 +8,7 @@ local EntityAccess = require("scripts.entity-access")
 local Functools = require("scripts.functools")
 local InventoryGrid = require("scripts.ui.inventory-grid")
 local InventoryUtils = require("scripts.inventory-utils")
+local ModEntitySettings = require("scripts.mod-entity-settings")
 local Speech = require("scripts.speech")
 local TabList = require("scripts.ui.tab-list")
 local UiKeyGraph = require("scripts.ui.key-graph")
@@ -25,6 +26,7 @@ local infinity_chest_config_tab = require("scripts.ui.tabs.infinity-chest-config
 local infinity_pipe_config_tab = require("scripts.ui.tabs.infinity-pipe-config")
 local inserter_config_tab = require("scripts.ui.tabs.inserter-config")
 local locomotive_config_tab = require("scripts.ui.tabs.locomotive-config")
+local mod_entity_settings_tab = require("scripts.ui.tabs.mod-entity-settings")
 local roboport_config_tab = require("scripts.ui.tabs.roboport-config")
 local rocket_silo_config_tab = require("scripts.ui.tabs.rocket-silo-config")
 local selector_combinator_tab = require("scripts.ui.tabs.selector-combinator")
@@ -160,6 +162,12 @@ local function build_configuration_tabs(entity)
    if not prototype then return nil end
 
    local tabs = {}
+
+   -- Settings another mod declared for this entity go first: for an entity that
+   -- exists to be configured, that is what the player came for.
+   if mod_entity_settings_tab.is_available(entity) then
+      table.insert(tabs, mod_entity_settings_tab.mod_entity_settings_tab)
+   end
 
    -- Add assembling machine recipe selector
    if prototype.type == "assembling-machine" then table.insert(tabs, assembling_machine_tab.assembling_machine_tab) end
@@ -410,6 +418,11 @@ function mod.has_ui(entity)
    -- Check by entity type
    if ENTITY_TYPES_WITH_UI[entity.type] then return true end
 
+   -- Another mod offers settings for it.  This is checked ahead of the building
+   -- test below because such an entity need not be operable or a building; a
+   -- marker or a sign is a reasonable thing to configure.
+   if mod_entity_settings_tab.is_available(entity) then return true end
+
    -- Operable buildings
    if entity.operable and entity.prototype.is_building then return true end
 
@@ -527,6 +540,14 @@ function mod.open_entity_ui(pindex, entity)
 
    -- Open the appropriate UI based on entity type
    local router = UiRouter.get_router(pindex)
+
+   -- Entities another mod configures go to the generic UI ahead of the type
+   -- special cases below, whatever base type they were built on: the mod's own
+   -- settings are what the player wants, not the vanilla UI for that type.
+   if ModEntitySettings.has_settings(entity) then
+      router:open_ui(UiRouter.UI_NAMES.ENTITY, params)
+      return true
+   end
 
    -- Special case: constant combinators use their own UI
    if entity.type == "constant-combinator" then

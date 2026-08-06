@@ -1,3 +1,10 @@
+# 0.16.58 (2026-08-06))
+
+- Mods can now make their entities' settings accessible to us. A mod describes its settings as data over a remote
+  interface and we render them as a spoken tab in the entity UI. A setting is either a toggle or a list of choices.
+  The schema is re-read on every render, so choice lists can be updated dynamically, for example setting choices
+  based on what a player has researched. See devdocs/mod-entity-settings.md.
+
 # 0.16.57 (2026-03-04))
 
 - Some multiplayer fixes
