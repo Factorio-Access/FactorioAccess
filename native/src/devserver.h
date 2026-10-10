@@ -7,6 +7,7 @@
 //   /speech?since=N         spoken lines since cursor N
 //   /say?text=...           speak through the native speech path
 //   /mute?on=1|0            mute or unmute speech (history still records)
+//   /ui/tree?all=1          the agui widget tree: class, address, flags, absolute rect, text (all=1: hidden too)
 namespace fa::dev {
 void start(int port);  // no-op while running
 void stop();

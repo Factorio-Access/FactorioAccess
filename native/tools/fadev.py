@@ -344,9 +344,13 @@ def main():
     s = sub.add_parser("mute")
     s.add_argument("on")
     s.set_defaults(f=lambda a: print(get("/mute" + q(on=a.on)), end=""))
+    # Routes are given without the leading slash (`get ui/tree?all=1`): Git Bash rewrites /-paths into Windows paths.
     s = sub.add_parser("get")
     s.add_argument("path")
-    s.set_defaults(f=lambda a: print(get(a.path), end=""))
+    s.set_defaults(f=lambda a: print(get("/" + a.path.lstrip("/")), end=""))
+    s = sub.add_parser("tree")
+    s.add_argument("--all", action="store_true")
+    s.set_defaults(f=lambda a: print(get("/ui/tree" + q(all=1 if a.all else None)), end=""))
     a = p.parse_args()
     a.f(a)
 

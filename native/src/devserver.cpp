@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include "agui.h"
 #include "hooks.h"
 #include "log.h"
 #include "speech.h"
@@ -58,6 +59,23 @@ static std::string ring_since(LineRing& ring, const Query& q) {
   return out;
 }
 
+// One line per widget, indented by depth: class, flags, rect, text. Hidden subtrees are skipped unless all=1;
+// private children (a widget's implementation parts) are marked with '~'.
+static void dump_tree(agui::Widget* w, int depth, bool all, std::string& out) {
+  bool vis = agui::visible(w);
+  if (!vis && !all) return;
+  auto r = agui::rect(w);
+  std::string t = agui::text(w);
+  out += std::format("{}{} {:#x}{}{}{} [{},{} {}x{}]{}{}\n", std::string(depth * 2, ' '), agui::class_name(w), (uintptr_t)w, vis ? "" : " hidden",
+                     agui::enabled(w) ? "" : " disabled", w == agui::focused() ? " FOCUSED" : "", r.x, r.y, r.w, r.h, t.empty() ? "" : " ",
+                     t);
+  for (auto* c : agui::children(w)) dump_tree(c, depth + 1, all, out);
+  for (auto* c : agui::private_children(w)) {
+    out += std::string(depth * 2 + 2, ' ') + "~\n";
+    dump_tree(c, depth + 1, all, out);
+  }
+}
+
 static std::string handle(const std::string& path, const Query& q, int& status) {
   status = 200;
   if (path == "/health")
@@ -71,6 +89,13 @@ static std::string handle(const std::string& path, const Query& q, int& status) 
   if (path == "/mute") {
     speech::set_muted(truthy(arg(q, "on", "1")));
     return std::format("muted={}\n", speech::muted());
+  }
+  if (path == "/ui/tree") {
+    agui::Widget* root = agui::root();
+    if (!root) return "no gui\n";
+    std::string out;
+    dump_tree(root, 0, truthy(arg(q, "all", "0")), out);
+    return out;
   }
   status = 404;
   return "unknown route\n";

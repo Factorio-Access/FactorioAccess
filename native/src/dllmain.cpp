@@ -1,4 +1,5 @@
 #include <windows.h>
+#include "agui.h"
 #include "devserver.h"
 #include "hooks.h"
 #include "log.h"
@@ -27,6 +28,10 @@ extern "C" __declspec(dllexport) DWORD WINAPI fa_init(LPVOID) {
   bool sp = fa::speech::init();
   if (!fa::sym::init()) {
     fa::speech::speak("Factorio Access native code could not read the game's symbols and is disabled", true);
+    return 0;
+  }
+  if (!fa::agui::init()) {
+    fa::speech::speak("Factorio Access native code does not support this game version and is disabled", true);
     return 0;
   }
   g_installed = fa::hooks::install();

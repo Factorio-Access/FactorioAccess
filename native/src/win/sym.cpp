@@ -11,7 +11,7 @@ namespace fa::sym {
 static std::mutex g_mu;
 static HANDLE g_proc;
 // SymTagEnum values (cvconst.h, which ships with the DIA SDK rather than the Windows SDK).
-constexpr DWORD kSymTagData = 7, kSymTagBaseClass = 18;
+constexpr DWORD kSymTagFunction = 5, kSymTagData = 7, kSymTagBaseClass = 18;
 static DWORD64 g_base;
 
 bool init() {
@@ -101,8 +101,7 @@ static std::optional<std::size_t> find_member(ULONG type, const std::wstring& me
   return std::nullopt;
 }
 
-std::optional<std::size_t> offset(const char* type, const char* member) {
-  std::lock_guard lk(g_mu);
+static std::optional<ULONG> type_id(const char* type) {
   alignas(SYMBOL_INFO) char buf[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
   auto* si = reinterpret_cast<SYMBOL_INFO*>(buf);
   si->SizeOfStruct = sizeof(SYMBOL_INFO);
@@ -111,8 +110,31 @@ std::optional<std::size_t> offset(const char* type, const char* member) {
     log::writef("sym: type '{}' not found", type);
     return std::nullopt;
   }
+  return si->TypeIndex;
+}
+
+std::optional<std::size_t> vtable_offset(const char* type, const char* method) {
+  std::lock_guard lk(g_mu);
+  auto t = type_id(type);
+  if (!t) return std::nullopt;
+  // Methods carry their qualified name ("agui::Widget::getText"); data members their bare one.
+  std::string qualified = std::string(type) + "::" + method;
+  std::wstring m(qualified.begin(), qualified.end());
+  for (ULONG c : children(*t)) {
+    DWORD tag = 0, off = 0;
+    SymGetTypeInfo(g_proc, g_base, c, TI_GET_SYMTAG, &tag);
+    if (tag == kSymTagFunction && name_of(c) == m && SymGetTypeInfo(g_proc, g_base, c, TI_GET_VIRTUALBASEOFFSET, &off)) return off;
+  }
+  log::writef("sym: virtual '{}::{}' not found", type, method);
+  return std::nullopt;
+}
+
+std::optional<std::size_t> offset(const char* type, const char* member) {
+  std::lock_guard lk(g_mu);
+  auto t = type_id(type);
+  if (!t) return std::nullopt;
   std::wstring m(member, member + strlen(member));
-  auto r = find_member(si->TypeIndex, m);
+  auto r = find_member(*t, m);
   if (!r) log::writef("sym: '{}::{}' not found", type, member);
   return r;
 }
