@@ -26,9 +26,7 @@ local DataToRuntimeMap = require("scripts.data-to-runtime-map")
 local FaUtils = require("scripts.fa-utils")
 local Functools = require("scripts.functools")
 local Localising = require("scripts.localising")
-local Memosort = require("scripts.memosort")
 local Speech = require("scripts.speech")
-local StorageManager = require("scripts.storage-manager")
 local TH = require("scripts.table-helpers")
 
 -- This is the workaround for the lack of counts in craft-item research
@@ -54,19 +52,7 @@ local RESEARCH_LISTS = {
    LOCKED = "locked",
    RESEARCHED = "researched",
 }
-local RESEARCH_LIST_ORDER = { RESEARCH_LISTS.RESEARCHABLE, RESEARCH_LISTS.LOCKED, RESEARCH_LISTS.RESEARCHED }
 
----@class fa.research.ResearchMenuPosition
----@field index integer
----@field focused_list fa.research.ResearchList
-
----@type table<number, { research_menu_pos: fa.research.ResearchMenuPosition }>
-local research_state = StorageManager.declare_storage_module("research", {
-   research_menu_pos = {
-      index = 1,
-      focused_list = RESEARCH_LISTS.RESEARCHABLE,
-   },
-})
 local mod = {}
 
 -- Wrap a research's localised name so that, if vanilla doesn't have a localised
@@ -467,90 +453,6 @@ local function get_visible_researches(player)
    end)
 
    return res
-end
-
--- Given a position, normalize it to be on a technology in the given list: go down untiln one is found, otherwise go up.
--- This is needed to handle the case when the research lists are open as a technology changes states.  Returns whether
--- this was possible.  Or put another way, if this returns false then the focused list is empty.
----@param researches fa.research.ResearchEntry[]
----@param pos fa.research.ResearchMenuPosition
----@return boolean
-local function normalize_pos(researches, pos)
-   if pos.index < 1 then
-      pos.index = 1
-   elseif pos.index > #researches then
-      pos.index = #researches
-   end
-
-   for direction = -1, 1, 2 do
-      local endpoint = (direction == -1 and 1 or #researches)
-
-      for i = pos.index, endpoint, direction do
-         if researches[i].list == pos.focused_list then
-            pos.index = i
-            return true
-         end
-      end
-   end
-
-   return false
-end
-
--- Find the next or previous index in an array of researches which is in the given list, direction, and starting index.
--- Does not return the starting index. Returns nil if there was nothing in the direction specified; throws an error if
--- the index is out of range.
----@param researches fa.research.ResearchEntry[]
----@param start_index integer
----@param direction 1|-1
----@param list fa.research.ResearchList
----@return number?
-local function find_index_relative(researches, start_index, direction, list)
-   local len = #researches
-   assert(start_index >= 1 and start_index <= len)
-   local endpoint = direction == 1 and len or 1
-   local startpoint = start_index + direction
-   if startpoint > len then return nil end
-
-   for i = startpoint, endpoint, direction do
-      if researches[i].list == list then return i end
-   end
-end
-
--- Return a string to announce the research under the given pos, which must
--- already be in range.
----@param researches fa.research.ResearchEntry[]
----@param pos fa.research.ResearchMenuPosition
----@return LocalisedString
-local function announce_under_pos(researches, pos)
-   -- The point is e.g. "1 of 5" or more context at the top level or etc. This
-   -- is basically a hook point whenever we want more complex logic.
-   return tech_name_string(researches[pos.index].tech)
-end
-
-function mod.clear_queue(pindex)
-   local player = game.get_player(pindex)
-   assert(player)
-   player.force.research_queue = {}
-   Speech.speak(pindex, { "fa.research-queue-cleared" })
-end
-
-function mod.queue_announce(pindex)
-   local player = game.get_player(pindex)
-   assert(player)
-   local queue = (player.force --[[@as LuaForce]]).research_queue
-   if not next(queue) then
-      Speech.speak(pindex, { "fa.research-queue-empty" })
-      return
-   end
-
-   ---@type LocalisedString[]
-   local joining = {}
-   for _, t in pairs(queue) do
-      table.insert(joining, tech_name_string(t))
-   end
-   local joined = FaUtils.localise_cat_table(joining, ", ")
-
-   Speech.speak(pindex, { "fa.research-queue-contains", joined })
 end
 
 -- For when pressing `t`, the research part of the string.

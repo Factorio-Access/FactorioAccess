@@ -9,14 +9,6 @@ local dirs = defines.direction
 
 local mod = {}
 
---Report more info about a vehicle.
-function mod.vehicle_info(pindex)
-   if not game.get_player(pindex).driving then return { "fa.driving-not-in-vehicle" } end
-
-   local vehicle = game.get_player(pindex).vehicle
-   return { "fa.driving-car", { "entity-name." .. vehicle.name }, mod.fuel_inventory_info(vehicle) }
-end
-
 --Return fuel content in a fuel inventory
 function mod.fuel_inventory_info(ent)
    local itemtable = ent.get_fuel_inventory().get_contents()
@@ -34,16 +26,6 @@ function mod.fuel_inventory_info(ent)
    end
 
    return { "fa.driving-contains-fuel", FaUtils.build_list(fuel_items) }
-end
-
-function mod.stop_vehicle(pindex)
-   local vehicle = game.get_player(pindex).vehicle
-   if vehicle and vehicle.valid then vehicle.speed = 0 end
-end
-
-function mod.halve_vehicle_speed(pindex)
-   local vehicle = game.get_player(pindex).vehicle
-   if vehicle and vehicle.valid then vehicle.speed = vehicle.speed / 2 end
 end
 
 return mod

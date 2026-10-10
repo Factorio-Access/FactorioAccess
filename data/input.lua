@@ -274,13 +274,6 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "fa-a-i",
-      key_sequence = "ALT + I",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
       name = "fa-pageup",
       key_sequence = "PAGEUP",
       consuming = "none",

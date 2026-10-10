@@ -2,15 +2,12 @@
 --Does not include event handlers
 
 local BuildDimensions = require("scripts.build-dimensions")
-local BuildingTools = require("scripts.building-tools")
 local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
 local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
-local PlayerMiningTools = require("scripts.player-mining-tools")
 local UiRouter = require("scripts.ui.router")
-local Viewpoint = require("scripts.viewpoint")
 
 local dirs = defines.direction
 
@@ -40,128 +37,6 @@ end
 --Works for blueprints and also books too
 function mod.set_stack_bp_from_data(stack, bp_data)
    stack.import_stack("0" .. helpers.encode_string(helpers.table_to_json(bp_data)))
-end
-
---Create a blueprint from a rectangle between any two points and give it to the player's hand
-function mod.create_blueprint(pindex, point_1, point_2, prior_bp_data)
-   local top_left, bottom_right = FaUtils.get_top_left_and_bottom_right(point_1, point_2)
-   local p = game.get_player(pindex)
-   local cursor = assert(p.cursor_stack)
-   if prior_bp_data ~= nil then
-      --First clear the bp in hand
-      cursor.set_stack({ name = "blueprint", count = 1 })
-   end
-   if
-      not cursor.valid_for_read
-      or cursor.valid_for_read
-         and not (cursor.is_blueprint and cursor.is_blueprint_setup() == false and prior_bp_data == nil)
-   then
-      local cleared = p.clear_cursor()
-      if not cleared then
-         Speech.speak(pindex, { "fa.blueprints-error-cursor-full" })
-         return
-      end
-   end
-   cursor.set_stack({ name = "blueprint" })
-   cursor.create_blueprint({ surface = p.surface, force = p.force, area = { top_left, bottom_right } })
-
-   --Avoid empty blueprints
-   local ent_count = cursor.get_blueprint_entity_count()
-   if ent_count == 0 then
-      if prior_bp_data == nil then cursor.set_stack({ name = "blueprint" }) end
-      local message = MessageBuilder.new()
-      message:fragment({ "fa.blueprints-selection-empty" })
-      if prior_bp_data ~= nil then message:fragment({ "fa.blueprints-keeping-old" }) end
-      Speech.speak(pindex, message:build())
-   else
-      local prior_name = ""
-      if prior_bp_data ~= nil then prior_name = prior_bp_data.blueprint.label or "" end
-      local message = MessageBuilder.new()
-      message:fragment({ "fa.blueprints-created", prior_name })
-      message:fragment(FaUtils.format_count(ent_count, { "fa.blueprints-entities" }))
-      message:fragment({ "fa.blueprints-in-hand" })
-      Speech.speak(pindex, message:build())
-   end
-
-   --Copy label and description and icons from previous version
-   if prior_bp_data ~= nil then
-      local bp_data = mod.get_bp_data_for_edit(cursor)
-      bp_data.blueprint.label = prior_bp_data.blueprint.label or ""
-      bp_data.blueprint.label_color = prior_bp_data.blueprint.label_color or { 1, 1, 1 }
-      bp_data.blueprint.description = prior_bp_data.blueprint.description or ""
-      bp_data.blueprint.icons = prior_bp_data.blueprint.icons or {}
-      if ent_count == 0 then bp_data.blueprint.entities = prior_bp_data.blueprint.entities end
-      mod.set_stack_bp_from_data(cursor, bp_data)
-   end
-
-   --Use this opportunity to update saved information about the blueprint's corners (used when drawing the footprint)
-   local width, height = BuildDimensions.get_stack_build_dimensions(cursor, dirs.north)
-   if width and height then
-      storage.players[pindex].blueprint_width_in_hand = width + 1
-      storage.players[pindex].blueprint_height_in_hand = height + 1
-   end
-end
-
---Building function for bluelprints
----@param pindex integer
----@param flip_horizontal? boolean
----@param flip_vertical? boolean
-function mod.paste_blueprint(pindex, flip_horizontal, flip_vertical)
-   local p = game.get_player(pindex)
-   local bp = assert(p.cursor_stack)
-   local vp = Viewpoint.get_viewpoint(pindex)
-   local pos = vp:get_cursor_pos()
-
-   --Not a blueprint or blueprint book
-   if not bp.is_blueprint and not bp.is_blueprint_book then return nil end
-
-   --Check if it's a blueprint book
-   if bp.is_blueprint_book then
-      -- For blueprint books, the active blueprint is used automatically by Factorio
-      -- Just verify there's an active blueprint that's set up
-      local book_inv = bp.get_inventory(defines.inventory.item_main)
-      if not book_inv or not bp.active_index then return nil end
-      local active_bp = book_inv[bp.active_index]
-      if not active_bp or not active_bp.valid_for_read or not active_bp.is_blueprint_setup() then return nil end
-   elseif bp.is_blueprint then
-      --Empty blueprint
-      if not bp.is_blueprint_setup() then return nil end
-   end
-
-   --Get the offset blueprint positions
-   local dir = vp:get_hand_direction()
-   local width, height = BuildDimensions.get_stack_build_dimensions(bp, dir)
-   local left_top = { x = math.floor(pos.x), y = math.floor(pos.y) }
-   local right_bottom = { x = math.ceil(pos.x + width), y = math.ceil(pos.y + height) }
-   local build_pos = { x = pos.x + width / 2, y = pos.y + height / 2 }
-
-   --Clear build area for objects up to a certain range, while others are marked for deconstruction
-   PlayerMiningTools.clear_obstacles_in_rectangle(left_top, right_bottom, pindex, 99)
-   local can_build = p.can_build_from_cursor({
-      position = build_pos,
-      direction = dir,
-      flip_horizontal = flip_horizontal or false,
-      flip_vertical = flip_vertical or false,
-   })
-
-   if can_build then
-      p.build_from_cursor({
-         position = build_pos,
-         direction = dir,
-         flip_horizontal = flip_horizontal or false,
-         flip_vertical = flip_vertical or false,
-      })
-      p.play_sound({ path = "Close-Inventory-Sound" }) --laterdo maybe better blueprint placement sound
-      Speech.speak(pindex, { "fa.blueprints-placed", mod.get_blueprint_label(bp) })
-      return true
-   else
-      p.play_sound({ path = "utility/cannot_build" })
-      --Explain build error
-      local build_area = { left_top, right_bottom }
-      local result = BuildingTools.identify_building_obstacle(pindex, build_area, nil)
-      Speech.speak(pindex, result)
-      return false
-   end
 end
 
 --Export and import the same blueprint so that its parameters reset, e.g. rotation.
@@ -226,51 +101,6 @@ function mod.get_blueprint_info(stack, in_hand, pindex)
    end
 
    return message:build()
-end
-
-function mod.get_blueprint_icons_info(bp_table)
-   local result = { "" }
-   --Use icons as extra info (in case it is not named)
-   local icons = bp_table.icons
-   if icons == nil or #icons == 0 then
-      result = { "", result, { "fa.blueprints-no-icons" } }
-      return result
-   end
-
-   for i, signal in ipairs(icons) do
-      if signal.index > 1 then result = { "", result, { "fa.blueprints-and" } } end
-      if signal.signal.name ~= nil then
-         result = { "", result, signal.signal.name }
-      else
-         result = { "", result, { "fa.blueprints-unknown-icon" } }
-      end
-   end
-   return result
-end
-
-function mod.apply_blueprint_import(pindex, text)
-   local bp = game.get_player(pindex).cursor_stack
-   --local result = bp.import_stack("0"..text)
-   local result = bp.import_stack(text)
-   if result == 0 then
-      if bp.is_blueprint then
-         Speech.speak(pindex, { "fa.blueprints-imported-successfully", mod.get_blueprint_label(bp) })
-      elseif bp.is_blueprint_book then
-         Speech.speak(pindex, { "fa.blueprints-imported-book" })
-      else
-         Speech.speak(pindex, { "fa.blueprints-imported-unknown" })
-      end
-   elseif result == -1 then
-      if bp.is_blueprint then
-         Speech.speak(pindex, { "fa.blueprints-imported-with-errors", mod.get_blueprint_label(bp) })
-      elseif bp.is_blueprint_book then
-         Speech.speak(pindex, { "fa.blueprints-imported-book-errors" })
-      else
-         Speech.speak(pindex, { "fa.blueprints-imported-unknown-errors" })
-      end
-   else --result == 1
-      Speech.speak(pindex, { "fa.blueprints-import-failed" })
-   end
 end
 
 --Basic info for when the blueprint book item is read (using inventory API)

@@ -39,7 +39,6 @@ local FaCommands = require("scripts.fa-commands")
 local FaInfo = require("scripts.fa-info")
 local FaUtils = require("scripts.fa-utils")
 local F = require("scripts.field-ref")
-local Filters = require("scripts.filters")
 local Graphics = require("scripts.graphics")
 local InventoryUtils = require("scripts.inventory-utils")
 local ItemInfo = require("scripts.item-info")
@@ -146,8 +145,6 @@ local sounds = require("scripts.ui.sounds")
 GridSonifier.register_backend_factory("crafting", CraftingBackend.new, CraftingBackend.ENTITY_TYPES)
 
 entity_types = {}
-production_types = {}
-building_types = {}
 local dirs = defines.direction
 
 ---Check if in combat mode and speak feedback if so
@@ -496,100 +493,6 @@ EventManager.on_event(quickbar_set_events, Quickbar.quickbar_set_handler)
 
 EventManager.on_event(quickbar_page_events, Quickbar.quickbar_page_handler)
 
-function swap_weapon_forward(pindex, write_to_character)
-   local p = game.get_player(pindex)
-   if p.character == nil then
-      return 0 --This is an intentionally selected error code
-   end
-   local gun_index = p.character.selected_gun_index
-   if gun_index == nil then
-      return 0 --This is an intentionally selected error code
-   end
-   local guns_inv = p.character.get_inventory(defines.inventory.character_guns)
-   local ammo_inv = game.get_player(pindex).character.get_inventory(defines.inventory.character_ammo)
-
-   --Simple index increment (not needed)
-   gun_index = gun_index + 1
-   if gun_index > 3 then gun_index = 1 end
-   --game.print("start " .. gun_index)--
-   assert(ammo_inv)
-
-   --Increment again if the new index has no guns or no ammo
-   local ammo_stack = ammo_inv[gun_index]
-   local gun_stack = guns_inv[gun_index]
-   local tries = 0
-   while
-      tries < 4
-      and (
-         ammo_stack == nil
-         or not ammo_stack.valid_for_read
-         or not ammo_stack.valid
-         or gun_stack == nil
-         or not gun_stack.valid_for_read
-         or not gun_stack.valid
-      )
-   do
-      gun_index = gun_index + 1
-      if gun_index > 3 then gun_index = 1 end
-      ammo_stack = ammo_inv[gun_index]
-      gun_stack = guns_inv[gun_index]
-      tries = tries + 1
-   end
-
-   if tries > 3 then
-      --game.print("error " .. gun_index)--
-      return -1
-   end
-
-   if write_to_character then p.character.selected_gun_index = gun_index end
-   --game.print("end " .. gun_index)--
-   return gun_index
-end
-
-function swap_weapon_backward(pindex, write_to_character)
-   local p = game.get_player(pindex)
-   if p.character == nil then
-      return 0 --This is an intentionally selected error code
-   end
-   local gun_index = p.character.selected_gun_index
-   if gun_index == nil then
-      return 0 --This is an intentionally selected error code
-   end
-   local guns_inv = p.get_inventory(defines.inventory.character_guns)
-   local ammo_inv = game.get_player(pindex).get_inventory(defines.inventory.character_ammo)
-
-   --Simple index increment (not needed)
-   gun_index = gun_index - 1
-   if gun_index < 1 then gun_index = 3 end
-
-   --Increment again if the new index has no guns or no ammo
-   local ammo_stack = ammo_inv[gun_index]
-   local gun_stack = guns_inv[gun_index]
-   local tries = 0
-   while
-      tries < 4
-      and (
-         ammo_stack == nil
-         or not ammo_stack.valid_for_read
-         or not ammo_stack.valid
-         or gun_stack == nil
-         or not gun_stack.valid_for_read
-         or not gun_stack.valid
-      )
-   do
-      gun_index = gun_index - 1
-      if gun_index < 1 then gun_index = 3 end
-      ammo_stack = ammo_inv[gun_index]
-      gun_stack = guns_inv[gun_index]
-      tries = tries + 1
-   end
-
-   if tries > 3 then return -1 end
-
-   if write_to_character then p.character.selected_gun_index = gun_index end
-   return gun_index
-end
-
 function clicked_on_entity(ent, pindex)
    local p = game.get_player(pindex)
    if ent == nil then
@@ -689,32 +592,10 @@ function ensure_storage_structures_are_up_to_date()
       table.insert(entity_types, i)
    end
    table.insert(entity_types, "container")
-
-   storage.production_types = {}
-   production_types = storage.production_types
-
-   -- TODO: reimplement production types. Seems only to be the warnings menu
-   -- using it.
-
-   storage.building_types = {}
-   building_types = storage.building_types
-
-   local ents = prototypes.entity
-   local types = {}
-   for i, ent in pairs(ents) do
-      if ent.is_building then types[ent.type] = true end
-   end
-   types["transport-belt"] = nil
-   for i, type in pairs(types) do
-      table.insert(building_types, i)
-   end
-   table.insert(building_types, "character")
 end
 
 EventManager.on_load(function()
    entity_types = storage.entity_types
-   production_types = storage.production_types
-   building_types = storage.building_types
 end)
 
 EventManager.on_configuration_changed(ensure_storage_structures_are_up_to_date)
@@ -726,24 +607,6 @@ EventManager.on_init(function()
    ensure_storage_structures_are_up_to_date()
    TestFramework.on_init()
 end)
-
-EventManager.on_event(
-   defines.events.on_cutscene_finished,
-   ---@param event EventData.on_cutscene_finished
-   ---@param pindex integer
-   function(event, pindex)
-      --Speech.speak(pindex, "Press TAB to continue")
-   end
-)
-
-EventManager.on_event(
-   defines.events.on_cutscene_started,
-   ---@param event EventData.on_cutscene_started
-   ---@param pindex integer
-   function(event, pindex)
-      --Speech.speak(pindex, "Press TAB to continue")
-   end
-)
 
 EventManager.on_event(
    defines.events.on_player_created,
@@ -787,39 +650,6 @@ EventManager.on_event(
    end
 )
 
---If a filter inserter is selected, the item in hand is set as its output filter item.
-function set_inserter_filter_by_hand(pindex, ent)
-   local stack = game.get_player(pindex).cursor_stack
-   if ent.filter_slot_count == 0 then return "This inserter has no filters to set" end
-   if stack == nil or stack.valid_for_read == false then
-      --Delete last filter
-      for i = ent.filter_slot_count, 1, -1 do
-         local filt = Filters.get_filter_prototype(ent, i)
-         if filt ~= nil then
-            Filters.set_filter(ent, i, nil)
-            return "Last filter cleared"
-         end
-      end
-      return "All filters cleared"
-   else
-      --Add item in hand as next filter
-      for i = 1, ent.filter_slot_count, 1 do
-         local filt = Filters.get_filter_prototype(ent, i)
-         if filt == nil then
-            Filters.set_filter(ent, i, stack.name)
-            if Filters.get_filter_prototype(ent, i) == stack.name then
-               return "Added filter"
-            else
-               return "Filter setting failed"
-            end
-         end
-      end
-      return "All filters full"
-   end
-end
-
---Notifies battle sonifier when structures are damaged
---Character/vehicle damage sounds are handled by the tick-based health-bar sonifier
 EventManager.on_event(
    defines.events.on_entity_damaged,
    ---@param event EventData.on_entity_damaged
@@ -947,21 +777,6 @@ EventManager.on_event(
    end
 )
 
---If the player has unexpected lateral movement while smooth running in a cardinal direction, like from bumping into an entity or being at the edge of water, play a sound.
-
-function all_ents_are_walkable(pos)
-   local ents = game.surfaces[1].find_entities_filtered({
-      position = FaUtils.center_of_tile(pos),
-      radius = 0.4,
-      invert = true,
-      type = Consts.ENT_TYPES_YOU_CAN_WALK_OVER,
-   })
-   for i, ent in ipairs(ents) do
-      return false
-   end
-   return true
-end
-
 EventManager.on_event(
    defines.events.on_console_chat,
    ---@param event EventData.on_console_chat
@@ -989,29 +804,6 @@ EventManager.on_event(
       end
    end
 )
-
-function general_mod_menu_up(pindex, menu, lower_limit_in) --todo*** use
-   local lower_limit = lower_limit_in or 0
-   menu.index = menu.index - 1
-   if menu.index < lower_limit then
-      menu.index = lower_limit
-      sounds.play_ui_edge(pindex)
-   else
-      --Play sound
-      sounds.play_menu_move(pindex)
-   end
-end
-
-function general_mod_menu_down(pindex, menu, upper_limit)
-   menu.index = menu.index + 1
-   if menu.index > upper_limit then
-      menu.index = upper_limit
-      sounds.play_ui_edge(pindex)
-   else
-      --Play sound
-      sounds.play_menu_move(pindex)
-   end
-end
 
 EventManager.on_event(
    defines.events.on_surface_created,
@@ -2283,14 +2075,6 @@ EventManager.on_event(
    function(event, pindex)
       if skip_in_combat_mode(pindex) then return end
       adjust_cursor_size(pindex, -1)
-   end
-)
-
-EventManager.on_event(
-   "fa-a-i",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      -- For remote view toggle, but remote view is currently not working in Factorio 2.0.
    end
 )
 
