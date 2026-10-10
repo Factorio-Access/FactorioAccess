@@ -375,6 +375,7 @@ class DialogsScreen : public Screen {
     if (!w || !agui::enabled(w)) return;
     agui::focus(w);
     editing_ = p;
+    input::set_reserved({input::sc::Enter, input::sc::Escape, input::sc::Tab});
     MessageBuilder m;
     m.fragment("editing").list_item().fragment("enter or escape to finish");
     speech::speak(m.build(), true);
@@ -389,6 +390,7 @@ class DialogsScreen : public Screen {
     if (!done) return;
     std::string value = w ? plain(agui::text(w)) : std::string();
     editing_.clear();
+    input::set_reserved({});
     log::write("dialogs: editing done");
     speech::speak(value.empty() ? std::string("blank") : value, true);
   }

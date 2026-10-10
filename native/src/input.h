@@ -3,6 +3,7 @@
 // The platform layer feeds events in; the main-thread tick reads them through key_source().
 #include <cstdint>
 #include <string>
+#include <vector>
 #include "ui/input.h"
 
 namespace fa::input {
@@ -23,6 +24,10 @@ struct KeyEvent {
 // decides to swallow a key event (the game then never sees it).
 void set_owned(bool owned);
 bool owned();
+// While the game has the keyboard on loan (a text field being typed into), these keys still stop here: they end
+// the loan and must not also reach the game (Enter in a field confirms the whole dialog). Empty = none.
+void set_reserved(std::vector<int> scancodes);
+bool reserved(int scancode);
 
 // Platform layer -> here (any thread).
 void record_key(const KeyEvent& e);

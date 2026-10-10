@@ -104,6 +104,7 @@ void tick() {
   double dt = g_last_tick > 0 ? t - g_last_tick : 0;
   g_last_tick = t;
   Screen* before = g_screens.current();
+  bool owned_before = g_owned;
   g_screens.tick();
   bool owns = g_screens.owns_keyboard();
   if (owns != g_owned) {
@@ -114,8 +115,9 @@ void tick() {
   }
   g_input.set_live_categories(g_screens.live_categories());
   Screen* cur = g_screens.current();
-  // The keys of the frame a screen became current belong to whoever had the keyboard before it.
-  if (!owns || cur != before) return;
+  // The keys of the frame a screen became current, or the keyboard changed hands, belong to whoever had the
+  // keyboard before (the Enter that ends a text edit must not also activate the field again).
+  if (!owns || !owned_before || cur != before) return;
   const KeySource& ks = input::key_source();
   g_input.tick(t, ks, [](InputAction& a) { return g_nav && g_nav->on_action(a.key()); });
   TypeaheadInput in;

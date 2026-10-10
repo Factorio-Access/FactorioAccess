@@ -196,7 +196,7 @@ static bool PollEvent_hook(void* self, void* ev) {
     if (type < kKeyDown || type > kKeyComposition) return true;
     // Every key is recorded (a screen that lent the keyboard to the game still watches for the keys that end
     // the loan); it is only swallowed while the native UI owns the keyboard.
-    bool swallow = input::owned();
+    bool swallow = input::owned() || (type != kKeyChar && type != kKeyComposition && input::reserved(field<int>(ev, E.kb_scancode)));
     if (type == kKeyChar) {
       char32_t c = (char32_t)field<int>(ev, E.kb_unichar);
       input::record_text(std::u32string_view(&c, 1));

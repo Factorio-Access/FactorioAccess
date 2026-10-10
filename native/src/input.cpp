@@ -10,6 +10,19 @@ static std::atomic<bool> g_owned{false};
 void set_owned(bool o) { g_owned = o; }
 bool owned() { return g_owned; }
 
+static std::mutex g_reserved_mu;
+static std::vector<int> g_reserved;
+void set_reserved(std::vector<int> scancodes) {
+  std::lock_guard lk(g_reserved_mu);
+  g_reserved = std::move(scancodes);
+}
+bool reserved(int scancode) {
+  std::lock_guard lk(g_reserved_mu);
+  for (int s : g_reserved)
+    if (s == scancode) return true;
+  return false;
+}
+
 namespace {
 struct Pending {
   bool is_text;
