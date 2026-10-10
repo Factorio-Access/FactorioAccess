@@ -1,5 +1,7 @@
 #include <windows.h>
 #include "agui.h"
+#include "app.h"
+#include "game.h"
 #include "devserver.h"
 #include "hooks.h"
 #include "log.h"
@@ -30,7 +32,7 @@ extern "C" __declspec(dllexport) DWORD WINAPI fa_init(LPVOID) {
     fa::speech::speak("Factorio Access native code could not read the game's symbols and is disabled", true);
     return 0;
   }
-  if (!fa::agui::init()) {
+  if (!fa::agui::init() || !fa::game::init()) {
     fa::speech::speak("Factorio Access native code does not support this game version and is disabled", true);
     return 0;
   }
@@ -41,6 +43,8 @@ extern "C" __declspec(dllexport) DWORD WINAPI fa_init(LPVOID) {
     fa::speech::speak("Factorio Access native code does not support this game version and is disabled", true);
     return 0;
   }
+  fa::app::init();
+  fa::hooks::set_frame_callback(fa::app::tick);
   if (int port = env_int(L"FA_PORT", 0)) fa::dev::start(port);
   fa::log::writef("fa_native: ready, speech {}", sp ? fa::speech::backend_name() : "unavailable");
   return 1;
@@ -52,6 +56,8 @@ extern "C" __declspec(dllexport) DWORD WINAPI fa_unload(LPVOID) {
   fa::log::write("fa_native: unloading");
   fa::dev::stop();
   if (g_installed) fa::hooks::remove();
+  Sleep(250);  // the main thread may still be inside a hook body (the frame callback included): let it leave
+  fa::app::shutdown();
   fa::sym::shutdown();
   fa::speech::shutdown();
   // The detours are gone but the main thread may still be inside one of our hook bodies: let it leave.

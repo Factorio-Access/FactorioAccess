@@ -9,6 +9,7 @@
 #include <string>
 #include <thread>
 #include "agui.h"
+#include "app.h"
 #include "hooks.h"
 #include "input.h"
 #include "log.h"
@@ -67,8 +68,9 @@ static void dump_tree(agui::Widget* w, int depth, bool all, std::string& out) {
   if (!vis && !all) return;
   auto r = agui::rect(w);
   std::string t = agui::text(w);
-  out += std::format("{}{} {:#x}{}{}{} [{},{} {}x{}]{}{}\n", std::string(depth * 2, ' '), agui::class_name(w), (uintptr_t)w, vis ? "" : " hidden",
-                     agui::enabled(w) ? "" : " disabled", w == agui::focused() ? " FOCUSED" : "", r.x, r.y, r.w, r.h, t.empty() ? "" : " ",
+  std::string st = agui::style_name(w);
+  out += std::format("{}{} {:#x}{}{}{}{}{} [{},{} {}x{}]{}{}\n", std::string(depth * 2, ' '), agui::class_name(w), (uintptr_t)w, vis ? "" : " hidden",
+                     agui::enabled(w) ? "" : " disabled", w == agui::focused() ? " FOCUSED" : "", st.empty() ? "" : " style=", st, r.x, r.y, r.w, r.h, t.empty() ? "" : " ",
                      t);
   for (auto* c : agui::children(w)) dump_tree(c, depth + 1, all, out);
   for (auto* c : agui::private_children(w)) {
@@ -137,6 +139,7 @@ static std::string handle(const std::string& path, const Query& q, int& status) 
     agui::click(w);
     return "clicked\n";
   }
+  if (path == "/ui/nav") return app::dump();
   if (path == "/ui/tree") {
     agui::Widget* root = agui::root();
     if (!root) return "no gui\n";

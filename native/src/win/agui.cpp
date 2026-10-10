@@ -31,8 +31,10 @@ struct Layout {
   size_t gui_base = 0;         // agui::Gui::baseWidget
   size_t gui_focus = 0;        // agui::Gui::focusManager + FocusManager::focusedWidget (GenericTargeter: target first)
   size_t w_parent = 0, w_children = 0, w_private = 0, w_usage = 0;
-  size_t vt_get_text = 0;
-  void* get_abs_rect = nullptr;  // Rectangle agui::Widget::getAbsoluteRectangle() const
+  size_t button_toggled = 0;  // agui::Button::toggled (checkbox and toggle button state)
+  size_t vt_get_text = 0, vt_focus = 0, vt_get_style = 0;
+  size_t style_parent = 0, style_info = 0, style_tooltip = 0, info_name = 0;
+  void* get_abs_rect = nullptr;    // Rectangle agui::Widget::getAbsoluteRectangle() const
   void* dispatch_click = nullptr;  // void agui::Widget::dispatchClick(agui::MouseEvent const&)
   size_t me_position = 0, me_button = 0, me_type = 0, me_source = 0, me_size = 0;
 } L;
@@ -46,6 +48,17 @@ bool resolve(size_t& out, const char* type, const char* member) {
   auto r = sym::offset(type, member);
   if (r) out = *r;
   return r.has_value();
+}
+bool resolve_virtual(size_t& out, const char* type, const char* method) {
+  auto r = sym::vtable_offset(type, method);
+  if (r) out = *r;
+  return r.has_value();
+}
+
+template <typename Fn>
+Fn virtual_fn(Widget* w, size_t slot_offset) {
+  void** vtable = *reinterpret_cast<void***>(w);
+  return reinterpret_cast<Fn>(vtable[slot_offset / sizeof(void*)]);
 }
 }  // namespace
 
@@ -63,34 +76,42 @@ bool init() {
   ok &= resolve(L.w_children, "agui::Widget", "children");
   ok &= resolve(L.w_private, "agui::Widget", "privateChildren");
   ok &= resolve(L.w_usage, "agui::Widget", "usageBitMask");
-  if (auto v = sym::vtable_offset("agui::Widget", "getText")) L.vt_get_text = *v;
-  else ok = false;
-  L.get_abs_rect = sym::addr("agui::Widget::getAbsoluteRectangle");
-  ok &= L.get_abs_rect != nullptr;
+  ok &= resolve(L.button_toggled, "agui::Button", "toggled");
+  ok &= resolve_virtual(L.vt_get_text, "agui::Widget", "getText");
   L.dispatch_click = sym::addr("agui::Widget::dispatchClick");
   ok &= L.dispatch_click != nullptr;
+  ok &= resolve_virtual(L.vt_focus, "agui::Widget", "focus");
+  ok &= resolve_virtual(L.vt_get_style, "agui::Widget", "getStyle");
+  ok &= resolve(L.style_parent, "agui::Style", "parent");
+  ok &= resolve(L.style_info, "agui::Style", "styleInfo");
+  ok &= resolve(L.style_tooltip, "agui::Style", "tooltip");
+  ok &= resolve(L.info_name, "agui::StyleInfo", "name");
+  L.get_abs_rect = sym::addr("agui::Widget::getAbsoluteRectangle");
+  ok &= L.get_abs_rect != nullptr;
   ok &= resolve(L.me_position, "agui::MouseEvent", "position");
   ok &= resolve(L.me_button, "agui::MouseEvent", "button");
   ok &= resolve(L.me_type, "agui::MouseEvent", "eventType");
   ok &= resolve(L.me_source, "agui::MouseEvent", "source");
   ok &= resolve(L.me_size, "agui::MouseEvent", "previous");  // the last member: size = its offset + 8
   L.me_size += sizeof(void*);
-  log::writef("agui: layout {} (children +{:#x}, usage +{:#x}, getText vtable +{:#x})", ok ? "resolved" : "INCOMPLETE", L.w_children, L.w_usage,
-              L.vt_get_text);
+  log::writef("agui: layout {} (children +{:#x}, usage +{:#x}, getText vtable +{:#x})", ok ? "resolved" : "INCOMPLETE", L.w_children,
+              L.w_usage, L.vt_get_text);
   return ok;
 }
 
-Widget* root() {
+static void* gui() {
   void* global = *reinterpret_cast<void**>(L.global_var);
-  if (!global) return nullptr;
-  void* gui = at<void*>(global, L.global_gui);
-  return gui ? at<Widget*>(gui, L.gui_base) : nullptr;
+  return global ? at<void*>(global, L.global_gui) : nullptr;
+}
+
+Widget* root() {
+  void* g = gui();
+  return g ? at<Widget*>(g, L.gui_base) : nullptr;
 }
 
 Widget* focused() {
-  void* global = *reinterpret_cast<void**>(L.global_var);
-  void* gui = global ? at<void*>(global, L.global_gui) : nullptr;
-  return gui ? at<Widget*>(gui, L.gui_focus) : nullptr;
+  void* g = gui();
+  return g ? at<Widget*>(g, L.gui_focus) : nullptr;
 }
 
 static std::vector<Widget*> ptr_vector(Widget* w, size_t off) {
@@ -106,12 +127,23 @@ Widget* parent(Widget* w) { return at<Widget*>(w, L.w_parent); }
 constexpr uint32_t kVisible = 0x4, kHiddenOverride = 0x20000, kEnabled = 0x8;
 bool visible(Widget* w) { return (at<uint32_t>(w, L.w_usage) & (kVisible | kHiddenOverride)) == kVisible; }
 bool enabled(Widget* w) { return (at<uint32_t>(w, L.w_usage) & kEnabled) != 0; }
+bool toggled(Widget* w) { return at<bool>(w, L.button_toggled); }
 
-std::string text(Widget* w) {
-  void** vtable = *reinterpret_cast<void***>(w);
-  auto get_text = reinterpret_cast<const MsvcString* (*)(Widget*)>(vtable[L.vt_get_text / sizeof(void*)]);
-  return get_text(w)->str();
+static void* style(Widget* w) { return virtual_fn<void* (*)(Widget*)>(w, L.vt_get_style)(w); }
+
+std::string style_name(Widget* w) {
+  for (void* s = style(w); s; s = at<void*>(s, L.style_parent))
+    if (void* info = at<void*>(s, L.style_info)) return at<MsvcString>(info, L.info_name).str();
+  return {};
 }
+
+std::string tooltip(Widget* w) {
+  void* s = style(w);
+  auto* t = s ? at<MsvcString*>(s, L.style_tooltip) : nullptr;  // unique_ptr<std::string>
+  return t ? t->str() : std::string();
+}
+
+std::string text(Widget* w) { return virtual_fn<const MsvcString* (*)(Widget*)>(w, L.vt_get_text)(w)->str(); }
 
 Rect rect(Widget* w) {
   struct AguiRect {
@@ -134,7 +166,14 @@ void click(Widget* w) {
   at<uint16_t>(ev, L.me_button) = kLeftButton;
   at<int>(ev, L.me_type) = kMouseClick;
   at<Widget*>(ev, L.me_source) = w;
+  // The click listeners (what the game attached to the button). The virtual mouseDown/mouseUp/mouseClick
+  // path does not fire them: agui::Gui's own state (which widget took the mouse down) gates it.
   reinterpret_cast<void (*)(Widget*, void*)>(L.dispatch_click)(w, ev);
+}
+
+void focus(Widget* w) {
+  // virtual void focus(NamedBool<TabbedInTag>): the flag is one byte, passed by value.
+  virtual_fn<void (*)(Widget*, uint8_t)>(w, L.vt_focus)(w, 0);
 }
 
 static bool find(Widget* at_w, Widget* target) {
@@ -150,14 +189,14 @@ bool in_tree(Widget* w) {
   return r && w && find(r, w);
 }
 
-// MSVC RTTI: the CompleteObjectLocator sits just before the vtable; its TypeDescriptor (image-relative on
-// x64) holds the decorated name ".?AVTextButton@agui@@", turned here into "agui::TextButton".
-std::string class_name(Widget* w) {
-  void** vtable = *reinterpret_cast<void***>(w);
-  auto* col = reinterpret_cast<const uint32_t*>(vtable[-1]);
-  auto image = reinterpret_cast<const char*>(GetModuleHandleW(nullptr));
-  const char* decorated = image + col[3] + 0x10;  // COL::pTypeDescriptor (RVA) -> TypeDescriptor::name
-  std::string_view d(decorated);
+// ---- MSVC RTTI ----
+// The CompleteObjectLocator sits just before the vtable. On x64 its pointers are image-relative:
+// +0x0c TypeDescriptor (name at +0x10, decorated: ".?AVTextButton@agui@@"), +0x10 ClassHierarchyDescriptor
+// (+0x08 base count, +0x0c BaseClassDescriptor array; each descriptor starts with its TypeDescriptor RVA).
+static const char* image() { return reinterpret_cast<const char*>(GetModuleHandleW(nullptr)); }
+static const uint32_t* locator(Widget* w) { return reinterpret_cast<const uint32_t*>((*reinterpret_cast<void***>(w))[-1]); }
+
+static std::string undecorate(std::string_view d) {
   if (d.size() < 4 || d.substr(0, 4) != ".?AV") return std::string(d);
   d.remove_prefix(4);
   if (d.ends_with("@@")) d.remove_suffix(2);
@@ -167,5 +206,19 @@ std::string class_name(Widget* w) {
   std::string out;
   for (auto it = parts.rbegin(); it != parts.rend(); ++it) out += (out.empty() ? "" : "::") + std::string(*it);
   return out;
+}
+
+std::string class_name(Widget* w) { return undecorate(image() + locator(w)[3] + 0x10); }
+
+bool is_a(Widget* w, std::string_view qualified) {
+  const uint32_t* col = locator(w);
+  auto* hierarchy = reinterpret_cast<const uint32_t*>(image() + col[4]);
+  uint32_t count = hierarchy[2];
+  auto* bases = reinterpret_cast<const uint32_t*>(image() + hierarchy[3]);
+  for (uint32_t i = 0; i < count; ++i) {
+    auto* descriptor = reinterpret_cast<const uint32_t*>(image() + bases[i]);
+    if (undecorate(image() + descriptor[0] + 0x10) == qualified) return true;
+  }
+  return false;
 }
 }  // namespace fa::agui

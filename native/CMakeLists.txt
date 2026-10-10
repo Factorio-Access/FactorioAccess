@@ -40,7 +40,7 @@ target_link_libraries(faui_tests PRIVATE faui)
 
 # --- the injected DLL ---
 add_library(fa_native SHARED
-  src/dllmain.cpp src/log.cpp src/input.cpp src/speech.cpp src/devserver.cpp
+  src/dllmain.cpp src/log.cpp src/input.cpp src/app.cpp src/screens/dialogs.cpp src/win/game.cpp src/speech.cpp src/devserver.cpp
   src/win/hooks.cpp src/win/sym.cpp src/win/window.cpp src/win/agui.cpp)
 target_include_directories(fa_native PRIVATE src ${PRISM_DIR}/include)
 target_link_libraries(fa_native PRIVATE faui detours ${PRISM_LIB} user32 ws2_32 dbghelp delayimp)

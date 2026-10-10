@@ -11,6 +11,7 @@
 //   /keys?text=abc          text input as a real SDL event
 //   /own?on=1|0             dev override: the native UI owns the keyboard (keys stop reaching the game)
 //   /ui/click?addr=0x...    fire a widget's click handlers (address from /ui/tree)
+//   /ui/nav                 the native UI's graph and focus (what the player navigates)
 //   /ui/tree?all=1          the agui widget tree: class, address, flags, absolute rect, text (all=1: hidden too)
 namespace fa::dev {
 void start(int port);  // no-op while running

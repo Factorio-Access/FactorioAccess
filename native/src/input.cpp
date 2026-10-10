@@ -73,8 +73,9 @@ void begin_frame() {
   }
   for (auto& e : p) {
     if (!e.is_text) {
-      log::writef("[key] {} {}{}{}{}{}", e.key.scancode, e.key.down ? "down" : "up", e.key.repeat ? " repeat" : "", e.key.ctrl ? " ctrl" : "",
-                  e.key.shift ? " shift" : "", e.key.alt ? " alt" : "");
+      if (g_owned)
+        log::writef("[key] {} {}{}{}{}{}", e.key.scancode, e.key.down ? "down" : "up", e.key.repeat ? " repeat" : "", e.key.ctrl ? " ctrl" : "",
+                    e.key.shift ? " shift" : "", e.key.alt ? " alt" : "");
       g_frame.apply(e.key);
       continue;
     }

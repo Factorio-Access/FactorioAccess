@@ -83,7 +83,9 @@ static void attach_all() {
 static std::mutex g_jobs_mu;
 static std::deque<std::function<void()>> g_jobs;
 static uint64_t g_frame;
+static std::function<void()> g_on_frame;
 uint64_t frame() { return g_frame; }
+void set_frame_callback(std::function<void()> fn) { g_on_frame = std::move(fn); }
 
 bool run_on_main_thread(std::function<void()> fn, unsigned timeout_ms) {
   struct State {
@@ -129,6 +131,7 @@ static int MainLoopStep_hook(void* worker, int heavy) {
   ++g_frame;
   input::begin_frame();
   drain_jobs();
+  if (g_on_frame) g_on_frame();
   input::end_frame();
   return MainLoopStep_orig(worker, heavy);
 }
@@ -188,7 +191,10 @@ static bool PollEvent_hook(void* self, void* ev) {
     if (!PollEvent_orig(self, ev)) return false;
     int type = field<int>(ev, E.type);
     if (type >= 14 && type <= 24) log::writef("event: window event {}", type);  // Event::Type WINDOW_*
-    if (type < kKeyDown || type > kKeyComposition || !input::owned()) return true;
+    if (type < kKeyDown || type > kKeyComposition) return true;
+    // Every key is recorded (a screen that lent the keyboard to the game still watches for the keys that end
+    // the loan); it is only swallowed while the native UI owns the keyboard.
+    bool swallow = input::owned();
     if (type == kKeyChar) {
       char32_t c = (char32_t)field<int>(ev, E.kb_unichar);
       input::record_text(std::u32string_view(&c, 1));
@@ -197,6 +203,7 @@ static bool PollEvent_hook(void* self, void* ev) {
       input::record_key({field<int>(ev, E.kb_scancode), type == kKeyDown, field<bool>(ev, E.kb_repeat), (mod & kModShift) != 0,
                          (mod & kModCtrl) != 0, (mod & kModAlt) != 0});
     }
+    if (!swallow) return true;
   }
 }
 
