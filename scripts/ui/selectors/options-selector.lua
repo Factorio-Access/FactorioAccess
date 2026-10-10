@@ -21,15 +21,11 @@ local mod = {}
 ---@class fa.ui.selectors.OptionsSelectorDeclaration
 ---@field ui_name fa.ui.UiName Unique UI name for this selector
 ---@field title LocalisedString Title for the selector tab
----@field get_options fun(pindex: number, parameters: table): fa.ui.selectors.OptionsResult Callback to get options
+---@field get_options fun(pindex: integer, parameters: table): fa.ui.selectors.OptionsResult Callback to get options
 
 ---@param declaration fa.ui.selectors.OptionsSelectorDeclaration
 ---@return fa.ui.TabList
 function mod.declare_options_selector(declaration)
-   assert(declaration.ui_name, "OptionsSelectorDeclaration must have ui_name")
-   assert(declaration.title, "OptionsSelectorDeclaration must have title")
-   assert(declaration.get_options, "OptionsSelectorDeclaration must have get_options")
-
    ---Build the options menu
    ---@param ctx fa.ui.graph.Ctx
    ---@return fa.ui.graph.Render?

@@ -50,6 +50,7 @@ local VanillaMode = require("scripts.vanilla-mode")
 local mod = {}
 
 -- Test capture mechanism
+---@type { enabled: boolean, messages: { message: LocalisedString, pindex: integer }[] }
 local capture_state = {
    enabled = false,
    messages = {},
@@ -123,8 +124,8 @@ function MessageBuilder:fragment(fragment)
       self.state = MESSAGE_BUILDER_STATE.FRAGMENT
    end
 
-   -- In all cases but initial, a space is needed.
-   if self.state ~= MESSAGE_BUILDER_STATE.INITIAL then table.insert(self.parts, " ") end
+   -- A space separates this fragment from anything before it.
+   if next(self.parts) then table.insert(self.parts, " ") end
 
    table.insert(self.parts, fragment)
    return self
@@ -167,6 +168,7 @@ end
 mod.new = MessageBuilder.new
 
 -- Late-registered rich text processor (set by rich-text.lua to avoid circular dependency)
+---@type (fun(text: string): LocalisedString)?
 local rich_text_processor = nil
 
 ---Register the rich text processor function (called by rich-text.lua)
@@ -190,7 +192,7 @@ local function process_rich_text(str)
       for i = 2, #str do
          result[i] = process_rich_text(str[i])
       end
-      return result
+      return result --[[@as LocalisedString]]
    else
       -- Numbers, booleans, nil - return as-is
       return str
@@ -202,7 +204,7 @@ mod.process_rich_text = process_rich_text
 ---Send a localized string to the screen reader: through the native code when it is loaded (single player),
 ---else to the external launcher.
 ---This is the primary way the mod communicates with blind players.
----@param pindex number Player index
+---@param pindex integer Player index
 ---@param str LocalisedString The message to speak
 function mod.speak(pindex, str)
    -- Assert to catch parameter order mistakes
@@ -243,7 +245,7 @@ function mod.start_capture()
 end
 
 ---Disable speech capture and return captured messages
----@return table Array of {message: LocalisedString, pindex: number}
+---@return table Array of {message: LocalisedString, pindex: integer}
 function mod.stop_capture()
    capture_state.enabled = false
    local messages = capture_state.messages
@@ -252,7 +254,7 @@ function mod.stop_capture()
 end
 
 ---Get captured messages without stopping capture
----@return table Array of {message: LocalisedString, pindex: number}
+---@return table Array of {message: LocalisedString, pindex: integer}
 function mod.get_captured_messages()
    return capture_state.messages
 end

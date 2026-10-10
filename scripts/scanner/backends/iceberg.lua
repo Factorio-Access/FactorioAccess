@@ -18,7 +18,7 @@ TH.array_to_set(ICEBERG_PROTOS_SET, SC.ICEBERG_PROTOS)
 local IcebergBackend = {}
 local IcebergBackend_meta = { __index = IcebergBackend }
 mod.IcebergBackend = IcebergBackend
-if script then script.register_metatable("fa.scanner.IcebergBackend", IcebergBackend_meta) end
+script.register_metatable("fa.scanner.IcebergBackend", IcebergBackend_meta)
 
 ---@param surface LuaSurface
 function IcebergBackend.new(surface)

@@ -67,7 +67,7 @@ You can think of this like a Java class except with some ceremony that lets it
 live in storage.
 ]]
 ---@class fa.RulerHandle
----@field pindex number
+---@field pindex integer
 ---@field id number
 ---@field ruler fa.Ruler?  Nil if deleted already.
 local handle_class = {}
@@ -95,7 +95,7 @@ end
 ---@param pos_y number
 ---@param ruler_x number
 ---@param ruler_y number
----@returns number, numbre
+---@return number, number
 local function manhattan(pos_x, pos_y, ruler_x, ruler_y)
    return ruler_x - pos_x, ruler_y - pos_y
 end
@@ -115,7 +115,7 @@ local ALIGNMENT = {
    ON_AMBIGUOUS_CORNER = 4,
 }
 
----@returns fa.RulerAlignmentResult
+---@return fa.RulerAlignmentResult
 local function determine_alignment(pos_x, pos_y, ruler_x, ruler_y)
    local m_x, m_y = manhattan(pos_x, pos_y, ruler_x, ruler_y)
 
@@ -170,10 +170,10 @@ local function play_ruler_alignment(pindex, alignment)
 end
 
 -- If a ruler is present for this player, destroy it.  Then make a new one.
----@param pindex number
+---@param pindex integer
 ---@param x number
 ---@param y number
----@returns fa.RulerHandle
+---@return fa.RulerHandle
 function mod.upsert_ruler(pindex, x, y)
    x = math.floor(x)
    y = math.floor(y)
@@ -187,13 +187,11 @@ function mod.upsert_ruler(pindex, x, y)
       y = y,
    }
 
-   local handle = {
+   local handle = setmetatable({
       pindex = pindex,
       id = id,
       ruler = state.rulers[id],
-   }
-
-   setmetatable(handle, handle_meta)
+   }, handle_meta)
    state.handle = handle
    return handle
 end
@@ -212,7 +210,7 @@ end
 -- Report how this position aligns with this ruler
 ---@param x number
 ---@param y number
----@returns fa.RulerAlignmentResult
+---@return fa.RulerAlignmentResult
 function handle_class:report_alignment(x, y)
    assert(self.ruler, DELETED_MSG)
 
@@ -270,7 +268,7 @@ end
 
 ---Update ruler checks for a single player based on movement history
 ---Checks both walking and cursor movement, triggers on tile crossings
----@param pindex number
+---@param pindex integer
 local function update_player(pindex)
    local state = module_state[pindex]
    if not state.handle then return end

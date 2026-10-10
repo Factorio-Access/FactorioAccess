@@ -372,7 +372,7 @@ def main():
     subparsers = parser.add_subparsers(dest='command', help='Command to run')
 
     # Lint subcommand
-    lint_parser = subparsers.add_parser('lint', help='Analyze locale key usage in Lua code')
+    subparsers.add_parser('lint', help='Analyze locale key usage in Lua code')
 
     # Extract subcommand
     extract_parser = subparsers.add_parser('extract', help='Extract all locale keys to a file')

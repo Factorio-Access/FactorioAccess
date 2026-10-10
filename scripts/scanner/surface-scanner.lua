@@ -30,7 +30,7 @@ us see if a prototype is listed yet.
 Rocks are a special case; the next table is where you can drop name overrides
 for things like that.
 ]]
----@type table<string, fa.scanner.ScannerBackend>
+---@type table<string, fa.scanner.ScannerBackendFactory>
 local BACKEND_LUT = {
    ["accumulator"] = SEB.LogisticsAndPower,
    ["ammo-turret"] = SEB.Military,
@@ -131,7 +131,7 @@ local BACKEND_LUT = {
    ["wall"] = SEB.Military,
 }
 
----@type fun(): table<string, fa.scanner.ScannerBackend>
+---@type fun(): table<string, fa.scanner.ScannerBackendFactory>
 local BACKEND_NAME_OVERRIDES = Functools.cached(function()
    local bno = {}
 
@@ -155,8 +155,8 @@ local BACKEND_NAME_OVERRIDES = Functools.cached(function()
    return bno
 end)
 ---@class fa.scanner.SurfaceBackends
----@field lut table<string, fa.scanner.ScannerBackend>
----@field name_lut table<string, fa.scanner.ScannerBackend>
+---@field lut table<string, fa.scanner.ScannerBackend?> By prototype type
+---@field name_lut table<string, fa.scanner.ScannerBackend?> By prototype name, checked first
 ---@field iceberg_backend fa.scanner.IcebergBackend
 ---@field water_backend fa.scanner.WaterBackend
 
@@ -360,10 +360,9 @@ function mod.on_new_entity(surface_index, ent)
    dispatch_entities(state.backends, { ent })
 end
 
----@param surface_index number
+---@param surface_index integer
 ---@param player LuaPlayer
----@param callback fun(fa.scanner.ScanEntry)
----@returns table<fa.scanner.ScanEntry, true>
+---@param callback fun(entry: fa.scanner.ScanEntry)
 function mod.get_entries_snapshot(surface_index, player, callback)
    local state = surface_state[surface_index]
 

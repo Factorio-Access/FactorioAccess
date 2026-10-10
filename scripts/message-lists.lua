@@ -18,7 +18,7 @@ mod.STATUS = {
 ---@field name string Name of the message list
 
 ---@class fa.MessageLists.State
----@field metadata_cache table<string, fa.MessageLists.Metadata> Cached metadata by list name
+---@field metadata_cache table<string, fa.MessageLists.Metadata?> Cached metadata by list name
 ---@field pending_translations table<number, string> Map of translation request ID to list name
 ---@field pending_list_names table<string, boolean> Set of list names with pending translations
 ---@field all_translated boolean True once all lists have been translated
@@ -53,13 +53,9 @@ local function request_metadata_translation(pindex, list_name)
    -- Request translation for the metadata key
    local meta_key = { "fa.messagelist--" .. list_name .. "--meta" }
    local request_id = player.request_translation(meta_key)
-
-   if request_id then
-      state.pending_translations[request_id] = list_name
-      state.pending_list_names[list_name] = true
-      return true
-   end
-   return false
+   state.pending_translations[request_id] = list_name
+   state.pending_list_names[list_name] = true
+   return true
 end
 
 ---Handle a translation result from on_string_translated event.

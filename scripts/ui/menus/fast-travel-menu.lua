@@ -10,7 +10,8 @@ local Viewpoint = require("scripts.viewpoint")
 
 local mod = {}
 
----@type fun(fa.ui.graph.Ctx): fa.ui.graph.Render?
+---@param ctx fa.ui.graph.Ctx
+---@return fa.ui.graph.Render?
 local function render(ctx)
    local p = game.get_player(ctx.pindex)
    if not p then return nil end

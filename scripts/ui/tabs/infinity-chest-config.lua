@@ -73,11 +73,7 @@ local function render_infinity_chest_config(ctx)
 
             -- Get item prototype for localized name
             local item_proto = prototypes.item[filter.name]
-            if item_proto then
-               ctx.message:fragment(item_proto.localised_name)
-            else
-               ctx.message:fragment(filter.name)
-            end
+            ctx.message:fragment(item_proto.localised_name)
 
             -- Add mode
             ctx.message:fragment(get_mode_label(filter.mode or "exactly"))
@@ -105,11 +101,7 @@ local function render_infinity_chest_config(ctx)
                })
 
                local item_proto = prototypes.item[result.name]
-               if item_proto then
-                  ctx.controller.message:fragment(item_proto.localised_name)
-               else
-                  ctx.controller.message:fragment(result.name)
-               end
+               ctx.controller.message:fragment(item_proto.localised_name)
             end
          end,
          on_clear = function(ctx)

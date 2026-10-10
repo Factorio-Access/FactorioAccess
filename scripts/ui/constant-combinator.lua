@@ -24,7 +24,7 @@ local function render_overview(ctx)
    local entity = ctx.global_parameters and ctx.global_parameters.entity
    assert(entity and entity.valid, "render_overview: entity is nil or invalid")
 
-   local cb = entity.get_control_behavior() --[[@as LuaConstantCombinatorControlBehavior]]
+   local cb = entity.get_control_behavior() --[[@as LuaConstantCombinatorControlBehavior?]]
    assert(cb, "render_overview: no control behavior found")
 
    local menu = Menu.MenuBuilder.new()
@@ -143,7 +143,7 @@ local function render_overview(ctx)
 end
 
 ---Build tabs for the constant combinator
----@param pindex number
+---@param pindex integer
 ---@param parameters any
 ---@return fa.ui.TabstopDescriptor[]
 local function build_constant_combinator_tabs(pindex, parameters)
@@ -152,7 +152,7 @@ local function build_constant_combinator_tabs(pindex, parameters)
    assert(entity, "build_constant_combinator_tabs: entity is nil")
    assert(entity.valid, "build_constant_combinator_tabs: entity is not valid")
 
-   local cb = entity.get_control_behavior() --[[@as LuaConstantCombinatorControlBehavior]]
+   local cb = entity.get_control_behavior() --[[@as LuaConstantCombinatorControlBehavior?]]
    assert(cb, "build_constant_combinator_tabs: no control behavior")
 
    -- Tabstop 1: Main (Overview + Circuit signals)

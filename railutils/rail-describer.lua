@@ -170,11 +170,12 @@ local function detect_turn(surface, rail_type, placement_direction, position)
    local from_name = Queries.get_cardinal_name(turn_info.from_cardinal) or "north"
    local to_name = Queries.get_cardinal_name(turn_info.to_cardinal) or "south"
 
-   return turn_info.position .. "-of-" .. from_name .. "-to-" .. to_name .. "-turn"
+   -- Every turn table entry names one of RailKind's turn positions
+   return (turn_info.position .. "-of-" .. from_name .. "-to-" .. to_name .. "-turn") --[[@as railutils.RailKind]]
 end
 
 ---Direct lookup table for curved-rail-a fallback descriptions
----@type table<defines.direction, railutils.RailKind>
+---@type table<defines.direction, railutils.RailKind?>
 local CURVE_A_FALLBACK = {
    [defines.direction.north] = RailInfo.RailKind.LEFT_OF_NORTH,
    [defines.direction.northeast] = RailInfo.RailKind.RIGHT_OF_NORTH,
@@ -187,7 +188,7 @@ local CURVE_A_FALLBACK = {
 }
 
 ---Direct lookup table for curved-rail-b fallback descriptions
----@type table<defines.direction, railutils.RailKind>
+---@type table<defines.direction, railutils.RailKind?>
 local CURVE_B_FALLBACK = {
    [defines.direction.north] = RailInfo.RailKind.RIGHT_OF_SOUTHEAST,
    [defines.direction.northeast] = RailInfo.RailKind.LEFT_OF_SOUTHWEST,
@@ -239,27 +240,18 @@ end
 ---@param position fa.Point Position of the rail (grid-adjusted)
 ---@return railutils.RailDescription
 function mod.describe_rail(surface, rail_type, placement_direction, position)
+   -- Try simple classification first; for curves, turn detection, then simple left/right of cardinal/diagonal
+   local kind = classify_simple_rail(rail_type, placement_direction)
+      or detect_turn(surface, rail_type, placement_direction, position)
+      or get_curve_fallback(rail_type, placement_direction)
+
+   ---@type railutils.RailDescription
    local description = {
-      kind = "",
+      kind = kind,
       end_direction = nil,
       lonely = false,
       junctions = {},
    }
-
-   -- Try simple classification first
-   local simple_kind = classify_simple_rail(rail_type, placement_direction)
-   if simple_kind then
-      description.kind = simple_kind
-   else
-      -- For curves, try turn detection first
-      local turn_kind = detect_turn(surface, rail_type, placement_direction, position)
-      if turn_kind then
-         description.kind = turn_kind
-      else
-         -- Fall back to simple left/right of cardinal/diagonal
-         description.kind = get_curve_fallback(rail_type, placement_direction)
-      end
-   end
 
    -- Get the two ends of this rail
    local ends = Queries.get_end_directions(rail_type, placement_direction)

@@ -25,7 +25,7 @@ every keypress.  Prototypes cannot change without a restart and module locals do
 so the orderings are computed once per dictionary and reused; filters are applied while walking
 the cached ordering instead of while building it.
 ]]
----@type table<string, fa.ui.signal_helpers.Hierarchy>
+---@type table<string, fa.ui.signal_helpers.Hierarchy?>
 local hierarchy_cache = {}
 
 ---@param cache_key string Unique name for the dictionary, e.g. the chooser's key prefix.
@@ -232,13 +232,14 @@ Unlocks are driven by research, so the cache is dropped on research events.  A r
 directly by script without research will not show up until the next research event; that is rare
 enough to accept.
 ]]
----@type table<integer, table<string, boolean>>
+---@type table<integer, table<string, boolean>?>
 local unlocked_items_cache = {}
 
 -- The world slots for these events belong to the research announcements; EventManager permits one
 -- handler per slot per event, so this rides in the ui slot and returns nil to let them run.
 EventManager.on_event({ defines.events.on_research_finished, defines.events.on_research_reversed }, function()
    unlocked_items_cache = {}
+   return nil
 end, EventManager.EVENT_KIND.UI)
 
 ---@param force LuaForce
@@ -251,7 +252,7 @@ local function get_unlocked_items(force)
 
    -- Always-show items
    for name, item_proto in pairs(prototypes.item) do
-      if item_proto.flags and item_proto.flags["always-show"] then unlocked_items[name] = true end
+      if item_proto.has_flag("always-show") then unlocked_items[name] = true end
    end
 
    -- Items from researched technologies
@@ -285,8 +286,9 @@ local function get_unlocked_items(force)
       if entity_proto.resource_category then
          local loot = entity_proto.loot
          if loot then
+            -- Loot is always items
             for _, loot_item in ipairs(loot) do
-               if loot_item.type == "item" then unlocked_items[loot_item.name] = true end
+               unlocked_items[loot_item.name] = true
             end
          end
 

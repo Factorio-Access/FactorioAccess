@@ -36,7 +36,7 @@ end
 ---@param rail_type railutils.RailType Type of the rail
 ---@param placement_direction defines.direction Direction the rail is placed
 ---@param position fa.Point Position of the rail
----@param query_fn fun(area: BoundingBox.0): LuaEntity[] Function to query rails at an area
+---@param query_fn fun(area: BoundingBox): LuaEntity[] Function to query rails at an area
 local function push_connected_unit_numbers(connected_set, rail_ent, rail_type, placement_direction, position, query_fn)
    -- Get both end directions for this rail (always 2)
    local end_directions = RailQueries.get_end_directions(rail_type, placement_direction)
@@ -130,7 +130,7 @@ end
 ---Rails with signals or stations are always considered primary and never grouped.
 ---
 ---@param rail_list LuaEntity[] Array of rail entities at the same position
----@param query_fn fun(area: BoundingBox.0): LuaEntity[] Function to query rails at an area
+---@param query_fn fun(area: BoundingBox): LuaEntity[] Function to query rails at an area
 ---@return LuaEntity[] Filtered array with only primary rails
 function mod.deduplicate_secondary_rails(rail_list, query_fn)
    if #rail_list <= 1 then return rail_list end

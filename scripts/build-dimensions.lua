@@ -17,9 +17,13 @@ local function analyze_blueprint_base_dimensions(stack)
 
    local ents = stack.get_blueprint_entities()
 
+   ---@type number
    local west_most_x = 0
+   ---@type number
    local east_most_x = 0
+   ---@type number
    local north_most_y = 0
+   ---@type number
    local south_most_y = 0
    local first_ent = true
 
@@ -100,9 +104,12 @@ function mod.get_stack_build_dimensions(stack, direction)
    elseif stack.is_blueprint_book then
       -- Blueprint books: get dimensions from active blueprint
       local book_inv = stack.get_inventory(defines.inventory.item_main)
-      if book_inv and stack.active_index then
-         local active_bp = book_inv[stack.active_index]
-         if active_bp and active_bp.valid_for_read and active_bp.is_blueprint then
+      -- integer, not the API's uint32: EmmyLua does not resolve an alias used as an index key
+      ---@type integer?
+      local active_index = stack.active_index
+      if book_inv and active_index then
+         local active_bp = book_inv[active_index]
+         if active_bp.valid_for_read and active_bp.is_blueprint then
             width, height = analyze_blueprint_base_dimensions(active_bp)
          end
       end

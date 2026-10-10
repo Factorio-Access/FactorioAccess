@@ -170,7 +170,7 @@ end
 players = TH.deny_access_table()
 
 --Reads the item in hand, its facing direction if applicable, its count, and its total count including units in the main inventory.
----@param pindex number
+---@param pindex integer
 local function read_hand(pindex)
    if storage.players[pindex].skip_read_hand == true then
       storage.players[pindex].skip_read_hand = false
@@ -1090,7 +1090,7 @@ EventManager.on_event(defines.events.on_research_finished, Research.on_research_
 
 --Moves the cursor, and conducts an area scan for larger cursors. If the player is in a slow moving vehicle, it is stopped.
 ---Move a large cursor by n tiles and read the area
----@param pindex number
+---@param pindex integer
 ---@param direction defines.direction
 ---@param tiles number Number of tiles to move
 ---@param prefix_text string? Optional text to prepend to the reading
@@ -1242,7 +1242,7 @@ local function cursor_skip_iteration(pindex, direction, iteration_limit)
 
    -- Returns a new value for current or nil, ignoring a list of entities.
    --
-   ---@returns LuaEntity?
+   ---@return LuaEntity?
    local function compute_current()
       EntitySelection.reset_entity_index(pindex)
       for ent in EntitySelection.iterate_selected_ents(pindex) do
@@ -2214,7 +2214,7 @@ EventManager.on_event(
 )
 
 ---Toggles cursor mode on or off. Appropriately affects other modes such as build lock or remote view.
----@param pindex number
+---@param pindex integer
 ---@param muted boolean
 local function toggle_cursor_mode(pindex, muted)
    local p = game.get_player(pindex)
@@ -2285,7 +2285,7 @@ local CURSOR_SIZES = { 0, 1, 2, 5, 10, 25, 50, 125 }
 
 ---Adjusts the cursor size for a given player by stepping through predefined cursor size options.
 ---Direction +1 increases the size to the next larger value, -1 decreases it.
----@param pindex number Player index
+---@param pindex integer Player index
 ---@param direction number Step direction in CURSOR_SIZES (+1 to increase, -1 to decrease)
 local function adjust_cursor_size(pindex, direction)
    local vp = Viewpoint.get_viewpoint(pindex)

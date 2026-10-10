@@ -17,7 +17,7 @@ describe("Inventory Coordinate Tests", function()
          -- Ensure player exists with character
          if not player then
             -- Player should already exist in test environment
-            ctx:error("No player found at index 1")
+            error("No player found at index 1")
             return
          end
 
@@ -100,7 +100,7 @@ describe("Inventory Coordinate Tests", function()
 
          if not player then
             -- Player should already exist in test environment
-            ctx:error("No player found at index 1")
+            error("No player found at index 1")
             return
          end
 

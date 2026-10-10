@@ -3,17 +3,25 @@
 ---@class LRUCache
 ---@field capacity integer Maximum number of items to store
 ---@field size integer Current number of items in cache
----@field map table<any, table> Map from keys to nodes
----@field head table? Most recently used node
----@field tail table? Least recently used node
+---@field map table<any, LRUCache.Node?> Map from keys to nodes
+---@field head LRUCache.Node? Most recently used node
+---@field tail LRUCache.Node? Least recently used node
 local LRUCache = {}
 local LRUCache_meta = { __index = LRUCache }
+-- script is nil under plain Lua, outside Factorio
+---@diagnostic disable-next-line: unnecessary-if
 if script then script.register_metatable("ds.LruCache", LRUCache_meta) end
+
+---@class LRUCache.Node
+---@field key any
+---@field value any
+---@field prev LRUCache.Node?
+---@field next LRUCache.Node?
 
 ---Create a new node (plain table, no metatable for internal use)
 ---@param key any
 ---@param value any
----@return table
+---@return LRUCache.Node
 local function new_node(key, value)
    return {
       key = key,
@@ -37,12 +45,11 @@ function LRUCache.new(capacity)
       tail = nil, -- least recently used
    }
 
-   setmetatable(cache, LRUCache_meta)
-   return cache
+   return setmetatable(cache, LRUCache_meta)
 end
 
 ---Remove a node from the linked list
----@param node table
+---@param node LRUCache.Node
 function LRUCache:_unlink(node)
    if node.prev then
       node.prev.next = node.next
@@ -61,7 +68,7 @@ function LRUCache:_unlink(node)
 end
 
 ---Add a node to the head of the linked list
----@param node table
+---@param node LRUCache.Node
 function LRUCache:_add_to_head(node)
    node.next = self.head
    node.prev = nil
@@ -74,7 +81,7 @@ function LRUCache:_add_to_head(node)
 end
 
 ---Move a node to the head (mark as most recently used)
----@param node table
+---@param node LRUCache.Node
 function LRUCache:_move_to_head(node)
    self:_unlink(node)
    self:_add_to_head(node)

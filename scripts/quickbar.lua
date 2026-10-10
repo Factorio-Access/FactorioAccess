@@ -17,19 +17,15 @@ local function describe_quick_bar_slot(slot)
       local name = slot.item.name
       return Localising.get_localised_name_with_fallback(prototypes.item[name]), name
    elseif slot.type == "filter" and slot.filter then
-      local name = type(slot.filter) == "string" and slot.filter or slot.filter.name
-      local proto = prototypes.item[name]
-      if proto then return Localising.get_localised_name_with_fallback(proto), name end
-      return name
+      -- Filters read from the game name their item by string.
+      local name = (type(slot.filter) == "string" and slot.filter or slot.filter.name) --[[@as string]]
+      return Localising.get_localised_name_with_fallback(prototypes.item[name]), name
    elseif slot.type == "record" and slot.record then
       local record = slot.record
       if record.label and record.label ~= "" then return record.label end
-      local proto = prototypes.item[record.type]
-      if proto then return Localising.get_localised_name_with_fallback(proto) end
-      return record.type
+      return Localising.get_localised_name_with_fallback(prototypes.item[record.type])
    elseif slot.type == "remote" then
-      local proto = prototypes.item["spidertron-remote"]
-      if proto then return Localising.get_localised_name_with_fallback(proto) end
+      return Localising.get_localised_name_with_fallback(prototypes.item["spidertron-remote"])
    end
    return nil
 end

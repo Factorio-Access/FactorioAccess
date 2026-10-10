@@ -36,7 +36,7 @@ local walking_storage = StorageManager.declare_storage_module("walking", {
 })
 
 ---Process walking announcements for a player
----@param pindex number
+---@param pindex integer
 function mod.process_walking_announcements(pindex)
    local player = game.get_player(pindex)
    if not player or not player.character then return end

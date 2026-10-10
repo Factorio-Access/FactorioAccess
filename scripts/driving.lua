@@ -174,9 +174,31 @@ function mod.halve_vehicle_speed(pindex)
    if vehicle and vehicle.valid then vehicle.speed = vehicle.speed / 2 end
 end
 
+---The remote interface of the Pavement Driving Assist mod, as this file uses it
+---@class fa.Driving.PdaInterface
+---@field get_state_of_cruise_control fun(pindex: integer): boolean
+---@field set_state_of_cruise_control fun(pindex: integer, new_state: boolean)
+---@field get_cruise_control_limit fun(pindex: integer): number
+---@field set_cruise_control_limit fun(pindex: integer, new_value: number)
+---@field get_state_of_driving_assistant fun(pindex: integer): boolean
+---@field set_state_of_driving_assistant fun(pindex: integer, new_state: boolean)
+
+---@class (partial) LuaRemote.InterfaceMap
+---@field PDA fa.Driving.PdaInterface
+
+---Whether the Pavement Driving Assist mod is present and has this remote function
+---@param fname string
+---@return boolean
+local function pda_has(fname)
+   ---@type table<string, true?>?
+   local pda = remote.interfaces["PDA"]
+   return pda ~= nil and pda[fname] ~= nil
+end
+
 --Pavement Driving Assist: Read CC state
+---@param pindex integer
 function mod.pda_get_state_of_cruise_control(pindex)
-   if remote.interfaces.PDA and remote.interfaces.PDA.get_state_of_cruise_control then
+   if pda_has("get_state_of_cruise_control") then
       return remote.call("PDA", "get_state_of_cruise_control", pindex)
    else
       return nil
@@ -184,8 +206,10 @@ function mod.pda_get_state_of_cruise_control(pindex)
 end
 
 --Pavement Driving Assist: Set CC state
+---@param pindex integer
+---@param new_state boolean
 function mod.pda_set_state_of_cruise_control(pindex, new_state)
-   if remote.interfaces.PDA and remote.interfaces.PDA.set_state_of_cruise_control then
+   if pda_has("set_state_of_cruise_control") then
       remote.call("PDA", "set_state_of_cruise_control", pindex, new_state)
       return 1
    else
@@ -194,8 +218,9 @@ function mod.pda_set_state_of_cruise_control(pindex, new_state)
 end
 
 --Pavement Driving Assist: Read CC speed limit in kmh
+---@param pindex integer
 function mod.pda_get_cruise_control_limit(pindex)
-   if remote.interfaces.PDA and remote.interfaces.PDA.get_cruise_control_limit then
+   if pda_has("get_cruise_control_limit") then
       return remote.call("PDA", "get_cruise_control_limit", pindex)
    else
       return nil
@@ -203,8 +228,10 @@ function mod.pda_get_cruise_control_limit(pindex)
 end
 
 --Pavement Driving Assist: Set CC speed limit in kmh
+---@param pindex integer
+---@param new_value number
 function mod.pda_set_cruise_control_limit(pindex, new_value)
-   if remote.interfaces.PDA and remote.interfaces.PDA.set_cruise_control_limit then
+   if pda_has("set_cruise_control_limit") then
       remote.call("PDA", "set_cruise_control_limit", pindex, new_value)
       return 1
    else
@@ -213,8 +240,9 @@ function mod.pda_set_cruise_control_limit(pindex, new_value)
 end
 
 --Pavement Driving Assist: Read assistant state
+---@param pindex integer
 function mod.pda_get_state_of_driving_assistant(pindex)
-   if remote.interfaces.PDA and remote.interfaces.PDA.get_state_of_driving_assistant then
+   if pda_has("get_state_of_driving_assistant") then
       return remote.call("PDA", "get_state_of_driving_assistant", pindex)
    else
       return nil
@@ -222,8 +250,10 @@ function mod.pda_get_state_of_driving_assistant(pindex)
 end
 
 --Pavement Driving Assist: Set assistant state
+---@param pindex integer
+---@param new_state boolean
 function mod.pda_set_state_of_driving_assistant(pindex, new_state)
-   if remote.interfaces.PDA and remote.interfaces.PDA.set_state_of_driving_assistant then
+   if pda_has("set_state_of_driving_assistant") then
       remote.call("PDA", "set_state_of_driving_assistant", pindex, new_state)
       return 1
    else
@@ -234,13 +264,14 @@ end
 --Pavement Driving Assist: Read assistant state after it has been toggled
 function mod.pda_read_assistant_toggled_info(pindex)
    if game.get_player(pindex).driving then
-      local is_on = not mod.pda_get_state_of_driving_assistant(pindex)
-      if is_on == true then
-         Speech.speak(pindex, { "fa.driving-pda-enabled" })
-      elseif is_on == false then
-         Speech.speak(pindex, { "fa.driving-pda-disabled" })
-      else
+      -- The state is read before the toggle reaches PDA, so the new state is its opposite
+      local was_on = mod.pda_get_state_of_driving_assistant(pindex)
+      if was_on == nil then
          Speech.speak(pindex, { "fa.driving-pda-missing" })
+      elseif not was_on then
+         Speech.speak(pindex, { "fa.driving-pda-enabled" })
+      else
+         Speech.speak(pindex, { "fa.driving-pda-disabled" })
       end
    end
 end
@@ -248,13 +279,14 @@ end
 --Pavement Driving Assist: Read CC state after it has been toggled
 function mod.pda_read_cruise_control_toggled_info(pindex)
    if game.get_player(pindex).driving then
-      local is_on = not mod.pda_get_state_of_cruise_control(pindex)
-      if is_on == true then
-         Speech.speak(pindex, { "fa.driving-cruise-enabled" })
-      elseif is_on == false then
-         Speech.speak(pindex, { "fa.driving-cruise-disabled" })
-      else
+      -- The state is read before the toggle reaches PDA, so the new state is its opposite
+      local was_on = mod.pda_get_state_of_cruise_control(pindex)
+      if was_on == nil then
          Speech.speak(pindex, { "fa.driving-cruise-missing" })
+      elseif not was_on then
+         Speech.speak(pindex, { "fa.driving-cruise-enabled" })
+      else
+         Speech.speak(pindex, { "fa.driving-cruise-disabled" })
       end
       mod.pda_set_cruise_control_limit(pindex, 0.16)
    end

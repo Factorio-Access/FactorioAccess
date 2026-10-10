@@ -108,7 +108,7 @@ function MenuBuilder:end_row()
    return self
 end
 
----@param label LocalisedString | fun(fa.ui.graph.Ctx): LocalisedString
+---@param label LocalisedString | fun(ctx: fa.ui.graph.Ctx): LocalisedString
 ---@return fa.ui.menu.MenuBuilder
 function MenuBuilder:add_label(key, label)
    self:add_item(key, {
@@ -118,7 +118,7 @@ function MenuBuilder:add_label(key, label)
 end
 
 ---@param key string
----@param label LocalisedString | fun(fa.ui.graph.Ctx): LocalisedString
+---@param label LocalisedString | fun(ctx: fa.ui.graph.Ctx): LocalisedString
 ---@param click_handlers fa.ui.menu.ClickHandlers
 function MenuBuilder:add_clickable(key, label, click_handlers)
    local vtable = {
@@ -159,7 +159,9 @@ function MenuBuilder:build()
 
    -- Flatten rows to get all items
    local all_items = {}
-   local item_to_row = {} -- Map item index to row index
+   -- Map item index to row index
+   ---@type table<integer, integer>
+   local item_to_row = {}
    for row_idx, row in ipairs(self.rows) do
       assert(#row.items > 0, "Row cannot be empty")
       for _, item in ipairs(row.items) do

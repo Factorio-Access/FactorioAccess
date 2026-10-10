@@ -16,7 +16,7 @@ local mod = {}
 ---Calculate world position for a connection point from an AABB
 ---@param entity LuaEntity
 ---@param aabb fa.AABB Connection point AABB
----@return MapPosition
+---@return fa.Point
 local function aabb_to_world_pos(entity, aabb)
    -- Get center of the AABB in entity-local coordinates
    local local_x = (aabb.left_top.x + aabb.right_bottom.x) / 2
@@ -35,7 +35,7 @@ end
 ---Calculate world position for a connection point from a position vector
 ---@param entity LuaEntity
 ---@param pos Vector Connection point position
----@return MapPosition
+---@return fa.Point
 local function vec_to_world_pos(entity, pos)
    -- Rotate to world coordinates
    local world_x, world_y = Geometry.rotate_vec(pos.x, pos.y, entity.direction)
@@ -222,6 +222,7 @@ function mod.drag_wire_and_read(pindex, side)
       },
    })
    local c_ent = ents_at_position[1]
+   ---@type LuaEntity?
    local last_c_ent = storage.players[pindex].last_wire_ent
    local network_found = nil
    if c_ent == nil or c_ent.valid == false then c_ent = p.selected end
@@ -376,7 +377,7 @@ function mod.localise_signal_with_count(signal_id, count)
 end
 
 ---Localize a comparator symbol to a LocalisedString
----@param comparator string Comparator symbol (<, <=, =, !=, >=, >)
+---@param comparator ComparatorString? Comparator symbol (<, <=, =, !=, >=, >)
 ---@return LocalisedString
 function mod.localise_comparator(comparator)
    local comp = comparator or "<"
@@ -396,9 +397,10 @@ function mod.localise_comparator(comparator)
 end
 
 ---Get next comparator (cycle forward)
----@param current string Current comparator
----@return string
+---@param current ComparatorString? Current comparator
+---@return ComparatorString
 function mod.get_next_comparison_operator(current)
+   ---@type ComparatorString[]
    local comparators = { "<", "≤", "=", "≥", ">", "≠" }
    local curr = current or "<"
    for i, comp in ipairs(comparators) do
@@ -408,9 +410,10 @@ function mod.get_next_comparison_operator(current)
 end
 
 ---Get previous comparator (cycle backward)
----@param current string Current comparator
----@return string
+---@param current ComparatorString? Current comparator
+---@return ComparatorString
 function mod.get_prev_comparison_operator(current)
+   ---@type ComparatorString[]
    local comparators = { "<", "≤", "=", "≥", ">", "≠" }
    local curr = current or "<"
    for i, comp in ipairs(comparators) do
@@ -477,7 +480,7 @@ end
 ---Aggregate signals from a circuit network, summing across qualities
 ---Returns a nested table: type -> name -> quality -> count
 ---@param signals Signal[]?
----@return table<string, table<string, table<string, number>>>
+---@return table<string, table<string, table<string, integer>>>
 function mod.aggregate_signals(signals)
    if not signals then return {} end
 
@@ -499,8 +502,8 @@ end
 
 ---Sort aggregated signals by total count (descending) then by name
 ---Unrolls the nested table into a flat sorted array
----@param aggregated table<string, table<string, table<string, number>>>
----@return {signal_id: SignalID, total_count: number, by_quality: table<string, number>}[]
+---@param aggregated table<string, table<string, table<string, integer>>>
+---@return {signal_id: SignalID, total_count: integer, by_quality: table<string, integer>}[]
 function mod.sort_aggregated_signals(aggregated)
    local sorted = {}
 
@@ -594,7 +597,7 @@ end
 ---@param entity LuaEntity
 ---@param both_wires boolean If true, combine red and green networks
 ---@param wire_connector_id defines.wire_connector_id? If both_wires is false, which wire to use
----@return {signal_id: SignalID, total_count: number, by_quality: table<string, number>}[]?
+---@return {signal_id: SignalID, total_count: integer, by_quality: table<string, integer>}[]?
 function mod.get_aggregated_signals_from_entity(entity, both_wires, wire_connector_id)
    local signals = mod.get_signals_from_entity(entity, both_wires, wire_connector_id)
    if not signals then return nil end
@@ -711,7 +714,7 @@ end
 
 ---Get info string for constant combinator signals (for fa-info)
 ---@param entity LuaEntity
----@param pindex number
+---@param pindex integer
 ---@return LocalisedString
 function mod.constant_combinator_signals_info(entity, pindex)
    local all_signals = mod.get_constant_combinator_filters(entity)
@@ -735,7 +738,7 @@ end
 ---Get immediate neighbors via copper wires (electric poles)
 ---Returns grouped and formatted string for display
 ---@param entity LuaEntity
----@param pindex number
+---@param pindex integer
 ---@return LocalisedString
 function mod.get_copper_wire_neighbors_info(entity, pindex)
    local neighbors = {}
@@ -810,7 +813,7 @@ end
 ---Get immediate circuit network neighbors (directly connected entities)
 ---Returns grouped and formatted string for display
 ---@param entity LuaEntity
----@param pindex number
+---@param pindex integer
 ---@return LocalisedString
 function mod.get_circuit_neighbors_info(entity, pindex)
    local neighbors = {}
@@ -961,7 +964,7 @@ end
 
 ---Get combinator neighbors info with separate sections for each connection point
 ---@param entity LuaEntity
----@param pindex number
+---@param pindex integer
 ---@return LocalisedString
 function mod.get_combinator_neighbors_info(entity, pindex)
    local msg = Speech.MessageBuilder.new()
@@ -1002,7 +1005,7 @@ end
 
 ---Get power switch neighbors info with separate sections for left/right copper and circuit
 ---@param entity LuaEntity
----@param pindex number
+---@param pindex integer
 ---@return LocalisedString
 function mod.get_power_switch_neighbors_info(entity, pindex)
    local msg = Speech.MessageBuilder.new()

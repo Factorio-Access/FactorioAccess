@@ -25,7 +25,7 @@ local mod = {}
 ---@field tablist_shared_state fa.ui.OffshorePumpPlacement.SharedState
 
 -- Shared state setup function
----@param pindex number
+---@param pindex integer
 ---@param params fa.ui.OffshorePumpPlacement.Parameters
 ---@return fa.ui.OffshorePumpPlacement.SharedState
 local function state_setup(pindex, params)

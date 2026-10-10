@@ -28,7 +28,7 @@ local logger = Logging.Logger("build-lock")
 local BuildLock = {}
 
 -- Prototype cache for O(1) lookups
----@type table<string, {can_handle: function, backend: fa.BuildLock.Backend?}>
+---@type table<string, {backend: fa.BuildLock.Backend?}?>
 local prototype_cache = {}
 
 ---@class fa.BuildLock.PlacedEntity
@@ -83,27 +83,28 @@ local backends = {}
 ---@class fa.BuildLock.Backend
 ---@field name string
 ---@field can_handle fun(item_prototype: LuaItemPrototype): boolean
----@field select_tile_to_build? fun(pending_tiles: table, max_count: number, context: fa.BuildLock.BuildContext, helpers: fa.BuildLock.BuildHelpers): {action: string, tile_index: number}? Optional: select which tile from queue to build at (if not provided, uses default forward scan)
+---@field select_tile_to_build? fun(pending_tiles: table, max_count: number, context: fa.BuildLock.SelectContext, helpers: fa.BuildLock.BuildHelpers): {action: string, tile_index: number}? Optional: select which tile from queue to build at (if not provided, uses default forward scan)
 ---@field build fun(context: fa.BuildLock.BuildContext, helpers: fa.BuildLock.BuildHelpers): string Returns BuildAction constant
 
----@class fa.BuildLock.BuildContext
----@field pindex number
+---What a backend knows while choosing which pending tile to build at
+---@class fa.BuildLock.SelectContext
+---@field pindex integer
 ---@field player LuaPlayer
 ---@field item_prototype LuaItemPrototype
 ---@field item_quality LuaQualityPrototype?
----@field entity_prototype LuaEntityPrototype
----@field current_position MapPosition
----@field movement_direction defines.direction
+---@field entity_prototype LuaEntityPrototype? nil for tiles
 ---@field building_direction defines.direction
 ---@field entity_history fa.ds.FixedRingBuffer of fa.BuildLock.PlacedEntity
 ---@field backend_state table?
 
+---The context a backend builds with: the select context plus the tile chosen
+---@class fa.BuildLock.BuildContext: fa.BuildLock.SelectContext
+---@field current_position MapPosition
+---@field movement_direction defines.direction
+
 ---Registers a build lock backend
 ---@param backend fa.BuildLock.Backend
 function BuildLock.register_backend(backend)
-   assert(backend.name, "Backend must have a name")
-   assert(backend.can_handle, "Backend must have can_handle function")
-   assert(backend.build, "Backend must have build function")
    table.insert(backends, backend)
    logger:debug("Registered backend: " .. backend.name)
 end
@@ -129,7 +130,7 @@ local function find_backend(item_prototype)
 end
 
 ---Checks if build lock should be disabled due to cursor stack changes
----@param pindex number
+---@param pindex integer
 ---@return boolean should_disable
 ---@return string? reason Locale key for the reason
 local function check_cursor_stack_changes(pindex)
@@ -168,7 +169,7 @@ local function check_cursor_stack_changes(pindex)
 end
 
 ---Checks if build lock should be disabled due to movement discontinuity
----@param pindex number
+---@param pindex integer
 ---@return boolean should_disable
 ---@return string? reason Locale key for the reason
 local function check_movement_discontinuity(pindex)
@@ -186,7 +187,7 @@ local function check_movement_discontinuity(pindex)
 end
 
 ---Checks if the item in hand is buildable with build lock
----@param pindex number
+---@param pindex integer
 ---@return boolean is_buildable
 ---@return string? error_message
 local function check_item_buildable(pindex)
@@ -210,7 +211,7 @@ local function check_item_buildable(pindex)
 end
 
 ---Enables or disables build lock for a player
----@param pindex number
+---@param pindex integer
 ---@param enabled boolean
 ---@param silent boolean? Don't play sound or speak
 ---@param reason string? Optional locale key for disabling reason (only used when enabled=false and silent=false)
@@ -283,14 +284,14 @@ function BuildLock.set_enabled(pindex, enabled, silent, reason)
 end
 
 ---Toggles build lock for a player
----@param pindex number
+---@param pindex integer
 function BuildLock.toggle(pindex)
    local state = build_lock_storage[pindex]
    BuildLock.set_enabled(pindex, not state.enabled, false)
 end
 
 ---Checks if build lock is enabled for a player
----@param pindex number
+---@param pindex integer
 ---@return boolean
 function BuildLock.is_enabled(pindex)
    return build_lock_storage[pindex].enabled
@@ -373,7 +374,7 @@ BuildLock.BuildAction = {
 local BuildAction = BuildLock.BuildAction
 
 ---@class fa.BuildLock.BuildHelpers
----@field pindex number
+---@field pindex integer
 ---@field build_state fa.BuildLock.BuildState
 ---@field player LuaPlayer
 ---@field stack LuaItemStack
@@ -512,7 +513,7 @@ end
 ---Attempts to build from a queue of pending tiles using two-phase approach
 ---Phase 1: Select which tile to attempt (backend or default)
 ---Phase 2: Build at selected tile (backend)
----@param pindex number
+---@param pindex integer
 ---@param build_state fa.BuildLock.BuildState
 ---@param pending_tiles table Array of pending tiles
 ---@param max_count number Maximum number of tiles to consider
@@ -539,16 +540,14 @@ local function attempt_build_from_queue(pindex, build_state, pending_tiles, max_
       return nil
    end
 
-   -- Build base context (without position yet)
    local vp = Viewpoint.get_viewpoint(pindex)
+   ---@type fa.BuildLock.SelectContext
    local context = {
       pindex = pindex,
       player = player,
       item_prototype = item_prototype,
       item_quality = item_quality,
       entity_prototype = entity_prototype, -- nil for tiles
-      current_position = nil, -- Will be set after tile selection
-      movement_direction = nil, -- Will be set after tile selection
       building_direction = vp:get_hand_direction(),
       entity_history = build_state.entity_history,
       backend_state = build_state.backend_state,
@@ -578,24 +577,25 @@ local function attempt_build_from_queue(pindex, build_state, pending_tiles, max_
    local tile_index = selection.tile_index
    local selected_tile = pending_tiles[tile_index]
 
-   -- Update context with selected tile's position and direction
-   context.current_position = { x = selected_tile.x + 0.5, y = selected_tile.y + 0.5 }
-   context.movement_direction = selected_tile.direction
+   -- The selected tile completes the context
+   local build_context = context --[[@as fa.BuildLock.BuildContext]]
+   build_context.current_position = { x = selected_tile.x + 0.5, y = selected_tile.y + 0.5 }
+   build_context.movement_direction = selected_tile.direction
 
    logger:debug(
       string.format(
          "Backend: %s, selected tile %d at pos=(%.1f,%.1f), move_dir=%d, build_dir=%d",
          backend.name,
          tile_index,
-         context.current_position.x,
-         context.current_position.y,
-         context.movement_direction,
-         context.building_direction
+         build_context.current_position.x,
+         build_context.current_position.y,
+         build_context.movement_direction,
+         build_context.building_direction
       )
    )
 
    -- Phase 2: Build at selected position
-   local action = backend.build(context, helpers)
+   local action = backend.build(build_context, helpers)
    action = action or BuildAction.RETRY
 
    -- Handle FAIL action: disable build lock and stop processing
@@ -608,7 +608,7 @@ local function attempt_build_from_queue(pindex, build_state, pending_tiles, max_
 end
 
 ---Process the pending tiles queue, attempting to build entities
----@param pindex number
+---@param pindex integer
 ---@param build_state fa.BuildLock.BuildState
 ---@param current_tile {x: number, y: number} Current tile position (floored)
 local function process_pending_tiles_queue(pindex, build_state, current_tile)
@@ -663,7 +663,7 @@ local function process_pending_tiles_queue(pindex, build_state, current_tile)
 end
 
 ---Processes build lock for walking movement
----@param pindex number
+---@param pindex integer
 function BuildLock.process_walking_movement(pindex)
    local state = build_lock_storage[pindex]
    if not state.enabled then return end
@@ -718,7 +718,7 @@ function BuildLock.process_walking_movement(pindex)
 end
 
 ---Processes build lock for cursor movement
----@param pindex number
+---@param pindex integer
 ---@param new_position MapPosition
 ---@param movement_direction defines.direction
 function BuildLock.process_cursor_movement(pindex, new_position, movement_direction)
@@ -772,7 +772,7 @@ function BuildLock.process_cursor_movement(pindex, new_position, movement_direct
 end
 
 ---Called when a bump is detected, disables build lock
----@param pindex number
+---@param pindex integer
 function BuildLock.on_bump_detected(pindex)
    local state = build_lock_storage[pindex]
    if state.enabled then

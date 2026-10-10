@@ -24,14 +24,14 @@ local function patch_parameters(entity, closure)
 end
 
 ---Get the key for a condition at index i
----@param i number
+---@param i integer
 ---@return string
 local function get_condition_key(i)
    return "cond_" .. tostring(i)
 end
 
 ---Get the key for an output at index i
----@param i number
+---@param i integer
 ---@return string
 local function get_output_key(i)
    return "out_" .. tostring(i)
@@ -75,7 +75,7 @@ end
 ---Helper to cycle networks for a condition or output field
 ---@param entity LuaEntity
 ---@param item_type string "conditions" or "outputs"
----@param index number
+---@param index integer
 ---@param field_name string Field name containing networks (e.g., "first_signal_networks")
 ---@param ctx fa.ui.graph.Ctx
 local function cycle_item_networks(entity, item_type, index, field_name, ctx)
@@ -88,7 +88,7 @@ end
 
 ---Helper to validate and set a number from text input
 ---@param text_result string
----@param on_valid fun(num: number)
+---@param on_valid fun(num: integer)
 ---@param ctx fa.ui.graph.Ctx
 local function validate_and_set_number(text_result, on_valid, ctx)
    local num_value = tonumber(text_result)
@@ -173,7 +173,7 @@ end
 
 ---Build vtable for a condition item
 ---@param entity LuaEntity
----@param i number Index of this condition
+---@param i integer Index of this condition
 ---@param condition DeciderCombinatorCondition
 ---@param row_key string Key for this row
 ---@return fa.ui.graph.NodeVtable
@@ -288,7 +288,7 @@ end
 
 ---Build vtable for an output item
 ---@param entity LuaEntity
----@param i number Index of this output
+---@param i integer Index of this output
 ---@param output DeciderCombinatorOutput
 ---@param row_key string Key for this row
 ---@return fa.ui.graph.NodeVtable
@@ -357,7 +357,7 @@ local function render_decider_config(ctx)
    local entity = ctx.global_parameters and ctx.global_parameters.entity
    assert(entity and entity.valid, "render_decider_config: entity is nil or invalid")
 
-   local cb = entity.get_control_behavior() --[[@as LuaDeciderCombinatorControlBehavior]]
+   local cb = entity.get_control_behavior() --[[@as LuaDeciderCombinatorControlBehavior?]]
    assert(cb, "render_decider_config: no control behavior found")
 
    local params = cb.parameters
@@ -458,7 +458,7 @@ local function render_decider_config(ctx)
 end
 
 ---Build tabs for the decider combinator
----@param pindex number
+---@param pindex integer
 ---@param parameters any
 ---@return fa.ui.TabstopDescriptor[]
 local function build_decider_combinator_tabs(pindex, parameters)

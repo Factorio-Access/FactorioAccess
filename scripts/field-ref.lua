@@ -184,6 +184,7 @@ end
 ---@type FieldRefBuilder
 local F = capture_path_and_build({})
 
+---@type table
 local test_value = {
    f1 = "f1",
    f2 = {
@@ -212,6 +213,7 @@ assert(deep.get(test_value) == "new2")
 assert(test_value.f2.f1 == "new2")
 
 -- We can work over something mixed between strings and numbers.
+---@type table
 local mixed = {
    f = { 1, 2, 3 },
 }

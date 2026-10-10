@@ -9,6 +9,8 @@ This is safe to store in storage: the metatable is registered with Factorio.
 ---@field buffer table
 local RingBuffer = {}
 local RingBuffer_meta = { __index = RingBuffer }
+-- script is nil under plain Lua, outside Factorio
+---@diagnostic disable-next-line: unnecessary-if
 if script then script.register_metatable("ds.FixedRingBuffer", RingBuffer_meta) end
 
 ---@param capacity integer

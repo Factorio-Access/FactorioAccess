@@ -12,7 +12,7 @@ local TrainHelpers = require("scripts.rails.train-helpers")
 local mod = {}
 
 ---Get train interrupt options for the selector
----@param pindex number
+---@param pindex integer
 ---@param parameters table
 ---@return fa.ui.selectors.OptionsResult
 local function get_train_interrupt_options(pindex, parameters)

@@ -19,7 +19,7 @@ mod.MESSAGE_KIND = {
 
 ---@class fa.ui.help.HelpItem
 ---@field kind fa.ui.help.MessageKind
----@field value string Either message list name or localised string
+---@field value LocalisedString A message list name (string) for MESSAGE_LIST, the message itself for MESSAGE
 
 ---@class fa.ui.help.Parameters
 ---@field items fa.ui.help.HelpItem[] Array of help items to display
@@ -46,10 +46,11 @@ local help_graph = UiKeyGraph.declare_graph({
       for _, item in ipairs(params.items) do
          if item.kind == mod.MESSAGE_KIND.MESSAGE_LIST then
             -- Get message list metadata
-            local result = MessageLists.get_message_list_meta(ctx.pindex, item.value)
+            local list_name = item.value --[[@as string]]
+            local result = MessageLists.get_message_list_meta(ctx.pindex, list_name)
 
             if result.status == MessageLists.STATUS.NOT_FOUND then
-               table.insert(all_messages, { "fa.help-message-list-not-found", item.value })
+               table.insert(all_messages, { "fa.help-message-list-not-found", list_name })
             elseif result.status == MessageLists.STATUS.PENDING then
                all_ready = false
             elseif result.status == MessageLists.STATUS.READY then

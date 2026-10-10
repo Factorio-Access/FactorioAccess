@@ -62,7 +62,8 @@ function mod.initialize(player)
    faplayer.last_click_time = faplayer.last_click_time or 0
    faplayer.lag_building_in_hand = faplayer.lag_building_in_hand or nil
    faplayer.lag_building_selected = faplayer.lag_building_selected or nil
-   faplayer.tile = faplayer.tile or character.surface.get_tile(character.position.x, character.position.y)
+   faplayer.tile = faplayer.tile
+      or character.surface.get_tile(math.floor(character.position.x), math.floor(character.position.y))
    faplayer.move_state = faplayer.move_state or {}
    faplayer.remote_view = faplayer.remote_view or false
    faplayer.remote_view_tiles = faplayer.remote_view_tiles or 0

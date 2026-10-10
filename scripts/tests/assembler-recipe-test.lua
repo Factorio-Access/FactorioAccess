@@ -11,8 +11,11 @@ describe("Assembler Recipe Mod Tests", function()
    it("should list available recipes for assembler", function(ctx)
       -- Local variables for the test
       local pindex = 1
+      ---@type LuaPlayer
       local player
+      ---@type LuaSurface
       local surface
+      ---@type LuaEntity
       local assembler
 
       ctx:init(function()

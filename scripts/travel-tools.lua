@@ -39,7 +39,7 @@ local travel_storage = StorageManager.declare_storage_module("fast_travel", {
 })
 
 ---@class fa.FastTravelController
----@field pindex number
+---@field pindex integer
 local FastTravelController = {}
 local FastTravelController_meta = { __index = FastTravelController }
 
@@ -50,7 +50,7 @@ function FastTravelController:get_num_travel_points()
 end
 
 ---Get travel point by index (1-based, for iteration)
----@param index number
+---@param index integer
 ---@return fa.travel.TravelPoint?
 function FastTravelController:get_point_by_index(index)
    return travel_storage[self.pindex].points[index]
@@ -87,7 +87,7 @@ function FastTravelController:travel_to_point(id)
    if success and vp:get_cursor_anchored() then
       vp:set_cursor_pos(table.deepcopy(point.position))
    else
-      vp:set_cursor_pos(p.position)
+      vp:set_cursor_pos(p.position --[[@as fa.Point]])
    end
 
    Graphics.sync_build_cursor_graphics(self.pindex)
@@ -186,7 +186,7 @@ end
 local controller_cache = {}
 
 ---Get or create FastTravelController for player
----@param pindex number
+---@param pindex integer
 ---@return fa.FastTravelController
 function mod.get_controller(pindex)
    local cached = controller_cache[pindex]

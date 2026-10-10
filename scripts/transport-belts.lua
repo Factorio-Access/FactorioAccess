@@ -177,7 +177,7 @@ end
 local Node = {}
 local Node_meta = { __index = Node }
 mod.Node = Node
-if script then script.register_metatable("fa.TransportBelts.Node", Node_meta) end
+script.register_metatable("fa.TransportBelts.Node", Node_meta)
 
 ---@param entity LuaEntity
 function Node.create(entity)
@@ -296,7 +296,7 @@ difficult.
 The items table is prototype->quality->count.
 ]]
 ---@class fa.TransportBelts.SlotBucket
----@field items table<string, table<string, number>>
+---@field items table<string, table<string, integer>>
 
 -- Get the contents of a lane, accounting for stack sizes.
 ---@param line defines.transport_line
@@ -305,6 +305,7 @@ function Node:get_line_contents(line)
    self:_assert_valid()
    local line = self.entity.get_transport_line(line --[[@as defines.transport_line]])
 
+   ---@type fa.TransportBelts.SlotBucket[]
    local buckets = {}
 
    for _ = 1, line.line_length * 4 do
@@ -515,6 +516,9 @@ function Node:carries_heuristic(line_index, depth_limit)
    local contents
    local distance = 0
 
+   ---@param cur_parent LuaEntity
+   ---@param cur_depth integer
+   ---@param negate boolean
    local function handler(cur_parent, cur_depth, negate)
       if cur_depth > depth_limit then return false end
 
@@ -523,7 +527,7 @@ function Node:carries_heuristic(line_index, depth_limit)
       -- skip splitters, which have very complex internal contents.
       if cur_parent.type == "splitter" then return true end
 
-      line = cur_parent.get_transport_line(line_index --[[@as number]])
+      line = cur_parent.get_transport_line(line_index)
       empty = #line == 0
       if not empty then
          contents = line.get_detailed_contents()
@@ -621,6 +625,7 @@ So we do it here, then consume it in ui/belt-analyzer.lua.
 ]]
 ---@return fa.TransportBelts.BeltAnalyzerData
 function Node:belt_analyzer_algo()
+   ---@type fa.TransportBelts.BeltAnalyzerData
    local ret = {
       left = {
          upstream = {},
@@ -728,7 +733,7 @@ function mod.find_underground_entrance(surface, prototype, position, direction)
 
    -- In the API, exits and entrances face the SAME direction when connected
    -- Search in the opposite direction (behind where the exit would face) to find the entrance
-   local search_direction = (direction + defines.direction.south) % (2 * defines.direction.south)
+   local search_direction = ((direction + defines.direction.south) % (2 * defines.direction.south)) --[[@as defines.direction]]
    local search_offset_x, search_offset_y = Geometry.uv_for_direction(search_direction)
 
    -- The entrance could be anywhere from 1 to (max_dist + 1) tiles away Total span is: entrance (1 tile) + underground
@@ -867,7 +872,7 @@ function mod.splitter_priority_info(ent)
    elseif input == "right" then
       local direction = FaUtils.direction_lookup(FaUtils.rotate_90(ent.direction))
       msg:fragment({ "fa.splitter-info-input-priority-right", direction })
-   elseif input == "left" then
+   else -- left
       local direction = FaUtils.direction_lookup(FaUtils.rotate_270(ent.direction))
       msg:fragment({ "fa.splitter-info-input-priority-left", direction })
    end
@@ -878,12 +883,14 @@ function mod.splitter_priority_info(ent)
       elseif output == "right" then
          local direction = FaUtils.direction_lookup(FaUtils.rotate_90(ent.direction))
          msg:fragment({ "fa.splitter-info-output-priority-right", direction })
-      elseif output == "left" then
+      else -- left
          local direction = FaUtils.direction_lookup(FaUtils.rotate_270(ent.direction))
          msg:fragment({ "fa.splitter-info-output-priority-left", direction })
       end
    else
-      local item_name = localising.get_localised_name_with_fallback(prototypes.item[filter.name])
+      -- Filters read from the game are tables naming their item by string.
+      local filter_name = (filter --[[@as ItemFilter.struct]]).name --[[@as string]]
+      local item_name = localising.get_localised_name_with_fallback(prototypes.item[filter_name])
       local direction
       if output == "right" then
          direction = FaUtils.direction_lookup(FaUtils.rotate_90(ent.direction))

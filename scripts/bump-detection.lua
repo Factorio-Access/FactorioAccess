@@ -45,7 +45,7 @@ local bump_storage = StorageManager.declare_storage_module("bump_detection", {
 })
 
 ---Resets bump detection statistics for a player
----@param pindex number
+---@param pindex integer
 function mod.reset_bump_stats(pindex)
    bump_storage[pindex] = {
       last_bump_tick = 0,
@@ -60,7 +60,7 @@ function mod.register_bump_callback(callback)
 end
 
 ---Notify all registered callbacks of a bump
----@param pindex number
+---@param pindex integer
 local function notify_bump_callbacks(pindex)
    for _, callback in ipairs(bump_callbacks) do
       callback(pindex)
@@ -68,7 +68,7 @@ local function notify_bump_callbacks(pindex)
 end
 
 ---Checks and plays bump alert sounds when collision is detected
----@param pindex number
+---@param pindex integer
 ---@param this_tick number
 function mod.check_and_play_bump_alert_sound(pindex, this_tick)
    local bump = bump_storage[pindex]
@@ -204,7 +204,7 @@ end
 
 ---If walking but position unchanged, play stuck alert
 ---Detects when player is giving walking input but not moving at all
----@param pindex number
+---@param pindex integer
 ---@param this_tick number
 function mod.check_and_play_stuck_alert_sound(pindex, this_tick)
    local bump = bump_storage[pindex]

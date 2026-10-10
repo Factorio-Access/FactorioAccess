@@ -54,9 +54,8 @@ function mod.get_connection_points(ent)
       local dir = ent.direction or 0
       for _, conn in ipairs(proto.heat_buffer_prototype.connections) do
          local pos = ent.position
-         local rel = conn.position or { 0, 0 }
-         local dx, dy = rel[1], rel[2]
-         local rx, ry = rotate_offset(dx, dy, dir)
+         local rel = conn.position --[[@as fa.VectorArray]]
+         local rx, ry = rotate_offset(rel[1], rel[2], dir)
          table.insert(res, {
             position = { x = pos.x + rx, y = pos.y + ry },
             direction = (conn.direction + dir) % (defines.direction.south * 2),

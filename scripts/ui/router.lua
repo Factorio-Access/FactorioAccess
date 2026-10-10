@@ -40,7 +40,7 @@ local RichText = require("scripts.rich-text")
 local mod = {}
 
 ---Storage for registered UI instances
----@type table<string, fa.ui.UiPanelBase>
+---@type table<string, fa.ui.UiPanelBase?>
 local registered_uis = {}
 
 ---Register a UI with the event routing system
@@ -58,7 +58,7 @@ function mod.get_registered_ui(ui_name)
 end
 
 ---Get all registered UIs
----@return table<string, fa.ui.UiPanelBase>
+---@return table<string, fa.ui.UiPanelBase?>
 function mod.get_registered_uis()
    return registered_uis
 end
@@ -67,54 +67,54 @@ end
 
 ---@class fa.ui.UiPanelBase
 ---@field ui_name fa.ui.UiName
----@field open fun(self, pindex: number, parameters: table, controller: fa.ui.RouterController)
----@field close? fun(self, pindex: number)
+---@field open fun(self, pindex: integer, parameters: table, controller: fa.ui.RouterController)
+---@field close? fun(self, pindex: integer)
 ---@field is_overlay? fun(self): boolean Return true if this UI is an overlay on the map
----@field on_click? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_right_click? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_up? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_down? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_left? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_right? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_top? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_bottom? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_leftmost? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_rightmost? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_read_coords? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_read_info? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_next_tab? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_previous_tab? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_next_section? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_previous_section? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_child_result? fun(self, pindex: number, result: any, context: any, controller: fa.ui.RouterController) Result is string (plain textbox), fa.ui.TextboxRichTextResult (rich text textbox), or child UI specific
----@field on_accelerator? fun(self, pindex: number, accelerator_name: fa.ui.Accelerator, modifiers: table?, controller: fa.ui.RouterController)
----@field on_clear? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_dangerous_delete? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_announce_title? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_bar_min? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_bar_max? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_bar_up_small? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_bar_down_small? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_bar_up_large? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_bar_down_large? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_trash? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_action1? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_action2? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_action3? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_drag_up? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_drag_down? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_drag_left? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_drag_right? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_conjunction_modification? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_add_to_row? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_toggle_supertype? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_set_filter? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field on_clear_filter? fun(self, pindex: number, modifiers: table?, controller: fa.ui.RouterController)
----@field get_help_metadata? fun(self, pindex: number): fa.ui.help.HelpItem[]?
----@field supports_search? fun(self, pindex: number, controller: fa.ui.RouterController): boolean Check if this UI supports search
----@field search_hint? fun(self, pindex: number, hint_callback: fun(localised_string: LocalisedString), controller: fa.ui.RouterController) Submit searchable strings for cache population
----@field search_move? fun(self, message: fa.MessageBuilder, pindex: number, direction: integer, matcher: fun(localised_string: LocalisedString): boolean, controller: fa.ui.RouterController): integer Move to next/prev search result, returns fa.ui.SEARCH_RESULT
----@field get_binds? fun(self, pindex: number, parameters: table): fa.ui.Bind[]? Return binds for this UI, nil closes immediately
+---@field on_click? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_right_click? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_up? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_down? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_left? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_right? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_top? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_bottom? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_leftmost? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_rightmost? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_read_coords? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_read_info? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_next_tab? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_previous_tab? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_next_section? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_previous_section? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_child_result? fun(self, pindex: integer, result: any, context: any, controller: fa.ui.RouterController) Result is string (plain textbox), fa.ui.TextboxRichTextResult (rich text textbox), or child UI specific
+---@field on_accelerator? fun(self, pindex: integer, accelerator_name: fa.ui.Accelerator, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_clear? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_dangerous_delete? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_announce_title? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_bar_min? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_bar_max? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_bar_up_small? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_bar_down_small? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_bar_up_large? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_bar_down_large? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_trash? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_action1? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_action2? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_action3? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_drag_up? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_drag_down? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_drag_left? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_drag_right? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_conjunction_modification? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_add_to_row? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_toggle_supertype? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_set_filter? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field on_clear_filter? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
+---@field get_help_metadata? fun(self, pindex: integer): fa.ui.help.HelpItem[]?
+---@field supports_search? fun(self, pindex: integer, controller: fa.ui.RouterController): boolean Check if this UI supports search
+---@field search_hint? fun(self, pindex: integer, hint_callback: fun(localised_string: LocalisedString), controller: fa.ui.RouterController) Submit searchable strings for cache population
+---@field search_move? fun(self, message: fa.MessageBuilder, pindex: integer, direction: integer, matcher: (fun(localised_string: LocalisedString): boolean), controller: fa.ui.RouterController): fa.ui.SearchResult Move to next/prev search result
+---@field get_binds? fun(self, pindex: integer, parameters: table): fa.ui.Bind[]? Return binds for this UI, nil closes immediately
 
 ---@enum fa.ui.UiName
 mod.UI_NAMES = {
@@ -223,7 +223,7 @@ mod.BIND_KIND = {
 ---@field ui_stack fa.ui.StackEntry[] Stack of open UIs with contexts (top is last)
 ---@field search_pattern string? Current search pattern (literal substring)
 
----@type table<number, fa.ui.RouterState>
+---@type table<integer, fa.ui.RouterState>
 local router_state = StorageManager.declare_storage_module("ui_router", {
    ui_stack = {},
    search_pattern = nil,
@@ -232,13 +232,13 @@ local router_state = StorageManager.declare_storage_module("ui_router", {
 })
 
 ---@class fa.ui.Router
----@field pindex number
+---@field pindex integer
 local Router = {}
 local Router_meta = { __index = Router }
 
 ---@class fa.ui.RouterController
 ---@field router fa.ui.Router
----@field pindex number
+---@field pindex integer
 ---@field message fa.MessageBuilder Temporary message accumulator during event processing
 local RouterController = {}
 local RouterController_meta = { __index = RouterController }
@@ -619,7 +619,7 @@ end
 -- Routers are stateless save for the pindex; we cache them to avoid the overhead of making new ones.
 local router_cache = {}
 
----@param pindex number
+---@param pindex integer
 ---@return fa.ui.Router
 function mod.get_router(pindex)
    assert(pindex ~= nil)
@@ -816,25 +816,11 @@ register_ui_event("fa-a-e", function(event, pindex)
 
    -- If there's still a UI on the stack, announce its title
    if #stack > 0 then
-      local top_entry = stack[#stack]
-      local ui_name = top_entry.name
-      local ui = registered_uis[ui_name]
-
-      if ui then
-         -- Check if this is a TabList (has descriptors and tab_order)
-         ---@cast ui fa.ui.TabList
-         if ui.descriptors and ui.tab_order then
-            -- Get the TabList storage directly from storage.players
-            local tablist_storage = storage.players[pindex].tab_list
-            if tablist_storage and tablist_storage[ui_name] then
-               local tl = tablist_storage[ui_name]
-               local active_tab = tl.active_tab
-               if active_tab and ui.tab_order[active_tab] then
-                  local desc = ui.descriptors[ui.tab_order[active_tab]]
-                  if desc and desc.title then Speech.speak(pindex, desc.title) end
-               end
-            end
-         end
+      local ui = registered_uis[stack[#stack].name]
+      if ui and ui.on_announce_title then
+         local controller = create_controller_for_event(router)
+         ui:on_announce_title(pindex, nil, controller)
+         controller:finalize()
       end
    end
 
@@ -1100,7 +1086,7 @@ register_ui_event("fa-a-rightbracket", create_ui_handler("on_clear_filter"))
 -- Bind invalidation handlers (called from control.lua)
 
 ---Called when player's hand contents change. Closes all UIs if any have HAND_CONTENTS bind.
----@param pindex number
+---@param pindex integer
 function mod.on_hand_contents_changed(pindex)
    local router = mod.get_router(pindex)
    if router:_has_hand_bind() then router:_clear_ui_stack() end

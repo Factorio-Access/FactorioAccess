@@ -7,6 +7,7 @@ local FaUtils = require("scripts.fa-utils")
 local mod = {}
 
 -- Cached lookup from entity status id to status name
+---@type table<defines.entity_status, string>?
 local entity_status_lookup = nil
 
 --- Get the localised string for an entity status.

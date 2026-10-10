@@ -10,6 +10,7 @@ local mod = {}
 
 -- Zoom levels in tiles (diameter - full distance across screen). This list is calibrated to the default zoom limits for
 -- the character view.
+---@type integer[]
 mod.ZOOM_LEVELS = { 20, 50, 100, 200 }
 
 -- The base pixels per tile at zoom=1.

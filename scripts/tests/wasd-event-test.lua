@@ -11,8 +11,11 @@ describe("WASD Event Tests", function()
    it("should move cursor with simulated WASD events", function(ctx)
       -- Local variables for the test
       local pindex = 1
+      ---@type LuaPlayer
       local player
+      ---@type fa.Viewpoint
       local vp
+      ---@type fa.Point
       local initial_pos
 
       ctx:init(function()
@@ -20,7 +23,7 @@ describe("WASD Event Tests", function()
 
          -- Ensure player exists
          if not player then
-            ctx:error("No player found at index 1")
+            error("No player found at index 1")
             return
          end
 

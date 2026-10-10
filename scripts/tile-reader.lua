@@ -69,16 +69,14 @@ function mod.read_tile_rails(pindex, message)
       for _, rail_entity in ipairs(rail_entities) do
          if rail_entity and rail_entity.valid then
             local rail_type = RailQueries.prototype_type_to_rail_type(rail_entity.name)
-            if rail_type then
-               local pos = { x = rail_entity.position.x, y = rail_entity.position.y }
-               local description = RailDescriber.describe_rail(wrapped_surface, rail_type, rail_entity.direction, pos)
-               local announcement = RailAnnouncer.announce_rail(
-                  description,
-                  { prefix_rail = is_first, rail_entity = rail_entity, cursor_pos = cursor_pos }
-               )
-               message:list_item_forced_comma(announcement)
-               is_first = false
-            end
+            local pos = { x = rail_entity.position.x, y = rail_entity.position.y }
+            local description = RailDescriber.describe_rail(wrapped_surface, rail_type, rail_entity.direction, pos)
+            local announcement = RailAnnouncer.announce_rail(
+               description,
+               { prefix_rail = is_first, rail_entity = rail_entity, cursor_pos = cursor_pos }
+            )
+            message:list_item_forced_comma(announcement)
+            is_first = false
          end
       end
    end
@@ -91,14 +89,11 @@ function mod.read_tile_rails(pindex, message)
       for _, ghost_entity in ipairs(ghost_entities) do
          if ghost_entity and ghost_entity.valid then
             local rail_type = RailQueries.prototype_type_to_rail_type(ghost_entity.ghost_name)
-            if rail_type then
-               local pos = { x = ghost_entity.position.x, y = ghost_entity.position.y }
-               local description = RailDescriber.describe_rail(ghost_surface, rail_type, ghost_entity.direction, pos)
-               local announcement =
-                  RailAnnouncer.announce_rail(description, { prefix_rail = is_first, is_ghost = true })
-               message:list_item_forced_comma(announcement)
-               is_first = false
-            end
+            local pos = { x = ghost_entity.position.x, y = ghost_entity.position.y }
+            local description = RailDescriber.describe_rail(ghost_surface, rail_type, ghost_entity.direction, pos)
+            local announcement = RailAnnouncer.announce_rail(description, { prefix_rail = is_first, is_ghost = true })
+            message:list_item_forced_comma(announcement)
+            is_first = false
          end
       end
    end

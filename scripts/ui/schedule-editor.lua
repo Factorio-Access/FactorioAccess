@@ -16,6 +16,7 @@ local mod = {}
 
 ---Condition type cycle order for main schedule wait conditions
 ---Edit this table to reorder condition types for better UX
+---@type WaitConditionType[]
 local MAIN_SCHEDULE_CONDITION_TYPES = {
    "time",
    "inactivity",
@@ -35,6 +36,7 @@ local MAIN_SCHEDULE_CONDITION_TYPES = {
 }
 
 ---Condition type cycle order for interrupt trigger conditions
+---@type WaitConditionType[]
 local INTERRUPT_TRIGGER_CONDITION_TYPES = {
    "at_station",
    "not_at_station",
@@ -54,19 +56,23 @@ local INTERRUPT_TRIGGER_CONDITION_TYPES = {
 }
 
 -- Lookup tables for condition type field preservation when cycling types
+---@type table<WaitConditionType, true?>
 local TYPES_WITH_TICKS = { time = true, inactivity = true }
+---@type table<WaitConditionType, true?>
 local TYPES_WITH_CONDITION = {
    item_count = true,
    circuit = true,
    fuel_item_count_all = true,
    fuel_item_count_any = true,
 }
+---@type table<WaitConditionType, true?>
 local TYPES_WITH_STATION = {
    specific_destination_full = true,
    specific_destination_not_full = true,
    at_station = true,
    not_at_station = true,
 }
+---@type table<WaitConditionType, true?>
 local TYPES_WITH_COMPARATOR = {
    item_count = true,
    fluid_count = true,
@@ -77,7 +83,7 @@ local TYPES_WITH_COMPARATOR = {
 
 ---Get the next or previous condition type in the cycle
 ---@param current_type WaitConditionType
----@param allowed_types string[]? List of allowed types (defaults to MAIN_SCHEDULE_CONDITION_TYPES)
+---@param allowed_types WaitConditionType[]? List of allowed types (defaults to MAIN_SCHEDULE_CONDITION_TYPES)
 ---@param reverse boolean? If true, cycle backward instead of forward
 ---@return WaitConditionType
 local function get_next_condition_type(current_type, allowed_types, reverse)
@@ -110,8 +116,8 @@ local function is_fluid_signal(signal)
 end
 
 ---Create a record position for schedule operations
----@param schedule_index number
----@param interrupt_index number?
+---@param schedule_index integer
+---@param interrupt_index integer?
 ---@return ScheduleRecordPosition
 local function make_record_position(schedule_index, interrupt_index)
    return {
@@ -122,7 +128,7 @@ end
 
 ---Get the key for a schedule record tracking position within sublists
 ---@param records ScheduleRecord[] All records in the schedule
----@param record_index number Current record's 1-based index
+---@param record_index integer Current record's 1-based index
 ---@param prefix string? Optional prefix
 ---@return string
 local function get_record_key(records, record_index, prefix)
@@ -154,8 +160,8 @@ end
 
 ---Get the key for a wait condition
 ---@param records ScheduleRecord[] All records in the schedule
----@param record_index number Current record's 1-based index
----@param condition_index number Condition's 1-based index
+---@param record_index integer Current record's 1-based index
+---@param condition_index integer Condition's 1-based index
 ---@param prefix string? Optional prefix
 ---@return string
 local function get_condition_key(records, record_index, condition_index, prefix)
@@ -178,7 +184,7 @@ end
 ---@return string? station_name The extracted station name, or nil if empty
 local function extract_station_name(result, ctx)
    local station_name
-   if type(result) == "table" and result.value then
+   if type(result) == "table" then
       if result.errors then
          UiSounds.play_ui_edge(ctx.pindex)
          for _, error_msg in ipairs(result.errors) do
@@ -202,7 +208,7 @@ end
 ---Generate condition key and suggest move, handling both interrupt and main schedule
 ---@param ctx fa.ui.graph.Ctx
 ---@param record_position ScheduleRecordPosition
----@param new_condition_index number
+---@param new_condition_index integer
 ---@param key_prefix string
 ---@param records ScheduleRecord[]
 local function suggest_condition_move(ctx, record_position, new_condition_index, key_prefix, records)
@@ -215,6 +221,19 @@ local function suggest_condition_move(ctx, record_position, new_condition_index,
    ctx.graph_controller:suggest_move(new_key)
 end
 
+---How to edit one parameter of a wait condition
+---@class fa.ui.ScheduleEditor.ParamHandler
+---@field constant? fun(condition: WaitCondition, new_value: any): WaitCondition? Builds the condition from typed text
+---@field setter? fun(condition: WaitCondition, new_value: any): WaitCondition? Builds the condition from a chosen signal
+---@field get_current? fun(condition: WaitCondition): string
+---@field announcer fun(new_value: any, condition: WaitCondition): LocalisedString
+
+---The editable parameters of one wait condition type
+---@class fa.ui.ScheduleEditor.TypeHandlers
+---@field p1? fa.ui.ScheduleEditor.ParamHandler
+---@field p2? fa.ui.ScheduleEditor.ParamHandler
+---@field constant? fa.ui.ScheduleEditor.ParamHandler
+
 -- Shared announcers
 local function announce_number(new_value)
    return tostring(math.floor(tonumber(new_value)))
@@ -225,6 +244,8 @@ local function announce_signal(new_value)
 end
 
 -- Factory for ticks-based conditions (time, inactivity)
+---@param type_name WaitConditionType
+---@return fa.ui.ScheduleEditor.TypeHandlers
 local function make_ticks_handler(type_name)
    return {
       p1 = {
@@ -242,6 +263,8 @@ local function make_ticks_handler(type_name)
 end
 
 -- Shared constant handler for circuit-like conditions
+---@param fixed_type WaitConditionType?
+---@return fa.ui.ScheduleEditor.ParamHandler
 local function make_circuit_constant_handler(fixed_type)
    return {
       constant = function(condition, new_value)
@@ -264,6 +287,9 @@ local function make_circuit_constant_handler(fixed_type)
 end
 
 -- Shared p1 signal setter for circuit-like conditions
+---@param fixed_type WaitConditionType?
+---@param auto_fluid boolean?
+---@return fa.ui.ScheduleEditor.ParamHandler
 local function make_signal_setter(fixed_type, auto_fluid)
    return {
       setter = function(condition, new_value)
@@ -285,6 +311,7 @@ local function make_signal_setter(fixed_type, auto_fluid)
 end
 
 -- Station name handler (shared by destination and at_station conditions)
+---@type fa.ui.ScheduleEditor.TypeHandlers
 local station_name_handler = {
    p1 = {
       constant = function(condition, new_value)
@@ -300,6 +327,7 @@ local station_name_handler = {
 }
 
 -- Build PARAM_HANDLERS using factories
+---@type table<WaitConditionType, fa.ui.ScheduleEditor.TypeHandlers?>
 local PARAM_HANDLERS = {
    time = make_ticks_handler("time"),
    inactivity = make_ticks_handler("inactivity"),
@@ -351,6 +379,7 @@ local PARAM_HANDLERS = {
 }
 
 -- Fuel handlers use same pattern as item_count but preserve type
+---@type fa.ui.ScheduleEditor.TypeHandlers
 local fuel_handlers = {
    p1 = make_signal_setter(), -- nil type means preserve condition.type
    constant = make_circuit_constant_handler(),
@@ -362,12 +391,12 @@ PARAM_HANDLERS.fluid_count = PARAM_HANDLERS.item_count
 ---Build vtable for a wait condition
 ---@param schedule LuaSchedule
 ---@param record_position ScheduleRecordPosition
----@param condition_index number
+---@param condition_index integer
 ---@param condition WaitCondition
 ---@param row_key string
 ---@param key_prefix string? Prefix for node keys
 ---@param records ScheduleRecord[] All records for key generation
----@param allowed_types string[]? Allowed condition types (defaults to MAIN_SCHEDULE_CONDITION_TYPES)
+---@param allowed_types WaitConditionType[]? Allowed condition types (defaults to MAIN_SCHEDULE_CONDITION_TYPES)
 ---@param default_type WaitConditionType? Default type when adding new conditions
 ---@return fa.ui.graph.NodeVtable
 local function build_condition_vtable(
@@ -715,7 +744,7 @@ end
 ---Build a list of schedule records and their conditions
 ---@param builder fa.ui.menu.MenuBuilder The menu builder to add to
 ---@param schedule LuaSchedule
----@param interrupt_index number? Optional interrupt index
+---@param interrupt_index integer? Optional interrupt index
 ---@param key_prefix string? Prefix for node keys
 local function build_records_list(builder, schedule, interrupt_index, key_prefix)
    key_prefix = key_prefix or ""

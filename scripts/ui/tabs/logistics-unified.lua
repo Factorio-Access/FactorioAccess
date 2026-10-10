@@ -86,12 +86,10 @@ local function render_unified_overview(ctx)
 
       -- Network info (from first point with a network)
       for _, point in ipairs(points) do
-         if point.logistic_network then
-            local network_name = WorkerRobots.get_network_name_for_point(point)
-            if network_name then
-               label_ctx.message:fragment({ "fa.logistics-in-network", network_name })
-               break
-            end
+         local network_name = WorkerRobots.get_network_name_for_point(point)
+         if network_name then
+            label_ctx.message:fragment({ "fa.logistics-in-network", network_name })
+            break
          end
       end
    end)

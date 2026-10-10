@@ -17,10 +17,12 @@ local lshift = bit32.lshift
 local floor = math.floor
 
 ---@class fa.ds.SparseBitset
----@field bits table<number, number>
+---@field bits table<integer, integer>
 local SparseBitset = {}
 mod.SparseBitset = SparseBitset
 local SparseBitset_meta = { __index = SparseBitset }
+-- script is nil under plain Lua, outside Factorio
+---@diagnostic disable-next-line: unnecessary-if
 if script then script.register_metatable("fa.ds.SparseBitset", SparseBitset_meta) end
 
 ---@return fa.ds.SparseBitset
@@ -28,7 +30,7 @@ function SparseBitset.new()
    return setmetatable({ bits = {} }, SparseBitset_meta)
 end
 
----@param bit number
+---@param bit integer
 ---@return boolean
 function SparseBitset:test(bit)
    local chunk = floor(bit / 32)
@@ -39,7 +41,7 @@ function SparseBitset:test(bit)
    return btest(mask, data)
 end
 
----@param bit number
+---@param bit integer
 function SparseBitset:set(bit)
    local chunk = floor(bit / 32)
    local offset = bit - chunk * 32
@@ -47,7 +49,7 @@ function SparseBitset:set(bit)
    self.bits[chunk] = bor(lshift(1, offset), data)
 end
 
----@param bit number
+---@param bit integer
 ---@return boolean whether or not the bit used to be set
 function SparseBitset:remove(bit)
    local chunk = floor(bit / 32)

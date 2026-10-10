@@ -104,7 +104,7 @@ local function build_chapter_blueprints_tab(chapter)
 end
 
 ---Build tabs for the tutorial UI
----@param pindex number
+---@param pindex integer
 ---@return fa.ui.TabstopDescriptor[]?
 local function build_tutorial_tabs(pindex)
    local chapters = TutorialData.get_chapters()

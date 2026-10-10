@@ -58,10 +58,11 @@ end
 local movement_history_storage = StorageManager.declare_storage_module("movement_history", init_movement_history)
 
 ---@class fa.MovementHistory.Reader
----@field pindex number
+---@field pindex integer
 local MovementHistoryReader = {}
 local MovementHistoryReader_meta = { __index = MovementHistoryReader }
 
+---@type table<integer, fa.MovementHistory.Reader?>
 local movement_history_cache = {}
 
 ---@return fa.MovementHistory.Reader
@@ -94,8 +95,13 @@ local function update_player_if_needed(pindex)
       return
    end
 
-   local entry = {}
-   entry.position = character.position
+   ---@type fa.MovementHistory.Entry
+   local entry = {
+      position = character.position,
+      kind = mod.MOVEMENT_KINDS.NONE,
+      direction = defines.direction.north,
+      velocity = 0,
+   }
 
    if player.driving then
       local vehicle = player.vehicle
@@ -105,14 +111,8 @@ local function update_player_if_needed(pindex)
 
          if vehicle.speed > 0.001 or vehicle.speed < -0.001 then
             local orientation = vehicle.orientation
-            entry.direction = math.floor(orientation * 8 + 0.5) % 8
-         else
-            entry.direction = defines.direction.north
+            entry.direction = (math.floor(orientation * 16 + 0.5) % 16) --[[@as defines.direction]]
          end
-      else
-         entry.kind = mod.MOVEMENT_KINDS.NONE
-         entry.direction = defines.direction.north
-         entry.velocity = 0
       end
    else
       local walking_state = player.walking_state
@@ -129,10 +129,6 @@ local function update_player_if_needed(pindex)
                entry.velocity
             )
          )
-      else
-         entry.kind = mod.MOVEMENT_KINDS.NONE
-         entry.direction = defines.direction.north
-         entry.velocity = 0
       end
    end
 

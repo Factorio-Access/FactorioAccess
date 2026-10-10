@@ -6,6 +6,7 @@
 ---This module takes RailDescription objects from the railutils describer and converts
 ---them into localized messages using MessageBuilder.
 
+local FaUtils = require("scripts.fa-utils")
 local SignalStationClassifier = require("scripts.rails.signal-station-classifier")
 local StopPreview = require("scripts.rails.stop-preview")
 local Speech = require("scripts.speech")
@@ -20,7 +21,7 @@ local function build_signal_station_announcement(info)
    if not info then return nil end
 
    local message = MessageBuilder.new()
-   local dir = { "fa.direction", info.direction }
+   local dir = FaUtils.localise_direction(info.direction)
 
    -- Determine signal configuration
    local left = info.left
@@ -65,14 +66,20 @@ local function build_signal_station_announcement(info)
    return message:build()
 end
 
+---@class fa.rails.AnnounceRailOpts
+---@field prefix_rail boolean? Say "rail" first, default true
+---@field is_ghost boolean?
+---@field rail_entity LuaEntity? For signals, stations and the stop preview
+---@field cursor_pos MapPosition?
+
 ---Build announcement message for a rail
 ---@param description railutils.RailDescription Rail description from describer
----@param opts { prefix_rail: boolean?, is_ghost: boolean?, rail_entity: LuaEntity?, cursor_pos: MapPosition? }? Options
+---@param opts fa.rails.AnnounceRailOpts? Options
 ---@return LocalisedString Message ready for speech
 function mod.announce_rail(description, opts)
    opts = opts or {}
    local prefix_rail = opts.prefix_rail
-   local is_ghost = opts.is_ghost or false
+   local is_ghost = opts.is_ghost == true
    local rail_entity = opts.rail_entity
    if prefix_rail == nil then prefix_rail = true end
 
@@ -92,14 +99,14 @@ function mod.announce_rail(description, opts)
       message:fragment({ "fa.rail-lonely" })
    elseif description.end_direction then
       -- Only announce disconnected end if not lonely
-      message:fragment({ "fa.rail-end-direction", { "fa.direction", description.end_direction } })
+      message:fragment({ "fa.rail-end-direction", FaUtils.localise_direction(description.end_direction) })
    end
 
    -- Add junctions (splits and forks)
    if #description.junctions > 0 then
       for _, junction in ipairs(description.junctions) do
          -- Junction kind is one of: split, fork-left, fork-right, fork-both
-         local junction_desc = { "fa.rail-junction-" .. junction.kind, { "fa.direction", junction.direction } }
+         local junction_desc = { "fa.rail-junction-" .. junction.kind, FaUtils.localise_direction(junction.direction) }
 
          message:list_item(junction_desc)
       end

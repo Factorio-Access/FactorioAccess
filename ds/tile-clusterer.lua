@@ -85,21 +85,23 @@ local ADJ_COORDS = {
 }
 
 ---@class fa.ds.TileClusterer.Group
----@field tiles table<number, table<number, true>> All tiles in this group.
----@field edge_tiles table<number, table<number, true>> The tiles on the edge.
+---@field tiles table<number, table<number, true?>?> All tiles in this group.
+---@field edge_tiles table<number, table<number, true?>?> The tiles on the edge.
 ---@field valid boolean If false, this group should be dropped and ignored.
 
 ---@class fa.ds.TileClusterer.Options
 ---@field track_interior boolean if false, only fill out edges.
 
 ---@class fa.ds.TileClusterer
----@field seen_tiles table<number, table<number, number>> The number is a group index.
+---@field seen_tiles table<number, table<number, number?>?> The number is a group index.
 ---@field groups table<number, fa.ds.TileClusterer.Group>
----@field canonical_linked_list table<number, number>
----@field edge_counters table<number, table<number, number>> Doesn't use defaulting_table.
+---@field canonical_linked_list table<number, number?>
+---@field edge_counters table<number, table<number, number?>?> Doesn't use defaulting_table.
 ---@field options fa.ds.TileClusterer.Options
 local TileClusterer = {}
 local TileClusterer_meta = { __index = TileClusterer }
+-- script is nil under plain Lua, outside Factorio
+---@diagnostic disable-next-line: unnecessary-if
 if script then script.register_metatable("fa.ds.TileClusterer", TileClusterer_meta) end
 mod.TileClusterer = TileClusterer
 
@@ -136,6 +138,7 @@ function TileClusterer:submit_points(points)
 
       if seen_tiles[point_x] and seen_tiles[point_x][point_y] then goto continue end
 
+      ---@type (number?)[]
       local adjacents = {}
 
       -- For each point, find all adjacent groups. If we have 4 it's a middle tile.
@@ -144,7 +147,9 @@ function TileClusterer:submit_points(points)
          local x_i, y_i = point_x + ADJ_COORDS[c_i][1], point_y + ADJ_COORDS[c_i][2]
 
          adjacents[c_i] = nil
-         if seen_tiles[x_i] then adjacents[c_i] = self:walk_canonical_list(seen_tiles[x_i][y_i]) end
+         local seen_x = seen_tiles[x_i]
+         local adjacent_group = seen_x and seen_x[y_i]
+         if adjacent_group then adjacents[c_i] = self:walk_canonical_list(adjacent_group) end
       end
 
       local adj_count = 0
@@ -292,12 +297,13 @@ function TileClusterer:submit_points(points)
          if a_x then
             -- We must have seen it already. If there's no tile here yet
             -- there's nothing to have merged with.
-            if a_x[i_y] then
+            local adjacent_group = a_x[i_y]
+            if adjacent_group then
                -- Anything in the other group was merged to this one, so replace
                -- the group then mark the old group as no longer canonical.
                -- Note that at this point, the other group is still set to
                -- something random--we have to walk to the bottom.
-               local other = self:walk_canonical_list(a_x[i_y])
+               local other = self:walk_canonical_list(adjacent_group)
                -- No cycles.
                if other ~= final_group_num then self.canonical_linked_list[other] = final_group_num end
                a_x[i_y] = final_group_num

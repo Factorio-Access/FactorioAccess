@@ -33,7 +33,7 @@ structures like menus.
 
 To that end: this is a directed graph.  Nodes are controls.  Each node can have up to 4 transitions up/down/left/right.
 Nodes and transitions each get a set of properties saying what to do.  For messaging, this is usually in the form of a
-function which gets passed a `fa.ui.GraphCtx` to append to.  Others represent actions like gain_focus and left_click
+function which gets passed a `fa.ui.graph.Ctx` to append to.  Others represent actions like gain_focus and left_click
 ([).
 
 The graph itself comes from a function returning the graph.  This function may return a top-level constant graph or it
@@ -85,9 +85,6 @@ local mod = {}
 
 ---@alias fa.ui.graph.Modifiers { control: boolean, alt: boolean, shift: boolean }
 
----@class fa.ui.graph.GraphController
----@field graph_state fa.ui.graph.StoredState
-
 ---@class fa.ui.graph.Ctx
 ---@field message fa.MessageBuilder
 ---@field modifiers fa.ui.graph.Modifiers Set for things using the keyboard. Non-nil but garbage for all others.
@@ -95,14 +92,14 @@ local mod = {}
 ---@field graph_controller fa.ui.graph.GraphController Graph-specific controller with suggest_move
 ---@field state any
 ---@field tablist_shared_state any
----@field pindex number
+---@field pindex integer
 ---@field parameters any Comes from the parent parameters, indexed by the name of the graph.
 ---@field global_parameters any The parent parameters, to enable "going sideways".
 ---@field child_context any? Context from child UI result (only set in on_child_result)
 
----@alias fa.ui.graph.SimpleCallback fun(fa.ui.GraphCtx)
----@alias fa.ui.graph.ClickCallback fun(fa.ui.GraphCtx, fa.ui.Modifiers)
----@alias fa.ui.graph.ChildResultCallback fun(fa.ui.GraphCtx, any)
+---@alias fa.ui.graph.SimpleCallback fun(ctx: fa.ui.graph.Ctx)
+---@alias fa.ui.graph.ClickCallback fun(ctx: fa.ui.graph.Ctx, modifiers: fa.ui.Modifiers)
+---@alias fa.ui.graph.ChildResultCallback fun(ctx: fa.ui.graph.Ctx, result: any)
 
 ---@class fa.ui.graph.NodeVtable
 ---@field label fa.ui.graph.SimpleCallback Required always.
@@ -145,30 +142,31 @@ local mod = {}
 ---@field vtable fa.ui.graph.TransitionVtable
 
 ---@enum fa.ui.graph.TransitionDir
-mod.TRANSITION_DIR = {
+local TRANSITION_DIR = {
    UP = 1,
    RIGHT = 12,
    DOWN = 3,
    LEFT = 4,
 }
+mod.TRANSITION_DIR = TRANSITION_DIR
 
 ---@class fa.ui.graph.Node
 ---@field vtable fa.ui.graph.NodeVtable
----@field transitions table<fa.ui.graph.TransitionDir, fa.ui.graph.Transition>
+---@field transitions table<fa.ui.graph.TransitionDir, fa.ui.graph.Transition?> Directions with no transition are absent
 
 ---@class fa.ui.graph.Render
 ---@field nodes table<string, fa.ui.graph.Node>
 ---@field start_key string
 
 ---@class fa.ui.graph.StoredState
----@field cur_key string
+---@field cur_key string Unset only before on_tab_list_opened
 ---@field key_order string[]? Not set the first time through.
 ---@field next_suggested_move string? If set, silently move to this key on next render
 
 ---@class fa.ui.graph.InternalTabCtx: fa.ui.TabContext
 ---@field state fa.ui.graph.StoredState
 
----@alias fa.ui.graph.RenderCallback fun(fa.ui.graph.Ctx): fa.ui.graph.Render?
+---@alias fa.ui.graph.RenderCallback fun(ctx: fa.ui.graph.Ctx): fa.ui.graph.Render?
 
 ---@class fa.ui.Graph: fa.ui.TabCallbacks
 ---@field render fa.ui.graph.Render
@@ -182,6 +180,7 @@ local Graph_meta = { __index = Graph }
 
 ---GraphController is a simple object with graph-specific methods
 ---@class fa.ui.graph.GraphController
+---@field graph_state fa.ui.graph.StoredState
 local GraphController = {}
 local GraphController_meta = { __index = GraphController }
 
@@ -286,7 +285,7 @@ function Graph:_rerender(ctx)
 
    local i = 1
    while i <= #down_fringe do
-      local k = down_fringe[i]
+      local k = down_fringe[i] --[[@as string]]
       -- The fringe is always unique. Let's check that--it will find bugs if not.
       -- assert(not seen[k]) -- Commented out - this can fail with complex menu structures
 
@@ -354,24 +353,22 @@ end
 
 ---@private
 ---@param ctx fa.ui.graph.InternalTabCtx
+---@param dir fa.ui.graph.TransitionDir
 function Graph:_do_move(ctx, dir)
    self:_with_render(ctx, function()
       local state = ctx.state
       local render = self.render
       local node = render.nodes[state.cur_key]
       local t = node.transitions[dir]
-      local new_node = node
-      if t then
-         new_node = render.nodes[t.destination]
-         assert(new_node)
-      end
 
       -- Didn't move. Behavior: play edge sound and re-read label.
-      if node == new_node then
+      if not t or t.destination == state.cur_key then
          UiSounds.play_ui_edge(ctx.pindex)
-         self:_maybe_call(new_node, ctx, "label", NO_MODIFIERS)
+         self:_maybe_call(node, ctx, "label", NO_MODIFIERS)
          return
       end
+
+      local new_node = render.nodes[t.destination]
 
       self:_maybe_call(t, ctx, "label", NO_MODIFIERS)
       self:_maybe_call(t, ctx, "play_sound", NO_MODIFIERS)
@@ -444,7 +441,7 @@ end
 
 ---@private
 ---@param ctx fa.ui.graph.InternalTabCtx
----@param dir number Direction from mod.TRANSITION_DIR
+---@param dir fa.ui.graph.TransitionDir
 function Graph:_do_move_to_edge(ctx, dir)
    self:_with_render(ctx, function()
       local state = ctx.state
@@ -505,7 +502,11 @@ end
 function Graph:on_tab_list_opened(ctx)
    -- Got to be a bit careful. If the tablist persisted the state, we are already somewhere.
    -- We will detect closure/key correction on the next operation, if that's necessary.
-   if ctx.state.cur_key then return end
+   if
+      ctx.state.cur_key --[[@as string?]]
+   then
+      return
+   end
 
    self:_with_render(ctx, function()
       ctx.state.cur_key = self.render.start_key
@@ -829,7 +830,7 @@ function Graph:search_move(message, ctx, direction, matcher)
             wrapped = true
          end
 
-         local key = key_order[i]
+         local key = key_order[i] --[[@as string]]
          local node = render.nodes[key]
          if node and not node.vtable.exclude_from_search then
             -- Build the label as a localised string

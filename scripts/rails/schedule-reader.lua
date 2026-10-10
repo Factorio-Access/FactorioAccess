@@ -10,6 +10,7 @@ local mod = {}
 local CONDITION_READ_OPTS = { empty_message = { "fa.schedule-contents-condition-not-configured" } }
 
 -- Simple conditions that just map to a locale key (no parameters)
+---@type table<string, string?>
 local SIMPLE_CONDITIONS = {
    full = "fa.schedule-full",
    empty = "fa.schedule-empty",
@@ -26,6 +27,7 @@ local SIMPLE_CONDITIONS = {
 
 -- Conditions with circuit condition data (uses CircuitNetwork.read_condition)
 -- Value is prefix locale key to speak before the condition (false = no prefix)
+---@type table<string, string|false|nil>
 local CIRCUIT_CONDITIONS = {
    item_count = false,
    fluid_count = false,
@@ -35,6 +37,7 @@ local CIRCUIT_CONDITIONS = {
 }
 
 -- Conditions with a station parameter
+---@type table<string, string?>
 local STATION_CONDITIONS = {
    specific_destination_full = "fa.schedule-destination-full",
    specific_destination_not_full = "fa.schedule-destination-not-full",
@@ -59,8 +62,8 @@ function mod.read_wait_condition(mb, condition)
    local circuit_prefix = CIRCUIT_CONDITIONS[cond_type]
    if circuit_prefix ~= nil then
       if circuit_prefix then mb:fragment({ circuit_prefix }) end
-      ---@diagnostic disable-next-line: param-type-mismatch
-      CircuitNetwork.read_condition(mb, condition.condition, CONDITION_READ_OPTS)
+      -- These condition types carry a CircuitCondition (an item pair only belongs to the request conditions)
+      CircuitNetwork.read_condition(mb, condition.condition --[[@as CircuitCondition]], CONDITION_READ_OPTS)
       return
    end
 

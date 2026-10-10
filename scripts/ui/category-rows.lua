@@ -51,10 +51,10 @@ mod.CATEGORY_POSITION = {
 ---@field current_category_key string?
 ---@field cursor_by_category table<string, string> Maps category key to item key
 ---@field prev_category_order string[]
----@field prev_items_by_category table<string, string[]>
+---@field prev_items_by_category table<string, string[]?> Absent for categories new since the last render
 
 ---@class fa.ui.CategoryRows.ItemContext
----@field pindex number
+---@field pindex integer
 ---@field player LuaPlayer
 ---@field message fa.MessageBuilder
 ---@field state table
@@ -63,7 +63,7 @@ mod.CATEGORY_POSITION = {
 ---@field controller fa.ui.RouterController Controller for UI management
 
 ---@class fa.ui.CategoryRows.Builder
----@field categories table<string, fa.ui.CategoryRows.Category>
+---@field categories table<string, fa.ui.CategoryRows.Category?>
 ---@field category_order string[]
 ---@field focus_category_key string?
 ---@field focus_item_key string?
@@ -136,7 +136,7 @@ end
 ---Find category index by key
 ---@param render fa.ui.CategoryRows.Render
 ---@param key string
----@return number?
+---@return integer?
 local function find_category_index(render, key)
    for i, category in ipairs(render.categories) do
       if category.key == key then return i end
@@ -147,7 +147,7 @@ end
 ---Find item index in category by key
 ---@param category fa.ui.CategoryRows.Category
 ---@param key string
----@return number?
+---@return integer?
 local function find_item_index(category, key)
    for i, item in ipairs(category.items) do
       if item.key == key then return i end
@@ -208,6 +208,7 @@ local function update_state_after_render(state, render)
 
    -- For each category, check if cursor item was removed
    for cat_key, item_key in pairs(state.cursor_by_category) do
+      ---@type fa.ui.CategoryRows.Category?
       local category = nil
       for _, c in ipairs(render.categories) do
          if c.key == cat_key then
@@ -276,7 +277,7 @@ end
 ---Get current position, initializing if needed
 ---@param state fa.ui.CategoryRows.State
 ---@param render fa.ui.CategoryRows.Render
----@return number?, number?
+---@return integer?, integer?
 local function _get_position(state, render)
    -- Ensure cursor is initialized
    _ensure_cursor_initialized(state, render)
@@ -328,7 +329,7 @@ end
 ---Announce current position (category and optionally item)
 ---@param ctx fa.ui.TabContext
 ---@param category fa.ui.CategoryRows.Category
----@param item_index number? nil to skip item announcement
+---@param item_index integer? nil to skip item announcement
 ---@param category_position fa.ui.CategoryRows.CategoryPosition? where to announce category (nil to skip category)
 local function announce_position(ctx, category, item_index, category_position)
    if category_position == mod.CATEGORY_POSITION.BEFORE then
@@ -353,11 +354,11 @@ local function announce_position(ctx, category, item_index, category_position)
 end
 
 ---Wrap an index within bounds with sound feedback
----@param current_index number
+---@param current_index integer
 ---@param direction -1|1
----@param max_index number
----@param pindex number
----@return number new_index
+---@param max_index integer
+---@param pindex integer
+---@return integer new_index
 local function wrap_index(current_index, direction, max_index, pindex)
    local new_index = current_index + direction
 
@@ -555,7 +556,7 @@ function mod.get_prev_position(render, category_key, item_key)
    return nil, nil
 end
 
----@class fa.ui.CategoryRows
+---@class fa.ui.CategoryRows: fa.ui.TabCallbacks
 ---@field render_callback fun(ctx: fa.ui.TabContext): fa.ui.CategoryRows.Render?
 ---@field name string
 ---@field user_get_help_metadata (fun(ctx: fa.ui.TabContext): fa.ui.help.HelpItem[]?)?
@@ -594,7 +595,7 @@ end
 ---Helper function to jump to a specific category (first or last)
 ---@param ctx fa.ui.TabContext
 ---@param render fa.ui.CategoryRows.Render
----@param target_index number 1 for first, or #categories for last
+---@param target_index integer 1 for first, or #categories for last
 local function jump_to_category(ctx, render, target_index)
    local state = prepare_state(ctx, render)
    if check_empty_categories(ctx, render) then return end
@@ -623,7 +624,7 @@ end
 ---Helper function to jump to a specific item in current category (first or last)
 ---@param ctx fa.ui.TabContext
 ---@param render fa.ui.CategoryRows.Render
----@param target_index_fn fun(category: fa.ui.CategoryRows.Category): number
+---@param target_index_fn fun(category: fa.ui.CategoryRows.Category): integer
 local function jump_to_item(ctx, render, target_index_fn)
    local state = prepare_state(ctx, render)
    if check_empty_categories(ctx, render) then return end
@@ -815,6 +816,7 @@ function CategoryRows:search_move(message, ctx, direction, matcher)
    local state = prepare_state(ctx, render)
 
    -- Build flat list of all items with their positions
+   ---@type { cat_idx: integer, item_idx: integer, category: fa.ui.CategoryRows.Category, item: fa.ui.CategoryRows.Item }[]
    local all_items = {}
    for cat_idx, category in ipairs(render.categories) do
       for item_idx, item in ipairs(category.items) do

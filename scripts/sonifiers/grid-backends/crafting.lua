@@ -35,8 +35,7 @@ function mod.new()
    local self = {
       tracked_entities = {},
    }
-   setmetatable(self, CraftingBackend_meta)
-   return self
+   return setmetatable(self, CraftingBackend_meta)
 end
 
 ---Called when an entity becomes visible
@@ -102,6 +101,6 @@ function CraftingBackend:tick(callback)
 end
 
 -- Register metatable for save/load
-if script then script.register_metatable("fa.GridSonifier.CraftingBackend", CraftingBackend_meta) end
+script.register_metatable("fa.GridSonifier.CraftingBackend", CraftingBackend_meta)
 
 return mod

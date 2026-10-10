@@ -10,8 +10,8 @@ local mod = {}
 
 ---@class fa.ui.BoxSelectorDeclaration
 ---@field ui_name fa.ui.UiName
----@field callback? fun(pindex: number, params: table, result: table) Optional callback when selection completes
----@field get_binds? fun(pindex: number, parameters: table): fa.ui.Bind[]? Optional bind callback
+---@field callback? fun(pindex: integer, params: table, result: table) Optional callback when selection completes
+---@field get_binds? fun(pindex: integer, parameters: table): fa.ui.Bind[]? Optional bind callback
 
 ---@class fa.ui.BoxSelectorParameters
 ---@field intro_message? LocalisedString Custom intro message
@@ -23,8 +23,6 @@ local mod = {}
 ---@param declaration fa.ui.BoxSelectorDeclaration
 ---@return fa.ui.UiPanelBase
 function mod.declare_box_selector(declaration)
-   assert(declaration.ui_name, "BoxSelector declaration must have ui_name")
-
    local callback = declaration.callback
 
    return MultipointSelector.declare_multipoint_selector({

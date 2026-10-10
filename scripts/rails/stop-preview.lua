@@ -123,11 +123,18 @@ local function validate_stop(stop)
    return stop_rail, stop_facing, orientation
 end
 
+---@class fa.rails.StopCandidate
+---@field stop LuaEntity
+---@field rail LuaEntity The rail the stop is connected to
+---@field facing defines.direction
+---@field orientation "vertical"|"horizontal"
+
 ---Find nearby train stops that could form a preview
 ---@param surface LuaSurface
 ---@param position MapPosition Center position to search from
----@return table<uint, {stop: LuaEntity, rail: LuaEntity, facing: defines.direction, orientation: "vertical"|"horizontal"}>
+---@return table<integer, fa.rails.StopCandidate?> candidates By unit number of the stop's rail
 local function find_candidate_stops(surface, position)
+   ---@type table<integer, fa.rails.StopCandidate?>
    local candidates = {}
 
    local stops = surface.find_entities_filtered({
@@ -154,9 +161,9 @@ end
 ---Extend from a rail in one direction, looking for a candidate stop rail
 ---@param rail LuaEntity Starting rail
 ---@param rail_direction defines.rail_direction Direction to extend
----@param candidates table<uint, table> Map of unit_number to candidate info
+---@param candidates table<integer, fa.rails.StopCandidate?> Map of unit_number to candidate info
 ---@param cursor_pos MapPosition Cursor position for distance calculation
----@return table? candidate The matched candidate, or nil
+---@return fa.rails.StopCandidate? candidate The matched candidate, or nil
 local function extend_and_find(rail, rail_direction, candidates, cursor_pos)
    local rail_end = rail.get_rail_end(rail_direction)
    local tiles_traveled = 0

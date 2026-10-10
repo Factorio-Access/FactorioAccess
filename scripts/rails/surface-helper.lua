@@ -14,40 +14,27 @@ function mod.get_planner_description(rail_planner_prototype)
 
    local rails = rail_planner_prototype.rails
 
-   -- Map rail prototypes to the description structure
    -- Rails array contains LuaEntityPrototype objects for each rail type
-   local description = {
-      straight_rail_name = nil,
-      curved_rail_a_name = nil,
-      curved_rail_b_name = nil,
-      half_diagonal_rail_name = nil,
-   }
-
+   ---@type table<string, string?>
+   local name_by_type = {}
    for _, rail_proto in ipairs(rails) do
-      local name = rail_proto.name
-      local type = rail_proto.type
-      if type == "straight-rail" then
-         description.straight_rail_name = name
-      elseif type == "curved-rail-a" then
-         description.curved_rail_a_name = name
-      elseif type == "curved-rail-b" then
-         description.curved_rail_b_name = name
-      elseif type == "half-diagonal-rail" then
-         description.half_diagonal_rail_name = name
-      end
+      name_by_type[rail_proto.type] = rail_proto.name
    end
+
+   local straight = name_by_type["straight-rail"]
+   local curved_a = name_by_type["curved-rail-a"]
+   local curved_b = name_by_type["curved-rail-b"]
+   local half_diagonal = name_by_type["half-diagonal-rail"]
 
    -- Validate we got all rail types
-   if
-      not description.straight_rail_name
-      or not description.curved_rail_a_name
-      or not description.curved_rail_b_name
-      or not description.half_diagonal_rail_name
-   then
-      return nil
-   end
+   if not straight or not curved_a or not curved_b or not half_diagonal then return nil end
 
-   return description
+   return {
+      straight_rail_name = straight,
+      curved_rail_a_name = curved_a,
+      curved_rail_b_name = curved_b,
+      half_diagonal_rail_name = half_diagonal,
+   }
 end
 
 ---Wrap a surface for rail queries using the player's current rail planner

@@ -29,7 +29,7 @@ local mod = {}
 ---@field tablist_shared_state fa.ui.BlueprintSetupConfig.SharedState
 
 ---Setup shared state with default values
----@param _pindex number
+---@param _pindex integer
 ---@param _params fa.ui.BlueprintSetupConfig.Parameters
 ---@return fa.ui.BlueprintSetupConfig.SharedState
 local function state_setup(_pindex, _params)

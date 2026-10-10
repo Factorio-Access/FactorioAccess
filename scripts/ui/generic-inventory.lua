@@ -20,12 +20,14 @@ local mod = {}
 ---@field entity LuaEntity The target entity
 ---@field inventory defines.inventory
 
+---Inventory grid states, keyed by each grid's subkey
 ---@class fa.ui.Inventory.SharedState
----@field entity LuaEntity
----@field inventory LuaInventory
+---@field generic_inventory fa.ui.InventoryGrid.State
+---@field player_inventory? fa.ui.InventoryGrid.State Absent when the player has no character
+---@field trash_inventory? fa.ui.InventoryGrid.State Only for vehicles with logistics enabled
 
 ---Setup shared state when opening the UI
----@param pindex number
+---@param pindex integer
 ---@param params fa.ui.GenericInventory.Parameters
 ---@return fa.ui.Inventory.SharedState?
 local function setup_shared_state(pindex, params)
@@ -35,6 +37,7 @@ local function setup_shared_state(pindex, params)
    local inventory = entity.get_inventory(params.inventory)
    if not inventory then error("Entity does not have inventory " .. tostring(params.inventory)) end
 
+   ---@type fa.ui.Inventory.SharedState
    local ret = {
       generic_inventory = {
          entity = entity,

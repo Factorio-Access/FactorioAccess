@@ -17,7 +17,7 @@ local PlannerUtils = require("scripts.planner-utils")
 local mod = {}
 
 ---Make the planner permanent (not temporary cursor item)
----@param pindex number
+---@param pindex integer
 local function make_permanent(pindex)
    local player = game.get_player(pindex)
    if player then player.cursor_stack_temporary = false end
@@ -33,14 +33,17 @@ local TILE_MODE_CHOICES = {
 
 ---Get entity filter as name string
 ---@param planner LuaItemStack
----@param index number
+---@param index integer
 ---@return string|nil
 local function get_entity_filter_name(planner, index)
    local filter = planner.get_entity_filter(index)
    if not filter then return nil end
    -- filter can be string or table with name field
    if type(filter) == "string" then return filter end
-   if type(filter) == "table" and filter.name then return filter.name end
+   -- Names read from the API are strings
+   if type(filter) == "table" and filter.name then
+      return filter.name --[[@as string]]
+   end
    return nil
 end
 
@@ -136,8 +139,8 @@ local settings_tab = KeyGraph.declare_graph({
 ---Render entity filter slot
 ---@param builder fa.ui.menu.MenuBuilder
 ---@param planner LuaItemStack
----@param slot_index number
----@param pindex number
+---@param slot_index integer
+---@param pindex integer
 local function render_entity_slot(builder, planner, slot_index, pindex)
    local row_key = "entity_slot_" .. slot_index
 
@@ -146,11 +149,7 @@ local function render_entity_slot(builder, planner, slot_index, pindex)
    builder:add_clickable(row_key, function(label_ctx)
       if filter_name then
          local proto = prototypes.entity[filter_name]
-         if proto then
-            label_ctx.message:fragment(Localising.get_localised_name_with_fallback(proto))
-         else
-            label_ctx.message:fragment(filter_name)
-         end
+         label_ctx.message:fragment(Localising.get_localised_name_with_fallback(proto))
       else
          label_ctx.message:fragment({ "fa.decon-empty-slot", slot_index })
       end
@@ -242,8 +241,8 @@ local entities_tab = KeyGraph.declare_graph({
 ---Render tile filter slot
 ---@param builder fa.ui.menu.MenuBuilder
 ---@param planner LuaItemStack
----@param slot_index number
----@param pindex number
+---@param slot_index integer
+---@param pindex integer
 local function render_tile_slot(builder, planner, slot_index, pindex)
    local row_key = "tile_slot_" .. slot_index
 
@@ -252,11 +251,7 @@ local function render_tile_slot(builder, planner, slot_index, pindex)
    builder:add_clickable(row_key, function(label_ctx)
       if filter_name then
          local proto = prototypes.tile[filter_name]
-         if proto then
-            label_ctx.message:fragment(Localising.get_localised_name_with_fallback(proto))
-         else
-            label_ctx.message:fragment(filter_name)
-         end
+         label_ctx.message:fragment(Localising.get_localised_name_with_fallback(proto))
       else
          label_ctx.message:fragment({ "fa.decon-empty-slot", slot_index })
       end

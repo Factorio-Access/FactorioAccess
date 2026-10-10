@@ -6,6 +6,8 @@
 ---@field lru_cache LRUCache LRU cache for storing translations
 local LocalisedStringCache = {}
 local LocalisedStringCache_meta = { __index = LocalisedStringCache }
+-- script is nil under plain Lua, outside Factorio
+---@diagnostic disable-next-line: unnecessary-if
 if script then script.register_metatable("ds.LocalisedStringCache", LocalisedStringCache_meta) end
 
 local LRUCache = require("ds.lru-cache")
@@ -26,8 +28,7 @@ function LocalisedStringCache.new(capacity)
       lru_cache = LRUCache.new(capacity),
    }
 
-   setmetatable(cache, LocalisedStringCache_meta)
-   return cache
+   return setmetatable(cache, LocalisedStringCache_meta)
 end
 
 ---Flatten a localised string into a linear path through the trie.

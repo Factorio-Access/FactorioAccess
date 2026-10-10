@@ -76,7 +76,9 @@ local function render_assembling_machine_recipes(ctx)
    local builder = CategoryRows.CategoryRowsBuilder_new()
 
    -- Track where the current recipe is for focus
+   ---@type string?
    local focus_category_key = nil
+   ---@type string?
    local focus_item_key = nil
 
    -- Add each recipe group as a category

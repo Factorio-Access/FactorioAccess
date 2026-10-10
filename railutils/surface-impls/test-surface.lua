@@ -76,7 +76,7 @@ function TestSurface:add_rail(rail_type, position, direction)
    -- Correct direction for straight and half-diagonal rails (game applies mod 8)
    local corrected_direction = direction
    if rail_type == RailInfo.RailType.STRAIGHT or rail_type == RailInfo.RailType.HALF_DIAGONAL then
-      corrected_direction = direction % 8
+      corrected_direction = (direction % 8) --[[@as defines.direction]]
    end
 
    -- Determine grid offset based on rail type, corrected direction, and position parity

@@ -33,7 +33,7 @@ local TH = require("scripts.table-helpers")
 
 -- This is the workaround for the lack of counts in craft-item research
 -- triggers. See data-final-fixes.lua for the data declaration.
----@type fun(): table<string, table<string, number>>
+---@type fun(): table<string, table<string, integer?>>
 local CRAFT_ITEM_COUNTS = Functools.cached(function()
    local map_outer = DataToRuntimeMap.load(Consts.RESEARCH_CRAFT_ITEMS_MAP_OUTER)
 
@@ -57,7 +57,7 @@ local RESEARCH_LISTS = {
 local RESEARCH_LIST_ORDER = { RESEARCH_LISTS.RESEARCHABLE, RESEARCH_LISTS.LOCKED, RESEARCH_LISTS.RESEARCHED }
 
 ---@class fa.research.ResearchMenuPosition
----@field index number
+---@field index integer
 ---@field focused_list fa.research.ResearchList
 
 ---@type table<number, { research_menu_pos: fa.research.ResearchMenuPosition }>
@@ -96,11 +96,11 @@ end
 -- happened.  If the index is nil, put it at the end, like table.insert does.
 ---@param player LuaPlayer
 ---@param name string
----@param index number?
+---@param index integer?
 ---@return LocalisedString, boolean
 function mod.enqueue(player, name, index)
    local tech = prototypes.technology[name]
-   if not tech then error(string.format("Got an invalid technology name! %s")) end
+   if not tech then error(string.format("Got an invalid technology name! %s", name)) end
 
    if tech.research_trigger then return { "fa.research-not-in-labs" }, false end
 
@@ -153,7 +153,8 @@ local function localise_trigger(tech, trig)
       local amount = CRAFT_ITEM_COUNTS()[tech.name][trig.item.name]
       assert(amount)
       table.insert(res, amount)
-      local quality = trig.item.quality
+      -- Read back as a LuaQualityPrototype, though the generated types say string
+      local quality = trig.item.quality --[[@as QualityID?]]
       local quality_name = "normal"
       if type(quality) == "string" then
          quality_name = quality
@@ -225,9 +226,7 @@ local function localise_science_cost(tech)
       local amount = -g[1]
       local namelist = {}
       for _, n in pairs(names) do
-         local proto = prototypes.item[n]
-         assert(proto, "Should have found item " .. n)
-         table.insert(namelist, Localising.get_localised_name_with_fallback(proto))
+         table.insert(namelist, Localising.get_localised_name_with_fallback(prototypes.item[n]))
       end
 
       table.insert(grouplist, { "fa.research-costs-items-entry", FaUtils.localise_cat_table(namelist, ", "), amount })
@@ -257,10 +256,8 @@ local function localise_research_requirements(tech)
    local trig_or_cost
    if tech.prototype.research_trigger then
       trig_or_cost = localise_trigger(tech, tech.prototype.research_trigger)
-   elseif tech.prototype.research_unit_ingredients then
-      trig_or_cost = localise_science_cost(tech)
    else
-      trig_or_cost = { "fa.research-costs-nothing" }
+      trig_or_cost = localise_science_cost(tech)
    end
 
    if not next(tech.prerequisites) then return trig_or_cost end
@@ -278,6 +275,7 @@ local function localise_research_requirements(tech)
    return FaUtils.spacecat(trig_or_cost, { "fa.research-needs-techs", prereqs_msg })
 end
 
+---@type table<string, true?>
 local BONUSES_ARE_PERCENTS = TH.array_to_set({}, {
    "laboratory-speed",
    "worker-robot-speed",
@@ -335,7 +333,7 @@ local function localise_research_rewards(player, tech)
             Localising.get_localised_name_with_fallback(prototypes.ammo_category[reward.ammo_category]),
             string.format("%2.d", reward.modifier * 100),
          })
-      elseif reward.type == "gun-speed" then
+      elseif reward.type == "ammo-damage" then
          table.insert(other_bonuses, {
             "fa.research-reward-gun-damage",
             Localising.get_localised_name_with_fallback(prototypes.ammo_category[reward.ammo_category]),
@@ -500,7 +498,7 @@ end
 -- Does not return the starting index. Returns nil if there was nothing in the direction specified; throws an error if
 -- the index is out of range.
 ---@param researches fa.research.ResearchEntry[]
----@param start_index number
+---@param start_index integer
 ---@param direction 1|-1
 ---@param list fa.research.ResearchList
 ---@return number?
@@ -554,7 +552,7 @@ function mod.queue_announce(pindex)
 end
 
 -- For when pressing `t`, the research part of the string.
----@param pindex number
+---@param pindex integer
 ---@return LocalisedString
 function mod.get_progress_string(pindex)
    local player = game.get_player(pindex)

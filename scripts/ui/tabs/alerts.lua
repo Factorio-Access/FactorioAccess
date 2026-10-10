@@ -182,7 +182,7 @@ mod.overview_tab = KeyGraph.declare_graph({
 })
 
 ---Build tabs for the alerts section dynamically
----@param pindex number
+---@param pindex integer
 ---@return fa.ui.TabDescriptor[]
 function mod.build_alert_tabs(pindex)
    local tabs = { mod.overview_tab }

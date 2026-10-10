@@ -23,6 +23,7 @@ mod.CATEGORIES = {
 }
 
 -- The desired order of categories when moving through the scanner.
+---@type fa.scanner.Category[]
 mod.CATEGORY_ORDER = {
    mod.CATEGORIES.ALL,
    mod.CATEGORIES.RESOURCES,

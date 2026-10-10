@@ -27,7 +27,7 @@ local gui_storage = StorageManager.declare_storage_module("game_gui", {
 })
 
 ---Cleanup any invalid GUI elements
----@param pindex number
+---@param pindex integer
 local function cleanup_invalid_elements(pindex)
    local state = gui_storage[pindex]
    if state.ui_frame and not state.ui_frame.valid then
@@ -42,7 +42,7 @@ local function cleanup_invalid_elements(pindex)
 end
 
 ---Ensure the UI frame exists and is valid
----@param pindex number
+---@param pindex integer
 ---@return LuaGuiElement
 local function ensure_frame_exists(pindex)
    local state = gui_storage[pindex]
@@ -72,7 +72,7 @@ local function ensure_frame_exists(pindex)
 end
 
 ---Set the active UI, creating or updating the GUI frame
----@param pindex number
+---@param pindex integer
 ---@param ui_name string?
 function mod.set_active_ui(pindex, ui_name)
    local state = gui_storage[pindex]
@@ -98,7 +98,7 @@ function mod.set_active_ui(pindex, ui_name)
 end
 
 ---Clear the active UI, destroying the GUI frame
----@param pindex number
+---@param pindex integer
 function mod.clear_active_ui(pindex)
    local state = gui_storage[pindex]
 
@@ -121,7 +121,7 @@ end
 ---@field errors LocalisedString[]? Array of error messages if parsing failed
 
 ---Open a textbox for user input
----@param pindex number
+---@param pindex integer
 ---@param initial_text string
 ---@param context any? Context to help identify which node/item opened the textbox
 ---@param options fa.ui.TextboxOptions? Options for the textbox
@@ -157,7 +157,7 @@ function mod.open_textbox(pindex, initial_text, context, options)
 end
 
 ---Close the textbox
----@param pindex number
+---@param pindex integer
 function mod.close_textbox(pindex)
    local state = gui_storage[pindex]
 
@@ -169,21 +169,21 @@ function mod.close_textbox(pindex)
 end
 
 ---Get the stored context for the textbox
----@param pindex number
+---@param pindex integer
 ---@return any?
 function mod.get_textbox_context(pindex)
    return gui_storage[pindex].textbox_context
 end
 
 ---Check if rich text parsing is enabled for the textbox
----@param pindex number
+---@param pindex integer
 ---@return boolean
 function mod.is_textbox_rich_text(pindex)
    return gui_storage[pindex].textbox_rich_text or false
 end
 
 ---Get the textbox text
----@param pindex number
+---@param pindex integer
 ---@return string?
 function mod.get_textbox_text(pindex)
    local state = gui_storage[pindex]
@@ -192,7 +192,7 @@ function mod.get_textbox_text(pindex)
 end
 
 ---Check if a textbox is open
----@param pindex number
+---@param pindex integer
 ---@return boolean
 function mod.is_textbox_open(pindex)
    local state = gui_storage[pindex]

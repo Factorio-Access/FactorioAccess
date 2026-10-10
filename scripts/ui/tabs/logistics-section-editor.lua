@@ -27,7 +27,7 @@ local mod = {}
 ---Build the unified section editor menu
 ---Works for all entities via entity.get_logistic_sections()
 ---@param ctx fa.ui.graph.Ctx
----@param section_index number
+---@param section_index integer
 ---@return fa.ui.graph.Render?
 local function render_section(ctx, section_index)
    assert(ctx.global_parameters, "render_section: global_parameters is nil")
@@ -35,8 +35,6 @@ local function render_section(ctx, section_index)
 
    -- Validate entity at render callback entry
    if not entity or not entity.valid then return nil end
-
-   assert(section_index, "render_section: section_index is nil")
 
    -- Get sections directly from entity
    local sections = entity.get_logistic_sections()
@@ -470,7 +468,7 @@ local function render_section(ctx, section_index)
 end
 
 ---Create a section editor tab
----@param section_index number
+---@param section_index integer
 ---@param title? LocalisedString Optional title override
 ---@return fa.ui.TabDescriptor
 function mod.create_section_tab(section_index, title)

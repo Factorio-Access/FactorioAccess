@@ -15,7 +15,7 @@ local syntrax_input_ui = {
 }
 
 ---Open the syntrax input
----@param pindex number
+---@param pindex integer
 ---@param parameters {position: MapPosition, direction: defines.direction}
 ---@param controller fa.ui.RouterController
 function syntrax_input_ui:open(pindex, parameters, controller)
@@ -24,7 +24,7 @@ function syntrax_input_ui:open(pindex, parameters, controller)
 end
 
 ---Handle textbox result
----@param pindex number
+---@param pindex integer
 ---@param result any The syntrax code entered by the user (nil if cancelled)
 ---@param context any The context (should be "syntrax_input")
 ---@param controller fa.ui.RouterController

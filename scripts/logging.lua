@@ -114,11 +114,7 @@ end
 ---@param module_name string The name of the module creating this logger
 ---@return fa.Logger
 function mod.Logger(module_name)
-   local logger = {
-      module_name = module_name,
-   }
-   setmetatable(logger, Logger_meta)
-   return logger
+   return setmetatable({ module_name = module_name }, Logger_meta)
 end
 
 -- Initialize the logging system (called once by control.lua)

@@ -31,7 +31,8 @@ local function check_entity_at_position(surface, pos, preferred_unit_number, exc
    return false
 end
 
--- Lookup table for direction offsets
+-- Offsets for the 8 cardinal and diagonal directions; half diagonals have none
+---@type table<defines.direction, { x: integer, y: integer }?>
 local DIRECTION_OFFSETS = {
    [defines.direction.north] = { x = 0, y = -1 },
    [defines.direction.northeast] = { x = 1, y = -1 },
@@ -107,11 +108,7 @@ function mod.to_neighboring_tile(pos, facing_direction)
    dir = HALF_DIAGONAL_MAP[dir] or dir
 
    local offset = DIRECTION_OFFSETS[dir]
-   if offset then
-      return { x = pos.x + offset.x, y = pos.y + offset.y }
-   else
-      return pos
-   end
+   return { x = pos.x + offset.x, y = pos.y + offset.y }
 end
 
 --Reports the direction and distance of one point from another. Biased towards the diagonals.
@@ -244,7 +241,7 @@ function mod.direction_of_vector(vector)
    local mapped = segment % 32
    local dir = math.floor(mapped / 2)
    assert(dir < 16)
-   return dir --[[ @as defines.direction ]]
+   return dir --[[@as defines.direction]]
 end
 
 function mod.get_direction_precise(pos_target, pos_origin)
@@ -271,6 +268,17 @@ function mod.is_direction_aligned(pos_origin, pos_target)
 
    --None of the above means they are not aligned.
    return false
+end
+
+---A direction's name, as a locale parameter or a whole message. fa.direction picks the name by the direction's
+---number; the API documents defines as opaque, so the number is taken explicitly here.
+---@param dir defines.direction
+---@return LocalisedString
+function mod.localise_direction(dir)
+   return {
+      "fa.direction",
+      dir --[[@as integer]],
+   }
 end
 
 --Converts an input direction into a localised string.
@@ -567,7 +575,9 @@ function mod.ent_name_locale(ent)
       print("todo: forest isn't an entity")
       return { "fa.forest" }
    end
+   ---@type LuaEntityPrototype?
    local entity_prototype = prototypes.entity[ent.name]
+   ---@type LuaResourceCategoryPrototype?
    local resource_prototype = prototypes.resource_category[ent.name]
    local name = nil
    if ent.localised_name == nil and entity_prototype == nil and resource_prototype == nil then
@@ -753,7 +763,7 @@ function mod.get_item_name_for_ent(name)
 end
 
 --Returns true only if this action was called within the last 10 seconds. Resets.
----@param pindex int player index
+---@param pindex integer player index
 ---@param id_string string used to check whether the same thing as last time is being checked
 ---@param custom_message string info about what action is being checked
 ---@return boolean to allow the action
@@ -795,11 +805,9 @@ function mod.closest_point_in_box(point, box)
    }
 end
 
+-- Every LuaPrototypes table whose values are LuaPrototypeBase (fonts, styles and map gen presets are not)
 local ALL_PROTO_KINDS = {
    "item",
-   "font",
-   "map_gen_preset",
-   "style",
    "entity",
    "fluid",
    "tile",
@@ -849,8 +857,10 @@ local ALL_PROTO_KINDS = {
 ---@return LuaPrototypeBase?
 function mod.find_prototype(name)
    for _, f in pairs(ALL_PROTO_KINDS) do
-      local p = prototypes[f]
-      if p and p[name] then return p[name] end
+      local kind = prototypes[f] --[[@as LuaCustomTable<string, LuaPrototypeBase>]]
+      ---@type LuaPrototypeBase?
+      local proto = kind[name]
+      if proto then return proto end
    end
 
    return nil
@@ -879,34 +889,10 @@ end
 
 -- Formats a distance with direction to a localized string
 ---@param distance number Distance in tiles
----@param direction string|number Direction name (e.g., "north", "south") or direction number
+---@param direction defines.direction
 ---@return LocalisedString
 function mod.format_distance_with_direction(distance, direction)
-   -- If direction is a string, we need to convert it to a number
-   -- This is a temporary fix - ideally callers should pass the numeric direction
-   if type(direction) == "string" then
-      -- Try to convert string directions back to numbers
-      local dir_map = {
-         ["North"] = 0,
-         ["NorthNorthEast"] = 1,
-         ["NorthEast"] = 2,
-         ["EastNorthEast"] = 3,
-         ["East"] = 4,
-         ["EastSouthEast"] = 5,
-         ["SouthEast"] = 6,
-         ["SouthSouthEast"] = 7,
-         ["South"] = 8,
-         ["SouthSouthWest"] = 9,
-         ["SouthWest"] = 10,
-         ["WestSouthWest"] = 11,
-         ["West"] = 12,
-         ["WestNorthWest"] = 13,
-         ["NorthWest"] = 14,
-         ["NorthNorthWest"] = 15,
-      }
-      direction = dir_map[direction] or 0
-   end
-   return { "fa.distance-tiles-direction", tostring(distance), { "fa.direction", direction } }
+   return { "fa.distance-tiles-direction", tostring(distance), mod.localise_direction(direction) }
 end
 
 -- Builds a list with proper separators

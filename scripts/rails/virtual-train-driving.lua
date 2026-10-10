@@ -48,10 +48,11 @@ local function init_inventories()
    return {}
 end
 
+---@type table<integer, vtd.Inventories>
 local vtd_inventories = StorageManager.declare_storage_module("virtual_train_invs", init_inventories)
 
 ---@class vtd.Move
----@field position MapPosition Position of the rail piece
+---@field position fa.Point Position of the rail piece
 ---@field end_direction defines.direction Direction of the rail end we're facing
 ---@field rail_type railutils.RailType Type of rail (STRAIGHT, HALF_DIAGONAL, CURVE_A, CURVE_B)
 ---@field placement_direction defines.direction Direction the rail was placed
@@ -77,6 +78,7 @@ local function init_state()
    }
 end
 
+---@type table<integer, vtd.State>
 local vtd_storage = StorageManager.declare_storage_module("virtual_train_driving", init_state)
 
 ---Check if player has a rail planner in hand
@@ -418,7 +420,7 @@ local function announce_rail(pindex)
    end
 
    -- Direction
-   mb:fragment({ "fa.facing-direction", { "fa.direction", current.end_direction } })
+   mb:fragment({ "fa.facing-direction", FaUtils.localise_direction(current.end_direction) })
 
    if state.speculating then mb:fragment("speculating") end
 
@@ -594,7 +596,7 @@ function mod.lock_on_to_rail(pindex, rail_entity, build_mode)
    elseif state.build_mode == defines.build_mode.superforced then
       mb:fragment({ "fa.virtual-train-mode-superforce" })
    end
-   mb:fragment({ "fa.facing-direction", { "fa.direction", chosen_end_direction } })
+   mb:fragment({ "fa.facing-direction", FaUtils.localise_direction(chosen_end_direction) })
    Speech.speak(pindex, mb:build())
 end
 
@@ -709,7 +711,7 @@ function mod.flip_end(pindex)
    -- Announce flip with new direction
    local mb = MessageBuilder.new()
    mb:fragment({ "fa.virtual-train-flipped" })
-      :fragment({ "fa.virtual-train-now-facing", { "fa.direction", trav:get_direction() } })
+      :fragment({ "fa.virtual-train-now-facing", FaUtils.localise_direction(trav:get_direction()) })
    Speech.speak(pindex, mb:build())
 end
 
@@ -861,7 +863,7 @@ function mod.place_signal(pindex, side, is_chain)
       local mb = MessageBuilder.new()
       mb:fragment({
          "fa.virtual-train-placed-" .. (is_chain and "chain-signal" or "signal"),
-      }):fragment({ "fa.direction", signal_dir })
+      }):fragment(FaUtils.localise_direction(signal_dir))
       Speech.speak(pindex, mb:build())
       return true
    elseif already_existed then

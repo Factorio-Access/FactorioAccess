@@ -20,6 +20,7 @@ local mod = {}
 
 ---Maximum connection radius of any roboport prototype.
 ---Uses logistic_radius as approximation since logistics_connection_distance >= logistic_radius.
+---@type number
 local max_roboport_connection_radius = 0
 do
    local roboports = prototypes.get_entity_filtered({ { filter = "type", type = "roboport" } })
@@ -91,7 +92,7 @@ function mod.calculate_build_params(params)
             TransportBelts.would_form_underground_exit(p.surface, ent, position, building_direction)
          if would_auto_exit then
             --Flip the chute by 180 degrees
-            actual_build_direction = (building_direction + dirs.south) % (2 * dirs.south)
+            actual_build_direction = ((building_direction + dirs.south) % (2 * dirs.south)) --[[@as defines.direction]]
          end
       end
 
@@ -338,8 +339,7 @@ function mod.build_offshore_pump_in_hand(pindex)
                -- BUG: factorio 2.0 plays a sound for can_build_from_cursor if pointed at out of reach tiles
                if FaUtils.distance(position, p.position) > p.build_distance then goto continue end
 
-               ---@type defines.direction
-               local dir_3 = i3 * dirs.east
+               local dir_3 = (i3 * dirs.east) --[[@as defines.direction]]
                if p.can_build_from_cursor({ name = "offshore-pump", position = position, direction = dir_3 }) then
                   table.insert(positions, { position = position, direction = dir_3 })
                end
@@ -389,7 +389,7 @@ function mod.rotate_item_in_hand(event, forward)
       -- Update the hand direction
       p.play_sound({ path = "Rotate-Hand-Sound" })
       local build_dir = vp:get_hand_direction()
-      local new_dir = (build_dir + dirs.east * mult) % (2 * dirs.south)
+      local new_dir = ((build_dir + dirs.east * mult) % (2 * dirs.south)) --[[@as defines.direction]]
       vp:set_hand_direction(new_dir)
 
       -- For blueprints and blueprint books, just announce direction
@@ -550,7 +550,7 @@ function mod.nudge_key(direction, event)
             return
          else
             --Successfully teleported and so nudged
-            Speech.speak(pindex, { "fa.nudged-one-direction", { "fa.direction", direction } })
+            Speech.speak(pindex, { "fa.nudged-one-direction", FaUtils.localise_direction(direction) })
 
             vp:set_cursor_pos(FaUtils.offset_position_legacy(vp:get_cursor_pos(), direction, 1))
 
@@ -662,7 +662,7 @@ function mod.build_preview_checks_info(stack, pindex)
          })
          table.insert(result, {
             "fa.connection-connects-underground",
-            { "fa.direction", build_dir },
+            FaUtils.localise_direction(build_dir),
             tostring(actual_dist - 1),
          })
       else
@@ -676,7 +676,7 @@ function mod.build_preview_checks_info(stack, pindex)
       if connection then
          table.insert(result, {
             "fa.connection-connects-underground",
-            { "fa.direction", connection.facing_direction },
+            FaUtils.localise_direction(connection.facing_direction),
             tostring(connection.distance),
          })
       end
@@ -732,7 +732,7 @@ function mod.build_preview_checks_info(stack, pindex)
                         con_count = con_count + 1
                         local con_dir = FaUtils.get_direction_biased(con_target_pos, pos)
                         if con_count > 1 then table.insert(result, { "fa.connection-heat-pipe-and" }) end
-                        table.insert(result, { "fa.direction", con_dir })
+                        table.insert(result, FaUtils.localise_direction(con_dir))
                      end
                   end
                end
@@ -773,7 +773,7 @@ function mod.build_preview_checks_info(stack, pindex)
                -- Use center-to-center distance for accurate reporting
                local dist = math.ceil(util.distance(pole.position, pole_center))
                local dir = FaUtils.get_direction_biased(pole.position, pole_center)
-               table.insert(result, FaUtils.format_distance_with_direction(dist, helpers.direction_to_string(dir)))
+               table.insert(result, FaUtils.format_distance_with_direction(dist, dir))
                table.insert(result, ", ")
             end
          end
@@ -787,7 +787,7 @@ function mod.build_preview_checks_info(stack, pindex)
             local dir = FaUtils.get_direction_biased(nearest_pole.position, pole_center)
             table.insert(result, {
                "fa.connection-to-nearest-pole",
-               FaUtils.format_distance_with_direction(math.ceil(min_dist), helpers.direction_to_string(dir)),
+               FaUtils.format_distance_with_direction(math.ceil(min_dist), dir),
             })
          end
       end
@@ -831,7 +831,7 @@ function mod.build_preview_checks_info(stack, pindex)
             if i <= 5 then
                local dist = math.ceil(util.distance(port.position, new_center))
                local dir = FaUtils.get_direction_biased(port.position, new_center)
-               table.insert(result, FaUtils.format_distance_with_direction(dist, helpers.direction_to_string(dir)))
+               table.insert(result, FaUtils.format_distance_with_direction(dist, dir))
                table.insert(result, ", ")
             end
          end
@@ -860,7 +860,7 @@ function mod.build_preview_checks_info(stack, pindex)
             local dir = FaUtils.get_direction_biased(nearest_port.position, new_center)
             table.insert(result, {
                "fa.connection-to-nearest-roboport",
-               FaUtils.format_distance_with_direction(math.ceil(min_dist), helpers.direction_to_string(dir)),
+               FaUtils.format_distance_with_direction(math.ceil(min_dist), dir),
             })
          end
       end
@@ -872,11 +872,10 @@ function mod.build_preview_checks_info(stack, pindex)
       if not network then
          table.insert(result, { "fa.connection-not-in-network" })
       elseif distance and distance > 0 then
-         local dir = FaUtils.direction_lookup(direction)
-         table.insert(
-            result,
-            { "fa.connection-not-in-network-nearest", FaUtils.format_distance_with_direction(math.ceil(distance), dir) }
-         )
+         table.insert(result, {
+            "fa.connection-not-in-network-nearest",
+            FaUtils.format_distance_with_direction(math.ceil(distance), direction),
+         })
       else
          local network_name = BotLogistics.get_network_name_from_network(network)
          table.insert(result, { "fa.connection-in-network", network_name })
@@ -939,7 +938,7 @@ function mod.build_preview_checks_info(stack, pindex)
             local dir = FaUtils.get_direction_biased(found_pole.position, pos)
             table.insert(result, {
                "fa.connection-from-direction",
-               FaUtils.format_distance_with_direction(dist, helpers.direction_to_string(dir)),
+               FaUtils.format_distance_with_direction(dist, dir),
             })
          end
       else
@@ -952,7 +951,7 @@ function mod.build_preview_checks_info(stack, pindex)
             local dir = FaUtils.get_direction_biased(nearest_pole.position, pos)
             table.insert(result, {
                "fa.connection-to-nearest-pole",
-               FaUtils.format_distance_with_direction(math.ceil(min_dist), helpers.direction_to_string(dir)),
+               FaUtils.format_distance_with_direction(math.ceil(min_dist), dir),
             })
          end
       end
@@ -1168,6 +1167,7 @@ function mod.identify_building_obstacle(pindex, area, ent_to_ignore)
       invert = true,
       type = Consts.ENT_TYPES_YOU_CAN_BUILD_OVER,
    })
+   ---@type LuaEntity?
    local obstacle_ent = nil
    for i, area_ent in ipairs(ents_in_area) do
       if

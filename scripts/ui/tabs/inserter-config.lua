@@ -82,6 +82,7 @@ local function render_inserter_config(ctx)
       })
 
       -- Row 3: Filter slots (all in one row)
+      form:start_row("filters")
       for i = 1, entity.filter_slot_count do
          local slot_index = i
          local get_value = function()
@@ -134,9 +135,9 @@ local function render_inserter_config(ctx)
             end,
          }
 
-         -- Add with row_key to group all filters in one row
-         form:add_item("filter_" .. slot_index, vtable, "filters")
+         form:add_item("filter_" .. slot_index, vtable)
       end
+      form:end_row()
    end
 
    return form:build()

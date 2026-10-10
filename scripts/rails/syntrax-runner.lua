@@ -20,7 +20,7 @@ end
 ---@class syntrax_runner.ExecuteOptions
 ---@field pindex integer Player index
 ---@field source string Syntrax source code
----@field position MapPosition Starting position
+---@field position fa.Point Starting position
 ---@field direction defines.direction Starting end direction (0-15)
 ---@field rail_type railutils.RailType Starting rail type
 ---@field placement_direction defines.direction Starting rail's placement direction
@@ -50,21 +50,27 @@ end
 ---@param planner_description railutils.RailPlannerDescription
 ---@return {name: string, position: MapPosition, direction: defines.direction}
 local function convert_placement(placement, planner_description)
+   -- Syntrax directions are plain numbers 0-15.
    if placement.type == "rail" then
+      local rail = placement --[[@as syntrax.vm.RailPlacement]]
       return {
-         name = map_rail_type(placement.rail_type, planner_description),
-         position = placement.position,
-         direction = placement.placement_direction,
+         name = map_rail_type(rail.rail_type, planner_description),
+         position = rail.position,
+         direction = rail.placement_direction --[[@as defines.direction]],
       }
-   elseif placement.type == "signal" then
-      return {
-         name = placement.signal_type,
-         position = placement.position,
-         direction = placement.direction,
-      }
-   else
-      error("Unknown placement type: " .. tostring((placement --[[@as syntrax.vm.Placement]]).type))
    end
+
+   -- Rails and signals are every kind the VM emits today; a new kind must fail here, not build as a signal.
+   ---@diagnostic disable-next-line: unnecessary-if
+   if placement.type == "signal" then
+      local signal = placement --[[@as syntrax.vm.SignalPlacement]]
+      return {
+         name = signal.signal_type,
+         position = signal.position,
+         direction = signal.direction --[[@as defines.direction]],
+      }
+   end
+   error("Unknown placement type: " .. tostring(placement.type))
 end
 
 ---Format an error message for a failed placement
@@ -137,8 +143,13 @@ function mod.execute(opts)
    if not player then return nil, "Invalid player" end
 
    -- Parse and execute syntrax
-   local placement_groups, err =
-      Syntrax.execute(opts.source, opts.position, opts.direction, opts.rail_type, opts.placement_direction)
+   local placement_groups, err = Syntrax.execute(
+      opts.source,
+      opts.position,
+      opts.direction --[[@as integer]],
+      opts.rail_type,
+      opts.placement_direction --[[@as integer]]
+   )
    if err then return nil, err.message end
 
    -- Handle empty result
@@ -150,6 +161,7 @@ function mod.execute(opts)
 
    for group_idx, group in ipairs(placement_groups) do
       local group_ghosts, group_created = nil, nil
+      ---@type syntrax.vm.Placement?
       local last_failed_placement = nil
 
       -- Try each alternative in order

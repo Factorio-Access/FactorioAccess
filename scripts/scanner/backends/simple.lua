@@ -136,8 +136,9 @@ function SimpleBackend:on_new_tiles(tiles) end
 ---@field subcategory_callback (fun(LuaEntity): fa.scanner.Subcategory)?
 ---@field readout_callback (fun(LuaPlayer, LuaEntity): LocalisedString)?
 
+---@param meta_name string
 ---@param callbacks fa.scanner.SimpleBackendCallbacks
----@return fa.scanner.ScannerBackend
+---@return fa.scanner.ScannerBackendFactory
 function mod.declare_simple_backend(meta_name, callbacks)
    local callbacks_defaulted = {
       category_callback = callbacks.category_callback or default_category_cb,
@@ -147,7 +148,7 @@ function mod.declare_simple_backend(meta_name, callbacks)
 
    local newmeta = TH.nested_indexer(SimpleBackend, callbacks_defaulted)
 
-   if script then script.register_metatable(meta_name, newmeta) end
+   script.register_metatable(meta_name, newmeta)
 
    local ret = {
       new = function()

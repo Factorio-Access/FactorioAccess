@@ -9,7 +9,10 @@ local UiRouter = require("scripts.ui.router")
 
 describe("Entity UI", function()
    it("should open for a chest entity", function(ctx)
-      local player, chest
+      ---@type LuaPlayer
+      local player
+      ---@type LuaEntity
+      local chest
 
       ctx:init(function()
          player = game.get_player(1)
@@ -42,7 +45,10 @@ describe("Entity UI", function()
    end)
 
    it("should open for an assembling machine", function(ctx)
-      local player, machine
+      ---@type LuaPlayer
+      local player
+      ---@type LuaEntity
+      local machine
 
       ctx:init(function()
          player = game.get_player(1)
@@ -79,7 +85,10 @@ describe("Entity UI", function()
    end)
 
    it("should open for charted out-of-reach entity in read-only mode", function(ctx)
-      local player, far_chest
+      ---@type LuaPlayer
+      local player
+      ---@type LuaEntity
+      local far_chest
 
       ctx:init(function()
          player = game.get_player(1)
@@ -117,7 +126,10 @@ describe("Entity UI", function()
    end)
 
    it("should fail to open for uncharted out-of-reach entity", function(ctx)
-      local player, far_chest
+      ---@type LuaPlayer
+      local player
+      ---@type LuaEntity?
+      local far_chest
 
       ctx:init(function()
          player = game.get_player(1)
@@ -160,7 +172,10 @@ describe("Entity UI", function()
    end)
 
    it("should handle entity becoming invalid during UI lifetime", function(ctx)
-      local player, chest
+      ---@type LuaPlayer
+      local player
+      ---@type LuaEntity
+      local chest
 
       ctx:init(function()
          player = game.get_player(1)

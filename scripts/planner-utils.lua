@@ -12,15 +12,16 @@ local mod = {}
 local function get_book_active_item(book)
    local book_inv = book.get_inventory(defines.inventory.item_main)
    if not book_inv then return nil end
+   ---@type integer?
    local idx = book.active_index
    if not idx or idx < 1 or idx > #book_inv then return nil end
    local item = book_inv[idx]
-   if item and item.valid_for_read then return item end
+   if item.valid_for_read then return item end
    return nil
 end
 
 ---Get the upgrade planner from cursor (direct or in book)
----@param pindex number
+---@param pindex integer
 ---@return LuaItemStack|nil planner The upgrade planner stack
 ---@return boolean in_book Whether the planner is inside a book
 function mod.get_upgrade_planner(pindex)
@@ -43,7 +44,7 @@ function mod.get_upgrade_planner(pindex)
 end
 
 ---Get the deconstruction planner from cursor (direct or in book)
----@param pindex number
+---@param pindex integer
 ---@return LuaItemStack|nil planner The deconstruction planner stack
 ---@return boolean in_book Whether the planner is inside a book
 function mod.get_decon_planner(pindex)
@@ -66,7 +67,7 @@ function mod.get_decon_planner(pindex)
 end
 
 ---Check if player is holding an upgrade planner (direct or in book)
----@param pindex number
+---@param pindex integer
 ---@return boolean
 function mod.has_upgrade_planner(pindex)
    local planner = mod.get_upgrade_planner(pindex)
@@ -74,7 +75,7 @@ function mod.has_upgrade_planner(pindex)
 end
 
 ---Check if player is holding a deconstruction planner (direct or in book)
----@param pindex number
+---@param pindex integer
 ---@return boolean
 function mod.has_decon_planner(pindex)
    local planner = mod.get_decon_planner(pindex)

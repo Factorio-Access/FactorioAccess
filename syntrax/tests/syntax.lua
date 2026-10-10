@@ -4,6 +4,7 @@
 local helpers = require("syntrax.tests.helpers")
 local Errors = require("syntrax.errors")
 
+---@type table<string, fun()>
 local mod = {}
 
 -- Test cases for basic rail sequences

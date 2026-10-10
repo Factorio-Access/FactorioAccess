@@ -29,11 +29,7 @@ local function render_infinity_pipe_config(ctx)
       if filter and filter.name then
          local fluid_proto = prototypes.fluid[filter.name]
          ctx.message:fragment({ "fa.infinity-pipe-fluid" })
-         if fluid_proto then
-            ctx.message:fragment(fluid_proto.localised_name)
-         else
-            ctx.message:fragment(filter.name)
-         end
+         ctx.message:fragment(fluid_proto.localised_name)
          if filter.temperature then
             ctx.message:fragment({ "fa.infinity-pipe-temperature", tostring(filter.temperature) })
          end
@@ -48,7 +44,7 @@ local function render_infinity_pipe_config(ctx)
          if result and result.name then
             -- Set the fluid with default temperature
             local fluid_proto = prototypes.fluid[result.name]
-            local default_temp = fluid_proto and fluid_proto.default_temperature or 25
+            local default_temp = fluid_proto.default_temperature
 
             entity.set_infinity_pipe_filter({
                name = result.name,
@@ -57,11 +53,7 @@ local function render_infinity_pipe_config(ctx)
                mode = "exactly",
             })
 
-            if fluid_proto then
-               ctx.controller.message:fragment(fluid_proto.localised_name)
-            else
-               ctx.controller.message:fragment(result.name)
-            end
+            ctx.controller.message:fragment(fluid_proto.localised_name)
          end
       end,
       on_clear = function(ctx)

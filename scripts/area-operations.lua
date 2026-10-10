@@ -15,7 +15,7 @@ local Viewpoint = require("scripts.viewpoint")
 local mod = {}
 
 ---Mine area around cursor or selected entity
----@param pindex number
+---@param pindex integer
 function mod.mine_area(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
    local cursor_pos = vp:get_cursor_pos()
@@ -136,7 +136,7 @@ function mod.mine_area(pindex)
 end
 
 ---Super mine area for long range ghost clearing
----@param pindex number
+---@param pindex integer
 function mod.super_mine_area(pindex)
    local ent = game.get_player(pindex).selected
    if not ent or not ent.valid then return end

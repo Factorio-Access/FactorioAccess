@@ -11,8 +11,11 @@ describe("Transport Belt Mod Tests", function()
    it("should read splitter priority settings", function(ctx)
       -- Local variables for the test
       local pindex = 1
+      ---@type LuaPlayer
       local player
+      ---@type LuaSurface
       local surface
+      ---@type LuaEntity
       local splitter
 
       ctx:init(function()

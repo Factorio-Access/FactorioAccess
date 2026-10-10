@@ -4,7 +4,10 @@ local Speech = require("scripts.speech")
 
 describe("Furnace Fuel Status", function()
    it("should report out of fuel for furnace with empty fuel inventory", function(ctx)
-      local furnace, player
+      ---@type LuaEntity
+      local furnace
+      ---@type LuaPlayer
+      local player
 
       ctx:init(function()
          player = game.get_player(1)
@@ -40,7 +43,10 @@ describe("Furnace Fuel Status", function()
    end)
 
    it("should not report out of fuel when fuel is present", function(ctx)
-      local furnace, player
+      ---@type LuaEntity
+      local furnace
+      ---@type LuaPlayer
+      local player
 
       ctx:init(function()
          player = game.get_player(1)
@@ -72,7 +78,10 @@ describe("Furnace Fuel Status", function()
    end)
 
    it("should report out of fuel even when crafting if fuel inventory is empty", function(ctx)
-      local furnace, player
+      ---@type LuaEntity
+      local furnace
+      ---@type LuaPlayer
+      local player
 
       ctx:init(function()
          player = game.get_player(1)

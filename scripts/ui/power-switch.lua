@@ -74,7 +74,7 @@ local function render_power_switch_control(ctx)
 end
 
 ---Build tabs for the power switch
----@param pindex number
+---@param pindex integer
 ---@param parameters any
 ---@return fa.ui.TabstopDescriptor[]
 local function build_power_switch_tabs(pindex, parameters)

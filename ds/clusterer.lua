@@ -248,6 +248,8 @@ function mod.declare_clusterer(name, opts)
    declared_names[name] = true
 
    local newmeta = TH.nested_indexer(Clusterer, { fold = opts.fold })
+   -- script is nil under plain Lua, outside Factorio
+   ---@diagnostic disable-next-line: unnecessary-if
    if script then script.register_metatable(name, newmeta) end
 
    return function(search_radius, bucket_size)

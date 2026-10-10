@@ -37,6 +37,7 @@ end
 ---@return table<string, any> The stored data
 function mod.load(name)
    local proto_name = "fa-" .. name
+   ---@type LuaModData?
    local proto = prototypes.mod_data[proto_name]
 
    assert(proto, "Map " .. name .. " was never declared (expected prototype: " .. proto_name .. ")")

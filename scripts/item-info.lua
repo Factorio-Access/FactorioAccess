@@ -147,7 +147,8 @@ end
 ---@param entity LuaEntity
 ---@return number
 function mod.inserter_max_stack_size(entity)
-   return mod.inserter_stack_size_with_force(entity.prototype, entity.force)
+   -- Reading force always gives a LuaForce.
+   return mod.inserter_stack_size_with_force(entity.prototype, entity.force --[[@as LuaForce]])
 end
 
 ---Get the effective stack size for a placed inserter entity.
@@ -161,12 +162,14 @@ function mod.inserter_effective_stack_size(entity)
 end
 
 ---Marker to say "other item" in localise_item
-mod.ITEM_OTHER = {}
+---@class fa.ItemInfo.ItemOther
+local ITEM_OTHER = {}
+mod.ITEM_OTHER = ITEM_OTHER
 
 ---@class fa.ItemInfo.LocaliseItemOpts
----@field name LuaItemPrototype | LuaFluidPrototype | string | `mod.ITEM_OTHER`
+---@field name LuaItemPrototype | LuaFluidPrototype | string | fa.ItemInfo.ItemOther
 ---@field quality (LuaQualityPrototype|string)?
----@field count number?
+---@field count number? Fluid amounts can be fractional
 
 --[[
 Localise an item, or fluid, possibly with count and quality.
@@ -211,6 +214,8 @@ function mod.item_or_fluid_info(what, protos)
       quality = what.quality
       count = what.count
    end
+   -- ITEM_OTHER returned above.
+   ---@cast name -fa.ItemInfo.ItemOther
 
    -- Resolve prototypes
    local item_proto
@@ -236,7 +241,7 @@ function mod.item_or_fluid_info(what, protos)
 
    -- For actual stacks, check for special item types (planners, labeled blueprints, etc.)
    if stack then
-      local special_name = get_special_item_name(stack, quality_str, has_quality, has_count, count)
+      local special_name = get_special_item_name(stack, quality_str, has_quality, has_count, stack.count)
       if special_name then return special_name end
    end
 
@@ -657,14 +662,13 @@ local function fuel_info(message, item_proto)
    end
 end
 
----@class fa.ItemInfo.GetItemStackInfoOptions
----@field verbosity integer VERBOSITY.BRIEF or VERBOSITY.VERBOSE
----@field force LuaForce? Optional force for research bonus calculations
-
 ---@class fa.ItemInfo.GetItemInfoFromPrototypeOptions
 ---@field verbosity integer VERBOSITY.BRIEF or VERBOSITY.VERBOSE
----@field name_override LocalisedString? Override the name announced (for cases where name is already known)
----@field force LuaForce? Optional force for research bonus calculations
+---@field name_override? LocalisedString Override the name announced (for cases where name is already known)
+---@field force? LuaForce Optional force for research bonus calculations
+
+-- Passed through to get_item_info_from_prototype.
+---@alias fa.ItemInfo.GetItemStackInfoOptions fa.ItemInfo.GetItemInfoFromPrototypeOptions
 
 ---Get detailed information about an item from its prototype and quality
 ---This is the core function used by both stack-based and prototype-based queries
@@ -795,24 +799,10 @@ function mod.get_product_info(message, product, quality, options)
    quality = quality or prototypes.quality["normal"]
 
    if product.type == "item" then
-      local item_proto = prototypes.item[product.name]
-      if item_proto then
-         mod.get_item_info_from_prototype(message, item_proto, quality, options)
-      else
-         -- Fallback if item not found (shouldn't happen)
-         message:fragment(product.name)
-      end
-   elseif product.type == "fluid" then
-      -- For fluids, just announce the fluid name
-      local fluid_proto = prototypes.fluid[product.name]
-      if fluid_proto then
-         message:fragment(Localising.get_localised_name_with_fallback(fluid_proto))
-      else
-         message:fragment(product.name)
-      end
+      mod.get_item_info_from_prototype(message, prototypes.item[product.name], quality, options)
    else
-      -- Unknown product type
-      message:fragment((product --[[@as fa.ItemInfo.Product]]).name)
+      -- For fluids, just announce the fluid name
+      message:fragment(Localising.get_localised_name_with_fallback(prototypes.fluid[product.name]))
    end
 end
 
@@ -836,7 +826,7 @@ function mod.get_recipe_products_info(message, recipe, quality, options)
 end
 
 ---Read item info for item in hand (global fa-y handler)
----@param pindex number
+---@param pindex integer
 function mod.read_item_in_hand(pindex)
    local player = game.get_player(pindex)
    local cursor_stack = player.cursor_stack
@@ -847,7 +837,10 @@ function mod.read_item_in_hand(pindex)
    end
 
    local message = MessageBuilder.new()
-   mod.get_item_stack_info(message, cursor_stack, { verbosity = mod.VERBOSITY.VERBOSE, force = player.force })
+   mod.get_item_stack_info(message, cursor_stack, {
+      verbosity = mod.VERBOSITY.VERBOSE,
+      force = player.force --[[@as LuaForce]],
+   })
    Speech.speak(pindex, message:build())
 end
 

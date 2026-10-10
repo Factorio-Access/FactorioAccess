@@ -106,9 +106,7 @@ local function render_turret_config(ctx)
             if result then
                entity.set_priority_target(slot_index, result)
                local proto = prototypes.entity[result]
-               if proto then
-                  result_ctx.controller.message:fragment(Localising.get_localised_name_with_fallback(proto))
-               end
+               result_ctx.controller.message:fragment(Localising.get_localised_name_with_fallback(proto))
             end
          end,
          on_clear = function(clear_ctx)

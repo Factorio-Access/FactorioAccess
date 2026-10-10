@@ -75,7 +75,7 @@ end
 
 local mod = {}
 
----@class fa.ui.LocomotiveTabContext: fa.ui.TabContext
+---@class fa.ui.LocomotiveTabContext: fa.ui.graph.Ctx
 ---@field tablist_shared_state fa.ui.EntityUI.SharedState
 
 ---Render the locomotive configuration form

@@ -35,7 +35,7 @@ mod.world_menu = TabList.declare_tablist({
 })
 
 ---Open the world menu for a player
----@param pindex number Player index
+---@param pindex integer Player index
 ---@return boolean success
 function mod.open_world_menu(pindex)
    local player = game.get_player(pindex)

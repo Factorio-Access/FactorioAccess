@@ -73,7 +73,7 @@ function Span:_resolve()
          if t == "" then line = line + 1 end
       end
 
-      assert(false, "unreachable!")
+      error("unreachable!")
    end
 
    local l1, c1 = find_lc(self.start)

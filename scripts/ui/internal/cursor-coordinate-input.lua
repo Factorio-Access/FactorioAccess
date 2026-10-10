@@ -14,7 +14,7 @@ local cursor_coordinate_ui = {
 }
 
 ---Open the cursor coordinate input
----@param pindex number
+---@param pindex integer
 ---@param parameters table
 ---@param controller fa.ui.RouterController
 function cursor_coordinate_ui:open(pindex, parameters, controller)
@@ -23,7 +23,7 @@ function cursor_coordinate_ui:open(pindex, parameters, controller)
 end
 
 ---Handle textbox result
----@param pindex number
+---@param pindex integer
 ---@param result any The coordinates entered by the user (nil if cancelled)
 ---@param context any The context (should be "cursor_coordinate_input")
 ---@param controller fa.ui.RouterController

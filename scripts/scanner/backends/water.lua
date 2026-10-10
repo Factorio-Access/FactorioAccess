@@ -18,7 +18,7 @@ TH.array_to_set(WATER_PROTOS_SET, SC.WATER_PROTOS)
 local WaterBackend = {}
 mod.WaterBackend = WaterBackend
 local WaterBackend_meta = { __index = WaterBackend }
-if script then script.register_metatable("fa.scanner.WaterBackend", WaterBackend_meta) end
+script.register_metatable("fa.scanner.WaterBackend", WaterBackend_meta)
 
 ---@param surface LuaSurface
 function WaterBackend.new(surface)

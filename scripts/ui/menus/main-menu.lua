@@ -26,7 +26,7 @@ local TRASH_GRID = InventoryGrid.create_inventory_grid({
 })
 
 ---Shared state setup function that combines state from all tabs
----@param pindex number
+---@param pindex integer
 ---@param params any
 ---@return table
 local function setup_shared_state(pindex, params)
@@ -34,7 +34,7 @@ local function setup_shared_state(pindex, params)
 end
 
 ---Build tabs for the inventories section
----@param pindex number
+---@param pindex integer
 ---@param params table
 ---@return fa.ui.TabDescriptor[]
 local function build_inventory_tabs(pindex, params)
@@ -108,7 +108,7 @@ mod.main_menu = TabList.declare_tablist({
 })
 
 ---Open the main menu for a player
----@param pindex number Player index
+---@param pindex integer Player index
 ---@return boolean success
 function mod.open_main_menu(pindex)
    local player = game.get_player(pindex)

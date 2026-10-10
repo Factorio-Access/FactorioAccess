@@ -16,7 +16,7 @@ local WorkerRobots = require("scripts.worker-robots")
 
 local mod = {}
 
----@class fa.ui.RoboportTabContext: fa.ui.TabContext
+---@class fa.ui.RoboportTabContext: fa.ui.graph.Ctx
 ---@field tablist_shared_state fa.ui.EntityUI.SharedState
 
 ---Render the roboport configuration form
@@ -28,7 +28,8 @@ local function render_roboport_config(ctx)
    assert(port.type == "roboport", "render: entity is not a roboport")
 
    local form = FormBuilder.FormBuilder.new()
-   local nw = port.logistic_network
+   -- Nil when the roboport is in no network (the API's type omits the nil)
+   local nw = port.logistic_network --[[@as LuaLogisticNetwork?]]
 
    -- Menu item 0: Title/Instructions
    form:add_label("title", function(label_ctx)

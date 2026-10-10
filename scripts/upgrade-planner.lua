@@ -101,6 +101,7 @@ end
 ---@param entity_name string
 ---@return string|nil
 function mod.get_fast_replaceable_group(entity_name)
+   ---@type LuaEntityPrototype?
    local proto = prototypes.entity[entity_name]
    if proto then return proto.fast_replaceable_group end
    return nil

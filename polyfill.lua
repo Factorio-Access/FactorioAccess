@@ -2,6 +2,8 @@
 ---This file provides defines and other global API constructs for standalone Lua execution
 ---When running in the game (script exists), this file does nothing
 
+-- script is nil under plain Lua, outside Factorio
+---@diagnostic disable-next-line: unnecessary-if
 if script then return end
 
 ---@diagnostic disable: lowercase-global
@@ -41,7 +43,7 @@ rawset(defines, "rail_direction", {
 ---Polyfill for Factorio's table_size function
 ---Counts the number of keys in a table (both array and hash parts)
 ---@param tbl table
----@return number
+---@return uint32
 function table_size(tbl)
    local count = 0
    for _ in pairs(tbl) do

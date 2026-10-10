@@ -226,7 +226,7 @@ local function build_configuration_tabs(entity)
 end
 
 ---Build equipment section based on entity having a grid
----@param pindex number
+---@param pindex integer
 ---@param entity LuaEntity
 ---@return fa.ui.TabDescriptor[]?
 local function build_equipment_tabs(pindex, entity)
@@ -280,7 +280,7 @@ local function get_player_inventory_section()
 end
 
 ---Build all sections for the entity UI
----@param pindex number
+---@param pindex integer
 ---@param entity LuaEntity
 ---@return fa.ui.TabstopDescriptor[]?
 local function build_entity_sections(pindex, entity)
@@ -353,7 +353,7 @@ local function build_entity_sections(pindex, entity)
 end
 
 ---Shared state setup for entity UI
----@param pindex number
+---@param pindex integer
 ---@param params table
 ---@return table
 local function setup_shared_state(pindex, params)
@@ -419,7 +419,7 @@ end
 ---Attempt to open entity UI, handling entity indirection and special UI cases
 ---This is the main entry point for opening entity UIs from user interaction
 ---Returns false if the entity has no UI, otherwise attempts to open it
----@param pindex number Player index
+---@param pindex integer Player index
 ---@param entity LuaEntity The entity that was clicked
 ---@return boolean success True if UI was opened, false if entity has no UI or error occurred
 function mod.maybe_open_entity(pindex, entity)
@@ -457,7 +457,7 @@ function mod.maybe_open_entity(pindex, entity)
 end
 
 ---Open the entity UI for a given entity
----@param pindex number Player index
+---@param pindex integer Player index
 ---@param entity LuaEntity The entity to open UI for
 ---@return boolean success
 function mod.open_entity_ui(pindex, entity)

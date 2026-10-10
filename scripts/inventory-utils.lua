@@ -252,7 +252,6 @@ end
 ---@return LuaInventory? inventory The inventory if it exists and matches, nil otherwise
 function mod.get_inventory_safe(entity, define_name)
    local def = defines.inventory[define_name]
-   assert(def)
 
    local inv = entity.get_inventory(def)
    if not inv then return nil end
@@ -371,7 +370,7 @@ function mod.quick_transfer(pindex, msg_builder, src_ent, src_inv_def, src_slot,
    if transfer_count > stack.count then transfer_count = stack.count end
 
    -- Create a transfer stack with the specified count
-   local transfer_stack = { name = stack.name, count = transfer_count, quality = stack.quality }
+   local transfer_stack = { name = stack.name, count = transfer_count, quality = stack.quality.name }
 
    -- Check if destination can accept the stack
    if not dest_inv.can_insert(transfer_stack) then
@@ -415,7 +414,7 @@ end
 
 -- Present a list like iron plate x1, transport belt legendary x2, ...
 ---@param list ({ name: string|LuaItemPrototype, quality: string|LuaQualityPrototype|nil, count: number})[]
----@param truncate number?
+---@param truncate integer?
 ---@param protos table<string, LuaItemPrototype | LuaFluidPrototype>?
 ---@param raw boolean? If true, return just the list without "Has" wrapper
 ---@return LocalisedString?
@@ -501,7 +500,7 @@ end
 
 ---Get gun stack in a slot
 ---@param entity LuaEntity
----@param slot number
+---@param slot integer
 ---@return LuaItemStack?
 function mod.get_gun_in_slot(entity, slot)
    local gun_inv = mod.get_gun_inventory(entity)
@@ -513,7 +512,7 @@ end
 
 ---Get ammo stack in a slot
 ---@param entity LuaEntity
----@param slot number
+---@param slot integer
 ---@return LuaItemStack?
 function mod.get_ammo_in_slot(entity, slot)
    local ammo_inv = mod.get_ammo_inventory(entity)
@@ -552,7 +551,7 @@ end
 
 ---Present a fluid contents dictionary (from train.get_fluid_contents() or similar)
 ---@param contents table<string, double> Dictionary of fluid name to amount
----@param truncate number? Maximum number of entries to show
+---@param truncate integer? Maximum number of entries to show
 ---@return LocalisedString?
 function mod.present_fluid_list(contents, truncate)
    if not contents or not next(contents) then return nil end
@@ -592,7 +591,7 @@ end
 
 ---Get gun info for a slot, abstracting over inventory guns vs built-in guns
 ---@param entity LuaEntity
----@param slot number
+---@param slot integer
 ---@return fa.GunInfo?
 function mod.get_gun_info_for_slot(entity, slot)
    -- First check for gun inventory (characters)

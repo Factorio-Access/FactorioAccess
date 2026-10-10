@@ -23,7 +23,7 @@ local syntrax_storage = StorageManager.declare_storage_module("syntrax_custom_pr
 })
 
 ---Create a new custom program
----@param pindex number
+---@param pindex integer
 ---@param name string
 ---@param source string
 ---@return number id The ID of the newly created program
@@ -39,7 +39,7 @@ function mod.create_program(pindex, name, source)
 end
 
 ---Get a program by ID
----@param pindex number
+---@param pindex integer
 ---@param id number
 ---@return fa.syntrax.CustomProgram?
 function mod.get_program(pindex, id)
@@ -50,14 +50,14 @@ function mod.get_program(pindex, id)
 end
 
 ---Get all programs for a player
----@param pindex number
+---@param pindex integer
 ---@return fa.syntrax.CustomProgram[]
 function mod.get_all_programs(pindex)
    return syntrax_storage[pindex].programs
 end
 
 ---Update a program
----@param pindex number
+---@param pindex integer
 ---@param id number
 ---@param name string
 ---@param source string
@@ -73,7 +73,7 @@ function mod.update_program(pindex, id, name, source)
 end
 
 ---Delete a program
----@param pindex number
+---@param pindex integer
 ---@param id number
 ---@return boolean success
 function mod.delete_program(pindex, id)

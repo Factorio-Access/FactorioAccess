@@ -106,16 +106,13 @@ local mod = {}
 
 ---@alias fa.LauncherAudio.Command fa.LauncherAudio.PatchCommand|fa.LauncherAudio.StopCommand|fa.LauncherAudio.CompoundCommand
 
--- Forward declarations
-local PatchBuilder, StopBuilder, CompoundBuilder, EnvelopeBuilder
-
 --------------------------------------------------------------------------------
 -- Envelope Builder
 --------------------------------------------------------------------------------
 
 ---@class fa.LauncherAudio.EnvelopeBuilder
 ---@field _points fa.LauncherAudio.EnvelopePoint[]
-EnvelopeBuilder = {}
+local EnvelopeBuilder = {}
 local EnvelopeBuilder_meta = { __index = EnvelopeBuilder }
 
 ---Create a new envelope builder
@@ -172,7 +169,7 @@ end
 ---@field _start_time number?
 ---@field _lpf fa.LauncherAudio.LpfConfig?
 ---@field _filter_gain fa.LauncherAudio.Parameter?
-PatchBuilder = {}
+local PatchBuilder = {}
 local PatchBuilder_meta = { __index = PatchBuilder }
 
 ---Create a new patch command builder
@@ -380,7 +377,7 @@ end
 
 ---@class fa.LauncherAudio.StopBuilder
 ---@field _id string
-StopBuilder = {}
+local StopBuilder = {}
 local StopBuilder_meta = { __index = StopBuilder }
 
 ---Create a stop command builder
@@ -413,7 +410,7 @@ end
 
 ---@class fa.LauncherAudio.CompoundBuilder
 ---@field _commands fa.LauncherAudio.Command[]
-CompoundBuilder = {}
+local CompoundBuilder = {}
 local CompoundBuilder_meta = { __index = CompoundBuilder }
 
 ---Create a compound command builder for batching

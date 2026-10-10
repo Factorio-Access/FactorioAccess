@@ -61,14 +61,14 @@ local mod = {}
 ---@field message fa.MessageBuilder
 ---@field is_scanner boolean
 ---@field ent LuaEntity
----@field pindex number
+---@field pindex integer
 ---@field player LuaPlayer
 ---@field cursor_pos fa.Point Not necessarily the player's actual cursor.
 
 ---@class fa.Info.EntStatusContext
 ---@field message fa.MessageBuilder
 ---@field ent LuaEntity
----@field pindex number
+---@field pindex integer
 ---@field player LuaPlayer
 ---@field power_rate number
 ---@field drain number
@@ -412,7 +412,6 @@ local function ent_info_container(ctx)
    end
 
    if inv then
-      assert(inv)
       local presenting = InventoryUtils.present_list(inv.get_contents(), 3)
       if presenting then ctx.message:fragment(presenting) end
    end
@@ -453,10 +452,9 @@ local function ent_info_logistic_network(ctx)
       if not network then
          ctx.message:fragment({ "fa.ent-info-logistic-no-network" })
       elseif distance and distance > 0 then
-         local dir = FaUtils.direction_lookup(direction)
          ctx.message:fragment({
             "fa.ent-info-logistic-not-in-network",
-            FaUtils.format_distance_with_direction(math.ceil(distance), dir),
+            FaUtils.format_distance_with_direction(math.ceil(distance), direction),
          })
       else
          local network_name = BotLogistics.get_network_name_from_network(network)
@@ -478,12 +476,10 @@ local function ent_info_infinity_chest(ctx)
                break
             end
             ctx.message:list_item()
-            local item_proto = prototypes.item[filter.name]
-            if item_proto then
-               ctx.message:fragment(item_proto.localised_name)
-            else
-               ctx.message:fragment(filter.name)
-            end
+            -- A filter read from the game names its item with a string
+            ctx.message:fragment(prototypes.item[
+               filter.name --[[@as string]]
+            ].localised_name)
             local mode = filter.mode or "exactly"
             if mode == "at-least" then
                ctx.message:fragment({ "fa.ent-info-infinity-chest-at-least", tostring(filter.count or 0) })
@@ -527,7 +523,7 @@ local function ent_info_belt_shape(ctx)
          -- we say "from the", so we aren't undoing it and counterclockwise for
          -- left is right.
          dir = Geometry.dir_counterclockwise_90(e.direction)
-      elseif shape_info.corner == TransportBelts.CORNER_KINDS.RIGHT then
+      else
          key = "fa.ent-info-belt-shape-right"
          dir = Geometry.dir_clockwise_90(e.direction)
       end
@@ -621,7 +617,7 @@ local function ent_info_underground_belt_type(ctx)
    if ent.type == "underground-belt" then
       if ent.belt_to_ground_type == "input" then
          ctx.message:fragment({ "fa.ent-info-underground-belt-entrance" })
-      elseif ent.belt_to_ground_type == "output" then
+      else
          ctx.message:fragment({ "fa.ent-info-underground-belt-exit" })
       end
    end
@@ -1184,10 +1180,14 @@ local function ent_info_belt_contents(ctx)
       left = node:carries_heuristic(defines.transport_line.left_line, 5),
       right = node:carries_heuristic(defines.transport_line.right_line, 5),
    }
+   ---@type { left: boolean, right: boolean }
    local empty = { left = true, right = true }
+   ---@type { left: any, right: any }
    local most_common_for_both = { left = nil, right = nil }
+   ---@type { left: integer?, right: integer? }
    local other_count_for_both = { left = nil, right = nil }
 
+   ---@type LocalisedString[]
    local params = {}
    for _, side in pairs({ "left", "right" }) do
       local carries = carries[side]
@@ -1227,7 +1227,8 @@ local function ent_info_belt_contents(ctx)
       end
    end
    table.insert(params, 1, key)
-   ctx.message:fragment(params)
+   -- EmmyLua cannot see that an array starting with a key string is a LocalisedString
+   ctx.message:fragment(params --[[@as LocalisedString]])
 end
 
 ---@param ctx fa.Info.EntInfoContext
@@ -1364,8 +1365,9 @@ function mod.ent_info(pindex, ent, is_scanner)
    end)
    --For furnaces (which produce only 1 output item type at a time) state how many output units are ready
    if ent.type == "furnace" then
-      local output_stack = ent.get_output_inventory()[1]
-      if output_stack and output_stack.valid_for_read then
+      -- Furnaces always have an output inventory
+      local output_stack = (ent.get_output_inventory() --[[@as LuaInventory]])[1]
+      if output_stack.valid_for_read then
          local item_str = ItemInfo.item_info(output_stack)
          ctx.message:fragment({ "fa.ent-info-furnace-output-ready", item_str })
          ctx.message:list_item()
@@ -1594,7 +1596,9 @@ function mod.read_nearest_damaged_ent_info(pos, pindex)
       return
    end
    --Narrow by distance
+   ---@type LuaEntity?
    local closest = nil
+   ---@type number
    local min_dist = 1001
    for i, ent in ipairs(damaged_ents) do
       local dist = util.distance(pos, ent.position)
@@ -1655,8 +1659,12 @@ function mod.selected_item_production_stats_info(pindex, prototype_name)
    if prototype_name then
       prototype = prototypes.item[prototype_name]
       if not prototype then
-         prototype = prototypes.fluid[prototype_name]
-         if prototype then stats = p.force.get_fluid_production_statistics(p.surface) end
+         ---@type LuaFluidPrototype?
+         local fluid = prototypes.fluid[prototype_name]
+         if fluid then
+            prototype = fluid
+            stats = p.force.get_fluid_production_statistics(p.surface)
+         end
       end
       -- If provided but not found, return error immediately (don't try fallbacks)
       if not prototype then return { "fa.error-unknown-item", prototype_name } end
@@ -2035,7 +2043,7 @@ local function ent_status_spawner_evolution(ctx)
 end
 
 ---Report the status of the selected entity as well as additional dynamic info depending on the entity type
----@param pindex number The player index for whom the action is being performed.
+---@param pindex integer The player index for whom the action is being performed.
 function mod.read_selected_entity_status(pindex)
    local ent = game.get_player(pindex).selected
    if not ent then return end
@@ -2111,7 +2119,7 @@ function mod.read_selected_entity_status(pindex)
 end
 
 --Returns an info string about the entities and tiles found within an area scan done by an enlarged cursor.
----@param pindex number
+---@param pindex integer
 ---@param left_top fa.Point
 ---@param right_bottom fa.Point
 ---@return LocalisedString
@@ -2144,7 +2152,7 @@ function mod.area_scan_summary_info(pindex, left_top, right_bottom)
       })
    end
 
-   ---@type { name: string, count: string, category: string }[]
+   ---@type { name: string, count: integer, category: string }[]
    local counts = {}
 
    local covered_area = (right_bottom.x - left_top.x) * (right_bottom.y - left_top.y)
@@ -2235,11 +2243,8 @@ function mod.area_scan_summary_info(pindex, left_top, right_bottom)
       elseif entry.name == "refined-concrete" then
          localised_name = { "tile-name.refined-concrete" }
       else
-         -- Try entity name first, then fall back to raw name
-
-         if prototypes.entity[entry.name] then
-            localised_name = Localising.get_localised_name_with_fallback(prototypes.entity[entry.name])
-         end
+         -- Every other entry is counted from entities
+         localised_name = Localising.get_localised_name_with_fallback(prototypes.entity[entry.name])
       end
 
       if entry.category == "resource" or entry.category == "flooring" then

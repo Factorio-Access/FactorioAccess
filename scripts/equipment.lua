@@ -19,7 +19,7 @@ local mod = {}
 ---Modifies the source stack (decrements count or swaps for armor)
 ---@param stack LuaItemStack The stack to equip from (will be modified)
 ---@param target_entity LuaEntity Entity to equip to
----@param pindex number Player index (for by_player parameter)
+---@param pindex integer Player index (for by_player parameter)
 ---@param message fa.MessageBuilder Message builder to append results to
 ---@return boolean success True if anything was equipped
 local function equip_stack_to_entity(stack, target_entity, pindex, message)
@@ -143,7 +143,7 @@ function mod.equip_it(stack, pindex, target_entity)
 end
 
 --Move all weapons and ammo back to inventory
----@param pindex number
+---@param pindex integer
 ---@param source_entity LuaEntity? Entity containing guns/ammo (defaults to player character)
 ---@param target_entity LuaEntity? Entity to receive items (defaults to player character)
 ---@param target_inv_index defines.inventory? Target inventory index (defaults to character_main)
@@ -198,6 +198,8 @@ function mod.remove_weapons_and_ammo(pindex, source_entity, target_entity, targe
    return message
 end
 
+---@param grid LuaEquipmentGrid
+---@return integer
 function mod.count_empty_equipment_slots(grid)
    local slots_left = 0
    for i = 0, grid.width - 1, 1 do
@@ -226,10 +228,9 @@ function mod.read_shield_and_health_level(pindex, ent_in)
    else
       if not char or not char.valid then return { "fa.equipment-no-character" } end
       ent = char
-      local armor_inv = p.get_inventory(defines.inventory.character_armor)
-      if armor_inv[1] and armor_inv[1].valid_for_read and armor_inv[1].grid and armor_inv[1].grid.valid then
-         grid = armor_inv[1].grid
-      end
+      -- A player with a character always has an armor inventory
+      local armor = (p.get_inventory(defines.inventory.character_armor) --[[@as LuaInventory]])[1]
+      if armor.valid_for_read then grid = armor.grid end
    end
 
    -- Check shield health remaining (if supported)
@@ -273,20 +274,22 @@ function mod.read_armor_stats(pindex, ent_in)
 
    local grid
    if ent_in == nil then
-      -- Player armor
-      if armor_inv.is_empty() then
+      -- Player armor. Without a character there is none; the health reading above already said so.
+      if not armor_inv then return mb:build() end
+      local armor = armor_inv[1]
+      if not armor.valid_for_read then
          mb:list_item({ "fa.armor-no-armor" })
          return mb:build()
-      elseif armor_inv[1].grid == nil or not armor_inv[1].grid.valid then
+      elseif armor.grid == nil then
          mb:list_item({
             "fa.armor-equipped-no-grid",
-            localising.get_localised_name_with_fallback(armor_inv[1].prototype),
+            localising.get_localised_name_with_fallback(armor.prototype),
          })
          return mb:build()
       end
       -- Player armor with non-empty equipment grid
-      grid = armor_inv[1].grid
-      mb:list_item({ "fa.armor-equipped", localising.get_localised_name_with_fallback(armor_inv[1].prototype) })
+      grid = armor.grid
+      mb:list_item({ "fa.armor-equipped", localising.get_localised_name_with_fallback(armor.prototype) })
    else
       -- Entity grid
       grid = ent_in.grid
@@ -342,7 +345,7 @@ function mod.read_armor_stats(pindex, ent_in)
 end
 
 --Remove all armor equipment and then the armor
----@param pindex number
+---@param pindex integer
 ---@param source_entity LuaEntity? Entity containing armor (defaults to player character)
 ---@param target_entity LuaEntity? Entity to receive items (defaults to player character)
 ---@param target_inv_index defines.inventory? Target inventory index (defaults to character_main)
@@ -401,10 +404,10 @@ function mod.remove_equipment_and_armor(pindex, source_entity, target_entity, ta
 end
 
 --Repair an item in a specific inventory slot using repair pack from hand
----@param pindex number
+---@param pindex integer
 ---@param entity LuaEntity Entity containing the inventory
 ---@param inv_index defines.inventory Inventory index
----@param slot_index number Slot index (1-based)
+---@param slot_index integer Slot index (1-based)
 ---@return LocalisedString|string Result message
 function mod.repair_item_in_slot(pindex, entity, inv_index, slot_index)
    local p = game.get_player(pindex)

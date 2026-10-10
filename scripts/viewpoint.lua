@@ -28,7 +28,7 @@ local mod = {}
 
 ---@class fa.viewpoint.ViewpointState
 ---@field cursor_pos fa.Point
----@field cursor_size number
+---@field cursor_size integer
 ---@field cursor_anchored boolean
 ---@field cursor_hidden boolean
 ---@field cursor_bookmark fa.Point
@@ -55,7 +55,7 @@ local viewpoint_storage = StorageManager.declare_storage_module("viewpoint", {
 })
 
 ---@class fa.Viewpoint
----@field pindex number
+---@field pindex integer
 local Viewpoint = {}
 local Viewpoint_meta = { __index = Viewpoint }
 
@@ -70,17 +70,18 @@ end
 -- Set the cursor position. Floors the incoming coordinates.
 ---@param point fa.Point
 function Viewpoint:set_cursor_pos(point)
-   assert(point and point.x and point.y)
    viewpoint_storage[self.pindex].cursor_pos = { x = math.floor(point.x), y = math.floor(point.y) }
 end
 
----@return number
+---@return integer
 function Viewpoint:get_cursor_size()
    return viewpoint_storage[self.pindex].cursor_size
 end
 
----@param size number
+---@param size integer
 function Viewpoint:set_cursor_size(size)
+   -- A nil would be stored and only fail later, far from the caller.
+   ---@diagnostic disable-next-line: unnecessary-assert
    assert(size)
    viewpoint_storage[self.pindex].cursor_size = size
 end
@@ -115,7 +116,6 @@ end
 
 ---@param point fa.Point
 function Viewpoint:set_cursor_bookmark(point)
-   assert(point and point.x and point.y)
    viewpoint_storage[self.pindex].cursor_bookmark = { x = point.x, y = point.y }
 end
 
@@ -146,6 +146,8 @@ end
 
 ---@param rotation_offset  number
 function Viewpoint:set_cursor_rotation_offset(rotation_offset)
+   -- A nil would be stored and only fail later, far from the caller.
+   ---@diagnostic disable-next-line: unnecessary-assert
    assert(rotation_offset)
    viewpoint_storage[self.pindex].cursor_rotation_offset = rotation_offset
 end
@@ -196,7 +198,7 @@ end
 
 local viewpoint_cache = {}
 
----@param pindex number
+---@param pindex integer
 ---@return fa.Viewpoint
 function mod.get_viewpoint(pindex)
    local cached = viewpoint_cache[pindex]
@@ -211,7 +213,7 @@ function mod.get_viewpoint(pindex)
 end
 
 -- Listener system for cursor events
----@type table<string, function[]>
+---@type table<string, function[]?>
 local listeners = {}
 
 ---Register a listener for cursor events
@@ -224,7 +226,7 @@ end
 
 ---Notify listeners of an event
 ---@param event_name string
----@param pindex number
+---@param pindex integer
 ---@param data table?
 local function notify_listeners(event_name, pindex, data)
    if listeners[event_name] then
@@ -239,7 +241,6 @@ end
 ---@param point fa.Point
 ---@param direction defines.direction
 function Viewpoint:set_cursor_pos_continuous(point, direction)
-   assert(point and point.x and point.y)
    assert(direction ~= nil)
 
    local old_pos = self:get_cursor_pos()

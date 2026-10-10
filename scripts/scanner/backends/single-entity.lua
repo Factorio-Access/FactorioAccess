@@ -56,7 +56,8 @@ mod.Furnace = decl("fa.scanner.backends.Furnace", {
       local recipe = ent.get_recipe()
       local rname = recipe and recipe.name or nil
 
-      local oi = ent.get_output_inventory()
+      -- Furnaces always have an output inventory
+      local oi = ent.get_output_inventory() --[[@as LuaInventory]]
       if not rname and #oi > 0 and oi[1].valid_for_read then rname = oi[1].name end
       return cat2(ent.name, rname or "<UNCONFIGURED>")
    end,

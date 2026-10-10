@@ -22,7 +22,7 @@ local mod = {}
 local MAX_SLOTS = 24
 
 ---Get the upgrade planner from cursor (direct or in book)
----@param pindex number
+---@param pindex integer
 ---@return LuaItemStack|nil
 local function get_planner(pindex)
    local planner = PlannerUtils.get_upgrade_planner(pindex)
@@ -30,7 +30,7 @@ local function get_planner(pindex)
 end
 
 ---Make the planner permanent (not temporary cursor item)
----@param pindex number
+---@param pindex integer
 local function make_permanent(pindex)
    local player = game.get_player(pindex)
    if player then player.cursor_stack_temporary = false end
@@ -39,7 +39,7 @@ end
 ---Render a single slot row
 ---@param builder fa.ui.menu.MenuBuilder
 ---@param planner LuaItemStack
----@param slot_index number
+---@param slot_index integer
 local function render_slot(builder, planner, slot_index)
    local row_key = "slot_" .. slot_index
 
@@ -139,7 +139,7 @@ end
 ---Render the actions section
 ---@param builder fa.ui.menu.MenuBuilder
 ---@param planner LuaItemStack
----@param pindex number
+---@param pindex integer
 local function render_actions(builder, planner, pindex)
    builder:start_row("actions")
 

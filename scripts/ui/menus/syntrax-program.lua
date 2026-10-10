@@ -18,7 +18,7 @@ local mod = {}
 ---@field source string
 ---@field existing_id number?
 
----@param _pindex number
+---@param _pindex integer
 ---@param params table
 ---@return fa.syntrax.ProgramEditorState
 local function state_setup(_pindex, params)

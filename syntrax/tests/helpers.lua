@@ -75,7 +75,7 @@ local MOVEMENT_TO_RAIL_TYPE = {
 
 ---Assert that rails match expected count (simplified from old kind-based checking)
 ---The new output format uses rail_type instead of movement kind, so we just verify count.
----@param rails syntrax.vm.RailPlacement[]
+---@param rails syntrax.vm.Placement[]
 ---@param expected_kinds string[] Movement kinds (for count, types are ignored)
 function mod.assert_rail_sequence(rails, expected_kinds)
    lu.assertEquals(#rails, #expected_kinds, string.format("Expected %d rails but got %d", #expected_kinds, #rails))
@@ -87,8 +87,8 @@ function mod.assert_rail_sequence(rails, expected_kinds)
 end
 
 ---Assert a rail exists at the given index
----@param rails syntrax.vm.RailPlacement[]
----@param rail_index number The rail to check (1-based)
+---@param rails syntrax.vm.Placement[]
+---@param rail_index integer The rail to check (1-based)
 ---@param comment string? Optional comment explaining why
 function mod.assert_rail_exists(rails, rail_index, comment)
    local rail = rails[rail_index]
@@ -98,8 +98,8 @@ function mod.assert_rail_exists(rails, rail_index, comment)
 end
 
 ---Assert rail has expected placement direction
----@param rails syntrax.vm.RailPlacement[]
----@param rail_index number
+---@param rails syntrax.vm.Placement[]
+---@param rail_index integer
 ---@param expected_direction number Expected placement direction (0-15)
 function mod.assert_rail_placement_direction(rails, rail_index, expected_direction)
    local rail = rails[rail_index]
@@ -112,8 +112,8 @@ function mod.assert_rail_placement_direction(rails, rail_index, expected_directi
 end
 
 ---Assert rail has expected position
----@param rails syntrax.vm.RailPlacement[]
----@param rail_index number
+---@param rails syntrax.vm.Placement[]
+---@param rail_index integer
 ---@param expected_x number
 ---@param expected_y number
 function mod.assert_rail_position(rails, rail_index, expected_x, expected_y)
@@ -128,14 +128,14 @@ end
 ---@field source string The Syntrax source
 ---@field initial_position fa.Point? Optional initial position
 ---@field initial_direction number? Optional initial direction
----@field expected_count number Expected number of rails
+---@field expected_count integer? Expected number of rails (for success cases)
 ---@field expected_kinds string[]? Expected sequence of rail kinds (for count verification)
 ---@field expected_error string? Expected error code (for failure cases)
 ---@field error_pattern string? Expected error message pattern
 
 ---Run a table-driven test case
 ---@param test_case TestCase
----@return syntrax.vm.RailPlacement[]? rails
+---@return syntrax.vm.Placement[]? rails
 function mod.run_test_case(test_case)
    if test_case.expected_error then
       mod.assert_compilation_fails(test_case.source, test_case.expected_error, test_case.error_pattern)

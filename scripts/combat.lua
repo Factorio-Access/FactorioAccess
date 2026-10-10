@@ -68,15 +68,10 @@ function mod.get_effective_health_shields(pindex)
    local health = char.get_health_ratio()
    local shields = nil
 
-   local armor_inv = player.get_inventory(defines.inventory.character_armor)
-   if
-      armor_inv[1]
-      and armor_inv[1].valid_for_read
-      and armor_inv[1].valid
-      and armor_inv[1].grid
-      and armor_inv[1].grid.valid
-   then
-      local grid = armor_inv[1].grid
+   -- A player with a character always has an armor inventory
+   local armor = (player.get_inventory(defines.inventory.character_armor) --[[@as LuaInventory]])[1]
+   if armor.valid_for_read and armor.grid then
+      local grid = armor.grid
       if grid.max_shield > 0 then shields = grid.shield / grid.max_shield end
    end
 

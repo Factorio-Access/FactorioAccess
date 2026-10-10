@@ -6,13 +6,15 @@ local Wires = require("scripts.wires")
 local mod = {}
 
 --Formats a power value in watts to summarize it as a LocalisedString according to its magnitude.
----@param power float
+---@param power number
 ---@return LocalisedString
 function mod.get_power_string(power)
    return FaUtils.format_power(power)
 end
 
 --Spawns a lamp at the electric pole and uses its energy level to approximate the network satisfaction percentage with high accuracy
+---@param electric_pole LuaEntity
+---@return integer
 function mod.get_electricity_satisfaction(electric_pole)
    local satisfaction = -1
    local test_lamp = electric_pole.surface.create_entity({
@@ -30,7 +32,9 @@ end
 ---@param ent LuaEntity
 function mod.get_electricity_flow_info(ent)
    local result = { "" }
+   ---@type number
    local power = 0
+   ---@type number
    local capacity = 0
    for i, v in pairs(ent.electric_network_statistics.output_counts) do
       power = power
@@ -41,6 +45,7 @@ function mod.get_electricity_flow_info(ent)
                precision_index = defines.flow_precision_index.five_seconds,
             })
          )
+      ---@type number
       local cap_add = 0
       for _, power_ent in pairs(ent.surface.find_entities_filtered({ name = i, force = ent.force })) do
          if power_ent.electric_network_id == ent.electric_network_id then

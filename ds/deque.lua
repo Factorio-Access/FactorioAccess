@@ -20,20 +20,18 @@ local mod = {}
 local Deque = {}
 local deque_meta = { __index = Deque }
 
--- We want to be able to poke at this outside Factorio for debugging.
+-- We want to be able to poke at this outside Factorio for debugging, where script is nil.
+---@diagnostic disable-next-line: unnecessary-if
 if script then script.register_metatable("fa.ds.Deque", deque_meta) end
 mod.Deque = Deque
 
----@returns fa.ds.Deque
+---@return fa.ds.Deque
 function Deque.new()
-   local state = {
+   return setmetatable({
       front = 1,
       back = 0,
       items = {},
-   }
-
-   setmetatable(state, deque_meta)
-   return state
+   }, deque_meta)
 end
 
 function Deque:push_front(item)
@@ -50,12 +48,12 @@ function Deque:push_back(item)
    self.back = b
 end
 
----@returns bool
+---@return bool
 function Deque:is_empty()
    return self.back < self.front
 end
 
----@returns any?
+---@return any?
 function Deque:pop_front()
    local f = self.front
    local b = self.back
@@ -66,7 +64,7 @@ function Deque:pop_front()
    return r
 end
 
----@returns any?
+---@return any?
 function Deque:pop_back()
    local f = self.front
    local b = self.back

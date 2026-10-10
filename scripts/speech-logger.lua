@@ -10,7 +10,11 @@ local LOG_FILE = "factorio-access-speech.log"
 --- Initialize the speech logger
 local function init_if_needed()
    -- Only init once per save.
-   if storage.speech_logger_initialized then return end
+   if
+      storage.speech_logger_initialized --[[@as boolean?]]
+   then
+      return
+   end
 
    -- Clear the log file on startup
    helpers.write_file(LOG_FILE, "", false)
@@ -32,7 +36,7 @@ end
 
 --- Log a speech message
 ---@param message LocalisedString
----@param pindex number
+---@param pindex integer
 function mod.log_speech(message, pindex)
    init_if_needed()
 

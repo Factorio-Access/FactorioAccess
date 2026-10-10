@@ -37,45 +37,43 @@ local function render_crafting_queue(ctx)
    -- Add items from the queue, next item first
    for i, queue_item in ipairs(queue) do
       local recipe_proto = prototypes.recipe[queue_item.recipe]
-      if recipe_proto then
-         -- Create unique key using prototype name and index
-         local key = queue_item.recipe .. "-" .. i
+      -- Create unique key using prototype name and index
+      local key = queue_item.recipe .. "-" .. i
 
-         -- Build label with localized name and count
-         builder:add_item(key, {
-            label = function(label_ctx)
-               local name = Localising.get_localised_name_with_fallback(recipe_proto)
-               label_ctx.message:fragment({ "fa.crafting-queue-item", name, queue_item.count })
-            end,
-            on_click = function(click_ctx)
-               -- Cancel crafting
-               local count = 1
-               if click_ctx.modifiers.shift and click_ctx.modifiers.control then
-                  count = queue_item.count
-               elseif click_ctx.modifiers.shift then
-                  count = 5
-               end
+      -- Build label with localized name and count
+      builder:add_item(key, {
+         label = function(label_ctx)
+            local name = Localising.get_localised_name_with_fallback(recipe_proto)
+            label_ctx.message:fragment({ "fa.crafting-queue-item", name, queue_item.count })
+         end,
+         on_click = function(click_ctx)
+            -- Cancel crafting
+            local count = 1
+            if click_ctx.modifiers.shift and click_ctx.modifiers.control then
+               count = queue_item.count
+            elseif click_ctx.modifiers.shift then
+               count = 5
+            end
 
-               -- Cancel the crafting
-               local cancelled_count = math.min(count, queue_item.count)
-               player.cancel_crafting({
-                  index = i,
-                  count = cancelled_count,
-               })
+            -- Cancel the crafting
+            local cancelled_count = math.min(count, queue_item.count)
+            player.cancel_crafting({
+               index = i,
+               count = cancelled_count,
+            })
 
-               -- Announce what was cancelled
-               click_ctx.message:fragment({
-                  "fa.crafting-queue-cancelled",
-                  cancelled_count,
-                  Localising.get_localised_name_with_fallback(recipe_proto),
-               })
-            end,
-            on_read_info = function(info_ctx)
-               -- Y key: read detailed info about all products
-               ItemInfo.get_recipe_products_info(info_ctx.message, recipe_proto)
-            end,
-         })
-      end
+            -- Announce what was cancelled
+            click_ctx.message:fragment({
+               "fa.crafting-queue-cancelled",
+               cancelled_count,
+               Localising.get_localised_name_with_fallback(recipe_proto),
+            })
+         end,
+         on_read_info = function(info_ctx)
+            -- Y key: read detailed info about all products
+            ItemInfo.get_recipe_products_info(info_ctx.message, recipe_proto)
+         end,
+      })
    end
 
    return builder:build()

@@ -101,7 +101,7 @@ mod.RAIL_KIND = {
 ---@field placements syntrax.vm.PlacementGroup[] Output list of placement groups (each group has alternatives)
 ---@field pc number Program counter
 ---@field traverser railutils.Traverser? Current traverser (nil until first rail)
----@field position_to_index table<string, number> Position key to rail index for dedup
+---@field position_to_index table<string, integer?> Position key to rail index for dedup
 ---@field rail_stack syntrax.vm.RailStackEntry[] Stack of saved traverser states
 ---@field initial_traverser railutils.Traverser? Initial traverser for reset
 ---@field mark_traverser railutils.Traverser? Current mark position (reset jumps here)
@@ -481,11 +481,12 @@ end
 ---@param initial_position fa.Point? Starting position (default: {x=0, y=0})
 ---@param initial_direction number? Starting direction 0-15 (default: north/0)
 ---@param initial_rail_type railutils.RailType? Starting rail type (default: STRAIGHT)
+---@param initial_placement_direction number? Placement direction 0-15, required unless the rail is straight
 ---@return syntrax.vm.PlacementGroup[]?, syntrax.Error?
 function VM:run(initial_position, initial_direction, initial_rail_type, initial_placement_direction)
    -- Default to origin facing north on a straight rail
    local pos = initial_position or { x = 0, y = 0 }
-   local dir = initial_direction or defines.direction.north
+   local dir = initial_direction or defines.direction.north --[[@as integer]]
    local rail_type = initial_rail_type or RailInfo.RailType.STRAIGHT
 
    -- Compute default placement_direction from end_direction for straight rails
@@ -502,8 +503,10 @@ function VM:run(initial_position, initial_direction, initial_rail_type, initial_
       end
    end
 
-   -- Create the initial traverser at the starting position/direction/rail_type
-   self.traverser = Traverser.new(rail_type, pos, placement_dir, dir)
+   -- Create the initial traverser at the starting position/direction/rail_type.
+   -- Syntrax takes directions as plain numbers 0-15; the traverser's are defines.direction.
+   self.traverser =
+      Traverser.new(rail_type, pos, placement_dir --[[@as defines.direction]], dir --[[@as defines.direction]])
    self.initial_traverser = self.traverser:clone()
    self.mark_traverser = self.traverser:clone()
 

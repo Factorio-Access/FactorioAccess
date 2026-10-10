@@ -25,7 +25,7 @@ local worker_robots_storage = StorageManager.declare_storage_module("worker_robo
 })
 
 ---Cache of roboport-compatible item names, built at script load
----@type string[]
+---@type string[]?
 local roboport_compatible_items = nil
 
 ---Get list of items that roboports can request (repair tools and robots)
@@ -98,7 +98,7 @@ function mod.can_set_logistic_filter(ent)
    return ent.type == "logistic-container" and ent.prototype.logistic_mode == "storage"
 end
 
----@param pindex number
+---@param pindex integer
 ---@param ent LuaEntity
 ---@param name string
 function mod.set_logistic_filter(pindex, ent, name)
@@ -112,11 +112,7 @@ function mod.set_logistic_filter(pindex, ent, name)
 
    ent.set_filter(1, name)
    local proto = prototypes.item[name]
-   if proto then
-      Speech.speak(pindex, { "fa.logistic-storage-filter-set", Localising.get_localised_name_with_fallback(proto) })
-   else
-      Speech.speak(pindex, { "fa.logistic-storage-filter-set", name })
-   end
+   Speech.speak(pindex, { "fa.logistic-storage-filter-set", Localising.get_localised_name_with_fallback(proto) })
 end
 
 ---Format a compiled logistic filter for readout (from point.filters)
@@ -179,6 +175,7 @@ function mod.get_all_logistic_points(entity)
 
    -- If called without index, returns array of points
    if type(points_result) == "table" then
+      ---@cast points_result LuaLogisticPoint[]
       return points_result
    else
       -- Single point returned
@@ -220,7 +217,7 @@ end
 
 ---Get the network name for a logistic point's network
 ---@param point LuaLogisticPoint
----@return string?
+---@return LocalisedString?
 function mod.get_network_name_for_point(point)
    if not point or not point.valid then return nil end
 
@@ -379,7 +376,7 @@ end
 ---@param force ForceID
 ---@return LuaLogisticNetwork? network The closest network, or nil if none found
 ---@return number? distance Distance to coverage edge (positive=outside, negative=inside), nil if no network
----@return integer? direction Direction toward the network, nil if no network or inside coverage
+---@return defines.direction? direction Direction toward the network, nil if no network or inside coverage
 function mod.find_closest_network_with_distance(surface, position, force)
    local network = surface.find_closest_logistic_network_by_position(position, force)
    if not network then return nil, nil, nil end
@@ -397,7 +394,7 @@ function mod.find_closest_network_with_distance(surface, position, force)
 end
 
 ---On tick handler to announce logistics state changes after the game has processed them
----@param pindex number
+---@param pindex integer
 function mod.on_tick(pindex)
    local player_storage = worker_robots_storage[pindex]
 

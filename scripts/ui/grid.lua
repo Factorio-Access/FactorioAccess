@@ -18,7 +18,7 @@ local UiSounds = require("scripts.ui.sounds")
 
 local mod = {}
 
----@alias fa.ui.grid.CoordCallback fun(ctx: fa.ui.graph.Ctx, x: number, y: number)
+---@alias fa.ui.grid.CoordCallback fun(ctx: fa.ui.graph.Ctx, x: integer, y: integer)
 
 ---@class fa.ui.grid.GridNodeVtable : fa.ui.graph.NodeVtable
 ---@field on_read_coords fa.ui.grid.CoordCallback?
@@ -53,14 +53,14 @@ local EMPTY_GRAPH_VTAB = {
 }
 
 ---@class fa.ui.grid.GridBuilder
----@field cells table<number, table<number, fa.ui.grid.GridCell>>
+---@field cells table<integer, table<integer, fa.ui.grid.GridCell>>
 ---@field default_cell_vtab fa.ui.graph.NodeVtable
----@field dimension_labeler fun(fa.ui.graph.Ctx, number, number)
+---@field dimension_labeler fun(ctx: fa.ui.graph.Ctx, x: integer, y: integer)
 local GridBuilder = {}
 local GridBuilder_meta = { __index = GridBuilder }
 
----@param x number
----@param y number
+---@param x integer
+---@param y integer
 ---@param cell fa.ui.grid.GridCell
 ---@private
 function GridBuilder:_insert(x, y, cell)
@@ -71,8 +71,8 @@ function GridBuilder:_insert(x, y, cell)
    self.max_y = y > self.max_y and y or self.max_y
 end
 
----@param x number
----@param y number
+---@param x integer
+---@param y integer
 ---@param label LocalisedString
 function GridBuilder:add_simple_label(x, y, label)
    self:add_lazy_label(x, y, function(ctx)
@@ -81,9 +81,9 @@ function GridBuilder:add_simple_label(x, y, label)
    return self
 end
 
----@param x number
----@param y number
----@param label fun(fa.ui.graph.Ctx)
+---@param x integer
+---@param y integer
+---@param label fun(ctx: fa.ui.graph.Ctx)
 function GridBuilder:add_lazy_label(x, y, label)
    self:_insert(x, y, {
       vtable = {
@@ -92,11 +92,10 @@ function GridBuilder:add_lazy_label(x, y, label)
    })
 end
 
----@param x number
----@param y number
+---@param x integer
+---@param y integer
 ---@param vtable fa.ui.grid.GridNodeVtable Must include a label field
 function GridBuilder:add_control(x, y, vtable)
-   assert(vtable and vtable.label, "vtable must include a label field")
    self:_insert(x, y, {
       vtable = vtable,
    })
@@ -278,8 +277,8 @@ function mod.grid_builder()
 end
 
 ---Make a grid key from x and y coordinates
----@param x number
----@param y number
+---@param x integer
+---@param y integer
 ---@return string
 function mod.make_key(x, y)
    return string.format("%d-%d", x, y)

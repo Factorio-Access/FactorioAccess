@@ -163,6 +163,7 @@ function mod.cycle_spidertrons(player, direction)
 
    -- Find current spidertron at cursor position
    local current_spider = EntitySelection.get_first_ent_at_tile(pindex)
+   ---@type integer?
    local current_index = nil
 
    if current_spider and current_spider.type == "spider-vehicle" then

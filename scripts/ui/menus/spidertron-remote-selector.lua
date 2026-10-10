@@ -11,7 +11,7 @@ local Viewpoint = require("scripts.viewpoint")
 local mod = {}
 
 ---Get all spidertrons on the player's force on the relevant surface
----@param pindex number
+---@param pindex integer
 ---@return LuaEntity[]
 local function get_available_spidertrons(pindex)
    local player = game.get_player(pindex)
@@ -115,7 +115,7 @@ mod.spidertron_selector_menu = TabList.declare_tablist({
 UiRouter.register_ui(mod.spidertron_selector_menu)
 
 ---Open the spidertron remote selector menu
----@param pindex number
+---@param pindex integer
 function mod.open_spidertron_selector(pindex)
    local router = UiRouter.get_router(pindex)
    router:open_ui(UiRouter.UI_NAMES.SPIDERTRON_REMOTE_SELECTOR)

@@ -130,8 +130,11 @@ function mod.build_alert_sort_key(alert, surface_index)
       pos = alert.position
    end
 
+   ---@type number
    local distance = 0
+   ---@type number
    local pos_x = 0
+   ---@type number
    local pos_y = 0
    if pos then
       distance = math.sqrt(pos.x * pos.x + pos.y * pos.y)

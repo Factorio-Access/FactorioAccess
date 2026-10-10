@@ -15,7 +15,13 @@ local mod = {}
 -- Test mode flag - when enabled, sounds are logged instead of played
 local test_mode = false
 
+---@class fa.ui.Sounds.PlayedSound
+---@field pindex integer
+---@field sound PlaySoundSpecification
+---@field tick integer
+
 -- Sound history for testing
+---@type fa.ui.Sounds.PlayedSound[]
 local sound_history = {}
 
 -- Internal function to handle sound playing
@@ -49,6 +55,7 @@ function mod.disable_test_mode()
 end
 
 -- Get sound history (for testing)
+---@return fa.ui.Sounds.PlayedSound[]
 function mod.get_sound_history()
    return sound_history
 end
@@ -253,6 +260,8 @@ function mod.play_sound(pindex, sound_spec)
 end
 
 -- Play sound at position (not player-specific)
+---@param sound_spec PlaySoundSpecification
+---@param position MapPosition
 function mod.play_sound_at_position(sound_spec, position)
    if test_mode then
       table.insert(sound_history, {
@@ -263,10 +272,8 @@ function mod.play_sound_at_position(sound_spec, position)
       })
       logger:debug("Sound played at position: " .. serpent.line(sound_spec))
    else
-      local spec = { position = position }
-      for k, v in pairs(sound_spec) do
-         spec[k] = v
-      end
+      local spec = table.deepcopy(sound_spec)
+      spec.position = position
       game.play_sound(spec)
    end
 end

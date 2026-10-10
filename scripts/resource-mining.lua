@@ -27,13 +27,13 @@ function mod.get_solid_output_coords(ent)
 
    -- Get the closest point on the box. Then work out the direction of the point
    -- from that.  Then use the direction to move the point inside the entity, so
-   -- that rounding will hit on a tile.
-   local in_ent = FaUtils.center_of_tile(FaUtils.closest_point_in_box(v2pr, ent.bounding_box))
+   -- that rounding will hit on a tile. Boxes read from the API are always dictionaries.
+   local box = ent.bounding_box --[[@as fa.AABB]]
+   local in_ent = FaUtils.center_of_tile(FaUtils.closest_point_in_box(v2pr, box))
 
    local dir = FaUtils.direction_of_vector({ x = v2pr.x - in_ent.x, y = v2pr.y - in_ent.y })
    local flipped = FaUtils.rotate_180(dir)
    local uv = Consts.DIRECTION_VECTORS[flipped]
-   assert(uv)
 
    local effective = { x = v2pr.x + uv.x, y = v2pr.y + uv.y }
    effective = FaUtils.center_of_tile(effective)

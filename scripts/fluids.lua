@@ -77,7 +77,7 @@ local function fluid_id_name(fluid_id)
 end
 
 ---@param entity LuaEntity
----@param index number
+---@param index integer
 ---@return string?
 local function get_local_fluidbox_constraint(entity, index)
    local filt = entity.get_fluid_filter(index)
@@ -93,7 +93,7 @@ get_local_fluidbox_constraint, but call it on all immediately adjacent
 fluidboxes until one is found.  We don't look further than that. for now.
 ]]
 ---@param entity LuaEntity
----@param index number
+---@param index integer
 ---@return string?
 local function get_fluidbox_constraint(entity, index)
    -- 2.1: ghosts no longer have fluidboxes at all, and so calling some APIs throws.
@@ -120,6 +120,7 @@ function mod.get_connection_points(ent)
    -- Entities here claim fluids, but do not support the fluids API.
    if ent.type == "fluid-wagon" then return {} end
 
+   ---@type boolean?
    local is_crafting_machine = Consts.CRAFTING_MACHINES[ent.type]
 
    local closed_because_no_recipe = is_crafting_machine and ent.get_recipe() == nil
@@ -141,7 +142,7 @@ function mod.get_connection_points(ent)
             in_dir = FaUtils.rotate_180(FaUtils.direction_of_vector({ x = tx - sx, y = ty - sy }))
          elseif c.flow_direction == "output" then
             out_dir = FaUtils.direction_of_vector({ x = tx - sx, y = ty - sy })
-         elseif c.flow_direction == "input-output" then
+         else -- input-output
             out_dir = FaUtils.direction_of_vector({ x = tx - sx, y = ty - sy })
             in_dir = FaUtils.rotate_180(out_dir)
          end

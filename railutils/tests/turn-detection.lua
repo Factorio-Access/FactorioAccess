@@ -10,7 +10,7 @@ local Traverser = require("railutils.traverser")
 local mod = {}
 
 ---Generate all 16 permutations of 4 boolean values
----@return table<number, boolean[]> Array of 16 permutations, each is array of 4 booleans
+---@return boolean[][] Array of 16 permutations, each is array of 4 booleans
 local function generate_permutations()
    local permutations = {}
    for i = 0, 15 do
@@ -34,7 +34,7 @@ end
 local function get_turn_pieces(start_pos, start_dir, navigate_func, turn_func)
    -- For straight rails, placement_direction is the cardinal/ordinal direction
    -- If end_direction >= 8, the placement is end_direction - 8 (opposite ends share placement)
-   local placement_dir = start_dir >= 8 and (start_dir - 8) or start_dir
+   local placement_dir = (start_dir >= 8 and (start_dir - 8) or start_dir) --[[@as defines.direction]]
    local trav = Traverser.new(RailInfo.RailType.STRAIGHT, start_pos, placement_dir, start_dir)
    local pieces = {}
 
@@ -56,7 +56,7 @@ end
 
 ---Test that a piece only detects the turn when all 4 pieces are present
 ---@param pieces table[] The 4 pieces of the turn
----@param piece_index number Which piece to test (1-4)
+---@param piece_index integer Which piece to test (1-4)
 ---@param turn_name string Name of the turn for error messages
 local function test_piece_detection(pieces, piece_index, turn_name)
    local permutations = generate_permutations()

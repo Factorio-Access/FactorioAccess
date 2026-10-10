@@ -9,7 +9,7 @@ local CACHE_SIZE = 1000
 
 ---@class fa.LocalisedStringCacheState
 ---@field cache any The underlying LRU cache instance
----@field pending_requests table<number, table> Map of translation request ID to localised string
+---@field pending_requests table<integer, LocalisedString> Map of translation request ID to localised string
 
 ---@type table<number, fa.LocalisedStringCacheState>
 local cache_storage = StorageManager.declare_storage_module("localised_string_cache", function(_pindex)
@@ -22,7 +22,7 @@ end)
 ---Hint that we may want a string soon - enqueues it for translation and discards the result.
 ---This is useful for pre-loading strings that will be searched.
 ---@param pindex integer
----@param localised_string table
+---@param localised_string LocalisedString
 function mod.hint_submit(pindex, localised_string)
    local player = game.get_player(pindex)
    if not player then return end
@@ -34,7 +34,7 @@ function mod.hint_submit(pindex, localised_string)
 
    -- Request translation
    local request_id = player.request_translation(localised_string)
-   if request_id then state.pending_requests[request_id] = localised_string end
+   state.pending_requests[request_id] = localised_string
 end
 
 ---Get a cached translation for a localised string.

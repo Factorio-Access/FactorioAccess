@@ -157,7 +157,7 @@ end
 ---Check if an interrupt name is unique within a schedule
 ---@param schedule LuaSchedule
 ---@param name string
----@param exclude_index number? Optional index to exclude (for renames)
+---@param exclude_index integer? Optional index to exclude (for renames)
 ---@return boolean
 function mod.is_interrupt_name_unique(schedule, name, exclude_index)
    local interrupts = schedule.get_interrupts()

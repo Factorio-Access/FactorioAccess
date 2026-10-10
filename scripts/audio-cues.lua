@@ -13,8 +13,8 @@ local mod = {}
 
 ---@class fa.AudioCues.CueType
 ---@field check_function function The function to call for checking
----@field tick_interval number How often to check (in ticks)
----@field tick_offset number Offset to distribute checks across ticks
+---@field tick_interval integer How often to check (in ticks)
+---@field tick_offset integer Offset to distribute checks across ticks
 ---@field per_player boolean Whether to check for each player individually
 ---@field params any[] Additional parameters to pass to the check function
 
@@ -24,8 +24,8 @@ local cue_types = {}
 ---Registers an audio cue to be played periodically
 ---@param name string Unique identifier for the cue
 ---@param check_function function Function to call (receives pindex and tick if per_player, otherwise just tick)
----@param tick_interval number How often to check in ticks
----@param tick_offset number? Offset to avoid all checks on same tick (default 0)
+---@param tick_interval integer How often to check in ticks
+---@param tick_offset integer? Offset to avoid all checks on same tick (default 0)
 ---@param per_player boolean? Whether to run for each player (default true)
 ---@param params any[]? Additional parameters to pass to the check function
 function mod.register_cue(name, check_function, tick_interval, tick_offset, per_player, params)
@@ -39,8 +39,8 @@ function mod.register_cue(name, check_function, tick_interval, tick_offset, per_
 end
 
 ---Checks all registered audio cues for the current tick
----@param tick number
----@param players table<number, LuaPlayer>
+---@param tick integer
+---@param players table<integer, LuaPlayer>
 function mod.check_cues(tick, players)
    for name, cue in pairs(cue_types) do
       if (tick + cue.tick_offset) % cue.tick_interval == 0 then

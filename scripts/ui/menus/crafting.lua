@@ -22,7 +22,7 @@ local mod = {}
 ---Get the craftable count for a recipe
 ---@param player LuaPlayer
 ---@param recipe LuaRecipe
----@return number
+---@return integer
 local function get_craftable_count(player, recipe)
    return player.get_craftable_count(recipe.name)
 end
@@ -30,8 +30,8 @@ end
 ---Start crafting a recipe
 ---@param player LuaPlayer
 ---@param recipe LuaRecipe
----@param count number
----@return number actual_count
+---@param count integer
+---@return integer actual_count
 local function start_crafting(player, recipe, count)
    local T = {
       count = count,

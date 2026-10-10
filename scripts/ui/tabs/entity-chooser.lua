@@ -67,20 +67,15 @@ local function build_entity_tree(ctx)
 
    -- Collect entities by group/subgroup
    local entities_by_group = {}
-   local ungrouped = {}
 
    for name, proto in pairs(prototypes.entity) do
       if not filter_func or filter_func(proto, params) then
+         -- Every prototype has a group and subgroup
          local group = proto.group
          local subgroup = proto.subgroup
-
-         if group and subgroup then
-            entities_by_group[group.name] = entities_by_group[group.name] or {}
-            entities_by_group[group.name][subgroup.name] = entities_by_group[group.name][subgroup.name] or {}
-            table.insert(entities_by_group[group.name][subgroup.name], proto)
-         else
-            table.insert(ungrouped, proto)
-         end
+         entities_by_group[group.name] = entities_by_group[group.name] or {}
+         entities_by_group[group.name][subgroup.name] = entities_by_group[group.name][subgroup.name] or {}
+         table.insert(entities_by_group[group.name][subgroup.name], proto)
       end
    end
 
@@ -148,34 +143,6 @@ local function build_entity_tree(ctx)
                end,
             })
          end
-      end
-   end
-
-   -- Add ungrouped entities
-   if #ungrouped > 0 then
-      builder:add_node("entity-ungrouped", TreeChooser.ROOT, {
-         label = function(lctx)
-            lctx.message:fragment({ "fa.ungrouped-entities" })
-         end,
-         exclude_from_search = true,
-      })
-
-      table.sort(ungrouped, function(a, b)
-         if a.order ~= b.order then return a.order < b.order end
-         return a.name < b.name
-      end)
-
-      for _, proto in ipairs(ungrouped) do
-         local entity_key = "entity-" .. proto.name
-
-         builder:add_node(entity_key, "entity-ungrouped", {
-            label = function(lctx)
-               lctx.message:fragment(Localising.get_localised_name_with_fallback(proto))
-            end,
-            on_click = function(click_ctx)
-               click_ctx.controller:close_with_result(proto.name)
-            end,
-         })
       end
    end
 

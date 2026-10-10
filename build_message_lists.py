@@ -14,11 +14,10 @@ Message list names must be globally unique across all directories.
 import base64
 import hashlib
 import json
-import os
 import re
 import zlib
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 
 def parse_message_list_file(file_path: Path) -> List[str]:

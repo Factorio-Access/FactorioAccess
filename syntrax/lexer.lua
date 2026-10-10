@@ -67,7 +67,10 @@ local function split_at_possibles(text)
    local len = #text
 
    while pos <= len do
-      local part, keep
+      ---@type string?
+      local part
+      ---@type boolean?
+      local keep
 
       for i = 1, #MUNCHERS do
          local pat, k = MUNCHERS[i][1], MUNCHERS[i][2]
@@ -162,10 +165,10 @@ local CHORD_PATTERNS = {
 
 --- Extracts the first chord token from a string starting at position pos.
 ---@param text string
----@param pos number Starting position (1-based)
+---@param pos integer Starting position (1-based)
 ---@return string? token_text The matched token text, or nil if no match
 ---@return syntrax.TOKEN_TYPE|"x_with_number"|nil token_type The token type
----@return number new_pos The position after the match
+---@return integer new_pos The position after the match
 local function get_chord_token(text, pos)
    local substr = string.sub(text, pos)
 
@@ -268,12 +271,12 @@ local function expand_chords(tokens)
 end
 mod._expand_chords = expand_chords
 
----@param untyped_tokens { text: string, span: syntrax.Span }
+---@param untyped_tokens { text: string, span: syntrax.Span }[]
 ---@return syntrax.Token[]?, syntrax.Error?
 local function build_tokens(untyped_tokens)
    -- A stack whose bottom-most level is the "top" of the program, and each level thereafter is a bracket plus the items
    -- under that bracket.
-   ---@type { expected_bracket: "["|"("|"{", above: syntrax.Token[], start_span: syntrax.Span }
+   ---@type { expected_bracket: "]"|")"|"}", above: syntrax.Token[], span: syntrax.Span }[]
    local stack = {}
 
    local result = {}
@@ -335,7 +338,7 @@ local function build_tokens(untyped_tokens)
          -- Bracket open. Our current set of results goes on the stack and we start a new one.
          table.insert(stack, {
             span = span,
-            expected_bracket = assert(BRACKET_INVERSE[text]),
+            expected_bracket = BRACKET_INVERSE[text],
             above = result,
          })
          result = {}

@@ -70,7 +70,7 @@ end
 ---@param direction defines.direction
 function mod.set_direction(pindex, direction)
    aim_storage[pindex].direction = direction
-   Speech.speak(pindex, { "fa.aim-direction-set", { "fa.direction", direction } })
+   Speech.speak(pindex, { "fa.aim-direction-set", FaUtils.localise_direction(direction) })
 end
 
 ---Toggle spawners first preference

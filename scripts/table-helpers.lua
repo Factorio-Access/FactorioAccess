@@ -104,6 +104,8 @@ local empty_table_defaulter = {
       return t[i]
    end,
 }
+-- ds/ requires this module under plain Lua, where script does not exist.
+---@diagnostic disable-next-line: unnecessary-if
 if script then script.register_metatable("fa.TableHelpers.EmptyTableDefaulter", empty_table_defaulter) end
 
 --[[
@@ -149,6 +151,7 @@ At least one table must be specified.
 function mod.nested_indexer(...)
    local args = table.pack(...)
    assert(#args > 0, "At least one table must be specified")
+   ---@type table<any, any>
    local cache = {}
 
    return {

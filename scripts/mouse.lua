@@ -11,7 +11,7 @@ local mod = {}
 
 ---helper function with tripple return
 ---@param position MapPosition
----@param pindex int
+---@param pindex integer
 ---@return {x:float,y:float} pixel_pos The sceen pixel coordinates of the map position
 ---@return boolean on_sceen If that position is on sceen
 ---@return {x:float,y:float} screen_center The x and y pixels of the center of the screen
@@ -32,7 +32,7 @@ end
 
 ---Moves the mouse pointer to specified pixels on the screen of player
 ---@param pos {x:float,y:float} bounds must be prechecked
----@param pindex int
+---@param pindex integer
 local function move_pointer_to_pixels(pos, pindex)
    local x = math.ceil(pos.x)
    local y = math.ceil(pos.y)
@@ -45,7 +45,7 @@ end
 ---If the position is off screen, then the pointer is centered instead.
 ---Does not run in vanilla mode or if the mouse is released from synchronizing.
 ---@param position MapPosition
----@param pindex int
+---@param pindex integer
 function mod.move_mouse_pointer(position, pindex)
    if VanillaMode.is_enabled(pindex) or game.get_player(pindex).game_view_settings.update_entity_selection == true then
       return
@@ -57,7 +57,7 @@ end
 
 ---Checks if the position is on the screen
 ---@param pos MapPosition
----@param pindex int
+---@param pindex integer
 ---@return boolean
 function mod.is_on_screen(pos, pindex)
    local _, on_sceen, _ = get_pixel_pos_onscreen_center(pos, pindex)

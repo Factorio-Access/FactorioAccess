@@ -10,9 +10,12 @@ lines already.  This means that Factorio might return for example a point in `{
 
 ---@alias fa.Point { x: number, y: number }
 
+-- A Vector as the game provides it: always the {x, y} array form.
+---@alias fa.VectorArray [number, number]
+
 -- If this isn't an alias LuaLS gets mad about trying to use our otherwikse
 -- valid boxes in the Factorio API.
----@alias fa.AABB BoundingBox.0
+---@alias fa.AABB BoundingBox.struct
 
 -- We find that a representation name->quality->count is very useful when
 -- dealing with aggregating objects for announcement, so rather than continue to

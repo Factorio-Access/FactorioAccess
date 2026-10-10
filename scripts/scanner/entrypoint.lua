@@ -37,33 +37,37 @@ local mod = {}
 ---@field category fa.scanner.Category
 ---@field subcategory fa.scanner.Subcategory
 
----@class fa.scanner.ScannerBackend
----@field new fun(LuaSurface): fa.scanner.ScannerBackend
----@field validate_entry function(player: LuaPlayer, entry: fa.scanner.ScanEntry): boolean
----@field update_entry function(player: LuaPlayer, entry: fa.scanner.ScanEntry): boolean
----@field readout_entry function(LuaPlayer, fa.scanner.ScanEntry): LocalisedString
----@field on_new_entity fun(self, LuaEntity)
----@field on_entity_destroyed fun(self, EventData.on_entity_destroyed)
----@field dump_entries_to_callback fun(self, player: LuaPlayer,  callback: fun(fa.scanner.ScanEntry))
+---What surface-scanner.lua is handed for each backend: creates one backend per surface.
+---@class fa.scanner.ScannerBackendFactory
+---@field new fun(surface: LuaSurface): fa.scanner.ScannerBackend
+
+---A backend class is also its own factory.
+---@class fa.scanner.ScannerBackend: fa.scanner.ScannerBackendFactory
+---@field validate_entry fun(self, player: LuaPlayer, entry: fa.scanner.ScanEntry): boolean
+---@field update_entry fun(self, player: LuaPlayer, entry: fa.scanner.ScanEntry)
+---@field readout_entry fun(self, player: LuaPlayer, entry: fa.scanner.ScanEntry): LocalisedString
+---@field on_new_entity fun(self, entity: LuaEntity)
+---@field on_entity_destroyed fun(self, event: EventData.on_object_destroyed)
+---@field dump_entries_to_callback fun(self, player: LuaPlayer, callback: fun(entry: fa.scanner.ScanEntry))
 ---@field on_new_tiles fun(self, tiles: LuaTile[])
----@field is_huge(fa.scanner.ScanEntry): boolean Return true if the scanner should check to see if the player is in the bounding box.
----@field get_aabb(fa.scanner.ScanEntry): (number, number, number, number) Returnjs (left_top.x, left_top.y, right_bottom.x, right_bottom.y)
+---@field is_huge fun(self, entry: fa.scanner.ScanEntry): boolean True if the scanner should check whether the player is in the bounding box.
+---@field get_aabb fun(self, entry: fa.scanner.ScanEntry): number, number, number, number left_top.x, left_top.y, right_bottom.x, right_bottom.y
 
 ---@class fa.scanner.CursorPos
 ---@field category fa.scanner.Category?
----@field subcategory_index number?
----@field entry_index number?
+---@field subcategory_index integer?
+---@field entry_index integer?
 
 ---@alias fa.scanner.SubcategoryData { entries: fa.scanner.ScanEntry[], subcategory: fa.scanner.Subcategory }
 
 ---@class fa.scanner.GlobalPlayerState
 ---@field scanner_cursor fa.scanner.CursorPos
 ---@field surface LuaSurface
----@field entries table<fa.scanner.Category, fa.scanner.SubcategoryData[]>
+---@field entries table<fa.scanner.Category, fa.scanner.SubcategoryData[]?> Categories with no entries are absent
 ---@field pending_refresh_counter number? used to delay refreshes by a tick.
 ---@field pending_direction_filter defines.direction?
 
----@returns fa.scanner.GlobalPlayerState
+---@return fa.scanner.GlobalPlayerState
 local function new_player_state(pindex)
    local player = game.get_player(pindex)
 
@@ -124,6 +128,7 @@ local function do_refresh_after_sfx(pindex, direction_filter)
 
    local px, py = player_obj.position.x, player_obj.position.y
 
+   ---@type table<fa.scanner.ScanEntry, true>
    local known_entries = {}
 
    do
@@ -151,7 +156,7 @@ local function do_refresh_after_sfx(pindex, direction_filter)
                -- Instead we check the center or whatever point the backend
                -- decided was most relevant and assume that's good enough.  This
                -- shaved off 5% or so of scan refreshing time.
-is_chunk_charted(surface, { x = ex / 32, y = ey / 32 })
+is_chunk_charted(surface, { x = math.floor(ex / 32), y = math.floor(ey / 32) })
                -- For cases in which the entity is large enough that no corner
                -- or position is charted, let's see if the player themselves is
                -- inside.  This can happen with e.g. seablock where the water
@@ -192,7 +197,6 @@ is_chunk_charted(surface, { x = ex / 32, y = ey / 32 })
       t_insert(c, ent)
    end
 
-   ---@type fa.scanner.ScanEntry
    for e in pairs(known_entries) do
       local cat = e.category
       local subcat = e.subcategory
@@ -225,7 +229,7 @@ is_chunk_charted(surface, { x = ex / 32, y = ey / 32 })
 end
 
 -- Given a pindex, refresh the player's local view over a scan.
----@param pindex number
+---@param pindex integer
 ---@param direction_filter defines.direction?
 function mod.do_refresh(pindex, direction_filter)
    game.get_player(pindex).play_sound({ path = "scanner-pulse" })
@@ -300,7 +304,7 @@ local function move_category(pindex, ps, dir)
    end
 end
 
----@param pindex number
+---@param pindex integer
 ---@param ps fa.scanner.GlobalPlayerState
 ---@param dir -1|1
 ---@return fa.scanner.MoveResult
@@ -315,8 +319,9 @@ local function move_subcategory(pindex, ps, dir)
    end
 
    local ind
-   if ps.scanner_cursor.subcategory_index then
-      ind = ps.scanner_cursor.subcategory_index + dir
+   local cur_index = ps.scanner_cursor.subcategory_index
+   if cur_index then
+      ind = cur_index + dir
    else
       ind = 1
    end
@@ -351,7 +356,7 @@ local function move_subcategory(pindex, ps, dir)
    end
 end
 
----@param pindex number
+---@param pindex integer
 ---@param ps fa.scanner.GlobalPlayerState
 ---@param dir -1|1
 ---@return fa.scanner.MoveResult
@@ -411,6 +416,7 @@ local function announce_cursor_pos(pindex, ps)
    -- Perform the cleanups unconditionally until one of them finds a valid
    -- entity; once it does stop and announce that.  These happen outside in so
    -- that we may only break the loop once.
+   ---@type fa.scanner.ScanEntry?
    local announcing = nil -- if set, not empty.
    local count = 0
 
@@ -487,7 +493,7 @@ local function sound_for_end(pindex, val)
    if val == AT_BEGINNING or val == AT_END then game.get_player(pindex).play_sound({ path = "inventory-edge" }) end
 end
 
----@param pindex number
+---@param pindex integer
 ---@param direction 1 | -1
 function mod.move_category(pindex, direction)
    local pstate = player_state[pindex]
@@ -495,7 +501,7 @@ function mod.move_category(pindex, direction)
    Speech.speak(pindex, { "fa.scanner-category-" .. pstate.scanner_cursor.category })
 end
 
----@param pindex number
+---@param pindex integer
 ---@param direction 1 | -1
 function mod.move_subcategory(pindex, direction)
    local pstate = player_state[pindex]
@@ -503,7 +509,7 @@ function mod.move_subcategory(pindex, direction)
    announce_cursor_pos(pindex, pstate)
 end
 
----@param pindex number
+---@param pindex integer
 ---@param direction 1 | -1
 function mod.move_within_subcategory(pindex, direction)
    local pstate = player_state[pindex]
@@ -511,7 +517,7 @@ function mod.move_within_subcategory(pindex, direction)
    announce_cursor_pos(pindex, pstate)
 end
 
----@param pindex number
+---@param pindex integer
 function mod.announce_current_item(pindex)
    local pstate = player_state[pindex]
    announce_cursor_pos(pindex, pstate)
@@ -546,7 +552,7 @@ local new_entity_queue = WorkQueue.declare_work_queue({
 })
 
 -- Called from control.lua whenever control.lua finds out about a new entity.
----@param surface_index number
+---@param surface_index integer
 ---@param entity LuaEntity
 function mod.on_new_entity(surface_index, entity)
    new_entity_queue:enqueue({ surface_index = surface_index, entity = entity })

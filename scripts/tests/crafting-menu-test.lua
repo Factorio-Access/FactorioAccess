@@ -19,7 +19,7 @@ describe("Crafting Menu Navigation Tests", function()
          -- Ensure player exists with a character
          if not player then
             -- Player should already exist in test environment
-            ctx:error("No player found at index 1")
+            error("No player found at index 1")
             return
          end
          
@@ -97,7 +97,7 @@ describe("Crafting Menu Navigation Tests", function()
          
          if not player then
             -- Player should already exist in test environment
-            ctx:error("No player found at index 1")
+            error("No player found at index 1")
             return
          end
          

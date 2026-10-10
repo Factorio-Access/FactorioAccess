@@ -6,7 +6,9 @@ local it = TestRegistry.it
 
 describe("Roboport Distance Cursor Mode", function()
    it("should correctly handle cursor position for distance calculations", function(ctx)
+      ---@type LuaPlayer
       local player
+      ---@type fa.Viewpoint
       local vp
 
       ctx:init(function()
@@ -50,7 +52,9 @@ describe("Roboport Distance Cursor Mode", function()
    end)
 
    it("should calculate distances correctly using cursor position", function(ctx)
+      ---@type LuaPlayer
       local player
+      ---@type fa.Viewpoint
       local vp
       local target_pos = { x = 50, y = 0 }
 

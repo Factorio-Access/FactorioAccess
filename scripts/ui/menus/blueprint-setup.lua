@@ -15,7 +15,7 @@ local mod = {}
 ---@class fa.ui.BlueprintSetup.StorageState
 ---@field parameters fa.ui.BlueprintSetup.Parameters?
 
----@type fa.ui.BlueprintSetup.StorageState
+---@type table<integer, fa.ui.BlueprintSetup.StorageState>
 local blueprint_setup_storage = StorageManager.declare_storage_module("blueprint_setup", {
    parameters = nil,
 })
@@ -50,7 +50,7 @@ local BlueprintSetup = {}
 local BlueprintSetup_meta = { __index = BlueprintSetup }
 
 ---Return binds for this UI
----@param pindex number
+---@param pindex integer
 ---@param parameters fa.ui.BlueprintSetup.Parameters
 ---@return fa.ui.Bind[]?
 function BlueprintSetup:get_binds(pindex, parameters)
@@ -58,7 +58,7 @@ function BlueprintSetup:get_binds(pindex, parameters)
 end
 
 ---Open the blueprint setup - opens the area selector as a child
----@param pindex number
+---@param pindex integer
 ---@param parameters fa.ui.BlueprintSetup.Parameters
 ---@param controller fa.ui.RouterController
 function BlueprintSetup:open(pindex, parameters, controller)
@@ -74,7 +74,7 @@ function BlueprintSetup:open(pindex, parameters, controller)
 end
 
 ---Handle result from child UIs (area selector or config)
----@param pindex number
+---@param pindex integer
 ---@param result any The result from the child UI
 ---@param context any The context
 ---@param controller fa.ui.RouterController

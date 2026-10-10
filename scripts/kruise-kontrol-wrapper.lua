@@ -104,12 +104,14 @@ function mod.status_read(pindex, short_version)
    call_with_interface(function()
       -- We must remember if KK was last active and then use it to detect the
       -- falling edge.  This is the only way to really know if it's finished.
-      local active = remote.call(interface_name, "is_active", pindex)
+      local active = remote.call(interface_name, "is_active", pindex) --[[@as boolean]]
+      ---@type boolean?
       local was_active = storage.players[pindex].kruise_kontrol_active_last_time
       storage.players[pindex].kruise_kontrol_active_last_time = active
       if active then
-         Speech.speak(pindex, { "fa.kk-state", remote.call(interface_name, "get_description", pindex) })
-      elseif not active and was_active then
+         local desc = remote.call(interface_name, "get_description", pindex) --[[@as LocalisedString]]
+         Speech.speak(pindex, { "fa.kk-state", desc })
+      elseif was_active then
          Speech.speak(pindex, { "fa.kk-done" })
       end
    end)

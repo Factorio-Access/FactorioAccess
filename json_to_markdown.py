@@ -9,9 +9,8 @@ Usage:
 
 import json
 import argparse
-import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List
 
 
 def format_type(type_info: Any, inline: bool = True) -> str:
@@ -135,7 +134,7 @@ def write_runtime_class(class_info: Dict[str, Any], output_dir: Path):
             f.write(f"**Parent:** [{class_info['parent']}]({class_info['parent']}.md)\n\n")
 
         if class_info.get("abstract"):
-            f.write(f"**Abstract:** Yes\n\n")
+            f.write("**Abstract:** Yes\n\n")
 
         # Attributes
         attributes = class_info.get("attributes", [])
@@ -159,7 +158,7 @@ def write_runtime_class(class_info: Dict[str, Any], output_dir: Path):
                     f.write(f"**Write type:** {format_type(write_type)}\n\n")
 
                 if attr.get("optional"):
-                    f.write(f"**Optional:** Yes\n\n")
+                    f.write("**Optional:** Yes\n\n")
 
                 if attr.get("subclasses"):
                     f.write(f"**Subclasses:** {', '.join(attr['subclasses'])}\n\n")
@@ -255,13 +254,13 @@ def write_prototype(proto_info: Dict[str, Any], output_dir: Path):
             metadata_items.append(f"**Parent:** [{proto_info['parent']}]({proto_info['parent']}.md)")
 
         if proto_info.get("abstract"):
-            metadata_items.append(f"**Abstract:** Yes")
+            metadata_items.append("**Abstract:** Yes")
 
         if proto_info.get("typename"):
             metadata_items.append(f"**Type name:** `{proto_info['typename']}`")
 
         if proto_info.get("deprecated"):
-            metadata_items.append(f"**Deprecated:** Yes")
+            metadata_items.append("**Deprecated:** Yes")
 
         if proto_info.get("instance_limit"):
             metadata_items.append(f"**Instance limit:** {proto_info['instance_limit']}")
@@ -299,18 +298,18 @@ def write_prototype(proto_info: Dict[str, Any], output_dir: Path):
 
                 # Optional/Required
                 if prop.get("optional"):
-                    f.write(f"**Optional:** Yes\n\n")
+                    f.write("**Optional:** Yes\n\n")
 
                     # Default value
                     if "default" in prop:
                         default = format_default_value(prop["default"])
                         f.write(f"**Default:** {default}\n\n")
                 else:
-                    f.write(f"**Required:** Yes\n\n")
+                    f.write("**Required:** Yes\n\n")
 
                 # Override flag
                 if prop.get("override"):
-                    f.write(f"**Overrides parent:** Yes\n\n")
+                    f.write("**Overrides parent:** Yes\n\n")
 
                 # Examples for this property
                 if prop.get("examples"):
@@ -341,9 +340,9 @@ def write_table_parameters(f, parameters: List[Dict[str, Any]], header_level: in
 
         # Optional/Required
         if param.get("optional"):
-            f.write(f"**Optional:** Yes\n\n")
+            f.write("**Optional:** Yes\n\n")
         else:
-            f.write(f"**Required:** Yes\n\n")
+            f.write("**Required:** Yes\n\n")
 
         # Default value
         if "default" in param:
@@ -377,7 +376,7 @@ def write_struct_attributes(f, attributes: List[Dict[str, Any]], header_level: i
             f.write(f"**Write type:** {format_type(write_type)}\n\n")
 
         if attr.get("optional"):
-            f.write(f"**Optional:** Yes\n\n")
+            f.write("**Optional:** Yes\n\n")
 
 
 def write_concepts(concepts: List[Dict[str, Any]], output_dir: Path, doc_type: str):
@@ -408,7 +407,7 @@ def write_concepts(concepts: List[Dict[str, Any]], output_dir: Path, doc_type: s
                     complex_type = concept_type.get("complex_type")
 
                     if complex_type == "table":
-                        f.write(f"**Type:** Table\n\n")
+                        f.write("**Type:** Table\n\n")
                         # Expand table parameters
                         parameters = concept_type.get("parameters", [])
                         if parameters:
@@ -443,8 +442,8 @@ def write_concepts(concepts: List[Dict[str, Any]], output_dir: Path, doc_type: s
             if has_struct_in_type:
                 properties = concept.get("properties", [])
                 if properties:
-                    f.write(f"## Properties\n\n")
-                    f.write(f"*These properties apply when the value is a struct/table.*\n\n")
+                    f.write("## Properties\n\n")
+                    f.write("*These properties apply when the value is a struct/table.*\n\n")
                     for prop in sorted(properties, key=lambda x: x.get("order", 0)):
                         prop_name = prop["name"]
                         f.write(f"### {prop_name}\n\n")
@@ -459,13 +458,13 @@ def write_concepts(concepts: List[Dict[str, Any]], output_dir: Path, doc_type: s
 
                         # Optional/Required
                         if prop.get("optional"):
-                            f.write(f"**Optional:** Yes\n\n")
+                            f.write("**Optional:** Yes\n\n")
                             # Default value
                             if "default" in prop:
                                 default = format_default_value(prop["default"])
                                 f.write(f"**Default:** {default}\n\n")
                         else:
-                            f.write(f"**Required:** Yes\n\n")
+                            f.write("**Required:** Yes\n\n")
 
             # Category
             if concept.get("category"):

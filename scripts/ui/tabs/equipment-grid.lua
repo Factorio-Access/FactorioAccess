@@ -25,7 +25,7 @@ end
 
 ---Build a map of occupied cells for equipment positioning
 ---@param grid LuaEquipmentGrid
----@return table<string, LuaEquipment> Map of "x,y" to equipment occupying that cell
+---@return table<string, LuaEquipment?> Map of "x,y" to equipment occupying that cell; empty cells are absent
 local function build_cell_map(grid)
    local cell_map = {}
 
@@ -91,10 +91,11 @@ end
 ---@param ctx fa.ui.graph.Ctx
 ---@param grid LuaEquipmentGrid
 ---@param equipment LuaEquipment
----@param dx number Change in x position
----@param dy number Change in y position
+---@param dx integer Change in x position
+---@param dy integer Change in y position
 local function handle_drag_equipment(ctx, grid, equipment, dx, dy)
-   local current_pos = equipment.position
+   -- Positions read from the API are always the struct form
+   local current_pos = equipment.position --[[@as EquipmentPosition.struct]]
    local new_x = current_pos.x + dx
    local new_y = current_pos.y + dy
 

@@ -9,7 +9,7 @@ local TableHelpers = require("scripts.table-helpers")
 
 local mod = {}
 
----@type function(): table<string, number>
+---@type fun(): table<string, number?>
 local PROTOTYPE_SEARCH_RADIUSES = Functools.cached(function()
    -- With ModData, numbers are stored directly, no need to convert from strings
    return DataToRuntimeMap.load(Consts.RESOURCE_SEARCH_RADIUSES_MAP_NAME)
@@ -24,7 +24,7 @@ end)
 ---@field zoom_override LuaEntity?
 
 ---@class fa.scanner.ResourcePatchesBackend: fa.scanner.ScannerBackend
----@field clusterers table<string, fa.ds.Clusterer>
+---@field clusterers table<string, fa.ds.Clusterer?>
 ---@field known_patches table<string, table<any, true>>
 local ResourcePatchesBackend = {}
 local ResourcePatchesBackend_meta = { __index = ResourcePatchesBackend }
@@ -56,7 +56,7 @@ local clusterer_fact = Clusterer.declare_clusterer("fa.scanner.ResourceClusterer
 })
 
 ---@param ent LuaEntity
----@return number
+---@return integer
 local function amount_for(ent)
    return ent.amount
 end
@@ -69,14 +69,13 @@ local FOREST_DENSITIES = {
    { 80, "fa.scanner-forest-dense" },
 }
 
----@returns fa.scanner.ResourcePatchesBackend
+---@return fa.scanner.ResourcePatchesBackend
 function ResourcePatchesBackend.new()
    local ret = {
       known_patches = {},
       clusterers = {},
    }
-   setmetatable(ret, ResourcePatchesBackend_meta)
-   return ret
+   return setmetatable(ret, ResourcePatchesBackend_meta)
 end
 
 ---@param proto string
@@ -137,7 +136,7 @@ function ResourcePatchesBackend:validate_entry(player, ent)
    return count > 0
 end
 
-function ResourcePatchesBackend:update_entry(ent)
+function ResourcePatchesBackend:update_entry(player, ent)
    -- Nothing to do.  Re-update happens on announcement.  Revalidation scans
    -- happen in validation.
 end
@@ -174,11 +173,9 @@ function ResourcePatchesBackend:readout_entry(player, ent)
 
    local percent = math.floor(total / bd.initial_total_amount * 100)
 
-   pname = prototypes.entity[pname].localised_name
-
    local res = {
       "fa.scanner-resource-patch",
-      pname,
+      prototypes.entity[pname].localised_name,
       total_str,
       percent,
    }

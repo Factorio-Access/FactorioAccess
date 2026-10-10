@@ -125,7 +125,7 @@ local function add_input_field(builder, params, cb, is_first)
                   ctx.controller.message:fragment(error)
                   return
                end
-               params[constant_field] = num
+               params[constant_field] = num --[[@as integer]]
                params[signal_field] = nil
                cb.parameters = params
                ctx.controller.message:fragment(tostring(num))
@@ -197,7 +197,7 @@ local function add_input_field(builder, params, cb, is_first)
    builder:end_row()
 end
 
----@class fa.ui.ArithmeticCombinatorTabContext: fa.ui.TabContext
+---@class fa.ui.ArithmeticCombinatorTabContext: fa.ui.graph.Ctx
 ---@field tablist_shared_state fa.ui.EntityUI.SharedState
 
 ---Render the arithmetic combinator configuration form

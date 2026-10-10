@@ -28,7 +28,7 @@ local mod = {}
 
 ---Clear ammo from slot to a target inventory
 ---@param entity LuaEntity
----@param slot number
+---@param slot integer
 ---@param target_inv LuaInventory
 ---@return boolean success
 local function clear_ammo_to_inventory(entity, slot, target_inv)
@@ -46,7 +46,7 @@ end
 
 ---Set a weapon in a slot using swap
 ---@param entity LuaEntity
----@param slot number
+---@param slot integer
 ---@param weapon_stack LuaItemStack
 ---@return boolean success
 ---@return LocalisedString message
@@ -82,7 +82,7 @@ end
 
 ---Remove weapon from slot to entity's inventory
 ---@param entity LuaEntity
----@param slot number
+---@param slot integer
 ---@return boolean success
 ---@return LocalisedString message
 local function remove_weapon_to_inventory(entity, slot)
@@ -112,8 +112,8 @@ end
 
 ---Remove weapon from slot to player's hand
 ---@param entity LuaEntity
----@param slot number
----@param pindex number
+---@param slot integer
+---@param pindex integer
 ---@return boolean success
 ---@return LocalisedString message
 local function remove_weapon_to_hand(entity, slot, pindex)
@@ -145,7 +145,7 @@ end
 
 ---Remove weapon from slot to player's inventory
 ---@param entity LuaEntity
----@param slot number
+---@param slot integer
 ---@param character LuaEntity
 ---@return boolean success
 ---@return LocalisedString message
@@ -180,7 +180,7 @@ end
 
 ---Set ammo in a slot using swap
 ---@param entity LuaEntity
----@param slot number
+---@param slot integer
 ---@param ammo_stack LuaItemStack
 ---@return boolean success
 ---@return LocalisedString message
@@ -200,7 +200,7 @@ end
 
 ---Remove ammo from slot to entity's inventory
 ---@param entity LuaEntity
----@param slot number
+---@param slot integer
 ---@return boolean success
 ---@return LocalisedString message
 local function remove_ammo_to_inventory(entity, slot)
@@ -224,8 +224,8 @@ end
 
 ---Remove ammo from slot to player's hand
 ---@param entity LuaEntity
----@param slot number
----@param pindex number
+---@param slot integer
+---@param pindex integer
 ---@return boolean success
 ---@return LocalisedString message
 local function remove_ammo_to_hand(entity, slot, pindex)
@@ -250,7 +250,7 @@ end
 
 ---Remove ammo from slot to player's inventory
 ---@param entity LuaEntity
----@param slot number
+---@param slot integer
 ---@param character LuaEntity
 ---@return boolean success
 ---@return LocalisedString message
@@ -293,7 +293,7 @@ end
 
 ---Build the weapon row label for a slot
 ---@param entity LuaEntity
----@param slot number
+---@param slot integer
 ---@return LocalisedString
 local function build_weapon_row_label(entity, slot)
    local mb = MessageBuilder.new()
@@ -335,8 +335,8 @@ end
 ---Handle weapon selector result
 ---@param entity LuaEntity
 ---@param character LuaEntity?
----@param slot number
----@param pindex number
+---@param slot integer
+---@param pindex integer
 ---@param result fa.WeaponSelectorResult
 ---@return boolean success
 ---@return LocalisedString message
@@ -357,8 +357,8 @@ end
 ---Handle ammo selector result
 ---@param entity LuaEntity
 ---@param character LuaEntity?
----@param slot number
----@param pindex number
+---@param slot integer
+---@param pindex integer
 ---@param result fa.AmmoSelectorResult
 ---@return boolean success
 ---@return LocalisedString message
@@ -380,7 +380,7 @@ end
 ---@param builder fa.ui.menu.MenuBuilder
 ---@param entity LuaEntity
 ---@param character LuaEntity?
----@param pindex number
+---@param pindex integer
 local function add_weapon_row(builder, entity, character, pindex)
    local slot_count = InventoryUtils.get_weapon_slot_count(entity)
    if slot_count == 0 then return end
@@ -452,7 +452,7 @@ end
 ---@param main_inv LuaInventory?
 local function add_character_armor_section(builder, player, entity, grid, main_inv)
    local armor_inv = player.get_inventory(defines.inventory.character_armor)
-   local has_armor = armor_inv and not armor_inv.is_empty() and armor_inv[1].valid_for_read
+   local armor_stack = armor_inv and armor_inv[1]
 
    -- Get aggregated armor from inventory
    local armor_filter = function(stack)
@@ -462,8 +462,7 @@ local function add_character_armor_section(builder, player, entity, grid, main_i
 
    builder:start_row("armor-management")
 
-   if has_armor then
-      local armor_stack = armor_inv[1]
+   if armor_stack and armor_stack.valid_for_read then
       builder:add_clickable("current-armor", function(ctx)
          ctx.message:fragment({ "fa.equipment-overview-equipped" })
          ctx.message:list_item(ItemInfo.item_info(armor_stack))

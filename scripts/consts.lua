@@ -62,7 +62,7 @@ mod.DIRECTION_VECTORS = {
    [defines.direction.northnorthwest] = { x = -0.3826834323650904, y = -0.9238795325112865 },
 }
 
----@type table<string, true>
+---@type table<string, true?>
 mod.CRAFTING_MACHINES = {
    ["assembling-machine"] = true,
    ["furnace"] = true,
@@ -80,7 +80,7 @@ mod.WATER_TILE_NAMES = {
    "water-wube",
 }
 
----@type table<string, true>
+---@type table<string, true?>
 mod.WATER_TILE_NAMES_SET = {
    ["water"] = true,
    ["deepwater"] = true,
@@ -99,7 +99,7 @@ mod.RAIL_TYPES = {
    "half-diagonal-rail",
 }
 
----@type table<string, true>
+---@type table<string, true?>
 mod.RAIL_TYPES_SET = TableHelpers.array_to_set({}, mod.RAIL_TYPES)
 
 -- Vehicle entity types (can have drivers/passengers)
@@ -149,7 +149,7 @@ mod.EXCLUDED_ENT_NAMES = { "highlight-box" }
 
 -- Main inventories that represent primary storage for entities
 -- These are the inventories used for fast transfer operations
----@type string[]
+---@type fa.InventoryDefineName[]
 mod.MAIN_INVENTORIES = {
    "character_main",
    "chest",

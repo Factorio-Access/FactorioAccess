@@ -16,7 +16,7 @@ local LogisticsSectionEditor = require("scripts.ui.tabs.logistics-section-editor
 local mod = {}
 
 ---Build tabs dynamically based on entity's logistic points and sections
----@param pindex number
+---@param pindex integer
 ---@param parameters any
 ---@return fa.ui.TabstopDescriptor[]
 local function build_logistics_tabs(pindex, parameters)

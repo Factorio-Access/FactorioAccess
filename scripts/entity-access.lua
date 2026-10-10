@@ -90,7 +90,11 @@ function mod.can_open_entity(pindex, entity)
    if bypasses_charting(entity) then return true end
 
    -- Otherwise, check if the chunk is visible (in radar range)
-   if is_position_visible(player.force, player.surface, entity.position) then return true end
+   if
+      is_position_visible(player.force --[[@as LuaForce]], player.surface, entity.position)
+   then
+      return true
+   end
 
    -- Cannot access
    return false, { "fa.entity-out-of-reach" }

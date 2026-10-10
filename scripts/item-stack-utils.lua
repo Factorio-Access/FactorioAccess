@@ -79,7 +79,7 @@ function mod.aggregate_inventories(inventories, filter)
    local groups = {}
 
    for _, inventory in ipairs(inventories) do
-      if inventory then push_inventory_to_groups(groups, inventory, filter) end
+      push_inventory_to_groups(groups, inventory, filter)
    end
 
    return flatten_groups(groups)

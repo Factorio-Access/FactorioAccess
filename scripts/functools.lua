@@ -19,7 +19,7 @@ This can be extended with support for arguments later should we desire to do so;
 that's backward compatible in Lua with functions taking ...
 ]]
 ---@param func function(): any
----@returns function(): any
+---@return fun(): any
 function mod.cached(func)
    local cache = nil
    -- Could actually be nil, so use a flag.

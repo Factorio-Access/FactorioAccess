@@ -13,7 +13,7 @@ local search_setter_ui = {
 }
 
 ---Open the search setter
----@param pindex number
+---@param pindex integer
 ---@param parameters table
 ---@param controller fa.ui.RouterController
 function search_setter_ui:open(pindex, parameters, controller)
@@ -23,7 +23,7 @@ function search_setter_ui:open(pindex, parameters, controller)
 end
 
 ---Handle textbox result
----@param pindex number
+---@param pindex integer
 ---@param result any The search pattern entered by the user (nil if cancelled)
 ---@param context any The context (should be "search_pattern_input")
 ---@param controller fa.ui.RouterController

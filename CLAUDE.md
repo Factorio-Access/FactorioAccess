@@ -18,7 +18,7 @@ Every feature is designed audio first: if it cannot be understood by ear and dri
    `python lint_localisation.py lint`. Native changes also: build, and run `native/build/ninja/faui_tests.exe`.
 4. **Debug output goes to the log**: `print("debug")`. Never `game.print` (the GUI is useless to the players).
    User-facing text goes through `Speech.speak(pindex, message)`.
-5. **LuaLS annotations use three dashes**: `---@param pindex integer`.
+5. **Type annotations use three dashes**: `---@param pindex integer`.
 6. **This is Factorio 2.x, not 1.1.** Check every API against `llm-docs/api-reference` before using it (see
    "Factorio API reference").
 
@@ -30,8 +30,8 @@ Run from this directory (`mods/FactorioAccess`, inside a portable Factorio insta
 python launch_factorio.py --format              # stylua; required before committing
 python launch_factorio.py --format-check
 python launch_factorio.py --run-tests --timeout 60
-python launch_factorio.py --setup-tools         # once, and after a Factorio update: .tools/ (LuaLS + API library)
-python launch_factorio.py --lint                # lua-language-server --check with the generated Factorio library
+python launch_factorio.py --setup-tools         # once, and after a Factorio update: .tools/ (checker + API library)
+python launch_factorio.py --lint                # emmylua_check with the generated Factorio library
 python lint_localisation.py lint                # unused / missing locale keys
 python build_message_lists.py                   # after editing locale/*/**/*.txt message lists (then --format)
 python json_to_markdown.py --type runtime --input ../../doc-html/runtime-api.json --output llm-docs/api-reference
@@ -41,11 +41,22 @@ python json_to_markdown.py --type prototype --input ../../doc-html/prototype-api
 Regenerating the API reference after a Factorio update: delete `llm-docs/api-reference/runtime` and
 `.../prototypes` first (the generator never removes pages for classes the API dropped), run both commands, commit.
 
-`--setup-tools` needs network once: it downloads pinned lua-language-server and stylua releases (stylua matches CI)
-and runs fmtk (`npx factoriomod-debug luals-addon`, with its LuaLS plugin) on this install's own `doc-html` JSON.
-`--format` and `--lint` use only `.tools/`; nothing comes from an editor. fmtk is pinned to 2.1.3: from 2.1.5 fmtk
-writes types for EmmyLua (its declared successor to LuaLS) that LuaLS misreads, about 500 false findings.
-Don't add a root `.luarc.json`: it overrides VS Code's settings and hides the editor's Factorio library.
+`--setup-tools` needs network once: it downloads pinned emmylua_check and stylua releases (stylua matches CI) and
+runs fmtk (`npx factoriomod-debug luals-addon`) on this install's own `doc-html` JSON. `--format` and `--lint` use
+only `.tools/`; nothing comes from an editor. The lint config is written to `.tools/emmyrc.json` by
+`write_emmyrc` in `launch_factorio.py`; warnings fail the lint, hints are not shown. `need-check-nil` is off: the
+project lets a missing value crash rather than checking for it.
+
+Type-checker habits that keep the lint clean:
+
+- Integers are `integer` (indices, counts, `pindex`); Factorio's `uint32` and friends are aliases of it.
+- A local initialised with `0` and later given fractions needs `---@type number` above it.
+- A local assigned inside a different closure needs its type declared (`---@type LuaEntity`), or it reads as nil.
+- `---@class` binds to a `local X = {}` declaration only. Casts are `--[[@as T]]`, no spaces inside.
+- `defines` values are opaque in the types: `FaUtils.localise_direction(dir)` for direction names.
+
+Don't add a root `.luarc.json` or `.emmyrc.json`: editors pick them up, and they override the editor's own settings
+(including its Factorio library).
 
 ## Architecture
 

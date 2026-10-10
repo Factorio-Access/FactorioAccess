@@ -21,7 +21,7 @@ describe("Cursor Movement Tests", function()
          -- Ensure player exists
          if not player then
             -- Player should already exist in test environment
-            ctx:error("No player found at index 1")
+            error("No player found at index 1")
             return
          end
 
@@ -60,7 +60,7 @@ describe("Cursor Movement Tests", function()
 
          if not player then
             -- Player should already exist in test environment
-            ctx:error("No player found at index 1")
+            error("No player found at index 1")
             return
          end
       end)

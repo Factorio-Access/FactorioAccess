@@ -79,9 +79,12 @@ function mod.get_recipe_crafters(recipe)
    -- Check if any character prototype can craft this recipe
    local characters = prototypes.get_entity_filtered({ { filter = "type", type = "character" } })
    for _, char_proto in pairs(characters) do
-      if char_proto.crafting_categories then
+      -- A set: categories it lacks are absent.
+      ---@type table<string, true?>?
+      local crafting_categories = char_proto.crafting_categories
+      if crafting_categories then
          for _, category in ipairs(categories) do
-            if char_proto.crafting_categories[category] then
+            if crafting_categories[category] then
                can_hand_craft = true
                break
             end
@@ -131,7 +134,7 @@ end
 ---Create a label for a recipe, optionally marking it as current
 ---@param message fa.MessageBuilder The message builder to append to
 ---@param recipe LuaRecipe The recipe
----@param pindex number Player index
+---@param pindex integer Player index
 ---@param is_current boolean? Whether this is the currently selected recipe
 function mod.create_recipe_label(message, recipe, pindex, is_current)
    message:fragment(Localising.get_localised_name_with_fallback(recipe))

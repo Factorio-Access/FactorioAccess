@@ -39,7 +39,9 @@ UiRouter.register_ui(test_tablist_focus)
 
 describe("Assembling Machine UI", function()
    it("should open recipe selection tab for assembling machine", function(ctx)
+      ---@type LuaPlayer
       local player
+      ---@type LuaEntity
       local assembler
       local opened = false
       local closed = false
@@ -89,7 +91,9 @@ describe("Assembling Machine UI", function()
    end)
 
    it("should set recipe when clicking on a recipe item", function(ctx)
+      ---@type LuaPlayer
       local player
+      ---@type LuaEntity
       local assembler
 
       ctx:init(function()
@@ -124,7 +128,9 @@ describe("Assembling Machine UI", function()
    end)
 
    it("should focus on current recipe when tab gains focus", function(ctx)
+      ---@type LuaPlayer
       local player
+      ---@type LuaEntity
       local assembler
 
       ctx:init(function()

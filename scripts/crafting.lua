@@ -9,6 +9,10 @@ local MessageBuilder = Speech.MessageBuilder
 local mod = {}
 
 --Returns a navigable list of all unlocked recipes, for the recipe categories supported by the selected entity. Optionally can return all unlocked recipes for all categories.
+---@param pindex integer
+---@param ent LuaEntity?
+---@param load_all_categories boolean?
+---@return LuaRecipe[][] One list of recipes per item group
 function mod.get_recipes(pindex, ent, load_all_categories)
    if not ent then return {} end
    local category_filters = {}
@@ -16,15 +20,13 @@ function mod.get_recipes(pindex, ent, load_all_categories)
    for category_name, _ in pairs(ent.prototype.crafting_categories) do
       table.insert(category_filters, { filter = "category", category = category_name })
    end
+   ---@type LuaCustomTable<string, LuaRecipePrototype>|LuaCustomTable<string, LuaRecipe>
    local all_machine_recipes = prototypes.get_recipe_filtered(category_filters)
    local unlocked_machine_recipes = {}
    local force_recipes = game.get_player(pindex).force.recipes
 
    --Load all crafting categories if instructed
-   if load_all_categories == true then
-      ---@diagnostic disable-next-line: cast-local-type
-      all_machine_recipes = force_recipes
-   end
+   if load_all_categories == true then all_machine_recipes = force_recipes end
 
    --Load only the unlocked recipes
    for recipe_name, recipe in pairs(all_machine_recipes) do
@@ -47,10 +49,9 @@ end
 --Returns a count of how many batches of this recipe are listed in the (entire) crafting queue.
 function mod.count_in_crafting_queue(recipe_name, pindex)
    local count = 0
-   if game.get_player(pindex).crafting_queue == nil or #game.get_player(pindex).crafting_queue == 0 then
-      return count
-   end
-   for i, item in ipairs(game.get_player(pindex).crafting_queue) do
+   local queue = game.get_player(pindex).crafting_queue
+   if not queue then return count end
+   for _, item in ipairs(queue) do
       if item.recipe == recipe_name then count = count + item.count end
    end
    return count
@@ -78,6 +79,7 @@ function mod.recipe_cannot_craft_reason(pindex, recipe_in)
    -- Check if recipe category can be hand-crafted
    local p = game.get_player(pindex)
    if p.character then
+      ---@type table<string, true?>
       local crafting_categories = p.character.prototype.crafting_categories
       local hand_craftable = false
       for _, category in ipairs(recipe.categories) do

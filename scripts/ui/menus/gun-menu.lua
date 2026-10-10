@@ -18,7 +18,7 @@ local FaInfo = require("scripts.fa-info")
 local mod = {}
 
 ---Check if the gun menu tab is needed for this player
----@param pindex number
+---@param pindex integer
 ---@return boolean
 function mod.needs_gun_menu_tab(pindex)
    local player = game.get_player(pindex)
@@ -41,7 +41,7 @@ end
 ---@field tablist_shared_state fa.ui.GunMenu.SharedState
 
 ---Shared state setup function
----@param pindex number
+---@param pindex integer
 ---@param params fa.ui.GunMenu.Parameters
 ---@return fa.ui.GunMenu.SharedState
 local function state_setup(pindex, params)
@@ -50,7 +50,7 @@ end
 
 ---Handle clicking on a gun or ammo slot
 ---@param ctx fa.ui.GunMenu.Context
----@param slot_index number
+---@param slot_index integer
 ---@param is_ammo boolean
 local function handle_slot_click(ctx, slot_index, is_ammo)
    local player = game.get_player(ctx.pindex)
@@ -74,12 +74,10 @@ local function handle_slot_click(ctx, slot_index, is_ammo)
       end
 
       -- Try to swap
-      if target_stack then
-         cursor_stack.swap_stack(target_stack)
-         -- If swap failed, it means incompatible item
-         if cursor_stack.valid_for_read and cursor_stack.name == target_stack.name then
-            ctx.controller.message:fragment({ "fa.equipment-error-incompatible" })
-         end
+      cursor_stack.swap_stack(target_stack)
+      -- If swap failed, it means incompatible item
+      if cursor_stack.valid_for_read and cursor_stack.name == target_stack.name then
+         ctx.controller.message:fragment({ "fa.equipment-error-incompatible" })
       end
    else
       -- Empty hand - pick up item
@@ -93,7 +91,7 @@ end
 
 ---Handle right-clicking on a gun or ammo slot (split stack)
 ---@param ctx fa.ui.GunMenu.Context
----@param slot_index number
+---@param slot_index integer
 ---@param is_ammo boolean
 local function handle_slot_right_click(ctx, slot_index, is_ammo)
    local player = game.get_player(ctx.pindex)
@@ -119,7 +117,7 @@ local function handle_slot_right_click(ctx, slot_index, is_ammo)
 
          local half = math.floor(cursor_stack.count / 2)
          if half > 0 then
-            target_stack.set_stack({ name = cursor_stack.name, count = half, quality = cursor_stack.quality })
+            target_stack.set_stack({ name = cursor_stack.name, count = half, quality = cursor_stack.quality.name })
             cursor_stack.count = cursor_stack.count - half
             ctx.controller.message:fragment({ "fa.placed-stuff", { "fa.half-stack" } })
          end
@@ -127,7 +125,7 @@ local function handle_slot_right_click(ctx, slot_index, is_ammo)
          -- Cursor is empty, slot has items - take half
          local half = math.floor(target_stack.count / 2)
          if half > 0 then
-            cursor_stack.set_stack({ name = target_stack.name, count = half, quality = target_stack.quality })
+            cursor_stack.set_stack({ name = target_stack.name, count = half, quality = target_stack.quality.name })
             target_stack.count = target_stack.count - half
             local item_description = ItemInfo.item_info({
                name = cursor_stack.name,

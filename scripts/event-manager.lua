@@ -7,6 +7,7 @@ local VanillaMode = require("scripts.vanilla-mode")
 local mod = {}
 
 -- Events that run even when vanilla mode is enabled.
+---@type table<defines.events|string, true?>
 local VANILLA_MODE_WHITELIST = {
    -- Vanilla mode toggle itself
    ["fa-cas-v"] = true,
@@ -54,8 +55,6 @@ mod.EVENT_KIND = {
 -- Special constant to indicate no further handlers should run
 mod.FINISHED = {}
 
----@alias EventHandlerResult nil|table Return nil to continue processing, or EventManager.FINISHED to stop
-
 -- Storage for all registered handlers
 -- Structure: handlers[event_id] = { test = handler, ui = handler, world = handler }
 local handlers = {}
@@ -81,7 +80,7 @@ local mocked_events = {}
 
 ---Register a handler for an event
 ---@param event_id defines.events|string|(defines.events|string)[] The event ID from defines.events, custom input name, or array of event IDs
----@param handler fun(event: any, pindex?: integer): EventHandlerResult The function to call when the event fires
+---@param handler fun(event: any, pindex?: integer): table? The function to call; return nil to continue, or EventManager.FINISHED to stop when the event fires
 ---@param priority? "test"|"ui"|"world" Optional priority (defaults to WORLD)
 function mod.on_event(event_id, handler, priority)
    priority = priority or mod.EVENT_KIND.WORLD
@@ -101,6 +100,8 @@ function mod.on_event(event_id, handler, priority)
       script.on_event(event_id, function(event)
          -- For debugging: prints events to the launcher console.
          -- CLAUDE: don't remove this, it's not by you.
+         -- Switched off by hand; flip `false` to turn the event trace on.
+         ---@diagnostic disable-next-line: unnecessary-if
          if false and event.name and event.name ~= 0 then
             print("Evt:", serpent.line(event, { nocode = true }))
             for n, v in pairs(defines.events) do
@@ -151,7 +152,7 @@ end
 
 ---Register a handler for a custom input
 ---@param input_name string The custom input name (e.g. "fa-w")
----@param handler fun(event: EventData, pindex?: integer): EventHandlerResult The function to call
+---@param handler fun(event: EventData, pindex?: integer): table? The function to call; return nil to continue, or EventManager.FINISHED to stop
 ---@param priority? "test"|"ui"|"world" Optional priority (defaults to WORLD)
 function mod.on_custom_input(input_name, handler, priority)
    -- Custom inputs are just regular events
@@ -160,7 +161,7 @@ end
 
 ---Register a handler (alias for on_event)
 ---@param event_id_or_input defines.events|string The event ID or custom input name
----@param handler fun(event: EventData, pindex?: integer): EventHandlerResult The function to call
+---@param handler fun(event: EventData, pindex?: integer): table? The function to call; return nil to continue, or EventManager.FINISHED to stop
 ---@param priority? "test"|"ui"|"world" Optional priority (defaults to WORLD)
 function mod.register(event_id_or_input, handler, priority)
    mod.on_event(event_id_or_input, handler, priority)

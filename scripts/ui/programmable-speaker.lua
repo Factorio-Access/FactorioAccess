@@ -228,7 +228,7 @@ local function render_speaker_config(ctx)
 end
 
 ---Build tabs for the programmable speaker
----@param pindex number
+---@param pindex integer
 ---@param parameters any
 ---@return fa.ui.TabstopDescriptor[]
 local function build_speaker_tabs(pindex, parameters)

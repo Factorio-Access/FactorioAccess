@@ -64,7 +64,7 @@ local function cmd_fac(cmd)
 
    local environment = {}
 
-   for k, v in pairs(_ENV) do
+   for k, v in pairs(_G) do
       environment[k] = v
    end
    environment.print = print_override
@@ -124,7 +124,7 @@ local function cmd_railtable(cmd)
    if not player then return end
 
    -- Extract rail data
-   local rail_data = RailTableExtractor.extract_rail_table(player.surface, player.force)
+   local rail_data = RailTableExtractor.extract_rail_table(player.surface, player.force --[[@as LuaForce]])
 
    -- Write to file
    local output = serpent.block(rail_data, { comment = false })

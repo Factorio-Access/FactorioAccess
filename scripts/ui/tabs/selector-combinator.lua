@@ -80,7 +80,7 @@ local function add_select_mode_params(builder, params, cb)
             -- Textbox result (constant)
             local num = tonumber(result)
             if num and math.floor(num) == num then
-               params.index_constant = num
+               params.index_constant = num --[[@as integer]]
                params.index_signal = nil
                cb.parameters = params
                ctx.controller.message:fragment(tostring(num))
@@ -143,7 +143,7 @@ local function add_random_mode_params(builder, params, cb)
       on_child_result = function(ctx, result)
          local num = tonumber(result)
          if num and num >= 0 and math.floor(num) == num then
-            params.random_update_interval = num
+            params.random_update_interval = num --[[@as integer]]
             cb.parameters = params
             ctx.controller.message:fragment(tostring(num))
          else
@@ -180,7 +180,7 @@ local function add_quality_filter_mode_params(builder)
    builder:add_label("quality_filter_note", { "fa.selector-quality-filter-note" })
 end
 
----@class fa.ui.SelectorCombinatorTabContext: fa.ui.TabContext
+---@class fa.ui.SelectorCombinatorTabContext: fa.ui.graph.Ctx
 ---@field tablist_shared_state fa.ui.EntityUI.SharedState
 
 ---Render the selector combinator configuration form

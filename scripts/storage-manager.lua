@@ -49,7 +49,7 @@ local mod = {}
 ---@param module_name string
 ---@param default_value any
 ---@param opts? fa.StorageManagerOpts
----@returns any
+---@return any
 function mod.declare_storage_module(module_name, default_value, opts)
    assert(default_value ~= nil, "Default values of nil can't be put in a table as values")
 
@@ -94,8 +94,9 @@ function mod.declare_storage_module(module_name, default_value, opts)
       end
 
       if version_changed or opts.persistent == false then
-         if not storage[opts.root_field] then return end
-         for k, e in pairs(storage[opts.root_field]) do
+         local root = storage[opts.root_field] --[[@as table<any, table>?]]
+         if not root then return end
+         for k, e in pairs(root) do
             e[module_name] = nil
          end
       end
@@ -136,9 +137,10 @@ function mod.declare_storage_module(module_name, default_value, opts)
       do_clear_if_needed()
       local last = nil
       local function ret()
-         if not storage[opts.root_field] then return nil end
+         local root = storage[opts.root_field] --[[@as table<any, table>?]]
+         if not root then return nil end
          while true do
-            last = next(storage[opts.root_field], last)
+            last = next(root, last)
             if not last then return nil end
             if storage[opts.root_field][last][module_name] then
                if not is_ipairs or type(last) == "number" then

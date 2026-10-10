@@ -49,7 +49,7 @@ end
 ---Check for signals at a rail end using the Factorio API
 ---@param rail LuaEntity Rail entity
 ---@param rail_direction defines.rail_direction Which end to check
----@return defines.direction? end_direction Direction of the rail end
+---@return defines.direction end_direction Direction of the rail end
 ---@return fa.rails.SignalType? left Signal type on left (in_signal)
 ---@return fa.rails.SignalType? right Signal type on right (out_signal)
 local function get_signals_at_end(rail, rail_direction)

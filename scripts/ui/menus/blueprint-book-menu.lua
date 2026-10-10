@@ -77,7 +77,8 @@ local function get_book_stack(ctx)
 end
 
 ---Render the blueprints list tab
----@type fun(fa.ui.graph.Ctx): fa.ui.graph.Render?
+---@param ctx fa.ui.graph.Ctx
+---@return fa.ui.graph.Render?
 local function render_blueprints_list(ctx)
    local book_inv = get_book_inventory(ctx)
    local book_stack = get_book_stack(ctx)
@@ -264,7 +265,7 @@ local function is_bookable_item(stack)
 end
 
 ---Get planners from player inventory that can be added to the book
----@param pindex number
+---@param pindex integer
 ---@return LuaItemStack[] planners Array of planner stacks from inventory
 local function get_planners_from_inventory(pindex)
    local player = game.get_player(pindex)
@@ -282,7 +283,8 @@ local function get_planners_from_inventory(pindex)
 end
 
 ---Render the settings tab
----@type fun(fa.ui.graph.Ctx): fa.ui.graph.Render?
+---@param ctx fa.ui.graph.Ctx
+---@return fa.ui.graph.Render?
 local function render_settings(ctx)
    local book_stack = get_book_stack(ctx)
    if not book_stack then return nil end
@@ -376,7 +378,7 @@ local function render_settings(ctx)
 end
 
 ---Setup shared state - compress the book on open
----@param pindex number
+---@param pindex integer
 ---@param _params table
 ---@return table
 local function state_setup(pindex, _params)

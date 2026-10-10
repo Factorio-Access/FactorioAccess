@@ -38,7 +38,7 @@ local mod = {}
 ---@field per_tick number
 local WorkQueueHandle = {}
 local work_queue_handle_meta = { __index = WorkQueueHandle }
-if script then script.register_metatable("fa.WorkQueue", work_queue_handle_meta) end
+script.register_metatable("fa.WorkQueue", work_queue_handle_meta)
 
 -- This state, held outside storage, is reconstituted on imports.  It is used to
 -- let this module know about all work queues. -@type fa.WorkQueueHandle[]
@@ -55,18 +55,17 @@ local declared_names = {}
 ---@field per_tick number how many items to dequeue per tick
 
 ---@param opts fa.WorkQueueOpts
----@returns fa.WorkQueueHandle
+---@return fa.WorkQueueHandle
 function mod.declare_work_queue(opts)
    assert(not declared_names[opts.name], "Attempt to declare queues of the same name: name=" .. opts.name)
    declared_names[opts.name] = true
 
-   local qstate = {
+   local qstate = setmetatable({
       name = opts.name,
       worker_function = opts.worker_function,
       idle_function = opts.idle_function,
       per_tick = opts.per_tick,
-   }
-   setmetatable(qstate, work_queue_handle_meta)
+   }, work_queue_handle_meta)
    table.insert(queues, qstate)
    return qstate
 end
@@ -74,7 +73,7 @@ end
 -- For dev. Set to true to make work queues reset themselves on game restarts.
 local force_clear = false
 
----@returns { items: fa.ds.Deque }
+---@return { items: fa.ds.Deque }
 local function qstate_from_storage(name)
    if force_clear then
       storage.work_queues = {}

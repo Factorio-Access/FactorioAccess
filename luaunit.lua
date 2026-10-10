@@ -12,6 +12,12 @@ License: BSD License, see LICENSE.txt
 --
 
 require("math")
+-- Aliases created in a loop below, declared here so the type checker knows them.
+---@class luaunit
+---@field assertTrue fun(value: any, extra_msg_or_nil: string?)
+---@field assertFalse fun(value: any, extra_msg_or_nil: string?)
+---@field assertNil fun(value: any, extra_msg_or_nil: string?)
+---@field assertNotNil fun(value: any, extra_msg_or_nil: string?)
 local M = {}
 
 -- private exported functions (for testing)

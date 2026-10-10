@@ -17,7 +17,7 @@ local mod = {}
 -- Max uint32 value used by Factorio to represent "unlimited" trains
 local UNLIMITED_TRAINS = 4294967295
 
----@class fa.ui.TrainStopTabContext: fa.ui.TabContext
+---@class fa.ui.TrainStopTabContext: fa.ui.graph.Ctx
 ---@field tablist_shared_state fa.ui.EntityUI.SharedState
 
 ---Render the train stop configuration form
@@ -58,7 +58,7 @@ local function render_train_stop_config(ctx)
       on_child_result = function(ctx, result)
          local num = tonumber(result)
          if num and num >= 0 and num <= 255 and math.floor(num) == num then
-            entity.train_stop_priority = num
+            entity.train_stop_priority = num --[[@as integer]]
             ctx.controller.message:fragment(tostring(num))
          else
             UiSounds.play_ui_edge(ctx.pindex)
@@ -88,7 +88,7 @@ local function render_train_stop_config(ctx)
       on_child_result = function(ctx, result)
          local num = tonumber(result)
          if num and num >= 0 and math.floor(num) == num then
-            entity.trains_limit = num
+            entity.trains_limit = num --[[@as integer]]
             ctx.controller.message:fragment(tostring(num))
          else
             UiSounds.play_ui_edge(ctx.pindex)

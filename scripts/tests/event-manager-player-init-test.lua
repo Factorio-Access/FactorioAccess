@@ -18,7 +18,7 @@ describe("EventManager Player Initialization", function()
 
       ctx:at_tick(1, function()
          -- Clear any existing player data for our test player
-         if storage.players then storage.players[test_pindex] = nil end
+         storage.players[test_pindex] = nil
 
          -- Mock a player event for a new player
          EventManager.mock_event("test-player-event", {

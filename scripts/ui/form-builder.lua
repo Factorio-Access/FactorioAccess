@@ -14,23 +14,23 @@ local CircuitNetwork = require("scripts.circuit-network")
 local mod = {}
 
 ---@class (exact) fa.ui.form.BarConfig
----@field label LocalisedString | fun(fa.ui.graph.Ctx): LocalisedString
+---@field label LocalisedString | fun(ctx: fa.ui.graph.Ctx): LocalisedString
 ---@field get_value fun(): number
----@field set_value fun(number)
+---@field set_value fun(value: number)
 ---@field min_value number
 ---@field max_value number
 ---@field small_step number?
 ---@field large_step number?
 
 ---@class (exact) fa.FormBuilder.TextBoxParams
----@field label LocalisedString | fun(fa.ui.graph.Ctx): LocalisedString
----@field get_value fun(): string
----@field set_value fun(string)
----@field on_clear (fun(fa.ui.graph.Ctx))? Optional clear callback (triggered by backspace)
----@field validate (fun(string): boolean, LocalisedString?)? Optional validation callback, returns success and optional error message
+---@field label LocalisedString | fun(ctx: fa.ui.graph.Ctx): LocalisedString
+---@field get_value fun(): LocalisedString Spoken as the current value; an empty string reads as empty
+---@field set_value fun(value: string)
+---@field on_clear (fun(ctx: fa.ui.graph.Ctx))? Optional clear callback (triggered by backspace)
+---@field validate (fun(value: string): boolean, LocalisedString?)? Optional validation callback, returns success and optional error message
 
 ---@class fa.ui.form.FormBuilder
----@field operations fun(fa.ui.menu.MenuBuilder)[] Sequence of closures to apply to MenuBuilder
+---@field operations (fun(menu: fa.ui.menu.MenuBuilder))[] Sequence of closures to apply to MenuBuilder
 ---@field vtables fa.ui.graph.NodeVtable[] Vtables for accelerator handler attachment
 ---@field accelerator_handler fun(ctx: fa.ui.graph.Ctx, accelerator_name: string)? Form-wide accelerator handler
 local FormBuilder = {}
@@ -56,7 +56,7 @@ end
 
 ---Add a label (non-interactive display item)
 ---@param key string Unique identifier
----@param label LocalisedString | fun(fa.ui.graph.Ctx): LocalisedString
+---@param label LocalisedString | fun(ctx: fa.ui.graph.Ctx): LocalisedString
 ---@return fa.ui.form.FormBuilder
 function FormBuilder:add_label(key, label)
    self:add_item(key, {
@@ -67,9 +67,9 @@ end
 
 ---Add a checkbox control
 ---@param name string Unique identifier for this control
----@param label LocalisedString | fun(fa.ui.graph.Ctx): LocalisedString
+---@param label LocalisedString | fun(ctx: fa.ui.graph.Ctx): LocalisedString
 ---@param get_value fun(): boolean Function that returns the current value
----@param set_value fun(boolean) Function that sets the new value
+---@param set_value fun(value: boolean) Function that sets the new value
 ---@return fa.ui.form.FormBuilder
 function FormBuilder:add_checkbox(name, label, get_value, set_value)
    self:add_item(
@@ -188,7 +188,7 @@ end
 
 ---Add a choice field control
 ---@param name string Unique identifier for this control
----@param label LocalisedString | fun(fa.ui.graph.Ctx): LocalisedString
+---@param label LocalisedString | fun(ctx: fa.ui.graph.Ctx): LocalisedString
 ---@param get_value fun(): any Function that returns the current value
 ---@param set_value fun(any) Function that sets the new value
 ---@param choices {label: LocalisedString, value: any, default: boolean?}[] Array of choices
@@ -250,8 +250,8 @@ end
 
 ---Add an action button
 ---@param name string Unique identifier for this control
----@param label LocalisedString | fun(fa.ui.graph.Ctx): LocalisedString
----@param callback fun(fa.ui.RouterController) Called when clicked, receives the controller
+---@param label LocalisedString | fun(ctx: fa.ui.graph.Ctx): LocalisedString
+---@param callback fun(controller: fa.ui.RouterController) Called when clicked, receives the controller
 ---@return fa.ui.form.FormBuilder
 function FormBuilder:add_action(name, label, callback)
    self:add_item(name, {
@@ -345,7 +345,7 @@ end
 
 ---Add a signal selector field
 ---@param name string Unique identifier for this control
----@param label LocalisedString | fun(fa.ui.graph.Ctx): LocalisedString
+---@param label LocalisedString | fun(ctx: fa.ui.graph.Ctx): LocalisedString
 ---@param get_value fun(): SignalID? Function that returns the current signal
 ---@param set_value fun(SignalID?) Function that sets the new signal
 ---@return fa.ui.form.FormBuilder
@@ -514,8 +514,10 @@ function FormBuilder:add_condition(name, get_value, set_value)
          -- Check context to determine if this is constant or signal
          if type(ctx.child_context) == "table" and ctx.child_context.type == "constant" then
             -- Result is a string from textbox
-            local num = tonumber(result)
-            if num then
+            local parsed = tonumber(result)
+            if parsed then
+               -- Circuit condition constants are integers
+               local num = math.floor(parsed)
                ---@diagnostic disable-next-line: inject-field
                condition.constant = num
                ---@diagnostic disable-next-line: inject-field
@@ -599,7 +601,7 @@ end
 ---Add a circuit condition with enable/disable toggle (complex row with 4 items)
 ---@param name string Unique identifier for this control
 ---@param get_enabled fun(): boolean Function that returns whether condition is enabled
----@param set_enabled fun(boolean) Function that sets whether condition is enabled
+---@param set_enabled fun(value: boolean) Function that sets whether condition is enabled
 ---@param get_condition fun(): CircuitConditionDefinition? Function that returns the current condition
 ---@param set_condition fun(CircuitConditionDefinition?) Function that sets the new condition
 ---@return fa.ui.form.FormBuilder
@@ -731,8 +733,10 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
          -- Check context to determine if this is constant or signal
          if type(ctx.child_context) == "table" and ctx.child_context.type == "constant" then
             -- Result is a string from textbox
-            local num = tonumber(result)
-            if num then
+            local parsed = tonumber(result)
+            if parsed then
+               -- Circuit condition constants are integers
+               local num = math.floor(parsed)
                ---@diagnostic disable-next-line: inject-field
                condition.constant = num
                ---@diagnostic disable-next-line: inject-field

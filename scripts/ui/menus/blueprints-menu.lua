@@ -15,7 +15,8 @@ local UiRouter = require("scripts.ui.router")
 
 local mod = {}
 
----@type fun(fa.ui.graph.Ctx): fa.ui.graph.Render?
+---@param ctx fa.ui.graph.Ctx
+---@return fa.ui.graph.Render?
 local function render(ctx)
    local p = game.get_player(ctx.pindex)
    if not p then return nil end
@@ -29,7 +30,7 @@ local function render(ctx)
 
    if not bp.is_blueprint_setup() then
       -- Use custom intro message if provided in params, otherwise default
-      local intro_message = (ctx.params and ctx.params.intro_message) or { "fa.ui-blueprints-menu-limited" }
+      local intro_message = ctx.global_parameters.intro_message or { "fa.ui-blueprints-menu-limited" }
       builder:add_label("blueprint-info", intro_message)
 
       -- Add option to select area for empty blueprint
@@ -95,7 +96,7 @@ local function render(ctx)
             return a.index < b.index
          end)
 
-         icons = TH.map(bp.preview_icons, function(icon)
+         local icon_names = TH.map(icons, function(icon)
             -- Localising this is tricky because it could be from anywhere.
 
             local proto = FaUtils.find_prototype(icon.signal.name)
@@ -105,8 +106,8 @@ local function render(ctx)
          end)
 
          ctx.message:fragment({ "fa.ui-blueprints-menu-icons" })
-         for _, i in ipairs(icons) do
-            ctx.message:list_item(i)
+         for _, name in ipairs(icon_names) do
+            ctx.message:list_item(name)
          end
       end)
 

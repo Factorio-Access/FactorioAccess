@@ -59,8 +59,10 @@ local test_files = {
 }
 
 -- Test execution state
+---@type { suite: table, test: table, context: fa.TestFramework.TestContext, start_tick: integer }?
 local current_test = nil
 local test_queue = {}
+---@type table<integer, fun()[]?>
 local scheduled_actions = {}
 local test_results = {}
 local is_running = false
@@ -70,17 +72,26 @@ local start_tick = 0
 local assertions = TestRegistry.get_assertions()
 
 -- Test context object
+---@class fa.TestFramework.TestContext
+---@field name string
+---@field init_func fun()?
+---@field actions table[]
+---@field last_tick integer
+---@field state table
 local TestContext = {}
 TestContext.__index = TestContext
 
+---@param test_name string
+---@return fa.TestFramework.TestContext
 function TestContext.new(test_name)
-   local ctx = {
+   ---@type fa.TestFramework.TestContext
+   local ctx = setmetatable({
       name = test_name,
       init_func = nil,
       actions = {},
       last_tick = 0,
       state = {}, -- For storing test-specific state
-   }
+   }, TestContext)
 
    -- Add assertion methods with proper self binding
    for name, func in pairs(assertions) do
@@ -89,7 +100,6 @@ function TestContext.new(test_name)
       end
    end
 
-   setmetatable(ctx, TestContext)
    return ctx
 end
 
@@ -103,10 +113,7 @@ function TestContext:setup_player(pindex)
    pindex = pindex or 1
    local player = game.get_player(pindex)
 
-   if not player then
-      self:error("No player found at index " .. pindex)
-      return nil
-   end
+   if not player then error("No player found at index " .. pindex) end
 
    -- Ensure player has a character
    if not player.character then player.create_character() end
@@ -231,12 +238,9 @@ end
 function mod._reset_game_state()
    -- Clear the entire surface instead of just a range
    local surface = game.surfaces["nauvis"]
-   if surface then
-      -- Get all entities on the surface
-      local entities = surface.find_entities()
-      for _, entity in pairs(entities) do
-         if entity.valid and entity.type ~= "character" then entity.destroy() end
-      end
+   local entities = surface.find_entities()
+   for _, entity in pairs(entities) do
+      if entity.valid and entity.type ~= "character" then entity.destroy() end
    end
 
    -- Reset all players

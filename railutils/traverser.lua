@@ -44,8 +44,15 @@ function Traverser:_get_end_data()
    return end_data
 end
 
+---The rail an extension leads to: the part of railutils.ExtensionPoint the traverser needs
+---@class railutils.Traverser.Extension
+---@field next_rail_prototype string Prototype type to place for this extension
+---@field next_rail_position fa.Point Absolute position to place next rail
+---@field next_rail_direction defines.direction Direction to place next rail
+---@field next_rail_goal_direction defines.direction Direction of far end of next rail
+
 ---Apply an extension result to update traverser state (internal helper)
----@param ext railutils.ExtensionPoint
+---@param ext railutils.Traverser.Extension
 function Traverser:_apply_extension(ext)
    self._rail_type = Queries.prototype_type_to_rail_type(ext.next_rail_prototype)
    self._placement_direction = ext.next_rail_direction
@@ -126,7 +133,7 @@ end
 
 ---Get extension in a specific direction offset
 ---@param direction_offset number 0=forward, 1=right, -1=left
----@return railutils.ExtensionPoint
+---@return railutils.Traverser.Extension
 function Traverser:_get_extension(direction_offset)
    local goal_direction = (self._end_direction + direction_offset) % 16
    local end_data = self:_get_end_data()

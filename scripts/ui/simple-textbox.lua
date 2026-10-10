@@ -13,7 +13,7 @@ local simple_textbox_ui = {
 }
 
 ---Open the simple textbox
----@param pindex number
+---@param pindex integer
 ---@param parameters table Should contain intro_message (LocalisedString) and initial_text (string)
 ---@param controller fa.ui.RouterController
 function simple_textbox_ui:open(pindex, parameters, controller)
@@ -28,7 +28,7 @@ function simple_textbox_ui:open(pindex, parameters, controller)
 end
 
 ---Handle textbox result
----@param pindex number
+---@param pindex integer
 ---@param result any The text entered by the user
 ---@param context any The context (should be "simple_textbox_input")
 ---@param controller fa.ui.RouterController

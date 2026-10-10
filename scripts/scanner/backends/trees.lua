@@ -31,7 +31,7 @@ local mod = {}
 ---@field surface LuaSurface
 local TreeBackend = {}
 local TreeBackend_meta = { __index = TreeBackend }
-if script then script.register_metatable("fa.scanner.backends.TreeBackenmd", TreeBackend_meta) end
+script.register_metatable("fa.scanner.backends.TreeBackenmd", TreeBackend_meta)
 mod.TreeBackend = TreeBackend
 
 ---@return fa.scanner.backends.TreeBackend

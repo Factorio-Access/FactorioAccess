@@ -14,7 +14,7 @@ local mod = {}
 ---@alias fa.Filters.Filterlike LuaEntity | LuaInventory
 
 ---@param filterable fa.Filters.Filterlike
----@param index number
+---@param index integer
 ---@return string?
 function mod.get_filter_prototype(filterable, index)
    print(serpent.line(filterable))
@@ -40,7 +40,7 @@ function mod.get_all_filters(ent)
 end
 
 ---@param filterable fa.Filters.Filterlike
----@param index number
+---@param index integer
 ---@param filter ItemFilter?
 function mod.set_filter(filterable, index, filter)
    filterable.set_filter(index, filter)
