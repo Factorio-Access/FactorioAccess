@@ -24,8 +24,9 @@ static int env_int(const wchar_t* name, int def) {
 
 static bool g_installed = false;
 
-// Called by the injector on a remote thread right after LoadLibrary, while the game's main thread is still
-// suspended at a fresh launch, so every hook is in place before the game creates its window.
+// Called once, on a thread of its own: by the dev injector right after LoadLibrary while the game's main thread is
+// still suspended (every hook is in place before the game creates its window), or by the version.dll proxy in
+// parallel with the game's startup.
 // Environment (set by the dev loop): FA_MUTE=1 records speech without voicing it, FA_NOFOCUS=1 keeps the
 // game from activating its window, FA_PORT=<n> starts the dev server.
 extern "C" __declspec(dllexport) DWORD WINAPI fa_init(LPVOID) {
