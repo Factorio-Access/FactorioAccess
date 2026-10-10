@@ -5,6 +5,7 @@ This module runs the player loop once and calls each sonifier's
 on_tick_per_player function, avoiding redundant iteration.
 ]]
 
+local EventManager = require("scripts.event-manager")
 local VanillaMode = require("scripts.vanilla-mode")
 local SettingsDecls = require("scripts.settings-decls")
 local SETTING_NAMES = SettingsDecls.SETTING_NAMES
@@ -17,6 +18,22 @@ local SpawnerRadar = require("scripts.sonifiers.combat.spawner-radar")
 local HealthBar = require("scripts.sonifiers.health-bar")
 
 local mod = {}
+
+-- Switching a combat sonification off stops its radar, so stop the sounds it was playing too.
+EventManager.on_event(defines.events.on_runtime_mod_setting_changed, function(event)
+   local radar
+   if event.setting == SETTING_NAMES.SONIFICATION_COMBAT_ENEMIES then
+      radar = EnemyRadar
+   elseif event.setting == SETTING_NAMES.SONIFICATION_COMBAT_SPAWNERS then
+      radar = SpawnerRadar
+   else
+      return
+   end
+   if settings.global[event.setting].value then return end
+   for _, player in pairs(game.connected_players) do
+      radar.stop_all(player.index)
+   end
+end)
 
 ---Called every tick from control.lua
 function mod.on_tick()
