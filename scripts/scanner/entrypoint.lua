@@ -49,7 +49,6 @@ local mod = {}
 ---@field on_new_entity fun(self, entity: LuaEntity)
 ---@field on_entity_destroyed fun(self, event: EventData.on_object_destroyed)
 ---@field dump_entries_to_callback fun(self, player: LuaPlayer, callback: fun(entry: fa.scanner.ScanEntry))
----@field on_new_tiles fun(self, tiles: LuaTile[])
 ---@field is_huge fun(self, entry: fa.scanner.ScanEntry): boolean True if the scanner should check whether the player is in the bounding box.
 ---@field get_aabb fun(self, entry: fa.scanner.ScanEntry): number, number, number, number left_top.x, left_top.y, right_bottom.x, right_bottom.y
 
@@ -62,7 +61,6 @@ local mod = {}
 
 ---@class fa.scanner.GlobalPlayerState
 ---@field scanner_cursor fa.scanner.CursorPos
----@field surface LuaSurface
 ---@field entries table<fa.scanner.Category, fa.scanner.SubcategoryData[]?> Categories with no entries are absent
 ---@field pending_refresh_counter number? used to delay refreshes by a tick.
 ---@field pending_direction_filter defines.direction?
@@ -78,7 +76,6 @@ local function new_player_state(pindex)
          subcategory_index = nil,
          entry_index = nil,
       },
-      surface = player.surface,
       entries = {},
       pending_refresh_counter = nil,
       pending_direction_filter = nil,

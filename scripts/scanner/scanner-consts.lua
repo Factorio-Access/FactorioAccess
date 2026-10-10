@@ -49,11 +49,6 @@ mod.CATEGORY_ORDER = {
 -- a (rough) equivalent.
 mod.SCANNER_DISTANCE = 2500
 
--- How far apart may trees be to count as a forest? Note that changing this
--- value has a very outsized effect and can cause the clusterer to cluster
--- thousands of wood into one forest.  Also, this is effectively a radius.
-mod.FOREST_TREE_DIST = 4
-
 -- When this close to a forest, make an entry for the trees the player is near.
 mod.FOREST_ZOOM_DISTANCE = 25
 
@@ -68,18 +63,8 @@ mod.FOREST_CHUNK_SIZE = 8
 -- dump the individual resources instead.
 mod.INFINITE_RESOURCE_ZOOM_DISTANCE = 50
 
--- How far apart must tiles be to be in the same body of water?  2.1 is chosen
--- because it allows for tiny bits of land not to get in the way, causes
--- diagonal tiles to connect, and leaves a bit of room for floating point error.
-mod.WATER_TILE_DISTANCE = 10
-
 -- Modded water is mostly not a thing. If it is we can extend the list.
 mod.WATER_PROTOS = Consts.WATER_TILE_NAMES
-
--- How far apart must tiles be to be in the same iceberg?  2.1 is chosen
--- because it allows for tiny bits of water not to get in the way, causes
--- diagonal tiles to connect, and leaves a bit of room for floating point error.
-mod.ICEBERG_TILE_DISTANCE = 10
 
 -- No clue if modded icebergs is a thing. If it is we can extend the list.
 mod.ICEBERG_PROTOS =

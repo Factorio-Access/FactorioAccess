@@ -61,14 +61,6 @@ local function amount_for(ent)
    return ent.amount
 end
 
--- Adjectives for forest by density, as an amount of wood.
-local FOREST_DENSITIES = {
-   { -math.huge, "fa.scanner-forest-empty" },
-   { 10, "fa.scanner-forest-sparse" },
-   { 50, "fa.scanner-forest-normal" },
-   { 80, "fa.scanner-forest-dense" },
-}
-
 ---@return fa.scanner.ResourcePatchesBackend
 function ResourcePatchesBackend.new()
    local ret = {
@@ -303,8 +295,6 @@ function ResourcePatchesBackend:dump_entries_to_callback(player, callback)
       ::continue::
    end
 end
-
-function ResourcePatchesBackend:on_new_tiles(tiles) end
 
 function ResourcePatchesBackend:is_huge(e)
    return false

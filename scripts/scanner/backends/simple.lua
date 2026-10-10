@@ -129,8 +129,6 @@ function SimpleBackend:dump_entries_to_callback(player, callback)
    end
 end
 
-function SimpleBackend:on_new_tiles(tiles) end
-
 ---@class fa.scanner.SimpleBackendCallbacks
 ---@field category_callback (fun(e: LuaEntity):fa.scanner.Category)?
 ---@field subcategory_callback (fun(LuaEntity): fa.scanner.Subcategory)?
