@@ -9,7 +9,9 @@ It never touches the real desktop's focus or input.
   kill                                           terminate the tracked game (only if it is provably ours)
   shot [out.png] [--width N]                     screenshot of the game window (works unfocused)
   health | log [--since N] | speech [--since N] [--wait S]
-  say TEXT | mute on|off | get /route?query
+  say TEXT | mute on|off | key NAME [--shift --ctrl --alt] | keys TEXT
+  tree [--all]                                   the game's widget tree
+  get route?query                                any dev-server route (no leading slash: Git Bash rewrites /paths)
 
 Process identity: the launch records pid + creation time + image path in native/build/fadev_state.json.
 Every command that acts on the process re-checks all three, so a pid Windows reused for another process
@@ -348,6 +350,15 @@ def main():
     s = sub.add_parser("get")
     s.add_argument("path")
     s.set_defaults(f=lambda a: print(get("/" + a.path.lstrip("/")), end=""))
+    s = sub.add_parser("key")
+    s.add_argument("name")
+    s.add_argument("--shift", action="store_true")
+    s.add_argument("--ctrl", action="store_true")
+    s.add_argument("--alt", action="store_true")
+    s.set_defaults(f=lambda a: print(get("/key" + q(name=a.name, shift=a.shift and 1, ctrl=a.ctrl and 1, alt=a.alt and 1)), end=""))
+    s = sub.add_parser("keys")
+    s.add_argument("text")
+    s.set_defaults(f=lambda a: print(get("/keys" + q(text=a.text)), end=""))
     s = sub.add_parser("tree")
     s.add_argument("--all", action="store_true")
     s.set_defaults(f=lambda a: print(get("/ui/tree" + q(all=1 if a.all else None)), end=""))

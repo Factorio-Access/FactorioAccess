@@ -7,6 +7,10 @@
 //   /speech?since=N         spoken lines since cursor N
 //   /say?text=...           speak through the native speech path
 //   /mute?on=1|0            mute or unmute speech (history still records)
+//   /key?name=enter&shift=1&ctrl=1&alt=1   press+release as real SDL events (names: devserver.cpp scancode())
+//   /keys?text=abc          text input as a real SDL event
+//   /own?on=1|0             dev override: the native UI owns the keyboard (keys stop reaching the game)
+//   /ui/click?addr=0x...    fire a widget's click handlers (address from /ui/tree)
 //   /ui/tree?all=1          the agui widget tree: class, address, flags, absolute rect, text (all=1: hidden too)
 namespace fa::dev {
 void start(int port);  // no-op while running

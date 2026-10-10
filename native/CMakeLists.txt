@@ -28,12 +28,22 @@ set(PRISM_DIR ${CMAKE_SOURCE_DIR}/third_party/prism)
 set(PRISM_LIB ${PRISM_DIR}/windows/x64/lib/prism.lib)
 set(PRISM_DLL ${PRISM_DIR}/windows/x64/bin/prism.dll)
 
+# --- engine-free UI core: navigation graph, screens, input, message building (no Windows, no game types) ---
+file(GLOB FAUI_SOURCES CONFIGURE_DEPENDS src/ui/*.cpp)
+add_library(faui STATIC ${FAUI_SOURCES})
+target_include_directories(faui PUBLIC src)
+
+file(GLOB FAUI_TESTS CONFIGURE_DEPENDS tests/*.cpp)
+add_executable(faui_tests ${FAUI_TESTS})
+target_include_directories(faui_tests PRIVATE third_party)
+target_link_libraries(faui_tests PRIVATE faui)
+
 # --- the injected DLL ---
 add_library(fa_native SHARED
-  src/dllmain.cpp src/log.cpp src/speech.cpp src/devserver.cpp
+  src/dllmain.cpp src/log.cpp src/input.cpp src/speech.cpp src/devserver.cpp
   src/win/hooks.cpp src/win/sym.cpp src/win/window.cpp src/win/agui.cpp)
 target_include_directories(fa_native PRIVATE src ${PRISM_DIR}/include)
-target_link_libraries(fa_native PRIVATE detours ${PRISM_LIB} user32 ws2_32 dbghelp delayimp)
+target_link_libraries(fa_native PRIVATE faui detours ${PRISM_LIB} user32 ws2_32 dbghelp delayimp)
 target_link_options(fa_native PRIVATE /DELAYLOAD:prism.dll)
 add_custom_command(TARGET fa_native POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PRISM_DLL} $<TARGET_FILE_DIR:fa_native>)

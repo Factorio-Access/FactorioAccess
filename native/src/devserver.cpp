@@ -10,6 +10,7 @@
 #include <thread>
 #include "agui.h"
 #include "hooks.h"
+#include "input.h"
 #include "log.h"
 #include "speech.h"
 
@@ -76,6 +77,22 @@ static void dump_tree(agui::Widget* w, int depth, bool all, std::string& out) {
   }
 }
 
+// Key names -> SDL scancodes. Letters and digits by themselves ("a", "7").
+static int scancode(const std::string& name) {
+  static const std::map<std::string, int> k = {
+      {"enter", 40}, {"return", 40}, {"escape", 41}, {"esc", 41}, {"backspace", 42}, {"tab", 43}, {"space", 44}, {"minus", 45},
+      {"equals", 46}, {"lbracket", 47}, {"rbracket", 48}, {"backslash", 49}, {"semicolon", 51}, {"apostrophe", 52}, {"grave", 53},
+      {"comma", 54}, {"period", 55}, {"slash", 56}, {"f1", 58}, {"f2", 59}, {"f3", 60}, {"f4", 61}, {"f5", 62}, {"f6", 63},
+      {"f7", 64}, {"f8", 65}, {"f9", 66}, {"f10", 67}, {"f11", 68}, {"f12", 69}, {"insert", 73}, {"home", 74}, {"pageup", 75},
+      {"delete", 76}, {"end", 77}, {"pagedown", 78}, {"right", 79}, {"left", 80}, {"down", 81}, {"up", 82},
+  };
+  if (name.size() == 1 && name[0] >= 'a' && name[0] <= 'z') return 4 + (name[0] - 'a');
+  if (name.size() == 1 && name[0] >= '1' && name[0] <= '9') return 30 + (name[0] - '1');
+  if (name == "0") return 39;
+  auto it = k.find(name);
+  return it == k.end() ? -1 : it->second;
+}
+
 static std::string handle(const std::string& path, const Query& q, int& status) {
   status = 200;
   if (path == "/health")
@@ -89,6 +106,36 @@ static std::string handle(const std::string& path, const Query& q, int& status) 
   if (path == "/mute") {
     speech::set_muted(truthy(arg(q, "on", "1")));
     return std::format("muted={}\n", speech::muted());
+  }
+  if (path == "/key") {  // press and release, as two real SDL events
+    int sc = scancode(arg(q, "name"));
+    if (sc < 0) {
+      status = 400;
+      return "unknown key name\n";
+    }
+    bool shift = truthy(arg(q, "shift")), ctrl = truthy(arg(q, "ctrl")), alt = truthy(arg(q, "alt"));
+    // The release comes a few frames later: a press and release inside one poll is invisible to code that
+    // samples key state per frame.
+    if (!hooks::push_key(sc, true, shift, ctrl, alt)) return "not ready (no SDL window yet)\n";
+    std::thread([=] {
+      Sleep(60);
+      hooks::push_key(sc, false, shift, ctrl, alt);
+    }).detach();
+    return "ok\n";
+  }
+  if (path == "/keys") return hooks::push_text(arg(q, "text")) ? "ok\n" : "not ready\n";
+  if (path == "/own") {  // dev override of who owns the keyboard; the UI tick decides again on its next change
+    if (q.count("on")) input::set_owned(truthy(arg(q, "on")));
+    return std::format("keyboard={}\n", input::owned() ? "native" : "game");
+  }
+  if (path == "/ui/click") {  // ?addr=0x... from /ui/tree
+    auto* w = reinterpret_cast<agui::Widget*>(strtoull(arg(q, "addr").c_str(), nullptr, 16));
+    if (!agui::in_tree(w)) {
+      status = 400;
+      return "not a widget in the current tree\n";
+    }
+    agui::click(w);
+    return "clicked\n";
   }
   if (path == "/ui/tree") {
     agui::Widget* root = agui::root();

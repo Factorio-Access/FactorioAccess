@@ -33,6 +33,8 @@ struct Layout {
   size_t w_parent = 0, w_children = 0, w_private = 0, w_usage = 0;
   size_t vt_get_text = 0;
   void* get_abs_rect = nullptr;  // Rectangle agui::Widget::getAbsoluteRectangle() const
+  void* dispatch_click = nullptr;  // void agui::Widget::dispatchClick(agui::MouseEvent const&)
+  size_t me_position = 0, me_button = 0, me_type = 0, me_source = 0, me_size = 0;
 } L;
 
 template <typename T>
@@ -65,6 +67,14 @@ bool init() {
   else ok = false;
   L.get_abs_rect = sym::addr("agui::Widget::getAbsoluteRectangle");
   ok &= L.get_abs_rect != nullptr;
+  L.dispatch_click = sym::addr("agui::Widget::dispatchClick");
+  ok &= L.dispatch_click != nullptr;
+  ok &= resolve(L.me_position, "agui::MouseEvent", "position");
+  ok &= resolve(L.me_button, "agui::MouseEvent", "button");
+  ok &= resolve(L.me_type, "agui::MouseEvent", "eventType");
+  ok &= resolve(L.me_source, "agui::MouseEvent", "source");
+  ok &= resolve(L.me_size, "agui::MouseEvent", "previous");  // the last member: size = its offset + 8
+  L.me_size += sizeof(void*);
   log::writef("agui: layout {} (children +{:#x}, usage +{:#x}, getText vtable +{:#x})", ok ? "resolved" : "INCOMPLETE", L.w_children, L.w_usage,
               L.vt_get_text);
   return ok;
@@ -109,6 +119,35 @@ Rect rect(Widget* w) {
   } r{};
   reinterpret_cast<AguiRect* (*)(Widget*, AguiRect*)>(L.get_abs_rect)(w, &r);
   return {r.x, r.y, r.w, r.h};
+}
+
+// agui::MouseEvent::Type::MOUSE_CLICK and agui::MouseButton::LEFT (enums in the PDB).
+constexpr int kMouseClick = 4;
+constexpr uint16_t kLeftButton = 2;
+
+void click(Widget* w) {
+  alignas(8) unsigned char ev[128] = {};
+  if (L.me_size > sizeof ev) return;
+  Rect r = rect(w);
+  at<int>(ev, L.me_position) = r.w / 2;  // agui positions are relative to the source widget
+  at<int>(ev, L.me_position + 4) = r.h / 2;
+  at<uint16_t>(ev, L.me_button) = kLeftButton;
+  at<int>(ev, L.me_type) = kMouseClick;
+  at<Widget*>(ev, L.me_source) = w;
+  reinterpret_cast<void (*)(Widget*, void*)>(L.dispatch_click)(w, ev);
+}
+
+static bool find(Widget* at_w, Widget* target) {
+  if (at_w == target) return true;
+  for (auto* c : children(at_w))
+    if (find(c, target)) return true;
+  for (auto* c : private_children(at_w))
+    if (find(c, target)) return true;
+  return false;
+}
+bool in_tree(Widget* w) {
+  Widget* r = root();
+  return r && w && find(r, w);
 }
 
 // MSVC RTTI: the CompleteObjectLocator sits just before the vtable; its TypeDescriptor (image-relative on

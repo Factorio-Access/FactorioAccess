@@ -23,4 +23,9 @@ std::string text(Widget* w);        // the widget's own text (captions are alrea
 bool visible(Widget* w);
 bool enabled(Widget* w);
 Rect rect(Widget* w);  // absolute, in window pixels
+// Fire the widget's click handlers with a left-button click at its centre (agui::Widget::dispatchClick): the
+// game reacts exactly as to a mouse click on it, without moving the mouse or needing the widget on screen.
+void click(Widget* w);
+// Whether `w` is currently in the tree under root() (guards dev routes taking raw addresses).
+bool in_tree(Widget* w);
 }  // namespace fa::agui

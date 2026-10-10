@@ -3,11 +3,15 @@
 #include <detours.h>
 #include <intrin.h>
 #include <tlhelp32.h>
+#include <atomic>
 #include <condition_variable>
 #include <deque>
 #include <memory>
 #include <mutex>
+#include <string>
+#include <string_view>
 #include <vector>
+#include "input.h"
 #include "log.h"
 #include "sym.h"
 #include "win/window.h"
@@ -123,8 +127,117 @@ using MainLoopStep_t = int (*)(void*, int);
 static MainLoopStep_t MainLoopStep_orig;
 static int MainLoopStep_hook(void* worker, int heavy) {
   ++g_frame;
+  input::begin_frame();
   drain_jobs();
+  input::end_frame();
   return MainLoopStep_orig(worker, heavy);
+}
+
+// ======================= input: SDLWindow::pollEvent =======================
+// The game drains SDL through SDLWindow::pollEvent(Event&), which hands out its own converted Event. While the
+// native UI owns the keyboard, key events stop here: recorded for the UI, never returned to the game.
+struct EventLayout {
+  size_t type, kb_scancode, kb_mod, kb_unichar, kb_repeat;  // Event::type, Event::keyboard.<field>
+  size_t sdl_type, sdl_window, sdl_scancode, sdl_key, sdl_mod, sdl_down, sdl_repeat;  // SDL_KeyboardEvent
+  size_t sdl_text_window, sdl_text;                                              // SDL_TextInputEvent
+  size_t window_sdl;                                                             // SDLWindow::window
+} E;
+// Event::Type values (enum Event::Type in the PDB).
+constexpr int kKeyDown = 0, kKeyChar = 1, kKeyUp = 2, kKeyComposition = 3;
+// SDL3: SDL_EVENT_KEY_DOWN / KEY_UP / TEXT_INPUT, and the SDL_Keymod bit groups (SDL_keycode.h).
+constexpr uint32_t kSdlKeyDown = 0x300, kSdlKeyUp = 0x301, kSdlTextInput = 0x303;
+constexpr uint16_t kModShift = 0x0003, kModCtrl = 0x00c0, kModAlt = 0x0300;
+
+static bool resolve_events() {
+  bool ok = true;
+  auto off = [&](const char* t, const char* m) {
+    auto r = sym::offset(t, m);
+    ok &= r.has_value();
+    return r.value_or(0);
+  };
+  size_t kb = off("Event", "keyboard");
+  E.type = off("Event", "type");
+  E.kb_scancode = kb + off("KeyboardEvent", "scancode");
+  E.kb_mod = kb + off("KeyboardEvent", "mod");
+  E.kb_unichar = kb + off("KeyboardEvent", "unichar");
+  E.kb_repeat = kb + off("KeyboardEvent", "repeat");
+  E.sdl_type = off("SDL_KeyboardEvent", "type");
+  E.sdl_window = off("SDL_KeyboardEvent", "windowID");
+  E.sdl_scancode = off("SDL_KeyboardEvent", "scancode");
+  E.sdl_key = off("SDL_KeyboardEvent", "key");
+  E.sdl_mod = off("SDL_KeyboardEvent", "mod");
+  E.sdl_down = off("SDL_KeyboardEvent", "down");
+  E.sdl_repeat = off("SDL_KeyboardEvent", "repeat");
+  E.sdl_text_window = off("SDL_TextInputEvent", "windowID");
+  E.sdl_text = off("SDL_TextInputEvent", "text");
+  E.window_sdl = off("SDLWindow", "window");
+  return ok;
+}
+
+template <typename T>
+static T& field(void* base, size_t off) {
+  return *reinterpret_cast<T*>(reinterpret_cast<char*>(base) + off);
+}
+
+static std::atomic<void*> g_sdl_window;  // SDL_Window*, captured from the first pollEvent
+using PollEvent_t = bool (*)(void*, void*);
+static PollEvent_t PollEvent_orig;
+static bool PollEvent_hook(void* self, void* ev) {
+  if (!g_sdl_window) g_sdl_window = field<void*>(self, E.window_sdl);
+  for (;;) {
+    if (!PollEvent_orig(self, ev)) return false;
+    int type = field<int>(ev, E.type);
+    if (type >= 14 && type <= 24) log::writef("event: window event {}", type);  // Event::Type WINDOW_*
+    if (type < kKeyDown || type > kKeyComposition || !input::owned()) return true;
+    if (type == kKeyChar) {
+      char32_t c = (char32_t)field<int>(ev, E.kb_unichar);
+      input::record_text(std::u32string_view(&c, 1));
+    } else if (type != kKeyComposition) {
+      uint16_t mod = field<uint16_t>(ev, E.kb_mod);
+      input::record_key({field<int>(ev, E.kb_scancode), type == kKeyDown, field<bool>(ev, E.kb_repeat), (mod & kModShift) != 0,
+                         (mod & kModCtrl) != 0, (mod & kModAlt) != 0});
+    }
+  }
+}
+
+using PushEvent_t = bool (*)(void*);
+using GetWindowID_t = uint32_t (*)(void*);
+using GetKeyFromScancode_t = uint32_t (*)(int, uint16_t, bool);
+static PushEvent_t g_push_event;
+static GetWindowID_t g_get_window_id;
+static GetKeyFromScancode_t g_key_from_scancode;
+
+bool push_key(int scancode, bool down, bool shift, bool ctrl, bool alt) {
+  void* win = g_sdl_window;
+  if (!win || !g_push_event) return false;
+  alignas(8) unsigned char ev[128] = {};  // sizeof(SDL_Event)
+  uint16_t mod = (shift ? 0x0001 : 0) | (ctrl ? 0x0040 : 0) | (alt ? 0x0100 : 0);  // the left-hand modifier bits
+  field<uint32_t>(ev, E.sdl_type) = down ? kSdlKeyDown : kSdlKeyUp;
+  field<uint32_t>(ev, E.sdl_window) = g_get_window_id(win);
+  field<int>(ev, E.sdl_scancode) = scancode;
+  field<uint32_t>(ev, E.sdl_key) = g_key_from_scancode(scancode, mod, false);
+  field<uint16_t>(ev, E.sdl_mod) = mod;
+  field<bool>(ev, E.sdl_down) = down;
+  return g_push_event(ev);
+}
+
+bool push_text(std::string_view utf8) {
+  void* win = g_sdl_window;
+  if (!win || !g_push_event || utf8.empty()) return false;
+  // The event carries a pointer: keep every distinct string alive for the life of the process (dev use only).
+  static std::mutex mu;
+  static std::deque<std::string> kept;
+  const char* text;
+  {
+    std::lock_guard lk(mu);
+    kept.emplace_back(utf8);
+    text = kept.back().c_str();
+  }
+  alignas(8) unsigned char ev[128] = {};
+  field<uint32_t>(ev, E.sdl_type) = kSdlTextInput;
+  field<uint32_t>(ev, E.sdl_text_window) = g_get_window_id(win);
+  field<const char*>(ev, E.sdl_text) = text;
+  return g_push_event(ev);
 }
 
 // ======================= dev mode: never let the game take the foreground =======================
@@ -208,8 +321,14 @@ bool install() {
     wchar_t v[4];
     g_nofocus = GetEnvironmentVariableW(L"FA_NOFOCUS", v, 4) > 0 && v[0] == L'1';
   }
+  if (!resolve_events()) return false;
+  g_push_event = sym::fn<PushEvent_t>("SDL_PushEvent_REAL");
+  g_get_window_id = sym::fn<GetWindowID_t>("SDL_GetWindowID_REAL");
+  g_key_from_scancode = sym::fn<GetKeyFromScancode_t>("SDL_GetKeyFromScancode_REAL");
+  if (!g_push_event || !g_get_window_id || !g_key_from_scancode) return false;
   g_hooks = {
       Hook{sym::addr("MainLoop::mainLoopStep"), (void*)&MainLoopStep_hook, (void**)&MainLoopStep_orig, "MainLoop::mainLoopStep", false},
+      Hook{sym::addr("SDLWindow::pollEvent"), (void*)&PollEvent_hook, (void**)&PollEvent_orig, "SDLWindow::pollEvent", false},
   };
   if (g_nofocus) {
     for (Hook h : {USER32_HOOK(SetForegroundWindow), USER32_HOOK(SetActiveWindow), USER32_HOOK(BringWindowToTop), USER32_HOOK(SetFocus),
