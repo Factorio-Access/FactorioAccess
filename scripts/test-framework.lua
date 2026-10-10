@@ -29,6 +29,7 @@ end
 local test_files = {
    -- Integration/smoke tests as per claude-prompt.md
    "simple-smoke-test", -- Very basic tests to verify framework works
+   "building-preview-reach-test",
    "cursor-movement-test", -- Test mod's cursor system (not vanilla)
    "wasd-event-test", -- Test cursor movement via WASD simulation
    -- Selected tests from feedback

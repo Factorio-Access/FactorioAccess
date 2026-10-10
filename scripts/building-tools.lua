@@ -639,6 +639,11 @@ function mod.build_preview_checks_info(stack, pindex)
    local build_dir = vp:get_hand_direction()
    local ent_p = stack.prototype.place_result --it is an entity prototype!
    if ent_p == nil or not ent_p.valid then return "invalid entity" end
+   local footprint = FaUtils.calculate_building_footprint({
+      entity_prototype = ent_p,
+      position = pos,
+      building_direction = build_dir,
+   })
 
    --Notify before all else if surface/player cannot place this entity. laterdo extend this valid placement check by copying over build offset stuff
    if
@@ -745,12 +750,6 @@ function mod.build_preview_checks_info(stack, pindex)
    --For electric poles, report the directions of up to 5 wire-connectible
    -- electric poles that can connect.
    if ent_p.type == "electric-pole" then
-      -- Calculate center position of the entity being placed
-      local footprint = FaUtils.calculate_building_footprint({
-         entity_prototype = ent_p,
-         position = pos,
-         building_direction = build_dir,
-      })
       local pole_center = footprint.center
 
       local pole_dict = surf.find_entities_filtered({
@@ -796,12 +795,6 @@ function mod.build_preview_checks_info(stack, pindex)
 
    --For roboports, list possible neighbors that would connect (boxes overlap)
    if ent_p.type == "roboport" then
-      -- Calculate center of roboport being placed
-      local footprint = FaUtils.calculate_building_footprint({
-         entity_prototype = ent_p,
-         position = pos,
-         building_direction = build_dir,
-      })
       local new_center = footprint.center
       local new_radius = ent_p.logistic_radius -- connection distance >= logistic_radius
 
@@ -886,13 +879,14 @@ function mod.build_preview_checks_info(stack, pindex)
    --For all electric powered entities, note whether powered, and from which direction. Otherwise report the nearest power pole.
    if ent_p.electric_energy_source_prototype ~= nil then
       local vp = Viewpoint.get_viewpoint(pindex)
-      local position = pos
       local build_dir = vp:get_hand_direction()
       local sel_left_top = ent_p.selection_box.left_top --[[@as MapPosition.struct]]
       local sel_right_bottom = ent_p.selection_box.right_bottom --[[@as MapPosition.struct]]
 
-      position.x = position.x + math.ceil(2 * sel_right_bottom.x) / 2 - 0.5
-      position.y = position.y + math.ceil(2 * sel_right_bottom.y) / 2 - 0.5
+      local position = {
+         x = pos.x + math.ceil(2 * sel_right_bottom.x) / 2 - 0.5,
+         y = pos.y + math.ceil(2 * sel_right_bottom.y) / 2 - 0.5,
+      }
 
       local dict = prototypes.get_entity_filtered({ { filter = "type", type = "electric-pole" } })
       local poles = {}
@@ -934,8 +928,8 @@ function mod.build_preview_checks_info(stack, pindex)
       end
       if found_pole then
          table.insert(result, { "fa.connection-power-connected" })
-         local dist = math.ceil(util.distance(found_pole.position, pos))
-         local dir = FaUtils.get_direction_biased(found_pole.position, pos)
+         local dist = math.ceil(util.distance(found_pole.position, position))
+         local dir = FaUtils.get_direction_biased(found_pole.position, position)
          table.insert(result, {
             "fa.connection-from-direction",
             FaUtils.format_distance_with_direction(dist, dir),
@@ -943,11 +937,11 @@ function mod.build_preview_checks_info(stack, pindex)
       else
          table.insert(result, { "fa.connection-power-not-connected" })
          --Notify if no connections and state nearest electric pole
-         local nearest_pole, min_dist = Electrical.find_nearest_electric_pole(nil, false, 50, surf, pos)
+         local nearest_pole, min_dist = Electrical.find_nearest_electric_pole(nil, false, 50, surf, position)
          if min_dist == nil or min_dist >= 1000 then
             table.insert(result, { "fa.connection-no-poles-within" })
          else
-            local dir = FaUtils.get_direction_biased(nearest_pole.position, pos)
+            local dir = FaUtils.get_direction_biased(nearest_pole.position, position)
             table.insert(result, {
                "fa.connection-to-nearest-pole",
                FaUtils.format_distance_with_direction(math.ceil(min_dist), dir),
@@ -956,7 +950,9 @@ function mod.build_preview_checks_info(stack, pindex)
       end
    end
 
-   if util.distance(pos, p.position) > p.reach_distance + 2 then
+   -- The game measures build reach to the nearest point of the building's footprint.
+   local player_pos = p.position --[[@as MapPosition.struct]]
+   if util.distance(FaUtils.closest_point_in_box(player_pos, footprint), player_pos) > p.build_distance then
       table.insert(result, { "fa.connection-cursor-out-of-reach" })
    end
    return result
