@@ -11,3 +11,4 @@ factorio_crash_*
 # Local scratch space (extractions, dumps)
 /scratchpad/
 /native/build/
+/.tools/

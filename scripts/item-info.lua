@@ -651,8 +651,10 @@ local function fuel_info(message, item_proto)
 
    message:list_item({ "fa.item-info-fuel-value", FaUtils.format_power(fuel_value, "j") })
 
-   local fuel_category = item_proto.fuel_category
-   if fuel_category then message:list_item({ "fa.item-info-fuel-category", fuel_category }) end
+   -- Factorio 2.1.21 replaced the single fuel_category with a list (absent when empty).
+   for _, fuel_category in ipairs(item_proto.fuel_categories or {}) do
+      message:list_item({ "fa.item-info-fuel-category", fuel_category })
+   end
 end
 
 ---@class fa.ItemInfo.GetItemStackInfoOptions
