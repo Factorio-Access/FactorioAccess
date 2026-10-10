@@ -4055,36 +4055,6 @@ EventManager.on_event("fa-o", function(event)
    end
 end, EventManager.EVENT_KIND.WORLD)
 
--- Virtual train driving keys
--- TODO: Add these key definitions to data.lua
--- EventManager.on_event("fa-slash", function(event)
---    VirtualTrainDriving.on_kb_descriptive_action_name(event)
--- end, EventManager.EVENT_KIND.WORLD)
-
--- EventManager.on_event("fa-alt-comma", function(event)
---    VirtualTrainDriving.on_kb_descriptive_action_name(event)
--- end, EventManager.EVENT_KIND.WORLD)
-
--- EventManager.on_event("fa-shift-b", function(event)
---    VirtualTrainDriving.on_kb_descriptive_action_name(event)
--- end, EventManager.EVENT_KIND.WORLD)
-
--- EventManager.on_event("fa-ctrl-m", function(event)
---    VirtualTrainDriving.on_kb_descriptive_action_name(event)
--- end, EventManager.EVENT_KIND.WORLD)
-
--- EventManager.on_event("fa-ctrl-dot", function(event)
---    VirtualTrainDriving.on_kb_descriptive_action_name(event)
--- end, EventManager.EVENT_KIND.WORLD)
-
--- EventManager.on_event("fa-shift-m", function(event)
---    VirtualTrainDriving.on_kb_descriptive_action_name(event)
--- end, EventManager.EVENT_KIND.WORLD)
-
--- EventManager.on_event("fa-shift-dot", function(event)
---    VirtualTrainDriving.on_kb_descriptive_action_name(event)
--- end, EventManager.EVENT_KIND.WORLD)
-
 -- Zoom controls (WORLD priority so UI bar handlers take precedence)
 EventManager.on_event("fa-minus", function(event, pindex)
    Zoom.zoom_out(pindex)
