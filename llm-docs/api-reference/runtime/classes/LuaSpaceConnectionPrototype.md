@@ -6,6 +6,10 @@ Prototype of a space connection.
 
 ## Attributes
 
+### origin
+
+**Read type:** `MapPosition`
+
 ### from
 
 **Read type:** `LuaSpaceLocationPrototype`
@@ -17,6 +21,10 @@ Prototype of a space connection.
 ### length
 
 **Read type:** `uint32`
+
+### shape
+
+**Read type:** `"arc"` | `"line"`
 
 ### asteroid_spawn_definitions
 

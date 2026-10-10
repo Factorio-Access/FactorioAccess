@@ -121,6 +121,8 @@ The amount of energy the lamp uses. Must be greater than > 0.
 
 The emissions set on the energy source are ignored so lamps cannot produce pollution.
 
+If this is an electric energy source, any [usage_priority](prototype:ElectricEnergySource::usage_priority) set here will be ignored, lamps always have the "lamp" usage priority.
+
 **Type:** `ElectricEnergySource` | `VoidEnergySource`
 
 **Required:** Yes

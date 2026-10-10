@@ -12,6 +12,14 @@ List of conditions.
 
 **Required:** Yes
 
+### else_outputs
+
+List of else-outputs.
+
+**Type:** Array[`DeciderCombinatorOutput`]
+
+**Required:** Yes
+
 ### outputs
 
 List of outputs.

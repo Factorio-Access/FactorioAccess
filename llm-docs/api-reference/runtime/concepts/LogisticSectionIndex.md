@@ -1,0 +1,4 @@
+# LogisticSectionIndex
+
+**Type:** `uint8`
+

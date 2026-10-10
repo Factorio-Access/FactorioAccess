@@ -10,6 +10,12 @@
 
 **Optional:** Yes
 
+### empty_slots_signal
+
+**Type:** `SignalID`
+
+**Optional:** Yes
+
 ### input_networks
 
 **Type:** `CircuitNetworkSelection`
@@ -31,6 +37,14 @@ Defaults to `true`.
 **Optional:** Yes
 
 ### read_damage_taken
+
+Defaults to `false`.
+
+**Type:** `boolean`
+
+**Optional:** Yes
+
+### read_empty_slots
 
 Defaults to `false`.
 

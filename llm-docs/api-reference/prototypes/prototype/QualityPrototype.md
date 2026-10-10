@@ -286,13 +286,27 @@ Must be >= 0.01.
 
 Must be >= 0.01.
 
-Affects the durability of [tool items](prototype:ToolPrototype) like science packs, repair tools and armor.
+Affects the durability of [tool items](prototype:ToolPrototype) like repair tools and armor.
 
 **Type:** `double`
 
 **Optional:** Yes
 
 **Default:** "1 + `level`"
+
+### science_capacity_multiplier
+
+Must be >= 0.01.
+
+Affects how much research will lab be able to do using item of that quality.
+
+Only used for items that are not a [tool](prototype:ToolPrototype).
+
+**Type:** `double`
+
+**Optional:** Yes
+
+**Default:** "Value of `tool_durability_multiplier`"
 
 ### accumulator_capacity_multiplier
 
@@ -451,6 +465,8 @@ Must be >= 0.01.
 ### spoil_ticks_multiplier
 
 Must be >= 0.01.
+
+Only affects items with [ItemPrototype::quality_affects_spoil_ticks](prototype:ItemPrototype::quality_affects_spoil_ticks) set.
 
 **Type:** `float`
 

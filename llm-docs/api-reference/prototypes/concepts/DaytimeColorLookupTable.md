@@ -24,7 +24,7 @@ color_lookup = {{0.5, "__core__/graphics/color_luts/nightvision.png"}}
 
 ```
 ```
-zoom_to_world_daytime_color_lookup =
+daytime_color_lookup =
 {
   {0.25, "identity"},
   {0.45, "__core__/graphics/color_luts/night.png"},

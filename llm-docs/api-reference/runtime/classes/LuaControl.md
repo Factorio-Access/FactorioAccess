@@ -100,11 +100,11 @@ The GUI the player currently has open.
 
 This is the GUI that will asked to close (by firing the [on_gui_closed](runtime:on_gui_closed) event) when the `Esc` or `E` keys are pressed. If this attribute is non-nil, then writing `nil` or a new GUI to it will ask the existing GUI to close.
 
-Write supports any of the types. Read will return the `entity`, `equipment`, `equipment-grid`, `player`, `element`, `inventory`, `item` or `nil`.
+Write supports any of the types. Read will return the `entity`, `equipment`, `equipment-grid`, `player`, `element`, `inventory`, `item`, `tile`, or `nil`.
 
-**Read type:** `LuaEntity` | `LuaItemStack` | `LuaEquipment` | `LuaEquipmentGrid` | `LuaPlayer` | `LuaGuiElement` | `LuaInventory` | `LuaLogisticNetwork` | `LuaItemStack` | `defines.gui_type`
+**Read type:** `LuaEntity` | `LuaItemStack` | `LuaEquipment` | `LuaEquipmentGrid` | `LuaPlayer` | `LuaGuiElement` | `LuaInventory` | `LuaLogisticNetwork` | `LuaTile` | `defines.gui_type`
 
-**Write type:** `LuaEntity` | `LuaItemStack` | `LuaEquipment` | `LuaEquipmentGrid` | `LuaPlayer` | `LuaGuiElement` | `LuaInventory` | `LuaLogisticNetwork` | `LuaItemStack` | `defines.gui_type`
+**Write type:** `LuaEntity` | `LuaItemStack` | `LuaEquipment` | `LuaEquipmentGrid` | `LuaPlayer` | `LuaGuiElement` | `LuaInventory` | `LuaLogisticNetwork` | `LuaTile` | `defines.gui_type`
 
 **Optional:** Yes
 

@@ -22,6 +22,14 @@ score(chunk) = 1 / (1 + player + base)
 
 ## Parameters
 
+### build_base_unit_dispatch_cooldown
+
+Cooldown in ticks for dispatching units when building bases. Defaults to `60*30=1 800` ticks.
+
+**Type:** `uint32`
+
+**Required:** Yes
+
 ### building_coefficient
 
 Defaults to `0.5`.

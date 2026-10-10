@@ -42,11 +42,11 @@ Maximum stack size of the item specified by this prototype.
 
 **Read type:** `uint32`
 
-### fuel_category
+### fuel_categories
 
-The fuel category, if any.
+Fuel categories. Only provided when not empty.
 
-**Read type:** `string`
+**Read type:** Array[`string`]
 
 **Optional:** Yes
 
@@ -194,9 +194,17 @@ An alternative prototype that will be used to display info about this prototype 
 
 **Read type:** `boolean`
 
+### quality_affects_spoil_ticks
+
+**Read type:** `boolean`
+
 ### lab_ignores_spoil_percent
 
 **Read type:** `boolean`
+
+### science_capacity
+
+**Read type:** `double`
 
 ### space_platform_request_priority
 
@@ -348,7 +356,7 @@ The gun attack parameters.
 
 ### item_group_filters
 
-**Read type:** Array[`LuaGroup`]
+**Read type:** Array[`LuaItemGroup`]
 
 **Optional:** Yes
 
@@ -356,7 +364,7 @@ The gun attack parameters.
 
 ### item_subgroup_filters
 
-**Read type:** Array[`LuaGroup`]
+**Read type:** Array[`LuaItemSubGroup`]
 
 **Optional:** Yes
 
@@ -424,7 +432,7 @@ The repairing speed if this is a repairing tool.
 
 Effects of this module.
 
-**Read type:** `ModuleEffects`
+**Read type:** `Effect`
 
 **Optional:** Yes
 
@@ -718,7 +726,7 @@ Effects of this module at the specified quality.
 
 **Returns:**
 
-- `ModuleEffects` *(optional)*
+- `Effect` *(optional)*
 
 ### get_selection_border_color
 

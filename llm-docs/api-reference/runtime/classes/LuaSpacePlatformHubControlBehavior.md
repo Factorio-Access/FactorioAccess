@@ -14,6 +14,20 @@ Control behavior for space platform hubs
 
 **Write type:** `boolean`
 
+### read_empty_slots
+
+**Read type:** `boolean`
+
+**Write type:** `boolean`
+
+### empty_slots_signal
+
+**Read type:** `SignalID`
+
+**Write type:** `SignalID`
+
+**Optional:** Yes
+
 ### set_requests
 
 **Read type:** `boolean`

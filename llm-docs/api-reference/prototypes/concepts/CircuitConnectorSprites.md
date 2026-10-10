@@ -80,3 +80,19 @@ Drawn when the entity is connected to a circuit network.
 
 **Optional:** Yes
 
+### render_layer
+
+**Type:** `RenderLayer`
+
+**Optional:** Yes
+
+**Default:** "object"
+
+### secondary_draw_order
+
+**Type:** `int8`
+
+**Optional:** Yes
+
+**Default:** 10
+

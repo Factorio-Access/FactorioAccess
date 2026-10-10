@@ -64,3 +64,13 @@ Refer to [EntityPrototype::water_reflection](prototype:EntityPrototype::water_re
 
 **Optional:** Yes
 
+### animation_random_start_frame
+
+If true the starting frame will be randomized upon placement.
+
+**Type:** `boolean`
+
+**Optional:** Yes
+
+**Default:** True
+

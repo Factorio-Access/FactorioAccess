@@ -4,6 +4,12 @@
 
 ## Parameters
 
+### launched_signal
+
+**Type:** `SignalID`
+
+**Optional:** Yes
+
 ### output_networks
 
 **Type:** `CircuitNetworkSelection`
@@ -15,6 +21,14 @@
 Defaults to `logistic_inventory`.
 
 **Type:** `defines.control_behavior.rocket_silo.read_mode`
+
+**Optional:** Yes
+
+### read_launched
+
+Defaults to `false`.
+
+**Type:** `boolean`
 
 **Optional:** Yes
 

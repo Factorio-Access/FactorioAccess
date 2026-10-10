@@ -195,6 +195,18 @@ Converts LuaEventType into related value of defines.events. Value will be provid
 
 - `defines.events`
 
+### get_event_name
+
+Converts LuaEventType into corresponding event name. If event has no name, no value will be given.
+
+**Parameters:**
+
+- `event` `LuaEventType`
+
+**Returns:**
+
+- `string` *(optional)*
+
 ### get_event_handler
 
 Find the event handler for an event.

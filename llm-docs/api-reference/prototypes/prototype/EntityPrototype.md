@@ -327,6 +327,12 @@ The effect/trigger that happens when the entity is placed.
 
 **Optional:** Yes
 
+### ghost_build_sound
+
+**Type:** `Sound`
+
+**Optional:** Yes
+
 ### impact_category
 
 Name of a [ImpactCategory](prototype:ImpactCategory).

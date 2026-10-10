@@ -6,7 +6,7 @@ Style of a GUI element. All of the attributes listed here may be `nil` if not av
 
 ### gui
 
-Gui of the [LuaGuiElement](runtime:LuaGuiElement) of this style.
+GUI of the [LuaGuiElement](runtime:LuaGuiElement) of this style.
 
 **Read type:** `LuaGui`
 

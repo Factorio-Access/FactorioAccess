@@ -58,7 +58,7 @@ Removes the given logistic section if possible. Removal may fail if the section 
 
 **Parameters:**
 
-- `section_index` `uint32` - Index of the section.
+- `section_index` `LogisticSectionIndex` - Index of the section.
 
 **Returns:**
 
@@ -70,7 +70,7 @@ Gets section on the selected index, if it exists.
 
 **Parameters:**
 
-- `section_index` `uint32` - Index of the section.
+- `section_index` `LogisticSectionIndex` - Index of the section.
 
 **Returns:**
 

@@ -56,6 +56,14 @@ Note that this is actually implemented as a [LuaCustomTable](runtime:LuaCustomTa
 
 **Required:** Yes
 
+### asteroid_min_damage_modifier
+
+Asteroid damage will be multiplied by this value when space platform speed is zero and will linearly increase until asteroid_spawning_with_random_orientation_max_speed is reached.
+
+**Type:** `float`
+
+**Required:** Yes
+
 ### asteroid_position_offset_to_speed_coefficient
 
 **Type:** `double`
@@ -69,6 +77,8 @@ Note that this is actually implemented as a [LuaCustomTable](runtime:LuaCustomTa
 **Required:** Yes
 
 ### asteroid_spawning_with_random_orientation_max_speed
+
+In km per tick.
 
 **Type:** `double`
 
@@ -1273,24 +1283,6 @@ Silently clamped to be between 0 and 1.
 ### zero_count_value_tint
 
 **Type:** `Color`
-
-**Required:** Yes
-
-### zoom_to_world_can_use_nightvision
-
-**Type:** `boolean`
-
-**Required:** Yes
-
-### zoom_to_world_daytime_color_lookup
-
-**Type:** `DaytimeColorLookupTable`
-
-**Required:** Yes
-
-### zoom_to_world_effect_strength
-
-**Type:** `float`
 
 **Required:** Yes
 

@@ -120,19 +120,21 @@ The collision masks this entity uses
 
 The trigger target mask for this entity prototype type.
 
-The values in the dictionary are meaningless and exists just to allow the dictionary type for easy lookup.
-
-**Read type:** Dictionary[`string`, `boolean`]
+**Read type:** Dictionary[`string`, `True`]
 
 ### attack_target_mask
 
 **Read type:** `TriggerTargetMask`
+
+**Optional:** Yes
 
 **Subclasses:** Turret
 
 ### ignore_target_mask
 
 **Read type:** `TriggerTargetMask`
+
+**Optional:** Yes
 
 **Subclasses:** Turret
 
@@ -578,6 +580,8 @@ Returns the inventory size if this entity is of normal quality. Use [LuaEntityPr
 
 **Read type:** Dictionary[`QualityID`, `ItemStackIndex`]
 
+**Optional:** Yes
+
 **Subclasses:** CraftingMachine
 
 ### inventory_type
@@ -642,6 +646,8 @@ The max number of item products this crafting machine prototype supports.
 
 **Read type:** Dictionary[`QualityID`, `double`]
 
+**Optional:** Yes
+
 **Subclasses:** CraftingMachine
 
 ### crafting_categories
@@ -667,6 +673,8 @@ The value in the dictionary is meaningless and exists just to allow for easy loo
 ### energy_usage_quality_multiplier
 
 **Read type:** Dictionary[`QualityID`, `double`]
+
+**Optional:** Yes
 
 **Subclasses:** CraftingMachine
 
@@ -946,9 +954,9 @@ The heat buffer prototype this entity uses, if any.
 
 **Optional:** Yes
 
-### building_grid_bit_shift
+### build_grid_size
 
-The log2 of [grid size](prototype:EntityPrototype::build_grid_size) of the building.
+The [grid size](prototype:EntityPrototype::build_grid_size) of the building.
 
 **Read type:** `uint32`
 
@@ -1209,6 +1217,8 @@ The time to live for this prototype or `0` if prototype doesn't have time_to_liv
 ### alert_after_time
 
 **Read type:** `uint32`
+
+**Optional:** Yes
 
 **Subclasses:** TemporaryContainer
 
@@ -1740,6 +1750,10 @@ The radius of this entity prototype. The radius is defined as half the distance 
 
 **Read type:** `double`
 
+### show_fluid_visualization_when_in_cursor
+
+**Read type:** `boolean`
+
 ### cliff_explosive_prototype
 
 The item prototype name used to destroy this cliff.
@@ -1896,6 +1910,8 @@ If this lab uses the quality drain modifier when consuming science packs.
 
 **Read type:** `boolean`
 
+**Optional:** Yes
+
 **Subclasses:** Lab
 
 ### science_pack_drain_rate_percent
@@ -1903,6 +1919,8 @@ If this lab uses the quality drain modifier when consuming science packs.
 How much science pack durability is required to research one science point.
 
 **Read type:** `uint8`
+
+**Optional:** Yes
 
 **Subclasses:** Lab
 
@@ -2336,6 +2354,8 @@ The energy required to keep this entity from freezing. Zero energy means it does
 
 **Read type:** `boolean`
 
+**Optional:** Yes
+
 **Subclasses:** Corpse
 
 ### factoriopedia_alternative
@@ -2350,11 +2370,15 @@ An alternative prototype that will be used to display info about this prototype 
 
 **Read type:** `boolean`
 
+**Optional:** Yes
+
 **Subclasses:** ElectricPole
 
 ### solar_panel_performance_at_day
 
 **Read type:** `double`
+
+**Optional:** Yes
 
 **Subclasses:** SolarPanel
 
@@ -2362,11 +2386,15 @@ An alternative prototype that will be used to display info about this prototype 
 
 **Read type:** `double`
 
+**Optional:** Yes
+
 **Subclasses:** SolarPanel
 
 ### solar_panel_solar_coefficient_property
 
 **Read type:** `LuaSurfacePropertyPrototype`
+
+**Optional:** Yes
 
 **Subclasses:** SolarPanel
 
@@ -2520,6 +2548,12 @@ An alternative prototype that will be used to display info about this prototype 
 
 **Subclasses:** CraftingMachine, MiningDrill, Inserter
 
+### allows_flipping
+
+When this entity is part of blueprint, will it allow flipping of the blueprint?
+
+**Read type:** `boolean`
+
 ### territory_radius
 
 **Read type:** `uint32`
@@ -2564,11 +2598,15 @@ An alternative prototype that will be used to display info about this prototype 
 
 **Read type:** `double`
 
+**Optional:** Yes
+
 **Subclasses:** SegmentedUnit
 
 ### acceleration_rate
 
 **Read type:** `double`
+
+**Optional:** Yes
 
 **Subclasses:** SegmentedUnit
 
@@ -3120,6 +3158,8 @@ When lightning hits a lightning attractor this amount of energy is transferred t
 
 **Read type:** Array[`string`]
 
+**Optional:** Yes
+
 **Subclasses:** FluidWagon
 
 ### quality_affects_capacity
@@ -3288,7 +3328,7 @@ When lightning hits a lightning attractor this amount of energy is transferred t
 
 **Optional:** Yes
 
-**Subclasses:** AssemblingMachine
+**Subclasses:** AssemblingMachine, Furnace
 
 ### default_working_signal
 
@@ -3296,7 +3336,7 @@ When lightning hits a lightning attractor this amount of energy is transferred t
 
 **Optional:** Yes
 
-**Subclasses:** AssemblingMachine
+**Subclasses:** AssemblingMachine, Furnace
 
 ### disabled_when_recipe_not_researched
 
@@ -3421,6 +3461,8 @@ When lightning hits a lightning attractor this amount of energy is transferred t
 ### track_particle_triggers
 
 **Read type:** Dictionary[`LuaTilePrototype`, Array[`TriggerEffectItem`]]
+
+**Optional:** Yes
 
 **Subclasses:** Car
 
@@ -3606,7 +3648,7 @@ When lightning hits a lightning attractor this amount of energy is transferred t
 
 **Optional:** Yes
 
-**Subclasses:** Container
+**Subclasses:** Container, ProxyContainer
 
 ### default_status
 
@@ -3615,6 +3657,14 @@ When lightning hits a lightning attractor this amount of energy is transferred t
 **Optional:** Yes
 
 **Subclasses:** Container
+
+### default_empty_slots_signal
+
+**Read type:** `SignalID`
+
+**Optional:** Yes
+
+**Subclasses:** Container, LinkedContainer, ProxyContainer, SpacePlatformHub, CargoLandingPad
 
 ### expires
 
@@ -3763,6 +3813,8 @@ When lightning hits a lightning attractor this amount of energy is transferred t
 ### absorptions_per_second
 
 **Read type:** Dictionary[`string`, `EnemySpawnerAbsorption`]
+
+**Optional:** Yes
 
 **Subclasses:** Spawner
 
@@ -4902,6 +4954,14 @@ When lightning hits a lightning attractor this amount of energy is transferred t
 
 **Subclasses:** RocketSilo
 
+### default_launched_signal
+
+**Read type:** `SignalID`
+
+**Optional:** Yes
+
+**Subclasses:** RocketSilo
+
 ### default_game_tick_output_signal
 
 **Read type:** `SignalID`
@@ -5007,7 +5067,7 @@ The crafting speed of this crafting-machine or character.
 
 **Returns:**
 
-- `double`
+- `double` *(optional)*
 
 ### get_supply_area_distance
 
@@ -5019,7 +5079,7 @@ The supply area of this electric pole or beacon prototype.
 
 **Returns:**
 
-- `double`
+- `double` *(optional)*
 
 ### get_max_wire_distance
 
@@ -5187,7 +5247,7 @@ The pumping speed of this offshore pump or normal pump.
 
 **Returns:**
 
-- `double`
+- `double` *(optional)*
 
 ### get_valve_flow_rate
 
@@ -5199,7 +5259,7 @@ The maximum flow rate through this valve.
 
 **Returns:**
 
-- `double`
+- `double` *(optional)*
 
 ### get_max_speed
 

@@ -1,4 +1,4 @@
-# ModuleEffects
+# Effect
 
 **Type:** Table
 
@@ -6,31 +6,31 @@
 
 ### consumption
 
-**Type:** `ModuleEffectValue`
+**Type:** `EffectValue`
 
 **Optional:** Yes
 
 ### pollution
 
-**Type:** `ModuleEffectValue`
+**Type:** `EffectValue`
 
 **Optional:** Yes
 
 ### productivity
 
-**Type:** `ModuleEffectValue`
+**Type:** `EffectValue`
 
 **Optional:** Yes
 
 ### quality
 
-**Type:** `ModuleEffectValue`
+**Type:** `EffectValue`
 
 **Optional:** Yes
 
 ### speed
 
-**Type:** `ModuleEffectValue`
+**Type:** `EffectValue`
 
 **Optional:** Yes
 

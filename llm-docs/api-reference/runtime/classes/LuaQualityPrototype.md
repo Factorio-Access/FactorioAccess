@@ -24,6 +24,8 @@ The next higher level of the quality
 
 **Read type:** `LuaQualityPrototype`
 
+**Optional:** Yes
+
 ### next_probability
 
 The probability multiplier of getting the next level of quality.
@@ -39,6 +41,8 @@ Probability of additional quality increase happening after quality was increased
 ### previous
 
 **Read type:** `LuaQualityPrototype`
+
+**Optional:** Yes
 
 ### previous_probability
 
@@ -113,6 +117,10 @@ Probability of additional quality decrease happening after quality was decreased
 **Read type:** `double`
 
 ### tool_durability_multiplier
+
+**Read type:** `double`
+
+### science_capacity_multiplier
 
 **Read type:** `double`
 
@@ -211,4 +219,33 @@ Is this object valid? This Lua object holds a reference to an object within the 
 The class name of this object. Available even when `valid` is false. For LuaStruct objects it may also be suffixed with a dotted path to a member of the struct.
 
 **Read type:** `string`
+
+## Methods
+
+### roll_quality
+
+Performs quality roll
+
+**Parameters:**
+
+- `quality_effect` `EffectValue` - Strength of quality effect. Larger value makes it easier to roll better qualities.
+- `quality_seed` `double` - Random value in [0, 1) used to select result quality.
+- `force` `ForceID` *(optional)* - Force which is doing the quality roll. Used to select unlocked qualities. If not provided, all qualities are considered unlocked.
+
+**Returns:**
+
+- `LuaQualityPrototype`
+
+### get_roll_chances
+
+Computes probabilities of rolling various qualities given a quality effect
+
+**Parameters:**
+
+- `quality_effect` `EffectValue` - Strength of quality effect. Larger value makes it easier to roll better qualities.
+- `force` `ForceID` *(optional)* - Force to select unlocked qualities. If not provided, all qualities are considered unlocked.
+
+**Returns:**
+
+- Dictionary[`string`, `double`] - Roll chances per quality. Only positive values are listed. All values should sum to 1.
 

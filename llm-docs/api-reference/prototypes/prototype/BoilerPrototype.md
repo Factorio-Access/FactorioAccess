@@ -33,7 +33,7 @@ If `mode` is `"heat-fluid-inside"`, the fluid is heated up directly in this flui
 
 The output fluid box.
 
-If `mode` is `"output-to-separate-pipe"` and this has a [filter](prototype:FluidBox::filter), the heated input fluid is converted to the output fluid that is set in the filter. The conversion ratio is based on the [heat capacity](prototype:FluidPrototype::heat_capacity) of the fluids: `output_fluid_amount = input_fluid_amount * (output_fluid_heat_capacity / input_fluid_heat_capacity)`
+If `mode` is `"output-to-separate-pipe"` and this has a [filter](prototype:FluidBox::filter), the heated input fluid is converted to the output fluid that is set in the filter. The conversion ratio is based on the [heat capacity](prototype:FluidPrototype::heat_capacity) of the fluids: `output_fluid_amount = input_fluid_amount * (input_fluid_heat_capacity / output_fluid_heat_capacity)`
 
 If `mode` is `"heat-fluid-inside"`, this fluidbox is unused.
 
@@ -59,7 +59,7 @@ Note that `fire` and `fire_glow` alpha is set to the light intensity of the ener
 
 ### target_temperature
 
-Only loaded, and mandatory if `mode` is `"output-to-separate-pipe"`. This is the temperature that the input fluid must reach to be moved to the output fluid box.
+Only loaded, and mandatory if `mode` is `"output-to-separate-pipe"`. The boiler heats the input fluid to exactly this temperature and moves the fluid to the output fluid box.
 
 **Type:** `float`
 
@@ -87,7 +87,7 @@ If this is set to false, `fire` alpha is always 1 instead of being controlled by
 
 ### mode
 
-In the `"output-to-separate-pipe"` mode, fluid is transferred from the `fluid_box` to the `output_fluid_box` when enough energy is available to [heat](prototype:FluidPrototype::heat_capacity) the input fluid to the `target_temperature`. Setting a filter on the `output_fluid_box` means that instead of the heated input fluid getting moved to the output, it is converted to the filtered fluid in a ratio based on the heat capacity of the fluids: `output_fluid_amount = input_fluid_amount * (output_fluid_heat_capacity / input_fluid_heat_capacity)`
+In the `"output-to-separate-pipe"` mode, fluid is transferred from the `fluid_box` to the `output_fluid_box` when enough energy is available to [heat](prototype:FluidPrototype::heat_capacity) the input fluid to the `target_temperature`. Setting a filter on the `output_fluid_box` means that instead of the heated input fluid getting moved to the output, it is converted to the filtered fluid in a ratio based on the heat capacity of the fluids: `output_fluid_amount = input_fluid_amount * (input_fluid_heat_capacity / output_fluid_heat_capacity)`
 
 In the `"heat-fluid-inside"` mode, fluid in the `fluid_box` is continuously heated from the input temperature up to its [FluidPrototype::max_temperature](prototype:FluidPrototype::max_temperature).
 

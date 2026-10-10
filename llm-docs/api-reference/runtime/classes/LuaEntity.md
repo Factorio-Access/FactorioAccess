@@ -416,7 +416,9 @@ Energy stored in the entity's energy buffer (energy stored in electrical devices
 
 ### temperature
 
-The temperature of this entity's heat energy source. `nil` if this entity does not use a heat energy source.
+The temperature of this entity's heat energy source or this entity's heat buffer. `nil` if this entity does not use a heat energy source or does not have a heat buffer.
+
+The following entity types have a heat buffer: heat pipe, reactor and heat interface.
 
 **Read type:** `double`
 
@@ -492,7 +494,9 @@ The belt connectable neighbours of this belt connectable entity. Only entities t
 
 ### heat_neighbours
 
-The entities connected to this entities heat buffer.
+The entities connected to this entity's heat energy source or this entity's heat buffer.
+
+The following entity types have a heat buffer: heat pipe, reactor and heat interface.
 
 **Read type:** Array[`LuaEntity`]
 
@@ -1158,7 +1162,15 @@ The description on this combinator.
 
 The effects being applied to this entity, if any. For beacons, this is the effect the beacon is broadcasting.
 
-**Read type:** `ModuleEffects`
+**Read type:** `Effect`
+
+**Optional:** Yes
+
+### potential_effects
+
+The effects that will be applied to this entity once all upgrades are resolved. Can only be used when the entity has an effect receiver (AssemblingMachine, Furnace, Lab, MiningDrill, AgriculturalTower).
+
+**Read type:** `Effect`
 
 **Optional:** Yes
 
@@ -2276,6 +2288,36 @@ The priority targets for this turret (if any).
 
 **Subclasses:** Turret
 
+### request_missing_construction_materials
+
+If this space platform hub will automatically make logistic requests for any missing construction materials.
+
+**Read type:** `boolean`
+
+**Write type:** `boolean`
+
+**Subclasses:** SpacePlatformHub
+
+### providing_to_other_platforms
+
+If this space platform hub will provide its contents to other requesting platforms.
+
+**Read type:** `boolean`
+
+**Write type:** `boolean`
+
+**Subclasses:** SpacePlatformHub
+
+### local_effect
+
+Additional effect applied to this entity with effect receiver. `nil` if this entity has no effect receiver.
+
+**Read type:** `Effect`
+
+**Write type:** `Effect`
+
+**Optional:** Yes
+
 ### proxy_target_entity
 
 Entity of which inventory is exposed by this ProxyContainer
@@ -2637,6 +2679,11 @@ Is this entity marked for upgrade?
 ### apply_upgrade
 
 Upgrades this entity in place if it's marked to be upgraded.
+
+**Parameters:**
+
+- `override_target` `EntityWithQualityID` *(optional)* - The override upgrade target - used instead of the entities current upgrade target if given. Note, the entity must be fast-replaceable with the override target, or it won't be upgraded.
+- `buffer` `LuaInventory` *(optional)* - If provided - any items left over from the upgrade are put into this inventory.
 
 **Returns:**
 
@@ -3057,6 +3104,23 @@ Read all signals from the selected wire connector.
 **Returns:**
 
 - Array[`Signal`] *(optional)* - Current values of all signals.
+
+### get_signals_changed
+
+Checks if signals on a circuit connector changed recently.
+
+Returns `true` if signals changed since last tick. If a tick of last check is provided, returns `true` if signals changed since the specified tick. May also return `true` spuriously in other situations when values seen on this connector may be different, caused by addition of wires, removal of wires, circuit network merges, circuit network splits, input network selection changes, etc.
+
+`nil` if entity has no circuit connector with provided identifier.
+
+**Parameters:**
+
+- `wire_connector_id` `defines.wire_connector_id`
+- `tick_of_last_check` `MapTick` *(optional)* - Value of [LuaGameScript::tick](runtime:LuaGameScript::tick) of the previous check.
+
+**Returns:**
+
+- `boolean` *(optional)*
 
 ### supports_backer_name
 

@@ -17,9 +17,19 @@ A value which modifies platform speed; is subtracted when traveling from this lo
 
 **Default:** 0
 
+### origin
+
+The location that this space location orbits in the space map.
+
+**Type:** `MapPosition`
+
+**Optional:** Yes
+
+**Default:** "`{0, 0}`"
+
 ### distance
 
-Distance from the sun in map coordinates.
+Distance from the origin in map coordinates.
 
 **Type:** `double`
 
@@ -27,7 +37,7 @@ Distance from the sun in map coordinates.
 
 ### orientation
 
-Angle in relation to the sun.
+Angle in relation to the origin.
 
 **Type:** `RealOrientation`
 
@@ -65,7 +75,7 @@ The orientation where the location's name will be drawn.
 
 ### draw_orbit
 
-If `false`, the orbital ring around the sun will not be drawn for this location.
+If `false`, the orbital ring around the origin will not be drawn for this location.
 
 **Type:** `boolean`
 
@@ -199,7 +209,7 @@ Only loaded if `starmap_icons` is not defined.
 
 ### starmap_icon_orientation
 
-Orientation of the starmap icon, defaults to pointing towards the sun.
+Orientation of the starmap icon, defaults to pointing towards the origin.
 
 **Type:** `RealOrientation`
 

@@ -6,13 +6,13 @@
 
 ### high
 
-**Type:** `double`
+**Type:** `EffectValue`
 
 **Required:** Yes
 
 ### low
 
-**Type:** `double`
+**Type:** `EffectValue`
 
 **Required:** Yes
 

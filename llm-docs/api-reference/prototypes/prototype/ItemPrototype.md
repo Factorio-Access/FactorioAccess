@@ -109,15 +109,13 @@ place_result = "wooden-chest"
 
 **Default:** ""
 
-### fuel_category
+### fuel_categories
 
-Must exist when a nonzero fuel_value is defined.
+Mandatory with at least one fuel category when a nonzero fuel_value is defined.
 
-**Type:** `FuelCategoryID`
+**Type:** Array[`FuelCategoryID`]
 
 **Optional:** Yes
-
-**Default:** ""
 
 ### burnt_result
 
@@ -131,11 +129,17 @@ The item that is the result when this item gets burned as fuel.
 
 ### spoil_result
 
+Only loaded if `spoil_ticks` is larger than 0.
+
 **Type:** `ItemID`
 
 **Optional:** Yes
 
 ### spoil_quality_min
+
+Only loaded if `spoil_ticks` is larger than 0.
+
+The minimum quality level that can be reached when [spoil_quality_change](prototype:ItemPrototype::spoil_quality_change) is used.
 
 **Type:** `QualityID`
 
@@ -143,15 +147,25 @@ The item that is the result when this item gets burned as fuel.
 
 ### spoil_quality_max
 
+Only loaded if `spoil_ticks` is larger than 0.
+
+The maximum quality level that can be reached when [spoil_quality_change](prototype:ItemPrototype::spoil_quality_change) is used.
+
 **Type:** `QualityID`
 
 **Optional:** Yes
 
 ### spoil_quality_change
 
+Only loaded if `spoil_ticks` is larger than 0.
+
+Defines how many levels the item's quality will go up (positive integer) or down (negative integer) when spoiling.
+
 **Type:** `int8`
 
 **Optional:** Yes
+
+**Default:** 0
 
 ### plant_result
 
@@ -196,6 +210,18 @@ flags = { "hide-from-bonus-gui" }
 **Optional:** Yes
 
 **Default:** 0
+
+### quality_affects_spoil_ticks
+
+Only loaded if `spoil_ticks` is larger than 0.
+
+If set, [QualityPrototype::spoil_ticks_multiplier](prototype:QualityPrototype::spoil_ticks_multiplier) will be applied to spoil_tick value.
+
+**Type:** `boolean`
+
+**Optional:** Yes
+
+**Default:** True
 
 ### fuel_value
 
@@ -355,6 +381,8 @@ Only used by hidden setting, support may be limited.
 
 ### spoil_to_trigger_result
 
+Only loaded if `spoil_ticks` is larger than 0.
+
 **Type:** `SpoilToTriggerResult`
 
 **Optional:** Yes
@@ -448,4 +476,16 @@ Item will not appear in lists of all items such as those for logistics requests,
 **Optional:** Yes
 
 **Default:** False
+
+### science_capacity
+
+Used by labs. Not relevant for [tools](prototype:ToolPrototype) where [durability](prototype:ToolPrototype::durability) is used.
+
+Must be >= 0.01.
+
+**Type:** `double`
+
+**Optional:** Yes
+
+**Default:** 1
 

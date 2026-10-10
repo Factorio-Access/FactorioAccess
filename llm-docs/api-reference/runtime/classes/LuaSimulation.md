@@ -92,7 +92,7 @@ The class name of this object. Available even when `valid` is false. For LuaStru
 
 **Parameters:**
 
-- `inventory_index` `InventoryIndex`
+- `inventory_index` `defines.inventory`
 - `slot_index` `ItemStackIndex` - This index is 0-based, unlike other inventory indices.
 - `inventory` `"character"` | `"entity"` *(optional)* - Defaults to `"character"`.
 
@@ -105,8 +105,6 @@ The class name of this object. Available even when `valid` is false. For LuaStru
 **Parameters:**
 
 - `type` `SimulationWidgetType`
-- `data` `string` *(optional)*
-- `data2` `string` *(optional)*
 
 **Returns:**
 

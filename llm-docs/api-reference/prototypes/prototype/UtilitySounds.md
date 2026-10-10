@@ -50,6 +50,22 @@ Sound category `"gui-effect"`.
 
 **Required:** Yes
 
+### machine_gui_open
+
+Sound category `"gui-effect"`.
+
+**Type:** `Sound`
+
+**Required:** Yes
+
+### machine_gui_close
+
+Sound category `"gui-effect"`.
+
+**Type:** `Sound`
+
+**Required:** Yes
+
 ### list_box_click
 
 Sound category `"gui-effect"`.
@@ -299,6 +315,14 @@ Sound category `"game-effect"`.
 **Required:** Yes
 
 ### alert_destroyed
+
+Sound category `"alert"`.
+
+**Type:** `Sound`
+
+**Required:** Yes
+
+### alert_expansion_base_built
 
 Sound category `"alert"`.
 

@@ -6,7 +6,7 @@
 
 ### base_effect
 
-**Type:** `ModuleEffects`
+**Type:** `Effect`
 
 **Required:** Yes
 
@@ -41,6 +41,14 @@
 **Required:** Yes
 
 ### uses_beacon_effects
+
+**Type:** `boolean`
+
+**Required:** Yes
+
+### uses_local_effects
+
+Controls whether [LuaEntity::local_effect](runtime:LuaEntity::local_effect) affects this receiver.
 
 **Type:** `boolean`
 

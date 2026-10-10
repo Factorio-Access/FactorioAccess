@@ -63,7 +63,7 @@ Whether the tip title on the left in the tips and tricks GUI should use the "tit
 
 ### trigger
 
-Condition for when the tip notification should be shown to the player.
+Condition for when the tip notification should be shown to the player. If the condition is fulfilled, the status of the tip is set to "suggested" or "dependencies-not-met".
 
 **Type:** `TipTrigger`
 
@@ -71,7 +71,9 @@ Condition for when the tip notification should be shown to the player.
 
 ### skip_trigger
 
-Condition for never showing the tip notification to the player.
+Condition for never showing the tip notification to the player. If the condition is fulfilled, the tip is considered completed and shown in the tips list.
+
+If the tip notification is already shown, then fulfilling the skip trigger removes the tip notification icon again.
 
 **Type:** `TipTrigger`
 

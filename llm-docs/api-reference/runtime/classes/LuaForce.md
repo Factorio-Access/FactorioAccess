@@ -406,7 +406,7 @@ This force's index in [LuaGameScript::forces](runtime:LuaGameScript::forces) (un
 
 The research queue of this force. The first technology in the array is the currently active one. Reading this attribute gives an array of [LuaTechnology](runtime:LuaTechnology).
 
-To write to this, the entire table must be written. Providing an empty table or `nil` will empty the research queue and cancel the current research.  Writing to this when the research queue is disabled will simply set the last research in the table as the current research.
+To write to this, the entire table must be written. Providing an empty table or `nil` will empty the research queue and cancel the current research.
 
 This only allows mods to queue research that this force is able to research in the first place. As an example, an already researched technology or one whose prerequisites are not fulfilled will not be queued, but dropped silently instead.
 
@@ -887,7 +887,7 @@ Sets if the given recipe can be hand-crafted. This is used to explicitly disable
 
 ### add_research
 
-Add this technology to the back of the research queue if the queue is enabled. Otherwise, set this technology to be researched now.
+Add this technology to the back of the research queue.
 
 **Parameters:**
 
@@ -1048,6 +1048,20 @@ Creates a new space platform on this force.
 **Returns:**
 
 - `LuaSpacePlatform` *(optional)*
+
+### get_space_platforms
+
+Gets the built space platforms at the given space location for this force.
+
+Note, this does not include platforms that have not yet been built.
+
+**Parameters:**
+
+- `location` `SpaceLocationID`
+
+**Returns:**
+
+- Array[`LuaSpacePlatform`]
 
 ### get_evolution_factor
 

@@ -226,9 +226,9 @@ If this surface can be deleted.
 
 Surface-wide effects applied to entities with effect receivers. `nil` if this surface is not using surface-wide effect source.
 
-**Read type:** `ModuleEffects`
+**Read type:** `Effect`
 
-**Write type:** `ModuleEffects`
+**Write type:** `Effect`
 
 **Optional:** Yes
 

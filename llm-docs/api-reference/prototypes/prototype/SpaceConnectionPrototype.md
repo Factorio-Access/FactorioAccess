@@ -29,6 +29,22 @@ Cannot be 0.
 
 **Default:** 600
 
+### origin
+
+**Type:** `MapPosition`
+
+**Optional:** Yes
+
+**Default:** "`{0, 0}`"
+
+### shape
+
+**Type:** `"arc"` | `"line"`
+
+**Optional:** Yes
+
+**Default:** "arc"
+
 ### asteroid_spawn_definitions
 
 **Type:** Array[`SpaceConnectionAsteroidSpawnDefinition`]

@@ -149,6 +149,19 @@ Get detailed information of items on this line, such as their position.
 
 - Array[`DetailedItemOnLine`]
 
+### get_item_position
+
+Gives position of the selected item on this transport line.
+
+**Parameters:**
+
+- `index` `uint32` - Index of the item. Allowed values are from 1 up to [# (length)](runtime:LuaTransportLine::length_operator).
+
+**Returns:**
+
+- `float` - Linear position of the item along the transport line
+- `MapPosition` - Map position of the item
+
 ### line_equals
 
 Returns whether the associated internal transport line of this line is the same as the others associated internal transport line.

@@ -160,6 +160,22 @@ Set to `true` to disallow opening the space map and hide the space map button.
 
 **Write type:** `boolean`
 
+### toggle_menu_leaves_remote_view
+
+Set to `false` to disallow leaving remote view using the toggle menu hotkey.
+
+**Read type:** `boolean`
+
+**Write type:** `boolean`
+
+### hide_locked_prototypes_in_factoriopedia
+
+Set to `true` to hide prototypes in Factoriopedia if they aren't unlocked yet.
+
+**Read type:** `boolean`
+
+**Write type:** `boolean`
+
 ### color
 
 The color associated with the player. This will be used to tint the player's character as well as their buildings and vehicles.
@@ -334,14 +350,6 @@ The input method of the player, mouse and keyboard or game controller
 
 **Read type:** `defines.input_method`
 
-### spectator
-
-If `true`, zoom-to-world noise effect will be disabled and environmental sounds will be based on zoom-to-world view instead of position of player's character.
-
-**Read type:** `boolean`
-
-**Write type:** `boolean`
-
 ### show_on_map
 
 If `true`, circle and name of given player is rendered on the map/chart.
@@ -427,6 +435,20 @@ The filters that will be applied when this player respawns. These only have mean
 **Read type:** `SavedLogisticFilters`
 
 **Write type:** `SavedLogisticFilters`
+
+### editor_settings
+
+The map editor settings if the map editor exists for this player.
+
+When reading this may return nil if the map editor does not yet exist for this player.
+
+When writing the full table of settings is always required.
+
+**Read type:** `MapEditorSetting`
+
+**Write type:** `MapEditorSetting`
+
+**Optional:** Yes
 
 ### valid
 
@@ -698,8 +720,26 @@ Adds a pin to this player for the given pin specification. Either entity, player
 - `always_visible` `boolean` *(optional)* - Defaults to `true`.
 - `entity` `LuaEntity` *(optional)* - The entity to pin.
 - `player` `PlayerIdentification` *(optional)* - The player to pin.
-- `surface` `SurfaceIdentification` *(optional)* - The surface to create the pin on.
-- `position` `MapPosition` *(optional)* - Where to create the pin. Required when surface is defined.
+- `surface` `SurfaceIdentification` *(optional)* - The surface to create the pin on. Required when resource is defined.
+- `resource` `EntityID` *(optional)* - The resource prototype to add an entire resource patch with.
+- `chart_tag` `LuaCustomChartTag` *(optional)* - The tag to pin.
+- `position` `MapPosition` *(optional)* - Where to create the pin. Required when surface is defined or resource is defined.
+
+**Returns:**
+
+- `LuaPin`
+
+### get_pins
+
+Gets all of the pins that this player has.
+
+**Returns:**
+
+- Array[`LuaPin`]
+
+### clear_pins
+
+Removes all pins from this player.
 
 ### pipette
 

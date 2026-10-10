@@ -111,3 +111,9 @@ If given, there must be exactly `direction_count` elements in the table.
 
 **Default:** "normal"
 
+### default_empty_slots_signal
+
+**Type:** `SignalIDConnector`
+
+**Optional:** Yes
+

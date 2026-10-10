@@ -8,6 +8,8 @@
 
 ### add_decider_combinator_condition
 
+### add_decider_combinator_else_output
+
 ### add_decider_combinator_output
 
 ### add_logistic_section
@@ -158,6 +160,8 @@
 
 ### drag_decider_combinator_condition
 
+### drag_decider_combinator_else_output
+
 ### drag_decider_combinator_output
 
 ### drag_research_condition
@@ -268,6 +272,8 @@
 
 ### modify_decider_combinator_condition
 
+### modify_decider_combinator_else_output
+
 ### modify_decider_combinator_output
 
 ### move_pin
@@ -275,6 +281,8 @@
 ### move_research
 
 ### open_achievements_gui
+
+### open_alerts_config_gui
 
 ### open_blueprint_library_gui
 
@@ -345,6 +353,8 @@
 ### remove_cables
 
 ### remove_decider_combinator_condition
+
+### remove_decider_combinator_else_output
 
 ### remove_decider_combinator_output
 
@@ -509,6 +519,8 @@
 ### start_walking
 
 ### stop_drag_build
+
+### super_forced_select_area
 
 ### swap_asteroid_chunk_slots
 

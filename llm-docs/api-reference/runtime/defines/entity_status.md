@@ -30,7 +30,7 @@ Used by trains.
 
 ### disabled
 
-Used by constant combinators: Combinator is turned off via switch in GUI.
+Used by constant combinators: Combinator is turned off via switch in GUI. Also used by inserters.
 
 ### disabled_by_control_behavior
 

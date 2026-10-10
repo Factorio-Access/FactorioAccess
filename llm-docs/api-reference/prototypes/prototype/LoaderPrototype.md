@@ -29,16 +29,6 @@ How many item filters this loader has. Maximum count of filtered items in loader
 
 **Default:** "object"
 
-### circuit_connector_layer
-
-Render layer for all directions of the circuit connectors.
-
-**Type:** `RenderLayer`
-
-**Optional:** Yes
-
-**Default:** "object"
-
 ### container_distance
 
 The distance between the position of this loader and the tile of the loader's container target.

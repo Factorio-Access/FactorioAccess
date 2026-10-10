@@ -92,3 +92,13 @@ If this burner attempts to auto-refill fuel from the owner character, car, spide
 
 **Default:** True
 
+### hide_from_stats
+
+When set, items consumed and produced by this burner will not appear in item production statistics.
+
+**Type:** `boolean`
+
+**Optional:** Yes
+
+**Default:** False
+

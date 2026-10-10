@@ -16,9 +16,11 @@ Returns one of the subtypes, depending on the value of `type`.
 ```
 ```
 -- Products of the "advanced-oil-processing" recipe
-{{type="fluid", name="heavy-oil", amount=1},
-  {type="fluid", name="light-oil", amount=4.5},
-  {type="fluid", name="petroleum-gas", amount=5.5}}
+{
+  {type = "fluid", name = "heavy-oil", amount = 25},
+  {type = "fluid", name = "light-oil", amount = 45},
+  {type = "fluid", name = "petroleum-gas", amount = 55}
+}
 ```
 ```
 
@@ -26,7 +28,7 @@ Returns one of the subtypes, depending on the value of `type`.
 ```
 -- What a custom recipe would look like that had a probability of 0.5 to return a
 -- minimum amount of 1 and a maximum amount of 5
-{{type="item", name="custom-item", probability=0.5, amount_min=1, amount_max=5}}
+{{type="item", name="custom-item", independent_probability=0.5, amount_min=1, amount_max=5}}
 ```
 ```
 

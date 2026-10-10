@@ -39,7 +39,7 @@ If defined, it can't be empty.
 
 ### colors
 
-Mandatory if `variations` is defined.
+Mandatory if `variations` is defined. Can't be empty.
 
 **Type:** Array[`Color`]
 

@@ -10,6 +10,10 @@ Prototype of a space location, such as a planet.
 
 **Read type:** `double`
 
+### origin
+
+**Read type:** `MapPosition`
+
 ### distance
 
 **Read type:** `double`

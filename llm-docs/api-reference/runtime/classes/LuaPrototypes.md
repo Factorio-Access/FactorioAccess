@@ -144,13 +144,13 @@ A dictionary containing every LuaNamedNoiseFunction indexed by `name`.
 
 A dictionary containing every ItemSubgroup indexed by `name`.
 
-**Read type:** LuaCustomTable[`string`, `LuaGroup`]
+**Read type:** LuaCustomTable[`string`, `LuaItemSubGroup`]
 
 ### item_group
 
 A dictionary containing every ItemGroup indexed by `name`.
 
-**Read type:** LuaCustomTable[`string`, `LuaGroup`]
+**Read type:** LuaCustomTable[`string`, `LuaItemGroup`]
 
 ### fuel_category
 
@@ -311,6 +311,10 @@ A dictionary containing every LuaProcessionLayerInheritanceGroupPrototype indexe
 ### max_underground_belt_distance
 
 **Read type:** `uint8`
+
+### max_logistics_connection_distance
+
+**Read type:** `float`
 
 ### object_name
 

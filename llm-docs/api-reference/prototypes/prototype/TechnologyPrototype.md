@@ -40,6 +40,8 @@ A [technology](https://wiki.factorio.com/Technologies).
 
 If this name ends with `-<number>`, that number is ignored for localization purposes. E.g. if the name is `technology-3`, the game looks for the `technology-name.technology` localization. The technology tree will also show the number on the technology icon.
 
+The number is considered the level of the technology. There can't be technologies with noncontiguous levels, e.g. `technology-1` and `technology-3` without `technology-2` will cause a startup error.
+
 **Type:** `string`
 
 **Required:** Yes

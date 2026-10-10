@@ -50,14 +50,6 @@
 
 **Optional:** Yes
 
-### circuit_connector_render_layer
-
-**Type:** `RenderLayer`
-
-**Optional:** Yes
-
-**Default:** "object"
-
 ### structure_align_to_animation_index
 
 **Type:** Array[`uint8`]

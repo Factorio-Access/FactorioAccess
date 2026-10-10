@@ -16,7 +16,7 @@ A value in range [0.01, 100].
 
 ### technology_price_multiplier
 
-A value in range [0.001, 1000].
+A value in range [0.001, 100000].
 
 **Read type:** `double`
 

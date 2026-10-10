@@ -16,6 +16,14 @@ Stage of scripting that is currently running
 
 **Read type:** `"settings"` | `"prototype"` | `"runtime"`
 
+### instrument_mod
+
+The name of the active Instrument Mode mod, if any.
+
+**Read type:** `string`
+
+**Optional:** Yes
+
 ### object_name
 
 The class name of this object. Available even when `valid` is false. For LuaStruct objects it may also be suffixed with a dotted path to a member of the struct.
@@ -57,7 +65,7 @@ Write a file to the `script-output` folder, located in the game's [user data dir
 - `filename` `string` - The name of the file. Providing a directory path (ex. `"save/here/example.txt"`) will create the necessary folder structure in `script-output`.
 - `data` `LocalisedString` - The content to write to the file.
 - `append` `boolean` *(optional)* - If `true`, `data` will be appended to the end of the file. Defaults to `false`, which will overwrite any pre-existing file with the new `data`.
-- `for_player` `uint32` *(optional)* - If given, the file will only be written for this `player_index`. Providing `0` will only write to the server's output if present. `for_player` cannot be used in settings and prototype stages.
+- `for_player` `uint32` *(optional)* - If given, the file will only be written for this `player_index`. Providing `0` will only write to the server's output if present. `for_player` cannot be used in settings and prototype stages. In the main chunk of the runtime stage writing the file will always be skipped if `for_player` is set and not `0`.
 
 ### send_udp
 
@@ -69,7 +77,7 @@ This must be enabled per-instance with `--enable-lua-udp`.
 
 - `port` `uint16` - Destination port number (localhost only)
 - `data` `LocalisedString` - The content to send.
-- `for_player` `uint32` *(optional)* - If given, the packet will only be sent from this `player_index`. Providing `0` will only send from the server if present. `for_player` cannot be used in settings and prototype stages.
+- `for_player` `uint32` *(optional)* - If given, the packet will only be sent from this `player_index`. Providing `0` will only send from the server if present. `for_player` cannot be used in settings and prototype stages. In the main chunk of the runtime stage sending the packet will always be skipped if `for_player` is set and not `0`.
 
 ### recv_udp
 
@@ -85,7 +93,7 @@ Not available in settings and prototype stages.
 
 **Parameters:**
 
-- `for_player` `uint32` *(optional)* - If given, packets will only be read from this `player_index`. Providing `0` will only read from the server if present.
+- `for_player` `uint32` *(optional)* - If given, packets will only be read from this `player_index`. Providing `0` will only read from the server if present. In the main chunk of the runtime stage receiving the packet will always be skipped if `for_player` is set and not `0`.
 
 ### remove_path
 

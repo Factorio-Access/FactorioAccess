@@ -34,6 +34,10 @@ The table of emissions of this energy source in `pollution/Joule`, indexed by po
 
 **Read type:** `boolean`
 
+### hide_from_stats
+
+**Read type:** `boolean`
+
 ### fluid_usage_per_tick
 
 **Read type:** `double`

@@ -10,6 +10,8 @@
 
 ### entity_under_attack
 
+### expansion_base_built
+
 ### fluid_mixing
 
 ### no_material_for_construction

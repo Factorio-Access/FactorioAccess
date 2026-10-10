@@ -46,6 +46,10 @@ The item quality used to select the area.
 
 The record that was used to select the area.
 
+### selection_mode
+
+**Type:** `defines.selection_mode`
+
 ### stack
 
 **Type:** `LuaItemStack` *(optional)*

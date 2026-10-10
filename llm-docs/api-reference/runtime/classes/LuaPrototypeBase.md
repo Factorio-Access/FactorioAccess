@@ -42,13 +42,13 @@ Provides additional description used in factoriopedia.
 
 Group of this prototype.
 
-**Read type:** `LuaGroup`
+**Read type:** `LuaItemGroup`
 
 ### subgroup
 
 Subgroup of this prototype.
 
-**Read type:** `LuaGroup`
+**Read type:** `LuaItemSubGroup`
 
 ### hidden
 

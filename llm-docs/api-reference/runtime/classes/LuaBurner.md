@@ -52,6 +52,8 @@ The currently burning item. Writing `nil` will void the currently burning item w
 
 Writing to this automatically handles correcting [LuaBurner::remaining_burning_fuel](runtime:LuaBurner::remaining_burning_fuel).
 
+When writing, any item with a [fuel value](runtime:LuaItemPrototype::fuel_value) is considered valid fuel; the fuel category does not have to match.
+
 **Read type:** `ItemIDAndQualityIDPair`
 
 **Write type:** `ItemWithQualityID`

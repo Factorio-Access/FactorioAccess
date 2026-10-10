@@ -27,7 +27,7 @@ Only loaded if `fixed_recipe` is defined.
 
 ### gui_title_key
 
-The locale key of the title of the GUI that is shown when the player opens the assembling machine. May not be longer than 200 characters.
+The locale key of the title of the recipe selection GUI that is shown when the player opens the assembling machine. May not be longer than 200 characters.
 
 **Type:** `string`
 
@@ -106,6 +106,10 @@ This only counts item ingredients, not fluid ingredients! This means if ingredie
 **Optional:** Yes
 
 ### fluid_boxes_off_when_no_fluid_recipe
+
+Whether the [fluid boxes](prototype:CraftingMachinePrototype::fluid_boxes) are disabled when this assembling machine has no recipe set.
+
+If a recipe is set, this property does not affect fluidbox behavior. Instead, whether fluidboxes are enabled depends on whether the recipe needs them, e.g. if a recipe without fluid ingredients is set, the input fluidboxes will be disabled.
 
 **Type:** `boolean`
 

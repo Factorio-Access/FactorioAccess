@@ -138,6 +138,8 @@ See the [events page](runtime:events) for more info on what events contain and w
 
 ### on_multiplayer_init
 
+### on_next_day_started
+
 ### on_object_destroyed
 
 ### on_permission_group_added
@@ -259,6 +261,8 @@ See the [events page](runtime:events) for more info on what events contain and w
 ### on_player_set_quick_bar_slot
 
 ### on_player_setup_blueprint
+
+### on_player_super_forced_selected_area
 
 ### on_player_toggled_alt_mode
 

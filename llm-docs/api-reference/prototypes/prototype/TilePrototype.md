@@ -304,6 +304,8 @@ Must be equal to or greater than 0.
 
 ### weight
 
+Mass which this tile adds to total space platform mass when placed.
+
 **Type:** `Weight`
 
 **Optional:** Yes

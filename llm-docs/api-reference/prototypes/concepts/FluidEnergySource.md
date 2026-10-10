@@ -80,6 +80,16 @@ In those cases, this property determines whether the fluid should be destroyed, 
 
 **Default:** True
 
+### hide_from_stats
+
+When set, fluids consumed and produced by this energy source will not appear in fluid production statistics.
+
+**Type:** `boolean`
+
+**Optional:** Yes
+
+**Default:** False
+
 ### fluid_usage_per_tick
 
 The number of fluid units the energy source uses per tick. If used with `scale_fluid_usage`, this specifies the maximum. If this value is not set, `scale_energy_usage` is `false` and a fluid box filter is set, the game will attempt to calculate this value from the fluid box filter's fluid's `fuel_value` or `heat_capacity` and the entity's `energy_usage`. If `burns_fluid` is `false`, `maximum_temperature` will also be used. If the attempt of the game to calculate this value fails (`scale_energy_usage` is `false` and a fluid box filter is set), then `scale_energy_usage` will be forced to `true`, to prevent the energy source from being an infinite fluid sink. More context [on the forums](https://forums.factorio.com/90613).

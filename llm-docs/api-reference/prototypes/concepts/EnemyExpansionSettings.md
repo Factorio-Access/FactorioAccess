@@ -110,3 +110,11 @@ In ticks.
 
 **Required:** Yes
 
+### build_base_unit_dispatch_cooldown
+
+Cooldown in ticks for dispatching units when building bases.
+
+**Type:** `uint32`
+
+**Required:** Yes
+

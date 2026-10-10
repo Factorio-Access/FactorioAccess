@@ -213,6 +213,16 @@ Whether the recipe icon should be shown on the map.
 
 **Default:** False
 
+### animation_random_start_frame
+
+If true the starting frame will be randomized upon placement.
+
+**Type:** `boolean`
+
+**Optional:** Yes
+
+**Default:** False
+
 ### graphics_set
 
 **Type:** `CraftingMachineGraphicsSet`

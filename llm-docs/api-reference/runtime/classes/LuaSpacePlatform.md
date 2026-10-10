@@ -44,6 +44,14 @@ The space location this space platform previously went through or stopped at.
 
 **Optional:** Yes
 
+### completed_trips
+
+The number of trips completed between space locations.
+
+**Read type:** `uint32`
+
+**Write type:** `uint32`
+
 ### space_connection
 
 The space connection this space platform is traveling through or `nil`.

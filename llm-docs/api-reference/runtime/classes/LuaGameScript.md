@@ -198,6 +198,22 @@ True by default. Can be used to prevent the game engine from printing certain me
 
 **Write type:** `boolean`
 
+### player_death_notifications_enabled
+
+True by default. Can be used to prevent the game engine from printing messages for player deaths and respawns.
+
+**Read type:** `boolean`
+
+**Write type:** `boolean`
+
+### space_platform_death_notifications_enabled
+
+True by default. Can be used to prevent the game engine from printing messages for space platform deaths.
+
+**Read type:** `boolean`
+
+**Write type:** `boolean`
+
 ### allow_tip_activation
 
 If the tips are allowed to be activated in this scenario, it is false by default.

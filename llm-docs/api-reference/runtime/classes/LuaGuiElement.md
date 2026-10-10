@@ -248,9 +248,21 @@ The number to be shown in the bottom right corner of this sprite-button, or `nil
 
 **Subclasses:** sprite-button
 
+### secondary_number
+
+The number to be shown on the right side of this sprite-button, directly above the regular [LuaGuiElement::number](runtime:LuaGuiElement::number), or `nil` to show nothing.
+
+**Read type:** `double`
+
+**Write type:** `double`
+
+**Optional:** Yes
+
+**Subclasses:** sprite-button
+
 ### show_percent_for_small_numbers
 
-Related to the number to be shown in the bottom right corner of this sprite-button. When set to `true`, numbers that are non-zero and smaller than one are shown as a percentage rather than the value. For example, `0.5` will be shown as `50%` instead.
+Related to the numbers to be shown in the bottom right corner of this sprite-button. When set to `true`, numbers that are non-zero and smaller than one are shown as a percentage rather than the value. For example, `0.5` will be shown as `50%` instead.
 
 **Read type:** `boolean`
 
@@ -526,7 +538,7 @@ The value of this slider element.
 
 The mouse button filters for this button or sprite-button.
 
-**Read type:** `MouseButtonFlags`
+**Read type:** `ActiveMouseButtonFlags`
 
 **Write type:** `MouseButtonFlags`
 
@@ -870,7 +882,7 @@ game.player.gui.top.greeting.destroy()
 
 ### get_mod
 
-The mod that owns this Gui element or `nil` if it's owned by the scenario script.
+The mod that owns this GUI element or `nil` if it's owned by the scenario script.
 
 This has a not-super-expensive, but non-free cost to get.
 

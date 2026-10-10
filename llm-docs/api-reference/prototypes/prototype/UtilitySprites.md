@@ -572,6 +572,12 @@ The sprite will be drawn on top of [fluid turrets](prototype:FluidTurretPrototyp
 
 **Required:** Yes
 
+### expansion_base_built_icon
+
+**Type:** `Sprite`
+
+**Required:** Yes
+
 ### destroyed_icon
 
 **Type:** `Sprite`
@@ -1401,6 +1407,24 @@ The sprite will be drawn on top of [fluid turrets](prototype:FluidTurretPrototyp
 **Required:** Yes
 
 ### side_menu_achievements_icon
+
+**Type:** `Sprite`
+
+**Required:** Yes
+
+### side_menu_alerts_config_icon
+
+**Type:** `Sprite`
+
+**Required:** Yes
+
+### side_menu_master_mute_muted_icon
+
+**Type:** `Sprite`
+
+**Required:** Yes
+
+### side_menu_master_mute_unmuted_icon
 
 **Type:** `Sprite`
 

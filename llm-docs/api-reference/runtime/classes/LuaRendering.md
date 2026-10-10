@@ -35,6 +35,7 @@ Create a line.
 - `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
 - `draw_on_ground` `boolean` *(optional)* - If this should be drawn below sprites and entities. Defaults to false.
 - `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
+- `tall` `boolean` *(optional)* - If this will be translucent when "Hide tall entities" mode is active. Defaults to false.
 - `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 
 **Returns:**
@@ -78,6 +79,7 @@ Not all fonts support scaling.
 - `vertical_alignment` `VerticalTextAlign` *(optional)* - Defaults to "top".
 - `scale_with_zoom` `boolean` *(optional)* - Defaults to false. If true, the text scales with player zoom, resulting in it always being the same size on screen, and the size compared to the game world changes.
 - `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
+- `tall` `boolean` *(optional)* - If this will be translucent when "Hide tall entities" mode is active. Defaults to false.
 - `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 - `use_rich_text` `boolean` *(optional)* - If rich text rendering is enabled. Defaults to false.
 
@@ -104,6 +106,7 @@ Create a circle.
 - `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
 - `draw_on_ground` `boolean` *(optional)* - If this should be drawn below sprites and entities. Defaults to false.
 - `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
+- `tall` `boolean` *(optional)* - If this will be translucent when "Hide tall entities" mode is active. Defaults to false.
 - `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 
 **Returns:**
@@ -129,6 +132,7 @@ Create a rectangle.
 - `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
 - `draw_on_ground` `boolean` *(optional)* - If this should be drawn below sprites and entities. Defaults to false.
 - `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
+- `tall` `boolean` *(optional)* - If this will be translucent when "Hide tall entities" mode is active. Defaults to false.
 - `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 
 **Returns:**
@@ -162,6 +166,7 @@ Create an arc.
 - `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
 - `draw_on_ground` `boolean` *(optional)* - If this should be drawn below sprites and entities. Defaults to false.
 - `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
+- `tall` `boolean` *(optional)* - If this will be translucent when "Hide tall entities" mode is active. Defaults to false.
 - `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 
 **Returns:**
@@ -188,6 +193,7 @@ Create a triangle mesh defined by a triangle strip.
 - `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
 - `draw_on_ground` `boolean` *(optional)* - If this should be drawn below sprites and entities. Defaults to false.
 - `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
+- `tall` `boolean` *(optional)* - If this will be translucent when "Hide tall entities" mode is active. Defaults to false.
 - `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 
 **Returns:**
@@ -217,6 +223,7 @@ Create a sprite.
 - `players` Array[`PlayerIdentification`] *(optional)* - The players that this object is rendered to. Passing `nil` or an empty table will render it to all players.
 - `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
 - `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
+- `tall` `boolean` *(optional)* - If this will be translucent when "Hide tall entities" mode is active. Defaults to false.
 - `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 - `light_mode` `ScriptSpriteLightMode` *(optional)* - Whether this object should be rendered as a sprite, light or both at once. Defaults to "occluder".
 
@@ -259,6 +266,7 @@ The base game uses the utility sprites `light_medium` and `light_small` for ligh
 - `players` Array[`PlayerIdentification`] *(optional)* - The players that this object is rendered to. Passing `nil` or an empty table will render it to all players.
 - `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
 - `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
+- `tall` `boolean` *(optional)* - If this will be translucent when "Hide tall entities" mode is active. Defaults to false.
 - `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 
 **Returns:**
@@ -290,6 +298,7 @@ Create an animation.
 - `players` Array[`PlayerIdentification`] *(optional)* - The players that this object is rendered to. Passing `nil` or an empty table will render it to all players.
 - `visible` `boolean` *(optional)* - If this is rendered to anyone at all. Defaults to true.
 - `only_in_alt_mode` `boolean` *(optional)* - If this should only be rendered in alt mode. Defaults to false.
+- `tall` `boolean` *(optional)* - If this will be translucent when "Hide tall entities" mode is active. Defaults to false.
 - `render_mode` `ScriptRenderMode` *(optional)* - Mode which this object should render in. Defaults to "game".
 - `light_mode` `ScriptSpriteLightMode` *(optional)* - Whether this object should be rendered as a sprite, light or both at once. Defaults to "occluder".
 

@@ -206,11 +206,11 @@ Color of atmospheric light. Multiplied by 10 in shader.
 
 **Optional:** Yes
 
-**Default:** "`{0.095, 0.15, 0.19, 0.1}`"
+**Default:** "`{0.095, 0.15, 0.19, 1.0}`"
 
 ### specular_color
 
-Color of specular light. Multiplied by 10 in shader.
+Color of specular light.
 
 **Type:** `Color`
 
@@ -220,7 +220,7 @@ Color of specular light. Multiplied by 10 in shader.
 
 ### light_color
 
-Color of light. Multiplied by 10 in shader.
+Color of light.
 
 **Type:** `Color`
 

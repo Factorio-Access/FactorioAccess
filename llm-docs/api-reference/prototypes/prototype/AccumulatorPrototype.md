@@ -73,6 +73,8 @@ Entity with energy source with specialised animation for charging/discharging. U
 
 The capacity of the energy source buffer specifies the capacity of the accumulator.
 
+Any [usage_priority](prototype:ElectricEnergySource::usage_priority) set here will be ignored, accumulators always have the "managed-accumulator" usage priority.
+
 **Type:** `ElectricEnergySource`
 
 **Required:** Yes

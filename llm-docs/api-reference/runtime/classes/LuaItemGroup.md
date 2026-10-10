@@ -1,10 +1,20 @@
-# LuaGroup
+# LuaItemGroup
 
-Item group or subgroup.
+Item group.
 
 ## Attributes
 
+### type
+
+**Read type:** `string`
+
 ### name
+
+**Read type:** `string`
+
+### order
+
+The string used to alphabetically sort these prototypes. It is a simple string that has no additional semantic meaning.
 
 **Read type:** `string`
 
@@ -14,37 +24,15 @@ Localised name of the group.
 
 **Read type:** `LocalisedString`
 
-### type
-
-**Read type:** `string`
-
-### group
-
-The parent group.
-
-**Read type:** `LuaGroup`
-
-**Subclasses:** ItemSubGroup
-
 ### subgroups
 
 Subgroups of this group.
 
-**Read type:** Array[`LuaGroup`]
-
-**Subclasses:** ItemGroup
+**Read type:** Array[`LuaItemSubGroup`]
 
 ### order_in_recipe
 
 The additional order value used in recipe ordering.
-
-**Read type:** `string`
-
-**Subclasses:** ItemGroup
-
-### order
-
-The string used to alphabetically sort these prototypes. It is a simple string that has no additional semantic meaning.
 
 **Read type:** `string`
 

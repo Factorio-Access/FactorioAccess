@@ -106,3 +106,41 @@ Removes the output at `index`.
 
 - `index` `uint32` - Index of output to remove.
 
+### get_else_output
+
+Gets the else-output at `index`.
+
+**Parameters:**
+
+- `index` `uint32` - Index of else-output to get.
+
+**Returns:**
+
+- `DeciderCombinatorOutput`
+
+### set_else_output
+
+Sets the else-output at `index`.
+
+**Parameters:**
+
+- `index` `uint32` - Index of else-output to modify.
+- `output` `DeciderCombinatorOutput` - Data to set selected else-output to.
+
+### add_else_output
+
+Adds a new else-output.
+
+**Parameters:**
+
+- `output` `DeciderCombinatorOutput` - New else-output to insert.
+- `index` `uint32` *(optional)* - Index to insert new else-output at. If not specified, appends to the end.
+
+### remove_else_output
+
+Removes the else-output at `index`.
+
+**Parameters:**
+
+- `index` `uint32` - Index of else-output to remove.
+

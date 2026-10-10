@@ -91,3 +91,9 @@ The maximum circuit wire distance for this linked container.
 
 **Optional:** Yes
 
+### default_empty_slots_signal
+
+**Type:** `SignalIDConnector`
+
+**Optional:** Yes
+

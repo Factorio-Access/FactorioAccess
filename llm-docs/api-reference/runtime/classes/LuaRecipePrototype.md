@@ -202,6 +202,14 @@ True if a player can set quality of the recipe to craft. False when only normal 
 
 **Read type:** `boolean`
 
+### on_crafted_event
+
+Event raised when this recipe is crafted. Only available if [RecipePrototype::raise_on_crafted](prototype:RecipePrototype::raise_on_crafted) was set to true.
+
+**Read type:** `LuaEventType`
+
+**Optional:** Yes
+
 ### valid
 
 Is this object valid? This Lua object holds a reference to an object within the game engine. It is possible that the game-engine object is removed whilst a mod still holds the corresponding Lua object. If that happens, the object becomes invalid, i.e. this attribute will be `false`. Mods are advised to check for object validity if any change to the game state might have occurred between the creation of the Lua object and its access.

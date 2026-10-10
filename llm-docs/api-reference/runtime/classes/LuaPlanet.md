@@ -52,8 +52,6 @@ Creates the associated surface if one doesn't already exist.
 
 Associates the given surface with this planet. Surface must not already be associated with a planet and the planet must not already have an associated surface.
 
-Planet must not be using [entities_require_heating](runtime:LuaSpaceLocationPrototype::entities_require_heating).
-
 **Parameters:**
 
 - `surface` `SurfaceIdentification` - The surface to be associated.

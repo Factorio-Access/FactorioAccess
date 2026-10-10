@@ -262,18 +262,6 @@ All trivial smoke will be tinted with this value when "Hide tall entities" mode 
 
 **Required:** Yes
 
-### zoom_to_world_can_use_nightvision
-
-**Type:** `boolean`
-
-**Required:** Yes
-
-### zoom_to_world_effect_strength
-
-**Type:** `float`
-
-**Required:** Yes
-
 ### max_logistic_filter_count
 
 **Type:** `LogisticFilterIndex`
@@ -483,12 +471,6 @@ If not set, defaults to `true` when modded and `false` when vanilla.
 **Optional:** Yes
 
 ### daytime_color_lookup
-
-**Type:** `DaytimeColorLookupTable`
-
-**Required:** Yes
-
-### zoom_to_world_daytime_color_lookup
 
 **Type:** `DaytimeColorLookupTable`
 
@@ -850,7 +832,17 @@ The strings represent the names of the simulations.
 
 **Required:** Yes
 
+### asteroid_min_damage_modifier
+
+Asteroid damage will be multiplied by this value when space platform speed is zero and will linearly increase until asteroid_spawning_with_random_orientation_max_speed is reached.
+
+**Type:** `float`
+
+**Required:** Yes
+
 ### asteroid_spawning_with_random_orientation_max_speed
+
+In km per tick.
 
 **Type:** `double`
 

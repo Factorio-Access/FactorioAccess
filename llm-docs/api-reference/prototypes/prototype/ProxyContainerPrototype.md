@@ -7,9 +7,19 @@ A container that must be set to point at other entity and inventory index so it 
 
 ## Properties
 
+### direction_count
+
+Amount of directions this container should have. Allowed values are 1, 2 and 4.
+
+**Type:** `uint8`
+
+**Optional:** Yes
+
+**Default:** 1
+
 ### picture
 
-**Type:** `Sprite`
+**Type:** `Sprite4Way`
 
 **Optional:** Yes
 
@@ -51,7 +61,15 @@ The maximum circuit wire distance for this entity.
 
 ### circuit_connector
 
-**Type:** `CircuitConnectorDefinition`
+If given, there must be exactly `direction_count` elements in the table.
+
+**Type:** Array[`CircuitConnectorDefinition`]
+
+**Optional:** Yes
+
+### default_empty_slots_signal
+
+**Type:** `SignalIDConnector`
 
 **Optional:** Yes
 

@@ -148,7 +148,7 @@ Above this temperature the `gas_flow` animation is used to display the fluid ins
 
 ### draw_as_glow
 
-Whether the fluid should glow in pipe and storage tank windows.
+Whether the fluid should glow in pipe and storage tank windows. The glow is only drawn when the [expansion_shaders](prototype:FeatureFlags::expansion_shaders) feature flag is enabled.
 
 **Type:** `boolean`
 

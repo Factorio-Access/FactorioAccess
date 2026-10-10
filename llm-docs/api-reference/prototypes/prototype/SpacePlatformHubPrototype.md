@@ -68,6 +68,12 @@ The maximum circuit wire distance for this entity.
 
 **Optional:** Yes
 
+### default_empty_slots_signal
+
+**Type:** `SignalIDConnector`
+
+**Optional:** Yes
+
 ### platform_repair_speed_modifier
 
 Repair speed of entities is multiplied by this value when they are on a space platform with this hub prototype.
@@ -80,7 +86,7 @@ Repair speed of entities is multiplied by this value when they are on a space pl
 
 ### weight
 
-Weight which this entity adds to total space platform weight when placed.
+Mass which this entity adds to total space platform mass when placed.
 
 **Type:** `Weight`
 

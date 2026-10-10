@@ -104,6 +104,12 @@ Prototype name of the result.
 
 **Optional:** Yes
 
+### reset_freshness_on_craft
+
+**Type:** `boolean`
+
+**Optional:** Yes
+
 ### shared_probability
 
 **Type:** `SharedProbabilityDefinition`
@@ -129,7 +135,7 @@ Prototype name of the result.
 ```
 -- What a custom recipe would look like that had a probability of 0.5 to return a
 -- minimum amount of 1 and a maximum amount of 5
-{{type="item", name="custom-item", probability=0.5, amount_min=1, amount_max=5}}
+{{type="item", name="custom-item", independent_probability=0.5, amount_min=1, amount_max=5}}
 ```
 ```
 

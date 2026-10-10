@@ -46,14 +46,6 @@ Any amount of pollution larger than this value is visualized as this value inste
 
 **Required:** Yes
 
-### max_pollution_to_restore_trees
-
-Defaults to `20`.
-
-**Type:** `double`
-
-**Required:** Yes
-
 ### min_pollution_to_damage_trees
 
 Defaults to `60`.

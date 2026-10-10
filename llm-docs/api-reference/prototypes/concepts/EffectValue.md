@@ -4,17 +4,3 @@ Precision is ignored beyond four decimals - `0.56789` results in `0.5678` and me
 
 **Type:** `float`
 
-## Examples
-
-```
-```
-{speed = 0.07}  -- 7% bonus
-```
-```
-
-```
-```
-{quality = 0.025}  -- 2.5% bonus
-```
-```
-

@@ -1,4 +1,0 @@
-# InventoryIndex
-
-**Type:** `uint8`
-

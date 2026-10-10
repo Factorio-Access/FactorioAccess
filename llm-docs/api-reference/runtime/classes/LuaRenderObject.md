@@ -108,6 +108,14 @@ If this object uses the target orientation.
 
 **Subclasses:** Sprite, Polygon, Animation
 
+### tall
+
+If this render object will be translucent when "Hide tall entities" mode is active.
+
+**Read type:** `boolean`
+
+**Write type:** `boolean`
+
 ### color
 
 Color or tint of the object.

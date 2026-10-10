@@ -132,6 +132,14 @@ Whether this active defense equipment is automatic. Returns false if not active 
 
 **Subclasses:** NightVisionEquipment
 
+### sunglasses
+
+**Read type:** `boolean`
+
+**Optional:** Yes
+
+**Subclasses:** NightVisionEquipment
+
 ### valid
 
 Is this object valid? This Lua object holds a reference to an object within the game engine. It is possible that the game-engine object is removed whilst a mod still holds the corresponding Lua object. If that happens, the object becomes invalid, i.e. this attribute will be `false`. Mods are advised to check for object validity if any change to the game state might have occurred between the creation of the Lua object and its access.

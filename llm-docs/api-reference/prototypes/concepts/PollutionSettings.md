@@ -78,12 +78,6 @@ Anything lower than this (but > 0) is visualized as this value.
 
 **Required:** Yes
 
-### max_pollution_to_restore_trees
-
-**Type:** `double`
-
-**Required:** Yes
-
 ### enemy_attack_pollution_consumption_modifier
 
 **Type:** `double`

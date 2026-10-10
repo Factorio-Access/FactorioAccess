@@ -82,13 +82,13 @@ The string used to alphabetically sort these prototypes. It is a simple string t
 
 Group of this recipe.
 
-**Read type:** `LuaGroup`
+**Read type:** `LuaItemGroup`
 
 ### subgroup
 
 Subgroup of this recipe.
 
-**Read type:** `LuaGroup`
+**Read type:** `LuaItemSubGroup`
 
 ### force
 
@@ -100,9 +100,9 @@ The force that owns this recipe.
 
 The productivity bonus for this recipe.
 
-**Read type:** `float`
+**Read type:** `EffectValue`
 
-**Write type:** `float`
+**Write type:** `EffectValue`
 
 ### valid
 

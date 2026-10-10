@@ -30,5 +30,5 @@ Defaults to `false`.
 
 **Type:** `SignalID`
 
-**Required:** Yes
+**Optional:** Yes
 

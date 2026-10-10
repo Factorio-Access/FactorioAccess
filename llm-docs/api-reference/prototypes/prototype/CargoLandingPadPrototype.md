@@ -57,6 +57,12 @@ The maximum circuit wire distance for this entity.
 
 **Optional:** Yes
 
+### default_empty_slots_signal
+
+**Type:** `SignalIDConnector`
+
+**Optional:** Yes
+
 ### cargo_station_parameters
 
 **Type:** `CargoStationParameters`

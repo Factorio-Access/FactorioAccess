@@ -38,6 +38,16 @@ Controls whether [LuaSurface::global_effect](runtime:LuaSurface::global_effect) 
 
 **Default:** True
 
+### uses_local_effects
+
+Controls whether [LuaEntity::local_effect](runtime:LuaEntity::local_effect) affects this receiver.
+
+**Type:** `boolean`
+
+**Optional:** Yes
+
+**Default:** True
+
 ### consumption_limits
 
 Limits total consumption effect value.
