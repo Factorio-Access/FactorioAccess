@@ -358,7 +358,6 @@ def check_non_top_level_requires() -> Tuple[int, List[str]]:
     skip_patterns = [
         "*-tests.lua",
         "*-cli.lua",
-        "run-tests.lua",
         "test-*.lua",
     ]
 

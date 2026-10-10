@@ -760,16 +760,6 @@ function mod.get_item_name_for_ent(name)
    return name
 end
 
---Returns true only if this action was called within the last 10 seconds. Resets.
----@param pindex integer player index
----@param id_string string used to check whether the same thing as last time is being checked
----@param custom_message string info about what action is being checked
----@return boolean to allow the action
-function mod.confirm_action(pindex, id_string, custom_message)
-   -- TODO: Reimplement this without global state
-   return true
-end
-
 -- Format a  number to e.g. "1.3m"
 ---@param amount number
 ---@return string

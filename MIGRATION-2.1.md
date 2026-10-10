@@ -145,7 +145,6 @@ fluid-segment-contents mappings are the two that need doc confirmation before co
 Runtime `defines.inventory.X` reads now evaluate to nil and break `get_inventory`.
 
 Real runtime breaks:
-- scripts/inventory-transfers.lua:35 `get_inventory(defines.inventory.assembling_machine_input)`
 - scripts/ui/inventory-grid.lua:57 `inventory_index == defines.inventory.assembling_machine_input`
 - scripts/ui/inventory-grid.lua:58 `defines.inventory.furnace_source`
 - scripts/ui/inventory-grid.lua:69 `defines.inventory.assembling_machine_output`

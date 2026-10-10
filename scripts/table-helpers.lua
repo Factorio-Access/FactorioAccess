@@ -347,6 +347,10 @@ function mod.deny_access_table()
             "Attempted to write to denied table at key: " .. tostring(k) .. "\nUse storage.players instead of players"
          )
       end,
+      -- Without this, pairs() over the table silently finds nothing
+      __pairs = function()
+         error("Attempted to iterate a denied table\nUse game.connected_players or storage.players instead of players")
+      end,
    }
    setmetatable(denied, mt)
    return denied

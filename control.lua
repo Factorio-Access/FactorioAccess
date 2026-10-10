@@ -41,7 +41,6 @@ local FaUtils = require("scripts.fa-utils")
 local F = require("scripts.field-ref")
 local Filters = require("scripts.filters")
 local Graphics = require("scripts.graphics")
-local InventoryTransfers = require("scripts.inventory-transfers")
 local InventoryUtils = require("scripts.inventory-utils")
 local ItemInfo = require("scripts.item-info")
 local KruiseKontrol = require("scripts.kruise-kontrol-wrapper")
@@ -59,7 +58,6 @@ require("scripts.rich-text") -- registers rich text processor with speech.lua
 require("scripts.dev-udp") -- development tooling: runs Lua sent over UDP when the game has --enable-lua-udp
 local Rulers = require("scripts.rulers")
 local ScannerEntrypoint = require("scripts.scanner.entrypoint")
-local Spidertron = require("scripts.spidertron")
 local SpidertronRemote = require("scripts.spidertron-remote")
 local TH = require("scripts.table-helpers")
 local Teleport = require("scripts.teleport")
@@ -384,31 +382,17 @@ function on_tick(event)
       ::continue::
    end
 
-   if event.tick % 15 == 0 then
-      for pindex, player in pairs(players) do
-         -- Other periodic checks can go here
-      end
-   elseif event.tick % 61 == 0 then
+   if event.tick % 61 == 0 then
       -- Refresh search cache periodically (coprime with other updates)
-      for pindex, player in pairs(players) do
-         if player.connected then UiRouter.periodic_search_refresh(pindex) end
-      end
-   elseif event.tick % 90 == 13 then
-      for pindex, player in pairs(players) do
-         --Fix running speed bug (toggle walk also fixes it)
-         fix_walk(pindex)
+      for _, player in pairs(game.connected_players) do
+         UiRouter.periodic_search_refresh(player.index)
       end
    elseif event.tick % 450 == 14 then
-      --Run regular reminders every 7.5 seconds
-      for pindex, player in pairs(players) do
-         if game.get_player(pindex).ticks_to_respawn ~= nil then
-            Speech.speak(
-               pindex,
-               { "fa.respawn-countdown", tostring(math.floor(game.get_player(pindex).ticks_to_respawn / 60)) }
-            )
+      -- Every 7.5 seconds, tell dead players how long until they respawn
+      for _, player in pairs(game.connected_players) do
+         if player.ticks_to_respawn ~= nil then
+            Speech.speak(player.index, { "fa.respawn-countdown", tostring(math.floor(player.ticks_to_respawn / 60)) })
          end
-         --Report the KK state, if any.
-         KruiseKontrol.status_read(pindex, false)
       end
    end
 end
@@ -784,13 +768,6 @@ EventManager.on_event(
       router:close_ui()
    end
 )
-
-function fix_walk(pindex)
-   local player = game.get_player(pindex)
-   if not player.character then return end
-   -- Always use normal walking speed
-   player.character_running_speed_modifier = 0 -- 100% + 0 = 100%
-end
 
 EventManager.on_event(
    defines.events.on_gui_opened,
@@ -2636,10 +2613,8 @@ local function kb_delete(event)
          or hand.is_deconstruction_item
          or hand.is_upgrade_item
       if is_planner then
-         if FaUtils.confirm_action(pindex, hand.export_stack(), "Press again to delete the planner in hand.") then
-            p.cursor_stack_temporary = true
-            p.clear_cursor()
-         end
+         p.cursor_stack_temporary = true
+         p.clear_cursor()
       end
    end
 end
@@ -3728,11 +3703,7 @@ EventManager.on_event(
    function(event, pindex)
       local p = game.get_player(pindex)
       if p.character == nil then return end
-      if p.driving == false then
-         WorkerRobots.logistics_info_key_handler(pindex)
-      else
-         Driving.pda_read_assistant_toggled_info(pindex)
-      end
+      if not p.driving then WorkerRobots.logistics_info_key_handler(pindex) end
    end
 )
 

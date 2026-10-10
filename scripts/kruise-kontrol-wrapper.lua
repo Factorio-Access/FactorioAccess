@@ -23,8 +23,6 @@ function mod.activate_kk(pindex)
       -- If the player has no character then abort
       local c = p and p.valid and p.character
       if not c then return end
-      -- The mod modifies this for e.g. telestep.
-      p.character_running_speed_modifier = 0
 
       -- we want the mod's view of the cursor, which may be off the screen.
       --
@@ -89,10 +87,6 @@ function mod.cancel_kk(pindex)
 
       -- Prevent saying KK is done after it is cancelled.
       storage.players[pindex].kruise_kontrol_active_last_time = false
-
-      -- We screwed around with the running modifier. Put it back based on
-      -- cursor mode.
-      fix_walk(pindex)
 
       Speech.speak(pindex, { "fa.kk-cancel" })
    end)

@@ -3,7 +3,6 @@
 
 local Electrical = require("scripts.electrical")
 local FaUtils = require("scripts.fa-utils")
-local InventoryTransfers = require("scripts.inventory-transfers")
 local ItemInfo = require("scripts.item-info")
 local ItemStackUtils = require("scripts.item-stack-utils")
 local localising = require("scripts.localising")
