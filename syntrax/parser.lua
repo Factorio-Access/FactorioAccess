@@ -295,7 +295,4 @@ function mod.parse(text)
    return parse_tokens(tokens --[[@as syntrax.Token[] ]], text)
 end
 
--- Export for testing
-mod._parse_tokens = parse_tokens
-
 return mod

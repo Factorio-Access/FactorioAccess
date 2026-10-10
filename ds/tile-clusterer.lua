@@ -72,7 +72,6 @@ mapping group numbers to their canonical group numbers.  To findf a canonical
 group, we consult that table and walk it like a linked list.  It is entirely
 possible to have d->c->b->a, if tiles are touched in the right order.
 ]]
-local TH = require("scripts.table-helpers")
 local uid = require("scripts.uid").uid
 
 local mod = {}

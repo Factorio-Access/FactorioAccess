@@ -7,7 +7,6 @@
 require("polyfill")
 
 local RailData = require("railutils.rail-data")
-local RailInfo = require("railutils.rail-info")
 local Queries = require("railutils.queries")
 
 local mod = {}

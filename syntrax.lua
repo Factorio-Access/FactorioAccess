@@ -8,7 +8,6 @@ All other modules are considered internal implementation details.
 local Parser = require("syntrax.parser")
 local Compiler = require("syntrax.compiler")
 local Vm = require("syntrax.vm")
-local RailInfo = require("railutils.rail-info")
 
 local mod = {}
 

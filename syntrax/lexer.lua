@@ -234,9 +234,7 @@ local function split_chord(text, base_span)
    return tokens
 end
 
-mod._get_chord_token = get_chord_token
 mod._is_chord_string = is_chord_string
-mod._split_chord = split_chord
 
 --- Expands chord strings in the token list.
 --- If a token contains multiple chord tokens concatenated (e.g., "lrsx5"),
@@ -269,7 +267,6 @@ local function expand_chords(tokens)
 
    return result
 end
-mod._expand_chords = expand_chords
 
 ---@param untyped_tokens { text: string, span: syntrax.Span }[]
 ---@return syntrax.Token[]?, syntrax.Error?
@@ -393,7 +390,6 @@ local function build_tokens(untyped_tokens)
 
    return result
 end
-mod._build_tokens = build_tokens
 
 ---@param text string
 ---@return syntrax.Token[]?, syntrax.Error?

@@ -6,7 +6,6 @@
 ---@diagnostic disable-next-line: unnecessary-if
 if script then return end
 
----@diagnostic disable: lowercase-global
 ---@diagnostic disable: missing-fields
 ---@diagnostic disable: inject-field
 
@@ -34,20 +33,3 @@ local dirdefs = {
 }
 
 rawset(defines, "direction", dirdefs)
-
-rawset(defines, "rail_direction", {
-   front = 0,
-   back = 1,
-})
-
----Polyfill for Factorio's table_size function
----Counts the number of keys in a table (both array and hash parts)
----@param tbl table
----@return uint32
-function table_size(tbl)
-   local count = 0
-   for _ in pairs(tbl) do
-      count = count + 1
-   end
-   return count
-end

@@ -9,27 +9,6 @@ local RailInfo = require("railutils.rail-info")
 
 local mod = {}
 
----Map from defines.direction to direction name
----@type table<defines.direction, string>
-mod.DIRECTION_NAMES = {
-   [defines.direction.north] = "north",
-   [defines.direction.northnortheast] = "northnortheast",
-   [defines.direction.northeast] = "northeast",
-   [defines.direction.eastnortheast] = "eastnortheast",
-   [defines.direction.east] = "east",
-   [defines.direction.eastsoutheast] = "eastsoutheast",
-   [defines.direction.southeast] = "southeast",
-   [defines.direction.southsoutheast] = "southsoutheast",
-   [defines.direction.south] = "south",
-   [defines.direction.southsouthwest] = "southsouthwest",
-   [defines.direction.southwest] = "southwest",
-   [defines.direction.westsouthwest] = "westsouthwest",
-   [defines.direction.west] = "west",
-   [defines.direction.westnorthwest] = "westnorthwest",
-   [defines.direction.northwest] = "northwest",
-   [defines.direction.northnorthwest] = "northnorthwest",
-}
-
 ---Map from defines.direction to cardinal name (only for cardinals)
 ---@type table<defines.direction, string>
 mod.CARDINAL_NAMES = {
@@ -39,34 +18,11 @@ mod.CARDINAL_NAMES = {
    [defines.direction.west] = "west",
 }
 
----Map from defines.direction to diagonal name (only for diagonals)
----@type table<defines.direction, string>
-mod.DIAGONAL_NAMES = {
-   [defines.direction.northeast] = "northeast",
-   [defines.direction.southeast] = "southeast",
-   [defines.direction.southwest] = "southwest",
-   [defines.direction.northwest] = "northwest",
-}
-
----Get direction name
----@param direction defines.direction
----@return string
-function mod.get_direction_name(direction)
-   return mod.DIRECTION_NAMES[direction] or "unknown"
-end
-
 ---Get cardinal name (only for cardinal directions)
 ---@param direction defines.direction
 ---@return string|nil
 function mod.get_cardinal_name(direction)
    return mod.CARDINAL_NAMES[direction]
-end
-
----Get diagonal name (only for diagonal directions)
----@param direction defines.direction
----@return string|nil
-function mod.get_diagonal_name(direction)
-   return mod.DIAGONAL_NAMES[direction]
 end
 
 -- Bidirectional mapping between RailType and prototype names
