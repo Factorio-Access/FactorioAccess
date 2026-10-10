@@ -107,28 +107,6 @@ function mod.play_change_menu_tab(pindex)
    play_sound_internal(pindex, { path = "Change-Menu-Tab-Sound" })
 end
 
--- Scanner sounds
-function mod.play_scanner_pulse(pindex)
-   play_sound_internal(pindex, { path = "scanner-pulse" })
-end
-
--- Player movement/action sounds
-function mod.play_player_walk(pindex)
-   play_sound_internal(pindex, { path = "player-walk" })
-end
-
-function mod.play_player_turn(pindex)
-   play_sound_internal(pindex, { path = "player-turned" })
-end
-
-function mod.play_player_teleport(pindex)
-   play_sound_internal(pindex, { path = "player-teleported" })
-end
-
-function mod.play_player_bump_alert(pindex)
-   play_sound_internal(pindex, { path = "player-bump-alert" })
-end
-
 function mod.play_player_bump_stuck(pindex)
    play_sound_internal(pindex, { path = "player-bump-stuck-alert" })
 end
@@ -139,53 +117,6 @@ end
 
 function mod.play_player_bump_trip(pindex)
    play_sound_internal(pindex, { path = "player-bump-trip" })
-end
-
--- Combat sounds
-function mod.play_player_damaged_character(pindex)
-   play_sound_internal(pindex, { path = "player-damaged-character" })
-end
-
-function mod.play_player_damaged_shield(pindex)
-   play_sound_internal(pindex, { path = "player-damaged-shield" })
-end
-
-function mod.play_aim_locked(pindex)
-   play_sound_internal(pindex, { path = "player-aim-locked" })
-end
-
--- Vehicle sounds
-function mod.play_car_horn(pindex)
-   play_sound_internal(pindex, { path = "car-horn" })
-end
-
-function mod.play_tank_horn(pindex)
-   play_sound_internal(pindex, { path = "tank-horn" })
-end
-
--- Train sounds
-function mod.play_train_alert_high(pindex)
-   play_sound_internal(pindex, { path = "train-alert-high" })
-end
-
-function mod.play_train_alert_low(pindex)
-   play_sound_internal(pindex, { path = "train-alert-low" })
-end
-
-function mod.play_train_clack(pindex)
-   play_sound_internal(pindex, { path = "train-clack" })
-end
-
-function mod.play_train_honk_long(pindex)
-   play_sound_internal(pindex, { path = "train-honk-long" })
-end
-
-function mod.play_train_honk_short(pindex)
-   play_sound_internal(pindex, { path = "train-honk-short-2x" })
-end
-
-function mod.play_train_honk_low_long(pindex)
-   play_sound_internal(pindex, { path = "train-honk-low-long" })
 end
 
 -- Utility sounds
@@ -215,27 +146,9 @@ function mod.play_entity_mined(pindex, entity_type)
    play_sound_internal(pindex, { path = sound_path })
 end
 
--- Selection sounds
-function mod.play_cursor_moved_while_selecting(pindex)
-   play_sound_internal(pindex, { path = "cursor-moved-while-selecting" })
-end
-
 -- Wire connection sounds
 function mod.play_wire_disconnect(pindex)
    play_sound_internal(pindex, { path = "utility/wire_disconnect" })
-end
-
--- Walking sounds
-function mod.play_metal_walking(pindex)
-   play_sound_internal(pindex, { path = "utility/metal_walking_sound", volume_modifier = 1 })
-end
-
-function mod.play_tile_walking(pindex, tile_name)
-   if tile_name then
-      play_sound_internal(pindex, { path = "tile-walking/" .. tile_name, volume_modifier = 1 })
-   else
-      play_sound_internal(pindex, { path = "player-walk", volume_modifier = 1 })
-   end
 end
 
 -- Building sounds
