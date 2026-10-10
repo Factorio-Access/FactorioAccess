@@ -18,10 +18,6 @@ local SOUND_VOLUME = 0.8
 -- Tick interval: 2 times per second (60 ticks / 2 = 30 ticks)
 local TICK_INTERVAL = 30
 
--- Target number of spawners to ping per tick
--- We ping spawners where (unit_number % visible_count) falls within our "slot"
-local TARGET_PINGS_PER_TICK = 1
-
 ---@class fa.SpawnerRadar.State
 ---@field cycle_index integer Current index in the cycle
 ---@field active_sounds table<string, true> Sound IDs currently playing

@@ -49,15 +49,6 @@ local sonifier_storage = StorageManager.declare_storage_module("grid_sonifier", 
    ephemeral_state_version = 1,
 })
 
----Register a backend for a player
----@param pindex integer
----@param name string
----@param backend fa.GridSonifier.Backend
-function mod.register_backend(pindex, name, backend)
-   local state = sonifier_storage[pindex]
-   state.backends[name] = backend
-end
-
 ---@class fa.GridSonifier.BackendRegistration
 ---@field factory fun(): fa.GridSonifier.Backend
 ---@field entity_types table<string, true>
@@ -308,19 +299,6 @@ function mod.on_tick_per_player(pindex)
 
    -- Process and play sounds
    if #all_events > 0 then process_events(pindex, all_events, left, top, right, bottom) end
-end
-
----Reset state for a player (e.g., when disabling sonification)
----@param pindex integer
-function mod.reset(pindex)
-   local state = sonifier_storage[pindex]
-   for _, backend in pairs(state.backends) do
-      for unit_number, _ in pairs(state.visible_entities) do
-         backend:on_vanished(unit_number)
-      end
-   end
-   state.visible_entities = {}
-   state.surface_index = nil
 end
 
 return mod

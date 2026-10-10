@@ -104,42 +104,4 @@ function mod.read_wait_condition(mb, condition)
    end
 end
 
----Read multiple wait conditions with and/or connectors
----@param mb fa.MessageBuilder
----@param wait_conditions WaitCondition[]
-function mod.read_wait_conditions(mb, wait_conditions)
-   if not wait_conditions or #wait_conditions == 0 then return end
-
-   for i, condition in ipairs(wait_conditions) do
-      -- Add connector for conditions after the first
-      if i > 1 then
-         local connector = condition.compare_type or "and"
-         mb:fragment({ "fa.schedule-connector-" .. connector })
-      end
-
-      mod.read_wait_condition(mb, condition)
-   end
-end
-
----Read a schedule record (destination + wait conditions)
----Starting point for reading schedule entries
----@param mb fa.MessageBuilder
----@param record ScheduleRecord
-function mod.read_schedule_record(mb, record)
-   -- Destination
-   if record.station then
-      mb:fragment({ "fa.schedule-station", record.station })
-   elseif record.rail then
-      mb:fragment({ "fa.schedule-rail-position" })
-   else
-      mb:fragment({ "fa.schedule-no-destination" })
-   end
-
-   -- Wait conditions
-   if record.wait_conditions and #record.wait_conditions > 0 then
-      mb:fragment({ "fa.schedule-waiting-for" })
-      mod.read_wait_conditions(mb, record.wait_conditions)
-   end
-end
-
 return mod

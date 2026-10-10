@@ -119,14 +119,6 @@ function mod.get_hard_min_range(pindex)
    end
 end
 
----Get the hard minimum range from a gun prototype name
----@param gun_name string
----@return number? min_range
-function mod.get_hard_min_range_from_prototype(gun_name)
-   local gun_data = CombatData.get_gun_data(gun_name)
-   return gun_data and gun_data.min_range
-end
-
 ---Get the soft minimum range for the currently selected gun+ammo combo
 ---This is the range at which firing would damage the player
 ---@param pindex integer
@@ -139,14 +131,6 @@ function mod.get_soft_min_range(pindex)
    if not ammo_data then return nil end
 
    return ammo_data.soft_min_range
-end
-
----Get the soft minimum range from an ammo prototype name
----@param ammo_name string
----@return number? soft_min_range
-function mod.get_soft_min_range_from_prototype(ammo_name)
-   local ammo_data = CombatData.get_ammo_data(ammo_name)
-   return ammo_data and ammo_data.soft_min_range
 end
 
 ---Get the soft minimum range from a capsule prototype name
@@ -238,14 +222,6 @@ function mod.can_damage_self(pindex)
    return ammo_data.can_damage_self or false
 end
 
----Check if the specified ammo can damage the player themselves
----@param ammo_name string
----@return boolean can_damage
-function mod.can_damage_self_from_prototype(ammo_name)
-   local ammo_data = CombatData.get_ammo_data(ammo_name)
-   return ammo_data and ammo_data.can_damage_self or false
-end
-
 ---Check if the specified capsule can damage the player themselves
 ---@param capsule_name string
 ---@return boolean can_damage
@@ -265,14 +241,6 @@ function mod.get_area_damage_radius(pindex)
    if not ammo_data or not ammo_data.has_area_damage then return nil end
 
    return ammo_data.area_radius
-end
-
----Get area damage radius from an ammo prototype name
----@param ammo_name string
----@return number? radius
-function mod.get_area_damage_radius_from_prototype(ammo_name)
-   local ammo_data = CombatData.get_ammo_data(ammo_name)
-   return ammo_data and ammo_data.has_area_damage and ammo_data.area_radius or nil
 end
 
 ---Get area damage radius from a capsule prototype name
@@ -297,14 +265,6 @@ end
 function mod.capsule_heals_player(capsule_name)
    local capsule_data = CombatData.get_capsule_data(capsule_name)
    return capsule_data and capsule_data.heals_player or false
-end
-
----Get what entity a capsule spawns (combat robots, etc.)
----@param capsule_name string
----@return string? entity_name
-function mod.get_capsule_spawned_entity(capsule_name)
-   local capsule_data = CombatData.get_capsule_data(capsule_name)
-   return capsule_data and capsule_data.spawns_entity
 end
 
 return mod

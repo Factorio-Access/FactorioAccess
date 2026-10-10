@@ -34,7 +34,6 @@ mod.AimingType = {
 ---@field force_condition string? The force condition on triggers ("enemy", "all", etc)
 
 ---@class fa.GunData
----@field attack_parameters_type string "projectile", "stream", "beam"
 ---@field min_range number? Hard minimum range
 ---@field max_range number Max firing range
 ---@field ammo_categories string[] Which ammo categories this gun accepts
@@ -201,18 +200,16 @@ end
 ---@class fa.AttackParamsData
 ---@field min_range number?
 ---@field max_range number
----@field attack_type string
 
 ---Extract attack parameters data
 ---@param attack_params table?
 ---@return fa.AttackParamsData
 local function extract_attack_params(attack_params)
-   if not attack_params then return { min_range = nil, max_range = 0, attack_type = "projectile" } end
+   if not attack_params then return { min_range = nil, max_range = 0 } end
 
    return {
       min_range = attack_params.min_range,
       max_range = attack_params.range or 0,
-      attack_type = attack_params.type or "projectile",
    }
 end
 
@@ -279,7 +276,6 @@ function mod.build_map()
       end
 
       combat_data.guns[name] = {
-         attack_parameters_type = params.attack_type,
          min_range = params.min_range,
          max_range = params.max_range,
          ammo_categories = ammo_categories,

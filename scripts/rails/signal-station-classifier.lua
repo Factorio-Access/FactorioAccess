@@ -16,14 +16,6 @@ local mod = {}
 ---@field right fa.rails.SignalType? Type of signal on right side (out_signal), nil if none
 ---@field station boolean True if a train station is adjacent to this rail
 
----Get effective rail type from entity (handles ghosts)
----@param ent LuaEntity
----@return string The rail type (e.g., "straight-rail")
-local function get_effective_type(ent)
-   if ent.type == "entity-ghost" then return ent.ghost_type end
-   return ent.type
-end
-
 ---Get effective rail name from entity (handles ghosts)
 ---@param ent LuaEntity
 ---@return string The rail prototype name

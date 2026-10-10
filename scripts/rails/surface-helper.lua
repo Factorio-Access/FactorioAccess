@@ -37,24 +37,6 @@ function mod.get_planner_description(rail_planner_prototype)
    }
 end
 
----Wrap a surface for rail queries using the player's current rail planner
----@param surface LuaSurface
----@param player LuaPlayer
----@return railutils.GameSurface|nil
-function mod.wrap_surface_for_player(surface, player)
-   if not player.cursor_stack or not player.cursor_stack.valid_for_read then return nil end
-
-   local prototype = player.cursor_stack.prototype
-   if not prototype.rails then return nil end
-
-   local planner_description = mod.get_planner_description(prototype)
-   if not planner_description then return nil end
-
-   return GameSurface.wrap_surface(surface, {
-      planner_description = planner_description,
-   })
-end
-
 ---Wrap a surface for rail queries using vanilla rail names
 ---@param surface LuaSurface
 ---@return railutils.GameSurface
