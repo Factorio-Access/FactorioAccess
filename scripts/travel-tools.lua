@@ -1,11 +1,9 @@
 --Here: Fast travel, structure travel, etc.
 local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
-local Mouse = require("scripts.mouse")
 local Teleport = require("scripts.teleport")
 local UiRouter = require("scripts.ui.router")
 local Viewpoint = require("scripts.viewpoint")
-local EntitySelection = require("scripts.entity-selection")
 local Speech = require("scripts.speech")
 local StorageManager = require("scripts.storage-manager")
 local UID = require("scripts.uid")

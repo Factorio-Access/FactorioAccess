@@ -10,7 +10,6 @@ Provides a category-based interface for research technologies where:
 
 local CategoryRows = require("scripts.ui.category-rows")
 local Research = require("scripts.research")
-local Speech = require("scripts.speech")
 local Help = require("scripts.ui.help")
 
 local mod = {}

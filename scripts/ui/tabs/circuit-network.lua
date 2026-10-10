@@ -7,7 +7,6 @@ Uses control-behavior-descriptors to dynamically build a form based on the entit
 local ControlBehaviorDescriptors = require("scripts.control-behavior-descriptors")
 local FormBuilder = require("scripts.ui.form-builder")
 local KeyGraph = require("scripts.ui.key-graph")
-local Speech = require("scripts.speech")
 local CircuitNetwork = require("scripts.circuit-network")
 
 local mod = {}

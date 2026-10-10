@@ -3,7 +3,6 @@ local lu = require("luaunit")
 local Compiler = require("syntrax.compiler")
 local Parser = require("syntrax.parser")
 local Vm = require("syntrax.vm")
-local Directions = require("syntrax.directions")
 local Helpers = require("syntrax.tests.helpers")
 
 local mod = {}

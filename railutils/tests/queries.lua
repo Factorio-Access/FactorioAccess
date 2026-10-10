@@ -1,7 +1,6 @@
 local lu = require("luaunit")
 require("polyfill")
 
-local TestSurface = require("railutils.surface-impls.test-surface")
 local Queries = require("railutils.queries")
 local RailInfo = require("railutils.rail-info")
 

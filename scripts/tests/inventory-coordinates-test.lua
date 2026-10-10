@@ -1,7 +1,6 @@
 --- Test character inventory coordinate announcements
 -- Tests that moving in inventory announces coordinates
 
-local EventManager = require("scripts.event-manager")
 local TestRegistry = require("scripts.test-registry")
 local describe = TestRegistry.describe
 local it = TestRegistry.it

@@ -13,7 +13,6 @@ local UiRouter = require("scripts.ui.router")
 local UiUtils = require("scripts.ui.ui-utils")
 local UiSounds = require("scripts.ui.sounds")
 local Filters = require("scripts.filters")
-local Localising = require("scripts.localising")
 local ItemInfo = require("scripts.item-info")
 
 local mod = {}

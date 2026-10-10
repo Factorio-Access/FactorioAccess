@@ -1,8 +1,6 @@
 --- Test cursor bookmark system
 -- Tests saving and restoring cursor position bookmarks
 
-local EventManager = require("scripts.event-manager")
-local graphics = require("scripts.graphics")
 local TestRegistry = require("scripts.test-registry")
 local viewpoint = require("scripts.viewpoint")
 local describe = TestRegistry.describe

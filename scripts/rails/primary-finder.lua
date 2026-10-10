@@ -6,8 +6,6 @@
 ---
 ---Rails with signals or stations are always considered primary and reported individually.
 
-local Consts = require("scripts.consts")
-local RailInfo = require("railutils.rail-info")
 local RailQueries = require("railutils.queries")
 local SignalStationClassifier = require("scripts.rails.signal-station-classifier")
 local Traverser = require("railutils.traverser")

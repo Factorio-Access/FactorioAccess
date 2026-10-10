@@ -1,8 +1,6 @@
 --- Test cursor movement functionality
 -- Tests the mod's custom cursor system (not part of vanilla Factorio)
 
-local EventManager = require("scripts.event-manager")
-local graphics = require("scripts.graphics")
 local TestRegistry = require("scripts.test-registry")
 local viewpoint = require("scripts.viewpoint")
 local describe = TestRegistry.describe

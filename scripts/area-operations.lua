@@ -5,9 +5,7 @@ Handles area mining for obstacles, ghosts, and with special tools.
 ]]
 
 local Consts = require("scripts.consts")
-local Localising = require("scripts.localising")
 local PlayerMiningTools = require("scripts.player-mining-tools")
-local FaUtils = require("scripts.fa-utils")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
 local Viewpoint = require("scripts.viewpoint")

@@ -9,9 +9,6 @@ file.  Not just for this mod, for all mods.  This already had to be rewritten
 once in part due to lost knowledge.
 ]]
 
-local util = require("util")
-
-local Consts = require("scripts.consts")
 local FaUtils = require("scripts.fa-utils")
 local F = require("scripts.field-ref")
 local Geometry = require("scripts.geometry")

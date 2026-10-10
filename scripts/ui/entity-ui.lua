@@ -5,12 +5,10 @@ Provides a dynamic UI that adapts to entity capabilities
 
 local Consts = require("scripts.consts")
 local EntityAccess = require("scripts.entity-access")
-local Functools = require("scripts.functools")
 local InventoryGrid = require("scripts.ui.inventory-grid")
 local InventoryUtils = require("scripts.inventory-utils")
 local Speech = require("scripts.speech")
 local TabList = require("scripts.ui.tab-list")
-local UiKeyGraph = require("scripts.ui.key-graph")
 local UiRouter = require("scripts.ui.router")
 local inventory = require("scripts.ui.menus.inventory")
 local arithmetic_combinator_tab = require("scripts.ui.tabs.arithmetic-combinator")

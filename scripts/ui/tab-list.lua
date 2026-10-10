@@ -31,7 +31,6 @@ local Math2 = require("math-helpers")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
 local StorageManager = require("scripts.storage-manager")
-local TH = require("scripts.table-helpers")
 local Sounds = require("scripts.ui.sounds")
 local UiRouter = require("scripts.ui.router")
 

@@ -11,8 +11,6 @@ Provides controls for:
 local FormBuilder = require("scripts.ui.form-builder")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local UiRouter = require("scripts.ui.router")
-local UiSounds = require("scripts.ui.sounds")
-local Viewpoint = require("scripts.viewpoint")
 local Localising = require("scripts.localising")
 
 local mod = {}

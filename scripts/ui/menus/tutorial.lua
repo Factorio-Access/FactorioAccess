@@ -8,7 +8,6 @@ The tutorial state persists across close/reopen operations.
 local Menu = require("scripts.ui.menu")
 local MessageLists = require("scripts.message-lists")
 local Router = require("scripts.ui.router")
-local Speech = require("scripts.speech")
 local TabList = require("scripts.ui.tab-list")
 local TutorialData = require("scripts.tutorial-data")
 local UiKeyGraph = require("scripts.ui.key-graph")

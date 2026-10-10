@@ -24,7 +24,6 @@ local StorageManager = require("scripts.storage-manager")
 local MovementHistory = require("scripts.movement-history")
 local sounds = require("scripts.ui.sounds")
 local Logging = require("scripts.logging")
-local Consts = require("scripts.consts")
 local Geometry = require("scripts.geometry")
 
 local logger = Logging.Logger("bump-detection")

@@ -38,7 +38,6 @@ local Consts = require("scripts.consts")
 local FaUtils = require("scripts.fa-utils")
 local Geometry = require("scripts.geometry")
 local NetworkShape = require("scripts.network-shape")
-local TH = require("scripts.table-helpers")
 
 local mod = {}
 

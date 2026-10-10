@@ -1,8 +1,6 @@
 --- Logging framework for FactorioAccess
 -- Provides module-specific loggers without global injection
 
-local Speech = require("scripts.speech")
-
 local mod = {}
 
 ---@enum LogLevel

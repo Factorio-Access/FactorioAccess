@@ -3,7 +3,6 @@ Main unified menu that combines inventory, guns, crafting, and research tabs.
 This is the primary player interface accessed with the E key.
 ]]
 
-local Functools = require("scripts.functools")
 local TabList = require("scripts.ui.tab-list")
 local UiRouter = require("scripts.ui.router")
 

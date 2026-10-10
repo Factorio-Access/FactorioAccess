@@ -11,7 +11,6 @@ local UiRouter = require("scripts.ui.router")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
 local UpgradePlanner = require("scripts.upgrade-planner")
-local Localising = require("scripts.localising")
 local EntityChooser = require("scripts.ui.tabs.entity-chooser")
 local ItemChooser = require("scripts.ui.tabs.item-chooser")
 local LauncherCommands = require("scripts.launcher-commands")

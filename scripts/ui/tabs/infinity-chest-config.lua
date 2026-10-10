@@ -10,9 +10,7 @@ local Menu = require("scripts.ui.menu")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local Controls = require("scripts.ui.controls")
 local UiRouter = require("scripts.ui.router")
-local UiUtils = require("scripts.ui.ui-utils")
 local UiSounds = require("scripts.ui.sounds")
-local Localising = require("scripts.localising")
 
 local mod = {}
 

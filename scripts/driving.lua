@@ -1,10 +1,8 @@
 --Here: Functions about driving, mainly cars.
 
-local util = require("util")
 local FaUtils = require("scripts.fa-utils")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
-local VanillaMode = require("scripts.vanilla-mode")
 local dirs = defines.direction
 
 local mod = {}

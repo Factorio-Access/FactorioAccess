@@ -12,7 +12,6 @@ Example:
 - Update PREVIOUS (west) belt to face south -> forms corner!
 ]]
 
-local FaUtils = require("scripts.fa-utils")
 local Logging = require("scripts.logging")
 local BuildLock = require("scripts.build-lock")
 

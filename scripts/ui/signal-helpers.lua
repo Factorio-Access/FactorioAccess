@@ -2,7 +2,6 @@
 --Each signal type can be added to a TreeChooser builder, with hierarchy where possible
 
 local EventManager = require("scripts.event-manager")
-local TreeChooser = require("scripts.ui.tree-chooser")
 local Localising = require("scripts.localising")
 
 local mod = {}

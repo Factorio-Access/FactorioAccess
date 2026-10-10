@@ -2,11 +2,9 @@
 --Does not include event handlers
 
 local FaUtils = require("scripts.fa-utils")
-local Graphics = require("scripts.graphics")
 local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
-local UiRouter = require("scripts.ui.router")
 
 local mod = {}
 

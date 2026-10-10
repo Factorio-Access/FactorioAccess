@@ -13,7 +13,6 @@ local Crafting = require("scripts.crafting")
 local ItemInfo = require("scripts.item-info")
 local Localising = require("scripts.localising")
 local RecipeHelpers = require("scripts.recipe-helpers")
-local Speech = require("scripts.speech")
 
 local mod = {}
 

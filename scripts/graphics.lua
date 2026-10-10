@@ -4,7 +4,6 @@
 local BuildDimensions = require("scripts.build-dimensions")
 local FaUtils = require("scripts.fa-utils")
 local Mouse = require("scripts.mouse")
-local UiRouter = require("scripts.ui.router")
 local VanillaMode = require("scripts.vanilla-mode")
 local Viewpoint = require("scripts.viewpoint")
 local dirs = defines.direction

@@ -12,8 +12,6 @@ local Menu = require("scripts.ui.menu")
 local KeyGraph = require("scripts.ui.key-graph")
 local CircuitNetworkSignals = require("scripts.ui.tabs.circuit-network-signals")
 local CircuitNetwork = require("scripts.ui.tabs.circuit-network")
-local Wires = require("scripts.wires")
-local Speech = require("scripts.speech")
 
 local mod = {}
 

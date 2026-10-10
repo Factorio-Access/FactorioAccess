@@ -5,7 +5,6 @@ Handles electric poles with smart spacing based on the last placed pole.
 Uses wire reach to determine optimal placement distance.
 ]]
 
-local FaUtils = require("scripts.fa-utils")
 local Logging = require("scripts.logging")
 local BuildLock = require("scripts.build-lock")
 

@@ -1,7 +1,6 @@
 --- Handles cursor stack changes and pipette tool
 local mod = {}
 
-local Consts = require("scripts.consts")
 local StorageManager = require("scripts.storage-manager")
 local Viewpoint = require("scripts.viewpoint")
 local Graphics = require("scripts.graphics")

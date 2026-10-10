@@ -4,7 +4,6 @@ require("polyfill")
 local TestSurface = require("railutils.surface-impls.test-surface")
 local RailDescriber = require("railutils.rail-describer")
 local RailInfo = require("railutils.rail-info")
-local Queries = require("railutils.queries")
 local Traverser = require("railutils.traverser")
 
 local mod = {}

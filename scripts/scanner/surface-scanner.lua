@@ -1,8 +1,6 @@
 local Functools = require("scripts.functools")
 local Memosort = require("scripts.memosort")
 local ResourcePatchesBackend = require("scripts.scanner.backends.resource-patches")
-local SimpleBackend = require("scripts.scanner.backends.simple")
-local ScannerConsts = require("scripts.scanner.scanner-consts")
 local StorageManager = require("scripts.storage-manager")
 -- This is typed around 100 times and only used for the LUT, so we will shorten
 -- it.

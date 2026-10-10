@@ -1,5 +1,4 @@
 --Here: localisation functions, including event handlers
-local Speech = require("scripts.speech")
 local LocalisedStringCache = require("scripts.localised-string-cache")
 local MessageLists = require("scripts.message-lists")
 local FaUtils = require("scripts.fa-utils")

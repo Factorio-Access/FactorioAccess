@@ -1,7 +1,5 @@
 --Here: Crafting menu, crafting queue menu, and related functions
 
-local util = require("util")
-local FaUtils = require("scripts.fa-utils")
 local localising = require("scripts.localising")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder

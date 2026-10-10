@@ -4,10 +4,6 @@ Handles initialization of player state when joining the game.
 Sets up default values and data structures for each player.
 ]]
 
-local FaUtils = require("scripts.fa-utils")
-local TH = require("scripts.table-helpers")
-local Localising = require("scripts.localising")
-
 local dirs = defines.direction
 
 local mod = {}

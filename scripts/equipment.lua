@@ -6,11 +6,8 @@ local FaUtils = require("scripts.fa-utils")
 local ItemInfo = require("scripts.item-info")
 local ItemStackUtils = require("scripts.item-stack-utils")
 local localising = require("scripts.localising")
-local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
-local UiRouter = require("scripts.ui.router")
-local TH = require("scripts.table-helpers")
 
 local mod = {}
 

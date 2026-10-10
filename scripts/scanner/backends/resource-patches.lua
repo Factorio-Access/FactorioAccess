@@ -5,7 +5,6 @@ local FaInfo = require("scripts.fa-info")
 local FaUtils = require("scripts.fa-utils")
 local Functools = require("scripts.functools")
 local ScannerConsts = require("scripts.scanner.scanner-consts")
-local TableHelpers = require("scripts.table-helpers")
 
 local mod = {}
 

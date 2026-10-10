@@ -12,7 +12,6 @@ local Controls = require("scripts.ui.controls")
 local Router = require("scripts.ui.router")
 local WorkerRobots = require("scripts.worker-robots")
 local Localising = require("scripts.localising")
-local CircuitNetwork = require("scripts.circuit-network")
 
 local mod = {}
 

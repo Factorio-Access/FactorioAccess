@@ -4,7 +4,6 @@
 local util = require("util")
 local EntitySelection = require("scripts.entity-selection")
 local Equipment = require("scripts.equipment")
-local FaUtils = require("scripts.fa-utils")
 local HealthBar = require("scripts.sonifiers.health-bar")
 local Localising = require("scripts.localising")
 local PlayerWeapon = require("scripts.combat.player-weapon")

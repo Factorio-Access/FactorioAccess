@@ -6,11 +6,9 @@ Provides a menu interface for selecting from valid offshore pump placement posit
 local Functools = require("scripts.functools")
 local FaUtils = require("scripts.fa-utils")
 local Menu = require("scripts.ui.menu")
-local Speech = require("scripts.speech")
 local TabList = require("scripts.ui.tab-list")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local UiRouter = require("scripts.ui.router")
-local Viewpoint = require("scripts.viewpoint")
 
 local mod = {}
 

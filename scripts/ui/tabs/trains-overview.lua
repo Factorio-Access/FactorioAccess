@@ -10,7 +10,6 @@ local TrainHelpers = require("scripts.rails.train-helpers")
 local EntityUi = require("scripts.ui.entity-ui")
 local Viewpoint = require("scripts.viewpoint")
 local Graphics = require("scripts.graphics")
-local UiSounds = require("scripts.ui.sounds")
 local Help = require("scripts.ui.help")
 
 local mod = {}

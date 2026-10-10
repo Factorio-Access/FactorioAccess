@@ -1,6 +1,5 @@
 local UiKeyGraph = require("scripts.ui.key-graph")
 local UiSounds = require("scripts.ui.sounds")
-local UiUtils = require("scripts.ui.ui-utils")
 
 local mod = {}
 

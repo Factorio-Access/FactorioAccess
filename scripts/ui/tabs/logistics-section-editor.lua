@@ -14,12 +14,9 @@ local Menu = require("scripts.ui.menu")
 local KeyGraph = require("scripts.ui.key-graph")
 local Controls = require("scripts.ui.controls")
 local Router = require("scripts.ui.router")
-local Speech = require("scripts.speech")
 local UiSounds = require("scripts.ui.sounds")
-local Localising = require("scripts.localising")
 local CircuitNetwork = require("scripts.circuit-network")
 local FaInfo = require("scripts.fa-info")
-local BotLogistics = require("scripts.worker-robots")
 local Consts = require("scripts.consts")
 
 local mod = {}

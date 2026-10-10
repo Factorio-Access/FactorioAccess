@@ -9,8 +9,6 @@ Provides a single fluid selector:
 local Menu = require("scripts.ui.menu")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local UiRouter = require("scripts.ui.router")
-local UiUtils = require("scripts.ui.ui-utils")
-local Localising = require("scripts.localising")
 
 local mod = {}
 

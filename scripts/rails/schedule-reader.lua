@@ -2,7 +2,6 @@
 --Recursive descent parser in reverse: each function handles one level and pushes to the message builder
 
 local CircuitNetwork = require("scripts.circuit-network")
-local Speech = require("scripts.speech")
 
 local mod = {}
 

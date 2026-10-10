@@ -15,7 +15,6 @@ local TrainHelpers = require("scripts.rails.train-helpers")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local Router = require("scripts.ui.router")
 local UiSounds = require("scripts.ui.sounds")
-local Speech = require("scripts.speech")
 
 ---Build a vtable for a "go to stop" button that adds a temporary schedule entry
 ---@param entity LuaEntity The locomotive entity

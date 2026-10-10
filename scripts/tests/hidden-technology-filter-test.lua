@@ -1,4 +1,3 @@
-local Research = require("scripts.research")
 local TestRegistry = require("scripts.test-registry")
 local Speech = require("scripts.speech")
 local describe = TestRegistry.describe

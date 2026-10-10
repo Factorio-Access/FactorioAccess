@@ -13,7 +13,6 @@ Key bindings within this tab:
 - Backspace on output priority: Clear filter
 ]]
 
-local ItemInfo = require("scripts.item-info")
 local Localising = require("scripts.localising")
 local Menu = require("scripts.ui.menu")
 local UiKeyGraph = require("scripts.ui.key-graph")
