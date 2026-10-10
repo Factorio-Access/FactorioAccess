@@ -61,6 +61,10 @@ static void register_actions() {
       {ui_actions::Activate, "Activate", sc::Enter, false, false, false},
       {ui_actions::Back, "Back", sc::Escape, false, false, false},
       {ui_actions::Tooltip, "Tooltip", sc::Space, false, false, false},
+      {ui_actions::Increase, "Increase", sc::PageUp, false, false, true},
+      {ui_actions::Decrease, "Decrease", sc::PageDown, false, false, true},
+      {ui_actions::IncreaseLarge, "Increase a lot", sc::PageUp, true, false, true},
+      {ui_actions::DecreaseLarge, "Decrease a lot", sc::PageDown, true, false, true},
   };
   for (const Ui& u : ui) {
     auto& a = g_input.register_action(std::string(u.id), u.label, InputCategory::UI).bind(u.key, u.ctrl, u.shift, false);
@@ -96,6 +100,10 @@ void focus_stop(const Key& stop) {
   if (g_nav) g_nav->focus_stop(stop);
 }
 
+void announce_change(std::string_view text) {
+  if (g_nav) g_nav->announce_change(text);
+}
+
 std::string dump() { return g_nav ? g_nav->dump() : "(no navigator)\n"; }
 
 void tick() {
@@ -105,6 +113,7 @@ void tick() {
   g_last_tick = t;
   Screen* before = g_screens.current();
   bool owned_before = g_owned;
+  bool raw_before = before && before->captures_raw_input();
   g_screens.tick();
   bool owns = g_screens.owns_keyboard();
   if (owns != g_owned) {
@@ -118,6 +127,9 @@ void tick() {
   // The keys of the frame a screen became current, or the keyboard changed hands, belong to whoever had the
   // keyboard before (the Enter that ends a text edit must not also activate the field again).
   if (!owns || !owned_before || cur != before) return;
+  // A screen reading raw keys this frame (typing a value) handles them in on_update; navigation stays out, also
+  // on the frame the screen stopped (the Enter that set the value must not activate the slider again).
+  if (raw_before || (cur && cur->captures_raw_input())) return;
   const KeySource& ks = input::key_source();
   g_input.tick(t, ks, [](InputAction& a) { return g_nav && g_nav->on_action(a.key()); });
   TypeaheadInput in;

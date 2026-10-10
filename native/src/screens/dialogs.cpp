@@ -1,4 +1,6 @@
 #include "screens/dialogs.h"
+#include <cmath>
+#include <cstdlib>
 #include <format>
 #include <optional>
 #include <string>
@@ -129,11 +131,28 @@ std::string label_of(agui::Widget* w) {
   return tip.substr(0, tip.find('\n'));
 }
 
+// A label used to name the control after it: "Seed" for the seed field, "Version:" before a dropdown.
+std::string as_label(const std::string& s) {
+  std::string t = s;
+  while (!t.empty() && (t.back() == ':' || t.back() == ' ')) t.pop_back();
+  return t;
+}
+
+bool is_control(Kind k) { return k != Kind::Container && k != Kind::Skip && k != Kind::Label; }
+// Controls whose caption is their value, so they need a name from elsewhere (a label beside them, a table header).
+bool needs_name(Kind k) { return k == Kind::TextField || k == Kind::DropDown || k == Kind::Slider; }
+
 struct Entry {
   Path path;
   Kind kind;
+  std::string name;  // composed by the walker (a neighbouring label, table headers); empty = the widget's own
+  Path value_path;   // a slider's companion text field, whose text is the readable value ("10 min" for 36000 ticks)
 };
-using Row = std::vector<Entry>;
+struct Row {
+  std::vector<Entry> cells;
+  std::string key;      // shared by the rows of one table: up and down keep the column
+  std::string context;  // the row's own label ("Move up" before its key buttons): said when focus enters the row
+};
 
 // Visible controls (non-containers) under `w`, counting up to `limit`.
 int count_controls(agui::Widget* w, int limit) {
@@ -156,10 +175,36 @@ bool cells_are_single(agui::Widget* w) {
   return true;
 }
 
+std::string join_name(const std::string& a, const std::string& b) {
+  if (a.empty()) return b;
+  if (b.empty()) return a;
+  MessageBuilder m;
+  m.fragment(a).list_item().fragment(b);
+  return m.build();
+}
+
 class Walker {
  public:
   std::vector<Row> rows;
   Path title_path;
+
+  // After walk(): a label alone on its row names the unnamed control on the row below it ("Preferred screen"
+  // over its dropdown) and stops being a node; then sliders pair with their value fields. A label followed by
+  // controls that carry their own names (a section heading over checkboxes) stays.
+  void finish() {
+    for (size_t i = 0; i + 1 < rows.size(); ++i) {
+      Row& above = rows[i];
+      Row& below = rows[i + 1];
+      if (above.cells.size() != 1 || above.cells[0].kind != Kind::Label || below.cells.empty()) continue;
+      Entry& first = below.cells[0];
+      if (!needs_name(first.kind) || !first.name.empty()) continue;
+      agui::Widget* w = resolve(above.cells[0].path);
+      first.name = w ? as_label(plain(agui::text(w))) : std::string();
+      rows.erase(rows.begin() + (long long)i);
+      --i;
+    }
+    for (Row& row : rows) pair_sliders(row);
+  }
 
   void walk(agui::Widget* w, const Path& path, bool in_row) {
     auto visit = [&](bool priv) {
@@ -171,38 +216,185 @@ class Walker {
         Kind k = classify(c);
         if (k == Kind::Skip) continue;
         if (k == Kind::Container) {
+          if (!in_row && agui::is_a(c, "agui::Table") && agui::table_columns(c) > 1) {
+            grid(c, p);
+            continue;
+          }
           // A horizontal flow or table is a row when each of its cells holds at most one control (a button
           // bar, a tab strip, "label: dropdown"). One holding whole panels side by side (a list beside its
           // details) is columns: each column is walked on its own, top to bottom.
           bool row = !in_row && (agui::is_a(c, "agui::HorizontalFlow") || agui::is_a(c, "agui::Table")) && cells_are_single(c);
           if (row) rows.emplace_back();
           walk(c, p, in_row || row);
-          if (row && rows.back().empty()) rows.pop_back();
+          if (row) {
+            name_from_labels(rows.back());
+            if (rows.back().cells.empty()) rows.pop_back();
+          }
           continue;
         }
-        // A control with neither caption nor tooltip (a bare icon button) has nothing to announce: leave it out.
-        // A dropdown's or text field's caption is its value, which may legitimately be empty.
-        if ((k == Kind::Button || k == Kind::Tab || k == Kind::CheckBox || k == Kind::Radio) && label_of(c).empty()) continue;
-        if (k == Kind::Label) {
-          if (plain(agui::text(c)).empty()) continue;
-          if (title_path.empty()) {
-            title_path = p;  // the first label is the dialog's title: spoken as the stop's context, not as a row
-            continue;
-          }
-        }
+        if (!keep(c, k, p)) continue;
         if (!in_row) rows.emplace_back();
-        rows.back().push_back({p, k});
+        rows.back().cells.push_back({p, k, {}});
       }
     };
     visit(false);
     visit(true);
   }
+
+ private:
+  // Whether a leaf becomes a node. The dialog's first label is its title (the stop's context, not a row); a
+  // control with neither caption nor tooltip (a bare icon button) has nothing to say. A dropdown's or text
+  // field's caption is its value, which may legitimately be empty.
+  bool keep(agui::Widget* c, Kind k, const Path& p) {
+    if ((k == Kind::Button || k == Kind::Tab || k == Kind::CheckBox || k == Kind::Radio) && label_of(c).empty()) return false;
+    if (k == Kind::Label) {
+      if (plain(agui::text(c)).empty()) return false;
+      if (title_path.empty()) {
+        title_path = p;
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // In a row, a label directly before a field, dropdown or slider names it ("Seed" + the seed field) instead of
+  // being a stop of its own.
+  static void name_from_labels(Row& row) {
+    for (size_t i = 0; i + 1 < row.cells.size(); ++i) {
+      Entry& label = row.cells[i];
+      Entry& next = row.cells[i + 1];
+      if (label.kind != Kind::Label || !needs_name(next.kind) || !next.name.empty()) continue;
+      agui::Widget* w = resolve(label.path);
+      next.name = w ? as_label(plain(agui::text(w))) : std::string();
+      row.cells.erase(row.cells.begin() + (long long)i);
+    }
+    // A label leading a row of controls that name themselves ("Move up" + its key buttons, "Input method" + its
+    // radio buttons) is the row's context rather than a stop of its own.
+    if (row.cells.size() > 1 && row.cells[0].kind == Kind::Label) {
+      bool all_controls = true;
+      for (size_t i = 1; i < row.cells.size(); ++i) all_controls &= is_control(row.cells[i].kind);
+      if (all_controls) {
+        agui::Widget* w = resolve(row.cells[0].path);
+        row.context = w ? as_label(plain(agui::text(w))) : std::string();
+        row.cells.erase(row.cells.begin());
+      }
+    }
+    // A checkbox that switches the thing a slider sets ("Game effects" before its volume slider) also names it.
+    for (size_t i = 0; i + 1 < row.cells.size(); ++i) {
+      Entry& toggle = row.cells[i];
+      Entry& next = row.cells[i + 1];
+      if ((toggle.kind != Kind::CheckBox && toggle.kind != Kind::Radio) || !needs_name(next.kind) || !next.name.empty()) continue;
+      agui::Widget* w = resolve(toggle.path);
+      next.name = w ? as_label(label_of(w)) : std::string();
+    }
+  }
+
+  // A slider with a text field beside it (the game's "slider + exact value" pair): the field's text is the
+  // slider's readable value, and the field shares the slider's name.
+  static void pair_sliders(Row& row) {
+    for (size_t i = 0; i + 1 < row.cells.size(); ++i) {
+      Entry& slider = row.cells[i];
+      Entry& field = row.cells[i + 1];
+      if (slider.kind != Kind::Slider || field.kind != Kind::TextField) continue;
+      slider.value_path = field.path;
+      if (field.name.empty()) field.name = slider.name;
+    }
+  }
+
+  // The controls inside one table cell (a cell can be a flow holding several).
+  void collect(agui::Widget* w, const Path& path, std::vector<Entry>& out) {
+    Kind k = classify(w);
+    if (k == Kind::Skip || !agui::visible(w)) return;
+    if (k != Kind::Container) {
+      if (k == Kind::Label ? !plain(agui::text(w)).empty() : keep(w, k, path)) out.push_back({path, k, {}});
+      return;
+    }
+    for (bool priv : {false, true}) {
+      auto kids = priv ? agui::private_children(w) : agui::children(w);
+      for (size_t i = 0; i < kids.size(); ++i) collect(kids[i], child_path(path, priv, i), out);
+    }
+  }
+
+  // A table with columns: its visible children are cells, row by row. The first row is column headers when the
+  // table says so or it holds nothing but labels. Each data row's first cell names the row; a control without a
+  // name of its own is named "<row>, <column>" ("Iron ore, Frequency").
+  void grid(agui::Widget* table, const Path& path) {
+    int columns = agui::table_columns(table);
+    std::vector<std::pair<agui::Widget*, Path>> cells;
+    auto kids = agui::children(table);
+    for (size_t i = 0; i < kids.size(); ++i)
+      if (agui::visible(kids[i])) cells.push_back({kids[i], child_path(path, false, i)});
+    size_t first = 0;
+    std::vector<std::string> headers(columns);
+    bool header_row = agui::table_has_headers(table);
+    if (!header_row && (int)cells.size() > columns) {
+      header_row = true;
+      for (int j = 0; j < columns; ++j)
+        if (is_control(classify(cells[j].first)) || count_controls(cells[j].first, 1) > 0) header_row = false;
+    }
+    if (header_row) {
+      for (int j = 0; j < columns && j < (int)cells.size(); ++j) headers[j] = as_label(plain(agui::text(cells[j].first)));
+      first = columns;
+    }
+    for (size_t r = first; r < cells.size(); r += columns) {
+      Row row;
+      row.key = path;
+      std::string row_name;
+      for (int j = 0; j < columns && r + j < cells.size(); ++j) {
+        std::vector<Entry> found;
+        collect(cells[r + j].first, cells[r + j].second, found);
+        for (Entry& e : found) {
+          agui::Widget* w = resolve(e.path);
+          if (j == 0 && row_name.empty() && w) row_name = as_label(label_of(w));
+          // A label in the first column only names the row.
+          if (j == 0 && e.kind == Kind::Label && columns > 1) continue;
+          if (needs_name(e.kind) || (w && label_of(w).empty())) e.name = join_name(row_name, headers[j]);
+          row.cells.push_back(e);
+        }
+      }
+      if (!row.cells.empty()) rows.push_back(std::move(row));
+    }
+  }
 };
 
-NodeVtablePtr make_node(const Entry& e, std::function<void(const Path&)> start_editing) {
+// Text a button carries besides its caption: labels inside it (a save row's "3 months ago").
+std::string inner_labels(agui::Widget* w, const std::string& caption) {
+  MessageBuilder m;
+  std::function<void(agui::Widget*)> visit = [&](agui::Widget* c) {
+    if (!agui::visible(c)) return;
+    if (agui::is_a(c, "agui::Label")) {
+      std::string t = plain(agui::text(c));
+      if (!t.empty() && t != caption) m.list_item().fragment(t);
+      return;
+    }
+    for (bool priv : {false, true})
+      for (agui::Widget* g : priv ? agui::private_children(c) : agui::children(c)) visit(g);
+  };
+  for (bool priv : {false, true})
+    for (agui::Widget* c : priv ? agui::private_children(w) : agui::children(w)) visit(c);
+  return m.build();
+}
+
+// The readable value of a slider: the game's own text for the current notch when it has one, else the number.
+std::string slider_text(agui::Widget* w) {
+  std::string notch = plain(agui::slider_notch_text(w));
+  if (!notch.empty()) return notch;
+  std::string n = std::format("{:.2f}", agui::slider_value(w));
+  while (n.ends_with('0')) n.pop_back();
+  if (n.ends_with('.')) n.pop_back();
+  return n;
+}
+
+struct Editors {
+  std::function<void(const Path&)> text_field;  // lend the keyboard to the game's text field
+  std::function<void(const Path&)> slider;      // take a typed value for a slider ourselves
+};
+
+NodeVtablePtr make_node(const Entry& e, const Editors& editors) {
   auto v = std::make_shared<NodeVtable>();
   Path p = e.path;
-  auto label = [p] {
+  std::string name = e.name;
+  auto own = [p] {
     agui::Widget* w = resolve(p);
     return w ? label_of(w) : std::string();
   };
@@ -210,6 +402,13 @@ NodeVtablePtr make_node(const Entry& e, std::function<void(const Path&)> start_e
     agui::Widget* w = resolve(p);
     return w && !agui::enabled(w) ? std::string(strings::kDisabled) : std::string();
   };
+  // A control whose caption is its value: the walker's name as the label, the caption as the live value.
+  auto named_value = [&](std::function<std::string()> value) {
+    v->announcements = {NodeAnnouncement([name] { return name; }, false, announcement_kinds::kLabel),
+                        NodeAnnouncement(std::move(value), true, announcement_kinds::kValue),
+                        NodeAnnouncement(disabled, true, announcement_kinds::kEnabled)};
+  };
+  auto label = name.empty() ? std::function<std::string()>(own) : std::function<std::string()>([name] { return name; });
   v->announcements = {NodeAnnouncement(label, false, announcement_kinds::kLabel), NodeAnnouncement(disabled, true, announcement_kinds::kEnabled)};
   auto tip = [p] {
     agui::Widget* w = resolve(p);
@@ -239,10 +438,50 @@ NodeVtablePtr make_node(const Entry& e, std::function<void(const Path&)> start_e
         return s && *s ? std::string(strings::kSelected) : std::string();
       };
       v->announcements.push_back(NodeAnnouncement(selected, true, announcement_kinds::kSelected));
+      auto details = [p] {
+        agui::Widget* w = resolve(p);
+        return w ? inner_labels(w, label_of(w)) : std::string();
+      };
+      v->announcements.push_back(NodeAnnouncement(details, false, announcement_kinds::kValue));
       break;
     }
-    case Kind::Tab: v->control_type = &kTabType; break;
-    case Kind::Slider: v->control_type = &kSliderType; break;
+    case Kind::Tab: {
+      v->control_type = &kTabType;
+      auto selected = [p] {
+        agui::Widget* w = resolve(p);
+        return w && agui::tab_selected(w) ? std::string(strings::kSelected) : std::string();
+      };
+      v->announcements.push_back(NodeAnnouncement(selected, true, announcement_kinds::kSelected));
+      break;
+    }
+    case Kind::Slider: {
+      v->control_type = &kSliderType;
+      auto value = [p, vp = e.value_path] {
+        if (!vp.empty())
+          if (agui::Widget* f = resolve(vp)) return plain(agui::text(f));
+        agui::Widget* w = resolve(p);
+        return w ? slider_text(w) : std::string();
+      };
+      named_value(value);
+      // One notch per step (a tenth of the range when the slider is continuous); shift for five.
+      v->on_adjust = [p](int sign, bool large) {
+        agui::Widget* w = resolve(p);
+        if (!w || !agui::enabled(w)) return;
+        double lo = agui::slider_min(w), hi = agui::slider_max(w), step = agui::slider_step(w);
+        if (step <= 0) step = (hi - lo) / 10;
+        double next = agui::slider_value(w) + sign * step * (large ? 5 : 1);
+        next = next < lo ? lo : next > hi ? hi : next;
+        agui::slider_set(w, next);
+      };
+      v->state_text = value;
+      v->on_tooltip = tip;
+      // Enter types an exact value: into the game's own value field when the slider has one, else into ours.
+      v->on_activate = [p, vp = e.value_path, editors] {
+        if (!vp.empty()) editors.text_field(vp);
+        else editors.slider(p);
+      };
+      return v;
+    }
     case Kind::Radio:
     case Kind::CheckBox: {
       v->control_type = e.kind == Kind::Radio ? &kRadioType : &kCheckType;
@@ -261,11 +500,10 @@ NodeVtablePtr make_node(const Entry& e, std::function<void(const Path&)> start_e
       return v;
     }
     case Kind::DropDown:
-      // The caption of a dropdown is its selected item: speak it as the value, without a separate label. The
-      // game's popup list is never opened: left and right pick the previous / next item directly.
+      // The caption of a dropdown is its selected item: its value. The game's popup list is never opened: left
+      // and right pick the previous / next item directly.
       v->control_type = &kDropdownType;
-      v->announcements[0].kind = std::string(announcement_kinds::kValue);
-      v->announcements[0].live = true;
+      named_value(own);
       v->on_adjust = [p](int sign, bool large) {
         agui::Widget* w = resolve(p);
         if (!w || !agui::enabled(w)) return;
@@ -274,14 +512,13 @@ NodeVtablePtr make_node(const Entry& e, std::function<void(const Path&)> start_e
         next = next < 0 ? 0 : next >= n ? n - 1 : next;
         if (next != cur) agui::dropdown_select(w, next);
       };
-      v->state_text = label;
+      v->state_text = own;
       v->on_tooltip = tip;
       return v;
     case Kind::TextField:
       v->control_type = &kTextType;
-      v->announcements[0].kind = std::string(announcement_kinds::kValue);
-      v->announcements[0].live = true;
-      v->on_activate = [p, start_editing] { start_editing(p); };
+      named_value(own);
+      v->on_activate = [p, editors] { editors.text_field(p); };
       v->on_tooltip = tip;
       return v;
     default: break;
@@ -303,6 +540,7 @@ class DialogsScreen : public Screen {
   std::string screen_name() const override { return {}; }  // each dialog announces itself when it comes up
 
   bool owns_keyboard() const override { return editing_.empty(); }
+  bool captures_raw_input() const override { return !entering_.empty(); }
 
   std::vector<ScreenAction> actions() override {
     return {{std::string(action_ids::Back), [this] { back(); }}};
@@ -315,19 +553,23 @@ class DialogsScreen : public Screen {
     for (size_t i = 0; i < ds.size(); ++i) {
       Walker walker;
       walker.walk(ds[i].widget, ds[i].key + "|", false);
+      walker.finish();
       if (walker.rows.empty()) continue;
       b.begin_stop(Key(ds[i].key));
       std::string title;
       if (agui::Widget* t = resolve(walker.title_path)) title = plain(agui::text(t));
       if (!title.empty()) b.push_context(title);
       for (const Row& row : walker.rows) {
-        if (row.size() > 1) b.start_row();
-        for (const Entry& e : row) {
+        bool open_row = row.cells.size() > 1 || !row.key.empty();
+        if (!row.context.empty()) b.push_context(row.context);
+        if (open_row) b.start_row(row.key.empty() ? Key() : Key(row.key));
+        for (const Entry& e : row.cells) {
           ControlId id = ControlId::structural(Key(e.path));
-          b.add_item(id, make_node(e, [this](const Path& p) { start_editing(p); }));
+          b.add_item(id, make_node(e, Editors{[this](const Path& p) { start_editing(p); }, [this](const Path& p) { start_value_entry(p); }}));
           if (&ds[i] == top && !start && e.kind != Kind::Label) start = id;
         }
-        if (row.size() > 1) b.end_row();
+        if (open_row) b.end_row();
+        if (!row.context.empty()) b.pop_context();
       }
       if (!title.empty()) b.pop_context();
     }
@@ -337,6 +579,10 @@ class DialogsScreen : public Screen {
   void on_update() override {
     if (!editing_.empty()) {
       tick_editing();
+      return;
+    }
+    if (!entering_.empty()) {
+      tick_value_entry();
       return;
     }
     // A new dialog on top (the game opened one, or one closed): land on it and say its title.
@@ -352,6 +598,8 @@ class DialogsScreen : public Screen {
  private:
   std::string editing_;  // path of the text field the game is typing into; empty = the native UI has the keyboard
   std::string top_;
+  std::string entering_;  // path of the slider a value is being typed for; empty = none
+  std::string typed_;
 
   void back() {
     if (agui::close_dropdown_popup()) return;
@@ -376,9 +624,7 @@ class DialogsScreen : public Screen {
     agui::focus(w);
     editing_ = p;
     input::set_reserved({input::sc::Enter, input::sc::Escape, input::sc::Tab});
-    MessageBuilder m;
-    m.fragment("editing").list_item().fragment("enter or escape to finish");
-    speech::speak(m.build(), true);
+    speech::speak(strings::kEditing, true);
     log::writef("dialogs: editing {}", p);
   }
 
@@ -392,7 +638,74 @@ class DialogsScreen : public Screen {
     editing_.clear();
     input::set_reserved({});
     log::write("dialogs: editing done");
-    speech::speak(value.empty() ? std::string("blank") : value, true);
+    app::announce_change(value.empty() ? std::string(strings::kBlank) : value);
+  }
+
+  // Typing an exact value for a slider that has no value field of its own: digits, '.', '-', Backspace; Enter
+  // sets, Escape cancels.
+  void start_value_entry(const Path& p) {
+    agui::Widget* w = resolve(p);
+    if (!w || !agui::enabled(w)) return;
+    entering_ = p;
+    typed_.clear();
+    speech::speak(strings::kTypeValue, true);
+  }
+
+  void tick_value_entry() {
+    const KeySource& ks = input::key_source();
+    for (char16_t c : input::typed_chars()) {
+      if ((c >= u'0' && c <= u'9') || c == u'.' || c == u'-') {
+        typed_ += (char)c;
+        speech::speak(std::string(1, (char)c), true);
+      }
+    }
+    if (ks.just_pressed(input::sc::Backspace) && !typed_.empty()) {
+      typed_.pop_back();
+      speech::speak(typed_.empty() ? std::string(strings::kBlank) : typed_, true);
+    }
+    agui::Widget* w = resolve(entering_);
+    if (!w || ks.just_pressed(input::sc::Escape)) {
+      entering_.clear();
+      speech::speak(strings::kCancelled, true);
+      return;
+    }
+    if (!ks.just_pressed(input::sc::Enter)) return;
+    entering_.clear();
+    char* end = nullptr;
+    double t = std::strtod(typed_.c_str(), &end);
+    if (typed_.empty() || end == typed_.c_str()) {
+      speech::speak(strings::kCancelled, true);
+      return;
+    }
+    agui::slider_set(w, slider_value_for(w, t));
+    app::announce_change(slider_text(w));
+  }
+
+  // What a typed number means for a slider: on a slider with notch texts ("100%", "133%", ...) the notch whose
+  // number is closest; otherwise a percentage of the slider's range.
+  static double slider_value_for(agui::Widget* w, double typed) {
+    double lo = agui::slider_min(w), hi = agui::slider_max(w), step = agui::slider_step(w);
+    auto notches = agui::slider_notch_texts(w);
+    if (!notches.empty() && step > 0) {
+      size_t best = 0;
+      double best_diff = 1e300;
+      for (size_t i = 0; i < notches.size(); ++i) {
+        const char* s = notches[i].c_str();
+        while (*s && !((*s >= '0' && *s <= '9') || *s == '-' || *s == '.')) ++s;
+        char* end = nullptr;
+        double n = std::strtod(s, &end);
+        if (end == s) continue;
+        double diff = n > typed ? n - typed : typed - n;
+        if (diff < best_diff) {
+          best_diff = diff;
+          best = i;
+        }
+      }
+      return lo + (double)best * step;
+    }
+    double v = lo + (hi - lo) * typed / 100.0;
+    if (step > 0) v = lo + std::round((v - lo) / step) * step;
+    return v < lo ? lo : v > hi ? hi : v;
   }
 };
 }  // namespace

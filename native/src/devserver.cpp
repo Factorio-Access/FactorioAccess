@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <vector>
 #include "agui.h"
 #include "app.h"
 #include "audio/audio.h"
@@ -119,12 +120,23 @@ static std::string handle(const std::string& path, const Query& q, int& status) 
       return "unknown key name\n";
     }
     bool shift = truthy(arg(q, "shift")), ctrl = truthy(arg(q, "ctrl")), alt = truthy(arg(q, "alt"));
-    // The release comes a few frames later: a press and release inside one poll is invisible to code that
-    // samples key state per frame.
-    if (!hooks::push_key(sc, true, shift, ctrl, alt)) return "not ready (no SDL window yet)\n";
+    // As typed: the modifiers go down first and come up last, as keys of their own (the game's GUI tracks them
+    // from their own events). Each step is a few frames apart: a press and release inside one poll is invisible
+    // to code that samples key state per frame.
+    std::vector<int> mods;
+    if (ctrl) mods.push_back(input::sc::LCtrl);
+    if (shift) mods.push_back(input::sc::LShift);
+    if (alt) mods.push_back(input::sc::LAlt);
+    for (int m : mods)
+      if (!hooks::push_key(m, true, shift, ctrl, alt)) return "not ready (no SDL window yet)\n";
     std::thread([=] {
+      if (!mods.empty()) Sleep(40);
+      hooks::push_key(sc, true, shift, ctrl, alt);
       Sleep(60);
       hooks::push_key(sc, false, shift, ctrl, alt);
+      if (mods.empty()) return;
+      Sleep(40);
+      for (int m : mods) hooks::push_key(m, false, false, false, false);
     }).detach();
     return "ok\n";
   }

@@ -9,5 +9,7 @@ void tick();  // once per frame on the main thread, after the frame's input was 
 void shutdown();
 // Move focus to a Tab stop of the current screen and announce it (a screen whose content swapped underneath).
 void focus_stop(const fa::ui::Key& stop);
-std::string dump();  // the navigator's current graph and focus, for the dev server
+std::string dump();
+// The current screen changed the focused control's state itself: speak it now (see GraphNavigator::announce_change).
+void announce_change(std::string_view text);  // the navigator's current graph and focus, for the dev server
 }  // namespace fa::app

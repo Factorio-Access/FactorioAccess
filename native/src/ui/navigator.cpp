@@ -176,6 +176,8 @@ bool GraphNavigator::on_action(std::string_view key) {
   if (key == Down) return arrow(GraphDir::Down);
   if (key == Left) return arrow(GraphDir::Left);
   if (key == Right) return arrow(GraphDir::Right);
+  if (key == Increase || key == Decrease || key == IncreaseLarge || key == DecreaseLarge)
+    return vtable_adjust(key == Increase || key == IncreaseLarge ? 1 : -1, key == IncreaseLarge || key == DecreaseLarge);
   if (key == Next) return tab(1);
   if (key == Prev) return tab(-1);
   if (key == Home) return jump_edge(true);
@@ -212,8 +214,9 @@ bool GraphNavigator::on_action(std::string_view key) {
 bool GraphNavigator::arrow(GraphDir dir) {
   const GraphNode* focus_node = graph_ ? graph_->current_node() : nullptr;
   if (!focus_node) return false;
-  // A focused slider/dropdown adjusts on Left/Right (priority over any navigation).
-  if (dir == GraphDir::Left || dir == GraphDir::Right)
+  // A focused slider/dropdown alone in its row adjusts on Left/Right. In a row with neighbours (a table of sliders)
+  // Left/Right move between them, and Page Up/Down adjust (ui.increase / ui.decrease).
+  if ((dir == GraphDir::Left || dir == GraphDir::Right) && !focus_node->transition(GraphDir::Left) && !focus_node->transition(GraphDir::Right))
     if (vtable_adjust(dir == GraphDir::Right ? 1 : -1)) return true;
   // Edge-wired movement first (rows/grids/flattened tree rows all ride edges).
   MoveResult move = graph_->move(dir);
@@ -355,6 +358,12 @@ void GraphNavigator::announce_move(const MoveResult& r) {
 // post-activation values: the current render still carries the old ones (its announcements captured them
 // at build time), so rerender first -- otherwise the next tick baselines on the stale render and then
 // announces the change a second time.
+void GraphNavigator::announce_change(std::string_view text) {
+  speak(text, true);
+  if (graph_) graph_->rerender();
+  live_key_.reset();  // the next watch re-baselines silently
+}
+
 void GraphNavigator::feedback_after_change() {
   const GraphNode* node = graph_->current_node();
   if (!node || !node->vtable || !node->vtable->state_text) return;
@@ -366,14 +375,16 @@ bool GraphNavigator::vtable_activate() {
   const GraphNode* node = graph_->current_node();
   if (!node || !node->vtable || !node->vtable->on_activate) return false;
   graph_->activate();
-  feedback_after_change();
+  // An activation that opened a typed entry (the screen now reads raw keys, or lent the keyboard to a game text
+  // field) has spoken its own prompt.
+  if (!(screen_ && (screen_->captures_raw_input() || !screen_->owns_keyboard()))) feedback_after_change();
   return true;
 }
 
-bool GraphNavigator::vtable_adjust(int sign) {
+bool GraphNavigator::vtable_adjust(int sign, bool large) {
   const GraphNode* node = graph_->current_node();
   if (!node || !node->vtable || !node->vtable->on_adjust) return false;
-  graph_->try_adjust(sign, false);
+  graph_->try_adjust(sign, large);
   feedback_after_change();
   return true;
 }

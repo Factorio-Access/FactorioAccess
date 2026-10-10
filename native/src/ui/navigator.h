@@ -43,6 +43,9 @@ inline constexpr std::string_view Next = "ui.next", Prev = "ui.prev", Home = "ui
 inline constexpr std::string_view RegionPrev = "ui.regionPrev", RegionNext = "ui.regionNext";
 inline constexpr std::string_view Activate = "ui.activate", Secondary = "ui.secondary", Back = "ui.back";
 inline constexpr std::string_view Tooltip = "ui.tooltip", TooltipDetail = "ui.tooltipDetail", Compare = "ui.compare";
+// Adjust the focused slider/dropdown wherever it sits (Left/Right do it only for a control alone in its row).
+inline constexpr std::string_view Increase = "ui.increase", Decrease = "ui.decrease";
+inline constexpr std::string_view IncreaseLarge = "ui.increaseLarge", DecreaseLarge = "ui.decreaseLarge";
 }  // namespace ui_actions
 
 class GraphNavigator {
@@ -65,6 +68,9 @@ class GraphNavigator {
   void ensure_focus();
   // Announce the current focus in full (e.g. when focus mode engages).
   void announce_current();
+  // A screen changed the focused control's state itself (outside an activation or adjust): speak it now,
+  // interrupting, and take the new state as the live watch's baseline so it is not said again.
+  void announce_change(std::string_view text);
   // Move focus to a node by id when it exists in a render (one retry frame for content appearing).
   void focus_node(const ControlId& id, bool announce = true);
   // Land on the first/remembered/selected node of a Tab-stop once it has nodes.
@@ -91,7 +97,7 @@ class GraphNavigator {
   bool region_jump(int dir);
   void announce_move(const MoveResult& r);
   bool vtable_activate();
-  bool vtable_adjust(int sign);
+  bool vtable_adjust(int sign, bool large = false);
   void feedback_after_change();  // speak state_text, rerender, rebaseline the live watch
   void speak_focused_state();
   void play_hover(const GraphNode* node);

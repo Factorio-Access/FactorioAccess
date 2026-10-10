@@ -47,6 +47,21 @@ int dropdown_selected(Widget* w);
 void dropdown_select(Widget* w, int index);
 // For a row of an agui::ListBox: whether it is the list's selected row. nullopt when `w` is not a list row.
 std::optional<bool> list_row_selected(Widget* w);
+// agui::Tab: whether it is its pane's selected tab.
+bool tab_selected(Widget* w);
+// agui::Table: column count (cells are its visible children, row by row) and whether its first row is headers.
+int table_columns(Widget* w);
+bool table_has_headers(Widget* w);
+// agui::Slider: value and range; a change as if the user dragged it (the game's slider-move listeners run).
+double slider_value(Widget* w);
+double slider_min(Widget* w);
+double slider_max(Widget* w);
+double slider_step(Widget* w);
+void slider_set(Widget* w, double value);
+// The game's text for the slider's current notch (agui::Slider::notchTooltips), or empty when it has none.
+std::string slider_notch_text(Widget* w);
+// All of the slider's notch texts, lowest value first (empty when it has none).
+std::vector<std::string> slider_notch_texts(Widget* w);
 // Close any open dropdown list (the popup the game adds over everything); false when none was open.
 bool close_dropdown_popup();
 // Whether `w` is currently in the tree under root() (guards dev routes taking raw addresses).

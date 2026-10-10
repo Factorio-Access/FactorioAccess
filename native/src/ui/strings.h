@@ -20,6 +20,10 @@ inline constexpr std::string_view kNothingToCompare = "nothing to compare";
 inline constexpr std::string_view kNoDetails = "no details";
 inline constexpr std::string_view kNoMatch = "no match for";
 inline constexpr std::string_view kSearchCleared = "search cleared";
+inline constexpr std::string_view kEditing = "editing, enter or escape to finish";
+inline constexpr std::string_view kTypeValue = "type a value, enter to set";
+inline constexpr std::string_view kCancelled = "cancelled";
+inline constexpr std::string_view kBlank = "blank";
 
 // "<i> of <n>" as a list item
 fa::ui::MessageBuilder& push_position(fa::ui::MessageBuilder& m, int index1, int count);

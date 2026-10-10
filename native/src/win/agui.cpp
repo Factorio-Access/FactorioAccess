@@ -1,6 +1,7 @@
 #include "agui.h"
 #include <windows.h>
 #include <cstdint>
+#include <cmath>
 #include <cstring>
 #include "log.h"
 #include "sym.h"
@@ -45,6 +46,13 @@ struct Layout {
   bool (*dd_showing)(Widget*) = nullptr;        // agui::DropDown::isDropDownShowing
   void (*dd_hide)(Widget*) = nullptr;           // agui::DropDown::hideDropDown
   int (*lb_selected)(Widget*) = nullptr;        // agui::ListBox::getSelectedIndex
+  bool (*tab_selected)(Widget*) = nullptr;      // agui::Tab::isSelectedTab
+  size_t table_columns = 0, table_headers = 0;  // agui::Table::columnCount, hasHeaders
+  size_t slider_value = 0, slider_min = 0, slider_max = 0, slider_step = 0;  // agui::Slider value/min/max/valueStep
+  size_t slider_notches = 0;                                                 // agui::Slider::notchTooltips (vector<string>)
+  // void agui::Slider::setValue(double value, bool dispatch, bool updateMarker): dispatch fires the slider-move
+  // listeners (read off its body: the first bool gates dispatchSliderMove).
+  void (*slider_set)(Widget*, double, bool, bool) = nullptr;
   int (*lb_index_of)(Widget*, Widget*) = nullptr;  // agui::ListBox::getIndexOfWidget
 } L;
 
@@ -105,6 +113,15 @@ bool init() {
   ok &= (L.dd_showing = sym::fn<decltype(L.dd_showing)>("agui::DropDown::isDropDownShowing")) != nullptr;
   ok &= (L.dd_hide = sym::fn<decltype(L.dd_hide)>("agui::DropDown::hideDropDown")) != nullptr;
   ok &= (L.lb_selected = sym::fn<decltype(L.lb_selected)>("agui::ListBox::getSelectedIndex")) != nullptr;
+  ok &= (L.tab_selected = sym::fn<decltype(L.tab_selected)>("agui::Tab::isSelectedTab")) != nullptr;
+  ok &= resolve(L.table_columns, "agui::Table", "columnCount");
+  ok &= resolve(L.table_headers, "agui::Table", "hasHeaders");
+  ok &= resolve(L.slider_value, "agui::Slider", "value");
+  ok &= resolve(L.slider_min, "agui::Slider", "min");
+  ok &= resolve(L.slider_max, "agui::Slider", "max");
+  ok &= resolve(L.slider_step, "agui::Slider", "valueStep");
+  ok &= resolve(L.slider_notches, "agui::Slider", "notchTooltips");
+  ok &= (L.slider_set = sym::fn<decltype(L.slider_set)>("agui::Slider::setValue")) != nullptr;
   ok &= (L.lb_index_of = sym::fn<decltype(L.lb_index_of)>("agui::ListBox::getIndexOfWidget")) != nullptr;
   ok &= resolve(L.me_position, "agui::MouseEvent", "position");
   ok &= resolve(L.me_button, "agui::MouseEvent", "button");
@@ -209,6 +226,37 @@ void focus(Widget* w) {
 int dropdown_count(Widget* w) { return L.dd_count(w); }
 int dropdown_selected(Widget* w) { return L.dd_selected(w); }
 void dropdown_select(Widget* w, int index) { L.dd_edit(w, index); }
+
+bool tab_selected(Widget* w) { return L.tab_selected(w); }
+int table_columns(Widget* w) { return (int)at<unsigned>(w, L.table_columns); }
+bool table_has_headers(Widget* w) { return at<bool>(w, L.table_headers); }
+double slider_value(Widget* w) { return at<double>(w, L.slider_value); }
+double slider_min(Widget* w) { return at<double>(w, L.slider_min); }
+double slider_max(Widget* w) { return at<double>(w, L.slider_max); }
+double slider_step(Widget* w) { return at<double>(w, L.slider_step); }
+void slider_set(Widget* w, double value) { L.slider_set(w, value, true, true); }
+
+struct StringVector {
+  const MsvcString* first;
+  const MsvcString* last;
+  const MsvcString* end;
+};
+
+std::vector<std::string> slider_notch_texts(Widget* w) {
+  auto& v = at<StringVector>(w, L.slider_notches);
+  std::vector<std::string> out;
+  for (const MsvcString* s = v.first; s != v.last; ++s) out.push_back(s->str());
+  return out;
+}
+
+std::string slider_notch_text(Widget* w) {
+  auto& v = at<StringVector>(w, L.slider_notches);
+  double step = slider_step(w);
+  if (v.first == v.last || step <= 0) return {};
+  long long index = std::llround((slider_value(w) - slider_min(w)) / step);
+  if (index < 0 || index >= v.last - v.first) return {};
+  return v.first[index].str();
+}
 
 std::optional<bool> list_row_selected(Widget* w) {
   // A row sits a few levels under its list (list -> scroll pane -> flow -> row).

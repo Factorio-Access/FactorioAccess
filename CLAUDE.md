@@ -180,6 +180,14 @@ critical rule 1 again before adding anything here.
   graph over it (`native/src/ui/`, ported from grimdark, itself from this mod's key-graph design). Labels,
   state and activation all come from the game's widgets; we add almost no text. While a menu is open the native
   UI owns the keyboard (keys never reach the game); once a world is loaded it lets go entirely.
+  Reading rules live in the walker: tables with columns become grids (row and column headers name the cells,
+  up/down keep the column), a label beside or above a field/dropdown/slider names it, a label leading a row of
+  controls is that row's context, a slider with a value field speaks the field's text. Keys: arrows, Tab, Home/End,
+  Enter activates, Escape clicks the dialog's back button, Left/Right adjust a slider or dropdown alone in its row,
+  Page Up/Down (Shift for more) adjust anywhere, Enter on a slider types a value (into the game's value field
+  when it has one), Enter on a text field lends the keyboard to the game until Enter, Escape or Tab.
+  Speech is immediate: state a screen changes itself goes through `app::announce_change` (speaks now and
+  re-baselines the navigator's live watch); never defer an announcement.
 - **Lua bridge**: the `_fa_native` global, installed only into this mod's Lua state (control stage).
   `scripts/native.lua` is the only Lua that touches it. Everything checks `Native.is_available()` (the DLL is
   loaded and the game is single player) and branches; calling anything else while it is false errors.

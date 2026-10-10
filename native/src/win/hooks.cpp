@@ -216,11 +216,19 @@ static PushEvent_t g_push_event;
 static GetWindowID_t g_get_window_id;
 static GetKeyFromScancode_t g_key_from_scancode;
 
+// SDL updates its modifier state only for physical keys, so a pushed Ctrl+A arrives as a bare A to code that asks
+// SDL_GetModState. While a synthetic key is held, its modifiers are added to the answer.
+static std::atomic<uint16_t> g_synthetic_mod;
+using GetModState_t = uint16_t (*)();
+static GetModState_t GetModState_orig;
+static uint16_t GetModState_hook() { return GetModState_orig() | g_synthetic_mod.load(); }
+
 bool push_key(int scancode, bool down, bool shift, bool ctrl, bool alt) {
   void* win = g_sdl_window;
   if (!win || !g_push_event) return false;
   alignas(8) unsigned char ev[128] = {};  // sizeof(SDL_Event)
   uint16_t mod = (shift ? 0x0001 : 0) | (ctrl ? 0x0040 : 0) | (alt ? 0x0100 : 0);  // the left-hand modifier bits
+  g_synthetic_mod = down ? mod : 0;
   field<uint32_t>(ev, E.sdl_type) = down ? kSdlKeyDown : kSdlKeyUp;
   field<uint32_t>(ev, E.sdl_window) = g_get_window_id(win);
   field<int>(ev, E.sdl_scancode) = scancode;
@@ -407,6 +415,7 @@ bool install() {
       Hook{sym::addr("MainLoop::mainLoopStep"), (void*)&MainLoopStep_hook, (void**)&MainLoopStep_orig, "MainLoop::mainLoopStep", false},
       Hook{sym::addr("SDLWindow::pollEvent"), (void*)&PollEvent_hook, (void**)&PollEvent_orig, "SDLWindow::pollEvent", false},
       Hook{sym::addr("LuaGameScript::LuaGameScript"), (void*)&LuaGameScriptCtor_hook, (void**)&LuaGameScriptCtor_orig, "LuaGameScript::LuaGameScript", false},
+      Hook{sym::addr("SDL_GetModState_REAL"), (void*)&GetModState_hook, (void**)&GetModState_orig, "SDL_GetModState", false},
       Hook{sym::addr("LuaHelper::initLuaState"), (void*)&InitLuaState_hook, (void**)&InitLuaState_orig, "LuaHelper::initLuaState", false},
   };
   if (g_nofocus) {
