@@ -61,7 +61,6 @@ local CONFIG_FIRST_TYPES = {
 
 ---@class fa.ui.EntityUI.SharedState
 ---@field entity LuaEntity The entity being viewed
----@field sorted_inventories table[] Sorted list of inventory data
 
 ---Get localized title for an inventory
 ---@param inv_name string The inventory name (key from defines.inventory)
@@ -360,7 +359,6 @@ local function setup_shared_state(pindex, params)
    local entity = params.entity
    if not entity or not entity.valid then return {
       entity = nil,
-      sorted_inventories = {},
    } end
 
    local sorted_invs = sort_inventories(entity)
@@ -368,7 +366,6 @@ local function setup_shared_state(pindex, params)
    -- Create shared state with inventory data pre-populated
    local state = {
       entity = entity,
-      sorted_inventories = sorted_invs,
    }
 
    -- Also add inventory states for the inventory grids

@@ -81,13 +81,11 @@ local mod = {}
 ---@field on_conjunction_modification fa.ui.SimpleTabHandler?
 ---@field on_add_to_row fa.ui.SimpleTabHandler?
 ---@field on_toggle_supertype fa.ui.SimpleTabHandler?
----@field on_set_filter fa.ui.SimpleTabHandler?
 ---@field on_clear_filter fa.ui.SimpleTabHandler?
 ---@field enabled (fun(pindex: integer): boolean)? If absent the tab is always enabled
 ---@field supports_search (fun(self, ctx: fa.ui.TabContext): boolean)? Returns true if search is supported
 ---@field search_hint (fun(self, ctx: fa.ui.TabContext, hint_callback: fun(localised_string: LocalisedString)))? Called to hint strings for caching
 ---@field search_move (fun(self, message: fa.MessageBuilder, ctx: fa.ui.TabContext, direction: integer, matcher: (fun(localised_string: LocalisedString): boolean)): fa.ui.SearchResult)? Move to next/prev search result, populate message with announcement
----@field search_all_from_start (fun(self, ctx: fa.ui.TabContext): fa.ui.SearchResult)? Search from start, move to first match
 ---@field get_help_metadata (fun(self, ctx: fa.ui.TabContext): fa.ui.help.HelpItem[]?)? Returns help metadata for the current tab
 ---@field get_binds (fun(self, ctx: fa.ui.TabContext): fa.ui.Bind[]?)? Returns binds for the tab
 
@@ -370,8 +368,6 @@ TabList.on_conjunction_modification = build_simple_method("on_conjunction_modifi
 TabList.on_add_to_row = build_simple_method("on_add_to_row")
 ---@type fun(self, number, table?, fa.ui.RouterController)
 TabList.on_toggle_supertype = build_simple_method("on_toggle_supertype")
----@type fun(self, number, table?, fa.ui.RouterController)
-TabList.on_set_filter = build_simple_method("on_set_filter")
 ---@type fun(self, number, table?, fa.ui.RouterController)
 TabList.on_clear_filter = build_simple_method("on_clear_filter")
 
@@ -679,37 +675,6 @@ function TabList:search_move(message, pindex, direction, matcher, controller)
          shared_state = tl.shared_state,
       }
       local result = callbacks:search_move(message, ctx, direction, matcher)
-      -- Save state back
-      tl.tab_states[tabname] = ctx.state
-      return result
-   end
-
-   return UiRouter.SEARCH_RESULT.NO_SUPPORT
-end
-
-function TabList:search_all_from_start(pindex, controller)
-   if not self:_open_state(pindex) then return UiRouter.SEARCH_RESULT.NO_SUPPORT end
-
-   -- Re-render to ensure descriptors are populated (e.g., after load)
-   self:_rerender(pindex, controller)
-   local tl = self:_open_state(pindex)
-   if not tl then return UiRouter.SEARCH_RESULT.NO_SUPPORT end -- Rerender might have closed
-
-   local tabname = self.tab_order[tl.active_tab] --[[@as string]]
-   local tabstate = assert(tl.tab_states[tabname], "_rerender sets up every tab's state")
-   local callbacks = self.descriptors[tabname].callbacks
-
-   if callbacks.search_all_from_start then
-      local ctx = {
-         pindex = pindex,
-         player = assert(game.get_player(pindex)),
-         state = tabstate,
-         parameters = tl.parameters,
-         controller = controller,
-         message = MessageBuilder.new(),
-         shared_state = tl.shared_state,
-      }
-      local result = callbacks:search_all_from_start(ctx)
       -- Save state back
       tl.tab_states[tabname] = ctx.state
       return result

@@ -108,7 +108,6 @@ end
 ---@field on_conjunction_modification? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_add_to_row? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_toggle_supertype? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
----@field on_set_filter? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
 ---@field on_clear_filter? fun(self, pindex: integer, modifiers: table?, controller: fa.ui.RouterController)
 ---@field get_help_metadata? fun(self, pindex: integer): fa.ui.help.HelpItem[]?
 ---@field supports_search? fun(self, pindex: integer, controller: fa.ui.RouterController): boolean Check if this UI supports search

@@ -182,15 +182,6 @@ function mod.is_textbox_rich_text(pindex)
    return gui_storage[pindex].textbox_rich_text or false
 end
 
----Get the textbox text
----@param pindex integer
----@return string?
-function mod.get_textbox_text(pindex)
-   local state = gui_storage[pindex]
-   if state.textbox_element and state.textbox_element.valid then return state.textbox_element.text end
-   return nil
-end
-
 ---Check if a textbox is open
 ---@param pindex integer
 ---@return boolean

@@ -45,7 +45,6 @@ local MOVE_TRANSITION_VTAB = {
 ---@class fa.ui.menu.Row
 ---@field items fa.ui.menu.Entry[]
 ---@field key string?
----@field is_explicit boolean
 
 ---@class fa.ui.menu.MenuBuilder
 ---@field rows fa.ui.menu.Row[]
@@ -72,7 +71,6 @@ function MenuBuilder:_add_entry_to_row(entry)
       table.insert(self.rows, {
          items = { entry },
          key = nil,
-         is_explicit = false,
       })
    end
 end
@@ -94,7 +92,6 @@ function MenuBuilder:start_row(key)
    self.current_row = {
       items = {},
       key = key,
-      is_explicit = true,
    }
    return self
 end

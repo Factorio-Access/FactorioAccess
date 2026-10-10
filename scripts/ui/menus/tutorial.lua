@@ -9,20 +9,12 @@ local Menu = require("scripts.ui.menu")
 local MessageLists = require("scripts.message-lists")
 local Router = require("scripts.ui.router")
 local Speech = require("scripts.speech")
-local StorageManager = require("scripts.storage-manager")
 local TabList = require("scripts.ui.tab-list")
 local TutorialData = require("scripts.tutorial-data")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local UiSounds = require("scripts.ui.sounds")
 
 local mod = {}
-
--- Persistent tutorial state
-local tutorial_storage = StorageManager.declare_storage_module("tutorial", {
-   -- Last viewed chapter and subtab
-   last_chapter = 1,
-   last_subtab = 1,
-})
 
 ---Build the chapter text subtab
 ---@param chapter fa.tutorial.Chapter

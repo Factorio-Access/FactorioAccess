@@ -13,15 +13,6 @@ local CircuitNetwork = require("scripts.circuit-network")
 
 local mod = {}
 
----@class (exact) fa.ui.form.BarConfig
----@field label LocalisedString | fun(ctx: fa.ui.graph.Ctx): LocalisedString
----@field get_value fun(): number
----@field set_value fun(value: number)
----@field min_value number
----@field max_value number
----@field small_step number?
----@field large_step number?
-
 ---@class (exact) fa.FormBuilder.TextBoxParams
 ---@field label LocalisedString | fun(ctx: fa.ui.graph.Ctx): LocalisedString
 ---@field get_value fun(): LocalisedString Spoken as the current value; an empty string reads as empty
@@ -259,84 +250,6 @@ function FormBuilder:add_action(name, label, callback)
       on_click = function(ctx)
          UiSounds.play_menu_move(ctx.pindex)
          callback(ctx.controller)
-      end,
-   })
-
-   return self
-end
-
----Add a bar control (numeric value adjustable with +/- keys)
----@param name string Unique identifier for this control
----@param config fa.ui.form.BarConfig
----@return fa.ui.form.FormBuilder
-function FormBuilder:add_bar(name, config)
-   local small_step = config.small_step or 1
-   local large_step = config.large_step or 5
-
-   -- Helper to announce value change
-   local function announce_value(ctx, new_value)
-      ctx.controller.message:fragment(tostring(new_value))
-   end
-
-   -- Helper to adjust value
-   local function adjust_value(ctx, delta)
-      local current = config.get_value()
-      local new_value = math.max(config.min_value, math.min(config.max_value, current + delta))
-      if new_value ~= current then
-         config.set_value(new_value)
-         UiSounds.play_menu_move(ctx.pindex)
-         announce_value(ctx, new_value)
-      else
-         UiSounds.play_ui_edge(ctx.pindex)
-         announce_value(ctx, new_value)
-      end
-   end
-
-   -- Create label builder function
-   local function build_label(message, ctx)
-      local base_label = UiUtils.to_label_function(config.label)(ctx)
-      local value = config.get_value()
-      message:fragment(tostring(value))
-      message:fragment(base_label)
-   end
-
-   self:add_item(name, {
-      label = function(ctx)
-         build_label(ctx.message, ctx)
-      end,
-      on_bar_up_small = function(ctx)
-         adjust_value(ctx, small_step)
-      end,
-      on_bar_down_small = function(ctx)
-         adjust_value(ctx, -small_step)
-      end,
-      on_bar_up_large = function(ctx)
-         adjust_value(ctx, large_step)
-      end,
-      on_bar_down_large = function(ctx)
-         adjust_value(ctx, -large_step)
-      end,
-      on_bar_max = function(ctx)
-         local current = config.get_value()
-         if current ~= config.max_value then
-            config.set_value(config.max_value)
-            UiSounds.play_menu_move(ctx.pindex)
-            announce_value(ctx, config.max_value)
-         else
-            UiSounds.play_ui_edge(ctx.pindex)
-            announce_value(ctx, config.max_value)
-         end
-      end,
-      on_bar_min = function(ctx)
-         local current = config.get_value()
-         if current ~= config.min_value then
-            config.set_value(config.min_value)
-            UiSounds.play_menu_move(ctx.pindex)
-            announce_value(ctx, config.min_value)
-         else
-            UiSounds.play_ui_edge(ctx.pindex)
-            announce_value(ctx, config.min_value)
-         end
       end,
    })
 

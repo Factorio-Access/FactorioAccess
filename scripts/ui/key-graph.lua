@@ -129,7 +129,6 @@ local mod = {}
 ---@field on_conjunction_modification fa.ui.graph.SimpleCallback? Handler for conjunction modification (n key)
 ---@field on_add_to_row fa.ui.graph.SimpleCallback? Handler for add to row (slash key with modifiers)
 ---@field on_toggle_supertype fa.ui.graph.SimpleCallback? Handler for toggling supertype (j key)
----@field on_set_filter fa.ui.graph.SimpleCallback? Handler for set filter (alt+leftbracket)
 ---@field on_clear_filter fa.ui.graph.SimpleCallback? Handler for clear filter (alt+rightbracket)
 ---@field exclude_from_search boolean? If true, this node won't be included in search results. Default false.
 
@@ -743,14 +742,6 @@ function Graph:on_toggle_supertype(ctx, modifiers)
 end
 
 ---@param ctx fa.ui.graph.InternalTabCtx
-function Graph:on_set_filter(ctx)
-   self:_with_render(ctx, function()
-      local n = self.render.nodes[ctx.state.cur_key]
-      self:_maybe_call(n, ctx, "on_set_filter", NO_MODIFIERS)
-   end)
-end
-
----@param ctx fa.ui.graph.InternalTabCtx
 function Graph:on_clear_filter(ctx)
    self:_with_render(ctx, function()
       local n = self.render.nodes[ctx.state.cur_key]
@@ -863,14 +854,6 @@ function Graph:search_move(message, ctx, direction, matcher)
    end)
 
    return result
-end
-
----Search from the start and move to first match
----@param ctx fa.ui.TabContext
----@return fa.ui.SearchResult
-function Graph:search_all_from_start(ctx)
-   -- TODO: Implement with matcher callback pattern when needed
-   return UiRouter.SEARCH_RESULT.DIDNT_MOVE
 end
 
 ---@class fa.ui.graph.Declaration

@@ -1,7 +1,5 @@
 --[[
-Trains overview tabs for the main menu.
-
-Two tabs: surface trains and all trains.
+Trains overview tab for the main menu: all trains of the player's force.
 Each train row has: name/position/state, move cursor, manual mode toggle.
 ]]
 
@@ -108,16 +106,14 @@ local function build_train_rows(builder, trains)
 end
 
 ---Render trains tab
----@param surface_getter (fun(player: LuaPlayer): LuaSurface?)? Returns surface or nil for all
 ---@return fun(ctx: fa.ui.graph.Ctx): fa.ui.graph.Render
-local function make_render_callback(surface_getter)
+local function make_render_callback()
    return function(ctx)
       local builder = Menu.MenuBuilder.new()
       local player = game.get_player(ctx.pindex)
       if not player then return builder:add_label("error", { "fa.trains-overview-error" }):build() end
 
-      local surface = surface_getter and surface_getter(player) or nil
-      local trains = TrainHelpers.get_trains(player.force, surface)
+      local trains = TrainHelpers.get_trains(player.force)
       sort_trains(trains)
 
       if #trains == 0 then
@@ -130,25 +126,11 @@ local function make_render_callback(surface_getter)
    end
 end
 
--- Tab for trains on current surface
-mod.surface_trains_tab = KeyGraph.declare_graph({
-   name = "surface_trains",
-   title = { "fa.trains-overview-surface-title" },
-   render_callback = make_render_callback(function(player)
-      return player.physical_surface
-   end),
-   get_help_metadata = function(ctx)
-      return {
-         Help.message_list("trains-overview-help"),
-      }
-   end,
-})
-
 -- Tab for all trains
 mod.all_trains_tab = KeyGraph.declare_graph({
    name = "all_trains",
    title = { "fa.trains-overview-all-title" },
-   render_callback = make_render_callback(nil),
+   render_callback = make_render_callback(),
    get_help_metadata = function(ctx)
       return {
          Help.message_list("trains-overview-help"),

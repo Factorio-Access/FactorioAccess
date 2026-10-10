@@ -180,18 +180,6 @@ local function render_locomotive_config(ctx)
       on_action1 = function(ctx)
          ctx.controller:open_textbox("", { node = "train_group" }, { "fa.locomotive-train-group" })
       end,
-      on_textbox_result = function(ctx, result)
-         if result and result ~= "" then
-            local train = entity.train
-            if not train then return end
-
-            train.group = result
-            ctx.controller.message:fragment({ "fa.locomotive-group-set", result })
-         else
-            UiSounds.play_ui_edge(ctx.pindex)
-            ctx.controller.message:fragment({ "fa.locomotive-name-cannot-be-empty" })
-         end
-      end,
    })
 
    builder:end_row()

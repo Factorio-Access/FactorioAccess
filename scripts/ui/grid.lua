@@ -2,8 +2,7 @@
 A builder which knows how to render grids.
 
 You `mod.grid_builder()` then `add_label`, `set_column_header`, etc.  The dimensions of the resulting grid are the
-widest dimensions needed to hold all of the set nodes.  Default nodes are "Empty" or a localisation thereof.  To
-customize that,call `set_default_cell_vtable`.
+widest dimensions needed to hold all of the set nodes.  Default nodes are "Empty" or a localisation thereof.
 
 The keys are "1-1" etc.
 
@@ -26,7 +25,6 @@ local mod = {}
 ---@field on_production_stats_announcement fa.ui.grid.CoordCallback?
 ---@field on_dangerous_delete fa.ui.grid.CoordCallback?
 ---@field on_child_result fa.ui.graph.ChildResultCallback?
----@field on_set_filter fa.ui.grid.CoordCallback?
 ---@field on_clear_filter fa.ui.grid.CoordCallback?
 
 ---@class fa.ui.grid.GridCell
@@ -106,13 +104,6 @@ function GridBuilder:set_dimension_labeler(labeler)
    return self
 end
 
----@param vtab fa.ui.graph.NodeVtable
----@return fa.ui.grid.GridBuilder
-function GridBuilder:set_default_cell_vtab(vtab)
-   self.default_cell_vtab = vtab
-   return self
-end
-
 -- Building strings is expensive!  Avoid that by caching these, since we need to use them a few times.  Filled out on
 -- demand; entries never change once created.
 local keycache = TH.defaulting_table()
@@ -186,14 +177,6 @@ function GridBuilder:build()
             node.vtable.on_dangerous_delete = function(ctx)
                -- Pass x,y as parameters to the callback
                old_dangerous_delete(ctx, x, y)
-            end
-         end
-
-         -- Wrap on_set_filter if it exists to provide x,y coordinates
-         local old_set_filter = node.vtable.on_set_filter
-         if old_set_filter then
-            node.vtable.on_set_filter = function(ctx)
-               old_set_filter(ctx, x, y)
             end
          end
 

@@ -227,7 +227,6 @@ end
 ---@class fa.ui.ScheduleEditor.ParamHandler
 ---@field constant? fun(condition: WaitCondition, new_value: any): WaitCondition? Builds the condition from typed text
 ---@field setter? fun(condition: WaitCondition, new_value: any): WaitCondition? Builds the condition from a chosen signal
----@field get_current? fun(condition: WaitCondition): string
 ---@field announcer fun(new_value: any, condition: WaitCondition): LocalisedString
 
 ---The editable parameters of one wait condition type
@@ -257,9 +256,6 @@ local function make_ticks_handler(type_name)
             if not seconds then return nil end
             return { type = type_name, ticks = math.floor(seconds) * 60 }
          end,
-         get_current = function(condition)
-            return tostring((condition.ticks or 0) / 60)
-         end,
          announcer = announce_number,
       },
    }
@@ -281,9 +277,6 @@ local function make_circuit_constant_handler(fixed_type)
                constant = math.floor(num),
             },
          }
-      end,
-      get_current = function(condition)
-         return tostring((condition.condition and condition.condition.constant) or 0)
       end,
       announcer = announce_number,
    }
@@ -319,9 +312,6 @@ local station_name_handler = {
    p1 = {
       constant = function(condition, new_value)
          return { type = condition.type, station = new_value }
-      end,
-      get_current = function(condition)
-         return condition.station or ""
       end,
       announcer = function(new_value)
          return new_value
@@ -367,9 +357,6 @@ local PARAM_HANDLERS = {
             local damage = tonumber(new_value)
             if not damage then return nil end
             return { type = "damage_taken", damage = math.floor(damage) }
-         end,
-         get_current = function(condition)
-            return tostring(condition.damage or 1000)
          end,
          announcer = announce_number,
       },
