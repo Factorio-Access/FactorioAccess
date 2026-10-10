@@ -98,23 +98,6 @@ function mod.can_set_logistic_filter(ent)
    return ent.type == "logistic-container" and ent.prototype.logistic_mode == "storage"
 end
 
----@param pindex integer
----@param ent LuaEntity
----@param name string
-function mod.set_logistic_filter(pindex, ent, name)
-   local filt = ent.get_filter(1)
-
-   if filt and filt.name.name == name then
-      ent.set_filter(1, nil)
-      Speech.speak(pindex, { "fa.robots-storage-filter-cleared" })
-      return
-   end
-
-   ent.set_filter(1, name)
-   local proto = prototypes.item[name]
-   Speech.speak(pindex, { "fa.logistic-storage-filter-set", Localising.get_localised_name_with_fallback(proto) })
-end
-
 ---Format a compiled logistic filter for readout (from point.filters)
 ---@param msg_builder fa.MessageBuilder
 ---@param filter table CompiledLogisticFilter
@@ -173,26 +156,6 @@ function mod.get_all_logistic_points(entity)
    -- Without an index, the API returns the array of all points
    return entity.get_logistic_point() --[[@as LuaLogisticPoint[]?]]
       or {}
-end
-
----Get unique group names from all sections in a point (excluding empty string)
----@param point LuaLogisticPoint
----@return string[]
-function mod.get_unique_groups_from_point(point)
-   if not point or not point.valid then return {} end
-
-   local groups_set = {}
-   for _, section in pairs(point.sections) do
-      if section.group and section.group ~= "" then groups_set[section.group] = true end
-   end
-
-   local groups = {}
-   for group, _ in pairs(groups_set) do
-      table.insert(groups, group)
-   end
-
-   table.sort(groups)
-   return groups
 end
 
 ---Get the network name directly from a network
@@ -255,75 +218,6 @@ function mod.roboport_contents_info(port)
       tostring(cell.stationed_logistic_robot_count),
       tostring(cell.stationed_construction_robot_count),
       tostring(repair_pack_count),
-   }
-end
-
-function mod.roboport_neighbours_info(port)
-   local cell = port.logistic_cell
-   local neighbour_count = #cell.neighbours
-
-   if neighbour_count == 0 then return { "fa.roboport-neighbours-none", tostring(neighbour_count) } end
-
-   -- Build list of directions
-   local dirs = {}
-   for _, neighbour in ipairs(cell.neighbours) do
-      local dir = FaUtils.direction_lookup(FaUtils.get_direction_biased(neighbour.owner.position, port.position))
-      table.insert(dirs, dir)
-   end
-   local neighbour_dirs = table.concat(dirs, " and ")
-
-   return { "fa.roboport-neighbours-info", tostring(neighbour_count), neighbour_dirs }
-end
-
-function mod.logistic_network_members_info(port)
-   local cell = port.logistic_cell
-   local nw = cell.logistic_network
-   if nw == nil or nw.valid == false then return { "fa.error-no-network" } end
-
-   return {
-      "fa.network-members-info",
-      tostring(#nw.cells),
-      tostring(nw.all_logistic_robots),
-      tostring(nw.available_logistic_robots),
-      tostring(nw.all_construction_robots),
-      tostring(nw.available_construction_robots),
-   }
-end
-
-function mod.logistic_network_chests_info(port)
-   local cell = port.logistic_cell
-   local nw = cell.logistic_network
-
-   if nw == nil or nw.valid == false then return { "fa.error-no-network" } end
-
-   local storage_chest_count = 0
-   for i, ent in ipairs(nw.storage_points) do
-      if ent.owner.type == "logistic-container" then storage_chest_count = storage_chest_count + 1 end
-   end
-   local passive_provider_chest_count = 0
-   for i, ent in ipairs(nw.passive_provider_points) do
-      if ent.owner.type == "logistic-container" then passive_provider_chest_count = passive_provider_chest_count + 1 end
-   end
-   local active_provider_chest_count = 0
-   for i, ent in ipairs(nw.active_provider_points) do
-      if ent.owner.type == "logistic-container" then active_provider_chest_count = active_provider_chest_count + 1 end
-   end
-   local requester_chest_count = 0
-   for i, ent in ipairs(nw.requester_points) do
-      if ent.owner.type == "logistic-container" then requester_chest_count = requester_chest_count + 1 end
-   end
-   local total_chest_count = storage_chest_count
-      + passive_provider_chest_count
-      + active_provider_chest_count
-      + requester_chest_count
-
-   return {
-      "fa.network-chests-info",
-      tostring(total_chest_count),
-      tostring(storage_chest_count),
-      tostring(passive_provider_chest_count),
-      tostring(active_provider_chest_count),
-      tostring(requester_chest_count),
    }
 end
 
