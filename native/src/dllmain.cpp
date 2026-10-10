@@ -2,6 +2,7 @@
 #include "agui.h"
 #include "app.h"
 #include "game.h"
+#include "lua_native.h"
 #include "devserver.h"
 #include "hooks.h"
 #include "log.h"
@@ -32,7 +33,7 @@ extern "C" __declspec(dllexport) DWORD WINAPI fa_init(LPVOID) {
     fa::speech::speak("Factorio Access native code could not read the game's symbols and is disabled", true);
     return 0;
   }
-  if (!fa::agui::init() || !fa::game::init()) {
+  if (!fa::agui::init() || !fa::game::init() || !fa::lua::init()) {
     fa::speech::speak("Factorio Access native code does not support this game version and is disabled", true);
     return 0;
   }

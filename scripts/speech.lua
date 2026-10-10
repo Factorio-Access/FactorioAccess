@@ -43,6 +43,7 @@ This is very much not storage safe, and it is very much not intended to be;
 attempts to do so throw when the game saves.
 ]]
 local FaUtils = require("scripts.fa-utils")
+local Native = require("scripts.native")
 local SpeechLogger = require("scripts.speech-logger")
 local VanillaMode = require("scripts.vanilla-mode")
 
@@ -198,7 +199,8 @@ end
 
 mod.process_rich_text = process_rich_text
 
----Send a localized string to the external launcher for text-to-speech rendering.
+---Send a localized string to the screen reader: through the native code when it is loaded (single player),
+---else to the external launcher.
 ---This is the primary way the mod communicates with blind players.
 ---@param pindex number Player index
 ---@param str LocalisedString The message to speak
@@ -223,7 +225,11 @@ function mod.speak(pindex, str)
       return
    end
    if not VanillaMode.is_enabled(pindex) then
-      localised_print({ "", "out " .. pindex .. " ", processed })
+      if Native.is_available() then
+         Native.speak(processed)
+      else
+         localised_print({ "", "out " .. pindex .. " ", processed })
+      end
       -- Also log to file for debugging
       SpeechLogger.log_speech(processed, pindex)
    end

@@ -113,6 +113,14 @@ static std::optional<ULONG> type_id(const char* type) {
   return si->TypeIndex;
 }
 
+std::optional<std::size_t> type_size(const char* type) {
+  std::lock_guard lk(g_mu);
+  auto t = type_id(type);
+  ULONG64 len = 0;
+  if (!t || !SymGetTypeInfo(g_proc, g_base, *t, TI_GET_LENGTH, &len)) return std::nullopt;
+  return (std::size_t)len;
+}
+
 std::optional<std::size_t> vtable_offset(const char* type, const char* method) {
   std::lock_guard lk(g_mu);
   auto t = type_id(type);

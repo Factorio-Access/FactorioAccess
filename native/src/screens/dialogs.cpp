@@ -17,12 +17,56 @@ namespace fa::screens {
 using namespace fa::ui;
 namespace {
 
-// A widget's address in the tree: one step per level, "c<i>" a public child, "p<i>" a private one, joined
-// with '.'. Node closures hold paths, never widget pointers: a pointer read in one frame may be freed by the next.
+// A widget's address: "<dialog key>|<steps>". The dialog key is the top-level dialog's class and its
+// occurrence among visible dialogs of that class ("MainMenuGui#0"), so it survives other top-level widgets
+// coming and going. Each step is "c<i>" (a public child) or "p<i>" (a private one), joined with '.'. Node
+// closures hold paths, never widget pointers: a pointer read in one frame may be freed by the next.
 using Path = std::string;
 
-agui::Widget* resolve(const Path& path) {
-  agui::Widget* w = agui::root();
+// Decorations: the background image, the logo, the version label, empty placeholder windows.
+bool is_dialog(agui::Widget* w) {
+  if (!agui::visible(w)) return false;
+  if (agui::is_a(w, "agui::ImageWidget") || agui::is_a(w, "agui::Label")) return false;
+  auto r = agui::rect(w);
+  return r.w > 0 && r.h > 0;
+}
+
+struct Dialog {
+  std::string key;
+  agui::Widget* widget;
+};
+// The visible top-level dialogs, bottom to top.
+std::vector<Dialog> dialogs() {
+  std::vector<Dialog> out;
+  agui::Widget* root = agui::root();
+  if (!root) return out;
+  for (agui::Widget* w : agui::children(root)) {
+    if (!is_dialog(w)) continue;
+    std::string cls = agui::class_name(w);
+    int n = 0;
+    for (auto& d : out)
+      if (d.key.starts_with(cls + "#")) ++n;
+    out.push_back({std::format("{}#{}", cls, n), w});
+  }
+  return out;
+}
+
+// The dialog the player is in: the topmost real window. Overlays drawn in an invisible frame (the main
+// menu's language selector sits above the menu in z-order) only win when nothing else is open.
+const Dialog* top_dialog(const std::vector<Dialog>& ds) {
+  for (size_t i = ds.size(); i-- > 0;)
+    if (agui::style_name(ds[i].widget) != "invisible_frame") return &ds[i];
+  return ds.empty() ? nullptr : &ds.back();
+}
+
+agui::Widget* resolve(const Path& full) {
+  size_t bar = full.find('|');
+  if (bar == std::string::npos) return nullptr;
+  std::string key = full.substr(0, bar);
+  agui::Widget* w = nullptr;
+  for (auto& d : dialogs())
+    if (d.key == key) w = d.widget;
+  std::string path = full.substr(bar + 1);
   size_t i = 0;
   while (w && i < path.size()) {
     size_t dot = path.find('.', i);
@@ -37,7 +81,7 @@ agui::Widget* resolve(const Path& path) {
 }
 
 Path child_path(const Path& parent, bool priv, size_t index) {
-  return (parent.empty() ? "" : parent + ".") + (priv ? "p" : "c") + std::to_string(index);
+  return parent + (parent.ends_with("|") ? "" : ".") + (priv ? "p" : "c") + std::to_string(index);
 }
 
 std::string plain(const std::string& s) { return strip_rich_text(s); }
@@ -85,14 +129,6 @@ struct Entry {
 };
 using Row = std::vector<Entry>;
 
-// Decorations: the background image, the logo, the version label, empty placeholder windows.
-bool is_dialog(agui::Widget* w) {
-  if (!agui::visible(w)) return false;
-  if (agui::is_a(w, "agui::ImageWidget") || agui::is_a(w, "agui::Label")) return false;
-  auto r = agui::rect(w);
-  return r.w > 0 && r.h > 0;
-}
-
 class Walker {
  public:
   std::vector<Row> rows;
@@ -114,6 +150,9 @@ class Walker {
           if (row && rows.back().empty()) rows.pop_back();
           continue;
         }
+        // A control with neither caption nor tooltip (a bare icon button) has nothing to announce: leave it out.
+        // A dropdown's or text field's caption is its value, which may legitimately be empty.
+        if ((k == Kind::Button || k == Kind::Tab || k == Kind::CheckBox || k == Kind::Radio) && label_of(c).empty()) continue;
         if (k == Kind::Label) {
           if (plain(agui::text(c)).empty()) continue;
           if (title_path.empty()) {
@@ -176,11 +215,22 @@ NodeVtablePtr make_node(const Entry& e, std::function<void(const Path&)> start_e
       break;
     }
     case Kind::DropDown:
-      // The caption of a dropdown is its selected item: speak it as the value, without a separate label.
+      // The caption of a dropdown is its selected item: speak it as the value, without a separate label. The
+      // game's popup list is never opened: left and right pick the previous / next item directly.
       v->control_type = &kDropdownType;
       v->announcements[0].kind = std::string(announcement_kinds::kValue);
       v->announcements[0].live = true;
-      break;
+      v->on_adjust = [p](int sign, bool large) {
+        agui::Widget* w = resolve(p);
+        if (!w || !agui::enabled(w)) return;
+        int n = agui::dropdown_count(w), cur = agui::dropdown_selected(w);
+        int next = cur + sign * (large ? 10 : 1);
+        next = next < 0 ? 0 : next >= n ? n - 1 : next;
+        if (next != cur) agui::dropdown_select(w, next);
+      };
+      v->state_text = label;
+      v->on_tooltip = tip;
+      return v;
     case Kind::TextField:
       v->control_type = &kTextType;
       v->announcements[0].kind = std::string(announcement_kinds::kValue);
@@ -214,12 +264,13 @@ class DialogsScreen : public Screen {
 
   void build(GraphBuilder& b) override {
     auto ds = dialogs();
+    const Dialog* top = top_dialog(ds);
     std::optional<ControlId> start;
     for (size_t i = 0; i < ds.size(); ++i) {
       Walker walker;
-      walker.walk(ds[i].second, ds[i].first, false);
+      walker.walk(ds[i].widget, ds[i].key + "|", false);
       if (walker.rows.empty()) continue;
-      b.begin_stop(Key(stop_key(ds[i])));
+      b.begin_stop(Key(ds[i].key));
       std::string title;
       if (agui::Widget* t = resolve(walker.title_path)) title = plain(agui::text(t));
       if (!title.empty()) b.push_context(title);
@@ -228,7 +279,7 @@ class DialogsScreen : public Screen {
         for (const Entry& e : row) {
           ControlId id = ControlId::structural(Key(e.path));
           b.add_item(id, make_node(e, [this](const Path& p) { start_editing(p); }));
-          if (i + 1 == ds.size() && !start && e.kind != Kind::Label) start = id;
+          if (&ds[i] == top && !start && e.kind != Kind::Label) start = id;
         }
         if (row.size() > 1) b.end_row();
       }
@@ -244,11 +295,11 @@ class DialogsScreen : public Screen {
     }
     // A new dialog on top (the game opened one, or one closed): land on it and say its title.
     auto ds = dialogs();
-    std::string top = ds.empty() ? std::string() : stop_key(ds.back());
+    const Dialog* td = top_dialog(ds);
+    std::string top = td ? td->key : std::string();
     if (top != top_) {
-      bool first = top_.empty();
       top_ = top;
-      if (!first && !top.empty()) app::focus_stop(Key(top));
+      if (!top.empty()) app::focus_stop(Key(top));
     }
   }
 
@@ -256,19 +307,8 @@ class DialogsScreen : public Screen {
   std::string editing_;  // path of the text field the game is typing into; empty = the native UI has the keyboard
   std::string top_;
 
-  using Dialog = std::pair<Path, agui::Widget*>;
-  static std::vector<Dialog> dialogs() {
-    std::vector<Dialog> out;
-    agui::Widget* root = agui::root();
-    if (!root) return out;
-    auto kids = agui::children(root);
-    for (size_t i = 0; i < kids.size(); ++i)
-      if (is_dialog(kids[i])) out.push_back({child_path("", false, i), kids[i]});
-    return out;
-  }
-  static std::string stop_key(const Dialog& d) { return d.first + ":" + agui::class_name(d.second); }
-
   void back() {
+    if (agui::close_dropdown_popup()) return;
     auto ds = dialogs();
     if (ds.empty()) return;
     // The dialog's own Back (or Exit) button, by style: back_button, red_back_button, ...
@@ -281,7 +321,7 @@ class DialogsScreen : public Screen {
         }
       return nullptr;
     };
-    if (agui::Widget* b = find(ds.back().second)) agui::click(b);
+    if (agui::Widget* b = find(top_dialog(ds)->widget)) agui::click(b);
   }
 
   void start_editing(const Path& p) {

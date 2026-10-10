@@ -1,0 +1,48 @@
+--[[
+The bridge to the native code (native/ in this repository), which is injected into the game process and
+exposes a `_fa_native` global to this mod's Lua state only.
+
+The native code is the last resort: nothing goes through it that the Factorio API can do. It is only used in
+single player, because it reads state that is local to one machine; in multiplayer the launcher keeps doing
+these jobs.
+
+Everything checks `Native.is_available()` first. Calling anything else while it is false is a bug and errors.
+]]
+local mod = {}
+
+---@class (exact) fa.NativeApi
+---@field api_version integer
+---@field speak fun(str: LocalisedString, interrupt: boolean?)
+
+---@return fa.NativeApi?
+local function get_native()
+   -- rawget: the global only exists when the DLL is loaded.
+   return rawget(_G, "_fa_native")
+end
+
+---Whether the native code can be used: it is loaded, and this is a single player game.
+---@return boolean
+function mod.is_available()
+   return get_native() ~= nil and not game.is_multiplayer()
+end
+
+---@generic T
+---@param cb fun(n: fa.NativeApi): T
+---@return T
+local function with_native(cb)
+   local n = get_native()
+   if not n then error("the native code is not loaded; check Native.is_available() first") end
+   if game.is_multiplayer() then error("the native code is not used in multiplayer; check Native.is_available() first") end
+   return cb(n)
+end
+
+---Speak through the native screen reader bridge. The engine localises the string immediately.
+---@param str LocalisedString
+---@param interrupt boolean? defaults to true
+function mod.speak(str, interrupt)
+   with_native(function(n)
+      n.speak(str, interrupt)
+   end)
+end
+
+return mod

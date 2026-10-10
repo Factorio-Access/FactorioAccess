@@ -13,6 +13,7 @@
 #include <vector>
 #include "input.h"
 #include "log.h"
+#include "lua_native.h"
 #include "sym.h"
 #include "win/window.h"
 
@@ -247,6 +248,46 @@ bool push_text(std::string_view utf8) {
   return g_push_event(ev);
 }
 
+// ======================= Lua: each mod's control-stage state =======================
+// LuaGameScript's constructor (one per mod, plus the scenario) is the only control-stage caller of
+// LuaHelper::initLuaState; the data stage's LuaDataLoader is the other. The constructor names the mod, so it
+// is noted here and handed to fa::lua once the state is initialised -- before the mod's control.lua runs.
+thread_local std::string t_creating_mod;
+
+struct MsvcStringView {
+  union {
+    char buf[16];
+    const char* ptr;
+  };
+  size_t size;
+  size_t cap;
+  std::string str() const { return std::string(cap > 15 ? ptr : buf, size); }
+};
+
+// LuaGameScript::LuaGameScript(std::string const& name, PackagePath const& x4, Mod const*, LuaRemote*,
+// LuaCommandProcessor*, LuaSettings*, LuaRCON*, LuaRendering*, LuaPrototypes*, LuaEventRegistrations*,
+// Scenario*, Map&): fifteen pointer-sized arguments after `this`.
+using LuaGameScriptCtor_t = void* (*)(void*, const MsvcStringView*, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*,
+                                      void*, void*, void*);
+static LuaGameScriptCtor_t LuaGameScriptCtor_orig;
+static void* LuaGameScriptCtor_hook(void* self, const MsvcStringView* name, void* a2, void* a3, void* a4, void* a5, void* a6, void* a7, void* a8,
+                                    void* a9, void* a10, void* a11, void* a12, void* a13, void* a14, void* a15) {
+  struct Clear {
+    ~Clear() { t_creating_mod.clear(); }  // also when the mod's script fails to load (a C++ exception)
+  } clear;
+  t_creating_mod = name->str();
+  return LuaGameScriptCtor_orig(self, name, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15);
+}
+
+using InitLuaState_t = void (*)(void*);
+static InitLuaState_t InitLuaState_orig;
+static void InitLuaState_hook(void* L) {
+  InitLuaState_orig(L);
+  // Script names are "mod-<mod name>" for mods and "level" for the scenario's own script.
+  std::string_view name = t_creating_mod;
+  if (name.starts_with("mod-")) lua::on_state_created(L, name.substr(4));
+}
+
 // ======================= dev mode: never let the game take the foreground =======================
 // FA_NOFOCUS=1 (the dev loop): the game runs visible but never activates itself, so a launch does not
 // interrupt the developer's screen reader. The game's own code is told its window is active; everything
@@ -336,6 +377,8 @@ bool install() {
   g_hooks = {
       Hook{sym::addr("MainLoop::mainLoopStep"), (void*)&MainLoopStep_hook, (void**)&MainLoopStep_orig, "MainLoop::mainLoopStep", false},
       Hook{sym::addr("SDLWindow::pollEvent"), (void*)&PollEvent_hook, (void**)&PollEvent_orig, "SDLWindow::pollEvent", false},
+      Hook{sym::addr("LuaGameScript::LuaGameScript"), (void*)&LuaGameScriptCtor_hook, (void**)&LuaGameScriptCtor_orig, "LuaGameScript::LuaGameScript", false},
+      Hook{sym::addr("LuaHelper::initLuaState"), (void*)&InitLuaState_hook, (void**)&InitLuaState_orig, "LuaHelper::initLuaState", false},
   };
   if (g_nofocus) {
     for (Hook h : {USER32_HOOK(SetForegroundWindow), USER32_HOOK(SetActiveWindow), USER32_HOOK(BringWindowToTop), USER32_HOOK(SetFocus),

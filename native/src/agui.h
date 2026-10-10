@@ -35,6 +35,13 @@ Rect rect(Widget* w);  // absolute, in window pixels
 void click(Widget* w);
 // Give the widget agui keyboard focus (a text field then receives the game's key events).
 void focus(Widget* w);
+// agui::DropDown: item count, selected index, and a selection change as if the user picked it (the game's
+// item-select listeners run). Only for dropdowns.
+int dropdown_count(Widget* w);
+int dropdown_selected(Widget* w);
+void dropdown_select(Widget* w, int index);
+// Close any open dropdown list (the popup the game adds over everything); false when none was open.
+bool close_dropdown_popup();
 // Whether `w` is currently in the tree under root() (guards dev routes taking raw addresses).
 bool in_tree(Widget* w);
 }  // namespace fa::agui

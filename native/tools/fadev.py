@@ -6,7 +6,7 @@ It never touches the real desktop's focus or input.
   launch [--speak] [--nobuild] [-- game args]   build, start the game with the DLL, wait for /health
   reload [--nobuild]                             eject the DLL, rebuild, inject again (game keeps running)
   status                                         is the tracked game alive, and does the dev server answer
-  kill                                           terminate the tracked game (only if it is provably ours)
+  kill [--hard]                                  close the tracked game (WM_CLOSE, then terminate; only if provably ours)
   shot [out.png] [--width N]                     screenshot of the game window (works unfocused)
   health | log [--since N] | speech [--since N] [--wait S]
   say TEXT | mute on|off | key NAME [--shift --ctrl --alt] | keys TEXT
@@ -228,10 +228,24 @@ def cmd_status(a):
 
 
 def cmd_kill(a):
+    """Close the window first so the game exits cleanly (it records state on exit, e.g. that the changelog was
+    seen); terminate only if it is still alive after the grace period, or at once with --hard."""
     pid = tracked()
     if not pid:
         print("no tracked game running")
         return
+    if not a.hard:
+        hwnd = find_window(pid)
+        if hwnd:
+            WM_CLOSE = 0x0010
+            u32.PostMessageW(hwnd, WM_CLOSE, 0, 0)
+            deadline = time.time() + 15
+            while time.time() < deadline and tracked() == pid:
+                time.sleep(0.25)
+            if tracked() != pid:
+                print(f"closed {pid}")
+                return
+            print("still running after WM_CLOSE; terminating")
     terminate(pid)
     print(f"killed {pid}")
 
@@ -327,7 +341,9 @@ def main():
     s.add_argument("--nobuild", action="store_true")
     s.set_defaults(f=cmd_reload)
     sub.add_parser("status").set_defaults(f=cmd_status)
-    sub.add_parser("kill").set_defaults(f=cmd_kill)
+    s = sub.add_parser("kill")
+    s.add_argument("--hard", action="store_true")
+    s.set_defaults(f=cmd_kill)
     s = sub.add_parser("shot")
     s.add_argument("out", nargs="?")
     s.add_argument("--width", type=int, default=1600)

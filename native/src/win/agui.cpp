@@ -37,6 +37,11 @@ struct Layout {
   void* get_abs_rect = nullptr;    // Rectangle agui::Widget::getAbsoluteRectangle() const
   void* dispatch_click = nullptr;  // void agui::Widget::dispatchClick(agui::MouseEvent const&)
   size_t me_position = 0, me_button = 0, me_type = 0, me_source = 0, me_size = 0;
+  int (*dd_count)(Widget*) = nullptr;           // agui::DropDown::getItemCount
+  int (*dd_selected)(Widget*) = nullptr;        // agui::DropDown::getSelectedIndex
+  void (*dd_edit)(Widget*, int) = nullptr;      // agui::DropDown::editSelectedIndex (dispatches item-select)
+  bool (*dd_showing)(Widget*) = nullptr;        // agui::DropDown::isDropDownShowing
+  void (*dd_hide)(Widget*) = nullptr;           // agui::DropDown::hideDropDown
 } L;
 
 template <typename T>
@@ -88,6 +93,11 @@ bool init() {
   ok &= resolve(L.info_name, "agui::StyleInfo", "name");
   L.get_abs_rect = sym::addr("agui::Widget::getAbsoluteRectangle");
   ok &= L.get_abs_rect != nullptr;
+  ok &= (L.dd_count = sym::fn<decltype(L.dd_count)>("agui::DropDown::getItemCount")) != nullptr;
+  ok &= (L.dd_selected = sym::fn<decltype(L.dd_selected)>("agui::DropDown::getSelectedIndex")) != nullptr;
+  ok &= (L.dd_edit = sym::fn<decltype(L.dd_edit)>("agui::DropDown::editSelectedIndex")) != nullptr;
+  ok &= (L.dd_showing = sym::fn<decltype(L.dd_showing)>("agui::DropDown::isDropDownShowing")) != nullptr;
+  ok &= (L.dd_hide = sym::fn<decltype(L.dd_hide)>("agui::DropDown::hideDropDown")) != nullptr;
   ok &= resolve(L.me_position, "agui::MouseEvent", "position");
   ok &= resolve(L.me_button, "agui::MouseEvent", "button");
   ok &= resolve(L.me_type, "agui::MouseEvent", "eventType");
@@ -174,6 +184,27 @@ void click(Widget* w) {
 void focus(Widget* w) {
   // virtual void focus(NamedBool<TabbedInTag>): the flag is one byte, passed by value.
   virtual_fn<void (*)(Widget*, uint8_t)>(w, L.vt_focus)(w, 0);
+}
+
+int dropdown_count(Widget* w) { return L.dd_count(w); }
+int dropdown_selected(Widget* w) { return L.dd_selected(w); }
+void dropdown_select(Widget* w, int index) { L.dd_edit(w, index); }
+
+static bool close_popups(Widget* w) {
+  bool closed = false;
+  for (bool priv : {false, true})
+    for (auto* c : priv ? private_children(w) : children(w)) {
+      if (is_a(c, "agui::DropDown") && L.dd_showing(c)) {
+        L.dd_hide(c);
+        closed = true;
+      }
+      closed |= close_popups(c);
+    }
+  return closed;
+}
+bool close_dropdown_popup() {
+  Widget* r = root();
+  return r && close_popups(r);
 }
 
 static bool find(Widget* at_w, Widget* target) {
