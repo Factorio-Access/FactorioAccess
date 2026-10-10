@@ -197,13 +197,6 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "fa-c-j",
-      key_sequence = "CONTROL + J",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
       name = "fa-s-b",
       key_sequence = "SHIFT + B",
       consuming = "none",
@@ -871,29 +864,8 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "fa-c-end",
-      key_sequence = "CONTROL + END",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
       name = "fa-a-z",
       key_sequence = "ALT + Z",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-as-z",
-      key_sequence = "SHIFT + ALT + Z",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-ca-z",
-      key_sequence = "CONTROL + ALT + Z",
       consuming = "none",
    },
 
@@ -963,34 +935,6 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "fa-as-left",
-      key_sequence = "SHIFT + ALT + LEFT",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-as-right",
-      key_sequence = "SHIFT + ALT + RIGHT",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-ca-left",
-      key_sequence = "CONTROL + ALT + LEFT",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-ca-right",
-      key_sequence = "CONTROL + ALT + RIGHT",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
       name = "fa-c-r",
       key_sequence = "CONTROL + R",
       consuming = "none",
@@ -1000,14 +944,6 @@ data:extend({
       type = "custom-input",
       name = "fa-cs-r",
       key_sequence = "CONTROL + SHIFT + R",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-space",
-      key_sequence = "SPACE",
-      linked_game_control = "shoot-enemy",
       consuming = "none",
    },
 
@@ -1027,48 +963,6 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "fa-c-h",
-      key_sequence = "CONTROL + H",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-s-h",
-      key_sequence = "SHIFT + H",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-ca-h",
-      key_sequence = "CONTROL + ALT + H",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-as-h",
-      key_sequence = "SHIFT + ALT + H",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-cs-h",
-      key_sequence = "CONTROL + SHIFT + H",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-a-h",
-      key_sequence = "ALT + H",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
       name = "fa-l",
       key_sequence = "L",
       consuming = "none",
@@ -1076,22 +970,8 @@ data:extend({
 
    {
       type = "custom-input",
-      name = "fa-s-l",
-      key_sequence = "SHIFT + L",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
       name = "fa-c-l",
       key_sequence = "CONTROL + L",
-      consuming = "none",
-   },
-
-   {
-      type = "custom-input",
-      name = "fa-as-l",
-      key_sequence = "SHIFT + ALT + L",
       consuming = "none",
    },
 
