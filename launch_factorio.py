@@ -77,6 +77,7 @@ def stream_process_output(
     timeout: Optional[int] = None,
     capture: bool = True,
     unbuffered: bool = True,
+    extra_env: Optional[Dict[str, str]] = None,
 ) -> Tuple[int, float]:
     """
     Stream output from a subprocess with timeout support.
@@ -104,7 +105,7 @@ def stream_process_output(
         "bufsize": 0 if unbuffered else -1,
         "encoding": "utf-8",
         "errors": "replace",
-        "env": os.environ.copy(),
+        "env": dict(os.environ, **(extra_env or {})),
     }
 
     if capture:
@@ -202,11 +203,12 @@ def launch_factorio(
     args: List[str],
     timeout: Optional[int] = None,
     capture_output: bool = True,
+    extra_env: Optional[Dict[str, str]] = None,
 ) -> Tuple[int, float]:
     """Launch Factorio with specified arguments."""
     factorio_path = validate_factorio_exe()
     cmd = [str(factorio_path)] + args
-    return stream_process_output(cmd, timeout, capture_output)
+    return stream_process_output(cmd, timeout, capture_output, extra_env=extra_env)
 
 
 def setup_tools() -> int:
@@ -1028,9 +1030,13 @@ def main():
                 sys.stdout = temp_output_file
                 sys.stderr = temp_output_file
 
-            # Run Factorio tests
+            # Run Factorio tests. FA_NO_PROXY keeps an installed native proxy (version.dll) idle, so the tests stay
+            # silent: speech goes to stdout as it does without the native code.
             exit_code, elapsed_time = launch_factorio(
-                factorio_args, timeout=args.timeout, capture_output=not args.no_capture
+                factorio_args,
+                timeout=args.timeout,
+                capture_output=not args.no_capture,
+                extra_env={"FA_NO_PROXY": "1"},
             )
 
             # Restore output

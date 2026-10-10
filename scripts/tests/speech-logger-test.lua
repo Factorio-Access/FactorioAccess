@@ -22,17 +22,17 @@ describe("Speech Logger", function()
 
       ctx:at_tick(10, function()
          -- Test actual locale key that exists
-         Speech.speak(1, { "fa.prefix-w" })
+         Speech.speak(1, { "fa.empty" })
       end)
 
       ctx:at_tick(15, function()
          -- Test locale key with parameters
-         Speech.speak(1, { "fa.ent-recipe-line", "iron-plate", 5 })
+         Speech.speak(1, { "fa.zoom-at-max", 200 })
       end)
 
       ctx:at_tick(20, function()
          -- Test mixed content
-         Speech.speak(1, { "", "Position: ", { "fa.position", 10, 20 }, " facing ", { "fa.direction.north" } })
+         Speech.speak(1, { "", "Position: ", { "fa.distance-tiles-direction", 10, { "fa.direction", 0 } } })
       end)
 
       ctx:at_tick(25, function()
