@@ -1,424 +1,313 @@
-# FactorioAccess Development Guide for LLMs
+# FactorioAccess development guide for LLMs
 
-This guide helps LLMs (particularly Claude) work effectively on the FactorioAccess mod, which makes Factorio playable by blind and visually impaired players through audio cues and keyboard controls.
+FactorioAccess makes Factorio playable by blind and visually impaired players through speech, audio cues and
+keyboard controls. Almost all of it is a normal Factorio mod in Lua. A small native part (`native/`, C++) is
+injected into the game process for the few things the modding API cannot do.
 
-## Critical Rules (Read First!)
+Every feature is designed audio first: if it cannot be understood by ear and driven by keyboard, it is not done.
 
-### Most Common Mistakes
+## Critical rules
 
-1. **API Access: Use dot notation for modules**
-   ```lua
-   -- WRONG: Viewpoint:get_viewpoint(pindex)
-   -- RIGHT: Viewpoint.get_viewpoint(pindex)
-   ```
+1. **Native code is the last resort.** Extend `native/` only when there is no way at all to do the job in Lua
+   with the Factorio API, the launcher, or a change of design. Having native code is not a licence to use it
+   for anything else. It runs only in single player (it reads state local to one machine), so every native
+   feature needs a Lua path for multiplayer anyway. When in doubt, it does not go in `native/`. See "Native
+   code" below.
+2. **Module functions use dot notation**: `Viewpoint.get_viewpoint(pindex)`, never `Viewpoint:get_viewpoint(pindex)`.
+3. **Before committing**: `python launch_factorio.py --format`, `python launch_factorio.py --run-tests --timeout 60`,
+   `python lint_localisation.py lint`. Native changes also: build, and run `native/build/ninja/faui_tests.exe`.
+4. **Debug output goes to the log**: `print("debug")`. Never `game.print` (the GUI is useless to the players).
+   User-facing text goes through `Speech.speak(pindex, message)`.
+5. **LuaLS annotations use three dashes**: `---@param pindex integer`.
+6. **This is Factorio 2.x, not 1.1.** Check every API against `llm-docs/api-reference` before using it (see
+   "Factorio API reference").
 
-2. **Always format, test, and lint localisation before committing**
-   ```bash
-   python launch_factorio.py --format
-   python launch_factorio.py --run-tests --timeout 60
-   python lint_localisation.py lint
-   ```
+## Commands
 
-3. **Debug output: Use print(), not game.print()**
-   ```lua
-   -- WRONG: game.print("debug")  -- Goes to GUI, blind users can't see
-   -- RIGHT: print("debug")        -- Goes to logs
-   -- RIGHT: Speech.speak(pindex, "user message")  -- Goes to screen reader
-   ```
+Run from this directory (`mods/FactorioAccess`, inside a portable Factorio install; the game is at `../..`).
 
-4. **LuaLS annotations: Use three dashes**
-   ```lua
-   ---@param pindex integer   -- CORRECT
-   -- @param pindex integer   -- WRONG (linter will fail)
-   ```
-
-## Development Essentials
-
-### Your Environment
-
-You are running in the mods/FactorioAccess directory of a Factorio install. `launch_factorio.py` is in your current working directory.
-
-The full factorio install is available at `../..`. You almost never need to consult it.
-
-Commands should always be relative to the current working directory.
-
-### Key Commands
 ```bash
-# Format code (REQUIRED before committing)
-python launch_factorio.py --format
-
-# Run tests
+python launch_factorio.py --format              # stylua; required before committing
+python launch_factorio.py --format-check
 python launch_factorio.py --run-tests --timeout 60
-
-# Run linter
-python launch_factorio.py --lint
-
-# Run localisation linter (checks for unused/missing locale keys)
-python lint_localisation.py lint
+python launch_factorio.py --setup-tools         # once, and after a Factorio update: .tools/ (LuaLS + API library)
+python launch_factorio.py --lint                # lua-language-server --check with the generated Factorio library
+python lint_localisation.py lint                # unused / missing locale keys
+python build_message_lists.py                   # after editing locale/*/**/*.txt message lists (then --format)
+python json_to_markdown.py --type runtime --input ../../doc-html/runtime-api.json --output llm-docs/api-reference
+python json_to_markdown.py --type prototype --input ../../doc-html/prototype-api.json --output llm-docs/api-reference
 ```
 
-### Architecture Overview
+Regenerating the API reference after a Factorio update: delete `llm-docs/api-reference/runtime` and
+`.../prototypes` first (the generator never removes pages for classes the API dropped), run both commands, commit.
 
-**Loading Stages (Critical!)**
-1. **Settings Stage** (`settings.lua`) - Defines settings, NO game access
-2. **Data Stage** (`data.lua`) - Defines prototypes, NO runtime access
-3. **Runtime Stage** (`control.lua`) - Event-driven gameplay logic
+`--setup-tools` needs network once: it downloads a pinned lua-language-server release and runs fmtk
+(`npx factoriomod-debug luals-addon`) on this install's own `doc-html` JSON. No editor is involved.
 
-**Never access runtime objects (game, script, storage) from data stage!**
+## Architecture
 
-### Core Patterns
+### Loading stages
 
-#### Player Data Access
+1. Settings (`settings.lua`): settings only, no game access.
+2. Data (`data.lua`): prototypes only, no runtime access.
+3. Runtime (`control.lua`): event-driven gameplay.
+
+Never touch `game`, `script` or `storage` from the settings or data stage.
+
+### Core patterns
+
 ```lua
-local pindex = player.index
 local player = game.get_player(pindex)
 local player_data = storage.players[pindex]
+
+-- Per-player storage with lazy initialisation: my_storage[pindex] is storage.players[pindex].module_name
+local my_storage = StorageManager.declare_storage_module("module_name", { --[[ defaults ]] })
 ```
 
-#### Storage Declaration (StorageManager)
+- Requires only at file top level. No global state beyond the current file.
+- Check `player and player.valid` at entry points; see "Defensive coding" for everywhere else.
+- `prototypes.recipe["name"]`, not `game.recipe_prototypes`. There is no `game.create_player()`.
+- Imports are CamelCase: `local FaUtils = require("scripts.fa-utils")`.
+
+### Speech and MessageBuilder
+
 ```lua
-local my_storage = storage_manager.declare_storage_module('module_name', {
-    -- default values
-})
-
--- Access: automatically refers to storage.players[pindex].module_name
--- Also handles lazy initialization
-local data = my_storage[pindex]
-```
-
-#### Modern UI Pattern
-```lua
-local Router = require("scripts.ui.router")
-local TabList = require("scripts.ui.tab-list")
-local Menu = require("scripts.ui.menu")  -- exposes Menu.MenuBuilder
-
-local my_menu = TabList.declare_tablist({
-    ui_name = Router.UI_NAMES.MY_MENU,
-    tabs = {
-        -- Tab definitions using KeyGraph
-    }
-})
-```
-
-scripts/ui/controls.lua, scripts/ui/form-builder.lua, and scripts/ui/menu.lua (the MenuBuilder) are the major UI entrypoints for implementing a new GUI. scripts/ui/grid.lua is the grid builder.  scripts/ui/router.lua is the entrypoint for non-UI interaction with the UI system, e.g. opening a UI.
-
-#### Localization (MessageBuilder)
-```lua
-local message = MessageBuilder.new()
-message:fragment({"entity-name.transport-belt"})
-message:fragment({"fa.direction", "north"})
+local message = Speech.MessageBuilder.new()
+message:fragment({ "entity-name.transport-belt" })
+message:fragment({ "fa.direction", "north" })
 Speech.speak(pindex, message:build())
 ```
 
-**WARNING**: `MessageBuilder` handles spaces. `MessageBuilder:fragment(" ")` crashes in order to loudly catch this bug!
+`MessageBuilder` (in `scripts/speech.lua`) places the spaces itself: `fragment(" ")` crashes on purpose. Use
+`list_item()` for commas. `scripts/localising.lua` has name fallbacks and other localisation helpers. Read both
+before writing user-facing text.
 
-Correct:
+`Speech.speak` goes through the native code when it is available (single player with the DLL) and otherwise
+prints `out <pindex> <message>` to stdout for the external launcher. Callers do not care which.
 
-```
-mb:fragment("foo"):fragment("bar")
--- produces foo bar
-```
+Writing for a screen reader:
 
-Crashes!:
+- The sooner the message varies, the sooner the player can move on: "anchored cursor" / "unanchored cursor",
+  not "cursor anchored" / "cursor unanchored".
+- No `:` `(` `)`: many screen reader setups read them aloud. Commas (`list_item`) and periods are fine.
+- No em dashes, no Unicode symbols, no verbosity.
+- Locale keys live in section `fa` and never contain `.`: `fa.foo-bar`, not `fa.foo.bar`.
+- Prefer one parameterised locale key over `fragment({"fa.intro"}):fragment(p1)`, so translations can reorder.
 
-```
-mb:fragment("foo"):fragment(" "):fragment("bar")
--- crashes: spaces were already added!
-```
+### UI system
 
-Style rules:
+Graph-based and React-like: a UI is a description of how to say things, rebuilt on demand; there is no paint
+step and no explicit re-render. Controls that change a value say the new value.
 
-- Don't use `:` `()`.  Screen readers read these symbols verbatim in many setups. Better to use comma (aka list_item) or just leave out the punctuation.
-- Don't be verbose
-- Avoid emdash
-- Avoid unicode
-- Prefer MessageBuilder list_item() for managing placement of commas
-- `MessageBuilder` and `Speech.speak` live in scripts/speech.lua (`Speech.MessageBuilder`); scripts/localising.lua holds localisation helpers like name fallbacks. Familiarize with both before writing user-facing text.
-- Localisation keys should always be in section `fa` and must never contain `.`.  Example: `fa.foo-bar` is good, `fa.foo.bar` is bad.
-- When possible, fold things into a parameterized localisation key rather than using `fragment({"fa.key-intro}"):fragment(p1)...`. This allows the word order to be changed in translations.
+- `scripts/ui/router.lua`: the entry point from non-UI code (opening a UI). `Router.UI_NAMES`.
+- `scripts/ui/menu.lua` (`Menu.MenuBuilder`), `scripts/ui/form-builder.lua`, `scripts/ui/controls.lua`: building UIs.
+- `scripts/ui/grid.lua`: grids. `scripts/ui/tab-list.lua`: `TabList.declare_tablist({ ui_name = ..., tabs = ... })`.
 
-We are writing for a screen reader.  This means two core principles:
+### Scanner
 
-- The sooner a message conveying information varies, the faster the user can keep going.
-  - Ex: "cursor anchored" "cursor unanchored" makes the user listen to "cursor".
-  - ex: "anchored cursor" "unanchored cursor" lets the user move on as soon as the first syllable.
-- Less punctuation is better, unless it's comma or period.  Many setups read colon left paren etc.
+A streaming database of entities and tiles, grouped by spatial clustering and answering fixed queries:
+`scripts/scanner/entrypoint.lua`, `scripts/scanner/surface-scanner.lua`, `scripts/scanner/backends/`.
 
-## Key Systems
+### Syntrax
 
-### Scanner System
-Used to find and categorize entities.  Effectively a streaming database which picks up new entities and tiles, grouping them and running fixed queries.
+The rail description language: compiler in `syntrax/` (lexer, parser, compiler, vm), CLI `syntrax-cli.lua`,
+runtime wiring in `scripts/rails/` and `scripts/ui/menus/` (router UIs `SYNTRAX_INPUT`, `RAIL_BUILDER`,
+`SYNTRAX_PROGRAM`).
 
-- **Entry**: `scripts/scanner/entrypoint.lua`
-- **Engine**: `scripts/scanner/surface-scanner.lua`
-- **Backends**: `scripts/scanner/backends/`
-- Uses spatial clustering and incremental processing
+### Other files
 
-### UI System
-Modern graph-based architecture:
-- **Router**: `scripts/ui/router.lua` - Central UI manager
-- **TabList**: Multi-tab support with shared state
-- **Builders**: Menu and Grid builders for common patterns
-- Dynamic rendering with React-like rebuilding
-- Explicit re-render is not possible because the UI does not have a painting step and is really a description of how to say things.  Controls which change values often say their new value.
+- `control.lua` is huge: grep it, read it in parts.
+- `scripts/fa-utils.lua` utilities, `scripts/fa-info.lua` entity info, `scripts/storage-manager.lua` storage,
+  `scripts/event-manager.lua` events (migration in progress).
+- `scripts/item-stack-utils.lua`: read it before aggregating items by quality ("legendary solar panel x 5").
+- `scripts/inventory-utils.lua`: inventory-like list presentation.
 
-## Testing
+## Common tasks
 
-### Test Framework
+### Keybinding
+
+1. `data.lua`: a `custom-input`. Names are `fa-<key>` or `fa-<flags>-<key>` with flags from `c`, `a`, `s`
+   (`fa-cas-s` is Ctrl+Alt+Shift+S).
+2. `control.lua`: `EventManager.on_event("fa-k", function(event, pindex) ... end)`.
+3. `locale/en/locale.cfg` under `[controls]`.
+
+### Setting
+
+1. Declare in `scripts/settings-decls.lua` (`name = "fa-my-setting"`, `type`, `setting_type = "runtime-per-user"`,
+   `default_value`, `order`).
+2. `locale/en/settings.cfg`: `[mod-setting-name]` and `[mod-setting-description]`.
+3. Read: `settings.get_player_settings(pindex)["fa-my-setting"].value`.
+
+The FA settings menu builds itself from `settings-decls.lua`.
+
+### Message lists (help and documentation)
+
+1. A `.txt` file anywhere under `locale/<language>/` (e.g. `locale/en/ui-help/my-feature.txt`); messages are
+   separated by blank lines, `;` starts a comment. The list's name is the file's basename and must be unique.
+2. `python build_message_lists.py`, then `python launch_factorio.py --format` (the generated
+   `scripts/message-list-index.lua` comes out with CRLF line endings on Windows, which stylua rejects and git's
+   autocrlf hides).
+3. In a UI: `get_help_metadata = function(ctx) return { Help.message_list("my-feature") } end`
+   (`local Help = require("scripts.ui.help")`). Players open help with Shift+/.
+
+### Test
+
 ```lua
--- In scripts/tests/my-test.lua
 local TestRegistry = require("scripts.test-registry")
 local describe, it = TestRegistry.describe, TestRegistry.it
 
 describe("Feature", function()
-    it("should work", function(ctx)
-        local test_value = 42  -- Use locals, not ctx.state
-
-        ctx:at_tick(5, function()
-            ctx:assert_equals(42, test_value)
-        end)
-    end)
+   it("does the thing", function(ctx)
+      local value = 42 -- locals, not ctx.state
+      ctx:at_tick(5, function()
+         ctx:assert_equals(42, value)
+      end)
+   end)
 end)
 ```
 
-**Remember**:
-- Add test to `test_files` table in `scripts/test-framework.lua` (around line 29)
-- Test mod behavior, not Factorio API
-- Use local variables for state
+Add the file to `test_files` in `scripts/test-framework.lua`. Test the mod's behaviour, not Factorio's API.
 
-## Quick Reference
+## Native code
 
-### File Locations
-- **Main entry**: `control.lua` (use grep/partial reads - it's huge!)
-- **Utilities**: `scripts/fa-utils.lua`
-- **Entity info**: `scripts/fa-info.lua`
-- **Storage**: `scripts/storage-manager.lua`
-- **Events**: `scripts/event-manager.lua` (migration in progress)
-- **Tests**: `scripts/tests/`
+`native/` is C++ (CMake, MSVC) injected into `factorio.exe`. It exists for what Lua cannot reach: the main
+menus before a world exists, speech without the external launcher, and the engine's own localisation. Read
+critical rule 1 again before adding anything here.
 
-### Common Tasks
+### What it does
 
-#### Add Keybinding
-1. Define in `data.lua`: `type = "custom-input"`
-2. Handle in `control.lua`: `script.on_event("fa-keyname")`
-3. Add locale in `locale/en/locale.cfg` under `[controls]`
+- **Menus**: `native/src/screens/dialogs.cpp` reads the game's widget tree (agui) and builds our own navigation
+  graph over it (`native/src/ui/`, ported from grimdark, itself from this mod's key-graph design). Labels,
+  state and activation all come from the game's widgets; we add almost no text. While a menu is open the native
+  UI owns the keyboard (keys never reach the game); once a world is loaded it lets go entirely.
+- **Lua bridge**: the `_fa_native` global, installed only into this mod's Lua state (control stage).
+  `scripts/native.lua` is the only Lua that touches it. Everything checks `Native.is_available()` (the DLL is
+  loaded and the game is single player) and branches; calling anything else while it is false errors.
+  `_fa_native.speak(localised_string, interrupt)` localises with the engine immediately and speaks through prism.
+  `_fa_native.audio_cmd(json)` takes the same JSON the launcher's audio engine does (`scripts/launcher-audio.lua`
+  builds it), so the launcher and the DLL are interchangeable by swapping who parses it.
+- **Audio**: `native/src/audio/` is the launcher's `fa_launcher_audio` ported to C++ (miniaudio, the panner
+  node, JSON commands), with tests in `native/tests_audio/` (`fa_audio_tests.exe`, runs on miniaudio's null
+  backend). It deliberately keeps three quirks of the Python engine the mod's sounds were tuned against (squared
+  steady volumes, scheduled fade-outs overridden by the next volume ramp, times converted at 44100 Hz); each is
+  commented in `audio.cpp`. Fixing one means retuning the sonifiers by ear.
+- **Assets**: `native/src/assets.cpp` reads files from the mod's own package (folder or installed zip, located
+  by the engine; zips inflate through the game's own zlib).
 
-Our keys are named `fa-s` (s, with no modifiers) or `fa-flags-s` where flags is c, a, or s (shift), e.g. `fa-cas-s` is s with control+alt+shift.
+### Layout
 
-#### Add Storage Module
-```lua
-local my_storage = storage_manager.declare_storage_module('my_module', {
-    -- defaults
-})
+- `native/src/` platform-free code; `native/src/win/` the Windows platform layer (everything that knows MSVC
+  layouts or Windows): hooks, symbol lookup, the agui reader, game state.
+- `native/src/ui/`: the engine-free UI core with doctest tests in `native/tests/`.
+- `native/third_party/`: vendored code and binaries, committed (see its README). The repository must build
+  without network access.
+
+### Build and dev loop
+
+```bash
+cmd //c "$(cygpath -w native/tools/build.cmd)"   # configure (first time) + build into native/build/ninja
+native/build/ninja/faui_tests.exe
+native/build/ninja/fa_audio_tests.exe
+python native/tools/fadev.py launch              # build, start the game with the DLL, wait for the dev server
+python native/tools/fadev.py reload              # eject, rebuild, re-inject into the running game
+python native/tools/fadev.py kill                # close the game (WM_CLOSE first; only the tracked process)
+python native/tools/fadev.py shot                # screenshot of the game window -> native/build/shot.png
+python native/tools/fadev.py key down | keys text | speech --since N | log | tree | get ui/nav
 ```
 
-#### Add a Setting
-Settings allow users to configure mod behavior. They're defined in the settings stage and accessed at runtime.
+- The dev loop never steals focus: the game starts visible but inactive and the DLL blocks its attempts to
+  activate itself (`FA_NOFOCUS`). It is silent unless `launch --speak`: speech is recorded but not voiced, and
+  the process's audio session (the game's sound and our audio engine) is muted. `speech` shows what would have
+  been said. `health` counts the audio commands the mod sent; `get "audio?json=..."` submits one by hand.
+- `fadev.py` tracks the game by pid, creation time and image path, and re-checks all three before acting, so a
+  pid Windows reused is never touched. `kill` closes the window first so the game exits cleanly (a terminated
+  game re-shows the changelog on the next start).
+- Routes take no leading slash on the command line (`get ui/nav`): Git Bash rewrites `/paths`.
+- Take screenshots (`shot`, then read the PNG). They catch what dumps miss.
+- Only one party drives the game at a time. Ask before launching or driving it unless the user handed it over.
+- `fa_native.dll` cannot be rebuilt while loaded: `reload` ejects first. A plain build while the game runs
+  fails to link (LNK1168); build test targets with `--target faui_tests` instead.
 
-1. **Add declaration** in `scripts/settings-decls.lua`:
-   ```lua
-   {
-      name = "fa-my-setting",
-      type = "bool-setting",  -- or "int-setting", "double-setting", "string-setting"
-      setting_type = "runtime-per-user",
-      default_value = false,
-      order = "b",  -- Controls display order in settings menu
-   },
-   ```
+### Engine access
 
-2. **Add locale** in `locale/en/settings.cfg`:
-   ```ini
-   [mod-setting-name]
-   fa-my-setting=My setting label
+All addresses, struct offsets and vtable slots come from the shipped `factorio.pdb` at startup, by name, through
+dbghelp (`native/src/sym.h`). Nothing is hardcoded except a few enum values and bit masks, each with a comment
+saying where it was read from. A missing name disables the native code with one spoken line instead of crashing.
 
-   [mod-setting-description]
-   fa-my-setting=Description shown in settings menu
-   ```
+Investigating the engine: `llvm-pdbutil` (in the Visual Studio LLVM directory) dumps classes with
+`pretty -classes -class-definitions=layout -include-types='^agui::Widget$'` and enums with `pretty -enums`;
+`llvm-objdump -d --start-address=... --stop-address=...` plus `llvm-symbolizer --obj=factorio.exe <addr>` reads
+code. Disassemble a function before guessing what it does.
 
-3. **Read at runtime**:
-   ```lua
-   local enabled = settings.get_player_settings(pindex)["fa-my-setting"].value
-   ```
+### Traps
 
-Settings automatically appear in the FA settings menu (opened via keybind). The menu is built dynamically from `settings-decls.lua`.
+- Factorio's Lua is compiled as C++: a Lua error is a C++ exception and unwinds through native frames. Code
+  called from Lua uses RAII only (see `ParsedLocalisedString` in `lua_native.cpp`), and every Lua C function
+  leaves the stack balanced.
+- Never free memory the game allocated (strings it returns by value, `Package::read` results): the DLL's CRT
+  heap is not the game's. Read the game's data in place instead.
+- Never hold a widget pointer across frames. Node closures keep a path and resolve it each time they run.
+- `agui::Widget::dispatchClick` fires a button's listeners. The virtual `mouseClick` does not, for buttons
+  (agui::Gui's mouse-down bookkeeping gates it), but it is the right call for toggle buttons (checkboxes).
+- Synthetic keys must release a few frames after the press: a press and release in one poll is invisible.
+- Script names in `LuaGameScript` are `mod-<name>`; the scenario's is `level`.
+- `_fa_native` and the mod's package path are set up when the mod's Lua state is created. After a hot `reload`,
+  load a save again (or `kill` and `launch`) before testing anything that goes through Lua or reads assets.
 
-## Performance Tips
+## Factorio API reference
 
-- Cache globals locally
-- Avoid table creation in hot loops
-- Use appropriate tick intervals (15, 60, etc.)
-- Validate entities: `if entity and entity.valid then`
+`llm-docs/api-reference/` has one file per class, concept, event and prototype, generated from this install's
+docs. Read `llm-docs/api-reference/CLAUDE.md` for how to browse it. It is in this repository, not the Factorio
+install. There are thousands of files: search with grep or glob rather than listing everything.
 
-## Syntrax (Rail Description Language)
+2.x renamed, removed and added a lot relative to 1.1, and most training data is 1.1. Check every call.
 
-Syntrax is active. The compiler lives in the top-level `syntrax/` module (lexer/parser/compiler/vm), with a CLI at `syntrax-cli.lua` and runtime wiring under `scripts/rails/` and `scripts/ui/menus/` (router UIs `SYNTRAX_INPUT`, `RAIL_BUILDER`, `SYNTRAX_PROGRAM`).
+## Common LLM antipatterns
 
-## Important Notes
+### Comments about what changed
 
-- **Everything** goes through `launch_factorio.py`
-- Requires only work at file top-level
-- No global state beyond current file
-- Check `player and player.valid` always
-- Never use `game.create_player()` (doesn't exist)
-- Use `prototypes.recipe["name"]` not `game.recipe_prototypes`
+Wrong: `-- Changed to use controllers. Now handles force_close`. Right: `-- Can be closed with the controller`,
+or no comment. Comments describe the code as it is.
 
-## External Communication
+### Overuse of `.valid`
 
-The mod communicates with a launcher via stdout:
-```
-out <player_index> <message>
-```
-This is why `Speech.speak()` is used for user messages.
+Check validity once, where an object enters from the outside (an event, a stored reference). Not at every level
+below that.
 
-Remember: This mod makes a visual game accessible through audio. Every feature must be designed with audio-first interaction in mind!
+### Defensive coding
 
-# Message List System for Help and Documentation
-
-The mod includes a message list system for providing help and documentation that integrates with Factorio's localization system.
-
-## Creating Message Lists
-
-1. Create a `.txt` file anywhere under `locale/<language>/` (e.g., `locale/en/ui-help/my-feature.txt` or `locale/en/docs/controls.txt`)
-2. Write messages separated by blank lines:
-   ```
-   ; Comments start with semicolon
-   This is the first message.
-
-   This is the second message.
-   ```
-3. Run `python build_message_lists.py` to generate locale files
-4. The message list name is the basename of the file (without `.txt`)
-5. Message list names must be globally unique across all directories
-
-**Windows gotcha**: `build_message_lists.py` writes `scripts/message-list-index.lua` with CRLF line endings, which fails `--format-check` (stylua wants LF). git's `autocrlf` hides this in `git diff`, so always run `python launch_factorio.py --format` after regenerating.
-
-## Using Message Lists in UIs
-
-```lua
-local Help = require("scripts.ui.help")
-
--- In your KeyGraph declaration or TabList callbacks:
-get_help_metadata = function(ctx)
-   return {
-      Help.message_list("my-feature"),  -- From my-feature.txt
-      Help.message({"fa.some-other-message"}),  -- Direct localised string
-   }
-end
-```
-
-## How Users Access Help
-
-- Press `Shift+/` (question mark) while in a UI to open help
-- Use W/S to navigate between help messages
-- Press `Shift+/` again or `E` to close help
-
-# Common LLM Antipatterns
-
-## Comments Referring To What Changed
-
-**WRONG**:
-
-```
-- Removed the old UI system. Now x does y.
-```
-
-**CORRECT**: consider whether a comment is required.
-
-**WRONG**:
-
-```
--- Changed to use controllers. Now handles force_close
-```
-
-**CORRECT**:
-
-```
--- Can be closed with the controller
-```
-
-## Overuse of valid
-
-`x.valid` is how the mod checks whether or not an entity from Factorio can be used without error.  But, it is **WRONG TO
-DO THIS AT EVERY LEVEL**.  Before implementing a block of code, **ALWAYS** consider whether or not entity/object
-validity has already been checked elsewhere.
-
-## Defensive Coding
-
-**CRITICAL**: Excessive validation hides bugs. Let code crash to find edge cases.
-
-**WRONG**:
+Excessive validation hides bugs. Let code crash so edge cases surface.
 
 ```lua
+-- Wrong: every line hides a possible bug
 function process_signals(entity)
    if not entity or not entity.valid then return {} end
-
    local cb = entity.get_control_behavior()
    if not cb then return {} end
-
    for _, section in ipairs(cb.sections or {}) do
-      local count = section.filters_count or 0
-      for i = 1, count do
+      for i = 1, (section.filters_count or 0) do
          local slot = section.get_slot(i)
-         if slot and slot.value then
-            -- process slot
-         end
+         if slot and slot.value then --[[ ... ]] end
       end
    end
 end
-```
 
-This hides bugs:
-- Returns empty table when entity is invalid (should crash)
-- `cb.sections or {}` returns empty on nil (should crash to find why cb.sections is nil)
-- `section.filters_count or 0` hides missing filters_count (should crash)
-- `if slot and slot.value` silently skips invalid slots (should crash if unexpected)
-
-**CORRECT**:
-
-```lua
+-- Right: check only what is legitimately nil
 function process_signals(entity)
    local cb = entity.get_control_behavior()
-
    for _, section in ipairs(cb.sections) do
       for i = 1, section.filters_count do
          local slot = section.get_slot(i)
-         if slot.value then  -- Only check what's expected to be nil
-            -- process slot
-         end
+         if slot.value then --[[ ... ]] end -- empty slots have no value
       end
    end
 end
 ```
 
-**When to validate:**
-- At UI entry points (user can trigger with bad state)
-- When nil is a valid expected value (e.g., `slot.value` can legitimately be nil for empty slots)
+Validate at UI entry points and where nil is an expected value. Not in internal functions, not for properties
+that always exist, and never by silently returning an empty default.
 
-**When NOT to validate:**
-- Internal functions (caller should ensure valid state)
-- Properties that should always exist (let it crash to find the bug)
-- Returning empty/default silently (masks the real problem)
+## Performance
 
-# Factorio 2.0 API
-
-This is a Factorio 2.0 project, not a Factorio 1.1 project.  Factorio 2.0 comes with many API changes.
-
-A complete reference (one file per class, concept, define, etc) is at `./llm-docs/api-reference`. List this directory recursively for a "table of contents".
-
-Read `./llm-docs/api-reference/CLAUDE.md` for more specific information on browsing this documentation.
-
-You **MUST** double check that you understand APIs before using them.  Your training knowledge cutoff was only barely after the Factorio 2.0 release and a vast majority of your training data refers to 1.1 APIs.  In addition to changes, the 2.0 API adds a lot of new functions and objects which may also simplify mod tasks.
-
-IMPORTANT: the docs are at the root of this repo, `./` relative to your invocation working directory. They are not at the root of the Factorio install.  For example, you can run exactly this command to list all files (thousands of them!):
-
-```
-find ./llm-docs -type f
-```
-
-Due to the sheer number of files, searching with your built-in search tools is a better approach.  This is just illustrating the locations of files--don't run it unless you're sure you want all that output!
-
-# Quick notes on common patterns
-
-- Before performing aggregations of items by quality to produce lists such as "legendary solar panel x 5", read scripts/item-stack-utils.lua to learn about aggregation functions that already exist.
-- See `inventory-utils.lua` for inventory-like list presentation helpers.
-- imports are CamelCase, not snake_case or camelCase.
+Cache globals locally, avoid creating tables in hot loops, use sensible tick intervals (15, 60), and validate
+entities where they enter (`if entity and entity.valid then`).
