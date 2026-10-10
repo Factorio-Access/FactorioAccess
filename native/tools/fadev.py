@@ -14,6 +14,7 @@ It never touches the real desktop's focus or input.
   say TEXT | mute on|off | key NAME [--shift --ctrl --alt] | keys TEXT
   tree [--all]                                   the game's widget tree
   get route?query                                any dev-server route (no leading slash: Git Bash rewrites /paths)
+  lua CODE|- [--timeout S]                       run Lua in the mod's state in the loaded game (over Lua UDP), print the result
 
 Process identity: the launch records pid + creation time + image path in native/build/fadev_state.json.
 Every command that acts on the process re-checks all three, so a pid Windows reused for another process
@@ -45,6 +46,8 @@ INJECT = os.path.join(BUILD, "fa_inject.exe")
 STATE = os.path.join(NATIVE, "build", "fadev_state.json")
 NATIVE_LOG = os.path.join(os.environ.get("LOCALAPPDATA", "."), "FactorioAccess", "native.log")
 PORT = int(os.environ.get("FA_PORT", "8792"))
+# The game listens here for Lua to run (scripts/dev-udp.lua); launch passes it as --enable-lua-udp.
+UDP_PORT = int(os.environ.get("FA_UDP_PORT", "8793"))
 
 k32 = ctypes.WinDLL("kernel32", use_last_error=True)
 u32 = ctypes.WinDLL("user32", use_last_error=True)
@@ -198,7 +201,8 @@ def cmd_launch(a):
         env.pop("FA_MUTE", None)
     else:
         env["FA_MUTE"] = "1"
-    out = subprocess.run([INJECT, "--launch", FACTORIO_EXE, DLL] + a.game_args, capture_output=True, text=True, env=env)
+    game_args = ["--enable-lua-udp", str(UDP_PORT)] + a.game_args
+    out = subprocess.run([INJECT, "--launch", FACTORIO_EXE, DLL] + game_args, capture_output=True, text=True, env=env)
     print(out.stdout, end="")
     pid = next((int(l.split()[1]) for l in out.stdout.splitlines() if l.startswith("pid ")), None)
     if out.returncode != 0 or pid is None:
@@ -358,6 +362,26 @@ def cmd_speech(a):
         time.sleep(0.3)
 
 
+def cmd_lua(a):
+    # The mod runs packets that start with this (scripts/dev-udp.lua) and replies to our port. It reads UDP once a tick,
+    # so a paused game or one still in the menus answers late or not at all.
+    import socket
+
+    code = a.code if a.code != "-" else sys.stdin.read()
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        sock.settimeout(a.timeout)
+        sock.sendto(("fa-eval\n" + code).encode("utf-8"), ("127.0.0.1", UDP_PORT))
+        try:
+            reply, _ = sock.recvfrom(65536)
+        except socket.timeout:
+            sys.exit(f"no reply in {a.timeout}s (is a game loaded and unpaused, launched by fadev with --enable-lua-udp?)")
+    status, _, body = reply.decode("utf-8", "replace").partition("\n")
+    print(body)
+    if status != "ok":
+        sys.exit(1)
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -408,6 +432,10 @@ def main():
     s = sub.add_parser("keys")
     s.add_argument("text")
     s.set_defaults(f=lambda a: print(get("/keys" + q(text=a.text)), end=""))
+    s = sub.add_parser("lua", help="run Lua in the mod's state in the loaded game and print what it returns")
+    s.add_argument("code", help="a Lua chunk or expression; - reads it from stdin")
+    s.add_argument("--timeout", type=float, default=5)
+    s.set_defaults(f=cmd_lua)
     s = sub.add_parser("tree")
     s.add_argument("--all", action="store_true")
     s.set_defaults(f=lambda a: print(get("/ui/tree" + q(all=1 if a.all else None)), end=""))

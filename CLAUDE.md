@@ -253,6 +253,7 @@ python native/tools/fadev.py reload              # eject, rebuild, re-inject int
 python native/tools/fadev.py kill                # close the game (WM_CLOSE first; only the tracked process)
 python native/tools/fadev.py shot                # screenshot of the game window -> native/build/shot.png
 python native/tools/fadev.py key down | keys text | speech --since N | log | tree | get ui/nav
+python native/tools/fadev.py lua "game.get_player(1).position"   # run Lua in the mod's state (loaded game; over Lua UDP)
 ```
 
 - The dev loop never steals focus: the game starts visible but inactive and the DLL blocks its attempts to
@@ -264,6 +265,10 @@ python native/tools/fadev.py key down | keys text | speech --since N | log | tre
   game re-shows the changelog on the next start).
 - Routes take no leading slash on the command line (`get ui/nav`): Git Bash rewrites `/paths`.
 - Take screenshots (`shot`, then read the PNG). They catch what dumps miss.
+- `lua` runs a chunk in the mod's Lua state in the loaded game and prints its return values (`scripts/dev-udp.lua`;
+  `launch` passes `--enable-lua-udp`). `loaded("scripts.fa-utils")` gets a module, since require only works at load
+  time. It answers once a tick, so the game must be in a world and unpaused. Use it for experiments on the engine's
+  behaviour instead of throwaway test files.
 - Only one party drives the game at a time. Ask before launching or driving it unless the user handed it over.
 - `fa_native.dll` cannot be rebuilt while loaded: `reload` ejects first. A plain build while the game runs
   fails to link (LNK1168); build test targets with `--target faui_tests` instead.

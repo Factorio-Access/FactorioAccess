@@ -12,6 +12,9 @@ local VANILLA_MODE_WHITELIST = {
    -- Vanilla mode toggle itself
    ["fa-cas-v"] = true,
 
+   -- Development tooling (scripts/dev-udp.lua)
+   [defines.events.on_udp_packet_received] = true,
+
    -- Essential game events
    [defines.events.on_tick] = true,
    [defines.events.on_player_joined_game] = true,

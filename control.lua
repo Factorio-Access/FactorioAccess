@@ -57,6 +57,7 @@ local PlayerMiningTools = require("scripts.player-mining-tools")
 local Quickbar = require("scripts.quickbar")
 local Research = require("scripts.research")
 require("scripts.rich-text") -- registers rich text processor with speech.lua
+require("scripts.dev-udp") -- development tooling: runs Lua sent over UDP when the game has --enable-lua-udp
 local Rulers = require("scripts.rulers")
 local ScannerEntrypoint = require("scripts.scanner.entrypoint")
 local Spidertron = require("scripts.spidertron")
