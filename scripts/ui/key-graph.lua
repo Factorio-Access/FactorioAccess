@@ -165,6 +165,8 @@ mod.TRANSITION_DIR = TRANSITION_DIR
 
 ---@class fa.ui.graph.InternalTabCtx: fa.ui.TabContext
 ---@field state fa.ui.graph.StoredState
+---@field message fa.MessageBuilder Graph handlers are never the close callback or get_binds, which lack it
+---@field controller fa.ui.RouterController
 
 ---@alias fa.ui.graph.RenderCallback fun(ctx: fa.ui.graph.Ctx): fa.ui.graph.Render?
 
@@ -263,6 +265,8 @@ function Graph:_rerender(ctx)
          end
          for i = old_ind, 1, -1 do
             local k = state.key_order[i]
+            -- Keys from the previous render may be missing from this one; the table type cannot say so.
+            ---@diagnostic disable-next-line: unnecessary-if
             if render.nodes[k] then
                state.cur_key = k
                break
@@ -784,7 +788,7 @@ function Graph:search_hint(ctx, hint_callback)
             node.vtable.label(temp_ctx)
 
             -- Extract localised strings from the message
-            local built = temp_message:build()
+            local built = temp_message:build_or_nil()
             if built and type(built) == "table" then hint_callback(built) end
          end
       end
@@ -839,7 +843,7 @@ function Graph:search_move(message, ctx, direction, matcher)
             local msg_ctx = self:_wrap_ctx(ctx, self.name, NO_MODIFIERS)
             msg_ctx.message = temp_msg
             node.vtable.label(msg_ctx)
-            local label_localised = temp_msg:build()
+            local label_localised = temp_msg:build_or_nil()
 
             if label_localised and matcher(label_localised) then
                -- Found a match

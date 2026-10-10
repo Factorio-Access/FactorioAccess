@@ -26,12 +26,7 @@ local function get_ammo_summary(entity)
    if not ammo_inv then return { "fa.turret-no-ammo-slot" } end
 
    local contents = ammo_inv.get_contents()
-   local presenting = InventoryUtils.present_list(contents, nil, nil, true)
-   if presenting then
-      return presenting
-   else
-      return { "fa.empty" }
-   end
+   return InventoryUtils.present_list(contents, nil, nil, true)
 end
 
 ---Render the turret configuration form

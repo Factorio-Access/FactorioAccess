@@ -65,7 +65,7 @@ local function build_spidertron_form(ctx)
       local player_pos = vp:get_cursor_pos()
 
       for _, spider in ipairs(spidertrons) do
-         local unit_number = spider.unit_number
+         local unit_number = assert(spider.unit_number)
          local key = "spidertron-" .. unit_number
 
          local label = function(label_ctx)

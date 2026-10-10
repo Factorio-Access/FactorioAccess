@@ -104,7 +104,8 @@ function mod.enqueue(player, name, index)
 
    if tech.research_trigger then return { "fa.research-not-in-labs" }, false end
 
-   local force = player.force
+   -- Reading a player's force always gives a LuaForce; the types carry the write type
+   local force = player.force --[[@as LuaForce]]
    local queue = force.research_queue
    if index then
       table.insert(queue, index, name)
@@ -164,10 +165,9 @@ local function localise_trigger(tech, trig)
       table.insert(res, quality_name)
    elseif trig.type == "mine-entity" then
       local parts = {}
-      -- LuaLS's Factorio defs lack this field, but MineEntityTechnologyTrigger requires it. See
-      -- llm-docs/api-reference/prototypes/concepts/MineEntityTechnologyTrigger.md
-      ---@diagnostic disable-next-line: undefined-field
-      for _, e in pairs(trig.entities) do
+      for _, e in
+         pairs((trig --[[@as ResearchTrigger.mine_entity]]).entities)
+      do
          table.insert(parts, Localising.get_localised_name_with_fallback(prototypes.entity[e]))
       end
       table.insert(res, FaUtils.localise_cat_table(parts, ", "))
@@ -430,7 +430,9 @@ local function get_visible_researches(player)
    ---@type fa.research.ResearchEntry[]
    local res = {}
 
-   for name, tech in pairs(player.force.technologies) do
+   for name, tech in
+      pairs((player.force --[[@as LuaForce]]).technologies)
+   do
       -- Skip hidden technologies - they're not meant to be shown to players
       if tech.prototype.hidden then goto continue end
 
@@ -535,7 +537,7 @@ end
 function mod.queue_announce(pindex)
    local player = game.get_player(pindex)
    assert(player)
-   local queue = player.force.research_queue
+   local queue = (player.force --[[@as LuaForce]]).research_queue
    if not next(queue) then
       Speech.speak(pindex, { "fa.research-queue-empty" })
       return

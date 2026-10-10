@@ -93,7 +93,7 @@ local function cluster_enemies(enemies)
    local clusters = {}
 
    for _, enemy in ipairs(enemies) do
-      local pos = enemy.position
+      local pos = enemy.position --[[@as MapPosition.struct]]
       local enemy_max_health = enemy.max_health
       local found_cluster = false
 
@@ -121,7 +121,7 @@ local function cluster_enemies(enemies)
             center_x = pos.x,
             center_y = pos.y,
             count = 1,
-            min_unit_number = enemy.unit_number,
+            min_unit_number = assert(enemy.unit_number),
             max_health = enemy_max_health,
          }
       end

@@ -40,7 +40,7 @@ cause the launcher to not read right.
 ]]
 ---@param cmd CustomCommandData
 local function cmd_fac(cmd)
-   local pindex = cmd.player_index
+   local pindex = assert(cmd.player_index)
    local script = cmd.parameter
 
    if not cmd.parameter or cmd.parameter == "" then
@@ -119,9 +119,8 @@ Outputs to script-output/rail-table.lua
 ]]
 ---@param cmd CustomCommandData
 local function cmd_railtable(cmd)
-   local pindex = cmd.player_index
-   local player = game.get_player(pindex)
-   if not player then return end
+   local pindex = assert(cmd.player_index)
+   local player = assert(game.get_player(pindex))
 
    -- Extract rail data
    local rail_data = RailTableExtractor.extract_rail_table(player.surface, player.force --[[@as LuaForce]])
@@ -144,9 +143,8 @@ Example: /fagive iron-plate
 ]]
 ---@param cmd CustomCommandData
 local function cmd_fagive(cmd)
-   local pindex = cmd.player_index
-   local player = game.get_player(pindex)
-   if not player then return end
+   local pindex = assert(cmd.player_index)
+   local player = assert(game.get_player(pindex))
 
    local pname = cmd.parameter
    if not pname or pname == "" then
@@ -175,7 +173,7 @@ in the first second after loading).
 ]]
 ---@param cmd CustomCommandData
 local function cmd_tutorial_transcript(cmd)
-   local pindex = cmd.player_index
+   local pindex = assert(cmd.player_index)
 
    local success, err = TutorialTranscript.generate_transcript(pindex)
 
@@ -183,8 +181,9 @@ local function cmd_tutorial_transcript(cmd)
       Speech.speak(pindex, { "fa.cmd-transcript-success" })
       print("Tutorial transcript written")
    else
-      Speech.speak(pindex, { "", { "fa.cmd-transcript-failed" }, ", ", err })
-      print("Tutorial transcript failed: " .. err)
+      local message = assert(err)
+      Speech.speak(pindex, { "", { "fa.cmd-transcript-failed" }, ", ", message })
+      print("Tutorial transcript failed: " .. message)
    end
 end
 

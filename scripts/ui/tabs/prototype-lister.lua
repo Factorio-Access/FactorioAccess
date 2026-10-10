@@ -88,7 +88,7 @@ local function prototype_lister_vtable_builder(name, proto, signal_type)
 
          if modifiers.shift then
             if has_shorthand then
-               local shorthand = get_rich_text_shorthand(signal_type, name)
+               local shorthand = assert(get_rich_text_shorthand(signal_type, name))
                LauncherCommands.copy_to_clipboard(pindex, shorthand)
                Speech.speak(pindex, { "fa.prototype-lister-copied-shorthand", shorthand })
             else

@@ -95,7 +95,8 @@ function mod.cycle_to_next_vehicle(pindex)
    end
 
    local target = vehicles[target_index]
-   local target_pos = { x = math.floor(target.position.x), y = math.floor(target.position.y) }
+   local vehicle_pos = target.position --[[@as MapPosition.struct]]
+   local target_pos = { x = math.floor(vehicle_pos.x), y = math.floor(vehicle_pos.y) }
 
    -- Move cursor to the vehicle
    vp:set_cursor_pos(target_pos)

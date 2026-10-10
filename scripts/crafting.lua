@@ -17,13 +17,13 @@ function mod.get_recipes(pindex, ent, load_all_categories)
    if not ent then return {} end
    local category_filters = {}
    --Load the supported recipe categories for this entity
-   for category_name, _ in pairs(ent.prototype.crafting_categories) do
+   for category_name, _ in pairs(assert(ent.prototype.crafting_categories)) do
       table.insert(category_filters, { filter = "category", category = category_name })
    end
    ---@type LuaCustomTable<string, LuaRecipePrototype>|LuaCustomTable<string, LuaRecipe>
    local all_machine_recipes = prototypes.get_recipe_filtered(category_filters)
    local unlocked_machine_recipes = {}
-   local force_recipes = game.get_player(pindex).force.recipes
+   local force_recipes = (game.get_player(pindex).force --[[@as LuaForce]]).recipes
 
    --Load all crafting categories if instructed
    if load_all_categories == true then all_machine_recipes = force_recipes end
@@ -80,7 +80,7 @@ function mod.recipe_cannot_craft_reason(pindex, recipe_in)
    local p = game.get_player(pindex)
    if p.character then
       ---@type table<string, true?>
-      local crafting_categories = p.character.prototype.crafting_categories
+      local crafting_categories = assert(p.character.prototype.crafting_categories)
       local hand_craftable = false
       for _, category in ipairs(recipe.categories) do
          if crafting_categories[category] then

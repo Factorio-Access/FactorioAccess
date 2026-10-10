@@ -34,7 +34,7 @@ end
 
 ---Calculate world position for a connection point from a position vector
 ---@param entity LuaEntity
----@param pos Vector Connection point position
+---@param pos fa.Point Connection point position, entity-local
 ---@return fa.Point
 local function vec_to_world_pos(entity, pos)
    -- Rotate to world coordinates
@@ -221,6 +221,7 @@ function mod.drag_wire_and_read(pindex, side)
          "electric-pole",
       },
    })
+   ---@type LuaEntity?
    local c_ent = ents_at_position[1]
    ---@type LuaEntity?
    local last_c_ent = storage.players[pindex].last_wire_ent
@@ -584,7 +585,7 @@ function mod.get_signals_from_entity(entity, both_wires, wire_connector_id)
       end
    else
       -- Get signals from specified wire
-      local network = entity.get_circuit_network(wire_connector_id)
+      local network = entity.get_circuit_network(assert(wire_connector_id))
 
       if network and network.signals then all_signals = network.signals end
    end

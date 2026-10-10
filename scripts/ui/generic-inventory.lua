@@ -60,7 +60,7 @@ local function setup_shared_state(pindex, params)
    if entity.type == "car" or entity.type == "spider-vehicle" then
       trash_inv_index = defines.inventory.car_trash
       -- For vehicles: only show if vehicle logistics is enabled
-      show_trash = entity.force.vehicle_logistics
+      show_trash = (entity.force --[[@as LuaForce]]).vehicle_logistics
    end
 
    if show_trash and trash_inv_index and entity.get_inventory(trash_inv_index) then

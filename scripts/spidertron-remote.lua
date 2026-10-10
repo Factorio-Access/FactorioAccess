@@ -32,9 +32,10 @@ end
 ---@param spidertron LuaEntity
 function mod.toggle_spidertron(player, spidertron)
    local current_list = player.spidertron_remote_selection or {}
+   local unit_number = assert(spidertron.unit_number)
 
-   if is_spidertron_in_list(current_list, spidertron.unit_number) then
-      mod.remove_spider(player, spidertron.unit_number)
+   if is_spidertron_in_list(current_list, unit_number) then
+      mod.remove_spider(player, unit_number)
    else
       mod.add_to_remote(player, spidertron)
    end
@@ -53,7 +54,7 @@ function mod.add_to_remote(player, spidertron)
    end
 
    -- Check if already added
-   if is_spidertron_in_list(current_list, spidertron.unit_number) then
+   if is_spidertron_in_list(current_list, assert(spidertron.unit_number)) then
       Speech.speak(player.index, { "fa.spidertron-already-linked" })
       return
    end

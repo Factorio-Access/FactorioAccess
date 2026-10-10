@@ -103,7 +103,7 @@ end
 ---@return syntrax.ast.Sequence?, syntrax.Error?
 local function parse_tree_contents(state, tree_token)
    -- Create a new parser state for the tree's children
-   local tree_state = new_state(tree_token.children)
+   local tree_state = new_state(assert(tree_token.children))
 
    local statements = {}
 
@@ -116,7 +116,7 @@ local function parse_tree_contents(state, tree_token)
    -- Empty sequences are allowed
 
    -- Merge spans from open bracket to close bracket
-   local span = tree_token.open_bracket_span:merge(tree_token.close_bracket_span)
+   local span = assert(tree_token.open_bracket_span):merge(assert(tree_token.close_bracket_span))
 
    return Ast.sequence(statements, span), nil
 end
@@ -268,6 +268,7 @@ local function parse_tokens(tokens, text)
    end
 
    -- Create program span by merging first and last statement spans
+   ---@type syntrax.Span
    local span
    if #statements == 0 then
       -- Empty program - create a dummy span

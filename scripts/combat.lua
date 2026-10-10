@@ -52,7 +52,7 @@ function mod.get_effective_health_shields(pindex)
    -- If in a vehicle, use vehicle stats
    if player.driving and player.vehicle and player.vehicle.valid then
       local vehicle = player.vehicle
-      local health = vehicle.get_health_ratio()
+      local health = assert(vehicle.get_health_ratio())
       local shields = nil
 
       local grid = vehicle.grid
@@ -65,7 +65,7 @@ function mod.get_effective_health_shields(pindex)
    local char = player.character
    if not char or not char.valid then return nil end
 
-   local health = char.get_health_ratio()
+   local health = assert(char.get_health_ratio())
    local shields = nil
 
    -- A player with a character always has an armor inventory

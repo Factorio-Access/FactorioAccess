@@ -51,7 +51,7 @@ end
 ---@return string The train name (backer_name of identifying locomotive), or fallback
 function mod.get_name(rolling_stock)
    local identifying_loco = mod.get_identifying_locomotive(rolling_stock)
-   if identifying_loco then return identifying_loco.backer_name end
+   if identifying_loco then return assert(identifying_loco.backer_name) end
 
    -- No locomotive: fallback based on whether we have a train
    local train = rolling_stock.train

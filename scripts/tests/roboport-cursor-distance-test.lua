@@ -12,7 +12,7 @@ describe("Roboport Distance Cursor Mode", function()
       local vp
 
       ctx:init(function()
-         player = game.get_player(1)
+         player = assert(game.get_player(1))
          vp = Viewpoint.get_viewpoint(1)
 
          -- Place player at a known position
@@ -59,7 +59,7 @@ describe("Roboport Distance Cursor Mode", function()
       local target_pos = { x = 50, y = 0 }
 
       ctx:init(function()
-         player = game.get_player(1)
+         player = assert(game.get_player(1))
          vp = Viewpoint.get_viewpoint(1)
 
          -- Place player at origin

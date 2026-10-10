@@ -31,11 +31,11 @@ describe("Assembler Recipe Mod Tests", function()
 
       ctx:at_tick(1, function()
          -- Create an assembler
-         assembler = surface.create_entity({
+         assembler = assert(surface.create_entity({
             name = "assembling-machine-1",
             position = { x = 0, y = -3 },
             force = player.force,
-         })
+         }))
       end)
 
       ctx:at_tick(2, function()

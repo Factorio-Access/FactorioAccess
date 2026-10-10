@@ -260,7 +260,7 @@ end
 
 ---Finalize the event by speaking accumulated message
 function RouterController:finalize()
-   local msg = self.message:build()
+   local msg = self.message:build_or_nil()
    if msg then Speech.speak(self.pindex, msg) end
 end
 
@@ -634,6 +634,8 @@ end
 ---@param handler fun(event: EventData, pindex: integer): any? The handler function
 local function register_ui_event(event_name, handler)
    EventManager.on_event(event_name, function(event, pindex)
+      -- UI events are all custom inputs, which always come from a player
+      assert(pindex)
       local router = mod.get_router(pindex)
       -- Only process if a UI is open
       if router:is_ui_open() then return handler(event, pindex) end
@@ -969,7 +971,7 @@ local function create_search_move_handler(direction)
          return nil
       end
 
-      local msg = message:build()
+      local msg = message:build_or_nil()
       if msg then Speech.speak(pindex, msg) end
       return EventManager.FINISHED
    end

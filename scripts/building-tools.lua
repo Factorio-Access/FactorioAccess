@@ -313,7 +313,7 @@ function mod.build_blueprint(pindex, flip_horizontal, flip_vertical, build_mode)
 
    -- Restore book to cursor if we were using a blueprint book
    if is_book and temp_inv then
-      temp_inv[1].swap_stack(p.cursor_stack)
+      temp_inv[1].swap_stack(cursor_stack)
       temp_inv.destroy()
    end
 
@@ -329,7 +329,7 @@ function mod.build_offshore_pump_in_hand(pindex)
 
    if stack and stack.valid and stack.valid_for_read and stack.name == "offshore-pump" then
       local positions = {}
-      local initial_position = p.position
+      local initial_position = p.position --[[@as MapPosition.struct]]
       initial_position.x = math.floor(initial_position.x)
       initial_position.y = math.floor(initial_position.y)
       for i1 = -10, 10 do
@@ -360,7 +360,7 @@ function mod.build_offshore_pump_in_hand(pindex)
 end
 
 ---Check if the item in cursor can be rotated (has rotation support)
----@param stack LuaItemStack
+---@param stack LuaItemStack?
 ---@return boolean can_rotate True if the stack can be rotated
 function mod.can_rotate_item(stack)
    if not stack or not stack.valid_for_read or not stack.valid then return false end
@@ -382,6 +382,7 @@ function mod.rotate_item_in_hand(event, forward)
 
    -- Check if item in hand can rotate
    if mod.can_rotate_item(stack) then
+      ---@cast stack -? -- can_rotate_item is false for nil
       local rotation_count = BuildDimensions.get_rotation_count(stack)
       -- Adjust mult for 2-way rotation
       if rotation_count == 2 then mult = mult * 2 end
@@ -874,7 +875,7 @@ function mod.build_preview_checks_info(stack, pindex)
       elseif distance and distance > 0 then
          table.insert(result, {
             "fa.connection-not-in-network-nearest",
-            FaUtils.format_distance_with_direction(math.ceil(distance), direction),
+            FaUtils.format_distance_with_direction(math.ceil(distance), assert(direction)), -- Set whenever distance > 0
          })
       else
          local network_name = BotLogistics.get_network_name_from_network(network)
@@ -887,9 +888,11 @@ function mod.build_preview_checks_info(stack, pindex)
       local vp = Viewpoint.get_viewpoint(pindex)
       local position = pos
       local build_dir = vp:get_hand_direction()
+      local sel_left_top = ent_p.selection_box.left_top --[[@as MapPosition.struct]]
+      local sel_right_bottom = ent_p.selection_box.right_bottom --[[@as MapPosition.struct]]
 
-      position.x = position.x + math.ceil(2 * ent_p.selection_box.right_bottom.x) / 2 - 0.5
-      position.y = position.y + math.ceil(2 * ent_p.selection_box.right_bottom.y) / 2 - 0.5
+      position.x = position.x + math.ceil(2 * sel_right_bottom.x) / 2 - 0.5
+      position.y = position.y + math.ceil(2 * sel_right_bottom.y) / 2 - 0.5
 
       local dict = prototypes.get_entity_filtered({ { filter = "type", type = "electric-pole" } })
       local poles = {}
@@ -899,8 +902,7 @@ function mod.build_preview_checks_info(stack, pindex)
       table.sort(poles, function(k1, k2)
          return k1.get_supply_area_distance() < k2.get_supply_area_distance()
       end)
-      local check = false
-      ---@type LuaEntity
+      ---@type LuaEntity?
       local found_pole = nil
       for i, pole in ipairs(poles) do
          local names = {}
@@ -911,12 +913,12 @@ function mod.build_preview_checks_info(stack, pindex)
          if supply_dist > 15 then supply_dist = supply_dist - 2 end
          local area = {
             left_top = {
-               (position.x + math.ceil(ent_p.selection_box.left_top.x) - supply_dist),
-               (position.y + math.ceil(ent_p.selection_box.left_top.y) - supply_dist),
+               (position.x + math.ceil(sel_left_top.x) - supply_dist),
+               (position.y + math.ceil(sel_left_top.y) - supply_dist),
             },
             right_bottom = {
-               (position.x + math.floor(ent_p.selection_box.right_bottom.x) + supply_dist),
-               (position.y + math.floor(ent_p.selection_box.right_bottom.y) + supply_dist),
+               (position.x + math.floor(sel_right_bottom.x) + supply_dist),
+               (position.y + math.floor(sel_right_bottom.y) + supply_dist),
             },
             orientation = build_dir / (2 * dirs.south),
          } --**laterdo "connected" check is a little buggy at the supply area edges, need to trim and tune, maybe re-enable direction based offset? The offset could be due to the pole width: 1 vs 2, maybe just make it more conservative?
@@ -926,21 +928,18 @@ function mod.build_preview_checks_info(stack, pindex)
          }
          local supplier_poles = surf.find_entities_filtered(T)
          if #supplier_poles > 0 then
-            check = true
             found_pole = supplier_poles[1]
             break
          end
       end
-      if check then
+      if found_pole then
          table.insert(result, { "fa.connection-power-connected" })
-         if found_pole.valid then
-            local dist = math.ceil(util.distance(found_pole.position, pos))
-            local dir = FaUtils.get_direction_biased(found_pole.position, pos)
-            table.insert(result, {
-               "fa.connection-from-direction",
-               FaUtils.format_distance_with_direction(dist, dir),
-            })
-         end
+         local dist = math.ceil(util.distance(found_pole.position, pos))
+         local dir = FaUtils.get_direction_biased(found_pole.position, pos)
+         table.insert(result, {
+            "fa.connection-from-direction",
+            FaUtils.format_distance_with_direction(dist, dir),
+         })
       else
          table.insert(result, { "fa.connection-power-not-connected" })
          --Notify if no connections and state nearest electric pole
@@ -1119,9 +1118,10 @@ function mod.snap_place_steam_engine_to_a_boiler(pindex)
          if p.can_build_from_cursor({ position = engine_position, direction = dir }) then
             p.build_from_cursor({ position = engine_position, direction = dir })
             found_valid_spot = true
+            local boiler_pos = boiler.position --[[@as MapPosition.struct]]
             Speech.speak(
                pindex,
-               { "fa.building-placed-steam-engine", math.floor(boiler.position.x), math.floor(boiler.position.y) }
+               { "fa.building-placed-steam-engine", math.floor(boiler_pos.x), math.floor(boiler_pos.y) }
             )
             return
          end
@@ -1197,15 +1197,16 @@ function mod.identify_building_obstacle(pindex, area, ent_to_ignore)
    })
    --Report obstacles
    if obstacle_ent ~= nil then
+      local obstacle_pos = obstacle_ent.position --[[@as MapPosition.struct]]
       message:fragment({
          "fa.building-obstacle-in-way",
          Localising.get_localised_name_with_fallback(obstacle_ent),
-         math.floor(obstacle_ent.position.x),
-         math.floor(obstacle_ent.position.y),
+         math.floor(obstacle_pos.x),
+         math.floor(obstacle_pos.y),
       })
    elseif #water_tiles_in_area > 0 then
-      local water = water_tiles_in_area[1]
-      message:fragment({ "fa.building-water-in-way", math.floor(water.position.x), math.floor(water.position.y) })
+      local water_pos = water_tiles_in_area[1].position --[[@as TilePosition.struct]]
+      message:fragment({ "fa.building-water-in-way", water_pos.x, water_pos.y })
    end
    return message:build()
 end

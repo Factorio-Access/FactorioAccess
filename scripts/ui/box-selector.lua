@@ -32,12 +32,13 @@ function mod.declare_box_selector(declaration)
       point_selected_callback = function(args)
          ---@type fa.ui.BoxSelectorState
          local state = args.state
+         local position = args.position
 
          if not state.first_click then
             -- First click - store it
             state.first_click = {
-               x = args.position.x,
-               y = args.position.y,
+               x = position.x,
+               y = position.y,
                modifiers = args.modifiers or {},
                is_right_click = args.kind == MultipointSelector.SELECTION_KIND.RIGHT,
             }
@@ -57,19 +58,19 @@ function mod.declare_box_selector(declaration)
             local result = {
                first_click = state.first_click,
                second_click = {
-                  x = args.position.x,
-                  y = args.position.y,
+                  x = position.x,
+                  y = position.y,
                   modifiers = args.modifiers or {},
                   is_right_click = args.kind == MultipointSelector.SELECTION_KIND.RIGHT,
                },
                box = {
                   left_top = {
-                     x = math.min(state.first_click.x, args.position.x),
-                     y = math.min(state.first_click.y, args.position.y),
+                     x = math.min(state.first_click.x, position.x),
+                     y = math.min(state.first_click.y, position.y),
                   },
                   right_bottom = {
-                     x = math.max(state.first_click.x, args.position.x),
-                     y = math.max(state.first_click.y, args.position.y),
+                     x = math.max(state.first_click.x, position.x),
+                     y = math.max(state.first_click.y, position.y),
                   },
                },
                controller = args.router_ctx,

@@ -120,7 +120,7 @@ function mod.on_tick_per_player(pindex)
       return
    end
 
-   local vehicle = player.vehicle
+   local vehicle = assert(player.vehicle)
    if not is_trackable_vehicle(vehicle) then
       state.tracking = false
       state.distance = 0

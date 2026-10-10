@@ -81,11 +81,13 @@ function mod.read_wait_condition(mb, condition)
       mb:fragment({ "fa.schedule-time", tostring((condition.ticks or 0) / 60) })
    elseif cond_type == "inactivity" then
       mb:fragment({ "fa.schedule-inactivity", tostring((condition.ticks or 0) / 60) })
-   -- Request conditions with item parameter
+   -- Request conditions with item parameter: these always carry an item pair
    elseif cond_type == "request_satisfied" then
-      mb:fragment({ "fa.schedule-request-satisfied", condition.condition.name })
+      local item = condition.condition --[[@as BlueprintItemIDAndQualityIDPair]]
+      mb:fragment({ "fa.schedule-request-satisfied", item.name })
    elseif cond_type == "request_not_satisfied" then
-      mb:fragment({ "fa.schedule-request-not-satisfied", condition.condition.name })
+      local item = condition.condition --[[@as BlueprintItemIDAndQualityIDPair]]
+      mb:fragment({ "fa.schedule-request-not-satisfied", item.name })
    -- Planet condition (optional planet parameter)
    elseif cond_type == "any_planet_import_zero" then
       if condition.planet then

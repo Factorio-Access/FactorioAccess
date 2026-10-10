@@ -140,6 +140,7 @@ local function get_alert_type_renderer(alert_type)
                end
 
                -- Get position from target
+               ---@type MapPosition.struct
                local pos
                if Alerts.target_is_entity(target) then
                   ---@cast target LuaEntity
@@ -148,9 +149,9 @@ local function get_alert_type_renderer(alert_type)
                      UiSounds.play_ui_edge(ctx.pindex)
                      return
                   end
-                  pos = target.position
+                  pos = target.position --[[@as MapPosition.struct]]
                else
-                  ---@cast target MapPosition
+                  ---@cast target MapPosition.struct
                   pos = target
                end
 

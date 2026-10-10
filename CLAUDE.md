@@ -44,8 +44,8 @@ Regenerating the API reference after a Factorio update: delete `llm-docs/api-ref
 `--setup-tools` needs network once: it downloads pinned emmylua_check and stylua releases (stylua matches CI) and
 runs fmtk (`npx factoriomod-debug luals-addon`) on this install's own `doc-html` JSON. `--format` and `--lint` use
 only `.tools/`; nothing comes from an editor. The lint config is written to `.tools/emmyrc.json` by
-`write_emmyrc` in `launch_factorio.py`; warnings fail the lint, hints are not shown. `need-check-nil` is off: the
-project lets a missing value crash rather than checking for it.
+`write_emmyrc` in `launch_factorio.py`; warnings fail the lint, hints are not shown. `need-check-nil` and `strict.arrayIndex` are
+off: the project lets a missing value crash rather than checking for it.
 
 Type-checker habits that keep the lint clean:
 
@@ -54,6 +54,10 @@ Type-checker habits that keep the lint clean:
 - A local assigned inside a different closure needs its type declared (`---@type LuaEntity`), or it reads as nil.
 - `---@class` binds to a `local X = {}` declaration only. Casts are `--[[@as T]]`, no spaces inside.
 - `defines` values are opaque in the types: `FaUtils.localise_direction(dir)` for direction names.
+- Positions the game returns are typed "struct or array" but are always the struct: cast where they enter,
+  `entity.position --[[@as MapPosition.struct]]`. A `Vector` is the opposite, always the array (`fa.VectorArray`).
+- An API value typed maybe-nil that cannot be nil here gets `assert(...)` where it enters, never an `if` that skips.
+- `MessageBuilder:build()` returns `""` for an empty message; `build_or_nil()` when the caller needs to know.
 
 Don't add a root `.luarc.json` or `.emmyrc.json`: editors pick them up, and they override the editor's own settings
 (including its Factorio library).

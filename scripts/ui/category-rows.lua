@@ -311,18 +311,19 @@ local function _get_position(state, render)
    return cat_index, item_index
 end
 
----Create an item context from a tab context
+---Create an item context from a tab context. Only for navigation and search callbacks, which always have a message
+---and a controller.
 ---@param tab_ctx fa.ui.TabContext
 ---@return fa.ui.CategoryRows.ItemContext
 local function create_item_context(tab_ctx)
    return {
       pindex = tab_ctx.pindex,
       player = tab_ctx.player,
-      message = tab_ctx.message,
+      message = assert(tab_ctx.message),
       state = tab_ctx.state,
       shared_state = tab_ctx.shared_state,
       parameters = tab_ctx.parameters,
-      controller = tab_ctx.controller,
+      controller = assert(tab_ctx.controller),
    }
 end
 
@@ -341,10 +342,8 @@ local function announce_position(ctx, category, item_index, category_position)
       ctx.message:fragment({ "fa.category-rows-empty-category" })
    elseif item_index then
       local item = category.items[item_index]
-      if item then
-         local item_ctx = create_item_context(ctx)
-         item.vtable.label(item_ctx)
-      end
+      local item_ctx = create_item_context(ctx)
+      item.vtable.label(item_ctx)
    end
 
    if category_position == mod.CATEGORY_POSITION.AFTER then
@@ -797,7 +796,7 @@ function CategoryRows:search_hint(ctx, hint_callback)
          local item_ctx = create_item_context(ctx)
          item_ctx.message = msg_builder
          item.vtable.label(item_ctx)
-         local built = msg_builder:build()
+         local built = msg_builder:build_or_nil()
          if built then hint_callback(built) end
       end
    end
@@ -864,7 +863,7 @@ function CategoryRows:search_move(message, ctx, direction, matcher)
       local item_ctx = create_item_context(ctx)
       item_ctx.message = temp_msg
       entry.item.vtable.label(item_ctx)
-      local label_localised = temp_msg:build()
+      local label_localised = temp_msg:build_or_nil()
 
       if label_localised and matcher(label_localised) then
          -- Found a match

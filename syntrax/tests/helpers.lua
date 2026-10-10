@@ -9,12 +9,9 @@ local mod = {}
 function mod.flatten_placements(placement_groups)
    local result = {}
    for _, group in ipairs(placement_groups) do
-      -- Take the first alternative of each group
-      local first_alt = group[1]
-      if first_alt then
-         for _, placement in ipairs(first_alt) do
-            table.insert(result, placement)
-         end
+      -- Take the first alternative of each group; the VM never emits an empty group
+      for _, placement in ipairs(group[1]) do
+         table.insert(result, placement)
       end
    end
    return result

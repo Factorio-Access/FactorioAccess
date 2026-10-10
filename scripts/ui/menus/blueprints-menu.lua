@@ -21,8 +21,7 @@ local function render(ctx)
    local p = game.get_player(ctx.pindex)
    if not p then return nil end
 
-   ---@type LuaItemStack
-   local bp = p.cursor_stack
+   local bp = assert(p.cursor_stack)
    if not bp.is_blueprint then return nil end
 
    local builder = Menu.MenuBuilder.new()
@@ -114,6 +113,8 @@ local function render(ctx)
       builder:add_label("count-and-dims", function(ctx)
          local count = bp.get_blueprint_entity_count()
          local width, height = BuildDimensions.get_stack_build_dimensions(bp, defines.direction.north)
+         -- A blueprint always has dimensions
+         assert(width and height)
          ctx.message:fragment({ "fa.ui-blueprints-menu-count-and-dims", width, height, count })
       end)
 

@@ -10,13 +10,13 @@ describe("Furnace Fuel Status", function()
       local player
 
       ctx:init(function()
-         player = game.get_player(1)
+         player = assert(game.get_player(1))
          -- Place a furnace
-         furnace = player.surface.create_entity({
+         furnace = assert(player.surface.create_entity({
             name = "stone-furnace",
             position = { 10, 10 },
             force = player.force,
-         })
+         }))
 
          -- Furnaces don't use set_recipe - they automatically choose based on ingredients
          -- Add ingredients but no fuel
@@ -49,13 +49,13 @@ describe("Furnace Fuel Status", function()
       local player
 
       ctx:init(function()
-         player = game.get_player(1)
+         player = assert(game.get_player(1))
          -- Place a furnace
-         furnace = player.surface.create_entity({
+         furnace = assert(player.surface.create_entity({
             name = "stone-furnace",
             position = { 15, 15 },
             force = player.force,
-         })
+         }))
 
          -- Furnaces don't use set_recipe - they automatically choose based on ingredients
          -- Add fuel
@@ -84,13 +84,13 @@ describe("Furnace Fuel Status", function()
       local player
 
       ctx:init(function()
-         player = game.get_player(1)
+         player = assert(game.get_player(1))
          -- Place a furnace
-         furnace = player.surface.create_entity({
+         furnace = assert(player.surface.create_entity({
             name = "stone-furnace",
             position = { 20, 20 },
             force = player.force,
-         })
+         }))
 
          -- Furnaces don't use set_recipe - they automatically choose based on ingredients
          -- Add ingredients to trigger smelting

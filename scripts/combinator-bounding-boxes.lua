@@ -19,8 +19,8 @@ local mod = {}
 ---@field output_aabb fa.AABB
 
 ---@class fa.PowerSwitchConnectionData
----@field left_pos Vector
----@field right_pos Vector
+---@field left_pos fa.Point
+---@field right_pos fa.Point
 
 ---Convert AABB to named format if needed
 ---@param aabb table? Either array format {{x1, y1}, {x2, y2}} or named format {left_top = {x, y}, right_bottom = {x, y}}
@@ -40,7 +40,7 @@ end
 
 ---Convert position vector to named format if needed
 ---@param pos table? Either array format {x, y} or named format {x = ..., y = ...}
----@return Vector? Named format: {x = ..., y = ...}
+---@return fa.Point?
 local function convert_vec(pos)
    if not pos then return nil end
 

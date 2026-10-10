@@ -473,7 +473,7 @@ function mod.open_entity_ui(pindex, entity)
    -- Check if player can access the entity (in reach, or charted for remote viewing)
    local can_access, error_message = EntityAccess.can_open_entity(pindex, entity)
    if not can_access then
-      Speech.speak(pindex, error_message)
+      Speech.speak(pindex, assert(error_message))
       return false
    end
 

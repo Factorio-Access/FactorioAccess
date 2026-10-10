@@ -417,7 +417,7 @@ end
 ---@param truncate integer?
 ---@param protos table<string, LuaItemPrototype | LuaFluidPrototype>?
 ---@param raw boolean? If true, return just the list without "Has" wrapper
----@return LocalisedString?
+---@return LocalisedString
 function mod.present_list(list, truncate, protos, raw)
    local contents = TH.rollup2(list, F.name().get, function(i)
       return i.quality or "normal"

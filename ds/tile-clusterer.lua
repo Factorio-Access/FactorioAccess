@@ -119,13 +119,13 @@ end
 ---@param group_number number
 ---@return number
 function TileClusterer:walk_canonical_list(group_number)
-   local old_group_number = group_number
-   while group_number do
-      old_group_number = group_number
-      group_number = self.canonical_linked_list[group_number]
+   local next_group = self.canonical_linked_list[group_number]
+   while next_group do
+      group_number = next_group
+      next_group = self.canonical_linked_list[group_number]
    end
 
-   return old_group_number
+   return group_number
 end
 
 ---@param points fa.Point[]

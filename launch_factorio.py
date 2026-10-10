@@ -280,6 +280,9 @@ def write_emmyrc(config_path: Path) -> None:
             "globals": ["__DebugAdapter", "__Profiler"],
             "disable": ["need-check-nil"],
         },
+        # Indexing an array is not maybe-nil: our indices are in range by construction, and one that is not crashes
+        # on first use, like any other missing value.
+        "strict": {"arrayIndex": False},
     }
     with open(config_path, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2)

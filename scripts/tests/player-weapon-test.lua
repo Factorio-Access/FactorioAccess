@@ -75,10 +75,11 @@ describe("Weapon Ammo Utils", function()
 
    describe("Player Weapon Detection", function()
       it("should detect equipped pistol and ammo", function(ctx)
+         ---@type LuaPlayer
          local player
 
          ctx:init(function()
-            player = game.get_player(1)
+            player = assert(game.get_player(1))
             -- Give the player a pistol and ammo
             player.insert({ name = "pistol", count = 1 })
             player.insert({ name = "firearm-magazine", count = 10 })
@@ -94,10 +95,11 @@ describe("Weapon Ammo Utils", function()
       end)
 
       it("should return correct max range for pistol", function(ctx)
+         ---@type LuaPlayer
          local player
 
          ctx:init(function()
-            player = game.get_player(1)
+            player = assert(game.get_player(1))
             player.clear_items_inside()
             player.insert({ name = "pistol", count = 1 })
             player.insert({ name = "firearm-magazine", count = 10 })
@@ -112,10 +114,11 @@ describe("Weapon Ammo Utils", function()
       end)
 
       it("should detect auto-aim for pistol+magazine", function(ctx)
+         ---@type LuaPlayer
          local player
 
          ctx:init(function()
-            player = game.get_player(1)
+            player = assert(game.get_player(1))
             player.clear_items_inside()
             player.insert({ name = "pistol", count = 1 })
             player.insert({ name = "firearm-magazine", count = 10 })
@@ -131,10 +134,11 @@ describe("Weapon Ammo Utils", function()
       end)
 
       it("should not detect player damage for regular bullets", function(ctx)
+         ---@type LuaPlayer
          local player
 
          ctx:init(function()
-            player = game.get_player(1)
+            player = assert(game.get_player(1))
             player.clear_items_inside()
             player.insert({ name = "pistol", count = 1 })
             player.insert({ name = "firearm-magazine", count = 10 })
@@ -149,10 +153,11 @@ describe("Weapon Ammo Utils", function()
 
    describe("Rocket Launcher Tests", function()
       it("should detect rocket launcher properties", function(ctx)
+         ---@type LuaPlayer
          local player
 
          ctx:init(function()
-            player = game.get_player(1)
+            player = assert(game.get_player(1))
             player.clear_items_inside()
             player.insert({ name = "rocket-launcher", count = 1 })
             player.insert({ name = "rocket", count = 10 })
@@ -171,10 +176,11 @@ describe("Weapon Ammo Utils", function()
       end)
 
       it("should detect explosive rocket danger", function(ctx)
+         ---@type LuaPlayer
          local player
 
          ctx:init(function()
-            player = game.get_player(1)
+            player = assert(game.get_player(1))
             player.clear_items_inside()
             player.insert({ name = "rocket-launcher", count = 1 })
             player.insert({ name = "explosive-rocket", count = 10 })
@@ -195,10 +201,11 @@ describe("Weapon Ammo Utils", function()
 
    describe("Capsule Detection", function()
       it("should detect grenade in cursor as weapon capsule", function(ctx)
+         ---@type LuaPlayer
          local player
 
          ctx:init(function()
-            player = game.get_player(1)
+            player = assert(game.get_player(1))
             player.clear_items_inside()
             player.cursor_stack.set_stack({ name = "grenade", count = 5 })
          end)
@@ -232,10 +239,11 @@ describe("Weapon Ammo Utils", function()
       end)
 
       it("should detect raw fish as healing not weapon", function(ctx)
+         ---@type LuaPlayer
          local player
 
          ctx:init(function()
-            player = game.get_player(1)
+            player = assert(game.get_player(1))
             player.cursor_stack.set_stack({ name = "raw-fish", count = 5 })
          end)
 

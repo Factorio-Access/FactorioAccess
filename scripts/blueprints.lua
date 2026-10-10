@@ -34,8 +34,7 @@ function mod.get_blueprint_label(stack)
 end
 
 function mod.get_bp_data_for_edit(stack)
-   ---@diagnostic disable-next-line: param-type-mismatch
-   return helpers.json_to_table(helpers.decode_string(string.sub(stack.export_stack(), 2)))
+   return helpers.json_to_table(assert(helpers.decode_string(string.sub(stack.export_stack(), 2))))
 end
 
 --Works for blueprints and also books too
@@ -47,14 +46,15 @@ end
 function mod.create_blueprint(pindex, point_1, point_2, prior_bp_data)
    local top_left, bottom_right = FaUtils.get_top_left_and_bottom_right(point_1, point_2)
    local p = game.get_player(pindex)
+   local cursor = assert(p.cursor_stack)
    if prior_bp_data ~= nil then
       --First clear the bp in hand
-      p.cursor_stack.set_stack({ name = "blueprint", count = 1 })
+      cursor.set_stack({ name = "blueprint", count = 1 })
    end
    if
-      not p.cursor_stack.valid_for_read
-      or p.cursor_stack.valid_for_read
-         and not (p.cursor_stack.is_blueprint and p.cursor_stack.is_blueprint_setup() == false and prior_bp_data == nil)
+      not cursor.valid_for_read
+      or cursor.valid_for_read
+         and not (cursor.is_blueprint and cursor.is_blueprint_setup() == false and prior_bp_data == nil)
    then
       local cleared = p.clear_cursor()
       if not cleared then
@@ -62,13 +62,13 @@ function mod.create_blueprint(pindex, point_1, point_2, prior_bp_data)
          return
       end
    end
-   p.cursor_stack.set_stack({ name = "blueprint" })
-   p.cursor_stack.create_blueprint({ surface = p.surface, force = p.force, area = { top_left, bottom_right } })
+   cursor.set_stack({ name = "blueprint" })
+   cursor.create_blueprint({ surface = p.surface, force = p.force, area = { top_left, bottom_right } })
 
    --Avoid empty blueprints
-   local ent_count = p.cursor_stack.get_blueprint_entity_count()
+   local ent_count = cursor.get_blueprint_entity_count()
    if ent_count == 0 then
-      if prior_bp_data == nil then p.cursor_stack.set_stack({ name = "blueprint" }) end
+      if prior_bp_data == nil then cursor.set_stack({ name = "blueprint" }) end
       local message = MessageBuilder.new()
       message:fragment({ "fa.blueprints-selection-empty" })
       if prior_bp_data ~= nil then message:fragment({ "fa.blueprints-keeping-old" }) end
@@ -85,17 +85,17 @@ function mod.create_blueprint(pindex, point_1, point_2, prior_bp_data)
 
    --Copy label and description and icons from previous version
    if prior_bp_data ~= nil then
-      local bp_data = mod.get_bp_data_for_edit(p.cursor_stack)
+      local bp_data = mod.get_bp_data_for_edit(cursor)
       bp_data.blueprint.label = prior_bp_data.blueprint.label or ""
       bp_data.blueprint.label_color = prior_bp_data.blueprint.label_color or { 1, 1, 1 }
       bp_data.blueprint.description = prior_bp_data.blueprint.description or ""
       bp_data.blueprint.icons = prior_bp_data.blueprint.icons or {}
       if ent_count == 0 then bp_data.blueprint.entities = prior_bp_data.blueprint.entities end
-      mod.set_stack_bp_from_data(p.cursor_stack, bp_data)
+      mod.set_stack_bp_from_data(cursor, bp_data)
    end
 
    --Use this opportunity to update saved information about the blueprint's corners (used when drawing the footprint)
-   local width, height = BuildDimensions.get_stack_build_dimensions(p.cursor_stack, dirs.north)
+   local width, height = BuildDimensions.get_stack_build_dimensions(cursor, dirs.north)
    if width and height then
       storage.players[pindex].blueprint_width_in_hand = width + 1
       storage.players[pindex].blueprint_height_in_hand = height + 1
@@ -108,7 +108,7 @@ end
 ---@param flip_vertical? boolean
 function mod.paste_blueprint(pindex, flip_horizontal, flip_vertical)
    local p = game.get_player(pindex)
-   local bp = p.cursor_stack
+   local bp = assert(p.cursor_stack)
    local vp = Viewpoint.get_viewpoint(pindex)
    local pos = vp:get_cursor_pos()
 

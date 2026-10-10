@@ -50,7 +50,7 @@ local function build_train_rows(builder, trains)
       builder:add_clickable("train-" .. train_id, function(ctx)
          if stock then
             ctx.message:fragment(TrainHelpers.get_name(stock))
-            local pos = stock.position
+            local pos = stock.position --[[@as MapPosition.struct]]
             ctx.message:fragment({ "fa.trains-overview-at-position", math.floor(pos.x), math.floor(pos.y) })
             TrainHelpers.push_state_message(ctx.message, stock)
          else
@@ -83,7 +83,7 @@ local function build_train_rows(builder, trains)
             end
 
             local vp = Viewpoint.get_viewpoint(ctx.pindex)
-            vp:set_cursor_pos(stock.position)
+            vp:set_cursor_pos(stock.position --[[@as MapPosition.struct]])
             Graphics.draw_cursor_highlight(ctx.pindex, nil, "train-visualization")
             ctx.message:fragment({ "fa.trains-overview-cursor-moved", TrainHelpers.get_name(stock) })
          end,

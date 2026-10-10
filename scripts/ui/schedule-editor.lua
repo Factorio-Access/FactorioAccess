@@ -213,10 +213,12 @@ end
 ---@param records ScheduleRecord[]
 local function suggest_condition_move(ctx, record_position, new_condition_index, key_prefix, records)
    local new_key
-   if record_position.interrupt_index and not record_position.schedule_index then
-      new_key = key_prefix .. "c" .. tostring(new_condition_index)
+   local schedule_index = record_position.schedule_index
+   if schedule_index then
+      new_key = get_condition_key(records, schedule_index, new_condition_index, key_prefix)
    else
-      new_key = get_condition_key(records, record_position.schedule_index, new_condition_index, key_prefix)
+      -- An interrupt's trigger condition
+      new_key = key_prefix .. "c" .. tostring(new_condition_index)
    end
    ctx.graph_controller:suggest_move(new_key)
 end
@@ -235,8 +237,9 @@ end
 ---@field constant? fa.ui.ScheduleEditor.ParamHandler
 
 -- Shared announcers
+-- Only called after a constant handler accepted the value as a number
 local function announce_number(new_value)
-   return tostring(math.floor(tonumber(new_value)))
+   return tostring(math.floor(assert(tonumber(new_value))))
 end
 
 local function announce_signal(new_value)
@@ -647,6 +650,8 @@ end
 ---@return fa.ui.graph.NodeVtable
 local function build_record_vtable(schedule, record_position, record, row_key, key_prefix, records)
    key_prefix = key_prefix or ""
+   -- Records always come from make_record_position
+   local schedule_index = assert(record_position.schedule_index)
 
    return {
       label = function(ctx)
@@ -686,7 +691,7 @@ local function build_record_vtable(schedule, record_position, record, row_key, k
 
       -- Right click: go to this station (main schedule only, not interrupts)
       on_right_click = not record_position.interrupt_index and function(ctx)
-         schedule.go_to_station(record_position.schedule_index)
+         schedule.go_to_station(schedule_index)
          local destination = record.station or { "fa.schedule-rail-position" }
          ctx.controller.message:fragment({ "fa.schedule-going-to", destination })
       end or nil,
@@ -698,26 +703,26 @@ local function build_record_vtable(schedule, record_position, record, row_key, k
       end,
 
       on_drag_up = function(ctx)
-         if record_position.schedule_index == 1 then
+         if schedule_index == 1 then
             ctx.controller.message:fragment({ "fa.schedule-already-first-record" })
             return
          end
 
-         schedule.drag_record(record_position.schedule_index, record_position.schedule_index - 1)
+         schedule.drag_record(schedule_index, schedule_index - 1)
          ctx.controller.message:fragment({ "fa.schedule-record-moved-up" })
-         ctx.graph_controller:suggest_move(get_record_key(records, record_position.schedule_index - 1, key_prefix))
+         ctx.graph_controller:suggest_move(get_record_key(records, schedule_index - 1, key_prefix))
       end,
 
       on_drag_down = function(ctx)
          local record_count = schedule.get_record_count()
-         if not record_count or record_position.schedule_index >= record_count then
+         if not record_count or schedule_index >= record_count then
             ctx.controller.message:fragment({ "fa.schedule-already-last-record" })
             return
          end
 
-         schedule.drag_record(record_position.schedule_index, record_position.schedule_index + 1)
+         schedule.drag_record(schedule_index, schedule_index + 1)
          ctx.controller.message:fragment({ "fa.schedule-record-moved-down" })
-         ctx.graph_controller:suggest_move(get_record_key(records, record_position.schedule_index + 1, key_prefix))
+         ctx.graph_controller:suggest_move(get_record_key(records, schedule_index + 1, key_prefix))
       end,
 
       on_child_result = function(ctx, result)
@@ -817,6 +822,8 @@ local function render_interrupt_tab(ctx, interrupt_index)
    local interrupts = schedule.get_interrupts()
    local interrupt = interrupts[interrupt_index]
    if not interrupt then return nil end
+   -- The game names every interrupt it returns: its interrupt API identifies them by name
+   local interrupt_name = assert(interrupt.name)
 
    local builder = Menu.MenuBuilder.new()
    local key_prefix = "interrupt-" .. tostring(interrupt_index) .. "-"
@@ -826,10 +833,10 @@ local function render_interrupt_tab(ctx, interrupt_index)
    builder:add_item("interrupt-name", {
       label = function(label_ctx)
          label_ctx.message:fragment({ "fa.schedule-interrupt-name" })
-         label_ctx.message:list_item(interrupt.name)
+         label_ctx.message:list_item(interrupt_name)
       end,
       on_click = function(click_ctx)
-         click_ctx.controller:open_textbox(interrupt.name, "interrupt-name", {
+         click_ctx.controller:open_textbox(interrupt_name, "interrupt-name", {
             intro_message = { "fa.schedule-enter-interrupt-name" },
          })
       end,
@@ -848,7 +855,7 @@ local function render_interrupt_tab(ctx, interrupt_index)
             return
          end
 
-         schedule.rename_interrupt(interrupt.name, new_name)
+         schedule.rename_interrupt(interrupt_name, new_name)
          click_ctx.controller.message:fragment({ "fa.schedule-interrupt-renamed", new_name })
       end,
    })
@@ -857,9 +864,8 @@ local function render_interrupt_tab(ctx, interrupt_index)
          label_ctx.message:fragment({ "fa.schedule-remove-interrupt" })
       end,
       on_click = function(click_ctx)
-         local name = interrupt.name
          schedule.remove_interrupt(interrupt_index)
-         click_ctx.controller.message:fragment({ "fa.schedule-interrupt-removed", name })
+         click_ctx.controller.message:fragment({ "fa.schedule-interrupt-removed", interrupt_name })
          click_ctx.graph_controller:suggest_move("interrupts-header")
       end,
    })
@@ -1049,8 +1055,9 @@ local function render_schedule_editor(ctx)
 
    local interrupts = schedule.get_interrupts()
    for i, interrupt in ipairs(interrupts) do
+      local interrupt_name = assert(interrupt.name)
       local interrupt_key = "interrupt-" .. tostring(i)
-      builder:add_clickable(interrupt_key, interrupt.name, {
+      builder:add_clickable(interrupt_key, interrupt_name, {
          on_click = function(click_ctx)
             click_ctx.graph_controller:suggest_move("interrupt-tab-" .. tostring(i))
          end,
@@ -1076,7 +1083,7 @@ local function render_schedule_editor(ctx)
          end,
          on_clear = function(clear_ctx)
             schedule.remove_interrupt(i)
-            clear_ctx.controller.message:fragment({ "fa.schedule-interrupt-removed", interrupt.name })
+            clear_ctx.controller.message:fragment({ "fa.schedule-interrupt-removed", interrupt_name })
          end,
       })
    end
@@ -1183,7 +1190,7 @@ mod.schedule_editor_ui = TabList.declare_tablist({
       for i, interrupt in ipairs(interrupts) do
          local interrupt_tab = KeyGraph.declare_graph({
             name = "interrupt-tab-" .. tostring(i),
-            title = interrupt.name,
+            title = assert(interrupt.name),
             render_callback = function(ctx)
                return render_interrupt_tab(ctx, i)
             end,

@@ -146,6 +146,7 @@ function mod.TestDescriber_CompleteTurn()
    end
 
    -- Now verify each piece is detected as part of the turn
+   ---@type string[]
    local expected_positions = { "top", "upper-half", "lower-half", "bottom" }
 
    for i, piece in ipairs(turn_pieces) do

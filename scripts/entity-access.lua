@@ -78,7 +78,7 @@ end
 ---@return boolean can_open
 ---@return LocalisedString? error_message
 function mod.can_open_entity(pindex, entity)
-   local player = game.get_player(pindex)
+   local player = assert(game.get_player(pindex))
 
    -- Ghosts are always accessible
    if entity.type == "entity-ghost" then return true end
@@ -105,7 +105,7 @@ end
 ---@param entity LuaEntity
 ---@return fa.EntityAccess.WriteCheckResult
 function mod.can_write_to_entity(pindex, entity)
-   local player = game.get_player(pindex)
+   local player = assert(game.get_player(pindex))
 
    -- Own character always has write access
    if is_own_character(player, entity) then return { allowed = true } end

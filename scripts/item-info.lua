@@ -247,7 +247,7 @@ function mod.item_or_fluid_info(what, protos)
 
    -- Default: standard item name with quality and count
    local item_str = Localising.get_localised_name_with_fallback(item_proto)
-   return { "fa.item-quantity-quality", item_str, has_quality, quality_str, has_count, count }
+   return { "fa.item-quantity-quality", item_str, has_quality, quality_str, has_count, count or 0 }
 end
 
 ---Get item info as a LocalisedString

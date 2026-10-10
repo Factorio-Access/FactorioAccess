@@ -343,13 +343,14 @@ end
 local function handle_weapon_result(entity, character, slot, pindex, result)
    local K = WeaponSelector.KIND
    if result.kind == K.EQUIP then
-      return set_weapon_in_slot(entity, slot, result.stack)
+      return set_weapon_in_slot(entity, slot, assert(result.stack))
    elseif result.kind == K.REMOVE_TO_INVENTORY then
       return remove_weapon_to_inventory(entity, slot)
    elseif result.kind == K.REMOVE_TO_HAND then
       return remove_weapon_to_hand(entity, slot, pindex)
    elseif result.kind == K.REMOVE_TO_PLAYER then
-      return remove_weapon_to_player(entity, slot, character)
+      -- The selector offers this only when there is a character
+      return remove_weapon_to_player(entity, slot, assert(character))
    end
    return false, ""
 end
@@ -365,13 +366,14 @@ end
 local function handle_ammo_result(entity, character, slot, pindex, result)
    local K = AmmoSelector.KIND
    if result.kind == K.LOAD then
-      return set_ammo_in_slot(entity, slot, result.stack)
+      return set_ammo_in_slot(entity, slot, assert(result.stack))
    elseif result.kind == K.REMOVE_TO_INVENTORY then
       return remove_ammo_to_inventory(entity, slot)
    elseif result.kind == K.REMOVE_TO_HAND then
       return remove_ammo_to_hand(entity, slot, pindex)
    elseif result.kind == K.REMOVE_TO_PLAYER then
-      return remove_ammo_to_player(entity, slot, character)
+      -- The selector offers this only when there is a character
+      return remove_ammo_to_player(entity, slot, assert(character))
    end
    return false, ""
 end

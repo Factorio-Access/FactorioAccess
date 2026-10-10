@@ -183,7 +183,7 @@ function TabList:_do_callback(pindex, target_tab_index, cb_name, msg_builder, pa
       tl.tab_states[tabname] = context.state
    end
 
-   local msg = msg_builder:build()
+   local msg = msg_builder:build_or_nil()
    if msg then Speech.speak(pindex, msg) end
 
    return result
@@ -609,13 +609,13 @@ function TabList:supports_search(pindex, controller)
    if not tl then return false end -- Rerender might have closed
 
    local tabname = self.tab_order[tl.active_tab] --[[@as string]]
-   local tabstate = tl.tab_states[tabname]
+   local tabstate = assert(tl.tab_states[tabname], "_rerender sets up every tab's state")
    local callbacks = self.descriptors[tabname].callbacks
 
    if callbacks.supports_search then
       local ctx = {
          pindex = pindex,
-         player = game.get_player(pindex),
+         player = assert(game.get_player(pindex)),
          state = tabstate,
          parameters = tl.parameters,
          controller = controller,
@@ -637,13 +637,13 @@ function TabList:search_hint(pindex, hint_callback, controller)
    if not tl then return end -- Rerender might have closed
 
    local tabname = self.tab_order[tl.active_tab] --[[@as string]]
-   local tabstate = tl.tab_states[tabname]
+   local tabstate = assert(tl.tab_states[tabname], "_rerender sets up every tab's state")
    local callbacks = self.descriptors[tabname].callbacks
 
    if callbacks.search_hint then
       local ctx = {
          pindex = pindex,
-         player = game.get_player(pindex),
+         player = assert(game.get_player(pindex)),
          state = tabstate,
          parameters = tl.parameters,
          controller = controller,
@@ -665,13 +665,13 @@ function TabList:search_move(message, pindex, direction, matcher, controller)
    if not tl then return UiRouter.SEARCH_RESULT.NO_SUPPORT end -- Rerender might have closed
 
    local tabname = self.tab_order[tl.active_tab] --[[@as string]]
-   local tabstate = tl.tab_states[tabname]
+   local tabstate = assert(tl.tab_states[tabname], "_rerender sets up every tab's state")
    local callbacks = self.descriptors[tabname].callbacks
 
    if callbacks.search_move then
       local ctx = {
          pindex = pindex,
-         player = game.get_player(pindex),
+         player = assert(game.get_player(pindex)),
          state = tabstate,
          parameters = tl.parameters,
          controller = controller,
@@ -696,13 +696,13 @@ function TabList:search_all_from_start(pindex, controller)
    if not tl then return UiRouter.SEARCH_RESULT.NO_SUPPORT end -- Rerender might have closed
 
    local tabname = self.tab_order[tl.active_tab] --[[@as string]]
-   local tabstate = tl.tab_states[tabname]
+   local tabstate = assert(tl.tab_states[tabname], "_rerender sets up every tab's state")
    local callbacks = self.descriptors[tabname].callbacks
 
    if callbacks.search_all_from_start then
       local ctx = {
          pindex = pindex,
-         player = game.get_player(pindex),
+         player = assert(game.get_player(pindex)),
          state = tabstate,
          parameters = tl.parameters,
          controller = controller,
@@ -804,7 +804,7 @@ end
 ---@return fa.ui.Bind[]?
 function TabList:get_binds(pindex, parameters)
    local all_binds = {}
-   local player = game.get_player(pindex)
+   local player = assert(game.get_player(pindex))
 
    -- Add TabList-level binds if present
    if self.get_binds_callback then

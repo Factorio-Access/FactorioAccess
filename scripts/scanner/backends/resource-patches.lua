@@ -103,11 +103,12 @@ end
 ---@param new_entity LuaEntity
 function ResourcePatchesBackend:on_new_entity(new_entity)
    local amount = amount_for(new_entity)
+   local pos = new_entity.position --[[@as MapPosition.struct]]
 
-   self:get_clusterer_for(new_entity.name):insert(new_entity.position.x, new_entity.position.y, {
+   self:get_clusterer_for(new_entity.name):insert(pos.x, pos.y, {
       highest_point = {
-         x = new_entity.position.x,
-         y = new_entity.position.y,
+         x = pos.x,
+         y = pos.y,
          amount = amount,
          entity = new_entity,
       },
@@ -187,7 +188,8 @@ end
 function ResourcePatchesBackend:dump_entries_to_callback(player, callback)
    local seen_clusterers = {}
 
-   local px, py = player.position.x, player.position.y
+   local player_pos = player.position --[[@as MapPosition.struct]]
+   local px, py = player_pos.x, player_pos.y
 
    for n, c in pairs(self.clusterers) do
       if seen_clusterers[c] then goto continue end
@@ -232,8 +234,10 @@ function ResourcePatchesBackend:dump_entries_to_callback(player, callback)
          -- Important shortcut.  If the cluster's aabb is further away than the
          -- player is, then we want  to avoid doing anything: surface scans
          --  hurt.
-         local closest_x = util.clamp(px, cluster.aabb.left_top.x, cluster.aabb.right_bottom.x)
-         local closest_y = util.clamp(py, cluster.aabb.left_top.y, cluster.aabb.right_bottom.y)
+         local left_top = cluster.aabb.left_top --[[@as fa.Point]]
+         local right_bottom = cluster.aabb.right_bottom --[[@as fa.Point]]
+         local closest_x = util.clamp(px, left_top.x, right_bottom.x)
+         local closest_y = util.clamp(py, left_top.y, right_bottom.y)
 
          local closest_dist = math.sqrt((px - closest_x) ^ 2 + (py - closest_y) ^ 2)
          if closest_dist > zoom_dist then

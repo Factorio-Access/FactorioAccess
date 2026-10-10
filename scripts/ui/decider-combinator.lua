@@ -18,7 +18,7 @@ local mod = {}
 local function patch_parameters(entity, closure)
    local cb = entity.get_control_behavior()
    ---@cast cb LuaDeciderCombinatorControlBehavior?
-   local params = cb.parameters
+   local params = assert(cb.parameters)
    closure(params)
    cb.parameters = params
 end

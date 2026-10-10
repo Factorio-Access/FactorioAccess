@@ -224,12 +224,7 @@ local function render_locomotive_config(ctx)
    -- Train contents label (items)
    builder:add_label("contents", function(label_ctx)
       local train_contents = train.get_contents()
-      local presenting = InventoryUtils.present_list(train_contents)
-      if presenting then
-         label_ctx.message:fragment({ "fa.locomotive-train-contents", presenting })
-      else
-         label_ctx.message:fragment({ "fa.locomotive-train-contents", { "fa.ent-info-inventory-empty" } })
-      end
+      label_ctx.message:fragment({ "fa.locomotive-train-contents", InventoryUtils.present_list(train_contents) })
    end)
 
    -- Train fluid contents label
@@ -246,12 +241,7 @@ local function render_locomotive_config(ctx)
    -- Train fuel label
    builder:add_label("fuel", function(label_ctx)
       local train_fuel = TrainHelpers.get_fuel(entity)
-      local presenting = InventoryUtils.present_list(train_fuel)
-      if presenting then
-         label_ctx.message:fragment({ "fa.locomotive-train-fuel", presenting })
-      else
-         label_ctx.message:fragment({ "fa.locomotive-train-fuel", { "fa.ent-info-inventory-empty" } })
-      end
+      label_ctx.message:fragment({ "fa.locomotive-train-fuel", InventoryUtils.present_list(train_fuel) })
    end)
 
    return builder:build()

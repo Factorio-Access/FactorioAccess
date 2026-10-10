@@ -154,14 +154,20 @@ function MessageBuilder:list_item_forced_comma(fragment)
 end
 
 -- It is an error to keep using this builder after building.
----@return LocalisedString? Nil if nothing was done.
-function MessageBuilder:build()
+---@return LocalisedString? Nil if nothing was added.
+function MessageBuilder:build_or_nil()
    self:_check_not_built()
    self.state = MESSAGE_BUILDER_STATE.BUILT
 
    if not next(self.parts) then return nil end
 
    return FaUtils.localise_cat_table(self.parts, "")
+end
+
+-- Like build_or_nil, but an empty message is the empty string.
+---@return LocalisedString
+function MessageBuilder:build()
+   return self:build_or_nil() or ""
 end
 
 -- Convenience function at module level
@@ -188,6 +194,7 @@ local function process_rich_text(str)
       return str
    elseif type(str) == "table" then
       -- Index 1 is the locale key/directive, process indices >= 2
+      ---@cast str LocalisedString[]
       local result = { str[1] }
       for i = 2, #str do
          result[i] = process_rich_text(str[i])

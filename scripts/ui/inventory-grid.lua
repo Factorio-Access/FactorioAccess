@@ -145,14 +145,14 @@ local function check_write_access(ctx, entity, sibling_entity)
       -- Transfer operation: check both source and destination
       local result = EntityAccess.can_transfer_between(ctx.pindex, entity, sibling_entity)
       if not result.allowed then
-         ctx.controller.message:fragment(result.reason)
+         ctx.controller.message:fragment(assert(result.reason))
          return false
       end
    else
       -- Single entity operation
       local result = EntityAccess.can_write_to_entity(ctx.pindex, entity)
       if not result.allowed then
-         ctx.controller.message:fragment(result.reason)
+         ctx.controller.message:fragment(assert(result.reason))
          return false
       end
    end
@@ -303,10 +303,11 @@ local function render_inventory_grid(ctx)
                if not check_write_access(click_ctx, entity, nil) then return end
 
                -- Check if hand has bookable item and slot has blueprint book
-               local is_bookable = cursor_stack
+               if
+                  cursor_stack
                   and cursor_stack.valid_for_read
                   and (cursor_stack.is_blueprint or cursor_stack.is_upgrade_item or cursor_stack.is_deconstruction_item)
-               if is_bookable then
+               then
                   if inv_stack and inv_stack.valid_for_read and inv_stack.is_blueprint_book then
                      -- Insert item into book
                      local book_inv = inv_stack.get_inventory(defines.inventory.item_main)

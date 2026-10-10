@@ -99,7 +99,7 @@ local backends = {}
 
 ---The context a backend builds with: the select context plus the tile chosen
 ---@class fa.BuildLock.BuildContext: fa.BuildLock.SelectContext
----@field current_position MapPosition
+---@field current_position fa.Point
 ---@field movement_direction defines.direction
 
 ---Registers a build lock backend
@@ -235,9 +235,10 @@ function BuildLock.set_enabled(pindex, enabled, silent, reason)
 
       -- Initialize walking state with current character position
       if player.character then
+         local character_pos = player.character.position --[[@as MapPosition.struct]]
          local current_tile = {
-            x = math.floor(player.character.position.x),
-            y = math.floor(player.character.position.y),
+            x = math.floor(character_pos.x),
+            y = math.floor(character_pos.y),
          }
          state.walking_state.last_floored_position = current_tile
          table.insert(state.walking_state.pending_tiles, {
@@ -423,7 +424,7 @@ function BuildHelpers:set_fail_reason(reason)
 end
 
 ---Build an entity at the specified position and direction
----@param position MapPosition
+---@param position fa.Point
 ---@param direction defines.direction
 ---@return LuaEntity? placed_entity The placed entity, or nil if placement failed
 function BuildHelpers:build_entity(position, direction)
@@ -694,7 +695,7 @@ function BuildLock.process_walking_movement(pindex)
    if not entry or entry.kind ~= MovementHistory.MOVEMENT_KINDS.WALKING then return end
 
    local walking_state = state.walking_state
-   local current_position = player.character.position
+   local current_position = player.character.position --[[@as MapPosition.struct]]
    local current_tile = {
       x = math.floor(current_position.x),
       y = math.floor(current_position.y),
@@ -719,7 +720,7 @@ end
 
 ---Processes build lock for cursor movement
 ---@param pindex integer
----@param new_position MapPosition
+---@param new_position fa.Point
 ---@param movement_direction defines.direction
 function BuildLock.process_cursor_movement(pindex, new_position, movement_direction)
    local state = build_lock_storage[pindex]

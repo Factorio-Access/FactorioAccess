@@ -44,7 +44,7 @@ end
 ---@param ent LuaEntity
 ---@return table<string, number> The counts by resource prototype name
 function mod.compute_resources_under_drill(ent)
-   local pos = ent.position
+   local pos = ent.position --[[@as MapPosition.struct]]
    local radius = ent.prototype.mining_drill_radius
    local area = { { pos.x - radius, pos.y - radius }, { pos.x + radius, pos.y + radius } }
    local resources = ent.surface.find_entities_filtered({ area = area, type = "resource" })

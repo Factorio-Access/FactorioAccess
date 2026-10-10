@@ -96,10 +96,10 @@ function mod.read_alert_to_msgbuilder(message, alert, alert_type)
       if mod.target_is_entity(target) then
          ---@cast target LuaEntity
          message:fragment(Localising.get_localised_name_with_fallback(target))
-         local pos = target.position
+         local pos = target.position --[[@as MapPosition.struct]]
          message:fragment({ "fa.alerts-at-position", math.floor(pos.x), math.floor(pos.y) })
       else
-         ---@cast target MapPosition
+         ---@cast target MapPosition.struct
          message:fragment({ "fa.alerts-at-position", math.floor(target.x), math.floor(target.y) })
       end
    end
@@ -120,14 +120,15 @@ end
 ---@param surface_index uint32
 ---@return fa.alerts.SortKey
 function mod.build_alert_sort_key(alert, surface_index)
+   ---@type MapPosition.struct?
    local pos = nil
    local unit_number = nil
 
    if alert.target and alert.target.valid then
-      pos = alert.target.position
+      pos = alert.target.position --[[@as MapPosition.struct]]
       unit_number = alert.target.unit_number
    elseif alert.position then
-      pos = alert.position
+      pos = alert.position --[[@as MapPosition.struct]]
    end
 
    ---@type number

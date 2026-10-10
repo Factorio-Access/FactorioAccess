@@ -7,7 +7,7 @@ local ar_tint = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 }
 local access_radar = table.deepcopy(data.raw["radar"]["radar"])
 access_radar.icons = {
    {
-      icon = access_radar.icon,
+      icon = assert(access_radar.icon),
       icon_size = access_radar.icon_size,
       tint = ar_tint,
    },
@@ -28,7 +28,7 @@ access_radar_item.name = "access-radar"
 access_radar_item.place_result = "access-radar"
 access_radar_item.icons = {
    {
-      icon = access_radar_item.icon,
+      icon = assert(access_radar_item.icon),
       icon_size = access_radar_item.icon_size,
       tint = ar_tint,
    },

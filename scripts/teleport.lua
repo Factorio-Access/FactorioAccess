@@ -15,8 +15,8 @@ function mod.teleport_to_cursor(pindex, muted, ignore_enemies, return_cursor)
    local vp = Viewpoint.get_viewpoint(pindex)
    local result = mod.teleport_to_closest(pindex, vp:get_cursor_pos(), muted, ignore_enemies)
    if return_cursor then
-      local p = game.get_player(pindex)
-      vp:set_cursor_pos({ x = p.position.x, y = p.position.y })
+      local player_pos = game.get_player(pindex).position --[[@as MapPosition.struct]]
+      vp:set_cursor_pos({ x = player_pos.x, y = player_pos.y })
    end
    return result
 end
@@ -33,11 +33,12 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
    local surf = char.surface
    local radius = 0.5
    --Find a non-colliding position
-   local new_pos = surf.find_non_colliding_position("character", pos, radius, 0.1, true)
-   while new_pos == nil do
+   local found = surf.find_non_colliding_position("character", pos, radius, 0.1, true)
+   while found == nil do
       radius = radius + 1
-      new_pos = surf.find_non_colliding_position("character", pos, radius, 0.1, true)
+      found = surf.find_non_colliding_position("character", pos, radius, 0.1, true)
    end
+   local new_pos = found --[[@as MapPosition.struct]]
    --Do not teleport if in a vehicle, in a menu, or already at the destination
    if char.vehicle ~= nil and char.vehicle.valid then
       Speech.speak(pindex, { "fa.teleport-cannot-in-vehicle" })

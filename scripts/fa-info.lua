@@ -218,13 +218,14 @@ end
 local function ent_info_accumulator(ctx)
    local ent = ctx.ent
    if ent.type == "accumulator" then
-      local level = math.ceil(ent.energy / ent.electric_buffer_size * 100) --In percentage
+      local buffer_size = assert(ent.electric_buffer_size)
+      local level = math.ceil(ent.energy / buffer_size * 100) --In percentage
       local charge = math.ceil(ent.energy)
       ctx.message:fragment({
          "fa.ent-info-accumulator-charge",
          level,
          Electrical.get_power_string(charge),
-         Electrical.get_power_string(ent.electric_buffer_size),
+         Electrical.get_power_string(buffer_size),
       })
    end
 end
@@ -258,8 +259,10 @@ local function add_rocket_silo_info(message, ent)
    if ent.status == defines.entity_status.waiting_to_launch_rocket then
       message:fragment({ "fa.ent-info-silo-complete" })
       return true
-   elseif ent.rocket_parts ~= nil and ent.rocket_parts < ent.prototype.rocket_parts_required then
-      message:fragment({ "fa.ent-info-silo-partial", ent.rocket_parts, ent.prototype.rocket_parts_required })
+   end
+   local parts_required = assert(ent.prototype.rocket_parts_required)
+   if ent.rocket_parts < parts_required then
+      message:fragment({ "fa.ent-info-silo-partial", ent.rocket_parts, parts_required })
       return true
    end
    return false
@@ -276,8 +279,7 @@ local function ent_info_beacon_status(ctx)
    if ent.name == "beacon" then
       local modules = ent.get_module_inventory()
       if not modules then return end
-      local presenting = InventoryUtils.present_list(modules.get_contents())
-      if presenting then ctx.message:fragment(presenting) end
+      ctx.message:fragment(InventoryUtils.present_list(modules.get_contents()))
    end
 end
 
@@ -411,10 +413,7 @@ local function ent_info_container(ctx)
       inv = ent.get_inventory(defines.inventory.cargo_landing_pad_main)
    end
 
-   if inv then
-      local presenting = InventoryUtils.present_list(inv.get_contents(), 3)
-      if presenting then ctx.message:fragment(presenting) end
-   end
+   if inv then ctx.message:fragment(InventoryUtils.present_list(inv.get_contents(), 3)) end
 end
 
 ---@param ctx fa.Info.EntInfoContext
@@ -447,14 +446,18 @@ end
 local function ent_info_logistic_network(ctx)
    local ent = ctx.ent
    if ent.type == "logistic-container" then
-      local network, distance, direction =
-         BotLogistics.find_closest_network_with_distance(ent.surface, ent.position, ent.force)
+      local network, distance, direction = BotLogistics.find_closest_network_with_distance(
+         ent.surface,
+         ent.position --[[@as MapPosition.struct]],
+         ent.force
+      )
       if not network then
          ctx.message:fragment({ "fa.ent-info-logistic-no-network" })
       elseif distance and distance > 0 then
          ctx.message:fragment({
             "fa.ent-info-logistic-not-in-network",
-            FaUtils.format_distance_with_direction(math.ceil(distance), direction),
+            -- A network outside its coverage always comes with a direction
+            FaUtils.format_distance_with_direction(math.ceil(distance), assert(direction)),
          })
       else
          local network_name = BotLogistics.get_network_name_from_network(network)
@@ -563,7 +566,7 @@ local function ent_info_pipe_shape(ctx)
       local shape_info = Fluids.get_pipe_shape(ctx.ent)
       local s, d = shape_info.shape, shape_info.direction
       local d_str = FaUtils.direction_lookup(d)
-      local conns = ctx.ent.get_fluid_box_pipe_connections(1)
+      local conns = assert(ctx.ent.get_fluid_box_pipe_connections(1))
       local pipe_conn_count = 0
       for _, c in pairs(conns) do
          if c.target and (c.target.type == "pipe" or c.target.type == "infinity-pipe") then
@@ -630,7 +633,7 @@ local function ent_info_train_stop(ctx)
       local limit = ent.trains_limit
       -- 4294967295 is the max uint32 value, used to represent "unlimited"
       if not limit or limit == 4294967295 then limit = 0 end
-      ctx.message:fragment({ "fa.ent-info-train-stop", ent.backer_name, limit })
+      ctx.message:fragment({ "fa.ent-info-train-stop", assert(ent.backer_name), limit })
    end
 end
 
@@ -804,12 +807,11 @@ local function ent_info_heat_neighbors(ctx)
       table.insert(dirs, dir or 16)
    end
 
-   -- Localize heat port directions, passing raw direction constants
+   -- Localize heat port directions, passing raw direction constants. There is at least one port, and at most one
+   -- per side of the tile.
    local function localise_heat_ports(dirs)
       local n = #dirs
-      if n == 0 then
-         return nil
-      elseif n == 1 then
+      if n == 1 then
          return { "fa.ent-info-heat-port-1", FaUtils.direction_lookup(dirs[1]) }
       elseif n == 2 then
          return { "fa.ent-info-heat-port-2", FaUtils.direction_lookup(dirs[1]), FaUtils.direction_lookup(dirs[2]) }
@@ -820,7 +822,8 @@ local function ent_info_heat_neighbors(ctx)
             FaUtils.direction_lookup(dirs[2]),
             FaUtils.direction_lookup(dirs[3]),
          }
-      elseif n == 4 then
+      else
+         assert(n == 4)
          return {
             "fa.ent-info-heat-port-4",
             FaUtils.direction_lookup(dirs[1]),
@@ -922,7 +925,7 @@ local function ent_info_electric_pole(ctx)
    if ent.type ~= "electric-pole" then return end
 
    -- Count number of entities being supplied within supply area
-   local pos = ent.position
+   local pos = ent.position --[[@as MapPosition.struct]]
    local sdist = ent.prototype.get_supply_area_distance(ent.quality)
    local supply_area = { { pos.x - sdist, pos.y - sdist }, { pos.x + sdist, pos.y + sdist } }
    local supplied_ents = ent.surface.find_entities_filtered({ area = supply_area })
@@ -1012,8 +1015,7 @@ local function ent_info_cargo_wagon(ctx)
    if ctx.ent.name == "cargo-wagon" then
       local inv = ctx.ent.get_inventory(defines.inventory.cargo_wagon)
       assert(inv)
-      local presenting = InventoryUtils.present_list(inv.get_contents())
-      if presenting then ctx.message:fragment(presenting) end
+      ctx.message:fragment(InventoryUtils.present_list(inv.get_contents()))
    end
 end
 
@@ -1294,7 +1296,12 @@ local function ent_info_rail(ctx)
    local rail_type = RailQueries.prototype_type_to_rail_type(entity_name)
 
    -- Describe and announce the rail
-   local description = RailDescriber.describe_rail(wrapped_surface, rail_type, ctx.ent.direction, ctx.ent.position)
+   local description = RailDescriber.describe_rail(
+      wrapped_surface,
+      rail_type,
+      ctx.ent.direction,
+      ctx.ent.position --[[@as MapPosition.struct]]
+   )
    local announcement = RailAnnouncer.announce_rail(description, { is_ghost = is_ghost })
 
    ctx.message:fragment(announcement)
@@ -1332,7 +1339,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    elseif ent.type == "roboport" then
       -- For roboports, announce both prototype name and backer_name
       ctx.message:fragment(Localising.get_localised_name_with_fallback(ent))
-      ctx.message:fragment(ent.backer_name)
+      ctx.message:fragment(assert(ent.backer_name))
    elseif is_rail_type(ent.type) then
       -- For rails, skip entity name - rail classification will be announced by ent_info_rail handler
    elseif
@@ -1566,7 +1573,7 @@ function mod.read_pollution_level_at_position(pos, pindex)
       result = { "fa.pollution-level-very-high" }
    elseif pol < 250 then
       result = { "fa.pollution-level-extremely-high" }
-   elseif pol >= 250 then
+   else
       result = { "fa.pollution-level-maximal" }
    end
    Speech.speak(pindex, result)
@@ -1613,7 +1620,7 @@ function mod.read_nearest_damaged_ent_info(pos, pindex)
       return
    else
       --Move cursor to closest
-      vp:set_cursor_pos(closest.position)
+      vp:set_cursor_pos(closest.position --[[@as MapPosition.struct]])
       Graphics.draw_cursor_highlight(pindex, closest, nil, nil)
 
       --Report the result

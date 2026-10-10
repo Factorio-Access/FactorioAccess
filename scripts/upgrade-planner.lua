@@ -36,7 +36,7 @@ function mod.is_rule_defined(planner, index)
    local mapper_count = planner.mapper_count or 0
    if index > mapper_count then return false end
    local from = planner.get_mapper(index, "from")
-   return from and from.name ~= nil
+   return from ~= nil and from.name ~= nil
 end
 
 ---Read a single planner rule into MessageBuilder

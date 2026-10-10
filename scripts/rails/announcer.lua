@@ -15,7 +15,7 @@ local MessageBuilder = Speech.MessageBuilder
 local mod = {}
 
 ---Build announcement for signal/station info
----@param info fa.rails.SignalStationInfo Signal and station info
+---@param info fa.rails.SignalStationInfo? Signal and station info, nil when there is none
 ---@return LocalisedString? Message fragment or nil if nothing to announce
 local function build_signal_station_announcement(info)
    if not info then return nil end

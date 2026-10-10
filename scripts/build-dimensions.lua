@@ -60,10 +60,11 @@ local function analyze_blueprint_base_dimensions(stack)
    if tiles then
       for _, tile in ipairs(tiles) do
          -- Tiles are 1x1, position is top-left corner (integer coords)
-         local tile_north = tile.position.y
-         local tile_east = tile.position.x + 1
-         local tile_south = tile.position.y + 1
-         local tile_west = tile.position.x
+         local tile_pos = tile.position --[[@as TilePosition.struct]]
+         local tile_north = tile_pos.y
+         local tile_east = tile_pos.x + 1
+         local tile_south = tile_pos.y + 1
+         local tile_west = tile_pos.x
 
          if first_ent then
             first_ent = false

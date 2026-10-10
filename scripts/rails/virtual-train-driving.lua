@@ -275,7 +275,7 @@ local function create_traverser_from_move(move)
 end
 
 ---Get a bounding box for the tile containing a position
----@param position MapPosition
+---@param position fa.Point
 ---@return BoundingBox
 local function get_tile_search_area(position)
    local floor_x = math.floor(position.x)
@@ -284,25 +284,6 @@ local function get_tile_search_area(position)
       { x = floor_x + 0.001, y = floor_y + 0.001 },
       { x = floor_x + 0.999, y = floor_y + 0.999 },
    }
-end
-
----Check if a rail already exists at position matching prototype and direction
----@param surface LuaSurface
----@param position MapPosition
----@param prototype_name string
----@param direction defines.direction
----@return LuaEntity|nil
-local function find_matching_rail(surface, position, prototype_name, direction)
-   local entities = surface.find_entities_filtered({
-      area = get_tile_search_area(position),
-      name = prototype_name,
-   })
-
-   for _, entity in ipairs(entities) do
-      if entity.direction == direction then return entity end
-   end
-
-   return nil
 end
 
 ---Build a rail at the specified position using build_from_cursor
@@ -434,7 +415,8 @@ end
 ---@param move_fn fun(trav: railutils.Traverser)
 ---@return boolean
 local function check_connection(rail_entity, rail_type, end_direction, move_fn)
-   local position = { x = rail_entity.position.x, y = rail_entity.position.y }
+   local rail_pos = rail_entity.position --[[@as MapPosition.struct]]
+   local position = { x = rail_pos.x, y = rail_pos.y }
    local trav = Traverser.new(rail_type, position, rail_entity.direction, end_direction)
    move_fn(trav)
 
@@ -450,8 +432,9 @@ local function check_connection(rail_entity, rail_type, end_direction, move_fn)
    })
 
    for _, connected_rail in ipairs(rails_at_pos) do
-      local rail_floor_x = math.floor(connected_rail.position.x)
-      local rail_floor_y = math.floor(connected_rail.position.y)
+      local connected_pos = connected_rail.position --[[@as MapPosition.struct]]
+      local rail_floor_x = math.floor(connected_pos.x)
+      local rail_floor_y = math.floor(connected_pos.y)
       if
          rail_floor_x == expected_floor_x
          and rail_floor_y == expected_floor_y
@@ -561,6 +544,7 @@ function mod.lock_on_to_rail(pindex, rail_entity, build_mode)
       Speech.speak(pindex, { "fa.virtual-train-no-rail" })
       return
    end
+   ---@cast rail -? -- is_rail_entity is false for nil
 
    -- Convert entity name to rail type
    local rail_type = Queries.prototype_type_to_rail_type(get_effective_name(rail))
@@ -582,11 +566,12 @@ function mod.lock_on_to_rail(pindex, rail_entity, build_mode)
 
    -- Add initial rail to moves (entity = rail, not nil, but we won't destroy it on undo)
    -- Actually, use nil since it already exists and we shouldn't destroy it
-   push_move(pindex, rail.position, chosen_end_direction, rail_type, rail.direction, nil, false)
+   local rail_pos = rail.position --[[@as MapPosition.struct]]
+   push_move(pindex, rail_pos, chosen_end_direction, rail_type, rail.direction, nil, false)
 
    -- Set cursor position
    local vp = Viewpoint.get_viewpoint(pindex)
-   vp:set_cursor_pos(rail.position)
+   vp:set_cursor_pos(rail_pos)
 
    -- Announce lock-on with build mode and end direction
    local mb = MessageBuilder.new()

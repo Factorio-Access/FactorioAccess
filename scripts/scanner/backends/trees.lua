@@ -58,7 +58,7 @@ function TreeBackend:update_entry(player, e)
    local trees = self.surface.find_entities_filtered({ area = aabb, type = "tree" })
    local closest = self.surface.get_closest(player.position, trees)
    -- It's still in the AABB, just a different point.
-   e.position = closest.position
+   e.position = closest.position --[[@as MapPosition.struct]]
 end
 
 function TreeBackend:validate_entry(player, e)

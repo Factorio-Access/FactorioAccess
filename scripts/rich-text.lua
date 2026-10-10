@@ -48,7 +48,7 @@ local function parse_tag(tag)
 
    -- Handle tags with parameters: [type=name,param=value,...]
    local tag_type, rest = tag:match("^([%w%-]+)=(.+)$")
-   if not tag_type then return nil end
+   if not rest then return nil end
 
    local params = {}
    local name = nil

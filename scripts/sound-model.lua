@@ -54,7 +54,7 @@ function mod.get_reference_position(pindex)
 
    if state.reference_point == mod.ReferencePoint.CHARACTER then
       if player and player.character and player.character.valid then
-         local pos = player.character.position
+         local pos = player.character.position --[[@as MapPosition.struct]]
          return { x = pos.x, y = pos.y }
       end
    end

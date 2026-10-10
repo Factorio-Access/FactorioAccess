@@ -205,7 +205,7 @@ function mod.get_direction_biased(pos_target, pos_origin)
 end
 
 ---@param vector fa.Point
----@return defines.direction?
+---@return defines.direction
 function mod.direction_of_vector(vector)
    --[[
    The math, since not everyone knows it:
@@ -238,7 +238,7 @@ function mod.direction_of_vector(vector)
    -- 2pi/32 = pi/16, lua will not fold the constants.
    local segment = math.floor(angle / (math.pi / 16))
    local segment_off = segment + 1
-   local mapped = segment % 32
+   local mapped = segment_off % 32
    local dir = math.floor(mapped / 2)
    assert(dir < 16)
    return dir --[[@as defines.direction]]
@@ -247,9 +247,7 @@ end
 function mod.get_direction_precise(pos_target, pos_origin)
    local diff_x = pos_target.x - pos_origin.x
    local diff_y = pos_target.y - pos_origin.y
-   -- For legacy reasons, this must default north: callers have never checked,
-   -- and this used to be a very complex if tree.
-   return mod.direction_of_vector({ x = diff_x, y = diff_y }) or defines.direction.north
+   return mod.direction_of_vector({ x = diff_x, y = diff_y })
 end
 
 --Checks whether a cardinal or diagonal direction is precisely aligned. All check positions are floored to their northwest corners.
@@ -797,11 +795,13 @@ end
 
 ---@param point fa.Point
 ---@param box fa.AABB
----@return fa.Point?
+---@return fa.Point
 function mod.closest_point_in_box(point, box)
+   local left_top = box.left_top --[[@as MapPosition.struct]]
+   local right_bottom = box.right_bottom --[[@as MapPosition.struct]]
    return {
-      x = math.max(math.min(point.x, box.right_bottom.x), box.left_top.x),
-      y = math.max(math.min(point.y, box.right_bottom.y), box.left_top.y),
+      x = math.max(math.min(point.x, right_bottom.x), left_top.x),
+      y = math.max(math.min(point.y, right_bottom.y), left_top.y),
    }
 end
 

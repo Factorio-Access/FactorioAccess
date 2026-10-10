@@ -91,11 +91,15 @@ local function calculate_signed_distance(cursor_pos, stop_rail_pos, orientation,
    return diff
 end
 
+---@class fa.rails.StopCandidate
+---@field stop LuaEntity
+---@field rail LuaEntity The rail the stop is connected to
+---@field facing defines.direction
+---@field orientation "vertical"|"horizontal"
+
 ---Check if a stop is valid for preview (connected to axis-aligned rail, on correct side)
 ---@param stop LuaEntity
----@return LuaEntity? stop_rail The rail the stop is connected to, or nil if invalid
----@return defines.direction? stop_facing The direction the stop faces
----@return "vertical"|"horizontal"? orientation The rail orientation
+---@return fa.rails.StopCandidate? candidate The stop with its rail, facing and orientation, or nil if invalid
 local function validate_stop(stop)
    local stop_rail = stop.connected_rail
    if not stop_rail then return nil end
@@ -120,14 +124,8 @@ local function validate_stop(stop)
       return nil -- Stop is on wrong side of rail for our direction
    end
 
-   return stop_rail, stop_facing, orientation
+   return { stop = stop, rail = stop_rail, facing = stop_facing, orientation = orientation }
 end
-
----@class fa.rails.StopCandidate
----@field stop LuaEntity
----@field rail LuaEntity The rail the stop is connected to
----@field facing defines.direction
----@field orientation "vertical"|"horizontal"
 
 ---Find nearby train stops that could form a preview
 ---@param surface LuaSurface
@@ -144,15 +142,8 @@ local function find_candidate_stops(surface, position)
    })
 
    for _, stop in ipairs(stops) do
-      local stop_rail, stop_facing, orientation = validate_stop(stop)
-      if stop_rail then
-         candidates[stop_rail.unit_number] = {
-            stop = stop,
-            rail = stop_rail,
-            facing = stop_facing,
-            orientation = orientation,
-         }
-      end
+      local candidate = validate_stop(stop)
+      if candidate then candidates[assert(candidate.rail.unit_number)] = candidate end
    end
 
    return candidates
@@ -172,7 +163,7 @@ local function extend_and_find(rail, rail_direction, candidates, cursor_pos)
       local current_rail = rail_end.rail
 
       -- Check if current rail is a candidate
-      local candidate = candidates[current_rail.unit_number]
+      local candidate = candidates[assert(current_rail.unit_number)]
       if candidate then return candidate end
 
       -- Check if we've gone too far
@@ -211,7 +202,7 @@ function mod.get_stop_preview(rail, cursor_pos)
    if not next(candidates) then return nil end
 
    -- Check if current rail is itself a candidate
-   local candidate = candidates[rail.unit_number]
+   local candidate = candidates[assert(rail.unit_number)]
 
    -- If not, extend in both directions to find one
    if not candidate then
@@ -225,6 +216,7 @@ function mod.get_stop_preview(rail, cursor_pos)
    if not candidate then return nil end
 
    local stop = candidate.stop
+   local stop_name = assert(stop.backer_name) -- Train stops always have a name
    local stop_rail = candidate.rail
    local stop_facing = candidate.facing
 
@@ -261,10 +253,10 @@ function mod.get_stop_preview(rail, cursor_pos)
 
    if position_in_car == 7 then
       -- Gap after this car
-      return { "fa.stop-preview-gap-after-car", stop.backer_name, car_number }
+      return { "fa.stop-preview-gap-after-car", stop_name, car_number }
    else
       -- Within a car (positions 1-6)
-      return { "fa.stop-preview-car-position", stop.backer_name, car_number, position_in_car }
+      return { "fa.stop-preview-car-position", stop_name, car_number, position_in_car }
    end
 end
 

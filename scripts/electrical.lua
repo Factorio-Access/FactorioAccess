@@ -72,14 +72,14 @@ end
 
 --Finds the neearest electric pole. Can be set to determine whether to check only for poles with electricity flow. Can call using only the first two parameters.
 function mod.find_nearest_electric_pole(ent, require_supplied, radius, alt_surface, alt_pos)
-   ---@type LuaEntity
+   ---@type LuaEntity?
    local nearest = nil
    local min_dist = 99999
    require_supplied = require_supplied or false
    radius = radius or 10
    ---@type LuaSurface
-   local surface = nil
-   local pos = nil
+   local surface
+   local pos
    if ent ~= nil and ent.valid then
       surface = ent.surface
       pos = ent.position

@@ -55,7 +55,7 @@ local help_graph = UiKeyGraph.declare_graph({
                all_ready = false
             elseif result.status == MessageLists.STATUS.READY then
                -- Add all messages from the list (programmatically built keys)
-               for _, message in ipairs(result.messages) do
+               for _, message in ipairs(assert(result.messages)) do
                   table.insert(all_messages, message)
                end
             end

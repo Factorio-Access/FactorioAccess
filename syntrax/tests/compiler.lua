@@ -20,7 +20,8 @@ end
 local function run_bytecode(bytecode)
    local vm = Vm.new()
    vm.bytecode = bytecode
-   local placement_groups = vm:run()
+   local placement_groups, err = vm:run()
+   assert(placement_groups, err and err.message)
    -- Flatten for test compatibility
    return Helpers.flatten_placements(placement_groups)
 end

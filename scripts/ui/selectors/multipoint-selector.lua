@@ -32,7 +32,7 @@ mod.RESULT_KIND = {
 
 ---@class fa.ui.selectors.MultipointCallbackArgs
 ---@field kind fa.ui.selectors.MultipointSelectionKind LEFT or RIGHT click
----@field position MapPosition The position that was selected
+---@field position fa.Point The position that was selected
 ---@field entity LuaEntity? The entity at the cursor position (nil if none)
 ---@field modifiers {control: boolean?, shift: boolean?, alt: boolean?} Modifier keys pressed
 ---@field router_ctx fa.ui.RouterController Router controller for messaging

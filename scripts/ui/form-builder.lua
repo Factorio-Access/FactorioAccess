@@ -617,13 +617,12 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
    self:start_row(name)
    self:add_item(name .. "_overview", {
       label = function(ctx)
-         local base_label = UiUtils.to_label_function(label)(ctx)
          local enabled = get_enabled()
          local state_text = enabled and { "fa.checked" } or { "fa.unchecked" }
          local condition = get_condition()
 
          ctx.message:fragment(state_text)
-         ctx.message:fragment(base_label)
+         UiUtils.to_label_function(label)(ctx)
          ctx.message:fragment(describe_condition(condition))
          if not condition or not condition.first_signal or not condition.first_signal.name then
             ctx.message:fragment({ "fa.condition-move-right-to-configure" })

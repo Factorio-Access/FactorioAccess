@@ -68,7 +68,7 @@ end
 
 function mod.read_quick_bar_slot(index, pindex)
    local p = game.get_player(pindex)
-   local page = p.get_active_quick_bar_page(1)
+   local page = assert(p.get_active_quick_bar_page(1))
    local name, item_name = describe_quick_bar_slot(p.get_quick_bar_slot(page, index))
    if name == nil then
       Speech.speak(pindex, { "fa.quickbar-empty-slot" })
@@ -91,7 +91,7 @@ end
 function mod.set_quick_bar_slot(index, pindex)
    local p = game.get_player(pindex)
    local router = UiRouter.get_router(pindex)
-   local page = game.get_player(pindex).get_active_quick_bar_page(1)
+   local page = assert(game.get_player(pindex).get_active_quick_bar_page(1))
    local stack_cur = game.get_player(pindex).cursor_stack
    local ent = p.selected
    if stack_cur and stack_cur.valid_for_read and stack_cur.valid == true then

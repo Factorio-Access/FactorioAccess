@@ -19,13 +19,7 @@ describe("WASD Event Tests", function()
       local initial_pos
 
       ctx:init(function()
-         player = game.get_player(pindex)
-
-         -- Ensure player exists
-         if not player then
-            error("No player found at index 1")
-            return
-         end
+         player = assert(game.get_player(pindex))
 
          -- Get viewpoint for cursor operations
          vp = Viewpoint.get_viewpoint(pindex)

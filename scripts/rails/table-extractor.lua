@@ -150,7 +150,7 @@ function mod.extract_rail_table(surface, force)
             rail_data[prototype_type][dir_str] = {}
 
             -- Record actual position (API may offset the entity)
-            local actual_position = rail.position
+            local actual_position = rail.position --[[@as MapPosition.struct]]
             local grid_offset = {
                x = actual_position.x - origin.x,
                y = actual_position.y - origin.y,

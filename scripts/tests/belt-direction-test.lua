@@ -26,12 +26,12 @@ describe("Transport Belt Mod Tests", function()
 
       ctx:at_tick(1, function()
          -- Create a splitter
-         splitter = surface.create_entity({
+         splitter = assert(surface.create_entity({
             name = "splitter",
             position = { x = 0, y = 0 },
             direction = defines.direction.north,
             force = player.force,
-         })
+         }))
       end)
 
       ctx:at_tick(2, function()

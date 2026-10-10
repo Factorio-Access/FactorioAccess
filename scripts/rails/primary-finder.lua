@@ -83,8 +83,9 @@ local function push_connected_unit_numbers(connected_set, rail_ent, rail_type, p
          for _, connected_rail in ipairs(rails_at_pos) do
             if connected_rail.valid and connected_rail.unit_number then
                -- Check that this rail matches what the traverser expects
-               local rail_floor_x = math.floor(connected_rail.position.x)
-               local rail_floor_y = math.floor(connected_rail.position.y)
+               local rail_pos = connected_rail.position --[[@as MapPosition.struct]]
+               local rail_floor_x = math.floor(rail_pos.x)
+               local rail_floor_y = math.floor(rail_pos.y)
                local pos_match = rail_floor_x == expected_floor_x and rail_floor_y == expected_floor_y
                local type_match = get_effective_name(connected_rail) == expected_type
                local direction_match = connected_rail.direction == expected_direction

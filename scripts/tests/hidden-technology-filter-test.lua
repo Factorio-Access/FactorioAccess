@@ -14,10 +14,12 @@ describe("Hidden Technology Filter", function()
       local total_hidden = 0
 
       ctx:init(function()
-         player = game.get_player(1)
+         player = assert(game.get_player(1))
 
          -- Collect all hidden technology names
-         for name, tech in pairs(player.force.technologies) do
+         for name, tech in
+            pairs((player.force --[[@as LuaForce]]).technologies)
+         do
             if tech.prototype.hidden then
                hidden_tech_names[name] = true
                total_hidden = total_hidden + 1
@@ -71,10 +73,12 @@ describe("Hidden Technology Filter", function()
       local hidden_successor_mentioned = false
 
       ctx:at_tick(1, function()
-         local player = game.get_player(1)
+         local player = assert(game.get_player(1))
 
          -- Find a non-hidden technology that has at least one hidden successor
-         for name, tech in pairs(player.force.technologies) do
+         for name, tech in
+            pairs((player.force --[[@as LuaForce]]).technologies)
+         do
             if not tech.prototype.hidden and not tech.researched then
                local has_hidden_successor = false
                local has_visible_successor = false

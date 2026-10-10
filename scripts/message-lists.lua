@@ -70,7 +70,7 @@ function mod.handle_translation(pindex, request_id, result)
    if not list_name then return false end
 
    -- Decode the base64+deflate metadata (will crash if invalid)
-   local metadata_json = helpers.decode_string(result)
+   local metadata_json = assert(helpers.decode_string(result))
 
    -- Parse JSON (will crash if invalid)
    local metadata = helpers.json_to_table(metadata_json)

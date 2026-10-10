@@ -21,6 +21,7 @@ local function on_point_selected(args)
    end
 
    if args.kind == MultipointSelector.SELECTION_KIND.LEFT then
+      local position = args.position
       -- Track if this is the first waypoint
       if not args.state.has_selected_first then
          -- First waypoint: clear queue and set destination
@@ -35,8 +36,8 @@ local function on_point_selected(args)
 
       args.router_ctx.message:fragment({
          "fa.spidertron-autopilot-added-at",
-         tostring(math.floor(args.position.x)),
-         tostring(math.floor(args.position.y)),
+         tostring(math.floor(position.x)),
+         tostring(math.floor(position.y)),
          { "fa.spidertron-autopilot-queue-count", tostring(args.state.waypoint_count) },
       })
 

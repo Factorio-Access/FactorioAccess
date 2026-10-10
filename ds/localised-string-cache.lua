@@ -131,6 +131,7 @@ function LocalisedStringCache:_remove_from_trie(canonical)
    local path = {}
    flatten_localised_string(canonical, path)
 
+   ---@type table[]
    local nodes = { self.trie_root }
    local current = self.trie_root
 

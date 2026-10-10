@@ -103,9 +103,9 @@ local function get_fluidbox_constraint(entity, index)
    if first_attempt then return first_attempt end
 
    -- Otherwise try adjacents.
-   for _, c in pairs(entity.get_fluid_box_pipe_connections(index)) do
+   for _, c in pairs(assert(entity.get_fluid_box_pipe_connections(index))) do
       if c.target then
-         local try = get_local_fluidbox_constraint(c.target, c.target_fluidbox_index)
+         local try = get_local_fluidbox_constraint(c.target, assert(c.target_fluidbox_index))
          if try then return try end
       end
    end
@@ -126,16 +126,18 @@ function mod.get_connection_points(ent)
    local closed_because_no_recipe = is_crafting_machine and ent.get_recipe() == nil
 
    for i = 1, ent.fluids_count do
-      local conns = ent.get_fluid_box_pipe_connections(i)
+      local conns = assert(ent.get_fluid_box_pipe_connections(i))
       local fluid = get_fluidbox_constraint(ent, i)
 
       for j = 1, #conns do
          local c = conns[j]
-         local sx = math.floor(c.position.x) + 0.5
-         local sy = math.floor(c.position.y) + 0.5
+         local c_pos = c.position --[[@as MapPosition.struct]]
+         local c_target_pos = c.target_position --[[@as MapPosition.struct]]
+         local sx = math.floor(c_pos.x) + 0.5
+         local sy = math.floor(c_pos.y) + 0.5
 
-         local tx = math.floor(c.target_position.x) + 0.5
-         local ty = math.floor(c.target_position.y) + 0.5
+         local tx = math.floor(c_target_pos.x) + 0.5
+         local ty = math.floor(c_target_pos.y) + 0.5
          local out_dir
          local in_dir
          if c.flow_direction == "input" then
@@ -156,7 +158,7 @@ function mod.get_connection_points(ent)
          -- side yet, we can't know.
          if c.connection_type ~= "normal" and c.target then
             local other_pos =
-               c.target.get_fluid_box_pipe_connections(c.target_fluidbox_index)[c.target_pipe_connection_index].position
+               c.target.get_fluid_box_pipe_connections(assert(c.target_fluidbox_index))[c.target_pipe_connection_index].position
             distance_in_tiles = math.ceil(FaUtils.distance(c.position, other_pos))
          end
          local open = true
@@ -207,14 +209,13 @@ function mod.get_pipe_shape(ent)
    assert(ent.fluids_count == 1)
 
    local dirs = {}
-   local conns = ent.get_fluid_box_pipe_connections(1)
+   local conns = assert(ent.get_fluid_box_pipe_connections(1))
 
    for _, conn in pairs(conns) do
       if conn.target and (conn.target.type == "pipe" or conn.target.type == "infinity-pipe") then
          local dx = conn.target_position.x - conn.position.x
          local dy = conn.target_position.y - conn.position.y
          local dir = FaUtils.direction_of_vector({ x = dx, y = dy })
-         assert(dir, "Unable to compute direction from vector.")
          dirs[dir] = true
       end
    end

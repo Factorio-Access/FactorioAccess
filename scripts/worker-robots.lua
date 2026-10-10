@@ -170,17 +170,9 @@ end
 function mod.get_all_logistic_points(entity)
    if not entity or not entity.valid then return {} end
 
-   local points_result = entity.get_logistic_point()
-   if not points_result then return {} end
-
-   -- If called without index, returns array of points
-   if type(points_result) == "table" then
-      ---@cast points_result LuaLogisticPoint[]
-      return points_result
-   else
-      -- Single point returned
-      return { points_result }
-   end
+   -- Without an index, the API returns the array of all points
+   return entity.get_logistic_point() --[[@as LuaLogisticPoint[]?]]
+      or {}
 end
 
 ---Get unique group names from all sections in a point (excluding empty string)
@@ -337,11 +329,11 @@ end
 
 ---Calculate the distance from a position to the edge of a logistic cell's coverage box.
 ---Logistic coverage is a square with half-side = logistic_radius.
----@param position MapPosition
+---@param position fa.Point
 ---@param cell LuaLogisticCell
 ---@return number distance Positive if outside, negative if inside
 local function distance_to_cell_coverage(position, cell)
-   local center = cell.owner.position
+   local center = cell.owner.position --[[@as MapPosition.struct]]
    local radius = cell.logistic_radius
 
    -- Box bounds
@@ -372,7 +364,7 @@ end
 
 ---Find the closest logistic network and calculate distance to its coverage area.
 ---@param surface LuaSurface
----@param position MapPosition
+---@param position fa.Point
 ---@param force ForceID
 ---@return LuaLogisticNetwork? network The closest network, or nil if none found
 ---@return number? distance Distance to coverage edge (positive=outside, negative=inside), nil if no network

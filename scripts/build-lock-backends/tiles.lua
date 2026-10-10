@@ -30,7 +30,7 @@ end
 function mod.build(context, helpers)
    local pindex = context.pindex
    local player = context.player
-   local current_position = context.current_position
+   local current_position = context.current_position --[[@as MapPosition.struct]]
    local stack = player.cursor_stack
 
    if not stack or not stack.valid_for_read then return BuildAction.SKIP end
