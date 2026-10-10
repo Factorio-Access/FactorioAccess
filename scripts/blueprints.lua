@@ -1,15 +1,12 @@
 --Here: Functions related to ghosts, blueprints and blueprint books
 --Does not include event handlers
 
-local BuildDimensions = require("scripts.build-dimensions")
 local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
 local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
 local UiRouter = require("scripts.ui.router")
-
-local dirs = defines.direction
 
 local mod = {}
 
@@ -90,15 +87,6 @@ function mod.get_blueprint_info(stack, in_hand, pindex)
    end
 
    message:fragment({ "fa.blueprints-entities-total", tostring(stack.get_blueprint_entity_count()) })
-
-   --Use this opportunity to update saved information about the blueprint's corners (used when drawing the footprint)
-   if in_hand then
-      local width, height = BuildDimensions.get_stack_build_dimensions(stack, dirs.north)
-      if width and height then
-         storage.players[pindex].blueprint_width_in_hand = width + 1
-         storage.players[pindex].blueprint_height_in_hand = height + 1
-      end
-   end
 
    return message:build()
 end

@@ -52,17 +52,6 @@ function mod.retain_unordered(a, filter)
    end
 end
 
--- Same as table.insert(x), except taking multiple arguments and pushing them to
--- the back left to right. Behavior is incredibly undefined is nil is passed
--- (LuaLS helps guard against it)
---
----@param destination any[]
----@param ... any
-function mod.multipush(destination, ...)
-   local packed = table.pack(...)
-   mod.concat_arrays(destination, packed)
-end
-
 -- Merges two arrays.  The second array is pushed into the first.  That is, it
 -- is *modified* in place.
 --
@@ -235,19 +224,6 @@ function mod.rollup2(input, func1, func2, func3)
 
    setmetatable(counts, nil)
    return counts
-end
-
--- Given a two-level nested table, count the keys in both. Useful on e.g.
--- prototype->quality->count.  Is *not* a sum.
----@param table table<any, table<any, any>>
-function mod.length2(table)
-   local res = 0
-
-   for _, v in pairs(table) do
-      res = res + table_size(v)
-   end
-
-   return res
 end
 
 local function default_tiebreaker2(k1_1, k1_2, k2_1, k2_2)

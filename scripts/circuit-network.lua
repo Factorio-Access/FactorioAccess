@@ -350,33 +350,6 @@ function mod.localise_signal(signal_id)
    end
 end
 
----Localize a SignalID with count to a LocalisedString
----@param signal_id SignalID
----@param count number
----@return LocalisedString
-function mod.localise_signal_with_count(signal_id, count)
-   if not signal_id or not signal_id.name then return { "", "empty" } end
-
-   local signal_type = signal_id.type or "item"
-   local proto_dict = get_prototype_dict(signal_type)
-   local proto = proto_dict[signal_id.name]
-
-   if not proto then return { "", signal_id.name, " x ", tostring(count) } end
-
-   -- For items and fluids, use the quality-aware localisation
-   if signal_type == "item" or signal_type == "fluid" then
-      return ItemInfo.item_or_fluid_info({
-         name = proto,
-         quality = signal_id.quality,
-         count = count,
-      }, proto_dict)
-   else
-      -- For other signals, just get name and append count
-      local name = Localising.get_localised_name_with_fallback(proto)
-      return { "", name, " x ", tostring(count) }
-   end
-end
-
 ---Localize a comparator symbol to a LocalisedString
 ---@param comparator ComparatorString? Comparator symbol (<, <=, =, !=, >=, >)
 ---@return LocalisedString
@@ -659,33 +632,6 @@ function mod.add_circuit_network_info(entity, msg)
       else
          msg:fragment({ "fa.circuit-network-info-green", tostring(network_info.id), tostring(others) })
       end
-   end
-end
-
----Get copper wire neighbor count for fa-info display (electric poles)
----@param entity LuaEntity
----@param msg fa.MessageBuilder Message builder to add info to
-function mod.add_copper_wire_info(entity, msg)
-   -- Count unique neighbors via copper wires
-   local neighbor_count = 0
-   local seen = {}
-
-   local connectors = entity.get_wire_connectors(false)
-   for _, connector in pairs(connectors) do
-      if connector.wire_type == defines.wire_type.copper then
-         for _, connection in pairs(connector.connections) do
-            local other = connection.target.owner
-            if other.valid and not seen[other.unit_number] then
-               seen[other.unit_number] = true
-               neighbor_count = neighbor_count + 1
-            end
-         end
-      end
-   end
-
-   if neighbor_count > 0 then
-      msg:list_item()
-      msg:fragment({ "fa.copper-wire-neighbors", tostring(neighbor_count) })
    end
 end
 

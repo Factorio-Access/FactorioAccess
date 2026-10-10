@@ -150,10 +150,4 @@ function mod.get_assertions()
    return assertions
 end
 
---- Clear all test suites (useful for testing the test framework)
-function mod.clear_suites()
-   test_suites = {}
-   current_suite = nil
-end
-
 return mod

@@ -37,13 +37,6 @@ function mod.set_reference_point(pindex, reference_point)
    sound_model_storage[pindex].reference_point = reference_point
 end
 
----Get the current sound reference point setting for a player
----@param pindex integer
----@return fa.SoundModel.ReferencePoint
-function mod.get_reference_point_setting(pindex)
-   return sound_model_storage[pindex].reference_point
-end
-
 ---Get the current reference position for spatial audio calculations.
 ---Returns the cursor position or character position depending on the current setting.
 ---@param pindex integer

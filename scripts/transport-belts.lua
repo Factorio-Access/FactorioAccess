@@ -193,22 +193,6 @@ function Node:_assert_valid()
    assert(self:valid())
 end
 
--- Is this a connectable with no children/outputs?
----@return boolean
-function Node:is_belt_end()
-   self:_assert_valid()
-
-   return not next(self.entity.belt_neighbours.outputs)
-end
-
--- Is this a connectable with no parents?
----@return boolean
-function Node:is_belt_start()
-   self:_assert_valid()
-
-   return not next(self.entity.belt_neighbours.inputs)
-end
-
 ---@enum fa.TransportBelts.CornerKind
 mod.CORNER_KINDS = {
    LEFT = "left",
@@ -387,19 +371,6 @@ function Node:get_all_contents()
    error(string.format("Should be unreachable as this should be a belt connectable, but it is a %s", t))
 end
 
--- If this node has exactly one parent, return that entity.
---
--- Single parents are special.  No matter what the current item is, a single
--- parent means that the current item must carry what the parent carries.
-function Node:get_single_parent()
-   self:_assert_valid()
-
-   local b, l, r = get_parents(self.entity)
-   local count = count3(b, l, r)
-   if count == 1 then return b or l or r end
-   return nil
-end
-
 -- Is the given transport line full?
 ---@param line defines.transport_line
 function Node:is_line_full(line)
@@ -407,28 +378,6 @@ function Node:is_line_full(line)
    local line = self.entity.get_transport_line(line --[[@as defines.transport_line]])
    local expected = line.line_length * 4
    return #line == expected
-end
-
----@return boolean
-function Node:is_left_full()
-   return self:is_line_full(defines.transport_line.left_line)
-end
-
----@return boolean
-function Node:is_right_full()
-   return self:is_line_full(defines.transport_line.right_line)
-end
-
--- Is every line in this connectable entity full?
----@return boolean
-function Node:is_all_full()
-   for i = 1, #self.entity.get_max_transport_line_index() do
-      local line = self.entity.get_transport_line(i --[[@as defines.transport_line]])
-      local expected = line.line_length * 4
-      if expected ~= #line then return false end
-   end
-
-   return true
 end
 
 ---@class fa.TransportBelts.Heuristic

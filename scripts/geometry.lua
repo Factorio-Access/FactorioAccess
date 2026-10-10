@@ -16,8 +16,6 @@ local function offset_dir(dir, offset)
    return ((dir + offset) % 16) --[[@as defines.direction]]
 end
 
-mod.offset_dir = offset_dir
-
 ---@param dir defines.direction
 ---@return defines.direction dir rotated 90 degrees counterclockwise.
 function mod.dir_counterclockwise_90(dir)
@@ -52,14 +50,6 @@ end
 function mod.uv_for_direction(dir)
    local v = Consts.DIRECTION_VECTORS[dir]
    return v.x, v.y
-end
-
--- Calculate the magnitude (length) of a 2D vector, unrolled to avoid tables
----@param x number
----@param y number
----@return number
-function mod.magnitude_2d(x, y)
-   return math.sqrt(x * x + y * y)
 end
 
 -- Normalize a 2D vector (make it unit length), returns individual components

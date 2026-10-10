@@ -150,10 +150,6 @@ function mod.reset_and_increment_generation(pindex)
    movement_history_storage[pindex] = init_movement_history()
 end
 
-function mod.update_player(pindex)
-   update_player_if_needed(pindex)
-end
-
 function mod.update_all_players()
    for pindex, _ in pairs(storage.players) do
       update_player_if_needed(pindex)

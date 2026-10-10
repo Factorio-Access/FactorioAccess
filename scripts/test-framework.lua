@@ -492,13 +492,6 @@ for _, file in ipairs(test_files) do
    end
 end
 
---- Initialize test framework (called from control.lua)
-function mod.load_tests()
-   -- Just log the summary since tests are already loaded
-   local test_suites = TestRegistry.get_test_suites()
-   log_info("TestFramework", "Test loading complete. " .. #test_suites .. " suites registered.")
-end
-
 function mod.on_init()
    if mod.is_test_save() then
       log_info("TestFramework", "Detected test save, initializing test framework")

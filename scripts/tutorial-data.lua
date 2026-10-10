@@ -64,19 +64,6 @@ function mod.get_chapters()
    return chapters
 end
 
----Get a specific chapter by number
----@param chapter_number number
----@return fa.tutorial.Chapter?
-function mod.get_chapter(chapter_number)
-   return chapters[chapter_number]
-end
-
----Get the number of chapters
----@return number
-function mod.get_chapter_count()
-   return #chapters
-end
-
 ---Get the message list name for a chapter's text
 ---@param chapter_number number
 ---@return string

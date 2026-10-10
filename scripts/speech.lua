@@ -206,8 +206,6 @@ local function process_rich_text(str)
    end
 end
 
-mod.process_rich_text = process_rich_text
-
 ---Send a localized string to the screen reader: through the native code when it is loaded (single player),
 ---else to the external launcher.
 ---This is the primary way the mod communicates with blind players.
@@ -258,23 +256,6 @@ function mod.stop_capture()
    local messages = capture_state.messages
    capture_state.messages = {}
    return messages
-end
-
----Get captured messages without stopping capture
----@return table Array of {message: LocalisedString, pindex: integer}
-function mod.get_captured_messages()
-   return capture_state.messages
-end
-
----Clear captured messages without stopping capture
-function mod.clear_captured_messages()
-   capture_state.messages = {}
-end
-
----Check if any messages were captured
----@return boolean
-function mod.has_captured_messages()
-   return #capture_state.messages > 0
 end
 
 return mod

@@ -7,22 +7,9 @@ common code for circuit and electric networks in that regard.
 ]]
 local mod = {}
 
----@param ent LuaEntity
----@param network defines.wire_type
----@return WireConnection[]
-function mod.get_connectors(ent, network)
-   local res = {}
-
-   mod.call_on_connectors(ent, network, function(_unused, c)
-      table.insert(res, c)
-      return true
-   end)
-   return res
-end
-
 --[[
-Same as get_connectors, but taking a callback and stopping when that callback
-returns false.
+Call a callback on each connection of the given wire type, stopping when that
+callback returns false.
 
 useful to avoid making tables or succinctly represent recursion, e.g. "all poles
 in the network".
@@ -42,19 +29,6 @@ function mod.call_on_connectors(ent, network, callback)
          end
       end
    end
-end
-
----Check if an entity has any circuit network connections (red or green wires)
----@param ent LuaEntity
----@return boolean
-function mod.has_circuit_connections(ent)
-   local connectors = ent.get_wire_connectors(false)
-   for _, connector in pairs(connectors) do
-      if connector.wire_type == defines.wire_type.red or connector.wire_type == defines.wire_type.green then
-         if #connector.connections > 0 then return true end
-      end
-   end
-   return false
 end
 
 return mod

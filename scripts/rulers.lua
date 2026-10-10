@@ -236,18 +236,6 @@ function mod.clear_rulers(pindex)
    end
 end
 
--- Soorta legacy: work out the cursor position of the player and use that as the
--- "viewpoint".
---
--- Sorta legacy because I (ahicks) think that we're going to havve to eventually
--- move away from the cursor and the walking player being the same thing,
--- especially with being able to walk in cursor mode on the horizon.  But it's
--- fine to use it for now.
-function mod.update_from_cursor(pindex)
-   local cur = Viewpoint.get_viewpoint(pindex):get_cursor_pos()
-   mod.on_viewpoint_moved(pindex, cur.x, cur.y)
-end
-
 --Checks the alignment of all rulers against the position
 function mod.is_at_any_ruler_definition(pindex, position)
    if module_state[pindex].handle then

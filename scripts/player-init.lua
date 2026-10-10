@@ -294,7 +294,6 @@ function mod.initialize(player)
    if table_size(faplayer.mapped) == 0 then player.force.rechart() end
 
    faplayer.localisations = faplayer.localisations or {}
-   faplayer.translation_id_lookup = faplayer.translation_id_lookup or {}
 
    -- Bump detection is now self-initializing via StorageManager
 end

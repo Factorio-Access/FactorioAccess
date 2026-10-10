@@ -69,13 +69,6 @@ end
 --That way this module doens't care if we even have a cursor
 --It only cares about the screen and mouse
 
---Checks if the map position of the mod cursor falls on screen when the camera is locked on the player character.
-function mod.cursor_position_is_on_screen_with_player_centered(pindex)
-   local vp = Viewpoint.get_viewpoint(pindex)
-   local cursor_pos = vp:get_cursor_pos()
-   return mod.is_on_screen(cursor_pos, pindex)
-end
-
 --Reports if the cursor tile is uncharted/blurred and also if it is distant (off screen)
 function mod.cursor_visibility_info(pindex)
    local p = game.get_player(pindex)

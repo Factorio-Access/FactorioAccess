@@ -13,8 +13,6 @@ local WARNING_TYPES = {
    NOT_CONNECTED = "not-connected",
 }
 
-mod.WARNING_TYPES = WARNING_TYPES
-
 --Warnings menu: scans for problems in the production network it defines and creates the warnings list.
 function mod.scan_for_warnings(L, H, pindex)
    local surf = game.get_player(pindex).surface

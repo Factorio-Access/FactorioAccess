@@ -110,13 +110,6 @@ function Deductor:is_empty()
    return next(self._pending) == nil
 end
 
----Get the pending count for an item
----@param name string Item prototype name
----@return integer
-function Deductor:get_pending(name)
-   return self._pending[name] or 0
-end
-
 ---Try to add cost for an entity prototype
 ---Tries all items_to_place_this options until one works
 ---@param proto_name string Entity prototype name

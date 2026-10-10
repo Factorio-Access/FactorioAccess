@@ -34,8 +34,6 @@ local mod = {}
 ---@field cursor_bookmark fa.Point
 ---@field cursor_ent_highlight_box  LuaEntity?
 ---@field cursor_tile_highlight_box LuaRenderObject?
----@field cursor_rotation_offset  number
----@field cursor_jumping boolean
 ---@field building_direction defines.direction
 ---@field flipped_horizontal boolean
 ---@field flipped_vertical boolean
@@ -137,30 +135,6 @@ end
 ---@param tile_highlight_box  LuaRenderObject?
 function Viewpoint:set_cursor_tile_highlight_box(tile_highlight_box)
    viewpoint_storage[self.pindex].cursor_tile_highlight_box = tile_highlight_box
-end
-
----@return number
-function Viewpoint:get_cursor_rotation_offset()
-   return viewpoint_storage[self.pindex].cursor_rotation_offset
-end
-
----@param rotation_offset  number
-function Viewpoint:set_cursor_rotation_offset(rotation_offset)
-   -- A nil would be stored and only fail later, far from the caller.
-   ---@diagnostic disable-next-line: unnecessary-assert
-   assert(rotation_offset)
-   viewpoint_storage[self.pindex].cursor_rotation_offset = rotation_offset
-end
-
----@return boolean
-function Viewpoint:get_cursor_jumping()
-   return viewpoint_storage[self.pindex].cursor_jumping
-end
-
----@param jumping boolean
-function Viewpoint:set_cursor_jumping(jumping)
-   assert(jumping ~= nil)
-   viewpoint_storage[self.pindex].cursor_jumping = jumping
 end
 
 ---@return defines.direction

@@ -136,10 +136,6 @@ local function compile(path)
       "Attempt to compile the empty/root path, e.g. `F()`.  Paths must always have at least one field on them."
    )
 
-   local meta = {
-      __newindex = no_setting_meta,
-   }
-
    local funcs = {
       get = function(object)
          return follow_path(object, path, false)

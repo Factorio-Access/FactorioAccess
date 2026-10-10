@@ -39,8 +39,6 @@ local VANILLA_MODE_WHITELIST = {
    -- GUI and game state
    [defines.events.on_gui_opened] = true,
    [defines.events.on_gui_closed] = true,
-   [defines.events.on_cutscene_started] = true,
-   [defines.events.on_cutscene_finished] = true,
    [defines.events.on_player_changed_surface] = true,
    [defines.events.on_player_driving_changed_state] = true,
    [defines.events.on_entity_damaged] = true,
@@ -77,9 +75,6 @@ local on_nth_tick_handlers = {}
 
 -- Flag to track if we're in test mode
 local test_mode = false
-
--- Storage for mocked events when in test mode
-local mocked_events = {}
 
 ---Register a handler for an event
 ---@param event_id defines.events|string|(defines.events|string)[] The event ID from defines.events, custom input name, or array of event IDs
@@ -151,23 +146,6 @@ function mod.on_nth_tick(tick_interval, handler)
    end
 
    table.insert(on_nth_tick_handlers[tick_interval], handler)
-end
-
----Register a handler for a custom input
----@param input_name string The custom input name (e.g. "fa-w")
----@param handler fun(event: EventData, pindex?: integer): table? The function to call; return nil to continue, or EventManager.FINISHED to stop
----@param priority? "test"|"ui"|"world" Optional priority (defaults to WORLD)
-function mod.on_custom_input(input_name, handler, priority)
-   -- Custom inputs are just regular events
-   mod.on_event(input_name, handler, priority)
-end
-
----Register a handler (alias for on_event)
----@param event_id_or_input defines.events|string The event ID or custom input name
----@param handler fun(event: EventData, pindex?: integer): table? The function to call; return nil to continue, or EventManager.FINISHED to stop
----@param priority? "test"|"ui"|"world" Optional priority (defaults to WORLD)
-function mod.register(event_id_or_input, handler, priority)
-   mod.on_event(event_id_or_input, handler, priority)
 end
 
 ---Internal: Dispatch an event to all registered handlers
@@ -250,7 +228,6 @@ end
 ---Disable test mode
 function mod.disable_test_mode()
    test_mode = false
-   mocked_events = {}
 end
 
 ---Mock an event (only works in test mode)
@@ -263,21 +240,8 @@ function mod.mock_event(event_id, event_data)
    event_data.name = event_id
    event_data.tick = event_data.tick or game.tick
 
-   -- Store the mocked event
-   if not mocked_events[event_id] then mocked_events[event_id] = {} end
-   table.insert(mocked_events[event_id], event_data)
-
    -- Dispatch immediately
    mod._dispatch_event(event_id, event_data)
-end
-
----Clear all handlers (useful for testing)
-function mod.clear_all_handlers()
-   handlers = {}
-   on_init_handlers = {}
-   on_load_handlers = {}
-   on_configuration_changed_handlers = {}
-   on_nth_tick_handlers = {}
 end
 
 ---Get the number of handlers for an event (useful for testing)

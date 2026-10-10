@@ -291,20 +291,6 @@ function BuildLock.toggle(pindex)
    BuildLock.set_enabled(pindex, not state.enabled, false)
 end
 
----Checks if build lock is enabled for a player
----@param pindex integer
----@return boolean
-function BuildLock.is_enabled(pindex)
-   return build_lock_storage[pindex].enabled
-end
-
----Get the last placed entity from history (most recent)
----@param entity_history fa.ds.FixedRingBuffer
----@return fa.BuildLock.PlacedEntity?
-local function get_last_placed_entity(entity_history)
-   return entity_history:get(0)
-end
-
 ---Calculate direction from one tile to another (4-way: N/S/E/W)
 ---@param from {x: number, y: number}
 ---@param to {x: number, y: number}

@@ -32,18 +32,6 @@ local function is_own_character(player, entity)
    return character.unit_number == entity.unit_number
 end
 
----Check if player can reach an entity for write operations
----@param player LuaPlayer
----@param entity LuaEntity
----@return boolean
-local function can_reach_for_write(player, entity)
-   -- Own character always has write access
-   if is_own_character(player, entity) then return true end
-
-   -- Check if player can physically reach the entity
-   return player.can_reach_entity(entity)
-end
-
 ---Check if a chunk is visible (charted and not fog-of-war)
 ---@param force LuaForce
 ---@param surface LuaSurface
@@ -52,16 +40,6 @@ end
 local function is_position_visible(force, surface, position)
    local chunk_pos = { x = math.floor(position.x / 32), y = math.floor(position.y / 32) }
    return force.is_chunk_visible(surface, chunk_pos)
-end
-
----Check if a chunk is charted (explored, may be fog-of-war)
----@param force LuaForce
----@param surface LuaSurface
----@param position MapPosition
----@return boolean
-local function is_position_charted(force, surface, position)
-   local chunk_pos = { x = math.floor(position.x / 32), y = math.floor(position.y / 32) }
-   return force.is_chunk_charted(surface, chunk_pos)
 end
 
 ---Check if an entity bypasses charting requirements (vehicles, trains, etc.)

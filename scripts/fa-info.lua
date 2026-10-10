@@ -663,13 +663,6 @@ local function ent_info_item_on_ground(ctx)
    end
 end
 
-local dir_names = {
-   [defines.direction.north] = "north",
-   [defines.direction.east] = "east",
-   [defines.direction.south] = "south",
-   [defines.direction.west] = "west",
-}
-
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_heat_pipe_shape(ctx)
    if ctx.ent.type == "heat-pipe" then

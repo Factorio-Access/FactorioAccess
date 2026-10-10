@@ -55,8 +55,6 @@ function mod.on_cursor_stack_changed(event, pindex, read_hand)
          end
          local width, height = BuildDimensions.get_stack_build_dimensions(stack, dirs.north)
          if width == nil or height == nil then return end
-         storage.players[pindex].blueprint_width_in_hand = width + 1
-         storage.players[pindex].blueprint_height_in_hand = height + 1
       end
    end
 
@@ -67,7 +65,6 @@ function mod.on_cursor_stack_changed(event, pindex, read_hand)
 
       if not pipetted_this_tick then
          vp:set_hand_direction(dirs.north)
-         vp:set_cursor_rotation_offset(0)
          vp:set_flipped_horizontal(false)
          vp:set_flipped_vertical(false)
       end
@@ -76,8 +73,6 @@ function mod.on_cursor_stack_changed(event, pindex, read_hand)
    end
 
    storage.players[pindex].bp_selecting = false
-   storage.players[pindex].blueprint_reselecting = false
-   storage.players[pindex].ghost_rail_planning = false
    Graphics.sync_build_cursor_graphics(pindex)
 end
 

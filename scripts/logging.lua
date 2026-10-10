@@ -94,22 +94,6 @@ function Logger:error(message)
    write_log(mod.LEVELS.ERROR, self.module_name, message)
 end
 
--- Log at CRITICAL level
----@param message string
-function Logger:critical(message)
-   write_log(mod.LEVELS.CRITICAL, self.module_name, message)
-end
-
--- Log a table (useful for debugging)
----@param message string
----@param tbl table
----@param level? LogLevel Default is DEBUG
-function Logger:log_table(message, tbl, level)
-   level = level or mod.LEVELS.DEBUG
-   local serialized = serpent.line(tbl, { comment = false, nocode = true })
-   write_log(level, self.module_name, message .. ":\n" .. serialized)
-end
-
 -- Logger constructor
 ---@param module_name string The name of the module creating this logger
 ---@return fa.Logger
@@ -159,30 +143,6 @@ function mod.use_main_log()
    shared_state.current_log_file = shared_state.log_file
    local logger = mod.Logger("Logging")
    logger:info("Switched to main log file")
-end
-
--- Special logger functions that don't belong to a specific module
-
--- Special logger for printout function
----@param pindex integer Player index
----@param message any Message to log
-function mod.log_printout(pindex, message)
-   if shared_state.current_level <= mod.LEVELS.DEBUG then
-      write_log(mod.LEVELS.DEBUG, "printout", string.format("Player %d: %s", pindex, tostring(message)))
-   end
-end
-
--- Special logger for events
----@param event_name string Name of the event
----@param event_data? table Optional event data table
-function mod.log_event(event_name, event_data)
-   if shared_state.current_level <= mod.LEVELS.DEBUG then
-      local message = string.format("Event %s fired", event_name)
-      if event_data and type(event_data) == "table" then
-         message = message .. " with data: " .. serpent.line(event_data, { comment = false })
-      end
-      write_log(mod.LEVELS.DEBUG, "EventManager", message)
-   end
 end
 
 return mod

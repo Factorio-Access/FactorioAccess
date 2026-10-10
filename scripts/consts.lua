@@ -113,26 +113,6 @@ mod.VEHICLE_TYPES = {
    ["artillery-wagon"] = true,
 }
 
--- Entity types that players can walk over without collision
-mod.ENT_TYPES_YOU_CAN_WALK_OVER = {
-   "resource",
-   "transport-belt",
-   "underground-belt",
-   "splitter",
-   "item-entity",
-   "entity-ghost",
-   "heat-pipe",
-   "pipe",
-   "pipe-to-ground",
-   "character",
-   "rail-signal",
-   "highlight-box",
-   "combat-robot",
-   "logistic-robot",
-   "construction-robot",
-   "rocket-silo-rocket-shadow",
-}
-
 -- Entity types that can be built over (replaced)
 mod.ENT_TYPES_YOU_CAN_BUILD_OVER = {
    "resource",

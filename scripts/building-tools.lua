@@ -81,10 +81,6 @@ function mod.calculate_build_params(params)
 
       local position = footprint.center
 
-      -- Store the calculated footprint for later use
-      storage.players[pindex].building_footprint_left_top = footprint.left_top
-      storage.players[pindex].building_footprint_right_bottom = footprint.right_bottom
-
       local actual_build_direction = building_direction
       if placing_underground_belt then
          -- Auto-detect if placing would form an exit

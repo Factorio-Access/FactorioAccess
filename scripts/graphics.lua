@@ -61,9 +61,7 @@ function mod.sync_build_cursor_graphics(pindex)
       width = footprint.width
       height = footprint.height
 
-      --Update the footprint info and draw it
-      player.building_footprint_left_top = left_top
-      player.building_footprint_right_bottom = right_bottom
+      --Draw the footprint
       player.building_footprint = rendering.draw_rectangle({
          left_top = left_top,
          right_bottom = right_bottom,

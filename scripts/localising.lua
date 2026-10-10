@@ -18,12 +18,6 @@ function mod.entity_status_localised(status)
    return { "entity-status." .. status_text:gsub("_", "-") }
 end
 
-function mod.request_localisation(thing, pindex)
-   local id = game.players[pindex].request_translation(thing.localised_name)
-   local lookup = storage.players[pindex].translation_id_lookup
-   lookup[id] = { thing.object_name, thing.name }
-end
-
 function mod.handler(event)
    local pindex = event.player_index
    local player = storage.players[pindex]

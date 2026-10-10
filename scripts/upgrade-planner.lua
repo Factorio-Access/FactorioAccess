@@ -107,11 +107,4 @@ function mod.get_fast_replaceable_group(entity_name)
    return nil
 end
 
----Check if an entity can be upgraded (has a fast_replaceable_group)
----@param entity_name string
----@return boolean
-function mod.is_entity_upgradeable(entity_name)
-   return mod.get_fast_replaceable_group(entity_name) ~= nil
-end
-
 return mod

@@ -81,7 +81,6 @@ local direction_deltas = {
    [defines.direction.south] = { dx = 0, dy = 1, opp = defines.direction.north },
    [defines.direction.west] = { dx = -1, dy = 0, opp = defines.direction.east },
 }
-mod.direction_deltas = direction_deltas
 
 ---Returns a list of valid neighbor connections for a given entity and one of its heat connection points.
 ---If pipes_only is true, only return pipe connections.
@@ -171,20 +170,6 @@ function mod.get_pipe_shape(ent)
    end
 
    return NetworkShape.get_shape_from_directions(connections)
-end
-
----Returns the total number of valid heat connections for the given entity.
----Counts all entities connected at any heat connection point (pipes and non-pipes).
----@param ent LuaEntity
----@return integer
-function mod.get_total_heat_connections(ent)
-   local total = 0
-   local cps = mod.get_connection_points(ent)
-   for _, cp in ipairs(cps) do
-      local neighbors = mod.get_connected_neighbors(ent, cp)
-      total = total + #neighbors
-   end
-   return total
 end
 
 ---Returns the total number of valid heat pipe connections for the given entity.
