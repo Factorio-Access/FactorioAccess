@@ -8,5 +8,12 @@
      "factorio_version": "2.1",
      "dependencies": [
           "? Kruise_Kontrol_Remote"
-     ]
+     ],
+     "package": {
+          "ignore": [
+               "native/**",
+               "scratchpad/**",
+               ".tools/**"
+          ]
+     }
 }

@@ -1,6 +1,8 @@
 #include "lua_native.h"
+#include <atomic>
 #include <cstddef>
 #include <string>
+#include "audio/audio.h"
 #include "log.h"
 #include "speech.h"
 #include "sym.h"
@@ -20,6 +22,7 @@ struct Api {
   void (*setglobal)(lua_State*, const char*);
   int (*gettop)(lua_State*);
   int (*toboolean)(lua_State*, int);
+  const char* (*checklstring)(lua_State*, int, size_t*);
 } api;
 
 // MSVC std::string, as returned by reference from the engine.
@@ -78,6 +81,17 @@ int lua_speak(lua_State* L) {
   return 0;
 }
 
+// _fa_native.audio_cmd(json): one command for the audio engine, in the launcher's JSON format.
+std::atomic<uint64_t> g_audio_commands;
+
+int lua_audio_cmd(lua_State* L) {
+  size_t len = 0;
+  const char* json = api.checklstring(L, 1, &len);  // raises a Lua error when not a string
+  if (g_audio_commands++ == 0) log::writef("lua: first audio command {}", std::string_view(json, len));
+  audio::submit(std::string_view(json, len));
+  return 0;
+}
+
 template <typename T>
 bool resolve(T& out, const char* name) {
   out = sym::fn<T>(name);
@@ -94,6 +108,7 @@ bool init() {
   ok &= resolve(api.setglobal, "lua_setglobal");
   ok &= resolve(api.gettop, "lua_gettop");
   ok &= resolve(api.toboolean, "lua_toboolean");
+  ok &= resolve(api.checklstring, "luaL_checklstring");
   ok &= resolve(g_parse, "LuaHelper::parseLocalisedString");
   ok &= resolve(g_str, "LocalisedString::str");
   ok &= resolve(g_dtor, "LocalisedString::~LocalisedString");
@@ -107,14 +122,18 @@ bool init() {
   return ok;
 }
 
+uint64_t audio_commands() { return g_audio_commands; }
+
 void on_state_created(void* L, std::string_view mod) {
   if (mod != "FactorioAccess") return;
   // Net stack effect zero: the table is consumed by setglobal, each closure by setfield.
-  api.createtable(L, 0, 2);
+  api.createtable(L, 0, 3);
   api.pushinteger(L, kApiVersion);
   api.setfield(L, -2, "api_version");
   api.pushcclosure(L, lua_speak, 0);
   api.setfield(L, -2, "speak");
+  api.pushcclosure(L, lua_audio_cmd, 0);
+  api.setfield(L, -2, "audio_cmd");
   api.setglobal(L, "_fa_native");
   log::writef("lua: _fa_native installed for {}", mod);
 }

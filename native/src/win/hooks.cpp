@@ -12,6 +12,7 @@
 #include <string_view>
 #include <vector>
 #include "input.h"
+#include "assets.h"
 #include "log.h"
 #include "lua_native.h"
 #include "sym.h"
@@ -270,12 +271,34 @@ struct MsvcStringView {
 using LuaGameScriptCtor_t = void* (*)(void*, const MsvcStringView*, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*,
                                       void*, void*, void*);
 static LuaGameScriptCtor_t LuaGameScriptCtor_orig;
+static size_t g_mod_package, g_package_path;  // Mod::package (unique_ptr<Package>), Package::packagePath_ (std::filesystem::path)
+
+// MSVC std::wstring (std::filesystem::path's only member): 8 inline wchar_t or a heap pointer, size, capacity.
+struct MsvcWString {
+  union {
+    wchar_t buf[8];
+    const wchar_t* ptr;
+  };
+  size_t size;
+  size_t cap;
+  std::wstring str() const { return std::wstring(cap > 7 ? ptr : buf, size); }
+};
+
+// Where FactorioAccess's files are: the engine's own package for the mod (a directory, or the installed zip).
+static void note_mod_package(const void* mod) {
+  if (!mod) return;
+  const void* package = *reinterpret_cast<void* const*>(reinterpret_cast<const char*>(mod) + g_mod_package);
+  if (!package) return;
+  auto& path = *reinterpret_cast<const MsvcWString*>(reinterpret_cast<const char*>(package) + g_package_path);
+  assets::set_package(path.str());
+}
 static void* LuaGameScriptCtor_hook(void* self, const MsvcStringView* name, void* a2, void* a3, void* a4, void* a5, void* a6, void* a7, void* a8,
                                     void* a9, void* a10, void* a11, void* a12, void* a13, void* a14, void* a15) {
   struct Clear {
     ~Clear() { t_creating_mod.clear(); }  // also when the mod's script fails to load (a C++ exception)
   } clear;
   t_creating_mod = name->str();
+  if (t_creating_mod == "mod-FactorioAccess") note_mod_package(a6);  // a6: Mod const*
   return LuaGameScriptCtor_orig(self, name, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15);
 }
 
@@ -370,6 +393,12 @@ bool install() {
     g_nofocus = GetEnvironmentVariableW(L"FA_NOFOCUS", v, 4) > 0 && v[0] == L'1';
   }
   if (!resolve_events()) return false;
+  {
+    auto mp = sym::offset("Mod", "package"), pp = sym::offset("Package", "packagePath_");
+    if (!mp || !pp) return false;
+    g_mod_package = *mp;
+    g_package_path = *pp;
+  }
   g_push_event = sym::fn<PushEvent_t>("SDL_PushEvent_REAL");
   g_get_window_id = sym::fn<GetWindowID_t>("SDL_GetWindowID_REAL");
   g_key_from_scancode = sym::fn<GetKeyFromScancode_t>("SDL_GetKeyFromScancode_REAL");

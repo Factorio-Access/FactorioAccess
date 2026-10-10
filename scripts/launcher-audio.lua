@@ -50,6 +50,7 @@ For full command documentation, see https://github.com/factorio-access/launcher-
 This module builds those, and it is ultimately handled by that package.
 ]]
 
+local Native = require("scripts.native")
 local Uid = require("scripts.uid")
 local VanillaMode = require("scripts.vanilla-mode")
 
@@ -450,13 +451,18 @@ end
 -- Send Function
 --------------------------------------------------------------------------------
 
----Send a command to the launcher
+---Send a command to the audio engine: the native code's when it is available (single player with the DLL), else
+---the launcher's. Both parse the same JSON.
 ---@param pindex integer
 ---@param command fa.LauncherAudio.Command
 function mod.send(pindex, command)
    if VanillaMode.is_enabled(pindex) then return end
    local json = helpers.table_to_json(command)
-   print("acmd " .. pindex .. " " .. json)
+   if Native.is_available() then
+      Native.audio_cmd(json)
+   else
+      print("acmd " .. pindex .. " " .. json)
+   end
 end
 
 return mod

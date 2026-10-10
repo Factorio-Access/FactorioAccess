@@ -13,6 +13,7 @@ local mod = {}
 ---@class (exact) fa.NativeApi
 ---@field api_version integer
 ---@field speak fun(str: LocalisedString, interrupt: boolean?)
+---@field audio_cmd fun(json: string)
 
 ---@return fa.NativeApi?
 local function get_native()
@@ -26,14 +27,14 @@ function mod.is_available()
    return get_native() ~= nil and not game.is_multiplayer()
 end
 
----@generic T
----@param cb fun(n: fa.NativeApi): T
----@return T
+---@param cb fun(n: fa.NativeApi)
 local function with_native(cb)
    local n = get_native()
    if not n then error("the native code is not loaded; check Native.is_available() first") end
-   if game.is_multiplayer() then error("the native code is not used in multiplayer; check Native.is_available() first") end
-   return cb(n)
+   if game.is_multiplayer() then
+      error("the native code is not used in multiplayer; check Native.is_available() first")
+   end
+   cb(n)
 end
 
 ---Speak through the native screen reader bridge. The engine localises the string immediately.
@@ -42,6 +43,14 @@ end
 function mod.speak(str, interrupt)
    with_native(function(n)
       n.speak(str, interrupt)
+   end)
+end
+
+---Send one audio command (the JSON the launcher's audio engine accepts) to the native audio engine.
+---@param json string
+function mod.audio_cmd(json)
+   with_native(function(n)
+      n.audio_cmd(json)
    end)
 end
 

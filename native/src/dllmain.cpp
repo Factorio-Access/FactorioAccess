@@ -1,5 +1,9 @@
 #include <windows.h>
+#include <string>
 #include "agui.h"
+#include "assets.h"
+#include "audio/audio.h"
+#include "audio_mute.h"
 #include "app.h"
 #include "game.h"
 #include "lua_native.h"
@@ -33,7 +37,7 @@ extern "C" __declspec(dllexport) DWORD WINAPI fa_init(LPVOID) {
     fa::speech::speak("Factorio Access native code could not read the game's symbols and is disabled", true);
     return 0;
   }
-  if (!fa::agui::init() || !fa::game::init() || !fa::lua::init()) {
+  if (!fa::agui::init() || !fa::game::init() || !fa::lua::init() || !fa::assets::init()) {
     fa::speech::speak("Factorio Access native code does not support this game version and is disabled", true);
     return 0;
   }
@@ -44,6 +48,13 @@ extern "C" __declspec(dllexport) DWORD WINAPI fa_init(LPVOID) {
     fa::speech::speak("Factorio Access native code does not support this game version and is disabled", true);
     return 0;
   }
+  fa::audio::set_log([](std::string_view line) { fa::log::writef("audio: {}", line); });
+  // Sound names are relative to the mod's audio/ folder, as the launcher resolved them.
+  if (!fa::audio::init([](std::string_view name) { return fa::assets::read("audio/" + std::string(name)); }))
+    fa::log::write("fa_native: audio unavailable");
+  // FA_MUTE (the dev loop) silences the whole process, the game included; otherwise unmute explicitly, since Windows
+  // would otherwise carry a muted dev run's state into the next real launch.
+  fa::audio_session::set_muted(env_flag(L"FA_MUTE"));
   fa::app::init();
   fa::hooks::set_frame_callback(fa::app::tick);
   if (int port = env_int(L"FA_PORT", 0)) fa::dev::start(port);
@@ -59,6 +70,7 @@ extern "C" __declspec(dllexport) DWORD WINAPI fa_unload(LPVOID) {
   if (g_installed) fa::hooks::remove();
   Sleep(250);  // the main thread may still be inside a hook body (the frame callback included): let it leave
   fa::app::shutdown();
+  fa::audio::shutdown();
   fa::sym::shutdown();
   fa::speech::shutdown();
   // The detours are gone but the main thread may still be inside one of our hook bodies: let it leave.

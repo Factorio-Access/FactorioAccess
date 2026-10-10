@@ -10,9 +10,11 @@
 #include <thread>
 #include "agui.h"
 #include "app.h"
+#include "audio/audio.h"
 #include "hooks.h"
 #include "input.h"
 #include "log.h"
+#include "lua_native.h"
 #include "speech.h"
 
 namespace fa::dev {
@@ -98,7 +100,8 @@ static int scancode(const std::string& name) {
 static std::string handle(const std::string& path, const Query& q, int& status) {
   status = 200;
   if (path == "/health")
-    return std::format("ok pid={} frame={} backend={} muted={}\n", GetCurrentProcessId(), hooks::frame(), speech::backend_name(), speech::muted());
+    return std::format("ok pid={} frame={} backend={} muted={} audio_commands={}\n", GetCurrentProcessId(), hooks::frame(), speech::backend_name(),
+                       speech::muted(), lua::audio_commands());
   if (path == "/log") return ring_since(log::ring(), q);
   if (path == "/speech") return ring_since(speech::history(), q);
   if (path == "/say") {
@@ -138,6 +141,10 @@ static std::string handle(const std::string& path, const Query& q, int& status) 
     }
     agui::click(w);
     return "clicked\n";
+  }
+  if (path == "/audio") {  // ?json=<one command, as the mod sends it>
+    audio::submit(arg(q, "json"));
+    return "submitted\n";
   }
   if (path == "/ui/nav") return app::dump();
   if (path == "/ui/tree") {

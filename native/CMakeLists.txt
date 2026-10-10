@@ -40,10 +40,10 @@ target_link_libraries(faui_tests PRIVATE faui)
 
 # --- the injected DLL ---
 add_library(fa_native SHARED
-  src/dllmain.cpp src/log.cpp src/input.cpp src/app.cpp src/lua_native.cpp src/screens/dialogs.cpp src/win/game.cpp src/speech.cpp src/devserver.cpp
+  src/dllmain.cpp src/log.cpp src/input.cpp src/app.cpp src/assets.cpp src/lua_native.cpp src/screens/dialogs.cpp src/win/game.cpp src/win/audio_mute.cpp src/speech.cpp src/devserver.cpp
   src/win/hooks.cpp src/win/sym.cpp src/win/window.cpp src/win/agui.cpp)
 target_include_directories(fa_native PRIVATE src ${PRISM_DIR}/include)
-target_link_libraries(fa_native PRIVATE faui detours ${PRISM_LIB} user32 ws2_32 dbghelp delayimp)
+target_link_libraries(fa_native PRIVATE faui fa_audio detours ${PRISM_LIB} user32 ws2_32 ole32 dbghelp delayimp)
 target_link_options(fa_native PRIVATE /DELAYLOAD:prism.dll)
 add_custom_command(TARGET fa_native POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PRISM_DLL} $<TARGET_FILE_DIR:fa_native>)
@@ -51,3 +51,13 @@ add_custom_command(TARGET fa_native POST_BUILD
 # --- the dev injector (launch suspended + inject, eject) ---
 add_executable(fa_inject src/inject/main.cpp)
 target_link_libraries(fa_inject PRIVATE psapi)
+
+# --- audio: the launcher's fa_launcher_audio ported in-process (miniaudio + JSON commands from the mod) ---
+set(MINIAUDIO_DIR ${CMAKE_SOURCE_DIR}/third_party/miniaudio)
+add_library(fa_audio STATIC
+  src/audio/audio.cpp src/audio/commands.cpp src/audio/json.cpp src/audio/panner_node.c src/audio/miniaudio_impl.c)
+target_include_directories(fa_audio PUBLIC src PRIVATE ${MINIAUDIO_DIR})
+add_executable(fa_audio_tests tests_audio/main.cpp tests_audio/commands_tests.cpp tests_audio/params_tests.cpp tests_audio/json_tests.cpp
+  tests_audio/engine_tests.cpp)
+target_include_directories(fa_audio_tests PRIVATE third_party)
+target_link_libraries(fa_audio_tests PRIVATE fa_audio)
