@@ -3,17 +3,6 @@ local Consts = require("scripts.consts")
 
 local mod = {}
 
-function mod.play_mining_sound(pindex)
-   local player = game.players[pindex]
-   if player and player.mining_state.mining and player.selected and player.selected.valid then
-      if player.selected and player.selected.prototype.is_building then
-         player.play_sound({ path = "player-mine" })
-      elseif player.selected and player.selected.type ~= "resource" then
-         player.play_sound({ path = "player-mine" }) --Mine other things, eg. character corpses, laterdo new sound
-      end
-   end
-end
-
 --Mines an entity with the right sound
 function mod.try_to_mine_with_soun(ent, pindex)
    if ent ~= nil and ent.valid and ((ent.destructible and ent.type ~= "resource") or ent.name == "item-on-ground") then

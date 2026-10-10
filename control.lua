@@ -12,7 +12,6 @@ local logger = Logging.Logger("control")
 local util = require("util")
 
 local AreaOperations = require("scripts.area-operations")
-local AudioCues = require("scripts.audio-cues")
 local Blueprints = require("scripts.blueprints")
 local BuildingTools = require("scripts.building-tools")
 local BuildDimensions = require("scripts.build-dimensions")
@@ -365,9 +364,6 @@ function on_tick(event)
    ForceGhostEnabler.on_tick()
 
    move_characters(event)
-
-   -- Check alerts via AudioCues
-   AudioCues.check_cues(event.tick, players)
 
    -- Check bump detection every tick for all players
    for _, player in pairs(game.players) do
@@ -748,7 +744,6 @@ EventManager.on_init(function()
    if freeplay and freeplay["set_skip_intro"] then remote.call("freeplay", "set_skip_intro", true) end
    ensure_storage_structures_are_up_to_date()
    TestFramework.on_init()
-   AudioCues.on_init()
 end)
 
 EventManager.on_event(
@@ -932,10 +927,10 @@ EventManager.on_event(
             .. "."
       end
       --Notify all players
-      for pindex, player in pairs(players) do
-         storage.players[pindex].last_damage_alert_tick = event.tick
-         Speech.speak(pindex, result)
-         game.get_player(pindex).print(result) --**laterdo unique sound, for now use console sound
+      for _, player in pairs(game.connected_players) do
+         storage.players[player.index].last_damage_alert_tick = event.tick
+         Speech.speak(player.index, result)
+         player.print(result) --**laterdo unique sound, for now use console sound
       end
    end
 )
@@ -1000,8 +995,8 @@ EventManager.on_event(
       local speaker = game.get_player(event.player_index).name
       if speaker == nil or speaker == "" then speaker = "Player" end
       local message = event.message
-      for pindex, player in pairs(players) do
-         Speech.speak(pindex, { "fa.chat-message", speaker, message })
+      for _, player in pairs(game.connected_players) do
+         Speech.speak(player.index, { "fa.chat-message", speaker, message })
       end
    end
 )
@@ -1015,8 +1010,8 @@ EventManager.on_event(
 
       local speaker = game.get_player(event.player_index).name
       if speaker == nil or speaker == "" then speaker = "Player" end
-      for pindex, player in pairs(players) do
-         Speech.speak(pindex, { "fa.command-message", speaker, event.command, event.parameters })
+      for _, player in pairs(game.connected_players) do
+         Speech.speak(player.index, { "fa.command-message", speaker, event.command, event.parameters })
       end
    end
 )
@@ -2034,30 +2029,6 @@ local function kb_jump_to_player(event)
          math.floor(cursor_pos.y) + cursor_size + 1,
       }
       Graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
-   end
-end
-
----@param event EventData.CustomInputEvent
-local function kb_read_driving_structure_ahead(event)
-   local pindex = event.player_index
-   local p = game.get_player(pindex)
-   local ent = storage.players[pindex].last_driving_alert_ent
-   if ent and ent.valid then
-      local dir = FaUtils.get_heading_value(p.vehicle)
-      local dir_ent = FaUtils.get_direction_biased(ent.position, p.vehicle.position)
-      if p.vehicle.speed >= 0 and (dir_ent == dir or math.abs(dir_ent - dir) == 1 or math.abs(dir_ent - dir) == 15) then
-         local dist = math.floor(util.distance(p.vehicle.position, ent.position))
-         Speech.speak(
-            pindex,
-            { "fa.driving-structure-ahead", Localising.get_localised_name_with_fallback(ent), tostring(dist) }
-         )
-      elseif p.vehicle.speed <= 0 and dir_ent == FaUtils.rotate_180(dir) then
-         local dist = math.floor(util.distance(p.vehicle.position, ent.position))
-         Speech.speak(
-            pindex,
-            { "fa.driving-structure-behind", Localising.get_localised_name_with_fallback(ent), tostring(dist) }
-         )
-      end
    end
 end
 

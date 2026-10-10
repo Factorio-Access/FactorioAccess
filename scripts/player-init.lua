@@ -58,7 +58,6 @@ function mod.initialize(player)
    faplayer.last_menu_toggle_tick = faplayer.last_menu_toggle_tick or 0
    faplayer.last_damage_alert_tick = faplayer.last_damage_alert_tick or 0
    faplayer.last_honk_tick = faplayer.last_honk_tick or 0
-   faplayer.last_driving_alert_tick = faplayer.last_driving_alert_tick or 0
    faplayer.last_click_time = faplayer.last_click_time or 0
    faplayer.lag_building_in_hand = faplayer.lag_building_in_hand or nil
    faplayer.lag_building_selected = faplayer.lag_building_selected or nil

@@ -188,11 +188,6 @@ function mod.play_train_honk_low_long(pindex)
    play_sound_internal(pindex, { path = "train-honk-low-long" })
 end
 
--- Crafting sounds
-function mod.play_crafting(pindex)
-   play_sound_internal(pindex, { path = "player-crafting" })
-end
-
 -- Utility sounds
 -- Note: play_inventory_click removed - use play_menu_click instead
 -- Note: play_inventory_move removed - not used anywhere
