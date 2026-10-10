@@ -84,7 +84,13 @@ Path child_path(const Path& parent, bool priv, size_t index) {
   return parent + (parent.ends_with("|") ? "" : ".") + (priv ? "p" : "c") + std::to_string(index);
 }
 
-std::string plain(const std::string& s) { return strip_rich_text(s); }
+// Speech text from a game caption: no rich-text markup, and no list bullet ("• Freeplay" reads "bullet Freeplay").
+std::string plain(const std::string& s) {
+  std::string t = strip_rich_text(s);
+  static const std::string kBullet = "\xE2\x80\xA2";  // U+2022
+  if (t.starts_with(kBullet)) t = strip_rich_text(t.substr(kBullet.size()));
+  return t;
+}
 
 enum class Kind { Container, Skip, Label, Button, CheckBox, Radio, DropDown, TextField, Tab, Slider };
 
@@ -129,6 +135,27 @@ struct Entry {
 };
 using Row = std::vector<Entry>;
 
+// Visible controls (non-containers) under `w`, counting up to `limit`.
+int count_controls(agui::Widget* w, int limit) {
+  int n = 0;
+  for (bool priv : {false, true})
+    for (agui::Widget* c : priv ? agui::private_children(w) : agui::children(w)) {
+      if (n >= limit) return n;
+      if (!agui::visible(c)) continue;
+      Kind k = classify(c);
+      if (k == Kind::Skip) continue;
+      n += k == Kind::Container ? count_controls(c, limit - n) : 1;
+    }
+  return n;
+}
+
+bool cells_are_single(agui::Widget* w) {
+  for (bool priv : {false, true})
+    for (agui::Widget* c : priv ? agui::private_children(w) : agui::children(w))
+      if (agui::visible(c) && classify(c) == Kind::Container && count_controls(c, 2) > 1) return false;
+  return true;
+}
+
 class Walker {
  public:
   std::vector<Row> rows;
@@ -144,7 +171,10 @@ class Walker {
         Kind k = classify(c);
         if (k == Kind::Skip) continue;
         if (k == Kind::Container) {
-          bool row = !in_row && (agui::is_a(c, "agui::HorizontalFlow") || agui::is_a(c, "agui::Table"));
+          // A horizontal flow or table is a row when each of its cells holds at most one control (a button
+          // bar, a tab strip, "label: dropdown"). One holding whole panels side by side (a list beside its
+          // details) is columns: each column is walked on its own, top to bottom.
+          bool row = !in_row && (agui::is_a(c, "agui::HorizontalFlow") || agui::is_a(c, "agui::Table")) && cells_are_single(c);
           if (row) rows.emplace_back();
           walk(c, p, in_row || row);
           if (row && rows.back().empty()) rows.pop_back();
@@ -200,7 +230,17 @@ NodeVtablePtr make_node(const Entry& e, std::function<void(const Path&)> start_e
       v->control_type = &kLabelType;
       v->announcements.resize(1);
       return v;
-    case Kind::Button: v->control_type = &kButtonType; break;
+    case Kind::Button: {
+      v->control_type = &kButtonType;
+      // A row of a list: say whether it is the selected one.
+      auto selected = [p] {
+        agui::Widget* w = resolve(p);
+        auto s = w ? agui::list_row_selected(w) : std::nullopt;
+        return s && *s ? std::string(strings::kSelected) : std::string();
+      };
+      v->announcements.push_back(NodeAnnouncement(selected, true, announcement_kinds::kSelected));
+      break;
+    }
     case Kind::Tab: v->control_type = &kTabType; break;
     case Kind::Slider: v->control_type = &kSliderType; break;
     case Kind::Radio:
@@ -208,11 +248,17 @@ NodeVtablePtr make_node(const Entry& e, std::function<void(const Path&)> start_e
       v->control_type = e.kind == Kind::Radio ? &kRadioType : &kCheckType;
       auto state = [p] {
         agui::Widget* w = resolve(p);
-        return w ? std::string(agui::toggled(w) ? strings::kChecked : strings::kUnchecked) : std::string();
+        return w ? std::string(agui::checked(w) ? strings::kChecked : strings::kUnchecked) : std::string();
       };
       v->announcements.push_back(NodeAnnouncement(state, true, announcement_kinds::kValue));
       v->state_text = state;
-      break;
+      v->on_activate = [p] {
+        agui::Widget* w = resolve(p);
+        if (w && agui::enabled(w)) agui::toggle(w);
+        else if (w) speech::speak(strings::kDisabled, true);
+      };
+      v->on_tooltip = tip;
+      return v;
     }
     case Kind::DropDown:
       // The caption of a dropdown is its selected item: speak it as the value, without a separate label. The

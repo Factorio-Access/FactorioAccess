@@ -31,7 +31,9 @@ struct Layout {
   size_t gui_base = 0;         // agui::Gui::baseWidget
   size_t gui_focus = 0;        // agui::Gui::focusManager + FocusManager::focusedWidget (GenericTargeter: target first)
   size_t w_parent = 0, w_children = 0, w_private = 0, w_usage = 0;
-  size_t button_toggled = 0;  // agui::Button::toggled (checkbox and toggle button state)
+  size_t button_toggled = 0;  // agui::Button::toggled (toggle button state)
+  size_t checked_state = 0;   // agui::ToggleButton::checkedState (enum CheckedState: UNCHECKED 0, CHECKED 1, INTERMEDIATE 2)
+  size_t vt_mouse_click = 0;  // virtual bool agui::Widget::mouseClick(agui::MouseEvent const&)
   size_t vt_get_text = 0, vt_focus = 0, vt_get_style = 0;
   size_t style_parent = 0, style_info = 0, style_tooltip = 0, info_name = 0;
   void* get_abs_rect = nullptr;    // Rectangle agui::Widget::getAbsoluteRectangle() const
@@ -42,6 +44,8 @@ struct Layout {
   void (*dd_edit)(Widget*, int) = nullptr;      // agui::DropDown::editSelectedIndex (dispatches item-select)
   bool (*dd_showing)(Widget*) = nullptr;        // agui::DropDown::isDropDownShowing
   void (*dd_hide)(Widget*) = nullptr;           // agui::DropDown::hideDropDown
+  int (*lb_selected)(Widget*) = nullptr;        // agui::ListBox::getSelectedIndex
+  int (*lb_index_of)(Widget*, Widget*) = nullptr;  // agui::ListBox::getIndexOfWidget
 } L;
 
 template <typename T>
@@ -82,6 +86,8 @@ bool init() {
   ok &= resolve(L.w_private, "agui::Widget", "privateChildren");
   ok &= resolve(L.w_usage, "agui::Widget", "usageBitMask");
   ok &= resolve(L.button_toggled, "agui::Button", "toggled");
+  ok &= resolve(L.checked_state, "agui::ToggleButton", "checkedState");
+  ok &= resolve_virtual(L.vt_mouse_click, "agui::Widget", "mouseClick");
   ok &= resolve_virtual(L.vt_get_text, "agui::Widget", "getText");
   L.dispatch_click = sym::addr("agui::Widget::dispatchClick");
   ok &= L.dispatch_click != nullptr;
@@ -98,6 +104,8 @@ bool init() {
   ok &= (L.dd_edit = sym::fn<decltype(L.dd_edit)>("agui::DropDown::editSelectedIndex")) != nullptr;
   ok &= (L.dd_showing = sym::fn<decltype(L.dd_showing)>("agui::DropDown::isDropDownShowing")) != nullptr;
   ok &= (L.dd_hide = sym::fn<decltype(L.dd_hide)>("agui::DropDown::hideDropDown")) != nullptr;
+  ok &= (L.lb_selected = sym::fn<decltype(L.lb_selected)>("agui::ListBox::getSelectedIndex")) != nullptr;
+  ok &= (L.lb_index_of = sym::fn<decltype(L.lb_index_of)>("agui::ListBox::getIndexOfWidget")) != nullptr;
   ok &= resolve(L.me_position, "agui::MouseEvent", "position");
   ok &= resolve(L.me_button, "agui::MouseEvent", "button");
   ok &= resolve(L.me_type, "agui::MouseEvent", "eventType");
@@ -138,6 +146,7 @@ constexpr uint32_t kVisible = 0x4, kHiddenOverride = 0x20000, kEnabled = 0x8;
 bool visible(Widget* w) { return (at<uint32_t>(w, L.w_usage) & (kVisible | kHiddenOverride)) == kVisible; }
 bool enabled(Widget* w) { return (at<uint32_t>(w, L.w_usage) & kEnabled) != 0; }
 bool toggled(Widget* w) { return at<bool>(w, L.button_toggled); }
+bool checked(Widget* w) { return at<int>(w, L.checked_state) == 1; }
 
 static void* style(Widget* w) { return virtual_fn<void* (*)(Widget*)>(w, L.vt_get_style)(w); }
 
@@ -181,6 +190,17 @@ void click(Widget* w) {
   reinterpret_cast<void (*)(Widget*, void*)>(L.dispatch_click)(w, ev);
 }
 
+void toggle(Widget* w) {
+  // agui::ToggleButton::mouseClick ignores the event apart from passing it through: it notifies the parent and
+  // advances the check state (which dispatches the check listeners). Unlike agui::Button::mouseClick it does
+  // not depend on agui::Gui's mouse-down bookkeeping, so it can be called directly.
+  alignas(8) unsigned char ev[128] = {};
+  at<int>(ev, L.me_type) = kMouseClick;
+  at<uint16_t>(ev, L.me_button) = kLeftButton;
+  at<Widget*>(ev, L.me_source) = w;
+  virtual_fn<bool (*)(Widget*, void*)>(w, L.vt_mouse_click)(w, ev);
+}
+
 void focus(Widget* w) {
   // virtual void focus(NamedBool<TabbedInTag>): the flag is one byte, passed by value.
   virtual_fn<void (*)(Widget*, uint8_t)>(w, L.vt_focus)(w, 0);
@@ -189,6 +209,16 @@ void focus(Widget* w) {
 int dropdown_count(Widget* w) { return L.dd_count(w); }
 int dropdown_selected(Widget* w) { return L.dd_selected(w); }
 void dropdown_select(Widget* w, int index) { L.dd_edit(w, index); }
+
+std::optional<bool> list_row_selected(Widget* w) {
+  // A row sits a few levels under its list (list -> scroll pane -> flow -> row).
+  Widget* lb = parent(w);
+  for (int depth = 0; lb && depth < 4 && !is_a(lb, "agui::ListBox"); ++depth) lb = parent(lb);
+  if (!lb || !is_a(lb, "agui::ListBox")) return std::nullopt;
+  int index = L.lb_index_of(lb, w);
+  if (index < 0) return std::nullopt;
+  return L.lb_selected(lb) == index;
+}
 
 static bool close_popups(Widget* w) {
   bool closed = false;

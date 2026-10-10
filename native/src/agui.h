@@ -1,6 +1,7 @@
 #pragma once
 // Read access to the game's widget tree (agui, Factorio's retained-mode GUI library). Widget pointers are
 // valid only within the main-thread frame they were read in: never hold one across frames.
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -23,7 +24,11 @@ bool is_a(Widget* w, std::string_view qualified);  // the dynamic type is or der
 std::string text(Widget* w);  // the widget's own text (captions are already localised, rich-text markup included), UTF-8
 bool visible(Widget* w);
 bool enabled(Widget* w);
-bool toggled(Widget* w);  // agui::Button state: a checkbox's checked, a toggle button's pressed. Only for buttons.
+bool toggled(Widget* w);  // agui::Button state: a toggle button's pressed. Only for agui::Button.
+bool checked(Widget* w);  // agui::ToggleButton state (checkboxes, radio buttons). Only for toggle buttons.
+// Flip a checkbox / pick a radio button as a click would (agui::ToggleButton::mouseClick: the state changes and
+// the game's check listeners run). Only for toggle buttons.
+void toggle(Widget* w);
 // The style the widget was built with ("back_button", "confirm_button"), from its style chain; empty if none.
 std::string style_name(Widget* w);
 // The widget's tooltip text (localised, may carry rich-text markup); empty if none.
@@ -40,6 +45,8 @@ void focus(Widget* w);
 int dropdown_count(Widget* w);
 int dropdown_selected(Widget* w);
 void dropdown_select(Widget* w, int index);
+// For a row of an agui::ListBox: whether it is the list's selected row. nullopt when `w` is not a list row.
+std::optional<bool> list_row_selected(Widget* w);
 // Close any open dropdown list (the popup the game adds over everything); false when none was open.
 bool close_dropdown_popup();
 // Whether `w` is currently in the tree under root() (guards dev routes taking raw addresses).
