@@ -6,6 +6,8 @@ It never touches the real desktop's focus or input.
   launch [--speak] [--nobuild] [-- game args]   build, start the game with the DLL, wait for /health
   reload [--nobuild]                             eject the DLL, rebuild, inject again (game keeps running)
   status                                         is the tracked game alive, and does the dev server answer
+  install [--nobuild] | uninstall                put version.dll + fa_native.dll + prism.dll next to factorio.exe
+                                                 (then just run the game; launch keeps using its own injected build)
   kill [--hard]                                  close the tracked game (WM_CLOSE, then terminate; only if provably ours)
   shot [out.png] [--width N]                     screenshot of the game window (works unfocused)
   health | log [--since N] | speech [--since N] [--wait S]
@@ -22,6 +24,7 @@ import argparse
 import ctypes
 import ctypes.wintypes as wt
 import json
+import shutil
 import os
 import struct
 import subprocess
@@ -189,7 +192,8 @@ def cmd_launch(a):
         sys.exit(f"factorio from this install is already running (pid {others}); it holds the write-data lock")
     if not a.nobuild:
         build()
-    env = dict(os.environ, FA_NOFOCUS="1", FA_PORT=str(PORT))
+    # FA_NO_PROXY: an installed version.dll stays idle; the dev loop injects its own build instead.
+    env = dict(os.environ, FA_NOFOCUS="1", FA_PORT=str(PORT), FA_NO_PROXY="1")
     if a.speak:
         env.pop("FA_MUTE", None)
     else:
@@ -248,6 +252,31 @@ def cmd_kill(a):
             print("still running after WM_CLOSE; terminating")
     terminate(pid)
     print(f"killed {pid}")
+
+
+GAME_BIN = os.path.dirname(FACTORIO_EXE)
+INSTALLED = ["version.dll", "fa_native.dll", "prism.dll"]
+
+
+def cmd_install(a):
+    """Put the proxy and the native code next to factorio.exe: launching the game normally then loads them."""
+    if factorio_pids_of_this_install():
+        sys.exit("close factorio first (its DLLs are in use)")
+    if not a.nobuild:
+        build()
+    for name in INSTALLED:
+        shutil.copy2(os.path.join(BUILD, name), os.path.join(GAME_BIN, name))
+        print("installed", os.path.join(GAME_BIN, name))
+
+
+def cmd_uninstall(a):
+    if factorio_pids_of_this_install():
+        sys.exit("close factorio first (its DLLs are in use)")
+    for name in INSTALLED:
+        path = os.path.join(GAME_BIN, name)
+        if os.path.exists(path):
+            os.remove(path)
+            print("removed", path)
 
 
 def find_window(pid):
@@ -341,6 +370,10 @@ def main():
     s.add_argument("--nobuild", action="store_true")
     s.set_defaults(f=cmd_reload)
     sub.add_parser("status").set_defaults(f=cmd_status)
+    s = sub.add_parser("install")
+    s.add_argument("--nobuild", action="store_true")
+    s.set_defaults(f=cmd_install)
+    sub.add_parser("uninstall").set_defaults(f=cmd_uninstall)
     s = sub.add_parser("kill")
     s.add_argument("--hard", action="store_true")
     s.set_defaults(f=cmd_kill)

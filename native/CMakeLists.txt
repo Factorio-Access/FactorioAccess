@@ -61,3 +61,7 @@ add_executable(fa_audio_tests tests_audio/main.cpp tests_audio/commands_tests.cp
   tests_audio/engine_tests.cpp)
 target_include_directories(fa_audio_tests PRIVATE third_party)
 target_link_libraries(fa_audio_tests PRIVATE fa_audio)
+
+# --- version.dll: the proxy factorio.exe loads from its own folder (fadev.py install puts it there) ---
+add_library(version_proxy SHARED src/proxy/version.cpp)
+set_target_properties(version_proxy PROPERTIES OUTPUT_NAME version)

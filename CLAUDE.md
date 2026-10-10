@@ -194,6 +194,18 @@ critical rule 1 again before adding anything here.
 - **Assets**: `native/src/assets.cpp` reads files from the mod's own package (folder or installed zip, located
   by the engine; zips inflate through the game's own zlib).
 
+### How it loads
+
+- **Playing**: `python native/tools/fadev.py install` copies `version.dll`, `fa_native.dll` and `prism.dll` next to
+  `factorio.exe` (`uninstall` removes them). Then just run the game. `version.dll` (`native/src/proxy/`) is a
+  proxy: factorio.exe imports VERSION.dll, which is not a KnownDLL, so this copy loads instead of System32's. It
+  forwards every export to the real one and starts `fa_native.dll` on a thread, in parallel with the game's own
+  startup. The external launcher can still start the game (multiplayer needs it); in single player the mod then
+  speaks through the native code and the launcher simply hears nothing.
+- **Developing**: `fadev.py launch` starts the game suspended and injects the build directory's DLL before the
+  game runs, with `FA_NO_PROXY=1` so an installed proxy stays idle. Re-run `install` after a change you want to
+  play with.
+
 ### Layout
 
 - `native/src/` platform-free code; `native/src/win/` the Windows platform layer (everything that knows MSVC
