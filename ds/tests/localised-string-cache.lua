@@ -10,7 +10,7 @@ local assert_nil = utils.assert_nil
 
 local tests = {}
 
-function tests.canonicalize_simple()
+function tests.test_canonicalize_simple()
    local cache = LocalisedStringCache.new(10)
 
    local str1 = { "entity-name.iron-ore" }
@@ -23,7 +23,7 @@ function tests.canonicalize_simple()
    assert_equals(str1, canonical1, "First canonical should be str1")
 end
 
-function tests.canonicalize_nested()
+function tests.test_canonicalize_nested()
    local cache = LocalisedStringCache.new(10)
 
    local str1 = { "my-string", { "nested", "values" }, 42 }
@@ -35,7 +35,7 @@ function tests.canonicalize_nested()
    assert_equals(canonical1, canonical2, "Should return same canonical for nested")
 end
 
-function tests.different_strings()
+function tests.test_different_strings()
    local cache = LocalisedStringCache.new(10)
 
    local str1 = { "entity-name.iron-ore" }
@@ -47,7 +47,7 @@ function tests.different_strings()
    assert_true(canonical1 ~= canonical2, "Different strings should have different canonicals")
 end
 
-function tests.get_put()
+function tests.test_get_put()
    local cache = LocalisedStringCache.new(10)
 
    local str = { "entity-name.iron-ore" }
@@ -56,7 +56,7 @@ function tests.get_put()
    assert_equals("Iron ore", cache:get(str), "Should get translated text")
 end
 
-function tests.lru_eviction()
+function tests.test_lru_eviction()
    local cache = LocalisedStringCache.new(2)
 
    local str1 = { "entity-name.iron-ore" }
@@ -72,7 +72,7 @@ function tests.lru_eviction()
    assert_equals("Coal", cache:get(str3), "str3 should exist")
 end
 
-function tests.remove()
+function tests.test_remove()
    local cache = LocalisedStringCache.new(10)
 
    local str1 = { "entity-name.iron-ore" }
@@ -87,7 +87,7 @@ function tests.remove()
    assert_nil(cache:get(str1), "Removed string should not have translation")
 end
 
-function tests.trie_cleanup()
+function tests.test_trie_cleanup()
    local cache = LocalisedStringCache.new(10)
 
    local str1 = { "a", { "b", "c" }, "d" }
@@ -106,7 +106,7 @@ function tests.trie_cleanup()
    assert_true(c1 ~= c1_new, "Should create new canonical after removal")
 end
 
-function tests.has_method()
+function tests.test_has_method()
    local cache = LocalisedStringCache.new(10)
 
    local str = { "entity-name.iron-ore" }
@@ -117,7 +117,7 @@ function tests.has_method()
    assert_true(cache:has(str), "Should have translation after put")
 end
 
-function tests.with_numbers()
+function tests.test_with_numbers()
    local cache = LocalisedStringCache.new(10)
 
    local str1 = { "quantity", 5 }
@@ -132,7 +132,7 @@ function tests.with_numbers()
    assert_true(c1 ~= c3, "Different number should give different canonical")
 end
 
-function tests.empty_string()
+function tests.test_empty_string()
    local cache = LocalisedStringCache.new(10)
 
    local str = { "" }
@@ -141,7 +141,7 @@ function tests.empty_string()
    assert_equals("Empty", cache:get(str), "Should handle empty string")
 end
 
-function tests.deeply_nested()
+function tests.test_deeply_nested()
    local cache = LocalisedStringCache.new(10)
 
    local str1 = { "a", { "b", { "c", { "d" } } } }
@@ -153,7 +153,7 @@ function tests.deeply_nested()
    assert_equals(c1, c2, "Deeply nested should canonicalize correctly")
 end
 
-function tests.multiple_tables()
+function tests.test_multiple_tables()
    local cache = LocalisedStringCache.new(10)
 
    local str1 = { "a", { "b" }, { "c" } }
@@ -165,7 +165,7 @@ function tests.multiple_tables()
    assert_equals(c1, c2, "Multiple tables should canonicalize correctly")
 end
 
-function tests.different_nesting()
+function tests.test_different_nesting()
    local cache = LocalisedStringCache.new(10)
 
    local str1 = { "a", "b", "c" }
@@ -177,7 +177,7 @@ function tests.different_nesting()
    assert_true(c1 ~= c2, "Different nesting should produce different canonicals")
 end
 
-function tests.clear()
+function tests.test_clear()
    local cache = LocalisedStringCache.new(10)
 
    local str = { "entity-name.iron-ore" }

@@ -10,7 +10,7 @@ local assert_nil = utils.assert_nil
 
 local tests = {}
 
-function tests.basic_operations()
+function tests.test_basic_operations()
    local cache = LRUCache.new(2)
 
    cache:put("a", 1)
@@ -22,7 +22,7 @@ function tests.basic_operations()
    assert_equals(2, cache:get_size(), "Size should be 2")
 end
 
-function tests.lru_eviction()
+function tests.test_lru_eviction()
    local cache = LRUCache.new(2)
 
    cache:put("a", 1)
@@ -35,7 +35,7 @@ function tests.lru_eviction()
    assert_equals(2, cache:get_size(), "Size should be 2")
 end
 
-function tests.update_marks_used()
+function tests.test_update_marks_used()
    local cache = LRUCache.new(2)
 
    cache:put("a", 1)
@@ -48,7 +48,7 @@ function tests.update_marks_used()
    assert_equals(3, cache:get("c"), "Key 'c' should exist")
 end
 
-function tests.put_marks_used()
+function tests.test_put_marks_used()
    local cache = LRUCache.new(2)
 
    cache:put("a", 1)
@@ -61,7 +61,7 @@ function tests.put_marks_used()
    assert_equals(3, cache:get("c"), "Key 'c' should exist")
 end
 
-function tests.remove()
+function tests.test_remove()
    local cache = LRUCache.new(3)
 
    cache:put("a", 1)
@@ -74,7 +74,7 @@ function tests.remove()
    assert_equals(2, cache:get_size(), "Size should be 2")
 end
 
-function tests.clear()
+function tests.test_clear()
    local cache = LRUCache.new(3)
 
    cache:put("a", 1)
@@ -85,7 +85,7 @@ function tests.clear()
    assert_nil(cache:get("a"), "Key 'a' should be gone")
 end
 
-function tests.has_method()
+function tests.test_has_method()
    local cache = LRUCache.new(3)
 
    cache:put("a", 1)
@@ -93,7 +93,7 @@ function tests.has_method()
    assert_false(cache:has("b"), "Should not have key 'b'")
 end
 
-function tests.explicit_evict_lru()
+function tests.test_explicit_evict_lru()
    local cache = LRUCache.new(3)
 
    cache:put("a", 1)
@@ -106,7 +106,7 @@ function tests.explicit_evict_lru()
    assert_nil(cache:get("a"), "Key 'a' should be evicted")
 end
 
-function tests.table_keys()
+function tests.test_table_keys()
    local cache = LRUCache.new(2)
 
    local key1 = { "foo" }

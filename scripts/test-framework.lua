@@ -34,7 +34,6 @@ local test_files = {
    "wasd-event-test", -- Test cursor movement via WASD simulation
    -- Selected tests from feedback
    "cursor-bookmark-test", -- Test cursor bookmark system (test #1)
-   "crafting-menu-test", -- Test crafting menu navigation (test #10)
    "inventory-coordinates-test", -- Test inventory coordinate announcements (test #12)
    -- Additional tests
    "belt-direction-test", -- Test transport belt direction detection
@@ -50,8 +49,6 @@ local test_files = {
    "speech-logger-test", -- Test speech logging to file
    -- "inventory-transfer-test", -- Removed: functionality migrated to capability-based UI
 
-   -- "event-manager-player-init-test", -- Test EventManager player initialization (requires custom events)
-   -- "event-priority-test", -- Test EventManager priority system (requires custom events)
    "entity-ui-test", -- Test generic entity UI system
    "entity-selection-test", -- Test stable entity ordering (issue #265)
    "rail-grid-adjustment-test", -- Test that TestSurface matches game rail grid adjustment

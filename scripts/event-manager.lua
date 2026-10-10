@@ -244,16 +244,4 @@ function mod.mock_event(event_id, event_data)
    mod._dispatch_event(event_id, event_data)
 end
 
----Get the number of handlers for an event (useful for testing)
----@param event_id defines.events|string The event ID
----@return integer count Number of handlers
-function mod.get_handler_count(event_id)
-   if not handlers[event_id] then return 0 end
-   local count = 0
-   for _, handler in pairs(handlers[event_id]) do
-      if handler then count = count + 1 end
-   end
-   return count
-end
-
 return mod
