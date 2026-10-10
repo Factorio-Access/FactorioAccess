@@ -8,11 +8,13 @@ Every feature is designed audio first: if it cannot be understood by ear and dri
 
 ## Critical rules
 
-1. **Native code is the last resort.** Extend `native/` only when there is no way at all to do the job in Lua
-   with the Factorio API, the launcher, or a change of design. Having native code is not a licence to use it
-   for anything else. It runs only in single player (it reads state local to one machine), so every native
-   feature needs a Lua path for multiplayer anyway. When in doubt, it does not go in `native/`. See "Native
-   code" below.
+1. **Native code is the last resort for anything players use.** Extend the player-facing part of `native/` only
+   when there is no way at all to do the job in Lua with the Factorio API, the launcher, or a change of design.
+   Having native code is not a licence to use it for anything else. It runs only in single player (it reads state
+   local to one machine), so every native feature needs a Lua path for multiplayer anyway. When in doubt, it does
+   not go in `native/`. Development tooling (the dev server, `fadev.py`, anything that only drives or inspects the
+   game for testing) is exempt: use native code freely there; it may break with any Factorio update and nobody
+   minds. See "Native code" below.
 2. **Module functions use dot notation**: `Viewpoint.get_viewpoint(pindex)`, never `Viewpoint:get_viewpoint(pindex)`.
 3. **Before committing**: `python launch_factorio.py --format`, `python launch_factorio.py --run-tests --timeout 60`,
    `python lint_localisation.py lint`. Native changes also: build, and run `native/build/ninja/faui_tests.exe`.
@@ -190,7 +192,7 @@ Add the file to `test_files` in `scripts/test-framework.lua`. Test the mod's beh
 
 `native/` is C++ (CMake, MSVC) injected into `factorio.exe`. It exists for what Lua cannot reach: the main
 menus before a world exists, speech without the external launcher, and the engine's own localisation. Read
-critical rule 1 again before adding anything here.
+critical rule 1 again before adding anything players use; the dev server and other test tooling are exempt.
 
 ### What it does
 
