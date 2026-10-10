@@ -123,12 +123,10 @@ mod.UI_NAMES = {
    -- World menu for global/cross-surface information (trains, etc.)
    WORLD = "world",
    -- New inventory, but we need the old name for a little bit while we roll over.
-   GENERIC_INVENTORY = "inventory2",
    -- BUILDING and VEHICLE removed - migrating to capability-based UI
    -- Generic entity UI that adapts to entity capabilities
    ENTITY = "entity",
    TRAVEL = "travel",
-   GUNS = "guns", -- Keep for backward compatibility with gun_menu registration
    BELT = "belt",
    WARNINGS = "warnings",
    PUMP = "pump",
@@ -155,7 +153,6 @@ mod.UI_NAMES = {
    DECON_AREA_SELECTOR = "decon_area_selector",
    UPGRADE_AREA_SELECTOR = "upgrade_area_selector",
    COPY_PASTE_AREA_SELECTOR = "copy_paste_area_selector",
-   SIMPLE_TEXTBOX = "simple_textbox",
    SEARCH_SETTER = "search_setter",
    CURSOR_COORDINATE_INPUT = "cursor_coordinate_input",
    SYNTRAX_INPUT = "syntrax_input",
