@@ -969,15 +969,6 @@ function mod.format_percentage(value, suffix)
    end
 end
 
--- Formats a state/status string
----@param state_key string The state key to look up
----@param prefix? string Optional prefix for the locale key (defaults to "state")
----@return LocalisedString
-function mod.format_state(state_key, prefix)
-   prefix = prefix or "state"
-   return { "fa." .. prefix .. "-" .. state_key }
-end
-
 -- Wave 5 formatting helpers
 -- Formats a count with item name (no pluralization needed)
 ---@param count number The count to format
