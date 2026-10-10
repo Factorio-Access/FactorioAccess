@@ -8,6 +8,16 @@ local mod = {}
 
 local interface_name = "kruise_kontrol_updated"
 
+---The remote interface of the Kruise Kontrol mod, as this file uses it
+---@class fa.KruiseKontrol.Interface
+---@field start_job fun(pindex: integer, opts: { x: integer, y: integer }, target: LuaEntity?)
+---@field get_description fun(pindex: integer): LocalisedString?
+---@field is_active fun(pindex: integer): boolean
+---@field cancel fun(pindex: integer)
+
+---@class (partial) LuaRemote.InterfaceMap
+---@field kruise_kontrol_updated fa.KruiseKontrol.Interface
+
 -- Call the closure if kk is present, returning what it returns. Otherwise don't
 -- call it and return `or_default`.  Recall that unspecified parameters are
 -- already nil; `or_default`, therefore, is optional.
@@ -59,7 +69,6 @@ function mod.activate_kk(pindex)
       end
 
       -- Okay. Finally we're good.  Let's kick this off.
-      ---@type table
       local opts = { x = math.floor(kk_pos.x), y = math.floor(kk_pos.y) }
       p.selected = nil
       remote.call(interface_name, "start_job", pindex, opts, target)
@@ -76,7 +85,8 @@ end
 function mod.cancel_kk(pindex)
    local p = game.get_player(pindex)
    call_with_interface(function()
-      if not remote.call(interface_name, "is_active", pindex) then
+      local active = remote.call(interface_name, "is_active", pindex)
+      if not active then
          -- If there was no interface then KK isn't installed; if the player
          -- isn't active already then the enter key is doing enter/exit vehicle.
          -- In that case there's nothing to say here.
@@ -85,30 +95,10 @@ function mod.cancel_kk(pindex)
 
       remote.call(interface_name, "cancel", pindex)
 
-      -- Prevent saying KK is done after it is cancelled.
-      storage.players[pindex].kruise_kontrol_active_last_time = false
-
       Speech.speak(pindex, { "fa.kk-cancel" })
    end)
    -- If in a car, make sure to stop it because we are exiting it too because of the overlapping keys
    if p.vehicle and p.vehicle.type == "car" and p.vehicle.active == true then p.vehicle.speed = 0 end
-end
-
-function mod.status_read(pindex, short_version)
-   call_with_interface(function()
-      -- We must remember if KK was last active and then use it to detect the
-      -- falling edge.  This is the only way to really know if it's finished.
-      local active = remote.call(interface_name, "is_active", pindex) --[[@as boolean]]
-      ---@type boolean?
-      local was_active = storage.players[pindex].kruise_kontrol_active_last_time
-      storage.players[pindex].kruise_kontrol_active_last_time = active
-      if active then
-         local desc = remote.call(interface_name, "get_description", pindex) --[[@as LocalisedString]]
-         Speech.speak(pindex, { "fa.kk-state", desc })
-      elseif was_active then
-         Speech.speak(pindex, { "fa.kk-done" })
-      end
-   end)
 end
 
 function mod.is_active(pindex)
