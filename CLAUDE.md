@@ -41,8 +41,11 @@ python json_to_markdown.py --type prototype --input ../../doc-html/prototype-api
 Regenerating the API reference after a Factorio update: delete `llm-docs/api-reference/runtime` and
 `.../prototypes` first (the generator never removes pages for classes the API dropped), run both commands, commit.
 
-`--setup-tools` needs network once: it downloads a pinned lua-language-server release and runs fmtk
-(`npx factoriomod-debug luals-addon`) on this install's own `doc-html` JSON. No editor is involved.
+`--setup-tools` needs network once: it downloads pinned lua-language-server and stylua releases (stylua matches CI)
+and runs fmtk (`npx factoriomod-debug luals-addon`, with its LuaLS plugin) on this install's own `doc-html` JSON.
+`--format` and `--lint` use only `.tools/`; nothing comes from an editor. fmtk is pinned to 2.1.3: from 2.1.5 fmtk
+writes types for EmmyLua (its declared successor to LuaLS) that LuaLS misreads, about 500 false findings.
+Don't add a root `.luarc.json`: it overrides VS Code's settings and hides the editor's Factorio library.
 
 ## Architecture
 
