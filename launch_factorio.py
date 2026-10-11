@@ -40,7 +40,7 @@ FMTK_VERSION = "2.1.9"
 FACTORIO_LIBRARY_DIR = TOOLS_DIR / "factorio-library"
 STYLUA_VERSION = "2.3.0"
 # Directories under the mod that hold no mod Lua (tools, native code, scratch space, docs): every Lua check skips them.
-NON_MOD_DIRS = [".vscode", ".git", ".tools", "native", "scratchpad", "llm-docs", "devdocs", "docs", "__pycache__"]
+NON_MOD_DIRS = [".vscode", ".git", ".tools", "native", "installer", "scratchpad", "llm-docs", "devdocs", "docs", "__pycache__"]
 
 
 def mod_lua_files(mod_path: Path) -> List[str]:

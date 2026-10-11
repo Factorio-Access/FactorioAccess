@@ -1,0 +1,5 @@
+# Not the mod: native code and the Rust installer (its target/ holds wxWidgets test .lua files)
+installer/
+native/
+scratchpad/
+.tools/
