@@ -732,6 +732,47 @@ local descriptors = {
       },
    },
 
+   [defines.control_behavior.type.splitter] = {
+      base = nil,
+      fields = {
+         {
+            type = mod.FIELD_TYPE.BOOLEAN,
+            name = "set_input_side",
+            label = { "fa.cb-field-set-input-side" },
+         },
+         {
+            type = mod.FIELD_TYPE.CONDITION,
+            name = "input_left_condition",
+            label = { "fa.cb-field-input-left-condition" },
+         },
+         {
+            type = mod.FIELD_TYPE.CONDITION,
+            name = "input_right_condition",
+            label = { "fa.cb-field-input-right-condition" },
+         },
+         {
+            type = mod.FIELD_TYPE.BOOLEAN,
+            name = "set_output_side",
+            label = { "fa.cb-field-set-output-side" },
+         },
+         {
+            type = mod.FIELD_TYPE.CONDITION,
+            name = "output_left_condition",
+            label = { "fa.cb-field-output-left-condition" },
+         },
+         {
+            type = mod.FIELD_TYPE.CONDITION,
+            name = "output_right_condition",
+            label = { "fa.cb-field-output-right-condition" },
+         },
+         {
+            type = mod.FIELD_TYPE.BOOLEAN,
+            name = "set_filter",
+            label = { "fa.cb-field-set-filter" },
+         },
+      },
+   },
+
    [defines.control_behavior.type.train_stop] = {
       base = generic_on_off_descriptor,
       fields = {

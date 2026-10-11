@@ -50,7 +50,7 @@ local function render_speaker_config(ctx)
    if cb.circuit_parameters.signal_value_is_pitch then
       builder:add_label("condition_disabled", { "fa.speaker-signal-controls-pitch-no-condition" })
    else
-      builder:add_condition("circuit_condition", function()
+      builder:add_condition("circuit_condition", nil, function()
          return cb.circuit_condition
       end, function(value)
          cb.circuit_condition = value

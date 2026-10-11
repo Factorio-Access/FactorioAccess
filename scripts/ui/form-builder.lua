@@ -310,10 +310,11 @@ end
 
 ---Add a circuit condition field (complex row with 4 items)
 ---@param name string Unique identifier for this control
+---@param label LocalisedString? Spoken before the condition; nil for a form's only condition
 ---@param get_value fun(): CircuitConditionDefinition? Function that returns the current condition
 ---@param set_value fun(CircuitConditionDefinition?) Function that sets the new condition
 ---@return fa.ui.form.FormBuilder
-function FormBuilder:add_condition(name, get_value, set_value)
+function FormBuilder:add_condition(name, label, get_value, set_value)
    -- Helper to build a description of the condition
    local function describe_condition(condition)
       local mb = Speech.MessageBuilder.new()
@@ -326,6 +327,7 @@ function FormBuilder:add_condition(name, get_value, set_value)
    self:add_item(name .. "_overview", {
       label = function(ctx)
          local condition = get_value()
+         if label then ctx.message:fragment(label) end
          ctx.message:fragment(describe_condition(condition))
          if not condition or not condition.first_signal or not condition.first_signal.name then
             ctx.message:fragment({ "fa.condition-move-right-to-configure" })

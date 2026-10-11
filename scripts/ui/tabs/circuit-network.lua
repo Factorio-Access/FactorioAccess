@@ -74,7 +74,7 @@ function mod.add_control_behavior_fields(builder, entity)
          end)
       elseif field.type == ControlBehaviorDescriptors.FIELD_TYPE.CONDITION then
          -- Condition field (complex row)
-         builder:add_condition(field_name, function()
+         builder:add_condition(field_name, field_label, function()
             local cb = entity.get_control_behavior()
             if not cb then return nil end
             return cb[field_name]
