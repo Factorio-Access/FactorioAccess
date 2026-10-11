@@ -84,6 +84,20 @@ local descriptors = {
             name = "read_contents",
             label = { "fa.cb-field-read-contents" },
          },
+         {
+            type = mod.FIELD_TYPE.CONDITION_WITH_ENABLE,
+            name = "harvesting_condition",
+            enable_field = "enable_harvesting_condition",
+            condition_field = "harvesting_condition",
+            label = { "fa.cb-field-harvesting-condition" },
+         },
+         {
+            type = mod.FIELD_TYPE.CONDITION_WITH_ENABLE,
+            name = "planting_condition",
+            enable_field = "enable_planting_condition",
+            condition_field = "planting_condition",
+            label = { "fa.cb-field-planting-condition" },
+         },
       },
    },
 
