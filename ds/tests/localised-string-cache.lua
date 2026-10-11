@@ -194,4 +194,25 @@ function tests.test_clear()
    assert_nil(cache:get(str), "Should not have translation after clear")
 end
 
+function tests.test_lookups_of_missing_strings_leave_no_trace()
+   local cache = LocalisedStringCache.new(10)
+
+   for i = 1, 50 do
+      assert_false(cache:has({ "fa.count", i }), "never stored")
+      assert_nil(cache:get({ "fa.count", i }), "never stored")
+      assert_nil(cache:remove({ "fa.count", i }), "never stored")
+   end
+   assert_nil(next(cache.trie_root), "the trie stays empty")
+
+   cache:put({ "fa.count", 1 }, "1")
+   assert_equals("1", cache:get({ "fa.count", 1 }))
+end
+
+function tests.test_key_of_is_structural()
+   local key_of = LocalisedStringCache.key_of
+   assert_equals(key_of({ "a", { "b" } }), key_of({ "a", { "b" } }))
+   assert_true(key_of({ "a", { "b" } }) ~= key_of({ "a", "b" }), "nesting counts")
+   assert_true(key_of({ "ab" }) ~= key_of({ "a", "b" }), "elements do not run together")
+end
+
 return tests

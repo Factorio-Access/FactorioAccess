@@ -5,19 +5,27 @@ local LocalisedStringCache = require("ds.localised-string-cache")
 
 local mod = {}
 
-local CACHE_SIZE = 1000
+-- Big enough for the largest searchable UI (the signal chooser has 3000 to 4000 labels): a smaller cache evicts its
+-- own entries while a search refresh fills it, and they are requested again forever.
+local CACHE_SIZE = 6000
+
+-- Ticks after which a translation still not back is requested again.
+local PENDING_TIMEOUT = 600
 
 ---@class fa.LocalisedStringCacheState
 ---@field cache any The underlying LRU cache instance
 ---@field pending_requests table<integer, LocalisedString> Map of translation request ID to localised string
+---@field pending_keys table<string, integer> Tick each pending string was requested, by LocalisedStringCache.key_of
 
 ---@type table<number, fa.LocalisedStringCacheState>
+-- The version rebuilds caches made with an older CACHE_SIZE (translations are simply requested again).
 local cache_storage = StorageManager.declare_storage_module("localised_string_cache", function(_pindex)
    return {
       cache = LocalisedStringCache.new(CACHE_SIZE),
       pending_requests = {},
+      pending_keys = {},
    }
-end)
+end, { ephemeral_state_version = 1 })
 
 ---Hint that we may want a string soon - enqueues it for translation and discards the result.
 ---This is useful for pre-loading strings that will be searched.
@@ -29,12 +37,17 @@ function mod.hint_submit(pindex, localised_string)
 
    local state = cache_storage[pindex]
 
-   -- Check if already cached
    if state.cache:has(localised_string) then return end
 
-   -- Request translation
+   -- Already asked for and not back yet
+   local pending_keys = state.pending_keys
+   local key = LocalisedStringCache.key_of(localised_string --[[@as table]])
+   local asked = pending_keys[key]
+   if asked and game.tick - asked < PENDING_TIMEOUT then return end
+
    local request_id = player.request_translation(localised_string)
    state.pending_requests[request_id] = localised_string
+   pending_keys[key] = game.tick
 end
 
 ---Get a cached translation for a localised string.
@@ -72,6 +85,8 @@ function mod.handle_translation(pindex, request_id, translation)
 
    -- Remove from pending
    state.pending_requests[request_id] = nil
+   local key = LocalisedStringCache.key_of(localised_string --[[@as table]])
+   state.pending_keys[key] = nil
 
    return true
 end

@@ -70,6 +70,31 @@ local function canonicalize(trie_root, localised_string)
    return current._canonical
 end
 
+---The canonical reference of a localised string already in the trie, or nil. Unlike canonicalize, adds nothing:
+---lookups of strings never stored must not grow the trie.
+---@param localised_string table
+---@return table?
+local function lookup(trie_root, localised_string)
+   local path = {}
+   flatten_localised_string(localised_string, path)
+
+   local current = trie_root
+   for i = 1, #path do
+      current = current[path[i]]
+      if not current then return nil end
+   end
+   return current._canonical
+end
+
+---A string identifying a localised string by structure: equal for structurally-equal strings.
+---@param localised_string table
+---@return string
+function LocalisedStringCache.key_of(localised_string)
+   local path = {}
+   flatten_localised_string(localised_string, path)
+   return table.concat(path, "")
+end
+
 ---Canonicalize a localised string (public method for advanced use).
 ---Most users should use get/put/has/remove which handle canonicalization automatically.
 ---@param localised_string table Localised string to canonicalize
@@ -82,8 +107,8 @@ end
 ---@param localised_string table Localised string to look up
 ---@return string|nil text Translated text if cached, nil otherwise
 function LocalisedStringCache:get(localised_string)
-   local canonical = canonicalize(self.trie_root, localised_string)
-   return self.lru_cache:get(canonical)
+   local canonical = lookup(self.trie_root, localised_string)
+   return canonical and self.lru_cache:get(canonical)
 end
 
 ---Store translated text for a localised string
@@ -101,8 +126,8 @@ end
 ---@param localised_string table Localised string to check
 ---@return boolean
 function LocalisedStringCache:has(localised_string)
-   local canonical = canonicalize(self.trie_root, localised_string)
-   return self.lru_cache:has(canonical)
+   local canonical = lookup(self.trie_root, localised_string)
+   return canonical ~= nil and self.lru_cache:has(canonical)
 end
 
 ---Get the current number of cached translations
@@ -116,7 +141,8 @@ end
 ---@param localised_string table Localised string to remove
 ---@return string|nil value Removed translation if found, nil otherwise
 function LocalisedStringCache:remove(localised_string)
-   local canonical = canonicalize(self.trie_root, localised_string)
+   local canonical = lookup(self.trie_root, localised_string)
+   if not canonical then return nil end
    local value = self.lru_cache:remove(canonical)
 
    if value then self:_remove_from_trie(canonical) end
