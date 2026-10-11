@@ -28,9 +28,9 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
    pos.y = math.floor(pos.y) + 0.5
    muted = muted or false
    local player = assert(game.get_player(pindex))
-   local char = FaUtils.physical_character(player)
+   local char = FaUtils.controlled_character(player)
    if not char then
-      Speech.speak(pindex, FaUtils.no_physical_character_reason(player))
+      Speech.speak(pindex, FaUtils.no_controlled_character_reason(player))
       return false
    end
 

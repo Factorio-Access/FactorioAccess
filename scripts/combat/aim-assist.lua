@@ -166,7 +166,7 @@ function mod.get_sorted_targets(pindex, options)
    local player = game.get_player(pindex)
    if not player or not player.valid then return nil, nil end
 
-   local character = FaUtils.physical_character(player)
+   local character = FaUtils.controlled_character(player)
    if not character then return nil, nil end
 
    local state = aim_storage[pindex]

@@ -48,7 +48,7 @@ function mod.get_reference_position(pindex)
 
    if state.reference_point == mod.ReferencePoint.CHARACTER then
       -- In remote view or a cargo pod the character isn't where the player is looking
-      local character = FaUtils.physical_character(assert(player))
+      local character = FaUtils.controlled_character(assert(player))
       if character then
          local pos = character.position --[[@as MapPosition.struct]]
          return { x = pos.x, y = pos.y }

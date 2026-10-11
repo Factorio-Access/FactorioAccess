@@ -41,7 +41,7 @@ function Deductor:_get_available(name)
    local total = 0
 
    -- Main inventory, which the player doesn't have in remote view
-   local character = FaUtils.physical_character(self._player)
+   local character = FaUtils.controlled_character(self._player)
    if character then
       local main_inv = character.get_inventory(defines.inventory.character_main)
       if main_inv then total = total + main_inv.get_item_count(name) end
@@ -76,7 +76,7 @@ function Deductor:commit()
       local remaining = count
 
       -- First: deduct from main inventory
-      local character = FaUtils.physical_character(self._player)
+      local character = FaUtils.controlled_character(self._player)
       if remaining > 0 and character then
          local main_inv = character.get_inventory(defines.inventory.character_main)
          if main_inv then

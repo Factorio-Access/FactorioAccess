@@ -39,7 +39,7 @@ local walking_storage = StorageManager.declare_storage_module("walking", {
 ---@param pindex integer
 function mod.process_walking_announcements(pindex)
    local player = game.get_player(pindex)
-   if not player or not FaUtils.physical_character(player) then return end
+   if not player or not FaUtils.controlled_character(player) then return end
    if VanillaMode.is_enabled(pindex) then return end
 
    local reader = MovementHistory.get_movement_history_reader(pindex)

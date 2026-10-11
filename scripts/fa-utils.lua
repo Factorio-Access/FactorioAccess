@@ -404,11 +404,13 @@ function mod.cursor_item(player)
    return nil, prototypes.quality.normal
 end
 
----The player's character when the player is in it, standing where they are: not in remote view (on a space
----platform the character is parked in the hub), not riding a cargo pod, and on the surface the player is looking at.
+---The character the player is controlling right now, or nil. player.character is not enough: in remote view (always,
+---aboard a space platform) the engine keeps the character and player.character returns it, but to the player there
+---is no character. Also nil while riding a cargo pod, and when the character is on another surface than the one the
+---player is looking at. Unlike the API's physical_* properties, which describe the character even in remote view.
 ---@param player LuaPlayer
 ---@return LuaEntity?
-function mod.physical_character(player)
+function mod.controlled_character(player)
    local character = player.character
    if
       character
@@ -421,10 +423,10 @@ function mod.physical_character(player)
    return nil
 end
 
----Why physical_character returned nil, to speak when refusing something that needs the character.
+---Why controlled_character returned nil, to speak when refusing something that needs the character.
 ---@param player LuaPlayer
 ---@return LocalisedString
-function mod.no_physical_character_reason(player)
+function mod.no_controlled_character_reason(player)
    if player.cargo_pod then return { "fa.not-available-in-cargo-pod" } end
    if player.controller_type == defines.controllers.remote then return { "fa.not-available-in-remote-view" } end
    return { "fa.not-available-without-character" }

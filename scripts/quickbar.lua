@@ -81,7 +81,7 @@ function mod.read_quick_bar_slot(index, pindex)
    msg:fragment(stack and stack.valid_for_read and { "fa.quickbar-unselected" } or { "fa.quickbar-selected" })
    msg:fragment(name)
    -- Only plain items have an inventory count to report, and only in the character (none in remote view).
-   local character = FaUtils.physical_character(p)
+   local character = FaUtils.controlled_character(p)
    if item_name and character then
       local count = assert(character.get_main_inventory()).get_item_count(item_name)
       if stack and stack.valid_for_read then count = count + stack.count end

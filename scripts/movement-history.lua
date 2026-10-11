@@ -91,7 +91,7 @@ local function update_player_if_needed(pindex)
    if not player then return end
 
    -- Nothing moves in remote view or a cargo pod: the camera isn't walking, and the pod's jumps aren't movement
-   local character = FaUtils.physical_character(player)
+   local character = FaUtils.controlled_character(player)
    if not character then
       state.entries:push(nil)
       return

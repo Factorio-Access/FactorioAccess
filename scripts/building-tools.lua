@@ -970,7 +970,7 @@ end
 --If the player is standing within the build area, they are teleported out.
 function mod.teleport_player_out_of_build_area(left_top, right_bottom, pindex)
    local p = assert(game.get_player(pindex))
-   local character = FaUtils.physical_character(p)
+   local character = FaUtils.controlled_character(p)
    if not character then return end
    if not left_top or not right_bottom then return end
    local pos = character.position

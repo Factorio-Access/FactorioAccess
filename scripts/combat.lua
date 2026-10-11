@@ -62,7 +62,7 @@ function mod.get_effective_health_shields(pindex)
    end
 
    -- Otherwise use character stats
-   local char = FaUtils.physical_character(player)
+   local char = FaUtils.controlled_character(player)
    if not char then return nil end
 
    local health = assert(char.get_health_ratio())
@@ -169,8 +169,8 @@ function mod.toggle_combat_mode(pindex)
       exit_combat_mode(pindex)
    else
       local player = assert(game.get_player(pindex))
-      if not FaUtils.physical_character(player) then
-         Speech.speak(pindex, FaUtils.no_physical_character_reason(player))
+      if not FaUtils.controlled_character(player) then
+         Speech.speak(pindex, FaUtils.no_controlled_character_reason(player))
          return
       end
       enter_combat_mode(pindex)
@@ -459,7 +459,7 @@ function mod.on_tick(pindex)
    local player = game.get_player(pindex)
    if not player or not player.valid then return end
 
-   local character = FaUtils.physical_character(player)
+   local character = FaUtils.controlled_character(player)
    if not character then return end
 
    tick_gun_change(pindex, character)

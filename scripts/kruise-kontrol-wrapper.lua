@@ -32,7 +32,7 @@ function mod.activate_kk(pindex)
    local announcing = call_with_interface(function()
       local p = assert(game.get_player(pindex))
       -- Kruise Kontrol walks the character
-      if not FaUtils.physical_character(p) then return FaUtils.no_physical_character_reason(p) end
+      if not FaUtils.controlled_character(p) then return FaUtils.no_controlled_character_reason(p) end
 
       -- we want the mod's view of the cursor, which may be off the screen.
       --

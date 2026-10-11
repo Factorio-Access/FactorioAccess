@@ -40,7 +40,7 @@ function mod.on_tick_per_player(pindex)
 
    -- Check if player has a non-empty crafting queue
    -- Silent in remote view, where the player has no character to craft with
-   local character = FaUtils.physical_character(player)
+   local character = FaUtils.controlled_character(player)
    if not character or character.crafting_queue_size == 0 then
       state.last_played_tick = nil
       return

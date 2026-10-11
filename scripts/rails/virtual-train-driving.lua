@@ -349,7 +349,7 @@ local function pop_move(pindex, destroy_entities)
       end
 
       if has_real_entity then
-         local character = player and FaUtils.physical_character(player)
+         local character = player and FaUtils.controlled_character(player)
          if not character then
             table.insert(state.moves, move)
             return nil, false
@@ -526,8 +526,8 @@ function mod.lock_on_to_rail(pindex, rail_entity, build_mode)
    if not player then return end
 
    -- Builds and picks up real rails through the character
-   if not FaUtils.physical_character(player) then
-      Speech.speak(pindex, FaUtils.no_physical_character_reason(player))
+   if not FaUtils.controlled_character(player) then
+      Speech.speak(pindex, FaUtils.no_controlled_character_reason(player))
       return
    end
 

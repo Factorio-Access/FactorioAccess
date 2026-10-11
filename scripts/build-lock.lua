@@ -234,7 +234,7 @@ function BuildLock.set_enabled(pindex, enabled, silent, reason)
       state.cursor_state = create_build_state()
 
       -- Initialize walking state with current character position
-      local character = FaUtils.physical_character(player)
+      local character = FaUtils.controlled_character(player)
       if character then
          local character_pos = character.position --[[@as MapPosition.struct]]
          local current_tile = {
@@ -674,7 +674,7 @@ function BuildLock.process_walking_movement(pindex)
    -- Get player's actual position (not cursor!)
    local player = game.get_player(pindex)
    if not player then return end
-   local character = FaUtils.physical_character(player)
+   local character = FaUtils.controlled_character(player)
    if not character then return end
 
    -- Get walking state from movement history

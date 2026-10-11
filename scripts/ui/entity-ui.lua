@@ -357,7 +357,7 @@ local function build_entity_sections(pindex, entity)
    if #sections == 0 then return nil end
 
    -- Add player inventory section for convenience; there is none without a character (remote view)
-   if FaUtils.physical_character(assert(game.get_player(pindex))) then
+   if FaUtils.controlled_character(assert(game.get_player(pindex))) then
       table.insert(sections, get_player_inventory_section())
    end
 
@@ -497,7 +497,7 @@ function mod.open_entity_ui(pindex, entity)
    local entity_main_inv_index = entity_main_inv and entity_main_inv.index or nil
 
    -- Set up sibling relationships only if the player is in their character (not in remote view)
-   local character = FaUtils.physical_character(player)
+   local character = FaUtils.controlled_character(player)
    if character then
       -- Set up player inventory with entity main inventory as sibling
       params.player_inventory = {

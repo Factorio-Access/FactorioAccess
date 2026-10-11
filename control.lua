@@ -208,7 +208,7 @@ local function read_hand(pindex)
          end
          table.insert(out, cursor_stack.count)
          -- The rest of the inventory, which the player doesn't have in remote view
-         local character = FaUtils.physical_character(assert(game.get_player(pindex)))
+         local character = FaUtils.controlled_character(assert(game.get_player(pindex)))
          local extra = character and assert(character.get_main_inventory()).get_item_count(cursor_stack.name) or 0
          if extra > 0 then
             table.insert(out, cursor_stack.count + extra)
@@ -390,7 +390,7 @@ EventManager.on_event(
 
 --Makes the character face the cursor, choosing the nearest of 4 cardinal directions (north or south only).
 function turn_to_cursor_direction_cardinal(pindex)
-   local character = FaUtils.physical_character(assert(game.get_player(pindex)))
+   local character = FaUtils.controlled_character(assert(game.get_player(pindex)))
    if not character then return end
    local vp = Viewpoint.get_viewpoint(pindex)
    local dir = FaUtils.get_direction_precise(vp:get_cursor_pos(), character.position)
@@ -1452,8 +1452,8 @@ local function nudge_self(event, direction, name)
    local pindex = event.player_index
    local p = game.get_player(pindex)
 
-   if not FaUtils.physical_character(p) then
-      Speech.speak(pindex, FaUtils.no_physical_character_reason(p))
+   if not FaUtils.controlled_character(p) then
+      Speech.speak(pindex, FaUtils.no_controlled_character_reason(p))
       return
    end
 
@@ -1763,9 +1763,9 @@ EventManager.on_event(
 local function kb_read_character_coords(event)
    local pindex = event.player_index
    local player = assert(game.get_player(pindex))
-   local character = FaUtils.physical_character(player)
+   local character = FaUtils.controlled_character(player)
    if not character then
-      Speech.speak(pindex, FaUtils.no_physical_character_reason(player))
+      Speech.speak(pindex, FaUtils.no_controlled_character_reason(player))
       return
    end
    local pos = character.position
@@ -1943,8 +1943,8 @@ EventManager.on_event(
 local function kb_cs_p(event)
    local pindex = event.player_index
    local player = assert(game.get_player(pindex))
-   if not FaUtils.physical_character(player) then
-      Speech.speak(pindex, FaUtils.no_physical_character_reason(player))
+   if not FaUtils.controlled_character(player) then
+      Speech.speak(pindex, FaUtils.no_controlled_character_reason(player))
       return
    end
    local vp = Viewpoint.get_viewpoint(pindex)

@@ -620,7 +620,7 @@ end
 ---@param grid LuaEquipmentGrid
 local function add_quick_equip_section(builder, ctx, player, entity, grid)
    Equipment.add_equipment_selection_rows(builder, {
-      character = FaUtils.physical_character(player),
+      character = FaUtils.controlled_character(player),
       equip_target = entity,
       max_x = grid.width,
       max_y = grid.height,
@@ -644,7 +644,7 @@ end
 local function render_character_overview(ctx, builder, player, entity)
    local grid = entity.grid
    -- In remote view the player has no inventory to equip from or unequip to
-   local character = FaUtils.physical_character(player)
+   local character = FaUtils.controlled_character(player)
    local main_inv = character and character.get_inventory(defines.inventory.character_main)
 
    -- Characters always get armor management (even without armor equipped)
@@ -666,7 +666,7 @@ end
 ---@param entity LuaEntity
 local function render_vehicle_with_grid(ctx, builder, player, entity)
    local grid = entity.grid
-   local character = FaUtils.physical_character(player)
+   local character = FaUtils.controlled_character(player)
    local main_inv = character and character.get_inventory(defines.inventory.character_main)
 
    if grid then
@@ -684,7 +684,7 @@ end
 ---@param player LuaPlayer
 ---@param entity LuaEntity
 local function render_weapons_only(ctx, builder, player, entity)
-   add_weapon_row(builder, entity, FaUtils.physical_character(player), ctx.pindex)
+   add_weapon_row(builder, entity, FaUtils.controlled_character(player), ctx.pindex)
 end
 
 ---Build the equipment overview menu

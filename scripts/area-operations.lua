@@ -25,9 +25,9 @@ function mod.mine_area(pindex)
    local comment = ""
 
    -- Mining puts what it collects into the character's inventory
-   local character = FaUtils.physical_character(p)
+   local character = FaUtils.controlled_character(p)
    if not character then
-      Speech.speak(pindex, FaUtils.no_physical_character_reason(p))
+      Speech.speak(pindex, FaUtils.no_controlled_character_reason(p))
       return
    end
    local main_inv = assert(character.get_main_inventory())

@@ -132,7 +132,7 @@ function mod.clear_obstacles_in_rectangle(left_top, right_bottom, pindex, mining
    local surf = p.surface
    local mining_range = mining_range_in or 99
    -- Without a physical character nothing is in reach: everything is marked for deconstruction instead
-   if not FaUtils.physical_character(p) then mining_range = 0 end
+   if not FaUtils.controlled_character(p) then mining_range = 0 end
    local comment = ""
    local trees_cleared = 0
    local rocks_cleared = 0

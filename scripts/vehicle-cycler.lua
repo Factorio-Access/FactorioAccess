@@ -65,10 +65,10 @@ end
 ---@param pindex integer
 function mod.cycle_to_next_vehicle(pindex)
    local player = assert(game.get_player(pindex))
-   local character = FaUtils.physical_character(player)
+   local character = FaUtils.controlled_character(player)
 
    if not character then
-      Speech.speak(pindex, FaUtils.no_physical_character_reason(player))
+      Speech.speak(pindex, FaUtils.no_controlled_character_reason(player))
       return
    end
 
