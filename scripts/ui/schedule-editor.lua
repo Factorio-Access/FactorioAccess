@@ -1110,6 +1110,12 @@ local function render_interrupt_tab(ctx, interrupt_index)
    return builder:build()
 end
 
+---@param paused boolean
+---@return LocalisedString
+local function thrust_mode_name(paused)
+   return paused and { "gui-train.paused-mode" } or { "gui-train.automatic-mode" }
+end
+
 ---Render the train or space platform schedule editor
 ---@param ctx fa.ui.graph.Ctx
 ---@return fa.ui.graph.Render?
@@ -1126,6 +1132,20 @@ local function render_schedule_editor(ctx)
    if not records then records = {} end
 
    local builder = Menu.MenuBuilder.new()
+
+   -- A platform's thrust: the game's switch between automatic and paused thrust
+   if platform then
+      local space_platform = assert(entity.surface.platform)
+      builder:add_item("thrust", {
+         label = function(label_ctx)
+            label_ctx.message:fragment(thrust_mode_name(space_platform.paused))
+         end,
+         on_click = function(click_ctx)
+            space_platform.paused = not space_platform.paused
+            click_ctx.controller.message:fragment(thrust_mode_name(space_platform.paused))
+         end,
+      })
+   end
 
    -- Summary row
    builder:add_label("summary", function(label_ctx)
