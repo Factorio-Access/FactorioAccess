@@ -8,6 +8,7 @@ Provides controls for:
 - Individual filter slots
 ]]
 
+local CircuitNetwork = require("scripts.circuit-network")
 local FormBuilder = require("scripts.ui.form-builder")
 local UiKeyGraph = require("scripts.ui.key-graph")
 local UiRouter = require("scripts.ui.router")
@@ -118,7 +119,7 @@ local function render_inserter_config(ctx)
             local signal = get_value()
             local value_text
             if signal and signal.name then
-               value_text = { "fa.inserter-signal-value", signal.type or "item", signal.name }
+               value_text = CircuitNetwork.localise_signal(signal)
             else
                value_text = { "fa.empty" }
             end
@@ -136,7 +137,7 @@ local function render_inserter_config(ctx)
             on_child_result = function(ctx, result)
                set_value(result)
                if result and result.name then
-                  ctx.controller.message:fragment({ "fa.inserter-signal-value", result.type or "item", result.name })
+                  ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
                else
                   ctx.controller.message:fragment({ "fa.empty" })
                end
