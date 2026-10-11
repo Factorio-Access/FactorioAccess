@@ -389,14 +389,14 @@ EventManager.on_event(
 
 --Makes the character face the cursor, choosing the nearest of 4 cardinal directions (north or south only).
 function turn_to_cursor_direction_cardinal(pindex)
-   local p = game.get_player(pindex)
-   if not p.character then return end
+   local character = FaUtils.physical_character(assert(game.get_player(pindex)))
+   if not character then return end
    local vp = Viewpoint.get_viewpoint(pindex)
-   local dir = FaUtils.get_direction_precise(vp:get_cursor_pos(), p.position)
+   local dir = FaUtils.get_direction_precise(vp:get_cursor_pos(), character.position)
    if dir == dirs.northwest or dir == dirs.north or dir == dirs.northeast then
-      p.character.direction = dirs.north
+      character.direction = dirs.north
    elseif dir == dirs.southwest or dir == dirs.south or dir == dirs.southeast then
-      p.character.direction = dirs.south
+      character.direction = dirs.south
    end
 end
 
@@ -1673,7 +1673,7 @@ local function kb_read_cursor_distance_and_direction(event)
    local vp = Viewpoint.get_viewpoint(pindex)
    local cursor_pos = vp:get_cursor_pos()
    --Read where the cursor is with respect to the player, e.g. "at 5 west"
-   local dir_dist = FaUtils.dir_dist_locale(p.position, cursor_pos)
+   local dir_dist = FaUtils.dir_dist_locale(FaUtils.player_reference_position(p), cursor_pos)
    local cursor_location_description = { "fa.at" }
    local cursor_production = " "
    local cursor_description_of = " "
@@ -1709,7 +1709,7 @@ local function kb_read_cursor_distance_vector(event)
    local p = game.get_player(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
    local c_pos = vp:get_cursor_pos()
-   local p_pos = p.position
+   local p_pos = FaUtils.player_reference_position(p)
    local diff_x = math.floor(c_pos.x) - math.floor(p_pos.x)
    local diff_y = math.floor(c_pos.y) - math.floor(p_pos.y)
 
@@ -1755,7 +1755,13 @@ EventManager.on_event(
 
 local function kb_read_character_coords(event)
    local pindex = event.player_index
-   local pos = game.get_player(pindex).position
+   local player = assert(game.get_player(pindex))
+   local character = FaUtils.physical_character(player)
+   if not character then
+      Speech.speak(pindex, FaUtils.no_physical_character_reason(player))
+      return
+   end
+   local pos = character.position
    local result = "Character at " .. math.floor(pos.x) .. ", " .. math.floor(pos.y)
    --Report co-ordinates (floored for the readout, extra precision for the console)
    Speech.speak(pindex, result)
@@ -1777,12 +1783,12 @@ EventManager.on_event(
 ---@param event EventData.CustomInputEvent
 local function kb_jump_to_player(event)
    local pindex = event.player_index
-   local first_player = game.get_player(pindex)
+   local player_pos = FaUtils.player_reference_position(assert(game.get_player(pindex)))
    local vp = Viewpoint.get_viewpoint(pindex)
    local cursor_pos = vp:get_cursor_pos()
    local cursor_size = vp:get_cursor_size()
-   cursor_pos.x = math.floor(first_player.position.x)
-   cursor_pos.y = math.floor(first_player.position.y)
+   cursor_pos.x = math.floor(player_pos.x)
+   cursor_pos.y = math.floor(player_pos.y)
    vp:set_cursor_pos(cursor_pos)
    read_coords(pindex, "Cursor returned ")
    if cursor_size < 2 then

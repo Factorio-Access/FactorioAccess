@@ -23,11 +23,9 @@ local function get_available_spidertrons(pindex)
    if #current_list > 0 then
       -- Use surface from first spidertron in remote
       surface = game.surfaces[current_list[1].surface_index]
-   elseif player.character then
-      -- Use player's surface
-      surface = player.character.surface
    else
-      return {}
+      -- The surface the player is looking at, which in remote view isn't the character's
+      surface = player.surface
    end
 
    -- Find all spidertrons on the surface

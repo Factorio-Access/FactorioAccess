@@ -430,6 +430,18 @@ function mod.no_physical_character_reason(player)
    return { "fa.not-available-without-character" }
 end
 
+---Where distances from the player are measured: the player's position, or on a space platform the hub they sit in
+---(the player's own position there is the remote view camera).
+---@param player LuaPlayer
+---@return MapPosition.struct
+function mod.player_reference_position(player)
+   local hub = player.hub
+   if hub and hub.surface == player.surface then
+      return hub.position --[[@as MapPosition.struct]]
+   end
+   return player.position --[[@as MapPosition.struct]]
+end
+
 --Returns the map position of the northwest corner of an entity.
 --NOTE: If the calculation result gives a tile that does not touch the ent, then the ent's own position is returned instead.
 --TODO fix the calculation (several attempts have failed so far because fixing it for one group of ents breaks it for others).

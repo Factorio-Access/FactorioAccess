@@ -349,11 +349,12 @@ local function pop_move(pindex, destroy_entities)
       end
 
       if has_real_entity then
-         if not player or not player.character then
+         local character = player and FaUtils.physical_character(player)
+         if not character then
             table.insert(state.moves, move)
             return nil, false
          end
-         main_inv = player.character.get_inventory(defines.inventory.character_main)
+         main_inv = character.get_inventory(defines.inventory.character_main)
          if not main_inv then
             table.insert(state.moves, move)
             return nil, false
@@ -523,6 +524,12 @@ end
 function mod.lock_on_to_rail(pindex, rail_entity, build_mode)
    local player = game.get_player(pindex)
    if not player then return end
+
+   -- Builds and picks up real rails through the character
+   if not FaUtils.physical_character(player) then
+      Speech.speak(pindex, FaUtils.no_physical_character_reason(player))
+      return
+   end
 
    -- Check if player has rail planner and get its description
    if not has_rail_planner(player) then

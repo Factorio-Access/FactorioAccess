@@ -1,6 +1,7 @@
 --Here: Functions related to Kruise Kontrol Remote
 
 local Viewpoint = require("scripts.viewpoint")
+local FaUtils = require("scripts.fa-utils")
 local EntitySelection = require("scripts.entity-selection")
 local Speech = require("scripts.speech")
 
@@ -29,10 +30,9 @@ end
 --FA actions to take when KK activate input is pressed
 function mod.activate_kk(pindex)
    local announcing = call_with_interface(function()
-      local p = game.get_player(pindex)
-      -- If the player has no character then abort
-      local c = p and p.valid and p.character
-      if not c then return end
+      local p = assert(game.get_player(pindex))
+      -- Kruise Kontrol walks the character
+      if not FaUtils.physical_character(p) then return FaUtils.no_physical_character_reason(p) end
 
       -- we want the mod's view of the cursor, which may be off the screen.
       --

@@ -64,11 +64,11 @@ end
 ---Cycle to the next vehicle near the player's character
 ---@param pindex integer
 function mod.cycle_to_next_vehicle(pindex)
-   local player = game.get_player(pindex)
-   local character = player.character
+   local player = assert(game.get_player(pindex))
+   local character = FaUtils.physical_character(player)
 
    if not character then
-      Speech.speak(pindex, { "fa.vehicle-cycle-no-character" })
+      Speech.speak(pindex, FaUtils.no_physical_character_reason(player))
       return
    end
 
