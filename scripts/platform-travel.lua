@@ -46,10 +46,8 @@ local function announce_boarding(pindex, platform)
    local location = platform.space_location --[[@as LuaSpaceLocationPrototype?]]
    local heading_to = platform.state == defines.space_platform_state.on_the_path and destination(platform)
    if location then
-      Speech.speak(
-         pindex,
-         { "fa.platform-aboard-orbiting", platform.name, Localising.get_localised_name_with_fallback(location) }
-      )
+      local key = location.type == "planet" and "fa.platform-aboard-orbiting-planet" or "fa.platform-aboard-orbiting"
+      Speech.speak(pindex, { key, platform.name, Localising.get_localised_name_with_fallback(location) })
    elseif heading_to then
       Speech.speak(
          pindex,

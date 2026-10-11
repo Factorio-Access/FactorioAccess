@@ -1,7 +1,10 @@
 --[[
-The mod menu, on Alt+M: a list of the mod's less frequently used UIs, each opened as a child.
+The mod menu, on Alt+M: a list of the mod's less frequently used UIs, each opened as a child. Aboard a space platform
+in orbit over a planet, it also offers dropping to the planet.
 ]]
 
+local Localising = require("scripts.localising")
+local PlatformTravel = require("scripts.platform-travel")
 local TabList = require("scripts.ui.tab-list")
 local UiRouter = require("scripts.ui.router")
 local Menu = require("scripts.ui.menu")
@@ -37,6 +40,21 @@ local ENTRIES = {
 ---@param ctx fa.ui.graph.Ctx
 local function build_mod_menu(ctx)
    local builder = Menu.MenuBuilder.new()
+
+   local player = assert(game.get_player(ctx.pindex))
+   local hub = player.hub
+   local planet = hub and PlatformTravel.orbited_planet(assert(hub.surface.platform))
+   if planet then
+      builder:add_clickable(
+         "drop_to_planet",
+         { "fa.platform-drop-to", Localising.get_localised_name_with_fallback(planet) },
+         {
+            on_click = function(click_ctx)
+               if PlatformTravel.drop_to_planet(player, click_ctx.message) then click_ctx.controller:close() end
+            end,
+         }
+      )
+   end
 
    for _, entry in ipairs(ENTRIES) do
       if not entry.available or entry.available(ctx.pindex) then
