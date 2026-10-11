@@ -5,6 +5,7 @@ Provides a dynamic UI that adapts to entity capabilities
 
 local Consts = require("scripts.consts")
 local EntityAccess = require("scripts.entity-access")
+local FaUtils = require("scripts.fa-utils")
 local InventoryGrid = require("scripts.ui.inventory-grid")
 local InventoryUtils = require("scripts.inventory-utils")
 local Speech = require("scripts.speech")
@@ -493,11 +494,12 @@ function mod.open_entity_ui(pindex, entity)
    local entity_main_inv = InventoryUtils.get_main_inventory(entity)
    local entity_main_inv_index = entity_main_inv and entity_main_inv.index or nil
 
-   -- Set up sibling relationships only if player has a character
-   if player.character then
+   -- Set up sibling relationships only if the player is in their character (not in remote view)
+   local character = FaUtils.physical_character(player)
+   if character then
       -- Set up player inventory with entity main inventory as sibling
       params.player_inventory = {
-         entity = player.character,
+         entity = character,
          inventory_index = defines.inventory.character_main,
          sibling_entity = entity_main_inv_index and entity or nil,
          sibling_inventory_id = entity_main_inv_index,
@@ -512,7 +514,7 @@ function mod.open_entity_ui(pindex, entity)
             params["inv_" .. inv.name] = {
                entity = entity,
                inventory_index = i,
-               sibling_entity = player.character,
+               sibling_entity = character,
                sibling_inventory_id = defines.inventory.character_main,
             }
          end

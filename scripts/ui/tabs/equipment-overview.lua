@@ -7,6 +7,7 @@ local Menu = require("scripts.ui.menu")
 local KeyGraph = require("scripts.ui.key-graph")
 local Controls = require("scripts.ui.controls")
 local Equipment = require("scripts.equipment")
+local FaUtils = require("scripts.fa-utils")
 local InventoryUtils = require("scripts.inventory-utils")
 local ItemInfo = require("scripts.item-info")
 local ItemStackUtils = require("scripts.item-stack-utils")
@@ -453,8 +454,8 @@ end
 ---@param grid LuaEquipmentGrid?
 ---@param main_inv LuaInventory?
 local function add_character_armor_section(builder, player, entity, grid, main_inv)
-   local armor_inv = player.get_inventory(defines.inventory.character_armor)
-   local armor_stack = armor_inv and armor_inv[1]
+   -- A character always has an armor inventory
+   local armor_stack = (entity.get_inventory(defines.inventory.character_armor) --[[@as LuaInventory]])[1]
 
    -- Get aggregated armor from inventory
    local armor_filter = function(stack)
@@ -619,7 +620,7 @@ end
 ---@param grid LuaEquipmentGrid
 local function add_quick_equip_section(builder, ctx, player, entity, grid)
    Equipment.add_equipment_selection_rows(builder, {
-      character = player.character,
+      character = FaUtils.physical_character(player),
       equip_target = entity,
       max_x = grid.width,
       max_y = grid.height,
@@ -642,7 +643,9 @@ end
 ---@param entity LuaEntity
 local function render_character_overview(ctx, builder, player, entity)
    local grid = entity.grid
-   local main_inv = player.get_inventory(defines.inventory.character_main)
+   -- In remote view the player has no inventory to equip from or unequip to
+   local character = FaUtils.physical_character(player)
+   local main_inv = character and character.get_inventory(defines.inventory.character_main)
 
    -- Characters always get armor management (even without armor equipped)
    add_character_armor_section(builder, player, entity, grid, main_inv)
@@ -653,7 +656,7 @@ local function render_character_overview(ctx, builder, player, entity)
       add_quick_equip_section(builder, ctx, player, entity, grid)
    end
 
-   add_weapon_row(builder, entity, player.character, ctx.pindex)
+   add_weapon_row(builder, entity, character, ctx.pindex)
 end
 
 ---Build the equipment overview for a vehicle with equipment grid support
@@ -663,7 +666,8 @@ end
 ---@param entity LuaEntity
 local function render_vehicle_with_grid(ctx, builder, player, entity)
    local grid = entity.grid
-   local main_inv = player.character and player.get_inventory(defines.inventory.character_main)
+   local character = FaUtils.physical_character(player)
+   local main_inv = character and character.get_inventory(defines.inventory.character_main)
 
    if grid then
       add_vehicle_equipment_bonuses(builder, grid)
@@ -671,7 +675,7 @@ local function render_vehicle_with_grid(ctx, builder, player, entity)
       add_quick_equip_section(builder, ctx, player, entity, grid)
    end
 
-   add_weapon_row(builder, entity, player.character, ctx.pindex)
+   add_weapon_row(builder, entity, character, ctx.pindex)
 end
 
 ---Build the equipment overview for an entity with only weapons (no grid support)
@@ -680,7 +684,7 @@ end
 ---@param player LuaPlayer
 ---@param entity LuaEntity
 local function render_weapons_only(ctx, builder, player, entity)
-   add_weapon_row(builder, entity, player.character, ctx.pindex)
+   add_weapon_row(builder, entity, FaUtils.physical_character(player), ctx.pindex)
 end
 
 ---Build the equipment overview menu

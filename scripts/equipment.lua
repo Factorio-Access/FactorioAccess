@@ -211,8 +211,8 @@ end
 ---@param ent_in LuaEntity?
 ---@return LocalisedString
 function mod.read_shield_and_health_level(pindex, ent_in)
-   local p = game.get_player(pindex)
-   local char = p.character
+   local p = assert(game.get_player(pindex))
+   local char = FaUtils.physical_character(p)
    local mb = MessageBuilder.new()
    local ent
    local grid
@@ -222,10 +222,10 @@ function mod.read_shield_and_health_level(pindex, ent_in)
       grid = ent.grid
       mb:fragment(ent.localised_name)
    else
-      if not char or not char.valid then return { "fa.equipment-no-character" } end
+      if not char then return FaUtils.no_physical_character_reason(p) end
       ent = char
-      -- A player with a character always has an armor inventory
-      local armor = (p.get_inventory(defines.inventory.character_armor) --[[@as LuaInventory]])[1]
+      -- A character always has an armor inventory
+      local armor = (char.get_inventory(defines.inventory.character_armor) --[[@as LuaInventory]])[1]
       if armor.valid_for_read then grid = armor.grid end
    end
 

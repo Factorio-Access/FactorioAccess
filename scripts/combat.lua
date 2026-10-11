@@ -4,6 +4,7 @@
 local util = require("util")
 local EntitySelection = require("scripts.entity-selection")
 local Equipment = require("scripts.equipment")
+local FaUtils = require("scripts.fa-utils")
 local HealthBar = require("scripts.sonifiers.health-bar")
 local Localising = require("scripts.localising")
 local PlayerWeapon = require("scripts.combat.player-weapon")
@@ -61,14 +62,14 @@ function mod.get_effective_health_shields(pindex)
    end
 
    -- Otherwise use character stats
-   local char = player.character
-   if not char or not char.valid then return nil end
+   local char = FaUtils.physical_character(player)
+   if not char then return nil end
 
    local health = assert(char.get_health_ratio())
    local shields = nil
 
-   -- A player with a character always has an armor inventory
-   local armor = (player.get_inventory(defines.inventory.character_armor) --[[@as LuaInventory]])[1]
+   -- A character always has an armor inventory
+   local armor = (char.get_inventory(defines.inventory.character_armor) --[[@as LuaInventory]])[1]
    if armor.valid_for_read and armor.grid then
       local grid = armor.grid
       if grid.max_shield > 0 then shields = grid.shield / grid.max_shield end

@@ -5,6 +5,7 @@ Handles area mining for obstacles, ghosts, and with special tools.
 ]]
 
 local Consts = require("scripts.consts")
+local FaUtils = require("scripts.fa-utils")
 local PlayerMiningTools = require("scripts.player-mining-tools")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
@@ -17,11 +18,19 @@ local mod = {}
 function mod.mine_area(pindex)
    local vp = Viewpoint.get_viewpoint(pindex)
    local cursor_pos = vp:get_cursor_pos()
-   local p = game.get_player(pindex)
+   local p = assert(game.get_player(pindex))
    local ent = game.get_player(pindex).selected
    local cleared_count = 0
    local cleared_total = 0
    local comment = ""
+
+   -- Mining puts what it collects into the character's inventory
+   local character = FaUtils.physical_character(p)
+   if not character then
+      Speech.speak(pindex, FaUtils.no_physical_character_reason(p))
+      return
+   end
+   local main_inv = assert(character.get_main_inventory())
 
    --Check if the is within reach or the applicable entity is within reach
    if
@@ -39,7 +48,7 @@ function mod.mine_area(pindex)
    end
 
    --Get initial inventory size
-   local init_empty_stacks = game.get_player(pindex).get_main_inventory().count_empty_stacks()
+   local init_empty_stacks = main_inv.count_empty_stacks()
 
    --Begin clearing
    if ent then
@@ -124,7 +133,7 @@ function mod.mine_area(pindex)
    end
 
    --Calculate collected stack count
-   local stacks_collected = init_empty_stacks - game.get_player(pindex).get_main_inventory().count_empty_stacks()
+   local stacks_collected = init_empty_stacks - main_inv.count_empty_stacks()
 
    --Print result
    local message = MessageBuilder.new()

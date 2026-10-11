@@ -79,9 +79,10 @@ function mod.read_quick_bar_slot(index, pindex)
    local msg = MessageBuilder.new()
    msg:fragment(stack and stack.valid_for_read and { "fa.quickbar-unselected" } or { "fa.quickbar-selected" })
    msg:fragment(name)
-   -- Only plain items have an inventory count to report.
-   if item_name then
-      local count = p.get_main_inventory().get_item_count(item_name)
+   -- Only plain items have an inventory count to report, and only with an inventory (none in remote view).
+   local main_inv = p.get_main_inventory()
+   if item_name and main_inv then
+      local count = main_inv.get_item_count(item_name)
       if stack and stack.valid_for_read then count = count + stack.count end
       msg:fragment({ "fa.quickbar-count", count })
    end
