@@ -106,6 +106,7 @@ require("scripts.ui.tabs.fluid-chooser")
 require("scripts.ui.tabs.entity-chooser")
 require("scripts.ui.tabs.prototype-lister")
 require("scripts.ui.tabs.equipment-selector")
+local RocketSiloConfig = require("scripts.ui.tabs.rocket-silo-config")
 local Help = require("scripts.ui.help")
 local MessageLists = require("scripts.message-lists")
 require("scripts.ui.logistics-config")
@@ -3466,12 +3467,18 @@ EventManager.on_event(
    end
 )
 
---Toggle whether rockets are launched automatically when they have cargo
+--Toggle the selected rocket silo's automation: sending to orbit, or automatic requests from space platforms
 EventManager.on_event(
    "fa-c-space",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      Speech.speak(pindex, { "fa.not-implemented-factorio-2" })
+      local ent = game.get_player(pindex).selected
+      if not (ent and ent.valid and ent.type == "rocket-silo") then return end
+      local automation = RocketSiloConfig.automation_setting(ent)
+      local value = not automation.get()
+      automation.set(value)
+      local key = value and "fa.rocket-silo-setting-enabled" or "fa.rocket-silo-setting-disabled"
+      Speech.speak(pindex, { key, automation.label })
    end
 )
 
