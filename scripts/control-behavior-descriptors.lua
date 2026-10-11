@@ -629,6 +629,21 @@ local descriptors = {
          },
          {
             type = mod.FIELD_TYPE.BOOLEAN,
+            name = "read_empty_slots",
+            label = { "fa.cb-field-read-empty-slots" },
+         },
+         {
+            type = mod.FIELD_TYPE.SIGNAL,
+            name = "empty_slots_signal",
+            label = { "fa.cb-field-empty-slots-signal" },
+         },
+         {
+            type = mod.FIELD_TYPE.BOOLEAN,
+            name = "set_requests",
+            label = { "fa.cb-field-set-requests" },
+         },
+         {
+            type = mod.FIELD_TYPE.BOOLEAN,
             name = "send_to_platform",
             label = { "fa.cb-field-send-to-platform" },
          },
