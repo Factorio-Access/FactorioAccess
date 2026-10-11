@@ -443,7 +443,28 @@ local descriptors = {
 
    [defines.control_behavior.type.radar] = {
       base = nil,
-      fields = {},
+      fields = {
+         {
+            type = mod.FIELD_TYPE.CHOICE,
+            name = "mode",
+            label = { "fa.cb-field-radar-mode" },
+            choices = {
+               {
+                  value = defines.control_behavior.radar.mode.surface,
+                  label = { "fa.cb-choice-radar-mode-surface" },
+               },
+               {
+                  value = defines.control_behavior.radar.mode.universe,
+                  label = { "fa.cb-choice-radar-mode-universe" },
+               },
+            },
+         },
+         {
+            type = mod.FIELD_TYPE.SIGNAL,
+            name = "universe_channel",
+            label = { "fa.cb-field-universe-channel" },
+         },
+      },
    },
 
    [defines.control_behavior.type.rail_signal] = {
