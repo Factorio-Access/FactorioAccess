@@ -1,19 +1,24 @@
 --[[
-Ghost chooser: what replaces the inventory in remote view, where the player has no items. Lists the buildable items
-the force has unlocked; choosing one puts its ghost in hand (player.cursor_ghost). On a space platform each item
-says how many the hub holds, since the hub builds the ghosts from its own inventory.
+Ghost chooser: what replaces the inventory in remote view, where the player has no items. Lists the items the force
+has unlocked that can be built on the player's surface; choosing one puts its ghost in hand (player.cursor_ghost). On
+a space platform each item says how many the hub holds, since the hub builds the ghosts from its own inventory.
 ]]
 local KeyGraph = require("scripts.ui.key-graph")
 local Localising = require("scripts.localising")
 local SignalHelpers = require("scripts.ui.signal-helpers")
+local SurfaceConditions = require("scripts.surface-conditions")
 local TreeChooser = require("scripts.ui.tree-chooser")
 
 local mod = {}
 
+---Whether the item places something on this surface. Tiles have no surface conditions.
 ---@param proto LuaItemPrototype
+---@param surface LuaSurface
 ---@return boolean
-local function is_buildable(proto)
-   return proto.place_result ~= nil or proto.place_as_tile_result ~= nil
+local function is_buildable(proto, surface)
+   local entity = proto.place_result
+   if entity then return SurfaceConditions.failed_condition(entity, surface) == nil end
+   return proto.place_as_tile_result ~= nil
 end
 
 ---@param ctx fa.ui.graph.Ctx
@@ -24,19 +29,26 @@ local function render_ghost_chooser(ctx)
    local hub = player.hub
    local hub_inv = hub and hub.get_inventory(defines.inventory.hub_main)
 
+   local surface = player.surface
+   local function filter(proto)
+      return is_buildable(proto, surface)
+   end
+
    SignalHelpers.add_item_signals(
       builder,
       TreeChooser.ROOT,
       true,
       player.force --[[@as LuaForce]],
       nil,
-      is_buildable,
+      filter,
       function(name, proto)
          return {
             label = function(label_ctx)
-               label_ctx.message:fragment(Localising.get_localised_name_with_fallback(proto))
+               local localised_name = Localising.get_localised_name_with_fallback(proto)
                if hub_inv then
-                  label_ctx.message:list_item({ "fa.ghost-chooser-in-hub", hub_inv.get_item_count(name) })
+                  label_ctx.message:fragment({ "fa.ghost-chooser-in-hub", localised_name, hub_inv.get_item_count(name) })
+               else
+                  label_ctx.message:fragment(localised_name)
                end
             end,
             on_click = function(click_ctx)
