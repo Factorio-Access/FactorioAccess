@@ -6,6 +6,7 @@
 #include "log.h"
 #include "speech.h"
 #include "sym.h"
+#include "ui/rich_text.h"
 
 namespace fa::lua {
 namespace {
@@ -74,10 +75,9 @@ std::string localise(lua_State* L, int index) {
 // _fa_native.speak(localised_string [, interrupt])
 int lua_speak(lua_State* L) {
   bool interrupt = api.gettop(L) < 2 || api.toboolean(L, 2) != 0;
-  std::string text = localise(L, 1);
-  // Composed messages can carry the separators of empty parts at their ends.
-  size_t first = text.find_first_not_of(" \t\r\n"), last = text.find_last_not_of(" \t\r\n");
-  speech::speak(first == std::string::npos ? std::string() : text.substr(first, last - first + 1), interrupt);
+  // Localised control names and item references come back as rich text ([font=...]M[/font]), which the launcher
+  // strips too. This also trims the separators that empty parts of a composed message leave at their ends.
+  speech::speak(ui::strip_rich_text(localise(L, 1)), interrupt);
   return 0;
 }
 
