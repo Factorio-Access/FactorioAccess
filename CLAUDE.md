@@ -84,6 +84,11 @@ local player_data = storage.players[pindex]
 local my_storage = StorageManager.declare_storage_module("module_name", { --[[ defaults ]] })
 ```
 
+- In remote view (always the case aboard a space platform) the player has no character as far as the game shows:
+  character features (inventory, crafting, equipment, walking, teleporting, mining) refuse or are absent. The engine
+  disagrees: `player.character` still returns the parked character, while `player.get_main_inventory()` is nil and
+  `player.position` / `player.surface` are the view. Use `FaUtils.controlled_character(player)`, never a bare
+  `player.character` check. `player.character` is truly nil only without a body (dead in multiplayer, god, editor).
 - Requires only at file top level. No global state beyond the current file.
 - Check `player and player.valid` at entry points; see "Defensive coding" for everywhere else.
 - `prototypes.recipe["name"]`, not `game.recipe_prototypes`. There is no `game.create_player()`.
