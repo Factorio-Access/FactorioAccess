@@ -8,6 +8,7 @@ local Fluids = require("scripts.fluids")
 local Localising = require("scripts.localising")
 local dirs = defines.direction
 local Graphics = require("scripts.graphics")
+local Heat = require("scripts.heat")
 local Speech = require("scripts.speech")
 local SurfaceConditions = require("scripts.surface-conditions")
 local MessageBuilder = Speech.MessageBuilder
@@ -590,61 +591,6 @@ function mod.nudge_key(direction, event)
    end
 end
 
---Returns a list of positions for this entity where it has its heat pipe connections.
-function mod.get_heat_connection_positions(ent_name, ent_position, ent_direction)
-   local pos = ent_position
-   local positions = {}
-   if ent_name == "heat-pipe" then
-      table.insert(positions, { x = pos.x, y = pos.y })
-   elseif ent_name == "heat-exchanger" then
-      table.insert(positions, FaUtils.offset_position_legacy(pos, FaUtils.rotate_180(ent_direction), 0.5))
-   elseif ent_name == "nuclear-reactor" then
-      table.insert(positions, { x = pos.x - 2, y = pos.y - 2 })
-      table.insert(positions, { x = pos.x - 0, y = pos.y - 2 })
-      table.insert(positions, { x = pos.x + 2, y = pos.y - 2 })
-
-      table.insert(positions, { x = pos.x - 2, y = pos.y - 0 })
-      table.insert(positions, { x = pos.x + 2, y = pos.y - 0 })
-
-      table.insert(positions, { x = pos.x - 2, y = pos.y + 2 })
-      table.insert(positions, { x = pos.x - 0, y = pos.y + 2 })
-      table.insert(positions, { x = pos.x + 2, y = pos.y + 2 })
-   end
-   return positions
-end
-
---Returns a list of positions for this entity where it expects to find other heat pipe interfaces that it can connect to.
-function mod.get_heat_connection_target_positions(ent_name, ent_position, ent_direction)
-   local pos = ent_position
-   local positions = {}
-   if ent_name == "heat-pipe" then
-      table.insert(positions, { x = pos.x - 1, y = pos.y - 0 })
-      table.insert(positions, { x = pos.x + 1, y = pos.y - 0 })
-      table.insert(positions, { x = pos.x - 0, y = pos.y - 1 })
-      table.insert(positions, { x = pos.x - 0, y = pos.y + 1 })
-   elseif ent_name == "heat-exchanger" then
-      table.insert(positions, FaUtils.offset_position_legacy(pos, FaUtils.rotate_180(ent_direction), 1.5))
-   elseif ent_name == "nuclear-reactor" then
-      table.insert(positions, { x = pos.x - 2, y = pos.y - 3 })
-      table.insert(positions, { x = pos.x - 0, y = pos.y - 3 })
-      table.insert(positions, { x = pos.x + 2, y = pos.y - 3 })
-
-      table.insert(positions, { x = pos.x - 3, y = pos.y - 2 })
-      table.insert(positions, { x = pos.x + 3, y = pos.y - 2 })
-
-      table.insert(positions, { x = pos.x - 3, y = pos.y - 0 })
-      table.insert(positions, { x = pos.x + 3, y = pos.y - 0 })
-
-      table.insert(positions, { x = pos.x - 3, y = pos.y + 2 })
-      table.insert(positions, { x = pos.x + 3, y = pos.y + 2 })
-
-      table.insert(positions, { x = pos.x - 2, y = pos.y + 3 })
-      table.insert(positions, { x = pos.x - 0, y = pos.y + 3 })
-      table.insert(positions, { x = pos.x + 2, y = pos.y + 3 })
-   end
-   return positions
-end
-
 --Returns an info string about trying to build the entity in hand. The info type depends on the entity. Note: Limited usefulness for entities with sizes greater than 1 by 1.
 ---@param stack LuaItemStack
 function mod.build_preview_checks_info(stack, pindex)
@@ -710,59 +656,39 @@ function mod.build_preview_checks_info(stack, pindex)
       end
    end
 
-   --For heat pipes, preview the connection directions
+   --For heat pipes, preview the connection directions: a neighbour connects when one of its heat connections sits
+   --on the neighbouring tile and faces back at the pipe (heat pipes connect on every side).
    if ent_p.type == "heat-pipe" then
       table.insert(result, { "fa.connection-heat-pipe-can-connect" })
-      local con_targets = mod.get_heat_connection_target_positions("heat-pipe", pos, dirs.north)
       local con_count = 0
-      if #con_targets > 0 then
-         for i, con_target_pos in ipairs(con_targets) do
-            --For each heat connection target position
-            rendering.draw_circle({
-               color = { 1.0, 0.0, 0.5 },
-               radius = 0.1,
-               width = 2,
-               target = con_target_pos,
-               surface = p.surface,
-               time_to_live = 30,
-            })
-            local target_ents = p.surface.find_entities_filtered({ position = con_target_pos })
-            for j, target_ent in ipairs(target_ents) do
+      for _, con_dir in ipairs({ dirs.north, dirs.east, dirs.south, dirs.west }) do
+         local con_target_pos = FaUtils.offset_position_legacy(tile_center, con_dir, 1)
+         local facing_back = FaUtils.rotate_180(con_dir)
+         rendering.draw_circle({
+            color = { 1.0, 0.0, 0.5 },
+            radius = 0.1,
+            width = 2,
+            target = con_target_pos,
+            surface = surf,
+            time_to_live = 30,
+         })
+         for _, target_ent in ipairs(surf.find_entities_filtered({ position = con_target_pos })) do
+            for _, cp in ipairs(Heat.get_connection_points(target_ent)) do
                if
-                  target_ent.valid
-                  and #mod.get_heat_connection_positions(target_ent.name, target_ent.position, target_ent.direction)
-                     > 0
+                  util.distance(con_target_pos, cp.position) < 0.2
+                  and (cp.direction == nil or cp.direction == facing_back)
                then
-                  for k, spot in
-                     ipairs(
-                        mod.get_heat_connection_positions(target_ent.name, target_ent.position, target_ent.direction)
-                     )
-                  do
-                     --For each heat connection of the found target entity
-                     rendering.draw_circle({
-                        color = { 1.0, 1.0, 0.5 },
-                        radius = 0.2,
-                        width = 2,
-                        target = spot,
-                        surface = p.surface,
-                        time_to_live = 30,
-                     })
-                     if util.distance(con_target_pos, spot) < 0.2 then
-                        --For each match
-                        rendering.draw_circle({
-                           color = { 0.5, 1.0, 0.5 },
-                           radius = 0.3,
-                           width = 2,
-                           target = spot,
-                           surface = p.surface,
-                           time_to_live = 30,
-                        })
-                        con_count = con_count + 1
-                        local con_dir = FaUtils.get_direction_biased(con_target_pos, pos)
-                        if con_count > 1 then table.insert(result, { "fa.connection-heat-pipe-and" }) end
-                        table.insert(result, FaUtils.localise_direction(con_dir))
-                     end
-                  end
+                  rendering.draw_circle({
+                     color = { 0.5, 1.0, 0.5 },
+                     radius = 0.3,
+                     width = 2,
+                     target = cp.position,
+                     surface = surf,
+                     time_to_live = 30,
+                  })
+                  con_count = con_count + 1
+                  if con_count > 1 then table.insert(result, { "fa.connection-heat-pipe-and" }) end
+                  table.insert(result, FaUtils.localise_direction(con_dir))
                end
             end
          end

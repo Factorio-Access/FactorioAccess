@@ -709,16 +709,7 @@ end
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_render_heat_ports(ctx)
    local ent = ctx.ent
-   if
-      not (
-         ent
-         and ent.valid
-         and ent.prototype.heat_buffer_prototype
-         and next(ent.prototype.heat_buffer_prototype.connections)
-      )
-   then
-      return
-   end
+   if not (ent and ent.valid and Heat.get_connection_definitions(ent.prototype)) then return end
 
    local connection_points = Heat.get_connection_points(ent)
    local found_dirs = {}
@@ -765,16 +756,7 @@ end
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_heat_neighbors(ctx)
    local ent = ctx.ent
-   if
-      not (
-         ent
-         and ent.valid
-         and ent.prototype.heat_buffer_prototype
-         and next(ent.prototype.heat_buffer_prototype.connections)
-      )
-   then
-      return
-   end
+   if not (ent and ent.valid and Heat.get_connection_definitions(ent.prototype)) then return end
 
    local connection_points = Heat.get_connection_points(ent)
    if not connection_points or #connection_points == 0 then return end

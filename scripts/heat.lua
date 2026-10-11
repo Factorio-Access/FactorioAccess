@@ -31,13 +31,24 @@ local function rotate_offset(dx, dy, direction)
    return dx * cos_theta - dy * sin_theta, dx * sin_theta + dy * cos_theta
 end
 
+---The prototype's heat connections, relative to a north-facing entity: from its heat buffer (heat pipes, reactors,
+---heating towers) or its heat energy source (heat exchangers and anything else heated). Nil when it has neither.
+---@param proto LuaEntityPrototype
+---@return HeatConnectionDefinition[]?
+function mod.get_connection_definitions(proto)
+   local source = proto.heat_buffer_prototype or proto.heat_energy_source_prototype
+   if not source or not next(source.connections) then return nil end
+   return source.connections
+end
+
 ---Returns a list of HeatConnectionPoint for the entity's heat connections.
 ---@param ent LuaEntity
 ---@return fa.Heat.ConnectionPoint[]
 function mod.get_connection_points(ent)
    local res = {}
    local proto = ent and ent.valid and ent.prototype
-   if not (proto and proto.heat_buffer_prototype and proto.heat_buffer_prototype.connections) then return res end
+   local connections = proto and mod.get_connection_definitions(proto)
+   if not connections then return res end
 
    -- Detect if this is a heat pipe by entity type.
    local is_heat_pipe = proto.type == "heat-pipe"
@@ -48,11 +59,11 @@ function mod.get_connection_points(ent)
          position = { x = pos.x, y = pos.y },
          direction = nil,
          entity = ent,
-         raw = proto.heat_buffer_prototype.connections[1],
+         raw = connections[1],
       })
    else
       local dir = ent.direction or 0
-      for _, conn in ipairs(proto.heat_buffer_prototype.connections) do
+      for _, conn in ipairs(connections) do
          local pos = ent.position
          local rel = conn.position --[[@as fa.VectorArray]]
          local rx, ry = rotate_offset(rel[1], rel[2], dir)
