@@ -97,6 +97,7 @@ local WorldMenu = require("scripts.ui.menus.world-menu")
 require("scripts.ui.menus.fast-travel-menu")
 require("scripts.ui.menus.debug-menu")
 require("scripts.ui.menus.settings-menu")
+require("scripts.ui.menus.mod-menu")
 require("scripts.ui.menus.rail-builder")
 require("scripts.ui.menus.syntrax-program")
 local SpidertronRemoteSelector = require("scripts.ui.menus.spidertron-remote-selector")
@@ -3526,6 +3527,10 @@ EventManager.on_event("fa-cas-m", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
    router:open_ui(UiRouter.UI_NAMES.SETTINGS)
+end)
+
+EventManager.on_event("fa-a-m", function(event, pindex)
+   UiRouter.get_router(pindex):open_ui(UiRouter.UI_NAMES.MOD_MENU)
 end)
 
 -- Toggle combat mode (changes sound reference point from cursor to character)

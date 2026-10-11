@@ -167,6 +167,7 @@ mod.UI_NAMES = {
    TUTORIAL = "tutorial",
    SCHEDULE_EDITOR = "schedule_editor",
    SETTINGS = "settings",
+   MOD_MENU = "mod_menu",
    BLUEPRINT_SETUP = "blueprint_setup",
    BLUEPRINT_SETUP_CONFIG = "blueprint_setup_config",
    UPGRADE_PLANNER = "upgrade_planner",
@@ -1043,7 +1044,6 @@ register_ui_event("fa-o", create_ui_handler("on_trash"))
 
 -- Action keys (m, comma, dot) - UI action handlers
 register_ui_event("fa-m", create_ui_handler("on_action1", {}))
-register_ui_event("fa-a-m", create_ui_handler("on_action1", { alt = true }))
 register_ui_event("fa-c-m", create_ui_handler("on_action1", { control = true }))
 register_ui_event("fa-s-m", create_ui_handler("on_action1", { shift = true }))
 register_ui_event("fa-cs-m", create_ui_handler("on_action1", { control = true, shift = true }))
