@@ -14,6 +14,7 @@ local Localising = require("scripts.localising")
 local LauncherCommands = require("scripts.launcher-commands")
 local Speech = require("scripts.speech")
 local UiSounds = require("scripts.ui.sounds")
+local FaInfo = require("scripts.fa-info")
 
 local mod = {}
 
@@ -100,6 +101,9 @@ local function prototype_lister_vtable_builder(name, proto, signal_type)
             Speech.speak(pindex, spaced)
          end
       end,
+      on_production_stats_announcement = signal_type == "item" and function(ctx)
+         ctx.message:fragment(FaInfo.selected_item_production_stats_info(ctx.pindex, name))
+      end or nil,
    }
 end
 
