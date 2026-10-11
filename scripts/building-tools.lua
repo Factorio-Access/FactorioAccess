@@ -35,6 +35,52 @@ do
    if max_roboport_connection_radius == 0 then max_roboport_connection_radius = 25 end
 end
 
+---Entity types that keep their neighbours from freezing: each warms whatever lies within its heating_radius tiles of
+---its footprint, diagonals included, while it is at least utility_constants.freezing_temperature.
+local HEATING_TYPES = { "heat-pipe", "reactor", "heat-interface" }
+
+---@type number
+local max_heating_radius = 0
+for _, proto in pairs(prototypes.get_entity_filtered({ { filter = "type", type = HEATING_TYPES } })) do
+   max_heating_radius = math.max(max_heating_radius, assert(proto.heating_radius))
+end
+
+---True when an entity placed on this footprint would freeze: the surface needs heating, the entity can freeze, and
+---no warm heat source reaches it.
+---@param entity_prototype LuaEntityPrototype
+---@param surface LuaSurface
+---@param footprint { left_top: MapPosition.struct, right_bottom: MapPosition.struct }
+---@return boolean
+local function would_freeze(entity_prototype, surface, footprint)
+   if not script.feature_flags.freezing or entity_prototype.heating_energy == 0 then return false end
+   local planet = surface.planet
+   if not planet or not planet.prototype.entities_require_heating then return false end
+   local min_temperature = prototypes.utility_constants.freezing_temperature
+   local lt, rb = footprint.left_top, footprint.right_bottom
+   local sources = surface.find_entities_filtered({
+      type = HEATING_TYPES,
+      area = {
+         { lt.x - max_heating_radius, lt.y - max_heating_radius },
+         { rb.x + max_heating_radius, rb.y + max_heating_radius },
+      },
+   })
+   for _, source in ipairs(sources) do
+      if source.temperature >= min_temperature then
+         local radius = assert(source.prototype.heating_radius)
+         local box = source.bounding_box --[[@as fa.AABB]]
+         local box_lt = box.left_top --[[@as MapPosition.struct]]
+         local box_rb = box.right_bottom --[[@as MapPosition.struct]]
+         -- The collision box sits inside the tiles the source covers; round it out to them.
+         local left = math.floor(box_lt.x) - radius
+         local top = math.floor(box_lt.y) - radius
+         local right = math.ceil(box_rb.x) + radius
+         local bottom = math.ceil(box_rb.y) + radius
+         if left < rb.x and lt.x < right and top < rb.y and lt.y < bottom then return false end
+      end
+   end
+   return true
+end
+
 ---"Recycler can't be built on this surface. The Magnetic field is too low.", or nil when its surface conditions hold.
 ---@param entity_prototype LuaEntityPrototype
 ---@param surface LuaSurface
@@ -897,6 +943,8 @@ function mod.build_preview_checks_info(stack, pindex)
          end
       end
    end
+
+   if would_freeze(ent_p, surf, footprint) then table.insert(result, { "fa.connection-would-freeze" }) end
 
    -- The game measures build reach to the nearest point of the building's footprint.
    local player_pos = p.position --[[@as MapPosition.struct]]

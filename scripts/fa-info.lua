@@ -205,6 +205,8 @@ local function ent_info_verbose_status(ctx)
    local status = ent.status
    if status == nil then return end
    if not Consts.VERBOSE_STATUSES[status] then return end
+   -- Already said after the name
+   if status == defines.entity_status.frozen then return end
 
    ctx.message:fragment(Localising.entity_status_localised(status))
 end
@@ -1340,6 +1342,11 @@ function mod.ent_info(pindex, ent, is_scanner)
    local function run_handler(handler, nolist)
       handler(ctx)
       if not nolist then ctx.message:list_item() end
+   end
+
+   -- Frozen stops nearly everything, so it comes straight after the name
+   if script.feature_flags.freezing and ent.frozen then
+      ctx.message:list_item_forced_comma(Localising.entity_status_localised(defines.entity_status.frozen)):list_item()
    end
 
    --Explain the recipe of a machine without pause and before the direction
