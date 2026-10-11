@@ -784,9 +784,33 @@ local descriptors = {
       base = nil,
       fields = {
          {
+            type = mod.FIELD_TYPE.CHOICE,
+            name = "circuit_exclusive_mode_of_operation",
+            label = { "fa.cb-field-read-mode" },
+            choices = {
+               {
+                  value = defines.control_behavior.single_fluid_box.exclusive_mode.none,
+                  label = { "fa.cb-choice-single-fluid-box-exclusive-mode-none" },
+               },
+               {
+                  value = defines.control_behavior.single_fluid_box.exclusive_mode.send_contents,
+                  label = { "fa.cb-choice-single-fluid-box-exclusive-mode-send-contents" },
+               },
+               {
+                  value = defines.control_behavior.single_fluid_box.exclusive_mode.send_segment_contents,
+                  label = { "fa.cb-choice-single-fluid-box-exclusive-mode-send-segment-contents" },
+               },
+            },
+         },
+         {
             type = mod.FIELD_TYPE.BOOLEAN,
-            name = "read_contents",
-            label = { "fa.cb-field-read-contents" },
+            name = "read_temperature",
+            label = { "fa.cb-field-read-fluid-temperature" },
+         },
+         {
+            type = mod.FIELD_TYPE.SIGNAL,
+            name = "temperature_signal",
+            label = { "fa.cb-field-temperature-signal" },
          },
       },
    },
