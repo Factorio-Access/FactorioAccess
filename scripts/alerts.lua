@@ -30,6 +30,8 @@ local ALERT_TYPE_TO_LOCALE = {
    [defines.alert_type.collector_path_blocked] = "collector-path-blocked",
    [defines.alert_type.platform_tile_building_blocked] = "platform-tile-building-blocked",
    [defines.alert_type.pipeline_overextended] = "pipeline-overextended",
+   [defines.alert_type.fluid_mixing] = "fluid-mixing",
+   [defines.alert_type.expansion_base_built] = "expansion-base-built",
    [defines.alert_type.unclaimed_cargo] = "unclaimed-cargo",
    [defines.alert_type.custom] = "custom-alert",
 }
