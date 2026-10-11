@@ -215,26 +215,7 @@ local function read_hand(pindex)
          Speech.speak(pindex, out)
       end
    elseif cursor_ghost ~= nil then
-      --Any ghost
-      local vp = Viewpoint.get_viewpoint(pindex)
-      local out = { "fa.cursor-description" }
-      table.insert(out, cursor_ghost.localised_name)
-      local build_entity = cursor_ghost.place_result
-      if build_entity and build_entity.supports_direction then
-         table.insert(out, 1)
-         table.insert(out, { "fa.facing-direction", FaUtils.direction_lookup(vp:get_hand_direction()) })
-      else
-         table.insert(out, 0)
-         table.insert(out, "")
-      end
-      table.insert(out, 0)
-      local extra = 0
-      if extra > 0 then
-         table.insert(out, cursor_stack.count + extra)
-      else
-         table.insert(out, 0)
-      end
-      Speech.speak(pindex, out)
+      CursorChanges.read_cursor_ghost(pindex)
    else
       Speech.speak(pindex, { "fa.empty_cursor" })
    end
@@ -263,10 +244,8 @@ local function read_tile_with_preview_info(pindex, start_text)
    -- Add build preview info if holding a building and tile is empty/has resources
    local ent = EntitySelection.get_first_ent_at_tile(pindex)
    if not ent or ent.type == "resource" then
-      local stack = game.get_player(pindex).cursor_stack
-      if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result ~= nil then
-         message:fragment(BuildingTools.build_preview_checks_info(stack, pindex))
-      end
+      local preview = BuildingTools.hand_build_preview_info(pindex)
+      if preview then message:fragment(preview) end
    end
 
    Speech.speak(pindex, message:build())
@@ -289,8 +268,7 @@ EventManager.on_event(
       end
 
       --Update cursor graphics
-      local stack = p.cursor_stack
-      if stack and stack.valid_for_read and stack.valid then Graphics.sync_build_cursor_graphics(pindex) end
+      if FaUtils.cursor_item(p) then Graphics.sync_build_cursor_graphics(pindex) end
    end
 )
 

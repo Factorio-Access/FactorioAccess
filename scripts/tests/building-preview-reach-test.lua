@@ -38,7 +38,7 @@ describe("Building preview reach", function()
             local item = c[1] == "assembling-machine" and "assembling-machine-1" or c[1]
             cursor.set_stack({ name = item, count = 1 })
             vp:set_cursor_pos({ x = px + c[2], y = py })
-            local out = mentions_out_of_reach(BuildingTools.build_preview_checks_info(cursor, 1))
+            local out = mentions_out_of_reach(assert(BuildingTools.hand_build_preview_info(1)))
             ctx:assert_equals(c[3], out, string.format("%s with the cursor %d tiles east", item, c[2]))
          end
          cursor.clear()

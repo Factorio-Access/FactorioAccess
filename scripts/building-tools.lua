@@ -966,15 +966,6 @@ function mod.hand_build_preview_info(pindex)
    return result
 end
 
---The build preview for a stack in hand with an entity to place. hand_build_preview_info also reads ghosts.
----@param stack LuaItemStack the player's cursor stack
----@param pindex integer
----@return LocalisedString
-function mod.build_preview_checks_info(stack, pindex)
-   assert(stack.valid_for_read)
-   return assert(mod.hand_build_preview_info(pindex))
-end
-
 --If the player is standing within the build area, they are teleported out.
 function mod.teleport_player_out_of_build_area(left_top, right_bottom, pindex)
    local p = game.get_player(pindex)
