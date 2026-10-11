@@ -197,7 +197,10 @@ def cmd_launch(a):
     if not a.nobuild:
         build()
     # FA_NO_PROXY: an installed version.dll stays idle; the dev loop injects its own build instead.
-    env = dict(os.environ, FA_NOFOCUS="1", FA_PORT=str(PORT), FA_NO_PROXY="1")
+    env = dict(os.environ, FA_PORT=str(PORT), FA_NO_PROXY="1")
+    # --focus: let the game take focus like a normal run (it may move the mouse); for bugs that need it.
+    if not a.focus:
+        env["FA_NOFOCUS"] = "1"
     if a.speak:
         env.pop("FA_MUTE", None)
     else:
@@ -389,6 +392,7 @@ def main():
     s = sub.add_parser("launch")
     s.add_argument("--speak", action="store_true")
     s.add_argument("--nobuild", action="store_true")
+    s.add_argument("--focus", action="store_true")
     s.add_argument("game_args", nargs="*")
     s.set_defaults(f=cmd_launch)
     s = sub.add_parser("reload")
