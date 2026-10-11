@@ -52,6 +52,7 @@ local test_files = {
    "entity-ui-test", -- Test generic entity UI system
    "entity-selection-test", -- Test stable entity ordering (issue #265)
    "rail-grid-adjustment-test", -- Test that TestSurface matches game rail grid adjustment
+   "scanner-tile-bodies-test", -- Water, lava, oceans and Gleba's tiles as scanner entries
    "player-weapon-test", -- Test weapon/ammo property detection
 }
 

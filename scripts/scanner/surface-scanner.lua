@@ -6,10 +6,9 @@ local StorageManager = require("scripts.storage-manager")
 -- it.
 local SparseBitset = require("ds.sparse-bitset")
 local SEB = require("scripts.scanner.backends.single-entity")
-local IcebergBackend = require("scripts.scanner.backends.iceberg")
 local TreeBackend = require("scripts.scanner.backends.trees")
-local WaterBackend = require("scripts.scanner.backends.water")
 local TH = require("scripts.table-helpers")
+local TileBodiesBackend = require("scripts.scanner.backends.tile-bodies")
 local WorkQueue = require("scripts.work-queue")
 
 local mod = {}
@@ -155,8 +154,7 @@ end)
 ---@class fa.scanner.SurfaceBackends
 ---@field lut table<string, fa.scanner.ScannerBackend?> By prototype type
 ---@field name_lut table<string, fa.scanner.ScannerBackend?> By prototype name, checked first
----@field iceberg_backend fa.scanner.IcebergBackend
----@field water_backend fa.scanner.WaterBackend
+---@field tile_bodies_backend fa.scanner.TileBodiesBackend
 
 -- Instantiate a set of backends, later wired up to a surface, by iterating over
 -- the LUT and making backends for each thing.
@@ -182,8 +180,7 @@ local function instantiate_backends(surface)
    return {
       lut = lut,
       name_lut = name_lut,
-      iceberg_backend = IcebergBackend.IcebergBackend.new(surface),
-      water_backend = WaterBackend.WaterBackend.new(surface),
+      tile_bodies_backend = TileBodiesBackend.TileBodiesBackend.new(surface),
    }
 end
 
@@ -211,7 +208,7 @@ end
 local surface_state = StorageManager.declare_storage_module(
    "scanner",
    new_empty_surface,
-   { root_field = "surfaces", ephemeral_state_version = 12 }
+   { root_field = "surfaces", ephemeral_state_version = 13 }
 )
 
 -- Given a backend setup and an array of entities, dispatch the entities to the
@@ -274,8 +271,7 @@ local function scan_chunk(cmd)
 
    if not state.seen_chunks[cx][cy] then
       state.seen_chunks[cx][cy] = true
-      state.backends.iceberg_backend:on_new_chunk(chunk)
-      state.backends.water_backend:on_new_chunk(chunk)
+      state.backends.tile_bodies_backend:on_new_chunk(chunk)
    end
 end
 
@@ -383,8 +379,7 @@ function mod.get_entries_snapshot(surface_index, player, callback)
       end
    end
 
-   state.backends.iceberg_backend:dump_entries_to_callback(player, callback)
-   state.backends.water_backend:dump_entries_to_callback(player, callback)
+   state.backends.tile_bodies_backend:dump_entries_to_callback(player, callback)
 end
 
 function mod.on_new_surface(index)

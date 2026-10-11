@@ -37,6 +37,7 @@ local NetworkShape = require("scripts.network-shape")
 -- Rails removed (Factorio 2.0 incompatibility)
 -- local Rails = require("scripts.rails")
 local ResourceMining = require("scripts.resource-mining")
+local ScannerConsts = require("scripts.scanner.scanner-consts")
 local TH = require("scripts.table-helpers")
 -- Trains removed (Factorio 2.0 incompatibility)
 -- local Trains = require("scripts.trains")
@@ -2146,18 +2147,23 @@ function mod.area_scan_summary_info(pindex, left_top, right_bottom)
       })
    end
 
-   ---@type { name: string, count: integer, category: string }[]
+   ---@type { name: string, count: integer, category: string, localised_name: LocalisedString? }[]
    local counts = {}
 
    local covered_area = (right_bottom.x - left_top.x) * (right_bottom.y - left_top.y)
    assert(covered_area > 0)
 
-   local water_count = surf.count_tiles_filtered({
-      name = Consts.WATER_TILE_NAMES,
-      area = { left_top, right_bottom },
-   })
-
-   if water_count > 0 then table.insert(counts, { name = "water", count = water_count, category = "resource" }) end
+   for _, kind in ipairs(ScannerConsts.tile_body_kinds().kinds) do
+      if kind.area_scan then
+         local tile_count = surf.count_tiles_filtered({ name = kind.tiles, area = { left_top, right_bottom } })
+         if tile_count > 0 then
+            table.insert(
+               counts,
+               { name = kind.key, count = tile_count, category = "resource", localised_name = kind.name }
+            )
+         end
+      end
+   end
 
    local path_count = surf.count_tiles_filtered({ name = "stone-path", area = { left_top, right_bottom } })
    if path_count > 0 then
@@ -2226,8 +2232,8 @@ function mod.area_scan_summary_info(pindex, left_top, right_bottom)
 
       -- Create proper localised string for the name
       local localised_name
-      if entry.name == "water" then
-         localised_name = { "fa.area-scan-water" }
+      if entry.localised_name then
+         localised_name = entry.localised_name
       elseif entry.name == "trees" then
          localised_name = { "fa.area-scan-trees" }
       elseif entry.name == "stone-brick-path" then
