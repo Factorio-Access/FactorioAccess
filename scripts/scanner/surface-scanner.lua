@@ -1,3 +1,4 @@
+local AsteroidChunksBackend = require("scripts.scanner.backends.asteroid-chunks")
 local Functools = require("scripts.functools")
 local Memosort = require("scripts.memosort")
 local ResourcePatchesBackend = require("scripts.scanner.backends.resource-patches")
@@ -35,6 +36,7 @@ local BACKEND_LUT = {
    ["artillery-flare"] = SEB.Military,
    ["artillery-turret"] = SEB.Military,
    ["artillery-wagon"] = SEB.TrainsNamed,
+   ["asteroid"] = SEB.Asteroid,
    ["assembling-machine"] = SEB.CraftingMachine,
    ["beacon"] = SEB.Production,
    ["boiler"] = SEB.LogisticsAndPower,
@@ -184,6 +186,7 @@ end)
 ---@field lut table<string, fa.scanner.ScannerBackend?> By prototype type
 ---@field name_lut table<string, fa.scanner.ScannerBackend?> By prototype name, checked first
 ---@field tile_bodies_backend fa.scanner.TileBodiesBackend
+---@field asteroid_chunks_backend fa.scanner.AsteroidChunksBackend
 
 -- Instantiate a set of backends, later wired up to a surface, by iterating over
 -- the LUT and making backends for each thing.
@@ -210,6 +213,7 @@ local function instantiate_backends(surface)
       lut = lut,
       name_lut = name_lut,
       tile_bodies_backend = TileBodiesBackend.TileBodiesBackend.new(surface),
+      asteroid_chunks_backend = AsteroidChunksBackend.AsteroidChunksBackend.new(surface),
    }
 end
 
@@ -237,7 +241,7 @@ end
 local surface_state = StorageManager.declare_storage_module(
    "scanner",
    new_empty_surface,
-   { root_field = "surfaces", ephemeral_state_version = 13 }
+   { root_field = "surfaces", ephemeral_state_version = 14 }
 )
 
 -- Given a backend setup and an array of entities, dispatch the entities to the
@@ -409,6 +413,7 @@ function mod.get_entries_snapshot(surface_index, player, callback)
    end
 
    state.backends.tile_bodies_backend:dump_entries_to_callback(player, callback)
+   state.backends.asteroid_chunks_backend:dump_entries_to_callback(player, callback)
 end
 
 function mod.on_new_surface(index)

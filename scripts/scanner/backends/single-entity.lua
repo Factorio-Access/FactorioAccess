@@ -95,6 +95,10 @@ mod.Character = decl_bound_category("fa.scanner.backends.Character", SC.CATEGORI
 -- Unit are enemies in vanilla.
 mod.Unit = decl_bound_category("fa.scanner.backends.Unit", SC.CATEGORIES.ENEMIES)
 
+-- Big asteroids: turrets shoot them before they hit the platform. The chunks they break into aren't entities; see
+-- asteroid-chunks.lua.
+mod.Asteroid = decl_bound_category("fa.scanner.backends.Asteroid", SC.CATEGORIES.ENEMIES)
+
 -- Spawners need to be grouped by pollution. Buckets copied from old scanner.
 local SPAWNER_POLLUTION_BUCKETS = {
    { 0, { "fa.scanner-spawner-polluted-none" } },
