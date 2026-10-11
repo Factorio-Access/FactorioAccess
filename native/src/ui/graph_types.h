@@ -230,6 +230,9 @@ class GraphNode {
   /// raw/grid nodes, or a multi-item row member positioned within its row).
   int position_index = 0;
   int position_count = 0;
+  /// A member of a multi-item row: the announcer says GraphAnnouncer::row_text instead of "n of m", which is
+  /// kept for counts in a list.
+  bool row_member = false;
 
   /// On a parent (context/group) node: its direct children get NO auto position -- for log-like streams
   /// where "37 of 200" is noise.

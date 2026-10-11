@@ -46,6 +46,9 @@ class GraphAnnouncer {
 
   /// Pluggable "n of m" wording (localized by the host); unset = no auto positions.
   static inline std::function<std::string(int index, int count)> position_text;
+  /// Pluggable wording for a member of a multi-item row, said in place of its "n of m" (localized by the host);
+  /// unset = row members say "n of m" like any other sibling.
+  static inline std::function<std::string()> row_text;
 
   /// Pluggable expanded/collapsed wording for group headers (localized by the host); unset = groups
   /// don't speak their state.

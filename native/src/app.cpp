@@ -82,6 +82,7 @@ void init() {
     strings::push_position(m, i, n);
     return m.build();
   };
+  GraphAnnouncer::row_text = [] { return std::string(strings::kRow); };
   g_nav = std::make_unique<GraphNavigator>(NavigatorHost{
       [](std::string_view t, bool interrupt) { speech::speak(t, interrupt); },
       {},

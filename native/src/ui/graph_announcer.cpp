@@ -158,7 +158,7 @@ std::optional<std::string> GraphAnnouncer::leaf_text(const GraphNode* node) {
   if (node != nullptr && node->position_count > 1 && position_text && vt != nullptr &&
       !vt->speaks_own_position && !has_kind(vt->announcements, std::string(announcement_kinds::kPosition)) &&
       (!part_filter || part_filter(vt->control_type, auto_position_probe()))) {
-    push(position_text(node->position_index, node->position_count));
+    push(node->row_member && row_text ? row_text() : position_text(node->position_index, node->position_count));
   }
 
   if (!any) return std::nullopt;

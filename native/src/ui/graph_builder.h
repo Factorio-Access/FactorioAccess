@@ -146,7 +146,7 @@ class GraphBuilder {
   void wire_menu_edges();
   void stitch_mode_boundaries();
   void stamp_positions();
-  static void stamp(const std::vector<GraphNode*>& siblings);
+  static void stamp(const std::vector<GraphNode*>& siblings, bool row = false);
   static ControlId vertical_target(const Row& from, const Row& to, std::size_t pos);
 
   std::unordered_set<ControlId>* expansion_;  // persistent expanded-group set (null = all explicit)

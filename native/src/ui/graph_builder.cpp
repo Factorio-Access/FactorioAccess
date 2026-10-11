@@ -270,7 +270,7 @@ void GraphBuilder::stamp_positions() {
   std::vector<GroupKey> keys;
   for (Row* row : rows_) {
     if (row->items.size() > 1) {
-      stamp(row->items);
+      stamp(row->items, true);
       continue;
     }
     GraphNode* node = row->items[0];
@@ -286,11 +286,12 @@ void GraphBuilder::stamp_positions() {
   for (const GroupKey& key : keys) stamp(groups[key]);
 }
 
-void GraphBuilder::stamp(const std::vector<GraphNode*>& siblings) {
+void GraphBuilder::stamp(const std::vector<GraphNode*>& siblings, bool row) {
   if (siblings.size() < 2) return;
   for (std::size_t i = 0; i < siblings.size(); i++) {
     siblings[i]->position_index = static_cast<int>(i) + 1;
     siblings[i]->position_count = static_cast<int>(siblings.size());
+    siblings[i]->row_member = row;
   }
 }
 

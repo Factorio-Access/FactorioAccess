@@ -102,3 +102,22 @@ TEST_CASE("tab between same-named contexts speaks the new context") {
   ScopedPositions positions;
   CHECK(spoken(GraphAnnouncer::compose(from, land)) == "Corpse of Mongrel, list, Dagger");
 }
+
+TEST_CASE("members of a multi-item row say the row wording, list items keep n of m") {
+  GraphBuilder b;
+  b.begin_stop(Key("s"));
+  b.add_item(id("a"), vt("Apple"));
+  b.add_item(id("b"), vt("Pear"));
+  b.start_row(Key("bar"));
+  b.add_item(id("back"), vt("Back"));
+  b.add_item(id("ok"), vt("Confirm"));
+  b.end_row();
+  const GraphRenderPtr render = b.build();
+
+  ScopedPositions positions;
+  auto previous = GraphAnnouncer::row_text;
+  GraphAnnouncer::row_text = [] { return std::string("row"); };
+  CHECK(spoken(GraphAnnouncer::compose(nullptr, render->node_at(id("b")))) == "Pear, 2 of 2");
+  CHECK(spoken(GraphAnnouncer::compose(nullptr, render->node_at(id("ok")))) == "Confirm, row");
+  GraphAnnouncer::row_text = previous;
+}
