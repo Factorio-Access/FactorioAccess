@@ -18,4 +18,7 @@ bool run_on_main_thread(std::function<void()> fn, unsigned timeout_ms = 5000);
 // exactly the path of physical keys (including being swallowed while the native UI owns the keyboard).
 bool push_key(int scancode, bool down, bool shift = false, bool ctrl = false, bool alt = false);
 bool push_text(std::string_view utf8);
+// Called on the main thread when a single player autosave starts; game::saving() says when it is done. Set before
+// install().
+void set_autosave_callback(std::function<void()> fn);
 }  // namespace fa::hooks

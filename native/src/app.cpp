@@ -2,6 +2,9 @@
 #include <windows.h>
 #include <chrono>
 #include <memory>
+#include <optional>
+#include "audio/audio.h"
+#include "game.h"
 #include "hooks.h"
 #include "input.h"
 #include "log.h"
@@ -108,9 +111,39 @@ void announce_change(std::string_view text) {
 
 std::string dump() { return g_nav ? g_nav->dump() : "(no navigator)\n"; }
 
+// An autosave in progress: since when, and whether the game has said it is saving yet.
+static std::optional<double> g_autosave_since;
+static bool g_autosave_seen = false;
+
+static void autosave_click() {
+  audio::submit(R"({"command":"patch","id":"fa-autosave","source":{"kind":"encoded_bytes","name":"autosave-shh.wav"}})");
+}
+
+void autosave_started() {
+  log::write("autosave started");
+  autosave_click();
+  g_autosave_since = now();
+  g_autosave_seen = false;
+}
+
+// The second click once the save is done: the game's saving state was seen and has ended, or never showed within a
+// second (a save too quick to see).
+static void watch_autosave(double t) {
+  if (!g_autosave_since) return;
+  if (game::saving()) {
+    g_autosave_seen = true;
+    return;
+  }
+  if (!g_autosave_seen && t - *g_autosave_since < 1.0) return;
+  log::writef("autosave finished after {:.0f} ms", (t - *g_autosave_since) * 1000);
+  autosave_click();
+  g_autosave_since.reset();
+}
+
 void tick() {
   if (!g_inited) return;
   double t = now();
+  watch_autosave(t);
   double dt = g_last_tick > 0 ? t - g_last_tick : 0;
   g_last_tick = t;
   Screen* before = g_screens.current();

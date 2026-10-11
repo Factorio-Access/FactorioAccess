@@ -14,6 +14,7 @@ local mod = {}
 ---@field api_version integer
 ---@field speak fun(str: LocalisedString, interrupt: boolean?)
 ---@field audio_cmd fun(json: string)
+---@field set_cursor fun(x: integer, y: integer)
 
 ---@return fa.NativeApi?
 local function get_native()
@@ -52,6 +53,18 @@ function mod.audio_cmd(json)
    with_native(function(n)
       n.audio_cmd(json)
    end)
+end
+
+---Move the real mouse pointer to a pixel of the game window, as the launcher's setCursor does.
+---@param x integer
+---@param y integer
+function mod.set_cursor(x, y)
+   -- Every tick with an item in hand: no closure.
+   local n = get_native()
+   if not n or game.is_multiplayer() then
+      error("the native code is not available; check Native.is_available() first")
+   end
+   n.set_cursor(x, y)
 end
 
 return mod

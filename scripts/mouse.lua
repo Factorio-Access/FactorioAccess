@@ -35,10 +35,9 @@ end
 ---@param pos {x:float,y:float} bounds must be prechecked
 ---@param pindex integer
 local function move_pointer_to_pixels(pos, pindex)
-   -- Only the external launcher reads this; with the native code loaded nobody does.
-   if Native.is_available() then return end
    local x = math.ceil(pos.x)
    local y = math.ceil(pos.y)
+   if Native.is_available() then return Native.set_cursor(x, y) end
    local text_pos = " " .. x .. "," .. y
    print("setCursor " .. pindex .. text_pos)
    --game.get_player(pindex).print("moved to" .. text_pos, { volume_modifier = 0 })

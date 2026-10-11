@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <string>
 #include "audio/audio.h"
+#include "mouse.h"
 #include "log.h"
 #include "speech.h"
 #include "sym.h"
@@ -24,6 +25,7 @@ struct Api {
   int (*gettop)(lua_State*);
   int (*toboolean)(lua_State*, int);
   const char* (*checklstring)(lua_State*, int, size_t*);
+  long long (*checkinteger)(lua_State*, int);
 } api;
 
 // MSVC std::string, as returned by reference from the engine.
@@ -92,6 +94,13 @@ int lua_audio_cmd(lua_State* L) {
   return 0;
 }
 
+// _fa_native.set_cursor(x, y): the mouse pointer to a pixel of the game window, as the launcher's setCursor did.
+int lua_set_cursor(lua_State* L) {
+  long long x = api.checkinteger(L, 1), y = api.checkinteger(L, 2);
+  mouse::move_to_client((int)x, (int)y);
+  return 0;
+}
+
 template <typename T>
 bool resolve(T& out, const char* name) {
   out = sym::fn<T>(name);
@@ -109,6 +118,7 @@ bool init() {
   ok &= resolve(api.gettop, "lua_gettop");
   ok &= resolve(api.toboolean, "lua_toboolean");
   ok &= resolve(api.checklstring, "luaL_checklstring");
+  ok &= resolve(api.checkinteger, "luaL_checkinteger");
   ok &= resolve(g_parse, "LuaHelper::parseLocalisedString");
   ok &= resolve(g_str, "LocalisedString::str");
   ok &= resolve(g_dtor, "LocalisedString::~LocalisedString");
@@ -127,13 +137,15 @@ uint64_t audio_commands() { return g_audio_commands; }
 void on_state_created(void* L, std::string_view mod) {
   if (mod != "FactorioAccess") return;
   // Net stack effect zero: the table is consumed by setglobal, each closure by setfield.
-  api.createtable(L, 0, 3);
+  api.createtable(L, 0, 4);
   api.pushinteger(L, kApiVersion);
   api.setfield(L, -2, "api_version");
   api.pushcclosure(L, lua_speak, 0);
   api.setfield(L, -2, "speak");
   api.pushcclosure(L, lua_audio_cmd, 0);
   api.setfield(L, -2, "audio_cmd");
+  api.pushcclosure(L, lua_set_cursor, 0);
+  api.setfield(L, -2, "set_cursor");
   api.setglobal(L, "_fa_native");
   log::writef("lua: _fa_native installed for {}", mod);
 }

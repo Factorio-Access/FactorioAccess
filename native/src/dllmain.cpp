@@ -43,6 +43,7 @@ extern "C" __declspec(dllexport) DWORD WINAPI fa_init(LPVOID) {
     fa::speech::speak("Factorio Access native code does not support this game version and is disabled", true);
     return 0;
   }
+  fa::hooks::set_autosave_callback(fa::app::autosave_started);
   g_installed = fa::hooks::install();
   if (!g_installed) {
     fa::log::write("fa_native: hook install failed; removing what attached");
