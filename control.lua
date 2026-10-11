@@ -1450,8 +1450,8 @@ local function nudge_self(event, direction, name)
    local pindex = event.player_index
    local p = game.get_player(pindex)
 
-   if not p.character then
-      Speech.speak(pindex, { "fa.nudge-failed" })
+   if not FaUtils.physical_character(p) then
+      Speech.speak(pindex, FaUtils.no_physical_character_reason(p))
       return
    end
 
@@ -1929,6 +1929,11 @@ EventManager.on_event(
 ---@param event EventData.CustomInputEvent
 local function kb_cs_p(event)
    local pindex = event.player_index
+   local player = assert(game.get_player(pindex))
+   if not FaUtils.physical_character(player) then
+      Speech.speak(pindex, FaUtils.no_physical_character_reason(player))
+      return
+   end
    local vp = Viewpoint.get_viewpoint(pindex)
    local alert_pos = storage.players[pindex].last_damage_alert_pos
    if alert_pos == nil then

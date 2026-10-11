@@ -27,8 +27,12 @@ function mod.teleport_to_closest(pindex, pos, muted, ignore_enemies)
    pos.x = math.floor(pos.x) + 0.5
    pos.y = math.floor(pos.y) + 0.5
    muted = muted or false
-   local char = game.get_player(pindex).character
-   if not char then return false end
+   local player = assert(game.get_player(pindex))
+   local char = FaUtils.physical_character(player)
+   if not char then
+      Speech.speak(pindex, FaUtils.no_physical_character_reason(player))
+      return false
+   end
 
    local surf = char.surface
    local radius = 0.5

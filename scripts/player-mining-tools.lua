@@ -1,5 +1,6 @@
 --Here: mining functions, such as obstacle clearing
 local Consts = require("scripts.consts")
+local FaUtils = require("scripts.fa-utils")
 
 local mod = {}
 
@@ -127,9 +128,11 @@ end
 --Useful when placing structures. Forces mining.
 --If an obstacle is beyond the mining_range (default is 99), the object gets marked for deconstruction instead.
 function mod.clear_obstacles_in_rectangle(left_top, right_bottom, pindex, mining_range_in)
-   local p = game.get_player(pindex)
+   local p = assert(game.get_player(pindex))
    local surf = p.surface
    local mining_range = mining_range_in or 99
+   -- Without a physical character nothing is in reach: everything is marked for deconstruction instead
+   if not FaUtils.physical_character(p) then mining_range = 0 end
    local comment = ""
    local trees_cleared = 0
    local rocks_cleared = 0
