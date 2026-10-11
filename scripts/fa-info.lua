@@ -32,6 +32,7 @@ local Heat = require("scripts.heat")
 local InventoryUtils = require("scripts.inventory-utils")
 local ItemInfo = require("scripts.item-info")
 local Localising = require("scripts.localising")
+local PlatformTravel = require("scripts.platform-travel")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
 local NetworkShape = require("scripts.network-shape")
@@ -270,6 +271,12 @@ end
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_rocket_silo(ctx)
    add_rocket_silo_info(ctx.message, ctx.ent)
+end
+
+---@param ctx fa.Info.EntInfoContext
+local function ent_info_space_platform_hub(ctx)
+   local ent = ctx.ent
+   if ent.type == "space-platform-hub" then PlatformTravel.describe(assert(ent.surface.platform), ctx.message) end
 end
 
 ---@param ctx fa.Info.EntInfoContext
@@ -1514,6 +1521,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    run_handler(ent_info_accumulator)
    run_handler(ent_info_solar)
    run_handler(ent_info_rocket_silo)
+   run_handler(ent_info_space_platform_hub)
    run_handler(ent_info_beacon_status)
    run_handler(ent_info_temperature)
    run_handler(ent_info_nuclear_neighbor_bonus)

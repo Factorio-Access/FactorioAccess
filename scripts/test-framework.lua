@@ -56,6 +56,7 @@ local test_files = {
    "player-weapon-test", -- Test weapon/ammo property detection
    "ghost-cursor-build-test", -- Building entity and tile ghosts from a ghost in hand
    "liquid-tile-test", -- Water and the other liquids for the cursor skip
+   "space-platform-status-test", -- The platform status description
 }
 
 -- Test execution state

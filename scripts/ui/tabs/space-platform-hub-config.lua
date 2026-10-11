@@ -1,7 +1,7 @@
 --[[
 Space platform hub configuration tab.
 
-Provides controls for:
+Reads the platform's status, and provides controls for:
 - Auto requesting missing construction materials
 - Providing materials to other platforms
 - Editing the platform's schedule
@@ -24,6 +24,11 @@ local function render_hub_config(ctx)
    if not entity or not entity.valid then return nil end
 
    local form = FormBuilder.FormBuilder.new()
+   local platform = assert(entity.surface.platform)
+
+   form:add_label("status", function(label_ctx)
+      PlatformTravel.describe(platform, label_ctx.message)
+   end)
 
    form:add_checkbox(
       "request_missing_construction_materials",
@@ -48,7 +53,7 @@ local function render_hub_config(ctx)
 
    local player = assert(game.get_player(ctx.pindex))
    if player.hub == entity then
-      local planet = PlatformTravel.orbited_planet(assert(entity.surface.platform))
+      local planet = PlatformTravel.orbited_planet(platform)
       local label = planet and { "fa.platform-drop-to", Localising.get_localised_name_with_fallback(planet) }
          or { "fa.platform-drop-to-a-planet" }
       form:add_action("drop_to_planet", label, function(controller)

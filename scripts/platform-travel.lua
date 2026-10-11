@@ -1,12 +1,14 @@
 --[[
 Announcements for travelling between planets and space platforms: boarding a platform, dropping to a planet,
-the trips of the platform the player is on, and platforms being destroyed.
+the trips of the platform the player is on, and platforms being destroyed. Also the compact description of a
+platform's status that the hub and the platform list read.
 
 A player boards a platform either directly (the controller becomes remote with player.hub set) or by riding a
 rocket, whose cargo pod lands in the hub. Both can report the same boarding, so the announcement is suppressed
 when it repeats shortly after for the same platform.
 ]]
 
+local FaUtils = require("scripts.fa-utils")
 local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
 
@@ -30,6 +32,7 @@ local function destination(platform)
    local schedule = platform.schedule
    if not schedule then return nil end
    local record = schedule.records[schedule.current]
+   if not record then return nil end
    return prototypes.space_location[assert(record.station)]
 end
 
@@ -88,6 +91,66 @@ function mod.orbited_planet(platform)
    local location = platform.space_location --[[@as LuaSpaceLocationPrototype?]]
    if location and location.type == "planet" then return location end
    return nil
+end
+
+---Describe a platform compactly: name, pending deletion, state, where it is or how far along its trip, speed and mass.
+---@param platform LuaSpacePlatform
+---@param message fa.MessageBuilder
+function mod.describe(platform, message)
+   message:list_item(platform.name)
+
+   local deleting = platform.scheduled_for_deletion
+   if deleting > 0 then message:list_item({ "fa.platform-status-deleting", FaUtils.format_time(deleting) }) end
+
+   local states = defines.space_platform_state
+   local state = platform.state
+   if state == states.waiting_for_starter_pack then
+      message:list_item({ "fa.platform-status-waiting-for-starter-pack" })
+   elseif state == states.starter_pack_requested then
+      message:list_item({ "fa.platform-status-starter-pack-requested" })
+   elseif state == states.starter_pack_on_the_way then
+      message:list_item({ "fa.platform-status-starter-pack-on-the-way" })
+   elseif state == states.paused then
+      message:list_item({ "fa.platform-status-paused" })
+   elseif state == states.no_path then
+      local to = destination(platform)
+      if to then
+         message:list_item({ "fa.platform-status-no-path", Localising.get_localised_name_with_fallback(to) })
+      end
+   end
+
+   local location = platform.space_location --[[@as LuaSpaceLocationPrototype?]]
+   local connection = platform.space_connection
+   if location then
+      local key = location.type == "planet" and "fa.platform-status-orbiting" or "fa.platform-status-at"
+      message:list_item({ key, Localising.get_localised_name_with_fallback(location) })
+   elseif connection then
+      -- distance runs from the connection's from end (0) to its to end (1), whichever way the platform flies; the
+      -- end it last passed is the one it is leaving.
+      local from = platform.last_visited_space_location
+      local reversed = from ~= nil and from.name == connection.to.name
+      local to = (reversed and connection.from or connection.to) --[[@as LuaSpaceLocationPrototype]]
+      local distance = assert(platform.distance)
+      local progress = reversed and 1 - distance or distance
+      message:list_item({
+         "fa.platform-status-travelling",
+         Localising.get_localised_name_with_fallback(to),
+         tostring(math.floor(progress * 100)),
+      })
+      local final = state == states.on_the_path and destination(platform)
+      if final and final.name ~= to.name then
+         message:list_item({ "fa.platform-status-then", Localising.get_localised_name_with_fallback(final) })
+      end
+   end
+
+   -- Speed is in kilometres per tick: distance along a 15000 km connection changes by speed / 15000 a tick.
+   local km_per_second = math.floor(math.abs(platform.speed) * 60 + 0.5)
+   if km_per_second > 0 then message:list_item({ "fa.platform-status-speed", tostring(km_per_second) }) end
+
+   -- Platform weight is in kilograms (a foundation tile adds 200), not the grams of item weights.
+   if platform.hub then
+      message:list_item({ "fa.platform-status-mass", string.format("%.1f", platform.weight / 1000) })
+   end
 end
 
 ---Drop the player from the hub they are in to the planet below, like the game's "Drop to a planet" button.
