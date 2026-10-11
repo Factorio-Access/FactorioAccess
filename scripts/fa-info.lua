@@ -1491,24 +1491,37 @@ function mod.ent_info(pindex, ent, is_scanner)
          drop_name = { "fa.ent-info-ground" }
       end
       --Report info
-      if drop ~= nil and drop.valid then ctx.message:fragment({ "fa.ent-info-mining-drill-outputs-to", drop_name }) end
+      local said_output = false
+      if drop ~= nil and drop.valid then
+         ctx.message:fragment({ "fa.ent-info-mining-drill-outputs-to", drop_name })
+         said_output = true
+      end
       if ent.status == defines.entity_status.waiting_for_space_in_destination then
-         ctx.message:fragment(", output full ")
+         ctx.message:list_item_forced_comma({ "fa.ent-info-mining-drill-output-full" })
+         said_output = true
       end
       if table_size(dict) > 0 then
+         if said_output then ctx.message:list_item_forced_comma() end
          ctx.message:fragment({ "fa.ent-info-mining-drill-mining-from" })
-         for i, amount in pairs(dict) do
-            local resource = prototypes.entity[i]
+         local first = true
+         for name, amount in pairs(dict) do
+            local resource = prototypes.entity[name]
+            local resource_name = Localising.get_localised_name_with_fallback(resource)
+            if first then
+               ctx.message:fragment(resource_name)
+            else
+               ctx.message:list_item_forced_comma(resource_name)
+            end
+            first = false
             if resource.infinite_resource then
-               ctx.message:fragment(Localising.get_localised_name_with_fallback(resource))
                ctx.message:list_item_forced_comma({
                   "fa.ent-info-resource-infinite",
                   math.floor(amount / resource.normal_resource_amount * 100),
                })
             else
-               ctx.message:fragment({
-                  "fa.ent-info-mining-drill-resource-amount",
-                  i,
+               -- The total amount left in the resource tiles the drill covers
+               ctx.message:list_item_forced_comma({
+                  "fa.ent-info-mining-drill-resource-remaining",
                   FaUtils.simplify_large_number(amount),
                })
             end
