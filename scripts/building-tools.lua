@@ -263,11 +263,13 @@ function mod.build_item_in_hand_with_params(params)
          return false
       end
    else
-      -- Entity placement
+      -- Entity placement. A ghost in hand builds in forced mode, as the game does: the ghost goes down over trees
+      -- and rocks, which are marked for deconstruction.
+      local from_ghost = not (p.cursor_stack and p.cursor_stack.valid_for_read)
       local building = {
          position = decision.position,
          direction = decision.direction,
-         build_mode = params.build_mode or defines.build_mode.normal,
+         build_mode = params.build_mode or (from_ghost and defines.build_mode.forced or defines.build_mode.normal),
          flip_horizontal = decision.flip_horizontal,
          flip_vertical = decision.flip_vertical,
       }

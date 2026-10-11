@@ -55,4 +55,28 @@ describe("Building from a ghost cursor", function()
          player.clear_cursor()
       end)
    end)
+
+   it("places an entity ghost over a tree in remote view", function(ctx)
+      ctx:init(function()
+         local player, surface = ctx:setup_test_area(1)
+         assert(player and surface)
+         local pos = player.position --[[@as MapPosition.struct]]
+         local x, y = math.floor(pos.x) + 6, math.floor(pos.y)
+         local tree = assert(surface.create_entity({ name = "tree-01", position = { x + 0.5, y + 0.5 } }))
+         assert(player.cursor_stack).clear()
+         player.set_controller({ type = defines.controllers.remote, position = pos, surface = surface })
+
+         player.cursor_ghost = "stone-furnace"
+         ctx:assert(build_at(player, x, y), "the furnace ghost was built")
+         local ghosts = surface.find_entities_filtered({ type = "entity-ghost", area = { { x, y }, { x + 2, y + 2 } } })
+         ctx:assert_equals(1, #ghosts)
+         ctx:assert_equals("stone-furnace", ghosts[1].ghost_name)
+         ctx:assert(tree.to_be_deconstructed(), "the tree is marked for deconstruction")
+         ghosts[1].destroy()
+         tree.destroy()
+
+         player.clear_cursor()
+         player.exit_remote_view()
+      end)
+   end)
 end)
