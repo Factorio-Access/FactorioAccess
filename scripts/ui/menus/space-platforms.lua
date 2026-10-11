@@ -87,7 +87,7 @@ local function build_platform(ctx)
 
    builder:add_clickable("rename", { "fa.space-platform-rename" }, {
       on_click = function(click_ctx)
-         click_ctx.controller:open_textbox("", "rename")
+         click_ctx.controller:open_textbox(platform.name, "rename")
       end,
       on_child_result = function(result_ctx, result)
          if result == "" then return end
