@@ -8,10 +8,10 @@ local BotLogistics = require("scripts.worker-robots")
 
 local mod = {}
 
----@param ctx fa.ui.graph.Ctx
-local function build_signal_tree(ctx)
+---@param mode string?
+---@return fa.ui.graph.Render?
+local function build_signal_tree_uncached(mode)
    local builder = TreeChooser.TreeChooserBuilder.new()
-   local mode = ctx.global_parameters and ctx.global_parameters.mode
 
    -- If mode is "item" or "fluid", add signals directly to root without category wrapper
    if mode == "item" then
@@ -121,6 +121,20 @@ local function build_signal_tree(ctx)
    end
 
    return builder:build()
+end
+
+-- Renders by mode. They come from prototypes alone, which cannot change while the game runs, and rebuilding thousands
+-- of nodes on every key press is slow. Labels and clicks get their context when called, so a render can be shared.
+---@type table<string, fa.ui.graph.Render|false>
+local render_cache = {}
+
+---@param ctx fa.ui.graph.Ctx
+---@return fa.ui.graph.Render?
+local function build_signal_tree(ctx)
+   local mode = ctx.global_parameters and ctx.global_parameters.mode
+   local key = mode or ""
+   if render_cache[key] == nil then render_cache[key] = build_signal_tree_uncached(mode) or false end
+   return render_cache[key] or nil
 end
 
 local signal_chooser_tab = KeyGraph.declare_graph({

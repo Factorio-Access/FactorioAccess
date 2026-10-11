@@ -103,8 +103,8 @@ local function prototype_lister_vtable_builder(name, proto, signal_type)
    }
 end
 
----@param ctx fa.ui.graph.Ctx
-local function build_prototype_tree(ctx)
+---@return fa.ui.graph.Render?
+local function build_prototype_tree_uncached()
    local builder = TreeChooser.TreeChooserBuilder.new()
 
    -- Prototype type categories with their signal-helpers add functions
@@ -187,6 +187,17 @@ local function build_prototype_tree(ctx)
    end
 
    return builder:build()
+end
+
+-- Built once: it comes from prototypes alone, which cannot change while the game runs, and rebuilding thousands of
+-- nodes on every key press is slow. Labels and clicks get their context when called, so the render can be shared.
+---@type fa.ui.graph.Render|false|nil
+local render_cache
+
+---@return fa.ui.graph.Render?
+local function build_prototype_tree()
+   if render_cache == nil then render_cache = build_prototype_tree_uncached() or false end
+   return render_cache or nil
 end
 
 local prototype_lister_tab = KeyGraph.declare_graph({

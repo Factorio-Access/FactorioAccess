@@ -12,9 +12,8 @@ local Localising = require("scripts.localising")
 
 local mod = {}
 
----Build the tile menu
----@param ctx fa.ui.graph.Ctx
-local function build_tile_menu(ctx)
+---@return fa.ui.graph.Render
+local function build_tile_menu_uncached()
    local builder = Menu.MenuBuilder.new()
 
    -- Collect placeable tiles (tiles that have an item which places them)
@@ -45,6 +44,15 @@ local function build_tile_menu(ctx)
    end
 
    return builder:build()
+end
+
+-- Built once: it comes from prototypes alone, which cannot change while the game runs.
+---@type fa.ui.graph.Render?
+local render_cache
+
+local function build_tile_menu()
+   if not render_cache then render_cache = build_tile_menu_uncached() end
+   return render_cache
 end
 
 local tile_chooser_tab = KeyGraph.declare_graph({

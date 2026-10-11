@@ -227,6 +227,12 @@ function Graph:_wrap_ctx(outer_ctx, name, modifiers)
    return inner_ctx
 end
 
+-- The render each state's key_order was computed from. A UI that hands back the same render (a chooser that caches
+-- its own) keeps its order instead of walking thousands of nodes on every key press. Outside storage on purpose: a
+-- client without the entry just computes the same order again.
+---@type table<table, fa.ui.graph.Render>
+local key_order_source = setmetatable({}, { __mode = "k" })
+
 ---@param ctx fa.ui.graph.InternalTabCtx
 ---@private
 function Graph:_rerender(ctx)
@@ -276,6 +282,8 @@ function Graph:_rerender(ctx)
       if not render.nodes[state.cur_key] then state.cur_key = render.start_key end
    end
 
+   if state.key_order and key_order_source[state] == render then return end
+
    -- Perform a loop-based graph traversal to compute the new key order.
    ---@type string[]
    local down_fringe = { render.start_key }
@@ -318,6 +326,7 @@ function Graph:_rerender(ctx)
    end
 
    state.key_order = new_order
+   key_order_source[state] = render
 end
 
 -- Call the callback if and only if a re-render succeeded.

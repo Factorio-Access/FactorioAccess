@@ -56,12 +56,11 @@ local FILTERS = {
 }
 
 ---Build the entity tree with optional filtering
----@param ctx fa.ui.graph.Ctx
-local function build_entity_tree(ctx)
+---@param params table Global parameters (passed to open_child_ui)
+---@return fa.ui.graph.Render?
+local function build_entity_tree_uncached(params)
    local builder = TreeChooser.TreeChooserBuilder.new()
 
-   -- Get filter type from global parameters (passed to open_child_ui)
-   local params = ctx.global_parameters or {}
    local filter_type = params.filter_type
    local filter_func = filter_type and FILTERS[filter_type]
 
@@ -147,6 +146,22 @@ local function build_entity_tree(ctx)
    end
 
    return builder:build()
+end
+
+-- Renders by filter. They come from prototypes alone, which cannot change while the game runs, and walking every
+-- entity prototype on each key press is slow. Labels and clicks get their context when called, so renders can be
+-- shared.
+---@type table<string, fa.ui.graph.Render|false>
+local render_cache = {}
+
+---@param ctx fa.ui.graph.Ctx
+---@return fa.ui.graph.Render?
+local function build_entity_tree(ctx)
+   local params = ctx.global_parameters or {}
+   -- The filters read nothing from params but the fast replaceable group.
+   local key = tostring(params.filter_type) .. "/" .. tostring(params.fast_replaceable_group)
+   if render_cache[key] == nil then render_cache[key] = build_entity_tree_uncached(params) or false end
+   return render_cache[key] or nil
 end
 
 local entity_chooser_tab = KeyGraph.declare_graph({

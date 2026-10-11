@@ -19,6 +19,7 @@ local MOVE_TRANSITION_VTAB = {
 ---@field parent string
 ---@field vtable fa.ui.graph.NodeVtable
 ---@field children string[]
+---@field child_set table<string, true>
 
 ---@class fa.ui.tree.TreeChooserBuilder
 ---@field nodes table<string, fa.ui.tree.Node>
@@ -44,6 +45,7 @@ function TreeChooserBuilder:add_node(key, parent, vtable)
          parent = parent,
          vtable = vtable,
          children = {},
+         child_set = {},
       }
    else
       self.nodes[key].parent = parent
@@ -59,18 +61,15 @@ function TreeChooserBuilder:add_node(key, parent, vtable)
                label = function(ctx) end,
             },
             children = {},
+            child_set = {},
          }
       end
 
-      local already_child = false
-      for _, child in ipairs(self.nodes[parent].children) do
-         if child == key then
-            already_child = true
-            break
-         end
+      local parent_node = self.nodes[parent]
+      if not parent_node.child_set[key] then
+         parent_node.child_set[key] = true
+         table.insert(parent_node.children, key)
       end
-
-      if not already_child then table.insert(self.nodes[parent].children, key) end
    end
 
    return self
