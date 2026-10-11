@@ -1,0 +1,198 @@
+# Build, check and release Factorio Access. Nothing here runs the game: the Lua is format-checked, the mod zip is built
+# from an explicit whitelist and verified, the native code is built with its engine-free tests, and the installer is
+# built with its tests.
+#
+# - Every push of CI_LATEST_BRANCH republishes the rolling `ci-latest` pre-release (the installer's last, deliberately
+#   unattractive "latest successful CI build" choice).
+# - A tag vX.Y.Z matching info.json's version publishes a GitHub release (mod zip, fa-native.zip, PDB, installer) and
+#   uploads the SAME verified mod zip to the Factorio mod portal.
+# - Other pushes, pull requests and manual runs only build. The mod portal job cannot run for them: its `if` requires a
+#   tag push, then tools/portal.py re-checks the ref, info.json, the whitelist and the zip's sha256 before the step that
+#   holds the API key.
+#
+# The mod zip never contains native code or the installer (tools/package_mod.py builds it from a whitelist and
+# verifies the finished zip); the DLLs ship only as fa-native.zip and inside what the installer downloads.
+name: build
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  # The branch whose pushes republish `ci-latest`. For now the prototyping branch f2.1; change it here, and only here,
+  # when releases move to main.
+  CI_LATEST_BRANCH: f2.1
+
+permissions:
+  contents: read
+
+# One run per ref at a time. A newer push cancels the older run outright: for a rolling `ci-latest` the older build is
+# worthless, and two publish steps racing each other could otherwise republish the OLDER commit last (a rollback) or
+# collide inside the delete-then-create window. Tags and PRs get their own groups, so a `v*` release run is never
+# cancelled by a branch push.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lua-format:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cargo/bin/stylua
+          key: stylua-2.3.0-lua52-${{ runner.os }}
+      - name: stylua --check
+        shell: bash
+        run: |
+          command -v stylua >/dev/null || cargo install --version 2.3.0 stylua --features lua52
+          stylua --check . -v
+
+  mod-zip:
+    runs-on: ubuntu-24.04
+    outputs:
+      zip_name: ${{ steps.build.outputs.zip_name }}
+      sha256: ${{ steps.build.outputs.sha256 }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Packaging and portal gate tests (the upload is stubbed)
+        run: python -m unittest discover -s tools -p "test_*.py" -v
+      - name: Build the mod zip from the whitelist
+        id: build
+        run: |
+          ZIP=$(python tools/package_mod.py build --out dist)
+          echo "zip_name=$(basename "$ZIP")" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum "$ZIP" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+      - name: Verify the zip (fails on anything outside the whitelist)
+        run: python tools/package_mod.py verify "dist/${{ steps.build.outputs.zip_name }}"
+      - name: Portal gate, dry run (refuses anything but a release tag; no key here)
+        run: |
+          if python tools/portal.py upload "dist/${{ steps.build.outputs.zip_name }}" --sha256 "${{ steps.build.outputs.sha256 }}" --dry-run; then
+            echo "The portal job will upload this zip."
+          else
+            echo "The portal gate refused (expected unless this is a vX.Y.Z tag matching info.json)."
+          fi
+      - uses: actions/upload-artifact@v7
+        with:
+          name: mod-zip
+          path: dist/${{ steps.build.outputs.zip_name }}
+          compression-level: 0
+
+  native:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Version (a tag build is the tag, anything else ci-<short sha>; embedded in the DLL and version.txt)
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VER="$GITHUB_REF_NAME"; else VER="ci-$(git rev-parse --short HEAD)"; fi
+          echo "FA_VERSION=$VER" >> "$GITHUB_ENV"
+      - name: Build (VS 2022 via native/tools/vsdev.cmd, Ninja RelWithDebInfo)
+        shell: cmd
+        run: native\tools\build.cmd
+      - name: UI core tests
+        shell: cmd
+        run: native\build\ninja\faui_tests.exe
+      - name: Audio tests
+        shell: cmd
+        run: native\build\ninja\fa_audio_tests.exe
+      - name: Package
+        shell: bash
+        run: python native/tools/package_native.py --out dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: native
+          path: |
+            dist/fa-native.zip
+            dist/fa_native.pdb
+
+  installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Rust toolchain (installer/rust-toolchain.toml)
+        shell: bash
+        run: rustup show active-toolchain || rustup toolchain install
+        working-directory: installer
+      - uses: actions/cache@v6
+        with:
+          path: |
+            installer/target
+            ~/.cargo/registry
+          key: installer-${{ runner.os }}-${{ hashFiles('installer/Cargo.lock', 'installer/rust-toolchain.toml') }}
+      - name: Installer tests
+        shell: cmd
+        run: cargo test --release
+        working-directory: installer
+      - name: Build installer
+        shell: cmd
+        run: cargo build --release
+        working-directory: installer
+      - uses: actions/upload-artifact@v7
+        with:
+          name: FactorioAccessInstaller
+          path: installer/target/release/FactorioAccessInstaller.exe
+
+  publish:
+    needs: [lua-format, mod-zip, native, installer]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0   # the rolling step compares commits
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+      - name: Re-verify the mod zip
+        run: python tools/package_mod.py verify "dist/mod-zip/${{ needs.mod-zip.outputs.zip_name }}"
+      - name: Release (vX.Y.Z tag matching info.json)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          python tools/portal.py gate
+          gh release create "$GITHUB_REF_NAME" "dist/mod-zip/${{ needs.mod-zip.outputs.zip_name }}" dist/native/fa-native.zip \
+            dist/native/fa_native.pdb dist/FactorioAccessInstaller/FactorioAccessInstaller.exe \
+            --title "$GITHUB_REF_NAME" --generate-notes
+      - name: Rolling CI pre-release (CI_LATEST_BRANCH)
+        if: github.ref == format('refs/heads/{0}', env.CI_LATEST_BRANCH)
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          # Never move ci-latest backwards: if an older run is already inside this step when a newer one
+          # starts, cancellation may land too late, so also refuse to replace a release whose commit
+          # descends from ours. Unknown / unreadable target = publish.
+          existing=$(gh release view ci-latest --json targetCommitish -q .targetCommitish 2>/dev/null || true)
+          if [[ -n "$existing" && "$existing" != "$GITHUB_SHA" ]] && git merge-base --is-ancestor "$GITHUB_SHA" "$existing" 2>/dev/null; then
+            echo "ci-latest is at ${existing::7}, which is newer than ${GITHUB_SHA::7}; leaving it alone"
+            exit 0
+          fi
+          gh release delete ci-latest --yes --cleanup-tag || true
+          gh release create ci-latest "dist/mod-zip/${{ needs.mod-zip.outputs.zip_name }}" dist/native/fa-native.zip \
+            dist/native/fa_native.pdb dist/FactorioAccessInstaller/FactorioAccessInstaller.exe \
+            --prerelease --target "$GITHUB_SHA" --title "Latest CI build" \
+            --notes "Automatic build of $CI_LATEST_BRANCH at ${GITHUB_SHA::7}. Untested; the installer lists it last. Tagged releases are the ones to use."
+
+  # The only job that sees FACTORIO_UPLOAD_API_KEY. The job-level `if` keeps every non-tag event out entirely; the gate
+  # step then requires refs/tags/vX.Y.Z exactly, equal to info.json's version; the upload step re-verifies the zip
+  # against the whitelist and the sha256 the mod-zip job recorded before reading the key.
+  mod-portal:
+    needs: [mod-zip, publish]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: mod-zip
+          path: dist
+      - name: Gate (release tag matching info.json)
+        run: python tools/portal.py gate
+      - name: Upload to the mod portal
+        env:
+          FACTORIO_UPLOAD_API_KEY: ${{ secrets.FACTORIO_UPLOAD_API_KEY }}
+        run: python tools/portal.py upload "dist/${{ needs.mod-zip.outputs.zip_name }}" --sha256 "${{ needs.mod-zip.outputs.sha256 }}"
