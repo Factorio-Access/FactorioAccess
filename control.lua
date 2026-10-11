@@ -320,7 +320,7 @@ local function move_characters(event)
                or stack.prototype.type == "copy-paste-tool"
             then
                --Force the pointer to the build preview location (and draw selection tool boxes)
-               Graphics.sync_build_cursor_graphics(pindex)
+               Graphics.redraw_build_cursor_if_changed(pindex)
             else
                --Force the pointer to the cursor location (if on screen)
                Mouse.move_mouse_pointer(vp:get_cursor_pos(), pindex)

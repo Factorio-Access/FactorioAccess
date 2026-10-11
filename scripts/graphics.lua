@@ -16,6 +16,8 @@ local mod = {}
 function mod.sync_build_cursor_graphics(pindex)
    local player = storage.players[pindex]
    if player == nil or player.player.character == nil then return end
+   -- Where the drawing put the mouse pointer, for redraw_build_cursor_if_changed.
+   player.build_cursor_pointer = nil
    local p = assert(game.get_player(pindex))
    local stack = game.get_player(pindex).cursor_stack
    local item = FaUtils.cursor_item(p)
@@ -77,6 +79,7 @@ function mod.sync_build_cursor_graphics(pindex)
 
       --Move mouse pointer to the center of the footprint
       Mouse.move_mouse_pointer(footprint.center, pindex)
+      player.build_cursor_pointer = footprint.center
    elseif stack == nil or not stack.valid_for_read then
       --Invalid stack: Hide the objects
       if dir_indicator ~= nil then dir_indicator.visible = false end
@@ -118,6 +121,7 @@ function mod.sync_build_cursor_graphics(pindex)
          player.building_footprint.visible = true
 
          Mouse.move_mouse_pointer(center_pos, pindex)
+         player.build_cursor_pointer = center_pos
       end
    else
       --Hide the objects
@@ -171,6 +175,55 @@ function mod.sync_build_cursor_graphics(pindex)
 
    --Recolor cursor boxes if multiplayer
    if game.is_multiplayer() then mod.set_cursor_colors_to_player_colors(pindex) end
+end
+
+-- Everything sync_build_cursor_graphics draws from, as a string.
+---@param pindex integer
+---@return string
+local function build_cursor_key(pindex)
+   local p = assert(game.get_player(pindex))
+   local faplayer = storage.players[pindex]
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local pos = vp:get_cursor_pos()
+   local stack = p.cursor_stack
+   local item, item_number = "", 0
+   if stack and stack.valid_for_read then
+      item = stack.name
+      item_number = stack.item_number or 0
+   elseif p.cursor_ghost then
+      item = "ghost " .. p.cursor_ghost.name.name
+   end
+   local corner = faplayer.bp_select_point_1
+   return table.concat({
+      p.surface_index,
+      pos.x,
+      pos.y,
+      vp:get_cursor_size(),
+      vp:get_hand_direction(),
+      item,
+      item_number,
+      tostring(faplayer.hide_cursor),
+      tostring(faplayer.bp_selecting),
+      corner and corner.x or "",
+      corner and corner.y or "",
+   }, " ")
+end
+
+-- The per-tick upkeep of the build preview: redraw only when something it is drawn from changed (redrawing
+-- recreates the render objects, and for a blueprint reads every entity in it). The mouse pointer is moved every
+-- tick regardless, since it follows the player's own position on screen.
+---@param pindex integer
+function mod.redraw_build_cursor_if_changed(pindex)
+   local faplayer = storage.players[pindex]
+   if faplayer == nil or faplayer.player.character == nil then return end
+   local key = build_cursor_key(pindex)
+   if key ~= faplayer.build_cursor_key then
+      faplayer.build_cursor_key = key
+      mod.sync_build_cursor_graphics(pindex)
+   else
+      turn_to_cursor_direction_cardinal(pindex)
+      if faplayer.build_cursor_pointer then Mouse.move_mouse_pointer(faplayer.build_cursor_pointer, pindex) end
+   end
 end
 
 --Draws the mod cursor box and highlights an entity selected by the cursor. Also moves the mouse pointer to the mod cursor position.

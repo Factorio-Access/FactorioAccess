@@ -5,6 +5,7 @@
 local base_pixels_per_tile = 32
 
 local FaUtils = require("scripts.fa-utils")
+local Native = require("scripts.native")
 local VanillaMode = require("scripts.vanilla-mode")
 local Viewpoint = require("scripts.viewpoint")
 local mod = {}
@@ -34,6 +35,8 @@ end
 ---@param pos {x:float,y:float} bounds must be prechecked
 ---@param pindex integer
 local function move_pointer_to_pixels(pos, pindex)
+   -- Only the external launcher reads this; with the native code loaded nobody does.
+   if Native.is_available() then return end
    local x = math.ceil(pos.x)
    local y = math.ceil(pos.y)
    local text_pos = " " .. x .. "," .. y

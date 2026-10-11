@@ -158,6 +158,8 @@ function mod.initialize(player)
    -- Graphics and rendering
    faplayer.building_footprint = faplayer.building_footprint or nil
    faplayer.building_footprint_clear = faplayer.building_footprint_clear or nil
+   faplayer.build_cursor_key = faplayer.build_cursor_key or nil
+   faplayer.build_cursor_pointer = faplayer.build_cursor_pointer or nil
    faplayer.building_footprint_valid = faplayer.building_footprint_valid or true
    faplayer.building_footprint_size = faplayer.building_footprint_size or nil
    faplayer.building_dir_arrow = faplayer.building_dir_arrow or nil
