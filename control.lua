@@ -2748,6 +2748,10 @@ EventManager.on_event(
 ---@param ent LuaEntity
 local function kb_launch_rocket(event, ent)
    local pindex = event.player_index
+   if script.feature_flags.space_travel then
+      RocketSiloConfig.launch_by_key(ent, pindex)
+      return
+   end
    local cargo_inventory = ent.get_inventory(defines.inventory.rocket_silo_rocket)
 
    local destination
