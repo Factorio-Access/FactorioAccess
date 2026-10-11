@@ -26,7 +26,9 @@ end
 local function render_ghost_chooser(ctx)
    local builder = TreeChooser.TreeChooserBuilder.new()
    local player = game.get_player(ctx.pindex)
-   local hub = player.hub
+   -- Counts only matter when looking at a platform: its hub builds the ghosts
+   local platform = player.surface.platform
+   local hub = platform and platform.hub
    local hub_inv = hub and hub.get_inventory(defines.inventory.hub_main)
 
    local surface = player.surface
