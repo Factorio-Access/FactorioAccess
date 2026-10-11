@@ -27,6 +27,7 @@ local locomotive_config_tab = require("scripts.ui.tabs.locomotive-config")
 local roboport_config_tab = require("scripts.ui.tabs.roboport-config")
 local rocket_silo_config_tab = require("scripts.ui.tabs.rocket-silo-config")
 local selector_combinator_tab = require("scripts.ui.tabs.selector-combinator")
+local space_platform_hub_config_tab = require("scripts.ui.tabs.space-platform-hub-config")
 local spidertron_config_tab = require("scripts.ui.tabs.spidertron-config")
 local splitter_config_tab = require("scripts.ui.tabs.splitter-config")
 local train_stop_tab = require("scripts.ui.tabs.train-stop")
@@ -218,6 +219,11 @@ local function build_configuration_tabs(entity)
    -- Add asteroid collector configuration
    if asteroid_collector_config_tab.is_available(entity) then
       table.insert(tabs, asteroid_collector_config_tab.asteroid_collector_config_tab)
+   end
+
+   -- Add space platform hub configuration
+   if space_platform_hub_config_tab.is_available(entity) then
+      table.insert(tabs, space_platform_hub_config_tab.space_platform_hub_config_tab)
    end
 
    -- Future: Add other device-specific tabs here
