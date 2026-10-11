@@ -184,6 +184,17 @@ local descriptors = {
       },
    },
 
+   [defines.control_behavior.type.boiler] = {
+      base = generic_on_off_descriptor,
+      fields = {
+         {
+            type = mod.FIELD_TYPE.BOOLEAN,
+            name = "read_fuel",
+            label = { "fa.cb-field-read-fuel" },
+         },
+      },
+   },
+
    [defines.control_behavior.type.cargo_landing_pad] = {
       base = nil,
       fields = {
@@ -269,6 +280,22 @@ local descriptors = {
 
    [defines.control_behavior.type.generic_on_off] = generic_on_off_descriptor,
 
+   [defines.control_behavior.type.heat_pipe] = {
+      base = nil,
+      fields = {
+         {
+            type = mod.FIELD_TYPE.BOOLEAN,
+            name = "read_temperature",
+            label = { "fa.cb-field-read-temperature" },
+         },
+         {
+            type = mod.FIELD_TYPE.SIGNAL,
+            name = "temperature_signal",
+            label = { "fa.cb-field-temperature-signal" },
+         },
+      },
+   },
+
    [defines.control_behavior.type.inserter] = {
       base = generic_on_off_descriptor,
       fields = {
@@ -306,6 +333,38 @@ local descriptors = {
             type = mod.FIELD_TYPE.SIGNAL,
             name = "circuit_stack_control_signal",
             label = { "fa.cb-field-circuit-stack-control-signal" },
+         },
+      },
+   },
+
+   -- set_research is left out: it needs research_conditions, a list the form can't edit
+   [defines.control_behavior.type.lab] = {
+      base = nil,
+      fields = {
+         {
+            type = mod.FIELD_TYPE.BOOLEAN,
+            name = "read_contents",
+            label = { "fa.cb-field-read-contents" },
+         },
+         {
+            type = mod.FIELD_TYPE.BOOLEAN,
+            name = "read_fuel",
+            label = { "fa.cb-field-read-fuel" },
+         },
+         {
+            type = mod.FIELD_TYPE.BOOLEAN,
+            name = "read_research_cost",
+            label = { "fa.cb-field-read-research-cost" },
+         },
+         {
+            type = mod.FIELD_TYPE.BOOLEAN,
+            name = "read_technology_level",
+            label = { "fa.cb-field-read-technology-level" },
+         },
+         {
+            type = mod.FIELD_TYPE.SIGNAL,
+            name = "technology_level_signal",
+            label = { "fa.cb-field-technology-level-signal" },
          },
       },
    },
