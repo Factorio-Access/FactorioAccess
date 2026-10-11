@@ -52,6 +52,12 @@ bool tab_selected(Widget* w);
 // agui::Table: column count (cells are its visible children, row by row) and whether its first row is headers.
 int table_columns(Widget* w);
 bool table_has_headers(Widget* w);
+// agui::TableWithSelection (a list whose rows are table rows, such as the mods list): whether `w` is one, its
+// selected row (rows count from 0 and include the header row when the table has one; -1 when none), and a selection
+// as if the user clicked the row (the game's selection listeners run). Only for selection tables.
+bool is_selection_table(Widget* w);
+int table_selected_row(Widget* w);
+void table_select_row(Widget* w, int row);
 // agui::Slider: value and range; a change as if the user dragged it (the game's slider-move listeners run).
 double slider_value(Widget* w);
 double slider_min(Widget* w);

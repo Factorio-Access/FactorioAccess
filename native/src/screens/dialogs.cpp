@@ -1,4 +1,5 @@
 #include "screens/dialogs.h"
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
@@ -95,7 +96,7 @@ std::string plain(const std::string& s) {
   return t;
 }
 
-enum class Kind { Container, Skip, Label, Button, CheckBox, Radio, DropDown, TextField, Tab, Slider };
+enum class Kind { Container, Skip, Label, Button, CheckBox, Radio, DropDown, TextField, Tab, Slider, ModRow };
 
 Kind classify(agui::Widget* w) {
   // Most specific first: a CheckBox is also a Button.
@@ -123,6 +124,7 @@ const ControlType kDropdownType = role_type("dropdown", strings::kDropdown);
 const ControlType kTextType = role_type("edit", strings::kTextField);
 const ControlType kTabType = role_type("tab", strings::kTab);
 const ControlType kSliderType = role_type("slider", strings::kSlider);
+const ControlType kModRowType{"mod", {"label", "value", "enabled", "position"}, {}};
 
 // The spoken label of a control: its caption, else its tooltip's first line (icon buttons have no caption).
 std::string label_of(agui::Widget* w) {
@@ -147,12 +149,19 @@ struct Entry {
   Path path;
   Kind kind;
   std::string name;  // composed by the walker (a neighbouring label, table headers); empty = the widget's own
-  Path value_path;   // a slider's companion text field, whose text is the readable value ("10 min" for 36000 ticks)
+  // A slider's companion text field, whose text is the readable value ("10 min" for 36000 ticks); a label's value
+  // beside it in a two-column table of labels ("Version" and "2.1.21").
+  Path value_path;
+  // A mod row: the labels it reads (name, version), and its row in the selection table.
+  std::vector<Path> text_paths;
+  Path table_path;
+  int table_row = -1;
 };
 struct Row {
   std::vector<Entry> cells;
   std::string key;      // shared by the rows of one table: up and down keep the column
   std::string context;  // the row's own label ("Move up" before its key buttons): said when focus enters the row
+  int section = 0;      // the panel it is in, when a list and its details sit side by side (see Walker)
 };
 
 // Visible controls (non-containers) under `w`, counting up to `limit`.
@@ -174,6 +183,26 @@ bool cells_are_single(agui::Widget* w) {
     for (agui::Widget* c : priv ? agui::private_children(w) : agui::children(w))
       if (agui::visible(c) && classify(c) == Kind::Container && count_controls(c, 2) > 1) return false;
   return true;
+}
+
+bool contains_selection_table(agui::Widget* w) {
+  if (agui::is_selection_table(w)) return true;
+  for (bool priv : {false, true})
+    for (agui::Widget* c : priv ? agui::private_children(w) : agui::children(w))
+      if (agui::visible(c) && contains_selection_table(c)) return true;
+  return false;
+}
+
+// The first non-empty label in a table cell.
+Path first_label(agui::Widget* w, const Path& path) {
+  if (!agui::visible(w)) return {};
+  if (agui::is_a(w, "agui::Label") || agui::is_a(w, "agui::TextBox")) return plain(agui::text(w)).empty() ? Path() : path;
+  for (bool priv : {false, true}) {
+    auto kids = priv ? agui::private_children(w) : agui::children(w);
+    for (size_t i = 0; i < kids.size(); ++i)
+      if (Path p = first_label(kids[i], child_path(path, priv, i)); !p.empty()) return p;
+  }
+  return {};
 }
 
 std::string join_name(const std::string& a, const std::string& b) {
@@ -207,7 +236,9 @@ class Walker {
     for (Row& row : rows) pair_sliders(row);
   }
 
-  void walk(agui::Widget* w, const Path& path, bool in_row) {
+  // `split`: w holds panels side by side around a selection list (the mods list beside the selected mod's details).
+  // Each panel's rows get a section of their own, and so does what follows, so the dialog can make each a Tab stop.
+  void walk(agui::Widget* w, const Path& path, bool in_row, bool split = false) {
     auto visit = [&](bool priv) {
       auto kids = priv ? agui::private_children(w) : agui::children(w);
       for (size_t i = 0; i < kids.size(); ++i) {
@@ -216,6 +247,7 @@ class Walker {
         Path p = child_path(path, priv, i);
         Kind k = classify(c);
         if (k == Kind::Skip) continue;
+        if (split) section_ = ++sections_;
         if (k == Kind::Container) {
           if (!in_row && agui::is_a(c, "agui::Table") && agui::table_columns(c) > 1) {
             grid(c, p);
@@ -224,9 +256,11 @@ class Walker {
           // A horizontal flow or table is a row when each of its cells holds at most one control (a button
           // bar, a tab strip, "label: dropdown"). One holding whole panels side by side (a list beside its
           // details) is columns: each column is walked on its own, top to bottom.
-          bool row = !in_row && (agui::is_a(c, "agui::HorizontalFlow") || agui::is_a(c, "agui::Table")) && cells_are_single(c);
-          if (row) rows.emplace_back();
-          walk(c, p, in_row || row);
+          bool flow = agui::is_a(c, "agui::HorizontalFlow") || agui::is_a(c, "agui::Table");
+          bool row = !in_row && flow && cells_are_single(c);
+          bool columns = !in_row && flow && !row && contains_selection_table(c);
+          if (row) new_row();
+          walk(c, p, in_row || row, columns);
           if (row) {
             name_from_labels(rows.back());
             if (rows.back().cells.empty()) rows.pop_back();
@@ -234,18 +268,26 @@ class Walker {
           continue;
         }
         if (!keep(c, k, p)) continue;
-        if (!in_row) rows.emplace_back();
+        if (!in_row) new_row();
         rows.back().cells.push_back({p, k, {}});
       }
     };
     visit(false);
     visit(true);
+    if (split) section_ = ++sections_;
   }
 
  private:
   // Whether a leaf becomes a node. The dialog's first label is its title (the stop's context, not a row); a
   // control with neither caption nor tooltip (a bare icon button) has nothing to say. A dropdown's or text
   // field's caption is its value, which may legitimately be empty.
+  int section_ = 0, sections_ = 0;
+
+  void new_row() {
+    rows.emplace_back();
+    rows.back().section = section_;
+  }
+
   bool keep(agui::Widget* c, Kind k, const Path& p) {
     if ((k == Kind::Button || k == Kind::Tab || k == Kind::CheckBox || k == Kind::Radio) && label_of(c).empty()) return false;
     if (k == Kind::Label) {
@@ -325,6 +367,7 @@ class Walker {
     auto kids = agui::children(table);
     for (size_t i = 0; i < kids.size(); ++i)
       if (agui::visible(kids[i])) cells.push_back({kids[i], child_path(path, false, i)});
+    if (mod_rows(table, path, columns, cells) || key_values(columns, cells)) return;
     size_t first = 0;
     std::vector<std::string> headers(columns);
     bool header_row = agui::table_has_headers(table);
@@ -341,6 +384,8 @@ class Walker {
       Row row;
       row.key = path;
       std::string row_name;
+      if (Path l = first_label(cells[r].first, cells[r].second); !l.empty())
+        if (agui::Widget* lw = resolve(l)) row_name = as_label(plain(agui::text(lw)));
       bool label_names_row = false, name_used = false;
       for (int j = 0; j < columns && r + j < cells.size(); ++j) {
         std::vector<Entry> found;
@@ -363,8 +408,52 @@ class Walker {
       // Controls that name themselves ("Keep enabled" beside a mod in the sync-mods table) still need the row's
       // name: it becomes the row's context, said when focus enters the row.
       if (label_names_row && !name_used) row.context = row_name;
+      row.section = section_;
       if (!row.cells.empty()) rows.push_back(std::move(row));
     }
+  }
+
+  // The mods list: each mod is one node reading "<name> <version>, enabled" instead of a checkbox and two labels.
+  bool mod_rows(agui::Widget* table, const Path& path, int columns, const std::vector<std::pair<agui::Widget*, Path>>& cells) {
+    if (!path.starts_with("ModsGui#") || !agui::is_selection_table(table)) return false;
+    size_t first = agui::table_has_headers(table) ? (size_t)columns : 0;
+    for (size_t r = first; r < cells.size(); r += columns) {
+      Entry e{{}, Kind::ModRow, {}};
+      for (int j = 0; j < columns && r + j < cells.size(); ++j) {
+        auto& [w, p] = cells[r + j];
+        if (classify(w) == Kind::CheckBox) e.path = p;
+        else if (Path l = first_label(w, p); !l.empty()) e.text_paths.push_back(l);
+      }
+      if (e.text_paths.empty()) continue;
+      e.table_path = path;
+      e.table_row = (int)(r / columns);
+      new_row();
+      rows.back().cells.push_back(std::move(e));
+    }
+    return true;
+  }
+
+  // A table of nothing but labels in two columns (the selected mod's "Version" and "2.1.21"): each row is one node
+  // reading the pair.
+  bool key_values(int columns, const std::vector<std::pair<agui::Widget*, Path>>& cells) {
+    if (columns != 2 || cells.size() < 2) return false;
+    for (auto& [w, p] : cells) {
+      if (is_control(classify(w))) return false;
+      std::vector<Entry> found;
+      collect(w, p, found);
+      for (auto& f : found)
+        if (f.kind != Kind::Label) return false;
+    }
+    for (size_t r = 0; r + 1 < cells.size(); r += 2) {
+      Path key = first_label(cells[r].first, cells[r].second);
+      Path value = first_label(cells[r + 1].first, cells[r + 1].second);
+      if (key.empty() && value.empty()) continue;
+      Entry e{key.empty() ? value : key, Kind::Label, {}};
+      if (!key.empty()) e.value_path = value;
+      new_row();
+      rows.back().cells.push_back(std::move(e));
+    }
+    return true;
   }
 };
 
@@ -439,7 +528,49 @@ NodeVtablePtr make_node(const Entry& e, const Editors& editors) {
     case Kind::Label:
       v->control_type = &kLabelType;
       v->announcements.resize(1);
+      if (!e.value_path.empty()) {
+        v->announcements[0] = NodeAnnouncement(
+            [p, vp = e.value_path] {
+              agui::Widget* k = resolve(p);
+              agui::Widget* w = resolve(vp);
+              return join_name(k ? as_label(plain(agui::text(k))) : std::string(), w ? plain(agui::text(w)) : std::string());
+            },
+            false, announcement_kinds::kLabel);
+      }
       return v;
+    case Kind::ModRow: {
+      v->control_type = &kModRowType;
+      auto text = [paths = e.text_paths] {
+        std::string out;
+        for (const Path& tp : paths)
+          if (agui::Widget* w = resolve(tp)) {
+            std::string t = plain(agui::text(w));
+            if (!t.empty()) out += (out.empty() ? "" : " ") + t;
+          }
+        return out;
+      };
+      auto state = [p] {
+        agui::Widget* w = p.empty() ? nullptr : resolve(p);
+        if (!w) return std::string();
+        return std::string(agui::checked(w) ? strings::kEnabled : strings::kDisabled);
+      };
+      v->announcements = {NodeAnnouncement(text, false, announcement_kinds::kLabel),
+                          NodeAnnouncement(state, true, announcement_kinds::kValue)};
+      v->state_text = state;
+      v->search_text = text;
+      // Landing on a mod selects it, so the details panel shows that mod.
+      v->on_focus = [tp = e.table_path, row = e.table_row] {
+        agui::Widget* t = resolve(tp);
+        if (t && agui::table_selected_row(t) != row) agui::table_select_row(t, row);
+      };
+      v->on_activate = [p] {
+        agui::Widget* w = p.empty() ? nullptr : resolve(p);
+        if (!w) return;
+        if (agui::enabled(w)) agui::toggle(w);
+        else speech::speak(strings::kCannotChange, true);
+      };
+      return v;
+    }
     case Kind::Button: {
       v->control_type = &kButtonType;
       // A row of a list: say whether it is the selected one.
@@ -463,6 +594,8 @@ NodeVtablePtr make_node(const Entry& e, const Editors& editors) {
         return w && agui::tab_selected(w) ? std::string(strings::kSelected) : std::string();
       };
       v->announcements.push_back(NodeAnnouncement(selected, true, announcement_kinds::kSelected));
+      // A tab strip is its own Tab stop; "row" there says nothing.
+      v->speaks_own_position = true;
       break;
     }
     case Kind::Slider: {
@@ -560,6 +693,7 @@ class DialogsScreen : public Screen {
   std::string screen_name() const override { return {}; }  // each dialog announces itself when it comes up
 
   bool owns_keyboard() const override { return editing_.empty(); }
+  bool wrap() const override { return true; }  // Tab from a dialog's last stop goes back to its first
   bool captures_raw_input() const override { return !entering_.empty(); }
 
   std::vector<ScreenAction> actions() override {
@@ -575,11 +709,13 @@ class DialogsScreen : public Screen {
       walker.walk(ds[i].widget, ds[i].key + "|", false);
       walker.finish();
       if (walker.rows.empty()) continue;
-      b.begin_stop(Key(ds[i].key));
+      auto stops = stop_keys(ds[i].key, walker.rows);
       std::string title;
       if (agui::Widget* t = resolve(walker.title_path)) title = plain(agui::text(t));
       if (!title.empty()) b.push_context(title);
-      for (const Row& row : walker.rows) {
+      for (size_t r = 0; r < walker.rows.size(); ++r) {
+        const Row& row = walker.rows[stops[r].first];
+        if (r == 0 || stops[r].second != stops[r - 1].second) b.begin_stop(Key(stops[r].second));
         bool open_row = row.cells.size() > 1 || !row.key.empty();
         if (!row.context.empty()) b.push_context(row.context);
         if (open_row) b.start_row(row.key.empty() ? Key() : Key(row.key));
@@ -594,6 +730,40 @@ class DialogsScreen : public Screen {
       if (!title.empty()) b.pop_context();
     }
     if (start) b.set_start(*start);
+  }
+
+  // A dialog is one Tab stop, unless it has tabs: then its tab strip, the settings around it (one stop per panel when
+  // a list and its details sit side by side) and its closing button bar are each a stop, in that order. Returns the
+  // rows in stop order (a row's index and its stop key), each stop's rows in their own order. The first stop keeps
+  // the dialog's own key, so a new dialog can be focused by it.
+  static std::vector<std::pair<size_t, std::string>> stop_keys(const std::string& dialog, const std::vector<Row>& rows) {
+    auto all_of = [](const Row& row, Kind k) {
+      for (const Entry& e : row.cells)
+        if (e.kind != k) return false;
+      return !row.cells.empty();
+    };
+    bool tabbed = false;
+    for (const Row& row : rows) tabbed |= all_of(row, Kind::Tab);
+    std::vector<std::string> groups(rows.size());
+    if (tabbed) {
+      size_t buttons = rows.size();
+      while (buttons > 0 && all_of(rows[buttons - 1], Kind::Button)) --buttons;
+      for (size_t r = 0; r < rows.size(); ++r)
+        groups[r] = r >= buttons ? "buttons" : all_of(rows[r], Kind::Tab) ? "tabs" : std::format("s{}", rows[r].section);
+    }
+    std::vector<std::string> order;
+    auto add = [&](const std::string& g) {
+      if (std::find(order.begin(), order.end(), g) == order.end()) order.push_back(g);
+    };
+    if (tabbed) add("tabs");
+    for (const std::string& g : groups)
+      if (g != "buttons") add(g);
+    add("buttons");
+    std::vector<std::pair<size_t, std::string>> out;
+    for (const std::string& g : order)
+      for (size_t r = 0; r < rows.size(); ++r)
+        if (groups[r] == g) out.push_back({r, g == order.front() ? dialog : dialog + "|" + g});
+    return out;
   }
 
   void on_update() override {

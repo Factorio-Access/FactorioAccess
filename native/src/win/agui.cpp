@@ -57,6 +57,10 @@ struct Layout {
   // listeners (read off its body: the first bool gates dispatchSliderMove).
   void (*slider_set)(Widget*, double, bool, bool) = nullptr;
   int (*lb_index_of)(Widget*, Widget*) = nullptr;  // agui::ListBox::getIndexOfWidget
+  // agui::TableWithSelection::selectedIndex, and editSelectedIndex(unsigned row, int), which dispatches the
+  // selection listeners when the row changes (read off its body; the int is passed through to them, 0 here).
+  size_t tws_selected = 0;
+  void (*tws_edit)(Widget*, unsigned, int) = nullptr;
 } L;
 
 template <typename T>
@@ -130,6 +134,8 @@ bool init() {
   ok &= resolve(L.slider_notches, "agui::Slider", "notchTooltips");
   ok &= (L.slider_set = sym::fn<decltype(L.slider_set)>("agui::Slider::setValue")) != nullptr;
   ok &= (L.lb_index_of = sym::fn<decltype(L.lb_index_of)>("agui::ListBox::getIndexOfWidget")) != nullptr;
+  ok &= resolve(L.tws_selected, "agui::TableWithSelection", "selectedIndex");
+  ok &= (L.tws_edit = sym::fn<decltype(L.tws_edit)>("agui::TableWithSelection::editSelectedIndex")) != nullptr;
   ok &= resolve(L.me_position, "agui::MouseEvent", "position");
   ok &= resolve(L.me_button, "agui::MouseEvent", "button");
   ok &= resolve(L.me_type, "agui::MouseEvent", "eventType");
@@ -244,6 +250,12 @@ void dropdown_select(Widget* w, int index) { L.dd_edit(w, index); }
 bool tab_selected(Widget* w) { return L.tab_selected(w); }
 int table_columns(Widget* w) { return (int)at<unsigned>(w, L.table_columns); }
 bool table_has_headers(Widget* w) { return at<bool>(w, L.table_headers); }
+bool is_selection_table(Widget* w) { return is_a(w, "agui::TableWithSelection"); }
+int table_selected_row(Widget* w) {
+  unsigned r = at<unsigned>(w, L.tws_selected);
+  return r == ~0u ? -1 : (int)r;
+}
+void table_select_row(Widget* w, int row) { L.tws_edit(w, (unsigned)row, 0); }
 double slider_value(Widget* w) { return at<double>(w, L.slider_value); }
 double slider_min(Widget* w) { return at<double>(w, L.slider_min); }
 double slider_max(Widget* w) { return at<double>(w, L.slider_max); }
