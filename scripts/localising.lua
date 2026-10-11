@@ -38,7 +38,8 @@ local function wrapped_pcall(f)
    end
 end
 
--- Build a localised string which will announce the localised_x field or, if not present, the name.
+-- Build a localised string which will announce the localised_x field or, if not present or untranslated, the name
+-- with its dashes as spaces ("extraction machine").
 ---@param what { name: string, localised_name: LocalisedString? } | LuaItemStack | LuaEntity | LuaPrototypeBase | LuaTile
 ---@return LocalisedString
 function mod.get_localised_name_with_fallback(what)
@@ -47,25 +48,20 @@ function mod.get_localised_name_with_fallback(what)
    -- objects hard error on properties that don't exist rather than giving back nil.  This is a *VERY BAD* antipattern
    -- in the general case, but this function needs to work with effectively anything you might pass it.
 
-   local fallback_name = wrapped_pcall(function()
+   local raw_name = wrapped_pcall(function()
       return what.prototype.name
    end) or wrapped_pcall(function()
       return what.name
    end)
+   local fallback_name = string.gsub(assert(raw_name), "-", " ")
 
    local res = wrapped_pcall(function()
       return what.localised_name
    end) or wrapped_pcall(function()
       return what.prototype.localised_name
-   end) or wrapped_pcall(function()
-      return what.prototype.name
-   end) or what.name
+   end) or fallback_name
 
-   if fallback_name then
-      return { "?", res, fallback_name }
-   else
-      return res
-   end
+   return { "?", res, fallback_name }
 end
 
 return mod

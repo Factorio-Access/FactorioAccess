@@ -8,7 +8,7 @@ describe("Rich Text Processing", function()
       -- Based on actual output from MessageBuilder
       local expected = {
          "",
-         { "fa.rich-text-item", { "?", { "item-name.iron-plate" }, "iron-plate" } },
+         { "fa.rich-text-item", { "?", { "item-name.iron-plate" }, "iron plate" } },
          "",
          " ",
          "",
@@ -38,7 +38,7 @@ describe("Rich Text Processing", function()
       local result = RichText.verbalize_rich_text("[virtual-signal=signal-A]")
       local expected = {
          "",
-         { "fa.rich-text-virtual-signal", { "?", { "virtual-signal-name.signal-A" }, "signal-A" } },
+         { "fa.rich-text-virtual-signal", { "?", { "virtual-signal-name.signal-A" }, "signal A" } },
       }
       ctx:assert_table_equals(expected, result)
    end)
