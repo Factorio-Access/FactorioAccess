@@ -814,17 +814,20 @@ class DialogsScreen : public Screen {
     if (agui::close_dropdown_popup()) return;
     auto ds = dialogs();
     if (ds.empty()) return;
-    // The dialog's own Back (or Exit) button, by style: back_button, red_back_button, ...
+    // The dialog's own Back (or Exit) button, by style: back_button, red_back_button, ... The game's pause menu has
+    // none (its red button quits): there Escape is Resume, as the game's own menu key is.
+    const Dialog* top = top_dialog(ds);
+    std::string_view want = top->key.starts_with("GameMenuGui#") ? "menu_button_continue" : "back_button";
     std::function<agui::Widget*(agui::Widget*)> find = [&](agui::Widget* w) -> agui::Widget* {
       for (bool priv : {false, true})
         for (auto* c : priv ? agui::private_children(w) : agui::children(w)) {
           if (!agui::visible(c)) continue;
-          if (agui::is_a(c, "agui::Button") && agui::enabled(c) && agui::style_name(c).ends_with("back_button")) return c;
+          if (agui::is_a(c, "agui::Button") && agui::enabled(c) && agui::style_name(c).ends_with(want)) return c;
           if (auto* r = find(c)) return r;
         }
       return nullptr;
     };
-    if (agui::Widget* b = find(top_dialog(ds)->widget)) agui::click(b);
+    if (agui::Widget* b = find(top->widget)) agui::click(b);
   }
 
   void start_editing(const Path& p) {

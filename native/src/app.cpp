@@ -63,6 +63,8 @@ static void register_actions() {
       {ui_actions::End, "Last", sc::End, false, false, false},
       {ui_actions::Activate, "Activate", sc::Enter, false, false, false},
       {ui_actions::Back, "Back", sc::Escape, false, false, false},
+      // The mod's config makes Shift+Escape the game's menu key: it closes the pause menu it opened.
+      {ui_actions::Back, "Back", sc::Escape, true, false, false},
       {ui_actions::Tooltip, "Tooltip", sc::Space, false, false, false},
       {ui_actions::Increase, "Increase", sc::PageUp, false, false, true},
       {ui_actions::Decrease, "Decrease", sc::PageDown, false, false, true},

@@ -213,7 +213,8 @@ server and other test tooling are exempt.
   reads "name, value" per row. A dialog's closing button bar is its own Tab stop when the dialog has other controls;
   a tabbed dialog also splits off its tab strip and its settings (one stop per panel beside a selection list). Members of a row say "row"; "n of m" is
   for lists. The mods list is read specially (one node per mod, landing selects it). Keys: arrows, Tab, Home/End,
-  Enter activates, Escape clicks the dialog's back button, Left/Right adjust a slider or dropdown alone in its row,
+  Enter activates, Escape (or Shift+Escape) clicks the dialog's back button (Resume in the pause menu; the game
+  itself ignores Escape in its menus), Left/Right adjust a slider or dropdown alone in its row,
   Page Up/Down (Shift for more) adjust anywhere, Enter on a slider types a value (into the game's value field
   when it has one), Enter on a text field lends the keyboard to the game until Enter, Escape or Tab.
   Speech is immediate: state a screen changes itself goes through `app::announce_change` (speaks now and
