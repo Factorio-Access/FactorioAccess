@@ -2252,7 +2252,7 @@ function mod.area_scan_summary_info(pindex, left_top, right_bottom)
       if entry.localised_name then
          localised_name = entry.localised_name
       elseif entry.name == "trees" then
-         localised_name = { "fa.area-scan-trees" }
+         localised_name = { "fa.area-scan-trees", tostring(entry.count) }
       elseif entry.name == "stone-brick-path" then
          localised_name = { "tile-name.stone-path" }
       elseif entry.name == "concrete" then
@@ -2264,20 +2264,17 @@ function mod.area_scan_summary_info(pindex, left_top, right_bottom)
          localised_name = Localising.get_localised_name_with_fallback(prototypes.entity[entry.name])
       end
 
-      if entry.category == "resource" or entry.category == "flooring" then
-         msg:list_item({
-            "fa.area-scan-item-with-percent",
-            tostring(entry.count),
-            localised_name,
-            tostring(math.floor(entry.count / covered_area * 100)),
-         })
+      -- Under 1 percent says nothing the count doesn't
+      local percent = math.floor(entry.count / covered_area * 100)
+      if (entry.category == "resource" or entry.category == "flooring") and percent > 0 then
+         msg:list_item({ "fa.area-scan-item-with-percent", tostring(entry.count), localised_name, tostring(percent) })
       else
          msg:list_item({ "fa.area-scan-item", tostring(entry.count), localised_name })
       end
    end
 
    if has_items then
-      msg:fragment({ "fa.area-scan-total-occupied", tostring(math.floor(count_total / covered_area * 100)) })
+      msg:list_item({ "fa.area-scan-total-occupied", tostring(math.floor(count_total / covered_area * 100)) })
    else
       msg:fragment({ "fa.area-scan-empty" })
    end
