@@ -70,14 +70,12 @@ mod.INFINITE_RESOURCE_ZOOM_DISTANCE = 50
 ---@field tiles string[]
 ---@field name LocalisedString
 ---@field category fa.scanner.Category
----@field track_interior boolean
 ---@field area_scan boolean Counted when the cursor reads an area
 ---@field space_age boolean?
 ---@field shores boolean? A liquid: the cursor reads its tiles as open, shore or crevice
 
 -- Bodies of tiles the scanner clusters and reads as "name w by h". A kind may list tiles the loaded mods don't have;
--- tile_body_kinds drops those. Foundations are left out on purpose: the scanner never sees tiles placed after a
--- chunk was first scanned.
+-- tile_body_kinds drops those. Foundations (landfill and the like) are left out.
 ---@type fa.scanner.TileBodyKind[]
 local TILE_BODY_KINDS = {
    {
@@ -86,7 +84,6 @@ local TILE_BODY_KINDS = {
       tiles = { "gleba-deep-lake" },
       name = { "tile-name.water" },
       category = mod.CATEGORIES.RESOURCES,
-      track_interior = false,
       area_scan = true,
       shores = true,
    },
@@ -95,7 +92,6 @@ local TILE_BODY_KINDS = {
       tiles = { "lava", "lava-hot" },
       name = { "tile-name.lava" },
       category = mod.CATEGORIES.RESOURCES,
-      track_interior = false,
       area_scan = true,
       shores = true,
       space_age = true,
@@ -105,7 +101,6 @@ local TILE_BODY_KINDS = {
       tiles = { "oil-ocean-shallow", "oil-ocean-shallow-2", "oil-ocean-deep", "oil-ocean-deep-2" },
       name = { "tile-name.oil-ocean-shallow" },
       category = mod.CATEGORIES.RESOURCES,
-      track_interior = false,
       area_scan = true,
       shores = true,
       space_age = true,
@@ -116,7 +111,6 @@ local TILE_BODY_KINDS = {
       tiles = { "ammoniacal-ocean", "ammoniacal-ocean-2", "brash-ice" },
       name = { "tile-name.ammoniacal-ocean" },
       category = mod.CATEGORIES.RESOURCES,
-      track_interior = false,
       area_scan = true,
       shores = true,
       space_age = true,
@@ -135,7 +129,6 @@ local TILE_BODY_KINDS = {
       },
       name = { "fa.scanner-tile-marsh" },
       category = mod.CATEGORIES.TERRAIN,
-      track_interior = false,
       area_scan = true,
       space_age = true,
    },
@@ -145,7 +138,6 @@ local TILE_BODY_KINDS = {
       tiles = { "wetland-yumako" },
       name = { "tile-name.wetland-yumako" },
       category = mod.CATEGORIES.TERRAIN,
-      track_interior = false,
       area_scan = true,
       space_age = true,
    },
@@ -154,7 +146,6 @@ local TILE_BODY_KINDS = {
       tiles = { "wetland-jellynut" },
       name = { "tile-name.wetland-jellynut" },
       category = mod.CATEGORIES.TERRAIN,
-      track_interior = false,
       area_scan = true,
       space_age = true,
    },
@@ -163,7 +154,6 @@ local TILE_BODY_KINDS = {
       tiles = { "natural-yumako-soil" },
       name = { "tile-name.natural-yumako-soil" },
       category = mod.CATEGORIES.TERRAIN,
-      track_interior = false,
       area_scan = true,
       space_age = true,
    },
@@ -172,7 +162,6 @@ local TILE_BODY_KINDS = {
       tiles = { "natural-jellynut-soil" },
       name = { "tile-name.natural-jellynut-soil" },
       category = mod.CATEGORIES.TERRAIN,
-      track_interior = false,
       area_scan = true,
       space_age = true,
    },
@@ -182,7 +171,6 @@ local TILE_BODY_KINDS = {
       tiles = { "ice-rough", "ice-smooth", "snow-crests", "snow-flat", "snow-lumpy", "snow-patchy", "ice-platform" },
       name = { "fa.scanner-tile-iceberg" },
       category = mod.CATEGORIES.TERRAIN,
-      track_interior = true,
       area_scan = false,
       space_age = true,
    },

@@ -1,36 +1,42 @@
 --[[
 Trees have the same problem as water: there's a billion of them spread widely.
 
-Blind players can't really tell how "perfectt" this is.  So, two basic things:
+Blind players can't really tell how "perfect" this is.  So, two basic things:
 
-- The foreests are announced as forests if they're far away.
+- The forests are announced as forests if they're far away.
 - The forests are announced as trees if they're close.
 
-And then to make this work we divide them into tiles like how the game does
-chunks, and use the much faster tile clusterer.  Any chunk in a forest close
-enough to the player gets converted to trees.
+To make this work the map is cut into squares of FOREST_CHUNK_SIZE tiles, and a square with a tree in it is one
+cell of a block clusterer, so trees about two squares apart join into one forest. Any forest tree close enough to
+the player is announced on its own.
 
-It's good enough as long as two things hold: the cursor ends up on a tree and
-the player can see trees close to them.
+It's good enough as long as two things hold: the cursor ends up on a tree and the player can see trees close to
+them.
 
-the one thing that does come up here is that it's important for us to be able to
-cluster in batches. We thus do the clustering when dumping, but the work which
-is done at that time is saved.
+Squares are filled a map chunk at a time: a new tree marks its chunk dirty, and the chunk is reread on its next
+scan or the next dump. Felled trees raise nothing that says where they were, so every scan of a chunk compares its
+tree count with the last read.
 ]]
-local TileClusterer = require("ds.tile-clusterer")
+local BlockClusterer = require("ds.block-clusterer")
 local Info = require("scripts.fa-info")
 local SC = require("scripts.scanner.scanner-consts")
 local TH = require("scripts.table-helpers")
 
+local band, bnot, bor, lshift = bit32.band, bit32.bnot, bit32.bor, bit32.lshift
+
 local mod = {}
+
+local MAP_CHUNK_SIZE = 32
+local BLOCK_SIZE = BlockClusterer.BLOCK_SIZE
 
 -- Gleba's yumako trees and jellystems are plants, a kind of tree.
 local TREE_TYPES = { "tree", "plant" }
 
 ---@class fa.scanner.backends.TreeBackend: fa.scanner.ScannerBackend
----@field point_queue { x: number, y: number }[]
----@field clusterer fa.ds.TileClusterer
----@field chunk_size number Saved version of ScannerConsts's value.
+---@field clusterer fa.ds.BlockClusterer A cell is a chunk_size square with a tree in it
+---@field chunk_size integer Saved version of ScannerConsts's value; divides a map chunk.
+---@field chunk_counts table<integer, table<integer, integer?>?> Trees in each map chunk at its last read
+---@field dirty_chunks table<integer, table<integer, true?>?> Map chunks to reread before the next dump
 ---@field surface LuaSurface
 local TreeBackend = {}
 local TreeBackend_meta = { __index = TreeBackend }
@@ -40,21 +46,99 @@ mod.TreeBackend = TreeBackend
 ---@return fa.scanner.backends.TreeBackend
 function TreeBackend.new(surface)
    return setmetatable({
-      clusterer = TileClusterer.TileClusterer.new({ track_interior = true }),
+      clusterer = BlockClusterer.BlockClusterer.new(),
       chunk_size = SC.FOREST_CHUNK_SIZE,
-      point_queue = {},
+      chunk_counts = {},
+      dirty_chunks = {},
       surface = surface,
    }, TreeBackend_meta)
 end
 
-function TreeBackend:on_new_entity(entity)
-   local cx, cy = math.floor(entity.position.x / self.chunk_size), math.floor(entity.position.y / self.chunk_size)
+---@param cx integer
+---@param cy integer
+function TreeBackend:mark_dirty(cx, cy)
+   local col = self.dirty_chunks[cx]
+   if not col then
+      col = {}
+      self.dirty_chunks[cx] = col
+   end
+   col[cy] = true
+end
 
-   table.insert(self.point_queue, { x = cx, y = cy })
+function TreeBackend:on_new_entity(entity)
+   local p = entity.position
+   self:mark_dirty(math.floor(p.x / MAP_CHUNK_SIZE), math.floor(p.y / MAP_CHUNK_SIZE))
 end
 
 ---@param event EventData.on_object_destroyed
 function TreeBackend:on_entity_destroyed(event) end
+
+---@param cx integer
+---@param cy integer
+---@return BoundingBox.struct
+local function chunk_area(cx, cy)
+   return {
+      left_top = { x = cx * MAP_CHUNK_SIZE, y = cy * MAP_CHUNK_SIZE },
+      right_bottom = { x = (cx + 1) * MAP_CHUNK_SIZE, y = (cy + 1) * MAP_CHUNK_SIZE },
+   }
+end
+
+-- Reread a map chunk's trees into its square of cells, replacing what was there.
+---@param cx integer
+---@param cy integer
+function TreeBackend:read_chunk(cx, cy)
+   local size = self.chunk_size
+   local per_chunk = math.floor(MAP_CHUNK_SIZE / size)
+   local trees = self.surface.find_entities_filtered({ area = chunk_area(cx, cy), type = TREE_TYPES })
+
+   -- The chunk's cells, in the block that holds them.
+   local cell_x0, cell_y0 = cx * per_chunk, cy * per_chunk
+   local bx, by = math.floor(cell_x0 / BLOCK_SIZE), math.floor(cell_y0 / BLOCK_SIZE)
+   local lx0, ly0 = cell_x0 - bx * BLOCK_SIZE, cell_y0 - by * BLOCK_SIZE
+
+   local rows = {}
+   for i, r in ipairs(self.clusterer:get_rows(bx, by) or BlockClusterer.empty_rows()) do
+      rows[i] = r
+   end
+   local window = lshift(lshift(1, per_chunk) - 1, lx0)
+   for i = ly0 + 1, ly0 + per_chunk do
+      rows[i] = band(rows[i], bnot(window))
+   end
+
+   for i = 1, #trees do
+      local p = trees[i].position
+      -- Trees overlapping from a neighbouring chunk belong to that chunk's read.
+      local x, y = math.floor(p.x / size) - cell_x0, math.floor(p.y / size) - cell_y0
+      if x >= 0 and x < per_chunk and y >= 0 and y < per_chunk then
+         local ri = ly0 + y + 1
+         rows[ri] = bor(rows[ri], lshift(1, lx0 + x))
+      end
+   end
+   self.clusterer:set_block(bx, by, rows)
+
+   local col = self.chunk_counts[cx]
+   if not col then
+      col = {}
+      self.chunk_counts[cx] = col
+   end
+   col[cy] = #trees
+end
+
+-- Every scan of a map chunk. Felled trees raise nothing we can place, so a changed count rereads the chunk.
+---@param chunk ChunkPositionAndArea
+function TreeBackend:on_chunk_scanned(chunk)
+   local cx, cy = chunk.x, chunk.y
+   local dirty = self.dirty_chunks[cx]
+   if dirty and dirty[cy] then
+      dirty[cy] = nil
+      return self:read_chunk(cx, cy)
+   end
+   local col = self.chunk_counts[cx]
+   local known = col and col[cy] or 0
+   if self.surface.count_entities_filtered({ area = chunk_area(cx, cy), type = TREE_TYPES }) ~= known then
+      self:read_chunk(cx, cy)
+   end
+end
 
 function TreeBackend:update_entry(player, e)
    local aabb = e.backend_data.aabb
@@ -81,42 +165,22 @@ end
 ---@param player LuaPlayer
 ---@param callback fun(fa.scanner.ScanEntry)
 function TreeBackend:dump_entries_to_callback(player, callback)
-   -- Step 1: feed all of OUR NEW POINTS To THE CLUSTERER.
-   if next(self.point_queue) then
-      self.clusterer:submit_points(self.point_queue)
-      self.point_queue = {}
+   for cx, col in pairs(self.dirty_chunks) do
+      for cy in pairs(col) do
+         self:read_chunk(cx, cy)
+      end
    end
+   self.dirty_chunks = {}
+
    local px, py = player.position.x, player.position.y
    local CAT_RESOURCES = SC.CATEGORIES.RESOURCES
    local find_entities_filtered = self.surface.find_entities_filtered
 
-   ---@param g fa.ds.TileClusterer.Group
-   self.clusterer:get_groups(function(g)
-      -- We work out the count, bounding box, and then find a tree closest to
-      -- the player.
-      local tlx = math.huge
-      local tly = math.huge
-      local brx = -math.huge
-      local bry = -math.huge
-
-      for x, children in pairs(g.edge_tiles) do
-         tlx = tlx < x and tlx or x
-         brx = brx > x and brx or x
-
-         for y in pairs(children) do
-            tly = tly < y and tly or y
-            bry = bry > y and bry or y
-         end
-      end
-
-      -- These are the top left of a tile; make them the bottom right.
-      brx = brx + 1
-      bry = bry + 1
-
-      tlx = tlx * self.chunk_size
-      brx = brx * self.chunk_size
-      tly = tly * self.chunk_size
-      bry = bry * self.chunk_size
+   for _, g in ipairs(self.clusterer:get_groups()) do
+      local tlx = g.x0 * self.chunk_size
+      local tly = g.y0 * self.chunk_size
+      local brx = (g.x1 + 1) * self.chunk_size
+      local bry = (g.y1 + 1) * self.chunk_size
 
       local aabb = {
          left_top = { x = tlx, y = tly },
@@ -124,8 +188,8 @@ function TreeBackend:dump_entries_to_callback(player, callback)
       }
 
       local trees = find_entities_filtered({ area = aabb, type = TREE_TYPES })
-      -- If still not, skip this one.
-      if not next(trees) then return end
+      -- Felled since the chunk was last read.
+      if not next(trees) then goto continue end
 
       local zoomed_trees = {}
 
@@ -163,7 +227,9 @@ function TreeBackend:dump_entries_to_callback(player, callback)
             backend_data = { tree_count = 1, zoom_ent = t, aabb = t.bounding_box },
          })
       end
-   end)
+
+      ::continue::
+   end
 end
 
 function TreeBackend:get_aabb(e)

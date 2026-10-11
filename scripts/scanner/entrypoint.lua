@@ -570,6 +570,16 @@ function mod.build_new_entity_handler(field_name, allow_nil)
    end
 end
 
+-- Handler for the tile events: on_player_built_tile and the others whose tiles carry a position.
+---@param event { surface_index: integer, tiles: { position: MapPosition }[] }
+function mod.on_tiles_changed(event)
+   local positions = {}
+   for i, t in ipairs(event.tiles) do
+      positions[i] = t.position
+   end
+   SurfaceScanner.on_tiles_changed(event.surface_index, positions)
+end
+
 function mod.on_entity_destroyed(event)
    SurfaceScanner.on_entity_destroyed(event)
 end

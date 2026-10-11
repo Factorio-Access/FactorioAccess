@@ -65,7 +65,7 @@ the keys and then this all works out. (TODO: we should document these patterns
 somewhere)
 
 This doesn't really scale quite as far as tiles. For tiles or anything which can
-be reduced to such, see tile-clusterer.lua.
+be reduced to such, see block-clusterer.lua.
 ]]
 local TH = require("scripts.table-helpers")
 

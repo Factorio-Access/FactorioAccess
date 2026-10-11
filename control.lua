@@ -835,6 +835,21 @@ EventManager.on_event({
    defines.events.on_biter_base_built,
 }, ScannerEntrypoint.build_new_entity_handler("entity"))
 
+-- Scanner: tiles changing under the tile bodies (landfill built or mined, scripts)
+EventManager.on_event({
+   defines.events.on_player_built_tile,
+   defines.events.on_robot_built_tile,
+   defines.events.on_player_mined_tile,
+   defines.events.on_robot_mined_tile,
+   defines.events.script_raised_set_tiles,
+}, ScannerEntrypoint.on_tiles_changed)
+if script.feature_flags.space_travel then
+   EventManager.on_event({
+      defines.events.on_space_platform_built_tile,
+      defines.events.on_space_platform_mined_tile,
+   }, ScannerEntrypoint.on_tiles_changed)
+end
+
 -- Scanner: entity creation events with different field names
 EventManager.on_event(defines.events.on_entity_cloned, ScannerEntrypoint.build_new_entity_handler("destination"))
 

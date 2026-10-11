@@ -203,6 +203,7 @@ end)
 ---@field lut table<string, fa.scanner.ScannerBackend?> By prototype type
 ---@field name_lut table<string, fa.scanner.ScannerBackend?> By prototype name, checked first
 ---@field tile_bodies_backend fa.scanner.TileBodiesBackend
+---@field tree_backend fa.scanner.backends.TreeBackend Also in lut, for trees and plants
 ---@field asteroid_chunks_backend fa.scanner.AsteroidChunksBackend
 
 -- Instantiate a set of backends, later wired up to a surface, by iterating over
@@ -230,6 +231,7 @@ local function instantiate_backends(surface)
       lut = lut,
       name_lut = name_lut,
       tile_bodies_backend = TileBodiesBackend.TileBodiesBackend.new(surface),
+      tree_backend = lut["tree"] --[[@as fa.scanner.backends.TreeBackend]],
       asteroid_chunks_backend = AsteroidChunksBackend.AsteroidChunksBackend.new(surface),
    }
 end
@@ -258,7 +260,7 @@ end
 local surface_state = StorageManager.declare_storage_module(
    "scanner",
    new_empty_surface,
-   { root_field = "surfaces", ephemeral_state_version = 15 }
+   { root_field = "surfaces", ephemeral_state_version = 16 }
 )
 
 -- Given a backend setup and an array of entities, dispatch the entities to the
@@ -322,7 +324,10 @@ local function scan_chunk(cmd)
    if not state.seen_chunks[cx][cy] then
       state.seen_chunks[cx][cy] = true
       state.backends.tile_bodies_backend:on_new_chunk(chunk)
+   else
+      state.backends.tile_bodies_backend:on_chunk_rescanned(chunk)
    end
+   state.backends.tree_backend:on_chunk_scanned(chunk)
 end
 
 ---@param queue fa.WorkQueueHandle
@@ -402,6 +407,13 @@ function mod.on_new_entity(surface_index, ent)
    state.seen_entities:set(dest_req)
 
    dispatch_entities(state.backends, { ent })
+end
+
+-- Tiles changed on a surface (built, mined, or set by a script that said so).
+---@param surface_index integer
+---@param positions MapPosition[]
+function mod.on_tiles_changed(surface_index, positions)
+   surface_state[surface_index].backends.tile_bodies_backend:on_tiles_changed(positions)
 end
 
 ---@param surface_index integer
