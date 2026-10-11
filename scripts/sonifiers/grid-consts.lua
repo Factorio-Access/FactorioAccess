@@ -17,7 +17,6 @@ mod.GRID_SIZE = 4 -- 4x4 grid = 16 cells
 mod.EVENTS_PER_CELL_LIMIT = 3
 
 -- Tick interval for sonifier updates (0.1 seconds at 60 ticks/second)
--- TODO: restore to 6 after testing
-mod.TICK_INTERVAL = 1
+mod.TICK_INTERVAL = 6
 
 return mod
