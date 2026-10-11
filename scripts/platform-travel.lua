@@ -98,7 +98,7 @@ function mod.drop_to_planet(player, message)
    local platform = assert(assert(player.hub).surface.platform)
    local planet = mod.orbited_planet(platform)
    if not planet then
-      message:fragment({ "fa.platform-drop-not-in-orbit", platform.name })
+      message:fragment({ "fa.platform-drop-not-in-orbit" })
       return false
    end
    local name = Localising.get_localised_name_with_fallback(planet)
