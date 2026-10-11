@@ -667,8 +667,8 @@ end
 ---@param item_proto LuaItemPrototype
 local function rocket_capacity_info(message, item_proto)
    if not script.feature_flags.space_travel then return end
-   -- Unclear what the game shows for these, so say nothing
-   if item_proto.send_to_orbit_mode == "not-sendable" or item_proto.weight == 0 then return end
+   -- send_to_orbit_mode is about launching without a platform; platform requests take any item with a weight
+   if item_proto.weight == 0 then return end
 
    local capacity = math.floor(prototypes.utility_constants.default_rocket_lift_weight / item_proto.weight)
    if capacity == 0 then
