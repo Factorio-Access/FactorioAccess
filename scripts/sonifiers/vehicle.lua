@@ -114,14 +114,8 @@ function mod.on_tick_per_player(pindex)
    local player = game.get_player(pindex)
    local state = vehicle_sounds_storage[pindex]
 
-   if not player or not player.valid or not player.driving then
-      state.tracking = false
-      state.distance = 0
-      return
-   end
-
-   local vehicle = assert(player.vehicle)
-   if not is_trackable_vehicle(vehicle) then
+   local vehicle = player and player.valid and player.vehicle
+   if not vehicle or not is_trackable_vehicle(vehicle) then
       state.tracking = false
       state.distance = 0
       return

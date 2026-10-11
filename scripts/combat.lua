@@ -49,7 +49,7 @@ function mod.get_effective_health_shields(pindex)
    if not player or not player.valid then return nil end
 
    -- If in a vehicle, use vehicle stats
-   if player.driving and player.vehicle and player.vehicle.valid then
+   if player.vehicle then
       local vehicle = player.vehicle
       local health = assert(vehicle.get_health_ratio())
       local shields = nil
@@ -95,7 +95,7 @@ function mod.notify_health_shields(pindex, mb)
    if mb then
       local health_pct = math.floor(stats.health * 100 + 0.5)
 
-      if player.driving and player.vehicle and player.vehicle.valid then
+      if player.vehicle then
          -- Vehicle health status
          local vehicle = player.vehicle
          mb:fragment(Localising.get_localised_name_with_fallback(vehicle))

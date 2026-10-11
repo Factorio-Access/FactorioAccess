@@ -85,7 +85,7 @@ function mod.process_walking_announcements(pindex)
          or (player.surface.can_place_entity({ name = "character", position = vp:get_cursor_pos() }) == false)
       then
          Graphics.draw_cursor_highlight(pindex, ent, nil)
-         if player.driving then return end
+         if player.vehicle then return end
 
          -- In combat mode or during KK, don't set selected entity
          local skip_selection = Combat.is_combat_mode(pindex) or KruiseKontrol.is_active(pindex)

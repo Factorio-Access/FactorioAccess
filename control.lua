@@ -425,17 +425,25 @@ EventManager.on_event(
    ---@param event EventData.on_player_driving_changed_state
    ---@param pindex integer
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
+      local player = game.get_player(pindex)
+      -- Boarding a platform hub and riding a cargo pod also change the driving state, but they aren't vehicles:
+      -- player.vehicle stays nil, and player.vehicle is what "in a vehicle" means here.
+      local entity = event.entity
+      if
+         player.hub
+         or player.cargo_pod
+         or (entity and entity.valid and (entity.type == "space-platform-hub" or entity.type == "cargo-pod"))
+      then
+         return
+      end
 
       BumpDetection.reset_bump_stats(pindex)
       MovementHistory.reset_and_increment_generation(pindex)
-      game.get_player(pindex).clear_cursor()
-      if game.get_player(pindex).driving then
-         storage.players[pindex].last_vehicle = game.get_player(pindex).vehicle
-         Speech.speak(
-            pindex,
-            { "fa.vehicle-entered", Localising.get_localised_name_with_fallback(game.get_player(pindex).vehicle) }
-         )
+      player.clear_cursor()
+      local vehicle = player.vehicle
+      if vehicle then
+         storage.players[pindex].last_vehicle = vehicle
+         Speech.speak(pindex, { "fa.vehicle-entered", Localising.get_localised_name_with_fallback(vehicle) })
       elseif storage.players[pindex].last_vehicle ~= nil then
          Speech.speak(
             pindex,
@@ -1540,10 +1548,9 @@ local function read_coords(pindex, start_phrase)
    local position = vp:get_cursor_pos()
    local marked_pos = { x = position.x, y = position.y }
 
-   if game.get_player(pindex).driving then
+   local vehicle = game.get_player(pindex).vehicle
+   if vehicle then
       --Give vehicle coords and orientation and speed --laterdo find exact speed coefficient
-      local vehicle = game.get_player(pindex).vehicle
-      assert(vehicle ~= nil) -- When driving is true, vehicle is guaranteed to exist
       local speed = vehicle.speed * 215
       local message = MessageBuilder.new()
 
@@ -3158,7 +3165,7 @@ local function kb_read_health_and_armor_stats(event)
    Combat.notify_health_shields(pindex, mb)
 
    -- For character, also add armor equipment stats
-   if not p.driving then
+   if not p.vehicle then
       mb:list_item()
       mb:fragment(Equipment.read_armor_stats(pindex, nil))
    end
@@ -3265,7 +3272,7 @@ EventManager.on_event(
    "fa-u",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      if game.get_player(pindex).driving then return end
+      if game.get_player(pindex).vehicle then return end
       local str = FaInfo.selected_item_production_stats_info(pindex)
       Speech.speak(pindex, str)
    end
@@ -3494,7 +3501,7 @@ EventManager.on_event(
    function(event, pindex)
       local p = game.get_player(pindex)
       if p.character == nil then return end
-      if not p.driving then WorkerRobots.logistics_info_key_handler(pindex) end
+      if not p.vehicle then WorkerRobots.logistics_info_key_handler(pindex) end
    end
 )
 

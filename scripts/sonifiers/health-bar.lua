@@ -96,7 +96,7 @@ local function get_current_state(pindex)
    if not player or not player.valid then return nil, nil, nil end
 
    -- Prefer vehicle if driving
-   if player.driving and player.vehicle and player.vehicle.valid then
+   if player.vehicle then
       local vehicle = player.vehicle
       local health_pct = math.floor(vehicle.get_health_ratio() * 100 + 0.5)
       local shield_pct = nil

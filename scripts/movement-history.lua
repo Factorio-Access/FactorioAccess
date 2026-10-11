@@ -103,16 +103,14 @@ local function update_player_if_needed(pindex)
       velocity = 0,
    }
 
-   if player.driving then
-      local vehicle = player.vehicle
-      if vehicle and vehicle.valid then
-         entry.kind = mod.MOVEMENT_KINDS.DRIVING
-         entry.velocity = vehicle.speed
+   local vehicle = player.vehicle
+   if vehicle then
+      entry.kind = mod.MOVEMENT_KINDS.DRIVING
+      entry.velocity = vehicle.speed
 
-         if vehicle.speed > 0.001 or vehicle.speed < -0.001 then
-            local orientation = vehicle.orientation
-            entry.direction = (math.floor(orientation * 16 + 0.5) % 16) --[[@as defines.direction]]
-         end
+      if vehicle.speed > 0.001 or vehicle.speed < -0.001 then
+         local orientation = vehicle.orientation
+         entry.direction = (math.floor(orientation * 16 + 0.5) % 16) --[[@as defines.direction]]
       end
    else
       local walking_state = player.walking_state
