@@ -507,7 +507,9 @@ std::string GraphNavigator::dump() {
   for (const GraphNode* n : graph_->current()->order()) {
     if (n->stop_key != last_stop) { out += "-- stop " + n->stop_key.to_string() + "\n"; last_stop = n->stop_key; }
     auto t = GraphAnnouncer::leaf_text(n);
-    out += std::string(n == cur ? "> " : "  ") + (t ? *t : std::string("(silent)")) + "\n";
+    // "+" marks a node that continues a row (it has a left neighbour in its row), so dumps show the rows.
+    bool continues = n->row_member && n->position_index > 1;
+    out += std::string(n == cur ? "> " : "  ") + (continues ? "+ " : "") + (t ? *t : std::string("(silent)")) + "\n";
   }
   return out;
 }

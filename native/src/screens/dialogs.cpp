@@ -39,7 +39,9 @@ struct Dialog {
   std::string key;
   agui::Widget* widget;
 };
-// The visible top-level dialogs, bottom to top.
+// The visible top-level dialogs, bottom to top. With the pause menu open, only it and what it opened (settings, save,
+// load): the world's own windows under it are not dialogs, nor is the HUD (InteractionArea, which holds the toolbar
+// and quickbar) once the pause menu has given way to its settings.
 std::vector<Dialog> dialogs() {
   std::vector<Dialog> out;
   agui::Widget* root = agui::root();
@@ -47,11 +49,17 @@ std::vector<Dialog> dialogs() {
   for (agui::Widget* w : agui::children(root)) {
     if (!is_dialog(w)) continue;
     std::string cls = agui::class_name(w);
+    if (cls == "InteractionArea") continue;
     int n = 0;
     for (auto& d : out)
       if (d.key.starts_with(cls + "#")) ++n;
     out.push_back({std::format("{}#{}", cls, n), w});
   }
+  for (size_t i = out.size(); i-- > 0;)
+    if (out[i].key.starts_with("GameMenuGui#")) {
+      out.erase(out.begin(), out.begin() + (long long)i);
+      break;
+    }
   return out;
 }
 
@@ -179,13 +187,15 @@ int count_controls(agui::Widget* w, int limit) {
   return n;
 }
 
-// Whether each cell holds at most one control, so the flow is one row. A horizontal flow nested in it is part of the
-// same line ("Map exchange string" beside its import and export buttons) when it qualifies itself.
+// Whether each cell holds at most one control, so the flow is one row. A horizontal flow nested in a horizontal flow
+// is part of the same line ("Map exchange string" beside its import and export buttons) when it qualifies itself; in a
+// table (one column of such flows is a list of lines, as on the sound settings) it is not.
 bool cells_are_single(agui::Widget* w) {
+  bool horizontal = agui::is_a(w, "agui::HorizontalFlow");
   for (bool priv : {false, true})
     for (agui::Widget* c : priv ? agui::private_children(w) : agui::children(w)) {
       if (!agui::visible(c) || classify(c) != Kind::Container || count_controls(c, 2) <= 1) continue;
-      if (!agui::is_a(c, "agui::HorizontalFlow") || !cells_are_single(c)) return false;
+      if (!horizontal || !agui::is_a(c, "agui::HorizontalFlow") || !cells_are_single(c)) return false;
     }
   return true;
 }
@@ -267,6 +277,9 @@ class Walker {
           if (row) {
             new_row();
             rows.back().closing = agui::style_name(c) == "dialog_buttons_horizontal_flow";
+            // The lines of a one-column table (each a flow: "Music", its slider, its value) are alike: up and down keep
+            // the column, as in a grid.
+            if (agui::is_a(w, "agui::Table")) rows.back().key = path;
           }
           walk(c, p, in_row || row, columns);
           if (row) {
@@ -311,6 +324,12 @@ class Walker {
   // In a row, a label directly before a field, dropdown or slider names it ("Seed" + the seed field) instead of
   // being a stop of its own.
   static void name_from_labels(Row& row) {
+    // Two labels on a line are a name and its value ("Map version:" and "2.1.21-11"): one node reading both.
+    if (row.cells.size() == 2 && row.cells[0].kind == Kind::Label && row.cells[1].kind == Kind::Label) {
+      row.cells[0].value_path = row.cells[1].path;
+      row.cells.pop_back();
+      return;
+    }
     for (size_t i = 0; i + 1 < row.cells.size(); ++i) {
       Entry& label = row.cells[i];
       Entry& next = row.cells[i + 1];
@@ -352,12 +371,14 @@ class Walker {
     }
   }
 
-  // The controls inside one table cell (a cell can be a flow holding several).
+  // The controls inside one table cell (a cell can be a flow holding several). A checkbox or radio button without a
+  // caption is kept: the table names it from its row (a mod setting's checkbox beside the setting's name).
   void collect(agui::Widget* w, const Path& path, std::vector<Entry>& out) {
     Kind k = classify(w);
     if (k == Kind::Skip || !agui::visible(w)) return;
     if (k != Kind::Container) {
-      if (k == Kind::Label ? !plain(agui::text(w)).empty() : keep(w, k, path)) out.push_back({path, k, {}});
+      bool nameable = k == Kind::CheckBox || k == Kind::Radio;
+      if (k == Kind::Label ? !plain(agui::text(w)).empty() : keep(w, k, path) || nameable) out.push_back({path, k, {}});
       return;
     }
     for (bool priv : {false, true}) {
@@ -416,6 +437,11 @@ class Walker {
       // Controls that name themselves ("Keep enabled" beside a mod in the sync-mods table) still need the row's
       // name: it becomes the row's context, said when focus enters the row.
       if (label_names_row && !name_used) row.context = row_name;
+      // A row's icon buttons (a setting's reset) come after what the row is about, so landing on it reaches the setting.
+      std::stable_partition(row.cells.begin(), row.cells.end(), [](const Entry& e) {
+        agui::Widget* w = resolve(e.path);
+        return !(e.kind == Kind::Button && w && plain(agui::text(w)).empty());
+      });
       row.section = section_;
       if (!row.cells.empty()) rows.push_back(std::move(row));
     }
