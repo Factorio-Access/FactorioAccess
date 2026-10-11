@@ -209,7 +209,10 @@ server and other test tooling are exempt.
   UI owns the keyboard (keys never reach the game); once a world is loaded it lets go entirely.
   Reading rules live in the walker: tables with columns become grids (row and column headers name the cells,
   up/down keep the column), a label beside or above a field/dropdown/slider names it, a label leading a row of
-  controls is that row's context, a slider with a value field speaks the field's text. Keys: arrows, Tab, Home/End,
+  controls is that row's context, a slider with a value field speaks the field's text, a two-column table of labels
+  reads "name, value" per row. A dialog is one Tab stop, unless it has tabs: then tab strip, settings (one stop per
+  panel beside a selection list) and closing button bar are separate stops. Members of a row say "row"; "n of m" is
+  for lists. The mods list is read specially (one node per mod, landing selects it). Keys: arrows, Tab, Home/End,
   Enter activates, Escape clicks the dialog's back button, Left/Right adjust a slider or dropdown alone in its row,
   Page Up/Down (Shift for more) adjust anywhere, Enter on a slider types a value (into the game's value field
   when it has one), Enter on a text field lends the keyboard to the game until Enter, Escape or Tab.
