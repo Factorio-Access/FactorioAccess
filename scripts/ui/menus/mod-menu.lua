@@ -18,6 +18,13 @@ local mod = {}
 local ENTRIES = {
    { ui_name = UiRouter.UI_NAMES.SETTINGS, label = { "fa.settings-menu-title" } },
    { ui_name = UiRouter.UI_NAMES.SURFACE_INFO, label = { "fa.surface-info-title" } },
+   {
+      ui_name = UiRouter.UI_NAMES.SPACE_MAP,
+      label = { "fa.space-map-title" },
+      available = function()
+         return script.feature_flags.space_travel
+      end,
+   },
 }
 
 ---@param ctx fa.ui.graph.Ctx
