@@ -2158,9 +2158,11 @@ function mod.area_scan_summary_info(pindex, left_top, right_bottom)
    if total_chunks_covered > 0 and generated_chunk_count < 1 then
       return { "fa.area-scan-charted-zero" }
    elseif total_chunks_covered > 0 and generated_chunk_count < total_chunks_covered then
+      -- An explicit comma: list_item would also put one after "Area contains"
       msg:fragment({
-         "fa.area-scan-charted-percent",
-         tostring(math.floor(generated_chunk_count / total_chunks_covered * 100)),
+         "",
+         { "fa.area-scan-charted-percent", tostring(math.floor(generated_chunk_count / total_chunks_covered * 100)) },
+         ",",
       })
    end
 

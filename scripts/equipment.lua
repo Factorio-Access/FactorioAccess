@@ -189,7 +189,7 @@ function mod.remove_weapons_and_ammo(pindex, source_entity, target_entity, targe
    end
 
    message = { "fa.equipment-collected-stacks", tostring(resulted_remove_count), tostring(expected_remove_count) }
-   if main_inv.count_empty_stacks() == 0 then message = { "", message, { "fa.inventory-full" } } end
+   if main_inv.count_empty_stacks() == 0 then message = { "", message, ", ", { "fa.inventory-full" } } end
 
    return message
 end
@@ -266,7 +266,7 @@ function mod.read_armor_stats(pindex, ent_in)
    local armor_inv = game.get_player(pindex).get_inventory(defines.inventory.character_armor)
 
    -- First report health and shield
-   mb:fragment(mod.read_shield_and_health_level(pindex, ent_in))
+   mb:fragment(mod.read_shield_and_health_level(pindex, ent_in)):list_item_forced_comma()
 
    local grid
    if ent_in == nil then
@@ -320,11 +320,17 @@ function mod.read_armor_stats(pindex, ent_in)
    -- Energy Producers
    if grid.get_generator_energy() > 0 or grid.max_solar_energy > 0 then
       mb:list_item({ "fa.armor-generating" })
-      if grid.get_generator_energy() > 0 then
+      local nonstop = grid.get_generator_energy() > 0
+      if nonstop then
          mb:fragment({ "fa.armor-power-nonstop", Electrical.get_power_string(grid.get_generator_energy() * 60) })
       end
       if grid.max_solar_energy > 0 then
-         mb:fragment({ "fa.armor-power-daytime", Electrical.get_power_string(grid.max_solar_energy * 60) })
+         local daytime = { "fa.armor-power-daytime", Electrical.get_power_string(grid.max_solar_energy * 60) }
+         if nonstop then
+            mb:list_item(daytime)
+         else
+            mb:fragment(daytime)
+         end
       end
    end
 
@@ -359,9 +365,9 @@ function mod.remove_equipment_and_armor(pindex, source_entity, target_entity, ta
 
    if not armor_inv or not char_main_inv then return "Error: Invalid inventory" end
 
-   ---@type LocalisedString
-   local result = ""
    if armor_inv.is_empty() then return { "fa.equipment-error-no-armor" } end
+
+   local mb = MessageBuilder.new()
 
    local grid
    grid = armor_inv[1].grid
@@ -377,26 +383,25 @@ function mod.remove_equipment_and_armor(pindex, source_entity, target_entity, ta
             end
          end
       end
-      result = {
+      mb:list_item({
          "fa.equipment-collected-items",
          tostring(initial_equipment_count - grid.count()),
          tostring(initial_equipment_count),
-      }
+      })
    end
 
    --Remove armor
    if char_main_inv.count_empty_stacks() == 0 then
-      result = { "", result, { "fa.inventory-full" } }
+      mb:list_item({ "fa.inventory-full" })
    else
-      result =
-         { "", result, { "fa.equipment-removed-armor", localising.get_localised_name_with_fallback(armor_inv[1]) } }
+      mb:list_item({ "fa.equipment-removed-armor", localising.get_localised_name_with_fallback(armor_inv[1]) })
       p.clear_cursor()
       local stack2 = p.cursor_stack
       stack2.swap_stack(armor_inv[1])
       p.clear_cursor()
    end
 
-   return result
+   return mb:build()
 end
 
 --Repair an item in a specific inventory slot using repair pack from hand

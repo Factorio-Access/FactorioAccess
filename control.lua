@@ -237,10 +237,10 @@ end
 
 ---Local helper: Reads tile info and adds build preview info if player is holding a building
 ---@param pindex integer Player index
----@param start_text LocalisedString? Optional text to prepend to the result
+---@param start_text LocalisedString? Optional text said before the tile, followed by a comma
 local function read_tile_with_preview_info(pindex, start_text)
    local message = MessageBuilder.new()
-   if start_text then message:fragment(start_text) end
+   if start_text then message:fragment(start_text):list_item_forced_comma() end
 
    TileReader.read_tile_inner(pindex, message)
 
@@ -1224,7 +1224,7 @@ local function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
    local moved_count = 0
    if use_preview_size == true then
       moved_count = apply_skip_by_preview_size(pindex, direction)
-      result = "Skipped by preview size " .. moved_count .. ", "
+      result = "Skipped by preview size " .. moved_count
    else
       moved_count = cursor_skip_iteration(pindex, direction, limit)
       result = "Skipped "
@@ -1245,7 +1245,7 @@ local function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
       end
    elseif moved_count < 0 then
       --No change found within the limit
-      result = result .. limit .. " tiles without a change, "
+      result = result .. limit .. " tiles without a change"
       if storage.players[pindex].remote_view then
          sounds.play_sound_at_position({ path = "inventory-wrap-around", volume_modifier = 1 }, cursor_pos)
       else
@@ -1268,7 +1268,7 @@ local function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
       end
    elseif moved_count > 1 then
       --Change found, with more than 1 tile moved
-      result = result .. moved_count .. " tiles, "
+      result = result .. moved_count .. " tiles"
       if storage.players[pindex].remote_view then
          sounds.play_sound_at_position({ path = "inventory-wrap-around", volume_modifier = 1 }, cursor_pos)
       else
@@ -1281,7 +1281,7 @@ local function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
    end
 
    --Read the tile reached
-   read_tile_with_preview_info(pindex, result)
+   read_tile_with_preview_info(pindex, result ~= "" and result or nil)
    Graphics.sync_build_cursor_graphics(pindex)
 end
 
