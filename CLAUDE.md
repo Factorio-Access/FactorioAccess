@@ -231,9 +231,15 @@ server and other test tooling are exempt.
   commented in `audio.cpp`. Fixing one means retuning the sonifiers by ear.
 - **Assets**: `native/src/assets.cpp` reads files from the mod's own package (folder or installed zip, located
   by the engine; zips inflate through the game's own zlib).
-- **Watchdog**: `native/src/win/watchdog.cpp`. When no frame has run for 5 s ("not responding"), `native.log`
-  (`%LOCALAPPDATA%\FactorioAccess\native.log`, rewritten each launch) gets the main thread's stack, the script
-  (update) thread's stack and a Lua traceback of the mod. `fadev.py get stack` logs the stacks on demand.
+- **Watchdog**: `native/src/win/watchdog.cpp`. When no frame has run for 2 s (lag or a hang: "not responding"),
+  `native.log` (`%LOCALAPPDATA%\FactorioAccess\native.log`, rewritten each launch; the dev loop writes
+  `native-dev.log` instead) gets the main thread's stack, the script (update) thread's stack and a Lua traceback of
+  the mod. `fadev.py get stack` logs the stacks on demand; `native/tools/stacks.py <pid>` prints every thread's
+  stack of any running Factorio from outside (no dev server needed).
+- **Threads**: scripts, and so every `_fa_native` call, run on the game's update thread while the main thread
+  waits for it. Code reached from Lua must never wait on the main thread, directly or through Windows: reading
+  another thread's window title or `SendMessage` deadlocks until Windows times out. Find such things on the main
+  thread and cache them (see `win::known_game_window`).
 - **Update check**: `native/src/win/update_check.cpp` (WinHTTP, its own thread; decisions in `src/update/check.h`)
   asks GitHub for `releases/latest`, or `ci-latest` for a CI build, and speaks "update available" once the main menu
   has been up for 3 s. The version is embedded at configure time from `FA_VERSION` (CI: the tag or `ci-<sha>`;
