@@ -59,7 +59,8 @@ local function render_asteroid_collector_config(ctx)
 
    local choices = chunk_choices()
    form:start_row("filters")
-   for i = 1, entity.filter_slot_count do
+   -- A collector has as many slots as its highest filter in use; the game shows one more to add the next filter
+   for i = 1, entity.filter_slot_count + 1 do
       local slot_index = i
       form:add_choice_field("filter_" .. slot_index, { "fa.inserter-filter-slot", tostring(slot_index) }, function()
          return get_chunk_filter(entity, slot_index)
