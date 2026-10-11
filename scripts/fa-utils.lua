@@ -834,6 +834,13 @@ function mod.format_count(count, item_name)
    return { "fa.count-of-items", tostring(count), item_name }
 end
 
+---One decimal place, dropped when it is zero: "5", "2.5".
+---@param value number
+---@return string
+local function one_decimal(value)
+   return (string.gsub(string.format("%.1f", value), "%.0$", ""))
+end
+
 -- Formats time from ticks to human-readable format
 ---@param ticks number Game ticks
 ---@return LocalisedString
@@ -843,11 +850,11 @@ function mod.format_time(ticks)
    local hours = minutes / 60
 
    if hours >= 1 then
-      return { "fa.time-hours", string.format("%.1f", hours) }
+      return { "fa.time-hours", one_decimal(hours) }
    elseif minutes >= 1 then
-      return { "fa.time-minutes", string.format("%.1f", minutes) }
+      return { "fa.time-minutes", one_decimal(minutes) }
    else
-      return { "fa.time-seconds", string.format("%.1f", seconds) }
+      return { "fa.time-seconds", one_decimal(seconds) }
    end
 end
 
