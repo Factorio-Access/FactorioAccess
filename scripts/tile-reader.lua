@@ -11,6 +11,7 @@ local PrimaryFinder = require("scripts.rails.primary-finder")
 local RailAnnouncer = require("scripts.rails.announcer")
 local RailDescriber = require("railutils.rail-describer")
 local RailQueries = require("railutils.queries")
+local ScannerConsts = require("scripts.scanner.scanner-consts")
 local Speech = require("scripts.speech")
 local SurfaceHelper = require("scripts.rails.surface-helper")
 local Viewpoint = require("scripts.viewpoint")
@@ -124,10 +125,8 @@ function mod.read_tile_inner(pindex, message)
    elseif not (ent and ent.valid) then
       --If there is no ent, read the tile instead
       if tile_object then message:fragment(Localising.get_localised_name_with_fallback(tile_object)) end
-      if Consts.WATER_TILE_NAMES_SET[tile_name] then
-         --Identify shores and crevices and so on for water tiles
-         message:fragment(FaUtils.identify_water_shores(pindex))
-      end
+      local body = ScannerConsts.tile_body_kinds().by_tile[tile_name]
+      if body and body.shores then message:fragment(FaUtils.identify_shore(pindex, body)) end
       Graphics.draw_cursor_highlight(pindex, nil, nil)
       if not skip_selection then game.get_player(pindex).selected = nil end
    else

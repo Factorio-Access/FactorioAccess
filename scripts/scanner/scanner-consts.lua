@@ -73,6 +73,7 @@ mod.INFINITE_RESOURCE_ZOOM_DISTANCE = 50
 ---@field track_interior boolean
 ---@field area_scan boolean Counted when the cursor reads an area
 ---@field space_age boolean?
+---@field shores boolean? A liquid: the cursor reads its tiles as open, shore or crevice
 
 -- Bodies of tiles the scanner clusters and reads as "name w by h". A kind may list tiles the loaded mods don't have;
 -- tile_body_kinds drops those. Foundations are left out on purpose: the scanner never sees tiles placed after a
@@ -87,6 +88,7 @@ local TILE_BODY_KINDS = {
       category = mod.CATEGORIES.RESOURCES,
       track_interior = false,
       area_scan = true,
+      shores = true,
    },
    {
       key = "lava",
@@ -95,6 +97,7 @@ local TILE_BODY_KINDS = {
       category = mod.CATEGORIES.RESOURCES,
       track_interior = false,
       area_scan = true,
+      shores = true,
       space_age = true,
    },
    {
@@ -104,6 +107,7 @@ local TILE_BODY_KINDS = {
       category = mod.CATEGORIES.RESOURCES,
       track_interior = false,
       area_scan = true,
+      shores = true,
       space_age = true,
    },
    {
@@ -114,6 +118,7 @@ local TILE_BODY_KINDS = {
       category = mod.CATEGORIES.RESOURCES,
       track_interior = false,
       area_scan = true,
+      shores = true,
       space_age = true,
    },
    {

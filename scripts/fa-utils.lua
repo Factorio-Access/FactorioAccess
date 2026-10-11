@@ -3,6 +3,7 @@ local Viewpoint = require("scripts.viewpoint")
 
 local Consts = require("scripts.consts")
 local EntitySelection = require("scripts.entity-selection")
+local ScannerConsts = require("scripts.scanner.scanner-consts")
 
 local mod = {}
 
@@ -518,59 +519,38 @@ function mod.tile_is_water(surface, pos)
    return #water_tiles == 1
 end
 
---If the cursor is over a water tile, this function is called to check if it is open water or a shore.
-function mod.identify_water_shores(pindex)
-   local p = game.get_player(pindex)
-   local water_tile_names = Consts.WATER_TILE_NAMES
-   local vp = Viewpoint.get_viewpoint(pindex)
-   local pos = vp:get_cursor_pos()
-   draw_circle_at_position(p.surface, { x = pos.x, y = pos.y - 1 })
-   draw_circle_at_position(p.surface, { x = pos.x, y = pos.y + 1 })
-   draw_circle_at_position(p.surface, { x = pos.x - 1, y = pos.y })
-   draw_circle_at_position(p.surface, { x = pos.x + 1, y = pos.y })
+-- The cursor is over a tile of a liquid such as water or lava: whether it is open, a shore or a crevice, counting
+-- the four neighbouring tiles of the same liquid.
+---@param pindex integer
+---@param kind fa.scanner.TileBodyKind
+---@return LocalisedString
+function mod.identify_shore(pindex, kind)
+   local surface = game.get_player(pindex).surface
+   local by_tile = ScannerConsts.tile_body_kinds().by_tile
+   local pos = Viewpoint.get_viewpoint(pindex):get_cursor_pos()
 
-   local tile_north = #p.surface.find_tiles_filtered({
-      position = { x = pos.x + 0, y = pos.y - 1 },
-      radius = 0.1,
-      name = water_tile_names,
-   })
-   local tile_south = #p.surface.find_tiles_filtered({
-      position = { x = pos.x + 0, y = pos.y + 1 },
-      radius = 0.1,
-      name = water_tile_names,
-   })
-   local tile_east = #p.surface.find_tiles_filtered({
-      position = { x = pos.x + 1, y = pos.y + 0 },
-      radius = 0.1,
-      name = water_tile_names,
-   })
-   local tile_west = #p.surface.find_tiles_filtered({
-      position = { x = pos.x - 1, y = pos.y + 0 },
-      radius = 0.1,
-      name = water_tile_names,
-   })
-
-   if tile_north > 0 then tile_north = 1 end
-   if tile_south > 0 then tile_south = 1 end
-   if tile_east > 0 then tile_east = 1 end
-   if tile_west > 0 then tile_west = 1 end
-
-   local sum = tile_north + tile_south + tile_east + tile_west
-   local result = " "
-   if sum == 0 then
-      result = " crevice pit "
-   elseif sum == 1 then
-      result = " crevice end "
-   elseif sum == 2 and ((tile_north + tile_south == 2) or (tile_east + tile_west == 2)) then
-      result = " crevice "
-   elseif sum == 2 then
-      result = " shore corner"
-   elseif sum == 3 then
-      result = " shore "
-   elseif sum == 4 then
-      result = " open "
+   ---@return integer
+   local function same_liquid(dx, dy)
+      local neighbour = { x = pos.x + dx, y = pos.y + dy }
+      draw_circle_at_position(surface, neighbour)
+      return by_tile[surface.get_tile(math.floor(neighbour.x), math.floor(neighbour.y)).name] == kind and 1 or 0
    end
-   return result
+
+   local north, south, east, west = same_liquid(0, -1), same_liquid(0, 1), same_liquid(1, 0), same_liquid(-1, 0)
+   local sum = north + south + east + west
+   if sum == 0 then
+      return { "fa.tile-crevice-pit" }
+   elseif sum == 1 then
+      return { "fa.tile-crevice-end" }
+   elseif sum == 2 and (north + south == 2 or east + west == 2) then
+      return { "fa.tile-crevice" }
+   elseif sum == 2 then
+      return { "fa.tile-shore-corner" }
+   elseif sum == 3 then
+      return { "fa.tile-shore" }
+   else
+      return { "fa.tile-open" }
+   end
 end
 
 -- Concatenate a bunch of stuff together, efficiently, and return this as a
