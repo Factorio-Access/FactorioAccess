@@ -12,6 +12,13 @@ mod.FIELD_TYPE = {
    CHOICE = "choice",
 }
 
+---Fuel can only be read from a machine that burns it
+---@param entity LuaEntity
+---@return boolean
+local function burns_fuel(entity)
+   return entity.prototype.burner_prototype ~= nil
+end
+
 ---Merge base and derived field lists, with base fields appearing first
 ---@param base table|nil Base descriptor
 ---@param derived table Derived descriptor
@@ -134,6 +141,7 @@ local descriptors = {
             type = mod.FIELD_TYPE.BOOLEAN,
             name = "read_fuel",
             label = { "fa.cb-field-read-fuel" },
+            available = burns_fuel,
          },
          {
             type = mod.FIELD_TYPE.BOOLEAN,
@@ -259,6 +267,7 @@ local descriptors = {
             type = mod.FIELD_TYPE.BOOLEAN,
             name = "read_fuel",
             label = { "fa.cb-field-read-fuel" },
+            available = burns_fuel,
          },
          {
             type = mod.FIELD_TYPE.BOOLEAN,
@@ -360,6 +369,7 @@ local descriptors = {
             type = mod.FIELD_TYPE.BOOLEAN,
             name = "read_fuel",
             label = { "fa.cb-field-read-fuel" },
+            available = burns_fuel,
          },
          {
             type = mod.FIELD_TYPE.BOOLEAN,
@@ -542,6 +552,10 @@ local descriptors = {
             type = mod.FIELD_TYPE.SIGNAL,
             name = "universe_channel",
             label = { "fa.cb-field-universe-channel" },
+            available = function(entity)
+               local cb = entity.get_control_behavior() --[[@as LuaRadarControlBehavior]]
+               return cb.mode == defines.control_behavior.radar.mode.universe
+            end,
          },
       },
    },
