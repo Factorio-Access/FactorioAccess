@@ -82,11 +82,11 @@ end
 function FormBuilder:add_textfield(name, params)
    -- Create label builder function that uses the getter
    local function build_label(message, ctx)
-      local base_label = UiUtils.to_label_function(params.label)(ctx)
+      -- Speaks the label into the message
+      UiUtils.to_label_function(params.label)(ctx)
       local val = params.get_value()
       local value_text = val and val ~= "" and val or { "fa.empty" }
       message:fragment(value_text)
-      message:fragment(base_label)
    end
 
    local vtable = {
@@ -121,7 +121,8 @@ end
 function FormBuilder:add_rich_textfield(name, params)
    -- Create label builder function that uses the getter
    local function build_label(message, ctx)
-      local base_label = UiUtils.to_label_function(params.label)(ctx)
+      -- Speaks the label into the message
+      UiUtils.to_label_function(params.label)(ctx)
       local val = params.get_value()
       local value_text
       if val and val ~= "" then
@@ -131,7 +132,6 @@ function FormBuilder:add_rich_textfield(name, params)
          value_text = { "fa.empty" }
       end
       message:fragment(value_text)
-      message:fragment(base_label)
    end
 
    local vtable = {
@@ -209,9 +209,9 @@ function FormBuilder:add_choice_field(name, label, get_value, set_value, choices
 
    -- Create label builder function that uses the getter
    local function build_label(message, ctx)
-      local base_label = UiUtils.to_label_function(label)(ctx)
+      -- Speaks the label into the message
+      UiUtils.to_label_function(label)(ctx)
       message:fragment(get_current_label())
-      message:fragment(base_label)
    end
 
    self:add_item(name, {
@@ -265,7 +265,8 @@ end
 function FormBuilder:add_signal(name, label, get_value, set_value)
    -- Create label builder function that uses the getter
    local function build_label(message, ctx)
-      local base_label = UiUtils.to_label_function(label)(ctx)
+      -- Speaks the label into the message
+      UiUtils.to_label_function(label)(ctx)
       local signal = get_value()
       local value_text
       if signal and signal.name then
@@ -274,7 +275,6 @@ function FormBuilder:add_signal(name, label, get_value, set_value)
          value_text = { "fa.empty" }
       end
       message:fragment(value_text)
-      message:fragment(base_label)
    end
 
    self:add_item(name, {

@@ -70,19 +70,19 @@ end
 --It only cares about the screen and mouse
 
 --Reports if the cursor tile is uncharted/blurred and also if it is distant (off screen)
-function mod.cursor_visibility_info(pindex)
-   local p = game.get_player(pindex)
-   local result = ""
+---@param pindex integer
+---@param message fa.MessageBuilder
+function mod.add_cursor_visibility_info(pindex, message)
+   local p = assert(game.get_player(pindex))
    local vp = Viewpoint.get_viewpoint(pindex)
    local pos = vp:get_cursor_pos()
    local chunk_pos = { x = math.floor(pos.x / 32), y = math.floor(pos.y / 32) }
-   if p.force.is_chunk_charted(p.surface, chunk_pos) == false then
-      result = result .. " uncharted "
-   elseif p.force.is_chunk_visible(p.surface, chunk_pos) == false then
-      result = result .. " blurred "
+   if not p.force.is_chunk_charted(p.surface, chunk_pos) then
+      message:fragment({ "fa.cursor-uncharted" })
+   elseif not p.force.is_chunk_visible(p.surface, chunk_pos) then
+      message:fragment({ "fa.cursor-blurred" })
    end
-   if mod.is_on_screen(pos, pindex) == false then result = result .. " distant " end
-   return result
+   if not mod.is_on_screen(pos, pindex) then message:fragment({ "fa.cursor-distant" }) end
 end
 
 return mod

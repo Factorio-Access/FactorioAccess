@@ -39,7 +39,7 @@ end
 
 ---Get a cached translation for a localised string.
 ---@param pindex integer
----@param localised_string table
+---@param localised_string LocalisedString
 ---@return string? translation The cached translation, or nil if not cached
 function mod.get(pindex, localised_string)
    local state = cache_storage[pindex]

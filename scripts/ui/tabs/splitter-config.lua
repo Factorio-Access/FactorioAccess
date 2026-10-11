@@ -56,10 +56,10 @@ local function render_splitter_config(ctx)
 
          if filter and filter.name then
             local item_name = Localising.get_localised_name_with_fallback(prototypes.item[filter.name])
-            label_ctx.message:fragment({ "fa.splitter-filter-label", item_name })
+            label_ctx.message:list_item_forced_comma({ "fa.splitter-filter-label", item_name })
          end
 
-         label_ctx.message:fragment({ "fa.splitter-output-help" })
+         label_ctx.message:list_item_forced_comma({ "fa.splitter-output-help" })
       end,
       on_click = function(click_ctx)
          -- Only allow setting filter if output priority is set
@@ -113,7 +113,7 @@ local function render_splitter_config(ctx)
 
          label_ctx.message:fragment(priority_to_text(priority))
          label_ctx.message:fragment({ "fa.splitter-input-priority-label" })
-         label_ctx.message:fragment({ "fa.splitter-input-help" })
+         label_ctx.message:list_item_forced_comma({ "fa.splitter-input-help" })
       end,
       -- M key: set to left
       on_action1 = function(action_ctx)

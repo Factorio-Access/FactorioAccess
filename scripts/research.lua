@@ -148,7 +148,10 @@ local function localise_trigger(tech, trig)
       elseif quality then
          quality_name = quality.name
       end
-      table.insert(res, quality_name)
+      if quality_name ~= "normal" then
+         res[1] = "fa.research-trigger-craft-item-quality"
+         table.insert(res, Localising.get_localised_name_with_fallback(prototypes.quality[quality_name]))
+      end
    elseif trig.type == "mine-entity" then
       local parts = {}
       for _, e in
@@ -156,6 +159,7 @@ local function localise_trigger(tech, trig)
       do
          table.insert(parts, Localising.get_localised_name_with_fallback(prototypes.entity[e]))
       end
+      if #parts > 1 then res[1] = "fa.research-trigger-mine-entities" end
       table.insert(res, FaUtils.localise_cat_table(parts, ", "))
    elseif trig.type == "craft-fluid" then
       table.insert(res, Localising.get_localised_name_with_fallback(prototypes.fluid[trig.fluid]))

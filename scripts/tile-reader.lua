@@ -137,7 +137,7 @@ function mod.read_tile_inner(pindex, message)
    end
 
    --Add info on whether the tile is uncharted or blurred or distant
-   message:fragment(Mouse.cursor_visibility_info(pindex))
+   Mouse.add_cursor_visibility_info(pindex, message)
 end
 
 return mod

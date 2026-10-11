@@ -115,7 +115,8 @@ local function render_inserter_config(ctx)
          local label = { "fa.inserter-filter-slot", tostring(slot_index) }
 
          local function build_label(message, ctx)
-            local base_label = UiUtils.to_label_function(label)(ctx)
+            -- Speaks the label into the message
+            UiUtils.to_label_function(label)(ctx)
             local signal = get_value()
             local value_text
             if signal and signal.name then
@@ -123,7 +124,6 @@ local function render_inserter_config(ctx)
             else
                value_text = { "fa.empty" }
             end
-            message:fragment(base_label)
             message:fragment(value_text)
          end
 

@@ -11,6 +11,8 @@ Provides a category-based interface for research technologies where:
 local CategoryRows = require("scripts.ui.category-rows")
 local Research = require("scripts.research")
 local Help = require("scripts.ui.help")
+local LocalisedStringCache = require("scripts.localised-string-cache")
+local RichText = require("scripts.rich-text")
 
 local mod = {}
 
@@ -42,24 +44,26 @@ end
 ---@param tech LuaTechnology
 local function create_tech_label(ctx, tech)
    ctx.message:fragment(Research.tech_name_string(tech))
+   -- Have the description translated by the time the player reads it
+   LocalisedStringCache.hint_submit(ctx.pindex, Research.tech_description_string(tech))
 
    -- Add status information
    if tech.researched then
-      ctx.message:fragment({ "fa.research-status-researched" })
+      ctx.message:list_item_forced_comma({ "fa.research-status-researched" })
    elseif tech.enabled then
-      if tech.level > 1 then ctx.message:fragment({ "fa.research-level", tech.level }) end
+      if tech.level > 1 then ctx.message:list_item_forced_comma({ "fa.research-level", tech.level }) end
       -- Check if in queue
       local force = ctx.player.force
       if force.research_queue then
          for i, queued in ipairs(force.research_queue) do
             if queued.name == tech.name then
-               ctx.message:fragment({ "fa.research-in-queue", i })
+               ctx.message:list_item_forced_comma({ "fa.research-in-queue", i })
                break
             end
          end
       end
    else
-      ctx.message:fragment({ "fa.research-status-locked" })
+      ctx.message:list_item_forced_comma({ "fa.research-status-locked" })
    end
 end
 
@@ -90,9 +94,16 @@ end
 ---@param ctx fa.ui.CategoryRows.ItemContext
 ---@param tech LuaTechnology
 local function read_tech_requirements(ctx, tech)
-   -- Description
-   ctx.message:fragment({ "fa.research-description" })
-   ctx.message:fragment(Research.tech_description_string(tech))
+   -- Description. Descriptions can hold rich text, which only the translated text shows; until the translation
+   -- arrives the description is spoken as the engine localises it.
+   local description = Research.tech_description_string(tech)
+   local translated = LocalisedStringCache.get(ctx.pindex, description)
+   if translated then
+      ctx.message:fragment({ "fa.research-description", RichText.verbalize_rich_text(translated) })
+   else
+      LocalisedStringCache.hint_submit(ctx.pindex, description)
+      ctx.message:fragment({ "fa.research-description", description })
+   end
 
    -- Requirements (cost/trigger and prerequisites)
    ctx.message:fragment(Research.localise_research_requirements(tech))
