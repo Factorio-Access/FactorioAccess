@@ -228,10 +228,15 @@ server and other test tooling are exempt.
   commented in `audio.cpp`. Fixing one means retuning the sonifiers by ear.
 - **Assets**: `native/src/assets.cpp` reads files from the mod's own package (folder or installed zip, located
   by the engine; zips inflate through the game's own zlib).
+- **Update check**: `native/src/win/update_check.cpp` (WinHTTP, its own thread; decisions in `src/update/check.h`)
+  asks GitHub for `releases/latest`, or `ci-latest` for a CI build, and speaks "update available" once the main menu
+  has been up for 3 s. The version is embedded at configure time from `FA_VERSION` (CI: the tag or `ci-<sha>`;
+  locally `dev`, which never checks; changing it needs a reconfigure). `FA_UPDATE_HOST` replaces api.github.com.
 
 ### How it loads
 
-- **Playing**: `python native/tools/fadev.py install` copies `version.dll`, `fa_native.dll` and `prism.dll` next to
+- **Players** use the installer (see "Releases, CI and the installer"), which puts the same three DLLs there.
+- **Playing a local build**: `python native/tools/fadev.py install` copies `version.dll`, `fa_native.dll` and `prism.dll` next to
   `factorio.exe` (`uninstall` removes them). Then just run the game. `version.dll` (`native/src/proxy/`) is a
   proxy: factorio.exe imports VERSION.dll, which is not a KnownDLL, so this copy loads instead of System32's. It
   forwards every export to the real one and starts `fa_native.dll` on a thread, in parallel with the game's own
@@ -305,6 +310,33 @@ code. Disassemble a function before guessing what it does.
 - Script names in `LuaGameScript` are `mod-<name>`; the scenario's is `level`.
 - `_fa_native` and the mod's package path are set up when the mod's Lua state is created. After a hot `reload`,
   load a save again (or `kill` and `launch`) before testing anything that goes through Lua or reads assets.
+
+## Releases, CI and the installer
+
+**Native code and the installer never reach the mod portal.** The mod zip is built from a whitelist, not a
+blacklist, and the portal upload runs only for a genuine version tag.
+
+- `tools/package_mod.py build` copies an explicit list of tracked runtime files (`WHITELIST_FILES`,
+  `WHITELIST_DIRS` with allowed extensions) into `FactorioAccess_<version>.zip`; `verify <zip>` independently fails
+  on any entry off the list, any forbidden extension (.dll .exe .pdb .cpp .h .rs .py ...) or path part (native,
+  installer, tools ...). A new runtime file or folder must be added to the whitelist or it will not ship. Tests:
+  `python -m unittest discover -s tools -p "test_*.py"`.
+- `tools/portal.py`: the upload passes only for a push of `refs/tags/vX.Y.Z` equal to info.json's version, after
+  re-verifying the zip and its sha256. Never create or push `v*` tags yourself; test it with `--dry-run` or the tests.
+- `.github/workflows/build.yml`: stylua, the mod zip (+ tests and a gate dry run), native build + `faui_tests` +
+  `fa_audio_tests` (`native/tools/package_native.py` makes `fa-native.zip`: the three DLLs and `version.txt`), and the
+  installer (`cargo test` + build). Pushes of `CI_LATEST_BRANCH` (f2.1 for now, set at the top of the workflow)
+  republish the `ci-latest` pre-release, never moving it backwards; a `vX.Y.Z` tag makes a GitHub release and then
+  runs the `mod-portal` job, the only one with `FACTORIO_UPLOAD_API_KEY`.
+- `installer/` (Rust, wx GUI + `--cli`, ported from grimdark's): installs one release's mod zip into the mods folder
+  and `fa-native.zip`'s DLLs into bin\x64, so mod and native always match. It finds Factorio (remembered choice in
+  `%LOCALAPPDATA%\FactorioAccess\installer.json`, Steam, usual folders, Browse) and resolves mods\ and config.ini
+  through `config-path.cfg` and config.ini's `write-data` as the game does. It applies `config_changes/XX_*.ini` with
+  the Python launcher's exact semantics and level markers (`access-config-version1/2-DO-NOT-EDIT` in `[controls]`),
+  so the two never re-apply each other's sets; a change to that format must change both. It refuses to touch a
+  `version.dll` that is not ours or an unpacked `mods/FactorioAccess` folder (a dev checkout). Build locally with
+  `cmd //c "$(cygpath -w native/tools/vsdev.cmd)" cargo build --release --manifest-path installer/Cargo.toml`
+  (wxWidgets compiles from source, about 10 minutes cold).
 
 ## Factorio API reference
 
