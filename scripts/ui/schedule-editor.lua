@@ -810,7 +810,7 @@ local function build_record_vtable(schedule, platform, record_position, record, 
                record.allows_unloading and "fa.schedule-unload" or "fa.schedule-no-unload",
             })
          else
-            ctx.message:fragment({ "fa.schedule-station-hint" })
+            ctx.message:list_item_forced_comma({ "fa.schedule-station-hint" })
          end
       end,
 

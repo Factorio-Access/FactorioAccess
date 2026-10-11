@@ -84,7 +84,7 @@ function mod.get_blueprint_info(stack, in_hand, pindex)
       end
    end
 
-   message:fragment({ "fa.blueprints-entities-total", tostring(stack.get_blueprint_entity_count()) })
+   message:list_item_forced_comma({ "fa.blueprints-entities-total", tostring(stack.get_blueprint_entity_count()) })
 
    return message:build()
 end

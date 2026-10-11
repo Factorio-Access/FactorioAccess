@@ -52,7 +52,7 @@ local function create_recipe_label(ctx, recipe)
    if SurfaceConditions.failed_condition(recipe.prototype, player.character.surface) then
       ctx.message:list_item_forced_comma({ "fa.recipe-unavailable-on-surface" })
    else
-      ctx.message:fragment({ "fa.crafting-can-craft", craftable })
+      ctx.message:list_item_forced_comma({ "fa.crafting-can-craft", craftable })
    end
 end
 

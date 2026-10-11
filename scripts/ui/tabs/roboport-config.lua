@@ -34,7 +34,7 @@ local function render_roboport_config(ctx)
    -- Menu item 0: Title/Instructions
    form:add_label("title", function(label_ctx)
       label_ctx.message:fragment({ "fa.roboport-menu-title", WorkerRobots.get_network_name(port) })
-      label_ctx.message:fragment({ "fa.roboport-menu-instructions" })
+      label_ctx.message:list_item_forced_comma({ "fa.roboport-menu-instructions" })
    end)
 
    -- Menu item 1: Rename roboport

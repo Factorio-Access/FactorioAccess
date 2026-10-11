@@ -53,7 +53,7 @@ local function build_train_rows(builder, trains)
          else
             ctx.message:fragment("id " .. train_id)
          end
-         ctx.message:fragment({ "fa.trains-overview-click-to-open" })
+         ctx.message:list_item_forced_comma({ "fa.trains-overview-click-to-open" })
       end, {
          on_click = function(ctx)
             if not stock then

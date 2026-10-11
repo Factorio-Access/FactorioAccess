@@ -69,7 +69,7 @@ local function render_pump_menu(ctx)
    -- Menu item 0: Title/Instructions
    builder:add_label("title", function(label_ctx)
       label_ctx.message:fragment({ "fa.building-pump-positions-available", #positions_array })
-      label_ctx.message:fragment({ "fa.offshore-pump-menu-instructions" })
+      label_ctx.message:list_item_forced_comma({ "fa.offshore-pump-menu-instructions" })
    end)
 
    -- Add a clickable item for each position

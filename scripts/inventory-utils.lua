@@ -374,7 +374,7 @@ function mod.quick_transfer(pindex, msg_builder, src_ent, src_inv_def, src_slot,
       })
       msg_builder:fragment({ "fa.transfer-cannot-insert", item_label })
       if dest_ent.type == "character" and dest_inv.count_empty_stacks() == 0 then
-         msg_builder:fragment({ "fa.transfer-full-inventory" })
+         msg_builder:list_item_forced_comma({ "fa.transfer-full-inventory" })
       end
       return false
    end

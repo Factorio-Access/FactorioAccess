@@ -142,7 +142,7 @@ local function render_locomotive_config(ctx)
             ctx.message:fragment(group)
          end
          ctx.message:fragment({ "fa.locomotive-train-group" })
-         ctx.message:fragment({ "fa.locomotive-group-hint" })
+         ctx.message:list_item_forced_comma({ "fa.locomotive-group-hint" })
       end,
       on_click = function(ctx)
          local player = game.get_player(ctx.pindex)

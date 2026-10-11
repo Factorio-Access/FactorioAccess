@@ -1641,14 +1641,14 @@ local function read_coords(pindex, start_phrase)
 
       -- Tiles are always 1x1, so tile case still triggers.
       if p_width and p_height and (p_width > 1 or p_height > 1) then
-         message:fragment({ "fa.build-preview-dimensions", tostring(p_width), tostring(p_height) })
+         message:list_item_forced_comma({ "fa.build-preview-dimensions", tostring(p_width), tostring(p_height) })
       elseif stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result ~= nil then
          --Paving preview size
          local size = vp:get_cursor_size() * 2 + 1
          if storage.players[pindex].preferences.tiles_placed_from_northwest_corner then
-            message:fragment({ "fa.paving-preview-northwest", tostring(size), tostring(size) })
+            message:list_item_forced_comma({ "fa.paving-preview-northwest", tostring(size), tostring(size) })
          else
-            message:fragment({ "fa.paving-preview-centered", tostring(size), tostring(size) })
+            message:list_item_forced_comma({ "fa.paving-preview-centered", tostring(size), tostring(size) })
          end
       end
       Speech.speak(pindex, message:build())
@@ -3310,17 +3310,18 @@ local function kb_read_time_and_research_progress(event)
    local surf = game.get_player(pindex).surface
    local hour = math.floor((24 * surf.daytime + 12) % 24)
    local minute = math.floor((24 * surf.daytime - math.floor(24 * surf.daytime)) * 60)
-   local time_string = { "fa.local-time", tostring(hour), string.format("%02d", minute) }
+   local message = MessageBuilder.new()
+   message:fragment({ "fa.local-time", tostring(hour), string.format("%02d", minute) })
+
+   --Add research progress info
+   message:list_item_forced_comma(Research.get_progress_string(pindex))
 
    --Get total playtime
    local total_hours = math.floor(game.tick / 216000)
    local total_minutes = math.floor((game.tick % 216000) / 3600)
-   local total_time_string = { "fa.mission-time", tostring(total_hours), tostring(total_minutes) }
+   message:list_item({ "fa.mission-time", tostring(total_hours), tostring(total_minutes) })
 
-   --Add research progress info
-   local progress_string = Research.get_progress_string(pindex)
-
-   Speech.speak(pindex, FaUtils.spacecat(time_string, progress_string, total_time_string))
+   Speech.speak(pindex, message:build())
 end
 
 EventManager.on_event(
