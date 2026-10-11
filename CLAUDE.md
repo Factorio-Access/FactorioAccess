@@ -41,6 +41,11 @@ python json_to_markdown.py --type runtime --input ../../doc-html/runtime-api.jso
 python json_to_markdown.py --type prototype --input ../../doc-html/prototype-api.json --output llm-docs/api-reference
 ```
 
+`--run-tests` runs a second Factorio beside any game being played: its own write-data folder
+(`%TEMP%\factorio-access-tests`, rebuilt each run, logs and `script-output` kept there for reading) and a mods folder
+of junctions to the real mods plus copies of `mod-list.json` and `mod-settings.dat`. Passing `--config` or
+`--mod-directory` runs it in place instead.
+
 Regenerating the API reference after a Factorio update: delete `llm-docs/api-reference/runtime` and
 `.../prototypes` first (the generator never removes pages for classes the API dropped), run both commands, commit.
 

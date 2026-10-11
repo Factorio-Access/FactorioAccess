@@ -40,6 +40,10 @@ FMTK_VERSION = "2.1.9"
 FACTORIO_LIBRARY_DIR = TOOLS_DIR / "factorio-library"
 STYLUA_VERSION = "2.3.0"
 # Directories under the mod that hold no mod Lua (tools, native code, scratch space, docs): every Lua check skips them.
+# Tests run in a Factorio of their own beside any game being played: their own write-data folder (Factorio locks
+# write-data, so sharing it refuses to start) and their own mods folder of junctions to the real mods, so they never
+# write the played game's logs, script-output or mod settings. Recreated on every run, kept afterwards for reading.
+TEST_RUN_DIR = Path(tempfile.gettempdir()) / "factorio-access-tests"
 NON_MOD_DIRS = [".vscode", ".git", ".tools", "native", "installer", "scratchpad", "llm-docs", "devdocs", "docs", "__pycache__"]
 
 
@@ -59,6 +63,55 @@ class LogsNotFoundError(Exception):
     """Raised when critical logs cannot be found during debugging."""
 
     pass
+
+
+def factorio_dir() -> Path:
+    """The Factorio install this mod lives in."""
+    return Path(__file__).parent.parent.parent.resolve()
+
+
+# Where Factorio writes its log and script-output: the install, or TEST_RUN_DIR while tests run.
+write_data_dir = factorio_dir()
+
+
+def clear_test_mods(mods: Path) -> None:
+    """Empty a test mods folder. Its folders are junctions to the real mods: remove only the links, never what they
+    point at. os.rmdir removes a junction itself and refuses a real non-empty folder."""
+    for entry in mods.iterdir():
+        if os.path.isjunction(entry):
+            os.rmdir(entry)
+        elif entry.is_dir():
+            raise RuntimeError(f"{entry} is a real folder, not a junction: refusing to delete it")
+        else:
+            entry.unlink()
+    mods.rmdir()
+
+
+def prepare_test_run() -> List[str]:
+    """Build TEST_RUN_DIR afresh and return the Factorio arguments that run in it."""
+    root = TEST_RUN_DIR
+    mods = root / "mods"
+    if mods.exists():
+        clear_test_mods(mods)
+    if root.exists():
+        shutil.rmtree(root)
+    (root / "saves").mkdir(parents=True)
+    mods.mkdir()
+
+    real_mods = Path(__file__).parent.parent.resolve()
+    for entry in real_mods.iterdir():
+        if entry.is_dir():
+            subprocess.run(["cmd", "/c", "mklink", "/J", str(mods / entry.name), str(entry)], check=True,
+                           capture_output=True)
+        elif entry.suffix == ".zip" or entry.name in ("mod-list.json", "mod-settings.dat"):
+            shutil.copy2(entry, mods / entry.name)
+    shutil.copy2(Path(__file__).parent / "lab_tiles.zip", root / "saves" / "lab_tiles.zip")
+
+    config = root / "config.ini"
+    config.write_text(
+        "\n".join(["[path]", f"read-data={factorio_dir() / 'data'}", f"write-data={root}", ""]), encoding="utf-8"
+    )
+    return ["--config", str(config), "--mod-directory", str(mods)]
 
 
 def validate_factorio_exe() -> Path:
@@ -510,15 +563,13 @@ def run_lua_tests(test_suite: str = "all") -> Tuple[int, str, str]:
 
 def find_script_output_dir() -> Optional[Path]:
     """Find Factorio's script-output directory."""
-    # Script output is relative to Factorio executable
-    factorio_dir = Path(__file__).parent.parent.parent
-    script_output = factorio_dir / "script-output"
+    script_output = write_data_dir / "script-output"
 
     if script_output.exists():
         return script_output
 
     # Try alternative location
-    alt_output = factorio_dir / "data" / "script-output"
+    alt_output = write_data_dir / "data" / "script-output"
     if alt_output.exists():
         return alt_output
 
@@ -548,8 +599,7 @@ def capture_crash_info(exit_code: int, fail_hard: bool = True) -> Dict[str, Any]
     missing_logs = []
 
     # Find Factorio log
-    factorio_dir = Path(__file__).parent.parent.parent
-    log_path = factorio_dir / "factorio-current.log"
+    log_path = write_data_dir / "factorio-current.log"
 
     if log_path.exists():
         try:
@@ -826,6 +876,7 @@ def parse_factorio_args() -> argparse.Namespace:
 
 def main():
     """Main entry point."""
+    global write_data_dir
     args = parse_factorio_args()
 
     # Handle show-paths
@@ -988,6 +1039,11 @@ def main():
                 print(error)
             print("[ERROR] Fix these errors before running tests")
             return req_exit_code
+
+        if not args.mod_directory and not args.config:
+            factorio_args.extend(prepare_test_run())
+            write_data_dir = TEST_RUN_DIR
+            print(f"[INFO] Running tests in {TEST_RUN_DIR}")
 
         # For tests, use benchmark mode
         factorio_args.extend(
