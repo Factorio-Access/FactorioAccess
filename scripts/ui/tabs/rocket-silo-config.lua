@@ -3,13 +3,45 @@ Rocket silo configuration tab.
 
 Provides controls for:
 - Rocket parts progress (read-only label)
-- Auto-launch setting
+- Automation: send to orbit automatically, or with space travel automatic requests from space platforms
 ]]
 
 local FormBuilder = require("scripts.ui.form-builder")
 local UiKeyGraph = require("scripts.ui.key-graph")
 
 local mod = {}
+
+---@class fa.ui.RocketSiloAutomation
+---@field label LocalisedString
+---@field get fun(): boolean
+---@field set fun(value: boolean)
+
+---The silo's automation checkbox, as the game's GUI shows it: with space travel the silo fulfils platform
+---requests and the checkbox is automatic requests; otherwise it is sending to orbit automatically.
+---@param entity LuaEntity
+---@return fa.ui.RocketSiloAutomation
+function mod.automation_setting(entity)
+   if script.feature_flags.space_travel then
+      return {
+         label = { "gui.controlled-by-transitional-requests" },
+         get = function()
+            return entity.use_transitional_requests
+         end,
+         set = function(value)
+            entity.use_transitional_requests = value
+         end,
+      }
+   end
+   return {
+      label = { "gui-rocket-silo.send-to-orbit-automatically" },
+      get = function()
+         return entity.send_to_orbit_automatically
+      end,
+      set = function(value)
+         entity.send_to_orbit_automatically = value
+      end,
+   }
+end
 
 ---Render the rocket silo configuration form
 ---@param ctx fa.ui.graph.Ctx
@@ -27,12 +59,8 @@ local function render_rocket_silo_config(ctx)
       ctx.message:fragment({ "fa.rocket-silo-parts-progress", parts, max_parts })
    end)
 
-   -- Auto-launch checkbox
-   form:add_checkbox("auto_launch", { "fa.rocket-silo-auto-launch" }, function()
-      return entity.send_to_orbit_automatically
-   end, function(value)
-      entity.send_to_orbit_automatically = value
-   end)
+   local automation = mod.automation_setting(entity)
+   form:add_checkbox("automation", automation.label, automation.get, automation.set)
 
    return form:build()
 end
