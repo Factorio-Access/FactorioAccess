@@ -16,6 +16,7 @@ stuff.
 ]]
 local dirs = defines.direction
 local util = require("util")
+local Agriculture = require("scripts.agriculture")
 local serpent = require("serpent")
 local Filters = require("scripts.filters")
 
@@ -874,6 +875,13 @@ local function ent_info_radar(ctx)
 end
 
 ---@param ctx fa.Info.EntInfoContext
+local function ent_info_agricultural_tower(ctx)
+   if ctx.ent.type ~= "agricultural-tower" then return end
+   local plants, grown = Agriculture.plant_counts(ctx.ent)
+   ctx.message:fragment({ "fa.ent-info-agricultural-tower-plants", plants, grown })
+end
+
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_inserter_spoil_priority(ctx)
    if ctx.ent.type ~= "inserter" or not script.feature_flags.spoiling then return end
 
@@ -1399,6 +1407,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    run_handler(ent_info_splitter_states)
    run_handler(ent_info_cargo_wagon)
    run_handler(ent_info_radar)
+   run_handler(ent_info_agricultural_tower)
    run_handler(ent_info_electric_pole)
    run_handler(ent_info_power_switch)
 

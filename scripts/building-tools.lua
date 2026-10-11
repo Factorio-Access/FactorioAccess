@@ -1,4 +1,5 @@
 --Here: Functions for building with the mod, both basics and advanced tools.
+local Agriculture = require("scripts.agriculture")
 local BotLogistics = require("scripts.worker-robots")
 local BuildDimensions = require("scripts.build-dimensions")
 local Consts = require("scripts.consts")
@@ -852,6 +853,11 @@ function mod.build_preview_checks_info(stack, pindex)
             })
          end
       end
+   end
+
+   if ent_p.type == "agricultural-tower" then
+      local plantable, total = Agriculture.count_plantable_sectors(ent_p, surf, footprint.center)
+      table.insert(result, { "fa.connection-agricultural-sectors", plantable, total })
    end
 
    --For logistic chests, list whether there is a network nearby
