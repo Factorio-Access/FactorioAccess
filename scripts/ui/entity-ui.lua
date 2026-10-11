@@ -574,11 +574,9 @@ function mod.open_entity_ui(pindex, entity)
    -- Logistics config is accessed via explicit keybinding (fa-cs-l)
 
    -- Check if the entity has any UI sections available
+   -- Callers say there is no menu when this returns false
    local sections = build_entity_sections(pindex, entity)
-   if not sections or #sections == 0 then
-      Speech.speak(pindex, { "fa.entity-no-ui-available" })
-      return false
-   end
+   if not sections or #sections == 0 then return false end
 
    router:open_ui(UiRouter.UI_NAMES.ENTITY, params)
    return true

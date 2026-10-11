@@ -2543,9 +2543,9 @@ local function kb_click_hand(event)
             if success then
                TileReader.read_tile(pindex)
             else
-               -- Build failed, try opening entity menu if one exists at cursor
+               -- Build failed and said why; open the entity at the cursor if it has a menu, silently otherwise
                local ent = EntitySelection.get_first_ent_at_tile(pindex)
-               if ent and EntityUI.has_ui(ent) then clicked_on_entity(ent, pindex) end
+               if ent then EntityUI.maybe_open_entity(pindex, ent) end
             end
          else
             -- Item cannot be built (e.g., intermediate products, tools, etc.)
