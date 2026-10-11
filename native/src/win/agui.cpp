@@ -37,6 +37,9 @@ struct Layout {
   size_t vt_mouse_click = 0;  // virtual bool agui::Widget::mouseClick(agui::MouseEvent const&)
   size_t vt_get_text = 0, vt_focus = 0, vt_get_style = 0;
   size_t style_parent = 0, style_info = 0, style_tooltip = 0, info_name = 0;
+  // agui::Widget::toolTipCreator and agui::PlainToolTipCreator::title / text: the tooltip of widgets that build it
+  // when hovered (icon buttons) instead of carrying it in their style. Optional: 0 when missing.
+  size_t w_tooltip_creator = 0, plain_tip_title = 0, plain_tip_text = 0;
   void* get_abs_rect = nullptr;    // Rectangle agui::Widget::getAbsoluteRectangle() const
   void* dispatch_click = nullptr;  // void agui::Widget::dispatchClick(agui::MouseEvent const&)
   size_t me_position = 0, me_button = 0, me_type = 0, me_source = 0, me_size = 0;
@@ -104,6 +107,10 @@ bool init() {
   ok &= resolve(L.style_parent, "agui::Style", "parent");
   ok &= resolve(L.style_info, "agui::Style", "styleInfo");
   ok &= resolve(L.style_tooltip, "agui::Style", "tooltip");
+  if (!resolve(L.w_tooltip_creator, "agui::Widget", "toolTipCreator") ||
+      !resolve(L.plain_tip_title, "agui::PlainToolTipCreator", "title") ||
+      !resolve(L.plain_tip_text, "agui::PlainToolTipCreator", "text"))
+    L.w_tooltip_creator = 0;
   ok &= resolve(L.info_name, "agui::StyleInfo", "name");
   L.get_abs_rect = sym::addr("agui::Widget::getAbsoluteRectangle");
   ok &= L.get_abs_rect != nullptr;
@@ -176,7 +183,14 @@ std::string style_name(Widget* w) {
 std::string tooltip(Widget* w) {
   void* s = style(w);
   auto* t = s ? at<MsvcString*>(s, L.style_tooltip) : nullptr;  // unique_ptr<std::string>
-  return t ? t->str() : std::string();
+  if (t && !t->str().empty()) return t->str();
+  if (!L.w_tooltip_creator) return {};
+  void* creator = at<void*>(w, L.w_tooltip_creator);
+  if (!creator || !is_a(static_cast<Widget*>(creator), "agui::PlainToolTipCreator")) return {};
+  std::string title = at<MsvcString>(creator, L.plain_tip_title).str();
+  std::string text = at<MsvcString>(creator, L.plain_tip_text).str();
+  if (title.empty()) return text;
+  return text.empty() ? title : title + "\n" + text;
 }
 
 std::string text(Widget* w) { return virtual_fn<const MsvcString* (*)(Widget*)>(w, L.vt_get_text)(w)->str(); }
