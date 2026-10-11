@@ -7,6 +7,11 @@ local SC = require("scripts.scanner.scanner-consts")
 
 local mod = {}
 
+-- Terrain kinds break up into many specks (Gleba's marsh comes in 1 by 1 patches) that only bury the bodies worth
+-- reading. Liquids keep every body: a lava pool of a few tiles still decides where things can go. Only edge tiles
+-- are counted: a 3 by 3 body has 8, a 3 by 4 one has 10.
+local MIN_TERRAIN_EDGE_TILES = 10
+
 ---@class fa.scanner.backends.TileBodiesBackendData
 ---@field aabb fa.AABB
 ---@field kind string Key into ScannerConsts.tile_body_kinds().by_key
@@ -74,6 +79,7 @@ function TileBodiesBackend:dump_entries_to_callback(player, callback)
 
             local closest_dist = math.huge
             local e_x, e_y
+            local edge_count = 0
 
             for x, children in pairs(group.edge_tiles) do
                tlx = tlx < x and tlx or x
@@ -82,6 +88,7 @@ function TileBodiesBackend:dump_entries_to_callback(player, callback)
                for y in pairs(children) do
                   tly = tly < y and tly or y
                   bry = bry > y and bry or y
+                  edge_count = edge_count + 1
 
                   local dist = (px - x) ^ 2 + (py - y) ^ 2
                   if dist < closest_dist then
@@ -91,6 +98,8 @@ function TileBodiesBackend:dump_entries_to_callback(player, callback)
                   end
                end
             end
+
+            if kind.category == SC.CATEGORIES.TERRAIN and edge_count < MIN_TERRAIN_EDGE_TILES then return end
 
             -- This is the top-left corner of the bottom-right tile. We want the
             -- bottom right.
