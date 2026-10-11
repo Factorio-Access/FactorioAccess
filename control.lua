@@ -3775,12 +3775,16 @@ EventManager.on_event("fa-c-backspace", function(event)
       return
    end
 
-   -- Check if it's a planner item using API flags
+   -- Planners and tools: copy-paste and cut-paste tools, selection tools, anything that only lives in the cursor
+   local proto = cursor_stack.prototype
    if
       cursor_stack.is_blueprint
       or cursor_stack.is_blueprint_book
       or cursor_stack.is_deconstruction_item
       or cursor_stack.is_upgrade_item
+      or proto.type == "copy-paste-tool"
+      or proto.type == "selection-tool"
+      or proto.has_flag("only-in-cursor")
    then
       local item_description = ItemInfo.item_info({
          name = cursor_stack.name,
