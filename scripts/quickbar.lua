@@ -1,4 +1,5 @@
 --Here: Quickbar related functions
+local FaUtils = require("scripts.fa-utils")
 local Localising = require("scripts.localising")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
@@ -67,7 +68,7 @@ function mod.quickbar_page_handler(event)
 end
 
 function mod.read_quick_bar_slot(index, pindex)
-   local p = game.get_player(pindex)
+   local p = assert(game.get_player(pindex))
    local page = assert(p.get_active_quick_bar_page(1))
    local name, item_name = describe_quick_bar_slot(p.get_quick_bar_slot(page, index))
    if name == nil then
@@ -79,10 +80,10 @@ function mod.read_quick_bar_slot(index, pindex)
    local msg = MessageBuilder.new()
    msg:fragment(stack and stack.valid_for_read and { "fa.quickbar-unselected" } or { "fa.quickbar-selected" })
    msg:fragment(name)
-   -- Only plain items have an inventory count to report, and only with an inventory (none in remote view).
-   local main_inv = p.get_main_inventory()
-   if item_name and main_inv then
-      local count = main_inv.get_item_count(item_name)
+   -- Only plain items have an inventory count to report, and only in the character (none in remote view).
+   local character = FaUtils.physical_character(p)
+   if item_name and character then
+      local count = assert(character.get_main_inventory()).get_item_count(item_name)
       if stack and stack.valid_for_read then count = count + stack.count end
       msg:fragment({ "fa.quickbar-count", count })
    end

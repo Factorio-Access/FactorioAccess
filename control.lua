@@ -207,8 +207,9 @@ local function read_hand(pindex)
             table.insert(out, "")
          end
          table.insert(out, cursor_stack.count)
-         local main_inv = game.get_player(pindex).get_main_inventory()
-         local extra = main_inv and main_inv.get_item_count(cursor_stack.name) or 0
+         -- The rest of the inventory, which the player doesn't have in remote view
+         local character = FaUtils.physical_character(assert(game.get_player(pindex)))
+         local extra = character and assert(character.get_main_inventory()).get_item_count(cursor_stack.name) or 0
          if extra > 0 then
             table.insert(out, cursor_stack.count + extra)
          else
