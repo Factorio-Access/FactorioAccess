@@ -353,6 +353,26 @@ local function localise_research_rewards(player, tech)
          )
       elseif reward.type == "unlock-recipe" then
          table.insert(recipes, prototypes.recipe[reward.recipe])
+      elseif reward.type == "change-recipe-productivity" then
+         local change = reward.change
+         table.insert(other_bonuses, {
+            change < 0 and "fa.research-reward-recipe-productivity-minus" or "fa.research-reward-recipe-productivity",
+            Localising.get_localised_name_with_fallback(prototypes.recipe[reward.recipe]),
+            tostring(math.floor(math.abs(change) * 100 + 0.5)),
+         })
+      elseif reward.type == "unlock-space-location" then
+         table.insert(other_bonuses, {
+            "modifier-description.space-location-discovery",
+            Localising.get_localised_name_with_fallback(prototypes.space_location[reward.space_location]),
+         })
+      elseif reward.type == "unlock-quality" then
+         table.insert(other_bonuses, {
+            "modifier-description.unlock-quality",
+            Localising.get_localised_name_with_fallback(prototypes.quality[reward.quality]),
+         })
+      elseif type(reward.modifier) == "boolean" then
+         -- Feature unlocks; the game describes each in a sentence of its own.
+         table.insert(other_bonuses, { "?", { "modifier-description." .. reward.type }, reward.type })
       else
          -- It's something else, or that we don't know how to handle.
          local key = "fa.research-reward-vanilla-localised-bonus"
