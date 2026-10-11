@@ -4,12 +4,14 @@ Space platform hub configuration tab.
 Provides controls for:
 - Auto requesting missing construction materials
 - Providing materials to other platforms
+- Editing the platform's schedule
 - Dropping to the planet below, for a player in this hub
 ]]
 
 local FormBuilder = require("scripts.ui.form-builder")
 local Localising = require("scripts.localising")
 local PlatformTravel = require("scripts.platform-travel")
+local Router = require("scripts.ui.router")
 local UiKeyGraph = require("scripts.ui.key-graph")
 
 local mod = {}
@@ -38,6 +40,10 @@ local function render_hub_config(ctx)
       return entity.providing_to_other_platforms
    end, function(value)
       entity.providing_to_other_platforms = value
+   end)
+
+   form:add_action("edit_schedule", { "fa.locomotive-edit-schedule" }, function(controller)
+      controller:open_child_ui(Router.UI_NAMES.SCHEDULE_EDITOR, { entity = entity })
    end)
 
    local player = assert(game.get_player(ctx.pindex))
