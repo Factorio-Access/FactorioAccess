@@ -202,6 +202,7 @@ end)
 ---@class fa.scanner.SurfaceBackends
 ---@field lut table<string, fa.scanner.ScannerBackend?> By prototype type
 ---@field name_lut table<string, fa.scanner.ScannerBackend?> By prototype name, checked first
+---@field entity_backends fa.scanner.ScannerBackend[] Each backend of lut and name_lut once
 ---@field tile_bodies_backend fa.scanner.TileBodiesBackend
 ---@field tree_backend fa.scanner.backends.TreeBackend Also in lut, for trees and plants
 ---@field asteroid_chunks_backend fa.scanner.AsteroidChunksBackend
@@ -227,9 +228,15 @@ local function instantiate_backends(surface)
       name_lut[name] = b
    end
 
+   local entity_backends = {}
+   for _, b in pairs(instantiated) do
+      table.insert(entity_backends, b)
+   end
+
    return {
       lut = lut,
       name_lut = name_lut,
+      entity_backends = entity_backends,
       tile_bodies_backend = TileBodiesBackend.TileBodiesBackend.new(surface),
       tree_backend = lut["tree"] --[[@as fa.scanner.backends.TreeBackend]],
       asteroid_chunks_backend = AsteroidChunksBackend.AsteroidChunksBackend.new(surface),
@@ -262,7 +269,7 @@ end
 local surface_state = StorageManager.declare_storage_module(
    "scanner",
    new_empty_surface,
-   { root_field = "surfaces", ephemeral_state_version = 17 }
+   { root_field = "surfaces", ephemeral_state_version = 18 }
 )
 
 -- Given a backend setup and an array of entities, dispatch the entities to the
@@ -484,13 +491,7 @@ end
 function mod.on_entity_destroyed(event)
    for _, s in pairs(surface_state) do
       if s.seen_entities:remove(event.registration_number) then
-         local b = s.backends
-
-         for _, b in pairs(b.lut) do
-            b:on_entity_destroyed(event)
-         end
-
-         for _, b in pairs(b.name_lut) do
+         for _, b in ipairs(s.backends.entity_backends) do
             b:on_entity_destroyed(event)
          end
       end
@@ -523,23 +524,8 @@ end
 function mod.get_entries_snapshot(surface_index, player, callback)
    local state = surface_state[surface_index]
 
-   -- Important to only ask backends once each.
-   local checked_backends = {}
-
-   local backends = state.backends
-
-   for proto, backend in pairs(backends.lut) do
-      if not checked_backends[backend] then
-         checked_backends[backend] = true
-         backend:dump_entries_to_callback(player, callback)
-      end
-   end
-
-   for proto, backend in pairs(backends.name_lut) do
-      if not checked_backends[backend] then
-         checked_backends[backend] = true
-         backend:dump_entries_to_callback(player, callback)
-      end
+   for _, backend in ipairs(state.backends.entity_backends) do
+      backend:dump_entries_to_callback(player, callback)
    end
 
    state.backends.tile_bodies_backend:dump_entries_to_callback(player, callback)
