@@ -626,6 +626,16 @@ local descriptors = {
                },
             },
          },
+         {
+            type = mod.FIELD_TYPE.BOOLEAN,
+            name = "read_launched",
+            label = { "fa.cb-field-read-launched" },
+         },
+         {
+            type = mod.FIELD_TYPE.SIGNAL,
+            name = "launched_signal",
+            label = { "fa.cb-field-launched-signal" },
+         },
       },
    },
 
