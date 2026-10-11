@@ -662,6 +662,22 @@ local function fuel_info(message, item_proto)
    end
 end
 
+---Add how many of the item fit in a rocket, as the game's "Rocket capacity" tooltip computes it
+---@param message fa.MessageBuilder
+---@param item_proto LuaItemPrototype
+local function rocket_capacity_info(message, item_proto)
+   if not script.feature_flags.space_travel then return end
+   -- Unclear what the game shows for these, so say nothing
+   if item_proto.send_to_orbit_mode == "not-sendable" or item_proto.weight == 0 then return end
+
+   local capacity = math.floor(prototypes.utility_constants.default_rocket_lift_weight / item_proto.weight)
+   if capacity == 0 then
+      message:list_item({ "fa.item-info-too-heavy-for-rocket" })
+   else
+      message:list_item({ "fa.item-info-rocket-capacity", capacity })
+   end
+end
+
 ---@class fa.ItemInfo.GetItemInfoFromPrototypeOptions
 ---@field verbosity integer VERBOSITY.BRIEF or VERBOSITY.VERBOSE
 ---@field name_override? LocalisedString Override the name announced (for cases where name is already known)
@@ -726,6 +742,7 @@ function mod.get_item_info_from_prototype(message, item_proto, quality, options)
 
    -- Add fuel info for any item that can be used as fuel
    fuel_info(message, item_proto)
+   rocket_capacity_info(message, item_proto)
 end
 
 ---Get verbose info for an upgrade planner
