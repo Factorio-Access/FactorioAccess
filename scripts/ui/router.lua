@@ -168,6 +168,7 @@ mod.UI_NAMES = {
    SCHEDULE_EDITOR = "schedule_editor",
    SETTINGS = "settings",
    MOD_MENU = "mod_menu",
+   SURFACE_INFO = "surface_info",
    BLUEPRINT_SETUP = "blueprint_setup",
    BLUEPRINT_SETUP_CONFIG = "blueprint_setup_config",
    UPGRADE_PLANNER = "upgrade_planner",

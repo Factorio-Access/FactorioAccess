@@ -17,6 +17,7 @@ local mod = {}
 ---@type fa.ui.ModMenuEntry[]
 local ENTRIES = {
    { ui_name = UiRouter.UI_NAMES.SETTINGS, label = { "fa.settings-menu-title" } },
+   { ui_name = UiRouter.UI_NAMES.SURFACE_INFO, label = { "fa.surface-info-title" } },
 }
 
 ---@param ctx fa.ui.graph.Ctx
