@@ -367,13 +367,12 @@ end
 local function ent_info_resource(ctx)
    local ent = ctx.ent
    if ent.type == "resource" then
-      if not ent.initial_amount then
-         -- initial_amount is nil for non-infinite resources.
-         ctx.message:fragment({ "fa.ent-info-resource-noninfinite", ent.amount })
-      else
-         -- The game computes it this way then displays it as 403% or w/e.
+      if ent.prototype.infinite_resource then
+         -- The yield, as the game shows it.
          local percentage = math.floor(ent.amount / ent.prototype.normal_resource_amount * 100)
-         ctx.message:fragment({ "fa.ent-info-resource-infinite", percentage })
+         ctx.message:list_item_forced_comma({ "fa.ent-info-resource-infinite", percentage })
+      else
+         ctx.message:fragment({ "fa.ent-info-resource-noninfinite", ent.amount })
       end
    end
 end
@@ -1499,11 +1498,12 @@ function mod.ent_info(pindex, ent, is_scanner)
       if table_size(dict) > 0 then
          ctx.message:fragment({ "fa.ent-info-mining-drill-mining-from" })
          for i, amount in pairs(dict) do
-            if i == "crude-oil" then
-               ctx.message:fragment({
-                  "fa.ent-info-mining-drill-crude-oil-rate",
-                  i,
-                  tostring(math.floor(amount / 3000) / 10),
+            local resource = prototypes.entity[i]
+            if resource.infinite_resource then
+               ctx.message:fragment(Localising.get_localised_name_with_fallback(resource))
+               ctx.message:list_item_forced_comma({
+                  "fa.ent-info-resource-infinite",
+                  math.floor(amount / resource.normal_resource_amount * 100),
                })
             else
                ctx.message:fragment({

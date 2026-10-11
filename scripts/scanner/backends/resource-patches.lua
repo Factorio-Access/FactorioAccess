@@ -5,6 +5,7 @@ local FaInfo = require("scripts.fa-info")
 local FaUtils = require("scripts.fa-utils")
 local Functools = require("scripts.functools")
 local ScannerConsts = require("scripts.scanner.scanner-consts")
+local Speech = require("scripts.speech")
 
 local mod = {}
 
@@ -154,24 +155,25 @@ function ResourcePatchesBackend:readout_entry(player, ent)
       total = total + amount_for(e)
    end
 
-   local total_str
+   local proto = prototypes.entity[pname]
 
-   if prototypes.entity[pname].type == "resource" and prototypes.entity[pname].infinite_resource then
-      local t = math.floor(total / prototypes.entity[pname].normal_resource_amount * 100)
-      total_str = string.format("%i percent", t)
-   else
-      total_str = FaUtils.format_number(total)
+   if proto.infinite_resource then
+      return Speech.MessageBuilder
+         .new()
+         :fragment(proto.localised_name)
+         :list_item_forced_comma({
+            "fa.ent-info-resource-infinite",
+            math.floor(total / proto.normal_resource_amount * 100),
+         })
+         :build()
    end
 
-   local percent = math.floor(total / bd.initial_total_amount * 100)
-
-   local res = {
+   return {
       "fa.scanner-resource-patch",
-      prototypes.entity[pname].localised_name,
-      total_str,
-      percent,
+      proto.localised_name,
+      FaUtils.format_number(total),
+      math.floor(total / bd.initial_total_amount * 100),
    }
-   return res
 end
 
 ---@param player LuaPlayer
