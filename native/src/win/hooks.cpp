@@ -134,6 +134,7 @@ using MainLoopStep_t = int (*)(void*, int);
 static MainLoopStep_t MainLoopStep_orig;
 static int MainLoopStep_hook(void* worker, int heavy) {
   if (!g_main_tid) g_main_tid = GetCurrentThreadId();
+  win::game_window();  // keeps the window other threads may use found (cached; cheap once found)
   ++g_frame;
   input::begin_frame();
   drain_jobs();
@@ -339,7 +340,7 @@ using HwndGetter_t = HWND(WINAPI*)();
 static HwndGetter_t GetForegroundWindow_orig, GetActiveWindow_orig, GetFocus_orig;
 static HWND lie_if_game(HWND real, void* ret) {
   if (g_nofocus && caller_is_game(ret)) {
-    if (HWND g = win::game_window()) return g;
+    if (HWND g = win::known_game_window()) return g;
   }
   return real;
 }

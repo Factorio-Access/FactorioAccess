@@ -17,7 +17,10 @@ void init() {
   DWORD n = GetEnvironmentVariableW(L"LOCALAPPDATA", base, MAX_PATH);
   std::wstring dir = n ? std::wstring(base, n) + L"\\FactorioAccess" : L"C:\\FactorioAccess";
   CreateDirectoryW(dir.c_str(), nullptr);
-  g_path = dir + L"\\native.log";
+  // The dev loop (FA_PORT set) logs on its own, so a test game never overwrites a played game's log.
+  wchar_t port[8];
+  bool dev = GetEnvironmentVariableW(L"FA_PORT", port, 8) > 0;
+  g_path = dir + (dev ? L"\\native-dev.log" : L"\\native.log");
   g_file = _wfopen(g_path.c_str(), L"w");
 }
 

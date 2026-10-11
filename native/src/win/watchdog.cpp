@@ -13,8 +13,12 @@
 
 namespace fa::watchdog {
 namespace {
-constexpr auto kStall = std::chrono::seconds(5);
-constexpr auto kRepeat = std::chrono::seconds(30);
+// A frame this late is reported (stacks and a Lua traceback), at most once per kRepeat; any gap of a second or more is
+// logged with its length once frames come back. Lag that never stops frames entirely still makes Windows call the
+// game "not responding".
+constexpr auto kStall = std::chrono::seconds(2);
+constexpr auto kRepeat = std::chrono::seconds(10);
+constexpr auto kNoteGap = std::chrono::seconds(1);
 
 std::thread g_thread;
 std::mutex g_mu;
@@ -44,25 +48,23 @@ void report(unsigned long tid) {
 }
 
 void run() {
-  uint64_t last = hooks::frame();
-  auto since = std::chrono::steady_clock::now();
-  auto reported = since;
-  bool stalled = false;
+  using namespace std::chrono;
+  uint64_t last_frame = hooks::frame();
+  auto since = steady_clock::now();
+  auto reported = since - kRepeat;
   std::unique_lock lk(g_mu);
-  while (!g_cv.wait_for(lk, std::chrono::seconds(1), [] { return g_stop; })) {
-    auto now = std::chrono::steady_clock::now();
+  while (!g_cv.wait_for(lk, milliseconds(250), [] { return g_stop; })) {
+    auto now = steady_clock::now();
     uint64_t f = hooks::frame();
     unsigned long tid = hooks::main_thread_id();
-    if (f != last || tid == 0) {
-      if (stalled) log::writef("watchdog: frames again after {} s", std::chrono::duration_cast<std::chrono::seconds>(now - since).count());
-      last = f;
+    if (f != last_frame || tid == 0) {
+      if (now - since >= kNoteGap) log::writef("watchdog: a frame took {} ms", duration_cast<milliseconds>(now - since).count());
+      last_frame = f;
       since = now;
-      stalled = false;
       continue;
     }
-    if (now - since < kStall || (stalled && now - reported < kRepeat)) continue;
-    log::writef("watchdog: no frame for {} s", std::chrono::duration_cast<std::chrono::seconds>(now - since).count());
-    stalled = true;
+    if (now - since < kStall || now - reported < kRepeat) continue;
+    log::writef("watchdog: no frame for {} ms", duration_cast<milliseconds>(now - since).count());
     reported = now;
     report(tid);
   }

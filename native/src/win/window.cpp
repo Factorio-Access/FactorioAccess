@@ -1,8 +1,9 @@
 #include "win/window.h"
+#include <atomic>
 #include "mouse.h"
 
 namespace fa::win {
-static HWND g_hwnd;
+static std::atomic<HWND> g_hwnd;
 
 static BOOL CALLBACK find(HWND h, LPARAM) {
   DWORD pid = 0;
@@ -20,6 +21,8 @@ static bool dev_nofocus() {
   return on;
 }
 
+HWND known_game_window() { return g_hwnd; }
+
 HWND game_window() {
   if (!g_hwnd || !IsWindow(g_hwnd)) {
     g_hwnd = nullptr;
@@ -31,7 +34,7 @@ HWND game_window() {
 
 namespace fa::mouse {
 void move_to_client(int x, int y) {
-  HWND h = fa::win::game_window();
+  HWND h = fa::win::known_game_window();  // scripts call this from the update thread
   // The dev loop hooks GetForegroundWindow to keep the game thinking it has focus; never move the developer's mouse.
   if (!h || fa::win::dev_nofocus() || GetForegroundWindow() != h) return;
   POINT p{x, y};

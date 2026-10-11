@@ -44,7 +44,7 @@ BUILD = os.path.join(NATIVE, "build", "ninja")
 DLL = os.path.join(BUILD, "fa_native.dll")
 INJECT = os.path.join(BUILD, "fa_inject.exe")
 STATE = os.path.join(NATIVE, "build", "fadev_state.json")
-NATIVE_LOG = os.path.join(os.environ.get("LOCALAPPDATA", "."), "FactorioAccess", "native.log")
+NATIVE_LOG = os.path.join(os.environ.get("LOCALAPPDATA", "."), "FactorioAccess", "native-dev.log")
 PORT = int(os.environ.get("FA_PORT", "8792"))
 # The game listens here for Lua to run (scripts/dev-udp.lua); launch passes it as --enable-lua-udp.
 UDP_PORT = int(os.environ.get("FA_UDP_PORT", "8793"))
