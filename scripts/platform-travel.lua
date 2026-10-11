@@ -147,7 +147,7 @@ function mod.describe(platform, message)
 
    -- Platform weight is in kilograms (a foundation tile adds 200), not the grams of item weights.
    if platform.hub then
-      message:list_item({ "fa.platform-status-mass", string.format("%.1f", platform.weight / 1000) })
+      message:list_item({ "fa.platform-status-mass", FaUtils.one_decimal(platform.weight / 1000) })
    end
 end
 

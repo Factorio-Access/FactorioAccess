@@ -841,6 +841,9 @@ local function one_decimal(value)
    return (string.gsub(string.format("%.1f", value), "%.0$", ""))
 end
 
+-- A number with at most one decimal, without a trailing ".0" ("5", "2.5")
+mod.one_decimal = one_decimal
+
 -- Formats time from ticks to human-readable format
 ---@param ticks number Game ticks
 ---@return LocalisedString
