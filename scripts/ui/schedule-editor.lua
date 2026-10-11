@@ -1150,7 +1150,7 @@ local function render_schedule_editor(ctx)
    -- Summary row
    builder:add_label("summary", function(label_ctx)
       local record_count = #records
-      label_ctx.message:fragment({ "fa.schedule-record-count", tostring(record_count) })
+      label_ctx.message:fragment({ "fa.schedule-record-count", record_count })
    end)
 
    -- Build the main schedule records list

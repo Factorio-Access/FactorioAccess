@@ -689,7 +689,7 @@ function mod.hand_build_preview_info(pindex)
          result:list_item({
             "fa.connection-connects-underground",
             FaUtils.localise_direction(build_dir),
-            tostring(actual_dist - 1),
+            actual_dist - 1,
          })
       else
          result:list_item({ "fa.connection-not-connected-pipe" })
@@ -703,7 +703,7 @@ function mod.hand_build_preview_info(pindex)
          result:list_item({
             "fa.connection-connects-underground",
             FaUtils.localise_direction(connection.facing_direction),
-            tostring(connection.distance),
+            connection.distance,
          })
       end
    end
