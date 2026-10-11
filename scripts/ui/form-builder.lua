@@ -269,9 +269,7 @@ function FormBuilder:add_signal(name, label, get_value, set_value)
       local signal = get_value()
       local value_text
       if signal and signal.name then
-         -- Show signal type and name
-         local signal_type = signal.type or "item"
-         value_text = { "fa.signal-type-name", signal_type, signal.name }
+         value_text = CircuitNetwork.localise_signal(signal)
       else
          value_text = { "fa.empty" }
       end
@@ -292,8 +290,7 @@ function FormBuilder:add_signal(name, label, get_value, set_value)
          set_value(result)
          -- Announce the new value
          if result and result.name then
-            local signal_type = result.type or "item"
-            ctx.controller.message:fragment({ "fa.signal-type-name", signal_type, result.name })
+            ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
          else
             ctx.controller.message:fragment({ "fa.empty" })
          end
@@ -341,8 +338,7 @@ function FormBuilder:add_condition(name, label, get_value, set_value)
          local condition = get_value() or {}
          local signal = condition.first_signal
          if signal and signal.name then
-            local signal_type = signal.type or "item"
-            ctx.message:fragment({ "fa.signal-type-name", signal_type, signal.name })
+            ctx.message:fragment(CircuitNetwork.localise_signal(signal))
             ctx.message:fragment({ "fa.condition-first-signal" })
          else
             ctx.message:fragment({ "fa.condition-first-signal-empty" })
@@ -356,8 +352,7 @@ function FormBuilder:add_condition(name, label, get_value, set_value)
          condition.first_signal = result
          set_value(condition)
          if result and result.name then
-            local signal_type = result.type or "item"
-            ctx.controller.message:fragment({ "fa.signal-type-name", signal_type, result.name })
+            ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
          else
             ctx.controller.message:fragment({ "fa.empty" })
          end
@@ -411,8 +406,7 @@ function FormBuilder:add_condition(name, label, get_value, set_value)
       label = function(ctx)
          local condition = get_value() or {}
          if condition.second_signal and condition.second_signal.name then
-            local signal_type = condition.second_signal.type or "item"
-            ctx.message:fragment({ "fa.signal-type-name", signal_type, condition.second_signal.name })
+            ctx.message:fragment(CircuitNetwork.localise_signal(condition.second_signal))
          elseif condition.constant then
             ctx.message:fragment(tostring(condition.constant))
          else
@@ -451,8 +445,7 @@ function FormBuilder:add_condition(name, label, get_value, set_value)
             condition.constant = nil
             set_value(condition)
             if result and result.name then
-               local signal_type = result.type or "item"
-               ctx.controller.message:fragment({ "fa.signal-type-name", signal_type, result.name })
+               ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
             else
                ctx.controller.message:fragment({ "fa.empty" })
             end
@@ -558,8 +551,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
          local condition = get_condition() or {}
          local signal = condition.first_signal
          if signal and signal.name then
-            local signal_type = signal.type or "item"
-            ctx.message:fragment({ "fa.signal-type-name", signal_type, signal.name })
+            ctx.message:fragment(CircuitNetwork.localise_signal(signal))
             ctx.message:fragment({ "fa.condition-first-signal" })
          else
             ctx.message:fragment({ "fa.condition-first-signal-empty" })
@@ -574,8 +566,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
          condition.first_signal = result
          set_condition(condition)
          if result and result.name then
-            local signal_type = result.type or "item"
-            ctx.controller.message:fragment({ "fa.signal-type-name", signal_type, result.name })
+            ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
          else
             ctx.controller.message:fragment({ "fa.empty" })
          end
@@ -629,8 +620,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
       label = function(ctx)
          local condition = get_condition() or {}
          if condition.second_signal and condition.second_signal.name then
-            local signal_type = condition.second_signal.type or "item"
-            ctx.message:fragment({ "fa.signal-type-name", signal_type, condition.second_signal.name })
+            ctx.message:fragment(CircuitNetwork.localise_signal(condition.second_signal))
          elseif condition.constant then
             ctx.message:fragment(tostring(condition.constant))
          else
@@ -669,8 +659,7 @@ function FormBuilder:add_condition_with_enable(name, label, get_enabled, set_ena
             condition.constant = nil
             set_condition(condition)
             if result and result.name then
-               local signal_type = result.type or "item"
-               ctx.controller.message:fragment({ "fa.signal-type-name", signal_type, result.name })
+               ctx.controller.message:fragment(CircuitNetwork.localise_signal(result))
             else
                ctx.controller.message:fragment({ "fa.empty" })
             end
