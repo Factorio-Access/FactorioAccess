@@ -25,6 +25,13 @@ local ENTRIES = {
          return script.feature_flags.space_travel
       end,
    },
+   {
+      ui_name = UiRouter.UI_NAMES.SPACE_PLATFORMS,
+      label = { "gui-space-platforms.title" },
+      available = function()
+         return script.feature_flags.space_travel
+      end,
+   },
 }
 
 ---@param ctx fa.ui.graph.Ctx

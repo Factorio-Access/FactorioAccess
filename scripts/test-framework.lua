@@ -57,6 +57,7 @@ local test_files = {
    "ghost-cursor-build-test", -- Building entity and tile ghosts from a ghost in hand
    "liquid-tile-test", -- Water and the other liquids for the cursor skip
    "space-platform-status-test", -- The platform status description
+   "space-platforms-menu-test", -- The space platform menus render
 }
 
 -- Test execution state
