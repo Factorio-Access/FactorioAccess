@@ -13,6 +13,7 @@ local Crafting = require("scripts.crafting")
 local ItemInfo = require("scripts.item-info")
 local Localising = require("scripts.localising")
 local RecipeHelpers = require("scripts.recipe-helpers")
+local SurfaceConditions = require("scripts.surface-conditions")
 
 local mod = {}
 
@@ -21,7 +22,13 @@ local mod = {}
 ---@param recipe LuaRecipe
 ---@param entity LuaEntity
 local function handle_recipe_click(ctx, recipe, entity)
-   local player = game.get_player(ctx.pindex)
+   -- The engine would set it and the machine would craft it; the game's own picker refuses.
+   local failed = SurfaceConditions.failed_condition(recipe.prototype, entity.surface)
+   if failed then
+      ctx.message:fragment({ "bad-surface-condition-recipe", Localising.get_localised_name_with_fallback(recipe) })
+      ctx.message:fragment(SurfaceConditions.failure_reason(failed, entity.surface))
+      return
+   end
 
    -- Set the recipe (let it crash if there's an issue - the UI guarantees validity)
    local removed_items = entity.set_recipe(recipe.name)
@@ -107,7 +114,7 @@ local function render_assembling_machine_recipes(ctx)
 
                builder:add_item(group_name, recipe.name, {
                   label = function(item_ctx)
-                     RecipeHelpers.create_recipe_label(item_ctx.message, recipe_ref, ctx.pindex, is_current_ref)
+                     RecipeHelpers.create_recipe_label(item_ctx.message, recipe_ref, entity_ref.surface, is_current_ref)
                   end,
                   on_click = function(item_ctx, mods)
                      handle_recipe_click(item_ctx, recipe_ref, entity_ref)

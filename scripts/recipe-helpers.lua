@@ -6,6 +6,7 @@ Takes MessageBuilder directly to avoid UI dependencies.
 
 local ItemInfo = require("scripts.item-info")
 local Localising = require("scripts.localising")
+local SurfaceConditions = require("scripts.surface-conditions")
 
 local mod = {}
 
@@ -131,13 +132,17 @@ function mod.read_recipe_details_with_time(message, recipe)
    end
 end
 
----Create a label for a recipe, optionally marking it as current
+---Create a label for a recipe, marking it when it can't be crafted on the surface and optionally as current
 ---@param message fa.MessageBuilder The message builder to append to
 ---@param recipe LuaRecipe The recipe
----@param pindex integer Player index
+---@param surface LuaSurface The surface it would be crafted on
 ---@param is_current boolean? Whether this is the currently selected recipe
-function mod.create_recipe_label(message, recipe, pindex, is_current)
+function mod.create_recipe_label(message, recipe, surface, is_current)
    message:fragment(Localising.get_localised_name_with_fallback(recipe))
+
+   if SurfaceConditions.failed_condition(recipe.prototype, surface) then
+      message:list_item_forced_comma({ "fa.recipe-unavailable-on-surface" })
+   end
 
    if is_current then message:list_item_forced_comma({ "fa.assembling-machine-current-recipe" }) end
 end

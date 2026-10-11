@@ -1,6 +1,7 @@
 --Here: Crafting menu, crafting queue menu, and related functions
 
 local localising = require("scripts.localising")
+local SurfaceConditions = require("scripts.surface-conditions")
 local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
 
@@ -87,6 +88,10 @@ function mod.recipe_cannot_craft_reason(pindex, recipe_in)
          end
       end
       if not hand_craftable then return { "fa.crafting-requires-machine" } end
+
+      local surface = p.character.surface
+      local failed = SurfaceConditions.failed_condition(recipe.prototype, surface)
+      if failed then return { "fa.crafting-wrong-surface", SurfaceConditions.failure_reason(failed, surface) } end
    end
 
    -- Check if recipe requires fluids (cannot be hand-crafted normally)

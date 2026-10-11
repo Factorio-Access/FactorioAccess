@@ -12,6 +12,7 @@ local CategoryRows = require("scripts.ui.category-rows")
 local Crafting = require("scripts.crafting")
 local Localising = require("scripts.localising")
 local RecipeHelpers = require("scripts.recipe-helpers")
+local SurfaceConditions = require("scripts.surface-conditions")
 local FaInfo = require("scripts.fa-info")
 local ItemInfo = require("scripts.item-info")
 local Help = require("scripts.ui.help")
@@ -48,7 +49,11 @@ local function create_recipe_label(ctx, recipe)
    local craftable = get_craftable_count(player, recipe)
 
    ctx.message:fragment(Localising.get_localised_name_with_fallback(recipe))
-   ctx.message:fragment({ "fa.crafting-can-craft", craftable })
+   if SurfaceConditions.failed_condition(recipe.prototype, player.character.surface) then
+      ctx.message:list_item_forced_comma({ "fa.recipe-unavailable-on-surface" })
+   else
+      ctx.message:fragment({ "fa.crafting-can-craft", craftable })
+   end
 end
 
 ---Handle clicking on a recipe (craft it)
