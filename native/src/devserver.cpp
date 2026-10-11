@@ -7,6 +7,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <mutex>
 #include <thread>
 #include <vector>
 #include "agui.h"
@@ -127,17 +128,21 @@ static std::string handle(const std::string& path, const Query& q, int& status) 
     if (ctrl) mods.push_back(input::sc::LCtrl);
     if (shift) mods.push_back(input::sc::LShift);
     if (alt) mods.push_back(input::sc::LAlt);
+    // The whole sequence runs before the reply: a key sent while an earlier one's modifiers were still down would
+    // get them too.
+    static std::mutex sequence;
+    std::lock_guard lock(sequence);
     for (int m : mods)
       if (!hooks::push_key(m, true, shift, ctrl, alt)) return "not ready (no SDL window yet)\n";
-    std::thread([=] {
-      if (!mods.empty()) Sleep(40);
-      hooks::push_key(sc, true, shift, ctrl, alt);
-      Sleep(60);
-      hooks::push_key(sc, false, shift, ctrl, alt);
-      if (mods.empty()) return;
+    if (!mods.empty()) Sleep(40);
+    hooks::push_key(sc, true, shift, ctrl, alt);
+    Sleep(60);
+    hooks::push_key(sc, false, shift, ctrl, alt);
+    if (!mods.empty()) {
       Sleep(40);
       for (int m : mods) hooks::push_key(m, false, false, false, false);
-    }).detach();
+      Sleep(40);
+    }
     return "ok\n";
   }
   if (path == "/keys") return hooks::push_text(arg(q, "text")) ? "ok\n" : "not ready\n";
