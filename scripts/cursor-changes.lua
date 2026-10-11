@@ -6,6 +6,9 @@ local Viewpoint = require("scripts.viewpoint")
 local Graphics = require("scripts.graphics")
 local Blueprints = require("scripts.blueprints")
 local BuildDimensions = require("scripts.build-dimensions")
+local FaUtils = require("scripts.fa-utils")
+local Localising = require("scripts.localising")
+local Speech = require("scripts.speech")
 
 local dirs = defines.direction
 
@@ -36,6 +39,22 @@ function mod.kb_pipette_tool(event)
    end
 end
 
+---Say the ghost in hand: "transport belt ghost facing north in hand".
+---@param pindex integer
+function mod.read_cursor_ghost(pindex)
+   local item = assert(FaUtils.cursor_item(assert(game.get_player(pindex))))
+   local placed = item.place_result
+   local facing = placed and placed.supports_direction
+   Speech.speak(pindex, {
+      "fa.cursor-ghost-description",
+      Localising.get_localised_name_with_fallback(item),
+      facing and 1 or 0,
+      facing
+            and { "fa.facing-direction", FaUtils.direction_lookup(Viewpoint.get_viewpoint(pindex):get_hand_direction()) }
+         or "",
+   })
+end
+
 --- Cursor stack changed handler
 ---@param event EventData.on_player_cursor_stack_changed
 ---@param pindex integer
@@ -43,9 +62,13 @@ end
 function mod.on_cursor_stack_changed(event, pindex, read_hand)
    local vp = Viewpoint.get_viewpoint(pindex)
 
-   local stack = game.get_player(pindex).cursor_stack
+   local p = assert(game.get_player(pindex))
+   local stack = p.cursor_stack
+   local holds_ghost = not (stack and stack.valid_for_read) and p.cursor_ghost ~= nil
    local new_item_name = ""
-   if stack and stack.valid_for_read then
+   if holds_ghost then
+      new_item_name = assert(FaUtils.cursor_item(p)).name
+   elseif stack and stack.valid_for_read then
       new_item_name = stack.name
       if stack.is_blueprint and storage.players[pindex].blueprint_hand_direction ~= dirs.north then
          storage.players[pindex].blueprint_hand_direction = dirs.north
@@ -68,7 +91,11 @@ function mod.on_cursor_stack_changed(event, pindex, read_hand)
          vp:set_flipped_vertical(false)
       end
 
-      read_hand(pindex)
+      if holds_ghost then
+         mod.read_cursor_ghost(pindex)
+      else
+         read_hand(pindex)
+      end
    end
 
    storage.players[pindex].bp_selecting = false

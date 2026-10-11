@@ -122,8 +122,8 @@ function mod.calculate_build_params(params)
    local flip_horizontal = params.flip_horizontal or false
    local flip_vertical = params.flip_vertical or false
 
-   local p = game.get_player(pindex)
-   local stack = p.cursor_stack
+   local p = assert(game.get_player(pindex))
+   local item = FaUtils.cursor_item(p)
    local vp = Viewpoint.get_viewpoint(pindex)
    local pos = vp:get_cursor_pos()
 
@@ -131,13 +131,13 @@ function mod.calculate_build_params(params)
    Graphics.sync_build_cursor_graphics(pindex)
 
    -- Handle entities
-   if stack.prototype.place_result ~= nil then
-      local ent = stack.prototype.place_result
-      local placing_underground_belt = stack.prototype.place_result.type == "underground-belt"
+   if item and item.place_result then
+      local ent = item.place_result
+      local placing_underground_belt = ent.type == "underground-belt"
 
       -- Calculate footprint using centralized function
       local footprint = FaUtils.calculate_building_footprint({
-         entity_prototype = stack.prototype.place_result,
+         entity_prototype = ent,
          position = pos,
          building_direction = building_direction,
       })
@@ -158,7 +158,7 @@ function mod.calculate_build_params(params)
       end
 
       return {
-         entity_name = stack.prototype.place_result.name,
+         entity_name = ent.name,
          tile_name = nil,
          position = position,
          direction = actual_build_direction,
@@ -168,7 +168,7 @@ function mod.calculate_build_params(params)
          footprint_right_bottom = footprint.right_bottom,
          is_tile = false,
       }
-   elseif stack and stack.valid_for_read and stack.valid and stack.prototype.place_as_tile_result ~= nil then
+   elseif item and item.place_as_tile_result then
       -- Tile placement
       local cursor_size = vp:get_cursor_size()
       local t_size = cursor_size * 2 + 1
@@ -179,7 +179,7 @@ function mod.calculate_build_params(params)
 
       return {
          entity_name = nil,
-         tile_name = stack.prototype.place_as_tile_result.result.name,
+         tile_name = item.place_as_tile_result.result.name,
          position = pos,
          direction = building_direction,
          flip_horizontal = false,
@@ -226,7 +226,6 @@ end
 * @param params fa.BuildingTools.BuildItemParams Build parameters
 * @return boolean True if build was successful
 ]]
--- Precondition: Caller must ensure cursor_stack is valid_for_read
 function mod.build_item_in_hand_with_params(params)
    local pindex = params.pindex
    local teleport_player = params.teleport_player ~= false -- default true
@@ -234,7 +233,6 @@ function mod.build_item_in_hand_with_params(params)
    local speak_errors = params.speak_errors ~= false -- default true
 
    local p = game.get_player(pindex)
-   local stack = p.cursor_stack
 
    -- Calculate what to build (includes graphics sync, storage updates, underground belt logic, etc)
    local decision = mod.calculate_build_params(params)
@@ -249,14 +247,16 @@ function mod.build_item_in_hand_with_params(params)
 
    -- Execute the build
    if decision.is_tile then
-      -- Tile placement
-      if
-         p.can_build_from_cursor({
-            position = decision.position,
-            terrain_building_size = decision.terrain_building_size,
-         })
-      then
-         p.build_from_cursor({ position = decision.position, terrain_building_size = decision.terrain_building_size })
+      -- Tile placement. Tile ghosts go down only in forced mode: in normal mode the game places nothing, though
+      -- can_build_from_cursor says yes.
+      local from_ghost = not (p.cursor_stack and p.cursor_stack.valid_for_read)
+      local building = {
+         position = decision.position,
+         terrain_building_size = decision.terrain_building_size,
+         build_mode = from_ghost and defines.build_mode.forced or nil,
+      }
+      if p.can_build_from_cursor(building) then
+         p.build_from_cursor(building)
          return true
       else
          if play_error_sound then p.play_sound({ path = "utility/cannot_build" }) end
@@ -426,20 +426,21 @@ function mod.build_offshore_pump_in_hand(pindex)
    end
 end
 
----Check if the item in cursor can be rotated (has rotation support)
----@param stack LuaItemStack?
----@return boolean can_rotate True if the stack can be rotated
-function mod.can_rotate_item(stack)
-   if not stack or not stack.valid_for_read or not stack.valid then return false end
-
-   local rotation_count = BuildDimensions.get_rotation_count(stack)
-   return rotation_count ~= nil
+---How many directions what the player holds can be rotated to: a stack, or the ghost of an entity.
+---@param p LuaPlayer
+---@return integer|nil rotation_count nil when it can't be rotated
+local function hand_rotation_count(p)
+   local stack = p.cursor_stack
+   if stack and stack.valid_for_read then return BuildDimensions.get_rotation_count(stack) end
+   local item = FaUtils.cursor_item(p)
+   if item and item.place_result then return BuildDimensions.get_entity_rotation_count(item.place_result) end
+   return nil
 end
 
 --Reads the result of rotating an item in hand
 function mod.rotate_item_in_hand(event, forward)
    local pindex = event.player_index
-   local p = game.get_player(pindex)
+   local p = assert(game.get_player(pindex))
    if not check_for_player(pindex) then return end
 
    local mult = 1
@@ -448,9 +449,8 @@ function mod.rotate_item_in_hand(event, forward)
    local vp = Viewpoint.get_viewpoint(pindex)
 
    -- Check if item in hand can rotate
-   if mod.can_rotate_item(stack) then
-      ---@cast stack -? -- can_rotate_item is false for nil
-      local rotation_count = BuildDimensions.get_rotation_count(stack)
+   local rotation_count = hand_rotation_count(p)
+   if rotation_count then
       -- Adjust mult for 2-way rotation
       if rotation_count == 2 then mult = mult * 2 end
 
@@ -461,17 +461,16 @@ function mod.rotate_item_in_hand(event, forward)
       vp:set_hand_direction(new_dir)
 
       -- For blueprints and blueprint books, just announce direction
-      if stack.is_blueprint or stack.is_blueprint_book then
+      if stack and stack.valid_for_read and (stack.is_blueprint or stack.is_blueprint_book) then
          Speech.speak(pindex, FaUtils.direction_lookup(new_dir))
       else
          Speech.speak(pindex, { "fa.building-rotation-in-hand", FaUtils.direction_lookup(new_dir) })
       end
       return
-   elseif stack and stack.valid_for_read and stack.valid and stack.prototype.place_result then
-      Speech.speak(
-         pindex,
-         { "fa.building-no-rotate-support", Localising.get_localised_name_with_fallback(stack.prototype) }
-      )
+   end
+   local item = FaUtils.cursor_item(p)
+   if item and item.place_result then
+      Speech.speak(pindex, { "fa.building-no-rotate-support", Localising.get_localised_name_with_fallback(item) })
       return
    end
 
@@ -499,7 +498,7 @@ end
 --Handles flipping an item in hand horizontally
 function mod.flip_item_in_hand_horizontal(event)
    local pindex = event.player_index
-   local p = game.get_player(pindex)
+   local p = assert(game.get_player(pindex))
    if not check_for_player(pindex) then return end
 
    local stack = p.cursor_stack
@@ -514,7 +513,7 @@ function mod.flip_item_in_hand_horizontal(event)
    end
 
    -- If there's a rotatable item in hand that's not a blueprint, error
-   if mod.can_rotate_item(stack) then
+   if hand_rotation_count(p) then
       Speech.speak(pindex, { "fa.cannot-flip-non-blueprint-in-hand" })
       return
    end
@@ -525,7 +524,7 @@ end
 --Handles flipping an item in hand vertically
 function mod.flip_item_in_hand_vertical(event)
    local pindex = event.player_index
-   local p = game.get_player(pindex)
+   local p = assert(game.get_player(pindex))
    if not check_for_player(pindex) then return end
 
    local stack = p.cursor_stack
@@ -540,7 +539,7 @@ function mod.flip_item_in_hand_vertical(event)
    end
 
    -- If there's a rotatable item in hand that's not a blueprint, error
-   if mod.can_rotate_item(stack) then
+   if hand_rotation_count(p) then
       Speech.speak(pindex, { "fa.cannot-flip-non-blueprint-in-hand" })
       return
    end
@@ -638,10 +637,16 @@ function mod.nudge_key(direction, event)
    end
 end
 
---Returns an info string about trying to build the entity in hand. The info type depends on the entity. Note: Limited usefulness for entities with sizes greater than 1 by 1.
----@param stack LuaItemStack
-function mod.build_preview_checks_info(stack, pindex)
-   local p = game.get_player(pindex)
+--Returns an info string about trying to build the entity in hand, real or ghost. The info type depends on the entity.
+--Note: Limited usefulness for entities with sizes greater than 1 by 1.
+---@param pindex integer
+---@return LocalisedString? nil when the hand holds no entity to build
+function mod.hand_build_preview_info(pindex)
+   local p = assert(game.get_player(pindex))
+   local item, quality = FaUtils.cursor_item(p)
+   local ent_p = item and item.place_result
+   if not ent_p then return nil end
+   local is_ghost = not p.cursor_stack.valid_for_read
    local surf = game.get_player(pindex).surface
    local vp = Viewpoint.get_viewpoint(pindex)
    local pos = vp:get_cursor_pos()
@@ -649,8 +654,6 @@ function mod.build_preview_checks_info(stack, pindex)
 
    local result = { "" }
    local build_dir = vp:get_hand_direction()
-   local ent_p = stack.prototype.place_result --it is an entity prototype!
-   if ent_p == nil or not ent_p.valid then return "invalid entity" end
    local footprint = FaUtils.calculate_building_footprint({
       entity_prototype = ent_p,
       position = pos,
@@ -750,11 +753,11 @@ function mod.build_preview_checks_info(stack, pindex)
       local pole_dict = surf.find_entities_filtered({
          type = "electric-pole",
          position = pole_center,
-         radius = ent_p.get_max_wire_distance(stack.quality),
+         radius = ent_p.get_max_wire_distance(quality),
       })
       local poles = {}
       for i, v in pairs(pole_dict) do
-         local ent_p_mwd = ent_p.get_max_wire_distance(stack.quality)
+         local ent_p_mwd = ent_p.get_max_wire_distance(quality)
          local pole_mwd = v.prototype.get_max_wire_distance(v.quality)
          local max_allowed = math.min(ent_p_mwd, pole_mwd)
          -- Use center-to-center distance for accurate calculation
@@ -952,12 +955,24 @@ function mod.build_preview_checks_info(stack, pindex)
 
    if would_freeze(ent_p, surf, footprint) then table.insert(result, { "fa.connection-would-freeze" }) end
 
-   -- The game measures build reach to the nearest point of the building's footprint.
+   -- The game measures build reach to the nearest point of the building's footprint. Ghosts have no reach.
    local player_pos = p.position --[[@as MapPosition.struct]]
-   if util.distance(FaUtils.closest_point_in_box(player_pos, footprint), player_pos) > p.build_distance then
+   if
+      not is_ghost
+      and util.distance(FaUtils.closest_point_in_box(player_pos, footprint), player_pos) > p.build_distance
+   then
       table.insert(result, { "fa.connection-cursor-out-of-reach" })
    end
    return result
+end
+
+--The build preview for a stack in hand with an entity to place. hand_build_preview_info also reads ghosts.
+---@param stack LuaItemStack the player's cursor stack
+---@param pindex integer
+---@return LocalisedString
+function mod.build_preview_checks_info(stack, pindex)
+   assert(stack.valid_for_read)
+   return assert(mod.hand_build_preview_info(pindex))
 end
 
 --If the player is standing within the build area, they are teleported out.

@@ -16,8 +16,9 @@ local mod = {}
 function mod.sync_build_cursor_graphics(pindex)
    local player = storage.players[pindex]
    if player == nil or player.player.character == nil then return end
-   local p = game.get_player(pindex)
+   local p = assert(game.get_player(pindex))
    local stack = game.get_player(pindex).cursor_stack
+   local item = FaUtils.cursor_item(p)
    turn_to_cursor_direction_cardinal(pindex)
    local dir_indicator = player.building_dir_arrow
    local vp = Viewpoint.get_viewpoint(pindex)
@@ -28,7 +29,7 @@ function mod.sync_build_cursor_graphics(pindex)
    local height = nil
    local left_top = nil
    local right_bottom = nil
-   if stack and stack.valid_for_read and stack.valid and stack.prototype.place_result then
+   if item and item.place_result then
       --Redraw direction indicator arrow
       if dir_indicator ~= nil then player.building_dir_arrow.destroy() end
       local arrow_pos = vp:get_cursor_pos()
@@ -50,7 +51,7 @@ function mod.sync_build_cursor_graphics(pindex)
 
       --Calculate footprint using centralized function
       local footprint = FaUtils.calculate_building_footprint({
-         entity_prototype = stack.prototype.place_result,
+         entity_prototype = item.place_result,
          position = vp:get_cursor_pos(),
          building_direction = dir,
       })
@@ -174,7 +175,7 @@ end
 
 --Draws the mod cursor box and highlights an entity selected by the cursor. Also moves the mouse pointer to the mod cursor position.
 function mod.draw_cursor_highlight(pindex, ent, box_type, skip_mouse_movement)
-   local p = game.get_player(pindex)
+   local p = assert(game.get_player(pindex))
    local vp = Viewpoint.get_viewpoint(pindex)
    local c_pos = vp:get_cursor_pos()
    local cursor_hidden = vp:get_cursor_hidden()
@@ -229,15 +230,9 @@ function mod.draw_cursor_highlight(pindex, ent, box_type, skip_mouse_movement)
 
    --Highlight nearby entities by default means (reposition the cursor)
    if VanillaMode.is_enabled(pindex) or skip_mouse_movement == true then return end
-   local stack = game.get_player(pindex).cursor_stack
-   if
-      stack ~= nil
-      and stack.valid_for_read
-      and stack.valid
-      and (stack.prototype.place_result ~= nil or stack.is_blueprint)
-   then
-      return
-   end
+   local stack = p.cursor_stack
+   local item = FaUtils.cursor_item(p)
+   if (item and item.place_result) or (stack and stack.valid_for_read and stack.is_blueprint) then return end
 
    --Move the mouse cursor to the object on screen or to the player position for objects off screen
    Mouse.move_mouse_pointer(FaUtils.center_of_tile(c_pos), pindex)

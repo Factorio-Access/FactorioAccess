@@ -149,24 +149,27 @@ function mod.get_rotation_count(stack)
    -- Blueprints always support 4-way rotation
    if stack.is_blueprint then return 4 end
 
-   -- Regular entities
-   if stack.prototype.place_result then
-      local placed = stack.prototype.place_result
+   local placed = stack.prototype.place_result
+   if placed then return mod.get_entity_rotation_count(placed) end
+   return nil
+end
 
-      -- Rolling stock (locomotives, wagons) only rotate 180 degrees
-      if
-         placed.type == "locomotive"
-         or placed.type == "cargo-wagon"
-         or placed.type == "fluid-wagon"
-         or placed.type == "artillery-wagon"
-      then
-         return 2
-      end
-
-      -- Cars and entities that support direction are 4-way
-      if placed.supports_direction or placed.type == "car" then return 4 end
+---Get the rotation count for an entity placed from the hand
+---@param placed LuaEntityPrototype
+---@return integer|nil rotation_count nil (no rotation), 2 (180° only) or 4 (cardinal)
+function mod.get_entity_rotation_count(placed)
+   -- Rolling stock (locomotives, wagons) only rotate 180 degrees
+   if
+      placed.type == "locomotive"
+      or placed.type == "cargo-wagon"
+      or placed.type == "fluid-wagon"
+      or placed.type == "artillery-wagon"
+   then
+      return 2
    end
 
+   -- Cars and entities that support direction are 4-way
+   if placed.supports_direction or placed.type == "car" then return 4 end
    return nil
 end
 

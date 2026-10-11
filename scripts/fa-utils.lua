@@ -387,6 +387,23 @@ function mod.calculate_building_footprint(params)
    }
 end
 
+---The item the player builds from: the cursor stack's, or the cursor ghost's when the hand holds only a ghost (an
+---item the player doesn't have, and on a space platform the only way to build).
+---@param player LuaPlayer
+---@return LuaItemPrototype? item
+---@return LuaQualityPrototype quality
+function mod.cursor_item(player)
+   local stack = player.cursor_stack
+   if stack and stack.valid_for_read then return stack.prototype, stack.quality end
+   local ghost = player.cursor_ghost
+   if ghost then
+      local item = ghost.name --[[@as LuaItemPrototype]]
+      local quality = (ghost.quality or prototypes.quality.normal) --[[@as LuaQualityPrototype]]
+      return item, quality
+   end
+   return nil, prototypes.quality.normal
+end
+
 --Returns the map position of the northwest corner of an entity.
 --NOTE: If the calculation result gives a tile that does not touch the ent, then the ent's own position is returned instead.
 --TODO fix the calculation (several attempts have failed so far because fixing it for one group of ents breaks it for others).

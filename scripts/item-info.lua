@@ -896,11 +896,22 @@ end
 ---Read item info for item in hand (global fa-y handler)
 ---@param pindex integer
 function mod.read_item_in_hand(pindex)
-   local player = game.get_player(pindex)
+   local player = assert(game.get_player(pindex))
    local cursor_stack = player.cursor_stack
 
    if not cursor_stack or not cursor_stack.valid_for_read then
-      Speech.speak(pindex, { "fa.item-info-no-item" })
+      -- A ghost in hand
+      local item, quality = FaUtils.cursor_item(player)
+      if not item then
+         Speech.speak(pindex, { "fa.item-info-no-item" })
+         return
+      end
+      local message = MessageBuilder.new()
+      mod.get_item_info_from_prototype(message, item, quality, {
+         verbosity = mod.VERBOSITY.VERBOSE,
+         force = player.force --[[@as LuaForce]],
+      })
+      Speech.speak(pindex, message:build())
       return
    end
 
