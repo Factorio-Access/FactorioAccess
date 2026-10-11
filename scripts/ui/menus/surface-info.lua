@@ -12,11 +12,13 @@ local Localising = require("scripts.localising")
 
 local mod = {}
 
--- The game's units for these are symbols ("m/s²", "×") or an abbreviation a screen reader spells out.
+-- The game's units for these are symbols ("m/s²", "×", "%") or an abbreviation a screen reader spells out.
 local UNIT_OVERRIDES = {
    gravity = "fa.surface-info-gravity",
    pressure = "fa.surface-info-pressure",
    ["robot-energy-usage"] = "fa.surface-info-robot-energy-usage",
+   ["magnetic-field"] = "fa.surface-info-percent",
+   ["solar-power"] = "fa.surface-info-percent",
 }
 
 ---@param value number
