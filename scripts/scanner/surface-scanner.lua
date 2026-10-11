@@ -81,6 +81,7 @@ local BACKEND_LUT = {
    ["legacy-straight-rail"] = SEB.TrainsSimple,
    ["land-mine"] = SEB.Military,
    ["linked-belt"] = SEB.LogisticsAndPower,
+   ["lightning-attractor"] = SEB.LogisticsAndPower,
    ["linked-container"] = SEB.LogisticsAndPower,
    ["loader-1x1"] = SEB.LogisticsAndPower,
    ["loader"] = SEB.LogisticsAndPower,
@@ -92,6 +93,7 @@ local BACKEND_LUT = {
    ["offshore-pump"] = SEB.Production,
    ["pipe-to-ground"] = SEB.LogisticsWithFluid,
    ["pipe"] = SEB.Pipe,
+   ["plant"] = TreeBackend.TreeBackend,
    ["player-port"] = SEB.Other,
    ["power-switch"] = SEB.LogisticsAndPower,
    ["programmable-speaker"] = SEB.LogisticsAndPower,
@@ -132,16 +134,43 @@ local BACKEND_LUT = {
 local BACKEND_NAME_OVERRIDES = Functools.cached(function()
    local bno = {}
 
-   -- All our kinds of rocks.
+   -- All our kinds of rocks, and the other natural things mined for what they drop: Space Age's chimneys,
+   -- stromatolites, fulgorite, lithium ice and Fulgoran ruins (the attractor among them).
    TH.merge_mappings(bno, {
+      ["big-fulgora-rock"] = SEB.Rock,
       ["big-rock"] = SEB.Rock,
       ["big-sand-rock"] = SEB.Rock,
+      ["big-volcanic-rock-hot"] = SEB.Rock,
+      ["big-volcanic-rock"] = SEB.Rock,
+      ["copper-stromatolite"] = SEB.Rock,
+      ["fulgora-sunk-ruin-big"] = SEB.Rock,
+      ["fulgora-sunk-ruin-medium-tall"] = SEB.Rock,
+      ["fulgoran-ruin-attractor"] = SEB.Rock,
+      ["fulgoran-ruin-big"] = SEB.Rock,
+      ["fulgoran-ruin-colossal"] = SEB.Rock,
+      ["fulgoran-ruin-huge"] = SEB.Rock,
+      ["fulgoran-ruin-medium"] = SEB.Rock,
+      ["fulgoran-ruin-small"] = SEB.Rock,
+      ["fulgoran-ruin-stonehenge"] = SEB.Rock,
+      ["fulgoran-ruin-vault"] = SEB.Rock,
+      ["fulgurite-small"] = SEB.Rock,
+      ["fulgurite"] = SEB.Rock,
       ["huge-rock"] = SEB.Rock,
+      ["huge-volcanic-rock-hot"] = SEB.Rock,
+      ["huge-volcanic-rock"] = SEB.Rock,
+      ["iron-stromatolite"] = SEB.Rock,
+      ["lithium-iceberg-big"] = SEB.Rock,
+      ["lithium-iceberg-huge"] = SEB.Rock,
       ["medium-rock"] = SEB.Rock,
       ["medium-sand-rock"] = SEB.Rock,
       ["small-rock"] = SEB.Rock,
       ["small-sand-rock"] = SEB.Rock,
       ["tiny-rock"] = SEB.Rock,
+      ["vulcanus-chimney-cold"] = SEB.Rock,
+      ["vulcanus-chimney-faded"] = SEB.Rock,
+      ["vulcanus-chimney-short"] = SEB.Rock,
+      ["vulcanus-chimney-truncated"] = SEB.Rock,
+      ["vulcanus-chimney"] = SEB.Rock,
    })
 
    -- remnants

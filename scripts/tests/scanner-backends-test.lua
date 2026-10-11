@@ -3,8 +3,9 @@ local describe, it = TestRegistry.describe, TestRegistry.it
 
 local FaInfo = require("scripts.fa-info")
 local TileBodiesBackend = require("scripts.scanner.backends.tile-bodies")
+local TreeBackend = require("scripts.scanner.backends.trees")
 
-describe("Scanner tile bodies", function()
+describe("Scanner backends", function()
    it("reads a water patch as one entry with its size", function(ctx)
       ctx:init(function()
          local player = assert(game.get_player(1))
@@ -40,6 +41,26 @@ describe("Scanner tile bodies", function()
 
          local summary = FaInfo.area_scan_summary_info(1, { x = 650, y = 650 }, { x = 660, y = 660 })
          ctx:assert(serpent.line(summary):find("tile-name.water", 1, true) ~= nil, serpent.line(summary))
+      end)
+   end)
+
+   it("reads a lone tree as that tree", function(ctx)
+      ctx:init(function()
+         local player = assert(game.get_player(1))
+         local surface = player.surface
+         local tree = assert(surface.create_entity({ name = "tree-01", position = { 700.5, 640.5 } }))
+
+         local backend = TreeBackend.TreeBackend.new(surface)
+         backend:on_new_entity(tree)
+         local entries = {}
+         backend:dump_entries_to_callback(player, function(e)
+            table.insert(entries, e)
+         end)
+
+         ctx:assert_equals(1, #entries, "one tree")
+         ctx:assert_equals(tree, entries[1].backend_data.zoom_ent)
+         ctx:assert(backend:validate_entry(player, entries[1]), "the tree is still there")
+         tree.destroy()
       end)
    end)
 end)

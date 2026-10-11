@@ -24,6 +24,9 @@ local TH = require("scripts.table-helpers")
 
 local mod = {}
 
+-- Gleba's yumako trees and jellystems are plants, a kind of tree.
+local TREE_TYPES = { "tree", "plant" }
+
 ---@class fa.scanner.backends.TreeBackend: fa.scanner.ScannerBackend
 ---@field point_queue { x: number, y: number }[]
 ---@field clusterer fa.ds.TileClusterer
@@ -55,7 +58,7 @@ function TreeBackend:on_entity_destroyed(event) end
 
 function TreeBackend:update_entry(player, e)
    local aabb = e.backend_data.aabb
-   local trees = self.surface.find_entities_filtered({ area = aabb, type = "tree" })
+   local trees = self.surface.find_entities_filtered({ area = aabb, type = TREE_TYPES })
    local closest = self.surface.get_closest(player.position, trees)
    -- It's still in the AABB, just a different point.
    e.position = closest.position --[[@as MapPosition.struct]]
@@ -63,7 +66,7 @@ end
 
 function TreeBackend:validate_entry(player, e)
    return self.surface.valid
-      and self.surface.count_entities_filtered({ area = e.backend_data.aabb, type = "tree", limit = 1 }) > 0
+      and self.surface.count_entities_filtered({ area = e.backend_data.aabb, type = TREE_TYPES, limit = 1 }) > 0
 end
 
 ---@param player LuaPlayer
@@ -120,7 +123,7 @@ function TreeBackend:dump_entries_to_callback(player, callback)
          right_bottom = { x = brx, y = bry },
       }
 
-      local trees = find_entities_filtered({ area = aabb, type = "tree" })
+      local trees = find_entities_filtered({ area = aabb, type = TREE_TYPES })
       -- If still not, skip this one.
       if not next(trees) then return end
 
