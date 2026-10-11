@@ -161,13 +161,22 @@ local function localise_trigger(tech, trig)
       table.insert(res, Localising.get_localised_name_with_fallback(prototypes.fluid[trig.fluid]))
       table.insert(res, trig.amount)
    elseif trig.type == "capture-spawner" then
-      table.insert(res, Localising.get_localised_name_with_fallback(prototypes.entity[trig.entity]))
+      -- No entity means any spawner
+      if trig.entity then
+         table.insert(res, Localising.get_localised_name_with_fallback(prototypes.entity[trig.entity]))
+      else
+         res = { "fa.research-trigger-capture-any-spawner" }
+      end
    elseif trig.type == "build-entity" then
       -- TODO: We don't handle quality yet because that is very hard to
       -- localise, and we are just getting 1.0 parity at the moment.
       table.insert(res, Localising.get_localised_name_with_fallback(prototypes.entity[trig.entity.name]))
    elseif trig.type == "send-item-to-orbit" then
-      table.insert(res, trig.item.name)
+      table.insert(res, Localising.get_localised_name_with_fallback(prototypes.item[trig.item.name]))
+   elseif trig.type == "scripted" then
+      -- The prototype's description is optional
+      local description = (trig --[[@as ResearchTrigger.scripted]]).trigger_description
+      if description and description ~= "" then return description end
    end
 
    return res
