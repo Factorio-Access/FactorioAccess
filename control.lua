@@ -702,8 +702,6 @@ EventManager.on_event(
       local bodies = p.surface.find_entities_filtered({ name = "character-corpse" })
       local latest_body = nil
       local latest_death_tick = 0
-      local name = p.name
-      if name == nil then name = " " end
       --Find the most recent character corpse
       for i, body in ipairs(bodies) do
          if
@@ -715,27 +713,30 @@ EventManager.on_event(
       end
       --Verify the latest death
       if event.tick - latest_death_tick > 120 then latest_body = nil end
-      --Generate death message
-      local result = "Player " .. name
-      if causer == nil or not causer.valid then
-         result = result .. " died "
-      elseif causer.name == "character" and causer.player ~= nil and causer.player.valid then
-         local other_name = causer.player.name
-         if other_name == nil then other_name = "" end
-         result = result .. " was killed by player " .. other_name
-      else
-         result = result .. " was killed by " .. causer.name
+
+      ---@type LocalisedString?
+      local killer
+      if causer and causer.valid then
+         if causer.type == "character" and causer.player then
+            killer = causer.player.name
+         else
+            killer = Localising.get_localised_name_with_fallback(causer)
+         end
       end
-      if latest_body ~= nil and latest_body.valid then
-         result = result
-            .. " at "
-            .. math.floor(0.5 + latest_body.position.x)
-            .. ", "
-            .. math.floor(0.5 + latest_body.position.y)
-            .. "."
-      end
+
       --Notify all players
       for _, player in pairs(game.connected_players) do
+         local message = MessageBuilder.new()
+         if player.index == pindex then
+            message:fragment(killer and { "fa.player-killed-you", killer } or { "fa.player-died-you" })
+         else
+            message:fragment(killer and { "fa.player-killed", p.name, killer } or { "fa.player-died", p.name })
+         end
+         if latest_body then
+            local pos = latest_body.position
+            message:fragment({ "fa.player-died-at", math.floor(0.5 + pos.x), math.floor(0.5 + pos.y) })
+         end
+         local result = message:build()
          storage.players[player.index].last_damage_alert_tick = event.tick
          Speech.speak(player.index, result)
          player.print(result) --**laterdo unique sound, for now use console sound
