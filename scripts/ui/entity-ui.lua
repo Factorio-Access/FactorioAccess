@@ -13,6 +13,7 @@ local UiRouter = require("scripts.ui.router")
 local inventory = require("scripts.ui.menus.inventory")
 local arithmetic_combinator_tab = require("scripts.ui.tabs.arithmetic-combinator")
 local artillery_config_tab = require("scripts.ui.tabs.artillery-config")
+local asteroid_collector_config_tab = require("scripts.ui.tabs.asteroid-collector-config")
 local assembling_machine_tab = require("scripts.ui.tabs.assembling-machine")
 local circuit_network_tab = require("scripts.ui.tabs.circuit-network")
 local circuit_network_signals_tab = require("scripts.ui.tabs.circuit-network-signals")
@@ -213,6 +214,11 @@ local function build_configuration_tabs(entity)
 
    -- Add splitter configuration
    if splitter_config_tab.is_available(entity) then table.insert(tabs, splitter_config_tab.splitter_config_tab) end
+
+   -- Add asteroid collector configuration
+   if asteroid_collector_config_tab.is_available(entity) then
+      table.insert(tabs, asteroid_collector_config_tab.asteroid_collector_config_tab)
+   end
 
    -- Future: Add other device-specific tabs here
    -- if prototype.type == "mining-drill" then ...
