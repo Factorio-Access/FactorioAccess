@@ -1,4 +1,5 @@
 #include "screens/dialogs.h"
+#include <chrono>
 #include <cmath>
 #include <cstdlib>
 #include <format>
@@ -533,7 +534,14 @@ class DialogsScreen : public Screen {
   std::string_view key() const override { return "dialogs"; }
 
   bool is_active() override {
-    if (game::in_game()) return false;
+    // in_game() reads false for a moment while a loaded game switches surfaces or opens remote view, and the game's
+    // own windows then look like dialogs. Only take over once the game has been out of a world for a while.
+    auto now = std::chrono::steady_clock::now();
+    if (game::in_game()) {
+      last_in_game_ = now;
+      return false;
+    }
+    if (last_in_game_ && now - *last_in_game_ < std::chrono::milliseconds(500)) return false;
     return !dialogs().empty();
   }
 
@@ -596,6 +604,7 @@ class DialogsScreen : public Screen {
   }
 
  private:
+  std::optional<std::chrono::steady_clock::time_point> last_in_game_;  // nullopt: never in a world yet
   std::string editing_;  // path of the text field the game is typing into; empty = the native UI has the keyboard
   std::string top_;
   std::string entering_;  // path of the slider a value is being typed for; empty = none
