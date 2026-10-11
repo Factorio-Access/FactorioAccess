@@ -18,6 +18,7 @@ For some idea how to use this, belt building walks the tiles between last tick a
 the prediction versus where we ended up.
 ]]
 local RingBuffer = require("ds.fixed-ringbuffer")
+local FaUtils = require("scripts.fa-utils")
 
 local StorageManager = require("scripts.storage-manager")
 local Uid = require("scripts.uid")
@@ -89,8 +90,9 @@ local function update_player_if_needed(pindex)
    local player = game.get_player(pindex)
    if not player then return end
 
-   local character = player.character
-   if not character or not character.valid then
+   -- Nothing moves in remote view or a cargo pod: the camera isn't walking, and the pod's jumps aren't movement
+   local character = FaUtils.physical_character(player)
+   if not character then
       state.entries:push(nil)
       return
    end

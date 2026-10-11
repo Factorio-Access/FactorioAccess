@@ -5,6 +5,7 @@ Plays a sound at a configurable interval while a player has items in their
 crafting queue. Uses in-game audio via the GUI mixer.
 ]]
 
+local FaUtils = require("scripts.fa-utils")
 local StorageManager = require("scripts.storage-manager")
 
 local mod = {}
@@ -38,8 +39,9 @@ function mod.on_tick_per_player(pindex)
    local state = crafting_storage[pindex]
 
    -- Check if player has a non-empty crafting queue
-   -- Apparently this throws if the player does not have a character
-   if not player.character or player.crafting_queue_size == 0 then
+   -- Silent in remote view, where the player has no character to craft with
+   local character = FaUtils.physical_character(player)
+   if not character or character.crafting_queue_size == 0 then
       state.last_played_tick = nil
       return
    end

@@ -168,6 +168,11 @@ function mod.toggle_combat_mode(pindex)
    if state.combat_mode then
       exit_combat_mode(pindex)
    else
+      local player = assert(game.get_player(pindex))
+      if not FaUtils.physical_character(player) then
+         Speech.speak(pindex, FaUtils.no_physical_character_reason(player))
+         return
+      end
       enter_combat_mode(pindex)
    end
 end
@@ -454,7 +459,7 @@ function mod.on_tick(pindex)
    local player = game.get_player(pindex)
    if not player or not player.valid then return end
 
-   local character = player.character
+   local character = FaUtils.physical_character(player)
    if not character then return end
 
    tick_gun_change(pindex, character)

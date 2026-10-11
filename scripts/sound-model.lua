@@ -8,6 +8,7 @@ Maps relative position to audio parameters:
 Also manages the sound reference point (cursor vs character) for different contexts.
 ]]
 
+local FaUtils = require("scripts.fa-utils")
 local StorageManager = require("scripts.storage-manager")
 local Viewpoint = require("scripts.viewpoint")
 
@@ -46,8 +47,10 @@ function mod.get_reference_position(pindex)
    local player = game.get_player(pindex)
 
    if state.reference_point == mod.ReferencePoint.CHARACTER then
-      if player and player.character and player.character.valid then
-         local pos = player.character.position --[[@as MapPosition.struct]]
+      -- In remote view or a cargo pod the character isn't where the player is looking
+      local character = FaUtils.physical_character(assert(player))
+      if character then
+         local pos = character.position --[[@as MapPosition.struct]]
          return { x = pos.x, y = pos.y }
       end
    end
