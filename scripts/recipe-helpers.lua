@@ -139,7 +139,7 @@ end
 function mod.create_recipe_label(message, recipe, pindex, is_current)
    message:fragment(Localising.get_localised_name_with_fallback(recipe))
 
-   if is_current then message:fragment({ "fa.assembling-machine-current-recipe" }) end
+   if is_current then message:list_item_forced_comma({ "fa.assembling-machine-current-recipe" }) end
 end
 
 ---Check if an entity can have its recipe changed by the player
