@@ -83,7 +83,7 @@ local function launch_to_platform(entity, platform, character, message)
       message:fragment({ "fa.not-ready-to-launch" })
       return false
    end
-   message:fragment({ "fa.rocket-silo-launching-to", platform.name })
+   message:fragment({ character and "fa.rocket-silo-travelling-to" or "fa.rocket-silo-launching-to", platform.name })
    return true
 end
 
