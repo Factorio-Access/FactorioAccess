@@ -99,7 +99,7 @@ local function build_slot_label(message, inv, slot_index, locks)
       -- Build the item label with count and quality
       message:fragment(ItemInfo.item_info(stack))
       local freshness = ItemInfo.freshness(stack, ItemInfo.VERBOSITY.BRIEF)
-      if freshness then message:list_item(freshness) end
+      if freshness then message:list_item_forced_comma(freshness) end
 
       -- Add lock info if this slot has one
       if lock_name then
