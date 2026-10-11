@@ -10,6 +10,7 @@ local UiRouter = require("scripts.ui.router")
 local inventory = require("scripts.ui.menus.inventory")
 local equipment_overview = require("scripts.ui.tabs.equipment-overview")
 local equipment_grid = require("scripts.ui.tabs.equipment-grid")
+local ghost_chooser = require("scripts.ui.tabs.ghost-chooser")
 local crafting = require("scripts.ui.menus.crafting")
 local crafting_queue = require("scripts.ui.menus.crafting-queue")
 local research = require("scripts.ui.menus.research")
@@ -53,6 +54,24 @@ mod.main_menu = TabList.declare_tablist({
    resets_to_first_tab_on_open = true,
    shared_state_setup = setup_shared_state,
    tabs_callback = function(pindex, params)
+      -- In remote view the player has no character: ghosts to build with, and research
+      if params.remote_view then
+         return {
+            {
+               name = "ghosts",
+               tabs = { ghost_chooser.ghost_chooser_tab },
+            },
+            {
+               name = "research",
+               title = { "fa.section-research" },
+               tabs = {
+                  research.research_tab,
+                  research_queue.research_queue_tab,
+               },
+            },
+         }
+      end
+
       local sections = {
          {
             name = "inventories",
@@ -100,6 +119,7 @@ mod.main_menu = TabList.declare_tablist({
       return sections
    end,
    get_binds = function(pindex, parameters)
+      if parameters.remote_view then return {} end
       local player = game.get_player(pindex)
       if not player or not player.character or not player.character.valid then return nil end
       return { { kind = UiRouter.BIND_KIND.ENTITY, entity = player.character } }
@@ -111,7 +131,14 @@ mod.main_menu = TabList.declare_tablist({
 ---@return boolean success
 function mod.open_main_menu(pindex)
    local player = game.get_player(pindex)
-   if not player or not player.character then return false end
+   local router = UiRouter.get_router(pindex)
+
+   if player.controller_type == defines.controllers.remote then
+      router:open_ui(UiRouter.UI_NAMES.MAIN, { remote_view = true })
+      return true
+   end
+
+   if not player.character then return false end
 
    local params = {
       player_inventory = {
@@ -128,7 +155,6 @@ function mod.open_main_menu(pindex)
       }
    end
 
-   local router = UiRouter.get_router(pindex)
    router:open_ui(UiRouter.UI_NAMES.MAIN, params)
    return true
 end

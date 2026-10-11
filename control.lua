@@ -2344,7 +2344,9 @@ local function kb_open_player_inventory(event)
    local p = game.get_player(pindex)
    local router = UiRouter.get_router(pindex)
 
-   if p.ticks_to_respawn ~= nil or p.character == nil then return end
+   if p.ticks_to_respawn ~= nil then return end
+   -- Remote view opens the main menu without the character's tabs
+   if p.character == nil and p.controller_type ~= defines.controllers.remote then return end
    sounds.play_open_inventory(p.index)
    p.selected = nil
 
