@@ -153,15 +153,6 @@ function mod.get_ents_on_tile(surface, x, y, pindex)
       if should_include_entity(ent) then table.insert(ents, ent) end
    end
 
-   -- Add corpses separately
-   local corpses = surface.find_entities_filtered({
-      area = search_area,
-      type = "corpse",
-   })
-   for _, corpse in ipairs(corpses) do
-      if should_include_entity(corpse) then table.insert(ents, corpse) end
-   end
-
    -- Sort with stable ordering
    table.sort(ents, function(a, b)
       return compare_entities(a, b, pindex)
