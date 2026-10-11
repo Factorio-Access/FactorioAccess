@@ -190,7 +190,8 @@ def wait_health(pid, seconds=60):
 def cmd_launch(a):
     if tracked():
         sys.exit("the tracked game is still running; `kill` it first (or `reload` to swap the DLL)")
-    others = factorio_pids_of_this_install()
+    # A game with its own --config (and so its own write-data) doesn't contend for the install's lock.
+    others = [] if "--config" in a.game_args else factorio_pids_of_this_install()
     if others:
         sys.exit(f"factorio from this install is already running (pid {others}); it holds the write-data lock")
     if not a.nobuild:
