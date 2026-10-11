@@ -889,6 +889,15 @@ local function ent_info_radar(ctx)
 end
 
 ---@param ctx fa.Info.EntInfoContext
+local function ent_info_inserter_spoil_priority(ctx)
+   if ctx.ent.type ~= "inserter" or not script.feature_flags.spoiling then return end
+
+   local priority = ctx.ent.inserter_spoil_priority
+   if priority == "none" then return end
+   ctx.message:list_item({ "gui-inserter." .. priority })
+end
+
+---@param ctx fa.Info.EntInfoContext
 local function ent_info_turret_priority(ctx)
    local ent = ctx.ent
    if ent.type ~= "ammo-turret" and ent.type ~= "electric-turret" and ent.type ~= "fluid-turret" then return end
@@ -1414,6 +1423,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    end
    run_handler(ent_info_spidertron)
    run_handler(ent_info_filters)
+   run_handler(ent_info_inserter_spoil_priority)
    run_handler(ent_info_verbose_status)
    run_handler(ent_info_turret_priority)
 

@@ -3,6 +3,7 @@ Inserter configuration tab.
 
 Provides controls for:
 - Hand size (stack size override)
+- Spoiled priority (with spoiling)
 - Filter mode (allow/deny)
 - Individual filter slots
 ]]
@@ -64,6 +65,18 @@ local function render_inserter_config(ctx)
          ctx.controller.message:fragment({ "fa.inserter-hand-size-unset" })
       end,
    })
+
+   if script.feature_flags.spoiling then
+      form:add_choice_field("spoil_priority", { "gui-inserter.spoiled-priority" }, function()
+         return entity.inserter_spoil_priority
+      end, function(value)
+         entity.inserter_spoil_priority = value
+      end, {
+         { label = { "gui-control-behavior-modes.none" }, value = "none" },
+         { label = { "gui-inserter.fresh-first" }, value = "fresh-first" },
+         { label = { "gui-inserter.spoiled-first" }, value = "spoiled-first" },
+      })
+   end
 
    -- Check if this inserter supports filters
    if entity.filter_slot_count == 0 then
