@@ -310,16 +310,6 @@ static void* LuaGameScriptCtor_hook(void* self, const MsvcStringView* name, void
   return LuaGameScriptCtor_orig(self, name, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15);
 }
 
-// void AppManager::autoSaveGameInSinglePlayer(std::string_view): the string_view (16 bytes) arrives by pointer. It
-// starts the save; the game's saving state finishes it over the next frames.
-using AutoSave_t = void (*)(void*, void*);
-static AutoSave_t AutoSave_orig;
-static std::function<void()> g_autosave_cb;
-static void AutoSave_hook(void* self, void* name) {
-  if (g_autosave_cb) g_autosave_cb();
-  AutoSave_orig(self, name);
-}
-
 using InitLuaState_t = void (*)(void*);
 static InitLuaState_t InitLuaState_orig;
 static void InitLuaState_hook(void* L) {
@@ -427,8 +417,6 @@ bool install() {
       Hook{sym::addr("LuaGameScript::LuaGameScript"), (void*)&LuaGameScriptCtor_hook, (void**)&LuaGameScriptCtor_orig, "LuaGameScript::LuaGameScript", false},
       Hook{sym::addr("SDL_GetModState_REAL"), (void*)&GetModState_hook, (void**)&GetModState_orig, "SDL_GetModState", false},
       Hook{sym::addr("LuaHelper::initLuaState"), (void*)&InitLuaState_hook, (void**)&InitLuaState_orig, "LuaHelper::initLuaState", false},
-      Hook{sym::addr("AppManager::autoSaveGameInSinglePlayer"), (void*)&AutoSave_hook, (void**)&AutoSave_orig,
-           "AppManager::autoSaveGameInSinglePlayer", false},
   };
   if (g_nofocus) {
     for (Hook h : {USER32_HOOK(SetForegroundWindow), USER32_HOOK(SetActiveWindow), USER32_HOOK(BringWindowToTop), USER32_HOOK(SetFocus),
@@ -454,5 +442,4 @@ void remove() {
     DetourTransactionCommit();
   }
 }
-void set_autosave_callback(std::function<void()> fn) { g_autosave_cb = std::move(fn); }
 }  // namespace fa::hooks

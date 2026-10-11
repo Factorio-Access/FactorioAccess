@@ -2,7 +2,6 @@
 #include <windows.h>
 #include <chrono>
 #include <memory>
-#include <optional>
 #include "audio/audio.h"
 #include "game.h"
 #include "hooks.h"
@@ -111,39 +110,24 @@ void announce_change(std::string_view text) {
 
 std::string dump() { return g_nav ? g_nav->dump() : "(no navigator)\n"; }
 
-// An autosave in progress: since when, and whether the game has said it is saving yet.
-static std::optional<double> g_autosave_since;
-static bool g_autosave_seen = false;
+// Every save (auto or not) clicks as it starts and as it finishes, as the launcher did from the game's log. A save
+// spans several frames of the game's saving state.
+static bool g_saving = false;
+static double g_saving_since = 0;
 
-static void autosave_click() {
-  audio::submit(R"({"command":"patch","id":"fa-autosave","source":{"kind":"encoded_bytes","name":"autosave-shh.wav"}})");
-}
-
-void autosave_started() {
-  log::write("autosave started");
-  autosave_click();
-  g_autosave_since = now();
-  g_autosave_seen = false;
-}
-
-// The second click once the save is done: the game's saving state was seen and has ended, or never showed within a
-// second (a save too quick to see).
-static void watch_autosave(double t) {
-  if (!g_autosave_since) return;
-  if (game::saving()) {
-    g_autosave_seen = true;
-    return;
-  }
-  if (!g_autosave_seen && t - *g_autosave_since < 1.0) return;
-  log::writef("autosave finished after {:.0f} ms", (t - *g_autosave_since) * 1000);
-  autosave_click();
-  g_autosave_since.reset();
+static void watch_saves(double t) {
+  bool saving = game::saving();
+  if (saving == g_saving) return;
+  g_saving = saving;
+  if (saving) g_saving_since = t;
+  else log::writef("save finished after {:.0f} ms", (t - g_saving_since) * 1000);
+  audio::submit(R"({"command":"patch","id":"fa-save","source":{"kind":"encoded_bytes","name":"save-shh.wav"}})");
 }
 
 void tick() {
   if (!g_inited) return;
   double t = now();
-  watch_autosave(t);
+  watch_saves(t);
   double dt = g_last_tick > 0 ? t - g_last_tick : 0;
   g_last_tick = t;
   Screen* before = g_screens.current();
