@@ -100,6 +100,26 @@ function mod.read_tile_rails(pindex, message)
    end
 end
 
+---On a space platform, the asteroid chunks drifting over the cursor's tile, each name once.
+---@param pindex integer
+---@param message fa.MessageBuilder
+---@return boolean added
+local function add_asteroid_chunks(pindex, message)
+   local platform = game.get_player(pindex).surface.platform
+   if not platform then return false end
+   local pos = Viewpoint.get_viewpoint(pindex):get_cursor_pos()
+   local x, y = math.floor(pos.x), math.floor(pos.y)
+   ---@type table<string, true>
+   local seen = {}
+   for _, chunk in ipairs(platform.find_asteroid_chunks_filtered({ area = { { x, y }, { x + 1, y + 1 } } })) do
+      if not seen[chunk.name] then
+         seen[chunk.name] = true
+         message:list_item(Localising.get_localised_name_with_fallback(prototypes.asteroid_chunk[chunk.name]))
+      end
+   end
+   return next(seen) ~= nil
+end
+
 ---Internal function that gathers information about the tile at the cursor position
 ---@param pindex integer Player index
 ---@param message fa.MessageBuilder MessageBuilder to append information to
@@ -123,8 +143,13 @@ function mod.read_tile_inner(pindex, message)
       Graphics.draw_cursor_highlight(pindex, ent, nil)
       if not skip_selection then game.get_player(pindex).selected = ent end
    elseif not (ent and ent.valid) then
-      --If there is no ent, read the tile instead
-      if tile_object then message:fragment(Localising.get_localised_name_with_fallback(tile_object)) end
+      --If there is no ent, read the asteroid chunks and the tile instead
+      local tile_text = Localising.get_localised_name_with_fallback(assert(tile_object))
+      if add_asteroid_chunks(pindex, message) then
+         message:list_item(tile_text)
+      else
+         message:fragment(tile_text)
+      end
       local body = ScannerConsts.tile_body_kinds().by_tile[tile_name]
       if body and body.shores then message:fragment(FaUtils.identify_shore(pindex, body)) end
       Graphics.draw_cursor_highlight(pindex, nil, nil)
