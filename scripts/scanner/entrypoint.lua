@@ -47,7 +47,7 @@ local mod = {}
 ---@field readout_entry fun(self, player: LuaPlayer, entry: fa.scanner.ScanEntry): LocalisedString
 ---@field on_new_entity fun(self, entity: LuaEntity)
 ---@field on_entity_destroyed fun(self, event: EventData.on_object_destroyed)
----@field dump_entries_to_callback fun(self, player: LuaPlayer, callback: fun(entry: fa.scanner.ScanEntry))
+---@field dump_entries_to_callback fun(self, player: LuaPlayer, callback: fun(entry: fa.scanner.ScanEntry), wanted: (fun(x: number, y: number): boolean)?) wanted may skip entries by position before any work on them; entries it lets through still get the full filter
 ---@field is_huge fun(self, entry: fa.scanner.ScanEntry): boolean True if the scanner should check whether the player is in the bounding box.
 ---@field get_aabb fun(self, entry: fa.scanner.ScanEntry): number, number, number, number left_top.x, left_top.y, right_bottom.x, right_bottom.y
 
@@ -168,7 +168,16 @@ is_chunk_charted(surface, { x = math.floor(ex / 32), y = math.floor(ey / 32) })
          end
       end
 
-      SurfaceScanner.get_entries_snapshot(player_obj.surface.index, player_obj, adder)
+      -- The cheap part of adder, by position alone: backends use it to skip work on entries it would drop.
+      ---@param x number
+      ---@param y number
+      ---@return boolean
+      local function wanted(x, y)
+         if (x - px) ^ 2 + (y - py) ^ 2 >= dist_limit_squared then return false end
+         return not direction_filter or get_direction_biased({ x = x, y = y }, player_obj.position) == direction_filter
+      end
+
+      SurfaceScanner.get_entries_snapshot(player_obj.surface.index, player_obj, adder, wanted)
    end
 
    -- Next: build up the (sub)category setup.

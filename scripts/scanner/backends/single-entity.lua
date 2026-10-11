@@ -37,6 +37,8 @@ mod.CraftingMachine = decl("fa.scanner.backends.CraftingMachine", {
 
 mod.MiningDrill = decl("fa.scanner.backends.MiningDrill", {
    category_callback = functionize(SC.CATEGORIES.PRODUCTION),
+   -- The ore under a drill is a surface query and changes only as the ore runs out.
+   subcategory_ttl = 600,
    subcategory_callback = function(ent)
       local under_drill = ResourceMining.compute_resources_under_drill(ent)
       local keys = {}

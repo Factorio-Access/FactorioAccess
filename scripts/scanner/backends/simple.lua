@@ -48,6 +48,7 @@ end
 ---@field readout_callback fun(LuaPlayer, LuaEntity): LocalisedString
 ---@field category_callback(LuaEntity): fa.scanner.Category
 ---@field subcategory_callback fun(LuaEntity): fa.scanner.Subcategory
+---@field subcategory_ttl integer? Ticks a computed subcategory is reused for; nil recomputes on every dump
 
 local SimpleBackend = {}
 
@@ -81,9 +82,11 @@ function SimpleBackend:on_entity_destroyed(event)
    self.entry_cache[event.registration_number] = nil
 end
 
-function SimpleBackend:dump_entries_to_callback(player, callback)
+function SimpleBackend:dump_entries_to_callback(player, callback, wanted)
    local cat_cb = self.category_callback
    local subcat_cb = self.subcategory_callback
+   local subcat_ttl = self.subcategory_ttl
+   local tick = game.tick
 
    for regnum, entity in pairs(self.known_entities) do
       if not entity.valid then
@@ -109,16 +112,23 @@ function SimpleBackend:dump_entries_to_callback(player, callback)
          effective_x = x - htw
          effective_y = y - hth
 
+         -- Subcategories can cost surface queries (a drill's ore), so skip entries the refresh will drop anyway.
+         if wanted and not wanted(effective_x, effective_y) then goto continue end
+
          local cached_entry = self.entry_cache[regnum]
          if cached_entry then
             cached_entry.position = { x = effective_x, y = effective_y }
-            cached_entry.subcategory = subcat_cb(entity)
+            if not subcat_ttl or tick - cached_entry.subcategory_tick >= subcat_ttl then
+               cached_entry.subcategory = subcat_cb(entity)
+               cached_entry.subcategory_tick = tick
+            end
             callback(cached_entry)
          else
             local entry = {
                position = { x = effective_x, y = effective_y },
                category = cat_cb(entity),
                subcategory = subcat_cb(entity),
+               subcategory_tick = tick,
                backend = self,
                backend_data = entity,
             }
@@ -126,6 +136,7 @@ function SimpleBackend:dump_entries_to_callback(player, callback)
             callback(entry)
          end
       end
+      ::continue::
    end
 end
 
@@ -133,6 +144,7 @@ end
 ---@field category_callback (fun(e: LuaEntity):fa.scanner.Category)?
 ---@field subcategory_callback (fun(LuaEntity): fa.scanner.Subcategory)?
 ---@field readout_callback (fun(LuaPlayer, LuaEntity): LocalisedString)?
+---@field subcategory_ttl integer? For subcategories that are slow to compute and rarely change
 
 ---@param meta_name string
 ---@param callbacks fa.scanner.SimpleBackendCallbacks
@@ -142,6 +154,7 @@ function mod.declare_simple_backend(meta_name, callbacks)
       category_callback = callbacks.category_callback or default_category_cb,
       subcategory_callback = callbacks.subcategory_callback or default_subcategory_cb,
       readout_callback = callbacks.readout_callback or default_readout_cb,
+      subcategory_ttl = callbacks.subcategory_ttl,
    }
 
    local newmeta = TH.nested_indexer(SimpleBackend, callbacks_defaulted)
