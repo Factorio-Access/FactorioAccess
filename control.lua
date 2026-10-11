@@ -2539,13 +2539,8 @@ local function kb_click_hand(event)
                flip_horizontal = vp:get_flipped_horizontal(),
                flip_vertical = vp:get_flipped_vertical(),
             })
-            if success then
-               TileReader.read_tile(pindex)
-            else
-               -- Build failed, try opening entity menu if one exists at cursor
-               local ent = EntitySelection.get_first_ent_at_tile(pindex)
-               if ent and EntityUI.has_ui(ent) then clicked_on_entity(ent, pindex) end
-            end
+            -- A failed build has already said why
+            if success then TileReader.read_tile(pindex) end
          else
             -- Item cannot be built (e.g., intermediate products, tools, etc.)
             -- If there's an entity with a menu at the cursor, open its menu
