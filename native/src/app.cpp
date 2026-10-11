@@ -11,6 +11,7 @@
 #include "ui/navigator.h"
 #include "ui/screen.h"
 #include "ui/strings.h"
+#include "update_check.h"
 
 namespace fa::app {
 using namespace fa::ui;
@@ -124,6 +125,7 @@ void tick() {
   }
   g_input.set_live_categories(g_screens.live_categories());
   Screen* cur = g_screens.current();
+  update::tick(cur && cur->key() == "dialogs" && screens::on_main_menu(), t);
   // The keys of the frame a screen became current, or the keyboard changed hands, belong to whoever had the
   // keyboard before (the Enter that ends a text edit must not also activate the field again).
   if (!owns || !owned_before || cur != before) return;

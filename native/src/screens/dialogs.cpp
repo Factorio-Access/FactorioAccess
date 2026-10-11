@@ -539,6 +539,8 @@ NodeVtablePtr make_node(const Entry& e, const Editors& editors) {
   return v;
 }
 
+bool g_main_menu = false;
+
 class DialogsScreen : public Screen {
  public:
   std::string_view key() const override { return "dialogs"; }
@@ -607,6 +609,7 @@ class DialogsScreen : public Screen {
     auto ds = dialogs();
     const Dialog* td = top_dialog(ds);
     std::string top = td ? td->key : std::string();
+    g_main_menu = top.starts_with("MainMenuGui#");
     if (top != top_) {
       top_ = top;
       if (!top.empty()) app::focus_stop(Key(top));
@@ -730,4 +733,5 @@ class DialogsScreen : public Screen {
 }  // namespace
 
 std::unique_ptr<Screen> make_dialogs() { return std::make_unique<DialogsScreen>(); }
+bool on_main_menu() { return g_main_menu; }
 }  // namespace fa::screens

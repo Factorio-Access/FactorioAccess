@@ -33,17 +33,35 @@ file(GLOB FAUI_SOURCES CONFIGURE_DEPENDS src/ui/*.cpp)
 add_library(faui STATIC ${FAUI_SOURCES})
 target_include_directories(faui PUBLIC src)
 
+# --- the update check's decisions (engine-free; the WinHTTP side is src/win/update_check.cpp) ---
+add_library(fa_update STATIC src/update/check.cpp)
+target_link_libraries(fa_update PUBLIC faui)
+
 file(GLOB FAUI_TESTS CONFIGURE_DEPENDS tests/*.cpp)
 add_executable(faui_tests ${FAUI_TESTS})
 target_include_directories(faui_tests PRIVATE third_party)
-target_link_libraries(faui_tests PRIVATE faui)
+target_link_libraries(faui_tests PRIVATE faui fa_update)
+
+# --- the native code's own version, embedded at configure time ---
+# CI sets FA_VERSION (a tag "v0.16.57" or "ci-<short sha>") before configuring; a local build is "dev" (the update
+# check stays silent). The same string goes to version.txt, which the native release zip carries for the installer.
+# Changing it needs a reconfigure.
+if(DEFINED ENV{FA_VERSION} AND NOT "$ENV{FA_VERSION}" STREQUAL "")
+  set(FA_VERSION "$ENV{FA_VERSION}")
+else()
+  set(FA_VERSION "dev")
+endif()
+message(STATUS "fa_native version: ${FA_VERSION}")
+configure_file(src/fa_version.h.in ${CMAKE_BINARY_DIR}/generated/fa_version.h @ONLY)
+file(WRITE ${CMAKE_BINARY_DIR}/version.txt "${FA_VERSION}
+")
 
 # --- the injected DLL ---
 add_library(fa_native SHARED
   src/dllmain.cpp src/log.cpp src/input.cpp src/app.cpp src/assets.cpp src/lua_native.cpp src/screens/dialogs.cpp src/win/game.cpp src/win/audio_mute.cpp src/speech.cpp src/devserver.cpp
-  src/win/hooks.cpp src/win/sym.cpp src/win/window.cpp src/win/agui.cpp)
-target_include_directories(fa_native PRIVATE src ${PRISM_DIR}/include)
-target_link_libraries(fa_native PRIVATE faui fa_audio detours ${PRISM_LIB} user32 ws2_32 ole32 dbghelp delayimp)
+  src/win/hooks.cpp src/win/sym.cpp src/win/window.cpp src/win/agui.cpp src/win/update_check.cpp)
+target_include_directories(fa_native PRIVATE src ${PRISM_DIR}/include ${CMAKE_BINARY_DIR}/generated)
+target_link_libraries(fa_native PRIVATE faui fa_update fa_audio detours ${PRISM_LIB} user32 ws2_32 ole32 dbghelp delayimp winhttp)
 target_link_options(fa_native PRIVATE /DELAYLOAD:prism.dll)
 add_custom_command(TARGET fa_native POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PRISM_DLL} $<TARGET_FILE_DIR:fa_native>)

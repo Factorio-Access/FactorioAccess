@@ -24,6 +24,12 @@ inline constexpr std::string_view kEditing = "editing, enter or escape to finish
 inline constexpr std::string_view kTypeValue = "type a value, enter to set";
 inline constexpr std::string_view kCancelled = "cancelled";
 inline constexpr std::string_view kBlank = "blank";
+// The update check (src/update/check.cpp): "Factorio Access update available, v0.17.0, you have v0.16.57, run the
+// Factorio Access installer to update"
+inline constexpr std::string_view kUpdateAvailable = "Factorio Access update available";
+inline constexpr std::string_view kCiUpdateAvailable = "newer Factorio Access CI build available";
+inline constexpr std::string_view kYouHave = "you have";
+inline constexpr std::string_view kRunInstallerToUpdate = "run the Factorio Access installer to update";
 
 // "<i> of <n>" as a list item
 fa::ui::MessageBuilder& push_position(fa::ui::MessageBuilder& m, int index1, int count);
