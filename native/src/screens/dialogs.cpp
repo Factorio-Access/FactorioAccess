@@ -341,6 +341,7 @@ class Walker {
       Row row;
       row.key = path;
       std::string row_name;
+      bool label_names_row = false, name_used = false;
       for (int j = 0; j < columns && r + j < cells.size(); ++j) {
         std::vector<Entry> found;
         collect(cells[r + j].first, cells[r + j].second, found);
@@ -348,11 +349,20 @@ class Walker {
           agui::Widget* w = resolve(e.path);
           if (j == 0 && row_name.empty() && w) row_name = as_label(label_of(w));
           // A label in the first column only names the row.
-          if (j == 0 && e.kind == Kind::Label && columns > 1) continue;
-          if (needs_name(e.kind) || (w && label_of(w).empty())) e.name = join_name(row_name, headers[j]);
+          if (j == 0 && e.kind == Kind::Label && columns > 1) {
+            label_names_row = true;
+            continue;
+          }
+          if (needs_name(e.kind) || (w && label_of(w).empty())) {
+            e.name = join_name(row_name, headers[j]);
+            name_used = true;
+          }
           row.cells.push_back(e);
         }
       }
+      // Controls that name themselves ("Keep enabled" beside a mod in the sync-mods table) still need the row's
+      // name: it becomes the row's context, said when focus enters the row.
+      if (label_names_row && !name_used) row.context = row_name;
       if (!row.cells.empty()) rows.push_back(std::move(row));
     }
   }
