@@ -66,8 +66,43 @@ end
 function mod.on_cargo_pod_finished_descending(event)
    local pindex = event.player_index
    if not pindex then return end
-   local platform = event.cargo_pod.surface.platform
-   if platform then announce_boarding(pindex, platform) end
+   local surface = event.cargo_pod.surface
+   local platform = surface.platform
+   local planet = surface.planet
+   if platform then
+      announce_boarding(pindex, platform)
+   elseif planet then
+      Speech.speak(pindex, { "fa.platform-landed", Localising.get_localised_name_with_fallback(planet.prototype) })
+   end
+end
+
+---The planet the platform is in orbit over, if any. Platforms also stop at space locations that aren't planets.
+---@param platform LuaSpacePlatform
+---@return LuaSpaceLocationPrototype?
+function mod.orbited_planet(platform)
+   local location = platform.space_location --[[@as LuaSpaceLocationPrototype?]]
+   if location and location.type == "planet" then return location end
+   return nil
+end
+
+---Drop the player from the hub they are in to the planet below, like the game's "Drop to a planet" button.
+---@param player LuaPlayer
+---@param message fa.MessageBuilder
+---@return boolean dropped
+function mod.drop_to_planet(player, message)
+   local platform = assert(assert(player.hub).surface.platform)
+   local planet = mod.orbited_planet(platform)
+   if not planet then
+      message:fragment({ "fa.platform-drop-not-in-orbit", platform.name })
+      return false
+   end
+   local name = Localising.get_localised_name_with_fallback(planet)
+   if not player.land_on_planet() then
+      message:fragment({ "fa.platform-drop-failed", name })
+      return false
+   end
+   message:fragment({ "fa.platform-dropping", name })
+   return true
 end
 
 return mod

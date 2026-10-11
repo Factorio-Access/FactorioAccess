@@ -4,9 +4,12 @@ Space platform hub configuration tab.
 Provides controls for:
 - Auto requesting missing construction materials
 - Providing materials to other platforms
+- Dropping to the planet below, for a player in this hub
 ]]
 
 local FormBuilder = require("scripts.ui.form-builder")
+local Localising = require("scripts.localising")
+local PlatformTravel = require("scripts.platform-travel")
 local UiKeyGraph = require("scripts.ui.key-graph")
 
 local mod = {}
@@ -36,6 +39,16 @@ local function render_hub_config(ctx)
    end, function(value)
       entity.providing_to_other_platforms = value
    end)
+
+   local player = assert(game.get_player(ctx.pindex))
+   if player.hub == entity then
+      local planet = PlatformTravel.orbited_planet(assert(entity.surface.platform))
+      local label = planet and { "fa.platform-drop-to", Localising.get_localised_name_with_fallback(planet) }
+         or { "fa.platform-drop-to-a-planet" }
+      form:add_action("drop_to_planet", label, function(controller)
+         if PlatformTravel.drop_to_planet(player, controller.message) then controller:close() end
+      end)
+   end
 
    return form:build()
 end
