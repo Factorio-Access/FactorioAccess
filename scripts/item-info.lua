@@ -678,10 +678,54 @@ local function rocket_capacity_info(message, item_proto)
    end
 end
 
+---How fresh a stack is, or nil if it does not spoil. Brief rounds to tens so slot readouts don't churn as it ages;
+---"fresh" is what would round to 100 percent.
+---@param stack LuaItemStack
+---@param verbosity integer VERBOSITY.BRIEF or VERBOSITY.VERBOSE
+---@return LocalisedString?
+function mod.freshness(stack, verbosity)
+   if not script.feature_flags.spoiling or stack.spoil_tick == 0 then return nil end
+
+   local step = verbosity == mod.VERBOSITY.BRIEF and 10 or 1
+   local percent = math.floor((1 - stack.spoil_percent) * 100 / step + 0.5) * step
+   if percent >= 100 then return { "fa.item-info-fresh" } end
+   -- Rounding to 0 would hide that it has not spoiled yet
+   return { "fa.item-info-percent-fresh", math.max(percent, step) }
+end
+
+---Add how fresh the stack is and when it spoils into what, or a fresh item's spoil time without a stack
+---@param message fa.MessageBuilder
+---@param item_proto LuaItemPrototype
+---@param quality LuaQualityPrototype
+---@param stack LuaItemStack?
+local function spoil_info(message, item_proto, quality, stack)
+   if not script.feature_flags.spoiling then return end
+   ---@type number
+   local ticks = item_proto.get_spoil_ticks(quality)
+   if ticks == 0 then return end
+
+   if stack then
+      message:list_item(assert(mod.freshness(stack, mod.VERBOSITY.VERBOSE)))
+      ticks = stack.spoil_tick - game.tick
+   end
+
+   local result = item_proto.spoil_result
+   if result then
+      message:list_item({
+         "fa.item-info-spoils-into",
+         FaUtils.format_time(ticks),
+         Localising.get_localised_name_with_fallback(result),
+      })
+   else
+      message:list_item({ "fa.item-info-spoils", FaUtils.format_time(ticks) })
+   end
+end
+
 ---@class fa.ItemInfo.GetItemInfoFromPrototypeOptions
 ---@field verbosity integer VERBOSITY.BRIEF or VERBOSITY.VERBOSE
 ---@field name_override? LocalisedString Override the name announced (for cases where name is already known)
 ---@field force? LuaForce Optional force for research bonus calculations
+---@field stack? LuaItemStack The stack being described, for its freshness and time left before spoiling
 
 -- Passed through to get_item_info_from_prototype.
 ---@alias fa.ItemInfo.GetItemStackInfoOptions fa.ItemInfo.GetItemInfoFromPrototypeOptions
@@ -707,6 +751,8 @@ function mod.get_item_info_from_prototype(message, item_proto, quality, options)
 
    -- Only add detailed info for VERBOSE mode
    if options.verbosity == mod.VERBOSITY.BRIEF then return end
+
+   spoil_info(message, item_proto, quality, options.stack)
 
    -- Check if this is equipment
    if item_proto.place_as_equipment_result then
@@ -799,7 +845,12 @@ function mod.get_item_stack_info(message, stack, options)
       end
    end
 
-   mod.get_item_info_from_prototype(message, stack.prototype, stack.quality, options)
+   mod.get_item_info_from_prototype(message, stack.prototype, stack.quality, {
+      verbosity = options.verbosity,
+      name_override = options.name_override,
+      force = options.force,
+      stack = stack,
+   })
 end
 
 ---@alias fa.ItemInfo.Product ItemProduct | FluidProduct
