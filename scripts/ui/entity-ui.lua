@@ -356,8 +356,10 @@ local function build_entity_sections(pindex, entity)
    -- Only add player inventory section if there are entity-specific sections
    if #sections == 0 then return nil end
 
-   -- Add player inventory section for convenience
-   table.insert(sections, get_player_inventory_section())
+   -- Add player inventory section for convenience; there is none without a character (remote view)
+   if FaUtils.physical_character(assert(game.get_player(pindex))) then
+      table.insert(sections, get_player_inventory_section())
+   end
 
    return sections
 end

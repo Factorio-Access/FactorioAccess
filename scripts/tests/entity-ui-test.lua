@@ -181,6 +181,31 @@ describe("Entity UI", function()
       -- Cleanup handled automatically by test framework
    end)
 
+   it("should open in remote view without the player inventory", function(ctx)
+      ---@type LuaPlayer
+      local player
+      ---@type LuaEntity
+      local chest
+
+      ctx:init(function()
+         player = assert(game.get_player(1))
+         local pos = player.position --[[@as MapPosition.struct]]
+         chest = assert(player.surface.create_entity({
+            name = "wooden-chest",
+            position = { x = pos.x + 2, y = pos.y },
+            force = player.force,
+         }))
+         player.set_controller({ type = defines.controllers.remote, position = pos, surface = player.surface })
+      end)
+
+      ctx:at_tick(5, function()
+         ctx:assert(EntityUI.open_entity_ui(1, chest), "opens in remote view")
+         ctx:assert(UiRouter.get_router(1):is_ui_open(UiRouter.UI_NAMES.ENTITY), "entity UI open")
+         UiRouter.get_router(1):close_ui()
+         player.exit_remote_view()
+      end)
+   end)
+
    it("should handle entity becoming invalid during UI lifetime", function(ctx)
       ---@type LuaPlayer
       local player
