@@ -18,8 +18,42 @@ local UiSounds = require("scripts.ui.sounds")
 local CircuitNetwork = require("scripts.circuit-network")
 local FaInfo = require("scripts.fa-info")
 local Consts = require("scripts.consts")
+local Localising = require("scripts.localising")
 
 local mod = {}
+
+---@type RequestFromLocation[]
+local REQUEST_FROM_CHOICES = { "planet", "platforms", "all" }
+
+---The planets a platform hub request can be limited to, in the game's order
+---@return LuaSpaceLocationPrototype[]
+local function importable_planets()
+   local planets = {}
+   for _, location in pairs(prototypes.space_location) do
+      if location.type == "planet" and not location.hidden then table.insert(planets, location) end
+   end
+   table.sort(planets, function(a, b)
+      return a.order < b.order
+   end)
+   return planets
+end
+
+---The name of the planet a request imports from, or nil for any location
+---@param filter LogisticFilter
+---@return string?
+local function import_from_name(filter)
+   local location = filter.import_from
+   if location == nil or type(location) == "string" then return location end
+   return location.name
+end
+
+---@param filter LogisticFilter
+---@return LocalisedString
+local function localise_import_from(filter)
+   local name = import_from_name(filter)
+   if not name then return { "gui-orbital-request.any-location" } end
+   return Localising.get_localised_name_with_fallback(prototypes.space_location[name])
+end
 
 ---Build the unified section editor menu
 ---Works for all entities via entity.get_logistic_sections()
@@ -45,6 +79,8 @@ local function render_section(ctx, section_index)
    -- Determine signal mode based on entity type
    local is_combinator = entity.type == "constant-combinator"
    local is_roboport = entity.type == "roboport"
+   -- Only the hub's requests are orbital requests, with the fields the game shows under them
+   local is_orbital = script.feature_flags.space_travel and entity.type == "space-platform-hub"
    local signal_mode
    if is_combinator then
       signal_mode = "all"
@@ -71,12 +107,23 @@ local function render_section(ctx, section_index)
                -- Localize the signal (works for both items and other signal types)
                local sid = slot.value
                ---@cast sid SignalID
-               ctx.message:fragment({
-                  "fa.logistics-signal-range",
-                  CircuitNetwork.localise_signal(sid),
-                  tostring(min_val),
-                  max_val and tostring(max_val) or { "fa.infinity" },
-               })
+               local max_text = max_val and tostring(max_val) or { "fa.infinity" }
+               if import_from_name(slot) then
+                  ctx.message:fragment({
+                     "fa.logistics-signal-range-from",
+                     CircuitNetwork.localise_signal(sid),
+                     tostring(min_val),
+                     max_text,
+                     localise_import_from(slot),
+                  })
+               else
+                  ctx.message:fragment({
+                     "fa.logistics-signal-range",
+                     CircuitNetwork.localise_signal(sid),
+                     tostring(min_val),
+                     max_text,
+                  })
+               end
             end,
             on_click = function(ctx)
                ctx.controller:open_child_ui(
@@ -236,6 +283,131 @@ local function render_section(ctx, section_index)
                ctx.controller.message:fragment({ "fa.infinity" })
             end,
          })
+
+         if is_orbital then
+            ---Replace the slot with a changed copy, keeping its other fields
+            ---@param change fun(filter: LogisticFilter)
+            ---@return LogisticFilter
+            local function modify_slot(change)
+               local section = entity.get_logistic_sections().get_section(section_index)
+               local filter = section.get_slot(i)
+               change(filter)
+               section.set_slot(i, filter)
+               return filter
+            end
+
+            -- Import from: any location, then each planet
+            menu:add_item(item_key .. "_import_from", {
+               label = function(ctx)
+                  local sid = slot.value
+                  ---@cast sid SignalID
+                  ctx.message:fragment({
+                     "fa.logistics-import-from-for",
+                     localise_import_from(slot),
+                     CircuitNetwork.localise_signal(sid),
+                  })
+               end,
+               on_click = function(ctx)
+                  local planets = importable_planets()
+                  local direction = (ctx.modifiers and ctx.modifiers.shift) and -1 or 1
+                  local filter = modify_slot(function(filter)
+                     local current = import_from_name(filter)
+                     -- 0 is any location
+                     local index = 0
+                     for n, planet in ipairs(planets) do
+                        if planet.name == current then index = n end
+                     end
+                     index = (index + direction) % (#planets + 1)
+                     filter.import_from = index > 0 and planets[index].name or nil
+                  end)
+                  UiSounds.play_menu_move(ctx.pindex)
+                  ctx.controller.message:fragment(localise_import_from(filter))
+               end,
+               on_clear = function(ctx)
+                  modify_slot(function(filter)
+                     filter.import_from = nil
+                  end)
+                  ctx.controller.message:fragment({ "gui-orbital-request.any-location" })
+               end,
+            })
+
+            -- Request from: planet, platforms or all
+            menu:add_item(item_key .. "_request_from", {
+               label = function(ctx)
+                  local sid = slot.value
+                  ---@cast sid SignalID
+                  ctx.message:fragment({
+                     "fa.logistics-request-from-for",
+                     { "gui-orbital-request." .. (slot.request_from or "planet") },
+                     CircuitNetwork.localise_signal(sid),
+                  })
+               end,
+               on_click = function(ctx)
+                  local direction = (ctx.modifiers and ctx.modifiers.shift) and -1 or 1
+                  local filter = modify_slot(function(filter)
+                     local index = 1
+                     for n, choice in ipairs(REQUEST_FROM_CHOICES) do
+                        if choice == (filter.request_from or "planet") then index = n end
+                     end
+                     index = (index - 1 + direction) % #REQUEST_FROM_CHOICES + 1
+                     filter.request_from = REQUEST_FROM_CHOICES[index]
+                  end)
+                  UiSounds.play_menu_move(ctx.pindex)
+                  ctx.controller.message:fragment({ "gui-orbital-request." .. filter.request_from })
+               end,
+            })
+
+            -- Custom minimum payload: unset is the game's default
+            menu:add_item(item_key .. "_min_payload", {
+               label = function(ctx)
+                  local sid = slot.value
+                  ---@cast sid SignalID
+                  if slot.minimum_delivery_count then
+                     ctx.message:fragment({
+                        "fa.logistics-min-payload-for",
+                        tostring(slot.minimum_delivery_count),
+                        CircuitNetwork.localise_signal(sid),
+                     })
+                  else
+                     ctx.message:fragment({ "fa.logistics-no-min-payload-for", CircuitNetwork.localise_signal(sid) })
+                  end
+               end,
+               on_click = function(ctx)
+                  ctx.controller:open_textbox(
+                     "",
+                     { node = item_key .. "_min_payload", slot_index = i },
+                     { "fa.logistics-enter-min-payload" }
+                  )
+               end,
+               on_child_result = function(ctx, result)
+                  local num = tonumber(result)
+                  -- The largest payload, as the game's rocket capacity
+                  local item = prototypes.item[slot.value.name]
+                  local capacity = math.floor(prototypes.utility_constants.default_rocket_lift_weight / item.weight)
+                  if not num then
+                     UiSounds.play_ui_edge(ctx.pindex)
+                     ctx.controller.message:fragment({ "fa.logistics-invalid-number" })
+                  elseif num < 1 then
+                     UiSounds.play_ui_edge(ctx.pindex)
+                     ctx.controller.message:fragment({ "fa.logistics-min-payload-too-low" })
+                  elseif num > capacity then
+                     UiSounds.play_ui_edge(ctx.pindex)
+                     ctx.controller.message:fragment({ "fa.logistics-min-payload-too-high", tostring(capacity) })
+                  else
+                     modify_slot(function(filter)
+                        filter.minimum_delivery_count = math.floor(num)
+                     end)
+                     ctx.controller.message:fragment(tostring(math.floor(num)))
+                  end
+               end,
+               on_clear = function(ctx)
+                  modify_slot(function(filter)
+                     filter.minimum_delivery_count = nil
+                  end)
+                  ctx.controller.message:fragment({ "fa.logistics-min-payload-cleared" })
+               end,
+            })
+         end
 
          -- Item 4: Delete button
          menu:add_item(item_key .. "_delete", {
