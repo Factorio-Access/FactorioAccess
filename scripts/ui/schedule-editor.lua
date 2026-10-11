@@ -1,5 +1,7 @@
---Train schedule editor UI
+--Train and space platform schedule editor UI
 --Uses 2D layout: each row is a stop with its conditions
+--Opened with { entity = locomotive } or { entity = space platform hub }. Both are LuaSchedules; a platform's stations
+--are space locations, picked from a list rather than typed
 
 local TabList = require("scripts.ui.tab-list")
 local Router = require("scripts.ui.router")
@@ -10,6 +12,7 @@ local ScheduleReader = require("scripts.rails.schedule-reader")
 local Help = require("scripts.ui.help")
 local UiSounds = require("scripts.ui.sounds")
 local TrainHelpers = require("scripts.rails.train-helpers")
+local Localising = require("scripts.localising")
 
 local mod = {}
 
@@ -52,6 +55,41 @@ local INTERRUPT_TRIGGER_CONDITION_TYPES = {
    "fuel_item_count_all",
    "fuel_item_count_any",
    "circuit",
+}
+
+---Condition type cycle order for space platform wait conditions
+---@type WaitConditionType[]
+local PLATFORM_SCHEDULE_CONDITION_TYPES = {
+   "time",
+   "inactivity",
+   "item_count",
+   "circuit",
+   "all_requests_satisfied",
+   "any_request_not_satisfied",
+   "any_request_zero",
+   "request_satisfied",
+   "request_not_satisfied",
+   "damage_taken",
+   "passenger_present",
+   "passenger_not_present",
+}
+
+---Condition type cycle order for space platform interrupt trigger conditions
+---@type WaitConditionType[]
+local PLATFORM_INTERRUPT_TRIGGER_CONDITION_TYPES = {
+   "at_station",
+   "not_at_station",
+   "any_planet_import_zero",
+   "all_requests_satisfied",
+   "any_request_not_satisfied",
+   "any_request_zero",
+   "request_satisfied",
+   "request_not_satisfied",
+   "item_count",
+   "circuit",
+   "damage_taken",
+   "passenger_present",
+   "passenger_not_present",
 }
 
 -- Lookup tables for condition type field preservation when cycling types
@@ -168,13 +206,86 @@ local function get_condition_key(records, record_index, condition_index, prefix)
    return record_key .. "-c" .. tostring(condition_index)
 end
 
----Get the LuaSchedule from the train
----@param entity LuaEntity Locomotive entity
+---@param entity LuaEntity Locomotive or space platform hub
+---@return boolean
+local function is_platform(entity)
+   return entity.type == "space-platform-hub"
+end
+
+---Get the LuaSchedule from the train or space platform
+---@param entity LuaEntity Locomotive or space platform hub
 ---@return LuaSchedule?
 local function get_schedule(entity)
+   if is_platform(entity) then return assert(entity.surface.platform).get_schedule() end
    local train = entity.train
    if not train then return nil end
    return train.get_schedule()
+end
+
+---Open the picker for a stop: the train stops on the locomotive's surface, or the space locations for a platform
+---@param ctx fa.ui.graph.Ctx
+---@param child_context table
+local function open_station_selector(ctx, child_context)
+   local entity = assert(ctx.global_parameters).entity --[[@as LuaEntity]]
+   if is_platform(entity) then
+      ctx.controller:open_child_ui(Router.UI_NAMES.SPACE_LOCATION_SELECTOR, {}, child_context)
+   else
+      ctx.controller:open_child_ui(Router.UI_NAMES.STOP_SELECTOR, { surface = entity.surface }, child_context)
+   end
+end
+
+---The schedules of all of a force's trains, or of all its space platforms
+---@param force LuaForce
+---@param platform boolean
+---@return LuaSchedule[]
+local function get_force_schedules(force, platform)
+   local schedules = {}
+   if platform then
+      for _, space_platform in pairs(force.platforms) do
+         table.insert(schedules, space_platform.get_schedule())
+      end
+   else
+      for _, train in ipairs(TrainHelpers.get_trains(force)) do
+         table.insert(schedules, train.get_schedule())
+      end
+   end
+   return schedules
+end
+
+---Sorted unique interrupt names across schedules
+---@param schedules LuaSchedule[]
+---@return string[]
+local function get_interrupt_names(schedules)
+   local seen = {}
+   local names = {}
+   for _, schedule in ipairs(schedules) do
+      for _, interrupt in ipairs(schedule.get_interrupts()) do
+         local name = interrupt.name
+         if name and name ~= "" and not seen[name] then
+            seen[name] = true
+            table.insert(names, name)
+         end
+      end
+   end
+   table.sort(names)
+   return names
+end
+
+---Add an interrupt by name. Interrupts are shared between all trains, or all platforms: an existing one is copied
+---with its conditions and targets, an unknown name starts empty.
+---@param schedule LuaSchedule
+---@param schedules LuaSchedule[] The force's schedules of the same kind
+---@param name string
+local function add_interrupt_by_name(schedule, schedules, name)
+   for _, other in ipairs(schedules) do
+      for _, interrupt in ipairs(other.get_interrupts()) do
+         if interrupt.name == name then
+            schedule.add_interrupt(interrupt)
+            return
+         end
+      end
+   end
+   schedule.add_interrupt({ name = name, conditions = {}, targets = {} })
 end
 
 ---Extract station name from rich text result, announcing any errors
@@ -225,8 +336,9 @@ end
 ---How to edit one parameter of a wait condition
 ---@class fa.ui.ScheduleEditor.ParamHandler
 ---@field constant? fun(condition: WaitCondition, new_value: any): WaitCondition? Builds the condition from typed text
----@field setter? fun(condition: WaitCondition, new_value: any): WaitCondition? Builds the condition from a chosen signal
----@field announcer fun(new_value: any, condition: WaitCondition): LocalisedString
+---@field setter? fun(condition: WaitCondition, new_value: any): WaitCondition? Builds the condition from a chosen value
+---@field chooser? fa.ui.UiName Where the setter's value is chosen, the signal chooser if not given
+---@field announcer fun(new_value: any, condition: WaitCondition, platform: boolean): LocalisedString
 
 ---The editable parameters of one wait condition type
 ---@class fa.ui.ScheduleEditor.TypeHandlers
@@ -312,8 +424,23 @@ local station_name_handler = {
       constant = function(condition, new_value)
          return { type = condition.type, station = new_value }
       end,
+      announcer = function(new_value, _, platform)
+         return ScheduleReader.localise_station(new_value, platform)
+      end,
+   },
+}
+
+-- Request conditions name one item the platform requests (normal quality)
+---@type fa.ui.ScheduleEditor.TypeHandlers
+local request_item_handler = {
+   p1 = {
+      chooser = Router.UI_NAMES.ITEM_CHOOSER,
+      setter = function(condition, new_value)
+         if not new_value then return nil end
+         return { type = condition.type, condition = { name = new_value, quality = "normal" } }
+      end,
       announcer = function(new_value)
-         return new_value
+         return Localising.get_localised_name_with_fallback(prototypes.item[new_value])
       end,
    },
 }
@@ -349,7 +476,7 @@ local PARAM_HANDLERS = {
       constant = make_circuit_constant_handler("circuit"),
    },
 
-   -- damage_taken is not in the cycle list but we keep the handler for reading existing conditions
+   -- damage_taken is only in the platform cycle lists
    damage_taken = {
       p1 = {
          constant = function(condition, new_value)
@@ -365,6 +492,22 @@ local PARAM_HANDLERS = {
    specific_destination_not_full = station_name_handler,
    at_station = station_name_handler,
    not_at_station = station_name_handler,
+
+   request_satisfied = request_item_handler,
+   request_not_satisfied = request_item_handler,
+
+   any_planet_import_zero = {
+      p1 = {
+         chooser = Router.UI_NAMES.SPACE_LOCATION_SELECTOR,
+         setter = function(condition, new_value)
+            if not new_value then return nil end
+            return { type = condition.type, planet = new_value }
+         end,
+         announcer = function(new_value)
+            return ScheduleReader.localise_station(new_value, true)
+         end,
+      },
+   },
 }
 
 -- Fuel handlers use same pattern as item_count but preserve type
@@ -379,6 +522,7 @@ PARAM_HANDLERS.fluid_count = PARAM_HANDLERS.item_count
 
 ---Build vtable for a wait condition
 ---@param schedule LuaSchedule
+---@param platform boolean The schedule belongs to a space platform
 ---@param record_position ScheduleRecordPosition
 ---@param condition_index integer
 ---@param condition WaitCondition
@@ -390,6 +534,7 @@ PARAM_HANDLERS.fluid_count = PARAM_HANDLERS.item_count
 ---@return fa.ui.graph.NodeVtable
 local function build_condition_vtable(
    schedule,
+   platform,
    record_position,
    condition_index,
    condition,
@@ -411,7 +556,7 @@ local function build_condition_vtable(
             ctx.message:fragment({ "fa.schedule-connector-" .. connector })
          end
 
-         ScheduleReader.read_wait_condition(ctx.message, condition)
+         ScheduleReader.read_wait_condition(ctx.message, condition, platform)
       end,
 
       on_conjunction_modification = function(ctx)
@@ -436,13 +581,14 @@ local function build_condition_vtable(
          elseif TYPES_WITH_CONDITION[new_type] then
             if condition.condition then new_condition.condition = condition.condition end
          elseif TYPES_WITH_STATION[new_type] then
-            new_condition.station = condition.station or "Station"
+            -- A platform's stations are space locations, chosen from a list afterwards
+            new_condition.station = condition.station or (not platform and "Station" or nil)
          elseif new_type == "damage_taken" then
             new_condition.damage = condition.damage or 1000
          end
 
          schedule.change_wait_condition(record_position, condition_index, new_condition)
-         ScheduleReader.read_wait_condition(ctx.controller.message, new_condition)
+         ScheduleReader.read_wait_condition(ctx.controller.message, new_condition, platform)
       end,
 
       on_action1 = function(ctx)
@@ -456,18 +602,12 @@ local function build_condition_vtable(
 
          -- Station conditions get special handling
          if TYPES_WITH_STATION[cond_type] then
-            if ctx.modifiers and ctx.modifiers.shift then
+            if ctx.modifiers and ctx.modifiers.shift and not platform then
                -- Shift+M: textbox with rich text for typing station name
                ctx.controller:open_textbox("", { node = row_key, target = "p1" }, { rich_text = true })
             else
-               -- M: open stop selector
-               local entity = ctx.global_parameters and ctx.global_parameters.entity
-               local surface = entity and entity.valid and entity.surface or nil
-               ctx.controller:open_child_ui(
-                  Router.UI_NAMES.STOP_SELECTOR,
-                  { surface = surface },
-                  { node = row_key, target = "p1" }
-               )
+               -- M: open stop or space location selector
+               open_station_selector(ctx, { node = row_key, target = "p1" })
             end
             return
          end
@@ -480,9 +620,13 @@ local function build_condition_vtable(
                ctx.controller.message:fragment({ "fa.schedule-no-text-param" })
             end
          else
-            -- M: signal chooser (if p1 has setter)
+            -- M: signal chooser or the parameter's own chooser (if p1 has setter)
             if type_handlers.p1.setter then
-               ctx.controller:open_child_ui(Router.UI_NAMES.SIGNAL_CHOOSER, {}, { node = row_key, target = "p1" })
+               ctx.controller:open_child_ui(
+                  type_handlers.p1.chooser or Router.UI_NAMES.SIGNAL_CHOOSER,
+                  {},
+                  { node = row_key, target = "p1" }
+               )
             else
                ctx.controller.message:fragment({ "fa.schedule-no-signal-param" })
             end
@@ -509,6 +653,7 @@ local function build_condition_vtable(
 
          schedule.change_wait_condition(record_position, condition_index, {
             type = cond_type,
+            compare_type = condition.compare_type,
             condition = {
                first_signal = condition.condition.first_signal,
                comparator = new_op,
@@ -617,27 +762,31 @@ local function build_condition_vtable(
             return
          end
 
-         -- Apply the change
+         -- Apply the change, keeping the and/or connector
+         new_condition_data.compare_type = condition.compare_type
          schedule.change_wait_condition(record_position, condition_index, new_condition_data)
 
          -- Announce the new value
-         ctx.controller.message:fragment(param_handler.announcer(processed_result, condition))
+         ctx.controller.message:fragment(param_handler.announcer(processed_result, condition, platform))
       end,
    }
 end
 
 ---Build vtable for a schedule record (station/destination)
 ---@param schedule LuaSchedule
+---@param platform boolean The schedule belongs to a space platform
 ---@param record_position ScheduleRecordPosition
 ---@param record ScheduleRecord
 ---@param row_key string
 ---@param key_prefix string? Prefix for node keys
 ---@param records ScheduleRecord[] All records for key generation
 ---@return fa.ui.graph.NodeVtable
-local function build_record_vtable(schedule, record_position, record, row_key, key_prefix, records)
+local function build_record_vtable(schedule, platform, record_position, record, row_key, key_prefix, records)
    key_prefix = key_prefix or ""
    -- Records always come from make_record_position
    local schedule_index = assert(record_position.schedule_index)
+   local destination = record.station and ScheduleReader.localise_station(record.station, platform)
+      or { "fa.schedule-rail-position" }
 
    return {
       label = function(ctx)
@@ -650,35 +799,40 @@ local function build_record_vtable(schedule, record_position, record, row_key, k
 
          -- Destination name or rail position
          if record.station then
-            ctx.message:fragment({ "fa.schedule-station", record.station })
+            ctx.message:fragment({ "fa.schedule-station", ScheduleReader.localise_station(record.station, platform) })
          elseif record.rail then
             ctx.message:fragment({ "fa.schedule-rail-position" })
          else
             ctx.message:fragment({ "fa.schedule-no-destination" })
          end
-         ctx.message:fragment({ "fa.schedule-station-hint" })
+         if platform then
+            ctx.message:list_item_forced_comma({
+               record.allows_unloading and "fa.schedule-unload" or "fa.schedule-no-unload",
+            })
+         else
+            ctx.message:fragment({ "fa.schedule-station-hint" })
+         end
       end,
 
       on_click = function(ctx)
-         -- Open station selector filtered to same surface
-         local entity = ctx.global_parameters and ctx.global_parameters.entity
-         local surface = entity and entity.valid and entity.surface or nil
-         ctx.controller:open_child_ui(
-            Router.UI_NAMES.STOP_SELECTOR,
-            { surface = surface },
-            { node = row_key, target = "station" }
-         )
+         open_station_selector(ctx, { node = row_key, target = "station" })
       end,
 
-      on_action1 = function(ctx)
-         -- Type a station name with rich text support
+      -- Type a station name with rich text support (trains only: a platform picks from its space locations)
+      on_action1 = not platform and function(ctx)
          ctx.controller:open_textbox("", { node = row_key, target = "station" }, { rich_text = true })
-      end,
+      end or nil,
+
+      -- Comma: toggle unloading at this stop (platforms only)
+      on_action2 = platform and function(ctx)
+         local allow = not record.allows_unloading
+         schedule.set_allow_unloading(record_position, allow)
+         ctx.controller.message:fragment({ allow and "fa.schedule-unload" or "fa.schedule-no-unload" })
+      end or nil,
 
       -- Right click: go to this station (main schedule only, not interrupts)
       on_right_click = not record_position.interrupt_index and function(ctx)
          schedule.go_to_station(schedule_index)
-         local destination = record.station or { "fa.schedule-rail-position" }
          ctx.controller.message:fragment({ "fa.schedule-going-to", destination })
       end or nil,
 
@@ -723,10 +877,13 @@ local function build_record_vtable(schedule, record_position, record, row_key, k
             schedule.add_record({
                station = station_name,
                wait_conditions = record.wait_conditions,
+               temporary = record.temporary,
+               created_by_interrupt = record.created_by_interrupt,
+               allows_unloading = record.allows_unloading,
                index = record_position,
             })
 
-            ctx.controller.message:fragment(station_name)
+            ctx.controller.message:fragment(ScheduleReader.localise_station(station_name, platform))
          end
       end,
    }
@@ -735,10 +892,12 @@ end
 ---Build a list of schedule records and their conditions
 ---@param builder fa.ui.menu.MenuBuilder The menu builder to add to
 ---@param schedule LuaSchedule
+---@param platform boolean The schedule belongs to a space platform
 ---@param interrupt_index integer? Optional interrupt index
 ---@param key_prefix string? Prefix for node keys
-local function build_records_list(builder, schedule, interrupt_index, key_prefix)
+local function build_records_list(builder, schedule, platform, interrupt_index, key_prefix)
    key_prefix = key_prefix or ""
+   local condition_types = platform and PLATFORM_SCHEDULE_CONDITION_TYPES or MAIN_SCHEDULE_CONDITION_TYPES
 
    local records
    if interrupt_index then
@@ -759,7 +918,7 @@ local function build_records_list(builder, schedule, interrupt_index, key_prefix
       local record_key = get_record_key(records, i, key_prefix)
       builder:add_item(
          record_key,
-         build_record_vtable(schedule, record_position, record, record_key, key_prefix, records)
+         build_record_vtable(schedule, platform, record_position, record, record_key, key_prefix, records)
       )
 
       -- Wait conditions
@@ -769,7 +928,17 @@ local function build_records_list(builder, schedule, interrupt_index, key_prefix
             local condition_key = get_condition_key(records, i, j, key_prefix)
             builder:add_item(
                condition_key,
-               build_condition_vtable(schedule, record_position, j, condition, condition_key, key_prefix, records)
+               build_condition_vtable(
+                  schedule,
+                  platform,
+                  record_position,
+                  j,
+                  condition,
+                  condition_key,
+                  key_prefix,
+                  records,
+                  condition_types
+               )
             )
          end
       else
@@ -800,7 +969,8 @@ end
 local function render_interrupt_tab(ctx, interrupt_index)
    local entity = ctx.global_parameters and ctx.global_parameters.entity
    assert(entity and entity.valid, "render_interrupt_tab: entity is nil or invalid")
-   assert(entity.type == "locomotive", "render_interrupt_tab: entity is not a locomotive")
+   local platform = is_platform(entity)
+   assert(platform or entity.type == "locomotive", "render_interrupt_tab: entity has no schedule")
 
    local schedule = get_schedule(entity)
    if not schedule then return nil end
@@ -869,13 +1039,14 @@ local function render_interrupt_tab(ctx, interrupt_index)
 
          local interrupt_vtable = build_condition_vtable(
             schedule,
+            platform,
             { interrupt_index = interrupt_index },
             i,
             condition,
             condition_key,
             key_prefix,
             {},
-            INTERRUPT_TRIGGER_CONDITION_TYPES
+            platform and PLATFORM_INTERRUPT_TRIGGER_CONDITION_TYPES or INTERRUPT_TRIGGER_CONDITION_TYPES
          )
 
          builder:add_item(condition_key, interrupt_vtable)
@@ -900,26 +1071,21 @@ local function render_interrupt_tab(ctx, interrupt_index)
    builder:add_label("target-stops-header", { "fa.schedule-interrupt-targets" })
 
    -- Build the interrupt's target stops using build_records_list
-   build_records_list(builder, schedule, interrupt_index, key_prefix)
+   build_records_list(builder, schedule, platform, interrupt_index, key_prefix)
 
    -- Add target stop button
-   builder:add_clickable("add-target-stop", { "fa.schedule-add-target-stop" }, {
+   local add_target_label = platform and { "fa.schedule-platform-add-target-stop" } or { "fa.schedule-add-target-stop" }
+   builder:add_clickable("add-target-stop", add_target_label, {
       on_click = function(click_ctx)
-         local entity = click_ctx.global_parameters and click_ctx.global_parameters.entity
-         local surface = entity and entity.valid and entity.surface or nil
-         click_ctx.controller:open_child_ui(
-            Router.UI_NAMES.STOP_SELECTOR,
-            { surface = surface },
-            { node = "add-target-stop" }
-         )
+         open_station_selector(click_ctx, { node = "add-target-stop" })
       end,
-      on_action1 = function(click_ctx)
+      on_action1 = not platform and function(click_ctx)
          click_ctx.controller:open_textbox(
             "",
             { node = "add-target-stop" },
             { intro_message = { "fa.schedule-enter-station-name" }, rich_text = true }
          )
-      end,
+      end or nil,
       on_child_result = function(click_ctx, result)
          local station_name = extract_station_name(result, click_ctx)
          if not station_name then return end
@@ -930,7 +1096,10 @@ local function render_interrupt_tab(ctx, interrupt_index)
             index = { interrupt_index = interrupt_index },
          })
 
-         click_ctx.controller.message:fragment({ "fa.schedule-record-added", station_name })
+         click_ctx.controller.message:fragment({
+            "fa.schedule-record-added",
+            ScheduleReader.localise_station(station_name, platform),
+         })
          if new_index then
             local updated_records = schedule.get_records(interrupt_index) or {}
             click_ctx.graph_controller:suggest_move(get_record_key(updated_records, new_index, key_prefix))
@@ -941,13 +1110,14 @@ local function render_interrupt_tab(ctx, interrupt_index)
    return builder:build()
 end
 
----Render the train schedule editor
+---Render the train or space platform schedule editor
 ---@param ctx fa.ui.graph.Ctx
 ---@return fa.ui.graph.Render?
 local function render_schedule_editor(ctx)
    local entity = ctx.global_parameters and ctx.global_parameters.entity
    assert(entity and entity.valid, "render_schedule_editor: entity is nil or invalid")
-   assert(entity.type == "locomotive", "render_schedule_editor: entity is not a locomotive")
+   local platform = is_platform(entity)
+   assert(platform or entity.type == "locomotive", "render_schedule_editor: entity has no schedule")
 
    local schedule = get_schedule(entity)
    if not schedule then return nil end
@@ -964,24 +1134,22 @@ local function render_schedule_editor(ctx)
    end)
 
    -- Build the main schedule records list
-   build_records_list(builder, schedule, nil, "main-")
+   build_records_list(builder, schedule, platform, nil, "main-")
 
    -- Add stop buttons row
    builder:start_row("add-stops-row")
 
-   builder:add_clickable("add_stop", { "fa.schedule-add-stop" }, {
+   builder:add_clickable("add_stop", platform and { "fa.schedule-platform-add-stop" } or { "fa.schedule-add-stop" }, {
       on_click = function(click_ctx)
-         local entity = click_ctx.global_parameters and click_ctx.global_parameters.entity
-         local surface = entity and entity.valid and entity.surface or nil
-         click_ctx.controller:open_child_ui(Router.UI_NAMES.STOP_SELECTOR, { surface = surface }, { node = "add_stop" })
+         open_station_selector(click_ctx, { node = "add_stop" })
       end,
-      on_action1 = function(click_ctx)
+      on_action1 = not platform and function(click_ctx)
          click_ctx.controller:open_textbox(
             "",
             "add_stop",
             { intro_message = { "fa.schedule-enter-station-name" }, rich_text = true }
          )
-      end,
+      end or nil,
       on_child_result = function(click_ctx, result)
          local station_name = extract_station_name(result, click_ctx)
          if not station_name then return end
@@ -991,7 +1159,10 @@ local function render_schedule_editor(ctx)
             wait_conditions = {},
          })
 
-         click_ctx.controller.message:fragment({ "fa.schedule-record-added", station_name })
+         click_ctx.controller.message:fragment({
+            "fa.schedule-record-added",
+            ScheduleReader.localise_station(station_name, platform),
+         })
          if new_index then
             local updated_records = schedule.get_records() or {}
             click_ctx.graph_controller:suggest_move(get_record_key(updated_records, new_index, "main-"))
@@ -999,23 +1170,19 @@ local function render_schedule_editor(ctx)
       end,
    })
 
-   builder:add_clickable("add_temp_stop", { "fa.schedule-add-temporary-stop" }, {
+   local add_temp_label = platform and { "fa.schedule-platform-add-temporary-stop" }
+      or { "fa.schedule-add-temporary-stop" }
+   builder:add_clickable("add_temp_stop", add_temp_label, {
       on_click = function(click_ctx)
-         local entity = click_ctx.global_parameters and click_ctx.global_parameters.entity
-         local surface = entity and entity.valid and entity.surface or nil
-         click_ctx.controller:open_child_ui(
-            Router.UI_NAMES.STOP_SELECTOR,
-            { surface = surface },
-            { node = "add_temp_stop" }
-         )
+         open_station_selector(click_ctx, { node = "add_temp_stop" })
       end,
-      on_action1 = function(click_ctx)
+      on_action1 = not platform and function(click_ctx)
          click_ctx.controller:open_textbox(
             "",
             "add_temp_stop",
             { intro_message = { "fa.schedule-enter-station-name" }, rich_text = true }
          )
-      end,
+      end or nil,
       on_child_result = function(click_ctx, result)
          local station_name = extract_station_name(result, click_ctx)
          if not station_name then return end
@@ -1026,7 +1193,10 @@ local function render_schedule_editor(ctx)
             temporary = true,
          })
 
-         click_ctx.controller.message:fragment({ "fa.schedule-temporary-record-added", station_name })
+         click_ctx.controller.message:fragment({
+            "fa.schedule-temporary-record-added",
+            ScheduleReader.localise_station(station_name, platform),
+         })
          if new_index then
             local updated_records = schedule.get_records() or {}
             click_ctx.graph_controller:suggest_move(get_record_key(updated_records, new_index, "main-"))
@@ -1077,10 +1247,7 @@ local function render_schedule_editor(ctx)
    -- Add interrupt button
    builder:add_clickable("add_interrupt", { "fa.schedule-add-interrupt" }, {
       on_click = function(click_ctx)
-         local player = game.get_player(click_ctx.pindex)
-         if not player then return end
-
-         local all_interrupts = TrainHelpers.get_train_interrupts(player.force)
+         local all_interrupts = get_interrupt_names(get_force_schedules(entity.force --[[@as LuaForce]], platform))
 
          if #all_interrupts == 0 then
             UiSounds.play_ui_edge(click_ctx.pindex)
@@ -1088,7 +1255,11 @@ local function render_schedule_editor(ctx)
             return
          end
 
-         click_ctx.controller:open_child_ui(Router.UI_NAMES.TRAIN_INTERRUPT_SELECTOR, {}, { node = "add_interrupt" })
+         click_ctx.controller:open_child_ui(
+            Router.UI_NAMES.TRAIN_INTERRUPT_SELECTOR,
+            { interrupt_names = all_interrupts },
+            { node = "add_interrupt" }
+         )
       end,
       on_action1 = function(m_ctx)
          m_ctx.controller:open_textbox("", { node = "add_interrupt" }, { "fa.schedule-enter-interrupt-name" })
@@ -1106,11 +1277,7 @@ local function render_schedule_editor(ctx)
             return
          end
 
-         schedule.add_interrupt({
-            name = result,
-            conditions = {},
-            targets = {},
-         })
+         add_interrupt_by_name(schedule, get_force_schedules(entity.force --[[@as LuaForce]], platform), result)
          ctx.controller.message:fragment({ "fa.schedule-interrupt-added", result })
          local updated_interrupts = schedule.get_interrupts()
          ctx.graph_controller:suggest_move("interrupt-" .. tostring(#updated_interrupts))
@@ -1133,10 +1300,21 @@ local function render_schedule_editor(ctx)
    return builder:build()
 end
 
--- Create the tab descriptor
+-- Create the tab descriptors: the same editor, titled for trains or platforms
 local schedule_editor_tab = KeyGraph.declare_graph({
    name = "schedule-editor",
    title = { "fa.schedule-editor-title" },
+   render_callback = render_schedule_editor,
+   get_help_metadata = function()
+      return {
+         Help.message_list("schedule-editor"),
+      }
+   end,
+})
+
+local platform_schedule_editor_tab = KeyGraph.declare_graph({
+   name = "schedule-editor",
+   title = { "fa.schedule-editor-platform-title" },
    render_callback = render_schedule_editor,
    get_help_metadata = function()
       return {
@@ -1151,7 +1329,7 @@ mod.schedule_editor_ui = TabList.declare_tablist({
    resets_to_first_tab_on_open = true,
    tabs_callback = function(pindex, parameters)
       local entity = parameters and parameters.entity
-      if not entity or not entity.valid or entity.type ~= "locomotive" then
+      if not entity or not entity.valid or (entity.type ~= "locomotive" and not is_platform(entity)) then
          return {
             {
                name = "main",
@@ -1170,7 +1348,7 @@ mod.schedule_editor_ui = TabList.declare_tablist({
          }
       end
 
-      local tabs = { schedule_editor_tab }
+      local tabs = { is_platform(entity) and platform_schedule_editor_tab or schedule_editor_tab }
 
       local interrupts = schedule.get_interrupts()
       for i, interrupt in ipairs(interrupts) do

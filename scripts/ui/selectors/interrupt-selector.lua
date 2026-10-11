@@ -1,29 +1,24 @@
 --[[
-Train interrupt selector UI.
+Schedule interrupt selector UI.
 
-Allows selecting a train interrupt from existing interrupts or typing a new one.
+Selects an interrupt from the names the opener passes (parameter interrupt_names: string[]), those of the force's
+trains or of its space platforms.
 Returns the selected interrupt name to the parent UI.
 ]]
 
 local OptionsSelector = require("scripts.ui.selectors.options-selector")
 local Router = require("scripts.ui.router")
-local TrainHelpers = require("scripts.rails.train-helpers")
 
 local mod = {}
 
----Get train interrupt options for the selector
+---Get interrupt options for the selector
 ---@param pindex integer
----@param parameters table
+---@param parameters { interrupt_names: string[] }
 ---@return fa.ui.selectors.OptionsResult
 local function get_train_interrupt_options(pindex, parameters)
-   local player = game.get_player(pindex)
-   if not player then return { options = {} } end
-
    local options = {}
 
-   -- Get existing interrupts and add them
-   local interrupts = TrainHelpers.get_train_interrupts(player.force)
-   for _, interrupt_name in ipairs(interrupts) do
+   for _, interrupt_name in ipairs(parameters.interrupt_names) do
       table.insert(options, {
          label = interrupt_name,
          value = interrupt_name,

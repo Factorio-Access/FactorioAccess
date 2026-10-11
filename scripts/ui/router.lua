@@ -143,6 +143,7 @@ mod.UI_NAMES = {
    TRAIN_GROUP_SELECTOR = "train_group_selector",
    TRAIN_INTERRUPT_SELECTOR = "train_interrupt_selector",
    STOP_SELECTOR = "stop_selector",
+   SPACE_LOCATION_SELECTOR = "space_location_selector",
    CONSTANT_COMBINATOR = "constant_combinator",
    DECIDER_COMBINATOR = "decider_combinator",
    POWER_SWITCH = "power_switch",

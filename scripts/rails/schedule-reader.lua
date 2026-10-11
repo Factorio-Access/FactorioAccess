@@ -1,7 +1,8 @@
---Here: Functions for reading train schedules into speech messages
+--Here: Functions for reading train and space platform schedules into speech messages
 --Recursive descent parser in reverse: each function handles one level and pushes to the message builder
 
 local CircuitNetwork = require("scripts.circuit-network")
+local Localising = require("scripts.localising")
 
 local mod = {}
 
@@ -44,10 +45,20 @@ local STATION_CONDITIONS = {
    not_at_station = "fa.schedule-not-at-station",
 }
 
+---Name a schedule's station: a platform's stations are space locations, a train's are stop names
+---@param station string
+---@param platform boolean
+---@return LocalisedString
+function mod.localise_station(station, platform)
+   if platform then return Localising.get_localised_name_with_fallback(prototypes.space_location[station]) end
+   return station
+end
+
 ---Read a single wait condition into a message builder
 ---@param mb fa.MessageBuilder
 ---@param condition WaitCondition
-function mod.read_wait_condition(mb, condition)
+---@param platform boolean? The condition belongs to a space platform's schedule
+function mod.read_wait_condition(mb, condition, platform)
    local cond_type = condition.type
 
    -- Simple conditions (no parameters)
@@ -70,8 +81,11 @@ function mod.read_wait_condition(mb, condition)
    local station_key = STATION_CONDITIONS[cond_type]
    if station_key then
       local station_name = condition.station
-      if not station_name or station_name == "" then station_name = "nil" end
-      mb:fragment({ station_key, station_name })
+      if station_name and station_name ~= "" then
+         mb:fragment({ station_key, mod.localise_station(station_name, platform or false) })
+      else
+         mb:fragment({ station_key, { "fa.schedule-station-not-set" } })
+      end
       return
    end
 
@@ -80,17 +94,22 @@ function mod.read_wait_condition(mb, condition)
       mb:fragment({ "fa.schedule-time", tostring((condition.ticks or 0) / 60) })
    elseif cond_type == "inactivity" then
       mb:fragment({ "fa.schedule-inactivity", tostring((condition.ticks or 0) / 60) })
-   -- Request conditions with item parameter: these always carry an item pair
-   elseif cond_type == "request_satisfied" then
-      local item = condition.condition --[[@as BlueprintItemIDAndQualityIDPair]]
-      mb:fragment({ "fa.schedule-request-satisfied", item.name })
-   elseif cond_type == "request_not_satisfied" then
-      local item = condition.condition --[[@as BlueprintItemIDAndQualityIDPair]]
-      mb:fragment({ "fa.schedule-request-not-satisfied", item.name })
+   -- Request conditions name an item pair once one is chosen
+   elseif cond_type == "request_satisfied" or cond_type == "request_not_satisfied" then
+      local satisfied = cond_type == "request_satisfied"
+      local item = condition.condition --[[@as BlueprintItemIDAndQualityIDPair?]]
+      if item then
+         local key = satisfied and "fa.schedule-request-satisfied" or "fa.schedule-request-not-satisfied"
+         mb:fragment({ key, Localising.get_localised_name_with_fallback(prototypes.item[item.name]) })
+      else
+         mb:fragment({
+            satisfied and "fa.schedule-request-satisfied-no-item" or "fa.schedule-request-not-satisfied-no-item",
+         })
+      end
    -- Planet condition (optional planet parameter)
    elseif cond_type == "any_planet_import_zero" then
       if condition.planet then
-         mb:fragment({ "fa.schedule-planet-import-zero", condition.planet })
+         mb:fragment({ "fa.schedule-planet-import-zero", mod.localise_station(condition.planet, true) })
       else
          mb:fragment({ "fa.schedule-any-planet-import-zero" })
       end
