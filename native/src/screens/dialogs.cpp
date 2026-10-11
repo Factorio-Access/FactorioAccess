@@ -162,6 +162,7 @@ struct Row {
   std::string key;      // shared by the rows of one table: up and down keep the column
   std::string context;  // the row's own label ("Move up" before its key buttons): said when focus enters the row
   int section = 0;      // the panel it is in, when a list and its details sit side by side (see Walker)
+  bool closing = false;  // the dialog's closing button bar (Back, Next, Confirm): the game's dialog_buttons flow
 };
 
 // Visible controls (non-containers) under `w`, counting up to `limit`.
@@ -178,10 +179,14 @@ int count_controls(agui::Widget* w, int limit) {
   return n;
 }
 
+// Whether each cell holds at most one control, so the flow is one row. A horizontal flow nested in it is part of the
+// same line ("Map exchange string" beside its import and export buttons) when it qualifies itself.
 bool cells_are_single(agui::Widget* w) {
   for (bool priv : {false, true})
-    for (agui::Widget* c : priv ? agui::private_children(w) : agui::children(w))
-      if (agui::visible(c) && classify(c) == Kind::Container && count_controls(c, 2) > 1) return false;
+    for (agui::Widget* c : priv ? agui::private_children(w) : agui::children(w)) {
+      if (!agui::visible(c) || classify(c) != Kind::Container || count_controls(c, 2) <= 1) continue;
+      if (!agui::is_a(c, "agui::HorizontalFlow") || !cells_are_single(c)) return false;
+    }
   return true;
 }
 
@@ -259,7 +264,10 @@ class Walker {
           bool flow = agui::is_a(c, "agui::HorizontalFlow") || agui::is_a(c, "agui::Table");
           bool row = !in_row && flow && cells_are_single(c);
           bool columns = !in_row && flow && !row && contains_selection_table(c);
-          if (row) new_row();
+          if (row) {
+            new_row();
+            rows.back().closing = agui::style_name(c) == "dialog_buttons_horizontal_flow";
+          }
           walk(c, p, in_row || row, columns);
           if (row) {
             name_from_labels(rows.back());
@@ -732,25 +740,34 @@ class DialogsScreen : public Screen {
     if (start) b.set_start(*start);
   }
 
-  // A dialog is one Tab stop, unless it has tabs: then its tab strip, the settings around it (one stop per panel when
-  // a list and its details sit side by side) and its closing button bar are each a stop, in that order. Returns the
-  // rows in stop order (a row's index and its stop key), each stop's rows in their own order. The first stop keeps
-  // the dialog's own key, so a new dialog can be focused by it.
+  // A dialog's closing button bar (Back, Next, Confirm) is a Tab stop of its own when the dialog has other controls
+  // (a message box's text and its OK stay one stop). A dialog with tabs also gets a stop for its tab strip and one
+  // for the settings around it (one per panel when a list and its details sit side by side). Stops go tabs, content,
+  // buttons. Returns the rows in stop order (a row's index and its stop key), each stop's rows in their own order.
+  // The first stop keeps the dialog's own key, so a new dialog can be focused by it.
   static std::vector<std::pair<size_t, std::string>> stop_keys(const std::string& dialog, const std::vector<Row>& rows) {
     auto all_of = [](const Row& row, Kind k) {
       for (const Entry& e : row.cells)
         if (e.kind != k) return false;
       return !row.cells.empty();
     };
-    bool tabbed = false;
-    for (const Row& row : rows) tabbed |= all_of(row, Kind::Tab);
-    std::vector<std::string> groups(rows.size());
-    if (tabbed) {
-      size_t buttons = rows.size();
-      while (buttons > 0 && all_of(rows[buttons - 1], Kind::Button)) --buttons;
-      for (size_t r = 0; r < rows.size(); ++r)
-        groups[r] = r >= buttons ? "buttons" : all_of(rows[r], Kind::Tab) ? "tabs" : std::format("s{}", rows[r].section);
+    bool tabbed = false, closing = false, content = false;
+    for (const Row& row : rows) {
+      tabbed |= all_of(row, Kind::Tab);
+      closing |= row.closing;
+      if (!row.closing)
+        for (const Entry& e : row.cells) content |= e.kind != Kind::Label;
     }
+    std::vector<bool> buttons(rows.size(), false);
+    if (closing && content) {
+      for (size_t r = 0; r < rows.size(); ++r) buttons[r] = rows[r].closing;
+    } else if (tabbed) {
+      // A tabbed dialog without the game's button flow: its trailing rows of buttons.
+      for (size_t r = rows.size(); r > 0 && all_of(rows[r - 1], Kind::Button); --r) buttons[r - 1] = true;
+    }
+    std::vector<std::string> groups(rows.size());
+    for (size_t r = 0; r < rows.size(); ++r)
+      groups[r] = buttons[r] ? "buttons" : !tabbed ? "" : all_of(rows[r], Kind::Tab) ? "tabs" : std::format("s{}", rows[r].section);
     std::vector<std::string> order;
     auto add = [&](const std::string& g) {
       if (std::find(order.begin(), order.end(), g) == order.end()) order.push_back(g);
