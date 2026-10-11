@@ -806,15 +806,14 @@ register_ui_event("fa-e", function(event, pindex)
    return EventManager.FINISHED
 end)
 
--- Escape key pops one UI from the stack and announces the title of what we arrived at
-register_ui_event("fa-a-e", function(event, pindex)
+---Close the top UI and announce the title of the one under it, if any (Alt+E, and Escape).
+---@param pindex integer
+function mod.back_one_level(pindex)
    local router = mod.get_router(pindex)
    local stack = router_state[pindex].ui_stack
 
-   -- Pop the current UI
-   local closed_ui = router:_pop_ui()
+   router:_pop_ui()
 
-   -- If there's still a UI on the stack, announce its title
    if #stack > 0 then
       local ui = registered_uis[stack[#stack].name]
       if ui and ui.on_announce_title then
@@ -823,7 +822,10 @@ register_ui_event("fa-a-e", function(event, pindex)
          controller:finalize()
       end
    end
+end
 
+register_ui_event("fa-a-e", function(event, pindex)
+   mod.back_one_level(pindex)
    return EventManager.FINISHED
 end)
 

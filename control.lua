@@ -2029,7 +2029,8 @@ EventManager.on_event(
    end
 )
 
--- Handle escape key: close textbox if open (sending nil to parent), otherwise give pause hint
+-- Handle escape key: close textbox if open (sending nil to parent), else go back one UI (as Alt+E), else give the pause
+-- hint
 EventManager.on_event(
    "fa-escape",
    ---@param event EventData.CustomInputEvent
@@ -2054,6 +2055,8 @@ EventManager.on_event(
          -- Fallback: just close textbox and pop UI
          GameGui.close_textbox(pindex)
          router:close_ui()
+      elseif UiRouter.get_router(pindex):is_ui_open() then
+         UiRouter.back_one_level(pindex)
       else
          Speech.speak(pindex, { "fa.escape-to-pause" })
       end
