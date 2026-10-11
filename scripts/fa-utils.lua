@@ -507,16 +507,14 @@ function mod.simplify_large_number(num_in)
    return num
 end
 
---Checks a position to see if it has a water tile
+---Whether the tile at a position is a liquid with shores: water, lava, oil ocean or ammoniacal ocean.
+---@param surface LuaSurface
+---@param pos MapPosition.struct
+---@return boolean
 function mod.tile_is_water(surface, pos)
-   local water_tiles = surface.find_tiles_filtered({
-      position = mod.center_of_tile(pos),
-      radius = 0.1,
-      name = Consts.WATER_TILE_NAMES,
-   })
-   if not water_tiles then return false end
-   assert(#water_tiles <= 1)
-   return #water_tiles == 1
+   local tile = surface.get_tile(math.floor(pos.x), math.floor(pos.y))
+   local kind = ScannerConsts.tile_body_kinds().by_tile[tile.name]
+   return kind ~= nil and kind.shores == true
 end
 
 -- The cursor is over a tile of a liquid such as water or lava: whether it is open, a shore or a crevice, counting

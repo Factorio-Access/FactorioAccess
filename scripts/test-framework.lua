@@ -54,6 +54,7 @@ local test_files = {
    "rail-grid-adjustment-test", -- Test that TestSurface matches game rail grid adjustment
    "scanner-backends-test", -- Scanner entries for tile bodies and trees
    "player-weapon-test", -- Test weapon/ammo property detection
+   "liquid-tile-test", -- Water and the other liquids for the cursor skip
 }
 
 -- Test execution state
