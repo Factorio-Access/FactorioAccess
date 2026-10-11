@@ -20,6 +20,7 @@ local mod = {}
 ---@field upstream fa.BeltAnalyzer.SortedEntries[]
 ---@field downstream fa.BeltAnalyzer.SortedEntries[]
 ---@field total fa.BeltAnalyzer.SortedEntries[]
+---@field stacks { left: { upstream: fa.NQC, downstream: fa.NQC, total: fa.NQC }, right: { upstream: fa.NQC, downstream: fa.NQC, total: fa.NQC } }
 ---@field upstream_length fa.TransportBelts.LaneLengths
 ---@field downstream_length fa.TransportBelts.LaneLengths
 ---@field total_length fa.TransportBelts.LaneLengths
@@ -81,12 +82,16 @@ local function label_local_cell(ctx, x, y)
 
    for name, quals in pairs(bucket.items) do
       for quality, count in pairs(quals) do
-         local item = ItemInfo.item_info({
-            name = name,
-            quality = quality,
-            count = count,
-         })
-         builder:list_item(item)
+         if count > 1 and bucket.stacks[name][quality] == 1 then
+            -- One stack of several items: a stacked belt
+            builder:list_item({
+               "fa.ui-belt-analyzer-stack-of",
+               count,
+               ItemInfo.item_info({ name = name, quality = quality }),
+            })
+         else
+            builder:list_item(ItemInfo.item_info({ name = name, quality = quality, count = count }))
+         end
       end
    end
 
@@ -140,13 +145,21 @@ local function aggregate_grid_builder(field, length_field)
       for col = 1, 2 do
          local lane_key = col == 1 and "left" or "right"
          local lane_length = analysis[length_field][lane_key]
+         ---@type fa.NQC
+         local stacks = (col == 1 and analysis.stacks.left or analysis.stacks.right)[field]
          for row, bucket in pairs(state[col]) do
             local percent = lane_length > 0 and string.format("%.1f", 100 * bucket.count / lane_length) or "0.0"
-            builder:add_simple_label(
-               col,
-               row,
-               { "fa.ui-belt-analyzer-aggregation", ItemInfo.item_info(bucket), percent }
-            )
+            local n_stacks = stacks[bucket.name][bucket.quality]
+            local label = { "fa.ui-belt-analyzer-aggregation", ItemInfo.item_info(bucket), percent }
+            if n_stacks < bucket.count then
+               label = {
+                  "fa.ui-belt-analyzer-aggregation-stacked",
+                  ItemInfo.item_info(bucket),
+                  percent,
+                  FaUtils.one_decimal(bucket.count / n_stacks),
+               }
+            end
+            builder:add_simple_label(col, row, label)
          end
       end
 
@@ -176,6 +189,7 @@ local function state_setup(_pindex, params)
          upstream = { up_left, up_right },
          total = { tot_left, tot_right },
          downstream = { down_left, down_right },
+         stacks = ad.stacks,
          upstream_length = ad.upstream_length,
          downstream_length = ad.downstream_length,
          total_length = ad.total_length,

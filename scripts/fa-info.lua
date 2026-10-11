@@ -896,6 +896,28 @@ local function ent_info_inserter_spoil_priority(ctx)
    ctx.message:list_item({ "gui-inserter." .. priority })
 end
 
+-- How high an inserter or loader stacks items onto belts, once the force has the stacking research: the research's
+-- size, up to what the machine can do.
+---@param ctx fa.Info.EntInfoContext
+local function ent_info_belt_stacking(ctx)
+   local ent = ctx.ent
+   local bonus = ent.force.belt_stack_size_bonus
+   if bonus == 0 then return end
+   ---@type integer
+   local max
+   if ent.type == "inserter" then
+      max = assert(ent.prototype.inserter_max_belt_stack_size)
+   elseif ent.type == "loader" or ent.type == "loader-1x1" then
+      max = assert(ent.prototype.loader_max_belt_stack_size)
+      local override = ent.loader_belt_stack_size_override
+      if override > 0 then max = math.min(max, override) end
+   else
+      return
+   end
+   if max <= 1 then return end
+   ctx.message:list_item({ "fa.ent-info-stacks-on-belts", math.min(max, 1 + bonus) })
+end
+
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_turret_priority(ctx)
    local ent = ctx.ent
@@ -1227,6 +1249,12 @@ local function ent_info_belt_contents(ctx)
    table.insert(params, 1, key)
    -- EmmyLua cannot see that an array starting with a key string is a LocalisedString
    ctx.message:fragment(params --[[@as LocalisedString]])
+
+   -- Stacked belts (with the stacking research): how high, on average, on this belt.
+   local average = node:average_stack()
+   if average and average > 1 then
+      ctx.message:list_item({ "fa.ent-info-belt-stacked", FaUtils.one_decimal(average) })
+   end
 end
 
 ---@param ctx fa.Info.EntInfoContext
@@ -1429,6 +1457,7 @@ function mod.ent_info(pindex, ent, is_scanner)
    run_handler(ent_info_spidertron)
    run_handler(ent_info_filters)
    run_handler(ent_info_inserter_spoil_priority)
+   run_handler(ent_info_belt_stacking)
    run_handler(ent_info_verbose_status)
    run_handler(ent_info_turret_priority)
 

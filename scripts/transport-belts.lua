@@ -274,10 +274,12 @@ That means that in rare cases we can probably bucket such that there are two
 item kinds in a slot, but observing one in practice is almost impossibly
 difficult.
 
-The items table is prototype->quality->count.
+The items table is prototype->quality->count; stacks counts the belt stacks those items are in (more items than
+stacks means stacked belts, with the stacking research).
 ]]
 ---@class fa.TransportBelts.SlotBucket
 ---@field items table<string, table<string, integer>>
+---@field stacks table<string, table<string, integer>>
 
 -- Get the contents of a lane, accounting for stack sizes.
 ---@param line defines.transport_line
@@ -292,6 +294,7 @@ function Node:get_line_contents(line)
    for _ = 1, line.line_length * 4 do
       table.insert(buckets, {
          items = {},
+         stacks = {},
       })
    end
 
@@ -304,9 +307,33 @@ function Node:get_line_contents(line)
 
       b.items[n] = b.items[n] or {}
       b.items[n][q] = (b.items[n][q] or 0) + ds.count
+      b.stacks[n] = b.stacks[n] or {}
+      b.stacks[n][q] = (b.stacks[n][q] or 0) + 1
    end
 
    return buckets
+end
+
+-- Items per belt stack on this belt's own lanes, or nil when they hold nothing. Above 1 only on stacked belts.
+---@return number?
+function Node:average_stack()
+   local items, stacks = 0, 0
+   for _, lane in pairs(self:get_all_contents()) do
+      for _, bucket in pairs(lane) do
+         for _, quals in pairs(bucket.items) do
+            for _, count in pairs(quals) do
+               items = items + count
+            end
+         end
+         for _, quals in pairs(bucket.stacks) do
+            for _, count in pairs(quals) do
+               stacks = stacks + count
+            end
+         end
+      end
+   end
+   if stacks == 0 then return nil end
+   return items / stacks
 end
 
 --[[
@@ -328,10 +355,10 @@ function Node:get_all_contents()
       local right = self:get_line_contents(defines.transport_line.right_line)
       local maxlen = math.max(#left, #right)
       for i = #left + 1, maxlen do
-         left[i] = { items = {} }
+         left[i] = { items = {}, stacks = {} }
       end
       for i = #right + 1, maxlen do
-         right[i] = { items = {} }
+         right[i] = { items = {}, stacks = {} }
       end
       return { left, right }
    elseif t == "underground-belt" then
@@ -518,6 +545,7 @@ end
 ---@class fa.TransportBelts.BeltAnalyzerData
 ---@field left { upstream: fa.NQC, downstream: fa.NQC, total: fa.NQC }
 ---@field right { upstream: fa.NQC, downstream: fa.NQC, total: fa.NQC }
+---@field stacks { left: { upstream: fa.NQC, downstream: fa.NQC, total: fa.NQC }, right: { upstream: fa.NQC, downstream: fa.NQC, total: fa.NQC } } Belt stacks per item, same shape
 ---@field upstream_length fa.TransportBelts.LaneLengths
 ---@field downstream_length fa.TransportBelts.LaneLengths
 ---@field total_length fa.TransportBelts.LaneLengths
@@ -579,6 +607,10 @@ function Node:belt_analyzer_algo()
          total = {},
       },
       right = { upstream = {}, downstream = {}, total = {} },
+      stacks = {
+         left = { upstream = {}, downstream = {}, total = {} },
+         right = { upstream = {}, downstream = {}, total = {} },
+      },
       upstream_length = { left = 0, right = 0 },
       downstream_length = { left = 0, right = 0 },
       total_length = { left = 0, right = 0 },
@@ -586,9 +618,10 @@ function Node:belt_analyzer_algo()
 
    ---@param tab fa.NQC
    ---@param buckets fa.TransportBelts.SlotBucket[]
-   local function fold_buckets_into(tab, buckets)
+   ---@param field "items"|"stacks"
+   local function fold_field(tab, buckets, field)
       for _, bucket in pairs(buckets) do
-         for n, quals in pairs(bucket.items) do
+         for n, quals in pairs(bucket[field]) do
             local dest = tab[n]
             if not dest then
                dest = {}
@@ -621,11 +654,15 @@ function Node:belt_analyzer_algo()
       local this_contents = n:get_all_contents()
       local left = this_contents[1]
       local right = this_contents[2]
-      fold_buckets_into(ret.left.total, left)
-      fold_buckets_into(ret.right.total, right)
+      fold_field(ret.left.total, left, "items")
+      fold_field(ret.right.total, right, "items")
+      fold_field(ret.stacks.left.total, left, "stacks")
+      fold_field(ret.stacks.right.total, right, "stacks")
       if ud then
-         fold_buckets_into(ret.left[ud], left)
-         fold_buckets_into(ret.right[ud], right)
+         fold_field(ret.left[ud], left, "items")
+         fold_field(ret.right[ud], right, "items")
+         fold_field(ret.stacks.left[ud], left, "stacks")
+         fold_field(ret.stacks.right[ud], right, "stacks")
       end
 
       return true
