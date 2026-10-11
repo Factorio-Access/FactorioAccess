@@ -166,6 +166,11 @@ local function render_rocket_silo_config(ctx)
 
    -- Rocket parts progress label
    form:add_label("rocket_parts", function(ctx)
+      -- The parts count restarts once a rocket is built
+      if entity.rocket_silo_status == defines.rocket_silo_status.rocket_ready then
+         ctx.message:fragment({ "fa.rocket-silo-rocket-ready" })
+         return
+      end
       local parts = entity.rocket_parts
       local max_parts = entity.prototype.rocket_parts_required
       ctx.message:fragment({ "fa.rocket-silo-parts-progress", parts, max_parts })
