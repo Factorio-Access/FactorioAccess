@@ -652,7 +652,7 @@ function mod.hand_build_preview_info(pindex)
    local pos = vp:get_cursor_pos()
    local tile_center = FaUtils.center_of_tile(pos)
 
-   local result = { "" }
+   local result = MessageBuilder.new()
    local build_dir = vp:get_hand_direction()
    local footprint = FaUtils.calculate_building_footprint({
       entity_prototype = ent_p,
@@ -684,13 +684,13 @@ function mod.hand_build_preview_info(pindex)
             surface = entrance.surface,
             time_to_live = 60,
          })
-         table.insert(result, {
+         result:list_item({
             "fa.connection-connects-underground",
             FaUtils.localise_direction(build_dir),
             tostring(actual_dist - 1),
          })
       else
-         table.insert(result, { "fa.connection-not-connected-pipe" })
+         result:list_item({ "fa.connection-not-connected-pipe" })
       end
    end
 
@@ -698,7 +698,7 @@ function mod.hand_build_preview_info(pindex)
    if ent_p.type == "pipe-to-ground" then
       local connection = Fluids.get_pipe_to_ground_preview(p.surface, pos, build_dir, ent_p)
       if connection then
-         table.insert(result, {
+         result:list_item({
             "fa.connection-connects-underground",
             FaUtils.localise_direction(connection.facing_direction),
             tostring(connection.distance),
@@ -709,9 +709,9 @@ function mod.hand_build_preview_info(pindex)
    --For heat pipes, preview the connection directions: a neighbour connects when one of its heat connections sits
    --on the neighbouring tile and faces back at the pipe (heat pipes connect on every side).
    if ent_p.type == "heat-pipe" then
-      table.insert(result, { "fa.connection-heat-pipe-can-connect" })
-      local con_count = 0
+      local connected_dirs = {}
       for _, con_dir in ipairs({ dirs.north, dirs.east, dirs.south, dirs.west }) do
+         local connects = false
          local con_target_pos = FaUtils.offset_position_legacy(tile_center, con_dir, 1)
          local facing_back = FaUtils.rotate_180(con_dir)
          rendering.draw_circle({
@@ -736,14 +736,17 @@ function mod.hand_build_preview_info(pindex)
                      surface = surf,
                      time_to_live = 30,
                   })
-                  con_count = con_count + 1
-                  if con_count > 1 then table.insert(result, { "fa.connection-heat-pipe-and" }) end
-                  table.insert(result, FaUtils.localise_direction(con_dir))
+                  connects = true
                end
             end
          end
+         if connects then table.insert(connected_dirs, FaUtils.localise_direction(con_dir)) end
       end
-      if con_count == 0 then table.insert(result, { "fa.connection-heat-pipe-to-nothing" }) end
+      if next(connected_dirs) then
+         result:list_item({ "fa.connection-heat-pipe-connects", FaUtils.build_list(connected_dirs) })
+      else
+         result:list_item({ "fa.connection-heat-pipe-to-nothing" })
+      end
    end
    --For electric poles, report the directions of up to 5 wire-connectible
    -- electric poles that can connect.
@@ -765,25 +768,25 @@ function mod.hand_build_preview_info(pindex)
       end
       if #poles > 0 then
          --List the first 4 poles within range
-         table.insert(result, { "fa.connection-connecting" })
+         local found = {}
          for i, pole in ipairs(poles) do
             if i < 5 then
                -- Use center-to-center distance for accurate reporting
                local dist = math.ceil(util.distance(pole.position, pole_center))
                local dir = FaUtils.get_direction_biased(pole.position, pole_center)
-               table.insert(result, FaUtils.format_distance_with_direction(dist, dir))
-               table.insert(result, ", ")
+               table.insert(found, FaUtils.format_distance_with_direction(dist, dir))
             end
          end
+         result:list_item({ "fa.connection-connecting", FaUtils.build_list(found) })
       else
          --Notify if no connections and state nearest electric pole
-         table.insert(result, { "fa.connection-not-connected" })
+         result:list_item({ "fa.connection-not-connected" })
          local nearest_pole, min_dist = Electrical.find_nearest_electric_pole(nil, false, 50, surf, pole_center)
          if min_dist == nil or min_dist >= 1000 then
-            table.insert(result, { "fa.connection-no-poles-within" })
+            result:list_item({ "fa.connection-no-poles-within" })
          else
             local dir = FaUtils.get_direction_biased(nearest_pole.position, pole_center)
-            table.insert(result, {
+            result:list_item({
                "fa.connection-to-nearest-pole",
                FaUtils.format_distance_with_direction(math.ceil(min_dist), dir),
             })
@@ -818,18 +821,18 @@ function mod.hand_build_preview_info(pindex)
       end
 
       if #connecting_ports > 0 then
-         table.insert(result, { "fa.connection-connecting" })
+         local found = {}
          for i, port in ipairs(connecting_ports) do
             if i <= 5 then
                local dist = math.ceil(util.distance(port.position, new_center))
                local dir = FaUtils.get_direction_biased(port.position, new_center)
-               table.insert(result, FaUtils.format_distance_with_direction(dist, dir))
-               table.insert(result, ", ")
+               table.insert(found, FaUtils.format_distance_with_direction(dist, dir))
             end
          end
+         result:list_item({ "fa.connection-connecting", FaUtils.build_list(found) })
       else
          --Notify if no connections and state nearest roboport
-         table.insert(result, { "fa.connection-not-connected" })
+         result:list_item({ "fa.connection-not-connected" })
          -- Search for nearest roboport (any type) within a large radius
          local far_ports = surf.find_entities_filtered({
             type = "roboport",
@@ -837,7 +840,7 @@ function mod.hand_build_preview_info(pindex)
             radius = 2000,
          })
          if #far_ports == 0 then
-            table.insert(result, { "fa.connection-no-roboports-within" })
+            result:list_item({ "fa.connection-no-roboports-within" })
          else
             -- Find the closest one
             local nearest_port = nil
@@ -850,7 +853,7 @@ function mod.hand_build_preview_info(pindex)
                end
             end
             local dir = FaUtils.get_direction_biased(nearest_port.position, new_center)
-            table.insert(result, {
+            result:list_item({
                "fa.connection-to-nearest-roboport",
                FaUtils.format_distance_with_direction(math.ceil(min_dist), dir),
             })
@@ -860,22 +863,22 @@ function mod.hand_build_preview_info(pindex)
 
    if ent_p.type == "agricultural-tower" then
       local plantable, total = Agriculture.count_plantable_sectors(ent_p, surf, footprint.center)
-      table.insert(result, { "fa.connection-agricultural-sectors", plantable, total })
+      result:list_item({ "fa.connection-agricultural-sectors", plantable, total })
    end
 
    --For logistic chests, list whether there is a network nearby
    if ent_p.type == "logistic-container" then
       local network, distance, direction = BotLogistics.find_closest_network_with_distance(p.surface, pos, p.force)
       if not network then
-         table.insert(result, { "fa.connection-not-in-network" })
+         result:list_item({ "fa.connection-not-in-network" })
       elseif distance and distance > 0 then
-         table.insert(result, {
+         result:list_item({
             "fa.connection-not-in-network-nearest",
             FaUtils.format_distance_with_direction(math.ceil(distance), assert(direction)), -- Set whenever distance > 0
          })
       else
          local network_name = BotLogistics.get_network_name_from_network(network)
-         table.insert(result, { "fa.connection-in-network", network_name })
+         result:list_item({ "fa.connection-in-network", network_name })
       end
    end
 
@@ -930,22 +933,18 @@ function mod.hand_build_preview_info(pindex)
          end
       end
       if found_pole then
-         table.insert(result, { "fa.connection-power-connected" })
          local dist = math.ceil(util.distance(found_pole.position, position))
          local dir = FaUtils.get_direction_biased(found_pole.position, position)
-         table.insert(result, {
-            "fa.connection-from-direction",
-            FaUtils.format_distance_with_direction(dist, dir),
-         })
+         result:list_item({ "fa.connection-power-connected", FaUtils.format_distance_with_direction(dist, dir) })
       else
-         table.insert(result, { "fa.connection-power-not-connected" })
+         result:list_item({ "fa.connection-power-not-connected" })
          --Notify if no connections and state nearest electric pole
          local nearest_pole, min_dist = Electrical.find_nearest_electric_pole(nil, false, 50, surf, position)
          if min_dist == nil or min_dist >= 1000 then
-            table.insert(result, { "fa.connection-no-poles-within" })
+            result:list_item({ "fa.connection-no-poles-within" })
          else
             local dir = FaUtils.get_direction_biased(nearest_pole.position, position)
-            table.insert(result, {
+            result:list_item({
                "fa.connection-to-nearest-pole",
                FaUtils.format_distance_with_direction(math.ceil(min_dist), dir),
             })
@@ -953,7 +952,7 @@ function mod.hand_build_preview_info(pindex)
       end
    end
 
-   if would_freeze(ent_p, surf, footprint) then table.insert(result, { "fa.connection-would-freeze" }) end
+   if would_freeze(ent_p, surf, footprint) then result:list_item({ "fa.connection-would-freeze" }) end
 
    -- The game measures build reach to the nearest point of the building's footprint. Ghosts have no reach.
    local player_pos = p.position --[[@as MapPosition.struct]]
@@ -961,9 +960,9 @@ function mod.hand_build_preview_info(pindex)
       not is_ghost
       and util.distance(FaUtils.closest_point_in_box(player_pos, footprint), player_pos) > p.build_distance
    then
-      table.insert(result, { "fa.connection-cursor-out-of-reach" })
+      result:list_item({ "fa.connection-cursor-out-of-reach" })
    end
-   return result
+   return result:build()
 end
 
 --If the player is standing within the build area, they are teleported out.

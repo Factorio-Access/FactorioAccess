@@ -248,7 +248,7 @@ local function read_tile_with_preview_info(pindex, start_text)
    local ent = EntitySelection.get_first_ent_at_tile(pindex)
    if not ent or ent.type == "resource" then
       local preview = BuildingTools.hand_build_preview_info(pindex)
-      if preview then message:fragment(preview) end
+      if preview and preview ~= "" then message:list_item_forced_comma(preview) end
    end
 
    Speech.speak(pindex, message:build())
