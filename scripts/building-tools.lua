@@ -9,6 +9,7 @@ local Localising = require("scripts.localising")
 local dirs = defines.direction
 local Graphics = require("scripts.graphics")
 local Speech = require("scripts.speech")
+local SurfaceConditions = require("scripts.surface-conditions")
 local MessageBuilder = Speech.MessageBuilder
 local PlayerMiningTools = require("scripts.player-mining-tools")
 local Teleport = require("scripts.teleport")
@@ -31,6 +32,22 @@ do
    end
    -- Fallback to vanilla value if no roboports found (shouldn't happen)
    if max_roboport_connection_radius == 0 then max_roboport_connection_radius = 25 end
+end
+
+---"Recycler can't be built on this surface. The Magnetic field is too low.", or nil when its surface conditions hold.
+---@param entity_prototype LuaEntityPrototype
+---@param surface LuaSurface
+---@return LocalisedString?
+local function surface_condition_failure(entity_prototype, surface)
+   local failed = SurfaceConditions.failed_condition(entity_prototype, surface)
+   if not failed then return nil end
+   local message = MessageBuilder.new()
+   message:fragment({
+      "cant-build-reason.bad-surface-conditions",
+      Localising.get_localised_name_with_fallback(entity_prototype),
+   })
+   message:fragment(SurfaceConditions.failure_reason(failed, surface))
+   return message:build()
 end
 
 ---@class fa.BuildingTools.BuildDecision
@@ -216,9 +233,15 @@ function mod.build_item_in_hand_with_params(params)
 
          -- Explain build error (if enabled)
          if speak_errors then
-            local build_area = { decision.footprint_left_top, decision.footprint_right_bottom }
-            local result = mod.identify_building_obstacle(pindex, build_area, nil)
-            Speech.speak(pindex, result)
+            local surface_failure =
+               surface_condition_failure(prototypes.entity[assert(decision.entity_name)], p.surface)
+            if surface_failure then
+               Speech.speak(pindex, surface_failure)
+            else
+               local build_area = { decision.footprint_left_top, decision.footprint_right_bottom }
+               local result = mod.identify_building_obstacle(pindex, build_area, nil)
+               Speech.speak(pindex, result)
+            end
          end
          return false
       end
@@ -640,6 +663,9 @@ function mod.build_preview_checks_info(stack, pindex)
       position = pos,
       building_direction = build_dir,
    })
+
+   local surface_failure = surface_condition_failure(ent_p, surf)
+   if surface_failure then return surface_failure end
 
    --Notify before all else if surface/player cannot place this entity. laterdo extend this valid placement check by copying over build offset stuff
    if
