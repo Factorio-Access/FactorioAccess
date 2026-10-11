@@ -588,6 +588,12 @@ function mod.on_new_surface(surface)
    SurfaceScanner.on_new_surface(surface.index)
 end
 
+---@param surface_index integer
+---@param position ChunkPosition
+function mod.on_chunk_generated(surface_index, position)
+   SurfaceScanner.on_chunk_generated(surface_index, position)
+end
+
 function mod.on_surface_delete(index)
    SurfaceScanner.on_surface_delete(index)
 end

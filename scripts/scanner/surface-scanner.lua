@@ -240,6 +240,7 @@ end
 ---@field backends fa.scanner.SurfaceBackends
 ---@field seen_entities fa.ds.SparseBitset
 ---@field seen_chunks table<number, table<number, true>>
+---@field resource_counts table<number, table<number, integer>> Resources in each chunk at its last read
 
 ---@return fa.scanner.GlobalSurfaceState
 local function new_empty_surface(key)
@@ -251,6 +252,7 @@ local function new_empty_surface(key)
       backends = instantiate_backends(surf),
       seen_entities = SparseBitset.SparseBitset.new(),
       seen_chunks = TH.defaulting_table(),
+      resource_counts = TH.defaulting_table(),
    }
 
    return ret
@@ -260,7 +262,7 @@ end
 local surface_state = StorageManager.declare_storage_module(
    "scanner",
    new_empty_surface,
-   { root_field = "surfaces", ephemeral_state_version = 16 }
+   { root_field = "surfaces", ephemeral_state_version = 17 }
 )
 
 -- Given a backend setup and an array of entities, dispatch the entities to the
@@ -279,32 +281,44 @@ local function dispatch_entities(backends, ents)
    end
 end
 
----@class fa.scanner.SurfaceScannerChunkScan
----@field surface LuaSurface
----@field chunk ChunkPositionAndArea
+-- The entity types worth finding when scanning a chunk: every type a backend wants, and the types of the
+-- prototypes named in the name overrides. Trees and plants are counted by the tree backend instead, and resources
+-- are read on a chunk's first scan and again only when their count goes up.
+---@type fun(): string[]
+local scanned_types = Functools.cached(function()
+   local wanted = {}
+   for t in pairs(BACKEND_LUT) do
+      wanted[t] = true
+   end
+   for name in pairs(BACKEND_NAME_OVERRIDES()) do
+      -- Absent when the mod that adds it is not loaded.
+      local proto = prototypes.entity[name] --[[@as LuaEntityPrototype?]]
+      if proto then wanted[proto.type] = true end
+   end
+   wanted["tree"], wanted["plant"], wanted["resource"] = nil, nil, nil
 
----@param cmd fa.scanner.SurfaceScannerChunkScan
-local function scan_chunk(cmd)
-   if not cmd.surface.valid then return end
+   -- Only types this game has: an unknown type name in a filter is an error.
+   local exists = {}
+   for _, proto in pairs(prototypes.entity) do
+      exists[proto.type] = true
+   end
+   local out = {}
+   for t in pairs(wanted) do
+      if exists[t] then table.insert(out, t) end
+   end
+   table.sort(out)
+   return out
+end)
 
-   local surf = cmd.surface
-   local state = surface_state[surf.index]
-   local chunk = cmd.chunk
-   local cx, cy = chunk.x, chunk.y
-
-   local ents = surf.find_entities(chunk.area)
-
-   -- We just got these from the surface with no gap, so do everything assuming
-   -- it's valid.
+-- Register entities and dispatch the ones not seen before. Assumes they are valid.
+---@param state fa.scanner.GlobalSurfaceState
+---@param ents LuaEntity[]
+---@param cx integer
+---@param cy integer
+local function dispatch_unseen(state, ents, cx, cy)
    TH.retain_unordered(ents, function(item)
       local dest_req = script.register_on_object_destroyed(item)
       if state.seen_entities:test(dest_req) then return false end
-
-      -- The entity may not have the center in this chunk.
-      if not math.floor(item.position.x / CHUNK_SIZE) == cx and math.floor(item.position.y / CHUNK_SIZE) == cy then
-         return false
-      end
-
       state.seen_entities:set(dest_req)
       return true
    end)
@@ -320,8 +334,34 @@ local function scan_chunk(cmd)
    end)
 
    dispatch_entities(state.backends, ents)
+end
 
-   if not state.seen_chunks[cx][cy] then
+---@param surf LuaSurface
+---@param cx integer
+---@param cy integer
+local function scan_chunk(surf, cx, cy)
+   local state = surface_state[surf.index]
+   local area = {
+      left_top = { x = cx * CHUNK_SIZE, y = cy * CHUNK_SIZE },
+      right_bottom = { x = (cx + 1) * CHUNK_SIZE, y = (cy + 1) * CHUNK_SIZE },
+   }
+   local chunk = { x = cx, y = cy, area = area }
+   local first = not state.seen_chunks[cx][cy]
+
+   dispatch_unseen(state, surf.find_entities_filtered({ area = area, type = scanned_types() }), cx, cy)
+
+   -- Resources: all of them the first time, then only when more appeared (a script placing ore). Fewer is just
+   -- mining, which the destroyed events already cover.
+   local known = state.resource_counts[cx][cy] or 0
+   local resource_count = first and 0 or surf.count_entities_filtered({ area = area, type = "resource" })
+   if first or resource_count > known then
+      local resources = surf.find_entities_filtered({ area = area, type = "resource" })
+      resource_count = #resources
+      dispatch_unseen(state, resources, cx, cy)
+   end
+   state.resource_counts[cx][cy] = resource_count
+
+   if first then
       state.seen_chunks[cx][cy] = true
       state.backends.tile_bodies_backend:on_new_chunk(chunk)
    else
@@ -330,54 +370,115 @@ local function scan_chunk(cmd)
    state.backends.tree_backend:on_chunk_scanned(chunk)
 end
 
----@param queue fa.WorkQueueHandle
-local function redispatch(queue)
-   -- For each surface, for each chunk in that surface, dispatch a task.
-   local tasks = {}
+---@class fa.scanner.NewChunkScan
+---@field s integer Surface index
+---@field x integer
+---@field y integer
 
-   for _, s in pairs(game.surfaces) do
-      for c in s.get_chunks() do
-         local task = {
-            surface = s,
+-- Chunks never scanned, 4 a tick, so a new game or a newly loaded save fills in quickly.
+---@param item fa.scanner.NewChunkScan
+local function scan_new_chunk(item)
+   local surf = game.get_surface(item.s)
+   if surf then scan_chunk(surf, item.x, item.y) end
+end
 
-            chunk = c,
-         }
-         table.insert(tasks, task)
-      end
+local new_chunk_queue = WorkQueue.declare_work_queue({
+   name = "fa.scanner.new-chunks",
+   per_tick = 4,
+   worker_function = scan_new_chunk,
+})
+
+---@class fa.scanner.RescanPass
+---@field s integer Surface index
+---@field coords integer[] Chunk x, y pairs, nearest the players first
+---@field i integer Index of the next pair's x
+
+-- Chunks per tick in the background rescan.
+local RESCAN_PER_TICK = 2
+
+---@type fa.WorkQueueHandle
+local rescan_queue
+
+-- The background rescan: entities that mods create without raising an event are only found this way (ones they
+-- destroy raise on_object_destroyed). One pass item per surface, taking turns a tick at a time.
+---@param item fa.scanner.RescanPass
+local function rescan_step(item)
+   local surf = game.get_surface(item.s)
+   if not surf then return end
+   local coords = item.coords
+   local stop = math.min(item.i + 2 * RESCAN_PER_TICK, #coords + 1)
+   for i = item.i, stop - 1, 2 do
+      scan_chunk(surf, coords[i], coords[i + 1])
    end
+   item.i = stop
+   if stop <= #coords then rescan_queue:enqueue(item) end
+end
 
-   -- Take that and sort it by the distance to any player, so that chunks near
-   -- players are scanned first on initial scans of large saves.
-   local players = {}
-   for _, p in pairs(game.players) do
-      table.insert(players, p)
-   end
-
-   Memosort.memosort(tasks, function(t)
-      if not next(players) then return 0 end
-
-      local cx, cy = t.chunk.x * CHUNK_SIZE, t.chunk.y * CHUNK_SIZE
-
+---@param list integer[][] Chunk positions as { x, y }
+---@param players { x: number, y: number }[]
+local function sort_by_distance(list, players)
+   if not next(players) then return end
+   Memosort.memosort(list, function(c)
+      local x, y = c[1] * CHUNK_SIZE, c[2] * CHUNK_SIZE
       local best = math.huge
-      for _, p in pairs(players) do
-         local dist = math.sqrt((cx - p.position.x) ^ 2 + (cy - p.position.y) ^ 2)
-         if dist < best then best = dist end
+      for _, p in ipairs(players) do
+         local d = (x - p.x) ^ 2 + (y - p.y) ^ 2
+         if d < best then best = d end
       end
       return best
    end)
+end
 
-   for _, t in pairs(tasks) do
-      queue:enqueue(t)
+-- Start a new pass: chunks never scanned go to the new-chunk queue, the rest become one pass item per surface.
+-- Both are sorted by distance to the nearest connected player on the surface.
+---@param queue fa.WorkQueueHandle
+local function redispatch(queue)
+   -- The queue before this one stored a table per chunk; drop what a save still holds of it.
+   storage.work_queues["fa.scanner.surface-scanner"] = nil
+
+   for _, s in pairs(game.surfaces) do
+      local state = surface_state[s.index]
+      local players = {}
+      for _, p in pairs(game.connected_players) do
+         if p.surface_index == s.index then
+            local pos = p.position
+            table.insert(players, { x = pos.x, y = pos.y })
+         end
+      end
+
+      local fresh, seen = {}, {}
+      for c in s.get_chunks() do
+         table.insert(state.seen_chunks[c.x][c.y] and seen or fresh, { c.x, c.y })
+      end
+      sort_by_distance(fresh, players)
+      sort_by_distance(seen, players)
+
+      for _, c in ipairs(fresh) do
+         new_chunk_queue:enqueue({ s = s.index, x = c[1], y = c[2] })
+      end
+      if next(seen) then
+         local coords = {}
+         for _, c in ipairs(seen) do
+            coords[#coords + 1] = c[1]
+            coords[#coords + 1] = c[2]
+         end
+         queue:enqueue({ s = s.index, coords = coords, i = 1 })
+      end
    end
 end
 
--- This work queue will get a chunk per task.
-local work_queue = WorkQueue.declare_work_queue({
-   name = "fa.scanner.surface-scanner",
-   per_tick = 4,
-   worker_function = scan_chunk,
+rescan_queue = WorkQueue.declare_work_queue({
+   name = "fa.scanner.rescan",
+   per_tick = 1,
+   worker_function = rescan_step,
    idle_function = redispatch,
 })
+
+---@param surface_index integer
+---@param position ChunkPosition
+function mod.on_chunk_generated(surface_index, position)
+   new_chunk_queue:enqueue({ s = surface_index, x = position.x, y = position.y })
+end
 
 ---@param event EventData.on_object_destroyed
 function mod.on_entity_destroyed(event)

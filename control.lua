@@ -819,6 +819,14 @@ EventManager.on_event(
 )
 
 EventManager.on_event(
+   defines.events.on_chunk_generated,
+   ---@param event EventData.on_chunk_generated
+   function(event)
+      ScannerEntrypoint.on_chunk_generated(event.surface.index, event.position)
+   end
+)
+
+EventManager.on_event(
    defines.events.on_surface_deleted,
    ---@param event EventData.on_surface_deleted
    function(event)
