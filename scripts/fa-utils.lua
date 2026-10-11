@@ -451,26 +451,20 @@ function mod.get_ent_northwest_corner_position(ent)
    if ent.valid == false or ent.tile_width == nil then return ent.position end
    local width = ent.tile_width
    local height = ent.tile_height
-   local pos = mod.center_of_tile({
-      x = math.floor(ent.position.x - width / 2),
-      y = math.floor(ent.position.y - height / 2),
-   })
-   --Error correction:
-   --When the northwest corner selection has missed the ent for some reason, the ent position is used instead.
+   local left = math.floor(ent.position.x - width / 2)
+   local top = math.floor(ent.position.y - height / 2)
    local surf = ent.surface
-   local pos_contains_ent = false
-   local pos_ents = surf.find_entities_filtered({ position = pos })
-   if pos_ents == nil or #pos_ents == 0 then
-      pos_contains_ent = false
-   else
-      for i, e in ipairs(pos_ents) do
-         if e.unit_number == ent.unit_number then pos_contains_ent = true end
+   -- Irregular entities (the crash site's spaceship and wrecks) don't cover every tile of their footprint, the corner
+   -- included: take the first tile they do cover, row by row from the top left.
+   for y = top, top + height - 1 do
+      for x = left, left + width - 1 do
+         local pos = { x = x + 0.5, y = y + 0.5 }
+         for _, e in ipairs(surf.find_entities_filtered({ position = pos })) do
+            if e == ent then return pos end
+         end
       end
    end
-   if pos_contains_ent == false then pos = mod.center_of_tile(ent.position) end
-
-   --Return the pos
-   return pos
+   return mod.center_of_tile(ent.position)
 end
 
 -- Lookup table for entity part location based on adjacent tile connectivity
