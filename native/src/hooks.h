@@ -9,6 +9,9 @@ bool install();
 void remove();
 // Frames seen by the main-loop hook (main thread, menus and game alike).
 uint64_t frame();
+// The thread the game's main loop runs on (0 before its first frame).
+unsigned long main_thread_id();
+unsigned long current_thread_id();
 // Called on the main thread once per frame, after the frame's input was collected and dev jobs ran.
 void set_frame_callback(std::function<void()> fn);
 // Run fn on the main thread at the start of the next frame. Blocks until it ran; false on timeout (the job

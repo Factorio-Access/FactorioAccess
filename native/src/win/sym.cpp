@@ -1,6 +1,9 @@
 #include "sym.h"
 #include <windows.h>
 #include <dbghelp.h>
+#include <algorithm>
+#include <cstring>
+#include <format>
 #include <mutex>
 #include <string>
 #include <vector>
@@ -145,5 +148,71 @@ std::optional<std::size_t> offset(const char* type, const char* member) {
   auto r = find_member(*t, m);
   if (!r) log::writef("sym: '{}::{}' not found", type, member);
   return r;
+}
+// Return addresses of a paused thread, unwound while it is paused with the system unwinder (each module's own unwind
+// tables, so frames in Windows' and drivers' DLLs unwind too). Nothing here allocates or logs: the paused thread may
+// hold the heap's lock or ours.
+static DWORD64 g_pcs[64];
+
+static int unwind(const CONTEXT& start) {
+  CONTEXT ctx = start;
+  int n = 0;
+  while (n < 64 && ctx.Rip) {
+    g_pcs[n++] = ctx.Rip;
+    DWORD64 image = 0;
+    PRUNTIME_FUNCTION fn = RtlLookupFunctionEntry(ctx.Rip, &image, nullptr);
+    if (!fn) {
+      // A leaf function: the return address is on top of the stack.
+      ctx.Rip = *reinterpret_cast<DWORD64*>(ctx.Rsp);
+      ctx.Rsp += 8;
+      continue;
+    }
+    void* handler_data = nullptr;
+    DWORD64 frame = 0;
+    RtlVirtualUnwind(UNW_FLAG_NHANDLER, image, ctx.Rip, fn, &ctx, &handler_data, &frame, nullptr);
+  }
+  return n;
+}
+
+std::vector<std::string> thread_stack(void* thread) {
+  std::vector<std::string> out;
+  out.reserve(64);
+  CONTEXT ctx{};
+  ctx.ContextFlags = CONTEXT_FULL;
+  if (SuspendThread(thread) == (DWORD)-1) {
+    out.push_back(std::format("(cannot suspend: {})", GetLastError()));
+    return out;
+  }
+  BOOL got = GetThreadContext(thread, &ctx);
+  int frames = got ? unwind(ctx) : 0;
+  ResumeThread(thread);
+  if (!got) {
+    out.push_back(std::format("(no context: {})", GetLastError()));
+    return out;
+  }
+
+  std::lock_guard lk(g_mu);
+  alignas(SYMBOL_INFO) char buf[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
+  auto* si = reinterpret_cast<SYMBOL_INFO*>(buf);
+  for (int i = 0; i < frames; ++i) {
+    DWORD64 pc = g_pcs[i], disp = 0;
+    si->SizeOfStruct = sizeof(SYMBOL_INFO);
+    si->MaxNameLen = MAX_SYM_NAME;
+    if (SymFromAddr(g_proc, pc, &disp, si)) {
+      out.push_back(std::format("{}+{:#x}", si->Name, disp));
+      continue;
+    }
+    // Not the game's: name the module it is in.
+    HMODULE mod = nullptr;
+    wchar_t path[MAX_PATH] = L"?";
+    if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                           reinterpret_cast<LPCWSTR>(pc), &mod))
+      GetModuleFileNameW(mod, path, MAX_PATH);
+    const wchar_t* slash = wcsrchr(path, L'\\');
+    std::string name;
+    for (const wchar_t* c = slash ? slash + 1 : path; *c; ++c) name += static_cast<char>(*c);
+    out.push_back(std::format("{}+{:#x}", name, pc - reinterpret_cast<DWORD64>(mod)));
+  }
+  return out;
 }
 }  // namespace fa::sym

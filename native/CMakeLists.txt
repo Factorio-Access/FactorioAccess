@@ -59,7 +59,7 @@ file(WRITE ${CMAKE_BINARY_DIR}/version.txt "${FA_VERSION}
 # --- the injected DLL ---
 add_library(fa_native SHARED
   src/dllmain.cpp src/log.cpp src/input.cpp src/app.cpp src/assets.cpp src/lua_native.cpp src/screens/dialogs.cpp src/win/game.cpp src/win/audio_mute.cpp src/speech.cpp src/devserver.cpp
-  src/win/hooks.cpp src/win/sym.cpp src/win/window.cpp src/win/agui.cpp src/win/update_check.cpp)
+  src/win/hooks.cpp src/win/sym.cpp src/win/window.cpp src/win/agui.cpp src/win/update_check.cpp src/win/watchdog.cpp)
 target_include_directories(fa_native PRIVATE src ${PRISM_DIR}/include ${CMAKE_BINARY_DIR}/generated)
 target_link_libraries(fa_native PRIVATE faui fa_update fa_audio detours ${PRISM_LIB} user32 ws2_32 ole32 dbghelp delayimp winhttp)
 target_link_options(fa_native PRIVATE /DELAYLOAD:prism.dll)

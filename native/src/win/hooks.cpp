@@ -84,9 +84,12 @@ static void attach_all() {
 // ======================= main-thread job pump =======================
 static std::mutex g_jobs_mu;
 static std::deque<std::function<void()>> g_jobs;
-static uint64_t g_frame;
+static std::atomic<uint64_t> g_frame;
+static std::atomic<unsigned long> g_main_tid;
 static std::function<void()> g_on_frame;
 uint64_t frame() { return g_frame; }
+unsigned long main_thread_id() { return g_main_tid; }
+unsigned long current_thread_id() { return GetCurrentThreadId(); }
 void set_frame_callback(std::function<void()> fn) { g_on_frame = std::move(fn); }
 
 bool run_on_main_thread(std::function<void()> fn, unsigned timeout_ms) {
@@ -130,6 +133,7 @@ static void drain_jobs() {
 using MainLoopStep_t = int (*)(void*, int);
 static MainLoopStep_t MainLoopStep_orig;
 static int MainLoopStep_hook(void* worker, int heavy) {
+  if (!g_main_tid) g_main_tid = GetCurrentThreadId();
   ++g_frame;
   input::begin_frame();
   drain_jobs();

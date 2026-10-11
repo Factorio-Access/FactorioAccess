@@ -11,6 +11,7 @@
 #include <thread>
 #include <vector>
 #include "agui.h"
+#include "watchdog.h"
 #include "app.h"
 #include "audio/audio.h"
 #include "hooks.h"
@@ -230,6 +231,12 @@ static void serve(SOCKET c) {
   };
   auto owned = std::make_shared<Owned>();
   owned->path = target.substr(0, qm);
+  if (owned->path == "/stack") {  // pauses the main thread: never from the main thread itself
+    watchdog::report_now();
+    std::string resp = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 7\r\nConnection: close\r\n\r\nlogged\n";
+    send(c, resp.data(), (int)resp.size(), 0);
+    return;
+  }
   owned->query = parse_query(qm == std::string::npos ? "" : target.substr(qm + 1));
   bool ran = hooks::run_on_main_thread(
       [owned] {

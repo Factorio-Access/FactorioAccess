@@ -3,6 +3,8 @@
 // Names are undecorated C++ names ("LuaHelper::initLuaState", "lua_pcallk", "global").
 #include <cstddef>
 #include <optional>
+#include <string>
+#include <vector>
 
 namespace fa::sym {
 bool init();
@@ -18,4 +20,7 @@ std::optional<std::size_t> type_size(const char* type);
 // Byte offset of a virtual method's slot in the vtable ("agui::Widget", "getText"), or nullopt (logged).
 // Overloads share a name: this returns the first one declared, so use it only on unambiguous methods.
 std::optional<std::size_t> vtable_offset(const char* type, const char* method);
+// The call stack of another thread (`thread` is the platform's thread handle; it is paused for a moment), innermost first:
+// "name+0xoffset" for the game's own code, "module+0xoffset" elsewhere.
+std::vector<std::string> thread_stack(void* thread);
 }  // namespace fa::sym

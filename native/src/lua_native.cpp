@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <string>
 #include "audio/audio.h"
+#include "hooks.h"
 #include "mouse.h"
 #include "log.h"
 #include "speech.h"
@@ -26,6 +27,10 @@ struct Api {
   int (*toboolean)(lua_State*, int);
   const char* (*checklstring)(lua_State*, int, size_t*);
   long long (*checkinteger)(lua_State*, int);
+  int (*sethook)(lua_State*, void (*)(lua_State*, void*), int, int);
+  void (*traceback)(lua_State*, lua_State*, const char*, int);
+  const char* (*tolstring)(lua_State*, int, size_t*);
+  void (*settop)(lua_State*, int);
 } api;
 
 // MSVC std::string, as returned by reference from the engine.
@@ -66,6 +71,9 @@ struct ParsedLocalisedString {
   }
 };
 
+// The thread the mod's Lua runs on, noted by each call into the native code, for the watchdog.
+std::atomic<unsigned long> g_script_tid;
+
 std::string localise(lua_State* L, int index) {
   ParsedLocalisedString ls;
   g_parse(ls.storage, L, index, true);  // raises a Lua error for a malformed localised string
@@ -76,6 +84,7 @@ std::string localise(lua_State* L, int index) {
 
 // _fa_native.speak(localised_string [, interrupt])
 int lua_speak(lua_State* L) {
+  g_script_tid = hooks::current_thread_id();
   bool interrupt = api.gettop(L) < 2 || api.toboolean(L, 2) != 0;
   // Localised control names and item references come back as rich text ([font=...]M[/font]), which the launcher
   // strips too. This also trims the separators that empty parts of a composed message leave at their ends.
@@ -87,6 +96,7 @@ int lua_speak(lua_State* L) {
 std::atomic<uint64_t> g_audio_commands;
 
 int lua_audio_cmd(lua_State* L) {
+  g_script_tid = hooks::current_thread_id();
   size_t len = 0;
   const char* json = api.checklstring(L, 1, &len);  // raises a Lua error when not a string
   if (g_audio_commands++ == 0) log::writef("lua: first audio command {}", std::string_view(json, len));
@@ -96,9 +106,22 @@ int lua_audio_cmd(lua_State* L) {
 
 // _fa_native.set_cursor(x, y): the mouse pointer to a pixel of the game window, as the launcher's setCursor did.
 int lua_set_cursor(lua_State* L) {
+  g_script_tid = hooks::current_thread_id();
   long long x = api.checkinteger(L, 1), y = api.checkinteger(L, 2);
   mouse::move_to_client((int)x, (int)y);
   return 0;
+}
+
+// The FactorioAccess state, for the watchdog's traceback.
+std::atomic<lua_State*> g_mod_state;
+
+void traceback_hook(lua_State* L, void*) {
+  api.sethook(L, nullptr, 0, 0);
+  api.traceback(L, L, "watchdog: the mod's Lua is running", 0);
+  size_t len = 0;
+  const char* s = api.tolstring(L, -1, &len);
+  log::writef("{}", std::string_view(s ? s : "", s ? len : 0));
+  api.settop(L, -2);
 }
 
 template <typename T>
@@ -119,6 +142,10 @@ bool init() {
   ok &= resolve(api.toboolean, "lua_toboolean");
   ok &= resolve(api.checklstring, "luaL_checklstring");
   ok &= resolve(api.checkinteger, "luaL_checkinteger");
+  ok &= resolve(api.sethook, "lua_sethook");
+  ok &= resolve(api.traceback, "luaL_traceback");
+  ok &= resolve(api.tolstring, "lua_tolstring");
+  ok &= resolve(api.settop, "lua_settop");
   ok &= resolve(g_parse, "LuaHelper::parseLocalisedString");
   ok &= resolve(g_str, "LocalisedString::str");
   ok &= resolve(g_dtor, "LocalisedString::~LocalisedString");
@@ -134,8 +161,16 @@ bool init() {
 
 uint64_t audio_commands() { return g_audio_commands; }
 
+unsigned long script_thread_id() { return g_script_tid; }
+
+void request_traceback() {
+  // LUA_MASKCOUNT (1 << 3): the hook runs after the next 1000 instructions.
+  if (lua_State* L = g_mod_state) api.sethook(L, reinterpret_cast<void (*)(lua_State*, void*)>(traceback_hook), 1 << 3, 1000);
+}
+
 void on_state_created(void* L, std::string_view mod) {
   if (mod != "FactorioAccess") return;
+  g_mod_state = static_cast<lua_State*>(L);
   // Net stack effect zero: the table is consumed by setglobal, each closure by setfield.
   api.createtable(L, 0, 4);
   api.pushinteger(L, kApiVersion);

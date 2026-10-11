@@ -14,5 +14,10 @@ bool init();  // resolves the Lua C API and the engine's localisation functions
 // A Lua state was just set up for `mod` (the platform layer calls this from the engine's own state setup,
 // before the mod's control.lua runs).
 void on_state_created(void* lua_state, std::string_view mod);
-uint64_t audio_commands();  // audio commands the mod has sent this session (dev server)
+uint64_t audio_commands();
+// From any thread: have the mod's Lua log a traceback of where it is the next time it runs a few instructions (a Lua
+// count hook, which lua_sethook allows to be set asynchronously). For the watchdog.
+void request_traceback();
+// The thread the mod's Lua last called into the native code from (the game's update thread), or 0.
+unsigned long script_thread_id();  // audio commands the mod has sent this session (dev server)
 }  // namespace fa::lua

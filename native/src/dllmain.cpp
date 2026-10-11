@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <string>
+#include "watchdog.h"
 #include "agui.h"
 #include "assets.h"
 #include "audio/audio.h"
@@ -60,6 +61,7 @@ extern "C" __declspec(dllexport) DWORD WINAPI fa_init(LPVOID) {
   fa::app::init();
   fa::hooks::set_frame_callback(fa::app::tick);
   if (int port = env_int(L"FA_PORT", 0)) fa::dev::start(port);
+  fa::watchdog::start();
   fa::update::start();  // a thread asks GitHub for a newer build; spoken on the main menu when there is one
   fa::log::writef("fa_native: ready, speech {}", sp ? fa::speech::backend_name() : "unavailable");
   return 1;
@@ -70,6 +72,7 @@ extern "C" __declspec(dllexport) DWORD WINAPI fa_init(LPVOID) {
 extern "C" __declspec(dllexport) DWORD WINAPI fa_unload(LPVOID) {
   fa::log::write("fa_native: unloading");
   fa::dev::stop();
+  fa::watchdog::stop();
   fa::update::shutdown();
   if (g_installed) fa::hooks::remove();
   Sleep(250);  // the main thread may still be inside a hook body (the frame callback included): let it leave
