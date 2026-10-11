@@ -49,6 +49,7 @@ local Speech = require("scripts.speech")
 local MessageBuilder = Speech.MessageBuilder
 local Mouse = require("scripts.mouse")
 local MovementHistory = require("scripts.movement-history")
+local PlatformTravel = require("scripts.platform-travel")
 local PlayerInit = require("scripts.player-init")
 local PlayerMiningTools = require("scripts.player-mining-tools")
 local Quickbar = require("scripts.quickbar")
@@ -455,6 +456,14 @@ EventManager.on_event(
       end
    end
 )
+
+if script.feature_flags.space_travel then
+   EventManager.on_event(defines.events.on_player_controller_changed, PlatformTravel.on_player_controller_changed)
+   EventManager.on_event(
+      defines.events.on_cargo_pod_finished_descending,
+      PlatformTravel.on_cargo_pod_finished_descending
+   )
+end
 
 --Called when a player changes surface
 EventManager.on_event(
