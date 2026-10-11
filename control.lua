@@ -1674,7 +1674,12 @@ local function kb_read_cursor_distance_and_direction(event)
    local vp = Viewpoint.get_viewpoint(pindex)
    local cursor_pos = vp:get_cursor_pos()
    --Read where the cursor is with respect to the player, e.g. "at 5 west"
-   local dir_dist = FaUtils.dir_dist_locale(FaUtils.player_reference_position(p), cursor_pos)
+   local reference = FaUtils.player_reference_position(p)
+   if util.distance(reference, cursor_pos) < 0.5 then
+      Speech.speak(pindex, { "fa.cursor-here" })
+      return
+   end
+   local dir_dist = FaUtils.dir_dist_locale(reference, cursor_pos)
    local cursor_location_description = { "fa.at" }
    local cursor_production = " "
    local cursor_description_of = " "
