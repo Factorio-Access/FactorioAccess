@@ -1,6 +1,6 @@
 --[[
 Announcements for travelling between planets and space platforms: boarding a platform, dropping to a planet,
-and the trips of the platform the player is on.
+the trips of the platform the player is on, and platforms being destroyed.
 
 A player boards a platform either directly (the controller becomes remote with player.hub set) or by riding a
 rocket, whose cargo pod lands in the hub. Both can report the same boarding, so the announcement is suppressed
@@ -17,6 +17,11 @@ local mod = {}
 local last_boarding = {}
 
 local BOARDING_REPEAT_TICKS = 300
+
+-- A platform can change state twice in one tick (paused, waiting at station, on the path), and each event already
+-- sees the final state. The first event of a tick announces it; the others repeat it and are dropped.
+---@type table<integer, { tick: integer, state: defines.space_platform_state }>
+local last_platform_state = {}
 
 ---The space location the platform is heading to, from its schedule.
 ---@param platform LuaSpacePlatform
@@ -103,6 +108,51 @@ function mod.drop_to_planet(player, message)
    end
    message:fragment({ "fa.platform-dropping", name })
    return true
+end
+
+---Departures, arrivals and a stuck schedule, for the players physically on the platform. Pausing is the player's
+---own doing and waiting at a station follows an arrival, so neither is announced.
+---@param event EventData.on_space_platform_changed_state
+function mod.on_space_platform_changed_state(event)
+   local platform = event.platform
+   local state = platform.state
+   local last = last_platform_state[platform.index]
+   if last and last.tick == event.tick and last.state == state then return end
+   last_platform_state[platform.index] = { tick = event.tick, state = state }
+
+   local states = defines.space_platform_state
+   ---@type LocalisedString?
+   local message
+   if state == states.on_the_path then
+      local to = Localising.get_localised_name_with_fallback(assert(destination(platform)))
+      local from = platform.last_visited_space_location
+      if from then
+         message = { "fa.platform-leaving", Localising.get_localised_name_with_fallback(from), to }
+      else
+         message = { "fa.platform-on-the-way", to }
+      end
+   elseif state == states.waiting_at_station and event.old_state == states.on_the_path then
+      local location = assert(platform.space_location) --[[@as LuaSpaceLocationPrototype]]
+      message = { "fa.platform-arrived", Localising.get_localised_name_with_fallback(location) }
+   elseif state == states.no_path then
+      local to = destination(platform)
+      if to then message = { "fa.platform-no-path", Localising.get_localised_name_with_fallback(to) } end
+   end
+   if not message then return end
+
+   local surface = platform.surface
+   for _, player in pairs(platform.force.connected_players) do
+      if player.physical_surface == surface then Speech.speak(player.index, message) end
+   end
+end
+
+---The hub dying takes its platform with it.
+---@param hub LuaEntity
+function mod.on_hub_died(hub)
+   local platform = assert(hub.surface.platform)
+   for _, player in pairs(platform.force.connected_players) do
+      Speech.speak(player.index, { "fa.platform-destroyed", platform.name })
+   end
 end
 
 return mod

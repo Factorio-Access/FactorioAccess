@@ -463,6 +463,7 @@ if script.feature_flags.space_travel then
       defines.events.on_cargo_pod_finished_descending,
       PlatformTravel.on_cargo_pod_finished_descending
    )
+   EventManager.on_event(defines.events.on_space_platform_changed_state, PlatformTravel.on_space_platform_changed_state)
 end
 
 --Called when a player changes surface
@@ -704,6 +705,7 @@ EventManager.on_event(
    function(event)
       local ent = event.entity
       if ent == nil or ent.name == "character" then return end
+      if ent.type == "space-platform-hub" then PlatformTravel.on_hub_died(ent) end
       BattleNotice.notify(ent.force)
    end
 )
