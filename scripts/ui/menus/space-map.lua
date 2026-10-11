@@ -71,9 +71,12 @@ local function build_space_routes(ctx)
       return builder:build()
    end
 
+   local force = game.get_player(ctx.pindex).force --[[@as LuaForce]]
    for _, route in ipairs(routes) do
+      local key = force.is_space_location_unlocked(route.other.name) and "fa.space-map-route"
+         or "fa.space-map-route-locked"
       builder:add_label(route.connection.name, {
-         "fa.space-map-route",
+         key,
          Localising.get_localised_name_with_fallback(route.other),
          tostring(route.connection.length),
       })
