@@ -573,13 +573,9 @@ end
 function Router:open_child_ui(name, params, context)
    local stack = router_state[self.pindex].ui_stack
 
-   -- If we're in an overlay, check if this UI is already in the stack
-   if self:is_in_overlay() then
-      for _, entry in ipairs(stack) do
-         if entry.name == name then
-            error("Cannot enter UI " .. name .. " while already in it during overlay selection")
-         end
-      end
+   -- A UI's state is per player, not per stack entry: a second copy would overwrite the first one's.
+   for _, entry in ipairs(stack) do
+      if entry.name == name then error("Cannot open UI " .. name .. " while it is already open") end
    end
 
    -- Just push without clearing
