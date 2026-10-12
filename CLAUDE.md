@@ -136,9 +136,8 @@ step and no explicit re-render. Controls that change a value say the new value.
 - Escape: while a UI is open, `player.opened` is the `get_subject` of the topmost UI that has one (the entity UI's
   entity, so the game shows its window), else our frame; `sync_opened` in `router.lua` keeps it so every tick. The
   game's menu key (Escape) then closes that instead of pausing, and the router's `on_gui_closed` goes back one level
-  or cancels the textbox. Tab also focuses the game window's text fields (where keys then go instead of ours), so
-  our Tab closes that window for a tick (`reopen_game_window`); Tab cannot be `game-only`, the game's Tab skips
-  cutscenes.
+  or cancels the textbox. A game window with text fields traps the keyboard once Tab focuses one (keys type there,
+  none of ours fire), so such entities have no subject: `OWN_FRAME_TYPES` in `entity-ui.lua` (trains).
 
 ### Scanner
 

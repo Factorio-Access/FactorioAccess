@@ -227,7 +227,6 @@ mod.BIND_KIND = {
 ---@field ui_stack fa.ui.StackEntry[] Stack of open UIs with contexts (top is last)
 ---@field search_pattern string? Current search pattern (literal substring)
 ---@field opened any What sync_opened last made player.opened, so it only ever closes what it opened
----@field frame_until integer? Until this tick player.opened is our frame whatever the stack wants (reopen_game_window)
 
 ---@type table<integer, fa.ui.RouterState>
 local router_state = StorageManager.declare_storage_module("ui_router", {
@@ -721,6 +720,10 @@ register_ui_event("fa-s-rightbracket", create_ui_handler("on_right_click", { shi
 register_ui_event("fa-cs-leftbracket", create_ui_handler("on_click", { control = true, shift = true }))
 register_ui_event("fa-cs-rightbracket", create_ui_handler("on_right_click", { control = true, shift = true }))
 
+-- Tab navigation (TAB and Shift+TAB)
+register_ui_event("fa-tab", create_ui_handler("on_next_tab"))
+register_ui_event("fa-s-tab", create_ui_handler("on_previous_tab"))
+
 -- Section navigation (Ctrl+TAB and Ctrl+Shift+TAB)
 register_ui_event("fa-c-tab", create_ui_handler("on_next_section"))
 register_ui_event("fa-cs-tab", create_ui_handler("on_previous_section"))
@@ -838,10 +841,7 @@ local syncing = false
 ---@param player LuaPlayer
 ---@return any
 local function wanted_opened(player)
-   local state = router_state[player.index]
-   if state.frame_until and game.tick < state.frame_until then return GameGui.get_frame(player.index) end
-   state.frame_until = nil
-   local stack = state.ui_stack
+   local stack = router_state[player.index].ui_stack
    for i = #stack, 1, -1 do
       local entry = stack[i]
       local ui = registered_uis[entry.name]
@@ -881,28 +881,6 @@ function mod.sync_opened(pindex)
    end
    syncing = false
    state.opened = want
-end
-
--- Tab also moves the game's focus into a text field of the window it shows for a subject (a train stop's priority),
--- after which keys type there and none of ours fire. The window closed for a tick comes back without that focus.
--- Tab cannot be consuming = "game-only" instead: the game's Tab is confirm-message, which skips cutscenes. Key
--- events come before on_tick, so the frame is held through this tick's sync and the subject returns on the next.
----@param pindex integer
-local function reopen_game_window(pindex)
-   local state = router_state[pindex]
-   local frame = GameGui.get_frame(pindex)
-   if not (state.opened and state.opened.valid) or state.opened == frame then return end
-   state.frame_until = game.tick + 1
-   mod.sync_opened(pindex)
-end
-
--- Tab navigation (TAB and Shift+TAB)
-for name, method in pairs({ ["fa-tab"] = "on_next_tab", ["fa-s-tab"] = "on_previous_tab" }) do
-   local handler = create_ui_handler(method)
-   register_ui_event(name, function(event, pindex)
-      reopen_game_window(pindex)
-      return handler(event, pindex)
-   end)
 end
 
 -- Escape: cancel the textbox (its UI gets a nil result), else go back one UI

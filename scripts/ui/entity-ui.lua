@@ -36,6 +36,15 @@ local turret_config_tab = require("scripts.ui.tabs.turret-config")
 
 local mod = {}
 
+-- Entity types whose UI leaves player.opened on our frame instead of the entity (see get_subject)
+local OWN_FRAME_TYPES = {
+   ["train-stop"] = true,
+   ["locomotive"] = true,
+   ["cargo-wagon"] = true,
+   ["fluid-wagon"] = true,
+   ["artillery-wagon"] = true,
+}
+
 -- Entity names that have UIs (for exact name matching)
 local ENTITY_NAMES_WITH_UI = {
    ["rocket-silo-rocket-shadow"] = true,
@@ -406,9 +415,12 @@ mod.entity_ui = TabList.declare_tablist({
       if not entity or not entity.valid then return nil end
       return { { kind = UiRouter.BIND_KIND.ENTITY, entity = entity } }
    end,
-   -- The game shows the entity as open, as when a sighted player opens it
+   -- The game shows the entity as open, as when a sighted player opens it. Not for trains: their windows have text
+   -- fields that Tab focuses, after which keys type there instead of reaching us.
    get_subject = function(pindex, parameters)
-      return parameters.entity
+      local entity = parameters.entity
+      if entity.valid and OWN_FRAME_TYPES[entity.type] then return nil end
+      return entity
    end,
 })
 
