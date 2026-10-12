@@ -37,6 +37,7 @@ local turret_config_tab = require("scripts.ui.tabs.turret-config")
 local mod = {}
 
 -- Entity types whose UI leaves player.opened on our frame instead of the entity (see get_subject)
+---@type table<string, true?>
 local OWN_FRAME_TYPES = {
    ["train-stop"] = true,
    ["locomotive"] = true,
