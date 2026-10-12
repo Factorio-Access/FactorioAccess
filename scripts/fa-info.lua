@@ -115,6 +115,14 @@ local function ent_info_marked_for_upgrade(ctx)
    if ctx.ent.to_be_upgraded() then ctx.message:fragment({ "fa.ent-info-marked-for-upgrading" }) end
 end
 
+---Many entities with a deconstruction mark have no status (rails, walls, trees), so this does not go through it
+---@param ctx fa.Info.EntInfoContext
+local function ent_info_marked_for_deconstruction(ctx)
+   if ctx.ent.to_be_deconstructed() then
+      ctx.message:fragment(Localising.entity_status_localised(defines.entity_status.marked_for_deconstruction))
+   end
+end
+
 ---Announces combinator description if present
 ---@param ctx fa.Info.EntInfoContext
 local function ent_info_combinator_description(ctx)
@@ -1437,6 +1445,7 @@ function mod.ent_info(pindex, ent, is_scanner)
 
    run_handler(ent_info_gate_connection_point)
    run_handler(ent_info_marked_for_upgrade)
+   run_handler(ent_info_marked_for_deconstruction)
    run_handler(ent_info_power_production)
    run_handler(ent_info_underground_belt_connection)
    run_handler(ent_info_splitter_states)

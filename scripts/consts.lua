@@ -253,7 +253,6 @@ mod.VERBOSE_STATUSES = {
    [defines.entity_status.not_enough_thrust] = true,
 
    -- Misc problems
-   [defines.entity_status.marked_for_deconstruction] = true,
    [defines.entity_status.recharging_after_power_outage] = true,
    [defines.entity_status.recipe_not_researched] = true,
    [defines.entity_status.no_filter] = true,
