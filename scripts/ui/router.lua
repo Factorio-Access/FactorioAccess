@@ -114,6 +114,7 @@ end
 ---@field search_hint? fun(self, pindex: integer, hint_callback: fun(localised_string: LocalisedString), controller: fa.ui.RouterController) Submit searchable strings for cache population
 ---@field search_move? fun(self, message: fa.MessageBuilder, pindex: integer, direction: integer, matcher: (fun(localised_string: LocalisedString): boolean), controller: fa.ui.RouterController): fa.ui.SearchResult Move to next/prev search result
 ---@field get_binds? fun(self, pindex: integer, parameters: table): fa.ui.Bind[]? Return binds for this UI, nil closes immediately
+---@field get_subject? fun(self, pindex: integer, parameters: table): any What the game should show as open (player.opened) while this UI is, e.g. its entity; nil defers to the UI below
 
 ---@enum fa.ui.UiName
 mod.UI_NAMES = {
@@ -220,17 +221,19 @@ mod.BIND_KIND = {
 ---@field context any?
 ---@field binds fa.ui.Bind[]?
 ---@field entity_registration_numbers uint64[]?
+---@field params table
 
 ---@class fa.ui.RouterState
 ---@field ui_stack fa.ui.StackEntry[] Stack of open UIs with contexts (top is last)
 ---@field search_pattern string? Current search pattern (literal substring)
+---@field opened any What sync_opened last made player.opened, so it only ever closes what it opened
 
 ---@type table<integer, fa.ui.RouterState>
 local router_state = StorageManager.declare_storage_module("ui_router", {
    ui_stack = {},
    search_pattern = nil,
 }, {
-   ephemeral_state_version = 3,
+   ephemeral_state_version = 4,
 })
 
 ---@class fa.ui.Router
@@ -419,6 +422,7 @@ function Router:_push_ui(name, params, context)
       context = context,
       binds = binds,
       entity_registration_numbers = entity_reg_numbers,
+      params = params or {},
    }
    table.insert(stack, entry)
 
@@ -823,6 +827,96 @@ function mod.back_one_level(pindex)
       end
    end
 end
+
+--[[
+player.opened follows the stack: the subject of the topmost UI that has one (an entity UI's entity, so the game shows
+it as open), else our frame. While something is opened the game's menu key (Escape) closes it, raising on_gui_closed,
+instead of opening the pause menu; on_gui_closed then goes back one level, and the next sync opens what the new top
+wants. Synced every tick, so whatever changes the stack, nothing else has to keep player.opened right.
+]]
+
+-- Set while sync_opened writes player.opened: replacing an open GUI closes it, raising on_gui_closed, which is ours.
+local syncing = false
+
+---@param player LuaPlayer
+---@return any
+local function wanted_opened(player)
+   local stack = router_state[player.index].ui_stack
+   for i = #stack, 1, -1 do
+      local entry = stack[i]
+      local ui = registered_uis[entry.name]
+      if ui and ui.get_subject then
+         local subject = ui:get_subject(player.index, entry.params)
+         if subject and subject.valid then
+            -- The game ignores opening an entity out of the character's reach
+            local reachable = subject.object_name ~= "LuaEntity"
+               or player.controller_type ~= defines.controllers.character
+               or player.can_reach_entity(subject)
+            if reachable then return subject end
+         end
+      end
+   end
+   return GameGui.get_frame(player.index)
+end
+
+---@param pindex integer
+function mod.sync_opened(pindex)
+   local state = router_state[pindex]
+   local player = assert(game.get_player(pindex))
+   local want = wanted_opened(player)
+   local current = player.opened
+   if want then
+      if current == want then return end
+   elseif not (state.opened and state.opened.valid) or current ~= state.opened then
+      -- Nothing of ours is open; never close what the game or another mod opened
+      state.opened = nil
+      return
+   end
+   syncing = true
+   player.opened = want
+   -- Anything else the game will not open: our frame instead
+   if player.opened ~= want then
+      want = GameGui.get_frame(pindex)
+      player.opened = want
+   end
+   syncing = false
+   state.opened = want
+end
+
+-- Escape: cancel the textbox (its UI gets a nil result), else go back one UI
+---@param pindex integer
+function mod.back_or_cancel(pindex)
+   local router = mod.get_router(pindex)
+   if GameGui.is_textbox_open(pindex) then
+      local ui = registered_uis[assert(router:get_open_ui_name())]
+      GameGui.close_textbox(pindex)
+      if ui and ui.on_child_result then
+         router:close_with_result(nil)
+      else
+         router:close_ui()
+      end
+   elseif router:is_ui_open() then
+      mod.back_one_level(pindex)
+   end
+end
+
+---@param event EventData.on_gui_closed
+EventManager.on_event(defines.events.on_gui_closed, function(event)
+   if syncing then return end
+   local pindex = event.player_index
+   local state = router_state[pindex]
+   if #state.ui_stack == 0 or not (state.opened and state.opened.valid) then return end
+   -- Only a close of what we opened is the player going back; anything else is the game's or another mod's
+   local closed = event.element
+      or event.entity
+      or event.equipment
+      or event.item
+      or event.inventory
+      or event.other_player
+   if closed ~= state.opened then return end
+   state.opened = nil
+   mod.back_or_cancel(pindex)
+end)
 
 register_ui_event("fa-a-e", function(event, pindex)
    mod.back_one_level(pindex)

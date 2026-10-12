@@ -182,6 +182,15 @@ function mod.is_textbox_rich_text(pindex)
    return gui_storage[pindex].textbox_rich_text or false
 end
 
+---The frame shown while a UI is open, or nil when none is
+---@param pindex integer
+---@return LuaGuiElement?
+function mod.get_frame(pindex)
+   local frame = gui_storage[pindex].ui_frame
+   if frame and frame.valid then return frame end
+   return nil
+end
+
 ---Check if a textbox is open
 ---@param pindex integer
 ---@return boolean

@@ -57,9 +57,9 @@ In queues, cancel 5: `shift + left bracket`
 
 In queues, cancel all: `ctrl + shift + left bracket`
 
-Cancel a textbox: `escape`
+Cancel a textbox, or go back one UI level: `escape`
 
-Pause the game: `shift + escape`
+Pause the game: `escape` with no UI open
 
 Close the active UI: `e` with a UI open
 

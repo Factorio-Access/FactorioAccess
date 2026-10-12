@@ -406,6 +406,10 @@ mod.entity_ui = TabList.declare_tablist({
       if not entity or not entity.valid then return nil end
       return { { kind = UiRouter.BIND_KIND.ENTITY, entity = entity } }
    end,
+   -- The game shows the entity as open, as when a sighted player opens it
+   get_subject = function(pindex, parameters)
+      return parameters.entity
+   end,
 })
 
 ---Check if an entity has a UI accessible via the entity UI system

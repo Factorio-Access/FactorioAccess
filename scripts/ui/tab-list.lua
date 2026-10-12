@@ -105,6 +105,7 @@ local mod = {}
 ---@field resets_to_first_tab_on_open boolean?
 ---@field persist_state boolean?
 ---@field get_binds (fun(pindex: integer, parameters: table): fa.ui.Bind[]?)? TabList-level binds callback
+---@field get_subject (fun(pindex: integer, parameters: table): any)? What the game shows as open meanwhile (UiPanelBase.get_subject)
 
 ---@class fa.ui.TabListStorageState
 ---@field active_tabstop integer
@@ -762,6 +763,14 @@ function TabList:get_help_metadata(pindex)
 end
 
 ---Get binds from all tabs in this TabList
+---@param pindex integer
+---@param parameters table
+---@return any
+function TabList:get_subject(pindex, parameters)
+   local callback = self.declaration.get_subject
+   return callback and callback(pindex, parameters)
+end
+
 ---Called before open, so we call tabs_callback directly
 ---@param pindex integer
 ---@param parameters table

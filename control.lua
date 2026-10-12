@@ -346,6 +346,7 @@ function on_tick(event)
    -- Check bump detection every tick for all players
    for _, player in pairs(game.players) do
       if not player.connected then goto continue end
+      UiRouter.sync_opened(player.index)
       if VanillaMode.is_enabled(player.index) then goto continue end
 
       BumpDetection.check_and_play_bump_alert_sound(player.index, event.tick)
@@ -617,18 +618,6 @@ EventManager.on_event(
    function(event)
       PlayerInit.initialize(game.players[event.player_index])
       --if not game.is_multiplayer() then Speech.speak(pindex, "Press 'TAB' to continue") end
-   end
-)
-
-EventManager.on_event(
-   defines.events.on_gui_closed,
-   ---@param event EventData.on_gui_closed
-   function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-      print(serpent.line(event, { nocode = true }))
-      --Other resets - now executed unconditionally
-      if event.element ~= nil then event.element.destroy() end
-      router:close_ui()
    end
 )
 
@@ -2029,40 +2018,6 @@ EventManager.on_event(
    end
 )
 
--- Handle escape key: close textbox if open (sending nil to parent), else go back one UI (as Alt+E), else give the pause
--- hint
-EventManager.on_event(
-   "fa-escape",
-   ---@param event EventData.CustomInputEvent
-   function(event, pindex)
-      if GameGui.is_textbox_open(pindex) then
-         local router = UiRouter.get_router(pindex)
-         local top_ui_name = router:get_open_ui_name()
-
-         -- Send nil result to parent UI to signal cancellation
-         if top_ui_name then
-            local registered_uis = UiRouter.get_registered_uis()
-            local ui = registered_uis[top_ui_name]
-            if ui and ui.on_child_result then
-               local context = GameGui.get_textbox_context(pindex)
-               -- Use close_with_result to properly notify parent and clean up
-               GameGui.close_textbox(pindex)
-               router:close_with_result(nil)
-               return
-            end
-         end
-
-         -- Fallback: just close textbox and pop UI
-         GameGui.close_textbox(pindex)
-         router:close_ui()
-      elseif UiRouter.get_router(pindex):is_ui_open() then
-         UiRouter.back_one_level(pindex)
-      else
-         Speech.speak(pindex, { "fa.escape-to-pause" })
-      end
-   end
-)
-
 ---Valid cursor sizes
 ---@type integer[]
 local CURSOR_SIZES = { 0, 1, 2, 5, 10, 25, 50, 125 }
@@ -2128,19 +2083,7 @@ EventManager.on_event(
    "fa-pageup",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-      local p = game.get_player(pindex)
-      local ent = p.opened
-
-      if ent and ent.type == "inserter" then
-         -- TODO: Move to capability-based UI
-         -- Temporarily inline the functionality
-         ent.inserter_stack_size_override = ent.inserter_stack_size_override + 1
-         local result = ent.inserter_stack_size_override .. " set for hand stack size"
-         Speech.speak(pindex, result)
-      else
-         ScannerEntrypoint.move_subcategory(pindex, -1)
-      end
+      ScannerEntrypoint.move_subcategory(pindex, -1)
    end
 )
 
@@ -2164,29 +2107,7 @@ EventManager.on_event(
    "fa-pagedown",
    ---@param event EventData.CustomInputEvent
    function(event, pindex)
-      local router = UiRouter.get_router(pindex)
-      local p = game.get_player(pindex)
-      local ent = p.opened
-
-      if ent and ent.type == "inserter" then
-         -- TODO: Move to capability-based UI
-         -- Temporarily inline the functionality
-         local result = ""
-         if ent.inserter_stack_size_override > 1 then
-            ent.inserter_stack_size_override = ent.inserter_stack_size_override - 1
-            result = ent.inserter_stack_size_override .. " set for hand stack size"
-         else
-            ent.inserter_stack_size_override = 0
-            local cap = ent.force.inserter_stack_size_bonus + 1
-            if ent.name == "stack-inserter" or ent.name == "stack-filter-inserter" then
-               cap = ent.force.stack_inserter_capacity_bonus + 1
-            end
-            result = "restored " .. cap .. " as default hand stack size "
-         end
-         Speech.speak(pindex, result)
-      else
-         ScannerEntrypoint.move_subcategory(pindex, 1)
-      end
+      ScannerEntrypoint.move_subcategory(pindex, 1)
    end
 )
 
