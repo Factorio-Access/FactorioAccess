@@ -35,11 +35,11 @@ mod.upgrade_area_selector = BoxSelector.declare_box_selector({
          },
       }
 
-      -- Check if shift was held on the second click to determine if we're canceling
-      local is_cancel = result.second_click.modifiers.shift
+      -- Shift or right bracket on the second point cancels
+      local is_cancel = result.second_click.modifiers.shift or result.second_click.is_right_click
 
       if is_cancel then
-         -- Alt was held - cancel upgrades
+         -- Cancel upgrades
          p.surface.cancel_upgrade_area({
             area = area,
             force = p.force,
@@ -48,7 +48,7 @@ mod.upgrade_area_selector = BoxSelector.declare_box_selector({
          })
          Speech.speak(pindex, { "fa.planner-cancelled-upgrade" })
       else
-         -- No alt - mark for upgrade
+         -- Mark for upgrade
          p.surface.upgrade_area({
             area = area,
             force = p.force,
