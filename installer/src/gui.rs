@@ -10,7 +10,7 @@ use std::sync::mpsc;
 
 use wxdragon::prelude::*;
 
-use crate::core::config_changes::{self, describe};
+use crate::core::config_changes;
 use crate::core::factorio::Factorio;
 use crate::core::install::{self, Installed, Progress};
 use crate::core::paths::{data_dir, APP_NAME};
@@ -148,7 +148,7 @@ impl Ui {
             == ID_YES
     }
 
-    /// The recommended config.ini changes: listed in a read-only text box (arrow through it), Apply all or Skip.
+    /// The config.ini changes the mod needs: one yes/no for all of them.
     fn recommended_settings(&self, f: &Factorio, sets: &[(String, String)]) {
         if !f.config_ini.exists() {
             let text = format!(
@@ -172,7 +172,7 @@ impl Ui {
             self.log(&format!("Factorio's settings already have every change {} recommends.", APP_NAME));
             return;
         }
-        if !check.pending.is_empty() && !self.ask_apply(&check.pending) {
+        if !check.pending.is_empty() && !self.yes_no(&config_changes::question(), "Factorio settings") {
             self.log("Recommended settings skipped. Press Recommended settings later to apply them.");
             return;
         }
@@ -191,39 +191,6 @@ impl Ui {
                 self.message(&e, true);
             }
         }
-    }
-
-    fn ask_apply(&self, pending: &[config_changes::Pending]) -> bool {
-        let dialog = Dialog::builder(&self.frame, "Recommended Factorio settings").with_size(640, 520).build();
-        let panel = Panel::builder(&dialog).build();
-        let sizer = BoxSizer::builder(Orientation::Vertical).build();
-        let intro = StaticText::builder(&panel)
-            .with_label(&format!("{} recommends {} changes to Factorio's settings. The list below explains each one.", APP_NAME, pending.len()))
-            .build();
-        let list = TextCtrl::builder(&panel)
-            .with_value(&describe(pending).replace('\n', "\r\n"))
-            .with_style(TextCtrlStyle::MultiLine | TextCtrlStyle::ReadOnly | TextCtrlStyle::WordWrap)
-            .build();
-        let buttons = BoxSizer::builder(Orientation::Horizontal).build();
-        let apply = Button::builder(&panel).with_label("Apply all").build();
-        let skip = Button::builder(&panel).with_label("Skip for now").build();
-        buttons.add(&apply, 0, SizerFlag::All, 4);
-        buttons.add(&skip, 0, SizerFlag::All, 4);
-        sizer.add(&intro, 0, SizerFlag::Expand | SizerFlag::All, 8);
-        sizer.add(&list, 1, SizerFlag::Expand | SizerFlag::All, 8);
-        sizer.add_sizer(&buttons, 0, SizerFlag::All, 4);
-        panel.set_sizer(sizer, true);
-        {
-            let d = dialog.clone();
-            apply.on_click(move |_| d.end_modal(ID_YES));
-        }
-        {
-            let d = dialog.clone();
-            skip.on_click(move |_| d.end_modal(ID_NO));
-        }
-        dialog.set_escape_id(ID_NO);
-        list.set_focus();
-        dialog.show_modal() == ID_YES
     }
 
     fn finish_install(&self, result: Result<(Installed, Vec<(String, String)>), String>) {

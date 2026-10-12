@@ -2,7 +2,7 @@
 use std::io::{self, Write};
 use std::path::PathBuf;
 
-use crate::core::config_changes::{self, describe};
+use crate::core::config_changes;
 use crate::core::factorio::Factorio;
 use crate::core::install::{self, ModZip, NativeZip, Progress};
 use crate::core::paths::APP_NAME;
@@ -203,9 +203,7 @@ fn recommended_settings(f: &Factorio, sets: Option<&Vec<(String, String)>>) {
         return;
     }
     if !check.pending.is_empty() {
-        println!("{} recommends these changes to Factorio's settings:\n", APP_NAME);
-        print!("{}", describe(&check.pending));
-        if !prompt("Apply all of them? (y = apply all, anything else = skip for now): ").eq_ignore_ascii_case("y") {
+        if !prompt(&format!("{} (y/N): ", config_changes::question())).eq_ignore_ascii_case("y") {
             println!("Skipped. Choose Recommended settings later to apply them.");
             return;
         }

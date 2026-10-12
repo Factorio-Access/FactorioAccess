@@ -226,8 +226,6 @@ pub struct Pending {
     /// "unknown" when config.ini does not have it at all, as the launcher says.
     pub current: String,
     pub suggested: String,
-    /// The comment, one line, without the `;`s.
-    pub reason: String,
 }
 
 /// Applies the sets in order (each set's settings, then its level marker), as "Approve all" does. Returns what
@@ -246,7 +244,6 @@ pub fn apply(ini: &mut ConfigIni, sets: &[ChangeSet]) -> Result<Vec<Pending>, St
                 key: s.key.clone(),
                 current,
                 suggested: s.value.clone(),
-                reason: s.comment.lines().map(str::trim).filter(|l| !l.is_empty()).collect::<Vec<_>>().join(" "),
             });
             ini.set(&s.section, &s.key, &s.value)?;
         }
@@ -293,19 +290,10 @@ pub fn apply_file(config_ini: &Path, sets: &[ChangeSet]) -> Result<Vec<Pending>,
     Ok(changed)
 }
 
-/// The pending changes as text for a person: one paragraph per setting.
-pub fn describe(pending: &[Pending]) -> String {
-    let mut out = String::new();
-    for p in pending {
-        let current = if p.current.is_empty() { "nothing (unbound)" } else { p.current.as_str() };
-        let suggested = if p.suggested.is_empty() { "nothing (unbound)" } else { p.suggested.as_str() };
-        out.push_str(&format!("{} in section {}: {} becomes {}.\n", p.key, p.section, current, suggested));
-        if !p.reason.is_empty() {
-            out.push_str(&format!("Why: {}\n", p.reason));
-        }
-        out.push('\n');
-    }
-    out
+/// What the player is asked before the changes are applied: one yes/no for all of them, since the mod does not work
+/// without them.
+pub fn question() -> String {
+    format!("There are pending changes to Factorio's settings that {} needs. Apply them?", crate::core::paths::APP_NAME)
 }
 
 #[cfg(test)]
@@ -423,7 +411,6 @@ mod tests {
         assert_eq!(check.level, "AA");
         let up = check.pending.iter().find(|p| p.key == "move-up").unwrap();
         assert_eq!((up.current.as_str(), up.suggested.as_str(), up.set.as_str()), ("W", "UP", "AB"));
-        assert_eq!(up.reason, "Remap walking to get out of the way of cursor");
         let upd = check.pending.iter().find(|p| p.key == "check-updates").unwrap();
         assert_eq!((upd.current.as_str(), upd.suggested.as_str()), ("true", "false"));
         let unknown = check.pending.iter().find(|p| p.key == "active-quick-bars").unwrap();
