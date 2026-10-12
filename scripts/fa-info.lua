@@ -1202,7 +1202,7 @@ local function ent_info_belt_contents(ctx)
    }
    ---@type { left: boolean, right: boolean }
    local empty = { left = true, right = true }
-   ---@type { left: any, right: any }
+   ---@type { left: string?, right: string? }
    local most_common_for_both = { left = nil, right = nil }
    ---@type { left: integer?, right: integer? }
    local other_count_for_both = { left = nil, right = nil }
@@ -1214,8 +1214,9 @@ local function ent_info_belt_contents(ctx)
       local is_full = is_full[side]
       if next(carries.results) then
          empty[side] = false
-         local most_common = TH.max_counts2(carries.results, TH.max_counts2_tiebreak_quality)
-         most_common_for_both[side] = most_common
+         local name, quality = TH.max_counts2(carries.results, TH.max_counts2_tiebreak_quality)
+         most_common_for_both[side] = name .. "/" .. quality
+         local most_common = ItemInfo.item_info({ name = name, quality = quality })
 
          local dist = carries.distance
          local dist_dir = 1
