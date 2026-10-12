@@ -403,14 +403,14 @@ data:extend({
       type = "custom-input",
       name = "fa-tab",
       key_sequence = "TAB",
-      consuming = "game-only",
+      consuming = "none",
    },
 
    {
       type = "custom-input",
       name = "fa-s-tab",
       key_sequence = "SHIFT + TAB",
-      consuming = "game-only",
+      consuming = "none",
    },
 
    {
