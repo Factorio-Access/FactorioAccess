@@ -1,17 +1,19 @@
+local Native = require("scripts.native")
 local VanillaMode = require("scripts.vanilla-mode")
 
 ---@class LauncherCommands
 local mod = {}
 
--- Generate a delimiter that's unlikely to appear in clipboard content
--- Using a combination of prefix and random-looking hex to avoid collisions
-local HEREDOC_DELIMITER = "FA_CLIPBOARD_BOUNDARY_7f3a9c2e1b"
-
----Copies text to the system clipboard via the launcher.
+---Copies text to the system clipboard: the native code's in single player, else the launcher's.
 ---@param pindex integer
 ---@param text string
 function mod.copy_to_clipboard(pindex, text)
    if VanillaMode.is_enabled(pindex) then return end
+   if Native.is_available() then
+      Native.set_clipboard(text)
+      return
+   end
+   -- The launcher reads one line per command
    assert(not string.find(text, "\n"), "Newlines not supported in copy yet")
    print(string.format("copy %i %s", pindex, text))
 end

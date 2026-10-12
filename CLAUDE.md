@@ -235,6 +235,9 @@ server and other test tooling are exempt.
   `_fa_native.speak(localised_string, interrupt)` localises with the engine immediately and speaks through prism.
   `_fa_native.audio_cmd(json)` takes the same JSON the launcher's audio engine does (`scripts/launcher-audio.lua`
   builds it), so the launcher and the DLL are interchangeable by swapping who parses it.
+  `_fa_native.set_clipboard(text)` replaces the launcher's `copy` (`LauncherCommands.copy_to_clipboard`); a worker
+  thread with its own window owns the clipboard (`native/src/win/clipboard.cpp`), since taking it messages the
+  previous owner, which may be the game's window.
 - **Audio**: `native/src/audio/` is the launcher's `fa_launcher_audio` ported to C++ (miniaudio, the panner
   node, JSON commands), with tests in `native/tests_audio/` (`fa_audio_tests.exe`, runs on miniaudio's null
   backend). It deliberately keeps three quirks of the Python engine the mod's sounds were tuned against (squared

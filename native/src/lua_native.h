@@ -6,6 +6,8 @@
 //   _fa_native.speak(ls [, interrupt]) speak a LocalisedString, localised by the engine on the spot
 //                                      (interrupt defaults to true)
 //   _fa_native.audio_cmd(json)         one audio command, the launcher's JSON format (scripts/launcher-audio.lua)
+//   _fa_native.set_cursor(x, y)        the mouse pointer to a pixel of the game window
+//   _fa_native.set_clipboard(text)     UTF-8 text onto the system clipboard (newlines allowed)
 #include <cstdint>
 #include <string_view>
 

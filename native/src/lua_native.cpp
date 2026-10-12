@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <string>
 #include "audio/audio.h"
+#include "clipboard.h"
 #include "hooks.h"
 #include "mouse.h"
 #include "log.h"
@@ -112,6 +113,15 @@ int lua_set_cursor(lua_State* L) {
   return 0;
 }
 
+// _fa_native.set_clipboard(text): UTF-8 text onto the system clipboard, as the launcher's copy command did.
+int lua_set_clipboard(lua_State* L) {
+  g_script_tid = hooks::current_thread_id();
+  size_t len = 0;
+  const char* text = api.checklstring(L, 1, &len);  // raises a Lua error when not a string
+  clipboard::set_text(std::string_view(text, len));
+  return 0;
+}
+
 // The FactorioAccess state, for the watchdog's traceback.
 std::atomic<lua_State*> g_mod_state;
 
@@ -172,7 +182,7 @@ void on_state_created(void* L, std::string_view mod) {
   if (mod != "FactorioAccess") return;
   g_mod_state = static_cast<lua_State*>(L);
   // Net stack effect zero: the table is consumed by setglobal, each closure by setfield.
-  api.createtable(L, 0, 4);
+  api.createtable(L, 0, 5);
   api.pushinteger(L, kApiVersion);
   api.setfield(L, -2, "api_version");
   api.pushcclosure(L, lua_speak, 0);
@@ -181,6 +191,8 @@ void on_state_created(void* L, std::string_view mod) {
   api.setfield(L, -2, "audio_cmd");
   api.pushcclosure(L, lua_set_cursor, 0);
   api.setfield(L, -2, "set_cursor");
+  api.pushcclosure(L, lua_set_clipboard, 0);
+  api.setfield(L, -2, "set_clipboard");
   api.setglobal(L, "_fa_native");
   log::writef("lua: _fa_native installed for {}", mod);
 }

@@ -15,6 +15,7 @@ local mod = {}
 ---@field speak fun(str: LocalisedString, interrupt: boolean?)
 ---@field audio_cmd fun(json: string)
 ---@field set_cursor fun(x: integer, y: integer)
+---@field set_clipboard fun(text: string)
 
 ---@return fa.NativeApi?
 local function get_native()
@@ -65,6 +66,14 @@ function mod.set_cursor(x, y)
       error("the native code is not available; check Native.is_available() first")
    end
    n.set_cursor(x, y)
+end
+
+---Put text on the system clipboard (newlines allowed).
+---@param text string
+function mod.set_clipboard(text)
+   with_native(function(n)
+      n.set_clipboard(text)
+   end)
 end
 
 return mod
