@@ -9,6 +9,8 @@ local UiKeyGraph = require("scripts.ui.key-graph")
 local Menu = require("scripts.ui.menu")
 local TabList = require("scripts.ui.tab-list")
 local UiRouter = require("scripts.ui.router")
+local UiSounds = require("scripts.ui.sounds")
+local LauncherCommands = require("scripts.launcher-commands")
 local Functools = require("scripts.functools")
 local CustomPrograms = require("scripts.rails.syntrax-custom-programs")
 local VTD = require("scripts.rails.virtual-train-driving")
@@ -62,6 +64,31 @@ local function execute_program(ctx, source, program_name)
    end
 end
 
+---Copy a program's source to the clipboard (shift click)
+---@param ctx fa.ui.graph.Ctx
+---@param source string
+---@param program_name LocalisedString|string
+local function copy_program(ctx, source, program_name)
+   if LauncherCommands.copy_to_clipboard(ctx.pindex, source) then
+      ctx.message:fragment({ "fa.syntrax-program-copied", program_name })
+   else
+      UiSounds.play_ui_error(ctx.pindex)
+      ctx.message:fragment({ "fa.syntrax-program-copy-line-breaks" })
+   end
+end
+
+---Click runs the program, shift click copies it
+---@param ctx fa.ui.graph.Ctx
+---@param source string
+---@param program_name LocalisedString|string
+local function click_program(ctx, source, program_name)
+   if ctx.modifiers.shift then
+      copy_program(ctx, source, program_name)
+   else
+      execute_program(ctx, source, program_name)
+   end
+end
+
 ---Add a predefined program row to the builder (label + programs in same row)
 ---@param builder fa.ui.menu.MenuBuilder
 ---@param row_key string
@@ -73,7 +100,7 @@ local function add_predefined_row(builder, row_key, label, programs)
    for i, prog in ipairs(programs) do
       builder:add_clickable(row_key .. "-" .. i, prog.name, {
          on_click = function(ctx)
-            execute_program(ctx, prog.source, prog.name)
+            click_program(ctx, prog.source, prog.name)
          end,
       })
    end
@@ -108,7 +135,7 @@ local function render(ctx)
          local prog_id = prog.id -- Capture for closures
          builder:add_clickable("custom-" .. prog_id, prog.name, {
             on_click = function(c)
-               execute_program(c, prog.source, prog.name)
+               click_program(c, prog.source, prog.name)
             end,
             on_right_click = function(c)
                -- Open editor with a copy of the program

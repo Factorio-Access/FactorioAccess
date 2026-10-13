@@ -240,7 +240,8 @@ The second is Syntrax, which is what the builder menu uses to store structures. 
 willing to learn a text based format, Syntrax is documented [here](./syntrax.md). The builder menu supports saving
 custom Syntrax programs for later use, which can be used to get Syntrax programs from others.  Please note that these
 are saved in your save and will not follow you between games.  We do not have the ability to offer global data like that
-at this time. You should keep a text file around and set them up in new games as you need them.
+at this time. You should keep a text file around and set them up in new games as you need them.  Shift click any
+program in the builder menu, yours or the built-in ones, to copy its Syntrax to your clipboard.
 
 If you prefer, you may type Syntrax directly. To do so, you hit alt right bracket.  This jumps straight into a text box:
 type your Syntrax and hit enter.
