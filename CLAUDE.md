@@ -41,8 +41,10 @@ python json_to_markdown.py --type runtime --input ../../doc-html/runtime-api.jso
 python json_to_markdown.py --type prototype --input ../../doc-html/prototype-api.json --output llm-docs/api-reference
 ```
 
-Tests that need Space Age (platforms, rockets) return early without it, and the default run has none: run them with
-`--config` and `--mod-directory` pointing at a setup with Space Age enabled. `--run-tests` runs a second Factorio
+The default run uses the real install's mod list, so whether Space Age is loaded depends on it (check the
+`Loading mod` lines of the run's `factorio-current.log`). Tests that need Space Age (platforms, rockets) return early
+without it; tests touching recipes Space Age changes must read amounts from the prototypes. To run with a different
+set of mods, pass `--config` and `--mod-directory`. `--run-tests` runs a second Factorio
 beside any game being played: its own write-data folder
 (`%TEMP%\factorio-access-tests`, rebuilt each run, logs and `script-output` kept there for reading) and a mods folder
 of junctions to the real mods plus copies of `mod-list.json` and `mod-settings.dat`. Passing `--config` or
