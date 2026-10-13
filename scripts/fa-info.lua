@@ -1724,9 +1724,11 @@ end
 -- are too many cases in the wild.
 ---@param pindex integer
 ---@param prototype_name string|nil Optional prototype name to look up directly
-function mod.selected_item_production_stats_info(pindex, prototype_name)
+---@param surface LuaSurface? The surface whose statistics to read, by default the one the player is on or views
+function mod.selected_item_production_stats_info(pindex, prototype_name, surface)
    local p = game.get_player(pindex)
-   local stats = p.force.get_item_production_statistics(p.surface)
+   surface = surface or p.surface
+   local stats = p.force.get_item_production_statistics(surface)
    local item_stack = nil
    local recipe = nil
    local prototype = nil
@@ -1739,7 +1741,7 @@ function mod.selected_item_production_stats_info(pindex, prototype_name)
          local fluid = prototypes.fluid[prototype_name]
          if fluid then
             prototype = fluid
-            stats = p.force.get_fluid_production_statistics(p.surface)
+            stats = p.force.get_fluid_production_statistics(surface)
          end
       end
       -- If provided but not found, return error immediately (don't try fallbacks)

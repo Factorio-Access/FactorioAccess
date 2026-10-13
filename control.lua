@@ -13,6 +13,7 @@ local util = require("util")
 
 local AreaOperations = require("scripts.area-operations")
 local Blueprints = require("scripts.blueprints")
+local Bottlenecks = require("scripts.bottlenecks")
 local BuildingTools = require("scripts.building-tools")
 local BuildDimensions = require("scripts.build-dimensions")
 local BuildLock = require("scripts.build-lock")
@@ -101,6 +102,7 @@ require("scripts.ui.menus.fast-travel-menu")
 require("scripts.ui.menus.debug-menu")
 require("scripts.ui.menus.mod-menu")
 require("scripts.ui.menus.surface-info")
+require("scripts.ui.menus.bottleneck-analyzer")
 require("scripts.ui.menus.space-map")
 require("scripts.ui.menus.space-platforms")
 require("scripts.ui.menus.rail-builder")
@@ -342,6 +344,7 @@ function on_tick(event)
    SonifierTickHandler.on_tick()
    BattleNotice.on_tick()
    ForceGhostEnabler.on_tick()
+   Bottlenecks.on_tick()
 
    move_characters(event)
 
@@ -639,6 +642,7 @@ EventManager.on_event(
    ---@param event EventData.on_object_destroyed
    function(event) --DOES NOT HAVE THE KEY PLAYER_INDEX
       ScannerEntrypoint.on_entity_destroyed(event)
+      Bottlenecks.on_object_destroyed(event)
 
       -- Close UIs that are bound to this entity
       UiRouter.on_entity_destroyed(event.registration_number)
@@ -831,8 +835,11 @@ EventManager.on_event(
    ---@param event EventData.on_surface_deleted
    function(event)
       ScannerEntrypoint.on_surface_delete(event.surface_index)
+      Bottlenecks.on_surface_deleted(event.surface_index)
    end
 )
+
+EventManager.on_event(defines.events.on_forces_merged, Bottlenecks.on_forces_merged)
 
 -- Scanner: entity creation events (most use "entity" field)
 EventManager.on_event({

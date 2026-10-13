@@ -20,6 +20,7 @@ local mod = {}
 ---@type fa.ui.ModMenuEntry[]
 local ENTRIES = {
    { ui_name = UiRouter.UI_NAMES.SURFACE_INFO, label = { "fa.surface-info-title" } },
+   { ui_name = UiRouter.UI_NAMES.BOTTLENECK_ANALYZER, label = { "fa.bottlenecks-title" } },
    {
       ui_name = UiRouter.UI_NAMES.SPACE_MAP,
       label = { "fa.space-map-title" },

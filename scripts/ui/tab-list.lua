@@ -105,6 +105,7 @@ local mod = {}
 ---@field resets_to_first_tab_on_open boolean?
 ---@field initial_tab (fun(pindex: integer, parameters: any): string)? The name of the tab to open on, every open. Its section's title is said before its own, as switching to it with ctrl+tab would.
 ---@field persist_state boolean?
+---@field sections_keep_tab_position boolean? Switching section lands on the tab at the same position in it, when enabled, rather than its first
 ---@field get_binds (fun(pindex: integer, parameters: table): fa.ui.Bind[]?)? TabList-level binds callback
 ---@field get_subject (fun(pindex: integer, parameters: table): any)? What the game shows as open meanwhile (UiPanelBase.get_subject)
 
@@ -544,16 +545,26 @@ function TabList:_cycle_section(pindex, direction, controller)
       return
    end
 
+   local old_position = 1
+   for i, tab in ipairs(self.tabstops[old_tabstop].tabs) do
+      if tab.name == self.tab_order[tl.active_tab] then old_position = i end
+   end
+
    -- Switch to new tabstop
    tl.active_tabstop = new_tabstop
 
-   -- Find first enabled tab in new tabstop
+   -- Find first enabled tab in new tabstop, or the one at the same position
    local tabstop = self.tabstops[new_tabstop]
    local first_tab_name = nil
-   for _, tab in ipairs(tabstop.tabs) do
-      if not tab.callbacks.enabled or tab.callbacks.enabled(pindex) then
-         first_tab_name = tab.name
-         break
+   local same = self.declaration.sections_keep_tab_position and tabstop.tabs[old_position]
+   if same and (not same.callbacks.enabled or same.callbacks.enabled(pindex)) then
+      first_tab_name = same.name
+   else
+      for _, tab in ipairs(tabstop.tabs) do
+         if not tab.callbacks.enabled or tab.callbacks.enabled(pindex) then
+            first_tab_name = tab.name
+            break
+         end
       end
    end
 

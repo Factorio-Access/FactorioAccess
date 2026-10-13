@@ -171,6 +171,7 @@ mod.UI_NAMES = {
    SCHEDULE_EDITOR = "schedule_editor",
    MOD_MENU = "mod_menu",
    SURFACE_INFO = "surface_info",
+   BOTTLENECK_ANALYZER = "bottleneck_analyzer",
    SPACE_MAP = "space_map",
    SPACE_ROUTES = "space_routes",
    SPACE_PLATFORMS = "space_platforms",
@@ -838,6 +839,20 @@ wants. Synced every tick, so whatever changes the stack, nothing else has to kee
 -- Set while sync_opened writes player.opened: replacing an open GUI closes it, raising on_gui_closed, which is ours.
 local syncing = false
 
+-- The tick a player's UIs stay open through the game closing what they have opened. Lost on load: at worst one UI
+-- closes.
+---@type table<integer, integer>
+local keep_open_tick = {}
+
+---Run f, keeping the player's UIs open if it makes the game close what they have opened (changing the controller
+---does). The game raises that after f returns, in the same tick, so this covers the rest of the tick.
+---@param pindex integer
+---@param f fun()
+function mod.keep_open_through(pindex, f)
+   keep_open_tick[pindex] = game.tick
+   f()
+end
+
 ---@param player LuaPlayer
 ---@return any
 local function wanted_opened(player)
@@ -915,6 +930,8 @@ EventManager.on_event(defines.events.on_gui_closed, function(event)
       or event.other_player
    if closed ~= state.opened then return end
    state.opened = nil
+   -- The next sync opens it again
+   if keep_open_tick[pindex] == game.tick then return end
    mod.back_or_cancel(pindex)
 end)
 

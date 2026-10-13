@@ -272,6 +272,22 @@ local surface_state = StorageManager.declare_storage_module(
    { root_field = "surfaces", ephemeral_state_version = 18 }
 )
 
+-- Code outside the scanner told of each new entity of some types, by type. See add_new_entity_listener.
+---@type table<string, fun(entity: LuaEntity)[]?>
+local new_entity_listeners = {}
+
+---Call `listener` with each entity of these types the scanner finds, once per entity: when it is built, or when its
+---chunk is first scanned. Entities already found before a listener existed are not passed to it. Call at file top
+---level.
+---@param types string[]
+---@param listener fun(entity: LuaEntity)
+function mod.add_new_entity_listener(types, listener)
+   for _, t in ipairs(types) do
+      new_entity_listeners[t] = new_entity_listeners[t] or {}
+      table.insert(new_entity_listeners[t], listener)
+   end
+end
+
 -- Given a backend setup and an array of entities, dispatch the entities to the
 -- backends.  Assumes the entities are valid.
 ---@param backends fa.scanner.SurfaceBackends
@@ -280,10 +296,18 @@ local function dispatch_entities(backends, ents)
    for i = 1, #ents do
       local e = ents[i]
 
+      local t = e.type
+      local listeners = new_entity_listeners[t]
+      if listeners then
+         for _, listener in ipairs(listeners) do
+            listener(e)
+         end
+      end
+
       if backends.name_lut[e.name] then
          backends.name_lut[e.name]:on_new_entity(e)
-      elseif backends.lut[e.type] then
-         backends.lut[e.type]:on_new_entity(e)
+      elseif backends.lut[t] then
+         backends.lut[t]:on_new_entity(e)
       end
    end
 end

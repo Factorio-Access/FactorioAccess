@@ -46,6 +46,7 @@ mod.CATEGORY_POSITION = {
 ---@field categories fa.ui.CategoryRows.Category[]
 ---@field focus_category_key string? Optional: category to focus when tab gains focus
 ---@field focus_item_key string? Optional: item to focus when tab gains focus
+---@field empty_message LocalisedString? Said when there are no categories, instead of the generic message
 
 ---@class fa.ui.CategoryRows.State
 ---@field current_category_key string?
@@ -390,7 +391,7 @@ end
 local function check_empty_categories(ctx, render)
    if #render.categories == 0 then
       sounds.play_ui_edge(ctx.pindex)
-      ctx.message:fragment({ "fa.category-rows-no-categories" })
+      ctx.message:fragment(render.empty_message or { "fa.category-rows-no-categories" })
       return true
    end
    return false

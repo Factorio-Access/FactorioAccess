@@ -1,0 +1,11 @@
+The bottleneck analyzer tells you which ingredients your crafting machines are waiting for. Every assembling machine and rocket silo is checked once every 5 seconds. Furnaces are left out, because they choose their recipe from what they are given, and so is fuel.
+
+Each row is an ingredient, the one keeping the most machines waiting first. A row says how many machines it kept waiting on average, how many machines were short of it at some point, and how much they were missing per craft when short.
+
+Move along a row to hear the machines short of that ingredient: what each is making, how much of the time it was short, and where it is. Machines on the surface you are viewing come first, nearest the cursor first. Click a machine to move the cursor to it, viewing its surface if it is on another one.
+
+Press U on a machine for the production statistics of the ingredient it is missing, on that machine's surface.
+
+Control Tab changes the time range: the last 30 seconds, the last minute or the last 10 minutes. Tab changes what is counted: all surfaces, the machines under the cursor when the cursor is bigger than one tile, then each surface on its own.
+
+The numbers are read when you open the analyzer, and do not change while it is open. To see newer numbers, close it and open it again.
