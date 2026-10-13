@@ -316,6 +316,8 @@ python native/tools/fadev.py kill                # close the game (WM_CLOSE firs
 python native/tools/fadev.py shot                # screenshot of the game window -> native/build/shot.png
 python native/tools/fadev.py key down | keys text | speech --since N | log | tree | get ui/nav
 python native/tools/fadev.py lua "game.get_player(1).position"   # run Lua in the mod's state (loaded game; over Lua UDP)
+python native/tools/fadev.py wait --ticks 600 | --until 'EXPR'  # let the world run; EXPR is Lua, polled until truthy
+python native/tools/fadev.py fixture NAME key=value  # a setup from native/tools/fixtures (no NAME lists them)
 ```
 
 - The dev loop never steals focus: the game starts visible but inactive and the DLL blocks its attempts to
@@ -330,7 +332,11 @@ python native/tools/fadev.py lua "game.get_player(1).position"   # run Lua in th
 - `lua` runs a chunk in the mod's Lua state in the loaded game and prints its return values (`scripts/dev-udp.lua`;
   `launch` passes `--enable-lua-udp`). `loaded("scripts.fa-utils")` gets a module, since require only works at load
   time. It answers once a tick, so the game must be in a world and unpaused. Use it for experiments on the engine's
-  behaviour instead of throwaway test files.
+  behaviour instead of throwaway test files. `launch` with `--load-game` waits until the world answers. Chunks also
+  get `localise(ls)` (a message as the text it reads as), `profile(f, n)`, and `profile_calls(module, name)` /
+  `profile_report(module, name)` to time a function over real ticks; a LuaProfiler's time can only be read this way.
+- Fixtures (`native/tools/fixtures/*.lua`, first line describes the args) are setups worth repeating: a powered test
+  surface, a grid of starved assemblers, a boarded platform. Add one rather than retyping a setup in `lua`.
 - Only one party drives the game at a time. Ask before launching or driving it unless the user handed it over.
 - `fa_native.dll` cannot be rebuilt while loaded: `reload` ejects first. A plain build while the game runs
   fails to link (LNK1168); build test targets with `--target faui_tests` instead.

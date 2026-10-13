@@ -32,6 +32,7 @@ struct Api {
   void (*traceback)(lua_State*, lua_State*, const char*, int);
   const char* (*tolstring)(lua_State*, int, size_t*);
   void (*settop)(lua_State*, int);
+  const char* (*pushlstring)(lua_State*, const char*, size_t);
 } api;
 
 // MSVC std::string, as returned by reference from the engine.
@@ -91,6 +92,15 @@ int lua_speak(lua_State* L) {
   // strips too. This also trims the separators that empty parts of a composed message leave at their ends.
   speech::speak(ui::strip_rich_text(localise(L, 1)), interrupt);
   return 0;
+}
+
+// _fa_native.localise(localised_string): the text it reads as, translated by the engine at once. For development
+// tooling (scripts/dev-udp.lua): a LuaProfiler's time, or a message read without speaking it.
+int lua_localise(lua_State* L) {
+  g_script_tid = hooks::current_thread_id();
+  std::string text = localise(L, 1);
+  api.pushlstring(L, text.data(), text.size());
+  return 1;
 }
 
 // _fa_native.audio_cmd(json): one command for the audio engine, in the launcher's JSON format.
@@ -156,6 +166,7 @@ bool init() {
   ok &= resolve(api.traceback, "luaL_traceback");
   ok &= resolve(api.tolstring, "lua_tolstring");
   ok &= resolve(api.settop, "lua_settop");
+  ok &= resolve(api.pushlstring, "lua_pushlstring");
   ok &= resolve(g_parse, "LuaHelper::parseLocalisedString");
   ok &= resolve(g_str, "LocalisedString::str");
   ok &= resolve(g_dtor, "LocalisedString::~LocalisedString");
@@ -182,7 +193,7 @@ void on_state_created(void* L, std::string_view mod) {
   if (mod != "FactorioAccess") return;
   g_mod_state = static_cast<lua_State*>(L);
   // Net stack effect zero: the table is consumed by setglobal, each closure by setfield.
-  api.createtable(L, 0, 5);
+  api.createtable(L, 0, 6);
   api.pushinteger(L, kApiVersion);
   api.setfield(L, -2, "api_version");
   api.pushcclosure(L, lua_speak, 0);
@@ -193,6 +204,8 @@ void on_state_created(void* L, std::string_view mod) {
   api.setfield(L, -2, "set_cursor");
   api.pushcclosure(L, lua_set_clipboard, 0);
   api.setfield(L, -2, "set_clipboard");
+  api.pushcclosure(L, lua_localise, 0);
+  api.setfield(L, -2, "localise");
   api.setglobal(L, "_fa_native");
   log::writef("lua: _fa_native installed for {}", mod);
 }

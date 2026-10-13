@@ -14,7 +14,13 @@ It never touches the real desktop's focus or input.
   say TEXT | mute on|off | key NAME [--shift --ctrl --alt] | keys TEXT
   tree [--all]                                   the game's widget tree
   get route?query                                any dev-server route (no leading slash: Git Bash rewrites /paths)
-  lua CODE|- [--timeout S]                       run Lua in the mod's state in the loaded game (over Lua UDP), print the result
+  lua CODE|- [--file F] [--timeout S]            run Lua in the mod's state in the loaded game (over Lua UDP), print the result
+                                                 (chunks get localise, profile, profile_calls/profile_report: see scripts/dev-udp.lua)
+  wait [--ticks N] [--until EXPR] [--timeout S]  wait for a loaded world, then N more ticks or until EXPR is truthy
+  fixture [NAME [key=value ...]]                 run native/tools/fixtures/NAME.lua with those args; no NAME lists them
+
+launch with --load-game (or another argument that loads a world) waits for the world too, so the next command can
+talk to it.
 
 Process identity: the launch records pid + creation time + image path in native/build/fadev_state.json.
 Every command that acts on the process re-checks all three, so a pid Windows reused for another process
@@ -187,6 +193,10 @@ def wait_health(pid, seconds=60):
     return False
 
 
+# Game arguments that load a world: launch then waits until the mod answers.
+WORLD_ARGS = {"--load-game", "--load-scenario", "--create", "--start-server"}
+
+
 def cmd_launch(a):
     if tracked():
         sys.exit("the tracked game is still running; `kill` it first (or `reload` to swap the DLL)")
@@ -214,6 +224,11 @@ def cmd_launch(a):
     record(pid)
     if not wait_health(pid):
         sys.exit(1)
+    if any(arg in WORLD_ARGS for arg in a.game_args):
+        tick = wait_world(180)
+        if tick is None:
+            sys.exit("the world did not answer over UDP in 180s")
+        print(f"world loaded, tick {tick}")
 
 
 def cmd_reload(a):
@@ -366,24 +381,125 @@ def cmd_speech(a):
         time.sleep(0.3)
 
 
-def cmd_lua(a):
+def lua_eval(code, timeout):
+    """(ok, body) for a Lua chunk run in the mod's state, or None when nothing answered in time."""
     # The mod runs packets that start with this (scripts/dev-udp.lua) and replies to our port. It reads UDP once a tick,
     # so a paused game or one still in the menus answers late or not at all.
     import socket
 
-    code = a.code if a.code != "-" else sys.stdin.read()
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
         sock.bind(("127.0.0.1", 0))
-        sock.settimeout(a.timeout)
+        sock.settimeout(timeout)
         sock.sendto(("fa-eval\n" + code).encode("utf-8"), ("127.0.0.1", UDP_PORT))
         try:
             reply, _ = sock.recvfrom(65536)
-        except socket.timeout:
-            sys.exit(f"no reply in {a.timeout}s (is a game loaded and unpaused, launched by fadev with --enable-lua-udp?)")
+        # Windows reports an unreachable port (no world loaded yet) as a reset of the socket
+        except (socket.timeout, ConnectionResetError):
+            return None
     status, _, body = reply.decode("utf-8", "replace").partition("\n")
+    return status == "ok", body
+
+
+def run_lua(code, timeout):
+    result = lua_eval(code, timeout)
+    if result is None:
+        sys.exit(f"no reply in {timeout}s (is a game loaded and unpaused, launched by fadev with --enable-lua-udp?)")
+    ok, body = result
     print(body)
-    if status != "ok":
+    if not ok:
         sys.exit(1)
+
+
+def cmd_lua(a):
+    if a.file:
+        with open(a.file, encoding="utf-8") as f:
+            code = f.read()
+    elif a.code == "-":
+        code = sys.stdin.read()
+    elif a.code is not None:
+        code = a.code
+    else:
+        sys.exit("give CODE, - or --file")
+    run_lua(code, a.timeout)
+
+
+def wait_world(seconds):
+    """Until the mod answers over UDP, which it does once a world is loaded and running. The tick, or None."""
+    deadline = time.time() + seconds
+    while time.time() < deadline:
+        result = lua_eval("return game.tick", 1)
+        if result and result[0]:
+            return int(result[1])
+        if not tracked():
+            return None
+        time.sleep(0.25)
+    return None
+
+
+def current_tick():
+    result = lua_eval("return game.tick", 2)
+    return int(result[1]) if result and result[0] else None
+
+
+def cmd_wait(a):
+    deadline = time.time() + a.timeout
+    tick = wait_world(a.timeout)
+    if tick is None:
+        sys.exit(f"no world answered in {a.timeout}s")
+    target = tick + a.ticks
+    while tick < target:
+        if time.time() > deadline:
+            sys.exit(f"timed out at tick {tick}, waiting for {target} (paused?)")
+        time.sleep(min(0.5, (target - tick) / 60))
+        tick = current_tick() or tick
+    while a.until:
+        result = lua_eval(a.until, 2)
+        if result:
+            ok, body = result
+            if not ok:
+                sys.exit("error: " + body)
+            if body.strip() not in ("", "nil", "false"):
+                break
+        if time.time() > deadline:
+            sys.exit(f"timed out waiting for: {a.until}")
+        time.sleep(0.1)
+    print(f"tick {current_tick()}")
+
+
+FIXTURES = os.path.join(NATIVE, "tools", "fixtures")
+
+
+def lua_value(text):
+    """A command-line value as Lua: numbers and booleans as they are, anything else a string."""
+    if text in ("true", "false"):
+        return text
+    try:
+        float(text)
+        return text
+    except ValueError:
+        return json.dumps(text)
+
+
+def cmd_fixture(a):
+    if not a.name:
+        for name in sorted(os.listdir(FIXTURES)):
+            if name.endswith(".lua"):
+                with open(os.path.join(FIXTURES, name), encoding="utf-8") as f:
+                    first = f.readline().strip().lstrip("-").strip()
+                print(f"{name[:-4]}: {first}")
+        return
+    path = os.path.join(FIXTURES, a.name + ".lua")
+    if not os.path.exists(path):
+        sys.exit(f"no fixture {a.name}; `fixture` lists them")
+    pairs = []
+    for arg in a.args:
+        key, sep, value = arg.partition("=")
+        if not sep or not key.isidentifier():
+            sys.exit(f"arguments are key=value, not {arg}")
+        pairs.append(f"{key} = {lua_value(value)}")
+    with open(path, encoding="utf-8") as f:
+        code = "local args = { " + ", ".join(pairs) + " }\n" + f.read()
+    run_lua(code, a.timeout)
 
 
 def main():
@@ -438,9 +554,20 @@ def main():
     s.add_argument("text")
     s.set_defaults(f=lambda a: print(get("/keys" + q(text=a.text)), end=""))
     s = sub.add_parser("lua", help="run Lua in the mod's state in the loaded game and print what it returns")
-    s.add_argument("code", help="a Lua chunk or expression; - reads it from stdin")
+    s.add_argument("code", nargs="?", help="a Lua chunk or expression; - reads it from stdin")
+    s.add_argument("--file", help="read the chunk from this file")
     s.add_argument("--timeout", type=float, default=5)
     s.set_defaults(f=cmd_lua)
+    s = sub.add_parser("wait", help="wait for a loaded world, then for ticks to pass or a Lua expression to be truthy")
+    s.add_argument("--ticks", type=int, default=0)
+    s.add_argument("--until", help="a Lua expression, polled until it is neither nil nor false")
+    s.add_argument("--timeout", type=float, default=120)
+    s.set_defaults(f=cmd_wait)
+    s = sub.add_parser("fixture", help="run a setup script from native/tools/fixtures")
+    s.add_argument("name", nargs="?")
+    s.add_argument("args", nargs="*", help="key=value, passed to the script as the table `args`")
+    s.add_argument("--timeout", type=float, default=30)
+    s.set_defaults(f=cmd_fixture)
     s = sub.add_parser("tree")
     s.add_argument("--all", action="store_true")
     s.set_defaults(f=lambda a: print(get("/ui/tree" + q(all=1 if a.all else None)), end=""))

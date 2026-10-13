@@ -11,8 +11,17 @@ The rest of the packet is a Lua chunk run in this mod's Lua state; a single expr
 returns an already loaded module by its require name. Globals a chunk assigns stay in that chunk. The reply, sent
 to the packet's source port, is "ok\n" followed by the serpent-serialised return values, one per line group, or
 "error\n" followed by the message.
+
+Chunks also get, with the native DLL loaded:
+
+- `localise(ls)`: the text a localised string reads as (a message, without speaking it).
+- `profile(f, n)`: run f n times (default 1) and return the total and per call times as text.
+- `profile_calls(module, name)`, then later `profile_report(module, name)`: time every call of a module's function
+  over real ticks; the report returns the count, total and per call times and puts the function back. Only calls
+  that look the function up in the module table at call time are seen (`Bottlenecks.on_tick()`, not a local copy).
 ]]
 local EventManager = require("scripts.event-manager")
+local Native = require("scripts.native")
 
 local mod = {}
 
@@ -24,10 +33,75 @@ local function loaded(name)
    return package.loaded["__FactorioAccess__/" .. name:gsub("%.", "/") .. ".lua"]
 end
 
+---@param f fun()
+---@param n integer?
+---@return string
+local function profile(f, n)
+   n = n or 1
+   local total = helpers.create_profiler()
+   for _ = 1, n do
+      f()
+   end
+   total.stop()
+   local each = helpers.create_profiler(true)
+   each.add(total)
+   each.divide(n)
+   return Native.localise({ "", "total ", total, ", per call ", each, ", calls ", n })
+end
+
+-- Functions being timed by profile_calls, by "module/name": the original, the last call's time, the sum, the count.
+---@type table<string, { original: function, last: LuaProfiler, total: LuaProfiler, count: integer }?>
+local timed = {}
+
+---@param module string
+---@param name string
+local function profile_calls(module, name)
+   local m = assert(loaded(module), "not loaded: " .. module)
+   local key = module .. "/" .. name
+   assert(not timed[key], "already timing " .. key)
+   local entry = {
+      original = m[name],
+      last = helpers.create_profiler(true),
+      total = helpers.create_profiler(true),
+      count = 0,
+   }
+   timed[key] = entry
+   m[name] = function(...)
+      entry.last.reset()
+      entry.last.restart()
+      local results = table.pack(entry.original(...))
+      entry.last.stop()
+      entry.total.add(entry.last)
+      entry.count = entry.count + 1
+      return table.unpack(results, 1, results.n)
+   end
+end
+
+---@param module string
+---@param name string
+---@return string
+local function profile_report(module, name)
+   local key = module .. "/" .. name
+   local entry = assert(timed[key], "not timing " .. key)
+   loaded(module)[name] = entry.original
+   timed[key] = nil
+   if entry.count == 0 then return "no calls" end
+   local each = helpers.create_profiler(true)
+   each.add(entry.total)
+   each.divide(entry.count)
+   return Native.localise({ "", "calls ", entry.count, ", total ", entry.total, ", per call ", each })
+end
+
 ---@param code string
 ---@return string
 local function run(code)
-   local env = setmetatable({ loaded = loaded }, { __index = _G })
+   local env = setmetatable({
+      loaded = loaded,
+      localise = Native.localise,
+      profile = profile,
+      profile_calls = profile_calls,
+      profile_report = profile_report,
+   }, { __index = _G })
    local chunk, err = load("return " .. code, "=fadev", "t", env)
    if not chunk then
       chunk, err = load(code, "=fadev", "t", env)

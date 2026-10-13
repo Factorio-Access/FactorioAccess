@@ -16,6 +16,7 @@ local mod = {}
 ---@field audio_cmd fun(json: string)
 ---@field set_cursor fun(x: integer, y: integer)
 ---@field set_clipboard fun(text: string)
+---@field localise fun(str: LocalisedString): string
 
 ---@return fa.NativeApi?
 local function get_native()
@@ -74,6 +75,18 @@ function mod.set_clipboard(text)
    with_native(function(n)
       n.set_clipboard(text)
    end)
+end
+
+---The text a localised string reads as, translated by the engine at once. Development tooling only.
+---@param str LocalisedString
+---@return string
+function mod.localise(str)
+   ---@type string
+   local text
+   with_native(function(n)
+      text = n.localise(str)
+   end)
+   return text
 end
 
 return mod
