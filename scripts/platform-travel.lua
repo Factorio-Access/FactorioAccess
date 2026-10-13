@@ -118,6 +118,10 @@ function mod.describe(platform, message)
       message:list_item({ "fa.platform-status-starter-pack-on-the-way" })
    elseif state == states.paused then
       message:list_item({ "fa.platform-status-paused" })
+   elseif state == states.no_schedule then
+      message:list_item({ "fa.platform-status-no-schedule" })
+   elseif state == states.waiting_for_departure then
+      message:list_item({ "fa.platform-status-waiting-for-departure" })
    elseif state == states.no_path then
       local to = destination(platform)
       if to then

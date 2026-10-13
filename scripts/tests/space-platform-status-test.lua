@@ -32,6 +32,24 @@ local function status(platform)
 end
 
 describe("Space platform status", function()
+   it("reads a built platform with nothing scheduled", function(ctx)
+      if not script.feature_flags.space_travel then return end
+      ---@type LuaSpacePlatform
+      local platform
+      ctx:init(function()
+         platform = assert(
+            game.forces.player.create_space_platform({ planet = "nauvis", starter_pack = "space-platform-starter-pack" })
+         )
+         platform.apply_starter_pack()
+         platform.paused = false
+      end)
+      ctx:at_tick(3, function()
+         ctx:assert_equals(defines.space_platform_state.no_schedule, platform.state)
+         ctx:assert(status(platform)["fa.platform-status-no-schedule"] ~= nil, "no schedule")
+         platform.destroy(0)
+      end)
+   end)
+
    it("reads an unbuilt platform, then a trip flown backwards along its connection", function(ctx)
       if not script.feature_flags.space_travel then return end
       ---@type LuaSpacePlatform
