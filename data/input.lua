@@ -1250,6 +1250,13 @@ data:extend({
 
    {
       type = "custom-input",
+      name = "fa-a-i",
+      key_sequence = "ALT + I",
+      consuming = "none",
+   },
+
+   {
+      type = "custom-input",
       name = "fa-cs-i",
       key_sequence = "CONTROL + SHIFT + I",
       consuming = "none",

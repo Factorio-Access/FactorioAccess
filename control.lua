@@ -53,6 +53,7 @@ local PlatformTravel = require("scripts.platform-travel")
 local PlayerInit = require("scripts.player-init")
 local PlayerMiningTools = require("scripts.player-mining-tools")
 local Quickbar = require("scripts.quickbar")
+local RemoteView = require("scripts.remote-view")
 local Research = require("scripts.research")
 require("scripts.rich-text") -- registers rich text processor with speech.lua
 require("scripts.dev-udp") -- development tooling: runs Lua sent over UDP when the game has --enable-lua-udp
@@ -441,7 +442,6 @@ EventManager.on_event(
 )
 
 if script.feature_flags.space_travel then
-   EventManager.on_event(defines.events.on_player_controller_changed, PlatformTravel.on_player_controller_changed)
    EventManager.on_event(
       defines.events.on_cargo_pod_finished_descending,
       PlatformTravel.on_cargo_pod_finished_descending
@@ -456,6 +456,7 @@ EventManager.on_event(
    ---@param pindex integer
    function(event, pindex)
       MovementHistory.reset_and_increment_generation(pindex)
+      RemoteView.on_player_changed_surface(event, pindex)
    end
 )
 
@@ -3499,6 +3500,19 @@ end)
 EventManager.on_event("fa-a-m", function(event, pindex)
    UiRouter.get_router(pindex):open_ui(UiRouter.UI_NAMES.MOD_MENU)
 end)
+
+EventManager.on_event("fa-a-i", function(event, pindex)
+   RemoteView.toggle(pindex)
+end)
+EventManager.on_event(
+   defines.events.on_player_controller_changed,
+   ---@param event EventData.on_player_controller_changed
+   ---@param pindex integer
+   function(event, pindex)
+      if script.feature_flags.space_travel then PlatformTravel.on_player_controller_changed(event, pindex) end
+      RemoteView.on_player_controller_changed(event, pindex)
+   end
+)
 
 -- Toggle combat mode (changes sound reference point from cursor to character)
 EventManager.on_event("fa-cs-i", function(event)

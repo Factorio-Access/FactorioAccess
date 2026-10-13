@@ -36,11 +36,19 @@ local function destination(platform)
    return prototypes.space_location[assert(record.station)]
 end
 
+---Say which platform the player is aboard and where it is, unless that was just said.
 ---@param pindex integer
 ---@param platform LuaSpacePlatform
-local function announce_boarding(pindex, platform)
+---@param repeat_ticks integer? How long a repeat is suppressed; by default long enough for the rocket and the pod
+function mod.announce_boarding(pindex, platform, repeat_ticks)
    local last = last_boarding[pindex]
-   if last and last.platform_index == platform.index and game.tick - last.tick < BOARDING_REPEAT_TICKS then return end
+   if
+      last
+      and last.platform_index == platform.index
+      and game.tick - last.tick < (repeat_ticks or BOARDING_REPEAT_TICKS)
+   then
+      return
+   end
    last_boarding[pindex] = { tick = game.tick, platform_index = platform.index }
 
    local location = platform.space_location --[[@as LuaSpaceLocationPrototype?]]
@@ -64,7 +72,7 @@ function mod.on_player_controller_changed(event, pindex)
    local player = game.get_player(pindex)
    local hub = player.hub
    if player.controller_type == defines.controllers.remote and hub then
-      announce_boarding(pindex, assert(hub.surface.platform))
+      mod.announce_boarding(pindex, assert(hub.surface.platform))
    end
 end
 
@@ -76,7 +84,7 @@ function mod.on_cargo_pod_finished_descending(event)
    local platform = surface.platform
    local planet = surface.planet
    if platform then
-      announce_boarding(pindex, platform)
+      mod.announce_boarding(pindex, platform)
    elseif planet then
       Speech.speak(pindex, { "fa.platform-landed", Localising.get_localised_name_with_fallback(planet.prototype) })
    end

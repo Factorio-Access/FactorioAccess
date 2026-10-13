@@ -11,6 +11,7 @@ The storage format changed in migrations/2026-10-13-fast-travel-surfaces-and-cat
 local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
 local Localising = require("scripts.localising")
+local RemoteView = require("scripts.remote-view")
 local SettingDecls = require("scripts.settings-decls")
 local Speech = require("scripts.speech")
 local StorageManager = require("scripts.storage-manager")
@@ -374,11 +375,15 @@ function mod.travel_to_point(pindex, id)
 
    -- Back to the body first; this fails aboard a platform or a rocket, and the view moves instead
    if p.controller_type == defines.controllers.remote and point.surface_index == p.physical_surface_index then
-      p.exit_remote_view()
+      RemoteView.quietly(pindex, function()
+         p.exit_remote_view()
+      end)
    end
    if p.controller_type == defines.controllers.remote or point.surface_index ~= p.surface.index then
       local surface = assert(game.get_surface(point.surface_index))
-      p.set_controller({ type = defines.controllers.remote, surface = surface, position = point.position })
+      RemoteView.quietly(pindex, function()
+         p.set_controller({ type = defines.controllers.remote, surface = surface, position = point.position })
+      end)
       vp:set_cursor_pos(table.deepcopy(point.position))
       return { "fa.travel-remote-view-of", point.label, mod.surface_name(surface) }
    end
