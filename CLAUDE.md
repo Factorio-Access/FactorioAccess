@@ -95,6 +95,10 @@ local my_storage = StorageManager.declare_storage_module("module_name", { --[[ d
   disagrees: `player.character` still returns the parked character, while `player.get_main_inventory()` is nil and
   `player.position` / `player.surface` are the view. Use `FaUtils.controlled_character(player)`, never a bare
   `player.character` check. `player.character` is truly nil only without a body (dead in multiplayer, god, editor).
+- `EventManager.on_event` keeps one handler per event and priority: a second registration replaces the first. Two
+  modules wanting the same event share one handler in control.lua that calls both.
+- Events an API call causes (`set_controller`, `exit_remote_view`, surface changes) are raised after the calling
+  Lua returns, in the same tick, and the handler sees the final state. Tests assert on them in a later tick.
 - Requires only at file top level. No global state beyond the current file.
 - Check `player and player.valid` at entry points; see "Defensive coding" for everywhere else.
 - `prototypes.recipe["name"]`, not `game.recipe_prototypes`. There is no `game.create_player()`.
