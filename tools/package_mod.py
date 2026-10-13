@@ -33,7 +33,6 @@ WHITELIST_FILES = {
     "data-updates.lua",
     "data-final-fixes.lua",
     "settings.lua",
-    "settings-updates.lua",
     "syntrax.lua",
     "polyfill.lua",
     "math-helpers.lua",
