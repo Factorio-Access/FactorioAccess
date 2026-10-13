@@ -110,6 +110,11 @@ GraphBuilder& GraphBuilder::set_start(ControlId id) {
   return *this;
 }
 
+GraphBuilder& GraphBuilder::set_stop_entry(ControlId id) {
+  stop_entries_.insert_or_assign(stop_key_, std::move(id));
+  return *this;
+}
+
 // ---- menu mode ----
 
 GraphBuilder& GraphBuilder::start_row(Key row_key) {
@@ -204,6 +209,10 @@ GraphRenderPtr GraphBuilder::build() {
   stitch_mode_boundaries();
 
   render->start_key = (start_ && render->contains(*start_)) ? *start_ : render->order()[0]->id;
+  for (auto& [stop, entry] : stop_entries_) {
+    const GraphNode* n = render->node_at(entry);
+    if (n != nullptr && n->stop_key == stop) render->stop_entries.emplace(stop, entry);
+  }
   stamp_positions();
   return render;
 }

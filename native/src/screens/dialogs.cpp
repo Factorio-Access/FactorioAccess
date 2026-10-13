@@ -737,7 +737,7 @@ class DialogsScreen : public Screen {
   void build(GraphBuilder& b) override {
     auto ds = dialogs();
     const Dialog* top = top_dialog(ds);
-    std::optional<ControlId> start;
+    std::optional<ControlId> start, start_confirm;
     for (size_t i = 0; i < ds.size(); ++i) {
       Walker walker;
       walker.walk(ds[i].widget, ds[i].key + "|", false);
@@ -756,13 +756,25 @@ class DialogsScreen : public Screen {
         for (const Entry& e : row.cells) {
           ControlId id = ControlId::structural(Key(e.path));
           b.add_item(id, make_node(e, Editors{[this](const Path& p) { start_editing(p); }, [this](const Path& p) { start_value_entry(p); }}));
-          if (&ds[i] == top && !start && e.kind != Kind::Label) start = id;
+          // The game's green forward button (Respawn, Load, Confirm) is where the bar is entered: the action the
+          // dialog leads to. Its style varies: confirm_button, confirm_in_load_game_button, ...
+          bool confirm = false;
+          if (row.closing && e.kind == Kind::Button)
+            if (agui::Widget* w = resolve(e.path); w && agui::style_name(w).find("confirm") != std::string::npos)
+              confirm = true;
+          if (confirm) b.set_stop_entry(id);
+          if (&ds[i] == top) {
+            // A dialog that is only its button bar (the defeat screen) starts on that button too
+            if (confirm && stops[r].second == stops[0].second) start_confirm = id;
+            if (!start && e.kind != Kind::Label) start = id;
+          }
         }
         if (open_row) b.end_row();
         if (!row.context.empty()) b.pop_context();
       }
       if (!title.empty()) b.pop_context();
     }
+    if (start_confirm) start = start_confirm;
     if (start) b.set_start(*start);
   }
 

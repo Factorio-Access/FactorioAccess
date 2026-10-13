@@ -85,6 +85,10 @@ class GraphBuilder {
   /// Focus starts here when the graph has no prior position (defaults to the first node).
   GraphBuilder& set_start(ControlId id);
 
+  /// Where focus lands entering the CURRENT stop with no remembered position and no selected member
+  /// (defaults to the stop's first node): a dialog's button bar lands on its confirm button.
+  GraphBuilder& set_stop_entry(ControlId id);
+
   // ---- menu mode ----
 
   /// Open a horizontal row. Rows sharing a non-empty `row_key` with the row above/below get
@@ -175,6 +179,7 @@ class GraphBuilder {
   // Shared.
   std::unordered_set<ControlId> ids_;
   std::optional<ControlId> start_;
+  std::unordered_map<Key, ControlId> stop_entries_;
 
   // Stop / region / parent state applied to nodes as they are added.
   Key stop_key_ = auto_stop_key(0);

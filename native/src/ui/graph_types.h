@@ -252,6 +252,10 @@ class GraphRender {
   /// hand-built render (where the C# would have thrown on the first dictionary lookup).
   std::optional<ControlId> start_key;
 
+  /// Per stop, where focus lands entering it with nothing remembered or selected (GraphBuilder::set_stop_entry);
+  /// a stop without one lands on its first node.
+  std::unordered_map<Key, ControlId> stop_entries;
+
   /// Take ownership of a node without publishing it (the non-focusable context parents).
   GraphNode* adopt(std::unique_ptr<GraphNode> node) {
     arena_.push_back(std::move(node));

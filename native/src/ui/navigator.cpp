@@ -299,7 +299,8 @@ bool GraphNavigator::tab(int step) {
   return land_on_stop(stops[(size_t)ni]);
 }
 
-// Remembered position -> SELECTED member -> first node (so Tab into a radio/tab group lands on the current pick).
+// Remembered position -> SELECTED member -> the stop's entry -> first node (so Tab into a radio/tab group lands on the
+// current pick, and into a dialog's button bar on its confirm button).
 bool GraphNavigator::land_on_stop(const Key& stop_key) {
   GraphNode* land = graph_->stop_landing(stop_key);
   if (!land || !graph_->focus(land->id)) return true;

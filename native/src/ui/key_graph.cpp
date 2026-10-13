@@ -374,8 +374,11 @@ GraphNode* KeyGraph::stop_landing(const GraphRender& render, const GraphState& s
   for (GraphNode* n : render.order())
     if (n->stop_key == stop_key) { first = n; break; }
   if (first == nullptr) return nullptr;
-  GraphNode* selected = selected_node_in_stop(render, stop_key, first);
-  return selected != nullptr ? selected : first;
+  if (GraphNode* selected = selected_node_in_stop(render, stop_key, first)) return selected;
+  auto entry = render.stop_entries.find(stop_key);
+  if (entry != render.stop_entries.end())
+    if (GraphNode* n = render.node_at(entry->second)) return n;
+  return first;
 }
 
 GraphNode* KeyGraph::selected_node_in_stop(const GraphRender& render, const Key& stop_key, const GraphNode* sibling_of) {
