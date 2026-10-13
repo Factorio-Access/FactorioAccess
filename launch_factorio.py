@@ -561,6 +561,15 @@ def run_lua_tests(test_suite: str = "all") -> Tuple[int, str, str]:
     return exit_code, "\n".join(stdout_parts), "\n".join(stderr_parts)
 
 
+def config_write_data(config: Path) -> Optional[Path]:
+    """The write-data folder a config.ini names, or None when it uses the game's __PATH__ placeholders."""
+    for line in config.read_text(encoding="utf-8", errors="ignore").splitlines():
+        if line.startswith("write-data="):
+            value = line.split("=", 1)[1].strip()
+            return None if "__" in value else Path(value)
+    return None
+
+
 def find_script_output_dir() -> Optional[Path]:
     """Find Factorio's script-output directory."""
     script_output = write_data_dir / "script-output"
@@ -1044,6 +1053,8 @@ def main():
             factorio_args.extend(prepare_test_run())
             write_data_dir = TEST_RUN_DIR
             print(f"[INFO] Running tests in {TEST_RUN_DIR}")
+        elif args.config:
+            write_data_dir = config_write_data(Path(args.config)) or write_data_dir
 
         # For tests, use benchmark mode
         factorio_args.extend(

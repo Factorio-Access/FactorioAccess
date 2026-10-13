@@ -41,7 +41,9 @@ python json_to_markdown.py --type runtime --input ../../doc-html/runtime-api.jso
 python json_to_markdown.py --type prototype --input ../../doc-html/prototype-api.json --output llm-docs/api-reference
 ```
 
-`--run-tests` runs a second Factorio beside any game being played: its own write-data folder
+Tests that need Space Age (platforms, rockets) return early without it, and the default run has none: run them with
+`--config` and `--mod-directory` pointing at a setup with Space Age enabled. `--run-tests` runs a second Factorio
+beside any game being played: its own write-data folder
 (`%TEMP%\factorio-access-tests`, rebuilt each run, logs and `script-output` kept there for reading) and a mods folder
 of junctions to the real mods plus copies of `mod-list.json` and `mod-settings.dat`. Passing `--config` or
 `--mod-directory` runs it in place instead.
