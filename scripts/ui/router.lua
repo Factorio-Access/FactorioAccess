@@ -169,7 +169,6 @@ mod.UI_NAMES = {
    HELP = "help",
    TUTORIAL = "tutorial",
    SCHEDULE_EDITOR = "schedule_editor",
-   SETTINGS = "settings",
    MOD_MENU = "mod_menu",
    SURFACE_INFO = "surface_info",
    SPACE_MAP = "space_map",

@@ -1,5 +1,5 @@
--- Shared setting declarations used by both settings.lua (data stage) and runtime UI
--- Each entry defines a setting that will be registered with Factorio and displayed in our settings menu
+-- The mod's settings, declared in settings.lua. Players change them in the game's own Mod settings screen, from the
+-- main menu (the defaults for new games, in mod-settings.dat) or from a game (that save's values only).
 
 ---@class fa.SettingDecl
 ---@field name string

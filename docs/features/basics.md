@@ -185,7 +185,7 @@ Fast travel has a section per surface, planets first, then any other surfaces, t
 
 Within a surface, `tab` moves between categories: "all", then each category with points there, then "uncategorized". A point's category control takes `m` to type a category, new or existing, or click to pick one, and `backspace` makes it uncategorized. `shift + a` and `shift + d` step a point to the previous or next category on its surface.
 
-Points stay in the order you put them in: `shift + w` and `shift + s` drag a point up and down, and a new point goes in by name. To keep them sorted by name instead, turn on "Sort fast travel points by name" in the mod settings menu.
+Points stay in the order you put them in: `shift + w` and `shift + s` drag a point up and down, and a new point goes in by name. To keep them sorted by name instead, turn on "Sort fast travel points by name" in the game's Mod settings, on the Per player tab: from the main menu for every new game, or from a game's Settings for that save.
 
 
 ### Cursor Skipping

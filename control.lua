@@ -98,7 +98,6 @@ local MainMenu = require("scripts.ui.menus.main-menu")
 local WorldMenu = require("scripts.ui.menus.world-menu")
 require("scripts.ui.menus.fast-travel-menu")
 require("scripts.ui.menus.debug-menu")
-require("scripts.ui.menus.settings-menu")
 require("scripts.ui.menus.mod-menu")
 require("scripts.ui.menus.surface-info")
 require("scripts.ui.menus.space-map")
@@ -3519,12 +3518,6 @@ EventManager.on_event("fa-cas-d", function(event)
    local pindex = event.player_index
    local router = UiRouter.get_router(pindex)
    router:open_ui(UiRouter.UI_NAMES.DEBUG)
-end)
-
-EventManager.on_event("fa-cas-m", function(event)
-   local pindex = event.player_index
-   local router = UiRouter.get_router(pindex)
-   router:open_ui(UiRouter.UI_NAMES.SETTINGS)
 end)
 
 EventManager.on_event("fa-a-m", function(event, pindex)

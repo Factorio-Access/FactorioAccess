@@ -174,7 +174,10 @@ runtime wiring in `scripts/rails/` and `scripts/ui/menus/` (router UIs `SYNTRAX_
 2. `locale/en/settings.cfg`: `[mod-setting-name]` and `[mod-setting-description]`.
 3. Read: `settings.get_player_settings(pindex)["fa-my-setting"].value`.
 
-The FA settings menu builds itself from `settings-decls.lua`; both `runtime-global` and `runtime-per-user` work there.
+Players change settings in the game's own Mod settings screen (the mod has no settings menu of its own). From the main
+menu it sets the defaults for new games (`mod-settings.dat`); from a game, that save's values only. A mod can write
+its own settings too (`settings.global[name] = { value = v }`, `player.mod_settings[name] = ...`), with the same
+per-save effect.
 
 ### Changing a storage format
 

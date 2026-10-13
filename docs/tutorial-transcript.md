@@ -294,7 +294,7 @@ No blueprints
 
 Now that you can place buildings, it is time to learn the game's core systems. This chapter teaches you about the UI hierarchy, how to examine technologies, how to craft items, and how to transfer items between inventories. You will improve your burner mining drill by crafting a wooden chest.
 
-The main menu (e) contains several tabs.  There are also the world menu (alt + w) and mod configuration menu (control alt shift m).
+The main menu (e) contains several tabs.  There are also the world menu (alt + w) and the mod menu (alt + m).
 
 The latter two do not matter for a very long time, and we will not discuss them much.
 
