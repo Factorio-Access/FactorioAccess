@@ -91,6 +91,8 @@ local function compare_entities(a, b, pindex)
    local b_is_ghost = b.type == "entity-ghost" or b.type == "tile-ghost"
    if a_is_ghost and not b_is_ghost then return true end
    if b_is_ghost and not a_is_ghost then return false end
+   -- An entity ghost before the tile ghost under it (a belt on landfill over water); it says the tile ghost itself
+   if a.type ~= b.type and a_is_ghost then return a.type == "entity-ghost" end
 
    -- Compare by priority (higher priority first)
    local a_priority = get_sort_priority(a.type)

@@ -1369,6 +1369,18 @@ function mod.ent_info(pindex, ent, is_scanner)
          Localising.get_localised_name_with_fallback(ent),
          Localising.get_localised_name_with_fallback(ent.ghost_prototype),
       })
+      -- What it will stand on once built: landfill under a belt over water
+      if ent.type == "entity-ghost" then
+         ---@type LuaEntity?
+         local tile_ghost =
+            ent.surface.find_entities_filtered({ area = ent.bounding_box, type = "tile-ghost", limit = 1 })[1]
+         if tile_ghost then
+            ctx.message:fragment({
+               "fa.ent-info-ghost-on-tile",
+               Localising.get_localised_name_with_fallback(tile_ghost.ghost_prototype),
+            })
+         end
+      end
    elseif ent.type == "roboport" then
       -- For roboports, announce both prototype name and backer_name
       ctx.message:fragment(Localising.get_localised_name_with_fallback(ent))

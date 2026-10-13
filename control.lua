@@ -1007,6 +1007,14 @@ EventManager.on_event(
    end
 )
 
+---What the skip compares: a ghost by what it is a ghost of, as every ghost's name is entity-ghost or tile-ghost
+---@param ent LuaEntity
+---@return string
+local function skip_identity(ent)
+   if ent.type == "entity-ghost" or ent.type == "tile-ghost" then return ent.type .. " " .. ent.ghost_name end
+   return ent.name
+end
+
 --Moves the cursor in the same direction multiple times until the reported entity changes. Change includes: new entity name or new direction for entites with the same name, or changing between nil and ent. Returns move count.
 local function cursor_skip_iteration(pindex, direction, iteration_limit)
    local p = game.get_player(pindex)
@@ -1068,8 +1076,8 @@ local function cursor_skip_iteration(pindex, direction, iteration_limit)
             return dist
          end
       end
-      --For water start, find the first non-water tile
-   elseif start_tile_is_water then
+      --For an empty water start, find the first non-water tile or the first thing on the water (ghosts to build on it)
+   elseif start_tile_is_water and start == nil then
       local selected_tile_is_water = nil
       --Iterate first_tile
       cursor_pos = FaUtils.offset_position_legacy(cursor_pos, direction, 1)
@@ -1078,8 +1086,8 @@ local function cursor_skip_iteration(pindex, direction, iteration_limit)
 
       --Run checks and skip when needed
       while moved < limit do
-         if selected_tile_is_water == false then
-            --Water tile -> non-water tile found
+         if selected_tile_is_water == false or compute_current() ~= nil then
+            --Water tile -> non-water tile or something on the water found
             return moved
          else
             --For audio rulers, stop if crossing into or out of alignment with any rulers
@@ -1141,7 +1149,7 @@ local function cursor_skip_iteration(pindex, direction, iteration_limit)
                --They are the same ent: skip
             else
                --They are different ents OR they are resource ents (which can have the same unit number despite being different ents)
-               if start.name ~= current.name then
+               if skip_identity(start) ~= skip_identity(current) then
                   --They have different names: return
                   --p.print("RET 1, start: " .. start.name .. ", current: " .. current.name .. ", comment:" .. comment)--
                   return moved
