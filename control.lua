@@ -351,6 +351,7 @@ function on_tick(event)
       UiRouter.sync_opened(player.index)
       if VanillaMode.is_enabled(player.index) then goto continue end
 
+      RemoteView.follow_cursor(player)
       BumpDetection.check_and_play_bump_alert_sound(player.index, event.tick)
       BumpDetection.check_and_play_stuck_alert_sound(player.index, event.tick)
       -- Process build lock for walking movement

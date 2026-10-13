@@ -2,7 +2,7 @@
 Remote view: looking at a surface without the character. Alt+I enters it at the cursor and leaves it again; Escape
 and the game's map key leave it too, so the announcements come from the events rather than the key.
 
-Leaving goes back to the character. Aboard a space platform the character sits in the hub and the player is always
+The camera follows the cursor. Leaving goes back to the character. Aboard a space platform the character sits in the hub and the player is always
 in remote view: leaving a view of another surface goes back to the platform, the way the game's own keys do, and
 exit_remote_view refuses.
 
@@ -53,6 +53,17 @@ function mod.toggle(pindex)
    else
       Speech.speak(pindex, FaUtils.no_controlled_character_reason(player))
    end
+end
+
+---Keep the remote view camera on the cursor, for whoever watches the screen. Teleporting a player in remote view
+---moves the camera, not the character, and keeps the zoom (set_controller resets it).
+---@param player LuaPlayer
+function mod.follow_cursor(player)
+   if player.controller_type ~= defines.controllers.remote or player.cargo_pod then return end
+   local cursor = Viewpoint.get_viewpoint(player.index):get_cursor_pos()
+   local x, y = cursor.x + 0.5, cursor.y + 0.5
+   local position = player.position
+   if position.x ~= x or position.y ~= y then player.teleport({ x = x, y = y }) end
 end
 
 ---@param event EventData.on_player_controller_changed
