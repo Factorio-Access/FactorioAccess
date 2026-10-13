@@ -363,7 +363,7 @@ function mod.drag_point(pindex, id, direction, visible)
    error("the neighbour is on the same surface")
 end
 
----Go to a point: teleport on this surface, remote view of another.
+---Go to a point: teleport on the character's surface, remote view of another.
 ---@param pindex integer
 ---@param id integer
 ---@return LocalisedString message
@@ -372,7 +372,11 @@ function mod.travel_to_point(pindex, id)
    local p = assert(game.get_player(pindex))
    local vp = Viewpoint.get_viewpoint(pindex)
 
-   if point.surface_index ~= p.surface.index then
+   -- Back to the body first; this fails aboard a platform or a rocket, and the view moves instead
+   if p.controller_type == defines.controllers.remote and point.surface_index == p.physical_surface_index then
+      p.exit_remote_view()
+   end
+   if p.controller_type == defines.controllers.remote or point.surface_index ~= p.surface.index then
       local surface = assert(game.get_surface(point.surface_index))
       p.set_controller({ type = defines.controllers.remote, surface = surface, position = point.position })
       vp:set_cursor_pos(table.deepcopy(point.position))

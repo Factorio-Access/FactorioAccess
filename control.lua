@@ -904,15 +904,11 @@ local function move_large_cursor_by(pindex, direction, tiles, prefix_text)
    Graphics.draw_large_cursor(scan_left_top, scan_right_bottom, pindex)
    Speech.speak(pindex, scan_summary)
 
-   if storage.players[pindex].remote_view then
-      sounds.play_building_placement(p.index, cursor_pos)
-   else
-      p.play_sound({
-         path = "Close-Inventory-Sound",
-         position = p.position,
-         volume_modifier = 0.75,
-      })
-   end
+   p.play_sound({
+      path = "Close-Inventory-Sound",
+      position = p.position,
+      volume_modifier = 0.75,
+   })
 end
 
 local function cursor_mode_move(direction, pindex, single_only)
@@ -950,15 +946,11 @@ local function cursor_mode_move(direction, pindex, single_only)
          Graphics.draw_cursor_highlight(pindex, nil, nil)
       end
 
-      if storage.players[pindex].remote_view then
-         sounds.play_building_placement(p.index, cursor_pos)
-      else
-         p.play_sound({
-            path = "Close-Inventory-Sound",
-            position = p.position,
-            volume_modifier = 0.75,
-         })
-      end
+      p.play_sound({
+         path = "Close-Inventory-Sound",
+         position = p.position,
+         volume_modifier = 0.75,
+      })
    else
       -- Use continuous movement tracking for WASD movements
       vp:set_cursor_pos_continuous(cursor_pos, direction)
@@ -1263,50 +1255,34 @@ local function cursor_skip(pindex, direction, iteration_limit, use_preview_size)
 
    if use_preview_size then
       --Rolling always plays the regular moving sound
-      if storage.players[pindex].remote_view then
-         sounds.play_building_placement(p.index, cursor_pos)
-      else
-         p.play_sound({
-            path = "Close-Inventory-Sound",
-            position = p.position,
-            volume_modifier = 1,
-         })
-      end
+      p.play_sound({
+         path = "Close-Inventory-Sound",
+         position = p.position,
+         volume_modifier = 1,
+      })
    elseif moved_count < 0 then
       --No change found within the limit
       result = result .. limit .. " tiles without a change"
-      if storage.players[pindex].remote_view then
-         sounds.play_sound_at_position({ path = "inventory-wrap-around", volume_modifier = 1 }, cursor_pos)
-      else
-         p.play_sound({
-            path = "inventory-wrap-around",
-            position = p.position,
-            volume_modifier = 1,
-         })
-      end
+      p.play_sound({
+         path = "inventory-wrap-around",
+         position = p.position,
+         volume_modifier = 1,
+      })
    elseif moved_count == 1 then
       result = ""
-      if storage.players[pindex].remote_view then
-         sounds.play_building_placement(p.index, cursor_pos)
-      else
-         p.play_sound({
-            path = "Close-Inventory-Sound",
-            position = p.position,
-            volume_modifier = 1,
-         })
-      end
+      p.play_sound({
+         path = "Close-Inventory-Sound",
+         position = p.position,
+         volume_modifier = 1,
+      })
    elseif moved_count > 1 then
       --Change found, with more than 1 tile moved
       result = result .. moved_count .. " tiles"
-      if storage.players[pindex].remote_view then
-         sounds.play_sound_at_position({ path = "inventory-wrap-around", volume_modifier = 1 }, cursor_pos)
-      else
-         p.play_sound({
-            path = "inventory-wrap-around",
-            position = p.position,
-            volume_modifier = 1,
-         })
-      end
+      p.play_sound({
+         path = "inventory-wrap-around",
+         position = p.position,
+         volume_modifier = 1,
+      })
    end
 
    --Read the tile reached

@@ -96,6 +96,44 @@ describe("Fast travel", function()
       end)
    end)
 
+   it("travels home out of remote view", function(ctx)
+      ---@type LuaPlayer
+      local player
+      ---@type integer, integer, integer
+      local home, away, elsewhere
+      ctx:init(function()
+         player = assert(game.get_player(1))
+         clear(1)
+         local surface = game.create_surface("fast-travel-remote-test")
+         surface.request_to_generate_chunks({ x = 0, y = 0 }, 1)
+         surface.force_generate_chunk_requests()
+         local start = player.position --[[@as MapPosition.struct]]
+         home = TravelTools.create_point(1, "home", player.surface.index, { x = start.x + 8, y = start.y })
+         away = TravelTools.create_point(1, "away", surface.index, { x = 0, y = 0 })
+         elsewhere = TravelTools.create_point(1, "elsewhere", surface.index, { x = 20, y = 0 })
+         TravelTools.travel_to_point(1, away)
+      end)
+      ctx:at_tick(3, function()
+         ctx:assert_equals(defines.controllers.remote, player.controller_type, "viewing the other surface")
+         TravelTools.travel_to_point(1, elsewhere)
+         ctx:assert_equals(defines.controllers.remote, player.controller_type, "still viewing")
+         ctx:assert_equals(
+            TravelTools.get_point(1, elsewhere).position.x,
+            player.position.x,
+            "the view moved on that surface"
+         )
+         TravelTools.travel_to_point(1, home)
+         ctx:assert_equals(defines.controllers.character, player.controller_type, "back in the body")
+         local target = TravelTools.get_point(1, home).position
+         local dx, dy = player.position.x - target.x, player.position.y - target.y
+         ctx:assert(dx * dx + dy * dy < 4, "teleported to the point")
+      end)
+      ctx:at_tick(5, function()
+         clear(1)
+         game.delete_surface("fast-travel-remote-test")
+      end)
+   end)
+
    it("forgets a deleted surface's points", function(ctx)
       ---@type integer
       local index

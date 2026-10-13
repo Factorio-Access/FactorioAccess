@@ -60,8 +60,6 @@ function mod.initialize(player)
    local character_pos = character.position --[[@as MapPosition.struct]]
    faplayer.tile = faplayer.tile or character.surface.get_tile(math.floor(character_pos.x), math.floor(character_pos.y))
    faplayer.move_state = faplayer.move_state or {}
-   faplayer.remote_view = faplayer.remote_view or false
-   faplayer.remote_view_tiles = faplayer.remote_view_tiles or 0
    faplayer.cursor_size = faplayer.cursor_size or 0
    faplayer.ruler = faplayer.ruler or nil
    faplayer.crafting = faplayer.crafting
