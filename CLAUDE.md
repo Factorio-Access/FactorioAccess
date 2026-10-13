@@ -174,7 +174,16 @@ runtime wiring in `scripts/rails/` and `scripts/ui/menus/` (router UIs `SYNTRAX_
 2. `locale/en/settings.cfg`: `[mod-setting-name]` and `[mod-setting-description]`.
 3. Read: `settings.get_player_settings(pindex)["fa-my-setting"].value`.
 
-The FA settings menu builds itself from `settings-decls.lua`.
+The FA settings menu builds itself from `settings-decls.lua`; both `runtime-global` and `runtime-per-user` work there.
+
+### Changing a storage format
+
+Storage is per module (`StorageManager.declare_storage_module`), created lazily from the module's default. Its
+`ephemeral_state_version` throws the old state away: right for caches like the scanner, wrong for anything the player
+made. To convert player data, add a Lua migration in `migrations/` (the save runs each file once, by name, before
+`on_configuration_changed`; a new save runs them after `on_init`, with nothing to convert). Put the conversion in a
+pure function under `scripts/migration-steps/` so a test can call it, frozen to the format it converts. A player who
+never used the module has no table to convert. Never rename a migration file: the save would run it again.
 
 ### Message lists (help and documentation)
 

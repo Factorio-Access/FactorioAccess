@@ -52,6 +52,7 @@ WHITELIST_DIRS = {
     "audio": {".ogg", ".wav"},
     "Graphics": {".png"},
     "config_changes": {".ini"},
+    "migrations": {".lua"},
 }
 EXCLUDED_DIRS = {"syntrax/tests", "ds/tests", "railutils/tests"}
 

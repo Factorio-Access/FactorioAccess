@@ -29,6 +29,7 @@ local VANILLA_MODE_WHITELIST = {
    [defines.events.on_entity_cloned] = true,
    [defines.events.on_surface_created] = true,
    [defines.events.on_surface_deleted] = true,
+   [defines.events.on_pre_surface_deleted] = true,
    [defines.events.on_research_finished] = true,
    [defines.events.on_string_translated] = true,
    [defines.events.on_player_display_resolution_changed] = true,

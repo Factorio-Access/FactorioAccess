@@ -14,10 +14,15 @@ local function build_settings_menu(ctx)
       local name = decl.name
 
       if decl.type == "bool-setting" then
+         -- A per-user setting is this player's own; a global one is the map's
+         local function setting_table()
+            if decl.setting_type == "runtime-per-user" then return assert(game.get_player(ctx.pindex)).mod_settings end
+            return settings.global
+         end
          builder:add_checkbox(name, { "mod-setting-name." .. name }, function()
-            return settings.global[name].value --[[@as boolean]]
+            return setting_table()[name].value --[[@as boolean]]
          end, function(value)
-            settings.global[name] = { value = value }
+            setting_table()[name] = { value = value }
          end)
       end
       -- Future: add int/string/double handling

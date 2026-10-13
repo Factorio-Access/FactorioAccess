@@ -142,6 +142,7 @@ mod.UI_NAMES = {
    LOGISTICS_CONFIG = "logistics_config",
    LOGISTIC_GROUP_SELECTOR = "logistic_group_selector",
    TRAIN_GROUP_SELECTOR = "train_group_selector",
+   TRAVEL_CATEGORY_SELECTOR = "travel_category_selector",
    TRAIN_INTERRUPT_SELECTOR = "train_interrupt_selector",
    STOP_SELECTOR = "stop_selector",
    SPACE_LOCATION_SELECTOR = "space_location_selector",

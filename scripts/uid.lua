@@ -14,7 +14,7 @@ why of it.
 
 local mod = {}
 
----@return number
+---@return integer
 function mod.uid()
    if not storage.id_counter then storage.id_counter = 0 end
    storage.id_counter = storage.id_counter + 1

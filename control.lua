@@ -118,6 +118,7 @@ local MessageLists = require("scripts.message-lists")
 require("scripts.ui.logistics-config")
 require("scripts.ui.selectors.logistic-group-selector")
 require("scripts.ui.selectors.train-group-selector")
+require("scripts.ui.selectors.travel-category-selector")
 require("scripts.ui.selectors.interrupt-selector")
 require("scripts.ui.selectors.stop-selector")
 require("scripts.ui.constant-combinator")
@@ -813,6 +814,14 @@ EventManager.on_event(
    ---@param event EventData.on_chunk_generated
    function(event)
       ScannerEntrypoint.on_chunk_generated(event.surface.index, event.position)
+   end
+)
+
+EventManager.on_event(
+   defines.events.on_pre_surface_deleted,
+   ---@param event EventData.on_pre_surface_deleted
+   function(event)
+      TravelTools.on_pre_surface_deleted(event.surface_index)
    end
 )
 

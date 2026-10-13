@@ -1,202 +1,323 @@
-local TravelTools = require("scripts.travel-tools")
+--[[
+Fast travel menu: a section per surface (ctrl+tab), a tab per category within it (tab), a row per point.
+
+Sections and tabs come from TravelTools in a stable order; the menu opens on the player's own surface. Tab names are
+stable identities (surface index and category ID), so a tab keeps its place in the list while the player works in it.
+]]
 local FaUtils = require("scripts.fa-utils")
-local Functools = require("scripts.functools")
 local Graphics = require("scripts.graphics")
-local UiKeyGraph = require("scripts.ui.key-graph")
 local Menu = require("scripts.ui.menu")
-local UiRouter = require("scripts.ui.router")
+local SettingDecls = require("scripts.settings-decls")
 local TabList = require("scripts.ui.tab-list")
+local TravelTools = require("scripts.travel-tools")
+local UiKeyGraph = require("scripts.ui.key-graph")
+local UiRouter = require("scripts.ui.router")
+local UiSounds = require("scripts.ui.sounds")
 local Viewpoint = require("scripts.viewpoint")
 
 local mod = {}
 
+---@param surface_index integer
+---@param filter fa.travel.Filter
+---@return string
+local function tab_name(surface_index, filter)
+   return string.format("s%d-%s", surface_index, filter)
+end
+
+---@param pindex integer
+---@param point fa.travel.TravelPoint
 ---@param ctx fa.ui.graph.Ctx
----@return fa.ui.graph.Render?
-local function render(ctx)
-   local p = game.get_player(ctx.pindex)
-   if not p then return nil end
+local function move_cursor_to(pindex, point, ctx)
+   Viewpoint.get_viewpoint(pindex):set_cursor_pos(FaUtils.center_of_tile(point.position))
+   Graphics.draw_cursor_highlight(pindex, nil, "train-visualization")
+   ctx.controller:close()
+   ctx.message:fragment({ "fa.travel-cursor-moved-to", point.label })
+end
 
-   local controller = TravelTools.get_controller(ctx.pindex)
-   local builder = Menu.MenuBuilder.new()
-   local vp = Viewpoint.get_viewpoint(ctx.pindex)
-
-   local num_points = controller:get_num_travel_points()
-
-   -- Add travel points as rows
-   for i = 1, num_points do
-      local point = controller:get_point_by_index(i)
-      if point then
-         local point_id = point.id -- Capture ID for closures
-
-         -- Start a row for this travel point
-         builder:start_row("travelpoint")
-
-         -- Point name and location
-         builder:add_clickable("point-" .. point_id, function(ctx)
-            local position_str = FaUtils.format_position(point.position.x, point.position.y)
-            if point.description and point.description ~= "" then
-               ctx.message:fragment({
-                  "fa.travel-point-label-with-description",
-                  point.label,
-                  position_str,
-                  point.description,
-               })
-            else
-               ctx.message:fragment({ "fa.travel-point-label-no-description", point.label, position_str })
+---Keys that act on a point from any cell of its row: drag it, step its category, delete it.
+---@param pindex integer
+---@param point fa.travel.TravelPoint
+---@param visible fa.travel.TravelPoint[] The tab's points, which dragging moves among
+---@param filter fa.travel.Filter The tab's filter
+---@return table
+local function row_handlers(pindex, point, visible, filter)
+   local function drag(direction)
+      return function(ctx)
+         if settings.get_player_settings(pindex)[SettingDecls.SETTING_NAMES.FAST_TRAVEL_SORT_BY_NAME].value then
+            UiSounds.play_ui_edge(pindex)
+            ctx.message:fragment({ "fa.travel-drag-sorted-by-name" })
+         elseif not TravelTools.drag_point(pindex, point.id, direction, visible) then
+            UiSounds.play_ui_edge(pindex)
+         else
+            local now = TravelTools.points(pindex, point.surface_index, filter)
+            for i, p in ipairs(now) do
+               if p.id == point.id then ctx.message:fragment({ "fa.travel-dragged", point.label, i, #now }) end
             end
-         end, {
-            on_click = function(ctx)
-               -- Move cursor to show location
-               vp:set_cursor_pos(FaUtils.center_of_tile(point.position))
-               Graphics.draw_cursor_highlight(ctx.pindex, nil, "train-visualization")
-               ctx.controller:close()
-               ctx.message:fragment({ "fa.travel-cursor-moved-to", point.label })
-            end,
-            on_dangerous_delete = function(ctx)
-               -- Delete travel point with Ctrl+Backspace
-               local deleted_name = point.label
-               if controller:delete_point(point_id) then
-                  ctx.message:fragment({ "fa.travel-deleted-point", deleted_name })
-                  -- Menu will re-render automatically
-               else
-                  ctx.message:fragment({ "fa.travel-failed-delete" })
-               end
-            end,
-         })
-
-         -- Teleport action
-         builder:add_clickable("teleport-" .. point_id, function(ctx)
-            ctx.message:fragment({ "fa.travel-menu-travel" })
-            ctx.message:fragment(point.label)
-         end, {
-            on_click = function(ctx)
-               if controller:travel_to_point(point_id) then
-                  ctx.controller:close()
-                  ctx.message:fragment({ "fa.travel-teleported-to", point.label })
-               end
-            end,
-         })
-
-         -- Relocate action
-         builder:add_clickable("relocate-" .. point_id, function(ctx)
-            ctx.message:fragment({ "fa.travel-menu-relocate" })
-            ctx.message:fragment(point.label)
-         end, {
-            on_click = function(ctx)
-               local position = vp:get_cursor_pos()
-               if controller:relocate_point(point_id, position) then
-                  ctx.message:fragment({
-                     "fa.travel-relocated-point",
-                     point.label,
-                     tostring(math.floor(position.x)),
-                     tostring(math.floor(position.y)),
-                  })
-                  vp:set_cursor_pos({ x = position.x, y = position.y })
-                  Graphics.draw_cursor_highlight(ctx.pindex)
-               else
-                  ctx.message:fragment({ "fa.travel-failed-relocate" })
-               end
-            end,
-         })
-
-         -- Rename action
-         builder:add_clickable("rename-" .. point_id, function(ctx)
-            ctx.message:fragment({ "fa.travel-menu-rename" })
-            ctx.message:fragment(point.label)
-         end, {
-            on_click = function(ctx)
-               ctx.controller:open_textbox("", "rename-" .. point_id)
-               ctx.message:fragment({ "fa.travel-enter-name" })
-            end,
-            on_child_result = function(ctx, result)
-               if result and result ~= "" then
-                  if controller:update_point_label(point_id, result) then
-                     ctx.message:fragment({ "fa.travel-point-renamed", result })
-                     -- Menu will re-render automatically
-                  end
-               end
-            end,
-         })
-
-         -- Edit description action
-         builder:add_clickable("edit-desc-" .. point_id, function(ctx)
-            ctx.message:fragment({ "fa.travel-rewrite-description-of", point.label })
-         end, {
-            on_click = function(ctx)
-               ctx.controller:open_textbox("", "edit-desc-" .. point_id)
-               ctx.message:fragment({ "fa.travel-enter-description" })
-            end,
-            on_child_result = function(ctx, result)
-               if result then
-                  if controller:update_point_description(point_id, result) then
-                     ctx.message:fragment({ "fa.travel-description-updated" })
-                     -- Menu will re-render automatically
-                  end
-               end
-            end,
-         })
-
-         -- Delete action
-         builder:add_clickable("delete-" .. point_id, function(ctx)
-            ctx.message:fragment({ "fa.travel-menu-delete" })
-            ctx.message:fragment(point.label)
-         end, {
-            on_click = function(ctx)
-               local deleted_name = point.label
-               if controller:delete_point(point_id) then
-                  ctx.message:fragment({ "fa.travel-deleted-point", deleted_name })
-                  -- Menu will re-render automatically
-               else
-                  ctx.message:fragment({ "fa.travel-failed-delete" })
-               end
-            end,
-         })
-
-         builder:end_row()
+         end
       end
    end
-
-   -- Add bottom actions row
-   builder:start_row("actions")
-
-   -- Create new travel point
-   builder:add_clickable("create-new", { "fa.travel-menu-create-new" }, {
-      on_click = function(ctx)
-         ctx.controller:open_textbox("", "create-new")
-         ctx.message:fragment({ "fa.travel-enter-name" })
-      end,
-      on_child_result = function(ctx, result)
-         if result and result ~= "" then
-            local position = vp:get_cursor_pos()
-            controller:create_point(result, position)
-            ctx.message:fragment({ "fa.travel-point-created", result })
-            -- Menu will re-render automatically
+   local function step(direction)
+      return function(ctx)
+         local moved = TravelTools.step_category(pindex, point.id, direction)
+         if moved == nil then
+            UiSounds.play_ui_edge(pindex)
+         elseif moved == false then
+            ctx.message:fragment({ "fa.travel-moved-to-uncategorized", point.label })
+         else
+            ctx.message:fragment({ "fa.travel-moved-to-category", point.label, moved })
          end
+      end
+   end
+   return {
+      on_drag_up = drag(-1),
+      on_drag_down = drag(1),
+      on_drag_left = step(-1),
+      on_drag_right = step(1),
+      on_dangerous_delete = function(ctx)
+         TravelTools.delete_point(pindex, point.id)
+         ctx.message:fragment({ "fa.travel-deleted-point", point.label })
       end,
-   })
+   }
+end
 
-   builder:end_row()
+---@param base table
+---@param extra table
+---@return table
+local function with(base, extra)
+   local out = {}
+   for k, v in pairs(base) do
+      out[k] = v
+   end
+   for k, v in pairs(extra) do
+      out[k] = v
+   end
+   return out
+end
+
+---@param ctx fa.ui.graph.Ctx
+---@param surface_index integer
+---@param filter fa.travel.Filter
+---@return fa.ui.graph.Render?
+local function render(ctx, surface_index, filter)
+   local pindex = ctx.pindex
+   local p = game.get_player(pindex)
+   if not p then return nil end
+   local vp = Viewpoint.get_viewpoint(pindex)
+   local here = p.surface.index == surface_index
+
+   local builder = Menu.MenuBuilder.new()
+   local points = TravelTools.points(pindex, surface_index, filter)
+
+   for _, point in ipairs(points) do
+      local id = point.id
+      local keys = row_handlers(pindex, point, points, filter)
+      builder:start_row("travelpoint")
+
+      builder:add_clickable(
+         "point-" .. id,
+         function(label_ctx)
+            label_ctx.message:fragment(point.label)
+            if filter == "all" and point.category then
+               label_ctx.message:list_item(TravelTools.category_name(pindex, point.category))
+            end
+            label_ctx.message:list_item(FaUtils.format_position(point.position.x, point.position.y))
+            if point.description ~= "" then label_ctx.message:list_item(point.description) end
+         end,
+         with(keys, {
+            on_click = function(click_ctx)
+               if here then
+                  move_cursor_to(pindex, point, click_ctx)
+               else
+                  click_ctx.message:fragment(TravelTools.travel_to_point(pindex, id))
+                  click_ctx.controller:close()
+               end
+            end,
+         })
+      )
+
+      builder:add_clickable(
+         "teleport-" .. id,
+         { "fa.travel-menu-travel-to", point.label },
+         with(keys, {
+            on_click = function(click_ctx)
+               click_ctx.message:fragment(TravelTools.travel_to_point(pindex, id))
+               click_ctx.controller:close()
+            end,
+         })
+      )
+
+      builder:add_clickable(
+         "relocate-" .. id,
+         { "fa.travel-menu-relocate-point", point.label },
+         with(keys, {
+            on_click = function(click_ctx)
+               local position = vp:get_cursor_pos()
+               TravelTools.relocate_point(pindex, id, p.surface.index, position)
+               click_ctx.message:fragment({
+                  "fa.travel-relocated-point",
+                  point.label,
+                  tostring(math.floor(position.x)),
+                  tostring(math.floor(position.y)),
+               })
+               Graphics.draw_cursor_highlight(pindex)
+            end,
+         })
+      )
+
+      builder:add_clickable(
+         "rename-" .. id,
+         { "fa.travel-menu-rename-point", point.label },
+         with(keys, {
+            on_click = function(click_ctx)
+               click_ctx.controller:open_textbox("", "rename-" .. id)
+               click_ctx.message:fragment({ "fa.travel-enter-name" })
+            end,
+            on_child_result = function(click_ctx, result)
+               if result and result ~= "" then
+                  TravelTools.rename_point(pindex, id, result)
+                  click_ctx.message:fragment({ "fa.travel-point-renamed", result })
+               end
+            end,
+         })
+      )
+
+      builder:add_clickable(
+         "category-" .. id,
+         function(label_ctx)
+            local name = TravelTools.category_name(pindex, point.category)
+            label_ctx.message:fragment(name or { "fa.travel-uncategorized" })
+            label_ctx.message:fragment({ "fa.travel-category" })
+            label_ctx.message:list_item_forced_comma({ "fa.travel-category-hint" })
+         end,
+         with(keys, {
+            on_click = function(click_ctx)
+               click_ctx.controller:open_child_ui(
+                  UiRouter.UI_NAMES.TRAVEL_CATEGORY_SELECTOR,
+                  {},
+                  { node = "category-" .. id }
+               )
+            end,
+            on_action1 = function(click_ctx)
+               click_ctx.controller:open_textbox("", { node = "category-" .. id })
+               click_ctx.message:fragment({ "fa.travel-enter-category" })
+            end,
+            on_clear = function(click_ctx)
+               TravelTools.set_category(pindex, id, nil)
+               click_ctx.message:fragment({ "fa.travel-moved-to-uncategorized", point.label })
+            end,
+            on_child_result = function(click_ctx, result)
+               if result == nil then return end
+               TravelTools.set_category(pindex, id, result)
+               if result == "" then
+                  click_ctx.message:fragment({ "fa.travel-moved-to-uncategorized", point.label })
+               else
+                  click_ctx.message:fragment({ "fa.travel-moved-to-category", point.label, result })
+               end
+            end,
+         })
+      )
+
+      builder:add_clickable(
+         "edit-desc-" .. id,
+         { "fa.travel-rewrite-description-of", point.label },
+         with(keys, {
+            on_click = function(click_ctx)
+               click_ctx.controller:open_textbox("", "edit-desc-" .. id)
+               click_ctx.message:fragment({ "fa.travel-enter-description" })
+            end,
+            on_child_result = function(click_ctx, result)
+               if result then
+                  TravelTools.set_description(pindex, id, result)
+                  click_ctx.message:fragment({ "fa.travel-description-updated" })
+               end
+            end,
+         })
+      )
+
+      builder:add_clickable(
+         "delete-" .. id,
+         { "fa.travel-menu-delete-point", point.label },
+         with(keys, {
+            on_click = function(click_ctx)
+               TravelTools.delete_point(pindex, id)
+               click_ctx.message:fragment({ "fa.travel-deleted-point", point.label })
+            end,
+         })
+      )
+
+      builder:end_row()
+   end
+
+   -- New points are made at the cursor, which is on the player's surface: only offered there
+   if here then
+      builder:add_clickable("create-new", { "fa.travel-menu-create-new" }, {
+         on_click = function(click_ctx)
+            click_ctx.controller:open_textbox("", "create-new")
+            click_ctx.message:fragment({ "fa.travel-enter-name" })
+         end,
+         on_child_result = function(click_ctx, result)
+            if result and result ~= "" then
+               local category = type(filter) == "number" and TravelTools.category_name(pindex, filter) or nil
+               TravelTools.create_point(pindex, result, surface_index, vp:get_cursor_pos(), category)
+               click_ctx.message:fragment({ "fa.travel-point-created", result })
+            end
+         end,
+      })
+   elseif #points == 0 then
+      -- A tab whose last point just left: it is gone from the list at the next key
+      builder:add_label("empty", { "fa.travel-no-points" })
+   end
 
    return builder:build()
 end
 
+-- One graph per tab, shared by every player; a tab's points are read when it renders
+---@type table<string, fa.ui.TabCallbacks>
+local graphs = {}
+
+---@param surface_index integer
+---@param filter fa.travel.Filter
+---@param title LocalisedString
+---@return fa.ui.TabDescriptor
+local function tab(surface_index, filter, title)
+   local name = tab_name(surface_index, filter)
+   if not graphs[name] then
+      graphs[name] = UiKeyGraph.declare_graph({
+         name = name,
+         title = title,
+         render_callback = function(ctx)
+            return render(ctx, surface_index, filter)
+         end,
+      }).callbacks
+   end
+   return { name = name, title = title, callbacks = graphs[name] }
+end
+
+---@param pindex integer
+---@return fa.ui.TabstopDescriptor[]
+local function tabstops(pindex)
+   local out = {}
+   for _, surface in ipairs(TravelTools.surfaces(pindex)) do
+      local index = surface.index
+      local tabs = { tab(index, "all", { "fa.travel-tab-all" }) }
+      local categories, uncategorized = TravelTools.categories_on(pindex, index)
+      for _, c in ipairs(categories) do
+         table.insert(tabs, tab(index, c.id, c.name))
+      end
+      if uncategorized then table.insert(tabs, tab(index, "uncategorized", { "fa.travel-uncategorized" })) end
+      table.insert(out, { name = "s" .. index, title = TravelTools.surface_name(surface), tabs = tabs })
+   end
+   return out
+end
+
 mod.fast_travel_menu_tabs = TabList.declare_tablist({
    ui_name = UiRouter.UI_NAMES.TRAVEL,
-   tabs_callback = Functools.functionize({
-      {
-         name = "main",
-         tabs = {
-            UiKeyGraph.declare_graph({
-               name = "fast-travel-menu",
-               render_callback = render,
-               title = { "fa.travel-menu-title" },
-            }),
-         },
-      },
-   }),
+   tabs_callback = tabstops,
+   initial_tab = function(pindex)
+      return tab_name(assert(game.get_player(pindex)).surface.index, "all")
+   end,
 })
 
--- Register with the UI event routing system
 UiRouter.register_ui(mod.fast_travel_menu_tabs)
 
 return mod

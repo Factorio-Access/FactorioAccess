@@ -50,6 +50,15 @@ class WhitelistTests(Fixture):
         self.assertEqual(package_mod.verify(self.zip), [])
         self.assertEqual(self.zip.name, f"FactorioAccess_{VERSION}.zip")
 
+    def test_real_build_has_every_migration(self):
+        # A migration missing from the zip runs in a dev checkout and silently never for players.
+        tracked = [f for f in package_mod.tracked_files() if f.startswith("migrations/")]
+        self.assertTrue(tracked, "no migrations tracked; the test would prove nothing")
+        with zipfile.ZipFile(self.zip) as z:
+            shipped = {n.split("/", 1)[1] for n in z.namelist()}
+        for f in tracked:
+            self.assertIn(f, shipped)
+
     def test_real_build_has_no_native_or_installer(self):
         with zipfile.ZipFile(self.zip) as z:
             for n in z.namelist():

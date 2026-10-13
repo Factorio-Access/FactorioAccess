@@ -103,6 +103,7 @@ local mod = {}
 ---@field tabs_callback fun(pindex: integer, parameters: any): fa.ui.TabstopDescriptor[]? Dynamic tabstops callback
 ---@field shared_state_setup (fun(pindex: integer, parameters: table): table)? passed the parameters and pindex, should return a shaerd state.
 ---@field resets_to_first_tab_on_open boolean?
+---@field initial_tab (fun(pindex: integer, parameters: any): string)? The name of the tab to open on, every open. Its section's title is said before its own, as switching to it with ctrl+tab would.
 ---@field persist_state boolean?
 ---@field get_binds (fun(pindex: integer, parameters: table): fa.ui.Bind[]?)? TabList-level binds callback
 ---@field get_subject (fun(pindex: integer, parameters: table): any)? What the game shows as open meanwhile (UiPanelBase.get_subject)
@@ -258,17 +259,7 @@ function TabList:_rerender(pindex, controller)
       end
    end
 
-   -- Determine which tabstop contains the active tab
-   local tab_index = 0
-   for tabstop_idx, tabstop in ipairs(valid_tabstops) do
-      for _, tab in ipairs(tabstop.tabs) do
-         tab_index = tab_index + 1
-         if tab_index == tl.active_tab then
-            tl.active_tabstop = tabstop_idx
-            break
-         end
-      end
-   end
+   tl.active_tabstop = self._tabstop_containing(valid_tabstops, tl.active_tab)
 
    -- Clean up states for removed tabs
    for _, old_name in ipairs(prev_tab_order) do
@@ -287,6 +278,19 @@ function TabList:_rerender(pindex, controller)
 
    -- Store the new order in storage for next time
    tl.prev_tab_order = new_order
+end
+
+---The index of the tabstop holding the tab at `tab_index` in the flat tab order.
+---@param tabstops fa.ui.TabstopDescriptor[]
+---@param tab_index integer
+---@return integer
+function TabList._tabstop_containing(tabstops, tab_index)
+   local seen = 0
+   for tabstop_idx, tabstop in ipairs(tabstops) do
+      seen = seen + #tabstop.tabs
+      if tab_index <= seen then return tabstop_idx end
+   end
+   error("tab index " .. tab_index .. " is past the last tab")
 end
 
 -- Returns a method which will call the event handler for the given name, so
@@ -719,6 +723,25 @@ function TabList:open(pindex, parameters, controller)
    self:_rerender(pindex, controller)
    if not self:_open_state(pindex) then return end -- Rerender might have closed
 
+   ---@type fa.MessageBuilder?
+   local opening_message = nil
+   if self.declaration.initial_tab then
+      local name = self.declaration.initial_tab(pindex, parameters)
+      ---@type integer?
+      local index = nil
+      for i, tab_name in ipairs(self.tab_order) do
+         if tab_name == name then index = i end
+      end
+      if not index then error("initial_tab named a tab that is not there: " .. name) end
+      tabstate.active_tab = index
+      tabstate.active_tabstop = self._tabstop_containing(self.tabstops, index)
+      local tabstop = self.tabstops[tabstate.active_tabstop]
+      if tabstop.title then
+         opening_message = MessageBuilder.new()
+         opening_message:fragment(tabstop.title)
+      end
+   end
+
    -- Tell all the tabs that they have opened, but abort if any of them close.
    for i = 1, #self.tab_order do
       local tabname = self.tab_order[i]
@@ -728,7 +751,7 @@ function TabList:open(pindex, parameters, controller)
    end
 
    -- Set the active tab without playing sound (we're opening, not switching)
-   self:_set_active_tab(pindex, tabstate.active_tab, nil, false, controller)
+   self:_set_active_tab(pindex, tabstate.active_tab, opening_message, false, controller)
 end
 
 ---Get help metadata for the current active tab

@@ -4,7 +4,7 @@
 ---@class fa.SettingDecl
 ---@field name string
 ---@field type "bool-setting"|"int-setting"|"double-setting"|"string-setting"
----@field setting_type "runtime-global"
+---@field setting_type "runtime-global"|"runtime-per-user"
 ---@field default_value boolean|number|string
 ---@field order string
 ---@field minimum_value number?
@@ -18,6 +18,7 @@ mod.SETTING_NAMES = {
    SONIFICATION_CRAFTING = "fa-crafting-sonification",
    SONIFICATION_COMBAT_ENEMIES = "fa-combat-enemy-sonification",
    SONIFICATION_COMBAT_SPAWNERS = "fa-combat-spawner-sonification",
+   FAST_TRAVEL_SORT_BY_NAME = "fa-fast-travel-sort-by-name",
 }
 
 ---@type fa.SettingDecl[]
@@ -49,6 +50,13 @@ mod.declarations = {
       setting_type = "runtime-global",
       default_value = true,
       order = "d",
+   },
+   {
+      name = mod.SETTING_NAMES.FAST_TRAVEL_SORT_BY_NAME,
+      type = "bool-setting",
+      setting_type = "runtime-per-user",
+      default_value = false,
+      order = "e",
    },
 }
 

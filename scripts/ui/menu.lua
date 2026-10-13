@@ -37,6 +37,8 @@ local MOVE_TRANSITION_VTAB = {
 ---@field on_action3? fa.ui.graph.SimpleCallback
 ---@field on_drag_up? fa.ui.graph.SimpleCallback
 ---@field on_drag_down? fa.ui.graph.SimpleCallback
+---@field on_drag_left? fa.ui.graph.SimpleCallback
+---@field on_drag_right? fa.ui.graph.SimpleCallback
 
 ---@class fa.ui.menu.Entry
 ---@field vtable fa.ui.graph.NodeVtable
@@ -140,6 +142,8 @@ function MenuBuilder:add_clickable(key, label, click_handlers)
    if click_handlers.on_action3 then vtable.on_action3 = click_handlers.on_action3 end
    if click_handlers.on_drag_up then vtable.on_drag_up = click_handlers.on_drag_up end
    if click_handlers.on_drag_down then vtable.on_drag_down = click_handlers.on_drag_down end
+   if click_handlers.on_drag_left then vtable.on_drag_left = click_handlers.on_drag_left end
+   if click_handlers.on_drag_right then vtable.on_drag_right = click_handlers.on_drag_right end
 
    self:add_item(key, vtable)
 end

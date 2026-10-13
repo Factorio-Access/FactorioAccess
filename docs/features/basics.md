@@ -181,6 +181,12 @@ You can use rulers to quickly place large numbers of items.  For example, to pla
 
 "multiple bookmarks" is fast travel, accessible with `alt + v`.  Fast travel is like your browser's bookmarks menu, but for map locations.
 
+Fast travel has a section per surface, planets first, then any other surfaces, then space platforms, each by name. Use `control + tab` to move between them; the menu opens on the surface you are on. A surface has a section once it has a point, and a space platform's points go when it is deleted. Travelling to a point on another surface opens remote view there instead of teleporting.
+
+Within a surface, `tab` moves between categories: "all", then each category with points there, then "uncategorized". A point's category control takes `m` to type a category, new or existing, or click to pick one, and `backspace` makes it uncategorized. `shift + a` and `shift + d` step a point to the previous or next category on its surface.
+
+Points stay in the order you put them in: `shift + w` and `shift + s` drag a point up and down, and a new point goes in by name. To keep them sorted by name instead, turn on "Sort fast travel points by name" in the mod settings menu.
+
 
 ### Cursor Skipping
 
