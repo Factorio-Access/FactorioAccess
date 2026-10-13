@@ -59,6 +59,7 @@ local test_files = {
    "space-platform-status-test", -- The platform status description
    "space-platforms-menu-test", -- The space platform menus render
    "decon-mark-info-test", -- Entity info says the deconstruction mark, status or not
+   "coupling-test", -- Ctrl+G and Shift+G couple and uncouple train cars
 }
 
 -- Test execution state

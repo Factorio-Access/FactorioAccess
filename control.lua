@@ -69,6 +69,7 @@ local UpgradePlanner = require("scripts.upgrade-planner")
 local PlannerUtils = require("scripts.planner-utils")
 local VanillaMode = require("scripts.vanilla-mode")
 local VirtualTrainDriving = require("scripts.rails.virtual-train-driving")
+local Coupling = require("scripts.rails.coupling")
 local SonifierTickHandler = require("scripts.sonifiers.tick-handler")
 local GridSonifier = require("scripts.sonifiers.grid-sonifier")
 local CraftingBackend = require("scripts.sonifiers.grid-backends.crafting")
@@ -3158,6 +3159,14 @@ EventManager.on_event(
       kb_read_health_and_armor_stats(event)
    end
 )
+
+EventManager.on_event("fa-c-g", function(event, pindex)
+   Coupling.couple(pindex)
+end)
+
+EventManager.on_event("fa-s-g", function(event, pindex)
+   Coupling.uncouple(pindex)
+end)
 
 EventManager.on_event(
    "fa-r",

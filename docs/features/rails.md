@@ -28,6 +28,14 @@ Pop a bookmark from the bookmark stack: b
 
 Undo the most recent move, deleting a rail if you placed one: backspace
 
+### For Train Cars
+
+These act on the car you are riding, else the car under the cursor.
+
+Couple it to the cars touching either end: control + g
+
+Uncouple it from the cars on both ends: shift + g
+
 ### For the Schedule Editor
 
 Set the first parameter of a schedule condition to a signal or item: m
