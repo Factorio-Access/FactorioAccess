@@ -204,6 +204,9 @@ end)
 
 Add the file to `test_files` in `scripts/test-framework.lua`. Test the mod's behaviour, not Factorio's API.
 
+The run stops at the first failing test: "Passed 57, Failed 1" out of 97 means the other 39 never ran. The failure's
+message and traceback are in `%TEMP%\factorio-access-tests\script-output\factorio-access-test.log`.
+
 ## Native code
 
 `native/` is C++ (CMake, MSVC) injected into `factorio.exe`. It exists for what Lua cannot reach: the main

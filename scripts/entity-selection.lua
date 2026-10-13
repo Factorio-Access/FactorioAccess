@@ -24,7 +24,6 @@ local SORT_PRIORITIES = {
    ["combat-robot"] = -2,
    ["capture-robot"] = -2,
    ["corpse"] = -2,
-   ["character-corpse"] = -2,
    ["rocket-silo-rocket-shadow"] = -2,
    ["resource"] = -2,
 
@@ -58,6 +57,9 @@ local SORT_PRIORITIES = {
    ["unit-spawner"] = 2,
    ["segmented-unit"] = 2,
    ["spider-unit"] = 2,
+
+   -- A player's corpse holds everything they carried: read and selected before the rail a train killed them on
+   ["character-corpse"] = 3,
 }
 
 ---Get the sort priority for an entity type

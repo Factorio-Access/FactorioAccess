@@ -406,4 +406,47 @@ describe("Entity Selection Stable Ordering", function()
          end
       end)
    end)
+
+   it("puts a player's corpse before the rail it lies on", function(ctx)
+      ---@type LuaEntity
+      local rail
+      ---@type LuaEntity
+      local corpse
+
+      ctx:init(function()
+         local player = assert(game.get_player(1))
+         rail = assert(player.surface.create_entity({
+            name = "straight-rail",
+            position = { x = 21, y = 21 },
+            direction = defines.direction.north,
+            force = player.force,
+         }))
+         -- What a character's death leaves (a real death makes this same entity)
+         corpse = assert(player.surface.create_entity({
+            name = "character-corpse",
+            position = { x = 21.5, y = 21.5 },
+            player_index = 1,
+            inventory_size = 10,
+         }))
+         -- The game removes an empty one
+         assert(corpse.get_inventory(defines.inventory.character_corpse)).insert({ name = "iron-plate", count = 5 })
+      end)
+
+      ctx:at_tick(1, function()
+         local ents = EntitySelection.get_ents_on_tile(rail.surface, 21.5, 21.5, 1)
+         local types = {}
+         for _, e in ipairs(ents) do
+            table.insert(types, e.type)
+         end
+         local listed = table.concat(types, ", ")
+            .. (
+               corpse.valid and string.format(" corpse at %s,%s", corpse.position.x, corpse.position.y)
+               or " corpse gone"
+            )
+         ctx:assert_equals(corpse, ents[1], "the corpse comes first, got " .. listed)
+         ctx:assert(listed:find("straight-rail", 1, true) ~= nil, "the rail is on the tile, got " .. listed)
+         corpse.destroy()
+         rail.destroy()
+      end)
+   end)
 end)
