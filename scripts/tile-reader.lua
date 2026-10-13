@@ -77,6 +77,11 @@ function mod.read_tile_rails(pindex, message)
                { prefix_rail = is_first, rail_entity = rail_entity, cursor_pos = cursor_pos }
             )
             message:list_item_forced_comma(announcement)
+            -- As FaInfo.ent_info says them for other entities
+            if rail_entity.to_be_upgraded() then message:list_item({ "fa.ent-info-marked-for-upgrading" }) end
+            if rail_entity.to_be_deconstructed() then
+               message:list_item(Localising.entity_status_localised(defines.entity_status.marked_for_deconstruction))
+            end
             is_first = false
          end
       end
