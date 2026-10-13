@@ -233,6 +233,13 @@ local function move_bar(ctx, delta)
    end
 end
 
+---How full a weight-limited inventory is, in whole percent.
+---@param inv LuaInventory
+---@return integer
+local function weight_percent(inv)
+   return math.floor(inv.weight / assert(inv.max_weight) * 100)
+end
+
 ---Render the inventory grid
 ---@param ctx fa.ui.InventoryGrid.Context
 ---@return fa.ui.graph.Render?
@@ -624,6 +631,41 @@ local function render_inventory_grid(ctx)
             -- Clear the filter
             inv.set_filter(slot_index, nil)
             clear_ctx.message:fragment({ "fa.ui-inventory-filter-cleared" })
+         end,
+      })
+   end
+
+   -- A weight-limited inventory (a rocket's cargo) has exactly the slots its items use: one more takes new items
+   if inv.max_weight then
+      local x, y = slot_to_grid_pos(total_slots + 1)
+      builder:add_control(x, y, {
+         label = function(label_ctx)
+            label_ctx.message:fragment({ "fa.ui-inventory-add-slot", weight_percent(inv) })
+         end,
+         on_click = function(click_ctx)
+            local cursor_stack = assert(game.get_player(click_ctx.pindex)).cursor_stack
+            if not cursor_stack or not cursor_stack.valid_for_read then
+               click_ctx.controller.message:fragment({ "fa.ui-inventory-add-slot-empty-hand" })
+               return
+            end
+            if not check_write_access(click_ctx, entity, nil) then return end
+            local inserted = inv.insert(cursor_stack)
+            if inserted == 0 then
+               click_ctx.controller.message:fragment({ "fa.ui-inventory-add-slot-too-heavy" })
+               return
+            end
+            local item = ItemInfo.item_info({
+               name = cursor_stack.name,
+               count = inserted,
+               quality = cursor_stack.quality.name,
+            })
+            if inserted == cursor_stack.count then
+               cursor_stack.clear()
+            else
+               cursor_stack.count = cursor_stack.count - inserted
+            end
+            sounds.play_menu_click(click_ctx.pindex)
+            click_ctx.controller.message:fragment({ "fa.ui-inventory-added", item, weight_percent(inv) })
          end,
       })
    end

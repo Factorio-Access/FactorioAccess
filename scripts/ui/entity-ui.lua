@@ -110,8 +110,9 @@ local function sort_inventories(entity)
       local inv = entity.get_inventory(inv_index)
 
       -- Inventory can be nil. Docs don't specify that. The inventory list is actually a sparse array.
-      -- Also filter out inventories with 0 slots (e.g., module inventory on machines that don't support modules)
-      if inv and #inv > 0 then
+      -- Also filter out inventories with 0 slots (e.g., module inventory on machines that don't support modules), but
+      -- not a weight-limited one: it grows from 0 as items go in (a rocket's cargo)
+      if inv and (#inv > 0 or inv.max_weight) then
          local inv_name = inv.name
          if inv_name and not is_gun_or_ammo_inventory(inv_name) then
             local priority = Consts.INVENTORY_PRIORITIES[inv_name] or 100

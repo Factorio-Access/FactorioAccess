@@ -27,3 +27,5 @@ For example, this can be used to quickly move things to and from chests.
 As a reminder, your inventory is available as the last tab in an entity's tabs, if that entity uses inventories.
 
 You may delete planners, blueprints, and books with ctrl backspace.
+
+A rocket's cargo is limited by weight, not slots: it has only the slots its items use, and one more at the end, Add here, which puts what is in your hand into it and says how full it is.
