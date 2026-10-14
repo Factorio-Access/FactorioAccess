@@ -8,15 +8,10 @@ The one thing this does not know about is category, so one must call declare_sim
 callbacks. Default is other, providing a way to see un-categorized things, and prototype name.  For future proofing, it
 is also possible to customize readouts.
 
-Unfortunately, we get a notable performance increase if we cache entries.  So there is that as well.  We also get a
-large jump if we inline table constants when dumping to callbacks.  So this is a bit ugly, but it's ugly because
-performance--a midgame save goes down from 80ms to under 40ms with respect to scanning everything in the logistics
-category (belts, etc), for instance.  Note that it is crutial to update positions and subcategories when dumping, so
-even when pulling from the cache we must still do those fields.  The others can be brought forward on updates.
+Entries are built afresh on every dump: nothing is kept between dumps but the entities. We get a large jump if we
+inline table constants when dumping to callbacks, so the dump is a bit ugly.
 
-For now, this assumes category cannot change.
-
-fa-utils corner finding relies on map queries and is slow.  As a result, the entry is put into the cache using an
+fa-utils corner finding relies on map queries and is slow.  As a result, the entry is built using an
 approximated top left corner and then that is made more accurate in update_entry.  The problem we face is that some
 entities, primarily rocket ship pieces in the initial crash site, don't quite line up with tiles.  A longer term
 solution is to use the bounding boxes. Unfortunately however, we aren't set up to do that safely until we have a better
@@ -44,11 +39,9 @@ end
 
 ---@class fa.scanner.backends.SimpleBackend: fa.scanner.ScannerBackend
 ---@field known_entities table<number, LuaEntity>
----@field entry_cache table<number, fa.scanner.ScanEntry>
 ---@field readout_callback fun(LuaPlayer, LuaEntity): LocalisedString
 ---@field category_callback(LuaEntity): fa.scanner.Category
 ---@field subcategory_callback fun(LuaEntity): fa.scanner.Subcategory
----@field subcategory_ttl integer? Ticks a computed subcategory is reused for; nil recomputes on every dump
 
 local SimpleBackend = {}
 
@@ -79,19 +72,18 @@ end
 ---@param event EventData.on_object_destroyed
 function SimpleBackend:on_entity_destroyed(event)
    self.known_entities[event.registration_number] = nil
-   self.entry_cache[event.registration_number] = nil
 end
 
 function SimpleBackend:dump_entries_to_callback(player, callback, wanted)
    local cat_cb = self.category_callback
    local subcat_cb = self.subcategory_callback
-   local subcat_ttl = self.subcategory_ttl
-   local tick = game.tick
+
+   -- Saves from before entries were built afresh carry their cache
+   self.entry_cache = nil
 
    for regnum, entity in pairs(self.known_entities) do
       if not entity.valid then
          self.known_entities[regnum] = nil
-         self.entry_cache[regnum] = nil
       else
          -- Lua optimizes the case of being able to pre-lookup functions into
          --locals, as well as the case wherein one writes out a table as a
@@ -115,26 +107,13 @@ function SimpleBackend:dump_entries_to_callback(player, callback, wanted)
          -- Subcategories can cost surface queries (a drill's ore), so skip entries the refresh will drop anyway.
          if wanted and not wanted(effective_x, effective_y) then goto continue end
 
-         local cached_entry = self.entry_cache[regnum]
-         if cached_entry then
-            cached_entry.position = { x = effective_x, y = effective_y }
-            if not subcat_ttl or tick - cached_entry.subcategory_tick >= subcat_ttl then
-               cached_entry.subcategory = subcat_cb(entity)
-               cached_entry.subcategory_tick = tick
-            end
-            callback(cached_entry)
-         else
-            local entry = {
-               position = { x = effective_x, y = effective_y },
-               category = cat_cb(entity),
-               subcategory = subcat_cb(entity),
-               subcategory_tick = tick,
-               backend = self,
-               backend_data = entity,
-            }
-            self.entry_cache[regnum] = entry
-            callback(entry)
-         end
+         callback({
+            position = { x = effective_x, y = effective_y },
+            category = cat_cb(entity),
+            subcategory = subcat_cb(entity),
+            backend = self,
+            backend_data = entity,
+         })
       end
       ::continue::
    end
@@ -144,7 +123,6 @@ end
 ---@field category_callback (fun(e: LuaEntity):fa.scanner.Category)?
 ---@field subcategory_callback (fun(LuaEntity): fa.scanner.Subcategory)?
 ---@field readout_callback (fun(LuaPlayer, LuaEntity): LocalisedString)?
----@field subcategory_ttl integer? For subcategories that are slow to compute and rarely change
 
 ---@param meta_name string
 ---@param callbacks fa.scanner.SimpleBackendCallbacks
@@ -154,7 +132,6 @@ function mod.declare_simple_backend(meta_name, callbacks)
       category_callback = callbacks.category_callback or default_category_cb,
       subcategory_callback = callbacks.subcategory_callback or default_subcategory_cb,
       readout_callback = callbacks.readout_callback or default_readout_cb,
-      subcategory_ttl = callbacks.subcategory_ttl,
    }
 
    local newmeta = TH.nested_indexer(SimpleBackend, callbacks_defaulted)
@@ -165,7 +142,6 @@ function mod.declare_simple_backend(meta_name, callbacks)
       new = function()
          local r = {
             known_entities = {},
-            entry_cache = {},
          }
          setmetatable(r, newmeta)
          return r
