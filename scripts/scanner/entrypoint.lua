@@ -56,7 +56,63 @@ local mod = {}
 ---@field subcategory_index integer?
 ---@field entry_index integer?
 
----@alias fa.scanner.SubcategoryData { entries: fa.scanner.ScanEntry[], subcategory: fa.scanner.Subcategory }
+--[[
+The player's scan result is saved with the game, and serialised again on every save, so it is kept compact: a
+subcategory's entries are one flat array of x, y, backend, backend_data per entry (ENTRY_STRIDE values), with no key
+names or nested tables to write. Backends still see ScanEntry tables: entry_at builds one for the entry being worked
+on, and the position update_entry gives it is written back.
+]]
+---@alias fa.scanner.EntryList any[]
+
+local ENTRY_STRIDE = 4
+
+---@param list fa.scanner.EntryList
+---@return integer
+local function entry_count(list)
+   return math.floor(#list / ENTRY_STRIDE)
+end
+
+---@param list fa.scanner.EntryList
+---@param i integer
+---@return fa.scanner.ScanEntry
+local function entry_at(list, i)
+   local b = (i - 1) * ENTRY_STRIDE
+   return {
+      position = { x = list[b + 1], y = list[b + 2] },
+      backend = list[b + 3],
+      backend_data = list[b + 4],
+   } --[[@as fa.scanner.ScanEntry]]
+end
+
+---@param list fa.scanner.EntryList
+---@param i integer
+local function remove_entry(list, i)
+   local b = (i - 1) * ENTRY_STRIDE + 1
+   for _ = 1, ENTRY_STRIDE do
+      table.remove(list, b)
+   end
+end
+
+---@param list fa.scanner.EntryList
+---@param i integer
+---@param position fa.Point
+local function store_position(list, i, position)
+   local b = (i - 1) * ENTRY_STRIDE
+   list[b + 1], list[b + 2] = position.x, position.y
+end
+
+---@param entries fa.scanner.ScanEntry[]
+---@return fa.scanner.EntryList
+local function compact(entries)
+   local list = {}
+   for i, e in ipairs(entries) do
+      local b = (i - 1) * ENTRY_STRIDE
+      list[b + 1], list[b + 2], list[b + 3], list[b + 4] = e.position.x, e.position.y, e.backend, e.backend_data
+   end
+   return list
+end
+
+---@alias fa.scanner.SubcategoryData { entries: fa.scanner.EntryList, subcategory: fa.scanner.Subcategory }
 
 ---@class fa.scanner.GlobalPlayerState
 ---@field scanner_cursor fa.scanner.CursorPos
@@ -84,33 +140,53 @@ local function new_player_state(pindex)
 end
 
 ---@type table<number, fa.scanner.GlobalPlayerState>
-local player_state = GlobalManager.declare_storage_module("scanner", new_player_state)
+-- The version drops results saved in an older layout: the player refreshes again.
+local player_state = GlobalManager.declare_storage_module("scanner", new_player_state, { ephemeral_state_version = 1 })
+
+-- Sort a list's entries by distance from px, py.
+---@param list fa.scanner.EntryList
+---@param px number
+---@param py number
+local function sort_entries(list, px, py)
+   local n = entry_count(list)
+   local order, scores = {}, {}
+   for i = 1, n do
+      local b = (i - 1) * ENTRY_STRIDE
+      order[i] = i
+      scores[i] = (px - list[b + 1]) ^ 2 + (py - list[b + 2]) ^ 2
+   end
+   table.sort(order, function(a, b)
+      return scores[a] < scores[b]
+   end)
+   local old = TH.shallow_copy(list)
+   for k = 1, n do
+      local from, to = (order[k] - 1) * ENTRY_STRIDE, (k - 1) * ENTRY_STRIDE
+      for j = 1, ENTRY_STRIDE do
+         list[to + j] = old[from + j]
+      end
+   end
+end
 
 ---@param player LuaPlayer
 ---@param pstate fa.scanner.GlobalPlayerState
 local function apply_sort(player, pstate)
-   local px, py = player.position.x, player.position.y
+   local pos = player.position --[[@as MapPosition.struct]]
+   local px, py = pos.x, pos.y
 
-   -- All shares lists with the other categories: each list is sorted once, and an entry is scored once.
-   ---@type table<fa.scanner.ScanEntry[], true>
+   -- All shares lists with the other categories: each list is sorted once.
+   ---@type table<fa.scanner.EntryList, true>
    local sorted = {}
-   local scores = {}
-   local function score(e)
-      local ex, ey = e.position.x, e.position.y
-      return (px - ex) ^ 2 + (py - ey) ^ 2
-   end
 
    for cat, sortable in pairs(pstate.entries) do
       Memosort.memosort(sortable, function(subcat)
-         if not sorted[subcat.entries] then
-            Memosort.memosort(subcat.entries, score, scores)
-            sorted[subcat.entries] = true
+         local list = subcat.entries
+         if not sorted[list] then
+            sort_entries(list, px, py)
+            sorted[list] = true
          end
-
-         local example = subcat.entries[1]
          -- Emptied through the other view of a shared list: last, until navigation removes it.
-         if not example then return math.huge end
-         return scores[example]
+         if not list[1] then return math.huge end
+         return (px - list[1]) ^ 2 + (py - list[2]) ^ 2
       end)
    end
 end
@@ -238,15 +314,22 @@ is_chunk_charted(surface, { x = math.floor(ex / 32), y = math.floor(ey / 32) })
    end
    if not next(all) then cats[CAT_ALL] = nil end
 
-   -- Now flatten it. This is what goes to the player, but only after sorting.
+   -- Now flatten it. This is what goes to the player, but only after sorting. A shared list stays shared.
+   ---@type table<fa.scanner.ScanEntry[], fa.scanner.EntryList>
+   local compacted = {}
    local cats_flattened = {}
    for cat, subcats in pairs(cats) do
       local dest = {}
       cats_flattened[cat] = dest
       for subcat, ents in pairs(subcats) do
+         local list = compacted[ents]
+         if not list then
+            list = compact(ents)
+            compacted[ents] = list
+         end
          t_insert(dest, {
             subcategory = subcat,
-            entries = ents,
+            entries = list,
          })
       end
    end
@@ -313,9 +396,9 @@ local function move_category(pindex, ps, dir)
       if not subcats then goto continue end
 
       while next(subcats) do
-         local s = subcats[1]
-         while next(s.entries) do
-            local first = s.entries[1]
+         local ents = subcats[1].entries
+         while next(ents) do
+            local first = entry_at(ents, 1)
             if first.backend:validate_entry(pobj, first) then
                -- We can go here, we found a valid entry.
                ps.scanner_cursor = {
@@ -326,7 +409,7 @@ local function move_category(pindex, ps, dir)
 
                return true
             else
-               table.remove(s.entries, 1)
+               remove_entry(ents, 1)
             end
          end
 
@@ -372,13 +455,14 @@ local function move_subcategory(pindex, ps, dir)
       -- it and try again.
       local s = subcats[ind].entries
       while next(s) do
-         if s[1].backend:validate_entry(pobj, s[1]) then
+         local first = entry_at(s, 1)
+         if first.backend:validate_entry(pobj, first) then
             ps.scanner_cursor.subcategory_index = ind
             ps.scanner_cursor.entry_index = nil
             return true
          end
 
-         table.remove(s, 1)
+         remove_entry(s, 1)
       end
 
       -- This subcategory couldn't do it. Move it out from under the index. If
@@ -416,13 +500,14 @@ local function move_in_subcategory(pindex, ps, dir)
 
    local ents = ps.entries[ps.scanner_cursor.category][ps.scanner_cursor.subcategory_index].entries
 
-   local total = dir == 1 and #ents or 1
+   local total = dir == 1 and entry_count(ents) or 1
 
    -- Move in the direction of dir. If we can find a new index to land on, then
    -- return it. Otherwise we have to be at an end, in the sense that either we
    -- actually are or the items are invalid.
    for i = ind + dir, total, dir do
-      if ents[i].backend:validate_entry(pobj, ents[i]) then
+      local e = entry_at(ents, i)
+      if e.backend:validate_entry(pobj, e) then
          ps.scanner_cursor.entry_index = i
          return true
       end
@@ -451,6 +536,8 @@ local function announce_cursor_pos(pindex, ps)
    -- that we may only break the loop once.
    ---@type fa.scanner.ScanEntry?
    local announcing = nil -- if set, not empty.
+   ---@type fa.scanner.EntryList
+   local announcing_list
    local count = 0
 
    local subcats = ps.entries[ps.scanner_cursor.category]
@@ -471,14 +558,15 @@ local function announce_cursor_pos(pindex, ps)
          local ents = subcats[ps.scanner_cursor.subcategory_index].entries
 
          while next(ents) do
-            ps.scanner_cursor.entry_index = math.min(ps.scanner_cursor.entry_index, #ents)
-            local e = ents[ps.scanner_cursor.entry_index]
+            ps.scanner_cursor.entry_index = math.min(ps.scanner_cursor.entry_index, entry_count(ents))
+            local e = entry_at(ents, ps.scanner_cursor.entry_index)
             if e.backend:validate_entry(pobj, e) then
-               count = #ents
+               count = entry_count(ents)
                announcing = e
+               announcing_list = ents
                goto do_announce
             end
-            table.remove(ents, ps.scanner_cursor.entry_index)
+            remove_entry(ents, ps.scanner_cursor.entry_index)
          end
 
          ::continue::
@@ -490,6 +578,7 @@ local function announce_cursor_pos(pindex, ps)
       -- Update the entry first so position is current
       EntitySelection.reset_entity_index(pindex)
       announcing.backend:update_entry(pobj, announcing)
+      store_position(announcing_list, ps.scanner_cursor.entry_index, announcing.position)
       -- Now set cursor to the updated position
       vp:set_cursor_pos(announcing.position)
       -- Try to select the entity if there is one

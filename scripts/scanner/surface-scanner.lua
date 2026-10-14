@@ -269,7 +269,7 @@ end
 local surface_state = StorageManager.declare_storage_module(
    "scanner",
    new_empty_surface,
-   { root_field = "surfaces", ephemeral_state_version = 18 }
+   { root_field = "surfaces", ephemeral_state_version = 19 }
 )
 
 -- Code outside the scanner told of each new entity of some types, by type. See add_new_entity_listener.

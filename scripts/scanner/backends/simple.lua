@@ -78,9 +78,6 @@ function SimpleBackend:dump_entries_to_callback(player, callback, wanted)
    local cat_cb = self.category_callback
    local subcat_cb = self.subcategory_callback
 
-   -- Saves from before entries were built afresh carry their cache
-   self.entry_cache = nil
-
    for regnum, entity in pairs(self.known_entities) do
       if not entity.valid then
          self.known_entities[regnum] = nil
