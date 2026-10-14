@@ -32,6 +32,9 @@ local BLOCK_SIZE = BlockClusterer.BLOCK_SIZE
 -- Gleba's yumako trees and jellystems are plants, a kind of tree.
 local TREE_TYPES = { "tree", "plant" }
 
+-- How far outside a forest's box one of its trees can stand: the search finds trees by their collision boxes.
+local ZOOM_BOX_MARGIN = 2
+
 ---@class fa.scanner.backends.TreeBackend: fa.scanner.ScannerBackend
 ---@field clusterer fa.ds.BlockClusterer A cell is a chunk_size square with a tree in it
 ---@field chunk_size integer Saved version of ScannerConsts's value; divides a map chunk.
@@ -172,7 +175,9 @@ function TreeBackend:dump_entries_to_callback(player, callback)
    end
    self.dirty_chunks = {}
 
-   local px, py = player.position.x, player.position.y
+   local player_pos = player.position --[[@as MapPosition.struct]]
+   local px, py = player_pos.x, player_pos.y
+   local zoom_squared = SC.FOREST_ZOOM_DISTANCE ^ 2
    local CAT_RESOURCES = SC.CATEGORIES.RESOURCES
    local find_entities_filtered = self.surface.find_entities_filtered
 
@@ -193,17 +198,22 @@ function TreeBackend:dump_entries_to_callback(player, callback)
 
       local zoomed_trees = {}
 
-      -- Filter out any trees close enough for zoom.
-      local d_squared = SC.FOREST_ZOOM_DISTANCE ^ 2
-      TH.retain_unordered(trees, function(t)
-         local zoomed = (player.position.x - t.position.x) ^ 2 + (player.position.y - t.position.y) ^ 2 < d_squared
-         if zoomed then table.insert(zoomed_trees, t) end
-         return not zoomed
-      end)
+      -- Filter out any trees close enough for zoom. A forest whose box is farther away has none: most forests, and
+      -- the per-tree test is most of a refresh's time.
+      local cx = math.min(math.max(px, tlx - ZOOM_BOX_MARGIN), brx + ZOOM_BOX_MARGIN)
+      local cy = math.min(math.max(py, tly - ZOOM_BOX_MARGIN), bry + ZOOM_BOX_MARGIN)
+      if (px - cx) ^ 2 + (py - cy) ^ 2 < zoom_squared then
+         TH.retain_unordered(trees, function(t)
+            local p = t.position
+            local zoomed = (px - p.x) ^ 2 + (py - p.y) ^ 2 < zoom_squared
+            if zoomed then table.insert(zoomed_trees, t) end
+            return not zoomed
+         end)
+      end
 
       -- Figure out the big non-zoomed one.
       if next(trees) then
-         local closest = self.surface.get_closest(player.position, trees)
+         local closest = self.surface.get_closest(player_pos, trees)
 
          -- If there is only one tree, don't announce as trees x1. instead
          -- "zoom" into it.
