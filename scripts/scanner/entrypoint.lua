@@ -91,17 +91,26 @@ local player_state = GlobalManager.declare_storage_module("scanner", new_player_
 local function apply_sort(player, pstate)
    local px, py = player.position.x, player.position.y
 
+   -- All shares lists with the other categories: each list is sorted once, and an entry is scored once.
+   ---@type table<fa.scanner.ScanEntry[], true>
+   local sorted = {}
+   local scores = {}
+   local function score(e)
+      local ex, ey = e.position.x, e.position.y
+      return (px - ex) ^ 2 + (py - ey) ^ 2
+   end
+
    for cat, sortable in pairs(pstate.entries) do
       Memosort.memosort(sortable, function(subcat)
-         Memosort.memosort(subcat.entries, function(e)
-            local ex, ey = e.position.x, e.position.y
-            return (px - ex) ^ 2 + (py - ey) ^ 2
-         end)
+         if not sorted[subcat.entries] then
+            Memosort.memosort(subcat.entries, score, scores)
+            sorted[subcat.entries] = true
+         end
 
          local example = subcat.entries[1]
-         local pos = example.position
-         local ex, ey = pos.x, pos.y
-         return (px - ex) ^ 2 + (ey - py) ^ 2
+         -- Emptied through the other view of a shared list: last, until navigation removes it.
+         if not example then return math.huge end
+         return scores[example]
       end)
    end
 end
@@ -187,28 +196,47 @@ is_chunk_charted(surface, { x = math.floor(ex / 32), y = math.floor(ey / 32) })
    We iterate over each entry.  The table is [category][subcategory].  Once done
    we flatten and sort.
 
-   All entries automatically go to the all category as well.
+   All entries automatically go to the all category as well. A subcategory found in one category only is the same
+   list in All: it is sorted once and saved once, and an entry the navigation drops is gone from both views.
    ]]
 
    local t_insert = table.insert
    local CAT_ALL = ScannerConsts.CATEGORIES.ALL
 
-   local function add(cat, subcat, ent)
-      local c = cats[cat][subcat]
+   for e in pairs(known_entries) do
+      local subcats = cats[e.category]
+      local c = subcats[e.subcategory]
       if not c then
          c = {}
-         cats[cat][subcat] = c
+         subcats[e.subcategory] = c
       end
-      t_insert(c, ent)
+      t_insert(c, e)
    end
 
-   for e in pairs(known_entries) do
-      local cat = e.category
-      local subcat = e.subcategory
-
-      add(CAT_ALL, subcat, e)
-      if cat ~= CAT_ALL then add(cat, subcat, e) end
+   -- Entries whose own category is All are already there; every other list joins All, shared while it is alone.
+   local all = cats[CAT_ALL]
+   ---@type table<fa.scanner.Subcategory, true>
+   local merged = {}
+   for cat, subcats in pairs(cats) do
+      if cat ~= CAT_ALL then
+         for subcat, ents in pairs(subcats) do
+            local existing = all[subcat]
+            if not existing then
+               all[subcat] = ents
+            else
+               if not merged[subcat] then
+                  existing = TH.shallow_copy(existing)
+                  all[subcat] = existing
+                  merged[subcat] = true
+               end
+               for i = 1, #ents do
+                  t_insert(existing, ents[i])
+               end
+            end
+         end
+      end
    end
+   if not next(all) then cats[CAT_ALL] = nil end
 
    -- Now flatten it. This is what goes to the player, but only after sorting.
    local cats_flattened = {}
