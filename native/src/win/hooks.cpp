@@ -150,12 +150,13 @@ struct EventLayout {
   size_t type, kb_scancode, kb_mod, kb_unichar, kb_repeat;  // Event::type, Event::keyboard.<field>
   size_t sdl_type, sdl_window, sdl_scancode, sdl_key, sdl_mod, sdl_down, sdl_repeat;  // SDL_KeyboardEvent
   size_t sdl_text_window, sdl_text;                                              // SDL_TextInputEvent
+  size_t sdl_motion_window, sdl_motion_x, sdl_motion_y;                          // SDL_MouseMotionEvent
   size_t window_sdl;                                                             // SDLWindow::window
 } E;
 // Event::Type values (enum Event::Type in the PDB).
 constexpr int kKeyDown = 0, kKeyChar = 1, kKeyUp = 2, kKeyComposition = 3;
 // SDL3: SDL_EVENT_KEY_DOWN / KEY_UP / TEXT_INPUT, and the SDL_Keymod bit groups (SDL_keycode.h).
-constexpr uint32_t kSdlKeyDown = 0x300, kSdlKeyUp = 0x301, kSdlTextInput = 0x303;
+constexpr uint32_t kSdlKeyDown = 0x300, kSdlKeyUp = 0x301, kSdlTextInput = 0x303, kSdlMouseMotion = 0x400;
 constexpr uint16_t kModShift = 0x0003, kModCtrl = 0x00c0, kModAlt = 0x0300;
 
 static bool resolve_events() {
@@ -180,6 +181,9 @@ static bool resolve_events() {
   E.sdl_repeat = off("SDL_KeyboardEvent", "repeat");
   E.sdl_text_window = off("SDL_TextInputEvent", "windowID");
   E.sdl_text = off("SDL_TextInputEvent", "text");
+  E.sdl_motion_window = off("SDL_MouseMotionEvent", "windowID");
+  E.sdl_motion_x = off("SDL_MouseMotionEvent", "x");
+  E.sdl_motion_y = off("SDL_MouseMotionEvent", "y");
   E.window_sdl = off("SDLWindow", "window");
   return ok;
 }
@@ -259,6 +263,17 @@ bool push_text(std::string_view utf8) {
   field<uint32_t>(ev, E.sdl_type) = kSdlTextInput;
   field<uint32_t>(ev, E.sdl_text_window) = g_get_window_id(win);
   field<const char*>(ev, E.sdl_text) = text;
+  return g_push_event(ev);
+}
+
+bool push_mouse_move(float x, float y) {
+  void* win = g_sdl_window;
+  if (!win || !g_push_event) return false;
+  alignas(8) unsigned char ev[128] = {};
+  field<uint32_t>(ev, E.sdl_type) = kSdlMouseMotion;
+  field<uint32_t>(ev, E.sdl_motion_window) = g_get_window_id(win);
+  field<float>(ev, E.sdl_motion_x) = x;
+  field<float>(ev, E.sdl_motion_y) = y;
   return g_push_event(ev);
 }
 

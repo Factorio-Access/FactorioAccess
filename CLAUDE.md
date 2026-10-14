@@ -324,6 +324,8 @@ python native/tools/fadev.py fixture NAME key=value  # a setup from native/tools
   activate itself (`FA_NOFOCUS`). It is silent unless `launch --speak`: speech is recorded but not voiced, and
   the process's audio session (the game's sound and our audio engine) is muted. `speech` shows what would have
   been said. `health` counts the audio commands the mod sent; `get "audio?json=..."` submits one by hand.
+  `get "mouse?x=960&y=420"` moves the game's pointer (window pixels) without touching the real one: a hovered
+  widget gets the game's tooltip, which a player's idle mouse often produces and the inactive dev window never does.
 - `fadev.py` tracks the game by pid, creation time and image path, and re-checks all three before acting, so a
   pid Windows reused is never touched. `kill` closes the window first so the game exits cleanly (a terminated
   game re-shows the changelog on the next start).

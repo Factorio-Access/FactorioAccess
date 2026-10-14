@@ -146,6 +146,9 @@ static std::string handle(const std::string& path, const Query& q, int& status) 
     }
     return "ok\n";
   }
+  if (path == "/mouse") {  // ?x=&y=: move the pointer, in window pixels
+    return hooks::push_mouse_move(std::stof(arg(q, "x")), std::stof(arg(q, "y"))) ? "ok\n" : "not ready\n";
+  }
   if (path == "/keys") return hooks::push_text(arg(q, "text")) ? "ok\n" : "not ready\n";
   if (path == "/own") {  // dev override of who owns the keyboard; the UI tick decides again on its next change
     if (q.count("on")) input::set_owned(truthy(arg(q, "on")));

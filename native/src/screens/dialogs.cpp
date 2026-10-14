@@ -31,6 +31,8 @@ using Path = std::string;
 bool is_dialog(agui::Widget* w) {
   if (!agui::visible(w)) return false;
   if (agui::is_a(w, "agui::ImageWidget") || agui::is_a(w, "agui::Label")) return false;
+  // The mouse pointer's hover tooltip sits above every window: never the dialog the player is in
+  if (agui::is_a(w, "agui::ToolTip")) return false;
   auto r = agui::rect(w);
   return r.w > 0 && r.h > 0;
 }
