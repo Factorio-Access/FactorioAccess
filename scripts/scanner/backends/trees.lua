@@ -181,51 +181,79 @@ function TreeBackend:dump_entries_to_callback(player, callback)
    local CAT_RESOURCES = SC.CATEGORIES.RESOURCES
    local find_entities_filtered = self.surface.find_entities_filtered
 
+   local size = self.chunk_size
+   local count_entities_filtered = self.surface.count_entities_filtered
+
    for _, g in ipairs(self.clusterer:get_groups()) do
-      local tlx = g.x0 * self.chunk_size
-      local tly = g.y0 * self.chunk_size
-      local brx = (g.x1 + 1) * self.chunk_size
-      local bry = (g.y1 + 1) * self.chunk_size
+      local tlx = g.x0 * size
+      local tly = g.y0 * size
+      local brx = (g.x1 + 1) * size
+      local bry = (g.y1 + 1) * size
 
       local aabb = {
          left_top = { x = tlx, y = tly },
          right_bottom = { x = brx, y = bry },
       }
 
-      local trees = find_entities_filtered({ area = aabb, type = TREE_TYPES })
-      -- Felled since the chunk was last read.
-      if not next(trees) then goto continue end
-
-      local zoomed_trees = {}
-
-      -- Filter out any trees close enough for zoom. A forest whose box is farther away has none: most forests, and
-      -- the per-tree test is most of a refresh's time.
+      -- Whether any tree of the forest can be close enough to announce on its own.
       local cx = math.min(math.max(px, tlx - ZOOM_BOX_MARGIN), brx + ZOOM_BOX_MARGIN)
       local cy = math.min(math.max(py, tly - ZOOM_BOX_MARGIN), bry + ZOOM_BOX_MARGIN)
-      if (px - cx) ^ 2 + (py - cy) ^ 2 < zoom_squared then
+      if (px - cx) ^ 2 + (py - cy) ^ 2 >= zoom_squared then
+         -- A forest farther away, nearly every one: no tree is fetched. Its count is counted, and it is placed on the
+         -- centre of its square nearest the player, only to sort it: announcing it runs update_entry, which moves
+         -- the cursor onto its closest tree. Fetching every tree of every forest cost most of a refresh's time and
+         -- a Lua object per tree.
+         local count = count_entities_filtered({ area = aabb, type = TREE_TYPES })
+         if count == 1 then
+            -- Announced as that tree.
+            local t = find_entities_filtered({ area = aabb, type = TREE_TYPES, limit = 1 })[1]
+            local tp = t.position --[[@as MapPosition.struct]]
+            callback(self, tp.x, tp.y, CAT_RESOURCES, "tree", { tree_count = 1, aabb = t.bounding_box, zoom_ent = t })
+         elseif count > 1 then
+            local ex, ey = self.clusterer:closest_edge(g, px / size, py / size)
+            callback(
+               self,
+               (ex + 0.5) * size,
+               (ey + 0.5) * size,
+               CAT_RESOURCES,
+               "tree",
+               { tree_count = count, aabb = aabb }
+            )
+         end
+         -- None: felled since the chunk was last read.
+         goto continue
+      end
+
+      do
+         local trees = find_entities_filtered({ area = aabb, type = TREE_TYPES })
+         -- Felled since the chunk was last read.
+         if not next(trees) then goto continue end
+
+         -- Trees close enough are announced on their own.
+         local zoomed_trees = {}
          TH.retain_unordered(trees, function(t)
             local p = t.position
             local zoomed = (px - p.x) ^ 2 + (py - p.y) ^ 2 < zoom_squared
             if zoomed then table.insert(zoomed_trees, t) end
             return not zoomed
          end)
-      end
 
-      -- Figure out the big non-zoomed one.
-      if next(trees) then
-         local closest = self.surface.get_closest(player_pos, trees)
+         -- The rest are the forest.
+         if next(trees) then
+            local closest = self.surface.get_closest(player_pos, trees)
 
-         -- If there is only one tree, don't announce as trees x1. instead
-         -- "zoom" into it.
-         local zoom_ent = #trees == 1 and trees[1] or nil
-         if zoom_ent then aabb = trees[1].bounding_box end
-         local cp = closest.position --[[@as MapPosition.struct]]
-         callback(self, cp.x, cp.y, CAT_RESOURCES, "tree", { tree_count = #trees, aabb = aabb, zoom_ent = zoom_ent })
-      end
+            -- If there is only one tree, don't announce as trees x1. instead
+            -- "zoom" into it.
+            local zoom_ent = #trees == 1 and trees[1] or nil
+            if zoom_ent then aabb = trees[1].bounding_box end
+            local cp = closest.position --[[@as MapPosition.struct]]
+            callback(self, cp.x, cp.y, CAT_RESOURCES, "tree", { tree_count = #trees, aabb = aabb, zoom_ent = zoom_ent })
+         end
 
-      for _, t in pairs(zoomed_trees) do
-         local tp = t.position --[[@as MapPosition.struct]]
-         callback(self, tp.x, tp.y, CAT_RESOURCES, "tree", { tree_count = 1, zoom_ent = t, aabb = t.bounding_box })
+         for _, t in pairs(zoomed_trees) do
+            local tp = t.position --[[@as MapPosition.struct]]
+            callback(self, tp.x, tp.y, CAT_RESOURCES, "tree", { tree_count = 1, zoom_ent = t, aabb = t.bounding_box })
+         end
       end
 
       ::continue::
