@@ -118,7 +118,7 @@ function TileBodiesBackend:read_chunk(cx, cy)
 end
 
 ---@param player LuaPlayer
----@param callback fun(fa.scanner.ScanEntry)
+---@param callback fa.scanner.EntryCallback
 function TileBodiesBackend:dump_entries_to_callback(player, callback)
    for cx, col in pairs(self.dirty_chunks) do
       for cy in pairs(col) do
@@ -136,20 +136,14 @@ function TileBodiesBackend:dump_entries_to_callback(player, callback)
          for _, group in ipairs(clusterer:get_groups()) do
             if kind.category ~= SC.CATEGORIES.TERRAIN or group.edges >= MIN_TERRAIN_EDGE_TILES then
                local e_x, e_y = clusterer:closest_edge(group, px, py)
-               callback({
-                  -- The tile's centre: the cursor code reads a tile corner as the tile to the northwest in some
-                  -- contexts.
-                  position = { x = e_x + 0.5, y = e_y + 0.5 },
-                  backend_data = {
-                     aabb = {
-                        left_top = { x = group.x0, y = group.y0 },
-                        right_bottom = { x = group.x1 + 1, y = group.y1 + 1 },
-                     },
-                     kind = kind.key,
+               -- The tile's centre: the cursor code reads a tile corner as the tile to the northwest in some
+               -- contexts.
+               callback(self, e_x + 0.5, e_y + 0.5, kind.category, kind.key, {
+                  aabb = {
+                     left_top = { x = group.x0, y = group.y0 },
+                     right_bottom = { x = group.x1 + 1, y = group.y1 + 1 },
                   },
-                  backend = self,
-                  category = kind.category,
-                  subcategory = kind.key,
+                  kind = kind.key,
                })
             end
          end
@@ -189,14 +183,14 @@ function TileBodiesBackend:on_tiles_changed(positions)
    end
 end
 
-function TileBodiesBackend:get_aabb(e)
-   local aabb = e.backend_data.aabb
+function TileBodiesBackend:get_aabb(data)
+   local aabb = data.aabb
    local lt = aabb.left_top
    local rb = aabb.right_bottom
    return lt.x, lt.y, rb.x, rb.y
 end
 
-function TileBodiesBackend:is_huge(e)
+function TileBodiesBackend:is_huge(data)
    return true
 end
 

@@ -47,9 +47,12 @@ local mod = {}
 ---@field readout_entry fun(self, player: LuaPlayer, entry: fa.scanner.ScanEntry): LocalisedString
 ---@field on_new_entity fun(self, entity: LuaEntity)
 ---@field on_entity_destroyed fun(self, event: EventData.on_object_destroyed)
----@field dump_entries_to_callback fun(self, player: LuaPlayer, callback: fun(entry: fa.scanner.ScanEntry), wanted: (fun(x: number, y: number): boolean)?) wanted may skip entries by position before any work on them; entries it lets through still get the full filter
----@field is_huge fun(self, entry: fa.scanner.ScanEntry): boolean True if the scanner should check whether the player is in the bounding box.
----@field get_aabb fun(self, entry: fa.scanner.ScanEntry): number, number, number, number left_top.x, left_top.y, right_bottom.x, right_bottom.y
+---@field dump_entries_to_callback fun(self, player: LuaPlayer, callback: fa.scanner.EntryCallback, wanted: (fun(x: number, y: number): boolean)?) wanted may skip entries by position before any work on them; entries it lets through still get the full filter
+---@field is_huge fun(self, backend_data: any): boolean True if the scanner should check whether the player is in the bounding box.
+---@field get_aabb fun(self, backend_data: any): number, number, number, number left_top.x, left_top.y, right_bottom.x, right_bottom.y
+
+---How a backend hands over an entry: as values, never a table (see the refresh).
+---@alias fa.scanner.EntryCallback fun(backend: fa.scanner.ScannerBackend, x: number, y: number, category: fa.scanner.Category, subcategory: fa.scanner.Subcategory, backend_data: any)
 
 ---@class fa.scanner.CursorPos
 ---@field category fa.scanner.Category?
@@ -101,17 +104,6 @@ local function store_position(list, i, position)
    list[b + 1], list[b + 2] = position.x, position.y
 end
 
----@param entries fa.scanner.ScanEntry[]
----@return fa.scanner.EntryList
-local function compact(entries)
-   local list = {}
-   for i, e in ipairs(entries) do
-      local b = (i - 1) * ENTRY_STRIDE
-      list[b + 1], list[b + 2], list[b + 3], list[b + 4] = e.position.x, e.position.y, e.backend, e.backend_data
-   end
-   return list
-end
-
 ---@alias fa.scanner.SubcategoryData { entries: fa.scanner.EntryList, subcategory: fa.scanner.Subcategory }
 
 ---@class fa.scanner.GlobalPlayerState
@@ -143,27 +135,35 @@ end
 -- The version drops results saved in an older layout: the player refreshes again.
 local player_state = GlobalManager.declare_storage_module("scanner", new_player_state, { ephemeral_state_version = 1 })
 
--- Sort a list's entries by distance from px, py.
+-- Above any entry's index in a sort key; a list never holds this many entries.
+local INDEX_SPAN = 1048576
+
+-- Sort a list's entries by distance from px, py. Each entry becomes one number, its distance in sixteenths of a tile
+-- times INDEX_SPAN plus its index, so table.sort compares numbers itself instead of calling Lua for each comparison:
+-- that call was most of a sort's time. Entries at the same distance stay in list order. Exact while the key stays
+-- under 2^53, which any two points of a map do.
 ---@param list fa.scanner.EntryList
 ---@param px number
 ---@param py number
 local function sort_entries(list, px, py)
    local n = entry_count(list)
-   local order, scores = {}, {}
+   assert(n < INDEX_SPAN)
+   local floor, sqrt = math.floor, math.sqrt
+   local keys = {}
    for i = 1, n do
       local b = (i - 1) * ENTRY_STRIDE
-      order[i] = i
-      scores[i] = (px - list[b + 1]) ^ 2 + (py - list[b + 2]) ^ 2
+      local dx, dy = px - list[b + 1], py - list[b + 2]
+      keys[i] = floor(sqrt(dx * dx + dy * dy) * 16) * INDEX_SPAN + i
    end
-   table.sort(order, function(a, b)
-      return scores[a] < scores[b]
-   end)
-   local old = TH.shallow_copy(list)
+   table.sort(keys)
+   local old = {}
+   for i = 1, n * ENTRY_STRIDE do
+      old[i] = list[i]
+   end
    for k = 1, n do
-      local from, to = (order[k] - 1) * ENTRY_STRIDE, (k - 1) * ENTRY_STRIDE
-      for j = 1, ENTRY_STRIDE do
-         list[to + j] = old[from + j]
-      end
+      local from, to = (keys[k] % INDEX_SPAN - 1) * ENTRY_STRIDE, (k - 1) * ENTRY_STRIDE
+      list[to + 1], list[to + 2], list[to + 3], list[to + 4] =
+         old[from + 1], old[from + 2], old[from + 3], old[from + 4]
    end
 end
 
@@ -224,8 +224,18 @@ local function do_refresh_after_sfx(pindex, direction_filter)
    local player_pos = player_obj.position --[[@as MapPosition.struct]]
    local px, py = player_pos.x, player_pos.y
 
-   ---@type table<fa.scanner.ScanEntry, true>
-   local known_entries = {}
+   --[[
+   The refresh runs every time the player presses the key, which is often, so it is written for speed. On a 15 hour
+   save (about 31,000 entities in range) it allocated 61 MB against a live Lua heap of 47 MB, so most refreshes also
+   paid for a garbage collection cycle, 100 to 150 ms. Hence:
+
+   - Backends hand each entry over as values, and the filter appends them straight into the flat lists the player
+     keeps (see the layout above): no entry table, position table or second copy per entry.
+   - Whether a chunk is charted is asked once per chunk, not once per entry.
+   - sort_entries sorts numbers, not entries with a Lua comparison.
+   ]]
+   ---@type table<fa.scanner.Category, table<fa.scanner.Subcategory, fa.scanner.EntryList>>
+   local cats = {}
 
    do
       local force = player_obj.force
@@ -235,7 +245,6 @@ local function do_refresh_after_sfx(pindex, direction_filter)
       local get_direction_biased = FaUtils.get_direction_biased
       local surface = player_obj.surface
 
-      -- Whether the chunk holding a point is charted, asked once per chunk: entries outnumber chunks many times.
       ---@type table<number, boolean>
       local charted = {}
       ---@param x number
@@ -252,37 +261,40 @@ local function do_refresh_after_sfx(pindex, direction_filter)
          return c
       end
 
-      ---@param e fa.scanner.ScanEntry
-      local function adder(e)
-         local pos = e.position
-         local ex, ey = pos.x, pos.y
-         local ltx, lty, rbx, rby
-         if e.backend:is_huge(e) then
-            ltx, lty, rbx, rby = e.backend:get_aabb(e)
+      ---@param backend fa.scanner.ScannerBackend
+      ---@param ex number
+      ---@param ey number
+      ---@param category fa.scanner.Category
+      ---@param subcategory fa.scanner.Subcategory
+      ---@param data any
+      local function adder(backend, ex, ey, category, subcategory, data)
+         if (ex - px) ^ 2 + (ey - py) ^ 2 >= dist_limit_squared then return end
+
+         -- Charted is decided by the entry's position (the centre, or whatever point the backend found most
+         -- relevant), not all its corners, which is expensive. An entry big enough that its point is uncharted but
+         -- the player stands inside it (an island in a lake whose box spans the generated map) is still shown.
+         if not charted_at(ex, ey) then
+            if not backend:is_huge(data) then return end
+            local ltx, lty, rbx, rby = backend:get_aabb(data)
+            if not (px >= ltx and px <= rbx and py >= lty and py <= rby) then return end
          end
 
-         -- NOTE: stylua is making the following format weird.
-         if
-            (ex - px) ^ 2 + (ey - py) ^ 2 < dist_limit_squared
-            and (
-                              -- We could check all corners too, but that's quite expensive.
-               -- Instead we check the center or whatever point the backend
-               -- decided was most relevant and assume that's good enough.  This
-               -- shaved off 5% or so of scan refreshing time.
-charted_at(ex, ey)
-               -- For cases in which the entity is large enough that no corner
-               -- or position is charted, let's see if the player themselves is
-               -- inside.  This can happen with e.g. seablock where the water
-               -- entry surrounds the island, and the bounding box is actually
-               -- based off the corners of the generated map.
-               --
-               -- ltx etc. are nil if we don't need to do the check.
-               or (ltx and px >= ltx and px <= rbx and py >= lty and py <= rby)
-            )
-            and (not direction_filter or get_direction_biased(e.position, player_obj.position) == direction_filter)
-         then
-            known_entries[e] = true
+         if direction_filter and get_direction_biased({ x = ex, y = ey }, player_pos) ~= direction_filter then
+            return
          end
+
+         local subcats = cats[category]
+         if not subcats then
+            subcats = {}
+            cats[category] = subcats
+         end
+         local list = subcats[subcategory]
+         if not list then
+            list = {}
+            subcats[subcategory] = list
+         end
+         local n = #list
+         list[n + 1], list[n + 2], list[n + 3], list[n + 4] = ex, ey, backend, data
       end
 
       -- The cheap part of adder, by position alone: backends use it to skip work on entries it would drop.
@@ -291,54 +303,35 @@ charted_at(ex, ey)
       ---@return boolean
       local function wanted(x, y)
          if (x - px) ^ 2 + (y - py) ^ 2 >= dist_limit_squared then return false end
-         return not direction_filter or get_direction_biased({ x = x, y = y }, player_obj.position) == direction_filter
+         return not direction_filter or get_direction_biased({ x = x, y = y }, player_pos) == direction_filter
       end
 
       SurfaceScanner.get_entries_snapshot(player_obj.surface.index, player_obj, adder, wanted)
    end
 
-   -- Next: build up the (sub)category setup.
-   local cats = TH.defaulting_table()
-
-   --[[
-   We iterate over each entry.  The table is [category][subcategory].  Once done
-   we flatten and sort.
-
-   All entries automatically go to the all category as well. A subcategory found in one category only is the same
-   list in All: it is sorted once and saved once, and an entry the navigation drops is gone from both views.
-   ]]
-
-   local t_insert = table.insert
+   -- Every list also goes to All. A subcategory found in one category only is the same list in All: sorted once and
+   -- saved once, and an entry navigation drops is gone from both views. Entries whose own category is All are there
+   -- already.
    local CAT_ALL = ScannerConsts.CATEGORIES.ALL
-
-   for e in pairs(known_entries) do
-      local subcats = cats[e.category]
-      local c = subcats[e.subcategory]
-      if not c then
-         c = {}
-         subcats[e.subcategory] = c
-      end
-      t_insert(c, e)
-   end
-
-   -- Entries whose own category is All are already there; every other list joins All, shared while it is alone.
-   local all = cats[CAT_ALL]
+   local all = cats[CAT_ALL] or {}
+   cats[CAT_ALL] = all
    ---@type table<fa.scanner.Subcategory, true>
    local merged = {}
    for cat, subcats in pairs(cats) do
       if cat ~= CAT_ALL then
-         for subcat, ents in pairs(subcats) do
+         for subcat, list in pairs(subcats) do
             local existing = all[subcat]
             if not existing then
-               all[subcat] = ents
+               all[subcat] = list
             else
                if not merged[subcat] then
                   existing = TH.shallow_copy(existing)
                   all[subcat] = existing
                   merged[subcat] = true
                end
-               for i = 1, #ents do
-                  t_insert(existing, ents[i])
+               local n = #existing
+               for i = 1, #list do
+                  existing[n + i] = list[i]
                end
             end
          end
@@ -346,43 +339,19 @@ charted_at(ex, ey)
    end
    if not next(all) then cats[CAT_ALL] = nil end
 
-   -- Sort the entries while they are still tables: cheaper than sorting the flat lists. A shared list is sorted
-   -- once, and each entry scored once.
-   do
-      local scores = {}
-      local function score(e)
-         local p = e.position
-         return (px - p.x) ^ 2 + (py - p.y) ^ 2
-      end
-      ---@type table<fa.scanner.ScanEntry[], true>
-      local sorted = {}
-      for _, subcats in pairs(cats) do
-         for _, ents in pairs(subcats) do
-            if not sorted[ents] then
-               Memosort.memosort(ents, score, scores)
-               sorted[ents] = true
-            end
-         end
-      end
-   end
-
-   -- Now flatten it. This is what goes to the player. A shared list stays shared.
-   ---@type table<fa.scanner.ScanEntry[], fa.scanner.EntryList>
-   local compacted = {}
+   -- What the player keeps: per category, its subcategories in order of their nearest entry.
+   ---@type table<fa.scanner.EntryList, true>
+   local sorted = {}
    local cats_flattened = {}
    for cat, subcats in pairs(cats) do
       local dest = {}
       cats_flattened[cat] = dest
-      for subcat, ents in pairs(subcats) do
-         local list = compacted[ents]
-         if not list then
-            list = compact(ents)
-            compacted[ents] = list
+      for subcat, list in pairs(subcats) do
+         if not sorted[list] then
+            sort_entries(list, px, py)
+            sorted[list] = true
          end
-         t_insert(dest, {
-            subcategory = subcat,
-            entries = list,
-         })
+         dest[#dest + 1] = { subcategory = subcat, entries = list }
       end
    end
 

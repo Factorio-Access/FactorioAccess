@@ -166,7 +166,7 @@ function TreeBackend:readout_entry(player, e)
 end
 
 ---@param player LuaPlayer
----@param callback fun(fa.scanner.ScanEntry)
+---@param callback fa.scanner.EntryCallback
 function TreeBackend:dump_entries_to_callback(player, callback)
    for cx, col in pairs(self.dirty_chunks) do
       for cy in pairs(col) do
@@ -219,38 +219,28 @@ function TreeBackend:dump_entries_to_callback(player, callback)
          -- "zoom" into it.
          local zoom_ent = #trees == 1 and trees[1] or nil
          if zoom_ent then aabb = trees[1].bounding_box end
-         callback({
-            backend = self,
-            backend_data = { tree_count = #trees, aabb = aabb, zoom_ent = zoom_ent },
-            position = closest.position,
-            category = CAT_RESOURCES,
-            subcategory = "tree",
-         })
+         local cp = closest.position --[[@as MapPosition.struct]]
+         callback(self, cp.x, cp.y, CAT_RESOURCES, "tree", { tree_count = #trees, aabb = aabb, zoom_ent = zoom_ent })
       end
 
       for _, t in pairs(zoomed_trees) do
-         callback({
-            position = t.position,
-            category = CAT_RESOURCES,
-            subcategory = "tree",
-            backend = self,
-            backend_data = { tree_count = 1, zoom_ent = t, aabb = t.bounding_box },
-         })
+         local tp = t.position --[[@as MapPosition.struct]]
+         callback(self, tp.x, tp.y, CAT_RESOURCES, "tree", { tree_count = 1, zoom_ent = t, aabb = t.bounding_box })
       end
 
       ::continue::
    end
 end
 
-function TreeBackend:get_aabb(e)
-   local aabb = e.backend_data.aabb
+function TreeBackend:get_aabb(data)
+   local aabb = data.aabb
    local lt = aabb.left_top
    local rb = aabb.right_bottom
    return lt.x, lt.y, rb.x, rb.y
 end
 
-function TreeBackend:is_huge(e)
-   return e.backend_data.tree_count > 100
+function TreeBackend:is_huge(data)
+   return data.tree_count > 100
 end
 
 return mod

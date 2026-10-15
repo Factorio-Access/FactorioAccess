@@ -5,6 +5,24 @@ local FaInfo = require("scripts.fa-info")
 local TileBodiesBackend = require("scripts.scanner.backends.tile-bodies")
 local TreeBackend = require("scripts.scanner.backends.trees")
 
+-- A backend's entries as ScanEntry tables, the way the scanner hands them back to it.
+---@param backend fa.scanner.ScannerBackend
+---@param player LuaPlayer
+---@return fa.scanner.ScanEntry[]
+local function dump(backend, player)
+   local out = {}
+   backend:dump_entries_to_callback(player, function(b, x, y, category, subcategory, data)
+      table.insert(out, {
+         backend = b,
+         position = { x = x, y = y },
+         category = category,
+         subcategory = subcategory,
+         backend_data = data,
+      })
+   end)
+   return out
+end
+
 describe("Scanner backends", function()
    it("reads a water patch as one entry with its size", function(ctx)
       ctx:init(function()
@@ -27,10 +45,7 @@ describe("Scanner backends", function()
          local backend = TileBodiesBackend.TileBodiesBackend.new(surface)
          backend:on_new_chunk({ x = 20, y = 20, area = chunk_area })
 
-         local entries = {}
-         backend:dump_entries_to_callback(player, function(e)
-            table.insert(entries, e)
-         end)
+         local entries = dump(backend, player)
 
          ctx:assert_equals(1, #entries, "one water body")
          ctx:assert_equals("water", entries[1].subcategory)
@@ -78,9 +93,9 @@ describe("Scanner backends", function()
 
          local function readouts()
             local out = {}
-            backend:dump_entries_to_callback(player, function(e)
+            for _, e in ipairs(dump(backend, player)) do
                table.insert(out, serpent.line(backend:readout_entry(player, e)))
-            end)
+            end
             table.sort(out)
             return out
          end
@@ -153,10 +168,7 @@ describe("Scanner backends", function()
 
          local backend = TreeBackend.TreeBackend.new(surface)
          backend:on_new_entity(tree)
-         local entries = {}
-         backend:dump_entries_to_callback(player, function(e)
-            table.insert(entries, e)
-         end)
+         local entries = dump(backend, player)
 
          ctx:assert_equals(1, #entries, "one tree")
          ctx:assert_equals(tree, entries[1].backend_data.zoom_ent)

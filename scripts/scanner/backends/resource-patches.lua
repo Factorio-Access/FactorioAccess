@@ -275,8 +275,9 @@ function ResourcePatchesBackend:readout_entry(player, ent)
 end
 
 ---@param player LuaPlayer
----@param callback fun(fa.scanner.ScanEntry)
+---@param callback fa.scanner.EntryCallback
 function ResourcePatchesBackend:dump_entries_to_callback(player, callback)
+   local RESOURCES = ScannerConsts.CATEGORIES.RESOURCES
    local player_pos = player.position --[[@as MapPosition.struct]]
    local px, py = player_pos.x, player_pos.y
 
@@ -291,27 +292,24 @@ function ResourcePatchesBackend:dump_entries_to_callback(player, callback)
          ---@type fa.scanner.ResourcePatch
          local d = cluster.data
 
-         ---@type fa.scanner.ScanEntry
-         local ent_agg = {
-            backend = self,
-            category = ScannerConsts.CATEGORIES.RESOURCES,
-            position = { x = d.highest_point.x, y = d.highest_point.y },
-            subcategory = n,
-            backend_data = {
-               aabb = cluster.aabb,
-               highest_point = d.highest_point,
-               -- Without the prototype, we can't do a query on the patch without
-               -- having an original entity, which may no longer exist.
-               prototype = n,
-               initial_total_amount = d.initial_total_amount,
+         ---@type fa.scanner.ResourcePatchEntData
+         local agg_data = {
+            aabb = cluster.aabb,
+            highest_point = d.highest_point,
+            -- Without the prototype, we can't do a query on the patch without
+            -- having an original entity, which may no longer exist.
+            prototype = n,
+            initial_total_amount = d.initial_total_amount,
 
-               -- When set this is a zoomed entry; announce with FaInfo instead.
-               zoom_override = nil,
-            },
+            -- When set this is a zoomed entry; announce with FaInfo instead.
+            zoom_override = nil,
          }
+         local function emit_aggregate()
+            callback(self, d.highest_point.x, d.highest_point.y, RESOURCES, n, agg_data)
+         end
 
          if not zoom_dist then
-            callback(ent_agg)
+            emit_aggregate()
             return
          end
 
@@ -325,7 +323,7 @@ function ResourcePatchesBackend:dump_entries_to_callback(player, callback)
 
          local closest_dist = math.sqrt((px - closest_x) ^ 2 + (py - closest_y) ^ 2)
          if closest_dist > zoom_dist then
-            callback(ent_agg)
+            emit_aggregate()
             return
          end
 
@@ -349,24 +347,14 @@ function ResourcePatchesBackend:dump_entries_to_callback(player, callback)
                and e.position.y <= cluster.aabb.right_bottom.y
             then
                consumed_count = consumed_count + 1
-               local ent = {
-                  backend = self,
-                  category = ScannerConsts.CATEGORIES.RESOURCES,
-                  position = { x = e.position.x, y = e.position.y },
-                  subcategory = e.name,
-                  backend_data = {
-                     aabb = table.deepcopy(e.bounding_box),
-                     highest_point = d.highest_point,
-                     -- Without the prototype, we can't do a query on the patch without
-                     -- having an original entity, which may no longer exist.
-                     prototype = n,
-                     initial_total_amount = d.initial_total_amount,
-                     -- When set this is a zoomed entry; announce with FaInfo instead.
-                     zoom_override = e,
-                  },
-               }
-
-               callback(ent)
+               local ep = e.position --[[@as MapPosition.struct]]
+               callback(self, ep.x, ep.y, RESOURCES, e.name, {
+                  aabb = e.bounding_box,
+                  highest_point = d.highest_point,
+                  prototype = n,
+                  initial_total_amount = d.initial_total_amount,
+                  zoom_override = e,
+               })
             end
          end
 
@@ -379,7 +367,7 @@ function ResourcePatchesBackend:dump_entries_to_callback(player, callback)
 
          local remaining_count = player.surface.count_entities_filtered(filter)
 
-         if consumed_count < remaining_count then callback(ent_agg) end
+         if consumed_count < remaining_count then emit_aggregate() end
       end
 
       for _, cluster in ipairs(self:patches(n)) do
@@ -388,12 +376,12 @@ function ResourcePatchesBackend:dump_entries_to_callback(player, callback)
    end
 end
 
-function ResourcePatchesBackend:is_huge(e)
+function ResourcePatchesBackend:is_huge(data)
    return false
 end
 
-function ResourcePatchesBackend:get_aabb(e)
-   local aabb = e.backend_data.aabb
+function ResourcePatchesBackend:get_aabb(data)
+   local aabb = data.aabb
    local lt = aabb.left_top
    local rb = aabb.right_bottom
    return lt.x, lt.y, rb.x, rb.y

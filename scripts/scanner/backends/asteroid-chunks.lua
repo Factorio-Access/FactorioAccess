@@ -81,7 +81,7 @@ function AsteroidChunksBackend:readout_entry(player, e)
 end
 
 ---@param player LuaPlayer
----@param callback fun(fa.scanner.ScanEntry)
+---@param callback fa.scanner.EntryCallback
 function AsteroidChunksBackend:dump_entries_to_callback(player, callback)
    if not script.feature_flags.space_travel then return end
    local platform = self.surface.platform
@@ -90,22 +90,23 @@ function AsteroidChunksBackend:dump_entries_to_callback(player, callback)
    local tick = game.tick
    for _, chunk in ipairs(platform.find_asteroid_chunks_filtered({})) do
       local pos = chunk.position --[[@as MapPosition.struct]]
-      callback({
-         position = { x = pos.x, y = pos.y },
-         backend = self,
-         backend_data = { name = chunk.name, position = pos, movement = chunk.movement, tick = tick },
-         category = SC.CATEGORIES.RESOURCES,
-         subcategory = chunk.name,
-      })
+      callback(
+         self,
+         pos.x,
+         pos.y,
+         SC.CATEGORIES.RESOURCES,
+         chunk.name,
+         { name = chunk.name, position = pos, movement = chunk.movement, tick = tick }
+      )
    end
 end
 
-function AsteroidChunksBackend:get_aabb(e)
-   local p = e.position
+function AsteroidChunksBackend:get_aabb(data)
+   local p = data.position
    return p.x, p.y, p.x, p.y
 end
 
-function AsteroidChunksBackend:is_huge(e)
+function AsteroidChunksBackend:is_huge(data)
    return false
 end
 

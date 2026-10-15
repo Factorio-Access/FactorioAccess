@@ -8,8 +8,8 @@ The one thing this does not know about is category, so one must call declare_sim
 callbacks. Default is other, providing a way to see un-categorized things, and prototype name.  For future proofing, it
 is also possible to customize readouts.
 
-Entries are built afresh on every dump: nothing is kept between dumps but the entities. We get a large jump if we
-inline table constants when dumping to callbacks, so the dump is a bit ugly.
+Nothing is kept between dumps but the entities. The dump is written for speed (see the refresh in
+entrypoint.lua): it hands each entry over as values, reads each entity property once, and builds no tables of its own.
 
 fa-utils corner finding relies on map queries and is slow.  As a result, the entry is built using an
 approximated top left corner and then that is made more accurate in update_entry.  The problem we face is that some
@@ -104,13 +104,7 @@ function SimpleBackend:dump_entries_to_callback(player, callback, wanted)
          -- Subcategories can cost surface queries (a drill's ore), so skip entries the refresh will drop anyway.
          if wanted and not wanted(effective_x, effective_y) then goto continue end
 
-         callback({
-            position = { x = effective_x, y = effective_y },
-            category = cat_cb(entity),
-            subcategory = subcat_cb(entity),
-            backend = self,
-            backend_data = entity,
-         })
+         callback(self, effective_x, effective_y, cat_cb(entity), subcat_cb(entity), entity)
       end
       ::continue::
    end
@@ -148,14 +142,15 @@ function mod.declare_simple_backend(meta_name, callbacks)
    return ret
 end
 
-function SimpleBackend:get_aabb(e)
-   local aabb = e.backend_data.bounding_box
+---@param entity LuaEntity
+function SimpleBackend:get_aabb(entity)
+   local aabb = entity.bounding_box
    local lt = aabb.left_top
    local rb = aabb.right_bottom
    return lt.x, lt.y, rb.x, rb.y
 end
 
-function SimpleBackend:is_huge(e)
+function SimpleBackend:is_huge(entity)
    return false
 end
 

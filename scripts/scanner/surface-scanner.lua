@@ -544,7 +544,7 @@ end
 
 ---@param surface_index integer
 ---@param player LuaPlayer
----@param callback fun(entry: fa.scanner.ScanEntry)
+---@param callback fa.scanner.EntryCallback
 ---@param wanted (fun(x: number, y: number): boolean)? See fa.scanner.ScannerBackend.dump_entries_to_callback
 function mod.get_entries_snapshot(surface_index, player, callback, wanted)
    local state = surface_state[surface_index]
