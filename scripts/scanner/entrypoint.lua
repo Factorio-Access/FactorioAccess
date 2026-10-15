@@ -167,6 +167,22 @@ local function sort_entries(list, px, py)
    end
 end
 
+-- Order each category's subcategories by their nearest entry. Their lists must be sorted already.
+---@param pstate fa.scanner.GlobalPlayerState
+---@param px number
+---@param py number
+local function sort_subcategories(pstate, px, py)
+   for _, sortable in pairs(pstate.entries) do
+      Memosort.memosort(sortable, function(subcat)
+         local list = subcat.entries
+         -- Emptied through the other view of a shared list: last, until navigation removes it.
+         if not list[1] then return math.huge end
+         return (px - list[1]) ^ 2 + (py - list[2]) ^ 2
+      end)
+   end
+end
+
+-- Sort a stored result again, from where the player is now.
 ---@param player LuaPlayer
 ---@param pstate fa.scanner.GlobalPlayerState
 local function apply_sort(player, pstate)
@@ -176,19 +192,17 @@ local function apply_sort(player, pstate)
    -- All shares lists with the other categories: each list is sorted once.
    ---@type table<fa.scanner.EntryList, true>
    local sorted = {}
-
-   for cat, sortable in pairs(pstate.entries) do
-      Memosort.memosort(sortable, function(subcat)
+   for _, subcats in pairs(pstate.entries) do
+      for _, subcat in ipairs(subcats) do
          local list = subcat.entries
          if not sorted[list] then
             sort_entries(list, px, py)
             sorted[list] = true
          end
-         -- Emptied through the other view of a shared list: last, until navigation removes it.
-         if not list[1] then return math.huge end
-         return (px - list[1]) ^ 2 + (py - list[2]) ^ 2
-      end)
+      end
    end
+
+   sort_subcategories(pstate, px, py)
 end
 
 local function do_refresh_after_sfx(pindex, direction_filter)
@@ -207,7 +221,8 @@ local function do_refresh_after_sfx(pindex, direction_filter)
    local player_obj = assert(game.get_player(pindex))
    ---@cast player_obj LuaPlayer
 
-   local px, py = player_obj.position.x, player_obj.position.y
+   local player_pos = player_obj.position --[[@as MapPosition.struct]]
+   local px, py = player_pos.x, player_pos.y
 
    ---@type table<fa.scanner.ScanEntry, true>
    local known_entries = {}
@@ -219,6 +234,23 @@ local function do_refresh_after_sfx(pindex, direction_filter)
       local is_chunk_charted = force.is_chunk_charted
       local get_direction_biased = FaUtils.get_direction_biased
       local surface = player_obj.surface
+
+      -- Whether the chunk holding a point is charted, asked once per chunk: entries outnumber chunks many times.
+      ---@type table<number, boolean>
+      local charted = {}
+      ---@param x number
+      ---@param y number
+      ---@return boolean
+      local function charted_at(x, y)
+         local cx, cy = math.floor(x / 32), math.floor(y / 32)
+         local key = (cx + 32768) * 65536 + (cy + 32768)
+         local c = charted[key]
+         if c == nil then
+            c = is_chunk_charted(surface, { x = cx, y = cy })
+            charted[key] = c
+         end
+         return c
+      end
 
       ---@param e fa.scanner.ScanEntry
       local function adder(e)
@@ -237,7 +269,7 @@ local function do_refresh_after_sfx(pindex, direction_filter)
                -- Instead we check the center or whatever point the backend
                -- decided was most relevant and assume that's good enough.  This
                -- shaved off 5% or so of scan refreshing time.
-is_chunk_charted(surface, { x = math.floor(ex / 32), y = math.floor(ey / 32) })
+charted_at(ex, ey)
                -- For cases in which the entity is large enough that no corner
                -- or position is charted, let's see if the player themselves is
                -- inside.  This can happen with e.g. seablock where the water
@@ -314,7 +346,27 @@ is_chunk_charted(surface, { x = math.floor(ex / 32), y = math.floor(ey / 32) })
    end
    if not next(all) then cats[CAT_ALL] = nil end
 
-   -- Now flatten it. This is what goes to the player, but only after sorting. A shared list stays shared.
+   -- Sort the entries while they are still tables: cheaper than sorting the flat lists. A shared list is sorted
+   -- once, and each entry scored once.
+   do
+      local scores = {}
+      local function score(e)
+         local p = e.position
+         return (px - p.x) ^ 2 + (py - p.y) ^ 2
+      end
+      ---@type table<fa.scanner.ScanEntry[], true>
+      local sorted = {}
+      for _, subcats in pairs(cats) do
+         for _, ents in pairs(subcats) do
+            if not sorted[ents] then
+               Memosort.memosort(ents, score, scores)
+               sorted[ents] = true
+            end
+         end
+      end
+   end
+
+   -- Now flatten it. This is what goes to the player. A shared list stays shared.
    ---@type table<fa.scanner.ScanEntry[], fa.scanner.EntryList>
    local compacted = {}
    local cats_flattened = {}
@@ -335,7 +387,7 @@ is_chunk_charted(surface, { x = math.floor(ex / 32), y = math.floor(ey / 32) })
    end
 
    ps.entries = cats_flattened
-   apply_sort(player_obj, ps)
+   sort_subcategories(ps, px, py)
 
    if direction_filter then
       Speech.speak(pindex, { "fa.scanner-refreshed-directional", FaUtils.direction_lookup(direction_filter) })
