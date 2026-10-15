@@ -17,7 +17,6 @@ local mod = {}
 ---@param index integer
 ---@return string?
 function mod.get_filter_prototype(filterable, index)
-   print(serpent.line(filterable))
    local filter = filterable.get_filter(index)
    if filter then
       return filter.name --[[@as string]]

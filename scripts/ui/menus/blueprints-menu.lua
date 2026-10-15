@@ -128,7 +128,6 @@ local function render(ctx)
          end
 
          local by_name = TH.set_to_sorted_array(counts)
-         print(serpent.line(by_name))
          table.sort(by_name, function(a, b)
             return a[2] > b[2]
          end)

@@ -184,16 +184,16 @@ function mod.check_and_play_bump_alert_sound(pindex, this_tick)
       if angle_degrees > 20 and angle_degrees < 70 and path_angle_degrees < 30 then
          -- Sliding along wall: moving wrong direction but smoothly
          -- Example: Trying to move east but sliding south along a wall
-         logger:info("Playing slide sound (deviation)")
+         logger:debug("Playing slide sound (deviation)")
          sounds.play_player_bump_slide(pindex)
       elseif path_angle_degrees > 45 then
          -- Sharp turn or direct hit: sudden direction change in path
          -- Example: Running into a corner and bouncing off
-         logger:info("Playing trip sound (sharp turn)")
+         logger:debug("Playing trip sound (sharp turn)")
          sounds.play_player_bump_trip(pindex)
       else
          -- General bump: other collision patterns
-         logger:info("Playing slide sound (general)")
+         logger:debug("Playing slide sound (general)")
          sounds.play_player_bump_slide(pindex)
       end
    else
@@ -253,7 +253,7 @@ function mod.check_and_play_stuck_alert_sound(pindex, this_tick)
       -- Notify registered callbacks
       notify_bump_callbacks(pindex)
 
-      logger:info("Playing stuck sound!")
+      logger:debug("Playing stuck sound!")
       sounds.play_player_bump_stuck(pindex)
    end
 end
